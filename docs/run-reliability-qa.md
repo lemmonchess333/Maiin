@@ -22,7 +22,7 @@ Pure-functions commit. Nothing user-visible to verify; the guards are just the f
 ### Happy path
 
 - [ ] Pick **Free** / **Easy** → Start → wait for GPS → run for ≥ 30 seconds and ≥ 100m → Stop
-- [ ] On RunSummary, tap **Save Run** → button shows "Saving…" briefly
+- [ ] On RunSummary, tap **Save run** → button shows "Saving…" briefly
 - [ ] After save resolves, primary slot becomes a green "**Done**" button (not auto-navigation)
 - [ ] **Confirm: you stay on the RunSummary screen** until you tap Done. The 800ms / 1800ms auto-nav timeouts are gone.
 - [ ] Tap Done → lands on Home
@@ -30,7 +30,7 @@ Pure-functions commit. Nothing user-visible to verify; the guards are just the f
 ### Save failure → retry
 
 - [ ] Repeat the run, reach RunSummary while online
-- [ ] **Toggle airplane mode ON**, then tap Save Run
+- [ ] **Toggle airplane mode ON**, then tap Save run
 - [ ] Save fails. Inline coral banner appears above the action row: "Couldn't save your run" with a Retry button
 - [ ] Toast also fires ("Failed to save run. Tap Retry below.") but the banner is the durable affordance
 - [ ] **Toggle airplane mode OFF**, tap **Retry** → save succeeds, Done button appears
@@ -47,7 +47,7 @@ Pure-functions commit. Nothing user-visible to verify; the guards are just the f
 
 - [ ] Start any non-treadmill type with a GPS lock → run for **5 seconds, distance < 100m** → Stop
 - [ ] Land on **"Run too short"** focused card (NOT the full summary)
-- [ ] Body copy reads: *"We recorded {time} and {km}km. This may have happened before GPS locked."*
+- [ ] Body copy reads: _"We recorded {time} and {km}km. This may have happened before GPS locked."_
 - [ ] Two visible actions: **Save anyway** (neutral) and **Discard** (red). No Share, no Export GPX, no map, no charts.
 - [ ] Tap Save anyway → green "Saved anyway." caption + Done button. Still no map / charts / share / GPX.
 - [ ] Tap Done → Home
@@ -57,7 +57,7 @@ Pure-functions commit. Nothing user-visible to verify; the guards are just the f
 - [ ] Start **Treadmill** → wait 30s → Stop → enter `0.04` km — note button stays disabled (this is C5; below)
 - [ ] To force the case for C3: enter `0.05` (just above floor), Save → if elapsed is < 30s but distance ≥ 50m, the run is **valid** for treadmill (no elapsed-time gate). Confirm normal summary renders.
 - [ ] To exercise the treadmill invalid path: enter `0.04`, then tap Save (the button is disabled — verify) → no save fires
-- [ ] **Note:** treadmill validity rule is distance-only. The body copy on InvalidRunReview reads *"This is below the minimum distance or duration for a normal summary."* (no GPS-lock framing)
+- [ ] **Note:** treadmill validity rule is distance-only. The body copy on InvalidRunReview reads _"This is below the minimum distance or duration for a normal summary."_ (no GPS-lock framing)
 
 ### Save anyway holds the user inside InvalidRunReview
 
@@ -68,7 +68,7 @@ Pure-functions commit. Nothing user-visible to verify; the guards are just the f
 - [ ] Start any non-treadmill type
 - [ ] **Toggle airplane mode ON** before / during the acquiring phase so GPS can never lock
 - [ ] Wait 15 seconds in the acquiring phase
-- [ ] CTA appears: **"Track without GPS"** with subtitle *"Record time now and enter distance after."*
+- [ ] CTA appears: **"Track without GPS"** with subtitle _"Record time now and enter distance after."_
 - [ ] Cancel button below is unchanged (small, muted, returns to setup)
 - [ ] Tap "Track without GPS"
 - [ ] You land directly in **TreadmillMode** (manual distance entry view) with the timer already running. No setup modal re-prompt.
@@ -78,7 +78,7 @@ Pure-functions commit. Nothing user-visible to verify; the guards are just the f
 
 - [ ] Pick **Treadmill** → Start → let timer run for any amount → Stop
 - [ ] In the distance input, type `0.04` → **Save Treadmill Run** button stays disabled
-- [ ] Below the input, helper text reads: *"Distance must be at least 0.05km."*
+- [ ] Below the input, helper text reads: _"Distance must be at least 0.05km."_
 - [ ] Clear the input → helper text disappears (no visible message on empty input)
 - [ ] Type `0.05` → button enables, helper text disappears
 - [ ] Type `0.10` → still enabled, no helper
@@ -100,10 +100,10 @@ The sprint doesn't change the happy-path content, but it does restructure the ac
 - [ ] **Map renders** with pace-coloured route + legend on a normal valid outdoor run
 - [ ] **Stats grid** (km / time / pace) shows correct values
 - [ ] **Splits chart** + per-km list render for a run > 1km
-- [ ] **Best Efforts** card appears for runs that crossed any of the canonical distances (1km / 5km / 10km / etc.)
+- [ ] **Best efforts** card appears for runs that crossed any of the canonical distances (1km / 5km / 10km / etc.)
 - [ ] **Pace trend badge** appears once you have ≥ 2 saved runs
 - [ ] **Notes textarea** still accepts input + saves with the run
-- [ ] **Share button** opens the share-composer flow (only after Save Run resolves to "saved" — gate added in C3)
+- [ ] **Share button** opens the share-composer flow (only after Save run resolves to "saved" — gate added in C3)
 - [ ] **Export GPX** downloads a valid `.gpx` file (only after saved + only on outdoor runs — gate added in C3)
 - [ ] **Treadmill runs** never show Export GPX, even after saved
 - [ ] **Background-then-foreground** during an active run still surfaces the existing bg-gap banner (P0 must not regress this)

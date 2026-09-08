@@ -1,3 +1,5 @@
+import type { ReminderActivity } from "./useReminderActivity";
+import { localDateString } from "@/lib/dateHelpers";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { doc, getDoc } from "firebase/firestore";
 import { setDocGuarded } from "@/lib/firestoreWrite";
@@ -18,7 +20,7 @@ export interface MealReminders {
   dinner: { enabled: boolean; time: string };
 }
 
-const DEFAULT_REMINDERS: MealReminders = {
+export const DEFAULT_MEAL_REMINDERS: MealReminders = {
   enabled: false,
   breakfast: { enabled: true, time: "08:00" },
   lunch: { enabled: true, time: "12:30" },
@@ -59,9 +61,11 @@ function computeNextOccurrence(timeHHMM: string): Date | null {
  * <RemindersProvider>. Public callers use `useMealReminders` from
  * RemindersProvider.tsx which reads this hook's output from context.
  */
-export function useMealRemindersInternal() {
+export function useMealRemindersInternal(activity?: ReminderActivity) {
   const uid = useUid();
-  const [reminders, setReminders] = useState<MealReminders>(DEFAULT_REMINDERS);
+  const [reminders, setReminders] = useState<MealReminders>(
+    DEFAULT_MEAL_REMINDERS
+  );
   const [loading, setLoading] = useState(true);
 
   // Load from Firestore
@@ -76,7 +80,7 @@ export function useMealRemindersInternal() {
       .then((snap) => {
         if (snap.exists()) {
           setReminders({
-            ...DEFAULT_REMINDERS,
+            ...DEFAULT_MEAL_REMINDERS,
             ...(snap.data() as MealReminders),
           });
         }
@@ -133,7 +137,13 @@ export function useMealRemindersInternal() {
         await cancelNotification(id);
       }
 
-      if (cancelled || !reminders.enabled) return;
+      if (
+        cancelled ||
+        !reminders.enabled ||
+        loading ||
+        (activity && !activity.ready)
+      )
+        return;
 
       const mealConfigs: Array<{
         key: keyof typeof MEAL_NOTIFICATION_IDS;
@@ -156,6 +166,12 @@ export function useMealRemindersInternal() {
         if (!config.enabled) continue;
         const nextAt = computeNextOccurrence(config.time);
         if (!nextAt) continue;
+        // Cancel today's occurrence once the slot is logged; keep tomorrow's reminder.
+        if (
+          activity?.meals.includes(key) &&
+          localDateString(nextAt) === activity.dateKey
+        )
+          nextAt.setDate(nextAt.getDate() + 1);
         await scheduleNotification({
           id: MEAL_NOTIFICATION_IDS[key],
           title,
@@ -176,7 +192,7 @@ export function useMealRemindersInternal() {
     return () => {
       cancelled = true;
     };
-  }, [reminders]);
+  }, [reminders, loading, activity]);
 
   // Permission request is a stable module-level function — no wrapper needed.
   return {

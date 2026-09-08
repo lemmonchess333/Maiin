@@ -149,7 +149,7 @@ async function formTab(id: string, beats: readonly FormBeat[], at: number) {
       .join("");
 
   const rows = beats
-    .map((b, i) => {
+    .map((_b, i) => {
       const live = i === at;
       const top = rowTops[i];
       return (

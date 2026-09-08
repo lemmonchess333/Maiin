@@ -1,0 +1,356 @@
+{
+  "mode": "built-in image generation and reference editing",
+  "status": "draft",
+  "calls": [
+    {
+      "frame": 1,
+      "id": "hammer-curl",
+      "path": "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/hammer-curl/1-master.png",
+      "prompt": "Use case: identity-preserve. Create ONE exercise-library master still for HAMMER CURL frame 1/6 by editing the supplied standing dumbbell curl image.\nKeep the exact athlete, entire head/torso/legs/shoes, original 1024x1536 canvas, camera, all outline coordinates, white-grey anatomy, black background and purple muscle treatment. Do not redesign him or change his scale.\nChange ONLY the grip and attached dumbbells: rotate both forearms/hands into a NEUTRAL hammer grip, palms facing inward toward each other, thumbs forward, straight wrists. Elbows almost straight, both upper arms hanging beside ribs. Place each dumbbell alongside its thigh, leaving both hands visible.\nThe dumbbell handle axes now point front-to-back relative to the athlete, NOT left-to-right like a supinated curl. Keep identical original round dark-grey dumbbell heads, diameter, thickness and handle length. Closed grips with fingers and thumbs around handles, no floating hand.\nKeep biceps strongest purple, brachialis and brachioradialis lilac; subtle trunk stabilisers as original. Do not add highlights elsewhere or enlarge muscles.\nThis establishes one locked scene for six positions: near-straight start, small curl, mid curl, top curl, controlled mid lower, near-bottom return. Do not draw multiple positions. ONE separate crisp native-resolution image, no captions/text/numbers/arrows/UI/grid.",
+      "refs": [
+        "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/db-curl/1-master.png"
+      ]
+    },
+    {
+      "frame": 2,
+      "id": "hammer-curl",
+      "path": "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/hammer-curl/2-early.png",
+      "prompt": "Precise local edit: ONE still, HAMMER CURL frame 2/6, early lift, of this exact image. Preserve original 1024x1536 canvas and the identical athlete.\nChange only BOTH FOREARMS, attached hands and dumbbells. Bend both elbows slightly, about 35 degrees from the almost-straight start. Raise each hand only about 65 pixels; hands remain clearly BELOW their elbow centres and below the waist. Do not raise to the belly button or shoulder yet.\nNeutral hammer grip stays locked: palms face each other, thumbs uppermost along the forearms; no supination. Each dumbbell rotates rigidly with its hand; preserve head diameter, head thickness and handle length. Both closed grips stay attached.\nFixed elbow centres beside ribs; upper arms do not swing. Keep head, shoulders, chest, abdomen, pelvis, entire legs, knees, shoes and background EXACTLY as supplied at their original coordinates. Keep all purple/lilac anatomy highlighting unchanged. No body rescaling, no camera/crop change, no muscle enlargement.\nOne separate sharp high-resolution frame, solid black background, NO text/captions/arrows/borders/collage.",
+      "refs": [
+        "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/hammer-curl/1-master.png"
+      ]
+    },
+    {
+      "frame": 3,
+      "id": "hammer-curl",
+      "path": "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/hammer-curl/3-mid.png",
+      "prompt": "Edit this exact hammer-curl frame to make ONE middle-curl still, frame 3/6. Change only forearms, hands and attached dumbbells.\nBend both elbows to approximately 85 degrees from straight. Upper arms stay vertical beside ribs with the elbow centres fixed. Forearms now project FORWARD almost horizontally; hands near elbow height, in front of the waist. Neutral wrists and hammer grip: palms face each other, thumbs point UP. IMPORTANT: in this mid pose each dumbbell's HANDLE AXIS IS NEAR VERTICAL, so there is one round head ABOVE the fist and one BELOW the fist, like holding a hammer upright. The whole rigid bell rotates naturally with the neutral wrist. Do not keep the two heads horizontally beside the hand like the starting pose. Both hands tightly wrap the middle of their handles, no supinated palms.\nKeep original head, shoulders, torso, hips, legs, shoes, all fixed outline coordinates, camera, 1024x1536 canvas, scale and lighting unchanged. Keep biceps purple, forearm lilac and pale obliques exactly consistent. Preserve original dumbbell head diameter/thickness and total length; do not enlarge the weights when they rise.\nSolid black, crisp anatomical 2D style, no caption, text, arrows, border or additional images.",
+      "refs": [
+        "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/hammer-curl/2-early.png"
+      ]
+    },
+    {
+      "frame": 4,
+      "id": "hammer-curl",
+      "path": "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/hammer-curl/4-top.png",
+      "prompt": "Make ONE top contraction frame 4/6 of this SAME HAMMER CURL by locally editing the supplied mid pose. Curl both forearms further, hands rising toward the front of shoulders, hand centres around y=405-425, elbows remaining beside lower ribs around y=505. Approximately 120 degrees elbow flexion. Upper arms do NOT lift or move forward.\nKeep a true neutral hammer grip, palms inward, wrists straight, thumbs toward shoulder. Rotate each entire rigid dumbbell with its hand: the top head tilts back toward the shoulder as forearm passes horizontal. Preserve EXACT same dumbbell head diameters, thicknesses, exposed handle length, finish and both closed hand contacts. No supinated grip.\nLock the original entire head, neck, shoulders, torso, obliques, pelvis, legs and white shoes at their same coordinates; same 1024x1536 canvas, crop, perspective, body scale, fine 2D contour and shading. Do not inflate the biceps. Same strongest purple biceps, lilac forearms, subtle pale obliques. Solid black. One separate native sharp image, no text, caption, arrows or UI.",
+      "refs": [
+        "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/hammer-curl/3-mid.png"
+      ]
+    },
+    {
+      "frame": 2,
+      "id": "hammer-curl",
+      "path": "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/hammer-curl/2-early-corrected.png",
+      "prompt": "Correct IMAGE 1, the EARLY HAMMER CURL frame. IMAGE 2 shows the SAME equipment in the later horizontal-forearm pose; it is an equipment-rotation reference only. Preserve IMAGE 1's early elbow pose and every head/torso/leg/shoe coordinate.\nChange ONLY hands and dumbbell orientation, not hand-centre location or forearm length. In image1 each forearm slopes forward/down about 45 degrees below horizontal. Keep palms INWARD and wrists straight. Therefore the dumbbell handle axes must slope UP/FORWARD about 45 degrees from horizontal: one round head should be diagonally ABOVE and FORWARD of the fist, the other diagonally BELOW and BEHIND it. They must NOT remain horizontal at equal height like a suitcase carry. Match the same round head shape, thickness and handle length seen in image2, under the changed perspective. Both hands close around the middle of the handles, thumbs around. Both arms synchronous.\nDo NOT change image1's body pose, elbow angle, purple biceps, lilac forearms, pale obliques, 1024x1536 canvas, camera, crop, shoes, black background or lighting. Keep the exact athlete. One sharp separate corrected image. No text or arrows.",
+      "refs": [
+        "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/hammer-curl/2-early.png",
+        "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/hammer-curl/3-mid.png"
+      ],
+      "revision": "equipment rotation"
+    },
+    {
+      "frame": 1,
+      "id": "front-raise",
+      "path": "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/front-raise/1-master.png",
+      "prompt": "Use case: scientific-educational; ONE FRONT RAISE exercise master, frame 1/6. Supplied image is the canonical athlete/linework/equipment reference. Match this SAME bald faceless white/light-grey muscular anatomical man, white low-top shoes, fine dark contour, polished 2D shading, body/head/hand proportions and modest round grey dumbbells.\nNew exercise setup: standing bilateral PRONATED dumbbell front raise. Upright torso, hip-width planted stance, neutral knees. Two dumbbells in FRONT of thighs, palms facing thighs, both hands closed around handles, wrists straight. Both elbows slightly bent about 10 degrees and hold that bend throughout later movement.\nCAMERA for this new set: fixed three-quarter SIDE view, athlete facing image LEFT, about 60 degrees turned from front so sagittal forward lift is legible and both arms/grips remain visible. Portrait 1024x1536. Entire head and shoes inside generous 50px vertical margins. Athlete centred around x=650 with extra empty black space to LEFT reserved for the arms to rise forward later; do not centre him too far left. No equipment cropped.\nMuscle hierarchy: anterior/front deltoid portions strongest purple; upper clavicular chest lighter lilac; only faint pale-purple forearm grip/core stabilisers. Biceps, triceps, legs, lats and rear delts white-grey, no unrelated deep-purple highlights. This is FRONT raise, not curl or lateral raise.\nSix intended beats: arms beside/front thighs, early 25-degree forward raise, middle 55-degree raise, shoulder-height 90-degree raise, controlled 55-degree lower, near-bottom 25-degree return. Do not draw multiple poses; make only the near-straight hanging-arm START. Head/torso/feet are fixed anchors for future edits; shoulders articulate naturally but no shrug or torso lean.\nOne crisp native high-resolution image, black background. No text, numbers, captions, arrow, legend, border, grid or UI.",
+      "refs": [
+        "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/hammer-curl/1-master.png"
+      ]
+    },
+    {
+      "frame": 2,
+      "id": "front-raise",
+      "path": "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/front-raise/2-early.png",
+      "prompt": "Create ONE adjacent still by precisely editing this master: bilateral DUMBBELL FRONT RAISE frame 2/6, early raise.\nLift both arms FORWARD toward image LEFT by about 25 degrees from their downward hanging position. Keep the small original elbow bend constant, around 10 degrees; this is shoulder flexion, NOT a biceps curl. Both hands move forward-left and slightly upward in arcs around fixed shoulder joints, remaining below waist height. Pronated grip: knuckles upward/forward and palms toward the floor as arms rise; both wrists straight. Preserve both separate visible hands and the same two dumbbells.\nKeep head/neck, torso, hips, thighs, knees, calves and shoes exactly as image1 at the original canvas coordinates. Body remains upright with no back lean, no shrugged shoulders. Preserve original arm bone lengths and limb thickness, fixed 1024x1536 canvas, perspective, crop, equipment head diameters and handle lengths. Do not enlarge highlighted muscles.\nSame front-deltoid deep purple, upper chest lilac, pale forearm accents, white-grey elsewhere. No new highlights. Same solid black background and crisp 2D anatomical drawing. ONE frame only, no text/caption/arrows/border/grid/UI.",
+      "refs": [
+        "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/front-raise/1-master.png"
+      ]
+    },
+    {
+      "frame": 3,
+      "id": "front-raise",
+      "path": "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/front-raise/3-mid.png",
+      "prompt": "Edit this exact FRONT RAISE early pose into ONE mid-raise still, frame 3/6.\nLift both arms a little further FORWARD toward image LEFT until the upper arms are about 60 degrees forward from vertical, roughly 30 degrees BELOW horizontal. Hands around y=480-500, visibly BELOW shoulder height y=300. Keep each elbow's existing small bend constant; do not curl. Both wrists straight and palms pronated toward floor; same two dumbbells with closed grips, identical diameter/thickness/handle lengths and rigid geometry.\nShoulder centres, head, neck, upright torso, hips, knees, legs and shoe soles remain fixed at their exact original 1024x1536 canvas coordinates. No forward torso lean, no shrug, no zoom/crop/view change, no limb length/size change. Preserve same anterior-deltoid purple, upper-chest lilac and pale forearms, anatomy style and black background.\nThis is an adjacent joint-pose edit, not a new athlete. One separate sharp native-resolution image without captions, text, arrows, borders or UI.",
+      "refs": [
+        "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/front-raise/2-early.png"
+      ]
+    },
+    {
+      "frame": 4,
+      "id": "front-raise",
+      "path": "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/front-raise/4-top.png",
+      "prompt": "ONE local edit for FRONT RAISE frame 4/6, shoulder-height top. Raise both arms FORWARD toward image LEFT from the supplied mid pose until the upper arms are horizontal at SHOULDER HEIGHT, approximately 90 degrees shoulder flexion. Both hands at about y=310-340 on the same 1024x1536 canvas. Do not raise overhead.\nKeep the original small elbow bend around 10 degrees, fixed arm bone lengths, straight wrists, pronated palms downward and both hands closed around the SAME dumbbell handles. Both dumbbells stay identical in head diameter/thickness and handle length, rigid and separated, fully inside the image. This is a forward raise, not sideways.\nKeep entire head, neck, torso, hips, legs, white shoes and soles at their original coordinates. No back lean, shrug, change in body scale, camera, framing or lighting. Preserve the purple anterior deltoids, lilac upper chest and pale forearms with no new highlighting or muscle inflation. Only the shoulder joints and attached arms/equipment change.\nBlack background, crisp polished 2D anatomical illustration. ONE separate high-resolution image. No captions, text, arrow, border, grid or UI.",
+      "refs": [
+        "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/front-raise/3-mid.png"
+      ]
+    },
+    {
+      "frame": 1,
+      "id": "goblet-squat",
+      "path": "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/goblet-squat/1-master.png",
+      "prompt": "Create ONE GOBLET SQUAT master still, frame 1/6. The supplied image is the canonical CHARACTER AND STYLE reference. Use this same bald faceless muscular white/light-grey anatomical man with white low-top shoes, identical head/body/hand proportions and crisp fine dark contours in polished 2D anatomy style. Change exercise and activation map, not identity.\nPose: stand tall in shoulder-width stance, feet turned outward about 20 degrees, both soles fully grounded. Hold ONE modest dark-grey round-ended dumbbell vertically against the upper chest. Both palms cup the underside of the UPPER round dumbbell head from opposite sides; fingers securely around its rim, thumbs supporting, elbows pointing down close to ribs. Lower head hangs in front of sternum, no second dumbbell, no barbell, no floating hand. Same simple grey equipment style as reference, no numbers.\nCamera: fixed three-quarter front-side view, athlete turned 40 degrees toward image LEFT. Both shoes, knees, elbows and both hands readable. Portrait 1024x1536, entire figure with 50px top/bottom margin and space around body. Feet fixed for all future frames.\nMuscles: quadriceps strongest deep purple on both thighs, gluteus maximus medium lilac; visible adductors and trunk stabilisers subtle pale purple. Arms, chest, shoulders and calves white-grey. Highlight contribution without enlarging muscles.\nSix-beat plan for later edits: tall start; small knee/hip bend; half-depth squat; deepest comfortable squat with hip crease near/slightly below knee height; controlled rise through half-depth; near-standing return. Whole feet remain planted, knees track toes, hips sit between heels, natural slight torso inclination with neutral spine. Weight remains tucked at chest throughout and moves with torso. Only create tall START here.\nSolid black background; one native sharp high-resolution image. No text, caption, numbers, arrows, diagram, grid or app UI.",
+      "refs": [
+        "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/hammer-curl/1-master.png"
+      ]
+    },
+    {
+      "frame": 2,
+      "id": "goblet-squat",
+      "path": "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/goblet-squat/2-early.png",
+      "prompt": "Precisely edit this GOBLET SQUAT master to make ONE early descent still, frame 2/6. Begin bending both knees and hips, knees tracking the same outward direction as toes. Small squat: knees approximately 35 degrees flexed, pelvis lowers about 100 pixels, head/torso/dumbbell descend together by about 80-100 pixels. Do NOT go to half depth yet. Keep spine neutral with a slight natural forward inclination and weight balanced over whole feet.\nCRITICAL FIXED ANCHORS: preserve BOTH ENTIRE SHOES exactly at the existing canvas coordinates, same heels, toes, soles, width, floor height and stance. Do not slide, rotate, widen or resize either shoe. Bend ankles/knees/hips above these fixed feet. Preserve femur and shin lengths, body proportions, head size and muscle volume.\nThe ONE dumbbell and both gripping hands remain locked together against the upper chest, rigid and identical in size/shape. Both palms support the same upper head, elbows point down; no second dumbbell. Preserve quadriceps deep purple, glutes/lower trunk lilac hierarchy without colour drift or enlarged muscles.\nSame 1024x1536 canvas, camera and perspective, black background, fine 2D anatomy linework. One separate crisp image, no text, captions, arrows, border, grid or UI.",
+      "refs": [
+        "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/goblet-squat/1-master.png"
+      ]
+    },
+    {
+      "frame": 3,
+      "id": "goblet-squat",
+      "path": "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/goblet-squat/3-mid.png",
+      "prompt": "Make ONE adjacent GOBLET SQUAT frame 3/6 by editing this early descent.\nLower farther into a clear HALF-TO-THREE-QUARTER squat: both thighs angle downward about 25 degrees from hips to knees, knees flex around 75-85 degrees. Hip crease remains about 100 pixels ABOVE the knee centres; do NOT reach the bottom yet. Head and torso lower together naturally about another 120 pixels from this pose. Spine neutral, chest proud with slight forward inclination, knees follow toes, elbows stay inside knees without colliding. Preserve original body proportions, head size, femur/shin lengths and muscle volume.\nBOTH SHOES ARE EXACT FIXED REGIONS: same toes, heels, soles and stance at identical canvas coordinates, no slide/rotation/resize. Pelvis moves down/back between the fixed feet. Keep ONE identical rigid vertical dumbbell held against chest by the exact same two cupping hands; unchanged head diameter, thickness and handle length.\nSame white-grey canonical athlete, purple quads, lilac glutes/pale trunk, all colouring stable. Same camera, 1024x1536 canvas, scale, black background, crisp fine anatomical contours. No other object, text, caption, arrows or grid.",
+      "refs": [
+        "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/goblet-squat/2-early.png"
+      ]
+    },
+    {
+      "frame": 4,
+      "id": "goblet-squat",
+      "path": "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/goblet-squat/4-bottom.png",
+      "prompt": "Create ONE GOBLET SQUAT bottom-position still, frame 4/6, by editing this exact mid-descent.\nLower the hips another 80-100 pixels so the HIP CREASE is now SLIGHTLY BELOW the top of the knees. Knees bend further and track outward with the toes; feet fully grounded, heels never lift. The head, chest and the same chest-held dumbbell move down together. Maintain a neutral back and slight forward torso inclination appropriate to a balanced goblet squat. Elbows stay between the knees, same secure two-palm support under the dumbbell's upper head. This should clearly be deeper than the supplied pose, not a duplicate.\nLock both shoes at EXACT original pixel coordinates: do not change their shape, toe/heel points, spacing, angle or sole height. Same shin/femur lengths, head size, torso dimensions and muscularity; do not shrink the athlete to make a deeper squat. Dumbbell dimensions/shape and hand size remain identical.\nPurple quads, lilac glutes, pale adductor/trunk emphasis remain on the same anatomy with same intensity. Fixed 1024x1536 canvas, camera, crop, black background, fine dark contours and crisp 2D shading.\nOne separate native-resolution image; no text/caption/arrows/grid/extra equipment.",
+      "refs": [
+        "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/goblet-squat/3-mid.png"
+      ]
+    },
+    {
+      "frame": 1,
+      "id": "push-ups",
+      "path": "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/push-ups/1-master.png",
+      "prompt": "Create ONE PUSH-UP exercise-library master, frame 1/6, with the SAME canonical athlete as the supplied character/style reference. Bald faceless muscular anatomical male, white/light-grey body, same proportions and muscle density, fine dark contours, polished flat 2D anatomical shading and same white low-top shoes. Not a photorealistic person.\nPose is the TOP of a standard full push-up: high plank, both palms planted slightly wider than shoulders, fingers spread forward, straight arms without hyperextension, shoulders above wrists. Both legs fully extended, feet roughly hip-width, toes of white shoes planted with heels raised. Head, shoulders, hips and ankles form one straight neutral line. No sagging hips, no raised pike, no knees on floor.\nCamera: fixed near-side three-quarter view, head toward image LEFT and feet toward RIGHT, camera only slightly elevated so both hands, elbows and shoe toe contacts are individually visible. Landscape 1536x1024, entire athlete within 70px margins, occupying most horizontal width. Plain BLACK background and invisible black floor with natural contact, no gym scene, no mat.\nMuscles: chest/pectorals deep purple, triceps and anterior deltoids lighter lilac, abdominal/oblique stabilisers very pale purple. Rest white-grey; do not colour lats or legs strongly. Same canonical purple hierarchy, no anatomy size changes.\nSix states for later edits: top plank; early controlled elbow bend; middle descent; chest just above floor; controlled press through mid; near-top return. Hands and shoe toe contacts remain fixed; body lowers and rises as a straight unit with elbows tracking diagonally back about 30-45 degrees from ribs, not flared sideways. Make ONLY top plank now.\nOne separate full-resolution sharp image. No text, number, caption, arrow, border, grid or UI.",
+      "refs": [
+        "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/hammer-curl/1-master.png"
+      ]
+    },
+    {
+      "frame": 2,
+      "id": "push-ups",
+      "path": "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/push-ups/2-early.png",
+      "prompt": "ONE precise adjacent edit of this PUSH-UP master: frame 2/6, early controlled descent.\nBend both elbows approximately 30 degrees from straight, tracking diagonally backward about 30-45 degrees away from the ribs, not winged sideways. Lower head, shoulders, chest and pelvis together as a rigid straight plank pivoting at the toes. Chest and shoulders descend only about 90 pixels from the supplied top pose; keep this clearly early, not bottom. Neck stays naturally aligned with torso, gaze toward floor, no chin jut.\nFIX BOTH PALMS AND ALL FINGERTIPS to their exact existing canvas coordinates. FIX BOTH SHOE TOE CONTACTS to their existing floor points; shoes may pivot naturally at toes but do not slide or change size. Arms must bend above fixed hands, not lengthen. Preserve original upper/lower arm lengths, head size, torso dimensions and leg length; no sagging hips or bent knees.\nSame 1536x1024 canvas, unchanged camera, crop, scale, black background. Exact canonical white-grey anatomy, deep purple chest, lilac triceps/front delts and pale trunk. No new highlights. One separate crisp high-resolution still, no caption, text, arrow, grid or UI.",
+      "refs": [
+        "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/push-ups/1-master.png"
+      ]
+    },
+    {
+      "frame": 3,
+      "id": "push-ups",
+      "path": "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/push-ups/3-mid.png",
+      "prompt": "Edit this exact PUSH-UP frame into ONE middle-descent still, frame 3/6. Bend both elbows farther to about 70 degrees from straight. Lower shoulders/chest/head together another 100 pixels, pelvis descends proportionally so head-to-ankles stays a straight plank. Chest still clearly above floor; do not reach deepest position yet. Elbows track diagonally back, about 30-45 degrees from ribs, not straight sideways. Wrists beneath elbows, same arm bone lengths.\nLOCK the exact palm outlines, fingertips and both shoe toe-contact points at their current canvas coordinates. No sliding hands, changed hand size, shifted feet or resized shoes. Preserve head size, torso dimensions, muscle volume and entire leg lengths. Knees straight and hips not sagging or piking. Neck in line with torso.\nSame 1536x1024 canvas, camera, zoom, black background, fine dark contour and white-grey canonical anatomical athlete. Purple chest/lilac triceps and anterior delts/pale trunk unchanged. ONE separate crisp high-resolution image, no text/caption/arrows/borders/UI.",
+      "refs": [
+        "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/push-ups/2-early.png"
+      ]
+    },
+    {
+      "frame": 4,
+      "id": "push-ups",
+      "path": "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/push-ups/4-bottom.png",
+      "prompt": "Make ONE PUSH-UP bottom still, frame 4/6, by editing the supplied middle-descent image.\nLower chest another 90-110 pixels toward the floor, elbows bending to about 90-100 degrees. Chest hovers just above the floor plane defined by the fixed palms/toes. Shoulders and pelvis lower as one straight plank, knees remain straight, glutes do not stick up, abdomen does not sag. Keep neutral neck, nose directed toward floor. Elbows point diagonally backward 30-45 degrees from ribs and stay approximately over the wrists in the movement plane; forearms near vertical, not stretched sideways.\nAll PALMS/FINGERTIPS and SHOE TOE CONTACTS stay at exactly the supplied coordinates and retain original dimensions. Do not slide either hand or foot. Original upper/lower arm lengths, torso length, leg lengths, head size, camera/perspective and 1536x1024 crop remain unchanged. Only joints and attached body segments move as required.\nSame crisp white-grey canonical anatomical athlete, deep-purple chest, lilac triceps/front deltoids, pale core, solid black background. One separate native-resolution frame without text/captions/arrows/borders/grid/UI.",
+      "refs": [
+        "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/push-ups/3-mid.png"
+      ]
+    },
+    {
+      "frame": 1,
+      "id": "squat",
+      "path": "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/squat-batch-02/1-master.png",
+      "prompt": "Use case: identity-preserve. Create ONE HIGH-BAR BACK SQUAT master frame 1/6 by editing this exact goblet-squat standing athlete.\nKeep the identical head, body proportions, entire legs, shoes, stance, floor coordinates, camera and 1024x1536 canvas. Same canonical bald faceless white-grey muscular anatomical figure and fine 2D contour/shading.\nReplace the chest-held dumbbell setup with a straight BARBELL supported across the UPPER TRAPEZIUS behind the head, below the neck. Both hands grip the bar symmetrically just outside shoulder width with closed grips; elbows angled down, wrists reasonably neutral. The bar is physically supported on the upper back, not held floating above it.\nONE modest dark-grey round full-size plate on EACH end, identical plate diameter and thickness, equal collars/sleeves; no stacks of plates, no labels/numbers. Bar rigid and level in world space; projected diagonal only from this fixed perspective. Entire bar and both plates fit inside the canvas with black margins. Do not hide one hand or omit a plate. Equipment design matches the existing simple grey library equipment.\nPurple quadriceps and visible glutes primary, adductors lilac, trunk stabilisers faint pale purple; arms/chest/shoulders white-grey. No muscle enlargement.\nThis set's six beats: tall setup, early descent, hip crease at knee level, slightly deeper controlled bottom, drive upward through half squat, tall finish. Feet stay locked; bar rides upper back unchanged in dimensions and grip spacing throughout. Create ONLY tall setup.\nOne separate crisp high-resolution image on black, no text/caption/arrows/grid/UI.",
+      "refs": [
+        "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/goblet-squat/1-master.png"
+      ]
+    },
+    {
+      "frame": 1,
+      "id": "squat",
+      "path": "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/squat-batch-02/1-master-corrected.png",
+      "prompt": "Make ONE targeted correction to this HIGH-BAR SQUAT setup image. The bar is currently too high behind the neck. LOWER THE ENTIRE BARBELL plus both gripping hands approximately 50 pixels so its shaft rests firmly on the muscular UPPER-TRAPEZIUS SHELF at the BASE of the neck, behind the shoulders, not at jaw/upper-neck height.\nAt this front three-quarter camera, the central shaft must be OCCLUDED by the neck/upper torso; only shaft segments extending outward beyond the shoulders should remain visible. The bar is behind the body, never crossing the throat/chest. Bend elbows naturally downward to retain secure two-handed grip. Maintain exact grip width and identical rigid bar length, two single plate diameters/thicknesses and sleeves. Move the equipment as one rigid object; do not shrink it.\nKeep all other regions exactly fixed: canonical head/neck outline, torso, hips, legs, shoes, original foot coordinates, purple highlights, 1024x1536 canvas, camera and black background. Do not change body size or pose or add a rack. One sharp corrected separate frame, no text/arrow/caption/UI.",
+      "refs": [
+        "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/squat-batch-02/1-master.png"
+      ],
+      "revision": "bar support"
+    },
+    {
+      "frame": 2,
+      "id": "squat",
+      "path": "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/squat-batch-02/2-descend.png",
+      "prompt": "Precisely edit this HIGH-BAR BACK SQUAT image to make ONE early descent frame 2/6.\nFlex hips and knees together into a shallow squat, knee flexion about 40 degrees, pelvis lowering about 130 pixels. Knees track toes, whole feet planted; neutral spine and slight natural forward torso lean. Head, shoulders, barbell and hands descend together.\nCRITICAL: preserve both shoes in their exact original coordinates and shape, same toe/heel/sole anchors and stance. Preserve thigh/shin lengths, head size, torso dimensions and muscularity. Do not shrink the athlete.\nThe bar stays supported on the upper traps behind the neck. Move the bar and its single plate on each side as ONE rigid object with the torso, same projected bar length, plate diameters/thicknesses, sleeve lengths and closed grip positions. Do not widen the grip, tip one end, add plates or float the bar. Central shaft remains correctly occluded by the upper body.\nSame 1024x1536 canvas/camera/scale/black background, deep-purple quads/glutes, lilac adductors and pale trunk; fine crisp 2D anatomical shading. ONE separate image, no text/caption/arrows/grid/UI.",
+      "refs": [
+        "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/squat-batch-02/1-master-corrected.png"
+      ]
+    },
+    {
+      "frame": 3,
+      "id": "squat",
+      "path": "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/squat-batch-02/3-parallel.png",
+      "prompt": "Create ONE HIGH-BAR BACK SQUAT frame 3/6, PARALLEL, by editing this exact early descent. Lower hips until HIP CREASE is LEVEL with the top of the knees. Both thighs approximately parallel to floor in world space, knees tracking toes. Hips and knees flex together, neutral spine with modest forward torso inclination, chest lifted. Head, upper back and barbell descend together, without body rescaling.\nBoth entire shoes must remain EXACTLY in their existing positions and shapes, same soles, heels, toe angles and stance. Preserve femur/shin lengths, head dimensions, torso length and muscularity. Do not slide feet or collapse knees inward.\nKeep bar on the upper trapezius shelf, behind the neck. Both hands keep the same grip width and correct contact. Same rigid straight bar with ONE same-sized plate each side, same sleeves, head diameters and thickness, orientation and perspective. Equipment translates with shoulders; do not tilt or shrink it.\nPreserve the same purple quads/glutes and lilac/pale stabiliser map, crisp 2D anatomical style, black background, 1024x1536 canvas, camera and crop. One separate sharp full-resolution image with no text/caption/arrows/UI.",
+      "refs": [
+        "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/squat-batch-02/2-descend.png"
+      ]
+    },
+    {
+      "frame": 4,
+      "id": "squat",
+      "path": "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/squat-batch-02/4-bottom.png",
+      "prompt": "ONE adjacent high-bar squat edit, frame 4/6 BOTTOM. The supplied image is the parallel position. Lower the HIP CREASE visibly another 65-80 pixels BELOW the top of the knees, with a clearly deeper knee bend. Head and upper-back/barbell assembly descend together roughly 70 pixels. Keep the same neutral spinal shape and same torso/head dimensions; no shrinking/compressing the body to simulate descent.\nBoth shoes remain EXACTLY fixed at original coordinates, same stance/sole shape/toe angle. Knees track over toes, heels flat, hips sit between heels. Both hands remain firmly on the same upper-back-supported bar at exactly the same grip width. The bar stays a rigid object: identical projected end-to-end length, one plate on each side, identical diameters/thicknesses/sleeves and level orientation, moving with shoulders. No floating bar, no camera movement.\nSame canonical white-grey anatomical athlete with purple quads/glutes, lilac adductors/pale trunk, same 1024x1536 canvas, black background, crisp fine contour/shading. One separate native-resolution image; no text, captions, arrows, collage or UI.",
+      "refs": [
+        "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/squat-batch-02/3-parallel.png"
+      ]
+    },
+    {
+      "frame": 5,
+      "id": "squat",
+      "path": "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/squat-batch-02/5-drive.png",
+      "prompt": "ONE high-bar squat still for frame 5/6 DRIVE UP. The supplied early-squat image is the nearest pose reference. Draw a position about halfway between standing and parallel: lower the supplied pelvis/head/bar assembly about 70 pixels, knee flexion around 65 degrees, hips ABOVE knee level. This pose is used on the upward phase after the bottom, so body alignment should show chest and hips rising together, neutral spine, knees tracking toes and whole-foot pressure.\nPreserve BOTH SHOES exactly, unchanged coordinates/shape/stance. Preserve body/head size, torso/femur/shin dimensions and muscularity. No shrinking or shifted feet.\nSame rigid barbell resting on upper traps, both closed grips at identical spacing, one original plate on each side, identical plate diameters/thicknesses and sleeves. Bar moves with upper back, stays same orientation and length. Same 1024x1536 camera/canvas/crop, black background, fine white-grey anatomical art, deep-purple quads/glutes and pale stabiliser shading.\nOne separate native-resolution image; no text/caption/arrows/UI or extra equipment.",
+      "refs": [
+        "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/squat-batch-02/2-descend.png"
+      ]
+    },
+    {
+      "frame": 1,
+      "id": "lat-pulldown",
+      "path": "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/lat-pulldown/1-master.png",
+      "prompt": "Create ONE LAT PULLDOWN master still, frame 1/6. The supplied image is the CANONICAL ATHLETE/style reference, not the pose. Same bald faceless muscular white/light-grey anatomical man, same proportions, fine dark contours, polished 2D shading and white low-top shoes.\nExercise: seated bilateral overhand lat pulldown, grip slightly wider than shoulders, bar travels IN FRONT to upper chest. Camera fixed rear three-quarter view, athlete facing image RIGHT so lats, both grips and machine are visible. Seated tall with slight fixed backward lean, thighs secured under pad, both feet planted. Arms nearly straight overhead holding one rigid curved-end lat bar, both closed grips visible. No behind-neck path.\n1024x1536 portrait canvas. Whole simple dark-grey machine inside 50px margins, athlete on left/centre and clearly visible WEIGHT STACK to right. Solid black background.\nREAL MACHINE: fixed seat/thigh pad/base/frame. One cable from bar's central carabiner goes vertically UP over a FIXED overhead pulley, horizontally across to a SECOND FIXED pulley above the stack, then vertically DOWN to the selected plates. This is a 1:1 fixed-pulley route; no moving pulley. Cable taut, route fully coherent.\nSTACK: exactly TWELVE identical rectangular plates total: EIGHT unselected plates together resting on base, FOUR selected plates together immediately above with a small visible 20px gap. The top four move as one rigid packet in later frames; bottom eight NEVER move. No extra plates, labels or numbers. Two vertical guide rods remain fixed.\nLayout target: bar central attachment near x=580,y=300; upper pulley near x=580,y=140, stack pulley near x=890,y=140. Stationary eight-plate block roughly y=1170..1330. Selected four-plate block roughly y=1070..1150, 20px gap above stationary block. Seat around y=990, feet near y=1360. Adjust coherent proportions but preserve physical routing.\nSix future states: bar overhead, early pull, mid pull, bar to upper chest, controlled mid return, near-overhead return. As bar comes DOWN, selected four plates go UP by equal cable travel; unselected eight remain grounded. Only draw START here.\nLats deep purple; biceps/visible posterior deltoids/teres-major area lighter lilac; trunk/grip stabilisers faint pale purple. No purple legs/chest, no inflated anatomy. One separate native crisp high-resolution image, no text/caption/arrows/grid/UI.",
+      "refs": [
+        "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/hammer-curl/1-master.png"
+      ]
+    },
+    {
+      "frame": 1,
+      "id": "lat-pulldown",
+      "path": "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/lat-pulldown/1-stack-corrected.png",
+      "prompt": "Targeted EQUIPMENT-ONLY correction of this LAT PULLDOWN master. Keep the entire athlete, bar, hands, seat, pad, machine frame, pulleys, floor, camera and 1024x1536 canvas EXACTLY unchanged.\nThe weight stack currently has the wrong number of plates. Replace ONLY the stack region with exactly TWELVE equal-thickness dark rectangular plates arranged as:\nBOTTOM stationary block: exactly EIGHT plates, each about 25 pixels thick, stacked tightly together from y=995 to y=1195, resting on the SAME existing base. Seven internal dividing seams, eight slabs.\nTOP selected packet: exactly FOUR plates, each about 25 pixels thick, stacked tightly together from y=875 to y=975. Three internal dividing seams, four slabs.\nThere is a visible 20-pixel gap between the bottom of the four selected plates at y=975 and the top of the eight stationary plates at y=995. Keep original plate width x=784..919 and original dark-grey finish/perspective. No other plates, no extra top slab, no numbers.\nTwo silver GUIDE RODS are fixed vertical rails passing through the plate holes and continue above/below the moving packet. The thin TAUT CABLE descends from the existing right pulley to a small connector on the top of the four-plate packet. These are different physical components; cable must attach to the moving four plates. Preserve correct original fixed-pulley route.\nThis image is the OVERHEAD ARMS starting position with selected plates near rest, not a high-lift stack. Nothing else changes. ONE sharp corrected image, no text or arrows.",
+      "refs": [
+        "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/lat-pulldown/1-master.png"
+      ],
+      "revision": "plate count and initial gap"
+    },
+    {
+      "frame": 2,
+      "id": "lat-pulldown",
+      "path": "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/lat-pulldown/2-early.png",
+      "prompt": "ONE precise adjacent edit of this exact LAT PULLDOWN master, frame 2/6 EARLY PULL.\nMove the entire rigid lat bar, central attachment and BOTH gripping hands vertically DOWN by 80 pixels, same x coordinates, bar shape, grip width and orientation. Begin bending both elbows naturally, shoulder blades drawing down, but keep athlete head, torso lean, pelvis, thighs, knees, shoes, seat and pad FIXED. Arms remain largely overhead.\nSIMULTANEOUS CABLE PHYSICS: Move the EXACT EXISTING FOUR-PLATE upper packet vertically UP by 80 pixels, no redraw or new plates. Its current top about y=745 becomes y=665; its bottom about y=849 becomes y=769. Leave the ENTIRE existing LOWER stack block from about y=890 to y=1197 pixel-identical and stationary. The gap increases by exactly the same 80px that the bar descends. Do not move the bottom block, change any plate count, plate dimensions or plate thickness.\nLengthen the taut bar-to-left-pulley cable by 80px and shorten the right-pulley-to-selected-stack cable by 80px. Both pulleys, frame and two fixed guide rods remain at identical coordinates. No slack, no extra cable, no moving pulley. Selected plates travel along unchanged guide rods.\nKeep the same canonical white-grey athlete, proportions, deep-purple lats/lilac arms and rear delts/pale trunk; preserve all fixed regions, original 1024x1536 canvas, camera, black background. One separate sharp native image without text/captions/arrows/UI.",
+      "refs": [
+        "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/lat-pulldown/1-stack-corrected.png"
+      ]
+    },
+    {
+      "frame": 2,
+      "id": "lat-pulldown",
+      "path": "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/lat-pulldown/2-stack-repair.png",
+      "prompt": "Precise EQUIPMENT-ONLY repair. IMAGE 1 is the target early-pull pose; keep its athlete, bar position, hands, frame, seat, pad, feet and pulleys unchanged. IMAGE 2 is the exact master stack reference.\nThe lower stationary plates in IMAGE 1 were wrongly multiplied and stretched upward. REPLACE THAT LOWER BLOCK with the exact lower block from IMAGE 2 at the same location: x=784..919, TOP y=890, BOTTOM y=1197. Preserve its exact original twelve plates, seams, width and finish. The region y=715..889 above it must be EMPTY BLACK GAP with only the original thin guide rods, not extra plates.\nIMAGE 2 has a four-plate selected packet whose top is y=745 and bottom y=849. In IMAGE 1 the lat bar has moved DOWN 136 pixels relative to IMAGE 2, so move that EXACT FOUR-PLATE packet UP 136 pixels from the master: top y=609, bottom y=713. Four slabs only, same height 104 pixels total. Do not change their thickness or add any slab. Use the same cable connector at the top.\nKeep guide rods fixed and the cable taut from right pulley to top of moving packet. This preserves the 1:1 cable length: bar down 136, selected packet up 136, bottom packet unmoved.\nChange ONLY this weight-stack region. No edits elsewhere, no reframing, no scale changes, no text/labels/arrows. One corrected separate 1024x1536 image.",
+      "refs": [
+        "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/lat-pulldown/2-early.png",
+        "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/lat-pulldown/1-stack-corrected.png"
+      ],
+      "revision": "separate equipment-only correction using master"
+    },
+    {
+      "frame": 1,
+      "id": "deadlift",
+      "path": "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/deadlift/1-master.png",
+      "prompt": "Create ONE CONVENTIONAL BARBELL DEADLIFT master still, frame 1/6 SETUP. Supplied image is the canonical athlete/style/equipment reference. Keep SAME bald faceless white-grey muscular anatomical male, same proportions, fine dark contours, 2D polished shading and white shoes. Do not redesign athlete.\nConventional stance: feet hip-width, bar over mid-foot, shins close, hips back and above knees, shoulders slightly ahead of bar, neutral spine and neck, BOTH arms fully straight. Both hands have closed DOUBLE-OVERHAND grips just OUTSIDE the legs; no sumo stance, no mixed grip, no curled elbows.\nEquipment: ONE rigid straight barbell with ONE identical dark-grey full-size modest plate on EACH end and equal sleeves/collars. Both plates rest on the floor. Bar shaft around mid-shin height. Same simple plate finish as reference; no labels or numbers. Show both grips and both plates, don't obscure the near knee entirely.\nCamera fixed three-quarter SIDE view with athlete facing image LEFT, about 55 degrees from front. Portrait 1024x1536; place floor/shoes near y=1420, leave enough empty black above the bent athlete for FULL STANDING LOCKOUT later at exactly the same scale. Do not crop tightly around the bent setup; full standing figure will occupy y=70..1420.\nMuscles: gluteus maximus and hamstrings deep purple; quadriceps lighter lilac; erector-spinae/trunk and lat/grip stabilisers subtle pale purple. Chest and upper arms white-grey. Keep same qualitative hierarchy across the sequence, no inflation.\nPlanned six frames: floor setup, early lift just off floor, bar near knees, tall lockout, controlled lower near knees, near-floor return. Bar stays close to legs and rigid, feet fixed, hips/shoulders rise together until knees clear; then hip extension without leaning back. Only generate FLOOR SETUP now.\nOne separate sharp high-resolution native image on solid black, no text, caption, arrows, grid, border or UI.",
+      "refs": [
+        "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/squat-batch-02/1-master-corrected.png"
+      ]
+    },
+    {
+      "frame": 2,
+      "id": "deadlift",
+      "path": "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/deadlift/2-early.png",
+      "prompt": "ONE CONVENTIONAL DEADLIFT early-lift frame 2/6 by editing this exact floor setup.\nLift the ENTIRE rigid barbell with both plates and both gripping hands about 75 pixels UP from the floor. Hips and shoulders rise together as knees begin extending; keep original back angle approximately steady, neutral spine/neck, arms completely straight and lats engaged. Bar remains close to shins and over mid-foot, not pulled away forward. This is only just off the floor, not knee height.\nPreserve BOTH SHOES and every toe/heel/sole coordinate exactly. Do not change stance, camera, body scale, limb lengths, torso/head dimensions, hand size or muscle volume. Bar remains same projected length and angle, same one plate each side, identical plate diameters/thicknesses/sleeves and closed double-overhand grip width.\nHead/torso/pelvis move only with the lift; do not redraw fixed regions or change anatomy style. Same purple posterior chain, lilac quads/pale trunk, white-grey arms, black background and 1024x1536 canvas. ONE separate sharp native-resolution image, no text/caption/arrows/grid/UI.",
+      "refs": [
+        "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/deadlift/1-master.png"
+      ]
+    },
+    {
+      "frame": 2,
+      "id": "deadlift",
+      "path": "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/deadlift/2-anchor-corrected.png",
+      "prompt": "ONE registration correction for IMAGE 1, the early deadlift pose. IMAGE 2 is the master floor setup and is the authority for fixed foot locations.\nThe shoes in image1 drifted upward about 32 pixels. Restore BOTH shoes, ankles and lowest calf connections to the exact shoe outlines/coordinates in IMAGE 2: near shoe bottom around y=1360, far shoe bottom around y=1328 on the unchanged 1024x1536 canvas. Keep each original toe/heel x coordinate and shoe size/angle. Only reconnect the lower shins to those restored fixed ankles; do not translate the whole athlete.\nKeep IMAGE 1's entire head, torso, pelvis, knees, straight arms, hands and lifted barbell exactly unchanged. Preserve its plate diameters/thicknesses and grip. Keep all highlighting and body dimensions; do not lower the bar or undo the early lift. Same camera/crop/background. Change ONLY the drifting footwear/ankle areas to match image2's fixed ground anchors.\nOne crisp corrected still, no text/caption/arrows.",
+      "refs": [
+        "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/deadlift/2-early.png",
+        "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/deadlift/1-master.png"
+      ],
+      "revision": "restore shoe anchors"
+    },
+    {
+      "frame": 1,
+      "id": "barbell-curl",
+      "path": "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/barbell-curl/1-master.png",
+      "prompt": "Create ONE BARBELL CURL master frame 1/6 by editing this exact canonical standing curl athlete. Keep his entire head, torso, pelvis, legs, shoes, original anchor coordinates, camera and 1024x1536 canvas unchanged. Same bald faceless white-grey muscular anatomy, deep purple biceps, lilac forearms/pale obliques, crisp 2D linework.\nReplace the two dumbbells with ONE rigid straight barbell held at the front of thighs. Both hands use a CLOSED UNDERHAND/supinated grip at shoulder width, palms forward/up, wrists straight, elbows almost straight and upper arms beside ribs. Bar runs continuously through both correct grips, not through the torso.\nEquipment: simple dark-grey straight bar with ONE modest round plate per side, equal plate diameter/thickness and equal sleeves/collars, no weight labels. Keep all bar ends/plates within the 1024px canvas with black margins. Plates should be a restrained illustrative load, not a pile. No EZ bend; this is straight-bar curl.\nSix future beats: almost-straight setup, early elbow flexion, middle curl, top contraction, controlled middle lower, near-bottom return. Only elbows/forearms/hands/bar move, same grip width and rigid equipment across all. Create ONLY the start frame.\nOne separate sharp native-resolution image on black. No caption/text/arrows/grid/UI.",
+      "refs": [
+        "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/db-curl/1-master.png"
+      ]
+    },
+    {
+      "frame": 2,
+      "id": "barbell-curl",
+      "path": "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/barbell-curl/2-early.png",
+      "prompt": "EDIT this exact barbell-curl master into frame 2 EARLY CURL. One separate native full-resolution portrait image, no text. Preserve pixel registration of shoes, feet, knees, hips, trunk, shoulders, head, camera, black canvas, white athlete anatomy and purple highlights. Only bend BOTH elbows slightly, keeping upper arms vertical beside ribs, to raise the same rigid straight bar approximately 70 pixels from its current thigh-level position. Underhand closed grip at exactly the same spacing. Both bar ends move together, same one modest plate per side, identical bar length/thickness and plate dimensions. Wrists straight, no torso swing, no elbow lift, no shoulder movement. This is an early partial curl, bar still below waist. Preserve exact character, white low-top shoes, fine anatomical contour style, deep purple biceps and lilac forearms. Do not add captions, numbers, borders or other objects.",
+      "refs": [
+        "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/barbell-curl/1-master.png"
+      ]
+    },
+    {
+      "frame": 3,
+      "id": "barbell-curl",
+      "path": "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/barbell-curl/3-mid.png",
+      "prompt": "Edit the exact supplied frame into BARBELL CURL frame 3 MID CURL. One full-resolution separate portrait image no text. Keep the entire scene registered exactly, same head torso hips knees shoes all static. Keep upper arms pointing down beside ribs and elbow pivot centres unchanged. Rotate ONLY the forearms at both elbows until approximately horizontal, so the same bar rises from below waist to around lower-rib level (bar centre approximately y535 of1536). Preserve projected forearm length through plausible foreshortening, straight wrists and underhand closed grip at identical spacing. Same straight rigid bar, one same modest plate each side, bar ends and plates unchanged in size and angle. No body swing, shrug or elbow forward drift. Maintain exact white faceless male anatomy, white shoes, dark fine contour lines, black background, deep purple biceps and lilac forearms. No change of purple placement or intensity; no text.",
+      "refs": [
+        "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/barbell-curl/2-early.png"
+      ]
+    },
+    {
+      "frame": 4,
+      "id": "barbell-curl",
+      "path": "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/barbell-curl/4-top.png",
+      "prompt": "Edit this exact barbell curl scene into frame4 TOP CURL. Preserve exact fixed camera, head, trunk, shoulders, lower body, white shoes, black background and athlete scale. Flex both elbows farther so the rigid bar rises only about 90 pixels from current position to upper abdominal/lower chest height. Upper arms remain beside ribs, elbow pivots stay where they are in the reference. Forearms now tilt upward toward shoulders. Do not bring elbows forward or shorten upper arms; preserve realistic limb lengths by foreshortening only. Underhand hands remain firmly closed around same grip positions; wrists neutral. Same straight bar with ONE identical modest plate on each side, same width thickness perspective. Deep purple biceps unchanged in size/color, lilac forearms unchanged. No swing, shrug, leaning or new anatomy. One separate full-resolution portrait frame, no text.",
+      "refs": [
+        "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/barbell-curl/3-mid.png"
+      ]
+    },
+    {
+      "frame": 1,
+      "id": "db-bench",
+      "path": "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/db-bench/1-master.png",
+      "prompt": "Create one separate native high-resolution LANDSCAPE 1536x1024 exercise illustration. Use the EXACT canonical athlete and anatomy/linework/style of the reference, but establish a NEW fixed scene for FLAT DUMBBELL BENCH PRESS. Same bald faceless muscular white/light-grey male, same proportions and fine dark anatomical contours, WHITE LOW-TOP SHOES, pure black background. Camera elevated front-side three-quarter view showing BOTH arms and dumbbells clearly, athlete head LEFT, feet RIGHT. Full sturdy dark grey flat bench, head upper back and buttocks supported; modest natural lower-back arch, both feet flat on floor. Show START/TOP position: both arms extended vertically above mid-chest, elbows soft not hyperextended; two identical restrained dark round-ended dumbbells separated by a small gap, palms facing toward feet (pronated bench-press grip), wrists stacked straight. Both hands closed on handles. Anatomical pectoralis major deepest purple, anterior deltoids and triceps lighter lilac, subtle trunk stabilisers pale. No other highlights. Leave enough margin for elbows to lower to sides of chest in subsequent frames without changing camera. Identical realistic dumbbells, no oversized weights, no numbers. This will be master of six frames: top, early lower, middle lower, bottom with elbows about45 degrees from torso and forearms vertical, middle press, late press. In this image show ONLY top pose. No text/caption/grid/border or extra pose.",
+      "refs": [
+        "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/barbell-curl/1-master.png"
+      ]
+    },
+    {
+      "frame": 2,
+      "id": "db-bench",
+      "path": "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/db-bench/2-early.png",
+      "prompt": "EDIT the exact supplied flat dumbbell bench press master into frame2 EARLY LOWER. Preserve the entire fixed scene: bench every corner and leg, shoes, knees, hips, supported head, neck, torso, shoulder positions, camera zoom crop and lighting. Only articulate the shoulders and elbows for a small initial controlled descent: bend both elbows about30 degrees from straight and lower both dumbbells approximately60px, drifting them slightly outward from each other in their correct chest-press plane. Elbows travel outward and down toward about45degrees from torso, not toward head. Forearms remain vertical with wrists directly above elbows, closed pronated grip, straight wrists. Same two dumbbells exact head diameter and handle length, do not rotate/change shape or gain plates. Preserve same white male anatomical proportions, dark contour style, purple pectorals/lilac triceps and front deltoids. No lower-body movement or bench movement. One separate full-resolution landscape image, no text.",
+      "refs": [
+        "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/db-bench/1-master.png"
+      ]
+    },
+    {
+      "frame": 3,
+      "id": "db-bench",
+      "path": "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/db-bench/3-mid.png",
+      "prompt": "Edit this exact dumbbell bench press frame into MID DESCENT, a small step lower. Scene must stay pixel registered: head, torso, hips, both feet, entire bench and black canvas fixed. Lower both identical dumbbells a further65pixels with elbows bending further and upper arms opening outward/down. Forearms remain upright, wrists directly over elbows, not a curl: shoulder and elbow movement coordinated. Both hands closed, same pronated grip, same dumbbell dimensions. Shoulders remain supported and down, no shrug, head never lifts, feet stay flat. The elbows should now be approaching bench-pad height, still slightly above their bottom position, tucked at about45degrees to trunk instead of flared toward ears. Maintain exact anatomical white male and purple chest/lilac triceps/front-deltoid treatment. Same camera/perspective, no equipment transformation, no caption. Single native full-resolution landscape frame.",
+      "refs": [
+        "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/db-bench/2-early.png"
+      ]
+    },
+    {
+      "frame": 4,
+      "id": "db-bench",
+      "path": "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/db-bench/4-bottom.png",
+      "prompt": "Edit supplied flat dumbbell bench press MID frame into BOTTOM position. Keep scene registration exact: head neck shoulder attachment points torso hips legs shoes and every bench edge unchanged, same camera/crop. Lower each dumbbell another approximately45pixels. Both elbows descend slightly below the top surface of bench pad, with upper arms roughly at torso height, elbows tucked about45degrees from torso. Both forearms still nearly vertical, wrists stacked directly above elbows, hands closed at same grip. This is the bottom of a chest press, NOT fly, not curl: elbows flex about90degrees and dumbbells stay outside sides of chest without touching. No excessive shoulder stretch or lifted shoulders. Preserve limb length, forearm thickness, exact dumbbell head/handle size and grip orientation. Purple chest primary and lilac triceps/front shoulders identical. Same white faceless anatomical male and white shoes on black. One native full-resolution landscape image; no text.",
+      "refs": [
+        "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/db-bench/3-mid.png"
+      ]
+    }
+  ]
+}

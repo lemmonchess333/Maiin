@@ -10,6 +10,7 @@ test.describe("Security & CSP", () => {
     expect(csp).toContain("default-src 'self'");
     expect(csp).toContain("object-src 'none'");
     expect(csp).toContain("base-uri 'self'");
+    expect(csp).toContain("form-action 'self'");
   });
 
   test("CSP allows required script sources", async ({ page }) => {

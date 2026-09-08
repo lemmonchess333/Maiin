@@ -1,5 +1,6 @@
 import { THEME } from "@/lib/theme";
 import SectionLabel from "@/components/ui/SectionLabel";
+import { Skeleton } from "@/components/LoadingSkeleton";
 import {
   Scale,
   Footprints,
@@ -15,21 +16,6 @@ import type { StepsStatus } from "@/hooks/useSteps";
 
 export type WeightTrendDirection = "down" | "up" | "flat" | null;
 
-/**
- * Steps tile gate. HealthKit shipped (iOS) — the tile is enabled, but only
- * renders on the native shell (steps are impossible on web) AND when Health
- * is actually available; `stepsStatus === "unavailable"` (web / no Health)
- * keeps it hidden so there's never a dead affordance. See POST_LAUNCH.md
- * "Steps tile → HealthKit / Health Connect wiring".
- */
-const STEPS_TILE_ENABLED = true;
-
-/* The component reads the gate through this mutable holder so the flip
-   path can be exercised in tests without editing source. Flipping
-   STEPS_TILE_ENABLED above remains the one-line change that ships. */
-// eslint-disable-next-line react-refresh/only-export-components -- test-only gate seam, not a component; fast-refresh impact is nil (module already re-renders on the default export)
-export const stepsTileGate = { enabled: STEPS_TILE_ENABLED };
-
 export default function WeightStepsTiles({
   lastWeight,
   weightUnit,
@@ -40,6 +26,7 @@ export default function WeightStepsTiles({
   stepsStatus = "unavailable",
   steps = null,
   onConnectSteps,
+  loading = false,
 }: {
   lastWeight: string | null;
   weightUnit: string;
@@ -57,6 +44,11 @@ export default function WeightStepsTiles({
   stepsStatus?: StepsStatus;
   steps?: number | null;
   onConnectSteps?: () => void;
+  /* True while the home data that carries the last weight is still
+     loading. The tile then shows a skeleton, not the "not yet logged"
+     empty state — every new user sees this window, and an empty state
+     that later fills in reads as a glitch. */
+  loading?: boolean;
 }) {
   /* Home2c a11y pin: each tile button gets an aria-label that
      surfaces its state compactly for screen readers. Without these,
@@ -86,18 +78,19 @@ export default function WeightStepsTiles({
           ? ArrowRight
           : Minus;
 
-  const weightAriaLabel = !lastWeight
-    ? "Weight not yet logged. Log your weight to start tracking trends."
-    : hidden
-      ? `Weight ${trendPhrase?.toLowerCase()}, last logged ${lastWeightDate}. Tap to log weight.`
-      : `Weight ${lastWeight} ${weightUnitDisplay}, last logged ${lastWeightDate}. Tap to log weight.`;
-  // Native-only + available-only: hide on web and when Health is unavailable
-  // so a dead affordance never ships. The mutable gate keeps the flip
-  // testable; isNativePlatform() + the status guard add the runtime rules.
-  const stepsTileEnabled =
-    stepsTileGate.enabled &&
-    isNativePlatform() &&
-    stepsStatus !== "unavailable";
+  const pending = loading && !lastWeight;
+  const weightAriaLabel = pending
+    ? "Weight loading."
+    : !lastWeight
+      ? "Weight not yet logged. Log your weight to start tracking trends."
+      : hidden
+        ? `Weight ${trendPhrase?.toLowerCase()}, last logged ${lastWeightDate}. Tap to log weight.`
+        : `Weight ${lastWeight} ${weightUnitDisplay}, last logged ${lastWeightDate}. Tap to log weight.`;
+  // The Steps tile renders only on the native shell (steps are impossible
+  // on web) AND when Health is actually available: `stepsStatus ===
+  // "unavailable"` keeps it hidden so a dead affordance never ships. See
+  // POST_LAUNCH.md "Steps tile → HealthKit / Health Connect wiring".
+  const stepsTileEnabled = isNativePlatform() && stepsStatus !== "unavailable";
 
   // Connected / ambiguous both render the number (ambiguous = connected but
   // zero/no-data, an iOS read-permission quirk we don't error on). Only
@@ -124,7 +117,7 @@ export default function WeightStepsTiles({
           onLogWeight();
         }}
         aria-label={weightAriaLabel}
-        className="p-3 rounded-xl text-left active:scale-[0.97] bg-muted h-full flex flex-col"
+        className="p-3 rounded-xl text-left motion-safe:active:scale-[0.97] bg-muted h-full flex flex-col focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
       >
         <div className="flex items-center gap-2 mb-1.5">
           <div
@@ -139,12 +132,13 @@ export default function WeightStepsTiles({
           </div>
           <SectionLabel>Weight</SectionLabel>
         </div>
-        {/* Value centred in the tile's remaining height so the number
-            fills the (water-matched) tile instead of clustering at the
-            top. No chevron \u2014 the whole tile taps to log, same as the
-            water card. */}
-        <div className="flex-1 flex flex-col justify-center min-h-0">
-          {hidden ? (
+        {/* Align the reading beneath the label, like the adjacent water
+            tile. Extra height stays below the date rather than displacing
+            the number as water controls or sync status change. */}
+        <div className="flex-1 flex flex-col min-h-0">
+          {pending ? (
+            <Skeleton className="h-6 w-16" />
+          ) : hidden ? (
             <div className="flex items-center gap-1.5">
               <TrendIcon
                 className="size-4 flex-shrink-0"
@@ -156,7 +150,7 @@ export default function WeightStepsTiles({
               </p>
             </div>
           ) : (
-            <div className="flex items-baseline gap-1">
+            <div className="flex flex-wrap items-baseline gap-x-1 gap-y-1">
               <p className="text-2xl font-extrabold leading-none text-foreground font-mono tabular-nums">
                 {lastWeight ? lastWeight : "\u2014"}
               </p>
@@ -170,12 +164,16 @@ export default function WeightStepsTiles({
               )}
             </div>
           )}
-          <p
-            className="text-micro mt-1"
-            style={{ color: "hsl(var(--muted-foreground))" }}
-          >
-            {lastWeightDate}
-          </p>
+          {pending ? (
+            <Skeleton className="h-3 w-20 mt-1.5" />
+          ) : (
+            <p
+              className="text-micro mt-1"
+              style={{ color: "hsl(var(--muted-foreground))" }}
+            >
+              {lastWeightDate}
+            </p>
+          )}
         </div>
       </button>
       {stepsTileEnabled && (
@@ -189,7 +187,7 @@ export default function WeightStepsTiles({
             if (!stepsConnected) onConnectSteps?.();
           }}
           aria-label={stepsAriaLabel}
-          className="p-3 rounded-xl text-left active:scale-[0.97] bg-muted group"
+          className="p-3 rounded-xl text-left motion-safe:active:scale-[0.97] bg-muted group"
         >
           <div className="flex items-center gap-2 mb-1.5">
             <div
@@ -206,7 +204,7 @@ export default function WeightStepsTiles({
           </div>
           {stepsConnected ? (
             <>
-              <div className="flex items-baseline gap-1">
+              <div className="flex flex-wrap items-baseline gap-x-1 gap-y-1">
                 {/* Same tier as the weight figure directly above it.
                     These two are peer tiles stacked in one column, and
                     they had drifted apart — steps at text-xl / 700 under

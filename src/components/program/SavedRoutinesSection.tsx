@@ -6,10 +6,13 @@ import { useUid } from "@/lib/auth";
 import {
   listSavedRoutines,
   deleteSavedRoutine,
+  restoreSavedRoutine,
   type SavedRoutine,
 } from "@/lib/savedRoutines";
 import { THEME } from "@/lib/theme";
 import { haptic } from "@/lib/haptic";
+import { logger } from "@/lib/logger";
+import { IconButton } from "@/components/ui/IconButton";
 
 /**
  * "Saved routines" surface on the Program page (PR 4 save half).
@@ -56,14 +59,44 @@ export default function SavedRoutinesSection() {
   // loading — empty-state chrome on a non-essential surface adds noise.
   if (!loading && routines.length === 0) return null;
 
+  // Undo writes the same document back under the same id, so the row and
+  // any /routine/:id link to it return exactly as they were. The section
+  // stays mounted (it renders null, not unmounts) while the list is
+  // empty, so an Undo on the last routine re-shows it.
+  const restore = async (routine: SavedRoutine, index: number) => {
+    if (!uid) return;
+    try {
+      await restoreSavedRoutine(uid, routine);
+      setRoutines((prev) => {
+        if (prev.some((r) => r.id === routine.id)) return prev;
+        const next = [...prev];
+        next.splice(Math.min(index, next.length), 0, routine);
+        return next;
+      });
+      haptic("light");
+    } catch (err) {
+      logger.error("[SavedRoutines] restore failed", err);
+      toast.error("Couldn't restore the routine. Try again.");
+    }
+  };
+
   const handleDelete = async (routineId: string) => {
     if (!uid || deletingId) return;
+    const index = routines.findIndex((r) => r.id === routineId);
+    const routine = routines[index];
+    if (!routine) return;
     setDeletingId(routineId);
     haptic("light");
     try {
       await deleteSavedRoutine(uid, routineId);
       setRoutines((prev) => prev.filter((r) => r.id !== routineId));
-      toast.success("Routine removed");
+      toast.success("Routine removed", {
+        duration: 8000,
+        action: {
+          label: "Undo",
+          onClick: () => void restore(routine, index),
+        },
+      });
     } catch {
       toast.error("Couldn't delete. Try again.");
     } finally {
@@ -120,19 +153,17 @@ export default function SavedRoutinesSection() {
                   </p>
                 </div>
               </Link>
-              <button
-                type="button"
+              <IconButton
+                icon={<Trash2 className="size-4" />}
+                aria-label={`Remove ${routine.name}`}
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
                   void handleDelete(routine.id);
                 }}
                 disabled={deletingId === routine.id}
-                aria-label={`Remove ${routine.name}`}
-                className="p-2 -m-2 text-muted-foreground hover:text-destructive-strong transition-colors disabled:opacity-50"
-              >
-                <Trash2 className="size-4" />
-              </button>
+                className="shrink-0 -my-2 -mr-2 text-muted-foreground hover:text-destructive-strong"
+              />
             </div>
           );
         })}

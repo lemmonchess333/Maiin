@@ -23,6 +23,9 @@ const {
   buildStripeReturnUrl,
   isAllowedAppOrigin,
   getAppCorsOptions,
+  CLIENT_APP_ORIGINS,
+  isAllowedClientAppOrigin,
+  getClientAppCorsOptions,
 } = require("../helpers");
 
 describe("pruneOldTimestamps", () => {
@@ -769,5 +772,135 @@ describe("getAppCorsOptions", () => {
     );
     expect(err).toBeNull();
     expect(allowed).toBe(true);
+  });
+});
+
+describe("isAllowedClientAppOrigin", () => {
+  // The AI-endpoint allow-list is static: no env var widens or narrows
+  // it, so a deployed prod function admits the same origins the
+  // emulator does. Every test runs under the strictest env (no
+  // emulator, no staging flag) to prove that.
+  const originalEnv = { ...process.env };
+
+  beforeEach(() => {
+    delete process.env.STRIPE_RETURN_URL_ORIGINS;
+    delete process.env.FUNCTIONS_EMULATOR;
+    delete process.env.TROPOS_DEPLOY_ENV;
+  });
+
+  afterEach(() => {
+    process.env = { ...originalEnv };
+  });
+
+  it.each([
+    "https://troposfit.com",
+    "https://www.troposfit.com",
+    "https://adaptive-fitness-af8bb.web.app",
+    "https://adaptive-fitness-af8bb.firebaseapp.com",
+    "https://lemmonchess333.github.io",
+    "capacitor://localhost",
+    "https://localhost",
+    "http://localhost:5173",
+    "http://localhost:4173",
+    "http://127.0.0.1:5173",
+    "http://127.0.0.1:4173",
+  ])("permits %s in a deployed-prod function", (origin) => {
+    expect(isAllowedClientAppOrigin(origin)).toBe(true);
+  });
+
+  it("lists exactly the surfaces the built app is served from", () => {
+    // A closed set: growing it is a deliberate act, so the count is
+    // pinned alongside the members above.
+    expect(CLIENT_APP_ORIGINS).toHaveLength(11);
+    expect(Object.isFrozen(CLIENT_APP_ORIGINS)).toBe(true);
+  });
+
+  it("rejects an arbitrary external origin", () => {
+    expect(isAllowedClientAppOrigin("https://evil.example")).toBe(false);
+  });
+
+  it("rejects lookalikes, downgrades and non-origin strings", () => {
+    expect(isAllowedClientAppOrigin("https://troposfit.com.evil.com")).toBe(
+      false
+    );
+    expect(isAllowedClientAppOrigin("http://troposfit.com")).toBe(false);
+    expect(isAllowedClientAppOrigin("https://troposfit.com/")).toBe(false);
+    expect(
+      isAllowedClientAppOrigin("https://lemmonchess333.github.io/Maiin")
+    ).toBe(false);
+    expect(isAllowedClientAppOrigin("http://localhost")).toBe(false);
+    expect(isAllowedClientAppOrigin("http://localhost:3000")).toBe(false);
+    expect(isAllowedClientAppOrigin("null")).toBe(false);
+  });
+
+  it("permits a missing Origin (non-browser callers) and rejects non-strings", () => {
+    expect(isAllowedClientAppOrigin(undefined)).toBe(true);
+    expect(isAllowedClientAppOrigin(null)).toBe(true);
+    expect(isAllowedClientAppOrigin("")).toBe(true);
+    expect(isAllowedClientAppOrigin(123)).toBe(false);
+    expect(isAllowedClientAppOrigin({})).toBe(false);
+  });
+
+  it("is independent of the payment allow-list's env override", () => {
+    process.env.STRIPE_RETURN_URL_ORIGINS = "https://app.example.com";
+    expect(isAllowedClientAppOrigin("https://app.example.com")).toBe(false);
+    expect(isAllowedClientAppOrigin("capacitor://localhost")).toBe(true);
+  });
+
+  it("admits the Android shell origin capacitor.config.ts actually produces", () => {
+    // Capacitor serves the Android app from `${androidScheme}://localhost`.
+    // Reading the scheme from the config keeps this list honest if it
+    // ever changes — the wrong scheme here silently breaks every food
+    // scan on Android.
+    const { readFileSync } = require("node:fs");
+    const { resolve } = require("node:path");
+    const config = readFileSync(
+      resolve(__dirname, "../../capacitor.config.ts"),
+      "utf8"
+    );
+    const match = config.match(/androidScheme:\s*"([a-z]+)"/);
+    expect(match).not.toBeNull();
+    expect(isAllowedClientAppOrigin(`${match[1]}://localhost`)).toBe(true);
+  });
+
+  it("admits the Firebase Hosting default sites of the configured project", () => {
+    const { readFileSync } = require("node:fs");
+    const { resolve } = require("node:path");
+    const rc = JSON.parse(
+      readFileSync(resolve(__dirname, "../../.firebaserc"), "utf8")
+    );
+    const project = rc.projects.default;
+    expect(isAllowedClientAppOrigin(`https://${project}.web.app`)).toBe(true);
+    expect(isAllowedClientAppOrigin(`https://${project}.firebaseapp.com`)).toBe(
+      true
+    );
+  });
+});
+
+describe("getClientAppCorsOptions", () => {
+  function invokeOrigin(opts, origin) {
+    return new Promise((resolve) => {
+      opts.origin(origin, (err, allowed) => {
+        resolve({ err, allowed });
+      });
+    });
+  }
+
+  it("calls back with (null, true) for an app origin", async () => {
+    const { err, allowed } = await invokeOrigin(
+      getClientAppCorsOptions(),
+      "capacitor://localhost"
+    );
+    expect(err).toBeNull();
+    expect(allowed).toBe(true);
+  });
+
+  it("calls back with an Error for a disallowed origin", async () => {
+    const { err, allowed } = await invokeOrigin(
+      getClientAppCorsOptions(),
+      "https://evil.example"
+    );
+    expect(err).toBeInstanceOf(Error);
+    expect(allowed).toBeUndefined();
   });
 });

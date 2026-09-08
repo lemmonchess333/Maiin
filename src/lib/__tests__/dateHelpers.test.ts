@@ -158,3 +158,37 @@ describe("parseLocalDate", () => {
     expect(d.getDate()).toBe(14);
   });
 });
+
+// ── localWeekKey — literal pins that lived beside the retired getWeekKey alias ────────────────────────────────
+
+describe("localWeekKey (Sunday anchor, literal dates)", () => {
+  it("returns the Sunday of the week for a Sunday", () => {
+    // 2025-01-05 is a Sunday
+    const result = localWeekKey(new Date("2025-01-05T12:00:00"));
+    expect(result).toBe("2025-01-05");
+  });
+
+  it("returns the previous Sunday for a Wednesday", () => {
+    // 2025-01-08 is a Wednesday → Sunday is 2025-01-05
+    const result = localWeekKey(new Date("2025-01-08T12:00:00"));
+    expect(result).toBe("2025-01-05");
+  });
+
+  it("returns the previous Sunday for a Saturday", () => {
+    // 2025-01-11 is a Saturday → Sunday is 2025-01-05
+    const result = localWeekKey(new Date("2025-01-11T12:00:00"));
+    expect(result).toBe("2025-01-05");
+  });
+
+  it("returns the previous Sunday for a Monday", () => {
+    // 2025-01-06 is a Monday → Sunday is 2025-01-05
+    const result = localWeekKey(new Date("2025-01-06T12:00:00"));
+    expect(result).toBe("2025-01-05");
+  });
+
+  it("handles year boundaries", () => {
+    // 2025-01-01 is a Wednesday → Sunday is 2024-12-29
+    const result = localWeekKey(new Date("2025-01-01T12:00:00"));
+    expect(result).toBe("2024-12-29");
+  });
+});

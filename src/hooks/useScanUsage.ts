@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { localDateString } from "@/lib/dateHelpers";
 import { doc, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useUid } from "@/lib/auth";
@@ -61,10 +62,7 @@ function getTodayKey(now = new Date()): string {
   // resolveDayKey. Using ISO + slice keeps the client side simple;
   // edge cases at the local-midnight boundary are bounded by the
   // server's authoritative count anyway.
-  const y = now.getFullYear();
-  const m = String(now.getMonth() + 1).padStart(2, "0");
-  const d = String(now.getDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`;
+  return localDateString(now);
 }
 
 export function useScanUsage(action: AiAction = "image_ai"): ScanUsage {

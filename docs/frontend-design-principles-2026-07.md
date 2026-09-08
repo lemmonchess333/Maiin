@@ -59,17 +59,17 @@ MacroFactor, Hevy, Strong; the repo's `docs/competitive-analysis.md` and
 
 ### A.1 — Tab count & primary-action placement (the benchmark)
 
-| App | Domain(s) | Bottom tabs | Primary action | Social placement | Confidence |
-|---|---|---|---|---|---|
-| **Nike Run Club** | Run | **5** — Home · Plans · **Run** · Club · Activity | Center **"Run" tab** (not a raised FAB) — 1 tap from anywhere | "Club" deliberately secondary ("compete with your past self") | high |
-| **Strava** | Multi-sport | **5** — Home · Maps · **Record** · Groups · You | Center **elevated "Record"** | Home feed _is_ the app; new features nest as sub-tabs (Events under Groups) | high |
-| **MyFitnessPal** (2026) | Food | **4 + center [+]** — Today · Plans · [+] · Progress · More | Context-aware center **[+]** | folded into More/Progress | high |
-| **Cronometer** | Food | **3** — Diary · Discover · More + per-group [+] | Per-diary-group **[+]** (customizable) | none | high |
-| **MacroFactor** | Food | **~3** — Dashboard · [+] · More | Center **[+] "Quick Actions"** | none | **low — tab list unverified** |
-| **Hevy** | Lift | **4** — Workout · Feed · History · Profile | **No FAB** — the Workout tab _is_ the start surface | Feed is its own tab (mature graph) | high |
-| **Strong** | Lift | **4** — Workout · History · Exercises · Profile | **No FAB** — Workout tab opens templates-first | minimal | high |
-| **Runna** | Run (+accessory lift) | ~4–5, plan-centric "Today" | Plan card → one-tap Start | none of note | medium (repo docs) |
-| **Tropos today** | **Lift + Run + Food** | **5** — Home · Train · Food · Social · Analytics | **None in nav** — start/log lives inside pages | **top-level tab (cold-start graph)** | VERIFIED `Layout.tsx:39-45` |
+| App                     | Domain(s)             | Bottom tabs                                                | Primary action                                                | Social placement                                                            | Confidence                    |
+| ----------------------- | --------------------- | ---------------------------------------------------------- | ------------------------------------------------------------- | --------------------------------------------------------------------------- | ----------------------------- |
+| **Nike Run Club**       | Run                   | **5** — Home · Plans · **Run** · Club · Activity           | Center **"Run" tab** (not a raised FAB) — 1 tap from anywhere | "Club" deliberately secondary ("compete with your past self")               | high                          |
+| **Strava**              | Multi-sport           | **5** — Home · Maps · **Record** · Groups · You            | Center **elevated "Record"**                                  | Home feed _is_ the app; new features nest as sub-tabs (Events under Groups) | high                          |
+| **MyFitnessPal** (2026) | Food                  | **4 + center [+]** — Today · Plans · [+] · Progress · More | Context-aware center **[+]**                                  | folded into More/Progress                                                   | high                          |
+| **Cronometer**          | Food                  | **3** — Diary · Discover · More + per-group [+]            | Per-diary-group **[+]** (customizable)                        | none                                                                        | high                          |
+| **MacroFactor**         | Food                  | **~3** — Dashboard · [+] · More                            | Center **[+] "Quick Actions"**                                | none                                                                        | **low — tab list unverified** |
+| **Hevy**                | Lift                  | **4** — Workout · Feed · History · Profile                 | **No FAB** — the Workout tab _is_ the start surface           | Feed is its own tab (mature graph)                                          | high                          |
+| **Strong**              | Lift                  | **4** — Workout · History · Exercises · Profile            | **No FAB** — Workout tab opens templates-first                | minimal                                                                     | high                          |
+| **Runna**               | Run (+accessory lift) | ~4–5, plan-centric "Today"                                 | Plan card → one-tap Start                                     | none of note                                                                | medium (repo docs)            |
+| **Tropos today**        | **Lift + Run + Food** | **5** — Home · Train · Food · Social · Analytics           | **None in nav** — start/log lives inside pages                | **top-level tab (cold-start graph)**                                        | VERIFIED `Layout.tsx:39-45`   |
 
 **Three patterns converge (3+ apps → convention):**
 
@@ -372,23 +372,33 @@ decisions (run two-state model, one food composer, hero-vs-pill weight, weekly-c
 streak, P2 social), and the **iOS-parity rule** (native features leave a web-visible seam).
 Effort: **S** ≤ a few days · **M** ~1–2 wks · **L** multi-week/native.
 
-| # | Item | Direction | Impact | Effort |
-|---|---|---|---|---|
-| 1 | **Notification-consent funnel + first-week return trigger** | Move the soft-prime to the first-log celebration (decouple from `>=2`), handle denial, fire one calm sub-`>=2` first-week nudge. Server infra exists (`index.js:2387`); this is threshold + opt-in-timing. **Native — leave web seam + OS-permission funnel.** | High | M |
-| 2 | **Persist onboarding as a uid-scoped draft** | `localStorage` write per step, rehydrate on mount, clear on complete (`Onboarding.tsx:305`). Removes a hard first-session abandon. | High | S |
-| 3 | **Make the nutrition moat legible + honest** | Causal line in `HeroDrillDownSheet` (Pro); first-log "targets shift with training" moment; Pro chip on the free-user caption so the conversion hook (`useEffectiveTargets.ts:356`) reads as gated, not inert. Implements the planned "nutrition↔training story." | High | M |
-| 4 | **Onboarding-time opt-in for meal + workout reminders** | Mirror the streak-priming pattern: after "Start my program", one `Toggle` to enable the two reminders that default off (`useMealReminders.ts:24`). Turns on return triggers before Settings discovery. | High | S |
-| 5 | **Domain-tab-as-start-surface (lock-safe primary action)** | Train opens to the day-relevant `SessionCommandCard` Start; Food opens the composer focused; give Run a first-class Start in the Train run sub-tab. No new composer entry, no nav rewiring. | High | M |
-| 6 | **Cold-start Home: one unambiguous "start here"** | For the zero-data user, elevate ONE primary CTA (the day-type card) and soften the two competing empty-state CTAs until after the first log (`Home.tsx:1020-1251`). Reuse `EmptyState`. | Med | M |
-| 7 | **Badge parity on Home** | Generalize `Layout.tsx:233` beyond Social so return-critical server state shows a dot on Home; keep it a dot, aria-label the count. | Med | S |
-| 8 | **Strengthen the RunSummary peak-end close** | Doc-flagged peak-end violation: collapse the long scroll + manual save + injected share into an immediate glanceable celebration, auto-save, share as one-tap secondary. coral throughout, motion-safe. | Med | L |
-| 9 | **Provisional-targets cold-start state (nutrition)** | Tell new users "targets are provisional until N weeks of data" as an explicit UI state (MacroFactor states its 2–3 wk ramp outright), not a silent formula fallback. | Med | M |
-| 10 | **Name the differentiator in upsell copy** | Replace the generic "AI adaptive macros" bullet (`Upgrade.tsx:309,401`) with "macros that shift with your training" so a user who notices the caption has a path to the Pro story. | Med | S |
-| 11 | **Default the injuries step to "none" / opt-in** | Drop the mandatory tap for the majority no-injury path (`Onboarding.tsx` injuries step) — one fewer pre-payoff screen. | Low | S |
-| 12 | **Differentiate the final onboarding-save loading copy** | The ~1.2s payoff-moment retry hangs silently; add "Setting up your program…" so the highest-stakes transition doesn't read as frozen. Copy only. | Low | S |
-| 13 | **Under-16 dead-end gets a recovery affordance** | The legal gate stays, but add a support link / "check back" copy so it reads designed, not broken. (REPORTED — re-trace before building.) | Low | S |
-| 14 | **Surface run-plan / lift-plan editing one level up in Settings** | They're 3-deep and absent from `SettingsIndex`; add index rows for the frequent plan-edit task. Pure IA. | Low | S |
-| 15 | **Standing guardrail: never fold the Food diary behind a summary** | Rejection-in-advance of an MFP-2026-style regression. Not a build — a constraint on any future "simplify Home/Food" pass. | — | — |
+| #   | Item                                                               | Direction                                                                                                                                                                                                                                                        | Impact | Effort |
+| --- | ------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | ------ |
+| 1   | **Notification-consent funnel + first-week return trigger**        | Move the soft-prime to the first-log celebration (decouple from `>=2`), handle denial, fire one calm sub-`>=2` first-week nudge. Server infra exists (`index.js:2387`); this is threshold + opt-in-timing. **Native — leave web seam + OS-permission funnel.**   | High   | M      |
+| 2   | **Persist onboarding as a uid-scoped draft**                       | `localStorage` write per step, rehydrate on mount, clear on complete (`Onboarding.tsx:305`). Removes a hard first-session abandon.                                                                                                                               | High   | S      |
+| 3   | **Make the nutrition moat legible + honest**                       | Causal line in `HeroDrillDownSheet` (Pro); first-log "targets shift with training" moment; Pro chip on the free-user caption so the conversion hook (`useEffectiveTargets.ts:356`) reads as gated, not inert. Implements the planned "nutrition↔training story." | High   | M      |
+| 4   | **Onboarding-time opt-in for meal + workout reminders**            | Mirror the streak-priming pattern: after "Start my program", one `Toggle` to enable the two reminders that default off (`useMealReminders.ts:24`). Turns on return triggers before Settings discovery.                                                           | High   | S      |
+| 5   | **Domain-tab-as-start-surface (lock-safe primary action)**         | Train opens to the day-relevant `SessionCommandCard` Start; Food opens the composer focused; give Run a first-class Start in the Train run sub-tab. No new composer entry, no nav rewiring.                                                                      | High   | M      |
+| 6   | **Cold-start Home: one unambiguous "start here"**                  | For the zero-data user, elevate ONE primary CTA (the day-type card) and soften the two competing empty-state CTAs until after the first log (`Home.tsx:1020-1251`). Reuse `EmptyState`.                                                                          | Med    | M      |
+| 7   | **Badge parity on Home**                                           | Generalize `Layout.tsx:233` beyond Social so return-critical server state shows a dot on Home; keep it a dot, aria-label the count.                                                                                                                              | Med    | S      |
+| 8   | **Strengthen the RunSummary peak-end close**                       | Doc-flagged peak-end violation: collapse the long scroll + manual save + injected share into an immediate glanceable celebration, auto-save, share as one-tap secondary. coral throughout, motion-safe.                                                          | Med    | L      |
+| 9   | **Provisional-targets cold-start state (nutrition)**               | Tell new users "targets are provisional until N weeks of data" as an explicit UI state (MacroFactor states its 2–3 wk ramp outright), not a silent formula fallback.                                                                                             | Med    | M      |
+| 10  | **Name the differentiator in upsell copy**                         | Replace the generic "AI adaptive macros" bullet (`Upgrade.tsx:309,401`) with "macros that shift with your training" so a user who notices the caption has a path to the Pro story.                                                                               | Med    | S      |
+| 11  | **Default the injuries step to "none" / opt-in**                   | Drop the mandatory tap for the majority no-injury path (`Onboarding.tsx` injuries step) — one fewer pre-payoff screen.                                                                                                                                           | Low    | S      |
+| 12  | **Differentiate the final onboarding-save loading copy**           | The ~1.2s payoff-moment retry hangs silently; add "Setting up your program…" so the highest-stakes transition doesn't read as frozen. Copy only.                                                                                                                 | Low    | S      |
+| 13  | **Under-16 dead-end gets a recovery affordance**                   | The legal gate stays, but add a support link / "check back" copy so it reads designed, not broken. (REPORTED — re-trace before building.)                                                                                                                        | Low    | S      |
+| 14  | **Surface run-plan / lift-plan editing one level up in Settings**  | They're 3-deep and absent from `SettingsIndex`; add index rows for the frequent plan-edit task. Pure IA.                                                                                                                                                         | Low    | S      |
+| 15  | **Standing guardrail: never fold the Food diary behind a summary** | Rejection-in-advance of an MFP-2026-style regression. Not a build — a constraint on any future "simplify Home/Food" pass.                                                                                                                                        | —      | —      |
+
+**Status 2026-09-05 (app-improvement pass, S-effort rows re-checked against main):**
+F-2, F-11 and F-12 had already shipped (`Onboarding.tsx` draft rehydration, the
+injuries step defaulting to "none", the "Setting up your program…" copy). F-4
+(reminder opt-in on the confirm step), F-10 (upsell copy), F-13 (support link on
+the under-16 notice) and F-14 (Lift plan / Run plan rows on `SettingsIndex`)
+shipped in the `claude/design-partf-s-items` PR. F-7 is not built: this table
+names no server signal for a Home dot to carry, so it is an owner call and sits in
+`docs/agents/app-improvement-pass-2026-09-05.md` with the candidates measured.
+F-1, F-3, F-5, F-6, F-8 and F-9 (M/L) are untouched.
 
 **Argue against the whole backlog ("the frontend is already good enough; spend effort on
 HR/HealthKit").** The audits keep finding _designed_ states, and the competitive analysis
@@ -446,11 +456,11 @@ demoting Social's nav slot (§E-2), renaming Analytics→Progress (§E-3).
 
 - **VERIFIED in code this session:** `Layout.tsx:39-45,231-330` (5 flat tabs, no center,
   Social-only badge); `useStreakReminder.ts:91` + `StreakReminderPrimingModal.tsx:51,57-61`
-  + `streakNudge.js:68` + `index.js:2387,2423,2441` (the `>=2` + consent floor across
-  client + server; server push infra EXISTS); `useEffectiveTargets.ts:356,444-455` (free
-  macro REST gate + label = conversion hook); `Onboarding.tsx:243-276,305` + no-localStorage
-  grep; `Program.tsx:157,1009` (lift+run start from Train); `captionBuilder.ts:35` (moat
-  caption, null on rest).
+  - `streakNudge.js:68` + `index.js:2387,2423,2441` (the `>=2` + consent floor across
+    client + server; server push infra EXISTS); `useEffectiveTargets.ts:356,444-455` (free
+    macro REST gate + label = conversion hook); `Onboarding.tsx:243-276,305` + no-localStorage
+    grep; `Program.tsx:157,1009` (lift+run start from Train); `captionBuilder.ts:35` (moat
+    caption, null on rest).
 - **REPORTED (research pass, not personally re-traced):** `HeroDrillDownSheet` silent on day
   type; `FoodHeroCard.tsx:222-225` explainer removed; under-16 dead-end; `Upgrade.tsx`
   copy. Re-trace before building against these.

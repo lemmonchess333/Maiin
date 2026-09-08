@@ -1,3 +1,4 @@
+import SectionLabel from "@/components/ui/SectionLabel";
 import { useSocialFeed, type FeedItem } from "@/hooks/useSocialFeed";
 import {
   ShareCardSheet,
@@ -666,9 +667,11 @@ export default function FeedView({
                     <div key={`${item.spaceId}/${item.postId}`}>
                       <Link
                         to={`/space/${item.spaceId}`}
-                        className="inline-flex items-center min-h-[28px] mb-1 text-caption font-semibold uppercase tracking-wider text-muted-foreground"
+                        className="inline-flex items-center min-h-[28px] mb-1"
                       >
-                        {def.name}
+                        <SectionLabel as="span" tier="section">
+                          {def.name}
+                        </SectionLabel>
                       </Link>
                       <SpacePostCard
                         spaceId={item.spaceId}

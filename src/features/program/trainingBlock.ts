@@ -23,6 +23,7 @@
  * (rules), swept on account deletion. One ACTIVE block at a time is
  * a UI constraint, not a schema one (history keeps past blocks).
  */
+import { localDateString } from "@/lib/dateHelpers";
 
 import type {
   ActiveTrainingBlock,
@@ -296,10 +297,7 @@ export function blockEndDate(
   const end = new Date(
     localDateMs(block.startDate) + block.durationWeeks * WEEK_MS
   );
-  const y = end.getFullYear();
-  const m = String(end.getMonth() + 1).padStart(2, "0");
-  const d = String(end.getDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`;
+  return localDateString(end);
 }
 
 /**

@@ -50,10 +50,14 @@ export default function RaceDayPlanCard({
       className="rounded-2xl bg-card border border-border p-4 space-y-4 card-shadow"
     >
       <div className="space-y-1">
-        <div className="inline-flex items-center gap-1.5 text-caption font-bold uppercase tracking-wider text-running-strong">
+        <SectionLabel
+          as="span"
+          tier="section"
+          className="inline-flex items-center gap-1.5 text-running-strong"
+        >
           <Timer className="size-3.5" aria-hidden="true" />
           Race-day plan
-        </div>
+        </SectionLabel>
         <p className="text-sm text-muted-foreground">
           <span className="font-mono tabular-nums font-semibold text-foreground">
             {raceTimeLabel(vm.planTimeS)}

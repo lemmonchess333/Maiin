@@ -12,7 +12,14 @@ const markSeen = vi.fn();
 vi.mock("@/hooks/useUnreadCount", () => ({
   useUnreadCount: () => ({ count: 0, markSeen }),
 }));
-vi.mock("@/lib/offlineQueue", () => ({ getQueueLength: () => 0 }));
+vi.mock("@/lib/offlineQueue", () => ({
+  getQueueLength: () => 0,
+  getFailedWorkoutCompletionCount: () => 0,
+  subscribeQueuedWrites: () => () => {},
+  flushQueue: vi.fn(),
+}));
+// The pending-sync badge counts THIS account's queued work (uid-scoped).
+vi.mock("@/lib/auth", () => ({ useUid: () => "u-test" }));
 vi.mock("@/lib/haptic", () => ({ haptic: vi.fn() }));
 /* reduced-motion ON keeps framer-motion deterministic under jsdom */
 vi.mock("@/hooks/useReducedMotion", () => ({ useReducedMotion: () => true }));
@@ -27,6 +34,8 @@ function renderAt(path: string) {
           <Route path="/food" element={<div>food</div>} />
           <Route path="/social" element={<div>social</div>} />
           <Route path="/history" element={<div>history</div>} />
+          <Route path="/user/:uid" element={<div>profile</div>} />
+          <Route path="/settings" element={<div>settings</div>} />
         </Route>
       </Routes>
     </MemoryRouter>
@@ -53,6 +62,7 @@ describe("Layout bottom-nav retap", () => {
     renderAt("/food");
     fireEvent.click(screen.getByLabelText("Food"));
     expect(scrollSpy).toHaveBeenCalled();
+    expect(scrollSpy).toHaveBeenCalledWith({ top: 0, behavior: "instant" });
     // Soc5: the feed-refresh event must NOT fire for non-Social tabs
     const retapFired = dispatchSpy.mock.calls.some(
       ([e]: [Event]) =>
@@ -76,5 +86,26 @@ describe("Layout bottom-nav retap", () => {
     renderAt("/food");
     fireEvent.click(screen.getByLabelText("Home"));
     expect(scrollSpy).not.toHaveBeenCalled();
+  });
+
+  it("announces Social as current on a profile reached from Social", () => {
+    renderAt("/user/preview");
+    expect(screen.getByRole("link", { name: "Social" })).toHaveAttribute(
+      "aria-current",
+      "page"
+    );
+    expect(
+      screen
+        .getAllByRole("link")
+        .filter((link) => link.getAttribute("aria-current") === "page")
+    ).toHaveLength(1);
+  });
+
+  it("keeps all destinations available without a false active tab in settings", () => {
+    renderAt("/settings");
+    expect(screen.getAllByRole("link")).toHaveLength(5);
+    for (const link of screen.getAllByRole("link")) {
+      expect(link).not.toHaveAttribute("aria-current");
+    }
   });
 });

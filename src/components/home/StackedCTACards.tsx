@@ -28,6 +28,9 @@ const fadeUp = {
  */
 export default function StackedCTACards({
   nextWorkout,
+  liftPurpose,
+  runPurpose,
+  runWeekLabel,
   liftDayIndex = null,
   liftStartable = true,
   todayType,
@@ -38,6 +41,9 @@ export default function StackedCTACards({
   firstRun = false,
   firstMeal = false,
 }: {
+  liftPurpose?: string | null;
+  runPurpose?: string | null;
+  runWeekLabel?: string | null;
   nextWorkout: {
     dayName: string;
     dayType: string;
@@ -76,6 +82,7 @@ export default function StackedCTACards({
         <motion.div key="lift" variants={fadeUp}>
           <LiftCTACard
             nextWorkout={nextWorkout}
+            purpose={liftPurpose}
             navigate={navigate}
             muscleGroups={muscleGroups}
             isFirst={firstWorkout}
@@ -88,6 +95,8 @@ export default function StackedCTACards({
         <motion.div key="run" variants={fadeUp}>
           <RunCTACard
             todayRun={todayRun}
+            purpose={runPurpose}
+            weekLabel={runWeekLabel}
             navigate={navigate}
             isFirst={firstRun}
           />

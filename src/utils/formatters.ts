@@ -9,6 +9,12 @@ export function formatVolume(kg: number): { value: string; unit: string } {
   return { value: String(Math.round(kg)), unit: "kg" };
 }
 
+/** A set's load: "BW" for bodyweight (0 kg), else "60 kg" / "62.5 kg". */
+export function formatLoadKg(kg: number): string {
+  if (kg === 0) return "BW";
+  return `${kg % 1 === 0 ? kg.toFixed(0) : kg.toFixed(1)} kg`;
+}
+
 /** Format volume as a compact subtitle string (e.g. "1.5k vol" or "500 kg vol") */
 export function formatVolumeSub(kg: number): string {
   if (kg <= 0) return "\u2014";
@@ -90,13 +96,22 @@ export function formatDistance(km: number | null | undefined): string {
   return km.toFixed(1);
 }
 
-/** Format a stat value, showing "—" when zero/null */
-export function formatStat(
-  value: number | null | undefined,
-  suffix = ""
-): string {
-  if (value == null || value <= 0) return "\u2014";
-  return String(value) + suffix;
+/**
+ * Elapsed or remaining time as a clock: "m:ss" below an hour, "h:mm:ss"
+ * from an hour ("0:08", "1:12", "1:01:01"). Rounds to the nearest second
+ * and clamps at zero; a caller that needs floor/ceil semantics (a
+ * stopwatch, a countdown) rounds before passing. Replaced twelve local
+ * copies across the run, workout and share surfaces.
+ */
+export function formatClock(totalSeconds: number): string {
+  const s = Math.max(0, Math.round(totalSeconds));
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const sec = s % 60;
+  const mmss = `${m}:${String(sec).padStart(2, "0")}`;
+  return h > 0
+    ? `${h}:${String(m).padStart(2, "0")}:${String(sec).padStart(2, "0")}`
+    : mmss;
 }
 
 /** Calculate macro ring percentage (clamped 0–1.3) and done state (±10% of target) */

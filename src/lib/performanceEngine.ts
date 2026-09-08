@@ -11,7 +11,7 @@ import type {
   PerformanceDoc,
 } from "./performanceTypes";
 import { PI_WEIGHTS } from "./performanceTypes";
-import { localWeekKey, localDateString, parseLocalDate } from "./dateHelpers";
+import { localDateString, parseLocalDate } from "./dateHelpers";
 
 // ── Helpers ──────────────────────────────────
 
@@ -34,10 +34,6 @@ import { localWeekKey, localDateString, parseLocalDate } from "./dateHelpers";
  * and do NOT need to stay in lockstep — only `scorePerformance`
  * (below) is the parity seam.
  */
-export function getWeekKey(date: Date): string {
-  return localWeekKey(date);
-}
-
 /** Get the Sunday date N weeks before a given weekKey. Pure local-date
  *  math via parseLocalDate (never UTC parsing — `new Date("YYYY-MM-DD")`
  *  parses as UTC midnight and shifts a day in negative-offset zones). */

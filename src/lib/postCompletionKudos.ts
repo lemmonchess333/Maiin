@@ -10,6 +10,7 @@
  * already carry author + activityId + createdAt), pick the kudos candidate.
  * Kept Firestore-free and `now`-injected so it's unit-testable.
  */
+import { localDateString } from "@/lib/dateHelpers";
 
 /** The fields of a feed item this decision depends on (subset of FeedItem). */
 export interface KudosFeedItemLike {
@@ -32,10 +33,7 @@ export interface KudosCandidate {
 
 /** Local YYYY-MM-DD (the user's "today", not UTC). */
 export function localDayKey(d: Date): string {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
+  return localDateString(d);
 }
 
 function toDate(v: KudosFeedItemLike["createdAt"]): Date | null {

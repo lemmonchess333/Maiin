@@ -6,7 +6,110 @@ follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- **Saved workouts remain accessible.** History opens saved records, and changing
+  accounts or workout routes clears the previous record and sharing state.
+
+- **Choose lifting, running or both during setup.** Running-only plans skip
+  lifting setup. Inspect the actual generated sessions before creating the plan.
+- **Copy selected meals from yesterday.** Choose meals and adjust each portion
+  within the existing sheet; totals update before logging and Undo affects only
+  the meals just created. Food quick-add and meal-slot pills retain their styling.
+- **Milestones link back to the session.** Earlier strength bests, recorded races
+  and completed training blocks remain discoverable in the existing chronology.
+
+- **Coming back to lifting is acknowledged.** After a week or more away,
+  Home offers a short welcome back: pick up where you left off, or head to
+  your programme and start with an easier session. It states how long it
+  has been and nothing else — no missed-session count, no streak language —
+  and it asks once per absence.
+- **About once a month, the weekly check-in asks two questions about the
+  app** — whether the plan made sense, and whether logging was easy. Both
+  optional, on the check-in you already answer, and absent the other three
+  weeks.
+- **Notes you write during a session are kept.** A note typed against an
+  exercise ("Level 8, 6.0 incline") now saves with the workout and shows on
+  that session in History. Previously it survived closing and reopening a
+  session but was discarded the moment you finished one.
+- **History remembers what happened.** The Badges tab is now Milestones: your
+  first workout, your first run, your best lift on each exercise and every
+  badge you have earned, in one list newest first and grouped by month. The
+  badge collection stays beneath it, so what is still in progress is still
+  visible.
+
 ### Changed
+
+- **Shared routes keep privacy gaps.** Maps, share images, GPX exports and saved
+  routes preserve disconnected sections. Sharing waits for confirmed privacy
+  settings, and the post composer shows the route that will be included.
+
+- **Run audio repeats less.** Cue phrasing varies between runs; pace alerts are
+  capped per off-pace stretch and acknowledge a sustained return to the band.
+
+- **Home keeps macro rings visible.** Protein, Carbs and Fat remain readable
+  without opening Details. Existing training cards and water/weight readings
+  use clearer alignment and wrapping within the same design system.
+- **Workout finishes show the session first.** Duration, volume and sets sit
+  beneath the title. Dated previous exercise notes can be explicitly reused.
+- **Saved on this phone and synced are distinct states.** Completed workouts
+  queue durable records and recover across programme changes without replacing
+  the current plan. Pending changes remain visible after reconnect, with Retry
+  for workouts that need attention.
+
+- **The bottom navigation floats above the page.** A compact frosted capsule
+  keeps all five labels visible, with a clear purple selected tab. Solid
+  fallbacks support reduced transparency and browsers without backdrop blur.
+
+- **Logging water no longer pops a confirmation.** The card already shows
+  it: the number and the fill both move as you tap. The toast covered the
+  screen below for five seconds and offered an Undo that the minus button
+  next to the plus already does in one tap.
+
+- **Clearer wording across the app.** Errors now say what failed and what to
+  do in two short sentences instead of joining them with a dash ("Couldn't
+  save. Check your connection and try again."), and paired facts use the
+  same middot the rest of the app uses.
+
+- **The app opens faster, especially on a phone.** Signing in used to
+  download the whole app before the login screen appeared — the workout
+  programme engine, the exercise database, the run scheduler, and the
+  entire offline database engine — none of which it needs to show you a
+  login form. On a mid-tier phone on 4G that is about 1.3 seconds off the
+  first screen, and half as much to download before anything shows.
+
+- **Buttons, labels and titles now read consistently.** Capitalisation was
+  a coin-flip across the app — "Delete Account" beside "Block user",
+  "Height Unit" beside "Body weight unit" — sometimes on the same screen.
+  Everything is sentence case now, except names: Performance Index,
+  Progress Vault, Weekly Review, and real-world names like Privacy Policy
+  and Apple Health.
+
+- **Home no longer shows a zero while it is still loading.** Today's
+  calories and macros wait for your meals to arrive instead of briefly
+  reading "0 eaten", which was indistinguishable from having eaten nothing.
+
+- **Security audit (2026-09-07):** re-check the active account before every offline queue replay; keep callable and food-analysis requests within the configured emulator/project boundary; constrain server-written comment avatars to supported origins; escape formula-like content in CSV exports. Added HTTP authentication/authorisation regression tests and a deployed-source verification step for comment functions.
+- Updated compatible Functions dependencies to clear high/critical advisories, made that audit a blocking CI check, and installed releases from the tested lockfile.
+- Security follow-up: release builds reject App Check debug tokens; the web CSP permits only the required reCAPTCHA paths. Unused PWA build packages are removed, artwork tooling uses patched Sharp directly, and CI checks development dependencies for high/critical advisories.
+- Security release checks now compare active Firestore and Storage Rules source with the tested checkout. A mismatch or missing access fails verification; the Storage approval gate remains in place.
+
+- Setup has five named chapters, an early interactive draft week, a spinning weight scale with direct typing, and an editable plan review. Goals and limitations require explicit choices; free running stays unscheduled, and nutrition clearly starts at maintenance.
+- Home puts today’s training and logging first, then the weekly performance ring. Food brings the composer and usual meal into view sooner, below the calorie ring and macro breakdown, with the full detail still in Details.
+- The meal slot you are adding to is a filled orange pill again, on Food and when editing servings.
+- Today's session says why it exists in one short line instead of a wrapped sentence.
+
+- Weigh-ins use a spinning scale dial with a fixed pointer, precise tenths, direct typing and keyboard adjustment.
+
+- Water offers the last three sizes used on this account. Weigh-ins support kg, lb and stone, retain conversion precision and offer dates within the last 30 days.
+- Food shows your usual meal without focusing the composer, remembers portions and meal slots, previews copies, and queues offline entries with a five-second Undo. Examples prefill the composer without logging.
+- **One workout finish.** Saving keeps the completion screen open with programme progress, the next session and explicit share/reminder actions. Strength recognition compares estimated bests; a first rep range is labelled separately. Set PR toasts and the circular rest timer are removed, plateau review lives on Program, and pending badge reveals survive a reload per account.
+- Reminders skip meals and sessions already logged today. Local streak reminders
+  yield to push consent, respect quiet hours, and expire after one day. Reminder
+  wording is neutral; Settings lists the activity tray types without controls.
+- Planned lift and run cards explain today’s session from programme state. Home,
+  the lift week row, and the training block share one week-and-focus label.
+  Nutrition phase no longer appears in the lift week row.
 
 - **Readability pass across the whole app.** Secondary text is slightly
   darker in light mode and slightly brighter in dark mode, tuned so every

@@ -63,7 +63,9 @@
  */
 
 import { useState, useMemo, useRef, useCallback, useEffect } from "react";
+import { Button } from "@/components/ui/Button";
 import SectionLabel from "@/components/ui/SectionLabel";
+import { readString, writeString } from "@/lib/localStore";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   Footprints,
@@ -125,6 +127,7 @@ import { track as trackProgram } from "@/lib/programAnalytics";
 import RaceCockpitCard from "./RaceCockpitCard";
 import RaceDayPlanCard from "./RaceDayPlanCard";
 import type { RaceDistance } from "@/lib/raceDayPlan";
+import { runSessionPresentation } from "@/lib/runSessionExplainer";
 import SessionCommandCard from "./SessionCommandCard";
 import ProgrammeWeekSelector from "./ProgrammeWeekSelector";
 import type { ProgrammeWeekSelectorCell } from "./ProgrammeWeekSelector";
@@ -291,23 +294,13 @@ export default function ProgrammeRunSection({
   // Run14: the ease-week nudge, dismissed for the rest of this week.
   const [easeNudgeDismissed, setEaseNudgeDismissed] = useState(false);
   const [raceElapsedDismissed, setRaceElapsedDismissed] = useState<boolean>(
-    () => {
-      if (typeof window === "undefined") return false;
-      try {
-        return window.localStorage.getItem(raceElapsedDismissKey) === "1";
-      } catch {
-        return false;
-      }
-    }
+    () => readString(raceElapsedDismissKey) === "1"
   );
   function dismissRaceElapsedBanner() {
     setRaceElapsedDismissed(true);
-    try {
-      window.localStorage.setItem(raceElapsedDismissKey, "1");
-    } catch {
-      // localStorage unavailable / quota — swallow; the in-memory
-      // state still hides the banner for this session.
-    }
+    // Storage unavailable / quota — the in-memory state still hides the
+    // banner for this session.
+    writeString(raceElapsedDismissKey, "1");
   }
 
   const currentMode = profile.runMode ?? "freeform";
@@ -362,24 +355,14 @@ export default function ProgrammeRunSection({
   // past race, by which point a newly-set future race has remounted the page.
   const raceRecentDismissKey = `${storageUid}:tropos.dismiss.raceRecent.${raceGoal?.targetDate ?? "none"}`;
   const [raceRecentDismissed, setRaceRecentDismissed] = useState<boolean>(
-    () => {
-      if (typeof window === "undefined") return false;
-      try {
-        return window.localStorage.getItem(raceRecentDismissKey) === "1";
-      } catch {
-        return false;
-      }
-    }
+    () => readString(raceRecentDismissKey) === "1"
   );
   function dismissRaceRecent() {
     setRaceRecentDismissed(true);
-    try {
-      window.localStorage.setItem(raceRecentDismissKey, "1");
-    } catch {
-      // localStorage unavailable / quota — swallow; the in-memory state still
-      // hides the prompt for this session.
-    }
-    toast("Got it — we'll wrap up your plan.");
+    // Storage unavailable / quota — the in-memory state still hides the
+    // prompt for this session.
+    writeString(raceRecentDismissKey, "1");
+    toast("Got it. We'll wrap up your plan.");
   }
 
   // #975: one-time "Set a race goal" nudge for freeform runners — the skip
@@ -392,23 +375,13 @@ export default function ProgrammeRunSection({
   // this whole freeform block stops rendering ("dismisses after use").
   const SET_RACE_GOAL_DISMISS_KEY = `${storageUid}:tropos.dismiss.setRaceGoal`;
   const [setRaceGoalDismissed, setSetRaceGoalDismissed] = useState<boolean>(
-    () => {
-      if (typeof window === "undefined") return false;
-      try {
-        return window.localStorage.getItem(SET_RACE_GOAL_DISMISS_KEY) === "1";
-      } catch {
-        return false;
-      }
-    }
+    () => readString(SET_RACE_GOAL_DISMISS_KEY) === "1"
   );
   function dismissSetRaceGoal() {
     setSetRaceGoalDismissed(true);
-    try {
-      window.localStorage.setItem(SET_RACE_GOAL_DISMISS_KEY, "1");
-    } catch {
-      // localStorage unavailable / quota — swallow; in-memory state still
-      // hides it for this session.
-    }
+    // Storage unavailable / quota — in-memory state still hides it for this
+    // session.
+    writeString(SET_RACE_GOAL_DISMISS_KEY, "1");
   }
 
   // PR-C: post-race card state derivation. Driven by:
@@ -716,6 +689,18 @@ export default function ProgrammeRunSection({
   };
   const selectedTemplate = selectedRun.template;
   const selectedIsRace = selectedTemplate?.type === "race";
+  const selectedPurpose =
+    selectedTemplate && selectedRun.runDay
+      ? runSessionPresentation({
+          type: selectedTemplate.type,
+          templateId: selectedTemplate.id,
+          currentWeek: programState?.runPlan?.currentWeek,
+          totalWeeks: programState?.runPlan?.totalWeeks,
+          distance:
+            programState?.runPlan?.raceGoal?.distance ??
+            profile.raceGoal?.distance,
+        })
+      : { purpose: null, weekLabel: null };
   const selectedDateLabel = format(
     parseLocalDate(selectedDateKey),
     "EEE d MMM"
@@ -915,7 +900,7 @@ export default function ProgrammeRunSection({
       {contextualPrompt === "no-show" && raceGoal && (
         <Banner
           variant="warning"
-          title={`${raceGoal.distance.toUpperCase()} — ${raceGoal.targetDate}`}
+          title={`${raceGoal.distance.toUpperCase()} · ${raceGoal.targetDate}`}
           description="We marked this as no-show after 3 days with no log. Log it now if you ran it."
           action={
             <div className="flex flex-col gap-2">
@@ -1059,7 +1044,7 @@ export default function ProgrammeRunSection({
       {currentMode === "race_prep" && raceGoal && inRecovery && (
         <Banner
           variant="info"
-          title={`Recovering — ${recoveryDaysLeft} day${recoveryDaysLeft === 1 ? "" : "s"} left`}
+          title={`Recovering · ${recoveryDaysLeft} day${recoveryDaysLeft === 1 ? "" : "s"} left`}
           description="Easy runs this week. Templates auto-set to easy_30 until recovery ends."
           action={
             <button
@@ -1143,11 +1128,11 @@ export default function ProgrammeRunSection({
           {runsLoading ? (
             <div className="space-y-1.5">
               <div
-                className="h-3.5 rounded bg-muted/60 animate-pulse"
+                className="h-3.5 rounded bg-muted/60 motion-safe:animate-pulse"
                 style={{ width: "70%" }}
               />
               <div
-                className="h-3.5 rounded bg-muted/60 animate-pulse"
+                className="h-3.5 rounded bg-muted/60 motion-safe:animate-pulse"
                 style={{ width: "55%" }}
               />
             </div>
@@ -1437,8 +1422,13 @@ export default function ProgrammeRunSection({
                   sport="run"
                   eyebrow={`${selectedEyebrow} · ${selectedDateLabel}`}
                   title={selectedTemplate?.name ?? "Run"}
-                  description={selectedTemplate?.description}
-                  meta={selectedRunMeta}
+                  description={selectedPurpose.purpose ?? undefined}
+                  meta={[
+                    ...(selectedPurpose.weekLabel
+                      ? [selectedPurpose.weekLabel]
+                      : []),
+                    ...selectedRunMeta,
+                  ]}
                   primaryActionLabel={
                     selectedIsRace ? "Start race" : "Start run"
                   }
@@ -1472,29 +1462,30 @@ export default function ProgrammeRunSection({
                 <SectionLabel tier="section">{selectedDateLabel}</SectionLabel>
                 <p className="text-sm font-bold text-foreground mt-0.5">
                   {selectedRun.isCompleted
-                    ? `${selectedTemplate?.name ?? "Run"} — done`
+                    ? `${selectedTemplate?.name ?? "Run"} · done`
                     : selectedRun.status === "skipped"
-                      ? `${selectedTemplate?.name ?? "Run"} — skipped`
+                      ? `${selectedTemplate?.name ?? "Run"} · skipped`
                       : "No run scheduled"}
                 </p>
                 <p className="text-micro text-muted-foreground mt-0.5">
                   {selectedRun.isCompleted
                     ? "Add another whenever you like."
                     : selectedRun.status === "skipped"
-                      ? "Marked as skipped — you can still head out."
+                      ? "Marked as skipped. You can still head out."
                       : "Rest day. Head out whenever you like."}
                 </p>
-                <button
-                  type="button"
+                <Button
+                  variant="sport"
+                  fullWidth
+                  className="mt-3 font-bold"
                   onClick={() => {
                     haptic();
                     navigate(FREE_RUN_URL);
                   }}
-                  className="mt-3 w-full min-h-[44px] py-2.5 rounded-lg text-sm font-bold text-white inline-flex items-center justify-center gap-1.5 bg-running-fill"
                 >
                   <Play className="size-3.5" fill="white" />
                   Start free run
-                </button>
+                </Button>
               </div>
             ))}
 
@@ -1567,8 +1558,8 @@ export default function ProgrammeRunSection({
           {postEaseBounce && (
             <p className="text-xs text-muted-foreground px-1">
               {postEaseBounce === "recovered"
-                ? "Back inside the pace window after the easier week — the plan resumes as scheduled."
-                : "Still outside the pace window after the easier week — worth keeping this week gentle too. You decide."}
+                ? "Back inside the pace window after the easier week. The plan resumes as scheduled."
+                : "Still outside the pace window after the easier week. Worth keeping this week gentle too, but you decide."}
             </p>
           )}
 

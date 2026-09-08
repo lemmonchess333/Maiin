@@ -1,0 +1,210 @@
+{
+  "bodyweight-squat": {
+    "method": "Read-only RGB threshold min>90/max>150 inside recorded ROIs; bounds are diagnostics, not anatomy approval.",
+    "regions": {
+      "farShoe": [
+        240,
+        1260,
+        500,
+        1420
+      ],
+      "nearShoe": [
+        500,
+        1320,
+        740,
+        1510
+      ]
+    },
+    "frames": [
+      {
+        "file": "1-master.png",
+        "bounds": {
+          "farShoe": {
+            "left": 263,
+            "top": 1260,
+            "right": 489,
+            "bottom": 1388
+          },
+          "nearShoe": {
+            "left": 511,
+            "top": 1320,
+            "right": 702,
+            "bottom": 1446
+          }
+        }
+      },
+      {
+        "file": "2-early.png",
+        "bounds": {
+          "farShoe": {
+            "left": 263,
+            "top": 1260,
+            "right": 488,
+            "bottom": 1388
+          },
+          "nearShoe": {
+            "left": 511,
+            "top": 1320,
+            "right": 701,
+            "bottom": 1446
+          }
+        }
+      },
+      {
+        "file": "3-mid.png",
+        "bounds": {
+          "farShoe": {
+            "left": 263,
+            "top": 1260,
+            "right": 488,
+            "bottom": 1389
+          },
+          "nearShoe": {
+            "left": 511,
+            "top": 1320,
+            "right": 701,
+            "bottom": 1446
+          }
+        }
+      },
+      {
+        "file": "4-bottom.png",
+        "bounds": {
+          "farShoe": {
+            "left": 263,
+            "top": 1260,
+            "right": 488,
+            "bottom": 1388
+          },
+          "nearShoe": {
+            "left": 511,
+            "top": 1320,
+            "right": 701,
+            "bottom": 1446
+          }
+        }
+      },
+      {
+        "file": "3-mid-v2.png",
+        "bounds": {
+          "farShoe": {
+            "left": 263,
+            "top": 1260,
+            "right": 488,
+            "bottom": 1358
+          },
+          "nearShoe": {
+            "left": 511,
+            "top": 1320,
+            "right": 700,
+            "bottom": 1413
+          }
+        }
+      },
+      {
+        "file": "3-mid-registered.png",
+        "bounds": {
+          "farShoe": {
+            "left": 263,
+            "top": 1260,
+            "right": 488,
+            "bottom": 1378
+          },
+          "nearShoe": {
+            "left": 511,
+            "top": 1320,
+            "right": 699,
+            "bottom": 1433
+          }
+        }
+      }
+    ]
+  },
+  "barbell-shrug": {
+    "method": "Read-only RGB threshold min>90/max>150 inside recorded ROIs; bounds are diagnostics, not anatomy approval.",
+    "regions": {
+      "farShoe": [
+        250,
+        1250,
+        500,
+        1490
+      ],
+      "nearShoe": [
+        500,
+        1280,
+        730,
+        1536
+      ]
+    },
+    "frames": [
+      {
+        "file": "1-master.png",
+        "bounds": {
+          "farShoe": {
+            "left": 270,
+            "top": 1250,
+            "right": 492,
+            "bottom": 1418
+          },
+          "nearShoe": {
+            "left": 506,
+            "top": 1280,
+            "right": 689,
+            "bottom": 1478
+          }
+        }
+      },
+      {
+        "file": "2-early.png",
+        "bounds": {
+          "farShoe": {
+            "left": 270,
+            "top": 1250,
+            "right": 492,
+            "bottom": 1386
+          },
+          "nearShoe": {
+            "left": 506,
+            "top": 1280,
+            "right": 688,
+            "bottom": 1446
+          }
+        }
+      },
+      {
+        "file": "4-top.png",
+        "bounds": {
+          "farShoe": {
+            "left": 270,
+            "top": 1250,
+            "right": 492,
+            "bottom": 1355
+          },
+          "nearShoe": {
+            "left": 506,
+            "top": 1280,
+            "right": 687,
+            "bottom": 1415
+          }
+        }
+      },
+      {
+        "file": "2-local-edit.png",
+        "bounds": {
+          "farShoe": {
+            "left": 270,
+            "top": 1250,
+            "right": 492,
+            "bottom": 1386
+          },
+          "nearShoe": {
+            "left": 506,
+            "top": 1280,
+            "right": 688,
+            "bottom": 1446
+          }
+        }
+      }
+    ]
+  }
+}

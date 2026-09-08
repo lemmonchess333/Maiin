@@ -1,5 +1,17 @@
-import { describe, it, expect } from "vitest";
-import { downsampleCoords, coordsToPoints, MAX_COORDS } from "../savedRoutes";
+const write = vi.hoisted(() => vi.fn());
+vi.mock("@/lib/firebase", () => ({ db: {} }));
+vi.mock("firebase/firestore");
+vi.mock("@/lib/firestoreWrite", () => ({
+  addDocGuarded: write,
+  deleteDocGuarded: vi.fn(),
+}));
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import {
+  downsampleCoords,
+  coordsToPoints,
+  MAX_COORDS,
+  saveRoute,
+} from "../savedRoutes";
 import type { GPSPoint } from "../gps";
 
 function pt(lat: number, lon: number): GPSPoint {
@@ -62,5 +74,46 @@ describe("coordsToPoints", () => {
       expect(p.lat).toBeCloseTo(original[i].lat, 6);
       expect(p.lon).toBeCloseTo(original[i].lon, 6);
     });
+  });
+});
+
+describe("saved route segment persistence", () => {
+  beforeEach(() => {
+    write.mockReset().mockResolvedValue({ id: "saved" });
+  });
+  it("preserves redaction gaps when the library route is reconstructed", async () => {
+    const points = [
+      pt(51.5, -0.1),
+      pt(51.51, -0.1),
+      { ...pt(51.6, 0.1), breakBefore: true },
+      pt(51.61, 0.1),
+    ];
+    await saveRoute("owner", {
+      name: "Route with a gap",
+      source: "gpx",
+      points,
+    });
+    const data = write.mock.calls[0][1];
+    expect(data.segmentStarts).toEqual([2]);
+    const restored = coordsToPoints(data.coords, data.segmentStarts);
+    expect(restored[2].breakBefore).toBe(true);
+    expect(restored[1].breakBefore).toBeUndefined();
+  });
+
+  it("does not reconnect isolated points when sampling leaves one segment", async () => {
+    const connected = [pt(51.5, -0.1), pt(51.501, -0.1)];
+    const isolated = Array.from({ length: MAX_COORDS }, (_, index) => ({
+      ...pt(51.6 + index * 0.001, 0.1),
+      breakBefore: true,
+    }));
+    await saveRoute("owner", {
+      name: "Fragmented route",
+      source: "gpx",
+      points: [...connected, ...isolated],
+    });
+    const data = write.mock.calls[0][1];
+    expect(data.coords).toEqual([-0.1, 51.5, -0.1, 51.501]);
+    expect(data.segmentStarts).toBeUndefined();
+    expect(coordsToPoints(data.coords, data.segmentStarts)).toHaveLength(2);
   });
 });

@@ -1,0 +1,76 @@
+{
+  "variation": "Barbell Romanian deadlift, double-overhand grip, hip-width stance and softly bent knees.",
+  "canvas": [
+    1024,
+    1536
+  ],
+  "camera": "Fixed side three-quarter, facing left, showing hip hinge and both grips.",
+  "equipment": "Straight barbell with one equal modest round plate per side.",
+  "anchors": [
+    "Both shoes and sole contacts",
+    "Bar orientation and grip width"
+  ],
+  "invariants": [
+    "Plate diameter and thickness",
+    "Bar shaft length",
+    "Arm and leg bone lengths",
+    "Small knee bend stays approximately constant"
+  ],
+  "primary": [
+    "Hamstrings"
+  ],
+  "secondary": [
+    "Glutes"
+  ],
+  "stabilizers": [
+    "Erector spinae",
+    "Trapezius"
+  ],
+  "techniqueSource": "https://www.acefitness.org/resources/everyone/exercise-library/317/romanian-deadlift/",
+  "exerciseId": "romanian-deadlift",
+  "status": "six-frame-draft-review",
+  "frames": [
+    {
+      "frame": 1,
+      "label": "Set up",
+      "cue": "Stand tall with soft knees and the bar close to your thighs.",
+      "t": 0,
+      "state": "Standing start; long arms; hips neutral without leaning back."
+    },
+    {
+      "frame": 2,
+      "label": "Begin hinge",
+      "cue": "Push your hips back while keeping the bar close.",
+      "t": 0.25,
+      "state": "Small hip hinge, bar descends thighs, knees stay soft."
+    },
+    {
+      "frame": 3,
+      "label": "Continue hinge",
+      "cue": "Lower along your legs with a long, braced spine.",
+      "t": 0.6,
+      "state": "Middle hinge, torso angled forward, bar near knees."
+    },
+    {
+      "frame": 4,
+      "label": "Bottom hinge",
+      "cue": "Stop at your hamstring limit with your back position held.",
+      "t": 1,
+      "state": "Comfortable hinge endpoint with bar just below knees; no forced mid-shin depth."
+    },
+    {
+      "frame": 5,
+      "label": "Drive hips forward",
+      "cue": "Stand by bringing your hips forward under your torso.",
+      "t": 0.6,
+      "state": "Same as frame3 on ascent."
+    },
+    {
+      "frame": 6,
+      "label": "Finish standing",
+      "cue": "Return tall without leaning backwards.",
+      "t": 0.25,
+      "state": "Same as frame2 on ascent; loop completes to1."
+    }
+  ]
+}

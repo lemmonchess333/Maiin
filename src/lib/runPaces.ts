@@ -250,6 +250,22 @@ export function prescriptivePaceTableFromFitness(
   return paceTableFromFitness(fitness);
 }
 
+/**
+ * Run17 — the easy pace the SCHEDULER plans long-run duration with: the
+ * midpoint of the runner's easy band from the PRESCRIPTIVE table (so an
+ * unconfirmed auto-derived benchmark yields null, RUN-EV-08), in seconds
+ * per km. Null means "no confirmed benchmark — use the nominal tier table".
+ */
+export function planningEasyPaceSPerKm(
+  fitness: RunFitnessInput | null | undefined
+): number | null {
+  const table = prescriptivePaceTableFromFitness(fitness);
+  if (!table) return null;
+  const [fast, slow] = table.easy;
+  const mid = Math.round((fast + slow) / 2);
+  return Number.isFinite(mid) && mid > 0 ? mid : null;
+}
+
 /** Shared vdot resolution: stored vdot wins, else derive from the benchmark;
  *  null when neither is usable. `benchmark` is echoed back only when valid. */
 function resolveFitnessVdot(fitness: RunFitnessInput | null | undefined): {

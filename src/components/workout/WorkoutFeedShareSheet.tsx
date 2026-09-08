@@ -28,7 +28,9 @@ import { recordSharedActivity } from "@/lib/sessionDelete";
 import { postActivity } from "@/lib/socialApi";
 import { containsProfanity } from "@/lib/profanityFilter";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
+import { useEmailVerificationGate } from "@/hooks/useEmailVerificationGate";
 import { workoutTonnageKg, type Workout } from "@/hooks/useWorkouts";
+import VerifyEmailNotice from "@/components/social/VerifyEmailNotice";
 
 const CAPTION_MAX = 140;
 
@@ -52,8 +54,9 @@ export default function WorkoutFeedShareSheet({
   title,
   onShared,
 }: Props) {
-  const { profile } = useAuth();
+  const { user, profile } = useAuth();
   const { isOnline } = useOnlineStatus();
+  const gate = useEmailVerificationGate(user);
   const [caption, setCaption] = useState("");
   const [posting, setPosting] = useState(false);
 
@@ -62,6 +65,8 @@ export default function WorkoutFeedShareSheet({
   const tonnage = workoutTonnageKg(workout);
 
   const share = async (visibility: "followers" | "public") => {
+    // Held while the email is unverified — the rules refuse the write.
+    if (gate.needsVerification) return;
     if (captionIsProfane || posting) {
       if (captionIsProfane) haptic("error");
       return;
@@ -164,11 +169,15 @@ export default function WorkoutFeedShareSheet({
           </p>
         )}
 
+        {gate.needsVerification && (
+          <VerifyEmailNotice onRecheck={gate.recheck} />
+        )}
+
         <div className="space-y-2">
           <Button
             fullWidth
             loading={posting}
-            disabled={captionIsProfane || !isOnline}
+            disabled={captionIsProfane || !isOnline || gate.needsVerification}
             onClick={() => share("followers")}
             leftIcon={<Users className="size-4 shrink-0" aria-hidden="true" />}
           >
@@ -178,7 +187,7 @@ export default function WorkoutFeedShareSheet({
             fullWidth
             variant="secondary"
             loading={posting}
-            disabled={captionIsProfane || !isOnline}
+            disabled={captionIsProfane || !isOnline || gate.needsVerification}
             onClick={() => share("public")}
             leftIcon={<Globe className="size-4 shrink-0" aria-hidden="true" />}
           >

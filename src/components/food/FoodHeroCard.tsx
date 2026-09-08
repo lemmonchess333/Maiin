@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { readString, writeString } from "@/lib/localStore";
 import {
   useCalorieRingMode,
   setCalorieRingMode,
@@ -28,6 +29,7 @@ import { mealPhotoImage } from "@/lib/editorialImages";
 import { useIsDarkMode } from "@/hooks/useIsDarkMode";
 import CalorieRing from "./CalorieRing";
 import MacroColumn from "./MacroColumn";
+import { macroInfeasibilityMessage } from "@/lib/macroInfeasibility";
 import AdaptiveWarmupBar from "./AdaptiveWarmupBar";
 
 interface DailyTotals {
@@ -48,6 +50,7 @@ interface FoodHeroCardProps {
    *  the hero correctly — the affordance is omitted when no handler
    *  is supplied. */
   onTapDrillDown?: () => void;
+  /** Task-first Food entry: full nutrition stays one tap away in Details. */
 }
 
 /* The ring MODE stays flat on purpose: "left vs eaten" is a display
@@ -151,24 +154,14 @@ export default function FoodHeroCard({
     // Check for celebration trigger BEFORE updating prevRef
     let shouldCelebrate = false;
     if (isToday) {
-      const celebrated = (() => {
-        try {
-          return window.localStorage.getItem(celebratedKey);
-        } catch {
-          return null;
-        }
-      })();
+      const celebrated = readString(celebratedKey);
       const todayKey = todayIsoDate();
       if (
         celebrated !== todayKey &&
         didJustCompleteAll(prev, dailyTotals, targets)
       ) {
         shouldCelebrate = true;
-        try {
-          window.localStorage.setItem(celebratedKey, todayKey);
-        } catch {
-          // ignore
-        }
+        writeString(celebratedKey, todayKey);
       }
     }
 
@@ -277,10 +270,10 @@ export default function FoodHeroCard({
       <div className="relative overflow-hidden p-5 rounded-2xl bg-card card-shadow">
         {mealPhoto ? (
           /* Ambient food-photo hero. Reuses the Social/Spaces
-             editorial-photo + scrim recipe: the photo fills the card
-             behind a scrim so the ring, number and captions stay legible.
-             Replaces the purple halo when present. Decorative +
-             aria-hidden. */
+           editorial-photo + scrim recipe: the photo fills the card
+           behind a scrim so the ring, number and captions stay legible.
+           Replaces the purple halo when present. Decorative +
+           aria-hidden. */
           <>
             <img
               src={mealPhoto}
@@ -288,18 +281,18 @@ export default function FoodHeroCard({
               aria-hidden="true"
               className="pointer-events-none absolute inset-0 size-full object-cover select-none"
               /* Light mode brightens the dark-graded asset back up so it
-                 reads as an airy wash under DARK text; dark mode uses it
-                 as-graded. Static filter — never animated (the
-                 WKWebView rule is about animating filter values). */
+               reads as an airy wash under DARK text; dark mode uses it
+               as-graded. Static filter — never animated (the
+               WKWebView rule is about animating filter values). */
               style={isDark ? undefined : { filter: "brightness(1.35)" }}
               draggable={false}
             />
             {/* Scrim via the --food-photo-scrim CSS vars, which flip with
-                the theme: a radial wash centred on the ring/number keeps
-                the value legible whatever the photo, over a vertical one
-                for the caption + glance line. DARK mode = black scrim (a
-                moody hero under light text); LIGHT mode = white scrim (an
-                airy wash under dark text). */}
+              the theme: a radial wash centred on the ring/number keeps
+              the value legible whatever the photo, over a vertical one
+              for the caption + glance line. DARK mode = black scrim (a
+              moody hero under light text); LIGHT mode = white scrim (an
+              airy wash under dark text). */}
             <div
               aria-hidden="true"
               className="pointer-events-none absolute inset-0"
@@ -311,10 +304,10 @@ export default function FoodHeroCard({
           </>
         ) : (
           /* Brand-hue ambient halo behind the calorie ring — the cross-screen
-             cohesion twin of the Performance hero's band-state halo. The ring
-             is a fixed brand-purple identity (CalorieRing COLOR_RING), so the
-             halo is brand purple, centered behind the ring. Decorative-free:
-             functional state/identity wash, low alpha, fades to transparent. */
+           cohesion twin of the Performance hero's band-state halo. The ring
+           is a fixed brand-purple identity (CalorieRing COLOR_RING), so the
+           halo is brand purple, centered behind the ring. Decorative-free:
+           functional state/identity wash, low alpha, fades to transparent. */
           <div
             aria-hidden="true"
             className="pointer-events-none absolute left-1/2 top-6 size-64 -translate-x-1/2 rounded-full"
@@ -324,18 +317,18 @@ export default function FoodHeroCard({
           />
         )}
         {/* Content sits above the absolute halo (positioned siblings paint
-            in DOM order; a non-positioned block would render beneath it). */}
+          in DOM order; a non-positioned block would render beneath it). */}
         <div className="relative">
           {/* Top row: caption (left) + adjust-targets gear (right).
-            The gear deep-links straight to the focused Nutrition editor
-            (/settings/nutrition — goal weight, calorie targets, macros,
-            activity), so users fix a wrong target in one tap instead of
-            landing on the generic Settings list and hunting for it. This
-            mirrors the Train tabs' "Edit run/lift plan" pattern: each
-            tab's day-to-day surface routes to its OWN plan editor.
-            (Historically this pointed at /settings because the nutrition
-            sub-route didn't exist; it does now.) Subtle muted-foreground
-            colour so it doesn't compete with the ring for attention. */}
+          The gear deep-links straight to the focused Nutrition editor
+          (/settings/nutrition — goal weight, calorie targets, macros,
+          activity), so users fix a wrong target in one tap instead of
+          landing on the generic Settings list and hunting for it. This
+          mirrors the Train tabs' "Edit run/lift plan" pattern: each
+          tab's day-to-day surface routes to its OWN plan editor.
+          (Historically this pointed at /settings because the nutrition
+          sub-route didn't exist; it does now.) Subtle muted-foreground
+          colour so it doesn't compete with the ring for attention. */}
           <div className="mb-4 min-h-[20px] flex items-start justify-between gap-3">
             <div className="flex-1 min-w-0">
               <AnimatePresence mode="wait">
@@ -349,9 +342,9 @@ export default function FoodHeroCard({
                     className="text-micro uppercase tracking-wider font-semibold"
                     style={{
                       /* Photo hero: bright identity over the dark scrim
-                         (the photo, not the theme, is the surface). Plain
-                         card: the theme-aware -strong step — the identity
-                         is 2.36:1 as 12px text on the light card (DS2). */
+                       (the photo, not the theme, is the surface). Plain
+                       card: the theme-aware -strong step — the identity
+                       is 2.36:1 as 12px text on the light card (DS2). */
                       color: photoTextClass
                         ? THEME.success
                         : "hsl(var(--success-strong))",
@@ -369,10 +362,10 @@ export default function FoodHeroCard({
                     className={`text-xs font-medium truncate ${photoTextClass ?? "text-muted-foreground"}`}
                   >
                     {/* Wave3 G — the day annotation is merged INTO the hero
-                      caption as one line ("{dayType} · {rationale}") instead
-                      of a second, container-less line orphaned below the
-                      macro tiles. Rationale is today-only (matching the old
-                      annotation gating); truncates to one line at 393px. */}
+                    caption as one line ("{dayType} · {rationale}") instead
+                    of a second, container-less line orphaned below the
+                    macro tiles. Rationale is today-only (matching the old
+                    annotation gating); truncates to one line at 393px. */}
                     {caption.trainingType}
                     {isToday && dailyTargets.annotation
                       ? ` · ${dailyTargets.annotation}`
@@ -418,8 +411,8 @@ export default function FoodHeroCard({
           />
 
           {/* Nutr2 / #981 — adaptive warmup bar, today-only, ambient under the
-            ring. Reads from the single source of truth (useEffectiveTargets).
-            Hidden once the gate clears (learned takeover, #982). */}
+          ring. Reads from the single source of truth (useEffectiveTargets).
+          Hidden once the gate clears (learned takeover, #982). */}
           {isToday && dailyTargets.showWarmup && (
             <AdaptiveWarmupBar
               fraction={dailyTargets.warmupFraction}
@@ -428,14 +421,14 @@ export default function FoodHeroCard({
           )}
 
           {/* Today-at-a-glance line. One sentence, protein-priority,
-            neutral over-target language. Sits inside the calorie
-            card below the ring so it summarises what the ring +
-            macro tiles already show without claiming a separate
-            card surface. Helper handles the priority rules,
-            on-track guard, tiny-deficit suppression, and the
-            missing-target prompt copy; component just routes
-            inputs and renders the result. Skips on past/future
-            dates (diary-mode views). */}
+          neutral over-target language. Sits inside the calorie
+          card below the ring so it summarises what the ring +
+          macro tiles already show without claiming a separate
+          card surface. Helper handles the priority rules,
+          on-track guard, tiny-deficit suppression, and the
+          missing-target prompt copy; component just routes
+          inputs and renders the result. Skips on past/future
+          dates (diary-mode views). */}
           {glanceLine && (
             <p
               className={`text-center text-xs font-medium mt-3 px-2 ${photoTextClass ?? "text-muted-foreground"}`}
@@ -443,11 +436,24 @@ export default function FoodHeroCard({
               {glanceLine}
             </p>
           )}
-          {/* Food6 a2: drill-down affordance. Subtle chevron pill at the
-            bottom of the calorie card opens the detailed breakdown
-            sheet. Distinct tap target so it doesn't conflict with the
-            CalorieRing mode-toggle, the Settings link, or any nested
-            buttons in the card. */}
+          {/* A target below the essential-fat floor's own cost: the macro
+            tiles below would otherwise present "0g" as the goal. Same
+            sentence as Settings and Home (macroInfeasibility.ts). */}
+          {dailyTargets.targetInfeasible && (
+            <p
+              role="status"
+              className="text-center text-xs font-medium mt-3 px-2"
+              style={{ color: "hsl(var(--warning-strong))" }}
+            >
+              {macroInfeasibilityMessage(dailyTargets.minFeasibleKcal)}
+            </p>
+          )}
+          {/* Food6 a2: drill-down affordance. "Details" + chevron at the
+          bottom of the calorie card opens the breakdown sheet — the same
+          label register as the Home and Analytics disclosures (sentence
+          case, text-xs, muted), not the uppercase section-label one.
+          Distinct tap target so it doesn't conflict with the CalorieRing
+          mode-toggle, the Settings link, or any nested buttons. */}
           {onTapDrillDown && (
             <div className="flex justify-center mt-3">
               <button
@@ -457,7 +463,7 @@ export default function FoodHeroCard({
                   onTapDrillDown();
                 }}
                 aria-label="View nutrition breakdown"
-                className={`flex items-center gap-1 px-2.5 min-h-[44px] -my-2 rounded-full text-caption font-semibold uppercase tracking-wider hover:bg-muted/60 active:scale-95 transition-all ${photoTextClass ?? "text-muted-foreground"}`}
+                className={`flex items-center gap-1 px-2.5 min-h-[44px] -my-2 rounded-full text-xs hover:bg-muted/60 active:scale-95 transition-all ${photoTextClass ?? "text-muted-foreground"}`}
               >
                 <span>Details</span>
                 <ChevronRight aria-hidden="true" className="size-3" />
@@ -468,25 +474,25 @@ export default function FoodHeroCard({
       </div>
 
       {/* Macro tile row — three floating tiles. Each reads the SAME shared
-          `mode` as the calorie ring, and tapping any tile flips that one
-          shared mode (via toggleMode) so the ring + all three tiles stay in
-          lockstep. mt-4 = 16px gap to the calorie card above.
+        `mode` as the calorie ring, and tapping any tile flips that one
+        shared mode (via toggleMode) so the ring + all three tiles stay in
+        lockstep. mt-4 = 16px gap to the calorie card above.
 
-          An explicit 3-column GRID rather than flex-1 children: flex-1
-          sizes from content, so the widest macro number could take space
-          from its neighbours and the three tiles stopped being the same
-          width exactly when the numbers got long. grid-cols-3 makes the
-          columns equal by construction, and `min-w-0` on each cell lets a
-          long number shrink inside its own tile instead of pushing the
-          row wider. gap-2 matches the compact-grid rule in the design
-          system and the sibling PeriodOverview grid. */}
+        An explicit 3-column GRID rather than flex-1 children: flex-1
+        sizes from content, so the widest macro number could take space
+        from its neighbours and the three tiles stopped being the same
+        width exactly when the numbers got long. grid-cols-3 makes the
+        columns equal by construction, and `min-w-0` on each cell lets a
+        long number shrink inside its own tile instead of pushing the
+        row wider. gap-2 matches the compact-grid rule in the design
+        system and the sibling PeriodOverview grid. */}
       <div className="grid grid-cols-3 gap-2 mt-4">
         <div className="min-w-0 flex p-3 rounded-2xl bg-card card-shadow">
           <MacroColumn
             macroKey="protein"
             Icon={Beef}
             consumed={dailyTotals.protein}
-            target={dailyTargets.protein}
+            target={dailyTargets.targetInfeasible ? 0 : dailyTargets.protein}
             label="PROTEIN"
             color={THEME.macros.protein}
             mode={mode}
@@ -500,7 +506,7 @@ export default function FoodHeroCard({
             macroKey="carbs"
             Icon={Wheat}
             consumed={dailyTotals.carbs}
-            target={dailyTargets.carbs}
+            target={dailyTargets.targetInfeasible ? 0 : dailyTargets.carbs}
             label="CARBS"
             color={THEME.macros.carbs}
             mode={mode}
@@ -526,12 +532,12 @@ export default function FoodHeroCard({
       </div>
 
       {/* Wave3 G — the training-aware day annotation (the free→premium
-          conversion hook: "Hard training day" / "Race week — carb load")
-          moved INTO the hero caption above as one merged line. It no longer
-          renders here as a separate, container-less line below the macro
-          tiles (audit: duplicate day-labels, the lower one orphaned). The
-          rationale text + its all-users visibility + today-only gating are
-          unchanged — only the render location moved. */}
+        conversion hook: "Hard training day" / "Race week — carb load")
+        moved INTO the hero caption above as one merged line. It no longer
+        renders here as a separate, container-less line below the macro
+        tiles (audit: duplicate day-labels, the lower one orphaned). The
+        rationale text + its all-users visibility + today-only gating are
+        unchanged — only the render location moved. */}
 
       {/* S2: goal-hit macro-day share card (nutrition template) */}
       <ShareCardSheet

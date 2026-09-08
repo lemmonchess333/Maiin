@@ -9,12 +9,13 @@
  * in the upper band of the viewBox so a caller's overlaid distance
  * numeral has clear ground bottom-left.
  */
+import { splitRouteSegments, type RouteCoordinate } from "@/lib/routeSegments";
 import { THEME } from "../../lib/theme";
 
 export default function RouteScene({
   preview,
 }: {
-  preview: { lat: number; lon: number }[];
+  preview: RouteCoordinate[];
 }) {
   const lats = preview.map((p) => p.lat);
   const lons = preview.map((p) => p.lon);
@@ -28,7 +29,9 @@ export default function RouteScene({
     ((p.lon - minLon) / rLon) * 180 + 10,
     (1 - (p.lat - minLat) / rLat) * 46 + 8,
   ];
-  const pts = preview.map((p) => toXY(p).join(",")).join(" ");
+  const paths = splitRouteSegments(preview)
+    .filter((segment) => segment.length > 1)
+    .map((segment) => segment.map((p) => toXY(p).join(",")).join(" "));
   const [sx, sy] = toXY(preview[0]);
   const [fx, fy] = toXY(preview[preview.length - 1]);
   const layers: { w: number; o: number }[] = [
@@ -44,18 +47,20 @@ export default function RouteScene({
       role="img"
       aria-label="Run route map"
     >
-      {layers.map(({ w, o }) => (
-        <polyline
-          key={w}
-          fill="none"
-          stroke={THEME.running}
-          strokeOpacity={o}
-          strokeWidth={w}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          points={pts}
-        />
-      ))}
+      {layers.flatMap(({ w, o }) =>
+        paths.map((pts, index) => (
+          <polyline
+            key={`${w}-${index}`}
+            fill="none"
+            stroke={THEME.running}
+            strokeOpacity={o}
+            strokeWidth={w}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            points={pts}
+          />
+        ))
+      )}
       {/* Start = hollow ring, finish = solid dot (Strava's grammar —
           readable without a legend). */}
       <circle

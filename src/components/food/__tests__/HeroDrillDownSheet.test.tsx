@@ -74,6 +74,8 @@ function targets(o: Partial<EffectiveTargets> = {}): EffectiveTargets {
     annotation: "Hard session",
     caption: null,
     targetTooAggressive: false,
+    targetInfeasible: false,
+    minFeasibleKcal: 0,
     taperActive: false,
     trainingFuel: fuel({ eligible: false, applied: false }),
     ...o,

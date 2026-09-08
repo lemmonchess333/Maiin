@@ -1,4 +1,10 @@
 import { useCallback } from "react";
+import {
+  keysWithPrefix,
+  readString,
+  remove,
+  writeJson,
+} from "@/lib/localStore";
 
 /**
  * In-progress workout draft persistence (weights / reps / notes /
@@ -80,6 +86,10 @@ export interface WorkoutDraft {
    *  a second receipt. Defaults to `completionId` when repairing an older
    *  draft. */
   completionCommandId: string;
+  /** A finished session awaiting server acknowledgement must not expire. */
+  completionPending?: boolean;
+  /** Preserve the original date when retrying a finished session later. */
+  startedAt?: number;
 }
 
 /**
@@ -135,20 +145,8 @@ export function computeDraftIdentity(parts: DraftIdentityParts): string {
   ].join("|");
 }
 
-function removeKey(key: string): void {
-  try {
-    localStorage.removeItem(key);
-  } catch {
-    // Storage unavailable — draft protection is best effort.
-  }
-}
-
-function writeDraftAt(key: string, draft: WorkoutDraft): void {
-  try {
-    localStorage.setItem(key, JSON.stringify(draft));
-  } catch {
-    // Quota exhausted or storage unavailable.
-  }
+function writeDraftAt(key: string, draft: WorkoutDraft): boolean {
+  return writeJson(key, draft);
 }
 
 /**
@@ -158,9 +156,9 @@ function writeDraftAt(key: string, draft: WorkoutDraft): void {
  * so a resumed session keeps a stable idempotency key across remounts.
  */
 function readDraftAt(key: string): WorkoutDraft | null {
+  const raw = readString(key);
+  if (!raw) return null;
   try {
-    const raw = localStorage.getItem(key);
-    if (!raw) return null;
     const parsed = JSON.parse(raw) as Partial<WorkoutDraft>;
     if (
       !parsed ||
@@ -169,11 +167,11 @@ function readDraftAt(key: string): WorkoutDraft | null {
       typeof parsed.identity !== "string" ||
       parsed.identity.length === 0
     ) {
-      removeKey(key);
+      remove(key);
       return null;
     }
-    if (Date.now() - parsed.savedAt > MAX_AGE_MS) {
-      removeKey(key);
+    if (!parsed.completionPending && Date.now() - parsed.savedAt > MAX_AGE_MS) {
+      remove(key);
       return null;
     }
     const completionId =
@@ -210,22 +208,18 @@ function readDraftAt(key: string): WorkoutDraft | null {
 
 /** Keep only the MAX_DRAFTS_PER_USER newest V2 drafts for a uid. */
 function pruneUserDrafts(uid: string): void {
-  try {
-    const prefix = v2UserKeyPrefix(uid);
-    const drafts: Array<{ key: string; savedAt: number }> = [];
-    for (let i = localStorage.length - 1; i >= 0; i -= 1) {
-      const key = localStorage.key(i);
-      if (!key || !key.startsWith(prefix)) continue;
-      const draft = readDraftAt(key);
-      if (draft) drafts.push({ key, savedAt: draft.savedAt });
-    }
-    drafts
-      .sort((a, b) => b.savedAt - a.savedAt)
-      .slice(MAX_DRAFTS_PER_USER)
-      .forEach((d) => removeKey(d.key));
-  } catch {
-    // localStorage enumeration unavailable.
+  const drafts: Array<{ key: string; savedAt: number }> = [];
+  // Newest storage entry first: on equal savedAt (saves inside one
+  // millisecond) the later-written draft must survive the cap.
+  for (const key of keysWithPrefix(v2UserKeyPrefix(uid)).reverse()) {
+    const draft = readDraftAt(key);
+    if (draft && !draft.completionPending)
+      drafts.push({ key, savedAt: draft.savedAt });
   }
+  drafts
+    .sort((a, b) => b.savedAt - a.savedAt)
+    .slice(MAX_DRAFTS_PER_USER)
+    .forEach((d) => remove(d.key));
 }
 
 /**
@@ -236,16 +230,21 @@ function pruneUserDrafts(uid: string): void {
  */
 export function clearWorkoutDraft(uid: string): void {
   if (!uid) return;
-  try {
-    const prefix = v2UserKeyPrefix(uid);
-    for (let i = localStorage.length - 1; i >= 0; i -= 1) {
-      const key = localStorage.key(i);
-      if (key && key.startsWith(prefix)) localStorage.removeItem(key);
-    }
-    localStorage.removeItem(v1StorageKey(uid));
-    localStorage.removeItem(LEGACY_STORAGE_KEY);
-  } catch {
-    // Storage unavailable — nothing to clear.
+  for (const key of keysWithPrefix(v2UserKeyPrefix(uid))) remove(key);
+  remove(v1StorageKey(uid));
+  remove(LEGACY_STORAGE_KEY);
+}
+
+/** Retire a server-acknowledged completion even after the user changes week. */
+export function clearCompletedWorkoutDraft(
+  uid: string,
+  completionId: string
+): void {
+  if (!uid || !completionId) return;
+  for (const key of keysWithPrefix(v2UserKeyPrefix(uid))) {
+    const draft = readDraftAt(key);
+    if (draft?.completionPending && draft.completionId === completionId)
+      remove(key);
   }
 }
 
@@ -259,13 +258,13 @@ export function useWorkoutDraft(
   const load = useCallback((): WorkoutDraft | null => {
     if (!uid || !key) return null;
     // Drop the pre-scoping global draft on first read.
-    removeKey(LEGACY_STORAGE_KEY);
+    remove(LEGACY_STORAGE_KEY);
 
     const v2 = readDraftAt(key);
     if (v2) {
       // The key already encodes (uid, identity); a defensive re-check.
       if (v2.dayIndex === dayIndex && v2.identity === identity) return v2;
-      removeKey(key);
+      remove(key);
       return null;
     }
 
@@ -279,30 +278,47 @@ export function useWorkoutDraft(
       return null;
     }
     writeDraftAt(key, v1);
-    removeKey(oldKey);
+    remove(oldKey);
     pruneUserDrafts(uid);
     return v1;
   }, [uid, key, dayIndex, identity]);
 
   const save = useCallback(
     (draft: Omit<WorkoutDraft, "savedAt" | "identity">) => {
-      if (!uid || !key) return;
-      writeDraftAt(key, { ...draft, identity, savedAt: Date.now() });
+      if (!uid || !key) return false;
+      const existing = readDraftAt(key);
+      if (
+        existing?.completionPending &&
+        existing.completionId !== draft.completionId
+      )
+        return false;
+      const stored = writeDraftAt(key, {
+        ...draft,
+        identity,
+        savedAt: Date.now(),
+      });
       pruneUserDrafts(uid);
+      return stored;
     },
     [uid, key, identity]
   );
 
-  const clear = useCallback(() => {
-    if (!uid || !key) return;
-    removeKey(key);
-    // Also clear a matching V1 key so a not-yet-migrated slot can't resurface.
-    const oldKey = v1StorageKey(uid);
-    const v1 = readDraftAt(oldKey);
-    if (v1 && v1.identity === identity && v1.dayIndex === dayIndex) {
-      removeKey(oldKey);
-    }
-  }, [uid, key, dayIndex, identity]);
+  const clear = useCallback(
+    (completionId?: string) => {
+      if (!uid || !key) return;
+      const existing = readDraftAt(key);
+      if (completionId && existing && existing.completionId !== completionId)
+        return;
+      remove(key);
+      // Also clear a matching V1 key so a not-yet-migrated slot can't resurface.
+      const oldKey = v1StorageKey(uid);
+      const v1 = readDraftAt(oldKey);
+      if (v1 && v1.identity === identity && v1.dayIndex === dayIndex) {
+        remove(oldKey);
+      }
+    },
+    [uid, key, dayIndex, identity]
+  );
 
   return { load, save, clear };
 }

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { formatWeightInUnit } from "@/lib/weightUnits";
 import {
   collection,
   query,
@@ -16,7 +17,6 @@ import type { UserProfile } from "@/lib/auth";
 import { logger } from "@/lib/logger";
 import { sumMealTotals, type MealTotalsInput } from "@/lib/mealTotals";
 import { isVolumeEligible } from "@/lib/runStatsEligibility";
-import { estimateRunCalories } from "@/lib/gps";
 import { calcWeightTrend } from "@/utils/weightTrend";
 import {
   collapseBodyweightLogs,
@@ -30,6 +30,7 @@ import {
 export type WeightTrendDirection = "down" | "up" | "flat" | null;
 
 interface WeightInfo {
+  kg?: number;
   weight: string;
   date: string;
   rawDate: string | null;
@@ -53,7 +54,6 @@ interface HomeDataState {
   // mismatch (e.g. Home showing 200g carbs, Food showing 400g).
   dailyCarbs: number;
   dailyFat: number;
-  todayRunCals: number;
   /* Epoch ms of the most recent countable run finished today, or null.
      Drives the "run" half of the post-workout nudge — see the effect
      below for why a run cannot be recognised from `workouts`. */
@@ -99,13 +99,19 @@ export function useHomeData(
     dailyProt: 0,
     dailyCarbs: 0,
     dailyFat: 0,
-    todayRunCals: 0,
     lastRunAtMs: null,
     lastWeightInfo: null,
     weightTrend: null,
     loading: true,
     error: null,
   });
+
+  const [weightVersion, setWeightVersion] = useState(0);
+  useEffect(() => {
+    const refresh = () => setWeightVersion((v) => v + 1);
+    window.addEventListener("tropos:weight-changed", refresh);
+    return () => window.removeEventListener("tropos:weight-changed", refresh);
+  }, []);
 
   // Batch Firestore queries with Promise.allSettled
   useEffect(
@@ -164,7 +170,6 @@ export function useHomeData(
           let prot = 0;
           let carb = 0;
           let fat = 0;
-          let rCals = 0;
           let lastRunAtMs: number | null = null;
           let weightInfo: WeightInfo | null = null;
           let weightTrend: WeightTrendDirection = null;
@@ -190,20 +195,14 @@ export function useHomeData(
             errors.push("Failed to load meals");
           }
 
-          // Runs — today's run-calorie aggregate feeds the Home energy
-          // tile and the HybridBalanceCard. P0.5: skip non-countable
-          // runs so a saved-anyway "too-fast" 20km / 0:08 misclick
-          // doesn't credit the user ~1500kcal of phantom burn and
-          // distort the daily energy picture.
+          // Runs — read for the newest countable finish, which is the
+          // post-workout nudge's only evidence a run happened. P0.5: skip
+          // non-countable runs so a saved-anyway "too-fast" 20km / 0:08
+          // misclick can't trigger a refuel prompt.
           if (results[1].status === "fulfilled") {
-            const weightKg = profile?.weightKg || 70;
             results[1].value.docs.forEach(function (d) {
               const data = d.data();
               if (!isVolumeEligible(data)) return;
-              rCals += estimateRunCalories(data.distance || 0, weightKg);
-              // Newest countable finish — the nudge's only evidence a run
-              // happened. Same eligibility gate as the calorie tally, so a
-              // saved-anyway misclick can't trigger a refuel prompt either.
               const at = data.completedAt?.toMillis?.();
               if (
                 typeof at === "number" &&
@@ -221,11 +220,13 @@ export function useHomeData(
             const snap = results[2].value;
             if (snap.empty) {
               if (profile?.weightKg) {
-                const w =
-                  weightUnit === "lbs"
-                    ? (profile.weightKg * 2.20462).toFixed(1)
-                    : profile.weightKg.toFixed(1);
-                weightInfo = { weight: w, date: "From profile", rawDate: null };
+                const w = formatWeightInUnit(profile.weightKg, weightUnit);
+                weightInfo = {
+                  kg: profile.weightKg,
+                  weight: w,
+                  date: "From profile",
+                  rawDate: null,
+                };
               }
             } else {
               // Collapse duplicate same-day rows to one trustworthy
@@ -264,11 +265,9 @@ export function useHomeData(
                   return a.date.localeCompare(b.date);
                 });
                 const latest = sorted[sorted.length - 1];
-                const w =
-                  weightUnit === "lbs"
-                    ? (latest.weight * 2.20462).toFixed(1)
-                    : latest.weight.toFixed(1);
+                const w = formatWeightInUnit(latest.weight, weightUnit);
                 weightInfo = {
+                  kg: latest.weight,
                   weight: w,
                   date: format(new Date(latest.date + "T12:00:00"), "d MMM"),
                   rawDate: latest.date,
@@ -296,11 +295,13 @@ export function useHomeData(
             errors.push("Failed to load weight");
             // Fallback to profile weight
             if (profile?.weightKg) {
-              const w =
-                weightUnit === "lbs"
-                  ? (profile.weightKg * 2.20462).toFixed(1)
-                  : profile.weightKg.toFixed(1);
-              weightInfo = { weight: w, date: "From profile", rawDate: null };
+              const w = formatWeightInUnit(profile.weightKg, weightUnit);
+              weightInfo = {
+                kg: profile.weightKg,
+                weight: w,
+                date: "From profile",
+                rawDate: null,
+              };
             }
           }
 
@@ -309,7 +310,6 @@ export function useHomeData(
             dailyProt: prot,
             dailyCarbs: carb,
             dailyFat: fat,
-            todayRunCals: rCals,
             lastRunAtMs,
             lastWeightInfo: weightInfo,
             weightTrend,
@@ -323,7 +323,7 @@ export function useHomeData(
         cancelled = true;
       };
     },
-    [user?.uid, weightUnit, profile?.weightKg]
+    [user?.uid, weightUnit, profile?.weightKg, weightVersion]
   );
 
   // Post-workout nudge — uses Date.now() so must be in useEffect, not useMemo
@@ -408,21 +408,13 @@ export function useHomeData(
     ]
   );
 
-  const setLastWeightInfo = function (info: WeightInfo | null) {
-    setState(function (prev) {
-      return { ...prev, lastWeightInfo: info };
-    });
-  };
-
   return {
     dailyCal: state.dailyCal,
     dailyProt: state.dailyProt,
     dailyCarbs: state.dailyCarbs,
     dailyFat: state.dailyFat,
-    todayRunCals: state.todayRunCals,
     lastWeightInfo: state.lastWeightInfo,
     weightTrend: state.weightTrend,
-    setLastWeightInfo,
     postWorkoutNudge,
     loading: state.loading,
     error: state.error,

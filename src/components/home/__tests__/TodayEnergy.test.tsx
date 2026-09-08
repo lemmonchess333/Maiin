@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { describe, it, expect, vi } from "vitest";
+import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 
 // framer-motion → plain elements (strip animation props)
@@ -40,39 +40,14 @@ vi.mock("@/lib/haptic", function () {
   return { haptic: hapticMock };
 });
 
-// Keep the test focused on the always-on affordance, not ring internals.
-vi.mock("@/components/home/MacroRing", function () {
-  return { default: () => <div data-testid="macro-ring" /> };
-});
-vi.mock("@/components/home/BreakdownRow", function () {
-  return { default: () => <div data-testid="breakdown-row" /> };
-});
-
+/* MacroRing is NOT stubbed here, deliberately. The card's contract is
+   that a reader sees three macros without tapping anything, and a
+   `data-testid` placeholder cannot tell a rendered gram figure from an
+   empty div — the previous suite counted stubs and would have passed
+   with the rings rendering nothing at all. BreakdownRow stays stubbed;
+   its own content is not what these tests are about. */
 import TodayEnergy from "../TodayEnergy";
 
-/**
- * The expand state is PERSISTED now (usePersistedToggle), so a test that
- * opens the card writes that choice to localStorage and every later test
- * in this file inherits an already-expanded card.
- *
- * That is the feature working — the card is supposed to remember — but
- * jsdom keeps one localStorage for the whole file, so without this the
- * "collapsed summary" tests silently start asserting against the
- * expanded body. It surfaced as `Unable to find "P 0g · C 0g · F 0g
- * left"` on a test that never touched the toggle.
- */
-beforeEach(() => {
-  window.localStorage.clear();
-});
-
-const burn: any = {
-  phase: null,
-  phaseLabel: "Maintain",
-  phaseAdjustedTdee: 2200,
-  workoutCalories: 0,
-  runCalories: 0,
-  stepCalories: 0,
-};
 const targets: any = {
   finalTarget: 2200,
   protein: 160,
@@ -88,7 +63,6 @@ function renderAt(props: any = {}) {
         protein={0}
         carbs={0}
         fat={0}
-        burn={burn}
         targets={targets}
         {...props}
       />
@@ -96,141 +70,188 @@ function renderAt(props: any = {}) {
   );
 }
 
+/**
+ * Matches text that spans child elements. The target labels set the WORD
+ * in the display font and the FIGURE in the numeral font, so "Target
+ * 140g" is a `<p>` wrapping a `<span>` rather than one text node, and a
+ * plain string matcher finds nothing. The children check excludes
+ * ancestors, which would otherwise match too.
+ */
+function spanning(text: string) {
+  const norm = (s: string | null | undefined) =>
+    (s ?? "").replace(/\s+/g, " ").trim();
+  return (_: string, el: Element | null) =>
+    !!el &&
+    norm(el.textContent) === text &&
+    !Array.from(el.children).some((c) => norm(c.textContent) === text);
+}
+
+const A_DAY = {
+  calories: 1450,
+  protein: 80,
+  carbs: 56,
+  fat: 38,
+};
+
+describe("TodayEnergy — everything visible, no disclosure", function () {
+  /* The reported defect. Calories and macros are everyday information;
+     they sat behind a "Details" toggle with an abbreviated
+     "P 80/160g · C 56/220g · F 38/70g" line standing in for the rings. */
+  it("shows all three macros without any interaction", function () {
+    renderAt(A_DAY);
+    expect(screen.getByText("Protein")).toBeInTheDocument();
+    expect(screen.getByText("Carbs")).toBeInTheDocument();
+    expect(screen.getByText("Fat")).toBeInTheDocument();
+    expect(screen.getByText("80g")).toBeInTheDocument();
+    expect(screen.getByText("56g")).toBeInTheDocument();
+    expect(screen.getByText("38g")).toBeInTheDocument();
+  });
+
+  it("names every macro target rather than abbreviating them into a row", function () {
+    renderAt(A_DAY);
+    expect(screen.getByText(spanning("Target 160g"))).toBeInTheDocument();
+    expect(screen.getByText(spanning("Target 220g"))).toBeInTheDocument();
+    expect(screen.getByText(spanning("Target 70g"))).toBeInTheDocument();
+    // The cramped summary line is gone in every state.
+    expect(screen.queryByText(/P \d+\/\d+g/)).toBeNull();
+  });
+
+  it("offers no expand/collapse control at all", function () {
+    renderAt(A_DAY);
+    expect(screen.queryByText("Details")).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: /today's (energy|nutrition)/i })
+    ).toBeNull();
+    // Nothing in the card claims an expanded/collapsed state.
+    for (const el of screen.queryAllByRole("button")) {
+      expect(el).not.toHaveAttribute("aria-expanded");
+    }
+  });
+
+  it("renders no stray source comment as visible text", function () {
+    /* A `/* ... *\/` block placed directly between JSX elements is not a
+       comment — JSX renders it as text. It survives `tsc`, lint and every
+       assertion that only looks for strings it EXPECTS, so the first
+       signal was the card measuring 584px in a browser instead of 274.
+       Comment JSX with braces, or put the prose in the doc header. */
+    const { container } = renderAt(A_DAY);
+    const text = container.textContent ?? "";
+    expect(text).not.toContain("/*");
+    expect(text).not.toContain("*/");
+  });
+
+  it("titles itself Today's nutrition", function () {
+    renderAt(A_DAY);
+    expect(screen.getByText("Today's nutrition")).toBeInTheDocument();
+  });
+});
+
+describe("TodayEnergy — the calorie line is about the LOG", function () {
+  it("says what was logged, not what was eaten", function () {
+    /* The app knows what reached the diary; it does not know what
+       reached the person. An empty diary is a statement about the log. */
+    renderAt(A_DAY);
+    expect(screen.getByText(/kcal logged/)).toBeInTheDocument();
+    expect(screen.queryByText("eaten")).toBeNull();
+  });
+
+  it("reads 0 kcal logged on an empty day, and still shows the macros", function () {
+    renderAt({ calories: 0, protein: 0, carbs: 0, fat: 0 });
+    expect(screen.getByText("0")).toBeInTheDocument();
+    expect(screen.getByText(/kcal logged/)).toBeInTheDocument();
+    // Zero is information, not a reason to hide the rings.
+    expect(screen.getAllByText("0g")).toHaveLength(3);
+    expect(screen.getByText(spanning("Target 160g"))).toBeInTheDocument();
+  });
+
+  it("labels the daily target", function () {
+    renderAt(A_DAY);
+    expect(screen.getByText(spanning("Target 2,200 kcal"))).toBeInTheDocument();
+  });
+
+  it("drops the lapsed 'Nothing logged yet today' row — the zeros say it", function () {
+    renderAt({ calories: 0, protein: 0, carbs: 0, fat: 0 });
+    expect(screen.queryByText("Nothing logged yet today")).toBeNull();
+  });
+
+  it("drops the cold-start block that duplicated the Log food action", function () {
+    renderAt({ calories: 0, protein: 0, carbs: 0, fat: 0 });
+    expect(
+      screen.queryByText("Log a meal to see your daily energy")
+    ).toBeNull();
+    expect(screen.getByRole("link", { name: "Log food" })).toBeInTheDocument();
+  });
+});
+
 describe("TodayEnergy — always-on Log affordance (#973)", function () {
+  const foodLinks = () =>
+    screen
+      .getAllByRole("link")
+      .filter((a) => a.getAttribute("href") === "/food");
+
   it("renders a Log affordance routing to /food", function () {
     renderAt();
     const link = screen.getByRole("link", { name: "Log food" });
-    expect(link).toBeInTheDocument();
     expect(link).toHaveAttribute("href", "/food");
   });
 
-  it("is present for the empty/new segment (no meals ever logged)", function () {
-    renderAt({ calories: 0, totalLifetimeMeals: 0 });
-    expect(screen.getByRole("link", { name: "Log food" })).toBeInTheDocument();
-  });
-
-  it("is present for an active segment (meals logged today)", function () {
-    renderAt({
-      calories: 1450,
-      protein: 90,
-      carbs: 150,
-      fat: 45,
-      totalLifetimeMeals: 420,
-    });
-    expect(screen.getByRole("link", { name: "Log food" })).toBeInTheDocument();
+  it("is present for the empty/new segment and the active one alike", function () {
+    const { unmount } = renderAt({ calories: 0 });
+    expect(foodLinks()).toHaveLength(1);
+    unmount();
+    renderAt(A_DAY);
+    expect(foodLinks()).toHaveLength(1);
   });
 
   it("fires haptic feedback on tap", function () {
     hapticMock.mockClear();
-    renderAt({ calories: 1450, totalLifetimeMeals: 420 });
-    fireEvent.click(screen.getByRole("link", { name: "Log food" }));
+    renderAt(A_DAY);
+    screen.getByRole("link", { name: "Log food" }).click();
     expect(hapticMock).toHaveBeenCalled();
   });
 });
 
-describe("TodayEnergy — collapsed macro summary vs expanded rings (Wave3 E1)", function () {
-  it("collapsed default shows the muted grams-remaining line, NOT the rings", function () {
-    renderAt({
-      calories: 1450,
-      protein: 80,
-      carbs: 56,
-      fat: 38,
-      totalLifetimeMeals: 420,
-    });
-    // target − consumed, clamped: P 160-80=80, C 220-56=164, F 70-38=32
-    expect(screen.getByText("P 80g · C 164g · F 32g left")).toBeInTheDocument();
-    expect(screen.queryByTestId("macro-ring")).toBeNull();
+describe("TodayEnergy — over target stays truthful", function () {
+  it("an over-target macro reads plainly — never clamped away", function () {
+    renderAt({ calories: 3000, protein: 200, carbs: 300, fat: 90 });
+    expect(screen.getByText("200g")).toBeInTheDocument();
+    expect(screen.getByText("300g")).toBeInTheDocument();
+    expect(screen.getByText("90g")).toBeInTheDocument();
+    // The targets they are over are still named beside them.
+    expect(screen.getByText(spanning("Target 160g"))).toBeInTheDocument();
   });
 
-  it("expanding the card reveals the three macro rings", function () {
-    renderAt({
-      calories: 1450,
-      protein: 80,
-      carbs: 56,
-      fat: 38,
-      totalLifetimeMeals: 420,
-    });
-    fireEvent.click(screen.getByText("Today's Energy"));
-    expect(screen.getAllByTestId("macro-ring")).toHaveLength(3);
-    // summary line hides once expanded (rings carry the detail)
-    expect(screen.queryByText(/P 80g · C 164g · F 32g left/)).toBeNull();
-  });
-
-  it("REMEMBERS an expand across a remount, per account", function () {
-    /* The reported friction. `expanded` was plain useState, so the card
-       re-collapsed on every arrival at Home and anyone who wanted the
-       macro breakdown re-opened it every single visit.
-
-       Asserted at the CARD, not just the hook: usePersistedToggle has
-       its own unit tests, and they would all pass while this component
-       still called useState — the wiring is the part that regressed.
-
-       The closed default is untouched (Wave3 E1); what is pinned here is
-       that a tap counts as a choice, and that the choice is uid-scoped so
-       a shared device doesn't carry one account's layout into another. */
-    const props = {
-      calories: 1450,
-      protein: 80,
-      carbs: 56,
-      fat: 38,
-      totalLifetimeMeals: 420,
-      uid: "user-A",
-    };
-    const first = renderAt(props);
-    expect(screen.queryByTestId("macro-ring")).toBeNull();
-    fireEvent.click(screen.getByText("Today's Energy"));
-    expect(screen.getAllByTestId("macro-ring")).toHaveLength(3);
-    first.unmount();
-
-    // Same account returns → still open, with no second tap.
-    const second = renderAt(props);
-    expect(screen.getAllByTestId("macro-ring")).toHaveLength(3);
-    second.unmount();
-
-    // A different account on the same device → their own default.
-    renderAt({ ...props, uid: "user-B" });
-    expect(screen.queryByTestId("macro-ring")).toBeNull();
-  });
-
-  it("grams-remaining never goes negative (clamped at 0)", function () {
-    renderAt({
-      calories: 3000,
-      protein: 200,
-      carbs: 300,
-      fat: 90,
-      totalLifetimeMeals: 420,
-    });
-    expect(screen.getByText("P 0g · C 0g · F 0g left")).toBeInTheDocument();
-  });
-
-  it("cold-start (no meals ever) shows neither the summary line nor the rings", function () {
-    renderAt({ calories: 0, totalLifetimeMeals: 0 });
-    expect(screen.queryByText(/left$/)).toBeNull();
-    expect(screen.queryByTestId("macro-ring")).toBeNull();
+  it("a reached target is announced, not signalled by colour alone", function () {
+    renderAt({ calories: 2200, protein: 155, carbs: 56, fat: 38 });
     expect(
-      screen.getByText("Log a meal to see your daily energy")
+      screen.getByText(/^Protein: 155 grams logged.*target reached$/)
     ).toBeInTheDocument();
+    // Carbs is nowhere near its 220g target, so it must not claim one.
+    expect(screen.getByText(/^Carbs: 56 grams logged/)).toBeInTheDocument();
+    expect(screen.queryByText(/^Carbs:.*target reached$/)).toBeNull();
   });
 });
 
 describe("TodayEnergy — HOME-TARGET-01 truthful targets/copy", () => {
-  it("phase chip shows the label WITHOUT a fabricated +300/−500 delta", () => {
-    renderAt({
-      calories: 1000,
-      burn: { ...burn, phase: "cut" },
-    });
-    expect(screen.getByText("Cut")).toBeInTheDocument();
-    expect(screen.queryByText(/−500/)).toBeNull();
-    expect(screen.queryByText(/\+300/)).toBeNull();
+  it("carries no nutrition-phase chip", () => {
+    /* The chip named the phase ("Cut" / "Bulk" / "Recomp") on a card
+       about today's log. It was a profile setting, not a fact about the
+       day: it never moved as you ate, and HOME-TARGET-01 had already
+       barred it from showing the adjustment it stands for, leaving a
+       label with no number. The phase still shows where it is set and
+       explained, in Settings > Nutrition. */
+    renderAt(A_DAY);
+    for (const phase of ["Cut", "Bulk", "Recomp"]) {
+      expect(screen.queryByText(phase)).toBeNull();
+    }
   });
 
-  it("bulk phase likewise shows only the label", () => {
-    renderAt({
-      calories: 1000,
-      burn: { ...burn, phase: "lean bulk" },
-    });
-    expect(screen.getByText("Bulk")).toBeInTheDocument();
-    expect(screen.queryByText(/\+300/)).toBeNull();
+  it("never fabricates a target adjustment", () => {
+    // The invariant the two phase-chip tests used to carry: whatever the
+    // phase, the card states the target and never a +300/-500 delta.
+    renderAt({ ...A_DAY, targets: { ...targets, finalTarget: 1700 } });
+    expect(screen.getByText(spanning("Target 1,700 kcal"))).toBeInTheDocument();
+    expect(screen.queryByText(/[+\u2212-]\s?\d{3}/)).toBeNull();
   });
 
   it("post-lift protein nudge ties to the target, not a recovery claim", () => {
@@ -240,5 +261,122 @@ describe("TodayEnergy — HOME-TARGET-01 truthful targets/copy", () => {
     });
     expect(screen.getByText(/40g protein to your target/i)).toBeInTheDocument();
     expect(screen.queryByText(/for recovery/i)).toBeNull();
+  });
+
+  it("does not restate the activity breakdown Food's drill-down owns", () => {
+    /* Nutr1 is not weakened by this — Food's "Nutrition breakdown" sheet
+       carries the same figures split by lifting and running, the total,
+       and the "already counted, no need to eat it back" sentence. Home
+       paid 93px for the copy, and only on days the user had trained,
+       which is exactly when the card is most crowded. The card no longer
+       takes a `burn` prop at all, so there is nothing to restate — and
+       the target it shows is unchanged by activity (no eat-back). */
+    renderAt(A_DAY);
+    expect(screen.queryByText(/already in your target/i)).toBeNull();
+    expect(screen.queryByText("Workout")).toBeNull();
+    expect(screen.queryByText(/Plan target/)).toBeNull();
+    expect(screen.getByText(spanning("Target 2,200 kcal"))).toBeInTheDocument();
+  });
+});
+
+/**
+ * Three-surface consistency: a target the split cannot fund is named in
+ * the same sentence on Home, Food and Settings (macroInfeasibility.ts).
+ */
+import { macroInfeasibilityMessage } from "@/lib/macroInfeasibility";
+
+describe("TodayEnergy — infeasible target notice", function () {
+  const infeasible = {
+    ...targets,
+    finalTarget: 100,
+    protein: 0,
+    carbs: 0,
+    fat: 42,
+    targetInfeasible: true,
+    minFeasibleKcal: 378,
+  };
+
+  it("renders the shared sentence when the target cannot fund essential fat", function () {
+    renderAt({
+      calories: 1790,
+      protein: 125,
+      carbs: 172,
+      fat: 56,
+      targets: infeasible,
+    });
+    expect(
+      screen.getByText(macroInfeasibilityMessage(378))
+    ).toBeInTheDocument();
+  });
+
+  it("Nutr3: below the floor, protein and carbs carry NO goal on the rings", function () {
+    renderAt({
+      calories: 900,
+      protein: 80,
+      carbs: 56,
+      fat: 38,
+      targets: infeasible,
+    });
+    expect(screen.getAllByText("No target")).toHaveLength(2);
+    expect(screen.getByText(spanning("Target 42g"))).toBeInTheDocument();
+    expect(screen.queryByText(/Target 0g/)).toBeNull();
+  });
+
+  it("says nothing on an ordinary target", function () {
+    renderAt({ targets: { ...targets, targetInfeasible: false } });
+    expect(screen.queryByText(/essential fat alone exceeds/)).toBeNull();
+  });
+});
+
+describe("TodayEnergy — loading is not the same as having logged nothing", function () {
+  /**
+   * A confident "0 kcal logged" while the day's meals are still in
+   * flight is a false statement rather than a neutral placeholder: it is
+   * byte-identical to the display for a user who has genuinely logged
+   * nothing, and the reader most likely to meet it is the returning user
+   * who logged a full day yesterday. Home has no page-level skeleton
+   * past the profile load, so this component owns the distinction — and
+   * now owns it for the MACROS too, which are no longer behind a tap.
+   */
+  it("shows no calorie figure while meals are still loading", function () {
+    renderAt({ calories: 0, mealsLoading: true });
+    expect(screen.queryByText("0")).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("status", { name: /calories still loading/i })
+    ).toBeInTheDocument();
+  });
+
+  it("shows no macro figures while meals are still loading", function () {
+    renderAt({ calories: 0, mealsLoading: true });
+    // The literal a pre-fix render produced for every macro at once.
+    expect(screen.queryByText("0g")).not.toBeInTheDocument();
+    expect(screen.queryByText("Target 160g")).not.toBeInTheDocument();
+  });
+
+  it("shows the real figures once meals have loaded", function () {
+    renderAt({
+      ...A_DAY,
+      protein: 90,
+      carbs: 150,
+      fat: 45,
+      mealsLoading: false,
+    });
+    expect(screen.getByText("1,450")).toBeInTheDocument();
+    expect(screen.getByText("90g")).toBeInTheDocument();
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+  });
+
+  it("keeps figures it already has rather than flickering back to a skeleton", function () {
+    // A refetch with data in hand must not blank the card: the guard is
+    // `calories === 0`, not `mealsLoading` alone.
+    renderAt({ ...A_DAY, protein: 90, mealsLoading: true });
+    expect(screen.getByText("1,450")).toBeInTheDocument();
+    expect(screen.getByText("90g")).toBeInTheDocument();
+  });
+
+  it("still shows a real zero once loading is done", function () {
+    renderAt({ calories: 0, mealsLoading: false });
+    expect(screen.getByText("0")).toBeInTheDocument();
+    expect(screen.getAllByText("0g")).toHaveLength(3);
   });
 });

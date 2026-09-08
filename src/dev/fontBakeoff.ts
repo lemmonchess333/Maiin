@@ -15,16 +15,12 @@
  *   archivo-all  → numbers AND text → Archivo (single-family)
  */
 import "@fontsource-variable/archivo/standard.css";
+import { readString } from "@/lib/localStore";
 
 const ARCHIVO = "'Archivo Variable', ui-sans-serif, system-ui, sans-serif";
 
 export function initFontBakeoff() {
-  let combo: string | null = null;
-  try {
-    combo = localStorage.getItem("bk-font-combo");
-  } catch {
-    /* private mode */
-  }
+  const combo = readString("bk-font-combo");
   if (!combo || combo === "control") return;
 
   const root = document.documentElement;

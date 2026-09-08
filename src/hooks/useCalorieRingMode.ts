@@ -1,5 +1,6 @@
 import { useSyncExternalStore } from "react";
 import type { CalorieRingMode } from "@/components/food/CalorieRing";
+import { readString, writeString } from "@/lib/localStore";
 
 const STORAGE_KEY = "tropos.food.calorieRingMode";
 
@@ -25,13 +26,7 @@ const STORAGE_KEY = "tropos.food.calorieRingMode";
 
 function read(): CalorieRingMode {
   if (typeof window === "undefined") return "left";
-  try {
-    return window.localStorage.getItem(STORAGE_KEY) === "eaten"
-      ? "eaten"
-      : "left";
-  } catch {
-    return "left";
-  }
+  return readString(STORAGE_KEY) === "eaten" ? "eaten" : "left";
 }
 
 let current: CalorieRingMode = read();
@@ -64,12 +59,9 @@ function getServerSnapshot(): CalorieRingMode {
 export function setCalorieRingMode(next: CalorieRingMode): void {
   if (next === current) return;
   current = next;
-  try {
-    window.localStorage.setItem(STORAGE_KEY, next);
-  } catch {
-    // Storage can throw in private mode; the in-memory value still holds
-    // for this session, which is the half the user notices.
-  }
+  // A refused write (private mode) still leaves the in-memory value for
+  // this session, which is the half the user notices.
+  writeString(STORAGE_KEY, next);
   for (const fn of listeners) fn();
 }
 

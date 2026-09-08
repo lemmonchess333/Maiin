@@ -113,7 +113,6 @@ async function run() {
       longestStreak: 0,
       lastLogDate: null,
       adjustCaloriesForTraining: true,
-      program: { goal: "recomp", startWeight: 72, currentPhase: "base" },
       targetCalories: 2100,
       targetProtein: 130,
       ...plan.profileUpdates,

@@ -26,7 +26,7 @@ import {
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
 import { useStreaks } from "@/features/streaks/useStreaks";
-import { getWeekKey } from "@/lib/performanceEngine";
+import { localWeekKey } from "@/lib/dateHelpers";
 import {
   buildWeekPulse,
   weekBounds,
@@ -47,7 +47,7 @@ export function useWeekPulse(pendingLifts = 0): WeekPulse | null {
     let cancelled = false;
     (async () => {
       try {
-        const weekKey = getWeekKey(new Date());
+        const weekKey = localWeekKey(new Date());
         const { start, end } = weekBounds(weekKey);
         const [workoutsSnap, runsSnap, programStateSnap] = await Promise.all([
           getDocs(

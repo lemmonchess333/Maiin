@@ -31,6 +31,7 @@ export function parseGpx(xml: string): GPSPoint[] {
     trkpts.length > 0 ? trkpts : Array.from(doc.getElementsByTagName("rtept"));
 
   const points: GPSPoint[] = [];
+  let previousSegment: Element | null = null;
   for (const node of nodes) {
     const lat = parseFloat(node.getAttribute("lat") ?? "");
     const lon = parseFloat(node.getAttribute("lon") ?? "");
@@ -42,7 +43,11 @@ export function parseGpx(xml: string): GPSPoint[] {
     const timeText = node.getElementsByTagName("time")[0]?.textContent ?? "";
     const t = timeText ? Date.parse(timeText) : NaN;
 
+    const segment = node.parentElement;
     points.push({
+      ...(points.length > 0 && segment !== previousSegment
+        ? { breakBefore: true }
+        : {}),
       lat,
       lon,
       altitude: Number.isFinite(altitude) ? altitude : null,
@@ -52,6 +57,7 @@ export function parseGpx(xml: string): GPSPoint[] {
       rawLat: lat,
       rawLon: lon,
     });
+    previousSegment = segment;
   }
   return points;
 }

@@ -21,7 +21,6 @@ vi.mock("@/lib/platform", function () {
 });
 
 import WeightStepsTiles from "../WeightStepsTiles";
-import * as tiles from "../WeightStepsTiles";
 import { isNativePlatform } from "@/lib/platform";
 
 const setNative = (v: boolean) =>
@@ -95,8 +94,6 @@ describe("WeightStepsTiles", function () {
   });
 
   afterEach(function () {
-    // Gate ships enabled; keep it at its default between tests.
-    tiles.stepsTileGate.enabled = true;
     vi.clearAllMocks();
     setNative(false);
   });
@@ -238,6 +235,53 @@ describe("WeightStepsTiles", function () {
     // Weight is still present.
     expect(
       screen.getByRole("button", { name: /Weight 75\.4 kg/i })
+    ).toBeInTheDocument();
+  });
+  it("loading with no weight yet: a skeleton, not the empty state", function () {
+    render(
+      <WeightStepsTiles
+        lastWeight={null}
+        weightUnit="kg"
+        onLogWeight={vi.fn()}
+        lastWeightDate="Tap to log"
+        loading
+      />
+    );
+    expect(screen.getAllByRole("status", { name: /loading/i }).length).toBe(2);
+    expect(screen.queryByText("\u2014")).toBeNull();
+    expect(screen.queryByText("Tap to log")).toBeNull();
+    expect(
+      screen.getByRole("button", { name: /weight loading/i })
+    ).toBeInTheDocument();
+  });
+
+  it("loading with a weight already known: the number wins over the skeleton", function () {
+    render(
+      <WeightStepsTiles
+        lastWeight="75.4"
+        weightUnit="kg"
+        onLogWeight={vi.fn()}
+        lastWeightDate="Logged today"
+        loading
+      />
+    );
+    expect(screen.getByText("75.4")).toBeInTheDocument();
+    expect(screen.queryByRole("status", { name: /loading/i })).toBeNull();
+  });
+
+  it("loaded with no weight: the empty state, with its log-prompting label", function () {
+    render(
+      <WeightStepsTiles
+        lastWeight={null}
+        weightUnit="kg"
+        onLogWeight={vi.fn()}
+        lastWeightDate="Tap to log"
+      />
+    );
+    expect(screen.getByText("\u2014")).toBeInTheDocument();
+    expect(screen.getByText("Tap to log")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /not yet logged/i })
     ).toBeInTheDocument();
   });
 });

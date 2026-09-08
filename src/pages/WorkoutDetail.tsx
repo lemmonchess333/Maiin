@@ -16,9 +16,9 @@
  * safe to pick.
  *
  * It also removes the reason two share controls used to sit on the
- * completion screen BEFORE the save ran: "Share to Circle" published a
+ * completion screen BEFORE the save ran: "Share to circle" published a
  * `session_completed` event and "Share Workout" exported a card, while
- * "Save Workout" was a different button entirely. Share to Circle → Close
+ * "Save Workout" was a different button entirely. Share to circle → Close
  * without saving left a Circle post claiming a session with no record
  * behind it. Sharing from a record that already exists cannot do that.
  *
@@ -28,6 +28,7 @@
  * snapshot resolves.
  */
 import { useEffect, useState } from "react";
+import { formatVolume } from "@/utils/formatters";
 import { useParams, useNavigate } from "react-router-dom";
 import { doc, getDoc } from "firebase/firestore";
 import { ChevronLeft, Share2, Users, Check, Dumbbell } from "lucide-react";
@@ -75,11 +76,6 @@ function StatPill({
   );
 }
 
-function formatVolume(kg: number): string {
-  if (kg >= 1000) return `${(kg / 1000).toFixed(1)}k`;
-  return String(Math.round(kg));
-}
-
 /** Working sets only. Warm-ups are logged on the same list but are not the
  *  session's work, and counting them inflates every set total on the page —
  *  the same filter `SessionCompleteScreen` applies to its SETS stat. */
@@ -88,6 +84,14 @@ function workingSets(ex: Workout["exercises"][number]) {
 }
 
 export default function WorkoutDetail() {
+  const { workoutId } = useParams<{ workoutId: string }>();
+  const { user } = useAuth();
+  // A route/account change must clear the prior record and its share state
+  // immediately, including while the next read is pending or fails.
+  return <WorkoutDetailContent key={JSON.stringify([user?.uid, workoutId])} />;
+}
+
+function WorkoutDetailContent() {
   const { workoutId } = useParams<{ workoutId: string }>();
   const navigate = useNavigate();
   const { user, profile } = useAuth();
@@ -111,7 +115,7 @@ export default function WorkoutDetail() {
       .then((snap) => {
         if (cancelled) return;
         if (snap.exists()) {
-          const data = { id: snap.id, ...snap.data() } as Workout;
+          const data = { ...snap.data(), id: snap.id } as Workout;
           setWorkout(data);
           setSharedActivityId(data.sharedActivityId ?? null);
         }
@@ -210,7 +214,7 @@ export default function WorkoutDetail() {
         <div className="rounded-2xl bg-card card-shadow flex divide-x divide-border/40">
           <StatPill value={`${workout.durationMinutes ?? 0}`} label="Minutes" />
           <StatPill
-            value={formatVolume(tonnage)}
+            value={formatVolume(tonnage).value}
             label="kg Volume"
             color={THEME.lifting}
           />
@@ -260,6 +264,17 @@ export default function WorkoutDetail() {
                       ))}
                     </div>
                   )}
+                  {/* The note the lifter typed during the session. This is
+                      the point of keeping it: "Level 8, 6.0 incline" is the
+                      machine setting they want back next time, and until now
+                      it was discarded on Finish. Absent on every session
+                      logged before notes were persisted, so the row simply
+                      does not render rather than showing an empty label. */}
+                  {ex.notes && (
+                    <p className="text-xs text-muted-foreground italic">
+                      {ex.notes}
+                    </p>
+                  )}
                 </div>
               );
             })
@@ -299,7 +314,7 @@ export default function WorkoutDetail() {
               onClick={() => setCircleOpen(true)}
               leftIcon={<Users className="size-4 shrink-0" />}
             >
-              Share to Circle
+              Share to circle
             </Button>
           )}
         </div>

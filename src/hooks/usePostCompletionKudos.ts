@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { getFeed, toggleKudos } from "@/lib/socialApi";
+import { readString, writeString } from "@/lib/localStore";
 import {
   pickKudosCandidate,
   localDayKey,
@@ -45,13 +46,8 @@ export function usePostCompletionKudos(opts: {
     ranRef.current = true;
 
     const today = localDayKey(new Date());
-    let alreadyShown = false;
-    try {
-      alreadyShown = localStorage.getItem(storageKey(uid)) === today;
-    } catch {
-      /* localStorage unavailable (private mode / webview) — treat as not shown */
-    }
-    if (alreadyShown) return;
+    // Unavailable storage (private mode / webview) reads as not shown.
+    if (readString(storageKey(uid)) === today) return;
 
     let cancelled = false;
     getFeed(uid, 20)
@@ -64,11 +60,7 @@ export function usePostCompletionKudos(opts: {
         );
         if (!c) return;
         setCandidate(c);
-        try {
-          localStorage.setItem(storageKey(uid), today);
-        } catch {
-          /* ignore */
-        }
+        writeString(storageKey(uid), today);
       })
       .catch((e) => logger.warn("[kudos] feed fetch failed", e));
 

@@ -84,7 +84,7 @@ describe("distance & pace unit toggle", () => {
     });
 
     track.mockReset();
-    fireEvent.click(screen.getByText("Height Unit"));
+    fireEvent.click(screen.getByText("Height unit"));
     expect(track).toHaveBeenCalledWith("settings_toggle_changed", {
       toggle: "height_unit",
       value: "ft",
@@ -99,5 +99,14 @@ describe("distance & pace unit toggle", () => {
       toggle: "run_distance_unit",
       value: "km",
     });
+  });
+});
+
+describe("body weight unit scope", () => {
+  it("names the body-weight scope and keeps lifting loads explicit", () => {
+    const { toggleUnit } = renderSection({ preferredWeightUnit: "lbs" });
+    fireEvent.click(screen.getByRole("button", { name: /Body weight unit/ }));
+    expect(toggleUnit).toHaveBeenCalledWith("preferredWeightUnit", "lbs");
+    expect(screen.getByText(/Lifting loads use kg/)).toBeInTheDocument();
   });
 });

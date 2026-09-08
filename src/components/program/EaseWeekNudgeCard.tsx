@@ -90,7 +90,7 @@ export default function EaseWeekNudgeCard({
         type="button"
         onClick={onDismiss}
         aria-label="Dismiss"
-        className="absolute top-2 right-2 size-8 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground active:scale-90 transition-all"
+        className="absolute top-2 right-2 size-8 before:absolute before:-inset-1.5 before:content-[''] flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground active:scale-90 transition-all"
       >
         <X className="size-4" aria-hidden />
       </button>

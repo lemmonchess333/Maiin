@@ -7,6 +7,7 @@ import {
   useCallback,
 } from "react";
 import { createPortal } from "react-dom";
+import EmptyState from "@/components/ui/EmptyState";
 import { useNavigate } from "react-router-dom";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import ExerciseFormContent from "@/components/ExerciseFormContent";
@@ -39,7 +40,7 @@ export default function ExercisePicker({
   onSelect,
   onMultiSelect,
   onClose,
-  headerTitle = "Select Exercise",
+  headerTitle = "Select exercise",
   existingExerciseIds,
   onRemoveExercise,
 }: Props) {
@@ -236,7 +237,7 @@ export default function ExercisePicker({
                         onClick={() => setShowDiscardConfirm(false)}
                         className="px-3 py-1.5 text-xs font-medium text-muted-foreground rounded-lg hover:bg-card"
                       >
-                        Keep Browsing
+                        Keep browsing
                       </button>
                       <button
                         type="button"
@@ -344,15 +345,12 @@ export default function ExercisePicker({
                 ))}
               </div>
               {filteredExercises.length === 0 && (
-                <div className="flex flex-col items-center justify-center py-16 px-8">
-                  <Search className="size-12 text-muted-foreground mb-3" />
-                  <p className="text-base font-semibold text-foreground">
-                    No exercises found
-                  </p>
-                  <p className="text-sm text-muted-foreground mt-1 text-center">
-                    Try a different search term or browse by muscle group
-                  </p>
-                </div>
+                <EmptyState
+                  compact
+                  icon={Search}
+                  headline="No exercises found"
+                  sub="Try a different search term or browse by muscle group"
+                />
               )}
             </div>
 

@@ -240,3 +240,118 @@ describe("D15 · DS invariant — numeric displays use the mono numeral font", (
     );
   });
 });
+
+/**
+ * Surface-level drift ratchets (2026-09-05). Each of these is a convention
+ * CLAUDE.md states and nothing enforced; each regressed silently in the
+ * survey that produced the app-improvement prompt. Ratchets, not bans:
+ * every one has legitimate instances (a pressable card IS a `<button>`, a
+ * pill label IS `font-medium`, the wordmark h1 is deliberately not the page
+ * title scale), so the assertion is only that a change does not ADD to the
+ * count. Lower a baseline when you burn some down; raise one only with the
+ * reason written beside the number.
+ */
+describe("DS ratchets — surface-level drift", () => {
+  // Raw <button> elements. CTAs belong on the Button / IconButton
+  // primitives (44px floor, focus ring, press feedback come with them);
+  // pressable cards, rows, chips and day-cells are legitimately bare.
+  const RAW_BUTTON_BASELINE = 386;
+  it("raw <button> elements do not increase (CTAs use the Button primitive)", () => {
+    const { total, byFile } = scan(
+      (src) => (src.match(/<button\b/g) ?? []).length
+    );
+    expectRatchet("raw <button>", total, RAW_BUTTON_BASELINE, byFile);
+  });
+
+  /* font-medium (500) is the small-text emphasis weight, and this pins the
+     boundary rather than a count.
+
+     It used to be a count ratchet on the theory that 500 was off-scale
+     drift — a "slightly bold" reflex against a documented 800/700/600.
+     Counting where it actually lands settled that: of 269 uses carrying a
+     size, 113 are text-sm and 105 are text-xs, and ZERO are text-lg or
+     above. A convention that consistent across ~96 components is the
+     scale, not drift, so DESIGN_GUIDE §Typography now documents 500 and
+     the count is no longer interesting.
+
+     What IS interesting is the boundary the codebase has never crossed:
+     500 at heading scale would be a real regression, because that is
+     where 600/700/800 carry the hierarchy. It sits at zero, which makes
+     it the rare invariant that can be asserted outright. */
+  it("font-medium never appears at heading scale (text-lg and above)", () => {
+    const offenders: string[] = [];
+    /* Per className CHUNK, not per line: the dominant pattern here is
+       `className={cn(...)}` spanning several lines, where the weight and
+       the size sit in different arguments. A line-wise check would miss
+       exactly those. */
+    scan((src, rel) => {
+      for (const chunk of classNameChunks(src)) {
+        if (!/\bfont-medium\b/.test(chunk)) continue;
+        const size = chunk.match(/\btext-(lg|xl|2xl|3xl|4xl|5xl)\b/);
+        if (size) offenders.push(`${rel}  font-medium + text-${size[1]}`);
+      }
+      return 0;
+    });
+    expect(
+      offenders,
+      `font-medium at heading scale. 500 is the small-text emphasis ` +
+        `weight (text-sm / text-xs); hierarchy at text-lg and above is ` +
+        `carried by 600 / 700 / 800. See DESIGN_GUIDE.md §Typography.\n` +
+        offenders.join("\n")
+    ).toEqual([]);
+  });
+
+  // Ambient animation must respect prefers-reduced-motion: `motion-safe:`
+  // is the Tailwind spelling of that promise. `animate-none` is a reset,
+  // not an animation, and is excluded.
+  const UNGUARDED_ANIMATION_BASELINE = 8;
+  it("animate-* classes without a motion-safe: prefix do not increase", () => {
+    const { total, byFile } = scan((src) => {
+      let n = 0;
+      for (const m of src.matchAll(/(motion-safe:)?\banimate-([a-z0-9-]+)/g)) {
+        if (!m[1] && m[2] !== "none") n++;
+      }
+      return n;
+    });
+    expectRatchet(
+      "animate-* without motion-safe:",
+      total,
+      UNGUARDED_ANIMATION_BASELINE,
+      byFile
+    );
+  });
+
+  // The page-title h1 is `text-xl font-extrabold` (H1 tier). Off-scale h1s
+  // — the wordmark, a text-h2 hero, a font-bold title — are counted here.
+  // Approved designer first release: onboarding questions use text-h1 (DESIGN_GUIDE §4).
+  // This is one question role, not a change to app page titles.
+  const OFF_SCALE_H1_BASELINE = 7;
+  it("<h1> elements off the page-title scale do not increase", () => {
+    const { total, byFile } = scan((src) => {
+      let n = 0;
+      for (const m of src.matchAll(/<h1\b([^>]*)>/g)) {
+        const attrs = m[1];
+        const c =
+          /className=(?:"([^"]*)"|\{`([^`]*)`\}|\{(?:cn|clsx|twMerge)\(([\s\S]*?)\)\})/.exec(
+            attrs
+          );
+        const cls = c ? (c[1] ?? c[2] ?? c[3] ?? "") : "";
+        if (!(/\btext-xl\b/.test(cls) && /\bfont-extrabold\b/.test(cls))) n++;
+      }
+      return n;
+    });
+    expectRatchet("off-scale <h1>", total, OFF_SCALE_H1_BASELINE, byFile);
+  });
+
+  // Arbitrary pixel sizes (`text-[10px]`, `text-[15px]`) sit off the
+  // documented scale — 11px is text-caption (tracked labels only), then
+  // 12 / 14 / 16 and up. The cohesion pass (batch 3, 2026-09-05) burned the
+  // product surfaces to zero; a new one has to be argued for here.
+  const OFF_SCALE_TEXT_BASELINE = 0;
+  it("arbitrary text-[Npx] sizes do not increase (use the documented scale)", () => {
+    const { total, byFile } = scan(
+      (src) => (src.match(/\btext-\[\d+(?:\.\d+)?px\]/g) ?? []).length
+    );
+    expectRatchet("text-[Npx]", total, OFF_SCALE_TEXT_BASELINE, byFile);
+  });
+});

@@ -4,11 +4,19 @@
  * the old bespoke purple-outline pills — and that picking a pace writes the
  * rate. Render-level (jsdom), no Firebase emulator.
  */
+import { useState } from "react";
+import { lbToKg } from "@/lib/weightUnits";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { render, screen, fireEvent, cleanup } from "@testing-library/react";
+import {
+  render,
+  screen,
+  fireEvent,
+  cleanup,
+  act,
+} from "@testing-library/react";
 import NutritionSection from "../NutritionSection";
 import type { UserProfile, UpdateProfileResult } from "@/lib/auth";
 import type { ActivityLevel } from "@/lib/tdee";
@@ -39,7 +47,171 @@ const DEFAULT_TDEE: TDEEResult = {
   deficit: 0,
   proteinCapped: false,
   proteinUncapped: 135,
+  infeasible: false,
+  minFeasibleKcal: 405,
 };
+
+describe("NutritionSection — editing the calorie override", () => {
+  function setup(customCalorieTarget?: number) {
+    const updateProfile = vi.fn(
+      async (_data: Partial<UserProfile>) =>
+        ({ ok: true }) as UpdateProfileResult
+    );
+    const props = {
+      profile: { uid: "u-1", customCalorieTarget } as UserProfile,
+      age: 25,
+      setAge: vi.fn(),
+      activityLevel: "moderate" as ActivityLevel,
+      setActivityLevel: vi.fn(),
+      currentKg: 75,
+      goalWeightKg: 76.5,
+      setGoalWeightKg: vi.fn(),
+      weeklyRateKg: 0.5,
+      setWeeklyRateKg: vi.fn(),
+      goalPlan,
+      tdee: DEFAULT_TDEE,
+      updateProfile,
+      inline: true,
+    };
+    const view = render(<NutritionSection {...props} />);
+    const input = screen.getByRole("spinbutton", {
+      name: "Override daily target (optional)",
+    });
+    return { ...view, props, input, updateProfile };
+  }
+
+  it("keeps every typed digit visible before saving the complete value on blur", async () => {
+    const { input, updateProfile } = setup();
+    for (const value of ["2", "24", "240", "2400"]) {
+      fireEvent.change(input, { target: { value } });
+      expect(input).toHaveValue(Number(value));
+    }
+    expect(updateProfile).not.toHaveBeenCalled();
+    await act(async () => fireEvent.blur(input));
+    expect(updateProfile).toHaveBeenCalledTimes(1);
+    expect(updateProfile).toHaveBeenCalledWith(
+      expect.objectContaining({
+        customCalorieTarget: 2400,
+        targetCalories: 2400,
+      })
+    );
+    const patch = updateProfile.mock.calls[0][0] as Partial<UserProfile>;
+    expect(
+      Math.abs(
+        patch.targetProtein! * 4 +
+          patch.targetCarbs! * 4 +
+          patch.targetFat! * 9 -
+          2400
+      )
+    ).toBeLessThanOrEqual(10);
+  });
+
+  it("clears a stored override on blur", async () => {
+    const { input, updateProfile } = setup(2400);
+    fireEvent.change(input, { target: { value: "" } });
+    expect(input).toHaveValue(null);
+    await act(async () => fireEvent.blur(input));
+    expect(updateProfile).toHaveBeenCalledWith(
+      expect.objectContaining({
+        customCalorieTarget: 0,
+        targetCalories: expect.any(Number),
+      })
+    );
+  });
+
+  it("reset writes a persistent no-override value and restores calculated targets", async () => {
+    const { updateProfile, props, rerender } = setup(2400);
+    await act(async () =>
+      fireEvent.click(
+        screen.getByRole("button", { name: "Reset to calculated" })
+      )
+    );
+    const patch = updateProfile.mock.calls[0][0];
+    expect(patch.customCalorieTarget).toBe(0);
+    expect(patch.targetCalories).toBeGreaterThan(0);
+    expect(patch.targetProtein).toBeGreaterThan(0);
+    expect(patch.targetCarbs).toBeGreaterThan(0);
+    expect(patch.targetFat).toBeGreaterThan(0);
+    rerender(
+      <NutritionSection {...props} profile={{ ...props.profile, ...patch }} />
+    );
+    expect(
+      screen.getByRole("spinbutton", {
+        name: "Override daily target (optional)",
+      })
+    ).toHaveValue(null);
+    expect(
+      screen.queryByRole("button", { name: "Reset to calculated" })
+    ).toBeNull();
+  });
+
+  it("still permits a below-floor override without silently clamping it", async () => {
+    const { input, updateProfile } = setup();
+    fireEvent.change(input, { target: { value: "900" } });
+    await act(async () => fireEvent.blur(input));
+    expect(updateProfile).toHaveBeenCalledWith(
+      expect.objectContaining({ customCalorieTarget: 900, targetCalories: 900 })
+    );
+  });
+
+  it("does not write a pending edit after the section unmounts", async () => {
+    vi.useFakeTimers();
+    try {
+      const { input, unmount, updateProfile } = setup();
+      fireEvent.change(input, { target: { value: "2400" } });
+      unmount();
+      await act(async () => vi.advanceTimersByTimeAsync(1000));
+      expect(updateProfile).not.toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("restores the persisted target when saving is rejected", async () => {
+    const { input, updateProfile } = setup(2400);
+    updateProfile.mockResolvedValue({ ok: false } as UpdateProfileResult);
+    fireEvent.change(input, { target: { value: "2600" } });
+    await act(async () => fireEvent.blur(input));
+    expect(updateProfile).toHaveBeenCalledWith(
+      expect.objectContaining({
+        customCalorieTarget: 2600,
+        targetCalories: 2600,
+      })
+    );
+    expect(input).toHaveValue(2400);
+  });
+
+  it("an older save response cannot erase a newer draft", async () => {
+    const { input, updateProfile } = setup(2400);
+    let complete!: (value: UpdateProfileResult) => void;
+    updateProfile.mockReturnValueOnce(
+      new Promise((resolve) => {
+        complete = resolve;
+      })
+    );
+    fireEvent.change(input, { target: { value: "2500" } });
+    fireEvent.blur(input);
+    fireEvent.change(input, { target: { value: "2600" } });
+    await act(async () => complete({ ok: true } as UpdateProfileResult));
+    expect(input).toHaveValue(2600);
+  });
+
+  it("does not carry an unsaved target across an account switch", () => {
+    const { input, rerender, props } = setup(2400);
+    fireEvent.change(input, { target: { value: "2600" } });
+    rerender(
+      <NutritionSection
+        {...props}
+        profile={{ uid: "u-2", customCalorieTarget: 1800 } as UserProfile}
+      />
+    );
+    expect(
+      screen.getByRole("spinbutton", {
+        name: "Override daily target (optional)",
+      })
+    ).toHaveValue(1800);
+  });
+});
 
 function renderSection(weeklyRateKg = 0.5, tdee: TDEEResult = DEFAULT_TDEE) {
   const setWeeklyRateKg = vi.fn();
@@ -276,6 +448,16 @@ describe("NutritionSection — target drift notice", () => {
     expect(notice.textContent).toContain("-0.50 kg/wk"); // what was picked
   });
 
+  it("uses pounds for both drift paces and the recalculation action", () => {
+    renderDrift({ preferredWeightUnit: "lbs" });
+    const notice = screen.getByText(/Your body has changed since this target/);
+    expect(notice.textContent).toContain("-0.73 lb/wk");
+    expect(notice.textContent).toContain("-1.10 lb/wk");
+    expect(
+      screen.getByRole("button", { name: "Recalculate for 172.0 lb" })
+    ).toBeInTheDocument();
+  });
+
   it("offers a recalculation that fires the owner's persist recipe", () => {
     /* The button must not write targets itself — SettingsNutrition owns the
        payload, so a recalculation and an ordinary edit cannot drift apart. */
@@ -364,4 +546,156 @@ describe("the adapting status line is wired to the learned target", () => {
       /adaptiveCalorieStatusLabel\([\s\S]{0,200}?adaptiveCapState\?\.lastApplied/
     );
   });
+});
+
+/**
+ * Three-surface consistency: a target the split cannot fund is named in
+ * the same sentence here, on Home and on Food (macroInfeasibility.ts). And
+ * the calculation chain names a manual override for what it is — it used to
+ * call the gap "Recomp offset −2400 cal", a plan choice the user never made.
+ */
+import { macroInfeasibilityMessage } from "@/lib/macroInfeasibility";
+
+describe("NutritionSection — manual target naming and the infeasible notice", () => {
+  function renderWith(profile: Partial<UserProfile>, tdee: TDEEResult) {
+    return render(
+      <NutritionSection
+        profile={{ uid: "u-1", ...profile } as UserProfile}
+        age={25}
+        setAge={vi.fn()}
+        activityLevel={"moderate" as ActivityLevel}
+        setActivityLevel={vi.fn()}
+        currentKg={70}
+        goalWeightKg={68}
+        setGoalWeightKg={vi.fn()}
+        weeklyRateKg={-0.5}
+        setWeeklyRateKg={vi.fn()}
+        goalPlan={goalPlan}
+        tdee={tdee}
+        updateProfile={vi.fn(async () => ({ ok: true }) as UpdateProfileResult)}
+        inline
+      />
+    );
+  }
+
+  it("labels the gap 'Manual target' when an override is set", () => {
+    renderWith(
+      { customCalorieTarget: 100 },
+      { ...DEFAULT_TDEE, targetCalories: 100, deficit: -2300 }
+    );
+    expect(screen.getByText("Manual target")).toBeInTheDocument();
+    expect(screen.queryByText(/offset$/)).toBeNull();
+  });
+
+  it("keeps the goal's offset label when no override is set", () => {
+    renderWith({}, { ...DEFAULT_TDEE, deficit: 550 });
+    expect(screen.getByText("Lean Bulk offset")).toBeInTheDocument();
+  });
+
+  it("renders the shared sentence when the target cannot fund essential fat", () => {
+    renderWith(
+      { customCalorieTarget: 100 },
+      {
+        ...DEFAULT_TDEE,
+        targetCalories: 100,
+        protein: 0,
+        carbs: 0,
+        fat: 42,
+        infeasible: true,
+        minFeasibleKcal: 378,
+      }
+    );
+    expect(
+      screen.getByText(macroInfeasibilityMessage(378))
+    ).toBeInTheDocument();
+  });
+
+  it("says nothing on an ordinary target", () => {
+    renderWith({}, DEFAULT_TDEE);
+    expect(screen.queryByText(/essential fat alone exceeds/)).toBeNull();
+  });
+});
+
+describe("NutritionSection — body-weight units", () => {
+  function setup(unit: "kg" | "lbs", initialKg = 76.5) {
+    const onGoal = vi.fn();
+    const onRate = vi.fn();
+    function Harness() {
+      const [goalWeightKg, setGoal] = useState(initialKg);
+      return (
+        <NutritionSection
+          profile={
+            { uid: "unit-test", preferredWeightUnit: unit } as UserProfile
+          }
+          age={25}
+          setAge={vi.fn()}
+          activityLevel="moderate"
+          setActivityLevel={vi.fn()}
+          currentKg={75}
+          goalWeightKg={goalWeightKg}
+          setGoalWeightKg={(kg) => {
+            onGoal(kg);
+            setGoal(kg);
+          }}
+          weeklyRateKg={0.5}
+          setWeeklyRateKg={onRate}
+          goalPlan={goalPlan}
+          tdee={DEFAULT_TDEE}
+          updateProfile={vi.fn(
+            async () => ({ ok: true }) as UpdateProfileResult
+          )}
+          inline
+        />
+      );
+    }
+    const view = render(<Harness />);
+    return { ...view, onGoal, onRate };
+  }
+
+  it("displays pounds and converts a one-pound goal edit back to kilograms", () => {
+    const { onGoal, onRate } = setup("lbs");
+    expect(screen.getByText("165.3")).toBeInTheDocument();
+    expect(screen.getByText("168.7")).toBeInTheDocument();
+    expect(screen.getByText("lb target")).toBeInTheDocument();
+    expect(
+      screen.getByRole("radio", { name: /Steady 1.10 lb\/wk/ })
+    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Raise goal weight" }));
+    expect(screen.getByText("169.7")).toBeInTheDocument();
+    expect(onGoal).toHaveBeenLastCalledWith(lbToKg(169.7));
+    fireEvent.click(screen.getByRole("button", { name: "Lower goal weight" }));
+    expect(screen.getByText("168.7")).toBeInTheDocument();
+    expect(onGoal).toHaveBeenLastCalledWith(lbToKg(168.7));
+    fireEvent.click(screen.getByRole("radio", { name: /Fast 1.65 lb\/wk/ }));
+    expect(onRate).toHaveBeenCalledWith(0.75);
+  });
+
+  it("preserves kilogram steps and the engine's existing pace choices", () => {
+    const { onGoal, onRate } = setup("kg");
+    expect(screen.getByText("75.0")).toBeInTheDocument();
+    expect(screen.getByText("kg target")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Raise goal weight" }));
+    expect(onGoal).toHaveBeenLastCalledWith(77);
+    fireEvent.click(screen.getByRole("button", { name: "Lower goal weight" }));
+    expect(onGoal).toHaveBeenLastCalledWith(76.5);
+    fireEvent.click(screen.getByRole("radio", { name: /Fast 0.75 kg\/wk/ }));
+    expect(onRate).toHaveBeenCalledWith(0.75);
+  });
+
+  it.each(["kg", "lbs"] as const)(
+    "keeps the stored goal in bounds when editing in %s",
+    (unit) => {
+      const lower = setup(unit, 30);
+      fireEvent.click(
+        screen.getByRole("button", { name: "Lower goal weight" })
+      );
+      expect(lower.onGoal).toHaveBeenLastCalledWith(30);
+      lower.unmount();
+      const upper = setup(unit, 250);
+      fireEvent.click(
+        screen.getByRole("button", { name: "Raise goal weight" })
+      );
+      expect(upper.onGoal).toHaveBeenLastCalledWith(250);
+    }
+  );
 });

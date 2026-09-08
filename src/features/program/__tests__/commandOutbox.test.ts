@@ -207,3 +207,65 @@ describe("flushCommandOutbox", () => {
     expect(outboxLength("alice")).toBe(1);
   });
 });
+
+describe("flushCommandOutbox — a command enqueued DURING a flush survives it", () => {
+  /**
+   * The flush snapshotted the queue, awaited every send, then wrote the
+   * snapshot's leftovers back — so anything enqueued while a send was in
+   * flight (another failed write, or the auth-change flush racing the
+   * online one) was erased. Silent loss, no test. The write-back now
+   * removes only what this pass finished from the LIVE queue.
+   */
+  it("keeps a command queued mid-flush, for this account and another", async () => {
+    enqueueCommand("alice", cmd("c1"));
+    const seen: string[] = [];
+    await flushCommandOutbox("alice", async (c) => {
+      seen.push(c.commandId);
+      if (c.commandId === "c1") {
+        // Arrives while c1's send is in flight.
+        enqueueCommand("alice", cmd("c2"));
+        enqueueCommand("bob", cmd("c3"));
+      }
+    });
+    expect(seen).toEqual(["c1"]);
+    expect(outboxLength("alice")).toBe(1);
+    expect(outboxLength("bob")).toBe(1);
+
+    // The retained command is intact and sends on the next pass.
+    const next: string[] = [];
+    await flushCommandOutbox("alice", async (c) => {
+      next.push(c.commandId);
+    });
+    expect(next).toEqual(["c2"]);
+    expect(outboxLength("alice")).toBe(0);
+    expect(outboxLength("bob")).toBe(1);
+  });
+
+  it("still clears what it sent when the queue changed underneath it", async () => {
+    enqueueCommand("alice", cmd("c1"));
+    enqueueCommand("alice", cmd("c2"));
+    await flushCommandOutbox("alice", async (c) => {
+      if (c.commandId === "c1") enqueueCommand("alice", cmd("c9"));
+    });
+    // c1 and c2 sent; c9 (mid-flush) remains — nothing sent is left behind,
+    // nothing new is lost.
+    expect(outboxLength("alice")).toBe(1);
+  });
+});
+
+describe("enqueueCommand — shedding on the cap is loud", () => {
+  it("logs what it drops when the queue is full", () => {
+    const spy = vi.spyOn(logger, "error").mockImplementation(() => undefined);
+    for (let i = 0; i < MAX_OUTBOX_ENTRIES; i++) {
+      enqueueCommand("alice", cmd(`c${i}`));
+    }
+    expect(spy).not.toHaveBeenCalled();
+    enqueueCommand("alice", cmd("overflow"));
+    expect(outboxLength("alice")).toBe(MAX_OUTBOX_ENTRIES);
+    expect(spy).toHaveBeenCalledWith(
+      expect.stringMatching(/shedding the oldest 1 queued command/),
+      ["applyDeloadWeek"]
+    );
+    spy.mockRestore();
+  });
+});

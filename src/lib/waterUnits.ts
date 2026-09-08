@@ -112,7 +112,7 @@ export function waterProgress(ml: number, targetMl: number): number {
  * "2.5 L"). Container sizes stay in ml where that's how people think;
  * running totals cross into litres.
  */
-export function formatVolume(ml: number): string {
+export function formatWaterVolume(ml: number): string {
   const v = clampMl(ml);
   if (v < 1000) return `${v} ml`;
   const litres = (v / 1000).toFixed(2).replace(/\.?0+$/, "");

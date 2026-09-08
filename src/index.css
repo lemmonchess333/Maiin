@@ -75,6 +75,7 @@
   --color-stage: hsl(var(--stage));
   --color-stage-foreground: hsl(var(--stage-foreground));
   --color-stage-muted: hsl(var(--stage-muted));
+  --color-stage-raised: hsl(var(--stage-raised));
   --color-muted: hsl(var(--muted));
   --color-muted-foreground: hsl(var(--muted-foreground));
   --color-border: hsl(var(--border));
@@ -236,6 +237,9 @@
      themes, like the stage itself, because the surface is. */
   --stage-foreground: 240 6% 96%;
   --stage-muted: 240 5% 70%;
+  /* A raised panel ON the stage (dialogs over the run HUD) — the dark card
+     value, fixed in both themes because the surface beneath it is. */
+  --stage-raised: 240 6% 11%; /* #1A1A1E */
   --muted: 240 6% 97.5%; /* DS2: near-white raised tile (was 95.9% ≈ page) */
   /* 46.1% → 43% (owner-decided consolidation, 2026-08-22). At 46.1% the
      token cleared AA on the white card by only 0.333 (4.833:1) and FAILED
@@ -255,6 +259,8 @@
   /* Bright specular hairline along the nav's top edge — the cue that makes
      the frosted bar read as GLASS rather than a flat translucent strip. */
   --nav-frost-highlight: rgba(255, 255, 255, 0.85);
+  --nav-surface-opacity: 82%;
+  --nav-active-foreground: var(--ds-purple-700);
   /* Semantic status colours — light mode.
      Destructive is a darker red than the legacy #e04040 because that
      value was borderline for white text on the filled surface; this
@@ -349,6 +355,9 @@
   --stage: 240 4% 7%;
   --stage-foreground: 240 6% 96%;
   --stage-muted: 240 5% 70%;
+  /* A raised panel ON the stage (dialogs over the run HUD) — the dark card
+     value, fixed in both themes because the surface beneath it is. */
+  --stage-raised: 240 6% 11%; /* #1A1A1E */
   /* Nutrition — the identity and the white-text fill step are IDENTICAL to
      :root (both fixed). Only the TEXT step follows the theme: on a dark
      surface the AA-clearing orange is the light one, which lands back on
@@ -387,6 +396,8 @@
   --skeleton-shimmer: rgba(255, 255, 255, 0.04);
   /* Fainter sheen on dark glass. */
   --nav-frost-highlight: rgba(255, 255, 255, 0.1);
+  --nav-surface-opacity: 88%;
+  --nav-active-foreground: var(--ds-purple-400);
   /* Semantic status colours — dark mode.
      Destructive/success/warning are brighter than in :root because
      dark cards need higher-luminance text for AA contrast. Since
@@ -436,7 +447,10 @@
    pages don't hand-roll `pb-20` / `pt-6` values. Values assume the
    iPhone safe-area envs are set; desktop falls back to 0. */
 :root {
-  --tab-bar-height: 64px; /* icon + label + py-3 vertical rhythm */
+  --tab-bar-gap: 8px;
+  --tab-bar-height: calc(
+    64px + var(--tab-bar-gap)
+  ); /* capsule + floating gap */
   --page-x: 1rem; /* horizontal gutter (matches px-4) */
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);

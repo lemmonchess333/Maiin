@@ -78,6 +78,25 @@ describe("getPlainLanguageSummary — headline tiers (PI)", () => {
 });
 
 describe("getPlainLanguageSummary — body by load band", () => {
+  it("overreach overrides a high-score celebration", () => {
+    const result = getPlainLanguageSummary(92, "overreach", 2);
+    expect(result.headline).toMatch(/Backing off/);
+    expect(result.headline).not.toMatch(/on track/);
+    expect(result.body).toContain("pushing hard");
+  });
+
+  it("a recommended deload overrides even a moderate composite load", () => {
+    const result = getPlainLanguageSummary(62, "moderate", null, false, true);
+    expect(result.headline).toMatch(/Backing off/);
+    expect(result.body).toContain("lighter week");
+    expect(result.body).not.toContain("Balanced load");
+  });
+
+  it("baseline establishment still takes priority over a deload verdict", () => {
+    const result = getPlainLanguageSummary(92, "overreach", 8, true, true);
+    expect(result.headline).toBe("Establishing your baseline");
+    expect(result.body).not.toContain("pts");
+  });
   it("'overreach' surfaces the recovery message", () => {
     expect(getPlainLanguageSummary(50, "overreach", null).body).toContain(
       "pushing hard"

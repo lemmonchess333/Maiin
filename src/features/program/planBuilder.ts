@@ -37,6 +37,7 @@
  * `buildPlan` coordinates these. Each is independently testable.
  */
 
+import { planningEasyPaceSPerKm, type RunFitnessInput } from "@/lib/runPaces";
 import type {
   Goal,
   PreferredSplit,
@@ -130,6 +131,10 @@ export interface PlanBuilderInput {
   weeklyRunDays: number;
 
   /** Required when runMode === "race_prep". */
+  /** Run17 — the runner's `profile.runFitness`, so the long-run ceiling is
+   *  measured at their confirmed easy pace (`planningEasyPaceSPerKm`
+   *  applies RUN-EV-08's gate). Omitted → the nominal tier table. */
+  runFitness?: RunFitnessInput | null;
   raceGoal?: {
     distance: "5k" | "10k" | "half" | "marathon";
     targetDate: string;
@@ -373,6 +378,7 @@ function buildRunPlan(
       currentDate: input.currentDate,
       weekStart,
       tuning: input.runTuning ?? DEFAULT_RUN_TUNING,
+      easyPaceSPerKm: planningEasyPaceSPerKm(input.runFitness),
     });
     return {
       runDays: racePlan.weeks[0] ?? [],

@@ -1,35 +1,7 @@
-/**
- * Firebase App Check initialisation.
- *
- * Split from `firebase.ts` so the provider selection has a single
- * clear swap point: today we use reCAPTCHA v3 on the web and run
- * UNENFORCED on the native Capacitor shell; once the native plugin
- * is wired the `nativeProviderFactory` injection point below
- * accepts a CustomProvider that calls App Attest (iOS) / Play
- * Integrity (Android).
- *
- * Why this is separate:
- *   - The web provider works by hitting Google's reCAPTCHA v3
- *     endpoint from the browser. Inside a WKWebView (Capacitor iOS)
- *     reCAPTCHA technically works, but Apple's guidance is to use
- *     App Attest for native surfaces so you get attestation backed
- *     by Secure Enclave instead of a third-party risk score.
- *   - Enforcement is toggled per-service (Firestore, Storage,
- *     Functions) in the Firebase console. Ship the client first in
- *     unenforced mode, verify tokens are flowing, THEN flip
- *     enforcement on to avoid locking existing users out mid-deploy.
- *     The full staged-rollout plan lives in
- *     `docs/app-check-rollout.md`.
- *
- * PR F (audit P0 #6): pre-PR-F the native branch was a hardcoded
- * stub that always returned false. Now `setNativeAppCheckProvider`
- * is the injection point — when `@capacitor-firebase/app-check` is
- * installed, that plugin's wrapper calls `setNativeAppCheckProvider`
- * during app boot with a factory that returns the CustomProvider.
- * `initAppCheck` then routes to it on native instead of the stub.
- * Keeping the injection async-shaped so plugin-side token fetch can
- * be awaited cleanly.
- */
+/** Firebase App Check provider routing. Web uses reCAPTCHA v3; Capacitor
+ * registers appCheckNative's token bridge before any Firebase service exists.
+ * Client registration is not backend enforcement. Verify signed builds and
+ * request metrics before changing enforcement (docs/app-check-rollout.md). */
 
 import {
   initializeAppCheck,
@@ -43,29 +15,7 @@ import type { FirebaseApp } from "firebase/app";
 import { isNativePlatform } from "./platform";
 import { logger } from "./logger";
 
-/**
- * Factory the native plugin wrapper calls to install its CustomProvider.
- *
- * Usage (when the plugin lands):
- *
- *   import { setNativeAppCheckProvider } from "@/lib/appCheck";
- *   import { CustomProvider } from "firebase/app-check";
- *   import { FirebaseAppCheck } from "@capacitor-firebase/app-check";
- *
- *   setNativeAppCheckProvider(() =>
- *     new CustomProvider({
- *       getToken: async () => {
- *         const { token } = await FirebaseAppCheck.getToken();
- *         // The plugin returns an opaque token + expiry; reshape
- *         // for the firebase/app-check CustomProvider contract.
- *         return { token, expireTimeMillis: Date.now() + 60 * 60 * 1000 };
- *       },
- *     }),
- *   );
- *
- * Single call site keeps the plugin install footprint to one
- * register-in-bootstrap line.
- */
+/** Installed by appCheckNative during Firebase bootstrap. */
 type NativeAppCheckProviderFactory = () => CustomProvider;
 let nativeProviderFactory: NativeAppCheckProviderFactory | null = null;
 
@@ -82,8 +32,8 @@ let appCheckHandle: AppCheck | null = null;
 /**
  * Initialise App Check for the given Firebase app. Idempotent — safe
  * to call multiple times (repeated calls are no-ops). Returns true
- * when a provider was actually installed, false when we're running
- * without enforcement (dev / missing config / native not-yet-wired).
+ * when a provider was installed, false when registration is unavailable.
+ * This does not report backend enforcement or successful token issuance.
  */
 export function initAppCheck(app: FirebaseApp): boolean {
   if (appCheckHandle) return true;
@@ -130,7 +80,11 @@ export function initAppCheck(app: FirebaseApp): boolean {
   // Honour the Firebase SDK's debug-provider global for local
   // development. Set VITE_APP_CHECK_DEBUG_TOKEN to a token copied
   // from the Firebase console to bypass App Check in dev.
-  const debugToken = import.meta.env.VITE_APP_CHECK_DEBUG_TOKEN;
+  // Keep debug credentials out of release code as well as runtime setup.
+  // Vite removes this development-only branch from production bundles.
+  const debugToken = import.meta.env.DEV
+    ? import.meta.env.VITE_APP_CHECK_DEBUG_TOKEN
+    : undefined;
   if (debugToken && typeof self !== "undefined") {
     (
       self as unknown as { FIREBASE_APPCHECK_DEBUG_TOKEN?: string }

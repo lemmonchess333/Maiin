@@ -1,3 +1,5 @@
+import QuickMealPortionSheet from "@/components/food/QuickMealPortionSheet";
+import { saveQuickMeal } from "@/lib/quickMealEntry";
 import { useState, useEffect, useRef, useMemo, Suspense } from "react";
 import { lazyRetry } from "@/lib/lazyRetry";
 import { useSearchParams } from "react-router-dom";
@@ -21,10 +23,11 @@ const ManualFoodLogger = lazyRetry(() =>
 );
 import { useMeals, type Meal } from "@/hooks/useMeals";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
-import { collection, Timestamp } from "firebase/firestore";
-import { addDocGuarded } from "@/lib/firestoreWrite";
+import { Timestamp } from "firebase/firestore";
+import { createMealEntry, notifyMealsLogged } from "@/lib/mealEntry";
+import { copySelectedMeals, type MealCopySelection } from "@/lib/mealCopy";
+import { usualMeal } from "@/lib/usualMeal";
 import { duplicatedServingPayload } from "@/lib/servingEdit";
-import { db } from "@/lib/firebase";
 import { parseFoodText, getFoodSuggestions } from "@/lib/nlFoodParser";
 import type { ParsedFood, FoodSuggestion } from "@/lib/nlFoodParser";
 import { RotateCcw, X } from "lucide-react";
@@ -35,9 +38,9 @@ import { ServingSizeDrawer } from "@/components/nutrition/ServingSizeDrawer";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Button } from "@/components/ui/Button";
 import { validateFoodEntry } from "@/lib/foodValidation";
+import { offProductToPortion, type OffProductLike } from "@/lib/offNutrition";
 import {
   orderQuickAddItems,
-  buildQuickAddMealPayload,
   pickRepresentativeMeal,
   type QuickAddItem,
 } from "@/lib/quickAddOrder";
@@ -52,6 +55,7 @@ import FoodTimeline from "@/components/food/FoodTimeline";
 import FoodDateBar from "@/components/food/FoodDateBar";
 import FoodOfflineBanner from "@/components/food/FoodOfflineBanner";
 import EditServingsSheet from "@/components/food/EditServingsSheet";
+import CopyMealsSheet from "@/components/food/CopyMealsSheet";
 import { useScanUsage } from "@/hooks/useScanUsage";
 import { useInFlightGuard } from "@/hooks/useInFlightGuard";
 import { useScanButtonOverrides } from "@/components/food/scanButtonOverrides";
@@ -68,7 +72,7 @@ import {
   inferMostLikelyMealSlot,
   type MealKey,
 } from "@/components/food/mealConstants";
-import { mealSlotFor } from "@/lib/mealSlots";
+import { mealLoggedAt, mealSlotFor } from "@/lib/mealSlots";
 import { track as trackFoodEvent } from "@/lib/foodAnalytics";
 import { sweepFoodPhotosOnce } from "@/lib/foodPhotoStore";
 
@@ -212,9 +216,8 @@ export default function Food() {
     () => new Set()
   );
 
-  // Copy-from-yesterday: tracks which meal section is being copied so the
-  // pill stays disabled until the Firestore subscription propagates the new
-  // entries and the section actually becomes populated. Prevents double-taps.
+  // Copy-from-yesterday: the trigger stays disabled while the selected
+  // entries are accepted by the durable local queue.
   const [copyingMealKey, setCopyingMealKey] = useState<string | null>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
   const {
@@ -246,7 +249,9 @@ export default function Food() {
      changes — vanished items drop, new items append at the end
      via `orderQuickAddItems` rather than rebuilding the whole
      cache and reintroducing the reshuffle bug. */
-  const quickAddOrderCache = useRef<Map<string, string[]>>(new Map());
+  const [quickAddOrderCache, setQuickAddOrderCache] = useState<
+    Map<string, string[]>
+  >(() => new Map());
 
   const [offResults, setOffResults] = useState<OFFResult[]>([]);
   const [, setOffLoading] = useState(false);
@@ -481,54 +486,24 @@ export default function Food() {
     });
   }, [yesterdaySegmented, mealSegmentedMeals]);
 
-  /**
-   * Copy every yesterday meal that today is missing in the same slot.
-   * Skips slots today already has so we never produce duplicates. Used by
-   * the bottom-of-page "Copy yesterday's …" button — replaces the
-   * per-section "Copy yesterday's lunch" pills that used to sit beneath
-   * each empty section header.
-   */
-  const handleCopyAllMissingFromYesterday = async () => {
-    if (copyingMealKey || !uid) return;
-    // Use a sentinel value so the in-flight UI guard works even though
-    // there's no single mealKey driving this call.
+  const handleCopySelectedFromYesterday = async (selections: readonly MealCopySelection[]) => {
+    if (copyingMealKey || !uid) return { created: [], error: new Error("Sign in again to log food.") };
     setCopyingMealKey("__all__");
-    haptic("light");
     try {
-      let total = 0;
-      const copied: string[] = [];
-      for (const mealKey of slotsToCopyFromYesterday) {
-        const items = yesterdaySegmented[mealKey] ?? [];
-        if (items.length === 0) continue;
-        for (const item of items) {
-          await addDocGuarded(collection(db, "users", uid, "meals"), {
-            date: selectedDate,
-            meal: mealKey,
-            foodName: item.foodName,
-            items: item.items ?? [],
-            totalCalories: item.totalCalories ?? 0,
-            totalProtein: item.totalProtein ?? 0,
-            totalCarbs: item.totalCarbs ?? 0,
-            totalFat: item.totalFat ?? 0,
-            confidence: "copy",
-            createdAt: Timestamp.now(),
-          });
-          total++;
-        }
-        copied.push(MEAL_LABELS[mealKey]);
+      const result = await copySelectedMeals(uid, selectedDate, selections);
+      if (result.created.length > 0) {
+        const slots = MEAL_ORDER.filter((slot) => result.created.some((entry) => entry.slot === slot));
+        const count = result.created.length;
+        haptic(15);
+        notifyMealsLogged(
+          uid,
+          result.created.map((entry) => entry.id),
+          `Copied ${count} item${count === 1 ? "" : "s"} into ${joinHumanList(slots.map((slot) => MEAL_LABELS[slot]))}`,
+          { path: "copy" }
+        );
       }
-      haptic(15);
-      // Toast names the slots that received copies so the user can see
-      // exactly what happened, not just an opaque item count.
-      toast.success(
-        `Copied ${total} item${total === 1 ? "" : "s"} into ${joinHumanList(copied)}`,
-        { id: "food-copy-yesterday" }
-      );
-    } catch (err) {
-      logger.error("[copy-all] Failed:", err);
-      toast.error("Couldn't copy from yesterday", {
-        id: "food-copy-yesterday",
-      });
+      if (result.error !== null) logger.error("[copy-selected] Failed:", result.error);
+      return result;
     } finally {
       setCopyingMealKey(null);
     }
@@ -682,34 +657,27 @@ export default function Food() {
               nutriments?: Record<string, number>;
             }) => p.product_name && p.nutriments
           )
-          .map(
-            (p: {
-              product_name?: string;
-              nutriments?: Record<string, number>;
-              brands?: string;
-              serving_size?: string;
-            }) => ({
-              name: p.product_name || "Unknown",
-              brand: p.brands || "",
-              calories: Math.round(
-                p.nutriments?.["energy-kcal_100g"] ||
-                  p.nutriments?.["energy-kcal"] ||
-                  0
-              ),
-              protein: Math.round((p.nutriments?.proteins_100g || 0) * 10) / 10,
-              carbs:
-                Math.round((p.nutriments?.carbohydrates_100g || 0) * 10) / 10,
-              fat: Math.round((p.nutriments?.fat_100g || 0) * 10) / 10,
-              servingSize: p.serving_size || "100g",
-              // F2: macro nutrients above all come from the
-              // *_100g fields. When a real serving_size string is
-              // missing, we fall through to "100g" and the macro
-              // numbers ARE actually per-100g, not per-serving —
-              // that's a low-confidence unit signal the user needs
-              // to confirm via the ServingSizeDrawer.
-              unitConfidence: p.serving_size ? "high" : "low",
-            })
-          );
+          .map((p: OffProductLike) => {
+            // The barcode path's converter, shared: OFF publishes
+            // nutrients per 100 g, so a stated gram serving scales the
+            // numbers to that serving (high confidence) and anything else
+            // is labelled "100g" and flagged low, which the drawer turns
+            // into its confirm-serving banner. Pre-fix this mapping stored
+            // the per-100 g values under the serving's label and flagged
+            // HIGH precisely when a serving existed — a 30 g bar logged at
+            // its 100 g numbers with the banner suppressed.
+            const portion = offProductToPortion(p);
+            return {
+              name: portion.name,
+              brand: portion.brand,
+              calories: portion.calories,
+              protein: portion.protein,
+              carbs: portion.carbs,
+              fat: portion.fat,
+              servingSize: portion.servingSize,
+              unitConfidence: portion.unitConfidence,
+            };
+          });
         if (cancelled) return; // a newer query/retry superseded this run
         setOffResults(products);
         setOffEmpty(products.length === 0);
@@ -769,8 +737,24 @@ export default function Food() {
     const food = offDrawerFood;
     if (!uid || !food) return;
     const s = servings;
+    const entry = {
+      calories: Math.round(food.calories * s),
+      protein: Math.round(food.protein * s),
+      carbs: Math.round(food.carbs * s),
+      fat: Math.round(food.fat * s),
+    };
+    /* Database rows skipped validation on the premise that they reuse
+       already-validated data. Open Food Facts is crowd-sourced and
+       arrives unvalidated, so the blocked tier (negative / non-finite)
+       applies here as on typed entries. Warn-tier values pass: a
+       labelled product is the user's own evidence. */
+    const verdict = validateFoodEntry(entry);
+    if (verdict.kind === "blocked") {
+      toast.error(verdict.reason, { id: "food-validation-error" });
+      return;
+    }
     try {
-      await addDocGuarded(collection(db, "users", uid, "meals"), {
+      const added = await createMealEntry(uid, {
         date: selectedDate,
         foodName: food.name,
         items: [
@@ -778,33 +762,41 @@ export default function Food() {
             name: food.name,
             portionSize:
               s !== 1 ? `${s}x ${food.servingSize}` : food.servingSize,
-            calories: Math.round(food.calories * s),
-            protein: Math.round(food.protein * s),
-            carbs: Math.round(food.carbs * s),
-            fat: Math.round(food.fat * s),
+            ...entry,
           },
         ],
-        totalCalories: Math.round(food.calories * s),
-        totalProtein: Math.round(food.protein * s),
-        totalCarbs: Math.round(food.carbs * s),
-        totalFat: Math.round(food.fat * s),
+        totalCalories: entry.calories,
+        totalProtein: entry.protein,
+        totalCarbs: entry.carbs,
+        totalFat: entry.fat,
         confidence: "database",
         createdAt: Timestamp.now(),
+        // The armed meal slot applies here exactly as on every other
+        // save path; this one ignored it, so a search pick landed
+        // by time of day and the NEXT save inherited the stale slot.
+        ...(targetMeal ? { meal: targetMeal } : {}),
       });
-      await addFavourite({ ...food, source: "search" });
+      void addFavourite({ ...food, source: "search" });
       setOffDrawerFood(null);
+      notifyMealsLogged(uid, [added.id], `Logged ${food.name}`, {
+        path: "barcode",
+      });
       // No success toast — the food appears in the meal list and the
       // macro tiles animate, which is the confirmation. See ToastProvider
       // commit notes for the wider rule.
     } catch {
-      toast.error("Couldn't save. Please try again.", {
+      toast.error("Couldn't save. Try again.", {
         id: "food-save-error",
       });
     }
   };
 
   const handleNLParse = async () => {
-    if (!nlInput.trim() || !uid) return;
+    if (!nlInput.trim() || !uid || nlParsing) return;
+    // Autocomplete is a separate, optional request. Once the user submits,
+    // cancel its effect and dismiss its stale error before parsing/saving.
+    setSuggestionsActive(false);
+    toast.dismiss("food-off-error");
     setNlParsing(true);
     let items: ParsedFood[];
     let confidence: string;
@@ -847,7 +839,7 @@ export default function Food() {
       const zeroItems = items.filter((i) => i.calories === 0);
       if (zeroItems.length > 0) {
         toast.warning(
-          `Couldn't find macros for: ${zeroItems.map((i) => i.name).join(", ")}. Try searching for accurate data.`,
+          `Couldn't find macros for: ${zeroItems.map((i) => i.name).join(", ")}. Search the foods to fill them in.`,
           { id: "food-nl-warning" }
         );
       }
@@ -883,7 +875,7 @@ export default function Food() {
       const totalCarbs = items.reduce((s, i) => s + i.carbs, 0);
       const totalFat = items.reduce((s, i) => s + i.fat, 0);
       try {
-        await addDocGuarded(collection(db, "users", uid, "meals"), {
+        const added = await createMealEntry(uid, {
           date: selectedDate,
           foodName: items.map((i) => i.name).join(", "),
           items: items.map((i) => ({
@@ -908,7 +900,6 @@ export default function Food() {
           ...(targetMeal ? { meal: targetMeal } : {}),
         });
         setNlInput("");
-        setTargetMeal(null);
         const inputSegmentCount = nlInput
           .split(/[,\n]+/)
           .map((s) => s.trim())
@@ -923,11 +914,16 @@ export default function Food() {
            Local NL parser keeps the existing item-count copy
            (the user typed it themselves). */
         if (confidence === "ai-parse") {
-          toast.success("Logged from AI estimate", { id: "food-nl-success" });
-        } else {
-          toast.success(`${items.length} ${itemNoun} logged${mergedSuffix}`, {
-            id: "food-nl-success",
+          notifyMealsLogged(uid, [added.id], "Logged from AI estimate", {
+            path: "nl",
           });
+        } else {
+          notifyMealsLogged(
+            uid,
+            [added.id],
+            `${items.length} ${itemNoun} logged${mergedSuffix}`,
+            { path: "nl" }
+          );
         }
 
         /* F2d grill — auto-add to Quick Add pantry. Fire-and-forget
@@ -951,7 +947,7 @@ export default function Food() {
           });
         }
       } catch {
-        toast.error("Couldn't save. Please try again.", {
+        toast.error("Couldn't save. Try again.", {
           id: "food-save-error",
         });
       }
@@ -1017,6 +1013,9 @@ export default function Food() {
       } catch (err) {
         logger.error("[Food] meal edit failed", err);
         toast.error("Could not save changes");
+        // Keep the editor open and do not change servings or announce success
+        // after any of the existing entries failed to update.
+        return;
       }
     }
     if (targetCount === currentCount || targetCount < 1) {
@@ -1041,12 +1040,9 @@ export default function Food() {
       return;
     }
     haptic("light");
+    const createdIds: string[] = [];
     try {
       if (targetCount > currentCount) {
-        /* Increment branch — no undo needed. The user can
-           always step the count back down (which routes through
-           the decrement branch with its own undo window) or
-           swipe-delete an extra entry. */
         /* `source` is the PRE-EDIT snapshot: editingGroup.meals is captured
            when the sheet opens and never refreshed, so cloning it verbatim
            carried none of the rename / slot / macro change that the editMeal
@@ -1063,20 +1059,24 @@ export default function Food() {
           targetMacros,
         });
         for (let i = 0; i < adds; i++) {
-          await addDocGuarded(collection(db, "users", uid, "meals"), {
+          const added = await createMealEntry(uid, {
             date: selectedDate,
             ...duplicate,
             confidence: "duplicate",
             createdAt: Timestamp.now(),
           });
+          createdIds.push(added.id);
         }
         setEditingGroup(null);
         setOpenRowId(null);
-        toast.success(
-          `Updated to ${targetCount} ${targetCount === 1 ? "serving" : "servings"}`,
-          {
-            id: `food-edit-${foodName}`,
-          }
+        // No `food_log_saved` telemetry on this branch or its catch: adding
+        // servings to a row already in the diary is a CORRECTION, not an
+        // entry path. Counting it would inflate the log totals and blunt the
+        // path comparison the event exists for. The omission is deliberate.
+        notifyMealsLogged(
+          uid,
+          createdIds,
+          `Added ${adds} ${adds === 1 ? "serving" : "servings"}`
         );
       } else {
         /* Decrement branch — actual data loss. Mirrors the
@@ -1120,7 +1120,17 @@ export default function Food() {
         );
       }
     } catch {
-      toast.error("Couldn't update. Try again.", { id: "food-edit-error" });
+      if (createdIds.length > 0) {
+        setEditingGroup(null);
+        setOpenRowId(null);
+        notifyMealsLogged(
+          uid,
+          createdIds,
+          `Added ${createdIds.length} servings; the remaining servings could not be saved`
+        );
+      } else {
+        toast.error("Couldn't update. Try again.", { id: "food-edit-error" });
+      }
     }
   };
 
@@ -1136,6 +1146,25 @@ export default function Food() {
        symmetric across all IDs — they go in and out of pending together
        so the toast's "Undo" action restores the entire group. */
     if (mealIds.length === 0) return;
+
+    // B0: how long the entry survived. A correction made in seconds and a
+    // change of mind made hours later look identical in a raw delete count
+    // and want opposite fixes — the first is a mis-tap the entry path
+    // should have prevented, the second is ordinary diary editing. Age is
+    // taken from the OLDEST meal in the group, so a row built up over time
+    // reports the life of the row rather than of its newest serving.
+    const loggedTimes = mealIds
+      .map((id) => meals.find((m) => m.id === id))
+      .map((m) => (m ? mealLoggedAt(m.createdAt)?.getTime() : undefined))
+      .filter((t): t is number => typeof t === "number");
+    if (loggedTimes.length > 0) {
+      trackFoodEvent("meal_deleted", {
+        ageSeconds: Math.max(
+          0,
+          Math.round((Date.now() - Math.min(...loggedTimes)) / 1000)
+        ),
+      });
+    }
 
     // 1. Optimistic hide for every meal in the group.
     setPendingDeleteIds((prev) => {
@@ -1215,7 +1244,7 @@ export default function Food() {
   //
   // Dedupe is by normalized food name across all three sources.
   // Capped at 5 to keep the row scannable.
-  const quickMeals = useMemo(() => {
+  const quickMealCandidates = useMemo(() => {
     /* Build the live key→item map first. Cap is enforced AFTER
        cache application via orderQuickAddItems (was previously
        enforced during ranking, which combined with the cache
@@ -1331,7 +1360,8 @@ export default function Food() {
         pro: entry.meal.totalProtein || 0,
         carb: entry.meal.totalCarbs || 0,
         fat: entry.meal.totalFat || 0,
-        portionSize: "1 serving",
+        portionSize:
+          items.length === 1 ? items[0].portionSize || "1 serving" : "1 meal",
         /* FOOD-01: multi-item historical meals repeat as a BUNDLE — the
            original foodName + full items[] ride on the chip so a tap
            re-logs the real composition (and the real name) instead of
@@ -1356,27 +1386,13 @@ export default function Food() {
     }
 
     // 3. Seeded defaults so first-time users still see suggestions
-    if (current.size < 3) {
+    if (current.size === 0) {
       for (const d of DEFAULT_QUICK_MEALS) {
-        push({ ...d, portionSize: "1 serving" });
+        push({ ...d, portionSize: "1 serving", example: true });
       }
     }
 
-    /* Apply the stable per-date cache. First visit to a date:
-       seed the cache with the freshly-computed order. Subsequent
-       visits / re-renders within the same date: render the cached
-       order, with vanished keys dropped and new keys appended at
-       the end. Cap of 5 enforced at render. */
-    const cached = quickAddOrderCache.current.get(selectedDate);
-    if (!cached) {
-      const seedOrder = Array.from(current.keys());
-      quickAddOrderCache.current.set(selectedDate, seedOrder);
-    }
-    return orderQuickAddItems(
-      quickAddOrderCache.current.get(selectedDate) ?? [],
-      current,
-      5
-    );
+    return current;
     /* timeRelevantHour added explicitly so eslint-react-hooks
        can verify the dep wiring — even though it derives from
        selectedDate, an explicit dep makes the freeze contract
@@ -1388,6 +1404,20 @@ export default function Food() {
     timeRelevantHour,
     pendingRemovalIds,
   ]);
+
+  const cachedQuickOrder = quickAddOrderCache.get(selectedDate);
+  if (!cachedQuickOrder) {
+    setQuickAddOrderCache(
+      new Map(quickAddOrderCache).set(
+        selectedDate,
+        Array.from(quickMealCandidates.keys())
+      )
+    );
+  }
+  const quickMeals = useMemo(
+    () => orderQuickAddItems(cachedQuickOrder ?? [], quickMealCandidates, 5),
+    [cachedQuickOrder, quickMealCandidates]
+  );
 
   const hasStrongQuickAddSuggestions = useMemo(() => {
     if (quickMeals.length === 0) return false;
@@ -1471,8 +1501,25 @@ export default function Food() {
     });
   };
 
-  const handleQuickMealAdd = async (meal: (typeof quickMeals)[number]) => {
-    if (!uid || quickAdding || !quickAddGuard.begin()) return;
+  const usualSlot =
+    targetMeal ?? inferMostLikelyMealSlot(new Date().getHours());
+  const usual = useMemo(
+    () => usualMeal(meals, usualSlot, selectedDate),
+    [meals, usualSlot, selectedDate]
+  );
+  const [copyPreviewOpen, setCopyPreviewOpen] = useState(false);
+  const [portionMeal, setPortionMeal] = useState<QuickAddItem | null>(null);
+  const handleQuickMealAdd = async (
+    meal: QuickAddItem,
+    slot = targetMeal
+  ): Promise<boolean> => {
+    if (meal.example) {
+      setNlInput(meal.name);
+      setSuggestionsActive(false);
+      inputRef.current?.focus();
+      return false;
+    }
+    if (!uid || quickAdding || !quickAddGuard.begin()) return false;
     /* Telemetry — emit BEFORE the save so we capture taps that
        fail mid-write too. favouriteId is undefined for recents /
        seeded defaults, which is meaningful — dashboards can split
@@ -1485,25 +1532,42 @@ export default function Food() {
       // FOOD-01: bundle chips re-log the original foodName + items[]
       // (composition preserved); plain chips keep the single synthetic
       // item. Pure helper so the 1/2/3+-item shapes are unit-tested.
-      const payload = buildQuickAddMealPayload(meal);
-      await addDocGuarded(collection(db, "users", uid, "meals"), {
-        date: selectedDate,
-        foodName: payload.foodName,
-        items: payload.items,
-        totalCalories: meal.cal,
-        totalProtein: meal.pro,
-        totalCarbs: meal.carb,
-        totalFat: meal.fat,
-        confidence: "quick-add",
-        createdAt: Timestamp.now(),
-        ...(targetMeal ? { meal: targetMeal } : {}),
-      });
-      setTargetMeal(null);
-      // No success toast — meal list updates, macros animate.
-    } catch {
-      toast.error("Couldn't save. Please try again.", {
-        id: "food-save-error",
-      });
+      const undo = await saveQuickMeal(uid, meal, selectedDate, slot);
+      if (slot) setTargetMeal(slot);
+      let undoing = false;
+      toast.success(
+        navigator.onLine
+          ? `Logged ${meal.name}${slot ? ` to ${slot}` : ""}`
+          : "Saved on this phone — syncs when you're back online",
+        {
+          duration: 5000,
+          action: {
+            label: "Undo",
+            onClick: async () => {
+              if (undoing) return;
+              undoing = true;
+              try {
+                await undo();
+                toast.success("Meal entry undone");
+              } catch (err) {
+                toast.error(
+                  err instanceof Error ? err.message : "Couldn't undo meal."
+                );
+                undoing = false;
+              }
+            },
+          },
+        }
+      );
+      return true;
+    } catch (err) {
+      toast.error(
+        err instanceof Error && !("code" in err)
+          ? err.message
+          : "Couldn't save. Check your connection and retry this meal.",
+        { id: "food-save-error" }
+      );
+      return false;
     } finally {
       quickAddGuard.end();
       setQuickAdding(null);
@@ -1519,37 +1583,21 @@ export default function Food() {
   const handlePantrySelect = async (
     fav: (typeof pantrySuggestions)[number]
   ) => {
-    if (!uid || quickAdding) return;
     trackFoodEvent("food_pantry_typeahead_selected", {
       favouriteId: fav.id,
       useCount: fav.useCount,
     });
-    setQuickAdding(fav.name);
-    try {
-      await addDocGuarded(collection(db, "users", uid, "meals"), {
-        date: selectedDate,
-        foodName: fav.name,
-        items: [
-          {
-            name: fav.name,
-            portionSize: fav.servingSize || "1 serving",
-            calories: fav.calories,
-            protein: fav.protein,
-            carbs: fav.carbs,
-            fat: fav.fat,
-          },
-        ],
-        totalCalories: fav.calories,
-        totalProtein: fav.protein,
-        totalCarbs: fav.carbs,
-        totalFat: fav.fat,
-        confidence: "quick-add",
-        createdAt: Timestamp.now(),
-        ...(targetMeal ? { meal: targetMeal } : {}),
-      });
-      // Re-route the favourite through addFavourite so useCount /
-      // lastUsed update like any other log — typeahead taps are
-      // graduation-relevant signal.
+    const saved = await handleQuickMealAdd({
+      key: fav.id,
+      name: fav.name,
+      portionSize: fav.servingSize || "1 serving",
+      cal: fav.calories,
+      pro: fav.protein,
+      carb: fav.carbs,
+      fat: fav.fat,
+      favouriteId: fav.id,
+    });
+    if (saved) {
       void addFavourite({
         name: fav.name,
         calories: fav.calories,
@@ -1561,13 +1609,7 @@ export default function Food() {
       });
       setNlInput("");
       setSuggestionsActive(false);
-      setTargetMeal(null);
-    } catch {
-      toast.error("Couldn't save. Please try again.", {
-        id: "food-save-error",
-      });
     }
-    setQuickAdding(null);
   };
 
   /* wave2 D: empty-focus Quick Add payload. Non-null only while the
@@ -1585,6 +1627,7 @@ export default function Food() {
           asExamples: !hasStrongQuickAddSuggestions,
           adding: quickAdding,
           onAdd: handleQuickMealAdd,
+          onEditPortion: setPortionMeal,
           onRemove: handleRemoveFavourite,
         }
       : null;
@@ -1646,7 +1689,7 @@ export default function Food() {
           aria-label="Refreshing"
         >
           <div
-            className="h-1 w-12 rounded-full bg-muted animate-pulse"
+            className="h-1 w-12 rounded-full bg-muted motion-safe:animate-pulse"
             aria-hidden="true"
           />
         </div>
@@ -1678,7 +1721,6 @@ export default function Food() {
         <h1 className="text-xl font-extrabold text-foreground">Food</h1>
       </motion.div>
 
-      {/* Hero card — ring + macros on a single white card */}
       <motion.div variants={itemVariant} key={selectedDate}>
         <FoodHeroCard
           selectedDate={selectedDate}
@@ -1720,7 +1762,7 @@ export default function Food() {
         <motion.div variants={itemVariant}>
           <div className="flex items-center gap-3 rounded-xl bg-running/10 px-4 py-3">
             <p className="flex-1 text-sm text-foreground">
-              Nice run — carbs + protein soon help recovery.
+              Nice run — refuel with carbs and protein.
               {(() => {
                 const proteinLeft = Math.max(
                   0,
@@ -1766,12 +1808,53 @@ export default function Food() {
         </motion.div>
       )}
 
-      {/* Composer: the ONE food entry surface (wave2 D) — NL textarea
-          with the scan icon, Add-to pills, and the dropdown. Quick Add
-          lives INSIDE the dropdown's empty-focus state now (the old
-          standing chip strip at two page positions is gone); the same
-          items render as instant-add rows when the input is focused
-          and empty, framed as examples for cold-start accounts. */}
+      {/* Logging group: the eligible usual, then the composer and slot.
+          The usual row leads because it is the one-tap repeat, and because
+          it has to clear the fold: `companion-food.capture.spec.ts` asserts
+          its Log button ends above 760px at 375px wide, and the calorie
+          hero above it leaves only just enough room. Keep it first. */}
+      {usual && (
+        /* Compact by requirement, not by taste: this row has to clear the
+           fold at 375px (see the ordering note above), and a separate line
+           each for the name, the kcal and the portion does not fit. Name
+           and figures share a baseline row — the name truncates, the
+           figures never do, because the figures are what make the row
+           tappable without thinking. The button row stays 44px: that is
+           the touch-target floor. */
+        <div
+          className="rounded-2xl bg-card card-shadow p-3 space-y-1"
+          aria-label="Your usual meal"
+        >
+          <p className="text-caption leading-tight text-muted-foreground">
+            Your usual at {usualSlot}
+          </p>
+          <div className="flex items-baseline justify-between gap-2">
+            <p className="text-base font-semibold truncate">{usual.name}</p>
+            <p className="text-xs text-muted-foreground shrink-0">
+              <span className="font-mono tabular-nums">
+                {Math.round(usual.cal)}
+              </span>{" "}
+              kcal · {usual.portionSize}
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <Button
+              disabled={quickAdding !== null}
+              onClick={() => void handleQuickMealAdd(usual)}
+            >
+              Log
+            </Button>
+            <Button
+              variant="secondary"
+              disabled={quickAdding !== null}
+              onClick={() => setPortionMeal(usual)}
+            >
+              Adjust portion or meal
+            </Button>
+          </div>
+        </div>
+      )}
+
       <motion.div variants={itemVariant}>
         <FoodComposerCard
           ref={suggestionsRef}
@@ -1780,7 +1863,16 @@ export default function Food() {
           nlParsing={nlParsing}
           inputFocused={inputFocused}
           setInputFocused={(v) => {
-            if (v && !inputFocused) trackFoodEvent("food_composer_focused");
+            if (v && !inputFocused) {
+              trackFoodEvent("food_composer_focused");
+              // Opens a logging attempt, to be paired with `food_log_saved`
+              // so an abandoned attempt is visible as an unmatched start.
+              // `slot` is the targeted slot when the user picked one, and
+              // the slot the clock implies otherwise.
+              trackFoodEvent("food_log_start", {
+                slot: targetMeal ?? mealSlotFor(undefined),
+              });
+            }
             setInputFocused(v);
           }}
           setSuggestionsActive={setSuggestionsActive}
@@ -1806,11 +1898,19 @@ export default function Food() {
           onManualOpen={() => setManualOpen(true)}
         />
       </motion.div>
+      {copyPreviewOpen && (
+        <CopyMealsSheet
+          key={`${uid}:${selectedDate}`}
+          sources={slotsToCopyFromYesterday.flatMap((slot) => yesterdaySegmented[slot] ?? [])}
+          onClose={() => setCopyPreviewOpen(false)}
+          onSave={handleCopySelectedFromYesterday}
+        />
+      )}
 
       {scanOpen && (
         <Suspense
           fallback={
-            <div className="py-12 text-center text-muted-foreground text-sm animate-pulse">
+            <div className="py-12 text-center text-muted-foreground text-sm motion-safe:animate-pulse">
               Loading scanner...
             </div>
           }
@@ -1827,7 +1927,6 @@ export default function Food() {
             effectiveDailyTarget={dailyTargets.finalTarget}
             onSaved={() => {
               setScanOpen(false);
-              setTargetMeal(null);
             }}
             onRequestManualLog={() => {
               // AI photo failure fallback. The camera modal stays
@@ -1892,7 +1991,7 @@ export default function Food() {
               <div className="flex justify-center pt-2">
                 <Button
                   variant="ghost"
-                  onClick={handleCopyAllMissingFromYesterday}
+                  onClick={() => setCopyPreviewOpen(true)}
                   disabled={inFlight}
                   aria-label={label}
                   leftIcon={<RotateCcw className="size-3.5" />}
@@ -1909,7 +2008,7 @@ export default function Food() {
         <ManualFoodLogger
           date={selectedDate}
           /* Pass the user's pre-selected meal slot through so a
-             manual entry honours the same "Add to Breakfast" pill
+             manual entry honours the same "Add to" meal selection
              selection as NL / quick-add. Null when no slot is
              selected — ManualFoodLogger omits the meal field in
              that case (no default slot, matches NL convention). */
@@ -1929,6 +2028,14 @@ export default function Food() {
           on the group id. Each open gets a fresh component instance so
           the stepper's local target state can't be stomped by a parent
           re-render rebuilding the `source` prop with a new identity. */}
+      {portionMeal && (
+        <QuickMealPortionSheet
+          meal={portionMeal}
+          onClose={() => setPortionMeal(null)}
+          slot={usualSlot}
+          onLog={handleQuickMealAdd}
+        />
+      )}
       {editingGroup && (
         <EditServingsSheet
           key={editingGroup.id}

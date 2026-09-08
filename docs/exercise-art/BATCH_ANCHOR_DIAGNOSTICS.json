@@ -1,0 +1,738 @@
+{
+  "method": "Read-only thresholded local-region bounds, not full registration or biomechanical approval. Shoes/toe/hand regions selected from visible images; some region tops contain adjoining limb pixels. Bounds alone cannot prove invariant shape or 1px alignment.",
+  "exercises": {
+    "hammer-curl": {
+      "1-master.png": {
+        "farShoe": {
+          "bounds": [
+            269,
+            1280,
+            493,
+            1418
+          ],
+          "pixels": 18301
+        },
+        "nearShoe": {
+          "bounds": [
+            506,
+            1300,
+            689,
+            1479
+          ],
+          "pixels": 18716
+        },
+        "head": {
+          "bounds": [
+            405,
+            13,
+            579,
+            254
+          ],
+          "pixels": 32503
+        }
+      },
+      "2-early-corrected.png": {
+        "farShoe": {
+          "bounds": [
+            269,
+            1280,
+            493,
+            1418
+          ],
+          "pixels": 18317
+        },
+        "nearShoe": {
+          "bounds": [
+            506,
+            1300,
+            689,
+            1479
+          ],
+          "pixels": 18636
+        },
+        "head": {
+          "bounds": [
+            405,
+            12,
+            579,
+            254
+          ],
+          "pixels": 32612
+        }
+      },
+      "2-early.png": {
+        "farShoe": {
+          "bounds": [
+            269,
+            1280,
+            493,
+            1418
+          ],
+          "pixels": 18317
+        },
+        "nearShoe": {
+          "bounds": [
+            506,
+            1300,
+            689,
+            1478
+          ],
+          "pixels": 18653
+        },
+        "head": {
+          "bounds": [
+            405,
+            13,
+            579,
+            254
+          ],
+          "pixels": 32529
+        }
+      },
+      "3-mid.png": {
+        "farShoe": {
+          "bounds": [
+            269,
+            1280,
+            492,
+            1418
+          ],
+          "pixels": 18350
+        },
+        "nearShoe": {
+          "bounds": [
+            506,
+            1300,
+            689,
+            1479
+          ],
+          "pixels": 18668
+        },
+        "head": {
+          "bounds": [
+            405,
+            12,
+            579,
+            254
+          ],
+          "pixels": 32631
+        }
+      },
+      "4-top.png": {
+        "farShoe": {
+          "bounds": [
+            269,
+            1280,
+            493,
+            1419
+          ],
+          "pixels": 18426
+        },
+        "nearShoe": {
+          "bounds": [
+            506,
+            1300,
+            689,
+            1479
+          ],
+          "pixels": 18702
+        },
+        "head": {
+          "bounds": [
+            405,
+            12,
+            579,
+            254
+          ],
+          "pixels": 32737
+        }
+      },
+      "5-lower.png": {
+        "farShoe": {
+          "bounds": [
+            269,
+            1280,
+            492,
+            1418
+          ],
+          "pixels": 18350
+        },
+        "nearShoe": {
+          "bounds": [
+            506,
+            1300,
+            689,
+            1479
+          ],
+          "pixels": 18668
+        },
+        "head": {
+          "bounds": [
+            405,
+            12,
+            579,
+            254
+          ],
+          "pixels": 32631
+        }
+      },
+      "6-return.png": {
+        "farShoe": {
+          "bounds": [
+            269,
+            1280,
+            493,
+            1418
+          ],
+          "pixels": 18317
+        },
+        "nearShoe": {
+          "bounds": [
+            506,
+            1300,
+            689,
+            1479
+          ],
+          "pixels": 18636
+        },
+        "head": {
+          "bounds": [
+            405,
+            12,
+            579,
+            254
+          ],
+          "pixels": 32612
+        }
+      }
+    },
+    "front-raise": {
+      "1-master.png": {
+        "farShoe": {
+          "bounds": [
+            403,
+            1220,
+            637,
+            1382
+          ],
+          "pixels": 21012
+        },
+        "nearShoe": {
+          "bounds": [
+            580,
+            1290,
+            814,
+            1469
+          ],
+          "pixels": 26434
+        },
+        "head": {
+          "bounds": [
+            555,
+            18,
+            724,
+            229
+          ],
+          "pixels": 28615
+        }
+      },
+      "2-early.png": {
+        "farShoe": {
+          "bounds": [
+            403,
+            1220,
+            637,
+            1382
+          ],
+          "pixels": 20958
+        },
+        "nearShoe": {
+          "bounds": [
+            580,
+            1290,
+            813,
+            1469
+          ],
+          "pixels": 26371
+        },
+        "head": {
+          "bounds": [
+            554,
+            18,
+            724,
+            229
+          ],
+          "pixels": 28594
+        }
+      },
+      "3-mid.png": {
+        "farShoe": {
+          "bounds": [
+            402,
+            1220,
+            636,
+            1382
+          ],
+          "pixels": 21000
+        },
+        "nearShoe": {
+          "bounds": [
+            580,
+            1290,
+            813,
+            1468
+          ],
+          "pixels": 26411
+        },
+        "head": {
+          "bounds": [
+            554,
+            17,
+            724,
+            229
+          ],
+          "pixels": 28659
+        }
+      },
+      "4-top.png": {
+        "farShoe": {
+          "bounds": [
+            402,
+            1220,
+            636,
+            1382
+          ],
+          "pixels": 21076
+        },
+        "nearShoe": {
+          "bounds": [
+            580,
+            1290,
+            814,
+            1468
+          ],
+          "pixels": 26466
+        },
+        "head": {
+          "bounds": [
+            554,
+            17,
+            724,
+            229
+          ],
+          "pixels": 28733
+        }
+      },
+      "5-lower.png": {
+        "farShoe": {
+          "bounds": [
+            402,
+            1220,
+            636,
+            1382
+          ],
+          "pixels": 21000
+        },
+        "nearShoe": {
+          "bounds": [
+            580,
+            1290,
+            813,
+            1468
+          ],
+          "pixels": 26411
+        },
+        "head": {
+          "bounds": [
+            554,
+            17,
+            724,
+            229
+          ],
+          "pixels": 28659
+        }
+      },
+      "6-return.png": {
+        "farShoe": {
+          "bounds": [
+            403,
+            1220,
+            637,
+            1382
+          ],
+          "pixels": 20958
+        },
+        "nearShoe": {
+          "bounds": [
+            580,
+            1290,
+            813,
+            1469
+          ],
+          "pixels": 26371
+        },
+        "head": {
+          "bounds": [
+            554,
+            18,
+            724,
+            229
+          ],
+          "pixels": 28594
+        }
+      }
+    },
+    "goblet-squat": {
+      "1-master.png": {
+        "farShoe": {
+          "bounds": [
+            263,
+            1245,
+            488,
+            1388
+          ],
+          "pixels": 18753
+        },
+        "nearShoe": {
+          "bounds": [
+            511,
+            1275,
+            702,
+            1447
+          ],
+          "pixels": 18814
+        }
+      },
+      "2-early.png": {
+        "farShoe": {
+          "bounds": [
+            263,
+            1245,
+            489,
+            1388
+          ],
+          "pixels": 18632
+        },
+        "nearShoe": {
+          "bounds": [
+            510,
+            1275,
+            701,
+            1446
+          ],
+          "pixels": 18741
+        }
+      },
+      "3-mid.png": {
+        "farShoe": {
+          "bounds": [
+            263,
+            1245,
+            488,
+            1388
+          ],
+          "pixels": 18558
+        },
+        "nearShoe": {
+          "bounds": [
+            511,
+            1275,
+            701,
+            1446
+          ],
+          "pixels": 18579
+        }
+      },
+      "4-bottom.png": {
+        "farShoe": {
+          "bounds": [
+            263,
+            1245,
+            488,
+            1388
+          ],
+          "pixels": 18512
+        },
+        "nearShoe": {
+          "bounds": [
+            511,
+            1275,
+            701,
+            1446
+          ],
+          "pixels": 18495
+        }
+      },
+      "5-rise.png": {
+        "farShoe": {
+          "bounds": [
+            263,
+            1245,
+            488,
+            1388
+          ],
+          "pixels": 18558
+        },
+        "nearShoe": {
+          "bounds": [
+            511,
+            1275,
+            701,
+            1446
+          ],
+          "pixels": 18579
+        }
+      },
+      "6-return.png": {
+        "farShoe": {
+          "bounds": [
+            263,
+            1245,
+            489,
+            1388
+          ],
+          "pixels": 18632
+        },
+        "nearShoe": {
+          "bounds": [
+            510,
+            1275,
+            701,
+            1446
+          ],
+          "pixels": 18741
+        }
+      }
+    },
+    "push-ups": {
+      "1-master.png": {
+        "farHand": {
+          "bounds": [
+            66,
+            710,
+            243,
+            782
+          ],
+          "pixels": 6538
+        },
+        "nearHand": {
+          "bounds": [
+            409,
+            790,
+            601,
+            874
+          ],
+          "pixels": 9442
+        },
+        "farShoeToe": {
+          "bounds": [
+            1163,
+            670,
+            1289,
+            744
+          ],
+          "pixels": 5810
+        },
+        "nearShoeToe": {
+          "bounds": [
+            1270,
+            685,
+            1400,
+            752
+          ],
+          "pixels": 6934
+        }
+      },
+      "2-early.png": {
+        "farHand": {
+          "bounds": [
+            67,
+            710,
+            240,
+            782
+          ],
+          "pixels": 6498
+        },
+        "nearHand": {
+          "bounds": [
+            409,
+            790,
+            609,
+            874
+          ],
+          "pixels": 9511
+        },
+        "farShoeToe": {
+          "bounds": [
+            1163,
+            670,
+            1289,
+            744
+          ],
+          "pixels": 5829
+        },
+        "nearShoeToe": {
+          "bounds": [
+            1270,
+            685,
+            1399,
+            752
+          ],
+          "pixels": 6926
+        }
+      },
+      "3-mid.png": {
+        "farHand": {
+          "bounds": [
+            67,
+            710,
+            239,
+            783
+          ],
+          "pixels": 6549
+        },
+        "nearHand": {
+          "bounds": [
+            410,
+            790,
+            609,
+            873
+          ],
+          "pixels": 9437
+        },
+        "farShoeToe": {
+          "bounds": [
+            1163,
+            670,
+            1289,
+            744
+          ],
+          "pixels": 5828
+        },
+        "nearShoeToe": {
+          "bounds": [
+            1270,
+            685,
+            1399,
+            751
+          ],
+          "pixels": 6861
+        }
+      },
+      "4-bottom.png": {
+        "farHand": {
+          "bounds": [
+            67,
+            710,
+            240,
+            783
+          ],
+          "pixels": 6559
+        },
+        "nearHand": {
+          "bounds": [
+            409,
+            790,
+            609,
+            873
+          ],
+          "pixels": 9449
+        },
+        "farShoeToe": {
+          "bounds": [
+            1163,
+            670,
+            1289,
+            744
+          ],
+          "pixels": 5822
+        },
+        "nearShoeToe": {
+          "bounds": [
+            1270,
+            685,
+            1399,
+            751
+          ],
+          "pixels": 6849
+        }
+      },
+      "5-rise.png": {
+        "farHand": {
+          "bounds": [
+            67,
+            710,
+            239,
+            783
+          ],
+          "pixels": 6549
+        },
+        "nearHand": {
+          "bounds": [
+            410,
+            790,
+            609,
+            873
+          ],
+          "pixels": 9437
+        },
+        "farShoeToe": {
+          "bounds": [
+            1163,
+            670,
+            1289,
+            744
+          ],
+          "pixels": 5828
+        },
+        "nearShoeToe": {
+          "bounds": [
+            1270,
+            685,
+            1399,
+            751
+          ],
+          "pixels": 6861
+        }
+      },
+      "6-return.png": {
+        "farHand": {
+          "bounds": [
+            67,
+            710,
+            240,
+            782
+          ],
+          "pixels": 6498
+        },
+        "nearHand": {
+          "bounds": [
+            409,
+            790,
+            609,
+            874
+          ],
+          "pixels": 9511
+        },
+        "farShoeToe": {
+          "bounds": [
+            1163,
+            670,
+            1289,
+            744
+          ],
+          "pixels": 5829
+        },
+        "nearShoeToe": {
+          "bounds": [
+            1270,
+            685,
+            1399,
+            752
+          ],
+          "pixels": 6926
+        }
+      }
+    }
+  }
+}

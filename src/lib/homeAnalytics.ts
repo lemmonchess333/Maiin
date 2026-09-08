@@ -14,7 +14,12 @@ import { emit } from "./analyticsClient";
 export type HomeEvent =
   | "home_initial_render_ms"
   | "home_card_tapped"
-  | "home_section_viewed";
+  | "home_section_viewed"
+  // Companion batch B0 — the weigh-in journey. Opening the sheet and not
+  // saving is the signal a weigh-in flow most needs and the one no current
+  // event can see, so the open is tracked separately from the save.
+  | "weight_sheet_open"
+  | "weight_log_saved";
 
 /** Cards the Home2 lock identifies as primary glanceable tiles. */
 export type HomeCard =
@@ -46,6 +51,18 @@ export interface HomeEventMetadata {
   /** home_section_viewed: which lazy-loaded section first crossed
    *  the viewport (or finished hydrating). */
   section?: HomeSection;
+  /** weight_log_saved: taps between opening the sheet and the write. */
+  taps?: number;
+  /** weight_log_saved: the value was typed rather than dialled. Both are
+   *  supported deliberately; which one people reach for decides whether
+   *  the dial earns its space. */
+  typed?: boolean;
+  /** weight_log_saved: the dial was moved at least once. Not the inverse
+   *  of `typed` — a user can dial to roughly the right place and then
+   *  type the exact figure. */
+  picker?: boolean;
+  /** weight_log_saved: the unit the value was entered in. */
+  unit?: "kg" | "lbs" | "st";
 }
 
 export function track(

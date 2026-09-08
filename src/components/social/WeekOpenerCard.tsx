@@ -1,4 +1,5 @@
 import { Zap } from "lucide-react";
+import { Button } from "@/components/ui/Button";
 import SectionLabel from "@/components/ui/SectionLabel";
 import { THEME } from "@/lib/theme";
 
@@ -45,13 +46,14 @@ export default function WeekOpenerCard({
             )}
           </p>
         </div>
-        <button
-          type="button"
+        <Button
+          variant="ghost"
+          size="sm"
           onClick={onStartTraining}
-          className="text-xs font-medium text-primary hover:text-primary/80 transition-colors shrink-0 min-h-[44px]"
+          className="shrink-0 min-h-[44px] text-primary hover:text-primary/80"
         >
           Start training
-        </button>
+        </Button>
       </div>
     </div>
   );

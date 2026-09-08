@@ -1,3 +1,4 @@
+import Button from "@/components/ui/Button";
 import { useState } from "react";
 import { THEME } from "@/lib/theme";
 import { motion } from "framer-motion";
@@ -5,6 +6,7 @@ import { Droplets, Plus, Minus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { haptic } from "@/lib/haptic";
 import { track as trackHomeEvent } from "@/lib/homeAnalytics";
+import InlineNumerals from "@/components/ui/InlineNumerals";
 import SectionLabel from "@/components/ui/SectionLabel";
 import WaterWave from "@/components/home/WaterWave";
 import WaterBubbles from "@/components/home/WaterBubbles";
@@ -12,7 +14,7 @@ import WaterSizeSheet from "@/components/home/WaterSizeSheet";
 import {
   GLASS_ML,
   formatLitresValue,
-  formatVolume,
+  formatWaterVolume,
   waterProgress,
 } from "@/lib/waterUnits";
 
@@ -28,6 +30,11 @@ export default function WaterCard({
   targetMl,
   onLog,
   compact = false,
+  servingMl = GLASS_ML,
+  onServingChange,
+  recentSizes = [],
+  syncStatus,
+  onRetry,
 }: {
   /** Consumed millilitres today. */
   ml: number;
@@ -38,6 +45,11 @@ export default function WaterCard({
   onLog: (deltaMl: number) => void;
   /** Pyramid tile variant: half-width cell beside the weight tile. */
   compact?: boolean;
+  servingMl?: number;
+  recentSizes?: number[];
+  onServingChange?: (ml: number) => void;
+  syncStatus?: string;
+  onRetry?: () => void;
 }) {
   const [rippleKey, setRippleKey] = useState(0);
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -48,13 +60,13 @@ export default function WaterCard({
   function quickAdd() {
     haptic();
     trackHomeEvent("home_card_tapped", { card: "water" });
-    onLog(GLASS_ML);
+    onLog(servingMl);
     setRippleKey((k) => k + 1);
   }
   function quickRemove() {
     haptic();
     trackHomeEvent("home_card_tapped", { card: "water" });
-    onLog(-GLASS_ML);
+    onLog(-servingMl);
   }
   function openSheet() {
     haptic();
@@ -70,6 +82,9 @@ export default function WaterCard({
         onLog(v);
         setRippleKey((k) => k + 1);
       }}
+      servingMl={servingMl}
+      recentSizes={recentSizes}
+      onServingChange={onServingChange}
       consumedMl={ml}
       targetMl={targetMl}
     />
@@ -85,7 +100,7 @@ export default function WaterCard({
   if (compact) {
     return (
       <div
-        className="relative overflow-hidden p-3 rounded-xl bg-card h-full"
+        className="relative overflow-hidden p-3 rounded-xl bg-card h-full flex flex-col"
         style={{ boxShadow: iconBoxShadow }}
       >
         <motion.div
@@ -100,13 +115,13 @@ export default function WaterCard({
           )}
         </motion.div>
         {ml > 2 * GLASS_ML && <WaterBubbles />}
-        <div className="relative z-10 flex flex-col h-full">
+        <div className="relative z-10 flex flex-col flex-1">
           {/* Card body opens the size sheet (choose a container). */}
           <button
             type="button"
             onClick={openSheet}
             aria-label="Add water — choose a container size"
-            className="text-left active:scale-[0.99] transition-transform"
+            className="text-left motion-safe:active:scale-[0.99] transition-transform"
           >
             <div className="flex items-center gap-2 mb-1.5">
               <div
@@ -115,7 +130,7 @@ export default function WaterCard({
               >
                 <Droplets
                   className="size-3.5"
-                  style={{ color: THEME.semantic.hydration }}
+                  style={{ color: "hsl(var(--teal))" }}
                 />
               </div>
               {/* SectionLabel, not a hand-rolled label: the weight tile
@@ -140,7 +155,7 @@ export default function WaterCard({
                 className="text-sm font-normal mx-1"
                 style={{ color: "hsl(var(--muted-foreground))" }}
               >
-                / {formatVolume(targetMl)}
+                / {formatWaterVolume(targetMl)}
               </span>
             </p>
           </button>
@@ -148,10 +163,10 @@ export default function WaterCard({
             <button
               type="button"
               onClick={quickRemove}
-              aria-label="Remove a glass (250 ml)"
+              aria-label={`Remove ${servingMl} ml`}
               disabled={!hasWater}
               className={cn(
-                "size-11 rounded-full flex items-center justify-center active:scale-[0.95] flex-shrink-0 border",
+                "size-11 rounded-full flex items-center justify-center motion-safe:active:scale-[0.95] flex-shrink-0 border",
                 !hasWater && "opacity-30"
               )}
               style={{
@@ -159,16 +174,13 @@ export default function WaterCard({
                 borderColor: THEME.semantic.hydration + "30",
               }}
             >
-              <Minus
-                className="size-4"
-                style={{ color: THEME.semantic.hydration }}
-              />
+              <Minus className="size-4" style={{ color: "hsl(var(--teal))" }} />
             </button>
             <button
               type="button"
               onClick={quickAdd}
-              aria-label="Add a glass (250 ml)"
-              className="size-11 rounded-full flex items-center justify-center active:scale-[0.95] flex-shrink-0"
+              aria-label={`Add ${servingMl} ml`}
+              className="size-11 rounded-full flex items-center justify-center motion-safe:active:scale-[0.95] flex-shrink-0"
               style={{
                 backgroundColor: THEME.semantic.hydration + "26",
                 borderColor: "transparent",
@@ -184,6 +196,22 @@ export default function WaterCard({
             </button>
           </div>
         </div>
+        <p className="relative z-10 text-micro text-muted-foreground mt-2">
+          Quick add: <InlineNumerals>{`${servingMl} ml`}</InlineNumerals>
+        </p>
+        {syncStatus && (
+          <div
+            role="status"
+            className="relative z-10 text-micro text-muted-foreground mt-2"
+          >
+            {syncStatus}
+            {onRetry && (
+              <Button variant="ghost" onClick={onRetry}>
+                Retry sync
+              </Button>
+            )}
+          </div>
+        )}
         {sheet}
       </div>
     );
@@ -210,7 +238,7 @@ export default function WaterCard({
           type="button"
           onClick={openSheet}
           aria-label="Add water — choose a container size"
-          className="flex items-center gap-4 flex-1 min-w-0 text-left active:scale-[0.99] transition-transform"
+          className="flex items-center gap-4 flex-1 min-w-0 text-left motion-safe:active:scale-[0.99] transition-transform"
         >
           <div
             className="size-12 rounded-xl flex items-center justify-center flex-shrink-0"
@@ -218,7 +246,7 @@ export default function WaterCard({
           >
             <Droplets
               className="size-5"
-              style={{ color: THEME.semantic.hydration }}
+              style={{ color: "hsl(var(--teal))" }}
             />
           </div>
           <div className="flex-1 min-w-0">
@@ -229,7 +257,7 @@ export default function WaterCard({
                 className="text-sm font-normal mx-1"
                 style={{ color: "hsl(var(--muted-foreground))" }}
               >
-                / {formatVolume(targetMl)}
+                / {formatWaterVolume(targetMl)}
               </span>
             </p>
           </div>
@@ -238,10 +266,10 @@ export default function WaterCard({
           <button
             type="button"
             onClick={quickRemove}
-            aria-label="Remove a glass (250 ml)"
+            aria-label={`Remove ${servingMl} ml`}
             disabled={!hasWater}
             className={cn(
-              "size-12 rounded-full flex items-center justify-center active:scale-[0.95] flex-shrink-0 border",
+              "size-12 rounded-full flex items-center justify-center motion-safe:active:scale-[0.95] flex-shrink-0 border",
               !hasWater && "opacity-30"
             )}
             style={{
@@ -249,28 +277,38 @@ export default function WaterCard({
               borderColor: THEME.semantic.hydration + "30",
             }}
           >
-            <Minus
-              className="size-4"
-              style={{ color: THEME.semantic.hydration }}
-            />
+            <Minus className="size-4" style={{ color: "hsl(var(--teal))" }} />
           </button>
           <button
             type="button"
             onClick={quickAdd}
-            aria-label="Add a glass (250 ml)"
-            className="size-12 rounded-full flex items-center justify-center active:scale-[0.95] flex-shrink-0"
+            aria-label={`Add ${servingMl} ml`}
+            className="size-12 rounded-full flex items-center justify-center motion-safe:active:scale-[0.95] flex-shrink-0"
             style={{
               backgroundColor: THEME.semantic.hydration + "26",
               borderColor: "transparent",
             }}
           >
-            <Plus
-              className="size-4"
-              style={{ color: THEME.semantic.hydration }}
-            />
+            <Plus className="size-4" style={{ color: "hsl(var(--teal))" }} />
           </button>
         </div>
       </div>
+      <p className="relative z-10 text-micro text-muted-foreground mt-2">
+        Quick add: <InlineNumerals>{`${servingMl} ml`}</InlineNumerals>
+      </p>
+      {syncStatus && (
+        <div
+          role="status"
+          className="relative z-10 text-micro text-muted-foreground mt-2"
+        >
+          {syncStatus}
+          {onRetry && (
+            <Button variant="ghost" onClick={onRetry}>
+              Retry sync
+            </Button>
+          )}
+        </div>
+      )}
       {sheet}
     </div>
   );

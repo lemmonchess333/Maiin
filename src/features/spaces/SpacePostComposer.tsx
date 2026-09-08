@@ -20,10 +20,12 @@ import { addDocGuarded } from "@/lib/firestoreWrite";
 import { useAuth } from "@/lib/auth";
 import { haptic } from "@/lib/haptic";
 import { toast } from "@/lib/toast";
+import { logger } from "@/lib/logger";
 import { containsProfanity } from "@/lib/profanityFilter";
 import { uploadSpacePostPhoto } from "@/lib/spacePhotoUpload";
 import { inferMovementCategory } from "@/lib/exerciseMovementCategory";
 import { BottomSheet } from "@/components/ui/BottomSheet";
+import SustainedOfflineBanner from "@/components/ui/SustainedOfflineBanner";
 import { Button } from "@/components/ui/Button";
 import SectionLabel from "@/components/ui/SectionLabel";
 import { THEME } from "@/lib/theme";
@@ -33,6 +35,8 @@ import {
   type Workout,
 } from "@/hooks/useWorkouts";
 import { useRunningStats, type RunSummaryItem } from "@/hooks/useRunningStats";
+import { useEmailVerificationGate } from "@/hooks/useEmailVerificationGate";
+import VerifyEmailNotice from "@/components/social/VerifyEmailNotice";
 import type { SpacePostActivitySnapshot } from "./spaceTypes";
 import { distanceLabel } from "@/lib/runLabels";
 import type { DistanceUnit } from "@/lib/distanceUnits";
@@ -93,7 +97,7 @@ function attachableLabel(a: Attachable, unit: DistanceUnit): string {
     .slice(0, 2)
     .map((e) => e.exerciseName)
     .join(", ");
-  return `Workout — ${names}${a.workout.exercises.length > 2 ? "…" : ""}`;
+  return `Workout · ${names}${a.workout.exercises.length > 2 ? "…" : ""}`;
 }
 
 export default function SpacePostComposer({
@@ -113,6 +117,7 @@ export default function SpacePostComposer({
   initialTitle?: string;
 }) {
   const { user, profile } = useAuth();
+  const gate = useEmailVerificationGate(user);
   const unit = useDistanceUnit();
   const { workouts } = useWorkouts();
   const { runs } = useRunningStats(30);
@@ -162,10 +167,27 @@ export default function SpacePostComposer({
   }, [workouts, runs]);
 
   const profane = containsProfanity(title) || containsProfanity(body);
-  const canPost = body.trim().length > 0 && !profane && !busy;
+  // Space posts are public content: the rules refuse an unverified email,
+  // so the action is held here and the notice below says why.
+  const canPost =
+    body.trim().length > 0 && !profane && !busy && !gate.needsVerification;
 
   const submit = async () => {
     if (!user || !canPost) return;
+    // Offline, an awaited Firestore write never settles (the SDK parks it
+    // until the server answers) and a photo cannot upload at all. A
+    // text-only post is committed to the local cache at call time and
+    // replays on reconnect, so it counts as posted; a photo post is held
+    // with the draft intact.
+    const offline =
+      typeof navigator !== "undefined" && navigator.onLine === false;
+    if (offline && photoFile) {
+      haptic("error");
+      toast.error(
+        "Photos need a connection. Remove the photo to post now, or try again when you're back online."
+      );
+      return;
+    }
     setBusy(true);
     /* Photo uploads FIRST — it's core post content (unlike the diary's
        enhancement posture), so a failed upload keeps the sheet open
@@ -177,36 +199,48 @@ export default function SpacePostComposer({
       } catch {
         haptic("error");
         toast.error(
-          "Photo upload failed — try again, or remove the photo to post without it."
+          "Photo upload failed. Try again, or remove the photo to post without it."
         );
         setBusy(false);
         return;
       }
     }
-    try {
-      await addDocGuarded(collection(db, "spaces", spaceId, "posts"), {
-        authorId: user.uid,
-        authorName: profile?.displayName || "Athlete",
-        /* Only include when it's a real URL — a null photoURL (profile
-           without an avatar) fails the rules' `is string` check;
-           stripUndefined only strips undefined, not null. */
-        ...(profile?.photoURL ? { authorPhotoURL: profile.photoURL } : {}),
-        ...(title.trim() ? { title: title.trim() } : {}),
-        body: body.trim(),
-        ...(attached ? { activity: toSnapshot(attached) } : {}),
-        ...(photoUrl ? { photoUrl } : {}),
-        likeCount: 0,
-        commentCount: 0,
-        createdAt: serverTimestamp(),
-      });
+    const write = addDocGuarded(collection(db, "spaces", spaceId, "posts"), {
+      authorId: user.uid,
+      authorName: profile?.displayName || "Athlete",
+      /* Only include when it's a real URL — a null photoURL (profile
+         without an avatar) fails the rules' `is string` check;
+         stripUndefined only strips undefined, not null. */
+      ...(profile?.photoURL ? { authorPhotoURL: profile.photoURL } : {}),
+      ...(title.trim() ? { title: title.trim() } : {}),
+      body: body.trim(),
+      ...(attached ? { activity: toSnapshot(attached) } : {}),
+      ...(photoUrl ? { photoUrl } : {}),
+      likeCount: 0,
+      commentCount: 0,
+      createdAt: serverTimestamp(),
+    });
+    const finish = (message: string) => {
       haptic("light");
-      toast.success("Posted");
+      toast.success(message);
       setTitle("");
       setBody("");
       setAttached(null);
       pickPhoto(null);
       onOpenChange(false);
       onPosted();
+    };
+    if (offline) {
+      write.catch((err) =>
+        logger.warn("[SpacePostComposer] queued post rejected", err)
+      );
+      finish("Post queued. It goes up when you reconnect.");
+      setBusy(false);
+      return;
+    }
+    try {
+      await write;
+      finish("Posted");
     } catch {
       haptic("error");
       toast.error("Couldn't post. Check you've joined the space.");
@@ -223,6 +257,12 @@ export default function SpacePostComposer({
           button became unreachable (caught by the rig's photo-post
           drive). This wrapper makes the composer body scroll. */}
       <div className="px-4 pb-6 space-y-4 overflow-y-auto min-h-0">
+        {/* A composer opened while already offline gets no 30s grace: its
+            own mount is the first chance to say what will happen. */}
+        <SustainedOfflineBanner thresholdMs={0} bannerKey="space-post-offline">
+          Text posts save on this device and go up when you reconnect. Photos
+          need a connection.
+        </SustainedOfflineBanner>
         <input
           type="text"
           value={title}
@@ -346,6 +386,10 @@ export default function SpacePostComposer({
               </div>
             )}
           </div>
+        )}
+
+        {gate.needsVerification && (
+          <VerifyEmailNotice onRecheck={gate.recheck} />
         )}
 
         <Button

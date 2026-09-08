@@ -86,8 +86,12 @@ function observedSubcollections() {
       '.doc($1)$2.collection("__nested_users__")'
     );
     const patterns = [
-      // client SDK: collection(db, "users", uid, "NAME") / doc(db, …)
-      /(?:collection|doc)\(\s*db\s*,\s*"users"\s*,\s*[^,]+,\s*"([A-Za-z]\w*)"/g,
+      // client SDK: collection(db, "users", uid, "NAME") / doc(db, …) —
+      // under ANY local alias. WorkoutSession imports `doc as fbDoc` and
+      // wrote users/{uid}/stats/prMap through it; the bare `doc(` form here
+      // never saw that call, so the subcollection sat outside the sweep
+      // with a green guard (found 2026-09-05).
+      /\b\w*(?:[Cc]ollection|[Dd]oc)\(\s*db\s*,\s*"users"\s*,\s*[^,]+,\s*"([A-Za-z]\w*)"/g,
       // admin SDK: .collection("users").doc(uid).collection("NAME")
       /collection\(\s*["']users["']\s*\)[\s\S]{0,80}?\.collection\(\s*["']([A-Za-z]\w*)["']/g,
       // template path: `users/${uid}/NAME/…`

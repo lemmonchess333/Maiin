@@ -94,12 +94,12 @@ const SCOPED_STYLE = `
 // ── Surface replicas (faithful: same classes / sizes / colours / values as
 //    the live Food, Home and RunDetail surfaces). ────────────────────────────
 
-/** Surface 2 — Today's Energy intake row ("1,310 / 2,200 kcal"). */
+/** Surface 2 — Today's energy intake row ("1,310 / 2,200 kcal"). */
 function TodayEnergyRow() {
   return (
     <div className="rounded-2xl bg-card p-4 w-[300px]">
       <p className="text-xs font-semibold text-muted-foreground mb-2">
-        Today's Energy
+        Today's energy
       </p>
       <div className="flex items-baseline gap-2">
         <span className="text-xl font-bold font-mono tabular-nums leading-none text-foreground">

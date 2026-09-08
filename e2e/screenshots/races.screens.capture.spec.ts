@@ -75,7 +75,7 @@ test.describe("races & events directory screenshots", () => {
      sections above (the Circles selector) can reflow the page between
      theme flips and silently scroll the target out of frame. */
   async function shootLightDark(page: Page, name: string) {
-    const anchor = page.getByText("Races & Events");
+    const anchor = page.getByText("Races & events");
     await page.evaluate(() =>
       document.documentElement.classList.remove("dark")
     );
@@ -100,7 +100,7 @@ test.describe("races & events directory screenshots", () => {
       .waitFor({ state: "visible", timeout: 20000 });
 
     // The full directory's second row is the surface under review.
-    const racesLabel = page.getByText("Races & Events");
+    const racesLabel = page.getByText("Races & events");
     await racesLabel.waitFor({ state: "visible", timeout: 15000 });
     await racesLabel.scrollIntoViewIfNeeded();
     // First race card (soonest, The Big Half) settles once its photo

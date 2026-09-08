@@ -7,13 +7,13 @@ import { THEME } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import { RotateCcw, Save, Check, Plus, Minus, Download, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { doc, Timestamp, collection } from "firebase/firestore";
-import { setDocGuarded } from "@/lib/firestoreWrite";
+import { Timestamp } from "firebase/firestore";
+import { createMealEntry, notifyMealsLogged } from "@/lib/mealEntry";
 import { saveFoodPhoto } from "@/lib/foodPhotoStore";
 import { invalidateFoodPhotoCache } from "@/hooks/useFoodPhotoUrls";
-import { db } from "@/lib/firebase";
 import { useUid } from "@/lib/auth";
-import { safeNum, parseServingGrams, round1 } from "@/lib/foodParseHelpers";
+import { offProductToPortion } from "@/lib/offNutrition";
+import { safeNum } from "@/lib/foodParseHelpers";
 import { toast } from "@/lib/toast";
 import { haptic } from "@/lib/haptic";
 import { isPhotoShareSupported, sharePhotoToLibrary } from "@/lib/sharePhoto";
@@ -74,9 +74,6 @@ type MealResult = {
   brand?: string;
 };
 
-/* safeNum / parseServingGrams / round1 extracted to
-   `@/lib/foodParseHelpers` so they can be tested in isolation. */
-
 async function fetchOpenFoodFacts(barcode: string): Promise<MealResult> {
   const url =
     `https://world.openfoodfacts.org/api/v2/product/${encodeURIComponent(barcode)}.json` +
@@ -93,45 +90,20 @@ async function fetchOpenFoodFacts(barcode: string): Promise<MealResult> {
     throw new Error("Barcode not found. Log it manually instead.");
   }
 
-  const p = data.product;
-  const name: string = (p.product_name || "").trim() || "Barcode item";
-  const brand: string = (p.brands || "").trim();
-
-  const nutr = p.nutriments || {};
-  const pro100 = safeNum(nutr["proteins_100g"]);
-  const carb100 = safeNum(nutr["carbohydrates_100g"]);
-  const fat100 = safeNum(nutr["fat_100g"]);
-
-  const servingSize: string = (p.serving_size || "").trim();
-  const servingGrams = parseServingGrams(servingSize);
-  const portionGrams = servingGrams ?? 100;
-
-  const factor = portionGrams / 100;
-
-  const protein = round1(pro100 * factor);
-  const carbs = round1(carb100 * factor);
-  const fat = round1(fat100 * factor);
-
-  // Calories: only OFF's per-100g energy is safe to scale by portionGrams/100.
-  // The bare `energy-kcal` field is frequently per-SERVING, so scaling it as
-  // per-100g under-based the calories (~3× off) while the macros — which read
-  // only *_100g — stayed correct, leaving calories and macros disagreeing. Drop
-  // the ambiguous fallback: when _100g energy is absent, derive calories from
-  // the (already per-portion) macros via Atwater so the two always agree.
-  const kcal100 = safeNum(nutr["energy-kcal_100g"]);
-  const calories = Math.round(
-    kcal100 > 0 ? kcal100 * factor : 4 * protein + 4 * carbs + 9 * fat
-  );
+  // One converter for OFF data, shared with the Food search results —
+  // see src/lib/offNutrition.ts for the per-100 g → per-serving contract.
+  const portion = offProductToPortion(data.product, "Barcode item");
+  const { name, brand, calories, protein, carbs, fat } = portion;
 
   return {
     foodName: name,
     brand,
     barcode,
-    imageUrl: p.image_url || undefined,
+    imageUrl: data.product.image_url || undefined,
     items: [
       {
         name: brand ? `${name} (${brand})` : name,
-        portionSize: servingGrams ? servingSize : `${portionGrams}g`,
+        portionSize: portion.servingSize,
         calories,
         protein,
         carbs,
@@ -510,8 +482,7 @@ export default function FoodAnalyzer({
         ? meal.foodName
         : buildFoodNameFromItems(persistedItems, meal.foodName);
 
-      const mealRef = doc(collection(db, "users", uid, "meals"));
-      await setDocGuarded(mealRef, {
+      const mealRef = await createMealEntry(uid, {
         date,
         foodName: derivedFoodName,
         items: persistedItems,
@@ -577,6 +548,9 @@ export default function FoodAnalyzer({
         source: meal.barcode ? "barcode" : "photo",
       });
 
+      notifyMealsLogged(uid, [mealRef.id], `Logged ${derivedFoodName}`, {
+        path: "photo",
+      });
       setSaving(false);
       setSaved(true);
 
@@ -841,7 +815,7 @@ export default function FoodAnalyzer({
       {showError && !activeResult && (
         <div className="bg-destructive/10 rounded-xl p-4 space-y-2">
           <p className="text-sm text-destructive-strong">
-            Couldn't identify food. Try manual entry.
+            Couldn't identify food.
           </p>
           <div className="flex gap-3">
             <button
@@ -1083,7 +1057,7 @@ export default function FoodAnalyzer({
                                 }
                                 aria-label={`Decrease ${item.name} portion`}
                                 disabled={item.multiplier <= 0.5}
-                                className="size-6 rounded-full bg-muted flex items-center justify-center text-muted-foreground hover:bg-muted/70 disabled:opacity-40 active:scale-90 transition-transform"
+                                className="size-6 relative before:absolute before:-inset-2.5 before:content-[''] rounded-full bg-muted flex items-center justify-center text-muted-foreground hover:bg-muted/70 disabled:opacity-40 active:scale-90 transition-transform"
                               >
                                 <Minus className="size-3" />
                               </button>
@@ -1097,7 +1071,7 @@ export default function FoodAnalyzer({
                                 }
                                 aria-label={`Increase ${item.name} portion`}
                                 disabled={item.multiplier >= 4}
-                                className="size-6 rounded-full bg-muted flex items-center justify-center text-muted-foreground hover:bg-muted/70 disabled:opacity-40 active:scale-90 transition-transform"
+                                className="size-6 relative before:absolute before:-inset-2.5 before:content-[''] rounded-full bg-muted flex items-center justify-center text-muted-foreground hover:bg-muted/70 disabled:opacity-40 active:scale-90 transition-transform"
                               >
                                 <Plus className="size-3" />
                               </button>

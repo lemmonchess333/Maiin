@@ -370,6 +370,42 @@ describe("writeStoredRun — failure modes", () => {
       Storage.prototype.setItem = original;
     }
   });
+
+  it("a refused chunk write leaves the meta at the previous consistent state", () => {
+    /* The commit-point invariant: chunks first, meta last, and the first
+       refused chunk write returns before the meta. A write that swallowed
+       the refusal and committed anyway would leave the meta claiming 305
+       points over a chunk that still holds 50 — which the read path can
+       only answer by discarding the whole run. */
+    const now = 2_000_000;
+    expect(
+      writeStoredRun(
+        UID,
+        makeSnapshot({ lastWriteAt: now, points: makePoints(300) })
+      )
+    ).toBe(true);
+    const real = Storage.prototype.setItem;
+    const spy = vi
+      .spyOn(Storage.prototype, "setItem")
+      .mockImplementation(function (this: Storage, k: string, v: string) {
+        if (k === runResumeChunkKey(UID, 1)) {
+          throw new DOMException("quota", "QuotaExceededError");
+        }
+        return real.call(this, k, v);
+      });
+    try {
+      expect(
+        writeStoredRun(
+          UID,
+          makeSnapshot({ lastWriteAt: now, points: makePoints(305) })
+        )
+      ).toBe(false);
+    } finally {
+      spy.mockRestore();
+    }
+    // Nothing past the refused chunk was written: the meta still commits 300.
+    expect(readStoredRun(UID, now)?.points).toHaveLength(300);
+  });
 });
 
 describe("readStoredRun — getItem throw guard", () => {

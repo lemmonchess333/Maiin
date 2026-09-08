@@ -168,6 +168,18 @@ describe("useEffectiveTargets — race taper (the only forward calorie move)", (
     expect(reconciles(carbLoad)).toBeLessThanOrEqual(2);
   });
 
+  it("Nutr4: a manual override outranks the taper — label shown, calorie move NOT applied", () => {
+    const { profile } = PRO_TAPER({ daysToRace: 6 });
+    h.profile = { ...profile, customCalorieTarget: 2500, targetCalories: 2500 };
+    const { result } = renderHook(() => useEffectiveTargets());
+    const t = result.current;
+    expect(t.finalTarget).toBe(2500); // the pinned number, not the tapered one
+    expect(t.taperActive).toBe(false);
+    expect(t.annotation).toMatch(/taper|race|carb/i); // the label still renders
+    expect(t.trainingFuel.eligible).toBe(true); // eligible-but-not-applied
+    expect(reconciles(t)).toBeLessThanOrEqual(2);
+  });
+
   it("LIFT_ONLY / no-race user: taper NEVER fires (no spurious calorie cut)", () => {
     h.profile = LIFT_ONLY().profile; // no runMode/raceGoal
     const { result } = renderHook(() => useEffectiveTargets());

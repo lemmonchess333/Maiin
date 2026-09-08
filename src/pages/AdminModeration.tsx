@@ -160,7 +160,7 @@ export default function AdminModeration() {
   if (!uid) {
     return (
       <div className="px-4 py-8 max-w-md mx-auto">
-        <h1 className="text-xl font-bold mb-2">Moderation</h1>
+        <h1 className="text-xl font-extrabold mb-2">Moderation</h1>
         <p className="text-sm text-muted-foreground">Sign in to continue.</p>
       </div>
     );
@@ -170,7 +170,7 @@ export default function AdminModeration() {
       <div className="px-4 py-8 max-w-md mx-auto">
         <div className="rounded-xl border border-border bg-card p-6 text-center">
           <ShieldAlert className="size-8 text-muted-foreground mx-auto mb-3" />
-          <h1 className="text-base font-semibold">Not authorised</h1>
+          <h1 className="text-xl font-extrabold">Not authorised</h1>
           <p className="text-sm text-muted-foreground mt-2">
             This page is for Tropos moderators only.
           </p>
@@ -182,7 +182,7 @@ export default function AdminModeration() {
   return (
     <div className="px-4 py-6 max-w-2xl mx-auto space-y-4">
       <header className="flex items-center justify-between">
-        <h1 className="text-xl font-bold">Moderation queue</h1>
+        <h1 className="text-xl font-extrabold">Moderation queue</h1>
         <button
           type="button"
           onClick={() => void fetchReports()}

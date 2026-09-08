@@ -17,7 +17,7 @@ import { Spinner } from "@/components/ui/Spinner";
  * card's 0-pts grid ever mounts.
  *
  * Keeps the same outer shape (p-4 rounded-2xl card with a header
- * row featuring Zap + title + "This Week" pill) as LeaderboardCard
+ * row featuring Zap + title + "This week" pill) as LeaderboardCard
  * so swapping between the two doesn't cause a layout shift.
  */
 export default function TrajectoryCard({
@@ -63,7 +63,7 @@ export default function TrajectoryCard({
         <div className="flex-1">
           <h3 className="text-sm font-bold">Your trajectory</h3>
         </div>
-        <span className="text-xs text-muted-foreground">This Week</span>
+        <span className="text-xs text-muted-foreground">This week</span>
       </div>
 
       {loading && (

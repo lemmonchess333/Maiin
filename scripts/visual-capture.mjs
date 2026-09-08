@@ -15,14 +15,37 @@
  * Admin SDK.
  */
 import { chromium } from "playwright";
-import { mkdirSync } from "node:fs";
+import { mkdirSync, writeFileSync } from "node:fs";
 import { initializeApp, getApps } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
 import { getAuth } from "firebase-admin/auth";
+import { assertVisualCaptureEnvironment } from "./visual-capture-safety.mjs";
+
+assertVisualCaptureEnvironment();
 
 const BASE = "http://localhost:4173/Maiin/";
 const OUT = "visual-capture";
 const CREDS = { email: "e2e-test@tropos.test", password: "test-password-123" };
+const manifest = {
+  sourceCommit: process.env.GITHUB_SHA ?? null,
+  runId: process.env.GITHUB_RUN_ID ?? null,
+  startedAt: new Date().toISOString(),
+  status: "incomplete",
+  project: "demo-tropos",
+  viewport: { width: 393, height: 852 },
+  notes: [
+    "Synthetic emulator fixture. Route captures do not prove every feature works.",
+    "Full-page captures retain fixed navigation at its viewport position; use viewport PNGs for layout review.",
+    "Open dialogs are recorded, not hidden. An obscured page is not an unobstructed screen pass.",
+    "No native-device, backend-callable, payment or offline-sync coverage is implied.",
+  ],
+  screens: [],
+};
+const saveManifest = () =>
+  writeFileSync(
+    `${OUT}/capture-manifest.json`,
+    JSON.stringify(manifest, null, 2)
+  );
 
 // The screens worth eyeballing on every UI change. Settings sub-pages are
 // included because that's where the recent cohesion work landed.
@@ -52,7 +75,7 @@ async function setDarkMode(value) {
   // Guard init: setDarkMode runs twice (light → dark) and a second
   // initializeApp would throw "default app already exists".
   if (!getApps().length) {
-    initializeApp({ projectId: process.env.GCLOUD_PROJECT });
+    initializeApp({ projectId: "demo-tropos" });
   }
   const u = await getAuth().getUserByEmail(CREDS.email);
   await getFirestore()
@@ -86,11 +109,11 @@ async function capturePass(browser, dark) {
   await p.fill("#login-email", CREDS.email);
   await p.fill("#login-password", CREDS.password);
   await p.locator('button[type="submit"]').first().click();
-  await p
-    .waitForFunction(() => !document.querySelector("#login-email"), null, {
-      timeout: 25000,
-    })
-    .catch(() => {});
+  // A failed sign-in must fail the capture, not produce eight login-page
+  // screenshots under names that look like successful authenticated screens.
+  await p.waitForFunction(() => !document.querySelector("#login-email"), null, {
+    timeout: 25000,
+  });
   await settle(p, 2500);
   const dismiss = async () => {
     try {
@@ -111,23 +134,54 @@ async function capturePass(browser, dark) {
     await p.addStyleTag({ content: SAFE }).catch(() => {});
     await p.evaluate(() => window.scrollTo(0, 0));
     await p.waitForTimeout(400);
+    if (await p.locator("#login-email").isVisible()) {
+      throw new Error(`Authentication lost while capturing ${name}-${tag}`);
+    }
+    const openDialogs = await p
+      .locator('[role="dialog"]:visible, [role="alertdialog"]:visible')
+      .count();
+    const viewportFile = `${name}-${tag}-viewport.png`;
+    await p.screenshot({
+      path: `${OUT}/${viewportFile}`,
+      animations: "disabled",
+    });
     await p.screenshot({
       path: `${OUT}/${name}-${tag}.png`,
       fullPage: true,
       animations: "disabled",
     });
-    console.log(`  ✓ ${tag}/${name}`);
+    manifest.screens.push({
+      name,
+      theme: tag,
+      path,
+      actualUrl: p.url(),
+      fullPageFile: `${name}-${tag}.png`,
+      viewportFile,
+      openDialogs,
+      reviewStatus: openDialogs
+        ? "dialog-obscures-page"
+        : "captured-not-interactively-tested",
+    });
+    saveManifest();
+    console.log(
+      `  ✓ ${tag}/${name}${openDialogs ? " (open dialog — review required)" : ""}`
+    );
   }
   await ctx.close();
 }
 
 mkdirSync(OUT, { recursive: true });
+saveManifest();
 const browser = await chromium.launch();
-// Light pass (profile default), then flip + dark pass.
-await setDarkMode(false);
-await capturePass(browser, false);
-await setDarkMode(true);
-await capturePass(browser, true);
-await browser.close();
-console.log("visual-capture: done");
-process.exit(0);
+try {
+  // Light pass (profile default), then flip + dark pass.
+  await setDarkMode(false);
+  await capturePass(browser, false);
+  await setDarkMode(true);
+  await capturePass(browser, true);
+  manifest.status = "complete";
+  console.log("visual-capture: done");
+} finally {
+  saveManifest();
+  await browser.close();
+}

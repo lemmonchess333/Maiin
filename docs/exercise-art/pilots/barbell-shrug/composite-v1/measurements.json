@@ -1,0 +1,103 @@
+{
+  "method": "single-master displacement with fixed-region compositing",
+  "releaseApproved": false,
+  "sourceSha256": "f15ee5e946f71387617afe27efffe579006a327c1c87a9e87eb7f94f8da38f12",
+  "frames": [
+    {
+      "frame": 1,
+      "path": "docs/exercise-art/pilots/barbell-shrug/composite-v1/1-start.png",
+      "verticalLiftPixels": 0,
+      "changedPixelsInFixedRegions": {
+        "head": 0,
+        "lowerBody": 0,
+        "core": 0,
+        "barShaftTranslated": 0,
+        "farPlateTranslated": 0,
+        "nearPlateTranslated": 0,
+        "farGripTranslated": 0,
+        "nearGripTranslated": 0
+      },
+      "sha256": "f15ee5e946f71387617afe27efffe579006a327c1c87a9e87eb7f94f8da38f12"
+    },
+    {
+      "frame": 2,
+      "path": "docs/exercise-art/pilots/barbell-shrug/composite-v1/2-begin-shrug.png",
+      "verticalLiftPixels": 12,
+      "changedPixelsInFixedRegions": {
+        "head": 0,
+        "lowerBody": 0,
+        "core": 0,
+        "barShaftTranslated": 0,
+        "farPlateTranslated": 0,
+        "nearPlateTranslated": 0,
+        "farGripTranslated": 0,
+        "nearGripTranslated": 0
+      },
+      "sha256": "9d5f4038bc96a481383eed193d4af1c8dc36974dbef8c0061bbd84002929cd5d"
+    },
+    {
+      "frame": 3,
+      "path": "docs/exercise-art/pilots/barbell-shrug/composite-v1/3-continue-lift.png",
+      "verticalLiftPixels": 24,
+      "changedPixelsInFixedRegions": {
+        "head": 0,
+        "lowerBody": 0,
+        "core": 0,
+        "barShaftTranslated": 0,
+        "farPlateTranslated": 0,
+        "nearPlateTranslated": 0,
+        "farGripTranslated": 0,
+        "nearGripTranslated": 0
+      },
+      "sha256": "f2b4806fe93095cb82139c0bf2b9a695ccf152e87a8cea8eb8feb0763232bf01"
+    },
+    {
+      "frame": 4,
+      "path": "docs/exercise-art/pilots/barbell-shrug/composite-v1/4-top.png",
+      "verticalLiftPixels": 36,
+      "changedPixelsInFixedRegions": {
+        "head": 0,
+        "lowerBody": 0,
+        "core": 0,
+        "barShaftTranslated": 0,
+        "farPlateTranslated": 0,
+        "nearPlateTranslated": 0,
+        "farGripTranslated": 0,
+        "nearGripTranslated": 0
+      },
+      "sha256": "46d5390c07b0365ef9bc36318f9f0a7fcae070fcb11b79611f38621db853c0fb"
+    },
+    {
+      "frame": 5,
+      "path": "docs/exercise-art/pilots/barbell-shrug/composite-v1/5-lower.png",
+      "verticalLiftPixels": 24,
+      "changedPixelsInFixedRegions": {
+        "head": 0,
+        "lowerBody": 0,
+        "core": 0,
+        "barShaftTranslated": 0,
+        "farPlateTranslated": 0,
+        "nearPlateTranslated": 0,
+        "farGripTranslated": 0,
+        "nearGripTranslated": 0
+      },
+      "sha256": "f2b4806fe93095cb82139c0bf2b9a695ccf152e87a8cea8eb8feb0763232bf01"
+    },
+    {
+      "frame": 6,
+      "path": "docs/exercise-art/pilots/barbell-shrug/composite-v1/6-finish-lowering.png",
+      "verticalLiftPixels": 12,
+      "changedPixelsInFixedRegions": {
+        "head": 0,
+        "lowerBody": 0,
+        "core": 0,
+        "barShaftTranslated": 0,
+        "farPlateTranslated": 0,
+        "nearPlateTranslated": 0,
+        "farGripTranslated": 0,
+        "nearGripTranslated": 0
+      },
+      "sha256": "9d5f4038bc96a481383eed193d4af1c8dc36974dbef8c0061bbd84002929cd5d"
+    }
+  ]
+}

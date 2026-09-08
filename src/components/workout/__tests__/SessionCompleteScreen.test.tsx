@@ -13,7 +13,7 @@
  * volume card were untested when their bugs shipped.
  */
 import { describe, it, expect, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 
 import SessionCompleteScreen from "../SessionCompleteScreen";
 import type { ProgramExercise } from "@/features/program/programTypes";
@@ -67,6 +67,23 @@ function renderScreen(
 }
 
 describe("SessionCompleteScreen — header stats agree with each other", () => {
+  it("shows the result before Save without opening Session details", async () => {
+    renderScreen([
+      [{ reps: 12, weight: 10, completed: true, type: "working" }],
+    ]);
+    await waitFor(() => expect(screen.getByText("24m")).toBeVisible());
+    expect(screen.getByText("120")).toBeVisible();
+    expect(screen.getByText("1")).toBeVisible();
+    expect(screen.getByText("24m").closest("details")).toBeNull();
+    expect(
+      screen
+        .getByText("24m")
+        .compareDocumentPosition(
+          screen.getByRole("button", { name: "Save Workout" })
+        ) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+  });
+
   it("SETS counts working sets only, not the warm-up ramp", () => {
     // The production shape: two warm-up rows the ramp generated, two working
     // sets the user actually prescribed. Pre-fix this rendered SETS 4.
@@ -148,7 +165,9 @@ describe("SessionCompleteScreen — header stats agree with each other", () => {
     renderScreen([
       [{ reps: 12, weight: 10, completed: true, type: "working" }],
     ]);
-    expect(screen.getByText("Legs — Deadlift Focus")).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Legs — Deadlift Focus · done" })
+    ).toBeInTheDocument();
   });
 });
 
@@ -156,8 +175,8 @@ describe("SessionCompleteScreen — header stats agree with each other", () => {
  * No share affordance on this screen — the phantom-post regression pin.
  *
  * Until 2026-08-04 this screen carried "Share Workout" (image card) and
- * "Share to Circle". Both fired BEFORE the save, because "Save Workout" is a
- * separate button — so "Share to Circle" → "Close without saving" published
+ * "Share to circle". Both fired BEFORE the save, because "Save Workout" is a
+ * separate button — so "Share to circle" → "Close without saving" published
  * a `session_completed` event for a session that was never written. Sharing
  * moved to `/workout/:id`, where the record exists first and that sequence
  * is impossible.
@@ -189,5 +208,45 @@ describe("SessionCompleteScreen — sharing lives on the saved record", () => {
     expect(
       screen.getByRole("button", { name: /close without saving/i })
     ).toBeTruthy();
+  });
+});
+
+describe("save comes before session detail", () => {
+  it("labels the unsaved state and keeps details collapsed", () => {
+    renderScreen([
+      [{ reps: 12, weight: 10, completed: true, type: "working" }],
+    ]);
+    expect(screen.getByRole("status")).toHaveTextContent("Not saved yet");
+    const detail = screen.getByText("Session details").closest("details")!;
+    expect(detail.open).toBe(false);
+    expect(
+      screen
+        .getByRole("button", { name: "Save Workout" })
+        .compareDocumentPosition(detail) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+  });
+  it("prevents save and close while persistence is pending", () => {
+    const finish = vi.fn(),
+      close = vi.fn();
+    render(
+      <SessionCompleteScreen
+        dayName="Upper"
+        exercises={[]}
+        setLogs={[]}
+        firedPRs={new Map()}
+        sessionDurationMinutes={20}
+        completing
+        onFinish={finish}
+        onClose={close}
+      />
+    );
+    const save = screen.getByRole("button", { name: /Save Workout/ });
+    expect(save).toBeDisabled();
+    const cancel = screen.getByRole("button", { name: "Close without saving" });
+    expect(cancel).toBeDisabled();
+    fireEvent.click(save);
+    fireEvent.click(cancel);
+    expect(finish).not.toHaveBeenCalled();
+    expect(close).not.toHaveBeenCalled();
   });
 });

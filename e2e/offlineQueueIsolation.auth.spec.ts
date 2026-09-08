@@ -17,8 +17,7 @@
  * (`completeWorkoutDay`) commits a `writeBatch` directly (offline it
  * rides the Firestore SDK's own pending-mutation queue + the persisted
  * session draft), and `useWorkouts.saveWorkout` is a pinned orphan
- * export (see symbolReachability). The one UI journey that routes
- * through the queue is the Food page's daily-log write
+ * export (see symbolReachability). The Food page queues both the meal and its daily-log write
  * (`DailyLogsProvider.saveLog` → `safeMerge`), triggered by logging a
  * meal. The contract under test — enqueue tagged with uid, survive
  * sign-out and an account switch, never flush under another uid, flush
@@ -44,7 +43,7 @@
  * under real airplane mode (A's meal write pends and only drains when A
  * next signs in online) — but because the emulator was never actually
  * unreachable, the SDK's write stream comes back cleanly afterwards.
- * Every queue assertion targets `users/{uid}/logs`. What this
+ * Queue assertions cover both `users/{uid}/logs` and `users/{uid}/meals`. What this
  * deliberately does not exercise is Chromium's disconnected network
  * stack — that stays a real-device (airplane-mode) concern.
  *
@@ -123,6 +122,31 @@ async function uidByEmail(email: string): Promise<string> {
   return localId;
 }
 
+/** Public writes (the feed share this spec exercises) require a verified
+ *  email — firestore.rules isEmailVerified(). A form-minted emulator
+ *  account is unverified, exactly like a real signup before the link is
+ *  tapped, so the rig marks it verified the way the emulator allows
+ *  (accounts:update under the owner bearer). The next sign-in mints a
+ *  token carrying the claim; production users get there via the link. */
+async function markEmailVerified(localId: string): Promise<void> {
+  const res = await fetch(
+    `http://${AUTH_HOST}/identitytoolkit.googleapis.com/v1/accounts:update`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer owner",
+      },
+      body: JSON.stringify({ localId, emailVerified: true }),
+    }
+  );
+  if (!res.ok) {
+    throw new Error(
+      `auth emulator accounts:update failed: ${await res.text()}`
+    );
+  }
+}
+
 /** Wait until the signup's own profile write has landed server-side.
  *  `writeNewProfileDocs` commits the FULL default profile from the
  *  browser as a non-merge batch (including `onboardingComplete: false`)
@@ -178,9 +202,12 @@ async function completeOnboardingDirect(
 /** List a user's `logs` subcollection straight from the emulator,
  *  bypassing rules — the server-side ground truth the queue assertions
  *  need (what actually landed, under whom). */
-async function listLogDocs(uid: string): Promise<RestDoc[]> {
+async function listLogDocs(
+  uid: string,
+  collection = "logs"
+): Promise<RestDoc[]> {
   const res = await fetch(
-    `http://${FS_HOST}/v1/projects/demo-tropos/databases/(default)/documents/users/${uid}/logs`,
+    `http://${FS_HOST}/v1/projects/demo-tropos/databases/(default)/documents/users/${uid}/${collection}`,
     { headers: { Authorization: "Bearer owner" } }
   );
   if (!res.ok) {
@@ -260,6 +287,7 @@ async function mintOnboardedAccount(
 
   const uid = await uidByEmail(email);
   await awaitSignupProfileDoc(uid);
+  await markEmailVerified(uid);
   await completeOnboardingDirect(uid, displayName);
 
   // Reload into the full shell straight onto the account page, then use
@@ -298,7 +326,7 @@ async function dismissBadgeCelebration(
 /** Click the app's Sign Out (rendered on /settings/account) and wait
  *  for the Login screen. */
 async function signOutViaUI(page: Page): Promise<void> {
-  const signOut = page.getByRole("button", { name: "Sign Out" });
+  const signOut = page.getByRole("button", { name: "Sign out" });
   await signOut.waitFor({ state: "visible", timeout: 20_000 });
   // The badge celebration can mount late over this page too (both
   // accounts log their first activity in this journey).
@@ -321,13 +349,8 @@ async function signInFromLoginScreen(page: Page, email: string): Promise<void> {
   await expect(page.locator("nav").first()).toBeVisible({ timeout: 20_000 });
 }
 
-/** Log "2 eggs, toast" through the NL composer (free tier → local
- *  parse, fully deterministic). Online, the save-ack toast is the
- *  completion anchor. Offline it can never fire — the dispatched
- *  offline event also parks the Firestore SDK's own network layer, so
- *  the meal write pends exactly as under real airplane mode — and the
- *  latency-compensated diary row is the signal that the save path ran
- *  (which is what fires the queued daily-log write). */
+/** Log through the real composer. Both online and offline saves confirm
+ *  after durable local acceptance; the server assertions below verify flush. */
 async function logMealViaComposer(
   page: Page,
   opts: { expectAck: boolean }
@@ -341,7 +364,9 @@ async function logMealViaComposer(
       timeout: 15_000,
     });
   } else {
-    await expect(page.getByText(/eggs/i).first()).toBeVisible({
+    await expect(
+      page.getByText(/Saved on this phone — syncs when/)
+    ).toBeVisible({
       timeout: 15_000,
     });
   }
@@ -408,19 +433,28 @@ test.describe("offline-queue uid isolation across an account switch", () => {
 
     await logMealViaComposer(page, { expectAck: false });
 
-    // The daily-log write queued under A's uid instead of writing live.
+    // Both the meal and its activity summary queue under A before any network write.
     await expect
       .poll(async () => await readQueue(page), { timeout: 10_000 })
-      .toHaveLength(1);
-    const [queued] = await readQueue(page);
+      .toHaveLength(2);
+    const initialQueue = await readQueue(page);
+    const queued = initialQueue.find(
+      (entry) => entry.collectionPath === `users/${uidA}/logs`
+    )!;
+    const queuedMeal = initialQueue.find(
+      (entry) => entry.collectionPath === `users/${uidA}/meals`
+    )!;
+    expect(queuedMeal.uid).toBe(uidA);
+    expect(queuedMeal.docId).toBeTruthy();
     expect(queued.uid).toBe(uidA);
     expect(queued.collectionPath).toBe(`users/${uidA}/logs`);
     const queuedDocId = queued.docId;
     expect(queuedDocId).toMatch(/^\d{4}-\d{2}-\d{2}$/);
     // …and nothing landed in A's logs collection server-side.
     expect(await listLogDocs(uidA)).toHaveLength(0);
+    expect(await listLogDocs(uidA, "meals")).toHaveLength(0);
     // The user-facing offline banner counts the queued change.
-    await expect(page.getByText(/1 change saved locally/i)).toBeVisible({
+    await expect(page.getByText(/2 changes saved on this phone/i)).toBeVisible({
       timeout: 10_000,
     });
 
@@ -451,13 +485,18 @@ test.describe("offline-queue uid isolation across an account switch", () => {
       );
     });
     await page
-      .getByRole("button", { name: "Save Run" })
+      .getByRole("button", { name: "Save run" })
       .click({ timeout: 20_000 });
     // Pre-#1887 this await parked forever offline; now the save
-    // confirms on the durable local commit and the composer opens.
-    await expect(page.getByText("Run saved")).toBeVisible({
+    // confirms on the durable local commit. Sharing is an explicit action.
+    await expect(
+      page.getByRole("button", { name: "Done", exact: true })
+    ).toBeVisible({
       timeout: 15_000,
     });
+    await page
+      .getByRole("button", { name: "Share this session", exact: true })
+      .click();
     await page
       .getByRole("button", { name: "Share to followers" })
       .click({ timeout: 15_000 });
@@ -501,13 +540,17 @@ test.describe("offline-queue uid isolation across an account switch", () => {
     // the run summary) re-fires the daily-log effect, which queues the
     // same date-keyed merge write again. Real behavior, and convergent:
     // duplicates target one docId and merge idempotently on flush. What
-    // matters here is that every entry is A's daily-log write.
+    // matters here is that every entry belongs to A and retains its original target.
     const queueAtSignOut = await readQueue(page);
-    expect(queueAtSignOut.length).toBeGreaterThanOrEqual(1);
+    expect(queueAtSignOut.length).toBeGreaterThanOrEqual(2);
     for (const entry of queueAtSignOut) {
       expect(entry.uid).toBe(uidA);
-      expect(entry.collectionPath).toBe(`users/${uidA}/logs`);
-      expect(entry.docId).toBe(queuedDocId);
+      expect([`users/${uidA}/logs`, `users/${uidA}/meals`]).toContain(
+        entry.collectionPath
+      );
+      expect(entry.docId).toBe(
+        entry.collectionPath.endsWith("/meals") ? queuedMeal.docId : queuedDocId
+      );
     }
     expect(await readShareQueue(page)).toHaveLength(1);
 
@@ -597,6 +640,7 @@ test.describe("offline-queue uid isolation across an account switch", () => {
       expect(kept.uid).toBe(uidA);
     }
     expect(await listLogDocs(uidA)).toHaveLength(0);
+    expect(await listLogDocs(uidA, "meals")).toHaveLength(0);
 
     // Share drain, same doctrine: B's pending share posts (the drain
     // pass provably completed)…
@@ -637,7 +681,20 @@ test.describe("offline-queue uid isolation across an account switch", () => {
     // so this doc came from the queue, not a live write path.
     expect(flushed.fields?._offlineCreatedAt).toBeDefined();
 
-    // The flush consumed A's entry.
+    // The original stable meal ID arrives once, under its owner only.
+    await expect
+      .poll(async () => await listLogDocs(uidA, "meals"), { timeout: 20_000 })
+      .toHaveLength(1);
+    const [flushedMeal] = await listLogDocs(uidA, "meals");
+    expect(flushedMeal.name.endsWith(`/meals/${queuedMeal.docId}`)).toBe(true);
+    expect(flushedMeal.fields?.createdAt?.timestampValue).toBeDefined();
+    expect(
+      (await listLogDocs(uidB, "meals")).some((meal) =>
+        meal.name.endsWith(`/meals/${queuedMeal.docId}`)
+      )
+    ).toBe(false);
+
+    // The flush consumed A's entries.
     await expect
       .poll(async () => await readQueue(page), { timeout: 10_000 })
       .toHaveLength(0);

@@ -80,7 +80,7 @@ export default function PeriodOverview({
   const unit = useDistanceUnit();
   const rangeLabel =
     timeRange === "1W"
-      ? "This Week"
+      ? "This week"
       : timeRange === "1M"
         ? "This Month"
         : timeRange === "3M"
@@ -89,7 +89,7 @@ export default function PeriodOverview({
             ? "Last 6 Months"
             : timeRange === "1Y"
               ? "This Year"
-              : "This Week";
+              : "This week";
 
   // Targets prorated from a 5/week aspirational rate. Keeping the ring
   // hardcoded at max=5 meant any range longer than 1W maxed out the

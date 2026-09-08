@@ -1,0 +1,106 @@
+[
+  {
+    "anchors": [
+      "Both shoe soles fixed on floor",
+      "Stance width and toe angles fixed"
+    ],
+    "camera": "Front three-quarter facing left, full body portrait",
+    "equipment": "None",
+    "exerciseId": "bodyweight-squat",
+    "frames": [
+      {
+        "body": "Upright, soft knees, both arms forward at shoulder height.",
+        "equipment": "None",
+        "label": "STAND TALL"
+      },
+      {
+        "body": "Small hip/knee bend, heels down, arms remain forward.",
+        "equipment": "None",
+        "label": "BEGIN DESCENT"
+      },
+      {
+        "body": "Hips lower and slightly back, knees track toes, thighs approaching parallel.",
+        "equipment": "None",
+        "label": "LOWER"
+      },
+      {
+        "body": "Controlled depth around or below parallel with whole feet planted, neutral trunk.",
+        "equipment": "None",
+        "label": "BOTTOM"
+      },
+      {
+        "body": "Reverse the middle squat pose, hips and chest rise together.",
+        "equipment": "None",
+        "label": "DRIVE UP"
+      },
+      {
+        "body": "Near standing, same early-pose geometry, then closes loop at upright frame1.",
+        "equipment": "None",
+        "label": "FINISH RISING"
+      }
+    ],
+    "loop": "6 to1 completes controlled rise. No camera or stance changes.",
+    "muscles": {
+      "primary": "Quadriceps",
+      "secondary": "Gluteals",
+      "stabilisers": "Subtle pale trunk and adductor emphasis"
+    },
+    "reference": "docs/exercise-art/pilots/goblet-squat/1-master.png",
+    "source": "https://www.acefitness.org/resources/everyone/exercise-library/135/bodyweight-squat/",
+    "status": "draft-plan",
+    "variation": "Bodyweight squat with both arms held forward for balance"
+  },
+  {
+    "exerciseId": "barbell-shrug",
+    "status": "draft-plan",
+    "variation": "Standing straight-bar shrug with double-overhand shoulder-width grip",
+    "reference": "docs/exercise-art/pilots/barbell-curl/1-master.png",
+    "camera": "Front three-quarter facing left; full body portrait",
+    "anchors": [
+      "Feet and stance",
+      "Head and hips",
+      "Grip width",
+      "Straight elbow angle"
+    ],
+    "muscles": {
+      "primary": "Upper trapezius",
+      "secondary": "Forearm gripping muscles in lilac",
+      "stabilisers": "Subtle pale trunk where useful"
+    },
+    "equipment": "Rigid straight bar, one identical modest plate each side",
+    "source": "https://www.muscleandstrength.com/exercises/barbell-shrug.html",
+    "frames": [
+      {
+        "label": "START",
+        "body": "Stand tall, arms straight, shoulders at relaxed neutral.",
+        "equipment": "Bar rests at thighs in closed overhand grip."
+      },
+      {
+        "label": "BEGIN SHRUG",
+        "body": "Shoulder girdle rises a small amount, head stays still.",
+        "equipment": "Whole bar rises with straight arms; no bar tilt."
+      },
+      {
+        "label": "CONTINUE LIFT",
+        "body": "Shoulders rise farther vertically, no rolling.",
+        "equipment": "Bar and plates rise together, grip width unchanged."
+      },
+      {
+        "label": "TOP",
+        "body": "Comfortable highest shoulder elevation with neutral neck.",
+        "equipment": "Bar highest, arms still straight."
+      },
+      {
+        "label": "LOWER",
+        "body": "Controlled reversal to middle elevation.",
+        "equipment": "Bar returns to middle height."
+      },
+      {
+        "label": "FINISH LOWERING",
+        "body": "Shoulders nearly at starting height.",
+        "equipment": "Bar near thighs, then loop returns to start."
+      }
+    ],
+    "loop": "Controlled descending frame6 to neutral frame1."
+  }
+]

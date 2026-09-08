@@ -8,8 +8,10 @@ import {
   useReducer,
 } from "react";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
+import { readString, writeString } from "@/lib/localStore";
 import { useAuth } from "../lib/auth";
 import { useGPS, type GPSSignalQuality } from "../hooks/useGPS";
+import { track as trackLifecycleEvent } from "@/lib/lifecycleAnalytics";
 import { useRunTimer } from "../hooks/useRunTimer";
 import { useWakeLock } from "../hooks/useWakeLock";
 import { useRunVisibility } from "../hooks/useRunVisibility";
@@ -37,6 +39,7 @@ import RunSetupModal, {
   type RunConfig,
   type ProgramContextStrip,
 } from "../components/run/RunSetupModal";
+import { deriveStrip } from "../lib/runContextStrip";
 import RunLaunchCard from "../components/run/RunLaunchCard";
 import RunTilePicker from "../components/run/RunTilePicker";
 import { useLastRunType } from "../hooks/useLastRunType";
@@ -84,10 +87,8 @@ import {
   finalisePlanMetadata,
   freeformPlanMetadata,
   type PlanMode,
-  type RunPlanMetadata,
 } from "../lib/runPlanMetadata";
 import { logger } from "../lib/logger";
-import { localDateString } from "../lib/dateHelpers";
 import { isNativePlatform } from "../lib/platform";
 import RunBackgroundGrantNote from "../components/run/RunBackgroundGrantNote";
 import {
@@ -99,7 +100,7 @@ import {
   initialRunPhase,
 } from "../features/run/runSessionReducer";
 import { haptic } from "../lib/haptic";
-import { formatRaceDistance, distanceLabel, paceLabel } from "../lib/runLabels";
+import { distanceLabel, paceLabel } from "../lib/runLabels";
 import {
   startRunActivity,
   updateRunActivity,
@@ -176,101 +177,6 @@ function GPSIndicator({
   );
 }
 
-/**
- * Map the metadata returned by computePlanMetadata into the
- * ProgramContextStrip shape consumed by RunSetupModal. Kept local
- * to Run.tsx because the strip-data fields are presentation-level
- * (week label, distance label, today template name) — the metadata
- * module stays purely about adherence accounting.
- *
- * Returns null when no strip should render (freeform users with
- * no plan context, missing-template fallback, or an elapsed plan
- * that the metadata module already folded into freeform metadata).
- */
-function deriveStrip(
-  metadata: RunPlanMetadata,
-  runPlan:
-    | {
-        mode: "structured" | "race_prep";
-        raceGoal?: { distance: string; targetDate: string };
-        totalWeeks?: number;
-        currentWeek?: number;
-      }
-    | undefined
-): ProgramContextStrip | null {
-  // Freeform / fallback cases get no strip.
-  if (metadata.planMode === "freeform") return null;
-  // Race-prep elapsed: metadata module already returned the freeform
-  // shape, but planMode === 'race_prep' is preserved. The trigger
-  // for the elapsed-state strip: we still have an elapsed runPlan
-  // even though planSource is 'manual'.
-  if (
-    metadata.planMode === "race_prep" &&
-    metadata.planSource === "manual" &&
-    runPlan?.mode === "race_prep"
-  ) {
-    const elapsed =
-      (typeof runPlan.currentWeek === "number" &&
-        typeof runPlan.totalWeeks === "number" &&
-        runPlan.currentWeek >= runPlan.totalWeeks) ||
-      // Local date-string compare: elapsed only AFTER race day, not during it
-      // (UTC-midnight parse dropped the race template to freeform on race day
-      // for non-UTC users). Matches isRacePlanElapsed in runPlanMetadata.ts.
-      (!!runPlan.raceGoal?.targetDate &&
-        localDateString() > runPlan.raceGoal.targetDate);
-    if (elapsed) {
-      return { kind: "race_prep_elapsed" };
-    }
-  }
-  if (metadata.planSource === "rest_day") return { kind: "rest_day" };
-  if (metadata.planSource === "completed_day") return { kind: "completed_day" };
-  if (
-    metadata.planSource === "today_plan" ||
-    metadata.planSource === "url_template"
-  ) {
-    // For URL-template overrides on a freeform user, no strip
-    // (no plan context to surface). For URL-template on a
-    // structured/race_prep user with a planned day, fall through
-    // to the planned-day strip — the user is overriding their plan
-    // and we still surface the plan context.
-    if (metadata.planMode === "race_prep") {
-      // Need a planned day or runPlan to render this state.
-      if (
-        metadata.plannedRunDayIndex === null &&
-        metadata.planSource === "url_template"
-      ) {
-        return null; // no plan today and URL is the only context
-      }
-      return {
-        kind: "race_prep_today",
-        weekLabel:
-          typeof metadata.planWeekIndex === "number" &&
-          typeof metadata.planTotalWeeks === "number"
-            ? `Week ${metadata.planWeekIndex + 1} of ${metadata.planTotalWeeks}`
-            : "",
-        distanceLabel: formatRaceDistance(runPlan?.raceGoal?.distance),
-        targetDate: runPlan?.raceGoal?.targetDate,
-      };
-    }
-    if (metadata.planMode === "structured") {
-      if (
-        metadata.plannedRunDayIndex === null &&
-        metadata.planSource === "url_template"
-      ) {
-        return null;
-      }
-      const todayTemplate = RUN_TEMPLATES.find(
-        (t) => t.id === metadata.plannedTemplateId
-      );
-      return {
-        kind: "structured_today",
-        todayLabel: todayTemplate?.name,
-      };
-    }
-  }
-  return null;
-}
-
 export default function Run() {
   const unit = useDistanceUnit();
   const navigate = useNavigate();
@@ -329,25 +235,19 @@ export default function Run() {
   // note. `showBgGrantNote` drives the non-blocking card in the banner
   // stack; the persisted dismissed flag stops it re-nagging once the user
   // has acknowledged it (the grant itself is unreadable — see
-  // nativeLocationSettings — so acknowledgement is the only exit).
+  // nativeLocationSettings — so acknowledgement is the only exit). The key
+  // is device-scoped on purpose: the grant is an OS setting for this
+  // install, not a fact about an account, so a second account on the phone
+  // would only be re-nagged about the same setting.
   const [showBgGrantNote, setShowBgGrantNote] = useState(false);
   const bgGrantNoteDismissedRef = useRef<boolean>(
-    (() => {
-      try {
-        return localStorage.getItem("tropos.run.bgGrantNoteDismissed") === "1";
-      } catch {
-        return false;
-      }
-    })()
+    readString("tropos.run.bgGrantNoteDismissed") === "1"
   );
   const dismissBgGrantNote = useCallback(() => {
     bgGrantNoteDismissedRef.current = true;
     setShowBgGrantNote(false);
-    try {
-      localStorage.setItem("tropos.run.bgGrantNoteDismissed", "1");
-    } catch {
-      /* private mode / storage disabled — the ref still suppresses re-show */
-    }
+    // Private mode / storage disabled — the ref still suppresses re-show.
+    writeString("tropos.run.bgGrantNoteDismissed", "1");
   }, []);
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
@@ -473,12 +373,22 @@ export default function Run() {
     enabled: phase === "active",
   });
 
+  /* Per-run cue-rotation seed. The variation pools in runCueCopy rotate
+     deterministically, so without a seed every run replays the same
+     script (same first split line, same session bookends). One draw per
+     mount — /run mounts fresh per run — varies it across runs while
+     staying fixed within one. Plan-prefilled segments carry their own
+     date-derived seed from runPlanMetadata; this one covers the cues
+     built or spoken on this page. */
+  const [cueSeed] = useState(() => Math.floor(Date.now() / 1000) % 9973);
+
   const audioCues = useAudioCues(
     runConfig?.audioCues ?? true,
     runConfig?.audioCueFrequency ?? "every_km",
     {
       paceAlerts: runConfig?.paceAlerts ?? true,
       voiceRate: runConfig?.voiceRate ?? 0.9,
+      variantSeed: cueSeed,
     }
   );
   // STRUCT-SESS-02: ONE structure source for the in-run player — the
@@ -495,10 +405,10 @@ export default function Run() {
     }
     if (runConfig.segments?.length) return runConfig.segments;
     if (runConfig.activityType === "intervals" && runConfig.intervals) {
-      return segmentsFromIntervals(runConfig.intervals, unit);
+      return segmentsFromIntervals(runConfig.intervals, unit, cueSeed);
     }
     return null;
-  }, [runConfig, unit]);
+  }, [runConfig, unit, cueSeed]);
   const player = useSessionPlayer(sessionSegments);
   const segmentIndexRef = useRef(-1);
   // Adaptive Paces: the work BAND for the step shell's headline — #18's
@@ -707,6 +617,12 @@ export default function Run() {
     // write effect persists it in every snapshot. Resume re-uses
     // the stored value (see handleResumeFromPrompt below).
     startedAtRef.current = Date.now();
+    // B0: runs ARE date-pinned (ADR-0002), so `offPlan` is meaningful here
+    // and is already decided by computePlanMetadata — read, not re-derived.
+    trackLifecycleEvent("session_started", {
+      kind: "run",
+      offPlan: planDecision.metadata.offPlan,
+    });
     if (requiresManualDistance(finalConfig.activityType)) {
       dispatch({ type: "START_MANUAL" });
       timer.start();
@@ -1050,7 +966,7 @@ export default function Run() {
     if (player.state.index === segmentIndexRef.current) return;
     segmentIndexRef.current = player.state.index;
     if (player.isComplete) {
-      audioCues.speak(sessionCompleteCue());
+      audioCues.speak(sessionCompleteCue(cueSeed));
       haptic("medium");
       return;
     }
@@ -1267,7 +1183,7 @@ export default function Run() {
                 )
               }
               onCustomize={() => setForceModal(true)}
-              onBack={() => navigate("/program")}
+              onBack={() => navigate("/program?tab=run")}
             />
           ) : forceModal || targetRoute != null ? (
             <div className="flex-1 flex flex-col min-h-0 bg-background text-foreground">
@@ -1292,7 +1208,7 @@ export default function Run() {
               </div>
               <RunSetupModal
                 onStart={handleStart}
-                onCancel={() => navigate("/program")}
+                onCancel={() => navigate("/program?tab=run")}
                 programContext={planDecision.strip}
                 savedPreferences={{
                   autoPause: true,
@@ -1330,7 +1246,7 @@ export default function Run() {
                 )
               }
               onMoreOptions={() => setForceModal(true)}
-              onBack={() => navigate("/program")}
+              onBack={() => navigate("/program?tab=run")}
             />
           )}
         </>
@@ -1364,14 +1280,14 @@ export default function Run() {
               {/* Signal rings */}
               <div className="relative size-28 flex items-center justify-center mb-8">
                 <div
-                  className="absolute inset-0 rounded-full border-2 animate-ping"
+                  className="absolute inset-0 rounded-full border-2 motion-safe:animate-ping"
                   style={{
                     borderColor: `${THEME.teal}30`,
                     animationDuration: "2s",
                   }}
                 />
                 <div
-                  className="absolute inset-3 rounded-full border-2 animate-ping"
+                  className="absolute inset-3 rounded-full border-2 motion-safe:animate-ping"
                   style={{
                     borderColor: `${THEME.teal}40`,
                     animationDuration: "2s",
@@ -1379,7 +1295,7 @@ export default function Run() {
                   }}
                 />
                 <div
-                  className="absolute inset-6 rounded-full border-2 animate-ping"
+                  className="absolute inset-6 rounded-full border-2 motion-safe:animate-ping"
                   style={{
                     borderColor: `${THEME.teal}50`,
                     animationDuration: "2s",
@@ -1788,6 +1704,7 @@ export default function Run() {
           onResume={handleResumeFromPrompt}
           onStartNew={handleStartNewFromPrompt}
           onDiscard={handleDiscardFromPrompt}
+          onBack={() => navigate("/program?tab=run")}
         />
       )}
 

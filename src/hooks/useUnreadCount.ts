@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from "react";
+import { readString, writeString } from "@/lib/localStore";
 import {
   collection,
   limit,
@@ -65,12 +66,8 @@ export function useUnreadCount() {
     purgeLegacySocialKey("unread-last-seen");
     const seenKey = socialPreferenceKey(uid, "unread-last-seen");
 
-    let lastSeen: string | null = null;
-    try {
-      lastSeen = localStorage.getItem(seenKey);
-    } catch {
-      /* private mode — treat as never-seen */
-    }
+    // Private mode reads as never-seen.
+    const lastSeen = readString(seenKey);
     const since = lastSeen
       ? Timestamp.fromDate(new Date(lastSeen))
       : Timestamp.fromDate(new Date(Date.now() - 86400000));
@@ -141,14 +138,11 @@ export function useUnreadCount() {
 
   const markSeen = () => {
     if (!uid) return;
-    try {
-      localStorage.setItem(
-        socialPreferenceKey(uid, "unread-last-seen"),
-        new Date().toISOString()
-      );
-    } catch {
-      /* private mode — in-memory clear below still hides the badge */
-    }
+    // Private mode: the in-memory clear below still hides the badge.
+    writeString(
+      socialPreferenceKey(uid, "unread-last-seen"),
+      new Date().toISOString()
+    );
     // Clear the in-memory rows so the badge hides immediately; the next
     // snapshot re-queries from the new last-seen instant.
     setRows([]);

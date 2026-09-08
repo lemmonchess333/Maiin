@@ -252,3 +252,73 @@ describe("getFoodSuggestions", () => {
     expect(results.length).toBeLessThanOrEqual(3);
   });
 });
+
+/* Conjunctions. Before 2026-09-06 only commas / newlines separated foods
+   and only ` with ` formed a compound, so an "and"-joined phrase reached
+   findBestMatch whole: the longest key found anywhere won and the rest of
+   the sentence was discarded. "2 eggs and a slice of toast" logged as two
+   slices of toast (160 kcal, 6 g protein — the eggs vanished) and
+   "chicken and rice" as chicken alone with 0 g carbs. Both were reproduced
+   through the composer. The atoms below are the parser's own single-food
+   answers, so the assertion is "the sentence equals its parts". */
+describe("parseFoodText — conjunctions", () => {
+  it('"2 eggs and a slice of toast" is two eggs AND a slice of toast', () => {
+    const result = parseFoodText("2 eggs and a slice of toast");
+    expect(result).toEqual([
+      { name: "Eggs (x2)", calories: 156, protein: 12, carbs: 2, fat: 10 },
+      { name: "Slice of toast", calories: 80, protein: 3, carbs: 14, fat: 1 },
+    ]);
+  });
+
+  it('"chicken and rice" keeps the rice', () => {
+    const result = parseFoodText("chicken and rice");
+    expect(result).toHaveLength(2);
+    expect(result[0]).toMatchObject({ name: "Chicken", calories: 165 });
+    expect(result[1].name).toBe("Rice");
+    expect(result[1].carbs).toBeGreaterThan(0);
+  });
+
+  it("a quantity belongs to the part it was written in", () => {
+    const [eggs, toast] = parseFoodText("2 eggs and toast");
+    expect(eggs).toMatchObject({ name: "Eggs (x2)", calories: 156 });
+    expect(toast).toMatchObject({ name: "Toast", calories: 80 });
+  });
+
+  it("& and + join foods the same way", () => {
+    expect(parseFoodText("eggs & toast").map((r) => r.name)).toEqual([
+      "Eggs",
+      "Toast",
+    ]);
+    expect(parseFoodText("eggs + toast").map((r) => r.name)).toEqual([
+      "Eggs",
+      "Toast",
+    ]);
+  });
+
+  it("a whole-phrase dish stays one row", () => {
+    const result = parseFoodText("fish and chips");
+    expect(result).toHaveLength(1);
+    expect(result[0].name).toBe("Fish and chips");
+  });
+
+  it("a `with` compound on one side survives the split", () => {
+    const names = parseFoodText("toast with butter and 2 eggs").map(
+      (r) => r.name
+    );
+    expect(names).toEqual(["Toast with butter", "Eggs (x2)"]);
+  });
+
+  it("does not split when a part is unrecognised", () => {
+    // "xqzv" resolves to nothing, so the phrase stays whole and takes the
+    // pre-existing single-phrase path rather than inventing a second row.
+    const result = parseFoodText("coffee and xqzvblorp");
+    expect(result).toHaveLength(1);
+  });
+
+  it("commas still separate, and the two rules compose", () => {
+    const names = parseFoodText("2 eggs and toast, a banana").map(
+      (r) => r.name
+    );
+    expect(names).toEqual(["Eggs (x2)", "Toast", "Banana"]);
+  });
+});

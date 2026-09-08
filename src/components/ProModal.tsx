@@ -389,7 +389,7 @@ export default function ProModal({ onClose, featureKey, initialPlan }: Props) {
                   </p>
                   {/* Weekly anchoring (teardown pattern): both plans in the
                       same per-week unit makes the annual saving visceral. */}
-                  <p className="text-[11px] text-muted-foreground font-mono tabular-nums">
+                  <p className="text-xs text-muted-foreground font-mono tabular-nums">
                     {weeklyPriceLabel(plan.id)}
                   </p>
                 </div>

@@ -83,6 +83,28 @@ service cloud.firestore {
       return isOwner(uid) && !isWriteFrozen(uid);
     }
 
+    /* Public content requires a verified email.
+
+       `email_verified` is a standard ID-token claim: OAuth providers
+       (Google, Apple) mint it true, an email/password signup carries
+       false until the user taps the verification link. Gating on it
+       keeps a throwaway unverified address from publishing into other
+       people's feeds while costing a verified account nothing.
+
+       Scope is the CONTENT surfaces another user reads — the activity
+       feed and space posts here, comments in the two server callables
+       that write them. Private logging under users/{uid}/* and every
+       non-content interaction (likes, kudos, follows, joins, circle
+       events) stay open to unverified accounts: the app must work for
+       a brand-new signup before the email arrives. The `in` check makes
+       an absent claim a plain false rather than an evaluation error —
+       both deny, but the intent reads at the call site. */
+    function isEmailVerified() {
+      return request.auth != null
+        && 'email_verified' in request.auth.token
+        && request.auth.token.email_verified == true;
+    }
+
     /* Is there a block in EITHER direction between these two users?
 
        Blocking severs the follow edges at block time (`blockUser` deletes all
@@ -104,6 +126,33 @@ service cloud.firestore {
     function blockExistsBetween(a, b) {
       return exists(/databases/$(database)/documents/blocks/$(a)/users/$(b))
         || exists(/databases/$(database)/documents/blocks/$(b)/users/$(a));
+    }
+
+    /* Photo URL value gate — shared by every field a client writes that
+       ANOTHER user's device will load as an <img src>: the public
+       profile avatar, activity and space-post author avatars, a space
+       post's attached photo, and the challenge-participant / space-member
+       identity rows. A URL a stranger's browser fetches is a tracking
+       pixel with a per-viewer IP unless its origin is one Tropos already
+       trusts to serve avatars:
+         - own-bucket Firebase Storage (custom uploads, space photos)
+         - Google OAuth CDN (lh3.googleusercontent.com)
+         - Apple OAuth CDN (appleid.cdn-apple.com)
+       `https` only and anchored with `^`, so a downgrade or a
+       suffix-phishing host (lh3.googleusercontent.com.evil.com) fails;
+       capped at 2048 chars so the field cannot carry a payload.
+       Null-safe: the type check runs first and `&&` short-circuits, so
+       a null never reaches `.matches()` (which would be an evaluation
+       error, not false). Whether absent / null / '' are legal is each
+       caller's decision — this speaks only to a present value. */
+    function isAllowedPhotoUrl(v) {
+      return v is string
+        && v.size() <= 2048
+        && (
+          v.matches('^https://firebasestorage\\.googleapis\\.com/.*')
+          || v.matches('^https://lh3\\.googleusercontent\\.com/.*')
+          || v.matches('^https://appleid\\.cdn-apple\\.com/.*')
+        );
     }
 
     /* raceGoal value gate — the shape the app actually consumes.
@@ -477,19 +526,15 @@ service cloud.firestore {
              states; null is what createDefaultProfile writes for
              email signups before any upload, '' is what removeProfilePhoto
              writes when the user clears their custom upload)
-           - own-bucket Firebase Storage URLs (custom uploads)
-           - Google OAuth CDN (lh3.googleusercontent.com)
-           - Apple OAuth CDN (appleid.cdn-apple.com)
-           The null check has to come BEFORE any `.matches()` call —
-           in Firestore rules `null.matches(...)` is an evaluation
-           error, not a falsy short-circuit, so the order matters. */
+           - an origin isAllowedPhotoUrl trusts (own Storage bucket,
+             Google / Apple OAuth CDNs)
+           The null and '' checks come BEFORE the helper so those two
+           real states are accepted rather than type-checked. */
         && (
           !('photoURL' in request.resource.data)
           || request.resource.data.photoURL == null
           || request.resource.data.photoURL == ''
-          || request.resource.data.photoURL.matches('^https://firebasestorage\\.googleapis\\.com/.*')
-          || request.resource.data.photoURL.matches('^https://lh3\\.googleusercontent\\.com/.*')
-          || request.resource.data.photoURL.matches('^https://appleid\\.cdn-apple\\.com/.*')
+          || isAllowedPhotoUrl(request.resource.data.photoURL)
         )
         /* photoStoragePath gate — must point to the owner's own
            profile-photos folder. Prevents writing a value that would
@@ -575,6 +620,8 @@ service cloud.firestore {
 
       allow create: if request.auth != null
         && !isWriteFrozen(request.auth.uid)
+        // Feed posts are public content — verified email only.
+        && isEmailVerified()
         && request.resource.data.authorId == request.auth.uid
         // Field allowlist — fail-closed; adding a field to
         // postActivity requires adding it here too.
@@ -594,6 +641,13 @@ service cloud.firestore {
         && request.resource.data.authorName is string
         && request.resource.data.authorName.size() > 0
         && request.resource.data.authorName.size() <= 100
+        // authorPhotoURL is loaded as <img src> by every feed viewer.
+        // postActivity omits it when the author has no photo (never
+        // null or ''), so present means a trusted origin or nothing.
+        && (
+          !('authorPhotoURL' in request.resource.data.keys())
+          || isAllowedPhotoUrl(request.resource.data.authorPhotoURL)
+        )
         && request.resource.data.type in ['run', 'workout']
         && request.resource.data.visibility in ['public', 'followers', 'private']
         && request.resource.data.createdAt is timestamp
@@ -860,7 +914,7 @@ service cloud.firestore {
           )
           && (
             !('photoURL' in request.resource.data)
-            || request.resource.data.photoURL is string
+            || isAllowedPhotoUrl(request.resource.data.photoURL)
           );
 
         // Updates may ONLY touch cosmetic identity fields. Any diff
@@ -878,7 +932,7 @@ service cloud.firestore {
           )
           && (
             !('photoURL' in request.resource.data)
-            || request.resource.data.photoURL is string
+            || isAllowedPhotoUrl(request.resource.data.photoURL)
           );
 
         allow delete: if request.auth != null
@@ -953,7 +1007,7 @@ service cloud.firestore {
           )
           && (
             !('photoURL' in request.resource.data)
-            || request.resource.data.photoURL is string
+            || isAllowedPhotoUrl(request.resource.data.photoURL)
           );
 
         allow update: if request.auth != null
@@ -968,7 +1022,7 @@ service cloud.firestore {
           )
           && (
             !('photoURL' in request.resource.data)
-            || request.resource.data.photoURL is string
+            || isAllowedPhotoUrl(request.resource.data.photoURL)
           );
 
         allow delete: if request.auth != null
@@ -989,6 +1043,8 @@ service cloud.firestore {
         allow create: if request.auth != null
           && isKnownSpaceId(spaceId)
           && !isWriteFrozen(request.auth.uid)
+          // Space posts are public content — verified email only.
+          && isEmailVerified()
           && request.resource.data.authorId == request.auth.uid
           // Posting requires membership (Spc1 engineering pin).
           && exists(/databases/$(database)/documents/spaces/$(spaceId)/members/$(request.auth.uid))
@@ -1010,11 +1066,11 @@ service cloud.firestore {
           )
           && (
             !('authorPhotoURL' in request.resource.data)
-            || request.resource.data.authorPhotoURL is string
+            || isAllowedPhotoUrl(request.resource.data.authorPhotoURL)
           )
           && (
             !('photoUrl' in request.resource.data)
-            || request.resource.data.photoUrl is string
+            || isAllowedPhotoUrl(request.resource.data.photoUrl)
           )
           && (
             !('activity' in request.resource.data)
@@ -1468,9 +1524,23 @@ service cloud.firestore {
         && request.resource.data.uid == request.auth.uid
         && request.resource.data.kind in ['joined', 'session_completed', 'milestone', 'needs_support', 'routine_shared']
         && request.resource.data.keys().hasOnly(['id', 'uid', 'kind', 'text', 'weekKey', 'createdAt'])
+        // text is optional: absent or null for an event with nothing to say,
+        // otherwise a string within the fence's bound.
         && (!('text' in request.resource.data)
+            || request.resource.data.text == null
             || (request.resource.data.text is string
-                && request.resource.data.text.size() <= 200));
+                && request.resource.data.text.size() <= 200))
+        // weekKey is the writer's LOCAL week as YYYY-MM-DD. The client
+        // sends null on every event it creates, so null must stay legal.
+        && (!('weekKey' in request.resource.data)
+            || request.resource.data.weekKey == null
+            || (request.resource.data.weekKey is string
+                && request.resource.data.weekKey.matches('^\\d{4}-\\d{2}-\\d{2}$')))
+        // id mirrors a document id; bounded so the field cannot carry a
+        // payload into a member-readable feed.
+        && (!('id' in request.resource.data)
+            || (request.resource.data.id is string
+                && request.resource.data.id.size() <= 64));
       allow update, delete: if false;
     }
 

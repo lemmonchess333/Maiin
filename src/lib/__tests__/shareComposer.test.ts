@@ -5,6 +5,7 @@ import {
   resolveCompose,
   getShareDefault,
   clearShareDefault,
+  setShareDefault,
   enqueueShare,
   getQueueLength,
   drainQueue,
@@ -33,6 +34,17 @@ beforeEach(() => {
 });
 
 describe("compose / resolveCompose", function () {
+  it("an explicit share action opens the sheet without rewriting a remembered default", async () => {
+    setShareDefault(UID, "workout", "never");
+    const listener = vi.fn();
+    const stop = subscribeShareComposer(listener);
+    const promise = compose(UID, WORKOUT_PREVIEW, { forcePrompt: true });
+    expect(listener).toHaveBeenLastCalledWith(expect.objectContaining({ open: true }));
+    resolveCompose({ visibility: "followers", caption: "" }, false);
+    await expect(promise).resolves.toEqual({ visibility: "followers", caption: "" });
+    expect(getShareDefault(UID, "workout")).toBe("never");
+    stop();
+  });
   it("opens the sheet (returns an unresolved promise) when no preference is stored", async function () {
     const promise = compose(UID, WORKOUT_PREVIEW);
     let settled = false;

@@ -1,0 +1,125 @@
+{
+  "exerciseId": "goblet-squat",
+  "version": "owner-release-2026-09",
+  "width": 1024,
+  "height": 1536,
+  "decision": "owner-released-with-findings",
+  "approval": {
+    "actor": "repository owner",
+    "instruction": "Merge the new artwork",
+    "context": "User requested activation after being told the previous merge kept these ten complete sets as drafts."
+  },
+  "reference": {
+    "path": "form-frames/goblet-squat/1.webp",
+    "sha256": "18f7baa2fe3e599ff375db4140a0eeb5e015a5e945c35b85542d3503974d824a"
+  },
+  "frames": [
+    {
+      "path": "form-frames/goblet-squat/1.webp",
+      "sha256": "18f7baa2fe3e599ff375db4140a0eeb5e015a5e945c35b85542d3503974d824a",
+      "source": {
+        "path": "docs/exercise-art/pilots/goblet-squat/1-master.png",
+        "sha256": "baf91df05be0056d4be07290e2e1195e39b38222d679bfe2bced8dfbb1c783a7"
+      }
+    },
+    {
+      "path": "form-frames/goblet-squat/2.webp",
+      "sha256": "3cd981cf1d7f4df90b1191bc3882a216f96f9c06dd21218aa01d416f267cba3e",
+      "source": {
+        "path": "docs/exercise-art/pilots/goblet-squat/2-early.png",
+        "sha256": "e0405dd7939366abc059057a49852347084eea0af18c4ea4dc893cb235acc4c0"
+      }
+    },
+    {
+      "path": "form-frames/goblet-squat/3.webp",
+      "sha256": "798545c1bef3bdd9ee5f1ba1848c50a3d1fa08434dffbde25bf8d1ade1f0a0f8",
+      "source": {
+        "path": "docs/exercise-art/pilots/goblet-squat/3-mid.png",
+        "sha256": "7a3ef99906d37749a4424723ebcb165a5d953b312abb64c060fed3bc065364ca"
+      }
+    },
+    {
+      "path": "form-frames/goblet-squat/4.webp",
+      "sha256": "7edf39e04009a0a708ead73f76be1b25160a4927afdb4eb473c1eb630051d688",
+      "source": {
+        "path": "docs/exercise-art/pilots/goblet-squat/4-bottom.png",
+        "sha256": "c1a0abcfd5045b8fb7a3f3f20305080d8e54d8fcf3b8b05617f9a02481ffbf16"
+      }
+    },
+    {
+      "path": "form-frames/goblet-squat/5.webp",
+      "sha256": "798545c1bef3bdd9ee5f1ba1848c50a3d1fa08434dffbde25bf8d1ade1f0a0f8",
+      "source": {
+        "path": "docs/exercise-art/pilots/goblet-squat/5-rise.png",
+        "sha256": "7a3ef99906d37749a4424723ebcb165a5d953b312abb64c060fed3bc065364ca"
+      }
+    },
+    {
+      "path": "form-frames/goblet-squat/6.webp",
+      "sha256": "3cd981cf1d7f4df90b1191bc3882a216f96f9c06dd21218aa01d416f267cba3e",
+      "source": {
+        "path": "docs/exercise-art/pilots/goblet-squat/6-return.png",
+        "sha256": "e0405dd7939366abc059057a49852347084eea0af18c4ea4dc893cb235acc4c0"
+      }
+    }
+  ],
+  "cueSha256": "c1fe8abb01e8cfeb89d85d9ee9421b3c4ad62c6a74b2317688c528db9c212adf",
+  "checks": {
+    "identity": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    },
+    "camera": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    },
+    "anatomy": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    },
+    "equipment": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    },
+    "contact": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    },
+    "physics": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    },
+    "muscles": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    },
+    "cueAgreement": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    },
+    "sequenceAndLoop": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    },
+    "mobileLight": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    },
+    "mobileDark": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    }
+  },
+  "findings": [
+    "Depth and femur/torso foreshortening require technique review; requested numerical angles are not verified.",
+    "Static inspection: both hands remain at the upper dumbbell head and soles remain planted. Dumbbell vertical extent appears slightly smaller in deeper poses; measure and correct before release.",
+    "Full visual acceptance under the strict artwork review contract is outstanding."
+  ],
+  "encoding": {
+    "format": "WebP",
+    "quality": 92,
+    "method": 6,
+    "resize": false,
+    "crop": false
+  }
+}

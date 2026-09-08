@@ -22,7 +22,8 @@ import {
 } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
-import { getWeekKey, weekKeyMinusN } from "@/lib/performanceEngine";
+import { weekKeyMinusN } from "@/lib/performanceEngine";
+import { localWeekKey } from "@/lib/dateHelpers";
 import {
   buildWeeklyReview,
   weekBounds,
@@ -34,7 +35,7 @@ import { workoutTonnageKg } from "@/hooks/useWorkouts";
 import { resolveSnapshotCalorieTarget } from "@/lib/adaptiveTarget";
 import { useSubscription } from "@/lib/subscription";
 import { isVolumeEligible } from "@/lib/runStatsEligibility";
-import { buildPRMap, checkSetPR } from "@/lib/prTracking";
+import { buildPRMap, checkSetPR, recordSetBest } from "@/lib/prTracking";
 import { isSetEligibleForStrengthPr } from "@/features/program/sessionSetPolicy";
 import { fetchBodyweightLogs } from "@/lib/api";
 import { resolveRunPlanSurface } from "@/lib/runProgrammeViewModel";
@@ -47,7 +48,7 @@ import {
 
 /** Sunday key of the last COMPLETED week (the reviewed week). */
 export function reviewedWeekKey(now: Date = new Date()): string {
-  return weekKeyMinusN(getWeekKey(now), 1);
+  return weekKeyMinusN(localWeekKey(now), 1);
 }
 
 /** localStorage key for the Home entry's viewed state (useDismissOnce). */
@@ -81,7 +82,7 @@ export function countWeekPRs(
   baseline: WorkoutDocLite[],
   weekWorkouts: WorkoutDocLite[]
 ): number {
-  const map = buildPRMap(baseline);
+  let map = buildPRMap(baseline);
   const sessionCounts: Record<string, number> = {};
   for (const w of baseline) {
     for (const ex of w.exercises) {
@@ -113,23 +114,12 @@ export function countWeekPRs(
           map,
           sessionCounts
         );
-        if (bucket) {
-          fired++;
-          if (!map[ex.exerciseName]) {
-            map[ex.exerciseName] = {
-              "1rm": null,
-              "3rm": null,
-              "5rm": null,
-              "8rm": null,
-              "10rm": null,
-            };
-          }
-          map[ex.exerciseName][bucket] = {
-            weight: set.weightKg,
-            reps: set.reps,
-            date: w.date,
-          };
-        }
+        if (bucket?.kind === "best") fired++;
+        map = recordSetBest(map, ex.exerciseName, {
+          weight: set.weightKg,
+          reps: set.reps,
+          date: w.date,
+        });
       }
     }
     for (const ex of w.exercises) {
@@ -255,7 +245,14 @@ export function useWeeklyReview(): UseWeeklyReviewResult {
     (async () => {
       try {
         const { start, end } = weekBounds(weekKey);
-        const prevKey = weekKeyMinusN(weekKey, 1);
+        // Performance docs are keyed by COMPUTE date (PI1a), not week
+        // start. The doc named after this week's Sunday is the compute
+        // from the week's first morning — LAST week's number — and on
+        // many days no doc carries that exact id at all. The compute that
+        // summarises the reviewed week landed after it ended: the latest
+        // in (weekKey, weekKey + 7d]. The previous week's is the latest
+        // at or before weekKey. Read by range, never by id.
+        const nextKey = weekKeyMinusN(weekKey, -1);
 
         const [
           workoutsSnap,
@@ -289,8 +286,23 @@ export function useWeeklyReview(): UseWeeklyReviewResult {
             )
           ),
           fetchBodyweightLogs(user.uid),
-          getDoc(doc(db, "users", user.uid, "performance", weekKey)),
-          getDoc(doc(db, "users", user.uid, "performance", prevKey)),
+          getDocs(
+            query(
+              collection(db, "users", user.uid, "performance"),
+              where("weekKey", ">", weekKey),
+              where("weekKey", "<=", nextKey),
+              orderBy("weekKey", "desc"),
+              limit(1)
+            )
+          ),
+          getDocs(
+            query(
+              collection(db, "users", user.uid, "performance"),
+              where("weekKey", "<=", weekKey),
+              orderBy("weekKey", "desc"),
+              limit(1)
+            )
+          ),
           getDocs(
             query(
               collection(db, "users", user.uid, "workouts"),
@@ -349,12 +361,12 @@ export function useWeeklyReview(): UseWeeklyReviewResult {
           calories,
         }));
 
-        const perfData = perfSnap.exists()
-          ? (perfSnap.data() as Record<string, unknown>)
-          : null;
-        const prevPerfData = prevPerfSnap.exists()
-          ? (prevPerfSnap.data() as Record<string, unknown>)
-          : null;
+        const perfData = perfSnap.empty
+          ? null
+          : (perfSnap.docs[0].data() as Record<string, unknown>);
+        const prevPerfData = prevPerfSnap.empty
+          ? null
+          : (prevPerfSnap.docs[0].data() as Record<string, unknown>);
         const perf =
           perfData && typeof perfData.performanceIndex === "number"
             ? {
@@ -434,7 +446,7 @@ export function useWeeklyReview(): UseWeeklyReviewResult {
         };
 
         const plannedRuns = raceRunDaysIn(weekKey);
-        const currentWeekKey = getWeekKey(new Date());
+        const currentWeekKey = localWeekKey(new Date());
         const weekAheadRuns =
           surface.kind === "race_goal"
             ? raceRunDaysIn(currentWeekKey)

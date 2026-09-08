@@ -24,9 +24,21 @@ import {
   onMessage,
 } from "firebase/messaging";
 import { getFunctions, httpsCallable } from "firebase/functions";
-import { doc, getDoc } from "firebase/firestore";
-import { app, auth, db } from "@/lib/firebase";
+import { app, auth } from "@/lib/firebaseApp";
+
+/* Firestore on first read, not at import. AuthProvider imports this module
+   eagerly (it releases the device token on sign-out), so a static Firestore
+   import here reached the login screen's critical path. The one read below
+   needs a uid, so it can never run before this resolves. */
+async function firestore() {
+  const [fs, { db }] = await Promise.all([
+    import("firebase/firestore"),
+    import("@/lib/firebase"),
+  ]);
+  return { ...fs, db };
+}
 import { logger } from "@/lib/logger";
+import { readJson, remove, writeJson } from "@/lib/localStore";
 import { DEFAULT_PUSH_CONSENT, type PushConsent } from "@/lib/pushConsent";
 import { getAppServiceWorkerRegistration } from "@/lib/register-sw";
 
@@ -116,47 +128,34 @@ function isStoredDeviceBinding(value: unknown): value is StoredDeviceBinding {
 
 function readStoredDeviceBindings(): Record<string, StoredDeviceBinding> {
   if (typeof window === "undefined") return {};
-  try {
-    const raw = window.localStorage.getItem(DEVICE_TOKEN_STORAGE_KEY);
-    if (!raw) return {};
-    const parsed: unknown = JSON.parse(raw);
-    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
-      return {};
-    }
-    return Object.fromEntries(
-      Object.entries(parsed as Record<string, unknown>).filter(
-        ([uid, binding]) => uid.length > 0 && isStoredDeviceBinding(binding)
-      )
-    ) as Record<string, StoredDeviceBinding>;
-  } catch {
+  const parsed = readJson<unknown>(DEVICE_TOKEN_STORAGE_KEY, null);
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
     return {};
   }
+  return Object.fromEntries(
+    Object.entries(parsed as Record<string, unknown>).filter(
+      ([uid, binding]) => uid.length > 0 && isStoredDeviceBinding(binding)
+    )
+  ) as Record<string, StoredDeviceBinding>;
 }
 
 function writeStoredDeviceBindings(
   bindings: Record<string, StoredDeviceBinding>
 ): void {
   if (typeof window === "undefined") return;
-  try {
-    const cleaned = Object.fromEntries(
-      Object.entries(bindings).filter(
-        ([uid, binding]) => uid.length > 0 && isStoredDeviceBinding(binding)
-      )
-    );
-    // Legacy values lack a binding id and must never be used for an unfenced
-    // release. Fresh registration migrates the server document instead.
-    window.localStorage.removeItem(LEGACY_DEVICE_TOKEN_STORAGE_KEY);
-    if (Object.keys(cleaned).length === 0) {
-      window.localStorage.removeItem(DEVICE_TOKEN_STORAGE_KEY);
-      return;
-    }
-    window.localStorage.setItem(
-      DEVICE_TOKEN_STORAGE_KEY,
-      JSON.stringify(cleaned)
-    );
-  } catch {
-    // Storage can be unavailable in private/restricted browser contexts.
+  const cleaned = Object.fromEntries(
+    Object.entries(bindings).filter(
+      ([uid, binding]) => uid.length > 0 && isStoredDeviceBinding(binding)
+    )
+  );
+  // Legacy values lack a binding id and must never be used for an unfenced
+  // release. Fresh registration migrates the server document instead.
+  remove(LEGACY_DEVICE_TOKEN_STORAGE_KEY);
+  if (Object.keys(cleaned).length === 0) {
+    remove(DEVICE_TOKEN_STORAGE_KEY);
+    return;
   }
+  writeJson(DEVICE_TOKEN_STORAGE_KEY, cleaned);
 }
 
 function newBindingId(): string {
@@ -420,6 +419,7 @@ export async function refreshDeviceTokenForCurrentUser(
 ): Promise<void> {
   if (!uid || !isCurrentUser(uid)) return;
   try {
+    const { doc, getDoc, db } = await firestore();
     const snapshot = await getDoc(doc(db, "users", uid, "settings", "push"));
     if (!isCurrentUser(uid)) return;
 

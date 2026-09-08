@@ -1,5 +1,14 @@
-import { collection, addDoc, doc, setDoc, Firestore } from "firebase/firestore";
+import {
+  collection,
+  addDoc,
+  doc,
+  setDoc,
+  Firestore,
+  Timestamp,
+  runTransaction,
+} from "firebase/firestore";
 import { logger } from "@/lib/logger";
+import { isAvailable, readJson, remove, writeJson } from "@/lib/localStore";
 import { captureError } from "@/lib/errorReporting";
 import { stripUndefined } from "@/lib/firestoreGuards";
 
@@ -27,72 +36,132 @@ interface QueuedWrite {
   merge?: boolean;
   data: Record<string, unknown>;
   timestamp: number;
+  durable?: boolean;
+  workoutCompletion?: { programme?: ProgrammeCompletionContext };
+  failed?: boolean;
+}
+
+export interface ProgrammeCompletionContext {
+  weekNumber: number;
+  dayIndex: number;
+  dayIdentity: string;
+  trainingBlockId?: string;
+}
+
+/** Stable row identities, never positional set logs, identify a saved day.
+ * Legacy days without identities can still save History; they cannot safely
+ * mark a later programme day completed during replay. */
+export function workoutCompletionDayIdentity(day: unknown): string | null {
+  if (!day || typeof day !== "object") return null;
+  const value = day as {
+    dayName?: unknown;
+    dayType?: unknown;
+    exercises?: unknown;
+  };
+  if (
+    typeof value.dayName !== "string" ||
+    typeof value.dayType !== "string" ||
+    !Array.isArray(value.exercises)
+  )
+    return null;
+  const ids = value.exercises.map((exercise) => exercise?.instanceId);
+  if (!ids.length || ids.some((id) => typeof id !== "string" || !id))
+    return null;
+  return JSON.stringify([value.dayName, value.dayType, ids]);
+}
+
+const queueListeners = new Set<() => void>();
+let queueVersion = 0;
+export const subscribeQueuedWrites = (listener: () => void) => {
+  queueListeners.add(listener);
+  return () => {
+    queueListeners.delete(listener);
+  };
+};
+export const queuedWritesVersion = () => queueVersion;
+function notifyQueue() {
+  queueVersion++;
+  queueListeners.forEach((listener) => listener());
+}
+// Durable entries encode SDK timestamps explicitly; JSON alone loses their type.
+function encode(value: unknown): unknown {
+  if (value instanceof Timestamp)
+    return { __queuedTimestamp: [value.seconds, value.nanoseconds] };
+  if (Array.isArray(value)) return value.map(encode);
+  if (value && typeof value === "object")
+    return Object.fromEntries(
+      Object.entries(value).map(([key, child]) => [key, encode(child)])
+    );
+  return value;
+}
+function decode(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(decode);
+  if (value && typeof value === "object") {
+    const stamp = (value as { __queuedTimestamp?: number[] }).__queuedTimestamp;
+    if (stamp?.length === 2) return new Timestamp(stamp[0], stamp[1]);
+    return Object.fromEntries(
+      Object.entries(value).map(([key, child]) => [key, decode(child)])
+    );
+  }
+  return value;
 }
 
 const QUEUE_KEY = "tropos_offline_queue";
 
 function getQueue(): QueuedWrite[] {
-  try {
-    const stored = localStorage.getItem(QUEUE_KEY);
-    if (!stored) return [];
-    const parsed = JSON.parse(stored) as unknown;
-    if (!Array.isArray(parsed)) return [];
-    // Drop legacy items that pre-date uid scoping. They were written
-    // by a previous build and we have no safe way to attribute them
-    // to a uid retroactively — better to drop than to flush under
-    // the wrong session.
-    return parsed.filter(
-      (item): item is QueuedWrite =>
-        item != null &&
-        typeof item === "object" &&
-        typeof (item as { uid?: unknown }).uid === "string"
-    );
-  } catch {
-    return [];
-  }
+  const parsed = readJson<unknown>(QUEUE_KEY, null);
+  if (!Array.isArray(parsed)) return [];
+  // Drop legacy items that pre-date uid scoping. They were written
+  // by a previous build and we have no safe way to attribute them
+  // to a uid retroactively — better to drop than to flush under
+  // the wrong session.
+  return parsed.filter(
+    (item): item is QueuedWrite =>
+      item != null &&
+      typeof item === "object" &&
+      typeof (item as { uid?: unknown }).uid === "string"
+  );
 }
 
 function saveQueue(queue: QueuedWrite[]) {
-  try {
-    localStorage.setItem(QUEUE_KEY, JSON.stringify(queue));
-  } catch (e: unknown) {
-    if (e instanceof DOMException && e.name === "QuotaExceededError") {
-      // CORE-01: quota exceeded. Drop the OLDEST item only and retry,
-      // shedding one at a time until it fits — the previous code lopped
-      // off the whole oldest HALF in one go and, on a second failure,
-      // cleared the queue ENTIRELY (silent bulk data loss). Every drop
-      // is reported so an exhausted/blocked sync is diagnosable rather
-      // than vanishing. Newest writes are kept (most likely still
-      // relevant); a dropped queued create can't duplicate because the
-      // creates are now idempotent by stable id (see queueWrite).
-      const working = [...queue];
-      while (working.length > 0) {
-        const dropped = working.shift();
-        captureError(
-          new Error("OfflineQueue: quota exceeded, dropped one queued write"),
-          "network",
-          {
-            collectionPath: dropped?.collectionPath,
-            docId: dropped?.docId,
-            remaining: working.length,
-          }
-        );
-        try {
-          localStorage.setItem(QUEUE_KEY, JSON.stringify(working));
-          return;
-        } catch {
-          // still too big — shed the next-oldest and retry
-        }
-      }
-      // Nothing fit even when empty — remove the key so a corrupt giant
-      // value can't wedge every future write.
-      try {
-        localStorage.removeItem(QUEUE_KEY);
-      } catch {
-        /* best-effort */
-      }
-    }
+  if (writeJson(QUEUE_KEY, queue)) {
+    notifyQueue();
+    return;
   }
+  // Never evict an accepted durable meal to make space for another write.
+  if (queue.some((item) => item.durable))
+    throw new Error(
+      "Couldn't save on this phone. Free device storage and retry."
+    );
+  // A refused write with no storage at all is not a full store: there is
+  // nothing to shed into, and every shed would be reported as a drop.
+  if (!isAvailable()) return;
+  // CORE-01: quota exceeded. Drop the OLDEST item only and retry,
+  // shedding one at a time until it fits — the previous code lopped
+  // off the whole oldest HALF in one go and, on a second failure,
+  // cleared the queue ENTIRELY (silent bulk data loss). Every drop
+  // is reported so an exhausted/blocked sync is diagnosable rather
+  // than vanishing. Newest writes are kept (most likely still
+  // relevant); a dropped queued create can't duplicate because the
+  // creates are now idempotent by stable id (see queueWrite).
+  const working = [...queue];
+  while (working.length > 0) {
+    const dropped = working.shift();
+    captureError(
+      new Error("OfflineQueue: quota exceeded, dropped one queued write"),
+      "network",
+      {
+        collectionPath: dropped?.collectionPath,
+        docId: dropped?.docId,
+        remaining: working.length,
+      }
+    );
+    // Still too big — shed the next-oldest and retry.
+    if (writeJson(QUEUE_KEY, working)) return;
+  }
+  // Nothing fit even when empty — remove the key so a corrupt giant
+  // value can't wedge every future write.
+  remove(QUEUE_KEY);
 }
 
 export function queueWrite(
@@ -115,9 +184,115 @@ export function queueWrite(
   saveQueue(queue);
 }
 
+/** Accept locally before attempting sync. The caller can close immediately,
+ * including when the browser says online but the server is unreachable. */
+export function queueDurableWrite(
+  uid: string,
+  collectionPath: string,
+  docId: string,
+  data: Record<string, unknown>,
+  merge = false
+) {
+  const queue = getQueue();
+  queue.push({
+    id: crypto.randomUUID(),
+    uid,
+    collectionPath,
+    docId,
+    merge,
+    data: encode(stripUndefined(data)) as Record<string, unknown>,
+    timestamp: Date.now(),
+    durable: true,
+  });
+  // Strict persistence: no quota shedding and no success on unavailable storage.
+  if (!writeJson(QUEUE_KEY, queue))
+    throw new Error(
+      "Couldn't save on this phone. Free device storage and retry."
+    );
+  notifyQueue();
+}
+
+export function pendingDocumentWrites(uid: string, collectionPath: string) {
+  return getQueue()
+    .filter(
+      (item) =>
+        item.uid === uid &&
+        item.collectionPath === collectionPath &&
+        item.durable
+    )
+    .map((item) => ({
+      id: item.docId!,
+      merge: item.merge,
+      data: decode(item.data) as Record<string, unknown>,
+    }));
+}
+
+export function hasQueuedWorkoutCompletion(
+  uid: string,
+  workoutId: string
+): boolean {
+  return getQueue().some(
+    (item) =>
+      item.uid === uid && item.docId === workoutId && item.workoutCompletion
+  );
+}
+
+/** The complete, timestamp-encoded workout survives programme rollover and
+ * view teardown. Replays never restore a stale whole programme document. */
+export function queueWorkoutCompletion(
+  db: Firestore,
+  uid: string,
+  workoutId: string,
+  data: Record<string, unknown>,
+  programme?: ProgrammeCompletionContext
+): Promise<"synced" | "failed"> {
+  const queue = getQueue();
+  const existing = queue.find(
+    (item) =>
+      item.uid === uid && item.docId === workoutId && item.workoutCompletion
+  );
+  const id = existing?.id ?? crypto.randomUUID();
+  if (existing) existing.failed = false;
+  else
+    queue.push({
+      id,
+      uid,
+      collectionPath: `users/${uid}/workouts`,
+      docId: workoutId,
+      data: encode(stripUndefined(data)) as Record<string, unknown>,
+      timestamp: Date.now(),
+      durable: true,
+      workoutCompletion: programme ? { programme } : {},
+    });
+  if (!writeJson(QUEUE_KEY, queue))
+    throw new Error(
+      "Couldn't save on this phone. Free device storage and retry."
+    );
+  notifyQueue();
+  const settled = new Promise<"synced" | "failed">((resolve) => {
+    const unsubscribe = subscribeQueuedWrites(() => {
+      const pending = getQueue().find(
+        (item) => item.uid === uid && item.id === id
+      );
+      if (!pending || pending.failed) {
+        unsubscribe();
+        resolve(pending ? "failed" : "synced");
+      }
+    });
+  });
+  if (navigator.onLine) void flushQueue(db, uid).catch(() => {});
+  return settled;
+}
+
 export function getQueueLength(uid?: string): number {
   const queue = getQueue();
   return uid ? queue.filter((q) => q.uid === uid).length : queue.length;
+}
+
+export function getFailedWorkoutCompletionCount(uid: string): number {
+  return getQueue().filter(
+    (item) => item.uid === uid && item.workoutCompletion && item.failed
+  ).length;
 }
 
 /**
@@ -154,17 +329,82 @@ async function flushQueueOnce(db: Firestore, uid: string): Promise<number> {
 
   let flushed = 0;
   const landed = new Set<string>();
+  const { auth } = await import("@/lib/firebase");
 
   for (const item of queue) {
     // Not our user's item — leave it for the next time that user signs in.
     if (item.uid !== uid) continue;
     try {
-      const payload = { ...item.data, _offlineCreatedAt: item.timestamp };
+      // A queued flush can start after sign-out, or resume after another
+      // account signs in while an earlier write awaits acknowledgement.
+      // Check the live identity for EVERY write, including legacy entries.
+      if (auth.currentUser?.uid !== uid) break;
+      if (item.durable && !navigator.onLine) break;
+      const decoded = item.durable
+        ? (decode(item.data) as Record<string, unknown>)
+        : item.data;
+      const payload = { ...decoded, _offlineCreatedAt: item.timestamp };
       if (item.docId) {
         const docRef = doc(db, item.collectionPath, item.docId);
-        await setDoc(docRef, payload, item.merge ? { merge: true } : {});
+        if (item.durable && !item.merge) {
+          await runTransaction(db, async (transaction) => {
+            const current = await transaction.get(docRef);
+            if (auth.currentUser?.uid !== uid)
+              throw new Error("Sign in again to sync food.");
+            // An ambiguous acknowledgement must not overwrite later diary edits.
+            if (current.exists()) return;
+            const completion = item.workoutCompletion?.programme;
+            if (completion) {
+              const programmeRef = doc(
+                db,
+                "users",
+                uid,
+                "programState",
+                "current"
+              );
+              const snapshot = await transaction.get(programmeRef);
+              if (auth.currentUser?.uid !== uid)
+                throw new Error("Sign in again to sync your workout.");
+              const state = snapshot.data();
+              if (
+                state?.weekNumber === completion.weekNumber &&
+                state.trainingBlock?.id === completion.trainingBlockId &&
+                Array.isArray(state.workouts) &&
+                workoutCompletionDayIdentity(
+                  state.workouts[completion.dayIndex]
+                ) === completion.dayIdentity
+              ) {
+                const next: Record<string, unknown> = {
+                  ...state,
+                  updatedAt: Date.now(),
+                  workouts: state.workouts.map((day, index) =>
+                    index === completion.dayIndex
+                      ? { ...day, completed: true, skipped: false }
+                      : day
+                  ),
+                };
+                if (next.nextWorkoutOverride === completion.dayIndex)
+                  delete next.nextWorkoutOverride;
+                transaction.set(programmeRef, next);
+              }
+            }
+            transaction.set(docRef, payload);
+          });
+        } else {
+          await setDoc(docRef, payload, item.merge ? { merge: true } : {});
+        }
       } else {
         await addDoc(collection(db, item.collectionPath), payload);
+      }
+      if (
+        item.workoutCompletion &&
+        auth.currentUser?.uid === uid &&
+        typeof decoded.completionId === "string"
+      ) {
+        const { clearCompletedWorkoutDraft } =
+          await import("@/hooks/useWorkoutDraft");
+        if (auth.currentUser?.uid === uid)
+          clearCompletedWorkoutDraft(uid, decoded.completionId);
       }
       landed.add(item.id);
       flushed++;
@@ -174,6 +414,16 @@ async function flushQueueOnce(db: Firestore, uid: string): Promise<number> {
         "network",
         { collectionPath: item.collectionPath, docId: item.docId }
       );
+      // Preserve create → undo ordering across a failed reconnect.
+      if (item.durable) {
+        if (item.workoutCompletion) {
+          const latest = getQueue().map((entry) =>
+            entry.id === item.id ? { ...entry, failed: true } : entry
+          );
+          if (writeJson(QUEUE_KEY, latest)) notifyQueue();
+        }
+        break;
+      }
     }
   }
 

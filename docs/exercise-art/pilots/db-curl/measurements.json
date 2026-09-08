@@ -1,0 +1,161 @@
+{
+  "method": "Read-only white-region bounding boxes in fixed ROIs; diagnostic only, not anatomy or technique certification. No image modification.",
+  "frames": [
+    {
+      "file": "1-master.png",
+      "canvas": [
+        1024,
+        1536
+      ],
+      "sha256": "b6e662d9791512eb1af157a1e4b383eb9ae02b3831da7f9bafc5dddaa121c98b",
+      "farShoe": {
+        "left": 269,
+        "right": 492,
+        "top": 1280,
+        "bottom": 1418
+      },
+      "nearShoe": {
+        "left": 506,
+        "right": 689,
+        "top": 1320,
+        "bottom": 1478
+      },
+      "head": {
+        "left": 405,
+        "right": 579,
+        "top": 14,
+        "bottom": 229
+      }
+    },
+    {
+      "file": "2-early-candidate.png",
+      "canvas": [
+        1024,
+        1536
+      ],
+      "sha256": "4c53286512a4c11f4ec0db7ae90825edd3e19b2c917da8c5af5bb3d75c271285",
+      "farShoe": {
+        "left": 270,
+        "right": 492,
+        "top": 1280,
+        "bottom": 1418
+      },
+      "nearShoe": {
+        "left": 506,
+        "right": 689,
+        "top": 1320,
+        "bottom": 1478
+      },
+      "head": {
+        "left": 405,
+        "right": 579,
+        "top": 14,
+        "bottom": 229
+      }
+    },
+    {
+      "file": "3-mid-candidate.png",
+      "canvas": [
+        1024,
+        1536
+      ],
+      "sha256": "61a625a2ca5c6880804a127e35c8e39919f3cd346ea9c76948af3df77c17b20f",
+      "farShoe": {
+        "left": 269,
+        "right": 492,
+        "top": 1280,
+        "bottom": 1418
+      },
+      "nearShoe": {
+        "left": 506,
+        "right": 689,
+        "top": 1320,
+        "bottom": 1479
+      },
+      "head": {
+        "left": 405,
+        "right": 579,
+        "top": 13,
+        "bottom": 229
+      }
+    },
+    {
+      "file": "4-top-colour-candidate.png",
+      "canvas": [
+        1024,
+        1536
+      ],
+      "sha256": "81f1f22ddb75f115e816a54b340bd06ef6819472b33a208d673024e8c192213f",
+      "farShoe": {
+        "left": 269,
+        "right": 492,
+        "top": 1280,
+        "bottom": 1418
+      },
+      "nearShoe": {
+        "left": 506,
+        "right": 689,
+        "top": 1320,
+        "bottom": 1478
+      },
+      "head": {
+        "left": 405,
+        "right": 579,
+        "top": 13,
+        "bottom": 229
+      }
+    },
+    {
+      "file": "5-lower-candidate.png",
+      "canvas": [
+        1024,
+        1536
+      ],
+      "sha256": "61a625a2ca5c6880804a127e35c8e39919f3cd346ea9c76948af3df77c17b20f",
+      "farShoe": {
+        "left": 269,
+        "right": 492,
+        "top": 1280,
+        "bottom": 1418
+      },
+      "nearShoe": {
+        "left": 506,
+        "right": 689,
+        "top": 1320,
+        "bottom": 1479
+      },
+      "head": {
+        "left": 405,
+        "right": 579,
+        "top": 13,
+        "bottom": 229
+      }
+    },
+    {
+      "file": "6-return-candidate.png",
+      "canvas": [
+        1024,
+        1536
+      ],
+      "sha256": "5f6dbfaf360023163f54df69f7385efe1fdf7fda61ebab7166075c3fc0192e4c",
+      "farShoe": {
+        "left": 270,
+        "right": 492,
+        "top": 1280,
+        "bottom": 1418
+      },
+      "nearShoe": {
+        "left": 506,
+        "right": 689,
+        "top": 1320,
+        "bottom": 1478
+      },
+      "head": {
+        "left": 405,
+        "right": 579,
+        "top": 13,
+        "bottom": 229
+      }
+    }
+  ]
+}

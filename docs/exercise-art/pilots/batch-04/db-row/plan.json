@@ -1,0 +1,75 @@
+{
+  "variation": "Right-arm neutral-grip dumbbell row; left hand and left knee supported on bench, right foot on floor.",
+  "canvas": [
+    1536,
+    1024
+  ],
+  "camera": "Fixed side three-quarter from right working side; head left, hips right; view working lat and grip.",
+  "equipment": "One modest round black dumbbell, flat dark bench.",
+  "anchors": [
+    "Left hand and left knee on bench",
+    "Right shoe on floor",
+    "Bench geometry",
+    "Head, torso and pelvis with no twist"
+  ],
+  "invariants": [
+    "Dumbbell diameter, head thickness and handle length",
+    "Working arm bone lengths",
+    "Bench and support limb dimensions"
+  ],
+  "primary": [
+    "Right latissimus dorsi"
+  ],
+  "secondary": [
+    "Rhomboids",
+    "Rear deltoid",
+    "Biceps"
+  ],
+  "techniqueSource": "https://www.acefitness.org/resources/everyone/exercise-library/126/single-arm-row/",
+  "exerciseId": "db-row",
+  "status": "six-frame-draft-review",
+  "frames": [
+    {
+      "frame": 1,
+      "label": "Set up",
+      "cue": "Support one hand and same-side knee; let the weight hang.",
+      "t": 0,
+      "state": "Working arm extended, neutral grip; spine long and torso nearly level."
+    },
+    {
+      "frame": 2,
+      "label": "Begin row",
+      "cue": "Draw the elbow back towards your hip.",
+      "t": 0.25,
+      "state": "Small shoulder extension and elbow flexion; dumbbell begins rising."
+    },
+    {
+      "frame": 3,
+      "label": "Continue row",
+      "cue": "Keep your torso still as the elbow passes your ribs.",
+      "t": 0.6,
+      "state": "Mid row, elbow back, shoulder not shrugged."
+    },
+    {
+      "frame": 4,
+      "label": "Top row",
+      "cue": "Bring the weight beside your hip without twisting.",
+      "t": 1,
+      "state": "Upper arm near torso line, elbow flexed, weight close to lateral lower ribs/hip."
+    },
+    {
+      "frame": 5,
+      "label": "Controlled lower",
+      "cue": "Lower slowly while keeping your back still.",
+      "t": 0.6,
+      "state": "Same as frame3, descending."
+    },
+    {
+      "frame": 6,
+      "label": "Finish lowering",
+      "cue": "Extend the arm back towards the starting stretch.",
+      "t": 0.25,
+      "state": "Same as frame2, descending; loop to full hang."
+    }
+  ]
+}

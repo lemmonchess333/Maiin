@@ -76,9 +76,9 @@ describe("RunLaunchCard", () => {
     expect(onStart).toHaveBeenCalledTimes(1);
   });
 
-  it("Customize fires onCustomize", () => {
+  it("Customise fires onCustomize", () => {
     const { onCustomize } = setup();
-    fireEvent.click(screen.getByRole("button", { name: /Customize/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Customise/i }));
     expect(onCustomize).toHaveBeenCalledTimes(1);
   });
 

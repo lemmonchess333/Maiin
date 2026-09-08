@@ -414,7 +414,7 @@ describe("resolveAdaptiveTarget — stale-hold across a logging lapse", () => {
   });
 
   it("the locked stall nudge still fires during a hold", () => {
-    // "Keep logging meals + weigh-ins to keep personalizing" — the lapse is
+    // "Keep logging meals and weigh-ins to keep learning" — the lapse is
     // exactly when that copy earns its place.
     const { view } = resolveAdaptiveTarget({
       ...baseInput,

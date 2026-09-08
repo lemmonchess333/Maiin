@@ -36,3 +36,20 @@ export function clampExerciseIndex(index: number, length: number): number {
   if (length <= 0) return 0;
   return Math.min(Math.trunc(index), length - 1);
 }
+
+/** Prefer the current exercise, then wrap to unfinished work elsewhere.
+ * Array position is not evidence of completion: users may log out of order.
+ * null means every existing set is complete (or there are no sets).
+ */
+export function nextIncompleteSet(
+  logs: readonly (readonly { completed: boolean }[])[],
+  preferredExercise = 0
+): { exerciseIndex: number; setIndex: number } | null {
+  const start = clampExerciseIndex(preferredExercise, logs.length);
+  for (let offset = 0; offset < logs.length; offset++) {
+    const exerciseIndex = (start + offset) % logs.length;
+    const setIndex = logs[exerciseIndex].findIndex((set) => !set.completed);
+    if (setIndex >= 0) return { exerciseIndex, setIndex };
+  }
+  return null;
+}

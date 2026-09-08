@@ -125,7 +125,14 @@ function stripCommentsAndStrings(src: string): string {
 }
 
 /** Roots whose exports must be reachable. */
-const DOMAIN_ROOTS = ["src/lib", "src/features", "src/hooks", "functions/lib"];
+const DOMAIN_ROOTS = [
+  "src/lib",
+  "src/features",
+  "src/hooks",
+  "src/utils",
+  "src/pages",
+  "functions/lib",
+];
 /** Everything that could plausibly consume them. */
 const CONSUMER_ROOTS = ["src", "functions", "e2e", "scripts"];
 
@@ -188,7 +195,6 @@ const KNOWN_ORPHAN_EXPORTS = [
   // Web ships the real path, native calls the setter from its boot path
   // once the Capacitor plugin lands. CLAUDE.md names the appCheck split as
   // THE reference for "if native parity is deferred, leave the seam".
-  "src/lib/appCheck.ts:setNativeAppCheckProvider",
   "src/lib/shareCard/instagramShare.ts:setNativeInstagramProvider",
 
   // Test-harness accessor with a named future consumer: the web popstate

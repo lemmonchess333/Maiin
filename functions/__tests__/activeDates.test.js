@@ -16,6 +16,23 @@ describe("activeDateKeysFromLogs", () => {
     expect(keys.sort()).toEqual(["2026-06-01", "2026-06-02"]);
   });
 
+  it("excludes soft-deleted meals", () => {
+    const keys = activeDateKeysFromLogs(
+      {
+        meals: [
+          {
+            date: "2026-06-02",
+            items: [{ x: 1 }],
+            deletedAt: "2026-06-02T10:00:00Z",
+          },
+          { date: "2026-06-03", items: [{ x: 1 }] },
+        ],
+      },
+      "UTC"
+    );
+    expect(keys).toEqual(["2026-06-03"]);
+  });
+
   it("excludes meals with no items", () => {
     const keys = activeDateKeysFromLogs(
       { meals: [{ date: "2026-06-02", items: [] }] },

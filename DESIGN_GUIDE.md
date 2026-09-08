@@ -179,6 +179,39 @@ values in light mode). Use the raw values only for dots/tints/bars.
 
 Never repurpose one of these for an unrelated feature.
 
+### 3f. Uniformity stops where identity starts
+
+The design system exists to make spacing, type scale, touch targets and
+control behaviour the same everywhere. It is **not** a mandate to make every
+surface look alike. A handful of elements are where the product has a face,
+and consistency must yield to them:
+
+| Element               | Keeps                                                       |
+| --------------------- | ----------------------------------------------------------- |
+| Food hero             | The photo, the calorie ring, the three macro cards          |
+| Home performance card | The ring, its warm gradient, the delta chip                 |
+| Meal slot picker      | Filled orange pills (`SegmentedControl` `emphasis="solid"`) |
+| Sport coding          | Purple lifting / coral running, everywhere they appear      |
+
+A 2026-09 cohesion pass flattened the meal pills onto the neutral segmented
+track, and a later release rendered both hero cards through a `compact`
+prop. Between them the food surface lost the only colour it owned and the
+weekly verdict became a row of digits. Both were consistency applied past
+the point where it helps. Before you unify something, ask whether the thing
+you are unifying IS the identity of its surface; if it is, unify the
+behaviour (roles, keyboard, target size) and leave the treatment alone.
+
+### 3g. Em dashes: one rhythm is the problem, not one character
+
+Copy that reaches for "statement — explanation" at every beat reads as
+machine-written even when each line is fine on its own. Prefer the middot
+the app already uses for `fact · fact`, or a full stop between two
+independent statements. Keep the em dash for a genuine aside.
+`emDashCopy.test.ts` ratchets the total and caps any single component, so
+the count can only fall; `liftSessionExplainerLength.test.ts` additionally
+bans it outright in the session purpose lines, which are capped at 45
+characters so they render on one line.
+
 ---
 
 ## 4. Typography
@@ -204,17 +237,48 @@ Never repurpose one of these for an unrelated feature.
 | `text-small`   | 14px  | Secondary descriptions                                           |
 | `text-micro`   | 12px  | Labels, captions, uppercase tracking headers (floor)             |
 
+**Onboarding question role (approved first release, 7 September 2026):**
+The question heading uses the existing `text-h1` token with `font-extrabold`,
+tight leading and natural wrapping. Standard route titles keep their existing
+page-title treatment. The five named chapters orient the seven setup screens;
+no additional typeface, colour or entrance animation is introduced.
+
 **Weight rules (strict):**
 
 - `800` extrabold → hero numbers + page titles
 - `700` bold → section headings + card titles
 - `600` semibold → pill text + button labels
+- `500` medium → **small-text emphasis only**: secondary labels, meta rows
+  and inline emphasis at `text-sm` / `text-xs`
 - **Never mix 700 and 800 in the same visual tier.**
+- **Never use `500` at `text-lg` or above.** Hierarchy at heading scale is
+  600 / 700 / 800; 500 there reads as an accident. Pinned by
+  `designSystemInvariants.test.ts`, which asserts zero rather than a
+  ratchet — the codebase has never crossed this line.
 
-Section labels are a deliberate style: ~10px, UPPERCASE, wide letter-spacing,
-muted colour. That's intentional, not a bug — match it.
+`500` was undocumented for a long time and briefly treated as drift to be
+burned down. It is not: of 269 sized uses, 113 are `text-sm` and 105 are
+`text-xs`, with none above. It earned its place in the scale by being used
+consistently; the guard now protects the boundary rather than the count.
+
+Section labels are a deliberate style: UPPERCASE, wide letter-spacing, muted
+colour, at exactly two sizes — `SectionLabel tier="section"` (11px,
+`text-caption`, page-section labels) and the default tier (12px, card-internal
+captions). The old "~10px" recipe was floored up to 11px when that became the
+app-wide minimum for tracked uppercase text; do not reintroduce it, and do not
+invent a third size. Use the `SectionLabel` primitive rather than hand-rolling
+the classes.
 
 ---
+
+**Numerals against a target — slash spacing.** The default is the spaced
+slash: `1,790 eaten / 2,200 kcal` on the energy header, `125 / 140 g` on a
+macro tile. Home keeps the existing three macro rings visible, with full
+Protein, Carbs and Fat labels; there is no collapsed P/C/F summary. The
+card has no Details disclosure; keep the current always-visible presentation.
+Keep values and targets on separate lines where space requires it rather
+than abbreviating the labels. Updated 2026-09-08. The whole-app role map — which treatment each UI role takes,
+and the permitted exceptions — is `docs/cohesion-spec-2026-09.md`.
 
 ## 5. Spacing & layout
 
@@ -229,17 +293,25 @@ muted colour. That's intentional, not a bug — match it.
 - **Safe areas:** respect `--safe-top` / `--safe-bottom`. Run pages (`/run`,
   `/run-summary`) render full-screen _without_ the nav Layout wrapper.
 
+**Bottom navigation glass (owner-requested, 8 September 2026):** The web
+navigation uses an inset frosted capsule, with the safe-area gap outside its
+surface. This treatment is limited to `BottomNavigation`; data cards stay
+solid. Reuse the existing palette, frost and shadow tokens, keep labels
+opaque and the active pill contrast stable, and provide solid fallbacks for
+reduced transparency and unsupported blur. It is a CSS approximation; native
+Apple Liquid Glass would require a separate iOS navigation renderer.
+
 ---
 
 ## 6. Card patterns
 
-| Pattern                                            | Recipe                                                                                                   |
-| -------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
-| **Standard card**                                  | `bg-card` white, `rounded-xl` (12px), `p-3`–`p-4`, `shadow-card` (very subtle). Or use `.ds-card`.       |
-| **Hero card** (Health Score, Water)                | `rounded-2xl` (16px), `p-4`, 48px icon container in a purple-tinted square.                              |
-| **Compact tile** (Weight, Steps)                   | `rounded-xl`, `p-3`, `bg-muted`, 2-col grid.                                                             |
-| **CTA card** (today's workout/run)                 | `rounded-xl`, sport-tinted bg at ~8% opacity, Play pill right-aligned.                                   |
-| **Action pill** (Quick Log / Start Run / Log Food) | `rounded-xl`, sport-tinted bg ~6%, icon + 11px semibold label, equal-width flex row, ≥44px touch target. |
+| Pattern                                           | Recipe                                                                                                                                                                             |
+| ------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Standard card**                                 | `bg-card` white, `rounded-xl` (12px), `p-3`–`p-4`, `shadow-card` (very subtle). Or use `.ds-card`.                                                                                 |
+| **Hero card** (Health Score, Water)               | `rounded-2xl` (16px), `p-4`, 48px icon container in a purple-tinted square.                                                                                                        |
+| **Compact tile** (Weight, Steps)                  | `rounded-xl`, `p-3`, `bg-muted`, 2-col grid.                                                                                                                                       |
+| **CTA card** (today's workout/run)                | `rounded-xl`, sport-tinted bg at ~8% opacity, Play pill right-aligned.                                                                                                             |
+| **Sport CTA card** (`LiftCTACard` / `RunCTACard`) | `rounded-xl`, sport-tinted bg ~8%, icon + title + purpose line, right-aligned Start control, ≥44px touch target. Replaced the three-pill quick-action row, which no longer exists. |
 
 - Use `.ds-card` for static grouped surfaces and `.ds-card-interactive` **only**
   on a real `<button>`/`<a>` (never a wrapped `div`) for pressable cards.
@@ -325,16 +397,52 @@ behaviour.
 
 ## 10. Accessibility floors (hard requirements)
 
-- **Touch targets ≥ 44px** for anything interactive (iOS HIG). `Button md` and
+- **Touch targets ≥ 44px** for anything interactive. `Button md` and
   `IconButton` meet this by default.
+
+  The three figures people quote are in three different logical units and
+  are not interchangeable physical pixels, so keep them straight rather
+  than averaging them: Apple asks for **44 × 44 pt**, Google for **48 × 48
+  dp**, and WCAG 2.2 sets **24 × 24 CSS px** at AA (SC 2.5.8, with
+  exceptions) and **44 × 44** only at AAA (SC 2.5.5, also with
+  exceptions). Tropos targets **44 × 44 CSS px** on the web as a product
+  decision — comfortably above the AA floor, matching the native platform
+  we ship on. And the size alone does not make a control accessible: it
+  still needs an accessible name, a visible focus state, and enough
+  separation from its neighbours.
+
 - **WCAG AA contrast** for text. This is _why_ `primary-strong`,
   `MACROS_TEXT_LIGHT`, and the darker semantic tokens exist — use them.
-- **Body text ≥ 16px**, micro labels ≥ 12px.
+- **Body text ≥ 16px**, micro labels ≥ 12px — with one named floor below it:
+  uppercase tracked section labels sit at 11px (`text-caption`, see §4).
 - **Semantic roles:** `Banner` uses `status`/`alert`; respect ARIA. Icon-only
   controls need labels. Inputs/anchors need accessible names.
 - **Keyboard:** focusable, Enter/Escape behave, focus returns to the trigger
   after a popover/sheet closes.
 - **Reduced motion** respected (see §8).
+
+---
+
+## 10a. Every surface owes six states, not one
+
+A polished happy state is one sixth of a feature. Before a surface is
+done, decide what it says in each of these — and say the thing that is
+true, which is the whole point of separating them.
+
+| State                    | What it must tell the person                                                                                                                                                                                                                                                         |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **First use**            | What this is for, and one useful first step. Reach for the `EmptyState` primitive (§7); do not hand-roll a centred icon block.                                                                                                                                                       |
+| **No results**           | What did not match, and how to recover — broaden, clear a filter, or add it manually. An illustration alone is not recovery.                                                                                                                                                         |
+| **Loading / saving**     | That something is in progress. **A zero is a claim, not a placeholder**: "0 eaten" is byte-identical to the display for someone who has genuinely eaten nothing. Show a `Skeleton` while a figure is unknown, and keep a figure you already have rather than flickering back to one. |
+| **Offline / queued**     | Whether the entry is saved on this device and waiting to sync — and say this ONLY where the app actually provides that guarantee. Claiming a durability we do not have is worse than saying nothing.                                                                                 |
+| **Error / interruption** | What failed, what was preserved, and the next safe action. A failed map must not take the run controls with it.                                                                                                                                                                      |
+| **Success / correction** | What changed, in neutral specific copy, plus Undo or an edit route. No automatic sharing, no extra celebration dialog.                                                                                                                                                               |
+
+The trap this table exists to catch is the middle one: a loading state
+that is height-stable and confident reads as final. Home renders past the
+profile skeleton with live data still arriving, so each card owns its own
+pending treatment — `WeightStepsTiles` and `TodayEnergy` are the
+reference implementations.
 
 ---
 

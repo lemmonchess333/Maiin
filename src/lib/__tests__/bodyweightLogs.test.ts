@@ -118,15 +118,15 @@ describe("weighInProfileMirror — the weigh-in updates the anchor everyone read
   // wrote bodyweightLogs only, so the anchor went stale for months —
   // probe-measured: a 90→78kg cut ran +26g/day protein and a 186 kcal/day
   // target overshoot against the 90 that no longer existed.
-  it("returns a rounded patch when the weight genuinely moved", () => {
-    expect(weighInProfileMirror(90, 78.04)).toEqual({ weightKg: 78 });
-    expect(weighInProfileMirror(undefined, 82.55)).toEqual({ weightKg: 82.6 });
+  it("retains full canonical precision when the weight moved", () => {
+    expect(weighInProfileMirror(90, 78.04)).toEqual({ weightKg: 78.04 });
+    expect(weighInProfileMirror(undefined, 82.55)).toEqual({ weightKg: 82.55 });
     expect(weighInProfileMirror(null, 70)).toEqual({ weightKg: 70 });
   });
 
   it("returns null when nothing meaningful changed — no wasted write", () => {
     expect(weighInProfileMirror(78, 78)).toBeNull();
-    expect(weighInProfileMirror(78, 78.04)).toBeNull(); // rounds to 78
+    expect(weighInProfileMirror(78, 78.04)).toEqual({ weightKg: 78.04 });
     expect(weighInProfileMirror(78.1, 78.1)).toBeNull();
   });
 

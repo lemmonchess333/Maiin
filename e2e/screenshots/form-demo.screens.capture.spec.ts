@@ -118,12 +118,16 @@ const DEMOS: [id: string, name: string][] = [
   ["overhead-press", "Overhead Press"],
   ["skull-crushers", "Skull Crushers"],
   ["barbell-row", "Barbell Row"],
-  ["lat-pulldown", "Lat Pulldown"],
 ];
 
 test.use({
   viewport: { width: 393, height: 852 },
-  reducedMotion: "reduce",
+  // `reducedMotion` is a browser-context option, not a test option: only
+  // `contextOptions` applies it. A bare `reducedMotion` key here is
+  // ignored silently (probed: prefers-reduced-motion stayed false) — the
+  // emulateMedia call in beforeEach is what actually held the placards
+  // still; this is now the typed brace to that belt.
+  contextOptions: { reducedMotion: "reduce" },
   ...(process.env.PW_CHROMIUM
     ? { launchOptions: { executablePath: process.env.PW_CHROMIUM } }
     : {}),
@@ -236,12 +240,13 @@ test.describe("form demo screenshots", () => {
   async function shootBoth(page: Page, name: string) {
     /* The reduced-motion root, by attribute rather than by accessible
        name. It used to wait on the two-up's EXACT label, because
-       `/demonstration/i` alone also matches the animated player
-       ("... demonstration — looping reps") and a looser locator once
-       shipped frames of a running loop. That string then stopped
-       existing for a placard demo, whose still version is a six-panel
-       storyboard, and this spec broke at `dips` — taking every demo
-       after it in the same run with it.
+       `/demonstration/i` alone also matches the animated player, and a
+       looser locator once shipped frames of a running loop. That label
+       then stopped existing for a placard demo, whose still version is a
+       six-panel storyboard, and this spec broke at `dips` — taking every
+       demo after it in the same run with it. The player's label has since
+       been reworded again, which is exactly why quoting it here would keep
+       going stale: the attribute below is the durable hook.
 
        `data-demo-still` is on the two reduced-motion roots and nowhere
        else, so it survives a change of presentation while keeping the

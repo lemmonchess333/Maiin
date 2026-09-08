@@ -1,4 +1,4 @@
-/** SettingsPrivacy — Social & Privacy nested page (Set1.2). */
+/** SettingsPrivacy — Social & privacy nested page (Set1.2). */
 import { useState } from "react";
 import { useAuth } from "@/lib/auth";
 import { usePrivacyZones } from "@/hooks/usePrivacyZones";
@@ -14,11 +14,11 @@ export default function SettingsPrivacy() {
   const [newZoneName, setNewZoneName] = useState("");
   const [newZoneRadius, setNewZoneRadius] = useState(500);
 
-  if (!profile) return <SettingsSection title="Social & Privacy" />;
+  if (!profile) return <SettingsSection title="Social & privacy" />;
 
   return (
     <SettingsSection
-      title="Social & Privacy"
+      title="Social & privacy"
       subtitle="Visibility, auto-post, GPS zones"
       section="privacy"
     >

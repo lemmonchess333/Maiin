@@ -94,8 +94,8 @@ describe("AccountSection — P0b Apple subscription warning", () => {
     });
     renderSection();
 
-    fireEvent.click(screen.getByText(/Data & Account/i));
-    fireEvent.click(screen.getByRole("button", { name: /Delete Account/i }));
+    fireEvent.click(screen.getByText(/Data & account/i));
+    fireEvent.click(screen.getByRole("button", { name: /Delete account/i }));
 
     expect(screen.getByPlaceholderText("Type DELETE")).toBeInTheDocument();
     expect(
@@ -111,8 +111,8 @@ describe("AccountSection — P0b Apple subscription warning", () => {
     });
     renderSection();
 
-    fireEvent.click(screen.getByText(/Data & Account/i));
-    fireEvent.click(screen.getByRole("button", { name: /Delete Account/i }));
+    fireEvent.click(screen.getByText(/Data & account/i));
+    fireEvent.click(screen.getByRole("button", { name: /Delete account/i }));
 
     // Apple warning shown first.
     expect(
@@ -145,8 +145,8 @@ describe("AccountSection — P0b Apple subscription warning", () => {
     const openSpy = vi.spyOn(window, "open").mockImplementation(() => null);
     renderSection();
 
-    fireEvent.click(screen.getByText(/Data & Account/i));
-    fireEvent.click(screen.getByRole("button", { name: /Delete Account/i }));
+    fireEvent.click(screen.getByText(/Data & account/i));
+    fireEvent.click(screen.getByRole("button", { name: /Delete account/i }));
     fireEvent.click(
       screen.getByRole("button", { name: /Open subscription settings/i })
     );
@@ -173,8 +173,8 @@ describe("AccountSection — P0b Apple subscription warning", () => {
     renderSection();
 
     // Open the AccordionSection so the Delete button is reachable.
-    fireEvent.click(screen.getByText(/Data & Account/i));
-    fireEvent.click(screen.getByRole("button", { name: /Delete Account/i }));
+    fireEvent.click(screen.getByText(/Data & account/i));
+    fireEvent.click(screen.getByRole("button", { name: /Delete account/i }));
 
     // Apple-cancel warning surface is visible.
     expect(
@@ -212,16 +212,16 @@ describe("AccountSection — P0b Apple subscription warning", () => {
     vi.mocked(deleteAccount).mockRejectedValueOnce(serverErr);
 
     renderSection();
-    fireEvent.click(screen.getByText(/Data & Account/i));
-    fireEvent.click(screen.getByRole("button", { name: /Delete Account/i }));
+    fireEvent.click(screen.getByText(/Data & account/i));
+    fireEvent.click(screen.getByRole("button", { name: /Delete account/i }));
 
     fireEvent.change(screen.getByPlaceholderText("Type DELETE"), {
       target: { value: "DELETE" },
     });
-    // Confirm button inside the modal shares the "Delete Account" name
+    // Confirm button inside the modal shares the "Delete account" name
     // with the opener — it is the last one rendered.
     const confirmButtons = screen.getAllByRole("button", {
-      name: /Delete Account/i,
+      name: /Delete account/i,
     });
     fireEvent.click(confirmButtons[confirmButtons.length - 1]);
 

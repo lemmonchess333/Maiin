@@ -27,7 +27,7 @@ const RING_C = 2 * Math.PI * RING_R;
 
 interface HoldToFinishButtonProps {
   /** Completed hold → end the run directly (the same action the confirm
-   *  dialog's "End Run" calls). */
+   *  dialog's "End run" calls). */
   onFinish: () => void;
   /** Tap / keyboard / screen-reader activation → open the Stop confirm dialog
    *  (which also carries the Discard path). */

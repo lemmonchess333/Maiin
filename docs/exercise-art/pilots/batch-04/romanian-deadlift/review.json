@@ -1,0 +1,21 @@
+{
+  "status": "draft-awaiting-review",
+  "visualApproval": false,
+  "staticImagesInspected": true,
+  "sequentialPlaybackVerified": false,
+  "mobileLightDarkVerified": false,
+  "findings": [
+    "Initial master had a tight nonstandard 961x1637 crop and is excluded; selected set uses1024x1536 with hinge clearance.",
+    "Original bottom raised the near sole31px. Selected fixed-anchor warp restores the sole to y1330 and preserves both plate regions and all pixels above y990 exactly; calf continuity and lower-leg proportions still require review.",
+    "Knee bend, bar/plate extents and head/neck alignment vary; comfortable endpoint and rigid-equipment checks remain unresolved.",
+    "Plan intended a just-below-knee endpoint, while selected image is closer to knee level. Do not treat the intended pose description as verified output."
+  ],
+  "referencePath": "public/form-frames/barbell-row/1.webp",
+  "referenceSha256": "6f514489bd36819239d4beab383cabf54140cf9d8b9115c1fe8995bab1093d10",
+  "cueSha256": "20f9787a17ec6431d4241b76dd02f1b2f18e9b109cdf7bd13c0b4b93b03e0718",
+  "additionalUnselectedCandidates": [
+    "4-rejected-foot-repair.png",
+    "4-fixed-region-candidate.png"
+  ],
+  "repairEvidence": "anchor-repair-diagnostics.json"
+}

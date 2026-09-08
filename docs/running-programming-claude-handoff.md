@@ -280,6 +280,17 @@ change that feeds a prescription keeps explicit acceptance. No code
 shipped yet; the implementing session must trace the automatic fitness
 derivation and pace-insight acceptance paths and test the policy.
 
+STATUS 2026-09-06 (Run17 / Run18, plan file): RUN-EV-06's ceiling is
+unchanged and is now MEASURED at the runner's confirmed easy pace
+(`planningEasyPaceSPerKm`, behind RUN-EV-08's gate) — a tier is
+schedulable when km × easy pace ≤ 150 min; without a confirmed benchmark
+the nominal table stands, byte-identical. The intended long-run curve is
+clamped to the schedulable peak (plus a 10% hold so the ceiling tier is
+reached for the last two or three ramp weeks, not once, and not for six
+flat weeks as the 32 km overshoot produced). `bigger` can no longer sit
+below `standard`. Run18: a build week keeps one easy run whenever ≥ 3 run
+days exist — `harder`'s second quality session needs a slot beyond it.
+
 STATUS 2026-08-09, later same session — SHIPPED (PR #1886). The tier
 split is by CONSEQUENCE at the fan-out: `prescriptivePaceTableFromFitness`
 returns null while `runFitness.pendingConfirmation` is true, and the six

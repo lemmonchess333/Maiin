@@ -1,5 +1,6 @@
 import { useReducer, useState } from "react";
 import { haptic } from "@/lib/haptic";
+import { writeString } from "@/lib/localStore";
 import { Download, LogOut, Trash2 } from "lucide-react";
 import DataExportSection from "./DataExportSection";
 import TrackSettingsSectionView from "./TrackSettingsSectionView";
@@ -127,12 +128,9 @@ export default function AccountSection({
       // Read-once flag for the Login screen's persistent confirmation —
       // the toast alone dies in the sign-out transition (deletion QA
       // 2026-07-27: user re-attempted login on the deleted account to
-      // verify, and got a red error as their only "confirmation").
-      try {
-        localStorage.setItem("tropos.account_deleted", "1");
-      } catch {
-        /* storage unavailable — toast remains the only confirmation */
-      }
+      // verify, and got a red error as their only "confirmation"). Without
+      // storage the toast remains the only confirmation.
+      writeString("tropos.account_deleted", "1");
       // The executor already removed the server claim + wrote the tombstone
       // (which rejects future callables). Skip the tombstone-rejected fallback
       // release; just drop the local token.
@@ -210,11 +208,7 @@ export default function AccountSection({
         toast.success("Account already deleted. Signing you out…", {
           duration: 4000,
         });
-        try {
-          localStorage.setItem("tropos.account_deleted", "1");
-        } catch {
-          /* storage unavailable */
-        }
+        writeString("tropos.account_deleted", "1");
         await discardDeletedAccountPushState(user.uid);
         /* Food9: meal photos live on the DEVICE, so the server-side
            executor cannot reach them. This erases the copies on THIS device.
@@ -311,7 +305,7 @@ export default function AccountSection({
       <AccordionSection
         inline={inline}
         icon={<Download className="size-5 text-primary" />}
-        title="Data & Account"
+        title="Data & account"
         subtitle="Export, sign out"
       >
         {/*
@@ -334,7 +328,7 @@ export default function AccountSection({
           <DataExportSection user={user} />
         </TrackSettingsSectionView>
 
-        {/* Sign Out is `outline`, Delete Account is `destructive` — the
+        {/* Sign out is `outline`, Delete account is `destructive` — the
             way round the actions actually rank. It was the reverse: Sign
             Out wore a filled `bg-destructive` at 16px/46px and shouted
             louder than anything else on the page, while the irreversible
@@ -345,7 +339,7 @@ export default function AccountSection({
             Both now route through the `Button` primitive, which is where
             the 44px floor, the focus ring and the 0.97 press live. */}
         <Button variant="outline" fullWidth onClick={signOut}>
-          <LogOut className="size-4" /> Sign Out
+          <LogOut className="size-4" /> Sign out
         </Button>
 
         {/* Account Deletion (App Store Guideline 5.1.1(v)) */}
@@ -365,7 +359,7 @@ export default function AccountSection({
             }
           }}
         >
-          <Trash2 className="size-4" /> Delete Account
+          <Trash2 className="size-4" /> Delete account
         </Button>
       </AccordionSection>
 
@@ -418,7 +412,7 @@ export default function AccountSection({
         </div>
       </Dialog>
 
-      {/* Delete Account Modal (App Store Guideline 5.1.1(v)) */}
+      {/* Delete account Modal (App Store Guideline 5.1.1(v)) */}
       <Dialog
         open={showDeleteModal}
         onClose={closeAndReset}
@@ -432,7 +426,7 @@ export default function AccountSection({
             modalState.phase === "deleting") && (
             <>
               <h3 className="text-base font-semibold text-destructive-strong">
-                Delete Account
+                Delete account
               </h3>
               <p className="text-sm text-muted-foreground">
                 This will permanently delete your account and all associated
@@ -483,7 +477,7 @@ export default function AccountSection({
                       Deleting…
                     </>
                   ) : (
-                    "Delete Account"
+                    "Delete account"
                   )}
                 </button>
               </div>

@@ -16,6 +16,9 @@ import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 
 const mockUsePerformanceWeeks = vi.fn();
+// Chart telemetry is unrelated to this copy contract. Keep its provider
+// outside the component-test boundary alongside the data subscriptions.
+vi.mock("@/lib/historyAnalytics", () => ({ track: vi.fn() }));
 vi.mock("@/hooks/usePerformance", () => ({
   usePerformanceWeeks: (...args: unknown[]) => mockUsePerformanceWeeks(...args),
 }));
@@ -26,6 +29,7 @@ vi.mock("@/hooks/useWeeklyReview", () => ({
 }));
 
 import PerformanceTab from "../PerformanceTab";
+import { THEME } from "@/lib/theme";
 
 /** A writer-shaped weekly doc: top-level band, NO labels map. */
 function week(
@@ -124,6 +128,36 @@ describe("PerformanceTab — load-band copy (regression: mirror drift)", () => {
        primary "back off" signal was dark for every user. */
     renderWith(history(88, "overreach", true));
     expect(screen.getByText(/Consider a deload week/)).toBeInTheDocument();
+  });
+
+  it.each([
+    [92, "overreach", false],
+    [81, "high", true],
+    [62, "moderate", true],
+  ])(
+    "does not celebrate PI %s when recovery takes priority",
+    (pi, band, deload) => {
+      renderWith(history(pi as number, band as string, deload as boolean));
+      const label = screen.getByText(/^Backing off$/);
+      expect(label).toHaveStyle({ color: "hsl(var(--warning-strong))" });
+      expect(screen.getByText(String(pi))).toHaveStyle({ color: THEME.amber });
+      expect(
+        screen.getByRole("heading", { name: /Backing off/ })
+      ).toBeInTheDocument();
+      expect(screen.queryByText(/^Peak$/)).toBeNull();
+      expect(
+        screen.queryByText(/your training is on track|keep the cadence/)
+      ).toBeNull();
+    }
+  );
+
+  it("keeps the early-read verdict when a first-week document recommends recovery", () => {
+    const first = week("2026-08-02", 92, "overreach", true);
+    first.signals.lifetimeWeeks = 1;
+    renderWith([first]);
+    expect(screen.getByText("Early read")).toBeInTheDocument();
+    expect(screen.getByText("Establishing your baseline")).toBeInTheDocument();
+    expect(screen.queryByText(/^Peak$|^Backing off$/)).toBeNull();
   });
 
   it("keeps the deload banner hidden when the engine does not recommend one", () => {

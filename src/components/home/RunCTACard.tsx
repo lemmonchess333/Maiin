@@ -1,3 +1,4 @@
+import InlineNumerals from "@/components/ui/InlineNumerals";
 import { THEME } from "@/lib/theme";
 import { motion } from "framer-motion";
 import {
@@ -33,10 +34,14 @@ const RUN_ICON_MAP: Record<
 
 export default function RunCTACard({
   todayRun,
+  purpose,
+  weekLabel,
   navigate,
   isFirst = false,
 }: {
   todayRun: ScheduledRunDay | null;
+  purpose?: string | null;
+  weekLabel?: string | null;
   navigate: (p: string) => void;
   /** #972 cold-start framing: frame this as the user's first run. */
   isFirst?: boolean;
@@ -47,7 +52,8 @@ export default function RunCTACard({
       })
     : null;
   const runLabel = tmpl ? tmpl.name : "Start a run";
-  const runDesc = tmpl ? tmpl.description : "Easy run, tempo, or intervals";
+  const runDesc =
+    purpose ?? (todayRun ? null : "Free running · your choice today");
   const runIcon = tmpl?.icon;
   // P0-6: pass scheduledRunId so Run.tsx can pin the exact runDay
   // being fulfilled. Falls back to ?template= alone for legacy
@@ -85,48 +91,58 @@ export default function RunCTACard({
         trackHomeEvent("home_card_tapped", { card: "today_run" });
         navigate(startable ? "/run" + queryString : "/program?tab=run");
       }}
-      className="w-full rounded-xl bg-running/8 text-left p-4"
+      type="button"
+      className="w-full rounded-xl bg-running/8 text-left p-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
     >
       <div className="flex items-center gap-3">
-        <div className="size-10 rounded-lg flex items-center justify-center bg-running/9">
-          <RunIconComp className="size-5 text-running" />
+        <div className="size-10 shrink-0 rounded-lg flex items-center justify-center bg-running/9">
+          <RunIconComp className="size-5 text-running" aria-hidden="true" />
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-xs font-semibold mb-0.5 text-running-strong">
             {isFirst ? "Your first run" : "Today · Run day"}
           </p>
-          <div className="flex items-baseline gap-2">
-            <p className="text-sm font-bold text-foreground truncate">
-              {runLabel}
+          <p className="text-base font-bold leading-snug text-foreground">
+            <InlineNumerals>{runLabel}</InlineNumerals>
+          </p>
+          {tmpl && (
+            <p className="mt-1 text-micro leading-relaxed text-muted-foreground">
+              <InlineNumerals>
+                {runKeyMetric ?? `${tmpl.estimatedDuration} min`}
+              </InlineNumerals>
             </p>
-            {runKeyMetric && (
-              <span className="text-sm font-bold font-mono tabular-nums text-running-strong">
-                {runKeyMetric}
-              </span>
-            )}
-          </div>
-          <p className="text-micro text-muted-foreground truncate">{runDesc}</p>
+          )}
         </div>
         {/* PR-0b-iii + HOME-ACTION-01: "Go" pill only when startable;
             terminal / reconciliation states show a calm "Done" chip with
             no Play icon (the run can't be relaunched). */}
         {startable ? (
           <div
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-bold shadow-sm"
+            className="flex min-h-11 shrink-0 items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-bold shadow-sm"
             style={{
               background: `linear-gradient(135deg, ${THEME.running}, ${THEME.runningLight})`,
               color: "white",
             }}
           >
-            <Play className="size-3" fill="white" />
+            <Play className="size-3" fill="currentColor" aria-hidden="true" />
             Go
           </div>
         ) : (
-          <div className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-bold bg-muted text-muted-foreground">
+          <div className="flex min-h-11 shrink-0 items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-bold bg-muted text-muted-foreground">
             Done
           </div>
         )}
       </div>
+      {runDesc && (
+        <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+          <InlineNumerals>{runDesc}</InlineNumerals>
+        </p>
+      )}
+      {weekLabel && (
+        <p className="mt-1 text-micro text-muted-foreground">
+          <InlineNumerals>{weekLabel}</InlineNumerals>
+        </p>
+      )}
     </motion.button>
   );
 }

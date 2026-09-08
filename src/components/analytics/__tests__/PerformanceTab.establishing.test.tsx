@@ -22,6 +22,7 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 
 const mockUsePerformanceWeeks = vi.fn();
+vi.mock("@/lib/historyAnalytics", () => ({ track: vi.fn() }));
 vi.mock("@/hooks/usePerformance", () => ({
   usePerformanceWeeks: (...args: unknown[]) => mockUsePerformanceWeeks(...args),
 }));
@@ -69,7 +70,7 @@ function renderWeeks(weeks: ReturnType<typeof week>[]) {
 }
 
 /**
- * The "This Week Adjustments" card lives inside the collapsed technical
+ * The "This week adjustments" card lives inside the collapsed technical
  * section, so it has to be opened before anything in it can be asserted.
  *
  * Worth stating why this is a helper rather than an inline click: the
@@ -80,7 +81,7 @@ function renderWeeks(weeks: ReturnType<typeof week>[]) {
  * proves nothing about the subtree.
  */
 function openDetails() {
-  fireEvent.click(screen.getByRole("button", { name: /show details/i }));
+  fireEvent.click(screen.getByRole("button", { name: "Details" }));
 }
 
 /** One week of history + lifetimeWeeks 1 — squarely establishing. */
@@ -120,7 +121,7 @@ describe("PerformanceTab — establishing baseline", () => {
     // The card itself is still here — this is a suppressed FIGURE, not a
     // hidden section. Anchoring on the heading is what stops the null
     // below from being satisfied by an unrendered card.
-    expect(screen.getByText("This Week Adjustments")).toBeInTheDocument();
+    expect(screen.getByText("This week adjustments")).toBeInTheDocument();
     expect(screen.queryByText(/\+324%/)).toBeNull();
     expect(
       screen.getByText(/adjustments start once your baseline settles/i)

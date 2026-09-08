@@ -1,4 +1,5 @@
 import type { CSSProperties, Ref } from "react";
+import { formatClock } from "@/utils/formatters";
 import {
   distanceUnitLabel,
   paceUnitLabel,
@@ -148,13 +149,7 @@ function accentFor(template: ShareTemplate): string {
 }
 
 function fmtDuration(sec?: number): string {
-  if (sec == null) return "--";
-  const h = Math.floor(sec / 3600);
-  const m = Math.floor((sec % 3600) / 60);
-  const s = Math.round(sec % 60);
-  return h > 0
-    ? `${h}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`
-    : `${m}:${s.toString().padStart(2, "0")}`;
+  return sec == null ? "--" : formatClock(sec);
 }
 
 function fmtVolume(kg?: number): string {

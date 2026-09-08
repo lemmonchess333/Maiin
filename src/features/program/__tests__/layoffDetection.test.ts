@@ -37,8 +37,8 @@ const run = (date: string, extra: Partial<DatedRun> = {}): DatedRun => ({
 });
 
 function addDays(key: string, n: number): string {
-  const d = new Date(`${key}T00:00:00`);
-  d.setDate(d.getDate() + n);
+  const d = new Date(`${key}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + n);
   return d.toISOString().slice(0, 10);
 }
 
@@ -48,6 +48,13 @@ function consistent(lastDate: string, count: number, every = 3): DatedRun[] {
     run(addDays(lastDate, -(count - 1 - i) * every))
   );
 }
+
+it("advances fixture date keys across month and daylight-saving boundaries", () => {
+  expect(addDays("2026-03-28", 1)).toBe("2026-03-29");
+  expect(addDays("2026-03-29", 1)).toBe("2026-03-30");
+  expect(addDays("2026-08-31", 1)).toBe("2026-09-01");
+  expect(addDays("2026-01-01", -1)).toBe("2025-12-31");
+});
 
 describe("daysSinceLastRun", () => {
   it("is null when they have never logged an eligible run", () => {

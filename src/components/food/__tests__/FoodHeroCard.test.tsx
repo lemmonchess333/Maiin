@@ -212,3 +212,81 @@ describe("FoodHeroCard — photo scrim carries the ring bed", () => {
     expect(scrim!.style.background).toContain("50% 47.5%");
   });
 });
+
+/**
+ * Three-surface consistency: a target the split cannot fund is named in
+ * the same sentence on Food, Home and Settings (macroInfeasibility.ts).
+ * Before this the macro tiles here read "125 / 0g PROTEIN" — 0 g rendered
+ * as the goal — while only Settings warned.
+ */
+import { macroInfeasibilityMessage } from "@/lib/macroInfeasibility";
+
+describe("FoodHeroCard — infeasible target notice", () => {
+  const infeasibleTargets = {
+    ...dailyTargets,
+    finalTarget: 100,
+    protein: 0,
+    carbs: 0,
+    fat: 42,
+    targetInfeasible: true,
+    minFeasibleKcal: 378,
+  } as unknown as EffectiveTargets;
+
+  it("renders the shared sentence when the target cannot fund essential fat", () => {
+    render(
+      <MemoryRouter>
+        <FoodHeroCard
+          selectedDate="2026-06-09"
+          isToday={true}
+          dailyTargets={infeasibleTargets}
+          dailyTotals={{ calories: 1790, protein: 125, carbs: 172, fat: 56 }}
+        />
+      </MemoryRouter>
+    );
+    expect(
+      screen.getByText(macroInfeasibilityMessage(378))
+    ).toBeInTheDocument();
+  });
+
+  it("says nothing on an ordinary target", () => {
+    renderHero();
+    expect(screen.queryByText(/essential fat alone exceeds/)).toBeNull();
+  });
+});
+
+describe("FoodHeroCard — Nutr3: below the floor, protein and carbs carry no goal", () => {
+  it("renders — for the protein and carb targets and keeps fat's floor figure", () => {
+    render(
+      <MemoryRouter>
+        <FoodHeroCard
+          selectedDate="2026-06-09"
+          isToday={true}
+          dailyTargets={
+            {
+              ...dailyTargets,
+              protein: 0,
+              carbs: 0,
+              fat: 42,
+              targetInfeasible: true,
+              minFeasibleKcal: 378,
+            } as unknown as EffectiveTargets
+          }
+          dailyTotals={{ calories: 900, protein: 80, carbs: 56, fat: 38 }}
+        />
+      </MemoryRouter>
+    );
+    const tiles = Array.from(document.querySelectorAll("[data-macro]"));
+    const protein = tiles.find(
+      (t) => t.getAttribute("data-macro") === "protein"
+    )!;
+    const fat = tiles.find((t) => t.getAttribute("data-macro") === "fat")!;
+    // The big number animates from 0 (count-up), so assert the ratio line's
+    // shape rather than the settled figure.
+    expect(protein.textContent).toMatch(/\/\s*—/);
+    expect(protein.textContent).not.toMatch(/\/\s*0g/);
+    expect(fat.textContent).toMatch(/\/\s*42g/);
+    expect(screen.getByRole("status")).toHaveTextContent(
+      /essential fat alone exceeds/
+    );
+  });
+});

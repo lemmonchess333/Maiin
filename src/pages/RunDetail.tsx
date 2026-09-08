@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { doc, getDoc } from "firebase/firestore";
 import {
@@ -9,6 +9,8 @@ import {
   Bookmark,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { usePrivacyZones } from "@/hooks/usePrivacyZones";
+import { applyPrivacyZones } from "@/lib/privacyZones";
 import { useShareRoute } from "@/hooks/useShareRoute";
 import { useSavedRoutes } from "@/hooks/useSavedRoutes";
 import { toast } from "@/lib/toast";
@@ -78,6 +80,7 @@ export default function RunDetail() {
   const navigate = useNavigate();
   const { user, profile } = useAuth();
   const shareRouteWithPrivacy = useShareRoute();
+  const privacy = usePrivacyZones();
   const { save: saveRoute } = useSavedRoutes();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [run, setRun] = useState<Record<string, any> | null>(null);
@@ -85,6 +88,14 @@ export default function RunDetail() {
   const [replaying, setReplaying] = useState(false);
   const [replayIndex, setReplayIndex] = useState(0);
   const replayRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const sharedPoints = useMemo(
+    () =>
+      privacy.loading || privacy.error
+        ? []
+        : applyPrivacyZones(run?.points ?? [], privacy.zones),
+    [run?.points, privacy.loading, privacy.error, privacy.zones]
+  );
 
   useEffect(() => {
     if (!user || !runId) return;
@@ -466,7 +477,7 @@ export default function RunDetail() {
               {elevationLabel(run.elevationGain ?? 0, unit)}
             </p>
             <p className="text-xs uppercase tracking-widest text-muted-foreground mt-0.5">
-              Elevation Gain
+              Elevation gain
             </p>
           </div>
           <div className="p-3 rounded-xl bg-card text-center card-shadow flex flex-col justify-center">
@@ -543,7 +554,7 @@ export default function RunDetail() {
               month: "short",
               year: "numeric",
             }) ?? "",
-          points: run.points,
+          points: sharedPoints,
           distanceKm: run.distance / 1000,
           durationSec: run.duration,
           paceSecPerKm: avgPace,

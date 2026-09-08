@@ -1,0 +1,126 @@
+{
+  "exerciseId": "squat",
+  "version": "owner-release-2026-09",
+  "width": 1024,
+  "height": 1536,
+  "decision": "owner-released-with-findings",
+  "approval": {
+    "actor": "repository owner",
+    "instruction": "Merge the new artwork",
+    "context": "User requested activation after being told the previous merge kept these ten complete sets as drafts."
+  },
+  "reference": {
+    "path": "form-frames/squat/1.webp",
+    "sha256": "be48eb2d8d92308fc4e4d72c7509915d87a6b8efe0fba68500cf7c1721882cfe"
+  },
+  "frames": [
+    {
+      "path": "form-frames/squat/1.webp",
+      "sha256": "be48eb2d8d92308fc4e4d72c7509915d87a6b8efe0fba68500cf7c1721882cfe",
+      "source": {
+        "path": "docs/exercise-art/pilots/squat-batch-02/1-master-corrected.png",
+        "sha256": "a91eb16b24c3062a44e51c754cf66d927427c358db9eadface14bb16f5b68e35"
+      }
+    },
+    {
+      "path": "form-frames/squat/2.webp",
+      "sha256": "76a5ec980652e1c97d527bb696ccc93af5da936c891479aaa456bf512c821019",
+      "source": {
+        "path": "docs/exercise-art/pilots/squat-batch-02/2-descend.png",
+        "sha256": "92f390e9615647b03692f2e4aafea786789f20aa181f6d84c8739bbe3ccdc3cf"
+      }
+    },
+    {
+      "path": "form-frames/squat/3.webp",
+      "sha256": "db74257fd20fdf96d7015079f8efb1af00768cf2fb94813a00cbc4e1d472ad5a",
+      "source": {
+        "path": "docs/exercise-art/pilots/squat-batch-02/3-parallel.png",
+        "sha256": "cac768813b7a35ae7d244da7e7c9ef3f335b2f09aaf67b81078d76007988b388"
+      }
+    },
+    {
+      "path": "form-frames/squat/4.webp",
+      "sha256": "ff8c9e3966701e83295ac40acb5e4c976d466bb5c2007e062278cda22ecfb407",
+      "source": {
+        "path": "docs/exercise-art/pilots/squat-batch-02/4-bottom.png",
+        "sha256": "167b96301348646c57859770625c4dd98eec0f95a6731be1348bc8adaeeed3fa"
+      }
+    },
+    {
+      "path": "form-frames/squat/5.webp",
+      "sha256": "a221c97e59b1adea59779ae0f7de1af05eb9ebdb780366bd9210c290ad8faab3",
+      "source": {
+        "path": "docs/exercise-art/pilots/squat-batch-02/5-drive.png",
+        "sha256": "b20fc0483ba636f01afbbb85dc9c78b39bfb619d76183d27931f49d12e4f47ff"
+      }
+    },
+    {
+      "path": "form-frames/squat/6.webp",
+      "sha256": "be48eb2d8d92308fc4e4d72c7509915d87a6b8efe0fba68500cf7c1721882cfe",
+      "source": {
+        "path": "docs/exercise-art/pilots/squat-batch-02/6-stand.png",
+        "sha256": "a91eb16b24c3062a44e51c754cf66d927427c358db9eadface14bb16f5b68e35"
+      }
+    }
+  ],
+  "cueSha256": "15a77017a96c711906ca3593af36f81d09e43710aac4cc51827135178bcbd322",
+  "checks": {
+    "identity": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    },
+    "camera": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    },
+    "anatomy": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    },
+    "equipment": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    },
+    "contact": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    },
+    "physics": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    },
+    "muscles": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    },
+    "cueAgreement": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    },
+    "sequenceAndLoop": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    },
+    "mobileLight": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    },
+    "mobileDark": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    }
+  },
+  "findings": [
+    "Initial 1-master.png bar sat too high; corrected candidate is selected.",
+    "Parallel label/depth and torso/head foreshortening require review.",
+    "Six movement beats match current authored squat order.",
+    "Full visual acceptance under the strict artwork review contract is outstanding."
+  ],
+  "encoding": {
+    "format": "WebP",
+    "quality": 92,
+    "method": 6,
+    "resize": false,
+    "crop": false
+  }
+}

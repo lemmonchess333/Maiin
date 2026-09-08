@@ -161,7 +161,7 @@ export default function ReportModal({
       toast.success(parts.length > 0 ? parts.join(" · ") + "." : "Done.");
       onClose();
     } catch {
-      toast.error("Couldn't complete that. Please try again.");
+      toast.error("Couldn't complete that. Try again.");
     } finally {
       setSending(false);
     }
@@ -263,9 +263,9 @@ export default function ReportModal({
         <div className="mt-3">
           <label
             htmlFor="report-freeform"
-            className="text-xs uppercase tracking-wider text-muted-foreground"
+            className="text-xs text-muted-foreground"
           >
-            Anything else? <span className="lowercase">(optional)</span>
+            Anything else? (optional)
           </label>
           <textarea
             id="report-freeform"

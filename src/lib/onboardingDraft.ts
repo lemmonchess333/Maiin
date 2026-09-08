@@ -34,6 +34,7 @@
  */
 
 import { logger } from "@/lib/logger";
+import { readString, remove, writeJson } from "@/lib/localStore";
 import {
   VALID_EQUIPMENT,
   VALID_RACE_DISTANCE,
@@ -77,7 +78,13 @@ export const DRAFT_PRIMARY_GOALS = [
   "general",
   "running",
 ] as const;
-export const DRAFT_DAYS_PER_WEEK = [2, 3, 4, 5, 6] as const;
+export const DRAFT_DAYS_PER_WEEK = [0, 2, 3, 4, 5, 6] as const;
+export const DRAFT_TRAINING_ACTIVITIES = [
+  "lifting",
+  "running",
+  "both",
+] as const;
+export type OnboardingActivity = (typeof DRAFT_TRAINING_ACTIVITIES)[number];
 export const DRAFT_RUN_FREQUENCIES = ["regular", "occasional", "none"] as const;
 export const DRAFT_RUN_MODES = ["freeform", "structured", "race_prep"] as const;
 export const DRAFT_UNITS_HEIGHT = ["cm", "ft"] as const;
@@ -102,6 +109,15 @@ export interface OnboardingDraft {
   weightUnit: (typeof DRAFT_UNITS_WEIGHT)[number];
   trainingWhy: string;
   experience: (typeof DRAFT_EXPERIENCE)[number];
+  /** Additive flow metadata: v2 answers remain resumable after the redesign. */
+  goalConfirmed?: boolean;
+  runConfirmed?: boolean;
+  displayName?: string;
+  weightDisplayUnit?: "kg" | "lbs" | "st";
+  returnToReview?: boolean;
+  trainingActivity?: OnboardingActivity;
+  /** Keep the chosen lifting rhythm when switching to running and back. */
+  liftDaysPreference?: Exclude<OnboardingDraft["daysPerWeek"], 0>;
 }
 
 interface DraftEnvelope {
@@ -154,23 +170,31 @@ export function isValidDraft(
     oneOf(DRAFT_UNITS_HEIGHT, d.heightUnit) &&
     oneOf(DRAFT_UNITS_WEIGHT, d.weightUnit) &&
     typeof d.trainingWhy === "string" &&
-    oneOf(DRAFT_EXPERIENCE, d.experience)
+    oneOf(DRAFT_EXPERIENCE, d.experience) &&
+    (d.goalConfirmed === undefined || typeof d.goalConfirmed === "boolean") &&
+    (d.runConfirmed === undefined || typeof d.runConfirmed === "boolean") &&
+    (d.displayName === undefined || typeof d.displayName === "string") &&
+    (d.weightDisplayUnit === undefined ||
+      oneOf(["kg", "lbs", "st"], d.weightDisplayUnit)) &&
+    (d.returnToReview === undefined || typeof d.returnToReview === "boolean") &&
+    (d.trainingActivity === undefined ||
+      oneOf(DRAFT_TRAINING_ACTIVITIES, d.trainingActivity)) &&
+    (d.liftDaysPreference === undefined ||
+      oneOf([2, 3, 4, 5, 6], d.liftDaysPreference))
   );
 }
 
 /** Persist the draft. Best-effort — storage failures never surface. */
 export function saveOnboardingDraft(uid: string, draft: OnboardingDraft): void {
   if (!uid) return;
-  try {
-    const envelope: DraftEnvelope = {
-      v: DRAFT_VERSION,
-      uid,
-      savedAt: Date.now(),
-      draft,
-    };
-    localStorage.setItem(keyFor(uid), JSON.stringify(envelope));
-  } catch (err) {
-    logger.warn("[OnboardingDraft] save failed", err);
+  const envelope: DraftEnvelope = {
+    v: DRAFT_VERSION,
+    uid,
+    savedAt: Date.now(),
+    draft,
+  };
+  if (!writeJson(keyFor(uid), envelope)) {
+    logger.warn("[OnboardingDraft] save failed");
   }
 }
 
@@ -184,9 +208,9 @@ export function loadOnboardingDraft(
   maxStep: number
 ): OnboardingDraft | null {
   if (!uid) return null;
+  const raw = readString(keyFor(uid));
+  if (!raw) return null;
   try {
-    const raw = localStorage.getItem(keyFor(uid));
-    if (!raw) return null;
     const envelope = JSON.parse(raw) as Partial<DraftEnvelope> | null;
     if (
       !envelope ||
@@ -196,17 +220,13 @@ export function loadOnboardingDraft(
       Date.now() - envelope.savedAt > DRAFT_TTL_MS ||
       !isValidDraft(envelope.draft, maxStep)
     ) {
-      localStorage.removeItem(keyFor(uid));
+      remove(keyFor(uid));
       return null;
     }
     return envelope.draft;
   } catch (err) {
     logger.warn("[OnboardingDraft] load failed", err);
-    try {
-      localStorage.removeItem(keyFor(uid));
-    } catch {
-      /* storage unavailable — nothing to clean */
-    }
+    remove(keyFor(uid));
     return null;
   }
 }
@@ -214,9 +234,5 @@ export function loadOnboardingDraft(
 /** Remove the draft — called once onboarding completes successfully. */
 export function clearOnboardingDraft(uid: string): void {
   if (!uid) return;
-  try {
-    localStorage.removeItem(keyFor(uid));
-  } catch (err) {
-    logger.warn("[OnboardingDraft] clear failed", err);
-  }
+  if (!remove(keyFor(uid))) logger.warn("[OnboardingDraft] clear failed");
 }

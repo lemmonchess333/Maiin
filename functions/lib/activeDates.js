@@ -36,7 +36,7 @@ const { isVolumeEligibleRun } = require("./runEligibility");
  *     distance?: number,
  *     duration?: number,
  *   }[],
- *   meals?: { date?: string, items?: unknown[] }[],
+ *   meals?: { date?: string, items?: unknown[], deletedAt?: unknown }[],
  * }} logs
  * @param {string | null | undefined} timezone
  * @returns {string[]} unique local "YYYY-MM-DD" active days
@@ -57,6 +57,10 @@ function activeDateKeysFromLogs(logs, timezone) {
     if (key) set.add(key);
   }
   for (const m of meals) {
+    // Soft-deleted (Recently Deleted) — the client filters these at its
+    // snapshot boundary (isActiveMealDoc); a binned meal must not keep a
+    // streak alive or silence a reminder.
+    if (m.deletedAt) continue;
     if (typeof m.date !== "string" || !m.date) continue;
     if (!Array.isArray(m.items) || m.items.length === 0) continue;
     set.add(m.date);

@@ -96,13 +96,13 @@ describe("ProfileInfoSection — D16 training why", () => {
 
   it("seeds the Your why field from profile.trainingWhy", () => {
     renderSection(makeProfile({ trainingWhy: "Feel stronger" }));
-    const input = screen.getByLabelText("Your why") as HTMLInputElement;
+    const input = screen.getByLabelText("Why you train") as HTMLInputElement;
     expect(input.value).toBe("Feel stronger");
   });
 
   it("persists a trimmed, capped why on blur", () => {
     const { updateProfile } = renderSection(makeProfile());
-    const input = screen.getByLabelText("Your why");
+    const input = screen.getByLabelText("Why you train");
     fireEvent.change(input, { target: { value: "  More energy  " } });
     fireEvent.blur(input);
     expect(updateProfile).toHaveBeenCalledWith({ trainingWhy: "More energy" });
@@ -112,7 +112,7 @@ describe("ProfileInfoSection — D16 training why", () => {
     const { updateProfile } = renderSection(
       makeProfile({ trainingWhy: "Longevity" })
     );
-    fireEvent.blur(screen.getByLabelText("Your why"));
+    fireEvent.blur(screen.getByLabelText("Why you train"));
     expect(updateProfile).not.toHaveBeenCalled();
   });
 
@@ -120,7 +120,7 @@ describe("ProfileInfoSection — D16 training why", () => {
     const { updateProfile } = renderSection(
       makeProfile({ trainingWhy: "Run a race" })
     );
-    const input = screen.getByLabelText("Your why");
+    const input = screen.getByLabelText("Why you train");
     fireEvent.change(input, { target: { value: "" } });
     fireEvent.blur(input);
     expect(updateProfile).toHaveBeenCalledWith({ trainingWhy: "" });

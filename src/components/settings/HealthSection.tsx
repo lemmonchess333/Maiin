@@ -96,7 +96,7 @@ export default function HealthSection({
               }}
               className="text-xs font-semibold text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded"
             >
-              Open Settings
+              Open settings
             </button>
           </div>
         </div>

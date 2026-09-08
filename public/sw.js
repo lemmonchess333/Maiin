@@ -82,6 +82,47 @@ if (
 
 const MAX_CACHE_ENTRIES = 150;
 
+// Public exercise art is downloaded on demand, separately from the app shell.
+// Filenames may be reused, so the build stamp invalidates old artwork caches.
+const ART_CACHE_NAME = `${CACHE_NAME}-form-art-${BUILD_STAMP}`;
+const ART_MAX_ENTRIES = 48;
+const ART_MAX_BYTES = 24 * 1024 * 1024;
+const ART_MAX_FILE_BYTES = 2 * 1024 * 1024;
+let artWriteQueue = Promise.resolve();
+
+function storeFormArtwork(request, response) {
+  // Serialize writes and eviction so parallel preloads cannot exceed the budget.
+  artWriteQueue = artWriteQueue.catch(() => {}).then(async () => {
+    if (response.status !== 200 || response.redirected ||
+        !response.headers.get("content-type")?.startsWith("image/")) return;
+    const data = await response.arrayBuffer();
+    if (!data.byteLength || data.byteLength > ART_MAX_FILE_BYTES) return;
+    const cache = await caches.open(ART_CACHE_NAME);
+    const headers = new Headers(response.headers);
+    headers.delete("content-encoding");
+    headers.set("content-length", String(data.byteLength));
+    headers.set("x-tropos-art-bytes", String(data.byteLength));
+    await cache.delete(request);
+    await cache.put(request, new Response(data, { status: 200, headers }));
+    const keys = await cache.keys();
+    const sizes = await Promise.all(keys.map(async (key) => {
+      const entry = await cache.match(key);
+      const size = Number(entry?.headers.get("x-tropos-art-bytes"));
+      return Number.isFinite(size) && size > 0 ? size : ART_MAX_FILE_BYTES;
+    }));
+    let total = sizes.reduce((sum, size) => sum + size, 0);
+    let count = keys.length;
+    for (let i = 0; count > ART_MAX_ENTRIES || total > ART_MAX_BYTES; i++) {
+      await cache.delete(keys[i]);
+      total -= sizes[i];
+      count--;
+    }
+  }).catch(() => {
+    // Quota/storage failures must not prevent displaying a network response.
+  });
+  return artWriteQueue;
+}
+
 const STATIC_ASSETS = [
   BASE_PATH,
   BASE_PATH + "index.html",
@@ -111,7 +152,7 @@ self.addEventListener("activate", (event) => {
     caches.keys().then((keys) => {
       return Promise.all(
         keys
-          .filter((key) => key !== CACHE_NAME)
+          .filter((key) => key !== CACHE_NAME && key !== ART_CACHE_NAME)
           .map((key) => caches.delete(key))
       );
     }).then(() => {
@@ -136,6 +177,23 @@ self.addEventListener("fetch", (event) => {
 
   // Skip Firebase/API and external API requests
   const url = new URL(event.request.url);
+  // Run before the broad Firebase-host skip: these are our own public files,
+  // even on Firebase Hosting. No API, account data or external origin is cached.
+  if (url.origin === self.location.origin &&
+      url.pathname.startsWith(BASE_PATH + "form-frames/") &&
+      /\.(webp|png|avif)$/.test(url.pathname)) {
+    const task = (async () => {
+      const cached = await caches.open(ART_CACHE_NAME)
+        .then((cache) => cache.match(event.request)).catch(() => undefined);
+      return { response: cached || await fetch(event.request, { cache: "no-cache" }), cached: Boolean(cached) };
+    })();
+    const write = task.then(({ response, cached }) =>
+      cached ? undefined : storeFormArtwork(event.request, response.clone())
+    ).catch(() => {});
+    event.waitUntil(write);
+    event.respondWith(task.then(({ response }) => response));
+    return;
+  }
   if (
     url.hostname.includes("firebaseio.com") ||
     url.hostname.includes("googleapis.com") ||

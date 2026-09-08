@@ -30,7 +30,7 @@ import { haptic } from "@/lib/haptic";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
-import { getWeekKey } from "@/lib/performanceEngine";
+import { localWeekKey } from "@/lib/dateHelpers";
 import { weekBounds } from "@/lib/weeklyReviewViewModel";
 import { activeMealDocs } from "@/lib/mealTotals";
 import {
@@ -53,7 +53,7 @@ const INTENT_SHORT: Record<NutritionIntent, string> = {
 };
 
 export default function FoodConsistencyCard({ uid }: { uid: string }) {
-  const weekKey = getWeekKey(new Date());
+  const weekKey = localWeekKey(new Date());
   // undefined = loading, null = none set this week
   const [commitment, setCommitment] = useState<
     NutritionCommitment | null | undefined
@@ -127,7 +127,7 @@ export default function FoodConsistencyCard({ uid }: { uid: string }) {
     setSaving(false);
     setPicking(false);
     if (ok) toast.success("Focus set for this week.");
-    else toast.error("Couldn't save. Please try again.");
+    else toast.error("Couldn't save. Try again.");
   };
 
   const shareMet = async () => {
@@ -143,7 +143,7 @@ export default function FoodConsistencyCard({ uid }: { uid: string }) {
       await save({ ...commitment, sharedMet: true });
       toast.success("Shared with your circle.");
     } else {
-      toast.error("Couldn't share. Please try again.");
+      toast.error("Couldn't share. Try again.");
     }
   };
 

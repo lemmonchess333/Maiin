@@ -72,7 +72,7 @@ export default function CircleShareSheet({
       onOpenChange(false);
     } else {
       // Stays open — the user keeps their note and selection.
-      toast.error("Couldn't share. Please try again.");
+      toast.error("Couldn't share. Try again.");
     }
   };
 
@@ -80,7 +80,7 @@ export default function CircleShareSheet({
     <BottomSheet
       open={open}
       onOpenChange={onOpenChange}
-      title="Share to Circle"
+      title="Share to circle"
       description="Only 'completed a session' is shared — never your numbers."
     >
       <div className="px-4 pt-3 pb-6 space-y-3">
@@ -171,7 +171,7 @@ export default function CircleShareSheet({
               disabled={selectedId === null}
               onClick={() => void share()}
             >
-              Share to Circle
+              Share to circle
             </Button>
 
             <Button

@@ -1,3 +1,4 @@
+import SectionLabel from "@/components/ui/SectionLabel";
 import { Suspense, useId, useState } from "react";
 import { lazyRetry } from "@/lib/lazyRetry";
 import { Trash2, Share2, Route } from "lucide-react";
@@ -178,16 +179,16 @@ export default function RouteSetupSection({
             })
           }
         />
-        <p className="mt-1 px-1 text-[11px] text-muted-foreground">
+        <p className="mt-1 px-1 text-xs text-muted-foreground">
           From Strava, Komoot, a friend…
         </p>
       </div>
 
       {routes.length > 0 && (
         <div>
-          <p className="mb-1.5 px-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+          <SectionLabel tier="section" className="mb-1.5 px-1">
             Saved routes
-          </p>
+          </SectionLabel>
           <ul className="space-y-1.5">
             {routes.map((r) => (
               <li
@@ -198,7 +199,7 @@ export default function RouteSetupSection({
                   type="button"
                   onClick={() =>
                     setPreview({
-                      points: coordsToPoints(r.coords),
+                      points: coordsToPoints(r.coords, r.segmentStarts),
                       name: r.name,
                       source: r.source,
                       showSave: false,
@@ -219,7 +220,10 @@ export default function RouteSetupSection({
                   icon={<Share2 />}
                   className="text-muted-foreground"
                   onClick={() =>
-                    shareRouteWithPrivacy(r.name, coordsToPoints(r.coords))
+                    shareRouteWithPrivacy(
+                      r.name,
+                      coordsToPoints(r.coords, r.segmentStarts)
+                    )
                   }
                 />
                 <IconButton

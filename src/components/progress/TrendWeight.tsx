@@ -10,6 +10,7 @@ import {
   deriveGoalWeightKg,
   projectGoalDate,
 } from "@/utils/weightTrend";
+import { formatWeightInUnit } from "@/lib/weightUnits";
 import { THEME } from "@/lib/theme";
 import { parseLocalDate } from "@/lib/dateHelpers";
 import {
@@ -60,7 +61,7 @@ export function TrendWeight() {
   const hideNumber = !!profile?.hideWeightNumber;
   const convert = (v: number) => {
     if (!Number.isFinite(v)) return 0;
-    return Math.round(v * (unit === "lbs" ? 2.205 : 1) * 10) / 10;
+    return Number(formatWeightInUnit(v, unit));
   };
 
   // Single entry: show simple display instead of chart
@@ -69,7 +70,7 @@ export function TrendWeight() {
     const d = parseLocalDate(entry.date);
     return (
       <div className="p-4 rounded-2xl bg-card text-center py-6 space-y-2">
-        <SectionLabel>Weight Trend</SectionLabel>
+        <SectionLabel>Weight trend</SectionLabel>
         {hideNumber ? (
           <p className="text-lg font-bold text-foreground">First weigh-in</p>
         ) : (
@@ -190,7 +191,7 @@ export function TrendWeight() {
   return (
     <div className="p-4 rounded-2xl bg-card space-y-3">
       <div className="flex items-center justify-between">
-        <SectionLabel>Weight Trend</SectionLabel>
+        <SectionLabel>Weight trend</SectionLabel>
         <p className="text-xs text-foreground font-medium">
           {hideNumber ? (
             <span className="text-primary font-bold">{hiddenHeadline}</span>

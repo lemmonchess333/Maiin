@@ -1,5 +1,19 @@
 import { collection, query, orderBy, getDocs } from "firebase/firestore";
+import { isActiveMealDoc } from "@/lib/mealTotals";
 import { db } from "@/lib/firebase";
+
+/** CSV quoting protects cell boundaries; an apostrophe also keeps untrusted
+ * formula prefixes as text when the export is opened in a spreadsheet. */
+function csvCell(value: unknown, alwaysQuote = false): string {
+  if (typeof value === "number" && Number.isFinite(value)) return String(value);
+  let text = String(value ?? "");
+  const formula =
+    /^[\s\p{Cc}]*[=+\-@＝＋－＠]/u.test(text) || /^[\t\r\n]/u.test(text);
+  if (formula) text = "'" + text;
+  return alwaysQuote || formula || /[",\r\n]/u.test(text)
+    ? `"${text.replace(/"/g, '""')}"`
+    : text;
+}
 
 export async function exportWorkoutsCSV(uid: string): Promise<string> {
   const workoutsRef = collection(db, "users", uid, "workouts");
@@ -26,7 +40,14 @@ export async function exportWorkoutsCSV(uid: string): Promise<string> {
           if (Array.isArray(ex.sets)) {
             ex.sets.forEach((set, i: number) => {
               rows.push(
-                `${date},"${(ex.exerciseName || ex.name || "").replace(/"/g, '""')}",${i + 1},${set.weightKg ?? set.weight ?? 0},${set.reps ?? 0},${set.type || "working"}`
+                [
+                  csvCell(date),
+                  csvCell(ex.exerciseName || ex.name || "", true),
+                  csvCell(i + 1),
+                  csvCell(set.weightKg ?? set.weight ?? 0),
+                  csvCell(set.reps ?? 0),
+                  csvCell(set.type || "working"),
+                ].join(",")
               );
             });
           }
@@ -47,10 +68,21 @@ export async function exportMealsCSV(uid: string): Promise<string> {
 
   snap.docs.forEach((docSnap) => {
     const m = docSnap.data();
+    // Soft-deleted meals (Recently Deleted, 24 h window) are not part of
+    // the diary the totals, review and scoring show — the export must not
+    // say otherwise.
+    if (!isActiveMealDoc(m)) return;
     const date =
       m.date || (m.createdAt?.toDate?.()?.toISOString?.()?.split("T")[0] ?? "");
     rows.push(
-      `${date},"${(m.foodName || m.name || "").replace(/"/g, '""')}",${m.totalCalories ?? m.calories ?? 0},${m.totalProtein ?? m.protein ?? 0},${m.totalCarbs ?? m.carbs ?? 0},${m.totalFat ?? m.fat ?? 0}`
+      [
+        csvCell(date),
+        csvCell(m.foodName || m.name || "", true),
+        csvCell(m.totalCalories ?? m.calories ?? 0),
+        csvCell(m.totalProtein ?? m.protein ?? 0),
+        csvCell(m.totalCarbs ?? m.carbs ?? 0),
+        csvCell(m.totalFat ?? m.fat ?? 0),
+      ].join(",")
     );
   });
 
@@ -65,7 +97,7 @@ export async function exportBodyweightCSV(uid: string): Promise<string> {
   const rows = ["Date,Weight (kg)"];
   snap.docs.forEach((docSnap) => {
     const d = docSnap.data();
-    rows.push(`${d.date},${d.weight}`);
+    rows.push([csvCell(d.date), csvCell(d.weight)].join(","));
   });
 
   return rows.join("\n");

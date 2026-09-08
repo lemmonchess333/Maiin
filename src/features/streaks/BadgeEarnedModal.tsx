@@ -96,14 +96,16 @@ const CRACKS = [
 ];
 const TAPS_NEEDED = 3;
 
-function BadgeEarnedContent({
+export function BadgeEarnedContent({
   badge,
   onDismiss,
+  inline = false,
 }: {
   badge: EarnedBadge;
   onDismiss: () => void;
+  inline?: boolean;
 }) {
-  const focusTrapRef = useFocusTrap<HTMLDivElement>();
+  const focusTrapRef = useFocusTrap<HTMLDivElement>(!inline);
   const sealBtnRef = useRef<HTMLButtonElement>(null);
   const reduce = useReducedMotion();
   const [taps, setTaps] = useState(0);
@@ -116,9 +118,11 @@ function BadgeEarnedContent({
   const glow = revealed ? 1 : stage / tapsNeeded; // 0..1 light building inside
 
   useEffect(() => {
-    haptic("light");
-    sealBtnRef.current?.focus();
-  }, []);
+    if (!inline) {
+      haptic("light");
+      sealBtnRef.current?.focus();
+    }
+  }, [inline]);
 
   const fireReveal = useCallback(() => {
     haptic("heavy");
@@ -126,7 +130,7 @@ function BadgeEarnedContent({
     // Reduced motion: the ceremony is already collapsed to a single tap —
     // particle rain contradicts that intent, so the reveal is haptic +
     // chime + bloom only. (Previously still fired 60 particles.)
-    if (reduce) return;
+    if (reduce || inline) return;
     lazyConfetti().then((confetti) => {
       // Palette tells the badge's story: the earned tier + brand purples +
       // celebratory gold (tier token) — no off-palette green/amber.
@@ -166,7 +170,7 @@ function BadgeEarnedContent({
         });
       }, 320);
     });
-  }, [reduce, tier]);
+  }, [reduce, tier, inline]);
 
   // Each tap cracks the seal a little more; the last tap breaks it open and
   // blooms the badge. Idempotent once revealed (extra taps dismiss instead).
@@ -197,16 +201,20 @@ function BadgeEarnedContent({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-center justify-center px-6"
-      style={{ background: "rgba(0,0,0,0.74)" }}
+      className={
+        inline
+          ? "flex items-center justify-center"
+          : "fixed inset-0 z-50 flex items-center justify-center px-6"
+      }
+      style={inline ? undefined : { background: "rgba(0,0,0,0.74)" }}
       // Pre-reveal: a backdrop tap counts as a seal tap (you can't accidentally
       // skip the moment). Post-reveal: a backdrop tap dismisses.
       onClick={revealed ? onDismiss : tapSeal}
     >
       <motion.div
         ref={focusTrapRef}
-        role="dialog"
-        aria-modal="true"
+        role={inline ? "region" : "dialog"}
+        aria-modal={inline ? undefined : true}
         aria-label={
           revealed
             ? `Badge earned: ${badge.name}`

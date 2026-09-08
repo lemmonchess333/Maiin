@@ -3,6 +3,7 @@ import {
   socialPreferenceKey,
   purgeLegacySocialKey,
 } from "@/lib/socialPreferenceKeys";
+import { readString, writeString } from "@/lib/localStore";
 
 /**
  * Soc5b pin (3) — Feed sub-tab new-content dot.
@@ -29,21 +30,13 @@ import {
  */
 
 function readSeen(key: string): string {
-  try {
-    return window.localStorage.getItem(key) ?? "0";
-  } catch {
-    return "0";
-  }
+  return readString(key) ?? "0";
 }
 
 function writeSeen(key: string, value: string) {
-  try {
-    window.localStorage.setItem(key, value);
-  } catch {
-    /* localStorage write failures (Safari private mode, quota) are
-       non-fatal — the dot will reappear next session, which is a
-       graceful degradation. */
-  }
+  /* Storage write failures (Safari private mode, quota) are non-fatal —
+     the dot will reappear next session, which is a graceful degradation. */
+  writeString(key, value);
 }
 
 /**

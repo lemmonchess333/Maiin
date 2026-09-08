@@ -33,6 +33,8 @@ import {
   easyRunMinutesForWeek,
   longRunKmForWeek,
   longTierForKm,
+  maxSchedulableLongKm,
+  PEAK_HOLD_FRACTION,
   LONG_RUN_MAX_MINUTES,
   TAPER_WEEKS_BY_DISTANCE,
   getRaceFloorWeeks,
@@ -286,7 +288,112 @@ describe("the long run progresses toward the race", () => {
           `${distance} week ${w}`
         ).toBeLessThanOrEqual(atPeak);
       }
-      expect(atPeak).toBeCloseTo(32, 5);
+      // Run17: the ramp ends at the peak the ceiling lets THIS runner
+      // schedule — 25 km on the nominal table, held for the last ~15% of
+      // the ramp — not at the 32 km the config declares, which left the
+      // last six weeks flat at the ceiling tier.
+      expect(maxSchedulableLongKm(null)).toBe(25);
+      expect(atPeak).toBeLessThanOrEqual(25 * (1 + PEAK_HOLD_FRACTION));
+      expect(atPeak).toBeGreaterThanOrEqual(25);
+      expect(longTierForKm(atPeak)).toBe("long_25k");
+    }
+  });
+});
+
+describe("Run17 — the 150-minute ceiling measures the runner's own pace", () => {
+  const marathon = (easyPaceSPerKm: number | null) =>
+    generateRacePlanV2({
+      recentLayoff: "none",
+      weekSchedule: generateSchedule(2, 4),
+      raceGoal: { distance: "marathon", targetDate: targetDate(20 * 7) },
+      weeklyRunDays: 4,
+      currentDate: CURRENT,
+      weekStart: WEEK_START,
+      easyPaceSPerKm,
+    });
+  const peakKm = (out: ReturnType<typeof generateRacePlanV2>) =>
+    Math.max(
+      ...out.weeks.flat().map((r) => LONG_KM_BY_ID.get(r.templateId) ?? 0)
+    );
+
+  it("no confirmed benchmark → the nominal table, exactly as before", () => {
+    expect(maxSchedulableLongKm(null)).toBe(25);
+    expect(maxSchedulableLongKm(undefined)).toBe(25);
+    expect(longTierForKm(32)).toBe("long_25k");
+    expect(peakKm(marathon(null))).toBe(25);
+  });
+
+  it("5:00/km → 30 km fits in 150 minutes, so long_30k becomes schedulable", () => {
+    expect(maxSchedulableLongKm(300)).toBe(30);
+    expect(longTierForKm(32, 300)).toBe("long_30k");
+    expect(peakKm(marathon(300))).toBe(30);
+  });
+
+  it("6:00/km → 25 km sits exactly on the ceiling; 30 does not", () => {
+    expect(maxSchedulableLongKm(360)).toBe(25);
+    expect(peakKm(marathon(360))).toBe(25);
+  });
+
+  it("7:00/km → 25 km would take 175 minutes, so the ceiling is 20 km", () => {
+    expect(maxSchedulableLongKm(420)).toBe(20);
+    expect(longTierForKm(32, 420)).toBe("long_20k");
+    expect(peakKm(marathon(420))).toBe(20);
+  });
+
+  it("a pace so slow that no tier fits still yields the shortest tier — the floor, not the ceiling", () => {
+    expect(longTierForKm(32, 3600)).toBe("long_6k");
+  });
+
+  it("the ramp is monotone to the emitted peak — no flat run at the ceiling before the last ramp week", () => {
+    for (const pace of [null, 300, 360, 420]) {
+      const out = marathon(pace);
+      const taperWeeks = TAPER_WEEKS_BY_DISTANCE.marathon;
+      const longs = out.weeks
+        .slice(0, out.totalWeeks - taperWeeks - 1)
+        .map((w) => w.find((r) => r.type === "long"))
+        .map((r) => (r ? (LONG_KM_BY_ID.get(r.templateId) ?? 0) : 0));
+      const peak = Math.max(...longs);
+      // The first week AT the peak tier is the last ramp week or a week
+      // within one tier step of it: the curve reaches the ceiling, it does
+      // not sit on it for six weeks.
+      const firstAtPeak = longs.indexOf(peak);
+      const weeksAtPeak = longs.filter((k) => k === peak).length;
+      expect(
+        weeksAtPeak,
+        `pace ${pace}: weeks at peak ${peak}`
+      ).toBeGreaterThanOrEqual(1);
+      // A coarse ladder near the ceiling (15 → 20 km at 7:00/km) spends
+      // longer at the top than a fine one; the property is "not flat for
+      // the whole second half", not a fixed count.
+      expect(
+        weeksAtPeak,
+        `pace ${pace}: weeks at peak ${peak}`
+      ).toBeLessThanOrEqual(Math.ceil(longs.length / 2));
+      expect(firstAtPeak).toBeGreaterThan(longs.length / 2);
+    }
+  });
+
+  it("bigger never peaks below standard (both clamp to the same ceiling)", () => {
+    for (const pace of [null, 300, 420]) {
+      const std = longRunKmForWeek({
+        weekIndex: 14,
+        totalWeeks: 20,
+        baseLongKm: 14,
+        peakLongKm: 32,
+        taperWeeks: 3,
+        volume: "standard",
+        easyPaceSPerKm: pace,
+      });
+      const big = longRunKmForWeek({
+        weekIndex: 14,
+        totalWeeks: 20,
+        baseLongKm: 14,
+        peakLongKm: 32,
+        taperWeeks: 3,
+        volume: "bigger",
+        easyPaceSPerKm: pace,
+      });
+      expect(big).toBeGreaterThanOrEqual(std);
     }
   });
 });

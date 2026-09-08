@@ -11,16 +11,9 @@ import { AuthProvider, useAuth } from "@/lib/auth";
 import { usePushTokenRefresh } from "@/hooks/usePushTokenRefresh";
 import { RevenueCatIdentity } from "@/hooks/useRevenueCatIdentity";
 import { ToastProvider } from "@/components/ToastProvider";
-import ShareComposerSheet from "@/components/social/ShareComposerSheet";
-import OneTimeMaintenance from "@/components/OneTimeMaintenance";
 import { NotificationBubbleProvider } from "@/components/NotificationBubble";
 import RouteErrorBoundary from "@/components/RouteErrorBoundary";
 import AuthSessionBoundary from "@/components/AuthSessionBoundary";
-import { StreakReminderPrimingModal } from "@/components/StreakReminderPrimingModal";
-import { StreaksProvider } from "@/features/streaks/useStreaks";
-import { DailyNutritionSnapshot } from "@/hooks/useDailyNutritionSnapshot";
-import { RemindersProvider } from "@/hooks/RemindersProvider";
-import { DailyLogsProvider } from "@/hooks/DailyLogsProvider";
 import { SurfaceCoordinatorProvider } from "@/components/SurfaceCoordinatorProvider";
 import { BackDismissProvider } from "@/lib/BackDismissProvider";
 import { EducationLaneProvider } from "@/components/EducationLaneProvider";
@@ -34,7 +27,59 @@ import MinVersionGate from "@/components/MinVersionGate";
 // Shipped ambient brand glow — eager (tiny, renders on every authed page).
 import AmbientGlow from "@/components/AmbientGlow";
 
+/* Two root-mounted components that render null until something happens.
+   A static import is unconditional, so theirs were the entire reason a
+   SIGNED-OUT visitor downloaded the programme engine, the exercise
+   database, the run scheduler and 81 KB of French profanity before the
+   login form painted — they were the only two static chains reaching any
+   of it. `eagerGraph.test.ts` fails if either comes back.
+
+   Neither can miss work by arriving late, which is the thing to check
+   before deferring a subscriber. DailyNutritionSnapshot is a writer keyed
+   off the current day, and subscribeShareComposer replays current state
+   to a new listener, so a share opened before the chunk lands is
+   delivered the moment it mounts. */
+/* The authenticated-only providers, deferred for the same reason as the two
+   above: each pulls Firestore, and a static import is unconditional, so
+   AuthProvider's own module graph put the 369 KB firebase-db chunk ahead of
+   the LOGIN screen's first paint — for stores a signed-out visitor never
+   reads. They render only inside the authenticated branch, already behind
+   its Suspense, so the bytes now load alongside the page chunks instead of
+   before anything paints. */
+const StreakReminderPrimingModal = lazyRetry(() =>
+  import("@/components/StreakReminderPrimingModal").then((m) => ({
+    default: m.StreakReminderPrimingModal,
+  }))
+);
+const OneTimeMaintenance = lazyRetry(
+  () => import("@/components/OneTimeMaintenance")
+);
+const StreaksProvider = lazyRetry(() =>
+  import("@/features/streaks/useStreaks").then((m) => ({
+    default: m.StreaksProvider,
+  }))
+);
+const RemindersProvider = lazyRetry(() =>
+  import("@/hooks/RemindersProvider").then((m) => ({
+    default: m.RemindersProvider,
+  }))
+);
+const DailyLogsProvider = lazyRetry(() =>
+  import("@/hooks/DailyLogsProvider").then((m) => ({
+    default: m.DailyLogsProvider,
+  }))
+);
+
 // Lazy-loaded pages & layout for code splitting
+const ShareComposerSheet = lazyRetry(
+  () => import("@/components/social/ShareComposerSheet")
+);
+const DailyNutritionSnapshot = lazyRetry(() =>
+  import("@/hooks/useDailyNutritionSnapshot").then((m) => ({
+    default: m.DailyNutritionSnapshot,
+  }))
+);
+
 const Layout = lazyRetry(() => import("@/components/Layout"));
 const Login = lazyRetry(() => import("@/pages/Login"));
 const Onboarding = lazyRetry(() => import("@/pages/Onboarding"));
@@ -128,6 +173,11 @@ const BrandBakeoff =
 const FormMotionLab =
   import.meta.env.MODE !== "production"
     ? lazyRetry(() => import("@/pages/dev/FormMotionLab"))
+    : null;
+
+const WeightPickerLab =
+  import.meta.env.MODE !== "production"
+    ? lazyRetry(() => import("@/pages/dev/WeightPickerLab"))
     : null;
 
 // The ambient-emission bake-off (#1252) concluded: candidate A (single
@@ -337,10 +387,16 @@ function AppRoutes() {
     const tryFlush = () => {
       if (!navigator.onLine) return;
       // Lazy-load so this only ships when the user is signed in.
+      void import("@/lib/weightQueue").then(({ flushQueuedWeights }) =>
+        flushQueuedWeights(uid)
+      );
       import("@/lib/offlineQueue").then(({ flushQueue }) => {
         import("@/lib/firebase").then(({ db }) => {
           flushQueue(db, uid).catch(() => {});
         });
+      });
+      import("@/lib/waterActions").then(({ flushWater }) => {
+        if (!cancelled) void flushWater(uid);
       });
       // P6 — programme COMMANDS are a separate queue from the Firestore write
       // queue above, and cannot share it: that one replays `setDoc` calls,
@@ -371,11 +427,23 @@ function AppRoutes() {
     // Re-flush whenever the browser regains connectivity. Listener
     // captures `uid` in closure so it can never flush under a
     // different user — the cleanup removes it on auth change.
+    const resumeWater = () => {
+      if (!cancelled && navigator.onLine)
+        void import("@/lib/waterActions").then(({ flushWater }) => {
+          if (!cancelled) void flushWater(uid);
+        });
+    };
+    document.addEventListener("visibilitychange", resumeWater);
+    window.addEventListener("focus", resumeWater);
+    window.addEventListener("storage", resumeWater);
     window.addEventListener("online", tryFlush);
     return () => {
       cancelled = true;
       stopForegroundPush();
       window.removeEventListener("online", tryFlush);
+      document.removeEventListener("visibilitychange", resumeWater);
+      window.removeEventListener("focus", resumeWater);
+      window.removeEventListener("storage", resumeWater);
     };
   }, [uid]);
 
@@ -427,7 +495,9 @@ function AppRoutes() {
         <StreaksProvider>
           {/* Single session-wide writer for the per-day macro-target snapshot
             (users/{uid}/dailyNutrition/{date}) the nutrition badges read. */}
-          <DailyNutritionSnapshot />
+          <Suspense fallback={null}>
+            <DailyNutritionSnapshot />
+          </Suspense>
           {/* RemindersProvider runs the three reminder hooks once at the
             authenticated root so scheduling doesn't drift whenever the
             user skips the Settings page. Must sit inside StreaksProvider
@@ -455,7 +525,9 @@ function AppRoutes() {
             on every foreground event regardless of which page the user is
             on. The modal internally gates on currentStreak >= 2 and
             primingShown === false — renders nothing on most sessions. */}
-                  <StreakReminderPrimingModal />
+                  <Suspense fallback={null}>
+                    <StreakReminderPrimingModal />
+                  </Suspense>
                   <Routes>
                     <Route path="/privacy" element={<PrivacyPolicy />} />
                     <Route path="/terms" element={<TermsOfService />} />
@@ -769,6 +841,16 @@ function AppRoutes() {
                         }
                       />
                     )}
+                    {WeightPickerLab && (
+                      <Route
+                        path="/dev/weight-picker"
+                        element={
+                          <RouteErrorBoundary>
+                            <WeightPickerLab />
+                          </RouteErrorBoundary>
+                        }
+                      />
+                    )}
                     <Route path="*" element={<Navigate to="/" replace />} />
                   </Routes>
                 </EducationLaneProvider>
@@ -798,8 +880,12 @@ function App() {
                     fast-follow). Wraps the root-level overlays + all routes. */}
                 <BackDismissProvider>
                   <ToastProvider />
-                  <ShareComposerSheet />
-                  <OneTimeMaintenance />
+                  <Suspense fallback={null}>
+                    <ShareComposerSheet />
+                  </Suspense>
+                  <Suspense fallback={null}>
+                    <OneTimeMaintenance />
+                  </Suspense>
                   <RevenueCatIdentity />
                   <AppRoutes />
                 </BackDismissProvider>

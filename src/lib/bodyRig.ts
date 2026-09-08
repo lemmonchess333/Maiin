@@ -1,3 +1,5 @@
+import { RELEASED_FORM_PLACARDS } from "./releasedFormPlacards";
+import { getReleasedFormArtwork } from "./formArtwork";
 /**
  * Body rig — animated exercise demos built from the REAL muscle-map figure.
  *
@@ -9503,7 +9505,7 @@ function stripHeldGear(demo: BodyDemo): BodyDemo {
  */
 export interface FormBeat {
   /** The demo's own progress value — this beat IS a frame of it, and
-   *  the frame the rig falls back to when `image` cannot load. */
+   *  the legacy rig coordinate; image load failures use the frame player retry state. */
   t: number;
   /** The position's name: the panel heading. */
   label: string;
@@ -9540,6 +9542,7 @@ export interface DemoMuscleKey {
 }
 
 const FORM_BEATS: Record<string, FormPlacard> = {
+
   /* Dips — the first placard demo. Six positions on the dip's own t,
    * where 0 is the locked-out top and 1 the bottom. The cues are the
    * catalogue's four authored steps re-cut into the six frames the
@@ -9675,8 +9678,8 @@ const FORM_BEATS: Record<string, FormPlacard> = {
        right — but it is DECORATION, not a readout. Measured across the
        set the cable is not conserved: between "set elbows" and
        "controlled return" the hands rise 68px and the stack rises with
-       them, the wrong way. Fine at a second a frame; do not describe
-       it to a user as feedback. */
+       them, the wrong way. This is a known replacement requirement:
+       the new release gate must reject contradictory cable physics. */
     beats: [
       {
         t: 0,
@@ -9903,78 +9906,6 @@ const FORM_BEATS: Record<string, FormPlacard> = {
     },
   },
 
-  /* Supplied art, 2026-09-04. This card REFINES the anchor rule the
-     lateral raise stated, and the earlier phrasing was too categorical.
-     "Does the load move" is not the test; what matters is how much of
-     the GREY MASK moves. Both anchors decline to shift here and the
-     output is byte-identical either way, but the reported alignment
-     differs hugely:
-
-       station (default)  56.1 - 61.7%
-       base               87.5 - 94.3%
-
-     The machine frame is pixel-identical across all six (top y=38,
-     base y=1077, right edge x=970-971) — yet the station mask ALSO
-     holds the bar and the weight stack, which move by design and are a
-     large share of the grey on this machine. Compare skull crushers,
-     where a barbell moves in shot but the bench dominates the grey and
-     the default anchor reads fine. Probe both and take the higher; it
-     is one command and the numbers decide.
-
-     No claim is made here about the weight stack's travel. It could
-     not be measured reliably off these frames (three of six defeated
-     the column heuristic), and the pushdown taught that a stack ladder
-     asserted without measurement is how decoration gets described as
-     feedback. */
-  "lat-pulldown": {
-    beats: [
-      {
-        t: 0,
-        label: "Start",
-        cue: "Arms fully extended, lats stretched.",
-        image: "form-frames/lat-pulldown/1.webp",
-      },
-      {
-        t: 0.2,
-        label: "Initiate pull",
-        cue: "Pull the shoulder blades down first.",
-        image: "form-frames/lat-pulldown/2.webp",
-      },
-      {
-        t: 0.5,
-        label: "Mid pull",
-        cue: "Elbows drive down toward the ribs.",
-        image: "form-frames/lat-pulldown/3.webp",
-      },
-      {
-        t: 0.8,
-        label: "Lower to chest",
-        cue: "Chest tall, elbows tracking down.",
-        image: "form-frames/lat-pulldown/4.webp",
-      },
-      {
-        t: 1,
-        label: "Contract",
-        cue: "Bar at the upper chest, squeeze.",
-        image: "form-frames/lat-pulldown/5.webp",
-      },
-      {
-        t: 0,
-        label: "Controlled return",
-        cue: "Let it rise slowly, arms straightening.",
-        image: "form-frames/lat-pulldown/6.webp",
-      },
-    ],
-    /* Lats solid; the pale wash covers the arms end to end, the traps
-       and the rear delts. Broader than the catalogue's Biceps + Rear
-       Delts, which omits the forearms and traps the art shades. */
-    key: {
-      primary: ["Lats"],
-      secondary: ["Biceps", "Forearms", "Traps", "Rear deltoids"],
-      secondaryFill: "solid",
-    },
-  },
-
   /* ── Authored ahead of the art (2026-09-03) ──────────────────────
    * Positions only: no `image`, so `getFormBeats` returns null and
    * these play as ordinary reps until their cards arrive. They exist
@@ -9993,16 +9924,6 @@ const FORM_BEATS: Record<string, FormPlacard> = {
    * bodyRig.test.ts check the labels against that, not against a
    * convention assumed here. */
 
-  squat: {
-    beats: [
-      { t: 0, label: "Set up", cue: "Bar on the traps, chest tall, brace." },
-      { t: 0.3, label: "Descend", cue: "Hips back and knees out together." },
-      { t: 0.7, label: "Parallel", cue: "Hip crease level with the knee." },
-      { t: 1, label: "Bottom", cue: "Depth without the lower back rounding." },
-      { t: 0.45, label: "Drive", cue: "Push the floor away, chest up." },
-      { t: 0, label: "Stand", cue: "Hips and knees lock out together." },
-    ],
-  },
 
   deadlift: {
     beats: [
@@ -10105,6 +10026,7 @@ const FORM_BEATS: Record<string, FormPlacard> = {
       secondaryFill: "solid",
     },
   },
+  ...RELEASED_FORM_PLACARDS,
 };
 
 /**
@@ -10120,8 +10042,10 @@ const FORM_BEATS: Record<string, FormPlacard> = {
  */
 export function getFormBeats(exerciseId: string): readonly FormBeat[] | null {
   const placard = FORM_BEATS[exerciseId];
-  if (!placard || placard.beats.length === 0) return null;
-  return placard.beats.every((b) => b.image) ? placard.beats : null;
+  const artwork = getReleasedFormArtwork(exerciseId);
+  if (!placard || placard.beats.length !== 6 || !artwork) return null;
+  return placard.beats.every((beat, i) => beat.image === artwork.frames[i])
+    ? placard.beats : null;
 }
 
 /** The authored positions whether or not their art has arrived — for

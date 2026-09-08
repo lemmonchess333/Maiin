@@ -1,5 +1,6 @@
 import { useAuth, useUidForStorageKey } from "@/lib/auth";
 import { stallCooldownKey } from "@/features/program/stallDetection";
+import { writeString } from "@/lib/localStore";
 import { useEffectiveTargets } from "@/hooks/useEffectiveTargets";
 import { buildCalorieOverridePayload } from "@/lib/goalWeightPlan";
 import { toast } from "@/lib/toast";
@@ -58,7 +59,7 @@ export default function StallModal({ exercise, onClose }: StallModalProps) {
       if (!result.ok) return;
       toast.success("Calorie target increased by 150");
     }
-    localStorage.setItem(
+    writeString(
       stallCooldownKey(storageUid, exercise.name),
       String(Date.now())
     );
@@ -66,7 +67,7 @@ export default function StallModal({ exercise, onClose }: StallModalProps) {
   };
 
   const handleDismiss = () => {
-    localStorage.setItem(
+    writeString(
       stallCooldownKey(storageUid, exercise.name),
       String(Date.now())
     );

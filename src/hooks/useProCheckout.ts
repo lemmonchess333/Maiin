@@ -131,8 +131,7 @@ export function useProCheckout(): UseProCheckoutResult {
           }
         );
         if (!result.success) {
-          const message =
-            result.error || "Couldn't start checkout. Please try again.";
+          const message = result.error || "Couldn't start checkout. Try again.";
           setError(message);
           toast.error(message);
           track("checkout_failed", {
@@ -152,7 +151,7 @@ export function useProCheckout(): UseProCheckoutResult {
         const message =
           err instanceof Error
             ? err.message
-            : "Couldn't start checkout. Please try again.";
+            : "Couldn't start checkout. Try again.";
         setError(message);
         toast.error(message);
         track("checkout_failed", {

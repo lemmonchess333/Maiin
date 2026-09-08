@@ -7,6 +7,7 @@
  * after each workout for complete history beyond the 50-session window.
  */
 import { isSetEligibleForStrengthPr } from "@/features/program/sessionSetPolicy";
+import { epley1RMExact } from "@/lib/analytics";
 
 export type RepBucket = "1rm" | "3rm" | "5rm" | "8rm" | "10rm";
 
@@ -113,14 +114,12 @@ export function buildPRMap(
         }
         const bucket = getRepBucket(set.reps);
         const current = map[ex.exerciseName][bucket];
-        // Same tiebreak as checkSetPR: heavier weight, OR same weight with
-        // more reps. The rebuild used to keep weight-only, so a
-        // same-weight-more-reps record silently degraded whenever the map
-        // was rebuilt from history (training-book backlog, section 3 B1).
+        // Retain the strongest estimate in each range, using the same
+        // comparison as the live writer and recognition.
         if (
           !current ||
-          set.weightKg > current.weight ||
-          (set.weightKg === current.weight && set.reps > current.reps)
+          epley1RMExact(set.weightKg, set.reps) >
+            epley1RMExact(current.weight, current.reps)
         ) {
           map[ex.exerciseName][bucket] = {
             weight: set.weightKg,
@@ -167,6 +166,43 @@ export function bumpSessionCounts(
   return next;
 }
 
+export interface SetPR {
+  /** Session-only row identity; not stored in the PR map. */
+  setKey?: string;
+  kind: "best" | "bucket-first";
+  bucket: RepBucket;
+  weight: number;
+  reps: number;
+  previousBest: ExercisePR | null;
+}
+
+/** Keep rep-range history independently of whether the set earns recognition. */
+export function recordSetBest(
+  map: PRMap,
+  name: string,
+  record: ExercisePR
+): PRMap {
+  if (
+    !Number.isFinite(record.weight) ||
+    !Number.isFinite(record.reps) ||
+    record.weight <= 0 ||
+    record.reps <= 0
+  )
+    return map;
+  const bucket = getRepBucket(record.reps);
+  const previous = map[name]?.[bucket];
+  if (
+    previous &&
+    epley1RMExact(record.weight, record.reps) <=
+      epley1RMExact(previous.weight, previous.reps)
+  )
+    return map;
+  return {
+    ...map,
+    [name]: { ...(map[name] ?? EMPTY_BUCKETS), [bucket]: record },
+  };
+}
+
 export function checkSetPR(
   exerciseName: string,
   weight: number,
@@ -174,19 +210,58 @@ export function checkSetPR(
   prMap: PRMap,
   sessionCounts: Record<string, number>,
   minSessions: number = 3
-): RepBucket | null {
-  if (weight <= 0) return null;
+): SetPR | null {
+  if (
+    !Number.isFinite(weight) ||
+    !Number.isFinite(reps) ||
+    weight <= 0 ||
+    reps <= 0
+  )
+    return null;
   if ((sessionCounts[exerciseName] || 0) < minSessions) return null;
   const bucket = getRepBucket(reps);
   const current = prMap[exerciseName]?.[bucket];
-  // PR if heavier weight, OR same weight with more reps (rep PR at same load)
+  const previousBest = Object.values(
+    prMap[exerciseName] ?? {}
+  ).reduce<ExercisePR | null>((best, record) => {
+    if (
+      !record ||
+      !Number.isFinite(record.weight) ||
+      !Number.isFinite(record.reps)
+    )
+      return best;
+    return !best ||
+      epley1RMExact(record.weight, record.reps) >
+        epley1RMExact(best.weight, best.reps)
+      ? record
+      : best;
+  }, null);
   if (
-    !current ||
-    weight > current.weight ||
-    (weight === current.weight && reps > current.reps)
-  )
-    return bucket;
+    previousBest &&
+    epley1RMExact(weight, reps) >
+      epley1RMExact(previousBest.weight, previousBest.reps)
+  ) {
+    return { kind: "best", bucket, weight, reps, previousBest };
+  }
+  if (!current)
+    return { kind: "bucket-first", bucket, weight, reps, previousBest };
   return null;
+}
+
+export function setPRDescription(result: SetPR): string {
+  const previous = result.previousBest;
+  if (result.kind === "best" && previous) {
+    return `${result.weight} kg × ${result.reps} is a new best (was ${previous.weight} kg × ${previous.reps}).`;
+  }
+  if (!previous) return `First logged at ${result.weight} kg × ${result.reps}.`;
+  const range: Record<RepBucket, string> = {
+    "1rm": "1 rep",
+    "3rm": "2–3 reps",
+    "5rm": "4–5 reps",
+    "8rm": "6–8 reps",
+    "10rm": "9+ reps",
+  };
+  return `First time at ${range[result.bucket]}. Your best stays ${previous.weight} kg × ${previous.reps}.`;
 }
 
 /* ================================

@@ -33,7 +33,10 @@ import {
   type MomentumFocus,
   type PlanFeel,
   checkinDocPath,
+  asksExperienceQuestions,
+  EXPERIENCE_SCALE,
 } from "@/lib/momentumCheckin";
+import { track as trackLifecycleEvent } from "@/lib/lifecycleAnalytics";
 
 interface Props {
   uid: string;
@@ -58,6 +61,54 @@ function pillClass(selected: boolean): string {
   );
 }
 
+/**
+ * A 1-5 row. Deliberately not a SegmentedControl: that primitive is a
+ * single-select of NAMED options, and five bare numerals in it read as
+ * five unrelated choices rather than as a scale. The end labels are what
+ * make the direction legible without a legend.
+ */
+function ExperienceScale({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: number | null;
+  onChange: (next: number | null) => void;
+}) {
+  return (
+    <div className="space-y-1.5">
+      <p className="text-sm font-semibold text-foreground">{label}</p>
+      <div className="flex gap-2" role="group" aria-label={label}>
+        {EXPERIENCE_SCALE.map((n) => (
+          <button
+            key={n}
+            type="button"
+            aria-pressed={value === n}
+            aria-label={`${label} ${n} of 5`}
+            className={cn(
+              pillClass(value === n),
+              "flex-1 font-mono tabular-nums"
+            )}
+            onClick={() => {
+              haptic("light");
+              // Re-tapping clears, so a mis-tap is correctable without a
+              // separate "skip" control.
+              onChange(value === n ? null : n);
+            }}
+          >
+            {n}
+          </button>
+        ))}
+      </div>
+      <div className="flex justify-between text-caption text-muted-foreground">
+        <span>Not at all</span>
+        <span>Completely</span>
+      </div>
+    </div>
+  );
+}
+
 export default function MomentumCheckinCard({ uid, weekKey }: Props) {
   const navigate = useNavigate();
   // undefined = loading, null = no doc yet (show the questions)
@@ -66,7 +117,12 @@ export default function MomentumCheckinCard({ uid, weekKey }: Props) {
   );
   const [feel, setFeel] = useState<PlanFeel | null>(null);
   const [focus, setFocus] = useState<MomentumFocus | null>(null);
+  const [clarity, setClarity] = useState<number | null>(null);
+  const [ease, setEase] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
+
+  // Roughly monthly, derived from the week key alone — see the module.
+  const asksExperience = asksExperienceQuestions(weekKey);
 
   useEffect(() => {
     let cancelled = false;
@@ -104,7 +160,23 @@ export default function MomentumCheckinCard({ uid, weekKey }: Props) {
   const submit = () => {
     if (!feel) return;
     haptic("light");
-    void save({ weekKey, feel, focus, createdAt: Date.now() });
+    // Both experience answers are optional: someone can answer the
+    // training half and leave these, and an unanswered one is absent
+    // rather than stored as a middling 3 nobody chose.
+    if (clarity !== null || ease !== null) {
+      trackLifecycleEvent("checkin_answered", {
+        ...(clarity !== null ? { clarity } : {}),
+        ...(ease !== null ? { ease } : {}),
+      });
+    }
+    void save({
+      weekKey,
+      feel,
+      focus,
+      ...(clarity !== null ? { clarity } : {}),
+      ...(ease !== null ? { ease } : {}),
+      createdAt: Date.now(),
+    });
   };
 
   const dismiss = () => {
@@ -220,6 +292,28 @@ export default function MomentumCheckinCard({ uid, weekKey }: Props) {
               </button>
             ))}
           </div>
+          {asksExperience && (
+            <div className="space-y-3 pt-1">
+              {/* Separated from the training questions above, and labelled
+                  as being about the app: "the plan felt like a bit much"
+                  and "the app was hard to follow" are different
+                  complaints, and merging them loses both. */}
+              <p className="text-xs text-muted-foreground">
+                Two quick ones about the app — asked about once a month, both
+                optional.
+              </p>
+              <ExperienceScale
+                label="Did this week's plan make sense?"
+                value={clarity}
+                onChange={setClarity}
+              />
+              <ExperienceScale
+                label="Was logging easy this week?"
+                value={ease}
+                onChange={setEase}
+              />
+            </div>
+          )}
           <Button onClick={submit} loading={saving} className="w-full">
             Save check-in
           </Button>

@@ -46,6 +46,10 @@ vi.mock("@/lib/register-sw", () => ({
   getAppServiceWorkerRegistration: (...a: unknown[]) => h.getReg(...(a as [])),
 }));
 vi.mock("@/lib/firebase", () => ({ app: {}, db: {}, auth: h.authMock }));
+/* pushNotifications now takes app/auth from firebaseApp — the half of the
+   split that carries no Firestore — and reaches db only through a dynamic
+   import at the point of use. */
+vi.mock("@/lib/firebaseApp", () => ({ app: {}, auth: h.authMock }));
 vi.mock("@/lib/logger", () => ({
   logger: { error: vi.fn(), warn: vi.fn(), log: vi.fn() },
 }));

@@ -1,3 +1,4 @@
+import SectionLabel from "@/components/ui/SectionLabel";
 import { useMemo, useState, Suspense, useCallback } from "react";
 import { lazyRetry } from "@/lib/lazyRetry";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
@@ -6,12 +7,12 @@ import { ChevronLeft, Trophy, Search, Dumbbell } from "lucide-react";
 import { useWorkouts } from "@/hooks/useWorkouts";
 import { EXERCISES } from "@/lib/exercises";
 import { epley1RMExact } from "@/lib/analytics";
-import { formatDayMonth } from "@/utils/formatters";
+import { formatDayMonth, formatLoadKg } from "@/utils/formatters";
 import { THEME } from "@/lib/theme";
 import { haptic } from "@/lib/haptic";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { localDateString } from "@/lib/dateHelpers";
+import { localDateString, parseLocalDate } from "@/lib/dateHelpers";
 import { isTimedExerciseId } from "@/features/program/repUnits";
 
 const ExerciseProgressChart = lazyRetry(
@@ -68,16 +69,6 @@ function topSetOf(
     }
   }
   return best;
-}
-
-function formatWeight(kg: number): string {
-  if (kg === 0) return "BW";
-  return `${kg % 1 === 0 ? kg.toFixed(0) : kg.toFixed(1)} kg`;
-}
-
-function formatDate(dateStr: string): string {
-  const d = new Date(dateStr + "T12:00:00");
-  return formatDayMonth(d);
 }
 
 export default function ExerciseHistory() {
@@ -290,9 +281,9 @@ export default function ExerciseHistory() {
   if (loading) {
     return (
       <div className="space-y-4 pt-2">
-        <div className="h-8 bg-muted/50 rounded animate-pulse" />
-        <div className="h-24 bg-muted/50 rounded-2xl animate-pulse" />
-        <div className="h-48 bg-muted/50 rounded-2xl animate-pulse" />
+        <div className="h-8 bg-muted/50 rounded motion-safe:animate-pulse" />
+        <div className="h-24 bg-muted/50 rounded-2xl motion-safe:animate-pulse" />
+        <div className="h-48 bg-muted/50 rounded-2xl motion-safe:animate-pulse" />
       </div>
     );
   }
@@ -334,14 +325,18 @@ export default function ExerciseHistory() {
           <ChevronLeft className="size-5 text-foreground" />
         </button>
         <div className="flex-1 min-w-0">
-          <h1 className="text-lg font-extrabold text-foreground truncate">
+          <h1 className="text-xl font-extrabold text-foreground truncate">
             {decodedName}
           </h1>
           {exercise && (
             <div className="flex items-center gap-2 mt-0.5">
-              <span className="text-caption font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-lifting/9 text-lifting-strong">
+              <SectionLabel
+                as="span"
+                tier="section"
+                className="text-lifting-strong"
+              >
                 {exercise.muscleGroup}
-              </span>
+              </SectionLabel>
               <span className="text-xs text-muted-foreground">
                 {exercise.equipment}
               </span>
@@ -353,9 +348,9 @@ export default function ExerciseHistory() {
       {/* ── Stat strip ───────────────────────────────────────────────── */}
       <div className="grid grid-cols-3 gap-2">
         <div className="p-3 rounded-xl bg-card card-shadow">
-          <p className="text-caption uppercase tracking-wider font-medium text-muted-foreground">
+          <SectionLabel tier="section">
             {isTimed ? "Longest hold" : isBodyweight ? "Max reps" : "Best 1RM"}
-          </p>
+          </SectionLabel>
           <p className="text-lg font-extrabold font-mono tabular-nums text-foreground mt-1">
             {isTimed
               ? headerStats.longestHold
@@ -374,17 +369,13 @@ export default function ExerciseHistory() {
           </p>
         </div>
         <div className="p-3 rounded-xl bg-card card-shadow">
-          <p className="text-caption uppercase tracking-wider font-medium text-muted-foreground">
-            Sessions
-          </p>
+          <SectionLabel tier="section">Sessions</SectionLabel>
           <p className="text-lg font-extrabold font-mono tabular-nums text-foreground mt-1">
             {headerStats.totalSessions}
           </p>
         </div>
         <div className="p-3 rounded-xl bg-card card-shadow">
-          <p className="text-caption uppercase tracking-wider font-medium text-muted-foreground">
-            Total sets
-          </p>
+          <SectionLabel tier="section">Total sets</SectionLabel>
           <p className="text-lg font-extrabold font-mono tabular-nums text-foreground mt-1">
             {headerStats.totalSets}
           </p>
@@ -412,7 +403,7 @@ export default function ExerciseHistory() {
         <div className="rounded-2xl bg-card p-4 card-shadow">
           <Suspense
             fallback={
-              <div className="h-40 bg-muted/30 rounded animate-pulse" />
+              <div className="h-40 bg-muted/30 rounded motion-safe:animate-pulse" />
             }
           >
             <ExerciseFormContent exerciseName={decodedName} />
@@ -442,9 +433,7 @@ export default function ExerciseHistory() {
                   const pr = repRangePRs[b];
                   return (
                     <div key={b} className="text-center">
-                      <p className="text-caption uppercase tracking-wider text-muted-foreground font-medium">
-                        {b}RM
-                      </p>
+                      <SectionLabel tier="section">{b}RM</SectionLabel>
                       <p className="text-sm font-bold font-mono tabular-nums text-foreground mt-0.5">
                         {pr
                           ? isBodyweight && pr.weightKg === 0
@@ -459,7 +448,7 @@ export default function ExerciseHistory() {
                       </p>
                       {pr && (
                         <p className="text-caption text-muted-foreground mt-0.5">
-                          {formatDate(pr.date)}
+                          {formatDayMonth(parseLocalDate(pr.date))}
                         </p>
                       )}
                     </div>
@@ -494,9 +483,7 @@ export default function ExerciseHistory() {
           ) : (
             <div className="rounded-2xl bg-card p-4 space-y-3 card-shadow">
               <div className="flex items-center justify-between gap-2">
-                <p className="text-xs uppercase tracking-wider font-medium text-muted-foreground">
-                  Progression
-                </p>
+                <SectionLabel>Progression</SectionLabel>
                 <div className="flex gap-1 bg-muted rounded-full p-0.5">
                   {metricOptions.map((m) => (
                     <button
@@ -524,7 +511,7 @@ export default function ExerciseHistory() {
               </div>
               <Suspense
                 fallback={
-                  <div className="h-40 bg-muted/30 rounded animate-pulse" />
+                  <div className="h-40 bg-muted/30 rounded motion-safe:animate-pulse" />
                 }
               >
                 <ExerciseProgressChart
@@ -557,7 +544,7 @@ export default function ExerciseHistory() {
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-1.5">
                           <p className="text-xs font-medium text-foreground">
-                            {formatDate(s.date)}
+                            {formatDayMonth(parseLocalDate(s.date))}
                           </p>
                           {isPR && (
                             <span
@@ -586,7 +573,7 @@ export default function ExerciseHistory() {
                           {s.topSet
                             ? isTimed
                               ? `${s.topSet.reps}s`
-                              : `${formatWeight(s.topSet.weightKg)} × ${s.topSet.reps}`
+                              : `${formatLoadKg(s.topSet.weightKg)} × ${s.topSet.reps}`
                             : "—"}
                         </p>
                         {delta != null && delta !== 0 && (

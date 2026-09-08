@@ -43,10 +43,13 @@ const mapOpts = vi.hoisted(
   () => [] as { center: [number, number]; zoom: number }[]
 );
 
+const mapFailure = vi.hoisted(() => ({ enabled: false }));
+
 vi.mock("maplibre-gl/dist/maplibre-gl.css", () => ({}));
 vi.mock("maplibre-gl", () => {
   class FakeMap {
     constructor(opts: { center: [number, number]; zoom: number }) {
+      if (mapFailure.enabled) throw new Error("WebGL2 unavailable");
       mapOpts.push(opts);
     }
     on() {}
@@ -62,12 +65,13 @@ vi.mock("maplibre-gl", () => {
     flyTo() {}
     remove() {}
   }
-  return { default: { Map: FakeMap } };
+  return { Map: FakeMap, setWorkerUrl: vi.fn() };
 });
 
 afterEach(() => {
   cleanup();
   mapOpts.length = 0;
+  mapFailure.enabled = false;
 });
 
 function setup(
@@ -128,3 +132,22 @@ describe("RoutePlannerSheet — where the map opens", () => {
     expect(mapOpts[0].zoom).toBeLessThan(5);
   });
 });
+
+it.each([true, false])(
+  "keeps the planner dismissible when WebGL2 fails (dark mode: %s)",
+  (darkMode) => {
+    mapFailure.enabled = true;
+    const { onClose } = setup({ darkMode });
+    expect(screen.getByRole("status")).toHaveTextContent("Map unavailable");
+    expect(
+      screen.getByRole("button", { name: "Centre on my location" })
+    ).toBeDisabled();
+    expect(
+      screen.getByRole("button", { name: /Save & follow/ })
+    ).toBeDisabled();
+    fireEvent.click(
+      screen.getByRole("button", { name: "Close route planner" })
+    );
+    expect(onClose).toHaveBeenCalledOnce();
+  }
+);

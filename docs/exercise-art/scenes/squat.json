@@ -1,0 +1,48 @@
+{
+  "exerciseId": "squat",
+  "status": "reviewed",
+  "reference": "public/form-frames/barbell-row/1.webp",
+  "variation": "High-bar back squat, approximately shoulder-width stance",
+  "camera": "Fixed three-quarter view facing left; entire body, both bar ends and shoes visible on one portrait canvas.",
+  "anchors": "Both heels and toes, ground plane, camera and crop remain fixed; head/torso/pelvis move only as required by the squat.",
+  "equipment": "Rigid straight bar on upper traps, one identical modest plate on each end, equal sleeves and collars. Both hands keep fixed grip width. No rack changes or plate labels.",
+  "primary": "Quadriceps and gluteus maximus",
+  "secondary": "Adductors where visible, lighter lilac",
+  "stabilisers": "Pale purple at trunk/spinal stabilisers only, no unrelated upper-arm highlighting.",
+  "techniqueSources": [
+    "https://www.acefitness.org/resources/everyone/exercise-library/11/back-squat/"
+  ],
+  "states": [
+    {
+      "body": "Stand tall, bar supported on upper traps, brace.",
+      "equipment": "Bar stays on traps, rigid and level across shoulders; both hands attached, grip width and plate dimensions unchanged.",
+      "cableAndStack": "Not applicable; no cable or stack."
+    },
+    {
+      "body": "Flex hips and knees together, heels planted.",
+      "equipment": "Bar stays on traps, rigid and level across shoulders; both hands attached, grip width and plate dimensions unchanged.",
+      "cableAndStack": "Not applicable; no cable or stack."
+    },
+    {
+      "body": "Hip crease near knee level, knees tracking toes.",
+      "equipment": "Bar stays on traps, rigid and level across shoulders; both hands attached, grip width and plate dimensions unchanged.",
+      "cableAndStack": "Not applicable; no cable or stack."
+    },
+    {
+      "body": "Deepest controlled depth available without lumbar rounding; clearly lower than frame 3.",
+      "equipment": "Bar stays on traps, rigid and level across shoulders; both hands attached, grip width and plate dimensions unchanged.",
+      "cableAndStack": "Not applicable; no cable or stack."
+    },
+    {
+      "body": "Drive up, chest and hips rise together, feet remain on the same floor.",
+      "equipment": "Bar stays on traps, rigid and level across shoulders; both hands attached, grip width and plate dimensions unchanged.",
+      "cableAndStack": "Not applicable; no cable or stack."
+    },
+    {
+      "body": "Stand tall again with hips and knees extended.",
+      "equipment": "Bar stays on traps, rigid and level across shoulders; both hands attached, grip width and plate dimensions unchanged.",
+      "cableAndStack": "Not applicable; no cable or stack."
+    }
+  ],
+  "loopBoundary": "Frame 6 is standing after the drive, matching the start setup. Hold across 6 to 1; never play the drive in reverse."
+}

@@ -161,7 +161,7 @@ export default function TrainingLoadCard({
         </ComposedChart>
       </ResponsiveContainer>
 
-      <p className="text-[10px] text-muted-foreground mt-2">
+      <p className="text-xs text-muted-foreground mt-2">
         The purple curve is your 6-week training base; the bars are daily
         sessions (<span style={{ color: THEME.running }}>runs</span> ·{" "}
         <span style={{ color: THEME.brand }}>lifts</span>). Positive form =

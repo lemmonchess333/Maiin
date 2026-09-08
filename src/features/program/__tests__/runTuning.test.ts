@@ -325,3 +325,57 @@ describe("Pgm6 — planBuilder threading", () => {
     expect(out.profileUpdates.runDifficulty).toBe("standard");
   });
 });
+
+describe("Run18 — build weeks keep one easy run whenever there is room for one", () => {
+  const isQuality = (d: { type: string }) =>
+    d.type === "tempo" || d.type === "intervals";
+
+  it("harder at THREE run days is one quality session, not two (the easy day survives)", () => {
+    const harder = plan({
+      distance: "marathon",
+      daysAhead: 120,
+      runDays: 3,
+      tuning: { volume: "standard", difficulty: "harder" },
+    });
+    for (const week of harder.weeks) {
+      const quality = week.filter(isQuality).length;
+      const easy = week.filter((d) => d.type === "easy").length;
+      if (quality > 0)
+        expect(easy, "a build week with quality").toBeGreaterThan(0);
+      expect(quality).toBeLessThanOrEqual(1);
+    }
+  });
+
+  it("every uncompressed build week with ≥3 run days carries an easy run, for every distance × frequency × difficulty", () => {
+    for (const distance of ["5k", "10k", "half", "marathon"] as const) {
+      for (const runDays of [3, 4, 5, 6]) {
+        for (const difficulty of ["gentler", "standard", "harder"] as const) {
+          const out = plan({
+            distance,
+            daysAhead: 140,
+            runDays,
+            liftDays: 1,
+            tuning: { volume: "standard", difficulty },
+          });
+          if (out.compressed) continue;
+          out.weeks.forEach((week, i) => {
+            if (!week.some(isQuality)) return; // base / taper / race weeks
+            expect(
+              week.some((d) => d.type === "easy"),
+              `${distance} ${runDays}d ${difficulty} week ${i}`
+            ).toBe(true);
+          });
+        }
+      }
+    }
+  });
+
+  it("the 2-run-day week stays long + quality — the long run is the week's easy work", () => {
+    const out = plan({ distance: "half", daysAhead: 120, runDays: 2 });
+    const buildWeek = out.weeks.find((w) => w.some(isQuality));
+    expect(buildWeek).toBeDefined();
+    expect(buildWeek!.filter(isQuality).length).toBe(1);
+    expect(buildWeek!.some((d) => d.type === "long")).toBe(true);
+    expect(buildWeek!.some((d) => d.type === "easy")).toBe(false);
+  });
+});

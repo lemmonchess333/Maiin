@@ -1,0 +1,20 @@
+{
+  "status": "draft-awaiting-review",
+  "visualApproval": false,
+  "staticImagesInspected": true,
+  "sequentialPlaybackVerified": false,
+  "mobileLightDarkVerified": false,
+  "findings": [
+    "The same four selected plates now translate 0, 136, 327, 327, 136 and 0 pixels upward, paired with the measured downward bar movement. The lower stack stays pixel-exact.",
+    "Two continuous guide rails are reconstructed once from the original rail texture and reused in every frame; this corrects the interrupted rails in the generated sources.",
+    "Upper-body poses retain generated anatomy. Grip spacing and the bar-end silhouette vary slightly between source poses; forward clearance at the neck and the final upper-chest position still need technique review.",
+    "The upper-body composite feathers into the fixed lower body over y860\u2013875; no deformation is applied to the plate block. Pelvis, feet and seat below y876 are pixel-exact.",
+    "The six beats use three joint configurations: setup, partial pull, finish pull, brief hold, controlled return and overhead return. The repeated endpoint closes the loop without a positional jump.",
+    "Static contact sheet and individual composite frames inspected. Native playback and mobile light/dark review are not certified; keep outside the production registry."
+  ],
+  "measurements": "measurements.json",
+  "referencePath": "../1-stack-corrected.png",
+  "referenceSha256": "a90cd7dc1f880e1172db9f40d285f12b317b43537f884ad2ba607890ba27ca68",
+  "sourceBottomSha256": "ed1b6a6677cc97edfbf3d6fe3461eac32255bdc261b1a1f0bddfd438cb21449e",
+  "ownerMethodAuthorization": "User said Yeah after being asked to use deterministic raster compositing to preserve the machine and move four plates by the exact required distance."
+}

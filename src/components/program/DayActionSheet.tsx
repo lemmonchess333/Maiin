@@ -33,6 +33,7 @@
 
 import { useMemo, useState } from "react";
 import SectionLabel from "@/components/ui/SectionLabel";
+import MetaLine from "@/components/ui/MetaLine";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import {
   Footprints,
@@ -46,7 +47,7 @@ import {
 import { THEME } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import { RUN_TEMPLATES, isScheduledRaceRunDay } from "@/lib/workoutTemplates";
-import { runSessionExplainer } from "@/lib/runSessionExplainer";
+import { runSessionPresentation } from "@/lib/runSessionExplainer";
 import { sessionFuelingLine } from "@/lib/fueling";
 import { sessionPaceDisplay } from "@/lib/runLabels";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
@@ -236,7 +237,7 @@ export default function DayActionSheet({
   const selectedRunWhy: string | null = (() => {
     if (!selectedRunTemplate || !run.runDay) return null;
     const rp = programState?.runPlan;
-    return runSessionExplainer({
+    return runSessionPresentation({
       type: selectedRunTemplate.type,
       templateId: selectedRunTemplate.id,
       currentWeek: rp?.currentWeek,
@@ -247,7 +248,7 @@ export default function DayActionSheet({
         | "half"
         | "marathon"
         | undefined,
-    });
+    }).purpose;
   })();
   // Race-day detection by TEMPLATE TYPE, not by `templateId === "race"`.
   // Race templates have ids like `5k_race` / `marathon_race` (never the
@@ -372,18 +373,16 @@ export default function DayActionSheet({
                     </p>
                   )}
                 {(selectedRunMeta || selectedRunHr) && (
-                  <div className="mt-2 flex flex-wrap gap-1.5">
-                    {selectedRunMeta && (
-                      <span className="inline-flex rounded-full bg-background/70 px-2.5 py-1 text-caption font-semibold text-muted-foreground">
-                        {selectedRunMeta}
-                      </span>
+                  /* Distance/duration and the HR zone are facts about the
+                     session, so they read as one line — the same MetaLine
+                     the command card uses — not as two pills. */
+                  <MetaLine
+                    size="xs"
+                    className="mt-2"
+                    items={[selectedRunMeta, selectedRunHr].filter(
+                      (s): s is string => Boolean(s)
                     )}
-                    {selectedRunHr && (
-                      <span className="inline-flex rounded-full bg-running/10 px-2.5 py-1 text-caption font-semibold text-running-strong font-mono tabular-nums">
-                        {selectedRunHr}
-                      </span>
-                    )}
-                  </div>
+                  />
                 )}
               </div>
               <div className="shrink-0 pt-1">
@@ -449,7 +448,7 @@ export default function DayActionSheet({
                   disabled={!run.isStartable || isRaceTemplate}
                   aria-label={
                     isRaceTemplate
-                      ? "Race day — template locked"
+                      ? "Race day · template locked"
                       : run.isStartable
                         ? "Run template"
                         : `${run.status} — template locked`
@@ -549,7 +548,7 @@ export default function DayActionSheet({
                       real "Finished" path is deliberately absent —
                       race-day completion is strictly real-saved-
                       run-only (Q1 P4 / Q2 P21); logging the run via
-                      Start Run is the only valid completion path. */}
+                      Start run is the only valid completion path. */}
                     {run.isStartable && isRaceTemplate && (
                       <>
                         <button

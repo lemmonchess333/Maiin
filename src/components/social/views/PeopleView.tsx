@@ -1,4 +1,5 @@
 import { useSuggestedPeople } from "@/hooks/useSuggestedPeople";
+import SectionLabel from "@/components/ui/SectionLabel";
 import { useSpacesDirectory } from "@/features/spaces/useSpacesDirectory";
 import { spaceDef } from "@/features/spaces/spaceDefs";
 import { useRestrictedStatus } from "@/hooks/useRestrictedStatus";
@@ -172,8 +173,7 @@ export default function PeopleView({
   }, []);
 
   const handleShareInvite = async () => {
-    const text =
-      "I'm tracking my lifts and runs on Tropos. Join me and let's compete!";
+    const text = "I'm tracking my lifts and runs on Tropos. Come join me.";
     if (navigator.share) {
       try {
         await navigator.share({
@@ -230,9 +230,7 @@ export default function PeopleView({
       still fires immediately — so it's been folded into the
       field instead of competing for visual weight beside it. */}
         <div className="space-y-3">
-          <p className="text-small font-semibold uppercase tracking-wide text-muted-foreground">
-            Find someone
-          </p>
+          <SectionLabel>Find someone</SectionLabel>
           <div className="relative">
             <Search
               className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none"
@@ -252,7 +250,7 @@ export default function PeopleView({
               }}
               aria-label={
                 isRestricted
-                  ? "Search is unavailable — your account is restricted"
+                  ? "Search is unavailable while your account is restricted"
                   : "Search athletes"
               }
               disabled={isRestricted}
@@ -363,9 +361,7 @@ export default function PeopleView({
         {/* Suggested People */}
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <p className="text-small font-semibold uppercase tracking-wide text-muted-foreground">
-              Suggested people
-            </p>
+            <SectionLabel>Suggested people</SectionLabel>
             {suggestedPeople.length > 0 && !suggestedLoading && (
               <button
                 type="button"
@@ -450,9 +446,7 @@ export default function PeopleView({
       previous arrangement put it above search which is wrong
       for high-intent users trying to find someone specific. */}
         <div className="space-y-3">
-          <p className="text-small font-semibold uppercase tracking-wide text-muted-foreground">
-            Bring a friend
-          </p>
+          <SectionLabel>Bring a friend</SectionLabel>
           <div
             className="p-3 rounded-2xl border"
             style={{
@@ -494,7 +488,7 @@ export default function PeopleView({
                   disabled={isRestricted}
                   aria-label={
                     isRestricted
-                      ? "Inviting is unavailable — your account is restricted"
+                      ? "Inviting is unavailable while your account is restricted"
                       : undefined
                   }
                   className="w-full min-h-[44px] py-2.5 rounded-xl text-white font-medium text-sm active:scale-[0.97] transition-transform disabled:opacity-50 disabled:cursor-not-allowed"
@@ -510,7 +504,7 @@ export default function PeopleView({
                 disabled={isRestricted}
                 aria-label={
                   isRestricted
-                    ? "Inviting is unavailable — your account is restricted"
+                    ? "Inviting is unavailable while your account is restricted"
                     : undefined
                 }
                 className="w-full min-h-[44px] py-2.5 rounded-xl text-white font-medium text-sm active:scale-[0.97] transition-transform disabled:opacity-50 disabled:cursor-not-allowed"

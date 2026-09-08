@@ -33,7 +33,7 @@ function mount() {
         onSelect={vi.fn()}
         onMultiSelect={onMultiSelect}
         onClose={vi.fn()}
-        headerTitle="Add Exercise"
+        headerTitle="Add exercise"
       />
     </MemoryRouter>
   );

@@ -309,3 +309,60 @@ describe("resolveSnapshotCalorieTarget — client and server agree", () => {
     }
   });
 });
+
+/* ── Nutr3: an infeasible target is NO target, on both copies ─────────── */
+import { isBelowEssentialFatCost as clientBelow } from "../adaptiveTarget";
+import { ESSENTIAL_FAT_FLOOR_PER_KG } from "../macroConstants";
+
+describe("Nutr3 — a calorie target below the essential-fat floor is no target", () => {
+  const { isBelowEssentialFatCost: serverBelow } = server;
+
+  it("the server's floor constant is the client's", () => {
+    expect(server.ESSENTIAL_FAT_FLOOR_PER_KG).toBe(ESSENTIAL_FAT_FLOOR_PER_KG);
+  });
+
+  it("both resolvers return null for a 100 kcal target at 70 kg (floor 378 kcal)", () => {
+    const profile = {
+      targetCalories: 100,
+      customCalorieTarget: 100,
+      weightKg: 70,
+    };
+    expect(resolveScoringCalorieTarget(profile, "pro")).toBeNull();
+    expect(resolveSnapshotCalorieTarget(profile, true)).toBeNull();
+  });
+
+  it("and a target that funds the floor still resolves", () => {
+    const profile = {
+      targetCalories: 400,
+      customCalorieTarget: 400,
+      weightKg: 70,
+    };
+    expect(resolveScoringCalorieTarget(profile, "pro")).toMatchObject({
+      source: "formula",
+      value: 400,
+    });
+    expect(resolveSnapshotCalorieTarget(profile, true)).toMatchObject({
+      source: "formula",
+      value: 400,
+    });
+  });
+
+  it("an unknown weight never triggers the guard", () => {
+    const profile = { targetCalories: 100, customCalorieTarget: 100 };
+    expect(resolveScoringCalorieTarget(profile, "pro")).not.toBeNull();
+    expect(resolveSnapshotCalorieTarget(profile, true)).not.toBeNull();
+  });
+
+  it("the predicate agrees across a grid of weights and targets", () => {
+    for (let kg = 40; kg <= 160; kg += 10) {
+      for (let kcal = 0; kcal <= 1200; kcal += 50) {
+        expect(serverBelow(kcal, kg), `${kcal} kcal @ ${kg} kg`).toBe(
+          clientBelow(kcal, kg)
+        );
+      }
+    }
+    // The boundary is the essential-fat cost itself: 0.6 × 70 = 42 g × 9.
+    expect(clientBelow(377, 70)).toBe(true);
+    expect(clientBelow(378, 70)).toBe(false);
+  });
+});

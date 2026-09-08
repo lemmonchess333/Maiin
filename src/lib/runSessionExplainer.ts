@@ -21,7 +21,32 @@ export interface SessionExplainerInput {
   /** Stored 0-based week index; null when the plan carries no counters. */
   currentWeek: number | null | undefined;
   totalWeeks: number | null | undefined;
-  distance: "5k" | "10k" | "half" | "marathon" | null | undefined;
+  distance: string | null | undefined;
+}
+
+/** Shared by Manage, Programme and Home: the explanation and real phase agree. */
+export function runSessionPresentation(input: SessionExplainerInput): {
+  purpose: string | null;
+  weekLabel: string | null;
+} {
+  const purpose = runSessionExplainer(input);
+  if (
+    !purpose ||
+    input.currentWeek == null ||
+    input.totalWeeks == null ||
+    !input.distance
+  ) {
+    return { purpose: null, weekLabel: null };
+  }
+  const phase = getPhaseForWeek(
+    input.currentWeek,
+    input.totalWeeks,
+    input.distance as "5k" | "10k" | "half" | "marathon"
+  );
+  return {
+    purpose,
+    weekLabel: `${phase.charAt(0).toUpperCase() + phase.slice(1)} · week ${input.currentWeek + 1} of ${input.totalWeeks}`,
+  };
 }
 
 const MEDIUM_LONG_IDS = new Set(["easy_60", "easy_75", "easy_90"]);
@@ -33,8 +58,15 @@ export function runSessionExplainer(
   if (
     currentWeek == null ||
     totalWeeks == null ||
+    !Number.isInteger(currentWeek) ||
+    currentWeek < 0 ||
+    !Number.isInteger(totalWeeks) ||
     totalWeeks <= 0 ||
-    !distance
+    currentWeek >= totalWeeks ||
+    (distance !== "5k" &&
+      distance !== "10k" &&
+      distance !== "half" &&
+      distance !== "marathon")
   ) {
     return null;
   }

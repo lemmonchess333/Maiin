@@ -1,3 +1,5 @@
+import { liftCompletionContext } from "@/lib/completionPlanContext";
+import ProgramStallReview from "@/components/program/ProgramStallReview";
 import { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import type { ReactNode } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -7,6 +9,7 @@ import { useAuth } from "@/lib/auth";
 import { useWorkouts } from "@/hooks/useWorkouts";
 import { getWeeklyRunTarget } from "@/lib/scheduleUtils";
 import ProgrammeRunSection from "@/components/program/ProgrammeRunSection";
+import ProgramOfflineBanner from "@/components/program/ProgramOfflineBanner";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { Button } from "@/components/ui/Button";
 import WorkoutSession from "@/components/WorkoutSession";
@@ -22,6 +25,10 @@ import {
   blockPrefersShorterSessions,
 } from "@/features/program/represcribe";
 import { THEME } from "@/lib/theme";
+import {
+  liftSessionExplainer,
+  liftWeekLabel,
+} from "@/lib/liftSessionExplainer";
 import WeekPhaseRow from "@/components/program/WeekPhaseRow";
 import SkipConfirmSheet from "@/components/program/SkipConfirmSheet";
 import ExpressSessionSheet from "@/components/program/ExpressSessionSheet";
@@ -120,18 +127,6 @@ export default function Program() {
   return <ProgramInner />;
 }
 
-function formatVolume(kg: number): string {
-  // 0kg isn't a meaningful "volume achievement" — it just means
-  // every exercise in the session was bodyweight or uncalibrated, in
-  // which case asserting "0kg" reads as a loss rather than as
-  // "weight wasn't the metric here." Show an em-dash instead.
-  if (kg <= 0) return "—";
-  if (kg >= 1000) return `${(kg / 1000).toFixed(1)}t`;
-  // Spaced unit — the repo-wide convention (DS2): "32.5 kg", matching the
-  // "Last: 60 kg × 8" line two rows below on the same card.
-  return `${Math.round(kg)} kg`;
-}
-
 function ProgramInner() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -224,46 +219,7 @@ function ProgramInner() {
     return true;
   }, [applyDeloadWeek, revertDeloadWeek]);
 
-  /**
-   * `completeWorkoutDay`, plus the only route back to what you just saved.
-   *
-   * The completion screen unmounts on save and drops you here on /program.
-   * Before `/workout/:id` existed there was nowhere to go, so nothing was
-   * offered; now the session is a record, and a toast action is the same
-   * shape `Routine` already uses for "View PRs" — no auto-navigation, which
-   * neither this surface nor RunSummary does.
-   *
-   * `completeWorkoutDay` returns `{ workoutId }`; it is typed
-   * `Promise<unknown>` through the WorkoutSession prop, so narrow rather
-   * than cast. A missing id just means no action on the toast.
-   */
-  const completeWithViewToast = useCallback(
-    async (
-      dayIndex: number,
-      sessionData: Parameters<typeof completeWorkoutDay>[1]
-    ) => {
-      const result = await completeWorkoutDay(dayIndex, sessionData);
-      const workoutId =
-        result &&
-        typeof result === "object" &&
-        typeof (result as { workoutId?: unknown }).workoutId === "string"
-          ? (result as { workoutId: string }).workoutId
-          : null;
-      toast.success(
-        "Workout saved",
-        workoutId
-          ? {
-              action: {
-                label: "View",
-                onClick: () => navigate(`/workout/${workoutId}`),
-              },
-            }
-          : undefined
-      );
-      return result;
-    },
-    [completeWorkoutDay, navigate]
-  );
+  const completeWithViewToast = completeWorkoutDay;
 
   const runsTarget = getWeeklyRunTarget(profile);
   // PR-2: weekly layout editor sheet. Mounted conditionally — when
@@ -378,7 +334,7 @@ function ProgramInner() {
   const [sessionDayIndex, setSessionDayIndex] = useState<number | null>(null);
   // PROGRAM-FLEX-01: Express Session chooser target + chosen variant.
   // The chooser only opens when a budget would actually change the day
-  // (expressChoices > 1); otherwise Begin Workout stays one tap.
+  // (expressChoices > 1); otherwise Start workout stays one tap.
   const [expressChooserDay, setExpressChooserDay] = useState<number | null>(
     null
   );
@@ -772,11 +728,6 @@ function ProgramInner() {
   const estimatedMinutes = estimateSessionMinutes(
     selectedWorkout?.exercises ?? []
   );
-  const totalVolume =
-    selectedWorkout?.exercises.reduce(
-      (sum, ex) => sum + ex.sets * ex.reps * ex.weight,
-      0
-    ) ?? 0;
 
   // PROGRAM-BLOCK-01: the programme's main compounds become the new
   // block's default anchor lifts (v1 auto-anchors — no picker yet).
@@ -811,11 +762,6 @@ function ProgramInner() {
     setDirection(newIndex > idx ? 1 : -1);
     selectDay(newIndex);
     trackProgrammeEvent("programme_day_tapped", { dayIndex: newIndex });
-  };
-
-  const goalLabel = (g: string) => {
-    if (g === "lean bulk") return "Lean Bulk";
-    return g.charAt(0).toUpperCase() + g.slice(1);
   };
 
   // W1b legibility line: "Built for [lifting goal] · [split] · [N] days/week"
@@ -962,6 +908,7 @@ function ProgramInner() {
   const SportIcon = activeTab === "run" ? Footprints : Dumbbell;
   return (
     <div>
+      <ProgramOfflineBanner />
       {/* ── Header Zone ── */}
       <div
         className="rounded-2xl px-3 pt-1.5 pb-2.5 transition-colors duration-300"
@@ -1132,7 +1079,18 @@ function ProgramInner() {
             <div>
               <WeekPhaseRow
                 weekNumber={displayWeekNumber}
-                phaseName={goalLabel(programState.goal)}
+                label={
+                  liftWeekLabel(
+                    {
+                      ...programState,
+                      weekNumber: displayWeekNumber,
+                      trainingBlock: isViewingHistory
+                        ? undefined
+                        : programState.trainingBlock,
+                    },
+                    localDateString()
+                  ) ?? undefined
+                }
                 onPrevWeek={goBack}
                 onNextWeek={goForward}
                 canGoPrev={canGoBack}
@@ -1195,7 +1153,7 @@ function ProgramInner() {
             disabled={advancing}
             leftIcon={<FastForward className="size-4" />}
           >
-            {advancing ? "Advancing..." : "Advance to Next Week"}
+            {advancing ? "Starting…" : "Start next week"}
           </Button>
         </div>
       )}
@@ -1312,14 +1270,30 @@ function ProgramInner() {
                                 : "Upcoming"
                         } · Day ${idx + 1}`}
                         title={selectedWorkout.dayName}
-                        description={muscleGroups || undefined}
-                        meta={[
-                          `${exerciseCount} exercises`,
-                          `~${estimatedMinutes} min`,
-                        ]}
+                        description={
+                          isViewingHistory
+                            ? undefined
+                            : (liftSessionExplainer(
+                                programState,
+                                localDateString(),
+                                "full",
+                                selectedWorkout.exercises.map(
+                                  (ex) => ex.progressionType
+                                )
+                              ) ?? undefined)
+                        }
+                        meta={
+                          status === "completed"
+                            ? []
+                            : [
+                                ...(muscleGroups ? [muscleGroups] : []),
+                                `${exerciseCount} exercises`,
+                                `~${estimatedMinutes} min`,
+                              ]
+                        }
                         primaryActionLabel={
                           status === "today" && !selectedWorkout.completed
-                            ? "Begin Workout"
+                            ? "Start workout"
                             : undefined
                         }
                         onPrimaryAction={
@@ -1374,6 +1348,13 @@ function ProgramInner() {
                           </button>
                         )}
 
+                      {sessionDayIndex === null && (
+                        <ProgramStallReview
+                          key={`${programState.weekNumber}:${idx}`}
+                          exercises={selectedWorkout.exercises}
+                        />
+                      )}
+
                       {/* Secondary action: skip this session — mirrors the
                           Run card's "Start free run instead" link. Offered on
                           the cursor day AND any upcoming day of the CURRENT
@@ -1421,7 +1402,7 @@ function ProgramInner() {
                                 setShowSkipConfirm(true);
                               }}
                             >
-                              Skip Session
+                              Skip session
                             </Button>
 
                             {/* PROGRAM-SESSION-ORDER-01: real weeks rarely
@@ -1440,7 +1421,7 @@ function ProgramInner() {
                                 }}
                                 className="min-h-[44px] px-4 inline-flex items-center justify-center text-sm font-medium text-muted-foreground active:scale-[0.97] transition-transform"
                               >
-                                Make This Next
+                                Make this next
                               </button>
                             )}
                             {status === "today" &&
@@ -1453,7 +1434,7 @@ function ProgramInner() {
                                   }}
                                   className="min-h-[44px] px-4 inline-flex items-center justify-center text-sm font-medium text-muted-foreground active:scale-[0.97] transition-transform"
                                 >
-                                  Follow Programme Order
+                                  Follow programme order
                                 </button>
                               )}
                           </div>
@@ -1701,7 +1682,7 @@ function ProgramInner() {
                         </div>
                       )}
 
-                      {/* ── + Add Exercise (not on completed/skipped) ── */}
+                      {/* ── + Add exercise (not on completed/skipped) ── */}
                       {status !== "completed" && status !== "skipped" && (
                         <button
                           type="button"
@@ -1711,58 +1692,23 @@ function ProgramInner() {
                           }}
                           className="w-full py-3 text-center active:scale-[0.97] transition-all flex items-center justify-center gap-2 bg-card rounded-xl text-primary font-medium text-sm"
                         >
-                          <Plus className="size-4" /> Add Exercise
+                          <Plus className="size-4" /> Add exercise
                         </button>
                       )}
 
                       {/* ── Completed Session Summary ── */}
                       {status === "completed" && (
-                        <div
-                          className="rounded-xl p-3"
-                          style={{
-                            // Brand success green via the THEME token (=#4DB872)
-                            // + hex alpha, not a raw rgb literal. Faithful swap:
-                            // the Tailwind `--success` token is a different,
-                            // darker green, so bg-success/5 would shift the
-                            // colour — THEME.success keeps it exact.
-                            backgroundColor: `${THEME.success}0D`,
-                            border: `1px solid ${THEME.success}26`,
-                          }}
-                        >
-                          <div className="flex justify-around items-center">
-                            <div className="text-center">
-                              <p className="text-base font-bold font-mono tabular-nums text-foreground">
-                                ~{estimatedMinutes} min
-                              </p>
-                              <p className="text-caption font-medium text-muted-foreground">
-                                Duration
-                              </p>
-                            </div>
-                            <div
-                              className="bg-border/60"
-                              style={{ width: 1, height: 24 }}
-                            />
-                            <div className="text-center">
-                              <p className="text-base font-bold font-mono tabular-nums text-foreground">
-                                {formatVolume(totalVolume)}
-                              </p>
-                              <p className="text-caption font-medium text-muted-foreground">
-                                Volume
-                              </p>
-                            </div>
-                            <div
-                              className="bg-border/60"
-                              style={{ width: 1, height: 24 }}
-                            />
-                            <div className="text-center">
-                              <p className="text-base font-bold font-mono tabular-nums text-foreground">
-                                {exerciseCount}
-                              </p>
-                              <p className="text-caption font-medium text-muted-foreground">
-                                Exercises
-                              </p>
-                            </div>
-                          </div>
+                        <div className="rounded-xl border border-border bg-card p-4 space-y-2">
+                          <p className="text-sm text-muted-foreground">
+                            This programme day is complete. View your recorded
+                            sets and actual totals in History.
+                          </p>
+                          <Button
+                            variant="secondary"
+                            onClick={() => navigate("/history")}
+                          >
+                            View workout history
+                          </Button>
                         </div>
                       )}
                     </div>
@@ -1865,7 +1811,7 @@ function ProgramInner() {
                 }}
                 className="w-full flex items-center gap-3 px-4 py-3 text-left text-sm text-destructive-strong hover:bg-muted transition-colors border-b border-border/30"
               >
-                <Trash2 className="size-4" /> Remove Exercise
+                <Trash2 className="size-4" /> Remove exercise
               </button>
               <button
                 type="button"
@@ -1875,7 +1821,7 @@ function ProgramInner() {
                 disabled={contextMenu.exIndex === 0}
                 className="w-full flex items-center gap-3 px-4 py-3 text-left text-sm text-foreground hover:bg-muted transition-colors border-b border-border/30 disabled:opacity-30"
               >
-                <ArrowUp className="size-4 text-muted-foreground" /> Move Up
+                <ArrowUp className="size-4 text-muted-foreground" /> Move up
               </button>
               <button
                 type="button"
@@ -1890,7 +1836,7 @@ function ProgramInner() {
                 }
                 className="w-full flex items-center gap-3 px-4 py-3 text-left text-sm text-foreground hover:bg-muted transition-colors disabled:opacity-30"
               >
-                <ArrowDown className="size-4 text-muted-foreground" /> Move Down
+                <ArrowDown className="size-4 text-muted-foreground" /> Move down
               </button>
             </motion.div>
           </>
@@ -1990,6 +1936,11 @@ function ProgramInner() {
                 plan ? { ...storedDay, exercises: plan.exercises } : storedDay
               }
               dayIndex={sessionDayIndex}
+              planContext={liftCompletionContext(
+                programState,
+                sessionDayIndex,
+                localDateString()
+              )}
               draftEpoch={programState.weekNumber}
               // Variant-scoped draft namespace (PROGRAM-ADAPT-01
               // follow-up): the draft identity fingerprints the
@@ -2066,7 +2017,7 @@ function ProgramInner() {
       {/* Exercise Picker — Add mode (scoped to addPickerDayIndex) */}
       <ExercisePicker
         open={showAddPicker}
-        headerTitle="Add Exercise"
+        headerTitle="Add exercise"
         existingExerciseIds={
           programState.workouts[addPickerDayIndex ?? idx]?.exercises.map(
             (ex) => ex.exerciseId

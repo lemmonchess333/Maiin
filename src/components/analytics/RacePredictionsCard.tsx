@@ -1,3 +1,4 @@
+import SectionLabel from "@/components/ui/SectionLabel";
 import { Link } from "react-router-dom";
 import { Timer } from "lucide-react";
 import { useAuth } from "@/lib/auth";
@@ -54,8 +55,8 @@ export default function RacePredictionsCard() {
           compact
           icon={Timer}
           accent={THEME.running}
-          headline="Race predictions unlock after a few runs"
-          sub="Log three outdoor runs and Tropos derives your fitness benchmark automatically — or set a recent race time yourself."
+          headline="Race predictions appear after a few runs"
+          sub="Log three outdoor runs and Tropos estimates your fitness level — or set a recent race time yourself."
           action={{
             label: "Set a race time",
             href: "/settings/training",
@@ -79,9 +80,7 @@ export default function RacePredictionsCard() {
       <div className="grid grid-cols-2 gap-2">
         {ROWS.map(({ key, label, km }) => (
           <div key={key} className="rounded-xl bg-muted p-3">
-            <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
-              {label}
-            </p>
+            <SectionLabel tier="section">{label}</SectionLabel>
             <p className="text-lg font-bold font-mono tabular-nums text-foreground mt-0.5">
               {finishTimeLabel(times[key])}
             </p>
@@ -107,7 +106,7 @@ export default function RacePredictionsCard() {
             {sourceLabel ? ` — ${sourceLabel}` : ""}.{" "}
           </>
         ) : (
-          <>Based on your stored fitness level. </>
+          <>Based on your current fitness level. </>
         )}
         {/* inline-block + negative-margin padding: keeps the footnote rhythm
             while clearing the 44px touch floor for the only tap target */}
@@ -119,7 +118,7 @@ export default function RacePredictionsCard() {
         </Link>
       </p>
       {/* Range carve-out (Hist5c): predictions are a today-snapshot. */}
-      <p className="text-[10px] text-muted-foreground mt-1">
+      <p className="text-xs text-muted-foreground mt-1">
         As of today — independent of the selected range.
       </p>
     </div>

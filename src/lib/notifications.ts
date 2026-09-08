@@ -29,6 +29,7 @@ export interface NotificationPayload {
 }
 
 const isNative = Capacitor.isNativePlatform();
+const webTimers = new Map<number, ReturnType<typeof setTimeout>>();
 
 /**
  * Request notification permission from the user.
@@ -147,6 +148,9 @@ export async function scheduleNotification(
     }
 
     if (typeof window !== "undefined" && "Notification" in window) {
+      const previous = webTimers.get(payload.id);
+      if (previous !== undefined) clearTimeout(previous);
+      webTimers.delete(payload.id);
       if (payload.scheduleAt) {
         const delay = payload.scheduleAt.getTime() - Date.now();
         if (delay <= 0) {
@@ -154,13 +158,15 @@ export async function scheduleNotification(
         } else {
           // Web fallback: setTimeout only fires if the app stays open.
           // Accepted limitation — web is not the primary delivery target.
-          setTimeout(() => {
+          const timer = setTimeout(() => {
+            webTimers.delete(payload.id);
             try {
               new Notification(payload.title, { body: payload.body });
             } catch (err) {
               logger.error("web notification fire failed", err);
             }
           }, delay);
+          webTimers.set(payload.id, timer);
         }
       } else {
         new Notification(payload.title, { body: payload.body });
@@ -177,9 +183,12 @@ export async function scheduleNotification(
 
 /**
  * Cancel a single scheduled notification by ID.
- * No-op on web (setTimeout handles are not tracked).
+ * Web and native both cancel the exact scheduled ID.
  */
 export async function cancelNotification(id: number): Promise<void> {
+  const timer = webTimers.get(id);
+  if (timer !== undefined) clearTimeout(timer);
+  webTimers.delete(id);
   if (!isNative) return;
   try {
     await LocalNotifications.cancel({ notifications: [{ id }] });
@@ -192,6 +201,8 @@ export async function cancelNotification(id: number): Promise<void> {
  * Cancel all scheduled notifications.
  */
 export async function cancelAllNotifications(): Promise<void> {
+  for (const timer of webTimers.values()) clearTimeout(timer);
+  webTimers.clear();
   if (!isNative) return;
   try {
     const pending = await LocalNotifications.getPending();

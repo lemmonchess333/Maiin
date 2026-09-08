@@ -358,7 +358,12 @@ function aggregateWindow(start, end, workouts, runs, meals, bodyweightLogs) {
     if (km > runLongKm) runLongKm = km;
     weekLongKm.set(wk, Math.max(weekLongKm.get(wk) || 0, km));
     const at = (r.activityType || "").toLowerCase();
-    if (r.intervalData || at === "tempo" || at === "interval") {
+    // Literals here MUST be spellings the client actually writes
+    // (src/types/run.ts `ActivityType`). This compared against
+    // "interval" — a value no run document ever carried, because the
+    // app emits "intervals" — so interval sessions without intervalData
+    // scored no quality bonus. Pinned by __tests__/runQualityTypes.test.js.
+    if (r.intervalData || at === "tempo" || at === "intervals") {
       runQualityCount++;
     }
   });

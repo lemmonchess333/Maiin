@@ -16,7 +16,7 @@ function renderRow() {
         icon={<Footprints data-testid="row-icon" className="size-5" />}
         text="Complete your first run to see running analytics here"
         to="/run"
-        ctaLabel="Start Run"
+        ctaLabel="Start run"
         variant="sport"
       />
     </MemoryRouter>
@@ -34,13 +34,13 @@ describe("SectionEmptyCTA", () => {
 
   it("the CTA is a link to the target route", () => {
     renderRow();
-    const link = screen.getByRole("link", { name: "Start Run" });
+    const link = screen.getByRole("link", { name: "Start run" });
     expect(link).toHaveAttribute("href", "/run");
   });
 
   it("the CTA wears the requested variant + the 44px md floor", () => {
     renderRow();
-    const link = screen.getByRole("link", { name: "Start Run" });
+    const link = screen.getByRole("link", { name: "Start run" });
     expect(link).toHaveClass("bg-running-fill"); // sport variant fill step
     expect(link).toHaveClass("min-h-[44px]"); // touch-target floor
     expect(link).toHaveClass("shrink-0"); // never squashed by long copy

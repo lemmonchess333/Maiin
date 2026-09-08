@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { THEME } from "@/lib/theme";
-import { doc, Timestamp } from "firebase/firestore";
-import { setDocGuarded } from "@/lib/firestoreWrite";
-import { db } from "@/lib/firebase";
+import { Timestamp } from "firebase/firestore";
+import { createMealEntry, notifyMealsLogged } from "@/lib/mealEntry";
 import { useUid } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import { Check } from "lucide-react";
@@ -59,8 +58,7 @@ export function ManualFoodLogger({ date, meal, open, onClose }: Props) {
     setSaving(true);
     try {
       const logDate = date || localDateString();
-      const id = `${logDate}_${Date.now()}`;
-      await setDocGuarded(doc(db, "users", uid, "meals", id), {
+      const savedMeal = await createMealEntry(uid, {
         date: logDate,
         foodName: entry.name,
         items: [
@@ -86,7 +84,9 @@ export function ManualFoodLogger({ date, meal, open, onClose }: Props) {
       });
 
       setSaved(true);
-      toast.success("Logged manually", { id: "food-manual-success" });
+      notifyMealsLogged(uid, [savedMeal.id], "Logged manually", {
+        path: "manual",
+      });
 
       /* F2d grill — auto-add to Quick Add pantry. Fire-and-forget;
          the favourites collection is a best-effort cache (see
@@ -163,14 +163,14 @@ export function ManualFoodLogger({ date, meal, open, onClose }: Props) {
     <>
       {/* Sprint 3 follow-up sweep: vaul boilerplate replaced with
         BottomSheet. Title rendered in children because the bespoke
-        two-line title ("Log a Meal" + "Manual entry" subtitle) doesn't
+        two-line title ("Log a meal" + "Manual entry" subtitle) doesn't
         fit the primitive's single-line title strip. hideHeader keeps
         the drag handle visible but skips the header row; sr-only
         Drawer.Title preserves aria-labelledby. */}
       <BottomSheet
         open={open}
         onOpenChange={(o) => !o && onClose()}
-        title="Log a Meal"
+        title="Log a meal"
         hideHeader
         maxHeight="max-h-[60vh]"
         className="border-t border-border"
@@ -181,7 +181,7 @@ export function ManualFoodLogger({ date, meal, open, onClose }: Props) {
 
           {/* Title */}
           <div className="mb-5">
-            <p className="text-lg font-bold text-foreground">Log a Meal</p>
+            <p className="text-lg font-bold text-foreground">Log a meal</p>
             <p className="text-xs text-muted-foreground">Manual entry</p>
           </div>
 
@@ -265,12 +265,12 @@ export function ManualFoodLogger({ date, meal, open, onClose }: Props) {
             >
               {saved ? (
                 <>
-                  <Check className="size-4" /> Meal Logged!
+                  <Check className="size-4" /> Meal logged
                 </>
               ) : saving ? (
                 "Saving meal..."
               ) : (
-                "Log This Meal"
+                "Log meal"
               )}
             </motion.button>
           </AnimatePresence>

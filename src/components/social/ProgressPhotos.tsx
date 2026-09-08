@@ -1,4 +1,11 @@
+import {
+  encryptProgressPhoto,
+  decryptProgressPhoto,
+  type ProgressPhotoEncryption,
+} from "@/lib/progressPhotoCrypto";
+import SectionLabel from "@/components/ui/SectionLabel";
 import { useState, useRef, useCallback, useEffect, useMemo } from "react";
+import { IconButton } from "@/components/ui/IconButton";
 import { Button } from "@/components/ui/Button";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import {
@@ -32,78 +39,6 @@ import {
   type VaultPhoto,
 } from "@/lib/progressVault";
 
-/**
- * Photo encryption key.
- *
- * READ THIS BEFORE DESCRIBING THIS FEATURE ANYWHERE. What it provides is
- * encryption AT REST against casual exposure: raw storage holds ciphertext,
- * not JPEGs. What it does NOT provide is confidentiality from whoever holds
- * the bucket, and the Privacy Policy now says so in those words.
- *
- * The key is derived from the uid with a fixed suffix and a fixed salt.
- * Every one of those inputs is public — the uid IS the storage path
- * (`progress-photos/{uid}/…`), and the suffix, the salt and this function
- * all ship in the client bundle. So anyone who can read the ciphertext can
- * derive the key.
- *
- * The 100k PBKDF2 iterations do not change that, which is worth saying
- * because the number reads as reassuring: iteration count hardens a
- * LOW-ENTROPY SECRET against brute force. There is no secret here, so it
- * costs an attacker one derivation rather than a search.
- *
- * This was documented as "client-side AES-GCM, verified" on the launch
- * checklist for a while, because the check confirmed the ALGORITHM and
- * never asked whether the key was secret. Real end-to-end encryption needs
- * a key the server never sees — a user passphrase, or a device-held key
- * with sync — and both trade away recoverability: forget the passphrase and
- * the photos are gone. That is a product decision, tracked in
- * `docs/LAUNCH_TODO.md`, not something to change quietly here.
- */
-async function getEncryptionKey(uid: string): Promise<CryptoKey> {
-  const enc = new TextEncoder();
-  const keyMaterial = await crypto.subtle.importKey(
-    "raw",
-    enc.encode(uid + "_tropos_photos_v1"),
-    "PBKDF2",
-    false,
-    ["deriveKey"]
-  );
-  return crypto.subtle.deriveKey(
-    {
-      name: "PBKDF2",
-      salt: enc.encode("tropos-salt"),
-      iterations: 100000,
-      hash: "SHA-256",
-    },
-    keyMaterial,
-    { name: "AES-GCM", length: 256 },
-    false,
-    ["encrypt", "decrypt"]
-  );
-}
-
-async function encryptBlob(data: ArrayBuffer, key: CryptoKey) {
-  const iv = crypto.getRandomValues(new Uint8Array(12));
-  const encrypted = await crypto.subtle.encrypt(
-    { name: "AES-GCM", iv: iv as unknown as Uint8Array<ArrayBuffer> },
-    key,
-    data
-  );
-  return { encrypted, iv };
-}
-
-async function decryptBlob(
-  encrypted: ArrayBuffer,
-  key: CryptoKey,
-  iv: Uint8Array
-) {
-  return crypto.subtle.decrypt(
-    { name: "AES-GCM", iv: iv as unknown as Uint8Array<ArrayBuffer> },
-    key,
-    encrypted
-  );
-}
-
 function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   return Promise.race([
     promise,
@@ -122,7 +57,7 @@ interface ComposerState {
 }
 
 /**
- * Private Progress Vault (BODY-VAULT-01, extends the BODY-VAULT-00
+ * Private progress Vault (BODY-VAULT-01, extends the BODY-VAULT-00
  * private-only contract). Photos group into dated CHECK-INS — an optional
  * front/side/back set plus a neutral note — and comparison is between two
  * dated check-ins rather than two arbitrary photos. Photos logged before
@@ -134,6 +69,19 @@ interface ComposerState {
  */
 export default function ProgressPhotos() {
   const uid = useUid();
+  // A new account receives a new vault instance: rows, decrypted URLs, key,
+  // selected files and composer drafts must never survive an account switch.
+  return uid ? <AccountProgressPhotos key={uid} uid={uid} /> : null;
+}
+
+function AccountProgressPhotos({ uid }: { uid: string }) {
+  const activeRef = useRef(true);
+  useEffect(() => {
+    activeRef.current = true;
+    return () => {
+      activeRef.current = false;
+    };
+  }, []);
   const [photos, setPhotos] = useState<VaultPhoto[]>([]);
   const [checkIns, setCheckIns] = useState<ProgressCheckIn[]>([]);
   const [decryptedUrls, setDecryptedUrls] = useState<Record<string, string>>(
@@ -147,7 +95,6 @@ export default function ProgressPhotos() {
   const [composer, setComposer] = useState<ComposerState | null>(null);
   const [savingCheckIn, setSavingCheckIn] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const keyRef = useRef<CryptoKey | null>(null);
   const pendingFileRef = useRef<File | null>(null);
   const pendingSlotRef = useRef<CheckInSlot | null>(null);
 
@@ -160,23 +107,20 @@ export default function ProgressPhotos() {
     [photos]
   );
 
-  // Helper to cache encryption key (#14)
-  const getOrDeriveKey = useCallback(
-    async (uid: string): Promise<CryptoKey> => {
-      if (keyRef.current) return keyRef.current;
-      const key = await getEncryptionKey(uid);
-      keyRef.current = key;
-      return key;
-    },
-    []
-  );
-
-  // Revoke object URLs on unmount to prevent memory leaks (#13)
+  // Revoke every object URL on unmount. The cleanup runs once, so it must
+  // read the LATEST url map through a ref: the mount-only effect's own
+  // closure captured the empty initial state and revoked nothing — every
+  // decrypted photo leaked for the life of the page.
+  const decryptedUrlsRef = useRef(decryptedUrls);
+  useEffect(() => {
+    decryptedUrlsRef.current = decryptedUrls;
+  }, [decryptedUrls]);
   useEffect(() => {
     return () => {
-      Object.values(decryptedUrls).forEach((url) => URL.revokeObjectURL(url));
+      Object.values(decryptedUrlsRef.current).forEach((url) =>
+        URL.revokeObjectURL(url)
+      );
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadPhotos = useCallback(async () => {
@@ -186,21 +130,25 @@ export default function ProgressPhotos() {
       orderBy("createdAt", "desc")
     );
     const snap = await getDocs(q);
+    if (!activeRef.current) return;
     setPhotos(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as VaultPhoto));
   }, [uid]);
 
   const loadCheckIns = useCallback(async () => {
     if (!uid) return;
     try {
-      setCheckIns(await loadProgressCheckIns(uid));
+      const rows = await loadProgressCheckIns(uid);
+      if (activeRef.current) setCheckIns(rows);
     } catch (err) {
       logger.error("[Vault] check-in load failed:", err);
     }
   }, [uid]);
 
   useEffect(() => {
-    loadPhotos();
-    loadCheckIns();
+    void loadPhotos().catch((err) =>
+      logger.error("[Vault] photo load failed:", err)
+    );
+    void loadCheckIns();
   }, [loadPhotos, loadCheckIns]);
 
   // Auto-decrypt the 6 most recent photos on mount
@@ -212,8 +160,6 @@ export default function ProgressPhotos() {
     let cancelled = false;
 
     const autoDecrypt = async () => {
-      const key = await getOrDeriveKey(uid);
-
       for (const photo of photos.slice(0, 6)) {
         if (cancelled) return;
         if (decryptedUrls[photo.id]) continue;
@@ -224,9 +170,13 @@ export default function ProgressPhotos() {
           const url = await getDownloadURL(storageRef);
           const response = await fetch(url);
           const encryptedBuffer = await response.arrayBuffer();
-          const iv = new Uint8Array(photo.iv);
-          const decrypted = await decryptBlob(encryptedBuffer, key, iv);
+          const decrypted = await decryptProgressPhoto(
+            encryptedBuffer,
+            uid,
+            photo
+          );
           if (cancelled) return;
+          if (!activeRef.current) return;
           const blob = new Blob([decrypted], { type: "image/webp" });
           const objectUrl = URL.createObjectURL(blob);
           setDecryptedUrls((prev) => ({ ...prev, [photo.id]: objectUrl }));
@@ -249,24 +199,23 @@ export default function ProgressPhotos() {
     return () => {
       cancelled = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- decryptedUrls is read as a skip-guard, not a trigger: re-running on every landed decrypt would cancel the in-flight loop and refetch the photo it was on
   }, [photos, uid]);
 
   const decryptPhoto = useCallback(
     async (photo: VaultPhoto) => {
       if (!uid || decryptedUrls[photo.id]) return;
-      const key = await getOrDeriveKey(uid);
       const storageRef = ref(storage, photo.storagePath);
       const url = await getDownloadURL(storageRef);
       const response = await fetch(url);
       const encryptedBuffer = await response.arrayBuffer();
-      const iv = new Uint8Array(photo.iv);
-      const decrypted = await decryptBlob(encryptedBuffer, key, iv);
+      const decrypted = await decryptProgressPhoto(encryptedBuffer, uid, photo);
+      if (!activeRef.current) return;
       const blob = new Blob([decrypted], { type: "image/webp" });
       const objectUrl = URL.createObjectURL(blob);
       setDecryptedUrls((prev) => ({ ...prev, [photo.id]: objectUrl }));
     },
-    [uid, decryptedUrls, getOrDeriveKey]
+    [uid, decryptedUrls]
   );
 
   /** Compress → encrypt (fail-closed) → upload → write metadata doc.
@@ -315,14 +264,17 @@ export default function ProgressPhotos() {
         // below is kept so legacy unencrypted photos (pre-fix fallback
         // uploads) still render for their owner.
         let encrypted: ArrayBuffer;
-        let iv: Uint8Array;
-        let key: CryptoKey;
+        let metadata: ProgressPhotoEncryption;
+        const path = `progress-photos/${uid}/${crypto.randomUUID()}.enc`;
         logger.log("[UPLOAD] 3. Starting encryption...");
         try {
-          key = await getOrDeriveKey(uid);
-          const result = await encryptBlob(await blob.arrayBuffer(), key);
+          const result = await encryptProgressPhoto(
+            await blob.arrayBuffer(),
+            uid,
+            path
+          );
           encrypted = result.encrypted;
-          iv = result.iv;
+          metadata = result.metadata;
           logger.log(
             "[UPLOAD] 4. Encryption complete, encrypted size:",
             encrypted.byteLength
@@ -330,19 +282,22 @@ export default function ProgressPhotos() {
         } catch (e) {
           logger.error("[UPLOAD] Encryption failed:", e);
           throw new Error(
-            "Couldn't encrypt the photo on this device — upload cancelled to keep it private. Please try again."
+            "Couldn't encrypt the photo on this device. The upload was cancelled to keep it private. Try again."
           );
         }
+
+        if (!activeRef.current) return null;
 
         // Step 3: Upload to Firebase Storage
         // NOTE: Requires VITE_FIREBASE_STORAGE_BUCKET env var to be set (see firebase.ts)
         // Always .enc — the write path is fail-closed on encryption
         // (unencrypted .webp blobs only exist from the legacy fallback).
-        const path = `progress-photos/${uid}/${Date.now()}.enc`;
         logger.log("[UPLOAD] 5. Creating Firebase Storage reference:", path);
         try {
           await withTimeout(
             uploadBytes(ref(storage, path), new Uint8Array(encrypted), {
+              // Existing Storage rules allow the source image MIME; the
+              // body is ciphertext and carries no key in Storage metadata.
               contentType: "image/webp",
             }),
             25000
@@ -353,6 +308,8 @@ export default function ProgressPhotos() {
           throw e;
         }
 
+        if (!activeRef.current) return null;
+
         // Step 4: Write Firestore document
         logger.log("[UPLOAD] 7. Writing Firestore document...");
         let docRef;
@@ -360,8 +317,7 @@ export default function ProgressPhotos() {
           docRef = await addDocGuarded(
             collection(db, "users", uid, "progressPhotos"),
             {
-              storagePath: path,
-              iv: Array.from(iv),
+              ...metadata,
               date: new Date().toISOString().split("T")[0],
               // Progress photos are owner-only by contract: both
               // firestore.rules (users/{uid}/progressPhotos) and
@@ -380,31 +336,17 @@ export default function ProgressPhotos() {
           throw new Error("Failed to save photo metadata");
         }
 
+        if (!activeRef.current) return null;
         await loadPhotos();
 
-        // Auto-decrypt/display newly uploaded photo
-        try {
-          if (iv.some((b) => b !== 0) && key) {
-            const newUrl = await getDownloadURL(ref(storage, path));
-            const encResponse = await fetch(newUrl);
-            const encBuffer = await encResponse.arrayBuffer();
-            const decryptedData = await decryptBlob(encBuffer, key, iv);
-            const decBlob = new Blob([decryptedData], { type: "image/webp" });
-            const objectUrl = URL.createObjectURL(decBlob);
-            setDecryptedUrls((prev) => ({ ...prev, [docRef.id]: objectUrl }));
-          } else {
-            // Unencrypted — create URL from the original blob
-            const objectUrl = URL.createObjectURL(blob);
-            setDecryptedUrls((prev) => ({ ...prev, [docRef.id]: objectUrl }));
-          }
-        } catch (e) {
-          logger.error(
-            "[UPLOAD] Auto-decrypt after upload failed (non-critical):",
-            e
-          );
+        // The original compressed image is already available. Encryption and
+        // both remote writes have succeeded; no second download/key exposure.
+        if (activeRef.current) {
+          const objectUrl = URL.createObjectURL(blob);
+          setDecryptedUrls((prev) => ({ ...prev, [docRef.id]: objectUrl }));
         }
 
-        return docRef.id;
+        return activeRef.current ? docRef.id : null;
       } catch (err) {
         logger.error("[UPLOAD] Upload failed:", err);
         // Surface the actual error so the user can tell what went
@@ -414,7 +356,7 @@ export default function ProgressPhotos() {
         const message =
           err instanceof Error && err.message
             ? err.message
-            : "Upload failed. Please try again.";
+            : "Upload failed. Try again.";
         setUploadError(message);
         return null;
       } finally {
@@ -422,7 +364,7 @@ export default function ProgressPhotos() {
         if (fileInputRef.current) fileInputRef.current.value = "";
       }
     },
-    [uid, loadPhotos, getOrDeriveKey]
+    [uid, loadPhotos]
   );
 
   /** File picked for a composer slot → upload → attach to the draft. */
@@ -555,7 +497,7 @@ export default function ProgressPhotos() {
             <Lock className="size-4 text-muted-foreground" />
           </div>
         )}
-        <span className="absolute bottom-0 inset-x-0 bg-black/45 text-[10px] text-white text-center py-0.5 uppercase tracking-wide">
+        <span className="absolute bottom-0 inset-x-0 bg-black/45 text-caption text-white text-center py-0.5 uppercase tracking-wider">
           {label}
         </span>
       </div>
@@ -608,8 +550,8 @@ export default function ProgressPhotos() {
       <div className="flex items-center gap-2">
         <Lock className="size-3.5 text-muted-foreground shrink-0" />
         <span className="text-xs text-muted-foreground">
-          Private to your account — encrypted on this device before upload; only
-          you can view these photos.
+          Private to your account — encrypted on this device before upload and
+          never shown to other users.
         </span>
       </div>
 
@@ -632,14 +574,12 @@ export default function ProgressPhotos() {
               Retry
             </button>
           )}
-          <button
-            type="button"
-            onClick={dismissError}
+          <IconButton
+            icon={<X size={14} />}
             aria-label="Dismiss error"
-            className="p-0.5 text-destructive-strong/70 hover:text-destructive-strong shrink-0"
-          >
-            <X size={14} />
-          </button>
+            onClick={dismissError}
+            className="shrink-0 -my-2.5 text-destructive-strong/70 hover:text-destructive-strong"
+          />
         </div>
       )}
 
@@ -647,7 +587,7 @@ export default function ProgressPhotos() {
         <EmptyState
           icon={Camera}
           headline="Track your transformation"
-          sub="A weekly check-in — front, side and back — shows change no mirror can. Only you can ever see these."
+          sub="A weekly check-in — front, side and back — shows change no mirror can. Never shown to other users."
           accent={THEME.brand}
           action={{ label: "+ First check-in", onClick: openNewCheckIn }}
         />
@@ -682,9 +622,9 @@ export default function ProgressPhotos() {
                 {entry.date}
               </span>
               {entry.legacy && (
-                <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                <SectionLabel as="span" tier="section">
                   Photo
-                </span>
+                </SectionLabel>
               )}
             </div>
             {entry.note && (
@@ -733,7 +673,7 @@ export default function ProgressPhotos() {
           if (!v && !savingCheckIn) setComposer(null);
         }}
         title={composer?.checkInId ? "Edit check-in" : "New check-in"}
-        description="Front, side and back are optional — one photo still counts. Private to your account."
+        description="Front, side and back are optional. One photo still counts, and it stays private to your account."
       >
         {composer && (
           <div className="px-5 pb-5 pt-3 space-y-4">
@@ -765,9 +705,9 @@ export default function ProgressPhotos() {
                     ) : (
                       <span className="size-full flex flex-col items-center justify-center gap-1 text-muted-foreground">
                         <Plus className="size-4" />
-                        <span className="text-[10px] uppercase tracking-wide">
+                        <SectionLabel as="span" tier="section">
                           {SLOT_LABELS[slot]}
-                        </span>
+                        </SectionLabel>
                       </span>
                     )}
                   </button>
@@ -807,14 +747,12 @@ export default function ProgressPhotos() {
                     Retry
                   </button>
                 )}
-                <button
-                  type="button"
-                  onClick={dismissError}
+                <IconButton
+                  icon={<X size={14} />}
                   aria-label="Dismiss error"
-                  className="p-0.5 text-destructive-strong/70 hover:text-destructive-strong shrink-0"
-                >
-                  <X size={14} />
-                </button>
+                  onClick={dismissError}
+                  className="shrink-0 -my-2.5 text-destructive-strong/70 hover:text-destructive-strong"
+                />
               </div>
             )}
 

@@ -52,6 +52,34 @@ const suite = EMULATOR_HOST ? describe : describe.skip;
 const OWNER_UID = "owner-uid";
 const OTHER_UID = "other-uid";
 const PROJECT_ID = "tropos-rules-test";
+/** Token claims for a verified account. Public-content creates
+ *  (activities, space posts) require `email_verified`; every context that
+ *  CREATES one carries this so the assertion under test is the field rule
+ *  it names, not the verification gate. */
+const VERIFIED = { email_verified: true };
+
+/**
+ * Every value a client can legitimately put in a photo field: the Storage
+ * download URL (profilePhotoUpload appends `&v=`), the Google OAuth CDN
+ * and the Apple OAuth CDN. Anything else loads as an <img src> on a
+ * stranger's device, so it is a tracking pixel.
+ */
+const ALLOWED_PHOTO_URLS = [
+  "https://firebasestorage.googleapis.com/v0/b/tropos-fitness.firebasestorage.app/o/profile-photos%2Fowner-uid%2Favatar.jpg?alt=media&v=1",
+  "https://lh3.googleusercontent.com/a/ACg8ocIabcdefg=s96-c",
+  "https://appleid.cdn-apple.com/static/bin/avatar/123.jpg",
+];
+const PHOTO_URL_ORIGIN = "https://firebasestorage.googleapis.com/";
+/** Arbitrary host, suffix-phishing host, http downgrade, two non-http
+ *  schemes, and a 2049-char value on an allowed origin (the size cap). */
+const REJECTED_PHOTO_URLS = [
+  "https://pixel-tracker.example/pixel?uid=victim",
+  "https://lh3.googleusercontent.com.evil.com/a/ACg8ocIabcdefg=s96-c",
+  "http://firebasestorage.googleapis.com/v0/b/x/o/y.jpg",
+  "javascript:alert(1)",
+  "data:image/svg+xml;base64,PHN2ZyBvbmxvYWQ9YWxlcnQoMSk+",
+  PHOTO_URL_ORIGIN + "a".repeat(2049 - PHOTO_URL_ORIGIN.length),
+];
 
 suite("firestore.rules — users/{uid}/public/{doc}", () => {
   let env: RulesTestEnvironment;
@@ -394,6 +422,32 @@ suite("firestore.rules — users/{uid}/public/{doc}", () => {
     );
   });
 
+  it("photoURL at the 2048-char cap passes; one char more fails", async () => {
+    // The cap is what stops the field carrying a payload. Both sides are
+    // pinned so an off-by-one cannot silently reject a real URL.
+    const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+    await assertSucceeds(
+      setDoc(
+        doc(ownerDb, "users", OWNER_UID, "public", "profile"),
+        {
+          photoURL:
+            PHOTO_URL_ORIGIN + "a".repeat(2048 - PHOTO_URL_ORIGIN.length),
+        },
+        { merge: true }
+      )
+    );
+    await assertFails(
+      setDoc(
+        doc(ownerDb, "users", OWNER_UID, "public", "profile"),
+        {
+          photoURL:
+            PHOTO_URL_ORIGIN + "a".repeat(2049 - PHOTO_URL_ORIGIN.length),
+        },
+        { merge: true }
+      )
+    );
+  });
+
   // ── photoStoragePath value gate ───────────────────────────────────
   // The rule constrains photoStoragePath to `^profile-photos/${uid}/.*`
   // so a malicious caller can't write a value that would trick a
@@ -713,6 +767,71 @@ suite("firestore.rules — /challenges", () => {
         doc(db, "challenges", "weekly-2026-01-01", "participants", OWNER_UID)
       )
     );
+  });
+
+  // ── participant photoURL value gate ─────────────────────────────────
+  // The participant row renders on the world-readable leaderboard, so its
+  // photoURL is loaded by every viewer. joinChallenge copies
+  // users/{uid}.photoURL and omits the field when there is none.
+  describe("participant photoURL value gate", () => {
+    const CHALLENGE = "weekly-2026-01-01";
+    const seedChallenge = () =>
+      env.withSecurityRulesDisabled(async (ctx) => {
+        await setDoc(
+          doc(ctx.firestore(), "challenges", CHALLENGE),
+          validChallengeData
+        );
+      });
+    const join = (photoURL: unknown) => ({
+      currentValue: 0,
+      tierAchieved: null,
+      joinedAt: serverTimestamp(),
+      photoURL,
+    });
+
+    it("join with a Storage, Google or Apple avatar succeeds", async () => {
+      await seedChallenge();
+      const db = env.authenticatedContext(OWNER_UID).firestore();
+      const ref = doc(db, "challenges", CHALLENGE, "participants", OWNER_UID);
+      for (const photoURL of ALLOWED_PHOTO_URLS) {
+        await assertSucceeds(setDoc(ref, join(photoURL)));
+        // Leave so the next iteration is a fresh join, not an update.
+        await assertSucceeds(deleteDoc(ref));
+      }
+    });
+
+    it("join with any other origin, scheme, size or type fails", async () => {
+      await seedChallenge();
+      const db = env.authenticatedContext(OWNER_UID).firestore();
+      const ref = doc(db, "challenges", CHALLENGE, "participants", OWNER_UID);
+      for (const photoURL of [...REJECTED_PHOTO_URLS, 42]) {
+        await assertFails(setDoc(ref, join(photoURL)));
+      }
+    });
+
+    it("a cosmetic update cannot repoint photoURL off the allowed origins", async () => {
+      await seedChallenge();
+      await env.withSecurityRulesDisabled(async (ctx) => {
+        await setDoc(
+          doc(
+            ctx.firestore(),
+            "challenges",
+            CHALLENGE,
+            "participants",
+            OWNER_UID
+          ),
+          join(ALLOWED_PHOTO_URLS[1])
+        );
+      });
+      const db = env.authenticatedContext(OWNER_UID).firestore();
+      const ref = doc(db, "challenges", CHALLENGE, "participants", OWNER_UID);
+      await assertFails(
+        setDoc(ref, { photoURL: REJECTED_PHOTO_URLS[0] }, { merge: true })
+      );
+      await assertSucceeds(
+        setDoc(ref, { photoURL: ALLOWED_PHOTO_URLS[2] }, { merge: true })
+      );
+    });
   });
 });
 
@@ -1217,7 +1336,7 @@ suite("firestore.rules — tombstone freeze (completed deletion)", () => {
     });
   });
 
-  const aliceDb = () => env.authenticatedContext(ALICE).firestore();
+  const aliceDb = () => env.authenticatedContext(ALICE, VERIFIED).firestore();
 
   it("create users/alice FAILS (data-recreation vector)", async () => {
     await assertFails(
@@ -1616,7 +1735,7 @@ suite(
     });
 
     it("valid activity (mandatory fields only) creates successfully", async () => {
-      const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+      const ownerDb = env.authenticatedContext(OWNER_UID, VERIFIED).firestore();
       await assertSucceeds(
         setDoc(doc(ownerDb, "activities", "valid-min"), makeValidActivity())
       );
@@ -1626,7 +1745,7 @@ suite(
       // Mirror what src/lib/socialApi.ts postActivity writes for a
       // typical workout post. If the rule allowlist drifts from the
       // client shape, this test catches it.
-      const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+      const ownerDb = env.authenticatedContext(OWNER_UID, VERIFIED).firestore();
       await assertSucceeds(
         setDoc(
           doc(ownerDb, "activities", "valid-full"),
@@ -1651,7 +1770,7 @@ suite(
     });
 
     it("authorId mismatch — rejected", async () => {
-      const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+      const ownerDb = env.authenticatedContext(OWNER_UID, VERIFIED).firestore();
       await assertFails(
         setDoc(
           doc(ownerDb, "activities", "bad-author"),
@@ -1661,7 +1780,7 @@ suite(
     });
 
     it("invalid visibility enum value — rejected", async () => {
-      const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+      const ownerDb = env.authenticatedContext(OWNER_UID, VERIFIED).firestore();
       await assertFails(
         setDoc(
           doc(ownerDb, "activities", "bad-vis"),
@@ -1671,7 +1790,7 @@ suite(
     });
 
     it("invalid type enum value — rejected", async () => {
-      const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+      const ownerDb = env.authenticatedContext(OWNER_UID, VERIFIED).firestore();
       await assertFails(
         setDoc(
           doc(ownerDb, "activities", "bad-type"),
@@ -1681,7 +1800,7 @@ suite(
     });
 
     it("non-zero initial kudosCount — rejected (counter-forgery on create)", async () => {
-      const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+      const ownerDb = env.authenticatedContext(OWNER_UID, VERIFIED).firestore();
       await assertFails(
         setDoc(
           doc(ownerDb, "activities", "bad-kudos"),
@@ -1691,7 +1810,7 @@ suite(
     });
 
     it("unknown field — rejected (fail-closed allowlist)", async () => {
-      const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+      const ownerDb = env.authenticatedContext(OWNER_UID, VERIFIED).firestore();
       await assertFails(
         setDoc(
           doc(ownerDb, "activities", "bad-extra"),
@@ -1701,7 +1820,7 @@ suite(
     });
 
     it("oversized routePreview (>5000 points) — rejected (audit #11)", async () => {
-      const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+      const ownerDb = env.authenticatedContext(OWNER_UID, VERIFIED).firestore();
       // 5001 entries — one over the cap.
       const bigRoute = Array.from({ length: 5001 }, (_, i) => ({
         lat: 51 + i * 0.00001,
@@ -1716,7 +1835,7 @@ suite(
     });
 
     it("routePreview at the cap (5000 points) — accepted", async () => {
-      const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+      const ownerDb = env.authenticatedContext(OWNER_UID, VERIFIED).firestore();
       const cappedRoute = Array.from({ length: 5000 }, (_, i) => ({
         lat: 51 + i * 0.00001,
         lon: -1 + i * 0.00001,
@@ -1730,7 +1849,7 @@ suite(
     });
 
     it("oversized exercises array (>100) — rejected", async () => {
-      const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+      const ownerDb = env.authenticatedContext(OWNER_UID, VERIFIED).firestore();
       const bigExercises = Array.from({ length: 101 }, (_, i) => ({
         name: `Ex ${i}`,
         summary: "5x10",
@@ -1744,7 +1863,7 @@ suite(
     });
 
     it("oversized muscleGroups array (>20) — rejected", async () => {
-      const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+      const ownerDb = env.authenticatedContext(OWNER_UID, VERIFIED).firestore();
       const bigMuscles = Array.from({ length: 21 }, (_, i) => `group${i}`);
       await assertFails(
         setDoc(
@@ -1755,7 +1874,7 @@ suite(
     });
 
     it("oversized workoutName (>200 chars) — rejected", async () => {
-      const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+      const ownerDb = env.authenticatedContext(OWNER_UID, VERIFIED).firestore();
       const longName = "x".repeat(201);
       await assertFails(
         setDoc(
@@ -1766,7 +1885,7 @@ suite(
     });
 
     it("negative distance — rejected", async () => {
-      const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+      const ownerDb = env.authenticatedContext(OWNER_UID, VERIFIED).firestore();
       await assertFails(
         setDoc(
           doc(ownerDb, "activities", "bad-dist-neg"),
@@ -1776,7 +1895,7 @@ suite(
     });
 
     it("absurd distance (>500km) — rejected", async () => {
-      const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+      const ownerDb = env.authenticatedContext(OWNER_UID, VERIFIED).firestore();
       await assertFails(
         setDoc(
           doc(ownerDb, "activities", "bad-dist-huge"),
@@ -1786,7 +1905,7 @@ suite(
     });
 
     it("duration > 24h — rejected", async () => {
-      const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+      const ownerDb = env.authenticatedContext(OWNER_UID, VERIFIED).firestore();
       await assertFails(
         setDoc(
           doc(ownerDb, "activities", "bad-dur"),
@@ -1796,13 +1915,134 @@ suite(
     });
 
     it("blank authorName — rejected", async () => {
-      const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
+      const ownerDb = env.authenticatedContext(OWNER_UID, VERIFIED).firestore();
       await assertFails(
         setDoc(
           doc(ownerDb, "activities", "bad-blank-name"),
           makeValidActivity({ authorName: "" })
         )
       );
+    });
+
+    // ── authorPhotoURL value gate ──────────────────────────────────────
+    // Avatar.tsx loads this as <img src> on every feed viewer's device, so
+    // an unconstrained value is a per-viewer tracking pixel. postActivity
+    // omits the field when the author has no photo; when present it is
+    // profile.photoURL, which only ever holds one of the allowed origins.
+    describe("authorPhotoURL value gate", () => {
+      it("accepts each origin the app can write, and no photo at all", async () => {
+        const ownerDb = env
+          .authenticatedContext(OWNER_UID, VERIFIED)
+          .firestore();
+        for (const [i, authorPhotoURL] of ALLOWED_PHOTO_URLS.entries()) {
+          await assertSucceeds(
+            setDoc(
+              doc(ownerDb, "activities", `photo-ok-${i}`),
+              makeValidActivity({ authorPhotoURL })
+            )
+          );
+        }
+        await assertSucceeds(
+          setDoc(
+            doc(ownerDb, "activities", "photo-absent"),
+            makeValidActivity()
+          )
+        );
+      });
+
+      it("rejects every other origin, scheme and size, and a non-string", async () => {
+        const ownerDb = env
+          .authenticatedContext(OWNER_UID, VERIFIED)
+          .firestore();
+        for (const [i, authorPhotoURL] of REJECTED_PHOTO_URLS.entries()) {
+          await assertFails(
+            setDoc(
+              doc(ownerDb, "activities", `photo-bad-${i}`),
+              makeValidActivity({ authorPhotoURL })
+            )
+          );
+        }
+        await assertFails(
+          setDoc(
+            doc(ownerDb, "activities", "photo-bad-type"),
+            makeValidActivity({ authorPhotoURL: 42 })
+          )
+        );
+      });
+
+      it("accepts exactly 2048 chars on an allowed origin", async () => {
+        // The 2049 rejection is in REJECTED_PHOTO_URLS; this is the other
+        // side of the cap, so an off-by-one cannot reject a real URL.
+        const ownerDb = env
+          .authenticatedContext(OWNER_UID, VERIFIED)
+          .firestore();
+        await assertSucceeds(
+          setDoc(
+            doc(ownerDb, "activities", "photo-2048"),
+            makeValidActivity({
+              authorPhotoURL:
+                PHOTO_URL_ORIGIN + "a".repeat(2048 - PHOTO_URL_ORIGIN.length),
+            })
+          )
+        );
+      });
+    });
+
+    describe("email verification gate — public content only", () => {
+      // The rule reads the `email_verified` claim and nothing else about
+      // the account: OAuth tokens carry it true, a password signup false
+      // until the link is tapped. The paired positive keeps each refusal
+      // honest — the same payload succeeds the moment the claim is true.
+      const UNVERIFIED = { email_verified: false };
+
+      it("email_verified false is refused; the identical payload with the claim true creates", async () => {
+        await assertFails(
+          setDoc(
+            doc(
+              env.authenticatedContext(OWNER_UID, UNVERIFIED).firestore(),
+              "activities",
+              "gate-false"
+            ),
+            makeValidActivity()
+          )
+        );
+        await assertSucceeds(
+          setDoc(
+            doc(
+              env.authenticatedContext(OWNER_UID, VERIFIED).firestore(),
+              "activities",
+              "gate-true"
+            ),
+            makeValidActivity()
+          )
+        );
+      });
+
+      it("a token with no email_verified claim at all is refused", async () => {
+        await assertFails(
+          setDoc(
+            doc(
+              env.authenticatedContext(OWNER_UID).firestore(),
+              "activities",
+              "gate-absent"
+            ),
+            makeValidActivity()
+          )
+        );
+      });
+
+      it("private logging is untouched — an unverified owner still writes users/{uid}/meals", async () => {
+        const unverifiedDb = env
+          .authenticatedContext(OWNER_UID, UNVERIFIED)
+          .firestore();
+        await assertSucceeds(
+          setDoc(doc(unverifiedDb, "users", OWNER_UID, "meals", "m1"), {
+            name: "Porridge",
+            calories: 320,
+            createdAt: serverTimestamp(),
+          })
+        );
+      });
     });
   }
 );

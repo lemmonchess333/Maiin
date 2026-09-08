@@ -99,7 +99,7 @@ export function getInvalidRunReason(args: {
   return null;
 }
 
-// Save Run button: visible for valid runs in idle or saving state.
+// Save run button: visible for valid runs in idle or saving state.
 export function canShowNormalSave(args: {
   isInvalid: boolean;
   saveStatus: SaveStatus;

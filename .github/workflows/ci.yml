@@ -31,13 +31,16 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v6
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
           node-version: 22
           cache: "npm"
       - run: npm ci
       - run: npm run lint
+      - name: Test production Rules verifier (offline)
+        run: python3 -m unittest discover -s scripts -p 'test_verify_deployed_rules.py' -v
+      - run: npm run check:form-art
       # Zero-cycle gate (2026-07-11 repo audit batch 3): six circular
       # import chains were removed by relocating shared types to neutral
       # modules; this keeps the dependency graph acyclic.
@@ -69,3 +72,33 @@ jobs:
           VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.VITE_FIREBASE_MESSAGING_SENDER_ID }}
           VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID }}
           VITE_FIREBASE_VAPID_KEY: ${{ secrets.VITE_FIREBASE_VAPID_KEY }}
+      # Dist-size ratchet: per-chunk + total budget against
+      # scripts/dist-size.baseline.json (5% growth tolerance; new large
+      # chunks must be added deliberately). chunkSizeWarningLimit in
+      # vite.config.ts is a raised warning, not a budget — this is the budget.
+      - run: npm run check:dist-size
+
+  # Dependency advisories, as a PR gate for the full ROOT tree: `npm audit`
+  # fails on high or critical, so a new advisory has to be fixed or
+  # consciously addressed before it merges. Development tooling processes
+  # images too, so the root gate includes it. Both dependency
+  # trees gate on high/critical. Compatible transitive updates cleared the
+  # Functions high/critical advisories on 2026-09-07 without an Admin SDK
+  # major migration; do not restore the former report-only `|| true` lane.
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 22
+          cache: "npm"
+      - run: npm ci
+      - name: Audit root and development dependencies (gates on high and critical)
+        run: npm audit --audit-level=high
+      - name: Audit functions dependencies (gates on high and critical)
+        working-directory: functions
+        run: |
+          npm ci
+          npm audit --omit=dev --audit-level=high

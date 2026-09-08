@@ -175,7 +175,7 @@ test.describe("app screenshots", () => {
       // and a log line makes the silent-miss visible in the CI output.
       if (name === "history") {
         await page
-          .getByText(/Muscle Groups Trained/i)
+          .getByText(/Muscle groups trained/i)
           .first()
           .waitFor({ state: "visible", timeout: 40000 })
           .catch(() =>
@@ -267,12 +267,18 @@ test.describe("app screenshots", () => {
       );
     }
 
-    // Badge grid — History's Badges tab. The stashed-tab hook (History.tsx
-    // reads sessionStorage("history-tab") on mount) gives a deterministic
-    // route without scripting the tab UI.
+    // History's Milestones tab — the chronology, with the badge collection
+    // beneath it. The stashed-tab hook (History.tsx reads
+    // sessionStorage("history-tab") on mount) gives a deterministic route
+    // without scripting the tab UI.
+    //
+    // The stored value is "milestones" now: the tab was renamed from
+    // "badges", and although History still redirects the legacy value, the
+    // catch below swallows a miss silently — so a spec left on the old
+    // value would capture Analytics and look like a Milestones regression.
     await page.addInitScript(() => {
       try {
-        window.sessionStorage.setItem("history-tab", "badges");
+        window.sessionStorage.setItem("history-tab", "milestones");
       } catch {
         /* fine — capture lands on Analytics instead */
       }
@@ -282,7 +288,7 @@ test.describe("app screenshots", () => {
       .getByRole("navigation", { name: /main navigation/i })
       .waitFor({ state: "visible", timeout: 20000 });
     await page.waitForTimeout(1600);
-    await shootLightDark("badges-grid");
+    await shootLightDark("milestones");
 
     // Exercise guide — ExerciseHistory's Form tab (ExerciseFormContent:
     // muscle diagram hero + pills + instructions + watch-out callout).

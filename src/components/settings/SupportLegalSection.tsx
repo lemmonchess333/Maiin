@@ -7,10 +7,10 @@ declare const __APP_VERSION__: string;
 // `support@troposfit.com` is a Cloudflare Email Routing forwarder — no
 // mailbox lives at troposfit.com itself. Inbound mail forwards to
 // troposfit@gmail.com, a dedicated support inbox separate from the
-// owner's personal Gmail. The Privacy Policy, Terms of Service, and
-// privacy.html also reference this address (see PrivacyPolicy.tsx,
-// TermsOfService.tsx, privacy.html) so any change to the routing target
-// or the support address itself needs to touch all four.
+// owner's personal Gmail. PrivacyPolicy.tsx, TermsOfService.tsx,
+// Support.tsx and the static public/legal/*.html pages carry the same
+// address, so a change to the routing target or the address itself has
+// to touch every one of them (legalCopyClaims.test.ts pins the set).
 //
 // The original address was support@troposfit.com — a domain nobody
 // here owned. Swapped to support@troposfit.com once the troposfit.com
@@ -66,7 +66,7 @@ export default function SupportLegalSection({
     <AccordionSection
       inline={inline}
       icon={<Scale className="size-5 text-primary" />}
-      title="Support & Legal"
+      title="Support & legal"
       subtitle="Help, privacy policy, terms"
     >
       <a
@@ -76,7 +76,7 @@ export default function SupportLegalSection({
         <div className="flex items-center gap-3">
           <Mail className="size-5" />
           <div>
-            <p className="text-sm text-foreground">Help & Support</p>
+            <p className="text-sm text-foreground">Help & support</p>
             <p className="text-xs text-muted-foreground">
               support@troposfit.com
             </p>

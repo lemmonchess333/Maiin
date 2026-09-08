@@ -12,6 +12,7 @@ import { logger } from "../lib/logger";
 import { useUid } from "../lib/auth";
 import { isVolumeEligible } from "../lib/runStatsEligibility";
 import { localWeekKey } from "../lib/dateHelpers";
+import { sampleRoute, type RouteCoordinate } from "../lib/routeSegments";
 
 export interface RunningWeekData {
   week: string;
@@ -38,7 +39,7 @@ export interface RunSummaryItem {
    *  existing item builders (tests, fixtures) stay assignable — the
    *  mapper below always sets it. */
   paceVerdictTone?: "on" | "fast" | "easy-too-fast" | "slow" | null;
-  routePreview?: { lat: number; lon: number }[];
+  routePreview?: RouteCoordinate[];
   /* Validity metadata persisted by PR #480. Carried on the item so
      downstream UI (Recent Runs badges) can render transparency
      labels without re-querying. Stat aggregations consult these
@@ -194,14 +195,11 @@ export function useRunningStats(days: number = 30) {
             savedAnyway: data.savedAnyway === true,
             routePreview:
               data.points?.length > 1
-                ? data.points
-                    .filter(
-                      (_: { lat: number; lon: number }, i: number) =>
-                        i % Math.ceil(data.points.length / 20) === 0
-                    )
-                    .map((p: { lat: number; lon: number }) => ({
+                ? sampleRoute(data.points as RouteCoordinate[], 20)
+                    .map((p) => ({
                       lat: p.lat,
                       lon: p.lon,
+                      ...(p.breakBefore ? { breakBefore: true } : {}),
                     }))
                 : undefined,
           });

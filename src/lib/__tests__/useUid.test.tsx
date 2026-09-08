@@ -36,6 +36,15 @@ vi.mock("../firebase", () => ({
   functions: {},
   firebaseConfig: {},
 }));
+/* auth.tsx takes `auth` from firebaseApp (the Firestore-free half of the
+   split), so the mock has to cover both halves — the real module calls
+   getAuth() at import, which this suite's `firebase/auth` mock does not
+   provide. Same shape as above so the suite's intent is unchanged. */
+vi.mock("../firebaseApp", () => ({
+  auth: H.mockAuth,
+  app: {},
+  firebaseConfig: {},
+}));
 vi.mock("@/lib/pushNotifications", () => ({
   invalidatePushTokenLifecycle: vi.fn(),
   stopListeningForForegroundPush: vi.fn(),

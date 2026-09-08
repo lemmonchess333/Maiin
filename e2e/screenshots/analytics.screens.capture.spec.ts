@@ -216,10 +216,12 @@ test.describe("analytics tab screenshots", () => {
       page.getByRole("heading", { name: /analytics/i }).first()
     ).toBeVisible({ timeout: 30_000 });
 
-    // The defect, stated directly. `animate-pulse` is the Skeleton /
-    // ChartSkeleton marker class; the lazy-chunk fallback copy is the
-    // other stuck state. Neither may survive a settled load.
-    await expect(page.locator(".animate-pulse")).toHaveCount(0, {
+    // The defect, stated directly. `motion-safe:animate-pulse` is the
+    // Skeleton / ChartSkeleton marker class (matched by substring so the
+    // variant prefix cannot silently empty this selector); the lazy-chunk
+    // fallback copy is the other stuck state. Neither may survive a
+    // settled load.
+    await expect(page.locator('[class*="animate-pulse"]')).toHaveCount(0, {
       timeout: 30_000,
     });
     await expect(page.getByText(/loading analytics/i)).toHaveCount(0);
@@ -229,11 +231,11 @@ test.describe("analytics tab screenshots", () => {
     // heading but never its data still fails. All three feed `dataLoading`
     // and all three must have arrived.
     await expect(
-      page.getByRole("button", { name: /Monthly Volume/i })
+      page.getByText("Monthly Volume", { exact: true })
     ).toBeVisible();
     await expect(page.getByText("2.2k").first()).toBeVisible();
     await expect(
-      page.getByRole("button", { name: /Monthly Distance/i })
+      page.getByText("Monthly Distance", { exact: true })
     ).toBeVisible();
     await expect(page.getByText("5.2").first()).toBeVisible();
     await expect(page.getByText(/no meals logged/i)).toHaveCount(0);

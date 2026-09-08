@@ -107,18 +107,15 @@ test.describe("onboarding screenshots", () => {
     await tap(page, /build muscle/i);
     await next(page);
 
+    // Select both activities for the race + lifting walkthrough.
+    await page.getByRole("radio", { name: "Both", exact: true }).click();
     // Step 1 — days per week (a default may already be selected).
     await shootBoth(page, "onboarding-1-days");
     await next(page);
 
-    // Step 2 — equipment.
-    await tap(page, /full gym/i);
-    await shootBoth(page, "onboarding-2-equipment");
-    await next(page);
-
     // Step 3 — run frequency + mode → Race Prep → distance + date.
     await tap(page, /regular runner/i);
-    await tap(page, /race prep/i);
+    await page.getByRole("radio", { name: /race prep/i }).click();
     /* Race distance is a `SegmentedControl` now, so its options carry an
        explicit role="radio" — which OVERRIDES the implicit button role, so
        the `tap` helper's getByRole("button") stops matching. And `tap` is
@@ -166,16 +163,21 @@ test.describe("onboarding screenshots", () => {
     await shootBoth(page, "onboarding-3-race-advisory-compressed");
     await next(page);
 
-    // Step 4 — injuries (skippable).
+    // Step 2 — equipment.
+    await tap(page, /full gym/i);
+    await shootBoth(page, "onboarding-2-equipment");
+    await next(page);
+
+    // Step 4 — limitations require an explicit answer.
     await shootBoth(page, "onboarding-4-injuries");
+    await expect(
+      page.getByRole("button", { name: /continue/i })
+    ).toBeDisabled();
+    await page.getByRole("button", { name: "None", exact: true }).click();
     await next(page);
 
     // Step 5 — about you (has sensible defaults; shoot as-is).
     await shootBoth(page, "onboarding-5-about-you");
-    await next(page);
-
-    // Step 6 — weekly preview.
-    await shootBoth(page, "onboarding-6-preview");
     await next(page);
 
     // Step 7 — confirmation. Shot but NOT submitted (completeOnboarding

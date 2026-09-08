@@ -1,6 +1,9 @@
-import { useState, useEffect, useMemo } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
-import WeekPulseCard from "@/components/WeekPulseCard";
+import CompletionExtras from "@/components/workout/CompletionExtras";
+import SectionLabel from "@/components/ui/SectionLabel";
+import { useState, useEffect, useMemo, useRef, Suspense } from "react";
+import { useLocation, useNavigate, Navigate } from "react-router-dom";
+import { readString, writeString } from "@/lib/localStore";
+import { lazyRetry } from "@/lib/lazyRetry";
 import {
   collection,
   doc,
@@ -10,13 +13,11 @@ import {
   Timestamp,
 } from "firebase/firestore";
 import { addDocGuarded, setDocGuarded } from "@/lib/firestoreWrite";
-import { db } from "../lib/firebase";
+import { auth, db } from "../lib/firebase";
 import { localDateString, localWeekKey } from "../lib/dateHelpers";
 import { spaceDef } from "@/features/spaces/spaceDefs";
 import { useAuth } from "../lib/auth";
 import { useOnlineStatus } from "../hooks/useOnlineStatus";
-import { usePostCompletionKudos } from "../hooks/usePostCompletionKudos";
-import PostCompletionKudos from "../components/social/PostCompletionKudos";
 import { logger } from "../lib/logger";
 import {
   calculatePace,
@@ -25,6 +26,7 @@ import {
   estimateRunCalories,
 } from "../lib/gps";
 import { postActivity } from "../lib/socialApi";
+import { needsEmailVerification } from "../lib/emailVerificationGate";
 import { compose, enqueueShare, showQueuedToast } from "../lib/shareComposer";
 import { recordSharedActivity } from "../lib/sessionDelete";
 import type { GPSPoint, Split } from "../lib/gps";
@@ -45,6 +47,7 @@ import {
   type PaceInsightRun,
 } from "../hooks/usePaceInsight";
 import { usePrivacyZones } from "../hooks/usePrivacyZones";
+import { sampleRoute } from "@/lib/routeSegments";
 import { applyPrivacyZones } from "../lib/privacyZones";
 import { clipRouteEnds, DEFAULT_CLIP_METERS } from "../lib/shareCard/polyline";
 import { useShoes } from "../hooks/useShoes";
@@ -147,6 +150,12 @@ function RetryBanner({
  * InvalidRunReview owns its own saved-state UI ("Saved anyway" +
  * Done). Sharing / GPX export / map / charts are deliberately absent
  * because none of them make sense for sub-50m noise. */
+// Keep this optional detail split after the workout save screen stopped importing it.
+const WeekPulseCard = lazyRetry(() => import("@/components/WeekPulseCard"));
+const SavedRunKudos = lazyRetry(
+  () => import("@/components/social/SavedRunKudos")
+);
+
 interface InvalidRunReviewProps {
   distanceKm: number;
   elapsedSeconds: number;
@@ -389,7 +398,7 @@ export default function RunSummary() {
   const navigate = useNavigate();
   const { user, profile } = useAuth();
   const unit = useDistanceUnit();
-  const { zones: privacyZones } = usePrivacyZones();
+  const { zones: privacyZones, loading: privacyZonesLoading, error: privacyZonesError } = usePrivacyZones();
   const { isOnline } = useOnlineStatus();
   const { updateMileage, defaultShoe } = useShoes();
   // PR-J Q2 chunk B2: completeRunDay deleted. The saved-run write
@@ -416,6 +425,15 @@ export default function RunSummary() {
   >("pending");
   const [reconciliationBusy, setReconciliationBusy] = useState(false);
   const [savedRunId, setSavedRunId] = useState<string | null>(null);
+  /* Post-write steps that must run once per saved run, however many times
+     the chain is resumed after a failure: the share prompt (a second prompt
+     could post the run twice) and the shoe-mileage increment (a second
+     call double-counts the distance). */
+  const shareHandledRef = useRef(false);
+  const [shareSaved, setShareSaved] = useState<
+    (() => Promise<void>) | undefined
+  >();
+  const mileageAppliedRef = useRef(false);
 
   // Pull dismissal state from localStorage whenever the saved-run
   // id arrives. The doc id is the natural unique key — different
@@ -423,17 +441,11 @@ export default function RunSummary() {
   // prompt-then-quiet cycle.
   useEffect(() => {
     if (!savedRunId) return;
-    try {
-      const flag = localStorage.getItem(
-        `tropos:reconcileDismissed:${savedRunId}`
-      );
-      if (flag === "1") setReconciliation("dismissed");
-    } catch {
-      // localStorage might be unavailable (private mode, blocked).
-      // Fall through silently — the prompt re-fires per mount;
-      // user can dismiss again. Same end state, just one extra
-      // tap in the rare error path.
-    }
+    // Unavailable storage (private mode, blocked) reads as not dismissed:
+    // the prompt re-fires per mount and the user can dismiss again. Same
+    // end state, just one extra tap in the rare error path.
+    const flag = readString(`tropos:reconcileDismissed:${savedRunId}`);
+    if (flag === "1") setReconciliation("dismissed");
   }, [savedRunId]);
   const [shareOpen, setShareOpen] = useState(false);
   // CIRCLE-SESSION-01 — explicit summary-only Circle share, offered
@@ -453,14 +465,6 @@ export default function RunSummary() {
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
   const [saveError, setSaveError] = useState<string | null>(null);
   const saved = saveStatus === "saved";
-  // Phase 2 — post-completion kudos. Only after the run is actually saved
-  // (the achievement is banked), and only if someone the user follows also
-  // trained today. Once/day, dismissible.
-  const kudos = usePostCompletionKudos({
-    uid: user?.uid,
-    fromName: profile?.displayName,
-    enabled: saved,
-  });
   const [paceTrend, setPaceTrend] = useState<PaceTrendResult | null>(null);
   // The historical run list, reused for BOTH the pace-trend badge and the
   // Pro pace-insight card — one query, two consumers (no extra Firestore read).
@@ -616,13 +620,19 @@ export default function RunSummary() {
     return meters ? getDistanceComparison(meters / 1000) : null;
   }, [editedDistanceMeters, state?.distance]);
 
+  const points = useMemo(
+    () => state ? applyPrivacyZones(state.points, privacyZones) : [],
+    [state, privacyZones]
+  );
+
+  // A redirect is an element, not a call made while rendering: React Router
+  // warns on navigate() in render, and a re-render before the navigation
+  // commits would fire it twice.
   if (!state) {
-    navigate("/");
-    return null;
+    return <Navigate to="/" replace />;
   }
 
   const {
-    points: rawPoints,
     distance: originalDistance,
     elapsed,
     splits,
@@ -637,7 +647,6 @@ export default function RunSummary() {
      reads from this so the edit propagates cleanly without
      touching each call site. */
   const distance = editedDistanceMeters ?? originalDistance;
-  const points = applyPrivacyZones(rawPoints, privacyZones);
   /* Mile laps are recomputed from the trace rather than converted — a mile
      split is a different CUT of the run. Privacy-zone trimming happens
      first, so the rows match the map the user is looking at. */
@@ -866,6 +875,13 @@ export default function RunSummary() {
        saving, but the inline Retry banner can call handleSave again —
        this stops a flap if the user mashes it. */
     if (saveStatus === "saving") return;
+    /* A Retry after the run document was written but a later step failed
+       (share post, shoe mileage). Pre-fix the chain re-entered from the
+       top and wrote a SECOND run document; onRunCreated then credited
+       challenges, lifetime totals and weekly distance twice, because its
+       idempotency markers key on the (new) document id. Resume against
+       the id already held instead. */
+    const resumed = savedRunId !== null;
     setSaveStatus("saving");
     setSaveError(null);
 
@@ -893,20 +909,18 @@ export default function RunSummary() {
     const planMetadata =
       runConfig?.planMetadata ?? freeformPlanMetadata("freeform");
 
+    // The run's start — its first GPS point. One value feeds both the
+    // Timestamp and (Lift3) the local date the run is filed under.
+    const startedAtDate = new Date(points[0]?.timestamp || Date.now());
     const runData = {
       distance,
       duration: elapsed,
       avgPace: avgPaceSeconds,
       calories,
       elevationGain,
-      points:
-        points.length > 500
-          ? points.filter((_, i) => i % Math.ceil(points.length / 500) === 0)
-          : points,
+      points: sampleRoute(points, 500),
       splits,
-      startedAt: Timestamp.fromDate(
-        new Date(points[0]?.timestamp || Date.now())
-      ),
+      startedAt: Timestamp.fromDate(startedAtDate),
       completedAt: Timestamp.now(),
       // PR-L bugfix — saved-run docs now persist a local-date string
       // alongside the completedAt Timestamp. The PR-L scheduled
@@ -915,7 +929,10 @@ export default function RunSummary() {
       // this field; without it the queries return empty for every
       // user and the reconciliation flow silently mis-fires. Matches
       // the workouts convention (saved workouts already carry both).
-      date: localDateString(new Date()),
+      // Lift3 (runs too): dated by when the run STARTED — not by the Save
+      // tap, so a run begun before midnight belongs to the day it began, as
+      // on Strava and Garmin.
+      date: localDateString(startedAtDate),
       notes: notes.trim(),
       // RUN-03: optional structured effort signal. Null (skipped) survives
       // stripUndefined so the field shape doesn't bifurcate — same precedent
@@ -985,7 +1002,9 @@ export default function RunSummary() {
       // "Leave open".
       const runsCol = collection(db, "users", user.uid, "runs");
       let savedId: string;
-      if (navigator.onLine) {
+      if (savedRunId) {
+        savedId = savedRunId;
+      } else if (navigator.onLine) {
         const savedDocRef = await addDocGuarded(runsCol, runData);
         savedId = savedDocRef.id;
       } else {
@@ -1011,126 +1030,128 @@ export default function RunSummary() {
          plausibly have set a PR — invalid 0km / 0:00 runs (the
          "Save anyway" exits) shouldn't tease a PR celebration. */
       if (!isInvalid) {
-        // Activation funnel: a real (non-zero) saved run. Invalid 0km/0:00
-        // "save anyway" runs are excluded — same gate as the PR toast/share.
-        trackLifecycle("run_completed");
-        // Session-completed signal for the reminder priming modal (D-1):
-        // a run-first user's first session is the consent value moment too.
-        window.dispatchEvent(new CustomEvent("tropos:run-completed"));
-        toast.success("Run saved", {
-          action: {
-            label: "View PRs",
-            onClick: () => navigate("/history?tab=prs"),
-          },
-        });
+        if (!resumed) {
+          // Activation funnel: a real (non-zero) saved run. Invalid 0km/0:00
+          // "save anyway" runs are excluded — same gate as the PR toast/share.
+          // Once per run: a resumed chain has already fired both.
+          trackLifecycle("run_completed");
+          // Session-completed signal for the reminder priming modal (D-1):
+          // a run-first user's first session is the consent value moment too.
+        }
       }
 
-      /* Skip the share-composer for invalid runs. The user chose
-         "Save anyway" on a sub-threshold run (e.g. 0:02 / 0.00km) —
-         we keep the record on their account but a 0km run has no
-         business prompting a "Share with followers / public"
-         decision. Surfaced in QA: the composer was auto-firing on
-         every Save anyway, even though the InvalidRunReview saved-
-         state UI deliberately hides Share / GPX / map. */
-      if (!isInvalid) {
-        // Share composer: prompts the user (or replays their saved
-        // default) for visibility + caption. When offline, the post is
-        // queued and replayed by ShareComposerSheet's drain effect.
-        const runName =
-          runConfig?.activityType === "intervals"
-            ? "Interval Run"
-            : runConfig?.activityType === "guided"
-              ? "Guided Run"
-              : "Run";
-        const km = distance / 1000;
-        const mins = Math.floor(elapsed / 60);
-        const secs = Math.round(elapsed % 60);
-        const decision = await compose(user.uid, {
-          type: "run",
-          title: runName,
-          meta: [
-            `${km.toFixed(2)} km`,
-            `${mins}:${secs.toString().padStart(2, "0")}`,
-            calories ? `${Math.round(calories)} cal` : "",
-          ].filter(Boolean),
-        });
-        if (decision) {
-          // Shared-route privacy default. The public activity routePreview is
-          // rendered as a REAL map on the feed, so a user who hasn't set
-          // explicit privacy zones would otherwise broadcast their home/start
-          // to anyone who follows them (follows are unilateral). Clip ~200m off
-          // each end by default. Scoped to the SHARE only — the user's own map
-          // + saved run keep the full `points`. Opt out in Settings → Privacy
-          // (profile.hideSharedRouteEnds === false). Already-zoned points stay
-          // zoned (this composes on top). clipRouteEnds is self-protecting: a
-          // route too short to clip is returned whole, never emptied.
-          const sharedRoutePoints =
-            profile?.hideSharedRouteEnds === false
-              ? points
-              : clipRouteEnds(points, DEFAULT_CLIP_METERS);
-          const payload = {
-            authorId: user.uid,
-            authorName: profile?.displayName || "Athlete",
-            ...(profile?.photoURL ? { authorPhotoURL: profile.photoURL } : {}),
-            type: "run" as const,
-            visibility: decision.visibility,
-            ...(decision.caption ? { caption: decision.caption } : {}),
-            runName,
-            activityTitle: runName,
-            distance,
-            duration: elapsed,
-            avgPace,
-            elevationGain,
-            calories,
-            routePreview:
-              sharedRoutePoints.length > 20
-                ? sharedRoutePoints
-                    .filter(
-                      (_, i) =>
-                        i % Math.ceil(sharedRoutePoints.length / 20) === 0
-                    )
-                    .map((p) => ({ lat: p.lat, lon: p.lon }))
-                : sharedRoutePoints.map((p) => ({ lat: p.lat, lon: p.lon })),
-          };
-          const runSource = { kind: "run" as const, id: savedId };
-          if (isOnline) {
-            try {
-              const activityId = await postActivity(payload);
-              /* The link that lets deleting this run clear its post —
+      // Prepare an explicit share action only after this run is persisted.
+      setShareSaved(() => async () => {
+        if (auth.currentUser?.uid !== user.uid) return;
+        if (!isInvalid && !shareHandledRef.current) {
+          // Share composer: prompts the user (or replays their saved
+          // default) for visibility + caption. When offline, the post is
+          // queued and replayed by ShareComposerSheet's drain effect.
+          const runName =
+            runConfig?.activityType === "intervals"
+              ? "Interval Run"
+              : runConfig?.activityType === "guided"
+                ? "Guided Run"
+                : "Run";
+          const km = distance / 1000;
+          const mins = Math.floor(elapsed / 60);
+          const secs = Math.round(elapsed % 60);
+          // Compute once before the choice: this exact geometry is previewed
+          // and posted. Loading/failed privacy settings withhold the route.
+          const sharedRoutePoints = privacyZonesLoading || privacyZonesError ? [] : (
+            profile?.hideSharedRouteEnds === false ? points : clipRouteEnds(points, DEFAULT_CLIP_METERS)
+          );
+          const routePreview = sampleRoute(sharedRoutePoints, 20).map((p) => ({
+            lat: p.lat, lon: p.lon, ...(p.breakBefore ? { breakBefore: true } : {}),
+          }));
+          const decision = await compose(
+            user.uid,
+            {
+              type: "run",
+              title: runName,
+              routePreview,
+              routePrivacyNote: privacyZonesLoading || privacyZonesError
+                ? "Route withheld because privacy settings are unavailable."
+                : "This is the route included in your post.",
+              meta: [
+                `${km.toFixed(2)} km`,
+                `${mins}:${secs.toString().padStart(2, "0")}`,
+                calories ? `${Math.round(calories)} cal` : "",
+              ].filter(Boolean),
+            },
+            {
+              needsEmailVerification: needsEmailVerification(user),
+              forcePrompt: true,
+            }
+          );
+          // Decided (posted, queued or declined) — never prompt again for
+          // this run, even if a later step fails and the chain resumes.
+          if (decision && auth.currentUser?.uid === user.uid) {
+            const payload = {
+              authorId: user.uid,
+              authorName: profile?.displayName || "Athlete",
+              ...(profile?.photoURL
+                ? { authorPhotoURL: profile.photoURL }
+                : {}),
+              type: "run" as const,
+              visibility: decision.visibility,
+              ...(decision.caption ? { caption: decision.caption } : {}),
+              runName,
+              activityTitle: runName,
+              distance,
+              duration: elapsed,
+              avgPace,
+              elevationGain,
+              calories,
+              routePreview,
+            };
+            const runSource = { kind: "run" as const, id: savedId };
+            if (isOnline) {
+              try {
+                const activityId = await postActivity(payload);
+                shareHandledRef.current = true;
+                /* The link that lets deleting this run clear its post —
                  without it the post is stranded (sessionDelete's
                  asymmetry note, now closed). Workout save-composers have
                  written their marker since the share sheet shipped; the
                  run path never did. Best-effort inside the helper. */
-              await recordSharedActivity(user.uid, runSource, activityId);
-            } catch (socialErr) {
-              const lostNet =
-                typeof navigator !== "undefined" && navigator.onLine === false;
-              if (lostNet) {
-                enqueueShare(user.uid, payload, runSource);
-                showQueuedToast();
-              } else {
-                logger.warn("[RunSave] postActivity failed:", socialErr);
+                await recordSharedActivity(user.uid, runSource, activityId);
+              } catch (socialErr) {
+                const lostNet =
+                  typeof navigator !== "undefined" &&
+                  navigator.onLine === false;
+                if (lostNet) {
+                  enqueueShare(user.uid, payload, runSource);
+                  shareHandledRef.current = true;
+                  showQueuedToast();
+                } else {
+                  logger.warn("[RunSave] postActivity failed:", socialErr);
+                  throw socialErr;
+                }
               }
+            } else {
+              enqueueShare(user.uid, payload, runSource);
+              shareHandledRef.current = true;
+              showQueuedToast();
             }
-          } else {
-            enqueueShare(user.uid, payload, runSource);
-            showQueuedToast();
           }
         }
-      }
+      });
 
-      // Update shoe mileage against whichever shoe was resolved above.
-      if (effectiveShoeId) {
+      // Update shoe mileage against whichever shoe was resolved above —
+      // once per run (see mileageAppliedRef).
+      if (effectiveShoeId && !mileageAppliedRef.current) {
         if (navigator.onLine) {
           const alert = await updateMileage(effectiveShoeId, distance / 1000);
+          mileageAppliedRef.current = true;
           if (alert === "replace") {
             toast.error(
-              "Time for new shoes! This pair has exceeded its recommended mileage.",
+              "This pair is past its recommended mileage. Consider replacing it.",
               { duration: 5000 }
             );
           } else if (alert === "warning") {
             toast.warning(
-              "Your shoes are at 85% of their recommended mileage. Start looking for a replacement!",
+              "Your shoes are at 85% of their recommended mileage. Start thinking about a replacement.",
               { duration: 5000 }
             );
           }
@@ -1139,6 +1160,7 @@ export default function RunSummary() {
           // too. Fire it into the SDK's durable queue; the wear alerts
           // wait for an online run (they're advisory, not per-run).
           void updateMileage(effectiveShoeId, distance / 1000).catch(() => {});
+          mileageAppliedRef.current = true;
         }
       }
 
@@ -1160,9 +1182,7 @@ export default function RunSummary() {
       // PR-J Q2 chunk B2: post-save completeRunDay call dropped.
       // The saved-run write that just happened is the completion
       // signal — the derivation's claim walk picks it up on next
-      // useProgram render. The "Ready for next week" toast moves
-      // to a useProgram effect (chunk B4) that watches derived
-      // completion of runDays + workouts.
+      // useProgram render.
 
       /* Auto-navigation timeouts (800ms online / 1800ms offline) were
          removed: they teleported the user back to home without their
@@ -1187,6 +1207,10 @@ export default function RunSummary() {
   };
 
   const handleExportGPX = () => {
+    if (privacyZonesLoading || privacyZonesError) {
+      toast.error("Couldn't check your privacy settings. Try again");
+      return;
+    }
     // Track name travels into other apps with the export — a stable
     // "22 Aug 2026", not whatever the device locale renders.
     const gpx = toGPX(points, `Tropos Run ${formatDayMonthYear(new Date())}`);
@@ -1333,16 +1357,10 @@ export default function RunSummary() {
           {/* Post-completion kudos (Phase 2) — after the run is banked, if
               someone the user follows also trained today. Renders nothing
               otherwise; once/day; dismissible. */}
-          {saved && kudos.candidate && (
-            <div className="mx-4 mb-4">
-              <PostCompletionKudos
-                candidate={kudos.candidate}
-                sending={kudos.sending}
-                sent={kudos.sent}
-                onSend={kudos.sendKudos}
-                onDismiss={kudos.dismiss}
-              />
-            </div>
+          {saved && (
+            <Suspense fallback={null}>
+              <SavedRunKudos uid={user?.uid} fromName={profile?.displayName} />
+            </Suspense>
           )}
 
           {/* P3-1: save-time mismatch reconciliation.
@@ -1402,7 +1420,7 @@ export default function RunSummary() {
                       Off-plan save
                     </p>
                     <p className="text-xs text-muted-foreground mt-0.5">
-                      {`This didn't match today's ${plannedTypeLabel}. How should we handle the scheduled slot?`}
+                      {`This didn't match today's ${plannedTypeLabel}. What should happen to the planned run?`}
                     </p>
                   </div>
                   <div className="grid grid-cols-1 gap-2">
@@ -1469,18 +1487,15 @@ export default function RunSummary() {
                         // Persist so re-mounts of this same saved run
                         // don't re-prompt. Same key the on-mount
                         // useEffect reads above.
+                        // Storage unavailable — the dismissal still
+                        // sticks for this mount via React state; it just
+                        // won't survive a re-mount. Acceptable degraded
+                        // mode.
                         if (savedRunId) {
-                          try {
-                            localStorage.setItem(
-                              `tropos:reconcileDismissed:${savedRunId}`,
-                              "1"
-                            );
-                          } catch {
-                            // localStorage unavailable — dismissal still
-                            // sticks for this mount via React state; it
-                            // just won't survive a re-mount. Acceptable
-                            // degraded mode.
-                          }
+                          writeString(
+                            `tropos:reconcileDismissed:${savedRunId}`,
+                            "1"
+                          );
                         }
                       }}
                       className="w-full py-2 text-xs text-muted-foreground disabled:opacity-50"
@@ -1606,7 +1621,9 @@ export default function RunSummary() {
               run doc is saved, so it includes this run). Null while
               loading; no jank. */}
           <div className="px-4 mb-4">
-            <WeekPulseCard />
+            <Suspense fallback={null}>
+              <WeekPulseCard />
+            </Suspense>
           </div>
 
           {/* Pace Trend Badge + Run8-Vocab Adherence chip.
@@ -1677,7 +1694,12 @@ export default function RunSummary() {
               <span className="font-mono tabular-nums font-semibold text-foreground">
                 {Math.min(
                   weeklyRunTarget,
-                  eligibleRunsThisWeek + (saved && currentRunIsEligible ? 1 : 0)
+                  eligibleRunsThisWeek +
+                    (saved &&
+                    currentRunIsEligible &&
+                    !weekRunsRaw.some((run) => run.id === savedRunId)
+                      ? 1
+                      : 0)
                 )}
               </span>
               <span className="text-muted-foreground">of</span>
@@ -1697,11 +1719,11 @@ export default function RunSummary() {
             </div>
           )}
 
-          {/* Best Efforts */}
+          {/* Best efforts */}
           {bestEfforts.length > 0 && (
             <div className="mx-4 mb-4 p-4 rounded-2xl bg-card">
               <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
-                Best Efforts
+                Best efforts
               </h3>
               <div className="grid grid-cols-3 gap-2">
                 {bestEfforts.map((effort) => (
@@ -1799,9 +1821,9 @@ export default function RunSummary() {
                 below keeps free text but no longer owns "how did it feel". */}
             {!isInvalid && (
               <div className="space-y-1.5">
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground px-1">
+                <SectionLabel tier="section" className="px-1">
                   How did it feel?
-                </p>
+                </SectionLabel>
                 <SegmentedControl
                   options={[
                     { value: "easier", label: "Easier" },
@@ -1836,14 +1858,14 @@ export default function RunSummary() {
             )}
 
             {canShowNormalSave({ isInvalid: false, saveStatus }) && (
-              <button
-                type="button"
+              <Button
+                variant="sport"
+                fullWidth
                 onClick={handleSave}
-                disabled={saveStatus === "saving"}
-                className="w-full py-3 rounded-xl font-medium text-sm transition-all active:scale-[0.97] disabled:opacity-90 bg-running-fill text-white"
+                loading={saveStatus === "saving"}
               >
-                {saveStatus === "saving" ? "Saving…" : "Save Run"}
-              </button>
+                Save run
+              </Button>
             )}
 
             {/* Pace insight (Pro) — surfaced at the post-run decision moment,
@@ -1857,13 +1879,43 @@ export default function RunSummary() {
               />
             )}
 
+            {saved &&
+              (() => {
+                const next = programState?.runDays
+                  ?.filter(
+                    (day) =>
+                      day.date &&
+                      day.date > localDateString() &&
+                      !day.completed &&
+                      day.status !== "skipped" &&
+                      day.status !== "race_no_show"
+                  )
+                  .sort((a, b) => a.date!.localeCompare(b.date!))[0];
+                if (!next?.date) return null;
+                const template = RUN_TEMPLATES.find(
+                  (template) =>
+                    template.id === (next.userOverride ?? next.templateId)
+                );
+                if (!template) return null;
+                return (
+                  <p className="text-sm text-muted-foreground">
+                    Next run: {template.name} —{" "}
+                    {new Date(`${next.date}T12:00:00`).toLocaleDateString(
+                      "en-GB",
+                      { weekday: "long" }
+                    )}
+                  </p>
+                );
+              })()}
+            {saved && <CompletionExtras onShare={shareSaved} />}
+
             {canShowDone({ saveStatus }) && (
               /* Replaces the removed auto-navigation timeouts. Sits in the
-             same primary-action slot as Save Run so the user's eye
+             same primary-action slot as Save run so the user's eye
              doesn't move when the state transitions saved → saved. */
               <button
                 type="button"
-                onClick={() => navigate("/")}
+                onClick={() => navigate("/program")}
                 className="w-full py-3 rounded-xl font-medium text-sm transition-all active:scale-[0.97] flex items-center justify-center gap-2"
                 style={{
                   background: `${THEME.success}20`,
@@ -1902,7 +1954,7 @@ export default function RunSummary() {
                 fullWidth
                 onClick={() => setCircleShareOpen(true)}
               >
-                Share to Circle
+                Share to circle
               </Button>
             )}
 
@@ -2002,7 +2054,7 @@ export default function RunSummary() {
             month: "short",
             year: "numeric",
           }),
-          points,
+          points: privacyZonesLoading || privacyZonesError ? [] : points,
           distanceKm: distance / 1000,
           durationSec: elapsed,
           paceSecPerKm: avgPaceSeconds,

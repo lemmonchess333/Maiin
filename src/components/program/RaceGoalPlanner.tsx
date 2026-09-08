@@ -151,11 +151,17 @@ function UpcomingRacePicker({
                     {format(parseLocalDate(race.event!.dateKey), "d MMM yyyy")}
                   </span>
                   <span
-                    className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-semibold"
-                    style={{
-                      background: `${THEME.running}1F`,
-                      color: THEME.running,
-                    }}
+                    className="text-caption text-muted-foreground"
+                    aria-hidden="true"
+                  >
+                    ·
+                  </span>
+                  <span
+                    className={cn(
+                      "text-caption text-foreground",
+                      /\d/.test(DISTANCE_CHIP[race.event!.distance]) &&
+                        "font-mono tabular-nums"
+                    )}
                   >
                     {DISTANCE_CHIP[race.event!.distance]}
                   </span>
@@ -221,7 +227,7 @@ export default function RaceGoalPlanner({
       <div>
         <label
           htmlFor="ps-race-event-name"
-          className="text-xs uppercase tracking-wider text-muted-foreground"
+          className="text-xs text-muted-foreground"
         >
           Event name (optional)
         </label>
@@ -239,10 +245,7 @@ export default function RaceGoalPlanner({
 
       {/* Target date */}
       <div>
-        <label
-          htmlFor="ps-race-date"
-          className="text-xs uppercase tracking-wider text-muted-foreground"
-        >
+        <label htmlFor="ps-race-date" className="text-xs text-muted-foreground">
           Target date
         </label>
         <input

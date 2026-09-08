@@ -170,10 +170,7 @@ export async function rcPurchase(
     return {
       success: false,
       isProActive: false,
-      error:
-        err instanceof Error
-          ? err.message
-          : "Purchase failed. Please try again.",
+      error: err instanceof Error ? err.message : "Purchase failed. Try again.",
     };
   }
 }

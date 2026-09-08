@@ -32,13 +32,26 @@ describe("SessionCommandCard", () => {
     expect(screen.queryByText(/Next ·/)).not.toBeInTheDocument();
   });
 
-  it("renders the title, description and meta pills", () => {
-    renderCard();
+  it("renders the title, description and ONE metadata line — not pills", () => {
+    const { container } = renderCard();
     expect(
       screen.getByRole("heading", { name: "Long 15K" })
     ).toBeInTheDocument();
-    expect(screen.getByText("15km steady state")).toBeInTheDocument();
-    expect(screen.getByText("15 km")).toBeInTheDocument();
+    expect(screen.getByRole("region")).toHaveTextContent("15km steady state");
+    // Static facts read as one quiet line, "15 km · Long", with real spaces
+    // (so a screen reader hears two items, not "15 kmLong").
+    const card = screen.getByRole("region", { name: /Up next — Long 15K/ });
+    expect(card).toHaveTextContent("15 km · Long");
+    // No enclosed pill chrome around metadata: a pill is a selection or a
+    // state, and these are neither.
+    expect(container.querySelector(".rounded-full.px-2\\.5")).toBeNull();
+    // Numerals take the numeral font; words stay in the text font.
+    expect(
+      screen
+        .getAllByText("15")
+        .every((element) => element.className.includes("font-mono"))
+    ).toBe(true);
+    expect(screen.getByText("km").className).not.toContain("font-mono");
   });
 
   it("fires onPrimaryAction from the Start button (not the whole card)", () => {

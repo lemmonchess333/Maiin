@@ -62,7 +62,7 @@ import type { ActivityType } from "@/types/run";
 import { requiresManualDistance } from "@/lib/runGuards";
 import { isVolumeEligible } from "@/lib/runStatsEligibility";
 import { getTargetValidationError } from "@/lib/runTargetValidation";
-import { formatDayMonthYear } from "@/utils/formatters";
+import { formatDayMonthYear, formatClock } from "@/utils/formatters";
 
 /* Preset chip (duration / pace / distance quick-pick groups). Tokenised —
    the old inline rgba(0,0,0,…) styles were light-theme-only values that
@@ -135,36 +135,9 @@ const WEATHER_ICON: Record<
    ./runConfigDefaults (run fast-launch arc) so RunLaunchCard + RunTilePicker
    share one config-from-type source of truth. Imported at the top. */
 
-/**
- * Read-only programme context strip data, computed in Run.tsx from
- * useProgram + URL params. Drives the strip rendered above the
- * selected-run card. Null = no strip (freeform user, or programme
- * has no opinion on today).
- *
- * Six visible states:
- *   - race_prep today_plan         → "Race prep · Week N of M · {distance}"
- *   - structured today_plan        → "This week's plan · {todayLabel}"
- *   - race_prep / structured rest_day      → "Rest day in your plan."
- *   - race_prep / structured completed_day → completed-day copy
- *   - race_prep elapsed            → "Race prep ended" + Settings link
- *   - freeform / no plan           → strip not rendered (null)
- */
-export interface ProgramContextStrip {
-  kind:
-    | "race_prep_today"
-    | "structured_today"
-    | "rest_day"
-    | "completed_day"
-    | "race_prep_elapsed";
-  /** For race_prep today: "Week 3 of 8" */
-  weekLabel?: string;
-  /** For race_prep today: "10K" / "Half Marathon" etc. */
-  distanceLabel?: string;
-  /** For race_prep today: ISO target date, rendered as a secondary line. */
-  targetDate?: string;
-  /** For structured today: "Tempo Run" / "Easy 30" — the day's template name. */
-  todayLabel?: string;
-}
+import type { ProgramContextStrip } from "@/lib/runContextStrip";
+// Re-exported so the run surface keeps one import site for the strip shape.
+export type { ProgramContextStrip };
 
 interface RunSetupModalProps {
   onStart: (config: RunConfig) => void;
@@ -400,19 +373,16 @@ export default function RunSetupModal({
                 <p className="text-base font-bold text-foreground">
                   {selected.name}
                 </p>
-                {/* Description and chip sit tight against each
-                    other (gap-2, no separator dot) — the chip pill
-                    visually separates the metadata on its own, so
-                    the explicit "·" was making it feel detached.
-                    Description truncates first, chip is shrink-0
-                    so it stays whole on narrow viewports. */}
-                <div className="flex items-center gap-2 mt-1">
-                  <span className="text-xs text-muted-foreground truncate min-w-0">
+                {/* Description and mode are facts, so one metadata line
+                    (" · "-joined) rather than a chip — the description
+                    truncates first and the mode stays whole on narrow
+                    viewports. */}
+                <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
+                  <span className="truncate min-w-0">
                     {selected.cardDescription}
                   </span>
-                  <span className="text-caption px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground shrink-0">
-                    {selected.cardChip}
-                  </span>
+                  <span aria-hidden="true">·</span>
+                  <span className="shrink-0">{selected.cardChip}</span>
                 </div>
               </div>
               <ChevronRight
@@ -444,9 +414,7 @@ export default function RunSetupModal({
               guided: "Guided",
             };
             const km = distanceValue(lastRun.distanceM, unit, 2);
-            const mins = Math.floor(lastRun.durationS / 60);
-            const secs = Math.floor(lastRun.durationS % 60);
-            const time = `${mins}:${secs.toString().padStart(2, "0")}`;
+            const time = formatClock(Math.floor(lastRun.durationS));
             const type = labelMap[lastRun.activityType] || "Run";
             return (
               <div className="px-4 py-2.5 rounded-xl bg-muted/40 border border-border/50">
@@ -1342,7 +1310,7 @@ export default function RunSetupModal({
                           >
                             {at.name}
                           </p>
-                          <span className="text-caption px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground shrink-0">
+                          <span className="text-xs text-muted-foreground shrink-0">
                             {at.chooserChip}
                           </span>
                         </div>

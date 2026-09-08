@@ -43,7 +43,7 @@ export default function DataExportSection({ user }: DataExportSectionProps) {
                 `${key.charAt(0).toUpperCase() + key.slice(1)} exported!`
               );
             } catch (err) {
-              toast.error("Couldn't export your data. Please try again.");
+              toast.error("Couldn't export your data. Try again.");
               logger.error(err);
             }
             setExporting(null);

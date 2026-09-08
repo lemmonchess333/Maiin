@@ -23,6 +23,17 @@ export default defineConfig({
   use: {
     baseURL: "http://localhost:4173/Maiin/",
     trace: "on-first-retry",
+    // Local browser override. The agent sandbox ships a Chromium build
+    // that does not match the revision Playwright expects, so a spec run
+    // there dies at launch with "Executable doesn't exist". Twenty-eight
+    // of the capture specs carry their own copy of this block in a
+    // `test.use`; seven do not, and reproducing a capture failure in one
+    // of those seven meant hand-writing a throwaway config first. Setting
+    // it once here covers every spec and every project. Unset in CI, where
+    // the runner installs the matching browser, so this is a no-op there.
+    ...(process.env.PW_CHROMIUM
+      ? { launchOptions: { executablePath: process.env.PW_CHROMIUM } }
+      : {}),
   },
   projects: [
     {

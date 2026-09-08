@@ -9,10 +9,17 @@ import {
   writeBatch,
 } from "firebase/firestore";
 import { setDocGuarded } from "@/lib/firestoreWrite";
+import {
+  hasQueuedWorkoutCompletion,
+  queueWorkoutCompletion,
+  workoutCompletionDayIdentity,
+} from "@/lib/offlineQueue";
+import { describeRejection, stripCallablePrefix } from "@/lib/callableErrors";
 import { stripUndefined } from "@/lib/firestoreGuards";
-import { db } from "@/lib/firebase";
+import { auth, db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
 import { postActivity } from "@/lib/socialApi";
+import { needsEmailVerification } from "@/lib/emailVerificationGate";
 import { compose, enqueueShare, showQueuedToast } from "@/lib/shareComposer";
 import { recordSharedActivity } from "@/lib/sessionDelete";
 import type {
@@ -104,7 +111,28 @@ export interface CompletedSessionData {
    *  activity-feed payload below — the variant (and any recovery
    *  reason behind it) never crosses a social or analytics boundary. */
   sessionVariant?: "express45" | "express30" | "easier_today";
+  /**
+   * Free-text notes the lifter typed against an exercise during the
+   * session, keyed by its index in the day's exercise list.
+   *
+   * These were held in session state and written to the resume draft, so
+   * they survived closing and reopening a session and were then dropped
+   * on Finish — the one moment the user would expect them to be kept.
+   * "Level 8, 6.0 incline" is exactly the setting they want back next
+   * week, and the draft is deleted the moment the workout commits.
+   *
+   * Optional and additive on the workout doc; older documents simply have
+   * no notes, and nothing derives a number from them.
+   */
+  exerciseNotes?: Record<number, string>;
+  /** Lift3 — when the session STARTED (ms). The workout doc is dated by its
+   *  start, not by the Finish tap: a session begun at 23:30 and finished at
+   *  00:20 belongs to the day it began (streak, active day, PI window and
+   *  Home's "today" burn all read `date`). Older drafts omit it → finish
+   *  time, the pre-Lift3 behaviour. */
+  startedAt?: number;
 }
+import { planningEasyPaceSPerKm } from "@/lib/runPaces";
 import {
   generateRacePlanV2,
   scheduleRecoveryWeekV2,
@@ -192,6 +220,7 @@ function makeRunPlanRecord(
 function regenerateRacePlan({
   raceGoal,
   recentLayoff,
+  easyPaceSPerKm,
   weekSchedule,
   weeklyRunDays,
   currentDate,
@@ -219,6 +248,11 @@ function regenerateRacePlan({
    *  silently rebuild a returning runner's week at mid-block volume, and a
    *  compile error is a better guard than a convention. */
   recentLayoff: LayoffClass;
+  /** Run17 — the runner's confirmed easy pace (`planningEasyPaceSPerKm`), or
+   *  null. REQUIRED for the same reason as `tuning`: a regen site that forgot
+   *  it would silently revert a benchmarked runner's long-run ceiling to the
+   *  nominal table on the next weekly refresh. */
+  easyPaceSPerKm: number | null;
   carry?: {
     currentWeek?: number;
     totalWeeks?: number;
@@ -257,6 +291,7 @@ function regenerateRacePlan({
     weekStart,
     tuning,
     recentLayoff,
+    easyPaceSPerKm,
     // The block's original length, so the generator emits the week for where
     // the runner actually IS rather than week 0 of a fresh block. Without it
     // `weeks[0]` — the only week any caller persists — is always a base week,
@@ -321,45 +356,6 @@ interface RefreshRunScheduleOverrides {
    *  `runTuningFromProfile(profile)` here would read the closure's
    *  pre-save values. */
   tuning?: RunTuning;
-}
-
-/**
- * Firebase prefixes a callable's message with its code, e.g.
- * "FirebaseError: failed-precondition: Undo the deload week first." Only
- * the sentence is fit to show a user.
- */
-function stripCallablePrefix(message: string): string {
-  const cleaned = message.replace(/^FirebaseError:\s*/i, "");
-  const marker = cleaned.indexOf("failed-precondition:");
-  return (
-    marker >= 0
-      ? cleaned.slice(marker + "failed-precondition:".length)
-      : cleaned
-  ).trim();
-}
-
-/**
- * The user-fit sentence behind a rejected command, or null. Only a
- * `failed-precondition` carries prose written for the user ("This workout
- * changed since you started. Refresh and try again."); every other code
- * (invalid-argument, internal, unauthenticated) is a developer message and
- * goes to error reporting instead. Eleven writers used to collapse every
- * rejection to "Couldn't X. Refreshing." and log the reason only to the
- * console, which is why "some things don't work" was undiagnosable from a
- * device (owner, 2026-09-02).
- */
-function describeRejection(err: unknown): string | null {
-  const code = String((err as { code?: unknown })?.code ?? "");
-  const message = String((err as { message?: unknown })?.message ?? "");
-  if (!message) return null;
-  if (
-    code.endsWith("failed-precondition") ||
-    /failed-precondition:/.test(message)
-  ) {
-    const why = stripCallablePrefix(message);
-    return why || null;
-  }
-  return null;
 }
 
 /** "Couldn't add that." + the server's own reason when it gave one. */
@@ -568,6 +564,8 @@ export function useProgram() {
           const { runDays, runPlan } = regenerateRacePlan({
             recentLayoff,
             tuning: runTuningFromProfile(profile),
+
+            easyPaceSPerKm: planningEasyPaceSPerKm(profile?.runFitness),
             raceGoal: profile.raceGoal,
             weekSchedule,
             weeklyRunDays: runTarget,
@@ -624,6 +622,8 @@ export function useProgram() {
           ({ runDays, runPlan } = regenerateRacePlan({
             recentLayoff,
             tuning: runTuningFromProfile(profile),
+
+            easyPaceSPerKm: planningEasyPaceSPerKm(profile?.runFitness),
             raceGoal: profile.raceGoal,
             weekSchedule,
             weeklyRunDays: runTarget,
@@ -840,7 +840,7 @@ export function useProgram() {
   // PR-G: auto week-rollover effect. When the user opens the app
   // and the calendar week has advanced past the week their
   // runDays were generated for, automatically rotate forward to
-  // catch up. Mirrors what the user-tapped "Advance to Next Week"
+  // catch up. Mirrors what the user-tapped "Start next week"
   // button does on the Lift tab, but driven by calendar instead
   // of lift completion.
   //
@@ -957,6 +957,8 @@ export function useProgram() {
         const r = regenerateRacePlan({
           recentLayoff,
           tuning: runTuningFromProfile(profile),
+
+          easyPaceSPerKm: planningEasyPaceSPerKm(profile?.runFitness),
           raceGoal: profile.raceGoal,
           weekSchedule,
           weeklyRunDays: runTarget,
@@ -1114,7 +1116,7 @@ export function useProgram() {
     async (dayIndex: number, sessionData: CompletedSessionData) => {
       // Fail CLOSED — returning silently here would let the session UI clear
       // its draft as if the workout persisted. The caller surfaces the throw.
-      if (!programState || !user) {
+      if (!programState || !user || auth.currentUser?.uid !== user.uid) {
         throw new Error(
           "Cannot complete a workout without an active programme and user."
         );
@@ -1140,8 +1142,14 @@ export function useProgram() {
 
       // Local date key so the written workout is picked up by the
       // useEffectiveTargets / useHomeData filters, which both format in
-      // the viewer's local timezone via isWorkoutOnDate.
-      const today = localDateString();
+      // the viewer's local timezone via isWorkoutOnDate. Lift3: dated by
+      // the session's START when the caller supplies it.
+      const today = localDateString(
+        typeof sessionData.startedAt === "number" &&
+          Number.isFinite(sessionData.startedAt)
+          ? new Date(sessionData.startedAt)
+          : new Date()
+      );
 
       // Build exercises array — from actual setLogs when available,
       // otherwise from planned data (every set assumed completed).
@@ -1171,11 +1179,17 @@ export function useProgram() {
               weightKg: plannedWeight,
             });
 
+        // Trimmed, and omitted entirely when empty: a whitespace-only note
+        // would otherwise persist an empty string that reads as "there is a
+        // note" to every consumer that checks for presence.
+        const note = sessionData.exerciseNotes?.[exIndex]?.trim();
+
         return {
           exerciseId: ex.exerciseId,
           exerciseName: ex.name,
           category: ex.movementCategory,
           ...(ex.repUnit !== undefined ? { repUnit: ex.repUnit } : {}),
+          ...(note ? { notes: note } : {}),
           sets,
           // D2: how many sets were PRESCRIBED, against `sets.length` which is
           // how many were completed. The array stays completed-only — every
@@ -1196,6 +1210,7 @@ export function useProgram() {
             : ex.sets.reduce((s, set) => s + set.weightKg * set.reps, 0)),
         0
       );
+      const performedExercises = exercises.filter((ex) => ex.sets.length > 0);
       const completedSetCount = exercises.reduce(
         (c, ex) => c + ex.sets.length,
         0
@@ -1242,66 +1257,74 @@ export function useProgram() {
       );
       const workoutId = `programme-${sessionData.completionId}`;
       const workoutRef = doc(db, "users", user.uid, "workouts", workoutId);
+      const queued =
+        navigator.onLine === false ||
+        hasQueuedWorkoutCompletion(user.uid, workoutId);
+      let sync: Promise<"synced" | "failed">;
 
-      try {
-        const batch = writeBatch(db);
-        batch.set(
-          programRef,
-          stripUndefined({ ...updated, updatedAt: Date.now() })
-        );
-        batch.set(
-          workoutRef,
-          stripUndefined({
-            date: today,
-            exercises,
-            totalCalories,
-            durationMinutes: effectiveDurationMin,
-            /* The field every SERVER consumer of a workout doc reads —
+      const workoutData = stripUndefined({
+        date: today,
+        exercises,
+        totalCalories,
+        durationMinutes: effectiveDurationMin,
+        /* The field every SERVER consumer of a workout doc reads —
                `workoutChallengeIncrements` (total_volume + the hybrid
                score's kg term) and `liftVolumeKgFor` (lifetime volume).
                It was computed here for the social activity post and never
                written onto the workout itself, so all three credited zero
                for every lift ever logged. */
-            totalVolume: tonnage,
-            notes: `${day.dayName} — Programme Week ${programState.weekNumber}`,
-            createdAt: Timestamp.now(),
-            source: "programme",
-            completionId: sessionData.completionId,
-            sessionVariant: sessionData.sessionVariant,
-            // D2: session-level provenance for any per-set RPE above. Helms
-            // p139 keeps novices on %1RM rather than RPE for their first
-            // month, and p73 claims accuracy only for lifters who are
-            // advanced AND RPE-familiar AND near failure — so a future
-            // consumer must be able to tell whose number it is holding rather
-            // than calibrating on an uncalibrated beginner's guess. Recorded
-            // once per session because it cannot vary within one.
-            rpeProvenance: {
-              experience: profile?.experience,
-              shownByDefault: showsRpeByDefault(
-                toExperience(profile?.experience)
-              ),
-            },
-          })
-        );
-        if (navigator.onLine) {
+        totalVolume: tonnage,
+        notes: `${day.dayName} — Programme Week ${programState.weekNumber}`,
+        createdAt: Timestamp.now(),
+        source: "programme",
+        completionId: sessionData.completionId,
+        sessionVariant: sessionData.sessionVariant,
+        // D2: session-level provenance for any per-set RPE above. Helms
+        // p139 keeps novices on %1RM rather than RPE for their first
+        // month, and p73 claims accuracy only for lifters who are
+        // advanced AND RPE-familiar AND near failure — so a future
+        // consumer must be able to tell whose number it is holding rather
+        // than calibrating on an uncalibrated beginner's guess. Recorded
+        // once per session because it cannot vary within one.
+        rpeProvenance: {
+          experience: profile?.experience,
+          shownByDefault: showsRpeByDefault(toExperience(profile?.experience)),
+        },
+      });
+
+      try {
+        if (!queued) {
+          const batch = writeBatch(db);
+          batch.set(
+            programRef,
+            stripUndefined({ ...updated, updatedAt: Date.now() })
+          );
+          batch.set(workoutRef, workoutData);
           await batch.commit();
+          sync = Promise.resolve("synced");
         } else {
-          /* #1887 — offline, commit() acks only on reconnect, so
-             awaiting it parked the whole completion chain: the session
-             UI hung on Finish and the share composer (whose offline
-             branch below queues the post) was unreachable. The batch is
-             queued durably in IndexedDB either way and stays atomic;
-             proceed on the local commit and log a post-reconnect
-             rejection, mirroring the offline queue's trade-off. */
-          void batch
-            .commit()
-            .catch((err) =>
-              logger.error("[Program] queued offline completion failed:", err)
-            );
+          const dayIdentity = workoutCompletionDayIdentity(day);
+          sync = queueWorkoutCompletion(
+            db,
+            user.uid,
+            workoutId,
+            workoutData,
+            dayIdentity
+              ? {
+                  weekNumber: programState.weekNumber,
+                  dayIndex,
+                  dayIdentity,
+                  trainingBlockId: programState.trainingBlock?.id,
+                }
+              : undefined
+          );
+          void sync.then((status) => {
+            if (status === "failed" && auth.currentUser?.uid === user.uid)
+              void refetchProgramState();
+          });
         }
-        // Local programme state changes only after BOTH docs commit
-        // (offline: after both are durably queued as one atomic batch).
-        setProgramState(updated);
+        // Optimistic while offline; completion receipt carries the distinction.
+        if (auth.currentUser?.uid === user.uid) setProgramState(updated);
       } catch (error) {
         logger.error("[Program] completion batch failed:", error);
         toast.error(
@@ -1310,102 +1333,120 @@ export function useProgram() {
         throw error;
       }
 
-      // ── POST-SAVE best-effort: sharing must NOT invalidate a saved workout.
-      try {
-        // Share composer: prompt the user (or replay their saved
-        // default) for visibility + caption. Returns null if they
-        // declined to share. Replaces the old autoPostWorkouts flag —
-        // see src/lib/shareComposer.ts for the preference store.
-        const decision = await compose(user.uid, {
-          type: "workout",
-          title: day.dayName,
-          meta: [
-            `${day.exercises.length} exercise${day.exercises.length === 1 ? "" : "s"}`,
-            tonnage > 0
-              ? `${Math.round(tonnage).toLocaleString()} kg volume`
-              : "",
-            effectiveDurationMin > 0 ? `${effectiveDurationMin} min` : "",
-          ].filter(Boolean),
-        });
-        if (decision) {
-          const uniqueCategories = [
-            ...new Set(
-              day.exercises.map((ex) => ex.movementCategory).filter(Boolean)
-            ),
-          ];
-          const payload = {
-            authorId: user.uid,
-            authorName: profile?.displayName || "Athlete",
-            ...(profile?.photoURL ? { authorPhotoURL: profile.photoURL } : {}),
-            type: "workout" as const,
-            visibility: decision.visibility,
-            ...(decision.caption ? { caption: decision.caption } : {}),
-            workoutName: day.dayName,
-            activityTitle: day.dayName,
-            exerciseCount: day.exercises.length,
-            totalVolume: tonnage,
-            duration: effectiveDurationMin * 60,
-            muscleGroups: uniqueCategories,
-            // Exercises — full list (was previously sliced to 3) with
-            // structured fields per exercise so feed viewers can
-            // "Save as routine" (PR 4) without parsing the summary
-            // string. ActivityCard renders only the top 3 visually
-            // for compactness; the rest sit on the doc for the routine
-            // copy flow.
-            exercises: exercises.map((ex) => {
-              const setCount = ex.sets.length;
-              const targetReps = ex.sets[0]?.reps ?? 0;
-              const targetWeightKg = ex.sets[0]?.weightKg ?? 0;
-              return {
-                name: ex.exerciseName,
-                exerciseId: ex.exerciseId,
-                summary: `${setCount}×${targetReps}×${targetWeightKg} kg`,
-                setCount,
-                targetReps,
-                targetWeightKg,
-              };
-            }),
-          };
-          if (typeof navigator !== "undefined" && navigator.onLine === false) {
-            /* #1887 — pre-gate, not a catch: a parked postActivity never
+      // Sharing is explicit and remains reachable after the save has finished.
+      let shared = false;
+      const share = async () => {
+        if (auth.currentUser?.uid !== user.uid || shared) return;
+        try {
+          // Share composer: prompt the user (or replay their saved
+          // default) for visibility + caption. Returns null if they
+          // declined to share. Replaces the old autoPostWorkouts flag —
+          // see src/lib/shareComposer.ts for the preference store.
+          const decision = await compose(
+            user.uid,
+            {
+              type: "workout",
+              title: day.dayName,
+              meta: [
+                `${performedExercises.length} exercise${performedExercises.length === 1 ? "" : "s"}`,
+                tonnage > 0
+                  ? `${Math.round(tonnage).toLocaleString()} kg volume`
+                  : "",
+                effectiveDurationMin > 0 ? `${effectiveDurationMin} min` : "",
+              ].filter(Boolean),
+            },
+            {
+              needsEmailVerification: needsEmailVerification(user),
+              forcePrompt: true,
+            }
+          );
+          if (decision && auth.currentUser?.uid === user.uid) {
+            const uniqueCategories = [
+              ...new Set(
+                performedExercises.map((ex) => ex.category).filter(Boolean)
+              ),
+            ];
+            const payload = {
+              authorId: user.uid,
+              authorName: profile?.displayName || "Athlete",
+              ...(profile?.photoURL
+                ? { authorPhotoURL: profile.photoURL }
+                : {}),
+              type: "workout" as const,
+              visibility: decision.visibility,
+              ...(decision.caption ? { caption: decision.caption } : {}),
+              workoutName: day.dayName,
+              activityTitle: day.dayName,
+              exerciseCount: performedExercises.length,
+              totalVolume: tonnage,
+              duration: effectiveDurationMin * 60,
+              muscleGroups: uniqueCategories,
+              // Exercises — full list (was previously sliced to 3) with
+              // structured fields per exercise so feed viewers can
+              // "Save as routine" (PR 4) without parsing the summary
+              // string. ActivityCard renders only the top 3 visually
+              // for compactness; the rest sit on the doc for the routine
+              // copy flow.
+              exercises: performedExercises.map((ex) => {
+                const setCount = ex.sets.length;
+                const targetReps = ex.sets[0]?.reps ?? 0;
+                const targetWeightKg = ex.sets[0]?.weightKg ?? 0;
+                return {
+                  name: ex.exerciseName,
+                  exerciseId: ex.exerciseId,
+                  summary: `${setCount}×${targetReps}×${targetWeightKg} kg`,
+                  setCount,
+                  targetReps,
+                  targetWeightKg,
+                };
+              }),
+            };
+            if (
+              typeof navigator !== "undefined" &&
+              navigator.onLine === false
+            ) {
+              /* #1887 — pre-gate, not a catch: a parked postActivity never
                throws offline, so the old catch-only branch could not
                fire. Queue up-front and let ShareComposerSheet's drain
                effect replay it on reconnect. */
-            enqueueShare(user.uid, payload, {
-              kind: "workout",
-              id: workoutId,
-            });
-            showQueuedToast();
-          } else {
-            try {
-              const activityId = await postActivity(payload);
-              // Dedupe + delete link (recordSharedActivity's docblock):
-              // `/workout/:id` reads it to avoid a second post, and
-              // deleting the session uses it to clear this one.
-              await recordSharedActivity(
-                user.uid,
-                { kind: "workout", id: workoutId },
-                activityId
-              );
-            } catch (socialErr) {
-              logger.warn("Failed to post workout to feed:", socialErr);
+              enqueueShare(user.uid, payload, {
+                kind: "workout",
+                id: workoutId,
+              });
+              shared = true;
+              showQueuedToast();
+            } else {
+              try {
+                const activityId = await postActivity(payload);
+                shared = true;
+                // Dedupe + delete link (recordSharedActivity's docblock):
+                // `/workout/:id` reads it to avoid a second post, and
+                // deleting the session uses it to clear this one.
+                await recordSharedActivity(
+                  user.uid,
+                  { kind: "workout", id: workoutId },
+                  activityId
+                );
+              } catch (socialErr) {
+                logger.warn("Failed to post workout to feed:", socialErr);
+                throw socialErr;
+              }
             }
           }
+        } catch (err) {
+          // Post-save sharing/social failure — the workout already committed.
+          logger.warn("[Program] post-save workout sharing failed:", err);
+          throw err;
         }
-      } catch (err) {
-        // Post-save sharing/social failure — the workout already committed.
-        logger.warn("[Program] post-save workout sharing failed:", err);
-      }
-
-      const allDone = updated.workouts.every((d) => d.completed || d.skipped);
-      if (allDone) {
-        toast.success(
-          "All workouts complete! Advance to next week when ready."
-        );
-      }
-      return { workoutId };
+      };
+      return {
+        workoutId,
+        share,
+        syncStatus: queued ? ("queued" as const) : ("synced" as const),
+        sync,
+      };
     },
-    [programState, user, profile]
+    [programState, user, profile, refetchProgramState]
   );
 
   // Skip a workout day (no stats, no social post)
@@ -1555,6 +1596,8 @@ export function useProgram() {
         const r = regenerateRacePlan({
           recentLayoff,
           tuning: runTuningFromProfile(profile),
+
+          easyPaceSPerKm: planningEasyPaceSPerKm(profile?.runFitness),
           raceGoal: profile.raceGoal,
           weekSchedule,
           weeklyRunDays: runTarget,
@@ -2334,6 +2377,8 @@ export function useProgram() {
           ({ runDays, runPlan } = regenerateRacePlan({
             recentLayoff,
             tuning: runTuningFromProfile(profile),
+
+            easyPaceSPerKm: planningEasyPaceSPerKm(profile?.runFitness),
             raceGoal: profile.raceGoal,
             weekSchedule: effectiveSchedule,
             weeklyRunDays: runTarget,
@@ -2488,6 +2533,8 @@ export function useProgram() {
         ({ runDays, runPlan } = regenerateRacePlan({
           recentLayoff,
           tuning: overrides?.tuning ?? runTuningFromProfile(profile),
+
+          easyPaceSPerKm: planningEasyPaceSPerKm(profile?.runFitness),
           raceGoal: profile.raceGoal,
           weekSchedule,
           weeklyRunDays: runTarget,
@@ -3408,6 +3455,8 @@ export function useProgram() {
     const { runDays, runPlan, manualCompletions } = regenerateRacePlan({
       recentLayoff,
       tuning: runTuningFromProfile(profile),
+
+      easyPaceSPerKm: planningEasyPaceSPerKm(profile?.runFitness),
       raceGoal: profile.raceGoal,
       weekSchedule: profile.weekSchedule ?? [],
       weeklyRunDays: getWeeklyRunTarget(profile) || 3,
@@ -3415,6 +3464,13 @@ export function useProgram() {
       weekStart: localWeekKey(),
       carry: {
         currentWeek: prevRunPlan?.currentWeek,
+        // Carried WITH currentWeek, as every other regen site does: the
+        // phase of a week is currentWeek against totalWeeks, so carrying
+        // the position without the block length re-derived the phase from
+        // the weeks REMAINING — a realign at week 10 of 18 with 6 weeks
+        // left generated a base week while the cockpit showed the carried
+        // build phase.
+        totalWeeks: prevRunPlan?.totalWeeks,
         completedRaces: prevRunPlan?.completedRaces,
       },
       prior: {

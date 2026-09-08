@@ -1,3 +1,4 @@
+import InlineNumerals from "@/components/ui/InlineNumerals";
 /**
  * SessionCommandCard — the Programme Run cockpit's "what do I do next"
  * command surface.
@@ -16,6 +17,7 @@
 
 import { MoreHorizontal, Play, Footprints, Dumbbell } from "lucide-react";
 import SectionLabel from "@/components/ui/SectionLabel";
+import MetaLine from "@/components/ui/MetaLine";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
@@ -88,14 +90,9 @@ export default function SessionCommandCard({
             <SectionLabel tier="section" className={accentText}>
               {eyebrow}
             </SectionLabel>
-            <h3 className="text-xl font-extrabold leading-tight text-foreground truncate">
+            <h3 className="text-xl font-extrabold leading-tight text-foreground">
               {title}
             </h3>
-            {description && (
-              <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
-                {description}
-              </p>
-            )}
           </div>
           {onManage && (
             <IconButton
@@ -109,18 +106,12 @@ export default function SessionCommandCard({
           )}
         </div>
 
-        {meta.length > 0 && (
-          <div className="flex flex-wrap gap-1.5" aria-hidden="true">
-            {meta.map((item) => (
-              <span
-                key={item}
-                className="rounded-full bg-background/70 px-2.5 py-1 text-caption font-semibold text-muted-foreground"
-              >
-                {item}
-              </span>
-            ))}
-          </div>
+        {description && (
+          <p className="text-sm text-muted-foreground">
+            <InlineNumerals>{description}</InlineNumerals>
+          </p>
         )}
+        {meta.length > 0 && <MetaLine items={meta} />}
 
         {primaryActionLabel && onPrimaryAction && (
           <Button

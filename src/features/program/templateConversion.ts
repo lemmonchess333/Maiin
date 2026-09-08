@@ -10,13 +10,20 @@
  * never set (so volume balancing treated template accessories as mains).
  */
 
-import type { TemplateExercise } from "@/features/program/templates";
+import type {
+  ProgramTemplate,
+  TemplateExercise,
+} from "@/features/program/templates";
 import type {
   PrimaryGoal,
   ProgramExercise,
+  ProgramState,
   ProgressionType,
   RepUnit,
+  SplitType,
+  WorkoutDay,
 } from "@/features/program/programTypes";
+import type { FitnessGoal } from "@/lib/tdee";
 import { goalProfileFor } from "@/features/program/programEngine";
 import { inferMovementCategory } from "@/lib/exerciseMovementCategory";
 
@@ -170,4 +177,55 @@ export function formatRepTarget(
   return ex.repRangeMax && ex.repRangeMax > ex.reps
     ? `${ex.reps}-${ex.repRangeMax}s`
     : `${ex.reps}s`;
+}
+
+/** The template's split vocabulary is wider than the programme's; bro_split
+ *  lands on ppl as the closest programme split. */
+export function templateSplitToSplitType(
+  s: ProgramTemplate["split"]
+): SplitType {
+  switch (s) {
+    case "full_body":
+      return "full_body";
+    case "upper_lower":
+      return "upper_lower";
+    case "ppl":
+      return "ppl";
+    case "bro_split":
+      return "ppl"; // closest match
+  }
+}
+
+export function templateToProgramState(
+  template: ProgramTemplate,
+  goal: FitnessGoal
+): ProgramState {
+  const week1 = template.weeks[0];
+  // P1 (training-book backlog): the conversion itself lives in
+  // features/program/templateConversion.ts so the boundary is unit-tested.
+  // Main lifts take the template goal's progression scheme; accessories
+  // stay "linear" for parity with the generated-program path.
+  const mainProgression = templateProgressionFor(template.goal);
+  const workouts: WorkoutDay[] = week1.days
+    .filter((d) => d.type === "lift")
+    .map((d) => ({
+      dayName: d.name,
+      dayType: d.type,
+      exercises: d.exercises.map((te) =>
+        templateExToProgEx(te, mainProgression)
+      ),
+      completed: false,
+    }));
+
+  return {
+    goal,
+    currentPhase: "base",
+    weekNumber: 1,
+    splitType: templateSplitToSplitType(template.split),
+    workouts,
+    fatigueScore: 0,
+    updatedAt: Date.now(),
+    settings: { autoProgression: true, microloading: true },
+    weekHistory: [],
+  };
 }

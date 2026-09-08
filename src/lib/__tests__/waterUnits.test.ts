@@ -7,7 +7,7 @@ import {
   resolveConsumedMl,
   resolveTargetMl,
   waterProgress,
-  formatVolume,
+  formatWaterVolume,
   formatLitresValue,
 } from "../waterUnits";
 
@@ -58,14 +58,14 @@ describe("waterProgress", () => {
   });
 });
 
-describe("formatVolume", () => {
+describe("formatWaterVolume", () => {
   it("reads ml under a litre, litres at/above", () => {
-    expect(formatVolume(250)).toBe("250 ml");
-    expect(formatVolume(750)).toBe("750 ml");
-    expect(formatVolume(1000)).toBe("1 L");
-    expect(formatVolume(1250)).toBe("1.25 L");
-    expect(formatVolume(2000)).toBe("2 L");
-    expect(formatVolume(2500)).toBe("2.5 L");
+    expect(formatWaterVolume(250)).toBe("250 ml");
+    expect(formatWaterVolume(750)).toBe("750 ml");
+    expect(formatWaterVolume(1000)).toBe("1 L");
+    expect(formatWaterVolume(1250)).toBe("1.25 L");
+    expect(formatWaterVolume(2000)).toBe("2 L");
+    expect(formatWaterVolume(2500)).toBe("2.5 L");
   });
 });
 

@@ -23,7 +23,7 @@ npm run test:e2e:ui  # Playwright E2E tests (interactive UI)
 - **Animation:** Framer Motion 12
 - **PWA:** vite-plugin-pwa + Workbox
 - **Native:** Capacitor (iOS/Android)
-- **Payments:** Stripe (@stripe/stripe-js)
+- **Payments:** RevenueCat (`@revenuecat/purchases-capacitor`) for native IAP (ADR-0006); Stripe Checkout is server-side only and dormant (Sub4) — the client loads no Stripe SDK
 - **Drag & Drop:** @dnd-kit (sortable exercise lists)
 - **Barcode:** @zxing/browser (food barcode scanning)
 - **Utilities:** clsx + tailwind-merge, date-fns 4, html-to-image, canvas-confetti
@@ -66,7 +66,7 @@ e2e/                    # Playwright E2E tests (smoke, navigation, a11y, PWA)
 ## Architecture Notes
 
 - **All pages are lazy-loaded** via `lazyRetry()` wrapper in App.tsx (handles stale cache)
-- **Manual chunks** in vite.config.ts: firebase-auth, firebase-db, charts, vendor, maplibre, motion, date-fns, barcode, body-highlighter, stripe
+- **Manual chunks** in vite.config.ts: firebase-auth, firebase-db, charts, vendor, maplibre, motion, date-fns, barcode, body-highlighter
 - **Path alias:** `@/` maps to `src/`
 - **Base path:** `/Maiin/` (for GitHub Pages deployment)
 - **Offline support:** `src/lib/offlineQueue.ts` queues writes when offline
@@ -77,66 +77,93 @@ e2e/                    # Playwright E2E tests (smoke, navigation, a11y, PWA)
 
 ## Pages (src/pages/)
 
-| Page                 | Route          | Description                                                                |
-| -------------------- | -------------- | -------------------------------------------------------------------------- |
-| `Home.tsx`           | `/`            | Main dashboard — WeekStrip, hero cards, energy, insights                   |
-| `Food.tsx`           | `/food`        | Food/meal logging with camera, NL parsing, barcode (`/log` redirects here) |
-| `History.tsx`        | `/history`     | Workout & run history with analytics charts                                |
-| `Program.tsx`        | `/program`     | Workout program builder & scheduling                                       |
-| `Run.tsx`            | `/run`         | Active GPS run tracking (full-screen, no nav)                              |
-| `RunSummary.tsx`     | `/run-summary` | Post-run stats & map review                                                |
-| `RunDetail.tsx`      | `/run/:runId`  | Historical run detail view                                                 |
-| `Social.tsx`         | `/social`      | Social feed, Circles/Spaces, leaderboards                                  |
-| `UserProfile.tsx`    | `/user/:uid`   | User profile viewing                                                       |
-| `Settings.tsx`       | `/settings`    | User settings & preferences                                                |
-| `Onboarding.tsx`     | `*` (fallback) | Multi-step setup flow (shown when onboarding incomplete)                   |
-| `Login.tsx`          | `*` (fallback) | Authentication (Email, Google, Apple) (shown when unauthenticated)         |
-| `PrivacyPolicy.tsx`  | `/privacy`     | Legal                                                                      |
-| `TermsOfService.tsx` | `/terms`       | Legal                                                                      |
+Every `path=` in `src/App.tsx` is named here, and every file named here
+exists — pinned by `claudeMdFreshness.test.ts` in both directions
+(`/dev/*` is the one allowlisted family). Add the row with the route.
+
+| Page                                   | Route                              | Description                                                                    |
+| -------------------------------------- | ---------------------------------- | ------------------------------------------------------------------------------ |
+| `Home.tsx`                             | `/`                                | Main dashboard — WeekStrip, hero cards, energy, insights                       |
+| `Food.tsx`                             | `/food`                            | Food/meal logging with camera, NL parsing, barcode (`/log` redirects here)     |
+| `History.tsx`                          | `/history`                         | Workout & run history with analytics charts                                    |
+| `ExerciseHistory.tsx`                  | `/history/exercise/:name`          | Per-exercise progression chart + rep-bucket PR strip                           |
+| `Program.tsx`                          | `/program`                         | Workout program builder & scheduling                                           |
+| `Routine.tsx`                          | `/routine/:routineId`              | Saved-routine workout runner (reuses `WorkoutSession`)                         |
+| `WorkoutDetail.tsx`                    | `/workout/:workoutId`              | Saved lift session detail; the delete action lives here (ADR-0012)             |
+| `Run.tsx`                              | `/run`                             | Active GPS run tracking (full-screen, no nav)                                  |
+| `RunSummary.tsx`                       | `/run-summary`                     | Post-run stats & map review                                                    |
+| `RunDetail.tsx`                        | `/run/:runId`                      | Historical run detail view                                                     |
+| `WeeklyReview.tsx`                     | `/review`                          | Sunday recap — passive narration of the week (Rev1)                            |
+| `Social.tsx`                           | `/social`                          | Social feed, Circles/Spaces, leaderboards                                      |
+| `Space.tsx`                            | `/space/:spaceId`                  | Community Space — hero, join/leave, post list + composer                       |
+| `UserProfile.tsx`                      | `/user/:uid`                       | User profile viewing                                                           |
+| `Upgrade.tsx`                          | `/upgrade`                         | Pro pricing + purchase page                                                    |
+| `SettingsIndex.tsx`                    | `/settings`                        | Settings section list — iOS nested-page IA (`/settings/legacy` redirects here) |
+| `settings/SettingsProfile.tsx`         | `/settings/profile`                | Profile section                                                                |
+| `settings/SettingsAccount.tsx`         | `/settings/account`                | Account — email, password, sign-out, account deletion                          |
+| `settings/SettingsTraining.tsx`        | `/settings/training`               | Programme settings (canonical, Set1.1 / Pgm4)                                  |
+| `settings/SettingsLiftPlan.tsx`        | `/settings/lift-plan`              | Dedicated lift-plan editor                                                     |
+| `settings/SettingsRunPlan.tsx`         | `/settings/run-plan`               | Dedicated run-plan editor (the Programme Run surface deep-links here)          |
+| `settings/SettingsWorkoutPrefs.tsx`    | `/settings/workout-prefs`          | Workout preferences                                                            |
+| `settings/SettingsNutrition.tsx`       | `/settings/nutrition`              | Nutrition section — targets, adaptive TDEE                                     |
+| `settings/SettingsRecentlyDeleted.tsx` | `/settings/recently-deleted-meals` | Soft-deleted meals archive (24 h window, F5c)                                  |
+| `settings/SettingsHealth.tsx`          | `/settings/health`                 | HealthKit steps — discovery and reconnection (ADR-0007)                        |
+| `settings/SettingsShoes.tsx`           | `/settings/shoes`                  | Running shoes                                                                  |
+| `settings/SettingsNotifications.tsx`   | `/settings/notifications`          | Push and reminder preferences                                                  |
+| `settings/SettingsPrivacy.tsx`         | `/settings/privacy`                | Privacy — visibility, blocked users, privacy zones                             |
+| `settings/SettingsUnitsAppearance.tsx` | `/settings/units-appearance`       | Units and theme                                                                |
+| `settings/SettingsSubscription.tsx`    | `/settings/subscription`           | Subscription status and management                                             |
+| `settings/SettingsSupportLegal.tsx`    | `/settings/support-legal`          | Support, legal links, app version                                              |
+| `AdminModeration.tsx`                  | `/admin/moderation`                | Admin report queue — client gate `VITE_ADMIN_UIDS`, the callable re-checks     |
+| `Diagnostics.tsx`                      | `/diagnostics`                     | Operator diagnostics (push, SW update, App Check state) — hidden, unlinked     |
+| `dev/*.tsx`                            | `/dev/*`                           | Developer labs (brand bake-off, form-motion lab) — not product surfaces        |
+| `Onboarding.tsx`                       | `*` (fallback)                     | Multi-step setup flow (shown when onboarding incomplete)                       |
+| `Login.tsx`                            | `*` (fallback)                     | Authentication (Email, Google, Apple) (shown when unauthenticated)             |
+| `PrivacyPolicy.tsx`                    | `/privacy`                         | Legal — reachable signed-out                                                   |
+| `TermsOfService.tsx`                   | `/terms`                           | Legal — reachable signed-out                                                   |
+| `Support.tsx`                          | `/support`                         | Public support page (App Store Support URL) — reachable signed-out             |
 
 ## Key Business Logic (src/lib/)
 
-| File                      | Purpose                                                        |
-| ------------------------- | -------------------------------------------------------------- |
-| `performanceEngine.ts`    | Weekly performance index (0-100), load bands, deload detection |
-| `tdee.ts`                 | Base TDEE calculation                                          |
-| `phaseNutrition.ts`       | Day-type specific macro adjustments (lift/run/rest)            |
-| `calculateDailyMacros.ts` | Daily macro target computation                                 |
-| `gps.ts`                  | Haversine, pace, splits, elevation, Kalman filter, GPX export  |
-| `paceTrends.ts`           | Running pace trend detection (PR/improving/consistent)         |
-| `guidedRun.ts`            | Guided run logic & coaching                                    |
-| `weather.ts`              | Weather API integration for runs                               |
-| `privacyZones.ts`         | GPS privacy zone detection for runs                            |
-| `prTracking.ts`           | Personal record tracking system                                |
-| `scheduleUtils.ts`        | Weekly schedule generation (lift/run/rest)                     |
-| `exercises.ts`            | Exercise database                                              |
-| `workoutTemplates.ts`     | Workout template library                                       |
-| `nlFoodParser.ts`         | Natural language food parsing                                  |
-| `voiceFoodParser.ts`      | Voice-based food parsing                                       |
-| `socialApi.ts`            | Firestore social operations (feed, kudos, follow)              |
-| `shareCardGenerator.ts`   | Share card image generation (html-to-image)                    |
-| `analytics.ts`            | Analytics computation                                          |
-| `subscription.ts`         | Pro subscription handling                                      |
-| `firebase.ts`             | Firebase app initialization & Firestore/Auth/Storage exports   |
-| `auth.tsx`                | AuthProvider, useAuth hook, UserProfile interface              |
-| `api.ts`                  | API client helpers                                             |
-| `haptic.ts`               | Haptic feedback utility (Capacitor)                            |
-| `offlineQueue.ts`         | Queues Firestore writes when offline, flushes on reconnect     |
-| `errorReporting.ts`       | Error reporting utilities                                      |
-| `logger.ts`               | Structured logging                                             |
-| `notifications.ts`        | Push notification setup                                        |
-| `types.ts`                | Shared TypeScript type definitions                             |
-| `performanceTypes.ts`     | Performance engine type definitions                            |
-| `macroConstants.ts`       | Macro/nutrition constants                                      |
-| `export.ts`               | Data export utilities                                          |
-| `exerciseDemo.ts`         | Exercise demo/animation data                                   |
-| `firestoreGuards.ts`      | Firestore data validation guards                               |
-| `funComparisons.ts`       | Fun stat comparison generators                                 |
-| `purchaseProvider.ts`     | In-app purchase provider (Capacitor)                           |
-| `register-sw.ts`          | Service worker registration                                    |
-| `timeAgo.ts`              | Relative time formatting                                       |
-| `theme.ts`                | THEME object for chart colours & design tokens                 |
-| `utils.ts`                | General utility functions                                      |
+| File                    | Purpose                                                        |
+| ----------------------- | -------------------------------------------------------------- |
+| `performanceEngine.ts`  | Weekly performance index (0-100), load bands, deload detection |
+| `tdee.ts`               | Base TDEE calculation                                          |
+| `phaseNutrition.ts`     | Day-type specific macro adjustments (lift/run/rest)            |
+| `gps.ts`                | Haversine, pace, splits, elevation, Kalman filter, GPX export  |
+| `paceTrends.ts`         | Running pace trend detection (PR/improving/consistent)         |
+| `guidedRun.ts`          | Guided run logic & coaching                                    |
+| `weather.ts`            | Weather API integration for runs                               |
+| `privacyZones.ts`       | GPS privacy zone detection for runs                            |
+| `prTracking.ts`         | Personal record tracking system                                |
+| `scheduleUtils.ts`      | Weekly schedule generation (lift/run/rest)                     |
+| `exercises.ts`          | Exercise database                                              |
+| `workoutTemplates.ts`   | Workout template library                                       |
+| `nlFoodParser.ts`       | Natural language food parsing                                  |
+| `socialApi.ts`          | Firestore social operations (feed, kudos, follow)              |
+| `shareCardGenerator.ts` | Share card image generation (html-to-image)                    |
+| `analytics.ts`          | Analytics computation                                          |
+| `subscription.ts`       | Pro subscription handling                                      |
+| `firebase.ts`           | Firebase app initialization & Firestore/Auth/Storage exports   |
+| `auth.tsx`              | AuthProvider, useAuth hook, UserProfile interface              |
+| `api.ts`                | API client helpers                                             |
+| `haptic.ts`             | Haptic feedback utility (Capacitor)                            |
+| `offlineQueue.ts`       | Queues Firestore writes when offline, flushes on reconnect     |
+| `errorReporting.ts`     | Error reporting utilities                                      |
+| `logger.ts`             | Structured logging                                             |
+| `notifications.ts`      | Push notification setup                                        |
+| `types.ts`              | Shared TypeScript type definitions                             |
+| `performanceTypes.ts`   | Performance engine type definitions                            |
+| `macroConstants.ts`     | Macro/nutrition constants                                      |
+| `export.ts`             | Data export utilities                                          |
+| `exerciseDemo.ts`       | Exercise demo/animation data                                   |
+| `firestoreGuards.ts`    | Firestore data validation guards                               |
+| `funComparisons.ts`     | Fun stat comparison generators                                 |
+| `purchaseProvider.ts`   | In-app purchase provider (Capacitor)                           |
+| `register-sw.ts`        | Service worker registration                                    |
+| `timeAgo.ts`            | Relative time formatting                                       |
+| `theme.ts`              | THEME object for chart colours & design tokens                 |
+| `utils.ts`              | General utility functions                                      |
 
 ## Feature Modules (src/features/)
 
@@ -219,6 +246,7 @@ Helper: `syncChallengeProgress()` — auto-updates challenge participant progres
 
 - **Firestore collections:** `users/{uid}`, `users/{uid}/meals`, `users/{uid}/workouts`, `users/{uid}/runs`, `users/{uid}/programState`, `users/{uid}/public/profile` (cross-user projection; incl. the opt-in `trainingForSpaceId` race identity), `activities` (public), `goalSpaces`, `challenges`, `challenges/{id}/participants`, `spaces/{id}/members`, `spaces/{id}/posts` (+ `posts/{id}/likes` and `posts/{id}/comments` — both SERVER-written via callables; clients read only)
 - **Auth:** Firebase Auth (Email, Google, Apple Sign-In)
+- **Public writes need a verified email.** The `email_verified` token claim gates `activities` and `spaces/{id}/posts` creates in `firestore.rules` (`isEmailVerified()`) and comments in the two comment callables (`assertCallerEmailVerified`). Private logging under `users/{uid}/*` and every non-content interaction stay open to unverified accounts; OAuth accounts carry the claim already. The e2e rig marks its signup-form accounts verified through the Auth emulator REST API (seed scripts create users verified).
 - **User profile:** Defined in `src/lib/auth.tsx` as `UserProfile` interface
 - **Feed items:** Defined in `src/hooks/useSocialFeed.ts` as `FeedItem` / `ActivityData`
 
@@ -234,6 +262,9 @@ Helper: `syncChallengeProgress()` — auto-updates challenge participant progres
 - **UI patterns:** Drawer (vaul), bottom sheets, pressable cards
 - **Class names:** `clsx()` + `twMerge()` for conditional/merged Tailwind classes
 - **Drag & drop:** @dnd-kit for sortable exercise lists
+- **Firestore writes:** `addDocGuarded` / `setDocGuarded` /
+  `updateDocGuarded` / `deleteDocGuarded` from `src/lib/firestoreWrite.ts`,
+  never the raw SDK — `firestoreWriteGuard.test.ts` bans the raw calls.
 - **Dates:** en-GB day-before-month ("22 Aug", "Saturday 23 August") via the
   `src/utils/formatters.ts` helpers. Locale-less `toLocaleDateString` follows
   the DEVICE (renders "Aug 22" on a US phone) and month-first date-fns
@@ -272,6 +303,7 @@ Helper: `syncChallengeProgress()` — auto-updates challenge participant progres
 - **deploy.yml:** Builds and deploys to GitHub Pages on push to `main`
 - **deploy-functions.yml:** Deploys Cloud Functions when `functions/**` changes
 - **deploy-firestore.yml:** Deploys Firestore security rules
+- **deploy-hosting.yml:** Builds with `base: "/"` and deploys to Firebase Hosting on push to `main`. The web build's security headers (HSTS, `nosniff`, Referrer-Policy, `X-Frame-Options`, a `frame-ancestors 'none'` CSP header, Permissions-Policy) live in `firebase.json` and ship ONLY via Hosting — GitHub Pages cannot set response headers, accepted because Pages is the preview surface, not the product. `frame-ancestors` is ignored in a `<meta>` CSP, which is why it is a header. Pinned by `hostingSecurityHeaders.test.ts`.
 - **Firebase project:** `adaptive-fitness-af8bb`
 
 ### Cloud Functions deploy — known gotchas
@@ -333,7 +365,7 @@ These are distilled from the project's own rework history — classes of mistake
 
 - **The tested copy does not prove the running copy.** When the same business rule lives in two places — client `src/lib/*` vs `functions/*` (e.g. `performanceEngine.ts` ↔ `performanceEngine.js`), or any value re-derived in a second module instead of read from where it's already computed — treat the non-canonical copy as the prime drift suspect. Consolidate to one source of truth, or add a test that pins the copy that actually runs; never assume green client tests prove the server's behaviour. (`62a9cfa` server engine diverged from the tested client engine and inflated new-user PI; `a169336` deleted a `useHomeData` re-derivation; `e1b0296` nutrition-phase regression; Run9 3b server mirror of `resolveRecoveryExit`.)
 - **Persist every mirrored and derived field in the same write.** A persisted field usually has consumers that read it from a _different_ location, or derive other fields from it. Enumerate them before you write. A write to `programState` must mirror into `profile.program.*` (consumers read the profile copy); writing `raceGoal` must materialize `runMode`; changing goal/rate must materialize the nutrition phase. Don't leave a parallel store stale for "something else" to reconcile later. (`5caad06` equipment/injuries/split not persisted to profile; `e1b0296` editor wrote `programState.goal` but macros read `profile.program.goal`; `3087ac5` `raceGoal` written without derived `runMode`; `4db6cb7` goal-weight didn't drive the phase.)
-- **Never call raw `setDoc`/`addDoc`/`updateDoc`.** Always route through the guarded wrappers in `src/lib/firestoreWrite.ts` — they strip `undefined` (which Firestore rejects outright) and survive offline-queue replay (a raw write that fails online fails forever on every flush). Any **new persisted profile field** must also be added to the `functions/profileSanitizer.js` allow-list, or the Cloud-Function write silently drops it. (`5061046` migrated ~25 raw call sites + fixed safeSave/safeMerge re-failing on every offline flush.)
+- **Never call raw `setDoc`/`addDoc`/`updateDoc`/`deleteDoc`.** Always route through the guarded wrappers in `src/lib/firestoreWrite.ts` — they strip `undefined` (which Firestore rejects outright) and survive offline-queue replay (a raw write that fails online fails forever on every flush). Any **new persisted profile field** must also be added to the `functions/profileSanitizer.js` allow-list, or the Cloud-Function write silently drops it. (`5061046` migrated ~25 raw call sites + fixed safeSave/safeMerge re-failing on every offline flush.)
 - **Treat every Firestore trigger as at-least-once and concurrent.** `onCreate`/`onWrite` handlers re-fire on retry and can run in parallel. Any read-modify-write inside one must run in a `runTransaction` AND guard re-delivery with a per-source idempotency marker — MIN/MAX-style updates are the only naturally-safe exception. `syncChallengeProgress` had to be fixed twice: once for a lost-update race (`23369ef`), once for double-counting on retry (`dc3e4a6`).
 - **Never mix local-date and UTC operations in one calculation.** Use the existing `localWeekKey()` / local-midnight helpers consistently for any day/week bucketing, and pin scheduled functions to explicit **UTC** — a Europe/London schedule anchor silently shifts an hour under BST. (`5ad5794` bucketed weekly run-stats into the wrong week near midnight in non-UTC zones; PR #815 BST shifted the rollup/refresh schedules; `8b856fa` captures `profile.timezone` on boot.)
 - **A negative assertion under `waitFor` proves nothing unless something anchors it.** `await waitFor(() => expect(x).toBeNull())` is satisfied on its FIRST poll by the initial state and returns before the awaited work has landed — so it passes at t=0, and a value that becomes wrong _asynchronously_ is invisible to it. Anchor on a positive first (wait for `loading` to flip, or for the other account's value to appear), or hold the read with `deferReads()` / `releaseRead()` and assert after releasing. Two instances so far, both pinning documented security properties that nothing was actually holding: `usePushSettings` uid-safety passed with EVERY uid guard deleted, and 5 of `useLastRunType`'s 7 tests passed while the hook offered a repeat row to every user including signed-out ones. Both were found by mutating the hook to go wrong AFTER the read — the mutation shape a synchronous probe misses.
@@ -342,7 +374,7 @@ These are distilled from the project's own rework history — classes of mistake
 - **`onAuthStateChanged` fires several times per sign-in.** Debounce one-time / side-effecting work (maintenance backfills, etc.) behind a settle timer — a bare `firedRef` guard has a race window during the sign-in settle. Scope any queued or cached writes (offline queue, share queue) by `uid` so they can't leak across an account switch on a shared device. (`9ae1247` debounced the maintenance backfill; PR #820 uid-scoped the offline + share queues.)
 - **Deleting a test file is a documentation change too — grep for prose that cites it.** A header saying "this is exhaustively covered by X" keeps steering people away from writing tests long after X is gone, and it reads as authoritative because it names a file and a test count. `useClaimMap.test.ts` claimed the completion predicate was "exhaustively covered by" `functions/__tests__/scheduledRunCompletion.test.js` (29 tests) + a cross-test; **both were deleted in #1733** and nothing replaced them. So nobody wrote rejection cases, and the locked 70% distance gate ran for months comparing **metres to kilometres** — a marathon slot completable by a 29.5-metre run — with a fully green suite (`b525af6f` fixed the unit, `051e7765` the header). Same shape as PR #1775's `templateId === "race"`: on both, the accept path was fiction and nothing asserted a rejection. When you delete or rename a spec, `rg` its filename across the repo; when you inherit a "covered elsewhere" claim, open the file it names before trusting it.
 - **A centrality or cohesion score is a question, not a defect.** Graph metrics (graphify communities, "god nodes") cannot distinguish a deployment manifest or a shared vocabulary from tangled logic. `functions/index.js` scores the worst cohesion in the codebase (0.023) purely because every deployed function must be exported from one entrypoint — the split has now been re-derived and declined **four** times; the standing hold + its reasoning live in `functions/__tests__/triggerMetadata.test.js`. `RUN_TEMPLATES` bridges seven run communities because a shared run vocabulary is exactly what it should be. ADR-0001 already bars the size argument; treat these scores as prompts to go **read**, and expect the answer to often be "correct as-is". (The 2026-08-02 graph run's value was entirely in what reading turned up while chasing its questions — both of its own headline verdicts were "change nothing".)
-- **Verify the three design-system invariants that keep drifting back, per-PR — not in periodic sweeps.** Before committing any UI: every numeric display uses `font-mono` + `tabular-nums`; every colour is a `THEME`/token (no hex literals); every interactive element clears 44px via the `Button`/`IconButton`/`Toggle` primitives. These three regress constantly and keep getting swept up after the fact. (`2dec467` + `97a783d` mono/font audits; `9ef01a1` + `82b5266` tokenized stray hex; `f89d34b` whole-app consistency pass; touch-target policy shipped in 5 parts.)
+- **Verify the three design-system invariants that keep drifting back, per-PR — not in periodic sweeps.** Before committing any UI: every numeric display uses `font-mono` + `tabular-nums`; every colour is a `THEME`/token (no hex literals); every interactive element clears 44px via the `Button`/`IconButton`/`Toggle` primitives (44 CSS px is a Tropos product target, NOT the WCAG AA floor — SC 2.5.8 is 24x24 and 44x44 is the AAA criterion; clearing the size is also not by itself an accessibility pass. DESIGN_GUIDE.md §10 carries the three units and their exceptions). These three regress constantly and keep getting swept up after the fact. (`2dec467` + `97a783d` mono/font audits; `9ef01a1` + `82b5266` tokenized stray hex; `f89d34b` whole-app consistency pass; touch-target policy shipped in 5 parts.)
 
 ## Meal photos are device-local — a standing invariant, not a preference
 
@@ -380,7 +412,10 @@ legacy-only — pre-Food9 documents keep rendering, nothing writes it.
   nothing. `npm run build` and CI both use `tsc -b`. Measured against a real
   missing import in `UserProfile.tsx` — `-p` exit 0, `-b` exit 2 with
   `TS2304`. An agent that "verified types" with the `-p` form has verified
-  nothing, and CI is the only thing that will say so.
+  nothing, and CI is the only thing that will say so. `tsc -b` also
+  covers `scripts/` and `e2e/` through `tsconfig.scripts.json`: a seed script
+  importing a deleted `src/` export is a build error, not a capture-run
+  surprise.
 - **Adding an import to a component breaks any suite that mocks that module
   wholesale.** `vi.mock("@/lib/auth", () => ({ useAuth: … }))` makes every
   OTHER export `undefined`, and the failure surfaces at the call site
@@ -419,6 +454,37 @@ Use the `/browse` skill from gstack for **all web browsing**. Never use `mcp__cl
 - `/retro` — Retrospective
 - `/document-release` — Document a release
 
+## House voice — how Tropos talks (app-wide, 2026-08-22)
+
+The rubric has lived in `src/lib/performanceInsights.ts`'s header since it
+was written; the 2026-08-22 copy sweep found the rest of the app was never
+held to it, so it is now the APP-WIDE standard, not an insights-file local:
+
+- **Observational, not judgmental.** "Load is high" ✓ · "You're crushing
+  it!" ✗. State what the data shows; pair it with what to consider next.
+- **No exclamation-mark cheer in UI chrome.** Confirmations, toasts,
+  banners, summaries: "Saved", "Meal logged", never "Saved!". The
+  checkmark carries the success.
+- **No AI-tells.** "Your plan knows…" (anthropomorphised app), "unlock /
+  elevate / seamless / your journey", motivational-poster tails glued
+  onto clean sentences ("…that's what drives progress"), a literal "+"
+  in prose, and the every-sentence-ends-in-an-epigram cadence (one strong
+  line is a coach; ten out of ten is a language model — the coachPrompts
+  trim was exactly this).
+- **No system-speak.** Users search for a food, not "accurate data"; a
+  planned run is not a "scheduled slot"; nothing "occurred unexpectedly".
+- **Genre exceptions are real and stay.** Spoken mid-run audio cues are
+  NRC-register coach speech ("Last one — leave nothing!" is correct
+  THERE); kudos quick-chips are the USER'S voice to a friend ("Nice
+  run!" stays); badge names are Fitbit-era vernacular ("Week Warrior"
+  stays); share-card fun facts are playful by design. Do not flatten
+  these into the calm-chrome register.
+- **Buttons are sentence case** ("Start workout", "Add exercise") — the
+  Title Case strays kept reading unpolished next to the majority.
+- Reference register when unsure: Strava (data-forward, terse), Hevy
+  (minimal utility), MyFitnessPal (plain), MacroFactor (never shames a
+  high day), Happy Scale (a stall reads as "expected", not failure).
+
 ## Tropos Design System
 
 ### Visual Identity
@@ -455,6 +521,16 @@ Use the `/browse` skill from gstack for **all web browsing**. Never use `mcp__cl
   - Micro: 12px — labels, captions, uppercase tracking headers
 - **Weight rules:** 800 (extrabold) for hero numbers and page titles. 700 (bold) for section headings and card titles. 600 (semibold) for pill text and button labels. Never mix 700 and 800 in the same visual tier.
 - **Numeric displays:** Always use font-mono + tabular-nums for alignment
+- **Medium (500, `font-medium`) IS a tier — the small-text emphasis
+  weight.** Use it at `text-sm` and `text-xs` for secondary labels, meta
+  rows and pill text; hierarchy at `text-lg` and above is carried by
+  600 / 700 / 800. It was previously held under a count ratchet on the
+  theory that it was off-scale drift. Counting where it actually lands
+  settled that: of 269 sized uses, 113 are `text-sm`, 105 are `text-xs`,
+  and **zero** are `text-lg` or above. A convention that consistent
+  across ~96 components is the scale, not drift. The count ratchet is
+  gone; `designSystemInvariants.test.ts` now pins the boundary that
+  matters — font-medium never appears at heading scale.
 
 ### Card Patterns
 
@@ -462,8 +538,10 @@ Use the `/browse` skill from gstack for **all web browsing**. Never use `mcp__cl
 - **Hero card (Health Score, Water):** rounded-2xl (16px), padding 4, larger icon (48px container), icon in purple-tinted bg square
 - **Compact tile (Weight, Steps):** rounded-xl, padding 3, bg-muted (slightly darker than white), 2-col grid
 - **CTA card (Today's workout/run):** rounded-xl, sport-coloured tinted background (8% opacity), Play button pill right-aligned
-- **Action pills (Quick Log, Start Run, Log Food):** rounded-xl, sport-coloured tinted bg (6% opacity), icon + 11px semibold label, flex row with equal widths, minimum 44px touch target
-- **Section labels:** 10px uppercase with wider letter-spacing, muted colour
+- **Quick actions:** there is no longer a pill row. Today's actions are
+  the sport-coloured CTA cards (`LiftCTACard` / `RunCTACard`), and food
+  logging is the "Log food" action at the foot of `TodayEnergy`.
+- **Section labels:** `SectionLabel` — uppercase, wider letter-spacing, muted; 11px (`tier="section"`, page sections) or 12px (default, card captions). No hand-rolled label classes, no third size
 
 ### Training plan primitives
 
@@ -566,12 +644,36 @@ reduced-motion` always gets the settled static state — no entrance, no
   `success`/`semantic.positive` remain value-aliases (pixel-correct,
   name-only debt, pinned in `colorCanonical.test.ts` alongside the
   warning≠nutrition inequality that IS the D19 contract).
+- **Framer Motion is gated globally; CSS animations are not.**
+  `useReducedMotion` covers every `motion.*` element, but a Tailwind
+  `animate-*` class runs under Reduce Motion unless it carries the
+  `motion-safe:` variant. Every skeleton pulse and ping does;
+  `animate-spin` spinners are progress feedback and stay unprefixed
+  (`UNGUARDED_ANIMATION_BASELINE = 8` in `designSystemInvariants.test.ts`
+  is exactly the spinner set).
 - **Empty states go through the `EmptyState` primitive**
   (`src/components/ui/EmptyState.tsx`; `compact` for in-card use) — no
   hand-rolled centered-icon-tile blocks. The primitive owns the brand
   hexagon, accent tinting, and reduced-motion handling.
 
 ### Design-review capture channel (screenshots without a local rig)
+
+**The capture specs are a PR gate as well as a screenshot source.** The
+`capture-specs` job in `emulator-tests.yml` runs every
+`e2e/screenshots/*.capture.spec.ts` on pull requests and on main, blocking,
+with the same build and the same seed chain `app-screenshots.yml` uses
+(the two lists must stay identical, pinned by `captureSeedChain.test.ts`;
+a seed added to only one leaves its spec failing on login in the gate, or
+its frame reading as `removed` in the diff report).
+Before that job existed these specs ran ONLY on a push to
+`claude/screenshot-app`, so their ~98 assertions could not fail a PR:
+#2187 removed an `aria-label` a spec located by, the locator matched zero
+elements for two merges, and nothing went red. If you change a
+user-visible string, an aria-label, or a reading order, that job is what
+tells you which spec you broke — so read its failure before assuming the
+rig is at fault. Frames written there are thrown away with the runner;
+committing them to the `app-screenshots` branch is still the workflow
+below.
 
 The agent sandbox can't run a browser; CI can. Push any branch's code to
 `claude/screenshot-app` (scratch trigger branch — force-with-lease is fine)
@@ -721,7 +823,18 @@ or touching a CTA button, route it through `Button` with the variant above.
 ### Component Architecture
 
 - **Pages:** src/pages/ — route-level, lazy-loaded
-- **Home screen built from:** WeekStrip → DayPeekCard → PerformanceHeroCard → StackedCTACards (action pills + health/water/weight/steps) → TodayEnergy → TodayGuidanceCard. This line named `HybridBalanceCard` until 2026-08-10; that component rendered NOWHERE, and had been superseded by `PerformanceHeroCard` / `TodayGuidanceCard` taking over the "how is my week going" role. Its only mention anywhere in the repo was this sentence — which is exactly why `componentReachability` strips comments before matching, and why a prose reference must never be what keeps a component looking alive.
+- **Home screen built from:** WeekStrip → DayPeekCard → StackedCTACards
+  (LiftCTACard / RunCTACard / RestDayCard — no pills) → TodayEnergy →
+  WaterCard → WeightStepsTiles → WeeklyReviewEntry → PerformanceHeroCard.
+  Performance sits LAST by owner decision: the first thing on the scroll
+  should be something to do today, not a verdict on the week just gone.
+  This line has now rotted twice. It named `HybridBalanceCard` until it
+  was caught rendering nowhere, and the replacement text then named
+  `TodayGuidanceCard` (also gone) and credited StackedCTACards with
+  action pills and the health/water/weight/steps tiles it has never
+  owned. `componentReachability` catches a dead COMPONENT; nothing
+  catches a dead SENTENCE, which is why this one is worth re-reading
+  against `src/pages/Home.tsx` rather than trusting.
 - **Icons:** lucide-react (individual imports only)
 - **Toasts:** sonner
 - **Charts:** Recharts (bar charts, line charts in History)
@@ -742,9 +855,8 @@ or touching a CTA button, route it through `Button` with the variant above.
 
 ### Current Known Design Considerations
 
-- The Quick Log / Start Run / Log Food action pills were recently shrunk to make room for the hero cards (Health Score, Water). The visual weight difference between the large hero cards and small pills is intentional — the hero cards are glanceable data, the pills are secondary quick actions.
 - The water card has a complex animated fill effect (WaterWave + WaterBubbles) — treat carefully when modifying
-- Section headers use 10px uppercase with tracking — this is a deliberate typographic choice, not an error
+- Section labels use uppercase with tracking at 11px/12px (`SectionLabel`'s two tiers) — a deliberate typographic choice, not an error; the 11px tier is the one place text sits below the 12px micro floor
 - The "NEW" badge on PR items uses orange background — this is the nutrition/warm accent colour
 
 ## Reference apps — for /grill-me and /grill-with-docs sessions
@@ -1343,6 +1455,16 @@ Firestore emulator up — 1156 tests, 76 files, none skipped.
 
 ### `functions/` dependency advisories — the bump was TRIED and declined
 
+**STATUS 2026-09-07 — high/critical hold superseded by a fresh measurement.**
+Compatible transitive updates (including grpc-js, protobufjs, websocket-driver,
+form-data and fast-xml-builder) now clear the high and critical advisories
+without changing firebase-admin's major version or its namespaced API. The
+security audit updates the lockfile and makes the Functions CI audit fail on
+high/critical advisories. The old counts and "no in-range fix" conclusion below
+are historical, not permission to skip a fresh audit. The Admin SDK v14 migration
+warning still applies. See `docs/agents/security-audit-2026-09-07.md` for this
+pass's measured dependency state and residual limits.
+
 `npm audit --omit=dev` in `functions/` reports 18 (1 low, 12 moderate, 4 high,
 1 critical). The obvious move — bump `firebase-admin`, the only DIRECT
 dependency implicated — was attempted on 2026-08-02, measured, and reverted.
@@ -1764,6 +1886,18 @@ Default canonical vocabulary — `needs-triage` / `needs-info` /
 `ready-for-agent` / `ready-for-human` / `wontfix`. Labels are
 auto-created on first `/triage` use if absent on GitHub. See
 `docs/agents/triage-labels.md`.
+
+### Reusable prompts
+
+Two paste-ready session prompts live in `docs/agents/`, each carrying the
+measured baseline and the pre-decided calls its last run earned:
+`visual-pass-prompt.md` for the pixels-only visual pass, and
+`app-improvement-prompt.md` for the whole-app pass (security, guards,
+de-slop, front-end, design). Re-verify their cited lines before acting; the
+citations are starting points, not a to-do list.
+`app-improvement-pass-2026-09-05.md` is that prompt's first run: what
+shipped, what was declined and why, the operator checklist, the open owner
+calls with both options measured, and the ratchet baselines it left.
 
 ### Domain docs
 

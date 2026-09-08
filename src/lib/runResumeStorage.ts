@@ -30,14 +30,16 @@
  * change ships without a migration script. The 6-hour cutoff discards
  * a run abandoned and reopened days later.
  *
- * Write path is best-effort: try/catch around every storage op so a
- * quota-exceeded or private-mode environment falls through to "run
- * continues in memory, no recoverability" instead of breaking the
- * live run. localStorage is also unavailable during SSR / Node tests —
- * every helper short-circuits cleanly when the global is absent.
+ * Write path is best-effort: every storage op goes through `localStore`,
+ * which never throws, so a quota-exceeded or private-mode environment
+ * falls through to "run continues in memory, no recoverability" instead
+ * of breaking the live run — and a failed chunk write returns before the
+ * meta commit, so the counts never advance past chunks that persisted.
+ * Absent storage (SSR / Node tests) simply reads as "nothing stored".
  */
 
 import type { GPSPoint } from "./gps";
+import { readString, remove, writeJson } from "@/lib/localStore";
 /* RunConfig's canonical home is runConfigDefaults.ts (pure module, no
  * UI imports — RunSetupModal only re-exports it). Importing the pure
  * module keeps storage/auth off the UI layer (2026-07-11 audit batch 3:
@@ -136,9 +138,9 @@ function chunkCountFor(pointCount: number): number {
 /** Best-effort read of the raw meta record (no age/version gating) —
  *  used by the write path to decide same-run vs fresh. */
 function readMetaRaw(uid: string): StoredMeta | null {
+  const raw = readString(runResumeKey(uid));
+  if (!raw) return null;
   try {
-    const raw = localStorage.getItem(runResumeKey(uid));
-    if (!raw) return null;
     const parsed = JSON.parse(raw) as unknown;
     if (!isValidMeta(parsed)) return null;
     return parsed;
@@ -148,76 +150,68 @@ function readMetaRaw(uid: string): StoredMeta | null {
 }
 
 /**
- * Defensive write — wrapped in try/catch because:
- *   - localStorage quota can throw mid-write (5MB cap)
- *   - private-mode Safari throws on every setItem
- *   - SSR / Node test envs have no `localStorage` global
+ * Defensive write — a storage failure (quota mid-write, private-mode
+ * Safari, no storage at all in SSR / Node) reports false and never
+ * propagates: the live run is more important than recoverability.
  *
  * Incremental: only chunks from the previous partial chunk onward are
- * rewritten; sealed chunks are left untouched. Meta is written LAST so
- * a mid-write quota failure never advances the counts past the chunks
- * that actually persisted.
+ * rewritten; sealed chunks are left untouched. Meta is written LAST, and
+ * the first failed chunk write returns before it, so a mid-write quota
+ * failure never advances the counts past the chunks that actually
+ * persisted.
  *
  * Returns true on success so call sites can debounce / log failures.
- * Never propagates the error — the live run is more important than
- * recoverability.
  */
 export function writeStoredRun(uid: string, snapshot: StoredRun): boolean {
-  if (typeof localStorage === "undefined") return false;
   if (!uid) return false;
-  try {
-    const prior = readMetaRaw(uid);
-    const newCount = snapshot.points.length;
-    const newChunks = chunkCountFor(newCount);
+  const prior = readMetaRaw(uid);
+  const newCount = snapshot.points.length;
+  const newChunks = chunkCountFor(newCount);
 
-    // Same run only when the meta is the current version, the start
-    // timestamp matches, and the trail hasn't shrunk (a shrink means a
-    // reset / different run reusing the key). Otherwise: fresh — wipe
-    // the prior run's chunks and write every chunk from scratch.
-    const sameRun =
-      prior !== null &&
-      prior.startedAt === snapshot.startedAt &&
-      newCount >= prior.pointCount;
+  // Same run only when the meta is the current version, the start
+  // timestamp matches, and the trail hasn't shrunk (a shrink means a
+  // reset / different run reusing the key). Otherwise: fresh — wipe
+  // the prior run's chunks and write every chunk from scratch.
+  const sameRun =
+    prior !== null &&
+    prior.startedAt === snapshot.startedAt &&
+    newCount >= prior.pointCount;
 
-    if (!sameRun && prior) {
-      for (let i = 0; i < prior.chunkCount; i++) {
-        localStorage.removeItem(runResumeChunkKey(uid, i));
-      }
+  if (!sameRun && prior) {
+    for (let i = 0; i < prior.chunkCount; i++) {
+      remove(runResumeChunkKey(uid, i));
     }
-
-    // Only the previous partial chunk and any brand-new chunks are
-    // dirty; earlier chunks are sealed and identical.
-    const firstDirty = sameRun
-      ? Math.floor(prior!.pointCount / RUN_RESUME_CHUNK_SIZE)
-      : 0;
-    for (let i = firstDirty; i < newChunks; i++) {
-      const slice = snapshot.points.slice(
-        i * RUN_RESUME_CHUNK_SIZE,
-        (i + 1) * RUN_RESUME_CHUNK_SIZE
-      );
-      localStorage.setItem(runResumeChunkKey(uid, i), JSON.stringify(slice));
-    }
-    // In the same-run path a shrink is impossible (guarded above), so
-    // there are never stale trailing chunks to remove here.
-
-    // Meta LAST — the commit point. Until this lands the read path
-    // still sees the previous consistent (pointCount, chunkCount).
-    const meta: StoredMeta = {
-      v: RUN_RESUME_SCHEMA_VERSION,
-      config: snapshot.config,
-      startedAt: snapshot.startedAt,
-      accumulatedSeconds: snapshot.accumulatedSeconds,
-      isRunning: snapshot.isRunning,
-      lastWriteAt: snapshot.lastWriteAt,
-      phase: snapshot.phase,
-      pointCount: newCount,
-      chunkCount: newChunks,
-    };
-    localStorage.setItem(runResumeKey(uid), JSON.stringify(meta));
-    return true;
-  } catch {
-    return false;
   }
+
+  // Only the previous partial chunk and any brand-new chunks are
+  // dirty; earlier chunks are sealed and identical.
+  const firstDirty = sameRun
+    ? Math.floor(prior!.pointCount / RUN_RESUME_CHUNK_SIZE)
+    : 0;
+  for (let i = firstDirty; i < newChunks; i++) {
+    const slice = snapshot.points.slice(
+      i * RUN_RESUME_CHUNK_SIZE,
+      (i + 1) * RUN_RESUME_CHUNK_SIZE
+    );
+    if (!writeJson(runResumeChunkKey(uid, i), slice)) return false;
+  }
+  // In the same-run path a shrink is impossible (guarded above), so
+  // there are never stale trailing chunks to remove here.
+
+  // Meta LAST — the commit point. Until this lands the read path
+  // still sees the previous consistent (pointCount, chunkCount).
+  const meta: StoredMeta = {
+    v: RUN_RESUME_SCHEMA_VERSION,
+    config: snapshot.config,
+    startedAt: snapshot.startedAt,
+    accumulatedSeconds: snapshot.accumulatedSeconds,
+    isRunning: snapshot.isRunning,
+    lastWriteAt: snapshot.lastWriteAt,
+    phase: snapshot.phase,
+    pointCount: newCount,
+    chunkCount: newChunks,
+  };
+  return writeJson(runResumeKey(uid), meta);
 }
 
 /**
@@ -239,18 +233,12 @@ export function readStoredRun(
   uid: string,
   now: number = Date.now()
 ): StoredRun | null {
-  if (typeof localStorage === "undefined") return null;
   // Drop the legacy un-scoped entry on first read so a pre-scoping
   // snapshot can never surface in the chooser under the wrong account.
   dropLegacyKey();
   if (!uid) return null;
 
-  let raw: string | null;
-  try {
-    raw = localStorage.getItem(runResumeKey(uid));
-  } catch {
-    return null;
-  }
+  const raw = readString(runResumeKey(uid));
   if (!raw) return null;
 
   let parsed: unknown;
@@ -278,13 +266,7 @@ export function readStoredRun(
   // makes the trail non-contiguous → unsafe to resume → discard.
   const points: GPSPoint[] = [];
   for (let i = 0; i < parsed.chunkCount; i++) {
-    let chunkRaw: string | null;
-    try {
-      chunkRaw = localStorage.getItem(runResumeChunkKey(uid, i));
-    } catch {
-      clearStoredRun(uid);
-      return null;
-    }
+    const chunkRaw = readString(runResumeChunkKey(uid, i));
     if (chunkRaw === null) {
       clearStoredRun(uid);
       return null;
@@ -326,12 +308,7 @@ export function readStoredRun(
  * with a scoped key — this only removes the pre-scoping global entry.
  */
 function dropLegacyKey(): void {
-  if (typeof localStorage === "undefined") return;
-  try {
-    localStorage.removeItem(LEGACY_RUN_RESUME_KEY);
-  } catch {
-    // Best-effort.
-  }
+  remove(LEGACY_RUN_RESUME_KEY);
 }
 
 /**
@@ -342,14 +319,9 @@ function dropLegacyKey(): void {
  * meta can't linger.
  */
 export function clearStoredRun(uid: string): void {
-  if (typeof localStorage === "undefined") return;
   if (!uid) return;
   const meta = readMetaRaw(uid);
-  try {
-    localStorage.removeItem(runResumeKey(uid));
-  } catch {
-    // Best-effort.
-  }
+  remove(runResumeKey(uid));
   const known = meta?.chunkCount ?? 0;
   // Remove the known chunks, then keep sweeping until the first gap so
   // a stale run with more chunks than a corrupt meta claims is still
@@ -357,18 +329,8 @@ export function clearStoredRun(uid: string): void {
   const CAP = 100_000;
   for (let i = 0; i < CAP; i++) {
     const key = runResumeChunkKey(uid, i);
-    let present: string | null;
-    try {
-      present = localStorage.getItem(key);
-    } catch {
-      break;
-    }
-    if (present === null && i >= known) break;
-    try {
-      localStorage.removeItem(key);
-    } catch {
-      // Best-effort.
-    }
+    if (readString(key) === null && i >= known) break;
+    remove(key);
   }
 }
 

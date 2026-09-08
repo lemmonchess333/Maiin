@@ -27,6 +27,8 @@ test.describe("race event header + door-2 picker screenshots", () => {
   );
 
   test.beforeEach(async ({ page }) => {
+    // Keep the catalogue fixture upcoming after its real event date passes.
+    await page.clock.setFixedTime(new Date("2026-06-01T12:00:00Z"));
     await suppressCoachmarks(page);
     await page.addInitScript(() => {
       document.addEventListener("DOMContentLoaded", () => {

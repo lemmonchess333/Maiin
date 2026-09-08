@@ -45,6 +45,15 @@ vi.mock("../firebase", () => ({
   functions: {},
   firebaseConfig: {},
 }));
+/* auth.tsx takes `auth` from firebaseApp (the Firestore-free half of the
+   split), so the mock has to cover both halves — the real module calls
+   getAuth() at import, which this suite's `firebase/auth` mock does not
+   provide. Same shape as above so the suite's intent is unchanged. */
+vi.mock("../firebaseApp", () => ({
+  auth: H.mockAuth,
+  app: {},
+  firebaseConfig: {},
+}));
 vi.mock("@/lib/pushNotifications", () => ({
   invalidatePushTokenLifecycle: vi.fn(),
   stopListeningForForegroundPush: vi.fn(),
@@ -155,9 +164,16 @@ describe("AuthProvider — account switch isolation", () => {
     deferReads();
     await emit("A");
     await emit("B");
-    // Assert the interleaving exists before relying on it. The old suite
-    // indexed a bare array and could not tell A's read from B's.
-    expect(pendingReads()).toEqual(["users/A", "users/B"]);
+    // Assert the interleaving exists before relying on it — indexing a
+    // bare array cannot tell A's read from B's.
+    // Awaited, not read synchronously: the provider reaches Firestore
+    // through a dynamic import, so the read is issued a tick or more after
+    // the auth callback rather than inside it. Reading straight after
+    // emit() therefore samples an empty queue on a cold module cache and
+    // only passes when some earlier suite happens to have warmed it. The
+    // expectation is unchanged and still positive — both reads, in order —
+    // so a provider that issued one, none, or the wrong order still fails.
+    await waitFor(() => expect(pendingReads()).toEqual(["users/A", "users/B"]));
 
     await act(async () => {
       expect(releaseRead(1)).toBe(true); // B answers first
@@ -179,7 +195,9 @@ describe("AuthProvider — account switch isolation", () => {
     // race the test happens to win.
     deferReads();
     await emit("B");
-    expect(pendingReads()).toEqual(["users/B"]);
+    // Same dynamic-import wait as above; the profile assertions below still
+    // land inside the held window, which is what "before B hydrates" means.
+    await waitFor(() => expect(pendingReads()).toEqual(["users/B"]));
     expect(state().p).toBe("null");
     expect(state().loading).toBe("true");
 
@@ -193,7 +211,7 @@ describe("AuthProvider — account switch isolation", () => {
     deferReads();
     await emit("A");
     await emit("B");
-    expect(pendingReads()).toEqual(["users/A", "users/B"]);
+    await waitFor(() => expect(pendingReads()).toEqual(["users/A", "users/B"]));
 
     await act(async () => {
       expect(releaseRead(1)).toBe(true);

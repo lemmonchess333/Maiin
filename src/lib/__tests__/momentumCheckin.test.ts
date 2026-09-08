@@ -18,6 +18,8 @@ import {
   resolveReviewNextAction,
   checkinDocPath,
   parseCheckin,
+  asksExperienceQuestions,
+  EXPERIENCE_EVERY_N_WEEKS,
 } from "../momentumCheckin";
 
 describe("nextActionForFeel / nextActionForFocus", () => {
@@ -133,5 +135,85 @@ describe("parseCheckin", () => {
     expect(
       parseCheckin({ weekKey: 5, createdAt: "x", feel: "good_fit" })
     ).toBeNull();
+  });
+});
+
+describe("app-experience questions — cadence and round-trip", () => {
+  /**
+   * The check-in is weekly and already asks two questions. Asking two
+   * more every week turns a decision moment into a survey, which is the
+   * thing it was built not to be — so the cadence is the feature, and
+   * these pin it rather than the wording.
+   */
+  it("asks roughly monthly, not weekly", () => {
+    // Four consecutive Mondays: exactly one carries the questions.
+    const mondays = ["2026-09-07", "2026-09-14", "2026-09-21", "2026-09-28"];
+    const asked = mondays.filter(asksExperienceQuestions);
+    expect(asked).toHaveLength(1);
+  });
+
+  it("gives the same answer for the same week every time", () => {
+    // Derived from the key alone, so it cannot drift between renders,
+    // devices, or a reload mid-review.
+    const key = "2026-09-07";
+    const first = asksExperienceQuestions(key);
+    expect(asksExperienceQuestions(key)).toBe(first);
+    expect(asksExperienceQuestions(key)).toBe(first);
+  });
+
+  it("repeats on the documented period", () => {
+    const asking = [
+      "2026-09-07",
+      "2026-09-14",
+      "2026-09-21",
+      "2026-09-28",
+    ].find(asksExperienceQuestions)!;
+    const next = new Date(`${asking}T00:00:00Z`);
+    next.setUTCDate(next.getUTCDate() + 7 * EXPERIENCE_EVERY_N_WEEKS);
+    expect(asksExperienceQuestions(next.toISOString().slice(0, 10))).toBe(true);
+  });
+
+  it("never asks on a malformed week key", () => {
+    // A surprise extra pair of questions is the worst failure mode here.
+    for (const bad of ["", "not-a-date", "2026-13-45", "26-09-07"]) {
+      expect(asksExperienceQuestions(bad)).toBe(false);
+    }
+  });
+
+  it("round-trips both answers through parseCheckin", () => {
+    const parsed = parseCheckin({
+      weekKey: "2026-09-07",
+      feel: "good_fit",
+      focus: "lifts",
+      clarity: 4,
+      ease: 5,
+      createdAt: 1_700_000_000_000,
+    });
+    expect(parsed).toMatchObject({ clarity: 4, ease: 5 });
+  });
+
+  it("drops an out-of-range or non-integer answer rather than trusting it", () => {
+    // A consumer that trusts the range would otherwise render "7 of 5".
+    const parsed = parseCheckin({
+      weekKey: "2026-09-07",
+      feel: "good_fit",
+      focus: null,
+      clarity: 9,
+      ease: 2.5,
+      createdAt: 1_700_000_000_000,
+    });
+    expect(parsed).not.toHaveProperty("clarity");
+    expect(parsed).not.toHaveProperty("ease");
+  });
+
+  it("an unanswered pair is absent, not a middling 3", () => {
+    const parsed = parseCheckin({
+      weekKey: "2026-09-07",
+      feel: "a_bit_much",
+      focus: null,
+      createdAt: 1_700_000_000_000,
+    });
+    expect(parsed).not.toHaveProperty("clarity");
+    expect(parsed).not.toHaveProperty("ease");
   });
 });

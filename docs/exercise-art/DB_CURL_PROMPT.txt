@@ -1,0 +1,91 @@
+MASTER EXERCISE IMAGE PROMPT — Dumbbell Curl
+Use case: scientific-educational. Asset: six separate anatomical exercise stills.
+EXACT VARIATION: Standing bilateral supinated dumbbell curl, strict torso, both arms together
+CANONICAL STYLE REFERENCE: public/form-frames/barbell-row/1.webp
+SCENE REFERENCE: public/form-frames/barbell-row/1.webp
+CAMERA: Fixed almost-front three-quarter view, athlete turned 15 degrees towards image left; both hands and dumbbells fully visible. Portrait 1024x1536, whole head and shoes in frame, camera near lower chest height, no perspective/scale changes.
+FIXED ANCHORS: Both shoe soles, heels, toes, pelvis, head and shoulders remain fixed. Upper arms remain beside ribs. Only elbow flexion and attached forearms/hands/dumbbells move.
+EQUIPMENT: Two identical modest round-ended dark-grey dumbbells; same handle length and head diameter in all six. No numerical weight labels. Each hand fully wraps its handle, palms forward/up throughout.
+
+LOCKED ATHLETE
+Same bald, faceless, muscular anatomical male as the canonical reference.
+White/light-grey body, crisp muscle separation, fine dark contours, polished 2D
+anatomical illustration on black. Same white shoes, proportions, muscle density,
+head, hands, feet, limb thickness, line weight and shading. No redesign, hair,
+photorealistic skin, painterly texture or extra clothing. Purple never changes muscle size.
+
+COLOUR HIERARCHY
+Primary (#7045F5): Biceps brachii on both arms, deep purple
+Secondary (#C5B5ED): Visible brachialis and brachioradialis only, lighter lilac
+Stabilisers (#E1D8F2): Subtle pale purple at forearm grip muscles and trunk only; leave chest, deltoids and legs white-grey.
+Use stable qualitative contribution colours, not a claim of measured activation.
+Keep anatomy visible and highlights consistent across the six frames. Do not
+dim all muscles simply because the movement is returning; no unrelated highlights.
+
+SIX SEPARATE FRAMES
+Each full-quality image must share one canvas, crop, camera, scale, perspective,
+lighting, floor and equipment geometry. Make one master, check it, then EDIT THE
+NEAREST ACCEPTABLE FRAME. Move only the joints and equipment that must move.
+Never make a contact sheet, collage or grid to crop/upscale. No blurred edges.
+Keep bar length, plate count/diameter/thickness, grip width and machine dimensions.
+Use a modest illustrative load: one identical plate on each barbell side unless
+the authored variation below requires otherwise. No weight numbering.
+Both hands must retain physical contact; no floating grip, disappearing cable,
+bending rigid bar, changing attachments, or fixed machine parts moving.
+
+MOVEMENT AND EQUIPMENT LADDER
+FRAME 1 — SET UP 1/6
+Body: start: both elbows approximately 5 degrees flexion from straight. Shoulders, upper arms, head, torso, pelvis, knees and feet hold the master position. Neutral wrists and supinated grip.
+Equipment: Dumbbells follow forearm arcs around fixed elbows; rigid handles stay centred in the palms. Both bells move synchronously, neither changes dimensions.
+Cable/stack: Not applicable; no machine, cable or stack.
+App cue: Stand tall, palms forward, elbows by ribs.
+
+FRAME 2 — INITIATE CURL 2/6
+Body: early curl: both elbows approximately 35 degrees flexion from straight. Shoulders, upper arms, head, torso, pelvis, knees and feet hold the master position. Neutral wrists and supinated grip.
+Equipment: Dumbbells follow forearm arcs around fixed elbows; rigid handles stay centred in the palms. Both bells move synchronously, neither changes dimensions.
+Cable/stack: Not applicable; no machine, cable or stack.
+App cue: Bend both elbows; keep your torso still.
+
+FRAME 3 — MID CURL 3/6
+Body: mid curl: both elbows approximately 75 degrees flexion from straight. Shoulders, upper arms, head, torso, pelvis, knees and feet hold the master position. Neutral wrists and supinated grip.
+Equipment: Dumbbells follow forearm arcs around fixed elbows; rigid handles stay centred in the palms. Both bells move synchronously, neither changes dimensions.
+Cable/stack: Not applicable; no machine, cable or stack.
+App cue: Upper arms still, wrists straight.
+
+FRAME 4 — TOP CONTRACTION 4/6
+Body: top: both elbows approximately 120 degrees flexion from straight. Shoulders, upper arms, head, torso, pelvis, knees and feet hold the master position. Neutral wrists and supinated grip.
+Equipment: Dumbbells follow forearm arcs around fixed elbows; rigid handles stay centred in the palms. Both bells move synchronously, neither changes dimensions.
+Cable/stack: Not applicable; no machine, cable or stack.
+App cue: Curl up without lifting your elbows.
+
+FRAME 5 — CONTROLLED LOWER 5/6
+Body: controlled lower: both elbows approximately 75 degrees flexion from straight. Shoulders, upper arms, head, torso, pelvis, knees and feet hold the master position. Neutral wrists and supinated grip.
+Equipment: Dumbbells follow forearm arcs around fixed elbows; rigid handles stay centred in the palms. Both bells move synchronously, neither changes dimensions.
+Cable/stack: Not applicable; no machine, cable or stack.
+App cue: Lower slowly along the same arc.
+
+FRAME 6 — FINISH RETURN 6/6
+Body: near-bottom return: both elbows approximately 25 degrees flexion from straight. Shoulders, upper arms, head, torso, pelvis, knees and feet hold the master position. Neutral wrists and supinated grip.
+Equipment: Dumbbells follow forearm arcs around fixed elbows; rigid handles stay centred in the palms. Both bells move synchronously, neither changes dimensions.
+Cable/stack: Not applicable; no machine, cable or stack.
+App cue: Return towards straight arms without bouncing.
+
+LOOP BOUNDARY: Frame 6 is a near-bottom controlled return, not a duplicate of frame 1. Continue elbow extension from about 25 degrees to about 5 degrees across 6 to 1. No pause jump or ping-pong playback.
+The sixth frame is normally controlled return; do not invent reverse playback.
+
+CAPTIONS
+The app renders the caption and cue as accessible text. App image masters contain
+no text, UI, legend, border or instruction. If standalone captioned exports are
+requested, use exactly one bold white uppercase centred bottom caption with the
+frame name and N/6, at the same position in each separate image.
+
+REJECT BEFORE RELEASE
+Compare all six stills AND their sequential playback. Reject identity/scale/camera
+drift, changing grip or plate dimensions, broken anatomy, shifted fixed anchors,
+incorrect cable/stack relationships, unordered poses, jumping paths or colour drift.
+Record measured invariant anchors and dimensions and review at mobile size in
+light and dark. A failed frame stays draft; a prompt is not proof of correctness.
+
+Technique references used for scene review:
+https://www.mayoclinic.org/healthy-lifestyle/fitness/multimedia/biceps-curl/vid-20084675
+Deliver IMAGE 1 through IMAGE 6 as six separate full-resolution files.

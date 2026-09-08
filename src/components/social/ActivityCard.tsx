@@ -1,4 +1,5 @@
 import { useState, memo } from "react";
+import { formatClock } from "@/utils/formatters";
 import SectionLabel from "@/components/ui/SectionLabel";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../lib/auth";
@@ -52,14 +53,10 @@ import {
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 import { elevationLabel } from "@/lib/runLabels";
 
-function formatDur(seconds: number): string {
-  const m = Math.floor(seconds / 60);
-  const s = seconds % 60;
-  return `${m}:${s.toString().padStart(2, "0")}`;
-}
+const formatDur = formatClock;
 
-const RUN_CHIPS = ["Nice run!", "Great pace!", "Keep it up!"];
-const LIFT_CHIPS = ["Great lift!", "Solid session!", "Strong work!"];
+const RUN_CHIPS = ["Nice run", "Great pace", "Keep it up"];
+const LIFT_CHIPS = ["Great lift", "Solid session", "Strong work"];
 
 interface ActivityCardProps {
   feedItem: FeedItem;
@@ -440,8 +437,9 @@ function ActivityCard({ feedItem, onShare }: ActivityCardProps) {
             mapped to session-level labels via movementCategoryLabel
             (Push / Pull / Legs / Arms / Core). Multiple raw categories
             now collapse to the same label (horizontal_push and
-            vertical_push both → "Push"), so we dedupe the labels here
-            to avoid showing duplicate chips on a typical push day. */}
+            vertical_push both → "Push"), so we dedupe the labels here.
+            Static facts, so one quiet line rather than chips — pills on
+            this surface mean a state (the PR badge), not a fact. */}
         {activity.muscleGroups &&
           activity.muscleGroups.length > 0 &&
           (() => {
@@ -451,16 +449,9 @@ function ActivityCard({ feedItem, onShare }: ActivityCardProps) {
               )
             );
             return (
-              <div className="flex flex-wrap gap-1.5">
-                {labels.map((label) => (
-                  <span
-                    key={label}
-                    className="text-xs px-2 py-0.5 rounded-full font-medium bg-lifting/8 text-lifting-strong"
-                  >
-                    {label}
-                  </span>
-                ))}
-              </div>
+              <p className="text-xs text-muted-foreground">
+                {labels.join(" · ")}
+              </p>
             );
           })()}
         {/* Workout volume/duration/PR count. Cells already printed on

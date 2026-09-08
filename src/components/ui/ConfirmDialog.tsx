@@ -1,5 +1,6 @@
 import { Button } from "./Button";
 import { Dialog } from "./Dialog";
+import type { Ref } from "react";
 
 interface ConfirmDialogProps {
   open: boolean;
@@ -10,6 +11,8 @@ interface ConfirmDialogProps {
   destructive?: boolean;
   onConfirm: () => void;
   onCancel: () => void;
+  /** Lift the dialog above a bottom sheet (z-50) it is confirming for. */
+  overSheet?: boolean;
 }
 
 /**
@@ -32,6 +35,7 @@ export function ConfirmDialog({
   destructive = false,
   onConfirm,
   onCancel,
+  overSheet = false,
 }: ConfirmDialogProps) {
   return (
     <Dialog
@@ -41,19 +45,51 @@ export function ConfirmDialog({
       description={description}
       size="sm"
       role="alertdialog"
+      overlayClassName={overSheet ? "z-[60]" : undefined}
+      className={overSheet ? "z-[60]" : undefined}
     >
-      <div className="flex gap-2 pt-1">
-        <Button onClick={onCancel} variant="secondary" className="flex-1">
-          {cancelLabel}
-        </Button>
-        <Button
-          onClick={onConfirm}
-          variant={destructive ? "destructive" : "primary"}
-          className="flex-1"
-        >
-          {confirmLabel}
-        </Button>
-      </div>
+      <ConfirmDialogActions
+        onCancel={onCancel}
+        onConfirm={onConfirm}
+        cancelLabel={cancelLabel}
+        confirmLabel={confirmLabel}
+        destructive={destructive}
+      />
     </Dialog>
+  );
+}
+
+/** Shared confirmation controls for flows that keep one dialog mounted. */
+export function ConfirmDialogActions({
+  onCancel,
+  onConfirm,
+  cancelLabel = "Cancel",
+  confirmLabel = "Confirm",
+  destructive = false,
+  cancelRef,
+}: Pick<
+  ConfirmDialogProps,
+  "onCancel" | "onConfirm" | "cancelLabel" | "confirmLabel" | "destructive"
+> & {
+  cancelRef?: Ref<HTMLButtonElement>;
+}) {
+  return (
+    <div className="flex gap-2 pt-1">
+      <Button
+        ref={cancelRef}
+        onClick={onCancel}
+        variant="secondary"
+        className="flex-1"
+      >
+        {cancelLabel}
+      </Button>
+      <Button
+        onClick={onConfirm}
+        variant={destructive ? "destructive" : "primary"}
+        className="flex-1"
+      >
+        {confirmLabel}
+      </Button>
+    </div>
   );
 }

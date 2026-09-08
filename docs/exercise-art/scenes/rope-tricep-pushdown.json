@@ -1,0 +1,81 @@
+{
+  "exerciseId": "rope-tricep-pushdown",
+  "status": "reviewed",
+  "reference": "public/form-frames/barbell-row/1.webp",
+  "variation": "Standing bilateral rope triceps pushdown, single fixed high pulley",
+  "camera": "Fixed front three-quarter view facing right, both hands distinct and full selected/unselected stack visible.",
+  "anchors": "Shoes, feet, torso, shoulders, upper arms, machine base, fixed pulley, guide rods and unselected plates. Elbows stay by ribs.",
+  "equipment": "One complete cable machine, high fixed pulley, taut cable and two-ended rope. Twelve identical plates total; exactly four selected, eight stay on the base. Fixed seatless tower; identical rope length and knobs.",
+  "primary": "Triceps brachii",
+  "secondary": "No additional prime mover to highlight",
+  "stabilisers": "Subtle forearm grip and trunk emphasis only; legs, chest and biceps remain white-grey.",
+  "techniqueSources": [
+    "https://www.acefitness.org/resources/everyone/exercise-library/3/triceps-pressdown/"
+  ],
+  "states": [
+    {
+      "body": "Start with elbows bent around 90 degrees, rope ends held high in front of torso.",
+      "equipment": "Cable taut, both hands wrapped around separate rope ends; fixed tower and guide rods do not move.",
+      "cableAndStack": "Four selected plates remain rigid as one block: payout 0 mm, gap 20 mm. Eight unselected plates remain at the base."
+    },
+    {
+      "body": "Set elbows by the sides, begin a small downward movement.",
+      "equipment": "Cable taut, both hands wrapped around separate rope ends; fixed tower and guide rods do not move.",
+      "cableAndStack": "Four selected plates remain rigid as one block: payout 20 mm, gap 40 mm. Eight unselected plates remain at the base."
+    },
+    {
+      "body": "Extend elbows, rope ends move towards the waist.",
+      "equipment": "Cable taut, both hands wrapped around separate rope ends; fixed tower and guide rods do not move.",
+      "cableAndStack": "Four selected plates remain rigid as one block: payout 100 mm, gap 120 mm. Eight unselected plates remain at the base."
+    },
+    {
+      "body": "Continue elbow extension, upper arms stay fixed.",
+      "equipment": "Cable taut, both hands wrapped around separate rope ends; fixed tower and guide rods do not move.",
+      "cableAndStack": "Four selected plates remain rigid as one block: payout 200 mm, gap 220 mm. Eight unselected plates remain at the base."
+    },
+    {
+      "body": "Both elbows extended, rope ends separate naturally beside upper thighs; both hands visible.",
+      "equipment": "Cable taut, both hands wrapped around separate rope ends; fixed tower and guide rods do not move.",
+      "cableAndStack": "Four selected plates remain rigid as one block: payout 300 mm, gap 320 mm. Eight unselected plates remain at the base."
+    },
+    {
+      "body": "Controlled partial return; elbows bend, upper arms remain by ribs.",
+      "equipment": "Cable taut, both hands wrapped around separate rope ends; fixed tower and guide rods do not move.",
+      "cableAndStack": "Four selected plates remain rigid as one block: payout 80 mm, gap 100 mm. Eight unselected plates remain at the base."
+    }
+  ],
+  "loopBoundary": "Continue the return from payout 80 mm to 0 mm while selected-stack gap falls from 100 mm to the 20 mm starting gap. No cable slack or moving fixed parts.",
+  "cable": {
+    "routing": "Handle cable passes over one fixed high pulley to the selected stack. Payout measured along this physical route.",
+    "payoutPerStackRise": 1,
+    "initialStackLiftMm": 20,
+    "totalPlates": 12,
+    "selectedPlates": 4,
+    "states": [
+      {
+        "payoutMm": 0,
+        "stackLiftMm": 20
+      },
+      {
+        "payoutMm": 20,
+        "stackLiftMm": 40
+      },
+      {
+        "payoutMm": 100,
+        "stackLiftMm": 120
+      },
+      {
+        "payoutMm": 200,
+        "stackLiftMm": 220
+      },
+      {
+        "payoutMm": 300,
+        "stackLiftMm": 320
+      },
+      {
+        "payoutMm": 80,
+        "stackLiftMm": 100
+      }
+    ]
+  }
+}

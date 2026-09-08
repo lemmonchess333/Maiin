@@ -14,7 +14,7 @@
  */
 import { describe, it, expect } from "vitest";
 
-import { clampExerciseIndex } from "../sessionCursor";
+import { clampExerciseIndex, nextIncompleteSet } from "../sessionCursor";
 
 describe("clampExerciseIndex", () => {
   it("leaves an in-range cursor alone", () => {
@@ -44,5 +44,38 @@ describe("clampExerciseIndex", () => {
 
   it("truncates a fractional cursor rather than producing a hole", () => {
     expect(clampExerciseIndex(1.9, 4)).toBe(1);
+  });
+});
+
+describe("nextIncompleteSet", () => {
+  const done = { completed: true };
+  const pending = { completed: false };
+  it("resumes after completed warm-ups and skips out-of-order logged sets", () => {
+    expect(nextIncompleteSet([[done, pending, pending, done]], 0)).toEqual({
+      exerciseIndex: 0,
+      setIndex: 1,
+    });
+  });
+  it("wraps from the final exercise to an unfinished earlier exercise", () => {
+    expect(nextIncompleteSet([[done], [pending, done], [done]], 2)).toEqual({
+      exerciseIndex: 1,
+      setIndex: 0,
+    });
+  });
+  it("keeps the current exercise if it has unfinished work", () => {
+    expect(nextIncompleteSet([[pending], [done, pending]], 1)).toEqual({
+      exerciseIndex: 1,
+      setIndex: 1,
+    });
+  });
+  it("only signals completion once all sets are done", () => {
+    expect(nextIncompleteSet([[done], [done]], 1)).toBeNull();
+    expect(nextIncompleteSet([])).toBeNull();
+  });
+  it("handles an invalid saved exercise index and empty exercises", () => {
+    expect(nextIncompleteSet([[], [pending]], 99)).toEqual({
+      exerciseIndex: 1,
+      setIndex: 0,
+    });
   });
 });

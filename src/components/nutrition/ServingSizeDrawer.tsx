@@ -178,7 +178,7 @@ export function ServingSizeDrawer({ food, open, onClose, onConfirm }: Props) {
           </button>
         </div>
 
-        {/* Log Food button */}
+        {/* Log food button */}
         <button
           type="button"
           onClick={() => onConfirm(servings)}
@@ -188,7 +188,7 @@ export function ServingSizeDrawer({ food, open, onClose, onConfirm }: Props) {
             boxShadow: "0 4px 16px rgba(124,110,246,0.25)",
           }}
         >
-          Log Food
+          Log food
         </button>
       </div>
     </BottomSheet>

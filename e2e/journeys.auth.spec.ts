@@ -13,7 +13,7 @@
  *      focused RunPlanSettings editor is the ONE run-plan surface post
  *      D14 dedupe; the actual save hits a callable this emulator set
  *      lacks, so the journey stops at the armed CTA).
- *   3. Start a workout & log a set — Programme → "Begin Workout" →
+ *   3. Start a workout & log a set — Programme → "Start workout" →
  *      session screen renders set inputs → mark one set complete →
  *      progress reflects it. Deliberately scoped to ONE set: driving
  *      every set of every exercise through rest timers is a flake
@@ -151,12 +151,12 @@ test.describe("core user journeys", () => {
     // Seeded profile has an all-lift weekSchedule (7 days), so today
     // is always a workout day and the command card offers Begin
     // Workout. Generous timeout: first visit bootstraps programState.
-    const begin = page.getByRole("button", { name: "Begin Workout" });
+    const begin = page.getByRole("button", { name: "Start workout" });
     await expect(begin).toBeVisible({ timeout: 20_000 });
     await begin.click();
 
     // PROGRAM-FLEX-01: on a day whose estimate exceeds the 30-min
-    // budget, Begin Workout opens the Express chooser first — take the
+    // budget, Start workout opens the Express chooser first — take the
     // full session. Best-effort with a short timeout: a short seeded
     // day starts directly and the chooser never renders.
     try {

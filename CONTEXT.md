@@ -8,6 +8,28 @@ Update when a /grill-me session crystallises new vocabulary, when we adopt or re
 
 ## Domain glossary
 
+### Naming — one concept, several spellings (rule, 2026-09-05)
+
+Two concepts carry more than one name in the code and that is not going
+to be mass-renamed: **Programme / Program** (`Programme*` identifiers and
+the `/program` route, `programState`, `programEngine` — ~50 files mixed)
+and **Circle / GoalSpace / Space** (`goalSpaces` collection, the
+`goalSpace/` feature module, `spaces/` for community Spaces, "Circles" in
+copy). A rename would churn hundreds of identifiers, the Firestore paths
+cannot move, and the mixed state is not what hurts — inconsistency INSIDE
+one file is.
+
+The rule:
+
+- **User-facing copy uses the glossary term.** "Programme" (en-GB) for the
+  training plan surface; "Circle" for a user's goal group; "Space" for a
+  community Space. Never "Program" in copy, never "GoalSpace" in copy.
+- **Identifiers follow their module's existing convention.** A file that
+  says `programState` keeps saying it; a file that says `ProgrammeRunSection`
+  keeps saying it. Firestore paths (`goalSpaces`, `spaces`) are fixed.
+- **Fix mixed usage only in files you touch** — and fix ALL of it in that
+  file while you are there. Do not open a rename PR.
+
 ### Running
 
 - **runDay** — a prescribed running slot for a specific date. Carries `id` (stable across regenerates within a week), `date` (YYYY-MM-DD, local timezone), `weekKey` (Sunday of the week, local), `templateId` (e.g. `easy_30`, `tempo_20`, `long_10k`, `10k_race`), `status`. Persisted in `programState.runDays[]`.

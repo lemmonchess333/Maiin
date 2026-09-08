@@ -150,15 +150,11 @@ describe("plan generation — golden sweep", () => {
     expect(SWEEP).toHaveLength(90);
   });
 
-  it("is deterministic — two builds of the same input agree exactly", () => {
-    // The precondition for everything else here. Both Math.random() sites
-    // were removed from the generator; if this fails, that regressed.
-    for (const g of GOALS) {
-      expect(summarise(4, "full_gym", g)).toEqual(summarise(4, "full_gym", g));
-    }
-  });
-
   it("matches the committed snapshot", () => {
+    // The snapshot is also the determinism check: both Math.random() sites
+    // were removed from the generator, and a build that disagreed with the
+    // committed sweep would fail here. (A same-input-twice comparison used
+    // to sit beside this; it could only ever agree with itself.)
     expect(SWEEP).toMatchSnapshot();
   });
 });

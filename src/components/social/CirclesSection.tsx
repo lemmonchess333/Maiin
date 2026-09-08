@@ -42,7 +42,7 @@ import SectionLabel from "@/components/ui/SectionLabel";
 import { Spinner } from "@/components/ui/Spinner";
 import { getTimeAgo } from "@/lib/timeAgo";
 import { formatDayMonth } from "@/utils/formatters";
-import { localWeekKey } from "@/lib/dateHelpers";
+import { localWeekKey, localDateString } from "@/lib/dateHelpers";
 import {
   LAUNCH_TEMPLATES,
   type GoalSpaceEvent,
@@ -111,7 +111,7 @@ const HYBRID_TEMPLATE: {
 
 /* SOCIAL-HOME-01 — cold-start goal selector options. The first three
    ARE the lock-pinned launch templates, plus the hybrid the create
-   sheet appends; "Private Progress" (its own button below) routes to
+   sheet appends; "Private progress" (its own button below) routes to
    the private Momentum check-in page and NEVER creates a circle.
 
    DERIVED, not re-listed. This used to be a second hand-written copy
@@ -142,10 +142,7 @@ function formatTargetDate(iso: string): string {
  *  targetDate is stored in, so the comparison is a plain string compare
  *  with no timezone drift. */
 function localTodayKey(): string {
-  const d = new Date();
-  const m = `${d.getMonth() + 1}`.padStart(2, "0");
-  const day = `${d.getDate()}`.padStart(2, "0");
-  return `${d.getFullYear()}-${m}-${day}`;
+  return localDateString(new Date());
 }
 
 /** Tomorrow (local) as YYYY-MM-DD — the `min` for the extend date input
@@ -154,9 +151,7 @@ function localTodayKey(): string {
 function localTomorrowKey(): string {
   const d = new Date();
   d.setDate(d.getDate() + 1);
-  const m = `${d.getMonth() + 1}`.padStart(2, "0");
-  const day = `${d.getDate()}`.padStart(2, "0");
-  return `${d.getFullYear()}-${m}-${day}`;
+  return localDateString(d);
 }
 
 /** CIRCLE-TARGET-LIFECYCLE — the owner of a still-active Circle whose
@@ -313,7 +308,7 @@ export default function CirclesSection({
       setTargetBusy(false);
       if (ok) {
         haptic("light");
-        toast.success("Target extended — keep it going");
+        toast.success("Target extended. Keep it going.");
         setExtendOpen(false);
         setNewTargetDate("");
       } else {
@@ -331,7 +326,7 @@ export default function CirclesSection({
       setTargetBusy(false);
       if (ok) {
         haptic("light");
-        toast.success("Circle wrapped — nice work");
+        toast.success("Circle wrapped. Nice work.");
       } else {
         toast.error("Couldn't wrap the Circle. Try again.");
       }
@@ -504,7 +499,7 @@ export default function CirclesSection({
         );
         toast.success("Invite copied.");
       } catch {
-        toast.error("Couldn't copy — long-press the code to select it.");
+        toast.error("Couldn't copy. Long-press the code to select it.");
       }
     }
   };
@@ -516,7 +511,7 @@ export default function CirclesSection({
       );
       toast.success("Invite code copied.");
     } catch {
-      toast.error("Couldn't copy — long-press the code to select it.");
+      toast.error("Couldn't copy. Long-press the code to select it.");
     }
   };
 
@@ -558,7 +553,7 @@ export default function CirclesSection({
       toast.success("You're in.");
     } else {
       toast.error(
-        "Couldn't join — the invite may be wrong or the circle full."
+        "Couldn't join. The invite may be wrong, or the circle may be full."
       );
     }
   };
@@ -572,7 +567,7 @@ export default function CirclesSection({
       setEvents(detail.events);
       toast.success("Shared with your circle.");
     } else {
-      toast.error("Couldn't share. Please try again.");
+      toast.error("Couldn't share. Try again.");
     }
   };
 
@@ -598,7 +593,7 @@ export default function CirclesSection({
     const res = await setWeeklyFocus(spaceId, focus);
     setFocusBusy(false);
     if (!res) {
-      toast.error("Couldn't update your focus. Please try again.");
+      toast.error("Couldn't update your focus. Try again.");
       return;
     }
     setFocusSheetOpen(false);
@@ -654,7 +649,7 @@ export default function CirclesSection({
         )
       );
     } else {
-      toast.error("Couldn't back this focus. Please try again.");
+      toast.error("Couldn't back this focus. Try again.");
     }
     setBackingId(null);
   };
@@ -665,7 +660,7 @@ export default function CirclesSection({
 
       {loading && (
         <div
-          className="h-16 rounded-xl bg-muted/40 animate-pulse"
+          className="h-16 rounded-xl bg-muted/40 motion-safe:animate-pulse"
           aria-hidden="true"
         />
       )}
@@ -691,7 +686,7 @@ export default function CirclesSection({
 
       {/* SOCIAL-HOME-01 — cold-start goal selector. Genuinely-empty
           only (!loadFailed). Four options preselect a create-sheet
-          template; "Private Progress" routes to the private Momentum
+          template; "Private progress" routes to the private Momentum
           check-in page and never creates a circle. "Join with code"
           stays below so invited users aren't funneled into creating. */}
       {!loading && !loadFailed && circles.length === 0 && (
@@ -733,7 +728,7 @@ export default function CirclesSection({
               className="w-full min-h-[44px] p-3 rounded-xl text-left bg-muted transition-colors active:scale-[0.97]"
             >
               <p className="text-sm font-semibold text-foreground">
-                Private Progress
+                Private progress
               </p>
               <p className="text-xs text-muted-foreground">
                 Private — just for you, never shared.
@@ -989,7 +984,7 @@ export default function CirclesSection({
           }
         }}
         title="Start a circle"
-        description="Invite-only, 2–8 people. Numbers, meals and photos stay private — a circle only ever sees check-ins."
+        description="Invite-only, 2–8 people. Numbers, meals and photos stay private. A circle only ever sees check-ins."
       >
         <div className="px-4 space-y-3 pb-2">
           {goalPrechosen ? (
@@ -1069,7 +1064,7 @@ export default function CirclesSection({
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             maxLength={60}
-            placeholder="Name it — e.g. Autumn strength block"
+            placeholder="Name it (e.g. Autumn strength block)"
             aria-label="Circle name"
             className="w-full min-h-[44px] px-3 rounded-xl bg-muted border border-border/50 text-sm text-foreground placeholder:text-muted-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring"
           />
@@ -1217,9 +1212,7 @@ export default function CirclesSection({
                         )
                         .then(() => toast.success("Invite code copied."))
                         .catch(() =>
-                          toast.error(
-                            "Couldn't copy — long-press to select it."
-                          )
+                          toast.error("Couldn't copy. Long-press to select it.")
                         );
                     }}
                   >
@@ -1337,7 +1330,7 @@ export default function CirclesSection({
                       if (ok) {
                         setDetailOf(null);
                         toast.success("You left the circle.");
-                      } else toast.error("Couldn't leave. Please try again.");
+                      } else toast.error("Couldn't leave. Try again.");
                     });
                   }}
                 >
@@ -1356,7 +1349,7 @@ export default function CirclesSection({
           if (!o) setInviteHandoff(null);
         }}
         title="Your Circle is ready"
-        description="Invite 1–7 people — the circle only ever sees check-ins, never numbers, meals or photos."
+        description="Invite 1–7 people. The circle only ever sees check-ins, never numbers, meals or photos."
       >
         {inviteHandoff && (
           <div className="px-4 space-y-3 pb-2">

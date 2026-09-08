@@ -23,14 +23,14 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
           node-version: 22
 
       - name: Authenticate to Google Cloud
-        uses: google-github-actions/auth@v2
+        uses: google-github-actions/auth@c200f3691d83b41bf9bbd8638997a462592937ed # v2
         with:
           credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
 
@@ -69,7 +69,7 @@ jobs:
         run: npm install -g firebase-tools
 
       - name: Install function dependencies
-        run: cd functions && npm install
+        run: npm ci --prefix functions
 
       # Inject the commit SHA + timestamp into functions/index.js
       # right before deploy. firebase-tools deduplicates uploads
@@ -94,6 +94,11 @@ jobs:
 
       - name: Deploy functions
         run: firebase deploy --only functions --project adaptive-fitness-af8bb --force
+
+      # Read the DEPLOYED source, including the injected commit marker. A
+      # green upload log alone does not establish which bundle is executing.
+      - name: Verify deployed comment function source
+        run: python3 scripts/verify-deployed-functions-source.py
 
       # A failed PRODUCTION deploy must be loud. CI on PRs stays green
       # (deploys only run post-merge), so without this step a deploy

@@ -26,6 +26,7 @@ import {
   Timestamp,
 } from "firebase/firestore";
 import { db } from "./firebase";
+import { localDateString } from "@/lib/dateHelpers";
 import { isVolumeEligible } from "./runStatsEligibility";
 
 export interface TrajectoryBreakdown {
@@ -74,10 +75,7 @@ function addDays(d: Date, days: number): Date {
 function toDateKey(d: Date): string {
   // Firestore workouts are keyed by local yyyy-MM-dd string — match
   // that format here so the `where('date', '>=', ...)` clause lines up.
-  const y = d.getFullYear();
-  const m = (d.getMonth() + 1).toString().padStart(2, "0");
-  const day = d.getDate().toString().padStart(2, "0");
-  return `${y}-${m}-${day}`;
+  return localDateString(d);
 }
 
 async function computeRangeBreakdown(

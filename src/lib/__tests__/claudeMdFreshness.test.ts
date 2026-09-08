@@ -149,3 +149,83 @@ describe("CLAUDE.md — no volatile file counts", () => {
     ).toEqual([]);
   });
 });
+
+/**
+ * Routes and file names are the two claims in CLAUDE.md that an agent acts
+ * on directly (it navigates to the route, it opens the file) and that go
+ * wrong silently when the app moves. Before this pin the Pages table named
+ * 14 of 41 routes, listed `Settings.tsx` a full IA migration after it became
+ * `SettingsIndex.tsx`, and the lib table carried two modules that did not
+ * exist (`calculateDailyMacros.ts`, `voiceFoodParser.ts`). Routes are not
+ * volatile counts — the ban on counts above stays — they are an inventory,
+ * and an inventory can be checked in both directions.
+ */
+function section(heading: string): string {
+  const start = claudeMd.indexOf(`## ${heading}`);
+  expect(start, `CLAUDE.md has no "## ${heading}" section`).toBeGreaterThan(-1);
+  const rest = claudeMd.slice(start + heading.length + 3);
+  const next = rest.search(/\n## /);
+  return next === -1 ? rest : rest.slice(0, next);
+}
+
+describe("CLAUDE.md — Pages table ↔ src/App.tsx routes", () => {
+  const appTsx = readFileSync(resolve(repoRoot, "src/App.tsx"), "utf8");
+  const declared = [
+    ...new Set([...appTsx.matchAll(/path="([^"]+)"/g)].map((m) => m[1])),
+  ].sort();
+  const pages = section("Pages (src/pages/)");
+  /** Developer labs are not product surfaces; one family row covers them. */
+  const isDevLab = (route: string) => route.startsWith("/dev/");
+
+  it("scans a plausible number of routes (guards a broken scan)", () => {
+    expect(declared.length).toBeGreaterThan(20);
+  });
+
+  it("names every route App.tsx declares", () => {
+    const missing = declared.filter(
+      (r) => !isDevLab(r) && !pages.includes(`\`${r}\``)
+    );
+    expect(
+      missing,
+      `Routes declared in src/App.tsx but absent from CLAUDE.md's Pages ` +
+        `table. Add a row (or mention a redirect in its target's row).`
+    ).toEqual([]);
+  });
+
+  it("names no route App.tsx does not declare", () => {
+    const named = [...pages.matchAll(/`(\/[^`\s]*)`/g)].map((m) => m[1]);
+    const stale = named.filter((r) => !isDevLab(r) && !declared.includes(r));
+    expect(
+      stale,
+      `Routes in CLAUDE.md's Pages table that src/App.tsx no longer declares.`
+    ).toEqual([]);
+  });
+
+  it("every page file it names exists under src/pages/", () => {
+    const named = [...pages.matchAll(/^\| `([^`]+\.tsx)`/gm)].map((m) => m[1]);
+    expect(named.length).toBeGreaterThan(20);
+    const missing = named.filter(
+      (f) => !f.includes("*") && !existsSync(join(repoRoot, "src/pages", f))
+    );
+    expect(
+      missing,
+      `Page files named in CLAUDE.md that do not exist (renamed or deleted).`
+    ).toEqual([]);
+  });
+});
+
+describe("CLAUDE.md — Key Business Logic table ↔ src/lib", () => {
+  it("every module it names exists", () => {
+    const lib = section("Key Business Logic (src/lib/)");
+    const named = [...lib.matchAll(/^\| `([^`]+\.tsx?)`/gm)].map((m) => m[1]);
+    expect(named.length).toBeGreaterThan(20);
+    const missing = named.filter(
+      (f) => !existsSync(join(repoRoot, "src/lib", f))
+    );
+    expect(
+      missing,
+      `Lib modules named in CLAUDE.md that do not exist — the row describes ` +
+        `a file an agent will go looking for.`
+    ).toEqual([]);
+  });
+});

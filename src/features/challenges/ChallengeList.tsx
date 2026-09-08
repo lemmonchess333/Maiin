@@ -1,3 +1,4 @@
+import SectionLabel from "@/components/ui/SectionLabel";
 import { useState, useEffect, type MutableRefObject } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -152,7 +153,10 @@ export function ChallengeList({
     return (
       <div className="space-y-3">
         {[1, 2, 3].map((i) => (
-          <div key={i} className="h-32 rounded-2xl bg-muted animate-pulse" />
+          <div
+            key={i}
+            className="h-32 rounded-2xl bg-muted motion-safe:animate-pulse"
+          />
         ))}
       </div>
     );
@@ -298,9 +302,9 @@ export function ChallengeList({
 
         {/* Secondary: this-week standings among people you follow. */}
         {(rankingsLoading || weeklyRankings.length > 0) && (
-          <p className="text-caption font-semibold uppercase tracking-wider text-muted-foreground mt-4 mb-2">
+          <SectionLabel tier="section" className="mt-4 mb-2">
             This week
-          </p>
+          </SectionLabel>
         )}
 
         <div className="space-y-1.5">
@@ -309,7 +313,7 @@ export function ChallengeList({
               {[1, 2, 3].map((i) => (
                 <div
                   key={i}
-                  className="h-8 rounded-lg bg-muted animate-pulse"
+                  className="h-8 rounded-lg bg-muted motion-safe:animate-pulse"
                 />
               ))}
             </div>
@@ -385,9 +389,7 @@ export function ChallengeList({
       {/* Other joined challenges */}
       {otherMy.length > 0 && (
         <div className="space-y-2">
-          <p className="text-small font-semibold uppercase tracking-wide text-muted-foreground">
-            Your challenges
-          </p>
+          <SectionLabel tier="section">Your challenges</SectionLabel>
           {otherMy.map((ch) => (
             <ChallengeCard
               key={ch.id}
@@ -413,9 +415,7 @@ export function ChallengeList({
       {otherAvailable.length > 0 &&
         (showAllAvailable ? (
           <div className="space-y-2">
-            <p className="text-small font-semibold uppercase tracking-wide text-muted-foreground">
-              Available
-            </p>
+            <SectionLabel tier="section">Available</SectionLabel>
             {otherAvailable.map((ch) => (
               <ChallengeCard
                 key={ch.id}

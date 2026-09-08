@@ -12,7 +12,7 @@ import { SectionErrorBoundary } from "@/components/SectionErrorBoundary";
    The prior double-fold (this section's expand accordion + PerformanceTab's
    own "show technical details") buried the gauge two taps deep. The outer
    accordion is removed: PerformanceTab renders always-visible, and its own
-   single "Show details" disclosure is the only remaining fold.
+   single "Details" disclosure is the only remaining fold.
 
    Deep-link continuity: `#performance` (the canonical Home PI-hero
    "tap for details" target from PR #635) still scrolls to this section on
@@ -67,7 +67,7 @@ export default function PerformanceSection() {
         <SectionLabel className="mt-6 mb-2" style={{ color: THEME.brand }}>
           Performance
         </SectionLabel>
-        <div className="p-4 rounded-2xl bg-card animate-pulse">
+        <div className="p-4 rounded-2xl bg-card motion-safe:animate-pulse">
           <div className="h-8 w-20 bg-muted rounded" />
         </div>
       </section>
@@ -112,7 +112,7 @@ export default function PerformanceSection() {
       <SectionErrorBoundary sectionName="performance-tab-body">
         <Suspense
           fallback={
-            <div className="p-4 rounded-2xl bg-card animate-pulse h-48" />
+            <div className="p-4 rounded-2xl bg-card motion-safe:animate-pulse h-48" />
           }
         >
           <PerformanceTab />

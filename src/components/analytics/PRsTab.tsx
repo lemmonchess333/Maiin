@@ -207,13 +207,13 @@ export default function PRsTab({
 
   /* Hist5d Stress 6 — cold-state designed as onboarding, not as a
      fallback. Cohesive single surface (not stacked empty cards)
-     with both Start Run + Start Lift CTAs side-by-side. The
+     with both Start run + Start lift CTAs side-by-side. The
      return-link toast on PR-eligible save (Hist5d Stress 19) lives
      in RunSummary + workout-save flows, not here — that's how the
      user comes BACK to this tab to celebrate their first PR. */
   if (hasNoPRs) {
     return (
-      <section aria-label="Personal Records" className="space-y-3 mt-4">
+      <section aria-label="Personal records" className="space-y-3 mt-4">
         <div className="p-6 rounded-2xl bg-card text-center space-y-3">
           <div
             className="size-12 rounded-xl flex items-center justify-center mx-auto"
@@ -239,13 +239,13 @@ export default function PRsTab({
                 className="size-3.5 inline-block mr-1"
                 aria-hidden="true"
               />
-              Start Run
+              Start run
             </Link>
             <Link
               to="/program"
               className="min-h-[44px] px-4 rounded-xl text-xs font-semibold text-white bg-lifting-fill inline-flex items-center"
             >
-              Start Lift
+              Start lift
             </Link>
           </div>
         </div>
@@ -254,7 +254,7 @@ export default function PRsTab({
   }
 
   return (
-    <section aria-label="Personal Records" className="space-y-5 mt-4">
+    <section aria-label="Personal records" className="space-y-5 mt-4">
       {/* Running PRs — three subsections per Hist5b pin 4 + 5:
           Lifetime (outdoor GPS, always shown when user has run),
           Last 30 days (only when user has recent activity),

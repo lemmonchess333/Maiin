@@ -21,8 +21,8 @@ afterEach(() => cleanup());
 
 describe("SectionLabel", () => {
   it("defaults to the caption tier (12px) with the canonical treatment", () => {
-    render(<SectionLabel>Macro Distribution</SectionLabel>);
-    const el = screen.getByText("Macro Distribution");
+    render(<SectionLabel>Macro distribution</SectionLabel>);
+    const el = screen.getByText("Macro distribution");
     expect(el.tagName).toBe("P");
     expect(el.className).toContain("text-xs");
     expect(el.className).toContain("font-semibold");
@@ -57,7 +57,7 @@ describe("SectionLabel", () => {
   });
 
   it("swaps the rendered element via `as`", () => {
-    render(<SectionLabel as="h3">Weekly Insights</SectionLabel>);
-    expect(screen.getByText("Weekly Insights").tagName).toBe("H3");
+    render(<SectionLabel as="h3">Weekly insights</SectionLabel>);
+    expect(screen.getByText("Weekly insights").tagName).toBe("H3");
   });
 });

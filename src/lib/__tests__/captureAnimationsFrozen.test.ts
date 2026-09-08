@@ -165,7 +165,7 @@ describe("capture specs — theme toggles settle before the shot", () => {
  *
  * The one-pixel moves are rounding. The 267px jump is a genuinely
  * different page. Every anchor in these specs is a single element — "wait
- * until `Today's Energy` is visible" — and a `fullPage` shot is a claim
+ * until `Today's energy` is visible" — and a `fullPage` shot is a claim
  * about the WHOLE document, so the shutter can fire while a card below the
  * fold is still mounting. A frame that swings 267px between runs cannot be
  * diffed, which means a real regression has somewhere to hide.

@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from "react";
+import { formatClock } from "@/utils/formatters";
 
 export function useRunTimer() {
   const [elapsed, setElapsed] = useState(0);
@@ -79,14 +80,10 @@ export function useRunTimer() {
     };
   }, [isRunning]);
 
-  const formatTime = useCallback((secs: number): string => {
-    const h = Math.floor(secs / 3600);
-    const m = Math.floor((secs % 3600) / 60);
-    const s = secs % 60;
-    if (h > 0)
-      return `${h}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
-    return `${m}:${s.toString().padStart(2, "0")}`;
-  }, []);
+  const formatTime = useCallback(
+    (secs: number): string => formatClock(secs),
+    []
+  );
 
   /**
    * Phase B3 helper for the persistence write path. Exposes the

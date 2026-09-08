@@ -4,10 +4,19 @@ import { db } from "@/lib/firebase";
 import { useUid } from "@/lib/auth";
 import { logger } from "@/lib/logger";
 import { sumLifetimeRunTotals } from "@/lib/runStatsEligibility";
+import {
+  recordedRaceMilestones,
+  type MilestoneRace,
+} from "@/lib/recordedRaceMilestones";
 
 export interface LifetimeRunStats {
   runCount: number;
   totalDistanceM: number;
+  /** Earliest eligible run, or null. See LifetimeRunTotals for why it is
+   *  derived from this whole-collection read rather than at the surface. */
+  firstRun: { id: string; date: string; distanceMetres: number } | null;
+  /** Explicitly recorded races from the same read, with no second scan. */
+  races: MilestoneRace[];
 }
 
 /**
@@ -29,8 +38,11 @@ export function useLifetimeRunStats(options?: { enabled?: boolean }) {
   const [stats, setStats] = useState<LifetimeRunStats>({
     runCount: 0,
     totalDistanceM: 0,
+    firstRun: null,
+    races: [],
   });
-  const [loading, setLoading] = useState(true);
+  const [loadedUid, setLoadedUid] = useState<string | null>(null);
+  const [statsUid, setStatsUid] = useState<string | null>(null);
   /**
    * A read that FAILED is not a user with no runs, and until this existed
    * the two were the same observable state: the catch below logged and
@@ -43,7 +55,6 @@ export function useLifetimeRunStats(options?: { enabled?: boolean }) {
 
   useEffect(() => {
     if (!uid || !enabled) {
-      setLoading(false);
       return;
     }
     let cancelled = false;
@@ -52,12 +63,20 @@ export function useLifetimeRunStats(options?: { enabled?: boolean }) {
         const snap = await getDocs(collection(db, "users", uid, "runs"));
         if (cancelled) return;
         setFailed(false);
-        setStats(sumLifetimeRunTotals(snap.docs.map((d) => d.data())));
+        // `id` is carried through so the chronology's first-run entry has a
+        // stable key; the doc data does not contain it.
+        const runs = snap.docs.map((d) => ({ ...d.data(), id: d.id }));
+        setStats({
+          ...sumLifetimeRunTotals(runs),
+          races: recordedRaceMilestones(runs),
+        });
+        setStatsUid(uid);
+        setLoadedUid(uid);
       } catch (err) {
         logger.error("useLifetimeRunStats error:", err);
         if (!cancelled) setFailed(true);
       } finally {
-        if (!cancelled) setLoading(false);
+        if (!cancelled) setLoadedUid(uid);
       }
     })();
     return () => {
@@ -65,5 +84,15 @@ export function useLifetimeRunStats(options?: { enabled?: boolean }) {
     };
   }, [uid, enabled]);
 
-  return { ...stats, loading, failed };
+  // Account changes must hide the old account's race/session identifiers
+  // synchronously, before the next effect or read can run.
+  const visible =
+    uid && enabled && statsUid === uid
+      ? stats
+      : { runCount: 0, totalDistanceM: 0, firstRun: null, races: [] };
+  return {
+    ...visible,
+    loading: Boolean(uid && enabled && loadedUid !== uid),
+    failed: Boolean(uid && enabled && loadedUid === uid && failed),
+  };
 }

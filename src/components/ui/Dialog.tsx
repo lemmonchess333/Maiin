@@ -101,9 +101,11 @@ const POSITION_CLASSES: Record<"center" | "bottom", string> = {
     "left-1/2 -translate-x-1/2 bottom-4 sm:bottom-auto sm:top-1/2 sm:-translate-y-1/2",
 };
 
+/* "dark" is a raised panel on the media stage — fixed in both themes, like
+   the stage itself — for dialogs that sit over the always-dark run HUD. */
 const TONE_PANEL: Record<"light" | "dark", string> = {
   light: "bg-card",
-  dark: "bg-[#1A1A1F]",
+  dark: "bg-stage-raised",
 };
 
 export function Dialog({

@@ -126,7 +126,11 @@ const batchCommits = () =>
     );
 
 vi.mock("firebase/firestore");
-vi.mock("@/lib/firebase", () => ({ db: {}, functions: {} }));
+vi.mock("@/lib/firebase", () => ({
+  db: {},
+  functions: {},
+  auth: { currentUser: { uid: "test-user-1" } },
+}));
 
 import {
   seedFirestore,
@@ -285,6 +289,7 @@ beforeEach(() => {
   // One reset clears documents, the cache, the write log and the batch
   // log together — the four things this suite used to zero by hand.
   resetFirestore();
+  localStorage.clear();
   writeMark = 0;
   batchMark = 0;
   mockProfile = null;
@@ -869,6 +874,15 @@ describe("Run9 phase-3 — realign carries completions across regen", () => {
 
     const lastSave = setDocCalls()[setDocCalls().length - 1]
       ?.data as ProgramState;
+    // The block's length is carried with the position. Without it the regen
+    // re-derived totalWeeks from the weeks REMAINING (~10 here), and a
+    // carried currentWeek against that shorter block put the generated week
+    // in a different phase from the one the cockpit showed. (currentWeek
+    // itself is advanced by the load-time rollover from the fixture's fixed
+    // 2026-05 weekKey, then clamped into the block — so only its bound is
+    // asserted here.)
+    expect(lastSave.runPlan?.totalWeeks).toBe(12);
+    expect(lastSave.runPlan?.currentWeek).toBeLessThan(12);
     // A manualCompletions map is persisted (pre-fix the writer kept the stale
     // map via spread but never re-keyed; now the carry path owns it).
     expect(lastSave.manualCompletions).toBeDefined();
@@ -1764,7 +1778,7 @@ describe("cache-first paint (cold-open latency)", () => {
 
 // Packet 15 — completeWorkoutDay writes programme + workout atomically.
 describe("packet 15 — completeWorkoutDay atomic batch", () => {
-  function seedProgramWithDay() {
+  function seedProgramWithDay(includeUnperformed = false) {
     mockProfile = { uid: "test-user-1", runMode: "freeform" };
     seedProgram({
       goal: "recomp",
@@ -1790,6 +1804,18 @@ describe("packet 15 — completeWorkoutDay atomic batch", () => {
               reps: 5,
               weight: 100,
             },
+            ...(includeUnperformed
+              ? [
+                  {
+                    exerciseId: "curl",
+                    name: "Curl",
+                    movementCategory: "arms",
+                    sets: 3,
+                    reps: 10,
+                    weight: 20,
+                  },
+                ]
+              : []),
           ],
         },
       ],
@@ -1800,6 +1826,68 @@ describe("packet 15 — completeWorkoutDay atomic batch", () => {
     completionCommandId: completionId,
     durationMinutes: 30,
     setLogs: [[{ weight: 100, reps: 5, completed: true }]],
+  });
+
+  it("returns an observable failed receipt for an offline rejection", async () => {
+    const online = vi.spyOn(navigator, "onLine", "get").mockReturnValue(false);
+    try {
+      seedProgramWithDay();
+      const { result } = renderHook(() => useProgram());
+      await waitFor(() => expect(result.current.loading).toBe(false));
+      failNextFirestore("commit");
+      await act(async () => {
+        const receipt = await result.current.completeWorkoutDay(
+          0,
+          session("offline-rejected")
+        );
+        expect(receipt.syncStatus).toBe("queued");
+        online.mockReturnValue(true);
+        const { flushQueue } = await import("@/lib/offlineQueue");
+        await flushQueue({} as Parameters<typeof flushQueue>[0], "test-user-1");
+        await expect(receipt.sync).resolves.toBe("failed");
+      });
+      await waitFor(() =>
+        expect(result.current.programState?.workouts[0].completed).toBe(false)
+      );
+    } finally {
+      online.mockRestore();
+    }
+  });
+
+  it("saves without a composer and shares only performed exercises on demand", async () => {
+    const { compose } = await import("@/lib/shareComposer");
+    const { postActivity } = await import("@/lib/socialApi");
+    vi.mocked(compose).mockResolvedValueOnce({
+      visibility: "followers",
+      caption: "",
+    });
+    seedProgramWithDay(true);
+    const { result } = renderHook(() => useProgram());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    await act(async () => {
+      const receipt = await result.current.completeWorkoutDay(0, {
+        ...session("partial-count"),
+        setLogs: [[{ weight: 100, reps: 5, completed: true }], []],
+      });
+      expect(compose).not.toHaveBeenCalled();
+      expect(postActivity).not.toHaveBeenCalled();
+      await receipt.share();
+    });
+    expect(compose).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({
+        meta: expect.arrayContaining(["1 exercise"]),
+      }),
+      expect.anything()
+    );
+    expect(postActivity).toHaveBeenCalledWith(
+      expect.objectContaining({
+        exerciseCount: 1,
+        totalVolume: 500,
+        exercises: [expect.objectContaining({ name: "Bench" })],
+        muscleGroups: ["chest"],
+      })
+    );
   });
 
   it("commits ONE batch writing the programme doc + a deterministic workout id", async () => {
@@ -1820,6 +1908,100 @@ describe("packet 15 — completeWorkoutDay atomic batch", () => {
     expect(ids).toContain("programme-cid-1");
     // Local programme state flipped the day to completed only after commit.
     expect(result.current.programState?.workouts[0].completed).toBe(true);
+  });
+
+  it("Lift3: the workout doc is dated by when the session STARTED, not by Finish", async () => {
+    seedProgramWithDay();
+    const { result } = renderHook(() => useProgram());
+    await waitFor(() => expect(result.current.loading).toBe(false), {
+      timeout: 2000,
+    });
+
+    // Started 36 hours ago — a session that crossed midnight (or a resumed
+    // draft) belongs to the day it began.
+    const startedAt = Date.now() - 36 * 3600 * 1000;
+    await act(async () => {
+      await result.current.completeWorkoutDay(0, {
+        ...session("cid-start"),
+        startedAt,
+      });
+    });
+    const workout = batchCommits()[0].find(
+      (w) => w.ref.__id === "programme-cid-start"
+    )!;
+    expect(workout.data.date).toBe(localDateString(new Date(startedAt)));
+    expect(workout.data.date).not.toBe(localDateString());
+  });
+
+  it("keeps the notes typed during the session on the workout doc", async () => {
+    // These were written to the resume draft and dropped on Finish, so they
+    // survived closing a session and were lost by completing one — and the
+    // draft is deleted the moment the workout commits, which made Finish the
+    // last point at which they existed anywhere.
+    seedProgramWithDay(true);
+    const { result } = renderHook(() => useProgram());
+    await waitFor(() => expect(result.current.loading).toBe(false), {
+      timeout: 2000,
+    });
+
+    await act(async () => {
+      await result.current.completeWorkoutDay(0, {
+        ...session("cid-notes"),
+        setLogs: [[{ weight: 100, reps: 5, completed: true }], []],
+        exerciseNotes: { 0: "Level 8, 6.0 incline" },
+      });
+    });
+
+    const workout = batchCommits()[0].find(
+      (w) => w.ref.__id === "programme-cid-notes"
+    )!;
+    const exercises = workout.data.exercises as Array<Record<string, unknown>>;
+    expect(exercises[0].notes).toBe("Level 8, 6.0 incline");
+    // Keyed by exercise INDEX: a note on the first exercise must not land on
+    // the second, which is the failure mode an off-by-one here would produce.
+    expect(exercises[1]).not.toHaveProperty("notes");
+  });
+
+  it("omits an empty or whitespace-only note rather than storing one", async () => {
+    // An empty string reads as "there is a note" to every consumer that
+    // checks for presence, and would render an empty italic row in history.
+    seedProgramWithDay();
+    const { result } = renderHook(() => useProgram());
+    await waitFor(() => expect(result.current.loading).toBe(false), {
+      timeout: 2000,
+    });
+
+    await act(async () => {
+      await result.current.completeWorkoutDay(0, {
+        ...session("cid-blank"),
+        exerciseNotes: { 0: "   " },
+      });
+    });
+
+    const workout = batchCommits()[0].find(
+      (w) => w.ref.__id === "programme-cid-blank"
+    )!;
+    const exercises = workout.data.exercises as Array<Record<string, unknown>>;
+    expect(exercises[0]).not.toHaveProperty("notes");
+  });
+
+  it("a session with no notes writes no notes field", async () => {
+    // The overwhelming majority of sessions, and every pre-existing one.
+    seedProgramWithDay();
+    const { result } = renderHook(() => useProgram());
+    await waitFor(() => expect(result.current.loading).toBe(false), {
+      timeout: 2000,
+    });
+
+    await act(async () => {
+      await result.current.completeWorkoutDay(0, session("cid-nonotes"));
+    });
+
+    const workout = batchCommits()[0].find(
+      (w) => w.ref.__id === "programme-cid-nonotes"
+    )!;
+    const exercises = workout.data.exercises as Array<Record<string, unknown>>;
+    expect(exercises[0]).not.toHaveProperty("notes");
   });
 
   it("a rejected commit throws and does NOT mark the day completed locally", async () => {

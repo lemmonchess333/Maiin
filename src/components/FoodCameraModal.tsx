@@ -328,7 +328,7 @@ export default function FoodCameraModal({
             }
             stopZXingRef.current = null;
             if (cancelled) return;
-            setBarcodeHint("Found!");
+            setBarcodeHint("Found");
 
             await onBarcodeDetectedRef.current(text);
           }
@@ -352,7 +352,7 @@ export default function FoodCameraModal({
         };
       } catch (e: unknown) {
         logger.error(e);
-        if (!cancelled) setBarcodeHint("Scanner failed — try again");
+        if (!cancelled) setBarcodeHint("Scanner failed. Try again.");
       }
     };
 
@@ -467,7 +467,7 @@ export default function FoodCameraModal({
               }
             : {
                 title: "No food detected",
-                sub: "Try a clearer shot of the plate — or type it in.",
+                sub: "Try a clearer shot of the plate, or type it in.",
               },
         error: {
           title: "Couldn't read this one",
@@ -480,7 +480,7 @@ export default function FoodCameraModal({
         },
         offline: {
           title: "You're offline",
-          sub: "Scanning needs a connection — typing it in still works.",
+          sub: "Scanning needs a connection. Typing it in still works.",
         },
       }[failure]
     : null;
@@ -761,12 +761,10 @@ export default function FoodCameraModal({
                   transition={{ duration: 0.22, ease: "easeOut" }}
                 >
                   <div className="space-y-1">
-                    <p className="text-[15px] font-semibold text-white">
+                    <p className="text-base font-semibold text-white">
                       {failureCopy.title}
                     </p>
-                    <p className="text-[13px] text-white/75">
-                      {failureCopy.sub}
-                    </p>
+                    <p className="text-sm text-white/75">{failureCopy.sub}</p>
                   </div>
                   {failureActions}
                 </motion.div>
@@ -790,7 +788,7 @@ export default function FoodCameraModal({
                       animate={{ opacity: 1, y: 0 }}
                       exit={reducedMotion ? undefined : { opacity: 0, y: -7 }}
                       transition={{ duration: 0.18, ease: "easeOut" }}
-                      className="text-[15px] font-semibold text-white"
+                      className="text-base font-semibold text-white"
                     >
                       {locked ? (
                         <span
@@ -835,10 +833,10 @@ export default function FoodCameraModal({
               className="flex w-full flex-col items-center gap-4 text-center"
             >
               <div className="space-y-1">
-                <p className="text-[15px] font-semibold text-white">
+                <p className="text-base font-semibold text-white">
                   {failureCopy.title}
                 </p>
-                <p className="text-[13px] text-white/75">{failureCopy.sub}</p>
+                <p className="text-sm text-white/75">{failureCopy.sub}</p>
               </div>
               {failureActions}
             </div>
@@ -1101,7 +1099,7 @@ export default function FoodCameraModal({
               jump every time the user toggled tabs. Reserving the
               row's height + crossfading the text keeps the scaffold
               stable; AnimatePresence is keyed on the hint string so a
-              hint change ("Scanning…" → "Found!") also crossfades. */}
+              hint change ("Scanning…" → "Found") also crossfades. */}
           <div
             className="h-4 flex items-center justify-center"
             aria-live="polite"
@@ -1203,7 +1201,7 @@ export default function FoodCameraModal({
                 className="text-center text-xs text-white/70"
               >
                 {tab === "barcode"
-                  ? "Aim at the barcode — auto-detects"
+                  ? "Aim at the barcode · auto-detects"
                   : tab === "label"
                     ? "Align the nutrition label"
                     : "Point at your meal"}

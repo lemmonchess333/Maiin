@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/Button";
 import EmptyState from "@/components/ui/EmptyState";
 import PeriodOverview from "@/components/analytics/PeriodOverview";
 import StatCard from "@/components/analytics/StatCard";
+import WorkoutHistoryList from "@/components/workout/WorkoutHistoryList";
 import SectionEmptyCTA from "@/components/analytics/SectionEmptyCTA";
 import RacePredictionsCard from "@/components/analytics/RacePredictionsCard";
 import TrainingLoadCard from "@/components/analytics/TrainingLoadCard";
@@ -87,7 +88,12 @@ const ShoeMileageSection = lazyRetry(
 const PerformanceSection = lazyRetry(
   () => import("@/components/analytics/PerformanceSection")
 );
+import { useStreaks } from "@/features/streaks/useStreaks";
+
 const PRsTab = lazyRetry(() => import("@/components/analytics/PRsTab"));
+const MilestonesTab = lazyRetry(
+  () => import("@/components/analytics/MilestonesTab")
+);
 const BadgeGrid = lazyRetry(() =>
   import("@/features/streaks/BadgeGrid").then((m) => ({ default: m.BadgeGrid }))
 );
@@ -108,9 +114,9 @@ const CalorieBalanceChart = lazyRetry(
    current state / lifetime achievements / progress milestones).
    "All" was renamed "analytics" to match the page's frame
    commitment (Hist5a). */
-type FilterTab = "analytics" | "prs" | "badges";
+type FilterTab = "analytics" | "prs" | "milestones";
 
-const VALID_TABS: FilterTab[] = ["analytics", "prs", "badges"];
+const VALID_TABS: FilterTab[] = ["analytics", "prs", "milestones"];
 
 /* Hist5c pin 11 — legacy `?tab=` redirect map. Old URLs from
    share-cards, bookmarks, and pre-Hist5 deep-links continue to
@@ -125,6 +131,11 @@ const LEGACY_TAB_REDIRECTS: Record<string, FilterTab> = {
   lifting: "analytics",
   nutrition: "analytics",
   performance: "analytics",
+  /* The Badges tab became Milestones — the badge collection is now one
+     entry type inside the chronology rather than the tab's whole subject.
+     Bookmarks and the capture rig's stashed-tab value both still say
+     "badges", so it redirects like any other retired tab value. */
+  badges: "milestones",
 };
 
 /* Tab values that, in addition to a `?tab=` rewrite, also force a
@@ -161,7 +172,8 @@ function FilterPills({
       onChange={setFilter}
       options={VALID_TABS.map((f) => ({
         value: f,
-        label: f === "analytics" ? "Analytics" : f === "prs" ? "PRs" : "Badges",
+        label:
+          f === "analytics" ? "Analytics" : f === "prs" ? "PRs" : "Milestones",
       }))}
     />
   );
@@ -399,6 +411,37 @@ export default function History() {
   const trainingLoad = useTrainingLoadSeries(rangeDays);
   const { meals, loading: mealsLoading } = useMeals();
   const lifetimeRuns = useLifetimeRunStats();
+  const { earnedBadges } = useStreaks();
+  /**
+   * Earned badges, reduced to the chronology's shape. `earnedAt` is stored
+   * in several shapes across the badge history (a Firestore Timestamp on
+   * server-awarded badges, an ISO string on locally-awarded ones), so it is
+   * normalised to a local "yyyy-MM-dd" here; anything unparseable is
+   * dropped rather than dated with today, which would put an old badge at
+   * the top of the list every time the page loaded.
+   */
+  const milestoneBadges = useMemo(
+    () =>
+      earnedBadges.flatMap((badge) => {
+        const raw = badge.earnedAt as unknown;
+        const date =
+          raw && typeof (raw as { toDate?: unknown }).toDate === "function"
+            ? (raw as { toDate: () => Date }).toDate()
+            : typeof raw === "string"
+              ? new Date(raw)
+              : null;
+        if (!date || Number.isNaN(date.getTime())) return [];
+        return [
+          {
+            id: badge.id,
+            name: badge.name,
+            description: badge.description,
+            earnedOn: localDateString(date),
+          },
+        ];
+      }),
+    [earnedBadges]
+  );
   const { profile } = useAuth();
   const unit = useDistanceUnit();
   /**
@@ -511,14 +554,10 @@ export default function History() {
   // Uses unfiltered workouts/meals (both hooks return everything) plus
   // a one-shot lifetime run query so pre-window runs aren't excluded.
   const lifetimeTotals = useMemo(() => {
-    let liftVolume = 0;
-    workouts.forEach((w) => {
-      w.exercises?.forEach((ex) => {
-        ex.sets?.forEach((set) => {
-          liftVolume += (set.weightKg || 0) * (set.reps || 0);
-        });
-      });
-    });
+    const liftVolume = workouts.reduce(
+      (sum, workout) => sum + workoutTonnageKg(workout),
+      0
+    );
     const daysLogged = new Set(meals.map((m) => m.date)).size;
     return {
       runCount: lifetimeRuns.runCount,
@@ -1183,7 +1222,7 @@ export default function History() {
       }}
     >
       <motion.header variants={itemVariant}>
-        <h1 className="text-lg font-extrabold text-foreground">Analytics</h1>
+        <h1 className="text-xl font-extrabold text-foreground">Analytics</h1>
       </motion.header>
 
       {/* Hist4: small refresh indicator while the pull-to-refresh
@@ -1218,13 +1257,32 @@ export default function History() {
 
       <Suspense
         fallback={
-          <div className="py-8 text-center text-muted-foreground text-sm animate-pulse">
+          <div className="py-8 text-center text-muted-foreground text-sm motion-safe:animate-pulse">
             Loading analytics...
           </div>
         }
       >
-        {filter === "badges" ? (
-          <BadgeGrid />
+        {filter === "milestones" ? (
+          <SectionErrorBoundary sectionName="milestones-tab">
+            <div className="space-y-8">
+              <MilestonesTab
+                workouts={workouts}
+                runs={lifetimeRuns.firstRun ? [lifetimeRuns.firstRun] : []}
+                liftBests={liftingData.lifetimePRs}
+                races={lifetimeRuns.races}
+                workoutsLoading={workoutsLoading}
+                runsLoading={lifetimeRuns.loading}
+                badges={milestoneBadges}
+                unit={unit}
+              />
+              {/* The badge COLLECTION stays, below the story. Earned badges
+                  are now entries in the chronology above, but the grid
+                  answers a different question — what is still in progress
+                  and how close it is — which a list of things that already
+                  happened structurally cannot. */}
+              <BadgeGrid />
+            </div>
+          </SectionErrorBoundary>
         ) : filter === "prs" ? (
           <SectionErrorBoundary sectionName="prs-tab">
             <PRsTab
@@ -1331,7 +1389,7 @@ export default function History() {
                 icon={LineChart}
                 accent={THEME.brand}
                 headline="No analytics yet"
-                sub="Log a workout, run, or meal and your trends — volume, pace, calories and your Performance Index — will show up here."
+                sub="Log a workout, run or meal and your trends will show up here."
                 action={{ label: "Start a workout", href: "/program" }}
               />
             )}
@@ -1413,7 +1471,7 @@ export default function History() {
                     }
                     text="Complete your first run to see running analytics here"
                     to="/run"
-                    ctaLabel="Start Run"
+                    ctaLabel="Start run"
                     variant="sport"
                   />
                 ) : (
@@ -1430,7 +1488,7 @@ export default function History() {
                         accentColor={THEME.running}
                       />
                       <StatCard
-                        label="Avg Pace"
+                        label="Avg pace"
                         value={paceMinSec(runningTotals.avgPace, unit)}
                         unit={paceUnitLabel(unit)}
                         direction="down-good"
@@ -1472,7 +1530,7 @@ export default function History() {
                     icon={<Trophy className="size-5 shrink-0 text-lifting" />}
                     text="Log a workout to see your lifting analytics here"
                     to="/program"
-                    ctaLabel="Start Lift"
+                    ctaLabel="Start lift"
                     variant="primary"
                   />
                 ) : (
@@ -1526,6 +1584,10 @@ export default function History() {
                   </>
                 )}
               </section>
+            )}
+
+            {filter === "analytics" && !workoutsLoading && (
+              <WorkoutHistoryList workouts={workouts} />
             )}
 
             {showNutritionSection && filter === "analytics" && (
@@ -1653,7 +1715,7 @@ export default function History() {
                   showSparklines / showDelta in the nutrition memo). */}
                     <div className="grid grid-cols-2 gap-2 mt-2">
                       <StatCard
-                        label="Avg Calories"
+                        label="Avg calories"
                         value={nutrition.avgCalories.toLocaleString()}
                         unit="kcal/day"
                         delta={

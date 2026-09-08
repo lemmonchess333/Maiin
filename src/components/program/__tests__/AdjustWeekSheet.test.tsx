@@ -8,7 +8,14 @@
  * still advances to the preview (the removed `keep` branch didn't gate it).
  */
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { render, screen, cleanup, fireEvent } from "@testing-library/react";
+import {
+  act,
+  render,
+  screen,
+  cleanup,
+  fireEvent,
+  waitFor,
+} from "@testing-library/react";
 import AdjustWeekSheet from "../AdjustWeekSheet";
 import { getEasedWeekKey, setEasedWeekKey } from "@/lib/easeWeekNudgeMarkers";
 import { localWeekKey } from "@/lib/dateHelpers";
@@ -100,18 +107,20 @@ function openEaser(props: {
   ) => Promise<number | null>;
   revertEaseWeek?: () => Promise<{ ok: boolean; message?: string }>;
   easedThisWeek?: boolean;
+  onClose?: () => void;
+  realignRacePlan?: () => Promise<{ timing: "healthy"; totalWeeks: number }>;
 }) {
   render(
     <AdjustWeekSheet
       open
-      onClose={vi.fn()}
+      onClose={props.onClose ?? vi.fn()}
       runDays={RUN_DAYS}
       raceGoal={{ distance: "marathon", targetDate: "2999-10-17" }}
       applyEaseWeek={props.applyEaseWeek ?? vi.fn(async () => 2)}
       revertEaseWeek={props.revertEaseWeek ?? vi.fn(async () => ({ ok: true }))}
       easedThisWeek={props.easedThisWeek}
       uid={UID}
-      realignRacePlan={vi.fn()}
+      realignRacePlan={props.realignRacePlan ?? vi.fn()}
     />
   );
 }
@@ -213,6 +222,120 @@ describe("AdjustWeekSheet — applying an easier week reports the truth", () => 
   });
 });
 
+describe("AdjustWeekSheet — pending changes", () => {
+  function deferred<T>() {
+    let resolve!: (value: T) => void;
+    const promise = new Promise<T>((done) => {
+      resolve = done;
+    });
+    return { promise, resolve };
+  }
+
+  it("shows saving progress and prevents navigating to another adjustment", async () => {
+    const request = deferred<number | null>();
+    const applyEaseWeek = vi.fn(() => request.promise);
+    const onClose = vi.fn();
+    openEaser({ applyEaseWeek, onClose });
+    fireEvent.click(
+      screen.getByRole("button", { name: /I need easier running/ })
+    );
+    fireEvent.click(screen.getByRole("button", { name: /Ease this week/ }));
+    expect(screen.getByRole("status")).toHaveTextContent("Saving changes…");
+    expect(screen.getByRole("button", { name: "Back" })).toBeDisabled();
+    fireEvent.click(screen.getByRole("button", { name: /Ease this week/ }));
+    expect(applyEaseWeek).toHaveBeenCalledTimes(1);
+    expect(onClose).not.toHaveBeenCalled();
+    await act(async () => request.resolve(null));
+    expect(screen.queryByRole("status")).toBeNull();
+    expect(screen.getByRole("button", { name: "Back" })).toBeEnabled();
+    expect(
+      screen.getByRole("button", { name: /Ease this week/ })
+    ).toBeEnabled();
+  });
+
+  it("blocks other adjustments during Undo and releases them on refusal", async () => {
+    const request = deferred<{ ok: boolean }>();
+    openEaser({ easedThisWeek: true, revertEaseWeek: () => request.promise });
+    fireEvent.click(screen.getByRole("button", { name: /Undo easier week/ }));
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "Restoring your week…"
+    );
+    expect(
+      screen.getByRole("button", { name: /My week is crowded/ })
+    ).toBeDisabled();
+    expect(
+      screen.queryByRole("button", { name: /I need easier running/ })
+    ).toBeNull();
+    await act(async () => request.resolve({ ok: false }));
+    expect(
+      screen.getByRole("button", { name: /My week is crowded/ })
+    ).toBeEnabled();
+  });
+
+  it("does not repeat Undo through an older toast callback while restoring", async () => {
+    const request = deferred<{ ok: boolean }>();
+    const revertEaseWeek = vi.fn(() => request.promise);
+    openEaser({ revertEaseWeek });
+    fireEvent.click(
+      screen.getByRole("button", { name: /I need easier running/ })
+    );
+    fireEvent.click(screen.getByRole("button", { name: /Ease this week/ }));
+    const { toast } = await import("@/lib/toast");
+    await vi.waitFor(() => expect(toast.success).toHaveBeenCalled());
+    const options = (toast.success as ReturnType<typeof vi.fn>).mock
+      .calls[0][1];
+    const undo = options.action.onClick as () => void;
+    act(() => {
+      undo();
+      undo();
+    });
+    expect(revertEaseWeek).toHaveBeenCalledTimes(1);
+    await act(async () => request.resolve({ ok: false }));
+  });
+
+  it("recovers from an unexpected Undo rejection and allows a retry", async () => {
+    const revertEaseWeek = vi
+      .fn()
+      .mockRejectedValueOnce(new Error("Connection interrupted"))
+      .mockResolvedValueOnce({ ok: true });
+    const onClose = vi.fn();
+    setEasedWeekKey(UID, localWeekKey(new Date()));
+    openEaser({ easedThisWeek: true, revertEaseWeek, onClose });
+    fireEvent.click(screen.getByRole("button", { name: /Undo easier week/ }));
+    const { toast } = await import("@/lib/toast");
+    await vi.waitFor(() =>
+      expect(toast.error).toHaveBeenCalledWith(
+        "Couldn't undo the easier week. Try again."
+      )
+    );
+    expect(getEasedWeekKey(UID)).not.toBeNull();
+    expect(onClose).not.toHaveBeenCalled();
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: /Undo easier week/ })
+      ).toBeEnabled()
+    );
+    fireEvent.click(screen.getByRole("button", { name: /Undo easier week/ }));
+    await vi.waitFor(() => expect(onClose).toHaveBeenCalledTimes(1));
+    expect(revertEaseWeek).toHaveBeenCalledTimes(2);
+  });
+
+  it("keeps the re-plan preview stable until the request completes", async () => {
+    const request = deferred<{ timing: "healthy"; totalWeeks: number }>();
+    const onClose = vi.fn();
+    openEaser({ realignRacePlan: () => request.promise, onClose });
+    fireEvent.click(screen.getByRole("button", { name: /My week is crowded/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Re-plan from today" }));
+    expect(screen.getByRole("button", { name: "Back" })).toBeDisabled();
+    expect(screen.getByRole("status")).toHaveTextContent("Saving changes…");
+    await act(async () =>
+      request.resolve({ timing: "healthy", totalWeeks: 12 })
+    );
+    expect(onClose).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole("status")).toBeNull();
+  });
+});
+
 /**
  * The path back — and how long it lasts.
  *
@@ -235,6 +358,16 @@ describe("AdjustWeekSheet — undoing an easier week", () => {
       screen.getByRole("button", { name: /Undo easier week/ })
     ).toBeInTheDocument();
     expect(screen.getByText(/This week is already eased/)).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /I need easier running/ })
+    ).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: /I'm not feeling 100%/ })
+    ).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: /My week is crowded/ }));
+    expect(
+      screen.getByRole("button", { name: "Re-plan from today" })
+    ).toBeEnabled();
   });
 
   it("offers nothing when this week has not been eased", () => {
@@ -257,7 +390,7 @@ describe("AdjustWeekSheet — undoing an easier week", () => {
     const { toast } = await import("@/lib/toast");
     await vi.waitFor(() =>
       expect(toast.success).toHaveBeenCalledWith(
-        "Easier week undone — this week is back to plan."
+        "Easier week undone. This week is back to plan."
       )
     );
   });
@@ -375,5 +508,76 @@ describe("AdjustWeekSheet — undoing an easier week", () => {
     (opts.action.onClick as () => void)();
 
     await vi.waitFor(() => expect(revertEaseWeek).toHaveBeenCalledTimes(1));
+  });
+});
+
+describe("AdjustWeekSheet — preview safety", () => {
+  function previewProps() {
+    return {
+      open: true,
+      onClose: vi.fn(),
+      runDays: RUN_DAYS,
+      raceGoal: { distance: "marathon" as const, targetDate: "2999-10-17" },
+      applyEaseWeek: vi.fn(async () => 2),
+      revertEaseWeek: vi.fn(async () => ({ ok: true })),
+      realignRacePlan: vi.fn(),
+      uid: UID,
+    };
+  }
+
+  it("opens Undo instead of an impossible ease preview from a stale nudge", () => {
+    const props = previewProps();
+    render(<AdjustWeekSheet {...props} easedThisWeek initialIntent="easier" />);
+    expect(
+      screen.getByRole("button", { name: "Undo easier week" })
+    ).toBeEnabled();
+    expect(screen.queryByRole("button", { name: "Ease this week" })).toBeNull();
+    expect(props.applyEaseWeek).not.toHaveBeenCalled();
+  });
+
+  it("withdraws the ease preview if another client has already eased the week", () => {
+    const props = previewProps();
+    const { rerender } = render(<AdjustWeekSheet {...props} />);
+    fireEvent.click(
+      screen.getByRole("button", { name: /I need easier running/ })
+    );
+    expect(
+      screen.getByRole("button", { name: "Ease this week" })
+    ).toBeEnabled();
+    rerender(<AdjustWeekSheet {...props} easedThisWeek />);
+    expect(screen.queryByRole("button", { name: "Ease this week" })).toBeNull();
+    expect(
+      screen.getByRole("button", { name: "Undo easier week" })
+    ).toBeEnabled();
+    expect(props.applyEaseWeek).not.toHaveBeenCalled();
+  });
+
+  it("submits only the runs shown in the preview after a plan refresh", async () => {
+    const props = previewProps();
+    const originalDays = RUN_DAYS as unknown as Array<{
+      id: string;
+      dayIndex: number;
+      templateId: string;
+      type: string;
+      status: string;
+      date: string;
+    }>;
+    const { rerender } = render(<AdjustWeekSheet {...props} />);
+    fireEvent.click(
+      screen.getByRole("button", { name: /I need easier running/ })
+    );
+    const updatedDays = [
+      ...originalDays,
+      { ...originalDays[0], id: "unseen-run", dayIndex: 6, date: "2999-01-06" },
+    ];
+    rerender(<AdjustWeekSheet {...props} runDays={updatedDays as never} />);
+    fireEvent.click(screen.getByRole("button", { name: "Ease this week" }));
+    await vi.waitFor(() =>
+      expect(props.applyEaseWeek).toHaveBeenCalledTimes(1)
+    );
+    expect(props.applyEaseWeek).toHaveBeenCalledWith([
+      expect.objectContaining({ key: "rd-1" }),
+      expect.objectContaining({ key: "rd-2" }),
+    ]);
   });
 });

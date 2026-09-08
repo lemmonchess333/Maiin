@@ -1,17 +1,21 @@
-import { useRef } from "react";
 import { motion } from "framer-motion";
+import { formatWeightInUnit, kgToLb, lbToKg } from "@/lib/weightUnits";
 import { haptic } from "@/lib/haptic";
 import { Calculator, Flame, Minus, Plus, Target } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { MIN_TARGET_CALORIES } from "@/lib/macroConstants";
 import { ACTIVITY_LABELS } from "@/lib/tdee";
 import type { ActivityLevel, TDEEResult } from "@/lib/tdee";
-import type { GoalWeightPlan } from "@/lib/goalWeightPlan";
+import {
+  buildGoalWeightPersistPayload,
+  type GoalWeightPlan,
+} from "@/lib/goalWeightPlan";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { Button } from "@/components/ui/Button";
 import { resolveTargetDrift, shouldShowTargetDrift } from "@/lib/targetDrift";
 import AccordionSection from "@/components/AccordionSection";
 import { useMacroPalette } from "@/hooks/useMacroPalette";
+import CalorieTargetOverride from "./CalorieTargetOverride";
+import { macroInfeasibilityMessage } from "@/lib/macroInfeasibility";
 import {
   adaptiveCalorieStatus,
   adaptiveCalorieStatusLabel,
@@ -69,7 +73,13 @@ export default function NutritionSection({
   // raw Tailwind palette classes that also broke the token invariant.
   const { text: macroText } = useMacroPalette();
 
-  const calorieTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const overrideRecipe = (customCalorieTarget?: number) =>
+    buildGoalWeightPersistPayload({
+      profile: { ...profile, age, activityLevel, customCalorieTarget },
+      currentKg,
+      targetKg: goalWeightKg,
+      rateKgPerWeek: weeklyRateKg,
+    });
 
   /* The stored target was set from the body the user had at the time;
      `tdee.tdee` is maintenance for the body they have now. A cut therefore
@@ -91,8 +101,21 @@ export default function NutritionSection({
       isManualOverride: adaptiveStatus.kind === "manual",
       isAdaptiveEngaged: adaptiveStatus.kind === "adapting",
     });
+  const weightUnit = profile.preferredWeightUnit === "lbs" ? "lbs" : "kg";
+  const weightLabel = weightUnit === "lbs" ? "lb" : "kg";
+  const displayRate = (kgPerWeek: number) =>
+    (weightUnit === "lbs" ? kgToLb(kgPerWeek) : kgPerWeek).toFixed(2);
   const paceLabel = (kgPerWeek: number) =>
-    `${kgPerWeek > 0 ? "+" : ""}${kgPerWeek.toFixed(2)} kg/wk`;
+    `${kgPerWeek > 0 ? "+" : ""}${displayRate(kgPerWeek)} ${weightLabel}/wk`;
+  const adjustGoalWeight = (direction: -1 | 1) => {
+    // Edit in the displayed unit; keep the engine and persistence in kg.
+    // Round the displayed pounds only, never the converted stored kilograms.
+    const nextKg =
+      weightUnit === "lbs"
+        ? lbToKg(Number(formatWeightInUnit(goalWeightKg, "lbs")) + direction)
+        : Math.round((goalWeightKg + direction * 0.5) * 10) / 10;
+    setGoalWeightKg(Math.min(250, Math.max(30, nextKg)));
+  };
 
   return (
     <AccordionSection
@@ -117,11 +140,11 @@ export default function NutritionSection({
             the point. */}
       <AccordionSection
         icon={<Calculator className="size-5 text-primary" />}
-        title="TDEE Calculator"
+        title="TDEE calculator"
         subtitle={`${tdee.targetCalories} cal/day target`}
       >
         <div>
-          <label htmlFor="tdee-age" className="text-sm text-muted-foreground">
+          <label htmlFor="tdee-age" className="text-xs text-muted-foreground">
             Age
           </label>
           <input
@@ -140,7 +163,7 @@ export default function NutritionSection({
         </div>
 
         <div>
-          <span className="text-sm text-muted-foreground">Activity Level</span>
+          <span className="text-sm text-muted-foreground">Activity level</span>
           <div className="mt-1 space-y-1">
             {(Object.entries(ACTIVITY_LABELS) as [ActivityLevel, string][]).map(
               ([key, label]) => (
@@ -186,32 +209,30 @@ export default function NutritionSection({
         </div>
       </AccordionSection>
 
-      {/* Goal Weight — owns the nutrition direction (target vs current → phase) */}
+      {/* Goal weight — owns the nutrition direction (target vs current → phase) */}
       <div className="bg-card rounded-2xl p-4 space-y-3">
         <div className="flex items-center gap-3">
           <Target className="size-5 text-primary" />
           <div>
-            <p className="text-sm font-medium text-foreground">Goal Weight</p>
+            <p className="text-sm font-medium text-foreground">Goal weight</p>
             <p className="text-xs text-muted-foreground">
               Sets your calorie target — current{" "}
               <span className="font-mono tabular-nums">
-                {currentKg.toFixed(1)}
+                {formatWeightInUnit(currentKg, weightUnit)}
               </span>{" "}
-              kg
+              {weightLabel}
             </p>
           </div>
         </div>
 
-        {/* Target weight stepper (0.5 kg steps) */}
+        {/* Target weight stepper: 0.5 kg or 1 lb per tap. */}
         <div className="flex items-center justify-between rounded-xl bg-muted/30 p-2">
           <button
             type="button"
             aria-label="Lower goal weight"
             onClick={() => {
               haptic("light");
-              setGoalWeightKg(
-                Math.max(30, Math.round((goalWeightKg - 0.5) * 10) / 10)
-              );
+              adjustGoalWeight(-1);
             }}
             className="size-11 rounded-lg bg-card border border-border/50 flex items-center justify-center text-foreground active:scale-95 transition-transform"
           >
@@ -219,18 +240,18 @@ export default function NutritionSection({
           </button>
           <div className="text-center">
             <p className="text-2xl font-mono tabular-nums font-bold text-foreground">
-              {goalWeightKg.toFixed(1)}
+              {formatWeightInUnit(goalWeightKg, weightUnit)}
             </p>
-            <p className="text-xs text-muted-foreground">kg target</p>
+            <p className="text-xs text-muted-foreground">
+              {weightLabel} target
+            </p>
           </div>
           <button
             type="button"
             aria-label="Raise goal weight"
             onClick={() => {
               haptic("light");
-              setGoalWeightKg(
-                Math.min(250, Math.round((goalWeightKg + 0.5) * 10) / 10)
-              );
+              adjustGoalWeight(1);
             }}
             className="size-11 rounded-lg bg-card border border-border/50 flex items-center justify-center text-foreground active:scale-95 transition-transform"
           >
@@ -259,9 +280,10 @@ export default function NutritionSection({
                 value: r.value,
                 label: (
                   <span className="flex flex-col items-center leading-tight">
-                    <span>{r.label}</span>
+                    <span>{r.label}</span>{" "}
                     <span className="text-caption font-normal text-muted-foreground font-mono tabular-nums mt-0.5">
-                      {r.value} kg/wk
+                      {weightUnit === "lbs" ? displayRate(r.value) : r.value}{" "}
+                      {weightLabel}/wk
                     </span>
                   </span>
                 ),
@@ -303,12 +325,18 @@ export default function NutritionSection({
             {tdee.deficit !== 0 && (
               <div className="flex items-center justify-between text-xs text-muted-foreground">
                 <span>
-                  {goalPlan.fitnessGoal === "lean bulk"
-                    ? "Lean Bulk"
-                    : goalPlan.fitnessGoal === "cut"
-                      ? "Cut"
-                      : "Recomp"}{" "}
-                  offset
+                  {/* A manual override REPLACES the plan's offset. Naming
+                      the gap after the goal ("Recomp offset −2400 cal")
+                      described a plan choice the user never made. */}
+                  {profile.customCalorieTarget
+                    ? "Manual target"
+                    : `${
+                        goalPlan.fitnessGoal === "lean bulk"
+                          ? "Lean Bulk"
+                          : goalPlan.fitnessGoal === "cut"
+                            ? "Cut"
+                            : "Recomp"
+                      } offset`}
                 </span>
                 <span className="font-mono tabular-nums">
                   {tdee.deficit > 0 ? "+" : ""}
@@ -365,7 +393,8 @@ export default function NutritionSection({
                     onRecalculate?.();
                   }}
                 >
-                  Recalculate for {currentKg.toFixed(1)} kg
+                  Recalculate for {formatWeightInUnit(currentKg, weightUnit)}{" "}
+                  {weightLabel}
                 </Button>
               </div>
             )}
@@ -373,7 +402,7 @@ export default function NutritionSection({
 
           <div className="flex items-center justify-between pt-1">
             <motion.div
-              key={tdee.protein}
+              key={`protein-${tdee.protein}`}
               initial={{ opacity: 0.5 }}
               animate={{ opacity: 1 }}
               className="text-center flex-1"
@@ -388,7 +417,7 @@ export default function NutritionSection({
             </motion.div>
             <div className="w-px h-6 bg-border/50" />
             <motion.div
-              key={tdee.carbs}
+              key={`carbs-${tdee.carbs}`}
               initial={{ opacity: 0.5 }}
               animate={{ opacity: 1 }}
               className="text-center flex-1"
@@ -403,7 +432,7 @@ export default function NutritionSection({
             </motion.div>
             <div className="w-px h-6 bg-border/50" />
             <motion.div
-              key={tdee.fat}
+              key={`fat-${tdee.fat}`}
               initial={{ opacity: 0.5 }}
               animate={{ opacity: 1 }}
               className="text-center flex-1"
@@ -441,69 +470,38 @@ export default function NutritionSection({
             </p>
           )}
 
-          {/* Custom calorie override */}
-          <div className="mt-3 pt-3 border-t border-border/50">
-            <div className="flex items-center justify-between">
-              <label
-                htmlFor="tdee-custom-target"
-                className="text-sm text-muted-foreground"
-              >
-                Override daily target (optional)
-              </label>
-              {profile?.customCalorieTarget && (
-                <button
-                  type="button"
-                  onClick={() =>
-                    updateProfile({ customCalorieTarget: undefined })
-                  }
-                  className="text-xs text-primary font-medium"
-                >
-                  Reset to calculated
-                </button>
-              )}
-            </div>
-            <p className="text-xs text-muted-foreground mt-0.5 mb-2">
-              Leave blank to use calculated target of {tdee.targetCalories} cal
+          {/* Below the essential-fat floor's own cost nothing reconciles —
+              the grams above show 0 g protein and carbs. Same sentence Home
+              and Food render (macroInfeasibility.ts). */}
+          {tdee.infeasible && (
+            <p
+              role="status"
+              className="text-caption leading-snug pt-2"
+              style={{ color: "hsl(var(--warning-strong))" }}
+            >
+              {macroInfeasibilityMessage(tdee.minFeasibleKcal)}
             </p>
-            <input
-              id="tdee-custom-target"
-              type="number"
-              value={profile?.customCalorieTarget ?? ""}
-              onChange={(e) => {
-                const val = e.target.value ? Number(e.target.value) : undefined;
-                clearTimeout(calorieTimerRef.current);
-                calorieTimerRef.current = setTimeout(() => {
-                  updateProfile({ customCalorieTarget: val || undefined });
-                }, 500);
-              }}
-              placeholder={String(tdee.targetCalories)}
-              className="w-full px-4 py-2.5 rounded-lg bg-muted border border-border/50 text-foreground text-sm"
-            />
-            {/* The rate-derived path is floored at MIN_TARGET_CALORIES; this
-                field is not — it is bounded only by the profile sanitizer
-                (0..10000), so a target below the floor is reachable by typing
-                one. Owner decision 2026-08-12: warn, don't clamp. It is the
-                user's own number, and blocking it just pushes them to lower
-                their goal weight instead — but the app enforcing a floor three
-                centimetres up the same screen and saying nothing here is the
-                dishonest option. */}
-            {typeof profile?.customCalorieTarget === "number" &&
-              profile.customCalorieTarget > 0 &&
-              profile.customCalorieTarget < MIN_TARGET_CALORIES && (
-                <p
-                  className="text-caption leading-snug mt-2"
-                  style={{ color: "hsl(var(--warning-strong))" }}
-                >
-                  Below the{" "}
-                  <span className="font-mono tabular-nums">
-                    {MIN_TARGET_CALORIES}
-                  </span>{" "}
-                  cal floor Tropos uses everywhere else. Your plan will keep
-                  this figure — very low targets make protein and essential fat
-                  hard to fit.
-                </p>
-              )}
-          </div>
+          )}
+
+          <CalorieTargetOverride
+            key={profile.uid}
+            value={profile.customCalorieTarget || undefined}
+            calculatedTarget={overrideRecipe().formulaTdee.targetCalories}
+            onSave={(customCalorieTarget) => {
+              const { payload } = overrideRecipe(customCalorieTarget);
+              // Undefined is stripped by the guarded merge and cannot clear
+              // a stored override. Zero is the existing no-override value
+              // understood by both the client and server target resolvers.
+              // Persist all target mirrors together, including on reset.
+              return updateProfile({
+                customCalorieTarget: customCalorieTarget ?? 0,
+                targetCalories: payload.targetCalories,
+                targetProtein: payload.targetProtein,
+                targetCarbs: payload.targetCarbs,
+                targetFat: payload.targetFat,
+              });
+            }}
+          />
         </div>
       </div>
 

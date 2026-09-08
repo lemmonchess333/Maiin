@@ -92,10 +92,10 @@ describe("ContextualTipBanner", () => {
     ).toBeInTheDocument();
   });
 
-  it("renders the default 'Open Settings' CTA link", () => {
+  it("renders the default 'Open settings' CTA link", () => {
     renderBanner({});
     expect(
-      screen.getByRole("link", { name: /Open Settings/i })
+      screen.getByRole("link", { name: /Open settings/i })
     ).toHaveAttribute("href", "/settings");
   });
 });

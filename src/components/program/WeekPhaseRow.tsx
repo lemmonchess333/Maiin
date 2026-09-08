@@ -1,8 +1,10 @@
+import InlineNumerals from "@/components/ui/InlineNumerals";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { IconButton } from "@/components/ui/IconButton";
 
 interface WeekPhaseRowProps {
   weekNumber: number;
-  phaseName?: string;
+  label?: string;
   onPrevWeek: () => void;
   onNextWeek: () => void;
   canGoPrev: boolean;
@@ -11,7 +13,7 @@ interface WeekPhaseRowProps {
 
 export default function WeekPhaseRow({
   weekNumber,
-  phaseName,
+  label,
   onPrevWeek,
   onNextWeek,
   canGoPrev,
@@ -20,53 +22,33 @@ export default function WeekPhaseRow({
   const showChevrons = canGoPrev || canGoNext;
 
   return (
-    <div
-      className="flex items-center justify-center gap-3 py-1"
-      style={{ height: 36 }}
-    >
+    <div className="flex min-h-11 items-center justify-center gap-3 py-1">
       {showChevrons &&
         (canGoPrev ? (
-          <button
-            type="button"
-            onClick={onPrevWeek}
-            className="p-1 active:scale-95 transition-transform"
+          <IconButton
+            icon={<ChevronLeft className="size-[15px] text-muted-foreground" />}
             aria-label="Previous week"
-          >
-            <ChevronLeft className="size-[15px] text-muted-foreground" />
-          </button>
+            onClick={onPrevWeek}
+          />
         ) : (
-          <div className="w-[23px]" />
+          <div className="size-11" aria-hidden="true" />
         ))}
 
-      <span className="text-sm font-semibold text-foreground">
-        Week {weekNumber}
+      <span className="text-sm font-semibold text-foreground text-center">
+        <InlineNumerals>{label ?? `Week ${weekNumber}`}</InlineNumerals>
       </span>
-
-      {phaseName && (
-        <span
-          className="text-caption font-bold uppercase text-lifting-strong bg-lifting/10"
-          style={{
-            padding: "3px 8px",
-            borderRadius: 6,
-            letterSpacing: "0.04em",
-          }}
-        >
-          {phaseName}
-        </span>
-      )}
 
       {showChevrons &&
         (canGoNext ? (
-          <button
-            type="button"
-            onClick={onNextWeek}
-            className="p-1 active:scale-95 transition-transform"
+          <IconButton
+            icon={
+              <ChevronRight className="size-[15px] text-muted-foreground" />
+            }
             aria-label="Next week"
-          >
-            <ChevronRight className="size-[15px] text-muted-foreground" />
-          </button>
+            onClick={onNextWeek}
+          />
         ) : (
-          <div className="w-[23px]" />
+          <div className="size-11" aria-hidden="true" />
         ))}
     </div>
   );

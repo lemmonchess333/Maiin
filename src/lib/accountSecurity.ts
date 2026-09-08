@@ -38,6 +38,19 @@ export async function sendVerificationEmail(): Promise<void> {
   await fn({});
 }
 
+/**
+ * User-facing line for a failed (re)send. The callable's own rate-limit
+ * message is the one worth passing through — it tells the user to wait
+ * rather than retry; everything else collapses to a calm generic. Shared
+ * by every surface that offers the resend so the two never drift.
+ */
+export function resendVerificationErrorMessage(err: unknown): string {
+  const msg = err instanceof Error ? err.message : "";
+  return msg.includes("Too many")
+    ? msg
+    : "Couldn't send the email. Try again in a moment.";
+}
+
 /** Reauth with the current password, then set the new one. */
 export async function changePassword(
   user: User,

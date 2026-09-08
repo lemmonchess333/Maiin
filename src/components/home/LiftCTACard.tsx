@@ -1,3 +1,4 @@
+import InlineNumerals from "@/components/ui/InlineNumerals";
 import { THEME } from "@/lib/theme";
 import { motion } from "framer-motion";
 import { Dumbbell, Play } from "lucide-react";
@@ -6,12 +7,14 @@ import { track as trackHomeEvent } from "@/lib/homeAnalytics";
 
 export default function LiftCTACard({
   nextWorkout,
+  purpose,
   navigate,
   muscleGroups,
   isFirst = false,
   dayIndex = null,
   isStartable = true,
 }: {
+  purpose?: string | null;
   nextWorkout: {
     dayName: string;
     dayType: string;
@@ -43,43 +46,51 @@ export default function LiftCTACard({
         trackHomeEvent("home_card_tapped", { card: "today_workout" });
         navigate(target);
       }}
-      className="w-full rounded-xl bg-lifting/8 text-left p-4"
+      type="button"
+      className="w-full rounded-xl bg-lifting/8 text-left p-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
     >
       <div className="flex items-center gap-3">
-        <div className="size-10 rounded-lg flex items-center justify-center bg-lifting/9">
-          <Dumbbell className="size-5 text-lifting" />
+        <div className="size-10 shrink-0 rounded-lg flex items-center justify-center bg-lifting/9">
+          <Dumbbell className="size-5 text-lifting" aria-hidden="true" />
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-xs font-semibold mb-0.5 text-lifting-strong">
             {isFirst ? "Your first workout" : "Today · Lift day"}
           </p>
-          <p className="text-sm font-bold text-foreground truncate">
-            {nextWorkout.dayName}
+          <p className="text-base font-bold leading-snug text-foreground">
+            <InlineNumerals>{nextWorkout.dayName}</InlineNumerals>
           </p>
-          <p className="text-micro text-muted-foreground capitalize">
-            {muscleGroups ||
-              `${nextWorkout.dayType} · ${nextWorkout.exercises.length} exercises`}
+          <p className="mt-1 text-micro leading-relaxed text-muted-foreground">
+            <InlineNumerals>
+              {`${nextWorkout.exercises.length} ${nextWorkout.exercises.length === 1 ? "exercise" : "exercises"}`}
+            </InlineNumerals>
+            {muscleGroups && <> · {muscleGroups}</>}
           </p>
         </div>
         {isStartable ? (
           <div
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-bold shadow-sm"
+            className="flex min-h-11 shrink-0 items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-bold shadow-sm"
             style={{
               background: `linear-gradient(135deg, ${THEME.lifting}, ${THEME.liftingLight})`,
               color: "white",
             }}
           >
-            <Play className="size-3" fill="white" />
+            <Play className="size-3" fill="currentColor" aria-hidden="true" />
             Start
           </div>
         ) : (
           // HOME-ACTION-01: a completed/skipped lift is not launchable —
           // show a calm "Done" chip instead of a Start button.
-          <div className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-bold bg-muted text-muted-foreground">
+          <div className="flex min-h-11 shrink-0 items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-bold bg-muted text-muted-foreground">
             Done
           </div>
         )}
       </div>
+      {purpose && (
+        <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+          <InlineNumerals>{purpose}</InlineNumerals>
+        </p>
+      )}
     </motion.button>
   );
 }

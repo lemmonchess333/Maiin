@@ -8,7 +8,8 @@
  *     reads as a missing element. Seeded to reproduce EXACTLY that state:
  *     protein and fat over target, carbs far under.
  *  2. Home day-peek — the card revealed by tapping a calendar day.
- *  3. Home Today's Energy — collapsed by default, every visit.
+ *  3. Home Today's nutrition — calories, the three macro rings and
+ *     the log action, all visible with no disclosure to open.
  *
  * Fixture note: targets come from the onboarding profile, so the meal
  * below is sized to clear a typical protein/fat target while leaving
@@ -127,7 +128,7 @@ test.describe(`home + food surfaces (${PHASE})`, () => {
     });
   }
 
-  test("macro tiles, day peek, and today's energy", async ({ page }) => {
+  test("macro tiles, day peek, and today's nutrition", async ({ page }) => {
     test.setTimeout(240_000);
 
     const email = `surfaces-${Date.now()}-${Math.floor(Math.random() * 1e6)}@tropos.test`;
@@ -168,7 +169,7 @@ test.describe(`home + food surfaces (${PHASE})`, () => {
     // ── 2 + 3. Home ───────────────────────────────────────────────
     await page.goto("/Maiin/");
     await page.waitForLoadState("domcontentloaded");
-    await expect(page.getByText(/today's energy/i)).toBeVisible({
+    await expect(page.getByText(/today's nutrition/i)).toBeVisible({
       timeout: 30_000,
     });
     /* Then anchor on the DATA, not the heading. The heading renders
@@ -196,7 +197,7 @@ test.describe(`home + food surfaces (${PHASE})`, () => {
       // three and still refuses a leading zero, which is the actual
       // signal. Pinned against a real render in
       // `energyCaptureAnchor.test.tsx`, including this runtime's grouping.
-      page.getByText(/\/ [1-9][\d.,\s\u00a0\u202f]*kcal/).first(),
+      page.getByText(/Target [1-9][\d.,\s\u00a0\u202f]*kcal/).first(),
       "the energy card never loaded its target — the frame would capture " +
         "the pre-load state, which is what made this frame swing 267px"
     ).toBeVisible({ timeout: 20_000 });
@@ -231,13 +232,11 @@ test.describe(`home + food surfaces (${PHASE})`, () => {
       { timeout: 10_000 }
     );
     await shoot(page, "home-day-peek");
-
-    // Today's Energy expanded.
-    await page
-      .getByText(/today's energy/i)
-      .click({ timeout: 10_000 })
-      .catch(() => {});
-    await page.waitForTimeout(500);
-    await shoot(page, "home-energy-expanded");
+    /* There is no `home-energy-expanded` frame any more, and its
+       absence is the point rather than an omission: the nutrition card
+       has no disclosure to open, so `home-energy-default` is now the
+       card's only state and carries the macros the expanded frame used
+       to be needed for. Expect one `removed` row for it in the first
+       diff report after this lands. */
   });
 });

@@ -65,6 +65,7 @@
  */
 
 import { logger } from "@/lib/logger";
+import { readJson, remove, writeJson } from "@/lib/localStore";
 
 const OUTBOX_KEY = "tropos.program.commandOutbox";
 
@@ -113,53 +114,39 @@ export function isTransportFailure(err: unknown): boolean {
 }
 
 function read(): OutboxEntry[] {
-  try {
-    const raw = localStorage.getItem(OUTBOX_KEY);
-    if (!raw) return [];
-    const parsed: unknown = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return [];
-    // Shape-guard every entry: a malformed one would either throw at send time
-    // or, worse, post a command with no id and defeat the idempotency the whole
-    // design rests on.
-    return parsed.filter((e): e is OutboxEntry => {
-      if (!e || typeof e !== "object") return false;
-      const { uid, command } = e as Partial<OutboxEntry>;
-      return (
-        typeof uid === "string" &&
-        !!command &&
-        typeof command === "object" &&
-        typeof command.kind === "string" &&
-        typeof command.commandId === "string"
-      );
-    });
-  } catch {
-    return [];
-  }
+  const parsed = readJson<unknown>(OUTBOX_KEY, null);
+  if (!Array.isArray(parsed)) return [];
+  // Shape-guard every entry: a malformed one would either throw at send time
+  // or, worse, post a command with no id and defeat the idempotency the whole
+  // design rests on.
+  return parsed.filter((e): e is OutboxEntry => {
+    if (!e || typeof e !== "object") return false;
+    const { uid, command } = e as Partial<OutboxEntry>;
+    return (
+      typeof uid === "string" &&
+      !!command &&
+      typeof command === "object" &&
+      typeof command.kind === "string" &&
+      typeof command.commandId === "string"
+    );
+  });
 }
 
 function write(entries: OutboxEntry[]): void {
   let working = entries;
   for (;;) {
-    try {
-      localStorage.setItem(OUTBOX_KEY, JSON.stringify(working));
+    if (writeJson(OUTBOX_KEY, working)) return;
+    if (working.length === 0) {
+      // Nothing fits even when empty — drop the key so a corrupt giant value
+      // cannot wedge every future write.
+      remove(OUTBOX_KEY);
       return;
-    } catch {
-      if (working.length === 0) {
-        // Nothing fits even when empty — drop the key so a corrupt giant value
-        // cannot wedge every future write.
-        try {
-          localStorage.removeItem(OUTBOX_KEY);
-        } catch {
-          /* best-effort */
-        }
-        return;
-      }
-      logger.error(
-        "[commandOutbox] storage full — shedding the oldest queued command",
-        working[0]?.command.kind
-      );
-      working = working.slice(1);
     }
+    logger.error(
+      "[commandOutbox] storage full — shedding the oldest queued command",
+      working[0]?.command.kind
+    );
+    working = working.slice(1);
   }
 }
 
@@ -177,6 +164,16 @@ export function enqueueCommand(
     (e) => e.command.commandId !== command.commandId
   );
   deduped.push({ uid, command, queuedAt: Date.now() });
+  if (deduped.length > MAX_OUTBOX_ENTRIES) {
+    // The cap sheds the OLDEST entries. Shedding is necessary; shedding
+    // silently is how the offline queue's CORE-01 bug lost everything —
+    // and this path did exactly that (only the quota path logged). A dropped command is a user action that vanished.
+    const shed = deduped.slice(0, deduped.length - MAX_OUTBOX_ENTRIES);
+    logger.error(
+      `[commandOutbox] queue full — shedding the oldest ${shed.length} queued command(s)`,
+      shed.map((e) => e.command.kind)
+    );
+  }
   write(
     deduped.length > MAX_OUTBOX_ENTRIES
       ? deduped.slice(deduped.length - MAX_OUTBOX_ENTRIES)
@@ -210,19 +207,20 @@ export async function flushCommandOutbox(
   const mine = queue.filter((e) => e.uid === uid);
   if (mine.length === 0) return 0;
 
-  const others = queue.filter((e) => e.uid !== uid);
-  const remaining: OutboxEntry[] = [];
+  // Ids this pass finished with — sent, or rejected by the server. Kept as
+  // ids rather than as a rebuilt array: see the write-back below.
+  const done = new Set<string>();
   let cleared = 0;
 
-  for (let i = 0; i < mine.length; i++) {
-    const entry = mine[i];
+  for (const entry of mine) {
     try {
       await send(entry.command);
       cleared += 1;
+      done.add(entry.command.commandId);
     } catch (err) {
       if (isTransportFailure(err)) {
-        // Still offline. Keep this one and everything after it, in order.
-        remaining.push(...mine.slice(i));
+        // Still offline. This one and everything after it stay queued, in
+        // order — commands can depend on each other.
         break;
       }
       // The server considered it and said no. Retrying is guaranteed to fail
@@ -233,18 +231,22 @@ export async function flushCommandOutbox(
         err
       );
       cleared += 1;
+      done.add(entry.command.commandId);
     }
   }
 
-  write([...others, ...remaining]);
+  // Write back against the queue AS IT IS NOW, not the snapshot taken before
+  // the sends. Every send above is an await; a command enqueued meanwhile — a
+  // write that failed while this flush ran, or the auth-change flush racing
+  // the online one (App.tsx fires both) — exists only in storage, and writing
+  // the pre-flush snapshot back erased it. Removing what this pass finished
+  // from the LIVE queue keeps everything else, any uid, in storage order.
+  const live = read();
+  write(live.filter((e) => !done.has(e.command.commandId)));
   return cleared;
 }
 
 /** Test seam — clears every uid's entries. */
 export function __resetCommandOutboxForTests(): void {
-  try {
-    localStorage.removeItem(OUTBOX_KEY);
-  } catch {
-    /* best-effort */
-  }
+  remove(OUTBOX_KEY);
 }

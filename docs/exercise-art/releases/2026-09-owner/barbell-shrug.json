@@ -1,0 +1,127 @@
+{
+  "exerciseId": "barbell-shrug",
+  "version": "owner-release-2026-09",
+  "width": 1024,
+  "height": 1536,
+  "decision": "owner-released-with-findings",
+  "approval": {
+    "actor": "repository owner",
+    "instruction": "Merge the new artwork",
+    "context": "User requested activation after being told the previous merge kept these ten complete sets as drafts."
+  },
+  "reference": {
+    "path": "form-frames/barbell-shrug/1.webp",
+    "sha256": "121d011abdc76254d8af96dc68f087427ee409c0ce150c9d0a8c14b9bf47a404"
+  },
+  "frames": [
+    {
+      "path": "form-frames/barbell-shrug/1.webp",
+      "sha256": "121d011abdc76254d8af96dc68f087427ee409c0ce150c9d0a8c14b9bf47a404",
+      "source": {
+        "path": "docs/exercise-art/pilots/barbell-shrug/composite-v1/1-start.png",
+        "sha256": "f15ee5e946f71387617afe27efffe579006a327c1c87a9e87eb7f94f8da38f12"
+      }
+    },
+    {
+      "path": "form-frames/barbell-shrug/2.webp",
+      "sha256": "dd7194feeb5b217d6fdbed85968d9d0b4b57421da9386c7985afdd46ea3323d5",
+      "source": {
+        "path": "docs/exercise-art/pilots/barbell-shrug/composite-v1/2-begin-shrug.png",
+        "sha256": "9d5f4038bc96a481383eed193d4af1c8dc36974dbef8c0061bbd84002929cd5d"
+      }
+    },
+    {
+      "path": "form-frames/barbell-shrug/3.webp",
+      "sha256": "1739b590ae114278876e5a5280e8508a2a81144665fd7a3a0c154cf2d2ebb748",
+      "source": {
+        "path": "docs/exercise-art/pilots/barbell-shrug/composite-v1/3-continue-lift.png",
+        "sha256": "f2b4806fe93095cb82139c0bf2b9a695ccf152e87a8cea8eb8feb0763232bf01"
+      }
+    },
+    {
+      "path": "form-frames/barbell-shrug/4.webp",
+      "sha256": "e838905d9658075a68662326386d8e8ca8e1220ef3248be03e1f3e324c1a6eb4",
+      "source": {
+        "path": "docs/exercise-art/pilots/barbell-shrug/composite-v1/4-top.png",
+        "sha256": "46d5390c07b0365ef9bc36318f9f0a7fcae070fcb11b79611f38621db853c0fb"
+      }
+    },
+    {
+      "path": "form-frames/barbell-shrug/5.webp",
+      "sha256": "1739b590ae114278876e5a5280e8508a2a81144665fd7a3a0c154cf2d2ebb748",
+      "source": {
+        "path": "docs/exercise-art/pilots/barbell-shrug/composite-v1/5-lower.png",
+        "sha256": "f2b4806fe93095cb82139c0bf2b9a695ccf152e87a8cea8eb8feb0763232bf01"
+      }
+    },
+    {
+      "path": "form-frames/barbell-shrug/6.webp",
+      "sha256": "dd7194feeb5b217d6fdbed85968d9d0b4b57421da9386c7985afdd46ea3323d5",
+      "source": {
+        "path": "docs/exercise-art/pilots/barbell-shrug/composite-v1/6-finish-lowering.png",
+        "sha256": "9d5f4038bc96a481383eed193d4af1c8dc36974dbef8c0061bbd84002929cd5d"
+      }
+    }
+  ],
+  "cueSha256": "9a757675d566f590a43b147b4584106ed1434dc89f64fccb5355997db831331d",
+  "checks": {
+    "identity": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    },
+    "camera": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    },
+    "anatomy": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    },
+    "equipment": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    },
+    "contact": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    },
+    "physics": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    },
+    "muscles": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    },
+    "cueAgreement": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    },
+    "sequenceAndLoop": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    },
+    "mobileLight": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    },
+    "mobileDark": {
+      "passed": null,
+      "evidence": "Not certified; retained source review findings apply."
+    }
+  },
+  "findings": [
+    "Single-master code-based compositing authorized by the user. Head, central-core and lower-body ROI pixels are unchanged; sampled bar, plate and grip regions translate exactly.",
+    "Shoulder/neck joins and the upper-thigh region revealed by the bar use deformation and feathering. These are still visual-review findings, not approved anatomy or a claim of a fully fixed pelvis.",
+    "Six ordered files use 0/12/24/36/24/12-pixel load elevation; return slots reuse matching outward poses.",
+    "Cloud browser blocks local player with ERR_BLOCKED_BY_CLIENT. Actual mobile light/dark playback remains unverified.",
+    "Full visual acceptance under the strict artwork review contract is outstanding."
+  ],
+  "encoding": {
+    "format": "WebP",
+    "quality": 92,
+    "method": 6,
+    "resize": false,
+    "crop": false
+  }
+}

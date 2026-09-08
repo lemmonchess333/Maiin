@@ -241,8 +241,12 @@ describe("race plans — the compressed band doubles the long run", () => {
     const { out } = plan({ distance: "marathon", weeksOut: 20 });
     expect(out.compressed).toBe(false);
     const longs = longRuns(out.weeks).filter((k) => k > 0);
+    // Run17: the curve now aims at the schedulable ceiling (25 km on the
+    // nominal table, plus the 10% hold) instead of the 32 km config peak,
+    // so the block spends three weeks at 25 km rather than five, and the
+    // early weeks climb from base more gradually.
     expect(longs).toEqual([
-      12, 15, 15, 12, 15, 20, 20, 15, 20, 20, 25, 20, 25, 25, 25, 25,
+      12, 12, 15, 12, 15, 15, 15, 15, 20, 20, 20, 15, 20, 25, 25, 25,
     ]);
     // No step past a third, and the sequence genuinely steps back down.
     for (let i = 1; i < longs.length; i++) {

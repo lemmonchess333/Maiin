@@ -30,7 +30,7 @@ export default function WorkoutPrefsSection({
     <AccordionSection
       inline={inline}
       icon={<Timer className="size-5 text-primary" />}
-      title="Workout Preferences"
+      title="Workout preferences"
       subtitle="Rest timer, audio cues"
     >
       <div className="space-y-3">

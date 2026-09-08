@@ -505,3 +505,36 @@ describe("useWorkoutDraft — V2 per-session isolation (packet 15b)", () => {
     expect(other.result.current.load()).not.toBeNull();
   });
 });
+
+describe("finished sessions awaiting acknowledgement", () => {
+  it("keeps the original completion and date beyond the ordinary 24 hour expiry", () => {
+    const pending = {
+      ...draftFor(0),
+      completionPending: true,
+      startedAt: 1788674400000,
+      savedAt: Date.now() - 3 * 86400000,
+      identity: IDENTITY,
+    };
+    localStorage.setItem(v2Key("user-A", IDENTITY), JSON.stringify(pending));
+    const { result } = renderHook(() => useWorkoutDraft("user-A", 0, IDENTITY));
+    expect(result.current.load()).toEqual(pending);
+  });
+
+  it("does not overwrite an unsynced session or clear it for a later completion", () => {
+    const { result } = renderHook(() => useWorkoutDraft("user-A", 0, IDENTITY));
+    act(() =>
+      expect(
+        result.current.save({ ...draftFor(0), completionPending: true })
+      ).toBe(true)
+    );
+    act(() =>
+      expect(
+        result.current.save({ ...draftFor(0), completionId: "different" })
+      ).toBe(false)
+    );
+    act(() => result.current.clear("different"));
+    expect(result.current.load()?.completionId).toBe("cid-fixed");
+    act(() => result.current.clear("cid-fixed"));
+    expect(result.current.load()).toBeNull();
+  });
+});

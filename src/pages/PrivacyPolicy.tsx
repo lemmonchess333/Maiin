@@ -22,7 +22,7 @@ export default function PrivacyPolicy() {
             Privacy Policy
           </h1>
           <p className="text-xs text-muted-foreground mt-1">
-            Last updated: August 2026
+            Last updated: September 2026
           </p>
         </div>
 
@@ -149,18 +149,21 @@ export default function PrivacyPolicy() {
               secure user authentication.
             </p>
             <p>
-              <strong className="text-foreground">Progress photos</strong> are
-              additionally encrypted on your device (AES-GCM-256) before upload,
-              so they are never stored as plain image files &mdash; anyone
-              browsing raw storage sees ciphertext rather than pictures.
+              <strong className="text-foreground">New progress photos</strong>{" "}
+              are additionally encrypted on your device (AES-GCM-256) before
+              upload, so they are never stored as plain image files &mdash;
+              anyone browsing raw storage sees ciphertext rather than pictures.
             </p>
             <p>
               To be precise about what that protects: this is{" "}
               <strong className="text-foreground">not</strong> end-to-end
-              encryption. The encryption key is derived from your account
-              identifier rather than from a password only you know, so Tropos is
-              technically able to decrypt your progress photos. We would rather
-              state that plainly than imply a protection we do not provide.
+              encryption. New photos use a random key for each photo, kept in
+              private account metadata separately from the image storage. This
+              lets you access them after signing in on another device. Tropos
+              can access these keys and is technically able to decrypt the
+              photos. Older uploads can use a key derived from your account
+              identifier or an unencrypted legacy format. Those photos do not
+              gain the new protection unless they are uploaded again.
             </p>
           </section>
 

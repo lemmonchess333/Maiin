@@ -192,9 +192,7 @@ async function purchaseWithAppleIAP(plan: PlanId): Promise<PurchaseResult> {
     return {
       success: false,
       error:
-        err instanceof Error
-          ? err.message
-          : "IAP not available. Please try again.",
+        err instanceof Error ? err.message : "IAP not available. Try again.",
     };
   }
 }
@@ -281,7 +279,7 @@ async function purchaseWithRevenueCat(plan: PlanId): Promise<PurchaseResult> {
   if (!outcome.success) {
     return {
       success: false,
-      error: outcome.error ?? "Purchase failed. Please try again.",
+      error: outcome.error ?? "Purchase failed. Try again.",
     };
   }
   await syncEntitlementBestEffort();
@@ -357,7 +355,7 @@ export async function manageSubscription(uid: string): Promise<PurchaseResult> {
     if (!url) {
       return {
         success: false,
-        error: "Couldn't open billing portal. Please try again.",
+        error: "Couldn't open billing portal. Try again.",
       };
     }
     window.location.href = url;
@@ -368,7 +366,7 @@ export async function manageSubscription(uid: string): Promise<PurchaseResult> {
       error:
         err instanceof Error
           ? err.message
-          : "Couldn't open billing portal. Please try again.",
+          : "Couldn't open billing portal. Try again.",
     };
   }
 }

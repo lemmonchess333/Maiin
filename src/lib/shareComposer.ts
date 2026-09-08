@@ -22,6 +22,13 @@
  */
 
 import { toast } from "@/lib/toast";
+import {
+  readJson,
+  readString,
+  remove,
+  writeJson,
+  writeString,
+} from "@/lib/localStore";
 import type { ShareSource } from "@/lib/sessionDelete";
 
 export type ShareType = "workout" | "run";
@@ -43,6 +50,9 @@ export interface ActivityPreview {
   title: string;
   /** Short stat line, e.g. ["1h 12m", "12,840kg volume"] */
   meta: string[];
+  /** Redacted coordinates, identical to the eventual post; never raw GPS. */
+  routePreview?: import("./routeSegments").RouteCoordinate[];
+  routePrivacyNote?: string;
 }
 
 export interface ShareDecision {
@@ -93,29 +103,21 @@ function prefKey(uid: string, type: ShareType): string {
 }
 
 function readAlways(uid: string, type: ShareType): AlwaysPref {
-  try {
-    // Purge the pre-uid-scoping global key. Never migrated: a global pref
-    // can't be safely attributed to one account (that IS the leak), so the
-    // user re-picks once after upgrade.
-    localStorage.removeItem(`${PREF_KEY_PREFIX}.${type}`);
-    const raw = localStorage.getItem(prefKey(uid, type));
-    if (raw === "followers" || raw === "public" || raw === "never") return raw;
-    // Crews retirement migration: the retired audience falls back to
-    // its underlying fan-out rather than silently clearing the pref.
-    if (raw === "crews") return "followers";
-  } catch {
-    /* localStorage unavailable (private mode, etc.) */
-  }
+  // Purge the pre-uid-scoping global key. Never migrated: a global pref
+  // can't be safely attributed to one account (that IS the leak), so the
+  // user re-picks once after upgrade.
+  remove(`${PREF_KEY_PREFIX}.${type}`);
+  const raw = readString(prefKey(uid, type));
+  if (raw === "followers" || raw === "public" || raw === "never") return raw;
+  // Crews retirement migration: the retired audience falls back to
+  // its underlying fan-out rather than silently clearing the pref.
+  if (raw === "crews") return "followers";
   return null;
 }
 
 function writeAlways(uid: string, type: ShareType, value: AlwaysPref) {
-  try {
-    if (value === null) localStorage.removeItem(prefKey(uid, type));
-    else localStorage.setItem(prefKey(uid, type), value);
-  } catch {
-    /* ignore */
-  }
+  if (value === null) remove(prefKey(uid, type));
+  else writeString(prefKey(uid, type), value);
 }
 
 /** Used by Settings (ShareDefaultsRow) to let the user clear their saved
@@ -151,11 +153,26 @@ export function getShareDefault(uid: string, type: ShareType): AlwaysPref {
 
 export function compose(
   uid: string,
-  preview: ActivityPreview
+  preview: ActivityPreview,
+  opts: {
+    /** The account cannot post publicly yet (unverified email/password
+     *  account — `needsEmailVerification`). A stored "always share" default
+     *  is then NOT honoured: the sheet opens instead, because the sheet is
+     *  where the verification notice lives, and a post the rules will refuse
+     *  must never be attempted silently on the strength of a remembered
+     *  choice. "never" still short-circuits — declining needs no email. */
+    needsEmailVerification?: boolean;
+    /** An explicit share row always opens the sheet; saved defaults stay intact. */
+    forcePrompt?: boolean;
+  } = {}
 ): Promise<ShareDecision | null> {
   const pref = readAlways(uid, preview.type);
-  if (pref === "never") return Promise.resolve(null);
-  if (pref === "followers" || pref === "public") {
+  if (pref === "never" && !opts.forcePrompt) return Promise.resolve(null);
+  if (
+    (pref === "followers" || pref === "public") &&
+    !opts.needsEmailVerification &&
+    !opts.forcePrompt
+  ) {
     return Promise.resolve({ visibility: pref, caption: "" });
   }
   state = { open: true, type: preview.type, preview, uid };
@@ -217,28 +234,18 @@ export interface PendingShare {
 }
 
 function readQueue(): PendingShare[] {
-  try {
-    const raw = localStorage.getItem(QUEUE_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw) as unknown;
-    if (!Array.isArray(parsed)) return [];
-    return parsed.filter(
-      (item): item is PendingShare =>
-        item != null &&
-        typeof item === "object" &&
-        typeof (item as { uid?: unknown }).uid === "string"
-    );
-  } catch {
-    return [];
-  }
+  const parsed = readJson<unknown>(QUEUE_KEY, null);
+  if (!Array.isArray(parsed)) return [];
+  return parsed.filter(
+    (item): item is PendingShare =>
+      item != null &&
+      typeof item === "object" &&
+      typeof (item as { uid?: unknown }).uid === "string"
+  );
 }
 
 function writeQueue(items: PendingShare[]) {
-  try {
-    localStorage.setItem(QUEUE_KEY, JSON.stringify(items));
-  } catch {
-    /* ignore */
-  }
+  writeJson(QUEUE_KEY, items);
 }
 
 export function enqueueShare(

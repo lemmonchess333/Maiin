@@ -17,19 +17,19 @@ export default function RunSetupSkeleton() {
   return (
     <div className="flex-1 flex flex-col bg-background text-foreground">
       <div className="px-4 pt-16 pb-6 space-y-4">
-        <div className="h-7 w-40 rounded-md bg-muted/60 animate-pulse" />
+        <div className="h-7 w-40 rounded-md bg-muted/60 motion-safe:animate-pulse" />
         {/* Context-strip placeholder — purple-tinted like the real strip */}
         <div
-          className="h-7 rounded-xl animate-pulse"
+          className="h-7 rounded-xl motion-safe:animate-pulse"
           style={{ background: "rgba(123,114,233,0.10)" }}
           aria-hidden="true"
         />
         {/* Selected-run card placeholder — matches the real card shape */}
         <div className="w-full rounded-2xl border border-border bg-card p-4 flex items-center gap-3">
-          <div className="size-11 rounded-xl bg-muted/60 animate-pulse shrink-0" />
+          <div className="size-11 rounded-xl bg-muted/60 motion-safe:animate-pulse shrink-0" />
           <div className="flex-1 space-y-2">
-            <div className="h-4 w-32 rounded-md bg-muted/60 animate-pulse" />
-            <div className="h-3 w-48 rounded-md bg-muted/40 animate-pulse" />
+            <div className="h-4 w-32 rounded-md bg-muted/60 motion-safe:animate-pulse" />
+            <div className="h-3 w-48 rounded-md bg-muted/40 motion-safe:animate-pulse" />
           </div>
         </div>
       </div>

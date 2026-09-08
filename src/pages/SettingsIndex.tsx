@@ -19,6 +19,8 @@ import {
   ChevronRight,
   User,
   Target,
+  Layers,
+  Route,
   Apple,
   Dumbbell,
   Palette,
@@ -35,6 +37,7 @@ import type { LucideIcon } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useSubscription } from "@/lib/subscription";
 import SettingsAvatar from "@/components/settings/SettingsAvatar";
+import SettingsOfflineBanner from "@/components/settings/SettingsOfflineBanner";
 import { haptic } from "@/lib/haptic";
 
 declare const __APP_VERSION__: string;
@@ -69,6 +72,20 @@ const SECTIONS: SectionRow[] = [
     migrated: true,
   },
   {
+    slug: "lift-plan",
+    label: "Lift plan",
+    description: "Focus, lift days, equipment",
+    icon: Layers,
+    migrated: true,
+  },
+  {
+    slug: "run-plan",
+    label: "Run plan",
+    description: "Race goal, run days, zones",
+    icon: Route,
+    migrated: true,
+  },
+  {
     slug: "nutrition",
     label: "Nutrition",
     description: "Calorie targets, activity level",
@@ -84,21 +101,21 @@ const SECTIONS: SectionRow[] = [
   },
   {
     slug: "units-appearance",
-    label: "Units & Appearance",
+    label: "Units & appearance",
     description: "Weight, height units, dark mode",
     icon: Palette,
     migrated: true,
   },
   {
     slug: "privacy",
-    label: "Social & Privacy",
+    label: "Social & privacy",
     description: "Visibility, auto-post, GPS zones",
     icon: Lock,
     migrated: true,
   },
   {
     slug: "shoes",
-    label: "My Shoes",
+    label: "My shoes",
     description: "Track mileage per pair",
     icon: Footprints,
     migrated: true,
@@ -126,7 +143,7 @@ const SECTIONS: SectionRow[] = [
   },
   {
     slug: "support-legal",
-    label: "Support & Legal",
+    label: "Support & legal",
     description: "Help, privacy policy, terms",
     icon: HelpCircle,
     migrated: true,
@@ -170,6 +187,7 @@ export default function SettingsIndex() {
         visible: { transition: { staggerChildren: 0.04 } },
       }}
     >
+      <SettingsOfflineBanner />
       <motion.header
         variants={{
           hidden: { opacity: 0, y: 6 },
@@ -184,7 +202,7 @@ export default function SettingsIndex() {
                 Settings
               </h1>
               <p className="text-sm text-muted-foreground">
-                Customize your experience
+                Customise your experience
               </p>
             </div>
           </div>
@@ -197,7 +215,7 @@ export default function SettingsIndex() {
               }}
               className="px-3 min-h-[44px] inline-flex items-center rounded-lg text-xs font-medium bg-muted text-foreground hover:bg-muted/80 transition-colors"
             >
-              View Profile
+              View profile
             </button>
           )}
         </div>

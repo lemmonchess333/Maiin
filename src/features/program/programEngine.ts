@@ -2041,6 +2041,11 @@ export function generateProgram(
    EXERCISE-SPECIFIC PROGRESSION
 ================================ */
 
+/** Lift2: how far above the prescription a lifted weight may re-anchor
+ *  progression — four load steps (10 kg on a plate-pair lift, 5 kg on a
+ *  microplate one). A plate jump, not a fat-finger. */
+export const USER_LOAD_ANCHOR_STEPS = 4;
+
 export function applyProgression(
   exercise: ProgramExercise,
   actualReps: number,
@@ -2118,6 +2123,30 @@ export function applyProgression(
   );
   const loadStep = microplate ? MICROPLATE_STEP : PLATE_PAIR_STEP;
   const loadBonus = microplate ? 0 : goalWeightBonus(goal);
+  // Lift2 — the weight the user CHOSE is a modification, not a verdict.
+  //   Lighter + reps hit → HOLD: no failure counted, no cut, prescription
+  //     kept, `lastSuccessfulWeight` records the load used. The success
+  //     predicate scored this as a MISS, so a deliberately lighter session
+  //     walked toward the three-strike 5% cut with nothing saying so.
+  //   Heavier + reps hit → the anchor moves to what was lifted, bounded to
+  //     four load steps over the prescription (a plate jump, not a
+  //     fat-finger: a 200 kg typo on a 50 kg lift keeps the prescription).
+  //     The step logic below runs from the anchor, so a completed heavier
+  //     session moves the prescription to at least what was lifted (Pgm5).
+  // No note is written — `notes` is the injury-warning slot.
+  if (
+    !isBodyweight &&
+    actualReps >= exercise.reps &&
+    actualWeight < exercise.weight
+  ) {
+    return { ...updated, lastSuccessfulWeight: actualWeight };
+  }
+  const anchor =
+    !isBodyweight &&
+    actualWeight > exercise.weight &&
+    actualWeight <= exercise.weight + USER_LOAD_ANCHOR_STEPS * loadStep
+      ? actualWeight
+      : exercise.weight;
   // D-LIFT-11: bodyweight rep target rises by 1 per success, but is capped —
   // a pull-up shouldn't drift to "25 reps"; at the cap, prompt adding load.
   // Backlog #7's time axis (N2). A timed hold counts SECONDS, not reps, so
@@ -2148,6 +2177,7 @@ export function applyProgression(
 
   if (exercise.progressionType === "double") {
     if (completed) {
+      if (anchor > exercise.weight) updated.weight = anchor;
       // Authored ceiling, or the one the legacy arm below already implies —
       // see `impliedDoubleRangeMax`. Without the fallback a range-less double
       // never progresses at all for a lifter who hits the prescription.
@@ -2189,7 +2219,7 @@ export function applyProgression(
         // contract as every other progression path.
         if (rpeOk) {
           if (actualReps >= rangeMax) {
-            updated.weight = exercise.weight + loadStep + loadBonus;
+            updated.weight = anchor + loadStep + loadBonus;
             updated.reps = resetReps;
           } else {
             // Next target: one past what was actually done (monotonic —
@@ -2205,7 +2235,7 @@ export function applyProgression(
           bumpBodyweightReps();
         } else {
           // Weighted: increase weight and reset reps to base prescription
-          updated.weight = exercise.weight + loadStep + loadBonus;
+          updated.weight = anchor + loadStep + loadBonus;
           updated.reps = resetReps;
         }
       }
@@ -2237,6 +2267,7 @@ export function applyProgression(
     }
   } else {
     if (completed) {
+      if (anchor > exercise.weight) updated.weight = anchor;
       if (isBodyweight) {
         const rangeMax = exercise.repRangeMax;
         if (rangeMax != null && rangeMax > resetReps) {
@@ -2258,11 +2289,14 @@ export function applyProgression(
           bumpBodyweightReps();
         }
       } else if (microloading && rpeOk) {
-        updated.weight = exercise.weight + 1;
+        // Microloading: a COMPLETED session (target reps at the prescribed
+        // load) earns +1 kg; without it only a 2-rep overshoot earns the
+        // full step. That is the rep requirement — Lift2 keeps it.
+        updated.weight = anchor + 1;
       } else {
         if (actualReps >= exercise.reps + 2 && rpeOk) {
           // No goal bonus on the linear path — pre-#7 behaviour, kept.
-          updated.weight = exercise.weight + loadStep;
+          updated.weight = anchor + loadStep;
           updated.reps = resetReps; // reset to original prescription, not drifted value
         }
       }

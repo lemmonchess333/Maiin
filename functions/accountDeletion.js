@@ -107,6 +107,11 @@ const USER_SUBCOLLECTIONS = Object.freeze([
   // under the user's own tree, so erasure has to include them.
   "errors",
   "logs",
+  // Personal-record map (users/{uid}/stats/prMap), written by
+  // WorkoutSession through a `doc as fbDoc` alias the sweep's guard did
+  // not match — so it orphaned on every deletion while the inventory
+  // claimed it was covered.
+  "stats",
 ]);
 
 // `kudos` is excluded — author-keyed top-level docs are handled by
