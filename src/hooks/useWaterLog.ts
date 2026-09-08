@@ -17,6 +17,8 @@ import {
   flushWater,
   pendingWater,
   queueWater,
+  retireSettled,
+  settledWater,
   waterSyncError,
   WATER_CHANGED,
   type WaterReceipt,
@@ -76,10 +78,14 @@ export function useWaterLog() {
       doc(db, "users", uid, "waterLog", today),
       (snap) => {
         const data = snap.data() ?? {};
+        const receipts = data.waterReceipts ?? {};
+        /* This snapshot is the proof a committed action was waiting for,
+           so retire it here rather than on a timer. */
+        retireSettled(uid, receipts);
         setSnapshot({
           key: `${uid}/${today}`,
           ml: resolveConsumedMl(data),
-          receipts: data.waterReceipts ?? {},
+          receipts,
         });
         setReadError(false);
       },
@@ -87,8 +93,15 @@ export function useWaterLog() {
     );
   }, [uid, today, readVersion]);
   const pending = uid ? pendingWater(uid) : [];
+  /* Committed-but-unconfirmed actions ride alongside the pending ones,
+     in queuedAt order so an undo still lands behind its drink. Once the
+     snapshot carries a receipt the overlay is a no-op, so this is only
+     ever load-bearing across the commit-to-snapshot gap. */
+  const overlay = [...(uid ? settledWater(uid) : []), ...pending].sort(
+    (a, b) => a.queuedAt - b.queuedAt
+  );
   let state = snapshot?.key === key ? snapshot : { ml: 0, receipts: {} };
-  for (const action of pending.filter((a) => a.date === today)) {
+  for (const action of overlay.filter((a) => a.date === today)) {
     try {
       state = {
         ...state,

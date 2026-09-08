@@ -40,8 +40,23 @@ export default function WeightLogSheet({
     initialKg ? String(kgToStonePounds(initialKg).pounds) : "0"
   );
   const minimumDate = localDateString(subDays(new Date(), 30));
+  /* Derived from `date`, never stored alongside it: a second source for
+     "which day" is how a picker ends up showing Tuesday while the
+     control still reads Today. */
+  const todayKey = localDateString();
+  const yesterdayKey = localDateString(subDays(new Date(), 1));
   const [value, setValue] = useState(initial);
   const [date, setDate] = useState(localDateString);
+  const dayChoice =
+    date === todayKey
+      ? "today"
+      : date === yesterdayKey
+        ? "yesterday"
+        : "earlier";
+  /* Opening "Earlier" lands two days back rather than on today, which
+     would leave the picker showing a day the two segments beside it
+     already cover. */
+  const earlierDate = localDateString(subDays(new Date(), 2));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const pending = useRef(false);
@@ -249,45 +264,53 @@ export default function WeightLogSheet({
           disabled={saving}
           onChange={changeDial}
         />
-        <div className="flex gap-2">
-          <Button
-            variant="secondary"
-            disabled={saving}
-            onClick={() => {
-              noteInteraction();
-              setDate(localDateString());
-            }}
-          >
-            Today
-          </Button>
-          <Button
-            variant="secondary"
-            disabled={saving}
-            onClick={() => {
-              noteInteraction();
-              setDate(localDateString(subDays(new Date(), 1)));
-            }}
-          >
-            Yesterday
-          </Button>
-        </div>
-        <label className="block text-sm" htmlFor="weight-date">
-          Date
-        </label>
-        <input
-          id="weight-date"
-          type="date"
-          className="ds-input min-h-11 w-full"
-          value={date}
-          min={minimumDate}
-          max={localDateString()}
+        {/* One control for one value. This was two `secondary` Buttons
+            that only SET the date and never showed which was chosen,
+            stacked above a separate "Date" label and a full-width native
+            picker holding the same value — three controls and four rows
+            for a field that is "today" almost every time. A radiogroup
+            is what it always was, so it uses the primitive: the chosen
+            day is now visible, and the picker appears only when the
+            answer is neither of the two common ones. */}
+        <SegmentedControl
+          ariaLabel="Day this weight was measured"
           disabled={saving}
-          onChange={(e) => {
+          value={dayChoice}
+          onChange={(choice) => {
             noteInteraction();
-            setDate(e.target.value);
             setError("");
+            if (choice === "today") setDate(localDateString());
+            else if (choice === "yesterday")
+              setDate(localDateString(subDays(new Date(), 1)));
+            else setDate(earlierDate);
           }}
+          options={[
+            { value: "today", label: "Today" },
+            { value: "yesterday", label: "Yesterday" },
+            { value: "earlier", label: "Earlier" },
+          ]}
         />
+        {dayChoice === "earlier" && (
+          <div>
+            <label className="block text-sm mb-1.5" htmlFor="weight-date">
+              Date
+            </label>
+            <input
+              id="weight-date"
+              type="date"
+              className="ds-input min-h-11 w-full"
+              value={date}
+              min={minimumDate}
+              max={localDateString()}
+              disabled={saving}
+              onChange={(e) => {
+                noteInteraction();
+                setDate(e.target.value);
+                setError("");
+              }}
+            />
+          </div>
+        )}
         <p className="text-micro text-muted-foreground">
           A new entry for the same day replaces that day's weight.
         </p>

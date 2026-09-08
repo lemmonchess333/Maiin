@@ -94,8 +94,13 @@ test("weight sheet offers stone and a bounded date without saving", async ({
   }
   await page.getByRole("radio", { name: "st", exact: true }).click();
   await expect(page.getByLabel("Pounds", { exact: true })).toBeVisible();
+  /* The day picker is a radiogroup, not a pair of buttons: Today /
+     Yesterday / Earlier, with the chosen day shown rather than merely
+     set. Asserted here so the stone frame is filmed on a fully-rendered
+     sheet, and so a change of ROLE fails in this spec rather than
+     quietly dropping the assertion. */
   await expect(
-    page.getByRole("button", { name: "Yesterday", exact: true })
+    page.getByRole("radio", { name: "Yesterday", exact: true })
   ).toBeVisible();
   for (const dark of [false, true]) {
     await page.evaluate(

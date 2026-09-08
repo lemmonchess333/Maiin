@@ -43,6 +43,56 @@ export function pendingWater(uid: string): WaterAction[] {
 }
 export const waterSyncError = (uid: string) => errors.get(uid);
 
+/**
+ * Actions the server has ALREADY accepted, held until the snapshot that
+ * proves it arrives.
+ *
+ * The queue entry has to be dropped the moment the transaction commits,
+ * or the flush loop would spin on it forever. But the listener is a
+ * separate round-trip: for the 15-20ms between the commit and the
+ * snapshot, the card had a fresh server total nowhere to read and no
+ * pending action left to add, so it rendered the figure from BEFORE the
+ * tap and then jumped forward again. Measured over four taps: three
+ * dips, 15/16/18ms, each one the previous value. The fill is a spring,
+ * so a dip that short still reads as the whole card flashing.
+ *
+ * Keeping the action here bridges exactly that gap. Re-applying it is
+ * free: `applyWaterAction` returns the state untouched once a receipt
+ * for the id exists, so the instant the snapshot lands the overlay
+ * becomes a no-op and `retireSettled` drops it.
+ */
+const settledPrefix = (uid: string) =>
+  `${scopedKey("tropos-water-settled", uid)}:`;
+
+/** Committed actions still awaiting their snapshot, oldest first. */
+export function settledWater(uid: string): WaterAction[] {
+  return keysWithPrefix(settledPrefix(uid))
+    .flatMap((uidKey) => {
+      const a = readJson<WaterAction | null>(uidKey, null);
+      return a && typeof a.id === "string" && Number.isFinite(a.delta)
+        ? [a]
+        : [];
+    })
+    .sort((a, b) => a.queuedAt - b.queuedAt);
+}
+
+/**
+ * Drop settled actions the given receipts now account for. The age cap
+ * is a backstop, not the mechanism: a receipt normally arrives within a
+ * frame or two, and an entry that outlives one is already a no-op
+ * against any snapshot carrying it.
+ */
+export function retireSettled(
+  uid: string,
+  receipts: Record<string, WaterReceipt>
+): void {
+  const now = Date.now();
+  for (const uidKey of keysWithPrefix(settledPrefix(uid))) {
+    const a = readJson<WaterAction | null>(uidKey, null);
+    if (!a || receipts[a.id] || now - a.queuedAt >= 60_000) remove(uidKey);
+  }
+}
+
 /** Receipts make retries idempotent and undo invert the actual clamped change. */
 export function applyWaterAction(
   ml: number,
@@ -121,6 +171,10 @@ export function flushWater(uid: string): Promise<void> {
         // Preserve taps queued while the transaction awaited.
         if (!remove(`${queuePrefix(uid)}${action.id}`))
           throw new Error("Water synced, but local storage needs space.");
+        // Committed, but the listener has not said so yet. Best-effort:
+        // if storage refuses the entry the total stays correct and only
+        // the pre-snapshot frame flashes.
+        writeJson(`${settledPrefix(uid)}${action.id}`, action);
         if (result.receipts[action.id]?.rejected) {
           const { toast } = await import("@/lib/toast");
           toast.error(
