@@ -56,7 +56,7 @@ test("a saved lift has one finish and Done returns to Program", async ({
   // The SDK emulator banner stays visible but must not consume app taps.
   await page.addStyleTag({ content: ".firebase-emulator-warning { pointer-events: none !important; }" });
   await page
-    .getByRole("button", { name: "Begin Workout", exact: true })
+    .getByRole("button", { name: "Start workout", exact: true })
     .click();
   const warmups = await page
     .getByTitle("Set type: warmup", { exact: true })

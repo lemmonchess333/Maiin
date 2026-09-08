@@ -15,7 +15,7 @@ test("companion purpose — narrow light and dark", async ({ page }) => {
   await page.goto("program");
   const card = page
     .getByRole("region")
-    .filter({ has: page.getByRole("button", { name: "Begin Workout" }) });
+    .filter({ has: page.getByRole("button", { name: "Start workout" }) });
   await expect(card).toBeVisible({ timeout: 20_000 });
   await expect(card).toContainText(/Week \d+ of \d+|Step-back week/);
   for (const dark of [false, true]) {
