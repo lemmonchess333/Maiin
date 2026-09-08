@@ -29,6 +29,11 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- **Logging water no longer pops a confirmation.** The card already shows
+  it: the number and the fill both move as you tap. The toast covered the
+  screen below for five seconds and offered an Undo that the minus button
+  next to the plus already does in one tap.
+
 - **Clearer wording across the app.** Errors now say what failed and what to
   do in two short sentences instead of joining them with a dash ("Couldn't
   save. Check your connection and try again."), and paired facts use the

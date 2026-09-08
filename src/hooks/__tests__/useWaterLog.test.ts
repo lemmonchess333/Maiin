@@ -219,6 +219,39 @@ describe("navigation and account boundaries", () => {
   });
 });
 
+describe("sync status", () => {
+  /* The reported defect: every tap made the water tile grow by a status
+     line and a 44px Retry button until the write landed, and the
+     items-stretch tile grid resized the weight tile with it. syncStatus is
+     read while the queue is genuinely non-empty — the pendingWater
+     assertion above it proves the flush has not landed yet, which is the
+     window the old copy rendered in. Asserting only after the flush would
+     pass with the bug still present. */
+  it("says nothing while an ordinary add is still in flight", async () => {
+    const result = await mountSettled();
+    act(() => result.current.logWater(250));
+
+    expect(pendingWater("u1")).toHaveLength(1);
+    expect(result.current.ml).toBe(250);
+    expect(result.current.syncStatus).toBe("");
+
+    await waitFor(() => expect(pendingWater("u1")).toHaveLength(0));
+    expect(result.current.syncStatus).toBe("");
+  });
+
+  it("says an offline entry is held on the device", async () => {
+    vi.spyOn(navigator, "onLine", "get").mockReturnValue(false);
+    const result = await mountSettled();
+    act(() => result.current.logWater(250));
+
+    expect(pendingWater("u1")).toHaveLength(1);
+    await waitFor(() =>
+      expect(result.current.syncStatus).toContain("Saved on this device")
+    );
+    vi.restoreAllMocks();
+  });
+});
+
 it("retry restores a failed live read", async () => {
   seedFirestore({ [PATH]: { ml: 750 } });
   failNextFirestore("onSnapshot");
