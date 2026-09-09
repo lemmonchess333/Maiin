@@ -1490,10 +1490,11 @@
       "reviewFindings": [
         "The same four selected plates now translate 0, 136, 327, 327, 136 and 0 pixels upward, paired with the measured downward bar movement. The lower stack stays pixel-exact.",
         "Two continuous guide rails are reconstructed once from the original rail texture and reused in every frame; this corrects the interrupted rails in the generated sources.",
-        "Upper-body poses retain generated anatomy. Grip spacing and the bar-end silhouette vary slightly between source poses; forward clearance at the neck and the final upper-chest position still need technique review.",
-        "The upper-body composite feathers into the fixed lower body over y860–875; no deformation is applied to the plate block. Pelvis, feet and seat below y876 are pixel-exact.",
+        "The rigid bar is translated from the master. Measured finger/palm cores are registered without rescaling; the forearm joins deform. Finger anatomy still comes from separate generated poses. The rear three-quarter view does not establish forward neck clearance or upper-chest contact, so technique approval remains false.",
+        "The upper-body composite feathers into the fixed lower body over y860\u2013875; no deformation is applied to the plate block. Pelvis, feet and seat below y876 are pixel-exact.",
         "The six beats use three joint configurations: setup, partial pull, finish pull, brief hold, controlled return and overhead return. The repeated endpoint closes the loop without a positional jump.",
-        "Static contact sheet and individual composite frames inspected. Native playback and mobile light/dark review are not certified; keep outside the production registry."
+        "Static contact sheet and individual composite frames inspected. Native playback and mobile light/dark review are not certified; keep outside the production registry.",
+        "Rejected first grip overlay: doubled finger contours, wrist seams and a clipped neck boundary. The selected repair segments the connected athlete silhouette to preserve occlusion, and excludes isolated metal highlights. Central shaft and both bar-end samples are pixel-exact translations."
       ],
       "frames": [
         {
@@ -1518,8 +1519,8 @@
             1024,
             1536
           ],
-          "bytes": 1017421,
-          "sha256": "75291c34e8ebdde7e7139837bc4a82564cd648cfcd74a28464aa1a68b646d2eb",
+          "bytes": 1010163,
+          "sha256": "0638e3b6eda110029e22abc2fb9ebfb9a5926f793a3b92950fb875ef881922fe",
           "reusedFrom": null,
           "cue": "Drive your elbows down without rocking.",
           "progress": 0.41590214067278286
@@ -1532,8 +1533,8 @@
             1024,
             1536
           ],
-          "bytes": 1020441,
-          "sha256": "00054465dcc43d170487519753dc1335c1714c5487aff51f85b1173deaf58a86",
+          "bytes": 1012073,
+          "sha256": "04dd6af7bdbeea626fc7e6afbcdf2abb8f1b4eb9b09df9b9e36c1b9b80d4c2d9",
           "reusedFrom": null,
           "cue": "Pull toward your upper chest, not behind your neck.",
           "progress": 1.0
@@ -1546,8 +1547,8 @@
             1024,
             1536
           ],
-          "bytes": 1020441,
-          "sha256": "00054465dcc43d170487519753dc1335c1714c5487aff51f85b1173deaf58a86",
+          "bytes": 1012073,
+          "sha256": "04dd6af7bdbeea626fc7e6afbcdf2abb8f1b4eb9b09df9b9e36c1b9b80d4c2d9",
           "reusedFrom": 3,
           "cue": "Briefly hold without leaning farther back.",
           "progress": 1.0
@@ -1560,8 +1561,8 @@
             1024,
             1536
           ],
-          "bytes": 1017421,
-          "sha256": "75291c34e8ebdde7e7139837bc4a82564cd648cfcd74a28464aa1a68b646d2eb",
+          "bytes": 1010163,
+          "sha256": "0638e3b6eda110029e22abc2fb9ebfb9a5926f793a3b92950fb875ef881922fe",
           "reusedFrom": 2,
           "cue": "Let your arms rise slowly under control.",
           "progress": 0.41590214067278286
@@ -1589,7 +1590,7 @@
       "status": "rejected-incomplete",
       "directory": "docs/exercise-art/pilots/lat-pulldown",
       "reason": "Stationary stack geometry/count changes. Early pull packet displacement contradicts 1:1 cable payout; targeted repair also failed.",
-      "expectedState": "Corrected master: selected packet y745–849, fixed block y890–1197. Early bar moves down about136px: selected packet should move up about136px; stationary block must stay unchanged.",
+      "expectedState": "Corrected master: selected packet y745\u2013849, fixed block y890\u20131197. Early bar moves down about136px: selected packet should move up about136px; stationary block must stay unchanged.",
       "nextStep": "Do not retry the same full-scene editing method. Establish a physically registered equipment construction before new frames."
     },
     {

@@ -7,10 +7,11 @@
   "findings": [
     "The same four selected plates now translate 0, 136, 327, 327, 136 and 0 pixels upward, paired with the measured downward bar movement. The lower stack stays pixel-exact.",
     "Two continuous guide rails are reconstructed once from the original rail texture and reused in every frame; this corrects the interrupted rails in the generated sources.",
-    "Upper-body poses retain generated anatomy. Grip spacing and the bar-end silhouette vary slightly between source poses; forward clearance at the neck and the final upper-chest position still need technique review.",
+    "The rigid bar is translated from the master. Measured finger/palm cores are registered without rescaling; the forearm joins deform. Finger anatomy still comes from separate generated poses. The rear three-quarter view does not establish forward neck clearance or upper-chest contact, so technique approval remains false.",
     "The upper-body composite feathers into the fixed lower body over y860\u2013875; no deformation is applied to the plate block. Pelvis, feet and seat below y876 are pixel-exact.",
     "The six beats use three joint configurations: setup, partial pull, finish pull, brief hold, controlled return and overhead return. The repeated endpoint closes the loop without a positional jump.",
-    "Static contact sheet and individual composite frames inspected. Native playback and mobile light/dark review are not certified; keep outside the production registry."
+    "Static contact sheet and individual composite frames inspected. Native playback and mobile light/dark review are not certified; keep outside the production registry.",
+    "Rejected first grip overlay: doubled finger contours, wrist seams and a clipped neck boundary. The selected repair segments the connected athlete silhouette to preserve occlusion, and excludes isolated metal highlights. Central shaft and both bar-end samples are pixel-exact translations."
   ],
   "measurements": "measurements.json",
   "referencePath": "../1-stack-corrected.png",
