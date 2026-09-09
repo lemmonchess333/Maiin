@@ -119,8 +119,18 @@ export function formatWaterVolume(ml: number): string {
   return `${litres} L`;
 }
 
-/** Litres value only (no unit), trimmed — for the card's hero number
- *  where the "L" unit is rendered separately. */
-export function formatLitresValue(ml: number): string {
-  return (clampMl(ml) / 1000).toFixed(2).replace(/\.?0+$/, "");
+/**
+ * `formatWaterVolume` split for a hero numeral, which sets the value big
+ * and the unit small.
+ *
+ * NOT `formatLitresValue` + a hard-coded "L": that always reads in
+ * litres, so a 750 ml day rendered "0.75 L" — a leading zero and a
+ * decimal where the rest of the app says "750 ml". Splitting the
+ * formatter keeps ONE rule about which unit a volume takes, so the
+ * hero and the container labels cannot disagree.
+ */
+export function splitWaterVolume(ml: number): { value: string; unit: string } {
+  const label = formatWaterVolume(ml);
+  const cut = label.lastIndexOf(" ");
+  return { value: label.slice(0, cut), unit: label.slice(cut + 1) };
 }

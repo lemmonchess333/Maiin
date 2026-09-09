@@ -109,60 +109,93 @@ describe("WaterCard compact tile — the meta row", () => {
     );
   });
 
-  it("gives both quick controls one treatment", () => {
+  it("gives both quick controls one treatment — an edge, not a fill", () => {
     /* They differed on three axes at once — border presence, background
        alpha, and the disabled state — so a stepper pair read as two
-       different KINDS of control. The border is load-bearing at full
-       fill (the disc is ~1.21:1 against the blended ground without it),
-       so it is pinned rather than left to taste. */
+       different KINDS of control.
+
+       The EDGE is what defines these, measured rather than assumed.
+       Against the two grounds a disc actually sits on (the card at 0%
+       fill, and the card plus the fill gradient at 100%, both themes)
+       every fill candidate lands between 1.00 and 1.49:1 — bg-background
+       1.16-1.49, bg-muted 1.06-1.33, bg-card 1.00-1.41, teal/15
+       1.19-1.28. None of them draws a control. The old teal/30 edge did
+       not either (1.44-1.71). A solid `border-teal` is 4.04-6.08 across
+       all four states, which clears the 3:1 WCAG 1.4.11 asks of a
+       control boundary.
+
+       So the fill is pinned ABSENT: an opaque `bg-background` disc is
+       darker than the tile in both themes and reads as a hole punched
+       through a teal card, which is what the owner saw on a device. */
     render(<WaterCard compact ml={500} targetMl={2000} onLog={vi.fn()} />);
     const add = screen.getByRole("button", { name: /^Add/ });
     const remove = screen.getByRole("button", { name: /^Remove/ });
-    for (const cls of [
-      "rounded-full",
-      "bg-background",
-      "border",
-      "border-teal/30",
-      "text-teal",
-    ]) {
+    for (const cls of ["rounded-full", "border", "border-teal", "text-teal"]) {
       expect(add, `plus is missing ${cls}`).toHaveClass(cls);
       expect(remove, `minus is missing ${cls}`).toHaveClass(cls);
+    }
+    for (const cls of ["bg-background", "bg-card", "bg-muted"]) {
+      expect(add, `plus should carry no fill, has ${cls}`).not.toHaveClass(cls);
+      expect(remove, `minus should carry no fill, has ${cls}`).not.toHaveClass(
+        cls
+      );
     }
   });
 });
 
-describe("WaterCard — the target is reached", () => {
-  /* `waterProgress` clamps at 1, so from the target upward every visual
-     on this card was frozen: 2 L and 7.25 L rendered pixel-for-pixel
-     alike. The number was the only thing that still varied, and it is
-     inside a button whose aria-label used to replace it — so a
-     screen-reader user could not reach it either. */
-  it("says nothing about a target that has not been reached", () => {
-    render(<WaterCard compact ml={1750} targetMl={2000} onLog={vi.fn()} />);
-    expect(
-      screen.getByRole("button", { name: /add water/i })
-    ).not.toHaveAccessibleName(/target reached/i);
-  });
+describe("WaterCard — it reports what you logged, not a score", () => {
+  /* The card used to render "4.5 / 2 L ✓" and speak "… of 2 litres.
+     Target reached." Owner call, from a device screenshot: drop the
+     target framing entirely — "they don't even say out of two litres,
+     they just say you're logging it… let people log it."
 
-  it("marks the target reached, and says how far over", () => {
-    render(<WaterCard compact ml={7250} targetMl={2000} onLog={vi.fn()} />);
-    const body = screen.getByRole("button", { name: /add water/i });
-    /* The whole reading, in one sentence, on the control that owns it —
-       "7.25 litres", not "7.25 L", because `L` beside a numeral is
-       spoken as a letter (the MacroRing "grams" precedent). */
-    expect(body).toHaveAccessibleName(
-      /Water 7\.25 litres of 2 litres\. Target reached\. 5\.25 litres over\./
+     So these pin ABSENCE. That is the point: the tick and the
+     denominator are exactly the kind of thing that creeps back in a
+     later polish pass, and a test that only checked the new string
+     would not notice one returning beside it. */
+  it("shows the amount with its own unit, and no target", () => {
+    const { container } = render(
+      <WaterCard compact ml={4500} targetMl={2000} onLog={vi.fn()} />
     );
+    expect(container.textContent).toContain("4.5");
+    expect(container.textContent).toContain("L");
+    expect(container.textContent).not.toMatch(/\/\s*2/);
   });
 
-  it("reaching the target exactly is reached, with nothing over", () => {
-    /* `met` is `>= target`, not MacroRing's 0.9-1.1 `done` band. A band
-       would un-tick this card at 2.3 L while `hydration_hero` had
-       already awarded the day on `ml >= target`. */
-    render(<WaterCard compact ml={2000} targetMl={2000} onLog={vi.fn()} />);
-    expect(
-      screen.getByRole("button", { name: /add water/i })
-    ).toHaveAccessibleName(/Target reached\.$|Target reached\. Add water/);
+  it("keeps millilitres in millilitres", () => {
+    /* `formatLitresValue` always divided by 1000, so a 750 ml day read
+       "0.75" — a leading zero and a decimal where every container label
+       in the app says "750 ml". splitWaterVolume defers to the one
+       formatter that decides the unit. */
+    const { container } = render(
+      <WaterCard compact ml={750} targetMl={2000} onLog={vi.fn()} />
+    );
+    expect(container.textContent).toContain("750");
+    expect(container.textContent).toContain("ml");
+    expect(container.textContent).not.toContain("0.75");
+  });
+
+  it("says nothing about a target, at any amount", () => {
+    for (const ml of [0, 1750, 2000, 7250]) {
+      const { unmount } = render(
+        <WaterCard compact ml={ml} targetMl={2000} onLog={vi.fn()} />
+      );
+      const body = screen.getByRole("button", { name: /add water/i });
+      expect(body, `${ml} ml`).not.toHaveAccessibleName(/target reached/i);
+      expect(body, `${ml} ml`).not.toHaveAccessibleName(/of 2 litres/i);
+      unmount();
+    }
+  });
+
+  it("renders no completion tick once the old target is passed", () => {
+    /* Anchored on a positive first: the reading must still RENDER at
+       7.25 L. Asserting only that no tick exists would pass just as
+       well if the whole numeral had vanished. */
+    const { container } = render(
+      <WaterCard compact ml={7250} targetMl={2000} onLog={vi.fn()} />
+    );
+    expect(container.textContent).toContain("7.25");
+    expect(container.querySelector(".lucide-check")).toBeNull();
   });
 
   it("announces the new total after a quick log, not the delta", () => {
@@ -192,9 +225,7 @@ describe("WaterCard — the target is reached", () => {
     );
     const status = document.querySelector('[role="status"]') as HTMLElement;
     expect(status).toBeTruthy();
-    expect(status.textContent).toMatch(
-      /2 litres of 2 litres\. Target reached\./
-    );
+    expect(status.textContent).toMatch(/Water 2 litres logged\./);
   });
 
   it("a refused log leaves no announcement pending", () => {

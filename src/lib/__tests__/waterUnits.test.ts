@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import {
+  splitWaterVolume,
   GLASS_ML,
   DEFAULT_TARGET_ML,
   WATER_PRESETS,
@@ -8,7 +9,6 @@ import {
   resolveTargetMl,
   waterProgress,
   formatWaterVolume,
-  formatLitresValue,
 } from "../waterUnits";
 
 describe("clampMl", () => {
@@ -69,14 +69,6 @@ describe("formatWaterVolume", () => {
   });
 });
 
-describe("formatLitresValue", () => {
-  it("returns the trimmed litres value with no unit", () => {
-    expect(formatLitresValue(250)).toBe("0.25");
-    expect(formatLitresValue(1250)).toBe("1.25");
-    expect(formatLitresValue(2000)).toBe("2");
-  });
-});
-
 describe("WATER_PRESETS", () => {
   it("carries the Glass / Bottle / Large containers", () => {
     expect(WATER_PRESETS.map((p) => p.ml)).toEqual([250, 500, 750]);
@@ -97,5 +89,34 @@ describe("resolveTargetMl — corrupt values fall to the default, never to 0", (
   it("non-finite legacy glasses fall through too", () => {
     expect(resolveTargetMl({ targetWaterGlasses: Infinity })).toBe(2000);
     expect(resolveTargetMl({ targetGlasses: NaN })).toBe(2000);
+  });
+});
+
+describe("splitWaterVolume", () => {
+  /* The card's hero numeral sets the value big and the unit small, so it
+     needs the two apart. It used to do that with `formatLitresValue` + a
+     hard-coded "L", which always divided by 1000 — a 750 ml day rendered
+     "0.75 L", a leading zero and a decimal where every container label
+     in the app says "750 ml". Deferring to `formatWaterVolume` keeps ONE
+     rule about which unit a volume takes. */
+  it("keeps sub-litre volumes in millilitres", () => {
+    expect(splitWaterVolume(750)).toEqual({ value: "750", unit: "ml" });
+    expect(splitWaterVolume(250)).toEqual({ value: "250", unit: "ml" });
+  });
+
+  it("crosses into litres at a litre, trimming trailing zeros", () => {
+    expect(splitWaterVolume(1000)).toEqual({ value: "1", unit: "L" });
+    expect(splitWaterVolume(4500)).toEqual({ value: "4.5", unit: "L" });
+    expect(splitWaterVolume(1250)).toEqual({ value: "1.25", unit: "L" });
+  });
+
+  it("recombines into exactly what formatWaterVolume renders", () => {
+    /* The contract that makes it safe to use one in place of the other:
+       a split that drifted from the formatter would put a unit on the
+       card that no container label agrees with. */
+    for (const ml of [0, 1, 250, 999, 1000, 1001, 4500, 7250, 100000]) {
+      const { value, unit } = splitWaterVolume(ml);
+      expect(`${value} ${unit}`, `${ml} ml`).toBe(formatWaterVolume(ml));
+    }
   });
 });

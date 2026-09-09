@@ -1,7 +1,7 @@
 import Button from "@/components/ui/Button";
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { Droplets, Plus, Minus, Check } from "lucide-react";
+import { Droplets, Plus, Minus } from "lucide-react";
 import { haptic } from "@/lib/haptic";
 import { track as trackHomeEvent } from "@/lib/homeAnalytics";
 import IconButton from "@/components/ui/IconButton";
@@ -11,8 +11,8 @@ import WaterBubbles from "@/components/home/WaterBubbles";
 import WaterSizeSheet from "@/components/home/WaterSizeSheet";
 import {
   GLASS_ML,
-  formatLitresValue,
   formatWaterVolume,
+  splitWaterVolume,
   waterProgress,
 } from "@/lib/waterUnits";
 
@@ -88,10 +88,11 @@ export default function WaterCard({
   /* ONE sentence, two readers — the button's accessible name and the
      live region both take it, so they cannot drift apart. Past the
      target it carries the only thing that still varies on this card. */
-  const reading =
-    `Water ${spokenVolume(ml)} of ${spokenVolume(targetMl)}.` +
-    (met ? " Target reached." : "") +
-    (met && ml > targetMl ? ` ${spokenVolume(ml - targetMl)} over.` : "");
+  /* Just what has been logged. The card used to read "… of 2 litres.
+     Target reached." — the same out-of-N framing the visible number
+     dropped, and a screen reader should not be told about a goal the
+     screen no longer shows. */
+  const reading = `Water ${spokenVolume(ml)} logged.`;
 
   useEffect(() => {
     const previous = wasMet.current;
@@ -135,25 +136,34 @@ export default function WaterCard({
      with no edge — so a stepper pair read as two different KINDS of
      control.
 
-     The surface is `bg-background`, not a teal tint, and that is what
-     makes the pair survive a full tile. `waterProgress` clamps at 1, so
-     a 362% day IS the 100% case: the fill covers the tile and its
-     gradient is STRONGEST at the bottom (rgba(30,120,155,0.25) below) —
-     exactly where these sit. Measured on that blended ground, a
-     `bg-teal/10` disc is ~1.1:1, i.e. gone. An opaque page-surface disc
-     is darker than BOTH tile surfaces in BOTH themes (light 93% L vs
-     card 100% / muted 97.5%; dark 7% vs 13% / 17%), so it reads as a
-     shallow well at 0% fill and punches out of the fill at 100%.
+     NO FILL, and a SOLID teal edge. The previous pass gave these an
+     opaque `bg-background` disc on the reasoning that a teal tint
+     vanishes against a full tile — `waterProgress` clamps at 1, so a
+     362% day covers the tile with a gradient strongest at the bottom
+     (rgba(30,120,155,0.25)), exactly where these sit. The diagnosis was
+     right and the cure was wrong: on the dark theme the page surface is
+     #121214, so the pair read as two black holes punched through a teal
+     card. Owner feedback, from a device: "the contrast looks weird…
+     it's not high fidelity enough."
+     
+     Measured against the ground each disc actually sits on — the card
+     at 0% fill and the card+gradient at 100%, both themes:
 
-     The BORDER is load-bearing, not decoration: the disc's own fill is
-     only ~1.21:1 against that ground at full fill, and the teal/30 edge
-     is what defines the control. Do not drop it later.
+       fill: bg-background 1.16-1.49   bg-muted 1.06-1.33
+             bg-card       1.00-1.41   teal/15  1.19-1.28
+
+     Every candidate is invisible. The fill was never defining these
+     controls, so the honest move is to drop it. The same measurement on
+     the EDGE says the old teal/30 was not carrying them either
+     (1.44-1.71); a solid `border-teal` is 4.04-6.08 across all four
+     states, clearing the 3:1 that WCAG 1.4.11 asks of a control
+     boundary. The teal glyph is 4.04-6.08 on the same grounds.
 
      `hover:bg-teal/10` is required, not polish — IconButton's ghost
      variant supplies `hover:bg-muted`, which greys these on the web
      build, the surface this app is previewed on. */
   const quickControlClass =
-    "rounded-full bg-background border border-teal/30 text-teal hover:bg-teal/10";
+    "rounded-full border border-teal text-teal hover:bg-teal/10";
 
   const controls = (
     <div className="flex items-center gap-1 flex-shrink-0">
@@ -211,7 +221,11 @@ export default function WaterCard({
             <WaterWave fillPercent={fillPercent} splash={rippleKey} />
           )}
         </motion.div>
-        {ml > 2 * GLASS_ML && <WaterBubbles />}
+        {/* No bubbles on the compact tile. It is 176x134 CSS px, the
+            wave is already an ambient loop on this surface (DESIGN_GUIDE
+            allows one), and 3-4px decorative dots at that size read as
+            specks rather than as bubbles. The hero card below keeps
+            them, where there is room for the effect to land. */}
         <div className="relative z-10 flex flex-col flex-1">
           {/* Card body opens the size sheet (choose a container). */}
           {/* Focus ring + 0.97 press mirror the peer tile's button
@@ -254,25 +268,13 @@ export default function WaterCard({
                 uses this treatment, so the compact one was the outlier
                 inside its own component too. */}
             <p className="text-2xl font-extrabold leading-none text-foreground font-mono tabular-nums">
-              {formatLitresValue(ml)}
+              {splitWaterVolume(ml).value}
               <span
-                className="text-sm font-normal mx-1"
+                className="text-sm font-normal ml-1"
                 style={{ color: "hsl(var(--muted-foreground))" }}
               >
-                / {formatWaterVolume(targetMl)}
+                {splitWaterVolume(ml).unit}
               </span>
-              {/* The completion cue the card had none of. Past the
-                  target every other visual is frozen (the fill clamps
-                  at 1), so without this a 362% day looks exactly like
-                  hitting 2 L. A tick, not a colour change or a second
-                  line: `items-stretch` on Home.tsx makes any height
-                  change here resize the weight tile too. */}
-              {met && (
-                <Check
-                  className="inline size-4 align-baseline text-teal"
-                  aria-hidden="true"
-                />
-              )}
             </p>
           </button>
           {/* Row 3 — the compact-tile meta row, which water alone lacked.
@@ -378,25 +380,13 @@ export default function WaterCard({
           <div className="flex-1 min-w-0">
             <SectionLabel>Water</SectionLabel>
             <p className="text-2xl font-extrabold leading-none text-foreground font-mono tabular-nums">
-              {formatLitresValue(ml)}
+              {splitWaterVolume(ml).value}
               <span
-                className="text-sm font-normal mx-1"
+                className="text-sm font-normal ml-1"
                 style={{ color: "hsl(var(--muted-foreground))" }}
               >
-                / {formatWaterVolume(targetMl)}
+                {splitWaterVolume(ml).unit}
               </span>
-              {/* The completion cue the card had none of. Past the
-                  target every other visual is frozen (the fill clamps
-                  at 1), so without this a 362% day looks exactly like
-                  hitting 2 L. A tick, not a colour change or a second
-                  line: `items-stretch` on Home.tsx makes any height
-                  change here resize the weight tile too. */}
-              {met && (
-                <Check
-                  className="inline size-4 align-baseline text-teal"
-                  aria-hidden="true"
-                />
-              )}
             </p>
           </div>
         </button>
