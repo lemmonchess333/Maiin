@@ -104,43 +104,12 @@ test.describe("calendar day peek", () => {
     await shootLightDark(page, "day-peek-open");
   });
 
-  /* The peek above deliberately opens a NON-today cell, and WeekStrip
-     resolves `{ startDate: today, days: 7 }` — so every other cell is in
-     the FUTURE and carries no meals. The nutrition summary row therefore
-     never appears in that frame. This one opens TODAY, which is the only
-     cell the seed gives meals to, and is the state where the row becomes
-     a way through to that day's diary. */
-  test("day peek on today — nutrition row is a route into the diary", async ({
-    page,
-  }) => {
-    test.setTimeout(120_000);
-    await page.goto("");
-    await page
-      .getByRole("navigation", { name: /main navigation/i })
-      .waitFor({ state: "visible", timeout: 20000 });
-    await page.waitForTimeout(1000);
-    for (const [x, y] of [
-      [8, 8],
-      [8, 8],
-    ] as const) {
-      await page.mouse.click(x, y).catch(() => {});
-      await page.waitForTimeout(200);
-    }
-    await page
-      .getByRole("button", { name: /^nice$/i })
-      .click({ timeout: 2000 })
-      .catch(() => {});
-
-    // Today's cell is the first in the strip (startDate: today).
-    const dayCells = page.getByRole("button", { name: /\w+day \d+ \w+,/i });
-    const count = await dayCells.count().catch(() => 0);
-    if (count > 0) {
-      await dayCells
-        .first()
-        .click({ timeout: 4000 })
-        .catch(() => {});
-    }
-    await page.waitForTimeout(600);
-    await shootLightDark(page, "day-peek-today");
-  });
+  /* NO "today" frame here, and the reason is worth keeping.
+     Tapping today never opens a peek at all: Home's handleDayTap
+     short-circuits on `dk === localDateString()` and scrolls to the
+     session cards instead (Cal-A — "tapping TODAY is redundant with the
+     live session cards right below"). Combined with WeekStrip resolving
+     `{ startDate: today, days: 7 }`, every date this card can ever show
+     is strictly in the FUTURE. A capture aimed at today films the plain
+     Home page and reads as a peek frame that lost its card. */
 });

@@ -91,11 +91,27 @@ function LiftRowShell({
  * renders as the plain `<div>` it always was rather than a link that
  * silently lands somewhere else — `/food` clamps an out-of-range
  * `?date=` back to today, so an ungated link would look like a broken
- * jump. The only rule that can bind HERE is "not in the future":
- * WeekStrip resolves `{ startDate: today, days: 7 }`, so every dateKey
- * this card sees is today or later, which puts Food.tsx's 90-day
- * FOOD_TAP_BACK_DAYS floor out of reach. If the strip ever gains past
- * days, this guard has to grow that floor too.
+ * jump.
+ *
+ * READ THIS BEFORE ASSUMING THE ROW IS LIVE. On today's Home it cannot
+ * render at all, and neither half of that is this row's doing:
+ *
+ *   WeekStrip     resolveTrainingWindow({ startDate: today, days: 7 })
+ *                 -> today plus six FUTURE days, no past day exists
+ *   handleDayTap  returns early on `dk === localDateString()`, scrolling
+ *                 to the session cards instead of opening a peek (Cal-A)
+ *
+ * So every dateKey this card is ever given is strictly in the future,
+ * `getDailyTotals` of a future day is empty, and `mealCount > 0` is
+ * never true. Confirmed against the capture channel: the day-peek frame
+ * shows date, badge, session and "Manage day" — no nutrition row.
+ *
+ * The guard below is therefore written for the surface as it SHOULD be
+ * rather than as it is: the moment the strip gains a past day, or
+ * tapping today opens a peek, the row is correct without further work.
+ * The 90-day FOOD_TAP_BACK_DAYS floor is the one rule it does NOT yet
+ * carry, because it cannot bind while the window starts at today — add
+ * it in the same change that makes a past day reachable.
  */
 function DiaryRowShell({
   to,
