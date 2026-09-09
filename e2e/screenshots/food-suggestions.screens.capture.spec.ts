@@ -46,10 +46,23 @@ test.describe("food suggestion actions", () => {
     await signInAsTestUser(page);
   });
 
-  /* Not fullPage: the dropdown is absolutely positioned under the
-     composer and a full-page shot buries it under the diary below.
-     The viewport crop is the surface under review. */
+  /* CLIPPED to the composer and the rows beneath it. A full-page shot
+     buries the dropdown under the diary; a plain viewport shot lets the
+     bottom nav sit over the lower rows, which is what the first run of
+     this spec filmed. The clip is computed from the input's own box so
+     it tracks the layout instead of hard-coding a y. */
   async function shootLightDark(page: Page, name: string) {
+    const box = await page
+      .getByRole("textbox", { name: "What did you eat" })
+      .boundingBox();
+    const clip = box
+      ? {
+          x: 0,
+          y: Math.max(0, box.y - 16),
+          width: 393,
+          height: Math.min(430, 852 - Math.max(0, box.y - 16)),
+        }
+      : undefined;
     for (const theme of ["light", "dark"] as const) {
       await page.evaluate((t) => {
         document.documentElement.classList.toggle("dark", t === "dark");
@@ -63,11 +76,25 @@ test.describe("food suggestion actions", () => {
       await page.screenshot({
         animations: "disabled",
         path: `screenshots/${name}-${theme}.png`,
+        ...(clip ? { clip } : {}),
       });
     }
     await page.evaluate(() =>
       document.documentElement.classList.remove("dark")
     );
+  }
+
+  /* The rig has no network, so the Open Food Facts fetch fails and
+     raises "Couldn't search foods." over the rows this spec exists to
+     film. Correct app behaviour, wrong thing to photograph. */
+  async function dismissSearchError(page: Page) {
+    await page
+      .getByRole("button", { name: /close|dismiss/i })
+      .last()
+      .click({ timeout: 1500 })
+      .catch(() => {});
+    await page.keyboard.press("Escape").catch(() => {});
+    await page.waitForTimeout(200);
   }
 
   async function openComposer(page: Page) {
@@ -97,7 +124,8 @@ test.describe("food suggestion actions", () => {
     // the local FOOD_DB. A longer query narrows to one row and stops
     // showing the pantry-vs-local contrast that is the point here.
     await input.fill("chicken");
-    await page.waitForTimeout(900);
+    await page.waitForTimeout(1500);
+    await dismissSearchError(page);
     await shootLightDark(page, "food-suggest-typed");
   });
 });
