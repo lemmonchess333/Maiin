@@ -310,6 +310,15 @@ select.ds-input:focus {
   -webkit-backdrop-filter: blur(10px);
   -webkit-mask-image: linear-gradient(to bottom, black 56%, transparent 100%);
   mask-image: linear-gradient(to bottom, black 56%, transparent 100%);
+  /* The occluder is decoration over live content, so it must not eat
+     taps. It spans the full viewport width at z-40 — above the
+     page-chrome tier — so without this every control that scrolls into
+     the top band is dead: WeekStrip day cells, the water tile's
+     +/- buttons, the settings icon. `aria-hidden` hides it from
+     assistive tech and does nothing about hit-testing. `.bottom-nav-frame`
+     above already sets this for the identical reason at the other end of
+     the screen; the top was missed. */
+  pointer-events: none;
   /* Force the occluder onto its OWN compositor layer. Without this,
      position:fixed + backdrop-filter elements get folded into the page's
      scroll layer and the compositor drops them mid-scroll (the known iOS
