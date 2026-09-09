@@ -1317,7 +1317,7 @@ export default function Run() {
                 <div
                   className="size-14 rounded-full flex items-center justify-center"
                   style={{
-                    background: "rgba(0,212,170,0.12)",
+                    background: `${THEME.teal}1F`,
                     border: `2px solid ${THEME.teal}`,
                   }}
                 >

@@ -10,7 +10,6 @@
  */
 
 import type { ActivityType } from "@/types/run";
-import { THEME } from "@/lib/theme";
 import { isPaceTrendEligible } from "./runStatsEligibility";
 
 export type PaceTrend = "pr" | "improving" | "consistent" | "no-data";
@@ -18,8 +17,39 @@ export type PaceTrend = "pr" | "improving" | "consistent" | "no-data";
 export interface PaceTrendResult {
   trend: PaceTrend;
   label: string;
-  color: string;
-  bgColor: string;
+  /**
+   * Tailwind classes for the badge: a token tint plus that token's AA
+   * text step. NOT a colour string — RunSummary renders this badge at
+   * `text-sm font-semibold` (14px, so 4.5:1 applies, not 3:1), and the
+   * fixed values that used to live here could not clear it. Measured on
+   * `--background`, the page canvas the badge actually sits on and the
+   * worst of the three surfaces in light mode:
+   *
+   *              was     now
+   *   PR!      1.66:1  4.82:1
+   *   Faster   1.90:1  4.50:1
+   *   Steady   2.81:1  4.60:1   (also failed DARK, at 4.13:1)
+   *
+   * Two things had to move together. The colours became the tuned
+   * `-strong` steps — theme-aware, unlike the frozen hex — and the tint
+   * dropped 15% -> 10%, because in light mode a denser tint darkens the
+   * ground under dark text. At 15% even the correct steps only reach
+   * 4.22 / 4.37 on the canvas; 10% is the strongest tint at which all
+   * three clear AA on card, muted AND background in both themes.
+   *
+   * Writing them as CLASSES rather than `hsl(var(--x) / 0.1)` is what
+   * keeps them honest: `tokenContrast.test.ts` derives its tint alphas
+   * by scanning the source for `bg-<token>/<n>`, so this badge is now
+   * inside a guard that already existed, and raising the tint back to
+   * /15 turns that suite red on its own.
+   *
+   * `--lifting` is the token whose value IS `THEME.brand` (#7B72E9);
+   * `--primary` is a slightly different purple, and `--primary-strong`
+   * is the darker step for white text ON a purple fill — the opposite
+   * direction, and 3.24:1 here. The "lifting" name is the documented
+   * value-alias debt, not a claim that Steady is a lifting badge.
+   */
+  className: string;
 }
 
 interface RunForTrend {
@@ -41,7 +71,7 @@ export function calculatePaceTrend(
   allRuns: RunForTrend[]
 ): PaceTrendResult {
   if (!isPaceTrendEligible(currentRun)) {
-    return { trend: "no-data", label: "", color: "", bgColor: "" };
+    return { trend: "no-data", label: "", className: "" };
   }
 
   // Find comparable runs (within 20% distance, excluding the current one)
@@ -54,7 +84,7 @@ export function calculatePaceTrend(
   });
 
   if (comparable.length < MIN_COMPARABLE_RUNS) {
-    return { trend: "no-data", label: "", color: "", bgColor: "" };
+    return { trend: "no-data", label: "", className: "" };
   }
 
   // Sort by date (oldest first)
@@ -72,8 +102,7 @@ export function calculatePaceTrend(
     return {
       trend: "pr",
       label: "PR!",
-      color: THEME.amberLight,
-      bgColor: "rgba(245, 158, 11, 0.15)",
+      className: "bg-achievement/10 text-achievement-strong",
     };
   }
 
@@ -82,8 +111,7 @@ export function calculatePaceTrend(
     return {
       trend: "improving",
       label: "Faster",
-      color: "#2dd4bf",
-      bgColor: "rgba(45, 212, 191, 0.15)",
+      className: "bg-success/10 text-success-strong",
     };
   }
 
@@ -92,11 +120,10 @@ export function calculatePaceTrend(
     return {
       trend: "consistent",
       label: "Steady",
-      color: THEME.brand,
-      bgColor: "rgba(124, 110, 246, 0.15)",
+      className: "bg-lifting/10 text-lifting-strong",
     };
   }
 
   // Slower — never show negative badge
-  return { trend: "no-data", label: "", color: "", bgColor: "" };
+  return { trend: "no-data", label: "", className: "" };
 }

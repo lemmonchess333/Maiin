@@ -150,7 +150,7 @@ export default function IntervalStepShell({
     <div
       className="mx-4 rounded-2xl overflow-hidden"
       style={{
-        background: "rgba(18, 18, 20, 0.97)",
+        background: `${THEME.bg}F7`,
         border: "1px solid rgba(255, 255, 255, 0.06)",
       }}
     >

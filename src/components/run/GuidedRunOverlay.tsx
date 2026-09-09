@@ -67,8 +67,9 @@ export default function GuidedRunOverlay({
            app theme. The theme-aware glass vars flipped to white in light
            mode here, rendering a white card with this component's white
            text/tracks on the dark map — unreadable. Values = the .dark
-           definitions of --glass-bg / --glass-border in index.css. */
-        background: "rgba(18, 18, 20, 0.97)",
+           definitions of --glass-bg / --glass-border in index.css, which
+           are THEME.bg at 97% (0xF7) and white at 6%. */
+        background: `${THEME.bg}F7`,
         border: "1px solid rgba(255, 255, 255, 0.06)",
       }}
     >

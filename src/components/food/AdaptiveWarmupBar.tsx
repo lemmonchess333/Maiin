@@ -39,7 +39,7 @@ export default function AdaptiveWarmupBar({
       </div>
       <div
         className="h-1 rounded-full overflow-hidden"
-        style={{ background: "rgba(123, 114, 233, 0.12)" }}
+        style={{ background: `${THEME.brand}1F` }}
       >
         <div
           className="h-full rounded-full motion-safe:transition-[width] motion-safe:duration-500"

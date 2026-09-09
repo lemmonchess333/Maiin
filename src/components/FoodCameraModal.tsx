@@ -892,8 +892,8 @@ export default function FoodCameraModal({
           <div
             className="size-16 rounded-2xl flex items-center justify-center"
             style={{
-              background: "rgba(217,136,78,0.12)",
-              border: "1px solid rgba(217,136,78,0.25)",
+              background: `${THEME.semantic.nutrition}1F`,
+              border: `1px solid ${THEME.semantic.nutrition}40`,
             }}
           >
             <CameraOff

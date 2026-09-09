@@ -1038,7 +1038,7 @@ export default function ProgrammeSettings({
       {/* ── Sticky save bar ── */}
       {(dirty || saving) && (
         <div
-          className="sticky z-20 -mx-4 px-4 pt-3 pb-3 bg-background/92 backdrop-blur border-t border-border shadow-[0_-10px_24px_rgba(15,23,42,0.08)]"
+          className="sticky z-20 -mx-4 px-4 pt-3 pb-3 bg-background/92 backdrop-blur border-t border-border shadow-[0_-10px_24px_rgba(0,0,0,0.08)]"
           style={{ bottom: "calc(var(--tab-bar-height) + var(--safe-bottom))" }}
         >
           <PendingChangesSummary
