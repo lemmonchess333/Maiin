@@ -13,6 +13,8 @@
  *
  * Freeform users skip this entirely.
  */
+import { THEME } from "@/lib/theme";
+
 export default function RunSetupSkeleton() {
   return (
     <div className="flex-1 flex flex-col bg-background text-foreground">
@@ -21,7 +23,7 @@ export default function RunSetupSkeleton() {
         {/* Context-strip placeholder — purple-tinted like the real strip */}
         <div
           className="h-7 rounded-xl motion-safe:animate-pulse"
-          style={{ background: "rgba(123,114,233,0.10)" }}
+          style={{ background: THEME.iconBg }}
           aria-hidden="true"
         />
         {/* Selected-run card placeholder — matches the real card shape */}

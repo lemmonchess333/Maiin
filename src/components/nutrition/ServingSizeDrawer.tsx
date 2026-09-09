@@ -185,7 +185,7 @@ export function ServingSizeDrawer({ food, open, onClose, onConfirm }: Props) {
           className="w-full py-3 rounded-xl text-base font-semibold text-white mt-4"
           style={{
             background: THEME.gradient.brand,
-            boxShadow: "0 4px 16px rgba(124,110,246,0.25)",
+            boxShadow: "var(--ds-shadow-purple-glow)",
           }}
         >
           Log food

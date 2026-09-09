@@ -42,23 +42,28 @@ const VARIANT_CONFIG: Record<
   BubbleVariant,
   { icon: typeof Trophy; color: string; bg: string; border: string }
 > = {
+  /* PR gold is THEME.tier.gold — byte-identical to the #ffd700 that
+     was here, and the same gold the badge/medal tiers already use. */
   pr: {
     icon: Trophy,
-    color: "#ffd700",
-    bg: "rgba(255, 215, 0, 0.08)",
-    border: "rgba(255, 215, 0, 0.15)",
+    color: THEME.tier.gold,
+    bg: `${THEME.tier.gold}14`,
+    border: `${THEME.tier.gold}26`,
   },
+  /* Was teal-500 (#14b8a6) — stock Tailwind, not a Tropos colour, and
+     not the hydration teal it reads as. A CheckCircle "complete" is the
+     POSITIVE register, so it takes THEME.success. */
   complete: {
     icon: CheckCircle,
-    color: "#14b8a6",
-    bg: "rgba(20, 184, 166, 0.08)",
-    border: "rgba(20, 184, 166, 0.15)",
+    color: THEME.success,
+    bg: `${THEME.success}14`,
+    border: `${THEME.success}26`,
   },
   generic: {
     icon: Bell,
     color: THEME.brand,
-    bg: "rgba(123, 114, 233, 0.07)",
-    border: "rgba(123, 114, 233, 0.12)",
+    bg: `${THEME.brand}12`,
+    border: `${THEME.brand}1F`,
   },
 };
 
