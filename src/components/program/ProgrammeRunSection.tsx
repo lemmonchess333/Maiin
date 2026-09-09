@@ -1,3 +1,4 @@
+import RunPurpose from "@/components/run/RunPurpose";
 /**
  * Programme Run tab — hybrid training cockpit.
  *
@@ -1425,16 +1426,14 @@ export default function ProgrammeRunSection({
                   sport="run"
                   eyebrow={`${selectedEyebrow} · ${selectedDateLabel}`}
                   title={selectedTemplate?.name ?? "Run"}
-                  description={selectedPurpose.purpose ?? undefined}
+                  description={selectedTemplate?.description}
                   meta={[
                     ...(selectedPurpose.weekLabel
                       ? [selectedPurpose.weekLabel]
                       : []),
                     ...selectedRunMeta,
                   ]}
-                  primaryActionLabel={
-                    selectedIsRace ? "Start race" : "Start run"
-                  }
+                  primaryActionLabel={selectedIsRace ? "View race" : "View run"}
                   onPrimaryAction={() => {
                     haptic();
                     // startUrl carries ?template=&scheduledRunId= so the run
@@ -1446,6 +1445,7 @@ export default function ProgrammeRunSection({
                     setManageDate(selectedDateKey);
                   }}
                 />
+                <RunPurpose>{selectedPurpose.purpose}</RunPurpose>
                 {/* Secondary: an ad-hoc run that does NOT fulfil the plan slot. */}
                 <button
                   type="button"

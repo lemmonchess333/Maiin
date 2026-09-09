@@ -21,6 +21,8 @@ export default function WeightStepsTiles({
   weightUnit,
   onLogWeight,
   lastWeightDate,
+  syncStatus,
+  saveAnnouncement,
   hideNumber = false,
   weightTrend = null,
   stepsStatus = "unavailable",
@@ -32,6 +34,8 @@ export default function WeightStepsTiles({
   weightUnit: string;
   onLogWeight: () => void;
   lastWeightDate: string;
+  syncStatus?: string | null;
+  saveAnnouncement?: string;
   /* #984 "Hide the number" anti-anxiety mode. When true AND a weight
      exists, the raw figure is replaced with a calm direction
      indicator (arrow + short phrase) + the date. */
@@ -175,6 +179,14 @@ export default function WeightStepsTiles({
             </p>
           )}
         </div>
+        <span
+          role="status"
+          className={
+            syncStatus ? "text-micro text-muted-foreground mt-2" : "sr-only"
+          }
+        >
+          {syncStatus ?? saveAnnouncement}
+        </span>
       </button>
       {stepsTileEnabled && (
         <button

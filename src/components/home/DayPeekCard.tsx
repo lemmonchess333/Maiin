@@ -1,3 +1,5 @@
+import RunPurpose from "@/components/run/RunPurpose";
+import { runSessionPresentation } from "@/lib/runSessionExplainer";
 import { useState } from "react";
 import { THEME } from "@/lib/theme";
 import { motion } from "framer-motion";
@@ -225,10 +227,20 @@ export default function DayPeekCard({
   const plannedLiftName = resolved.lift.workout?.dayName ?? null;
   const runTemplateId =
     resolved.run.runDay?.userOverride || resolved.run.runDay?.templateId;
-  const runName =
-    (runTemplateId &&
-      RUN_TEMPLATES.find((t) => t.id === runTemplateId)?.name) ||
-    "Run";
+  const runTemplate = RUN_TEMPLATES.find((t) => t.id === runTemplateId);
+  const runName = runTemplate?.name ?? "Run";
+  const runPurpose =
+    runTemplate && profile?.runMode !== "freeform"
+      ? runSessionPresentation({
+          type: runTemplate.type,
+          templateId: runTemplate.id,
+          currentWeek: programState?.runPlan?.currentWeek,
+          totalWeeks: programState?.runPlan?.totalWeeks,
+          distance:
+            programState?.runPlan?.raceGoal?.distance ??
+            profile?.raceGoal?.distance,
+        }).purpose
+      : null;
   // Q5 P69 — extras on the Home peek surface. Cap-at-2 (P71)
   // mirrors the RunWeekStrip pattern; overflow taps through to
   // /history. Counts toward the activity-section gate so a
@@ -429,6 +441,20 @@ export default function DayPeekCard({
                       </span>
                     ) : null}
                   </span>
+                </div>
+              )}
+              {runTemplate && (
+                <div className="pl-5 space-y-1">
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    <span className="font-mono tabular-nums">
+                      {runTemplate.config.targetDistanceKm
+                        ? `${runTemplate.config.targetDistanceKm} km`
+                        : `${runTemplate.estimatedDuration} min total`}
+                    </span>
+                    {" · "}
+                    {runTemplate.description}
+                  </p>
+                  <RunPurpose>{runPurpose}</RunPurpose>
                 </div>
               )}
               {/* Q5 P69/P70/P71 — extras rows. Mirrored from

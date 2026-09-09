@@ -25,10 +25,7 @@ import {
   blockPrefersShorterSessions,
 } from "@/features/program/represcribe";
 import { THEME } from "@/lib/theme";
-import {
-  liftSessionExplainer,
-  liftWeekLabel,
-} from "@/lib/liftSessionExplainer";
+import { liftWeekLabel } from "@/lib/liftSessionExplainer";
 import WeekPhaseRow from "@/components/program/WeekPhaseRow";
 import SkipConfirmSheet from "@/components/program/SkipConfirmSheet";
 import ExpressSessionSheet from "@/components/program/ExpressSessionSheet";
@@ -757,19 +754,6 @@ function ProgramInner() {
     ),
   ].slice(0, 3);
 
-  function getDayMuscleGroups(exercises: { exerciseId: string }[]): string {
-    const groups = exercises
-      .map((ex) => getExerciseById(ex.exerciseId)?.category)
-      .filter(Boolean);
-    const unique = [...new Set(groups)] as string[];
-    if (unique.length === 0) return "";
-    if (unique.length <= 3) return unique.join(" · ");
-    return unique.slice(0, 3).join(" · ") + " + more";
-  }
-  const muscleGroups = selectedWorkout
-    ? getDayMuscleGroups(selectedWorkout.exercises)
-    : "";
-
   // ── Handlers ──
   const handleSelect = (newIndex: number) => {
     if (isAnimating.current || newIndex === idx) return;
@@ -1240,30 +1224,6 @@ function ProgramInner() {
                 >
                   {selectedWorkout && (
                     <div className="space-y-3">
-                      {/* PROGRAM-BLOCK-01 — compact Training Block header.
-                          Quiet by design: the SessionCommandCard below stays
-                          the tab's primary moment. */}
-                      {profile?.uid && programState && (
-                        <TrainingBlockCard
-                          uid={profile.uid}
-                          block={programState.trainingBlock}
-                          currentFocus={programState.primaryGoal ?? "general"}
-                          liftDaysPerWeek={programState.workouts.length}
-                          mainCompoundIds={blockAnchorIds}
-                          trainingWhy={profile?.trainingWhy?.trim() ?? ""}
-                          raceTaperActive={blockOfferBlockedByRace({
-                            runMode: profile?.runMode,
-                            raceDistance: profile?.raceGoal?.distance,
-                            raceTargetDate: profile?.raceGoal?.targetDate,
-                            today: localDateString(),
-                          })}
-                          onStart={startTrainingBlock}
-                          onAdoptLegacy={adoptLegacyTrainingBlock}
-                          onRelease={releaseTrainingBlock}
-                          onKeepFocus={keepTrainingBlockFocus}
-                        />
-                      )}
-
                       {/* ── Session hero — shared command-card chrome
                             (SessionCommandCard sport="lift"), mirroring the Run
                             tab so both sports get the same "what's next"
@@ -1285,23 +1245,10 @@ function ProgramInner() {
                                 : "Upcoming"
                         } · Day ${idx + 1}`}
                         title={selectedWorkout.dayName}
-                        description={
-                          isViewingHistory
-                            ? undefined
-                            : (liftSessionExplainer(
-                                programState,
-                                localDateString(),
-                                "full",
-                                selectedWorkout.exercises.map(
-                                  (ex) => ex.progressionType
-                                )
-                              ) ?? undefined)
-                        }
                         meta={
                           status === "completed"
                             ? []
                             : [
-                                ...(muscleGroups ? [muscleGroups] : []),
                                 `${exerciseCount} exercises`,
                                 `~${estimatedMinutes} min`,
                               ]
@@ -1734,6 +1681,27 @@ function ProgramInner() {
                               : "View workout history"}
                           </Button>
                         </div>
+                      )}
+                      {/* Programme planning follows the current workout. */}
+                      {profile?.uid && programState && (
+                        <TrainingBlockCard
+                          uid={profile.uid}
+                          block={programState.trainingBlock}
+                          currentFocus={programState.primaryGoal ?? "general"}
+                          liftDaysPerWeek={programState.workouts.length}
+                          mainCompoundIds={blockAnchorIds}
+                          trainingWhy={profile?.trainingWhy?.trim() ?? ""}
+                          raceTaperActive={blockOfferBlockedByRace({
+                            runMode: profile?.runMode,
+                            raceDistance: profile?.raceGoal?.distance,
+                            raceTargetDate: profile?.raceGoal?.targetDate,
+                            today: localDateString(),
+                          })}
+                          onStart={startTrainingBlock}
+                          onAdoptLegacy={adoptLegacyTrainingBlock}
+                          onRelease={releaseTrainingBlock}
+                          onKeepFocus={keepTrainingBlockFocus}
+                        />
                       )}
                     </div>
                   )}

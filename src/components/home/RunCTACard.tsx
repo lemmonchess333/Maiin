@@ -3,7 +3,6 @@ import { THEME } from "@/lib/theme";
 import { motion } from "framer-motion";
 import {
   Footprints,
-  Play,
   PersonStanding,
   Zap,
   RefreshCw,
@@ -35,8 +34,6 @@ const RUN_ICON_MAP: Record<
 
 export default function RunCTACard({
   todayRun,
-  purpose,
-  weekLabel,
   navigate,
   isFirst = false,
   completed,
@@ -55,8 +52,6 @@ export default function RunCTACard({
       })
     : null;
   const runLabel = tmpl ? tmpl.name : "Start a run";
-  const runDesc =
-    purpose ?? (todayRun ? null : "Free running · your choice today");
   const runIcon = tmpl?.icon;
   // P0-6: pass scheduledRunId so Run.tsx can pin the exact runDay
   // being fulfilled. Falls back to ?template= alone for legacy
@@ -132,8 +127,7 @@ export default function RunCTACard({
               color: "white",
             }}
           >
-            <Play className="size-3" fill="currentColor" aria-hidden="true" />
-            Go
+            View run
           </div>
         ) : (
           <div className="flex min-h-11 shrink-0 items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-bold bg-muted text-muted-foreground">
@@ -141,16 +135,6 @@ export default function RunCTACard({
           </div>
         )}
       </div>
-      {runDesc && (
-        <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-          <InlineNumerals>{runDesc}</InlineNumerals>
-        </p>
-      )}
-      {weekLabel && (
-        <p className="mt-1 text-micro text-muted-foreground">
-          <InlineNumerals>{weekLabel}</InlineNumerals>
-        </p>
-      )}
     </motion.button>
   );
 }

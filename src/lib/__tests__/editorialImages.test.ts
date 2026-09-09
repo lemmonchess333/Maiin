@@ -6,11 +6,7 @@
  * than throwing.
  */
 import { describe, it, expect } from "vitest";
-import {
-  challengeEditorialImage,
-  mealPhotoStem,
-  mealPhotoImage,
-} from "../editorialImages";
+import { challengeEditorialImage } from "../editorialImages";
 
 describe("challengeEditorialImage", () => {
   const METRICS = [
@@ -41,25 +37,5 @@ describe("challengeEditorialImage", () => {
     expect(challengeEditorialImage("total_volume")).toBe(
       challengeEditorialImage("workout_count")
     );
-  });
-});
-
-describe("mealPhotoStem — time-of-day windows", () => {
-  it("buckets by the same thresholds as meal slots (<11, <17, else)", () => {
-    expect(mealPhotoStem(0)).toBe("food-breakfast");
-    expect(mealPhotoStem(8)).toBe("food-breakfast");
-    expect(mealPhotoStem(10)).toBe("food-breakfast");
-    expect(mealPhotoStem(11)).toBe("food-lunch");
-    expect(mealPhotoStem(13)).toBe("food-lunch");
-    expect(mealPhotoStem(16)).toBe("food-lunch");
-    expect(mealPhotoStem(17)).toBe("food-dinner");
-    expect(mealPhotoStem(23)).toBe("food-dinner");
-  });
-
-  it("resolves to null or a URL, never throws (drop-in contract)", () => {
-    for (const h of [8, 13, 20]) {
-      const v = mealPhotoImage(h);
-      expect(v === null || typeof v === "string").toBe(true);
-    }
   });
 });

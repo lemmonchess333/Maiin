@@ -1,3 +1,4 @@
+import RunPurpose from "./RunPurpose";
 /**
  * RunLaunchCard — the planned-run "launch surface" (run fast-launch arc,
  * 2026-07).
@@ -58,6 +59,7 @@ interface RunLaunchCardProps {
   onStart: () => void;
   onCustomize: () => void;
   onBack: () => void;
+  purpose?: string | null;
 }
 
 /** Compact interval summary, e.g. "5 × 1K" or "6 × 3min". */
@@ -83,6 +85,7 @@ export default function RunLaunchCard({
   onStart,
   onCustomize,
   onBack,
+  purpose,
 }: RunLaunchCardProps) {
   const unit = useDistanceUnit();
   const Icon = RUN_ICON_MAP[workout.icon] ?? Footprints;
@@ -120,7 +123,7 @@ export default function RunLaunchCard({
         />
       </header>
 
-      <div className="flex-1 flex flex-col justify-center gap-4 min-h-0">
+      <div className="flex-1 flex flex-col justify-center gap-4 min-h-0 overflow-y-auto">
         <div className="rounded-2xl bg-running/8 p-5">
           <div className="flex items-center gap-3">
             <div className="size-12 rounded-xl flex items-center justify-center bg-running/9 shrink-0">
@@ -153,7 +156,10 @@ export default function RunLaunchCard({
           )}
           <p className="text-sm text-muted-foreground mt-2">
             {workout.description}
+            {workout.config.strides &&
+              ` · ${workout.estimatedDuration} min total, including strides`}
           </p>
+          <RunPurpose>{purpose}</RunPurpose>
         </div>
 
         <ShoeSelector selectedShoeId={selectedShoeId} onSelect={onSelectShoe} />

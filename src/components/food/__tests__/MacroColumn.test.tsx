@@ -176,14 +176,18 @@ describe("MacroColumn — accessible toggle label", () => {
   it("in EATEN mode, offers to show what is remaining", () => {
     renderIn("eaten");
     expect(
-      screen.getByRole("button", { name: "Show protein remaining" })
+      screen.getByRole("button", {
+        name: "Show protein remaining. 42g eaten of 120g",
+      })
     ).toBeInTheDocument();
   });
 
   it("in LEFT mode, offers to show what has been eaten", () => {
     renderIn("left");
     expect(
-      screen.getByRole("button", { name: "Show protein eaten" })
+      screen.getByRole("button", {
+        name: "Show protein eaten. 42g eaten of 120g",
+      })
     ).toBeInTheDocument();
   });
 
@@ -202,7 +206,9 @@ describe("MacroColumn — accessible toggle label", () => {
       />
     );
     expect(
-      screen.getByRole("button", { name: "Show carbs remaining" })
+      screen.getByRole("button", {
+        name: "Show carbs remaining. 10g eaten of 200g",
+      })
     ).toBeInTheDocument();
   });
 });

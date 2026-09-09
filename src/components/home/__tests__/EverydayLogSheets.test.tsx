@@ -20,6 +20,7 @@ import {
   resetFirestore,
   readDoc,
   failNextFirestore,
+  seedFirestore,
 } from "@/test/firestoreHarness";
 import { flushQueuedWeights } from "@/lib/weightQueue";
 import { kgToLb, lbToKg } from "@/lib/weightUnits";
@@ -41,21 +42,21 @@ describe("everyday entry sheets", () => {
       readDoc(`users/u1/bodyweightLogs/${localDateString()}`)?.weight
     ).toBe(78.412);
   });
-  it("keeps the picker behind Earlier, and saves the day it is set to", async () => {
+  it("keeps the picker behind Today, and saves the selected date", async () => {
     /* The picker used to sit open under a "Date" label with Today and
        Yesterday as separate buttons above it — three controls for one
        value. It is now the third segment's disclosure. */
     const close = vi.fn();
     render(<WeightLogSheet uid="u1" unit="kg" onClose={close} />);
-    expect(screen.queryByLabelText("Date")).toBeNull();
+    expect(screen.queryByLabelText("Date measured")).toBeNull();
 
     fireEvent.change(screen.getByLabelText("Weight (kg)"), {
       target: { value: "78.4" },
     });
-    fireEvent.click(screen.getByRole("radio", { name: "Earlier" }));
+    fireEvent.click(screen.getByRole("button", { name: "Today" }));
     const older = new Date();
     older.setDate(older.getDate() - 5);
-    fireEvent.change(screen.getByLabelText("Date"), {
+    fireEvent.change(screen.getByLabelText("Date measured"), {
       target: { value: localDateString(older) },
     });
     fireEvent.click(screen.getByRole("button", { name: "Log weight" }));
@@ -71,16 +72,21 @@ describe("everyday entry sheets", () => {
        control reading Earlier while the value said yesterday — the
        class of drift a duplicated field always eventually produces. */
     render(<WeightLogSheet uid="u1" unit="kg" onClose={vi.fn()} />);
-    expect(screen.getByRole("radio", { name: "Today" })).toBeChecked();
+    expect(screen.getByRole("button", { name: "Today" })).toHaveAttribute(
+      "aria-expanded",
+      "false"
+    );
 
-    fireEvent.click(screen.getByRole("radio", { name: "Earlier" }));
+    fireEvent.click(screen.getByRole("button", { name: "Today" }));
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
-    fireEvent.change(screen.getByLabelText("Date"), {
+    fireEvent.change(screen.getByLabelText("Date measured"), {
       target: { value: localDateString(yesterday) },
     });
-    expect(screen.getByRole("radio", { name: "Yesterday" })).toBeChecked();
-    expect(screen.queryByLabelText("Date")).toBeNull();
+    expect(screen.getByLabelText("Date measured")).toHaveValue(
+      localDateString(yesterday)
+    );
+    expect(screen.queryByRole("button", { name: "Today" })).toBeNull();
   });
 
   it("accepts a comma entry and date locally, then retries a failed sync", async () => {
@@ -93,7 +99,10 @@ describe("everyday entry sheets", () => {
       target: { value: "78,4" },
     });
     // Yesterday is a one-tap segment now, not a trip through the picker.
-    fireEvent.click(screen.getByRole("radio", { name: "Yesterday" }));
+    fireEvent.click(screen.getByRole("button", { name: "Today" }));
+    fireEvent.change(screen.getByLabelText("Date measured"), {
+      target: { value: date },
+    });
     failNextFirestore("commit");
     fireEvent.click(screen.getByRole("button", { name: "Log weight" }));
     await waitFor(() => expect(close).toHaveBeenCalledOnce());
@@ -113,12 +122,18 @@ describe("everyday entry sheets", () => {
     expect(
       readDoc(`users/u1/bodyweightLogs/${localDateString()}`)
     ).toBeUndefined();
-    fireEvent.click(screen.getByRole("radio", { name: "lb" }));
+    fireEvent.change(screen.getByLabelText("Weight unit"), {
+      target: { value: "lbs" },
+    });
     expect(screen.getByLabelText("Weight (lb)")).toHaveValue(
       kgToLb(81.6).toFixed(1)
     );
-    fireEvent.click(screen.getByRole("radio", { name: "st" }));
-    fireEvent.click(screen.getByRole("radio", { name: "kg" }));
+    fireEvent.change(screen.getByLabelText("Weight unit"), {
+      target: { value: "st" },
+    });
+    fireEvent.change(screen.getByLabelText("Weight unit"), {
+      target: { value: "kg" },
+    });
     fireEvent.click(screen.getByRole("button", { name: "Log weight" }));
     await waitFor(() => expect(close).toHaveBeenCalledOnce());
     expect(
@@ -151,7 +166,9 @@ describe("everyday entry sheets", () => {
         onClose={vi.fn()}
       />
     );
-    fireEvent.click(screen.getByRole("radio", { name: "st" }));
+    fireEvent.change(screen.getByLabelText("Weight unit"), {
+      target: { value: "st" },
+    });
     fireEvent.change(screen.getByRole("slider", { name: "Weight scale" }), {
       target: { value: "168" },
     });
@@ -174,16 +191,72 @@ describe("everyday entry sheets", () => {
         onServingChange={preference}
       />
     );
-    fireEvent.change(screen.getByLabelText("Quick-add serving"), {
+    expect(screen.queryByRole("spinbutton")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Change" }));
+    fireEvent.change(screen.getByLabelText("Quick-add amount (ml)"), {
       target: { value: "500" },
     });
+    fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
     expect(preference).toHaveBeenCalledWith(500);
     expect(log).not.toHaveBeenCalled();
-    fireEvent.change(screen.getByLabelText("Custom amount in millilitres"), {
+    fireEvent.click(screen.getByRole("button", { name: "Other amount" }));
+    fireEvent.change(screen.getByLabelText("Amount (ml)"), {
       target: { value: "99999" },
     });
-    expect(screen.getByRole("button", { name: "Add" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Add water" })).toBeDisabled();
     expect(screen.getByRole("alert")).toBeInTheDocument();
+  });
+  it("reopens a saved weight with a durable correction and no success toast", async () => {
+    const { queueWeightEntry } = await import("@/lib/weightQueue");
+    const { toast } = await import("@/lib/toast");
+    const date = localDateString();
+    seedFirestore({ "users/u1": { weightKg: 80, targetCalories: 2200 } });
+    queueWeightEntry("u1", date, 81);
+    await flushQueuedWeights("u1");
+    const close = vi.fn();
+    render(
+      <WeightLogSheet
+        uid="u1"
+        unit="kg"
+        initialKg={75}
+        lastLoggedDate={date}
+        onClose={close}
+      />
+    );
+    await screen.findByRole("button", { name: "Remove entry" });
+    expect(screen.getByLabelText("Weight (kg)")).toHaveValue("81.0");
+    fireEvent.click(screen.getByRole("button", { name: "Remove entry" }));
+    await flushQueuedWeights("u1");
+    expect(readDoc(`users/u1/bodyweightLogs/${date}`)).toBeUndefined();
+    expect(readDoc("users/u1")?.weightKg).toBe(80);
+    expect(close).toHaveBeenCalledOnce();
+    expect(toast.success).not.toHaveBeenCalled();
+  });
+  it("edits a total above 3 L, accepts zero, and keeps the sheet open on a failed save", () => {
+    const setTotal = vi.fn().mockReturnValue(false),
+      close = vi.fn();
+    render(
+      <WaterSizeSheet
+        open
+        onClose={close}
+        onLog={vi.fn()}
+        onSetTotal={setTotal}
+        consumedMl={4250}
+        targetMl={2000}
+      />
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Edit today’s total" }));
+    expect(screen.getByRole("spinbutton")).toHaveValue(4250);
+    fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+    expect(setTotal).toHaveBeenCalledWith(4250);
+    expect(close).not.toHaveBeenCalled();
+    setTotal.mockReturnValue(true);
+    fireEvent.change(screen.getByRole("spinbutton"), {
+      target: { value: "0" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+    expect(setTotal).toHaveBeenLastCalledWith(0);
+    expect(close).toHaveBeenCalledOnce();
   });
   it("keeps a corrected meal portion available after failure", async () => {
     const close = vi.fn(),

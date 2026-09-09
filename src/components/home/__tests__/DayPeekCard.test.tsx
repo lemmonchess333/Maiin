@@ -184,6 +184,46 @@ describe("DayPeekCard — planned run rendering (spec gate #11, resolver-aware)"
     expect(screen.queryByText("No activity logged")).not.toBeInTheDocument();
   });
 
+  it("keeps the actual dose and strides visible while disclosing the coaching reason", () => {
+    const date = dayOfThisWeek(2);
+    const profile = makeProfile(
+      makeSchedule(["rest", "rest", "run", "rest", "rest", "rest", "rest"])
+    );
+    const program = makeProgramState([
+      makeRunDay({
+        dayIndex: 2,
+        date,
+        weekKey: localWeekKey(parseLocalDate(date)),
+        templateId: "easy_30_strides",
+      }),
+    ]);
+    program.runPlan = {
+      currentWeek: 0,
+      totalWeeks: 16,
+      raceGoal: { distance: "marathon", targetDate: "2027-01-01" },
+    } as ProgramState["runPlan"];
+    renderCard(
+      <DayPeekCard
+        dateKey={date}
+        profile={profile}
+        programState={program}
+        claimMap={emptyClaimMap}
+        extras={emptyExtras}
+        workouts={[]}
+        dailyTotals={emptyTotals()}
+        onClose={vi.fn()}
+      />
+    );
+    expect(screen.getByText("30 min total")).toBeInTheDocument();
+    expect(screen.getByText("30 min total").closest("details")).toBeNull();
+    expect(
+      screen.getByText(/Conversational pace; finish with 4/)
+    ).toBeInTheDocument();
+    const why = screen.getByText("Why this run").closest("details")!;
+    expect(why).not.toHaveAttribute("open");
+    expect(why).toHaveTextContent(/relaxed 20-second accelerations/);
+  });
+
   it("falls back to 'No activity logged' when there's no planned run + no logged activity", () => {
     const tueKey = dayOfThisWeek(2);
     const schedule = makeSchedule([

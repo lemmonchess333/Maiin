@@ -7,7 +7,6 @@ import { track as trackHomeEvent } from "@/lib/homeAnalytics";
 
 export default function LiftCTACard({
   nextWorkout,
-  purpose,
   navigate,
   muscleGroups,
   isFirst = false,
@@ -105,11 +104,6 @@ export default function LiftCTACard({
           </div>
         )}
       </div>
-      {purpose && (
-        <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-          <InlineNumerals>{purpose}</InlineNumerals>
-        </p>
-      )}
     </motion.button>
   );
 }

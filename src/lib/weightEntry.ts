@@ -1,5 +1,6 @@
 import {
   doc,
+  getDoc,
   runTransaction,
   serverTimestamp,
   deleteField,
@@ -36,7 +37,12 @@ interface WeightReceipt {
 }
 /** The retry receipt is bounded: retain the previous row, without nesting
  * its own receipt. An uncertain response can then recover the original undo. */
-export async function saveWeightEntry(uid: string, date: string, kg: number, queuedId?: string) {
+export async function saveWeightEntry(
+  uid: string,
+  date: string,
+  kg: number,
+  queuedId?: string
+) {
   if (!validWeightDate(date) || !Number.isFinite(kg) || kg < 20 || kg > 350)
     throw new Error("Check the weight and date.");
   const key = scopedKey(`tropos-weight-retry:${date}:${kg}`, uid);
@@ -92,54 +98,75 @@ export async function saveWeightEntry(uid: string, date: string, kg: number, que
 
 /** A queued Undo recovers the original receipt after reload. A newer edit
  * is preserved; replaying an already-landed Undo is harmless. */
-export async function restoreWeightEntry(uid: string, date: string, kg: number, editId: string, expectedReceipt?: WeightReceipt) {
+export async function restoreWeightEntry(
+  uid: string,
+  date: string,
+  kg: number,
+  editId: string,
+  expectedReceipt?: WeightReceipt
+) {
   const ref = doc(db, "users", uid, "bodyweightLogs", date);
   const profileRef = doc(db, "users", uid);
   await runTransaction(db, async (tx) => {
-      if (auth.currentUser?.uid !== uid)
-        throw new Error("Sign in again before undoing.");
-      const [row, profile] = await Promise.all([
-        tx.get(ref),
-        tx.get(profileRef),
-      ]);
+    if (auth.currentUser?.uid !== uid)
+      throw new Error("Sign in again before undoing.");
+    const [row, profile] = await Promise.all([tx.get(ref), tx.get(profileRef)]);
+    if (
+      row.data()?.editId !== editId ||
+      row.data()?.weight !== kg ||
+      row.data()?.source !== "manual"
+    ) {
+      if (!expectedReceipt) return;
+      throw new Error(
+        "A newer weight is saved. Open your history to correct it."
+      );
+    }
+    const receipt =
+      expectedReceipt ?? (row.data()?.editReceipt as WeightReceipt | undefined);
+    if (!receipt)
+      throw new Error("The previous weight could not be recovered.");
+    if (receipt.before) tx.set(ref, receipt.before);
+    else tx.delete(ref);
+    const current = profile.data() ?? {};
+    if (
+      receipt.mirror &&
+      Object.entries(receipt.mirror).every(([k, v]) => current[k] === v)
+    ) {
+      const restore: Record<string, unknown> = {};
+      for (const k of Object.keys(receipt.mirror))
+        restore[k] = receipt.profileBefore[k] ?? deleteField();
+      // If nutrition settings changed, restore the anchor but recompute its
+      // dependent macros using today's settings rather than an old split.
       if (
-        row.data()?.editId !== editId ||
-        row.data()?.weight !== kg ||
-        row.data()?.source !== "manual"
+        (current.targetCalories ?? null) !== receipt.targetCalories ||
+        (current.program?.goal ?? null) !== receipt.goal
       ) {
-        if (!expectedReceipt) return;
-        throw new Error("A newer weight is saved. Open your history to correct it.");
+        for (const k of ["targetProtein", "targetCarbs", "targetFat"])
+          delete restore[k];
+        if (typeof receipt.profileBefore.weightKg === "number")
+          Object.assign(
+            restore,
+            weighInProfilePatch(
+              current as WeighInProfileInputs,
+              receipt.profileBefore.weightKg
+            )
+          );
       }
-      const receipt = expectedReceipt ?? row.data()?.editReceipt as WeightReceipt | undefined;
-      if (!receipt) throw new Error("The previous weight could not be recovered.");
-      if (receipt.before) tx.set(ref, receipt.before);
-      else tx.delete(ref);
-      const current = profile.data() ?? {};
-      if (
-        receipt.mirror &&
-        Object.entries(receipt.mirror).every(([k, v]) => current[k] === v)
-      ) {
-        const restore: Record<string, unknown> = {};
-        for (const k of Object.keys(receipt.mirror))
-          restore[k] = receipt.profileBefore[k] ?? deleteField();
-        // If nutrition settings changed, restore the anchor but recompute its
-        // dependent macros using today's settings rather than an old split.
-        if (
-          (current.targetCalories ?? null) !== receipt.targetCalories ||
-          (current.program?.goal ?? null) !== receipt.goal
-        ) {
-          for (const k of ["targetProtein", "targetCarbs", "targetFat"])
-            delete restore[k];
-          if (typeof receipt.profileBefore.weightKg === "number")
-            Object.assign(
-              restore,
-              weighInProfilePatch(
-                current as WeighInProfileInputs,
-                receipt.profileBefore.weightKg
-              )
-            );
-        }
-        tx.update(profileRef, restore);
-      }
-    });
+      tx.update(profileRef, restore);
+    }
+  });
+}
+
+/** Recover the latest write receipt for the editor, without an expiring toast. */
+export async function readWeightCorrection(uid: string, date: string) {
+  const row = await getDoc(doc(db, "users", uid, "bodyweightLogs", date));
+  const data = row.data();
+  if (auth.currentUser?.uid !== uid) return null;
+  if (!data || typeof data.weight !== "number") return null;
+  return {
+    kg: data.weight,
+    editId:
+      typeof data.editId === "string" && data.editReceipt ? data.editId : null,
+    removesEntry: !!data.editReceipt && !data.editReceipt.before,
+  };
 }

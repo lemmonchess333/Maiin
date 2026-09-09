@@ -188,7 +188,7 @@ and consistency must yield to them:
 
 | Element               | Keeps                                                       |
 | --------------------- | ----------------------------------------------------------- |
-| Food hero             | The photo, the calorie ring, the three macro cards          |
+| Food hero             | Plain calorie ring surface and three compact macro cards    |
 | Home performance card | The ring, its warm gradient, the delta chip                 |
 | Meal slot picker      | Filled orange pills (`SegmentedControl` `emphasis="solid"`) |
 | Sport coding          | Purple lifting / coral running, everywhere they appear      |
@@ -534,3 +534,5 @@ no new colours, no gradient, no emoji.
 _When this guide and your generic UI instincts disagree, the guide wins. When
 the guide and `CLAUDE.md` disagree, `CLAUDE.md` wins (it's the deeper spec).
 When something genuinely isn't covered here, ask before inventing._
+
+**Daily logging simplification (user direction, 2026-09-09):** Keep decorative food photos out of the calorie summary; retain meal photos on meal entries. Home session cards show the session and dose; rationale lives behind “Why this run” in day details. Water and weight saves update the tile, with editing available by reopening; persistent sync errors remain visible.

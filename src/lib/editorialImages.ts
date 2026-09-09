@@ -55,23 +55,3 @@ export function challengeEditorialImage(metric: string): string | null {
 export function spaceEditorialImage(spaceId: string): string | null {
   return byStem(`space-${spaceId}`);
 }
-
-/** Meal window → editorial photo stem. Reuses the SAME hour thresholds
- *  the diary's meal-slot derivation uses (<11 breakfast, <17 lunch, else
- *  dinner — see mealSlots.ts) so the ambient food photo behind the Food
- *  calorie hero rotates in lockstep with how the app already buckets time. */
-export type MealPhotoStem = "food-breakfast" | "food-lunch" | "food-dinner";
-
-export function mealPhotoStem(hour: number): MealPhotoStem {
-  if (hour < 11) return "food-breakfast";
-  if (hour < 17) return "food-lunch";
-  return "food-dinner";
-}
-
-/** Time-of-day food photo for the calorie hero, or null until the
- *  licensed asset lands (the hero renders its designed no-photo look —
- *  the brand-purple halo — unchanged). Operator drops
- *  `food-breakfast|lunch|dinner.{webp,jpg,…}` into src/assets/editorial/. */
-export function mealPhotoImage(hour: number): string | null {
-  return byStem(mealPhotoStem(hour));
-}

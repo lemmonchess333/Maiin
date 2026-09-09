@@ -566,7 +566,7 @@ describe("ProgrammeRunSection — PR-4 structured / race_prep hero", () => {
       />
     );
     expect(
-      screen.getByRole("button", { name: /Start run/i })
+      screen.getByRole("button", { name: /View run/i })
     ).toBeInTheDocument();
     expect(screen.queryByText(/^Next ·/i)).not.toBeInTheDocument();
   });

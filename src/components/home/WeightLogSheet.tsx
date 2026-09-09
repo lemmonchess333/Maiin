@@ -2,31 +2,40 @@ import { useEffect, useRef, useState } from "react";
 import BottomSheet from "@/components/ui/BottomSheet";
 import Button from "@/components/ui/Button";
 import WeightScaleDial from "./WeightScaleDial";
-import SegmentedControl from "@/components/ui/SegmentedControl";
 import { format, subDays } from "date-fns";
 import {
   kgToLb,
   lbToKg,
-  formatStonePounds,
   kgToStonePounds,
   stonePoundsToKg,
   formatWeightInUnit,
 } from "@/lib/weightUnits";
 import { localDateString } from "@/lib/dateHelpers";
-import { parseWeightEntry, validWeightDate } from "@/lib/weightEntry";
-import { queueWeightEntry } from "@/lib/weightQueue";
-import { toast } from "@/lib/toast";
+import {
+  parseWeightEntry,
+  validWeightDate,
+  readWeightCorrection,
+} from "@/lib/weightEntry";
+import {
+  queueWeightEntry,
+  pendingWeights,
+  queueWeightCorrection,
+  flushQueuedWeights,
+  weightSyncFailed,
+} from "@/lib/weightQueue";
 import { track as trackHomeEvent } from "@/lib/homeAnalytics";
 
 export default function WeightLogSheet({
   uid,
   unit,
   initialKg,
+  lastLoggedDate,
   onClose,
 }: {
   uid: string;
   unit: "kg" | "lbs";
   initialKg?: number;
+  lastLoggedDate?: string | null;
   onClose: () => void;
 }) {
   type DisplayUnit = "kg" | "lbs" | "st";
@@ -44,19 +53,19 @@ export default function WeightLogSheet({
      "which day" is how a picker ends up showing Tuesday while the
      control still reads Today. */
   const todayKey = localDateString();
-  const yesterdayKey = localDateString(subDays(new Date(), 1));
   const [value, setValue] = useState(initial);
   const [date, setDate] = useState(localDateString);
-  const dayChoice =
-    date === todayKey
-      ? "today"
-      : date === yesterdayKey
-        ? "yesterday"
-        : "earlier";
-  /* Opening "Earlier" lands two days back rather than on today, which
-     would leave the picker showing a day the two segments beside it
-     already cover. */
-  const earlierDate = localDateString(subDays(new Date(), 2));
+  const [showDate, setShowDate] = useState(false);
+  const [correction, setCorrection] = useState<{
+    kg: number;
+    editId: string | null;
+    removesEntry: boolean;
+  } | null>(null);
+  const [entryDate, setEntryDate] = useState<string | null>(
+    lastLoggedDate ?? null
+  );
+  const [loadingEntry, setLoadingEntry] = useState(true);
+  const editing = entryDate === date;
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const pending = useRef(false);
@@ -135,7 +144,7 @@ export default function WeightLogSheet({
     setSaving(true);
     setError("");
     try {
-      const undo = queueWeightEntry(uid, date, kg);
+      queueWeightEntry(uid, date, kg);
       trackHomeEvent("weight_log_saved", {
         taps: interactions.current,
         typed: typedRef.current,
@@ -147,33 +156,6 @@ export default function WeightLogSheet({
           ? { durationMs: Math.round(Date.now() - openedAt.current) }
           : {}),
       });
-      window.dispatchEvent(new Event("tropos:weight-changed"));
-      let undoing = false;
-      toast.success(
-        !navigator.onLine
-          ? "Saved on this phone — syncs when you’re back online"
-          : `Logged ${selectedUnit === "st" ? formatStonePounds(kg) : `${formatWeightInUnit(kg, selectedUnit)} ${selectedUnit === "lbs" ? "lb" : "kg"}`} · ${format(new Date(`${date}T12:00:00`), "EEE d MMM")}`,
-        {
-          duration: 5000,
-          action: {
-            label: "Undo",
-            onClick: async () => {
-              if (undoing) return;
-              undoing = true;
-              try {
-                await undo();
-                window.dispatchEvent(new Event("tropos:weight-changed"));
-                toast.success("Weight entry undone");
-              } catch (err) {
-                toast.error(
-                  err instanceof Error ? err.message : "Couldn't undo weight."
-                );
-                undoing = false;
-              }
-            },
-          },
-        }
-      );
       onClose();
     } catch (err) {
       setError(
@@ -186,28 +168,69 @@ export default function WeightLogSheet({
       setSaving(false);
     }
   };
+  const correct = () => {
+    if (!correction?.editId || pending.current) return;
+    try {
+      queueWeightCorrection(uid, date, correction.kg, correction.editId);
+      onClose();
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Couldn't save this correction."
+      );
+    }
+  };
+  useEffect(() => {
+    let cancelled = false;
+    const interactionsAtLoad = interactions.current;
+    const queued = pendingWeights(uid)
+      .filter((item) => item.date === date)
+      .at(-1);
+    Promise.resolve(
+      queued
+        ? queued.undoOf
+          ? null
+          : { kg: queued.kg, editId: queued.id, removesEntry: false }
+        : readWeightCorrection(uid, date)
+    )
+      .then((entry) => {
+        if (cancelled) return;
+        if (
+          entry &&
+          !typedRef.current &&
+          !pickerRef.current &&
+          interactions.current === interactionsAtLoad
+        ) {
+          setPreciseKg(entry.kg);
+          setValue(
+            selectedUnit === "st"
+              ? String(kgToStonePounds(entry.kg).stone)
+              : formatWeightInUnit(entry.kg, selectedUnit)
+          );
+          setPounds(String(kgToStonePounds(entry.kg).pounds));
+        }
+        setCorrection(entry);
+        setEntryDate(entry ? date : null);
+        setLoadingEntry(false);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setLoadingEntry(false);
+        setError("Couldn't load the saved entry. You can still log a weight.");
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [uid, date, selectedUnit]);
   return (
     <BottomSheet
       open
-      title="Log weight"
-      description="Choose the weight and date to record"
+      title={editing ? "Edit weight" : "Log weight"}
       dismissible={!saving}
       onOpenChange={(open) => {
         if (!open && !pending.current) onClose();
       }}
     >
       <div className="px-4 pb-6 pt-3 space-y-4">
-        <SegmentedControl<DisplayUnit>
-          ariaLabel="Weight unit"
-          value={selectedUnit}
-          onChange={changeUnit}
-          disabled={saving}
-          options={[
-            { value: "kg", label: "kg" },
-            { value: "lbs", label: "lb" },
-            { value: "st", label: "st" },
-          ]}
-        />
         <div className="flex items-end gap-3">
           <div className="min-w-0 flex-1">
             <label htmlFor="weight-value" className="sr-only">
@@ -246,6 +269,7 @@ export default function WeightLogSheet({
                 value={pounds}
                 disabled={saving}
                 onChange={(event) => {
+                  noteInteraction();
                   setPounds(event.target.value);
                   setPreciseKg(null);
                   setError("");
@@ -254,6 +278,17 @@ export default function WeightLogSheet({
               <p className="text-center text-micro text-muted-foreground">lb</p>
             </div>
           )}
+          <select
+            aria-label="Weight unit"
+            value={selectedUnit}
+            onChange={(event) => changeUnit(event.target.value as DisplayUnit)}
+            disabled={saving}
+            className="ds-input min-h-11 w-20 shrink-0 self-center"
+          >
+            <option value="kg">kg</option>
+            <option value="lbs">lb</option>
+            <option value="st">st</option>
+          </select>
         </div>
         <WeightScaleDial
           key={selectedUnit}
@@ -264,56 +299,37 @@ export default function WeightLogSheet({
           disabled={saving}
           onChange={changeDial}
         />
-        {/* One control for one value. This was two `secondary` Buttons
-            that only SET the date and never showed which was chosen,
-            stacked above a separate "Date" label and a full-width native
-            picker holding the same value — three controls and four rows
-            for a field that is "today" almost every time. A radiogroup
-            is what it always was, so it uses the primitive: the chosen
-            day is now visible, and the picker appears only when the
-            answer is neither of the two common ones. */}
-        <SegmentedControl
-          ariaLabel="Day this weight was measured"
-          disabled={saving}
-          value={dayChoice}
-          onChange={(choice) => {
-            noteInteraction();
-            setError("");
-            if (choice === "today") setDate(localDateString());
-            else if (choice === "yesterday")
-              setDate(localDateString(subDays(new Date(), 1)));
-            else setDate(earlierDate);
-          }}
-          options={[
-            { value: "today", label: "Today" },
-            { value: "yesterday", label: "Yesterday" },
-            { value: "earlier", label: "Earlier" },
-          ]}
-        />
-        {dayChoice === "earlier" && (
-          <div>
-            <label className="block text-sm mb-1.5" htmlFor="weight-date">
-              Date
-            </label>
-            <input
-              id="weight-date"
-              type="date"
-              className="ds-input min-h-11 w-full"
-              value={date}
-              min={minimumDate}
-              max={localDateString()}
-              disabled={saving}
-              onChange={(e) => {
-                noteInteraction();
-                setDate(e.target.value);
-                setError("");
-              }}
-            />
-          </div>
+        <div className="flex items-center justify-between gap-3 text-sm">
+          <span className="text-muted-foreground">Date</span>
+          <Button
+            variant="ghost"
+            onClick={() => setShowDate((shown) => !shown)}
+            disabled={saving}
+            aria-expanded={showDate}
+          >
+            {date === todayKey
+              ? "Today"
+              : format(new Date(`${date}T12:00:00`), "d MMM yyyy")}
+          </Button>
+        </div>
+        {showDate && (
+          <input
+            aria-label="Date measured"
+            type="date"
+            className="ds-input min-h-11 w-full"
+            value={date}
+            min={minimumDate}
+            max={todayKey}
+            disabled={saving}
+            onChange={(event) => {
+              noteInteraction();
+              setDate(event.target.value);
+              setLoadingEntry(true);
+              setCorrection(null);
+              setError("");
+            }}
+          />
         )}
-        <p className="text-micro text-muted-foreground">
-          A new entry for the same day replaces that day's weight.
-        </p>
         {error && (
           <p
             id="weight-error"
@@ -323,6 +339,15 @@ export default function WeightLogSheet({
             {error}
           </p>
         )}
+        {weightSyncFailed(uid) && (
+          <Button
+            variant="secondary"
+            fullWidth
+            onClick={() => void flushQueuedWeights(uid)}
+          >
+            Retry sync
+          </Button>
+        )}
         {saving && (
           <p role="status" className="text-sm text-muted-foreground">
             Saving weight…
@@ -331,11 +356,16 @@ export default function WeightLogSheet({
         <Button
           fullWidth
           loading={saving}
-          aria-label="Log weight"
+          aria-label={editing ? "Save changes" : "Log weight"}
           onClick={() => void save()}
         >
-          Log weight
+          {editing ? "Save changes" : "Log weight"}
         </Button>
+        {!loadingEntry && correction?.editId && (
+          <Button variant="ghost" fullWidth disabled={saving} onClick={correct}>
+            {correction.removesEntry ? "Remove entry" : "Undo last change"}
+          </Button>
+        )}
       </div>
     </BottomSheet>
   );

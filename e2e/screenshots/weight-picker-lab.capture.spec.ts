@@ -76,7 +76,7 @@ test("weight sheet offers stone and a bounded date without saving", async ({
     await page.waitForTimeout(400);
   }
   await page.getByRole("button", { name: /^Weight / }).click();
-  await page.getByRole("radio", { name: "kg", exact: true }).click();
+  await page.getByLabel("Weight unit").selectOption("kg");
   await page.getByLabel("Weight (kg)", { exact: true }).fill("81.6");
   await expect(page.getByRole("slider", { name: "Weight scale" })).toHaveValue(
     "81.6"
@@ -92,16 +92,17 @@ test("weight sheet offers stone and a bounded date without saving", async ({
       animations: "disabled",
     });
   }
-  await page.getByRole("radio", { name: "st", exact: true }).click();
+  await page.getByLabel("Weight unit").selectOption("st");
   await expect(page.getByLabel("Pounds", { exact: true })).toBeVisible();
-  /* The day picker is a radiogroup, not a pair of buttons: Today /
-     Yesterday / Earlier, with the chosen day shown rather than merely
-     set. Asserted here so the stone frame is filmed on a fully-rendered
-     sheet, and so a change of ROLE fails in this spec rather than
-     quietly dropping the assertion. */
   await expect(
-    page.getByRole("radio", { name: "Yesterday", exact: true })
+    page.getByRole("button", { name: "Today", exact: true })
   ).toBeVisible();
+  await page.getByRole("button", { name: "Today", exact: true }).click();
+  await expect(page.getByLabel("Date measured")).toHaveAttribute(
+    "max",
+    /\d{4}-\d{2}-\d{2}/
+  );
+  await page.getByRole("button", { name: "Today", exact: true }).click();
   for (const dark of [false, true]) {
     await page.evaluate(
       (value) => document.documentElement.classList.toggle("dark", value),
@@ -113,4 +114,32 @@ test("weight sheet offers stone and a bounded date without saving", async ({
       animations: "disabled",
     });
   }
+  await page.getByLabel("Weight unit").selectOption("kg");
+  await page.getByLabel("Weight (kg)", { exact: true }).fill("81.6");
+  await page
+    .getByRole("button", { name: /^(Log weight|Save changes)$/ })
+    .click();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await expect(page.getByRole("button", { name: /^Weight / })).toContainText(
+    /81\.6|179\.9/
+  );
+  await page.reload();
+  await page.getByRole("button", { name: /^Weight / }).click();
+  await expect(page.getByRole("dialog", { name: "Edit weight" })).toBeVisible();
+  const correction = page.getByRole("button", {
+    name: /^(Remove entry|Undo last change)$/,
+  });
+  await expect(correction).toBeVisible();
+  for (const dark of [false, true]) {
+    await page.evaluate(
+      (value) => document.documentElement.classList.toggle("dark", value),
+      dark
+    );
+    await page.screenshot({
+      path: `screenshots/weight-edit-${dark ? "dark" : "light"}.png`,
+      animations: "disabled",
+    });
+  }
+  await correction.click();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
 });
