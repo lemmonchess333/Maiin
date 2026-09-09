@@ -187,29 +187,21 @@ describe("FoodHeroCard — day annotation merged into the caption (Wave3 G)", ()
   });
 });
 
-describe("FoodHeroCard — photo scrim carries the ring bed", () => {
-  /* The ring-bed layer is a concentrated feathered disc painted at the
-     wheel's centre (50% 47.5%) as the scrim's first radial layer. It's
-     what keeps the number + arc legible when the photo's MIDDLE is dark
-     or busy (the teal-quinoa lunch in dark mode) — the page-wide wash
-     alone couldn't supply a luminance gap exactly where the wheel sits.
-     Pinned so a scrim simplification can't silently drop the layer. */
-  it("today's hero paints the --food-photo-ring-bed layer at the ring centre", () => {
+describe("FoodHeroCard — calm summary", () => {
+  it("keeps decorative photos and empty encouragement off the calorie summary", () => {
     const { container } = render(
       <MemoryRouter>
         <FoodHeroCard
           selectedDate="2026-06-09"
-          isToday={true}
+          isToday
           dailyTargets={dailyTargets}
-          dailyTotals={dailyTotals}
+          dailyTotals={{ calories: 0, protein: 0, carbs: 0, fat: 0 }}
         />
       </MemoryRouter>
     );
-    const scrim = [...container.querySelectorAll("div")].find((d) =>
-      (d.style.background || "").includes("--food-photo-ring-bed")
-    );
-    expect(scrim).toBeTruthy();
-    expect(scrim!.style.background).toContain("50% 47.5%");
+    expect(container.querySelector("img")).toBeNull();
+    expect(screen.queryByText("Ready when you are")).toBeNull();
+    expect(ringButton()).toBeInTheDocument();
   });
 });
 
@@ -282,9 +274,9 @@ describe("FoodHeroCard — Nutr3: below the floor, protein and carbs carry no go
     const fat = tiles.find((t) => t.getAttribute("data-macro") === "fat")!;
     // The big number animates from 0 (count-up), so assert the ratio line's
     // shape rather than the settled figure.
-    expect(protein.textContent).toMatch(/\/\s*—/);
-    expect(protein.textContent).not.toMatch(/\/\s*0g/);
-    expect(fat.textContent).toMatch(/\/\s*42g/);
+    expect(protein).toHaveAccessibleName(/no target/);
+    expect(protein).not.toHaveAccessibleName(/of 0g/);
+    expect(fat).toHaveAccessibleName(/of 42g/);
     expect(screen.getByRole("status")).toHaveTextContent(
       /essential fat alone exceeds/
     );

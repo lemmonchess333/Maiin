@@ -71,7 +71,7 @@ export default function MacroColumn({
   // "maxed out + over by N" combined with the big number; an empty
   // bar would falsely read as "nothing left to eat").
   // Mirrors the calorie ring's fill direction in CalorieRing.tsx.
-  const barFillPct = isLeftMode ? (isOver ? 1 : 1 - pct) : pct;
+  const barFillPct = !hasTarget ? 0 : isLeftMode ? (isOver ? 1 : 1 - pct) : pct;
 
   // Overshoot — only when consumed exceeds target. Capped at one full
   // extra lap; going 3× over wouldn't read any differently than 2×.
@@ -84,11 +84,12 @@ export default function MacroColumn({
   //   over target  → overshoot   (e.g. "5g over")
   // EATEN mode:
   //   either       → consumed    (e.g. "14g eaten" or "170g eaten")
-  const displayValue = isLeftMode
-    ? isOver
-      ? consumed - target
-      : remaining
-    : consumed;
+  const displayValue =
+    isLeftMode && hasTarget
+      ? isOver
+        ? consumed - target
+        : remaining
+      : consumed;
 
   // LEFT mode:
   //   under target → "left"   (e.g. "151g left")
@@ -100,7 +101,8 @@ export default function MacroColumn({
   // Rendering "eaten" makes the mode self-documenting at the cost of
   // one short word; over-target is signalled by the bar overshoot and
   // the tertiary "X / Yg" line.
-  const displayLabel = isLeftMode ? (isOver ? "over" : "left") : "eaten";
+  const displayLabel =
+    isLeftMode && hasTarget ? (isOver ? "over" : "left") : "eaten";
 
   // Food7 (audit #34 — calm the loudest screen): the macro hue now lives
   // ONLY on the icon + progress bar; the big number renders neutral
@@ -197,7 +199,8 @@ export default function MacroColumn({
          covered it, so it only surfaced in the screenshot CI run. */
       aria-label={
         `Show ${label.toLowerCase()} ${isLeftMode ? "eaten" : "remaining"}` +
-        (goalReached ? `. ${label} goal reached` : "")
+        (goalReached ? `. ${label} goal reached` : "") +
+        `. ${Math.round(consumed)}g eaten${hasTarget ? ` of ${Math.round(target)}g` : "; no target"}`
       }
       className="min-w-0 flex-1 flex flex-col items-center text-center bg-transparent border-0 p-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-lg"
     >
@@ -321,24 +324,11 @@ export default function MacroColumn({
         )}
       </div>
 
-      {/* Tertiary line — consumed value tweens with the big number so all
-          three (big number, bar fill, tertiary) advance together during a log. */}
-      <p className="text-caption text-muted-foreground font-mono tabular-nums mt-1.5 whitespace-nowrap">
-        <AnimatedNumber
-          value={Math.round(consumed)}
-          duration={numberDurationSec}
-          ease={RING_EASE}
-        />
-        {" / "}
-        {/* Nutr3: a 0 target is NO goal (below the essential-fat floor), not "0g" */}
-        {hasTarget ? `${Math.round(target)}g` : "—"}
-      </p>
-
       {/* Uppercase macro label — intentionally muted (same tone as the
           `X / Yg` ratio line above) so the card's colour identity is
           carried by the icon + big number + progress bar, not duplicated
           four times. The label is a caption, not a headline. */}
-      <SectionLabel tier="section" className="mt-0.5">
+      <SectionLabel tier="section" className="mt-2">
         {label}
       </SectionLabel>
     </button>

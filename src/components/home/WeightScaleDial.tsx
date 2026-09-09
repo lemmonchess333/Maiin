@@ -267,7 +267,7 @@ export default function WeightScaleDial({
           })}
         </svg>
       </div>
-      <p id={helpId} className="text-center text-micro text-muted-foreground">
+      <p id={helpId} className="sr-only">
         {unit === "st"
           ? "Spin to adjust pounds, or tap the number to type"
           : "Spin the scale, or tap the number to type"}

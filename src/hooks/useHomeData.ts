@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { pendingWeights, weightSyncFailed } from "@/lib/weightQueue";
 import { formatWeightInUnit } from "@/lib/weightUnits";
 import {
   collection,
@@ -108,10 +109,36 @@ export function useHomeData(
 
   const [weightVersion, setWeightVersion] = useState(0);
   useEffect(() => {
-    const refresh = () => setWeightVersion((v) => v + 1);
+    const refresh = () => {
+      const latest = user?.uid
+        ? pendingWeights(user.uid)
+            .filter((item) => !item.undoOf)
+            .reverse()
+            .sort((a, b) => b.date.localeCompare(a.date))
+            .at(0)
+        : null;
+      if (latest)
+        setState((prev) => {
+          if (
+            prev.lastWeightInfo?.rawDate &&
+            prev.lastWeightInfo.rawDate > latest.date
+          )
+            return prev;
+          return {
+            ...prev,
+            lastWeightInfo: {
+              kg: latest.kg,
+              weight: formatWeightInUnit(latest.kg, weightUnit),
+              date: format(new Date(`${latest.date}T12:00:00`), "d MMM"),
+              rawDate: latest.date,
+            },
+          };
+        });
+      setWeightVersion((v) => v + 1);
+    };
     window.addEventListener("tropos:weight-changed", refresh);
     return () => window.removeEventListener("tropos:weight-changed", refresh);
-  }, []);
+  }, [user?.uid, weightUnit]);
 
   // Batch Firestore queries with Promise.allSettled
   useEffect(
@@ -408,12 +435,49 @@ export function useHomeData(
     ]
   );
 
+  // Pending entries survive reload and take precedence until the atomic write lands.
+  const queued = user?.uid ? pendingWeights(user.uid) : [];
+  const pendingByDate = new Map<string, number>();
+  for (const entry of queued) {
+    if (entry.undoOf) pendingByDate.delete(entry.date);
+    else pendingByDate.set(entry.date, entry.kg);
+  }
+  const latestPending = [...pendingByDate].sort(([a], [b]) =>
+    b.localeCompare(a)
+  )[0];
+  const optimisticWeight =
+    latestPending &&
+    (!state.lastWeightInfo?.rawDate ||
+      latestPending[0] >= state.lastWeightInfo.rawDate)
+      ? {
+          kg: latestPending[1],
+          weight: formatWeightInUnit(latestPending[1], weightUnit),
+          date: format(new Date(`${latestPending[0]}T12:00:00`), "d MMM"),
+          rawDate: latestPending[0],
+        }
+      : state.lastWeightInfo;
+  const weightSyncStatus =
+    queued.length > 0
+      ? user?.uid && weightSyncFailed(user.uid)
+        ? "Saved on this device · Sync needed"
+        : !navigator.onLine
+          ? "Saved on this device · Offline"
+          : null
+      : null;
+
   return {
     dailyCal: state.dailyCal,
     dailyProt: state.dailyProt,
     dailyCarbs: state.dailyCarbs,
     dailyFat: state.dailyFat,
-    lastWeightInfo: state.lastWeightInfo,
+    lastWeightInfo: optimisticWeight,
+    weightSyncStatus,
+    weightAnnouncement:
+      weightVersion > 0
+        ? queued.length
+          ? "Weight change saved on this device"
+          : "Weight saved"
+        : "",
     weightTrend: state.weightTrend,
     postWorkoutNudge,
     loading: state.loading,

@@ -13,11 +13,15 @@ test("companion purpose — narrow light and dark", async ({ page }) => {
   await suppressCoachmarks(page);
   await signInAsTestUser(page);
   await page.goto("program");
+  await page.addStyleTag({
+    content: ".firebase-emulator-warning { display: none !important; }",
+  });
   const card = page
     .getByRole("region")
     .filter({ has: page.getByRole("button", { name: "Start workout" }) });
   await expect(card).toBeVisible({ timeout: 20_000 });
-  await expect(card).toContainText(/Week \d+ of \d+|Step-back week/);
+  await expect(card).toContainText(/\d+ exercises/);
+  await expect(card).not.toContainText(/Week \d+ of \d+/);
   for (const dark of [false, true]) {
     await page.evaluate(
       (value) => document.documentElement.classList.toggle("dark", value),

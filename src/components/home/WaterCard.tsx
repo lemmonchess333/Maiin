@@ -32,6 +32,7 @@ export default function WaterCard({
   compact = false,
   servingMl = GLASS_ML,
   onServingChange,
+  onSetTotal,
   recentSizes = [],
   syncStatus,
   onRetry,
@@ -42,12 +43,13 @@ export default function WaterCard({
   targetMl: number;
   /** Add (or remove, with a negative delta) millilitres. The hook
    *  clamps the running total at ≥ 0. */
-  onLog: (deltaMl: number) => void;
+  onLog: (deltaMl: number) => void | boolean;
   /** Pyramid tile variant: half-width cell beside the weight tile. */
   compact?: boolean;
   servingMl?: number;
   recentSizes?: number[];
-  onServingChange?: (ml: number) => void;
+  onServingChange?: (ml: number) => void | boolean;
+  onSetTotal?: (ml: number) => void | boolean;
   syncStatus?: string;
   onRetry?: () => void;
 }) {
@@ -74,17 +76,19 @@ export default function WaterCard({
     setSheetOpen(true);
   }
 
-  const sheet = (
+  const sheet = sheetOpen && (
     <WaterSizeSheet
       open={sheetOpen}
       onClose={() => setSheetOpen(false)}
       onLog={(v) => {
-        onLog(v);
-        setRippleKey((k) => k + 1);
+        const saved = onLog(v);
+        if (saved !== false) setRippleKey((k) => k + 1);
+        return saved;
       }}
       servingMl={servingMl}
       recentSizes={recentSizes}
       onServingChange={onServingChange}
+      onSetTotal={onSetTotal ?? ((total) => onLog(total - ml))}
       consumedMl={ml}
       targetMl={targetMl}
     />
@@ -180,7 +184,7 @@ export default function WaterCard({
               type="button"
               onClick={quickAdd}
               aria-label={`Add ${servingMl} ml`}
-              className="size-11 rounded-full flex items-center justify-center motion-safe:active:scale-[0.95] flex-shrink-0"
+              className="min-h-11 min-w-11 px-2 rounded-full flex gap-1 items-center justify-center motion-safe:active:scale-[0.95] flex-shrink-0"
               style={{
                 backgroundColor: THEME.semantic.hydration + "26",
                 borderColor: "transparent",
@@ -193,12 +197,12 @@ export default function WaterCard({
                    on the light tint (3:1 UI floor, WCAG 1.4.11). */
                 style={{ color: "hsl(var(--teal))" }}
               />
+              <span className="text-micro font-semibold text-foreground">
+                <InlineNumerals>{`${servingMl} ml`}</InlineNumerals>
+              </span>
             </button>
           </div>
         </div>
-        <p className="relative z-10 text-micro text-muted-foreground mt-2">
-          Quick add: <InlineNumerals>{`${servingMl} ml`}</InlineNumerals>
-        </p>
         {syncStatus && (
           <div
             role="status"
@@ -283,19 +287,19 @@ export default function WaterCard({
             type="button"
             onClick={quickAdd}
             aria-label={`Add ${servingMl} ml`}
-            className="size-12 rounded-full flex items-center justify-center motion-safe:active:scale-[0.95] flex-shrink-0"
+            className="min-h-12 min-w-12 px-2 rounded-full flex gap-1 items-center justify-center motion-safe:active:scale-[0.95] flex-shrink-0"
             style={{
               backgroundColor: THEME.semantic.hydration + "26",
               borderColor: "transparent",
             }}
           >
             <Plus className="size-4" style={{ color: "hsl(var(--teal))" }} />
+            <span className="text-micro font-semibold text-foreground">
+              <InlineNumerals>{`${servingMl} ml`}</InlineNumerals>
+            </span>
           </button>
         </div>
       </div>
-      <p className="relative z-10 text-micro text-muted-foreground mt-2">
-        Quick add: <InlineNumerals>{`${servingMl} ml`}</InlineNumerals>
-      </p>
       {syncStatus && (
         <div
           role="status"

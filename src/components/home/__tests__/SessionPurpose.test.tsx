@@ -14,7 +14,7 @@ vi.mock("@/lib/haptic", () => ({ haptic: vi.fn() }));
 vi.mock("@/lib/homeAnalytics", () => ({ track: vi.fn() }));
 
 describe("session purpose command surfaces", () => {
-  it("shows the same lift reason on Home and Program while preserving the muscle meta", () => {
+  it("keeps lift rationale off Home while preserving the muscle meta", () => {
     const purpose = liftSessionExplainer(
       { weekNumber: 3, currentPhase: "progression" },
       "2026-09-06"
@@ -31,7 +31,7 @@ describe("session purpose command surfaces", () => {
         navigate={vi.fn()}
       />
     );
-    expect(screen.getByRole("button")).toHaveTextContent(purpose);
+    expect(screen.getByRole("button")).not.toHaveTextContent(purpose);
     expect(screen.getByRole("button")).toHaveTextContent("Back · Biceps");
     cleanup();
     render(
@@ -46,7 +46,7 @@ describe("session purpose command surfaces", () => {
     expect(screen.getByRole("region")).toHaveTextContent(purpose);
     expect(screen.getByRole("heading")).not.toHaveClass("truncate");
   });
-  it("uses the Manage-sheet explanation verbatim on both run command surfaces", () => {
+  it("keeps Home compact while retaining the run explanation for detail surfaces", () => {
     const input = {
       type: "easy",
       templateId: "easy_30",
@@ -64,10 +64,13 @@ describe("session purpose command surfaces", () => {
         weekLabel={weekLabel}
       />
     );
-    expect(screen.getByRole("button")).toHaveTextContent(
+    expect(screen.getByRole("button")).not.toHaveTextContent(
       runSessionExplainer(input)!
     );
-    expect(screen.getByRole("button")).toHaveTextContent("Base · week 3 of 16");
+    expect(screen.getByRole("button")).not.toHaveTextContent(
+      "Base · week 3 of 16"
+    );
+    expect(screen.getByRole("button")).toHaveTextContent("View run");
     cleanup();
     render(
       <SessionCommandCard
@@ -85,9 +88,7 @@ describe("session purpose command surfaces", () => {
   });
   it("omits invented programme reasons and gives a free run its neutral existing choice", () => {
     render(<RunCTACard todayRun={null} navigate={vi.fn()} />);
-    expect(screen.getByRole("button")).toHaveTextContent(
-      "Free running · your choice today"
-    );
+    expect(screen.getByRole("button")).toHaveTextContent("Start a run");
     expect(screen.getByRole("button")).not.toHaveTextContent(/week \d/i);
   });
 });

@@ -25,8 +25,6 @@ import {
 } from "@/lib/foodCelebration";
 import ShareCardSheet from "@/components/share/ShareCardSheet";
 import { buildGlanceLine } from "@/lib/foodDailySummary";
-import { mealPhotoImage } from "@/lib/editorialImages";
-import { useIsDarkMode } from "@/hooks/useIsDarkMode";
 import CalorieRing from "./CalorieRing";
 import MacroColumn from "./MacroColumn";
 import { macroInfeasibilityMessage } from "@/lib/macroInfeasibility";
@@ -231,35 +229,10 @@ export default function FoodHeroCard({
      non-today views — past/future dates are diary-mode and
      a "Still need 40g protein" line for yesterday's record
      reads wrong. */
-  const glanceLine = isToday
-    ? buildGlanceLine(dailyTotals, dailyTargets, { targetsAreDefault })
-    : null;
-
-  /* Ambient time-of-day food photo behind the calorie hero (breakfast /
-     lunch / dinner, same windows as meal slots). Today only — a past day
-     keeps the clean look. Null (→ purple halo) until the operator drops
-     the licensed asset.
-
-     BOTH themes, but they need OPPOSITE treatments of the same file. The
-     shipped asset is graded dark so light text reads on it (see the
-     editorial README); light mode brightens it back up via a filter and
-     lays a WHITE scrim, because there the card's text is DARK and needs a
-     light backdrop. Using a filter rather than a second asset keeps this
-     to one file per meal — a light-graded twin would double the bytes for
-     the same pixels.
-
-     Consequence worth knowing: light mode's photo is inherently PALER
-     than dark mode's. That's structural — dark text forces the image to
-     sit back — not a fixable property of the photo. */
-  const isDark = useIsDarkMode();
-  const mealPhoto = isToday ? mealPhotoImage(new Date().getHours()) : null;
-
-  /* Over a LIGHT-mode photo the card's muted greys stop working: they're
-     tuned to sit quietly on flat white, and against even a pale wash they
-     drop below readable. Promote them to full foreground for that case
-     only — dark mode's light-on-scrim text is already fine, and with no
-     photo the muted greys are exactly right. Measured 11-18:1 after. */
-  const photoTextClass = mealPhoto && !isDark ? "text-foreground" : null;
+  const glanceLine =
+    isToday && targetsAreDefault
+      ? buildGlanceLine(dailyTotals, dailyTargets, { targetsAreDefault })
+      : null;
 
   // Dark-aware surface via `bg-card` + `var(--ds-shadow-card)` — the token
   // swaps to a deeper shadow under `.dark` (see tokens.css), so the same
@@ -267,55 +240,14 @@ export default function FoodHeroCard({
   return (
     <>
       {/* ── CALORIE CARD — caption, ring, glance line ──────────────────── */}
-      <div className="relative overflow-hidden p-5 rounded-2xl bg-card card-shadow">
-        {mealPhoto ? (
-          /* Ambient food-photo hero. Reuses the Social/Spaces
-           editorial-photo + scrim recipe: the photo fills the card
-           behind a scrim so the ring, number and captions stay legible.
-           Replaces the purple halo when present. Decorative +
-           aria-hidden. */
-          <>
-            <img
-              src={mealPhoto}
-              alt=""
-              aria-hidden="true"
-              className="pointer-events-none absolute inset-0 size-full object-cover select-none"
-              /* Light mode brightens the dark-graded asset back up so it
-               reads as an airy wash under DARK text; dark mode uses it
-               as-graded. Static filter — never animated (the
-               WKWebView rule is about animating filter values). */
-              style={isDark ? undefined : { filter: "brightness(1.35)" }}
-              draggable={false}
-            />
-            {/* Scrim via the --food-photo-scrim CSS vars, which flip with
-              the theme: a radial wash centred on the ring/number keeps
-              the value legible whatever the photo, over a vertical one
-              for the caption + glance line. DARK mode = black scrim (a
-              moody hero under light text); LIGHT mode = white scrim (an
-              airy wash under dark text). */}
-            <div
-              aria-hidden="true"
-              className="pointer-events-none absolute inset-0"
-              style={{
-                background:
-                  "radial-gradient(circle 92px at 50% 47.5%, var(--food-photo-ring-bed) 0%, var(--food-photo-ring-bed) 55%, var(--food-photo-ring-bed-soft) 78%, transparent 100%), radial-gradient(circle at 50% 47.5%, var(--food-photo-scrim) 0%, var(--food-photo-scrim-soft) 46%, var(--food-photo-scrim) 100%), linear-gradient(to bottom, var(--food-photo-scrim) 0%, var(--food-photo-scrim-soft) 48%, var(--food-photo-scrim) 100%)",
-              }}
-            />
-          </>
-        ) : (
-          /* Brand-hue ambient halo behind the calorie ring — the cross-screen
-           cohesion twin of the Performance hero's band-state halo. The ring
-           is a fixed brand-purple identity (CalorieRing COLOR_RING), so the
-           halo is brand purple, centered behind the ring. Decorative-free:
-           functional state/identity wash, low alpha, fades to transparent. */
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute left-1/2 top-6 size-64 -translate-x-1/2 rounded-full"
-            style={{
-              background: `radial-gradient(circle, ${THEME.brand}33, transparent 70%)`,
-            }}
-          />
-        )}
+      <div className="relative overflow-hidden p-4 rounded-2xl bg-card card-shadow">
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute left-1/2 top-6 size-64 -translate-x-1/2 rounded-full"
+          style={{
+            background: `radial-gradient(circle, ${THEME.brand}33, transparent 70%)`,
+          }}
+        />
         {/* Content sits above the absolute halo (positioned siblings paint
           in DOM order; a non-positioned block would render beneath it). */}
         <div className="relative">
@@ -341,13 +273,7 @@ export default function FoodHeroCard({
                     transition={{ duration: 0.3 }}
                     className="text-micro uppercase tracking-wider font-semibold"
                     style={{
-                      /* Photo hero: bright identity over the dark scrim
-                       (the photo, not the theme, is the surface). Plain
-                       card: the theme-aware -strong step — the identity
-                       is 2.36:1 as 12px text on the light card (DS2). */
-                      color: photoTextClass
-                        ? THEME.success
-                        : "hsl(var(--success-strong))",
+                      color: "hsl(var(--success-strong))",
                     }}
                   >
                     {celebrationCaptionText}
@@ -359,7 +285,7 @@ export default function FoodHeroCard({
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -4 }}
                     transition={{ duration: 0.3 }}
-                    className={`text-xs font-medium truncate ${photoTextClass ?? "text-muted-foreground"}`}
+                    className={`text-xs font-medium truncate text-muted-foreground`}
                   >
                     {/* Wave3 G — the day annotation is merged INTO the hero
                     caption as one line ("{dayType} · {rationale}") instead
@@ -420,18 +346,11 @@ export default function FoodHeroCard({
             />
           )}
 
-          {/* Today-at-a-glance line. One sentence, protein-priority,
-          neutral over-target language. Sits inside the calorie
-          card below the ring so it summarises what the ring +
-          macro tiles already show without claiming a separate
-          card surface. Helper handles the priority rules,
-          on-track guard, tiny-deficit suppression, and the
-          missing-target prompt copy; component just routes
-          inputs and renders the result. Skips on past/future
-          dates (diary-mode views). */}
+          {/* Only actionable setup guidance belongs here; the ring and
+              macro cards already show the day's numbers. */}
           {glanceLine && (
             <p
-              className={`text-center text-xs font-medium mt-3 px-2 ${photoTextClass ?? "text-muted-foreground"}`}
+              className={`text-center text-xs font-medium mt-3 px-2 text-muted-foreground`}
             >
               {glanceLine}
             </p>
@@ -463,7 +382,7 @@ export default function FoodHeroCard({
                   onTapDrillDown();
                 }}
                 aria-label="View nutrition breakdown"
-                className={`flex items-center gap-1 px-2.5 min-h-[44px] -my-2 rounded-full text-xs hover:bg-muted/60 active:scale-95 transition-all ${photoTextClass ?? "text-muted-foreground"}`}
+                className={`flex items-center gap-1 px-2.5 min-h-[44px] -my-2 rounded-full text-xs hover:bg-muted/60 active:scale-95 transition-all text-muted-foreground`}
               >
                 <span>Details</span>
                 <ChevronRight aria-hidden="true" className="size-3" />

@@ -113,7 +113,8 @@ export function useWaterLog() {
   }
   const logWater = useCallback(
     (delta: number) => {
-      if (!uid || !Number.isFinite(delta) || delta === 0) return;
+      if (!uid || !Number.isFinite(delta)) return false;
+      if (delta === 0) return true;
       const action = {
         id: crypto.randomUUID(),
         date: localDateString(),
@@ -125,7 +126,7 @@ export function useWaterLog() {
         toast.error(
           "Couldn't keep this water entry. Free some storage and try again."
         );
-        return;
+        return false;
       }
       /* No confirmation toast on a water add.
          The card is the confirmation: the number and the fill both move
@@ -136,6 +137,7 @@ export function useWaterLog() {
          action in the app. Errors still surface — only the success
          confirmation goes. */
       if (delta > 0) rememberWaterSize(uid, Math.round(delta));
+      return true;
     },
     [uid, target]
   );
@@ -150,12 +152,13 @@ export function useWaterLog() {
       ? storedServing
       : GLASS_ML;
   const setServingMl = (value: number) => {
-    if (!uid || value <= 0 || value > MAX_SINGLE_LOG_ML) return;
+    if (!uid || value <= 0 || value > MAX_SINGLE_LOG_ML) return false;
     if (!writeJson(preferenceKey, clampMl(value))) {
       toast.error("Couldn't save your usual serving.");
-      return;
+      return false;
     }
     refresh((v) => v + 1);
+    return true;
   };
   return {
     ml: state.ml,

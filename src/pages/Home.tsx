@@ -1,4 +1,3 @@
-import InlineNumerals from "@/components/ui/InlineNumerals";
 import {
   useState,
   useEffect,
@@ -27,10 +26,7 @@ import {
 
 import { useSubscription } from "@/lib/subscription";
 import { useProgram } from "@/features/program/useProgram";
-import {
-  liftSessionExplainer,
-  liftWeekLabel,
-} from "@/lib/liftSessionExplainer";
+import { liftSessionExplainer } from "@/lib/liftSessionExplainer";
 import { runSessionPresentation } from "@/lib/runSessionExplainer";
 import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
 import { getExerciseById } from "@/lib/exercises";
@@ -262,6 +258,8 @@ export default function Home() {
     dailyFat,
     lastWeightInfo,
     weightTrend,
+    weightSyncStatus,
+    weightAnnouncement,
     postWorkoutNudge,
     loading: homeDataLoading,
   } = useHomeData(
@@ -632,13 +630,6 @@ export default function Home() {
             <h1 className="text-2xl font-extrabold tracking-[0.14em] text-foreground uppercase leading-none">
               TROPOS
             </h1>
-            {programState && (
-              <span className="text-xs font-medium text-muted-foreground mt-0.5">
-                <InlineNumerals>
-                  {liftWeekLabel(programState, localDateString()) ?? ""}
-                </InlineNumerals>
-              </span>
-            )}
           </div>
           <div className="flex items-center gap-2">
             {/* Streak pill is tappable — deep-links into History → Badges
@@ -871,11 +862,7 @@ export default function Home() {
             hidden: { opacity: 0, y: 8 },
             visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
           }}
-          className="flex items-center gap-3 p-3 rounded-xl border w-full text-left active:scale-[0.98] transition-transform"
-          style={{
-            background: `${THEME.brand}14`,
-            borderColor: `${THEME.brand}33`,
-          }}
+          className="flex min-h-11 items-center gap-3 px-3 rounded-xl w-full text-left bg-muted motion-safe:active:scale-[0.98] transition-transform"
         >
           <RotateCcw
             className="size-5 shrink-0"
@@ -883,10 +870,7 @@ export default function Home() {
           />
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold" style={{ color: THEME.brand }}>
-              Bring back your {backfillRescueStreak}-day streak
-            </p>
-            <p className="text-xs text-muted-foreground">
-              Missed yesterday? Log it to keep your streak going.
+              Log yesterday · Restore {backfillRescueStreak}-day streak
             </p>
           </div>
         </motion.button>
@@ -1074,7 +1058,7 @@ export default function Home() {
               onRetry={retryWater}
               onLog={function (deltaMl) {
                 closePeek();
-                logWater(deltaMl);
+                return logWater(deltaMl);
               }}
             />
           </SectionErrorBoundary>
@@ -1087,6 +1071,8 @@ export default function Home() {
                 setShowWeightSheet(true);
               }}
               lastWeightDate={weightRelativeTime}
+              syncStatus={weightSyncStatus}
+              saveAnnouncement={weightAnnouncement}
               loading={homeDataLoading}
               hideNumber={profile?.hideWeightNumber}
               weightTrend={weightTrend}
@@ -1267,6 +1253,7 @@ export default function Home() {
           <WeightLogSheet
             uid={user.uid}
             unit={weightUnit}
+            lastLoggedDate={lastWeightInfo?.rawDate}
             initialKg={
               lastWeightInfo?.kg ??
               (lastWeightInfo?.weight

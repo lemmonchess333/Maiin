@@ -1,3 +1,4 @@
+import RunPurpose from "@/components/run/RunPurpose";
 /**
  * PR-1: per-day action sheet — canonical surface (post-PR-3).
  *
@@ -282,7 +283,6 @@ export default function DayActionSheet({
       open={open}
       onOpenChange={(o) => !o && onClose()}
       title={`Manage ${dayLabel}`}
-      description="Start, swap, or complete this day's sessions."
       hideHeader
     >
       <div className="px-5 pb-6 pt-3 space-y-4">
@@ -353,15 +353,11 @@ export default function DayActionSheet({
                   {selectedRunTemplate?.name ?? "Run"}
                 </p>
                 {selectedRunTemplate?.description && (
-                  <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                  <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
                     {selectedRunTemplate.description}
                   </p>
                 )}
-                {selectedRunWhy && (
-                  <p className="text-xs text-muted-foreground mt-1.5 leading-snug">
-                    {selectedRunWhy}
-                  </p>
-                )}
+                <RunPurpose>{selectedRunWhy}</RunPurpose>
                 {/* A8: consensus fueling guidance for 75-min+ sessions —
                     one line, same register as the explainer above. */}
                 {selectedRunTemplate &&

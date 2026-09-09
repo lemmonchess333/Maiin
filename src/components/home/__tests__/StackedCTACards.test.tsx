@@ -230,7 +230,7 @@ describe("HOME-ACTION-01 — deep-link + terminal states", function () {
         status: "planned",
       } as any,
     });
-    expect(screen.getByText("Go")).toBeInTheDocument();
+    expect(screen.getByText("View run")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /Easy 30/ }));
     expect(navigate).toHaveBeenCalledWith(
       expect.stringContaining("/run?template=easy_30")

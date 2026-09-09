@@ -1,3 +1,4 @@
+import { runSessionPresentation } from "@/lib/runSessionExplainer";
 import {
   useState,
   useEffect,
@@ -1168,6 +1169,17 @@ export default function Run() {
             // gesture so audio primes). Customize drops to the full modal.
             <RunLaunchCard
               workout={launchWorkout}
+              purpose={
+                runSessionPresentation({
+                  type: launchWorkout.type,
+                  templateId: launchWorkout.id,
+                  currentWeek: programState?.runPlan?.currentWeek,
+                  totalWeeks: programState?.runPlan?.totalWeeks,
+                  distance:
+                    programState?.runPlan?.raceGoal?.distance ??
+                    profile?.raceGoal?.distance,
+                }).purpose
+              }
               prefill={planDecision.prefill}
               strip={planDecision.strip}
               isExtra={isExtraLaunch}
