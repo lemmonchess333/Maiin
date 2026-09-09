@@ -178,33 +178,20 @@ describe("everyday entry sheets", () => {
       readDoc(`users/u1/bodyweightLogs/${localDateString()}`)
     ).toBeUndefined();
   });
-  it("changing the usual water size does not log water, and excessive custom amounts are rejected", () => {
-    const log = vi.fn(),
-      preference = vi.fn();
-    render(
-      <WaterSizeSheet
-        open
-        onClose={vi.fn()}
-        onLog={log}
-        consumedMl={0}
-        targetMl={2000}
-        onServingChange={preference}
-      />
-    );
+  it("keeps presets available during custom entry and rejects excessive amounts", () => {
+    const log = vi.fn();
+    render(<WaterSizeSheet open onClose={vi.fn()} onLog={log} />);
     expect(screen.queryByRole("spinbutton")).toBeNull();
-    fireEvent.click(screen.getByRole("button", { name: "Change" }));
-    fireEvent.change(screen.getByLabelText("Quick-add amount (ml)"), {
-      target: { value: "500" },
-    });
-    fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
-    expect(preference).toHaveBeenCalledWith(500);
-    expect(log).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole("button", { name: "Other amount" }));
+    expect(
+      screen.getByRole("button", { name: "Add 500 ml bottle" })
+    ).toBeVisible();
     fireEvent.change(screen.getByLabelText("Amount (ml)"), {
       target: { value: "99999" },
     });
-    expect(screen.getByRole("button", { name: "Add water" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Add" })).toBeDisabled();
     expect(screen.getByRole("alert")).toBeInTheDocument();
+    expect(log).not.toHaveBeenCalled();
   });
   it("reopens a saved weight with a durable correction and no success toast", async () => {
     const { queueWeightEntry } = await import("@/lib/weightQueue");
@@ -232,30 +219,29 @@ describe("everyday entry sheets", () => {
     expect(close).toHaveBeenCalledOnce();
     expect(toast.success).not.toHaveBeenCalled();
   });
-  it("edits a total above 3 L, accepts zero, and keeps the sheet open on a failed save", () => {
-    const setTotal = vi.fn().mockReturnValue(false),
+  it("preserves a custom amount after a failed save, then logs and closes on retry", () => {
+    const log = vi.fn().mockReturnValue(false),
       close = vi.fn();
-    render(
-      <WaterSizeSheet
-        open
-        onClose={close}
-        onLog={vi.fn()}
-        onSetTotal={setTotal}
-        consumedMl={4250}
-        targetMl={2000}
-      />
-    );
-    fireEvent.click(screen.getByRole("button", { name: "Edit today’s total" }));
-    expect(screen.getByRole("spinbutton")).toHaveValue(4250);
-    fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
-    expect(setTotal).toHaveBeenCalledWith(4250);
-    expect(close).not.toHaveBeenCalled();
-    setTotal.mockReturnValue(true);
+    render(<WaterSizeSheet open onClose={close} onLog={log} />);
+    fireEvent.click(screen.getByRole("button", { name: "Other amount" }));
     fireEvent.change(screen.getByRole("spinbutton"), {
-      target: { value: "0" },
+      target: { value: "400" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
-    expect(setTotal).toHaveBeenLastCalledWith(0);
+    fireEvent.click(screen.getByRole("button", { name: "Add" }));
+    expect(log).toHaveBeenCalledWith(400);
+    expect(screen.getByRole("spinbutton")).toHaveValue(400);
+    expect(screen.getByRole("alert")).toHaveTextContent("Couldn't save");
+    expect(close).not.toHaveBeenCalled();
+    log.mockReturnValue(true);
+    fireEvent.click(screen.getByRole("button", { name: "Add" }));
+    expect(close).toHaveBeenCalledOnce();
+  });
+  it("logs a preset directly without a second confirmation", () => {
+    const log = vi.fn(),
+      close = vi.fn();
+    render(<WaterSizeSheet open onClose={close} onLog={log} />);
+    fireEvent.click(screen.getByRole("button", { name: "Add 750 ml large" }));
+    expect(log).toHaveBeenCalledWith(750);
     expect(close).toHaveBeenCalledOnce();
   });
   it("keeps a corrected meal portion available after failure", async () => {

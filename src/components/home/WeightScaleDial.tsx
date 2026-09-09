@@ -206,7 +206,7 @@ export default function WeightScaleDial({
           }}
         />
         <svg
-          viewBox="0 0 360 136"
+          viewBox="0 0 360 128"
           className="block w-full overflow-hidden"
           aria-hidden="true"
         >

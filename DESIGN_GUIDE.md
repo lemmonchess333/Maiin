@@ -186,12 +186,12 @@ control behaviour the same everywhere. It is **not** a mandate to make every
 surface look alike. A handful of elements are where the product has a face,
 and consistency must yield to them:
 
-| Element               | Keeps                                                       |
-| --------------------- | ----------------------------------------------------------- |
-| Food hero             | Plain calorie ring surface and three compact macro cards    |
-| Home performance card | The ring, its warm gradient, the delta chip                 |
-| Meal slot picker      | Filled orange pills (`SegmentedControl` `emphasis="solid"`) |
-| Sport coding          | Purple lifting / coral running, everywhere they appear      |
+| Element               | Keeps                                                                     |
+| --------------------- | ------------------------------------------------------------------------- |
+| Food hero             | Calorie ring with a subtle token-based halo and three compact macro cards |
+| Home performance card | The ring, its warm gradient, the delta chip                               |
+| Meal slot picker      | Filled orange pills (`SegmentedControl` `emphasis="solid"`)               |
+| Sport coding          | Purple lifting / coral running, everywhere they appear                    |
 
 A 2026-09 cohesion pass flattened the meal pills onto the neutral segmented
 track, and a later release rendered both hero cards through a `compact`
@@ -536,3 +536,12 @@ the guide and `CLAUDE.md` disagree, `CLAUDE.md` wins (it's the deeper spec).
 When something genuinely isn't covered here, ask before inventing._
 
 **Daily logging simplification (user direction, 2026-09-09):** Keep decorative food photos out of the calorie summary; retain meal photos on meal entries. Home session cards show the session and dose; rationale lives behind “Why this run” in day details. Water and weight saves update the tile, with editing available by reopening; persistent sync errors remain visible.
+
+**Daily logging refinement (user direction, 2026-09-09):** The Food calorie
+summary may use a subtle, static halo made from existing theme tokens to
+restore depth after the photo removal. Keep the ring and its contrast intact;
+no new palette, illustration or motion. Water keeps equal icon-only minus/plus
+controls; presets add immediately and Other amount expands inside the same
+sheet. Avoid extra quick-add settings and a separate total-edit flow in that
+sheet. Home has no persistent streak-recovery or rest-day banner; native timed
+notifications are a deferred feature in `POST_LAUNCH.md`.

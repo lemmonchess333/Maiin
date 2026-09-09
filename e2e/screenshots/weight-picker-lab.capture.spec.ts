@@ -77,12 +77,14 @@ test("weight sheet offers stone and a bounded date without saving", async ({
   await page.getByRole("button", { name: /^Weight / }).click();
   await page.getByLabel("Weight unit").selectOption("kg");
   await page.getByLabel("Weight (kg)", { exact: true }).fill("81.6");
-  // The field must remain usable beside the full-width input primitive.
+  // The centered readout must stay readable beside the unit picker.
   const numberBox = await page
     .getByLabel("Weight (kg)", { exact: true })
     .boundingBox();
   const unitBox = await page.getByLabel("Weight unit").boundingBox();
-  expect(numberBox!.width).toBeGreaterThan(140);
+  expect(numberBox!.width).toBeGreaterThan(88);
+  expect(numberBox!.height).toBeGreaterThanOrEqual(44);
+  expect(numberBox!.x + numberBox!.width).toBeLessThanOrEqual(unitBox!.x);
   expect(unitBox!.width).toBeGreaterThanOrEqual(44);
   expect(unitBox!.width).toBeLessThanOrEqual(88);
 
@@ -105,6 +107,7 @@ test("weight sheet offers stone and a bounded date without saving", async ({
   for (const name of ["Weight (st)", "Pounds"]) {
     const box = await page.getByLabel(name, { exact: true }).boundingBox();
     expect(box!.width).toBeGreaterThanOrEqual(80);
+    expect(box!.height).toBeGreaterThanOrEqual(44);
     expect(box!.x + box!.width).toBeLessThanOrEqual(375);
   }
   await expect(

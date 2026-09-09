@@ -90,9 +90,18 @@ test.describe("water size picker", () => {
     await page.getByRole("button", { name: "Other amount" }).click();
     await expect(page.getByLabel("Amount (ml)")).toBeVisible();
     await shootLightDark(page, "water-other-amount");
-    await page.getByRole("button", { name: "Back", exact: true }).click();
-    await page.getByRole("button", { name: "Edit today’s total" }).click();
-    await expect(page.getByLabel("Today’s total (ml)")).toBeVisible();
-    await shootLightDark(page, "water-edit-total");
+    // Expanded custom entry stays in the same compact sheet as the presets.
+    await expect(
+      page.getByRole("button", { name: "Add 500 ml bottle" })
+    ).toBeVisible();
+    await page.getByLabel("Amount (ml)").fill("400");
+    await expect(
+      page.getByRole("button", { name: "Add", exact: true })
+    ).toBeEnabled();
+    await shootLightDark(page, "water-custom-filled");
+    await page.getByRole("button", { name: "Add", exact: true }).click();
+    await expect(
+      page.getByRole("dialog", { name: "Add water" })
+    ).not.toBeVisible();
   });
 });

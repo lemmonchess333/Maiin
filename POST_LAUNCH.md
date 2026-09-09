@@ -37,6 +37,29 @@ These subscriptions are necessary for Home's header total to reflect the MAX rul
 
 ## Features
 
+### Native birthday and streak-recovery notifications
+
+**Status:** Deferred by user direction, 2026-09-09. Home's persistent streak
+recovery/rest-day rows are removed; Food's date picker still supports backfill.
+
+Use an iOS system notification banner at a chosen local time, respecting
+notification consent and quiet hours. Extend the existing Capacitor local
+notification bridge (`src/lib/notifications.ts`) and reminder preferences;
+check foreground presentation and tap routing on a device. The existing web
+FCM path is separate. Deduplicate by account/event and cancel stale reminders
+after logging or signing out; do not reintroduce a Home banner as a fallback.
+
+- **Streak recovery:** “Forgot to log yesterday?” / “You can still add it to
+  your diary.” Deep-link to `/food?date=YYYY-MM-DD`, using the actual missed
+  local date and showing it only while backfill is eligible.
+- **Birthday:** “Happy birthday 🕯️” / “From all of us at Tropos. Thanks for
+  being here.” Use the platform emoji. Schedule once on the birthday, never
+  merely when a birth date is entered. The app currently stores age, not a
+  birth date; add optional month/day collection with the native feature.
+
+No birthday collection, permission prompt or new scheduling ships in this UI
+refinement.
+
 ### Steps tile → HealthKit / Health Connect wiring
 
 **Status:** iOS ✅ SHIPPED (needs on-device verification — see the device

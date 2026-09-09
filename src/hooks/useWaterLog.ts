@@ -23,7 +23,7 @@ import {
   WATER_CHANGED,
   type WaterReceipt,
 } from "@/lib/waterActions";
-import { readJson, scopedKey, writeJson } from "@/lib/localStore";
+import { readJson, scopedKey } from "@/lib/localStore";
 import { toast } from "@/lib/toast";
 export interface WaterLog {
   ml: number;
@@ -145,21 +145,16 @@ export function useWaterLog() {
   const storedServing = uid
     ? readJson<number>(preferenceKey, GLASS_ML)
     : GLASS_ML;
+  const recentSizes = recentWaterSizes(uid);
+  // The most recently saved drink is the repeat/correction step. This keeps
+  // minus paired with a custom amount even after closing the sheet or reload.
+  const preferredServing = recentSizes[0] ?? storedServing;
   const servingMl =
-    Number.isFinite(storedServing) &&
-    storedServing > 0 &&
-    storedServing <= MAX_SINGLE_LOG_ML
-      ? storedServing
+    Number.isFinite(preferredServing) &&
+    preferredServing > 0 &&
+    preferredServing <= MAX_SINGLE_LOG_ML
+      ? preferredServing
       : GLASS_ML;
-  const setServingMl = (value: number) => {
-    if (!uid || value <= 0 || value > MAX_SINGLE_LOG_ML) return false;
-    if (!writeJson(preferenceKey, clampMl(value))) {
-      toast.error("Couldn't save your usual serving.");
-      return false;
-    }
-    refresh((v) => v + 1);
-    return true;
-  };
   return {
     ml: state.ml,
     target,
@@ -168,8 +163,6 @@ export function useWaterLog() {
     setWater: (value: number) => logWater(clampMl(value) - state.ml),
     progress: waterProgress(state.ml, target),
     servingMl,
-    recentSizes: recentWaterSizes(uid),
-    setServingMl,
     /* A write that is merely in flight says nothing.
        queueWater notifies before flushWater's transaction resolves, so
        every tap opens a window where the queue is non-empty. Reporting
