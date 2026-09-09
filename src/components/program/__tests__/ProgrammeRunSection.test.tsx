@@ -619,6 +619,31 @@ describe("ProgrammeRunSection — PR-4 structured / race_prep hero", () => {
     expect(screen.getByText(/All runs done this week/i)).toBeInTheDocument();
   });
 
+  it("opens the exact saved run from a claim-completed selected day", () => {
+    const claimedDay = makeRunDay({
+      date: TODAY_KEY,
+      dayIndex: TODAY_DOW,
+      status: "planned",
+    });
+    mockClaimMap.set(claimedDay.id!, {
+      claimedSavedRunId: "saved-run-exact",
+      manualCompleted: false,
+      legacyCompleted: false,
+    });
+    renderWith(
+      <ProgrammeRunSection
+        {...commonProps()}
+        profile={makeProfile({ runMode: "structured", raceGoal: undefined })}
+        programState={makeProgramState([claimedDay], {
+          runPlan: { mode: "structured" },
+        })}
+      />
+    );
+    fireEvent.click(screen.getByRole("button", { name: "View this run" }));
+    expect(navigateMock).toHaveBeenCalledWith("/run/saved-run-exact");
+    expect(screen.queryByRole("button", { name: "Start this run" })).toBeNull();
+  });
+
   it("renders 'Configure your runs' CTA for non-freeform users with runsTarget=0 and no race goal", () => {
     const props = commonProps();
     const profile = makeProfile({ runMode: "structured", raceGoal: undefined });

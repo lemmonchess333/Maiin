@@ -379,7 +379,12 @@ async function flushQueueOnce(db: Firestore, uid: string): Promise<number> {
                   updatedAt: Date.now(),
                   workouts: state.workouts.map((day, index) =>
                     index === completion.dayIndex
-                      ? { ...day, completed: true, skipped: false }
+                      ? {
+                          ...day,
+                          completed: true,
+                          skipped: false,
+                          completedWorkoutId: item.docId,
+                        }
                       : day
                   ),
                 };

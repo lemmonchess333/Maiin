@@ -278,7 +278,7 @@ export default function ExerciseHistory() {
     navigate(-1);
   }, [navigate]);
 
-  if (loading) {
+  if (loading && (tab !== "form" || !exercise)) {
     return (
       <div className="space-y-4 pt-2">
         <div className="h-8 bg-muted/50 rounded motion-safe:animate-pulse" />
@@ -345,43 +345,6 @@ export default function ExerciseHistory() {
         </div>
       </div>
 
-      {/* ── Stat strip ───────────────────────────────────────────────── */}
-      <div className="grid grid-cols-3 gap-2">
-        <div className="p-3 rounded-xl bg-card card-shadow">
-          <SectionLabel tier="section">
-            {isTimed ? "Longest hold" : isBodyweight ? "Max reps" : "Best 1RM"}
-          </SectionLabel>
-          <p className="text-lg font-extrabold font-mono tabular-nums text-foreground mt-1">
-            {isTimed
-              ? headerStats.longestHold
-                ? `${headerStats.longestHold}s`
-                : "—"
-              : isBodyweight
-                ? headerStats.maxReps || "—"
-                : headerStats.best1RM
-                  ? `${headerStats.best1RM}`
-                  : "—"}
-            {!isTimed && !isBodyweight && headerStats.best1RM > 0 && (
-              <span className="text-xs font-normal text-muted-foreground ml-1">
-                kg
-              </span>
-            )}
-          </p>
-        </div>
-        <div className="p-3 rounded-xl bg-card card-shadow">
-          <SectionLabel tier="section">Sessions</SectionLabel>
-          <p className="text-lg font-extrabold font-mono tabular-nums text-foreground mt-1">
-            {headerStats.totalSessions}
-          </p>
-        </div>
-        <div className="p-3 rounded-xl bg-card card-shadow">
-          <SectionLabel tier="section">Total sets</SectionLabel>
-          <p className="text-lg font-extrabold font-mono tabular-nums text-foreground mt-1">
-            {headerStats.totalSets}
-          </p>
-        </div>
-      </div>
-
       {/* ── Tab toggle — Progress / Form. Shared SegmentedControl
             primitive (replaces a hand-rolled pill row that had no a11y —
             now a full WAI-ARIA radiogroup with roving tabindex + keyboard,
@@ -398,6 +361,49 @@ export default function ExerciseHistory() {
           { value: "form", label: "Form" },
         ]}
       />
+
+      {/* Statistics belong to Progress; Form can render while history loads. */}
+      {tab === "progress" && (
+        <div className="grid grid-cols-3 gap-2">
+          <div className="p-3 rounded-xl bg-card card-shadow">
+            <SectionLabel tier="section">
+              {isTimed
+                ? "Longest hold"
+                : isBodyweight
+                  ? "Max reps"
+                  : "Best 1RM"}
+            </SectionLabel>
+            <p className="text-lg font-extrabold font-mono tabular-nums text-foreground mt-1">
+              {isTimed
+                ? headerStats.longestHold
+                  ? `${headerStats.longestHold}s`
+                  : "—"
+                : isBodyweight
+                  ? headerStats.maxReps || "—"
+                  : headerStats.best1RM
+                    ? `${headerStats.best1RM}`
+                    : "—"}
+              {!isTimed && !isBodyweight && headerStats.best1RM > 0 && (
+                <span className="text-xs font-normal text-muted-foreground ml-1">
+                  kg
+                </span>
+              )}
+            </p>
+          </div>
+          <div className="p-3 rounded-xl bg-card card-shadow">
+            <SectionLabel tier="section">Sessions</SectionLabel>
+            <p className="text-lg font-extrabold font-mono tabular-nums text-foreground mt-1">
+              {headerStats.totalSessions}
+            </p>
+          </div>
+          <div className="p-3 rounded-xl bg-card card-shadow">
+            <SectionLabel tier="section">Total sets</SectionLabel>
+            <p className="text-lg font-extrabold font-mono tabular-nums text-foreground mt-1">
+              {headerStats.totalSets}
+            </p>
+          </div>
+        </div>
+      )}
 
       {tab === "form" ? (
         <div className="rounded-2xl bg-card p-4 card-shadow">

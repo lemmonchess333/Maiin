@@ -107,6 +107,7 @@ beforeEach(() => {
   Element.prototype.scrollIntoView = vi.fn();
 });
 afterEach(() => {
+  vi.useRealTimers();
   cleanup();
   vi.unstubAllGlobals();
 });
@@ -153,7 +154,7 @@ describe("set completion through row controls", () => {
     expect(log).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole("button", { name: "Mark set complete" }));
     await vi.waitFor(() => expect(log).toHaveBeenCalledOnce());
-    expect(log).toHaveBeenCalledWith(0, 0, 8, 0, undefined);
+    expect(log).toHaveBeenCalledWith(0, 0, 8, 0, undefined, { id: "test" });
   });
 });
 
@@ -426,4 +427,105 @@ it("recognises a server-acknowledged completion after reopening instead of writi
   await vi.waitFor(() => expect(screen.getByText("Synced")).toBeVisible());
   expect(complete).not.toHaveBeenCalled();
   expect(h.clear).toHaveBeenCalledWith("landed-original");
+});
+
+describe("completed-set corrections", () => {
+  it("can correct an older set after Undo expires without changing other sets", async () => {
+    // Advance only Undo's timeout. Faking performance/RAF and then restoring
+    // them strands Motion's shared frame loop on CI, including later tests.
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+    openSession();
+    fireEvent.click(
+      screen.getAllByRole("button", { name: "Mark set complete" })[0]
+    );
+    await act(async () => vi.advanceTimersByTime(4100));
+    vi.useRealTimers();
+    await vi.waitFor(() =>
+      expect(screen.queryByRole("button", { name: "Undo last set" })).toBeNull()
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "Edit completed set 1" })
+    );
+    fireEvent.change(screen.getByRole("textbox", { name: "Weight (kg)" }), {
+      target: { value: "12.5" },
+    });
+    fireEvent.change(screen.getByRole("textbox", { name: "Reps" }), {
+      target: { value: "6" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+    await vi.waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    expect(
+      screen.getByRole("spinbutton", { name: "Set 1 weight" })
+    ).toHaveValue(12.5);
+    expect(screen.getByRole("spinbutton", { name: "Set 1 reps" })).toHaveValue(
+      6
+    );
+    expect(
+      screen.getByRole("spinbutton", { name: "Set 1 reps" })
+    ).toBeDisabled();
+    expect(screen.getByRole("spinbutton", { name: "Set 2 reps" })).toHaveValue(
+      8
+    );
+    expect(
+      screen.getByRole("spinbutton", { name: "Set 2 reps" })
+    ).toBeEnabled();
+  });
+
+  it("keeps an invalid correction in the sheet and Cancel preserves the set", async () => {
+    openSession();
+    fireEvent.click(
+      screen.getAllByRole("button", { name: "Mark set complete" })[0]
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: "Edit completed set 1" })
+    );
+    fireEvent.change(screen.getByRole("textbox", { name: "Reps" }), {
+      target: { value: "-2" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+    await vi.waitFor(() =>
+      expect(screen.getByRole("alert")).toHaveTextContent(
+        "Reps can't be negative."
+      )
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    expect(screen.getByRole("spinbutton", { name: "Set 1 reps" })).toHaveValue(
+      8
+    );
+  });
+
+  it("replaces the final progression result and saves the corrected workout", async () => {
+    const complete = vi.fn().mockResolvedValue(undefined);
+    const log = openSession(complete);
+    for (let i = 0; i < 3; i++)
+      fireEvent.click(
+        screen.getAllByRole("button", { name: "Mark set complete" })[0]
+      );
+    await vi.waitFor(() =>
+      expect(screen.getByRole("button", { name: "Edit workout" })).toBeVisible()
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Edit workout" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Edit completed set 3" })
+    );
+    fireEvent.change(screen.getByRole("textbox", { name: "Reps" }), {
+      target: { value: "6" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+    await vi.waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    expect(log).toHaveBeenCalledTimes(2);
+    expect(log).toHaveBeenLastCalledWith(0, 0, 6, 0, undefined, {
+      id: "test",
+      correction: true,
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Finish workout" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save Workout" }));
+    await vi.waitFor(() => expect(complete).toHaveBeenCalledOnce());
+    expect(
+      complete.mock.calls[0][1].setLogs[0].map(
+        (set: { reps: number }) => set.reps
+      )
+    ).toEqual([8, 8, 6]);
+    expect(screen.queryByRole("button", { name: "Edit workout" })).toBeNull();
+  });
 });

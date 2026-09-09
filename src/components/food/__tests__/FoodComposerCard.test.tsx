@@ -112,13 +112,11 @@ describe("FoodComposerCard — scan icon in the input row (wave2 A)", () => {
   });
 });
 
-describe("FoodComposerCard — no standing manual-log link (wave2 C)", () => {
-  it("renders no always-visible 'Log manually' control", () => {
-    renderComposer();
-    expect(screen.queryByText("Log manually")).toBeNull();
-    expect(
-      screen.queryByRole("button", { name: /log a meal manually/i })
-    ).toBeNull();
+describe("FoodComposerCard — visible manual entry", () => {
+  it("opens manual entry without a search or a scan", () => {
+    const { props } = renderComposer();
+    fireEvent.click(screen.getByRole("button", { name: "Enter manually" }));
+    expect(props.onManualOpen).toHaveBeenCalledOnce();
   });
 
   it("manual entry stays reachable via the dropdown's no-results row", () => {
@@ -133,17 +131,17 @@ describe("FoodComposerCard — no standing manual-log link (wave2 C)", () => {
     expect(onManualOpen).toHaveBeenCalledTimes(1);
   });
 
-  it("composer body is exactly the input surface: textarea + scan + meal-slot radiogroup (no extra CTA shapes)", () => {
+  it("keeps meal selection separate from scan and manual entry", () => {
     renderComposer({ targetMeal: "dinner" });
     // The meal slots are a SegmentedControl (radiogroup), not pill buttons:
     // no button carries a meal name, and the only buttons are the scan icon
-    // and the clear-target X that a selected slot brings.
+    // the clear-target X and manual entry.
     expect(
       screen.queryByRole("button", {
         name: /^(Breakfast|Lunch|Snacks|Dinner)$/,
       })
     ).toBeNull();
-    expect(screen.getAllByRole("button")).toHaveLength(2);
+    expect(screen.getAllByRole("button")).toHaveLength(3);
     const slots = screen.getByRole("radiogroup", { name: "Add to meal" });
     expect(within(slots).getAllByRole("radio")).toHaveLength(4);
     expect(

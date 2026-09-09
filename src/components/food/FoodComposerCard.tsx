@@ -1,5 +1,6 @@
 import type { Ref, RefObject } from "react";
 import SectionLabel from "@/components/ui/SectionLabel";
+import { Button } from "@/components/ui/Button";
 import SegmentedControl from "@/components/ui/SegmentedControl";
 import { Camera, Lock, PenLine, SendHorizontal, X } from "lucide-react";
 import { THEME } from "@/lib/theme";
@@ -82,8 +83,8 @@ interface FoodComposerCardProps {
 /**
  * The Food page's input surface: NL textarea (with scan icon, send
  * button + suggestions dropdown), the conditional quota caption, and
- * the "Add to" meal selector. ONE entry surface — manual logging is
- * contextual (dropdown no-results row), not a standing link.
+ * the "Add to" meal selector. Manual entry is also available directly for
+ * people who already know the nutrition values.
  *
  * Extracted from src/pages/Food.tsx — the page previously inlined
  * ~170 lines of composer markup that wove together five distinct
@@ -315,11 +316,17 @@ function FoodComposerCard({
           onChange={onTargetMeal}
         />
       </div>
-      {/* No standing manual-log link (wave2 C). Manual entry remains
-          reachable exactly when flows fail the user: the dropdown's
-          no-results row (below, via onManualOpen), the AI-failure
-          fallback (FoodAnalyzer onRequestManualLog), and the OFF
-          search-error toast action — all owned by the parent. */}
+      <Button
+        variant="ghost"
+        className="mt-2"
+        onClick={() => {
+          haptic();
+          setSuggestionsActive(false);
+          onManualOpen();
+        }}
+      >
+        Enter manually
+      </Button>
     </div>
   );
 }

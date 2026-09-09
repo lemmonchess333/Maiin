@@ -1132,7 +1132,14 @@ export function useProgram() {
       const updated: ProgramState = {
         ...programState,
         workouts: programState.workouts.map((d, i) =>
-          i === dayIndex ? { ...d, completed: true, skipped: false } : d
+          i === dayIndex
+            ? {
+                ...d,
+                completed: true,
+                skipped: false,
+                completedWorkoutId: `programme-${sessionData.completionId}`,
+              }
+            : d
         ),
         // Clear next-workout override if completing the overridden day
         ...(programState.nextWorkoutOverride === dayIndex && {
@@ -2157,7 +2164,8 @@ export function useProgram() {
       exerciseIndex: number,
       actualReps: number,
       actualWeight: number,
-      actualRpe?: number
+      actualRpe?: number,
+      session?: { id: string; correction?: boolean }
     ) => {
       if (!programState) return;
 
@@ -2165,9 +2173,23 @@ export function useProgram() {
         autoProgression: true,
         microloading: true,
       };
-      const exercise =
+      const storedExercise =
         programState.workouts[dayIndex]?.exercises[exerciseIndex];
-      if (!exercise) return;
+      if (!storedExercise)
+        throw new Error("This exercise is no longer in your workout.");
+      if (
+        session?.correction &&
+        storedExercise.sessionProgression?.id !== session.id
+      ) {
+        throw new Error(
+          "This session’s progression can no longer be corrected. Refresh your workout."
+        );
+      }
+      const { sessionProgression, ...currentExercise } = storedExercise;
+      const exercise =
+        session && sessionProgression?.id === session.id
+          ? sessionProgression.baseline
+          : currentExercise;
 
       // Blk2: an "easing back in" block holds load for its first two weeks,
       // so a returning lifter's numbers cannot go backwards while they find
@@ -2230,6 +2252,12 @@ export function useProgram() {
         };
       }
 
+      if (session)
+        updatedExercise.sessionProgression = {
+          id: session.id,
+          baseline: exercise,
+        };
+
       if (
         updatedExercise.plateauCount > 0 &&
         updatedExercise.plateauCount !== exercise.plateauCount
@@ -2268,12 +2296,16 @@ export function useProgram() {
           },
           today: localDateString(),
           ...(actualRpe === undefined ? {} : { actualRpe }),
+          ...(session ? { sessionId: session.id } : {}),
+          ...(session?.correction ? { correction: true } : {}),
         },
         (state) => ({ ...state, workouts: updatedWorkouts })
       );
       if (outcome === "rejected") {
         rejectedToast("Couldn't save that set.", lastRejectionRef.current);
         await refetchProgramState();
+        if (session?.correction)
+          throw new Error("Couldn’t update your workout. Please try again.");
       }
     },
     [programState, runProgramCommand, refetchProgramState]

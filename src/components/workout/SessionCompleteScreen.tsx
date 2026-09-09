@@ -35,6 +35,7 @@ interface SessionCompleteScreenProps {
   planContext?: { progress: string; next: string };
   onShare?: () => Promise<void>;
   onFinish: () => void;
+  onEdit?: () => void;
   onClose: () => void;
 }
 
@@ -51,6 +52,7 @@ export default function SessionCompleteScreen({
   planContext,
   onShare,
   onFinish,
+  onEdit,
   onClose,
 }: SessionCompleteScreenProps) {
   const durationDisplay =
@@ -220,6 +222,16 @@ export default function SessionCompleteScreen({
                 ? "Retry sync"
                 : "Save Workout"}
           </Button>
+          {!saved && onEdit && (
+            <Button
+              fullWidth
+              variant="secondary"
+              onClick={onEdit}
+              disabled={completing}
+            >
+              Edit workout
+            </Button>
+          )}
           {!saved && (
             <Button
               fullWidth

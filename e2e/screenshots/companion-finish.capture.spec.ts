@@ -54,7 +54,9 @@ test("a saved lift has one finish and Done returns to Program", async ({
   await signInAsTestUser(page, { email, password });
   await page.goto("program");
   // The SDK emulator banner stays visible but must not consume app taps.
-  await page.addStyleTag({ content: ".firebase-emulator-warning { pointer-events: none !important; }" });
+  await page.addStyleTag({
+    content: ".firebase-emulator-warning { pointer-events: none !important; }",
+  });
   await page
     .getByRole("button", { name: "Start workout", exact: true })
     .click();
@@ -67,6 +69,41 @@ test("a saved lift has one finish and Done returns to Program", async ({
     .click();
   const endRest = page.getByRole("button", { name: "End rest", exact: true });
   if (await endRest.isVisible()) await endRest.click();
+  await page
+    .getByRole("button", {
+      name: `Edit completed set ${warmups + 1}`,
+      exact: true,
+    })
+    .click();
+  const correction = page.getByRole("dialog", {
+    name: `Edit set ${warmups + 1}`,
+    exact: true,
+  });
+  await expect(correction).toBeVisible();
+  await correction
+    .getByRole("textbox", { name: "Reps", exact: true })
+    .fill("6");
+  for (const dark of [false, true]) {
+    await page.evaluate(
+      (value) => document.documentElement.classList.toggle("dark", value),
+      dark
+    );
+    await settleImages(page);
+    await page.screenshot({
+      path: `screenshots/completed-set-edit-${dark ? "dark" : "light"}.png`,
+      animations: "disabled",
+    });
+  }
+  await correction
+    .getByRole("button", { name: "Save changes", exact: true })
+    .click();
+  await expect(correction).toHaveCount(0);
+  await expect(
+    page.getByRole("spinbutton", {
+      name: `Set ${warmups + 1} reps`,
+      exact: true,
+    })
+  ).toHaveValue("6");
   await page.getByRole("button", { name: "Finish early", exact: true }).click();
   await page
     .getByRole("button", { name: "Review completed work", exact: true })
@@ -99,4 +136,8 @@ test("a saved lift has one finish and Done returns to Program", async ({
   ).toHaveCount(0);
   await expect(page.getByRole("dialog")).toHaveCount(0);
   await expect(page).toHaveURL(/\/program(?:\?.*)?$/);
+  await page
+    .getByRole("button", { name: "View this workout", exact: true })
+    .click();
+  await expect(page).toHaveURL(/\/workout\/programme-/);
 });

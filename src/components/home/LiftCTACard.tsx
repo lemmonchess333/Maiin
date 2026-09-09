@@ -1,7 +1,7 @@
 import InlineNumerals from "@/components/ui/InlineNumerals";
 import { THEME } from "@/lib/theme";
 import { motion } from "framer-motion";
-import { Dumbbell, Play } from "lucide-react";
+import { Dumbbell, ChevronRight } from "lucide-react";
 import { haptic } from "@/lib/haptic";
 import { track as trackHomeEvent } from "@/lib/homeAnalytics";
 
@@ -13,9 +13,12 @@ export default function LiftCTACard({
   isFirst = false,
   dayIndex = null,
   isStartable = true,
+  status,
 }: {
   purpose?: string | null;
   nextWorkout: {
+    completed?: boolean;
+    skipped?: boolean;
     dayName: string;
     dayType: string;
     exercises: { name: string }[];
@@ -29,15 +32,31 @@ export default function LiftCTACard({
    *  (`?day=N`) instead of a bare `/program`. Null → bare `/program`. */
   dayIndex?: number | null;
   /** HOME-ACTION-01: false when the lift slot is already completed/skipped
-   *  (terminal). The pill reads "Done" and the tap opens the day to review
+   *  (terminal). The pill names its status and the tap opens the day to review
    *  rather than framing a finished session as launchable. */
   isStartable?: boolean;
+  status?: "none" | "planned" | "completed" | "skipped";
 }) {
   // Deep-link to the exact Programme day; both startable and terminal
   // slots open there (the pill signals which). Bare /program only when
   // the resolver couldn't map an index.
   const target =
     typeof dayIndex === "number" ? `/program?day=${dayIndex}` : "/program";
+  const state =
+    status ??
+    (nextWorkout.completed
+      ? "completed"
+      : nextWorkout.skipped
+        ? "skipped"
+        : isStartable
+          ? "planned"
+          : "none");
+  const statusLabel =
+    state === "completed"
+      ? "Completed"
+      : state === "skipped"
+        ? "Skipped"
+        : "Needs review";
   return (
     <motion.button
       whileTap={{ scale: 0.97 }}
@@ -67,7 +86,7 @@ export default function LiftCTACard({
             {muscleGroups && <> · {muscleGroups}</>}
           </p>
         </div>
-        {isStartable ? (
+        {state === "planned" ? (
           <div
             className="flex min-h-11 shrink-0 items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-bold shadow-sm"
             style={{
@@ -75,14 +94,14 @@ export default function LiftCTACard({
               color: "white",
             }}
           >
-            <Play className="size-3" fill="currentColor" aria-hidden="true" />
-            Start
+            <ChevronRight className="size-4" aria-hidden="true" />
+            View
           </div>
         ) : (
           // HOME-ACTION-01: a completed/skipped lift is not launchable —
-          // show a calm "Done" chip instead of a Start button.
+          // show its actual completion status.
           <div className="flex min-h-11 shrink-0 items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-bold bg-muted text-muted-foreground">
-            Done
+            {statusLabel}
           </div>
         )}
       </div>

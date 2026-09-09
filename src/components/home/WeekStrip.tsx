@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { THEME } from "@/lib/theme";
-import { Check } from "lucide-react";
+import { Check, Minus } from "lucide-react";
 import { format } from "date-fns";
 import type { UserProfile } from "@/lib/auth";
 import type { ProgramState } from "@/features/program/programTypes";
@@ -21,6 +21,8 @@ import { localDateString, parseLocalDate } from "@/lib/dateHelpers";
  */
 function trainingLabel(day: {
   sType: string;
+  liftCompleted: boolean;
+  liftSkipped: boolean;
   runCompleted: boolean;
   runSkipped: boolean;
 }): string {
@@ -32,8 +34,13 @@ function trainingLabel(day: {
     : day.runSkipped
       ? "skipped run"
       : "run day";
-  if (hasLift && hasRun) return `lift and ${run}`;
-  if (hasLift) return "lift day";
+  const lift = day.liftCompleted
+    ? "completed lift"
+    : day.liftSkipped
+      ? "skipped lift"
+      : "lift day";
+  if (hasLift && hasRun) return `${lift} and ${run}`;
+  if (hasLift) return lift;
   return run;
 }
 
@@ -87,6 +94,8 @@ export default function WeekStrip({
         hasActivity: !!(data && (data.workouts > 0 || data.meals > 0)),
         sType: r.scheduleType,
         isSelected: r.dateKey === selectedDate,
+        liftCompleted: r.lift.status === "completed",
+        liftSkipped: r.lift.status === "skipped",
         runCompleted: r.run.isCompleted,
         runSkipped: r.run.status === "skipped",
       };
@@ -95,14 +104,8 @@ export default function WeekStrip({
   return (
     <div className="flex items-center justify-between px-1">
       {days.map(function (day) {
-        // Today: 48px filled purple + halo (matches Program DayStepper's
-        // Rule 3). Others: 40px. Selected-not-today: 40px filled purple
-        // to match Program Rule 5. Default: 40px hollow ring (transparent
-        // fill + 2px border) — matches Program's ProgrammeWeekSelector
-        // default cell so the day-circle primitive reads identically on
-        // Home and the Train Lift/Run selectors (the grey-fill default was
-        // the last state that diverged; it encoded nothing — activity shows
-        // via the dots below, not the circle).
+        // Today's larger outlined date stays distinct from the selected
+        // date's filled circle, including when another day is selected.
         const isBig = day.isToday;
         // Day numbers are numeric displays → font-mono (Archivo) + tabular-nums
         // per the design-system invariant, and text-sm so the week's dates are
@@ -111,18 +114,14 @@ export default function WeekStrip({
           (isBig ? "size-12 " : "size-10 ") +
           "rounded-full flex items-center justify-center text-sm font-semibold font-mono tabular-nums transition-all relative";
         let st: React.CSSProperties = {};
-        if (day.isToday) {
-          cls += " text-white";
-          st = {
-            backgroundColor: THEME.brand,
-            boxShadow: `0 0 0 4px ${THEME.brand}1A, 0 4px 14px ${THEME.brand}40`,
-          };
-        } else if (day.isSelected) {
-          cls += " text-white";
-          st = { backgroundColor: THEME.brand };
+        if (day.isSelected) {
+          cls += " bg-primary-strong text-primary-foreground";
+        } else if (day.isToday) {
+          cls += " border-2 border-primary text-primary";
         } else {
           cls += " text-muted-foreground border-2 border-border";
         }
+        if (day.isToday) st = { boxShadow: `0 0 0 3px ${THEME.brand}1A` };
         return (
           <button
             type="button"
@@ -136,6 +135,7 @@ export default function WeekStrip({
                textual equivalent to add to the label, and adding one would
                double-announce against it. */
             aria-pressed={day.isSelected}
+            aria-current={day.isToday ? "date" : undefined}
             aria-label={
               // en-GB day-before-month, the app's one date treatment —
               // "Saturday 23 August", not "Saturday, August 23". The
@@ -152,33 +152,44 @@ export default function WeekStrip({
             className="flex flex-col items-center gap-1 active:scale-[0.95] min-w-[44px] min-h-[44px] justify-center"
           >
             <span className="text-xs text-muted-foreground">
-              {format(day.date, "EEE").charAt(0)}
+              {format(day.date, "EEEEEE")}
             </span>
             <div className={cls} style={st}>
               {day.date.getDate()}
             </div>
-            <div className="flex items-center gap-1">
-              {(day.sType === "both" || day.sType === "lift") && (
-                <div className="size-[7px] rounded-full bg-lifting" />
-              )}
-              {/* PR-0c: actual-state precedence on run indicator.
-                  Resolver-aware: completed renders Check, skipped
-                  fades to 40% opacity, planned stays as the
-                  recurring rhombus. Future strip days that don't
-                  have a matched runDay just show the rhombus from
-                  the recurring weekSchedule. */}
+            <div className="flex h-3 items-center gap-1" aria-hidden="true">
+              {(day.sType === "both" || day.sType === "lift") &&
+                (day.liftCompleted ? (
+                  <Check
+                    className="size-3 text-lifting-strong"
+                    strokeWidth={3}
+                  />
+                ) : day.liftSkipped ? (
+                  <Minus
+                    className="size-3 text-lifting-strong"
+                    strokeWidth={3}
+                  />
+                ) : (
+                  <div className="size-[7px] rounded-full bg-lifting" />
+                ))}
+              {/* Shape communicates status as well as sport colour. */}
               {(day.sType === "both" || day.sType === "run") &&
                 day.runCompleted && (
-                  <Check className="size-[10px] text-running" strokeWidth={3} />
-                )}
-              {(day.sType === "both" || day.sType === "run") &&
-                !day.runCompleted && (
-                  <div
-                    className={`size-[7px] rotate-45 ${
-                      day.runSkipped ? "bg-muted-foreground/40" : "bg-running"
-                    }`}
+                  <Check
+                    className="size-3 text-running-strong"
+                    strokeWidth={3}
                   />
                 )}
+              {(day.sType === "both" || day.sType === "run") &&
+                !day.runCompleted &&
+                (day.runSkipped ? (
+                  <Minus
+                    className="size-3 text-running-strong"
+                    strokeWidth={3}
+                  />
+                ) : (
+                  <div className="size-[7px] rotate-45 bg-running" />
+                ))}
               {day.sType === "rest" && <div className="size-[7px]" />}
             </div>
           </button>

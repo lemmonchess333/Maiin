@@ -51,7 +51,7 @@ import {
   hitsFromWorkoutDocs,
 } from "@/lib/muscleRecovery";
 import { isHardRun } from "@/lib/hybridGuidance";
-import { addLocalDays, localDateString } from "@/lib/dateHelpers";
+import { addLocalDays, localDateString, localWeekKey } from "@/lib/dateHelpers";
 import { useRunningStats } from "@/hooks/useRunningStats";
 import ScheduleLayoutSheet from "@/components/program/ScheduleLayoutSheet";
 import {
@@ -688,6 +688,21 @@ function ProgramInner() {
 
   const selectedWorkout = displayWorkouts[idx];
   const isSelectedToday = !isViewingHistory && idx === todayIndex;
+  // Older saves have no explicit link. Only a unique current-week match is
+  // safe; historical/ambiguous records retain the History fallback.
+  const legacySavedMatches =
+    !isViewingHistory && selectedWorkout
+      ? recentWorkouts.filter(
+          (workout) =>
+            workout.date >= localWeekKey() &&
+            workout.date <= localDateString() &&
+            workout.notes ===
+              `${selectedWorkout.dayName} — Programme Week ${displayWeekNumber}`
+        )
+      : [];
+  const completedWorkoutId =
+    selectedWorkout?.completedWorkoutId ??
+    (legacySavedMatches.length === 1 ? legacySavedMatches[0].id : null);
 
   // Day status
   type DayStatus = "today" | "completed" | "skipped" | "upcoming";
@@ -1700,14 +1715,23 @@ function ProgramInner() {
                       {status === "completed" && (
                         <div className="rounded-xl border border-border bg-card p-4 space-y-2">
                           <p className="text-sm text-muted-foreground">
-                            This programme day is complete. View your recorded
-                            sets and actual totals in History.
+                            {completedWorkoutId
+                              ? "Your recorded sets and actual totals are ready to view."
+                              : "This programme day is complete. Find your recorded session in History."}
                           </p>
                           <Button
                             variant="secondary"
-                            onClick={() => navigate("/history")}
+                            onClick={() =>
+                              navigate(
+                                completedWorkoutId
+                                  ? `/workout/${completedWorkoutId}`
+                                  : "/history"
+                              )
+                            }
                           >
-                            View workout history
+                            {completedWorkoutId
+                              ? "View this workout"
+                              : "View workout history"}
                           </Button>
                         </div>
                       )}
@@ -1969,13 +1993,14 @@ function ProgramInner() {
                     // load decisions.)
                     async () => {}
                   : plan
-                    ? (di, exIdx, reps, weight, rpe) =>
+                    ? (di, exIdx, reps, weight, rpe, session) =>
                         logExercise(
                           di,
                           plan.sourceIndexes[exIdx] ?? exIdx,
                           reps,
                           weight,
-                          rpe
+                          rpe,
+                          session
                         )
                     : logExercise
               }

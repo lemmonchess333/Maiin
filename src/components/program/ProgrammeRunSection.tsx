@@ -656,6 +656,9 @@ export default function ProgrammeRunSection({
   const selectedDay =
     runWindow.find((d) => d.dateKey === selectedDateKey) ?? runWindow[0];
   const selectedRun = selectedDay.run;
+  const selectedSavedRunId = selectedRun.runDay?.id
+    ? claimMap.get(selectedRun.runDay.id)?.claimedSavedRunId
+    : undefined;
 
   // Run day-pager — swipe left/right across the run week to change the
   // selected day, mirroring the Lift tab's session swiper (shared
@@ -1416,7 +1419,7 @@ export default function ProgrammeRunSection({
               today's slot AND today is selected — the selector still lets
               the user browse other days. */}
           {!heroOwnsSelectedToday &&
-            (selectedRun.isStartable ? (
+            (selectedRun.isStartable && !selectedRun.isCompleted ? (
               <div className="space-y-2">
                 <SessionCommandCard
                   sport="run"
@@ -1474,8 +1477,25 @@ export default function ProgrammeRunSection({
                       ? "Marked as skipped. You can still head out."
                       : "Rest day. Head out whenever you like."}
                 </p>
+                {selectedRun.isCompleted && selectedSavedRunId && (
+                  <Button
+                    variant="sport"
+                    fullWidth
+                    className="mt-3"
+                    onClick={() => {
+                      haptic();
+                      navigate(`/run/${selectedSavedRunId}`);
+                    }}
+                  >
+                    View this run
+                  </Button>
+                )}
                 <Button
-                  variant="sport"
+                  variant={
+                    selectedRun.isCompleted && selectedSavedRunId
+                      ? "ghost"
+                      : "sport"
+                  }
                   fullWidth
                   className="mt-3 font-bold"
                   onClick={() => {
