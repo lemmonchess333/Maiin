@@ -168,3 +168,152 @@ describe("physical weight scale", () => {
     expect(change).not.toHaveBeenCalled();
   });
 });
+
+describe("an attempted scroll is not a weigh-in", () => {
+  /* The tape sits inside the sheet's own `overflow-y-auto`. Before the
+     axis gate the surface was `touch-none` across a full-width band, so
+     a vertical swipe that landed on it could not scroll AND the move
+     handler took `(startX - clientX)` with no threshold — about 5px of
+     sideways drift in that failed scroll crossed a detent and emitted a
+     new weight. 0.1-0.3 kg is exactly the magnitude that reads as a
+     plausible weigh-in, so it would survive the confirmation step and
+     land in the logs. */
+  const vertical = (element: HTMLElement, driftX: number) => {
+    fireEvent.pointerDown(element, {
+      clientX: 180,
+      clientY: 40,
+      pointerId: 1,
+      pointerType: "touch",
+      isPrimary: true,
+    });
+    clock += 20;
+    fireEvent.pointerMove(element, {
+      clientX: 180 - driftX,
+      clientY: 140,
+      pointerId: 1,
+      pointerType: "touch",
+    });
+    fireEvent.pointerUp(element, {
+      clientX: 180 - driftX,
+      clientY: 140,
+      pointerId: 1,
+      pointerType: "touch",
+    });
+  };
+
+  it("ignores sideways drift inside a vertical swipe", () => {
+    const change = vi.fn();
+    render(
+      <WeightScaleDial
+        value={81.6}
+        minimum={20}
+        maximum={350}
+        unit="kg"
+        onChange={change}
+      />
+    );
+    vertical(surface(), 5);
+    expect(change).not.toHaveBeenCalled();
+  });
+
+  it("still commits once the gesture is clearly horizontal", () => {
+    /* The counterweight: a gate that refused everything would pass the
+       test above while breaking the control. 100px right-to-left from
+       the origin is one whole kg at 10px per detent. */
+    const change = vi.fn();
+    render(
+      <WeightScaleDial
+        value={81.6}
+        minimum={20}
+        maximum={350}
+        unit="kg"
+        onChange={change}
+      />
+    );
+    const element = surface();
+    fireEvent.pointerDown(element, {
+      clientX: 180,
+      clientY: 40,
+      pointerId: 1,
+      pointerType: "touch",
+      isPrimary: true,
+    });
+    clock += 20;
+    fireEvent.pointerMove(element, {
+      clientX: 80,
+      clientY: 42,
+      pointerId: 1,
+      pointerType: "touch",
+    });
+    fireEvent.pointerUp(element, {
+      clientX: 80,
+      clientY: 42,
+      pointerId: 1,
+      pointerType: "touch",
+    });
+    expect(change).toHaveBeenLastCalledWith(82.6);
+  });
+
+  it("counts the travel before the gesture committed", () => {
+    /* The commit threshold is a decision about the gesture, not a
+       deadzone in the value. Applying from the last sample instead of
+       the origin would silently drop the first 6px of every drag. */
+    const change = vi.fn();
+    render(
+      <WeightScaleDial
+        value={81.6}
+        minimum={20}
+        maximum={350}
+        unit="kg"
+        onChange={change}
+      />
+    );
+    const element = surface();
+    fireEvent.pointerDown(element, {
+      clientX: 180,
+      clientY: 40,
+      pointerId: 1,
+      pointerType: "touch",
+      isPrimary: true,
+    });
+    clock += 20;
+    // Two moves that together travel 100px, the first below the threshold.
+    fireEvent.pointerMove(element, {
+      clientX: 176,
+      clientY: 40,
+      pointerId: 1,
+      pointerType: "touch",
+    });
+    clock += 20;
+    fireEvent.pointerMove(element, {
+      clientX: 80,
+      clientY: 40,
+      pointerId: 1,
+      pointerType: "touch",
+    });
+    fireEvent.pointerUp(element, {
+      clientX: 80,
+      clientY: 40,
+      pointerId: 1,
+      pointerType: "touch",
+    });
+    expect(change).toHaveBeenLastCalledWith(82.6);
+  });
+
+  it("pages by a whole unit, not Chromium's 33 kg", () => {
+    const change = vi.fn();
+    render(
+      <WeightScaleDial
+        value={81.6}
+        minimum={20}
+        maximum={350}
+        unit="kg"
+        onChange={change}
+      />
+    );
+    fireEvent.keyDown(screen.getByRole("slider"), { key: "PageUp" });
+    expect(change).toHaveBeenLastCalledWith(82.6);
+    fireEvent.keyDown(screen.getByRole("slider"), { key: "PageDown" });
+    expect(change).toHaveBeenLastCalledWith(81.6);
+  });
+});

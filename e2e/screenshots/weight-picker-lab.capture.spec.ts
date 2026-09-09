@@ -30,9 +30,12 @@ test("production scale is available in the development lab", async ({
   const dial = slider.locator("..");
   const bounds = await dial.boundingBox();
   expect(bounds).not.toBeNull();
-  await page.mouse.move(bounds!.x + bounds!.width * 0.75, bounds!.y + 65);
+  // The tape is 64px tall; the arc it replaced was ~122. y+65 now lands
+  // OUTSIDE the control, so the mouse-down misses and the assertion below
+  // passes on a value that never moved. No unit test covers this.
+  await page.mouse.move(bounds!.x + bounds!.width * 0.75, bounds!.y + 32);
   await page.mouse.down();
-  await page.mouse.move(bounds!.x + bounds!.width * 0.45, bounds!.y + 65, {
+  await page.mouse.move(bounds!.x + bounds!.width * 0.45, bounds!.y + 32, {
     steps: 8,
   });
   await page.mouse.up();

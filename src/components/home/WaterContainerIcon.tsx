@@ -1,5 +1,4 @@
 import type { ReactElement } from "react";
-import { THEME } from "@/lib/theme";
 
 /**
  * Water container illustrations for the size picker — a drinking glass,
@@ -10,8 +9,20 @@ import { THEME } from "@/lib/theme";
  */
 export type WaterContainerType = "glass" | "bottle" | "large";
 
-// Single colour token drives every stroke/fill (no hex literals).
-const C = THEME.semantic.hydration;
+/* `currentColor` throughout, with `text-teal` on the root <svg>.
+   This line used to read "single colour token drives every stroke/fill
+   (no hex literals)" over `const C = THEME.semantic.hydration` — which
+   is the static literal #52A3BD, not a token, so every glyph was
+   theme-blind. Measured against the light `--muted` these render on
+   (the secondary Button surface) that is 2.70:1, under WCAG 1.4.11's
+   3:1 floor for non-text graphics; in dark it is 5.00:1, which is why
+   nobody saw it. `--teal` gives 5.37:1 light / 5.34:1 dark, and it is
+   the token index.css says was created to close exactly this leak.
+
+   currentColor rather than `hsl(var(--teal))` in the attribute: this
+   ships inside WKWebView, where var() substitution in an SVG
+   PRESENTATION attribute is unreliable — it would render nothing on the
+   primary platform while looking correct in the dev browser. */
 
 // All glyphs authored on a 32×32 grid, filling the container with water
 // to ~55% and drawing grip/measurement lines up the sides.
@@ -21,14 +32,14 @@ const GLYPHS: Record<WaterContainerType, ReactElement> = {
       {/* water */}
       <path
         d="M9.4 16 H22.6 L21.7 27.4 A2 2 0 0 1 19.7 29.2 H12.3 A2 2 0 0 1 10.3 27.4 Z"
-        fill={C}
+        fill="currentColor"
         fillOpacity={0.2}
       />
       {/* tumbler outline */}
       <path
         d="M8 5.5 H24 L22 27.5 A2.2 2.2 0 0 1 19.8 29.5 H12.2 A2.2 2.2 0 0 1 10 27.5 Z"
         fill="none"
-        stroke={C}
+        stroke="currentColor"
         strokeWidth={1.8}
         strokeLinejoin="round"
       />
@@ -38,7 +49,7 @@ const GLYPHS: Record<WaterContainerType, ReactElement> = {
         y1="5.5"
         x2="24"
         y2="5.5"
-        stroke={C}
+        stroke="currentColor"
         strokeWidth={1.8}
         strokeLinecap="round"
       />
@@ -47,7 +58,7 @@ const GLYPHS: Record<WaterContainerType, ReactElement> = {
         y1="16"
         x2="22.4"
         y2="16"
-        stroke={C}
+        stroke="currentColor"
         strokeWidth={1.3}
         strokeOpacity={0.65}
         strokeLinecap="round"
@@ -57,7 +68,7 @@ const GLYPHS: Record<WaterContainerType, ReactElement> = {
         y1="9"
         x2="12.9"
         y2="26"
-        stroke={C}
+        stroke="currentColor"
         strokeWidth={1}
         strokeOpacity={0.3}
         strokeLinecap="round"
@@ -67,7 +78,7 @@ const GLYPHS: Record<WaterContainerType, ReactElement> = {
         y1="9"
         x2="19.1"
         y2="26"
-        stroke={C}
+        stroke="currentColor"
         strokeWidth={1}
         strokeOpacity={0.3}
         strokeLinecap="round"
@@ -79,14 +90,14 @@ const GLYPHS: Record<WaterContainerType, ReactElement> = {
       {/* water */}
       <path
         d="M9 17 H23 V26.4 A3 3 0 0 1 20 29.4 H12 A3 3 0 0 1 9 26.4 Z"
-        fill={C}
+        fill="currentColor"
         fillOpacity={0.2}
       />
       {/* body outline (shoulder → rounded base) */}
       <path
         d="M12.5 6.6 V8.1 A3.6 3.6 0 0 1 11.3 10.8 A5.2 5.2 0 0 0 9 15.1 V26.4 A3 3 0 0 0 12 29.4 H20 A3 3 0 0 0 23 26.4 V15.1 A5.2 5.2 0 0 0 20.7 10.8 A3.6 3.6 0 0 1 19.5 8.1 V6.6 Z"
         fill="none"
-        stroke={C}
+        stroke="currentColor"
         strokeWidth={1.8}
         strokeLinejoin="round"
       />
@@ -97,9 +108,9 @@ const GLYPHS: Record<WaterContainerType, ReactElement> = {
         width="8"
         height="4.4"
         rx="1"
-        fill={C}
+        fill="currentColor"
         fillOpacity={0.3}
-        stroke={C}
+        stroke="currentColor"
         strokeWidth={1.4}
       />
       <line
@@ -107,7 +118,7 @@ const GLYPHS: Record<WaterContainerType, ReactElement> = {
         y1="4"
         x2="19.1"
         y2="4"
-        stroke={C}
+        stroke="currentColor"
         strokeWidth={1}
         strokeOpacity={0.7}
       />
@@ -116,7 +127,7 @@ const GLYPHS: Record<WaterContainerType, ReactElement> = {
         y1="5.3"
         x2="19.1"
         y2="5.3"
-        stroke={C}
+        stroke="currentColor"
         strokeWidth={1}
         strokeOpacity={0.7}
       />
@@ -126,7 +137,7 @@ const GLYPHS: Record<WaterContainerType, ReactElement> = {
         y1="17"
         x2="23"
         y2="17"
-        stroke={C}
+        stroke="currentColor"
         strokeWidth={1.2}
         strokeOpacity={0.65}
       />
@@ -136,7 +147,7 @@ const GLYPHS: Record<WaterContainerType, ReactElement> = {
         y1="16.5"
         x2="12.8"
         y2="26"
-        stroke={C}
+        stroke="currentColor"
         strokeWidth={1.1}
         strokeOpacity={0.42}
         strokeLinecap="round"
@@ -146,7 +157,7 @@ const GLYPHS: Record<WaterContainerType, ReactElement> = {
         y1="15.6"
         x2="16"
         y2="26.6"
-        stroke={C}
+        stroke="currentColor"
         strokeWidth={1.1}
         strokeOpacity={0.42}
         strokeLinecap="round"
@@ -156,7 +167,7 @@ const GLYPHS: Record<WaterContainerType, ReactElement> = {
         y1="16.5"
         x2="19.2"
         y2="26"
-        stroke={C}
+        stroke="currentColor"
         strokeWidth={1.1}
         strokeOpacity={0.42}
         strokeLinecap="round"
@@ -168,14 +179,14 @@ const GLYPHS: Record<WaterContainerType, ReactElement> = {
       {/* water */}
       <path
         d="M7.6 17 H24.4 V26.4 A3 3 0 0 1 21.4 29.4 H10.6 A3 3 0 0 1 7.6 26.4 Z"
-        fill={C}
+        fill="currentColor"
         fillOpacity={0.2}
       />
       {/* wider body outline */}
       <path
         d="M9.2 8 A6 6 0 0 0 7.6 12.3 V26.4 A3 3 0 0 0 10.6 29.4 H21.4 A3 3 0 0 0 24.4 26.4 V12.3 A6 6 0 0 0 22.8 8 Z"
         fill="none"
-        stroke={C}
+        stroke="currentColor"
         strokeWidth={1.8}
         strokeLinejoin="round"
       />
@@ -186,14 +197,14 @@ const GLYPHS: Record<WaterContainerType, ReactElement> = {
         width="13.6"
         height="3.6"
         rx="1.2"
-        fill={C}
+        fill="currentColor"
         fillOpacity={0.3}
-        stroke={C}
+        stroke="currentColor"
         strokeWidth={1.4}
       />
       <path
         d="M14.2 4.4 V2.4 A1 1 0 0 1 15.2 1.4 H16.8 A1 1 0 0 1 17.8 2.4 V4.4 Z"
-        fill={C}
+        fill="currentColor"
       />
       {/* water surface */}
       <line
@@ -201,7 +212,7 @@ const GLYPHS: Record<WaterContainerType, ReactElement> = {
         y1="17"
         x2="24.4"
         y2="17"
-        stroke={C}
+        stroke="currentColor"
         strokeWidth={1.2}
         strokeOpacity={0.65}
       />
@@ -211,7 +222,7 @@ const GLYPHS: Record<WaterContainerType, ReactElement> = {
         y1="16.5"
         x2="10.6"
         y2="27"
-        stroke={C}
+        stroke="currentColor"
         strokeWidth={1.1}
         strokeOpacity={0.42}
         strokeLinecap="round"
@@ -221,7 +232,7 @@ const GLYPHS: Record<WaterContainerType, ReactElement> = {
         y1="15.8"
         x2="14.2"
         y2="27.4"
-        stroke={C}
+        stroke="currentColor"
         strokeWidth={1.1}
         strokeOpacity={0.42}
         strokeLinecap="round"
@@ -231,7 +242,7 @@ const GLYPHS: Record<WaterContainerType, ReactElement> = {
         y1="15.8"
         x2="17.8"
         y2="27.4"
-        stroke={C}
+        stroke="currentColor"
         strokeWidth={1.1}
         strokeOpacity={0.42}
         strokeLinecap="round"
@@ -241,7 +252,7 @@ const GLYPHS: Record<WaterContainerType, ReactElement> = {
         y1="16.5"
         x2="21.4"
         y2="27"
-        stroke={C}
+        stroke="currentColor"
         strokeWidth={1.1}
         strokeOpacity={0.42}
         strokeLinecap="round"
@@ -252,7 +263,7 @@ const GLYPHS: Record<WaterContainerType, ReactElement> = {
         y1="20"
         x2="24.4"
         y2="20"
-        stroke={C}
+        stroke="currentColor"
         strokeWidth={1}
         strokeOpacity={0.5}
         strokeLinecap="round"
@@ -262,7 +273,7 @@ const GLYPHS: Record<WaterContainerType, ReactElement> = {
         y1="23"
         x2="24.4"
         y2="23"
-        stroke={C}
+        stroke="currentColor"
         strokeWidth={1}
         strokeOpacity={0.5}
         strokeLinecap="round"
@@ -284,6 +295,7 @@ export default function WaterContainerIcon({
       height={size}
       viewBox="0 0 32 32"
       fill="none"
+      className="text-teal"
       aria-hidden="true"
     >
       {GLYPHS[type]}

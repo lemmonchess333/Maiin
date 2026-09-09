@@ -177,10 +177,17 @@ textarea.ds-input::placeholder {
   color: hsl(var(--muted-foreground));
 }
 
+/* The soft glow is a POINTER/typing affordance and stays on :focus.
+   It is not a focus INDICATOR: 13% primary over --card measures 1.16:1,
+   far under the 3:1 floor, and this rule used to also set
+   `outline: none` — at specificity 0,2,1 against the global
+   `:focus-visible` outline's 0,1,0, on `:focus` rather than
+   `:focus-visible`. So every keyboard user lost a compliant 4.47:1
+   outline and got a 1.16:1 shadow in its place, on every input in the
+   app. The outline now survives; the glow rides along beneath it. */
 input.ds-input:focus,
 textarea.ds-input:focus,
 select.ds-input:focus {
-  outline: none;
   border-color: hsl(var(--primary) / 0.42);
   box-shadow:
     0 4px 14px -8px hsl(var(--primary) / 0.32),

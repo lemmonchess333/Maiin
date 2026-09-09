@@ -32,7 +32,7 @@ const BASE_CLASSES = [
   // disabled state
   "disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none",
   // focus ring — focus-visible so mouse clicks don't draw the ring
-  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
 ].join(" ");
 
 /**

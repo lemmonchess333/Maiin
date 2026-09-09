@@ -2,12 +2,80 @@ import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { haptic } from "@/lib/haptic";
 import { RangeInput } from "@/components/ui/RangeInput";
 
-const ANGLE_PER_TICK = 1.7;
-const RADIUS = 332;
-const CENTRE_X = 180;
-const CENTRE_Y = 365;
+/* ── Tape geometry, in CSS pixels ─────────────────────────────────────
+   The SVG carries NO viewBox, so one user unit is one CSS pixel and the
+   markings track the finger exactly 1:1. A drum has no physical size and
+   can scale its drag gain with the container; a ruler cannot — a tape
+   that slides at a different rate from the finger dragging it is not a
+   tape.
 
-/** A physical scale: drag the markings beneath a fixed pointer. */
+   Dropping the viewBox also fixes a latent bug in the arc this replaces.
+   Its fixed `viewBox="0 0 360 128"` scaled with the container, so its
+   `text-micro` labels rendered at ~11.4px on a 375 phone and ~9.6px on a
+   320 one — under the documented 11px caption floor. Here 12px is 12px
+   on every device.
+
+   A fixed 600px span, absolutely centred inside an overflow-hidden
+   parent, buys that with no measurement, no ResizeObserver, no fallback
+   frame and no jsdom stub. It covers every real container (the sheet's
+   max-w-sm 384px; the dev lab's max-w-lg 512px).
+
+   PX_PER_TICK = 10 gives 100px per whole kg/lb and preserves the pinned
+   drag arithmetic: the arc worked out to 332 * 1.7 * PI/180 = 9.8506
+   px/tick, so a 100px swipe from 81.6 emitted 82.6. At 10px/tick it
+   still does, which is why WeightScaleDial.test.tsx is unedited. */
+const PX_PER_TICK = 10;
+const TAPE_SPAN = 600;
+const TAPE_CENTRE = TAPE_SPAN / 2;
+const TAPE_H = 64;
+const TICK_TOP = 8;
+const MINOR_H = 14; // every 0.1
+const MID_H = 20; // every 0.5
+const MAJOR_H = 28; // every 1.0, labelled
+const LABEL_Y = 50;
+const NEEDLE_H = 32; // through the tick field, not hovering above it
+const WINDOW = Math.ceil(TAPE_CENTRE / PX_PER_TICK) + 2;
+
+/* An attempted SCROLL must not edit the weight. `touch-pan-y` hands
+   vertical panning back to the browser (which then fires pointercancel,
+   already handled by `settle`), and the gate below refuses to move the
+   tape until the gesture has committed to the horizontal axis.
+
+   Without both, this control silently corrupted data: the surface was
+   `touch-none` across a full-width band inside the sheet's own
+   `overflow-y-auto`, so a vertical swipe landing on it could not scroll,
+   and `onPointerMove` took `(startX - clientX)` with no threshold and no
+   axis lock — about 5px of sideways drift in that failed scroll crossed
+   a detent and emitted a new weight. A 0.1-0.3 kg edit is exactly the
+   magnitude that reads as a plausible weigh-in, so it would not be
+   caught at the confirmation step. */
+const AXIS_COMMIT_PX = 6;
+
+/* Both ends dissolve rather than stopping at a hard edge — the same
+   reason the arc faded, minus 45 per-tick opacity attributes. Applied to
+   a layer spanning the VISIBLE width, not to the 600px sheet, where the
+   fade zone would fall entirely off-screen. rgba() rather than hex keeps
+   the inline-style hex rule (eslint.config.js) clean. */
+const TAPE_FADE =
+  "linear-gradient(to right, rgba(0,0,0,0) 0%, rgba(0,0,0,1) 14%, rgba(0,0,0,1) 86%, rgba(0,0,0,0) 100%)";
+const TAPE_MASK = { maskImage: TAPE_FADE, WebkitMaskImage: TAPE_FADE };
+
+type Tier = "minor" | "mid" | "major";
+const TICK_H: Record<Tier, number> = {
+  minor: MINOR_H,
+  mid: MID_H,
+  major: MAJOR_H,
+};
+/* Length + weight + a real token carry the hierarchy. No opacity
+   fractions: de-emphasis by alpha is the dodge the arc's edgeFade turned
+   into a depth cue, and it is what made half its geometry invisible. */
+const TICK_CLASS: Record<Tier, string> = {
+  minor: "text-border",
+  mid: "text-muted-foreground",
+  major: "text-foreground",
+};
+
+/** A measuring tape: drag the markings beneath a fixed centre needle. */
 export default function WeightScaleDial({
   value,
   minimum,
@@ -38,6 +106,11 @@ export default function WeightScaleDial({
     x: number;
     time: number;
     velocity: number;
+    /** Gesture origin, for the axis decision. */
+    originX: number;
+    originY: number;
+    /** null until the gesture commits to an axis. */
+    horizontal: boolean | null;
   } | null>(null);
   const helpId = useId();
 
@@ -84,15 +157,21 @@ export default function WeightScaleDial({
 
   const moveTo = (tick: number) => {
     const next = clamp(tick);
+    const previous = emitted.current;
     current.current = next;
     setPosition(next);
     const rounded = Math.round(next);
-    if (rounded !== emitted.current) {
+    if (rounded !== previous) {
       emitted.current = rounded;
       onChange(rounded / 10);
-      // A fast swipe crosses many detents; avoid flooding the native bridge.
+      /* A fast swipe crosses many detents; avoid flooding the native
+         bridge. A whole-unit crossing always clicks, so the tape keeps a
+         per-kg feel through a fling — it cannot flood, because at the
+         0.12 tick/ms velocity clamp a whole unit takes >= 83ms. */
+      const crossedUnit =
+        Math.floor(rounded / 10) !== Math.floor(previous / 10);
       const now = performance.now();
-      if (now - lastHaptic.current >= 40) {
+      if (crossedUnit || now - lastHaptic.current >= 40) {
         haptic("light");
         lastHaptic.current = now;
       }
@@ -127,19 +206,31 @@ export default function WeightScaleDial({
     };
     frame.current = requestAnimationFrame(coast);
   };
-  const ticks = Array.from(
-    { length: 45 },
-    (_, index) => Math.floor(position) - 22 + index
-  ).filter((tick) => tick >= minTick && tick <= maxTick);
+
+  /* Two ticks of overdraw either side, so a fractional `position` never
+     exposes a gap at the edge of the sheet mid-drag. */
+  const base = Math.floor(position);
+  const ticks: { tick: number; x: number; tier: Tier }[] = [];
+  for (let index = -WINDOW; index <= WINDOW; index += 1) {
+    const tick = base + index;
+    if (tick < minTick || tick > maxTick) continue;
+    ticks.push({
+      tick,
+      x: TAPE_CENTRE + (tick - position) * PX_PER_TICK,
+      tier: tick % 10 === 0 ? "major" : tick % 5 === 0 ? "mid" : "minor",
+    });
+  }
 
   const textValue =
     unit === "st"
       ? `${Math.floor(selectedTick / 140)} st ${(selectedTick % 140) / 10} lb`
       : `${(selectedTick / 10).toFixed(1)} ${unit}`;
+
   return (
     <div ref={root} className="min-w-0 w-full">
       <div
-        className="relative w-full rounded-xl select-none touch-none cursor-grab active:cursor-grabbing focus-within:ring-2 focus-within:ring-primary/40"
+        className="relative w-full overflow-hidden rounded-xl select-none touch-pan-y cursor-grab active:cursor-grabbing focus-within:ring-2 focus-within:ring-primary"
+        style={{ height: TAPE_H }}
         data-vaul-no-drag
         onPointerDown={(event) => {
           if (
@@ -155,17 +246,39 @@ export default function WeightScaleDial({
             x: event.clientX,
             time: performance.now(),
             velocity: 0,
+            originX: event.clientX,
+            originY: event.clientY,
+            /* A mouse has no competing pan gesture, so it commits
+               immediately; only touch has a scroll to disambiguate. */
+            horizontal: event.pointerType === "mouse" ? true : null,
           };
         }}
         onPointerMove={(event) => {
           const active = drag.current;
           if (!active || active.id !== event.pointerId) return;
+
+          if (active.horizontal === null) {
+            const dx = event.clientX - active.originX;
+            const dy = event.clientY - active.originY;
+            if (Math.abs(dy) > AXIS_COMMIT_PX && Math.abs(dy) >= Math.abs(dx)) {
+              // A scroll. Own nothing further in this gesture.
+              active.horizontal = false;
+              return;
+            }
+            if (Math.abs(dx) <= AXIS_COMMIT_PX) return;
+            active.horizontal = true;
+            /* Apply from the ORIGIN, not from the last sample: the
+               pre-commit travel is real movement the user made, and
+               dropping it would make the tape lag the finger by the
+               threshold on every drag. */
+            active.x = active.originX;
+          }
+          if (!active.horizontal) return;
+
           const now = performance.now();
-          const width =
-            event.currentTarget.getBoundingClientRect().width || 360;
-          const pixelsPerTick =
-            ((width / 360) * RADIUS * ANGLE_PER_TICK * Math.PI) / 180;
-          const delta = (active.x - event.clientX) / pixelsPerTick;
+          /* 1:1 with the drawn tape — no width factor, because there is
+             no viewBox to scale it. Drag left, the numbers grow. */
+          const delta = (active.x - event.clientX) / PX_PER_TICK;
           const velocity = delta / Math.max(8, now - active.time);
           moveTo(current.current + delta);
           drag.current = {
@@ -181,6 +294,7 @@ export default function WeightScaleDial({
           drag.current = null;
           if (event.currentTarget.hasPointerCapture(event.pointerId))
             event.currentTarget.releasePointerCapture(event.pointerId);
+          if (active.horizontal !== true) return;
           finish(performance.now() - active.time > 80 ? 0 : active.velocity);
         }}
         onPointerCancel={settle}
@@ -189,7 +303,10 @@ export default function WeightScaleDial({
         }}
       >
         {/* Native range supplies keyboard and VoiceOver adjustment; pointer
-            dragging uses the much finer physical scale above it. */}
+            dragging uses the much finer tape beside it. Must stay the
+            DIRECT child of this surface: WeightScaleDial.test.tsx resolves
+            the drag target as slider.parentElement, and the capture spec
+            as slider.locator(".."). */}
         <RangeInput
           className="sr-only"
           aria-label="Weight scale"
@@ -204,73 +321,98 @@ export default function WeightScaleDial({
             stop();
             moveTo(Number(event.target.value) * 10);
           }}
+          onKeyDown={(event) => {
+            /* Chromium's native page step over a 20-350 range is 33 kg,
+               which is useless. One whole unit is the coarse step that
+               keeps a 10:1 relationship with the arrow keys. */
+            const jump =
+              event.key === "PageUp" ? 10 : event.key === "PageDown" ? -10 : 0;
+            if (!jump || disabled) return;
+            event.preventDefault();
+            stop();
+            moveTo(current.current + jump);
+          }}
         />
-        <svg
-          viewBox="0 0 360 128"
-          className="block w-full overflow-hidden"
+
+        {/* The tape, masked at the VISIBLE edges. No shapeRendering hint:
+            ticks sit at fractional x during a drag, and crispEdges would
+            snap them between pixel columns, turning a slide into a
+            stutter. */}
+        <div
           aria-hidden="true"
+          className="pointer-events-none absolute inset-0"
+          style={TAPE_MASK}
         >
-          <path d="M 175 13 L 185 13 L 180 25 Z" className="fill-primary" />
-          {ticks.map((tick) => {
-            const angle = (tick - position) * ANGLE_PER_TICK;
-            const radians = (angle * Math.PI) / 180;
-            /* Fade the drum out towards its edges. The window is 22 ticks
-               either side of centre, so the outermost markings sit at
-               ~37 degrees: far enough round that they render as long,
-               steeply-rotated strokes with their labels stranded below
-               the arc, which reads as the scale breaking rather than
-               curving away. Every physical scale this imitates dissolves
-               at the edge for the same reason. Full strength through the
-               readable middle, gone by the rim. */
-            const edgeFade = Math.max(
-              0,
-              Math.min(1, (34 - Math.abs(angle)) / 16)
-            );
-            const major = tick % 10 === 0;
-            const middle = tick % 5 === 0;
-            const inner = RADIUS - (major ? 24 : middle ? 17 : 10);
-            const labelRadius = RADIUS - 45;
-            const whole = tick / 10;
-            const stoneBoundary = unit === "st" && tick % 140 === 0;
-            const label =
-              unit === "st" ? (stoneBoundary ? whole / 14 : whole % 14) : whole;
-            return (
-              <g key={tick}>
-                <line
-                  x1={CENTRE_X + RADIUS * Math.sin(radians)}
-                  y1={CENTRE_Y - RADIUS * Math.cos(radians)}
-                  x2={CENTRE_X + inner * Math.sin(radians)}
-                  y2={CENTRE_Y - inner * Math.cos(radians)}
-                  stroke="currentColor"
-                  strokeWidth={major ? 1.5 : 1}
-                  opacity={edgeFade}
-                  className={
-                    major ? "text-foreground" : "text-muted-foreground"
-                  }
-                />
-                {major && (
-                  <text
-                    x={CENTRE_X + labelRadius * Math.sin(radians)}
-                    y={CENTRE_Y - labelRadius * Math.cos(radians)}
-                    textAnchor="middle"
-                    dominantBaseline="middle"
-                    fill="currentColor"
-                    opacity={edgeFade}
-                    className="text-micro text-muted-foreground font-mono tabular-nums"
-                  >
-                    {label}
-                    {stoneBoundary && <tspan className="font-sans"> st</tspan>}
-                  </text>
-                )}
-              </g>
-            );
-          })}
-        </svg>
+          <svg
+            width={TAPE_SPAN}
+            height={TAPE_H}
+            className="absolute left-1/2 top-0 block -translate-x-1/2"
+          >
+            {ticks.map(({ tick, x, tier }) => {
+              const whole = tick / 10;
+              const stoneBoundary = unit === "st" && tick % 140 === 0;
+              return (
+                <g key={tick}>
+                  <line
+                    x1={x}
+                    y1={TICK_TOP}
+                    x2={x}
+                    y2={TICK_TOP + TICK_H[tier]}
+                    stroke="currentColor"
+                    strokeWidth={tier === "major" ? 1.5 : 1}
+                    className={TICK_CLASS[tier]}
+                  />
+                  {tier === "major" && (
+                    <text
+                      x={x}
+                      y={LABEL_Y}
+                      textAnchor="middle"
+                      dominantBaseline="middle"
+                      fill="currentColor"
+                      className="text-micro font-mono tabular-nums text-muted-foreground"
+                    >
+                      {unit === "st"
+                        ? stoneBoundary
+                          ? whole / 14
+                          : whole % 14
+                        : whole}
+                      {stoneBoundary && (
+                        <tspan className="font-sans"> st</tspan>
+                      )}
+                    </text>
+                  )}
+                </g>
+              );
+            })}
+          </svg>
+        </div>
+
+        {/* Fixed centre needle, deliberately OUTSIDE the mask so the fade
+            cannot eat it. The bar runs down through the tick field
+            (y 8-36) rather than stopping above it — the arc left an 8px
+            void between its pointer and the markings it selected. */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute left-1/2 top-0 flex -translate-x-1/2 flex-col items-center"
+        >
+          <svg
+            width="12"
+            height="8"
+            viewBox="0 0 12 8"
+            className="block fill-primary"
+          >
+            <path d="M0 0 H12 L6 8 Z" />
+          </svg>
+          <span
+            className="w-[2px] rounded-b-full bg-primary"
+            style={{ height: NEEDLE_H }}
+          />
+        </div>
       </div>
       <p id={helpId} className="sr-only">
         {unit === "st"
-          ? "Spin to adjust pounds, or tap the number to type"
-          : "Spin the scale, or tap the number to type"}
+          ? "Slide to adjust pounds, or tap the number to type"
+          : "Slide the scale, or tap the number to type"}
       </p>
     </div>
   );

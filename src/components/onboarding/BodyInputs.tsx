@@ -178,7 +178,7 @@ export default function BodyInputs({
           }}
         />
         <p className="text-sm text-muted-foreground">
-          Spin the scale or tap the number to type. This sets up your plan; it
+          Slide the scale or tap the number to type. This sets up your plan; it
           doesn’t log a weigh-in.
         </p>
       </section>
