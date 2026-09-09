@@ -1,6 +1,6 @@
 {
   "tolerance": 0.05,
-  "total": 5688105,
+  "total": 5691855,
   "chunks": {
     "AccordionSection": 1612,
     "activationTracker": 308,
@@ -288,7 +288,7 @@
     "wind": 456,
     "workoutBurn": 367,
     "WorkoutDetail": 9941,
-    "WorkoutSession": 42935,
+    "WorkoutSession": 46685,
     "workoutSetRecord": 500,
     "x": 155,
     "zap": 263
