@@ -229,9 +229,10 @@ export default function FoodHeroCard({
      non-today views — past/future dates are diary-mode and
      a "Still need 40g protein" line for yesterday's record
      reads wrong. */
-  const glanceLine = isToday
-    ? buildGlanceLine(dailyTotals, dailyTargets, { targetsAreDefault })
-    : null;
+  const glanceLine =
+    isToday && targetsAreDefault
+      ? buildGlanceLine(dailyTotals, dailyTargets, { targetsAreDefault })
+      : null;
 
   // Dark-aware surface via `bg-card` + `var(--ds-shadow-card)` — the token
   // swaps to a deeper shadow under `.dark` (see tokens.css), so the same
@@ -345,16 +346,9 @@ export default function FoodHeroCard({
             />
           )}
 
-          {/* Today-at-a-glance line. One sentence, protein-priority,
-          neutral over-target language. Sits inside the calorie
-          card below the ring so it summarises what the ring +
-          macro tiles already show without claiming a separate
-          card surface. Helper handles the priority rules,
-          on-track guard, tiny-deficit suppression, and the
-          missing-target prompt copy; component just routes
-          inputs and renders the result. Skips on past/future
-          dates (diary-mode views). */}
-          {glanceLine && glanceLine !== "Ready when you are" && (
+          {/* Only actionable setup guidance belongs here; the ring and
+              macro cards already show the day's numbers. */}
+          {glanceLine && (
             <p
               className={`text-center text-xs font-medium mt-3 px-2 text-muted-foreground`}
             >

@@ -278,17 +278,21 @@ export default function WeightLogSheet({
               <p className="text-center text-micro text-muted-foreground">lb</p>
             </div>
           )}
-          <select
-            aria-label="Weight unit"
-            value={selectedUnit}
-            onChange={(event) => changeUnit(event.target.value as DisplayUnit)}
-            disabled={saving}
-            className="ds-input min-h-11 w-20 shrink-0 self-center"
-          >
-            <option value="kg">kg</option>
-            <option value="lbs">lb</option>
-            <option value="st">st</option>
-          </select>
+          <div className="w-20 shrink-0 self-center">
+            <select
+              aria-label="Weight unit"
+              value={selectedUnit}
+              onChange={(event) =>
+                changeUnit(event.target.value as DisplayUnit)
+              }
+              disabled={saving}
+              className="ds-input"
+            >
+              <option value="kg">kg</option>
+              <option value="lbs">lb</option>
+              <option value="st">st</option>
+            </select>
+          </div>
         </div>
         <WeightScaleDial
           key={selectedUnit}

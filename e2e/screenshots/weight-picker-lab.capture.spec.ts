@@ -61,8 +61,7 @@ test("weight sheet offers stone and a bounded date without saving", async ({
   await signInAsTestUser(page);
   await page.goto("");
   await page.addStyleTag({
-    content:
-      ".firebase-emulator-warning { pointer-events: none !important; font-size: 10px !important; padding: 2px !important; }",
+    content: ".firebase-emulator-warning { display: none !important; }",
   });
   for (let i = 0; i < 10; i++) {
     if (
@@ -78,6 +77,15 @@ test("weight sheet offers stone and a bounded date without saving", async ({
   await page.getByRole("button", { name: /^Weight / }).click();
   await page.getByLabel("Weight unit").selectOption("kg");
   await page.getByLabel("Weight (kg)", { exact: true }).fill("81.6");
+  // The field must remain usable beside the full-width input primitive.
+  const numberBox = await page
+    .getByLabel("Weight (kg)", { exact: true })
+    .boundingBox();
+  const unitBox = await page.getByLabel("Weight unit").boundingBox();
+  expect(numberBox!.width).toBeGreaterThan(140);
+  expect(unitBox!.width).toBeGreaterThanOrEqual(44);
+  expect(unitBox!.width).toBeLessThanOrEqual(88);
+
   await expect(page.getByRole("slider", { name: "Weight scale" })).toHaveValue(
     "81.6"
   );
@@ -94,6 +102,11 @@ test("weight sheet offers stone and a bounded date without saving", async ({
   }
   await page.getByLabel("Weight unit").selectOption("st");
   await expect(page.getByLabel("Pounds", { exact: true })).toBeVisible();
+  for (const name of ["Weight (st)", "Pounds"]) {
+    const box = await page.getByLabel(name, { exact: true }).boundingBox();
+    expect(box!.width).toBeGreaterThanOrEqual(80);
+    expect(box!.x + box!.width).toBeLessThanOrEqual(375);
+  }
   await expect(
     page.getByRole("button", { name: "Today", exact: true })
   ).toBeVisible();
@@ -124,6 +137,9 @@ test("weight sheet offers stone and a bounded date without saving", async ({
     /81\.6|179\.9/
   );
   await page.reload();
+  await page.addStyleTag({
+    content: ".firebase-emulator-warning { display: none !important; }",
+  });
   await page.getByRole("button", { name: /^Weight / }).click();
   await expect(page.getByRole("dialog", { name: "Edit weight" })).toBeVisible();
   const correction = page.getByRole("button", {
