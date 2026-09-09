@@ -83,7 +83,13 @@ const EXPECTED_BARE_USES: Record<(typeof IDENTITY)[number], number> = {
   // raw text-amber-500/yellow-500 (PRCard, PRsTab, ExerciseHistory,
   // RunSummary pace-trend, SessionCompleteScreen, FoodSuggestionsDropdown
   // pantry star x2) — all icon fills, none text.
-  achievement: 11, // Companion finish removes the decorative trophy.
+  // 2026-09-09: 11 → 10. The RunSummary pace-trend Trophy named just
+  // above lost its `text-achievement` and now INHERITS the badge, which
+  // moved to --achievement-strong when that badge was taken from 1.66:1
+  // to 4.82:1. The icon was legitimate under this ratchet (3:1 non-text),
+  // so this is a free gain rather than a fix — locked in per the rule
+  // that a count may fall freely.
+  achievement: 10, // Companion finish removes the decorative trophy.
 };
 
 function sourceFiles(): string[] {

@@ -1,6 +1,5 @@
 import { describe, it, expect } from "vitest";
 import { calculatePaceTrend } from "../paceTrends";
-import { THEME } from "@/lib/theme";
 
 // ── Helpers ──────────────────────────────────
 
@@ -95,8 +94,9 @@ describe("calculatePaceTrend", () => {
       const result = calculatePaceTrend(current, allRuns);
       expect(result.trend).toBe("pr");
       expect(result.label).toBe("PR!");
-      expect(result.color).toBe(THEME.amberLight);
-      expect(result.bgColor).toBe(`${THEME.amberLight}26`);
+      expect(result.className).toBe(
+        "bg-achievement/10 text-achievement-strong"
+      );
     });
 
     it("returns pr when barely beating the best", () => {
@@ -121,8 +121,7 @@ describe("calculatePaceTrend", () => {
       const result = calculatePaceTrend(current, allRuns);
       expect(result.trend).toBe("improving");
       expect(result.label).toBe("Faster");
-      expect(result.color).toBe(THEME.success);
-      expect(result.bgColor).toBe(`${THEME.success}26`);
+      expect(result.className).toBe("bg-success/10 text-success-strong");
     });
   });
 
@@ -138,8 +137,7 @@ describe("calculatePaceTrend", () => {
       const result = calculatePaceTrend(current, allRuns);
       expect(result.trend).toBe("consistent");
       expect(result.label).toBe("Steady");
-      expect(result.color).toBe(THEME.brand);
-      expect(result.bgColor).toBe(`${THEME.brand}26`);
+      expect(result.className).toBe("bg-lifting/10 text-lifting-strong");
     });
 
     it("returns consistent when pace matches recent average exactly", () => {
