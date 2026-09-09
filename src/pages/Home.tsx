@@ -1007,6 +1007,8 @@ export default function Home() {
                   runWeekLabel={runPresentation.weekLabel}
                   liftDayIndex={resolvedToday.lift.index}
                   liftStartable={resolvedToday.lift.isStartable}
+                  liftStatus={resolvedToday.lift.status}
+                  runCompleted={resolvedToday.run.isCompleted}
                   todayType={todayType}
                   navigate={function (p: string) {
                     closePeek();

@@ -206,6 +206,11 @@ export interface ProgramExercise {
     weight: number;
     completed: boolean;
   } | null;
+  /** Server-owned baseline so corrections replace one session's progression. */
+  sessionProgression?: {
+    id: string;
+    baseline: Omit<ProgramExercise, "sessionProgression">;
+  };
   /**
    * Optional free-text note surfaced in the UI. Currently used by
    * `applyInjuryFilters` to explain a substitution ("Swapped from
@@ -232,6 +237,8 @@ export interface ProgramExercise {
 ================================ */
 
 export interface WorkoutDay {
+  /** Exact saved session for this completed programme day. */
+  completedWorkoutId?: string;
   dayName: string;
   dayType: string;
   exercises: ProgramExercise[];
@@ -963,6 +970,9 @@ export function normalizeExercise(
     plateauCount: ex.plateauCount ?? 0,
     performanceHistory: ex.performanceHistory ?? [],
     lastPerformance: ex.lastPerformance ?? null,
+    ...(ex.sessionProgression !== undefined
+      ? { sessionProgression: ex.sessionProgression }
+      : {}),
     ...(ex.notes !== undefined ? { notes: ex.notes } : {}),
   };
 }

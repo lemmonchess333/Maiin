@@ -398,7 +398,11 @@ export default function RunSummary() {
   const navigate = useNavigate();
   const { user, profile } = useAuth();
   const unit = useDistanceUnit();
-  const { zones: privacyZones, loading: privacyZonesLoading, error: privacyZonesError } = usePrivacyZones();
+  const {
+    zones: privacyZones,
+    loading: privacyZonesLoading,
+    error: privacyZonesError,
+  } = usePrivacyZones();
   const { isOnline } = useOnlineStatus();
   const { updateMileage, defaultShoe } = useShoes();
   // PR-J Q2 chunk B2: completeRunDay deleted. The saved-run write
@@ -621,7 +625,7 @@ export default function RunSummary() {
   }, [editedDistanceMeters, state?.distance]);
 
   const points = useMemo(
-    () => state ? applyPrivacyZones(state.points, privacyZones) : [],
+    () => (state ? applyPrivacyZones(state.points, privacyZones) : []),
     [state, privacyZones]
   );
 
@@ -1058,11 +1062,16 @@ export default function RunSummary() {
           const secs = Math.round(elapsed % 60);
           // Compute once before the choice: this exact geometry is previewed
           // and posted. Loading/failed privacy settings withhold the route.
-          const sharedRoutePoints = privacyZonesLoading || privacyZonesError ? [] : (
-            profile?.hideSharedRouteEnds === false ? points : clipRouteEnds(points, DEFAULT_CLIP_METERS)
-          );
+          const sharedRoutePoints =
+            privacyZonesLoading || privacyZonesError
+              ? []
+              : profile?.hideSharedRouteEnds === false
+                ? points
+                : clipRouteEnds(points, DEFAULT_CLIP_METERS);
           const routePreview = sampleRoute(sharedRoutePoints, 20).map((p) => ({
-            lat: p.lat, lon: p.lon, ...(p.breakBefore ? { breakBefore: true } : {}),
+            lat: p.lat,
+            lon: p.lon,
+            ...(p.breakBefore ? { breakBefore: true } : {}),
           }));
           const decision = await compose(
             user.uid,
@@ -1070,9 +1079,10 @@ export default function RunSummary() {
               type: "run",
               title: runName,
               routePreview,
-              routePrivacyNote: privacyZonesLoading || privacyZonesError
-                ? "Route withheld because privacy settings are unavailable."
-                : "This is the route included in your post.",
+              routePrivacyNote:
+                privacyZonesLoading || privacyZonesError
+                  ? "Route withheld because privacy settings are unavailable."
+                  : "This is the route included in your post.",
               meta: [
                 `${km.toFixed(2)} km`,
                 `${mins}:${secs.toString().padStart(2, "0")}`,
@@ -1915,7 +1925,7 @@ export default function RunSummary() {
              doesn't move when the state transitions saved → saved. */
               <button
                 type="button"
-                onClick={() => navigate("/program")}
+                onClick={() => navigate("/program?tab=run")}
                 className="w-full py-3 rounded-xl font-medium text-sm transition-all active:scale-[0.97] flex items-center justify-center gap-2"
                 style={{
                   background: `${THEME.success}20`,

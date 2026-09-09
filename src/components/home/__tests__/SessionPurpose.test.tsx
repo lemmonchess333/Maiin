@@ -149,7 +149,7 @@ describe("Home session actions and metadata", () => {
         navigate={navigate}
       />
     );
-    expect(screen.getByRole("button")).toHaveTextContent("Done");
+    expect(screen.getByRole("button")).toHaveTextContent("Completed");
     expect(screen.queryByText("Go")).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button"));
     expect(navigate).toHaveBeenCalledWith("/program?tab=run");

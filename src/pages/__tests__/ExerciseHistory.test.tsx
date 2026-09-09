@@ -31,12 +31,20 @@ vi.mock("@/hooks/useWorkouts", () => ({
   },
 }));
 
+vi.mock("@/components/ExerciseFormContent", () => ({
+  default: () => <div>Exercise guidance ready</div>,
+}));
 import ExerciseHistory from "../ExerciseHistory";
 
-function renderAt(name: string) {
+function renderAt(name: string, tab?: "form") {
   return render(
     <MemoryRouter
-      initialEntries={[`/history/exercise/${encodeURIComponent(name)}`]}
+      initialEntries={[
+        {
+          pathname: `/history/exercise/${encodeURIComponent(name)}`,
+          state: tab ? { initialTab: tab } : undefined,
+        },
+      ]}
     >
       <Routes>
         <Route path="/history/exercise/:name" element={<ExerciseHistory />} />
@@ -86,6 +94,14 @@ describe("ExerciseHistory — empty states (shared hexagon EmptyState)", () => {
     renderAt("Bench Press");
     expect(screen.queryByText("No sessions logged yet")).toBeNull();
     expect(screen.queryByText("Exercise not found")).toBeNull();
+  });
+
+  it("opens Form immediately while workout history is still loading", async () => {
+    workoutsMock.value = { workouts: [], loading: true };
+    renderAt("Bench Press", "form");
+    expect(await screen.findByText("Exercise guidance ready")).toBeVisible();
+    expect(screen.queryByText("Sessions")).toBeNull();
+    expect(screen.queryByText("Best weight")).toBeNull();
   });
 
   it("renders a timed hold in seconds instead of as repetition PRs", () => {

@@ -33,6 +33,8 @@ export default function StackedCTACards({
   runWeekLabel,
   liftDayIndex = null,
   liftStartable = true,
+  liftStatus,
+  runCompleted,
   todayType,
   navigate,
   todayRun,
@@ -53,6 +55,8 @@ export default function StackedCTACards({
    *  threaded to LiftCTACard for `?day=N` deep-linking and the Done state. */
   liftDayIndex?: number | null;
   liftStartable?: boolean;
+  liftStatus?: "none" | "planned" | "completed" | "skipped";
+  runCompleted?: boolean;
   todayType: "lift" | "run" | "both" | "rest";
   navigate: (p: string) => void;
   todayRun: ScheduledRunDay | null;
@@ -88,6 +92,7 @@ export default function StackedCTACards({
             isFirst={firstWorkout}
             dayIndex={liftDayIndex}
             isStartable={liftStartable}
+            status={liftStatus}
           />
         </motion.div>
       )}
@@ -95,6 +100,7 @@ export default function StackedCTACards({
         <motion.div key="run" variants={fadeUp}>
           <RunCTACard
             todayRun={todayRun}
+            completed={runCompleted}
             purpose={runPurpose}
             weekLabel={runWeekLabel}
             navigate={navigate}

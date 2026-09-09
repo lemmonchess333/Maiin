@@ -73,7 +73,7 @@ const EXPECTED_BARE_USES: Record<(typeof IDENTITY)[number], number> = {
   // 2026-08-11: 53 → 54. The Feather icon on AdjustWeekSheet's "this week
   // is already eased" row — an icon, which the 4.5:1 small-text bar does
   // not apply to; its label beside it is `text-foreground`.
-  running: 48, // Redesign moves onboarding icons to the strong colour step.
+  running: 47, // Calendar status icons now use the strong colour step.
   lifting: 19, // Redesign consolidates onboarding option icons.
   nutrition: 4,
   destructive: 0,

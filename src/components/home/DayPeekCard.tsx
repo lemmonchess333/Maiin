@@ -8,6 +8,7 @@ import {
   X,
   Check,
   Settings2,
+  ChevronRight,
 } from "lucide-react";
 import { format } from "date-fns";
 import { useNavigate } from "react-router-dom";
@@ -66,9 +67,13 @@ function LiftRowShell({
         navigate(`/workout/${workoutId}`);
       }}
       aria-label={`Open ${label ?? "workout"} details`}
-      className="flex items-center gap-1.5 w-full text-left rounded-md -mx-1 px-1 py-0.5 active:scale-[0.98] transition-transform"
+      className="flex min-h-11 items-center gap-2 w-full text-sm text-left rounded-md -mx-1 px-1 py-2 active:scale-[0.98] transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
     >
       {children}
+      <ChevronRight
+        className="ml-auto size-4 shrink-0 text-muted-foreground"
+        aria-hidden="true"
+      />
     </button>
   );
 }
@@ -533,12 +538,16 @@ function ExtraRunRow({
       type="button"
       onClick={onTap}
       aria-label={`Extra run: ${distanceText} ${bucketText}, tap to open`}
-      className="inline-flex items-center gap-1.5 -ml-1 px-1 py-0.5 rounded-md text-foreground/80 hover:text-foreground active:scale-[0.97]"
+      className="flex min-h-11 w-full items-center gap-2 -ml-1 px-1 py-2 rounded-md text-sm text-left text-foreground active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
     >
       <Footprints className="size-3.5 shrink-0 opacity-50 text-running" />
       <span className="text-muted-foreground">
         Extra: {distanceText} {bucketText}
       </span>
+      <ChevronRight
+        className="ml-auto size-4 shrink-0 text-muted-foreground"
+        aria-hidden="true"
+      />
     </button>
   );
 }

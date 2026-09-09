@@ -183,21 +183,22 @@ describe("HOME-ACTION-01 — deep-link + terminal states", function () {
     expect(navigate).toHaveBeenCalledWith("/program?day=2");
   });
 
-  it("a completed lift shows Done (not Start) and still opens the day", function () {
+  it("a completed lift is labelled Completed and still opens the day", function () {
     const navigate = vi.fn();
     renderCards({
       todayType: "lift",
       liftDayIndex: 1,
       liftStartable: false,
+      liftStatus: "completed",
       navigate,
     });
-    expect(screen.getByText("Done")).toBeInTheDocument();
+    expect(screen.getByText("Completed")).toBeInTheDocument();
     expect(screen.queryByText("Start")).toBeNull();
     fireEvent.click(screen.getByText("Push Day"));
     expect(navigate).toHaveBeenCalledWith("/program?day=1");
   });
 
-  it("a terminal run shows Done and does NOT relaunch /run", function () {
+  it("a skipped run is labelled Skipped and does not relaunch /run", function () {
     const navigate = vi.fn();
     renderCards({
       todayType: "run",
@@ -210,7 +211,7 @@ describe("HOME-ACTION-01 — deep-link + terminal states", function () {
         status: "skipped",
       } as any,
     });
-    expect(screen.getByText("Done")).toBeInTheDocument();
+    expect(screen.getByText("Skipped")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /Easy 30/ }));
     expect(navigate).toHaveBeenCalledWith("/program?tab=run");
     expect(navigate).not.toHaveBeenCalledWith(expect.stringContaining("/run"));

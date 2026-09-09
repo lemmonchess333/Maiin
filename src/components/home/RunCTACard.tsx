@@ -17,6 +17,7 @@ import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
 import type { ScheduledRunDay } from "@/features/program/runScheduler";
 import {
   getScheduledRunStatus,
+  isScheduledRunCompleted,
   isScheduledRunStartable,
 } from "@/lib/scheduledRunStatus";
 
@@ -38,6 +39,7 @@ export default function RunCTACard({
   weekLabel,
   navigate,
   isFirst = false,
+  completed,
 }: {
   todayRun: ScheduledRunDay | null;
   purpose?: string | null;
@@ -45,6 +47,7 @@ export default function RunCTACard({
   navigate: (p: string) => void;
   /** #972 cold-start framing: frame this as the user's first run. */
   isFirst?: boolean;
+  completed?: boolean;
 }) {
   const tmpl = todayRun
     ? RUN_TEMPLATES.find(function (t) {
@@ -76,12 +79,17 @@ export default function RunCTACard({
     : null;
 
   // HOME-ACTION-01: startability decides BOTH the pill label AND where the
-  // tap goes. A terminal/reconciliation run ("Done") must not relaunch the
+  // tap goes. A terminal/reconciliation run must not relaunch the
   // run flow — the tap opens the Programme run view to review it instead.
   // No todayRun (cold-start) is treated as startable ("Go").
-  const startable = todayRun
-    ? isScheduledRunStartable(getScheduledRunStatus(todayRun))
-    : true;
+  const status = todayRun ? getScheduledRunStatus(todayRun) : "planned";
+  const isCompleted = completed ?? isScheduledRunCompleted(status);
+  const startable = !isCompleted && isScheduledRunStartable(status);
+  const statusLabel = isCompleted
+    ? "Completed"
+    : status === "skipped"
+      ? "Skipped"
+      : "Needs review";
 
   return (
     <motion.button
@@ -129,7 +137,7 @@ export default function RunCTACard({
           </div>
         ) : (
           <div className="flex min-h-11 shrink-0 items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-bold bg-muted text-muted-foreground">
-            Done
+            {statusLabel}
           </div>
         )}
       </div>

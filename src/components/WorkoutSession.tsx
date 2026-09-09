@@ -29,6 +29,8 @@ import {
   Timer,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import EditSetSheet from "@/components/workout/EditSetSheet";
+import { sessionRecords } from "@/features/program/sessionRecords";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { motion, AnimatePresence } from "framer-motion";
 import { collection, getDocs, query, orderBy, limit } from "firebase/firestore";
@@ -209,7 +211,8 @@ interface Props {
     exIndex: number,
     reps: number,
     weight: number,
-    rpe?: number
+    rpe?: number,
+    session?: { id: string; correction?: boolean }
   ) => Promise<void>;
   onCompleteDay: (
     dayIndex: number,
@@ -376,6 +379,12 @@ export default function WorkoutSession({
 
   // Multi-rep-range PR tracking
   const [prMap, setPrMap] = useState<PRMap>({});
+  const recordBaseline = useRef<PRMap>({});
+  const volumeBaseline = useRef<VolumeBestMap>({});
+  const [editingSet, setEditingSet] = useState<{
+    exIdx: number;
+    setIdx: number;
+  } | null>(null);
   // Backlog #2 (three-axis PR): best single-session volume per exercise.
   // Loaded with the PR map; persisted undo-safe from final setLogs.
   const [volumeBest, setVolumeBest] = useState<VolumeBestMap>({});
@@ -503,7 +512,8 @@ export default function WorkoutSession({
         if (prMapDoc.exists()) {
           const data = prMapDoc.data();
           if (data.map) {
-            setPrMap(data.map as PRMap);
+            recordBaseline.current = data.map as PRMap;
+            setPrMap(recordBaseline.current);
             mapLoaded = true;
           }
           if (data.sessionCounts) {
@@ -511,7 +521,8 @@ export default function WorkoutSession({
             countsLoaded = true;
           }
           if (data.volumeBest) {
-            setVolumeBest(data.volumeBest as VolumeBestMap);
+            volumeBaseline.current = data.volumeBest as VolumeBestMap;
+            setVolumeBest(volumeBaseline.current);
             volumeBestLoaded = true;
           }
         }
@@ -548,7 +559,10 @@ export default function WorkoutSession({
             ),
           };
         });
-        if (!mapLoaded) setPrMap(buildPRMap(history));
+        if (!mapLoaded) {
+          recordBaseline.current = buildPRMap(history);
+          setPrMap(recordBaseline.current);
+        }
 
         if (!countsLoaded) {
           // Count sessions per exercise for 3-session minimum filter
@@ -594,7 +608,8 @@ export default function WorkoutSession({
             ),
           };
         });
-        setVolumeBest(buildVolumeBest(historyForVolume));
+        volumeBaseline.current = buildVolumeBest(historyForVolume);
+        setVolumeBest(volumeBaseline.current);
       }
     };
 
@@ -1154,7 +1169,8 @@ export default function WorkoutSession({
           currentExIndex,
           progressionSet.reps,
           progressionSet.weight,
-          progressionSet.rpe
+          progressionSet.rpe,
+          { id: completionIdRef.current }
         );
       }
 
@@ -1172,45 +1188,86 @@ export default function WorkoutSession({
     }
   };
 
+  const refreshRecords = (logs: SetLog[][]) => {
+    const next = sessionRecords(
+      recordBaseline.current,
+      volumeBaseline.current,
+      sessionCounts,
+      day.exercises,
+      logs,
+      new Date().toISOString().split("T")[0]
+    );
+    setPrMap(next.map);
+    setPrResults(next.results);
+    setFiredPRs(next.fired);
+    setVolumeBest(next.volumeBest);
+  };
+
+  const saveSetCorrection = async (values: {
+    weight: number;
+    reps: number;
+  }) => {
+    if (!editingSet || completionPendingRef.current || saved)
+      throw new Error("This workout is already being saved.");
+    const correctionUid = user?.uid;
+    const { exIdx, setIdx } = editingSet;
+    const exercise = day.exercises[exIdx];
+    const set = setLogs[exIdx]?.[setIdx];
+    if (!exercise || !set?.completed)
+      throw new Error("This set is no longer available to edit.");
+    const best =
+      recordBaseline.current[exercise.name]?.[getRepBucket(values.reps)];
+    const validation = validateSet({
+      ...values,
+      isBodyweight: values.weight === 0 && !best,
+      currentBestForBucket: best?.weight,
+    });
+    if (!validation.ok) throw new Error(validation.message);
+    const next = setLogs.map((sets, ei) =>
+      sets.map((entry, si) =>
+        ei === exIdx && si === setIdx ? { ...entry, ...values } : entry
+      )
+    );
+    const previousProgression = progressionSetFor(setLogs[exIdx]);
+    const nextProgression = progressionSetFor(next[exIdx]);
+    // Progression was already recorded when this exercise finished. Replace
+    // that one result against its server-owned baseline, never progress twice.
+    if (
+      next[exIdx].every((entry) => entry.completed) &&
+      nextProgression &&
+      (nextProgression.weight !== previousProgression?.weight ||
+        nextProgression.reps !== previousProgression?.reps)
+    ) {
+      await onLogExercise(
+        dayIndex,
+        exIdx,
+        nextProgression.reps,
+        nextProgression.weight,
+        nextProgression.rpe,
+        { id: completionIdRef.current, correction: true }
+      );
+    }
+    if (correctionUid && auth.currentUser?.uid !== correctionUid)
+      throw new Error("Your account changed. Reopen your workout to continue.");
+    setSetLogs(next);
+    refreshRecords(next);
+    setLastCompleted(null);
+    if (undoTimeoutRef.current) clearTimeout(undoTimeoutRef.current);
+    haptic();
+    if (validation.warn) toast.message(validation.warn.message);
+    else toast.success("Set updated");
+  };
+
   const handleUndo = () => {
     if (!lastCompleted) return;
-    const { exIdx, setIdx, pr } = lastCompleted;
-
-    // PR E (audit P0 #4): if completeSet recorded a PR, undo MUST
-    // revert that PR mutation. Pre-PR-E undo only flipped
-    // setLogs[].completed, leaving the false PR persisted in
-    // prMap + firedPRs AND in Firestore on the next auto-save.
-    if (pr) {
-      setPrMap((prev) => {
-        const updated = { ...prev };
-        if (updated[pr.exName]) {
-          updated[pr.exName] = {
-            ...updated[pr.exName],
-            [pr.bucket]: pr.previousPR,
-          };
-        }
-        return updated;
-      });
-      setPrResults((previous) => {
-        const next = new Map(previous);
-        if (pr.previousResult)
-          next.set(`${pr.exName}:${pr.bucket}`, pr.previousResult);
-        else next.delete(`${pr.exName}:${pr.bucket}`);
-        return next;
-      });
-      setFiredPRs((previous) => {
-        const next = new Map(previous);
-        if (pr.previousFired.length) next.set(pr.exName, pr.previousFired);
-        else next.delete(pr.exName);
-        return next;
-      });
-    }
-
-    setSetLogs((prev) => {
-      const updated = prev.map((sets) => sets.map((s) => ({ ...s })));
-      updated[exIdx][setIdx].completed = false;
-      return updated;
-    });
+    const { exIdx, setIdx } = lastCompleted;
+    const next = setLogs.map((sets, ei) =>
+      sets.map((set, si) =>
+        ei === exIdx && si === setIdx ? { ...set, completed: false } : set
+      )
+    );
+    setSetLogs(next);
+    refreshRecords(next);
     setCurrentExIndex(exIdx);
     setCurrentSetIndex(setIdx);
     stopRest();
@@ -1426,6 +1483,11 @@ export default function WorkoutSession({
           planContext={planContext}
           onShare={shareSaved}
           onFinish={handleFinish}
+          onEdit={
+            !completionPendingRef.current
+              ? () => setSessionComplete(false)
+              : undefined
+          }
           onClose={onClose}
         />
       </>
@@ -1441,6 +1503,15 @@ export default function WorkoutSession({
 
   return (
     <div className="fixed inset-0 z-50 bg-background flex flex-col safe-area-pb">
+      {editingSet && (
+        <EditSetSheet
+          set={setLogs[editingSet.exIdx][editingSet.setIdx]}
+          setNumber={editingSet.setIdx + 1}
+          timed={day.exercises[editingSet.exIdx]?.repUnit === "seconds"}
+          onSave={saveSetCorrection}
+          onClose={() => setEditingSet(null)}
+        />
+      )}
       {showResumePrompt && initialDraft && (
         <div className="fixed inset-0 z-[60] bg-black/60 flex items-end sm:items-center justify-center sm:p-4">
           <motion.div
@@ -1964,23 +2035,36 @@ export default function WorkoutSession({
                         </div>
                         <div className="col-span-2 flex justify-center">
                           {set.completed ? (
-                            <motion.div
-                              initial={{ scale: 0.5 }}
-                              animate={{ scale: 1 }}
-                              transition={{ duration: 0.15 }}
+                            <Button
+                              variant="ghost"
+                              className="min-w-11 flex-col gap-0 px-1 text-xs"
+                              aria-label={`Edit completed set ${setIdx + 1}`}
+                              onClick={() => {
+                                haptic();
+                                setEditingSet({
+                                  exIdx: currentExIndex,
+                                  setIdx,
+                                });
+                              }}
                             >
-                              <Check className="size-5 text-success-strong" />
-                              {[...prResults.values()].some(
-                                (result) =>
-                                  result.kind === "best" &&
-                                  result.setKey ===
-                                    `${currentExIndex}:${setIdx}`
-                              ) && (
-                                <span className="text-caption font-semibold text-lifting-strong">
-                                  PR
-                                </span>
-                              )}
-                            </motion.div>
+                              <Check
+                                className="size-4 text-success-strong"
+                                aria-hidden="true"
+                              />
+                              <span>
+                                {[...prResults.values()].some(
+                                  (result) =>
+                                    result.kind === "best" &&
+                                    result.setKey ===
+                                      `${currentExIndex}:${setIdx}`
+                                ) && (
+                                  <span className="font-semibold text-lifting-strong">
+                                    PR
+                                  </span>
+                                )}{" "}
+                                Edit
+                              </span>
+                            </Button>
                           ) : (
                             <button
                               type="button"
