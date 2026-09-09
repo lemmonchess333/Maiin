@@ -486,13 +486,18 @@ export default function Food() {
     });
   }, [yesterdaySegmented, mealSegmentedMeals]);
 
-  const handleCopySelectedFromYesterday = async (selections: readonly MealCopySelection[]) => {
-    if (copyingMealKey || !uid) return { created: [], error: new Error("Sign in again to log food.") };
+  const handleCopySelectedFromYesterday = async (
+    selections: readonly MealCopySelection[]
+  ) => {
+    if (copyingMealKey || !uid)
+      return { created: [], error: new Error("Sign in again to log food.") };
     setCopyingMealKey("__all__");
     try {
       const result = await copySelectedMeals(uid, selectedDate, selections);
       if (result.created.length > 0) {
-        const slots = MEAL_ORDER.filter((slot) => result.created.some((entry) => entry.slot === slot));
+        const slots = MEAL_ORDER.filter((slot) =>
+          result.created.some((entry) => entry.slot === slot)
+        );
         const count = result.created.length;
         haptic(15);
         notifyMealsLogged(
@@ -502,7 +507,8 @@ export default function Food() {
           { path: "copy" }
         );
       }
-      if (result.error !== null) logger.error("[copy-selected] Failed:", result.error);
+      if (result.error !== null)
+        logger.error("[copy-selected] Failed:", result.error);
       return result;
     } finally {
       setCopyingMealKey(null);
@@ -1845,11 +1851,12 @@ export default function Food() {
               Log
             </Button>
             <Button
-              variant="secondary"
+              variant="ghost"
+              aria-label="Adjust portion or meal"
               disabled={quickAdding !== null}
               onClick={() => setPortionMeal(usual)}
             >
-              Adjust portion or meal
+              Edit
             </Button>
           </div>
         </div>
@@ -1901,7 +1908,9 @@ export default function Food() {
       {copyPreviewOpen && (
         <CopyMealsSheet
           key={`${uid}:${selectedDate}`}
-          sources={slotsToCopyFromYesterday.flatMap((slot) => yesterdaySegmented[slot] ?? [])}
+          sources={slotsToCopyFromYesterday.flatMap(
+            (slot) => yesterdaySegmented[slot] ?? []
+          )}
           onClose={() => setCopyPreviewOpen(false)}
           onSave={handleCopySelectedFromYesterday}
         />

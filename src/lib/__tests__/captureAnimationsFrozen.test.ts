@@ -298,7 +298,7 @@ describe("capture specs — fullPage shots settle the document height", () => {
  * speculative sweep across specs this sandbox cannot run costs a CI cycle
  * to find out. Adopt where a diff mask points, then lower the number.
  */
-const UNSETTLED_IMAGE_SPECS = 26;
+const UNSETTLED_IMAGE_SPECS = 25;
 
 describe("capture specs — raster art is decoded before the shutter", () => {
   const files = specFiles(e2eRoot);

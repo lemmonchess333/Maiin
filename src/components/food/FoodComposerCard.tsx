@@ -308,6 +308,7 @@ function FoodComposerCard({
           emphasis="solid"
           tone="nutrition"
           ariaLabel="Add to meal"
+          className="grid grid-cols-2 min-[360px]:grid-cols-4 [&>button]:min-w-0 [&>button]:px-2 [&>button]:text-xs sm:[&>button]:text-sm"
           options={MEAL_ORDER.map((mealKey) => ({
             value: mealKey,
             label: MEAL_LABELS[mealKey],

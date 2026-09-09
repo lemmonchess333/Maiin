@@ -1,15 +1,13 @@
 import { useState } from "react";
-import { THEME } from "@/lib/theme";
 import { Timestamp } from "firebase/firestore";
 import { createMealEntry, notifyMealsLogged } from "@/lib/mealEntry";
 import { useUid } from "@/lib/auth";
-import { cn } from "@/lib/utils";
 import { Check } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "@/lib/toast";
 import { localDateString } from "@/lib/dateHelpers";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { BottomSheet } from "@/components/ui/BottomSheet";
+import { Button } from "@/components/ui/Button";
 import { validateFoodEntry } from "@/lib/foodValidation";
 import { useFoodFavourites } from "@/hooks/useFoodFavourites";
 
@@ -161,38 +159,21 @@ export function ManualFoodLogger({ date, meal, open, onClose }: Props) {
 
   return (
     <>
-      {/* Sprint 3 follow-up sweep: vaul boilerplate replaced with
-        BottomSheet. Title rendered in children because the bespoke
-        two-line title ("Log a meal" + "Manual entry" subtitle) doesn't
-        fit the primitive's single-line title strip. hideHeader keeps
-        the drag handle visible but skips the header row; sr-only
-        Drawer.Title preserves aria-labelledby. */}
       <BottomSheet
         open={open}
         onOpenChange={(o) => !o && onClose()}
         title="Log a meal"
-        hideHeader
-        maxHeight="max-h-[60vh]"
-        className="border-t border-border"
+        maxHeight="max-h-[85dvh]"
       >
-        <div className="overflow-y-auto flex-1 px-5 pt-4 pb-3">
-          {/* Drag handle */}
-          <div className="w-10 h-1 rounded-full mx-auto mb-4 bg-border" />
-
-          {/* Title */}
-          <div className="mb-5">
-            <p className="text-lg font-bold text-foreground">Log a meal</p>
-            <p className="text-xs text-muted-foreground">Manual entry</p>
-          </div>
-
+        <div className="min-h-0 overflow-y-auto px-4 py-4">
           {/* Meal name input */}
           <input
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="Meal name (e.g. Chicken & rice)"
+            placeholder="Meal name"
             aria-label="Meal name"
-            className="w-full p-3.5 rounded-xl text-foreground text-base placeholder:text-muted-foreground bg-muted/40 border border-border"
+            className="ds-input px-3 py-3 text-base"
           />
 
           {/* Macro input grid */}
@@ -208,23 +189,33 @@ export function ManualFoodLogger({ date, meal, open, onClose }: Props) {
               { label: "Carbs", value: carbs, set: setCarbs, unit: "g" },
               { label: "Fat", value: fat, set: setFat, unit: "g" },
             ].map((field) => (
-              <div key={field.label} className="space-y-1.5">
+              <div key={field.label} className="min-w-0 space-y-1.5">
                 <label
                   htmlFor={`manual-macro-${field.label.toLowerCase()}`}
-                  className="text-xs uppercase tracking-wider font-semibold text-muted-foreground pl-1"
+                  className="text-sm font-medium text-muted-foreground"
                 >
-                  {field.label} ({field.unit})
+                  {field.label}
                 </label>
-                <input
-                  id={`manual-macro-${field.label.toLowerCase()}`}
-                  type="number"
-                  step="1"
-                  min="0"
-                  value={field.value}
-                  onChange={(e) => field.set(e.target.value)}
-                  placeholder={field.unit}
-                  className="w-full p-3 rounded-xl text-foreground text-base font-semibold text-center placeholder:text-muted-foreground bg-muted/40 border border-border"
-                />
+                <div className="relative">
+                  <input
+                    id={`manual-macro-${field.label.toLowerCase()}`}
+                    type="number"
+                    inputMode="decimal"
+                    step="1"
+                    min="0"
+                    aria-label={`${field.label} (${field.unit})`}
+                    value={field.value}
+                    onChange={(e) => field.set(e.target.value)}
+                    placeholder="0"
+                    className="ds-input py-3 pl-3 pr-12 text-base font-mono tabular-nums"
+                  />
+                  <span
+                    aria-hidden="true"
+                    className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground"
+                  >
+                    {field.unit}
+                  </span>
+                </div>
               </div>
             ))}
           </div>
@@ -236,44 +227,17 @@ export function ManualFoodLogger({ date, meal, open, onClose }: Props) {
               Lifting it into a non-scrolling footer with safe-area
               bottom padding keeps it pinned regardless of scroll
               state. */}
-        <div className="px-5 pt-3 pb-5 border-t border-border safe-area-pb">
-          <AnimatePresence mode="wait">
-            <motion.button
-              key={saved ? "saved" : "save"}
-              initial={{ scale: 0.95 }}
-              animate={{ scale: 1 }}
-              onClick={handleSave}
-              disabled={saving || !name.trim()}
-              className={cn(
-                "w-full py-3.5 rounded-xl font-semibold text-base transition-all flex items-center justify-center gap-2",
-                saved
-                  ? "text-white shadow-[0_4px_20px_rgba(52,211,153,0.35)]"
-                  : "text-white active:scale-95",
-                (saving || !name.trim()) &&
-                  !saved &&
-                  "opacity-50 cursor-not-allowed"
-              )}
-              style={
-                saved
-                  ? // Saved-state fill from the palette (was raw green-500).
-                    { backgroundColor: THEME.success }
-                  : {
-                      backgroundColor: THEME.lifting,
-                      boxShadow: "0 4px 16px rgba(124,110,246,0.25)",
-                    }
-              }
-            >
-              {saved ? (
-                <>
-                  <Check className="size-4" /> Meal logged
-                </>
-              ) : saving ? (
-                "Saving meal..."
-              ) : (
-                "Log meal"
-              )}
-            </motion.button>
-          </AnimatePresence>
+        <div className="shrink-0 px-4 pt-1 pb-4">
+          <Button
+            fullWidth
+            size="lg"
+            onClick={handleSave}
+            disabled={saving || saved || !name.trim()}
+            loading={saving}
+            leftIcon={saved ? <Check className="size-4" /> : undefined}
+          >
+            {saved ? "Meal logged" : saving ? "Saving…" : "Log meal"}
+          </Button>
         </div>
       </BottomSheet>
       {/* Suspicious-but-possible high-value override prompt. Cancel

@@ -33,6 +33,7 @@ import {
   flushSnapshots,
 } from "@/test/firestoreHarness";
 import { localDateString } from "@/lib/dateHelpers";
+import { scopedKey, writeJson } from "@/lib/localStore";
 
 const TODAY = localDateString();
 const PATH = `users/u1/waterLog/${TODAY}`;
@@ -168,6 +169,61 @@ describe("logging", () => {
   });
 });
 
+describe("repeat and correction amount", () => {
+  it("remembers a custom drink across remount and subtracts that exact amount", async () => {
+    seedFirestore({ [PATH]: { ml: 1000, targetMl: 2000 } });
+    writeJson(scopedKey("tropos-water-serving", "u1"), 750);
+    const offline = vi.spyOn(navigator, "onLine", "get").mockReturnValue(false);
+    try {
+      const view = renderHook(() => useWaterLog());
+      await waitFor(() => expect(view.result.current.ml).toBe(1000));
+      expect(view.result.current.servingMl).toBe(750);
+
+      act(() => expect(view.result.current.logWater(375)).toBe(true));
+      expect(view.result.current.ml).toBe(1375);
+      expect(view.result.current.servingMl).toBe(375);
+      view.unmount();
+
+      const reopened = renderHook(() => useWaterLog());
+      await waitFor(() => expect(reopened.result.current.ml).toBe(1375));
+      expect(reopened.result.current.servingMl).toBe(375);
+      act(() =>
+        reopened.result.current.logWater(-reopened.result.current.servingMl)
+      );
+      expect(reopened.result.current.ml).toBe(1000);
+      expect(pendingWater("u1").map((entry) => entry.delta)).toEqual([
+        375, -375,
+      ]);
+      reopened.unmount();
+    } finally {
+      offline.mockRestore();
+    }
+    await flushWater("u1");
+    expect(readDoc(PATH)).toMatchObject({ ml: 1000 });
+  });
+
+  it("keeps the previous amount when the drink cannot be stored", async () => {
+    seedFirestore({ [PATH]: { ml: 1000, targetMl: 2000 } });
+    writeJson(scopedKey("tropos-water-serving", "u1"), 750);
+    const view = renderHook(() => useWaterLog());
+    await waitFor(() => expect(view.result.current.ml).toBe(1000));
+    const blockedStorage = vi
+      .spyOn(Storage.prototype, "setItem")
+      .mockImplementation(() => {
+        throw new DOMException("Storage full", "QuotaExceededError");
+      });
+    try {
+      act(() => expect(view.result.current.logWater(375)).toBe(false));
+      view.rerender();
+      expect(view.result.current.ml).toBe(1000);
+      expect(view.result.current.servingMl).toBe(750);
+      expect(pendingWater("u1")).toEqual([]);
+    } finally {
+      blockedStorage.mockRestore();
+    }
+  });
+});
+
 describe("signed out", () => {
   it("reports zero and stops loading", async () => {
     mockUser = null;
@@ -207,7 +263,6 @@ describe("navigation and account boundaries", () => {
     const view = renderHook(() => useWaterLog());
     await flushSnapshots();
     act(() => {
-      view.result.current.setServingMl(500);
       view.result.current.logWater(500);
     });
     mockUser = { uid: "u2" };

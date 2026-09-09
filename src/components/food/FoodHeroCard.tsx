@@ -243,13 +243,14 @@ export default function FoodHeroCard({
       <div className="relative overflow-hidden p-4 rounded-2xl bg-card card-shadow">
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute left-1/2 top-6 size-64 -translate-x-1/2 rounded-full"
+          className="pointer-events-none absolute inset-0 opacity-70 dark:opacity-100"
           style={{
-            background: `radial-gradient(circle, ${THEME.brand}33, transparent 70%)`,
+            background:
+              "radial-gradient(ellipse at 20% 25%, hsl(var(--nutrition) / 0.16), transparent 65%), radial-gradient(ellipse at 80% 70%, hsl(var(--primary) / 0.18), transparent 65%)",
           }}
         />
-        {/* Content sits above the absolute halo (positioned siblings paint
-          in DOM order; a non-positioned block would render beneath it). */}
+        {/* A static wash gives the whole card depth without a photo or a
+            second focal point. The ring and its readable centre stay above it. */}
         <div className="relative">
           {/* Top row: caption (left) + adjust-targets gear (right).
           The gear deep-links straight to the focused Nutrition editor

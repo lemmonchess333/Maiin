@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import BottomSheet from "@/components/ui/BottomSheet";
 import Button from "@/components/ui/Button";
 import WeightScaleDial from "./WeightScaleDial";
+import { ChevronDown } from "lucide-react";
 import { format, subDays } from "date-fns";
 import {
   kgToLb,
@@ -24,6 +25,15 @@ import {
   weightSyncFailed,
 } from "@/lib/weightQueue";
 import { track as trackHomeEvent } from "@/lib/homeAnalytics";
+
+// A scale readout shares the input primitive's editing behavior. Its
+// resting surface is unboxed; the surrounding group owns the focus ring.
+// Inline styles intentionally override the unlayered ds-input surface.
+const readoutStyle = {
+  background: "transparent",
+  borderColor: "transparent",
+  boxShadow: "none",
+};
 
 export default function WeightLogSheet({
   uid,
@@ -230,9 +240,14 @@ export default function WeightLogSheet({
         if (!open && !pending.current) onClose();
       }}
     >
-      <div className="px-4 pb-6 pt-3 space-y-4">
-        <div className="flex items-end gap-3">
-          <div className="min-w-0 flex-1">
+      <div className="min-h-0 overflow-y-auto px-4 pb-4 pt-3">
+        <div className="flex items-baseline justify-center gap-1 py-2">
+          <div
+            className="min-w-0 rounded-xl text-display font-mono font-extrabold tabular-nums focus-within:ring-2 focus-within:ring-primary/40"
+            style={{
+              width: `${Math.max(3, Math.min(7, value.length)) + 0.5}ch`,
+            }}
+          >
             <label htmlFor="weight-value" className="sr-only">
               Weight ({selectedUnit === "lbs" ? "lb" : selectedUnit})
             </label>
@@ -240,7 +255,8 @@ export default function WeightLogSheet({
               id="weight-value"
               inputMode="decimal"
               placeholder="—"
-              className="ds-input min-h-16 min-w-0 w-full text-center text-display font-mono tabular-nums"
+              className="ds-input h-16 min-w-0 px-1 py-0 text-center text-display font-extrabold font-mono tabular-nums"
+              style={readoutStyle}
               value={value}
               disabled={saving}
               aria-invalid={!!error}
@@ -253,18 +269,41 @@ export default function WeightLogSheet({
                 setError("");
               }}
             />
-            {selectedUnit === "st" && (
-              <p className="text-center text-micro text-muted-foreground">st</p>
-            )}
+          </div>
+          <div className="relative w-16 shrink-0 rounded-xl focus-within:ring-2 focus-within:ring-primary/40">
+            <select
+              aria-label="Weight unit"
+              value={selectedUnit}
+              onChange={(event) =>
+                changeUnit(event.target.value as DisplayUnit)
+              }
+              disabled={saving}
+              className="ds-input appearance-none pl-1 pr-6 text-lg"
+              style={{ ...readoutStyle, color: "hsl(var(--muted-foreground))" }}
+            >
+              <option value="kg">kg</option>
+              <option value="lbs">lb</option>
+              <option value="st">st</option>
+            </select>
+            <ChevronDown
+              aria-hidden="true"
+              className="pointer-events-none absolute right-2 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+            />
           </div>
           {selectedUnit === "st" && (
-            <div className="min-w-0 flex-1">
+            <div
+              className="min-w-0 rounded-xl text-display font-mono font-extrabold tabular-nums focus-within:ring-2 focus-within:ring-primary/40"
+              style={{
+                width: `${Math.max(3, Math.min(5, pounds.length)) + 0.5}ch`,
+              }}
+            >
               <label htmlFor="weight-pounds" className="sr-only">
                 Pounds
               </label>
               <input
                 id="weight-pounds"
-                className="ds-input min-h-16 min-w-0 w-full text-center text-display font-mono tabular-nums"
+                className="ds-input h-16 min-w-0 px-1 py-0 text-center text-display font-extrabold font-mono tabular-nums"
+                style={readoutStyle}
                 inputMode="decimal"
                 value={pounds}
                 disabled={saving}
@@ -275,101 +314,99 @@ export default function WeightLogSheet({
                   setError("");
                 }}
               />
-              <p className="text-center text-micro text-muted-foreground">lb</p>
             </div>
           )}
-          <div className="w-20 shrink-0 self-center">
-            <select
-              aria-label="Weight unit"
-              value={selectedUnit}
-              onChange={(event) =>
-                changeUnit(event.target.value as DisplayUnit)
-              }
+          {selectedUnit === "st" && (
+            <span className="text-lg text-muted-foreground">lb</span>
+          )}
+        </div>
+        <div className="mx-auto w-full max-w-sm">
+          <WeightScaleDial
+            key={selectedUnit}
+            value={selectedUnit === "kg" ? dialKg : kgToLb(dialKg)}
+            minimum={selectedUnit === "kg" ? 20 : kgToLb(20)}
+            maximum={selectedUnit === "kg" ? 350 : kgToLb(350)}
+            unit={selectedUnit === "lbs" ? "lb" : selectedUnit}
+            disabled={saving}
+            onChange={changeDial}
+          />
+        </div>
+        <div className="space-y-3">
+          <div className="flex items-center justify-between gap-3 text-sm">
+            <span className="text-muted-foreground">Date</span>
+            <Button
+              variant="ghost"
+              onClick={() => setShowDate((shown) => !shown)}
               disabled={saving}
-              className="ds-input"
+              aria-expanded={showDate}
             >
-              <option value="kg">kg</option>
-              <option value="lbs">lb</option>
-              <option value="st">st</option>
-            </select>
+              {date === todayKey
+                ? "Today"
+                : format(new Date(`${date}T12:00:00`), "d MMM yyyy")}
+            </Button>
+          </div>
+          {showDate && (
+            <input
+              aria-label="Date measured"
+              type="date"
+              className="ds-input min-h-11 w-full"
+              value={date}
+              min={minimumDate}
+              max={todayKey}
+              disabled={saving}
+              onChange={(event) => {
+                noteInteraction();
+                setDate(event.target.value);
+                setLoadingEntry(true);
+                setCorrection(null);
+                setError("");
+              }}
+            />
+          )}
+          {error && (
+            <p
+              id="weight-error"
+              role="alert"
+              className="text-sm text-destructive-strong"
+            >
+              {error}
+            </p>
+          )}
+          {weightSyncFailed(uid) && (
+            <Button
+              variant="secondary"
+              fullWidth
+              onClick={() => void flushQueuedWeights(uid)}
+            >
+              Retry sync
+            </Button>
+          )}
+          {saving && (
+            <p role="status" className="text-sm text-muted-foreground">
+              Saving weight…
+            </p>
+          )}
+          <div className="space-y-1">
+            <Button
+              fullWidth
+              loading={saving}
+              aria-label={editing ? "Save changes" : "Log weight"}
+              onClick={() => void save()}
+            >
+              {editing ? "Save changes" : "Log weight"}
+            </Button>
+            {!loadingEntry && correction?.editId && (
+              <Button
+                variant="ghost"
+                fullWidth
+                disabled={saving}
+                onClick={correct}
+              >
+                {correction.removesEntry ? "Remove entry" : "Undo last change"}
+              </Button>
+            )}
           </div>
         </div>
-        <WeightScaleDial
-          key={selectedUnit}
-          value={selectedUnit === "kg" ? dialKg : kgToLb(dialKg)}
-          minimum={selectedUnit === "kg" ? 20 : kgToLb(20)}
-          maximum={selectedUnit === "kg" ? 350 : kgToLb(350)}
-          unit={selectedUnit === "lbs" ? "lb" : selectedUnit}
-          disabled={saving}
-          onChange={changeDial}
-        />
-        <div className="flex items-center justify-between gap-3 text-sm">
-          <span className="text-muted-foreground">Date</span>
-          <Button
-            variant="ghost"
-            onClick={() => setShowDate((shown) => !shown)}
-            disabled={saving}
-            aria-expanded={showDate}
-          >
-            {date === todayKey
-              ? "Today"
-              : format(new Date(`${date}T12:00:00`), "d MMM yyyy")}
-          </Button>
-        </div>
-        {showDate && (
-          <input
-            aria-label="Date measured"
-            type="date"
-            className="ds-input min-h-11 w-full"
-            value={date}
-            min={minimumDate}
-            max={todayKey}
-            disabled={saving}
-            onChange={(event) => {
-              noteInteraction();
-              setDate(event.target.value);
-              setLoadingEntry(true);
-              setCorrection(null);
-              setError("");
-            }}
-          />
-        )}
-        {error && (
-          <p
-            id="weight-error"
-            role="alert"
-            className="text-sm text-destructive-strong"
-          >
-            {error}
-          </p>
-        )}
-        {weightSyncFailed(uid) && (
-          <Button
-            variant="secondary"
-            fullWidth
-            onClick={() => void flushQueuedWeights(uid)}
-          >
-            Retry sync
-          </Button>
-        )}
-        {saving && (
-          <p role="status" className="text-sm text-muted-foreground">
-            Saving weight…
-          </p>
-        )}
-        <Button
-          fullWidth
-          loading={saving}
-          aria-label={editing ? "Save changes" : "Log weight"}
-          onClick={() => void save()}
-        >
-          {editing ? "Save changes" : "Log weight"}
-        </Button>
-        {!loadingEntry && correction?.editId && (
-          <Button variant="ghost" fullWidth disabled={saving} onClick={correct}>
-            {correction.removesEntry ? "Remove entry" : "Undo last change"}
-          </Button>
-        )}
       </div>
     </BottomSheet>
   );

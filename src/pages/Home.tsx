@@ -40,19 +40,15 @@ import {
   Dumbbell,
   Sparkles,
   Settings as SettingsIcon,
-  Moon,
-  RotateCcw,
   UtensilsCrossed,
   X,
   Target,
 } from "lucide-react";
 import { useWaterLog } from "@/hooks/useWaterLog";
-import { haptic } from "@/lib/haptic";
 import { toast } from "@/lib/toast";
 import { realignResultMessage } from "@/lib/realignCopy";
 import { HomeSkeleton } from "@/components/LoadingSkeleton";
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary";
-import { format } from "date-fns";
 import { resolveTrainingDayForDate } from "@/lib/trainingResolver";
 import { useClaimMap } from "@/hooks/useClaimMap";
 import { goalReachedOffer } from "@/lib/goalWeightPlan";
@@ -131,20 +127,12 @@ export default function Home() {
   } = useProgram();
   const weeklyDayMap = useWeeklyDayMap();
   const navigate = useNavigate();
-  const {
-    currentStreak: streak,
-    forgivenYesterday,
-    backfillRescueStreak,
-    newBadge,
-    dismissNewBadge,
-  } = useStreaks();
+  const { currentStreak: streak, newBadge, dismissNewBadge } = useStreaks();
   const {
     ml: waterMl,
     target: waterTargetMl,
     logWater,
     servingMl,
-    recentSizes: recentWaterSizes,
-    setServingMl,
     syncStatus: waterSyncStatus,
     retry: retryWater,
   } = useWaterLog();
@@ -810,71 +798,8 @@ export default function Home() {
         </motion.div>
       )}
 
-      {/* No pre-emptive streak at-risk signal. The Streak1 lock permits only
-          gentle AFTER-the-fact reassurance (the grace card just below) —
-          "NEVER a pre-emptive threat". The old orange "streak at risk" banner
-          that lived here was an un-locked violation of that clause; removed
-          (Streak1 STATUS 2026-06-07). The 🔥 pill shows the count only. */}
-
-      {/* Grace reassurance (Streak1 visibility) — calm, after-the-fact: shown
-          only when today is logged AND yesterday was an off-day that grace
-          bridged. Purple (brand/calm), never orange (orange = the at-risk
-          warning above). The two are mutually exclusive by construction. */}
-      {forgivenYesterday && (
-        <motion.div
-          variants={{
-            hidden: { opacity: 0, y: 8 },
-            visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
-          }}
-          className="flex items-center gap-3 p-3 rounded-xl border"
-          style={{
-            background: `${THEME.brand}14`,
-            borderColor: `${THEME.brand}33`,
-          }}
-        >
-          <Moon className="size-5 shrink-0" style={{ color: THEME.brand }} />
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold" style={{ color: THEME.brand }}>
-              Yesterday's rest day is covered
-            </p>
-            <p className="text-xs text-muted-foreground">
-              You're still on a {streak}-day streak.
-            </p>
-          </div>
-        </motion.div>
-      )}
-
-      {/* Backfill rescue (Streak1 Tier B discoverability) — the streak broke,
-          but logging yesterday retroactively would revive it. One-tap deep
-          link into Food on yesterday's date. Shown only when a backfill
-          actually restores a streak worth saving (>= 3); mutually exclusive
-          with the two nudges above (those require a live streak). */}
-      {backfillRescueStreak > 0 && (
-        <motion.button
-          type="button"
-          onClick={() => {
-            haptic();
-            navigate(
-              `/food?date=${format(new Date(Date.now() - 86400000), "yyyy-MM-dd")}`
-            );
-          }}
-          variants={{
-            hidden: { opacity: 0, y: 8 },
-            visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
-          }}
-          className="flex min-h-11 items-center gap-3 px-3 rounded-xl w-full text-left bg-muted motion-safe:active:scale-[0.98] transition-transform"
-        >
-          <RotateCcw
-            className="size-5 shrink-0"
-            style={{ color: THEME.brand }}
-          />
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold" style={{ color: THEME.brand }}>
-              Log yesterday · Restore {backfillRescueStreak}-day streak
-            </p>
-          </div>
-        </motion.button>
-      )}
+      {/* Streak count stays in the header. Recovery remains available through
+          Food's date picker; native reminders are deferred in POST_LAUNCH.md. */}
 
       {/* Home2-hierarchy: grouped sections (This week / Performance /
           Today) replace the prior flat equal-altitude stack — tight
@@ -1052,8 +977,6 @@ export default function Home() {
               ml={waterMl}
               targetMl={waterTargetMl}
               servingMl={servingMl}
-              recentSizes={recentWaterSizes}
-              onServingChange={setServingMl}
               syncStatus={waterSyncStatus}
               onRetry={retryWater}
               onLog={function (deltaMl) {

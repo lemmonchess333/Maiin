@@ -1,12 +1,10 @@
 import Button from "@/components/ui/Button";
 import { useState } from "react";
-import { THEME } from "@/lib/theme";
 import { motion } from "framer-motion";
 import { Droplets, Plus, Minus } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { haptic } from "@/lib/haptic";
 import { track as trackHomeEvent } from "@/lib/homeAnalytics";
-import InlineNumerals from "@/components/ui/InlineNumerals";
+import IconButton from "@/components/ui/IconButton";
 import SectionLabel from "@/components/ui/SectionLabel";
 import WaterWave from "@/components/home/WaterWave";
 import WaterBubbles from "@/components/home/WaterBubbles";
@@ -19,8 +17,8 @@ import {
 } from "@/lib/waterUnits";
 
 /**
- * Water card (Water "B" millilitre model). Quick − / + step one 250 ml
- * glass for repeat-logging; tapping the card body opens the size sheet
+ * Water card (Water "B" millilitre model). Quick − / + repeat the last
+ * container size (250 ml initially); tapping the card opens the size sheet
  * to log a real container (Glass / Bottle / Large / custom). The wave
  * fill + ripple identity is unchanged — only the underlying unit moved
  * from whole glasses to millilitres.
@@ -31,9 +29,6 @@ export default function WaterCard({
   onLog,
   compact = false,
   servingMl = GLASS_ML,
-  onServingChange,
-  onSetTotal,
-  recentSizes = [],
   syncStatus,
   onRetry,
 }: {
@@ -47,9 +42,6 @@ export default function WaterCard({
   /** Pyramid tile variant: half-width cell beside the weight tile. */
   compact?: boolean;
   servingMl?: number;
-  recentSizes?: number[];
-  onServingChange?: (ml: number) => void | boolean;
-  onSetTotal?: (ml: number) => void | boolean;
   syncStatus?: string;
   onRetry?: () => void;
 }) {
@@ -76,6 +68,26 @@ export default function WaterCard({
     setSheetOpen(true);
   }
 
+  const controls = (
+    <div className="flex items-center gap-2">
+      <IconButton
+        onClick={quickRemove}
+        aria-label={`Remove ${servingMl} ml`}
+        disabled={!hasWater}
+        variant="ghost"
+        className="rounded-full border border-teal/20 bg-teal/10 text-teal"
+        icon={<Minus className="size-4" />}
+      />
+      <IconButton
+        onClick={quickAdd}
+        aria-label={`Add ${servingMl} ml`}
+        variant="ghost"
+        className="rounded-full bg-teal/15 text-teal"
+        icon={<Plus className="size-4" />}
+      />
+    </div>
+  );
+
   const sheet = sheetOpen && (
     <WaterSizeSheet
       open={sheetOpen}
@@ -85,12 +97,6 @@ export default function WaterCard({
         if (saved !== false) setRippleKey((k) => k + 1);
         return saved;
       }}
-      servingMl={servingMl}
-      recentSizes={recentSizes}
-      onServingChange={onServingChange}
-      onSetTotal={onSetTotal ?? ((total) => onLog(total - ml))}
-      consumedMl={ml}
-      targetMl={targetMl}
     />
   );
 
@@ -163,45 +169,7 @@ export default function WaterCard({
               </span>
             </p>
           </button>
-          <div className="flex items-center justify-end gap-1.5 mt-auto pt-2">
-            <button
-              type="button"
-              onClick={quickRemove}
-              aria-label={`Remove ${servingMl} ml`}
-              disabled={!hasWater}
-              className={cn(
-                "size-11 rounded-full flex items-center justify-center motion-safe:active:scale-[0.95] flex-shrink-0 border",
-                !hasWater && "opacity-30"
-              )}
-              style={{
-                backgroundColor: THEME.iconBg,
-                borderColor: THEME.semantic.hydration + "30",
-              }}
-            >
-              <Minus className="size-4" style={{ color: "hsl(var(--teal))" }} />
-            </button>
-            <button
-              type="button"
-              onClick={quickAdd}
-              aria-label={`Add ${servingMl} ml`}
-              className="min-h-11 min-w-11 px-2 rounded-full flex gap-1 items-center justify-center motion-safe:active:scale-[0.95] flex-shrink-0"
-              style={{
-                backgroundColor: THEME.semantic.hydration + "26",
-                borderColor: "transparent",
-              }}
-            >
-              <Plus
-                className="size-4"
-                /* The AA teal step, not the fixed identity — the '+' is the
-                   card's primary control and the identity measured 2.49:1
-                   on the light tint (3:1 UI floor, WCAG 1.4.11). */
-                style={{ color: "hsl(var(--teal))" }}
-              />
-              <span className="text-micro font-semibold text-foreground">
-                <InlineNumerals>{`${servingMl} ml`}</InlineNumerals>
-              </span>
-            </button>
-          </div>
+          <div className="flex justify-end mt-auto pt-2">{controls}</div>
         </div>
         {syncStatus && (
           <div
@@ -266,39 +234,7 @@ export default function WaterCard({
             </p>
           </div>
         </button>
-        <div className="flex items-center gap-1.5">
-          <button
-            type="button"
-            onClick={quickRemove}
-            aria-label={`Remove ${servingMl} ml`}
-            disabled={!hasWater}
-            className={cn(
-              "size-12 rounded-full flex items-center justify-center motion-safe:active:scale-[0.95] flex-shrink-0 border",
-              !hasWater && "opacity-30"
-            )}
-            style={{
-              backgroundColor: THEME.iconBg,
-              borderColor: THEME.semantic.hydration + "30",
-            }}
-          >
-            <Minus className="size-4" style={{ color: "hsl(var(--teal))" }} />
-          </button>
-          <button
-            type="button"
-            onClick={quickAdd}
-            aria-label={`Add ${servingMl} ml`}
-            className="min-h-12 min-w-12 px-2 rounded-full flex gap-1 items-center justify-center motion-safe:active:scale-[0.95] flex-shrink-0"
-            style={{
-              backgroundColor: THEME.semantic.hydration + "26",
-              borderColor: "transparent",
-            }}
-          >
-            <Plus className="size-4" style={{ color: "hsl(var(--teal))" }} />
-            <span className="text-micro font-semibold text-foreground">
-              <InlineNumerals>{`${servingMl} ml`}</InlineNumerals>
-            </span>
-          </button>
-        </div>
+        {controls}
       </div>
       {syncStatus && (
         <div
