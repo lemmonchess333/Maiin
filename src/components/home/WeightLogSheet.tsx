@@ -3,7 +3,9 @@ import BottomSheet from "@/components/ui/BottomSheet";
 import Button from "@/components/ui/Button";
 import WeightScaleDial from "./WeightScaleDial";
 import { ChevronDown } from "lucide-react";
+import InlineNumerals from "@/components/ui/InlineNumerals";
 import { format, subDays } from "date-fns";
+import { formatDayMonth } from "@/utils/formatters";
 import {
   kgToLb,
   lbToKg,
@@ -126,6 +128,35 @@ export default function WeightLogSheet({
     setError("");
   };
   const dialKg = parsedKg() ?? initialKg ?? 80;
+  /* What changed since the last weigh-in. `initialKg` and
+     `lastLoggedDate` describe the SAME entry, so the comparison is
+     either well-formed or absent — never a value against another day's
+     date.
+
+     Deliberately UNCOLOURED. Down is good for a cutter and bad for a
+     lean bulker, and this sheet never reads `program.goal`; a success or
+     destructive tint would moralise a number it has no basis to judge.
+
+     The drum shows about four units either side of the reading, so it
+     cannot itself catch a fat-fingered entry that is tens of kilos out.
+     "+16.4 kg vs 24 Aug" is the stronger form of that check, and unlike
+     the scale it survives typing — which is exactly when the keyboard
+     shrinks the sheet and pushes the drum out of view. */
+  const deltaCaption = (() => {
+    if (initialKg === undefined) return "First weigh-in";
+    const entered = parsedKg();
+    if (entered === null) return null;
+    const shown =
+      selectedUnit === "kg" ? entered - initialKg : kgToLb(entered - initialKg);
+    const suffix = selectedUnit === "kg" ? "kg" : "lb";
+    const when =
+      lastLoggedDate && lastLoggedDate !== todayKey
+        ? formatDayMonth(new Date(`${lastLoggedDate}T12:00:00`))
+        : "your last weigh-in";
+    if (Math.abs(shown) < 0.05) return `Same as ${when}`;
+    // U+2212, which VoiceOver announces as "minus" rather than "dash".
+    return `${shown > 0 ? "+" : "\u2212"}${Math.abs(shown).toFixed(1)} ${suffix} vs ${when}`;
+  })();
   const changeDial = (amount: number) => {
     pickerRef.current = true;
     noteInteraction();
@@ -243,7 +274,7 @@ export default function WeightLogSheet({
       <div className="min-h-0 overflow-y-auto px-4 pb-4 pt-3">
         <div className="flex items-baseline justify-center gap-1 py-2">
           <div
-            className="min-w-0 rounded-xl text-display font-mono font-extrabold tabular-nums focus-within:ring-2 focus-within:ring-primary/40"
+            className="min-w-0 rounded-xl text-display font-mono font-extrabold tabular-nums focus-within:ring-2 focus-within:ring-primary"
             style={{
               width: `${Math.max(3, Math.min(7, value.length)) + 0.5}ch`,
             }}
@@ -270,7 +301,7 @@ export default function WeightLogSheet({
               }}
             />
           </div>
-          <div className="relative w-16 shrink-0 rounded-xl focus-within:ring-2 focus-within:ring-primary/40">
+          <div className="relative w-16 shrink-0 rounded-xl focus-within:ring-2 focus-within:ring-primary">
             <select
               aria-label="Weight unit"
               value={selectedUnit}
@@ -292,7 +323,7 @@ export default function WeightLogSheet({
           </div>
           {selectedUnit === "st" && (
             <div
-              className="min-w-0 rounded-xl text-display font-mono font-extrabold tabular-nums focus-within:ring-2 focus-within:ring-primary/40"
+              className="min-w-0 rounded-xl text-display font-mono font-extrabold tabular-nums focus-within:ring-2 focus-within:ring-primary"
               style={{
                 width: `${Math.max(3, Math.min(5, pounds.length)) + 0.5}ch`,
               }}
@@ -320,6 +351,11 @@ export default function WeightLogSheet({
             <span className="text-lg text-muted-foreground">lb</span>
           )}
         </div>
+        {deltaCaption && (
+          <p className="mb-2 text-center text-small text-muted-foreground">
+            <InlineNumerals>{deltaCaption}</InlineNumerals>
+          </p>
+        )}
         <div className="mx-auto w-full max-w-sm">
           <WeightScaleDial
             key={selectedUnit}

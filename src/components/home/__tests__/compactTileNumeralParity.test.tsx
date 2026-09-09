@@ -157,4 +157,49 @@ describe("Home compact tiles share one numeral tier", () => {
     expect(unit).toHaveClass("text-sm");
     expect(unit).not.toHaveClass("text-2xl");
   });
+
+  it("water's third row carries content on the left axis, not a lone control cluster", () => {
+    /* The other half of the peer contract, one axis over from the
+       numeral tier. Weight spends its third row on `lastWeightDate` at
+       text-micro; water had no third row at all — in its place sat
+       `flex justify-end mt-auto pt-2`, a control cluster hard against
+       the right edge while every other element in the tile sat on the
+       12px left axis. At 375px that stranded ~47px of empty tile to
+       their left, a third of the row, which is what read as
+       "off centre". Two components, so no per-file check could see it. */
+    const { container: water } = render(
+      <WaterCard
+        compact
+        ml={0}
+        targetMl={2000}
+        servingMl={250}
+        onLog={vi.fn()}
+      />
+    );
+    const { container: weight } = render(
+      <WeightStepsTiles
+        lastWeight="70.0"
+        weightUnit="kg"
+        onLogWeight={vi.fn()}
+        lastWeightDate="2 days ago"
+      />
+    );
+
+    const weightMeta = Array.from(weight.querySelectorAll(".text-micro")).find(
+      (el) => el.textContent?.trim() === "2 days ago"
+    );
+    expect(weightMeta, "weight tile lost its meta row").toBeTruthy();
+
+    const add = water.querySelector(
+      'button[aria-label^="Add 250"]'
+    ) as HTMLElement;
+    const row = add.parentElement!.parentElement as HTMLElement;
+    expect(row.className).not.toMatch(/justify-end/);
+    expect(row.className).toMatch(/justify-between/);
+
+    const waterMeta = row.querySelector(".text-micro") as HTMLElement;
+    expect(waterMeta, "water tile has no meta row").toBeTruthy();
+    expect(waterMeta).toHaveTextContent("250 ml");
+    expect(waterMeta).toHaveClass("font-mono", "tabular-nums");
+  });
 });

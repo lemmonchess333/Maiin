@@ -38,7 +38,16 @@ describe("Button — base contract", () => {
     render(<Button>Press</Button>);
     const cls = screen.getByRole("button").className;
     expect(cls).toContain("focus-visible:ring-2");
-    expect(cls).toContain("focus-visible:ring-primary/40");
+    /* FULL opacity, not the /40 this pinned until 2026-09-09. The
+       primitive sets `focus-visible:outline-none`, which cancels the
+       app's global `:focus-visible` outline (index.css) — and that
+       outline measures 4.47:1 dark / 3.25:1 light against the
+       background, while the 40% ring replacing it measured 1.70:1 dark
+       and 1.54:1 light. Every Button in the app was therefore strictly
+       WORSE to keyboard-navigate than a bare <button>, and this
+       assertion was holding the failing value in place. */
+    expect(cls).toContain("focus-visible:ring-primary");
+    expect(cls).not.toContain("focus-visible:ring-primary/40");
   });
 
   it("md size meets the 44px touch-target floor", () => {

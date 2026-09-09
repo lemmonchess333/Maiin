@@ -281,3 +281,59 @@ describe("everyday entry sheets", () => {
     );
   });
 });
+
+describe("weight sheet — what changed since last time", () => {
+  /* The drum shows about four units either side of the reading, so it
+     cannot itself catch an entry that is tens of kilos out — and it is
+     off-screen entirely once the keyboard shrinks the sheet. The caption
+     is that check, and it survives typing. */
+  /* InlineNumerals splits digits into their own spans, so match on the
+     paragraph's textContent rather than on a single text node. */
+  const caption = () =>
+    Array.from(document.querySelectorAll("p"))
+      .map((el) => el.textContent || "")
+      .find((t) => /First weigh-in|Same as|vs /.test(t)) || "";
+
+  it("opens level with the last entry, then names the change", () => {
+    render(
+      <WeightLogSheet
+        uid="u1"
+        unit="kg"
+        initialKg={100}
+        lastLoggedDate="2026-09-04"
+        onClose={vi.fn()}
+      />
+    );
+    // Nothing typed yet, so the reading still IS the last entry.
+    expect(caption()).toMatch(/Same as 4 Sep/);
+
+    fireEvent.change(screen.getByLabelText(/^Weight \(/), {
+      target: { value: "98.4" },
+    });
+    expect(caption()).toMatch(/\u22121\.6 kg vs 4 Sep/);
+  });
+
+  it("says so on a first weigh-in rather than comparing against nothing", () => {
+    render(<WeightLogSheet uid="u1" unit="kg" onClose={vi.fn()} />);
+    expect(screen.getByText("First weigh-in")).toBeInTheDocument();
+  });
+
+  it("is uncoloured — it does not judge the direction", () => {
+    /* Down is good for a cutter and bad for a lean bulker, and this
+       sheet never reads program.goal. A success/destructive tint would
+       moralise a number it has no basis to judge. */
+    render(
+      <WeightLogSheet
+        uid="u1"
+        unit="kg"
+        initialKg={100}
+        lastLoggedDate="2026-09-04"
+        onClose={vi.fn()}
+      />
+    );
+    const caption = screen.getByText(/First weigh-in|Same as|vs /);
+    const classes = caption.closest("p")!.className;
+    expect(classes).toMatch(/text-muted-foreground/);
+    expect(classes).not.toMatch(/text-(success|destructive|running)/);
+  });
+});

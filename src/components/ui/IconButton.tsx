@@ -55,7 +55,7 @@ const BASE_CLASSES = [
   "rounded-xl select-none",
   "active:scale-[0.97] transition-transform duration-150",
   "disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none",
-  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
 ].join(" ");
 
 /**
