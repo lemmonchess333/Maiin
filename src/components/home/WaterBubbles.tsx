@@ -109,11 +109,21 @@ export default function WaterBubbles() {
                 bottom: 4,
                 backgroundColor: "rgba(255, 255, 255, 0.20)",
               }}
-              initial={{ y: 0, opacity: 0.3 }}
+              /* Starts INVISIBLE. Bubbles are staggered 0 / 1.2 / 2.4s
+                 apart, and an entry opacity of 0.3 meant the two
+                 delayed ones sat fully painted and motionless at
+                 `bottom: 4` for up to 2.4 seconds before they began to
+                 rise — a static pale dot parked near the bottom-left of
+                 the card, which reads as a smudge or a dead pixel
+                 rather than as a bubble. Caught from a device
+                 screenshot, where one was frozen mid-wait. Fading in as
+                 it leaves means a bubble is only ever visible while it
+                 is actually moving. */
+              initial={{ y: 0, opacity: 0 }}
               animate={{
                 y: -60,
                 x: [0, 3, -2, 1, 0],
-                opacity: 0,
+                opacity: [0, 0.3, 0.3, 0],
               }}
               exit={{ opacity: 0 }}
               transition={{

@@ -147,11 +147,15 @@ describe("Home compact tiles share one numeral tier", () => {
   });
 
   it("both tiles keep their unit secondary to the figure", () => {
+    /* The unit used to be the TARGET ("/ 2 L"); the card now shows the
+       amount's own unit instead, so this looks for the unit rather than
+       the denominator. 4.5 L, not 0 ml, because the point is that the
+       unit span is secondary whatever it says. */
     const { container: water } = render(
-      <WaterCard compact ml={0} targetMl={2000} onLog={vi.fn()} />
+      <WaterCard compact ml={4500} targetMl={2000} onLog={vi.fn()} />
     );
-    const unit = Array.from(water.querySelectorAll("span")).find((s) =>
-      /\/\s*2/.test(s.textContent ?? "")
+    const unit = Array.from(water.querySelectorAll("span")).find(
+      (s) => (s.textContent ?? "").trim() === "L"
     );
     expect(unit).toBeDefined();
     expect(unit).toHaveClass("text-sm");
