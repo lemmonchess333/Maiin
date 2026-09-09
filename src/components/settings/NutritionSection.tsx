@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { formatWeightInUnit, kgToLb, lbToKg } from "@/lib/weightUnits";
 import { haptic } from "@/lib/haptic";
@@ -14,6 +15,7 @@ import { Button } from "@/components/ui/Button";
 import { resolveTargetDrift, shouldShowTargetDrift } from "@/lib/targetDrift";
 import AccordionSection from "@/components/AccordionSection";
 import { useMacroPalette } from "@/hooks/useMacroPalette";
+import { useReducedMotion } from "@/hooks/useReducedMotion";
 import CalorieTargetOverride from "./CalorieTargetOverride";
 import { macroInfeasibilityMessage } from "@/lib/macroInfeasibility";
 import {
@@ -72,6 +74,41 @@ export default function NutritionSection({
   // previously mis-coloured (protein blue / carbs amber / fat pink) with
   // raw Tailwind palette classes that also broke the token invariant.
   const { text: macroText } = useMacroPalette();
+
+  /* Home's "How targets work" tip deep-links to #calorie-targets rather
+     than dumping a second copy of this explanation onto Home. The chain
+     below (Base TDEE -> offset -> Daily target) sits well under the fold
+     on this page, so arriving without a scroll would land the user on
+     the goal-weight stepper and read as a dead link. Same shape as
+     PerformanceSection's #performance handler: mount-only, hash-gated,
+     and a short delay so the card's height has settled before we aim at
+     it. `block: "center"` rather than "start" because the chain is a
+     short block near the bottom of a tall card — "start" pins its top
+     edge under the sticky header on short viewports. */
+  const calorieTargetsRef = useRef<HTMLDivElement>(null);
+  const prefersReducedMotion = useReducedMotion();
+  const scrolledRef = useRef(false);
+  useEffect(() => {
+    // StrictMode double-invokes effects in dev, so the ref does real
+    // work even with an empty dep list.
+    if (scrolledRef.current) return;
+    scrolledRef.current = true;
+    if (typeof window === "undefined") return;
+    if (window.location.hash !== "#calorie-targets") return;
+    const id = window.setTimeout(() => {
+      calorieTargetsRef.current?.scrollIntoView({
+        behavior: prefersReducedMotion ? "auto" : "smooth",
+        block: "center",
+      });
+    }, 100);
+    return () => window.clearTimeout(id);
+    /* eslint-disable-next-line react-hooks/exhaustive-deps -- mount-only
+       by design. useReducedMotion seeds from matchMedia synchronously in
+       its useState initializer, so the first render already has the real
+       value; listing it would let an OS toggle inside the 100ms window
+       re-run the effect, whose cleanup cancels the pending scroll while
+       the ref guard stops it being rescheduled. */
+  }, []);
 
   const overrideRecipe = (customCalorieTarget?: number) =>
     buildGoalWeightPersistPayload({
@@ -315,8 +352,13 @@ export default function NutritionSection({
           </span>
         </div>
 
-        {/* Calorie calculation chain */}
-        <div className="rounded-xl bg-muted/50 p-3 space-y-2">
+        {/* Calorie calculation chain — the destination of Home's
+            "How targets work" tip (see the scroll effect above). */}
+        <div
+          id="calorie-targets"
+          ref={calorieTargetsRef}
+          className="scroll-mt-20 rounded-xl bg-muted/50 p-3 space-y-2"
+        >
           <div className="space-y-1">
             <div className="flex items-center justify-between text-xs text-muted-foreground">
               <span>Base TDEE</span>

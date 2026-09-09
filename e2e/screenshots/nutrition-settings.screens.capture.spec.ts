@@ -33,6 +33,34 @@ test.describe("nutrition settings", () => {
     await signInAsTestUser(page);
   });
 
+  /* The destination of Home's "How targets work" tip. Arriving on the
+     hash should land the Base TDEE -> offset -> Daily target chain in
+     view rather than at the top of the page, so this frame is taken
+     WITHOUT scrolling and without fullPage: the viewport itself is the
+     assertion. */
+  for (const theme of ["light", "dark"] as const) {
+    test(`calorie-target deep-link lands in view — ${theme}`, async ({
+      page,
+    }) => {
+      test.setTimeout(120_000);
+      await page.goto("settings/nutrition#calorie-targets");
+      await page
+        .getByRole("heading", { name: /nutrition/i })
+        .first()
+        .waitFor({ state: "visible", timeout: 20000 })
+        .catch(() => console.log("[capture] nutrition heading not found"));
+      await page.evaluate((t) => {
+        document.documentElement.classList.toggle("dark", t === "dark");
+      }, theme);
+      // The scroll runs on a 100ms timer after mount, then animates.
+      await page.waitForTimeout(1200);
+      await page.screenshot({
+        animations: "disabled",
+        path: `screenshots/nutrition-calorie-targets-${theme}.png`,
+      });
+    });
+  }
+
   test("meal-logging slider removed — dark", async ({ page }) => {
     test.setTimeout(120_000);
     await page.evaluate(() => document.documentElement.classList.add("dark"));

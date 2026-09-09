@@ -70,7 +70,7 @@
  * surface (the coachmark-spec pattern) — no dependency on the shared
  * seed user, whose logs other parallel specs write to.
  */
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect, type Locator, type Page } from "@playwright/test";
 import { emulatorActive } from "./helpers/emulator";
 import { suppressCoachmarks } from "./helpers/suppressCoachmarks";
 
@@ -323,6 +323,43 @@ async function dismissBadgeCelebration(
   await expect(dialog).not.toBeVisible();
 }
 
+/** Click a control the badge celebration can cover, dismissing it as
+ *  many times as it takes.
+ *
+ *  A single `dismissBadgeCelebration` before the click is a race, and it
+ *  is the one CI kept losing. The overlay mounts ASYNCHRONOUSLY after a
+ *  navigation — the streaks provider evaluates badges off a Firestore
+ *  read — so when it is slower than the probe the helper returns "no
+ *  celebration pending", the modal mounts a beat later, and Playwright
+ *  spends its entire actionability budget watching
+ *  `fixed inset-0 z-50` intercept pointer events. The failure is
+ *  identical every time (35+ retries, "element is not stable"), and it
+ *  reproduced on two unrelated PRs; the same commit produced one passing
+ *  and one failing run, which is what a race looks like from outside.
+ *
+ *  Retrying the PAIR closes it: a click that loses the race fails in
+ *  seconds rather than twenty, and the next pass finds a modal that has
+ *  now mounted and dismisses it for real. */
+async function clickPastCelebration(
+  page: Page,
+  target: Locator,
+  probeMs = 1_000
+): Promise<void> {
+  let lastError: unknown;
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    // First pass keeps the cheap probe for the common no-celebration
+    // case; later passes wait long enough to catch a late mount.
+    await dismissBadgeCelebration(page, attempt === 0 ? probeMs : 4_000);
+    try {
+      await target.click({ timeout: 8_000 });
+      return;
+    } catch (error) {
+      lastError = error;
+    }
+  }
+  throw lastError;
+}
+
 /** Click the app's Sign Out (rendered on /settings/account) and wait
  *  for the Login screen. */
 async function signOutViaUI(page: Page): Promise<void> {
@@ -330,8 +367,7 @@ async function signOutViaUI(page: Page): Promise<void> {
   await signOut.waitFor({ state: "visible", timeout: 20_000 });
   // The badge celebration can mount late over this page too (both
   // accounts log their first activity in this journey).
-  await dismissBadgeCelebration(page, 1_000);
-  await signOut.click();
+  await clickPastCelebration(page, signOut);
   await page
     .locator("#login-email")
     .waitFor({ state: "visible", timeout: 20_000 });
@@ -528,11 +564,11 @@ test.describe("offline-queue uid isolation across an account switch", () => {
     // page session, and with it the navigator override, alive until the
     // sign-out lands — so no flush can fire under A on the way out.
     await page.getByRole("link", { name: /^Home/ }).click();
-    await dismissBadgeCelebration(page, 1_000);
-    await page.getByLabel("Settings").click({ timeout: 20_000 });
-    await page
-      .getByRole("button", { name: /sign out, delete account/i })
-      .click({ timeout: 20_000 });
+    await clickPastCelebration(page, page.getByLabel("Settings"));
+    await clickPastCelebration(
+      page,
+      page.getByRole("button", { name: /sign out, delete account/i })
+    );
     await signOutViaUI(page);
 
     // Sign-out must clear neither queue. The write queue may hold MORE

@@ -23,7 +23,11 @@ import {
   type ClaimState,
 } from "@/lib/scheduledRunCompletion";
 import type { SavedRunDoc } from "@/hooks/useClaimMap";
-import { localWeekKey, parseLocalDate } from "@/lib/dateHelpers";
+import {
+  localDateString,
+  localWeekKey,
+  parseLocalDate,
+} from "@/lib/dateHelpers";
 import { cn } from "@/lib/utils";
 import { IconButton } from "@/components/ui/IconButton";
 import ExtrasExpandSheet from "@/components/program/ExtrasExpandSheet";
@@ -70,6 +74,69 @@ function LiftRowShell({
       }}
       aria-label={`Open ${label ?? "workout"} details`}
       className="flex min-h-11 items-center gap-2 w-full text-sm text-left rounded-md -mx-1 px-1 py-2 active:scale-[0.98] transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+    >
+      {children}
+      <ChevronRight
+        className="ml-auto size-4 shrink-0 text-muted-foreground"
+        aria-hidden="true"
+      />
+    </button>
+  );
+}
+
+/**
+ * The nutrition summary row, tappable through to that day's diary.
+ *
+ * `to` is null when the diary cannot show the date, and the row then
+ * renders as the plain `<div>` it always was rather than a link that
+ * silently lands somewhere else — `/food` clamps an out-of-range
+ * `?date=` back to today, so an ungated link would look like a broken
+ * jump.
+ *
+ * READ THIS BEFORE ASSUMING THE ROW IS LIVE. On today's Home it cannot
+ * render at all, and neither half of that is this row's doing:
+ *
+ *   WeekStrip     resolveTrainingWindow({ startDate: today, days: 7 })
+ *                 -> today plus six FUTURE days, no past day exists
+ *   handleDayTap  returns early on `dk === localDateString()`, scrolling
+ *                 to the session cards instead of opening a peek (Cal-A)
+ *
+ * So every dateKey this card is ever given is strictly in the future,
+ * `getDailyTotals` of a future day is empty, and `mealCount > 0` is
+ * never true. Confirmed against the capture channel: the day-peek frame
+ * shows date, badge, session and "Manage day" — no nutrition row.
+ *
+ * The guard below is therefore written for the surface as it SHOULD be
+ * rather than as it is: the moment the strip gains a past day, or
+ * tapping today opens a peek, the row is correct without further work.
+ * The 90-day FOOD_TAP_BACK_DAYS floor is the one rule it does NOT yet
+ * carry, because it cannot bind while the window starts at today — add
+ * it in the same change that makes a past day reachable.
+ */
+function DiaryRowShell({
+  to,
+  label,
+  children,
+}: {
+  to: string | null;
+  label: string;
+  children: React.ReactNode;
+}) {
+  const navigate = useNavigate();
+  if (!to) {
+    return <div className="flex items-center gap-1.5">{children}</div>;
+  }
+  return (
+    <button
+      type="button"
+      onClick={(e) => {
+        // The whole card toggles open/closed on tap; without this the
+        // row's navigation and the card's collapse both fire.
+        e.stopPropagation();
+        navigate(to);
+      }}
+      aria-label={label}
+      className="flex min-h-11 items-center gap-1.5 w-full text-left rounded-md -mx-1 px-1 py-2 active:scale-[0.98] transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
     >
       {children}
       <ChevronRight
@@ -219,6 +286,17 @@ export default function DayPeekCard({
    *  instead of the ambiguous "N sessions" collapse. */
   const multiSession = workouts.length > 1;
   const hasM = dailyTotals.mealCount > 0;
+  /* Today drops the ?date= param so the diary opens on its own default
+     — matching how Food.tsx's own arrows write the URL (it deletes the
+     param for today rather than pinning it). See DiaryRowShell for why
+     a future date gets no link at all. */
+  const todayKey = localDateString(new Date());
+  const diaryHref =
+    dateKey > todayKey
+      ? null
+      : dateKey === todayKey
+        ? "/food"
+        : `/food?date=${dateKey}`;
   const hasRun = resolved.run.runDay !== null;
   // Cal-A: surface the PLANNED session by name so tapping a day tells
   // you WHICH lift / run it is (not a generic "Lift + Run day"). Lift
@@ -379,7 +457,10 @@ export default function DayPeekCard({
                 </LiftRowShell>
               )}
               {hasM && (
-                <div className="flex items-center gap-1.5">
+                <DiaryRowShell
+                  to={diaryHref}
+                  label={`Open the food diary for ${dayLabel}`}
+                >
                   <ClipboardList
                     className="size-3.5 shrink-0"
                     style={{ color: THEME.success }}
@@ -388,7 +469,7 @@ export default function DayPeekCard({
                     {dailyTotals.calories.toLocaleString()} cal {"·"}{" "}
                     {Math.round(dailyTotals.protein)}g protein
                   </span>
-                </div>
+                </DiaryRowShell>
               )}
               {/* PR-0c: run-day status row. Resolver delivers a
                   status-aware view — when no runDay matches this
