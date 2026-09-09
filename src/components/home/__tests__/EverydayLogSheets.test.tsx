@@ -36,7 +36,7 @@ describe("everyday entry sheets", () => {
     render(
       <WeightLogSheet uid="u1" unit="lbs" initialKg={78.412} onClose={close} />
     );
-    fireEvent.click(screen.getByRole("button", { name: "Log weight" }));
+    fireEvent.click(screen.getByRole("button", { name: "Log" }));
     await waitFor(() => expect(close).toHaveBeenCalledOnce());
     expect(
       readDoc(`users/u1/bodyweightLogs/${localDateString()}`)?.weight
@@ -59,7 +59,7 @@ describe("everyday entry sheets", () => {
     fireEvent.change(screen.getByLabelText("Date measured"), {
       target: { value: localDateString(older) },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Log weight" }));
+    fireEvent.click(screen.getByRole("button", { name: "Log" }));
     await waitFor(() => expect(close).toHaveBeenCalledOnce());
     expect(
       readDoc(`users/u1/bodyweightLogs/${localDateString(older)}`)
@@ -104,7 +104,7 @@ describe("everyday entry sheets", () => {
       target: { value: date },
     });
     failNextFirestore("commit");
-    fireEvent.click(screen.getByRole("button", { name: "Log weight" }));
+    fireEvent.click(screen.getByRole("button", { name: "Log" }));
     await waitFor(() => expect(close).toHaveBeenCalledOnce());
     await flushQueuedWeights("u1");
     await flushQueuedWeights("u1");
@@ -134,7 +134,7 @@ describe("everyday entry sheets", () => {
     fireEvent.change(screen.getByLabelText("Weight unit"), {
       target: { value: "kg" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Log weight" }));
+    fireEvent.click(screen.getByRole("button", { name: "Log" }));
     await waitFor(() => expect(close).toHaveBeenCalledOnce());
     expect(
       readDoc(`users/u1/bodyweightLogs/${localDateString()}`)?.weight
@@ -151,7 +151,7 @@ describe("everyday entry sheets", () => {
     fireEvent.change(screen.getByLabelText("Weight (kg)"), {
       target: { value: "78.4" },
     });
-    fireEvent.click(screen.getByRole("button", { name: "Log weight" }));
+    fireEvent.click(screen.getByRole("button", { name: "Log" }));
     await waitFor(() => expect(close).toHaveBeenCalledOnce());
     expect(
       readDoc(`users/u1/bodyweightLogs/${localDateString()}`)?.weight
@@ -210,9 +210,9 @@ describe("everyday entry sheets", () => {
         onClose={close}
       />
     );
-    await screen.findByRole("button", { name: "Remove entry" });
+    await screen.findByRole("button", { name: "Undo" });
     expect(screen.getByLabelText("Weight (kg)")).toHaveValue("81.0");
-    fireEvent.click(screen.getByRole("button", { name: "Remove entry" }));
+    fireEvent.click(screen.getByRole("button", { name: "Undo" }));
     await flushQueuedWeights("u1");
     expect(readDoc(`users/u1/bodyweightLogs/${date}`)).toBeUndefined();
     expect(readDoc("users/u1")?.weightKg).toBe(80);
@@ -335,5 +335,83 @@ describe("weight sheet — what changed since last time", () => {
     const classes = caption.closest("p")!.className;
     expect(classes).toMatch(/text-muted-foreground/);
     expect(classes).not.toMatch(/text-(success|destructive|running)/);
+  });
+});
+
+describe("WeightLogSheet — the sheet says what it does, once", () => {
+  /* Owner feedback from a device: "should just say log not save and
+     remove. Purple outline around the kg also looks a shit, isn't
+     needed." Both pinned as ABSENCE, because both are the kind of thing
+     a later pass restores without noticing: "Save changes" is the
+     reflex label for a form, and a focus ring on a wrapper looks like
+     an accessibility improvement rather than the touch-fired box it
+     actually was. */
+  /* `editing` is `entryDate === date`, and entryDate comes from a
+     Firestore READ of the day's entry — not from `initialKg`. Seeding a
+     saved weigh-in is the only way to reach the branch that used to say
+     "Save changes"; a bare `initialKg` renders the fresh state and would
+     have made the assertion below pass without ever touching it. */
+  async function renderEditingState() {
+    const { queueWeightEntry } = await import("@/lib/weightQueue");
+    const date = localDateString();
+    seedFirestore({ "users/u1": { weightKg: 80, targetCalories: 2200 } });
+    queueWeightEntry("u1", date, 100);
+    await flushQueuedWeights("u1");
+    render(
+      <WeightLogSheet
+        uid="u1"
+        unit="kg"
+        initialKg={100}
+        lastLoggedDate={date}
+        onClose={vi.fn()}
+      />
+    );
+    // The sheet only reaches the editing branch once that read lands.
+    await screen.findByText("Edit weight");
+  }
+
+  it("logs — it does not 'save changes', in either state", async () => {
+    const { unmount } = render(
+      <WeightLogSheet uid="u1" unit="kg" onClose={vi.fn()} />
+    );
+    expect(screen.getByRole("button", { name: "Log" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /save/i })).toBeNull();
+    unmount();
+
+    // The editing state is where "Save changes" used to appear.
+    await renderEditingState();
+    expect(screen.getByRole("button", { name: "Log" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /save/i })).toBeNull();
+  });
+
+  it("keeps the sheet TITLE carrying the noun, so the button need not", async () => {
+    /* The button dropped to one word because the header already names
+       the surface. If the title ever loses it, "Log" alone stops saying
+       what is being logged — so the pair is asserted together. */
+    await renderEditingState();
+    expect(screen.getByText("Edit weight")).toBeInTheDocument();
+  });
+
+  it("draws no focus ring on the unit control", () => {
+    /* `focus-within` matches on TOUCH, not just keyboard, so tapping the
+       unit drew a 2px primary box around it on a phone. It was also
+       redundant — index.css's global `:focus-visible` already outlines
+       every focusable element and `:focus:not(:focus-visible)` hides it
+       for pointer input — so removing it costs no keyboard indicator.
+       Anchored on a positive: the control must still RENDER. */
+    render(<WeightLogSheet uid="u1" unit="kg" onClose={vi.fn()} />);
+    const unit = screen.getByRole("combobox", { name: "Weight unit" });
+    expect(unit).toBeInTheDocument();
+    /* Walk up from the control itself rather than scanning a container.
+       BottomSheet renders through a PORTAL, so RTL's `container` does
+       not contain this sheet at all — a `container.querySelectorAll`
+       here returned zero matches whether or not the ring was present,
+       and passed with the ring restored. Caught by mutating it back. */
+    for (let el = unit.parentElement; el; el = el.parentElement) {
+      expect(
+        el.className,
+        `a focus-within ring is back on ${el.className}`
+      ).not.toMatch(/focus-within:ring/);
+    }
   });
 });

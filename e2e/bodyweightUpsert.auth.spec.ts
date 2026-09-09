@@ -118,9 +118,7 @@ async function logWeight(page: Page, value: string): Promise<void> {
   const input = sheet.getByLabel(/^Weight \(/);
   await input.waitFor({ state: "visible", timeout: 10_000 });
   await input.fill(value);
-  await sheet
-    .getByRole("button", { name: /^(Log weight|Save changes)$/ })
-    .click();
+  await sheet.getByRole("button", { name: "Log", exact: true }).click();
   // Save closes after durable local acceptance. Anchor on that dismissal
   // and then on the value being readable back from
   // the emulator. This replaces a fixed 1.5s wait, which lost the race
