@@ -103,4 +103,13 @@ test.describe("calendar day peek", () => {
     await page.waitForTimeout(600);
     await shootLightDark(page, "day-peek-open");
   });
+
+  /* NO "today" frame here, and the reason is worth keeping.
+     Tapping today never opens a peek at all: Home's handleDayTap
+     short-circuits on `dk === localDateString()` and scrolls to the
+     session cards instead (Cal-A — "tapping TODAY is redundant with the
+     live session cards right below"). Combined with WeekStrip resolving
+     `{ startDate: today, days: 7 }`, every date this card can ever show
+     is strictly in the FUTURE. A capture aimed at today films the plain
+     Home page and reads as a peek frame that lost its card. */
 });

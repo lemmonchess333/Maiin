@@ -26,7 +26,11 @@ import type {
 import type { ScheduleDay } from "@/lib/scheduleUtils";
 import type { ClaimState } from "@/lib/scheduledRunCompletion";
 import type { SavedRunDoc } from "@/hooks/useClaimMap";
-import { localWeekKey, parseLocalDate } from "@/lib/dateHelpers";
+import {
+  localDateString,
+  localWeekKey,
+  parseLocalDate,
+} from "@/lib/dateHelpers";
 
 /* These components read the display unit, which resolves from the auth
    profile — and `useAuth` throws outside an AuthProvider, which none of
@@ -877,5 +881,108 @@ describe("DayPeekCard — the badge names what the card holds", () => {
       />
     );
     expect(screen.getByText("Run day")).toBeInTheDocument();
+  });
+});
+
+/**
+ * The nutrition summary row is a way IN to that day's diary.
+ *
+ * It reads "1,850 cal · 140g protein" and, before this, did nothing —
+ * the one row in the card carrying numbers you would want to open. The
+ * three things worth pinning are the destination, the guard, and the
+ * gesture: the card is itself a tap target that collapses on click, so
+ * a row that navigates without stopping propagation both navigates and
+ * closes the card underneath it.
+ */
+describe("DayPeekCard — the nutrition row opens the diary", () => {
+  const fedTotals = () => ({
+    calories: 1850,
+    protein: 140,
+    carbs: 180,
+    fat: 60,
+    mealCount: 4,
+  });
+  const plainProfile = () =>
+    makeProfile(
+      makeSchedule(["rest", "rest", "rest", "rest", "rest", "rest", "rest"])
+    );
+
+  function renderWithTotals(dateKey: string, onClose = vi.fn()) {
+    renderCard(
+      <DayPeekCard
+        dateKey={dateKey}
+        profile={plainProfile()}
+        programState={makeProgramState([])}
+        claimMap={emptyClaimMap}
+        extras={emptyExtras}
+        workouts={[]}
+        dailyTotals={fedTotals()}
+        onClose={onClose}
+      />
+    );
+    return onClose;
+  }
+
+  beforeEach(() => navigateMock.mockClear());
+
+  it("navigates to the diary for a PAST date, carrying that exact date", () => {
+    const past = localDateString(new Date(Date.now() - 3 * 86_400_000));
+    renderWithTotals(past);
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /open the food diary/i })
+    );
+
+    expect(navigateMock).toHaveBeenCalledWith(`/food?date=${past}`);
+  });
+
+  it("drops the ?date= param for TODAY, matching how the diary writes its own URL", () => {
+    // Food.tsx's setSelectedDate deletes `date` when it equals today, so
+    // pinning today's link to `/food?date=…` here would have Home
+    // disagree with the page it opens the moment the user taps an arrow.
+    renderWithTotals(localDateString(new Date()));
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /open the food diary/i })
+    );
+
+    expect(navigateMock).toHaveBeenCalledWith("/food");
+  });
+
+  it("does not open the card's collapse when the row is tapped", () => {
+    /* The card's own onClick calls onClose. Without stopPropagation the
+       user gets navigation AND a collapsed card from one tap — and the
+       collapse is the visible half, so it reads as "the tap did the
+       wrong thing". */
+    const past = localDateString(new Date(Date.now() - 86_400_000));
+    const onClose = renderWithTotals(past);
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /open the food diary/i })
+    );
+
+    expect(navigateMock).toHaveBeenCalledTimes(1);
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it("offers no link for a FUTURE date, while still showing the numbers", () => {
+    /* Anchored on a positive first: the row must still RENDER. Asserting
+       only the absence of the button would pass just as well if the row
+       vanished entirely, which is a different bug wearing the same
+       green tick. `/food` clamps an out-of-range ?date= back to today,
+       so a link here would silently land on the wrong day. */
+    const future = localDateString(new Date(Date.now() + 2 * 86_400_000));
+    renderWithTotals(future);
+
+    expect(screen.getByText(/1,850 cal/)).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /open the food diary/i })
+    ).not.toBeInTheDocument();
+  });
+
+  it("keeps the numbers themselves unchanged", () => {
+    // The row's job is unchanged; only its tappability is new.
+    renderWithTotals(localDateString(new Date()));
+    expect(screen.getByText(/1,850 cal · 140g protein/)).toBeInTheDocument();
   });
 });

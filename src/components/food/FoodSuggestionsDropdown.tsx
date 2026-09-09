@@ -6,7 +6,7 @@ import {
 } from "react";
 import { motion } from "framer-motion";
 import IconButton from "@/components/ui/IconButton";
-import { Plus, Star, Pencil } from "lucide-react";
+import { ChevronRight, Star, Pencil } from "lucide-react";
 import { THEME } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import { haptic } from "@/lib/haptic";
@@ -30,6 +30,39 @@ const TOUCH_MOVE_CANCEL_PX = 10;
  *  without this guard would double-trigger (log meal AND open
  *  remove sheet). */
 const GHOST_CLICK_SUPPRESS_MS = 400;
+
+/**
+ * What tapping a row does, said in the row.
+ *
+ * Four outcomes hide behind rows that look alike, verified against
+ * Food.tsx's handlers rather than assumed:
+ *   handleSuggestionSelect  writes the name into the input   -> Select
+ *   handleQuickMealAdd      saves a meal there and then      -> Log
+ *     ...unless `item.example`, which fills the input instead -> Select
+ *   handlePantrySelect      saves a meal there and then      -> Log
+ *   handleOFFSelect         opens ServingSizeDrawer          -> Choose portion
+ *
+ * A pantry row and a local-DB row are visually identical and do
+ * opposite things — one commits a meal, one only types for you — so
+ * the verb is the whole point. Deliberately muted rather than
+ * button-coloured: it is a label on a row that is already the control,
+ * not a second control to hit. `text-muted-foreground` is also the one
+ * grey tuned to clear AA on card, muted and page background in both
+ * themes.
+ *
+ * The rows carry an explicit `min-h-11`. Single-line at `py-2.5` they
+ * measured ~40px — under the 44px Tropos target — and the second line
+ * these labels ride on lifts them past it as a side effect. A floor
+ * stated in the class list is the guarantee; an emergent one lasts
+ * until someone shortens the content.
+ */
+function RowAction({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="text-micro font-medium text-muted-foreground">
+      {children}
+    </span>
+  );
+}
 
 /** Subset of FoodFavourite used by the typeahead pantry section.
  *  Only the fields the dropdown needs to display + hand back to the
@@ -228,7 +261,9 @@ function FoodSuggestionsDropdown({
               <Star aria-hidden="true" className="size-3 text-achievement" />
             )}
             <SectionLabel as="span" tier="section">
-              {quickAdd.asExamples ? "Examples — tap to describe your own" : "Quick Add"}
+              {quickAdd.asExamples
+                ? "Examples — tap to describe your own"
+                : "Quick Add"}
             </SectionLabel>
           </div>
           {quickAdd.items.map((item) => (
@@ -261,14 +296,15 @@ function FoodSuggestionsDropdown({
                   userSelect: "none",
                 }}
                 className={cn(
-                  "w-full px-4 py-2.5 text-left hover:bg-muted/80 transition-colors flex items-center justify-between gap-2 border-b border-border/30 last:border-0",
+                  "w-full min-h-11 px-4 py-2.5 text-left hover:bg-muted/80 transition-colors flex items-center justify-between gap-2 border-b border-border/30 last:border-0",
                   quickAdd.adding !== null && "opacity-60 cursor-not-allowed"
                 )}
               >
                 <span className="text-sm font-medium text-foreground truncate min-w-0">
                   {item.name}
                   <span className="block text-micro text-muted-foreground font-normal">
-                    {item.portionSize}
+                    {item.portionSize} ·{" "}
+                    <RowAction>{item.example ? "Select" : "Log"}</RowAction>
                   </span>
                 </span>
                 <span className="text-xs text-muted-foreground font-mono tabular-nums shrink-0">
@@ -306,12 +342,12 @@ function FoodSuggestionsDropdown({
               key={`pantry-${p.id}`}
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => onSelectPantry(p)}
-              className="w-full px-4 py-2.5 text-left hover:bg-muted/80 transition-colors flex items-center justify-between gap-2 border-b border-border/30 last:border-0"
+              className="w-full min-h-11 px-4 py-2.5 text-left hover:bg-muted/80 transition-colors flex items-center justify-between gap-2 border-b border-border/30 last:border-0"
             >
               <span className="text-sm font-medium text-foreground truncate min-w-0">
                 {p.name}
-                <span className="text-muted-foreground font-normal ml-1.5">
-                  · {p.servingSize}
+                <span className="block text-micro text-muted-foreground font-normal">
+                  {p.servingSize} · <RowAction>Log</RowAction>
                 </span>
               </span>
               <span className="text-xs text-muted-foreground font-mono tabular-nums shrink-0">
@@ -330,12 +366,12 @@ function FoodSuggestionsDropdown({
               key={`ai-${i}`}
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => onSelectSuggestion(s)}
-              className="w-full px-4 py-2.5 text-left hover:bg-muted/80 transition-colors flex items-center justify-between gap-2 border-b border-border/30 last:border-0"
+              className="w-full min-h-11 px-4 py-2.5 text-left hover:bg-muted/80 transition-colors flex items-center justify-between gap-2 border-b border-border/30 last:border-0"
             >
-              <span className="text-sm font-medium text-foreground">
-                {s.name} —{" "}
-                <span className="text-muted-foreground font-normal">
-                  {s.serving}
+              <span className="text-sm font-medium text-foreground truncate min-w-0">
+                {s.name}
+                <span className="block text-micro text-muted-foreground font-normal">
+                  {s.serving} · <RowAction>Select</RowAction>
                 </span>
               </span>
               <span className="text-xs text-muted-foreground font-mono tabular-nums shrink-0">
@@ -402,7 +438,16 @@ function FoodSuggestionsDropdown({
                     )}
                   </div>
                 </div>
-                <Plus className="size-4 text-primary shrink-0 mt-1" />
+                {/* Was a Plus icon, which read as "log this" when the
+                    tap actually opens ServingSizeDrawer — the one row
+                    whose affordance pointed at the wrong outcome. */}
+                <span className="shrink-0 mt-1 flex items-center gap-0.5">
+                  <RowAction>Choose portion</RowAction>
+                  <ChevronRight
+                    aria-hidden="true"
+                    className="size-3.5 text-muted-foreground"
+                  />
+                </span>
               </div>
             </button>
           ))}
