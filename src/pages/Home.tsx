@@ -1123,7 +1123,7 @@ export default function Home() {
           description="No need to eat back exercise calories — your daily target already accounts for training. Big training days shift more carbs for fuel, so expect a deliberate deficit on your biggest days."
           visible={!!profile}
           ctaLabel="How targets work"
-          ctaHref="/settings"
+          ctaHref="/settings/nutrition#calorie-targets"
         />
 
         {/* Progressive profiling (fast-start PRD, final nudge): experience.

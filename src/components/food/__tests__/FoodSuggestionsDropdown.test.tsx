@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, vi } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, cleanup } from "@testing-library/react";
 import type { PantrySuggestion } from "../FoodSuggestionsDropdown";
 
 vi.mock("framer-motion", () => ({
@@ -404,5 +404,111 @@ describe("FoodSuggestionsDropdown quick-add — long-press → remove (ported fr
     });
     toastRow.dispatchEvent(toastEvent);
     expect(toastEvent.defaultPrevented).toBe(false);
+  });
+});
+
+/**
+ * Four look-alike rows, four different outcomes.
+ *
+ * A pantry row and a local-DB row render identically and do opposite
+ * things: one saves a meal on the spot, the other only types the name
+ * into the input. Verified against Food.tsx's handlers, not assumed —
+ * handlePantrySelect and handleQuickMealAdd both save, while
+ * handleSuggestionSelect calls setNlInput and handleOFFSelect opens
+ * ServingSizeDrawer. These pin the VERB against the handler each row
+ * actually calls, so a future rewiring cannot leave the label behind.
+ */
+describe("FoodSuggestionsDropdown — each row says what tapping it does", () => {
+  it("a local database match says Select, and only fills the input", () => {
+    const onSelectSuggestion = vi.fn();
+    render(
+      <FoodSuggestionsDropdown
+        suggestions={[
+          {
+            name: "Porridge",
+            serving: "1 bowl",
+            calories: 180,
+            protein: 6,
+            carbs: 30,
+            fat: 3,
+          } as any,
+        ]}
+        offResults={[]}
+        pantryResults={[]}
+        offEmpty={false}
+        offSearchQuery={null}
+        onSelectSuggestion={onSelectSuggestion}
+        onSelectOff={vi.fn()}
+        onSelectPantry={vi.fn()}
+        onLogManually={vi.fn()}
+      />
+    );
+
+    expect(screen.getByText("Select")).toBeInTheDocument();
+    expect(screen.queryByText("Log")).not.toBeInTheDocument();
+    // The portion and calorie detail the row already carried survives.
+    expect(screen.getByText(/1 bowl/)).toBeInTheDocument();
+    expect(screen.getByText(/180 cal/)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByText("Porridge"));
+    expect(onSelectSuggestion).toHaveBeenCalledTimes(1);
+  });
+
+  it("a pantry match says Log — it commits a meal, unlike its identical-looking neighbour", () => {
+    const onSelectPantry = vi.fn();
+    render(
+      <FoodSuggestionsDropdown
+        suggestions={[]}
+        offResults={[]}
+        pantryResults={[makePantry()]}
+        offEmpty={false}
+        offSearchQuery={null}
+        onSelectSuggestion={vi.fn()}
+        onSelectOff={vi.fn()}
+        onSelectPantry={onSelectPantry}
+        onLogManually={vi.fn()}
+      />
+    );
+
+    expect(screen.getByText("Log")).toBeInTheDocument();
+    expect(screen.queryByText("Select")).not.toBeInTheDocument();
+    expect(screen.getByText(/1 bowl/)).toBeInTheDocument();
+    expect(screen.getByText(/200 cal/)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByText("Oats"));
+    expect(onSelectPantry).toHaveBeenCalledTimes(1);
+  });
+
+  it("a database result says Choose portion, and no longer shows a Plus", () => {
+    /* The Plus icon was the one affordance pointing at the wrong
+       outcome: it reads "log this", but the tap opens the serving
+       drawer. Pinning its ABSENCE is the half that stops it coming
+       back alongside the label. */
+    renderOff([makeOff()]);
+
+    expect(screen.getByText("Choose portion")).toBeInTheDocument();
+    expect(document.querySelector(".lucide-plus")).toBeNull();
+    expect(screen.getByText(/400 cal/)).toBeInTheDocument();
+    expect(screen.getByText(/per 100g/)).toBeInTheDocument();
+  });
+
+  it("a Quick Add row says Log, but an EXAMPLE row says Select", () => {
+    /* handleQuickMealAdd returns early with setNlInput for an example
+       item — the same section renders both, so one label for the
+       section would be wrong half the time. */
+    renderQuickAdd({ items: [makeItem()], asExamples: false });
+    expect(screen.getByText("Log")).toBeInTheDocument();
+    expect(screen.getByText(/1 bowl/)).toBeInTheDocument();
+
+    cleanup();
+
+    /* makeItem() builds its object field-by-field rather than
+       spreading, so `example` has to be set on the result. */
+    renderQuickAdd({
+      items: [{ ...makeItem(), example: true }],
+      asExamples: true,
+    });
+    expect(screen.getByText("Select")).toBeInTheDocument();
+    expect(screen.queryByText("Log")).not.toBeInTheDocument();
   });
 });
