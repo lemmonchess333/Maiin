@@ -101,7 +101,7 @@ function variantStyle(
       return {
         background: THEME.teal,
         boxShadow: glow
-          ? "0 0 32px rgba(82, 163, 189, 0.4), 0 8px 24px rgba(0, 0, 0, 0.4)"
+          ? `0 0 32px ${THEME.teal}66, 0 8px 24px rgba(0, 0, 0, 0.4)`
           : "0 8px 24px rgba(0, 0, 0, 0.4)",
       };
     case "danger":

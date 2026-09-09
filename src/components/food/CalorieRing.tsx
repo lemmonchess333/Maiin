@@ -179,9 +179,7 @@ export default function CalorieRing({
       className="relative size-40 aspect-square mx-auto block focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-full"
       style={{
         // Celebration glow — purple matching the ring itself.
-        filter: glowing
-          ? "drop-shadow(0 0 16px rgba(123, 114, 233, 0.4))"
-          : undefined,
+        filter: glowing ? `drop-shadow(0 0 16px ${THEME.brand}66)` : undefined,
         transition: "filter 800ms ease-in-out",
       }}
     >

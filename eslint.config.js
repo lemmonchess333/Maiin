@@ -53,6 +53,20 @@ export default defineConfig([
       // codebase has repeatedly had to sweep. New code is blocked everywhere;
       // the files with pre-existing hex are grandfathered in the override
       // block at the bottom of this config (burn down when next touched).
+      //
+      // TWO THINGS THESE SELECTORS CANNOT SEE, both by construction:
+      //   1. Decimal rgba(). Every selector below matches on a literal "#",
+      //      so `rgba(123, 114, 233, 0.12)` — THEME.brand in decimal — was
+      //      invisible to all of them.
+      //   2. Colours hoisted out of the JSX. The style-attribute selectors
+      //      are scoped to JSXAttribute[name.name='style'], so the same hex
+      //      moved into a VARIANT_CONFIG map or a variantStyle() switch one
+      //      hop away is unseen.
+      // Both are covered by src/styles/__tests__/rgbaColourGuard.test.ts, a
+      // file scan with a documented per-file ledger — it also reaches the
+      // multi-line gradient and box-shadow strings no single-Literal
+      // selector can. Deliberately NOT duplicated here: a weaker second copy
+      // of the same rule is one more mirror to keep in sync.
       "no-restricted-syntax": [
         "error",
         {

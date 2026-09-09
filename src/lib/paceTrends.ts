@@ -73,7 +73,7 @@ export function calculatePaceTrend(
       trend: "pr",
       label: "PR!",
       color: THEME.amberLight,
-      bgColor: "rgba(245, 158, 11, 0.15)",
+      bgColor: `${THEME.amberLight}26`,
     };
   }
 
@@ -82,8 +82,11 @@ export function calculatePaceTrend(
     return {
       trend: "improving",
       label: "Faster",
-      color: "#2dd4bf",
-      bgColor: "rgba(45, 212, 191, 0.15)",
+      /* Was teal-400 (#2dd4bf) — stock Tailwind, off-palette, and
+         reading as the hydration teal. "Faster" is the positive
+         register, so it takes THEME.success like every other one. */
+      color: THEME.success,
+      bgColor: `${THEME.success}26`,
     };
   }
 
@@ -92,8 +95,11 @@ export function calculatePaceTrend(
     return {
       trend: "consistent",
       label: "Steady",
+      /* bgColor was #7C6EF6 — a frozen snapshot of the LIGHT-mode
+         --primary, so it did not even match the THEME.brand on the
+         line above it. */
       color: THEME.brand,
-      bgColor: "rgba(124, 110, 246, 0.15)",
+      bgColor: `${THEME.brand}26`,
     };
   }
 

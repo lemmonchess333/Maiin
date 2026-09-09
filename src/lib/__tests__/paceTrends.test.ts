@@ -96,6 +96,7 @@ describe("calculatePaceTrend", () => {
       expect(result.trend).toBe("pr");
       expect(result.label).toBe("PR!");
       expect(result.color).toBe(THEME.amberLight);
+      expect(result.bgColor).toBe(`${THEME.amberLight}26`);
     });
 
     it("returns pr when barely beating the best", () => {
@@ -120,7 +121,8 @@ describe("calculatePaceTrend", () => {
       const result = calculatePaceTrend(current, allRuns);
       expect(result.trend).toBe("improving");
       expect(result.label).toBe("Faster");
-      expect(result.color).toBe("#2dd4bf");
+      expect(result.color).toBe(THEME.success);
+      expect(result.bgColor).toBe(`${THEME.success}26`);
     });
   });
 
@@ -137,6 +139,7 @@ describe("calculatePaceTrend", () => {
       expect(result.trend).toBe("consistent");
       expect(result.label).toBe("Steady");
       expect(result.color).toBe(THEME.brand);
+      expect(result.bgColor).toBe(`${THEME.brand}26`);
     });
 
     it("returns consistent when pace matches recent average exactly", () => {

@@ -183,7 +183,7 @@ function ProgramContextStripView({ ctx }: { ctx: ProgramContextStrip }) {
       role="status"
       aria-live="polite"
       className="rounded-xl px-3.5 py-2.5"
-      style={{ background: "rgba(212,99,122,0.10)" }}
+      style={{ background: `${THEME.running}1A` }}
     >
       <p className="text-sm font-semibold text-foreground">{line1}</p>
       {line2 && <p className="text-xs text-muted-foreground mt-0.5">{line2}</p>}

@@ -1327,9 +1327,13 @@ export default function RunSummary() {
           {!isOnline && !saved && (
             <div
               className="mx-4 mb-4 px-4 py-3 rounded-xl flex items-center gap-2.5 text-sm"
+              /* The label below is text-warning-strong, which flips
+                 with the theme; this tint was frozen amber-500 (the
+                 DARK --warning value), so in light mode a theme-aware
+                 label sat on a dark-mode ground. Same token now. */
               style={{
-                background: "rgba(245,158,11,0.12)",
-                border: "1px solid rgba(245,158,11,0.25)",
+                background: "hsl(var(--warning) / 0.12)",
+                border: "1px solid hsl(var(--warning) / 0.25)",
               }}
             >
               <WifiOff size={20} className="text-warning-strong" />
@@ -1348,9 +1352,11 @@ export default function RunSummary() {
           {saved && (
             <div
               className="mx-4 mb-4 px-4 py-3 rounded-xl flex items-center gap-2.5 text-sm"
+              /* Was emerald-400 (#34D399) — stock Tailwind, never a
+                 Tropos green — under a text-success-strong label. */
               style={{
-                background: "rgba(52,211,153,0.12)",
-                border: "1px solid rgba(52,211,153,0.25)",
+                background: "hsl(var(--success) / 0.12)",
+                border: "1px solid hsl(var(--success) / 0.25)",
               }}
             >
               <CheckCircle size={20} className="text-success-strong" />
@@ -1420,9 +1426,13 @@ export default function RunSummary() {
               return (
                 <div
                   className="mx-4 mb-4 p-4 rounded-2xl space-y-3"
+                  /* The orange here is D19's collision in the other
+                     direction: #D9884E is semantic.nutrition, the FOOD
+                     identity, on a run-reconciliation prompt. The
+                     meaning is "this needs your attention" — warning. */
                   style={{
-                    background: "rgba(217,136,78,0.10)",
-                    border: "1px solid rgba(217,136,78,0.30)",
+                    background: "hsl(var(--warning) / 0.10)",
+                    border: "1px solid hsl(var(--warning) / 0.30)",
                   }}
                 >
                   <div>
@@ -1461,9 +1471,13 @@ export default function RunSummary() {
                         }
                       }}
                       className="w-full py-2.5 rounded-xl text-sm font-semibold disabled:opacity-50"
+                      /* --success-strong is the step tuned to clear
+                         4.5:1 on a tint of its own colour, which is
+                         exactly this button; the raw emerald it
+                         replaces was never contrast-checked. */
                       style={{
-                        background: "rgba(52,211,153,0.20)",
-                        color: "rgb(52,211,153)",
+                        background: "hsl(var(--success) / 0.20)",
+                        color: "hsl(var(--success-strong))",
                       }}
                     >
                       Mark scheduled run complete

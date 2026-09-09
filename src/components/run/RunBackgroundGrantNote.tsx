@@ -40,7 +40,7 @@ export default function RunBackgroundGrantNote({
       <div className="flex items-start gap-3">
         <div
           className="mt-0.5 flex size-8 flex-shrink-0 items-center justify-center rounded-lg"
-          style={{ background: "rgba(212,99,122,0.18)" }}
+          style={{ background: `${THEME.running}2E` }}
         >
           <MapPin
             className="size-4"
