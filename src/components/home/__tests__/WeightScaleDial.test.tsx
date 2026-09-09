@@ -317,3 +317,56 @@ describe("an attempted scroll is not a weigh-in", () => {
     expect(change).toHaveBeenLastCalledWith(81.6);
   });
 });
+
+describe("the markings scale with the container; the type does not", () => {
+  /* The SVG has a viewBox and `w-full`, so everything inside it scales
+     with the container. That is right for the arc — a drum that did not
+     grow with the sheet would not read as physical — and wrong for text:
+     with the labels inside the viewBox, `text-micro` rendered at ~11.4px
+     on a 375 phone and ~9.6px on a 320 one, under the app's 11px floor.
+
+     The labels therefore live in an HTML layer positioned by percentage
+     of the same box. These pin that split, because a future edit that
+     moves a label back inside the <svg> for tidiness would silently
+     reintroduce the shrink — it looks correct at the width you happen to
+     be testing at. */
+  it("draws no text inside the scaling viewBox", () => {
+    const { container } = render(
+      <WeightScaleDial
+        value={81.6}
+        minimum={20}
+        maximum={350}
+        unit="kg"
+        onChange={vi.fn()}
+      />
+    );
+    expect(container.querySelectorAll("svg text")).toHaveLength(0);
+    expect(container.querySelectorAll("svg tspan")).toHaveLength(0);
+  });
+
+  it("still labels the majors, at a real CSS size, outside the svg", () => {
+    /* The counterweight: an empty label layer would pass the test above
+       and leave an unreadable drum. */
+    const { container } = render(
+      <WeightScaleDial
+        value={81.6}
+        minimum={20}
+        maximum={350}
+        unit="kg"
+        onChange={vi.fn()}
+      />
+    );
+    const labels = Array.from(
+      container.querySelectorAll("span.text-micro")
+    ) as HTMLElement[];
+    expect(labels.length).toBeGreaterThan(0);
+    for (const label of labels) {
+      expect(label.closest("svg"), "a label is inside the svg").toBeNull();
+      expect(label).toHaveClass("font-mono", "tabular-nums");
+      // Positioned as a percentage of the same 360x128 box the arc uses.
+      expect(label.style.left).toMatch(/%$/);
+      expect(label.style.top).toMatch(/%$/);
+    }
+    expect(labels.map((l) => l.textContent)).toContain("82");
+  });
+});
