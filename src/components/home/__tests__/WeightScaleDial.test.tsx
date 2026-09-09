@@ -317,3 +317,51 @@ describe("an attempted scroll is not a weigh-in", () => {
     expect(change).toHaveBeenLastCalledWith(81.6);
   });
 });
+
+describe("labels are culled, not faded", () => {
+  it("renders no label that the edge mask would half-erase", () => {
+    /* The mask erases by alpha over a ~48px band and a two-digit label
+       is ~16px wide, so a label straddling it loses a glyph and keeps
+       the rest: "81" renders as a legible, WRONG "1" beside a correct
+       "82". Found in a capture frame, not here — every unit test asks
+       what is in the DOM, and the stray label IS in the DOM. This one
+       asks how far from centre it is. */
+    const { container } = render(
+      <WeightScaleDial
+        value={82.7}
+        minimum={20}
+        maximum={350}
+        unit="kg"
+        onChange={vi.fn()}
+      />
+    );
+    const labels = Array.from(container.querySelectorAll("text"));
+    expect(labels.length).toBeGreaterThan(0);
+    for (const label of labels) {
+      const dx = Math.abs(Number(label.getAttribute("x")) - 300);
+      expect(
+        dx,
+        `label "${label.textContent}" sits ${dx}px from centre, inside the fade`
+      ).toBeLessThanOrEqual(140);
+    }
+  });
+
+  it("still labels the majors either side of the reading", () => {
+    /* The counterweight: culling everything would pass the test above
+       and leave an unreadable tape. */
+    const { container } = render(
+      <WeightScaleDial
+        value={82.7}
+        minimum={20}
+        maximum={350}
+        unit="kg"
+        onChange={vi.fn()}
+      />
+    );
+    const shown = Array.from(container.querySelectorAll("text")).map(
+      (t) => t.textContent
+    );
+    expect(shown).toContain("82");
+    expect(shown).toContain("83");
+  });
+});

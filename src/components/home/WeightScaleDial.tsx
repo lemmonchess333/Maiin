@@ -36,6 +36,21 @@ const LABEL_Y = 50;
 const NEEDLE_H = 32; // through the tick field, not hovering above it
 const WINDOW = Math.ceil(TAPE_CENTRE / PX_PER_TICK) + 2;
 
+/* Ticks may fade at the edges; LABELS may not. The mask erases by alpha
+   across a 48px band, and a two-digit label is ~16px wide, so a label
+   straddling that band loses a glyph and keeps the rest — "81" renders
+   as a legible, wrong "1" beside a correct "82". Caught in the capture
+   channel, which is the only place it is visible: every unit test asks
+   what is in the DOM, and the stray label IS in the DOM.
+
+   So labels are culled by distance from centre rather than faded. 14
+   ticks = 140px is the conservative bound for the narrowest container
+   this ships in (the sheet's max-w-sm, ~343px inner: opaque to 86% is
+   147px from centre, less half a label). A wider container could show
+   one more on each side; showing three everywhere is the honest trade,
+   and three is what the spec budgeted. */
+const LABEL_MAX_TICKS = 14;
+
 /* An attempted SCROLL must not edit the weight. `touch-pan-y` hands
    vertical panning back to the browser (which then fires pointercancel,
    already handled by `settle`), and the gate below refuses to move the
@@ -362,25 +377,26 @@ export default function WeightScaleDial({
                     strokeWidth={tier === "major" ? 1.5 : 1}
                     className={TICK_CLASS[tier]}
                   />
-                  {tier === "major" && (
-                    <text
-                      x={x}
-                      y={LABEL_Y}
-                      textAnchor="middle"
-                      dominantBaseline="middle"
-                      fill="currentColor"
-                      className="text-micro font-mono tabular-nums text-muted-foreground"
-                    >
-                      {unit === "st"
-                        ? stoneBoundary
-                          ? whole / 14
-                          : whole % 14
-                        : whole}
-                      {stoneBoundary && (
-                        <tspan className="font-sans"> st</tspan>
-                      )}
-                    </text>
-                  )}
+                  {tier === "major" &&
+                    Math.abs(tick - position) <= LABEL_MAX_TICKS && (
+                      <text
+                        x={x}
+                        y={LABEL_Y}
+                        textAnchor="middle"
+                        dominantBaseline="middle"
+                        fill="currentColor"
+                        className="text-micro font-mono tabular-nums text-muted-foreground"
+                      >
+                        {unit === "st"
+                          ? stoneBoundary
+                            ? whole / 14
+                            : whole % 14
+                          : whole}
+                        {stoneBoundary && (
+                          <tspan className="font-sans"> st</tspan>
+                        )}
+                      </text>
+                    )}
                 </g>
               );
             })}
