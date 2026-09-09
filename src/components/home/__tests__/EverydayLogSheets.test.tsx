@@ -283,10 +283,10 @@ describe("everyday entry sheets", () => {
 });
 
 describe("weight sheet — what changed since last time", () => {
-  /* The tape shows ~3.4 units, so unlike the arc it cannot be read as a
-     sanity check against a fat-fingered entry — and neither could the
-     arc once the keyboard shrank the sheet. The caption is that check,
-     and it survives typing. */
+  /* The drum shows about four units either side of the reading, so it
+     cannot itself catch an entry that is tens of kilos out — and it is
+     off-screen entirely once the keyboard shrinks the sheet. The caption
+     is that check, and it survives typing. */
   /* InlineNumerals splits digits into their own spans, so match on the
      paragraph's textContent rather than on a single text node. */
   const caption = () =>

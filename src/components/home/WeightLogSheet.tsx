@@ -137,11 +137,11 @@ export default function WeightLogSheet({
      lean bulker, and this sheet never reads `program.goal`; a success or
      destructive tint would moralise a number it has no basis to judge.
 
-     It also replaces something the arc was quietly providing — the
-     neighbouring tick labels as a fat-finger tripwire. "+16.4 kg vs
-     24 Aug" is the stronger form of that check, and unlike any scale it
-     survives typing, which is exactly when the keyboard shrinks the
-     sheet and pushes the control out of view. */
+     The drum shows about four units either side of the reading, so it
+     cannot itself catch a fat-fingered entry that is tens of kilos out.
+     "+16.4 kg vs 24 Aug" is the stronger form of that check, and unlike
+     the scale it survives typing — which is exactly when the keyboard
+     shrinks the sheet and pushes the drum out of view. */
   const deltaCaption = (() => {
     if (initialKg === undefined) return "First weigh-in";
     const entered = parsedKg();
