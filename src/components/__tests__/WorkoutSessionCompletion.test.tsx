@@ -107,6 +107,7 @@ beforeEach(() => {
   Element.prototype.scrollIntoView = vi.fn();
 });
 afterEach(() => {
+  vi.useRealTimers();
   cleanup();
   vi.unstubAllGlobals();
 });
@@ -430,7 +431,9 @@ it("recognises a server-acknowledged completion after reopening instead of writi
 
 describe("completed-set corrections", () => {
   it("can correct an older set after Undo expires without changing other sets", async () => {
-    vi.useFakeTimers();
+    // Advance only Undo's timeout. Faking performance/RAF and then restoring
+    // them strands Motion's shared frame loop on CI, including later tests.
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
     openSession();
     fireEvent.click(
       screen.getAllByRole("button", { name: "Mark set complete" })[0]
