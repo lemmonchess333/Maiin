@@ -178,24 +178,21 @@ When the operator-diagnostics route lands (audit P2 #17), surface:
 
 - Provider type (reCAPTCHA / App Attest / Play Integrity / none).
 - Token age in seconds.
-- First 8 chars of the token (so support can correlate with Cloud
-  Logging without exposing the full token).
+- Token availability and expiry metadata only; never display or log token
+  contents, including prefixes.
 - The verification rate from the last 100 Firebase calls (read via
   network interceptor, separate effort).
 
-## What this PR (F) ships
+## Delivery status
 
-- `src/lib/appCheck.ts` rewritten to support a clean injection
-  point (`setNativeAppCheckProvider`) for the native plugin.
-- `getAppCheckToken()` + `isAppCheckActive()` diagnostic helpers
-  exported.
-- This rollout doc.
+PR #2212 merged the pinned native plugin, synchronous bootstrap registration,
+CustomProvider bridge, iOS provider factory, production entitlement and SPM
+registration. Web builds, unit tests and Capacitor sync passed. The native
+plugin and bootstrap are no longer pending implementation.
 
-## What this PR does NOT ship
-
-- The actual `@capacitor-firebase/app-check` install (requires
-  Xcode / Android Studio).
-- Native build steps (requires real-device verification).
-- The bootstrap wiring in `src/main.tsx` (depends on the plugin
-  install).
-- Enforcement flip (gated on Phase 3 verification).
+Still outstanding: compile/archive the signed Xcode project, confirm provider
+registration and production entitlement on a physical iPhone, and verify token
+issuance, refresh and authenticated requests. Android project setup is separate
+and remains absent from this repository. Keep enforcement off until the actual
+released-client metrics meet the Phase 3 gate; code and mocked tests do not
+satisfy it.
