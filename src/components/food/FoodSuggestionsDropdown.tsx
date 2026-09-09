@@ -49,6 +49,12 @@ const GHOST_CLICK_SUPPRESS_MS = 400;
  * not a second control to hit. `text-muted-foreground` is also the one
  * grey tuned to clear AA on card, muted and page background in both
  * themes.
+ *
+ * The rows carry an explicit `min-h-11`. Single-line at `py-2.5` they
+ * measured ~40px — under the 44px Tropos target — and the second line
+ * these labels ride on lifts them past it as a side effect. A floor
+ * stated in the class list is the guarantee; an emergent one lasts
+ * until someone shortens the content.
  */
 function RowAction({ children }: { children: React.ReactNode }) {
   return (
@@ -290,7 +296,7 @@ function FoodSuggestionsDropdown({
                   userSelect: "none",
                 }}
                 className={cn(
-                  "w-full px-4 py-2.5 text-left hover:bg-muted/80 transition-colors flex items-center justify-between gap-2 border-b border-border/30 last:border-0",
+                  "w-full min-h-11 px-4 py-2.5 text-left hover:bg-muted/80 transition-colors flex items-center justify-between gap-2 border-b border-border/30 last:border-0",
                   quickAdd.adding !== null && "opacity-60 cursor-not-allowed"
                 )}
               >
@@ -336,7 +342,7 @@ function FoodSuggestionsDropdown({
               key={`pantry-${p.id}`}
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => onSelectPantry(p)}
-              className="w-full px-4 py-2.5 text-left hover:bg-muted/80 transition-colors flex items-center justify-between gap-2 border-b border-border/30 last:border-0"
+              className="w-full min-h-11 px-4 py-2.5 text-left hover:bg-muted/80 transition-colors flex items-center justify-between gap-2 border-b border-border/30 last:border-0"
             >
               <span className="text-sm font-medium text-foreground truncate min-w-0">
                 {p.name}
@@ -360,7 +366,7 @@ function FoodSuggestionsDropdown({
               key={`ai-${i}`}
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => onSelectSuggestion(s)}
-              className="w-full px-4 py-2.5 text-left hover:bg-muted/80 transition-colors flex items-center justify-between gap-2 border-b border-border/30 last:border-0"
+              className="w-full min-h-11 px-4 py-2.5 text-left hover:bg-muted/80 transition-colors flex items-center justify-between gap-2 border-b border-border/30 last:border-0"
             >
               <span className="text-sm font-medium text-foreground truncate min-w-0">
                 {s.name}
