@@ -15,9 +15,30 @@ import { isPaceTrendEligible } from "./runStatsEligibility";
 
 export type PaceTrend = "pr" | "improving" | "consistent" | "no-data";
 
+/**
+ * FOUND, NOT FIXED — the badge these colours paint fails contrast in
+ * LIGHT mode, and has since it was written. RunSummary renders it as
+ * `text-sm font-semibold` (14px, so 4.5:1 applies, not 3:1) with
+ * `color` on a 15% tint of itself over the card. Measured:
+ *
+ *              light    dark
+ *   PR!        1.92:1   6.15:1
+ *   Faster     2.20:1   5.42:1   (1.68:1 before the token repoint)
+ *   Steady     3.26:1   3.73:1
+ *
+ * Two of the three have a ready answer — `--success-strong` and
+ * `--warning-strong` are exactly the "text on a tint of its own
+ * colour" steps and measure 5.30 / 5.39 in light. The brand branch
+ * does not: `--primary-strong` is the DARKER step for white text on a
+ * purple FILL, the opposite direction, and lands at 2.89:1 in dark.
+ * Fixing all three properly means adding a brand text-on-tint token,
+ * which is a design-system decision rather than a repoint — so it is
+ * recorded here instead of half-done.
+ */
 export interface PaceTrendResult {
   trend: PaceTrend;
   label: string;
+  /** @see the contrast note above before changing this. */
   color: string;
   bgColor: string;
 }
