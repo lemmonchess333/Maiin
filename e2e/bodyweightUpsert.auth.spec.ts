@@ -114,12 +114,14 @@ async function logWeight(page: Page, value: string): Promise<void> {
     .getByRole("button", { name: /weight/i })
     .first()
     .click();
-  const sheet = page.getByRole("dialog", { name: "Log weight", exact: true });
+  const sheet = page.getByRole("dialog", { name: /^(Log|Edit) weight$/ });
   const input = sheet.getByLabel(/^Weight \(/);
   await input.waitFor({ state: "visible", timeout: 10_000 });
   await input.fill(value);
-  await sheet.getByRole("button", { name: "Log weight", exact: true }).click();
-  // Save closes the sheet after the transaction. Anchor on that dismissal
+  await sheet
+    .getByRole("button", { name: /^(Log weight|Save changes)$/ })
+    .click();
+  // Save closes after durable local acceptance. Anchor on that dismissal
   // and then on the value being readable back from
   // the emulator. This replaces a fixed 1.5s wait, which lost the race
   // under parallel-suite load (2026-08-08 sweep: afterFirst read found
