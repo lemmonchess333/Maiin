@@ -16,7 +16,7 @@ on:
   # shaken out before merge. Extend to `pull_request` later if you want a
   # screenshot set attached to every UI PR automatically.
   push:
-    branches: ["claude/visual-capture"]
+    branches: ["fix/manual-food-capture-check"]
 
 jobs:
   capture:
@@ -89,17 +89,12 @@ jobs:
             set -e
             npm run seed:e2e
             npm run seed:rich
-            npm run preview > /tmp/preview.log 2>&1 &
-            for i in $(seq 1 40); do
-              curl -sf http://localhost:4173/Maiin/ > /dev/null && break
-              sleep 1
-            done
-            node scripts/visual-capture.mjs
+            npm run test:e2e -- e2e/screenshots/food-delight.screens.capture.spec.ts --project=auth-emulator
           '
 
       - if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: visual-capture
-          path: visual-capture/
+          path: screenshots/
           retention-days: 14

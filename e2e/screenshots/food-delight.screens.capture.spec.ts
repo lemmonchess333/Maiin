@@ -123,8 +123,51 @@ test.describe("food delight", () => {
           .getByRole("spinbutton", { name: label, exact: true })
           .fill(value);
       }
-      await sheet.getByRole("heading", { name: "Log a meal" }).click();
+      // A title click starts Vaul's drag press/release cycle; blur the
+      // last field directly so a capture does not trigger drawer movement.
+      await sheet
+        .getByRole("spinbutton", { name: "Fat (g)", exact: true })
+        .evaluate((input: HTMLInputElement) => input.blur());
       await expect(save).toBeEnabled();
+      const footerBounds = () =>
+        save.evaluate((button) => {
+          const drawer = button.closest('[role="dialog"]')!;
+          const drawerBox = drawer.getBoundingClientRect();
+          const buttonBox = button.getBoundingClientRect();
+          const viewport = window.visualViewport;
+          return {
+            drawerTop: drawerBox.top,
+            drawerBottom: drawerBox.bottom,
+            buttonBottom: buttonBox.bottom,
+            visibleBottom: viewport
+              ? viewport.offsetTop + viewport.height
+              : window.innerHeight,
+            drawerStyle: drawer.getAttribute("style"),
+            transform: getComputedStyle(drawer).transform,
+          };
+        });
+      await expect(async () => {
+        const before = await footerBounds();
+        const diagnostic = JSON.stringify(before);
+        expect(
+          Math.abs(before.drawerBottom - before.visibleBottom),
+          diagnostic
+        ).toBeLessThan(1);
+        expect(
+          before.visibleBottom - before.buttonBottom,
+          diagnostic
+        ).toBeGreaterThanOrEqual(15);
+        await page.waitForTimeout(150);
+        const after = await footerBounds();
+        expect(
+          Math.abs(after.drawerTop - before.drawerTop),
+          JSON.stringify(after)
+        ).toBeLessThan(1);
+        expect(
+          Math.abs(after.buttonBottom - before.buttonBottom),
+          JSON.stringify(after)
+        ).toBeLessThan(1);
+      }).toPass({ timeout: 5000, intervals: [100, 200, 300] });
       const saveBox = (await save.boundingBox())!;
       expect(saveBox.height).toBeGreaterThanOrEqual(44);
       expect(saveBox.y + saveBox.height).toBeLessThanOrEqual(852);
@@ -139,6 +182,11 @@ test.describe("food delight", () => {
         animations: "disabled",
         path: `screenshots/food-manual-${theme}.png`,
       });
+      const capturedBounds = await footerBounds();
+      expect(
+        capturedBounds.visibleBottom - capturedBounds.buttonBottom,
+        JSON.stringify(capturedBounds)
+      ).toBeGreaterThanOrEqual(15);
       // Capture only: no meal is written by either theme scenario.
     });
   }
