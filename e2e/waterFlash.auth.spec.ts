@@ -56,17 +56,40 @@ async function uidByEmail(email: string): Promise<string> {
   return id;
 }
 
-/** Record every CHANGE to the rendered litre figure, one sample per frame. */
+/**
+ * Record every CHANGE to the rendered water figure, one sample per frame,
+ * NORMALISED TO MILLILITRES.
+ *
+ * Two things this has to survive, both of which broke it once.
+ *
+ * It used to locate the numeral by the "/ target" denominator. The card
+ * no longer renders a target, so that matched nothing, `read()` returned
+ * null every frame, and the run came back with an EMPTY sample list —
+ * which the `adds.length > 3` guard below is what caught. Without that
+ * guard a monotonic check over zero samples passes, and this spec would
+ * have gone quietly blind instead of red.
+ *
+ * And the figure now carries its own unit, so a burst that crosses a
+ * litre renders 750 ml then 1 L. Comparing bare figures would read
+ * 750 -> 1 as travelling backwards and fail on correct behaviour, so the
+ * unit is folded in. What this spec is about — a frame showing the total
+ * from BEFORE the tap — is a change in VOLUME, not in how it is spelled.
+ */
 async function startSampling(page: Page) {
   await page.evaluate(() => {
     const w = window as unknown as { __water: number[] };
     w.__water = [];
     const read = () => {
+      // "750ml" / "1L" / "4.5L" — value plus its unit span, no space
+      // between them in textContent. The weight tile ("100.0kg") and the
+      // macro figures ("0g") cannot match this shape.
+      const RE = /^(\d+(?:\.\d+)?)\s*(ml|L)$/;
       const el = Array.from(document.querySelectorAll("p")).find((p) =>
-        /^\d+(\.\d+)?\s*\/\s*/.test((p.textContent ?? "").trim())
+        RE.test((p.textContent ?? "").trim())
       );
-      const m = (el?.textContent ?? "").trim().match(/^(\d+(?:\.\d+)?)/);
-      return m ? Number(m[1]) : null;
+      const m = (el?.textContent ?? "").trim().match(RE);
+      if (!m) return null;
+      return m[2] === "L" ? Number(m[1]) * 1000 : Number(m[1]);
     };
     const loop = () => {
       const v = read();
