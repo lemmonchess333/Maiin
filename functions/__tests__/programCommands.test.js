@@ -251,6 +251,20 @@ describe("logExercise", () => {
     });
   });
 
+  it("accepts a correction only with a bounded session id", () => {
+    expect(
+      assertClientProgramCommand({
+        ...valid,
+        sessionId: "session-1",
+        correction: true,
+      })
+    ).toMatchObject({ sessionId: "session-1", correction: true });
+    expectRejected({ ...valid, correction: true });
+    expectRejected({ ...valid, sessionId: "", correction: true });
+    expectRejected({ ...valid, sessionId: "session-1", correction: false });
+    expectRejected({ ...valid, sessionId: "session-1", baseline: {} });
+  });
+
   it("rejects a malformed actual", () => {
     expectRejected({ ...valid, actual: { weight: 60, reps: 10 } });
     expectRejected({
@@ -2348,6 +2362,58 @@ describe("logExercise (reducer wiring — progression math pinned by cross-test)
     expect(row.performanceHistory).toHaveLength(1);
   });
 
+  it("replaces a session's result from its original prescription without progressing twice", () => {
+    const input = baseState();
+    const initial = apply(logCmd({ sessionId: "session-1" }), input).state;
+    expect(initial.workouts[0].exercises[0].weight).toBe(101);
+    const correctedActual = { weight: 100, reps: 6, completed: true };
+    const corrected = apply(
+      logCmd({
+        sessionId: "session-1",
+        correction: true,
+        actual: correctedActual,
+      }),
+      initial
+    ).state;
+    const expected = apply(logCmd({ actual: correctedActual }), input).state
+      .workouts[0].exercises[0];
+    const { sessionProgression, ...row } = corrected.workouts[0].exercises[0];
+    expect(row).toEqual(expected);
+    expect(row.performanceHistory).toHaveLength(1);
+    expect(sessionProgression.baseline).toEqual(input.workouts[0].exercises[0]);
+    const correctedAgain = apply(
+      logCmd({ sessionId: "session-1", correction: true }),
+      corrected
+    ).state;
+    expect(correctedAgain.workouts[0].exercises[0].weight).toBe(101);
+    expect(
+      correctedAgain.workouts[0].exercises[0].performanceHistory
+    ).toHaveLength(1);
+    expect(input.workouts[0].exercises[0].sessionProgression).toBeUndefined();
+  });
+
+  it("a new session retains history but does not nest prior baselines", () => {
+    const first = apply(logCmd({ sessionId: "session-1" })).state;
+    const second = apply(
+      logCmd({
+        sessionId: "session-2",
+        actual: { weight: 101, reps: 8, completed: true },
+      }),
+      first
+    ).state;
+    const row = second.workouts[0].exercises[0];
+    expect(row.performanceHistory).toHaveLength(2);
+    expect(row.sessionProgression.baseline.sessionProgression).toBeUndefined();
+    expectHttps(
+      () => apply(logCmd({ sessionId: "session-1", correction: true }), second),
+      "failed-precondition"
+    );
+    expectHttps(
+      () => apply(logCmd({ sessionId: "unrecorded", correction: true })),
+      "failed-precondition"
+    );
+  });
+
   // ── Blk2: the easing-block hold — the reducer's THIRD branch ──────────
   //
   // Added with the boundary migration. The client had this branch and the
@@ -2604,7 +2670,13 @@ describe("deload week commands (PROGRAM-DELOAD-01)", () => {
       // the reducer overwrites templateId, nothing on the day remembers
       // that choice — only the snapshot does. Clearing instead of
       // restoring would silently discard a user decision.
-      const before = [planned({ templateId: "tempo_40", userOverride: "tempo_40", type: "tempo" })];
+      const before = [
+        planned({
+          templateId: "tempo_40",
+          userOverride: "tempo_40",
+          type: "tempo",
+        }),
+      ];
       const { state } = apply(
         applyCmd({ runSwaps: [{ runDayId: "run-1", templateId: "tempo_30" }] }),
         withRuns(before)
@@ -2827,7 +2899,9 @@ describe("easier week commands (RUN-EASE-01)", () => {
     // Nothing on the day remembers that choice — only the snapshot does,
     // so replaying the swaps in reverse (what the client used to do) could
     // never have got this right.
-    const before = [planned({ templateId: "6x1k", userOverride: "6x1k", type: "intervals" })];
+    const before = [
+      planned({ templateId: "6x1k", userOverride: "6x1k", type: "intervals" }),
+    ];
     const { state } = apply(
       easeCmd({ runSwaps: [{ runDayId: "run-1", templateId: "5x1k" }] }),
       withRuns(before)
@@ -2858,7 +2932,9 @@ describe("easier week commands (RUN-EASE-01)", () => {
     expectHttps(
       () =>
         apply(
-          easeCmd({ runSwaps: [{ runDayId: "run-1", templateId: "tempo_30" }] }),
+          easeCmd({
+            runSwaps: [{ runDayId: "run-1", templateId: "tempo_30" }],
+          }),
           withRuns([planned({ type: "race", templateId: "marathon_race" })])
         ),
       "failed-precondition"
@@ -2923,7 +2999,10 @@ describe("easier week commands (RUN-EASE-01)", () => {
     const { state: eased } = applyProgramCommand({
       state: rolled,
       profile: {},
-      command: easeCmd({ commandId: "cmd_nextweek012345", expectedWeekNumber: 6 }),
+      command: easeCmd({
+        commandId: "cmd_nextweek012345",
+        expectedWeekNumber: 6,
+      }),
       now: NOW,
     });
     expect(eased.runDays[0].templateId).toBe("tempo_30");
@@ -2940,7 +3019,10 @@ describe("easier week commands (RUN-EASE-01)", () => {
   });
 
   it("refuses an undo when nothing was eased", () => {
-    expectHttps(() => apply(undoCmd(), withRuns([planned()])), "failed-precondition");
+    expectHttps(
+      () => apply(undoCmd(), withRuns([planned()])),
+      "failed-precondition"
+    );
   });
 
   it("a deload PHASE alone does not gate the ease undo", () => {
@@ -3046,7 +3128,12 @@ describe("deload + easier week unwind in reverse order (RUN-EASE-01)", () => {
     const s = baseState();
     s.runDays = [
       runDay(),
-      runDay({ id: "run-2", dayIndex: 4, templateId: "tempo_40", type: "tempo" }),
+      runDay({
+        id: "run-2",
+        dayIndex: 4,
+        templateId: "tempo_40",
+        type: "tempo",
+      }),
     ];
     return s;
   };
@@ -3221,19 +3308,33 @@ describe("undo preserves decisions made after the reduction", () => {
   it("a run skipped after the ease stays skipped through the undo", () => {
     let s = at(
       withRuns(),
-      { kind: "applyEaseWeek", commandId: "cmd_e6123456789abc", expectedWeekNumber: 5, runSwaps: EASE },
+      {
+        kind: "applyEaseWeek",
+        commandId: "cmd_e6123456789abc",
+        expectedWeekNumber: 5,
+        runSwaps: EASE,
+      },
       1000
     ).state;
     s = at(
       s,
-      { kind: "transitionRunDay", commandId: "cmd_sk123456789abc", runDayId: "run-1", to: "skipped" },
+      {
+        kind: "transitionRunDay",
+        commandId: "cmd_sk123456789abc",
+        runDayId: "run-1",
+        to: "skipped",
+      },
       2000
     ).state;
     expect(s.runDays[0].status).toBe("skipped");
 
     s = at(
       s,
-      { kind: "revertEaseWeek", commandId: "cmd_ue723456789abc", expectedWeekNumber: 5 },
+      {
+        kind: "revertEaseWeek",
+        commandId: "cmd_ue723456789abc",
+        expectedWeekNumber: 5,
+      },
       3000
     ).state;
 
@@ -3262,13 +3363,22 @@ describe("undo preserves decisions made after the reduction", () => {
     ).state;
     s = at(
       s,
-      { kind: "transitionRunDay", commandId: "cmd_sk223456789abc", runDayId: "run-1", to: "skipped" },
+      {
+        kind: "transitionRunDay",
+        commandId: "cmd_sk223456789abc",
+        runDayId: "run-1",
+        to: "skipped",
+      },
       2000
     ).state;
 
     s = at(
       s,
-      { kind: "revertDeloadWeek", commandId: "cmd_ud723456789abc", expectedWeekNumber: 5 },
+      {
+        kind: "revertDeloadWeek",
+        commandId: "cmd_ud723456789abc",
+        expectedWeekNumber: 5,
+      },
       3000
     ).state;
     expect(s.runDays[0].status).toBe("skipped");
@@ -3281,12 +3391,21 @@ describe("undo preserves decisions made after the reduction", () => {
     // undo, which is what almost every use of it is.
     let s = at(
       withRuns(),
-      { kind: "applyEaseWeek", commandId: "cmd_e7123456789abc", expectedWeekNumber: 5, runSwaps: EASE },
+      {
+        kind: "applyEaseWeek",
+        commandId: "cmd_e7123456789abc",
+        expectedWeekNumber: 5,
+        runSwaps: EASE,
+      },
       1000
     ).state;
     s = at(
       s,
-      { kind: "revertEaseWeek", commandId: "cmd_ue823456789abc", expectedWeekNumber: 5 },
+      {
+        kind: "revertEaseWeek",
+        commandId: "cmd_ue823456789abc",
+        expectedWeekNumber: 5,
+      },
       2000
     ).state;
     expect(s.runDays.map((r) => r.templateId)).toEqual(["tempo_40", "6x1k"]);

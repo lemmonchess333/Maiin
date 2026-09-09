@@ -500,7 +500,7 @@ const KIND_VALIDATORS = {
       // only. `actualRpe` is the client's optional RPE — the progression
       // engine already takes it; the command used to drop it, which silently
       // progressed a session the user had flagged as maximal.
-      ["today", "actualRpe"]
+      ["today", "actualRpe", "sessionId", "correction"]
     );
     validatePrecondition(command, out);
     out.exerciseInstanceId = assertString(
@@ -509,6 +509,15 @@ const KIND_VALIDATORS = {
       MAX_ID_LEN
     );
     out.actual = validateSetLog(command.actual, "actual");
+    if ("sessionId" in command) {
+      out.sessionId = assertString(command.sessionId, "sessionId", MAX_ID_LEN);
+    }
+    if ("correction" in command) {
+      if (command.correction !== true || !out.sessionId) {
+        invalidCommand("A correction requires its session id.");
+      }
+      out.correction = true;
+    }
     if ("today" in command) {
       out.today = assertLocalDate(command.today, "today");
     }
@@ -1972,7 +1981,16 @@ function logExercise(state, command, now) {
   if (idx === -1) {
     failedPrecondition("That exercise is no longer in this workout.");
   }
-  const exercise = day.exercises[idx];
+  const storedExercise = day.exercises[idx];
+  if (command.correction && storedExercise.sessionProgression?.id !== command.sessionId) {
+    failedPrecondition("This session's progression can no longer be corrected. Refresh your workout.");
+  }
+  // Only a baseline recorded by this reducer is trusted. A corrected set
+  // replaces this session's result instead of counting as another workout.
+  const { sessionProgression, ...currentExercise } = storedExercise;
+  const exercise = command.sessionId && sessionProgression?.id === command.sessionId
+    ? sessionProgression.baseline
+    : currentExercise;
   const settings = isPlainObject(state.settings)
     ? state.settings
     : { autoProgression: true, microloading: true };
@@ -2035,6 +2053,9 @@ function logExercise(state, command, now) {
     };
   }
 
+  if (command.sessionId) {
+    updatedExercise.sessionProgression = { id: command.sessionId, baseline: exercise };
+  }
   return mapWorkoutDay(state, command.dayIndex, (d) => ({
     ...d,
     exercises: d.exercises.map((ex, i) => (i === idx ? updatedExercise : ex)),
@@ -2203,6 +2224,7 @@ function completeWorkoutDayWithEffect(state, profile, command, now) {
     ...d,
     completed: true,
     skipped: false,
+    completedWorkoutId: `programme-${command.completion.completionId}`,
   }));
   if (nextState.nextWorkoutOverride === command.dayIndex) {
     nextState = { ...nextState };
