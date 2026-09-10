@@ -25,12 +25,11 @@
  * The precedent is `replaceExercise`'s calibrated weight: the client supplies
  * the fact only it can know, the server keeps the decision.
  *
- * TIMEZONE NOTE. `blockWeekOf` is a DIFFERENCE between two plain date strings
- * (`today` and `block.startDate`). As long as both are parsed the same way the
- * difference is identical in any zone, which is why parsing as UTC here agrees
- * with the client parsing as local. This is not the local/UTC mixing the rule
- * warns about — there is no wall-clock instant involved, only two calendar
- * days.
+ * TIMEZONE NOTE. The client counts local calendar days, so clock changes do
+ * not alter its week boundaries. UTC arithmetic here counts the same dates
+ * without a timezone offset. Subtracting local-midnight timestamps would
+ * disagree across DST transitions; trainingBlock.timezone.test.ts exercises
+ * both implementations in explicit US, UK and UTC processes.
  *
  * TESTED-COPY RULE: pinned against the client copies
  * (`trainingBlock.ts` blockWeekOf, `represcribe.ts` isProgressionHeld /

@@ -23,8 +23,12 @@ not activate any new production guide or count drafts as approved.
 - Incline press: the first bottom candidate changed near/far arm ordering and
   is excluded. Its replacement retains ordering, but the selected middle and
   bottom positions are close and the lower depth/arm path need technique review.
-- Dumbbell row: support landmarks are stable, but early/middle poses are too
-  close and the dumbbell appears smaller after the hanging master.
+- Dumbbell row: the repaired draft now has distinct 0/125/237/372px load
+  positions and one unscaled master dumbbell layer. Named support, shoe, head
+  and bench regions retain exact master pixels. Shoulder/chest motion, arm
+  proportions and hand/handle contact still need technique review. See
+  `../pilots/batch-04/db-row/composite/README.md` for reproducible measurements
+  and recovery provenance; this remains an inactive draft.
 - Romanian deadlift: the original bottom frame moved the near sole upward
   31 pixels. A foot-only image edit did not solve this. A continuous lower-shin
   warp restores the selected candidate's near sole to y=1330 while translating

@@ -40,14 +40,14 @@
       "frame": 2,
       "label": "Begin row",
       "cue": "Draw the elbow back towards your hip.",
-      "t": 0.25,
+      "t": 0.33602150537634407,
       "state": "Small shoulder extension and elbow flexion; dumbbell begins rising."
     },
     {
       "frame": 3,
       "label": "Continue row",
       "cue": "Keep your torso still as the elbow passes your ribs.",
-      "t": 0.6,
+      "t": 0.6370967741935484,
       "state": "Mid row, elbow back, shoulder not shrugged."
     },
     {
@@ -61,14 +61,14 @@
       "frame": 5,
       "label": "Controlled lower",
       "cue": "Lower slowly while keeping your back still.",
-      "t": 0.6,
+      "t": 0.6370967741935484,
       "state": "Same as frame3, descending."
     },
     {
       "frame": 6,
       "label": "Finish lowering",
       "cue": "Extend the arm back towards the starting stretch.",
-      "t": 0.25,
+      "t": 0.33602150537634407,
       "state": "Same as frame2, descending; loop to full hang."
     }
   ]

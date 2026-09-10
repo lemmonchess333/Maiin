@@ -23,7 +23,12 @@
  * (rules), swept on account deletion. One ACTIVE block at a time is
  * a UI constraint, not a schema one (history keeps past blocks).
  */
-import { localDateString } from "@/lib/dateHelpers";
+import { differenceInCalendarDays } from "date-fns";
+import {
+  addLocalDays,
+  localDateString,
+  parseLocalDate,
+} from "@/lib/dateHelpers";
 
 import type {
   ActiveTrainingBlock,
@@ -282,20 +287,13 @@ export function makeBlockId(startDate: string, createdAt: number): string {
   return `${startDate}-${createdAt}`;
 }
 
-/** Local YYYY-MM-DD → ms epoch at local midnight. */
-function localDateMs(date: string): number {
-  const [y, m, d] = date.split("-").map(Number);
-  return new Date(y, m - 1, d).getTime();
-}
-
-const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
-
 /** Exclusive end date (the day AFTER the last block day), YYYY-MM-DD. */
 export function blockEndDate(
   block: Pick<TrainingBlock, "startDate" | "durationWeeks">
 ): string {
-  const end = new Date(
-    localDateMs(block.startDate) + block.durationWeeks * WEEK_MS
+  const end = addLocalDays(
+    parseLocalDate(block.startDate),
+    block.durationWeeks * 7
   );
   return localDateString(end);
 }
@@ -308,9 +306,13 @@ export function blockWeekOf(
   block: Pick<TrainingBlock, "startDate" | "durationWeeks">,
   today: string
 ): number | null {
-  const elapsed = localDateMs(today) - localDateMs(block.startDate);
-  if (elapsed < 0) return null;
-  const week = Math.floor(elapsed / WEEK_MS) + 1;
+  // Count calendar days: a DST week can contain 167 or 169 elapsed hours.
+  const elapsed = differenceInCalendarDays(
+    parseLocalDate(today),
+    parseLocalDate(block.startDate)
+  );
+  if (!Number.isFinite(elapsed) || elapsed < 0) return null;
+  const week = Math.floor(elapsed / 7) + 1;
   return week > block.durationWeeks ? null : week;
 }
 
@@ -319,7 +321,10 @@ export function isBlockFinished(
   block: Pick<TrainingBlock, "startDate" | "durationWeeks">,
   today: string
 ): boolean {
-  return localDateMs(today) >= localDateMs(blockEndDate(block));
+  return (
+    parseLocalDate(today).getTime() >=
+    parseLocalDate(blockEndDate(block)).getTime()
+  );
 }
 
 /**

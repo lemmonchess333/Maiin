@@ -20,10 +20,10 @@ import type { ActiveTrainingBlock } from "../programTypes";
  * WHAT IS DELIBERATELY NOT MIRRORED: the client passes its LOCAL date in the
  * command (`today`), because programState carries no timezone and the server
  * cannot derive the user's calendar day. The server mirror parses that date as
- * UTC while the client parses as local — which is safe here, and the boundary
- * cases below are the proof rather than the claim. `blockWeekOf` is a
- * DIFFERENCE between two plain YYYY-MM-DD strings, so a consistent parse on
- * either side yields an identical week number in any zone.
+ * UTC while the client counts local calendar days. Both count seven dates
+ * per week, including weeks with a daylight-saving transition. The separate
+ * trainingBlock.timezone suite checks this in fresh processes with explicit
+ * timezones so a UTC CI host also exercises the clock-change boundaries.
  */
 const require = createRequire(import.meta.url);
 const cf = require("../../../../functions/lib/progressionHold") as {

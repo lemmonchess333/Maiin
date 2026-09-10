@@ -1,0 +1,25 @@
+{
+  "tool": "built-in image generation",
+  "generatedOn": "2026-09-09",
+  "originalOutputName": "exec-ce2191a7-c191-41c9-98f1-adf2f4f54ed1.png",
+  "selectedSource": "early-source.png",
+  "sourceSha256": "e04158a5cd117fdd97048c0285bfa583b52584d9d09b4f10758b27a65b842535",
+  "sourceGitBlobSha": "e050d8b1f1e80013cf85da76f74ae27cf301e6a3",
+  "canvas": [1536, 1024],
+  "references": ["../1-master.png", "Annotated joint guide; temporary guide file no longer available"],
+  "promptRecordStatus": "Summary recovered from the prior work checkpoint; original verbatim prompt unavailable after workspace maintenance.",
+  "promptSummary": "Create a distinct early pull for the existing right-arm bench-supported dumbbell row. Preserve the master athlete, fixed right-side three-quarter camera, black background, bench, support hand and knee, floor foot, and purple/lilac muscle hierarchy. Keep the head and torso stable, bend the working elbow slightly and raise the original dumbbell about 90 pixels. Follow the joint guide while preserving arm and equipment proportions. Output one native frame, without guide marks, labels or a collage.",
+  "guideCoordinates": {
+    "shoulder": [550, 245],
+    "elbow": [640, 395],
+    "wrist": [595, 575],
+    "grip": [595, 615],
+    "weightBox": [505, 548, 708, 696]
+  },
+  "registeredLoadRisePixels": 125,
+  "exactGuideCompliance": false,
+  "selectionReason": "Distinct early step between the hanging master and 237-pixel midpoint; not exact guide compliance.",
+  "recovery": "Recovered native source bytes match the prior recorded SHA; compositor and metadata reconstructed and reverified on current main.",
+  "strictVisualApproval": false,
+  "productionActive": false
+}

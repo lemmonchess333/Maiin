@@ -1,0 +1,156 @@
+{
+  "status": "inactive-draft",
+  "canvas": [
+    1536,
+    1024
+  ],
+  "sourceSha256": {
+    "../1-master.png": "66dc7ae834dbdcc8f3bd9005793698000244ca0658b24d9101338fe71ecf441d",
+    "early-source.png": "e04158a5cd117fdd97048c0285bfa583b52584d9d09b4f10758b27a65b842535",
+    "../3-mid.png": "9824854faae1272014435f8528fb56a5e52bac0a760e54885d8fa8ac0b1d9b3d",
+    "../4-top.png": "ddf95258de771e1e90de7837517d8107c47f209d33e65b5960e3d7d08e0d3ba9"
+  },
+  "canonicalLoadBox": [
+    465,
+    635,
+    675,
+    790
+  ],
+  "anchorRegions": {
+    "head": [
+      260,
+      0,
+      445,
+      225
+    ],
+    "supportHand": [
+      240,
+      490,
+      400,
+      550
+    ],
+    "nearShoe": [
+      680,
+      810,
+      930,
+      985
+    ],
+    "supportedLegAndShoe": [
+      965,
+      430,
+      1360,
+      590
+    ],
+    "leftBenchAndLeg": [
+      185,
+      550,
+      455,
+      920
+    ],
+    "rightBenchAndLeg": [
+      980,
+      590,
+      1355,
+      945
+    ]
+  },
+  "plateInteriorRegions": {
+    "nearPlate": [
+      610,
+      690,
+      645,
+      745
+    ],
+    "farPlate": [
+      490,
+      685,
+      510,
+      730
+    ]
+  },
+  "frames": [
+    {
+      "frame": 1,
+      "translation": [
+        0,
+        0
+      ],
+      "risePixels": 0,
+      "sha256": "d39a9faaa0f6a9de3ec516f1b42f594fd64d555aa8aa36994d17a782344d4aec",
+      "bytes": 765571,
+      "anchorPixelsExact": true,
+      "plateInteriorPixelsExact": true
+    },
+    {
+      "frame": 2,
+      "translation": [
+        34,
+        -125
+      ],
+      "risePixels": 125,
+      "sha256": "a3b650b2f3e96a60fe774d40325334ac339eda862c53402b468a81d001aee2a4",
+      "bytes": 721561,
+      "anchorPixelsExact": true,
+      "plateInteriorPixelsExact": true
+    },
+    {
+      "frame": 3,
+      "translation": [
+        84,
+        -237
+      ],
+      "risePixels": 237,
+      "sha256": "69cdbe337e0458c373d9c819f2ceaeb6536329eec1df24bdaf342a83973e7d96",
+      "bytes": 725237,
+      "anchorPixelsExact": true,
+      "plateInteriorPixelsExact": true
+    },
+    {
+      "frame": 4,
+      "translation": [
+        137,
+        -372
+      ],
+      "risePixels": 372,
+      "sha256": "501f0fd70bdf5f179d272f2bcbf63c3fac62e970faeee05905fd266e0dcee232",
+      "bytes": 715700,
+      "anchorPixelsExact": true,
+      "plateInteriorPixelsExact": true
+    },
+    {
+      "frame": 5,
+      "translation": [
+        84,
+        -237
+      ],
+      "risePixels": 237,
+      "sha256": "69cdbe337e0458c373d9c819f2ceaeb6536329eec1df24bdaf342a83973e7d96",
+      "bytes": 725237,
+      "anchorPixelsExact": true,
+      "plateInteriorPixelsExact": true
+    },
+    {
+      "frame": 6,
+      "translation": [
+        34,
+        -125
+      ],
+      "risePixels": 125,
+      "sha256": "a3b650b2f3e96a60fe774d40325334ac339eda862c53402b468a81d001aee2a4",
+      "bytes": 721561,
+      "anchorPixelsExact": true,
+      "plateInteriorPixelsExact": true
+    }
+  ],
+  "masterPixelsExact": true,
+  "loadScaling": 1,
+  "farFaceCompletion": "One occluded sector filled once using the master face's median shade; not original pixels.",
+  "strictVisualApproval": false,
+  "sequentialPlaybackVerified": false,
+  "mobileLightDarkVerified": false,
+  "limitations": [
+    "Plate interiors prove rigid registration only; outlines are partly occluded.",
+    "Generated shoulder/chest/arm anatomy and hand-to-handle contact still need technique review.",
+    "Static contact sheets and downloadable animation do not certify the actual mobile player or 6-to-1 loop."
+  ]
+}
