@@ -208,12 +208,19 @@ describe("WeekStrip — runDay status precedence (spec gate #11, resolver-aware)
     expect(checks.length).toBeGreaterThan(0);
   });
 
-  it("PR-0c: does not match next-week strip dates to this-week's runDay", () => {
-    // Strip is rolling 7-day forward. If today is mid-week, the
-    // last few strip days fall into NEXT week. Even when a
-    // legacy-shaped runDay (no date/weekKey) matches by dayIndex,
-    // the resolver's currentWeekKey gate prevents it from
-    // surfacing on next-week strip dates.
+  it("anchors every strip day on ONE week key, so none can borrow another week's runDay", () => {
+    /* The strip renders the calendar week containing today, so all
+       seven days share `localWeekKey(today)` and a legacy-shaped runDay
+       (no date/weekKey) legitimately matches each of them by dayIndex.
+       That is the property worth pinning HERE: one anchor for the whole
+       window, which is what makes the resolver's gate meaningful.
+
+       The gate itself — a target date in a DIFFERENT week not matching
+       — cannot be exercised from this component any more, because the
+       window can no longer contain a next-week date. It keeps its own
+       coverage where it lives, in trainingResolver.test.ts: "does NOT
+       match the same legacy runDay when target is in a future week —
+       THE date-inheritance bug fix". */
     const schedule = makeSchedule([
       "run",
       "run",
@@ -260,13 +267,12 @@ describe("WeekStrip — runDay status precedence (spec gate #11, resolver-aware)
       />
     );
 
-    // The strip iterates today + 6 forward. Of those, only strip
-    // positions whose dates fall in the SAME week as today should
-    // match the legacy-shaped runDays. That's exactly `7 - todayDow`
-    // positions — minus today itself (excluded from runDays).
+    /* Every day of the week except today carries a legacy runDay, and
+       all seven share today's week key — so all six resolve. An anchor
+       that drifted per-day (a Monday-first strip, say, which would
+       straddle two Sunday-anchored keys) would drop some of them. */
     const checks = container.querySelectorAll(".lucide-check");
-    const maxExpected = Math.max(0, 7 - todayDow - 1);
-    expect(checks.length).toBeLessThanOrEqual(maxExpected);
+    expect(checks.length, `todayDow=${todayDow}`).toBe(6);
   });
 
   it("renders the recurring rhombus when programState is omitted (back-compat)", () => {
@@ -345,10 +351,20 @@ describe("WeekStrip — accessible name and selection state", () => {
     );
   }
 
-  /** Today's cell — the resolver anchors the rolling window at today, so
-   *  it is always the first button. */
+  /** Today's cell. The strip renders the CALENDAR week containing today,
+   *  Sunday-first (`localWeekKey` is Sunday-anchored), so today sits at
+   *  its own day-of-week index rather than at 0. */
   const todayCell = (container: HTMLElement) =>
-    container.querySelectorAll("button")[0];
+    container.querySelectorAll("button")[new Date().getDay()];
+
+  /** Any cell that is NOT today — index 3 is Wednesday and would BE
+   *  today one day in seven, which is the kind of weekday-dependent
+   *  flake that only shows up midweek. */
+  const nonTodayCell = (container: HTMLElement) => {
+    const cells = container.querySelectorAll("button");
+    const dow = new Date().getDay();
+    return cells[dow === 0 ? 1 : 0];
+  };
 
   /* The capture spec `surfaces.screens.capture.spec.ts` opens the day
      peek by selecting a day cell on its accessible NAME — it needs a
@@ -491,7 +507,85 @@ describe("WeekStrip — accessible name and selection state", () => {
     expect(label).toMatch(/^[A-Z][a-z]+day \d{1,2} [A-Z][a-z]+/);
     expect(label).toMatch(/\(today\)/);
     // …and a day that is not today does not claim to be.
-    const other = container.querySelectorAll("button")[3];
+    const other = nonTodayCell(container);
     expect(other.getAttribute("aria-label")).not.toMatch(/\(today\)/);
+  });
+});
+
+describe("WeekStrip — the week you are in, not the week ahead", () => {
+  /* Home labels this section "This week" while the strip ran
+     today..today+6, so on a Wednesday it read Wed-Tue: two calendar
+     weeks under a heading claiming one, with the days already gone
+     simply absent. That absence also put DayPeekCard's nutrition row
+     out of reach — every date the card could be handed was in the
+     future, and a future day has no meals to summarise. */
+  const dows = [
+    "Sunday",
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+  ];
+
+  function labels(container: HTMLElement): string[] {
+    return Array.from(container.querySelectorAll("button")).map(
+      (b) => b.getAttribute("aria-label") ?? ""
+    );
+  }
+
+  function renderStrip() {
+    return render(
+      <WeekStrip
+        dayMap={new Map()}
+        profile={makeProfile(makeSchedule(Array(7).fill("rest")))}
+        programState={makeProgramState([])}
+        claimMap={emptyClaimMap}
+        selectedDate={null}
+        onDayTap={vi.fn()}
+      />
+    );
+  }
+
+  it("starts on Sunday and runs the full calendar week", () => {
+    /* Sunday-first is forced by the data model rather than chosen:
+       `localWeekKey` is Sunday-anchored, and the resolver derives the
+       week key that gates its legacy fallback from the window's start.
+       A Monday-first strip would straddle two keys. */
+    const { container } = renderStrip();
+    const got = labels(container);
+    expect(got).toHaveLength(7);
+    got.forEach((label, i) => {
+      expect(label, `cell ${i}`).toMatch(new RegExp(`^${dows[i]} `));
+    });
+  });
+
+  it("shows the days already gone, which is the point", () => {
+    /* The assertion has to survive being run on a Sunday, when the
+       current week genuinely has no past day — so it is expressed as
+       "exactly the days before today", not "at least one". */
+    const { container } = renderStrip();
+    const today = new Date();
+    const todayDow = today.getDay();
+    const got = labels(container);
+
+    const past = got.slice(0, todayDow);
+    expect(past).toHaveLength(todayDow);
+    for (const label of past) {
+      expect(label).not.toMatch(/\(today\)/);
+    }
+    expect(got[todayDow]).toMatch(/\(today\)/);
+  });
+
+  it("still reaches the end of the week, so a plan stays visible", () => {
+    /* The trade this makes: lookahead shrinks from a fixed 6 days to
+       whatever is left of the week. Pinned so a future change cannot
+       quietly turn the strip into pure history. */
+    const { container } = renderStrip();
+    const todayDow = new Date().getDay();
+    const got = labels(container);
+    expect(got.slice(todayDow + 1)).toHaveLength(6 - todayDow);
+    expect(got[6]).toMatch(/^Saturday /);
   });
 });

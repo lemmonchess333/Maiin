@@ -45,12 +45,19 @@ function evidence(id: string) {
 }
 
 describe("owner-authorized artwork activation", () => {
-  /* An explicit budget, not the 5s default. This case SHA-256s every
-     delivered frame of ten guides straight off disk — ~109ms of test
-     time on its own, but real I/O plus hashing, which under a full
-     parallel suite has twice overrun 5s (8.7s measured). A default
-     timeout is a value nobody chose for a case that does this much
-     work; 30s is chosen for it. */
+  /* An explicit budget, and the reason is NOT this case's own cost —
+     an earlier note here blamed "real I/O plus hashing" and that was
+     measured wrong. The work is negligible: the ten guides come to 60
+     frames and 3.4 MB, which hash in ~0.00s, and the whole file runs in
+     ~800ms on its own.
+
+     What it actually overruns on is worker starvation under the full
+     730-file parallel suite — observed at 8.7s against the old 5s
+     default and once at 32s against this 30s one, for a case doing
+     ~109ms of work. So the budget absorbs SCHEDULING contention, not
+     I/O, and raising it further would be treating the symptom. If this
+     starts failing regularly rather than occasionally, the thing to
+     look at is suite concurrency, not this number. */
   it("ships exactly ten complete guides bound to source, delivered assets and cues", () => {
     expect(
       Object.keys(FORM_ARTWORK)
