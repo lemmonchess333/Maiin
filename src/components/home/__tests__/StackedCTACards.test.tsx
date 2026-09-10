@@ -183,6 +183,18 @@ describe("HOME-ACTION-01 — deep-link + terminal states", function () {
     expect(navigate).toHaveBeenCalledWith("/program?day=2");
   });
 
+  it("the lift pill reads View with no leading chevron", function () {
+    /* A right-pointing arrow BEFORE the word read as a stray character
+       — owner-reported from a device as "it's >". Chevrons in this app
+       sit at the far right of a row, never inside a pill, and the run
+       card's own pill is bare "View run", so the pair is asserted
+       together: whichever one grows an icon, this fails. */
+    renderCards({ todayType: "lift", liftDayIndex: 2, navigate: vi.fn() });
+    const pill = screen.getByText("View");
+    expect(pill.querySelector("svg")).toBeNull();
+    expect(pill.textContent).toBe("View");
+  });
+
   it("a completed lift is labelled Completed and still opens the day", function () {
     const navigate = vi.fn();
     renderCards({

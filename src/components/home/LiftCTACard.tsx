@@ -1,7 +1,7 @@
 import InlineNumerals from "@/components/ui/InlineNumerals";
 import { THEME } from "@/lib/theme";
 import { motion } from "framer-motion";
-import { Dumbbell, ChevronRight } from "lucide-react";
+import { Dumbbell } from "lucide-react";
 import { haptic } from "@/lib/haptic";
 import { track as trackHomeEvent } from "@/lib/homeAnalytics";
 
@@ -93,7 +93,11 @@ export default function LiftCTACard({
               color: "white",
             }}
           >
-            <ChevronRight className="size-4" aria-hidden="true" />
+            {/* No leading chevron. A right-pointing arrow BEFORE the word
+                reads as a stray character rather than an affordance —
+                chevrons in this app sit at the far right of a row, never
+                inside a pill. The run card's own pill is bare "View run",
+                so dropping it also puts the matched pair back in step. */}
             View
           </div>
         ) : (
