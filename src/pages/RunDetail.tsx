@@ -1,6 +1,5 @@
 import { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { doc, getDoc } from "firebase/firestore";
 import {
   Info,
   AlertTriangle,
@@ -18,7 +17,6 @@ import {
   describeRouteConfidence,
   type RouteQuality,
 } from "../lib/routeQuality";
-import { db } from "../lib/firebase";
 import { useAuth } from "../lib/auth";
 import { THEME } from "../lib/theme";
 import { isOutdoorGpsRun } from "../lib/runGuards";
@@ -29,7 +27,8 @@ import SplitsBarChart from "../components/analytics/SplitsBarChart";
 import ElevationProfile from "../components/analytics/ElevationProfile";
 import ShareCardSheet from "@/components/share/ShareCardSheet";
 import DeleteSessionAction from "@/components/session/DeleteSessionAction";
-import { Spinner } from "../components/ui/Spinner";
+import SessionLoadState from "@/components/session/SessionLoadState";
+import { useSessionDoc } from "@/hooks/useSessionDoc";
 import { distanceLabel, distanceLabel2, paceMinSec } from "@/lib/runLabels";
 import { distanceUnitLabel, paceUnitLabel } from "@/lib/distanceUnits";
 import { splitsForDisplay } from "@/lib/gps";
@@ -82,8 +81,16 @@ export default function RunDetail() {
   const shareRouteWithPrivacy = useShareRoute();
   const privacy = usePrivacyZones();
   const { save: saveRoute } = useSavedRoutes();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [run, setRun] = useState<Record<string, any> | null>(null);
+  const {
+    status: runStatus,
+    data: run,
+    retry: retryRun,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } = useSessionDoc<Record<string, any> & { id: string }>(
+    user?.uid,
+    "runs",
+    runId
+  );
   const [shareOpen, setShareOpen] = useState(false);
   const [replaying, setReplaying] = useState(false);
   const [replayIndex, setReplayIndex] = useState(0);
@@ -96,13 +103,6 @@ export default function RunDetail() {
         : applyPrivacyZones(run?.points ?? [], privacy.zones),
     [run?.points, privacy.loading, privacy.error, privacy.zones]
   );
-
-  useEffect(() => {
-    if (!user || !runId) return;
-    getDoc(doc(db, "users", user.uid, "runs", runId)).then((snap) => {
-      if (snap.exists()) setRun({ id: snap.id, ...snap.data() });
-    });
-  }, [user, runId]);
 
   const startReplay = useCallback(() => {
     if (!run?.points?.length) return;
@@ -131,11 +131,25 @@ export default function RunDetail() {
     };
   }, []);
 
-  if (!run)
+  /* Three states, three different words and actions. A single `!run`
+     check cannot tell them apart — it renders one spinner for a run that
+     is still arriving, one that was deleted and one the network failed to
+     fetch, and the last two never stop. Retry belongs only on `failed`:
+     on a deleted run it is a control that can never succeed. */
+  if (runStatus !== "ready" || !run)
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Spinner size="lg" variant="primary" label="Loading run" />
-      </div>
+      <SessionLoadState
+        status={runStatus}
+        icon={Navigation}
+        loadingLabel="Loading run"
+        missingHeadline="Run not found"
+        missingSub="It may have been deleted, or the link belongs to another account."
+        failedHeadline="Couldn't load this run"
+        failedSub="Check your connection and try again. Nothing has been changed."
+        onRetry={retryRun}
+        backHref="/history"
+        backLabel="History"
+      />
     );
 
   const avgPace =

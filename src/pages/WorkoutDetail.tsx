@@ -30,17 +30,16 @@
 import { useEffect, useState } from "react";
 import { formatVolume } from "@/utils/formatters";
 import { useParams, useNavigate } from "react-router-dom";
-import { doc, getDoc } from "firebase/firestore";
 import { ChevronLeft, Share2, Users, Check, Dumbbell } from "lucide-react";
 
-import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
 import { THEME } from "@/lib/theme";
 import { parseLocalDate } from "@/lib/dateHelpers";
 import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
-import { Spinner } from "@/components/ui/Spinner";
 import { EmptyState } from "@/components/ui/EmptyState";
+import SessionLoadState from "@/components/session/SessionLoadState";
+import { useSessionDoc } from "@/hooks/useSessionDoc";
 import ShareCardSheet from "@/components/share/ShareCardSheet";
 import CircleShareSheet from "@/components/social/CircleShareSheet";
 import WorkoutFeedShareSheet from "@/components/workout/WorkoutFeedShareSheet";
@@ -96,8 +95,11 @@ function WorkoutDetailContent() {
   const navigate = useNavigate();
   const { user, profile } = useAuth();
 
-  const [workout, setWorkout] = useState<Workout | null>(null);
-  const [loading, setLoading] = useState(true);
+  const {
+    status,
+    data: workout,
+    retry,
+  } = useSessionDoc<Workout & { id: string }>(user?.uid, "workouts", workoutId);
   const [cardOpen, setCardOpen] = useState(false);
   const [circleOpen, setCircleOpen] = useState(false);
   const [feedOpen, setFeedOpen] = useState(false);
@@ -105,56 +107,32 @@ function WorkoutDetailContent() {
    *  "shared" state without a refetch. Seeded from the doc on load. */
   const [sharedActivityId, setSharedActivityId] = useState<string | null>(null);
 
+  /* Seeded from the loaded doc so the share button can flip optimistically
+     without a refetch. Kept as its own state rather than read straight off
+     `workout` for that reason. */
   useEffect(() => {
-    if (!user || !workoutId) {
-      setLoading(false);
-      return;
-    }
-    let cancelled = false;
-    getDoc(doc(db, "users", user.uid, "workouts", workoutId))
-      .then((snap) => {
-        if (cancelled) return;
-        if (snap.exists()) {
-          const data = { ...snap.data(), id: snap.id } as Workout;
-          setWorkout(data);
-          setSharedActivityId(data.sharedActivityId ?? null);
-        }
-      })
-      .catch(() => {
-        /* leave `workout` null — the not-found state below covers it */
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [user, workoutId]);
+    if (workout) setSharedActivityId(workout.sharedActivityId ?? null);
+  }, [workout]);
 
-  if (loading) {
+  /* A failed read is no longer reported as a missing workout. The old
+     catch dropped the error and fell through to "not found", so a dropped
+     connection told the user their session may have been deleted or that
+     the link was someone else's — two claims, both false, one of them
+     about their own data. */
+  if (status !== "ready" || !workout) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Spinner size="lg" variant="primary" label="Loading workout" />
-      </div>
-    );
-  }
-
-  if (!workout) {
-    return (
-      <div className="min-h-screen bg-background px-4 pt-6">
-        <IconButton
-          icon={<ChevronLeft className="size-5" />}
-          aria-label="Back"
-          variant="ghost"
-          onClick={() => navigate(-1)}
-        />
-        <EmptyState
-          icon={Dumbbell}
-          headline="Workout not found"
-          sub="It may have been deleted, or the link belongs to another account."
-          action={{ label: "History", href: "/history" }}
-        />
-      </div>
+      <SessionLoadState
+        status={status}
+        icon={Dumbbell}
+        loadingLabel="Loading workout"
+        missingHeadline="Workout not found"
+        missingSub="It may have been deleted, or the link belongs to another account."
+        failedHeadline="Couldn't load this workout"
+        failedSub="Check your connection and try again. Nothing has been changed."
+        onRetry={retry}
+        backHref="/history"
+        backLabel="History"
+      />
     );
   }
 

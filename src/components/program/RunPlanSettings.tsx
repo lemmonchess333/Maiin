@@ -30,7 +30,7 @@
  * the week from the same `generateSchedule(liftDays, weeklyRunDays)`
  * derivation, so what the runway preview shows is what the save writes.
  */
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { formatClock } from "@/utils/formatters";
 import { useSearchParams } from "react-router-dom";
 import {
@@ -61,6 +61,11 @@ import { getNutritionPhase } from "@/lib/nutritionPhase";
 import { httpsCallable } from "firebase/functions";
 import { functions } from "@/lib/firebase";
 import { localDateString } from "@/lib/dateHelpers";
+import {
+  loadRunPlanDraft,
+  saveRunPlanDraft,
+  clearRunPlanDraft,
+} from "@/lib/runPlanDraft";
 import { spaceDef, type SpaceDef } from "@/features/spaces/spaceDefs";
 import {
   upcomingResolvedRaceDefs,
@@ -175,26 +180,37 @@ export default function RunPlanSettings({
     parseRaceDeepLink(searchParams)
   );
 
+  /* Unsaved edits from a previous visit, read ONCE for the same reason as
+     the deep link — a draft that reseeded on re-render would fight the
+     user's typing.
+
+     The deep link outranks it below. Arriving via "Train for this race"
+     is a fresh, explicit intent about a specific event; silently
+     restoring an older half-finished goal over it would answer a question
+     the user did not ask. */
+  const [storedDraft] = useState(() => loadRunPlanDraft(profile.uid));
+
   // ── Draft state ─────────────────────────────────────────────────────
   const [runMode, setRunMode] = useState<RunMode>(
-    deepLink ? "race_prep" : saved.runMode
+    deepLink ? "race_prep" : (storedDraft?.runMode ?? saved.runMode)
   );
   const [weeklyRunDays, setWeeklyRunDays] = useState<number>(
-    saved.weeklyRunDays
+    storedDraft?.weeklyRunDays ?? saved.weeklyRunDays
   );
   const [raceDistance, setRaceDistance] = useState<RaceDistance>(
-    deepLink?.distance ?? saved.raceDistance
+    deepLink?.distance ?? storedDraft?.raceDistance ?? saved.raceDistance
   );
   const [raceTargetDate, setRaceTargetDate] = useState<string>(
-    deepLink?.date ?? saved.raceTargetDate
+    deepLink?.date ?? storedDraft?.raceTargetDate ?? saved.raceTargetDate
   );
   const [raceEventName, setRaceEventName] = useState<string>(
-    deepLink?.eventName ?? saved.raceEventName
+    deepLink?.eventName ?? storedDraft?.raceEventName ?? saved.raceEventName
   );
   // A2: optional goal finish time, drafted as the string the user types
   // ("3:59:00" / "22:30") and parsed on the fly. Empty = no goal time.
   const [raceTimeStr, setRaceTimeStr] = useState<string>(
-    saved.raceTargetTimeS ? formatRaceTime(saved.raceTargetTimeS) : ""
+    storedDraft?.raceTimeStr ??
+      (saved.raceTargetTimeS ? formatRaceTime(saved.raceTargetTimeS) : "")
   );
   const raceTimeParsed = raceTimeStr.trim()
     ? parseRaceTimeToSeconds(raceTimeStr.trim())
@@ -203,13 +219,21 @@ export default function RunPlanSettings({
   /** The catalogue binding (Q4). Cleared by any manual distance/date
    *  edit — the goal is then no longer that event. */
   const [raceEventSpaceId, setRaceEventSpaceId] = useState<string>(
-    deepLink ? deepLink.spaceId : saved.raceEventSpaceId
+    deepLink
+      ? deepLink.spaceId
+      : (storedDraft?.raceEventSpaceId ?? saved.raceEventSpaceId)
   );
-  const [runVolume, setRunVolume] = useState<RunVolumePreset>(saved.runVolume);
+  const [runVolume, setRunVolume] = useState<RunVolumePreset>(
+    storedDraft?.runVolume ?? saved.runVolume
+  );
   const [runDifficulty, setRunDifficulty] = useState<RunDifficultyPreset>(
-    saved.runDifficulty
+    storedDraft?.runDifficulty ?? saved.runDifficulty
   );
   const [saving, setSaving] = useState(false);
+  /* Anchors for the "bring the invalid field into view" behaviour below.
+     The date input lives inside RaceGoalPlanner, so the section wrapper
+     is the addressable thing; the goal time has its own id. */
+  const raceGoalRef = useRef<HTMLDivElement>(null);
 
   const today = localDateString(new Date());
   const liftDays = profile.weeklyWorkoutsTarget ?? 4;
@@ -251,6 +275,40 @@ export default function RunPlanSettings({
         weeklyRunDays !== saved.weeklyRunDays ||
         runVolume !== saved.runVolume ||
         runDifficulty !== saved.runDifficulty));
+
+  /* Persist the draft on every change, so leaving the page keeps it.
+     Keyed off `dirty` in BOTH directions: a draft that matches the saved
+     plan is not an unsaved edit, and leaving one stored would restore
+     "changes" the user had already undone by hand. */
+  useEffect(() => {
+    if (dirty) {
+      saveRunPlanDraft(profile.uid, {
+        runMode,
+        weeklyRunDays,
+        raceDistance,
+        raceTargetDate,
+        raceEventName,
+        raceTimeStr,
+        raceEventSpaceId,
+        runVolume,
+        runDifficulty,
+      });
+    } else {
+      clearRunPlanDraft(profile.uid);
+    }
+  }, [
+    dirty,
+    profile.uid,
+    runMode,
+    weeklyRunDays,
+    raceDistance,
+    raceTargetDate,
+    raceEventName,
+    raceTimeStr,
+    raceEventSpaceId,
+    runVolume,
+    runDifficulty,
+  ]);
 
   // Door 2 (races plan amendment): the same catalogue the directory
   // reads, soonest first, past dates hidden — on RESOLVED dates
@@ -352,6 +410,11 @@ export default function RunPlanSettings({
         programState: plan.programState,
         weekSchedule: plan.weekSchedule,
       });
+      /* Cleared explicitly rather than left to the `dirty` effect. That
+         effect only re-runs once `refreshProfile` has propagated the new
+         profile into `saved`, and until it does the draft is still on
+         disk describing edits that are now committed. */
+      clearRunPlanDraft(profile.uid);
       await refreshProfile();
       toast.success(
         runMode === "race_prep"
@@ -369,13 +432,39 @@ export default function RunPlanSettings({
     }
   }
 
+  /* The button's job when the draft cannot be saved.
+     `handleSave` has always refused an invalid goal time, but the button
+     was only disabled for an invalid DATE — so a bad time left a filled,
+     enabled "Save run plan" that did nothing at all when tapped.
+
+     The fix is not simply to disable it for both. A disabled control
+     cannot be tapped, focused or announced, so it can say THAT something
+     is wrong but never WHERE — and the offending field may be scrolled
+     off a phone screen, which is how the date case already behaved. The
+     button therefore stays operable while invalid, reads as unavailable
+     (`aria-disabled` + the muted treatment), and spends the tap moving
+     the user to the field that needs fixing. `disabled` proper is kept
+     for the states with nothing to reveal: not dirty, or mid-save. */
+  const invalid = raceDateInvalid || raceTimeInvalid;
+  function revealInvalidField(): void {
+    // Date first: it sits higher on the page and is the required one.
+    const target = raceDateInvalid
+      ? raceGoalRef.current
+      : document.getElementById("ps-race-time");
+    target?.scrollIntoView({ behavior: "smooth", block: "center" });
+    if (target instanceof HTMLInputElement)
+      target.focus({ preventScroll: true });
+  }
+
   const saveLabel = saving
     ? "Saving…"
     : raceDateInvalid
       ? "Fix race date"
-      : runMode === "race_prep" && plannerState.ctaLabel
-        ? plannerState.ctaLabel
-        : "Save run plan";
+      : raceTimeInvalid
+        ? "Fix goal time"
+        : runMode === "race_prep" && plannerState.ctaLabel
+          ? plannerState.ctaLabel
+          : "Save run plan";
 
   return (
     <div className="space-y-5 pb-6">
@@ -433,19 +522,21 @@ export default function RunPlanSettings({
 
       {/* ── Race goal + runway (race prep only) ──────────────────────── */}
       {runMode === "race_prep" && (
-        <RaceGoalPlanner
-          distance={raceDistance}
-          targetDate={raceTargetDate}
-          eventName={raceEventName}
-          minDate={today}
-          state={plannerState}
-          onDistanceChange={handleDistanceChange}
-          onTargetDateChange={handleTargetDateChange}
-          onEventNameChange={setRaceEventName}
-          upcomingRaces={upcomingRaces}
-          selectedEventSpaceId={raceEventSpaceId}
-          onPickRace={handlePickRace}
-        />
+        <div ref={raceGoalRef}>
+          <RaceGoalPlanner
+            distance={raceDistance}
+            targetDate={raceTargetDate}
+            eventName={raceEventName}
+            minDate={today}
+            state={plannerState}
+            onDistanceChange={handleDistanceChange}
+            onTargetDateChange={handleTargetDateChange}
+            onEventNameChange={setRaceEventName}
+            upcomingRaces={upcomingRaces}
+            selectedEventSpaceId={raceEventSpaceId}
+            onPickRace={handlePickRace}
+          />
+        </div>
       )}
 
       {/* ── A2: goal time (optional) + feasibility verdict ───────────── */}
@@ -635,11 +726,12 @@ export default function RunPlanSettings({
         >
           <button
             type="button"
-            onClick={handleSave}
-            disabled={!dirty || raceDateInvalid || saving}
+            onClick={invalid ? revealInvalidField : handleSave}
+            disabled={!dirty || saving}
+            aria-disabled={invalid || undefined}
             className={cn(
               "w-full py-3.5 rounded-2xl text-sm font-bold transition-all active:scale-[0.98]",
-              !dirty || raceDateInvalid || saving
+              !dirty || invalid || saving
                 ? "bg-muted text-muted-foreground opacity-60"
                 : "bg-running-fill text-white"
             )}

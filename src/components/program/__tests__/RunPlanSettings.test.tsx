@@ -20,6 +20,11 @@ import type { UserProfile } from "@/lib/auth";
  * the same raceGoal + eventSpaceId — now inside profileUpdates.
  */
 
+// jsdom implements no layout, so scrollIntoView is absent. The reveal
+// behaviour asserts FOCUS, which jsdom does implement; the scroll is the
+// half only a real browser can show.
+Element.prototype.scrollIntoView = vi.fn();
+
 const configureSpy = vi.fn(async (..._args: unknown[]) => ({ data: {} }));
 vi.mock("firebase/functions", () => ({
   httpsCallable: () => configureSpy,
@@ -45,7 +50,7 @@ const baseProfile = {
 function renderPage(profile: UserProfile, path = "/settings/run-plan") {
   const refreshProfile = vi.fn().mockResolvedValue(undefined);
   const onOpenFullSettings = vi.fn();
-  render(
+  const { unmount } = render(
     <MemoryRouter initialEntries={[path]}>
       <RunPlanSettings
         profile={profile}
@@ -55,7 +60,7 @@ function renderPage(profile: UserProfile, path = "/settings/run-plan") {
       />
     </MemoryRouter>
   );
-  return { refreshProfile, onOpenFullSettings };
+  return { refreshProfile, onOpenFullSettings, unmount };
 }
 
 type ConfigurePayload = {
@@ -83,6 +88,9 @@ describe("RunPlanSettings", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     configureSpy.mockClear();
+    // The draft is uid-scoped localStorage; without this a draft written
+    // by one test seeds the next one's editor.
+    localStorage.clear();
   });
 
   it("shows only run controls — no lift/nutrition/equipment fields", () => {
@@ -301,6 +309,160 @@ describe("RunPlanSettings", () => {
     );
     await waitFor(() => expect(configureSpy).toHaveBeenCalledTimes(1));
     expect("targetTimeS" in sentPayload().profileUpdates.raceGoal!).toBe(false);
+  });
+
+  it("an invalid goal time makes Save say so and refuse the tap", async () => {
+    /* The test above is titled "blocks the save" but CLEARS the field
+       before tapping, so nothing exercised the block. It did not hold:
+       `handleSave` refused an invalid time, while the button's `disabled`
+       covered only the DATE — leaving a filled, enabled "Save run plan"
+       that silently did nothing. */
+    renderPage(baseProfile);
+    fireEvent.click(screen.getByRole("radio", { name: /Race prep/i }));
+    fireEvent.change(screen.getByLabelText(/Target date/i), {
+      target: { value: "2027-01-01" },
+    });
+    fireEvent.change(screen.getByLabelText(/Goal time \(optional\)/i), {
+      target: { value: "abc" },
+    });
+
+    const save = await screen.findByRole("button", { name: /Fix goal time/i });
+    expect(save).toHaveAttribute("aria-disabled", "true");
+    fireEvent.click(save);
+    expect(configureSpy).not.toHaveBeenCalled();
+  });
+
+  it("tapping the unavailable Save moves to the field that needs fixing", async () => {
+    /* Why the button stays operable rather than `disabled`: a disabled
+       control cannot be tapped, focused or announced, so it can say THAT
+       something is wrong but never WHERE — and on a phone the offending
+       field is usually scrolled off screen. */
+    renderPage(baseProfile);
+    fireEvent.click(screen.getByRole("radio", { name: /Race prep/i }));
+    fireEvent.change(screen.getByLabelText(/Target date/i), {
+      target: { value: "2027-01-01" },
+    });
+    const time = screen.getByLabelText(/Goal time \(optional\)/i);
+    fireEvent.change(time, { target: { value: "abc" } });
+
+    fireEvent.click(
+      await screen.findByRole("button", { name: /Fix goal time/i })
+    );
+    expect(document.activeElement).toBe(time);
+  });
+
+  it("a valid draft still saves — the counterweight", async () => {
+    // A button wired to refuse everything would pass both tests above.
+    renderPage(baseProfile);
+    fireEvent.click(screen.getByRole("radio", { name: /Race prep/i }));
+    fireEvent.change(screen.getByLabelText(/Target date/i), {
+      target: { value: "2027-01-01" },
+    });
+    fireEvent.change(screen.getByLabelText(/Goal time \(optional\)/i), {
+      target: { value: "24:30" },
+    });
+
+    const save = await screen.findByRole("button", {
+      name: /Save .*plan|Start .*plan/i,
+    });
+    expect(save).not.toHaveAttribute("aria-disabled");
+    fireEvent.click(save);
+    await waitFor(() => expect(configureSpy).toHaveBeenCalledTimes(1));
+  });
+
+  it("an unfinished race edit survives leaving the page", async () => {
+    /* The editor's own "open full settings" link navigates away, which
+       unmounted the component and took the draft with it. Unmounting and
+       re-rendering IS that journey — the draft lives in component state,
+       so nothing else distinguishes a remount from a return. */
+    const { unmount } = renderPage(baseProfile);
+    fireEvent.click(screen.getByRole("radio", { name: /Race prep/i }));
+    fireEvent.change(screen.getByLabelText(/Target date/i), {
+      target: { value: "2027-01-01" },
+    });
+    fireEvent.change(screen.getByLabelText(/Event name/i), {
+      target: { value: "Brighton" },
+    });
+    unmount();
+
+    renderPage(baseProfile);
+    expect(screen.getByLabelText(/Target date/i)).toHaveValue("2027-01-01");
+    expect(screen.getByLabelText(/Event name/i)).toHaveValue("Brighton");
+  });
+
+  it("a half-typed goal time survives too", async () => {
+    // The invalid draft is exactly the one worth keeping: it is the edit
+    // the user has not finished.
+    const { unmount } = renderPage(baseProfile);
+    fireEvent.click(screen.getByRole("radio", { name: /Race prep/i }));
+    fireEvent.change(screen.getByLabelText(/Target date/i), {
+      target: { value: "2027-01-01" },
+    });
+    fireEvent.change(screen.getByLabelText(/Goal time \(optional\)/i), {
+      target: { value: "3:5" },
+    });
+    unmount();
+
+    renderPage(baseProfile);
+    expect(screen.getByLabelText(/Goal time \(optional\)/i)).toHaveValue("3:5");
+  });
+
+  it("undoing every edit by hand leaves nothing to restore", async () => {
+    /* The counterweight, and the case a naive "write on change" gets
+       wrong: a draft equal to the saved plan is not an unsaved edit, and
+       restoring one would reinstate a change the user had already backed
+       out of. */
+    const { unmount } = renderPage(baseProfile);
+    fireEvent.click(screen.getByRole("radio", { name: /Race prep/i }));
+    fireEvent.click(screen.getByRole("radio", { name: /Freeform/i }));
+    unmount();
+
+    renderPage(baseProfile);
+    // Back to the saved mode, with no race planner showing.
+    expect(screen.queryByLabelText(/Target date/i)).toBeNull();
+  });
+
+  it("a saved plan clears the draft", async () => {
+    const { unmount } = renderPage(baseProfile);
+    fireEvent.click(screen.getByRole("radio", { name: /Race prep/i }));
+    fireEvent.change(screen.getByLabelText(/Target date/i), {
+      target: { value: "2027-01-01" },
+    });
+    fireEvent.click(
+      await screen.findByRole("button", { name: /Save .*plan|Start .*plan/i })
+    );
+    await waitFor(() => expect(configureSpy).toHaveBeenCalledTimes(1));
+    unmount();
+
+    // Re-rendered against the UNCHANGED baseProfile (the test double never
+    // refreshes it), so anything showing here came from a stale draft.
+    renderPage(baseProfile);
+    expect(screen.queryByLabelText(/Target date/i)).toBeNull();
+  });
+
+  it("a deep link outranks a stored draft", async () => {
+    /* Arriving via "Train for this race" is a fresh explicit intent about
+       a specific event. Restoring an older half-finished goal over it
+       would answer a question the user did not ask. */
+    const { unmount } = renderPage(baseProfile);
+    fireEvent.click(screen.getByRole("radio", { name: /Race prep/i }));
+    fireEvent.change(screen.getByLabelText(/Target date/i), {
+      target: { value: "2027-01-01" },
+    });
+    unmount();
+
+    const race = firstUpcomingRace();
+    renderPage(
+      baseProfile,
+      `/settings/run-plan?distance=${race.event!.distance}&date=${
+        race.event!.dateKey
+      }&spaceId=${race.id}`
+    );
+    // The deep link's date, NOT the draft's 2027-01-01.
+    expect(screen.getByLabelText(/Target date/i)).toHaveValue(
+      race.event!.dateKey
+    );
+    expect(race.event!.dateKey).not.toBe("2027-01-01");
   });
 
   it("Door 1: a valid deep-link seeds race prep and saves the eventSpaceId binding", async () => {
