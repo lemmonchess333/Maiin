@@ -274,7 +274,7 @@ export default function WeightLogSheet({
       <div className="min-h-0 overflow-y-auto px-4 pb-4 pt-3">
         <div className="flex items-baseline justify-center gap-1 py-2">
           <div
-            className="min-w-0 rounded-xl text-display font-mono font-extrabold tabular-nums focus-within:ring-2 focus-within:ring-primary"
+            className="min-w-0 rounded-xl text-display font-mono font-extrabold tabular-nums"
             style={{
               width: `${Math.max(3, Math.min(7, value.length)) + 0.5}ch`,
             }}
@@ -301,7 +301,17 @@ export default function WeightLogSheet({
               }}
             />
           </div>
-          <div className="relative w-16 shrink-0 rounded-xl focus-within:ring-2 focus-within:ring-primary">
+          {/* No `focus-within` ring. It matches whenever a descendant has
+              focus — INCLUDING after a touch tap — so tapping the unit
+              on a phone drew a heavy 2px primary box around it, which is
+              what the owner saw. It was also redundant: index.css's
+              global `:focus-visible` already gives every focusable
+              element a 2px primary outline at 4.47:1, and its
+              `:focus:not(:focus-visible)` companion suppresses that for
+              pointer and touch. Removing this loses no keyboard
+              indicator; it only stops the one that should never have
+              fired on a tap. */}
+          <div className="relative w-16 shrink-0 rounded-xl">
             <select
               aria-label="Weight unit"
               value={selectedUnit}
@@ -323,7 +333,7 @@ export default function WeightLogSheet({
           </div>
           {selectedUnit === "st" && (
             <div
-              className="min-w-0 rounded-xl text-display font-mono font-extrabold tabular-nums focus-within:ring-2 focus-within:ring-primary"
+              className="min-w-0 rounded-xl text-display font-mono font-extrabold tabular-nums"
               style={{
                 width: `${Math.max(3, Math.min(5, pounds.length)) + 0.5}ch`,
               }}
@@ -426,10 +436,15 @@ export default function WeightLogSheet({
             <Button
               fullWidth
               loading={saving}
-              aria-label={editing ? "Save changes" : "Log weight"}
+              /* One word, both states. The sheet's own title already
+                 says "Log weight" / "Edit weight", so the button was
+                 repeating the noun to say what the header said — and
+                 "Save changes" framed a weigh-in as a form submission
+                 rather than as logging something. */
+              aria-label="Log"
               onClick={() => void save()}
             >
-              {editing ? "Save changes" : "Log weight"}
+              Log
             </Button>
             {!loadingEntry && correction?.editId && (
               <Button
@@ -438,7 +453,15 @@ export default function WeightLogSheet({
                 disabled={saving}
                 onClick={correct}
               >
-                {correction.removesEntry ? "Remove entry" : "Undo last change"}
+                {/* One word for one gesture. This is not a general
+                    delete: `readWeightCorrection` returns an editId
+                    only while a recent write receipt exists, so the
+                    action is always "undo the last write". Undoing a
+                    create removes the entry; undoing an edit restores
+                    the previous figure. Forking the label on that
+                    distinction names an implementation detail the user
+                    did not choose, and "Remove" overstates half of it. */}
+                Undo
               </Button>
             )}
           </div>
