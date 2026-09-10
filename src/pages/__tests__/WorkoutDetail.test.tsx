@@ -93,9 +93,18 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe("WorkoutDetail", () => {
-  it.each(["missing", "failed"])(
+  /* The headline is now per-state. This case used to assert "Workout not
+     found" for BOTH, which is the conflation the split fixed: a failed
+     read reported the user's session as possibly deleted, or the link as
+     someone else's. What the case is FOR — the previous workout must not
+     survive the navigation — is unchanged and is the half that matters,
+     since stale data reads as data rather than as an error. */
+  it.each([
+    ["missing", "Workout not found"],
+    ["failed", "Couldn't load this workout"],
+  ])(
     "clears the previous workout when the next record is %s",
-    async (state) => {
+    async (state, headline) => {
       seedFirestore({ "users/u1/workouts/w1": SAVED });
       const router = createMemoryRouter(
         [{ path: "/workout/:workoutId", element: <WorkoutDetail /> }],
@@ -109,7 +118,7 @@ describe("WorkoutDetail", () => {
       await act(async () => {
         await router.navigate("/workout/w2");
       });
-      expect(await screen.findByText("Workout not found")).toBeTruthy();
+      expect(await screen.findByText(headline)).toBeTruthy();
       expect(screen.queryByText("Barbell Bench Press")).toBeNull();
       expect(
         screen.queryByRole("button", { name: /share to feed/i })
