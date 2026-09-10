@@ -529,3 +529,42 @@ describe("completed-set corrections", () => {
     expect(screen.queryByRole("button", { name: "Edit workout" })).toBeNull();
   });
 });
+
+describe("WorkoutSession — an accidental extra set can be removed", () => {
+  /* "+ Add Set" had no inverse, so a mis-tap left an uncompleted set the
+     session counted as outstanding: finishing the three sets the programme
+     prescribed still routed the lifter through "Finish early". */
+  const rows = () => screen.getAllByLabelText(/^Set \d+ reps$/);
+
+  /* The set-type popover is the menu each set already has; its trigger
+     is the numbered badge at the head of the row. */
+  it("removes the extra through the set's own menu", () => {
+    openSession();
+    expect(rows()).toHaveLength(3);
+
+    fireEvent.click(screen.getByRole("button", { name: "+ Add Set" }));
+    expect(rows()).toHaveLength(4);
+
+    // Open set 4's menu and remove it.
+    fireEvent.click(screen.getAllByTitle("Set type: working")[3]);
+    fireEvent.click(screen.getByRole("button", { name: /Remove set/i }));
+    expect(rows()).toHaveLength(3);
+  });
+
+  it("does NOT offer removal on a prescribed set", () => {
+    /* The boundary. Removing one of the three the programme asked for is a
+       change to the prescription, not a correction of a mis-tap. */
+    openSession();
+    fireEvent.click(screen.getAllByTitle("Set type: working")[2]);
+    expect(screen.queryByRole("button", { name: /Remove set/i })).toBeNull();
+  });
+
+  it("does NOT offer removal on a set that is not the last", () => {
+    // Splicing from the middle renumbers every set after it and moves the
+    // completion cursor under the lifter.
+    openSession();
+    fireEvent.click(screen.getByRole("button", { name: "+ Add Set" }));
+    fireEvent.click(screen.getAllByTitle("Set type: working")[1]);
+    expect(screen.queryByRole("button", { name: /Remove set/i })).toBeNull();
+  });
+});

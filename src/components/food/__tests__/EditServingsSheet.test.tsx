@@ -137,6 +137,58 @@ describe("EditServingsSheet", function () {
     expect(screen.getByText(/\(\+1 serving\)/)).toBeInTheDocument();
   });
 
+  it("previews the EDITED calories, not the stored ones", function () {
+    /* The sheet contradicted itself: the preview divided the SAVED total
+       by the saved count, while Save wrote the typed per-serving value.
+       Correcting 78 to 100 previewed 156 for two servings and saved 200. */
+    renderSheet();
+    fireEvent.change(screen.getByLabelText("Cal"), {
+      target: { value: "100" },
+    });
+    expect(screen.getByText(/~ 200 cal/)).toBeInTheDocument();
+  });
+
+  it("re-previews when the servings change on top of an edit", function () {
+    // Both inputs feed one number; changing either must move it.
+    renderSheet();
+    fireEvent.change(screen.getByLabelText("Cal"), {
+      target: { value: "100" },
+    });
+    fireEvent.click(screen.getByLabelText("Increase servings"));
+    expect(screen.getByText(/~ 300 cal/)).toBeInTheDocument();
+  });
+
+  it("keeps the stored average while the calorie field is blank", function () {
+    /* Mid-edit the field is empty, which `parseMacro` already treats as
+       "unchanged for this dimension". The preview must not read that as
+       zero calories and flash 0 while the user retypes. */
+    renderSheet();
+    fireEvent.change(screen.getByLabelText("Cal"), { target: { value: "" } });
+    expect(screen.getByText(/~ 156 cal/)).toBeInTheDocument();
+  });
+
+  it("does not shift an untouched preview by re-rounding", function () {
+    /* 157 over 2 servings is 78.5 each. The preview is round(78.5 x 3) =
+       236, NOT 3 x round(78.5) = 237 — so the unedited path keeps using
+       the unrounded stored average rather than the rounded figure that
+       seeds the input. */
+    // `source` REPLACES the default fixture rather than merging into it,
+    // so the count has to come along or it lands undefined.
+    renderSheet({
+      source: {
+        foodName: "Boiled egg",
+        currentCount: 2,
+        currentTotalCalories: 157,
+        currentTotalProtein: 12,
+        currentTotalCarbs: 2,
+        currentTotalFat: 10,
+        currentMeal: "breakfast",
+      },
+    });
+    fireEvent.click(screen.getByLabelText("Increase servings"));
+    expect(screen.getByText(/~ 236 cal/)).toBeInTheDocument();
+  });
+
   it("preserves the stepper across in-place source rerenders (parent remounts via key)", function () {
     // The parent (Food.tsx) is responsible for remounting the sheet
     // when the user opens a different group, by keying the component

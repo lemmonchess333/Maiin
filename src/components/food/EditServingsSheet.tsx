@@ -159,9 +159,6 @@ function EditServingsSheet({
   if (!source) return null;
 
   const { foodName, currentCount, currentTotalCalories, currentMeal } = source;
-  const perServingCal =
-    currentCount > 0 ? currentTotalCalories / currentCount : 0;
-  const previewCal = Math.round(perServingCal * target);
   const countDelta = target - currentCount;
   const mealChanged = pickedMeal !== null && pickedMeal !== currentMeal;
   const trimmedName = pickedName.trim();
@@ -185,9 +182,29 @@ function EditServingsSheet({
     car: parseMacro(pickedCar),
     fat: parseMacro(pickedFat),
   };
+
+  /* The user's calorie edit, or null when the field is untouched, blank or
+     non-numeric. Shared by the
+     preview and the override below so the sheet cannot preview one number
+     and save another — which is what it did: the preview divided the
+     SAVED total by the saved count, so typing 300 over a saved 200 left it
+     showing 200 x servings while Save wrote 300. */
+  const editedCal =
+    picked.cal !== null && picked.cal !== initialPerServing.cal
+      ? picked.cal
+      : null;
+
+  /* Unedited, this stays the UNROUNDED stored average rather than
+     `initialPerServing.cal`. The two differ whenever the saved total does
+     not divide evenly — 157 over 2 servings previews 236 at three
+     servings, not 3 x 79 = 237 — so reusing the rounded figure here would
+     shift the preview of a sheet nobody has touched. */
+  const perServingCal =
+    editedCal ?? (currentCount > 0 ? currentTotalCalories / currentCount : 0);
+  const previewCal = Math.round(perServingCal * target);
   const macroOverrides: MacroOverrides = {};
-  if (picked.cal !== null && picked.cal !== initialPerServing.cal) {
-    macroOverrides.totalCalories = picked.cal;
+  if (editedCal !== null) {
+    macroOverrides.totalCalories = editedCal;
   }
   if (picked.pro !== null && picked.pro !== initialPerServing.pro) {
     macroOverrides.totalProtein = picked.pro;
