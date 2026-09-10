@@ -18,9 +18,12 @@ import {
 import { useBlockedUsers } from "./useBlockedUsers";
 import { useHiddenActivities } from "./useHiddenActivities";
 
-// Cap the unread-counter subscription so this hook can't fan out to
-// the user's whole feed. The badge UI only renders "N" up to a max
-// display value — beyond UNREAD_CAP we surface "UNREAD_CAP+" instead.
+// Cap the unread-counter SUBSCRIPTION so this hook can't fan out to the
+// user's whole feed. This is a query bound, not a display rule: the tab
+// bar applies its own display cap (`9+`, in BottomNavigation) and never
+// consulted this hook for one. There is deliberately no `capped` flag on
+// the return: a flag for a "UNREAD_CAP+" rendering that no surface builds
+// would be a second copy of a display decision this hook does not own.
 const UNREAD_CAP = 50;
 
 /**
@@ -134,7 +137,6 @@ export function useUnreadCount() {
     [rows, uid, blocked, hidden]
   );
   const count = Math.min(visible, UNREAD_CAP);
-  const capped = visible > UNREAD_CAP;
 
   const markSeen = () => {
     if (!uid) return;
@@ -148,5 +150,5 @@ export function useUnreadCount() {
     setRows([]);
   };
 
-  return { count, markSeen, capped, error };
+  return { count, markSeen, error };
 }

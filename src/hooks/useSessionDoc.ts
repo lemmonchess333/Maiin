@@ -38,8 +38,6 @@ export interface SessionDoc<T> {
   data: T | null;
   /** Re-runs the read. A no-op unless the status is `failed`. */
   retry: () => void;
-  /** Replace the loaded document in place (optimistic local edits). */
-  setData: (next: T) => void;
 }
 
 export function useSessionDoc<T extends { id: string }>(
@@ -52,7 +50,6 @@ export function useSessionDoc<T extends { id: string }>(
      the effect would not re-run, and the second tap would look like a dead
      button — on exactly the flaky connection where a user taps twice. */
   const [attempt, setAttempt] = useState(0);
-  const [override, setOverride] = useState<T | null>(null);
 
   /* The identity of the read currently in flight. A settled result carries
      the key it came from, so a result belonging to a PREVIOUS uid / id /
@@ -103,12 +100,11 @@ export function useSessionDoc<T extends { id: string }>(
       : settled.status;
 
   const data =
-    override ??
-    (settled && settled.key === key && settled.status === "ready"
+    settled && settled.key === key && settled.status === "ready"
       ? settled.data
-      : null);
+      : null;
 
   const retry = useCallback(() => setAttempt((n) => n + 1), []);
 
-  return { status, data, retry, setData: setOverride };
+  return { status, data, retry };
 }

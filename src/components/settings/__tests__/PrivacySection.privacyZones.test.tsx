@@ -21,6 +21,18 @@ vi.mock("@/lib/socialApi", () => ({
   getBlockedUsers: vi.fn().mockResolvedValue([]),
   unblockUser: vi.fn().mockResolvedValue(undefined),
 }));
+/* PrivacySection now routes unblock through the shared blocked Set, so
+   it calls `useBlockedUsers()` — whose `useUid` needs an AuthProvider this
+   suite never mounts. Stubbed: these cases are about privacy zones, and
+   the blocking behaviour has its own suite (PrivacySection.blocked). */
+vi.mock("@/hooks/useBlockedUsers", () => ({
+  useBlockedUsers: () => ({
+    blocked: new Set<string>(),
+    ready: true,
+    addBlocked: vi.fn(),
+    removeBlocked: vi.fn(),
+  }),
+}));
 const toastSuccess = vi.fn();
 const toastError = vi.fn();
 vi.mock("@/lib/toast", () => ({
