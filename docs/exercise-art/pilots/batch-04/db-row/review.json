@@ -5,11 +5,16 @@
   "sequentialPlaybackVerified": false,
   "mobileLightDarkVerified": false,
   "findings": [
-    "Selected support hand, shoe and head threshold bounds remain within 1px; support hand/knee and opposite-foot setup match the catalogue.",
-    "Generated early pose is closer to midpoint than requested; movement spacing and the 6-to-1 return need repair/review.",
-    "Dumbbell appears smaller after the hanging master; working shoulder and chest exposure change during the pull, requiring equipment and no-torso-rotation review."
+    "The recovered early source gives a distinct 125px load rise between the hanging master and the 237px midpoint; top rise is 372px. The requested 90px guide was not met exactly.",
+    "One canonical dumbbell layer translates without scaling. Both plate interior patches retain master pixels; one formerly occluded far-face sector is reconstructed once and reused.",
+    "Named head, support hand, supported leg/shoe, standing shoe and bench regions are pixel-identical to the master across all six frames.",
+    "Generated shoulder excursion, chest exposure, projected arm lengths and hand/handle contact still need technique review; fixed scene pixels do not prove stable torso orientation.",
+    "Actual sequential mobile light/dark player review, including 6-to-1, remains unverified. Strict visual approval stays false."
   ],
   "referencePath": "public/form-frames/barbell-row/1.webp",
   "referenceSha256": "6f514489bd36819239d4beab383cabf54140cf9d8b9115c1fe8995bab1093d10",
-  "cueSha256": "6021f6dfd734a5bfe08c626dbfa595f49a10d0a192233f575412100f72c5e379"
+  "cueSha256": "6021f6dfd734a5bfe08c626dbfa595f49a10d0a192233f575412100f72c5e379",
+  "repairEvidence": "composite/measurements.json",
+  "strictVisualApproval": false,
+  "productionActive": false
 }

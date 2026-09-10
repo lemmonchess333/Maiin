@@ -83,7 +83,10 @@ vi.mock("@/lib/workoutBurn", () => ({ estimateLiftBurn: vi.fn(() => 0) }));
 vi.mock("sonner", () => ({
   toast: { success: vi.fn(), info: vi.fn(), error: vi.fn() },
 }));
-vi.mock("date-fns", () => ({ format: vi.fn(() => "2026-05-12") }));
+vi.mock("date-fns", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("date-fns")>()),
+  format: vi.fn(() => "2026-05-12"),
+}));
 
 /** The command client is the seam — mocking it keeps the callable out and
  *  lets each failure mode be produced exactly. */
