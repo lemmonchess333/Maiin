@@ -100,27 +100,48 @@ describe("MacroRing — what the ring says without a tap", () => {
     const { container } = renderRing({ value: 0 });
     const circles = container.querySelectorAll("circle");
     expect(circles).toHaveLength(1);
-    expect(circles[0].getAttribute("stroke")).toBe(
-      "hsl(var(--muted-foreground) / 0.22)"
-    );
     expect(screen.getByText("0g")).toBeInTheDocument();
   });
 
-  it("uses a NEUTRAL track, not a tint of the macro's own hue", () => {
-    /* The contrast decision this component's header records. A track
-       drawn as `color + "18"` measured 1.06:1 against the card for
-       carbs — invisible — and raising the alpha cannot fix yellow. If
-       someone reintroduces a hue-derived track, the three rings become
-       unequal again with the worst one unreadable. */
-    for (const color of ["#EC4899", "#EAB308", "#7CB46C"]) {
+  it("carries the macro's own hue at zero, where nothing else does", () => {
+    /* Replaces a lock that required a NEUTRAL track. That lock's
+       measurement was right about the value it tested and wrong about
+       the conclusion it drew: it tinted `THEME.macros.carbs`, the ACCENT
+       #EAB308, which is capped at 1.92:1 on a white card even solid — so
+       "yellow cannot clear it at any alpha" held for the accent and not
+       for the macro. `useMacroPalette().text` swaps to #A16207 in light
+       precisely so macro colour survives there, and TodayEnergy now
+       passes it.
+
+       Measured against --card, with the caller passing the theme's own
+       palette track:
+
+                    track@35%        arc vs card      arc vs track
+         light      1.85/1.62/1.59   6.04/4.92/4.83   3.26/3.03/3.03
+         dark       1.61/2.20/1.97   4.62/8.49/6.67   2.87/3.86/3.38
+
+       The neutral groove replaced was 1.34 light / 1.48 dark, so every
+       macro is MORE visible than before in both themes. */
+    for (const color of ["#BE185D", "#A16207", "#4F7D43"]) {
       const { container, unmount } = renderRing({ value: 0, color });
       const track = container.querySelector("circle");
-      expect(track?.getAttribute("stroke")).not.toContain(color);
-      expect(track?.getAttribute("stroke")).toBe(
-        "hsl(var(--muted-foreground) / 0.22)"
-      );
+      expect(track?.getAttribute("stroke")).toBe(`${color}59`);
       unmount();
     }
+  });
+
+  it("keeps the arc SOLID so filled reads as filled against remaining", () => {
+    /* The pair is the contract, not either alone: an arc drawn at the
+       track's alpha would leave a ring that is uniformly coloured and
+       says nothing about progress. */
+    const { container } = renderRing({
+      value: 70,
+      target: 100,
+      color: "#A16207",
+    });
+    const [track, arc] = Array.from(container.querySelectorAll("circle"));
+    expect(track.getAttribute("stroke")).toBe("#A1620759");
+    expect(arc.getAttribute("stroke")).toBe("#A16207");
   });
 
   it("gives assistive tech ONE sentence, not three fragments", () => {
@@ -161,5 +182,37 @@ describe("MacroRing — what the ring says without a tap", () => {
     expect(
       screen.getByText("Protein: 80 grams logged, no target")
     ).toBeInTheDocument();
+  });
+});
+
+describe("TodayEnergy hands the rings a theme-aware colour", () => {
+  /* The half of the fix that does not live in MacroRing. `THEME.macros`
+     is ONE fixed set for both themes, so passing it put the carbs arc at
+     1.92:1 on a white card — the filled portion, the half that carries
+     the reading, effectively invisible in light mode. Pinned at the
+     source rather than by rendering TodayEnergy, which needs the whole
+     Home data stack; what matters is that the raw accents are not the
+     thing handed to the ring. */
+  it("passes the palette's text track, not the raw THEME.macros accents", async () => {
+    const { readFileSync } = await import("node:fs");
+    const { fileURLToPath } = await import("node:url");
+    const { dirname, resolve } = await import("node:path");
+    const here = dirname(fileURLToPath(import.meta.url));
+    const src = readFileSync(resolve(here, "../TodayEnergy.tsx"), "utf8");
+
+    expect(src, "TodayEnergy must resolve macro colour per theme").toContain(
+      "useMacroPalette"
+    );
+    const macroBlock = src.slice(
+      src.indexOf("const macros = ["),
+      src.indexOf("];", src.indexOf("const macros = ["))
+    );
+    expect(macroBlock).toContain("macroText.protein");
+    expect(macroBlock).toContain("macroText.carbs");
+    expect(macroBlock).toContain("macroText.fat");
+    expect(
+      macroBlock,
+      "the raw accents are theme-blind — carbs is 1.92:1 on a light card"
+    ).not.toContain("THEME.macros");
   });
 });
