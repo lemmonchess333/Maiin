@@ -203,11 +203,11 @@ test.describe(`home + food surfaces (${PHASE})`, () => {
     ).toBeVisible({ timeout: 20_000 });
     await shoot(page, "home-energy-default");
 
-    /* Open the day peek. Must be a NON-today cell: `handleDayTap` treats
-       a tap on today as redundant with the live session cards below and
-       scrolls to them instead of peeking (Cal-A), so targeting "today"
-       silently captures the wrong screen — which is what the first run
-       of this spec did. Day-cell labels carry a "(today)" suffix, so the
+    /* Open the day peek on a NON-today cell. Every cell opens a peek, so
+       this is a choice of frame SUBJECT rather than a correctness guard:
+       a selector that can match today films a different card depending
+       on which weekday CI ran, which is diff-report churn with no code
+       change behind it. Day-cell labels carry a "(today)" suffix, so the
        absence of it is the selector.
 
        That intent was right and the regex had rotted. It anchored the

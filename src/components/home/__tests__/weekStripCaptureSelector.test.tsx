@@ -158,10 +158,13 @@ describe("capture spec — WeekStrip day-cell selector", () => {
     ).toBeGreaterThanOrEqual(5);
   });
 
-  it("never matches today — tapping it scrolls instead of peeking", () => {
-    // Cal-A: `handleDayTap` treats a tap on today as redundant with the
-    // live session cards below and scrolls to them. Selecting today
-    // captures the wrong screen rather than failing, which is worse.
+  it("never matches today — the frame's subject must not drift", () => {
+    /* Every cell opens a peek, today included, so this is no longer a
+       correctness guard: it keeps the capture's SUBJECT fixed. A
+       selector that could match today films a different card one day in
+       seven, depending only on which weekday CI ran — churn in the diff
+       report with no code change behind it, which is the class of
+       flake that costs an hour to chase. */
     const selector = captureSelector();
     const today = dayCellNames().filter((n) => n.includes("(today)"));
     for (const name of today) {

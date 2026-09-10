@@ -90,11 +90,14 @@ test.describe("calendar day peek", () => {
     const dayCells = page.getByRole("button", { name: /\w+day \d+ \w+,/i });
     const count = await dayCells.count().catch(() => 0);
     /* Pick a cell that is NOT today, by its label rather than by index.
-       The strip is the calendar week now, so a fixed `nth(4)` is
-       Thursday — and one day in seven that IS today, where handleDayTap
-       scrolls instead of peeking (Cal-A) and the frame would come back
-       as a bare strip. Today's cell is the one whose name ends
-       "(today)"; WeekStrip appends it. */
+       The strip is the calendar week, so a fixed `nth(4)` is Thursday —
+       and one day in seven that IS today, which makes the frame's
+       SUBJECT depend on the day CI happens to run. Every cell opens a
+       peek, so this is a choice of subject rather than a correctness
+       guard: today's session content is already filmed by the home
+       frames, and a day that is not today is what shows this card's own
+       contribution. Today's cell is the one whose name ends "(today)";
+       WeekStrip appends it. */
     let target = -1;
     for (let i = 0; i < count; i += 1) {
       const name = (await dayCells.nth(i).getAttribute("aria-label")) ?? "";
@@ -113,12 +116,11 @@ test.describe("calendar day peek", () => {
     await shootLightDark(page, "day-peek-open");
   });
 
-  /* NO "today" frame here, and the reason is worth keeping.
-     Tapping today never opens a peek at all: Home's handleDayTap
-     short-circuits on `dk === localDateString()` and scrolls to the
-     session cards instead (Cal-A — "tapping TODAY is redundant with the
-     live session cards right below"). Combined with WeekStrip resolving
-     `{ startDate: today, days: 7 }`, every date this card can ever show
-     is strictly in the FUTURE. A capture aimed at today films the plain
-     Home page and reads as a peek frame that lost its card. */
+  /* NO "today" frame here — a choice, not an impossibility, and the
+     note it replaces was wrong on both of its facts. It said tapping
+     today "never opens a peek at all" (Home's handleDayTap has no
+     today branch) and that every date the card can show is "strictly in
+     the FUTURE" (WeekStrip resolves the calendar week, so most of the
+     cells are in the past). Whoever adds a today frame should add it,
+     not conclude from here that it cannot exist. */
 });
