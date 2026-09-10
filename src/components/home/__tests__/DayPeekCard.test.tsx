@@ -940,6 +940,12 @@ describe("DayPeekCard — the nutrition row opens the diary", () => {
     // Food.tsx's setSelectedDate deletes `date` when it equals today, so
     // pinning today's link to `/food?date=…` here would have Home
     // disagree with the page it opens the moment the user taps an arrow.
+    //
+    // This case is only reachable by a user because Home's handleDayTap
+    // opens the card for today the same as any other day. While today's
+    // cell scrolled to the session cards instead, the card was never
+    // handed today and this branch ran nowhere but here — the shape a
+    // test has when it is the only caller of the code it covers.
     renderWithTotals(localDateString(new Date()));
 
     fireEvent.click(

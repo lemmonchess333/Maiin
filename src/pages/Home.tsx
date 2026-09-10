@@ -483,23 +483,23 @@ export default function Home() {
   const [showDayTapHint, setShowDayTapHint] = useState<boolean>(
     () => readString(dayTapSeenKey) !== "1"
   );
-  // Cal-A: scroll target for the today-tap shortcut (the session cards).
-  const sessionsRef = useRef<HTMLDivElement>(null);
+  /* EVERY day in the strip opens its detail card, today included.
+     There is no special case for today, and the argument for one — that
+     its peek would duplicate the session cards below — does not hold.
+     The cards are usually already on screen when the strip is, so
+     scrolling to them is a tap that visibly does nothing, the one
+     outcome a control must never have. And the peek is not a duplicate:
+     it also carries the day's nutrition row, its unclaimed extras and
+     the Manage action, none of which the CTA cards show.
+
+     This is also what makes DayPeekCard's `dateKey === todayKey` diary
+     link reachable. That branch shipped with the row and, with today
+     unreachable, no user could ever hit it. */
   const handleDayTap = useCallback(
     function (dk: string) {
       // Private mode: the hint re-shows next session, minor.
       writeString(dayTapSeenKey, "1");
       setShowDayTapHint(false);
-      // Cal-A: tapping TODAY is redundant with the live session cards
-      // right below — scroll to them instead of re-printing a peek copy.
-      if (dk === localDateString()) {
-        setPeekDate(null);
-        sessionsRef.current?.scrollIntoView({
-          behavior: "smooth",
-          block: "center",
-        });
-        return;
-      }
       setPeekDate(function (p) {
         return p === dk ? null : dk;
       });
@@ -897,7 +897,6 @@ export default function Home() {
             (today's lift/run) leads the Today group; energy, guidance and
             vitals follow. */}
         <motion.div
-          ref={sessionsRef}
           aria-label="Today’s training"
           variants={{
             hidden: { opacity: 0, y: 12 },

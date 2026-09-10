@@ -124,3 +124,45 @@ describe("Home's tier-4 surface registry", () => {
     expect(badge.suppressedBy).toContain("fell-behind");
   });
 });
+
+describe("Home's day tap — every cell opens its detail card", () => {
+  /* A source pin, not a render. Home.tsx has no unit render harness (it
+     is the app's most heavily-hooked page), and standing one up for a
+     three-line handler would cost more than it protects. What this
+     catches is the specific regression: a today branch reappearing in
+     `handleDayTap`, which is how a tap on today came to scroll to the
+     session cards instead of opening the card every other day opens.
+
+     Deliberately narrow — it proves the SHAPE of the handler, not that
+     the peek renders. The card's own today behaviour, including the
+     diary link that this handler makes reachable at all, is a real
+     render in `DayPeekCard.test.tsx`. */
+  function handleDayTapBody(): string {
+    const start = HOME.indexOf("const handleDayTap = useCallback(");
+    expect(
+      start,
+      "handleDayTap is gone from Home.tsx — retarget this pin"
+    ).toBeGreaterThan(-1);
+    const end = HOME.indexOf("[dayTapSeenKey]", start);
+    expect(
+      end,
+      "handleDayTap's dependency array moved — retarget this pin"
+    ).toBeGreaterThan(start);
+    return HOME.slice(start, end);
+  }
+
+  it("sets the peek date — the behaviour every cell shares", () => {
+    // The positive. Without it, the absence assertion below is satisfied
+    // by a handler that was deleted or gutted entirely.
+    expect(handleDayTapBody()).toContain("setPeekDate");
+  });
+
+  it("has no today branch short-circuiting the peek", () => {
+    const body = handleDayTapBody();
+    expect(
+      body,
+      "a today special-case is back in handleDayTap — tapping today " +
+        "should open its card like every other day"
+    ).not.toMatch(/localDateString\(\)|scrollIntoView/);
+  });
+});

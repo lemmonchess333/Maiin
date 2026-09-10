@@ -164,9 +164,43 @@ describe("Run setup navigation", () => {
     );
   });
 
-  it("cancels More options back to the Run tab", () => {
+  /* This pair replaces "cancels More options back to the Run tab", which
+     pinned the behaviour as it was: Back from the modal left /run
+     entirely, discarding the step the user had just taken to get there.
+     RunFast1 locks the modal as "the advanced surface behind Customize /
+     More options / route", so Back from it belongs on the surface it was
+     opened from. The Run-tab exit is not lost — it is still the
+     assertion in the picker, launch-card and route tests around this
+     one, which are the entries that genuinely have nothing behind them
+     inside /run. */
+  it("returns More options to the picker it was opened from", () => {
     open("/run");
     fireEvent.click(screen.getByRole("button", { name: "More options" }));
+    fireEvent.click(screen.getByRole("button", { name: "Cancel setup" }));
+    expect(
+      screen.getByRole("button", { name: "Back from picker" })
+    ).toBeInTheDocument();
+    expect(screen.queryByTestId("destination")).toBeNull();
+  });
+
+  it("still leaves to the Run tab when a route opened the modal", () => {
+    /* The counterweight. The modal is reached two ways and only one has
+       a surface behind it: a route arriving from RunDetail's "Re-run this
+       route" has no picker to fall back to, so its Back must still exit.
+       A fix that cleared the flag unconditionally would strand the user
+       on a modal whose Back did nothing. */
+    render(
+      <MemoryRouter
+        initialEntries={[
+          { pathname: "/run", state: { followRoute: [{ lat: 1, lng: 2 }] } },
+        ]}
+      >
+        <Routes>
+          <Route path="/run" element={<Run />} />
+          <Route path="/program" element={<Destination />} />
+        </Routes>
+      </MemoryRouter>
+    );
     fireEvent.click(screen.getByRole("button", { name: "Cancel setup" }));
     expect(screen.getByTestId("destination")).toHaveTextContent(
       "/program?tab=run"

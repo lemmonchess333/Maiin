@@ -368,8 +368,9 @@ describe("WeekStrip — accessible name and selection state", () => {
 
   /* The capture spec `surfaces.screens.capture.spec.ts` opens the day
      peek by selecting a day cell on its accessible NAME — it needs a
-     non-today cell, because handleDayTap scrolls instead of peeking on
-     today. Its regex had rotted: it anchored the date to end-of-name,
+     non-today cell, to keep the frame's subject from drifting with the
+     weekday CI runs on. Its regex had rotted: it anchored the date to
+     end-of-name,
      which stopped being true once the training label was appended, so
      it matched nothing and that step timed out on every screenshot run.
      Nothing failed locally, because the tests above assert only the

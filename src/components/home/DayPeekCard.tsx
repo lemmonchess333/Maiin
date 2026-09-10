@@ -94,10 +94,9 @@ function LiftRowShell({
  * jump.
  *
  * WHICH DATES REACH THIS ROW. WeekStrip renders the calendar week
- * containing today, Sunday-first, and `handleDayTap` returns early on
- * today (Cal-A: it scrolls to the session cards instead of peeking). So
- * the card is handed the other six days of the current week — the past
- * ones carry meals and get a link, the future ones do not.
+ * containing today, Sunday-first, and every one of its cells opens this
+ * card — so the dates are that week, today included. Past days and today
+ * carry meals and get a link; future ones do not.
  *
  * That bounds the window at six days either side of today, which is why
  * the guard checks only "not in the future" and not Food.tsx's 90-day
@@ -106,9 +105,12 @@ function LiftRowShell({
  * this surface can reach further back than a week — a month view, or a
  * strip that pages between weeks — and the guard has to grow it then.
  *
- * On a SUNDAY the current week has no past day yet, so the row does not
- * appear that day. That is the honest reading of "this week" rather than
- * a gap to paper over.
+ * Today reaching the card is also what makes the `dateKey === todayKey`
+ * branch below live. While today's cell scrolled to the session cards
+ * instead of opening this one, that branch was unreachable, and the
+ * Sunday case was starker than it now is: on a Sunday the week's only
+ * elapsed day IS today, so the row appears where it previously could
+ * not.
  */
 function DiaryRowShell({
   to,

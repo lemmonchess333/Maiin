@@ -1220,7 +1220,21 @@ export default function Run() {
               </div>
               <RunSetupModal
                 onStart={handleStart}
-                onCancel={() => navigate("/program?tab=run")}
+                /* Back goes back ONE step. This branch is reached two
+                   ways: `forceModal`, set by "More options" on the tile
+                   picker or "Customize" on the launch card, and a
+                   `targetRoute` arriving from RunDetail's "Re-run this
+                   route". Only the first has a surface behind it inside
+                   /run, and leaving to Train from there threw away a
+                   deliberate step the user had just taken. Clearing the
+                   flag re-renders whichever fast surface opened this one;
+                   `launchShoeId` lives on this page rather than in the
+                   modal, so a shoe picked before the detour survives it. */
+                onCancel={() =>
+                  forceModal
+                    ? setForceModal(false)
+                    : navigate("/program?tab=run")
+                }
                 programContext={planDecision.strip}
                 savedPreferences={{
                   autoPause: true,
