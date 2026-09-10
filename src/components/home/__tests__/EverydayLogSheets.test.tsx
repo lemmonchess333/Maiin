@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import {
   render,
   screen,
@@ -396,9 +398,13 @@ describe("WeightLogSheet — the sheet says what it does, once", () => {
     /* `focus-within` matches on TOUCH, not just keyboard, so tapping the
        unit drew a 2px primary box around it on a phone. It was also
        redundant — index.css's global `:focus-visible` already outlines
-       every focusable element and `:focus:not(:focus-visible)` hides it
-       for pointer input — so removing it costs no keyboard indicator.
-       Anchored on a positive: the control must still RENDER. */
+       every focusable element. Removing it costs no keyboard indicator.
+       Anchored on a positive: the control must still RENDER.
+
+       This is only HALF the purple, and the note here used to claim
+       otherwise: `:focus:not(:focus-visible)` does NOT hide the outline
+       for pointer input on a `<select>` in WebKit. The pointer-modality
+       class in the tests below is what closes the rest. */
     render(<WeightLogSheet uid="u1" unit="kg" onClose={vi.fn()} />);
     const unit = screen.getByRole("combobox", { name: "Weight unit" });
     expect(unit).toBeInTheDocument();
@@ -413,5 +419,57 @@ describe("WeightLogSheet — the sheet says what it does, once", () => {
         `a focus-within ring is back on ${el.className}`
       ).not.toMatch(/focus-within:ring/);
     }
+  });
+
+  it("suppresses the focus treatment when the unit is TAPPED", () => {
+    /* Removing the `focus-within` ring left the owner still seeing
+       purple on a phone. Sampled off the device screenshot the pixels
+       were (98, 91, 199) — a uniform 0.86 scaling of solid dark
+       `--primary` (114, 106, 231), i.e. the global `:focus-visible`
+       outline read through the native picker's dimming overlay, not
+       `.ds-input:focus`'s 13% glow (which computes to (43, 42, 60)).
+       WebKit matches `:focus-visible` on a select the moment it has
+       focus, however that focus arrived. No selector can express
+       "focus that came from a pointer", so the component tracks the
+       modality itself. */
+    render(<WeightLogSheet uid="u1" unit="kg" onClose={vi.fn()} />);
+    const unit = screen.getByRole("combobox", { name: "Weight unit" });
+    expect(unit.className).not.toContain("ds-input-pointer-focus");
+    /* The pointerdown bubbles into vaul's own drag handler, which calls
+       setPointerCapture on the target. jsdom has no pointer capture. */
+    Object.assign(unit, { setPointerCapture: vi.fn() });
+    fireEvent.pointerDown(unit);
+    expect(unit.className).toContain("ds-input-pointer-focus");
+    fireEvent.blur(unit);
+    expect(unit.className).not.toContain("ds-input-pointer-focus");
+  });
+
+  it("keeps the keyboard outline — focus alone does not suppress it", () => {
+    /* The counterweight. A component that suppressed on every focus
+       would pass the test above while stripping the one compliant
+       4.47:1 indicator a keyboard user has on this control. */
+    render(<WeightLogSheet uid="u1" unit="kg" onClose={vi.fn()} />);
+    const unit = screen.getByRole("combobox", { name: "Weight unit" });
+    fireEvent.focus(unit);
+    expect(unit.className).not.toContain("ds-input-pointer-focus");
+  });
+
+  it("the class it sets actually removes the outline", () => {
+    /* jsdom computes nothing about a stylesheet, so the React half
+       above is satisfied by a class that styles nothing at all. Read
+       the rule. */
+    const css = readFileSync(
+      resolve(process.cwd(), "src/styles/components.css"),
+      "utf8"
+    );
+    const rule = css
+      .split(".ds-input.ds-input-pointer-focus:focus")[1]
+      ?.split("}")[0];
+    expect(
+      rule,
+      "the pointer-focus rule is gone from components.css"
+    ).toBeDefined();
+    expect(rule).toContain("outline: none");
+    expect(rule).not.toContain("--primary");
   });
 });

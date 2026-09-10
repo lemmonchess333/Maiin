@@ -194,6 +194,27 @@ select.ds-input:focus {
     0 0 0 2.5px hsl(var(--primary) / 0.13);
 }
 
+/* `:focus:not(:focus-visible)` in index.css is meant to keep the focus
+   outline off pointer and touch input, and for a text input it does.
+   It does NOT for `<select>` in WebKit: a TAPPED select matches
+   `:focus-visible` there (the control is keyboard-operable the moment
+   it has focus, so the engine treats the focus as visible-worthy), so
+   an iPhone user tapping the weight unit got the full 2px solid
+   `--primary` outline plus this rule's 42% primary border — measured
+   off a device screenshot as a uniform purple frame, which is what the
+   owner reported. React cannot express "focus that arrived by pointer"
+   in a selector, so the component sets this class on pointerdown and
+   drops it on blur; a keyboard focus never carries it and keeps the
+   compliant 4.47:1 outline.
+
+   Specificity 0,3,1 to beat the rule above (0,2,1) and the global
+   `:focus-visible` outline (0,1,0). */
+.ds-input.ds-input-pointer-focus:focus {
+  outline: none;
+  border-color: hsl(var(--border) / 0.7);
+  box-shadow: var(--ds-shadow-input-rest);
+}
+
 .ds-status-banner {
   display: flex;
   align-items: center;
