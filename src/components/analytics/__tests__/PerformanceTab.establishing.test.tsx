@@ -7,7 +7,8 @@
  * true statements about different things, both on screen, saying opposite
  * things about whether the number means anything yet.
  *
- * The band came from the SCORE alone (`>= 80 ? "Peak"`), with no gate on
+ * The band came from the SCORE alone (`>= 80 ? "Peak"` — a taxonomy the
+ * gauge invented, since replaced by the locked verb), with no gate on
  * whether there was enough history to support a verdict. The same screen
  * also read "Lifting progression: +324%", which is `safeRatio(thisWeek,
  * baseline)` against a baseline that had not formed — arithmetically
@@ -97,10 +98,13 @@ const WARM = [
 beforeEach(() => mockUsePerformanceWeeks.mockReset());
 
 describe("PerformanceTab — establishing baseline", () => {
-  it("does NOT call a first-week 81 'Peak'", () => {
-    // The reported contradiction, stated directly.
+  it("does NOT give a first-week 81 a verdict", () => {
+    // The reported contradiction, stated directly. The verdict word for
+    // this fixture's `high` band is "Sharpening"; "Peak" is checked too,
+    // so this keeps failing if the old score-derived mapping returns.
     renderWeeks(COLD);
     expect(screen.getByText(/Establishing your baseline/i)).toBeInTheDocument();
+    expect(screen.queryByText(/^Sharpening$/)).toBeNull();
     expect(screen.queryByText(/^Peak$/)).toBeNull();
   });
 
@@ -128,11 +132,18 @@ describe("PerformanceTab — establishing baseline", () => {
     ).toBeInTheDocument();
   });
 
-  it("DOES call a settled 81 'Peak' — the control", () => {
+  it("DOES give a settled 81 its verdict — the control", () => {
     // Without this, every assertion above is satisfied by a component
-    // that never says Peak at all, which would be a different bug.
+    // that never prints a verdict at all, which would be a different bug.
+    //
+    // The word was "Peak" until the gauge stopped deriving its own bands
+    // from the score. The fixture's band is `high`, whose locked verb is
+    // "Sharpening"; "Peak" was never in the PI1 taxonomy and its absence
+    // is now asserted by `performanceVerbParity.test.tsx`. What this test
+    // is FOR — a settled week says something, an establishing one does
+    // not — is unchanged.
     renderWeeks(WARM);
-    expect(screen.getByText(/^Peak$/)).toBeInTheDocument();
+    expect(screen.getByText(/^Sharpening$/)).toBeInTheDocument();
     expect(screen.queryByText(/Establishing your baseline/i)).toBeNull();
   });
 

@@ -7,7 +7,7 @@ import { usePerformanceWeeks } from "@/hooks/usePerformance";
 import { THEME } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import { getPlainLanguageSummary } from "@/lib/performanceSummary";
-import { getVerbState, VERB_LABEL } from "@/lib/performanceLine";
+import { getVerb, getVerbState } from "@/lib/performanceLine";
 import {
   resolveLoadBand,
   resolveDeloadRecommended,
@@ -60,10 +60,25 @@ function bandPalette(
 // Semicircle gauge for the Performance Index
 function PIGauge({
   score,
+  verb,
   establishing,
   backingOff,
 }: {
   score: number;
+  /**
+   * The locked verb for this week, resolved by the caller from
+   * (loadBand, deloadRecommended).
+   *
+   * It arrives as a prop because the score alone cannot produce it.
+   * A band cut from the clamped score is a different taxonomy from a
+   * different input than the one PI1 locks and Home renders, and the
+   * two disagree across most of the range: a 30 is "Building" on a low
+   * band and a 65 is "Steady" on a moderate one, neither of which any
+   * score threshold recovers. Two names for one state is not a wording
+   * problem — it makes the number look unreliable, which is the one
+   * thing a confidence metric cannot afford.
+   */
+  verb: string;
   /**
    * Suppresses the band VERDICT while the baseline is still forming.
    *
@@ -93,17 +108,11 @@ function PIGauge({
     backingOff
   );
 
-  const band = establishing
-    ? "Early read"
-    : backingOff
-      ? VERB_LABEL["backing-off"]
-      : clamped >= 80
-        ? "Peak"
-        : clamped >= 60
-          ? "Building"
-          : clamped >= 40
-            ? "Moderate"
-            : "Recovery";
+  /* `establishing` still wins: a first-week 81 is a real number but not
+     yet a verdict, and that suppression is why this branch exists at
+     all. Everything past it is the locked taxonomy, resolved upstream —
+     `backingOff` is already folded into it by `getVerbState`. */
+  const band = establishing ? "Early read" : verb;
 
   // Needle tip point
   const angle = Math.PI - progress * Math.PI; // 180° → 0°
@@ -394,6 +403,7 @@ export default function PerformanceTab() {
       <div className="p-4 rounded-2xl border border-border/50 bg-card">
         <PIGauge
           score={currentWeek.performanceIndex}
+          verb={getVerb(loadBand, deloadRecommended).label}
           establishing={establishing}
           backingOff={backingOff}
         />

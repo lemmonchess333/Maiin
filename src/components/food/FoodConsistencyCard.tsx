@@ -16,7 +16,7 @@ import { useCallback, useEffect, useState } from "react";
 import {
   doc,
   getDoc,
-  getDocs,
+  onSnapshot,
   query,
   where,
   collection,
@@ -68,19 +68,44 @@ export default function FoodConsistencyCard({ uid }: { uid: string }) {
     let cancelled = false;
     void (async () => {
       try {
-        const { start, end } = weekBounds(weekKey);
-        const [snap, meals] = await Promise.all([
-          getDoc(doc(db, commitmentDocPath(uid, weekKey))),
-          getDocs(
-            query(
-              collection(db, "users", uid, "meals"),
-              where("date", ">=", start),
-              where("date", "<=", end)
-            )
-          ),
-        ]);
+        const snap = await getDoc(doc(db, commitmentDocPath(uid, weekKey)));
         if (cancelled) return;
         setCommitment(snap.exists() ? parseCommitment(snap.data()) : null);
+      } catch (err) {
+        // Read failure → hide the card this session. Leaving the state
+        // `undefined` does that; `parseCommitment(null)` is null — it
+        // would have re-shown the picker and let a fresh save overwrite
+        // a commitment we simply failed to read.
+        logger.error("nutritionConsistency: load failed", err);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [uid, weekKey]);
+
+  /* The progress count is LIVE, not a mount-time read. This effect keys on
+     [uid, weekKey] and neither moves when you log a meal, so a one-shot
+     `getDocs` left the counter showing the value it had when the page
+     opened: log the day's first meal and the count did not move until you
+     navigated away and back, and deleting the day's last meal left the day
+     still counted.
+
+     A subscription is affordable HERE specifically because the query is
+     bounded to one week — at most seven days of meals, never paginated.
+     Deriving these dates from `useMeals` instead would be the mistake the
+     Food9 lock names: that hook paginates, so "not in the loaded set" does
+     not mean "not logged", and the count would DROP for the heaviest
+     loggers, who are exactly the people a consistency card is for. */
+  useEffect(() => {
+    const { start, end } = weekBounds(weekKey);
+    const unsubscribe = onSnapshot(
+      query(
+        collection(db, "users", uid, "meals"),
+        where("date", ">=", start),
+        where("date", "<=", end)
+      ),
+      (meals) => {
         setMealDates(
           /* HOME-MEALS-01 — a soft-deleted meal used to keep counting its
              day toward the weekly commitment, so correcting a mis-scan
@@ -93,17 +118,10 @@ export default function FoodConsistencyCard({ uid }: { uid: string }) {
             .map((m) => m.date)
             .filter((d): d is string => typeof d === "string")
         );
-      } catch (err) {
-        // Read failure → hide the card this session. Leaving the state
-        // `undefined` does that; `parseCommitment(null)` is null — it
-        // would have re-shown the picker and let a fresh save overwrite
-        // a commitment we simply failed to read.
-        logger.error("nutritionConsistency: load failed", err);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
+      },
+      (err) => logger.error("nutritionConsistency: meals listen failed", err)
+    );
+    return unsubscribe;
   }, [uid, weekKey]);
 
   const save = useCallback(
