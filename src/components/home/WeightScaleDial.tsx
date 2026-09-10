@@ -7,21 +7,36 @@ const RADIUS = 332;
 const CENTRE_X = 180;
 const CENTRE_Y = 365;
 
-/* An attempted SCROLL must not edit the weight. `touch-pan-y` hands
-   vertical panning back to the browser (which then fires pointercancel,
-   already handled by `settle`), and the gate in onPointerMove refuses to
-   turn the drum until the gesture has committed to the horizontal axis.
+/* The drum owns the whole gesture (`touch-none`), the way a native
+   picker wheel does, and the gate in onPointerMove decides whether that
+   gesture turns it.
 
-   Without both, this control silently corrupted data: the surface was
-   `touch-none` across a full-width band inside the sheet's own
-   `overflow-y-auto`, so a vertical swipe landing on it could not scroll,
-   and the move handler took `(startX - clientX)` with no threshold and
-   no axis lock — about 5px of sideways drift in that failed scroll
-   crossed a detent and emitted a new weight. A 0.1-0.3 kg edit is
-   exactly the magnitude that reads as a plausible weigh-in, so it would
-   not be caught at the confirmation step; it lands in bodyweightLogs and
-   feeds trend weight. */
+   `touch-pan-y` was tried and is wrong here. It hands vertical panning
+   to the browser, and a spin is an ARC: the finger follows the markings
+   round, so a real turn carries tens of pixels of vertical travel.
+   The browser claimed those, and the sheet scrolled under the finger
+   while the drum sat still — reported from a device as the wheel
+   "going on a next page". The cost of `touch-none` is that a scroll
+   started ON the drum does not scroll the sheet; the readout above and
+   the Date/actions below are the grab area for that, and every native
+   wheel behaves this way.
+
+   The data-corruption risk `touch-pan-y` was reaching for is the gate's
+   job, not the browser's. Before the gate existed the move handler took
+   `(startX - clientX)` with no threshold and no axis lock, so about 5px
+   of sideways drift in a failed scroll crossed a detent and emitted a
+   new weight. A 0.1-0.3 kg edit reads as a plausible weigh-in, so it
+   survives the confirmation step and lands in bodyweightLogs, feeding
+   trend weight. The gate refuses the turn outright for a clearly
+   vertical drag, which holds whatever the browser does with the pan.
+
+   AXIS_VERTICAL_RATIO is why the verdict is a RATIO rather than
+   `|dy| >= |dx|`. At parity an arc-following spin — genuinely diagonal
+   for its first few samples — is read as a scroll and the drum is dead
+   for the rest of the gesture. Only a drag twice as vertical as it is
+   sideways is a scroll. */
 const AXIS_COMMIT_PX = 6;
+const AXIS_VERTICAL_RATIO = 2;
 
 /** A physical scale: drag the markings beneath a fixed pointer. */
 export default function WeightScaleDial({
@@ -197,7 +212,7 @@ export default function WeightScaleDial({
   return (
     <div ref={root} className="min-w-0 w-full">
       <div
-        className="relative w-full rounded-xl select-none touch-pan-y cursor-grab active:cursor-grabbing focus-within:ring-2 focus-within:ring-primary"
+        className="relative w-full rounded-xl select-none touch-none cursor-grab active:cursor-grabbing focus-within:ring-2 focus-within:ring-primary"
         data-vaul-no-drag
         onPointerDown={(event) => {
           if (
@@ -227,7 +242,10 @@ export default function WeightScaleDial({
           if (active.horizontal === null) {
             const dx = event.clientX - active.originX;
             const dy = event.clientY - active.originY;
-            if (Math.abs(dy) > AXIS_COMMIT_PX && Math.abs(dy) >= Math.abs(dx)) {
+            if (
+              Math.abs(dy) > AXIS_COMMIT_PX &&
+              Math.abs(dy) > Math.abs(dx) * AXIS_VERTICAL_RATIO
+            ) {
               // A scroll. Own nothing further in this gesture.
               active.horizontal = false;
               return;

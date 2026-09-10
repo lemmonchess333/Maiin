@@ -216,6 +216,28 @@ describe("an attempted scroll is not a weigh-in", () => {
     expect(change).not.toHaveBeenCalled();
   });
 
+  it("ignores drift that clears the commit threshold", () => {
+    /* The case above is held by AXIS_COMMIT_PX, not by the axis gate:
+       5px never reaches the commit threshold, so deleting the gate
+       outright leaves it green. Mutation-checked. 10px of sideways
+       travel inside the same 100px vertical swipe DOES clear the
+       threshold, so this one is the gate's own test — and it is the
+       gate the 2:1 ratio widened, which is why it needs a case that
+       fails when the gate is gone. */
+    const change = vi.fn();
+    render(
+      <WeightScaleDial
+        value={81.6}
+        minimum={20}
+        maximum={350}
+        unit="kg"
+        onChange={change}
+      />
+    );
+    vertical(surface(), 10);
+    expect(change).not.toHaveBeenCalled();
+  });
+
   it("still commits once the gesture is clearly horizontal", () => {
     /* The counterweight: a gate that refused everything would pass the
        test above while breaking the control. 100px right-to-left from
@@ -252,6 +274,75 @@ describe("an attempted scroll is not a weigh-in", () => {
       pointerType: "touch",
     });
     expect(change).toHaveBeenLastCalledWith(82.6);
+  });
+
+  it("survives a noisy first sample and still commits", () => {
+    /* The device report this gate was loosened for. The verdict is
+       taken at the FIRST sample past AXIS_COMMIT_PX, and a finger
+       landing on a phone produces a few pixels of unintended travel
+       before the spin proper: 8px down and 5px across is enough to
+       satisfy `|dy| >= |dx|`, which retired the drum for the WHOLE
+       gesture — the 100px horizontal sweep that followed moved
+       nothing, and the browser panned instead. Only a drag twice as
+       vertical as it is sideways is a scroll. */
+    const change = vi.fn();
+    render(
+      <WeightScaleDial
+        value={81.6}
+        minimum={20}
+        maximum={350}
+        unit="kg"
+        onChange={change}
+      />
+    );
+    const element = surface();
+    fireEvent.pointerDown(element, {
+      clientX: 180,
+      clientY: 40,
+      pointerId: 1,
+      pointerType: "touch",
+      isPrimary: true,
+    });
+    clock += 20;
+    fireEvent.pointerMove(element, {
+      clientX: 175,
+      clientY: 48,
+      pointerId: 1,
+      pointerType: "touch",
+    });
+    clock += 20;
+    fireEvent.pointerMove(element, {
+      clientX: 80,
+      clientY: 60,
+      pointerId: 1,
+      pointerType: "touch",
+    });
+    fireEvent.pointerUp(element, {
+      clientX: 80,
+      clientY: 60,
+      pointerId: 1,
+      pointerType: "touch",
+    });
+    expect(change).toHaveBeenCalled();
+  });
+
+  it("owns the gesture rather than handing the pan to the browser", () => {
+    /* `touch-pan-y` let the browser claim the vertical component of an
+       arc-following spin, so the sheet scrolled under the finger while
+       the drum sat still — the "goes on a next page" report. The refusal
+       above is the gate's job, not the browser's; this control takes the
+       whole gesture the way a native picker wheel does. */
+    render(
+      <WeightScaleDial
+        value={81.6}
+        minimum={20}
+        maximum={350}
+        unit="kg"
+        onChange={vi.fn()}
+      />
+    );
+    expect(surface().className).toContain("touch-none");
+    expect(surface().className).not.toContain("touch-pan-y");
   });
 
   it("counts the travel before the gesture committed", () => {

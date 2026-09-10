@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { cn } from "@/lib/utils";
 import BottomSheet from "@/components/ui/BottomSheet";
 import Button from "@/components/ui/Button";
 import WeightScaleDial from "./WeightScaleDial";
@@ -80,6 +81,7 @@ export default function WeightLogSheet({
   const editing = entryDate === date;
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [unitPointerFocus, setUnitPointerFocus] = useState(false);
   const pending = useRef(false);
   const [preciseKg, setPreciseKg] = useState<number | null>(initialKg ?? null);
 
@@ -306,12 +308,19 @@ export default function WeightLogSheet({
               on a phone drew a heavy 2px primary box around it, which is
               what the owner saw. It was also redundant: index.css's
               global `:focus-visible` already gives every focusable
-              element a 2px primary outline at 4.47:1, and its
-              `:focus:not(:focus-visible)` companion suppresses that for
-              pointer and touch. Removing this loses no keyboard
-              indicator; it only stops the one that should never have
-              fired on a tap. */}
+              element a 2px primary outline at 4.47:1. Removing this
+              loses no keyboard indicator.
+
+              Removing it was only half the purple, and the note here
+              claimed otherwise: index.css's `:focus:not(:focus-visible)`
+              companion does NOT suppress the outline for a tapped
+              `<select>` in WebKit. See the class on the control below. */}
           <div className="relative w-16 shrink-0 rounded-xl">
+            {/* WebKit matches `:focus-visible` on a TAPPED select, so
+                index.css's `:focus:not(:focus-visible)` does not keep the
+                outline off touch here. The class below suppresses the
+                purple focus treatment for pointer-initiated focus only —
+                see `.ds-input-pointer-focus` in components.css. */}
             <select
               aria-label="Weight unit"
               value={selectedUnit}
@@ -319,7 +328,12 @@ export default function WeightLogSheet({
                 changeUnit(event.target.value as DisplayUnit)
               }
               disabled={saving}
-              className="ds-input appearance-none pl-1 pr-6 text-lg"
+              onPointerDown={() => setUnitPointerFocus(true)}
+              onBlur={() => setUnitPointerFocus(false)}
+              className={cn(
+                "ds-input appearance-none pl-1 pr-6 text-lg",
+                unitPointerFocus && "ds-input-pointer-focus"
+              )}
               style={{ ...readoutStyle, color: "hsl(var(--muted-foreground))" }}
             >
               <option value="kg">kg</option>
