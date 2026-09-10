@@ -152,3 +152,40 @@ export function canShowDone(args: { saveStatus: SaveStatus }): boolean {
 export function canShowRetrySave(args: { saveStatus: SaveStatus }): boolean {
   return args.saveStatus === "error";
 }
+
+/**
+ * The summary's hero heading, for a run too small to earn celebratory copy.
+ *
+ * "Run saved" is a claim about the WRITE. This decided it from the distance
+ * alone, so any short run with a non-zero distance greeted the user with
+ * "Run saved" the moment the summary opened — above the Save button that
+ * had not been tapped. "Run recorded" is true from the moment the run ends
+ * and stays true either way, which is why it is the pre-save wording rather
+ * than something hedged.
+ */
+export function unsizedRunHeading(args: { saveStatus: SaveStatus }): string {
+  return args.saveStatus === "saved" ? "Run saved" : "Run recorded";
+}
+
+/**
+ * Has the user edited the post-save fields since the run was written?
+ *
+ * Notes and effort stay editable after saving, but the Save button is gone
+ * by then and Done only navigates — so a correction typed at that point was
+ * silently dropped. `saved` is null before the write: there is nothing to
+ * update yet, and the ordinary Save button is still on screen.
+ *
+ * Notes compare TRIMMED, because that is the form that was written; adding
+ * a trailing space is not an edit worth offering to save.
+ */
+export function hasUnsavedFieldEdits(args: {
+  saved: { notes: string; relativeEffort: string | null } | null;
+  notes: string;
+  relativeEffort: string | null;
+}): boolean {
+  if (!args.saved) return false;
+  return (
+    args.saved.notes !== args.notes.trim() ||
+    args.saved.relativeEffort !== args.relativeEffort
+  );
+}

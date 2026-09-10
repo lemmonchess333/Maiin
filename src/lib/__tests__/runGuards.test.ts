@@ -1,5 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
+  unsizedRunHeading,
+  hasUnsavedFieldEdits,
   isOutdoorGpsRun,
   requiresManualDistance,
   getInvalidRunReason,
@@ -414,5 +416,100 @@ describe("action-visibility guards", () => {
     expect(canShowRetrySave({ saveStatus: "idle" })).toBe(false);
     expect(canShowRetrySave({ saveStatus: "saving" })).toBe(false);
     expect(canShowRetrySave({ saveStatus: "saved" })).toBe(false);
+  });
+});
+
+describe("unsizedRunHeading — 'Run saved' is a claim about the write", () => {
+  /* The reported case: a short run showed "Run saved" the moment the
+     summary opened, above a Save button nobody had tapped. The heading
+     was decided from the distance alone and never consulted the write. */
+  it("says Run recorded before the run is written", () => {
+    expect(unsizedRunHeading({ saveStatus: "idle" })).toBe("Run recorded");
+  });
+
+  it("still says Run recorded while the write is in flight", () => {
+    // "Saving" is not "saved" — the write can still fail.
+    expect(unsizedRunHeading({ saveStatus: "saving" })).toBe("Run recorded");
+  });
+
+  it("does not claim saved after a FAILED write", () => {
+    // The case that would be worst to get wrong: the run is not on the
+    // user's account and the heading must not say it is.
+    expect(unsizedRunHeading({ saveStatus: "error" })).toBe("Run recorded");
+  });
+
+  it("says Run saved once the write lands — the counterweight", () => {
+    // Without this, the three above are satisfied by a function that never
+    // says "Run saved" at all.
+    expect(unsizedRunHeading({ saveStatus: "saved" })).toBe("Run saved");
+  });
+});
+
+describe("hasUnsavedFieldEdits — the post-save correction", () => {
+  const base = {
+    notes: "felt good",
+    relativeEffort: "matched" as string | null,
+  };
+
+  it("is false before the run is written", () => {
+    // Nothing to update yet, and the ordinary Save button is still on screen.
+    expect(
+      hasUnsavedFieldEdits({
+        saved: null,
+        notes: "anything",
+        relativeEffort: null,
+      })
+    ).toBe(false);
+  });
+
+  it("is false when nothing has changed since the write", () => {
+    expect(
+      hasUnsavedFieldEdits({
+        saved: base,
+        notes: "felt good",
+        relativeEffort: "matched",
+      })
+    ).toBe(false);
+  });
+
+  it("catches an edited note", () => {
+    expect(
+      hasUnsavedFieldEdits({
+        saved: base,
+        notes: "felt hard actually",
+        relativeEffort: "matched",
+      })
+    ).toBe(true);
+  });
+
+  it("catches a changed effort", () => {
+    expect(
+      hasUnsavedFieldEdits({
+        saved: base,
+        notes: "felt good",
+        relativeEffort: "harder",
+      })
+    ).toBe(true);
+  });
+
+  it("catches effort being cleared back to skipped", () => {
+    // null is a first-class answer here, so clearing it is a real edit.
+    expect(
+      hasUnsavedFieldEdits({
+        saved: base,
+        notes: "felt good",
+        relativeEffort: null,
+      })
+    ).toBe(true);
+  });
+
+  it("ignores trailing whitespace — the written form was trimmed", () => {
+    expect(
+      hasUnsavedFieldEdits({
+        saved: base,
+        notes: "felt good   ",
+        relativeEffort: "matched",
+      })
+    ).toBe(false);
   });
 });

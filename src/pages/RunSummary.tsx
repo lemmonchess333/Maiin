@@ -12,7 +12,11 @@ import {
   query,
   Timestamp,
 } from "firebase/firestore";
-import { addDocGuarded, setDocGuarded } from "@/lib/firestoreWrite";
+import {
+  addDocGuarded,
+  setDocGuarded,
+  updateDocGuarded,
+} from "@/lib/firestoreWrite";
 import { auth, db } from "../lib/firebase";
 import { localDateString, localWeekKey } from "../lib/dateHelpers";
 import { spaceDef } from "@/features/spaces/spaceDefs";
@@ -85,6 +89,8 @@ import { ConfirmDialog } from "../components/ui/ConfirmDialog";
 import {
   canExportGpx,
   canShowDiscard,
+  unsizedRunHeading,
+  hasUnsavedFieldEdits,
   canShowDone,
   canShowNormalSave,
   canShowRetrySave,
@@ -156,6 +162,97 @@ const SavedRunKudos = lazyRetry(
   () => import("@/components/social/SavedRunKudos")
 );
 
+/**
+ * Correct a manually-entered distance.
+ *
+ * Shared by the invalid-run review and the normal summary. Both need it:
+ * InvalidRunReview renders only for sub-threshold and too-fast runs, so on
+ * its own it leaves a treadmill run typed as 5 km when it was 6 with no
+ * correction path — the number is wrong but not wrong ENOUGH to trip a
+ * threshold, and the summary otherwise offers nothing but Save.
+ *
+ * One copy, so the 0.05-100 km bound (the same floor TreadmillMode uses)
+ * cannot drift between the two surfaces.
+ */
+export function EditDistance({
+  distanceKm,
+  onCommit,
+}: {
+  distanceKm: number;
+  onCommit: (meters: number) => void;
+}) {
+  const [editing, setEditing] = useState(false);
+  // Pre-filled with the current distance so the user adjusts rather than
+  // re-enters.
+  const [editValue, setEditValue] = useState<string>(() =>
+    distanceKm.toFixed(2)
+  );
+  const editValueNum = Number(editValue);
+  const editValid =
+    Number.isFinite(editValueNum) &&
+    editValueNum >= 0.05 &&
+    editValueNum <= 100;
+
+  if (!editing) {
+    return (
+      <button
+        type="button"
+        onClick={() => {
+          setEditValue(distanceKm.toFixed(2));
+          setEditing(true);
+        }}
+        className="w-full py-2.5 rounded-xl text-sm font-medium bg-muted text-foreground border border-border"
+      >
+        Edit distance
+      </button>
+    );
+  }
+  return (
+    <div className="p-3 rounded-xl border border-border bg-muted/40 space-y-2">
+      <label htmlFor="edit-distance" className="text-xs text-muted-foreground">
+        Distance (km)
+      </label>
+      <input
+        id="edit-distance"
+        type="number"
+        step="0.01"
+        min="0.05"
+        max="100"
+        value={editValue}
+        onChange={(e) => setEditValue(e.target.value)}
+        className="w-full px-3 py-2 rounded-lg bg-background border border-border text-sm text-center"
+      />
+      {!editValid && editValue !== "" && (
+        <p className="text-xs" style={{ color: THEME.running }}>
+          Distance must be between 0.05 km and 100 km.
+        </p>
+      )}
+      <div className="flex gap-2">
+        <button
+          type="button"
+          onClick={() => setEditing(false)}
+          className="flex-1 py-2 rounded-lg text-xs font-medium bg-muted text-muted-foreground border border-border"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            if (!editValid) return;
+            onCommit(editValueNum * 1000);
+            setEditing(false);
+          }}
+          disabled={!editValid}
+          className="flex-1 py-2 rounded-lg text-xs font-medium text-white disabled:opacity-50"
+          style={{ background: THEME.lifting }}
+        >
+          Update
+        </button>
+      </div>
+    </div>
+  );
+}
+
 interface InvalidRunReviewProps {
   distanceKm: number;
   elapsedSeconds: number;
@@ -202,30 +299,6 @@ function InvalidRunReview({
   const showRetry = canShowRetrySave({ saveStatus });
   const showDone = canShowDone({ saveStatus });
   const isSaved = saveStatus === "saved";
-
-  /* Edit-distance state lives on the InvalidRunReview itself so
-     the rest of RunSummary doesn't have to know about the
-     in-progress edit until it commits. Pre-fills with the current
-     distance so users can adjust rather than re-enter. Validates
-     against the same 0.05km floor as TreadmillMode. */
-  const [editing, setEditing] = useState(false);
-  const [editValue, setEditValue] = useState<string>(() =>
-    distanceKm.toFixed(2)
-  );
-  const editValueNum = Number(editValue);
-  const editValid =
-    Number.isFinite(editValueNum) &&
-    editValueNum >= 0.05 &&
-    editValueNum <= 100;
-  const startEditing = () => {
-    setEditValue(distanceKm.toFixed(2));
-    setEditing(true);
-  };
-  const commitEdit = () => {
-    if (!editValid) return;
-    onEditDistance(editValueNum * 1000);
-    setEditing(false);
-  };
 
   /* Heading + body are reason-aware before save and saved-aware after.
      Once the run is on the user's account the warning-style copy
@@ -299,57 +372,7 @@ function InvalidRunReview({
           the normal valid summary path. */}
       {canEditDistance && (showSaveAnyway || showDiscard) && (
         <div className="pt-1">
-          {!editing ? (
-            <button
-              type="button"
-              onClick={startEditing}
-              className="w-full py-2.5 rounded-xl text-sm font-medium bg-muted text-foreground border border-border"
-            >
-              Edit distance
-            </button>
-          ) : (
-            <div className="p-3 rounded-xl border border-border bg-muted/40 space-y-2">
-              <label
-                htmlFor="edit-distance"
-                className="text-xs text-muted-foreground"
-              >
-                Distance (km)
-              </label>
-              <input
-                id="edit-distance"
-                type="number"
-                step="0.01"
-                min="0.05"
-                max="100"
-                value={editValue}
-                onChange={(e) => setEditValue(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg bg-background border border-border text-sm text-center"
-              />
-              {!editValid && editValue !== "" && (
-                <p className="text-xs" style={{ color: THEME.running }}>
-                  Distance must be between 0.05 km and 100 km.
-                </p>
-              )}
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => setEditing(false)}
-                  className="flex-1 py-2 rounded-lg text-xs font-medium bg-muted text-muted-foreground border border-border"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  onClick={commitEdit}
-                  disabled={!editValid}
-                  className="flex-1 py-2 rounded-lg text-xs font-medium text-white disabled:opacity-50"
-                  style={{ background: THEME.lifting }}
-                >
-                  Update
-                </button>
-              </div>
-            </div>
-          )}
+          <EditDistance distanceKm={distanceKm} onCommit={onEditDistance} />
         </div>
       )}
 
@@ -429,6 +452,17 @@ export default function RunSummary() {
   >("pending");
   const [reconciliationBusy, setReconciliationBusy] = useState(false);
   const [savedRunId, setSavedRunId] = useState<string | null>(null);
+  /* What the notes and effort fields held at the moment the run was
+     written. Both stay editable after saving, but the Save button is gone
+     by then and Done only navigates — so a correction typed at that point
+     was silently dropped. Comparing against this is what tells the two
+     apart: unchanged since the write (nothing to do) versus edited after
+     it (an update the user is owed). */
+  const [savedFields, setSavedFields] = useState<{
+    notes: string;
+    relativeEffort: "easier" | "matched" | "harder" | null;
+  } | null>(null);
+  const [updating, setUpdating] = useState(false);
   /* Post-write steps that must run once per saved run, however many times
      the chain is resumed after a failure: the share prompt (a second prompt
      could post the run twice) and the shoe-mileage increment (a second
@@ -700,6 +734,36 @@ export default function RunSummary() {
   //   Extra / null → fall through to the generic celebratory copy.
   // Source of truth for template name: RUN_TEMPLATES looked up by
   // plannedTemplateId or actualTemplateId.
+  /* Apply a correction made AFTER the run was written. Scoped to the two
+     fields that stay editable — a distance or a route change post-save is
+     a different operation with different downstream effects (PRs, weekly
+     stats, challenge progress), and belongs with saved-session editing
+     rather than here. */
+  const notesDirty = hasUnsavedFieldEdits({
+    saved: savedFields,
+    notes,
+    relativeEffort,
+  });
+
+  const handleUpdateFields = async () => {
+    if (!savedRunId || !user?.uid || !notesDirty || updating) return;
+    setUpdating(true);
+    const next = { notes: notes.trim(), relativeEffort };
+    try {
+      await updateDocGuarded(
+        doc(db, "users", user.uid, "runs", savedRunId),
+        next
+      );
+      setSavedFields(next);
+      toast.success("Changes saved");
+    } catch (err) {
+      logger.error("[RunSummary] field update failed", err);
+      toast.error("Couldn't save your changes. Try again.");
+    } finally {
+      setUpdating(false);
+    }
+  };
+
   const heroTemplateName = (() => {
     const pm = runConfig?.planMetadata;
     if (!pm) return null;
@@ -710,7 +774,9 @@ export default function RunSummary() {
   })();
   const heroCopy = (() => {
     const sized = (distance || 0) > 200 && (elapsed || 0) > 60;
-    if (!sized) return (distance || 0) > 0 ? "Run saved" : "Run recorded";
+    /* "Run saved" is a claim about the WRITE, so it waits for one — see
+       `unsizedRunHeading`, which owns the rule and its reasoning. */
+    if (!sized) return unsizedRunHeading({ saveStatus });
     if (heroTemplateName && adherenceLabel === "Planned") {
       return `${heroTemplateName} complete ✓`;
     }
@@ -1028,6 +1094,9 @@ export default function RunSummary() {
         savedId = offlineRef.id;
       }
       setSavedRunId(savedId);
+      // The baseline for "edited since saving" — the values that actually
+      // went into the document, not the ones on screen a moment later.
+      setSavedFields({ notes: notes.trim(), relativeEffort });
 
       /* Hist5d Stress 19 / PR 7b — return-link toast closes the
          PRs-tab cold-start loop. Only fires on saves that could
@@ -1890,6 +1959,24 @@ export default function RunSummary() {
               <RetryBanner error={saveError} onRetry={handleSave} />
             )}
 
+            {/* A manually-entered distance is a TYPED number, so it can be
+                wrong by any amount — 5 km for a 6 km treadmill run is as
+                wrong as it gets while still looking ordinary. The
+                invalid-run review cannot serve this: it needs the number
+                to breach a threshold before it appears, which is exactly
+                what a plausible typo does not do.
+                Outdoor GPS is excluded: that distance came from a sensor,
+                and there is no typo to fix. Pre-save only — afterwards the
+                figure is on the account and correcting it is a different
+                operation. */}
+            {(activityType === "treadmill" || activityType === "manual") &&
+              canShowNormalSave({ isInvalid: false, saveStatus }) && (
+                <EditDistance
+                  distanceKm={distanceKm}
+                  onCommit={setEditedDistanceMeters}
+                />
+              )}
+
             {canShowNormalSave({ isInvalid: false, saveStatus }) && (
               <Button
                 variant="sport"
@@ -1941,6 +2028,22 @@ export default function RunSummary() {
                 );
               })()}
             {saved && <CompletionExtras onShare={shareSaved} />}
+
+            {/* The save action the post-save fields never had. It appears
+                only once they differ from what was written, so a user who
+                changes nothing sees the same two-button stack as before —
+                and one who corrects a note is not left with Done as the
+                only way out, which discarded the correction. */}
+            {notesDirty && (
+              <Button
+                variant="secondary"
+                fullWidth
+                onClick={handleUpdateFields}
+                loading={updating}
+              >
+                Save changes
+              </Button>
+            )}
 
             {canShowDone({ saveStatus }) && (
               /* Replaces the removed auto-navigation timeouts. Sits in the
