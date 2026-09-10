@@ -6,7 +6,11 @@ import type { UserProfile } from "@/lib/auth";
 import type { ProgramState } from "@/features/program/programTypes";
 import { resolveTrainingWindow } from "@/lib/trainingResolver";
 import type { ClaimState } from "@/lib/scheduledRunCompletion";
-import { localDateString, parseLocalDate } from "@/lib/dateHelpers";
+import {
+  localDateString,
+  localWeekKey,
+  parseLocalDate,
+} from "@/lib/dateHelpers";
 
 /**
  * What the day's dots say, in words.
@@ -75,11 +79,26 @@ export default function WeekStrip({
   const days = useMemo(() => {
     const today = new Date();
     const todayKey = localDateString(today);
-    // PR-0c: the resolver handles the rolling 7-day window. Each
-    // resolved day already carries scheduleType + run status with
-    // the date-inheritance guard baked in.
+    /* The CALENDAR week containing today, not a rolling window that
+       starts at today. Home labels this section "This week" while the
+       strip ran today..today+6, so on a Wednesday it read Wed-Tue and
+       spanned two weeks under a heading claiming one. The days already
+       gone were simply absent, which also put DayPeekCard's nutrition
+       row out of reach: every date the card could be given was in the
+       future, and a future day has no meals to summarise.
+
+       Sunday-start is forced by the data model, not a style choice.
+       `localWeekKey` is Sunday-anchored, and `resolveTrainingWindow`
+       derives `currentWeekKey` from `startDate` — the anchor that gates
+       the resolver's legacy run-day fallback, which the docstring says
+       must be today's. Starting on this week's Sunday keeps that true
+       for free: `localWeekKey(sunday) === localWeekKey(today)`, and all
+       seven days share that one key, so no day can inherit another
+       week's status. A Monday-start strip would straddle two week keys
+       and break exactly the guard PR-0c installed. */
+    const weekStart = parseLocalDate(localWeekKey(today));
     const resolved = resolveTrainingWindow({
-      startDate: today,
+      startDate: weekStart,
       days: 7,
       profile,
       programState,

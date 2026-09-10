@@ -93,25 +93,22 @@ function LiftRowShell({
  * `?date=` back to today, so an ungated link would look like a broken
  * jump.
  *
- * READ THIS BEFORE ASSUMING THE ROW IS LIVE. On today's Home it cannot
- * render at all, and neither half of that is this row's doing:
+ * WHICH DATES REACH THIS ROW. WeekStrip renders the calendar week
+ * containing today, Sunday-first, and `handleDayTap` returns early on
+ * today (Cal-A: it scrolls to the session cards instead of peeking). So
+ * the card is handed the other six days of the current week — the past
+ * ones carry meals and get a link, the future ones do not.
  *
- *   WeekStrip     resolveTrainingWindow({ startDate: today, days: 7 })
- *                 -> today plus six FUTURE days, no past day exists
- *   handleDayTap  returns early on `dk === localDateString()`, scrolling
- *                 to the session cards instead of opening a peek (Cal-A)
+ * That bounds the window at six days either side of today, which is why
+ * the guard checks only "not in the future" and not Food.tsx's 90-day
+ * FOOD_TAP_BACK_DAYS floor: no date this card can be given is more than
+ * six days old, so the floor cannot bind. It becomes real the moment
+ * this surface can reach further back than a week — a month view, or a
+ * strip that pages between weeks — and the guard has to grow it then.
  *
- * So every dateKey this card is ever given is strictly in the future,
- * `getDailyTotals` of a future day is empty, and `mealCount > 0` is
- * never true. Confirmed against the capture channel: the day-peek frame
- * shows date, badge, session and "Manage day" — no nutrition row.
- *
- * The guard below is therefore written for the surface as it SHOULD be
- * rather than as it is: the moment the strip gains a past day, or
- * tapping today opens a peek, the row is correct without further work.
- * The 90-day FOOD_TAP_BACK_DAYS floor is the one rule it does NOT yet
- * carry, because it cannot bind while the window starts at today — add
- * it in the same change that makes a past day reachable.
+ * On a SUNDAY the current week has no past day yet, so the row does not
+ * appear that day. That is the honest reading of "this week" rather than
+ * a gap to paper over.
  */
 function DiaryRowShell({
   to,

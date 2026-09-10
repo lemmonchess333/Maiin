@@ -89,14 +89,23 @@ test.describe("calendar day peek", () => {
     // frame filmed a bare strip labelled as an open peek.
     const dayCells = page.getByRole("button", { name: /\w+day \d+ \w+,/i });
     const count = await dayCells.count().catch(() => 0);
-    if (count >= 5) {
+    /* Pick a cell that is NOT today, by its label rather than by index.
+       The strip is the calendar week now, so a fixed `nth(4)` is
+       Thursday — and one day in seven that IS today, where handleDayTap
+       scrolls instead of peeking (Cal-A) and the frame would come back
+       as a bare strip. Today's cell is the one whose name ends
+       "(today)"; WeekStrip appends it. */
+    let target = -1;
+    for (let i = 0; i < count; i += 1) {
+      const name = (await dayCells.nth(i).getAttribute("aria-label")) ?? "";
+      if (!/\(today\)/.test(name)) {
+        target = i;
+        break;
+      }
+    }
+    if (target >= 0) {
       await dayCells
-        .nth(4)
-        .click({ timeout: 4000 })
-        .catch(() => {});
-    } else if (count > 0) {
-      await dayCells
-        .last()
+        .nth(target)
         .click({ timeout: 4000 })
         .catch(() => {});
     }
