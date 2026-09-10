@@ -7,18 +7,34 @@ import { macroRingState } from "@/utils/formatters";
  * One macro's progress toward its daily target: grams logged in the
  * centre, the nutrient's name and its target beneath.
  *
- * The track is NEUTRAL rather than a tint of the macro's own hue, and
- * that is a contrast decision rather than a stylistic one. A track drawn
- * as `color + "18"` measured 1.06:1 against the card for carbs, 1.08:1
- * for fat and 1.12:1 for protein — invisible, so a ring with nothing
- * logged read as a disabled control instead of an empty one. Raising the
- * alpha does not fix it: carbs is #EAB308, and yellow cannot clear
- * 1.26:1 on white at ANY alpha, so the three rings would stay unequal
- * with the worst one still unreadable. A neutral groove at
- * `--muted-foreground / 0.22` measures 1.34:1 light and 1.48:1 dark for
- * all three alike, and the macro's identity stays where it carries
- * meaning: the filled arc. Same reasoning as the Food macro columns,
- * which put the hue on the icon and bar and leave the number neutral.
+ * The track is a 35% tint of the macro's own hue, and the alpha is
+ * measured rather than chosen. An earlier pass drew it neutral, on the
+ * finding that a hue tint measured 1.06:1 against the card for carbs
+ * and that "yellow cannot clear 1.26:1 on white at ANY alpha". That
+ * measurement was right about the value it used and wrong about the
+ * conclusion: it tinted `THEME.macros.carbs`, the ACCENT #EAB308, which
+ * really is capped at 1.92:1 even solid. The palette already carries the
+ * answer — `useMacroPalette().text` swaps to #A16207 on a light card
+ * precisely so macro colour can survive there.
+ *
+ * Measured against `--card` with the caller passing the theme's own
+ * palette track (text in light, accent in dark):
+ *
+ *              track@35%        arc          arc vs track
+ *   light      1.85/1.62/1.59   6.04/4.92/4.83   3.26/3.03/3.03
+ *   dark       1.61/2.20/1.97   4.62/8.49/6.67   2.87/3.86/3.38
+ *
+ * The neutral groove it replaces was 1.34 light / 1.48 dark, so every
+ * macro is now MORE visible than the groove in both themes, the arc
+ * clears the 3:1 WCAG 1.4.11 asks of a meaningful graphic, and filled
+ * still reads as distinctly filled against remaining. 35% is the
+ * balance point: 25% barely beats the old groove, 45% drops arc-vs-track
+ * to ~2.6 and the ring starts reading as uniformly coloured.
+ *
+ * `color` must therefore be the palette's THEME-AWARE value, not a raw
+ * `THEME.macros.*`. Passing the accent in light mode puts the carbs arc
+ * at 1.92:1 on white — the filled half of the ring effectively invisible
+ * — which is what TodayEnergy was doing.
  *
  * The arc is clamped at one full turn (`macroRingState` caps at 1.3 and
  * the dash array takes `min(pct, 1)`), so going over target never wraps
@@ -101,7 +117,10 @@ export default function MacroRing({
             cy={size / 2}
             r={r}
             fill="none"
-            stroke="hsl(var(--muted-foreground) / 0.22)"
+            /* 0x59 = 89/255 = 0.349. The established alpha-hex form
+               (`${THEME.x}NN`) rather than a second colour prop, so the
+               track cannot drift from the arc it belongs to. */
+            stroke={`${color}59`}
             strokeWidth="5"
           />
           {pct > 0 && (

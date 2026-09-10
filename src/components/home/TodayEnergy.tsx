@@ -9,6 +9,7 @@ import { formatCalories, CALORIE_UNIT } from "@/utils/formatNutrition";
 import { Skeleton } from "@/components/LoadingSkeleton";
 import type { EffectiveTargets } from "@/hooks/useEffectiveTargets";
 import MacroRing from "@/components/home/MacroRing";
+import { useMacroPalette } from "@/hooks/useMacroPalette";
 import { macroInfeasibilityMessage } from "@/lib/macroInfeasibility";
 
 /**
@@ -97,15 +98,22 @@ export default function TodayEnergy({
           `Post-lift — ${postWorkoutNudge.proteinRemaining}g protein to your target`
       : null;
 
+  /* The palette's THEME-AWARE track, not the raw accents. `THEME.macros`
+     is one fixed set for both themes, and on a white card carbs
+     (#EAB308) is 1.92:1 — the FILLED part of the ring, the half that
+     carries the reading, effectively invisible in light mode. The hook
+     exists for exactly this and swaps to #A16207 / #BE185D / #4F7D43
+     there (4.92 / 6.04 / 4.83). Dark is unchanged: `text` is `accent`. */
+  const { text: macroText } = useMacroPalette();
   const macros = [
     {
       label: "Protein",
       value: protein,
       target: tProt,
-      color: THEME.macros.protein,
+      color: macroText.protein,
     },
-    { label: "Carbs", value: carbs, target: tCarbs, color: THEME.macros.carbs },
-    { label: "Fat", value: fat, target: tFat, color: THEME.macros.fat },
+    { label: "Carbs", value: carbs, target: tCarbs, color: macroText.carbs },
+    { label: "Fat", value: fat, target: tFat, color: macroText.fat },
   ];
 
   return (

@@ -45,6 +45,12 @@ function evidence(id: string) {
 }
 
 describe("owner-authorized artwork activation", () => {
+  /* An explicit budget, not the 5s default. This case SHA-256s every
+     delivered frame of ten guides straight off disk — ~109ms of test
+     time on its own, but real I/O plus hashing, which under a full
+     parallel suite has twice overrun 5s (8.7s measured). A default
+     timeout is a value nobody chose for a case that does this much
+     work; 30s is chosen for it. */
   it("ships exactly ten complete guides bound to source, delivered assets and cues", () => {
     expect(
       Object.keys(FORM_ARTWORK)
@@ -67,7 +73,7 @@ describe("owner-authorized artwork activation", () => {
           frame.source.sha256
         );
     }
-  });
+  }, 30_000);
   it("does not activate incomplete pilots or borrow a related exercise's artwork", () => {
     for (const id of [
       "lat-pulldown",
