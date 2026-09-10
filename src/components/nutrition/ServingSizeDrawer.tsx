@@ -32,14 +32,44 @@ interface Props {
 // keeps the drag handle but skips the visible title row; the
 // food.name is still emitted as an sr-only Drawer.Title for the
 // aria-labelledby contract.
+/* Per-100g foods are measured in GRAMS, everything else in servings.
+   The old control stepped servings by 0.5 with no way to type, which on a
+   per-100g product meant 50 g jumps: 100 g and 150 g were reachable, 30 g
+   and 125 g were not, and those are ordinary portions. Grams also step by
+   10 rather than 50 here, but the step is a convenience — the input is
+   what makes any amount reachable. */
+const GRAM_STEP = 10;
+const SERVING_STEP = 0.5;
+
+/** Trim a float to at most 2dp without trailing zeros ("1.5", not "1.50"). */
+function tidy(n: number): string {
+  return String(Math.round(n * 100) / 100);
+}
+
 export function ServingSizeDrawer({ food, open, onClose, onConfirm }: Props) {
-  const [servings, setServings] = useState(1);
+  const perHundred = food?.unitConfidence === "low";
+  const step = perHundred ? GRAM_STEP : SERVING_STEP;
+  /* ONE piece of state, held as the string the user types. Deriving the
+     servings from it (rather than mirroring two values) is what stops the
+     input and the macro grid from disagreeing mid-edit. */
+  const [qty, setQty] = useState(() => (perHundred ? "100" : "1"));
   const [prevFood, setPrevFood] = useState(food);
   const { accent, text: macroText } = useMacroPalette();
   if (prevFood !== food) {
     setPrevFood(food);
-    setServings(1);
+    setQty(food?.unitConfidence === "low" ? "100" : "1");
   }
+
+  const parsed = Number(qty.replace(",", "."));
+  const valid = Number.isFinite(parsed) && parsed > 0;
+  const servings = valid ? (perHundred ? parsed / 100 : parsed) : 0;
+  /* Mid-edit the field is briefly empty. The grid then shows ONE serving
+     of the food rather than zeros — a row of 0s reads as "this food has no
+     calories", which is a claim about the food rather than about the
+     half-typed number. Log food is refused until the field parses. */
+  const previewServings = valid ? servings : 1;
+  const bump = (delta: number) =>
+    setQty(tidy(Math.max(step, (valid ? parsed : step) + delta)));
 
   if (!food) return null;
 
@@ -104,7 +134,7 @@ export function ServingSizeDrawer({ food, open, onClose, onConfirm }: Props) {
               className="text-lg font-bold font-mono tabular-nums"
               style={{ color: macroText.nutrition }}
             >
-              {Math.round(food.calories * servings)}
+              {Math.round(food.calories * previewServings)}
             </p>
             <p className="text-xs" style={{ color: macroText.nutrition }}>
               cal
@@ -118,7 +148,7 @@ export function ServingSizeDrawer({ food, open, onClose, onConfirm }: Props) {
               className="text-lg font-bold font-mono tabular-nums"
               style={{ color: macroText.protein }}
             >
-              {Math.round(food.protein * servings)}g
+              {Math.round(food.protein * previewServings)}g
             </p>
             <p className="text-xs" style={{ color: macroText.protein }}>
               protein
@@ -132,7 +162,7 @@ export function ServingSizeDrawer({ food, open, onClose, onConfirm }: Props) {
               className="text-lg font-bold font-mono tabular-nums"
               style={{ color: macroText.carbs }}
             >
-              {Math.round(food.carbs * servings)}g
+              {Math.round(food.carbs * previewServings)}g
             </p>
             <p className="text-xs" style={{ color: macroText.carbs }}>
               carbs
@@ -146,7 +176,7 @@ export function ServingSizeDrawer({ food, open, onClose, onConfirm }: Props) {
               className="text-lg font-bold font-mono tabular-nums"
               style={{ color: macroText.fat }}
             >
-              {Math.round(food.fat * servings)}g
+              {Math.round(food.fat * previewServings)}g
             </p>
             <p className="text-xs" style={{ color: macroText.fat }}>
               fat
@@ -154,25 +184,37 @@ export function ServingSizeDrawer({ food, open, onClose, onConfirm }: Props) {
           </div>
         </div>
 
-        {/* Serving adjuster */}
+        {/* Quantity — typeable, with the unit named beside it. */}
         <div className="flex items-center justify-center gap-4 pt-4">
           <button
             type="button"
-            onClick={() => setServings(Math.max(0.5, servings - 0.5))}
-            aria-label="Decrease servings"
-            className="size-9 rounded-full bg-muted flex items-center justify-center"
+            onClick={() => bump(-step)}
+            aria-label={perHundred ? "Decrease grams" : "Decrease servings"}
+            className="size-11 rounded-full bg-muted flex items-center justify-center"
           >
             <Minus className="size-4" aria-hidden="true" />
           </button>
           <div className="text-center">
-            <p className="text-2xl font-bold text-foreground">{servings}</p>
-            <p className="text-xs text-muted-foreground">servings</p>
+            <label htmlFor="serving-qty" className="sr-only">
+              {perHundred ? "Grams" : "Servings"}
+            </label>
+            <input
+              id="serving-qty"
+              type="text"
+              inputMode="decimal"
+              value={qty}
+              onChange={(e) => setQty(e.target.value)}
+              className="w-20 min-h-11 rounded-lg bg-muted text-center text-2xl font-bold font-mono tabular-nums text-foreground"
+            />
+            <p className="text-xs text-muted-foreground">
+              {perHundred ? "grams" : "servings"}
+            </p>
           </div>
           <button
             type="button"
-            onClick={() => setServings(servings + 0.5)}
-            aria-label="Increase servings"
-            className="size-9 rounded-full bg-muted flex items-center justify-center"
+            onClick={() => bump(step)}
+            aria-label={perHundred ? "Increase grams" : "Increase servings"}
+            className="size-11 rounded-full bg-muted flex items-center justify-center"
           >
             <Plus className="size-4" aria-hidden="true" />
           </button>
@@ -182,7 +224,8 @@ export function ServingSizeDrawer({ food, open, onClose, onConfirm }: Props) {
         <button
           type="button"
           onClick={() => onConfirm(servings)}
-          className="w-full py-3 rounded-xl text-base font-semibold text-white mt-4"
+          disabled={!valid}
+          className="w-full py-3 rounded-xl text-base font-semibold text-white mt-4 disabled:opacity-50"
           style={{
             background: THEME.gradient.brand,
             boxShadow: "var(--ds-shadow-purple-glow)",

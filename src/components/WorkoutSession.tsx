@@ -27,6 +27,7 @@ import {
   TrendingUp,
   Disc,
   Timer,
+  Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import EditSetSheet from "@/components/workout/EditSetSheet";
@@ -965,6 +966,39 @@ export default function WorkoutSession({
       });
       return updated;
     });
+  };
+
+  /* "+ Add Set" had no inverse. A mis-tap left an uncompleted set that the
+     session then counted as outstanding work, so finishing the sets the
+     programme actually prescribed still routed the lifter through "Finish
+     early" — a warning about their own accidental tap.
+
+     Removal is deliberately narrow. Only the LAST set of an exercise
+     qualifies: taking one from the middle renumbers every set after it and
+     moves the completion cursor under the lifter. Only an EXTRA qualifies —
+     a working set beyond the prescribed count — because removing a
+     prescribed set is a change to the prescription, not a correction. And
+     only an UNCOMPLETED one: a completed set has already fed PR tracking,
+     progression and volume, and reversing those is the accumulator problem
+     ADR-0012 handles for deletion, not something to fold in here. */
+  const extraSetIndex = (exIdx: number): number | null => {
+    const sets = setLogs[exIdx];
+    if (!sets || sets.length === 0) return null;
+    const planned = day.exercises[exIdx]?.sets ?? 0;
+    const working = sets.filter((set) => set.type === "working").length;
+    if (working <= planned) return null;
+    const last = sets.length - 1;
+    if (sets[last].completed || sets[last].type !== "working") return null;
+    return last;
+  };
+
+  const removeSet = (exIdx: number, setIdx: number) => {
+    setSetLogs((prev) => {
+      const updated = prev.map((sets) => sets.map((s) => ({ ...s })));
+      updated[exIdx].splice(setIdx, 1);
+      return updated;
+    });
+    setCurrentSetIndex((idx) => Math.min(idx, Math.max(0, setIdx - 1)));
   };
 
   const updateSetLog = (
@@ -2177,6 +2211,23 @@ export default function WorkoutSession({
                     {TYPE_LABELS[type]}
                   </button>
                 ))}
+                {/* The inverse of "+ Add Set", in the menu that set already
+                    has. Rendered only for a removable extra, so the normal
+                    case gains no control. */}
+                {extraSetIndex(currentExIndex) === typePopover && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      removeSet(currentExIndex, typePopover);
+                      setTypePopover(null);
+                      haptic(10);
+                    }}
+                    className="w-full min-h-11 flex items-center gap-3 px-4 py-3 text-small font-semibold text-destructive-strong border-t border-border/50 hover:bg-muted transition-colors"
+                  >
+                    <Trash2 className="size-5" aria-hidden="true" />
+                    Remove set
+                  </button>
+                )}
               </div>
             </>,
             document.body
