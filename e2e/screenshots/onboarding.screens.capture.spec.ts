@@ -163,9 +163,13 @@ test.describe("onboarding screenshots", () => {
     await shootBoth(page, "onboarding-3-race-advisory-compressed");
     await next(page);
 
-    // Step 2 — equipment.
-    await tap(page, /full gym/i);
+    // Step 2 — equipment AND lifting experience. Neither arrives chosen,
+    // and the step holds until both are, so these are hard clicks: `tap`
+    // swallows a miss and the failure would surface as a dead Continue
+    // several steps later, exactly as the race-distance note above warns.
     await shootBoth(page, "onboarding-2-equipment");
+    await page.getByRole("button", { name: /full gym/i }).click();
+    await page.getByRole("button", { name: /some experience/i }).click();
     await next(page);
 
     // Step 4 — limitations require an explicit answer.
@@ -176,8 +180,15 @@ test.describe("onboarding screenshots", () => {
     await page.getByRole("button", { name: "None", exact: true }).click();
     await next(page);
 
-    // Step 5 — about you (has sensible defaults; shoot as-is).
+    // Step 5 — about you. Nothing here arrives filled in: height, weight
+    // and the age range are the whole calorie estimate, so the step will
+    // not advance on figures nobody entered. The frame is shot in that
+    // as-arrived state, which is what a new account actually sees.
     await shootBoth(page, "onboarding-5-about-you");
+    await page.getByLabel("Weight (kg)", { exact: true }).fill("81.5");
+    await page.getByLabel("Height (cm)", { exact: true }).fill("175");
+    // en dash in the rendered label, so match on the leading digits.
+    await page.getByRole("radio", { name: /^25/ }).click();
     await next(page);
 
     // Step 7 — confirmation. Shot but NOT submitted (completeOnboarding

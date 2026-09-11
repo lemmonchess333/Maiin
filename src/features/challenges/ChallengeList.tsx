@@ -3,7 +3,6 @@ import { useState, useEffect, type MutableRefObject } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   useChallenges,
-  useAutoJoinChallenge,
   getTimeRemaining,
   soonestEndingChallenge,
 } from "./useChallenges";
@@ -63,20 +62,6 @@ export function ChallengeList({
   // Find the weekly warrior challenge
   const weeklyCh = challenges.find(
     (c) => c.type === "weekly" && c.metric === "workout_count"
-  );
-  const isJoined = weeklyCh ? !!myProgress[weeklyCh.id] : false;
-
-  // Auto-enrolment (SOC-P1a): Weekly Warrior (the original precedent) and
-  // the global monthly hybrid — both are challenges every user is honestly
-  // IN from day one, so their cards never read as a locked "0 joined" door.
-  const hybridCh = challenges.find(
-    (c) => c.id.startsWith("global-monthly-") && c.metric === "hybrid_score"
-  );
-  useAutoJoinChallenge(user ? weeklyCh : undefined, isJoined, joinChallenge);
-  useAutoJoinChallenge(
-    user ? hybridCh : undefined,
-    hybridCh ? !!myProgress[hybridCh.id] : false,
-    joinChallenge
   );
 
   // Build friend workout rankings for the weekly card

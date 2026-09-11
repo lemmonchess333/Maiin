@@ -12,9 +12,6 @@ vi.mock("@/lib/auth", () => ({
 }));
 vi.mock("@/features/challenges/useChallenges", () => ({
   useChallenges: () => mockUseChallenges(),
-  // SOC-P1a auto-enrolment is a no-op here — its behaviour is pinned in
-  // the challenges feature tests; this suite cares about the stack layout.
-  useAutoJoinChallenge: () => {},
 }));
 /* `workoutTonnageKg` is the REAL implementation, deliberately: the share
    card's volume is one of the things this suite asserts, and stubbing the
@@ -26,8 +23,16 @@ vi.mock("@/hooks/useWorkouts", async (importOriginal) => ({
   useWorkouts: () => mockUseWorkouts(),
 }));
 vi.mock("@/features/challenges/ChallengeCard", () => ({
-  ChallengeCard: ({ challenge }: { challenge: { id: string } }) => (
-    <div data-testid="challenge-card">{challenge.id}</div>
+  ChallengeCard: ({
+    challenge,
+    joined,
+  }: {
+    challenge: { id: string };
+    joined: boolean;
+  }) => (
+    <div data-testid="challenge-card" data-joined={String(joined)}>
+      {challenge.id}
+    </div>
   ),
 }));
 vi.mock("@/components/share/ShareCardSheet", () => ({
@@ -73,6 +78,26 @@ describe("SoloFirstFeed", () => {
     expect(screen.getByTestId("challenge-card")).toHaveTextContent(
       "global-monthly-2026-06-01"
     );
+  });
+
+  it("greets a fresh account un-joined, and enrols nobody on mount", () => {
+    // The anchor card of the cold-start stack enrolled its viewer as a
+    // side effect of rendering, so a brand-new account was in a challenge
+    // it had never been offered. Joining is the tap the card shows.
+    const joinChallenge = vi.fn();
+    mockUseChallenges.mockReturnValue({
+      challenges: [GLOBAL],
+      myProgress: {},
+      leaderboards: {},
+      joinChallenge,
+      leaveChallenge: vi.fn(),
+    });
+    render(<SoloFirstFeed onFindPeople={vi.fn()} onOpenTogether={vi.fn()} />);
+    expect(screen.getByTestId("challenge-card")).toHaveAttribute(
+      "data-joined",
+      "false"
+    );
+    expect(joinChallenge).not.toHaveBeenCalled();
   });
 
   it("collapses the challenge slot when no global challenge exists yet", () => {

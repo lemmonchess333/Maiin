@@ -85,6 +85,9 @@ test("free running, typed metrics, editable review and recoverable commit", asyn
     page.getByRole("button", { name: /: (run|lift and run)$/ })
   ).toHaveCount(0);
   await next();
+  // Equipment and experience are both answers now, and the step holds
+  // until both are given.
+  await page.getByRole("button", { name: /Full gym/ }).click();
   await page.getByRole("button", { name: /New to lifting/ }).click();
   await next();
   await page.getByRole("button", { name: "None", exact: true }).click();
@@ -98,6 +101,12 @@ test("free running, typed metrics, editable review and recoverable commit", asyn
     page.getByRole("textbox", { name: "Weight (st)", exact: true })
   ).toHaveValue("12");
   await capture(page, "body-scale");
+  // Height and the age range are the other two halves of the calorie
+  // estimate, and neither arrives filled in.
+  await page
+    .getByRole("textbox", { name: "Height (cm)", exact: true })
+    .fill("175");
+  await page.getByRole("radio", { name: /^25/ }).click();
   await next();
   await expect(
     page.getByText("Free running · no scheduled runs")

@@ -16,6 +16,8 @@ const numeric = (text: string) =>
 
 /** Canonical kg/cm change only through input, never unit presentation. No log writes. */
 export default function BodyInputs({
+  answered,
+  onAnsweredChange,
   weightKg,
   heightCm,
   weightUnit,
@@ -26,6 +28,15 @@ export default function BodyInputs({
   onHeightUnit,
   onValidityChange,
 }: {
+  /** Whether these are the USER's figures. False on a fresh account: the
+   *  fields render empty and nothing is reported valid, so the caller
+   *  cannot advance on numbers nobody entered. Read once, to seed — a
+   *  resumed draft comes back with its answers in the boxes. */
+  answered: boolean;
+  onAnsweredChange: (answered: boolean) => void;
+  /** Still numbers rather than nullable: the dial has to point somewhere
+   *  while unanswered, and the plan preview on earlier steps estimates
+   *  against them. `answered` is what says whether they mean anything. */
   weightKg: number;
   heightCm: number;
   weightUnit: WeightUnit;
@@ -44,23 +55,41 @@ export default function BodyInputs({
     unit === "cm"
       ? String(Number(cm.toFixed(1)))
       : String(Math.floor(Math.round(cm / 2.54) / 12));
-  const [weight, setWeight] = useState(() => weightText(weightKg, weightUnit));
-  const [pounds, setPounds] = useState(() =>
-    String(kgToStonePounds(weightKg).pounds)
+  const [weightAnswered, setWeightAnswered] = useState(answered);
+  const [heightAnswered, setHeightAnswered] = useState(answered);
+  const [weight, setWeight] = useState(() =>
+    answered ? weightText(weightKg, weightUnit) : ""
   );
-  const [height, setHeight] = useState(() => heightText(heightCm, heightUnit));
+  const [pounds, setPounds] = useState(() =>
+    answered ? String(kgToStonePounds(weightKg).pounds) : ""
+  );
+  const [height, setHeight] = useState(() =>
+    answered ? heightText(heightCm, heightUnit) : ""
+  );
   const [inches, setInches] = useState(() =>
-    String(Math.round(heightCm / 2.54) % 12)
+    answered ? String(Math.round(heightCm / 2.54) % 12) : ""
   );
   const [weightValid, setWeightValid] = useState(true);
   const [heightValid, setHeightValid] = useState(true);
+  /* Unanswered is reported as NOT valid, so one gate covers both. An empty
+     field is not an error the user has made, though, so it draws no
+     `aria-invalid` and no message — the two are tracked separately for
+     exactly that reason. */
   useEffect(
-    () => onValidityChange(weightValid && heightValid),
-    [weightValid, heightValid, onValidityChange]
+    () =>
+      onValidityChange(
+        weightValid && heightValid && weightAnswered && heightAnswered
+      ),
+    [weightValid, heightValid, weightAnswered, heightAnswered, onValidityChange]
+  );
+  useEffect(
+    () => onAnsweredChange(weightAnswered && heightAnswered),
+    [weightAnswered, heightAnswered, onAnsweredChange]
   );
   const editWeight = (text: string, remainder: string) => {
     setWeight(text);
     setPounds(remainder);
+    setWeightAnswered(text.trim() !== "");
     const main = numeric(text);
     const remaining = numeric(remainder);
     const kg =
@@ -81,6 +110,7 @@ export default function BodyInputs({
   const editHeight = (text: string, remainder: string) => {
     setHeight(text);
     setInches(remainder);
+    setHeightAnswered(text.trim() !== "");
     const main = numeric(text);
     const remaining = numeric(remainder);
     const cm = heightUnit === "cm" ? main : (main * 12 + remaining) * 2.54;
@@ -112,8 +142,10 @@ export default function BodyInputs({
               { value: "st", label: "st" },
             ]}
             onChange={(next) => {
-              setWeight(weightText(weightKg, next));
-              setPounds(String(kgToStonePounds(weightKg).pounds));
+              setWeight(weightAnswered ? weightText(weightKg, next) : "");
+              setPounds(
+                weightAnswered ? String(kgToStonePounds(weightKg).pounds) : ""
+              );
               onWeightUnit(next);
             }}
           />
@@ -175,6 +207,7 @@ export default function BodyInputs({
             setWeight(weightText(kg, weightUnit));
             setPounds(String(kgToStonePounds(kg).pounds));
             setWeightValid(true);
+            setWeightAnswered(true);
           }}
         />
         <p className="text-sm text-muted-foreground">
@@ -198,8 +231,10 @@ export default function BodyInputs({
               { value: "ft", label: "ft / in" },
             ]}
             onChange={(next) => {
-              setHeight(heightText(heightCm, next));
-              setInches(String(Math.round(heightCm / 2.54) % 12));
+              setHeight(heightAnswered ? heightText(heightCm, next) : "");
+              setInches(
+                heightAnswered ? String(Math.round(heightCm / 2.54) % 12) : ""
+              );
               onHeightUnit(next);
             }}
           />
