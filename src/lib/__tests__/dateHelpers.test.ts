@@ -12,6 +12,7 @@ import { describe, it, expect } from "vitest";
 import {
   localDateString,
   localWeekKey,
+  dateForDayOfWeek,
   generateScheduledRunId,
   addLocalDays,
   parseLocalDate,
@@ -42,32 +43,69 @@ describe("localDateString", () => {
   });
 });
 
+/* Weeks start on MONDAY — en-GB and ISO-8601, and what the partner-streak
+   engine and the coach-prompt ids have always used. Every expectation here
+   is a literal rather than a call to the function under test, so a silent
+   re-anchor fails loudly instead of agreeing with itself. */
 describe("localWeekKey", () => {
-  it("returns the Sunday on or before the given date", () => {
-    // Wed May 14, 2026
-    const wed = new Date(2026, 4, 14);
-    expect(localWeekKey(wed)).toBe("2026-05-10"); // Sunday May 10
+  it("returns the Monday on or before the given date", () => {
+    // Thu 14 May 2026 — the source comment called this a Wednesday.
+    const thu = new Date(2026, 4, 14);
+    expect(localWeekKey(thu)).toBe("2026-05-11"); // Monday 11 May
   });
 
-  it("returns the same date when called on a Sunday", () => {
-    // Sun May 10, 2026
+  it("returns the same date when called on a Monday", () => {
+    const mon = new Date(2026, 4, 11);
+    expect(localWeekKey(mon)).toBe("2026-05-11");
+  });
+
+  it("treats Sunday as the END of its week, not the start", () => {
+    // The whole point of the anchor, and the day the two conventions
+    // disagree about: Sun 10 May belongs to the week that began Mon 4 May.
     const sun = new Date(2026, 4, 10);
-    expect(localWeekKey(sun)).toBe("2026-05-10");
+    expect(localWeekKey(sun)).toBe("2026-05-04");
   });
 
   it("crosses month boundaries correctly", () => {
-    // Mon May 4, 2026 — Sunday of that week is May 3 (within May)
-    const mon = new Date(2026, 4, 4);
-    expect(localWeekKey(mon)).toBe("2026-05-03");
-    // Mon Jun 1, 2026 — Sunday is May 31
+    // Sun 3 May 2026 belongs to the week beginning Mon 27 April.
+    const sun = new Date(2026, 4, 3);
+    expect(localWeekKey(sun)).toBe("2026-04-27");
+    // Mon 1 June 2026 starts its own week.
     const monJun = new Date(2026, 5, 1);
-    expect(localWeekKey(monJun)).toBe("2026-05-31");
+    expect(localWeekKey(monJun)).toBe("2026-06-01");
   });
 
   it("crosses year boundaries correctly", () => {
-    // Sat Jan 2, 2027 — Sunday is Dec 27, 2026
+    // Sat 2 Jan 2027 belongs to the week beginning Mon 28 Dec 2026.
     const sat = new Date(2027, 0, 2);
-    expect(localWeekKey(sat)).toBe("2026-12-27");
+    expect(localWeekKey(sat)).toBe("2026-12-28");
+  });
+});
+
+/* A weekKey is a MONDAY; a dayIndex is a plain day-of-week where 0 is
+   SUNDAY. The two are one offset apart, and every call site that added the
+   index straight onto the key shifted a run by a day — and a Sunday run by
+   a whole week. The offset lives in one function now; this pins it. */
+describe("dateForDayOfWeek", () => {
+  it("maps each day-of-week onto the right date in a Monday week", () => {
+    const weekKey = "2026-05-11"; // Monday 11 May 2026
+    expect(dateForDayOfWeek(weekKey, 1)).toBe("2026-05-11"); // Mon
+    expect(dateForDayOfWeek(weekKey, 3)).toBe("2026-05-13"); // Wed
+    expect(dateForDayOfWeek(weekKey, 6)).toBe("2026-05-16"); // Sat
+  });
+
+  it("puts Sunday at the END of the week it names", () => {
+    // The case a naive `weekKey + dayIndex` gets wrong by seven days: it
+    // would answer 11 May, the Monday the week starts on.
+    expect(dateForDayOfWeek("2026-05-11", 0)).toBe("2026-05-17");
+  });
+
+  it("agrees with localWeekKey for every day of a week", () => {
+    // Round-trip: each date this produces must resolve back to the key.
+    for (let dow = 0; dow < 7; dow++) {
+      const date = dateForDayOfWeek("2026-05-11", dow);
+      expect(localWeekKey(parseLocalDate(date))).toBe("2026-05-11");
+    }
   });
 });
 
@@ -161,34 +199,36 @@ describe("parseLocalDate", () => {
 
 // ── localWeekKey — literal pins that lived beside the retired getWeekKey alias ────────────────────────────────
 
-describe("localWeekKey (Sunday anchor, literal dates)", () => {
-  it("returns the Sunday of the week for a Sunday", () => {
-    // 2025-01-05 is a Sunday
-    const result = localWeekKey(new Date("2025-01-05T12:00:00"));
-    expect(result).toBe("2025-01-05");
-  });
-
-  it("returns the previous Sunday for a Wednesday", () => {
-    // 2025-01-08 is a Wednesday → Sunday is 2025-01-05
-    const result = localWeekKey(new Date("2025-01-08T12:00:00"));
-    expect(result).toBe("2025-01-05");
-  });
-
-  it("returns the previous Sunday for a Saturday", () => {
-    // 2025-01-11 is a Saturday → Sunday is 2025-01-05
-    const result = localWeekKey(new Date("2025-01-11T12:00:00"));
-    expect(result).toBe("2025-01-05");
-  });
-
-  it("returns the previous Sunday for a Monday", () => {
-    // 2025-01-06 is a Monday → Sunday is 2025-01-05
+describe("localWeekKey (Monday anchor, literal dates)", () => {
+  it("returns the same Monday for a Monday", () => {
+    // 2025-01-06 is a Monday
     const result = localWeekKey(new Date("2025-01-06T12:00:00"));
-    expect(result).toBe("2025-01-05");
+    expect(result).toBe("2025-01-06");
+  });
+
+  it("returns the preceding Monday for a Wednesday", () => {
+    // 2025-01-08 is a Wednesday → Monday is 2025-01-06
+    const result = localWeekKey(new Date("2025-01-08T12:00:00"));
+    expect(result).toBe("2025-01-06");
+  });
+
+  it("returns the preceding Monday for a Saturday", () => {
+    // 2025-01-11 is a Saturday → Monday is 2025-01-06
+    const result = localWeekKey(new Date("2025-01-11T12:00:00"));
+    expect(result).toBe("2025-01-06");
+  });
+
+  it("keeps a Sunday in the week that is ending", () => {
+    // 2025-01-05 is a Sunday → the week that began Monday 2024-12-30.
+    // Under the old anchor this same date was a week START; it is the one
+    // day of seven where the two conventions disagree.
+    const result = localWeekKey(new Date("2025-01-05T12:00:00"));
+    expect(result).toBe("2024-12-30");
   });
 
   it("handles year boundaries", () => {
-    // 2025-01-01 is a Wednesday → Sunday is 2024-12-29
+    // 2025-01-01 is a Wednesday → Monday is 2024-12-30
     const result = localWeekKey(new Date("2025-01-01T12:00:00"));
-    expect(result).toBe("2024-12-29");
+    expect(result).toBe("2024-12-30");
   });
 });

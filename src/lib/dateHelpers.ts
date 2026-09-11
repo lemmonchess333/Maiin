@@ -31,8 +31,36 @@ export function localDateString(d: Date = new Date()): string {
  */
 export function localWeekKey(d: Date = new Date()): string {
   const dow = d.getDay(); // 0=Sun..6=Sat
-  const sunday = new Date(d.getFullYear(), d.getMonth(), d.getDate() - dow);
-  return localDateString(sunday);
+  const sinceMonday = (dow + 6) % 7;
+  const monday = new Date(
+    d.getFullYear(),
+    d.getMonth(),
+    d.getDate() - sinceMonday
+  );
+  return localDateString(monday);
+}
+
+/**
+ * The date on which a given day-of-week falls, inside the week a `weekKey`
+ * names.
+ *
+ * Two different conventions meet here and they are NOT the same number.
+ * A `weekKey` is the MONDAY that starts the week. A `dayIndex` is a plain
+ * day-of-week from `Date.getDay()` — 0 = Sunday. So the offset between
+ * them is `(dayOfWeek + 6) % 7`, not `dayOfWeek`.
+ *
+ * It lives here because the offset was being re-derived as
+ * `addLocalDays(parseLocalDate(weekKey), dayIndex)` at each call site,
+ * which is only correct while the key happens to start on Sunday. Every
+ * such site silently shifted a scheduled run by a day — and a Sunday run
+ * by a whole week — the moment the anchor moved. One function means the
+ * anchor is stated once and a future change is genuinely one edit.
+ */
+export function dateForDayOfWeek(weekKey: string, dayOfWeek: number): string {
+  const offsetFromMonday = (dayOfWeek + 6) % 7;
+  return localDateString(
+    addLocalDays(parseLocalDate(weekKey), offsetFromMonday)
+  );
 }
 
 /**

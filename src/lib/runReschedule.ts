@@ -1,10 +1,6 @@
 import { HARD_RUN_TYPES } from "@/features/program/programTypes";
 import type { ScheduledRunDay } from "@/features/program/programTypes";
-import {
-  parseLocalDate,
-  addLocalDays,
-  localDateString,
-} from "@/lib/dateHelpers";
+import { dateForDayOfWeek } from "@/lib/dateHelpers";
 import { isScheduledRaceRunDay } from "@/lib/workoutTemplates";
 import {
   getScheduledRunStatus,
@@ -76,7 +72,9 @@ export function runOriginDate(source: ScheduledRunDay): string {
 
 function dateForDay(weekKey: string, dayIndex: number): string | null {
   try {
-    return localDateString(addLocalDays(parseLocalDate(weekKey), dayIndex));
+    // Through the shared helper: a weekKey starts on Monday and a dayIndex
+    // is a day-of-week (0 = Sunday), so the two are one offset apart.
+    return dateForDayOfWeek(weekKey, dayIndex);
   } catch {
     return null;
   }
