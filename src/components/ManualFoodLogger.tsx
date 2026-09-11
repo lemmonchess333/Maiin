@@ -2,7 +2,6 @@ import { useState } from "react";
 import { Timestamp } from "firebase/firestore";
 import { createMealEntry, notifyMealsLogged } from "@/lib/mealEntry";
 import { useUid } from "@/lib/auth";
-import { Check } from "lucide-react";
 import { toast } from "@/lib/toast";
 import { localDateString } from "@/lib/dateHelpers";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
@@ -44,7 +43,6 @@ export function ManualFoodLogger({ date, meal, open, onClose }: Props) {
   const [carbs, setCarbs] = useState("");
   const [fat, setFat] = useState("");
   const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
   /* ConfirmDialog state for suspicious-but-possible high values
      (>5000 cal etc). Negative / NaN values are blocked outright
      via inline toast — they never reach this prompt. */
@@ -81,7 +79,6 @@ export function ManualFoodLogger({ date, meal, open, onClose }: Props) {
         createdAt: Timestamp.now(),
       });
 
-      setSaved(true);
       notifyMealsLogged(uid, [savedMeal.id], "Logged manually", {
         path: "manual",
       });
@@ -100,15 +97,19 @@ export function ManualFoodLogger({ date, meal, open, onClose }: Props) {
         source: "manual",
       });
 
-      setTimeout(() => {
-        setSaved(false);
-        setName("");
-        setCalories("");
-        setProtein("");
-        setCarbs("");
-        setFat("");
-        onClose();
-      }, 1500);
+      /* Clear and close on the save itself. A delayed reset stays armed on
+         a component the sheet does not unmount, so dismissing and
+         reopening inside its window handed the next entry to a timer
+         belonging to the previous one — it wiped five fields and closed
+         the sheet under whatever had just been typed. The confirmation is
+         `notifyMealsLogged`'s toast, the same one every other logging
+         route in the app answers with. */
+      setName("");
+      setCalories("");
+      setProtein("");
+      setCarbs("");
+      setFat("");
+      onClose();
     } catch {
       toast.error("Couldn't save this meal. Try again.", {
         id: "food-save-error",
@@ -232,11 +233,10 @@ export function ManualFoodLogger({ date, meal, open, onClose }: Props) {
             fullWidth
             size="lg"
             onClick={handleSave}
-            disabled={saving || saved || !name.trim()}
+            disabled={saving || !name.trim()}
             loading={saving}
-            leftIcon={saved ? <Check className="size-4" /> : undefined}
           >
-            {saved ? "Meal logged" : saving ? "Saving…" : "Log meal"}
+            {saving ? "Saving…" : "Log meal"}
           </Button>
         </div>
       </BottomSheet>

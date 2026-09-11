@@ -1,6 +1,13 @@
 import QuickMealPortionSheet from "@/components/food/QuickMealPortionSheet";
 import { saveQuickMeal } from "@/lib/quickMealEntry";
-import { useState, useEffect, useRef, useMemo, Suspense } from "react";
+import {
+  useState,
+  useEffect,
+  useRef,
+  useMemo,
+  useCallback,
+  Suspense,
+} from "react";
 import { lazyRetry } from "@/lib/lazyRetry";
 import { useSearchParams } from "react-router-dom";
 import { useDailyLogs } from "@/hooks/useFirestore";
@@ -10,6 +17,7 @@ import { toast } from "@/lib/toast";
 import { motion } from "framer-motion";
 import { haptic } from "@/lib/haptic";
 import { logger } from "@/lib/logger";
+import { commitMealDeletes } from "@/lib/mealDeleteCommit";
 import { joinHumanList } from "@/lib/listFormat";
 
 const itemVariant = {
@@ -342,6 +350,28 @@ export default function Food() {
     editMeal,
     loading: mealsLoading,
   } = useMeals();
+
+  /* The failed half of a delete comes back on screen: `pendingDeleteIds`
+     drives both the row's visibility and the day's calorie total, so
+     dropping the ids whose write rejected restores both at once. The rule
+     itself lives in `commitMealDeletes`; this is the wiring. */
+  const commitDeletes = useCallback(
+    (mealIds: string[], foodName: string) =>
+      commitMealDeletes(mealIds, foodName, {
+        deleteMeal,
+        restore: (failed) =>
+          setPendingDeleteIds((prev) => {
+            const next = new Set(prev);
+            for (const id of failed) next.delete(id);
+            return next;
+          }),
+        report: (name) =>
+          toast.error(`Couldn't delete ${name}. Try again.`, {
+            id: "food-delete-error",
+          }),
+      }),
+    [deleteMeal]
+  );
 
   // Food6 ci3+perf: capture initial-render duration. `renderStartRef`
   // takes its first-paint timestamp from the post-mount effect (rather
@@ -1104,7 +1134,7 @@ export default function Food() {
         setOpenRowId(null);
 
         const timeoutId = setTimeout(() => {
-          for (const id of idsToRemove) deleteMeal(id);
+          void commitDeletes(idsToRemove, foodName);
         }, 3000);
 
         toast.success(
@@ -1182,13 +1212,12 @@ export default function Food() {
 
     // 2. Schedule the Firestore deletes after the undo window.
     const timeoutId = setTimeout(() => {
-      for (const id of mealIds) deleteMeal(id);
-      // Don't remove from pendingDeleteIds here. The Firestore onSnapshot
-      // will drop the meals from the meals array, making the pending IDs a
-      // harmless no-op filter on non-existent entries. Removing from
-      // pending BEFORE onSnapshot confirms the delete causes a brief flash
-      // where the rows reappear in the list (the "automatically adds back"
-      // bug).
+      // On success the ids stay in pendingDeleteIds: the Firestore
+      // onSnapshot drops the meals from the array, making the pending ids a
+      // harmless no-op filter on entries that no longer exist. Clearing
+      // them before that snapshot arrives flashes the rows back into the
+      // list. `commitDeletes` clears only the ids whose write REJECTED.
+      void commitDeletes(mealIds, foodName);
     }, 3000);
 
     // 3. Toast with Undo — pluralised when the group held multiple
