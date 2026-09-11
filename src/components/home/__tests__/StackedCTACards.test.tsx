@@ -144,10 +144,10 @@ describe("StackedCTACards", function () {
   });
 
   describe("#972 cold-start framing", function () {
-    it("frames the lift card as 'Your first workout' when firstWorkout is set", function () {
-      renderCards({ todayType: "lift", firstWorkout: true });
-      expect(screen.getByText("Your first workout")).toBeInTheDocument();
-      expect(screen.queryByText("Planned for today")).not.toBeInTheDocument();
+    it("keeps calendar wording when a fresh account is shown a later lift", function () {
+      renderCards({ todayType: "lift", firstWorkout: true, liftDayIndex: 2 });
+      expect(screen.getByText("Planned for today")).toBeInTheDocument();
+      expect(screen.queryByText("Your first workout")).not.toBeInTheDocument();
     });
 
     it("frames the run card as 'Your first run' when firstRun is set", function () {

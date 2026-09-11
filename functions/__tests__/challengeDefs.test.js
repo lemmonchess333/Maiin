@@ -10,7 +10,6 @@ import { describe, it, expect } from "vitest";
 import {
   buildCurrentChallenges,
   buildUpcomingChallenges,
-  isAutoEnrolChallengeId,
   seasonFor,
   seasonStartUTC,
   seasonEndUTC,
@@ -230,21 +229,5 @@ describe("buildUpcomingChallenges — one UTC day of lookahead", () => {
     );
     expect(challengeContainsActivityDate(august, "2026-07-31")).toBe(false);
     expect(challengeContainsActivityDate(august, "2026-08-01")).toBe(true);
-  });
-});
-
-describe("isAutoEnrolChallengeId — server join-on-first-activity is scoped", () => {
-  it("weekly + global monthly are auto-enrol", () => {
-    expect(isAutoEnrolChallengeId("weekly-2026-07-27")).toBe(true);
-    expect(isAutoEnrolChallengeId("global-monthly-2026-08-01")).toBe(true);
-  });
-
-  it("opt-in challenges are never server-joined — joining is a user choice", () => {
-    expect(isAutoEnrolChallengeId("monthly-2026-08-01")).toBe(false);
-    expect(isAutoEnrolChallengeId("seasonal-2026-06-01")).toBe(false);
-    expect(isAutoEnrolChallengeId("fastest-5k-2026-08-01")).toBe(false);
-    expect(isAutoEnrolChallengeId("group-goal-2026-08-01")).toBe(false);
-    expect(isAutoEnrolChallengeId("")).toBe(false);
-    expect(isAutoEnrolChallengeId(null)).toBe(false);
   });
 });

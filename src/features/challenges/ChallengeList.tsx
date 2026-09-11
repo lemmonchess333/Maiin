@@ -58,11 +58,25 @@ export function ChallengeList({
   // SOC-P1e: not-joined challenges collapse behind a disclosure row.
   const [showAllAvailable, setShowAllAvailable] = useState(false);
   const [rankingsLoading, setRankingsLoading] = useState(true);
+  const [weeklyBusy, setWeeklyBusy] = useState(false);
 
   // Find the weekly warrior challenge
   const weeklyCh = challenges.find(
     (c) => c.type === "weekly" && c.metric === "workout_count"
   );
+  const weeklyJoined = !!(weeklyCh && myProgress[weeklyCh.id]);
+
+  async function changeWeeklyMembership() {
+    if (!weeklyCh || weeklyBusy) return;
+    setWeeklyBusy(true);
+    haptic("light");
+    try {
+      if (weeklyJoined) await leaveChallenge(weeklyCh.id);
+      else await joinChallenge(weeklyCh.id);
+    } finally {
+      setWeeklyBusy(false);
+    }
+  }
 
   // Build friend workout rankings for the weekly card
   useEffect(() => {
@@ -269,21 +283,40 @@ export function ChallengeList({
           )}
         </div>
 
-        {/* Primary action — its own control, 44px target, sport-coded. */}
-        <button
-          type="button"
-          onClick={() => {
-            haptic("light");
-            navigate(ctaTo);
-          }}
-          className="w-full min-h-[44px] flex items-center justify-center gap-1.5 rounded-xl text-sm font-semibold text-white motion-safe:active:scale-[0.99] transition-transform"
-          style={{
-            background: goalMet ? THEME.semantic.positive : THEME.brand,
-          }}
-        >
-          {ctaLabel}
-          <ChevronRight size={16} />
-        </button>
+        {weeklyCh && !weeklyJoined ? (
+          <Button
+            fullWidth
+            loading={weeklyBusy}
+            onClick={changeWeeklyMembership}
+            aria-label="Join weekly challenge"
+          >
+            Join challenge
+          </Button>
+        ) : (
+          <div className="flex flex-wrap gap-2">
+            <Button
+              className="min-w-0 flex-1"
+              disabled={weeklyBusy}
+              onClick={() => {
+                haptic("light");
+                navigate(ctaTo);
+              }}
+              rightIcon={<ChevronRight size={16} />}
+            >
+              {ctaLabel}
+            </Button>
+            {weeklyCh && (
+              <Button
+                variant="ghost"
+                loading={weeklyBusy}
+                onClick={changeWeeklyMembership}
+                aria-label="Leave weekly challenge"
+              >
+                Leave
+              </Button>
+            )}
+          </div>
+        )}
 
         {/* Secondary: this-week standings among people you follow. */}
         {(rankingsLoading || weeklyRankings.length > 0) && (

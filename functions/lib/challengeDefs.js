@@ -261,23 +261,9 @@ function buildUpcomingChallenges(now = new Date()) {
   return [...byId.values()];
 }
 
-/**
- * Challenges every user is auto-enrolled into (SOC-P1a / Soc8): the weekly
- * "Weekly Warrior" and the global monthly hybrid. The client auto-joins
- * these on surface mount; the server may therefore create the participant
- * doc on a user's FIRST QUALIFYING ACTIVITY of the period without waiting
- * for the client — same end state, just not racing the user's first
- * app-open of the period. Opt-in challenges (seasonal, fastest-5k,
- * group-goal) are NEVER server-joined: joining those is a user choice.
- */
-function isAutoEnrolChallengeId(id) {
-  return /^(weekly|global-monthly)-\d{4}-\d{2}-\d{2}$/.test(String(id));
-}
-
 module.exports = {
   buildCurrentChallenges,
   buildUpcomingChallenges,
-  isAutoEnrolChallengeId,
   // exported for targeted tests
   weekStartUTC,
   monthStartUTC,
