@@ -211,8 +211,8 @@ function InvalidRunReview({
   const isSaved = saveStatus === "saved";
 
   /* Heading + body are reason-aware before save and saved-aware after.
-     Once the run is on the user's account the warning-style copy
-     would mislead — the run isn't being rejected, it's been saved.
+     Saved includes an offline local write, so it must not claim that
+     the run is already on the server. The offline sync note stays below.
      Heading priority: saved > too-fast > too-short. Body mirrors.
      'too-fast' only fires for manual-distance modes (treadmill /
      manual) when the implied speed exceeds 12 m/s — the canonical
@@ -223,7 +223,7 @@ function InvalidRunReview({
       ? "Run looks invalid"
       : "Run too short";
   const bodyCopy = isSaved
-    ? "We've kept this run on your account."
+    ? null
     : reason === "too-fast"
       ? `We recorded ${formattedDuration} and ${formattedDistance}. The implied pace looks unrealistic — did you mean a different distance?`
       : outdoorGps
@@ -232,14 +232,14 @@ function InvalidRunReview({
 
   return (
     <div className="mx-4 mt-3 mb-6 p-4 rounded-2xl bg-card space-y-3">
-      {/* aria-live wraps both heading and body so VoiceOver announces
-          the saved transition as a unit ("Saved. We've kept this run
-          on your account.") rather than just the heading change. */}
+      {/* Announce the saved heading without repeating the pre-save warning. */}
       <div className="space-y-1.5" aria-live="polite">
         <p className="text-base font-semibold text-foreground">{heading}</p>
-        <p className="text-sm text-muted-foreground leading-relaxed">
-          {bodyCopy}
-        </p>
+        {bodyCopy && (
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            {bodyCopy}
+          </p>
+        )}
       </div>
 
       {showRetry && <RetryBanner error={saveError} onRetry={onSave} />}

@@ -141,6 +141,50 @@ describe("SessionCompleteScreen — header stats agree with each other", () => {
     expect(screen.queryByText("1.4k")).toBeNull();
     // The hold still happened: it counts toward SETS (3) and is listed.
     expect(screen.getByText("Weighted Plank")).toBeInTheDocument();
+    expect(screen.getByText("20 kg × 60 s")).toBeInTheDocument();
+  });
+
+  it("shows the highest completed bodyweight rep count, excluding warm-ups", () => {
+    renderScreen(
+      [
+        [
+          { reps: 20, weight: 0, completed: true, type: "warmup" },
+          { reps: 6, weight: 0, completed: true, type: "working" },
+          { reps: 10, weight: 0, completed: true, type: "working" },
+          { reps: 30, weight: 0, completed: false, type: "working" },
+        ],
+      ],
+      [exercise("Push-up", 2)]
+    );
+    expect(screen.getByText("10 reps")).toBeInTheDocument();
+    expect(screen.getByText("2/2 sets")).toBeInTheDocument();
+  });
+
+  it("shows the longest completed unweighted hold in seconds", () => {
+    renderScreen(
+      [
+        [
+          { reps: 30, weight: 0, completed: true, type: "working" },
+          { reps: 60, weight: 0, completed: true, type: "working" },
+        ],
+      ],
+      [{ ...exercise("Plank", 2), repUnit: "seconds" }]
+    );
+    expect(screen.getByText("60 s")).toBeInTheDocument();
+  });
+
+  it("keeps the loaded best set based on weight times reps", () => {
+    renderScreen(
+      [
+        [
+          { reps: 5, weight: 80, completed: true, type: "working" },
+          { reps: 10, weight: 60, completed: true, type: "working" },
+          { reps: 50, weight: 0, completed: true, type: "working" },
+        ],
+      ],
+      [exercise("Squat", 3)]
+    );
+    expect(screen.getByText("60 kg × 10")).toBeInTheDocument();
   });
 
   it("still counts a loaded exercise that is not timed", () => {
