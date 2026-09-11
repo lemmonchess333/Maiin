@@ -112,6 +112,14 @@ export interface OnboardingDraft {
   /** Additive flow metadata: v2 answers remain resumable after the redesign. */
   goalConfirmed?: boolean;
   runConfirmed?: boolean;
+  /** Whether the user has actually ANSWERED, as opposed to a control
+   *  arriving on a value. Absent in drafts written before these gates
+   *  existed; the reader treats "got past that step" as answered so a
+   *  resumed draft is never sent back through a screen it cleared. */
+  equipmentConfirmed?: boolean;
+  experienceConfirmed?: boolean;
+  ageConfirmed?: boolean;
+  bodyAnswered?: boolean;
   displayName?: string;
   weightDisplayUnit?: "kg" | "lbs" | "st";
   returnToReview?: boolean;
@@ -173,6 +181,12 @@ export function isValidDraft(
     oneOf(DRAFT_EXPERIENCE, d.experience) &&
     (d.goalConfirmed === undefined || typeof d.goalConfirmed === "boolean") &&
     (d.runConfirmed === undefined || typeof d.runConfirmed === "boolean") &&
+    (d.equipmentConfirmed === undefined ||
+      typeof d.equipmentConfirmed === "boolean") &&
+    (d.experienceConfirmed === undefined ||
+      typeof d.experienceConfirmed === "boolean") &&
+    (d.ageConfirmed === undefined || typeof d.ageConfirmed === "boolean") &&
+    (d.bodyAnswered === undefined || typeof d.bodyAnswered === "boolean") &&
     (d.displayName === undefined || typeof d.displayName === "string") &&
     (d.weightDisplayUnit === undefined ||
       oneOf(["kg", "lbs", "st"], d.weightDisplayUnit)) &&

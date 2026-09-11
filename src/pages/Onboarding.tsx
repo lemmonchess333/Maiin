@@ -178,6 +178,29 @@ export default function Onboarding() {
   const [runningConfirmed, setRunConfirmed] = useState(
     draft?.runConfirmed ?? Boolean(draft && draft.step > 3)
   );
+  /* The same shape as goalConfirmed above: the VALUE a control sits on and
+     the fact that the user chose it are two different things, and only the
+     second may become a personal input. Equipment, experience and age range
+     all arrived on a value and were written to the profile unread —
+     equipment shapes the generated plan, experience sets the starting
+     loads, and the age range's midpoint feeds the calorie estimate. */
+  const [equipmentConfirmed, setEquipmentConfirmed] = useState(
+    draft?.equipmentConfirmed ?? Boolean(draft && draft.step > 2)
+  );
+  const [experienceConfirmed, setExperienceConfirmed] = useState(
+    draft?.experienceConfirmed ?? Boolean(draft && draft.step > 2)
+  );
+  const [ageConfirmed, setAgeConfirmed] = useState(
+    draft?.ageConfirmed ?? Boolean(draft && draft.step > 5)
+  );
+  /* Height and weight keep their numbers — a spin dial has to point
+     somewhere, and the plan preview on the steps BEFORE this one needs a
+     figure to estimate against. What changes is that the number is not
+     treated as the user's until they supply it: the fields render empty
+     and `BodyInputs` reports unanswered as invalid. */
+  const [bodyAnswered, setBodyAnswered] = useState(
+    draft?.bodyAnswered ?? Boolean(draft && draft.step > 5)
+  );
   const [primaryGoal, setPrimaryGoal] = useState<
     OnboardingDraft["primaryGoal"]
   >(draft?.primaryGoal ?? "hypertrophy");
@@ -249,6 +272,10 @@ export default function Onboarding() {
       experience,
       goalConfirmed,
       runConfirmed,
+      equipmentConfirmed,
+      experienceConfirmed,
+      ageConfirmed,
+      bodyAnswered,
       displayName,
       weightDisplayUnit,
       returnToReview,
@@ -276,6 +303,10 @@ export default function Onboarding() {
       experience,
       goalConfirmed,
       runConfirmed,
+      equipmentConfirmed,
+      experienceConfirmed,
+      ageConfirmed,
+      bodyAnswered,
       displayName,
       weightDisplayUnit,
       returnToReview,
@@ -372,14 +403,25 @@ export default function Onboarding() {
     [raceDistance, raceTargetDate, currentDate, daysPerWeek, weeklyRunDays]
   );
   const displayNameValidation = validateDisplayName(displayName);
+  /* A race with no date is not a race plan. Run9a lands a persisted
+     race_prep with no usable date on the freeform substrate rather than
+     leaving a dangling raceGoal — correct, and it stays as the backstop for
+     resumed drafts and dates that expire. But as the FIRST answer it meant
+     the segmented control read "Race prep" while the plan being built was
+     free running, with a muted line under the date field carrying the whole
+     difference. Requiring the date here means onboarding never creates the
+     state Run9a exists to absorb: pick a race and say when, or pick free
+     running. */
   const validRun =
     runConfirmed &&
     !(
       runFrequency !== "none" &&
       runMode === "race_prep" &&
-      racePreview.status === "invalid"
+      (racePreview.status === "invalid" || racePreview.status === "empty")
     );
   const validBody =
+    ageConfirmed &&
+    bodyAnswered &&
     ageRange !== "under-16" &&
     metricsValid &&
     weightKg >= 30 &&
@@ -389,7 +431,7 @@ export default function Onboarding() {
   const canAdvance = [
     goalConfirmed,
     true,
-    true,
+    equipmentConfirmed && experienceConfirmed,
     validRun,
     injuries.length > 0,
     validBody,
@@ -902,7 +944,7 @@ export default function Onboarding() {
                         ]}
                       />
                       <label className="block text-sm space-y-2">
-                        <span>Race target date (optional)</span>
+                        <span>Race target date</span>
                         <input
                           type="date"
                           className="ds-input min-h-11 w-full"
@@ -916,8 +958,8 @@ export default function Onboarding() {
                       </label>
                       {racePreview.status === "empty" ? (
                         <p className="text-sm text-muted-foreground">
-                          No date yet? You’ll start with free running and can
-                          add a race later.
+                          Pick your race date, or choose Free running to start
+                          without one.
                         </p>
                       ) : (
                         <div
@@ -981,8 +1023,11 @@ export default function Onboarding() {
                 ).map((option) => (
                   <OptionCard
                     key={option.id}
-                    selected={equipment === option.id}
-                    onSelect={() => setEquipment(option.id)}
+                    selected={equipmentConfirmed && equipment === option.id}
+                    onSelect={() => {
+                      setEquipmentConfirmed(true);
+                      setEquipment(option.id);
+                    }}
                     icon={<Warehouse className="size-5" />}
                     label={option.label}
                     desc={option.desc}
@@ -991,10 +1036,6 @@ export default function Onboarding() {
               </div>
               <div className="space-y-3">
                 <h2 className="text-base font-semibold">Lifting experience</h2>
-                <p className="text-sm text-muted-foreground">
-                  Starting suggestion: some experience. Change this to match
-                  your training.
-                </p>
                 {(
                   [
                     {
@@ -1016,8 +1057,11 @@ export default function Onboarding() {
                 ).map((option) => (
                   <OptionCard
                     key={option.id}
-                    selected={experience === option.id}
-                    onSelect={() => setExperience(option.id)}
+                    selected={experienceConfirmed && experience === option.id}
+                    onSelect={() => {
+                      setExperienceConfirmed(true);
+                      setExperience(option.id);
+                    }}
                     icon={<Award className="size-5" />}
                     label={option.label}
                     desc={option.desc}
@@ -1077,6 +1121,8 @@ export default function Onboarding() {
           {step === 5 && (
             <div className="space-y-6">
               <BodyInputs
+                answered={bodyAnswered}
+                onAnsweredChange={setBodyAnswered}
                 weightKg={weightKg}
                 heightCm={heightCm}
                 weightUnit={weightDisplayUnit}
@@ -1104,10 +1150,14 @@ export default function Onboarding() {
               </div>
               <div className="space-y-3">
                 <h2 className="text-base font-semibold">Age range</h2>
-                <SegmentedControl<OnboardingDraft["ageRange"]>
+                <SegmentedControl<OnboardingDraft["ageRange"] | "">
                   ariaLabel="Age range"
-                  value={ageRange}
-                  onChange={setAgeRange}
+                  value={ageConfirmed ? ageRange : ""}
+                  onChange={(next) => {
+                    if (next === "") return;
+                    setAgeConfirmed(true);
+                    setAgeRange(next);
+                  }}
                   layout="wrap"
                   options={DRAFT_AGE_RANGES.map((value) => ({
                     value,

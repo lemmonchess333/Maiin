@@ -1,10 +1,7 @@
 import { useMemo, useState } from "react";
 import { Users, Dumbbell } from "lucide-react";
 import { useAuth } from "@/lib/auth";
-import {
-  useChallenges,
-  useAutoJoinChallenge,
-} from "@/features/challenges/useChallenges";
+import { useChallenges } from "@/features/challenges/useChallenges";
 import { ChallengeCard } from "@/features/challenges/ChallengeCard";
 import PartnerStreakHero from "@/features/partnerStreak/PartnerStreakHero";
 import SpacesDirectory from "@/features/spaces/SpacesDirectory";
@@ -57,15 +54,9 @@ export default function SoloFirstFeed({
     [challenges]
   );
 
-  // SOC-P1a: the solo-first anchor is a challenge the user is honestly IN
-  // from day one (Weekly Warrior precedent) — its card greets a cold-start
-  // user as "You're in", never as a "0 joined" join-gate.
-  useAutoJoinChallenge(
-    globalChallenge,
-    globalChallenge ? !!myProgress[globalChallenge.id] : false,
-    joinChallenge
-  );
-
+  /* The anchor of the cold-start stack, and the card a brand-new account
+     meets first. Nothing enrols the viewer on mount: joining is the tap it
+     looks like, so this renders un-joined until they choose it. */
   // Preload the share card from the latest logged workout (volume summed
   // from sets). Null when the user hasn't logged anything yet — the share
   // card then shows the honest cold-start prompt instead of a dead button.

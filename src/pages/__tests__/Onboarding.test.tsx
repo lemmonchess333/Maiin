@@ -93,6 +93,12 @@ describe("onboarding chapters and commit", () => {
     expect(screen.getByRole("button", { name: "Continue" })).toBeDisabled();
     fireEvent.click(screen.getByRole("button", { name: /Occasional runner/ }));
     fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+    // Equipment and experience are answers, not settings that arrive set:
+    // neither alone releases the step.
+    expect(screen.getByRole("button", { name: "Continue" })).toBeDisabled();
+    fireEvent.click(screen.getByRole("button", { name: /Full gym/ }));
+    expect(screen.getByRole("button", { name: "Continue" })).toBeDisabled();
+    fireEvent.click(screen.getByRole("button", { name: /Some experience/ }));
     fireEvent.click(screen.getByRole("button", { name: "Continue" }));
     expect(screen.getByRole("button", { name: "Continue" })).toBeDisabled();
     fireEvent.click(screen.getByRole("button", { name: "None" }));
@@ -194,6 +200,17 @@ describe("activity-relevant setup", () => {
     expect(
       screen.queryByRole("heading", { name: "Equipment access" })
     ).not.toBeInTheDocument();
+    // Height, weight and the age range all feed the calorie estimate, so
+    // none of them may be taken from the control's starting position.
+    expect(screen.getByRole("button", { name: "Continue" })).toBeDisabled();
+    fireEvent.change(screen.getByLabelText("Weight (kg)"), {
+      target: { value: "81.5" },
+    });
+    fireEvent.change(screen.getByLabelText("Height (cm)"), {
+      target: { value: "175" },
+    });
+    expect(screen.getByRole("button", { name: "Continue" })).toBeDisabled();
+    fireEvent.click(screen.getByRole("radio", { name: "25–34" }));
     fireEvent.click(screen.getByRole("button", { name: "Continue" }));
     expect(
       screen.getByRole("region", { name: "First run preview" })
@@ -303,5 +320,119 @@ describe("inspect the generated week", () => {
       screen.getByRole("region", { name: "First lift preview" })
     ).toHaveTextContent(updated.exercises[0].name);
     builder.mockRestore();
+  });
+});
+
+/* Everything the profile learns about a person has to come FROM them.
+   Equipment, lifting experience, height, weight and the age range all
+   arrived on a value with nothing gating the step, so tapping Continue
+   through setup wrote a stranger's body and training history: a full-gym
+   intermediate of 175 cm and 75 kg, aged 25-34. That is not a cosmetic
+   default — equipment picks the exercises, experience sets the starting
+   loads, and the other three are the whole calorie estimate. */
+describe("answers the user has not given", () => {
+  const reachSetup = () => {
+    open();
+    fireEvent.click(screen.getByRole("button", { name: /Build muscle/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+    fireEvent.click(screen.getByRole("radio", { name: "Lifting" }));
+    fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+  };
+
+  it("shows no equipment or experience as chosen on arrival", () => {
+    reachSetup();
+    expect(
+      screen.getByRole("heading", { name: "Equipment access" })
+    ).toBeInTheDocument();
+    for (const name of [
+      /Full gym/,
+      /Home gym/,
+      /Minimal/,
+      /New to lifting/,
+      /Some experience/,
+      /Experienced/,
+    ]) {
+      expect(screen.getByRole("button", { name })).toHaveAttribute(
+        "aria-pressed",
+        "false"
+      );
+    }
+  });
+
+  it("does not offer a starting suggestion to tap past", () => {
+    // The copy apologised for the default rather than removing it, and it
+    // is the sentence that would come back first if the gate were lost.
+    reachSetup();
+    expect(screen.queryByText(/Starting suggestion/i)).not.toBeInTheDocument();
+  });
+
+  it("leaves height and weight empty rather than pre-filled", () => {
+    // A draft parked ON this step carries figures nobody confirmed, so the
+    // boxes stay empty even though the numbers are in the draft.
+    saveOnboardingDraft("setup-test", { ...draft, step: 5 });
+    open();
+    expect(
+      screen.getByRole("heading", { name: "Start with your numbers" })
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText("Weight (kg)")).toHaveValue("");
+    expect(screen.getByLabelText("Height (cm)")).toHaveValue("");
+  });
+
+  it("carries a resumed draft through without re-asking", () => {
+    // A draft written before these gates existed has no flags on it. Read
+    // as unanswered, it would send someone who has already finished setup
+    // back through it — so "got past that step" counts as answered.
+    saveOnboardingDraft("setup-test", { ...draft, step: 7 });
+    open();
+    expect(
+      screen.getByRole("button", { name: "Create my plan" })
+    ).toBeEnabled();
+  });
+});
+
+/* Run9a lands a persisted race_prep with no usable date on the freeform
+   substrate rather than leaving a dangling raceGoal, and that stays. What
+   changed is that onboarding no longer CREATES that state: the control
+   read "Race prep" while the plan being built was free running. */
+describe("a race needs a date", () => {
+  const reachRunningPlan = () => {
+    open();
+    fireEvent.click(screen.getByRole("button", { name: /Improve running/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+    fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+    fireEvent.click(screen.getByRole("button", { name: /Occasional runner/ }));
+  };
+
+  it("holds the step while race prep is chosen with no date", () => {
+    reachRunningPlan();
+    expect(screen.getByRole("button", { name: "Continue" })).toBeEnabled();
+    fireEvent.click(screen.getByRole("radio", { name: "Race prep" }));
+    expect(screen.getByRole("button", { name: "Continue" })).toBeDisabled();
+  });
+
+  it("releases it once a date is given", () => {
+    reachRunningPlan();
+    fireEvent.click(screen.getByRole("radio", { name: "Race prep" }));
+    fireEvent.change(screen.getByLabelText("Race target date"), {
+      target: { value: "2027-06-01" },
+    });
+    expect(screen.getByRole("button", { name: "Continue" })).toBeEnabled();
+  });
+
+  it("releases it by going back to free running", () => {
+    // The other half of the choice, and the one the copy points at.
+    reachRunningPlan();
+    fireEvent.click(screen.getByRole("radio", { name: "Race prep" }));
+    expect(
+      screen.getByText(/Pick your race date, or choose Free running/)
+    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("radio", { name: "Free running" }));
+    expect(screen.getByRole("button", { name: "Continue" })).toBeEnabled();
+  });
+
+  it("no longer calls the date optional", () => {
+    reachRunningPlan();
+    fireEvent.click(screen.getByRole("radio", { name: "Race prep" }));
+    expect(screen.queryByLabelText(/optional/i)).not.toBeInTheDocument();
   });
 });
