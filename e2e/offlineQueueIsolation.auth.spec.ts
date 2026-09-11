@@ -559,6 +559,41 @@ test.describe("offline-queue uid isolation across an account switch", () => {
       /* priming modal didn't fire — coordinator gating varies */
     }
 
+    // A short run has its own confirmation. It must acknowledge the
+    // local save without claiming that the run is already on the account.
+    await page.evaluate(() => {
+      history.pushState(
+        {
+          usr: {
+            points: [],
+            distance: 0,
+            elapsed: 5,
+            splits: [],
+            elevationGain: 0,
+          },
+          key: "e2e-short-run",
+          idx: (history.state?.idx ?? 0) + 1,
+        },
+        "",
+        "/Maiin/run-summary"
+      );
+      window.dispatchEvent(
+        new PopStateEvent("popstate", { state: history.state })
+      );
+    });
+    await page.getByRole("button", { name: "Save anyway" }).click();
+    await expect(
+      page.getByRole("button", { name: "Done", exact: true })
+    ).toBeVisible();
+    await expect(page.getByText("Saved", { exact: true })).toBeVisible();
+    await expect(
+      page.getByText("Saved locally — will sync when online.", { exact: true })
+    ).toBeVisible();
+    await expect(
+      page.getByText("We've kept this run on your account.", { exact: true })
+    ).toHaveCount(0);
+    await page.goBack();
+
     // ── Phase 2: still "offline", sign out via the app's own UI.
     // Client-side navigation (Food → Home → gear → Account) keeps the
     // page session, and with it the navigator override, alive until the
