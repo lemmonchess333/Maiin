@@ -1,13 +1,22 @@
 /**
  * Human-readable labels for the programme-shaping enums, as the onboarding
- * preview reads them back to the user ("Push / Pull / Legs", "Fat loss
- * focus", "Runs 3x/week integrated"). Exhaustive switches: adding an enum
- * member fails the typecheck here until it has a label.
+ * preview reads them back to the user ("Push / Pull / Legs", "Runs
+ * 3x/week integrated"). Exhaustive switches: adding an enum member fails
+ * the typecheck here until it has a label.
  *
  * programmeChanges.ts carries a second, deliberately different register
- * for the settings confirm modal ("Build muscle", "No preference") — the
- * two are separate surfaces, not a duplicate to merge (CONTEXT.md naming
- * rule).
+ * for the settings confirm modal, and ProgrammeSettings a third ("Stay
+ * fit", "Running support" — lifting that supports running, a different
+ * question with different words). Those are separate surfaces, not
+ * duplicates to merge (CONTEXT.md naming rule).
+ *
+ * `goalLabel` is the exception, and for the reason that rule gives: what
+ * hurts is inconsistency INSIDE one file. The goal labels here are read
+ * back on onboarding's own review screen, over a choice the user made
+ * from `GOALS` in the same file — so a goal picked as "Build muscle"
+ * summarised itself as "Hypertrophy focus". `GOALS` now takes its copy
+ * from here, which is why these read as the user's own words rather than
+ * in the "… focus" register of their neighbours.
  */
 import type {
   Equipment,
@@ -39,15 +48,15 @@ export function splitLabel(s: PreferredSplit): string {
 export function goalLabel(g: PrimaryGoal): string {
   switch (g) {
     case "hypertrophy":
-      return "Hypertrophy focus";
+      return "Build muscle";
     case "strength":
-      return "Strength focus";
+      return "Get stronger";
     case "fat_loss":
-      return "Fat loss focus";
+      return "Lose fat";
     case "general":
       return "General fitness";
     case "running":
-      return "Running focus";
+      return "Improve running";
   }
 }
 

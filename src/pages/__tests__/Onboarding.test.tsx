@@ -436,3 +436,43 @@ describe("a race needs a date", () => {
     expect(screen.queryByLabelText(/optional/i)).not.toBeInTheDocument();
   });
 });
+
+/* One flow, one vocabulary. The goal cards offered "Build muscle" and the
+   review screen read the same choice back as "Hypertrophy focus" — two
+   spellings of one value inside a single file, which is the case
+   CONTEXT.md's naming rule says is the one that actually hurts. The
+   settings confirm modal and ProgrammeSettings keep their own registers
+   on purpose; those are other surfaces. */
+describe("the goal is named the same way throughout", () => {
+  it("reads the choice back in the words it was offered in", () => {
+    saveOnboardingDraft("setup-test", {
+      ...draft,
+      primaryGoal: "hypertrophy",
+      step: 7,
+    });
+    open();
+    // The review names the goal in more than one place (the focus row and
+    // the plan summary line); all of them are the same words now.
+    expect(screen.getAllByText(/Build muscle/).length).toBeGreaterThan(0);
+    expect(screen.queryByText(/Hypertrophy/)).not.toBeInTheDocument();
+  });
+
+  it("offers the goal under that same name", () => {
+    saveOnboardingDraft("setup-test", { ...draft, step: 0 });
+    open();
+    expect(
+      screen.getByRole("button", { name: /Build muscle/ })
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /Hypertrophy/ })
+    ).not.toBeInTheDocument();
+  });
+
+  it("titles the last step Your plan", () => {
+    saveOnboardingDraft("setup-test", { ...draft, step: 7 });
+    open();
+    expect(
+      screen.getByRole("heading", { name: "Your plan" })
+    ).toBeInTheDocument();
+  });
+});

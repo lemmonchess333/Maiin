@@ -98,42 +98,42 @@ const STEP_META = [
   ],
   [
     "Start with your numbers",
-    "Check these starting values. They help set your nutrition targets and initial loads.",
+    "These set your nutrition targets and your initial loads.",
   ],
   ["Review your plan", "Check your answers before creating your plan."],
   [
-    "A starting point that fits you",
+    "Your plan",
     "Here’s the plan your answers generate. Edit anything before you start.",
   ],
 ];
 const GOALS = [
   {
     id: "hypertrophy",
-    label: "Build muscle",
+    label: goalLabel("hypertrophy"),
     desc: "A lifting plan with muscle-building work.",
     icon: Dumbbell,
   },
   {
     id: "strength",
-    label: "Get stronger",
+    label: goalLabel("strength"),
     desc: "A lifting plan focused on building strength.",
     icon: Zap,
   },
   {
     id: "fat_loss",
-    label: "Lose fat",
+    label: goalLabel("fat_loss"),
     desc: "Lifting to support your goal. Set nutrition separately.",
     icon: Flame,
   },
   {
     id: "general",
-    label: "General fitness",
+    label: goalLabel("general"),
     desc: "A balanced starting point for regular training.",
     icon: Heart,
   },
   {
     id: "running",
-    label: "Improve running",
+    label: goalLabel("running"),
     desc: "Free running or a race goal, with optional lifting alongside it.",
     icon: Footprints,
   },
@@ -861,11 +861,6 @@ export default function Onboarding() {
                 draft
                 freeRunning={freeRunning}
               />
-              {!runConfirmed && (
-                <p className="text-sm text-muted-foreground">
-                  Next, choose whether to include running.
-                </p>
-              )}
             </div>
           )}
           {step === 3 && (

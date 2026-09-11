@@ -100,21 +100,29 @@ export const LAUNCH_TEMPLATES: Array<{
   type: GoalSpaceType;
   label: string;
   description: string;
+  /** What to suggest naming a circle of this kind. One suggestion per
+   *  template, beside the label it belongs to: the create sheet offered
+   *  "e.g. Autumn strength block" whichever template was chosen, so
+   *  naming a race circle was prompted with a lifting block. */
+  namePlaceholder: string;
 }> = [
   {
     type: "strength_block",
     label: "Strength Block",
     description: "A shared 4–12 week lifting focus with weekly check-ins.",
+    namePlaceholder: "e.g. Autumn strength block",
   },
   {
     type: "race",
     label: "Race Journey",
     description: "Training for the same event — plan consistency and support.",
+    namePlaceholder: "e.g. Spring half marathon",
   },
   {
     type: "nutrition_consistency",
     label: "Consistency Reset",
     description: "Support for logging consistently — never calories or meals.",
+    namePlaceholder: "e.g. Back to daily logging",
   },
 ];
 

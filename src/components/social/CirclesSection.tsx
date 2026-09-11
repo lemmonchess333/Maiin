@@ -103,10 +103,12 @@ const HYBRID_TEMPLATE: {
   type: GoalSpaceType;
   label: string;
   description: string;
+  namePlaceholder: string;
 } = {
   type: "hybrid",
   label: "Hybrid",
   description: "Lifting + running together — one shared push.",
+  namePlaceholder: "e.g. Winter hybrid push",
 };
 
 /* SOCIAL-HOME-01 — cold-start goal selector options. The first three
@@ -126,6 +128,7 @@ const COLD_START_OPTIONS: Array<{
   type: GoalSpaceType;
   label: string;
   description: string;
+  namePlaceholder: string;
 }> = [...LAUNCH_TEMPLATES, HYBRID_TEMPLATE];
 
 /** "YYYY-MM-DD" → "12 Sep" via the canonical helper. The previous inline
@@ -984,7 +987,7 @@ export default function CirclesSection({
           }
         }}
         title="Start a circle"
-        description="Invite-only, 2–8 people. Numbers, meals and photos stay private. A circle only ever sees check-ins."
+        description="Invite-only, 2–8 people. The circle only ever sees check-ins, never numbers, meals or photos."
       >
         <div className="px-4 space-y-3 pb-2">
           {goalPrechosen ? (
@@ -1064,7 +1067,10 @@ export default function CirclesSection({
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             maxLength={60}
-            placeholder="Name it (e.g. Autumn strength block)"
+            placeholder={`Name it (${
+              COLD_START_OPTIONS.find((t) => t.type === template)
+                ?.namePlaceholder ?? "e.g. Autumn strength block"
+            })`}
             aria-label="Circle name"
             className="w-full min-h-[44px] px-3 rounded-xl bg-muted border border-border/50 text-sm text-foreground placeholder:text-muted-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring"
           />
