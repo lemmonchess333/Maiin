@@ -78,6 +78,10 @@ interface EditServingsSheetProps {
   onDelete?: () => void;
 }
 
+/* One id: the input points `aria-describedby` at the line the sheet
+   renders, so the message a screen reader reads is the message on screen. */
+const MACRO_ERROR_ID = "edit-meal-macro-error";
+
 /**
  * Bottom-sheet for adjusting how many servings of a grouped meal
  * the user logged. Driven by a +/- stepper instead of the earlier
@@ -164,29 +168,56 @@ function EditServingsSheet({
   const trimmedName = pickedName.trim();
   const nameChanged = trimmedName.length > 0 && trimmedName !== foodName.trim();
 
-  // F5a: macro change detection. Per dimension, the string input is
-  // parsed to a finite non-negative number; only differing values
-  // count. Blank / non-numeric / negative inputs are treated as
-  // "unchanged for this dimension" so a half-typed edit doesn't
-  // trip Save and an editMeal call doesn't write junk.
-  const parseMacro = (raw: string): number | null => {
+  /* F5a: macro change detection. A macro field has THREE outcomes, not
+     two. Blank is a field the user has not filled in — nothing to write
+     and nothing to complain about, so a half-typed edit must not trip
+     Save. A negative or non-numeric entry is an edit the user made and
+     meant; folding it in with blank read it as "unchanged for this
+     dimension", so Save stayed enabled on the serving change and wrote
+     that while dropping the number the user had typed. */
+  type MacroInput =
+    | { kind: "blank" }
+    | { kind: "invalid" }
+    | { kind: "value"; value: number };
+  const parseMacro = (raw: string): MacroInput => {
     const trimmed = raw.trim();
-    if (trimmed === "") return null;
+    if (trimmed === "") return { kind: "blank" };
     const n = Number(trimmed);
-    if (!Number.isFinite(n) || n < 0) return null;
-    return Math.round(n);
+    if (!Number.isFinite(n) || n < 0) return { kind: "invalid" };
+    return { kind: "value", value: Math.round(n) };
   };
-  const picked = {
+  const parsedMacros = {
     cal: parseMacro(pickedCal),
     pro: parseMacro(pickedPro),
     car: parseMacro(pickedCar),
     fat: parseMacro(pickedFat),
   };
+  const invalidMacroIds = new Set(
+    (
+      [
+        ["edit-meal-cal", parsedMacros.cal],
+        ["edit-meal-pro", parsedMacros.pro],
+        ["edit-meal-car", parsedMacros.car],
+        ["edit-meal-fat", parsedMacros.fat],
+      ] as const
+    )
+      .filter(([, parsed]) => parsed.kind === "invalid")
+      .map(([id]) => id)
+  );
+  const hasInvalidMacro = invalidMacroIds.size > 0;
+  const valueOf = (parsed: MacroInput): number | null =>
+    parsed.kind === "value" ? parsed.value : null;
+  const picked = {
+    cal: valueOf(parsedMacros.cal),
+    pro: valueOf(parsedMacros.pro),
+    car: valueOf(parsedMacros.car),
+    fat: valueOf(parsedMacros.fat),
+  };
 
-  /* The user's calorie edit, or null when the field is untouched, blank or
-     non-numeric. Shared by the
-     preview and the override below so the sheet cannot preview one number
-     and save another — which is what it did: the preview divided the
+  /* The user's calorie edit, or null when the field is untouched or
+     blank — an invalid entry never reaches here, it blocks Save instead.
+     Shared by the preview and the override below so the sheet cannot
+     preview one number and save another — which is what it did: the preview divided the
      SAVED total by the saved count, so typing 300 over a saved 200 left it
      showing 200 x servings while Save wrote 300. */
   const editedCal =
@@ -221,7 +252,7 @@ function EditServingsSheet({
     countDelta === 0 && !mealChanged && !nameChanged && !macrosChanged;
 
   const handleSave = async () => {
-    if (unchanged || saving) return;
+    if (unchanged || hasInvalidMacro || saving) return;
     setSaving(true);
     try {
       await onSave({
@@ -362,11 +393,21 @@ function EditServingsSheet({
                   onChange={(e) => setter(e.target.value)}
                   disabled={saving}
                   aria-label={`Per-serving ${label.toLowerCase()}`}
+                  aria-invalid={invalidMacroIds.has(id) || undefined}
+                  aria-describedby={
+                    invalidMacroIds.has(id) ? MACRO_ERROR_ID : undefined
+                  }
                   className={cn(
                     "w-full text-center text-base font-mono tabular-nums font-semibold text-foreground bg-muted/50",
                     "rounded-lg px-2 py-1.5 border border-transparent",
                     "focus:outline-none focus:border-border focus:bg-card transition-colors",
                     "disabled:opacity-60",
+                    /* The field the user has to go back to. Without it the
+                       only signal is a Save that refuses, which says
+                       nothing about which of the four numbers is at
+                       fault. */
+                    invalidMacroIds.has(id) &&
+                      "border-destructive bg-destructive/10 focus:border-destructive",
                     "[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                   )}
                 />
@@ -416,7 +457,11 @@ function EditServingsSheet({
 
         {/* Calorie preview + delta chip */}
         <div className="text-center text-xs text-muted-foreground">
-          {unchanged ? (
+          {hasInvalidMacro ? (
+            <span id={MACRO_ERROR_ID} className="text-destructive-strong">
+              Enter 0 or more.
+            </span>
+          ) : unchanged ? (
             <span>~ {previewCal} cal</span>
           ) : (
             <span>
@@ -463,10 +508,10 @@ function EditServingsSheet({
           <button
             type="button"
             onClick={handleSave}
-            disabled={unchanged || saving}
+            disabled={unchanged || hasInvalidMacro || saving}
             className={cn(
               "flex-1 py-3 rounded-xl text-sm font-semibold active:scale-[0.98]",
-              unchanged || saving
+              unchanged || hasInvalidMacro || saving
                 ? "bg-muted text-muted-foreground"
                 : "bg-primary-strong text-primary-foreground"
             )}

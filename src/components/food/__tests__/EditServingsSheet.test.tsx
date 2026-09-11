@@ -478,4 +478,85 @@ describe("EditServingsSheet", function () {
     fireEvent.click(screen.getByRole("button", { name: /delete/i }));
     expect(onDelete).toHaveBeenCalledTimes(1);
   });
+
+  /* An invalid macro entry is an edit the user MADE. It used to be parsed
+     to the same `null` a blank field produces, which the override builder
+     reads as "this dimension is unchanged" — so Save stayed enabled on
+     whatever else had changed, wrote that, and dropped the number. */
+
+  it("refuses Save while a macro field holds a negative number", function () {
+    const onSave = vi.fn();
+    renderSheet({ onSave });
+    fireEvent.click(screen.getByLabelText("Increase servings"));
+    expect(screen.getByRole("button", { name: "Save" })).not.toBeDisabled();
+
+    fireEvent.change(screen.getByLabelText("Per-serving cal"), {
+      target: { value: "-40" },
+    });
+    const save = screen.getByRole("button", { name: "Save" });
+    expect(save).toBeDisabled();
+    // Disabled buttons swallow clicks in a real browser; the handler's own
+    // guard is what holds if anything ever routes around the attribute.
+    fireEvent.click(save);
+    expect(onSave).not.toHaveBeenCalled();
+  });
+
+  it("marks the offending field and says what is wanted", function () {
+    renderSheet();
+    fireEvent.change(screen.getByLabelText("Per-serving carbs"), {
+      target: { value: "-1" },
+    });
+    const carbs = screen.getByLabelText("Per-serving carbs");
+    expect(carbs).toHaveAttribute("aria-invalid", "true");
+    const message = screen.getByText("Enter 0 or more.");
+    expect(carbs).toHaveAttribute("aria-describedby", message.id);
+    // Only the field at fault — otherwise "which number?" is still the
+    // user's problem to solve.
+    expect(screen.getByLabelText("Per-serving cal")).not.toHaveAttribute(
+      "aria-invalid"
+    );
+  });
+
+  it("saves both changes once the field is corrected", function () {
+    const onSave = vi.fn();
+    renderSheet({ onSave });
+    fireEvent.click(screen.getByLabelText("Increase servings"));
+    fireEvent.change(screen.getByLabelText("Per-serving cal"), {
+      target: { value: "-40" },
+    });
+    fireEvent.change(screen.getByLabelText("Per-serving cal"), {
+      target: { value: "90" },
+    });
+    expect(screen.queryByText("Enter 0 or more.")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+    expect(onSave).toHaveBeenCalledWith({
+      targetCount: 3,
+      targetMeal: null,
+      targetName: null,
+      targetMacros: { totalCalories: 90 },
+    });
+  });
+
+  it("still treats a cleared field as untouched, not as an error", function () {
+    // The half that must not regress: clearing a box on the way to typing
+    // a new number is ordinary, and blocking Save on it would fight the
+    // user mid-edit.
+    const onSave = vi.fn();
+    renderSheet({ onSave });
+    fireEvent.click(screen.getByLabelText("Increase servings"));
+    fireEvent.change(screen.getByLabelText("Per-serving fat"), {
+      target: { value: "" },
+    });
+    expect(screen.queryByText("Enter 0 or more.")).not.toBeInTheDocument();
+    expect(screen.getByLabelText("Per-serving fat")).not.toHaveAttribute(
+      "aria-invalid"
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+    expect(onSave).toHaveBeenCalledWith({
+      targetCount: 3,
+      targetMeal: null,
+      targetName: null,
+      targetMacros: null,
+    });
+  });
 });
