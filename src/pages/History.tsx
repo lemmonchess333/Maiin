@@ -3,12 +3,13 @@ import { lazyRetry } from "@/lib/lazyRetry";
 import { useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useMeals } from "@/hooks/useMeals";
+import { useMealsInRange } from "@/hooks/useMealsInRange";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { useStallWatch } from "@/hooks/useStallWatch";
 import { useRunningStats } from "@/hooks/useRunningStats";
 import { useWorkouts, workoutTonnageKg } from "@/hooks/useWorkouts";
 import { useLifetimeRunStats } from "@/hooks/useLifetimeRunStats";
-import { useAuth } from "@/lib/auth";
+import { useAuth, useUid } from "@/lib/auth";
 import { useEffectiveTargets } from "@/hooks/useEffectiveTargets";
 import { THEME } from "@/lib/theme";
 import { buildDelta } from "@/lib/deltaFormat";
@@ -409,7 +410,17 @@ export default function History() {
   // Training-load curve feed — self-fetching (needs warmup history beyond
   // the visible range, so it can't reuse the range-scoped runs above).
   const trainingLoad = useTrainingLoadSeries(rangeDays);
+  const uid = useUid();
   const { meals, loading: mealsLoading } = useMeals();
+  /* The nutrition section reads its OWN range-scoped query rather than
+     slicing the 400-doc `useMeals` window, which silently truncated 3M / 6M
+     / 1Y for anyone logging more than a couple of meals a day. `* 2` because
+     every stat card carries a delta against the preceding comparable period,
+     so the fetch has to cover both halves. */
+  const { meals: rangeMeals, loading: rangeMealsLoading } = useMealsInRange(
+    uid,
+    rangeDays * 2
+  );
   const lifetimeRuns = useLifetimeRunStats();
   const { earnedBadges } = useStreaks();
   /**
@@ -462,7 +473,8 @@ export default function History() {
    * Splitting them means a stuck discipline costs you that discipline,
    * not the page.
    */
-  const dataLoading = runsLoading || workoutsLoading || mealsLoading;
+  const dataLoading =
+    runsLoading || workoutsLoading || mealsLoading || rangeMealsLoading;
 
   /* Names whichever reads are still outstanding after 15s. Purely
      diagnostic — it never cancels or fakes a result, because a slow read
@@ -1051,10 +1063,10 @@ export default function History() {
         ? Math.round(days.reduce((s, d) => s + d[key], 0) / days.length)
         : 0;
 
-    const filtered = meals.filter(
+    const filtered = rangeMeals.filter(
       (m) => new Date(m.date + "T00:00:00") >= since
     );
-    const prevFiltered = meals.filter((m) => {
+    const prevFiltered = rangeMeals.filter((m) => {
       const d = new Date(m.date + "T00:00:00");
       return d >= prevSince && d < since;
     });
@@ -1132,7 +1144,7 @@ export default function History() {
       carbsSparkline,
       fatSparkline,
     };
-  }, [meals, rangeDays]);
+  }, [rangeMeals, rangeDays]);
 
   const itemVariant = {
     hidden: { opacity: 0, y: 12 },
