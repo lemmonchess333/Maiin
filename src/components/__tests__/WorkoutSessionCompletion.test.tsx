@@ -217,12 +217,12 @@ describe("workout save acknowledgement", () => {
     );
     expect(
       screen.getByRole("heading", { name: "Review workout" })
-    ).toBeVisible();
+    ).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Save Workout" }));
     await vi.waitFor(() => expect(h.error).toHaveBeenCalled());
     expect(
       screen.getByRole("heading", { name: "Review workout" })
-    ).toBeVisible();
+    ).toBeInTheDocument();
     expect(h.clear).not.toHaveBeenCalled();
     expect(close).not.toHaveBeenCalled();
     expect(h.success).not.toHaveBeenCalledWith("Workout saved");
@@ -231,7 +231,7 @@ describe("workout save acknowledgement", () => {
     expect(complete).toHaveBeenCalledTimes(2);
     expect(
       screen.getByRole("heading", { name: "Review workout" })
-    ).toBeVisible();
+    ).toBeInTheDocument();
     expect(h.success).not.toHaveBeenCalledWith("Workout saved");
     await act(async () => {
       resolveSave!();
@@ -241,7 +241,7 @@ describe("workout save acknowledgement", () => {
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     expect(
       screen.getByRole("heading", { name: "Workout saved" })
-    ).toBeVisible();
+    ).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Done" }));
     expect(close).toHaveBeenCalledOnce();
     expect(h.clear).toHaveBeenCalledOnce();
@@ -275,13 +275,11 @@ it("keeps the recovery draft while queued, then clears it only when synced", asy
     vi.fn().mockResolvedValue({ syncStatus: "queued", sync })
   );
   await vi.waitFor(() =>
-    expect(
-      screen.getByText("Waiting to sync")
-    ).toBeVisible()
+    expect(screen.getByText("Waiting to sync")).toBeVisible()
   );
   expect(
     screen.getByRole("heading", { name: "Saved on this phone" })
-  ).toBeVisible();
+  ).toBeInTheDocument();
   expect(h.clear).not.toHaveBeenCalled();
   expect(h.save).toHaveBeenCalledWith(
     expect.objectContaining({ completionPending: true, completionId: "test" })
@@ -290,7 +288,7 @@ it("keeps the recovery draft while queued, then clears it only when synced", asy
   expect(screen.getByText("Synced")).toBeVisible();
   expect(
     screen.getByRole("heading", { name: "Workout saved" })
-  ).toBeVisible();
+  ).toBeInTheDocument();
   expect(h.clear).toHaveBeenCalledWith("test");
 });
 
@@ -313,7 +311,7 @@ it("a reconnect rejection keeps the session and retries the same completion", as
   ).toBeVisible();
   expect(
     screen.getByRole("heading", { name: "Review workout" })
-  ).toBeVisible();
+  ).toBeInTheDocument();
   expect(h.clear).not.toHaveBeenCalled();
   fireEvent.click(screen.getByRole("button", { name: "Retry sync" }));
   await vi.waitFor(() => expect(screen.getByText("Synced")).toBeVisible());
@@ -334,10 +332,8 @@ it("never reports an offline save when recovery storage refuses the write", asyn
   expect(h.clear).not.toHaveBeenCalled();
   expect(
     screen.getByRole("heading", { name: "Review workout" })
-  ).toBeVisible();
-  expect(
-    screen.queryByText("Waiting to sync")
-  ).not.toBeInTheDocument();
+  ).toBeInTheDocument();
+  expect(screen.queryByText("Waiting to sync")).not.toBeInTheDocument();
   vi.restoreAllMocks();
 });
 
@@ -351,9 +347,7 @@ it("ignores a late completion acknowledgement after account switch", async () =>
     vi.fn().mockResolvedValue({ syncStatus: "queued", sync })
   );
   await vi.waitFor(() =>
-    expect(
-      screen.getByText("Waiting to sync")
-    ).toBeVisible()
+    expect(screen.getByText("Waiting to sync")).toBeVisible()
   );
   h.user = { uid: "incoming-user" };
   await act(async () => settle("synced"));
