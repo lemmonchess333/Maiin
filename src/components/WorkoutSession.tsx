@@ -617,14 +617,26 @@ export default function WorkoutSession({
     fetchPreviousWeights();
   }, [user?.uid, day.exercises]);
 
-  // Elapsed workout timer
-  const [elapsedSeconds, setElapsedSeconds] = useState(
-    initialDraft?.elapsedSeconds ?? 0
-  );
+  /* Elapsed workout timer, derived from the session's wall-clock anchor
+     rather than counted in ticks.
+
+     iOS freezes WebView timers on a locked or backgrounded phone, so an
+     interval that incremented a counter lost every tick it missed: five
+     minutes with the screen off put 0:01 on the clock. The saved duration
+     never had this problem — `handleFinish` computes it from
+     `sessionStartRef` — so the two disagreed, and the completion screen
+     contradicted the clock the user had been watching. The interval is
+     kept only as a repaint pulse; `Date.now()` is the source of truth, the
+     same way `restStartedAtRef` already anchors the rest timer. */
+  const [nowTick, setNowTick] = useState(() => Date.now());
   useEffect(() => {
-    const id = setInterval(() => setElapsedSeconds((s) => s + 1), 1000);
+    const id = setInterval(() => setNowTick(Date.now()), 1000);
     return () => clearInterval(id);
   }, []);
+  const elapsedSeconds =
+    sessionStartRef.current > 0
+      ? Math.max(0, Math.floor((nowTick - sessionStartRef.current) / 1000))
+      : (initialDraft?.elapsedSeconds ?? 0);
 
   // Auto-save in-progress workout to localStorage so abandoned sessions can
   // be resumed. Saves on meaningful state change (set logs, notes, exercise
@@ -674,11 +686,17 @@ export default function WorkoutSession({
       ? profile.defaultRestSeconds
       : DEFAULT_REST_SECONDS;
   const [restTarget, setRestTarget] = useState(profileRestDefault);
-  // P1 (training-book backlog): template-derived exercises carry an authored
-  // per-exercise rest (ProgramExercise.restSeconds). startRest prefers it over
-  // the profile default — unless the user has manually changed the target
-  // this session, in which case the manual choice wins for the remainder.
-  const manualRestRef = useRef(false);
+  /* P1 (training-book backlog): template-derived exercises carry an authored
+     per-exercise rest (ProgramExercise.restSeconds). startRest prefers it
+     over the profile default.
+
+     There is deliberately no "manual target" latch. A `manualRestRef` used
+     to sit here so a hand-set target won the rest of the session, but the
+     ONLY control that could set one is "+15 s" — which is an extension of
+     the rest in progress, not a statement about every rest to come. Its
+     effect was that extending one 90 s rest silently started the next at
+     105. The rest target is per-rest; the session-wide preference lives in
+     Settings → Workout preferences. */
   const [isResting, setIsResting] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const chimeFiredRef = useRef(false);
@@ -848,13 +866,11 @@ export default function WorkoutSession({
     (exerciseRest?: number) => {
       // Rest "belongs" to the exercise just performed: call sites pass that
       // exercise's authored restSeconds (undefined for generated programs).
-      if (!manualRestRef.current) {
-        setRestTarget(
-          typeof exerciseRest === "number" && exerciseRest > 0
-            ? exerciseRest
-            : profileRestDefault
-        );
-      }
+      setRestTarget(
+        typeof exerciseRest === "number" && exerciseRest > 0
+          ? exerciseRest
+          : profileRestDefault
+      );
       restStartedAtRef.current = Date.now();
       setRestSeconds(0);
       setIsResting(true);
@@ -1480,10 +1496,14 @@ export default function WorkoutSession({
   const handleStartFresh = () => {
     setSetLogs(buildInitialSetLogs(day.exercises));
     setExerciseNotes({});
-    setElapsedSeconds(0);
     setCurrentExIndex(0);
     setCurrentSetIndex(0);
+    /* Re-anchoring IS the clock reset now that elapsed is derived. The tick
+       is pushed forward with it so the display recomputes from the new
+       anchor immediately instead of carrying an up-to-one-second-stale
+       `nowTick` into the fresh session. */
     sessionStartRef.current = Date.now();
+    setNowTick(sessionStartRef.current);
     clearDraft();
     completionPendingRef.current = false;
     setShowResumePrompt(false);
@@ -1617,9 +1637,18 @@ export default function WorkoutSession({
           seconds={restSeconds}
           target={restTarget}
           onStop={stopRest}
-          onChangeTarget={(target) => {
-            manualRestRef.current = true;
-            setRestTarget(target);
+          onExtend={(seconds) => {
+            /* Extends THIS rest only — `startRest` re-derives the target
+               for the next one. */
+            setRestTarget((current) => {
+              const next = current + seconds;
+              /* Re-arm the chime. Extending an ALREADY-EXPIRED rest starts
+                 a fresh countdown, and without this the flag was still set
+                 from the first expiry, so the second one passed in silence
+                 — a timer running with no alert at the end of it. */
+              if (restSeconds >= current) chimeFiredRef.current = false;
+              return next;
+            });
           }}
         />
       )}

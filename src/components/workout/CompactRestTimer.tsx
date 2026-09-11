@@ -5,12 +5,14 @@ export default function CompactRestTimer({
   seconds,
   target,
   onStop,
-  onChangeTarget,
+  onExtend,
 }: {
   seconds: number;
   target: number;
   onStop: () => void;
-  onChangeTarget: (value: number) => void;
+  /** Add time to the rest in progress. Not a session-wide target change —
+   *  the next rest re-derives its own. */
+  onExtend: (seconds: number) => void;
 }) {
   return (
     <div
@@ -27,7 +29,7 @@ export default function CompactRestTimer({
       <Button
         variant="ghost"
         aria-label="Add 15 seconds of rest"
-        onClick={() => onChangeTarget(target + 15)}
+        onClick={() => onExtend(15)}
       >
         +<span className="font-mono tabular-nums">15</span> s
       </Button>
