@@ -2,10 +2,13 @@
  * SettingsRecentlyDeleted — F5c contract tests.
  *
  * Pins the empty state, the restore + hard-delete orchestration, and
- * the sort order (most recently deleted first). The 24-hour purge
- * cron CF that drives the bottom-of-list expiry is server-side and
- * out of scope; this surface just renders what useMeals.deletedMeals
- * returns.
+ * the sort order (most recently deleted first). This surface just renders
+ * the rows its query hands it, so the list is mocked here; the QUERY —
+ * which is what made an old meal deleted today unrecoverable — is proven
+ * against the Firestore fake in `useDeletedMeals.test.tsx`.
+ *
+ * (The header used to cite a 24-hour purge cron. There isn't one: no
+ * scheduled function touches `meals`, as `useMeals` documents at length.)
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, act } from "@testing-library/react";
@@ -25,7 +28,6 @@ vi.mock("@/hooks/useMeals", async () => {
     ...actual,
     useMeals: () => ({
       meals: [],
-      deletedMeals: deletedMealsMock,
       loading: false,
       hasMore: false,
       loadMore: vi.fn(),
@@ -37,6 +39,12 @@ vi.mock("@/hooks/useMeals", async () => {
     }),
   };
 });
+
+// The screen reads its rows from the deletion-time query now.
+vi.mock("@/hooks/useDeletedMeals", () => ({
+  useDeletedMeals: () => ({ deletedMeals: deletedMealsMock, loading: false }),
+}));
+vi.mock("@/lib/auth", () => ({ useUid: () => "u1" }));
 
 import SettingsRecentlyDeleted from "../SettingsRecentlyDeleted";
 

@@ -3,12 +3,14 @@ import { lazyRetry } from "@/lib/lazyRetry";
 import { useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useMeals } from "@/hooks/useMeals";
+import { useMealsInRange } from "@/hooks/useMealsInRange";
+import { useLifetimeMealStats } from "@/hooks/useLifetimeMealStats";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { useStallWatch } from "@/hooks/useStallWatch";
 import { useRunningStats } from "@/hooks/useRunningStats";
 import { useWorkouts, workoutTonnageKg } from "@/hooks/useWorkouts";
 import { useLifetimeRunStats } from "@/hooks/useLifetimeRunStats";
-import { useAuth } from "@/lib/auth";
+import { useAuth, useUid } from "@/lib/auth";
 import { useEffectiveTargets } from "@/hooks/useEffectiveTargets";
 import { THEME } from "@/lib/theme";
 import { buildDelta } from "@/lib/deltaFormat";
@@ -409,8 +411,19 @@ export default function History() {
   // Training-load curve feed — self-fetching (needs warmup history beyond
   // the visible range, so it can't reuse the range-scoped runs above).
   const trainingLoad = useTrainingLoadSeries(rangeDays);
+  const uid = useUid();
   const { meals, loading: mealsLoading } = useMeals();
+  /* The nutrition section reads its OWN range-scoped query rather than
+     slicing the 400-doc `useMeals` window, which silently truncated 3M / 6M
+     / 1Y for anyone logging more than a couple of meals a day. `* 2` because
+     every stat card carries a delta against the preceding comparable period,
+     so the fetch has to cover both halves. */
+  const { meals: rangeMeals, loading: rangeMealsLoading } = useMealsInRange(
+    uid,
+    rangeDays * 2
+  );
   const lifetimeRuns = useLifetimeRunStats();
+  const lifetimeMeals = useLifetimeMealStats();
   const { earnedBadges } = useStreaks();
   /**
    * Earned badges, reduced to the chronology's shape. `earnedAt` is stored
@@ -462,7 +475,8 @@ export default function History() {
    * Splitting them means a stuck discipline costs you that discipline,
    * not the page.
    */
-  const dataLoading = runsLoading || workoutsLoading || mealsLoading;
+  const dataLoading =
+    runsLoading || workoutsLoading || mealsLoading || rangeMealsLoading;
 
   /* Names whichever reads are still outstanding after 15s. Purely
      diagnostic — it never cancels or fakes a result, because a slow read
@@ -551,23 +565,35 @@ export default function History() {
 
   // Lifetime totals — all-time aggregates shown only on the "All" tab,
   // pinned at the very bottom as a quiet "you've come this far" footer.
-  // Uses unfiltered workouts/meals (both hooks return everything) plus
-  // a one-shot lifetime run query so pre-window runs aren't excluded.
+  /* Runs and meals each come from a one-shot whole-collection read, so
+     records older than any window still count toward a total that claims to
+     be lifetime. `useMeals` cannot serve this: it subscribes to the newest
+     400 meal docs, so both meal figures would saturate there — silently,
+     since a capped count looks exactly like a real one.
+
+     Workouts still read `useWorkouts`. Whether that hook is bounded the
+     same way is a separate question on a separate surface — not assumed
+     either way here, and not fixed blind. */
   const lifetimeTotals = useMemo(() => {
     const liftVolume = workouts.reduce(
       (sum, workout) => sum + workoutTonnageKg(workout),
       0
     );
-    const daysLogged = new Set(meals.map((m) => m.date)).size;
     return {
       runCount: lifetimeRuns.runCount,
       runKm: lifetimeRuns.totalDistanceM / 1000,
       liftCount: workouts.length,
       liftVolume,
-      mealCount: meals.length,
-      daysLogged,
+      mealCount: lifetimeMeals.mealCount,
+      daysLogged: lifetimeMeals.daysLogged,
     };
-  }, [workouts, meals, lifetimeRuns.runCount, lifetimeRuns.totalDistanceM]);
+  }, [
+    workouts,
+    lifetimeMeals.mealCount,
+    lifetimeMeals.daysLogged,
+    lifetimeRuns.runCount,
+    lifetimeRuns.totalDistanceM,
+  ]);
 
   const runningTotals = useMemo(() => {
     const runCount = weeklyData.reduce((sum, week) => sum + week.runCount, 0);
@@ -1051,10 +1077,10 @@ export default function History() {
         ? Math.round(days.reduce((s, d) => s + d[key], 0) / days.length)
         : 0;
 
-    const filtered = meals.filter(
+    const filtered = rangeMeals.filter(
       (m) => new Date(m.date + "T00:00:00") >= since
     );
-    const prevFiltered = meals.filter((m) => {
+    const prevFiltered = rangeMeals.filter((m) => {
       const d = new Date(m.date + "T00:00:00");
       return d >= prevSince && d < since;
     });
@@ -1132,7 +1158,7 @@ export default function History() {
       carbsSparkline,
       fatSparkline,
     };
-  }, [meals, rangeDays]);
+  }, [rangeMeals, rangeDays]);
 
   const itemVariant = {
     hidden: { opacity: 0, y: 12 },

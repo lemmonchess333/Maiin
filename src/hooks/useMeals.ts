@@ -1,4 +1,10 @@
-import { useState, useEffect, useCallback, useMemo, useSyncExternalStore } from "react";
+import {
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+  useSyncExternalStore,
+} from "react";
 import {
   collection,
   query,
@@ -20,7 +26,11 @@ import { db } from "@/lib/firebase";
 import { useUid } from "@/lib/auth";
 import { activeMealDocs, sumMealTotals } from "@/lib/mealTotals";
 import { validateFoodEntry } from "@/lib/foodValidation";
-import { pendingDocumentWrites, queuedWritesVersion, subscribeQueuedWrites } from "@/lib/offlineQueue";
+import {
+  pendingDocumentWrites,
+  queuedWritesVersion,
+  subscribeQueuedWrites,
+} from "@/lib/offlineQueue";
 import { logger } from "@/lib/logger";
 
 export interface MealItem {
@@ -126,7 +136,11 @@ function safeNum(v: unknown): number {
   return Number.isFinite(n) ? n : 0;
 }
 
-function parseMealDoc(id: string, raw: Record<string, unknown>): Meal {
+/* Exported so the range-scoped and archive queries parse meal docs with
+   THIS function rather than a second copy of it — the shape of a meal doc
+   is one decision, and a parser that drifts is the mirror-parity failure
+   this repo pays for most often. */
+export function parseMealDoc(id: string, raw: Record<string, unknown>): Meal {
   return {
     id,
     date: typeof raw.date === "string" ? raw.date : "",
@@ -188,14 +202,27 @@ export function useMeals() {
   // soft-deleted only. Single subscription powers both surfaces.
   const [snapshotMeals, setAllMeals] = useState<Meal[]>([]);
   const [snapshotUid, setSnapshotUid] = useState<string | null>(null);
-  const queueVersion = useSyncExternalStore(subscribeQueuedWrites, queuedWritesVersion, queuedWritesVersion);
+  const queueVersion = useSyncExternalStore(
+    subscribeQueuedWrites,
+    queuedWritesVersion,
+    queuedWritesVersion
+  );
   const allMeals = useMemo(() => {
     // A queue mutation invalidates this projection even before a server snapshot.
     void queueVersion;
-    const byId = new Map((snapshotUid === uid ? snapshotMeals : []).map((meal) => [meal.id, meal]));
-    if (uid) for (const pending of pendingDocumentWrites(uid, `users/${uid}/meals`)) {
-      byId.set(pending.id, parseMealDoc(pending.id, { ...(pending.merge ? byId.get(pending.id) : {}), ...pending.data }));
-    }
+    const byId = new Map(
+      (snapshotUid === uid ? snapshotMeals : []).map((meal) => [meal.id, meal])
+    );
+    if (uid)
+      for (const pending of pendingDocumentWrites(uid, `users/${uid}/meals`)) {
+        byId.set(
+          pending.id,
+          parseMealDoc(pending.id, {
+            ...(pending.merge ? byId.get(pending.id) : {}),
+            ...pending.data,
+          })
+        );
+      }
     return Array.from(byId.values());
   }, [snapshotMeals, snapshotUid, uid, queueVersion]);
   const [loading, setLoading] = useState(true);

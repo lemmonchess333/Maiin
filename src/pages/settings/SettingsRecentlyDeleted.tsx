@@ -17,6 +17,8 @@ import { useState } from "react";
 import { Trash2, RotateCcw, Utensils } from "lucide-react";
 import { toast } from "@/lib/toast";
 import { useMeals, type Meal } from "@/hooks/useMeals";
+import { useDeletedMeals } from "@/hooks/useDeletedMeals";
+import { useUid } from "@/lib/auth";
 import { logger } from "@/lib/logger";
 import { haptic } from "@/lib/haptic";
 import SettingsSection from "@/components/settings/SettingsSection";
@@ -52,7 +54,18 @@ function formatRelative(ms: number): string {
 }
 
 export default function SettingsRecentlyDeleted() {
-  const { deletedMeals, restoreMeal, hardDeleteMeal, loading } = useMeals();
+  const uid = useUid();
+  /* The LIST comes from its own query, ordered by deletion time — the
+     question this screen asks. `useMeals` answers a different one (the
+     newest 400 by `createdAt`), so a meal logged months ago and deleted
+     today was absent from it and could not be restored here at all.
+
+     The two writers still come from `useMeals`: both take a meal id and
+     write, so they are independent of which query loaded the row, and a
+     second copy of them is a second place for the soft-delete contract to
+     drift. */
+  const { restoreMeal, hardDeleteMeal } = useMeals();
+  const { deletedMeals, loading } = useDeletedMeals(uid);
   const [pendingId, setPendingId] = useState<string | null>(null);
 
   // Sort by deletedAt DESC — most recent at top per F5c spec pin (6).
