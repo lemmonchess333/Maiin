@@ -222,13 +222,13 @@ export default function ProgrammeRunSection({
   // PR-1: which row is opening DayActionSheet.
   const [manageDate, setManageDate] = useState<string | null>(null);
   // The run-week selector's selected calendar day (date-pinned — ADR-0002).
-  // Defaults to today; today is always index 0 of the rolling 7-day window
-  // below, so the default selection is always visible. Drives the selected-
-  // day command card so the selector actually controls the content beneath it.
+  // Defaults to today, which the calendar week below always contains, so the
+  // default selection is always on screen. Drives the selected-day command
+  // card so the selector actually controls the content beneath it.
   // Mirror the selected run day into the URL (?rday=YYYY-MM-DD) — the sibling
   // of the Lift day selector's ?day — so opening a run/plan detail and pressing
   // back restores the day instead of snapping to today. An out-of-window value
-  // degrades gracefully (the runWindow lookup below falls back to day 0).
+  // degrades gracefully (the runWindow lookup below falls back to today).
   const [searchParams, setSearchParams] = useSearchParams();
   const [selectedDateKey, setSelectedDateKey] = useState<string>(() => {
     const raw = searchParams.get("rday");
@@ -609,20 +609,42 @@ export default function ProgrammeRunSection({
   );
 
   // ── Run-week selector (date-pinned, ADR-0002) ──────────────────────
-  // A rolling 7-day window anchored on today, resolved through the same
-  // shared resolver Home/WeekStrip/DayActionSheet use. Run-scope only — no
-  // lift lanes (the Lift tab owns lifting). The selector drives
-  // `selectedDateKey`; the selected-day command card below reads from it.
+  /* The CALENDAR week — Sunday-anchored, the same window Home's WeekStrip
+     renders — resolved through the same shared resolver Home/WeekStrip/
+     DayActionSheet use. Run-scope only: no lift lanes, the Lift tab owns
+     lifting. The selector drives `selectedDateKey`; the selected-day
+     command card below reads from it.
+
+     Three reasons it is not a rolling today-first window:
+
+     1. This selector is deliberately drawn in Home's WeekStrip visual
+        language, so two near-identical strips windowing differently gives
+        the same control two meanings with nothing on screen to tell them
+        apart.
+     2. A race block is structured in WEEKS ("Week 1/26" above). Any
+        7-day window that does not begin on the week's first day spans two
+        plan weeks, so the mileage on screen belongs to a different week
+        than the header — true by construction, not an edge case.
+     3. `resolveTrainingWindow` derives its `currentWeekKey` gate from
+        `startDate`, and that gate gives `resolveRunDayForDate` its
+        priority-3 legacy fallback. Anchoring on Sunday makes
+        `localWeekKey(weekStart) === localWeekKey(today)` hold for all
+        seven days, so a legacy-shaped runDay (no `date`, no `weekKey`)
+        resolves across the whole strip instead of going null the moment
+        the window crossed into next week. Narrow — post-migration docs
+        carry `date` and match on priority 1 — but it is the same guard
+        Home's strip is anchored to keep. */
+  const weekStartKey = localWeekKey(parseLocalDate(todayKeyDerivation));
   const runWindow = useMemo(
     () =>
       resolveTrainingWindow({
-        startDate: new Date(),
+        startDate: parseLocalDate(weekStartKey),
         days: 7,
         profile,
         programState,
         claimMap,
       }),
-    [profile, programState, claimMap]
+    [weekStartKey, profile, programState, claimMap]
   );
   const runSelectorCells: ProgrammeWeekSelectorCell[] = useMemo(
     () =>
@@ -649,13 +671,21 @@ export default function ProgrammeRunSection({
     [runWindow, todayKeyDerivation]
   );
 
-  // The SELECTED day for the command card — taken straight from the already-
-  // resolved 7-day window (the selector only ever selects a day in it; the
-  // default is today = window[0]). Avoids a second resolver pass over the same
-  // window. `startUrl` already carries ?template=&scheduledRunId= when
-  // startable. Falls back to today if a stale key isn't in the window.
+  /* The SELECTED day for the command card — taken straight from the
+     already-resolved week (the selector only ever selects a day in it), so
+     there is no second resolver pass over the same window. `startUrl`
+     already carries ?template=&scheduledRunId= when startable.
+
+     The fallback for a stale `?rday` is TODAY, found by key rather than by
+     index. On a calendar week index 0 is SUNDAY, so an index-based fallback
+     answers a stale link with the start of the week instead of the day the
+     user is on. */
+  const todayIdx = Math.max(
+    0,
+    runWindow.findIndex((d) => d.dateKey === todayKeyDerivation)
+  );
   const selectedDay =
-    runWindow.find((d) => d.dateKey === selectedDateKey) ?? runWindow[0];
+    runWindow.find((d) => d.dateKey === selectedDateKey) ?? runWindow[todayIdx];
   const selectedRun = selectedDay.run;
   const selectedSavedRunId = selectedRun.runDay?.id
     ? claimMap.get(selectedRun.runDay.id)?.claimedSavedRunId
@@ -667,10 +697,13 @@ export default function ProgrammeRunSection({
   // and the outer tab-swipe takes over via the data-swipe-pager contract on
   // the wrapper below.
   const runTouchStartRef = useRef({ x: 0, y: 0 });
-  const selectedRunIdx = Math.max(
-    0,
-    runWindow.findIndex((d) => d.dateKey === selectedDateKey)
+  // Same reasoning as `selectedDay`: an unfound key resolves to today's
+  // index, not to the start of the week, so a swipe after a stale link
+  // continues from the day the card is actually showing.
+  const selectedRunIdxRaw = runWindow.findIndex(
+    (d) => d.dateKey === selectedDateKey
   );
+  const selectedRunIdx = selectedRunIdxRaw >= 0 ? selectedRunIdxRaw : todayIdx;
   const handleRunTouchStart = (e: React.TouchEvent) => {
     runTouchStartRef.current = {
       x: e.touches[0].clientX,
@@ -1411,7 +1444,12 @@ export default function ProgrammeRunSection({
             sport="run"
             ariaLabel="Run week"
             cells={runSelectorCells}
-            selectedKey={selectedDateKey}
+            /* The RESOLVED day, not the raw state. A stale `?rday` falls
+               back to today for the command card below, and passing the
+               unresolved key here left the strip with nothing highlighted
+               while the card showed today — the two halves of one control
+               disagreeing about what is selected. */
+            selectedKey={selectedDay.dateKey}
             onSelect={selectRunDay}
           />
 
