@@ -72,8 +72,20 @@ export default function LiftCTACard({
           <Dumbbell className="size-5 text-lifting" aria-hidden="true" />
         </div>
         <div className="flex-1 min-w-0">
+          {/* Deliberately NOT the run card's "Today · Run day", though the
+              two cards are otherwise twins. ADR-0002: runs are date-pinned,
+              so naming the day IS the run's identity; lifts are
+              split-ordered, and the session that comes next is the Programme
+              cursor's call, not this weekday's. Home resolves a lift by
+              weekday (liftIndexForDayOfWeek), which is the right thing for a
+              calendar surface to draw and the wrong thing to assert as "the
+              next session" — tapping through to a day the rotation has not
+              reached yet left this card saying "Today" over a session the
+              Programme tab called "Upcoming". "Planned for today" is what
+              this surface actually knows, and it reads as plan-vs-progress
+              beside the cursor rather than as a contradiction. */}
           <p className="text-xs font-semibold mb-0.5 text-lifting-strong">
-            {isFirst ? "Your first workout" : "Today · Lift day"}
+            {isFirst ? "Your first workout" : "Planned for today"}
           </p>
           <p className="text-base font-bold leading-snug text-foreground">
             <InlineNumerals>{nextWorkout.dayName}</InlineNumerals>

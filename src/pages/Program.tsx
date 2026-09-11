@@ -1357,6 +1357,33 @@ function ProgramInner() {
                                   Short on time?
                                 </Button>
                               )}
+                            {/* PROGRAM-SESSION-ORDER-01: real weeks rarely
+                                happen in order. "Make this next" moves the
+                                startable cursor to this unfinished day — a
+                                cursor change, never a schedule rewrite; the
+                                overridden cursor day offers the way back.
+                                History weeks are records, not prescriptions
+                                (same gate as Skip above).
+
+                                It leads the row, and in `secondary` rather
+                                than ghost, because on a day you cannot start
+                                it IS the action: ghost put it level with
+                                Skip session, and the hand-rolled
+                                muted-foreground button it replaces read as
+                                disabled and gave a keyboard user no focus
+                                ring — the same defect fixed for "Short on
+                                time?" above, which left these two behind. */}
+                            {status === "upcoming" && (
+                              <Button
+                                variant="secondary"
+                                onClick={() => {
+                                  haptic("light");
+                                  void setNextWorkout(idx);
+                                }}
+                              >
+                                Make this next
+                              </Button>
+                            )}
                             <Button
                               variant="ghost"
                               onClick={() => {
@@ -1367,37 +1394,17 @@ function ProgramInner() {
                               Skip session
                             </Button>
 
-                            {/* PROGRAM-SESSION-ORDER-01: real weeks rarely
-                                happen in order. "Make this next" moves the
-                                startable cursor to this unfinished day — a
-                                cursor change, never a schedule rewrite; the
-                                overridden cursor day offers the way back.
-                                History weeks are records, not prescriptions
-                                (same gate as Skip above). */}
-                            {status === "upcoming" && (
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  haptic("light");
-                                  void setNextWorkout(idx);
-                                }}
-                                className="min-h-[44px] px-4 inline-flex items-center justify-center text-sm font-medium text-muted-foreground active:scale-[0.97] transition-transform"
-                              >
-                                Make this next
-                              </button>
-                            )}
                             {status === "today" &&
                               programState?.nextWorkoutOverride === idx && (
-                                <button
-                                  type="button"
+                                <Button
+                                  variant="secondary"
                                   onClick={() => {
                                     haptic("light");
                                     void setNextWorkout(null);
                                   }}
-                                  className="min-h-[44px] px-4 inline-flex items-center justify-center text-sm font-medium text-muted-foreground active:scale-[0.97] transition-transform"
                                 >
                                   Follow programme order
-                                </button>
+                                </Button>
                               )}
                           </div>
                         )}
@@ -1691,6 +1698,7 @@ function ProgramInner() {
                           liftDaysPerWeek={programState.workouts.length}
                           mainCompoundIds={blockAnchorIds}
                           trainingWhy={profile?.trainingWhy?.trim() ?? ""}
+                          hasTrained={recentWorkouts.length > 0}
                           raceTaperActive={blockOfferBlockedByRace({
                             runMode: profile?.runMode,
                             raceDistance: profile?.raceGoal?.distance,

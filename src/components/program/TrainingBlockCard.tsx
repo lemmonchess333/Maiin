@@ -98,6 +98,13 @@ interface Props {
    * pick a lifting focus back up.
    */
   raceTaperActive?: boolean;
+  /** Whether the user has actually trained yet. The block offer asks what
+   *  the next few weeks are FOR, which is a question a programme earns the
+   *  right to ask — put to someone who has just answered it in onboarding
+   *  and not yet lifted, it reads as more setup standing between them and
+   *  their first session. An existing block still renders either way; this
+   *  gates the OFFER only. */
+  hasTrained?: boolean;
   onStart: (input: StartBlockInput) => Promise<boolean>;
   /**
    * Adopts a pre-Blk2 block that was still open when Blk2 shipped. Without
@@ -148,6 +155,7 @@ export default function TrainingBlockCard({
   mainCompoundIds,
   trainingWhy,
   raceTaperActive = false,
+  hasTrained = true,
   onStart,
   onAdoptLegacy,
   onRelease,
@@ -275,7 +283,7 @@ export default function TrainingBlockCard({
 
   return (
     <>
-      {!block && !raceTaperActive && (
+      {!block && !raceTaperActive && hasTrained && (
         <button
           type="button"
           onClick={() => {

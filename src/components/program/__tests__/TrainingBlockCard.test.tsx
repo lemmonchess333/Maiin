@@ -300,3 +300,33 @@ describe("TrainingBlockCard (Blk2) — the active block", () => {
     });
   });
 });
+
+/* The offer asks what the next few weeks are FOR. Put to someone who
+   answered that in onboarding minutes ago and has not yet lifted, it is
+   one more setup card between them and their first session — which is
+   where a fresh account met it, because the only gates were "no block
+   yet" and "not tapering for a race". */
+describe("TrainingBlockCard — when the offer is worth making", () => {
+  it("does not offer a block before the user has trained", () => {
+    renderCard({ block: undefined, hasTrained: false });
+    expect(screen.queryByText("Start a training block")).toBeNull();
+  });
+
+  it("offers it once they have", () => {
+    renderCard({ block: undefined, hasTrained: true });
+    expect(screen.getByText("Start a training block")).toBeVisible();
+  });
+
+  it("still shows a block they already have", () => {
+    // The gate is on the OFFER. Someone mid-block who has logged nothing
+    // recently must not lose the card tracking it.
+    renderCard({ block: activeBlock(), hasTrained: false });
+    expect(screen.getByText(/Get stronger/)).toBeVisible();
+    expect(screen.queryByText("Start a training block")).toBeNull();
+  });
+
+  it("offers by default, so a caller that says nothing is unchanged", () => {
+    renderCard({ block: undefined });
+    expect(screen.getByText("Start a training block")).toBeVisible();
+  });
+});

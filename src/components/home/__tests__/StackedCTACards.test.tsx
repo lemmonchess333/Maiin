@@ -92,7 +92,7 @@ describe("StackedCTACards", function () {
     it("LiftCTA appears before RunCTA on both days", function () {
       const { container } = renderCards();
       const allText = container.textContent || "";
-      const liftIdx = allText.indexOf("Today · Lift day");
+      const liftIdx = allText.indexOf("Planned for today");
       const runIdx = allText.indexOf("Today · Run day");
       expect(liftIdx).toBeGreaterThan(-1);
       expect(runIdx).toBeGreaterThan(-1);
@@ -147,7 +147,7 @@ describe("StackedCTACards", function () {
     it("frames the lift card as 'Your first workout' when firstWorkout is set", function () {
       renderCards({ todayType: "lift", firstWorkout: true });
       expect(screen.getByText("Your first workout")).toBeInTheDocument();
-      expect(screen.queryByText("Today · Lift day")).not.toBeInTheDocument();
+      expect(screen.queryByText("Planned for today")).not.toBeInTheDocument();
     });
 
     it("frames the run card as 'Your first run' when firstRun is set", function () {
@@ -155,9 +155,13 @@ describe("StackedCTACards", function () {
       expect(screen.getByText("Your first run")).toBeInTheDocument();
     });
 
-    it("default (no flags) keeps the standard 'Today · Lift day' eyebrow", function () {
+    it("default (no flags) keeps the standard lift eyebrow", function () {
+      /* "Planned for today", not the run card's "Today · Run day": ADR-0002
+         makes a run's identity its date and a lift's the cursor's call, so
+         the lift card describes the plan rather than naming the session as
+         today's. The register split is pinned in liftCardRegister.test.tsx. */
       renderCards({ todayType: "lift" });
-      expect(screen.getByText("Today · Lift day")).toBeInTheDocument();
+      expect(screen.getByText("Planned for today")).toBeInTheDocument();
       expect(screen.queryByText("Your first workout")).not.toBeInTheDocument();
     });
 
