@@ -581,7 +581,10 @@ test.describe("offline-queue uid isolation across an account switch", () => {
         new PopStateEvent("popstate", { state: history.state })
       );
     });
-    await page.getByRole("button", { name: "Save anyway" }).click();
+    await clickPastCelebration(
+      page,
+      page.getByRole("button", { name: "Save anyway" })
+    );
     await expect(
       page.getByRole("button", { name: "Done", exact: true })
     ).toBeVisible();
