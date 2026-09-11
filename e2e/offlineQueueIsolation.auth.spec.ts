@@ -468,6 +468,8 @@ test.describe("offline-queue uid isolation across an account switch", () => {
             elapsed: 5,
             splits: [],
             elevationGain: 0,
+            // Legacy payloads without a mode deliberately skip validation.
+            runConfig: { activityType: "freerun" },
           },
           key: "e2e-short-run",
           idx: (history.state?.idx ?? 0) + 1,
@@ -478,6 +480,9 @@ test.describe("offline-queue uid isolation across an account switch", () => {
       window.dispatchEvent(
         new PopStateEvent("popstate", { state: history.state })
       );
+    });
+    await expect(page.getByText("Run too short", { exact: true })).toBeVisible({
+      timeout: 10_000,
     });
     await clickPastCelebration(
       page,
