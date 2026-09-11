@@ -28,7 +28,7 @@ import type {
 /** How often the user wants runs woven into the lifting week. Onboarding-only
  *  vocabulary (the programme itself stores runDays), so it lives beside its
  *  labels rather than in programTypes. */
-export type RunFrequency = "regular" | "occasional" | "none";
+export type RunFrequency = "regular" | "occasional" | "none" | "new";
 
 export function splitLabel(s: PreferredSplit): string {
   switch (s) {

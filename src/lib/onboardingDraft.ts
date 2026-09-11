@@ -85,7 +85,16 @@ export const DRAFT_TRAINING_ACTIVITIES = [
   "both",
 ] as const;
 export type OnboardingActivity = (typeof DRAFT_TRAINING_ACTIVITIES)[number];
-export const DRAFT_RUN_FREQUENCIES = ["regular", "occasional", "none"] as const;
+/* "new" is the beginner tier. It sits first in the user-facing list and
+   last here so the existing values keep their positions — anything that
+   indexes this array by position (a stored ordinal, a test fixture) is
+   unaffected by the addition. */
+export const DRAFT_RUN_FREQUENCIES = [
+  "regular",
+  "occasional",
+  "none",
+  "new",
+] as const;
 export const DRAFT_RUN_MODES = ["freeform", "structured", "race_prep"] as const;
 export const DRAFT_UNITS_HEIGHT = ["cm", "ft"] as const;
 export const DRAFT_UNITS_WEIGHT = ["kg", "lbs"] as const;
