@@ -59,12 +59,21 @@ function walk(dir: string, out: string[] = []): string[] {
  *  it over-eats, which can only ever remove a match and push toward
  *  reporting MORE orphans (a visible failure, never a silent pass). */
 function stripInert(src: string): string {
-  return src
-    .replace(/\/\*[\s\S]*?\*\//g, " ")
-    .replace(/\/\/[^\n]*/g, " ")
-    .replace(/`(?:[^`\\]|\\.)*`/g, " ")
-    .replace(/"(?:[^"\\]|\\.)*"/g, " ")
-    .replace(/'(?:[^'\\]|\\.)*'/g, " ");
+  /* ONE alternation, not five passes. Sequential passes are order-
+     dependent: a delimiter sitting inside an earlier-stripped token is
+     still visible to the pass that runs next, so a stray backtick inside
+     a comment or a quoted string could open a phantom template literal
+     that ran to the next backtick in the file and ate the code between.
+     Measured on FoodAnalyzer.tsx: a destructured, genuinely-consumed
+     `analyzeFood` survived the comment passes and vanished at the
+     template-literal pass — reported as an orphan the first time this
+     sweep ever scanned its hook. Reordering only moves the hole. In a
+     single alternation the scanner consumes whichever token STARTS first,
+     whole, so a delimiter inside another token can never open anything. */
+  return src.replace(
+    /\/\*[\s\S]*?\*\/|\/\/[^\n]*|`(?:[^`\\]|\\.)*`|"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'/g,
+    " "
+  );
 }
 
 /**
@@ -85,6 +94,14 @@ const PINNED_HOOK_PROPERTIES = [
   // readable-model cost, not a cleanup; held for a deliberate call.
   "src/hooks/useEffectiveTargets.ts:baseTarget",
   "src/hooks/useEffectiveTargets.ts:isRunDay",
+
+  // Hiding is one-way today: `hide` is wired from the report modal, and no
+  // surface anywhere offers to unhide — the hook carries the inverse but
+  // nothing calls it. That is a product gap (a mis-tap hides a post from
+  // this device for good), not a cleanup: deleting `unhide` would make the
+  // gap permanent by construction, and building the surface is a product
+  // call. Held, and flagged, until that call is made.
+  "src/hooks/useHiddenActivities.ts:unhide",
 ];
 
 interface HookProp {
@@ -99,11 +116,25 @@ function collectReturnedProperties(): HookProp[] {
     const rel = abs.slice(repoRoot.length + 1);
     if (!/use[A-Z]|Provider/.test(rel)) continue;
     const src = stripInert(readFileSync(abs, "utf8"));
+    /* Two shapes of object return. The multi-line form is one property
+       per line; the single-line form (`return { a, b, c };`) is how a
+       short hook returns, and it was invisible here: `useSessionDoc`
+       shipped an unused `setData` on a one-line return and this sweep
+       never saw the hook at all. Any hook it cannot parse is a hook it
+       cannot check, and that failure looks exactly like a clean pass. */
     const blocks = [...src.matchAll(/\n {2}return \{\n([\s\S]*?)\n {2}\};/g)];
-    if (!blocks.length) continue;
-    const body = blocks[blocks.length - 1][1];
-    for (const m of body.matchAll(/^\s{4}([A-Za-z_$][\w$]*)\s*[,:]/gm)) {
-      out.push({ file: rel, prop: m[1] });
+    if (blocks.length) {
+      const body = blocks[blocks.length - 1][1];
+      for (const m of body.matchAll(/^\s{4}([A-Za-z_$][\w$]*)\s*[,:]/gm)) {
+        out.push({ file: rel, prop: m[1] });
+      }
+      continue;
+    }
+    const inline = [...src.matchAll(/\n {2}return \{ ([^\n}]*) \};/g)];
+    if (!inline.length) continue;
+    for (const part of inline[inline.length - 1][1].split(",")) {
+      const m = part.trim().match(/^([A-Za-z_$][\w$]*)\s*(?::|$)/);
+      if (m) out.push({ file: rel, prop: m[1] });
     }
   }
   return out;

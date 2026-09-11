@@ -113,7 +113,6 @@ describe("useUnreadCount — what it counts", () => {
     const { result } = renderHook(() => useUnreadCount());
     await waitFor(() => expect(result.current.count).toBe(2));
     expect(result.current.error).toBe(false);
-    expect(result.current.capped).toBe(false);
   });
 
   it("EXCLUDES items older than the last-seen marker", async () => {
@@ -146,15 +145,19 @@ describe("useUnreadCount — what it counts", () => {
     await waitFor(() => expect(result.current.count).toBe(2));
   });
 
-  it("caps the count at the display ceiling", async () => {
+  it("saturates the count at the subscription cap", async () => {
+    /* The cap is a QUERY bound so the hook cannot fan out to the whole
+       feed; the count saturates there rather than reporting a true total.
+       A `capped` flag once rode alongside it for a "50+" rendering that no
+       surface ever built — the tab bar applies its own display cap — so
+       the invariant is pinned on the number itself. */
     seedItems(
       Object.fromEntries(
         Array.from({ length: 60 }, (_, i) => [`u${i}`, item(1, `u${i}`)])
       )
     );
     const { result } = renderHook(() => useUnreadCount());
-    await waitFor(() => expect(result.current.capped).toBe(true));
-    expect(result.current.count).toBe(50);
+    await waitFor(() => expect(result.current.count).toBe(50));
   });
 });
 

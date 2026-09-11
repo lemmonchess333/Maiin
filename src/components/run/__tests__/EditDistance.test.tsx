@@ -10,7 +10,7 @@
  */
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
-import { EditDistance } from "../RunSummary";
+import EditDistance from "../EditDistance";
 
 function open(distanceKm: number, onCommit = vi.fn()) {
   render(<EditDistance distanceKm={distanceKm} onCommit={onCommit} />);

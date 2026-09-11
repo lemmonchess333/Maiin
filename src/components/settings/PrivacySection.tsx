@@ -9,6 +9,7 @@ import { toast } from "@/lib/toast";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { getBlockedUsers, unblockUser } from "@/lib/socialApi";
+import { useBlockedUsers } from "@/hooks/useBlockedUsers";
 import AccordionSection from "@/components/AccordionSection";
 import ShareDefaultsRow from "@/components/settings/ShareDefaultsRow";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
@@ -58,6 +59,7 @@ export default function PrivacySection({
 }: PrivacySectionProps) {
   const [pendingZoneRemoval, setPendingZoneRemoval] =
     useState<PrivacyZone | null>(null);
+  const { removeBlocked } = useBlockedUsers();
   const [blockedUsersList, setBlockedUsersList] = useState<
     { uid: string; displayName: string }[]
   >([]);
@@ -334,6 +336,15 @@ export default function PrivacySection({
                       onClick={async () => {
                         if (!user) return;
                         await unblockUser(user.uid, bu.uid);
+                        /* The shared blocked Set too, not just this list.
+                           `useBlockedUsers` exists so every consumer sees
+                           one set — Social's feed filter reads it — and a
+                           Firestore write alone leaves that set stale, so
+                           the unblocked account's posts stayed hidden
+                           until a reload. The block direction already
+                           pairs its write with `addBlocked`; this is the
+                           same pairing on the way back. */
+                        removeBlocked(bu.uid);
                         setBlockedUsersList((prev) =>
                           prev.filter((u) => u.uid !== bu.uid)
                         );

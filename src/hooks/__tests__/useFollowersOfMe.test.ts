@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { renderHook, act } from "@testing-library/react";
+import { renderHook, waitFor } from "@testing-library/react";
 
 /* Same harness pattern as useBlockedUsers.test.ts. The hook owns a
  * module-level cache + listener registry and we want to exercise the
@@ -35,55 +35,39 @@ describe("useFollowersOfMe", () => {
     mockGetFollowerIds.mockResolvedValue(new Set<string>());
   });
 
-  it("propagates an addFollower call to a sibling hook instance synchronously", () => {
-    /* Two parallel instances simulate the real wiring: a profile page
-       might addFollower(uid) when a follow-back happens; suggested-
-       people row needs to flip its "Follows you" badge in the same
-       render pass without waiting for a refetch. */
-    currentAuthUser = { uid: "test-propagate" };
-    const a = renderHook(() => useFollowersOfMe());
-    const b = renderHook(() => useFollowersOfMe());
-
-    expect(a.result.current.followers.has("alice")).toBe(false);
-    expect(b.result.current.followers.has("alice")).toBe(false);
-
-    act(() => {
-      a.result.current.addFollower("alice");
-    });
-
-    expect(a.result.current.followers.has("alice")).toBe(true);
-    expect(b.result.current.followers.has("alice")).toBe(true);
-  });
-
-  it("removes a uid symmetrically", () => {
-    currentAuthUser = { uid: "test-remove" };
-    const hook = renderHook(() => useFollowersOfMe());
-
-    act(() => hook.result.current.addFollower("alice"));
-    expect(hook.result.current.followers.has("alice")).toBe(true);
-
-    act(() => hook.result.current.removeFollower("alice"));
-    expect(hook.result.current.followers.has("alice")).toBe(false);
-  });
-
-  it("isolates cached sets per uid (different signed-in users don't share followers)", () => {
+  /* Two tests retired here drove the shared Set through `addFollower` /
+     `removeFollower`. Those mutators were speculative: the hook's own note
+     said they served "a follow-back from another device" — a remote event
+     with no listener — or "a UI surface that knows the change happened",
+     and no surface can know that someone else followed the signed-in user.
+     Nothing outside the hook ever called them. The property they
+     exercised, one cache notifying sibling instances, is the same
+     mechanism `useBlockedUsers` uses, where a consumer genuinely mutates
+     it; coverage of that shape lives with the hook that has a caller. */
+  it("isolates cached sets per uid (different signed-in users don't share followers)", async () => {
+    /* Seeded through the fetch — the only path that fills the cache now
+       that the imperative mutators are gone. Alice follows user A only. */
+    mockGetFollowerIds.mockImplementation(
+      async (uid: string) =>
+        new Set<string>(uid === "test-isolation-a" ? ["alice"] : [])
+    );
     currentAuthUser = { uid: "test-isolation-a" };
     const a = renderHook(() => useFollowersOfMe());
-    act(() => a.result.current.addFollower("alice"));
+    await waitFor(() =>
+      expect(a.result.current.followers.has("alice")).toBe(true)
+    );
 
     currentAuthUser = { uid: "test-isolation-b" };
     const b = renderHook(() => useFollowersOfMe());
+    await waitFor(() =>
+      expect(mockGetFollowerIds).toHaveBeenCalledWith("test-isolation-b")
+    );
     expect(b.result.current.followers.has("alice")).toBe(false);
   });
 
   it("returns an empty set when there's no authenticated user", () => {
     currentAuthUser = null;
     const { result } = renderHook(() => useFollowersOfMe());
-    expect(result.current.followers.size).toBe(0);
-
-    /* addFollower no-ops without a user — pre-auth calls must not
-       poison the cache for whoever signs in next. */
-    act(() => result.current.addFollower("alice"));
     expect(result.current.followers.size).toBe(0);
   });
 });

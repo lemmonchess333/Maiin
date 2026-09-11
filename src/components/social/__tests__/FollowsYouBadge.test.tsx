@@ -10,8 +10,6 @@ const followers = { value: new Set<string>() };
 vi.mock("../../../hooks/useFollowersOfMe", () => ({
   useFollowersOfMe: () => ({
     followers: followers.value,
-    addFollower: () => {},
-    removeFollower: () => {},
   }),
 }));
 

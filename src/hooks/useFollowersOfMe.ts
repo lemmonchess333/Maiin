@@ -26,11 +26,6 @@ export interface UseFollowersOfMeReturn {
   /** Set of UIDs that follow the current user. Empty until the
    *  initial fetch resolves (and stays empty if the fetch fails). */
   followers: Set<string>;
-  /** Imperatively add a UID — used by the inverse-follow flow when a
-   *  user follows me back from another device, or as an optimistic
-   *  update from a UI surface that knows the change happened. */
-  addFollower: (uid: string) => void;
-  removeFollower: (uid: string) => void;
 }
 
 export function useFollowersOfMe(): UseFollowersOfMeReturn {
@@ -77,21 +72,5 @@ export function useFollowersOfMe(): UseFollowersOfMeReturn {
     ? (cache.get(uid) ?? new Set())
     : new Set();
 
-  const addFollower = (id: string) => {
-    if (!uid) return;
-    const next = new Set<string>(cache.get(uid) ?? []);
-    next.add(id);
-    cache.set(uid, next);
-    notify(uid);
-  };
-
-  const removeFollower = (id: string) => {
-    if (!uid) return;
-    const next = new Set<string>(cache.get(uid) ?? []);
-    next.delete(id);
-    cache.set(uid, next);
-    notify(uid);
-  };
-
-  return { followers, addFollower, removeFollower };
+  return { followers };
 }

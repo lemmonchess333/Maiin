@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 
 /**
  * Tracks document visibility state and provides callbacks for
@@ -9,6 +9,12 @@ import { useEffect, useRef, useState } from "react";
  * is backgrounded. This hook detects those transitions so the run
  * page can pause GPS (saving battery), reconcile elapsed time on
  * return, and notify the user of any data gaps.
+ *
+ * Callback-only. It returns nothing: the visibility flag and the last
+ * gap were also exposed as state, and no consumer ever read them — Run
+ * drives everything from `onHidden` / `onVisible`, whose event carries
+ * the gap. State that nothing reads is a second copy of the truth that
+ * cannot be checked against the first.
  */
 
 export interface VisibilityEvent {
@@ -34,8 +40,6 @@ export function useRunVisibility({
   onVisible,
   enabled = true,
 }: UseRunVisibilityOptions) {
-  const [isVisible, setIsVisible] = useState(true);
-  const [lastGap, setLastGap] = useState<VisibilityEvent | null>(null);
   const hiddenAtRef = useRef<number | null>(null);
   const onHiddenRef = useRef(onHidden);
   const onVisibleRef = useRef(onVisible);
@@ -54,10 +58,8 @@ export function useRunVisibility({
     const handleVisibilityChange = () => {
       if (document.visibilityState === "hidden") {
         hiddenAtRef.current = Date.now();
-        setIsVisible(false);
         onHiddenRef.current?.();
       } else if (document.visibilityState === "visible") {
-        setIsVisible(true);
         const hiddenAt = hiddenAtRef.current;
         if (hiddenAt) {
           const now = Date.now();
@@ -66,7 +68,6 @@ export function useRunVisibility({
             visibleAt: now,
             hiddenDuration: (now - hiddenAt) / 1000,
           };
-          setLastGap(event);
           hiddenAtRef.current = null;
           onVisibleRef.current?.(event);
         }
@@ -77,6 +78,4 @@ export function useRunVisibility({
     return () =>
       document.removeEventListener("visibilitychange", handleVisibilityChange);
   }, [enabled]);
-
-  return { isVisible, lastGap };
 }
