@@ -280,7 +280,7 @@ describe("ProgrammeRunSection — runDay rendering", () => {
   });
 
   it("marks a skipped run in the selector — no passive copy", () => {
-    // Date it today so it lands in the selector's rolling 7-day window.
+    // Date it today so it lands in the selector's calendar week.
     const programState = makeProgramState([
       makeRunDay({ status: "skipped", date: TODAY_KEY, dayIndex: TODAY_DOW }),
     ]);
@@ -1241,5 +1241,78 @@ describe("ProgrammeRunSection — below-floor race plans describe themselves hon
     // And the compressed plan still gets ITS explanation — passing
     // `belowFloor` as a constant true would silence this one.
     expect(body).toMatch(/compressed plan/i);
+  });
+});
+
+describe("ProgrammeRunSection — the selector is a CALENDAR week", () => {
+  /* It windowed today + 6 days while Home's near-identical strip showed the
+     calendar week, so the same control had two meanings with nothing on
+     screen to separate them. A race block is also structured in weeks
+     ("Week 1/26"), and a window that does not begin on the week's first day
+     spans two of them by construction.
+
+     Nothing pinned the old shape — the whole suite passed unchanged after
+     the switch — so these are the first assertions about the window itself.
+     The clock is pinned to a FRIDAY: on a Sunday the two windows agree, and
+     a test that cannot tell them apart proves nothing. */
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 8, 11, 12, 0, 0)); // Fri 2026-09-11
+  });
+  afterEach(() => vi.useRealTimers());
+
+  /** The date each cell announces, in render order. */
+  const cellDates = () =>
+    screen
+      .getAllByRole("tab")
+      .map((el) => (el.getAttribute("aria-label") ?? "").split(",")[0].trim());
+
+  it("runs Sunday to Saturday, with today in its own weekday slot", () => {
+    renderSection(commonProps(), makeProgramState([]));
+    // Sun 6 → Sat 12. Today is the 11th: present, and at index 5 rather
+    // than index 0, which is exactly what a rolling window cannot do.
+    expect(cellDates()).toEqual(["6", "7", "8", "9", "10", "11", "12"]);
+    expect(
+      screen.getByRole("tab", { name: /^11, today$/ })
+    ).toBeInTheDocument();
+  });
+
+  it("shows the days already behind you this week", () => {
+    /* The reason the calendar week is worth the change: banked days are
+       visible. A today-first window shows only what is still owed. */
+    renderSection(commonProps(), makeProgramState([]));
+    for (const past of ["6", "7", "8", "9", "10"]) {
+      expect(screen.getByRole("tab", { name: past })).toBeInTheDocument();
+    }
+  });
+
+  it("selects TODAY by default, not the start of the week", () => {
+    renderSection(commonProps(), makeProgramState([]));
+    expect(screen.getByRole("tab", { name: /^11, today$/ })).toHaveAttribute(
+      "aria-selected",
+      "true"
+    );
+    expect(screen.getByRole("tab", { name: "6" })).toHaveAttribute(
+      "aria-selected",
+      "false"
+    );
+  });
+
+  it("falls back to today when ?rday points outside the week", () => {
+    /* The fallback was `runWindow[0]`, which meant "today" only while the
+       window began on today. On a calendar week index 0 is SUNDAY, so a
+       stale link would have quietly answered with the start of the week. */
+    render(
+      <MemoryRouter initialEntries={["/program?tab=run&rday=2026-01-01"]}>
+        <ProgrammeRunSection
+          {...commonProps()}
+          programState={makeProgramState([])}
+        />
+      </MemoryRouter>
+    );
+    expect(screen.getByRole("tab", { name: /^11, today$/ })).toHaveAttribute(
+      "aria-selected",
+      "true"
+    );
   });
 });
