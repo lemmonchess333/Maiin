@@ -661,7 +661,11 @@ export default function ProgrammeRunSection({
         const date = parseLocalDate(d.dateKey);
         return {
           key: d.dateKey,
-          topLabel: format(date, "EEE").charAt(0),
+          // The narrow token, not the first letter of the short one — same
+          // result, but it says "one-letter weekday" rather than leaving a
+          // slice to be re-derived. Matches Home's strip: the letter row is
+          // a fixed frame on both, so position disambiguates S/S and T/T.
+          topLabel: format(date, "EEEEE"),
           center: String(date.getDate()),
           bottomLabel: hasRun ? compactRunLabel(run.template) : "",
           status,

@@ -1,5 +1,4 @@
 import { useMemo } from "react";
-import { THEME } from "@/lib/theme";
 import { Check, Minus } from "lucide-react";
 import { format } from "date-fns";
 import type { UserProfile } from "@/lib/auth";
@@ -123,16 +122,22 @@ export default function WeekStrip({
   return (
     <div className="flex items-center justify-between px-1">
       {days.map(function (day) {
-        // Today's larger outlined date stays distinct from the selected
-        // date's filled circle, including when another day is selected.
-        const isBig = day.isToday;
-        // Day numbers are numeric displays → font-mono (Archivo) + tabular-nums
-        // per the design-system invariant, and text-sm so the week's dates are
-        // confidently scannable (was text-xs, and missing the numeral font).
+        /* Every cell is the same size, deliberately. In a `flex-col
+           items-center` cell, a circle taller than its neighbours pushes
+           its own weekday letter up and its indicator dot down, so sizing
+           today differently breaks all three of the strip's baselines on
+           the one day a user looks at most. Today is a colour and a ring,
+           never a geometry — the reason iOS week rows stay ruled while
+           still marking today.
+
+           Day numbers are numeric displays → font-mono (Archivo) +
+           tabular-nums per the design-system invariant. */
         let cls =
-          (isBig ? "size-12 " : "size-10 ") +
-          "rounded-full flex items-center justify-center text-sm font-semibold font-mono tabular-nums transition-all relative";
-        let st: React.CSSProperties = {};
+          "size-10 rounded-full flex items-center justify-center text-sm font-semibold font-mono tabular-nums transition-all relative";
+        /* Fill says SELECTED, ring says TODAY, and they COMPOSE. An
+           if/else here lets selection mask today: pick today — the
+           likeliest day to pick — and its marker disappears, leaving it
+           indistinguishable from any other selected day. */
         if (day.isSelected) {
           cls += " bg-primary-strong text-primary-foreground";
         } else if (day.isToday) {
@@ -140,7 +145,9 @@ export default function WeekStrip({
         } else {
           cls += " text-muted-foreground border-2 border-border";
         }
-        if (day.isToday) st = { boxShadow: `0 0 0 3px ${THEME.brand}1A` };
+        if (day.isToday) {
+          cls += " ring-2 ring-primary ring-offset-2 ring-offset-background";
+        }
         return (
           <button
             type="button"
@@ -170,12 +177,14 @@ export default function WeekStrip({
             }
             className="flex flex-col items-center gap-1 active:scale-[0.95] min-w-[44px] min-h-[44px] justify-center"
           >
+            {/* One letter, not two. The row is a fixed frame — these seven
+                letters never move, because the strip is always the calendar
+                week — so position disambiguates the two S's and the two T's
+                exactly as it does on the iOS week row. */}
             <span className="text-xs text-muted-foreground">
-              {format(day.date, "EEEEEE")}
+              {format(day.date, "EEEEE")}
             </span>
-            <div className={cls} style={st}>
-              {day.date.getDate()}
-            </div>
+            <div className={cls}>{day.date.getDate()}</div>
             <div className="flex h-3 items-center gap-1" aria-hidden="true">
               {(day.sType === "both" || day.sType === "lift") &&
                 (day.liftCompleted ? (
