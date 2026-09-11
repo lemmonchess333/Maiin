@@ -225,8 +225,14 @@ export default function ProgrammeWeekSelector({
                 {content}
               </motion.div>
             </button>
+            {/* The row is reserved whether or not this cell has a label.
+                Rest days render an empty span, so without a floor the
+                strip's height changed with the week's shape and a lone
+                "12K" under one day hung off a row nothing else occupied.
+                Home's indicator row has had a fixed height for the same
+                reason. */}
             <span
-              className="text-caption font-semibold text-center line-clamp-1 leading-tight max-w-full mt-1"
+              className="text-caption font-semibold text-center line-clamp-1 leading-tight max-w-full mt-1 block min-h-4"
               style={{ color: labelColor }}
             >
               {cell.bottomLabel}
