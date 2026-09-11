@@ -285,3 +285,33 @@ describe("CirclesSection (SOCIAL-HOME-01 Together surface)", () => {
     expect(value.loadDetail).toHaveBeenCalledTimes(1);
   });
 });
+
+/* The name box suggested a lifting block whatever the circle was for, so
+   someone naming a race circle was prompted with "Autumn strength block".
+   The suggestion belongs beside the label it describes, which is why it
+   lives on the template rather than in this component. */
+describe("the name suggestion follows the chosen template", () => {
+  it("suggests a race name for a race circle, not a strength block", async () => {
+    mockUseGoalSpaces.mockReturnValue(hookValue());
+    render(
+      <MemoryRouter>
+        <CirclesSection uid="me" />
+      </MemoryRouter>
+    );
+    fireEvent.click(screen.getByRole("button", { name: /Strength Block/ }));
+    const name = await screen.findByLabelText("Circle name");
+    expect(name).toHaveAttribute(
+      "placeholder",
+      "Name it (e.g. Autumn strength block)"
+    );
+    // The cold-start pick arrives confirmed, so the full picker is behind
+    // "Change" — the same two taps a user makes to switch goal.
+    fireEvent.click(screen.getByRole("button", { name: "Change" }));
+    fireEvent.click(screen.getByRole("button", { name: /Race Journey/ }));
+    expect(name).toHaveAttribute(
+      "placeholder",
+      "Name it (e.g. Spring half marathon)"
+    );
+    expect(name.getAttribute("placeholder")).not.toMatch(/strength block/);
+  });
+});

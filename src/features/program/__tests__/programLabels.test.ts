@@ -46,7 +46,11 @@ describe("programme labels (onboarding preview register)", () => {
   it("pins the copy the preview shows", () => {
     expect(splitLabel("ppl")).toBe("Push / Pull / Legs");
     expect(splitLabel("auto")).toBe("Auto-assigned");
-    expect(goalLabel("fat_loss")).toBe("Fat loss focus");
+    // The goal register is the user's own words, not the "… focus" one
+    // its neighbours use: onboarding's review screen reads this back over
+    // a choice the same file offered as "Lose fat".
+    expect(goalLabel("fat_loss")).toBe("Lose fat");
+    expect(goalLabel("hypertrophy")).toBe("Build muscle");
     expect(equipmentLabel("minimal")).toBe("Minimal");
   });
 });
