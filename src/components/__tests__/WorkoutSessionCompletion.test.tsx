@@ -568,3 +568,108 @@ describe("WorkoutSession — an accidental extra set can be removed", () => {
     expect(screen.queryByRole("button", { name: /Remove set/i })).toBeNull();
   });
 });
+
+describe("WorkoutSession — rest timer", () => {
+  /* The fixture carries `restSeconds: 0` and a null profile, so every rest
+     falls back to the 90s default. That makes the default the thing a leak
+     would visibly overwrite. */
+  const restLabel = () =>
+    screen.getByRole("group", { name: "Rest timer" }).textContent ?? "";
+
+  function startFirstRest() {
+    openSession();
+    fireEvent.click(screen.getAllByLabelText("Mark set complete")[0]);
+  }
+
+  it("+15 s extends the rest in progress", () => {
+    startFirstRest();
+    expect(restLabel()).toContain("90");
+    fireEvent.click(screen.getByLabelText("Add 15 seconds of rest"));
+    expect(restLabel()).toContain("105");
+  });
+
+  it("does NOT carry the extension into the next rest", () => {
+    /* The reported bug. A `manualRestRef` latched on the first "+15 s" and
+       made `startRest` skip re-deriving the target, so every later rest in
+       the session began at 105 — a one-off extension quietly becoming a
+       preference. */
+    startFirstRest();
+    fireEvent.click(screen.getByLabelText("Add 15 seconds of rest"));
+    expect(restLabel()).toContain("105");
+
+    // End this rest and complete the next set: a fresh rest, fresh target.
+    fireEvent.click(screen.getByRole("button", { name: "End rest" }));
+    fireEvent.click(screen.getAllByLabelText("Mark set complete")[0]);
+    expect(restLabel()).toContain("90");
+  });
+
+  it("extends repeatedly within one rest — the counterweight", () => {
+    // A fix that reset the target on every render would pass the test above
+    // while making the button useless.
+    startFirstRest();
+    fireEvent.click(screen.getByLabelText("Add 15 seconds of rest"));
+    fireEvent.click(screen.getByLabelText("Add 15 seconds of rest"));
+    expect(restLabel()).toContain("120");
+  });
+});
+
+describe("WorkoutSession — timers survive a locked phone", () => {
+  /* Both timers derive from a wall-clock anchor, so these tests move the
+     SYSTEM CLOCK forward and then fire a single interval tick. That is what
+     a backgrounded WebView does: iOS freezes the timers while real time
+     keeps passing, so the ticks a counter would have accumulated never
+     arrive. A test that only advanced fake timers could not tell a derived
+     clock from a counted one. */
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ["setInterval", "clearInterval", "Date"] });
+    vi.setSystemTime(new Date(2026, 8, 11, 9, 0, 0));
+  });
+  afterEach(() => vi.useRealTimers());
+
+  /** Jump wall time forward, then let exactly one tick repaint. */
+  async function background(ms: number) {
+    vi.setSystemTime(Date.now() + ms);
+    await act(async () => {
+      vi.advanceTimersByTime(1000);
+    });
+  }
+
+  it("the workout clock counts real time, not ticks it received", async () => {
+    /* The reported case: five minutes with the screen off showed 0:01 while
+       the completion screen recorded 5 minutes, because the clock counted
+       interval ticks and `handleFinish` read the wall-clock anchor. */
+    openSession();
+    await background(5 * 60_000);
+    expect(screen.getByText(/0\/3 sets · 5:0\d/)).toBeInTheDocument();
+  });
+
+  it("still advances second by second in the foreground", async () => {
+    // The counterweight: a clock wired only to wall-clock jumps would pass
+    // the test above while sitting frozen during an ordinary set.
+    openSession();
+    await act(async () => {
+      vi.advanceTimersByTime(3000);
+    });
+    expect(screen.getByText(/0\/3 sets · 0:0[23]/)).toBeInTheDocument();
+  });
+
+  it("re-arms the completion alert when an expired rest is extended", async () => {
+    /* Extending an already-finished rest starts a fresh countdown. The
+       chime flag stayed set from the first expiry, so the second one passed
+       in silence — a timer running with no alert at the end of it. */
+    const { haptic } = await import("@/lib/haptic");
+    openSession();
+    fireEvent.click(screen.getAllByLabelText("Mark set complete")[0]);
+
+    // Run past the 90s target: the alert fires once.
+    await background(95_000);
+    const chime = [200, 100, 200];
+    expect(haptic).toHaveBeenCalledWith(chime);
+    (haptic as unknown as { mockClear: () => void }).mockClear();
+
+    // Extend the expired rest, then run past the NEW target.
+    fireEvent.click(screen.getByLabelText("Add 15 seconds of rest"));
+    await background(20_000);
+    expect(haptic).toHaveBeenCalledWith(chime);
+  });
+});
