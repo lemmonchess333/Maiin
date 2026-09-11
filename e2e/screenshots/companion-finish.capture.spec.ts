@@ -111,9 +111,15 @@ test("a saved lift has one finish and Done returns to Program", async ({
   await expect(
     page.getByRole("region", { name: "Session completion" })
   ).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Review workout", exact: true })
+  ).toBeVisible();
   await page.getByRole("button", { name: "Save Workout", exact: true }).click();
   await expect(
     page.getByRole("button", { name: "Done", exact: true })
+  ).toBeVisible({ timeout: 20_000 });
+  await expect(
+    page.getByRole("heading", { name: "Workout saved", exact: true })
   ).toBeVisible({ timeout: 20_000 });
   await expect(page.getByRole("dialog")).toHaveCount(0);
   await expect(

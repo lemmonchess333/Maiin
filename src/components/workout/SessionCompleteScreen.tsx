@@ -55,6 +55,12 @@ export default function SessionCompleteScreen({
   onEdit,
   onClose,
 }: SessionCompleteScreenProps) {
+  const heading =
+    saveStatus === "queued"
+      ? "Saved on this phone"
+      : saved
+        ? "Workout saved"
+        : "Review workout";
   const durationDisplay =
     sessionDurationMinutes >= 60
       ? `${Math.floor(sessionDurationMinutes / 60)}h ${sessionDurationMinutes % 60}m`
@@ -132,9 +138,8 @@ export default function SessionCompleteScreen({
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
         >
-          <h2 className="text-2xl font-bold text-foreground">
-            {dayName} · done
-          </h2>
+          <h2 className="text-2xl font-bold text-foreground">{heading}</h2>
+          <p className="text-sm text-muted-foreground">{dayName}</p>
           {sessionVariant === "easier_today" ? (
             <p className="text-xs text-muted-foreground">
               Easier session. Your regular plan stays in place.
@@ -197,7 +202,7 @@ export default function SessionCompleteScreen({
             {completing
               ? "Saving workout…"
               : saveStatus === "queued"
-                ? "Saved on this phone · waiting to sync"
+                ? "Waiting to sync"
                 : saveStatus === "needs-attention"
                   ? "Needs attention · your session is here to retry"
                   : saved
