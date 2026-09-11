@@ -9,7 +9,6 @@ export default function LiftCTACard({
   nextWorkout,
   navigate,
   muscleGroups,
-  isFirst = false,
   dayIndex = null,
   isStartable = true,
   status,
@@ -24,7 +23,7 @@ export default function LiftCTACard({
   };
   navigate: (p: string) => void;
   muscleGroups?: string;
-  /** #972 cold-start framing: frame this as the user's first workout. */
+  /** Legacy cold-start flag; a calendar card always describes the plan. */
   isFirst?: boolean;
   /** HOME-ACTION-01: index into programState.workouts for the exact
    *  Programme day this CTA represents, so the tap deep-links to that day
@@ -85,7 +84,7 @@ export default function LiftCTACard({
               this surface actually knows, and it reads as plan-vs-progress
               beside the cursor rather than as a contradiction. */}
           <p className="text-xs font-semibold mb-0.5 text-lifting-strong">
-            {isFirst ? "Your first workout" : "Planned for today"}
+            Planned for today
           </p>
           <p className="text-base font-bold leading-snug text-foreground">
             <InlineNumerals>{nextWorkout.dayName}</InlineNumerals>

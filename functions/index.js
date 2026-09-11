@@ -4200,7 +4200,7 @@ async function accrueLifetimeStat(uid, kind, incrementBy, sourceId) {
  * Apply one SUM-metric increment to ONE challenge. Extracted from the
  * syncChallengeProgress loop so the join-time backfill can replay a
  * historical source against exactly the challenge being joined, through
- * the SAME window check, auto-enrol logic, transaction and idempotency
+ * the SAME window check, membership guard, transaction and idempotency
  * marker as the live path — one apply path, two callers.
  */
 async function applyChallengeProgressIncrement(
@@ -4223,34 +4223,11 @@ async function applyChallengeProgressIncrement(
     .doc(challengeDocId)
     .collection("participants")
     .doc(uid);
-  // Fast-path skip for non-participants (avoids opening a transaction
-  // for every challenge the user isn't in) — EXCEPT the auto-enrol
-  // challenges (weekly + global monthly). Every user is enrolled in
-  // those by design; the client just does it on surface mount, which
-  // races the first activity of a new period (probe-measured: an NZ
-  // user's local Aug 1 morning run arrived before any app surface had
-  // auto-joined August, so the progress was silently dropped). For
-  // auto-enrol ids the server creates the participant doc on first
-  // qualifying activity instead — same end state as the client join,
-  // no race. Opt-in challenges keep the hard skip: joining is a user
-  // choice there.
-  const autoEnrol = challengeDefs.isAutoEnrolChallengeId(challengeDocId);
+  // Soc10: only an explicit Join creates membership, including weekly
+  // and global monthly challenges. Activity must never enrol or rejoin
+  // someone who left. The join trigger backfills earlier in-window activity.
   const participantSnap = await participantRef.get();
-  if (!participantSnap.exists && !autoEnrol) return;
-
-  // Display fields for a server-side first join, read OUTSIDE the
-  // transaction (leaderboard cosmetics, not consistency-critical) and
-  // shaped exactly like the client's joinChallenge write.
-  let joinFields = null;
-  if (!participantSnap.exists) {
-    const profileSnap = await db.collection("users").doc(uid).get();
-    const profile = profileSnap.exists ? profileSnap.data() : {};
-    joinFields = {
-      joinedAt: admin.firestore.Timestamp.now(),
-      displayName: (profile && profile.displayName) || "Athlete",
-      ...(profile && profile.photoURL ? { photoURL: profile.photoURL } : {}),
-    };
-  }
+  if (!participantSnap.exists) return;
 
   // Read-modify-write inside a transaction: (a) two near-simultaneous
   // triggers otherwise read the same currentValue and the second write
@@ -4263,9 +4240,9 @@ async function applyChallengeProgressIncrement(
     // path depends on the participant's `joinedAt` — see below. Both
     // still precede every write, which is what the rule requires.
     const snap = await tx.get(participantRef);
-    // A participant doc that appeared between the fast-path read and
-    // the tx read (client join racing us) is fine — the tx read wins.
-    if (!snap.exists && !joinFields) return;
+    // Leaving between the fast-path read and this transaction must also
+    // prevent crediting. Firestore retries if membership changes mid-write.
+    if (!snap.exists) return;
 
     // Marker keyed by (membership, driving activity id). The membership
     // half is what makes leaving and re-joining a clean slate: a
@@ -4277,14 +4254,14 @@ async function applyChallengeProgressIncrement(
       .collection("applied")
       .doc(
         challengeMarkers.markerDocId(
-          snap.exists ? snap.data().joinedAt : joinFields.joinedAt,
+          snap.data().joinedAt,
           sourceId,
           `${metric}_legacy_nosrc`
         )
       );
     const marker = await tx.get(markerRef);
     if (marker.exists) return; // already applied this activity — idempotent no-op
-    const current = snap.exists ? snap.data().currentValue || 0 : 0;
+    const current = snap.data().currentValue || 0;
     const newValue = current + incrementBy;
     const tierAchieved = challengeTiers.resolveTier(newValue, tiers, metric);
     tx.set(
@@ -4292,12 +4269,6 @@ async function applyChallengeProgressIncrement(
       {
         currentValue: newValue,
         tierAchieved,
-        // First-activity server join (auto-enrol only): the same doc
-        // shape the client's joinChallenge writes, so the leaderboard
-        // renders identically whichever side created it. merge:true —
-        // if the client's join landed after our fast-path read, these
-        // fields are already present and identical in kind.
-        ...(joinFields && !snap.exists ? joinFields : {}),
       },
       { merge: true }
     );

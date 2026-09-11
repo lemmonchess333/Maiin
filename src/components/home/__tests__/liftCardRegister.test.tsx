@@ -57,9 +57,10 @@ describe("the lift card does not claim the cursor's session", () => {
     expect(screen.queryByText(/Today · Lift day/)).not.toBeInTheDocument();
   });
 
-  it("keeps the cold-start line for a first-ever session", () => {
+  it("does not call a later calendar session the first workout for a fresh account", () => {
     renderLift({ isFirst: true });
-    expect(screen.getByText("Your first workout")).toBeInTheDocument();
+    expect(screen.getByText("Planned for today")).toBeInTheDocument();
+    expect(screen.queryByText("Your first workout")).not.toBeInTheDocument();
   });
 
   it("still names the workout it resolved", () => {

@@ -36,9 +36,8 @@
  * the next redelivery double-counts.
  *
  * `joinedAt` is the membership identity because it is already written by
- * BOTH creators of a participant doc — the client's `joinChallenge` and
- * the server's auto-enrol path — and is never rewritten for an existing
- * participant. Nothing new has to be persisted for this to work.
+ * the client's explicit `joinChallenge` and is never rewritten for an
+ * existing participant. Nothing new has to be persisted for this to work.
  */
 
 /**
