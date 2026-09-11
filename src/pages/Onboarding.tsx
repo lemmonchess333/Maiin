@@ -869,14 +869,19 @@ export default function Onboarding() {
                 {(
                   [
                     {
-                      id: "regular",
-                      label: "Regular runner",
-                      desc: "Usually three or more runs a week.",
+                      id: "new",
+                      label: "New to running",
+                      desc: "Starting out, or coming back after a long gap.",
                     },
                     {
                       id: "occasional",
                       label: "Occasional runner",
                       desc: "Usually one or two runs a week.",
+                    },
+                    {
+                      id: "regular",
+                      label: "Regular runner",
+                      desc: "Usually three or more runs a week.",
                     },
                   ] as const
                 ).map((option) => (
@@ -890,7 +895,25 @@ export default function Onboarding() {
                     onSelect={() => {
                       setRunConfirmed(true);
                       setRunFrequency(option.id);
-                      setWeeklyRunDays(option.id === "regular" ? 3 : 2);
+                      /* This lands on the RACE-PREP plan only. Freeform
+                         is a substrate with no scheduled runs (Run9a), so
+                         its weekly target is 0 whichever tier is picked —
+                         pinned in Onboarding.test.tsx. The beginner tier
+                         earns its place on the default path by letting
+                         someone starting out say so, instead of filing
+                         themselves under "occasional runner"; it does not
+                         change a freeform plan, and reading it as a
+                         freeform scheduling lever is reading it wrong.
+                         One a week when a race IS set, for the same
+                         volume-preserving reason ADR-0002 gives for not
+                         punishing a light trainer. */
+                      setWeeklyRunDays(
+                        option.id === "regular"
+                          ? 3
+                          : option.id === "new"
+                            ? 1
+                            : 2
+                      );
                     }}
                   />
                 ))}
@@ -1063,13 +1086,31 @@ export default function Onboarding() {
                   />
                 ))}
               </div>
-              <WeekPreview
-                schedule={plan.weekSchedule}
-                workouts={plan.programState.workouts}
-                runDays={plan.programState.runDays}
-                draft
-                freeRunning={freeRunning}
-              />
+              {/* Optional here, open everywhere else it appears. The draft
+                  week renders on four screens, and on three of them it is
+                  the thing being decided: steps 1 and 3 are the "Your week"
+                  chapter, and the last step is the review. This step is
+                  "Your setup" — equipment and experience change the
+                  EXERCISES inside the days, not the shape of the week, so
+                  an always-open week rail here repeated a picture that had
+                  not moved.
+
+                  Collapsed, not deleted: tapping a day in this preview is
+                  the only place the app shows that switching to minimal
+                  kit rebuilt your sessions, which is why the summary says
+                  so rather than reading "Preview". */}
+              <details className="text-sm">
+                <summary className="min-h-11 py-3 cursor-pointer text-muted-foreground">
+                  See the exercises this builds
+                </summary>
+                <WeekPreview
+                  schedule={plan.weekSchedule}
+                  workouts={plan.programState.workouts}
+                  runDays={plan.programState.runDays}
+                  draft
+                  freeRunning={freeRunning}
+                />
+              </details>
             </div>
           )}
           {step === 4 && (

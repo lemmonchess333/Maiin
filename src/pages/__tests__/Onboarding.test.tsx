@@ -308,6 +308,11 @@ describe("inspect the generated week", () => {
     ).not.toEqual(
       original.exercises.map((exercise: { name: string }) => exercise.name)
     );
+    // The week rail is optional on this step now, so the journey starts by
+    // opening it. Without this click the assertions below still pass —
+    // jsdom keeps a closed <details>'s content in the DOM — which would
+    // leave this test green over a preview no user can see.
+    fireEvent.click(screen.getByText("See the exercises this builds"));
     fireEvent.click(screen.getByRole("button", { name: /Mon: lift/ }));
     const preview = screen.getByRole("region", { name: "Draft week" });
     expect(
@@ -474,5 +479,127 @@ describe("the goal is named the same way throughout", () => {
     expect(
       screen.getByRole("heading", { name: "Your plan" })
     ).toBeInTheDocument();
+  });
+});
+
+/* The draft week renders on four screens. On three it is the thing being
+   decided — steps 1 and 3 are the "Your week" chapter, the last step is
+   the review — and on the setup step it repeated a picture that had not
+   moved, because equipment and experience change the exercises inside the
+   days rather than the shape of the week. */
+describe("where the draft week is worth showing", () => {
+  it("is open while you are choosing the week itself", () => {
+    saveOnboardingDraft("setup-test", { ...draft, step: 1 });
+    open();
+    expect(screen.getByRole("region", { name: "Draft week" })).toBeVisible();
+  });
+
+  it("is open on the final review", () => {
+    saveOnboardingDraft("setup-test", { ...draft, step: 7 });
+    open();
+    expect(
+      screen.getByRole("region", { name: "Your week shape" })
+    ).toBeVisible();
+  });
+
+  it("is optional on the setup step", () => {
+    saveOnboardingDraft("setup-test", { ...draft, step: 2 });
+    open();
+    expect(
+      screen.getByRole("region", { name: "Draft week" })
+    ).not.toBeVisible();
+    fireEvent.click(screen.getByText("See the exercises this builds"));
+    expect(screen.getByRole("region", { name: "Draft week" })).toBeVisible();
+  });
+
+  it("says what opening it shows, not just that it is a preview", () => {
+    // Tapping a day in there is the only place the app shows that a kit
+    // change rebuilt the sessions; a bare "Preview" hides that.
+    saveOnboardingDraft("setup-test", { ...draft, step: 2 });
+    open();
+    expect(
+      screen.getByText("See the exercises this builds")
+    ).toBeInTheDocument();
+  });
+});
+
+/* Running offered two tiers, both of which assume you already run. Someone
+   starting out had to call themselves an occasional runner and take its
+   two-a-week target — a week that opens on a miss. */
+describe("new runners", () => {
+  const reachRunStep = () => {
+    open();
+    fireEvent.click(screen.getByRole("button", { name: /Improve running/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+    fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+  };
+
+  it("offers a beginner tier, first in the list", () => {
+    reachRunStep();
+    const options = screen
+      .getAllByRole("button")
+      .map((b) => b.textContent ?? "")
+      .filter((t) => /runner|New to running/.test(t));
+    expect(options[0]).toMatch(/New to running/);
+  });
+
+  it("arrives unchosen like the tiers beside it", () => {
+    reachRunStep();
+    expect(
+      screen.getByRole("button", { name: /New to running/ })
+    ).toHaveAttribute("aria-pressed", "false");
+  });
+
+  /* Asserted through the plan builder, not a control: freeform mode shows
+     no runs-per-week slider (that lives in the race-prep card) and its
+     review line reads "no scheduled runs", so the target is real but not
+     on screen here. It is what the weekly checks and the adherence score
+     measure the week against. */
+  const targetAfterPicking = (name: RegExp) => {
+    // Each tier is its own walk: the draft persists to localStorage, so a
+    // second render without clearing resumes mid-flow instead of at step 0.
+    cleanup();
+    localStorage.clear();
+    const builder = vi.spyOn(planning, "buildOnboardingPlan");
+    reachRunStep();
+    fireEvent.click(screen.getByRole("button", { name }));
+    // Race prep WITH a date, because freeform's target is 0 whatever tier
+    // you pick (the freeform test below pins exactly that), and race prep
+    // without a date resolves to the freeform substrate under Run9a.
+    fireEvent.click(screen.getByRole("radio", { name: /race prep/i }));
+    fireEvent.change(screen.getByLabelText("Race target date"), {
+      target: { value: "2027-06-01" },
+    });
+    const target =
+      builder.mock.results.at(-1)!.value.profileUpdates.weeklyRunDaysTarget;
+    builder.mockRestore();
+    return target;
+  };
+
+  it("plans no runs for a freeform week, whichever tier is picked", () => {
+    // Run9a: freeform is a substrate with NO scheduled runs, so
+    // weeklyRunDays is inert there. The tier is still worth having — it
+    // stops a beginner having to call themselves an occasional runner, and
+    // it is persisted — but on the default path it describes the user
+    // rather than changing the plan. Anything that reads the tier as a
+    // freeform scheduling lever is reading it wrong.
+    const builder = vi.spyOn(planning, "buildOnboardingPlan");
+    reachRunStep();
+    fireEvent.click(screen.getByRole("button", { name: /New to running/ }));
+    expect(
+      builder.mock.results.at(-1)!.value.profileUpdates.weeklyRunDaysTarget
+    ).toBe(0);
+    builder.mockRestore();
+  });
+
+  it("starts them at a reachable weekly target", () => {
+    // One is reachable; two is what "occasional" already means, so a
+    // beginner tier that also meant two would be a label and nothing else.
+    expect(targetAfterPicking(/New to running/)).toBe(1);
+  });
+
+  it("leaves the existing tiers where they were", () => {
+    expect(targetAfterPicking(/Regular runner/)).toBe(3);
+    expect(targetAfterPicking(/Occasional runner/)).toBe(2);
   });
 });

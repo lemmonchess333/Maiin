@@ -422,7 +422,7 @@ export interface UserProfileOnboarding {
   daysPerWeek?: 2 | 3 | 4 | 5 | 6;
   equipment?: "full_gym" | "home_gym" | "minimal";
   preferredSplit?: PreferredSplit;
-  runFrequency?: "regular" | "occasional" | "none";
+  runFrequency?: "regular" | "occasional" | "none" | "new";
   injuries?: string[];
   gender?: "male" | "female" | "unspecified";
   /** Tier 2 — goal-weight onboarding. Target body weight (kg) and the
