@@ -3,8 +3,8 @@ import { useBlockedUsers } from "../hooks/useBlockedUsers";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { useState, useRef, useCallback, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import { useUid } from "../lib/auth";
-import { getBoundedFollowingCount } from "../lib/socialApi";
+import { useUid } from "@/lib/auth";
+import { useFollowingCount } from "@/hooks/useFollowingCount";
 /* SOCIAL-HOME-01 Stage A: the three tab sections are extracted into
    view components (mechanical decomposition, zero behaviour change).
    Each view stays MOUNTED at all times — exactly like the hooks all
@@ -19,7 +19,7 @@ import IconButton from "@/components/ui/IconButton";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { useNotifications } from "@/hooks/useNotifications";
 import NotificationsSheet from "@/components/social/NotificationsSheet";
-import { SOCIAL_GATES, shouldShowFollowingFeed } from "@/lib/socialGates";
+import { shouldShowFollowingFeed } from "@/lib/socialGates";
 import { motion } from "framer-motion";
 import { track as trackSocialEvent } from "@/lib/socialAnalytics";
 
@@ -38,6 +38,8 @@ export type { SocialTab, FeedSubTab };
 
 export default function Social() {
   const uid = useUid();
+  const { count: followingCount, refresh: refreshFollowing } =
+    useFollowingCount();
   /* useBlockedUsers now returns { blocked, addBlocked, removeBlocked }
      so ActivityCard can mutate the shared set after a block write
      completes. We only care about the Set here for filtering — the
@@ -107,32 +109,19 @@ export default function Social() {
     [setSearchParams]
   );
 
-  /**
-   * Smart default: new / zero-follow users land on Discover; users
-   * with any follows land on Following. One cheap limit(2) read
-   * decides both "do I have any follows" (smart default tab) AND
-   * "do I have ≥2 follows" (leaderboard vs trajectory card).
-   * While we wait, we default to 'explore' so a brand-new user
-   * never sees a flash of the empty Following state before
-   * resolution. `followingCount` is bounded at 3 — we only care about
-   * the thresholds (0 = solo, ≥3 = following-feed unlocked per S4), not
-   * the exact number.
-   */
-  // Feed sub-tab (Following | Explore) is mirrored into the URL (?feed=) so
-  // opening a profile and pressing back RESTORES the chosen sub-tab instead of
-  // the smart-default effect below re-deriving it on remount. A fresh open
-  // (no ?feed) still gets the smart default.
+  // Explicit source selection always wins. Otherwise the live follow count
+  // chooses the useful default, including immediately after the first follow.
   const feedFromUrl = searchParams.get("feed");
-  const [feedSubTab, setFeedSubTab] = useState<FeedSubTab>(
+  const feedSubTab: FeedSubTab =
     feedFromUrl === "following" ||
-      feedFromUrl === "explore" ||
-      feedFromUrl === "communities"
+    feedFromUrl === "explore" ||
+    feedFromUrl === "communities"
       ? feedFromUrl
-      : "explore"
-  );
+      : (followingCount ?? 0) > 0
+        ? "following"
+        : "explore";
   const selectFeedSubTab = useCallback(
     (next: FeedSubTab) => {
-      setFeedSubTab(next);
       setSearchParams(
         (params) => {
           const updated = new URLSearchParams(params);
@@ -144,28 +133,6 @@ export default function Social() {
     },
     [setSearchParams]
   );
-  const [followingCount, setFollowingCount] = useState<number | null>(null);
-  useEffect(() => {
-    if (!uid || followingCount !== null) return;
-    let cancelled = false;
-    getBoundedFollowingCount(uid, SOCIAL_GATES.FOLLOWING_FEED_MIN_FOLLOWS)
-      .then((n) => {
-        if (cancelled) return;
-        setFollowingCount(n);
-        // Only auto-pick the sub-tab on a fresh open; a URL-restored ?feed
-        // (back-navigation) must win over the follows-count default.
-        if (feedFromUrl !== "following" && feedFromUrl !== "explore") {
-          setFeedSubTab(n > 0 ? "following" : "explore");
-        }
-      })
-      .catch(() => {
-        // On error, treat as zero — safe empty state + trajectory card.
-        if (!cancelled) setFollowingCount(0);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [uid, followingCount, feedFromUrl]);
 
   /* The old Soc5c smart default (send brand-new users to the People
      tab) is gone: Together is the default surface and owns the
@@ -181,9 +148,8 @@ export default function Social() {
 
   // SOCIAL S4 — the solo-first curated stack IS the Feed tab for a
   // cold-start user (0 follows ⇒ 0 partners, since a bond needs mutual
-  // follow). Sub-tab-agnostic on purpose: a new user's sub-tab defaults to
-  // Explore (n>0?following:explore), so gating on "following" would never
-  // fire.
+  // follow). Covers Explore and Following; My communities is independent
+  // because a user can join spaces without following anybody.
   //
   // It REPLACES rather than precedes: FeedView suppresses the activity
   // list, the weekly recap, the Spaces row and the trajectory slot while
@@ -206,10 +172,8 @@ export default function Social() {
   // stack would replace, not supplement.
   const showSoloFeed = isNewUser;
 
-  // SOCIAL S4 — the following ACTIVITY feed (the list of activities from
-  // people you follow) only renders at ≥3 follows; below that it's a
-  // sparse list that reads as broken, so we show the leaderboard/
-  // trajectory slot instead (never an empty feed). Explore is unaffected.
+  // The activity list renders from the first follow. At three follows the
+  // progress prompt gives way to the standard empty-state treatment.
   const followingFeedUnlocked = shouldShowFollowingFeed(followingCount ?? 0);
 
   /* FullLeaderboard overlay state lives in FeedView (which owns the
@@ -241,13 +205,14 @@ export default function Social() {
   const feedRefreshRef = useRef<(() => Promise<void>) | null>(null);
   const communityRefreshRef = useRef<(() => Promise<void>) | null>(null);
   const performRefresh = useCallback(async () => {
+    refreshFollowing();
     if (tab === "feed") {
       await feedRefreshRef.current?.();
     } else {
       await communityRefreshRef.current?.();
     }
     // People overlay: search results are user-driven; no refresh action.
-  }, [tab]);
+  }, [tab, refreshFollowing]);
 
   const {
     isRefreshing: pullRefreshing,

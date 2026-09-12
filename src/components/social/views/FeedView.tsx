@@ -463,7 +463,7 @@ export default function FeedView({
               </div>
             </BottomSheet>
 
-            {showSoloFeed && (
+            {showSoloFeed && feedSubTab !== "communities" && (
               <SoloFirstFeed
                 onFindPeople={openPeople}
                 onOpenTogether={openTogether}
@@ -629,7 +629,7 @@ export default function FeedView({
                 lives on the space page — the eyebrow link above each
                 card); the eyebrow names the space so a mixed stream
                 stays legible. */}
-            {feedSubTab === "communities" && !showSoloFeed && (
+            {feedSubTab === "communities" && (
               <div className="space-y-3 mt-4">
                 {communitiesFeed.loading &&
                   communitiesFeed.items.length === 0 && (

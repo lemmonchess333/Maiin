@@ -14,6 +14,8 @@ const api = vi.hoisted(() => ({
   notifyMealsLogged: vi.fn(),
   addFavourite: vi.fn(),
   saveLog: vi.fn(),
+  mealsState: { error: null as string | null, loading: false },
+  refreshMeals: vi.fn(),
 }));
 
 vi.mock("firebase/firestore");
@@ -35,7 +37,8 @@ vi.mock("@/hooks/useFirestore", () => ({
 vi.mock("@/hooks/useMeals", () => ({
   useMeals: () => ({
     meals: [],
-    loading: false,
+    ...api.mealsState,
+    refresh: api.refreshMeals,
     getMealsForDate: () => [],
     getDailyTotals: () => ({ calories: 0, protein: 0, carbs: 0, fat: 0 }),
     deleteMeal: vi.fn(),
@@ -101,6 +104,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   api.createMealEntry.mockResolvedValue({ id: "m1" });
   api.saveLog.mockResolvedValue(undefined);
+  api.mealsState = { error: null, loading: false };
 });
 afterEach(() => {
   cleanup();
@@ -212,5 +216,34 @@ describe("food text logging", () => {
     );
     expect(input).toHaveValue("toast");
     expect(screen.getByLabelText("Log meal")).toBeEnabled();
+  });
+});
+
+describe("food diary read recovery", () => {
+  it("shows Retry instead of an empty diary, and keeps date navigation available", () => {
+    api.mealsState.error = "failed";
+    render(
+      <MemoryRouter>
+        <Food />
+      </MemoryRouter>
+    );
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "Couldn't load your food diary."
+    );
+    expect(screen.queryByLabelText("What did you eat")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+    expect(api.refreshMeals).toHaveBeenCalledOnce();
+    expect(screen.getByRole("button", { name: /previous day/i })).toBeEnabled();
+  });
+  it("keeps the selected date accessible while loading", () => {
+    api.mealsState.loading = true;
+    render(
+      <MemoryRouter>
+        <Food />
+      </MemoryRouter>
+    );
+    expect(screen.getByRole("button", { name: /previous day/i })).toBeEnabled();
+    expect(screen.getByRole("status", { name: "Loading" })).toBeInTheDocument();
+    expect(api.saveLog).not.toHaveBeenCalled();
   });
 });

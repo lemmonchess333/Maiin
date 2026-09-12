@@ -184,6 +184,16 @@ jobs:
           firebase emulators:exec --only auth,firestore --project demo-tropos \
             'npm run seed:e2e && npm run test:e2e -- auth.spec.ts --project=auth-emulator'
 
+      # Keep the two focused mobile previews on success as well as failure.
+      - name: Upload weekly-layout mobile previews
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: weekly-layout-mobile-previews
+          path: test-results/**/layout-confirmation-*.png
+          if-no-files-found: ignore
+          retention-days: 7
+
       # Upload Playwright artefacts on failure so investigating a CI
       # break doesn't require re-running locally.
       - if: failure()

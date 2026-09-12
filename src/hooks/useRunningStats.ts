@@ -106,7 +106,7 @@ export function aggregateWeeklyData(runs: RunSummaryItem[]): RunningWeekData[] {
     }));
 }
 
-function parseRunSummary(
+export function parseRunSummary(
   id: string,
   data: DocumentData
 ): RunSummaryItem | null {

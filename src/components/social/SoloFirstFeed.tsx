@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Users, Dumbbell } from "lucide-react";
+import { Users, Dumbbell, Footprints } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useChallenges } from "@/features/challenges/useChallenges";
 import { ChallengeCard } from "@/features/challenges/ChallengeCard";
@@ -8,6 +8,8 @@ import SpacesDirectory from "@/features/spaces/SpacesDirectory";
 import { EmptyState as HexEmptyState } from "@/components/ui/EmptyState";
 import { Button } from "@/components/ui/Button";
 import { useWorkouts, workoutTonnageKg } from "@/hooks/useWorkouts";
+import { useRecentRuns } from "@/hooks/useRecentRuns";
+import { isVolumeEligible } from "@/lib/runStatsEligibility";
 import { ShareCardSheet } from "@/components/share/ShareCardSheet";
 import { THEME } from "@/lib/theme";
 import { parseLocalDate } from "@/lib/dateHelpers";
@@ -44,6 +46,7 @@ export default function SoloFirstFeed({
     leaveChallenge,
   } = useChallenges();
   const { workouts } = useWorkouts();
+  const { runs } = useRecentRuns();
   const [shareOpen, setShareOpen] = useState(false);
 
   // The featured global monthly hybrid challenge (Soc8), identified by id
@@ -54,34 +57,42 @@ export default function SoloFirstFeed({
     [challenges]
   );
 
-  /* The anchor of the cold-start stack, and the card a brand-new account
-     meets first. Nothing enrols the viewer on mount: joining is the tap it
-     looks like, so this renders un-joined until they choose it. */
-  // Preload the share card from the latest logged workout (volume summed
-  // from sets). Null when the user hasn't logged anything yet — the share
-  // card then shows the honest cold-start prompt instead of a dead button.
   const latest = workouts[0];
+  const latestRun = runs.find(isVolumeEligible);
   const shareData = useMemo(() => {
+    const liftDate = latest
+      ? (latest.createdAt?.toDate?.() ?? parseLocalDate(latest.date))
+      : null;
+    const dateOptions = {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    } as const;
+    const handle = profile?.displayName || "Athlete";
+    if (latestRun && (!liftDate || latestRun.completedAt > liftDate)) {
+      return {
+        template: "run" as const,
+        handle,
+        date: latestRun.completedAt.toLocaleDateString("en-GB", dateOptions),
+        distanceKm: latestRun.distance / 1000,
+        durationSec: latestRun.duration,
+        paceSecPerKm: latestRun.avgPace,
+        elevationM: latestRun.elevationGain,
+      };
+    }
     if (!latest) return null;
-    // Through the canonical helper, not a re-derived loop. This one had
-    // none of its three guards: a legacy doc missing `exercises` THREW
-    // inside this memo, a missing `sets` likewise, and a set missing
-    // `weightKg` or `reps` made the whole total NaN — rendering "NaN kg"
-    // on a share card. The sibling share path (WorkoutFeedShareSheet)
-    // already used the helper; this is the copy that drifted.
-    const totalVolumeKg = workoutTonnageKg(latest);
     return {
       template: "lift" as const,
-      handle: profile?.displayName || "Athlete",
-      date: parseLocalDate(latest.date).toLocaleDateString("en-GB", {
-        day: "numeric",
-        month: "short",
-        year: "numeric",
-      }),
-      totalVolumeKg: Math.round(totalVolumeKg),
-      exerciseCount: latest.exercises.length,
+      handle,
+      date: parseLocalDate(latest.date).toLocaleDateString(
+        "en-GB",
+        dateOptions
+      ),
+      totalVolumeKg: Math.round(workoutTonnageKg(latest)),
+      exerciseCount: latest.exercises?.length ?? 0,
     };
-  }, [latest, profile]);
+  }, [latest, latestRun, profile?.displayName]);
+  const isRunShare = shareData?.template === "run";
 
   return (
     <div className="mt-4 space-y-3">
@@ -107,8 +118,22 @@ export default function SoloFirstFeed({
       {/* Share your training */}
       <div className="rounded-2xl bg-card card-shadow p-4">
         <div className="flex items-start gap-3">
-          <div className="flex size-12 items-center justify-center rounded-xl bg-primary/10 shrink-0">
-            <Dumbbell className="size-6 text-primary" />
+          <div
+            className="flex size-12 items-center justify-center rounded-xl bg-primary/10 shrink-0"
+            style={
+              isRunShare
+                ? {
+                    backgroundColor: `${THEME.running}1A`,
+                    color: THEME.running,
+                  }
+                : undefined
+            }
+          >
+            {isRunShare ? (
+              <Footprints className="size-6" />
+            ) : (
+              <Dumbbell className="size-6 text-primary" />
+            )}
           </div>
           <div className="flex-1 min-w-0">
             <h3 className="text-base font-bold">Share your training</h3>
@@ -122,7 +147,7 @@ export default function SoloFirstFeed({
                 variant="primary"
                 size="sm"
                 onClick={() => setShareOpen(true)}
-                className="mt-3"
+                className="mt-3 min-h-[44px]"
               >
                 Create a share card
               </Button>

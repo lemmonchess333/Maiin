@@ -234,36 +234,43 @@ describe("FeedView — My communities source (SOC-P3a)", () => {
     expect(selectFeedSubTab).toHaveBeenCalledWith("communities");
   });
 
-  it("renders joined-space posts with a space eyebrow link", () => {
-    mockCommunitiesFeed.mockReturnValue({
-      items: [
-        {
-          spaceId: "runners",
-          postId: "coach-2026-07-20",
-          post: {
-            authorId: "tropos-coach",
-            authorName: "Tropos Coach",
-            body: "prompt",
-            likeCount: 0,
-            commentCount: 0,
-            official: true,
-            createdAt: { toDate: () => new Date() },
+  it.each([0, 3])(
+    "renders joined-space posts with %i follows",
+    (followingCount) => {
+      mockCommunitiesFeed.mockReturnValue({
+        items: [
+          {
+            spaceId: "runners",
+            postId: "coach-2026-07-20",
+            post: {
+              authorId: "tropos-coach",
+              authorName: "Tropos Coach",
+              body: "prompt",
+              likeCount: 0,
+              commentCount: 0,
+              official: true,
+              createdAt: { toDate: () => new Date() },
+            },
           },
-        },
-      ],
-      loading: false,
-      refresh: vi.fn(async () => {}),
-      remove: vi.fn(),
-    });
-    setup({ feedSubTab: "communities" });
-    expect(screen.getByTestId("space-post")).toHaveTextContent(
-      "coach-2026-07-20"
-    );
-    expect(screen.getByRole("link", { name: /runners/i })).toHaveAttribute(
-      "href",
-      "/space/runners"
-    );
-  });
+        ],
+        loading: false,
+        refresh: vi.fn(async () => {}),
+        remove: vi.fn(),
+      });
+      setup({
+        feedSubTab: "communities",
+        followingCount,
+        showSoloFeed: followingCount === 0,
+      });
+      expect(screen.getByTestId("space-post")).toHaveTextContent(
+        "coach-2026-07-20"
+      );
+      expect(screen.getByRole("link", { name: /runners/i })).toHaveAttribute(
+        "href",
+        "/space/runners"
+      );
+    }
+  );
 
   it("empty stream shows the honest join prompt, never a blank column", () => {
     setup({ feedSubTab: "communities" });

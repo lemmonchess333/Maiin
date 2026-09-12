@@ -348,6 +348,8 @@ export default function Food() {
     }
   );
 
+  const previousDiaryDay = format(addDays(selectedDateObj, -1), "yyyy-MM-dd");
+  const recentMealsFrom = format(addDays(new Date(), -30), "yyyy-MM-dd");
   const {
     meals,
     getMealsForDate,
@@ -355,7 +357,13 @@ export default function Food() {
     deleteMeal,
     editMeal,
     loading: mealsLoading,
-  } = useMeals();
+    error: mealsError,
+    refresh: refreshMeals,
+  } = useMeals({
+    from:
+      previousDiaryDay < recentMealsFrom ? previousDiaryDay : recentMealsFrom,
+    to: todayStr,
+  });
 
   /* The failed half of a delete comes back on screen: `pendingDeleteIds`
      drives both the row's visibility and the day's calorie total, so
@@ -553,7 +561,7 @@ export default function Food() {
 
   useEffect(() => {
     const mealCount = todaysMeals.length;
-    if (mealCount === 0) return;
+    if (mealCount === 0 || mealsLoading || mealsError) return;
     // Fire-and-forget previously: a failed log write (permission, offline)
     // would silently desync the streak system from the user's actual
     // activity. We removed the meal success toast in 0f68ff3
@@ -571,7 +579,7 @@ export default function Food() {
       logger.error("[Food] daily log save failed", err);
       toast.error("Couldn't update today's log", { id: "food-save-error" });
     });
-  }, [todaysMeals.length, selectedDate, saveLog]);
+  }, [todaysMeals.length, selectedDate, saveLog, mealsLoading, mealsError]);
 
   // Food6a-3: tap-back limited to 90 days; beyond that the History
   // page is the surface for review (privacy + data freshness).
@@ -1679,35 +1687,60 @@ export default function Food() {
         }
       : null;
 
-  /* Food6 F1: pull-to-refresh on the Food page via the shared
-     usePullToRefresh hook (same gesture as Social + History).
-     useMeals is onSnapshot-driven so the page is already auto-
-     fresh; the gesture is intentionally cosmetic — minDisplayMs
-     gives the user UX-acknowledgement that they CAN refresh,
-     matches the convention they expect from Social/History.
-     excludeSelector guards against FoodRow swipe-to-delete: if
-     a touch starts on a row, the page-level pull-to-refresh
-     suppresses for that touch sequence so the swipe gesture
-     doesn't double-fire. */
+  // Retry the subscription as well as acknowledging the gesture. A terminated
+  // listener otherwise leaves a failed diary read stuck until a full reload.
   const { isRefreshing: pullRefreshing, bindProps: pullBindProps } =
     usePullToRefresh({
-      onRefresh: () => {
-        /* No-op: useMeals onSnapshot keeps the page live. The
-           indicator alone is the user-visible feedback. */
-      },
+      onRefresh: refreshMeals,
       minDisplayMs: 600,
       excludeSelector: "[data-food-row]",
     });
 
-  // Cold-start guard: until the day's meals resolve, render a structural
-  // skeleton instead of the zeroed hero + four empty meal sections, which
-  // otherwise flash as real content and then pop in. Mirrors HomeSkeleton /
-  // ProgramSkeleton (every other top page already gates its load). A
-  // genuinely empty *loaded* day still shows the real per-slot empty
-  // states — the skeleton only covers the loading window. Placed after all
-  // hooks (no conditional-hook / React #310 risk).
-  if (mealsLoading && meals.length === 0) {
-    return <FoodSkeleton />;
+  const dateBar = (
+    <FoodDateBar
+      selectedDate={selectedDate}
+      isToday={isToday}
+      onPrev={() => changeDate(-1)}
+      onNext={() => changeDate(1)}
+      onPick={(next) => {
+        if (next < minDateStr || next > todayStr) return;
+        setSelectedDate(next);
+        trackFoodEvent("food_date_navigated", { direction: "pick" });
+      }}
+      canGoBack={canGoBack}
+      canGoForward={canGoForward}
+      minDate={minDateStr}
+      maxDate={todayStr}
+      itemVariant={itemVariant}
+    />
+  );
+  const readError = mealsError ? (
+    <div
+      role="alert"
+      className="ds-card flex items-center justify-between gap-3 p-4"
+    >
+      <p className="text-sm">Couldn't load your food diary.</p>
+      <Button
+        variant="secondary"
+        className="min-h-[44px]"
+        disabled={mealsLoading}
+        onClick={() => {
+          void refreshMeals();
+        }}
+      >
+        {mealsLoading ? "Retrying…" : "Retry"}
+      </Button>
+    </div>
+  ) : null;
+  // Keep date navigation available during a cold read or failure. A failed
+  // read is never painted as a successful day with zero calories.
+  if (meals.length === 0 && (mealsLoading || mealsError)) {
+    return (
+      <div {...pullBindProps} className="space-y-4.5">
+        {dateBar}
+        {mealsError ? readError : <FoodSkeleton />}
+      </div>
+    );
   }
 
   return (
@@ -1741,22 +1774,8 @@ export default function Food() {
           />
         </div>
       )}
-      <FoodDateBar
-        selectedDate={selectedDate}
-        isToday={isToday}
-        onPrev={() => changeDate(-1)}
-        onNext={() => changeDate(1)}
-        onPick={(next) => {
-          if (next < minDateStr || next > todayStr) return;
-          setSelectedDate(next);
-          trackFoodEvent("food_date_navigated", { direction: "pick" });
-        }}
-        canGoBack={canGoBack}
-        canGoForward={canGoForward}
-        minDate={minDateStr}
-        maxDate={todayStr}
-        itemVariant={itemVariant}
-      />
+      {dateBar}
+      {readError}
 
       {/* Food6 cc2: sustained-offline notice (30s threshold). Adds
           Food-specific context (image AI + barcode unavailable) on
