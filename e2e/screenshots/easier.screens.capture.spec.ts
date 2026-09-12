@@ -4,9 +4,8 @@
  *
  * The chooser now opens on EVERY "Start workout" (Easier today is
  * always offered), so the capture drives Program → Start workout and
- * shoots the sheet in both themes. The rich-seeded e2e user has an
- * all-lift weekSchedule + a programme, so Start workout renders on
- * every weekday CI runs.
+ * shoots the sheet in both themes. The seeded user's six-day schedule
+ * rests tomorrow, so Start workout renders on every weekday CI runs.
  *
  * Rig conventions: fresh context per spec file, short best-effort
  * timeouts, emulator banner hidden.
