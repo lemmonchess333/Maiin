@@ -3,7 +3,7 @@
 /**
  * Server mirror of the one-off run move (RUN-RESCHEDULE-01).
  *
- * Moves a planned run to another day WITHIN its generated Sunday-start week.
+ * Moves a planned run to another day WITHIN its generated calendar week.
  * Moves the plan, not the goalposts: the stable `id`, `templateId`,
  * `userOverride`, `status`, completion truth, race identity (`type`) and the
  * `manualCompletions` map all survive — only `date` / `dayIndex` and the
@@ -50,12 +50,16 @@ function formatDayUTC(ms) {
   return `${y}-${m}-${day}`;
 }
 
-/** Mirror of runReschedule.ts dateForDay — the Nth day of the anchored week. */
+/** Resolve a weekday inside the stored week, accepting both migration anchors. */
 function dateForDay(weekKey, dayIndex) {
   const base = parseDayUTC(weekKey);
   if (!Number.isFinite(base)) return null;
   if (!Number.isInteger(dayIndex) || dayIndex < 0 || dayIndex > 6) return null;
-  return formatDayUTC(base + dayIndex * DAY_MS);
+  // A weekday number is not an offset: Sunday is 0 even when the week
+  // starts on Monday. Read the anchor from the stored key so this server
+  // can ship before the client flip and serve both old and migrated plans.
+  const offset = (dayIndex - new Date(base).getUTCDay() + 7) % 7;
+  return formatDayUTC(base + offset * DAY_MS);
 }
 
 /**
