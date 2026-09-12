@@ -621,11 +621,7 @@ function AccountProgressPhotos({ uid }: { uid: string }) {
               <span className="text-xs font-mono tabular-nums text-foreground">
                 {entry.date}
               </span>
-              {entry.legacy && (
-                <SectionLabel as="span" tier="section">
-                  Photo
-                </SectionLabel>
-              )}
+              {entry.legacy && <SectionLabel as="span">Photo</SectionLabel>}
             </div>
             {entry.note && (
               <p className="text-xs text-muted-foreground truncate mt-0.5">
@@ -705,7 +701,7 @@ function AccountProgressPhotos({ uid }: { uid: string }) {
                     ) : (
                       <span className="size-full flex flex-col items-center justify-center gap-1 text-muted-foreground">
                         <Plus className="size-4" />
-                        <SectionLabel as="span" tier="section">
+                        <SectionLabel as="span">
                           {SLOT_LABELS[slot]}
                         </SectionLabel>
                       </span>

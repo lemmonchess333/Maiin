@@ -446,6 +446,51 @@ describe("DS ratchets — surface-level drift", () => {
     expectRatchet("shadow-card trap", total, SHADOW_TRAP_BASELINE, byFile);
   });
 
+  /* Uppercase tracked labels hand-rolled beside `SectionLabel`. The
+     primitive consolidated ~60 variants; the survivors below re-drift on
+     every axis it fixed (size, tracking, weight, colour) and cannot take
+     the role tiers. Counted: any class string carrying `uppercase` and a
+     `tracking-*` utility. Grandfathered until touched (Diagnostics carries
+     8 of them, RunDetail 4, WorkoutDetail 3); `pages/dev/*` is outside
+     the scan as usual. */
+  const HAND_ROLLED_LABEL_BASELINE = 34;
+  const LABEL_PRIMITIVE = "src/components/ui/SectionLabel.tsx";
+  it("hand-rolled uppercase tracked labels do not increase (use SectionLabel)", () => {
+    const { total, byFile } = scan((src, rel) => {
+      if (rel === LABEL_PRIMITIVE) return 0;
+      let n = 0;
+      for (const chunk of classNameChunks(src)) {
+        if (
+          /\buppercase\b/.test(chunk) &&
+          /\btracking-(?:wide|wider|widest|\[[^\]]+\])/.test(chunk)
+        )
+          n++;
+      }
+      return n;
+    });
+    expectRatchet(
+      "hand-rolled uppercase label",
+      total,
+      HAND_ROLLED_LABEL_BASELINE,
+      byFile
+    );
+  });
+
+  it("SectionLabel's two tiers share a size and differ on every other axis (positive pin)", () => {
+    // The ratchet above sends labels to the primitive; this is what the
+    // primitive promises. One pixel of difference between the tiers is
+    // the drift being closed, so the size is pinned EQUAL and the rest
+    // pinned different.
+    const src = readFileSync(resolve(repoRoot, LABEL_PRIMITIVE), "utf8");
+    expect(src).toMatch(
+      /caption: "text-xs font-semibold tracking-wider text-muted-foreground"/
+    );
+    expect(src).toMatch(
+      /section: "text-xs font-bold tracking-widest text-foreground"/
+    );
+    expect(src).not.toMatch(/text-caption/);
+  });
+
   // Arbitrary pixel sizes (`text-[10px]`, `text-[15px]`) sit off the
   // documented scale — 11px is text-caption (tracked labels only), then
   // 12 / 14 / 16 and up. The cohesion pass (batch 3, 2026-09-05) burned the

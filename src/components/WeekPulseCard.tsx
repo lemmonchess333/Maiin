@@ -22,7 +22,7 @@ export default function WeekPulseCard({
 
   return (
     <div className="p-4 rounded-2xl bg-card border border-border/50 space-y-2">
-      <SectionLabel tier="section">Your week so far</SectionLabel>
+      <SectionLabel>Your week so far</SectionLabel>
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5">
         {pulse.lifts && (
           <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-foreground">

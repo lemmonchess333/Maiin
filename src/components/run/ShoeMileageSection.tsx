@@ -20,7 +20,7 @@ function MileagePill({ shoe }: { shoe: Shoe }) {
         <p className="text-sm font-medium text-foreground truncate">
           {shoe.name}
           {shoe.isDefault && (
-            <SectionLabel as="span" tier="section" className="ml-1.5">
+            <SectionLabel as="span" className="ml-1.5">
               Default
             </SectionLabel>
           )}

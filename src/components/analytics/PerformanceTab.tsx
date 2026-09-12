@@ -459,7 +459,9 @@ export default function PerformanceTab() {
       {/* Weekly insight bullets */}
       {insightBullets && insightBullets.length > 0 && (
         <div className="p-4 rounded-2xl bg-card space-y-2">
-          <SectionLabel as="h3">Weekly insights</SectionLabel>
+          <SectionLabel tier="section" as="h3">
+            Weekly insights
+          </SectionLabel>
           <ul className="space-y-1.5">
             {insightBullets.map((bullet, i) => (
               <li

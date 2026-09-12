@@ -675,7 +675,9 @@ export default function RunSetupModal({
                 (RunConfig, localStorage, Firestore, analytics events
                 all keep `target` as the key) so existing data and
                 callers stay working. */}
-              <SectionLabel className="mb-2">Goal</SectionLabel>
+              <SectionLabel tier="section" className="mb-2">
+                Goal
+              </SectionLabel>
               {/* Goal type — shared SegmentedControl (tone=running). Was a
                   hand-rolled pill row that hardcoded the coral hex and used
                   rgba(0,0,0,…) inactive styling (not dark-mode-safe); now the

@@ -305,7 +305,7 @@ function PaceRow({
   const unit = useDistanceUnit();
   return (
     <div className="rounded-lg bg-muted/50 px-3 py-2">
-      <SectionLabel tier="section">{label}</SectionLabel>
+      <SectionLabel>{label}</SectionLabel>
       <p className="text-sm font-semibold font-mono tabular-nums text-foreground">
         {band
           ? `${paceLabel(band[0], unit)}–${paceLabel(band[1], unit)}`

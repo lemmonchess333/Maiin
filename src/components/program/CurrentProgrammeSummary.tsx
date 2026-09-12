@@ -24,9 +24,7 @@ export default function CurrentProgrammeSummary({
 }: CurrentProgrammeSummaryProps) {
   return (
     <div className={cn("rounded-2xl bg-muted px-4 py-3.5", className)}>
-      <SectionLabel tier="section" className="mb-1.5">
-        Current setup
-      </SectionLabel>
+      <SectionLabel className="mb-1.5">Current setup</SectionLabel>
       <div className="space-y-0.5">
         {lines.map((line, i) => (
           <p key={i} className="text-sm leading-snug text-foreground">

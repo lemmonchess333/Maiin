@@ -1504,7 +1504,7 @@ export default function ProgrammeRunSection({
               // No startable run on the selected day: completed, skipped, or
               // nothing scheduled. Calm, date-led, always offers a free run.
               <div className="rounded-2xl border p-4 card-shadow bg-running/4 border-running/14">
-                <SectionLabel tier="section">{selectedDateLabel}</SectionLabel>
+                <SectionLabel>{selectedDateLabel}</SectionLabel>
                 <p className="text-sm font-bold text-foreground mt-0.5">
                   {selectedRun.isCompleted
                     ? `${selectedTemplate?.name ?? "Run"} · done`

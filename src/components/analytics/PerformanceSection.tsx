@@ -64,7 +64,11 @@ export default function PerformanceSection() {
         ref={sectionRef}
         aria-label="Performance Index"
       >
-        <SectionLabel className="mt-6 mb-2" style={{ color: THEME.brand }}>
+        <SectionLabel
+          tier="section"
+          className="mt-6 mb-2"
+          style={{ color: THEME.brand }}
+        >
           Performance
         </SectionLabel>
         <div className="p-4 rounded-2xl bg-card motion-safe:animate-pulse">
@@ -83,7 +87,11 @@ export default function PerformanceSection() {
         ref={sectionRef}
         aria-label="Performance Index"
       >
-        <SectionLabel className="mt-6 mb-2" style={{ color: THEME.brand }}>
+        <SectionLabel
+          tier="section"
+          className="mt-6 mb-2"
+          style={{ color: THEME.brand }}
+        >
           Performance
         </SectionLabel>
         <div className="rounded-2xl bg-card">
@@ -106,7 +114,11 @@ export default function PerformanceSection() {
       ref={sectionRef}
       aria-label="Performance Index"
     >
-      <SectionLabel className="mt-6 mb-2" style={{ color: THEME.brand }}>
+      <SectionLabel
+        tier="section"
+        className="mt-6 mb-2"
+        style={{ color: THEME.brand }}
+      >
         Performance
       </SectionLabel>
       <SectionErrorBoundary sectionName="performance-tab-body">

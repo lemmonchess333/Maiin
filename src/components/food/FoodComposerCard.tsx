@@ -303,7 +303,7 @@ function FoodComposerCard({
           EditServingsSheet's "Meal slot" mirrors this exactly; the label
           above is the DS2 11px section tier. */}
       <div className="mt-2 space-y-1.5">
-        <SectionLabel tier="section">Add to</SectionLabel>
+        <SectionLabel>Add to</SectionLabel>
         <SegmentedControl
           emphasis="solid"
           tone="nutrition"

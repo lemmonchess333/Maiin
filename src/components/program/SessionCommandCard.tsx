@@ -87,9 +87,7 @@ export default function SessionCommandCard({
             <Icon className={cn("size-5", accentText)} aria-hidden="true" />
           </div>
           <div className="flex-1 min-w-0">
-            <SectionLabel tier="section" className={accentText}>
-              {eyebrow}
-            </SectionLabel>
+            <SectionLabel className={accentText}>{eyebrow}</SectionLabel>
             <h3 className="text-xl font-extrabold leading-tight text-foreground">
               {title}
             </h3>
