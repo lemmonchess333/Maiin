@@ -612,7 +612,7 @@ Constraints these primitives must keep:
 
 - **Page horizontal padding:** px-4 (16px)
 - **Card internal padding:** p-3 (12px) for compact, p-4 (16px) for hero cards
-- **Card gap (vertical):** space-y-2 (8px) for dense stacks, space-y-3 (12px) for section breaks
+- **Stack rhythm (vertical):** three steps and nothing between them. space-y-2 (8px) within a group — the cards under one section label, rows inside a card; space-y-3 (12px) for a break inside a card; space-y-4 (16px) between page sections, which `PageShell` owns. No half steps (`space-y-2.5` was Home's group rhythm beside `space-y-8` on Analytics — the same role at 10px and 32px), and a section label carries no margin of its own: its group's stack places it. Ratcheted in `designSystemInvariants.test.ts`; the five route pages and the shell are pinned to the scale outright.
 - **Grid gap:** gap-2 (8px) for compact grids
 - **Icon container:** w-9 h-9 (36px) for standard, w-12 h-12 (48px) for hero
 - **Icon inside container:** w-4 h-4 (16px) standard, w-5 h-5 (20px) hero
