@@ -56,8 +56,9 @@ interface PersistedWeek {
 /**
  * Simulate what a runner is actually handed, week by week.
  *
- * Mirrors `useProgram`'s regen recipe: a fresh `currentDate` each week, the
- * block length carried forward from creation, and only `weeks[0]` kept.
+ * Mirrors `useProgram`'s regen recipe: a fresh `currentDate` each week — the
+ * Monday that opens it, which is the rollover day under the Monday anchor —
+ * the block length carried forward from creation, and only `weeks[0]` kept.
  */
 function walkSeason(args: {
   distance: Distance;
@@ -74,7 +75,7 @@ function walkSeason(args: {
 
   for (let weeksOut = startWeeksOut; weeksOut >= 1; weeksOut--) {
     const d = parseLocalDate(RACE_DATE);
-    d.setDate(d.getDate() - weeksOut * 7);
+    d.setDate(d.getDate() - weeksOut * 7 + 1);
     const currentDate = localDateString(d);
     const plan = generateRacePlanV2({
       recentLayoff: "none",

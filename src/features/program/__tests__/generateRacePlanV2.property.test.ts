@@ -11,13 +11,20 @@
  *   - totalWeeks respects the hard 2-week floor
  *   - belowFloor ⟹ compressed (documented implication)
  *   - the (compressed, belowFloor) pair EXACTLY matches classifyRaceTiming for
- *     the realized totalWeeks
+ *     `raceTrainingWeeks` — the weeks the runner can train in, which is what
+ *     the Realign preview classifies with. Not `totalWeeks`: that is the
+ *     calendar block, one longer than the training when the race is on the
+ *     week's first day
  *   - weeks is a well-formed array of per-week run lists
  *
  * Deterministic (seeded PRNG).
  */
 import { describe, it, expect } from "vitest";
-import { generateRacePlanV2, classifyRaceTiming } from "../runScheduler";
+import {
+  generateRacePlanV2,
+  classifyRaceTiming,
+  raceTrainingWeeks,
+} from "../runScheduler";
 import { generateSchedule } from "@/lib/scheduleUtils";
 import {
   localDateString,
@@ -47,7 +54,7 @@ function targetDate(daysAhead: number): string {
 }
 
 describe("generateRacePlanV2 timing-flag consistency (property-based)", () => {
-  it("flags are internally consistent and match classifyRaceTiming for the realized totalWeeks", () => {
+  it("flags are internally consistent and match classifyRaceTiming for raceTrainingWeeks", () => {
     const rnd = mulberry32(861);
     for (let i = 0; i < 3000; i++) {
       const distance = DISTANCES[Math.floor(rnd() * DISTANCES.length)];
@@ -72,10 +79,17 @@ describe("generateRacePlanV2 timing-flag consistency (property-based)", () => {
       // Documented implication.
       if (plan.belowFloor) expect(plan.compressed).toBe(true);
 
-      // The generator's flags must match the classifier for the SAME weeks.
+      // The generator's flags must match the classifier for the SAME weeks —
+      // the training weeks, never more than the calendar block.
+      const trainingWeeks = raceTrainingWeeks({
+        currentDate: CURRENT,
+        targetDate: targetDate(daysAhead),
+      });
+      expect(trainingWeeks).toBeLessThanOrEqual(plan.totalWeeks);
+      expect(trainingWeeks).toBeGreaterThanOrEqual(plan.totalWeeks - 1);
       const timing = classifyRaceTiming({
         distance,
-        weeksRemaining: plan.totalWeeks,
+        weeksRemaining: trainingWeeks,
       });
       const expected =
         timing === "healthy"

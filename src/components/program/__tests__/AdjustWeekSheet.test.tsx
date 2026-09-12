@@ -82,6 +82,60 @@ describe("AdjustWeekSheet — intent list", () => {
   });
 });
 
+/**
+ * The crowded-intent preview classifies with the weeks the GENERATOR judges
+ * `compressed` / `belowFloor` on (`raceTrainingWeeks`), not with its own
+ * `ceil(daysLeft / 7)`. The two disagree by a week whenever the race sits
+ * earlier in its week than today does in this one; the sheet then previewed
+ * "mostly-easy" and the realign landed on a compressed build. Pinned on a
+ * date pair where they differ, with an agreeing pair beside it so the
+ * assertion cannot pass on copy that ignores the date altogether.
+ */
+describe("AdjustWeekSheet — crowded intent previews the generator's timing", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  function openCrowded(today: Date, targetDate: string) {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(today);
+    render(
+      <AdjustWeekSheet
+        open
+        onClose={vi.fn()}
+        runDays={[]}
+        raceGoal={{ distance: "marathon", targetDate }}
+        applyEaseWeek={vi.fn(async () => 0)}
+        revertEaseWeek={vi.fn(async () => ({ ok: true }))}
+        uid={UID}
+        realignRacePlan={vi.fn()}
+      />
+    );
+    fireEvent.click(screen.getByRole("button", { name: /My week is crowded/ }));
+    expect(
+      screen.getByText(/Re-plan from today — preview/)
+    ).toBeInTheDocument();
+  }
+
+  it("a Tuesday marathon 20 days from a Wednesday is a compressed build, not mostly-easy", () => {
+    // ceil(20 / 7) = 3 < the marathon floor of 4 → the old preview said
+    // mostly-easy. The block runs Mon 1 Jun through the race's week with a
+    // Monday to train on before the race: four weeks, and that is what the
+    // generator builds.
+    openCrowded(new Date(2026, 5, 3, 12, 0, 0), "2026-06-23");
+    expect(
+      screen.getByText(/compressed toward your race date/)
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/mostly-easy shape/)).toBeNull();
+  });
+
+  it("a Sunday marathon 20 days from a Monday is mostly-easy — three weeks either way", () => {
+    openCrowded(new Date(2026, 5, 1, 12, 0, 0), "2026-06-21");
+    expect(screen.getByText(/mostly-easy shape/)).toBeInTheDocument();
+    expect(screen.queryByText(/compressed toward your race date/)).toBeNull();
+  });
+});
+
 const RUN_DAYS = [
   {
     id: "rd-1",

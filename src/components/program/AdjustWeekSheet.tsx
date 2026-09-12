@@ -38,6 +38,7 @@ import { planEasierWeek, type EasySwap } from "@/lib/adjustWeek";
 import { track } from "@/lib/programAnalytics";
 import {
   classifyRaceTiming,
+  raceTrainingWeeks,
   type RaceTiming,
 } from "@/features/program/runScheduler";
 import { realignResultMessage } from "@/lib/realignCopy";
@@ -182,19 +183,18 @@ export default function AdjustWeekSheet({
     if (pendingRef.current || (easedThisWeek && intent !== "crowded")) return;
     track("adjust_week_intent_selected", { intent });
     if (intent === "crowded") {
-      // Preview the realign OUTCOME before writing anything: weeks remaining
-      // from today → the same timing classification the generator will land on.
-      const daysLeft = Math.max(
-        1,
-        Math.round(
-          (new Date(raceGoal.targetDate + "T00:00:00").getTime() -
-            new Date(todayKey + "T00:00:00").getTime()) /
-            86400000
-        )
-      );
+      // Preview the realign OUTCOME before writing anything, classified on
+      // the same weeks the generator judges `compressed` / `belowFloor` on.
+      // This was its own `ceil(daysLeft / 7)`, a from-today count the
+      // generator no longer uses; the two disagreed by a week whenever the
+      // race sat earlier in its week than today does in this one, so the
+      // sheet previewed one timing and the realign landed on another.
       const timing = classifyRaceTiming({
         distance: raceGoal.distance,
-        weeksRemaining: Math.max(1, Math.ceil(daysLeft / 7)),
+        weeksRemaining: raceTrainingWeeks({
+          currentDate: todayKey,
+          targetDate: raceGoal.targetDate,
+        }),
       });
       setStep({ kind: "preview-realign", intent, timing });
       return;
