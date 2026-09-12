@@ -514,6 +514,71 @@ describe("DS ratchets — surface-level drift", () => {
     expect(src).toMatch(/"relative flex gap-3 rounded-xl p-3 text-xs"/);
   });
 
+  /* Stack rhythm. Three steps: space-y-2 within a group, space-y-3 for a
+     break inside a card, space-y-4 between page sections (PageShell's).
+     Measured before this pin, Home grouped its cards at space-y-2.5 while
+     Analytics separated its sections at space-y-8 — the same role at 10px
+     and 32px — and 60 half-step stacks (0.5 / 1.5 / 2.5) sat across the
+     tree. The five route pages and the shell are pinned to the scale
+     outright; the rest of the tree is ratcheted. */
+  const HALF_STEP_STACK_BASELINE = 56;
+  it("half-step vertical stacks (space-y-0.5 / 1.5 / 2.5) do not increase", () => {
+    const { total, byFile } = scan((src) => {
+      let n = 0;
+      for (const chunk of classNameChunks(src))
+        n += (chunk.match(/\bspace-y-(?:0\.5|1\.5|2\.5)\b/g) ?? []).length;
+      return n;
+    });
+    expectRatchet("half-step space-y", total, HALF_STEP_STACK_BASELINE, byFile);
+  });
+
+  it("the route pages and PageShell stack only on space-y-1 / 2 / 3 / 4 (positive pin)", () => {
+    // 1 is the text rhythm inside a single card (a caption under its
+    // figure); 2 / 3 / 4 are the three layout steps. Nothing else.
+    const ON_SCALE = new Set(["1", "2", "3", "4"]);
+    for (const rel of [
+      "src/pages/Home.tsx",
+      "src/pages/Program.tsx",
+      "src/pages/Food.tsx",
+      "src/pages/Social.tsx",
+      "src/pages/History.tsx",
+      "src/components/ui/PageShell.tsx",
+    ]) {
+      const src = readFileSync(resolve(repoRoot, rel), "utf8");
+      const off: string[] = [];
+      for (const chunk of classNameChunks(src))
+        for (const m of chunk.matchAll(/\bspace-y-([0-9.]+)\b/g))
+          if (!ON_SCALE.has(m[1])) off.push(m[0]);
+      expect(off, `${rel} stacks off the scale: ${off.join(", ")}`).toEqual([]);
+    }
+  });
+
+  /* A section label carries no margin of its own — its group's stack
+     places it. Analytics' three labels (and PerformanceSection's) still
+     wear `mt-6 mb-2`, which stacked on their container's own spacing is
+     how one page got 56px between sections while Home got 16; that
+     restructure is Analytics' own change. Counted here so no new label
+     picks the habit up. Multi-line openers included. */
+  const SECTION_LABEL_MARGIN_BASELINE = 10;
+  it("section-tier labels with their own vertical margin do not increase", () => {
+    const { total, byFile } = scan((src) => {
+      let n = 0;
+      for (const m of src.matchAll(/<SectionLabel\b([^>]*)>/g)) {
+        const attrs = m[1];
+        if (!/tier="section"/.test(attrs)) continue;
+        const c = /className="([^"]*)"/.exec(attrs);
+        if (c && /\bm[tb]-[0-9.]+\b/.test(c[1])) n++;
+      }
+      return n;
+    });
+    expectRatchet(
+      "section label self-margin",
+      total,
+      SECTION_LABEL_MARGIN_BASELINE,
+      byFile
+    );
+  });
+
   // Arbitrary pixel sizes (`text-[10px]`, `text-[15px]`) sit off the
   // documented scale — 11px is text-caption (tracked labels only), then
   // 12 / 14 / 16 and up. The cohesion pass (batch 3, 2026-09-05) burned the

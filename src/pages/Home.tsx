@@ -785,8 +785,9 @@ export default function Home() {
 
       {/* Home2-hierarchy: grouped sections (This week / Performance /
           Today) replace the prior flat equal-altitude stack — tight
-          within a group, airy between, via SectionLabel headers. */}
-      <div className="space-y-2.5">
+          within a group (space-y-2, the dense-stack step), airy between
+          (the shell's space-y-4), via SectionLabel headers. */}
+      <div className="space-y-2">
         <SectionLabel tier="section" className="px-1">
           This week
         </SectionLabel>
@@ -865,7 +866,7 @@ export default function Home() {
 
       {/* Home2-hierarchy: Today group — contextual nudges + energy +
           quick actions + insight, clustered under one "Today" header. */}
-      <div className="space-y-2.5">
+      <div className="space-y-2">
         <SectionLabel tier="section" className="px-1">
           Today
         </SectionLabel>
@@ -1023,7 +1024,7 @@ export default function Home() {
           action is the first thing on the scroll; the full ring, verb and
           delta chip stay — a compact numbers row does not carry the weekly
           verdict the same way. Detailed interpretation remains in Analytics. */}
-      <div className="space-y-2.5">
+      <div className="space-y-2">
         <SectionLabel tier="section" className="px-1">
           Performance
         </SectionLabel>
@@ -1046,7 +1047,7 @@ export default function Home() {
         </motion.div>
       </div>
 
-      <div className="space-y-2.5" aria-label="Helpful tips">
+      <div className="space-y-2" aria-label="Helpful tips">
         {/* A1 contextual tip: nudge the user to add age + sex if
           either is missing. These two fields drive TDEE precision
           (calculateTDEE consumes both); without them the user gets

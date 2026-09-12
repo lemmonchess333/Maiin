@@ -1279,7 +1279,7 @@ export default function History() {
       >
         {filter === "milestones" ? (
           <SectionErrorBoundary sectionName="milestones-tab">
-            <div className="space-y-8">
+            <div className="space-y-4">
               <MilestonesTab
                 workouts={workouts}
                 runs={lifetimeRuns.firstRun ? [lifetimeRuns.firstRun] : []}
