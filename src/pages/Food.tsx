@@ -1734,11 +1734,20 @@ export default function Food() {
   // Keep date navigation available during a cold read or failure. A failed
   // read is never painted as a successful day with zero calories.
   if (meals.length === 0 && (mealsLoading || mealsError)) {
+    // The cold-read and failed-read states are the same page: same shell,
+    // same title, same offline slot, same rhythm. A bare stack here made
+    // the title pop in when the meals arrived and sat on an 18px half
+    // step the spacing scale does not have.
     return (
-      <div {...pullBindProps} className="space-y-4.5">
+      <PageShell
+        {...pullBindProps}
+        title="Food"
+        banner={<FoodOfflineBanner />}
+        style={{ paddingBottom: "var(--page-bottom-pad)" }}
+      >
         {dateBar}
         {mealsError ? readError : <FoodSkeleton />}
-      </div>
+      </PageShell>
     );
   }
 
