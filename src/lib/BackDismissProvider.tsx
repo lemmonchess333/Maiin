@@ -52,14 +52,16 @@ interface StackEntry {
    *  the provider re-arms the sentinel after handling so back stays trapped
    *  instead of a second back navigating the page away. */
   sticky: boolean;
-  /** window.location.pathname when the overlay opened — compared at close to
+  /** Full browser URL when the overlay opened — compared at close to
    *  detect the navigate-from-overlay case (web only). Read from window.location
    *  (not useLocation) so the compare is SYNCHRONOUS at unregister time: React
    *  Router's navigate() calls history.pushState synchronously, so the URL is
    *  already the new route when the overlay's cleanup runs — a useLocation-fed
-   *  ref could still hold the old path (effect-ordering race) and mis-detect the
-   *  navigation, wrongly consuming the sentinel and undoing the nav (#6). */
-  openPath: string;
+   *  ref could still hold the old URL (effect-ordering race) and mis-detect the
+   *  navigation, wrongly consuming the sentinel and undoing the nav (#6).
+   *  Include search/hash: source or filter selection can replace the URL on
+   *  the same route, and consuming its sentinel would undo that choice. */
+  openUrl: string;
 }
 
 export function BackDismissProvider({ children }: { children: ReactNode }) {
@@ -90,7 +92,7 @@ export function BackDismissProvider({ children }: { children: ReactNode }) {
         handler,
         viaBack: false,
         sticky: opts?.sticky ?? false,
-        openPath: window.location.pathname,
+        openUrl: window.location.href,
       };
       stack.current.push(entry);
       webController?.onOpen();
@@ -98,7 +100,7 @@ export function BackDismissProvider({ children }: { children: ReactNode }) {
         stack.current = stack.current.filter((e) => e.id !== id);
         webController?.onClose(
           entry.viaBack,
-          window.location.pathname !== entry.openPath
+          window.location.href !== entry.openUrl
         );
       };
     },

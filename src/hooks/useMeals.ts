@@ -4,11 +4,13 @@ import {
   useCallback,
   useMemo,
   useSyncExternalStore,
+  useRef,
 } from "react";
 import {
   collection,
   query,
   orderBy,
+  where,
   onSnapshot,
   doc,
   limit,
@@ -195,23 +197,108 @@ export function parseMealDoc(id: string, raw: Record<string, unknown>): Meal {
   };
 }
 
-export function useMeals() {
+/** Food supplies the window needed by the selected day, Copy yesterday and
+ * recent suggestions. History callers can keep the existing paged query. */
+export function useMeals(dateWindow?: { from: string; to: string }) {
   const uid = useUid();
-  // Internal store holds BOTH active and soft-deleted meals; the
-  // returned `meals` filters to active only, `deletedMeals` to
-  // soft-deleted only. Single subscription powers both surfaces.
-  const [snapshotMeals, setAllMeals] = useState<Meal[]>([]);
-  const [snapshotUid, setSnapshotUid] = useState<string | null>(null);
+  const from = dateWindow?.from;
+  const to = dateWindow?.to;
+  const scope = `${uid ?? ""}:${from ?? ""}:${to ?? ""}`;
+  const [revision, setRevision] = useState(0);
+  const [snapshot, setSnapshot] = useState<{
+    scope: string;
+    revision: number;
+    meals: Meal[];
+    lastDoc: QueryDocumentSnapshot | null;
+    hasMore: boolean;
+    error: string | null;
+  } | null>(null);
+  const refreshWaiters = useRef<Array<() => void>>([]);
+  const refresh = useCallback(
+    () =>
+      new Promise<void>((resolve) => {
+        refreshWaiters.current.push(resolve);
+        setRevision((n) => n + 1);
+      }),
+    []
+  );
   const queueVersion = useSyncExternalStore(
     subscribeQueuedWrites,
     queuedWritesVersion,
     queuedWritesVersion
   );
+  const PAGE_SIZE = 400;
+
+  useEffect(() => {
+    const waiters = refreshWaiters.current.splice(0);
+    const finish = () => waiters.forEach((resolve) => resolve());
+    if (!uid) {
+      finish();
+      return;
+    }
+    let active = true;
+    let firstSnapshot = true;
+    const mealsRef = collection(db, "users", uid, "meals");
+    const q =
+      from && to
+        ? query(
+            mealsRef,
+            where("date", ">=", from),
+            where("date", "<=", to),
+            orderBy("date", "desc")
+          )
+        : query(mealsRef, orderBy("createdAt", "desc"), limit(PAGE_SIZE));
+    const unsubscribe = onSnapshot(
+      q,
+      (result) => {
+        if (!active) return;
+        setSnapshot({
+          scope,
+          revision,
+          meals: result.docs.map((d) =>
+            parseMealDoc(d.id, d.data() as Record<string, unknown>)
+          ),
+          lastDoc: result.docs.at(-1) ?? null,
+          hasMore: !from && result.docs.length >= PAGE_SIZE,
+          error: null,
+        });
+        noteActivitySnapshot(
+          "food",
+          uid,
+          result.docs.map((d) => d.id),
+          { baseline: !!from && firstSnapshot }
+        );
+        firstSnapshot = false;
+        finish();
+      },
+      (err) => {
+        if (!active) return;
+        logger.error("[useMeals] snapshot subscription failed", err);
+        setSnapshot((prev) => ({
+          scope,
+          revision,
+          meals: prev?.scope === scope ? prev.meals : [],
+          lastDoc: null,
+          hasMore: false,
+          error: "Couldn't load your food diary.",
+        }));
+        finish();
+      }
+    );
+    return () => {
+      active = false;
+      unsubscribe();
+      finish();
+    };
+  }, [uid, from, to, scope, revision]);
+
   const allMeals = useMemo(() => {
-    // A queue mutation invalidates this projection even before a server snapshot.
     void queueVersion;
     const byId = new Map(
-      (snapshotUid === uid ? snapshotMeals : []).map((meal) => [meal.id, meal])
+      (snapshot?.scope === scope ? snapshot.meals : []).map((meal) => [
+        meal.id,
+        meal,
+      ])
     );
     if (uid)
       for (const pending of pendingDocumentWrites(uid, `users/${uid}/meals`)) {
@@ -223,93 +310,44 @@ export function useMeals() {
           })
         );
       }
-    return Array.from(byId.values());
-  }, [snapshotMeals, snapshotUid, uid, queueVersion]);
-  const [loading, setLoading] = useState(true);
-  const [hasMore, setHasMore] = useState(true);
-  const [lastDoc, setLastDoc] = useState<QueryDocumentSnapshot | null>(null);
-
-  // 400 matches the useStreaks window — an active user logging 4-6 meals/day
-  // hits 100 in ~17 days and their history silently truncates. 400 covers
-  // ~67 days of heavy logging with headroom for the 365-day streak badge
-  // calculations that read meals as a signal.
-  const PAGE_SIZE = 400;
-
-  useEffect(() => {
-    if (!uid) {
-      const reset = () => {
-        setAllMeals([]);
-        setLoading(false);
-      };
-      reset();
-      return;
-    }
-
-    const mealsRef = collection(db, "users", uid, "meals");
-    const q = query(mealsRef, orderBy("createdAt", "desc"), limit(PAGE_SIZE));
-
-    const unsubscribe = onSnapshot(
-      q,
-      (snapshot) => {
-        const data = snapshot.docs.map((d) =>
-          parseMealDoc(d.id, d.data() as Record<string, unknown>)
-        );
-        setSnapshotUid(uid);
-        setAllMeals(data);
-        setLastDoc(snapshot.docs[snapshot.docs.length - 1] || null);
-        setHasMore(snapshot.docs.length >= PAGE_SIZE);
-        setLoading(false);
-        // Activation funnel: fire `food_logged` once per newly-created meal
-        // across all creation sites. Baseline-guarded + deduped by uid.
-        noteActivitySnapshot(
-          "food",
-          uid,
-          snapshot.docs.map((d) => d.id)
-        );
-      },
-      // Surface the failure so the UI can exit its skeleton state; keep any
-      // previously loaded meals in state so a transient permission blip or
-      // network hiccup doesn't wipe what the user is already looking at.
-      (err) => {
-        logger.error("[useMeals] snapshot subscription failed", err);
-        setLoading(false);
-        setHasMore(false);
-      }
+    return [...byId.values()].filter(
+      (meal) => (!from || meal.date >= from) && (!to || meal.date <= to)
     );
-
-    return unsubscribe;
-  }, [uid]);
-
-  // F5c — split active vs soft-deleted. Existing call sites only see
-  // active meals via `meals`; the Settings recently-deleted archive
-  // reads `deletedMeals`. Memoised so the array references stay
-  // stable across renders that don't change the underlying snapshot.
+  }, [snapshot, scope, uid, from, to, queueVersion]);
   const meals = useMemo(() => activeMealDocs(allMeals), [allMeals]);
-  // The complement — deliberately NOT `!isActiveMealDoc`, because this is
-  // the archive's own question ("what can I restore?"), not the counting
-  // rule. Kept adjacent so the pair reads as one decision.
   const deletedMeals = useMemo(
-    () => allMeals.filter((m) => !!m.deletedAt),
+    () => allMeals.filter((meal) => !!meal.deletedAt),
     [allMeals]
   );
-
+  const loading =
+    !!uid && (snapshot?.scope !== scope || snapshot.revision !== revision);
+  const error = snapshot?.scope === scope ? snapshot.error : null;
+  const hasMore = snapshot?.scope === scope && snapshot.hasMore;
+  const lastDoc = snapshot?.scope === scope ? snapshot.lastDoc : null;
   const loadMore = useCallback(async () => {
-    if (!uid || !lastDoc || !hasMore) return;
-    const mealsRef = collection(db, "users", uid, "meals");
-    const q = query(
-      mealsRef,
-      orderBy("createdAt", "desc"),
-      startAfter(lastDoc),
-      limit(PAGE_SIZE)
+    if (!uid || from || !lastDoc || !hasMore) return;
+    const result = await getDocs(
+      query(
+        collection(db, "users", uid, "meals"),
+        orderBy("createdAt", "desc"),
+        startAfter(lastDoc),
+        limit(PAGE_SIZE)
+      )
     );
-    const snapshot = await getDocs(q);
-    const newData = snapshot.docs.map((d) =>
+    const data = result.docs.map((d) =>
       parseMealDoc(d.id, d.data() as Record<string, unknown>)
     );
-    setAllMeals((prev) => [...prev, ...newData]);
-    setLastDoc(snapshot.docs[snapshot.docs.length - 1] || null);
-    setHasMore(snapshot.docs.length >= PAGE_SIZE);
-  }, [uid, lastDoc, hasMore]);
+    setSnapshot((prev) =>
+      prev?.scope === scope && prev.revision === revision
+        ? {
+            ...prev,
+            meals: [...prev.meals, ...data],
+            lastDoc: result.docs.at(-1) ?? null,
+            hasMore: result.docs.length >= PAGE_SIZE,
+          }
+        : prev
+    );
+  }, [uid, from, lastDoc, hasMore, scope, revision]);
 
   // F5c — soft-delete: writes `deletedAt: serverTimestamp()` instead
   // of removing the doc. Restoration clears `deletedAt`.
@@ -465,6 +503,8 @@ export function useMeals() {
     meals,
     deletedMeals,
     loading,
+    error,
+    refresh,
     hasMore,
     loadMore,
     deleteMeal,

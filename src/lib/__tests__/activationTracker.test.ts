@@ -80,3 +80,11 @@ describe("noteActivitySnapshot", () => {
     expect(track).not.toHaveBeenCalled();
   });
 });
+
+it("expanding the diary window baselines old history without counting it as new logging", () => {
+  noteActivitySnapshot("food", "u1", ["today"]);
+  noteActivitySnapshot("food", "u1", ["today", "old"], { baseline: true });
+  expect(track).not.toHaveBeenCalled();
+  noteActivitySnapshot("food", "u1", ["today", "old", "new"]);
+  expect(track).toHaveBeenCalledExactlyOnceWith("food_logged");
+});

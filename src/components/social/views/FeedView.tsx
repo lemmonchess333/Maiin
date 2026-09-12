@@ -428,8 +428,11 @@ export default function FeedView({
                         aria-checked={feedSubTab === st}
                         onClick={() => {
                           setSourceMenuOpen(false);
-                          if (feedSubTab === st) return;
+                          // The visible source may only be a smart default.
+                          // Record even the same choice so a later follow-count
+                          // snapshot cannot switch away from what was tapped.
                           selectFeedSubTab(st);
+                          if (feedSubTab === st) return;
                           trackSocialEvent("social_feed_subtab_changed", {
                             subTab: st,
                           });
@@ -463,7 +466,7 @@ export default function FeedView({
               </div>
             </BottomSheet>
 
-            {showSoloFeed && (
+            {showSoloFeed && feedSubTab !== "communities" && (
               <SoloFirstFeed
                 onFindPeople={openPeople}
                 onOpenTogether={openTogether}
@@ -629,7 +632,7 @@ export default function FeedView({
                 lives on the space page — the eyebrow link above each
                 card); the eyebrow names the space so a mixed stream
                 stays legible. */}
-            {feedSubTab === "communities" && !showSoloFeed && (
+            {feedSubTab === "communities" && (
               <div className="space-y-3 mt-4">
                 {communitiesFeed.loading &&
                   communitiesFeed.items.length === 0 && (

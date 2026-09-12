@@ -65,16 +65,7 @@ export default function ScheduleLayoutSheet(props: ScheduleLayoutSheetProps) {
   // `useState` reads from `profile`. Do NOT lift the hook to this
   // component, or hydration on re-open breaks.
   if (!props.open) return null;
-  return (
-    <BottomSheet
-      open={props.open}
-      onOpenChange={(o) => !o && props.onClose()}
-      title="Edit weekly layout"
-      description="Tap any day to cycle through Rest, Lift, Run, Both."
-    >
-      <ScheduleLayoutSheetBody {...props} />
-    </BottomSheet>
-  );
+  return <ScheduleLayoutSheetBody {...props} />;
 }
 
 function ScheduleLayoutSheetBody({
@@ -98,6 +89,7 @@ function ScheduleLayoutSheetBody({
     showRestructureModal,
     pendingLiftDays,
     restructuring,
+    saving,
     handleConfirmRestructure,
     cancelRestructure,
   } = editor;
@@ -114,198 +106,210 @@ function ScheduleLayoutSheetBody({
   const doubleDays = sortedSchedule.filter((s) => s.type === "both").length;
 
   async function handleApply(): Promise<void> {
-    await handleApplyScheduleChanges();
-    // If a restructure is required the hook opens its modal and the
-    // sheet stays put. If not, we just applied — close the sheet.
-    if (!editor.showRestructureModal) {
-      onClose();
-    }
+    const result = await handleApplyScheduleChanges();
+    if (result === "saved") onClose();
   }
 
   async function handleConfirmAndClose(): Promise<void> {
-    await handleConfirmRestructure();
-    onClose();
+    if (await handleConfirmRestructure()) onClose();
   }
 
   return (
-    <div className="px-5 pb-6 pt-4 space-y-5">
-      <div
-        className="grid grid-cols-3 gap-2"
-        aria-label="Weekly layout summary"
-      >
-        {[
-          { label: "Lift", value: liftSessions, color: THEME.lifting },
-          { label: "Run", value: runSessions, color: THEME.running },
-          { label: "Double", value: doubleDays, color: THEME.brand },
-        ].map((item) => (
-          <div
-            key={item.label}
-            className="rounded-2xl border border-border/50 bg-card px-3 py-2 text-center"
-          >
-            <p
-              className="text-lg font-extrabold leading-none font-mono tabular-nums"
-              style={{ color: item.color }}
-            >
-              {item.value}
-            </p>
-            <SectionLabel className="mt-1">{item.label}</SectionLabel>
-          </div>
-        ))}
-      </div>
-
-      {hasUnsavedScheduleChanges && (
-        <p
-          className="rounded-xl px-3 py-2 text-xs font-medium"
-          style={{
-            backgroundColor: `${THEME.amber}12`,
-            color: THEME.amber,
-          }}
+    <BottomSheet
+      open
+      onOpenChange={(open) => {
+        if (!open && !saving && !showRestructureModal) onClose();
+      }}
+      dismissible={!saving && !showRestructureModal}
+      title="Edit weekly layout"
+      description="Tap any day to cycle through Rest, Lift, Run, Both."
+    >
+      <div className="px-5 pb-6 pt-4 space-y-5">
+        <div
+          className="grid grid-cols-3 gap-2"
+          aria-label="Weekly layout summary"
         >
-          Unsaved layout changes
-        </p>
-      )}
-
-      <div className="grid grid-cols-7 gap-1.5">
-        {sortedSchedule.map((s) => {
-          const color =
-            s.type === "lift"
-              ? THEME.lifting
-              : s.type === "run"
-                ? THEME.running
-                : s.type === "both"
-                  ? THEME.brand
-                  : undefined;
-          const label =
-            s.type === "lift"
-              ? "Lift"
-              : s.type === "run"
-                ? "Run"
-                : s.type === "both"
-                  ? "Both"
-                  : "Rest";
-          return (
-            <button
-              type="button"
-              key={s.day}
-              onClick={() => handleDayToggle(s.day)}
-              aria-label={`${DAY_LABELS[s.day]}: ${label}. Tap to change.`}
-              className={cn(
-                "min-h-[86px] flex flex-col items-center justify-between rounded-2xl border px-1.5 py-2.5 text-center shadow-sm transition-all active:scale-[0.98]",
-                s.type !== "rest"
-                  ? "bg-card"
-                  : "border-border/60 bg-muted/30 text-muted-foreground"
-              )}
-              style={
-                s.type !== "rest" && color
-                  ? {
-                      borderColor: `${color}45`,
-                      background: `${color}10`,
-                    }
-                  : undefined
-              }
+          {[
+            { label: "Lift", value: liftSessions, color: THEME.lifting },
+            { label: "Run", value: runSessions, color: THEME.running },
+            { label: "Double", value: doubleDays, color: THEME.brand },
+          ].map((item) => (
+            <div
+              key={item.label}
+              className="rounded-2xl border border-border/50 bg-card px-3 py-2 text-center"
             >
-              <span className="text-xs font-semibold text-muted-foreground">
-                {DAY_LABELS[s.day].charAt(0)}
-              </span>
-              {s.type === "both" ? (
-                <div className="size-4 rounded-full overflow-hidden flex shadow-sm">
-                  <div className="w-1/2 h-full bg-lifting" />
-                  <div className="w-1/2 h-full bg-running" />
-                </div>
-              ) : color ? (
-                <div
-                  className="size-4 rounded-full shadow-sm"
-                  style={{ backgroundColor: color }}
-                />
-              ) : (
-                <div className="size-4 rounded-full bg-muted-foreground/20" />
-              )}
-              <span
-                className="text-caption font-bold leading-none"
-                style={{ color: color || "hsl(var(--muted-foreground))" }}
+              <p
+                className="text-lg font-extrabold leading-none font-mono tabular-nums"
+                style={{ color: item.color }}
               >
-                {label}
-              </span>
-            </button>
-          );
-        })}
-      </div>
+                {item.value}
+              </p>
+              <SectionLabel className="mt-1">{item.label}</SectionLabel>
+            </div>
+          ))}
+        </div>
 
-      <div className="flex gap-2">
-        <button
-          type="button"
-          onClick={onClose}
-          className={cn(
-            "py-3 rounded-xl text-sm font-medium active:scale-[0.97] transition-transform",
-            hasUnsavedScheduleChanges
-              ? "flex-1 text-muted-foreground bg-muted"
-              : "w-full text-foreground bg-card border border-border/60"
-          )}
-        >
-          {hasUnsavedScheduleChanges ? "Cancel" : "Close"}
-        </button>
         {hasUnsavedScheduleChanges && (
-          <motion.button
-            type="button"
-            whileTap={{ scale: 0.97 }}
-            onClick={handleApply}
-            className="flex-1 py-3 rounded-xl text-sm font-bold bg-primary-strong text-primary-foreground transition-all"
+          <p
+            className="rounded-xl px-3 py-2 text-xs font-medium"
+            style={{
+              backgroundColor: `${THEME.amber}12`,
+              color: THEME.amber,
+            }}
           >
-            Apply changes
-          </motion.button>
+            Unsaved layout changes
+          </p>
         )}
-      </div>
 
-      {/* Restructure-confirm modal — fires when the day-toggle changed
+        <div className="grid grid-cols-7 gap-1.5">
+          {sortedSchedule.map((s) => {
+            const color =
+              s.type === "lift"
+                ? THEME.lifting
+                : s.type === "run"
+                  ? THEME.running
+                  : s.type === "both"
+                    ? THEME.brand
+                    : undefined;
+            const label =
+              s.type === "lift"
+                ? "Lift"
+                : s.type === "run"
+                  ? "Run"
+                  : s.type === "both"
+                    ? "Both"
+                    : "Rest";
+            return (
+              <button
+                type="button"
+                key={s.day}
+                onClick={() => handleDayToggle(s.day)}
+                disabled={saving}
+                aria-label={`${DAY_LABELS[s.day]}: ${label}. Tap to change.`}
+                className={cn(
+                  "min-h-[86px] flex flex-col items-center justify-between rounded-2xl border px-1.5 py-2.5 text-center shadow-sm transition-all active:scale-[0.98]",
+                  s.type !== "rest"
+                    ? "bg-card"
+                    : "border-border/60 bg-muted/30 text-muted-foreground"
+                )}
+                style={
+                  s.type !== "rest" && color
+                    ? {
+                        borderColor: `${color}45`,
+                        background: `${color}10`,
+                      }
+                    : undefined
+                }
+              >
+                <span className="text-xs font-semibold text-muted-foreground">
+                  {DAY_LABELS[s.day].charAt(0)}
+                </span>
+                {s.type === "both" ? (
+                  <div className="size-4 rounded-full overflow-hidden flex shadow-sm">
+                    <div className="w-1/2 h-full bg-lifting" />
+                    <div className="w-1/2 h-full bg-running" />
+                  </div>
+                ) : color ? (
+                  <div
+                    className="size-4 rounded-full shadow-sm"
+                    style={{ backgroundColor: color }}
+                  />
+                ) : (
+                  <div className="size-4 rounded-full bg-muted-foreground/20" />
+                )}
+                <span
+                  className="text-caption font-bold leading-none"
+                  style={{ color: color || "hsl(var(--muted-foreground))" }}
+                >
+                  {label}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={saving}
+            className={cn(
+              "py-3 rounded-xl text-sm font-medium active:scale-[0.97] transition-transform",
+              hasUnsavedScheduleChanges
+                ? "flex-1 text-muted-foreground bg-muted"
+                : "w-full text-foreground bg-card border border-border/60"
+            )}
+          >
+            {hasUnsavedScheduleChanges ? "Cancel" : "Close"}
+          </button>
+          {hasUnsavedScheduleChanges && (
+            <motion.button
+              type="button"
+              whileTap={{ scale: 0.97 }}
+              onClick={handleApply}
+              disabled={saving}
+              aria-busy={saving}
+              className="flex-1 py-3 rounded-xl text-sm font-bold bg-primary-strong text-primary-foreground transition-all"
+            >
+              {saving ? "Saving…" : "Apply changes"}
+            </motion.button>
+          )}
+        </div>
+
+        {/* Restructure-confirm modal — fires when the day-toggle changed
           the weekly lift count. The hook owns the gating; we render
           its surface here so the modal lives inside the same sheet
           stack (no z-index drift with the BottomSheet overlay). */}
-      <Dialog
-        open={showRestructureModal && pendingLiftDays !== null}
-        onClose={cancelRestructure}
-        title="Restructure programme?"
-        description="Changing your training days will restructure your programme. Your workout history won't be affected, but your programme will be rebuilt. This cannot be undone."
-        role="alertdialog"
-        overlayClassName="z-[60]"
-        className="z-[70]"
-      >
-        {pendingLiftDays !== null && (
-          <p className="text-sm font-medium text-foreground">
-            Your new programme will use a{" "}
-            <span className="text-primary">
-              {splitLabel(chooseSplit(pendingLiftDays))}
-            </span>{" "}
-            split.
-          </p>
-        )}
-        <div className="flex gap-2 mt-4">
-          <Button
-            variant="secondary"
-            className="flex-1"
-            onClick={cancelRestructure}
-          >
-            Cancel
-          </Button>
-          <Button
-            className="flex-1"
-            onClick={handleConfirmAndClose}
-            disabled={restructuring}
-          >
-            {restructuring ? (
-              <>
-                <Spinner
-                  size="sm"
-                  variant="inverse"
-                  label="Rebuilding programme"
-                />
-                Rebuilding...
-              </>
-            ) : (
-              "Confirm"
-            )}
-          </Button>
-        </div>
-      </Dialog>
-    </div>
+        <Dialog
+          open={showRestructureModal && pendingLiftDays !== null}
+          onClose={cancelRestructure}
+          closeOnBackdrop={!saving}
+          closeOnEscape={!saving}
+          title="Restructure programme?"
+          description="Changing your training days will restructure your programme. Your workout history won't be affected, but your programme will be rebuilt. This cannot be undone."
+          role="alertdialog"
+          overlayClassName="z-[60]"
+          className="z-[70]"
+        >
+          {pendingLiftDays !== null && (
+            <p className="text-sm font-medium text-foreground">
+              Your new programme will use a{" "}
+              <span className="text-primary">
+                {splitLabel(chooseSplit(pendingLiftDays))}
+              </span>{" "}
+              split.
+            </p>
+          )}
+          <div className="flex gap-2 mt-4">
+            <Button
+              variant="secondary"
+              className="flex-1"
+              onClick={cancelRestructure}
+              disabled={saving}
+            >
+              Cancel
+            </Button>
+            <Button
+              className="flex-1"
+              onClick={handleConfirmAndClose}
+              disabled={restructuring}
+            >
+              {restructuring ? (
+                <>
+                  <Spinner
+                    size="sm"
+                    variant="inverse"
+                    label="Rebuilding programme"
+                  />
+                  Rebuilding...
+                </>
+              ) : (
+                "Confirm"
+              )}
+            </Button>
+          </div>
+        </Dialog>
+      </div>
+    </BottomSheet>
   );
 }

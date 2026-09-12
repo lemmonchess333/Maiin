@@ -44,7 +44,7 @@
  * pattern intact rather than reintroducing a state-syncing effect.
  */
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import { toast } from "@/lib/toast";
 import { logger } from "@/lib/logger";
 import {
@@ -69,7 +69,7 @@ function friendlyRestructureError(error: unknown): string {
   if (code === "unauthenticated")
     return "Please sign in again to save changes.";
   if (code === "unavailable")
-    return "You're offline — changes will save when you reconnect.";
+    return "Couldn't save changes. Reconnect and try again.";
   if (code === "deadline-exceeded") return "Saving took too long. Try again.";
   return "Couldn't rebuild your programme. Try again.";
 }
@@ -113,12 +113,15 @@ export interface UseProgrammeScheduleEditorReturn {
   handleDayToggle: (day: number) => void;
   // Save flow — opens the restructure modal when the lift-day count
   // changed, otherwise updates the profile directly.
-  handleApplyScheduleChanges: () => Promise<void>;
+  handleApplyScheduleChanges: () => Promise<
+    "saved" | "confirmation-required" | "failed" | "busy"
+  >;
   // Restructure modal state + handlers.
   showRestructureModal: boolean;
   pendingLiftDays: number | null;
   restructuring: boolean;
-  handleConfirmRestructure: () => Promise<void>;
+  saving: boolean;
+  handleConfirmRestructure: () => Promise<boolean>;
   cancelRestructure: () => void;
 }
 
@@ -129,7 +132,7 @@ export function useProgrammeScheduleEditor(
     args;
 
   const [workoutsTarget, setWorkoutsTarget] = useState(
-    profile?.weeklyWorkoutsTarget || 4
+    profile?.weeklyWorkoutsTarget ?? 4
   );
   // PR-2: zero-as-zero. Pre-PR-2 this was `getWeeklyRunTarget(profile) || 2`
   // which silently coerced a user's explicit 0 runs into 2. Same class of
@@ -149,7 +152,8 @@ export function useProgrammeScheduleEditor(
   // the weekly lift-day count. Same trigger Settings used pre-P0-7.
   const [showRestructureModal, setShowRestructureModal] = useState(false);
   const [pendingLiftDays, setPendingLiftDays] = useState<number | null>(null);
-  const [restructuring, setRestructuring] = useState(false);
+  const [pending, setPending] = useState<"save" | "rebuild" | null>(null);
+  const pendingRef = useRef(false);
 
   // savedSchedule is the schedule at hook-mount time — we use it
   // to detect unsaved edits. Pre-P0-7 Settings captured this with
@@ -164,7 +168,7 @@ export function useProgrammeScheduleEditor(
     if (savedSchedule)
       return savedSchedule.filter((s) => s.type === "lift" || s.type === "both")
         .length;
-    return profile?.weeklyWorkoutsTarget || 4;
+    return profile?.weeklyWorkoutsTarget ?? 4;
   }, [savedSchedule, profile?.weeklyWorkoutsTarget]);
 
   // Derived current schedule. Custom (in-progress edits) wins; falls
@@ -183,6 +187,7 @@ export function useProgrammeScheduleEditor(
   }, [customSchedule, savedSchedule]);
 
   function handleDayToggle(day: number): void {
+    if (pendingRef.current) return;
     const current = schedule.find((s) => s.day === day);
     if (!current) return;
     const cycle: DayType[] = ["rest", "lift", "run", "both"];
@@ -201,76 +206,77 @@ export function useProgrammeScheduleEditor(
     setWorkoutsTarget(newLiftDays);
   }
 
-  async function handleApplyScheduleChanges(): Promise<void> {
+  async function handleApplyScheduleChanges(): Promise<
+    "saved" | "confirmation-required" | "failed" | "busy"
+  > {
+    if (pendingRef.current) return "busy";
     const currentLiftDays = schedule.filter(
       (s) => s.type === "lift" || s.type === "both"
     ).length;
     if (currentLiftDays !== savedLiftDays && currentLiftDays > 0) {
       setPendingLiftDays(currentLiftDays);
       setShowRestructureModal(true);
-      return;
+      return "confirmation-required";
     }
-    await updateProfile({
-      weekSchedule: schedule,
-      weeklyWorkoutsTarget: workoutsTarget,
-      ...runTargetWriteFields(runsTarget),
-    });
-    if (profile?.runMode && profile.runMode !== "freeform") {
-      // PR-0b-ii: pass the freshly-confirmed schedule explicitly.
-      // useAuth's profile closure may not yet reflect the
-      // updateProfile above by the time refreshRunSchedule reads
-      // it, so without the override refreshRunSchedule could
-      // regenerate runDays against a stale schedule.
-      await refreshRunSchedule({
-        weekSchedule: schedule,
-        weeklyRunDaysTarget: runsTarget,
-      });
-    }
-  }
-
-  async function handleConfirmRestructure(): Promise<void> {
-    if (pendingLiftDays === null) return;
-    setRestructuring(true);
+    pendingRef.current = true;
+    setPending("save");
     try {
-      // Save profile FIRST so subsequent reads (and the
-      // refreshRunSchedule fallback) see the new schedule. Then pass
-      // the new schedule directly into regenerateProgram via the
-      // `overrides` param so the run scheduler uses the user's
-      // confirmed layout, not the pre-edit profile state.
-      await updateProfile({
+      const result = await updateProfile({
         weekSchedule: schedule,
         weeklyWorkoutsTarget: workoutsTarget,
         ...runTargetWriteFields(runsTarget),
       });
+      // updateProfile reports failures as values. It already shows its error;
+      // stop here so a failed profile write cannot change the programme.
+      if (!result.ok) return "failed";
+      if (profile?.runMode && profile.runMode !== "freeform") {
+        await refreshRunSchedule({
+          weekSchedule: schedule,
+          weeklyRunDaysTarget: runsTarget,
+        });
+      }
+      return "saved";
+    } catch (error) {
+      logger.error("Schedule save failed:", error);
+      toast.error("Couldn't finish saving your layout. Try again.");
+      return "failed";
+    } finally {
+      pendingRef.current = false;
+      setPending(null);
+    }
+  }
+
+  async function handleConfirmRestructure(): Promise<boolean> {
+    if (pendingLiftDays === null || pendingRef.current) return false;
+    pendingRef.current = true;
+    setPending("rebuild");
+    try {
+      const result = await updateProfile({
+        weekSchedule: schedule,
+        weeklyWorkoutsTarget: workoutsTarget,
+        ...runTargetWriteFields(runsTarget),
+      });
+      if (!result.ok) return false;
       await regenerateProgram(undefined, pendingLiftDays, {
         weekSchedule: schedule,
         weeklyRunDaysTarget: runsTarget,
       });
-      // PR-0b-ii: removed redundant refreshRunSchedule() call.
-      // regenerateProgram above already used the confirmed schedule
-      // via the `overrides` arg, so a second pass through
-      // refreshRunSchedule would just re-write the same runDays
-      // against the same weekSchedule. The race-prep path would
-      // also reset currentWeek to 0 inside regenerate AND then
-      // refresh — pointless double work + extra Firestore write.
       setShowRestructureModal(false);
-      // chooseSplit invocation kept for parity with the pre-P0-7
-      // Settings code — it doesn't toast but pinning the call
-      // surfaces an exception if the lift-day count ever drifts out
-      // of the chooseSplit domain. void to silence the unused-expr
-      // lint.
-      const newSplit = chooseSplit(pendingLiftDays);
+      void chooseSplit(pendingLiftDays);
       setPendingLiftDays(null);
-      void newSplit;
+      return true;
     } catch (error) {
       logger.error("handleConfirmRestructure failed:", error);
       toast.error(friendlyRestructureError(error));
+      return false;
     } finally {
-      setRestructuring(false);
+      pendingRef.current = false;
+      setPending(null);
     }
   }
 
   function cancelRestructure(): void {
+    if (pendingRef.current) return;
     setShowRestructureModal(false);
     setPendingLiftDays(null);
   }
@@ -286,7 +292,8 @@ export function useProgrammeScheduleEditor(
     handleApplyScheduleChanges,
     showRestructureModal,
     pendingLiftDays,
-    restructuring,
+    restructuring: pending === "rebuild",
+    saving: pending !== null,
     handleConfirmRestructure,
     cancelRestructure,
   };

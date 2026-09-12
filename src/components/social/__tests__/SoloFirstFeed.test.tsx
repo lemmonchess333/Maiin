@@ -5,6 +5,10 @@ import { render, screen, fireEvent } from "@testing-library/react";
 // COMPOSITION (which sections render, and the share cold-start branch).
 const mockUseChallenges = vi.fn();
 const mockUseWorkouts = vi.fn();
+const mockUseRecentRuns = vi.fn();
+vi.mock("@/hooks/useRecentRuns", () => ({
+  useRecentRuns: () => mockUseRecentRuns(),
+}));
 
 vi.mock("@/lib/auth", () => ({
   useAuth: () => ({ profile: { displayName: "Alex" } }),
@@ -36,8 +40,11 @@ vi.mock("@/features/challenges/ChallengeCard", () => ({
   ),
 }));
 vi.mock("@/components/share/ShareCardSheet", () => ({
-  ShareCardSheet: ({ open }: { open: boolean }) => (
-    <div data-testid="share-sheet">{open ? "open" : "closed"}</div>
+  ShareCardSheet: ({ open, data }: { open: boolean; data: unknown }) => (
+    <div data-testid="share-sheet">
+      {open ? "open" : "closed"}
+      <span data-testid="share-data">{JSON.stringify(data)}</span>
+    </div>
   ),
 }));
 /* Spc1 PR5 — the suggested-spaces row renders router Links; this suite
@@ -64,6 +71,7 @@ beforeEach(() => {
     leaveChallenge: vi.fn(),
   });
   mockUseWorkouts.mockReturnValue({ workouts: [] });
+  mockUseRecentRuns.mockReturnValue({ runs: [] });
 });
 
 describe("SoloFirstFeed", () => {
@@ -157,5 +165,61 @@ describe("SoloFirstFeed", () => {
     );
     fireEvent.click(screen.getByRole("button", { name: /browse spaces/i }));
     expect(onNavigate).toHaveBeenCalled();
+  });
+});
+
+describe("SoloFirstFeed — latest run or lift", () => {
+  const run = {
+    id: "r1",
+    completedAt: new Date("2026-06-10T12:00:00"),
+    distance: 5000,
+    duration: 1800,
+    avgPace: 360,
+    elevationGain: 42,
+  };
+  const lift = (date: string) => ({
+    id: "w1",
+    date: date.slice(0, 10),
+    createdAt: { toDate: () => new Date(date) },
+    exercises: [{ sets: [{ reps: 5, weightKg: 100 }] }],
+  });
+  const show = () =>
+    render(<SoloFirstFeed onFindPeople={vi.fn()} onOpenTogether={vi.fn()} />);
+  it("offers a run-only account its saved run with the correct units", () => {
+    mockUseRecentRuns.mockReturnValue({ runs: [run] });
+    show();
+    fireEvent.click(
+      screen.getByRole("button", { name: /create a share card/i })
+    );
+    expect(
+      JSON.parse(screen.getByTestId("share-data").textContent!)
+    ).toMatchObject({
+      template: "run",
+      distanceKm: 5,
+      durationSec: 1800,
+      paceSecPerKm: 360,
+      elevationM: 42,
+    });
+  });
+  it.each([
+    ["2026-06-10T10:00:00", "run"],
+    ["2026-06-10T14:00:00", "lift"],
+  ])("chooses the latest session when the lift is at %s", (date, template) => {
+    mockUseWorkouts.mockReturnValue({ workouts: [lift(date)] });
+    mockUseRecentRuns.mockReturnValue({ runs: [run] });
+    show();
+    expect(
+      JSON.parse(screen.getByTestId("share-data").textContent!).template
+    ).toBe(template);
+  });
+  it("skips invalid runs and keeps the eligible lift", () => {
+    mockUseWorkouts.mockReturnValue({
+      workouts: [lift("2026-06-09T12:00:00")],
+    });
+    mockUseRecentRuns.mockReturnValue({ runs: [{ ...run, isInvalid: true }] });
+    show();
+    expect(
+      JSON.parse(screen.getByTestId("share-data").textContent!).template
+    ).toBe("lift");
   });
 });

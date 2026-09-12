@@ -46,7 +46,8 @@ const seenByKey = new Map<string, Set<string>>();
 export function noteActivitySnapshot(
   type: ActivityType,
   uid: string,
-  ids: string[]
+  ids: string[],
+  options: { baseline?: boolean } = {}
 ): string[] {
   if (!uid) return [];
   const key = `${type}:${uid}`;
@@ -59,7 +60,7 @@ export function noteActivitySnapshot(
   for (const id of ids) {
     if (set.has(id)) continue;
     set.add(id);
-    if (!isBaseline) {
+    if (!isBaseline && !options.baseline) {
       track(EVENT[type]);
       fired.push(id);
     }
