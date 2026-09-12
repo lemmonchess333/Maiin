@@ -29,8 +29,8 @@ import { getPersonalTrajectory } from "../personalTrajectory";
 import { seedFirestore, resetFirestore } from "@/test/firestoreHarness";
 import { Timestamp } from "firebase/firestore";
 
-/** Tuesday 14:00 local time. Week starts Sunday, so: this week from Sun 26th;
- *  last week Sun 19th → Sun 26th; last-week-to-date Sun 19th → Tue 21st
+/** Tuesday 14:00 local time. Week starts Monday, so: this week from Mon 27th;
+ *  last week Mon 20th → Mon 27th; last-week-to-date Mon 20th → Tue 21st
  *  14:00. */
 const NOW = new Date("2026-04-28T14:00:00");
 
@@ -85,12 +85,12 @@ describe("getPersonalTrajectory", () => {
   });
 
   it("excludes a run from just BEFORE last week starts", async () => {
-    // Deliberately one hour before the boundary (last week starts Sun
-    // 19th 00:00), not comfortably outside it. A seed placed days away
+    // Deliberately one hour before the boundary (last week starts Mon
+    // 20th 00:00), not comfortably outside it. A seed placed days away
     // tolerates a week-start that is a day off; this one does not — and
     // an off-by-one week anchor is the likeliest way this drifts.
     seedFirestore({
-      "users/user1/runs/just_before": run("2026-04-18T23:00:00", 42),
+      "users/user1/runs/just_before": run("2026-04-19T23:00:00", 42),
       "users/user1/runs/tw": run("2026-04-27T10:00:00", 2),
     });
 
@@ -100,9 +100,9 @@ describe("getPersonalTrajectory", () => {
     expect(result.lastWeekToDate.km).toBe(0);
   });
 
-  it("includes the exact local Sunday boundary in last week", async () => {
+  it("includes the exact local Monday boundary in last week", async () => {
     seedFirestore({
-      "users/user1/runs/boundary": run("2026-04-19T00:00:00", 4),
+      "users/user1/runs/boundary": run("2026-04-20T00:00:00", 4),
     });
     const result = await getPersonalTrajectory("user1");
     expect(result.lastWeek.km).toBe(4);

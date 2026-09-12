@@ -151,16 +151,17 @@ describe("evaluateEaseWeekNudge — scope + suppression", () => {
   });
 
   it("suppressed for the rest of a week the user dismissed it in", () => {
-    // localWeekKey of 2026-07-12 (Sunday) is 2026-07-12 itself.
+    // localWeekKey of 2026-07-12 (Sunday) is 2026-07-06 — the Monday that
+    // starts the week TODAY closes.
     expect(
       evaluateEaseWeekNudge(
-        base({ dismissedWeekKey: "2026-07-12", runs: triggering })
+        base({ dismissedWeekKey: "2026-07-06", runs: triggering })
       ).show
     ).toBe(false);
     // A different (prior) week's dismissal does not suppress this week.
     expect(
       evaluateEaseWeekNudge(
-        base({ dismissedWeekKey: "2026-07-05", runs: triggering })
+        base({ dismissedWeekKey: "2026-06-29", runs: triggering })
       ).show
     ).toBe(true);
   });
@@ -308,9 +309,10 @@ describe("A6 — pace-miss trigger", () => {
 });
 
 describe("A6 — evaluatePostEaseBounce", () => {
-  // TODAY = 2026-07-12 (a Sunday) → current week 2026-07-12, last week
-  // 2026-07-05.
-  const LAST_WEEK = "2026-07-05";
+  // TODAY = 2026-07-12 (a Sunday) → current week 2026-07-06, last week
+  // 2026-06-29. Under the Monday anchor a Sunday CLOSES its week rather
+  // than opening one, so both keys are the Mondays before TODAY.
+  const LAST_WEEK = "2026-06-29";
   const tempoRun = (
     date: string,
     tone: "on" | "fast" | "slow"
@@ -327,7 +329,7 @@ describe("A6 — evaluatePostEaseBounce", () => {
     ).toBeNull();
     expect(
       evaluatePostEaseBounce({
-        easedWeekKey: "2026-06-28", // two weeks back — read expired
+        easedWeekKey: "2026-06-22", // two weeks back — read expired
         today: TODAY,
         runs: [tempoRun("2026-07-12", "on")],
       })
@@ -339,13 +341,13 @@ describe("A6 — evaluatePostEaseBounce", () => {
       evaluatePostEaseBounce({
         easedWeekKey: LAST_WEEK,
         today: TODAY,
-        runs: [tempoRun("2026-07-08", "slow")], // last week's run, not this week's
+        runs: [tempoRun("2026-07-01", "slow")], // last week's run, not this week's
       })
     ).toBeNull();
   });
 
   it("reads the LATEST judged tempo of the current week", () => {
-    // TODAY is the Sunday that STARTS week 2026-07-12.
+    // TODAY is the Sunday that CLOSES week 2026-07-06.
     expect(
       evaluatePostEaseBounce({
         easedWeekKey: LAST_WEEK,

@@ -21,10 +21,10 @@ import {
 } from "../runScheduler";
 import { generateSchedule, type ScheduleDay } from "@/lib/scheduleUtils";
 
-const sundayStart = "2026-05-10"; // Sunday
+const mondayStart = "2026-05-11"; // Monday — the week anchor (RunWk2)
 const baseInput = {
   weekNumber: 1,
-  weekStart: sundayStart,
+  weekStart: mondayStart,
 };
 
 /* ─── scheduleStructuredWeekV2 ───────────────────────────────── */
@@ -58,13 +58,108 @@ describe("scheduleStructuredWeekV2", () => {
       expect(rd.id).toBeTruthy();
       expect(rd.id).toMatch(/^runday_/);
       expect(rd.date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
-      expect(rd.weekKey).toBe(sundayStart);
+      expect(rd.weekKey).toBe(mondayStart);
       expect(rd.status).toBe("planned");
     });
   });
 
+  it("emits the week's runs in CALENDAR order — a Sunday run comes last, not first", () => {
+    // `dayIndex` is a getDay() weekday, so sorting on it puts Sunday (0)
+    // first; under the Monday anchor Sunday is the week's LAST day. The
+    // scheduler sorts on week position instead. Nothing asserted order
+    // before, which is how a Sunday-first array would have shipped.
+    const schedule: ScheduleDay[] = [
+      { day: 0, type: "run" }, // Sunday — last in a Monday week
+      { day: 1, type: "rest" },
+      { day: 2, type: "run" },
+      { day: 3, type: "rest" },
+      { day: 4, type: "run" },
+      { day: 5, type: "rest" },
+      { day: 6, type: "rest" },
+    ];
+    const result = scheduleStructuredWeekV2({
+      ...baseInput,
+      weekSchedule: schedule,
+    });
+    expect(result.map((rd) => rd.date)).toEqual([
+      "2026-05-12", // Tue
+      "2026-05-14", // Thu
+      "2026-05-17", // Sun
+    ]);
+    const dates = result.map((rd) => rd.date!);
+    expect([...dates].sort()).toEqual(dates);
+  });
+
+  it("normalises an off-anchor weekStart, so any day of the week yields that week's plan", () => {
+    // Production passes an on-anchor key. A caller handing in a Wednesday
+    // must not get runs keyed to one week and dated in another — the
+    // builder keys to the CONTAINING week, so the arithmetic has to start
+    // there too. Pinned as equality with the Monday plan rather than as a
+    // list of dates, so the property is the claim.
+    const schedule: ScheduleDay[] = [
+      { day: 0, type: "run" },
+      { day: 1, type: "run" },
+      { day: 2, type: "rest" },
+      { day: 3, type: "run" },
+      { day: 4, type: "rest" },
+      { day: 5, type: "rest" },
+      { day: 6, type: "run" },
+    ];
+    const fromMonday = scheduleStructuredWeekV2({
+      ...baseInput,
+      weekStart: "2026-05-11", // Mon
+      weekSchedule: schedule,
+    });
+    const fromWednesday = scheduleStructuredWeekV2({
+      ...baseInput,
+      weekStart: "2026-05-13", // Wed, same week
+      weekSchedule: schedule,
+    });
+    expect(fromWednesday).toEqual(fromMonday);
+    expect(fromMonday.every((rd) => rd.weekKey === "2026-05-11")).toBe(true);
+  });
+
+  it("a race plan from a mid-week weekStart equals the plan from that week's Monday", () => {
+    // `generateRacePlanV2` does its own week arithmetic from `weekStart`
+    // (final-week start, race offset) while the builder keys every run to
+    // the CONTAINING week. If the two started from different days, the
+    // race offset would be measured from the wrong day and the shakeout
+    // filter would keep or cut the wrong slots. Equality with the Monday
+    // plan is the whole property; a date list would only pin one case.
+    const schedule: ScheduleDay[] = [
+      { day: 0, type: "run" },
+      { day: 1, type: "run" },
+      { day: 2, type: "rest" },
+      { day: 3, type: "run" },
+      { day: 4, type: "rest" },
+      { day: 5, type: "run" },
+      { day: 6, type: "rest" },
+    ];
+    const base = {
+      weekSchedule: schedule,
+      raceGoal: { distance: "half" as const, targetDate: "2026-06-21" }, // a Sunday
+      weeklyRunDays: 4,
+      recentLayoff: "none" as const,
+    };
+    const fromMonday = generateRacePlanV2({
+      ...base,
+      currentDate: "2026-05-11",
+      weekStart: "2026-05-11", // Mon
+    });
+    const fromWednesday = generateRacePlanV2({
+      ...base,
+      currentDate: "2026-05-11",
+      weekStart: "2026-05-13", // Wed of the same week
+    });
+    expect(fromWednesday.weeks).toEqual(fromMonday.weeks);
+    const race = fromMonday.weeks.at(-1)!.find((r) => r.type === "race")!;
+    expect(race.date).toBe("2026-06-21");
+  });
+
   it("derives `date` from weekStart + dayIndex correctly", () => {
-    // weekStart = Sun 2026-05-10. Run on dayIndex 3 (Wed) = 2026-05-13
+    // weekStart = Mon 2026-05-11. Run on dayIndex 3 (Wed) = 2026-05-13.
+    // Wed 13 May sat in the old Sunday week too, so the date is the
+    // same under both anchors — only the key moved.
     const schedule: ScheduleDay[] = [
       { day: 0, type: "rest" },
       { day: 1, type: "rest" },
@@ -210,8 +305,8 @@ describe("generateRacePlanV2", () => {
     weekSchedule: generateSchedule(3, 3),
     raceGoal: { distance: "10k", targetDate: "2026-08-10" }, // ~13 weeks from May 10
     weeklyRunDays: 3,
-    currentDate: "2026-05-10",
-    weekStart: "2026-05-10",
+    currentDate: "2026-05-11",
+    weekStart: "2026-05-11",
   };
 
   it("returns totalWeeks, compressed flag, weeks array", () => {
@@ -489,8 +584,8 @@ describe("generateRacePlanV2 · clashesWithLift flag", () => {
   ];
   const baseInputC = {
     weeklyRunDays: 2,
-    currentDate: "2026-05-10",
-    weekStart: "2026-05-10",
+    currentDate: "2026-05-11",
+    weekStart: "2026-05-11",
   };
 
   it("flags the hard run when it's forced onto a both-day, but never the easy run", () => {
@@ -611,8 +706,8 @@ describe("PR-0a — race template selection by distance", () => {
         weekSchedule: generateSchedule(3, 3),
         raceGoal: { distance: c.distance, targetDate: "2026-12-12" },
         weeklyRunDays: 3,
-        currentDate: "2026-05-10",
-        weekStart: "2026-05-10",
+        currentDate: "2026-05-11",
+        weekStart: "2026-05-11",
       });
       // Race day lives in the final week, marked type: "race".
       const finalWeek = plan.weeks[plan.weeks.length - 1];

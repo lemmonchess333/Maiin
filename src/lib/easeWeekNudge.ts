@@ -88,7 +88,7 @@ export interface EaseWeekNudgeInput {
   weekAlreadyEased: boolean;
   /** A PR-L fell-behind prompt is pending for this user. */
   fellBehindPending: boolean;
-  /** The weekKey (Sunday YYYY-MM-DD) the user dismissed the card in,
+  /** The weekKey (Monday YYYY-MM-DD) the user dismissed the card in,
    *  or null. Silences the card for the rest of that week. */
   dismissedWeekKey: string | null;
   /** Local YYYY-MM-DD the card was last shown, or null. Drives the
@@ -226,7 +226,7 @@ export function evaluateEaseWeekNudge(
 export type PostEaseBounce = "recovered" | "still_missing" | null;
 
 export function evaluatePostEaseBounce(input: {
-  /** Sunday weekKey the athlete applied an easier week in, or null. */
+  /** Monday weekKey the athlete applied an easier week in, or null. */
   easedWeekKey: string | null;
   /** Local YYYY-MM-DD "today". */
   today: string;

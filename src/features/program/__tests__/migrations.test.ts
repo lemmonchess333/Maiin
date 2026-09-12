@@ -50,20 +50,24 @@ function legacyRunDay(
 
 describe("migrateProgramState", () => {
   it("returns input unchanged when already at current version", () => {
+    // Keys are MONDAYS here because that is what a current-version doc
+    // carries (RunWk2 / v4). A Sunday key at v4 is not "clean" — the
+    // re-anchor below would rewrite it, and referential equality would
+    // rightly fail.
     const upToDate = makeLegacyProgramState({
       programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
-      liftWeekKey: "2026-01-04",
+      liftWeekKey: "2026-01-05",
       runDays: [
         {
           ...legacyRunDay(),
-          id: "runday_2026-05-10_2_tempo",
+          id: "runday_2026-05-11_2_tempo",
           date: "2026-05-12",
-          weekKey: "2026-05-10",
+          weekKey: "2026-05-11",
           status: "planned",
         },
       ],
     });
-    const migrated = migrateProgramState(upToDate, "2026-05-10");
+    const migrated = migrateProgramState(upToDate, "2026-05-11");
     expect(migrated).toBe(upToDate); // referentially equal (no work done)
   });
 
@@ -103,10 +107,10 @@ describe("migrateProgramState", () => {
         }),
       ],
     });
-    const migrated = migrateProgramState(legacy, "2026-05-10");
+    const migrated = migrateProgramState(legacy, "2026-05-11");
     expect(migrated.runDays![0].id).toBeTruthy();
-    expect(migrated.runDays![0].date).toBe("2026-05-12"); // Sun May 10 + dayIndex 2 = Tue May 12
-    expect(migrated.runDays![0].weekKey).toBe("2026-05-10");
+    expect(migrated.runDays![0].date).toBe("2026-05-12"); // Mon May 11 + dayIndex 2 (Tue) = May 12
+    expect(migrated.runDays![0].weekKey).toBe("2026-05-11");
     expect(migrated.runDays![0].status).toBe("planned");
   });
 
@@ -313,27 +317,29 @@ describe("PR-0b-i — migrateProgramState shape-aware repair", () => {
         },
       ],
     });
-    const migrated = migrateProgramState(state, "2026-05-10");
-    expect(migrated.runDays![0].weekKey).toBe("2026-05-10");
+    const migrated = migrateProgramState(state, "2026-05-11");
+    expect(migrated.runDays![0].weekKey).toBe("2026-05-11");
     // Pre-existing id is preserved — migration is additive.
     expect(migrated.runDays![0].id).toBe("runday_pre-existing");
   });
 
   it("fully V2 doc returns reference-equal (===) state (zero work)", () => {
+    // Monday keys — a v4 doc carries them, and a Sunday key would be
+    // re-anchored by the RunWk2 remap, which is real work.
     const v2 = makeLegacyProgramState({
       programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
-      liftWeekKey: "2026-01-04",
+      liftWeekKey: "2026-01-05",
       runDays: [
         {
           ...legacyRunDay({ dayIndex: 2, completed: false }),
-          id: "runday_2026-05-10_2_tempo",
+          id: "runday_2026-05-11_2_tempo",
           date: "2026-05-12",
-          weekKey: "2026-05-10",
+          weekKey: "2026-05-11",
           status: "planned",
         },
       ],
     });
-    const migrated = migrateProgramState(v2, "2026-05-10");
+    const migrated = migrateProgramState(v2, "2026-05-11");
     // Reference equality — proves the persist guard will skip the
     // Firestore write. This is the storm-prevention assertion.
     expect(migrated).toBe(v2);
@@ -396,30 +402,33 @@ describe("PR-0b-i — migrateProgramState weekStart normalisation", () => {
   // today's date. For a user opening the app on a Wednesday this
   // produced weekKey="2026-05-13" and date values offset from that
   // Wednesday, splitting the calendar week across two weekKeys.
-  // The default is now `localWeekKey()` (Sunday) and callers
-  // passing mid-week dates get them normalised back to that
-  // week's Sunday.
+  // The default is now `localWeekKey()` (Monday, per RunWk2) and
+  // callers passing mid-week dates get them normalised back to that
+  // week's Monday.
 
-  it("normalises a Wednesday weekStart to that week's Sunday", () => {
-    // 2026-05-13 is a Wednesday. The Sunday on or before is
-    // 2026-05-10.
+  it("normalises a Wednesday weekStart to that week's Monday", () => {
+    // 2026-05-13 is a Wednesday. The Monday on or before is
+    // 2026-05-11.
     const state = makeLegacyProgramState({
       runDays: [legacyRunDay({ dayIndex: 2 })],
     });
     const migrated = migrateProgramState(state, "2026-05-13");
-    expect(migrated.runDays![0].weekKey).toBe("2026-05-10");
-    // dayIndex 2 (Tue) from Sunday May 10 = May 12.
+    expect(migrated.runDays![0].weekKey).toBe("2026-05-11");
+    // dayIndex 2 (Tue) from Monday May 11 = May 12.
     expect(migrated.runDays![0].date).toBe("2026-05-12");
   });
 
-  it("normalises a Saturday weekStart to that week's Sunday", () => {
-    // 2026-05-16 is a Saturday → Sunday May 10.
+  it("normalises a Saturday weekStart to that week's Monday", () => {
+    // 2026-05-16 is a Saturday → Monday May 11.
     const state = makeLegacyProgramState({
       runDays: [legacyRunDay({ dayIndex: 0 })],
     });
     const migrated = migrateProgramState(state, "2026-05-16");
-    expect(migrated.runDays![0].weekKey).toBe("2026-05-10");
-    expect(migrated.runDays![0].date).toBe("2026-05-10");
+    expect(migrated.runDays![0].weekKey).toBe("2026-05-11");
+    // dayIndex 0 is a `getDay()` Sunday, and under the Monday anchor
+    // Sunday is the LAST day of the week — so it lands on May 17, the
+    // Sunday that closes the May 11 week, not the one that opened it.
+    expect(migrated.runDays![0].date).toBe("2026-05-17");
   });
 
   it("does not regenerate workouts (reference equality on workouts)", () => {
@@ -531,18 +540,18 @@ describe("PR-0b-i — persist-if-changed integration semantics", () => {
   it("healthy V2 doc stringifies identically before/after migration", () => {
     const v2 = makeLegacyProgramState({
       programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
-      liftWeekKey: "2026-01-04",
+      liftWeekKey: "2026-01-05",
       runDays: [
         {
           ...legacyRunDay({ dayIndex: 2, completed: false }),
-          id: "runday_2026-05-10_2_tempo",
+          id: "runday_2026-05-11_2_tempo",
           date: "2026-05-12",
-          weekKey: "2026-05-10",
+          weekKey: "2026-05-11",
           status: "planned",
         },
       ],
     });
-    const migrated = migrateProgramState(v2, "2026-05-10");
+    const migrated = migrateProgramState(v2, "2026-05-11");
     expect(JSON.stringify(migrated)).toBe(JSON.stringify(v2));
   });
 
@@ -571,14 +580,17 @@ describe("migrateProgramState — liftWeekKey backfill (D1)", () => {
 
   it("seeds a missing anchor to the CURRENT week, not the epoch", () => {
     const out = migrateProgramState(legacy(), "2026-03-11"); // a Wednesday
-    // Normalised to that week's Sunday, matching every other week key.
-    expect(out.liftWeekKey).toBe("2026-03-08");
+    // Normalised to that week's Monday, matching every other week key.
+    expect(out.liftWeekKey).toBe("2026-03-09");
   });
 
   it("never re-seeds an existing anchor — that would cancel a real absence", () => {
+    // A Sunday-anchored anchor from December. The v4 remap re-anchors it
+    // one day forward (Sun 7 Dec → Mon 8 Dec); what must NOT happen is a
+    // jump to the March week, which would erase a three-month absence.
     const stale = { ...legacy(), liftWeekKey: "2025-12-07" };
     const out = migrateProgramState(stale, "2026-03-11");
-    expect(out.liftWeekKey).toBe("2025-12-07");
+    expect(out.liftWeekKey).toBe("2025-12-08");
   });
 
   it("the seeded anchor does not read as stale on the same day", () => {
@@ -586,7 +598,7 @@ describe("migrateProgramState — liftWeekKey backfill (D1)", () => {
     // rollover must find nothing to do. If this ever inverts, every existing
     // user gets a twelve-week catch-up on first open.
     const out = migrateProgramState(legacy(), "2026-03-11");
-    expect(out.liftWeekKey! >= "2026-03-08").toBe(true);
+    expect(out.liftWeekKey! >= "2026-03-09").toBe(true);
   });
 });
 

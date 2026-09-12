@@ -5,8 +5,8 @@
  * no engine re-runs, no server materialization, no new storage. The lock's
  * behavioural rules ALL live here so they're unit-testable:
  *
- *  - Sunday-start local weeks (the performance engine's convention —
- *    `localWeekKey`); the review covers the last COMPLETED Sun–Sat week.
+ *  - Monday-start local weeks (the performance engine's convention —
+ *    `localWeekKey`); the review covers the last COMPLETED Mon–Sun week.
  *  - Eligibility: renders only when the reviewed week has ≥1 DELIBERATE
  *    event (workout / run / meal / weigh-in — never passive data). A fully
  *    quiet week renders the gentle "quiet" variant ONLY for established
@@ -39,7 +39,9 @@ import { parseLocalDate, localDateString } from "@/lib/dateHelpers";
 
 /* ── Week bounds ──────────────────────────────────────────────── */
 
-/** Sunday "YYYY-MM-DD" → { start, end } local-date strings (Sun..Sat). */
+/** Week-start "YYYY-MM-DD" → { start, end } local-date strings, the
+ *  seven-day span it opens. Anchor-agnostic: it adds six days to
+ *  whatever first day it is handed. */
 export function weekBounds(weekKey: string): { start: string; end: string } {
   const start = parseLocalDate(weekKey);
   const end = new Date(start);
@@ -98,7 +100,7 @@ export interface WeekAheadPlan {
 }
 
 export interface WeeklyReviewData {
-  /** Sunday key of the REVIEWED (last completed) week. */
+  /** Monday key of the REVIEWED (last completed) week. */
   weekKey: string;
   /** Week-scoped rows (the view-model re-filters defensively). */
   workouts: ReviewWorkout[];
@@ -181,7 +183,7 @@ export interface WeekPulse {
  * Live mid-week counterpart of the review's training section, shown on
  * the two completion screens. Same rules as the review: eligible runs
  * only, planned comparisons only when a plan exists (Run9a freeform →
- * done-only), Sunday-start weeks. NO PI claims — the index recomputes
+ * done-only), Monday-start weeks. NO PI claims — the index recomputes
  * async server-side after a save, so an instant delta would be a guess.
  * Returns null when there is nothing to say (no lanes at all).
  */

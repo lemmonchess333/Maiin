@@ -9,7 +9,7 @@ import {
 
 /**
  * RUN-RESCHEDULE-01 — pure logic for the one-off "move a scheduled run to
- * another day within the same generated Sunday-start week" feature.
+ * another day within the same generated Monday-start week" feature.
  *
  * Locked invariants (from the audit): the stable `id`, `templateId`,
  * `userOverride`, `status`, completion truth, race identity (`type`), the

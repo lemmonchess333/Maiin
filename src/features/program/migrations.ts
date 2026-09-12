@@ -48,6 +48,7 @@ import { generateSchedule, isValidWeekSchedule } from "@/lib/scheduleUtils";
 import {
   generateScheduledRunId,
   localWeekKey,
+  migrateWeekKeyAnchor,
   parseLocalDate,
   dateForDayOfWeek,
 } from "@/lib/dateHelpers";
@@ -278,8 +279,9 @@ function migrateScheduledRunDay(
   // ── Shape repair (fill missing fields) ──
   const weekKey = rd.weekKey ?? localWeekKey(weekStartDate);
   // Same offset rule: `weekKey` names the week's first day, `dayIndex` is a
-  // day-of-week (0 = Sunday). Adding the index directly repairs a legacy
-  // runDay onto the wrong date under any anchor but Sunday.
+  // day-of-week (0 = Sunday). Adding the index directly would repair a
+  // legacy runDay onto the wrong date — a live bug since RunWk2, not a
+  // latent one, which is why this goes through `dateForDayOfWeek`.
   const date = rd.date ?? dateForDayOfWeek(weekKey, rd.dayIndex);
   const id =
     rd.id ??
@@ -348,20 +350,20 @@ function migrateScheduledRunDay(
  *   internally inconsistent)
  * @param weekStart - local-date "YYYY-MM-DD" representing any
  *   date in the week this state's runDays belong to. Defensively
- *   normalised to that week's Sunday — callers can pass today
+ *   normalised to that week's first day — callers can pass today
  *   and the helper will resolve the right week. Defaults to
- *   `localWeekKey()` (this week's Sunday).
+ *   `localWeekKey()` (this week's start, Monday since RunWk2).
  */
 export function migrateProgramState(
   state: ProgramState,
   weekStart: string = localWeekKey()
 ): ProgramState {
   // Defensive normalisation: callers may pass today's date
-  // (mid-week). We always want the Sunday on or before so derived
-  // run-day dates land in the user's current calendar week. Pre-
-  // PR-0b-i the default was `localDateString()` which produced
-  // mid-week weekKey values for any user opening the app on a
-  // non-Sunday.
+  // (mid-week). We always want the week's first day on or before it,
+  // so derived run-day dates land in the user's current calendar
+  // week. Pre-PR-0b-i the default was `localDateString()`, which
+  // produced mid-week weekKey values for anyone opening the app on
+  // any day but the anchor.
   const normalizedWeekStart = localWeekKey(parseLocalDate(weekStart));
   const weekStartDate = parseLocalDate(normalizedWeekStart);
 
@@ -422,21 +424,70 @@ export function migrateProgramState(
   // silently cancel a genuine multi-week absence.
   const liftWeekKeyChanged = state.liftWeekKey === undefined;
 
+  /* v4 (RunWk2) — re-anchor stored week keys from Sunday to Monday.
+     `WEEK_STARTS_ON` flipped, and both rollovers decide whether to
+     advance by comparing a STORED key against a freshly computed one
+     as strings. Every Sunday key sorts before the Monday key for the
+     same span, so without this remap the first app-open after the
+     flip walks every user forward a week — a deload some of them did
+     not earn — as an artefact of the migration.
+
+     Two fields carry a week key and both are remapped:
+     `liftWeekKey`, and each runDay's `weekKey`.
+
+     What is deliberately NOT touched, each for its own reason:
+       - runDay `date`: the user's actual scheduled days. Re-deriving
+         them would move a Sunday long run by a week and orphan the
+         claim that matches a saved run to its slot BY DATE. The cost
+         of leaving them is one week where a Sunday run sits a day
+         outside its own week key; the next natural rollover
+         regenerates a clean Monday week, so it self-heals.
+       - runDay `id`: opaque and deliberately stable across moves.
+         Nothing derives a week from it, and the SERVER dedupes
+         completed races against these exact strings in
+         `runPlan.completedRaces` — regenerating them client-side
+         would make an already-recorded race look new and invite a
+         second recovery entry.
+
+     Idempotent via `migrateWeekKeyAnchor`, which returns a key that
+     is already on the anchor unchanged. */
+  const remappedLiftWeekKey = state.liftWeekKey
+    ? migrateWeekKeyAnchor(state.liftWeekKey)
+    : undefined;
+  const liftWeekKeyReanchored =
+    remappedLiftWeekKey !== undefined &&
+    remappedLiftWeekKey !== state.liftWeekKey;
+
+  const anchoredRunDays = migratedRunDays.map((rd) => {
+    if (!rd.weekKey) return rd;
+    const next = migrateWeekKeyAnchor(rd.weekKey);
+    return next === rd.weekKey ? rd : { ...rd, weekKey: next };
+  });
+  const runDaysReanchored = anchoredRunDays.some(
+    (rd, i) => rd !== migratedRunDays[i]
+  );
+
   if (
     !runDaysChanged &&
+    !runDaysReanchored &&
     !workoutsChanged &&
     !coverageChanged &&
     !versionChanged &&
-    !liftWeekKeyChanged
+    !liftWeekKeyChanged &&
+    !liftWeekKeyReanchored
   ) {
     return state;
   }
 
   return {
     ...state,
-    runDays: migratedRunDays,
+    runDays: anchoredRunDays,
     ...(workoutsChanged || coverageChanged ? { workouts: backfilled } : {}),
-    ...(liftWeekKeyChanged ? { liftWeekKey: normalizedWeekStart } : {}),
+    ...(liftWeekKeyChanged
+      ? { liftWeekKey: normalizedWeekStart }
+      : liftWeekKeyReanchored
+        ? { liftWeekKey: remappedLiftWeekKey }
+        : {}),
     programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
   };
 }

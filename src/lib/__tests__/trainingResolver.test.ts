@@ -79,9 +79,9 @@ function makeProgramState(overrides: Partial<ProgramState> = {}): ProgramState {
   } as ProgramState;
 }
 
-// Anchor week: Sunday 2026-05-17 → Saturday 2026-05-23.
+// Anchor week: Monday 2026-05-18 → Sunday 2026-05-24.
 // Mon = "2026-05-18", next Mon = "2026-05-25".
-const CURRENT_WEEK_KEY = "2026-05-17";
+const CURRENT_WEEK_KEY = "2026-05-18";
 const THIS_MON = "2026-05-18";
 const NEXT_MON = "2026-05-25";
 
@@ -115,7 +115,7 @@ describe("resolveRunDayForDate — priority 2 (current-week weekKey)", () => {
     const runDays = [
       makeRunDay({ weekKey: CURRENT_WEEK_KEY, dayIndex: 1, date: undefined }),
     ];
-    // Target next Mon → its weekKey is 2026-05-24, doesn't match
+    // Target next Mon → its weekKey is 2026-05-25, doesn't match
     expect(
       resolveRunDayForDate(NEXT_MON, runDays, CURRENT_WEEK_KEY)
     ).toBeNull();
@@ -359,7 +359,7 @@ describe("resolveTrainingDayForDate — status surfacing", () => {
     const programState = makeProgramState({
       runDays: [
         makeRunDay({
-          id: "runday_2026-05-17_1_easy_30",
+          id: "runday_2026-05-18_1_easy_30",
           date: THIS_MON,
           weekKey: CURRENT_WEEK_KEY,
           dayIndex: 1,

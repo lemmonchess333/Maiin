@@ -353,7 +353,7 @@ function buildRunPlan(
   weekSchedule: ScheduleDay[]
 ): { runDays: ScheduledRunDay[]; runPlan: RunPlan | undefined } {
   // The week containing `currentDate` is the plan's week 0. Use
-  // localWeekKey to find the Sunday-start anchor.
+  // localWeekKey to find its first day (Monday — see WEEK_STARTS_ON).
   const weekStart = localWeekKey(parseLocalDate(input.currentDate));
 
   if (input.runMode === "freeform") {

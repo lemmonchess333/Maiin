@@ -41,9 +41,9 @@ import {
   failNextFirestore,
 } from "@/test/firestoreHarness";
 
-/** Wed 15 Jul 2026 → current week Sun 12th, reviewed week Sun 5th–Sat 11th. */
+/** Wed 15 Jul 2026 → current week Mon 13th, reviewed week Mon 6th–Sun 12th. */
 const NOW = new Date(2026, 6, 15, 9, 0, 0);
-const WEEK = "2026-07-05";
+const WEEK = "2026-07-06";
 
 function lift(date: string, weightKg: number, reps: number) {
   return {
@@ -105,14 +105,14 @@ describe("useWeeklyReview assembly", () => {
       "users/u1/meals/m1": { date: "2026-07-06", totalCalories: 2200 },
       "users/u1/meals/m2": { date: "2026-07-07", totalCalories: 2600 },
       // Compute-date keys: the doc that summarises the reviewed week
-      // landed the Sunday AFTER it (2026-07-12); the one before it is
-      // last week's number.
-      "users/u1/performance/2026-07-12": {
-        weekKey: "2026-07-12",
+      // landed the Monday AFTER it (2026-07-13); the one named after the
+      // week's own first day is last week's number.
+      "users/u1/performance/2026-07-13": {
+        weekKey: "2026-07-13",
         performanceIndex: 68,
       },
-      "users/u1/performance/2026-07-05": {
-        weekKey: "2026-07-05",
+      "users/u1/performance/2026-07-06": {
+        weekKey: "2026-07-06",
         performanceIndex: 60,
       },
     });
@@ -122,7 +122,7 @@ describe("useWeeklyReview assembly", () => {
 
     const review = result.current.review!;
     expect(review.weekKey).toBe(WEEK);
-    expect(review.range).toEqual({ start: WEEK, end: "2026-07-11" });
+    expect(review.range).toEqual({ start: WEEK, end: "2026-07-12" });
     expect(review.headline).toMatchObject({ pi: 68, delta: 8 });
     expect(review.training?.lifts).toMatchObject({ done: 2, planned: 3 });
     expect(review.training?.runs).toMatchObject({ count: 2, km: 15 });
@@ -343,12 +343,12 @@ describe("the load band is RESOLVED, not read raw", () => {
     seedFirestore({
       "users/u1/workouts/w1": lift("2026-07-06", 100, 5),
       // No loadBand field at all — a doc from before the band was stored.
-      "users/u1/performance/2026-07-12": {
-        weekKey: "2026-07-12",
+      "users/u1/performance/2026-07-13": {
+        weekKey: "2026-07-13",
         performanceIndex: 88,
       },
-      "users/u1/performance/2026-07-05": {
-        weekKey: "2026-07-05",
+      "users/u1/performance/2026-07-06": {
+        weekKey: "2026-07-06",
         performanceIndex: 86,
       },
     });
@@ -366,13 +366,13 @@ describe("the load band is RESOLVED, not read raw", () => {
   it("tolerates a stored band whose case differs", async () => {
     seedFirestore({
       "users/u1/workouts/w1": lift("2026-07-06", 100, 5),
-      "users/u1/performance/2026-07-12": {
-        weekKey: "2026-07-12",
+      "users/u1/performance/2026-07-13": {
+        weekKey: "2026-07-13",
         performanceIndex: 88,
         loadBand: "Overreach",
       },
-      "users/u1/performance/2026-07-05": {
-        weekKey: "2026-07-05",
+      "users/u1/performance/2026-07-06": {
+        weekKey: "2026-07-06",
         performanceIndex: 86,
       },
     });
@@ -393,12 +393,12 @@ describe("the load band is RESOLVED, not read raw", () => {
        verdictFor has no copy for, so the delta path is correct here. */
     seedFirestore({
       "users/u1/workouts/w1": lift("2026-07-06", 100, 5),
-      "users/u1/performance/2026-07-12": {
-        weekKey: "2026-07-12",
+      "users/u1/performance/2026-07-13": {
+        weekKey: "2026-07-13",
         performanceIndex: 60,
       },
-      "users/u1/performance/2026-07-05": {
-        weekKey: "2026-07-05",
+      "users/u1/performance/2026-07-06": {
+        weekKey: "2026-07-06",
         performanceIndex: 58,
       },
     });
@@ -415,26 +415,26 @@ describe("performance docs are keyed by COMPUTE date, and read by range", () => 
    * The server names each performance doc after the UTC date it was
    * computed on (PI1a: `weekKey` = compute date), and computes daily for
    * active users. The hook used to `getDoc` the id equal to the reviewed
-   * week's Sunday — the compute from the week's FIRST morning, i.e. last
+   * week's Monday — the compute from the week's FIRST morning, i.e. last
    * week's number, and on a user without a compute on that exact day, no
    * doc at all. The reviewed week's number is the latest compute that
-   * landed after the week ended (Sunday 12th … up to and including the
-   * following Sunday's own compute); the previous week's is the latest at
-   * or before the reviewed Sunday.
+   * landed after the week ended (Tuesday 7th … up to and including the
+   * following Monday's own compute); the previous week's is the latest at
+   * or before the reviewed Monday.
    */
   const perf = (weekKey: string, performanceIndex: number) => ({
     weekKey,
     performanceIndex,
   });
 
-  it("takes the latest compute in (reviewed Sunday, next Sunday], not the doc named after the week", async () => {
+  it("takes the latest compute in (reviewed Monday, next Monday], not the doc named after the week", async () => {
     seedFirestore({
       "users/u1/workouts/w1": lift("2026-07-06", 100, 5),
-      "users/u1/performance/2026-07-04": perf("2026-07-04", 50),
-      "users/u1/performance/2026-07-05": perf("2026-07-05", 60), // reviewed Sunday itself → previous week
-      "users/u1/performance/2026-07-08": perf("2026-07-08", 64), // mid-week daily refresh
-      "users/u1/performance/2026-07-12": perf("2026-07-12", 68), // the Sunday after → this week
-      "users/u1/performance/2026-07-14": perf("2026-07-14", 75), // already next week's story
+      "users/u1/performance/2026-07-05": perf("2026-07-05", 50),
+      "users/u1/performance/2026-07-06": perf("2026-07-06", 60), // reviewed Monday itself → previous week
+      "users/u1/performance/2026-07-09": perf("2026-07-09", 64), // mid-week daily refresh
+      "users/u1/performance/2026-07-13": perf("2026-07-13", 68), // the Monday after → this week
+      "users/u1/performance/2026-07-15": perf("2026-07-15", 75), // already next week's story
     });
 
     const { result } = renderHook(() => useWeeklyReview());
@@ -446,7 +446,7 @@ describe("performance docs are keyed by COMPUTE date, and read by range", () => 
   it("with no compute after the week ended, claims no PI rather than last week's", async () => {
     seedFirestore({
       "users/u1/workouts/w1": lift("2026-07-06", 100, 5),
-      "users/u1/performance/2026-07-05": perf("2026-07-05", 60),
+      "users/u1/performance/2026-07-06": perf("2026-07-06", 60),
     });
 
     const { result } = renderHook(() => useWeeklyReview());
@@ -458,7 +458,7 @@ describe("performance docs are keyed by COMPUTE date, and read by range", () => 
   it("a partial-week compute still counts when nothing later exists", async () => {
     seedFirestore({
       "users/u1/workouts/w1": lift("2026-07-06", 100, 5),
-      "users/u1/performance/2026-07-05": perf("2026-07-05", 60),
+      "users/u1/performance/2026-07-06": perf("2026-07-06", 60),
       "users/u1/performance/2026-07-09": perf("2026-07-09", 66),
     });
 

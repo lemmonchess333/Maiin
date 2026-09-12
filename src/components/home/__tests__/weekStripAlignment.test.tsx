@@ -78,8 +78,13 @@ describe("today and selected compose", () => {
   it("does not ring a selected day that is not today", () => {
     // The other half — otherwise "always ring the selection" would pass
     // the test above while meaning nothing.
+    //
+    // The neighbour has to stay INSIDE the rendered week or there is no
+    // selected circle to find. The week is Monday-anchored, so yesterday
+    // leaves it only on a Monday (getDay() === 1) — that is the one day
+    // that has to reach forward instead.
     const other = new Date();
-    other.setDate(other.getDate() + (other.getDay() === 0 ? 1 : -1));
+    other.setDate(other.getDate() + (other.getDay() === 1 ? 1 : -1));
     const { container } = renderStrip(localDateString(other));
     const selected = circles(container).find((c) =>
       c.className.includes("bg-primary-strong")
@@ -93,12 +98,14 @@ describe("weekday letters", () => {
   it("renders one letter per day", () => {
     // The row is a fixed frame — always the calendar week — so position
     // disambiguates the two S's and the two T's, as on the iOS week row.
+    // Monday-anchored (`WEEK_STARTS_ON = 1`), so the pair of S's is at the
+    // END: Saturday then Sunday.
     const { container } = renderStrip();
     const letters = Array.from(container.querySelectorAll("button")).map(
       (b) => b.querySelector("span")?.textContent ?? ""
     );
     expect(letters).toHaveLength(7);
     for (const l of letters) expect(l).toHaveLength(1);
-    expect(letters.join("")).toBe("SMTWTFS");
+    expect(letters.join("")).toBe("MTWTFSS");
   });
 });

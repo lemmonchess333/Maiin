@@ -31,7 +31,11 @@ const cf = require("../../../../functions/lib/runReschedule") as {
   dateForDay: (weekKey: string, dayIndex: number) => string | null;
 };
 
-const WEEK_KEY = "2026-03-01"; // a Sunday
+/* Mon 2026-03-02 — the week anchor since RunWk2. The server reads the
+   anchor off the key itself during the transition, so the legacy Sunday
+   case is exercised separately below rather than by pointing this at a
+   Sunday. */
+const WEEK_KEY = "2026-03-02";
 
 function run(overrides: Partial<ScheduledRunDay> = {}): ScheduledRunDay {
   return {
@@ -128,5 +132,32 @@ describe("run move — client vs functions mirror", () => {
     // week if that bound ever moves.
     expect(cf.dateForDay(WEEK_KEY, 7)).toBeNull();
     expect(cf.dateForDay(WEEK_KEY, -1)).toBeNull();
+  });
+});
+
+describe("transition — a Sunday-anchored key from a client not yet on schema v4", () => {
+  /* The server reads the anchor off the key itself, so a run stored by an
+     old build (Sunday key, `dayIndex` == offset) still moves to the day it
+     asked for. There is no client-side equivalent to mirror: every key the
+     new client sees has been re-anchored to Monday by migration, so the
+     assertion here is against the OLD client's arithmetic — the day index
+     added straight onto the key — which is what that client would paint. */
+  const SUNDAY_KEY = "2026-03-01";
+  const legacyDate = (dayIndex: number) => `2026-03-0${1 + dayIndex}`; // Sun 1 .. Sat 7 March, the old week
+
+  it("lands every weekday where the old client's arithmetic put it", () => {
+    for (let dayIndex = 0; dayIndex <= 6; dayIndex++) {
+      expect(cf.dateForDay(SUNDAY_KEY, dayIndex), `weekday ${dayIndex}`).toBe(
+        legacyDate(dayIndex)
+      );
+    }
+  });
+
+  it("is distinguishable from the Monday case — the anchor is read, not assumed", () => {
+    // Same weekday, different anchor, different date. If the server ever
+    // hard-codes Monday before the Sunday branch is retired (RunWk2 PR 4),
+    // this is the assertion that says so.
+    expect(cf.dateForDay(SUNDAY_KEY, 0)).toBe("2026-03-01");
+    expect(cf.dateForDay(WEEK_KEY, 0)).toBe("2026-03-08");
   });
 });
