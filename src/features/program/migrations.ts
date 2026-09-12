@@ -53,6 +53,7 @@ import {
 } from "@/lib/dateHelpers";
 import { isScheduledRunCompleted } from "@/lib/scheduledRunStatus";
 import { repUnitForExerciseId } from "./repUnits";
+import { migrateMondayWeek } from "./mondayWeekMigration";
 
 /**
  * A MAIN lift's minimum set anchor — mirrors volumeModel's
@@ -348,22 +349,23 @@ function migrateScheduledRunDay(
  *   internally inconsistent)
  * @param weekStart - local-date "YYYY-MM-DD" representing any
  *   date in the week this state's runDays belong to. Defensively
- *   normalised to that week's Sunday — callers can pass today
+ *   normalised to that week's Monday — callers can pass today
  *   and the helper will resolve the right week. Defaults to
- *   `localWeekKey()` (this week's Sunday).
+ *   `localWeekKey()` (this week's Monday).
  */
 export function migrateProgramState(
   state: ProgramState,
   weekStart: string = localWeekKey()
 ): ProgramState {
   // Defensive normalisation: callers may pass today's date
-  // (mid-week). We always want the Sunday on or before so derived
+  // (mid-week). We always want the Monday on or before so derived
   // run-day dates land in the user's current calendar week. Pre-
   // PR-0b-i the default was `localDateString()` which produced
   // mid-week weekKey values for any user opening the app on a
   // non-Sunday.
   const normalizedWeekStart = localWeekKey(parseLocalDate(weekStart));
   const weekStartDate = parseLocalDate(normalizedWeekStart);
+  state = migrateMondayWeek(state, normalizedWeekStart);
 
   const runDays = state.runDays ?? [];
   const migratedRunDays = runDays.map((rd) =>
@@ -403,9 +405,10 @@ export function migrateProgramState(
   // Coverage backfill — v3, one-shot. Gated on the version rather than on
   // "is the group missing", so it repairs plans predating the slots without
   // ever fighting a user who deletes them later.
-  const backfilled = versionChanged
-    ? backfillMissingCoverage(migratedWorkouts)
-    : migratedWorkouts;
+  const backfilled =
+    (state.programSchemaVersion ?? 1) < 3
+      ? backfillMissingCoverage(migratedWorkouts)
+      : migratedWorkouts;
   const coverageChanged = backfilled !== migratedWorkouts;
 
   // D1: seed the lift-week anchor to the CURRENT week, never to the epoch.

@@ -609,7 +609,7 @@ export default function ProgrammeRunSection({
   );
 
   // ── Run-week selector (date-pinned, ADR-0002) ──────────────────────
-  /* The CALENDAR week — Sunday-anchored, the same window Home's WeekStrip
+  /* The CALENDAR week — Monday-anchored, the same window Home's WeekStrip
      renders — resolved through the same shared resolver Home/WeekStrip/
      DayActionSheet use. Run-scope only: no lift lanes, the Lift tab owns
      lifting. The selector drives `selectedDateKey`; the selected-day
@@ -627,7 +627,7 @@ export default function ProgrammeRunSection({
         than the header — true by construction, not an edge case.
      3. `resolveTrainingWindow` derives its `currentWeekKey` gate from
         `startDate`, and that gate gives `resolveRunDayForDate` its
-        priority-3 legacy fallback. Anchoring on Sunday makes
+        priority-3 legacy fallback. Anchoring on Monday makes
         `localWeekKey(weekStart) === localWeekKey(today)` hold for all
         seven days, so a legacy-shaped runDay (no `date`, no `weekKey`)
         resolves across the whole strip instead of going null the moment

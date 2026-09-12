@@ -147,6 +147,7 @@ import {
   addLocalDays,
   parseLocalDate,
 } from "@/lib/dateHelpers";
+import { matchesScheduledRunId } from "@/lib/scheduledRunIdentity";
 import { isInRecoveryOn } from "@/lib/runPlanResolver";
 import { planDeloadWeek, type DeloadSwap } from "@/lib/planDeloadWeek";
 import { CURRENT_PROGRAM_SCHEMA_VERSION } from "./programTypes";
@@ -526,7 +527,13 @@ export function useProgram() {
           // in `migrated` as `undefined` would silently re-introduce
           // the "Failed to load programme" loop. setDocGuarded strips
           // undefined recursively (a no-op for already-clean docs).
-          await setDocGuarded(ref, migrated, { merge: true });
+          // Replace complete top-level maps: a recursive merge would retain
+          // old manual-completion keys alongside their migrated IDs.
+          await setDocGuarded(ref, migrated, {
+            mergeFields: Object.entries(migrated)
+              .filter(([, value]) => value !== undefined)
+              .map(([key]) => key),
+          });
         }
 
         if (
@@ -850,9 +857,10 @@ export function useProgram() {
   // runDay into weekHistory BEFORE the auto-transition writes
   // `race_no_show` to it, losing the inferred state.
   //
-  // Detection: `programState.runDays[0]?.weekKey` is the Sunday of
-  // the week the runDays were last generated for. If that's
-  // before `localWeekKey()`, the user is ≥1 week stale.
+  // The programme anchor owns rollover. After the Monday migration a
+  // preserved Sunday run may have a preceding-week date bucket, even
+  // though the programme itself is current. Never infer its age from
+  // whichever run happens to be first in the array.
   //
   // Loop: while stale, run `advanceWeek` and regenerate runDays
   // for the new week. Cap at 12 iterations to prevent runaway
@@ -883,7 +891,8 @@ export function useProgram() {
     // wait-for-migration early-return.
     if (user && layoffRead.uid !== user.uid) return;
 
-    const runDayWeekKey = programState.runDays?.[0]?.weekKey;
+    if (!programState.runDays?.length) return;
+    const runDayWeekKey = programState.liftWeekKey;
     if (!runDayWeekKey) return;
 
     const todayKeyG = localWeekKey();
@@ -895,7 +904,7 @@ export function useProgram() {
     let rolling = programState;
     let iterations = 0;
     while (iterations < 12) {
-      const currentRunWeekKey = rolling.runDays?.[0]?.weekKey;
+      const currentRunWeekKey = rolling.liftWeekKey;
       if (!currentRunWeekKey || currentRunWeekKey >= todayKeyG) break;
 
       // Advance lift side (workouts, weekNumber, weekHistory).
@@ -989,7 +998,7 @@ export function useProgram() {
     if (iterations === 0) return;
 
     logger.log(
-      `[auto-rollover] advanced ${iterations} week${iterations > 1 ? "s" : ""} (from ${runDayWeekKey} to ${rolling.runDays?.[0]?.weekKey ?? "?"})`
+      `[auto-rollover] advanced ${iterations} week${iterations > 1 ? "s" : ""} (from ${runDayWeekKey} to ${rolling.liftWeekKey ?? "?"})`
     );
 
     saveProgram(rolling)
@@ -1015,8 +1024,8 @@ export function useProgram() {
    * D1 — calendar week rollover for the LIFT side.
    *
    * The effect above only ever ran for users with a run plan: it returns early
-   * on freeform and needs `runDays[0].weekKey` as its anchor. A pure lifter has
-   * neither, so their only path to a new week was the manual button, which is
+   * on freeform and needs a nonempty run plan. A pure lifter has
+   * no run plan, so their only path to a new week was the manual button, which is
    * gated on EVERY day being completed-or-skipped. Miss one Friday, never tap
    * "skip", and the whole weekly tier stopped forever — no deload, no
    * adjustment rule, no mesocycle rotation. Per CLAUDE.md's
@@ -1063,7 +1072,7 @@ export function useProgram() {
     const runSideOwnsRollover =
       !!profile.runMode &&
       profile.runMode !== "freeform" &&
-      !!programState.runDays?.[0]?.weekKey;
+      !!programState.runDays?.length;
     if (runSideOwnsRollover) return;
 
     const anchor = programState.liftWeekKey;
@@ -1541,15 +1550,15 @@ export function useProgram() {
     // The original stamped `localWeekKey()` — the current week — reasoning
     // that a user finishing early is still inside it. But the rollover fires
     // on `anchor < localWeekKey()`, so the current-week anchor is already
-    // stale by the next Sunday: advance on Wednesday and the automatic
-    // rollover fires four days later, on top of the advance the user just
-    // asked for. The new week got four days instead of seven, and for anyone
+    // stale by the next Monday: advance on Wednesday and the automatic
+    // rollover fires five days later, on top of the advance the user just
+    // asked for. The new week got five days instead of seven, and for anyone
     // who habitually finishes early the whole periodization compresses —
     // deloads arriving every ~2 calendar weeks instead of every 4th
     // programme week, which is a training defect, not a display one.
     //
     // Anchoring to the next week key means the automatic rollover stays
-    // quiet through that week and fires the Sunday after, so the week the
+    // quiet through that week and fires the Monday after, so the week the
     // user just advanced into is never silently cut short. If they finish
     // early again they simply advance again — which is the whole point of
     // the button.
@@ -1672,8 +1681,8 @@ export function useProgram() {
   const markManualComplete = useCallback(
     async (runDayId: string) => {
       if (!programState?.runDays || !user) return;
-      const targetIndex = programState.runDays.findIndex(
-        (rd) => rd.id === runDayId
+      const targetIndex = programState.runDays.findIndex((rd) =>
+        matchesScheduledRunId(rd, runDayId)
       );
       if (targetIndex === -1) {
         logger.warn(
@@ -1682,6 +1691,8 @@ export function useProgram() {
         return;
       }
       const targetDay = programState.runDays[targetIndex];
+      if (!targetDay.id) return;
+      runDayId = targetDay.id;
 
       // RUN-RACE-GUARD-01: a race completes only via a logged run
       // (RunSummary reconciliation), never a manual mark — otherwise a
@@ -1750,6 +1761,9 @@ export function useProgram() {
   const unmarkManualComplete = useCallback(
     async (runDayId: string) => {
       if (!programState?.manualCompletions || !user) return;
+      runDayId =
+        programState.runDays?.find((rd) => matchesScheduledRunId(rd, runDayId))
+          ?.id ?? runDayId;
       if (!(runDayId in programState.manualCompletions)) return;
       const next = { ...programState.manualCompletions };
       delete next[runDayId];
@@ -1782,7 +1796,9 @@ export function useProgram() {
 
       const targetIndex =
         typeof idOrDayIndex === "string"
-          ? programState.runDays.findIndex((rd) => rd.id === idOrDayIndex)
+          ? programState.runDays.findIndex((rd) =>
+              matchesScheduledRunId(rd, idOrDayIndex)
+            )
           : programState.runDays.findIndex(
               (rd) => rd.dayIndex === idOrDayIndex
             );
@@ -1859,7 +1875,9 @@ export function useProgram() {
       if (!programState?.runDays || !user) return;
       const targetIndex =
         typeof idOrDayIndex === "string"
-          ? programState.runDays.findIndex((rd) => rd.id === idOrDayIndex)
+          ? programState.runDays.findIndex((rd) =>
+              matchesScheduledRunId(rd, idOrDayIndex)
+            )
           : programState.runDays.findIndex(
               (rd) => rd.dayIndex === idOrDayIndex
             );
@@ -1946,7 +1964,7 @@ export function useProgram() {
   );
 
   // RUN-RESCHEDULE-01: one-off move of a planned run to another day WITHIN
-  // its generated Sunday-start week. Moves the plan, not the goalposts — the
+  // its generated Monday-start week. Moves the plan, not the goalposts — the
   // stable id, template, override, status, completion truth, race identity,
   // and manualCompletions map all survive; only `date`/`dayIndex` and the
   // truthful clash metadata change (see runReschedule.computeRunMove).
@@ -1958,7 +1976,7 @@ export function useProgram() {
       if (!programState?.runDays || !user) return;
       const target = programState.runDays.find((rd) =>
         typeof idOrDayIndex === "string"
-          ? rd.id === idOrDayIndex
+          ? matchesScheduledRunId(rd, idOrDayIndex)
           : rd.dayIndex === idOrDayIndex
       );
       if (!target) {
@@ -2086,7 +2104,9 @@ export function useProgram() {
       if (!programState?.runDays) return false;
       const target =
         typeof idOrDayIndex === "string"
-          ? programState.runDays.find((rd) => rd.id === idOrDayIndex)
+          ? programState.runDays.find((rd) =>
+              matchesScheduledRunId(rd, idOrDayIndex)
+            )
           : programState.runDays.find((rd) => rd.dayIndex === idOrDayIndex);
       if (!target) {
         logger.warn(

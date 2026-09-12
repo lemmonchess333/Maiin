@@ -73,16 +73,16 @@ describe("weekKeyMinusN", () => {
 // observe the negative-offset drift these functions previously had
 // (local Sunday-rewind + UTC toISOString → previous Saturday key). We
 // re-exec a tiny script under TZ=America/New_York (UTC-5) to prove the
-// fix: a Sunday 23:30 LOCAL must key to that local Sunday, not the
+// fix: a Sunday 23:30 LOCAL must key to the preceding local Monday, not the
 // UTC-rolled Monday.
 describe("localWeekKey / weekKeyMinusN — UTC/local drift", () => {
-  it("localWeekKey keys a late-Sunday-night local time to the local Sunday under a negative-offset TZ", () => {
+  it("localWeekKey keys a late-Sunday-night local time to the local Monday under a negative-offset TZ", () => {
     const enginePath = path.resolve(__dirname, "../performanceEngine.ts");
     const dateHelpersPath = path.resolve(__dirname, "../dateHelpers.ts");
     // Actually import + call the REAL exported functions under TZ=America/
     // New_York (UTC-5). Sun 2025-01-05 23:30 local NY = 2025-01-06 04:30Z.
     // Pre-fix (local Sunday-rewind + UTC toISOString) this drifted to the
-    // previous Saturday 2025-01-04; the fix must return the local Sunday.
+    // previous Saturday 2025-01-04; the fix must return the local Monday.
     const script = `
       import { weekKeyMinusN } from ${JSON.stringify(enginePath)};
       import { localWeekKey } from ${JSON.stringify(dateHelpersPath)};
@@ -101,8 +101,8 @@ describe("localWeekKey / weekKeyMinusN — UTC/local drift", () => {
       }
     );
     const result = JSON.parse(out.trim().split("\n").pop() as string);
-    expect(result.weekKey).toBe("2025-01-05"); // local Sunday, not 2025-01-04
-    expect(result.minus1).toBe("2024-12-29"); // prior local Sunday, no UTC drift
+    expect(result.weekKey).toBe("2024-12-30"); // local week, before UTC Monday
+    expect(result.minus1).toBe("2024-12-23"); // prior local Monday, no UTC drift
   });
 });
 

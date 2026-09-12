@@ -1,3 +1,4 @@
+import { localWeekKey } from "@/lib/dateHelpers";
 // @vitest-environment jsdom — renders the hook; the rest of this directory
 // runs in the fast node environment.
 /**
@@ -569,6 +570,7 @@ describe("every migrated writer sends a command the server accepts", () => {
   function seedFull(): void {
     seedFirestore({
       [RUN_PROGRAM]: {
+        liftWeekKey: localWeekKey(),
         weekNumber: 1,
         splitType: "upper_lower",
         goal: "recomp",

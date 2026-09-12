@@ -350,7 +350,8 @@ export const CURRENT_WEEKSCHEDULE_VERSION = 1 as const;
 // v3 (2026-08-04): one-time coverage backfill for plans generated before the
 // lateral-raise and calf slots existed. Version-gated precisely so it runs
 // ONCE — a user who deletes those slots afterwards keeps them deleted.
-export const CURRENT_PROGRAM_SCHEMA_VERSION = 3 as const;
+// v4: Monday weeks, with dated runs and completion identities migrated once.
+export const CURRENT_PROGRAM_SCHEMA_VERSION = 4 as const;
 
 /* ================================
    SCHEDULED RUN
@@ -434,7 +435,10 @@ export interface ScheduledRunDay {
    *  `migrateProgramState` backfills lazily on first read. */
   id?: string;
 
-  /** Sunday-start week key (local-date "YYYY-MM-DD"). Used for
+  /** Exact pre-migration IDs retained for saved links and interrupted runs. */
+  legacyIds?: string[];
+
+  /** Monday-start week key (local-date "YYYY-MM-DD"). Used for
    *  week-bucket queries and adherence calculations. Optional in v1
    *  type; backfilled by migration. */
   weekKey?: string;
@@ -800,7 +804,7 @@ export interface ProgramState {
    */
   easeSnapshot?: EaseSnapshot;
   /**
-   * D1: local week key (Sunday, `localWeekKey()`) of the week the current
+   * D1: local week key (Monday, `localWeekKey()`) of the week the current
    * `workouts` were generated for. The LIFT side's calendar anchor.
    *
    * Why it had to exist. The auto week-rollover was keyed on

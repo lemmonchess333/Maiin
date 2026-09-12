@@ -17,6 +17,7 @@
  * data: profile snapshot, programState (or its absence), URL params.
  */
 
+import { matchesScheduledRunId } from "./scheduledRunIdentity";
 import { RUN_TEMPLATES, type RunTemplate } from "./workoutTemplates";
 import { localDateString } from "./dateHelpers";
 import type { DistanceUnit } from "./distanceUnits";
@@ -214,6 +215,9 @@ export interface ComputePlanInputs {
    * tests can pin "today" deterministically.
    */
   todayDayIndex: number;
+  /** Local date from the live Run screen; prevents a preserved past Sunday
+   *  from being treated as today's Sunday after the week migration. */
+  todayDate?: string;
   /**
    * Run-plan summary from programState. Undefined for freeform users
    * or when programme hasn't loaded.
@@ -312,7 +316,9 @@ export function computePlanMetadata(inputs: ComputePlanInputs): {
   function findRunDayByUrlId(): ScheduledRunDay | null {
     if (!inputs.urlScheduledRunId || !inputs.runDays) return null;
     return (
-      inputs.runDays.find((d) => d.id === inputs.urlScheduledRunId) ?? null
+      inputs.runDays.find((d) =>
+        matchesScheduledRunId(d, inputs.urlScheduledRunId!)
+      ) ?? null
     );
   }
   function findTodayIncompleteRunDay(): ScheduledRunDay | null {
@@ -323,11 +329,14 @@ export function computePlanMetadata(inputs: ComputePlanInputs): {
     // race_completed_unlinked all refuse.
     return (
       inputs.runDays?.find(
-        (d) =>
-          d.dayIndex === inputs.todayDayIndex &&
-          isScheduledRunStartable(getScheduledRunStatus(d))
+        (d) => isToday(d) && isScheduledRunStartable(getScheduledRunStatus(d))
       ) ?? null
     );
+  }
+  function isToday(day: ScheduledRunDay): boolean {
+    return inputs.todayDate && day.date
+      ? day.date === inputs.todayDate
+      : day.dayIndex === inputs.todayDayIndex;
   }
   // The resolved-day candidate used by branches (1), (2), and (3b).
   // The completed-day branch (3a) and rest-day branch (3c) keep
@@ -443,8 +452,7 @@ export function computePlanMetadata(inputs: ComputePlanInputs): {
     const todayDay =
       resolvedPlannedDay && inputs.urlScheduledRunId
         ? resolvedPlannedDay
-        : (inputs.runDays.find((d) => d.dayIndex === inputs.todayDayIndex) ??
-          null);
+        : (inputs.runDays.find(isToday) ?? null);
 
     // PR-0b-iii: branch via the central status helper. Pre-
     // PR-0b-iii these branches read `todayDay.completed` which

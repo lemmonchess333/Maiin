@@ -1587,15 +1587,10 @@ describe("PR-G — auto-rollover on calendar-week change", () => {
   // advanceWeek + runDays regen in a loop up to 12 iterations.
   // Batches writes into one saveProgram at the end.
 
-  it("rolls forward when runDays weekKey is older than today's week", async () => {
-    const twoWeeksAgoSunday = (() => {
-      const d = new Date();
-      d.setDate(d.getDate() - d.getDay() - 14); // Sunday two weeks ago
-      const y = d.getFullYear();
-      const m = String(d.getMonth() + 1).padStart(2, "0");
-      const day = String(d.getDate()).padStart(2, "0");
-      return `${y}-${m}-${day}`;
-    })();
+  it("rolls forward when the programme anchor is older than today's week", async () => {
+    const twoWeeksAgoMonday = localWeekKey(
+      new Date(Date.now() - 14 * 86400000)
+    );
     // Run9: structured retired — auto-rollover (mode-agnostic) is exercised
     // via a race plan, the surviving runDays-bearing mode.
     mockProfile = raceProfile("2027-01-01", { weeklyRunDaysTarget: 2 });
@@ -1610,12 +1605,13 @@ describe("PR-G — auto-rollover on calendar-week change", () => {
       settings: { autoProgression: true, microloading: true },
       weekHistory: [],
       programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
+      liftWeekKey: twoWeeksAgoMonday,
       runDays: [
         {
           id: "stale_runday",
           dayIndex: 1,
-          date: twoWeeksAgoSunday,
-          weekKey: twoWeeksAgoSunday,
+          date: twoWeeksAgoMonday,
+          weekKey: twoWeeksAgoMonday,
           templateId: "easy_30",
           type: "easy",
           status: "planned",
@@ -1640,7 +1636,7 @@ describe("PR-G — auto-rollover on calendar-week change", () => {
           | ProgramState
           | undefined;
         // After rollover, runDays[0].weekKey should match current week
-        expect(lastWrite?.runDays?.[0]?.weekKey).not.toBe(twoWeeksAgoSunday);
+        expect(lastWrite?.runDays?.[0]?.weekKey).not.toBe(twoWeeksAgoMonday);
         // The run week is what this test is about. It deliberately does NOT
         // assert a lift-side archive: this fixture has `workouts: []`, so
         // there are no lift weeks to archive, and `advanceWeek` only archives
@@ -2742,5 +2738,134 @@ describe("per-set evidence survives the save (D2)", () => {
     expect(workoutWrite!.data!.rpeProvenance).toMatchObject({
       shownByDefault: expect.any(Boolean),
     });
+  });
+});
+
+// RunWk2: assert the user-visible result through the real load + rollover
+// effects. A pure migration test alone cannot catch first-row Sunday reuse.
+describe("Monday migration on app open", () => {
+  const oldPlan = (runMode: "freeform" | "race_prep"): ProgramState => ({
+    goal: "recomp",
+    currentPhase: "Strength",
+    weekNumber: 3,
+    splitType: "upper_lower",
+    fatigueScore: 0,
+    updatedAt: 123,
+    programSchemaVersion: 3,
+    liftWeekKey: "2026-09-06",
+    weekHistory: [],
+    workouts: [
+      {
+        dayName: "Keep upper first",
+        dayType: "push",
+        completed: true,
+        exercises: [],
+      },
+      {
+        dayName: "Keep lower second",
+        dayType: "legs",
+        completed: false,
+        exercises: [],
+      },
+    ],
+    ...(runMode === "race_prep"
+      ? {
+          runDays: [
+            {
+              id: "sunday-before-the-flip",
+              date: "2026-09-06",
+              weekKey: "2026-09-06",
+              dayIndex: 0,
+              templateId: "easy_30",
+              type: "easy",
+              status: "completed_exact",
+              completed: true,
+            },
+            {
+              id: "tuesday-to-keep",
+              date: "2026-09-08",
+              weekKey: "2026-09-06",
+              dayIndex: 2,
+              templateId: "easy_30",
+              type: "easy",
+              status: "planned",
+              completed: false,
+            },
+          ],
+          runPlan: {
+            mode: "race_prep",
+            currentWeek: 2,
+            totalWeeks: 12,
+            raceGoal: { distance: "10k", targetDate: "2026-12-06" },
+          },
+        }
+      : {}),
+  });
+
+  it.each(["freeform", "race_prep"] as const)(
+    "opening the migrated %s plan advances zero weeks",
+    async (runMode) => {
+      vi.useFakeTimers({ toFake: ["Date"] });
+      vi.setSystemTime(new Date("2026-09-09T12:00:00Z"));
+      mockProfile =
+        runMode === "race_prep"
+          ? raceProfile("2026-12-06", { weeklyRunDaysTarget: 2 })
+          : structuredProfile({ runMode: "freeform", weeklyRunDaysTarget: 0 });
+      const before = oldPlan(runMode);
+      seedProgram(before);
+      const { result, unmount } = renderHook(() => useProgram());
+      try {
+        await waitFor(() => expect(result.current.loading).toBe(false));
+        await waitFor(() =>
+          expect(result.current.programState?.programSchemaVersion).toBe(4)
+        );
+        // Let both effects and the layoff read settle after the positive load.
+        await act(async () => {
+          await new Promise((resolve) => setTimeout(resolve, 80));
+        });
+        const after = result.current.programState!;
+        expect(after.weekNumber).toBe(3);
+        expect(after.liftWeekKey).toBe("2026-09-07");
+        expect(after.workouts.map((d) => [d.dayName, d.completed])).toEqual(
+          before.workouts.map((d) => [d.dayName, d.completed])
+        );
+        expect(after.weekHistory).toEqual([]);
+        if (runMode === "race_prep") {
+          expect(after.runPlan?.currentWeek).toBe(2);
+          expect(after.runDays?.map((rd) => rd.date)).toEqual([
+            "2026-09-06",
+            "2026-09-08",
+          ]);
+        }
+        expect(
+          setDocCalls().every(
+            (write) => (write.data as ProgramState).weekNumber === 3
+          )
+        ).toBe(true);
+      } finally {
+        unmount();
+        vi.useRealTimers();
+      }
+    }
+  );
+
+  it("the next real Monday still rolls the migrated programme forward once", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-09-14T12:00:00Z"));
+    mockProfile = raceProfile("2026-12-06", { weeklyRunDaysTarget: 2 });
+    const { migrateProgramState } = await import("../migrations");
+    seedProgram(migrateProgramState(oldPlan("race_prep"), "2026-09-07"));
+    const { result, unmount } = renderHook(() => useProgram());
+    try {
+      await waitFor(() => expect(result.current.loading).toBe(false));
+      await waitFor(() =>
+        expect(result.current.programState?.liftWeekKey).toBe("2026-09-14")
+      );
+      expect(result.current.programState?.weekNumber).toBe(4);
+      expect(result.current.programState?.weekHistory).toHaveLength(1);
+    } finally {
+      unmount();
+      vi.useRealTimers();
+    }
   });
 });

@@ -66,7 +66,7 @@ export function binKeyForDate(
     return localDateString(date);
   }
   if (granularity === "weekly") {
-    return localWeekKey(date); // Sunday-anchored, local
+    return localWeekKey(date); // Monday-anchored, local
   }
   // monthly — first-of-month, local
   return localDateString(new Date(date.getFullYear(), date.getMonth(), 1));

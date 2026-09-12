@@ -1,3 +1,4 @@
+import { matchesScheduledRunId } from "@/lib/scheduledRunIdentity";
 import CompletionExtras from "@/components/workout/CompletionExtras";
 import SectionLabel from "@/components/ui/SectionLabel";
 import {
@@ -1466,7 +1467,7 @@ export default function RunSummary() {
               // resolved it elsewhere (Week tab overflow, for instance).
               const runDay = programState?.runDays?.find((rd) =>
                 typeof refKey === "string"
-                  ? rd.id === refKey
+                  ? matchesScheduledRunId(rd, refKey)
                   : rd.dayIndex === refKey
               );
               if (runDay && runDay.status && runDay.status !== "planned")

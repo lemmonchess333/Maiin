@@ -100,9 +100,9 @@ describe("getPersonalTrajectory", () => {
     expect(result.lastWeekToDate.km).toBe(0);
   });
 
-  it("includes the exact local Sunday boundary in last week", async () => {
+  it("includes the exact local Monday boundary in last week", async () => {
     seedFirestore({
-      "users/user1/runs/boundary": run("2026-04-19T00:00:00", 4),
+      "users/user1/runs/boundary": run("2026-04-20T00:00:00", 4),
     });
     const result = await getPersonalTrajectory("user1");
     expect(result.lastWeek.km).toBe(4);

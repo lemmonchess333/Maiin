@@ -31,7 +31,7 @@ const cf = require("../../../../functions/lib/runReschedule") as {
   dateForDay: (weekKey: string, dayIndex: number) => string | null;
 };
 
-const WEEK_KEY = "2026-03-01"; // a Sunday
+const WEEK_KEY = "2026-03-02"; // a Monday
 
 function run(overrides: Partial<ScheduledRunDay> = {}): ScheduledRunDay {
   return {

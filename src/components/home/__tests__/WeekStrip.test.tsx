@@ -352,10 +352,10 @@ describe("WeekStrip — accessible name and selection state", () => {
   }
 
   /** Today's cell. The strip renders the CALENDAR week containing today,
-   *  Sunday-first (`localWeekKey` is Sunday-anchored), so today sits at
+   *  Monday-first (`localWeekKey` is Monday-anchored), so today sits at
    *  its own day-of-week index rather than at 0. */
   const todayCell = (container: HTMLElement) =>
-    container.querySelectorAll("button")[new Date().getDay()];
+    container.querySelectorAll("button")[(new Date().getDay() + 6) % 7];
 
   /** Any cell that is NOT today — index 3 is Wednesday and would BE
    *  today one day in seven, which is the kind of weekday-dependent
@@ -363,7 +363,7 @@ describe("WeekStrip — accessible name and selection state", () => {
   const nonTodayCell = (container: HTMLElement) => {
     const cells = container.querySelectorAll("button");
     const dow = new Date().getDay();
-    return cells[dow === 0 ? 1 : 0];
+    return cells[dow === 1 ? 1 : 0];
   };
 
   /* The capture spec `surfaces.screens.capture.spec.ts` opens the day
@@ -521,13 +521,13 @@ describe("WeekStrip — the week you are in, not the week ahead", () => {
      out of reach — every date the card could be handed was in the
      future, and a future day has no meals to summarise. */
   const dows = [
-    "Sunday",
     "Monday",
     "Tuesday",
     "Wednesday",
     "Thursday",
     "Friday",
     "Saturday",
+    "Sunday",
   ];
 
   function labels(container: HTMLElement): string[] {
@@ -549,11 +549,8 @@ describe("WeekStrip — the week you are in, not the week ahead", () => {
     );
   }
 
-  it("starts on Sunday and runs the full calendar week", () => {
-    /* Sunday-first is forced by the data model rather than chosen:
-       `localWeekKey` is Sunday-anchored, and the resolver derives the
-       week key that gates its legacy fallback from the window's start.
-       A Monday-first strip would straddle two keys. */
+  it("starts on Monday and runs the full calendar week", () => {
+    /* The strip and data buckets use the same Monday anchor. */
     const { container } = renderStrip();
     const got = labels(container);
     expect(got).toHaveLength(7);
@@ -563,12 +560,12 @@ describe("WeekStrip — the week you are in, not the week ahead", () => {
   });
 
   it("shows the days already gone, which is the point", () => {
-    /* The assertion has to survive being run on a Sunday, when the
+    /* The assertion has to survive being run on a Monday, when the
        current week genuinely has no past day — so it is expressed as
        "exactly the days before today", not "at least one". */
     const { container } = renderStrip();
     const today = new Date();
-    const todayDow = today.getDay();
+    const todayDow = (today.getDay() + 6) % 7;
     const got = labels(container);
 
     const past = got.slice(0, todayDow);
@@ -584,9 +581,9 @@ describe("WeekStrip — the week you are in, not the week ahead", () => {
        whatever is left of the week. Pinned so a future change cannot
        quietly turn the strip into pure history. */
     const { container } = renderStrip();
-    const todayDow = new Date().getDay();
+    const todayDow = (new Date().getDay() + 6) % 7;
     const got = labels(container);
     expect(got.slice(todayDow + 1)).toHaveLength(6 - todayDow);
-    expect(got[6]).toMatch(/^Saturday /);
+    expect(got[6]).toMatch(/^Sunday /);
   });
 });

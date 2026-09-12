@@ -7,7 +7,7 @@ import { resolveTrainingWindow } from "@/lib/trainingResolver";
 import type { ClaimState } from "@/lib/scheduledRunCompletion";
 import {
   localDateString,
-  localWeekKey,
+  startOfLocalWeek,
   parseLocalDate,
 } from "@/lib/dateHelpers";
 
@@ -86,16 +86,9 @@ export default function WeekStrip({
        row out of reach: every date the card could be given was in the
        future, and a future day has no meals to summarise.
 
-       Sunday-start is forced by the data model, not a style choice.
-       `localWeekKey` is Sunday-anchored, and `resolveTrainingWindow`
-       derives `currentWeekKey` from `startDate` — the anchor that gates
-       the resolver's legacy run-day fallback, which the docstring says
-       must be today's. Starting on this week's Sunday keeps that true
-       for free: `localWeekKey(sunday) === localWeekKey(today)`, and all
-       seven days share that one key, so no day can inherit another
-       week's status. A Monday-start strip would straddle two week keys
-       and break exactly the guard PR-0c installed. */
-    const weekStart = parseLocalDate(localWeekKey(today));
+       Home and Programme share the Monday anchor with their resolver,
+       so all seven cells belong to the same calendar week. */
+    const weekStart = startOfLocalWeek(today);
     const resolved = resolveTrainingWindow({
       startDate: weekStart,
       days: 7,

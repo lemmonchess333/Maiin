@@ -1,3 +1,4 @@
+import { localWeekKey } from "@/lib/dateHelpers";
 /**
  * PR-0b-iii + PR-0d + PR-4: ProgrammeRunSection behaviour.
  *
@@ -455,18 +456,7 @@ describe("ProgrammeRunSection — PR-4 freeform hero", () => {
     // PR-F: "This week" filter now uses `localWeekKey(new Date())`
     // so the fixture must reflect the current calendar week, not
     // a hardcoded historical week. Use the runtime week key.
-    const todayWeekKey = (() => {
-      const d = new Date();
-      const sunday = new Date(
-        d.getFullYear(),
-        d.getMonth(),
-        d.getDate() - d.getDay()
-      );
-      const y = sunday.getFullYear();
-      const m = String(sunday.getMonth() + 1).padStart(2, "0");
-      const day = String(sunday.getDate()).padStart(2, "0");
-      return `${y}-${m}-${day}`;
-    })();
+    const todayWeekKey = localWeekKey();
     mockWeeklyData = [
       { week: todayWeekKey, totalDistance: 12.3, runCount: 2, avgPace: 330 },
     ];
@@ -1253,7 +1243,7 @@ describe("ProgrammeRunSection — the selector is a CALENDAR week", () => {
 
      Nothing pinned the old shape — the whole suite passed unchanged after
      the switch — so these are the first assertions about the window itself.
-     The clock is pinned to a FRIDAY: on a Sunday the two windows agree, and
+     The clock is pinned to a FRIDAY: on a Monday the two windows agree, and
      a test that cannot tell them apart proves nothing. */
   beforeEach(() => {
     vi.useFakeTimers();
@@ -1267,11 +1257,11 @@ describe("ProgrammeRunSection — the selector is a CALENDAR week", () => {
       .getAllByRole("tab")
       .map((el) => (el.getAttribute("aria-label") ?? "").split(",")[0].trim());
 
-  it("runs Sunday to Saturday, with today in its own weekday slot", () => {
+  it("runs Monday to Sunday, with today in its own weekday slot", () => {
     renderSection(commonProps(), makeProgramState([]));
-    // Sun 6 → Sat 12. Today is the 11th: present, and at index 5 rather
+    // Mon 7 → Sun 13. Today is the 11th: present, and at index 4 rather
     // than index 0, which is exactly what a rolling window cannot do.
-    expect(cellDates()).toEqual(["6", "7", "8", "9", "10", "11", "12"]);
+    expect(cellDates()).toEqual(["7", "8", "9", "10", "11", "12", "13"]);
     expect(
       screen.getByRole("tab", { name: /^11, today$/ })
     ).toBeInTheDocument();
@@ -1281,7 +1271,7 @@ describe("ProgrammeRunSection — the selector is a CALENDAR week", () => {
     /* The reason the calendar week is worth the change: banked days are
        visible. A today-first window shows only what is still owed. */
     renderSection(commonProps(), makeProgramState([]));
-    for (const past of ["6", "7", "8", "9", "10"]) {
+    for (const past of ["7", "8", "9", "10"]) {
       expect(screen.getByRole("tab", { name: past })).toBeInTheDocument();
     }
   });
@@ -1292,7 +1282,7 @@ describe("ProgrammeRunSection — the selector is a CALENDAR week", () => {
       "aria-selected",
       "true"
     );
-    expect(screen.getByRole("tab", { name: "6" })).toHaveAttribute(
+    expect(screen.getByRole("tab", { name: "7" })).toHaveAttribute(
       "aria-selected",
       "false"
     );
@@ -1300,7 +1290,7 @@ describe("ProgrammeRunSection — the selector is a CALENDAR week", () => {
 
   it("falls back to today when ?rday points outside the week", () => {
     /* The fallback was `runWindow[0]`, which meant "today" only while the
-       window began on today. On a calendar week index 0 is SUNDAY, so a
+       window began on today. On a calendar week index 0 is MONDAY, so a
        stale link would have quietly answered with the start of the week. */
     render(
       <MemoryRouter initialEntries={["/program?tab=run&rday=2026-01-01"]}>

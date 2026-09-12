@@ -27,6 +27,13 @@ import {
 } from "../dateHelpers";
 
 describe("the anchor is self-consistent", () => {
+  it("uses Monday literals, including the preceding Monday for Sunday", () => {
+    expect(WEEK_STARTS_ON).toBe(1);
+    expect(localWeekKey(parseLocalDate("2026-09-13"))).toBe("2026-09-07");
+    expect(localWeekKey(parseLocalDate("2026-09-14"))).toBe("2026-09-14");
+    expect(localWeekKey(parseLocalDate("2027-01-03"))).toBe("2026-12-28");
+    expect(dateForDayOfWeek("2026-09-07", 0)).toBe("2026-09-13");
+  });
   it("puts every day of a week on the same key", () => {
     // Seven consecutive days must agree, whatever the anchor is.
     const start = startOfLocalWeek(new Date(2026, 4, 14));

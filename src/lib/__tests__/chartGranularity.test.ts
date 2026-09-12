@@ -8,7 +8,7 @@ import {
   binKeyForDate,
   formatBinLabel,
 } from "../chartGranularity";
-import { parseLocalDate } from "../dateHelpers";
+import { parseLocalDate, startOfLocalWeek } from "../dateHelpers";
 
 describe("granularityForRange", () => {
   it("returns daily for 1W (7 days)", () => {
@@ -48,15 +48,15 @@ describe("binKeyForDate", () => {
     expect(binKeyForDate(d, "daily")).toBe("2026-05-21");
   });
 
-  it("weekly bin returns the Sunday of the week", () => {
-    /* 2026-05-21 is a Thursday → previous Sunday is 2026-05-17. */
+  it("weekly bin returns the Monday of the week", () => {
+    /* 2026-05-21 is a Thursday → previous Monday is 2026-05-18. */
     const d = new Date("2026-05-21T10:00:00Z");
-    expect(binKeyForDate(d, "weekly")).toBe("2026-05-17");
+    expect(binKeyForDate(d, "weekly")).toBe("2026-05-18");
   });
 
-  it("weekly bin: Sunday maps to itself", () => {
+  it("weekly bin: Sunday maps to the preceding Monday", () => {
     const d = new Date("2026-05-17T10:00:00Z");
-    expect(binKeyForDate(d, "weekly")).toBe("2026-05-17");
+    expect(binKeyForDate(d, "weekly")).toBe("2026-05-11");
   });
 
   it("monthly bin returns the 1st of the month", () => {
@@ -115,10 +115,9 @@ describe("binKeyForDate — timezone agreement", () => {
 
   /** History's data side: a local "YYYY-MM-DD" from a workout doc. */
   const dataKey = (day: string) => binKeyForDate(parseLocalDate(day), "weekly");
-  /** History's axis side: a local wall-clock cursor moved to its Sunday. */
+  /** History's axis side: a local wall-clock cursor moved to its Monday. */
   const axisKey = (now: Date) => {
-    const cursor = new Date(now);
-    cursor.setDate(cursor.getDate() - cursor.getDay());
+    const cursor = startOfLocalWeek(now);
     return binKeyForDate(cursor, "weekly");
   };
 
@@ -131,11 +130,11 @@ describe("binKeyForDate — timezone agreement", () => {
 
     it(`a local day always bins to its own local week in ${zone}`, () => {
       process.env.TZ = zone;
-      // Every day of one week must land on that week's Sunday, whatever
+      // Every day of one week must land on that week's Monday, whatever
       // the offset does to the underlying UTC instant.
       for (let i = 0; i < 7; i++) {
-        const d = new Date(2026, 6, 5 + i, i * 3, 0); // vary time of day too
-        expect(binKeyForDate(d, "weekly")).toBe("2026-07-05");
+        const d = new Date(2026, 6, 6 + i, i * 3, 0); // vary time of day too
+        expect(binKeyForDate(d, "weekly")).toBe("2026-07-06");
       }
     });
 
@@ -169,7 +168,7 @@ describe("formatBinLabel", () => {
   });
 
   it("weekly label is day/month (week-start)", () => {
-    expect(formatBinLabel("2026-05-17", "weekly")).toBe("17/5");
+    expect(formatBinLabel("2026-05-18", "weekly")).toBe("18/5");
   });
 
   it("monthly label is short month name in current year", () => {

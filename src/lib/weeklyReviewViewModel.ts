@@ -6,7 +6,7 @@
  * behavioural rules ALL live here so they're unit-testable:
  *
  *  - Sunday-start local weeks (the performance engine's convention —
- *    `localWeekKey`); the review covers the last COMPLETED Sun–Sat week.
+ *    `localWeekKey`); the review covers the last COMPLETED Mon–Sun week.
  *  - Eligibility: renders only when the reviewed week has ≥1 DELIBERATE
  *    event (workout / run / meal / weigh-in — never passive data). A fully
  *    quiet week renders the gentle "quiet" variant ONLY for established

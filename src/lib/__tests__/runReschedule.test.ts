@@ -7,10 +7,10 @@ import {
 } from "../runReschedule";
 import type { ScheduledRunDay } from "@/features/program/programTypes";
 
-// Week of Sun 2026-05-17 → Sat 2026-05-23.
-const WEEK = "2026-05-17";
+// Week of Mon 2026-05-18 → Sun 2026-05-24.
+const WEEK = "2026-05-18";
 function dateFor(dayIndex: number): string {
-  const d = new Date(2026, 4, 17 + dayIndex);
+  const d = new Date(2026, 4, 18 + ((dayIndex + 6) % 7));
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
@@ -63,7 +63,7 @@ describe("runOriginDate", () => {
 });
 
 describe("resolveRunMoveOptions — blocks", () => {
-  // Anchor "today" to the run's own day so past days are Sun/Mon.
+  // Anchor "today" to the run's own day so Monday is in the past.
   const todayKey = dateFor(2); // Tue
 
   it("blocks the run's own day (same) and past days", () => {
@@ -74,7 +74,7 @@ describe("resolveRunMoveOptions — blocks", () => {
       todayKey,
     });
     expect(opts[2]).toMatchObject({ available: false, blockReason: "same" });
-    expect(opts[0]).toMatchObject({ available: false, blockReason: "past" });
+    expect(opts[0]).toMatchObject({ available: true, date: "2026-05-24" });
     expect(opts[1]).toMatchObject({ available: false, blockReason: "past" });
     // Future days are open.
     expect(opts[4].available).toBe(true);
@@ -130,7 +130,7 @@ describe("resolveRunMoveOptions — blocks", () => {
 });
 
 describe("resolveRunMoveOptions — warnings", () => {
-  const todayKey = dateFor(0);
+  const todayKey = dateFor(1);
 
   it("warns clashes_lift when a HARD run targets a lift day", () => {
     const source = run({ id: "s", dayIndex: 2, type: "tempo" });

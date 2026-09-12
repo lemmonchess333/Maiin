@@ -21,10 +21,10 @@ import {
 } from "../runScheduler";
 import { generateSchedule, type ScheduleDay } from "@/lib/scheduleUtils";
 
-const sundayStart = "2026-05-10"; // Sunday
+const mondayStart = "2026-05-11"; // Monday
 const baseInput = {
   weekNumber: 1,
-  weekStart: sundayStart,
+  weekStart: mondayStart,
 };
 
 /* ─── scheduleStructuredWeekV2 ───────────────────────────────── */
@@ -58,13 +58,13 @@ describe("scheduleStructuredWeekV2", () => {
       expect(rd.id).toBeTruthy();
       expect(rd.id).toMatch(/^runday_/);
       expect(rd.date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
-      expect(rd.weekKey).toBe(sundayStart);
+      expect(rd.weekKey).toBe(mondayStart);
       expect(rd.status).toBe("planned");
     });
   });
 
-  it("derives `date` from weekStart + dayIndex correctly", () => {
-    // weekStart = Sun 2026-05-10. Run on dayIndex 3 (Wed) = 2026-05-13
+  it("derives `date` from the weekday within weekStart correctly", () => {
+    // weekStart = Mon 2026-05-11. Run on dayIndex 3 (Wed) = 2026-05-13
     const schedule: ScheduleDay[] = [
       { day: 0, type: "rest" },
       { day: 1, type: "rest" },
@@ -210,8 +210,8 @@ describe("generateRacePlanV2", () => {
     weekSchedule: generateSchedule(3, 3),
     raceGoal: { distance: "10k", targetDate: "2026-08-10" }, // ~13 weeks from May 10
     weeklyRunDays: 3,
-    currentDate: "2026-05-10",
-    weekStart: "2026-05-10",
+    currentDate: "2026-05-11",
+    weekStart: "2026-05-11",
   };
 
   it("returns totalWeeks, compressed flag, weeks array", () => {
@@ -489,8 +489,8 @@ describe("generateRacePlanV2 · clashesWithLift flag", () => {
   ];
   const baseInputC = {
     weeklyRunDays: 2,
-    currentDate: "2026-05-10",
-    weekStart: "2026-05-10",
+    currentDate: "2026-05-11",
+    weekStart: "2026-05-11",
   };
 
   it("flags the hard run when it's forced onto a both-day, but never the easy run", () => {
@@ -611,8 +611,8 @@ describe("PR-0a — race template selection by distance", () => {
         weekSchedule: generateSchedule(3, 3),
         raceGoal: { distance: c.distance, targetDate: "2026-12-12" },
         weeklyRunDays: 3,
-        currentDate: "2026-05-10",
-        weekStart: "2026-05-10",
+        currentDate: "2026-05-11",
+        weekStart: "2026-05-11",
       });
       // Race day lives in the final week, marked type: "race".
       const finalWeek = plan.weeks[plan.weeks.length - 1];

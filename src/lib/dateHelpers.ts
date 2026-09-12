@@ -9,9 +9,9 @@
  *
  * Conventions:
  *   - `localDateString` → "YYYY-MM-DD" using local Date getters
- *   - `localWeekKey` → Sunday-start week key ("YYYY-MM-DD" of the
- *     Sunday on or before the input date). Matches the existing
- *     JS convention `Date.getDay()` where 0 = Sunday.
+ *   - `localWeekKey` → Monday-start week key ("YYYY-MM-DD" of the
+ *     Monday on or before the input date). Weekday indices still
+ *     use `Date.getDay()`, where 0 = Sunday.
  *   - `generateScheduledRunId` → stable deterministic ID for a
  *     scheduled run instance; preserved across user-initiated moves
  */
@@ -24,32 +24,11 @@ export function localDateString(d: Date = new Date()): string {
   return `${y}-${m}-${day}`;
 }
 
-/**
- * Sunday-start week key for the week containing `d`. Returns the
- * local YYYY-MM-DD of that Sunday. Pure local-date math — does not
- * read UTC components.
+/** One app-wide calendar anchor: Monday in Date.getDay() numbering.
+ * RunWk2: existing programme keys/IDs are migrated by schema v4 before
+ * rollover reads them. Server check-ins accept both anchors during rollout.
  */
-/**
- * The day a week starts on, in `Date.getDay()` numbering — 0 = Sunday,
- * 1 = Monday.
- *
- * This is the ONE place the app decides. It was decided in six places:
- * `localWeekKey` here, plus `setDate(getDate() - getDay())` written out by
- * hand in `personalTrajectory`, `leaderboard` and twice each in two blocks
- * of `History.tsx`. Those hand-written copies are why History carries
- * comments insisting the axis "MUST use the same local-week helper" as the
- * data — a coupling real enough to be documented, held together by nothing
- * but the comment. Changing the anchor meant finding all six and agreeing
- * with yourself six times; miss one and a chart's axis silently slides off
- * its data.
- *
- * Tropos is inconsistent about this today and this constant does not yet
- * resolve it: `streakEngine.weekKey` and the coach-prompt doc ids anchor on
- * MONDAY, which is also the en-GB and ISO-8601 convention. Moving to
- * Monday is a separate change; this one exists so that change is an edit
- * here rather than an archaeology exercise.
- */
-export const WEEK_STARTS_ON = 0;
+export const WEEK_STARTS_ON = 1;
 
 /** Local midnight on the first day of the week containing `d`. */
 export function startOfLocalWeek(d: Date): Date {

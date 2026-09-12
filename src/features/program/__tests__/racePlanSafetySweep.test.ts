@@ -164,8 +164,13 @@ describe("race plans — nothing is scheduled after race day", () => {
     expect(week.filter((r) => r.type !== "race" && r.date! > raceDate)).toEqual(
       []
     );
-    // Race day at slot 0 means there is no room for a shakeout before it.
-    expect(week).toHaveLength(1);
+    // Sunday closes the week; Monday through Wednesday precede the race.
+    expect(week.map((r) => r.date)).toEqual([
+      "2026-01-05",
+      "2026-01-06",
+      "2026-01-07",
+      "2026-01-11",
+    ]);
   });
 
   it("still schedules the shakeouts that fall BEFORE race day", () => {
@@ -173,34 +178,30 @@ describe("race plans — nothing is scheduled after race day", () => {
        week". A midweek race keeps the run-eligible days that precede it. */
     const { out, raceDate } = plan({
       distance: "half",
-      daysOut: 10, // a Wednesday race, with Sun/Mon/Tue run days before it
+      daysOut: 10, // a Wednesday race, with Mon/Tue run days before it
       runDays: 4,
     });
     const week = out.weeks[out.weeks.length - 1];
     const race = week.find((r) => r.type === "race")!;
     expect(race.date).toBe(raceDate);
     /* The EXACT set, not merely a non-empty one: a Wednesday race on a
-       Sun/Mon/Tue/Wed schedule keeps all three preceding days. Asserting only
+       Sun/Mon/Tue/Wed schedule keeps both preceding weekdays. Asserting only
        "some remain" lets an over-tight filter through — checked by mutating
        the bound to `< raceDayIndex - 1`, which silently drops the day before
        the race and passed a length-only assertion. */
     const before = week.filter((r) => r.type !== "race");
-    expect(before.map((r) => r.date)).toEqual([
-      "2026-01-11",
-      "2026-01-12",
-      "2026-01-13",
-    ]);
+    expect(before.map((r) => r.date)).toEqual(["2026-01-12", "2026-01-13"]);
     expect(race.dayIndex).toBe(3);
   });
 
   it("does not happen when the race is the last scheduled day of its week", () => {
     /* The other half, so the finding is understood rather than just counted:
-       a race that lands after the week's run days gets `dayIndex: 7` and
+       a Sunday race retains its standard `dayIndex: 0` and
        nothing follows it. This is what most plans look like. */
     const { out, raceDate } = plan({ distance: "marathon", weeksOut: 20 });
     const week = out.weeks[out.weeks.length - 1];
     const race = week.find((r) => r.type === "race")!;
-    expect(race.dayIndex).toBe(7);
+    expect(race.dayIndex).toBe(0);
     expect(week.filter((r) => r.date! > raceDate)).toHaveLength(0);
   });
 });

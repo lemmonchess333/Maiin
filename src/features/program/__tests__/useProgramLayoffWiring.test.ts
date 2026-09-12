@@ -173,7 +173,7 @@ beforeEach(() => {
  * what the weekly rollover does. So the returning runner this feature is for
  * is, by construction, someone whose plan already exists.
  *
- * Aging the `weekKey` is the same signal the real rollover keys on: "the
+ * Aging `liftWeekKey` is the same signal the real rollover keys on: "the
  * runDays were generated for a week that is now in the past".
  */
 async function ageIntoMidBlock(uid: string, weekIndex: number): Promise<void> {
@@ -183,6 +183,7 @@ async function ageIntoMidBlock(uid: string, weekIndex: number): Promise<void> {
   seedFirestore({
     [path]: {
       ...doc,
+      liftWeekKey: staleKey,
       runDays: (doc.runDays as { weekKey: string }[]).map((d) => ({
         ...d,
         weekKey: staleKey,

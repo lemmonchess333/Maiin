@@ -41,9 +41,9 @@ import {
   failNextFirestore,
 } from "@/test/firestoreHarness";
 
-/** Wed 15 Jul 2026 → current week Sun 12th, reviewed week Sun 5th–Sat 11th. */
+/** Wed 15 Jul 2026 → current week Mon 13th, reviewed week Mon 6th–Sun 12th. */
 const NOW = new Date(2026, 6, 15, 9, 0, 0);
-const WEEK = "2026-07-05";
+const WEEK = "2026-07-06";
 
 function lift(date: string, weightKg: number, reps: number) {
   return {
@@ -122,7 +122,7 @@ describe("useWeeklyReview assembly", () => {
 
     const review = result.current.review!;
     expect(review.weekKey).toBe(WEEK);
-    expect(review.range).toEqual({ start: WEEK, end: "2026-07-11" });
+    expect(review.range).toEqual({ start: WEEK, end: "2026-07-12" });
     expect(review.headline).toMatchObject({ pi: 68, delta: 8 });
     expect(review.training?.lifts).toMatchObject({ done: 2, planned: 3 });
     expect(review.training?.runs).toMatchObject({ count: 2, km: 15 });

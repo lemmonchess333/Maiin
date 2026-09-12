@@ -43,31 +43,31 @@ describe("localDateString", () => {
 });
 
 describe("localWeekKey", () => {
-  it("returns the Sunday on or before the given date", () => {
-    // Wed May 14, 2026
+  it("returns the Monday on or before the given date", () => {
+    // Thu May 14, 2026
     const wed = new Date(2026, 4, 14);
-    expect(localWeekKey(wed)).toBe("2026-05-10"); // Sunday May 10
+    expect(localWeekKey(wed)).toBe("2026-05-11"); // Monday May 11
   });
 
-  it("returns the same date when called on a Sunday", () => {
+  it("returns the preceding Monday when called on a Sunday", () => {
     // Sun May 10, 2026
     const sun = new Date(2026, 4, 10);
-    expect(localWeekKey(sun)).toBe("2026-05-10");
+    expect(localWeekKey(sun)).toBe("2026-05-04");
   });
 
   it("crosses month boundaries correctly", () => {
-    // Mon May 4, 2026 — Sunday of that week is May 3 (within May)
-    const mon = new Date(2026, 4, 4);
-    expect(localWeekKey(mon)).toBe("2026-05-03");
-    // Mon Jun 1, 2026 — Sunday is May 31
+    // Fri May 1 belongs to the week beginning in April.
+    const fri = new Date(2026, 4, 1);
+    expect(localWeekKey(fri)).toBe("2026-04-27");
+    // Mon Jun 1 begins a new week and month
     const monJun = new Date(2026, 5, 1);
-    expect(localWeekKey(monJun)).toBe("2026-05-31");
+    expect(localWeekKey(monJun)).toBe("2026-06-01");
   });
 
   it("crosses year boundaries correctly", () => {
-    // Sat Jan 2, 2027 — Sunday is Dec 27, 2026
+    // Sat Jan 2, 2027 — Monday is Dec 28, 2026
     const sat = new Date(2027, 0, 2);
-    expect(localWeekKey(sat)).toBe("2026-12-27");
+    expect(localWeekKey(sat)).toBe("2026-12-28");
   });
 });
 
@@ -161,34 +161,34 @@ describe("parseLocalDate", () => {
 
 // ── localWeekKey — literal pins that lived beside the retired getWeekKey alias ────────────────────────────────
 
-describe("localWeekKey (Sunday anchor, literal dates)", () => {
-  it("returns the Sunday of the week for a Sunday", () => {
+describe("localWeekKey (Monday anchor, literal dates)", () => {
+  it("returns the preceding Monday for a Sunday", () => {
     // 2025-01-05 is a Sunday
     const result = localWeekKey(new Date("2025-01-05T12:00:00"));
-    expect(result).toBe("2025-01-05");
+    expect(result).toBe("2024-12-30");
   });
 
-  it("returns the previous Sunday for a Wednesday", () => {
-    // 2025-01-08 is a Wednesday → Sunday is 2025-01-05
+  it("returns the previous Monday for a Wednesday", () => {
+    // 2025-01-08 is a Wednesday → Monday is 2025-01-06
     const result = localWeekKey(new Date("2025-01-08T12:00:00"));
-    expect(result).toBe("2025-01-05");
+    expect(result).toBe("2025-01-06");
   });
 
-  it("returns the previous Sunday for a Saturday", () => {
-    // 2025-01-11 is a Saturday → Sunday is 2025-01-05
+  it("returns the previous Monday for a Saturday", () => {
+    // 2025-01-11 is a Saturday → Monday is 2025-01-06
     const result = localWeekKey(new Date("2025-01-11T12:00:00"));
-    expect(result).toBe("2025-01-05");
+    expect(result).toBe("2025-01-06");
   });
 
-  it("returns the previous Sunday for a Monday", () => {
-    // 2025-01-06 is a Monday → Sunday is 2025-01-05
+  it("returns the same date for a Monday", () => {
+    // 2025-01-06 is a Monday → Monday is 2025-01-06
     const result = localWeekKey(new Date("2025-01-06T12:00:00"));
-    expect(result).toBe("2025-01-05");
+    expect(result).toBe("2025-01-06");
   });
 
   it("handles year boundaries", () => {
-    // 2025-01-01 is a Wednesday → Sunday is 2024-12-29
+    // 2025-01-01 is a Wednesday → Monday is 2024-12-30
     const result = localWeekKey(new Date("2025-01-01T12:00:00"));
-    expect(result).toBe("2024-12-29");
+    expect(result).toBe("2024-12-30");
   });
 });

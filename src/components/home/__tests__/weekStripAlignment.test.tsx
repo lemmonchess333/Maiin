@@ -99,6 +99,6 @@ describe("weekday letters", () => {
     );
     expect(letters).toHaveLength(7);
     for (const l of letters) expect(l).toHaveLength(1);
-    expect(letters.join("")).toBe("SMTWTFS");
+    expect(letters.join("")).toBe("MTWTFSS");
   });
 });

@@ -151,16 +151,16 @@ describe("evaluateEaseWeekNudge — scope + suppression", () => {
   });
 
   it("suppressed for the rest of a week the user dismissed it in", () => {
-    // localWeekKey of 2026-07-12 (Sunday) is 2026-07-12 itself.
+    // Sunday July 12 closes the week beginning Monday July 6.
     expect(
       evaluateEaseWeekNudge(
-        base({ dismissedWeekKey: "2026-07-12", runs: triggering })
+        base({ dismissedWeekKey: "2026-07-06", runs: triggering })
       ).show
     ).toBe(false);
     // A different (prior) week's dismissal does not suppress this week.
     expect(
       evaluateEaseWeekNudge(
-        base({ dismissedWeekKey: "2026-07-05", runs: triggering })
+        base({ dismissedWeekKey: "2026-06-29", runs: triggering })
       ).show
     ).toBe(true);
   });
@@ -308,9 +308,8 @@ describe("A6 — pace-miss trigger", () => {
 });
 
 describe("A6 — evaluatePostEaseBounce", () => {
-  // TODAY = 2026-07-12 (a Sunday) → current week 2026-07-12, last week
-  // 2026-07-05.
-  const LAST_WEEK = "2026-07-05";
+  // Sunday July 12 closes the current week; last week began June 29.
+  const LAST_WEEK = "2026-06-29";
   const tempoRun = (
     date: string,
     tone: "on" | "fast" | "slow"
@@ -327,7 +326,7 @@ describe("A6 — evaluatePostEaseBounce", () => {
     ).toBeNull();
     expect(
       evaluatePostEaseBounce({
-        easedWeekKey: "2026-06-28", // two weeks back — read expired
+        easedWeekKey: "2026-06-22", // two weeks back — read expired
         today: TODAY,
         runs: [tempoRun("2026-07-12", "on")],
       })
@@ -339,13 +338,13 @@ describe("A6 — evaluatePostEaseBounce", () => {
       evaluatePostEaseBounce({
         easedWeekKey: LAST_WEEK,
         today: TODAY,
-        runs: [tempoRun("2026-07-08", "slow")], // last week's run, not this week's
+        runs: [tempoRun("2026-07-01", "slow")], // last week's run, not this week's
       })
     ).toBeNull();
   });
 
   it("reads the LATEST judged tempo of the current week", () => {
-    // TODAY is the Sunday that STARTS week 2026-07-12.
+    // TODAY is the Sunday that ENDS week 2026-07-06.
     expect(
       evaluatePostEaseBounce({
         easedWeekKey: LAST_WEEK,
