@@ -321,13 +321,26 @@ describe("DS ratchets — surface-level drift", () => {
     );
   });
 
-  // The page-title h1 is `text-xl font-extrabold` (H1 tier). Off-scale h1s
-  // — the wordmark, a text-h2 hero, a font-bold title — are counted here.
-  // Approved designer first release: onboarding questions use text-h1 (DESIGN_GUIDE §4).
-  // This is one question role, not a change to app page titles.
-  const OFF_SCALE_H1_BASELINE = 7;
-  it("<h1> elements off the page-title scale do not increase", () => {
-    const { total, byFile } = scan((src) => {
+  // The page-title scale is the H1 TOKEN (`text-h1`, ~31px), not `text-xl`.
+  //
+  // This block previously defined on-scale as `text-xl font-extrabold` — i.e.
+  // it pinned 20px, the H3 *card-title* tier, as the page-title standard, and
+  // noted that moving page titles onto the real H1 was out of scope. That is
+  // the definition under which a card title outranked the page title on the
+  // same screen. The five route pages now render their h1 through
+  // `PageShell` at `text-h1`; the remaining `text-xl` h1s (settings and
+  // detail sub-pages) are grandfathered here and burn down as they adopt
+  // the shell.
+  //
+  // Two sanctioned exceptions to `text-h1`, both pinned below rather than
+  // counted here: the Home brand WORDMARK (tracked uppercase — a brand
+  // mark, not a page name) and the `PageShell` primitive itself, whose h1
+  // takes its class from a variable the regex cannot read.
+  const OFF_SCALE_H1_BASELINE = 22;
+  const H1_PRIMITIVE = "src/components/ui/PageShell.tsx";
+  it("<h1> elements off the H1 token do not increase", () => {
+    const { total, byFile } = scan((src, rel) => {
+      if (rel === H1_PRIMITIVE) return 0;
       let n = 0;
       for (const m of src.matchAll(/<h1\b([^>]*)>/g)) {
         const attrs = m[1];
@@ -336,11 +349,36 @@ describe("DS ratchets — surface-level drift", () => {
             attrs
           );
         const cls = c ? (c[1] ?? c[2] ?? c[3] ?? "") : "";
-        if (!(/\btext-xl\b/.test(cls) && /\bfont-extrabold\b/.test(cls))) n++;
+        if (!/\btext-h1\b/.test(cls)) n++;
       }
       return n;
     });
     expectRatchet("off-scale <h1>", total, OFF_SCALE_H1_BASELINE, byFile);
+  });
+
+  it("the PageShell primitive sizes its title at the H1 token (positive pin)", () => {
+    // The exemption above is only safe because this holds.
+    const shell = readFileSync(resolve(repoRoot, H1_PRIMITIVE), "utf8");
+    expect(shell).toMatch(
+      /text-h1 leading-tight tracking-tight font-extrabold/
+    );
+    // And the brand variant is the ONE way off the token: tracked uppercase.
+    expect(shell).toMatch(/tracking-\[0\.14em\] uppercase/);
+  });
+
+  it("every route page renders its title through PageShell, not a local <h1>", () => {
+    for (const page of ["Home", "Program", "Food", "Social", "History"]) {
+      const src = readFileSync(
+        resolve(repoRoot, `src/pages/${page}.tsx`),
+        "utf8"
+      );
+      expect(src, `${page}.tsx should import PageShell`).toMatch(
+        /from "@\/components\/ui\/PageShell"/
+      );
+      expect(src, `${page}.tsx should not declare its own <h1>`).not.toMatch(
+        /<h1\b/
+      );
+    }
   });
 
   // Arbitrary pixel sizes (`text-[10px]`, `text-[15px]`) sit off the

@@ -68,6 +68,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import PageShell from "@/components/ui/PageShell";
 import { getExerciseById } from "@/lib/exercises";
 import type { Exercise } from "@/lib/exercises";
 import { formatRepTarget } from "@/features/program/templateConversion";
@@ -906,125 +907,94 @@ function ProgramInner() {
   const sportTint = activeTab === "run" ? THEME.running : THEME.lifting;
   const SportIcon = activeTab === "run" ? Footprints : Dumbbell;
   return (
-    <div>
-      <ProgramOfflineBanner />
-      {/* ── Header Zone ── */}
-      <div
-        className="rounded-2xl px-3 pt-1.5 pb-2.5 transition-colors duration-300"
-        style={{ backgroundColor: `${sportTint}0F` }}
-      >
-        <header>
-          <div className="flex items-start justify-between pt-1 pb-1">
-            <div className="min-w-0 flex-1">
-              {/* Sport accent tile makes "Train" answer to the active mode —
-                  previously the big title stayed neutral and only the tiny
-                  subtitle changed on switch. */}
-              <div className="flex items-center gap-2">
-                <div
-                  className="size-7 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors duration-300"
-                  style={{ backgroundColor: `${sportTint}24` }}
-                >
-                  <SportIcon
-                    className="size-4"
-                    style={{ color: sportTint }}
-                    aria-hidden="true"
-                  />
-                </div>
-                <h1 className="text-xl font-extrabold text-foreground">
-                  Train
-                </h1>
-              </div>
-              {/* Subtitle is tab-aware so the Run tab no longer reads as a
-                  secondary add-on under a lifting-only header.
-
-                  Reserve a stable 2-line height so the segmented control — and
-                  everything below it — sits at the SAME Y on both tabs. The
-                  lift subtitle ("Built for … · split · N days/week") often
-                  wraps to two lines while the run subtitle ("Free running · …")
-                  is one; without the reserve the whole page shifted up ~12px
-                  when toggling Lift↔Run. line-clamp-2 caps longer lines so it
-                  can't grow to three and re-introduce the jump. */}
-              <p className="text-xs text-muted-foreground line-clamp-2 min-h-[2rem] mt-1">
-                {activeTab === "run" ? programRunHeaderLine : programHeaderLine}
-              </p>
-            </div>
-            {/* Right utility cluster — overflow (+ a "Done" exit that shows
-              only while reordering). The reorder ENTER control moved out of
-              the header into the overflow menu ("Reorder exercises") — it's
-              a low-frequency plan edit, not worth a permanent header icon.
-              During reorder mode the header surfaces a clear "Done" to exit;
-              at rest the header is just the overflow. */}
-            <div className="flex items-center gap-1 flex-shrink-0">
-              {activeTab === "lift" &&
-                (programState?.workouts?.length ?? 0) > 0 &&
-                reorderMode && (
-                  <button
-                    type="button"
-                    onClick={() => setReorderMode(false)}
-                    className="px-3 py-1.5 min-h-[44px] inline-flex items-center rounded-lg text-xs font-semibold text-primary"
-                  >
-                    Done
-                  </button>
-                )}
-              <button
-                type="button"
-                onClick={() => setShowOverflow(true)}
-                className="p-2 rounded-lg hover:bg-muted transition-colors"
-                style={{ minWidth: 44, minHeight: 44 }}
-                aria-label="More options"
-              >
-                <MoreHorizontal className="size-4 text-muted-foreground" />
-              </button>
-            </div>
-          </div>
-        </header>
-
-        {/* PR-3: 2-tab segmented control. Today / Week were retired —
-            Home owns today-glance, DayActionSheet owns per-day
-            actions, and the Footprint nav icon starts a run.
-
-            Sport-coding matters here: Programme is the point where the
-            athlete chooses between two training modes, so the switch should
-            not read as two anonymous grey tabs. The shared SegmentedControl
-            keeps the iOS pill interaction, 44px targets, roving-keyboard
-            support, and reduced-motion behaviour in one primitive while the
-            active tone reinforces the design-system rule: purple = lift,
-            coral = run. */}
-        <div className="pt-2">
-          <SegmentedControl
-            ariaLabel="Train mode"
-            value={activeTab}
-            onChange={(value) => selectTab(value)}
-            tone={activeTab === "run" ? "running" : "lifting"}
-            className="rounded-2xl bg-muted/50 p-1.5"
-            options={
-              [
-                {
-                  value: "lift",
-                  label: (
-                    <span className="inline-flex items-center justify-center gap-1.5">
-                      <Dumbbell className="size-4" aria-hidden="true" />
-                      <span>Lift</span>
-                    </span>
-                  ),
-                },
-                {
-                  value: "run",
-                  label: (
-                    <span className="inline-flex items-center justify-center gap-1.5">
-                      <Footprints className="size-4" aria-hidden="true" />
-                      <span>Run</span>
-                    </span>
-                  ),
-                },
-              ] satisfies {
-                value: ProgramTab;
-                label: ReactNode;
-              }[]
-            }
+    <PageShell
+      title="Train"
+      banner={<ProgramOfflineBanner />}
+      /* Option A sport-tint: the active mode's colour bleeds through the
+         whole header zone (title · subtitle · toggle) so the Lift/Run
+         switch reads as the page changing mode, not a lone coloured pill on
+         grey. Purple = lift, coral = run. */
+      accent={sportTint}
+      /* Sport accent tile makes "Train" answer to the active mode. */
+      leading={
+        <div
+          className="size-7 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors duration-300"
+          style={{ backgroundColor: `${sportTint}24` }}
+        >
+          <SportIcon
+            className="size-4"
+            style={{ color: sportTint }}
+            aria-hidden="true"
           />
         </div>
-      </div>
+      }
+      /* Tab-aware, so the Run tab does not read as an add-on under a
+         lifting-only header. Two lines reserved: the lift line often wraps
+         while the run line is one, and without the reserve everything
+         below shifted ~12px on Lift↔Run. */
+      subtitle={activeTab === "run" ? programRunHeaderLine : programHeaderLine}
+      subtitleReserveLines={2}
+      /* Overflow, plus a "Done" exit only while reordering. */
+      actions={
+        <>
+          {activeTab === "lift" &&
+            (programState?.workouts?.length ?? 0) > 0 &&
+            reorderMode && (
+              <button
+                type="button"
+                onClick={() => setReorderMode(false)}
+                className="px-3 py-1.5 min-h-[44px] inline-flex items-center rounded-lg text-xs font-semibold text-primary"
+              >
+                Done
+              </button>
+            )}
+          <button
+            type="button"
+            onClick={() => setShowOverflow(true)}
+            className="p-2 rounded-lg hover:bg-muted transition-colors"
+            style={{ minWidth: 44, minHeight: 44 }}
+            aria-label="More options"
+          >
+            <MoreHorizontal className="size-4 text-muted-foreground" />
+          </button>
+        </>
+      }
+      /* Sport-coded 2-tab switch: purple = lift, coral = run. */
+      controls={
+        <SegmentedControl
+          ariaLabel="Train mode"
+          value={activeTab}
+          onChange={(value) => selectTab(value)}
+          tone={activeTab === "run" ? "running" : "lifting"}
+          className="rounded-2xl bg-muted/50 p-1.5"
+          options={
+            [
+              {
+                value: "lift",
+                label: (
+                  <span className="inline-flex items-center justify-center gap-1.5">
+                    <Dumbbell className="size-4" aria-hidden="true" />
+                    <span>Lift</span>
+                  </span>
+                ),
+              },
+              {
+                value: "run",
+                label: (
+                  <span className="inline-flex items-center justify-center gap-1.5">
+                    <Footprints className="size-4" aria-hidden="true" />
+                    <span>Run</span>
+                  </span>
+                ),
+              },
+            ] satisfies {
+              value: ProgramTab;
+              label: ReactNode;
+            }[]
+          }
+        />
+      }
+    >
       {/* ── End header bubble. The sport-tint wraps ONLY the identity +
             mode switch (title · subtitle · Lift/Run toggle) — the week/day
             selector below is plan CONTENT and renders on the plain page
@@ -2163,6 +2133,6 @@ function ProgramInner() {
           </>
         )}
       </AnimatePresence>
-    </div>
+    </PageShell>
   );
 }
