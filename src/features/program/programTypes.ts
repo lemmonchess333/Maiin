@@ -350,7 +350,7 @@ export const CURRENT_WEEKSCHEDULE_VERSION = 1 as const;
 // v3 (2026-08-04): one-time coverage backfill for plans generated before the
 // lateral-raise and calf slots existed. Version-gated precisely so it runs
 // ONCE — a user who deletes those slots afterwards keeps them deleted.
-export const CURRENT_PROGRAM_SCHEMA_VERSION = 3 as const;
+export const CURRENT_PROGRAM_SCHEMA_VERSION = 4 as const;
 
 /* ================================
    SCHEDULED RUN
@@ -766,8 +766,11 @@ export interface ProgramState {
    * the plan). Missing in legacy docs is treated as v1.
    *
    * Bump pattern: increment when adding new required fields that
-   * existing data lacks. v2 added the run-identity tuple
-   * (id/date/weekKey/status) to ScheduledRunDay.
+   * existing data lacks, or when the MEANING of a stored value
+   * changes. v2 added the run-identity tuple (id/date/weekKey/status)
+   * to ScheduledRunDay. v4 is a meaning change rather than a shape
+   * one: `WEEK_STARTS_ON` moved to Monday, so every stored week key
+   * written under the Sunday anchor is re-anchored once on read.
    */
   programSchemaVersion?: number;
   /**

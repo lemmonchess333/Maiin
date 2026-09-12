@@ -39,7 +39,9 @@ import { parseLocalDate, localDateString } from "@/lib/dateHelpers";
 
 /* ── Week bounds ──────────────────────────────────────────────── */
 
-/** Sunday "YYYY-MM-DD" → { start, end } local-date strings (Sun..Sat). */
+/** Week-start "YYYY-MM-DD" → { start, end } local-date strings, the
+ *  seven-day span it opens. Anchor-agnostic: it adds six days to
+ *  whatever first day it is handed. */
 export function weekBounds(weekKey: string): { start: string; end: string } {
   const start = parseLocalDate(weekKey);
   const end = new Date(start);

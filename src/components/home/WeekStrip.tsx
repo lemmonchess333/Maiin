@@ -86,15 +86,18 @@ export default function WeekStrip({
        row out of reach: every date the card could be given was in the
        future, and a future day has no meals to summarise.
 
-       Sunday-start is forced by the data model, not a style choice.
-       `localWeekKey` is Sunday-anchored, and `resolveTrainingWindow`
-       derives `currentWeekKey` from `startDate` — the anchor that gates
-       the resolver's legacy run-day fallback, which the docstring says
-       must be today's. Starting on this week's Sunday keeps that true
-       for free: `localWeekKey(sunday) === localWeekKey(today)`, and all
-       seven days share that one key, so no day can inherit another
-       week's status. A Monday-start strip would straddle two week keys
-       and break exactly the guard PR-0c installed. */
+       Starting on the week's FIRST day is forced by the data model,
+       not a style choice — and note the argument never names a
+       weekday. `resolveTrainingWindow` derives `currentWeekKey` from
+       `startDate`, the anchor gating the resolver's legacy run-day
+       fallback, which its docstring says must be today's. Starting on
+       `localWeekKey(today)` keeps that true for free: all seven days
+       share that one key, so no day can inherit another week's status.
+       Any strip starting mid-week would straddle two keys and break
+       exactly the guard PR-0c installed. The strip follows
+       `WEEK_STARTS_ON`, so the Monday flip cost it nothing; the
+       weekday letters come from each date via `format`, so they move
+       with the days rather than being a fixed S-M-T-W row. */
     const weekStart = parseLocalDate(localWeekKey(today));
     const resolved = resolveTrainingWindow({
       startDate: weekStart,

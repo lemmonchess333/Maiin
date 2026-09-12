@@ -9,10 +9,16 @@
  * document, held together by nothing but the comment. Changing the anchor
  * meant finding all six and agreeing with yourself six times.
  *
- * These tests pin the structure rather than the value: WEEK_STARTS_ON may
- * change (Monday is en-GB and ISO, and `streakEngine.weekKey` and the
- * coach-prompt ids already use it), and when it does, everything here must
- * follow from the one edit.
+ * Most of these pin the STRUCTURE rather than the value, so they held
+ * unchanged across the flip itself: whatever the anchor is, the seven days
+ * of a week agree and `dateForDayOfWeek` lands on the right weekday.
+ *
+ * Two do pin the value, deliberately and with literal dates. The anchor is
+ * MONDAY now (RunWk2 — en-GB and ISO-8601, and what `streakEngine.weekKey`
+ * and the coach-prompt ids always used), and a structural suite cannot
+ * tell you which day that is: every assertion in it passes just as well
+ * under Sunday. A literal is the only thing that fails when someone
+ * changes the constant without meaning to.
  */
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
@@ -23,8 +29,64 @@ import {
   startOfLocalWeek,
   localWeekKey,
   dateForDayOfWeek,
+  migrateWeekKeyAnchor,
   parseLocalDate,
 } from "../dateHelpers";
+
+describe("the anchor is MONDAY, and a literal is what says so", () => {
+  it("keys a Sunday back to the Monday that opened its week", () => {
+    // Sun 2026-09-13 belongs to the week that began Mon 2026-09-07.
+    // This is THE assertion the structural tests cannot make: under a
+    // Sunday anchor the same date keys to itself.
+    expect(localWeekKey(parseLocalDate("2026-09-13"))).toBe("2026-09-07");
+  });
+
+  it("keys a Monday to itself", () => {
+    expect(localWeekKey(parseLocalDate("2026-09-07"))).toBe("2026-09-07");
+  });
+
+  it("is Monday in getDay() numbering", () => {
+    expect(WEEK_STARTS_ON).toBe(1);
+  });
+});
+
+describe("migrateWeekKeyAnchor — re-anchoring a stored Sunday key", () => {
+  it("shifts a Sunday key FORWARD to the Monday week sharing six of its days", () => {
+    // The direction is the point. Sun 6 Sept opened the old week
+    // Sun 6..Sat 12; the closest Monday week is Mon 7..Sun 13.
+    expect(migrateWeekKeyAnchor("2026-09-06")).toBe("2026-09-07");
+  });
+
+  it("never resolves BACKWARD, which is what a naive re-derive would do", () => {
+    // localWeekKey("2026-09-06") under Monday rules is 2026-08-31 — a
+    // week EARLIER than the key it replaced. Both rollovers compare a
+    // stored key against a fresh one as strings and advance while the
+    // stored one sorts first, so the naive answer hands every user a
+    // spurious week advance on their first open after the flip.
+    const naive = localWeekKey(parseLocalDate("2026-09-06"));
+    expect(naive).toBe("2026-08-31");
+    expect(migrateWeekKeyAnchor("2026-09-06")).not.toBe(naive);
+    expect(
+      migrateWeekKeyAnchor("2026-09-06") > naive,
+      "the remap must move forward, not back"
+    ).toBe(true);
+  });
+
+  it("is idempotent — a key already on the anchor is returned unchanged", () => {
+    // It runs on every read, so a second pass must not walk anyone on.
+    const once = migrateWeekKeyAnchor("2026-09-06");
+    expect(migrateWeekKeyAnchor(once)).toBe(once);
+    expect(migrateWeekKeyAnchor("2026-09-07")).toBe("2026-09-07");
+  });
+
+  it("lands on the anchor from every day of the week", () => {
+    for (let d = 6; d <= 12; d++) {
+      const key = `2026-09-${String(d).padStart(2, "0")}`;
+      const out = migrateWeekKeyAnchor(key);
+      expect(parseLocalDate(out).getDay()).toBe(WEEK_STARTS_ON);
+    }
+  });
+});
 
 describe("the anchor is self-consistent", () => {
   it("puts every day of a week on the same key", () => {
