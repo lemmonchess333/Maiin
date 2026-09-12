@@ -47,10 +47,9 @@ import { inferMovementCategory } from "@/lib/exerciseMovementCategory";
 import { generateSchedule, isValidWeekSchedule } from "@/lib/scheduleUtils";
 import {
   generateScheduledRunId,
-  localDateString,
   localWeekKey,
-  addLocalDays,
   parseLocalDate,
+  dateForDayOfWeek,
 } from "@/lib/dateHelpers";
 import { isScheduledRunCompleted } from "@/lib/scheduledRunStatus";
 import { repUnitForExerciseId } from "./repUnits";
@@ -278,8 +277,10 @@ function migrateScheduledRunDay(
 ): ScheduledRunDay {
   // ── Shape repair (fill missing fields) ──
   const weekKey = rd.weekKey ?? localWeekKey(weekStartDate);
-  const date =
-    rd.date ?? localDateString(addLocalDays(weekStartDate, rd.dayIndex));
+  // Same offset rule: `weekKey` names the week's first day, `dayIndex` is a
+  // day-of-week (0 = Sunday). Adding the index directly repairs a legacy
+  // runDay onto the wrong date under any anchor but Sunday.
+  const date = rd.date ?? dateForDayOfWeek(weekKey, rd.dayIndex);
   const id =
     rd.id ??
     generateScheduledRunId(

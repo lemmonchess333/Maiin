@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { Leaf } from "lucide-react";
 import { THEME } from "@/lib/theme";
+import { cardClasses } from "@/components/ui/cardClasses";
 
 /**
  * Home CTA card for rest days. Matches the Lift and Run CTA card
@@ -18,7 +19,10 @@ import { THEME } from "@/lib/theme";
 export default function RestDayCard() {
   return (
     <motion.div
-      className="p-4 rounded-2xl flex items-center gap-4"
+      className={cardClasses({
+        tone: "tinted",
+        className: "flex items-center gap-4",
+      })}
       style={{
         background: `linear-gradient(135deg, ${THEME.brand}14, ${THEME.brand}05 70%)`,
         boxShadow: `var(--ds-shadow-card), 0 0 0 1px ${THEME.brand}14`,

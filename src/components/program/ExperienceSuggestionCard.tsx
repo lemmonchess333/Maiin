@@ -12,6 +12,7 @@ import {
   type ExperienceSuggestion,
 } from "@/features/program/experienceDetection";
 import type { WorkoutDay } from "@/features/program/programTypes";
+import Card from "@/components/ui/Card";
 
 /**
  * Evidence-triggered training-level suggestion (experience auto-detection).
@@ -50,7 +51,7 @@ export default function ExperienceSuggestionCard({
   const copy = copyFor(suggestion);
 
   return (
-    <div className="mt-3 rounded-xl bg-card p-4 shadow-card">
+    <Card className="mt-3">
       <div className="flex items-start gap-3">
         <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary/10">
           <GraduationCap className="size-4 text-primary" aria-hidden="true" />
@@ -103,7 +104,7 @@ export default function ExperienceSuggestionCard({
           Dismiss
         </Button>
       </div>
-    </div>
+    </Card>
   );
 }
 

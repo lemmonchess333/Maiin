@@ -20,7 +20,7 @@ import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { useNotifications } from "@/hooks/useNotifications";
 import NotificationsSheet from "@/components/social/NotificationsSheet";
 import { shouldShowFollowingFeed } from "@/lib/socialGates";
-import { motion } from "framer-motion";
+import PageShell from "@/components/ui/PageShell";
 import { track as trackSocialEvent } from "@/lib/socialAnalytics";
 
 /* SOCIAL-HOME-01: the page leads with shared goals. Two top-level
@@ -233,61 +233,43 @@ export default function Social() {
     return () => window.removeEventListener("tropos:social-tab-retap", onRetap);
   }, [triggerRefresh]);
 
-  const itemVariant = {
-    hidden: { opacity: 0, y: 12 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
-  };
-
   return (
-    <motion.div
+    <PageShell
       {...pullBindProps}
-      className="space-y-4"
-      initial="hidden"
-      animate="visible"
-      variants={{
-        hidden: {},
-        visible: { transition: { staggerChildren: 0.06 } },
-      }}
-    >
-      <motion.header variants={itemVariant} className="pt-1">
-        <div className="flex items-center justify-between">
-          <h1 className="text-xl font-extrabold text-foreground">Social</h1>
-          {/* Right cluster (Home header idiom): find people + the
-              notification tray. People moved out of the tab bar
-              (SOCIAL-HOME-01) — search is a header action now. */}
-          <div className="flex items-center gap-1">
+      title="Social"
+      actions={
+        <>
+          <IconButton
+            aria-label="Find people"
+            icon={<Search className="size-5" />}
+            variant="ghost"
+            onClick={openPeople}
+          />
+          <div className="relative">
             <IconButton
-              aria-label="Find people"
-              icon={<Search className="size-5" />}
+              aria-label={
+                notifications.unreadCount > 0
+                  ? `Notifications, ${notifications.unreadCount} unread`
+                  : "Notifications"
+              }
+              icon={<Bell className="size-5" />}
               variant="ghost"
-              onClick={openPeople}
+              onClick={() => {
+                setShowNotifications(true);
+                notifications.markAllSeen();
+              }}
             />
-            <div className="relative">
-              <IconButton
-                aria-label={
-                  notifications.unreadCount > 0
-                    ? `Notifications, ${notifications.unreadCount} unread`
-                    : "Notifications"
-                }
-                icon={<Bell className="size-5" />}
-                variant="ghost"
-                onClick={() => {
-                  setShowNotifications(true);
-                  notifications.markAllSeen();
-                }}
-              />
-              {notifications.unreadCount > 0 && (
-                <span className="absolute top-1 right-1 min-w-[18px] h-[18px] px-1 rounded-full flex items-center justify-center text-caption font-bold font-mono tabular-nums text-white pointer-events-none bg-running-fill">
-                  {notifications.unreadCount > 9
-                    ? "9+"
-                    : notifications.unreadCount}
-                </span>
-              )}
-            </div>
+            {notifications.unreadCount > 0 && (
+              <span className="absolute top-1 right-1 min-w-[18px] h-[18px] px-1 rounded-full flex items-center justify-center text-caption font-bold font-mono tabular-nums text-white pointer-events-none bg-running-fill">
+                {notifications.unreadCount > 9
+                  ? "9+"
+                  : notifications.unreadCount}
+              </span>
+            )}
           </div>
-        </div>
-      </motion.header>
-
+        </>
+      }
+    >
       <NotificationsSheet
         open={showNotifications}
         onOpenChange={setShowNotifications}
@@ -382,6 +364,6 @@ export default function Social() {
           </div>
         </div>
       )}
-    </motion.div>
+    </PageShell>
   );
 }

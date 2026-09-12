@@ -26,7 +26,7 @@ import {
   Timestamp,
 } from "firebase/firestore";
 import { db } from "./firebase";
-import { localDateString } from "@/lib/dateHelpers";
+import { localDateString, startOfLocalWeek } from "@/lib/dateHelpers";
 import { isVolumeEligible } from "./runStatsEligibility";
 
 export interface TrajectoryBreakdown {
@@ -60,10 +60,8 @@ export interface PersonalTrajectory {
 }
 
 function startOfWeek(d: Date): Date {
-  const r = new Date(d);
-  r.setDate(r.getDate() - r.getDay());
-  r.setHours(0, 0, 0, 0);
-  return r;
+  // The shared anchor, not a local copy of the arithmetic.
+  return startOfLocalWeek(d);
 }
 
 function addDays(d: Date, days: number): Date {

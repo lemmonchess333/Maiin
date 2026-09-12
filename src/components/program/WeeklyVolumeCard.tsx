@@ -12,6 +12,7 @@ import {
   type VolumeStatus,
 } from "@/features/program/volumeModel";
 import type { WorkoutDay } from "@/features/program/programTypes";
+import Card from "@/components/ui/Card";
 
 /**
  * Weekly sets-per-muscle summary (D-LIFT-1, read-only). Surfaces the hard-set
@@ -110,7 +111,7 @@ export default function WeeklyVolumeCard({
       : `${lowCount} ${lowCount === 1 ? "muscle" : "muscles"} below target`;
 
   return (
-    <div className="rounded-2xl bg-card p-4 shadow-card space-y-3 mt-3">
+    <Card className="space-y-3 mt-3">
       <button
         type="button"
         aria-expanded={expanded}
@@ -172,6 +173,6 @@ export default function WeeklyVolumeCard({
           })}
         </div>
       )}
-    </div>
+    </Card>
   );
 }

@@ -2,6 +2,8 @@ import { useMemo, useEffect, useRef, useCallback, Suspense } from "react";
 import { lazyRetry } from "@/lib/lazyRetry";
 import { useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
+import PageShell from "@/components/ui/PageShell";
+import { pageItemVariant } from "@/components/ui/pageMotion";
 import { useMeals } from "@/hooks/useMeals";
 import { useMealsInRange } from "@/hooks/useMealsInRange";
 import { useLifetimeMealStats } from "@/hooks/useLifetimeMealStats";
@@ -57,6 +59,7 @@ import HistoryOfflineBanner from "@/components/analytics/HistoryOfflineBanner";
 import { granularityForRange, binKeyForDate } from "@/lib/chartGranularity";
 import {
   localWeekKey,
+  startOfLocalWeek,
   localDateString,
   parseLocalDate,
 } from "@/lib/dateHelpers";
@@ -91,6 +94,7 @@ const PerformanceSection = lazyRetry(
   () => import("@/components/analytics/PerformanceSection")
 );
 import { useStreaks } from "@/features/streaks/useStreaks";
+import Card from "@/components/ui/Card";
 
 const PRsTab = lazyRetry(() => import("@/components/analytics/PRsTab"));
 const MilestonesTab = lazyRetry(
@@ -630,10 +634,11 @@ export default function History() {
     {
       const since = new Date();
       since.setDate(since.getDate() - rangeDays);
-      const cursor = new Date(since);
-      cursor.setDate(cursor.getDate() - cursor.getDay());
-      const end = new Date();
-      end.setDate(end.getDate() - end.getDay());
+      // Both ends through the shared anchor. The comment below has always
+      // said the axis MUST agree with the data's week helper; deriving the
+      // boundary by hand made that a promise rather than a fact.
+      const cursor = startOfLocalWeek(since);
+      const end = startOfLocalWeek(new Date());
       while (cursor <= end) {
         // weeklyData[].week is keyed by localWeekKey (useRunningStats),
         // so the axis MUST use the same local-week helper. The prior
@@ -870,12 +875,11 @@ export default function History() {
     // of compressing logged-only weeks into an uninterrupted line.
     const allWeekKeys: string[] = [];
     {
-      const cursor = new Date(since);
-      cursor.setDate(cursor.getDate() - cursor.getDay());
-      const end = new Date();
-      end.setDate(end.getDate() - end.getDay());
+      // Same anchor as the data side, for the same reason as above.
+      const cursor = startOfLocalWeek(since);
+      const end = startOfLocalWeek(new Date());
       while (cursor <= end) {
-        // sparkVolumeMap is keyed by binKeyForDate(d, "weekly") (UTC-
+        // sparkVolumeMap is keyed by binKeyForDate(d, "weekly") (local-
         // Sunday), so the axis MUST derive its keys with the SAME helper.
         // The prior local-cursor + cursor.toISOString() key never matched
         // binKeyForDate's UTC-Sunday anchor in non-UTC zones, flatlining
@@ -1160,11 +1164,6 @@ export default function History() {
     };
   }, [rangeMeals, rangeDays]);
 
-  const itemVariant = {
-    hidden: { opacity: 0, y: 12 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
-  };
-
   // Range-adaptive prefix for stat-card labels. The values inside
   // those cards are TOTALS for the selected window (e.g. "Volume" is
   // the sum across rangeDays, not a weekly average), so a static
@@ -1237,20 +1236,7 @@ export default function History() {
     !showRunningSection && !showLiftingSection && !showNutritionSection;
 
   return (
-    <motion.div
-      {...pullBindProps}
-      className="space-y-4 pt-2"
-      initial="hidden"
-      animate="visible"
-      variants={{
-        hidden: {},
-        visible: { transition: { staggerChildren: 0.06 } },
-      }}
-    >
-      <motion.header variants={itemVariant}>
-        <h1 className="text-xl font-extrabold text-foreground">Analytics</h1>
-      </motion.header>
-
+    <PageShell {...pullBindProps} title="Analytics">
       {/* Hist4: small refresh indicator while the pull-to-refresh
           gesture is in flight. aria-live polite so screen readers
           announce the transient state without interrupting. */}
@@ -1269,7 +1255,7 @@ export default function History() {
           Firestore local cache while offline. */}
       <HistoryOfflineBanner />
 
-      <motion.div variants={itemVariant}>
+      <motion.div variants={pageItemVariant}>
         <FilterPills
           filter={filter}
           setFilter={(next) => {
@@ -1879,7 +1865,7 @@ export default function History() {
                       bars, and `text-sm font-medium` is what the Home
                       weight tile already uses for exactly this role. */}
                   <div className="grid grid-cols-3 gap-2">
-                    <div className="p-3 rounded-2xl bg-card text-center card-shadow">
+                    <Card size="compact" className="text-center">
                       <Footprints className="size-4 mx-auto mb-1.5 text-running" />
                       <p className="text-base font-extrabold font-mono tabular-nums text-foreground leading-tight">
                         {abbreviateK(lifetimeTotals.runKm)}
@@ -1889,8 +1875,8 @@ export default function History() {
                         {lifetimeTotals.runCount}{" "}
                         {lifetimeTotals.runCount === 1 ? "run" : "runs"}
                       </p>
-                    </div>
-                    <div className="p-3 rounded-2xl bg-card text-center card-shadow">
+                    </Card>
+                    <Card size="compact" className="text-center">
                       <Trophy className="size-4 mx-auto mb-1.5 text-lifting" />
                       <p className="text-base font-extrabold font-mono tabular-nums text-foreground leading-tight">
                         {formatVolume(lifetimeTotals.liftVolume).value}
@@ -1906,8 +1892,8 @@ export default function History() {
                           ? "session"
                           : "sessions"}
                       </p>
-                    </div>
-                    <div className="p-3 rounded-2xl bg-card text-center card-shadow">
+                    </Card>
+                    <Card size="compact" className="text-center">
                       <UtensilsCrossed
                         className="size-4 mx-auto mb-1.5"
                         style={{ color: THEME.semantic.nutrition }}
@@ -1921,13 +1907,13 @@ export default function History() {
                       <p className="text-caption text-muted-foreground mt-0.5">
                         logged
                       </p>
-                    </div>
+                    </Card>
                   </div>
                 </section>
               )}
           </>
         )}
       </Suspense>
-    </motion.div>
+    </PageShell>
   );
 }
