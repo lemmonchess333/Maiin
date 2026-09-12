@@ -601,3 +601,48 @@ describe("WeekStrip — the week you are in, not the week ahead", () => {
     expect(got[6]).toMatch(/^Sunday /);
   });
 });
+
+describe("WeekStrip — today is a colour and a soft halo, never a second ring", () => {
+  // `ring-2 ring-primary ring-offset-2` on top of the 2px `border-primary`
+  // drew today as two concentric rings (border, gap, ring). Today is now a
+  // 4px translucent halo with no offset — the same mark the Run and Lift
+  // selectors use — so the three strips read as one control.
+  it("marks today with a translucent halo and no offset ring", () => {
+    const { container } = render(
+      <WeekStrip
+        dayMap={new Map()}
+        profile={null}
+        programState={null}
+        claimMap={emptyClaimMap}
+        selectedDate={null}
+        onDayTap={vi.fn()}
+      />
+    );
+    const todayButton = container.querySelector('button[aria-current="date"]');
+    expect(todayButton).not.toBeNull();
+    const circle = todayButton!.querySelector("div.rounded-full");
+    expect(circle).not.toBeNull();
+    const cls = circle!.className;
+    expect(cls).toContain("ring-4 ring-primary/10");
+    expect(cls).not.toContain("ring-offset");
+    expect(cls).not.toContain("ring-2");
+  });
+
+  it("keeps the halo when today is also the selected day", () => {
+    const todayKey = localDateString(new Date());
+    const { container } = render(
+      <WeekStrip
+        dayMap={new Map()}
+        profile={null}
+        programState={null}
+        claimMap={emptyClaimMap}
+        selectedDate={todayKey}
+        onDayTap={vi.fn()}
+      />
+    );
+    const todayButton = container.querySelector('button[aria-current="date"]')!;
+    const cls = todayButton.querySelector("div.rounded-full")!.className;
+    expect(cls).toContain("bg-primary-strong");
+    expect(cls).toContain("ring-4 ring-primary/10");
+  });
+});

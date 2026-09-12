@@ -44,6 +44,9 @@ const GREEN = THEME.success;
    its bottomLabel text sat at 2.77:1 on the light page. Alpha steps use
    hsl()/alpha rather than hex concatenation, same value, theme-aware. */
 const SKIPPED = "hsl(var(--muted-foreground))";
+/** Every day cell, today included, is this size — see the styling note in
+ *  the cell loop. One constant so there is no second size to drift to. */
+const CELL_PX = 40;
 const SKIPPED_FILL = "hsl(var(--muted-foreground) / 0.2)";
 const SKIPPED_BORDER = "hsl(var(--muted-foreground) / 0.33)";
 
@@ -78,10 +81,13 @@ export default function ProgrammeWeekSelector({
         const isSkipped = cell.status === "skipped";
         const isRest = cell.status === "rest";
 
-        // First-match-wins circle styling. Mirrors DayStepper's rule order
-        // (today = 48px + glow; peers = 40px) so the two tabs are visually
-        // interchangeable.
-        let diameter: number;
+        // First-match-wins circle styling. Every cell is the same size:
+        // today is a colour and a soft halo, never a geometry — a taller
+        // cell pushes its own weekday letter and bottom label off the
+        // row's baselines on the one day a user looks at most. Same rule
+        // as Home's WeekStrip, so the three strips read as one control.
+        // (This enlarged today after a `DayStepper` that no longer
+        // exists.)
         let fill: string;
         let bColor: string;
         let bWidth: number;
@@ -90,7 +96,6 @@ export default function ProgrammeWeekSelector({
         let content: React.ReactNode;
 
         if (isSkipped) {
-          diameter = 40;
           fill = SKIPPED_FILL;
           bWidth = 1;
           bColor = SKIPPED_BORDER;
@@ -103,47 +108,40 @@ export default function ProgrammeWeekSelector({
           );
           labelColor = SKIPPED;
         } else if (isToday && isCompleted) {
-          diameter = 48;
           fill = GREEN;
           bWidth = 0;
           bColor = "transparent";
-          glow = `0 0 0 4px ${GREEN}1A, 0 4px 14px ${GREEN}33`;
-          content = <Check className="size-5 text-white" strokeWidth={3} />;
+          glow = `0 0 0 4px ${GREEN}1A`;
+          content = <Check className="size-4 text-white" strokeWidth={3} />;
           // Text takes the AA step; the fill/glow keep the identity green.
           labelColor = "hsl(var(--success-strong))";
         } else if (isCompleted) {
-          diameter = 40;
           fill = GREEN;
           bWidth = 0;
           bColor = "transparent";
           content = <Check className="size-4 text-white" strokeWidth={3} />;
           labelColor = "hsl(var(--success-strong))";
         } else if (isToday && isSelected) {
-          diameter = 48;
           fill = SPORT;
           bWidth = 0;
           bColor = "transparent";
-          glow = `0 0 0 4px ${SPORT}1A, 0 4px 14px ${SPORT}40`;
+          glow = `0 0 0 4px ${SPORT}1A`;
           content = (
-            <span className="text-base font-bold text-white">
-              {cell.center}
-            </span>
+            <span className="text-sm font-bold text-white">{cell.center}</span>
           );
           labelColor = SPORT;
         } else if (isToday) {
-          diameter = 48;
           fill = "transparent";
           bWidth = 2;
           bColor = SPORT;
           glow = `0 0 0 4px ${SPORT}1A`;
           content = (
-            <span className="text-base font-bold" style={{ color: SPORT }}>
+            <span className="text-sm font-bold" style={{ color: SPORT }}>
               {cell.center}
             </span>
           );
           labelColor = SPORT;
         } else if (isSelected) {
-          diameter = 40;
           fill = SPORT;
           bWidth = 0;
           bColor = "transparent";
@@ -154,7 +152,6 @@ export default function ProgrammeWeekSelector({
         } else {
           // Upcoming + rest share the calm outline; rest fades a touch more
           // so a run-scope empty day reads as "nothing here" not "to do".
-          diameter = 40;
           fill = "transparent";
           bWidth = 2;
           bColor = "hsl(var(--border))";
@@ -204,18 +201,19 @@ export default function ProgrammeWeekSelector({
                   (audit batch 4): Motion cannot tween "transparent" ↔
                   hsl(var(--…)) or the implicit "medium" borderWidth ↔ a
                   number, and warned at runtime on every state change.
-                  The discrete swap is imperceptible under the size +
-                  glow tween that remains, and CSS variables stay
-                  theme-correct in both light and dark. */}
+                  The discrete swap is imperceptible under the glow tween
+                  that remains, and CSS variables stay theme-correct in
+                  both light and dark. Size is not tweened because it no
+                  longer changes: every cell is `CELL_PX`. */}
               <motion.div
                 className="flex items-center justify-center rounded-full"
                 animate={{
-                  width: diameter,
-                  height: diameter,
                   boxShadow: glow ?? "0 0 0 0 transparent",
                 }}
                 transition={{ duration: 0.2, ease: "easeOut" }}
                 style={{
+                  width: CELL_PX,
+                  height: CELL_PX,
                   borderStyle: "solid",
                   borderWidth: bWidth,
                   borderColor: bColor,
