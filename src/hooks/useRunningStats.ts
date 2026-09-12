@@ -62,7 +62,7 @@ export interface RunSummaryItem {
 }
 
 /**
- * Bucket a flat run list into Sunday-anchored weeks. Pure function —
+ * Bucket a flat run list into Monday-anchored weeks. Pure function —
  * extracted so the bug it carries is unit-testable without mocking
  * Firestore + auth + the hook lifecycle.
  *
@@ -80,7 +80,7 @@ export function aggregateWeeklyData(runs: RunSummaryItem[]): RunningWeekData[] {
   > = {};
   for (const run of runs) {
     if (!isVolumeEligible(run)) continue;
-    // Sunday-start week key in pure LOCAL date math. Previously this mixed
+    // Monday-start week key in pure LOCAL date math. Previously this mixed
     // local getDay()/setDate() with a UTC toISOString() key, so runs logged
     // near midnight in non-UTC zones bucketed into the wrong week.
     const key = localWeekKey(new Date(run.completedAt));

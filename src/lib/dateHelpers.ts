@@ -79,6 +79,21 @@ export function dateForDayOfWeek(weekKey: string, dayOfWeek: number): string {
 }
 
 /**
+ * A weekday's POSITION inside the anchored week: 0 for the week's first
+ * day, 6 for its last. This is the number to sort, compare and "is it
+ * before X" on; `Date.getDay()` is not, because under any anchor but
+ * Sunday the two disagree — a Sunday run is `getDay() === 0` and yet the
+ * LAST run of a Monday week.
+ *
+ * The scheduler's race week was ordering and filtering on `getDay()`
+ * directly, correct only by the Sunday coincidence; this is what it
+ * compares on now.
+ */
+export function weekPosition(dayOfWeek: number): number {
+  return (dayOfWeek - WEEK_STARTS_ON + 7) % 7;
+}
+
+/**
  * Re-anchor a week key written under the SUNDAY anchor onto the Monday
  * week it belongs to (RunWk2, schema v4).
  *

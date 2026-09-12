@@ -7,11 +7,24 @@ import {
 } from "../runReschedule";
 import type { ScheduledRunDay } from "@/features/program/programTypes";
 
-// Week of Sun 2026-05-17 → Sat 2026-05-23.
-const WEEK = "2026-05-17";
+// Week of Mon 2026-05-18 → Sun 2026-05-24 (the Monday anchor).
+const WEEK = "2026-05-18";
+
+// A `dayIndex` is a plain `getDay()` day-of-week (0 = Sunday), which is NOT
+// the position in the week: under the Monday anchor Sunday is the week's LAST
+// day. Spelled out as literals so this table can never re-derive itself from
+// the helper the code under test uses.
+const WEEK_DATES: Record<number, string> = {
+  0: "2026-05-24", // Sun — last day of the Monday-anchored week
+  1: "2026-05-18", // Mon
+  2: "2026-05-19", // Tue
+  3: "2026-05-20", // Wed
+  4: "2026-05-21", // Thu
+  5: "2026-05-22", // Fri
+  6: "2026-05-23", // Sat
+};
 function dateFor(dayIndex: number): string {
-  const d = new Date(2026, 4, 17 + dayIndex);
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  return WEEK_DATES[dayIndex];
 }
 
 function run(overrides: Partial<ScheduledRunDay> = {}): ScheduledRunDay {
@@ -63,7 +76,8 @@ describe("runOriginDate", () => {
 });
 
 describe("resolveRunMoveOptions — blocks", () => {
-  // Anchor "today" to the run's own day so past days are Sun/Mon.
+  // Anchor "today" to the run's own day. Under the Monday anchor only Mon
+  // sits behind a Tuesday run — Sunday closes the week, so it reads as future.
   const todayKey = dateFor(2); // Tue
 
   it("blocks the run's own day (same) and past days", () => {
@@ -74,8 +88,9 @@ describe("resolveRunMoveOptions — blocks", () => {
       todayKey,
     });
     expect(opts[2]).toMatchObject({ available: false, blockReason: "same" });
-    expect(opts[0]).toMatchObject({ available: false, blockReason: "past" });
     expect(opts[1]).toMatchObject({ available: false, blockReason: "past" });
+    // Sunday is the LAST day of this week, so it is ahead of Tuesday.
+    expect(opts[0].available).toBe(true);
     // Future days are open.
     expect(opts[4].available).toBe(true);
   });
@@ -130,7 +145,8 @@ describe("resolveRunMoveOptions — blocks", () => {
 });
 
 describe("resolveRunMoveOptions — warnings", () => {
-  const todayKey = dateFor(0);
+  // The week's FIRST day, so nothing in it is past: Monday, not Sunday.
+  const todayKey = dateFor(1);
 
   it("warns clashes_lift when a HARD run targets a lift day", () => {
     const source = run({ id: "s", dayIndex: 2, type: "tempo" });

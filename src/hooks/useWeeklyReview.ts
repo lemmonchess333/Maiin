@@ -46,7 +46,7 @@ import {
   resolveLoadBand,
 } from "@/lib/performanceDocFields";
 
-/** Sunday key of the last COMPLETED week (the reviewed week). */
+/** Monday key of the last COMPLETED week (the reviewed week). */
 export function reviewedWeekKey(now: Date = new Date()): string {
   return weekKeyMinusN(localWeekKey(now), 1);
 }
@@ -246,7 +246,7 @@ export function useWeeklyReview(): UseWeeklyReviewResult {
       try {
         const { start, end } = weekBounds(weekKey);
         // Performance docs are keyed by COMPUTE date (PI1a), not week
-        // start. The doc named after this week's Sunday is the compute
+        // start. The doc named after this week's Monday is the compute
         // from the week's first morning — LAST week's number — and on
         // many days no doc carries that exact id at all. The compute that
         // summarises the reviewed week landed after it ended: the latest

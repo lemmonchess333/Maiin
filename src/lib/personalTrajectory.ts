@@ -3,8 +3,8 @@
  *
  * The hybrid score is the same formula as the weekly_hybrid
  * leaderboard challenge: `km * 100 + kg * 0.1`. We compute it for
- * both the current week (Sunday 00:00 local → now) and the prior
- * week (Sunday 00:00 → Saturday 23:59:59) so the Social "leaderboard
+ * both the current week (Monday 00:00 local → now) and the prior
+ * week (Monday 00:00 → Sunday 23:59:59) so the Social "leaderboard
  * slot" can show a week-over-week trajectory when the user doesn't
  * have enough friends for a meaningful leaderboard.
  *

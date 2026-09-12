@@ -621,7 +621,7 @@ export default function History() {
           )
         : 0;
 
-    // Zero-padded weekly distance across every Sunday-anchored week
+    // Zero-padded weekly distance across every Monday-anchored week
     // in the time range. Distance is a count metric — a week with no
     // runs is legitimately 0 km, so the sparkline shape correctly
     // tells the consistency story (valleys at 0 = rest weeks, spikes
@@ -832,17 +832,17 @@ export default function History() {
 
     const weekMap: Record<string, number> = {};
     const sessionWeekMap: Record<string, number> = {};
-    /* The sparklines are ALWAYS weekly (they zero-pad across Sunday-
+    /* The sparklines are ALWAYS weekly (they zero-pad across Monday-
        anchored weeks below), while the VolumeChart bins adaptively
        (daily/weekly/monthly with the range). They therefore need their
        OWN weekly-keyed maps: reusing the granularity-keyed weekMap made
        the sparkline lookups miss on every range except 3M — daily keys
        for 1W/1M, monthly keys for 6M/1Y — flatlining both sparklines
-       to zero for a user who trains all week but never on a Sunday. */
+       to zero for a user who trains all week but never on a Monday. */
     const sparkVolumeMap: Record<string, number> = {};
     const sparkSessionsMap: Record<string, number> = {};
     /* Hist5c pin 7 — adaptive chart granularity. At 1W/1M we bin
-       daily; at 3M we bin weekly (Sunday-anchored, the prior
+       daily; at 3M we bin weekly (Monday-anchored, the prior
        universal behaviour); at 6M/1Y we bin monthly. Avoids the
        52-bar unreadable mess at long windows. */
     const granularity = granularityForRange(rangeDays);
@@ -868,7 +868,7 @@ export default function History() {
       volume: weekMap[week],
     }));
 
-    // Zero-pad sparklines across every Sunday-anchored week in the
+    // Zero-pad sparklines across every Monday-anchored week in the
     // range. For activity (volume + sessions), missing weeks are
     // legitimately zero — the user didn't lift that week — so the
     // sparkline shape correctly tells the consistency story instead
@@ -880,9 +880,9 @@ export default function History() {
       const end = startOfLocalWeek(new Date());
       while (cursor <= end) {
         // sparkVolumeMap is keyed by binKeyForDate(d, "weekly") (local-
-        // Sunday), so the axis MUST derive its keys with the SAME helper.
+        // Monday), so the axis MUST derive its keys with the SAME helper.
         // The prior local-cursor + cursor.toISOString() key never matched
-        // binKeyForDate's UTC-Sunday anchor in non-UTC zones, flatlining
+        // binKeyForDate's UTC-anchored week key in non-UTC zones, flatlining
         // the sparkline.
         allWeekKeys.push(binKeyForDate(cursor, "weekly"));
         cursor.setDate(cursor.getDate() + 7);

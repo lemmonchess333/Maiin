@@ -6,7 +6,7 @@
    Per-range granularity:
 
      1W / 1M  → daily bars
-     3M       → weekly bars (Sunday-anchored)
+     3M       → weekly bars (Monday-anchored)
      6M / 1Y  → monthly bars (first-of-month)
 
    Used by History.tsx's lifting-volume aggregator + VolumeChart's
@@ -35,7 +35,7 @@ export function granularityForRange(rangeDays: number): ChartGranularity {
 /**
  * Compute the bin key for `date` under the chosen granularity.
  * Returns a local date string (`YYYY-MM-DD`) — the first day of
- * the bin (the day itself for daily, the Sunday of the week for
+ * the bin (the day itself for daily, the Monday of the week for
  * weekly, the 1st of the month for monthly).
  *
  * LOCAL, deliberately. This was UTC-anchored (`toISOString`), on the
@@ -66,7 +66,7 @@ export function binKeyForDate(
     return localDateString(date);
   }
   if (granularity === "weekly") {
-    return localWeekKey(date); // Sunday-anchored, local
+    return localWeekKey(date); // Monday-anchored, local
   }
   // monthly — first-of-month, local
   return localDateString(new Date(date.getFullYear(), date.getMonth(), 1));

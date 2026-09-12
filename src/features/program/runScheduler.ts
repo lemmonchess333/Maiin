@@ -10,10 +10,12 @@ import type { LayoffClass } from "./layoffDetection";
 import { HARD_RUN_TYPES } from "./programTypes";
 import {
   generateScheduledRunId,
-  localDateString,
   localWeekKey,
   addLocalDays,
   parseLocalDate,
+  dateForDayOfWeek,
+  startOfLocalWeek,
+  weekPosition,
 } from "@/lib/dateHelpers";
 
 // Re-export so existing imports of these types from runScheduler keep
@@ -258,7 +260,14 @@ function buildRunDayV2(args: {
   weekStart: Date;
 }): ScheduledRunDay {
   const weekKey = localWeekKey(args.weekStart);
-  const date = localDateString(addLocalDays(args.weekStart, args.dayIndex));
+  // A `dayIndex` is a getDay() weekday (0 = Sunday), NOT an offset from
+  // the week's first day; the two only coincide under a Sunday anchor.
+  // Adding it straight onto `weekStart` put a Wednesday run on Thursday
+  // the moment the week began on Monday, and a Sunday run six days late.
+  // `dateForDayOfWeek` applies the anchor offset, and derives from the
+  // normalised key rather than the raw `weekStart`, so a caller handing
+  // in a mid-week date still lands every run on its own weekday.
+  const date = dateForDayOfWeek(weekKey, args.dayIndex);
   return {
     id: generateScheduledRunId(
       { dayIndex: args.dayIndex, templateId: args.templateId },
@@ -870,8 +879,10 @@ export interface StructuredWeekV2Input {
   weekSchedule: ScheduleDay[];
   /** 1-indexed week number (drives even/odd quality alternation). */
   weekNumber: number;
-  /** Local-date "YYYY-MM-DD" representing the Sunday of the target
-   *  week. Used to populate `date` + `weekKey` on every runDay. */
+  /** Local-date "YYYY-MM-DD" of the target week's first day (its Monday
+   *  — the anchor is `WEEK_STARTS_ON`). Normalised on entry, so any date
+   *  inside the week is accepted. Used to populate `date` + `weekKey` on
+   *  every runDay. */
   weekStart: string;
 }
 
@@ -885,7 +896,7 @@ export function scheduleStructuredWeekV2(
     .map((d) => d.day);
   if (runEligibleSlots.length === 0) return [];
 
-  const weekStart = parseLocalDate(input.weekStart);
+  const weekStart = startOfLocalWeek(parseLocalDate(input.weekStart));
   const longSlot = pickLongRunSlot(runEligibleSlots, input.weekSchedule);
   const remaining = runEligibleSlots.filter((d) => d !== longSlot);
   const result: ScheduledRunDay[] = [];
@@ -932,7 +943,9 @@ export function scheduleStructuredWeekV2(
     }
   }
 
-  return result.sort((a, b) => a.dayIndex - b.dayIndex);
+  return result.sort(
+    (a, b) => weekPosition(a.dayIndex) - weekPosition(b.dayIndex)
+  );
 }
 
 /**
@@ -957,7 +970,7 @@ export function scheduleRecoveryWeekV2(input: {
     .map((d) => d.day);
   if (runEligibleSlots.length === 0) return [];
 
-  const weekStart = parseLocalDate(input.weekStart);
+  const weekStart = startOfLocalWeek(parseLocalDate(input.weekStart));
   return runEligibleSlots
     .map((dayIndex) =>
       buildRunDayV2({
@@ -967,7 +980,7 @@ export function scheduleRecoveryWeekV2(input: {
         weekStart,
       })
     )
-    .sort((a, b) => a.dayIndex - b.dayIndex);
+    .sort((a, b) => weekPosition(a.dayIndex) - weekPosition(b.dayIndex));
 }
 
 export interface RacePlanV2Input {
@@ -1084,7 +1097,13 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
   const tuning = input.tuning ?? DEFAULT_RUN_TUNING;
   const now = parseLocalDate(input.currentDate);
   const target = parseLocalDate(input.raceGoal.targetDate);
-  const weekStartDate = parseLocalDate(input.weekStart);
+  // Normalised to the anchor, the way `migrateProgramState` normalises its
+  // weekStart: `buildRunDayV2` already keys every run to the week that
+  // CONTAINS this date, so the week arithmetic below has to start from the
+  // same day or the final week's start and the race's key disagree by up
+  // to six days. Production passes an on-anchor key; a caller handing in a
+  // mid-week date now gets the same plan it would from that week's Monday.
+  const weekStartDate = startOfLocalWeek(parseLocalDate(input.weekStart));
   const diffMs = target.getTime() - now.getTime();
   const naturalWeeks = Math.max(1, Math.ceil(diffMs / (7 * 86400000)));
   // R2: whole weeks from the CURRENT week's start to the race's calendar week.
@@ -1144,9 +1163,19 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
   // by `rd.date === raceGoal.targetDate`. Placing it on the long-run slot (as
   // before) left the race dated on the wrong day-of-week, so that equality
   // never held and the no-show / recovery deciders silently bailed. Compute the
-  // race day's index within the FINAL week from the target date itself.
+  // race day's OFFSET within the FINAL week from the target date itself.
+  //
+  // An offset, not a weekday, and the distinction is the point. Days from
+  // the week's first day (0..6, or beyond either end when `totalWeeks`
+  // and the calendar disagree) is the right space to ask "is this slot
+  // before the race?" in. `getDay()` is not: under the Monday anchor a
+  // Sunday is `getDay() === 0` and the LAST day of the week, so comparing
+  // the two kept the wrong shakeouts and placed the race on the wrong day.
+  // The runDay's own `dayIndex` stays a real weekday — every consumer,
+  // the week schedule and `dateForDayOfWeek` all speak that — and the
+  // comparisons below go through `weekPosition` to meet this offset.
   const finalWeekStart = addLocalDays(weekStartDate, (totalWeeks - 1) * 7);
-  const raceDayIndex = Math.round(
+  const raceDayOffset = Math.round(
     (target.getTime() - finalWeekStart.getTime()) / 86400000
   );
 
@@ -1208,14 +1237,23 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
     // it isn't double-booked (it need not be a scheduled run day at all — you
     // race on race day regardless of the weekly template).
     if (phase === "race") {
-      week.push(
-        buildRunDayV2({
-          dayIndex: raceDayIndex,
+      week.push({
+        ...buildRunDayV2({
+          dayIndex: target.getDay(),
           templateId: pickRaceTemplateId(input.raceGoal.distance),
           type: "race",
           weekStart,
-        })
-      );
+        }),
+        // RUN-M2's invariant, held by construction rather than by
+        // arithmetic: the server finds the race by `date === targetDate`.
+        // When `totalWeeks` undercounts and the race sits a week past the
+        // final week's start, the derived date would be in the wrong week;
+        // this keeps it on race day regardless. (That undercount is
+        // pre-existing and the runDay's weekKey still names the plan's
+        // final week in that case — unchanged here, and claims match by
+        // date, so nothing downstream reads the key to find the race.)
+        date: input.raceGoal.targetDate,
+      });
       /* Shakeouts BEFORE the race only. A slot after race day is not a
          shakeout — it is the training week bleeding past the event the plan
          exists to reach, and for a marathon it landed three easy runs in the
@@ -1224,9 +1262,12 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
          `<` rather than `!==` is the whole change. It bites exactly when race
          day is not the last run-eligible day of its week, which was 28.4% of
          generated plans (racePlanSafetySweep.test.ts) — every distance
-         equally, since it is a calendar property. A Sunday race on a
-         Sun/Mon/Tue/Wed schedule was the worst case, and Sunday is when most
-         road races are held.
+         equally, since it is a calendar property. Under the old Sunday
+         anchor a Sunday race on a Sun/Mon/Tue/Wed schedule was the worst
+         case — Sunday opened the week, so every other run day followed
+         the race. Under the Monday anchor Sunday CLOSES the week and that
+         same schedule is the best case; the filter is written in week
+         positions so it needs no such casework.
 
          Nothing downstream was clearing them: `scheduleRecoveryWeekV2`
          replaces the runDays of the week AFTER the race (useProgram's rollover
@@ -1235,11 +1276,22 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
          `recoveryWeeksForDistance` — this stops it contradicting itself in the
          days immediately after.
 
-         The normal case is untouched: when the race falls after the week's run
-         days it carries the `dayIndex: 7` sentinel, every slot 0-6 is `< 7`,
-         and the full shakeout set is kept. */
+         The normal case is untouched: when the race falls after every run
+         day of its week, `raceDayOffset` is past the last position, every
+         slot's position is below it, and the full shakeout set is kept.
+
+         The weekday itself is excluded as well, and only the `totalWeeks`
+         undercount makes that a separate condition: `naturalWeeks` counts
+         from `currentDate` while the weeks are laid out from the week's
+         first day, so a plan started late in the week can put the race a
+         full week past the final week's start (`raceDayOffset >= 7`). Every
+         position is then below the offset and the race's own weekday would
+         be double-booked — the case RUN-M2 pins. Before the anchor change
+         that race carried a sentinel `dayIndex` of 7 which nothing could
+         collide with; now it carries its real weekday, so the exclusion has
+         to be explicit. Fixing the undercount is its own change. */
       runEligibleSlots
-        .filter((d) => d < raceDayIndex)
+        .filter((d) => weekPosition(d) < raceDayOffset && d !== target.getDay())
         .forEach((d) =>
           week.push(
             buildRunDayV2({
@@ -1250,7 +1302,9 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
             })
           )
         );
-      weeks.push(week.sort((a, b) => a.dayIndex - b.dayIndex));
+      weeks.push(
+        week.sort((a, b) => weekPosition(a.dayIndex) - weekPosition(b.dayIndex))
+      );
       continue;
     }
 
@@ -1302,7 +1356,9 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
           })
         )
       );
-      weeks.push(week.sort((a, b) => a.dayIndex - b.dayIndex));
+      weeks.push(
+        week.sort((a, b) => weekPosition(a.dayIndex) - weekPosition(b.dayIndex))
+      );
       continue;
     }
 
@@ -1528,7 +1584,9 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
       }
     }
 
-    weeks.push(week.sort((a, b) => a.dayIndex - b.dayIndex));
+    weeks.push(
+      week.sort((a, b) => weekPosition(a.dayIndex) - weekPosition(b.dayIndex))
+    );
   }
 
   // Run9 phase-3 (Slice C) — clash flag. pickLongRunSlot prefers run-only

@@ -16,25 +16,25 @@ import { localDateString, parseLocalDate } from "./dateHelpers";
 // ── Helpers ──────────────────────────────────
 
 /**
- * Sunday-start week key matching the useRunningStats / localWeekKey
+ * Monday-start week key matching the useRunningStats / localWeekKey
  * convention.
  *
- * UTC/local note: the prior implementation rewound to Sunday with
+ * UTC/local note: the prior implementation rewound to the (then-Sunday) week start with
  * LOCAL date math (`setDate(getDate() - getDay())`) then stringified
  * with `toISOString()` (UTC) — in negative-offset zones a local
- * Sunday-midnight stringified back to the previous Saturday, keying
+ * week-start midnight stringified back to the previous Saturday, keying
  * the wrong week. Now delegates to the shared `localWeekKey` helper
- * (pure local-date math, no UTC read), matching every other Sunday-
+ * (pure local-date math, no UTC read), matching every other Monday-
  * week bucket in the app (useRunningStats, trainingResolver, …).
  *
  * NOTE — NOT a parity-bound copy of the server. The Cloud Function
  * (`functions/performanceEngine.js` `getComputeKey`) is a DIFFERENT
  * function: post-PI1a it keys perf docs by today's compute date with
- * NO Sunday alignment. These two are semantically distinct by design
+ * NO week-start alignment. These two are semantically distinct by design
  * and do NOT need to stay in lockstep — only `scorePerformance`
  * (below) is the parity seam.
  */
-/** Get the Sunday date N weeks before a given weekKey. Pure local-date
+/** Get the Monday date N weeks before a given weekKey. Pure local-date
  *  math via parseLocalDate (never UTC parsing — `new Date("YYYY-MM-DD")`
  *  parses as UTC midnight and shifts a day in negative-offset zones). */
 export function weekKeyMinusN(weekKey: string, n: number): string {

@@ -136,14 +136,15 @@ describe("aggregateWeeklyData", () => {
     expect(result[0].runCount).toBe(2);
   });
 
-  it("buckets runs into Sunday-anchored weeks", () => {
-    /* Saturday + Sunday land in different weeks. 8 May 2026 is a
-       Friday; 10 May 2026 is the next Sunday. */
-    const friday = new Date("2026-05-08T12:00:00Z");
+  it("buckets runs into Monday-anchored weeks", () => {
+    /* Sunday + Monday land in different weeks. 10 May 2026 is a
+       Sunday — the last day of its week; 11 May 2026 is the Monday
+       that opens the next one. */
     const sunday = new Date("2026-05-10T12:00:00Z");
+    const monday = new Date("2026-05-11T12:00:00Z");
     const result = aggregateWeeklyData([
-      run({ distance: 5000, avgPace: 150, completedAt: friday }),
-      run({ distance: 3000, avgPace: 180, completedAt: sunday }),
+      run({ distance: 5000, avgPace: 150, completedAt: sunday }),
+      run({ distance: 3000, avgPace: 180, completedAt: monday }),
     ]);
 
     expect(result).toHaveLength(2);

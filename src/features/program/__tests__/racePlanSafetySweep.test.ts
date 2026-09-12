@@ -63,7 +63,11 @@ import { generateRacePlanV2 } from "@/features/program/runScheduler";
 import type { ScheduleDay } from "@/lib/scheduleUtils";
 
 const DAY = 86_400_000;
-const SUNDAY = Date.UTC(2026, 0, 4);
+/** Mon 5 Jan 2026 — the week anchor (RunWk2). Every plan below starts
+ *  on-anchor, the shape production hands the scheduler; the exhaustive
+ *  sweep still walks `startOffsetDays` 0..6 so off-anchor starts are
+ *  exercised too. */
+const MONDAY = Date.UTC(2026, 0, 5);
 const RACE_DISTANCES = ["5k", "10k", "half", "marathon"] as const;
 type RaceDistance = (typeof RACE_DISTANCES)[number];
 
@@ -85,10 +89,10 @@ function plan(o: {
   weeksOut?: number;
   daysOut?: number;
   runDays?: number;
-  /** Shift week 0's Sunday so the race lands on a different weekday. */
+  /** Shift week 0's start so the race lands on a different weekday. */
   startOffsetDays?: number;
 }) {
-  const start = SUNDAY + (o.startOffsetDays ?? 0) * DAY;
+  const start = MONDAY + (o.startOffsetDays ?? 0) * DAY;
   const key = (d: number) =>
     new Date(start + d * DAY).toISOString().slice(0, 10);
   const daysOut = o.daysOut ?? (o.weeksOut ?? 1) * 7;
@@ -153,19 +157,29 @@ describe("race plans — nothing is scheduled after race day", () => {
   it("leaves a Sunday marathon week with the race and nothing after it", () => {
     /* The concrete worst case, and the modal one — most road races are on a
        Sunday, and a Sun/Mon/Tue/Wed schedule is an ordinary four-day week.
-       This used to emit easy_30 on 12th, 13th and 14th January: three runs in
-       the 72 hours after a marathon. */
-    const { out, raceDate } = plan({ distance: "marathon", weeksOut: 1 });
+       This used to emit easy_30 in the 72 hours AFTER a marathon.
+
+       Under the old Sunday anchor the race opened its week, so every other
+       run day followed it and the only safe week was the race alone. Under
+       the Monday anchor Sunday CLOSES the week: Mon/Tue/Wed now precede the
+       race and are legitimate shakeouts, so the week holds four runs — and
+       the safety property is unchanged, nothing after race day. */
+    const { out, raceDate } = plan({ distance: "marathon", daysOut: 6 });
     const week = out.weeks[out.weeks.length - 1];
     const race = week.find((r) => r.type === "race")!;
-    expect(race.date).toBe(raceDate);
+    expect(race.date).toBe(raceDate); // Sun 2026-01-11
     expect(race.dayIndex).toBe(0);
 
     expect(week.filter((r) => r.type !== "race" && r.date! > raceDate)).toEqual(
       []
     );
-    // Race day at slot 0 means there is no room for a shakeout before it.
-    expect(week).toHaveLength(1);
+    const before = week.filter((r) => r.type !== "race");
+    expect(before.map((r) => r.date)).toEqual([
+      "2026-01-05",
+      "2026-01-06",
+      "2026-01-07",
+    ]);
+    expect(week).toHaveLength(4);
   });
 
   it("still schedules the shakeouts that fall BEFORE race day", () => {
@@ -173,34 +187,41 @@ describe("race plans — nothing is scheduled after race day", () => {
        week". A midweek race keeps the run-eligible days that precede it. */
     const { out, raceDate } = plan({
       distance: "half",
-      daysOut: 10, // a Wednesday race, with Sun/Mon/Tue run days before it
+      daysOut: 9, // a Wednesday race (14 Jan), on a Sun/Mon/Tue/Wed schedule
       runDays: 4,
     });
     const week = out.weeks[out.weeks.length - 1];
     const race = week.find((r) => r.type === "race")!;
     expect(race.date).toBe(raceDate);
-    /* The EXACT set, not merely a non-empty one: a Wednesday race on a
-       Sun/Mon/Tue/Wed schedule keeps all three preceding days. Asserting only
-       "some remain" lets an over-tight filter through — checked by mutating
-       the bound to `< raceDayIndex - 1`, which silently drops the day before
-       the race and passed a length-only assertion. */
+    /* The EXACT set, not merely a non-empty one. Asserting only "some
+       remain" lets an over-tight filter through — checked by mutating the
+       bound to `< raceDayOffset - 1`, which silently drops the day before
+       the race and passed a length-only assertion.
+
+       Under the Monday anchor the race week is Mon 12 – Sun 18 Jan, so of
+       a Sun/Mon/Tue/Wed schedule only Mon 12 and Tue 13 precede the race;
+       the schedule's Sunday is the 18th, AFTER it, and is correctly cut.
+       (Under Sunday weeks the same schedule kept Sun 11 as well.) */
     const before = week.filter((r) => r.type !== "race");
-    expect(before.map((r) => r.date)).toEqual([
-      "2026-01-11",
-      "2026-01-12",
-      "2026-01-13",
-    ]);
+    expect(before.map((r) => r.date)).toEqual(["2026-01-12", "2026-01-13"]);
     expect(race.dayIndex).toBe(3);
   });
 
   it("does not happen when the race is the last scheduled day of its week", () => {
     /* The other half, so the finding is understood rather than just counted:
-       a race that lands after the week's run days gets `dayIndex: 7` and
-       nothing follows it. This is what most plans look like. */
+       a race that lands after the week's run days keeps every shakeout and
+       nothing follows it. This is what most plans look like.
+
+       This used to assert `race.dayIndex === 7` — an offset sentinel that
+       leaked out of the arithmetic and pinned the Sunday coincidence rather
+       than the behaviour. The race day now carries its real weekday, and the
+       claims that matter are that it sits ON race day and is the last thing
+       in the plan. */
     const { out, raceDate } = plan({ distance: "marathon", weeksOut: 20 });
     const week = out.weeks[out.weeks.length - 1];
     const race = week.find((r) => r.type === "race")!;
-    expect(race.dayIndex).toBe(7);
+    expect(race.date).toBe(raceDate);
+    expect(race.dayIndex).toBe(new Date(`${raceDate}T12:00:00`).getDay());
     expect(week.filter((r) => r.date! > raceDate)).toHaveLength(0);
   });
 });
