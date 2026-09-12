@@ -7,6 +7,7 @@ import {
   cleanup,
 } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
+import type { FeedSubTab } from "@/components/social/views/socialTabs";
 import Social from "@/pages/Social";
 vi.mock("firebase/firestore");
 vi.mock("@/lib/firebase", () => ({
@@ -52,16 +53,23 @@ vi.mock("@/components/social/views/FeedView", () => ({
     followingCount,
     showSoloFeed,
     feedSubTab,
+    selectFeedSubTab,
   }: {
     active: boolean;
     followingCount: number;
     showSoloFeed: boolean;
     feedSubTab: string;
+    selectFeedSubTab: (source: FeedSubTab) => void;
   }) =>
     active ? (
-      <output data-testid="feed-state">
-        {followingCount}:{String(showSoloFeed)}:{feedSubTab}
-      </output>
+      <>
+        <output data-testid="feed-state">
+          {followingCount}:{String(showSoloFeed)}:{feedSubTab}
+        </output>
+        <button onClick={() => selectFeedSubTab("explore")}>
+          Choose Explore
+        </button>
+      </>
     ) : null,
 }));
 vi.mock("@/components/social/views/PeopleView", async () => {
@@ -123,3 +131,18 @@ it.each(["following", "communities", "explore"])(
     );
   }
 );
+
+it("keeps a chosen default source after the first follow arrives", async () => {
+  render(
+    <MemoryRouter initialEntries={["/social?tab=feed"]}>
+      <Social />
+    </MemoryRouter>
+  );
+  await waitFor(() =>
+    expect(screen.getByTestId("feed-state")).toHaveTextContent("0:true:explore")
+  );
+  fireEvent.click(screen.getByRole("button", { name: "Choose Explore" }));
+  seedFirestore({ "following/audit/users/friend": { followedAt: 1 } });
+  await flushSnapshots();
+  expect(screen.getByTestId("feed-state")).toHaveTextContent("1:false:explore");
+});

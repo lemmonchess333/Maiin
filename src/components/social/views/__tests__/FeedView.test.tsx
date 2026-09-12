@@ -149,14 +149,17 @@ describe("FeedView — compact source menu", () => {
     expect(selectFeedSubTab).toHaveBeenCalledWith("following");
   });
 
-  it("re-picking the current source closes without a redundant URL write", () => {
-    const { selectFeedSubTab } = setup();
-    fireEvent.click(
-      screen.getByRole("button", { name: /feed source: explore/i })
-    );
-    fireEvent.click(screen.getByRole("radio", { name: /explore/i }));
-    expect(selectFeedSubTab).not.toHaveBeenCalled();
-  });
+  it.each([null, 3])(
+    "records an explicit choice of the current source with follow count %s",
+    (followingCount) => {
+      const { selectFeedSubTab } = setup({ followingCount });
+      fireEvent.click(
+        screen.getByRole("button", { name: /feed source: explore/i })
+      );
+      fireEvent.click(screen.getByRole("radio", { name: /explore/i }));
+      expect(selectFeedSubTab).toHaveBeenCalledWith("explore");
+    }
+  );
 });
 
 describe("FeedView — explore empty state routes somewhere useful", () => {

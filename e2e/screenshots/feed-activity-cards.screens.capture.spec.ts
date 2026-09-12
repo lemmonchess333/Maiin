@@ -264,8 +264,8 @@ test.describe("feed activity card screenshots", () => {
     // Social opens on Together; the feed lives under the Feed radio
     // (SegmentedControl → role=radio, the standing gotcha).
     await page.getByRole("radio", { name: /feed/i }).click({ timeout: 20_000 });
-    // A 0-follow account lands on the solo stack, so switch the SOURCE to
-    // Explore — that is the one that queries `activities` directly.
+    // This account follows the author, but the fixture has no fan-out feed
+    // docs. Explore reads the public activities directly.
     await page
       .getByRole("button", { name: /feed source/i })
       .first()
@@ -273,6 +273,19 @@ test.describe("feed activity card screenshots", () => {
     await page
       .getByRole("radio", { name: /explore/i })
       .click({ timeout: 15_000 });
+    // Closing the source sheet must not back-navigate over the chosen query.
+    // Reload also proves the source is retained in the URL, not only in memory.
+    await expect(
+      page.getByRole("dialog", { name: "Feed source", exact: true })
+    ).not.toBeVisible();
+    await expect(page).toHaveURL(/feed=explore/);
+    await expect(
+      page.getByRole("button", { name: "Feed source: Explore", exact: true })
+    ).toBeVisible();
+    await page.reload();
+    await expect(
+      page.getByRole("button", { name: "Feed source: Explore", exact: true })
+    ).toBeVisible();
 
     /* Assert BEFORE shooting, so a regression films loudly rather than
        producing a quietly empty frame.

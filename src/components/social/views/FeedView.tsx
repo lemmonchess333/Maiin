@@ -428,8 +428,11 @@ export default function FeedView({
                         aria-checked={feedSubTab === st}
                         onClick={() => {
                           setSourceMenuOpen(false);
-                          if (feedSubTab === st) return;
+                          // The visible source may only be a smart default.
+                          // Record even the same choice so a later follow-count
+                          // snapshot cannot switch away from what was tapped.
                           selectFeedSubTab(st);
+                          if (feedSubTab === st) return;
                           trackSocialEvent("social_feed_subtab_changed", {
                             subTab: st,
                           });

@@ -14,6 +14,10 @@ test.describe("weekly layout confirmation on mobile", () => {
       await suppressCoachmarks(page);
       await page.emulateMedia({ colorScheme, reducedMotion: "reduce" });
       await signInAsTestUser(page);
+      // Firebase's test-only banner covers the mobile bottom navigation.
+      await page.addStyleTag({
+        content: ".firebase-emulator-warning { display: none !important; }",
+      });
       await page.getByRole("link", { name: "Train", exact: true }).click();
       await page
         .getByRole("button", { name: "More options", exact: true })
