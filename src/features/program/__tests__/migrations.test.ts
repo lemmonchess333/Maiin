@@ -774,6 +774,15 @@ describe("migrateProgramState — v3 coverage backfill", () => {
   const idsIn = (s: ProgramState) =>
     s.workouts.flatMap((d) => d.exercises.map((e) => e.exerciseId));
 
+  it("does not restore deleted accessories when v3 advances to v4", () => {
+    const state = uncoveredPlan(3);
+    const out = migrateProgramState(state, "2026-09-07");
+    expect(out.programSchemaVersion).toBe(CURRENT_PROGRAM_SCHEMA_VERSION);
+    expect(out.workouts).toEqual(state.workouts);
+    expect(idsIn(out)).not.toContain("standing-calf-raise");
+    expect(idsIn(out)).not.toContain("lateral-raise");
+  });
+
   it("adds the missing calf and side-delt slots to an old plan", () => {
     const out = migrateProgramState(uncoveredPlan(1), "2026-08-04");
     const ids = idsIn(out);

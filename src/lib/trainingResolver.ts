@@ -26,7 +26,7 @@
  *
  * Resolution priority for runDay:
  *   1. Exact date match (rd.date === dateKey)
- *   2. Current-week weekKey match (rd.weekKey === targetWeekKey
+ *   2. Undated row with a weekKey match (rd.weekKey === targetWeekKey
  *      AND rd.dayIndex === targetDow)
  *   3. Legacy guarded fallback (rd.dayIndex === targetDow) — ONLY
  *      when rd lacks both date+weekKey AND the target date is
@@ -151,7 +151,8 @@ export function resolveRunDayForDate(
   // Priority 2 — same-week weekKey + dayIndex. Catches V2-shaped
   // docs that have `weekKey` but no `date` (mid-migration).
   const byWeekKey = runDays.find(
-    (rd) => rd.weekKey === targetWeekKey && rd.dayIndex === targetDow
+    (rd) =>
+      !rd.date && rd.weekKey === targetWeekKey && rd.dayIndex === targetDow
   );
   if (byWeekKey) return byWeekKey;
 

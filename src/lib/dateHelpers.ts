@@ -71,11 +71,11 @@ export function localWeekKey(d: Date = new Date()): string {
  * shifts a scheduled run by a day, and a Sunday run by a whole week.
  */
 export function dateForDayOfWeek(weekKey: string, dayOfWeek: number): string {
-  // Now load-bearing rather than merely correct: under the Monday anchor
-  // the two numbers genuinely differ, so every caller that used to add
-  // `dayIndex` straight onto the key has to come through here.
-  const offset = (dayOfWeek - WEEK_STARTS_ON + 7) % 7;
-  return localDateString(addLocalDays(parseLocalDate(weekKey), offset));
+  // The key carries its own anchor. Legacy Sunday keys must still derive
+  // Sun..Sat dates while migration is repairing rows before re-anchoring.
+  const start = parseLocalDate(weekKey);
+  const offset = (dayOfWeek - start.getDay() + 7) % 7;
+  return localDateString(addLocalDays(start, offset));
 }
 
 /**
