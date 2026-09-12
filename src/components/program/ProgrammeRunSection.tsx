@@ -609,8 +609,8 @@ export default function ProgrammeRunSection({
   );
 
   // ── Run-week selector (date-pinned, ADR-0002) ──────────────────────
-  /* The CALENDAR week — Sunday-anchored, the same window Home's WeekStrip
-     renders — resolved through the same shared resolver Home/WeekStrip/
+  /* The CALENDAR week — anchored on `WEEK_STARTS_ON` (Monday), the same
+     window Home's WeekStrip renders — resolved through the same shared resolver Home/WeekStrip/
      DayActionSheet use. Run-scope only: no lift lanes, the Lift tab owns
      lifting. The selector drives `selectedDateKey`; the selected-day
      command card below reads from it.
@@ -627,7 +627,7 @@ export default function ProgrammeRunSection({
         than the header — true by construction, not an edge case.
      3. `resolveTrainingWindow` derives its `currentWeekKey` gate from
         `startDate`, and that gate gives `resolveRunDayForDate` its
-        priority-3 legacy fallback. Anchoring on Sunday makes
+        priority-3 legacy fallback. Anchoring on the week's first day makes
         `localWeekKey(weekStart) === localWeekKey(today)` hold for all
         seven days, so a legacy-shaped runDay (no `date`, no `weekKey`)
         resolves across the whole strip instead of going null the moment
@@ -681,9 +681,9 @@ export default function ProgrammeRunSection({
      already carries ?template=&scheduledRunId= when startable.
 
      The fallback for a stale `?rday` is TODAY, found by key rather than by
-     index. On a calendar week index 0 is SUNDAY, so an index-based fallback
-     answers a stale link with the start of the week instead of the day the
-     user is on. */
+     index. On a calendar week index 0 is the week's first day (Monday), so
+     an index-based fallback answers a stale link with the start of the week
+     instead of the day the user is on. */
   const todayIdx = Math.max(
     0,
     runWindow.findIndex((d) => d.dateKey === todayKeyDerivation)
@@ -1517,7 +1517,12 @@ export default function ProgrammeRunSection({
                     ? "Add another whenever you like."
                     : selectedRun.status === "skipped"
                       ? "Marked as skipped. You can still head out."
-                      : "Rest day. Head out whenever you like."}
+                      : selectedDay.scheduleType === "lift"
+                        ? // Run-scope card, but the day is not a rest day:
+                          // Home names it a lift day and this said "Rest
+                          // day" beside it.
+                          "Lift day. Head out for a free run if you like."
+                        : "Rest day. Head out whenever you like."}
                 </p>
                 {selectedRun.isCompleted && selectedSavedRunId && (
                   <Button

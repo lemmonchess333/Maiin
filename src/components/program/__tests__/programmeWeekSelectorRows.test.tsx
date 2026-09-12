@@ -8,6 +8,8 @@
  * height for exactly this reason.
  */
 import { describe, it, expect, vi } from "vitest";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { render } from "@testing-library/react";
 import ProgrammeWeekSelector from "@/components/program/ProgrammeWeekSelector";
 import type { ProgrammeWeekSelectorCell } from "@/components/program/ProgrammeWeekSelector";
@@ -65,5 +67,38 @@ describe("the weekday row", () => {
     ).map((s) => s.textContent ?? "");
     expect(tops).toHaveLength(7);
     for (const t of tops) expect(t).toHaveLength(1);
+  });
+});
+
+describe("today's cell", () => {
+  // Today used to render at 48px against 40px peers (a rule inherited from
+  // a `DayStepper` that no longer exists). A taller cell pushes its own
+  // weekday letter and bottom label off the row's baselines on the one day
+  // a user looks at most, and Home's strip already held the opposite rule:
+  // today is a colour and a soft halo, never a geometry.
+  it("is the same size as its peers — today is a colour and a halo, not a geometry", () => {
+    const { container } = renderSelector();
+    const circles = Array.from(
+      container.querySelectorAll<HTMLElement>(
+        "button[role=tab] > div.rounded-full"
+      )
+    );
+    expect(circles).toHaveLength(7);
+    const widths = circles.map((c) => c.style.width);
+    expect(new Set(widths).size).toBe(1);
+    expect(widths[5]).toBe("40px");
+  });
+
+  it("has no second size to drift to", () => {
+    // The size is a plain `style`, not a Motion `animate` value, so the
+    // render above is the real geometry rather than a pre-tween frame; this
+    // guards the other direction — a per-state diameter creeping back in.
+    const src = readFileSync(
+      resolve(__dirname, "../ProgrammeWeekSelector.tsx"),
+      "utf8"
+    );
+    expect(src).not.toMatch(/diameter/);
+    expect(src).toMatch(/const CELL_PX = 40;/);
+    expect(src).not.toMatch(/animate=\{\{[^}]*width/s);
   });
 });

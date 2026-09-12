@@ -295,6 +295,47 @@ describe("ProgrammeRunSection — runDay rendering", () => {
   });
 });
 
+describe("ProgrammeRunSection — the no-run card names the day it is on", () => {
+  // Run-scope card, but the day has a type: Home's strip calls a lift-only
+  // day a lift day, and this card said "Rest day" beside it. The type comes
+  // from the same resolver Home reads (`scheduleType`), so the two agree.
+  const scheduleWithTodayAs = (type: "lift" | "rest") =>
+    Array.from({ length: 7 }, (_, day) => ({
+      day,
+      type: day === TODAY_DOW ? type : ("rest" as const),
+    }));
+
+  it("says lift day on a lift-only day, not rest day", () => {
+    renderSection(
+      {
+        ...commonProps(),
+        profile: makeProfile({
+          weekSchedule: scheduleWithTodayAs("lift"),
+        } as Partial<UserProfile>),
+      },
+      makeProgramState([])
+    );
+    expect(screen.getByText("No run scheduled")).toBeInTheDocument();
+    expect(screen.getByText(/^Lift day\./)).toBeInTheDocument();
+    expect(screen.queryByText(/^Rest day\./)).toBeNull();
+  });
+
+  it("still says rest day on a day with nothing on it", () => {
+    renderSection(
+      {
+        ...commonProps(),
+        profile: makeProfile({
+          weekSchedule: scheduleWithTodayAs("rest"),
+        } as Partial<UserProfile>),
+      },
+      makeProgramState([])
+    );
+    expect(screen.getByText("No run scheduled")).toBeInTheDocument();
+    expect(screen.getByText(/^Rest day\./)).toBeInTheDocument();
+    expect(screen.queryByText(/^Lift day\./)).toBeNull();
+  });
+});
+
 describe("ProgrammeRunSection — A1c 'Manage Run Plan' deeplink", () => {
   beforeEach(() => {
     navigateMock.mockClear();

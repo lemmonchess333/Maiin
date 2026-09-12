@@ -129,18 +129,21 @@ export default function WeekStrip({
            items-center` cell, a circle taller than its neighbours pushes
            its own weekday letter up and its indicator dot down, so sizing
            today differently breaks all three of the strip's baselines on
-           the one day a user looks at most. Today is a colour and a ring,
-           never a geometry — the reason iOS week rows stay ruled while
-           still marking today.
+           the one day a user looks at most. Today is a colour and a soft
+           halo, never a geometry — the reason iOS week rows stay ruled
+           while still marking today. The Run and Lift selectors
+           (`ProgrammeWeekSelector`) mark today the same way.
 
            Day numbers are numeric displays → font-mono (Archivo) +
            tabular-nums per the design-system invariant. */
         let cls =
           "size-10 rounded-full flex items-center justify-center text-sm font-semibold font-mono tabular-nums transition-all relative";
-        /* Fill says SELECTED, ring says TODAY, and they COMPOSE. An
+        /* Fill says SELECTED, halo says TODAY, and they COMPOSE. An
            if/else here lets selection mask today: pick today — the
            likeliest day to pick — and its marker disappears, leaving it
-           indistinguishable from any other selected day. */
+           indistinguishable from any other selected day. The halo is a
+           4px translucent wash with no offset: an opaque offset ring on
+           top of the 2px border drew today as two concentric rings. */
         if (day.isSelected) {
           cls += " bg-primary-strong text-primary-foreground";
         } else if (day.isToday) {
@@ -149,7 +152,7 @@ export default function WeekStrip({
           cls += " text-muted-foreground border-2 border-border";
         }
         if (day.isToday) {
-          cls += " ring-2 ring-primary ring-offset-2 ring-offset-background";
+          cls += " ring-4 ring-primary/10";
         }
         return (
           <button
