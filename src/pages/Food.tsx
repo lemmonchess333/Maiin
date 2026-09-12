@@ -81,6 +81,7 @@ import {
 import { mealLoggedAt, mealSlotFor } from "@/lib/mealSlots";
 import { track as trackFoodEvent } from "@/lib/foodAnalytics";
 import { sweepFoodPhotosOnce } from "@/lib/foodPhotoStore";
+import Card from "@/components/ui/Card";
 
 const DEFAULT_QUICK_MEALS = [
   { name: "Grilled Chicken & Rice", cal: 450, pro: 40, carb: 45, fat: 12 },
@@ -1848,10 +1849,7 @@ export default function Food() {
            figures never do, because the figures are what make the row
            tappable without thinking. The button row stays 44px: that is
            the touch-target floor. */
-        <div
-          className="rounded-2xl bg-card card-shadow p-3 space-y-1"
-          aria-label="Your usual meal"
-        >
+        <Card size="compact" className="space-y-1" aria-label="Your usual meal">
           <p className="text-caption leading-tight text-muted-foreground">
             Your usual at {usualSlot}
           </p>
@@ -1880,7 +1878,7 @@ export default function Food() {
               Edit
             </Button>
           </div>
-        </div>
+        </Card>
       )}
 
       <motion.div variants={pageItemVariant}>

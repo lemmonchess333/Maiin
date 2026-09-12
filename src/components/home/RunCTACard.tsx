@@ -19,6 +19,7 @@ import {
   isScheduledRunCompleted,
   isScheduledRunStartable,
 } from "@/lib/scheduledRunStatus";
+import { cardClasses } from "@/components/ui/cardClasses";
 
 const RUN_ICON_MAP: Record<
   string,
@@ -95,7 +96,11 @@ export default function RunCTACard({
         navigate(startable ? "/run" + queryString : "/program?tab=run");
       }}
       type="button"
-      className="w-full rounded-xl bg-running/8 text-left p-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+      className={cardClasses({
+        tone: "tinted",
+        className:
+          "w-full bg-running/8 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+      })}
     >
       <div className="flex items-center gap-3">
         <div className="size-10 shrink-0 rounded-lg flex items-center justify-center bg-running/9">

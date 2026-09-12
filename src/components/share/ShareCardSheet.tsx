@@ -276,7 +276,7 @@ export function ShareCardSheet({
         {/* Scaled live preview (the offscreen capture node is separate) */}
         <div className="flex justify-center">
           <div
-            className="rounded-2xl overflow-hidden shadow-card"
+            className="rounded-2xl overflow-hidden card-shadow"
             style={{ width: previewW, height: cardH * scale }}
           >
             <div

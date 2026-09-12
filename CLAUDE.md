@@ -534,10 +534,18 @@ held to it, so it is now the APP-WIDE standard, not an insights-file local:
 
 ### Card Patterns
 
-- **Standard card:** bg-card (white), rounded-xl (12px), padding 3-4, shadow-card (very subtle)
-- **Hero card (Health Score, Water):** rounded-2xl (16px), padding 4, larger icon (48px container), icon in purple-tinted bg square
-- **Compact tile (Weight, Steps):** rounded-xl, padding 3, bg-muted (slightly darker than white), 2-col grid
-- **CTA card (Today's workout/run):** rounded-xl, sport-coloured tinted background (8% opacity), Play button pill right-aligned
+- **Cards render through the `Card` primitive** (`src/components/ui/Card.tsx`;
+  pressable cards take the same look from `cardClasses` in its `.ts`
+  sibling). Two sizes, decided once: **hero** = rounded-2xl (16px) + p-4,
+  **compact** = rounded-xl (12px) + p-3. The old "standard card, padding
+  3-4" was the drift — 45 `bg-card` surfaces sat on some third pairing.
+  `designSystemInvariants.test.ts` ratchets hand-rolled off-pairing
+  `bg-card` surfaces down and bans the `shadow-card` class outright: it is
+  a Tailwind shadow COLOUR, not a shadow, and cards that used it were flat.
+  The elevation utility is `card-shadow`.
+- **Hero card (Health Score, Water):** `Card` (hero), larger icon (48px container), icon in purple-tinted bg square
+- **Compact tile (Weight, Steps):** `Card size="compact" tone="muted"` (one step darker than the page), 2-col grid
+- **CTA card (Today's workout/run/rest):** `cardClasses({ tone: "tinted" })` — the hero pairing with the sport-coloured 8% wash painted at the call site, Play button pill right-aligned. All three sit on one radius now; Lift and Run were rounded-xl beside a rounded-2xl Rest.
 - **Quick actions:** there is no longer a pill row. Today's actions are
   the sport-coloured CTA cards (`LiftCTACard` / `RunCTACard`), and food
   logging is the "Log food" action at the foot of `TodayEnergy`.

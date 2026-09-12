@@ -381,6 +381,71 @@ describe("DS ratchets — surface-level drift", () => {
     }
   });
 
+  /* Cards. The measurements behind the `Card` primitive: 96 surfaces on
+     `rounded-2xl p-4`, 64 on `rounded-xl p-3`, and 37 `bg-card` surfaces on
+     some other radius/padding pairing — `p-3.5`, `rounded-lg p-4`,
+     `rounded-2xl p-3`, `p-5`, `p-6`. A card on its own pairing is the
+     "thrown together" the owner could feel and not name. The primitive
+     decides the pairing; this counts the hand-rolled `bg-card` surfaces
+     that carry BOTH a radius and a padding and are on neither pairing.
+     Surfaces the primitive renders carry no `bg-card` literal, so
+     migrating one lowers the count. (The 37 was a plain-string grep; this
+     scanner also reads cn() and template chunks and found 45, of which the
+     first migration batch — the Home CTA trio, the macro and lifetime
+     tiles, the usual-meal card, the two flat programme cards — took 13.)
+     Grandfathered: the settings option rows, the run-setup rows, the
+     modals and the empty states — they adopt the primitive as they are
+     touched. */
+  const CARD_PAIRINGS = new Set(["rounded-2xl p-4", "rounded-xl p-3"]);
+  const OFF_PAIRING_CARD_BASELINE = 32;
+  const CARD_PRIMITIVE = "src/components/ui/cardClasses.ts";
+  it("hand-rolled bg-card surfaces off the two card pairings do not increase", () => {
+    const { total, byFile } = scan((src) => {
+      let n = 0;
+      for (const chunk of classNameChunks(src)) {
+        if (!/\bbg-card\b/.test(chunk)) continue;
+        const radius = /\brounded-(?:md|lg|xl|2xl|3xl)\b/.exec(chunk)?.[0];
+        const padding = /\bp-\d+(?:\.\d+)?\b/.exec(chunk)?.[0];
+        if (!radius || !padding) continue;
+        if (!CARD_PAIRINGS.has(`${radius} ${padding}`)) n++;
+      }
+      return n;
+    });
+    expectRatchet(
+      "bg-card off the two pairings",
+      total,
+      OFF_PAIRING_CARD_BASELINE,
+      byFile
+    );
+  });
+
+  it("the Card primitive carries exactly the two pairings (positive pin)", () => {
+    // The ratchet above only means something if the thing surfaces migrate
+    // TO is on the pairings. `cardClasses.ts` is a .ts file, outside the
+    // .tsx scan, so it is read directly.
+    const src = readFileSync(resolve(repoRoot, CARD_PRIMITIVE), "utf8");
+    expect(src).toMatch(/hero: \{ radius: "rounded-2xl", padding: "p-4" \}/);
+    expect(src).toMatch(/compact: \{ radius: "rounded-xl", padding: "p-3" \}/);
+    expect(src).toMatch(/card: "bg-card card-shadow"/);
+  });
+
+  /* `shadow-card` is a trap, documented in index.css: Tailwind parses it
+     as shadow-COLOUR=card with no size, so it renders nothing. Three cards
+     that meant to float were flat because of it. The utility is
+     `card-shadow`. Floor is 0: any new `shadow-card` in a class string
+     fails. (`--ds-shadow-card` in a style object is the token, not the
+     trap, and is not matched.) */
+  const SHADOW_TRAP_BASELINE = 0;
+  it("the shadow-card trap class does not appear (use card-shadow)", () => {
+    const { total, byFile } = scan((src) => {
+      let n = 0;
+      for (const chunk of classNameChunks(src))
+        n += (chunk.match(/\bshadow-card\b/g) ?? []).length;
+      return n;
+    });
+    expectRatchet("shadow-card trap", total, SHADOW_TRAP_BASELINE, byFile);
+  });
+
   // Arbitrary pixel sizes (`text-[10px]`, `text-[15px]`) sit off the
   // documented scale — 11px is text-caption (tracked labels only), then
   // 12 / 14 / 16 and up. The cohesion pass (batch 3, 2026-09-05) burned the

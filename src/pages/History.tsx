@@ -93,6 +93,7 @@ const PerformanceSection = lazyRetry(
   () => import("@/components/analytics/PerformanceSection")
 );
 import { useStreaks } from "@/features/streaks/useStreaks";
+import Card from "@/components/ui/Card";
 
 const PRsTab = lazyRetry(() => import("@/components/analytics/PRsTab"));
 const MilestonesTab = lazyRetry(
@@ -1863,7 +1864,7 @@ export default function History() {
                       bars, and `text-sm font-medium` is what the Home
                       weight tile already uses for exactly this role. */}
                   <div className="grid grid-cols-3 gap-2">
-                    <div className="p-3 rounded-2xl bg-card text-center card-shadow">
+                    <Card size="compact" className="text-center">
                       <Footprints className="size-4 mx-auto mb-1.5 text-running" />
                       <p className="text-base font-extrabold font-mono tabular-nums text-foreground leading-tight">
                         {abbreviateK(lifetimeTotals.runKm)}
@@ -1873,8 +1874,8 @@ export default function History() {
                         {lifetimeTotals.runCount}{" "}
                         {lifetimeTotals.runCount === 1 ? "run" : "runs"}
                       </p>
-                    </div>
-                    <div className="p-3 rounded-2xl bg-card text-center card-shadow">
+                    </Card>
+                    <Card size="compact" className="text-center">
                       <Trophy className="size-4 mx-auto mb-1.5 text-lifting" />
                       <p className="text-base font-extrabold font-mono tabular-nums text-foreground leading-tight">
                         {formatVolume(lifetimeTotals.liftVolume).value}
@@ -1890,8 +1891,8 @@ export default function History() {
                           ? "session"
                           : "sessions"}
                       </p>
-                    </div>
-                    <div className="p-3 rounded-2xl bg-card text-center card-shadow">
+                    </Card>
+                    <Card size="compact" className="text-center">
                       <UtensilsCrossed
                         className="size-4 mx-auto mb-1.5"
                         style={{ color: THEME.semantic.nutrition }}
@@ -1905,7 +1906,7 @@ export default function History() {
                       <p className="text-caption text-muted-foreground mt-0.5">
                         logged
                       </p>
-                    </div>
+                    </Card>
                   </div>
                 </section>
               )}
