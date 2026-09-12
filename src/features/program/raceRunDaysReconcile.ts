@@ -44,7 +44,11 @@
  *   change (see header). The bug it fixes is live until then.
  */
 
-import { localWeekKey, parseLocalDate } from "@/lib/dateHelpers";
+import {
+  localWeekKey,
+  parseLocalDate,
+  startOfLocalWeek,
+} from "@/lib/dateHelpers";
 import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
 import {
   generateRacePlanV2,
@@ -123,15 +127,22 @@ export function areRaceRunDaysStale(args: RaceRunDaysStaleArgs): boolean {
   return storedHasRace !== freshHasRace;
 }
 
-/** The honest 0-based week index for a race plan today: how many whole
- *  weeks have elapsed since the plan would have started, clamped to
+/** The honest 0-based week index for a race plan today, clamped to
  *  `[0, totalWeeks - 1]`. Replaces a stale stored `currentWeek` that
  *  drifted out of sync with `runDays`.
  *
- *  Derivation: `currentWeek = totalWeeks - weeksRemaining`, where
- *  `weeksRemaining = ceil((raceDate - today) / 7d)` — the same arithmetic
- *  `generateRacePlanV2` uses for `totalWeeks`, so the phase the cockpit
- *  shows matches the week the scheduler actually generated. */
+ *  Derivation, in the scheduler's own week-index space: a fresh plan's
+ *  `weeks[0]` is the week containing today and the race sits in
+ *  `weeks[totalWeeks - 1]`, so the race's index is the number of whole
+ *  calendar weeks between this week's first day and the race's, and the
+ *  current index is `totalWeeks - 1 - raceWeekIndex`. That is 0 for any
+ *  race still ahead of this week and 0 on race week itself. Before this it was
+ *  `totalWeeks - ceil((raceDate - today) / 7d)`, which agreed with the
+ *  scheduler only while `totalWeeks` was ALSO counted from today; now that
+ *  the scheduler sizes the block from the week's first day the two counts
+ *  differ by one whenever today sits later in its week than the race does
+ *  in its own, and the subtraction reported a phantom week 1 for a plan
+ *  created that morning. */
 export function honestRaceWeekIndex(args: {
   raceGoal: { distance: string; targetDate: string };
   todayKey: string;
@@ -153,15 +164,19 @@ export function honestRaceWeekIndex(args: {
   });
   const totalWeeks = fresh.totalWeeks;
 
-  const target = parseLocalDate(raceGoal.targetDate);
-  const today = parseLocalDate(todayKey);
-  const weeksRemaining = Math.max(
+  const raceWeekStart = startOfLocalWeek(parseLocalDate(raceGoal.targetDate));
+  const thisWeekStart = startOfLocalWeek(parseLocalDate(todayKey));
+  // Calendar days between the two local midnights (a DST hour would
+  // otherwise sit inside the rounding), then whole weeks.
+  const utcDay = (d: Date) =>
+    Date.UTC(d.getFullYear(), d.getMonth(), d.getDate());
+  const raceWeekIndex = Math.max(
     0,
-    Math.ceil((target.getTime() - today.getTime()) / (7 * 86_400_000))
+    Math.round((utcDay(raceWeekStart) - utcDay(thisWeekStart)) / 86_400_000) / 7
   );
   const currentWeek = Math.max(
     0,
-    Math.min(totalWeeks - 1, totalWeeks - weeksRemaining)
+    Math.min(totalWeeks - 1, totalWeeks - 1 - raceWeekIndex)
   );
   return { currentWeek, totalWeeks };
 }

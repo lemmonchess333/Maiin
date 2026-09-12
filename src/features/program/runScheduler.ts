@@ -131,6 +131,62 @@ export function classifyRaceTiming(input: {
   return "below-floor";
 }
 
+/** Calendar weeks a race plan spans: `weeks[0]` is the week containing
+ *  `weekStartDate` (already normalised to the week's first day) and the race
+ *  sits in the last, so the count is the race's week index plus one. A race
+ *  in the current week (or already past) is a single week ending on race day
+ *  — no room for two forward weeks, and a bare 2-week floor pushed it into a
+ *  phantom FUTURE week that vanished from the rail. */
+function raceCalendarWeeks(weekStartDate: Date, target: Date): number {
+  // Calendar days, not elapsed hours: a DST transition between the two
+  // local midnights is ±1h, which `floor` would turn into a missing week
+  // for a race exactly N weeks out.
+  const raceWeekOffset = Math.floor(
+    calendarDaysBetween(weekStartDate, target) / 7
+  );
+  return raceWeekOffset <= 0 ? 1 : Math.max(raceWeekOffset + 1, 2);
+}
+
+/** Whole local calendar days from `a` to `b` (negative when `b` is earlier). */
+function calendarDaysBetween(a: Date, b: Date): number {
+  const utc = (d: Date) => Date.UTC(d.getFullYear(), d.getMonth(), d.getDate());
+  return Math.round((utc(b) - utc(a)) / 86400000);
+}
+
+/** Of `blockWeeks` calendar weeks, the ones the runner can TRAIN in. The
+ *  race's week holds training days only when the race is not its first
+ *  day: a Monday race makes the block one week longer than the training it
+ *  contains, and read as block weeks a 5k three Mondays out came back
+ *  "healthy" with quality sessions in it. The race's weekday is fixed for
+ *  the life of the plan, so this is the same on creation and on every
+ *  carried regen — which is what lets it be derived rather than persisted.
+ *  The declaration-side counterpart (a plan declared on the week's LAST day
+ *  counts a week already behind the runner) is deliberately not corrected:
+ *  it is true only at creation, a carry could not reproduce it, and the
+ *  extra week unlocks nothing (`racePlanSafetySweep` pins that). */
+function trainingWeeksOf(blockWeeks: number, target: Date): number {
+  const raceOnFirstDay = weekPosition(target.getDay()) === 0;
+  return Math.max(
+    1,
+    raceOnFirstDay && blockWeeks > 1 ? blockWeeks - 1 : blockWeeks
+  );
+}
+
+/** Weeks the runner can train in before `targetDate`, counted from the week
+ *  containing `currentDate` — the number `generateRacePlanV2` judges
+ *  `compressed` / `belowFloor` against for a fresh plan. The Realign preview
+ *  (`AdjustWeekSheet`) classifies with THIS rather than its own
+ *  `ceil(daysLeft / 7)`, so the timing it previews is the one the generator
+ *  lands on; `generateRacePlanV2.property.test.ts` pins the two together. */
+export function raceTrainingWeeks(args: {
+  currentDate: string;
+  targetDate: string;
+}): number {
+  const target = parseLocalDate(args.targetDate);
+  const weekStartDate = startOfLocalWeek(parseLocalDate(args.currentDate));
+  return trainingWeeksOf(raceCalendarWeeks(weekStartDate, target), target);
+}
+
 /**
  * Clamp a carried 0-based `currentWeek` into a freshly (re)generated plan's
  * bounds. `currentWeek` is 0-based and the race cockpit renders
@@ -993,10 +1049,13 @@ export interface RacePlanV2Input {
    *  the weekSchedule is authoritative — this only seeds the structure
    *  for the race-prep generator's internal planning. */
   weeklyRunDays: number;
-  /** Local "YYYY-MM-DD". REQUIRED — race-prep totalWeeks calc must
-   *  be deterministic. */
+  /** Local "YYYY-MM-DD". Kept on the input for call-site symmetry with the
+   *  other builders; the race plan is laid out from `weekStart`'s week and
+   *  no longer reads this (`totalWeeks` was sized from here before, which
+   *  undercounted — see the `raceWeekOffset` note in `generateRacePlanV2`). */
   currentDate: string;
-  /** Local "YYYY-MM-DD" Sunday of week 0. */
+  /** Local "YYYY-MM-DD" first day (Monday — `WEEK_STARTS_ON`) of week 0.
+   *  Normalised on entry, so any date inside the week is accepted. */
   weekStart: string;
   /**
    * How long the runner has actually been away (Run15).
@@ -1095,7 +1154,6 @@ export interface RacePlanV2Output {
 export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
   const config = RACE_CONFIGS[input.raceGoal.distance];
   const tuning = input.tuning ?? DEFAULT_RUN_TUNING;
-  const now = parseLocalDate(input.currentDate);
   const target = parseLocalDate(input.raceGoal.targetDate);
   // Normalised to the anchor, the way `migrateProgramState` normalises its
   // weekStart: `buildRunDayV2` already keys every run to the week that
@@ -1104,17 +1162,18 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
   // to six days. Production passes an on-anchor key; a caller handing in a
   // mid-week date now gets the same plan it would from that week's Monday.
   const weekStartDate = startOfLocalWeek(parseLocalDate(input.weekStart));
-  // Count calendar days, not elapsed hours: a DST transition must not
-  // add a training week or collapse next Monday into the current week.
-  const calendarTime = (date: Date) =>
-    Date.UTC(date.getFullYear(), date.getMonth(), date.getDate());
-  const calendarDays = (calendarTime(target) - calendarTime(now)) / 86400000;
-  const naturalWeeks = Math.max(1, Math.ceil(calendarDays / 7));
-  // R2: a same-week race needs one week ending on race day. Applying the
-  // two-week floor would push its race phase into a phantom future week.
-  // Other races retain the currentDate-based duration and two-week floor.
-  const raceIsThisWeek = localWeekKey(target) <= localWeekKey(weekStartDate);
-  const totalWeeks = raceIsThisWeek ? 1 : Math.max(naturalWeeks, 2);
+  // R2: calendar weeks from the CURRENT week through the race's week,
+  // measured from the week's first day — the same origin the weeks are laid
+  // out from. Before this it was `ceil((target - currentDate) / 7d)`: a count
+  // from TODAY, laid out from the week's FIRST day. Those agree only when
+  // today is the first day and the race is not on one; a plan started on the
+  // week's last day undercounted by one for every race weekday, which put
+  // the race a full week past the sequential final week (#2264 re-keyed the
+  // race week to the event's calendar week so the rows at least landed on
+  // the right dates, and left the count itself to this change), and a race
+  // exactly N weeks out on the anchor day past its own plan even from a
+  // fresh Monday start.
+  const totalWeeks = raceCalendarWeeks(weekStartDate, target);
 
   // `totalWeeks` is weeks REMAINING. The block may be longer — see
   // `planTotalWeeks`. A carry shorter than the time left is stale or corrupt,
@@ -1135,13 +1194,19 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
   // gated on `!compressed`, so the one session Bosquet et al. (2007) say must
   // survive a taper (intensity maintained, volume cut) was the one thing
   // dropped. Reading the block length fixes that as a consequence.
-  const compressed = blockWeeks < config.minWeeks;
+  //
+  // Judged on the weeks the runner can TRAIN in (`trainingWeeksOf`), not on
+  // the calendar block: for a fresh plan that is `raceTrainingWeeks`, and
+  // because the race's weekday is fixed it is the same number on every
+  // carried regen.
+  const trainingWeeks = trainingWeeksOf(blockWeeks, target);
+  const compressed = trainingWeeks < config.minWeeks;
   // Run9 phase-3 (Slice B): below the taper-safe floor (= taperWeeks + 1),
   // compressing is no longer safe — the week content flips to "finish-safely"
   // (all easy, no quality, the long run capped at baseLongKm so there are no
   // week-over-week jumps). belowFloor implies compressed by construction
   // (floor <= minWeeks for every distance).
-  const belowFloor = blockWeeks < getRaceFloorWeeks(input.raceGoal.distance);
+  const belowFloor = trainingWeeks < getRaceFloorWeeks(input.raceGoal.distance);
   /* Run15 — see `recentLayoff` on the input. */
   const detrained = input.recentLayoff === "detrained";
 
@@ -1156,18 +1221,15 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
 
   const weeks: ScheduledRunDay[][] = [];
 
-  // `w` is the runner's position in the block; it drives phase and load.
-  // Race-phase dates use the event's calendar week below.
+  // `offset` walks the CALENDAR (weeks[0] is always this week); `w` is the
+  // runner's position in the BLOCK, which drives phase and load. They
+  // coincide exactly when startIndex is 0, i.e. on a fresh plan. The block
+  // is sized from the week's first day, so the final week IS the race's
+  // calendar week — no re-keying of the race phase is needed.
   for (let offset = 0; offset < totalWeeks; offset++) {
     const w = startIndex + offset;
     const phase = getPhaseForWeek(w, blockWeeks, input.raceGoal.distance);
-    // The duration policy counts from currentDate. If that leaves the race
-    // beyond the sequential final week, its rows still belong to the actual
-    // race week. Keep the event, its key and its shakeouts on one calendar.
-    const weekStart =
-      phase === "race"
-        ? startOfLocalWeek(target)
-        : addLocalDays(weekStartDate, offset * 7);
+    const weekStart = addLocalDays(weekStartDate, offset * 7);
     const week: ScheduledRunDay[] = [];
 
     const longSlot = pickLongRunSlot(runEligibleSlots, input.weekSchedule);
@@ -1228,7 +1290,9 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
         date: input.raceGoal.targetDate,
       });
       // Only dates before the event are shakeouts. Comparing actual dates
-      // works for every weekday, including a Sunday at the end of the week.
+      // works for every weekday, including a Sunday at the end of the week
+      // — and excludes the race's own date, so nothing shares its slot
+      // (`raceRunDayDate.run-m2`).
       runEligibleSlots
         .filter(
           (d) =>

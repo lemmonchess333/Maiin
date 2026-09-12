@@ -56,8 +56,12 @@ function planAt(args: {
   runDays?: number;
 }) {
   const runDays = args.runDays ?? 4;
+  // Declared on the Monday that opens the week `weeksOut` weeks before the
+  // race — the rollover day under the Monday anchor, and the day useProgram
+  // regenerates on. (A Sunday declaration is a week whose training days are
+  // already behind it; `racePlanSafetySweep` pins that case separately.)
   const d = parseLocalDate(RACE_DATE);
-  d.setDate(d.getDate() - args.weeksOut * 7);
+  d.setDate(d.getDate() - args.weeksOut * 7 + 1);
   const currentDate = localDateString(d);
   return generateRacePlanV2({
     raceGoal: { distance: args.distance, targetDate: RACE_DATE },
@@ -79,10 +83,16 @@ const persisted = (p: ReturnType<typeof planAt>) => p.weeks[0] ?? [];
 const hardSessions = (week: ReturnType<typeof persisted>) =>
   week.filter((d) => HARD.has(d.type));
 
+/** Longest RUN of the week. The race itself is excluded: the walk now
+ *  reaches race week (the block is sized from the week's first day, so
+ *  `weeksOut: 1` IS the race's week), and a 10k on race day is not the
+ *  long-run ramp these tests measure. */
 const longestKm = (week: ReturnType<typeof persisted>) =>
   Math.max(
     0,
-    ...week.map((d) => TEMPLATE.get(d.templateId)?.config.targetDistanceKm ?? 0)
+    ...week
+      .filter((d) => d.type !== "race")
+      .map((d) => TEMPLATE.get(d.templateId)?.config.targetDistanceKm ?? 0)
   );
 
 /**
@@ -231,10 +241,10 @@ describe("the policy is scoped to `detrained` alone", () => {
     // not quietly remove the thing the plan exists for.
     //
     // Searched across the whole plan rather than `weeks[0]`: `RACE_DATE` is a
-    // Sunday, so a currentDate an exact number of weeks earlier is also a
-    // Sunday and the race falls in a later week bucket. Where the race day
-    // LANDS is `raceRunDayDate.run-m2`'s job; this test's job is that the
-    // layoff policy leaves it alone.
+    // Sunday and `currentDate` is a Monday `weeksOut` weeks before it, so the
+    // race falls in a later week bucket. Where the race day LANDS is
+    // `raceRunDayDate.run-m2`'s job; this test's job is that the layoff
+    // policy leaves it alone.
     for (const distance of DISTANCES) {
       for (const weeksOut of [1, 3, 8]) {
         const trained = planAt({ distance, weeksOut, layoff: "none" });

@@ -59,7 +59,10 @@
  * it is the kind of gap a future reader will re-derive.
  */
 import { describe, it, expect } from "vitest";
-import { generateRacePlanV2 } from "@/features/program/runScheduler";
+import {
+  generateRacePlanV2,
+  raceTrainingWeeks,
+} from "@/features/program/runScheduler";
 import type { ScheduleDay } from "@/lib/scheduleUtils";
 
 const DAY = 86_400_000;
@@ -95,7 +98,11 @@ function plan(o: {
   const start = MONDAY + (o.startOffsetDays ?? 0) * DAY;
   const key = (d: number) =>
     new Date(start + d * DAY).toISOString().slice(0, 10);
-  const daysOut = o.daysOut ?? (o.weeksOut ?? 1) * 7;
+  // `weeksOut: N` is an N-week plan: the race on the Sunday that closes week
+  // N-1, the weekend race every distance's fixtures assume. `N * 7` would put
+  // it on the Monday that OPENS week N — a real plan of N+1 calendar weeks
+  // whose last week is the race alone, pinned below as its own case.
+  const daysOut = o.daysOut ?? (o.weeksOut ?? 1) * 7 - 1;
   const runDays = o.runDays ?? 4;
   return {
     raceDate: key(daysOut),
@@ -223,6 +230,152 @@ describe("race plans — nothing is scheduled after race day", () => {
     expect(race.date).toBe(raceDate);
     expect(race.dayIndex).toBe(new Date(`${raceDate}T12:00:00`).getDay());
     expect(week.filter((r) => r.date! > raceDate)).toHaveLength(0);
+  });
+});
+
+describe("race plans — the block is the calendar weeks from this week through race week", () => {
+  /* `totalWeeks` used to be `ceil((race - currentDate) / 7d)` while the weeks
+     were laid out from the week's FIRST day. The two origins agree only when
+     the plan starts on that day and the race is not on one; every other
+     combination undercounted by one, which put the race a week past the
+     final week's start (and, pre-Monday-anchor, gave it the sentinel
+     `dayIndex` of 7 that hid the double-booking `raceRunDayDate.run-m2`
+     pins). The count is now the race's week index plus one, so these hold
+     for every start weekday × race weekday, not just the on-anchor ones. */
+  const weekIndexOf = (from: number, to: number) =>
+    Math.floor((to - from) / (7 * DAY));
+  const mondayOf = (t: number) => {
+    const dow = new Date(t).getUTCDay();
+    return t - ((dow + 6) % 7) * DAY;
+  };
+
+  it("every start weekday × race weekday: the race is in the last week, and nothing follows it", () => {
+    for (let startOffsetDays = 0; startOffsetDays < 7; startOffsetDays++) {
+      for (let daysOut = 1; daysOut <= 70; daysOut++) {
+        const { out, raceDate } = plan({
+          distance: "half",
+          daysOut,
+          startOffsetDays,
+        });
+        const start = MONDAY + startOffsetDays * DAY;
+        const expectedWeeks =
+          weekIndexOf(mondayOf(start), start + daysOut * DAY) + 1;
+        const label = `start+${startOffsetDays} race+${daysOut}`;
+        expect(out.weeks.length, label).toBe(
+          Math.max(expectedWeeks, expectedWeeks > 1 ? 2 : 1)
+        );
+        expect(out.totalWeeks, label).toBe(out.weeks.length);
+        const last = out.weeks[out.weeks.length - 1];
+        const races = last.filter((r) => r.type === "race");
+        expect(
+          races.map((r) => r.date),
+          label
+        ).toEqual([raceDate]);
+        expect(
+          last.filter((r) => r.date! > raceDate),
+          label
+        ).toHaveLength(0);
+        expect(
+          last.filter((r) => r.dayIndex === races[0].dayIndex),
+          label
+        ).toHaveLength(1);
+      }
+    }
+  });
+
+  it("a Monday race exactly N weeks out is an (N+1)-week plan whose last week is the race alone", () => {
+    // 42 days from a Monday start is the Monday that OPENS week 6. The old
+    // count said 6 weeks and left the race a week past its plan.
+    const { out, raceDate } = plan({ distance: "marathon", daysOut: 42 });
+    expect(out.totalWeeks).toBe(7);
+    expect(out.weeks[6].map((r) => [r.type, r.date])).toEqual([
+      ["race", raceDate],
+    ]);
+  });
+
+  it("raceTrainingWeeks — literal pins for the number the verdicts and the Realign preview share", () => {
+    const at = (currentDate: string, targetDate: string) =>
+      raceTrainingWeeks({ currentDate, targetDate });
+    // Mon 5 Jan start. A Sunday race 20 days out closes week 2: 3 weeks.
+    expect(at("2026-01-05", "2026-01-25")).toBe(3);
+    // The Monday after it opens week 3 with nothing to train in: still 3.
+    expect(at("2026-01-05", "2026-01-26")).toBe(3);
+    // A Tuesday race in week 3 has a Monday to train on: 4.
+    expect(at("2026-01-05", "2026-01-27")).toBe(4);
+    // Declared on Sunday for a Sunday race three weeks on: the week already
+    // behind the runner counts (4), the declaration-side case the block
+    // does not correct — see the pin below for why that unlocks nothing.
+    expect(at("2026-01-11", "2026-02-01")).toBe(4);
+    // Race this week, race today, race in the past: one week, never zero.
+    expect(at("2026-01-05", "2026-01-10")).toBe(1);
+    expect(at("2026-01-05", "2026-01-05")).toBe(1);
+    expect(at("2026-01-05", "2025-12-25")).toBe(1);
+    // A Monday race next week is a 2-week block whose second week is the
+    // race alone: one week to train in.
+    expect(at("2026-01-05", "2026-01-12")).toBe(1);
+  });
+
+  it("a Monday race's empty last week is not training: the safety verdicts read the weeks before it", () => {
+    /* Three Mondays out is a 4-week block with 3 weeks to train in. Read as
+       block weeks, a marathon sat AT the 4-week floor (compressed, quality
+       gated off but not the finish-safely shape) and a 5k came back
+       "healthy" — with 6x1k and 8x400 in it — for a runner with three weeks.
+       The verdicts read the training weeks; the layout keeps the race's
+       week. Same verdicts as the Sunday race one day earlier, which is the
+       3-week block every other fixture here uses. */
+    const mondayMarathon = plan({ distance: "marathon", daysOut: 21 });
+    const sundayMarathon = plan({ distance: "marathon", daysOut: 20 });
+    expect(mondayMarathon.out.totalWeeks).toBe(4);
+    expect(sundayMarathon.out.totalWeeks).toBe(3);
+    expect(mondayMarathon.out.belowFloor).toBe(true);
+    expect(mondayMarathon.out.belowFloor).toBe(sundayMarathon.out.belowFloor);
+
+    const monday5k = plan({ distance: "5k", daysOut: 21 });
+    const sunday5k = plan({ distance: "5k", daysOut: 20 });
+    expect(monday5k.out.compressed).toBe(true);
+    expect(monday5k.out.belowFloor).toBe(false);
+    expect([monday5k.out.compressed, monday5k.out.belowFloor]).toEqual([
+      sunday5k.out.compressed,
+      sunday5k.out.belowFloor,
+    ]);
+    const types = (p: typeof monday5k) =>
+      new Set(p.out.weeks.flat().map((r) => r.type));
+    expect(types(monday5k)).toEqual(new Set(["easy", "long", "race"]));
+  });
+
+  it("declared on the week's last day, the week already behind the runner counts — and unlocks nothing", () => {
+    /* A Sunday declaration is a calendar week with no training day left in
+       it. The block counts it (the rail shows it; the race's week index is
+       what it is), so a marathon declared three Sundays before a Sunday race
+       is a 4-week block — at the floor, not below it — where the from-today
+       count said 3. What matters for the runner is that the extra week is
+       made of days already gone: every runDay from today to the race is
+       easy, exactly as the Monday declaration's below-floor plan is. The
+       verdict label differs; the training does not. */
+    const sunday = plan({
+      distance: "marathon",
+      startOffsetDays: 6, // Sun 11 Jan
+      daysOut: 21, // Sun 1 Feb
+    });
+    const monday = plan({
+      distance: "marathon",
+      startOffsetDays: 7, // Mon 12 Jan
+      daysOut: 20, // Sun 1 Feb
+    });
+    expect(sunday.raceDate).toBe(monday.raceDate);
+    expect(sunday.out.totalWeeks).toBe(4);
+    expect(sunday.out.belowFloor).toBe(false);
+    expect(monday.out.totalWeeks).toBe(3);
+    expect(monday.out.belowFloor).toBe(true);
+    const ahead = (p: typeof sunday) =>
+      p.out.weeks
+        .flat()
+        .filter((r) => r.date! >= "2026-01-12")
+        .map((r) => `${r.date}:${r.templateId}`);
+    expect(ahead(sunday)).toEqual(ahead(monday));
+    expect(new Set(ahead(sunday).map((k) => k.split(":")[1]))).toEqual(
+      new Set(["easy_30", "marathon_race"])
+    );
   });
 });
 

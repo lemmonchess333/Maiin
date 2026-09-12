@@ -195,7 +195,9 @@ describe("honestRaceWeekIndex", () => {
   });
 
   it("advances the week index as the race approaches (mid-plan)", () => {
-    // Marathon 8 weeks out: totalWeeks ~8, current week ~ totalWeeks-8.
+    // Marathon 8 weeks out, generated fresh from today: week 0 of ~8 — the
+    // range assertions are the contract, the exact index is the fresh-plan
+    // pin above.
     const eightWeeks = localDateString(
       addLocalDays(new Date("2026-05-30T12:00:00"), 56)
     );

@@ -9,10 +9,14 @@ const schedule: ScheduleDay[] = Array.from({ length: 7 }, (_, day) => ({
 }));
 
 describe("Monday calendar scheduling", () => {
+  // Block lengths are calendar weeks from the week containing `weekStart`
+  // through the race's week: Tue 29 Sep is in the week of Mon 28 Sep, the
+  // fourth week from Mon 7 Sep. (This pinned 3 — `ceil(20 / 7)` from the
+  // Wednesday — while the count still ran from `currentDate`.)
   it.each([
     ["2026-09-13", 1],
     ["2026-09-14", 2],
-    ["2026-09-29", 3],
+    ["2026-09-29", 4],
   ])(
     "keeps the race on %s, with the correct weekday",
     (targetDate, totalWeeks) => {
@@ -59,14 +63,20 @@ describe("Monday calendar scheduling", () => {
   });
 });
 
+// A race exactly N weeks out on a Monday is the case a DST hour can turn
+// into a missing week: the two local midnights are 7N days ± 1h apart, and
+// elapsed-time arithmetic floors the spring-forward side to N-1. The
+// expected block is N+1 calendar weeks (the race's week is its own, with
+// the race alone in it); the autumn pairs pinned 2 while the count still ran
+// from `currentDate`.
 it.each([
-  ["Europe/London", "2026-03-23", "2026-03-25", "2026-03-30"],
-  ["America/Los_Angeles", "2026-03-02", "2026-03-04", "2026-03-09"],
-  ["Europe/London", "2026-10-19", "2026-10-19", "2026-11-02"],
-  ["America/Los_Angeles", "2026-10-26", "2026-10-26", "2026-11-09"],
+  ["Europe/London", "2026-03-23", "2026-03-25", "2026-03-30", 2],
+  ["America/Los_Angeles", "2026-03-02", "2026-03-04", "2026-03-09", 2],
+  ["Europe/London", "2026-10-19", "2026-10-19", "2026-11-02", 3],
+  ["America/Los_Angeles", "2026-10-26", "2026-10-26", "2026-11-09", 3],
 ])(
   "counts local calendar weeks across DST in %s (%s)",
-  (zone, weekStart, currentDate, targetDate) => {
+  (zone, weekStart, currentDate, targetDate, totalWeeks) => {
     const previous = process.env.TZ;
     try {
       process.env.TZ = zone;
@@ -78,7 +88,7 @@ it.each([
         recentLayoff: "none",
         weekSchedule: schedule,
       });
-      expect(plan.totalWeeks).toBe(2);
+      expect(plan.totalWeeks).toBe(totalWeeks);
       expect(plan.weeks.at(-1)?.map((rd) => rd.date)).toEqual([targetDate]);
     } finally {
       if (previous === undefined) delete process.env.TZ;
