@@ -720,7 +720,11 @@ export interface ProgramState {
    * Optional — only present when the user fell behind a given week.
    */
   pendingFellBehindPrompt?: {
-    /** YYYY-MM-DD Sunday of the week the user fell behind on. */
+    /** YYYY-MM-DD first day of the week the user fell behind on —
+     *  a MONDAY, matching the app's week anchor (`WEEK_STARTS_ON`).
+     *  Server-written by `weeklyFellBehindCheck`, which buckets the
+     *  prior week Mon..Sun; this field is display/idempotency data,
+     *  never re-derived here. */
     weekKey: string;
     /** Ratio of real runs / weekly target. e.g. 0.25 = 1/4. */
     completedRatio: number;

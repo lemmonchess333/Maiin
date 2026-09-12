@@ -6781,7 +6781,8 @@ exports.sendVerificationEmailCallable =
 // even on query failure.
 //
 // Implementation notes:
-//   - "Prior week" is Sun..Sat in UTC. The server runs in UTC and
+//   - "Prior week" is Mon..Sun in UTC (Monday-anchored per RunWk2;
+//     it was Sun..Sat before that). The server runs in UTC and
 //     `date` fields on saved runs are local-date strings — close
 //     enough at the 50% threshold that timezone edges don't matter
 //     for the prompt trigger.
