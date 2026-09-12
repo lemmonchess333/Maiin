@@ -1,3 +1,4 @@
+import { localDateString } from "@/lib/dateHelpers";
 import { runSessionPresentation } from "@/lib/runSessionExplainer";
 import {
   useState,
@@ -457,6 +458,7 @@ export default function Run() {
       displayUnit: unit,
       profileRunMode,
       todayDayIndex: new Date().getDay(),
+      todayDate: localDateString(),
       runPlan: programState?.runPlan,
       runDays: programState?.runDays,
       urlTemplateId,
@@ -495,7 +497,9 @@ export default function Run() {
     // startable. Helper restricts to `planned` only.
     const todayDay = programState?.runDays?.find(
       (d) =>
-        d.dayIndex === new Date().getDay() &&
+        (d.date
+          ? d.date === localDateString()
+          : d.dayIndex === new Date().getDay()) &&
         isScheduledRunStartable(getScheduledRunStatus(d))
     );
     if (

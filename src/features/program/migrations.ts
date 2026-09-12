@@ -278,10 +278,9 @@ function migrateScheduledRunDay(
 ): ScheduledRunDay {
   // ── Shape repair (fill missing fields) ──
   const weekKey = rd.weekKey ?? localWeekKey(weekStartDate);
-  // Same offset rule: `weekKey` names the week's first day, `dayIndex` is a
-  // day-of-week (0 = Sunday). Adding the index directly would repair a
-  // legacy runDay onto the wrong date — a live bug since RunWk2, not a
-  // latent one, which is why this goes through `dateForDayOfWeek`.
+  // Repair against the STORED anchor before v4 re-anchors the key. A legacy
+  // Sunday key still describes Sun..Sat; applying today's Monday offset
+  // to it would move every undated run to the wrong day.
   const date = rd.date ?? dateForDayOfWeek(weekKey, rd.dayIndex);
   const id =
     rd.id ??
@@ -405,9 +404,10 @@ export function migrateProgramState(
   // Coverage backfill — v3, one-shot. Gated on the version rather than on
   // "is the group missing", so it repairs plans predating the slots without
   // ever fighting a user who deletes them later.
-  const backfilled = versionChanged
-    ? backfillMissingCoverage(migratedWorkouts)
-    : migratedWorkouts;
+  const backfilled =
+    (state.programSchemaVersion ?? 1) < 3
+      ? backfillMissingCoverage(migratedWorkouts)
+      : migratedWorkouts;
   const coverageChanged = backfilled !== migratedWorkouts;
 
   // D1: seed the lift-week anchor to the CURRENT week, never to the epoch.

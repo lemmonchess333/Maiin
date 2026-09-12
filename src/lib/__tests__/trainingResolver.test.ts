@@ -102,6 +102,22 @@ describe("resolveRunDayForDate — priority 1 (exact date)", () => {
 });
 
 describe("resolveRunDayForDate — priority 2 (current-week weekKey)", () => {
+  it("does not reuse last Sunday's dated run through its migrated week key", () => {
+    const previousSunday = makeRunDay({
+      dayIndex: 0,
+      date: "2026-09-06",
+      weekKey: "2026-09-07",
+      status: "completed_exact",
+      completed: true,
+    });
+    expect(
+      resolveRunDayForDate("2026-09-13", [previousSunday], "2026-09-07")
+    ).toBeNull();
+    expect(
+      resolveRunDayForDate("2026-09-06", [previousSunday], "2026-09-07")
+    ).toBe(previousSunday);
+  });
+
   it("matches a runDay with weekKey + dayIndex but no date when target is in the same week", () => {
     const runDays = [
       makeRunDay({ weekKey: CURRENT_WEEK_KEY, dayIndex: 1, date: undefined }),

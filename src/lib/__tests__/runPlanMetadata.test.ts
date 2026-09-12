@@ -83,6 +83,40 @@ describe("freeformPlanMetadata", () => {
 });
 
 describe("computePlanMetadata — programme today_plan", () => {
+  it.each(["planned", "completed_exact"] as const)(
+    "does not treat the preserved prior Sunday (%s) as today",
+    (status) => {
+      const day: ScheduledRunDay = {
+        ...makeRunDay(0, "easy_30", "easy", status === "completed_exact"),
+        id: "runday_2026-09-06_0_easy_30",
+        date: "2026-09-06",
+        weekKey: "2026-09-07",
+        status,
+      };
+      const inputs = {
+        displayUnit: "km" as const,
+        profileRunMode: "structured" as const,
+        todayDayIndex: 0,
+        todayDate: "2026-09-13",
+        runPlan: structuredPlan,
+        runDays: [day],
+        urlTemplateId: null,
+        urlType: null,
+      };
+      const result = computePlanMetadata(inputs);
+      expect(result.metadata.planSource).toBe("rest_day");
+      expect(result.metadata.scheduledRunId).toBeNull();
+
+      // An explicit saved link still identifies that exact run, even
+      // though the automatic today path must not select it.
+      const pinned = computePlanMetadata({
+        ...inputs,
+        urlScheduledRunId: day.id,
+      });
+      expect(pinned.metadata.scheduledRunId).toBe(day.id);
+    }
+  );
+
   // Scenario 4: structured user on a scheduled day with an incomplete
   // planned run → strip shows structured plan, prefill applies.
   it("race-prep scheduled day prefills from the planned template", () => {

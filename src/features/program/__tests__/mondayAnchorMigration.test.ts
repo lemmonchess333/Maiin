@@ -94,6 +94,32 @@ describe("opening the app on flip day advances nobody", () => {
 });
 
 describe("what the remap does and does not move", () => {
+  it.each([
+    [0, "2026-09-06"],
+    [1, "2026-09-07"],
+    [2, "2026-09-08"],
+    [3, "2026-09-09"],
+    [4, "2026-09-10"],
+    [5, "2026-09-11"],
+    [6, "2026-09-12"],
+  ])(
+    "repairs an undated legacy weekday %i to %s before re-anchoring",
+    (dayIndex, date) => {
+      const legacy = runDay({ dayIndex, date: undefined });
+      const state = migrateProgramState(
+        legacyState({ runDays: [legacy] }),
+        MONDAY_KEY
+      );
+      expect(state.runDays?.[0]).toMatchObject({
+        date,
+        dayIndex,
+        weekKey: MONDAY_KEY,
+        id: legacy.id,
+      });
+      expect(migrateProgramState(state, MONDAY_KEY)).toBe(state);
+    }
+  );
+
   it("re-anchors both week keys onto the Monday", () => {
     const migrated = migrateProgramState(
       legacyState({ runDays: [runDay()] }),
