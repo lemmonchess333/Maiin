@@ -207,4 +207,38 @@ test.describe("P1 bodyweight upsert — one row per local day", () => {
     const latest = afterSecond.find((r) => r.id === dayOfSecond);
     expect(latest?.weight).toBe(80.1);
   });
+
+  test("clearing the date keeps the sheet editable and saves only after correction", async ({
+    page,
+  }) => {
+    await signInAsTestUser(page);
+    await page.goto("");
+    await page
+      .getByRole("button", { name: /weight/i })
+      .first()
+      .click({ timeout: 20_000 });
+    const sheet = page.getByRole("dialog", { name: /^(Log|Edit) weight$/ });
+    await sheet.getByLabel(/^Weight \(/).fill("80.4");
+    await sheet.getByRole("button", { name: "Today", exact: true }).click();
+    const dateInput = sheet.getByLabel("Date measured");
+    const date = await dateInput.inputValue();
+
+    await dateInput.fill("");
+    await expect(
+      sheet.getByRole("button", { name: "Choose date" })
+    ).toBeVisible();
+    await sheet.getByRole("button", { name: "Log", exact: true }).click();
+    await expect(sheet.getByRole("alert")).toHaveText(
+      "Choose a day within the last 30 days."
+    );
+    await expect(sheet.getByLabel(/^Weight \(/)).toHaveValue("80.4");
+    expect(await readBodyweightLogs()).toHaveLength(0);
+
+    await dateInput.fill(date);
+    await sheet.getByRole("button", { name: "Log", exact: true }).click();
+    await expect(sheet).toBeHidden();
+    await expect
+      .poll(readBodyweightLogs, { timeout: 15_000 })
+      .toEqual([{ id: date, weight: 80.4 }]);
+  });
 });

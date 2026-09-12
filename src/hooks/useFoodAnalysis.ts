@@ -140,6 +140,8 @@ export function useFoodAnalysis() {
   const analyzeFoodText = async (
     text: string
   ): Promise<FoodAnalysis | null> => {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), ANALYZE_TIMEOUT_MS);
     try {
       const user = auth.currentUser;
       if (!user) return null;
@@ -152,6 +154,7 @@ export function useFoodAnalysis() {
           Authorization: "Bearer " + token,
         },
         body: JSON.stringify({ text }),
+        signal: controller.signal,
       });
 
       if (!response.ok) {
@@ -162,6 +165,8 @@ export function useFoodAnalysis() {
     } catch (e) {
       logger.error("[analyzeFoodText] failed", e);
       return null;
+    } finally {
+      clearTimeout(timeout);
     }
   };
 

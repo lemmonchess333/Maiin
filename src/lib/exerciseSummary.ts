@@ -24,6 +24,7 @@
  */
 
 import { isBodyweightExerciseId } from "@/lib/exercises";
+import { isTimedExerciseId } from "@/features/program/repUnits";
 
 export interface ExerciseSummaryInput {
   setCount: number;
@@ -41,7 +42,10 @@ export function formatExerciseSummary(input: ExerciseSummaryInput): string {
 
   if (sets === 0 && reps === 0) return "—";
   if (reps === 0) return `${sets} set${sets === 1 ? "" : "s"}`;
+  const timed = isTimedExerciseId(input.exerciseId);
+  const count = `${sets}×${reps}${timed ? " s" : ""}`;
   if (weight === 0) {
+    if (timed) return count;
     // Only label as BW when the exercise is intrinsically bodyweight.
     // Otherwise weight === 0 means "no calibrated starting weight"
     // — a Leg Press at 0kg is uncalibrated, not bodyweight.
@@ -54,5 +58,5 @@ export function formatExerciseSummary(input: ExerciseSummaryInput): string {
     ? String(weight)
     : weight.toFixed(1);
   // Spaced unit — the app's one unit treatment ("60 kg", never "60kg").
-  return `${sets}×${reps}×${weightStr} kg`;
+  return `${count}${timed ? " × " : "×"}${weightStr} kg`;
 }

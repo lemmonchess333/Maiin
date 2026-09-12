@@ -223,6 +223,8 @@ export default function WeightLogSheet({
     }
   };
   useEffect(() => {
+    // A cleared native date input is editable state, not a document path.
+    if (!validWeightDate(date)) return;
     let cancelled = false;
     const interactionsAtLoad = interactions.current;
     const queued = pendingWeights(uid)
@@ -363,6 +365,7 @@ export default function WeightLogSheet({
                 value={pounds}
                 disabled={saving}
                 onChange={(event) => {
+                  typedRef.current = true;
                   noteInteraction();
                   setPounds(event.target.value);
                   setPreciseKg(null);
@@ -402,7 +405,9 @@ export default function WeightLogSheet({
             >
               {date === todayKey
                 ? "Today"
-                : format(new Date(`${date}T12:00:00`), "d MMM yyyy")}
+                : validWeightDate(date)
+                  ? format(new Date(`${date}T12:00:00`), "d MMM yyyy")
+                  : "Choose date"}
             </Button>
           </div>
           {showDate && (

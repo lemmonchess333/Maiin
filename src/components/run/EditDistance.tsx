@@ -1,5 +1,11 @@
 import { useState } from "react";
 import { THEME } from "@/lib/theme";
+import { Button } from "@/components/ui/Button";
+import {
+  distanceIn,
+  distanceToMetres,
+  type DistanceUnit,
+} from "@/lib/distanceUnits";
 
 /**
  * Correct a manually-entered distance.
@@ -16,77 +22,83 @@ import { THEME } from "@/lib/theme";
 export default function EditDistance({
   distanceKm,
   onCommit,
+  unit,
 }: {
   distanceKm: number;
   onCommit: (meters: number) => void;
+  unit: DistanceUnit;
 }) {
   const [editing, setEditing] = useState(false);
   // Pre-filled with the current distance so the user adjusts rather than
   // re-enters.
   const [editValue, setEditValue] = useState<string>(() =>
-    distanceKm.toFixed(2)
+    distanceIn(distanceKm * 1000, unit).toFixed(2)
   );
   const editValueNum = Number(editValue);
+  const editMeters = distanceToMetres(editValueNum, unit);
+  // Round input bounds inward to the hundredth so every offered value is valid.
+  const minimum = Math.ceil(distanceIn(50, unit) * 100) / 100;
+  const maximum = Math.floor(distanceIn(100000, unit) * 100) / 100;
   const editValid =
+    editValue.trim() !== "" &&
     Number.isFinite(editValueNum) &&
-    editValueNum >= 0.05 &&
-    editValueNum <= 100;
+    editMeters >= 50 &&
+    editMeters <= 100000;
 
   if (!editing) {
     return (
-      <button
-        type="button"
+      <Button
+        variant="secondary"
+        fullWidth
         onClick={() => {
-          setEditValue(distanceKm.toFixed(2));
+          setEditValue(distanceIn(distanceKm * 1000, unit).toFixed(2));
           setEditing(true);
         }}
-        className="w-full py-2.5 rounded-xl text-sm font-medium bg-muted text-foreground border border-border"
       >
         Edit distance
-      </button>
+      </Button>
     );
   }
   return (
     <div className="p-3 rounded-xl border border-border bg-muted/40 space-y-2">
       <label htmlFor="edit-distance" className="text-xs text-muted-foreground">
-        Distance (km)
+        Distance ({unit})
       </label>
       <input
         id="edit-distance"
         type="number"
         step="0.01"
-        min="0.05"
-        max="100"
+        min={minimum}
+        max={maximum}
         value={editValue}
         onChange={(e) => setEditValue(e.target.value)}
-        className="w-full px-3 py-2 rounded-lg bg-background border border-border text-sm text-center"
+        className="w-full min-h-11 px-3 py-2 rounded-lg bg-background border border-border text-sm text-center font-mono tabular-nums"
       />
       {!editValid && editValue !== "" && (
         <p className="text-xs" style={{ color: THEME.running }}>
-          Distance must be between 0.05 km and 100 km.
+          Distance must be between {minimum} {unit} and {maximum} {unit}.
         </p>
       )}
       <div className="flex gap-2">
-        <button
-          type="button"
+        <Button
+          variant="secondary"
           onClick={() => setEditing(false)}
-          className="flex-1 py-2 rounded-lg text-xs font-medium bg-muted text-muted-foreground border border-border"
+          className="flex-1"
         >
           Cancel
-        </button>
-        <button
-          type="button"
+        </Button>
+        <Button
+          variant="sport"
           onClick={() => {
             if (!editValid) return;
-            onCommit(editValueNum * 1000);
+            onCommit(editMeters);
             setEditing(false);
           }}
           disabled={!editValid}
-          className="flex-1 py-2 rounded-lg text-xs font-medium text-white disabled:opacity-50"
-          style={{ background: THEME.lifting }}
+          className="flex-1"
         >
           Update
-        </button>
+        </Button>
       </div>
     </div>
   );

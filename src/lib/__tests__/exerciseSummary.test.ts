@@ -2,6 +2,33 @@ import { describe, it, expect } from "vitest";
 import { formatExerciseSummary } from "../exerciseSummary";
 
 describe("formatExerciseSummary", function () {
+  it("labels holds and loaded carries in seconds", () => {
+    expect(
+      formatExerciseSummary({
+        setCount: 3,
+        targetReps: 60,
+        targetWeightKg: 0,
+        exerciseId: "plank",
+      })
+    ).toBe("3×60 s");
+    expect(
+      formatExerciseSummary({
+        setCount: 3,
+        targetReps: 45,
+        targetWeightKg: 20,
+        exerciseId: "weighted-plank",
+      })
+    ).toBe("3×45 s × 20 kg");
+    expect(
+      formatExerciseSummary({
+        setCount: 2,
+        targetReps: 30,
+        targetWeightKg: 24,
+        exerciseId: "farmers-carry",
+      })
+    ).toBe("2×30 s × 24 kg");
+  });
+
   it("renders standard sets×reps×weight format with kg suffix", function () {
     expect(
       formatExerciseSummary({ setCount: 4, targetReps: 6, targetWeightKg: 100 })

@@ -1,4 +1,10 @@
-import { useEffect, useRef, useState } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  useMemo,
+  useSyncExternalStore,
+} from "react";
 import {
   collection,
   getDocs,
@@ -6,9 +12,15 @@ import {
   where,
   orderBy,
   Timestamp,
+  type DocumentData,
 } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { logger } from "../lib/logger";
+import {
+  pendingDocumentWrites,
+  subscribeQueuedWrites,
+  queuedWritesVersion,
+} from "@/lib/offlineQueue";
 import { useUid } from "../lib/auth";
 import { isVolumeEligible } from "../lib/runStatsEligibility";
 import { localWeekKey } from "../lib/dateHelpers";
@@ -94,9 +106,64 @@ export function aggregateWeeklyData(runs: RunSummaryItem[]): RunningWeekData[] {
     }));
 }
 
+function parseRunSummary(
+  id: string,
+  data: DocumentData
+): RunSummaryItem | null {
+  let date: Date | undefined;
+  if (data.completedAt instanceof Timestamp) {
+    date = data.completedAt.toDate();
+  } else if (data.completedAt instanceof Date) {
+    date = data.completedAt;
+  } else if (typeof data.completedAt === "number") {
+    date = new Date(data.completedAt);
+  } else if (data.completedAt?.toDate) {
+    date = data.completedAt.toDate();
+  }
+  if (!date) return null;
+
+  return {
+    id,
+    distance: data.distance || 0,
+    duration: data.duration || 0,
+    avgPace: data.avgPace || 0,
+    elevationGain: data.elevationGain || 0,
+    calories: data.calories || 0,
+    activityType: data.activityType || "freerun",
+    completedAt: date,
+    relativeEffort:
+      data.relativeEffort === "easier" ||
+      data.relativeEffort === "matched" ||
+      data.relativeEffort === "harder"
+        ? data.relativeEffort
+        : null,
+    paceVerdictTone:
+      data.paceVerdictTone === "on" ||
+      data.paceVerdictTone === "fast" ||
+      data.paceVerdictTone === "easy-too-fast" ||
+      data.paceVerdictTone === "slow"
+        ? data.paceVerdictTone
+        : null,
+    isInvalid: data.isInvalid === true,
+    savedAnyway: data.savedAnyway === true,
+    routePreview:
+      data.points?.length > 1
+        ? sampleRoute(data.points as RouteCoordinate[], 20).map((p) => ({
+            lat: p.lat,
+            lon: p.lon,
+            ...(p.breakBefore ? { breakBefore: true } : {}),
+          }))
+        : data.routePreview,
+  };
+}
+
 export function useRunningStats(days: number = 30) {
   const uid = useUid();
-  const [weeklyData, setWeeklyData] = useState<RunningWeekData[]>([]);
+  const queueVersion = useSyncExternalStore(
+    subscribeQueuedWrites,
+    queuedWritesVersion,
+    queuedWritesVersion
+  );
   const [runs, setRuns] = useState<RunSummaryItem[]>([]);
   const [loading, setLoading] = useState(true);
   /** See the note on the catch below — a failed read used to be
@@ -119,7 +186,6 @@ export function useRunningStats(days: number = 30) {
       // until B's load completes (the uid-scoping class hardened in PR #820).
       loadedUidRef.current = null;
       setRuns([]);
-      setWeeklyData([]);
       setLoading(false);
       return;
     }
@@ -129,7 +195,6 @@ export function useRunningStats(days: number = 30) {
     // pull-to-refresh keeps the current rows visible while loading.
     if (loadedUidRef.current !== uid) {
       setRuns([]);
-      setWeeklyData([]);
     }
     setLoading(true);
 
@@ -146,69 +211,13 @@ export function useRunningStats(days: number = 30) {
         );
         const snap = await getDocs(q);
 
-        const runList: RunSummaryItem[] = [];
-
-        snap.docs.forEach((d) => {
-          const data = d.data();
-          /* No source filter. `runs` is the transparent record-of-truth
-           list — Recent Runs renders all of them with Invalid /
-           Saved-anyway badges so the user can see entries they
-           saved exist on their account. Stat aggregations apply
-           `isVolumeEligible` (weekly tile, lifetime totals,
-           leaderboards, streaks) or `isPaceEligible` (Best Pace,
-           Fastest 1K/5K, Longest Run) downstream from this list. */
-          let date: Date | undefined;
-          if (data.completedAt instanceof Timestamp) {
-            date = data.completedAt.toDate();
-          } else if (data.completedAt instanceof Date) {
-            date = data.completedAt;
-          } else if (typeof data.completedAt === "number") {
-            date = new Date(data.completedAt);
-          } else if (data.completedAt?.toDate) {
-            date = data.completedAt.toDate();
-          }
-          if (!date) return;
-
-          runList.push({
-            id: d.id,
-            distance: data.distance || 0,
-            duration: data.duration || 0,
-            avgPace: data.avgPace || 0,
-            elevationGain: data.elevationGain || 0,
-            calories: data.calories || 0,
-            activityType: data.activityType || "freerun",
-            completedAt: date,
-            relativeEffort:
-              data.relativeEffort === "easier" ||
-              data.relativeEffort === "matched" ||
-              data.relativeEffort === "harder"
-                ? data.relativeEffort
-                : null,
-            paceVerdictTone:
-              data.paceVerdictTone === "on" ||
-              data.paceVerdictTone === "fast" ||
-              data.paceVerdictTone === "easy-too-fast" ||
-              data.paceVerdictTone === "slow"
-                ? data.paceVerdictTone
-                : null,
-            isInvalid: data.isInvalid === true,
-            savedAnyway: data.savedAnyway === true,
-            routePreview:
-              data.points?.length > 1
-                ? sampleRoute(data.points as RouteCoordinate[], 20)
-                    .map((p) => ({
-                      lat: p.lat,
-                      lon: p.lon,
-                      ...(p.breakBefore ? { breakBefore: true } : {}),
-                    }))
-                : undefined,
-          });
-        });
+        const runList = snap.docs
+          .map((d) => parseRunSummary(d.id, d.data()))
+          .filter((run): run is RunSummaryItem => run !== null);
 
         if (cancelled) return;
         loadedUidRef.current = uid;
         setFailed(false);
-        setWeeklyData(aggregateWeeklyData(runList));
         setRuns(runList);
       } catch (error) {
         // A failed read must settle to a retryable state, not load forever
@@ -223,7 +232,6 @@ export function useRunningStats(days: number = 30) {
         if (cancelled) return;
         loadedUidRef.current = uid;
         setRuns([]);
-        setWeeklyData([]);
         setFailed(true);
         logger.error("[useRunningStats] Failed to load runs", error);
       } finally {
@@ -235,16 +243,43 @@ export function useRunningStats(days: number = 30) {
     return () => {
       cancelled = true;
     };
-  }, [uid, days, refreshTick]);
+  }, [uid, days, refreshTick, queueVersion]);
+
+  const visibleRuns = useMemo(() => {
+    void queueVersion;
+    const byId = new Map(
+      (loadedUidRef.current === uid ? runs : []).map((run) => [run.id, run])
+    );
+    const since = new Date();
+    since.setDate(since.getDate() - days);
+    if (uid)
+      for (const entry of pendingDocumentWrites(uid, `users/${uid}/runs`)) {
+        const run = parseRunSummary(entry.id, {
+          ...(entry.merge ? byId.get(entry.id) : {}),
+          ...entry.data,
+        });
+        if (run && run.completedAt >= since) byId.set(entry.id, run);
+      }
+    return [...byId.values()].sort(
+      (a, b) => b.completedAt.getTime() - a.completedAt.getTime()
+    );
+  }, [uid, runs, days, queueVersion]);
 
   return {
-    weeklyData,
-    runs,
-    loading,
+    weeklyData: aggregateWeeklyData(visibleRuns),
+    runs: visibleRuns,
+    loading:
+      loading &&
+      !(
+        uid &&
+        pendingDocumentWrites(uid, `users/${uid}/runs`).some(
+          (entry) => !entry.merge
+        )
+      ),
     /** True when the last read threw. Distinguishes "we couldn't load
      *  your runs" from "you have no runs" — the two are otherwise the
      *  same `runs: []`. */
-    failed,
+    failed: failed && visibleRuns.length === 0,
     /** Hist4: re-runs the underlying getDocs query. Used by the
      *  History page's pull-to-refresh gesture; the other History
      *  data sources (useWorkouts, useMeals) are onSnapshot listeners

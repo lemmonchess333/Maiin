@@ -15,6 +15,7 @@ vi.mock("@/hooks/useUnreadCount", () => ({
 vi.mock("@/lib/offlineQueue", () => ({
   getQueueLength: () => 0,
   getFailedWorkoutCompletionCount: () => 0,
+  getFailedRunSaveCount: () => 0,
   subscribeQueuedWrites: () => () => {},
   flushQueue: vi.fn(),
 }));

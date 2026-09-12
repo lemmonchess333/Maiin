@@ -2,6 +2,8 @@ import { useMemo, useEffect, useRef, useCallback, Suspense } from "react";
 import { lazyRetry } from "@/lib/lazyRetry";
 import { useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
+import PageShell from "@/components/ui/PageShell";
+import { pageItemVariant } from "@/components/ui/pageMotion";
 import { useMeals } from "@/hooks/useMeals";
 import { useMealsInRange } from "@/hooks/useMealsInRange";
 import { useLifetimeMealStats } from "@/hooks/useLifetimeMealStats";
@@ -1161,11 +1163,6 @@ export default function History() {
     };
   }, [rangeMeals, rangeDays]);
 
-  const itemVariant = {
-    hidden: { opacity: 0, y: 12 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
-  };
-
   // Range-adaptive prefix for stat-card labels. The values inside
   // those cards are TOTALS for the selected window (e.g. "Volume" is
   // the sum across rangeDays, not a weekly average), so a static
@@ -1238,20 +1235,7 @@ export default function History() {
     !showRunningSection && !showLiftingSection && !showNutritionSection;
 
   return (
-    <motion.div
-      {...pullBindProps}
-      className="space-y-4 pt-2"
-      initial="hidden"
-      animate="visible"
-      variants={{
-        hidden: {},
-        visible: { transition: { staggerChildren: 0.06 } },
-      }}
-    >
-      <motion.header variants={itemVariant}>
-        <h1 className="text-xl font-extrabold text-foreground">Analytics</h1>
-      </motion.header>
-
+    <PageShell {...pullBindProps} title="Analytics">
       {/* Hist4: small refresh indicator while the pull-to-refresh
           gesture is in flight. aria-live polite so screen readers
           announce the transient state without interrupting. */}
@@ -1270,7 +1254,7 @@ export default function History() {
           Firestore local cache while offline. */}
       <HistoryOfflineBanner />
 
-      <motion.div variants={itemVariant}>
+      <motion.div variants={pageItemVariant}>
         <FilterPills
           filter={filter}
           setFilter={(next) => {
@@ -1929,6 +1913,6 @@ export default function History() {
           </>
         )}
       </Suspense>
-    </motion.div>
+    </PageShell>
   );
 }

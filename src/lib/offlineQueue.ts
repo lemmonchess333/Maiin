@@ -295,6 +295,21 @@ export function getFailedWorkoutCompletionCount(uid: string): number {
   ).length;
 }
 
+/** Failed runs share the existing account-scoped retry surface. */
+export function getFailedRunSaveCount(uid: string): number {
+  return new Set(
+    getQueue()
+      .filter(
+        (item) =>
+          item.uid === uid &&
+          item.collectionPath === `users/${uid}/runs` &&
+          item.durable &&
+          item.failed
+      )
+      .map((item) => item.docId)
+  ).size;
+}
+
 /**
  * Serialises flushes. `AppRoutes` calls `flushQueue` on BOTH the auth-user
  * change and the `online` event, and signing in while already online fires
@@ -350,7 +365,7 @@ async function flushQueueOnce(db: Firestore, uid: string): Promise<number> {
           await runTransaction(db, async (transaction) => {
             const current = await transaction.get(docRef);
             if (auth.currentUser?.uid !== uid)
-              throw new Error("Sign in again to sync food.");
+              throw new Error("Sign in again to sync your changes.");
             // An ambiguous acknowledgement must not overwrite later diary edits.
             if (current.exists()) return;
             const completion = item.workoutCompletion?.programme;
@@ -421,12 +436,10 @@ async function flushQueueOnce(db: Firestore, uid: string): Promise<number> {
       );
       // Preserve create → undo ordering across a failed reconnect.
       if (item.durable) {
-        if (item.workoutCompletion) {
-          const latest = getQueue().map((entry) =>
-            entry.id === item.id ? { ...entry, failed: true } : entry
-          );
-          if (writeJson(QUEUE_KEY, latest)) notifyQueue();
-        }
+        const latest = getQueue().map((entry) =>
+          entry.id === item.id ? { ...entry, failed: true } : entry
+        );
+        if (writeJson(QUEUE_KEY, latest)) notifyQueue();
         break;
       }
     }
