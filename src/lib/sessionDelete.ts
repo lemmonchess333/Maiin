@@ -1,6 +1,11 @@
 import { doc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { updateDocGuarded, deleteDocGuarded } from "@/lib/firestoreWrite";
+import {
+  pendingDocumentWrites,
+  flushQueue,
+  queueDurableWrite,
+} from "@/lib/offlineQueue";
 import { logger } from "@/lib/logger";
 
 /**
@@ -59,6 +64,23 @@ export async function deleteLoggedSession({
   id: string;
   sharedActivityId?: string | null;
 }): Promise<void> {
+  // A queued create must finish before deletion, or replay could restore it.
+  // Retain the local recovery copy if reconnect or sync fails.
+  if (
+    kind === "run" &&
+    pendingDocumentWrites(uid, `users/${uid}/runs`).some(
+      (entry) => entry.id === id
+    )
+  ) {
+    if (!navigator.onLine) throw new Error("Connect to delete this run.");
+    await flushQueue(db, uid);
+    if (
+      pendingDocumentWrites(uid, `users/${uid}/runs`).some(
+        (entry) => entry.id === id
+      )
+    )
+      throw new Error("Sync this run before deleting it.");
+  }
   // Post FIRST, session second. The reverse order strands the post if the
   // second delete fails — and the post is the half the user cannot clear
   // by retrying, because the session it was reachable from is already
@@ -103,6 +125,22 @@ export async function recordSharedActivity(
   activityId: string
 ): Promise<void> {
   try {
+    if (
+      source.kind === "run" &&
+      pendingDocumentWrites(uid, `users/${uid}/runs`).some(
+        (entry) => entry.id === source.id
+      )
+    ) {
+      queueDurableWrite(
+        uid,
+        `users/${uid}/runs`,
+        source.id,
+        { sharedActivityId: activityId },
+        true
+      );
+      if (navigator.onLine) void flushQueue(db, uid).catch(() => {});
+      return;
+    }
     await updateDocGuarded(
       doc(db, "users", uid, COLLECTION[source.kind], source.id),
       { sharedActivityId: activityId }

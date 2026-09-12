@@ -452,7 +452,7 @@ test.describe("offline-queue uid isolation across an account switch", () => {
   }) => {
     test.setTimeout(90_000);
     const email = `offline-short-${Date.now()}-${Math.floor(Math.random() * 1e6)}@tropos.test`;
-    await mintOnboardedAccount(page, email, "Offline Short Run");
+    const uid = await mintOnboardedAccount(page, email, "Offline Short Run");
     await page.goto("/");
     await signInFromLoginScreen(page, email);
     await goOffline(page);
@@ -498,6 +498,35 @@ test.describe("offline-queue uid isolation across an account switch", () => {
     await expect(
       page.getByText("We've kept this run on your account.", { exact: true })
     ).toHaveCount(0);
+    const queued = (await readQueue(page)).filter(
+      (entry) => entry.collectionPath === `users/${uid}/runs`
+    );
+    expect(queued).toHaveLength(1);
+    expect(queued[0].uid).toBe(uid);
+    expect(queued[0].docId).toBeTruthy();
+    await page.addInitScript(() => {
+      Object.defineProperty(navigator, "onLine", {
+        configurable: true,
+        get: () => false,
+      });
+    });
+    await page.reload();
+    await expect(
+      page.getByRole("button", { name: "Done", exact: true })
+    ).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole("button", { name: "Save anyway" })).toHaveCount(
+      0
+    );
+    // Leave the summary: the recovery entry must outlive its React state.
+    await clickPastCelebration(
+      page,
+      page.getByRole("button", { name: "Done", exact: true })
+    );
+    expect(
+      (await readQueue(page))
+        .filter((entry) => entry.collectionPath === `users/${uid}/runs`)
+        .map((entry) => entry.docId)
+    ).toEqual([queued[0].docId]);
   });
 
   test("A's offline write survives B's session untouched and flushes only under A", async ({
@@ -542,6 +571,7 @@ test.describe("offline-queue uid isolation across an account switch", () => {
     // …and nothing landed in A's logs collection server-side.
     expect(await listLogDocs(uidA)).toHaveLength(0);
     expect(await listLogDocs(uidA, "meals")).toHaveLength(0);
+    expect(await listLogDocs(uidA, "runs")).toHaveLength(0);
     // The user-facing offline banner counts the queued change.
     await expect(page.getByText(/2 changes saved on this phone/i)).toBeVisible({
       timeout: 10_000,
@@ -593,6 +623,11 @@ test.describe("offline-queue uid isolation across an account switch", () => {
     await expect(page.getByText(/Post queued/i)).toBeVisible({
       timeout: 10_000,
     });
+    const queuedRuns = (await readQueue(page)).filter(
+      (entry) => entry.collectionPath === `users/${uidA}/runs`
+    );
+    expect(queuedRuns).toHaveLength(1);
+    const queuedRun = queuedRuns[0];
     const sharesAfterEnqueue = await readShareQueue(page);
     expect(sharesAfterEnqueue).toHaveLength(1);
     expect(sharesAfterEnqueue[0].uid).toBe(uidA);
@@ -634,11 +669,17 @@ test.describe("offline-queue uid isolation across an account switch", () => {
     expect(queueAtSignOut.length).toBeGreaterThanOrEqual(2);
     for (const entry of queueAtSignOut) {
       expect(entry.uid).toBe(uidA);
-      expect([`users/${uidA}/logs`, `users/${uidA}/meals`]).toContain(
-        entry.collectionPath
-      );
+      expect([
+        `users/${uidA}/logs`,
+        `users/${uidA}/meals`,
+        `users/${uidA}/runs`,
+      ]).toContain(entry.collectionPath);
       expect(entry.docId).toBe(
-        entry.collectionPath.endsWith("/meals") ? queuedMeal.docId : queuedDocId
+        entry.collectionPath.endsWith("/meals")
+          ? queuedMeal.docId
+          : entry.collectionPath.endsWith("/runs")
+            ? queuedRun.docId
+            : queuedDocId
       );
     }
     expect(await readShareQueue(page)).toHaveLength(1);
@@ -730,6 +771,7 @@ test.describe("offline-queue uid isolation across an account switch", () => {
     }
     expect(await listLogDocs(uidA)).toHaveLength(0);
     expect(await listLogDocs(uidA, "meals")).toHaveLength(0);
+    expect(await listLogDocs(uidA, "runs")).toHaveLength(0);
 
     // Share drain, same doctrine: B's pending share posts (the drain
     // pass provably completed)…
@@ -782,6 +824,14 @@ test.describe("offline-queue uid isolation across an account switch", () => {
         meal.name.endsWith(`/meals/${queuedMeal.docId}`)
       )
     ).toBe(false);
+
+    await expect
+      .poll(async () => await listLogDocs(uidA, "runs"), { timeout: 20_000 })
+      .toHaveLength(1);
+    const [flushedRun] = await listLogDocs(uidA, "runs");
+    expect(flushedRun.name.endsWith(`/runs/${queuedRun.docId}`)).toBe(true);
+    expect(flushedRun.fields?.completedAt?.timestampValue).toBeDefined();
+    expect(await listLogDocs(uidB, "runs")).toHaveLength(0);
 
     // The flush consumed A's entries.
     await expect

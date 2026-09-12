@@ -14,6 +14,7 @@ const state = vi.hoisted(() => ({
   uid: "account-a" as string | null,
   queue: {} as Record<string, number>,
   failed: {} as Record<string, number>,
+  failedRuns: {} as Record<string, number>,
   outbox: {} as Record<string, number>,
   listeners: new Set<() => void>(),
   flush: vi.fn(),
@@ -29,6 +30,7 @@ vi.mock("@/hooks/useReducedMotion", () => ({ useReducedMotion: () => true }));
 vi.mock("@/lib/offlineQueue", () => ({
   getQueueLength: (uid: string) => state.queue[uid] ?? 0,
   getFailedWorkoutCompletionCount: (uid: string) => state.failed[uid] ?? 0,
+  getFailedRunSaveCount: (uid: string) => state.failedRuns[uid] ?? 0,
   subscribeQueuedWrites: (listener: () => void) => {
     state.listeners.add(listener);
     return () => state.listeners.delete(listener);
@@ -70,6 +72,7 @@ beforeEach(() => {
   state.uid = "account-a";
   state.queue = {};
   state.failed = {};
+  state.failedRuns = {};
   state.outbox = {};
   state.listeners.clear();
   state.flush.mockReset();
@@ -195,6 +198,27 @@ describe("Layout pending changes", () => {
       "2 changes saved on this phone · waiting to sync"
     );
     expect(banner()).not.toHaveTextContent("needs attention");
+  });
+
+  it("keeps failed runs visible after reopening and retries only the signed-in account", async () => {
+    state.queue = { "account-a": 1, "account-b": 2 };
+    state.failedRuns["account-a"] = 1;
+    const view = render(<App />);
+    expect(banner()).toHaveTextContent(
+      "1 run needs attention · saved on this phone"
+    );
+    await act(async () =>
+      fireEvent.click(
+        screen.getByRole("button", { name: "Retry syncing runs" })
+      )
+    );
+    expect(state.flush).toHaveBeenCalledWith(state.db, "account-a");
+    state.uid = "account-b";
+    view.rerender(<App />);
+    expect(banner()).not.toHaveTextContent("needs attention");
+    expect(
+      screen.queryByRole("button", { name: "Retry syncing runs" })
+    ).not.toBeInTheDocument();
   });
 
   it("reports connectivity alone when no local changes are known", () => {

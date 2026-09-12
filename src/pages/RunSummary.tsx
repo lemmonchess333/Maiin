@@ -1,6 +1,13 @@
 import CompletionExtras from "@/components/workout/CompletionExtras";
 import SectionLabel from "@/components/ui/SectionLabel";
-import { useState, useEffect, useMemo, useRef, Suspense } from "react";
+import {
+  useState,
+  useEffect,
+  useMemo,
+  useRef,
+  useSyncExternalStore,
+  Suspense,
+} from "react";
 import { useLocation, useNavigate, Navigate } from "react-router-dom";
 import { readString, writeString } from "@/lib/localStore";
 import { lazyRetry } from "@/lib/lazyRetry";
@@ -12,11 +19,14 @@ import {
   query,
   Timestamp,
 } from "firebase/firestore";
+import { updateDocGuarded } from "@/lib/firestoreWrite";
 import {
-  addDocGuarded,
-  setDocGuarded,
-  updateDocGuarded,
-} from "@/lib/firestoreWrite";
+  queueDurableWrite,
+  pendingDocumentWrites,
+  subscribeQueuedWrites,
+  queuedWritesVersion,
+  flushQueue,
+} from "@/lib/offlineQueue";
 import EditDistance from "@/components/run/EditDistance";
 import { auth, db } from "../lib/firebase";
 import { localDateString, localWeekKey } from "../lib/dateHelpers";
@@ -72,7 +82,12 @@ import { resolvePaceVerdict } from "../lib/paceVerdict";
 import { paceMinSec, distanceLabel2 } from "../lib/runLabels";
 import { splitsForDisplay } from "../lib/gps";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
-import { paceUnitLabel, distanceUnitLabel } from "@/lib/distanceUnits";
+import {
+  distanceIn,
+  type DistanceUnit,
+  paceUnitLabel,
+  distanceUnitLabel,
+} from "@/lib/distanceUnits";
 import { useRunningStats } from "../hooks/useRunningStats";
 import { getWeeklyRunTarget } from "../lib/scheduleUtils";
 import { isVolumeEligible, isPaceEligible } from "../lib/runStatsEligibility";
@@ -164,6 +179,7 @@ const SavedRunKudos = lazyRetry(
 );
 
 interface InvalidRunReviewProps {
+  unit: DistanceUnit;
   distanceKm: number;
   elapsedSeconds: number;
   formatTime: (s: number) => string;
@@ -175,6 +191,7 @@ interface InvalidRunReviewProps {
   saveStatus: SaveStatus;
   saveError: string | null;
   isOnline: boolean;
+  pendingSync: boolean;
   /** Set when the run came from treadmill / manual flows so the
    *  Edit distance affordance only surfaces for runs whose
    *  distance was user-typed (and therefore correctable). Outdoor
@@ -188,6 +205,7 @@ interface InvalidRunReviewProps {
 }
 
 function InvalidRunReview({
+  unit,
   distanceKm,
   elapsedSeconds,
   formatTime,
@@ -196,6 +214,7 @@ function InvalidRunReview({
   saveStatus,
   saveError,
   isOnline,
+  pendingSync,
   canEditDistance,
   onSave,
   onDiscard,
@@ -203,7 +222,7 @@ function InvalidRunReview({
   onEditDistance,
 }: InvalidRunReviewProps) {
   const formattedDuration = formatTime(elapsedSeconds);
-  const formattedDistance = `${distanceKm.toFixed(2)} km`;
+  const formattedDistance = `${distanceIn(distanceKm * 1000, unit).toFixed(2)} ${unit}`;
   const showSaveAnyway = canShowSaveAnyway({ isInvalid: true, saveStatus });
   const showDiscard = canShowDiscard({ saveStatus });
   const showRetry = canShowRetrySave({ saveStatus });
@@ -250,9 +269,11 @@ function InvalidRunReview({
               the heading is the authoritative saved state. The
               offline variant stays — it conveys real sync status the
               heading copy doesn't. */}
-          {!isOnline && (
+          {pendingSync && (
             <p className="text-xs text-muted-foreground text-center">
-              Saved locally — will sync when online.
+              {isOnline
+                ? "Saved on this phone · waiting to sync."
+                : "Saved locally — will sync when online."}
             </p>
           )}
           <button
@@ -282,7 +303,11 @@ function InvalidRunReview({
           the normal valid summary path. */}
       {canEditDistance && (showSaveAnyway || showDiscard) && (
         <div className="pt-1">
-          <EditDistance distanceKm={distanceKm} onCommit={onEditDistance} />
+          <EditDistance
+            unit={unit}
+            distanceKm={distanceKm}
+            onCommit={onEditDistance}
+          />
         </div>
       )}
 
@@ -314,6 +339,12 @@ function InvalidRunReview({
 }
 
 interface RunData {
+  savedRun?: {
+    uid: string;
+    id: string;
+    notes: string;
+    relativeEffort: "easier" | "matched" | "harder" | null;
+  };
   points: GPSPoint[];
   distance: number;
   elapsed: number;
@@ -331,6 +362,8 @@ export default function RunSummary() {
   const navigate = useNavigate();
   const { user, profile } = useAuth();
   const unit = useDistanceUnit();
+  const receipt = state?.savedRun?.uid === user?.uid ? state?.savedRun : null;
+  const runOwnerRef = useRef(user?.uid);
   const {
     zones: privacyZones,
     loading: privacyZonesLoading,
@@ -361,7 +394,22 @@ export default function RunSummary() {
     "pending" | "completed" | "skipped" | "dismissed"
   >("pending");
   const [reconciliationBusy, setReconciliationBusy] = useState(false);
-  const [savedRunId, setSavedRunId] = useState<string | null>(null);
+  const [savedRunId, setSavedRunId] = useState<string | null>(
+    receipt?.id ?? null
+  );
+  const runIdRef = useRef<string | null>(receipt?.id ?? null);
+  const savingRef = useRef(false);
+  useSyncExternalStore(
+    subscribeQueuedWrites,
+    queuedWritesVersion,
+    queuedWritesVersion
+  );
+  const pendingSync =
+    !!user?.uid &&
+    !!savedRunId &&
+    pendingDocumentWrites(user.uid, `users/${user.uid}/runs`).some(
+      (entry) => entry.id === savedRunId
+    );
   /* What the notes and effort fields held at the moment the run was
      written. Both stay editable after saving, but the Save button is gone
      by then and Done only navigates — so a correction typed at that point
@@ -371,7 +419,11 @@ export default function RunSummary() {
   const [savedFields, setSavedFields] = useState<{
     notes: string;
     relativeEffort: "easier" | "matched" | "harder" | null;
-  } | null>(null);
+  } | null>(
+    receipt
+      ? { notes: receipt.notes, relativeEffort: receipt.relativeEffort }
+      : null
+  );
   const [updating, setUpdating] = useState(false);
   /* Post-write steps that must run once per saved run, however many times
      the chain is resumed after a failure: the share prompt (a second prompt
@@ -410,7 +462,9 @@ export default function RunSummary() {
      'Run saved' confirmation strip, the offline notice) keep working
      without rippling the migration through every condition in
      this commit. */
-  const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>(
+    receipt ? "saved" : "idle"
+  );
   const [saveError, setSaveError] = useState<string | null>(null);
   const saved = saveStatus === "saved";
   const [paceTrend, setPaceTrend] = useState<PaceTrendResult | null>(null);
@@ -418,7 +472,7 @@ export default function RunSummary() {
   // Pro pace-insight card — one query, two consumers (no extra Firestore read).
   const [paceHistory, setPaceHistory] = useState<PaceInsightRun[]>([]);
   const [paceHistoryLoading, setPaceHistoryLoading] = useState(true);
-  const [notes, setNotes] = useState("");
+  const [notes, setNotes] = useState(receipt?.notes ?? "");
   /* RUN-03: optional one-tap post-run effort signal ("how did it feel vs
      what you expected?"). Structured so the engine can later distinguish
      "completed, felt easy" from "completed, too hard" — notes no longer
@@ -428,7 +482,7 @@ export default function RunSummary() {
      calibration signal only. */
   const [relativeEffort, setRelativeEffort] = useState<
     "easier" | "matched" | "harder" | null
-  >(null);
+  >(receipt?.relativeEffort ?? null);
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
   /* Sprint 3 Edit-distance: when the user corrects a fat-fingered
      manual / treadmill distance from InvalidRunReview, the new
@@ -576,7 +630,7 @@ export default function RunSummary() {
   // A redirect is an element, not a call made while rendering: React Router
   // warns on navigate() in render, and a re-render before the navigation
   // commits would fire it twice.
-  if (!state) {
+  if (!state || (state.savedRun && state.savedRun.uid !== user?.uid)) {
     return <Navigate to="/" replace />;
   }
 
@@ -660,11 +714,29 @@ export default function RunSummary() {
     setUpdating(true);
     const next = { notes: notes.trim(), relativeEffort };
     try {
-      await updateDocGuarded(
-        doc(db, "users", user.uid, "runs", savedRunId),
-        next
-      );
+      if (pendingSync || !navigator.onLine) {
+        queueDurableWrite(
+          user.uid,
+          `users/${user.uid}/runs`,
+          savedRunId,
+          next,
+          true
+        );
+        if (navigator.onLine) void flushQueue(db, user.uid).catch(() => {});
+      } else {
+        await updateDocGuarded(
+          doc(db, "users", user.uid, "runs", savedRunId),
+          next
+        );
+      }
       setSavedFields(next);
+      navigate(".", {
+        replace: true,
+        state: {
+          ...state,
+          savedRun: { uid: user.uid, id: savedRunId, ...next },
+        },
+      });
       toast.success("Changes saved");
     } catch (err) {
       logger.error("[RunSummary] field update failed", err);
@@ -850,11 +922,17 @@ export default function RunSummary() {
   };
 
   const handleSave = async () => {
-    if (!user) return;
+    if (
+      !user ||
+      auth.currentUser?.uid !== user.uid ||
+      runOwnerRef.current !== user.uid
+    )
+      return;
     /* Double-submit guard. The Save button is also disabled while
        saving, but the inline Retry banner can call handleSave again —
        this stops a flap if the user mashes it. */
-    if (saveStatus === "saving") return;
+    if (savingRef.current) return;
+    savingRef.current = true;
     /* A Retry after the run document was written but a later step failed
        (share post, shoe mileage). Pre-fix the chain re-entered from the
        top and wrote a SECOND run document; onRunCreated then credited
@@ -967,43 +1045,33 @@ export default function RunSummary() {
       scheduledRunId: planMetadata.scheduledRunId,
     };
     try {
-      // Firestore queues the write offline automatically via IndexedDB
-      // persistence. addDocGuarded strips undefined fields first —
-      // Firestore rejects any document with explicit undefined values,
-      // and runData routinely carries them (intervalData on non-interval
-      // runs, runConfig.target.value on `target.type === 'none'`, etc.).
-      // Surfaced in QA as "addDoc() called with invalid data" failures
-      // that landed users in the retry banner with no recovery path.
-      // P3-1 follow-up: capture the doc id so the reconciliation
-      // card's dismissal can persist across mounts of this same
-      // saved run (e.g. user dismisses, navigates to Home, comes
-      // back via History). Without the id, every remount fires the
-      // prompt again — annoying nag for a user who already decided
-      // "Leave open".
-      const runsCol = collection(db, "users", user.uid, "runs");
-      let savedId: string;
-      if (savedRunId) {
-        savedId = savedRunId;
-      } else if (navigator.onLine) {
-        const savedDocRef = await addDocGuarded(runsCol, runData);
-        savedId = savedDocRef.id;
-      } else {
-        /* #1887 — offline, the SDK durably queues the mutation in
-           IndexedDB and acks only on reconnect, so awaiting here parked
-           this entire chain forever: no confirmation, no share composer
-           (whose offline branch below queues the post), no saved state.
-           Mint the id client-side, start the write without awaiting the
-           ack, and proceed — the local mutation is applied immediately
-           and syncs on reconnect, the same durability the online path
-           has after its ack. A post-reconnect rejection (rules) is
-           logged, mirroring the offline queue's accepted trade-off. */
-        const offlineRef = doc(runsCol);
-        void setDocGuarded(offlineRef, runData).catch((err) =>
-          logger.error("[RunSave] queued offline write failed:", err)
-        );
-        savedId = offlineRef.id;
+      // The recovery copy must reach device storage BEFORE any server write.
+      // The queue survives leaving this page, retries with this same id, and
+      // retires the record only after the server acknowledges it.
+      const savedId =
+        savedRunId ??
+        (runIdRef.current ??= doc(
+          collection(db, "users", user.uid, "runs")
+        ).id);
+      if (!savedRunId) {
+        queueDurableWrite(user.uid, `users/${user.uid}/runs`, savedId, runData);
       }
+      if (navigator.onLine) void flushQueue(db, user.uid).catch(() => {});
       setSavedRunId(savedId);
+      // A reload of this browser-history entry must reopen the same saved run.
+      navigate(".", {
+        replace: true,
+        state: {
+          ...state,
+          distance,
+          savedRun: {
+            uid: user.uid,
+            id: savedId,
+            notes: notes.trim(),
+            relativeEffort,
+          },
+        },
+      });
       // The baseline for "edited since saving" — the values that actually
       // went into the document, not the ones on screen a moment later.
       setSavedFields({ notes: notes.trim(), relativeEffort });
@@ -1130,35 +1198,33 @@ export default function RunSummary() {
       // Update shoe mileage against whichever shoe was resolved above —
       // once per run (see mileageAppliedRef).
       if (effectiveShoeId && !mileageAppliedRef.current) {
-        if (navigator.onLine) {
-          const alert = await updateMileage(effectiveShoeId, distance / 1000);
-          mileageAppliedRef.current = true;
-          if (alert === "replace") {
-            toast.error(
-              "This pair is past its recommended mileage. Consider replacing it.",
-              { duration: 5000 }
-            );
-          } else if (alert === "warning") {
-            toast.warning(
-              "Your shoes are at 85% of their recommended mileage. Start thinking about a replacement.",
-              { duration: 5000 }
-            );
-          }
-        } else {
-          // #1887 — the mileage write would park the save chain offline
-          // too. Fire it into the SDK's durable queue; the wear alerts
-          // wait for an online run (they're advisory, not per-run).
-          void updateMileage(effectiveShoeId, distance / 1000).catch(() => {});
-          mileageAppliedRef.current = true;
-        }
+        mileageAppliedRef.current = true;
+        // Shoe bookkeeping must not hold an accepted run's confirmation open.
+        void updateMileage(effectiveShoeId, distance / 1000)
+          .then((alert) => {
+            if (auth.currentUser?.uid !== user.uid || !navigator.onLine) return;
+            if (alert === "replace") {
+              toast.error(
+                "This pair is past its recommended mileage. Consider replacing it.",
+                { duration: 5000 }
+              );
+            } else if (alert === "warning") {
+              toast.warning(
+                "Your shoes are at 85% of their recommended mileage. Start thinking about a replacement.",
+                { duration: 5000 }
+              );
+            }
+          })
+          .catch((error) =>
+            logger.warn("[RunSave] shoe mileage update failed:", error)
+          );
       }
 
       setSaveStatus("saved");
       setSaveError(null);
 
-      // Phase B3: the saved run is now durable in Firestore, so the
-      // in-flight localStorage snapshot is no longer needed. Clear so
-      // the next /run mount sees no resume prompt.
+      // The complete run is now durable in the retry queue. The active-run
+      // snapshot can be cleared without losing the recovery copy.
       if (user?.uid) clearStoredRun(user.uid);
 
       // ── Phase B1: programme reconciliation ───────────────────────
@@ -1188,6 +1254,8 @@ export default function RunSummary() {
          scrolled away or have the app backgrounded; the inline retry
          banner above the action row is the durable affordance. */
       toast.error("Failed to save run. Tap Retry below.");
+    } finally {
+      savingRef.current = false;
     }
   };
 
@@ -1245,6 +1313,7 @@ export default function RunSummary() {
            and gates correctly on actual thresholds (50m / 30s) instead
            of the both-conditions-must-be-true bypass. */
         <InvalidRunReview
+          unit={unit}
           distanceKm={distanceKm}
           elapsedSeconds={elapsedSeconds}
           formatTime={formatTime}
@@ -1253,6 +1322,7 @@ export default function RunSummary() {
           saveStatus={saveStatus}
           saveError={saveError}
           isOnline={isOnline}
+          pendingSync={pendingSync}
           /* Edit distance only for treadmill / manual — outdoor
              GPS distance came from a sensor, no typo to fix. */
           canEditDistance={
@@ -1341,9 +1411,11 @@ export default function RunSummary() {
               <CheckCircle size={20} className="text-success-strong" />
               <div>
                 <p className="font-medium text-success-strong text-xs">
-                  {isOnline
-                    ? "Run saved"
-                    : "Saved locally — will sync when online"}
+                  {pendingSync
+                    ? isOnline
+                      ? "Saved on this phone · waiting to sync"
+                      : "Saved locally — will sync when online"
+                    : "Run saved"}
                 </p>
               </div>
             </div>
@@ -1882,6 +1954,7 @@ export default function RunSummary() {
             {(activityType === "treadmill" || activityType === "manual") &&
               canShowNormalSave({ isInvalid: false, saveStatus }) && (
                 <EditDistance
+                  unit={unit}
                   distanceKm={distanceKm}
                   onCommit={setEditedDistanceMeters}
                 />

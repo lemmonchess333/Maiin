@@ -12,80 +12,18 @@ import {
   redactExternalRoutineExercises,
   type SavedRoutineExercise,
 } from "@/lib/savedRoutines";
-import { isBodyweightExerciseId } from "@/lib/exercises";
+import {
+  formatExerciseSummary,
+  type ExerciseSummaryInput,
+} from "@/lib/exerciseSummary";
+import InlineNumerals from "@/components/ui/InlineNumerals";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 
-/**
- * Renders the per-exercise summary with numbers in Archivo (the numeral font) and
- * units ("kg", "BW", "sets") in Plus Jakarta — Tropos's "numerals in
- * mono, words in sans" convention. The shared lib formatter returns a
- * pure string and would render the units in mono too, which read as
- * cramped on the routine preview rows. Branching at render time lets
- * each fragment pick its own font without forking the formatter used
- * by the activity feed.
- */
-function ExerciseSummary({
-  setCount,
-  targetReps,
-  targetWeightKg,
-  exerciseId,
-}: {
-  setCount: number;
-  targetReps: number;
-  targetWeightKg: number;
-  /** When provided, used to distinguish bodyweight movements from
-   *  uncalibrated weighted exercises. Without it, weight === 0 falls
-   *  back to "{sets}×{reps}" without a BW label. */
-  exerciseId?: string;
-}) {
-  const sets = Math.max(0, Math.round(setCount || 0));
-  const reps = Math.max(0, Math.round(targetReps || 0));
-  const weight = Math.max(0, Number(targetWeightKg) || 0);
-
-  const num = "font-mono tabular-nums text-foreground/80";
-  const unit = "text-muted-foreground";
-
-  if (sets === 0 && reps === 0) {
-    return <span className="text-muted-foreground">—</span>;
-  }
-  if (reps === 0) {
-    return (
-      <span>
-        <span className={num}>{sets}</span>
-        <span className={unit}> {sets === 1 ? "set" : "sets"}</span>
-      </span>
-    );
-  }
-  if (weight === 0) {
-    // Only label as BW for true bodyweight movements. An uncalibrated
-    // weighted exercise (Leg Press at 0kg) shouldn't claim "BW".
-    if (isBodyweightExerciseId(exerciseId)) {
-      return (
-        <span>
-          <span className={num}>
-            {sets}×{reps}
-          </span>
-          <span className={unit}> BW</span>
-        </span>
-      );
-    }
-    return (
-      <span>
-        <span className={num}>
-          {sets}×{reps}
-        </span>
-      </span>
-    );
-  }
-  const weightStr = Number.isInteger(weight)
-    ? String(weight)
-    : weight.toFixed(1);
+/** Keep the preview and feed on one formatter; only numbers use Archivo. */
+function ExerciseSummary(props: ExerciseSummaryInput) {
   return (
-    <span>
-      <span className={num}>
-        {sets}×{reps}×{weightStr}
-      </span>
-      <span className={unit}>kg</span>
+    <span className="text-muted-foreground [&_.font-mono]:text-foreground/80">
+      <InlineNumerals>{formatExerciseSummary(props)}</InlineNumerals>
     </span>
   );
 }
