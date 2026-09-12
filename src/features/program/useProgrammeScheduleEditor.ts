@@ -54,7 +54,7 @@ import {
   type ScheduleDay,
   type DayType,
 } from "@/lib/scheduleUtils";
-import { chooseSplit } from "./programEngine";
+import { chooseSplit, expectedDayCount } from "./programEngine";
 import type { UserProfile, UpdateProfileResult } from "@/lib/auth";
 
 /* Restructure-failure copy. The two realistic shapes here are a
@@ -106,6 +106,7 @@ export interface UseProgrammeScheduleEditorReturn {
   runsTarget: number;
   schedule: ScheduleDay[];
   hasUnsavedScheduleChanges: boolean;
+  scheduleError: string | null;
   // Setters for the +/− stepper UI in TrainingSection.
   setWorkoutsTarget: (n: number) => void;
   setRunsTarget: (n: number) => void;
@@ -186,6 +187,17 @@ export function useProgrammeScheduleEditor(
     return customSchedule.some((s, i) => s.type !== savedSchedule[i]?.type);
   }, [customSchedule, savedSchedule]);
 
+  const currentLiftDays = schedule.filter(
+    (s) => s.type === "lift" || s.type === "both"
+  ).length;
+  // Allow an intermediate seven-lift-day draft so the Rest → Lift → Run
+  // cycle stays usable. Save must respect the generator's capacity; do
+  // not silently choose a rest day or change the user's workout order.
+  const scheduleError =
+    currentLiftDays > expectedDayCount(currentLiftDays)
+      ? "Programmes support up to six lifting days. Set at least one day to Run or Rest."
+      : null;
+
   function handleDayToggle(day: number): void {
     if (pendingRef.current) return;
     const current = schedule.find((s) => s.day === day);
@@ -210,9 +222,7 @@ export function useProgrammeScheduleEditor(
     "saved" | "confirmation-required" | "failed" | "busy"
   > {
     if (pendingRef.current) return "busy";
-    const currentLiftDays = schedule.filter(
-      (s) => s.type === "lift" || s.type === "both"
-    ).length;
+    if (scheduleError) return "failed";
     if (currentLiftDays !== savedLiftDays && currentLiftDays > 0) {
       setPendingLiftDays(currentLiftDays);
       setShowRestructureModal(true);
@@ -247,7 +257,8 @@ export function useProgrammeScheduleEditor(
   }
 
   async function handleConfirmRestructure(): Promise<boolean> {
-    if (pendingLiftDays === null || pendingRef.current) return false;
+    if (pendingLiftDays === null || pendingRef.current || scheduleError)
+      return false;
     pendingRef.current = true;
     setPending("rebuild");
     try {
@@ -286,6 +297,7 @@ export function useProgrammeScheduleEditor(
     runsTarget,
     schedule,
     hasUnsavedScheduleChanges,
+    scheduleError,
     setWorkoutsTarget,
     setRunsTarget,
     handleDayToggle,

@@ -121,9 +121,44 @@ describe("StackedCTACards", function () {
       expect(screen.queryByText("Push Day")).not.toBeInTheDocument();
     });
 
-    it("hides LiftCTA when nextWorkout is null", function () {
-      renderCards({ todayType: "lift", nextWorkout: null });
+    it("opens Programme without selecting an overflow day when today's lift is missing", function () {
+      const navigate = vi.fn();
+      renderCards({
+        todayType: "lift",
+        nextWorkout: null,
+        liftDayIndex: 6,
+        navigate,
+      });
       expect(screen.queryByText("Push Day")).not.toBeInTheDocument();
+      expect(screen.queryByText("Today · Rest day")).not.toBeInTheDocument();
+      expect(screen.getByText("Check your lifting plan")).toBeInTheDocument();
+      fireEvent.click(screen.getByRole("button", { name: "Open programme" }));
+      expect(navigate).toHaveBeenCalledExactlyOnceWith("/program");
+    });
+
+    it("keeps the run available alongside recovery for a missing lift on a both day", function () {
+      renderCards({ todayType: "both", nextWorkout: null });
+      expect(screen.getByText("Today · Run day")).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: "Open programme" })
+      ).toBeInTheDocument();
+    });
+
+    it.each(["rest", "run"] as const)(
+      "does not show lift recovery on a %s day",
+      function (todayType) {
+        renderCards({ todayType, nextWorkout: null });
+        expect(
+          screen.queryByRole("button", { name: "Open programme" })
+        ).not.toBeInTheDocument();
+      }
+    );
+
+    it("does not show lift recovery when the planned workout is available", function () {
+      renderCards({ todayType: "lift" });
+      expect(
+        screen.queryByRole("button", { name: "Open programme" })
+      ).not.toBeInTheDocument();
     });
 
     it("shows RunCTA when todayType is run", function () {

@@ -24,7 +24,6 @@
 
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import SectionLabel from "@/components/ui/SectionLabel";
-import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { THEME } from "@/lib/theme";
 import { DAY_LABELS, type ScheduleDay } from "@/lib/scheduleUtils";
@@ -33,6 +32,7 @@ import { chooseSplit, splitLabel } from "@/features/program/programEngine";
 import { Dialog } from "@/components/ui/Dialog";
 import { Spinner } from "@/components/ui/Spinner";
 import { Button } from "@/components/ui/Button";
+import { Banner } from "@/components/ui/Banner";
 import type { UserProfile, UpdateProfileResult } from "@/lib/auth";
 
 interface RefreshRunScheduleOverrides {
@@ -84,6 +84,7 @@ function ScheduleLayoutSheetBody({
   const {
     schedule,
     hasUnsavedScheduleChanges,
+    scheduleError,
     handleDayToggle,
     handleApplyScheduleChanges,
     showRestructureModal,
@@ -228,6 +229,10 @@ function ScheduleLayoutSheetBody({
           })}
         </div>
 
+        {scheduleError && (
+          <Banner variant="warning" description={scheduleError} />
+        )}
+
         <div className="flex gap-2">
           <button
             type="button"
@@ -243,16 +248,14 @@ function ScheduleLayoutSheetBody({
             {hasUnsavedScheduleChanges ? "Cancel" : "Close"}
           </button>
           {hasUnsavedScheduleChanges && (
-            <motion.button
-              type="button"
-              whileTap={{ scale: 0.97 }}
+            <Button
               onClick={handleApply}
-              disabled={saving}
+              disabled={saving || Boolean(scheduleError)}
               aria-busy={saving}
-              className="flex-1 py-3 rounded-xl text-sm font-bold bg-primary-strong text-primary-foreground transition-all"
+              className="flex-1"
             >
               {saving ? "Saving…" : "Apply changes"}
-            </motion.button>
+            </Button>
           )}
         </div>
 
