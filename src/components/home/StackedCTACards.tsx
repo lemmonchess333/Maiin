@@ -4,6 +4,10 @@ import LiftCTACard from "@/components/home/LiftCTACard";
 import RunCTACard from "@/components/home/RunCTACard";
 import RestDayCard from "@/components/home/RestDayCard";
 import FirstMealCard from "@/components/home/FirstMealCard";
+import { Banner } from "@/components/ui/Banner";
+import { Button } from "@/components/ui/Button";
+import { haptic } from "@/lib/haptic";
+import { track as trackHomeEvent } from "@/lib/homeAnalytics";
 
 const stagger = {
   hidden: {},
@@ -66,8 +70,8 @@ export default function StackedCTACards({
   firstRun?: boolean;
   firstMeal?: boolean;
 }) {
-  const showLift =
-    (todayType === "lift" || todayType === "both") && nextWorkout;
+  const hasLiftDay = todayType === "lift" || todayType === "both";
+  const showLift = hasLiftDay && nextWorkout;
   const showRun = todayType === "run" || todayType === "both";
   // Rest-day cue. Previously neither lift nor run rendered on rest
   // days and the page looked half-empty — users couldn't distinguish
@@ -93,6 +97,30 @@ export default function StackedCTACards({
             dayIndex={liftDayIndex}
             isStartable={liftStartable}
             status={liftStatus}
+          />
+        </motion.div>
+      )}
+      {hasLiftDay && !nextWorkout && (
+        <motion.div key="lift-recovery" variants={fadeUp}>
+          {/* Legacy schedules can outnumber the programme's workouts.
+              Keep the next-session choice with Programme's rotation
+              (ADR-0002), without deep-linking to an overflow index. */}
+          <Banner
+            variant="neutral"
+            title="Check your lifting plan"
+            description="Today is a lifting day, but no workout is linked. Open your programme to review your weekly layout."
+            action={
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  haptic();
+                  trackHomeEvent("home_card_tapped", { card: "today_workout" });
+                  navigate("/program");
+                }}
+              >
+                Open programme
+              </Button>
+            }
           />
         </motion.div>
       )}

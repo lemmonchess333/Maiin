@@ -57,6 +57,30 @@ function setup(result: UpdateProfileResult = { ok: true }) {
 }
 
 describe("weekly layout save recovery", () => {
+  it("explains the lift-day limit and keeps an unsupported draft editable", async () => {
+    const callbacks = setup();
+    for (const day of ["Sun", "Tue", "Sat"]) {
+      fireEvent.click(
+        screen.getByRole("button", { name: new RegExp(`${day}: Rest`) })
+      );
+    }
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "Programmes support up to six lifting days. Set at least one day to Run or Rest."
+    );
+    expect(
+      screen.getByRole("button", { name: "Apply changes" })
+    ).toBeDisabled();
+    expect(callbacks.updateProfile).not.toHaveBeenCalled();
+    expect(callbacks.regenerateProgram).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole("button", { name: /Sat: Lift/i }));
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Apply changes" })).toBeEnabled();
+    fireEvent.click(screen.getByRole("button", { name: "Apply changes" }));
+    expect(await screen.findByRole("alertdialog")).toBeInTheDocument();
+    expect(callbacks.updateProfile).not.toHaveBeenCalled();
+  });
+
   it("keeps the new lift-day layout open for confirmation before writing", async () => {
     const callbacks = setup();
     fireEvent.click(screen.getByRole("button", { name: /Tue: Rest/i }));

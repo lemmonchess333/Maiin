@@ -174,6 +174,60 @@ describe("useProgrammeScheduleEditor — handleDayToggle", () => {
 });
 
 describe("useProgrammeScheduleEditor — handleApplyScheduleChanges", () => {
+  it.each(["lift", "both"] as const)(
+    "rejects a saved seven-%s-day layout before any profile or programme write",
+    async (type) => {
+      const args = makeArgs({
+        weeklyWorkoutsTarget: 7,
+        weekSchedule: Array.from({ length: 7 }, (_, day) => ({ day, type })),
+      });
+      const { result } = renderHook(() => useProgrammeScheduleEditor(args));
+      await act(async () => {
+        expect(await result.current.handleApplyScheduleChanges()).toBe(
+          "failed"
+        );
+      });
+      expect(result.current.showRestructureModal).toBe(false);
+      expect(args.updateProfile).not.toHaveBeenCalled();
+      expect(args.regenerateProgram).not.toHaveBeenCalled();
+      expect(args.refreshRunSchedule).not.toHaveBeenCalled();
+    }
+  );
+
+  it("lets a seven-lift-day draft be corrected to six lifts and seven runs", async () => {
+    const args = makeArgs({
+      weeklyWorkoutsTarget: 6,
+      weeklyRunDaysTarget: 7,
+      weekSchedule: Array.from({ length: 7 }, (_, day) => ({
+        day,
+        type: day === 6 ? "run" : "both",
+      })),
+    });
+    const { result } = renderHook(() => useProgrammeScheduleEditor(args));
+    act(() => result.current.handleDayToggle(6)); // Run → Both: seven lifts.
+    await act(async () => {
+      expect(await result.current.handleApplyScheduleChanges()).toBe("failed");
+    });
+    expect(args.updateProfile).not.toHaveBeenCalled();
+    // The draft remains intact, so cycling another day can correct it.
+    act(() => result.current.handleDayToggle(0)); // Both → Rest.
+    act(() => result.current.handleDayToggle(0)); // Rest → Lift.
+    act(() => result.current.handleDayToggle(0)); // Lift → Run.
+    await act(async () => {
+      expect(await result.current.handleApplyScheduleChanges()).toBe("saved");
+    });
+    expect(args.updateProfile).toHaveBeenCalledExactlyOnceWith({
+      weekSchedule: Array.from({ length: 7 }, (_, day) => ({
+        day,
+        type: day === 0 ? "run" : "both",
+      })),
+      weeklyWorkoutsTarget: 6,
+      weeklyRunDaysTarget: 7,
+      weeklyRunsTarget: 7,
+    });
+    expect(args.regenerateProgram).not.toHaveBeenCalled();
+  });
+
   it("plain update when the lift-day count is unchanged", async () => {
     const ws: ScheduleDay[] = [
       { day: 0, type: "rest" },
