@@ -148,9 +148,7 @@ function ScheduleLayoutSheetBody({
             >
               {item.value}
             </p>
-            <SectionLabel tier="section" className="mt-1">
-              {item.label}
-            </SectionLabel>
+            <SectionLabel className="mt-1">{item.label}</SectionLabel>
           </div>
         ))}
       </div>

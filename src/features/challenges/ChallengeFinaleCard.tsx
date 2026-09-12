@@ -66,9 +66,7 @@ export function ChallengeFinaleCard({
           <Trophy size={18} />
         </div>
         <div className="flex-1 min-w-0">
-          <SectionLabel tier="section" style={{ color: accent }}>
-            Challenge ended
-          </SectionLabel>
+          <SectionLabel style={{ color: accent }}>Challenge ended</SectionLabel>
           <p className="text-sm font-semibold text-foreground">
             {challenge.name}
           </p>

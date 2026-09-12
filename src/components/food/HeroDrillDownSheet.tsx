@@ -72,9 +72,7 @@ function MacroRow({ label, consumed, target, color, mode }: MacroRowProps) {
   return (
     <div className="space-y-1.5">
       <div className="flex items-baseline justify-between">
-        <SectionLabel as="span" tier="section">
-          {label}
-        </SectionLabel>
+        <SectionLabel as="span">{label}</SectionLabel>
         <span className="font-mono tabular-nums text-sm">
           <span className="font-semibold text-foreground">
             {formatMacro(consumed)}
@@ -140,7 +138,7 @@ function MicroRow({
   return (
     <div className="space-y-1.5">
       <div className="flex items-baseline justify-between">
-        <SectionLabel as="span" tier="section">
+        <SectionLabel as="span">
           {label}
           {isLimit && (
             <span className="ml-1.5 normal-case tracking-normal text-muted-foreground">

@@ -134,13 +134,13 @@ export default function RaceCockpitCard({
       {hasProgress && (
         <div className="grid grid-cols-2 gap-2">
           <div className="rounded-xl bg-muted/60 p-3">
-            <SectionLabel tier="section">Week</SectionLabel>
+            <SectionLabel>Week</SectionLabel>
             <p className="text-lg font-semibold tabular-nums font-mono text-foreground">
               {currentWeek! + 1} / {totalWeeks!}
             </p>
           </div>
           <div className="rounded-xl bg-muted/60 p-3">
-            <SectionLabel tier="section">Phase</SectionLabel>
+            <SectionLabel>Phase</SectionLabel>
             <p className="text-lg font-semibold text-foreground">
               {phaseLabel ?? "—"}
             </p>
@@ -203,7 +203,7 @@ export default function RaceCockpitCard({
       )}
 
       {inTaper && (
-        <SectionLabel tier="section" className="text-running-strong">
+        <SectionLabel className="text-running-strong">
           Taper week
           {" · "}
           race in {daysToRace} {daysToRace === 1 ? "day" : "days"}

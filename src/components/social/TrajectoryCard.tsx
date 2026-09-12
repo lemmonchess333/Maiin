@@ -138,7 +138,7 @@ export default function TrajectoryCard({
           {/* Breakdown — km + kg split */}
           <div className="flex items-center gap-4 pt-3 border-t border-border/30">
             <div className="flex-1">
-              <SectionLabel tier="section">Running</SectionLabel>
+              <SectionLabel>Running</SectionLabel>
               <p className="text-sm font-mono tabular-nums font-bold mt-0.5">
                 {thisWeek.km.toFixed(1)}{" "}
                 <span className="text-xs text-muted-foreground font-normal">
@@ -147,7 +147,7 @@ export default function TrajectoryCard({
               </p>
             </div>
             <div className="flex-1">
-              <SectionLabel tier="section">Lifting</SectionLabel>
+              <SectionLabel>Lifting</SectionLabel>
               <p className="text-sm font-mono tabular-nums font-bold mt-0.5">
                 {thisWeek.kg.toLocaleString()}{" "}
                 <span className="text-xs text-muted-foreground font-normal">

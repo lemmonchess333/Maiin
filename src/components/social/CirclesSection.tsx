@@ -659,7 +659,9 @@ export default function CirclesSection({
 
   return (
     <div className="space-y-3">
-      <SectionLabel as="h2">Circles</SectionLabel>
+      <SectionLabel tier="section" as="h2">
+        Circles
+      </SectionLabel>
 
       {loading && (
         <div
@@ -1262,7 +1264,9 @@ export default function CirclesSection({
                 </div>
 
                 <div className="space-y-1.5">
-                  <SectionLabel as="h3">Recent</SectionLabel>
+                  <SectionLabel tier="section" as="h3">
+                    Recent
+                  </SectionLabel>
                   {/* Chosen-focus pulse — a count, never a ranking. */}
                   {focusSetCount > 0 && (
                     <p className="text-xs text-muted-foreground">

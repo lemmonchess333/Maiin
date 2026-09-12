@@ -549,7 +549,7 @@ held to it, so it is now the APP-WIDE standard, not an insights-file local:
 - **Quick actions:** there is no longer a pill row. Today's actions are
   the sport-coloured CTA cards (`LiftCTACard` / `RunCTACard`), and food
   logging is the "Log food" action at the foot of `TodayEnergy`.
-- **Section labels:** `SectionLabel` — uppercase, wider letter-spacing, muted; 11px (`tier="section"`, page sections) or 12px (default, card captions). No hand-rolled label classes, no third size
+- **Section labels:** `SectionLabel`, uppercase, 12px, two ROLE tiers: default caption (semibold · wider · muted) inside a card; `tier="section"` (bold · widest · foreground) heading a group of cards or rows on a page, tab or sheet. Pick by role, not size. No hand-rolled label classes (ratcheted in `designSystemInvariants.test.ts`), no third tier
 
 ### Training plan primitives
 
@@ -864,7 +864,7 @@ or touching a CTA button, route it through `Button` with the variant above.
 ### Current Known Design Considerations
 
 - The water card has a complex animated fill effect (WaterWave + WaterBubbles) — treat carefully when modifying
-- Section labels use uppercase with tracking at 11px/12px (`SectionLabel`'s two tiers) — a deliberate typographic choice, not an error; the 11px tier is the one place text sits below the 12px micro floor
+- Section labels use uppercase with tracking at 12px (`SectionLabel`'s two role tiers, differing in weight, tracking and colour) — a deliberate typographic choice, not an error. The old 11px section tier is gone: nothing sits below the 12px micro floor except `text-caption` numerals and units
 - The "NEW" badge on PR items uses orange background — this is the nutrition/warm accent colour
 
 ## Reference apps — for /grill-me and /grill-with-docs sessions

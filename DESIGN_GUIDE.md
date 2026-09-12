@@ -261,13 +261,16 @@ burned down. It is not: of 269 sized uses, 113 are `text-sm` and 105 are
 `text-xs`, with none above. It earned its place in the scale by being used
 consistently; the guard now protects the boundary rather than the count.
 
-Section labels are a deliberate style: UPPERCASE, wide letter-spacing, muted
-colour, at exactly two sizes — `SectionLabel tier="section"` (11px,
-`text-caption`, page-section labels) and the default tier (12px, card-internal
-captions). The old "~10px" recipe was floored up to 11px when that became the
-app-wide minimum for tracked uppercase text; do not reintroduce it, and do not
-invent a third size. Use the `SectionLabel` primitive rather than hand-rolling
-the classes.
+Section labels are a deliberate style: UPPERCASE, letter-spaced, 12px, at
+exactly two ROLE tiers of `SectionLabel`. The default **caption** tier
+(semibold · tracking-wider · muted) lives inside one card: a stat's name above
+its number, an eyebrow, a pill, a form-field label. The **section** tier
+(bold · tracking-widest · foreground) heads a group of sibling cards or rows
+on a page, tab or sheet. The tiers used to differ by one pixel and nothing
+else, with the page-level tier the smaller one, so a caption inside a tile
+outranked the header above it; nothing sits at 11px now. Pick the tier by
+what the label heads, not by how small it should look, and use the primitive
+rather than hand-rolling the classes.
 
 ---
 
@@ -413,8 +416,9 @@ behaviour.
 
 - **WCAG AA contrast** for text. This is _why_ `primary-strong`,
   `MACROS_TEXT_LIGHT`, and the darker semantic tokens exist — use them.
-- **Body text ≥ 16px**, micro labels ≥ 12px — with one named floor below it:
-  uppercase tracked section labels sit at 11px (`text-caption`, see §4).
+- **Body text ≥ 16px**, micro labels ≥ 12px. `SectionLabel`'s two tiers both
+  sit at 12px (see §4); `text-caption` (11px) is the scale's named floor for
+  dense numerals and units, not for labels.
 - **Semantic roles:** `Banner` uses `status`/`alert`; respect ARIA. Icon-only
   controls need labels. Inputs/anchors need accessible names.
 - **Keyboard:** focusable, Enter/Escape behave, focus returns to the trigger

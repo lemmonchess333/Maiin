@@ -93,7 +93,7 @@ export default function RaceDayPlanCard({
 
       {/* The split table. */}
       <div className="rounded-xl bg-muted/60 p-3 space-y-1.5">
-        <SectionLabel tier="section">Splits</SectionLabel>
+        <SectionLabel>Splits</SectionLabel>
         <div className="space-y-1">
           {vm.splits.map((row) => (
             <div
