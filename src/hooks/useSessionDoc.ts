@@ -26,9 +26,14 @@
  * pages, so a null uid here is a window, not a verdict. A null `id` is a
  * malformed URL and IS missing.
  */
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import {
+  pendingDocumentWrites,
+  subscribeQueuedWrites,
+  queuedWritesVersion,
+} from "@/lib/offlineQueue";
 import { logger } from "@/lib/logger";
 
 export type SessionDocStatus = "loading" | "ready" | "missing" | "failed";
@@ -50,6 +55,11 @@ export function useSessionDoc<T extends { id: string }>(
      the effect would not re-run, and the second tap would look like a dead
      button — on exactly the flaky connection where a user taps twice. */
   const [attempt, setAttempt] = useState(0);
+  const queueVersion = useSyncExternalStore(
+    subscribeQueuedWrites,
+    queuedWritesVersion,
+    queuedWritesVersion
+  );
 
   /* The identity of the read currently in flight. A settled result carries
      the key it came from, so a result belonging to a PREVIOUS uid / id /
@@ -87,7 +97,7 @@ export function useSessionDoc<T extends { id: string }>(
     return () => {
       cancelled = true;
     };
-  }, [key, uid, collection, id]);
+  }, [key, uid, collection, id, queueVersion]);
 
   /* Derived, not stored. The two synchronous verdicts — a malformed URL is
      missing, an unresolved uid is still loading — are facts about the
@@ -106,5 +116,13 @@ export function useSessionDoc<T extends { id: string }>(
 
   const retry = useCallback(() => setAttempt((n) => n + 1), []);
 
-  return { status, data, retry };
+  // A completed run remains readable on this phone until sync is acknowledged.
+  let local = data;
+  if (uid && id && collection === "runs") {
+    for (const entry of pendingDocumentWrites(uid, `users/${uid}/runs`)) {
+      if (entry.id !== id || (entry.merge && !local)) continue;
+      local = { ...(entry.merge ? local : {}), ...entry.data, id } as T;
+    }
+  }
+  return { status: local ? "ready" : status, data: local, retry };
 }

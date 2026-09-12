@@ -96,6 +96,7 @@ async function ensureUser(): Promise<string> {
 }
 
 async function ensureProfile(uid: string): Promise<void> {
+  const restDay = (new Date().getDay() + 1) % 7;
   // Profile shape mirrors createDefaultProfile() in src/lib/auth.tsx
   // with `onboardingComplete: true` so the AuthProvider routes the
   // E2E user straight onto Home rather than into Onboarding. Adding
@@ -110,15 +111,13 @@ async function ensureProfile(uid: string): Promise<void> {
     athleteType: "Lifter",
     weightKg: 70,
     heightCm: 170,
-    // 7 lift days + an all-lift weekSchedule so "today" is ALWAYS a
-    // workout day — the journeys spec (journeys.auth.spec.ts) relies
-    // on the Programme page showing "Begin Workout" regardless of
-    // which weekday CI runs on. Without this the workout journey
-    // would only pass on the seeded schedule's lift days.
-    weeklyWorkoutsTarget: 7,
+    // The generator caps plans at six workouts. Keep tomorrow as rest
+    // so today's lift always maps to one of those six slots, including
+    // on Saturdays. Seven lift slots left Saturday without a workout.
+    weeklyWorkoutsTarget: 6,
     weekSchedule: Array.from({ length: 7 }, (_, day) => ({
       day,
-      type: "lift" as const,
+      type: day === restDay ? ("rest" as const) : ("lift" as const),
     })),
     weeklyMealsTarget: 10,
     preferredWeightUnit: "kg",

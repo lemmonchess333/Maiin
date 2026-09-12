@@ -109,3 +109,20 @@ describe("ActivityCard does not leak source comments into the DOM", () => {
     expect(text).toContain("21.10");
   });
 });
+
+it("labels a timed exercise in seconds when an older shared summary omitted its unit", () => {
+  const item = feedItem();
+  const exercises = [
+    {
+      name: "Plank",
+      summary: "3×60 BW",
+      setCount: 3,
+      targetReps: 60,
+      targetWeightKg: 0,
+    },
+  ];
+  item.activity!.exercises = exercises;
+  const { container } = renderCard(item);
+  expect(container.textContent).toContain("3×60 s");
+  expect(container.textContent).not.toContain("3×60 BW");
+});

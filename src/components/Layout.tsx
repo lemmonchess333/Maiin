@@ -15,6 +15,7 @@ import { useUnreadCount } from "@/hooks/useUnreadCount";
 import {
   getQueueLength,
   getFailedWorkoutCompletionCount,
+  getFailedRunSaveCount,
   subscribeQueuedWrites,
   flushQueue,
 } from "@/lib/offlineQueue";
@@ -52,13 +53,13 @@ function useQueuedChanges(uid: string | null) {
     // external-store read. Both queues and failures belong to THIS account.
     () =>
       uid
-        ? `${getQueueLength(uid) + outboxLength(uid)}:${getFailedWorkoutCompletionCount(uid)}`
-        : "0:0",
+        ? `${getQueueLength(uid) + outboxLength(uid)}:${getFailedWorkoutCompletionCount(uid)}:${getFailedRunSaveCount(uid)}`
+        : "0:0:0",
     [uid]
   );
   const snapshot = useSyncExternalStore(subscribe, getSnapshot);
-  const [count, failedWorkouts] = snapshot.split(":").map(Number);
-  return { count, failedWorkouts };
+  const [count, failedWorkouts, failedRuns] = snapshot.split(":").map(Number);
+  return { count, failedWorkouts, failedRuns };
 }
 
 const tabs: { to: string; icon: typeof Home; label: string }[] = [
@@ -76,15 +77,25 @@ export default function Layout() {
   const { count: unreadCount, markSeen } = useUnreadCount();
   const prefersReducedMotion = useReducedMotion();
   const uid = useUid();
-  const { count: queueCount, failedWorkouts } = useQueuedChanges(uid);
+  const {
+    count: queueCount,
+    failedWorkouts,
+    failedRuns,
+  } = useQueuedChanges(uid);
   const [retryingUid, setRetryingUid] = useState<string | null>(null);
-  const waitingCount = Math.max(0, queueCount - failedWorkouts);
+  const failedCount = failedWorkouts + failedRuns;
+  const failedNoun = failedRuns
+    ? failedWorkouts
+      ? "session"
+      : "run"
+    : "workout";
+  const waitingCount = Math.max(0, queueCount - failedCount);
   const pendingText =
-    failedWorkouts > 0
-      ? `${failedWorkouts} workout${failedWorkouts === 1 ? " needs" : "s need"} attention · saved on this phone${waitingCount > 0 ? `. ${waitingCount} other change${waitingCount === 1 ? "" : "s"} waiting to sync` : ""}`
+    failedCount > 0
+      ? `${failedCount} ${failedNoun}${failedCount === 1 ? " needs" : "s need"} attention · saved on this phone${waitingCount > 0 ? `. ${waitingCount} other change${waitingCount === 1 ? "" : "s"} waiting to sync` : ""}`
       : `${queueCount} change${queueCount === 1 ? "" : "s"} saved on this phone · waiting to sync`;
 
-  async function retryWorkouts() {
+  async function retryChanges() {
     if (!uid) return;
     const owner = uid;
     haptic();
@@ -212,13 +223,13 @@ export default function Layout() {
                       : "You're offline"}
                   </InlineNumerals>
                 </span>
-                {isOnline && failedWorkouts > 0 && (
+                {isOnline && failedCount > 0 && (
                   <Button
                     variant="ghost"
                     className="shrink-0 px-2 text-xs text-warning-strong"
                     loading={retryingUid === uid}
-                    onClick={retryWorkouts}
-                    aria-label="Retry syncing workouts"
+                    onClick={retryChanges}
+                    aria-label={`Retry syncing ${failedNoun}s`}
                   >
                     Retry
                   </Button>

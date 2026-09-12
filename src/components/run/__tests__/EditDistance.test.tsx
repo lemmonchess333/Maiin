@@ -11,14 +11,43 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import EditDistance from "../EditDistance";
+import type { DistanceUnit } from "@/lib/distanceUnits";
 
-function open(distanceKm: number, onCommit = vi.fn()) {
-  render(<EditDistance distanceKm={distanceKm} onCommit={onCommit} />);
+function open(
+  distanceKm: number,
+  onCommit = vi.fn(),
+  unit: DistanceUnit = "km"
+) {
+  render(
+    <EditDistance distanceKm={distanceKm} onCommit={onCommit} unit={unit} />
+  );
   fireEvent.click(screen.getByRole("button", { name: "Edit distance" }));
   return onCommit;
 }
 
 describe("EditDistance", () => {
+  it("edits miles while committing metres", () => {
+    const onCommit = open(8.04672, vi.fn(), "mi");
+    expect(screen.getByLabelText("Distance (mi)")).toHaveValue(5);
+    fireEvent.change(screen.getByLabelText("Distance (mi)"), {
+      target: { value: "6.25" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Update" }));
+    expect(onCommit).toHaveBeenCalledWith(10058.4);
+  });
+
+  it("enforces the same physical bounds in miles", () => {
+    const onCommit = open(5, vi.fn(), "mi");
+    const input = screen.getByLabelText("Distance (mi)");
+    for (const value of ["0.03", "62.14", ""]) {
+      fireEvent.change(input, { target: { value } });
+      expect(screen.getByRole("button", { name: "Update" })).toBeDisabled();
+    }
+    expect(onCommit).not.toHaveBeenCalled();
+    fireEvent.change(input, { target: { value: "62.13" } });
+    expect(screen.getByRole("button", { name: "Update" })).toBeEnabled();
+  });
+
   it("commits the corrected distance in METRES", () => {
     // The reported case: 5 km typed, 6 km run.
     const onCommit = open(5);

@@ -148,9 +148,8 @@ test.describe("core user journeys", () => {
   test("starts today's workout and logs a set", async ({ page }) => {
     await page.goto("program");
 
-    // Seeded profile has an all-lift weekSchedule (7 days), so today
-    // is always a workout day and the command card offers Begin
-    // Workout. Generous timeout: first visit bootstraps programState.
+    // The seeded six-day schedule rests tomorrow, so today always
+    // has a workout. First visit bootstraps programState.
     const begin = page.getByRole("button", { name: "Start workout" });
     await expect(begin).toBeVisible({ timeout: 20_000 });
     await begin.click();
