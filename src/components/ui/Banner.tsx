@@ -10,6 +10,12 @@
  *   - info     → coral 6% tint surface, coral icon  (running / sport context)
  *   - warning  → amber 8% tint surface, amber icon  (calendar warnings, e.g.
  *                race date elapsed, schedule compression)
+ *   - neutral  → muted surface, muted icon — a quiet note with no domain
+ *                colour (the sustained-offline notices). Added when the
+ *                offline banner was found carrying its own geometry
+ *                (rounded-lg, px-3 py-2, gap-2, a 14px icon, a self-margin)
+ *                beside this one's; every inline banner now shares the
+ *                compact-card pairing, `rounded-xl p-3`.
  *   - No `error` variant. Errors are surfaced via toasts (auth.tsx /
  *     sonner), never as a stacked banner.
  *
@@ -42,11 +48,13 @@ import { Info, AlertTriangle, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { THEME } from "@/lib/theme";
 
-export type BannerVariant = "info" | "warning";
+export type BannerVariant = "info" | "warning" | "neutral";
 
 interface BannerProps {
   variant: BannerVariant;
-  title: string;
+  /** The bold first line. Optional: a one-line notice passes only
+   *  `description` and reads as a quiet note rather than a headed one. */
+  title?: string;
   description?: ReactNode;
   /** Inline action (button/link) rendered at the end of the body. */
   action?: ReactNode;
@@ -101,6 +109,12 @@ const VARIANT_STYLES: Record<BannerVariant, VariantStyle> = {
     role: "alert",
     DefaultIcon: AlertTriangle,
   },
+  neutral: {
+    surfaceClass: "bg-muted/60 border-border/40",
+    accentClass: "text-muted-foreground",
+    role: "status",
+    DefaultIcon: Info,
+  },
 };
 
 export function Banner({
@@ -143,7 +157,9 @@ export function Banner({
         {icon ?? <IconComponent className="size-4" />}
       </span>
       <div className="flex-1 min-w-0 space-y-0.5">
-        <p className="font-semibold text-foreground">{title}</p>
+        {title ? (
+          <p className="font-semibold text-foreground">{title}</p>
+        ) : null}
         {description ? (
           <div className="text-muted-foreground">{description}</div>
         ) : null}

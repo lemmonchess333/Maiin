@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { WifiOff } from "lucide-react";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
+import Banner from "./Banner";
 
 const DEFAULT_THRESHOLD_MS = 30_000;
 
@@ -33,6 +34,17 @@ interface SustainedOfflineBannerProps {
  * effect's cleanup so each fresh offline cycle re-waits the full
  * threshold — no instant-flash bug from stale state across multiple
  * offline cycles in one session.
+ *
+ * Renders NOTHING until sustained. It kept a permanent `aria-live`
+ * wrapper so screen readers would announce the copy when it arrived,
+ * and that empty wrapper was a real element in the page's vertical
+ * rhythm: as the first child of a `space-y-4` page it pushed the
+ * header down one step on Food and Train but not on Home, Social or
+ * Analytics, and inside Analytics' own stack it opened a gap above
+ * nothing. The notice now carries `role="status"` on itself, the same
+ * contract every other `Banner` already relies on, and the surface is
+ * the `Banner` primitive's neutral variant rather than a third
+ * geometry.
  */
 export default function SustainedOfflineBanner({
   children,
@@ -55,31 +67,27 @@ export default function SustainedOfflineBanner({
   const sustained = !isOnline && thresholdPassed;
 
   return (
-    <div aria-live="polite">
-      <AnimatePresence>
-        {sustained && (
-          <motion.div
-            key={bannerKey}
-            initial={prefersReducedMotion ? false : { height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={
-              prefersReducedMotion ? { opacity: 0 } : { height: 0, opacity: 0 }
-            }
-            transition={
-              prefersReducedMotion ? { duration: 0 } : { duration: 0.2 }
-            }
-            className="overflow-hidden"
-          >
-            <div className="flex items-start gap-2 px-3 py-2 mt-2 rounded-lg bg-muted/60 text-xs text-muted-foreground">
-              <WifiOff
-                aria-hidden="true"
-                className="size-3.5 shrink-0 mt-0.5"
-              />
-              <p className="leading-snug">{children}</p>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
+    <AnimatePresence>
+      {sustained && (
+        <motion.div
+          key={bannerKey}
+          initial={prefersReducedMotion ? false : { height: 0, opacity: 0 }}
+          animate={{ height: "auto", opacity: 1 }}
+          exit={
+            prefersReducedMotion ? { opacity: 0 } : { height: 0, opacity: 0 }
+          }
+          transition={
+            prefersReducedMotion ? { duration: 0 } : { duration: 0.2 }
+          }
+          className="overflow-hidden"
+        >
+          <Banner
+            variant="neutral"
+            icon={<WifiOff className="size-4" />}
+            description={children}
+          />
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }

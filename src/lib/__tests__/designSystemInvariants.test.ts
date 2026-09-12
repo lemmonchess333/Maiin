@@ -491,6 +491,29 @@ describe("DS ratchets — surface-level drift", () => {
     expect(src).not.toMatch(/text-caption/);
   });
 
+  /* Inline banners. `Banner` and `SustainedOfflineBanner` each carried
+     their own geometry (rounded-xl p-3 gap-3 with a 16px icon beside
+     rounded-lg px-3 py-2 gap-2 with a 14px icon and a self-margin), and
+     the offline one kept an always-rendered live-region wrapper that sat
+     in the page rhythm as an empty first child. One primitive now: the
+     offline notice renders through Banner's neutral variant, and Banner's
+     base geometry is the compact-card pairing. */
+  const BANNER_PRIMITIVE = "src/components/ui/Banner.tsx";
+  const OFFLINE_BANNER = "src/components/ui/SustainedOfflineBanner.tsx";
+  it("the offline notice renders through the Banner primitive, with no permanent wrapper (positive pin)", () => {
+    const src = readFileSync(resolve(repoRoot, OFFLINE_BANNER), "utf8");
+    expect(src).toMatch(/<Banner\b/);
+    // The attribute, not the word — the header comment names what went.
+    expect(src).not.toMatch(/aria-live=/);
+    for (const chunk of classNameChunks(src))
+      expect(chunk).not.toMatch(/\b(?:rounded-lg|py-2|mt-2)\b/);
+  });
+
+  it("Banner's base geometry is the compact-card pairing (positive pin)", () => {
+    const src = readFileSync(resolve(repoRoot, BANNER_PRIMITIVE), "utf8");
+    expect(src).toMatch(/"relative flex gap-3 rounded-xl p-3 text-xs"/);
+  });
+
   // Arbitrary pixel sizes (`text-[10px]`, `text-[15px]`) sit off the
   // documented scale — 11px is text-caption (tracked labels only), then
   // 12 / 14 / 16 and up. The cohesion pass (batch 3, 2026-09-05) burned the
