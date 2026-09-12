@@ -338,7 +338,9 @@ export default function ShoesManager() {
 
       {retired.length > 0 && (
         <div className="pt-2">
-          <SectionLabel className="mb-2">Retired</SectionLabel>
+          <SectionLabel tier="section" className="mb-2">
+            Retired
+          </SectionLabel>
           {retired.map((shoe) => (
             <div
               key={shoe.id}

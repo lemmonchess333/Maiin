@@ -669,9 +669,7 @@ export default function FeedView({
                         to={`/space/${item.spaceId}`}
                         className="inline-flex items-center min-h-[28px] mb-1"
                       >
-                        <SectionLabel as="span" tier="section">
-                          {def.name}
-                        </SectionLabel>
+                        <SectionLabel as="span">{def.name}</SectionLabel>
                       </Link>
                       <SpacePostCard
                         spaceId={item.spaceId}

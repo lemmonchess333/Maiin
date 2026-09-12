@@ -80,7 +80,7 @@ export default function RacePredictionsCard() {
       <div className="grid grid-cols-2 gap-2">
         {ROWS.map(({ key, label, km }) => (
           <div key={key} className="rounded-xl bg-muted p-3">
-            <SectionLabel tier="section">{label}</SectionLabel>
+            <SectionLabel>{label}</SectionLabel>
             <p className="text-lg font-bold font-mono tabular-nums text-foreground mt-0.5">
               {finishTimeLabel(times[key])}
             </p>

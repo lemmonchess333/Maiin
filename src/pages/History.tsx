@@ -1436,7 +1436,10 @@ export default function History() {
 
             {showRunningSection && filter === "analytics" && (
               <section id="analytics-running" aria-label="Running analytics">
-                <SectionLabel className="mt-6 mb-2 text-running-strong">
+                <SectionLabel
+                  tier="section"
+                  className="mt-6 mb-2 text-running-strong"
+                >
                   Running
                 </SectionLabel>
                 {runsLoading ? (
@@ -1522,7 +1525,10 @@ export default function History() {
 
             {showLiftingSection && filter === "analytics" && (
               <section id="analytics-lifting" aria-label="Lifting analytics">
-                <SectionLabel className="mt-6 mb-2 text-lifting-strong">
+                <SectionLabel
+                  tier="section"
+                  className="mt-6 mb-2 text-lifting-strong"
+                >
                   Lifting
                 </SectionLabel>
                 {workoutsLoading ? (
@@ -1851,7 +1857,9 @@ export default function History() {
                 lifetimeTotals.daysLogged >
                 0 && (
                 <section id="analytics-lifetime" aria-label="Lifetime totals">
-                  <SectionLabel className="mt-6 mb-2">Lifetime</SectionLabel>
+                  <SectionLabel tier="section" className="mt-6 mb-2">
+                    Lifetime
+                  </SectionLabel>
                   {/* Three peer tiles, one unit treatment. The runs tile
                       used to push its `km` down into the caption ("km ·
                       1 runs") while the lifting tile beside it carried

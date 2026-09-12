@@ -183,7 +183,7 @@ export default function FoodTimeline({
       {/* Header caption — item count answers "did I log all five
           things?" at a glance; totals stay the hero card's job. */}
       <div className="px-3.5 pt-3.5 pb-2">
-        <SectionLabel tier="section">
+        <SectionLabel>
           Food log {" · "}
           {entries.length} {entries.length === 1 ? "item" : "items"}
         </SectionLabel>

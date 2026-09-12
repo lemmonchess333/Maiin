@@ -66,9 +66,7 @@ function Stat({
       <span className="font-mono text-base font-bold tabular-nums text-foreground">
         {value}
       </span>
-      <SectionLabel as="span" tier="section">
-        {label}
-      </SectionLabel>
+      <SectionLabel as="span">{label}</SectionLabel>
     </div>
   );
 }

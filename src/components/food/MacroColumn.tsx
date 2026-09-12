@@ -328,9 +328,7 @@ export default function MacroColumn({
           `X / Yg` ratio line above) so the card's colour identity is
           carried by the icon + big number + progress bar, not duplicated
           four times. The label is a caption, not a headline. */}
-      <SectionLabel tier="section" className="mt-2">
-        {label}
-      </SectionLabel>
+      <SectionLabel className="mt-2">{label}</SectionLabel>
     </button>
   );
 }

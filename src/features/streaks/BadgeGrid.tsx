@@ -91,7 +91,7 @@ export function BadgeGrid() {
           <div className="min-w-0">
             {/* Muted, not the tier metal (silver eyebrow = 1.82:1 on
                 white); the hex tile beside carries the tier. */}
-            <SectionLabel tier="section">Next badge</SectionLabel>
+            <SectionLabel>Next badge</SectionLabel>
             <p className="text-base font-bold text-foreground leading-tight">
               {next.def.name}
             </p>

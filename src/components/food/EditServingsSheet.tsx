@@ -314,9 +314,7 @@ function EditServingsSheet({
             intended outcome but the section label here would be
             misleading. */}
         <div className="space-y-1.5">
-          <SectionLabel tier="section" className="text-center">
-            Meal slot
-          </SectionLabel>
+          <SectionLabel className="text-center">Meal slot</SectionLabel>
           <SegmentedControl
             emphasis="solid"
             tone="nutrition"
@@ -344,9 +342,7 @@ function EditServingsSheet({
             propagated to editMeal — parseMacro() above gates which
             fields land in macroOverrides. */}
         <div className="space-y-1.5">
-          <SectionLabel tier="section" className="text-center">
-            Per serving
-          </SectionLabel>
+          <SectionLabel className="text-center">Per serving</SectionLabel>
           <div className="grid grid-cols-4 gap-2">
             {(
               [
@@ -380,9 +376,7 @@ function EditServingsSheet({
                 <label htmlFor={id}>
                   {/* SectionLabel can't render a <label>, so the primitive
                       rides inside as a span — treatment stays canonical. */}
-                  <SectionLabel as="span" tier="section">
-                    {label}
-                  </SectionLabel>
+                  <SectionLabel as="span">{label}</SectionLabel>
                 </label>
                 <input
                   id={id}
@@ -437,7 +431,7 @@ function EditServingsSheet({
             >
               {target}
             </p>
-            <SectionLabel tier="section" className="mt-0.5">
+            <SectionLabel className="mt-0.5">
               {target === 1 ? "serving" : "servings"}
             </SectionLabel>
           </div>
