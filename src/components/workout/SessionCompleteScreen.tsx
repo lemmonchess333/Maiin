@@ -106,14 +106,19 @@ export default function SessionCompleteScreen({
       const workingSets = logs.filter((s) => s.type !== "warmup");
       const bestSet =
         workingSets.length > 0
-          ? workingSets.reduce(
-              (best, s) =>
-                s.weight * s.reps > best.weight * best.reps ? s : best,
-              workingSets[0]
-            )
+          ? workingSets.reduce((best, s) => {
+              // Unweighted sets all have zero tonnage. Compare their
+              // reps (or hold duration), keeping loaded-set ranking intact.
+              const improves =
+                s.weight === 0 && best.weight === 0
+                  ? s.reps > best.reps
+                  : s.weight * s.reps > best.weight * best.reps;
+              return improves ? s : best;
+            }, workingSets[0])
           : null;
       return {
         name: ex.name,
+        repUnit: ex.repUnit,
         setsCompleted: workingSets.length,
         totalSets: ex.sets,
         bestWeight: bestSet?.weight || 0,
@@ -303,8 +308,8 @@ export default function SessionCompleteScreen({
                   <div className="text-right shrink-0 ml-3">
                     <p className="text-sm font-mono tabular-nums font-semibold text-lifting-strong">
                       {ex.bestWeight > 0
-                        ? `${ex.bestWeight} kg × ${ex.bestReps}`
-                        : `${ex.bestReps} reps`}
+                        ? `${ex.bestWeight} kg × ${ex.bestReps}${ex.repUnit === "seconds" ? " s" : ""}`
+                        : `${ex.bestReps} ${ex.repUnit === "seconds" ? "s" : "reps"}`}
                     </p>
                     <p
                       className="text-xs"

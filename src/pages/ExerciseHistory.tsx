@@ -55,12 +55,13 @@ function topSetOf(
   sets: { reps: number; weightKg: number }[]
 ): { reps: number; weightKg: number } | null {
   if (sets.length === 0) return null;
-  // Top set = highest e1rm. Ties broken by heaviest weight.
+  // Loaded sets use e1rm, then weight. Unweighted sets compare reps.
   let best: { reps: number; weightKg: number } = sets[0];
   let bestScore = epley1RMExact(best.weightKg, best.reps);
   for (const s of sets) {
     const score = epley1RMExact(s.weightKg, s.reps);
     if (
+      (s.weightKg === 0 && best.weightKg === 0 && s.reps > best.reps) ||
       score > bestScore ||
       (score === bestScore && s.weightKg > best.weightKg)
     ) {

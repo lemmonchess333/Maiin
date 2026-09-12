@@ -142,4 +142,31 @@ describe("ExerciseHistory — empty states (shared hexagon EmptyState)", () => {
     ).toBeInTheDocument();
     expect(screen.queryByText("Personal bests by reps")).toBeNull();
   });
+
+  it("keeps the highest-rep bodyweight set when opening saved history", () => {
+    workoutsMock.value = {
+      loading: false,
+      workouts: [
+        {
+          id: "bodyweight-session",
+          date: "2026-07-20",
+          exercises: [
+            {
+              exerciseId: "push-ups",
+              exerciseName: "Push-Ups",
+              sets: [
+                { setNumber: 1, reps: 6, weightKg: 0 },
+                { setNumber: 2, reps: 10, weightKg: 0 },
+              ],
+            },
+          ],
+          totalCalories: 0,
+          durationMinutes: 5,
+          notes: "",
+        },
+      ],
+    } as any;
+    renderAt("Push-Ups");
+    expect(screen.getByText("BW × 10")).toBeInTheDocument();
+  });
 });
