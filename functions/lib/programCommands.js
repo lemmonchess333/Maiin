@@ -2326,6 +2326,27 @@ function applyProgramCommand({ state, profile, command, now }) {
   const validated = assertClientProgramCommand(command);
   const current = normalizeForReducer(state);
 
+  // RunWk2: a command queued offline before the ID migration still names
+  // the old slot. Resolve against server-read aliases after validation;
+  // receipts keep the original command payload and commandId for dedup.
+  // Exact IDs win over aliases, and all writes use the canonical ID.
+  const runs = Array.isArray(current.runDays) ? current.runDays : [];
+  const canonicalRunId = (id) => {
+    if (runs.some((rd) => rd && rd.id === id)) return id;
+    const match = runs.find((rd) =>
+      rd && Array.isArray(rd.legacyIds) && rd.legacyIds.includes(id)
+    );
+    return match && typeof match.id === "string" ? match.id : id;
+  };
+  if (typeof validated.runDayId === "string") {
+    validated.runDayId = canonicalRunId(validated.runDayId);
+  }
+  if (Array.isArray(validated.runSwaps)) {
+    validated.runSwaps = validated.runSwaps.map((swap) => ({
+      ...swap, runDayId: canonicalRunId(swap.runDayId),
+    }));
+  }
+
   // completeWorkoutDay is the only command that produces an effect (the saved
   // workout record); handle it separately so the rest stay effect-free.
   if (validated.kind === "completeWorkoutDay") {
