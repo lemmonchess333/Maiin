@@ -64,29 +64,54 @@ function realRun(overrides = {}) {
 // ── _priorWeekUtcRange ──────────────────────────────────────────
 
 describe("_priorWeekUtcRange", () => {
-  it("for a Monday, returns the prior Sun..Sat week", () => {
-    // Mon 2026-06-01 → prior week Sun 2026-05-24, Sat 2026-05-30
+  // Monday-anchored per RunWk2. Every expectation here is a LITERAL
+  // date rather than a value recomputed from the function under test:
+  // a range helper that agrees with itself proves nothing about which
+  // day the week starts on.
+  it("on the Monday it fires, grades the Mon..Sun week that just ended", () => {
+    // Mon 2026-06-01 → prior week Mon 2026-05-25, Sun 2026-05-31
     const monday = new Date("2026-06-01T05:00:00Z").getTime();
     const range = _priorWeekUtcRange(monday);
-    expect(range.weekStart).toBe("2026-05-24");
-    expect(range.weekEnd).toBe("2026-05-30");
-    expect(range.weekKey).toBe("2026-05-24");
+    expect(range.weekStart).toBe("2026-05-25");
+    expect(range.weekEnd).toBe("2026-05-31");
+    expect(range.weekKey).toBe("2026-05-25");
   });
 
-  it("for a Sunday, returns last Sun..Sat (the prior calendar week)", () => {
-    // Sun 2026-05-31 → prior week Sun 2026-05-24, Sat 2026-05-30
+  it("for a Sunday, the prior week is the one that ended the Sunday before", () => {
+    // Sun 2026-05-31 is the LAST day of the Mon 25th week, so the
+    // prior week is Mon 2026-05-18 .. Sun 2026-05-24. Under the old
+    // Sunday anchor this same instant returned the 24th–30th — the
+    // off-by-one day this change removes.
     const sunday = new Date("2026-05-31T05:00:00Z").getTime();
     const range = _priorWeekUtcRange(sunday);
-    expect(range.weekStart).toBe("2026-05-24");
-    expect(range.weekEnd).toBe("2026-05-30");
+    expect(range.weekStart).toBe("2026-05-18");
+    expect(range.weekEnd).toBe("2026-05-24");
   });
 
-  it("for a Wednesday, prior week is Sun..Sat ending the previous Saturday", () => {
-    // Wed 2026-06-03 → prior week Sun 2026-05-24, Sat 2026-05-30
+  it("for a Wednesday, prior week is the Mon..Sun before this one", () => {
+    // Wed 2026-06-03 → prior week Mon 2026-05-25, Sun 2026-05-31
     const wednesday = new Date("2026-06-03T05:00:00Z").getTime();
     const range = _priorWeekUtcRange(wednesday);
-    expect(range.weekStart).toBe("2026-05-24");
-    expect(range.weekEnd).toBe("2026-05-30");
+    expect(range.weekStart).toBe("2026-05-25");
+    expect(range.weekEnd).toBe("2026-05-31");
+  });
+
+  it("always spans exactly seven days and starts on a Monday", () => {
+    // Swept across a full week of firing instants: the shape holds
+    // whatever weekday the sweep runs on, which a three-date suite
+    // can assert only by accident.
+    for (let d = 1; d <= 7; d++) {
+      const at = Date.parse(`2026-06-0${d}T05:00:00Z`);
+      const range = _priorWeekUtcRange(at);
+      expect(new Date(`${range.weekStart}T00:00:00Z`).getUTCDay()).toBe(1);
+      expect(new Date(`${range.weekEnd}T00:00:00Z`).getUTCDay()).toBe(0);
+      const spanDays =
+        (Date.parse(`${range.weekEnd}T00:00:00Z`) -
+          Date.parse(`${range.weekStart}T00:00:00Z`)) /
+        86400000;
+      expect(spanDays).toBe(6);
+      expect(range.weekKey).toBe(range.weekStart);
+    }
   });
 });
 

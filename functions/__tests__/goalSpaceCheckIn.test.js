@@ -161,20 +161,46 @@ describe("weeklyCheckIn", () => {
     }
   });
 
-  it("rejects non-Sunday weekKeys — the deterministic ID is one per WEEK, not one per date", async () => {
+  it("rejects mid-week weekKeys — the deterministic ID is one per WEEK, not one per date", async () => {
     const { firestore, docs } = makeStore();
     seedMember(docs, "alice");
     // Every date in the window would otherwise mint its own
     // ${uid}_${weekKey} doc — ~20 "weekly" check-ins per real week
-    // for a scripted client. localWeekKey always emits a Sunday.
-    for (const weekKey of ["2026-07-13", "2026-07-14", "2026-07-18"]) {
+    // for a scripted client. Tue / Wed / Sat are never a week start
+    // under either anchor.
+    for (const weekKey of ["2026-07-14", "2026-07-15", "2026-07-18"]) {
       await expect(
         weeklyCheckIn(checkInArgs(firestore, { weekKey }))
       ).rejects.toMatchObject({ code: "invalid-argument" });
     }
+  });
+
+  it("accepts a MONDAY weekKey — the anchor the client is moving to (RunWk2)", async () => {
+    // This server change ships BEFORE the client flips. A client
+    // already sending Monday keys against a Sunday-only server would
+    // have every check-in refused, which is why the order matters.
+    const { firestore, docs } = makeStore();
+    seedMember(docs, "alice");
+    await expect(
+      weeklyCheckIn(checkInArgs(firestore, { weekKey: "2026-07-13" }))
+    ).resolves.toMatchObject({ ok: true });
+    expect(
+      docs.get(`goalSpaces/${SPACE}/events/alice_2026-07-13`)
+    ).toBeTruthy();
+  });
+
+  it("still accepts a SUNDAY weekKey while old clients are in the wild", async () => {
+    // Transitional, and deliberately temporary: RunWk2 PR 4 drops
+    // this branch one release after the client flip, because two
+    // accepted anchors mean two possible docs per real week.
+    const { firestore, docs } = makeStore();
+    seedMember(docs, "alice");
     await expect(
       weeklyCheckIn(checkInArgs(firestore, { weekKey: "2026-07-12" }))
     ).resolves.toMatchObject({ ok: true });
+    expect(
+      docs.get(`goalSpaces/${SPACE}/events/alice_2026-07-12`)
+    ).toBeTruthy();
   });
 
   it("rejects a focus outside the closed enum", async () => {

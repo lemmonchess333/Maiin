@@ -18,8 +18,14 @@ const _isVolumeEligibleRun = isVolumeEligibleRun;
 const FELL_BEHIND_THRESHOLD = 0.5;
 
 /** Compute the prior-week boundaries given a "now" timestamp. The
- *  trigger fires Monday 05:00 UTC; prior week is the Sun..Sat
- *  block immediately preceding today. */
+ *  trigger fires Monday 05:00 UTC; prior week is the Mon..Sun block
+ *  immediately preceding today — so on the Monday it fires, it grades
+ *  the week that ended the evening before.
+ *
+ *  Monday-anchored per RunWk2. It bucketed Sun..Sat until then, which
+ *  put the sweep's verdict and the `weekKey` it stamps on
+ *  `pendingFellBehindPrompt` a day out of step with every week the
+ *  user sees. */
 function _priorWeekUtcRange(nowMs) {
   // Anchor on UTC midnight of "today" so dates align cleanly with
   // the saved-runs `date` field (which is a local-date string that
@@ -29,17 +35,21 @@ function _priorWeekUtcRange(nowMs) {
   const todayUtc = new Date(
     Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
   );
-  const todayDow = todayUtc.getUTCDay(); // 0=Sun..6=Sat
-  // Last Saturday = today - (todayDow + 1) days. Monday → -2 days.
-  // Sunday → -1 day. Etc.
-  const lastSaturday = new Date(todayUtc.getTime());
-  lastSaturday.setUTCDate(lastSaturday.getUTCDate() - todayDow - 1);
-  const lastSunday = new Date(lastSaturday.getTime());
-  lastSunday.setUTCDate(lastSunday.getUTCDate() - 6);
+  // Distance back to this week's Monday: Mon→0, Tue→1 … Sun→6. The
+  // +6 %7 shift is what turns getUTCDay's Sunday-first numbering into
+  // a Monday-first offset; subtracting the raw day number would send
+  // Sunday back a whole week.
+  const backToMonday = (todayUtc.getUTCDay() + 6) % 7;
+  const thisMonday = new Date(todayUtc.getTime());
+  thisMonday.setUTCDate(thisMonday.getUTCDate() - backToMonday);
+  const priorMonday = new Date(thisMonday.getTime());
+  priorMonday.setUTCDate(priorMonday.getUTCDate() - 7);
+  const priorSunday = new Date(thisMonday.getTime());
+  priorSunday.setUTCDate(priorSunday.getUTCDate() - 1);
   return {
-    weekStart: _utcDateString(lastSunday),
-    weekEnd: _utcDateString(lastSaturday),
-    weekKey: _utcDateString(lastSunday),
+    weekStart: _utcDateString(priorMonday),
+    weekEnd: _utcDateString(priorSunday),
+    weekKey: _utcDateString(priorMonday),
   };
 }
 

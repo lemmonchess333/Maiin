@@ -47,10 +47,16 @@ const WEEKLY_FOCUS_VALUES = Object.freeze([
  *  supporters) — this is a defensive ceiling, not a target. */
 const MAX_FOCUS_SUPPORTERS = 16;
 
-/** The client's local week (Sunday-start localWeekKey) can sit up to a
- *  day ahead of server UTC and a week behind it — ±10 days accepts
- *  every real timezone without letting a client back-date history. */
+/** The client's local week (localWeekKey) can sit up to a day ahead of
+ *  server UTC and a week behind it — ±10 days accepts every real
+ *  timezone without letting a client back-date history. */
 const WEEK_KEY_WINDOW_MS = 10 * 24 * 60 * 60 * 1000;
+
+/** `getUTCDay()` numbering. The client anchors weeks on Monday
+ *  (`WEEK_STARTS_ON` in src/lib/dateHelpers.ts); Sunday is the anchor
+ *  it is migrating off and stays accepted for one release. */
+const WEEK_START_DAY = 1;
+const LEGACY_WEEK_START_DAY = 0;
 
 /**
  * The client computes weekKey with its LOCAL calendar (localWeekKey —
@@ -70,13 +76,28 @@ function assertValidWeekKey(weekKey, now) {
   if (Math.abs(now - parsed) > WEEK_KEY_WINDOW_MS) {
     throw new GoalSpaceError("invalid-argument", "weekKey out of window");
   }
-  // Every honest localWeekKey is a Sunday. Without this anchor, any
-  // date inside the window is a distinct valid ${uid}_${weekKey} doc
-  // ID — a scripted client could mint ~20 "weekly" check-ins per real
-  // week, which is exactly the multiplicity the deterministic ID
+  // Every honest localWeekKey is a week start. Without this anchor,
+  // any date inside the window is a distinct valid ${uid}_${weekKey}
+  // doc ID — a scripted client could mint ~20 "weekly" check-ins per
+  // real week, which is exactly the multiplicity the deterministic ID
   // exists to prevent. Calendar-date day-of-week is timezone-free, so
   // UTC parsing is safe here.
-  if (new Date(parsed).getUTCDay() !== 0) {
+  //
+  // TRANSITIONAL (RunWk2): Monday AND Sunday both count as a week
+  // start. The client is moving from Sunday-anchored weeks to Monday,
+  // and this server change ships FIRST — a client that flipped while
+  // the server still demanded Sunday would have every check-in
+  // refused. Accepting two anchors leaves the bound at 2 doc IDs per
+  // real week rather than ~20, so the defence this gate exists for
+  // still holds. Its cost is bounded and known: a member who checks
+  // in on the old build and again after updating, inside the same
+  // real week, gets two events that week. One week, one member, one
+  // extra row.
+  //
+  // Drop the Sunday branch one release after the client flip lands
+  // (RunWk2 PR 4) — leaving it forever re-opens the doubling for good.
+  const day = new Date(parsed).getUTCDay();
+  if (day !== WEEK_START_DAY && day !== LEGACY_WEEK_START_DAY) {
     throw new GoalSpaceError("invalid-argument", "weekKey must be a week start");
   }
 }
