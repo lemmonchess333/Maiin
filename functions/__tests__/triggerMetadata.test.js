@@ -146,6 +146,20 @@ const EXPECTED = {
     maxInstances: 100,
     secrets: ["STRIPE_SECRET_KEY", "STRIPE_WEBHOOK_SECRET"],
   },
+  // IAP slice 3 (#1099, ADR-0006) — the RevenueCat path. The webhook is
+  // the entitlement source of truth (RC verifies with Apple before it
+  // fires; the shared Authorization secret is the trust anchor), and the
+  // callable closes the purchase→webhook latency gap client-side.
+  revenueCatWebhook: {
+    kind: "http",
+    maxInstances: 100,
+    secrets: ["REVENUECAT_WEBHOOK_AUTH"],
+  },
+  syncRevenueCatEntitlement: {
+    kind: "callable",
+    maxInstances: 100,
+    secrets: ["REVENUECAT_REST_KEY"],
+  },
   computePerformanceWeek: {
     kind: "callable",
     maxInstances: 100,
