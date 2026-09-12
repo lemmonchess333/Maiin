@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { UtensilsCrossed, Plus } from "lucide-react";
 import { haptic } from "@/lib/haptic";
 import { track as trackHomeEvent } from "@/lib/homeAnalytics";
+import { cardClasses } from "@/components/ui/cardClasses";
 
 /**
  * Cold-start first-action card for a NEW user on a REST day (#972). On
@@ -26,7 +27,10 @@ export default function FirstMealCard({
         trackHomeEvent("home_card_tapped", { card: "first_meal" });
         navigate("/food");
       }}
-      className="w-full rounded-xl bg-card text-left p-4"
+      className={cardClasses({
+        tone: "tinted",
+        className: "w-full text-left",
+      })}
       style={{ backgroundColor: THEME.semantic.nutrition + "14" }}
     >
       <div className="flex items-center gap-3">

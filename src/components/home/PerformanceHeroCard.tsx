@@ -19,6 +19,7 @@ import {
   type VerbState,
 } from "@/lib/performanceLine";
 import type { PerformanceWeekDoc } from "@/lib/performanceTypes";
+import { cardClasses } from "@/components/ui/cardClasses";
 
 interface PerformanceHeroCardProps {
   /** Most recent week's perf doc, or null when no rollup exists yet. */
@@ -185,7 +186,10 @@ export default function PerformanceHeroCard({
         haptic();
         trackHomeEvent("home_card_tapped", { card: "performance" });
       }}
-      className="relative overflow-hidden block p-5 rounded-2xl bg-card active:scale-[0.98] transition-transform card-shadow"
+      className={cardClasses({
+        className:
+          "relative overflow-hidden block active:scale-[0.98] transition-transform",
+      })}
       aria-label={`Performance Index ${pi}, ${verb.label}`}
       aria-describedby={`perf-detail-${currentWeek.weekKey}`}
     >

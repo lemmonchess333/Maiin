@@ -29,6 +29,7 @@ import CalorieRing from "./CalorieRing";
 import MacroColumn from "./MacroColumn";
 import { macroInfeasibilityMessage } from "@/lib/macroInfeasibility";
 import AdaptiveWarmupBar from "./AdaptiveWarmupBar";
+import Card from "@/components/ui/Card";
 
 interface DailyTotals {
   calories: number;
@@ -407,7 +408,7 @@ export default function FoodHeroCard({
         row wider. gap-2 matches the compact-grid rule in the design
         system and the sibling PeriodOverview grid. */}
       <div className="grid grid-cols-3 gap-2 mt-4">
-        <div className="min-w-0 flex p-3 rounded-2xl bg-card card-shadow">
+        <Card size="compact" className="min-w-0 flex">
           <MacroColumn
             macroKey="protein"
             Icon={Beef}
@@ -420,8 +421,8 @@ export default function FoodHeroCard({
             numberDurationSec={LOG_MOMENT_SEC}
             barDurationSec={LOG_MOMENT_SEC}
           />
-        </div>
-        <div className="min-w-0 flex p-3 rounded-2xl bg-card card-shadow">
+        </Card>
+        <Card size="compact" className="min-w-0 flex">
           <MacroColumn
             macroKey="carbs"
             Icon={Wheat}
@@ -434,8 +435,8 @@ export default function FoodHeroCard({
             numberDurationSec={LOG_MOMENT_SEC}
             barDurationSec={LOG_MOMENT_SEC}
           />
-        </div>
-        <div className="min-w-0 flex p-3 rounded-2xl bg-card card-shadow">
+        </Card>
+        <Card size="compact" className="min-w-0 flex">
           <MacroColumn
             macroKey="fat"
             Icon={Avocado}
@@ -448,7 +449,7 @@ export default function FoodHeroCard({
             numberDurationSec={LOG_MOMENT_SEC}
             barDurationSec={LOG_MOMENT_SEC}
           />
-        </div>
+        </Card>
       </div>
 
       {/* Wave3 G — the training-aware day annotation (the free→premium

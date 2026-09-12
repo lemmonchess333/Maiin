@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { Dumbbell } from "lucide-react";
 import { haptic } from "@/lib/haptic";
 import { track as trackHomeEvent } from "@/lib/homeAnalytics";
+import { cardClasses } from "@/components/ui/cardClasses";
 
 export default function LiftCTACard({
   nextWorkout,
@@ -64,7 +65,11 @@ export default function LiftCTACard({
         navigate(target);
       }}
       type="button"
-      className="w-full rounded-xl bg-lifting/8 text-left p-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+      className={cardClasses({
+        tone: "tinted",
+        className:
+          "w-full bg-lifting/8 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+      })}
     >
       <div className="flex items-center gap-3">
         <div className="size-10 shrink-0 rounded-lg flex items-center justify-center bg-lifting/9">
