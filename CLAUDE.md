@@ -549,6 +549,7 @@ held to it, so it is now the APP-WIDE standard, not an insights-file local:
 - **Quick actions:** there is no longer a pill row. Today's actions are
   the sport-coloured CTA cards (`LiftCTACard` / `RunCTACard`), and food
   logging is the "Log food" action at the foot of `TodayEnergy`.
+- **Inline banners:** the `Banner` primitive (`src/components/ui/Banner.tsx`), three variants — `info` (coral, running context), `warning` (amber), `neutral` (muted, no domain colour) — on the compact-card pairing, `rounded-xl p-3`. The sustained-offline notices render through `neutral` and render NOTHING while idle: the permanent live-region wrapper they used to keep was an empty first child in the page rhythm, pushing Food's and Train's headers down a step. Pinned in `designSystemInvariants.test.ts`. The global online/offline strip in `Layout` (`ds-status-banner`) is app-shell chrome, not an inline banner.
 - **Section labels:** `SectionLabel`, uppercase, 12px, two ROLE tiers: default caption (semibold · wider · muted) inside a card; `tier="section"` (bold · widest · foreground) heading a group of cards or rows on a page, tab or sheet. Pick by role, not size. No hand-rolled label classes (ratcheted in `designSystemInvariants.test.ts`), no third tier
 
 ### Training plan primitives

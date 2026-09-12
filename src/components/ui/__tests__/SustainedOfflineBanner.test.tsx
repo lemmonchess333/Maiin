@@ -48,6 +48,33 @@ describe("SustainedOfflineBanner", () => {
     expect(screen.queryByText(/Some copy/i)).toBeNull();
   });
 
+  it("renders NO element at all while idle — not even an empty live region", () => {
+    // The permanent aria-live wrapper it used to render was a real child
+    // in the page's vertical rhythm: as the first child of a space-y-4
+    // page it pushed Food's and Train's headers down one step, and inside
+    // Analytics' own stack it opened a gap above nothing.
+    mockIsOnline = true;
+    const { container } = render(
+      <SustainedOfflineBanner>Some copy</SustainedOfflineBanner>
+    );
+    expect(container.childElementCount).toBe(0);
+  });
+
+  it("renders the notice through the Banner primitive's neutral variant with role=status", () => {
+    mockIsOnline = false;
+    render(<SustainedOfflineBanner>Cached data shown</SustainedOfflineBanner>);
+    act(() => {
+      vi.advanceTimersByTime(30_000);
+    });
+    const notice = screen.getByRole("status");
+    expect(notice).toHaveTextContent("Cached data shown");
+    expect(notice.className).toMatch(/\brounded-xl\b/);
+    expect(notice.className).toMatch(/\bp-3\b/);
+    expect(notice.className).toContain("bg-muted/60");
+    // No self-margin: the slot owns the rhythm.
+    expect(notice.className).not.toMatch(/\bmt-/);
+  });
+
   it("does not render in the first 30 seconds after going offline", () => {
     mockIsOnline = false;
     render(<SustainedOfflineBanner>Some copy</SustainedOfflineBanner>);

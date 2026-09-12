@@ -110,4 +110,37 @@ describe("Banner — dismiss affordance", () => {
     render(<Banner variant="info" title="Generic" onDismiss={() => {}} />);
     expect(screen.getByRole("button", { name: "Dismiss" })).toBeInTheDocument();
   });
+
+  it("neutral variant is a quiet muted note: role=status, muted surface and icon, no domain colour", () => {
+    render(
+      <Banner variant="neutral" description="You're viewing cached data." />
+    );
+    const banner = screen.getByRole("status");
+    expect(banner.className).toContain("bg-muted/60");
+    expect(banner.className).not.toMatch(/running|amber/);
+    expect(banner.getAttribute("style")).toBeNull();
+    expect(banner).toHaveTextContent("You're viewing cached data.");
+  });
+
+  it("renders no title line when title is omitted", () => {
+    // A one-line notice passes only `description`; nothing renders an
+    // empty bold paragraph above it.
+    const { container } = render(
+      <Banner variant="neutral" description="Only this line" />
+    );
+    expect(container.querySelectorAll("p.font-semibold")).toHaveLength(0);
+  });
+
+  it("every variant shares the compact-card pairing, rounded-xl p-3", () => {
+    // The offline notice used to carry rounded-lg px-3 py-2 beside this
+    // rounded-xl p-3 — two inline-banner geometries on one app.
+    for (const variant of ["info", "warning", "neutral"] as const) {
+      const { unmount } = render(<Banner variant={variant} title="x" />);
+      const el = screen.getByRole(variant === "warning" ? "alert" : "status");
+      expect(el.className).toMatch(/\brounded-xl\b/);
+      expect(el.className).toMatch(/\bp-3\b/);
+      expect(el.className).toMatch(/\bgap-3\b/);
+      unmount();
+    }
+  });
 });

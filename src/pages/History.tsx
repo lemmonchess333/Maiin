@@ -1236,7 +1236,16 @@ export default function History() {
     !showRunningSection && !showLiftingSection && !showNutritionSection;
 
   return (
-    <PageShell {...pullBindProps} title="Analytics">
+    <PageShell
+      {...pullBindProps}
+      title="Analytics"
+      /* Hist4: sustained-offline notice (30s threshold). Additive to the
+         global Layout banner — surfaces only after the disconnect has
+         lasted 30s and clarifies that Analytics reads from the Firestore
+         local cache while offline. In the shell's banner slot, above the
+         title, where Food and Train keep theirs. */
+      banner={<HistoryOfflineBanner />}
+    >
       {/* Hist4: small refresh indicator while the pull-to-refresh
           gesture is in flight. aria-live polite so screen readers
           announce the transient state without interrupting. */}
@@ -1248,12 +1257,6 @@ export default function History() {
           Refreshing…
         </div>
       )}
-
-      {/* Hist4: sustained-offline notice (30s threshold). Additive to
-          the global Layout banner — surfaces only after the disconnect
-          has lasted 30s and clarifies that History reads from the
-          Firestore local cache while offline. */}
-      <HistoryOfflineBanner />
 
       <motion.div variants={pageItemVariant}>
         <FilterPills
