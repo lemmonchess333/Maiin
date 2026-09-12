@@ -2336,7 +2336,22 @@ function applyProgramCommand({ state, profile, command, now }) {
     const match = runs.find((rd) =>
       rd && Array.isArray(rd.legacyIds) && rd.legacyIds.includes(id)
     );
-    return match && typeof match.id === "string" ? match.id : id;
+    if (match && typeof match.id === "string") return match.id;
+    // The cache-first client can migrate locally before its write reaches
+    // Firestore. Accept that new ID against a still-v3 row too, while keeping
+    // this transaction's writes attached to the server's current identity.
+    if ((current.programSchemaVersion ?? 1) < 4) {
+      const pending = runs.find((rd) => {
+        if (!rd || typeof rd.id !== "string" || typeof rd.date !== "string") return false;
+        const date = new Date(`${rd.date}T00:00:00.000Z`);
+        if (!Number.isFinite(date.getTime())) return false;
+        const day = date.getUTCDay();
+        date.setUTCDate(date.getUTCDate() - (day + 6) % 7);
+        return id === `runday_${date.toISOString().slice(0, 10)}_${day}_${rd.templateId}`;
+      });
+      if (pending) return pending.id;
+    }
+    return id;
   };
   if (typeof validated.runDayId === "string") {
     validated.runDayId = canonicalRunId(validated.runDayId);
