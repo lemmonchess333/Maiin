@@ -36,6 +36,7 @@ import { useStreaks } from "@/features/streaks/useStreaks";
 import { THEME } from "@/lib/theme";
 import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import PageShell from "@/components/ui/PageShell";
 import {
   Dumbbell,
   Sparkles,
@@ -593,34 +594,16 @@ export default function Home() {
   if (!profile) return <HomeSkeleton />;
 
   return (
-    <motion.div
-      className="flex flex-col gap-4 pb-6"
-      initial="hidden"
-      animate="visible"
-      variants={{
-        hidden: {},
-        visible: { transition: { staggerChildren: 0.06 } },
-      }}
-    >
-      <header>
-        <motion.div
-          variants={{
-            hidden: { opacity: 0, y: 12 },
-            visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
-          }}
-          className="flex items-center justify-between pt-1 pb-1"
-        >
-          <div className="flex flex-col">
-            {/* TROPOS wordmark only — the hexagon icon was removed because it's
-                redundant with the iOS Home Screen / PWA launch icon. The icon
-                SVG itself is intentionally kept in `public/` and the manifest
-                so the device installer still has it. */}
-            <h1 className="text-2xl font-extrabold tracking-[0.14em] text-foreground uppercase leading-none">
-              TROPOS
-            </h1>
-          </div>
-          <div className="flex items-center gap-2">
-            {/* Streak pill is tappable — deep-links into History → Badges
+    <PageShell
+      brand
+      /* TROPOS wordmark only — the hexagon icon was removed because it is
+         redundant with the iOS Home Screen / PWA launch icon. The icon SVG
+         itself is kept in `public/` and the manifest so the device
+         installer still has it. */
+      title="TROPOS"
+      actions={
+        <>
+          {/* Streak pill is tappable — deep-links into History → Badges
                 so the user can see what streak-tier they're chasing next
                 (e.g. "4 more days to Week Warrior"). The pill is a real
                 achievement with reward context behind it; leaving it as
@@ -628,50 +611,49 @@ export default function Home() {
                 History page restores its last tab on mount, so we also
                 persist the target in sessionStorage to force the Badges
                 tab even if the user last looked at Lifting / Performance. */}
-            {streak > 0 ? (
-              <Link
-                to="/history"
-                onClick={() => {
-                  try {
-                    sessionStorage.setItem("history-tab", "milestones");
-                  } catch {
-                    /* private mode — fine, user lands on the default tab */
-                  }
-                }}
-                aria-label={`View milestones — ${streak}-day streak`}
-                className="rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
-              >
-                <StreakFlame
-                  streak={streak}
-                  bounce={streakBounce}
-                  display={<motion.span>{streakDisplay}</motion.span>}
-                />
-              </Link>
-            ) : (
+          {streak > 0 ? (
+            <Link
+              to="/history"
+              onClick={() => {
+                try {
+                  sessionStorage.setItem("history-tab", "milestones");
+                } catch {
+                  /* private mode — fine, user lands on the default tab */
+                }
+              }}
+              aria-label={`View milestones — ${streak}-day streak`}
+              className="rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+            >
               <StreakFlame
                 streak={streak}
                 bounce={streakBounce}
                 display={<motion.span>{streakDisplay}</motion.span>}
               />
-            )}
-            <Link
-              to="/settings"
-              aria-label="Settings"
-              style={{
-                // Match StreakFlame's pill surface so the two header
-                // chips read as siblings instead of "filled pill next
-                // to a faded outline icon."
-                boxShadow:
-                  "0 1px 3px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04)",
-              }}
-              className="inline-flex items-center justify-center size-11 rounded-full bg-card text-muted-foreground hover:bg-muted active:scale-[0.97] transition-transform duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-            >
-              <SettingsIcon aria-hidden="true" className="size-5" />
             </Link>
-          </div>
-        </motion.div>
-      </header>
-
+          ) : (
+            <StreakFlame
+              streak={streak}
+              bounce={streakBounce}
+              display={<motion.span>{streakDisplay}</motion.span>}
+            />
+          )}
+          <Link
+            to="/settings"
+            aria-label="Settings"
+            style={{
+              // Match StreakFlame's pill surface so the two header
+              // chips read as siblings instead of "filled pill next
+              // to a faded outline icon."
+              boxShadow:
+                "0 1px 3px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04)",
+            }}
+            className="inline-flex items-center justify-center size-11 rounded-full bg-card text-muted-foreground hover:bg-muted active:scale-[0.97] transition-transform duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          >
+            <SettingsIcon aria-hidden="true" className="size-5" />
+          </Link>
+        </>
+      }
+    >
       {/* Persistent trial / upgrade strip */}
       {isInTrial && (
         <button
@@ -1381,6 +1363,6 @@ export default function Home() {
           </Suspense>
         )}
       </AnimatePresence>
-    </motion.div>
+    </PageShell>
   );
 }

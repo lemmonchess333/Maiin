@@ -15,15 +15,13 @@ import { useUid } from "@/lib/auth";
 import { addDays, format } from "date-fns";
 import { toast } from "@/lib/toast";
 import { motion } from "framer-motion";
+import PageShell from "@/components/ui/PageShell";
+import { pageItemVariant } from "@/components/ui/pageMotion";
 import { haptic } from "@/lib/haptic";
 import { logger } from "@/lib/logger";
 import { commitMealDeletes } from "@/lib/mealDeleteCommit";
 import { joinHumanList } from "@/lib/listFormat";
 
-const itemVariant = {
-  hidden: { opacity: 0, y: 12 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
-};
 const ManualFoodLogger = lazyRetry(() =>
   import("@/components/ManualFoodLogger").then((m) => ({
     default: m.ManualFoodLogger,
@@ -1711,23 +1709,15 @@ export default function Food() {
   }
 
   return (
-    <motion.div
+    <PageShell
       {...pullBindProps}
-      /* Bottom padding hooks into the canonical --page-bottom-pad
-         token (tab-bar height + env(safe-area-inset-bottom) +
-         1rem) so the last meal section / Copy yesterday button
-         clears the home indicator on notched iPhones. The previous
-         hardcoded `pb-28` (7rem / 112px) ignored safe-area inset
-         and could clip on devices with deeper insets. Same pattern
-         as RunSummary.tsx. */
-      className="space-y-4.5"
+      title="Food"
+      banner={<FoodOfflineBanner />}
+      /* Bottom padding hooks into the canonical --page-bottom-pad token
+         (tab-bar height + env(safe-area-inset-bottom) + 1rem) so the last
+         meal section / Copy yesterday button clears the home indicator on
+         notched iPhones. A hardcoded pb ignores the inset. */
       style={{ paddingBottom: "var(--page-bottom-pad)" }}
-      initial="hidden"
-      animate="visible"
-      variants={{
-        hidden: {},
-        visible: { transition: { staggerChildren: 0.06 } },
-      }}
     >
       {pullRefreshing && (
         <div
@@ -1755,20 +1745,10 @@ export default function Food() {
         canGoForward={canGoForward}
         minDate={minDateStr}
         maxDate={todayStr}
-        itemVariant={itemVariant}
+        itemVariant={pageItemVariant}
       />
 
-      {/* Food6 cc2: sustained-offline notice (30s threshold). Adds
-          Food-specific context (image AI + barcode unavailable) on
-          top of the global Layout banner. */}
-      <FoodOfflineBanner />
-
-      {/* Header */}
-      <motion.div variants={itemVariant}>
-        <h1 className="text-xl font-extrabold text-foreground">Food</h1>
-      </motion.div>
-
-      <motion.div variants={itemVariant} key={selectedDate}>
+      <motion.div variants={pageItemVariant} key={selectedDate}>
         <FoodHeroCard
           selectedDate={selectedDate}
           isToday={isToday}
@@ -1806,7 +1786,7 @@ export default function Food() {
           composer with one calm data-derived line; no separate flow, no
           prescription, finalTarget unchanged. */}
       {searchParams.get("context") === "post-run" && isToday && (
-        <motion.div variants={itemVariant}>
+        <motion.div variants={pageItemVariant}>
           <div className="flex items-center gap-3 rounded-xl bg-running/10 px-4 py-3">
             <p className="flex-1 text-sm text-foreground">
               Nice run — refuel with carbs and protein.
@@ -1903,7 +1883,7 @@ export default function Food() {
         </div>
       )}
 
-      <motion.div variants={itemVariant}>
+      <motion.div variants={pageItemVariant}>
         <FoodComposerCard
           ref={suggestionsRef}
           nlInput={nlInput}
@@ -2010,7 +1990,7 @@ export default function Food() {
           mealSlotFor, shown in each row's caption, and moved via the
           row's edit sheet. Targeting a slot for NEW logs stays on the
           composer pills. */}
-      <motion.div variants={itemVariant} className="space-y-3">
+      <motion.div variants={pageItemVariant} className="space-y-3">
         {/* NUTR-CONSISTENCY-01 — weekly logging focus. Private
             commitment + derived progress; the only social affordance
             is the opt-in constant status line once MET. */}
@@ -2170,6 +2150,6 @@ export default function Food() {
           />
         </Suspense>
       )}
-    </motion.div>
+    </PageShell>
   );
 }
