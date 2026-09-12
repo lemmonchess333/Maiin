@@ -3,7 +3,7 @@
 /**
  * Server mirror of the one-off run move (RUN-RESCHEDULE-01).
  *
- * Moves a planned run to another day WITHIN its generated calendar week.
+ * Moves a planned run to another day WITHIN its generated Sunday-start week.
  * Moves the plan, not the goalposts: the stable `id`, `templateId`,
  * `userOverride`, `status`, completion truth, race identity (`type`) and the
  * `manualCompletions` map all survive — only `date` / `dayIndex` and the
@@ -20,7 +20,7 @@
  * here, and the command carries only "which run, which day".
  *
  * TIMEZONE NOTE. `dateForDay` adds whole days to a plain YYYY-MM-DD week
- * anchor. Both sides parse a calendar day and emit a calendar day with no
+ * anchor (the weekday offset, not the raw index — see its docstring). Both sides parse a calendar day and emit a calendar day with no
  * wall-clock instant in between, so a consistent parse (UTC here, local on
  * the client) yields the same string. Same argument as progressionHold.js,
  * and the cross-test walks every day of the week to prove it rather than
@@ -50,15 +50,33 @@ function formatDayUTC(ms) {
   return `${y}-${m}-${day}`;
 }
 
-/** Resolve a weekday inside the stored week, accepting both migration anchors. */
+/**
+ * Mirror of runReschedule.ts dateForDay — the date a getDay() weekday falls
+ * on inside the week `weekKey` names.
+ *
+ * `dayIndex` is a weekday (0 = Sunday), NOT an offset from the week's
+ * first day; the two coincide only when the week starts on Sunday. The
+ * client moved its anchor to Monday (RunWk2), and this copy added the
+ * index straight onto the key — so every moved run was painted on one day
+ * by the client and stored on another by this transaction, which is
+ * exactly the quiet drift the cross-test exists to catch.
+ *
+ * TRANSITIONAL: the anchor is read off the key itself rather than fixed.
+ * A stored key is either a Sunday (written by a client that has not yet
+ * migrated to schema v4) or a Monday (written after), and the key's own
+ * weekday says which. Inferring it means an old client's move lands on
+ * the day it asked for and a new client's does too, with no flag day.
+ * Once every stored key is a Monday, this collapses to the fixed offset
+ * `(dayIndex + 6) % 7` the client uses — RunWk2 PR 4 alongside the
+ * check-in's Sunday branch.
+ */
 function dateForDay(weekKey, dayIndex) {
   const base = parseDayUTC(weekKey);
   if (!Number.isFinite(base)) return null;
   if (!Number.isInteger(dayIndex) || dayIndex < 0 || dayIndex > 6) return null;
-  // A weekday number is not an offset: Sunday is 0 even when the week
-  // starts on Monday. Read the anchor from the stored key so this server
-  // can ship before the client flip and serve both old and migrated plans.
-  const offset = (dayIndex - new Date(base).getUTCDay() + 7) % 7;
+  // Calendar-date day-of-week is timezone-free, so UTC is safe here.
+  const anchor = new Date(base).getUTCDay();
+  const offset = (dayIndex - anchor + 7) % 7;
   return formatDayUTC(base + offset * DAY_MS);
 }
 
