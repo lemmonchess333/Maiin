@@ -29,10 +29,53 @@ export function localDateString(d: Date = new Date()): string {
  * local YYYY-MM-DD of that Sunday. Pure local-date math — does not
  * read UTC components.
  */
+/**
+ * The day a week starts on, in `Date.getDay()` numbering — 0 = Sunday,
+ * 1 = Monday.
+ *
+ * This is the ONE place the app decides. It was decided in six places:
+ * `localWeekKey` here, plus `setDate(getDate() - getDay())` written out by
+ * hand in `personalTrajectory`, `leaderboard` and twice each in two blocks
+ * of `History.tsx`. Those hand-written copies are why History carries
+ * comments insisting the axis "MUST use the same local-week helper" as the
+ * data — a coupling real enough to be documented, held together by nothing
+ * but the comment. Changing the anchor meant finding all six and agreeing
+ * with yourself six times; miss one and a chart's axis silently slides off
+ * its data.
+ *
+ * Tropos is inconsistent about this today and this constant does not yet
+ * resolve it: `streakEngine.weekKey` and the coach-prompt doc ids anchor on
+ * MONDAY, which is also the en-GB and ISO-8601 convention. Moving to
+ * Monday is a separate change; this one exists so that change is an edit
+ * here rather than an archaeology exercise.
+ */
+export const WEEK_STARTS_ON = 0;
+
+/** Local midnight on the first day of the week containing `d`. */
+export function startOfLocalWeek(d: Date): Date {
+  const back = (d.getDay() - WEEK_STARTS_ON + 7) % 7;
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate() - back);
+}
+
 export function localWeekKey(d: Date = new Date()): string {
-  const dow = d.getDay(); // 0=Sun..6=Sat
-  const sunday = new Date(d.getFullYear(), d.getMonth(), d.getDate() - dow);
-  return localDateString(sunday);
+  return localDateString(startOfLocalWeek(d));
+}
+
+/**
+ * The date on which a given day-of-week falls, inside the week a `weekKey`
+ * names.
+ *
+ * Two conventions meet here and they are NOT the same number: a `weekKey`
+ * is the week's FIRST day, while a `dayIndex` is a plain day-of-week from
+ * `Date.getDay()` where 0 is always Sunday. They coincide only while the
+ * week starts on Sunday, so call sites deriving a date as
+ * `addLocalDays(parseLocalDate(weekKey), dayIndex)` are correct by
+ * coincidence rather than by construction — under any other anchor each
+ * shifts a scheduled run by a day, and a Sunday run by a whole week.
+ */
+export function dateForDayOfWeek(weekKey: string, dayOfWeek: number): string {
+  const offset = (dayOfWeek - WEEK_STARTS_ON + 7) % 7;
+  return localDateString(addLocalDays(parseLocalDate(weekKey), offset));
 }
 
 /**

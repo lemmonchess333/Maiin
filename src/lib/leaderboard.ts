@@ -9,7 +9,7 @@ import {
 } from "firebase/firestore";
 import { db } from "./firebase";
 import { isVolumeEligible } from "./runStatsEligibility";
-import { localDateString } from "./dateHelpers";
+import { localDateString, startOfLocalWeek } from "./dateHelpers";
 
 export interface LeaderboardEntry {
   uid: string;
@@ -33,9 +33,9 @@ export async function buildLeaderboard(
   );
   const uids = [currentUid, ...followingSnap.docs.map((d) => d.id)];
 
-  const since = new Date();
-  since.setDate(since.getDate() - since.getDay());
-  since.setHours(0, 0, 0, 0);
+  // Week start through the shared anchor — this read the week boundary by
+  // hand, so it agreed with the rest of the app only by repetition.
+  const since = startOfLocalWeek(new Date());
   const sinceTs = Timestamp.fromDate(since);
   // `workout.date` is stored as a LOCAL "YYYY-MM-DD" string, so the cutoff
   // for the `where('date', '>=', ...)` query must be the LOCAL date of

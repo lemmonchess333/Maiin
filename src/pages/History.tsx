@@ -59,6 +59,7 @@ import HistoryOfflineBanner from "@/components/analytics/HistoryOfflineBanner";
 import { granularityForRange, binKeyForDate } from "@/lib/chartGranularity";
 import {
   localWeekKey,
+  startOfLocalWeek,
   localDateString,
   parseLocalDate,
 } from "@/lib/dateHelpers";
@@ -632,10 +633,11 @@ export default function History() {
     {
       const since = new Date();
       since.setDate(since.getDate() - rangeDays);
-      const cursor = new Date(since);
-      cursor.setDate(cursor.getDate() - cursor.getDay());
-      const end = new Date();
-      end.setDate(end.getDate() - end.getDay());
+      // Both ends through the shared anchor. The comment below has always
+      // said the axis MUST agree with the data's week helper; deriving the
+      // boundary by hand made that a promise rather than a fact.
+      const cursor = startOfLocalWeek(since);
+      const end = startOfLocalWeek(new Date());
       while (cursor <= end) {
         // weeklyData[].week is keyed by localWeekKey (useRunningStats),
         // so the axis MUST use the same local-week helper. The prior
@@ -872,12 +874,11 @@ export default function History() {
     // of compressing logged-only weeks into an uninterrupted line.
     const allWeekKeys: string[] = [];
     {
-      const cursor = new Date(since);
-      cursor.setDate(cursor.getDate() - cursor.getDay());
-      const end = new Date();
-      end.setDate(end.getDate() - end.getDay());
+      // Same anchor as the data side, for the same reason as above.
+      const cursor = startOfLocalWeek(since);
+      const end = startOfLocalWeek(new Date());
       while (cursor <= end) {
-        // sparkVolumeMap is keyed by binKeyForDate(d, "weekly") (UTC-
+        // sparkVolumeMap is keyed by binKeyForDate(d, "weekly") (local-
         // Sunday), so the axis MUST derive its keys with the SAME helper.
         // The prior local-cursor + cursor.toISOString() key never matched
         // binKeyForDate's UTC-Sunday anchor in non-UTC zones, flatlining
