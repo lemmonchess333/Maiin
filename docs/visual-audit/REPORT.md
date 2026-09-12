@@ -44,7 +44,7 @@ C. Selected meal pill → nutrition identity orange — `fixes/C-*`
 ### 03 Programme — `screens/light/03-program-*.png`
 
 1. Hue: purple-dominant, disciplined (lift purple / run coral split via the Lift|Run toggle).
-2. The **streak-priming modal fires on first Programme visit** and stacks over the page (captured); it intercepted taps in the rig — on device it lands mid-task (you came here to train, not to configure reminders).
+2. ~~The **streak-priming modal fires on first Programme visit** and stacks over the page (captured); it intercepted taps in the rig — on device it lands mid-task (you came here to train, not to configure reminders).~~ — **fixed** (audit #10): the modal's seed-on-first-render + visibilitychange triggers were removed; it now fires ONLY on the `tropos:workout-completed` event (a successful-completion moment), so navigating to Programme never pops it. It's also routed through the SurfaceCoordinator (lowest tier-4 priority) so it can't stack over peer modals. Trigger rule pinned by `src/components/__tests__/StreakReminderPrimingModal.test.tsx`.
 3. Spacing: exercise rows are uniform; week header + RECOMP chip give some hierarchy.
    4–8. No dark-parity, overflow, or safe-area issues found.
 
@@ -115,7 +115,7 @@ C. Selected meal pill → nutrition identity orange — `fixes/C-*`
 7. **Stale cold-start artifacts on rich accounts** — "Welcome to Tropos!" checklist still rendering for an account with months of data. (`01-home-top`)
 8. **Hue overload on Home + Food** (6–7 distinct hues per viewport vs the documented 4-ish semantic system). Macro pink/yellow/green + sport coral/purple + nutrition orange all co-present; the semantic system is intact but the _density_ of simultaneous accents is the issue. (`01-home-scrolled`, `02-food-scrolled`)
 9. ~~Webview desktop scrollbar~~ — **fixed (B)** (suppression CSS; rig cannot render the before state — see device screenshots).
-10. **Streak-priming modal interrupts first Programme visit** — lands mid-task, stacks over the page the user explicitly navigated to. (`03-program-top`)
+10. ~~**Streak-priming modal interrupts first Programme visit** — lands mid-task, stacks over the page the user explicitly navigated to.~~ — **fixed**: modal now fires only on the `tropos:workout-completed` completion event (not on mount/visit/visibilitychange) and is gated through the SurfaceCoordinator so it never stacks. Regression test added (`StreakReminderPrimingModal.test.tsx`). (`03-program-top`)
 
 _(Bug C — amber selected-pill clash — fixed; would have ranked ~#8.)_
 
