@@ -170,7 +170,13 @@ export default function Food() {
     );
   };
   const [scanOpen, setScanOpen] = useState(false);
-  const [nlInput, setNlInput] = useState("");
+  const [{ text: nlInput, revision: nlInputRevision }, setNlDraft] = useState({
+    text: "",
+    revision: 0,
+  });
+  const setNlInput = useCallback((text: string) => {
+    setNlDraft((draft) => ({ text, revision: draft.revision + 1 }));
+  }, []);
   const [nlParsing, setNlParsing] = useState(false);
   const [suggestionsActive, setSuggestionsActive] = useState(true);
   // Rotating placeholder index — cycles through example meals every few
@@ -935,7 +941,13 @@ export default function Food() {
           createdAt: Timestamp.now(),
           ...(targetMeal ? { meal: targetMeal } : {}),
         });
-        setNlInput("");
+        // A completed save owns only its submitted draft. Revision tracking
+        // also preserves a new entry that happens to use the same words.
+        setNlDraft((draft) =>
+          draft.revision === nlInputRevision
+            ? { text: "", revision: draft.revision + 1 }
+            : draft
+        );
         const inputSegmentCount = nlInput
           .split(/[,\n]+/)
           .map((s) => s.trim())
@@ -992,7 +1004,7 @@ export default function Food() {
 
     if (warnVerdict) {
       /* Park the save behind the confirm dialog. setNlParsing stays
-         true so the input stays disabled while the user decides;
+         true so Log stays disabled while the user decides;
          performNLSave will reset it on resolve. */
       setNlPendingSave(() => performNLSave);
       setNlWarnTitle(warnVerdict.title);
