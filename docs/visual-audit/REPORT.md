@@ -59,7 +59,7 @@ C. Selected meal pill → nutrition identity orange — `fixes/C-*`
 ### 05 Run setup / treadmill — `screens/light/05-run-*.png`
 
 1. Run setup: coral-coded, race-prep context strip ("Race prep · Week 4 of 8 · 10K") — strong. Hue discipline good.
-2. **Treadmill live screen OVERFLOWS at 393px** — the distance input and "Save Treadmill Run" button run off the right edge (`05-run-treadmill-live-top.png`). `TreadmillMode`'s column appears to take content width inside its centring flex parent instead of `w-full`. Functional but visually broken. (Observation only — not in the Phase-2 fix list.)
+2. ~~**Treadmill live screen OVERFLOWS at 393px** — the distance input and "Save Treadmill Run" button run off the right edge (`05-run-treadmill-live-top.png`). `TreadmillMode`'s column appears to take content width inside its centring flex parent instead of `w-full`. Functional but visually broken.~~ — **fixed**: the diagnosis was exact. `TreadmillMode`'s root column now uses `w-full ... px-6` so it fills the `flex items-center` parent row in `Run.tsx` instead of shrink-fitting to content, and the distance input gained `min-w-0` so `flex-1` can shrink it below its intrinsic width (`src/components/run/TreadmillMode.tsx`). No overflow at 393px; touch targets unchanged. (Observation only — not in the Phase-2 fix list.)
 3. The treadmill screen is always-dark by design; in "light" theme captures it renders dark — by design (active-run surfaces are theme-independent), but the _transition_ light page → black countdown → black screen is an abrupt flash sequence.
 4. Safe area: Run-family screens render **without the Layout occluder** (they're full-screen, outside Layout). Their layouts keep content out of the clock zone by construction; the lock-screen + map screens pin chrome below `--safe-top` manually. Consistent, but worth knowing there are two safe-area systems.
 
@@ -109,7 +109,7 @@ C. Selected meal pill → nutrition identity orange — `fixes/C-*`
 1. **Food page redundancy — four simultaneous "add" entry points** (Quick Add / composer / scan / Log manually, + per-meal "+" below). One viewport, five shapes. The page's information architecture problem dwarfs any colour tweak. (`02-food-scrolled`)
 2. ~~Status-bar collision on scroll~~ — **fixed (A)**: compositor-layer drop + z-tie; occluder now survives scroll on every page.
 3. **RunDetail text collision at 393px** — "FREE RUN" × pace-legend overlap + Share pill crowding; plus the toast covering the back button. (`06-run-detail-top`)
-4. **TreadmillMode overflows the viewport** — input + save button clipped off-right at 393px. (`05-run-treadmill-live-top`)
+4. ~~**TreadmillMode overflows the viewport** — input + save button clipped off-right at 393px.~~ — **fixed**: column made `w-full` (fills the centring flex parent instead of shrink-fitting) + `min-w-0` on the distance input so it can flex. (`05-run-treadmill-live-top`)
 5. **Bottom-nav active-tab mismatch** — Food highlighted on `/run/:id` and `/upgrade`. Systemic route-matching bug, visible on every non-tab route. (`06-run-detail-top`, `10-upgrade-top`)
 6. **Undesigned text-only empty states on the highest-traffic surfaces** — Home Performance, History Performance, Social feed/suggestions. All are sentence-in-a-grey-box; none offer a designed next action beyond prose. Cold-start is a most-seen state for the user base. (`01-home-top`, `07-history-top`, `08-social-top`)
 7. **Stale cold-start artifacts on rich accounts** — "Welcome to Tropos!" checklist still rendering for an account with months of data. (`01-home-top`)
