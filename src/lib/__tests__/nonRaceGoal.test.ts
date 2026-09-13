@@ -19,6 +19,20 @@ const run = (
   ...extra,
 });
 describe("weekly free-running goals", () => {
+  it("keeps a Sunday run in Sunday's week when it is saved after midnight", () => {
+    expect(
+      nonRaceGoalProgress(
+        { kind: "runs", target: 3 },
+        [
+          run("sunday-start", 14, {
+            date: "2026-09-13",
+            completedAt: new Date(2026, 8, 14, 0, 10),
+          }),
+        ],
+        new Date(2026, 8, 14, 12)
+      ).current
+    ).toBe(0);
+  });
   it("counts eligible actual runs once within the local Monday–Sunday week", () => {
     const runs = [
       run("sun", 6),

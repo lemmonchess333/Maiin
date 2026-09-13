@@ -308,7 +308,9 @@ export function blockConsequence(input: {
   // the window and the pace. Naming the focus keeps it concrete.
   const kept = focusLabel(currentFocus).toLowerCase();
   if (pace === "full") {
-    return `Nothing about your sessions changes — the block just gives ${weeks} of ${kept} a shape and a finish line.`;
+    // "gives 8 weeks of stay fit a shape" read as a sentence with a verb
+    // phrase wedged into it; the focus goes at the end, as the thing kept.
+    return `Nothing about your sessions changes — the block just gives the next ${weeks} a shape and a finish line, with the same ${kept} focus.`;
   }
   if (pace === "lighter") {
     return `Same prescription for ${weeks}, ${trimmed} each time — the full one is always a tap away.`;

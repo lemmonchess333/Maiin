@@ -119,8 +119,9 @@ export default function RunningBaselineSettings({
                 !runningBaselineNeedsReview(value, today)
                   ? "Faster sessions can stay where the plan and your recent running allow them."
                   : "The plan will use easy running while you build consistency."}{" "}
-                Weekly time stays within this report where the available
-                sessions fit. It will not increase automatically.
+                Weekly time stays within what you've reported here, spread
+                across the sessions your week has room for. It won't increase on
+                its own.
               </p>
               {preview.status !== "empty" && preview.status !== "invalid" && (
                 <p>

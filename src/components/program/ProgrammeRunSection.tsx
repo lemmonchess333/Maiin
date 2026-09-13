@@ -1,4 +1,8 @@
 import NonRaceGoalProgress from "@/components/run/NonRaceGoalProgress";
+import {
+  isRunCoachingEligible,
+  runEvidenceDate,
+} from "@/lib/runExecutionEvidence";
 import { useLocalDateKey } from "@/hooks/useLocalDateKey";
 import {
   isRunningBaseline,
@@ -225,6 +229,7 @@ export default function ProgrammeRunSection({
   dismissFellBehindPrompt,
 }: ProgrammeRunSectionProps) {
   const navigate = useNavigate();
+  const todayKeyDerivation = useLocalDateKey();
   // PR-1: which row is opening DayActionSheet.
   const [manageDate, setManageDate] = useState<string | null>(null);
   // The run-week selector's selected calendar day (date-pinned — ADR-0002).
@@ -271,6 +276,7 @@ export default function ProgrammeRunSection({
     weeklyData,
     loading: runsLoading,
     failed: runsFailed,
+    evidenceReady: runsEvidenceReady,
   } = useRunningStats(30);
   // PR-J Q3 chunk B3b — single source of truth for derived
   // completion. Subscribes to users/{uid}/runs + reads
@@ -293,7 +299,9 @@ export default function ProgrammeRunSection({
   // shouldn't be dismissed either). Dismissal is keyed by this week's
   // localWeekKey so each Monday rollover the banner re-surfaces if
   // the race is still elapsed.
-  const thisWeekKeyForDismissal = useMemo(() => localWeekKey(new Date()), []);
+  const thisWeekKeyForDismissal = localWeekKey(
+    parseLocalDate(todayKeyDerivation)
+  );
   const raceElapsedDismissKey = `${storageUid}:tropos.dismiss.raceElapsed.${thisWeekKeyForDismissal}`;
   // Run13 (RUN-02): the proactive Adjust-this-week sheet.
   const [adjustOpen, setAdjustOpen] = useState(false);
@@ -304,7 +312,9 @@ export default function ProgrammeRunSection({
     "easier" | undefined
   >(undefined);
   // Run14: the ease-week nudge, dismissed for the rest of this week.
-  const [easeNudgeDismissed, setEaseNudgeDismissed] = useState(false);
+  const [easeNudgeDismissed, setEaseNudgeDismissed] = useState<string | null>(
+    null
+  );
   const [raceElapsedDismissed, setRaceElapsedDismissed] = useState<boolean>(
     () => readString(raceElapsedDismissKey) === "1"
   );
@@ -324,7 +334,6 @@ export default function ProgrammeRunSection({
    * race-prep user's entire race surface vanished. `resolveRunPlan`
    * reconciles them (profile wins, mirror backfills) and owns the single
    * definition of the recovery window, which was hand-derived here. */
-  const todayKeyDerivation = useLocalDateKey();
   const resolvedRunPlan = useMemo(
     () => resolveRunPlan(profile, programState, todayKeyDerivation),
     [profile, programState, todayKeyDerivation]
@@ -526,18 +535,22 @@ export default function ProgrammeRunSection({
   // suppression rule (all in the pure module), and render a quiet
   // evidence-first card that opens AdjustWeekSheet preselected. The
   // engine never changes anything — the user applies in the sheet.
+  const coachingRuns = useMemo(
+    () =>
+      runs.filter(isRunCoachingEligible).map((r) => ({
+        ...r,
+        date: runEvidenceDate(r),
+        completedAtMs: r.completedAt.getTime(),
+      })),
+    [runs]
+  );
+  const coachingReady =
+    !runsLoading && !runsFailed && runsEvidenceReady !== false;
   const easeNudge = useMemo(
     () =>
       evaluateEaseWeekNudge({
         isRacePrep: currentMode === "race_prep" && !!raceGoal && !raceElapsed,
-        runs: runs.map((r) => ({
-          date: localDateString(r.completedAt),
-          relativeEffort: r.relativeEffort,
-          // A6: the measured second trigger — persisted verdict tones on
-          // tempo sessions.
-          activityType: r.activityType,
-          paceVerdictTone: r.paceVerdictTone,
-        })),
+        runs: coachingReady ? coachingRuns : [],
         today: todayKeyDerivation,
         // Never tell a tapering / racing / recovering runner to ease more.
         phaseSuppressed:
@@ -557,7 +570,8 @@ export default function ProgrammeRunSection({
       currentMode,
       raceGoal,
       raceElapsed,
-      runs,
+      coachingRuns,
+      coachingReady,
       todayKeyDerivation,
       inRecovery,
       recoveryEnded,
@@ -567,7 +581,9 @@ export default function ProgrammeRunSection({
       profile.uid,
     ]
   );
-  const easeNudgeVisible = easeNudge.show && !easeNudgeDismissed;
+  const dismissalScope = `${profile.uid}:${localWeekKey(parseLocalDate(todayKeyDerivation))}`;
+  const easeNudgeVisible =
+    easeNudge.show && easeNudgeDismissed !== dismissalScope;
   // A6: trigger-aware counts — the card copy branches on which signal
   // fired (user-authored ratings vs measured pace misses).
   const easeNudgeTrigger = easeNudge.show ? easeNudge.trigger : null;
@@ -575,12 +591,16 @@ export default function ProgrammeRunSection({
     ? 0
     : easeNudge.trigger === "harder_ratings"
       ? easeNudge.harderCount
-      : easeNudge.slowCount;
+      : easeNudge.trigger === "short_sessions"
+        ? easeNudge.shortCount
+        : easeNudge.slowCount;
   const easeNudgeTotal = !easeNudge.show
     ? 0
     : easeNudge.trigger === "harder_ratings"
       ? easeNudge.ratedCount
-      : easeNudge.judgedCount;
+      : easeNudge.trigger === "short_sessions"
+        ? easeNudge.comparedCount
+        : easeNudge.judgedCount;
   // Record the 14-day cooldown + fire analytics the first render the card
   // is visible. The pure module treats "shown today" as still-showable
   // (sinceShown === 0), so writing the marker here never self-suppresses.
@@ -609,14 +629,9 @@ export default function ProgrammeRunSection({
       evaluatePostEaseBounce({
         easedWeekKey: getEasedWeekKey(profile.uid),
         today: todayKeyDerivation,
-        runs: runs.map((r) => ({
-          date: localDateString(r.completedAt),
-          relativeEffort: r.relativeEffort,
-          activityType: r.activityType,
-          paceVerdictTone: r.paceVerdictTone,
-        })),
+        runs: coachingReady ? coachingRuns : [],
       }),
-    [profile.uid, todayKeyDerivation, runs]
+    [profile.uid, todayKeyDerivation, coachingReady, coachingRuns]
   );
 
   // ── Run-week selector (date-pinned, ADR-0002) ──────────────────────
@@ -1668,8 +1683,10 @@ export default function ProgrammeRunSection({
           {postEaseBounce && (
             <p className="text-xs text-muted-foreground px-1">
               {postEaseBounce === "recovered"
-                ? "Back inside the pace window after the easier week. The plan resumes as scheduled."
-                : "Still outside the pace window after the easier week. Worth keeping this week gentle too, but you decide."}
+                ? "Your latest tempo was inside its pace window. One run does not tell the whole story; the plan is unchanged."
+                : postEaseBounce === "above_window"
+                  ? "Your latest tempo was faster than its pace window. The plan is unchanged."
+                  : "Your latest tempo was slower than its pace window. You can review an easier week below."}
             </p>
           )}
 
@@ -1678,6 +1695,12 @@ export default function ProgrammeRunSection({
               trigger={easeNudgeTrigger}
               count={easeNudgeCount}
               total={easeNudgeTotal}
+              evidence={
+                easeNudge.show && easeNudge.trigger === "short_sessions"
+                  ? easeNudge.evidence
+                  : undefined
+              }
+              unit={unit}
               onEase={() => {
                 haptic();
                 trackProgram("ease_week_nudge_applied");
@@ -1687,7 +1710,7 @@ export default function ProgrammeRunSection({
               onDismiss={() => {
                 haptic();
                 setDismissedWeekKey(profile.uid, thisWeekKeyForDismissal);
-                setEaseNudgeDismissed(true);
+                setEaseNudgeDismissed(dismissalScope);
                 trackProgram("ease_week_nudge_dismissed");
               }}
             />

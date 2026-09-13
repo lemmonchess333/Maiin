@@ -95,7 +95,13 @@ export function ChoiceSheet({
       hideHeader={hideHeader}
     >
       <div className="px-5 pb-6 pt-4 space-y-4">
-        <div className="w-9 h-1 rounded-full bg-border mx-auto" />
+        {/* The drag handle, ONLY when the sheet's own header (which draws
+            one) is hidden. With a title the two stacked — a pill under the
+            description on the session chooser and the goal-reached ask,
+            reading as a second sheet nested in the first. */}
+        {hideHeader && (
+          <div className="w-9 h-1 rounded-full bg-border mx-auto" />
+        )}
 
         {children}
 
