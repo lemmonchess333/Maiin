@@ -1,48 +1,6 @@
-/**
- * Race-prep runDays read-time reconciliation (RunWk1 follow-up).
- *
- * PURE + ADDITIVE. This module is unwired by design — it ships the tested
- * logic first; the load-effect wiring is a separate, emulator-gated change
- * (the race-prep state machine in `useProgram`'s load effect is the
- * lock-flagged "workflow-class, verify with the emulator" surface, and a
- * prior load-effect attempt — Run9 3a-iii — was reverted for racing the
- * existing auto-rollover effect).
- *
- * ── The bug this targets ─────────────────────────────────────────────
- * The scheduler is correct: `generateRacePlanV2` only ever places a race
- * template (`*_race`) in the FINAL week. But a `programState` doc written
- * by an older/buggy build can carry `runDays` that DISAGREE with their own
- * `runPlan.currentWeek` — e.g. race-week days (with past dates) stored
- * while `currentWeek` reads 0. The cockpit then renders a nonsensical
- * "Marathon Race · Start run" in Base week 1. Nothing on the read path
- * cross-checks `runDays` against the current week, and the shape migration
- * deliberately never regenerates scheduler-owned content.
- *
- * Race-prep `runDays` are 100% scheduler-derived (unlike `workouts`, which
- * hold user customisation), so regenerating them from the canonical
- * `raceGoal` + today is SAFE and loses nothing the user authored.
- *
- * ── What "stale" means here ──────────────────────────────────────────
- * For an active race plan, the stored `runDays` are stale when EITHER:
- *   (a) ANCHOR DRIFT — `runDays[0].weekKey !== thisWeekKey` (the days were
- *       generated for a different week and never rolled forward), OR
- *   (b) PHASE/TEMPLATE MISMATCH — the stored week contains a race-template
- *       day but the fresh today-anchored generation for the same week does
- *       NOT (i.e. the race leaked into a non-race week) — or vice-versa.
- *
- * `(a)` is the common cause; `(b)` is the belt-and-braces catch for a doc
- * whose `weekKey` happens to look current but whose content is wrong.
- *
- * The reconciliation does NOT touch completion: terminal status +
- * manualCompletions are carried across the regen by the caller via
- * `regenerateRacePlan`'s existing `prior`/carry machinery (the claim-map
- * matches saved runs by date+bucket, so organic completions survive
- * automatically). This module only DECIDES staleness + recomputes the
- * honest week index; the caller performs the carry-aware regen.
- *
- * @unwired: intentional — the load-effect wiring is a separate, emulator-gated
- *   change (see header). The bug it fixes is live until then.
- */
+/** Saved race-row reconciliation. The load path repairs current-week template
+ * mismatches; auto-rollover owns older weeks and their history. Callers carry
+ * completions and the original block's week count through regeneration. */
 
 import {
   localWeekKey,

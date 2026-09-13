@@ -1,99 +1,130 @@
-/**
- * Run14 — the ease-week nudge card (RUN-05).
- *
- * A quiet, evidence-first suggestion in the race-prep cockpit: the
- * athlete rated several recent runs harder than expected, so we offer
- * to ease this week. Presentational only — the parent
- * (ProgrammeRunSection) owns the trigger evaluation (easeWeekNudge),
- * the local cooldown/dismissal markers, and analytics; this just
- * renders the copy and the two actions.
- *
- * Never auto-opens anything; the CTA opens the existing AdjustWeekSheet
- * (preselected to the easier preview). Suggest + approve — the app
- * changes nothing until the user applies in the sheet (Run14a).
- */
+import { useState } from "react";
+import { Link } from "react-router-dom";
 import { Feather, X } from "lucide-react";
-import { THEME } from "@/lib/theme";
+import { Button } from "@/components/ui/Button";
+import { IconButton } from "@/components/ui/IconButton";
+import { durationLabel, distanceLabel } from "@/lib/runLabels";
+import { formatDayMonth } from "@/utils/formatters";
+import { parseLocalDate } from "@/lib/dateHelpers";
+import type { DistanceUnit } from "@/lib/distanceUnits";
+import type { EaseWeekNudgeResult } from "@/lib/easeWeekNudge";
+import { SHORT_TARGET_RATIO } from "@/lib/easeWeekNudge";
 
+type ShortSessions = Extract<
+  EaseWeekNudgeResult,
+  { trigger: "short_sessions" }
+>;
 interface Props {
-  /** A6: which signal fired — user-authored effort ratings (Run14) or
-   *  measured pace-verdict misses. Drives the evidence line only; the
-   *  offer + actions are identical. */
-  trigger: "harder_ratings" | "pace_misses";
-  /** Numerator — "harder" ratings or "slow" verdicts, per trigger. */
+  trigger: "harder_ratings" | "pace_misses" | "short_sessions";
   count: number;
-  /** Denominator — recent rated runs or judged tempo sessions. */
   total: number;
-  /** Open AdjustWeekSheet on the easier-week preview. */
+  evidence?: ShortSessions["evidence"];
+  unit?: DistanceUnit;
   onEase: () => void;
-  /** Dismiss for the rest of this week. */
   onDismiss: () => void;
 }
 
+/** Evidence-first suggestion. Only the existing preview's Apply changes a plan. */
 export default function EaseWeekNudgeCard({
   trigger,
   count,
   total,
+  evidence,
+  unit = "km",
   onEase,
   onDismiss,
 }: Props) {
+  const [expanded, setExpanded] = useState(false);
   return (
-    <div
-      className="relative rounded-xl p-3 flex items-start gap-3"
-      style={{
-        background: `${THEME.running}0F`,
-        border: `1px solid ${THEME.running}2E`,
-      }}
-    >
-      <div
-        className="flex size-9 items-center justify-center rounded-lg shrink-0"
-        style={{ background: `${THEME.running}1A` }}
-      >
+    <div className="relative rounded-xl p-3 bg-running/6 dark:bg-running/12 border border-running/20">
+      <div className="flex items-start gap-3">
         <Feather
-          className="size-4"
-          style={{ color: THEME.running }}
+          className="size-5 text-running-strong shrink-0 mt-0.5"
           aria-hidden
         />
+        <div className="flex-1 min-w-0 pr-9">
+          <p className="text-sm font-semibold text-foreground">
+            Take this week easier?
+          </p>
+          <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+            {trigger === "harder_ratings" ? (
+              <>
+                You rated{" "}
+                <span className="font-mono tabular-nums">{count}</span> of your
+                last <span className="font-mono tabular-nums">{total}</span>{" "}
+                rated runs harder than expected.
+              </>
+            ) : trigger === "pace_misses" ? (
+              <>
+                <span className="font-mono tabular-nums">{count}</span> of your
+                last <span className="font-mono tabular-nums">{total}</span>{" "}
+                judged tempo sessions were slower than their pace window.
+              </>
+            ) : (
+              <>
+                <span className="font-mono tabular-nums">{count}</span> of your
+                last <span className="font-mono tabular-nums">{total}</span>{" "}
+                comparable planned runs finished well short of their target.
+                Time, conditions or tiredness could all play a part.
+              </>
+            )}
+          </p>
+        </div>
       </div>
-      <div className="flex-1 min-w-0 pr-5">
-        <p className="text-sm font-semibold text-foreground">
-          Take this week easier?
-        </p>
-        <p className="text-xs text-muted-foreground mt-0.5 leading-snug">
-          {trigger === "harder_ratings" ? (
-            <>
-              You rated <span className="font-mono tabular-nums">{count}</span>{" "}
-              of your last{" "}
-              <span className="font-mono tabular-nums">{total}</span> runs
-              harder than expected. Ease this week&apos;s quality runs — you
-              decide.
-            </>
-          ) : (
-            <>
-              <span className="font-mono tabular-nums">{count}</span> of your
-              last <span className="font-mono tabular-nums">{total}</span> tempo
-              sessions ran outside their pace window. Ease this week&apos;s
-              quality runs — you decide.
-            </>
-          )}
-        </p>
-        <button
-          type="button"
-          onClick={onEase}
-          className="mt-2 min-h-[36px] px-3 rounded-lg text-xs font-semibold text-white active:scale-[0.97] transition-transform"
-          style={{ background: THEME.running }}
-        >
-          Ease this week
-        </button>
-      </div>
-      <button
-        type="button"
-        onClick={onDismiss}
+      <IconButton
         aria-label="Dismiss"
-        className="absolute top-2 right-2 size-8 before:absolute before:-inset-1.5 before:content-[''] flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground active:scale-90 transition-all"
-      >
-        <X className="size-4" aria-hidden />
-      </button>
+        icon={<X />}
+        onClick={onDismiss}
+        className="absolute top-1 right-1"
+      />
+      <div className="mt-2 flex flex-wrap gap-1">
+        <Button variant="sport-tinted" onClick={onEase}>
+          Review easier week
+        </Button>
+        {evidence?.length ? (
+          <Button
+            variant="ghost"
+            aria-expanded={expanded}
+            onClick={() => setExpanded(!expanded)}
+          >
+            {expanded ? "Hide runs" : "See runs"}
+          </Button>
+        ) : null}
+      </div>
+      {expanded && evidence?.length ? (
+        <div className="mt-2 border-t border-running/20 pt-2">
+          <p className="text-xs text-muted-foreground">
+            Recorded less than{" "}
+            <span className="font-mono tabular-nums">
+              {Math.round(SHORT_TARGET_RATIO * 100)}%
+            </span>{" "}
+            of the saved target. Tap a run to check its details.
+          </p>
+          <ul className="mt-1">
+            {evidence.map((run) => {
+              const amount = (value: number) =>
+                run.target.unit === "seconds"
+                  ? durationLabel(value)
+                  : distanceLabel(value, unit);
+              return (
+                <li key={run.id}>
+                  <Link
+                    to={`/run/${encodeURIComponent(run.id)}`}
+                    className="flex flex-wrap justify-between items-center gap-2 min-h-11 rounded-lg px-1 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                  >
+                    <span className="text-foreground">
+                      {formatDayMonth(parseLocalDate(run.date))}
+                    </span>
+                    <span className="font-mono tabular-nums text-muted-foreground">
+                      {amount(run.actual)} / {amount(run.target.value)}
+                    </span>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      ) : null}
     </div>
   );
 }

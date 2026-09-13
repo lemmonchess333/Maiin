@@ -1,4 +1,8 @@
-import { seedFirestore, resetFirestore } from "@/test/firestoreHarness";
+import {
+  seedFirestore,
+  resetFirestore,
+  readDoc,
+} from "@/test/firestoreHarness";
 vi.mock("@/components/WeekPulseCard", () => ({ default: () => null }));
 import {
   act,
@@ -64,7 +68,6 @@ vi.mock("@/lib/restTimerNotification", () => ({
 import WorkoutSession from "../WorkoutSession";
 
 function openSession(onCompleteDay = vi.fn(), onClose = vi.fn()) {
-  const onLogExercise = vi.fn().mockResolvedValue(undefined);
   render(
     <WorkoutSession
       day={{
@@ -83,12 +86,11 @@ function openSession(onCompleteDay = vi.fn(), onClose = vi.fn()) {
         ],
       }}
       dayIndex={0}
-      onLogExercise={onLogExercise}
       onCompleteDay={onCompleteDay}
       onClose={onClose}
     />
   );
-  return onLogExercise;
+  return onCompleteDay;
 }
 
 beforeEach(() => {
@@ -141,7 +143,7 @@ describe("set completion through row controls", () => {
     ).toBeEnabled();
   });
 
-  it("logs progression once when row controls finish an exercise out of order", async () => {
+  it("keeps completed exercises in the draft until the workout is saved", async () => {
     const log = openSession();
     // Cursor remains at set 1; completing set 3 must not finish the exercise.
     fireEvent.click(
@@ -153,8 +155,10 @@ describe("set completion through row controls", () => {
     );
     expect(log).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole("button", { name: "Mark set complete" }));
-    await vi.waitFor(() => expect(log).toHaveBeenCalledOnce());
-    expect(log).toHaveBeenCalledWith(0, 0, 8, 0, undefined, { id: "test" });
+    await vi.waitFor(() =>
+      expect(screen.getByRole("button", { name: "Save Workout" })).toBeVisible()
+    );
+    expect(log).not.toHaveBeenCalled();
   });
 });
 
@@ -190,6 +194,83 @@ it("a supported PR appears only on its row and Undo removes it", async () => {
   expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   fireEvent.click(screen.getByRole("button", { name: "Undo last set" }));
   expect(screen.queryByText("PR")).not.toBeInTheDocument();
+});
+
+it("rebuilds corrected records from full history without dropping an older valid record", async () => {
+  h.user = { uid: "pr-user" };
+  const path = "users/pr-user/stats/prMap";
+  seedFirestore({
+    [path]: {
+      invalidated: true,
+      revision: 3,
+      map: {},
+      sessionCounts: {},
+      volumeBest: {},
+    },
+    ...Object.fromEntries(
+      Array.from({ length: 55 }, (_, i) => [
+        `users/pr-user/workouts/history-${i}`,
+        {
+          date: i < 5 ? `2025-01-0${i + 1}` : "2026-07-01",
+          exercises: [
+            {
+              exerciseName: i < 5 ? "Test exercise" : "Other exercise",
+              sets: [{ weightKg: i < 5 ? 120 : 80, reps: 8 }],
+            },
+          ],
+        },
+      ])
+    ),
+  });
+  await act(async () => {
+    openSession();
+  });
+  fireEvent.change(screen.getByRole("spinbutton", { name: "Set 1 weight" }), {
+    target: { value: "125" },
+  });
+  fireEvent.click(
+    screen.getAllByRole("button", { name: "Mark set complete" })[0]
+  );
+  expect(screen.getByText("PR")).toBeInTheDocument();
+  for (let i = 0; i < 2; i++)
+    fireEvent.click(
+      screen.getAllByRole("button", { name: "Mark set complete" })[0]
+    );
+  fireEvent.click(await screen.findByRole("button", { name: "Save Workout" }));
+  await vi.waitFor(() => expect(readDoc(path)?.invalidated).toBe(false));
+  expect(readDoc(path)).toMatchObject({
+    revision: 4,
+    map: {
+      "Test exercise": { "8rm": { weight: 125 } },
+      "Other exercise": { "8rm": { weight: 80 } },
+    },
+  });
+});
+
+it("an open session cannot replace records invalidated by a newer correction", async () => {
+  h.user = { uid: "pr-user" };
+  const path = "users/pr-user/stats/prMap";
+  seedFirestore({
+    [path]: {
+      revision: 3,
+      map: {
+        "Test exercise": { "8rm": { weight: 60, reps: 8, date: "2026-07-01" } },
+      },
+      sessionCounts: { "Test exercise": 5 },
+      volumeBest: {},
+    },
+  });
+  await act(async () => {
+    openSession();
+  });
+  seedFirestore({ [path]: { revision: 4, invalidated: true, map: {} } });
+  for (let i = 0; i < 3; i++)
+    fireEvent.click(
+      screen.getAllByRole("button", { name: "Mark set complete" })[0]
+    );
+  fireEvent.click(await screen.findByRole("button", { name: "Save Workout" }));
+  await vi.waitFor(() => expect(readDoc(path)?.revision).toBe(5));
+  expect(readDoc(path)).toMatchObject({ invalidated: true, map: {} });
 });
 
 describe("workout save acknowledgement", () => {
@@ -531,11 +612,7 @@ describe("completed-set corrections", () => {
     });
     fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
     await vi.waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
-    expect(log).toHaveBeenCalledTimes(2);
-    expect(log).toHaveBeenLastCalledWith(0, 0, 6, 0, undefined, {
-      id: "test",
-      correction: true,
-    });
+    expect(log).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole("button", { name: "Finish workout" }));
     fireEvent.click(screen.getByRole("button", { name: "Save Workout" }));
     await vi.waitFor(() => expect(complete).toHaveBeenCalledOnce());
@@ -689,5 +766,38 @@ describe("WorkoutSession — timers survive a locked phone", () => {
     fireEvent.click(screen.getByLabelText("Add 15 seconds of rest"));
     await background(20_000);
     expect(haptic).toHaveBeenCalledWith(chime);
+  });
+});
+
+it("Undo followed by finishing early saves only the final completed work", async () => {
+  const complete = vi.fn().mockResolvedValue(undefined);
+  openSession(complete);
+  for (let i = 0; i < 3; i++)
+    fireEvent.click(
+      screen.getAllByRole("button", { name: "Mark set complete" })[0]
+    );
+  await vi.waitFor(() =>
+    expect(
+      screen.getByRole("button", { name: "Edit workout" })
+    ).toBeInTheDocument()
+  );
+  fireEvent.click(screen.getByRole("button", { name: "Edit workout" }));
+  fireEvent.click(screen.getByRole("button", { name: "Undo last set" }));
+  expect(complete).not.toHaveBeenCalled();
+  fireEvent.click(screen.getByRole("button", { name: "Finish early" }));
+  fireEvent.click(
+    screen.getByRole("button", { name: "Review completed work" })
+  );
+  fireEvent.click(screen.getByRole("button", { name: "Save Workout" }));
+  await vi.waitFor(() => expect(complete).toHaveBeenCalledOnce());
+  expect(
+    complete.mock.calls[0][1].setLogs[0].filter(
+      (set: { completed: boolean }) => set.completed
+    )
+  ).toHaveLength(2);
+  expect(complete.mock.calls[0][1].prescription.exercises[0]).toMatchObject({
+    sets: 3,
+    reps: 8,
+    weight: 0,
   });
 });

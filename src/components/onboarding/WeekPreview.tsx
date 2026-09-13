@@ -12,7 +12,7 @@ import type {
   ScheduledRunDay,
 } from "@/features/program/programTypes";
 import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
-import { parseLocalDate } from "@/lib/dateHelpers";
+import { parseLocalDate, weekPosition } from "@/lib/dateHelpers";
 import { cn } from "@/lib/utils";
 
 export default function WeekPreview({
@@ -29,6 +29,14 @@ export default function WeekPreview({
   freeRunning?: boolean;
 }) {
   const [selected, setSelected] = useState<number | null>(null);
+  // `schedule` arrives in getDay() order (Sunday first). The week the
+  // user is shown starts where every other week in the app starts
+  // (`WEEK_STARTS_ON`) — Home's strip flipped to Monday and this preview
+  // was left reading Sun … Sat beside it. Order, never renumber: `day`
+  // stays the getDay() index the split indexer and the run days key on.
+  const orderedDays = [...schedule].sort(
+    (a, b) => weekPosition(a.day) - weekPosition(b.day)
+  );
   const detail = schedule.find((day) => day.day === selected);
   const lifts = schedule.filter(
     (day) => day.type === "lift" || day.type === "both"
@@ -79,7 +87,7 @@ export default function WeekPreview({
         </p>
       </div>
       <div className="flex gap-0.5 -mx-2 overflow-x-auto">
-        {schedule.map(({ day, type }) => (
+        {orderedDays.map(({ day, type }) => (
           <Button
             key={day}
             variant="ghost"

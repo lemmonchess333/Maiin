@@ -1,3 +1,8 @@
+import {
+  buildTimeBudgetSession,
+  isLiftTimeBudget,
+} from "@/features/program/liftTimeBudget";
+import { workoutCompletionDayIdentity } from "@/lib/workoutCompletion";
 import { liftCompletionContext } from "@/lib/completionPlanContext";
 import ProgramStallReview from "@/components/program/ProgramStallReview";
 import { useState, useMemo, useRef, useEffect, useCallback } from "react";
@@ -136,7 +141,6 @@ function ProgramInner() {
     skipWorkoutDay,
     setNextWorkout,
     advanceToNextWeek,
-    logExercise,
     regenerateProgram,
     reorderDayExercises,
     removeExerciseFromDay,
@@ -336,6 +340,7 @@ function ProgramInner() {
   const [expressChooserDay, setExpressChooserDay] = useState<number | null>(
     null
   );
+  const [sessionBudgetMinutes, setSessionBudgetMinutes] = useState<number>(60);
   const [sessionVariant, setSessionVariant] = useState<SessionVariant>("full");
 
   // Skip confirmation
@@ -734,13 +739,21 @@ function ProgramInner() {
   );
 
   // Session metadata
-  const exerciseCount = selectedWorkout?.exercises.length ?? 0;
+  const usualBudget = isLiftTimeBudget(profile?.liftTimeBudgetMinutes)
+    ? profile.liftTimeBudgetMinutes
+    : null;
+  const usualPlan =
+    selectedWorkout && usualBudget !== null
+      ? buildTimeBudgetSession(selectedWorkout, usualBudget)
+      : null;
+  const exerciseCount =
+    usualPlan?.exercises.length ?? selectedWorkout?.exercises.length ?? 0;
   // Was an inline copy of the old sets x 2.5 formula. A second copy of a
   // shared rule is the drift this repo keeps paying for — and it would now
   // disagree with the chooser sheet on the same screen.
-  const estimatedMinutes = estimateSessionMinutes(
-    selectedWorkout?.exercises ?? []
-  );
+  const estimatedMinutes =
+    usualPlan?.estimatedMinutes ??
+    estimateSessionMinutes(selectedWorkout?.exercises ?? []);
 
   // PROGRAM-BLOCK-01: the programme's main compounds become the new
   // block's default anchor lifts (v1 auto-anchors — no picker yet).
@@ -1243,12 +1256,30 @@ function ProgramInner() {
                                 // its own row below, so PROGRAM-ADAPT-01's
                                 // never-auto-applied offer survives without
                                 // taxing every session start.
-                                setSessionVariant("full");
+                                setSessionBudgetMinutes(usualBudget ?? 60);
+                                setSessionVariant(
+                                  usualBudget === null ? "full" : "time_budget"
+                                );
                                 setSessionDayIndex(idx);
                               }
                             : undefined
                         }
                       />
+
+                      {usualPlan && !selectedWorkout.completed && (
+                        <p className="px-3 text-xs text-muted-foreground leading-relaxed">
+                          Start uses your usual session time.{" "}
+                          {usualPlan.trim.droppedExercises.length > 0 ||
+                          usualPlan.trim.reducedSets.length > 0
+                            ? "Some accessories or sets are trimmed; the full programme stays below."
+                            : usualPlan.estimatedMinutes > usualBudget!
+                              ? "Your main lifts stay in place."
+                              : "This session already fits."}
+                          {usualPlan.estimatedMinutes > usualBudget!
+                            ? " The main lifts still take longer than your available time."
+                            : ""}
+                        </p>
+                      )}
 
                       {/* PROGRAM-ADAPT-01, post-de-interception home: the
                           recommendation is VISIBLE before any tap, instead of
@@ -1844,6 +1875,7 @@ function ProgramInner() {
 
       {/* Pre-session chooser (PROGRAM-FLEX-01 + PROGRAM-ADAPT-01) */}
       <ExpressSessionSheet
+        timeBudgetMinutes={usualBudget}
         open={expressChooserDay !== null}
         day={
           expressChooserDay !== null
@@ -1869,6 +1901,7 @@ function ProgramInner() {
           const idx = expressChooserDay;
           setExpressChooserDay(null);
           if (idx === null) return;
+          setSessionBudgetMinutes(usualBudget ?? 60);
           setSessionVariant(variant);
           setSessionDayIndex(idx);
         }}
@@ -1898,7 +1931,9 @@ function ProgramInner() {
               ? null
               : sessionVariant === "easier_today"
                 ? buildEasierSession(storedDay)
-                : buildExpressSession(storedDay, sessionVariant);
+                : sessionVariant === "time_budget"
+                  ? buildTimeBudgetSession(storedDay, sessionBudgetMinutes)
+                  : buildExpressSession(storedDay, sessionVariant);
           return (
             <WorkoutSession
               deloadWeek={programState.currentPhase === "deload"}
@@ -1927,56 +1962,14 @@ function ProgramInner() {
                   ? (plan.variant as Exclude<SessionVariant, "full">)
                   : undefined
               }
-              onLogExercise={
-                sessionVariant === "easier_today"
-                  ? // An easier session NEVER touches the stored
-                    // programme: no progression, no lastAttempted /
-                    // lastPerformance updates, no plateau counting.
-                    // (logExercise writes programme state even with
-                    // autoProgression off, so it is skipped entirely —
-                    // the plan the user returns to is exactly the plan
-                    // they left, and a lighter day can't feed future
-                    // load decisions.)
-                    async () => {}
-                  : plan
-                    ? (di, exIdx, reps, weight, rpe, session) =>
-                        logExercise(
-                          di,
-                          plan.sourceIndexes[exIdx] ?? exIdx,
-                          reps,
-                          weight,
-                          rpe,
-                          session
-                        )
-                    : logExercise
-              }
-              onCompleteDay={
-                plan
-                  ? (di, sd) => {
-                      // Re-expand trimmed setLogs to stored-day
-                      // positions. Dropped exercises get [] (recorded
-                      // as zero completed sets — same as an exercise
-                      // the user skipped mid-session), NEVER undefined
-                      // (undefined falls back to planned all-completed
-                      // data, which would fake work never done).
-                      const aligned = storedDay.exercises.map(
-                        () =>
-                          [] as {
-                            weight: number;
-                            reps: number;
-                            completed: boolean;
-                          }[]
-                      );
-                      plan.sourceIndexes.forEach((srcIdx, i) => {
-                        aligned[srcIdx] = sd.setLogs[i] ?? [];
-                      });
-                      return completeWithViewToast(di, {
-                        ...sd,
-                        setLogs: aligned,
-                      });
-                    }
-                  : completeWithViewToast
-              }
+              progressionBaseline={storedDay.exercises}
+              programmeContext={{
+                weekNumber: programState.weekNumber,
+                dayIndex: sessionDayIndex,
+                dayIdentity: workoutCompletionDayIdentity(storedDay) ?? "",
+                trainingBlockId: programState.trainingBlock?.id,
+              }}
+              onCompleteDay={completeWithViewToast}
               onClose={() => {
                 setSessionDayIndex(null);
                 setSessionVariant("full");

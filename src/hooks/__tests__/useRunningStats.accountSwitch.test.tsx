@@ -1,19 +1,5 @@
-/**
- * useRunningStats — account-switch request safety.
- *
- * On a shared device, account A's in-flight run query must not land after
- * the switch to B and overwrite B's rows. Both reads SUCCEED, so nothing
- * throws and nothing logs — B simply sees A's runs. That is a privacy
- * leak that looks like working software.
- *
- * This used to run on a hand-rolled deferred-promise harness whose
- * `getDocs` ignored its argument, so "A's rows" and "B's rows" were
- * fabricated objects rather than either user's data: the hook could have
- * queried the wrong uid entirely and every test still passed. It now runs
- * on the shared fake with per-uid documents seeded at real paths, so the
- * leak assertion is about actual isolation. Ordering comes from
- * `deferReads` / `releaseRead`, added to the fake for exactly this.
- */
+/** Running history uses live queries. Delay actual harness snapshots to
+ * test stale callbacks, account isolation and cached/pending evidence. */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { renderHook, act, waitFor } from "@testing-library/react";
 
@@ -37,12 +23,39 @@ import { splitRouteSegments } from "@/lib/routeSegments";
 import {
   seedFirestore,
   resetFirestore,
-  deferReads,
-  pendingReads,
-  releaseRead,
   failNextFirestore,
 } from "@/test/firestoreHarness";
-import { Timestamp } from "firebase/firestore";
+import {
+  Timestamp,
+  type Query,
+  type DocumentData,
+  type QuerySnapshot,
+  type SnapshotListenOptions,
+} from "firebase/firestore";
+import * as firestore from "firebase/firestore";
+const originalOnSnapshot = firestore.onSnapshot;
+type Delivery = {
+  path: string;
+  snapshot: QuerySnapshot<DocumentData>;
+  next: (snapshot: QuerySnapshot<DocumentData>) => void;
+};
+let deliveries: Delivery[] = [];
+let hold = false;
+function deferSnapshots() {
+  hold = true;
+}
+function pendingSnapshots() {
+  return deliveries.map((d) => d.path);
+}
+function releaseSnapshot(
+  index = 0,
+  metadata = { fromCache: false, hasPendingWrites: false }
+) {
+  const delivery = deliveries.splice(index, 1)[0];
+  if (!delivery) return false;
+  delivery.next(Object.assign(delivery.snapshot, { metadata }));
+  return true;
+}
 
 const A_RUNS = "users/A/runs";
 const B_RUNS = "users/B/runs";
@@ -56,8 +69,30 @@ const run = () => ({
   activityType: "freerun",
 });
 
-beforeEach(() => {
+beforeEach(async () => {
   resetFirestore();
+  deliveries = [];
+  hold = false;
+  vi.spyOn(firestore, "onSnapshot").mockImplementation(((
+    query: Query<DocumentData>,
+    options: SnapshotListenOptions,
+    next: (snapshot: QuerySnapshot<DocumentData>) => void,
+    error: (error: Error) => void
+  ) =>
+    originalOnSnapshot(
+      query,
+      options,
+      (snapshot) => {
+        if (hold)
+          deliveries.push({
+            path: (query as unknown as { path: string }).path,
+            snapshot,
+            next,
+          });
+        else next(snapshot);
+      },
+      error
+    )) as typeof firestore.onSnapshot);
   vi.useFakeTimers({ toFake: ["Date"] });
   vi.setSystemTime(new Date("2026-07-15T12:00:00Z"));
   currentUser = { uid: "A" };
@@ -67,9 +102,11 @@ beforeEach(() => {
     [`${A_RUNS}/a-run`]: run(),
     [`${B_RUNS}/b-run`]: run(),
   });
+  await Promise.resolve();
 });
 afterEach(() => {
   vi.useRealTimers();
+  vi.restoreAllMocks();
   vi.clearAllMocks();
 });
 
@@ -84,7 +121,9 @@ describe("useRunningStats — account switch", () => {
       lon: 0.01 + i * 0.001,
       ...(i === 0 ? { breakBefore: true } : {}),
     }));
-    seedFirestore({ [`${A_RUNS}/a-run`]: { ...run(), points: [...west, ...east] } });
+    seedFirestore({
+      [`${A_RUNS}/a-run`]: { ...run(), points: [...west, ...east] },
+    });
 
     const { result } = renderHook(() => useRunningStats(30));
     await waitFor(() => expect(result.current.loading).toBe(false));
@@ -99,20 +138,20 @@ describe("useRunningStats — account switch", () => {
   });
 
   it("B's later data wins even when A resolves last", async () => {
-    deferReads();
+    deferSnapshots();
     const { result, rerender } = renderHook(() => useRunningStats(30));
-    await waitFor(() => expect(pendingReads()).toEqual([A_RUNS]));
+    await waitFor(() => expect(pendingSnapshots()).toEqual([A_RUNS]));
 
     currentUser = { uid: "B" };
     rerender();
-    await waitFor(() => expect(pendingReads()).toEqual([A_RUNS, B_RUNS]));
+    await waitFor(() => expect(pendingSnapshots()).toEqual([A_RUNS, B_RUNS]));
 
     // B answers first, then A answers LATE — the leak interleaving.
     await act(async () => {
-      expect(releaseRead(1)).toBe(true); // B
+      expect(releaseSnapshot(1)).toBe(true); // B
     });
     await act(async () => {
-      expect(releaseRead(0)).toBe(true); // A, stale
+      expect(releaseSnapshot(0)).toBe(true); // A, stale
     });
 
     // The id proves WHOSE document survived, not merely that a row did.
@@ -120,11 +159,11 @@ describe("useRunningStats — account switch", () => {
   });
 
   it("clears A's rows immediately on switch to B", async () => {
-    deferReads();
+    deferSnapshots();
     const { result, rerender } = renderHook(() => useRunningStats(30));
-    await waitFor(() => expect(pendingReads()).toEqual([A_RUNS]));
+    await waitFor(() => expect(pendingSnapshots()).toEqual([A_RUNS]));
     await act(async () => {
-      releaseRead();
+      releaseSnapshot();
     });
     expect(result.current.runs.map((r) => r.id)).toEqual(["a-run"]);
 
@@ -136,7 +175,7 @@ describe("useRunningStats — account switch", () => {
   });
 
   it("a rejected read settles loading=false, empties, and logs once", async () => {
-    failNextFirestore("getDocs", { path: A_RUNS });
+    failNextFirestore("onSnapshot", { path: A_RUNS });
     const { result } = renderHook(() => useRunningStats(30));
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(result.current.runs).toEqual([]);
@@ -148,7 +187,7 @@ describe("useRunningStats — account switch", () => {
     // suppression turns it into "this user has never run" — so a failed
     // read used to delete the Running section rather than report itself.
     // The log line above is not a substitute: users don't read consoles.
-    failNextFirestore("getDocs", { path: A_RUNS });
+    failNextFirestore("onSnapshot", { path: A_RUNS });
     const { result } = renderHook(() => useRunningStats(30));
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(result.current.failed).toBe(true);
@@ -173,7 +212,7 @@ describe("useRunningStats — account switch", () => {
   it("a successful retry clears the failure", async () => {
     // Otherwise the "Try again" button would leave the error card up
     // forever and read as broken even once the read recovered.
-    failNextFirestore("getDocs", { path: A_RUNS });
+    failNextFirestore("onSnapshot", { path: A_RUNS });
     const { result } = renderHook(() => useRunningStats(30));
     await waitFor(() => expect(result.current.failed).toBe(true));
 
@@ -186,41 +225,82 @@ describe("useRunningStats — account switch", () => {
   });
 
   it("unmount cancels the outstanding resolution (no state update)", async () => {
-    deferReads();
+    deferSnapshots();
     const { result, unmount } = renderHook(() => useRunningStats(30));
-    await waitFor(() => expect(pendingReads()).toEqual([A_RUNS]));
+    await waitFor(() => expect(pendingSnapshots()).toEqual([A_RUNS]));
     unmount();
     await act(async () => {
-      releaseRead();
+      releaseSnapshot();
     });
     expect(result.current.runs).toEqual([]);
   });
 
   it("a same-uid refresh keeps current rows while loading", async () => {
-    deferReads();
+    deferSnapshots();
     const { result } = renderHook(() => useRunningStats(30));
-    await waitFor(() => expect(pendingReads()).toEqual([A_RUNS]));
+    await waitFor(() => expect(pendingSnapshots()).toEqual([A_RUNS]));
     await act(async () => {
-      releaseRead();
+      releaseSnapshot();
     });
     expect(result.current.runs).toHaveLength(1);
 
-    // Seed BEFORE refreshing: a deferred read snapshots at ISSUE time, so
-    // data added after the call can't appear in it. (Seeding afterwards
-    // silently reduced this to "1 row, still 1 row" — which passes while
-    // proving nothing about the refresh replacing anything.)
-    seedFirestore({ [`${A_RUNS}/a-run-2`]: run() });
+    // Hold the live update, then ask for a new subscription against two rows.
+    await act(async () => {
+      seedFirestore({ [`${A_RUNS}/a-run-2`]: run() });
+    });
+    deliveries = [];
 
     // Pull-to-refresh (same uid): rows stay visible while in flight, so
     // the list doesn't blank out under the user's thumb.
     act(() => result.current.refresh());
-    await waitFor(() => expect(pendingReads()).toEqual([A_RUNS]));
+    await waitFor(() => expect(pendingSnapshots()).toEqual([A_RUNS]));
     expect(result.current.runs).toHaveLength(1);
     expect(result.current.loading).toBe(true);
 
     await act(async () => {
-      releaseRead();
+      releaseSnapshot();
     });
     await waitFor(() => expect(result.current.runs).toHaveLength(2));
+  });
+});
+
+describe("running evidence authority", () => {
+  it("displays cached facts but waits for server confirmation before coaching", () => {
+    deferSnapshots();
+    const { result } = renderHook(() => useRunningStats(30));
+    const initial = deliveries[0];
+    act(() =>
+      initial.next(
+        Object.assign(initial.snapshot, {
+          metadata: { fromCache: true, hasPendingWrites: false },
+        })
+      )
+    );
+    expect(result.current.runs).toHaveLength(1);
+    expect(result.current.evidenceReady).toBe(false);
+    act(() =>
+      initial.next(
+        Object.assign(initial.snapshot, {
+          metadata: { fromCache: false, hasPendingWrites: true },
+        })
+      )
+    );
+    expect(result.current.evidenceReady).toBe(false);
+    act(() => {
+      releaseSnapshot();
+    });
+    expect(result.current.evidenceReady).toBe(true);
+  });
+
+  it("preserves known rows but withholds advice when refresh fails; retry recovers", async () => {
+    const { result } = renderHook(() => useRunningStats(30));
+    await waitFor(() => expect(result.current.evidenceReady).toBe(true));
+    failNextFirestore("onSnapshot", { path: A_RUNS });
+    act(() => result.current.refresh());
+    expect(result.current.runs).toHaveLength(1);
+    expect(result.current.evidenceReady).toBe(false);
+    act(() => result.current.refresh());
+    await waitFor(() => expect(result.current.evidenceReady).toBe(true));
+    expect(logError).toHaveBeenCalledTimes(1);
   });
 });

@@ -29,6 +29,16 @@ function run(
 }
 
 describe("aggregateWeeklyData", () => {
+  it("uses the saved start date across the Sunday/Monday boundary", () => {
+    const weeks = aggregateWeeklyData([
+      run({
+        distance: 5000,
+        date: "2026-09-13",
+        completedAt: new Date(2026, 8, 14, 0, 10),
+      }),
+    ]);
+    expect(weeks[0].week).toBe("2026-09-07");
+  });
   it("drops zero-distance zombies entirely from the week (volume eligibility)", () => {
     /* Same week: 1 legitimate 2km / 158s/km run + 3 zero-distance
        "Save anyway" entries. The aggregator's volume filter drops

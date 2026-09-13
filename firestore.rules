@@ -280,7 +280,7 @@ service cloud.firestore {
         // Pgm6 run-plan tuning knobs (volume preset + difficulty). Written by
         // the configurePlan CF today, but allow-listed here so a future direct
         // updateProfile write isn't silently rejected. Also in profileSanitizer.js.
-        'runVolume', 'runDifficulty',
+        'runVolume', 'runDifficulty', 'runTimeLimits', 'runningBaseline', 'nonRaceGoal', 'liftTimeBudgetMinutes',
         'weeklyRunsTarget', 'age', 'sex', 'activityLevel', 'macroTargets',
         'targetFiber', 'targetSugar', 'targetSodium', 'targetWaterGlasses',
         'enableRolloverCalories', 'autoPostBadges', 'customCalorieTarget',

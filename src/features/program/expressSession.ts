@@ -42,7 +42,11 @@ export type ExpressVariant = "express45" | "express30";
  *  (PROGRAM-ADAPT-01) is built by easierToday.ts — same
  *  execution-clone contract, different policy (one set less +
  *  deload-policy loads instead of a time budget). */
-export type SessionVariant = "full" | ExpressVariant | "easier_today";
+export type SessionVariant =
+  | "full"
+  | ExpressVariant
+  | "easier_today"
+  | "time_budget";
 
 /**
  * Draft namespace for a session variant (PROGRAM-ADAPT-01 follow-up).

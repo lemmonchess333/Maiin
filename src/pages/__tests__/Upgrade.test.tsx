@@ -269,7 +269,7 @@ describe("Upgrade — the offer beat (what the page opens on)", () => {
   it("leads with the product, not the price list", () => {
     renderPage();
     expect(
-      screen.getByRole("heading", { name: "Log a meal from a photo." })
+      screen.getByRole("heading", { name: "Log a meal from a photo" })
     ).toBeInTheDocument();
     expect(
       screen.getByRole("group", { name: "What Pro looks like" })
@@ -494,6 +494,15 @@ describe("Upgrade — where 'not now' goes", () => {
     fireEvent.click(screen.getByRole("button", { name: /Start Pro/ }));
     await waitFor(() => expect(purchaseMock).toHaveBeenCalledTimes(1));
     expect(purchaseMock.mock.calls[0][3]?.source).toBe("trial_strip");
+  });
+
+  it("checkout from Home's Pro strip is attributed to it", async () => {
+    purchaseMock.mockResolvedValueOnce({ success: true });
+    renderPage("/upgrade?from=home_strip");
+    fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+    fireEvent.click(screen.getByRole("button", { name: /Start Pro/ }));
+    await waitFor(() => expect(purchaseMock).toHaveBeenCalledTimes(1));
+    expect(purchaseMock.mock.calls[0][3]?.source).toBe("home_strip");
   });
 
   it("checkout from a Settings entry is attributed to Settings", async () => {

@@ -242,6 +242,69 @@ const PROFILE_FIELD_VALIDATORS = Object.freeze({
   // Pgm6 run-plan tuning knobs — bounded enums, invalid values dropped.
   runVolume: (v) => cleanEnum(v, ["lighter", "standard", "bigger"]),
   runDifficulty: (v) => cleanEnum(v, ["gentler", "standard", "harder"]),
+  liftTimeBudgetMinutes: (v) =>
+    v === null
+      ? null
+      : Number.isInteger(v) && v >= 30 && v <= 120
+        ? v
+        : undefined,
+  nonRaceGoal: (v) => {
+    if (v === null) return null;
+    if (!v || typeof v !== "object" || Array.isArray(v)) return undefined;
+    const valid =
+      Number.isInteger(v.target) &&
+      (v.kind === "runs"
+        ? v.target >= 1 && v.target <= 7
+        : v.kind === "minutes" && v.target >= 10 && v.target <= 1200);
+    return valid ? { kind: v.kind, target: v.target } : undefined;
+  },
+  runningBaseline: (v) => {
+    if (v === null) return null;
+    if (!v || typeof v !== "object" || Array.isArray(v)) return undefined;
+    if (
+      v.version !== 1 ||
+      !["building", "returning", "regular"].includes(v.experience) ||
+      !["recorded", "self_reported"].includes(v.source) ||
+      !Number.isInteger(v.weeklyMinutes) ||
+      v.weeklyMinutes < 10 ||
+      v.weeklyMinutes > 1200 ||
+      !Number.isInteger(v.longestRunMinutes) ||
+      v.longestRunMinutes < 10 ||
+      v.longestRunMinutes > 300 ||
+      v.longestRunMinutes > v.weeklyMinutes ||
+      typeof v.confirmedAt !== "string" ||
+      !/^\d{4}-\d{2}-\d{2}$/.test(v.confirmedAt) ||
+      // The client's canonical local-date formatter emits four-digit years.
+      Number(v.confirmedAt.slice(0, 4)) < 1000
+    )
+      return undefined;
+    const date = new Date(v.confirmedAt + "T00:00:00Z");
+    if (
+      !Number.isFinite(date.getTime()) ||
+      date.toISOString().slice(0, 10) !== v.confirmedAt
+    )
+      return undefined;
+    return {
+      version: 1,
+      experience: v.experience,
+      weeklyMinutes: v.weeklyMinutes,
+      longestRunMinutes: v.longestRunMinutes,
+      confirmedAt: v.confirmedAt,
+      source: v.source,
+    };
+  },
+  runTimeLimits: (v) => {
+    if (v === null) return null;
+    if (!v || typeof v !== "object" || Array.isArray(v)) return undefined;
+    const valid = (minutes) =>
+      minutes === null ||
+      (Number.isInteger(minutes) && minutes >= 30 && minutes <= 150);
+    if (!valid(v.sessionMinutes) || !valid(v.longRunMinutes)) return undefined;
+    return {
+      sessionMinutes: v.sessionMinutes,
+      longRunMinutes: v.longRunMinutes,
+    };
+  },
   // RUN-EV-02: an explicit null clears the goal (freeform save through
   // configurePlan). cleanObject would silently drop it.
   raceGoal: (v) =>

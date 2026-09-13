@@ -42,7 +42,7 @@ describe("RunFitnessSection", () => {
     expect(screen.getByText("Set your fitness")).toBeInTheDocument();
   });
 
-  it("shows VDOT + personalized paces when a benchmark exists", () => {
+  it("shows VDOT + personalised paces when a benchmark exists", () => {
     renderWith({
       runFitness: {
         benchmark: { distanceM: 5000, timeS: 1200 },
@@ -51,7 +51,7 @@ describe("RunFitnessSection", () => {
         updatedAt: "2026-06-11T00:00:00.000Z",
       },
     });
-    expect(screen.getByText("Personalized paces")).toBeInTheDocument();
+    expect(screen.getByText("Personalised paces")).toBeInTheDocument();
     expect(screen.getByText("Threshold")).toBeInTheDocument();
     expect(screen.getByText(/VDOT/)).toBeInTheDocument();
   });

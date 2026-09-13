@@ -1,3 +1,7 @@
+import {
+  buildTimeBudgetSession,
+  isLiftTimeBudget,
+} from "@/features/program/liftTimeBudget";
 /**
  * Session chooser (PROGRAM-FLEX-01 + PROGRAM-ADAPT-01).
  *
@@ -44,6 +48,7 @@ import {
 import type { WorkoutDay } from "@/features/program/programTypes";
 
 interface ExpressSessionSheetProps {
+  timeBudgetMinutes?: number | null;
   open: boolean;
   day: WorkoutDay | null;
   /** Pure recommendation computed by the caller from existing signals
@@ -78,6 +83,7 @@ export default function ExpressSessionSheet({
   lighterDay = null,
   onSwapToDay,
   blockPrefersShorter = false,
+  timeBudgetMinutes,
 }: ExpressSessionSheetProps) {
   if (!day) return null;
 
@@ -108,6 +114,20 @@ export default function ExpressSessionSheet({
       onSelect: async () => onStart(variant),
     };
   });
+
+  if (isLiftTimeBudget(timeBudgetMinutes)) {
+    const usual = buildTimeBudgetSession(day, timeBudgetMinutes);
+    choices.forEach((choice) => {
+      choice.variant = "secondary";
+    });
+    choices.unshift({
+      id: "time_budget",
+      label: `Usual session · ~${usual.estimatedMinutes} min`,
+      sublabel: summarizeTrim(usual.trim),
+      variant: "primary",
+      onSelect: async () => onStart("time_budget"),
+    });
+  }
 
   // Always offered (PROGRAM-ADAPT-01) — same exercises, reduced.
   const easierPlan = buildEasierSession(day);
@@ -142,9 +162,11 @@ export default function ExpressSessionSheet({
       onClose={onClose}
       title="How do you want to train today?"
       description={
-        promote
-          ? "Your block is running lighter sessions, so the short one is first. The full plan is still here whenever you want it."
-          : "Full plan is the default. Short on time or feeling beat up — pick the honest version. Your programme doesn't change."
+        isLiftTimeBudget(timeBudgetMinutes)
+          ? "Your usual session is first. You can choose the full plan or another version today."
+          : promote
+            ? "Your block is running lighter sessions, so the short one is first. The full plan is still here whenever you want it."
+            : "Full plan is the default. Short on time or feeling beat up — pick the honest version. Your programme doesn't change."
       }
       choices={choices}
       logTag="sessionChooser"

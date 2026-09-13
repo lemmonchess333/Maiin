@@ -39,7 +39,7 @@ export interface ProgramEventMetadata {
   ratedCount?: number;
   /** A6: which nudge signal fired (user-authored vs measured), and the
    *  trigger-agnostic evidence counts. */
-  trigger?: "harder_ratings" | "pace_misses" | null;
+  trigger?: "harder_ratings" | "pace_misses" | "short_sessions" | null;
   count?: number;
   total?: number;
 }

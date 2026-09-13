@@ -74,7 +74,10 @@ function seedCacheDoc(data: unknown): void {
  *  translation of the old `mockDocData = null` would produce. */
 function seedProgram(data: unknown): void {
   if (data == null) return;
-  seedFirestore({ [PROGRAM]: data as Record<string, unknown> });
+  seedFirestore({
+    "users/test-user-1": mockProfile ?? {},
+    [PROGRAM]: data as Record<string, unknown>,
+  });
 }
 
 /**
@@ -98,14 +101,10 @@ function markWrites(): void {
  *  path, and `ref.path` is available for anything that wants to be
  *  unambiguous about which collection was written. */
 const setDocCalls = () => {
-  // Exclude writes that arrived inside a batch. The old stub kept batch
-  // sets in their own array, so `setDocCalls` meant "direct setDoc only";
-  // the fake logs both, and counting them together silently doubles
-  // every assertion on a path that is written both ways.
-  const batched = new Set(batchLog().flat());
+  // Week transitions now commit in transactions. Count the actual programme
+  // mutations regardless of transport; batchCommits still proves atomicity.
   return writeLog()
     .slice(writeMark)
-    .filter((w) => !batched.has(w))
     .filter((w) => w.op.startsWith("set") && w.path === PROGRAM)
     .map((w) => ({
       ref: { path: w.path, __id: w.path.split("/").pop() },
@@ -118,6 +117,7 @@ const setDocCalls = () => {
 const batchCommits = () =>
   batchLog()
     .slice(batchMark)
+    .filter((writes) => writes.some((w) => w.path.includes("/workouts/")))
     .map((b) =>
       b.map((w) => ({
         ref: { path: w.path, __id: w.path.split("/").pop() },
@@ -134,6 +134,7 @@ vi.mock("@/lib/firebase", () => ({
 
 import {
   seedFirestore,
+  readDoc,
   resetFirestore,
   seedCache,
   writeLog,
@@ -308,7 +309,7 @@ describe("PR-0b-ii — useProgram writers swap V1 → V2", () => {
     mockProfile = structuredProfile();
     resetFirestore(); // no existing programState doc
 
-    const { result } = renderHook(() => useProgram());
+    const { result } = mountProgram();
 
     await waitFor(() => expect(result.current.loading).toBe(false), {
       timeout: 2000,
@@ -324,7 +325,7 @@ describe("PR-0b-ii — useProgram writers swap V1 → V2", () => {
     expect(lastWrite.runDays).toBeUndefined();
 
     // runMode is migrated structured → freeform.
-    expect(mockUpdateProfile).toHaveBeenCalledWith({ runMode: "freeform" });
+    expect(readDoc("users/test-user-1")).toMatchObject({ runMode: "freeform" });
   });
 
   it("race-prep initial creation writes compressed flag on runPlan", async () => {
@@ -335,7 +336,7 @@ describe("PR-0b-ii — useProgram writers swap V1 → V2", () => {
     mockProfile = raceProfile(targetDate);
     resetFirestore();
 
-    const { result } = renderHook(() => useProgram());
+    const { result } = mountProgram();
     await waitFor(() => expect(result.current.loading).toBe(false), {
       timeout: 2000,
     });
@@ -373,7 +374,7 @@ describe("PR-0b-ii — useProgram writers swap V1 → V2", () => {
       },
     } as ProgramState);
 
-    const { result } = renderHook(() => useProgram());
+    const { result } = mountProgram();
     await waitFor(() => expect(result.current.loading).toBe(false), {
       timeout: 2000,
     });
@@ -434,7 +435,7 @@ describe("PR-0b-ii — useProgram writers swap V1 → V2", () => {
       },
     } as ProgramState);
 
-    const { result } = renderHook(() => useProgram());
+    const { result } = mountProgram();
     await waitFor(() => expect(result.current.loading).toBe(false), {
       timeout: 2000,
     });
@@ -484,7 +485,7 @@ describe("PR-0b-ii — useProgram writers swap V1 → V2", () => {
       },
     } as ProgramState);
 
-    const { result } = renderHook(() => useProgram());
+    const { result } = mountProgram();
     await waitFor(() => expect(result.current.loading).toBe(false), {
       timeout: 2000,
     });
@@ -534,13 +535,13 @@ describe("PR-0b-ii — useProgram writers swap V1 → V2", () => {
       runPlan: { mode: "structured" },
     } as ProgramState);
 
-    const { result } = renderHook(() => useProgram());
+    const { result } = mountProgram();
     await waitFor(() => expect(result.current.loading).toBe(false), {
       timeout: 2000,
     });
 
     // runMode migrated structured → freeform.
-    expect(mockUpdateProfile).toHaveBeenCalledWith({ runMode: "freeform" });
+    expect(readDoc("users/test-user-1")).toMatchObject({ runMode: "freeform" });
     // The wipe write cleared the orphaned structured runDays to []. (Assert a
     // wipe write exists rather than the LAST write: the migration's
     // updateProfile triggers a re-render whose second load pass reads the
@@ -588,7 +589,7 @@ describe("PR-0b-ii — useProgram writers swap V1 → V2", () => {
       },
     } as ProgramState);
 
-    const { result } = renderHook(() => useProgram());
+    const { result } = mountProgram();
     await waitFor(() => expect(result.current.loading).toBe(false), {
       timeout: 2000,
     });
@@ -636,7 +637,7 @@ describe("PR-0b-ii — useProgram writers swap V1 → V2", () => {
       runPlan: { mode: "race_prep" },
     } as ProgramState);
 
-    const { result } = renderHook(() => useProgram());
+    const { result } = mountProgram();
     await waitFor(() => expect(result.current.loading).toBe(false), {
       timeout: 2000,
     });
@@ -695,7 +696,7 @@ describe("PR-0b-ii — useProgram writers swap V1 → V2", () => {
       trainingBlock: block,
     } as ProgramState);
 
-    const { result } = renderHook(() => useProgram());
+    const { result } = mountProgram();
     await waitFor(() => expect(result.current.loading).toBe(false), {
       timeout: 2000,
     });
@@ -727,7 +728,7 @@ describe("PR-0b-ii — useProgram writers swap V1 → V2", () => {
       runPlan: { mode: "race_prep" },
     } as ProgramState);
 
-    const { result } = renderHook(() => useProgram());
+    const { result } = mountProgram();
     await waitFor(() => expect(result.current.loading).toBe(false), {
       timeout: 2000,
     });
@@ -794,7 +795,7 @@ describe("PR-0b-iii — legacy completed:true is not treated as planned", () => 
       runPlan: { mode: "structured" },
     } as ProgramState);
 
-    const { result } = renderHook(() => useProgram());
+    const { result } = mountProgram();
     await waitFor(() => expect(result.current.loading).toBe(false), {
       timeout: 2000,
     });
@@ -865,7 +866,7 @@ describe("Run9 phase-3 — realign carries completions across regen", () => {
       },
     } as ProgramState);
 
-    const { result } = renderHook(() => useProgram());
+    const { result } = mountProgram();
     await waitFor(() => expect(result.current.loading).toBe(false));
 
     await act(async () => {
@@ -951,7 +952,7 @@ describe("PR-1 — overrideRunDay accepts string id and number dayIndex", () => 
       runPlan: { mode: "structured" },
     } as ProgramState);
 
-    const { result } = renderHook(() => useProgram());
+    const { result } = mountProgram();
     await waitFor(() => expect(result.current.loading).toBe(false), {
       timeout: 2000,
     });
@@ -987,7 +988,7 @@ describe("PR-1 — overrideRunDay accepts string id and number dayIndex", () => 
       runPlan: { mode: "structured" },
     } as ProgramState);
 
-    const { result } = renderHook(() => useProgram());
+    const { result } = mountProgram();
     await waitFor(() => expect(result.current.loading).toBe(false), {
       timeout: 2000,
     });
@@ -1029,7 +1030,7 @@ describe("PR-1 — overrideRunDay accepts string id and number dayIndex", () => 
       runPlan: { mode: "structured" },
     } as ProgramState);
 
-    const { result } = renderHook(() => useProgram());
+    const { result } = mountProgram();
     await waitFor(() => expect(result.current.loading).toBe(false), {
       timeout: 2000,
     });
@@ -1147,7 +1148,7 @@ describe("PR-B — refreshRunSchedule replaces runDays on race_prep → structur
       },
     } as ProgramState);
 
-    const { result } = renderHook(() => useProgram());
+    const { result } = mountProgram();
     await waitFor(() => expect(result.current.loading).toBe(false), {
       timeout: 2000,
     });
@@ -1193,8 +1194,8 @@ describe("PR-B — refreshRunSchedule replaces runDays on race_prep → structur
       {
         id: "LEGACY_STRUCTURED_easy_marker",
         dayIndex: 2,
-        date: "2026-05-19",
-        weekKey: "2026-05-17",
+        date: localDateString(),
+        weekKey: localWeekKey(),
         templateId: "easy_30",
         type: "easy",
         status: "planned",
@@ -1216,7 +1217,7 @@ describe("PR-B — refreshRunSchedule replaces runDays on race_prep → structur
       runPlan: { mode: "structured" },
     } as ProgramState);
 
-    const { result } = renderHook(() => useProgram());
+    const { result } = mountProgram();
     await waitFor(() => expect(result.current.loading).toBe(false), {
       timeout: 2000,
     });
@@ -1298,7 +1299,7 @@ describe("PR-L L5 — useProgram does NOT write race_no_show client-side", () =>
       },
     } as ProgramState);
 
-    const { result } = renderHook(() => useProgram());
+    const { result } = mountProgram();
     await waitFor(() => expect(result.current.loading).toBe(false), {
       timeout: 2000,
     });
@@ -1358,7 +1359,7 @@ describe("PR-E — recovery phase emits all easy_30 templates", () => {
       },
     } as ProgramState);
 
-    const { result } = renderHook(() => useProgram());
+    const { result } = mountProgram();
     await waitFor(() => expect(result.current.loading).toBe(false), {
       timeout: 2000,
     });
@@ -1416,7 +1417,7 @@ describe("PR-E — recovery phase emits all easy_30 templates", () => {
       },
     } as ProgramState);
 
-    const { result } = renderHook(() => useProgram());
+    const { result } = mountProgram();
     await waitFor(() => expect(result.current.loading).toBe(false), {
       timeout: 2000,
     });
@@ -1490,7 +1491,7 @@ describe("PR-E — recovery phase emits all easy_30 templates", () => {
       },
     } as ProgramState);
 
-    const { result } = renderHook(() => useProgram());
+    const { result } = mountProgram();
     await waitFor(() => expect(result.current.loading).toBe(false), {
       timeout: 2000,
     });
@@ -1548,7 +1549,7 @@ describe("PR-E — recovery phase emits all easy_30 templates", () => {
       },
     } as ProgramState);
 
-    const { result } = renderHook(() => useProgram());
+    const { result } = mountProgram();
     await waitFor(() => expect(result.current.loading).toBe(false), {
       timeout: 2000,
     });
@@ -1628,7 +1629,7 @@ describe("PR-G — auto-rollover on calendar-week change", () => {
       },
     } as ProgramState);
 
-    const { result } = renderHook(() => useProgram());
+    const { result } = mountProgram();
     await waitFor(() => expect(result.current.loading).toBe(false), {
       timeout: 2000,
     });
@@ -1688,7 +1689,7 @@ describe("PR-G — auto-rollover on calendar-week change", () => {
       runPlan: { mode: "structured" },
     } as ProgramState);
 
-    const { result } = renderHook(() => useProgram());
+    const { result } = mountProgram();
     await waitFor(() => expect(result.current.loading).toBe(false), {
       timeout: 2000,
     });
@@ -1715,7 +1716,7 @@ describe("PR-G — auto-rollover on calendar-week change", () => {
       runPlan: { mode: "structured" },
     } as ProgramState);
 
-    const { result } = renderHook(() => useProgram());
+    const { result } = mountProgram();
     await waitFor(() => expect(result.current.loading).toBe(false), {
       timeout: 2000,
     });
@@ -1750,7 +1751,7 @@ describe("cache-first paint (cold-open latency)", () => {
     deferReads();
     mockProfile = structuredProfile({ runMode: "freeform" });
 
-    const { result } = renderHook(() => useProgram());
+    const { result } = mountProgram();
 
     await waitFor(() => expect(result.current.loading).toBe(false), {
       timeout: 2000,
@@ -1765,7 +1766,7 @@ describe("cache-first paint (cold-open latency)", () => {
     resetFirestore(); // no server doc either → initial-creation path
     mockProfile = structuredProfile({ runMode: "freeform" });
 
-    const { result } = renderHook(() => useProgram());
+    const { result } = mountProgram();
 
     await waitFor(() => expect(result.current.loading).toBe(false), {
       timeout: 2000,
@@ -1793,6 +1794,7 @@ describe("packet 15 — completeWorkoutDay atomic batch", () => {
       workouts: [
         {
           dayName: "Push",
+          dayType: "upper",
           completed: false,
           skipped: false,
           exercises: [
@@ -1828,11 +1830,43 @@ describe("packet 15 — completeWorkoutDay atomic batch", () => {
     setLogs: [[{ weight: 100, reps: 5, completed: true }]],
   });
 
+  it("saves the session's original prescription while progression advances its next target", async () => {
+    seedProgramWithDay();
+    const { result } = mountProgram();
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    const original = structuredClone(
+      result.current.programState!.workouts[0].exercises
+    );
+    await act(async () => {
+      await result.current.completeWorkoutDay(0, {
+        ...session("prescription"),
+        prescription: { exercises: original, progressionBaseline: original },
+        setLogs: [
+          Array.from({ length: 3 }, () => ({
+            weight: 100,
+            reps: 5,
+            completed: true,
+          })),
+        ],
+      });
+    });
+    const saved = readDoc("users/test-user-1/workouts/programme-prescription")!;
+    expect((saved.exercises as any[])[0].sets).toHaveLength(3);
+    expect((saved.exercises as any[])[0].sets[0]).toMatchObject({
+      weightKg: 100,
+      plannedWeightKg: 100,
+      plannedReps: 5,
+    });
+    expect(
+      result.current.programState!.workouts[0].exercises[0].weight
+    ).toBeGreaterThan(100);
+  });
+
   it("returns an observable failed receipt for an offline rejection", async () => {
     const online = vi.spyOn(navigator, "onLine", "get").mockReturnValue(false);
     try {
       seedProgramWithDay();
-      const { result } = renderHook(() => useProgram());
+      const { result } = mountProgram();
       await waitFor(() => expect(result.current.loading).toBe(false));
       failNextFirestore("commit");
       await act(async () => {
@@ -1862,7 +1896,7 @@ describe("packet 15 — completeWorkoutDay atomic batch", () => {
       caption: "",
     });
     seedProgramWithDay(true);
-    const { result } = renderHook(() => useProgram());
+    const { result } = mountProgram();
     await waitFor(() => expect(result.current.loading).toBe(false));
     await act(async () => {
       const receipt = await result.current.completeWorkoutDay(0, {
@@ -1892,7 +1926,7 @@ describe("packet 15 — completeWorkoutDay atomic batch", () => {
 
   it("commits ONE batch writing the programme doc + a deterministic workout id", async () => {
     seedProgramWithDay();
-    const { result } = renderHook(() => useProgram());
+    const { result } = mountProgram();
     await waitFor(() => expect(result.current.loading).toBe(false), {
       timeout: 2000,
     });
@@ -1912,7 +1946,7 @@ describe("packet 15 — completeWorkoutDay atomic batch", () => {
 
   it("Lift3: the workout doc is dated by when the session STARTED, not by Finish", async () => {
     seedProgramWithDay();
-    const { result } = renderHook(() => useProgram());
+    const { result } = mountProgram();
     await waitFor(() => expect(result.current.loading).toBe(false), {
       timeout: 2000,
     });
@@ -1939,7 +1973,7 @@ describe("packet 15 — completeWorkoutDay atomic batch", () => {
     // draft is deleted the moment the workout commits, which made Finish the
     // last point at which they existed anywhere.
     seedProgramWithDay(true);
-    const { result } = renderHook(() => useProgram());
+    const { result } = mountProgram();
     await waitFor(() => expect(result.current.loading).toBe(false), {
       timeout: 2000,
     });
@@ -1966,7 +2000,7 @@ describe("packet 15 — completeWorkoutDay atomic batch", () => {
     // An empty string reads as "there is a note" to every consumer that
     // checks for presence, and would render an empty italic row in history.
     seedProgramWithDay();
-    const { result } = renderHook(() => useProgram());
+    const { result } = mountProgram();
     await waitFor(() => expect(result.current.loading).toBe(false), {
       timeout: 2000,
     });
@@ -1988,7 +2022,7 @@ describe("packet 15 — completeWorkoutDay atomic batch", () => {
   it("a session with no notes writes no notes field", async () => {
     // The overwhelming majority of sessions, and every pre-existing one.
     seedProgramWithDay();
-    const { result } = renderHook(() => useProgram());
+    const { result } = mountProgram();
     await waitFor(() => expect(result.current.loading).toBe(false), {
       timeout: 2000,
     });
@@ -2006,7 +2040,7 @@ describe("packet 15 — completeWorkoutDay atomic batch", () => {
 
   it("a rejected commit throws and does NOT mark the day completed locally", async () => {
     seedProgramWithDay();
-    const { result } = renderHook(() => useProgram());
+    const { result } = mountProgram();
     await waitFor(() => expect(result.current.loading).toBe(false), {
       timeout: 2000,
     });
@@ -2024,7 +2058,7 @@ describe("packet 15 — completeWorkoutDay atomic batch", () => {
 
   it("persists sessionVariant on the PRIVATE workout doc — easier_today saves truthfully (PROGRAM-ADAPT-01)", async () => {
     seedProgramWithDay();
-    const { result } = renderHook(() => useProgram());
+    const { result } = mountProgram();
     await waitFor(() => expect(result.current.loading).toBe(false), {
       timeout: 2000,
     });
@@ -2066,7 +2100,7 @@ describe("packet 15 — completeWorkoutDay atomic batch", () => {
 
   it("a retry with the same completionId targets the same workout doc (idempotent)", async () => {
     seedProgramWithDay();
-    const { result } = renderHook(() => useProgram());
+    const { result } = mountProgram();
     await waitFor(() => expect(result.current.loading).toBe(false), {
       timeout: 2000,
     });
@@ -2119,7 +2153,7 @@ describe("PROGRAM-SESSION-ORDER-01 — setNextWorkout writer contract", () => {
   }
 
   async function mount() {
-    const { result } = renderHook(() => useProgram());
+    const { result } = mountProgram();
     await waitFor(() => expect(result.current.loading).toBe(false), {
       timeout: 2000,
     });
@@ -2218,7 +2252,7 @@ describe("RUN-RACE-GUARD-01 — race identity is immutable in the writers", () =
 
   it("overrideRunDay refuses to swap a scheduled race (no write)", async () => {
     seedRaceDay();
-    const { result } = renderHook(() => useProgram());
+    const { result } = mountProgram();
     await waitFor(() => expect(result.current.loading).toBe(false), {
       timeout: 2000,
     });
@@ -2233,7 +2267,7 @@ describe("RUN-RACE-GUARD-01 — race identity is immutable in the writers", () =
 
   it("markManualComplete refuses a scheduled race (no write)", async () => {
     seedRaceDay();
-    const { result } = renderHook(() => useProgram());
+    const { result } = mountProgram();
     await waitFor(() => expect(result.current.loading).toBe(false), {
       timeout: 2000,
     });
@@ -2288,7 +2322,7 @@ describe("SESSION-RESTORE-01 — restore writers reverse a skip", () => {
   it("restoreRunDay: skipped → planned, completed:false, no manual-completion key", async () => {
     mockProfile = raceProfile("2099-09-15");
     seedProgram(stateWith([skippedRunDay("skipped")]));
-    const { result } = renderHook(() => useProgram());
+    const { result } = mountProgram();
     await waitFor(() => expect(result.current.loading).toBe(false), {
       timeout: 2000,
     });
@@ -2315,7 +2349,7 @@ describe("SESSION-RESTORE-01 — restore writers reverse a skip", () => {
   it("restoreRunDay: race_no_show → planned", async () => {
     mockProfile = raceProfile("2099-09-15");
     seedProgram(stateWith([skippedRunDay("race_no_show")]));
-    const { result } = renderHook(() => useProgram());
+    const { result } = mountProgram();
     await waitFor(() => expect(result.current.loading).toBe(false), {
       timeout: 2000,
     });
@@ -2347,7 +2381,7 @@ describe("SESSION-RESTORE-01 — restore writers reverse a skip", () => {
         } as ScheduledRunDay,
       ])
     );
-    const { result } = renderHook(() => useProgram());
+    const { result } = mountProgram();
     await waitFor(() => expect(result.current.loading).toBe(false), {
       timeout: 2000,
     });
@@ -2376,7 +2410,7 @@ describe("SESSION-RESTORE-01 — restore writers reverse a skip", () => {
         ]
       )
     );
-    const { result } = renderHook(() => useProgram());
+    const { result } = mountProgram();
     await waitFor(() => expect(result.current.loading).toBe(false), {
       timeout: 2000,
     });
@@ -2415,7 +2449,7 @@ describe("SESSION-RESTORE-01 — restore writers reverse a skip", () => {
         ]
       )
     );
-    const { result } = renderHook(() => useProgram());
+    const { result } = mountProgram();
     await waitFor(() => expect(result.current.loading).toBe(false), {
       timeout: 2000,
     });
@@ -2474,7 +2508,7 @@ describe("RUN-RESCHEDULE-01 — moveRunDay", () => {
   ) {
     mockProfile = raceProfile("2099-09-15");
     seedProgram(stateWith(runDays));
-    const { result } = renderHook(() => useProgram());
+    const { result } = mountProgram();
     await waitFor(() => expect(result.current.loading).toBe(false), {
       timeout: 2000,
     });
@@ -2603,7 +2637,7 @@ describe("auto week-rollover for a freeform lifter (D1)", () => {
     resetFirestore();
     seedProgram(frozenLifter(staleKey()));
 
-    const { result } = renderHook(() => useProgram());
+    const { result } = mountProgram();
     await waitFor(() => expect(result.current.loading).toBe(false), {
       timeout: 2000,
     });
@@ -2637,7 +2671,7 @@ describe("auto week-rollover for a freeform lifter (D1)", () => {
     resetFirestore();
     seedProgram(frozenLifter(localWeekKey()));
 
-    const { result } = renderHook(() => useProgram());
+    const { result } = mountProgram();
     await waitFor(() => expect(result.current.loading).toBe(false), {
       timeout: 2000,
     });
@@ -2656,7 +2690,7 @@ describe("auto week-rollover for a freeform lifter (D1)", () => {
     resetFirestore();
     seedProgram(frozenLifter(undefined));
 
-    const { result } = renderHook(() => useProgram());
+    const { result } = mountProgram();
     await waitFor(() => expect(result.current.loading).toBe(false), {
       timeout: 2000,
     });
@@ -2683,7 +2717,7 @@ describe("per-set evidence survives the save (D2)", () => {
     mockProfile = structuredProfile({ runMode: "freeform" });
     resetFirestore();
 
-    const { result } = renderHook(() => useProgram());
+    const { result } = mountProgram();
     await waitFor(() => expect(result.current.loading).toBe(false), {
       timeout: 2000,
     });
@@ -2744,3 +2778,8 @@ describe("per-set evidence survives the save (D2)", () => {
     });
   });
 });
+
+function mountProgram() {
+  seedFirestore({ "users/test-user-1": mockProfile ?? {} });
+  return renderHook(() => useProgram());
+}
