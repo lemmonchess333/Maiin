@@ -393,6 +393,15 @@ describe("Upgrade — where 'not now' goes", () => {
     );
   });
 
+  it("checkout from the trial-ended prompt is attributed to it", async () => {
+    purchaseMock.mockResolvedValueOnce({ success: true });
+    renderPage("/upgrade?from=trial_end");
+    fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+    fireEvent.click(screen.getByRole("button", { name: /Start Pro/ }));
+    await waitFor(() => expect(purchaseMock).toHaveBeenCalledTimes(1));
+    expect(purchaseMock.mock.calls[0][3]?.source).toBe("trial_end");
+  });
+
   it("checkout from the Food entry is attributed to the Food page", async () => {
     purchaseMock.mockResolvedValueOnce({ success: true });
     renderPage("/upgrade?from=food");

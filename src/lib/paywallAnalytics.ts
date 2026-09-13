@@ -43,6 +43,8 @@ export type PaywallSource =
   | "onboarding"
   /** The Food page's photo-logging strip (gated tier). */
   | "food_page"
+  /** Home's one-time prompt when the trial lapses. */
+  | "trial_end"
   | "unknown";
 
 export interface PaywallEventMetadata {
