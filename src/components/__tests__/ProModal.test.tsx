@@ -187,6 +187,19 @@ describe("ProModal — feature-specific hero", () => {
     expect(screen.queryByText("Detected: Chicken & rice bowl")).toBeNull();
   });
 
+  it.each(["adaptive_tdee", "adaptive_macros"] as const)(
+    "the %s gate shows the adaptive target, not just a tagline",
+    (featureKey) => {
+      renderModal({ onClose: vi.fn(), featureKey });
+      expect(
+        screen.getByRole("img", { name: /^Sample: a calorie target/ })
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByRole("img", { name: /^Sample: a meal photo/ })
+      ).toBeNull();
+    }
+  );
+
   it("renders the registry's title for featureKey='adaptive_tdee'", () => {
     renderModal({ onClose: () => {}, featureKey: "adaptive_tdee" });
     // Visible hero h2 should match the registry's `title` value —

@@ -10,6 +10,7 @@
 import { describe, it, expect, afterEach } from "vitest";
 import { render, screen, cleanup } from "@testing-library/react";
 import ProPreview from "../ProPreview";
+import { framesForFeature } from "../previewFrames";
 
 afterEach(cleanup);
 
@@ -50,5 +51,20 @@ describe("ProPreview", () => {
       expect(el!.className).toContain("font-mono");
       expect(el!.className).toContain("tabular-nums");
     }
+  });
+
+  it("frame order follows the feature that brought the user, and never invents one", () => {
+    expect(framesForFeature("ai_food_logging")).toEqual(["scan", "target"]);
+    expect(framesForFeature("adaptive_tdee")).toEqual(["target", "scan"]);
+    expect(framesForFeature("adaptive_macros")).toEqual(["target", "scan"]);
+    expect(framesForFeature(undefined)).toEqual(["scan", "target"]);
+    expect(framesForFeature(null)).toEqual(["scan", "target"]);
+  });
+
+  it("renders the frames in the order asked", () => {
+    render(<ProPreview frames={["target", "scan"]} />);
+    const frames = screen.getAllByRole("img");
+    expect(frames[0].getAttribute("aria-label")).toMatch(/calorie target/);
+    expect(frames[1].getAttribute("aria-label")).toMatch(/meal photo/);
   });
 });

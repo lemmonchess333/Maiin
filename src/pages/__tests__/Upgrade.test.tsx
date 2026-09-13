@@ -313,6 +313,22 @@ describe("Upgrade — the offer beat (what the page opens on)", () => {
     ).toBeInTheDocument();
   });
 
+  it("from onboarding, the offer acknowledges the plan just made", () => {
+    renderPage("/upgrade?from=onboarding");
+    expect(screen.getByText(/^Your plan is ready\./)).toBeInTheDocument();
+    expect(screen.queryByText(/^Pro reads the plate/)).toBeNull();
+  });
+
+  it("the rail leads with the scan from Food and from the plain entry alike", () => {
+    renderPage("/upgrade?from=food");
+    let frames = screen.getAllByRole("img");
+    expect(frames[0].getAttribute("aria-label")).toMatch(/meal photo/);
+    cleanup();
+    renderPage();
+    frames = screen.getAllByRole("img");
+    expect(frames[0].getAttribute("aria-label")).toMatch(/meal photo/);
+  });
+
   it("carries the legal links on the offer beat too (Guideline 3.1.2)", () => {
     renderPage();
     expect(screen.getByRole("link", { name: "Terms" })).toBeInTheDocument();

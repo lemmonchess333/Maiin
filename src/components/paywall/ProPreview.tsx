@@ -1,28 +1,7 @@
 import { Camera, Check, TrendingDown } from "lucide-react";
 import { THEME } from "@/lib/theme";
 import { cn } from "@/lib/utils";
-
-/**
- * ProPreview — the product, shown doing the thing the paywall sells.
- *
- * The paywall used to sell Pro with a bullet list and a blurred fake
- * card. Every reference paywall (Cal AI, MacroFactor, Runna) leads with
- * the app itself — the scan result, the dashboard — because a runner
- * deciding whether to pay wants to see what they get, not read about it.
- *
- * Two frames, both drawn from tokens rather than screenshots (a PNG
- * rots the moment the real surface changes, and the capture rig cannot
- * be committed into the bundle): the AI scan result, and the adaptive
- * calorie target. Static sample data, clearly a sample — the aria copy
- * says so. Numerals take the numeral font + tabular figures per the
- * design-system invariant.
- *
- * `variant="carousel"` lays the frames out as a horizontal scroll-snap
- * rail (the Cal AI pattern) inside its OWN overflow container, so the
- * page body never scrolls sideways. `variant="single"` renders one frame
- * at full width for the contextual sheet.
- */
-export type ProPreviewFrame = "scan" | "target";
+import type { ProPreviewFrame } from "./previewFrames";
 
 interface Props {
   frames?: ProPreviewFrame[];
