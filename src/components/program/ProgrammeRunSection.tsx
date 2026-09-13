@@ -757,7 +757,7 @@ export default function ProgrammeRunSection({
     parseLocalDate(selectedDateKey),
     "EEE d MMM"
   );
-  // Adaptive Paces: the user's personalized pace for the selected session,
+  // Adaptive Paces: the user's personalised pace for the selected session,
   // surfaced on the command card so the "made for you" pace is visible where
   // the run is started — not just in Settings. Band-first via the shared
   // sessionPaceDisplay rule (mirrors DayActionSheet). Null when there's no

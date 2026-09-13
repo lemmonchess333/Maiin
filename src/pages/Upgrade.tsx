@@ -469,9 +469,9 @@ export default function Upgrade() {
           <div className="text-center space-y-2 pt-2">
             <h1
               id="pro-offer-heading"
-              className="text-h1 font-extrabold text-foreground leading-tight"
+              className="text-h1 font-extrabold text-foreground leading-tight text-balance"
             >
-              Log a meal from a photo.
+              Log a meal from a photo
             </h1>
             <p className="text-sm text-muted-foreground max-w-[340px] mx-auto leading-relaxed">
               {fromOnboarding

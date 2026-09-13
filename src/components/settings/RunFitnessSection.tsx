@@ -20,7 +20,7 @@ import type { UserProfile } from "@/lib/auth";
  * Adaptive Paces — "Your running fitness" settings card.
  *
  * Lets the user set a benchmark (a recent race / time-trial) from which all
- * training paces are derived, and shows the resulting personalized paces. The
+ * training paces are derived, and shows the resulting personalised paces. The
  * benchmark is the locked-decision "ask" capture path (§10); the silent-derive
  * path lives in useRunFitnessAutoDerive. Free tier (paces are free; only the
  * adaptive Pace-Insights loop is Pro).
@@ -152,7 +152,7 @@ export default function RunFitnessSection({
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-semibold text-foreground">
-                  Personalized paces
+                  Personalised paces
                 </p>
                 <p className="text-xs text-muted-foreground">
                   From your{" "}

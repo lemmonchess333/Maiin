@@ -269,7 +269,7 @@ describe("Upgrade — the offer beat (what the page opens on)", () => {
   it("leads with the product, not the price list", () => {
     renderPage();
     expect(
-      screen.getByRole("heading", { name: "Log a meal from a photo." })
+      screen.getByRole("heading", { name: "Log a meal from a photo" })
     ).toBeInTheDocument();
     expect(
       screen.getByRole("group", { name: "What Pro looks like" })
