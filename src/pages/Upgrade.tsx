@@ -68,6 +68,7 @@ import { Button } from "@/components/ui/Button";
 import { PaywallLegalLinks } from "@/components/paywall/PaywallLegalLinks";
 import PlanPicker from "@/components/paywall/PlanPicker";
 import ProPreview from "@/components/paywall/ProPreview";
+import ProDemoVideo from "@/components/paywall/ProDemoVideo";
 import { framesForFeature } from "@/components/paywall/previewFrames";
 
 type Beat = "offer" | "plans";
@@ -472,13 +473,20 @@ export default function Upgrade() {
             </p>
           </div>
 
-          {/* The feature that brought the user leads the rail. Only the Food
+          {/* The recording of the real app when there is one to play; the
+              drawn frames otherwise, and as the poster meanwhile. The
+              feature that brought the user leads the rail. Only the Food
               entry names one today; the contextual sheet (ProModal) covers
               the per-feature gates. */}
-          <ProPreview
-            frames={framesForFeature(
-              source === "food_page" ? "ai_food_logging" : undefined
-            )}
+          <ProDemoVideo
+            label="Sample: Tropos reading a meal photo and filling in the macros, then the calorie target on Home"
+            fallback={
+              <ProPreview
+                frames={framesForFeature(
+                  source === "food_page" ? "ai_food_logging" : undefined
+                )}
+              />
+            }
           />
 
           {withTrial ? (

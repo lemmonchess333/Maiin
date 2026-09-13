@@ -218,6 +218,12 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
+  // Video is the browser's, not the worker's. A <video> fetches with a
+  // Range header and expects a 206 back; a cached 200 body handed to a
+  // Range request is what makes Safari refuse to play at all. The
+  // browser's own HTTP cache handles repeat visits.
+  if (url.pathname.match(/\.(mp4|webm)$/)) return;
+
   // Stale-while-revalidate for fonts and images
   if (url.pathname.match(/\.(woff2?|ttf|otf|png|jpe?g|gif|svg|webp|ico|avif)$/)) {
     event.respondWith(
