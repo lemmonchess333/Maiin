@@ -51,7 +51,6 @@ import { initializeApp, getApps } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
 import { getFirestore, FieldValue } from "firebase-admin/firestore";
 import { assertEmulatorEnvOrExit } from "../e2e/helpers/emulator";
-import { CURRENT_WEEKSCHEDULE_VERSION } from "../src/features/program/programTypes";
 
 // Single source of truth for "is this an emulator session?". The
 // helper reads firebase.json so the expected hosts stay in lockstep
@@ -126,7 +125,10 @@ async function ensureProfile(uid: string): Promise<void> {
     // whose slot order leaves SUNDAY as the rest day, and the "tomorrow is
     // rest" intent never held: every Sunday the seeded user woke up on a
     // rest day and Home's Today's training had no CTA to find.
-    weekScheduleVersion: CURRENT_WEEKSCHEDULE_VERSION,
+    // Literal rather than the `CURRENT_WEEKSCHEDULE_VERSION` import:
+    // programTypes pulls `@/`-aliased modules tsx cannot resolve from a
+    // seed. `homeTrainingRecovery.auth.spec.ts` stamps the same literal.
+    weekScheduleVersion: 1,
     weeklyMealsTarget: 10,
     preferredWeightUnit: "kg",
     preferredHeightUnit: "cm",
