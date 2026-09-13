@@ -1,3 +1,8 @@
+import {
+  plannedRunMinutes,
+  type RunTimeLimits,
+} from "@/features/program/runTimeLimits";
+import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
 /**
  * Race Goal Planner — pure derivation of the pre-save preview shown in the
  * Programme Settings race-prep editor (see RaceGoalPlanner.tsx).
@@ -66,6 +71,8 @@ export interface RaceGoalPlannerInput {
    *  commit, or the previewed week structure drifts from the plan.
    *  Optional (absent → standard) for non-editor callers. */
   tuning?: RunTuning;
+  runTimeLimits?: RunTimeLimits | null;
+  easyPaceSPerKm?: number | null;
 }
 
 export interface RaceGoalPlannerState {
@@ -88,6 +95,8 @@ export interface RaceGoalPlannerState {
   doubleDays: number;
   /** Hard runs (long/tempo/intervals/race) the engine flags as clashing with a lift day, in week 0. */
   hardClashDays: number;
+  timeLimitedRuns: number;
+  firstWeekMinutes: number;
   /** Post-race easy weeks (5k=1, 10k=2, half=3, marathon=4). */
   recoveryWeeks: number;
   compressed: boolean;
@@ -125,6 +134,8 @@ export function getRaceGoalPlannerState(
     recommendedRunDays: weeklyRunDays,
     doubleDays,
     hardClashDays: 0,
+    timeLimitedRuns: 0,
+    firstWeekMinutes: 0,
     recoveryWeeks,
     compressed: false,
     belowFloor: false,
@@ -173,6 +184,8 @@ export function getRaceGoalPlannerState(
     currentDate,
     weekStart,
     tuning: input.tuning,
+    runTimeLimits: input.runTimeLimits,
+    easyPaceSPerKm: input.easyPaceSPerKm,
   });
 
   // Status straight from the engine's own booleans (belowFloor ⊂ compressed).
@@ -223,6 +236,16 @@ export function getRaceGoalPlannerState(
     recommendedRunDays,
     doubleDays,
     hardClashDays,
+    timeLimitedRuns: plan.weeks.flat().filter((run) => run.timeLimit).length,
+    firstWeekMinutes: week0.reduce((total, run) => {
+      const template = RUN_TEMPLATES.find(
+        (candidate) => candidate.id === run.templateId
+      );
+      return (
+        total +
+        (template ? plannedRunMinutes(template, input.easyPaceSPerKm) : 0)
+      );
+    }, 0),
     recoveryWeeks,
     compressed: plan.compressed,
     belowFloor: plan.belowFloor,

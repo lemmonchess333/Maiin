@@ -1,3 +1,4 @@
+import type { RunTimeLimits } from "./runTimeLimits";
 import { commitProgramTransition } from "./programTransition";
 import { ProgrammeConflictError, sameStoredValue } from "./stateTransition";
 import { areRaceRunDaysStale, raceIsInFuture } from "./raceRunDaysReconcile";
@@ -226,6 +227,7 @@ function regenerateRacePlan({
   raceGoal,
   recentLayoff,
   easyPaceSPerKm,
+  runTimeLimits,
   weekSchedule,
   weeklyRunDays,
   currentDate,
@@ -258,6 +260,7 @@ function regenerateRacePlan({
    *  it would silently revert a benchmarked runner's long-run ceiling to the
    *  nominal table on the next weekly refresh. */
   easyPaceSPerKm: number | null;
+  runTimeLimits: RunTimeLimits | null;
   carry?: {
     currentWeek?: number;
     totalWeeks?: number;
@@ -297,6 +300,7 @@ function regenerateRacePlan({
     tuning,
     recentLayoff,
     easyPaceSPerKm,
+    runTimeLimits,
     // The block's original length, so the generator emits the week for where
     // the runner actually IS rather than week 0 of a fresh block. Without it
     // `weeks[0]` — the only week any caller persists — is always a base week,
@@ -533,7 +537,8 @@ export function useProgram() {
           const runs = regenerateRacePlan({
             recentLayoff: layoff,
             tuning: runTuningFromProfile(profile),
-            easyPaceSPerKm: planningEasyPaceSPerKm(profile.runFitness),
+            easyPaceSPerKm: planningEasyPaceSPerKm(profile?.runFitness),
+            runTimeLimits: profile?.runTimeLimits ?? null,
             raceGoal: profile.raceGoal,
             weekSchedule,
             weeklyRunDays: runTarget,
@@ -622,6 +627,8 @@ export function useProgram() {
             tuning: runTuningFromProfile(profile),
 
             easyPaceSPerKm: planningEasyPaceSPerKm(profile?.runFitness),
+
+            runTimeLimits: profile?.runTimeLimits ?? null,
             raceGoal: profile.raceGoal,
             weekSchedule,
             weeklyRunDays: runTarget,
@@ -1004,6 +1011,8 @@ export function useProgram() {
           tuning: runTuningFromProfile(profile),
 
           easyPaceSPerKm: planningEasyPaceSPerKm(profile?.runFitness),
+
+          runTimeLimits: profile?.runTimeLimits ?? null,
           raceGoal: profile.raceGoal,
           weekSchedule,
           weeklyRunDays: runTarget,
@@ -1688,6 +1697,8 @@ export function useProgram() {
           tuning: runTuningFromProfile(profile),
 
           easyPaceSPerKm: planningEasyPaceSPerKm(profile?.runFitness),
+
+          runTimeLimits: profile?.runTimeLimits ?? null,
           raceGoal: profile.raceGoal,
           weekSchedule,
           weeklyRunDays: runTarget,
@@ -2501,6 +2512,8 @@ export function useProgram() {
             tuning: runTuningFromProfile(profile),
 
             easyPaceSPerKm: planningEasyPaceSPerKm(profile?.runFitness),
+
+            runTimeLimits: profile?.runTimeLimits ?? null,
             raceGoal: profile.raceGoal,
             weekSchedule: effectiveSchedule,
             weeklyRunDays: runTarget,
@@ -2661,6 +2674,8 @@ export function useProgram() {
           tuning: overrides?.tuning ?? runTuningFromProfile(profile),
 
           easyPaceSPerKm: planningEasyPaceSPerKm(profile?.runFitness),
+
+          runTimeLimits: profile?.runTimeLimits ?? null,
           raceGoal: profile.raceGoal,
           weekSchedule,
           weeklyRunDays: runTarget,
@@ -3586,6 +3601,8 @@ export function useProgram() {
       tuning: runTuningFromProfile(profile),
 
       easyPaceSPerKm: planningEasyPaceSPerKm(profile?.runFitness),
+
+      runTimeLimits: profile?.runTimeLimits ?? null,
       raceGoal: profile.raceGoal,
       weekSchedule: profile.weekSchedule ?? [],
       weeklyRunDays: getWeeklyRunTarget(profile) || 3,

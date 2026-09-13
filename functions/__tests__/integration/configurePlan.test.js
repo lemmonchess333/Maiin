@@ -194,6 +194,20 @@ suite("configurePlan — emulator integration", () => {
     await clearTestUserState();
   });
 
+  it("stores recurring availability with its plan and clears it explicitly", async () => {
+    const user = db.collection("users").doc(TEST_UID);
+    await user.set({ ...validProfileUpdates(), runTimeLimits: { sessionMinutes: 90, longRunMinutes: 120 } });
+    const programState = validProgramState();
+    programState.runDays = [{ id: "time-fit", dayIndex: 0, date: "2026-09-13", weekKey: "2026-09-07", templateId: "long_8k", type: "long", status: "planned", timeLimit: { minutes: 45, originalTemplateId: "long_12k" } }];
+    const limits = { sessionMinutes: 30, longRunMinutes: 45 };
+    await configurePlan.run({ profileUpdates: { ...validProfileUpdates(), runTimeLimits: limits }, programState, weekSchedule: validWeekSchedule() }, { auth: { uid: TEST_UID } });
+    expect((await user.get()).data().runTimeLimits).toEqual(limits);
+    expect((await user.collection("programState").doc("current").get()).data().runDays[0].timeLimit).toEqual({ minutes: 45, originalTemplateId: "long_12k" });
+    await db.collection("rateLimits").doc(`${TEST_UID}_configurePlan`).delete();
+    await configurePlan.run({ profileUpdates: { ...validProfileUpdates(), runTimeLimits: null }, programState, weekSchedule: validWeekSchedule() }, { auth: { uid: TEST_UID } });
+    expect((await user.get()).data().runTimeLimits).toBeNull();
+  });
+
   it("rejects payload missing programSchemaVersion (invalid-argument)", async () => {
     const ps = validProgramState();
     delete ps.programSchemaVersion;

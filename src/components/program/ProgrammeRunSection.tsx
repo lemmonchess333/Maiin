@@ -1,4 +1,4 @@
-import RunPurpose from "@/components/run/RunPurpose";
+import RunPlanPurpose from "@/components/run/RunPlanPurpose";
 /**
  * Programme Run tab — hybrid training cockpit.
  *
@@ -1487,7 +1487,7 @@ export default function ProgrammeRunSection({
                     setManageDate(selectedDateKey);
                   }}
                 />
-                <RunPurpose>{selectedPurpose.purpose}</RunPurpose>
+                <RunPlanPurpose purpose={selectedPurpose.purpose} run={selectedRun.runDay} runDays={runDays} />
                 {/* Secondary: an ad-hoc run that does NOT fulfil the plan slot. */}
                 <button
                   type="button"

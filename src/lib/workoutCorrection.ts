@@ -12,7 +12,11 @@ import { validateSet } from "./setValidation";
 import { sameStoredValue } from "@/features/program/stateTransition";
 import { applySessionProgression } from "@/features/program/sessionCompletion";
 import type { ProgramState } from "@/features/program/programTypes";
-import { workoutCompletionDayIdentity } from "./workoutCompletion";
+import {
+  workoutCompletionDayIdentity,
+  restoreSessionProgression,
+  storeSessionProgression,
+} from "./workoutCompletion";
 
 export interface WorkoutEdits {
   durationMinutes: number;
@@ -135,7 +139,7 @@ export async function correctSavedWorkout(
     ) {
       const state = program.data() as ProgramState;
       const context = saved.context;
-      const original = saved.context.progression;
+      const original = restoreSessionProgression(saved.context.progression);
       const day = state.workouts[context.dayIndex];
       if (
         sameStoredValue(saved.policy, {
@@ -218,7 +222,10 @@ export async function correctSavedWorkout(
           );
         next.programmeCompletion = {
           ...saved,
-          context: { ...context, progression },
+          context: {
+            ...context,
+            progression: storeSessionProgression(progression),
+          },
           committedExercises: revised.workouts[
             context.dayIndex
           ].exercises.filter((ex) => eligible.has(ex.instanceId)),

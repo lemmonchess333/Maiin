@@ -4,9 +4,40 @@ import type { SessionProgression } from "@/features/program/sessionCompletion";
 import type { ProgramState } from "@/features/program/programTypes";
 
 export interface SavedProgrammeCompletion {
-  context: ProgrammeCompletionContext;
+  context: Omit<ProgrammeCompletionContext, "progression"> & {
+    progression?: StoredSessionProgression;
+  };
   policy: Pick<ProgramState, "goal" | "settings" | "trainingBlock">;
   committedExercises: ProgramState["workouts"][number]["exercises"];
+}
+
+type StoredSessionProgression = Omit<SessionProgression, "setLogs"> & {
+  // Map wrappers avoid Firestore's forbidden array-of-arrays shape. The
+  // array alternative reads pre-release/local fixtures without losing work.
+  setLogs: (
+    | { sets: SessionProgression["setLogs"][number] }
+    | SessionProgression["setLogs"][number]
+  )[];
+};
+
+export function storeSessionProgression(
+  progression: SessionProgression
+): StoredSessionProgression {
+  return {
+    ...progression,
+    setLogs: progression.setLogs.map((sets) => ({ sets })),
+  };
+}
+
+export function restoreSessionProgression(
+  progression: StoredSessionProgression
+): SessionProgression {
+  return {
+    ...progression,
+    setLogs: progression.setLogs.map((row) =>
+      Array.isArray(row) ? row : row.sets
+    ),
+  };
 }
 
 export interface ProgrammeCompletionContext {
@@ -81,7 +112,10 @@ export async function commitWorkoutCompletion(
           : state;
         if (completion.progression)
           programmeCompletion = {
-            context: completion,
+            context: {
+              ...completion,
+              progression: storeSessionProgression(completion.progression),
+            },
             policy: {
               goal: state.goal,
               settings: state.settings,

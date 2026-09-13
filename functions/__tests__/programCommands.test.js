@@ -1174,6 +1174,21 @@ describe("moveRunDay (RUN-RESCHEDULE-01)", () => {
     );
   });
 
+  it("allows a move when the same weekday is occupied only in an older week", () => {
+    const s = weekState();
+    s.runDays[1].date = "2026-02-26";
+    s.runDays[1].weekKey = "2026-02-23";
+    const { state } = apply(move(4), s, { weekSchedule: SCHEDULE });
+    expect(state.runDays[0].date).toBe("2026-03-05");
+    expect(state.runDays[1]).toEqual(s.runDays[1]);
+  });
+
+  it("retains the same-week occupancy guard for undated legacy rows", () => {
+    const s = weekState();
+    delete s.runDays[1].date;
+    expectHttps(() => apply(move(4), s, { weekSchedule: SCHEDULE }), "failed-precondition");
+  });
+
   it("is a no-op when the run is already on that day", () => {
     const { state } = apply(move(2), weekState(), { weekSchedule: SCHEDULE });
     expect(state.runDays[0].date).toBe("2026-03-03");

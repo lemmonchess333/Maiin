@@ -1,3 +1,9 @@
+import {
+  normalizeRunTimeLimits,
+  type RunTimeLimits,
+} from "@/features/program/runTimeLimits";
+import { planningEasyPaceSPerKm } from "@/lib/runPaces";
+import RunAvailabilitySettings from "@/components/run/RunAvailabilitySettings";
 /**
  * RunPlanSettings — the focused, run-ONLY plan editor (Run-Split, 2026-07).
  *
@@ -169,6 +175,7 @@ export default function RunPlanSettings({
       // Pgm6 knobs — missing → standard (same lazy default the engine uses).
       runVolume: runTuningFromProfile(profile).volume,
       runDifficulty: runTuningFromProfile(profile).difficulty,
+      runTimeLimits: normalizeRunTimeLimits(profile.runTimeLimits),
     }),
     [profile]
   );
@@ -229,6 +236,9 @@ export default function RunPlanSettings({
   const [runDifficulty, setRunDifficulty] = useState<RunDifficultyPreset>(
     storedDraft?.runDifficulty ?? saved.runDifficulty
   );
+  const [runTimeLimits, setRunTimeLimits] = useState<RunTimeLimits>(
+    storedDraft?.runTimeLimits ?? saved.runTimeLimits
+  );
   const [saving, setSaving] = useState(false);
   /* Anchors for the "bring the invalid field into view" behaviour below.
      The date input lives inside RaceGoalPlanner, so the section wrapper
@@ -249,6 +259,8 @@ export default function RunPlanSettings({
         weeklyRunDays,
         // Pgm6: preview with the same knobs the save will commit.
         tuning: { volume: runVolume, difficulty: runDifficulty },
+        runTimeLimits,
+        easyPaceSPerKm: planningEasyPaceSPerKm(profile.runFitness),
       }),
     [
       raceDistance,
@@ -258,6 +270,8 @@ export default function RunPlanSettings({
       weeklyRunDays,
       runVolume,
       runDifficulty,
+      runTimeLimits,
+      profile.runFitness,
     ]
   );
 
@@ -274,7 +288,9 @@ export default function RunPlanSettings({
         raceEventSpaceId !== saved.raceEventSpaceId ||
         weeklyRunDays !== saved.weeklyRunDays ||
         runVolume !== saved.runVolume ||
-        runDifficulty !== saved.runDifficulty));
+        runDifficulty !== saved.runDifficulty ||
+        runTimeLimits.sessionMinutes !== saved.runTimeLimits.sessionMinutes ||
+        runTimeLimits.longRunMinutes !== saved.runTimeLimits.longRunMinutes));
 
   /* Persist the draft on every change, so leaving the page keeps it.
      Keyed off `dirty` in BOTH directions: a draft that matches the saved
@@ -292,6 +308,7 @@ export default function RunPlanSettings({
         raceEventSpaceId,
         runVolume,
         runDifficulty,
+        runTimeLimits,
       });
     } else {
       clearRunPlanDraft(profile.uid);
@@ -308,6 +325,7 @@ export default function RunPlanSettings({
     raceEventSpaceId,
     runVolume,
     runDifficulty,
+    runTimeLimits,
   ]);
 
   // Door 2 (races plan amendment): the same catalogue the directory
@@ -366,6 +384,7 @@ export default function RunPlanSettings({
         runTuning: { volume: runVolume, difficulty: runDifficulty },
         // Run17: the long-run ceiling is measured at the confirmed easy pace.
         runFitness: profile.runFitness ?? null,
+        runTimeLimits,
         ...(runMode === "race_prep"
           ? {
               raceGoal: {
@@ -665,6 +684,15 @@ export default function RunPlanSettings({
             </button>
           </div>
         </div>
+      )}
+
+      {runMode === "race_prep" && (
+        <RunAvailabilitySettings
+          value={runTimeLimits}
+          onChange={setRunTimeLimits}
+          preview={plannerState}
+          hasConfirmedPace={planningEasyPaceSPerKm(profile.runFitness) !== null}
+        />
       )}
 
       {/* ── Pgm6 tuning knobs (race prep only — they shape the periodised

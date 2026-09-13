@@ -36,6 +36,15 @@ vi.mock("@/lib/firebase", () => ({
   storage: {},
 }));
 
+vi.mock("@/hooks/useRunningStats", () => ({
+  useRunningStats: () => ({
+    runs: [],
+    loading: false,
+    failed: false,
+    refresh: vi.fn(),
+  }),
+}));
+
 const baseProfile = {
   runMode: "freeform",
   weeklyWorkoutsTarget: 4,
@@ -185,6 +194,52 @@ describe("RunPlanSettings", () => {
     // stored profile.weekSchedule the old path passed (draft default: 3
     // run days, saved liftDays 4).
     expect(sentPayload().weekSchedule).toEqual(generateSchedule(4, 3));
+  });
+
+  it("previews, commits and restores recurring time limits", async () => {
+    const profile = {
+      ...baseProfile,
+      uid: "run-limit-user",
+      runMode: "race_prep",
+      raceGoal: { distance: "marathon", targetDate: "2027-03-07" },
+    } as UserProfile;
+    const first = renderPage(profile);
+    fireEvent.change(screen.getByLabelText("Other runs"), {
+      target: { value: "30" },
+    });
+    fireEvent.change(screen.getByLabelText("Long run"), {
+      target: { value: "45" },
+    });
+    expect(
+      screen.getByText(/Some sessions in this plan will be shorter/)
+    ).toBeInTheDocument();
+    first.unmount();
+    renderPage(profile);
+    expect(screen.getByLabelText("Other runs")).toHaveValue("30");
+    expect(screen.getByLabelText("Long run")).toHaveValue("45");
+    fireEvent.click(
+      await screen.findByRole("button", { name: /Save .*plan/i })
+    );
+    await waitFor(() => expect(configureSpy).toHaveBeenCalledTimes(1));
+    const payload = sentPayload();
+    expect(payload.profileUpdates.runTimeLimits).toEqual({
+      sessionMinutes: 30,
+      longRunMinutes: 45,
+    });
+    const rows = payload.programState
+      .runDays as import("@/features/program/programTypes").ScheduledRunDay[];
+    const { RUN_TEMPLATES } = await import("@/lib/workoutTemplates");
+    const total = rows.reduce(
+      (sum, row) =>
+        sum +
+        RUN_TEMPLATES.find((template) => template.id === row.templateId)!
+          .estimatedDuration,
+      0
+    );
+    expect(
+      screen.getByText(String(Math.round(total)), { selector: "span" })
+    ).toBeInTheDocument();
+    expect(rows.some((row) => row.timeLimit)).toBe(true);
   });
 
   it("RACE-EVENT-IDENTITY-01: saving with an event name includes it in the raceGoal", async () => {

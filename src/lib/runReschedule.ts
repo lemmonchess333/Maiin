@@ -3,6 +3,11 @@ import type { ScheduledRunDay } from "@/features/program/programTypes";
 import { dateForDayOfWeek } from "@/lib/dateHelpers";
 import { isScheduledRaceRunDay } from "@/lib/workoutTemplates";
 import {
+  adjacentDemandingRuns,
+  isDemandingScheduledRun,
+  runOccupiesDate,
+} from "./runSpacing";
+import {
   getScheduledRunStatus,
   isScheduledRunEditable,
 } from "@/lib/scheduledRunStatus";
@@ -93,11 +98,21 @@ export function resolveRunMoveOptions(args: {
 }): RunMoveOption[] {
   const { source, runDays, weekSchedule, todayKey } = args;
   const weekKey = source.weekKey;
-  const sourceHard = HARD_RUN_TYPES.has(source.type);
+  const sourceHard = isDemandingScheduledRun(source);
 
   // Earliest race date in this week, if any — you can't schedule past it.
+  const weekDates = new Set(
+    Array.from({ length: 7 }, (_, day) =>
+      weekKey ? dateForDay(weekKey, day) : null
+    )
+  );
   const raceDate = runDays
-    .filter((rd) => isScheduledRaceRunDay(rd) && typeof rd.date === "string")
+    .filter(
+      (rd) =>
+        isScheduledRaceRunDay(rd) &&
+        typeof rd.date === "string" &&
+        weekDates.has(rd.date)
+    )
     .map((rd) => rd.date)
     .sort()[0];
 
@@ -121,7 +136,10 @@ export function resolveRunMoveOptions(args: {
     // Another run already occupies this day — a race takes precedence in the
     // reason (its date is immutable), otherwise it's a plain occupancy block.
     const other = runDays.find(
-      (rd) => rd.id !== source.id && rd.dayIndex === dayIndex
+      (rd) =>
+        rd !== source &&
+        (!source.id || rd.id !== source.id) &&
+        runOccupiesDate(rd, date, dayIndex, weekKey)
     );
     if (other) {
       return {
@@ -141,14 +159,7 @@ export function resolveRunMoveOptions(args: {
       const dayType = typeForDay(dayIndex);
       if (dayType === "lift" || dayType === "both") {
         warning = "clashes_lift";
-      } else if (
-        runDays.some(
-          (rd) =>
-            rd.id !== source.id &&
-            HARD_RUN_TYPES.has(rd.type) &&
-            Math.abs(rd.dayIndex - dayIndex) === 1
-        )
-      ) {
+      } else if (adjacentDemandingRuns(source, runDays, date).length > 0) {
         warning = "beside_hard";
       }
     }

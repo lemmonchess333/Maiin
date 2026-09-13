@@ -1,4 +1,4 @@
-import RunPurpose from "@/components/run/RunPurpose";
+import RunPlanPurpose from "@/components/run/RunPlanPurpose";
 /**
  * PR-1: per-day action sheet — canonical surface (post-PR-3).
  *
@@ -357,7 +357,7 @@ export default function DayActionSheet({
                     {selectedRunTemplate.description}
                   </p>
                 )}
-                <RunPurpose>{selectedRunWhy}</RunPurpose>
+                <RunPlanPurpose purpose={selectedRunWhy} run={run.runDay} runDays={programState?.runDays ?? []} />
                 {/* A8: consensus fueling guidance for 75-min+ sessions —
                     one line, same register as the explainer above. */}
                 {selectedRunTemplate &&

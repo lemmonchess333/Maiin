@@ -152,6 +152,116 @@ describe.skipIf(!enabled)("trusted state with the Firestore emulator", () => {
     await (await import("firebase-admin/app")).deleteApp(adminApp);
   });
 
+  it("saves, retries and corrects a progression receipt with the real Firestore serializer", async () => {
+    const { normalizeProgramState } = await import("../programTypes");
+    const { commitWorkoutCompletion, workoutCompletionDayIdentity } =
+      await import("@/lib/workoutCompletion");
+    const { correctSavedWorkout } = await import("@/lib/workoutCorrection");
+    const state = normalizeProgramState({
+      ...seed,
+      workouts: [
+        {
+          dayName: "Push",
+          dayType: "upper",
+          completed: false,
+          exercises: [
+            {
+              instanceId: "bench-receipt",
+              exerciseId: "bench",
+              name: "Bench",
+              sets: 3,
+              reps: 8,
+              weight: 100,
+            },
+          ],
+        },
+      ],
+    } as unknown as ProgramState);
+    const programRef = adminDb.doc(`users/${h.user.uid}/programState/current`);
+    await programRef.set(state);
+    const context = {
+      weekNumber: state.weekNumber,
+      dayIndex: 0,
+      dayIdentity: workoutCompletionDayIdentity(state.workouts[0])!,
+      progression: {
+        completionId: "real-receipt",
+        date: "2026-09-10",
+        prescription: {
+          exercises: state.workouts[0].exercises,
+          progressionBaseline: state.workouts[0].exercises,
+        },
+        setLogs: [
+          [0, 1, 2].map(() => ({ weight: 100, reps: 8, completed: true })),
+        ],
+      },
+    };
+    const data = {
+      date: "2026-09-10",
+      durationMinutes: 30,
+      burnContext: { bodyweightKg: 80 },
+      exercises: [
+        {
+          exerciseId: "bench",
+          exerciseName: "Bench",
+          category: "push",
+          sets: [1, 2, 3].map((setNumber) => ({
+            weightKg: 100,
+            reps: 8,
+            setNumber,
+          })),
+        },
+      ],
+    };
+    await commitWorkoutCompletion(
+      h.db!,
+      h.user.uid,
+      "real-receipt",
+      data,
+      context
+    );
+    await commitWorkoutCompletion(
+      h.db!,
+      h.user.uid,
+      "real-receipt",
+      data,
+      context
+    );
+    const workoutRef = adminDb.doc(`users/${h.user.uid}/workouts/real-receipt`);
+    expect(
+      (await workoutRef.get()).data()?.programmeCompletion.context.progression
+        .setLogs[0].sets
+    ).toHaveLength(3);
+    expect(
+      (await programRef.get()).data()?.workouts[0].exercises[0]
+        .performanceHistory
+    ).toHaveLength(1);
+    await correctSavedWorkout(
+      h.db!,
+      h.user.uid,
+      "real-receipt",
+      0,
+      "correct-receipt",
+      {
+        durationMinutes: 30,
+        exercises: [
+          { sets: [1, 2, 3].map(() => ({ weightKg: 100, reps: 6 })) },
+        ],
+      }
+    );
+    expect((await workoutRef.get()).data()?.revision).toBe(1);
+    expect(
+      (await programRef.get()).data()?.workouts[0].exercises[0]
+        .consecutiveFailures
+    ).toBe(1);
+    expect(
+      (await programRef.get()).data()?.workouts[0].exercises[0]
+        .performanceHistory
+    ).toHaveLength(1);
+    // Restore the saved-race fixture for the independent reconciliation test.
+    await programRef.set(seed);
+    await adminDb.doc(`users/${h.user.uid}/stats/prMap`).delete();
+  }, 30_000);
+
   it("repairs a saved race in a base week without resetting progress or completions", async () => {
     const { result } = renderHook(() => useProgram());
     await waitFor(() => expect(result.current.loading).toBe(false), {

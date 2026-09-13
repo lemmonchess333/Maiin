@@ -240,6 +240,14 @@ const PROFILE_FIELD_VALIDATORS = Object.freeze({
   // Pgm6 run-plan tuning knobs — bounded enums, invalid values dropped.
   runVolume: (v) => cleanEnum(v, ["lighter", "standard", "bigger"]),
   runDifficulty: (v) => cleanEnum(v, ["gentler", "standard", "harder"]),
+  runTimeLimits: (v) => {
+    if (v === null) return null;
+    if (!v || typeof v !== "object" || Array.isArray(v)) return undefined;
+    const valid = (minutes) => minutes === null ||
+      (Number.isInteger(minutes) && minutes >= 30 && minutes <= 150);
+    if (!valid(v.sessionMinutes) || !valid(v.longRunMinutes)) return undefined;
+    return { sessionMinutes: v.sessionMinutes, longRunMinutes: v.longRunMinutes };
+  },
   // RUN-EV-02: an explicit null clears the goal (freeform save through
   // configurePlan). cleanObject would silently drop it.
   raceGoal: (v) =>
