@@ -51,6 +51,7 @@ import { initializeApp, getApps } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
 import { getFirestore, FieldValue } from "firebase-admin/firestore";
 import { assertEmulatorEnvOrExit } from "../e2e/helpers/emulator";
+import { CURRENT_WEEKSCHEDULE_VERSION } from "../src/features/program/programTypes";
 
 // Single source of truth for "is this an emulator session?". The
 // helper reads firebase.json so the expected hosts stay in lockstep
@@ -119,6 +120,13 @@ async function ensureProfile(uid: string): Promise<void> {
       day,
       type: day === restDay ? ("rest" as const) : ("lift" as const),
     })),
+    // The read-side backfill (`backfillWeekScheduleIfMissing`) regenerates
+    // any schedule not stamped with the current version — so without this
+    // the app replaced the schedule above with `generateSchedule(6, 0)`,
+    // whose slot order leaves SUNDAY as the rest day, and the "tomorrow is
+    // rest" intent never held: every Sunday the seeded user woke up on a
+    // rest day and Home's Today's training had no CTA to find.
+    weekScheduleVersion: CURRENT_WEEKSCHEDULE_VERSION,
     weeklyMealsTarget: 10,
     preferredWeightUnit: "kg",
     preferredHeightUnit: "cm",
@@ -138,31 +146,28 @@ async function ensureProfile(uid: string): Promise<void> {
   await db.collection("users").doc(uid).set(profile, { merge: true });
   // Public mirror — cross-user readable projection (PR G architecture).
   // Kept in sync with PUBLIC_MIRRORED_FIELDS in auth.tsx.
-  await db
-    .collection("users")
-    .doc(uid)
-    .collection("public")
-    .doc("profile")
-    .set(
-      {
-        uid,
-        displayName: TEST_USER.displayName,
-        displayNameLower: TEST_USER.displayName.toLowerCase(),
-        photoURL: null,
-        athleteType: "Lifter",
-        currentStreak: 0,
-        longestStreak: 0,
-        createdAt: FieldValue.serverTimestamp(),
-      },
-      { merge: true },
-    );
+  await db.collection("users").doc(uid).collection("public").doc("profile").set(
+    {
+      uid,
+      displayName: TEST_USER.displayName,
+      displayNameLower: TEST_USER.displayName.toLowerCase(),
+      photoURL: null,
+      athleteType: "Lifter",
+      currentStreak: 0,
+      longestStreak: 0,
+      createdAt: FieldValue.serverTimestamp(),
+    },
+    { merge: true }
+  );
   console.log(`[seed-e2e-user] Profile written for ${uid}`);
 }
 
 async function main() {
   const uid = await ensureUser();
   await ensureProfile(uid);
-  console.log(`[seed-e2e-user] Done. Login as ${TEST_USER.email} with the shared E2E password.`);
+  console.log(
+    `[seed-e2e-user] Done. Login as ${TEST_USER.email} with the shared E2E password.`
+  );
 }
 
 main().catch((err) => {
