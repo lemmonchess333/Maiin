@@ -68,6 +68,7 @@ import { Button } from "@/components/ui/Button";
 import { PaywallLegalLinks } from "@/components/paywall/PaywallLegalLinks";
 import PlanPicker from "@/components/paywall/PlanPicker";
 import ProPreview from "@/components/paywall/ProPreview";
+import { framesForFeature } from "@/components/paywall/previewFrames";
 
 type Beat = "offer" | "plans";
 
@@ -465,12 +466,20 @@ export default function Upgrade() {
               Log a meal from a photo.
             </h1>
             <p className="text-sm text-muted-foreground max-w-[340px] mx-auto leading-relaxed">
-              Pro reads the plate and fills in the macros, then keeps your
-              calorie target honest as your weight moves.
+              {fromOnboarding
+                ? "Your plan is ready. Pro logs the meals around it, and keeps your calorie target honest as your weight moves."
+                : "Pro reads the plate and fills in the macros, then keeps your calorie target honest as your weight moves."}
             </p>
           </div>
 
-          <ProPreview />
+          {/* The feature that brought the user leads the rail. Only the Food
+              entry names one today; the contextual sheet (ProModal) covers
+              the per-feature gates. */}
+          <ProPreview
+            frames={framesForFeature(
+              source === "food_page" ? "ai_food_logging" : undefined
+            )}
+          />
 
           {withTrial ? (
             <p className="flex items-center justify-center gap-2 text-base font-bold text-foreground">

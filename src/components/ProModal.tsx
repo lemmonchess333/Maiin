@@ -75,6 +75,17 @@ const FEATURE_PREVIEWS: Partial<
     ),
     preview: <ProPreview frames={["scan"]} variant="single" />,
   },
+  // The two adaptive gates show the target frame — the thing they gate —
+  // where they used to fall back to a title and a tagline with no product
+  // in sight.
+  adaptive_tdee: {
+    icon: <Sparkles className="size-6" style={{ color: THEME.brand }} />,
+    preview: <ProPreview frames={["target"]} variant="single" />,
+  },
+  adaptive_macros: {
+    icon: <Sparkles className="size-6" style={{ color: THEME.brand }} />,
+    preview: <ProPreview frames={["target"]} variant="single" />,
+  },
 };
 
 const DEFAULT_HERO = {
