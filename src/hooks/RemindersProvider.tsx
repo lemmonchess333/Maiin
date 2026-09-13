@@ -3,6 +3,7 @@ import { useReminderActivity } from "@/hooks/useReminderActivity";
 import { useMealRemindersInternal } from "@/hooks/useMealReminders";
 import { useWorkoutRemindersInternal } from "@/hooks/useWorkoutReminders";
 import { useStreakReminderInternal } from "@/hooks/useStreakReminder";
+import { useTrialReminderInternal } from "@/hooks/useTrialReminder";
 
 /**
  * Reminders (meal / workout / streak) share three characteristics that
@@ -44,6 +45,8 @@ export function RemindersProvider({ children }: { children: ReactNode }) {
   const meal = useMealRemindersInternal(activity);
   const workout = useWorkoutRemindersInternal(activity);
   const streak = useStreakReminderInternal(pushOwns, refreshKey);
+  // One-shot, no prefs, no consumer: it only needs to run once per session.
+  useTrialReminderInternal();
   const value = useMemo(
     () => ({ meal, workout, streak }),
     [meal, workout, streak]

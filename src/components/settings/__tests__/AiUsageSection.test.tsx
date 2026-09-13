@@ -94,7 +94,7 @@ describe("AiUsageSection — Sub1a F1b lock pin #6", () => {
     expect(screen.getByText(/Image is Pro-only/)).toBeTruthy();
   });
 
-  it("Cycle 2: free user — whole row is a button; tap navigates to /upgrade", () => {
+  it("Cycle 2: free user — whole row is a button; tap navigates to the offer page, tagged as Settings", () => {
     useScanUsageMock.mockImplementation((action) =>
       makeUsage(
         action === "text_ai" ? { used: 5, limit: 10 } : { used: 0, limit: 0 },
@@ -104,7 +104,7 @@ describe("AiUsageSection — Sub1a F1b lock pin #6", () => {
     renderSection();
     const row = screen.getByRole("button", { name: /AI usage today/ });
     fireEvent.click(row);
-    expect(navigateMock).toHaveBeenCalledWith("/upgrade");
+    expect(navigateMock).toHaveBeenCalledWith("/upgrade?from=settings");
   });
 
   it("Cycle 3: pro user shows both counters; no upgrade CTA", () => {

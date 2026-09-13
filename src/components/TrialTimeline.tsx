@@ -5,10 +5,14 @@ import { Unlock, Crown } from "lucide-react";
  * the Blinkist-proven "what actually happens" ladder that reduces trial
  * anxiety). Shown only when the trial CTA is live (Sub1a P1 eligibility).
  *
- * Copy is deliberately HONEST about today's mechanics: there is no
- * trial-ending reminder yet (that's Sub1a P3 — "Day 5 email, Day 6
- * banner"), so this strip promises none. When P3 ships, add the middle
- * "Day 5 — we'll remind you" step here and nowhere else.
+ * Copy is deliberately HONEST about today's mechanics. This ladder
+ * describes the BILLED checkout trial (`hasUsedTrial` — Stripe
+ * `trialing`, or the App Store intro offer), whose end the client cannot
+ * see, so no reminder is promised for it. The reminder that does exist
+ * (`useTrialReminder`) is for the app-granted onboarding trial, a
+ * different thing with nothing to bill. Add a "Day 5 — we'll remind you"
+ * step here only when a server-side reminder keyed on the billed trial's
+ * end ships — here and nowhere else.
  */
 const STEPS: {
   icon: typeof Unlock;
@@ -18,7 +22,7 @@ const STEPS: {
   {
     icon: Unlock,
     when: "Today",
-    what: "Full Pro access unlocks. Every feature, no payment due.",
+    what: "Full Pro access. Every feature, no payment due.",
   },
   {
     icon: Crown,

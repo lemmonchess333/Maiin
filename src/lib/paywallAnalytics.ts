@@ -45,6 +45,8 @@ export type PaywallSource =
   | "food_page"
   /** Home's one-time prompt when the trial lapses. */
   | "trial_end"
+  /** Home's countdown strip while the onboarding trial is live. */
+  | "trial_strip"
   | "unknown";
 
 export interface PaywallEventMetadata {

@@ -35,7 +35,7 @@ export default function SettingsSubscription() {
         type="button"
         onClick={() => {
           haptic();
-          navigate("/upgrade");
+          navigate("/upgrade?from=settings");
         }}
         className="w-full flex items-center justify-between p-4 rounded-2xl bg-card motion-safe:active:scale-[0.99]"
       >
