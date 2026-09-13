@@ -5,9 +5,12 @@
  */
 import { describe, it, expect, afterEach } from "vitest";
 import { render, cleanup } from "@testing-library/react";
+import { existsSync, statSync } from "node:fs";
+import { resolve } from "node:path";
 import { SealFace, SealShards } from "../BadgeSeal";
 import { SEAL_CRACKS, SEAL_SHARDS } from "../sealGeometry";
 import { TIER_PALETTES } from "../tierPalettes";
+import { SEAL_ART, type BadgeTier } from "../badges";
 
 afterEach(cleanup);
 
@@ -80,5 +83,65 @@ describe("SealShards", () => {
       SEAL_SHARDS.map((s) => Math.round(Math.atan2(s.dy, s.dx) * 100))
     );
     expect(headings.size).toBe(6);
+  });
+});
+
+describe("the rendered seal (SEAL_ART)", () => {
+  const tiers: BadgeTier[] = ["bronze", "silver", "gold", "platinum"];
+
+  it("ships one keyed WebP per tier under public/badges, small enough to preload", () => {
+    for (const tier of tiers) {
+      const file = resolve(process.cwd(), "public/badges", `seal_${tier}.webp`);
+      expect(existsSync(file), `${tier}: ${file}`).toBe(true);
+      expect(statSync(file).size).toBeLessThan(60_000);
+      expect(SEAL_ART[tier]).toMatch(new RegExp(`badges/seal_${tier}\\.webp$`));
+    }
+  });
+
+  it("layers the art over the drawn seal, clipped inside the rim, with the cracks on top", () => {
+    const c = render(
+      <svg viewBox="0 0 100 100">
+        <SealFace tier="gold" idBase="t" visibleCracks={2} imageSrc="/x.webp" />
+      </svg>
+    ).container;
+    const art = c.querySelector("image[data-seal-art]");
+    expect(art).not.toBeNull();
+    expect(art?.getAttribute("href")).toBe("/x.webp");
+    expect(art?.getAttribute("clip-path")).toBe("url(#t-clip)");
+    expect(c.querySelector("#t-clip polygon")).not.toBeNull();
+    // Fallback stays underneath (rim drawn before the art) and cracks come after it.
+    const all = Array.from(c.querySelectorAll("*"));
+    const rim = all.findIndex(
+      (el) => el.getAttribute("fill") === "url(#t-rim)"
+    );
+    const artAt = all.indexOf(art!);
+    const crack = all.findIndex((el) => el.hasAttribute("data-seal-crack"));
+    expect(rim).toBeGreaterThan(-1);
+    expect(rim).toBeLessThan(artAt);
+    expect(artAt).toBeLessThan(crack);
+    // Without art there is no image and no clip.
+    const plain = render(
+      <svg viewBox="0 0 100 100">
+        <SealFace tier="gold" idBase="p" visibleCracks={0} />
+      </svg>
+    ).container;
+    expect(plain.querySelector("image")).toBeNull();
+  });
+
+  it("cuts each shard from the same art along its own piece", () => {
+    const c = render(
+      <div>
+        <SealShards tier="gold" idBase="t" size={132} imageSrc="/x.webp" />
+      </div>
+    ).container;
+    const svgs = Array.from(c.querySelectorAll("svg"));
+    expect(svgs).toHaveLength(6);
+    svgs.forEach((svg, i) => {
+      const img = svg.querySelector("image[data-seal-art]");
+      expect(img?.getAttribute("clip-path")).toBe(`url(#t-s${i}-clip)`);
+      expect(
+        svg.querySelector(`#t-s${i}-clip polygon`)?.getAttribute("points")
+      ).toBe(SEAL_SHARDS[i].points);
+    });
   });
 });

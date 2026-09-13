@@ -3,10 +3,10 @@ import { THEME } from "@/lib/theme";
 import { motion, AnimatePresence } from "framer-motion";
 const lazyConfetti = () => import("canvas-confetti").then((m) => m.default);
 import type { EarnedBadge } from "./badges";
-import { BADGE_ART, BADGE_ICONS, TIER_COLORS } from "./badges";
+import { BADGE_ART, BADGE_ICONS, SEAL_ART, TIER_COLORS } from "./badges";
 import { BadgeHex } from "./BadgeHex";
 import { TIER_PALETTES } from "./tierPalettes";
-import { SealFace, SealShards } from "./BadgeSeal";
+import { SealFace, SealShards, SealSweep, SealDust } from "./BadgeSeal";
 import { SEAL_CRACKS } from "./sealGeometry";
 import { Trophy, Lock } from "lucide-react";
 import { useFocusTrap } from "@/hooks/useFocusTrap";
@@ -84,6 +84,9 @@ export function BadgeEarnedContent({
   const tier = TIER_COLORS[badge.tier];
   const sealId = `seal${useId().replace(/:/g, "")}`;
   const lockColor = TIER_PALETTES[badge.tier].icon;
+  // The rendered seal carries its own wax medallion with the Tropos
+  // chevron, so the HTML lock glyph is only for a tier without art.
+  const sealArt: string | undefined = SEAL_ART[badge.tier];
 
   // Reduced motion collapses the ceremony to a single tap (no shake / shatter).
   const tapsNeeded = reduce ? 1 : TAPS_NEEDED;
@@ -355,9 +358,15 @@ export function BadgeEarnedContent({
                       tier={badge.tier}
                       idBase={sealId}
                       visibleCracks={visibleCracks}
+                      imageSrc={sealArt}
                     />
                   </g>
                 </svg>
+                {/* A band of light crosses the seal on each hit (keyed on
+                    taps so it re-fires); nothing on the first paint. */}
+                {!reduce && taps > 0 && (
+                  <SealSweep key={`sweep-${taps}`} boxUnitsTall={114} dy={8} />
+                )}
                 {/* Centre lock + tap-progress dots. The prompt TEXT moved
                     OUT of the hexagon (device QA 2026-08-09): "Tap to break
                     the seal" at its narrowest fit ran wider than the hex's
@@ -371,18 +380,20 @@ export function BadgeEarnedContent({
                   {/* On the medallion: the hexagon's centre is viewBox y=58
                       of 114 → 76px of the 150px box; the dots sit on the
                       face below it. */}
-                  <Lock
-                    className="size-5 absolute"
-                    style={{
-                      left: "50%",
-                      top: 76,
-                      marginLeft: -10,
-                      marginTop: -10,
-                      opacity: 0.92,
-                    }}
-                    strokeWidth={2.4}
-                    aria-hidden="true"
-                  />
+                  {!sealArt && (
+                    <Lock
+                      className="size-5 absolute"
+                      style={{
+                        left: "50%",
+                        top: 76,
+                        marginLeft: -10,
+                        marginTop: -10,
+                        opacity: 0.92,
+                      }}
+                      strokeWidth={2.4}
+                      aria-hidden="true"
+                    />
+                  )}
                   {tapsNeeded > 1 && (
                     <span
                       className="absolute left-0 right-0 flex items-center justify-center gap-1.5"
@@ -420,7 +431,15 @@ export function BadgeEarnedContent({
                   marginLeft: -66,
                 }}
               >
-                <SealShards tier={badge.tier} idBase={sealId} size={132} />
+                <SealShards
+                  tier={badge.tier}
+                  idBase={sealId}
+                  size={132}
+                  imageSrc={sealArt}
+                />
+                <div className="absolute" style={{ left: 66, top: 66 }}>
+                  <SealDust tier={badge.tier} />
+                </div>
               </div>
             )
           )}

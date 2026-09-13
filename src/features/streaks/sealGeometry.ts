@@ -72,4 +72,29 @@ export const SEAL_CRACKS = [
 /** Radius of the wax-seal medallion the lock sits on. */
 export const SEAL_MEDALLION_R = 16;
 
+/** The hexagon a hair inside the rim — clips the artwork so no keyed edge
+ *  shows past the drawn seal. */
+export const SEAL_ART_CLIP = pts(inset(0.985));
+
+/** The hexagon as CSS `polygon()` percentages of a box `w`×`h` whose
+ *  100-unit seal space starts `dy` units down — the modal draws the seal
+ *  in a 100×114 viewBox translated by 8. */
+export function sealClipPolygon(dy: number, boxUnitsTall: number): string {
+  return (
+    "polygon(" +
+    V.map(
+      ([x, y]) => `${x}% ${(((y + dy) / boxUnitsTall) * 100).toFixed(1)}%`
+    ).join(", ") +
+    ")"
+  );
+}
+
+/** Where the break's dust flies: twelve headings, deterministic, spread
+ *  around the ring with a little jitter so it does not read as a clock. */
+export const SEAL_DUST = Array.from({ length: 12 }, (_, i) => {
+  const a = (i / 12) * Math.PI * 2 + (i % 3) * 0.11;
+  const r = 62 + (i % 4) * 9;
+  return { dx: Math.cos(a) * r, dy: Math.sin(a) * r, size: 3 + (i % 3) };
+});
+
 export { FACE, BEVEL, SHEEN, FACETS, pts };

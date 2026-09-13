@@ -121,25 +121,59 @@ earning rules land.
 ## The seal (the sealed hexagon a new badge is tapped out of)
 
 `BadgeEarnedModal` shows a new badge inside a sealed hexagon that the user
-taps three times to crack and break open. Since 2026-09-13 the seal is drawn
-in SVG (`src/features/streaks/BadgeSeal.tsx`): a bevelled rim in the badge's
-tier metal, a faceted obsidian face, a wax-seal medallion in the tier metal
-under the lock, cracks that leak the tier's light, and shards that carry the
-same material when it breaks. Review it on `/dev/badge-seal` (dev builds) or
-in the `badge-seal-*` frames on the capture channel.
+taps three times to crack and break open. Since 2026-09-13 the seal is
+**rendered art**, one WebP per tier (`public/badges/seal_{tier}.webp`,
+~25 KB each, registered in `SEAL_ART`), layered over an SVG seal
+(`src/features/streaks/BadgeSeal.tsx`) that stays as the instant fallback
+while the image loads. The cracks, the light sweep per tap, the shards
+(cut from the same image along `SEAL_SHARDS`) and the dust on the break
+are SVG/CSS on top of the art, so they still animate.
 
-If it is ever replaced by art, the per-tier prompt is the badge skeleton's
-sibling — one master, then image-edit the rim metal for the other three:
+**The object:** a pointy-top hexagon of black obsidian cut like a black
+diamond (six facets meeting behind the centre), held in a bevelled rim of
+the tier metal, with a round wax-seal medallion of the same metal in the
+centre embossed with the Tropos chevron, and the tier's light glowing from
+inside. Bronze = copper rim, amber ember glow · silver = brushed steel,
+cool white glow · gold = gold, golden glow · platinum = white gold,
+violet-white glow (the stone itself takes a violet cast).
 
-> Premium sealed achievement capsule, **pointy-top hexagon**, thick
-> **{TIER_METAL} beveled metal rim** with a polished specular highlight, a
-> deep **faceted black obsidian** face like a cut stone, a small round
-> **{TIER_METAL} wax seal medallion** embossed in the centre (no symbol on
-> it), subtle inner glow, soft top-left studio key light, dramatic
-> **transparent background**, symmetrical, centred, app-icon style, crisp,
-> high detail, no text, no letters, no numbers.
+**How it was made** — `gemini-3-pro-image` via `scripts/art/gemini-image.py`
+(key from `GEMINI_API_KEY`), one gold master then three image-edits so all
+four are the same object, keyed and framed by `scripts/art/key-hexagon.py`:
 
-Four assets (`public/badges/seal_{tier}.webp`, 512×512), one per tier. The
-cracks and the break stay in SVG over the art — the shards would be the art
-cut along `SEAL_SHARDS` with `clip-path`. Not built until an asset exists:
-an image seam nothing exercises is the "unwired seam" CLAUDE.md warns about.
+Master prompt:
+
+> A premium achievement capsule for a fitness app, seen straight on,
+> centred: a pointy-top hexagon of deep black obsidian cut like a black
+> diamond — six large flat triangular facets meeting behind the centre,
+> each catching a soft studio key light from the top left slightly
+> differently so the facet edges read as fine crisp lines — held in a
+> thick bevelled rim of polished gold metal with one sharp specular
+> highlight along its upper-left edges. In the exact centre a small round
+> wax-seal medallion of the same polished gold, embossed with a single
+> simple upward chevron mark (like a caret ^), sitting slightly recessed
+> into the stone. A faint warm golden glow seeps out along the stone's
+> inner edges and around the medallion, as if something bright is sealed
+> inside. Symmetrical, sharp, photoreal 3D render, app-icon quality, the
+> hexagon filling about 88% of the square frame. No text, no letters, no
+> numbers, no other objects. Flat solid magenta (#FF00FF) background with
+> no shadow, reflection or gradient on the background.
+
+Tier edit (with the master as `--ref`):
+
+> Keep this exact object, camera angle, framing, lighting, facets,
+> wax-seal shape with its chevron, and the flat solid magenta background.
+> Change only the metal and the glow: every gold metal part (the bevelled
+> rim and the wax-seal medallion) becomes {polished warm copper-bronze
+> metal | polished brushed-steel silver metal | polished white-gold
+> platinum metal with a faint cool sheen}, and the golden inner glow
+> becomes {a warm amber ember glow | a cool white glow | a soft
+> violet-white glow}. Nothing else changes.
+
+Then `key-hexagon.py master-{tier}.png keyed-{tier} 512` keys the magenta
+to alpha (with despill), finds the hexagon, and maps its bounding box to
+the app's seal frame (x 7..93, y 3..97 of 100 — `SEAL_HEX`) so the SVG
+cracks, clip and shards line up with the art. The magenta background is
+what makes keying trivial: it is the one colour none of the four metals
+or the black stone contains. Review on `/dev/badge-seal` (dev builds) or
+in the `badge-seal-*` capture frames.

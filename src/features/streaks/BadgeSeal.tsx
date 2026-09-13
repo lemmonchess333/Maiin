@@ -6,11 +6,14 @@ import {
   SEAL_SHARDS,
   SEAL_CRACKS,
   SEAL_MEDALLION_R,
+  SEAL_ART_CLIP,
+  SEAL_DUST,
   FACE,
   BEVEL,
   SHEEN,
   FACETS,
   pts,
+  sealClipPolygon,
 } from "./sealGeometry";
 
 /**
@@ -75,15 +78,29 @@ interface SealFaceProps {
   idBase: string;
   /** How many of the six cracks are showing. */
   visibleCracks: number;
+  /** The rendered seal (SEAL_ART), keyed and framed to the hexagon box.
+   *  Layered OVER the drawn seal, which stays as the instant fallback
+   *  while the image loads and for a tier without art. */
+  imageSrc?: string;
 }
 
 /** The intact seal. Render inside an `<svg>` whose user space is the
  *  100×100 hexagon box (a `<g transform>` around it is fine). */
-export function SealFace({ tier, idBase, visibleCracks }: SealFaceProps) {
+export function SealFace({
+  tier,
+  idBase,
+  visibleCracks,
+  imageSrc,
+}: SealFaceProps) {
   const p = TIER_PALETTES[tier];
   return (
     <>
       <SealDefs idBase={idBase} tier={tier} />
+      {imageSrc && (
+        <clipPath id={`${idBase}-clip`}>
+          <polygon points={SEAL_ART_CLIP} />
+        </clipPath>
+      )}
       {/* 1. Tier-metal rim, bevelled by the dark ring inside it. */}
       <polygon points={SEAL_HEX} fill={`url(#${idBase}-rim)`} />
       <polygon points={pts(BEVEL)} fill={p.edge} opacity={0.92} />
@@ -169,6 +186,19 @@ export function SealFace({ tier, idBase, visibleCracks }: SealFaceProps) {
         opacity={0.26}
         transform="rotate(-28 44.5 42.5)"
       />
+      {/* The artwork, clipped a hair inside the rim so no keyed edge shows. */}
+      {imageSrc && (
+        <image
+          href={imageSrc}
+          x={0}
+          y={0}
+          width={100}
+          height={100}
+          preserveAspectRatio="xMidYMid slice"
+          clipPath={`url(#${idBase}-clip)`}
+          data-seal-art=""
+        />
+      )}
       {/* 4. Cracks — light leaks through the tier's highlight, then the
           break line itself. */}
       {SEAL_CRACKS.slice(0, visibleCracks).map((d, i) => (
@@ -207,11 +237,14 @@ interface SealShardsProps {
   idBase: string;
   /** Rendered size of the 100-unit hexagon box, in px. */
   size: number;
+  /** The same artwork the face showed — each shard is cut from it. */
+  imageSrc?: string;
 }
 
 /** The six pieces, flying outward once. Each carries the seal's own
- *  material — face gradient inside, the metal rim along its outer edge. */
-export function SealShards({ tier, idBase, size }: SealShardsProps) {
+ *  material — face gradient inside, the metal rim along its outer edge,
+ *  and the artwork cut along the piece when there is one. */
+export function SealShards({ tier, idBase, size, imageSrc }: SealShardsProps) {
   const p = TIER_PALETTES[tier];
   return (
     <>
@@ -242,6 +275,23 @@ export function SealShards({ tier, idBase, size }: SealShardsProps) {
             <SealDefs idBase={id} tier={tier} />
             <polygon points={s.points} fill={`url(#${id}-face)`} />
             <polygon points={s.rim} fill={`url(#${id}-rim)`} />
+            {imageSrc && (
+              <>
+                <clipPath id={`${id}-clip`}>
+                  <polygon points={s.points} />
+                </clipPath>
+                <image
+                  href={imageSrc}
+                  x={0}
+                  y={0}
+                  width={100}
+                  height={100}
+                  preserveAspectRatio="xMidYMid slice"
+                  clipPath={`url(#${id}-clip)`}
+                  data-seal-art=""
+                />
+              </>
+            )}
             <polygon
               points={s.points}
               fill="none"
@@ -253,5 +303,68 @@ export function SealShards({ tier, idBase, size }: SealShardsProps) {
         );
       })}
     </>
+  );
+}
+
+interface SealSweepProps {
+  /** Re-keyed by the caller per tap; runs once per mount. */
+  boxUnitsTall: number;
+  dy: number;
+}
+
+/** A band of light crossing the seal on a tap — transform only, clipped
+ *  to the hexagon, so every hit visibly rings the metal. */
+export function SealSweep({ boxUnitsTall, dy }: SealSweepProps) {
+  return (
+    <motion.div
+      aria-hidden="true"
+      className="absolute inset-0 pointer-events-none overflow-hidden"
+      style={{ clipPath: sealClipPolygon(dy, boxUnitsTall) }}
+    >
+      <motion.div
+        className="absolute inset-y-0 w-1/2"
+        style={{
+          background:
+            "linear-gradient(105deg, rgba(255,255,255,0) 30%, rgba(255,255,255,0.28) 50%, rgba(255,255,255,0) 70%)",
+        }}
+        initial={{ x: "-120%" }}
+        animate={{ x: "260%" }}
+        transition={{ duration: 0.55, ease: "easeOut" }}
+      />
+    </motion.div>
+  );
+}
+
+/** Dust off the break: a dozen flecks of the tier's light, out and gone. */
+export function SealDust({ tier }: { tier: BadgeTier }) {
+  const p = TIER_PALETTES[tier];
+  return (
+    <div
+      aria-hidden="true"
+      className="absolute pointer-events-none"
+      style={{ left: "50%", top: "50%" }}
+      data-seal-dust=""
+    >
+      {SEAL_DUST.map((d, i) => (
+        <motion.span
+          key={i}
+          className="absolute rounded-full"
+          style={{
+            width: d.size,
+            height: d.size,
+            marginLeft: -d.size / 2,
+            marginTop: -d.size / 2,
+            background: i % 2 ? p.highlight : p.base,
+          }}
+          initial={{ x: 0, y: 0, opacity: 1, scale: 1 }}
+          animate={{ x: d.dx, y: d.dy, opacity: 0, scale: 0.4 }}
+          transition={{
+            duration: 0.55 + (i % 3) * 0.08,
+            ease: [0.2, 0.8, 0.3, 1],
+            delay: 0.02 * (i % 4),
+          }}
+        />
+      ))}
+    </div>
   );
 }
