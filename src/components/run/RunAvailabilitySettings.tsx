@@ -20,6 +20,7 @@ export default function RunAvailabilitySettings({
         <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
           Choose how much time you usually have. Shorter sessions will be
           planned when needed, including in future weeks. Race day stays fixed.
+          Completed runs and your one-off changes are kept.
         </p>
       </div>
       <div className="grid grid-cols-2 gap-3">

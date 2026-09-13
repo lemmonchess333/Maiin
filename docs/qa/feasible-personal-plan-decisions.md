@@ -72,3 +72,12 @@ serializer test covers completion, idempotent retry, correction and unchanged
 single-entry progression history. This fixes the release candidate before it
 reaches production; it is not dismissed as a screenshot-only failure.
 
+## Same-race edits retain the block
+
+Tracing time-limit saves found that buildPlan reset an existing race block to
+week zero. Same-distance/date edits now pass the original block length into
+both preview and save. Completed, skipped, manual, past and explicitly swapped
+or moved sessions keep their original identity. A moved row reserves its old
+slot so an edit cannot re-add it. Existing recovery remains intact. A different
+race/date remains an explicit new block. Regression tests compare the real
+preview and save and cover lifting-settings rebuilds through buildPlan.

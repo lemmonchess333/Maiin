@@ -261,6 +261,7 @@ export default function RunPlanSettings({
         tuning: { volume: runVolume, difficulty: runDifficulty },
         runTimeLimits,
         easyPaceSPerKm: planningEasyPaceSPerKm(profile.runFitness),
+        existingState: programState,
       }),
     [
       raceDistance,
@@ -272,6 +273,7 @@ export default function RunPlanSettings({
       runDifficulty,
       runTimeLimits,
       profile.runFitness,
+      programState,
     ]
   );
 

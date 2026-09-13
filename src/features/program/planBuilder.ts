@@ -1,4 +1,9 @@
 import type { RunTimeLimits } from "./runTimeLimits";
+import {
+  continuingRacePlan,
+  continuedBlockWeeks,
+  preserveEditedRunDays,
+} from "./racePlanContinuation";
 /**
  * planBuilder · P0-C · spec v7.
  *
@@ -369,6 +374,15 @@ function buildRunPlan(
       // validator catches this. Return empty + undefined defensively.
       return { runDays: [], runPlan: undefined };
     }
+    const continued = input.preserveHistory
+      ? continuingRacePlan(input.existingState?.runPlan, input.raceGoal)
+      : undefined;
+    if (continued?.phase === "recovery") {
+      return {
+        runDays: input.existingState?.runDays ?? [],
+        runPlan: continued,
+      };
+    }
     const racePlan = generateRacePlanV2({
       weekSchedule,
       /* Run15 — plan CREATION, so "none" is the right answer and not a
@@ -383,14 +397,24 @@ function buildRunPlan(
       tuning: input.runTuning ?? DEFAULT_RUN_TUNING,
       easyPaceSPerKm: planningEasyPaceSPerKm(input.runFitness),
       runTimeLimits: input.runTimeLimits,
+      planTotalWeeks: continued?.totalWeeks,
     });
+    const totalWeeks = continuedBlockWeeks(racePlan.totalWeeks, continued);
     return {
-      runDays: racePlan.weeks[0] ?? [],
+      runDays: continued
+        ? preserveEditedRunDays(
+            input.existingState?.runDays ?? [],
+            racePlan.weeks[0] ?? [],
+            input.existingState?.manualCompletions,
+            input.currentDate
+          )
+        : (racePlan.weeks[0] ?? []),
       runPlan: {
+        ...continued,
         mode: "race_prep",
         raceGoal: input.raceGoal,
-        totalWeeks: racePlan.totalWeeks,
-        currentWeek: 0,
+        totalWeeks,
+        currentWeek: totalWeeks - racePlan.totalWeeks,
         // P2-1: thread the compressed flag through so the Programme
         // run section can surface a "your plan is compressed" banner.
         compressed: racePlan.compressed,
@@ -603,6 +627,12 @@ export function buildPlan(input: PlanBuilderInput): PlanBuilderOutput {
     // `buildPlan` stays a pure function of its input.
     liftWeekKey: localWeekKey(parseLocalDate(input.currentDate)),
     ...(carriedBlock ? { trainingBlock: carriedBlock } : {}),
+    ...(input.preserveHistory &&
+    input.raceGoal &&
+    continuingRacePlan(input.existingState?.runPlan, input.raceGoal) &&
+    input.existingState?.manualCompletions
+      ? { manualCompletions: input.existingState.manualCompletions }
+      : {}),
   };
 
   const output: PlanBuilderOutput = {
