@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { renderHook, waitFor } from "@testing-library/react";
+import { act, renderHook, waitFor } from "@testing-library/react";
 
 // ── Module mocks (refs so each test overrides per-call) ──────────────────
 const updateProfileMock = vi.fn(async () => ({ ok: true }));
@@ -15,18 +15,12 @@ const authMock = vi.fn<
   updateProfile: updateProfileMock,
 }));
 const subMock = vi.fn<() => { isPro: boolean }>(() => ({ isPro: true }));
-const bodyweightMock = vi.fn<() => Promise<{ date: string; weight: number }[]>>(
-  async () => []
-);
 vi.mock("@/lib/auth", () => ({
   useAuth: () => authMock(),
   useUid: () => authMock().user?.uid ?? null,
 }));
 vi.mock("@/lib/subscription", () => ({ useSubscription: () => subMock() }));
 vi.mock("@/lib/firebase", () => ({ db: {} }));
-vi.mock("@/lib/api", () => ({
-  fetchBodyweightLogs: () => bodyweightMock(),
-}));
 vi.mock("firebase/firestore");
 
 import { useAdaptiveTdee } from "../useAdaptiveTdee";
@@ -34,6 +28,7 @@ import {
   seedFirestore,
   resetFirestore,
   readsAt,
+  flushSnapshots,
 } from "@/test/firestoreHarness";
 
 const MEALS = "users/u1/meals";
@@ -48,6 +43,14 @@ function seedMeals(dates: string[], totalCalories: number) {
 }
 
 /** Recent local "YYYY-MM-DD" keys (today back), safely inside the 21d window. */
+function seedWeights(dates: string[], weight: number) {
+  seedFirestore(
+    Object.fromEntries(
+      dates.map((date) => [`users/u1/bodyweightLogs/${date}`, { date, weight }])
+    )
+  );
+}
+
 function recentDays(n: number): string[] {
   const pad = (x: number) => String(x).padStart(2, "0");
   return Array.from({ length: n }, (_, i) => {
@@ -64,7 +67,7 @@ beforeEach(() => {
     updateProfile: updateProfileMock,
   });
   subMock.mockReturnValue({ isPro: true });
-  bodyweightMock.mockResolvedValue([]);
+  updateProfileMock.mockClear();
   resetFirestore();
 });
 
@@ -77,7 +80,7 @@ describe("useAdaptiveTdee — gating (no Firestore reads)", () => {
     // Gated hooks must SKIP the read, not read-then-discard — Firestore
     // bills per document.
     expect(readsAt(MEALS)).toEqual([]);
-    expect(bodyweightMock).not.toHaveBeenCalled();
+    expect(readsAt("users/u1/bodyweightLogs")).toEqual([]);
   });
 
   it("inactive when the user has a manual calorie override", () => {
@@ -125,7 +128,7 @@ describe("useAdaptiveTdee — active assembly", () => {
   it("Pro user with a full window: assembles → gate ready → warmup hidden", async () => {
     const ds = recentDays(21);
     seedMeals(ds, 2500);
-    bodyweightMock.mockResolvedValue(ds.map((date) => ({ date, weight: 80 })));
+    seedWeights(ds, 80);
 
     const { result } = renderHook(() => useAdaptiveTdee());
     await waitFor(() => expect(result.current.ready).toBe(true));
@@ -171,7 +174,7 @@ describe("useAdaptiveTdee — race-taper freeze", () => {
     updateProfileMock.mockClear(); // module-level mock isn't auto-reset
     const ds = recentDays(21);
     seedMeals(ds, 3200);
-    bodyweightMock.mockResolvedValue(ds.map((date) => ({ date, weight: 78 })));
+    seedWeights(ds, 78);
 
     const { result } = renderHook(() => useAdaptiveTdee());
     // Frozen short-circuits to the persisted pre-taper value immediately.
@@ -180,5 +183,79 @@ describe("useAdaptiveTdee — race-taper freeze", () => {
     // The cap is never advanced during the freeze (no corruption).
     await waitFor(() => expect(result.current.value).toBe(2450));
     expect(updateProfileMock).not.toHaveBeenCalled();
+  });
+});
+
+describe("live adaptive evidence", () => {
+  it("becomes ready after new meals and weigh-ins arrive, sharing subscriptions", async () => {
+    const first = renderHook(() => useAdaptiveTdee());
+    const second = renderHook(() => useAdaptiveTdee());
+    await flushSnapshots();
+    expect(first.result.current.ready).toBe(false);
+    expect(
+      readsAt(MEALS).filter((read) => read.op === "onSnapshot")
+    ).toHaveLength(1);
+    expect(
+      readsAt("users/u1/bodyweightLogs").filter(
+        (read) => read.op === "onSnapshot"
+      )
+    ).toHaveLength(1);
+    const days = recentDays(21);
+    await act(async () => {
+      seedMeals(days, 2500);
+      seedWeights(days, 80);
+    });
+    await waitFor(() => expect(first.result.current.ready).toBe(true));
+    expect(second.result.current.value).toBe(first.result.current.value);
+    first.unmount();
+    await act(async () => {
+      seedMeals(days, 2600);
+    });
+    await flushSnapshots();
+    expect(second.result.current.ready).toBe(true);
+    expect(
+      readsAt(MEALS).filter((read) => read.op === "onSnapshot")
+    ).toHaveLength(1);
+  });
+
+  it("re-evaluates deleted meals and corrected weigh-ins without remounting", async () => {
+    const days = recentDays(21);
+    seedMeals(days, 2500);
+    seedWeights(days, 80);
+    const { result } = renderHook(() => useAdaptiveTdee());
+    await waitFor(() => expect(result.current.ready).toBe(true));
+    await act(async () =>
+      seedFirestore(
+        Object.fromEntries(
+          days.map((date, i) => [
+            `${MEALS}/m${i}`,
+            { date, totalCalories: 2500, deletedAt: 1 },
+          ])
+        )
+      )
+    );
+    await waitFor(() => expect(result.current.ready).toBe(false));
+    await act(async () => {
+      seedMeals(days, 2500);
+      seedWeights(days, 79);
+    });
+    await waitFor(() => expect(result.current.ready).toBe(true));
+  });
+
+  it("does not show the prior account's evidence after an account switch", async () => {
+    const days = recentDays(21);
+    seedMeals(days, 2500);
+    seedWeights(days, 80);
+    const { result, rerender } = renderHook(() => useAdaptiveTdee());
+    await waitFor(() => expect(result.current.ready).toBe(true));
+    authMock.mockReturnValue({
+      user: { uid: "u2" },
+      profile: { targetCalories: 1900 },
+      updateProfile: updateProfileMock,
+    });
+    rerender();
+    await flushSnapshots();
+    expect(result.current.ready).toBe(false);
+    expect(result.current.value).toBe(1900);
   });
 });

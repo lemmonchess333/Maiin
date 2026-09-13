@@ -1,3 +1,7 @@
+import {
+  fitWeekToRunningBaseline,
+  type RunningBaseline,
+} from "@/features/program/runningBaseline";
 /* ─────────────────────────────────────────────
    Run Day Scheduler
    Auto-distributes run types across the week,
@@ -8,6 +12,8 @@ import type { ScheduleDay } from "@/lib/scheduleUtils";
 import type { ScheduledRunDay, RunPlan } from "./programTypes";
 import type { LayoffClass } from "./layoffDetection";
 import { HARD_RUN_TYPES } from "./programTypes";
+import { chooseQualityRunSlots } from "./runPlacement";
+import { fitRunToTimeLimit, type RunTimeLimits } from "./runTimeLimits";
 import {
   generateScheduledRunId,
   localWeekKey,
@@ -1040,6 +1046,8 @@ export function scheduleRecoveryWeekV2(input: {
 }
 
 export interface RacePlanV2Input {
+  runningBaseline?: RunningBaseline | null;
+  runTimeLimits?: RunTimeLimits | null;
   weekSchedule: ScheduleDay[];
   raceGoal: {
     distance: "5k" | "10k" | "half" | "marathon";
@@ -1468,9 +1476,16 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
             distance: input.raceGoal.distance,
             difficulty: tuning.difficulty,
           });
+          const secondQualityHere = allowSecondQuality && remaining.length >= 3;
+          const qualitySlots = chooseQualityRunSlots({
+            availableDays: remaining,
+            longDay: longSlot,
+            count: secondQualityHere ? 2 : 1,
+            weekSchedule: input.weekSchedule,
+          });
           week.push(
             buildRunDayV2({
-              dayIndex: remaining[0],
+              dayIndex: qualitySlots[0],
               templateId: qualityId,
               type: qualityType,
               weekStart,
@@ -1482,12 +1497,11 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
           // run days the second quality session took the only easy day
           // (tempo + intervals + long, nothing easy), so it needs three
           // remaining slots, i.e. four run days or more.
-          const secondQualityHere = allowSecondQuality && remaining.length >= 3;
           if (secondQualityHere) {
             const secondType = qualityType === "tempo" ? "intervals" : "tempo";
             week.push(
               buildRunDayV2({
-                dayIndex: remaining[1],
+                dayIndex: qualitySlots[1],
                 templateId: qualityTemplateId({
                   flavour: secondType,
                   weekIndex: w,
@@ -1501,23 +1515,25 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
               })
             );
           }
-          remaining.slice(secondQualityHere ? 2 : 1).forEach((d, i) =>
-            week.push(
-              buildRunDayV2({
-                dayIndex: d,
-                // RUN-EV-11: first easy slot is the medium-long;
-                // WAVE1-STRIDES: the next plain easy gains strides.
-                templateId:
-                  i === 0
-                    ? midLongId
-                    : i === 1 && input.recentLayoff !== "detrained"
-                      ? stridesVariantOf(easyId)
-                      : easyId,
-                type: "easy",
-                weekStart,
-              })
-            )
-          );
+          remaining
+            .filter((day) => !qualitySlots.includes(day))
+            .forEach((d, i) =>
+              week.push(
+                buildRunDayV2({
+                  dayIndex: d,
+                  // RUN-EV-11: first easy slot is the medium-long;
+                  // WAVE1-STRIDES: the next plain easy gains strides.
+                  templateId:
+                    i === 0
+                      ? midLongId
+                      : i === 1 && input.recentLayoff !== "detrained"
+                        ? stridesVariantOf(easyId)
+                        : easyId,
+                  type: "easy",
+                  weekStart,
+                })
+              )
+            );
         } else {
           // Skip quality this week — all easy; first slot carries the
           // medium-long (RUN-EV-11), the second gains strides
@@ -1605,13 +1621,28 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
   const bothDays = new Set(
     input.weekSchedule.filter((d) => d.type === "both").map((d) => d.day)
   );
-  const flaggedWeeks = weeks.map((week) =>
-    week.map((rd) =>
-      HARD_RUN_TYPES.has(rd.type) && bothDays.has(rd.dayIndex)
+  const flaggedWeeks = weeks.map((week) => {
+    const limited = week.map((row) =>
+      fitRunToTimeLimit(row, input.runTimeLimits, input.easyPaceSPerKm)
+    );
+    const fitted = fitWeekToRunningBaseline(
+      limited,
+      input.runningBaseline,
+      week[0]?.weekKey && week[0].weekKey > input.currentDate
+        ? week[0].weekKey
+        : input.currentDate,
+      input.easyPaceSPerKm
+    );
+    return fitted.map((row, index) => {
+      const rd =
+        row === week[index]
+          ? row
+          : { ...row, id: generateScheduledRunId(row, row.weekKey!) };
+      return HARD_RUN_TYPES.has(rd.type) && bothDays.has(rd.dayIndex)
         ? { ...rd, clashesWithLift: true }
-        : rd
-    )
-  );
+        : rd;
+    });
+  });
 
   return { totalWeeks, compressed, belowFloor, weeks: flaggedWeeks };
 }

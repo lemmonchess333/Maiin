@@ -285,6 +285,8 @@ jobs:
           java-version: "21"
 
       - run: npm ci
+      # Run the actual command handler in the coaching preview/apply capture.
+      - run: npm ci --prefix functions
 
       - name: Get Playwright version
         id: playwright-version

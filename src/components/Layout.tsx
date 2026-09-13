@@ -72,7 +72,13 @@ const tabs: { to: string; icon: typeof Home; label: string }[] = [
 
 export default function Layout() {
   const location = useLocation();
-  const hideNav = location.pathname === "/run";
+  // No tab bar under the live run, and none under the Pro offer: the
+  // offer is a decision screen with its own exits (Continue with Free /
+  // Not now / the close X), and five more ways to leave beneath it were
+  // five ways to leave without deciding — while the fixed bar sat over
+  // the legal links on a short phone. Its bottom padding goes with it.
+  const hideNav =
+    location.pathname === "/run" || location.pathname === "/upgrade";
   const { isOnline, wasOffline } = useOnlineStatus();
   const { count: unreadCount, markSeen } = useUnreadCount();
   const prefersReducedMotion = useReducedMotion();
@@ -157,7 +163,9 @@ export default function Layout() {
       className="min-h-screen transition-colors"
       style={{
         paddingTop: "var(--safe-top)",
-        paddingBottom: "var(--page-bottom-pad)",
+        paddingBottom: hideNav
+          ? "var(--safe-bottom)"
+          : "var(--page-bottom-pad)",
       }}
     >
       {/* Top safe-area occluder — hides scrolling content under the iOS status bar.

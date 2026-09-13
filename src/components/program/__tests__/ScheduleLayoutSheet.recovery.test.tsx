@@ -124,8 +124,9 @@ describe("weekly layout save recovery", () => {
     );
   });
 
-  it("does not rebuild when saving the confirmed profile fails", async () => {
-    const callbacks = setup({ ok: false, error: new Error("unavailable") });
+  it("keeps the confirmation when the combined profile and programme save fails", async () => {
+    const callbacks = setup();
+    callbacks.regenerateProgram.mockRejectedValueOnce(new Error("unavailable"));
     fireEvent.click(screen.getByRole("button", { name: /Tue: Rest/i }));
     fireEvent.click(screen.getByRole("button", { name: /Apply changes/i }));
     fireEvent.click(
@@ -134,9 +135,16 @@ describe("weekly layout save recovery", () => {
       })
     );
     await waitFor(() =>
-      expect(callbacks.updateProfile).toHaveBeenCalledTimes(1)
+      expect(callbacks.regenerateProgram).toHaveBeenCalledTimes(1)
     );
-    expect(callbacks.regenerateProgram).not.toHaveBeenCalled();
+    expect(callbacks.updateProfile).not.toHaveBeenCalled();
+    expect(callbacks.regenerateProgram).toHaveBeenCalledWith(
+      undefined,
+      5,
+      expect.objectContaining({
+        profileUpdates: expect.objectContaining({ weeklyWorkoutsTarget: 5 }),
+      })
+    );
     expect(callbacks.onClose).not.toHaveBeenCalled();
     expect(screen.getByRole("alertdialog")).toBeInTheDocument();
   });

@@ -20,7 +20,7 @@
  * write log answers.
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { renderHook } from "@testing-library/react";
+import { act, renderHook } from "@testing-library/react";
 
 vi.mock("firebase/firestore");
 vi.mock("@/lib/firebase", () => ({ db: {}, functions: {} }));
@@ -148,5 +148,16 @@ describe("useDailyNutritionSnapshot", () => {
     await Promise.resolve();
 
     expect(readDoc(PATH)).toMatchObject({ targetCalories: 2400 });
+  });
+});
+
+it("writes the new local day's snapshot on resume even at identical targets", async () => {
+  renderHook(() => useDailyNutritionSnapshot());
+  await Promise.resolve();
+  expect(readDoc(PATH)).toBeDefined();
+  vi.setSystemTime(new Date(2026, 6, 16, 9));
+  await act(async () => window.dispatchEvent(new Event("focus")));
+  expect(readDoc("users/u1/dailyNutrition/2026-07-16")).toMatchObject({
+    targetCalories: 2400,
   });
 });

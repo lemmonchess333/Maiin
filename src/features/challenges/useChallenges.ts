@@ -131,6 +131,20 @@ export function challengeLocalEndMs(
   return parseLocalDate(endKey).getTime();
 }
 
+/**
+ * The collapsed entry to the not-joined challenges. It used to read
+ * "See all challenges · 1 · 20 days left" — a count and a deadline with
+ * nothing telling the reader what the number counted. Says what it is:
+ * how many more there are, and how soon the nearest one closes.
+ */
+export function moreChallengesLabel(
+  count: number,
+  soonest: string | null
+): string {
+  const noun = count === 1 ? "challenge" : "challenges";
+  return `See ${count} more ${noun}${soonest ? ` · ${soonest}` : ""}`;
+}
+
 export function getTimeRemaining(
   endDate: Timestamp | Date,
   now: number = Date.now()

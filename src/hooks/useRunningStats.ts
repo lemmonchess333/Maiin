@@ -1,13 +1,7 @@
-import {
-  useEffect,
-  useRef,
-  useState,
-  useMemo,
-  useSyncExternalStore,
-} from "react";
+import { useEffect, useState, useMemo, useSyncExternalStore } from "react";
 import {
   collection,
-  getDocs,
+  onSnapshot,
   query,
   where,
   orderBy,
@@ -23,7 +17,14 @@ import {
 } from "@/lib/offlineQueue";
 import { useUid } from "../lib/auth";
 import { isVolumeEligible } from "../lib/runStatsEligibility";
-import { localWeekKey } from "../lib/dateHelpers";
+import { addLocalDays, localWeekKey, parseLocalDate } from "../lib/dateHelpers";
+import { useLocalDateKey } from "./useLocalDateKey";
+import {
+  isRunDateKey,
+  readRunExecutionTarget,
+  runEvidenceDate,
+  type RunExecutionTarget,
+} from "@/lib/runExecutionEvidence";
 import { sampleRoute, type RouteCoordinate } from "../lib/routeSegments";
 
 export interface RunningWeekData {
@@ -42,6 +43,9 @@ export interface RunSummaryItem {
   calories: number;
   activityType: string;
   completedAt: Date;
+  date?: string;
+  executionTarget?: RunExecutionTarget | null;
+  routeQuality?: string | null;
   /** Post-run effort check-in (#1523). null when skipped. Read by the
    *  Run14 ease-week nudge (harder-streak trigger). */
   relativeEffort: "easier" | "matched" | "harder" | null;
@@ -83,7 +87,7 @@ export function aggregateWeeklyData(runs: RunSummaryItem[]): RunningWeekData[] {
     // Monday-start week key in pure LOCAL date math. Previously this mixed
     // local getDay()/setDate() with a UTC toISOString() key, so runs logged
     // near midnight in non-UTC zones bucketed into the wrong week.
-    const key = localWeekKey(new Date(run.completedAt));
+    const key = localWeekKey(parseLocalDate(runEvidenceDate(run)));
     if (!weeks[key])
       weeks[key] = { distance: 0, count: 0, paceKmSum: 0, paceKm: 0 };
     weeks[key].distance += run.distance / 1000;
@@ -120,17 +124,30 @@ export function parseRunSummary(
   } else if (data.completedAt?.toDate) {
     date = data.completedAt.toDate();
   }
-  if (!date) return null;
+  if (!date || !Number.isFinite(date.getTime())) return null;
+
+  const finite = (value: unknown): number =>
+    typeof value === "number" && Number.isFinite(value) && value >= 0
+      ? value
+      : 0;
 
   return {
     id,
-    distance: data.distance || 0,
-    duration: data.duration || 0,
-    avgPace: data.avgPace || 0,
-    elevationGain: data.elevationGain || 0,
-    calories: data.calories || 0,
+    distance: finite(data.distance),
+    duration: finite(data.duration),
+    avgPace: finite(data.avgPace),
+    elevationGain: finite(data.elevationGain),
+    calories: finite(data.calories),
     activityType: data.activityType || "freerun",
     completedAt: date,
+    date: isRunDateKey(data.date) ? data.date : undefined,
+    executionTarget: readRunExecutionTarget(data),
+    routeQuality:
+      typeof data.routeQuality?.confidence === "string"
+        ? data.routeQuality.confidence
+        : typeof data.routeQuality === "string"
+          ? data.routeQuality
+          : null,
     relativeEffort:
       data.relativeEffort === "easier" ||
       data.relativeEffort === "matched" ||
@@ -159,23 +176,28 @@ export function parseRunSummary(
 
 export function useRunningStats(days: number = 30) {
   const uid = useUid();
+  const today = useLocalDateKey();
   const queueVersion = useSyncExternalStore(
     subscribeQueuedWrites,
     queuedWritesVersion,
     queuedWritesVersion
   );
-  const [runs, setRuns] = useState<RunSummaryItem[]>([]);
+  const [{ runs, uid: loadedUid, queryKey: loadedQuery }, setLoaded] =
+    useState<{
+      runs: RunSummaryItem[];
+      uid: string | null;
+      queryKey: string | null;
+    }>({ runs: [], uid: null, queryKey: null });
   const [loading, setLoading] = useState(true);
-  /** See the note on the catch below — a failed read used to be
+  /** See the listener error callback below — a failed read used to be
    *  indistinguishable from an empty one. */
   const [failed, setFailed] = useState(false);
+  const [authoritative, setAuthoritative] = useState(false);
   // Hist4: refresh trigger for pull-to-refresh. Incrementing the
   // tick forces the load effect below to re-run via the dep array.
   // Public surface is the `refresh()` callback below.
   const [refreshTick, setRefreshTick] = useState(0);
-  // The UID whose data is currently rendered. Data is cleared immediately only
-  // when the UID CHANGES (an account switch), never on a same-uid refresh.
-  const loadedUidRef = useRef<string | null>(null);
+  const queryKey = `${uid ?? ""}:${days}:${today}:${refreshTick}`;
 
   useEffect(() => {
     if (!uid) {
@@ -184,44 +206,49 @@ export function useRunningStats(days: number = 30) {
       // sign-out → sign-in, or a transient null-user window), leaving `runs` /
       // `weeklyData` populated leaks account A's runs into account B's view
       // until B's load completes (the uid-scoping class hardened in PR #820).
-      loadedUidRef.current = null;
-      setRuns([]);
+      setLoaded({ runs: [], uid: null, queryKey: null });
       setLoading(false);
+      setFailed(false);
+      setAuthoritative(false);
       return;
     }
 
     let cancelled = false;
     // A→B: clear A's rows immediately so they can't show under B. A same-uid
     // pull-to-refresh keeps the current rows visible while loading.
-    if (loadedUidRef.current !== uid) {
-      setRuns([]);
-    }
+    setLoaded((current) =>
+      current.uid === uid ? current : { runs: [], uid: null, queryKey: null }
+    );
     setLoading(true);
+    setAuthoritative(false);
 
-    const loadStats = async () => {
-      try {
-        const since = new Date();
-        since.setDate(since.getDate() - days);
+    const since = addLocalDays(parseLocalDate(today), -days);
 
-        const runsRef = collection(db, "users", uid, "runs");
-        const q = query(
-          runsRef,
-          where("completedAt", ">=", Timestamp.fromDate(since)),
-          orderBy("completedAt", "desc")
-        );
-        const snap = await getDocs(q);
-
+    const runsRef = collection(db, "users", uid, "runs");
+    const q = query(
+      runsRef,
+      where("completedAt", ">=", Timestamp.fromDate(since)),
+      orderBy("completedAt", "desc")
+    );
+    const unsubscribe = onSnapshot(
+      q,
+      { includeMetadataChanges: true },
+      (snap) => {
         const runList = snap.docs
           .map((d) => parseRunSummary(d.id, d.data()))
           .filter((run): run is RunSummaryItem => run !== null);
 
         if (cancelled) return;
-        loadedUidRef.current = uid;
+        setLoaded({ runs: runList, uid, queryKey });
         setFailed(false);
-        setRuns(runList);
-      } catch (error) {
+        setAuthoritative(
+          !snap.metadata?.fromCache && !snap.metadata?.hasPendingWrites
+        );
+        setLoading(false);
+      },
+      (error) => {
         // A failed read must settle to a retryable state, not load forever
-        // (and never leave the promise rejection unhandled).
+        // after a listener failure.
         //
         // But settling to `runs: []` also made failure look exactly like
         // success-with-no-runs, and History's Tier-1 auto-hide reads an
@@ -230,40 +257,54 @@ export function useRunningStats(days: number = 30) {
         // and the surface that WOULD have shown one deleted itself.
         // `failed` lets the caller tell the two apart.
         if (cancelled) return;
-        loadedUidRef.current = uid;
-        setRuns([]);
+        setLoaded((current) => ({ ...current, uid, queryKey }));
         setFailed(true);
+        setAuthoritative(false);
+        setLoading(false);
         logger.error("[useRunningStats] Failed to load runs", error);
-      } finally {
-        if (!cancelled) setLoading(false);
       }
-    };
+    );
 
-    void loadStats();
     return () => {
       cancelled = true;
+      unsubscribe();
     };
-  }, [uid, days, refreshTick, queueVersion]);
+  }, [uid, days, refreshTick, today, queryKey]);
 
   const visibleRuns = useMemo(() => {
     void queueVersion;
     const byId = new Map(
-      (loadedUidRef.current === uid ? runs : []).map((run) => [run.id, run])
+      (loadedUid === uid ? runs : []).map((run) => [run.id, run])
     );
-    const since = new Date();
-    since.setDate(since.getDate() - days);
+    const since = addLocalDays(parseLocalDate(today), -days);
     if (uid)
       for (const entry of pendingDocumentWrites(uid, `users/${uid}/runs`)) {
         const run = parseRunSummary(entry.id, {
           ...(entry.merge ? byId.get(entry.id) : {}),
           ...entry.data,
         });
-        if (run && run.completedAt >= since) byId.set(entry.id, run);
+        if (run && run.completedAt >= since) {
+          if (
+            entry.merge &&
+            ![
+              "runConfig",
+              "planMode",
+              "planSource",
+              "matchedPlanExact",
+              "offPlan",
+              "scheduledRunId",
+              "activityType",
+            ].some((key) => Object.hasOwn(entry.data, key))
+          ) {
+            run.executionTarget = byId.get(entry.id)?.executionTarget ?? null;
+          }
+          byId.set(entry.id, run);
+        }
       }
-    return [...byId.values()].sort(
-      (a, b) => b.completedAt.getTime() - a.completedAt.getTime()
-    );
-  }, [uid, runs, days, queueVersion]);
+    return [...byId.values()]
+      .filter((run) => run.completedAt >= since)
+      .sort((a, b) => b.completedAt.getTime() - a.completedAt.getTime());
+  }, [uid, loadedUid, runs, days, queueVersion, today]);
 
   return {
     weeklyData: aggregateWeeklyData(visibleRuns),
@@ -280,13 +321,21 @@ export function useRunningStats(days: number = 30) {
      *  your runs" from "you have no runs" — the two are otherwise the
      *  same `runs: []`. */
     failed: failed && visibleRuns.length === 0,
-    /** Hist4: re-runs the underlying getDocs query. Used by the
+    /** History can display cached/queued facts, but coaching must not treat
+     * a partial or failed query as a complete, current evidence window. */
+    evidenceReady:
+      !!uid &&
+      loadedUid === uid &&
+      loadedQuery === queryKey &&
+      !loading &&
+      !failed &&
+      authoritative &&
+      pendingDocumentWrites(uid, `users/${uid}/runs`).length === 0,
+    /** Hist4: restarts the underlying live query. Used by the
      *  History page's pull-to-refresh gesture; the other History
      *  data sources (useWorkouts, useMeals) are onSnapshot listeners
-     *  so they're already live. Returns a promise that resolves
-     *  when the next render with fresh data settles — but the
-     *  loading flag is also exposed if callers want to gate UI on
-     *  the refresh completing. */
+     *  so they're already live. The loading flag reports the new subscription, while
+     *  existing same-account rows remain visible. */
     refresh: () => setRefreshTick((n) => n + 1),
   };
 }

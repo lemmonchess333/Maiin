@@ -14,6 +14,7 @@
 import { describe, it, expect } from "vitest";
 import { renderHook, act } from "@testing-library/react";
 import { useSessionPlayer } from "../useSessionPlayer";
+import { computePlanMetadata } from "@/lib/runPlanMetadata";
 import {
   segmentsFromEasyWithStrides,
   segmentsFromIntervals,
@@ -25,6 +26,31 @@ import {
 // elapsed, so tests drive time by passing it — no fake timers.
 
 describe("useSessionPlayer", () => {
+  it.each([10, 20])(
+    "executes the actual Easy %s template through its timed finish",
+    (minutes) => {
+      const decision = computePlanMetadata({
+        profileRunMode: "freeform",
+        todayDayIndex: 1,
+        todayDate: "2026-09-07",
+        runPlan: undefined,
+        runDays: [],
+        urlTemplateId: `easy_${minutes}`,
+        urlType: null,
+        displayUnit: "km",
+      });
+      const { result } = renderHook(() =>
+        useSessionPlayer(decision.prefill.segments)
+      );
+      act(() => result.current.start());
+      act(() => result.current.tick(minutes * 60 - 1, 500));
+      expect(result.current.isComplete).toBe(false);
+      expect(result.current.current?.type).toBe("easy");
+      act(() => result.current.tick(minutes * 60, 500));
+      expect(result.current.isComplete).toBe(true);
+    }
+  );
+
   const intervalSegs = segmentsFromIntervals(
     {
       reps: 2,

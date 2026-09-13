@@ -1,3 +1,15 @@
+import type { RunningBaseline } from "@/features/program/runningBaseline";
+import {
+  plannedRunMinutes,
+  type RunTimeLimits,
+} from "@/features/program/runTimeLimits";
+import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
+import {
+  continuingRacePlan,
+  continuedBlockWeeks,
+  preserveEditedRunDays,
+} from "@/features/program/racePlanContinuation";
+import type { ProgramState } from "@/features/program/programTypes";
 /**
  * Race Goal Planner — pure derivation of the pre-save preview shown in the
  * Programme Settings race-prep editor (see RaceGoalPlanner.tsx).
@@ -18,7 +30,7 @@
  *
  * No medical warnings, no performance promises (Run9 / design system).
  */
-import { generateSchedule } from "./scheduleUtils";
+import { planWeekSchedule, type ScheduleDay } from "./scheduleUtils";
 import { localWeekKey, parseLocalDate } from "./dateHelpers";
 import {
   generateRacePlanV2,
@@ -66,6 +78,12 @@ export interface RaceGoalPlannerInput {
    *  commit, or the previewed week structure drifts from the plan.
    *  Optional (absent → standard) for non-editor callers. */
   tuning?: RunTuning;
+  runningBaseline?: RunningBaseline | null;
+  runTimeLimits?: RunTimeLimits | null;
+  easyPaceSPerKm?: number | null;
+  existingState?: ProgramState | null;
+  recentLayoff?: import("@/features/program/layoffDetection").LayoffClass;
+  weekSchedule?: ScheduleDay[];
 }
 
 export interface RaceGoalPlannerState {
@@ -88,6 +106,8 @@ export interface RaceGoalPlannerState {
   doubleDays: number;
   /** Hard runs (long/tempo/intervals/race) the engine flags as clashing with a lift day, in week 0. */
   hardClashDays: number;
+  timeLimitedRuns: number;
+  firstWeekMinutes: number;
   /** Post-race easy weeks (5k=1, 10k=2, half=3, marathon=4). */
   recoveryWeeks: number;
   compressed: boolean;
@@ -125,6 +145,8 @@ export function getRaceGoalPlannerState(
     recommendedRunDays: weeklyRunDays,
     doubleDays,
     hardClashDays: 0,
+    timeLimitedRuns: 0,
+    firstWeekMinutes: 0,
     recoveryWeeks,
     compressed: false,
     belowFloor: false,
@@ -157,23 +179,39 @@ export function getRaceGoalPlannerState(
   const weeksOut = Math.ceil(daysOut / 7);
 
   // Build the plan through the SAME engine + derivation the save path uses.
-  const weekSchedule = generateSchedule(liftDays, weeklyRunDays);
+  const weekSchedule = planWeekSchedule(
+    liftDays,
+    weeklyRunDays,
+    input.weekSchedule
+  );
   const weekStart = localWeekKey(now);
+  const continued = continuingRacePlan(input.existingState?.runPlan, {
+    distance,
+    targetDate,
+  });
   const plan = generateRacePlanV2({
-    /* Run15 — this is the date-picker PREVIEW, which answers "is there time
-       for this race?", a question about the calendar rather than about the
-       runner. Threading a layoff here would make the preview disagree with
-       the plan the user gets on save only when they are ALSO detrained, which
-       is the confusing half of the truth. The re-entry decision belongs to
-       the realign flow, where it can be explained. */
-    recentLayoff: "none",
+    // Settings preview the same returning-runner guard used by the save.
+    // Calendar-only callers deliberately retain the no-history fallback.
+    recentLayoff: input.recentLayoff ?? "none",
     weekSchedule,
     raceGoal: { distance, targetDate },
     weeklyRunDays,
     currentDate,
     weekStart,
     tuning: input.tuning,
+    runningBaseline: input.runningBaseline,
+    runTimeLimits: input.runTimeLimits,
+    easyPaceSPerKm: input.easyPaceSPerKm,
+    planTotalWeeks: continued?.totalWeeks,
   });
+  if (continued && plan.weeks[0]) {
+    plan.weeks[0] = preserveEditedRunDays(
+      input.existingState?.runDays ?? [],
+      plan.weeks[0],
+      input.existingState?.manualCompletions,
+      currentDate
+    );
+  }
 
   // Status straight from the engine's own booleans (belowFloor ⊂ compressed).
   const status: RacePlannerStatus = plan.belowFloor
@@ -182,11 +220,19 @@ export function getRaceGoalPlannerState(
       ? "compressed"
       : "healthy";
 
-  const firstWeek = plan.weeks.find((w) => w.length > 0) ?? [];
-  const recommendedRunDays = firstWeek.length || weeklyRunDays;
-  const week0 = plan.weeks[0] ?? [];
+  const week0 = (plan.weeks[0] ?? []).filter((run) =>
+    run.date
+      ? localWeekKey(parseLocalDate(run.date)) === weekStart
+      : !run.weekKey || run.weekKey === weekStart
+  );
+  const recommendedRunDays = week0.length || weeklyRunDays;
   const hardClashDays = week0.filter((rd) => rd.clashesWithLift).length;
-  const firstWeekPhase = getRacePhaseLabel(0, plan.totalWeeks, distance);
+  const blockWeeks = continuedBlockWeeks(plan.totalWeeks, continued);
+  const firstWeekPhase = getRacePhaseLabel(
+    blockWeeks - plan.totalWeeks,
+    blockWeeks,
+    distance
+  );
 
   const lower = distanceLabel.toLowerCase();
   let statusTitle: string;
@@ -223,11 +269,23 @@ export function getRaceGoalPlannerState(
     recommendedRunDays,
     doubleDays,
     hardClashDays,
+    timeLimitedRuns: plan.weeks.flat().filter((run) => run.timeLimit).length,
+    firstWeekMinutes: week0.reduce((total, run) => {
+      const template = RUN_TEMPLATES.find(
+        (candidate) => candidate.id === run.templateId
+      );
+      return (
+        total +
+        (template ? plannedRunMinutes(template, input.easyPaceSPerKm) : 0)
+      );
+    }, 0),
     recoveryWeeks,
     compressed: plan.compressed,
     belowFloor: plan.belowFloor,
-    statusTitle,
-    statusDescription,
+    statusTitle: continued ? "Continue your plan" : statusTitle,
+    statusDescription: continued
+      ? `Your current ${firstWeekPhase.toLowerCase()} phase continues. Completed runs and one-off changes are kept.`
+      : statusDescription,
     ctaLabel,
   };
 }

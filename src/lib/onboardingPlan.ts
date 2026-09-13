@@ -1,3 +1,5 @@
+import type { RunTimeLimits } from "@/features/program/runTimeLimits";
+import type { RunFitnessInput } from "./runPaces";
 import { buildPlan } from "@/features/program/planBuilder";
 import { PROGRAM_TEMPLATES } from "@/features/program/templates";
 import {
@@ -27,7 +29,14 @@ export function buildOnboardingPlan(
     | "weightKg"
   >,
   nutritionPhase: Goal,
-  currentDate: string
+  currentDate: string,
+  runningPreferences?: {
+    runningBaseline?:
+      | import("@/features/program/runningBaseline").RunningBaseline
+      | null;
+    runTimeLimits?: RunTimeLimits | null;
+    runFitness?: RunFitnessInput | null;
+  }
 ) {
   const runMode = resolveOnboardingRunMode({
     runFrequency: draft.runFrequency,
@@ -71,6 +80,9 @@ export function buildOnboardingPlan(
     preferredSplit: "auto",
     runMode,
     weeklyRunDays,
+    runningBaseline: runningPreferences?.runningBaseline,
+    runTimeLimits: runningPreferences?.runTimeLimits,
+    runFitness: runningPreferences?.runFitness,
     ...(runMode === "race_prep"
       ? {
           raceGoal: {

@@ -42,6 +42,7 @@ function makeArgs(profileOverrides: Partial<UserProfile> = {}) {
   // inspect the schedule arg.
   const refreshRunSchedule = vi.fn<
     (overrides?: {
+      profileUpdates?: Partial<UserProfile>;
       weekSchedule?: ScheduleDay[];
       weeklyRunDaysTarget?: number;
     }) => Promise<void>
@@ -50,7 +51,11 @@ function makeArgs(profileOverrides: Partial<UserProfile> = {}) {
     (
       goalOverride?: string,
       weeklyTargetOverride?: number,
-      overrides?: { weekSchedule?: ScheduleDay[]; weeklyRunDaysTarget?: number }
+      overrides?: {
+        weekSchedule?: ScheduleDay[];
+        weeklyRunDaysTarget?: number;
+        profileUpdates?: Partial<UserProfile>;
+      }
     ) => Promise<void>
   >(async () => {});
   return {
@@ -216,7 +221,8 @@ describe("useProgrammeScheduleEditor — handleApplyScheduleChanges", () => {
     await act(async () => {
       expect(await result.current.handleApplyScheduleChanges()).toBe("saved");
     });
-    expect(args.updateProfile).toHaveBeenCalledExactlyOnceWith({
+    expect(args.updateProfile).not.toHaveBeenCalled();
+    expect(args.refreshRunSchedule.mock.calls[0][0]?.profileUpdates).toEqual({
       weekSchedule: Array.from({ length: 7 }, (_, day) => ({
         day,
         type: day === 0 ? "run" : "both",
@@ -247,8 +253,11 @@ describe("useProgrammeScheduleEditor — handleApplyScheduleChanges", () => {
     await act(async () => {
       await result.current.handleApplyScheduleChanges();
     });
-    expect(args.updateProfile).toHaveBeenCalledOnce();
+    expect(args.updateProfile).not.toHaveBeenCalled();
     expect(args.refreshRunSchedule).toHaveBeenCalledOnce();
+    expect(
+      args.refreshRunSchedule.mock.calls[0][0]?.profileUpdates?.weekSchedule
+    ).toEqual(result.current.schedule);
     expect(result.current.showRestructureModal).toBe(false);
   });
 
@@ -333,8 +342,11 @@ describe("useProgrammeScheduleEditor — restructure flow", () => {
     await act(async () => {
       await result.current.handleConfirmRestructure();
     });
-    expect(args.updateProfile).toHaveBeenCalledOnce();
+    expect(args.updateProfile).not.toHaveBeenCalled();
     expect(args.regenerateProgram).toHaveBeenCalledOnce();
+    expect(
+      args.regenerateProgram.mock.calls[0][2]?.profileUpdates?.weekSchedule
+    ).toEqual(result.current.schedule);
     const [goalOverride, weeklyTargetOverride, overrides] =
       args.regenerateProgram.mock.calls[0];
     expect(goalOverride).toBeUndefined();
@@ -502,4 +514,14 @@ describe("useProgrammeScheduleEditor — PR-2 zero-as-zero", () => {
     );
     expect(resultB.current.runsTarget).toBe(3);
   });
+});
+
+it("keeps a failed race-layout change as a draft without a separate profile write", async () => {
+  const args = makeArgs({ runMode: "race_prep" });
+  args.refreshRunSchedule.mockRejectedValue(new Error("unavailable"));
+  const { result } = renderHook(() => useProgrammeScheduleEditor(args));
+  await act(async () =>
+    expect(await result.current.handleApplyScheduleChanges()).toBe("failed")
+  );
+  expect(args.updateProfile).not.toHaveBeenCalled();
 });

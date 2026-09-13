@@ -355,6 +355,14 @@ export interface UserProfileRunning {
    */
   runVolume?: "lighter" | "standard" | "bigger";
   runDifficulty?: "gentler" | "standard" | "harder";
+  runningBaseline?:
+    | import("@/features/program/runningBaseline").RunningBaseline
+    | null;
+  nonRaceGoal?: import("@/lib/nonRaceGoal").NonRaceGoal | null;
+  liftTimeBudgetMinutes?: number | null;
+  runTimeLimits?:
+    | import("@/features/program/runTimeLimits").RunTimeLimits
+    | null;
   // Run9 3a-ii: `null` is the explicit "no race" value so a freeform switch /
   // recovery exit can CLEAR a prior race (a merge write of `undefined` is
   // stripped and would leave the old goal stranded). Readers gate on

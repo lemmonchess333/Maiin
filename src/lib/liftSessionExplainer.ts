@@ -70,6 +70,7 @@ export function liftSessionExplainer(
   if (!state || cycleWeek(state.weekNumber) === null) return null;
   if (variant === "easier_today")
     return "Easier today · fewer sets, lighter loads";
+  if (variant === "time_budget") return "Usual session · main lifts stay";
   if (variant !== "full") return "Shorter today · main lifts stay";
   if (state.currentPhase === "deload")
     return "Step-back week · lighter by design";

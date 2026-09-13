@@ -1,4 +1,10 @@
 import {
+  withoutSessionProgression,
+  type SessionPrescription,
+} from "@/features/program/sessionCompletion";
+import type { CompletedSessionData } from "@/features/program/useProgram";
+import type { ProgrammeCompletionContext } from "@/lib/workoutCompletion";
+import {
   useState,
   useEffect,
   useRef,
@@ -35,16 +41,12 @@ import { sessionRecords } from "@/features/program/sessionRecords";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { motion, AnimatePresence } from "framer-motion";
 import { collection, getDocs, query, orderBy, limit } from "firebase/firestore";
-import { setDocGuarded } from "@/lib/firestoreWrite";
 import {
   buildInitialSetLogs,
   toCompletionSetLogs,
 } from "@/features/program/warmupRamp";
 import { formatRepTarget } from "@/features/program/templateConversion";
-import {
-  isSetEligibleForStrengthPr,
-  progressionSetFor,
-} from "@/features/program/sessionSetPolicy";
+import { isSetEligibleForStrengthPr } from "@/features/program/sessionSetPolicy";
 import { auth, db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
 import { DEFAULT_REST_SECONDS } from "@/features/program/programTypes";
@@ -203,50 +205,34 @@ interface Props {
    *  handed a reduced COPY of `day` (Express time budget, or Easier
    *  today). Threaded into the completion write and acknowledged on
    *  the complete screen. */
-  sessionVariant?: "express45" | "express30" | "easier_today";
+  sessionVariant?: "express45" | "express30" | "easier_today" | "time_budget";
   /** Backlog #4: true during a step-back (deload) week — the effort cue
    *  under the set counter switches to the step-back line. */
   deloadWeek?: boolean;
-  onLogExercise: (
-    dayIndex: number,
-    exIndex: number,
-    reps: number,
-    weight: number,
-    rpe?: number,
-    session?: { id: string; correction?: boolean }
-  ) => Promise<void>;
+  progressionBaseline?: ProgramExercise[];
+  programmeContext?: ProgrammeCompletionContext;
   onCompleteDay: (
     dayIndex: number,
-    sessionData: {
-      completionId: string;
-      completionCommandId: string;
-      durationMinutes: number;
-      setLogs: Array<
-        Array<{ weight: number; reps: number; completed: boolean }>
-      >;
-      sessionVariant?: "express45" | "express30" | "easier_today";
-      /** Lift3 — when the session started (ms); the doc is dated by it. */
-      startedAt?: number;
-      /** Per-exercise notes typed during the session, by exercise index. */
-      exerciseNotes?: Record<number, string>;
-    }
+    sessionData: CompletedSessionData
   ) => Promise<unknown>;
   onClose: () => void;
 }
 
 export default function WorkoutSession({
-  day,
+  day: incomingDay,
   dayIndex,
   planContext,
   draftScope,
   draftEpoch,
   sessionVariant,
   deloadWeek = false,
-  onLogExercise,
+  progressionBaseline,
+  programmeContext,
   onCompleteDay,
   onClose,
 }: Props) {
   const { user, profile } = useAuth();
+  const [initialDay] = useState(incomingDay);
   const { awardEventBadge } = useStreaks();
   // LIFT-01: bind the draft to this exact session — scope + epoch +
   // day metadata + executable exercise layout. setLogs/exerciseNotes
@@ -258,13 +244,13 @@ export default function WorkoutSession({
         scope: draftScope ?? "programme",
         epoch: draftEpoch ?? 0,
         dayIndex,
-        dayName: day.dayName,
-        layout: day.exercises.map((ex) => ({
+        dayName: initialDay.dayName,
+        layout: initialDay.exercises.map((ex) => ({
           id: ex.exerciseId || ex.name,
           sets: ex.sets,
         })),
       }),
-    [draftScope, draftEpoch, dayIndex, day.dayName, day.exercises]
+    [draftScope, draftEpoch, dayIndex, initialDay.dayName, initialDay.exercises]
   );
   const {
     load: loadDraft,
@@ -276,13 +262,48 @@ export default function WorkoutSession({
   // One completion id per session (packet 15). Resumed from the draft when
   // present so a retry/resume targets the SAME workout doc; persisted into
   // every draft save below. Never regenerated per Finish click.
-  const completionIdRef = useRef(
-    initialDraft?.completionId ?? createWorkoutCompletionId()
+  const [initialCompletionId] = useState(
+    () => initialDraft?.completionId ?? createWorkoutCompletionId()
   );
+  const completionIdRef = useRef(initialCompletionId);
   // Packet 18 program-command receipt key — session-stable, never regenerated
   // per Finish. Defaults to the completion id for a fresh session.
   const completionCommandIdRef = useRef(
-    initialDraft?.completionCommandId ?? completionIdRef.current
+    initialDraft?.completionCommandId ?? initialCompletionId
+  );
+  const [prescription] = useState<SessionPrescription>(() => {
+    if (initialDraft?.prescription) return initialDraft.prescription;
+    const baseline = (ex: ProgramExercise) =>
+      withoutSessionProgression(
+        ex.sessionProgression?.id === initialCompletionId
+          ? ex.sessionProgression.baseline
+          : ex
+      );
+    return structuredClone({
+      dayName: initialDay.dayName,
+      exercises: initialDay.exercises.map((ex) => ({
+        ...withoutSessionProgression(ex),
+        weight: baseline(ex).weight,
+        reps: baseline(ex).reps,
+      })),
+      progressionBaseline: initialDay.exercises.map((ex) =>
+        baseline(
+          progressionBaseline?.find(
+            (candidate) => candidate.instanceId === ex.instanceId
+          ) ?? ex
+        )
+      ),
+    });
+  });
+  const [sessionProgrammeContext] = useState(
+    initialDraft?.programmeContext ?? programmeContext
+  );
+  const day = useMemo(
+    () => ({ ...initialDay, exercises: prescription.exercises }),
+    [initialDay, prescription]
+  );
+  const [originalStartedAt, setOriginalStartedAt] = useState(
+    () => initialDraft?.startedAt ?? Date.now()
   );
   const [showResumePrompt, setShowResumePrompt] = useState(
     initialDraft !== null && !initialDraft.completionPending
@@ -381,6 +402,7 @@ export default function WorkoutSession({
   // Multi-rep-range PR tracking
   const [prMap, setPrMap] = useState<PRMap>({});
   const recordBaseline = useRef<PRMap>({});
+  const recordsRevisionRef = useRef(0);
   const volumeBaseline = useRef<VolumeBestMap>({});
   const [editingSet, setEditingSet] = useState<{
     exIdx: number;
@@ -504,6 +526,7 @@ export default function WorkoutSession({
       let mapLoaded = false;
       let countsLoaded = false;
       let volumeBestLoaded = false;
+      let recordsInvalidated = false;
       try {
         const { doc: fbDoc, getDoc: fbGetDoc } =
           await import("firebase/firestore");
@@ -512,16 +535,18 @@ export default function WorkoutSession({
         );
         if (prMapDoc.exists()) {
           const data = prMapDoc.data();
-          if (data.map) {
+          recordsRevisionRef.current = data.revision ?? 0;
+          recordsInvalidated = data.invalidated === true;
+          if (data.map && !recordsInvalidated) {
             recordBaseline.current = data.map as PRMap;
             setPrMap(recordBaseline.current);
             mapLoaded = true;
           }
-          if (data.sessionCounts) {
+          if (data.sessionCounts && !recordsInvalidated) {
             setSessionCounts(data.sessionCounts as Record<string, number>);
             countsLoaded = true;
           }
-          if (data.volumeBest) {
+          if (data.volumeBest && !recordsInvalidated) {
             volumeBaseline.current = data.volumeBest as VolumeBestMap;
             setVolumeBest(volumeBaseline.current);
             volumeBestLoaded = true;
@@ -531,10 +556,13 @@ export default function WorkoutSession({
         // Fall through to rebuild from history
       }
 
+      const recordHistory = recordsInvalidated
+        ? await getDocs(query(workoutsRef, orderBy("date", "desc")))
+        : snap;
       if (!mapLoaded || !countsLoaded) {
         // Fall back to building from last 50 workouts — only the pieces
         // that are actually missing.
-        const history = snap.docs.map((d) => {
+        const history = recordHistory.docs.map((d) => {
           const data = d.data();
           return {
             date: data.date as string,
@@ -585,7 +613,7 @@ export default function WorkoutSession({
         // Legacy stats/prMap docs predate volumeBest — rebuild from the
         // same 50-workout window so the first post-upgrade session doesn't
         // spray false volume PRs.
-        const historyForVolume = snap.docs.map((d) => {
+        const historyForVolume = recordHistory.docs.map((d) => {
           const data = d.data();
           return {
             date: (data.date as string) ?? "",
@@ -661,7 +689,9 @@ export default function WorkoutSession({
       currentExIndex,
       completionId: completionIdRef.current,
       completionCommandId: completionCommandIdRef.current,
-      startedAt: sessionStartRef.current,
+      startedAt: originalStartedAt,
+      prescription,
+      programmeContext: sessionProgrammeContext,
     });
   }, [
     setLogs,
@@ -670,6 +700,9 @@ export default function WorkoutSession({
     dayIndex,
     day.dayName,
     saveDraft,
+    prescription,
+    originalStartedAt,
+    sessionProgrammeContext,
   ]);
 
   const formatElapsed = formatClock;
@@ -1207,23 +1240,6 @@ export default function WorkoutSession({
       // If nothing is eligible (an exercise logged as warm-ups only, or a lone
       // drop set) we skip entirely — there is no working-set evidence, and
       // inventing some would be worse than waiting for the next session.
-      const progressionSet = progressionSetFor(
-        currentSets.map((st, i) =>
-          i === setIdx ? { ...set, completed: true } : st
-        )
-      );
-
-      if (progressionSet) {
-        await onLogExercise(
-          dayIndex,
-          currentExIndex,
-          progressionSet.reps,
-          progressionSet.weight,
-          progressionSet.rpe,
-          { id: completionIdRef.current }
-        );
-      }
-
       if (!next) {
         completeSession();
       } else {
@@ -1278,25 +1294,6 @@ export default function WorkoutSession({
         ei === exIdx && si === setIdx ? { ...entry, ...values } : entry
       )
     );
-    const previousProgression = progressionSetFor(setLogs[exIdx]);
-    const nextProgression = progressionSetFor(next[exIdx]);
-    // Progression was already recorded when this exercise finished. Replace
-    // that one result against its server-owned baseline, never progress twice.
-    if (
-      next[exIdx].every((entry) => entry.completed) &&
-      nextProgression &&
-      (nextProgression.weight !== previousProgression?.weight ||
-        nextProgression.reps !== previousProgression?.reps)
-    ) {
-      await onLogExercise(
-        dayIndex,
-        exIdx,
-        nextProgression.reps,
-        nextProgression.weight,
-        nextProgression.rpe,
-        { id: completionIdRef.current, correction: true }
-      );
-    }
     if (correctionUid && auth.currentUser?.uid !== correctionUid)
       throw new Error("Your account changed. Reopen your workout to continue.");
     setSetLogs(next);
@@ -1352,7 +1349,9 @@ export default function WorkoutSession({
         completionId: completionIdRef.current,
         completionCommandId: completionCommandIdRef.current,
         completionPending: true,
-        startedAt: sessionStartRef.current,
+        startedAt: originalStartedAt,
+        prescription,
+        programmeContext: sessionProgrammeContext,
       });
       if (navigator.onLine === false && !recoveryStored) {
         throw new Error("Offline recovery storage is unavailable.");
@@ -1370,7 +1369,9 @@ export default function WorkoutSession({
         sessionVariant,
         // Lift3: the doc is dated by when the session STARTED (draft-resume
         // aware — sessionStartRef is backdated by the draft's elapsed time).
-        startedAt: sessionStartRef.current,
+        startedAt: originalStartedAt,
+        prescription,
+        programmeContext: sessionProgrammeContext,
         // These were written to the resume draft and dropped on Finish, so
         // they survived closing a session and were lost by completing one.
         // The draft is deleted the moment the workout commits, so Finish was
@@ -1453,16 +1454,34 @@ export default function WorkoutSession({
             const { doc: fbDoc } = await import("firebase/firestore");
             const { Timestamp } = await import("firebase/firestore");
             if (auth.currentUser?.uid !== user.uid) return;
-            await setDocGuarded(
-              fbDoc(db, "users", user.uid, "stats", "prMap"),
-              {
-                map: prMap,
-                sessionCounts: finalSessionCounts,
-                volumeBest: finalVolumeBest,
-                updatedAt: Timestamp.now(),
-              },
-              { merge: true }
-            );
+            const { runTransaction } = await import("firebase/firestore");
+            const ref = fbDoc(db, "users", user.uid, "stats", "prMap");
+            await runTransaction(db, async (transaction) => {
+              const current = await transaction.get(ref);
+              if (auth.currentUser?.uid !== user.uid) return;
+              const revision = current.data()?.revision ?? 0;
+              if (revision !== recordsRevisionRef.current) {
+                // Another save/correction invalidated this session's baseline.
+                transaction.set(
+                  ref,
+                  { invalidated: true, revision: revision + 1 },
+                  { merge: true }
+                );
+                return;
+              }
+              transaction.set(
+                ref,
+                {
+                  map: prMap,
+                  sessionCounts: finalSessionCounts,
+                  volumeBest: finalVolumeBest,
+                  updatedAt: Timestamp.now(),
+                  invalidated: false,
+                  revision: revision + 1,
+                },
+                { merge: true }
+              );
+            });
           } catch {
             // Non-critical — map can be rebuilt from history
           }
@@ -1503,6 +1522,7 @@ export default function WorkoutSession({
        anchor immediately instead of carrying an up-to-one-second-stale
        `nowTick` into the fresh session. */
     sessionStartRef.current = Date.now();
+    setOriginalStartedAt(sessionStartRef.current);
     setNowTick(sessionStartRef.current);
     clearDraft();
     completionPendingRef.current = false;
