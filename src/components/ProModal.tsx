@@ -44,7 +44,7 @@ import { useProCheckout } from "@/hooks/useProCheckout";
 import TrialTimeline from "@/components/TrialTimeline";
 import { useProPlanPrices } from "@/hooks/useProPlanPrices";
 import { track } from "@/lib/paywallAnalytics";
-import { hasLapsedOnboardingTrial } from "@/lib/subscription";
+import { isCheckoutTrialEligible } from "@/lib/subscription";
 import { X, Sparkles, Utensils } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { BottomSheet } from "@/components/ui/BottomSheet";
@@ -141,8 +141,7 @@ export default function ProModal({ onClose, featureKey, initialPlan }: Props) {
   // profile (cold-start, race) defaults to true so the more generous
   // CTA wins on uncertainty — the server still rejects a second
   // trial if the user actually has `hasUsedTrial: true`.
-  const withTrial = !profile || !profile.hasUsedTrial;
-  const extension = withTrial && hasLapsedOnboardingTrial(profile);
+  const withTrial = isCheckoutTrialEligible(profile);
 
   const platform: "web" | "ios" = isNativeIOS() ? "ios" : "web";
   const showRestore = isNativeIOS();
@@ -209,7 +208,7 @@ export default function ProModal({ onClose, featureKey, initialPlan }: Props) {
   // plan-priced default.
   const ctaLabel = requiresSignIn
     ? "Sign in to start Pro"
-    : getCheckoutCtaLabel(selectedPlan, withTrial, extension);
+    : getCheckoutCtaLabel(selectedPlan, withTrial);
 
   // Reset selection if the parent remounts the modal with a different
   // initialPlan (defensive — current callsites always remount on open

@@ -1,5 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { getSubscriptionInfo, hasLapsedOnboardingTrial } from "../subscription";
+import {
+  getSubscriptionInfo,
+  hasLapsedOnboardingTrial,
+  isCheckoutTrialEligible,
+} from "../subscription";
 import type { UserProfile } from "../auth";
 
 function makeProfile(overrides: Partial<UserProfile> = {}): UserProfile {
@@ -291,5 +295,33 @@ describe("hasLapsedOnboardingTrial", () => {
         now
       )
     ).toBe(true);
+  });
+});
+
+describe("isCheckoutTrialEligible — one trial per account", () => {
+  it("a profile that ever held the onboarding free week is not eligible: live or lapsed, flag or no flag", () => {
+    expect(
+      isCheckoutTrialEligible({
+        hasUsedTrial: false,
+        trialExpiresAt: "2020-01-01T00:00:00Z",
+      })
+    ).toBe(false);
+    expect(
+      isCheckoutTrialEligible({
+        hasUsedTrial: false,
+        trialExpiresAt: "2999-01-01T00:00:00Z",
+      })
+    ).toBe(false);
+    expect(
+      isCheckoutTrialEligible({ hasUsedTrial: true, trialExpiresAt: null })
+    ).toBe(false);
+  });
+
+  it("eligible only with neither the flag nor an expiry on the profile, and with no profile at all", () => {
+    expect(
+      isCheckoutTrialEligible({ hasUsedTrial: false, trialExpiresAt: null })
+    ).toBe(true);
+    expect(isCheckoutTrialEligible({ trialExpiresAt: null })).toBe(true);
+    expect(isCheckoutTrialEligible(null)).toBe(true);
   });
 });

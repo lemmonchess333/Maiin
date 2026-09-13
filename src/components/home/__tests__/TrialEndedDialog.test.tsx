@@ -22,23 +22,6 @@ describe("TrialEndedDialog", () => {
     expect(screen.getByText(/work as before/)).toBeInTheDocument();
   });
 
-  it("offers the extension only when the card trial is still available", () => {
-    const { rerender } = render(
-      <TrialEndedDialog
-        onDismiss={vi.fn()}
-        onKeep={vi.fn()}
-        extensionAvailable
-      />
-    );
-    expect(
-      screen.getByText(
-        /Keep Pro to carry on, with 7 more days free before anything is charged/
-      )
-    ).toBeInTheDocument();
-    rerender(<TrialEndedDialog onDismiss={vi.fn()} onKeep={vi.fn()} />);
-    expect(screen.queryByText(/7 more days free/)).toBeNull();
-  });
-
   it("names nothing that is free as a reason to pay", () => {
     // Performance insights, the PI and the week's verdict are free (Sub2).
     // The old copy promised "performance insights" for subscribing.
@@ -73,9 +56,6 @@ describe("TrialEndedDialog", () => {
     const block = home.slice(start, home.indexOf("</AnimatePresence>", start));
     expect(start).toBeGreaterThan(0);
     expect(block).toMatch(/navigate\("\/upgrade\?from=trial_end"\)/);
-    // The extension line is Home's to decide: it knows whether the card
-    // trial is still unused.
-    expect(block).toMatch(/extensionAvailable=\{!profile\?\.hasUsedTrial\}/);
     expect(block).not.toMatch(/navigate\("\/upgrade"\)/);
   });
 
