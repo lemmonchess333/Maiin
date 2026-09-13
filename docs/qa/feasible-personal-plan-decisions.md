@@ -86,3 +86,32 @@ Settings also pass the existing account-scoped layoff classification into
 preview and save, so retaining block position does not reintroduce quality
 work for a returning runner. Existing weekday choices remain when lift/run
 counts are unchanged; a frequency change still generates a fitting layout.
+
+## Verification and bundle budget
+
+The complete local `npm run verify` run passed lint, artwork checks and the
+production build. Vitest reported 8,986 passing tests, 344 skipped tests and
+three failed registry assertions: the new profile field was absent from the
+shared declaration. Adding `runTimeLimits` to that declaration resolved the
+failure; the unchanged registry and cross-parity suites then passed all 15
+tests. The declaration is test-only and does not change the application bundle.
+
+The application code at `fa476c4` passed the GitHub emulator and capture jobs:
+1,501 backend tests, 341 security-rule tests, 29 authenticated browser scenarios
+and 62 screenshot scenarios. Local checks also passed the import-cycle gate
+and all 14 production-rules-verifier tests. The run-time-limit controls were
+checked in light and dark themes, including draft persistence and clearing.
+
+The generated size baseline records the intended feature cost: total JavaScript
+grew from 5,735,000 to 5,764,722 bytes (+29,722 bytes, 0.52%). The running editor
+adds recurring limits and recent-history context; WorkoutDetail adds the saved
+workout correction flow. Shared engine code now produces a `runScheduler`
+chunk, while the former `programEngine` chunk disappears and `scheduleUtils`
+shrinks. The standard 5% growth tolerance and 2 KiB small-chunk allowance remain
+unchanged. The regenerated baseline passes `check:dist-size`; include this
+intentional growth explanation in the PR description.
+
+A normal non-force update to main was rejected because GitHub also requires
+the `unit` CI status. That workflow runs on pull requests or manual dispatch;
+the available connector does not expose manual dispatch. Production deployment
+remains pending the required check. No branch protections were changed.
