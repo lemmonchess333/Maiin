@@ -166,6 +166,7 @@ export const PROFILE_FIELD_REGISTRY: readonly ProfileFieldEntry[] = [
   { field: "runFitness", sanitized: true },
   { field: "runFrequency", sanitized: true },
   { field: "runMode", sanitized: true },
+  { field: "runTimeLimits", sanitized: true },
   // Pgm6 run-plan tuning knob (long-run volume preset).
   { field: "runVolume", sanitized: true },
   { field: "sex", sanitized: true },
