@@ -20,15 +20,9 @@ import { Button } from "@/components/ui/Button";
 interface Props {
   onDismiss: () => void;
   onKeep: () => void;
-  /** The card trial is still available: Keep Pro means 7 more free days. */
-  extensionAvailable?: boolean;
 }
 
-export default function TrialEndedDialog({
-  onDismiss,
-  onKeep,
-  extensionAvailable = false,
-}: Props) {
+export default function TrialEndedDialog({ onDismiss, onKeep }: Props) {
   return (
     <>
       <motion.div
@@ -60,9 +54,6 @@ export default function TrialEndedDialog({
         <p className="text-sm text-muted-foreground">
           Photo logging is paused and your calorie target has stopped adapting.
           Typing, search and your programme work as before.
-          {extensionAvailable
-            ? " Keep Pro to carry on, with 7 more days free before anything is charged."
-            : null}
         </p>
         <div className="flex gap-3">
           <Button

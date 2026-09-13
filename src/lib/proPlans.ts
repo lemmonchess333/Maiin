@@ -91,17 +91,9 @@ export const DEFAULT_PLAN: PlanId =
 
 /** CTA copy for the checkout button. When `withTrial` is true, returns
  *  the Sub1a P1 trial CTA (single string regardless of plan — the
- *  plan choice still flows through, just not surfaced in the label);
- *  with `extension` too, the same trial is offered to someone whose
- *  onboarding free week has lapsed, so it reads as keeping what they
- *  had rather than starting something new.
+ *  plan choice still flows through, just not surfaced in the label).
  *  Otherwise returns the plan-priced CTA — e.g. "Start Pro — £34.99/yr". */
-export function getCheckoutCtaLabel(
-  id: PlanId,
-  withTrial = false,
-  extension = false
-): string {
-  if (withTrial && extension) return "Keep Pro — 7 more days free";
+export function getCheckoutCtaLabel(id: PlanId, withTrial = false): string {
   if (withTrial) return "Start your 7-day free trial";
   const plan = getPlan(id);
   return `Start Pro — ${plan.price}/${plan.shortPeriod}`;

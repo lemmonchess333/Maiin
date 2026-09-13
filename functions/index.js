@@ -795,6 +795,11 @@ exports.completeOnboarding = functions
             });
           } else {
             profileData.trialExpiresAt = trialExpiryIso(new Date());
+            // The free week IS the trial (owner-decided, Sub1a STATUS
+            // 2026-09-13c): mark it used here so checkout never offers a
+            // second one. `hasUsedTrial` is server-only; this write runs
+            // after sanitisation, like the expiry itself.
+            profileData.hasUsedTrial = true;
             grantTrial = true;
           }
         }
