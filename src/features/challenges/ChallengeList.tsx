@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import {
   useChallenges,
   getTimeRemaining,
+  moreChallengesLabel,
   soonestEndingChallenge,
 } from "./useChallenges";
 import { getWeeklyAccountability } from "./weeklyAccountability";
@@ -451,8 +452,7 @@ export function ChallengeList({
             fullWidth
             onClick={() => setShowAllAvailable(true)}
           >
-            See all challenges · {otherAvailable.length}
-            {soonestAvailable ? ` · ${soonestAvailable}` : ""}
+            {moreChallengesLabel(otherAvailable.length, soonestAvailable)}
           </Button>
         ))}
 

@@ -1174,6 +1174,24 @@ describe("moveRunDay (RUN-RESCHEDULE-01)", () => {
     );
   });
 
+  it("allows a move when the same weekday is occupied only in an older week", () => {
+    const s = weekState();
+    s.runDays[1].date = "2026-02-26";
+    s.runDays[1].weekKey = "2026-02-23";
+    const { state } = apply(move(4), s, { weekSchedule: SCHEDULE });
+    expect(state.runDays[0].date).toBe("2026-03-05");
+    expect(state.runDays[1]).toEqual(s.runDays[1]);
+  });
+
+  it("retains the same-week occupancy guard for undated legacy rows", () => {
+    const s = weekState();
+    delete s.runDays[1].date;
+    expectHttps(
+      () => apply(move(4), s, { weekSchedule: SCHEDULE }),
+      "failed-precondition"
+    );
+  });
+
   it("is a no-op when the run is already on that day", () => {
     const { state } = apply(move(2), weekState(), { weekSchedule: SCHEDULE });
     expect(state.runDays[0].date).toBe("2026-03-03");
@@ -2349,6 +2367,17 @@ describe("logExercise (reducer wiring — progression math pinned by cross-test)
       ...overrides,
     };
   }
+
+  it("rejects an old queued set command once a saved workout owns progression", () => {
+    const current = baseState();
+    current.workouts[0].completed = true;
+    current.workouts[0].completedWorkoutId = "programme-session-1";
+    const before = structuredClone(current);
+    expect(() => apply(logCmd({ sessionId: "session-1" }), current)).toThrow(
+      "Correct it from History"
+    );
+    expect(current).toEqual(before);
+  });
 
   it("autoProgression on: applies progression to the target exercise", () => {
     // inst-a: linear (no progressionType), microloading on, completed set at

@@ -142,11 +142,13 @@ export const PROFILE_FIELD_REGISTRY: readonly ProfileFieldEntry[] = [
     undeclared: "activity timestamp written by the Firestore triggers",
   },
   { field: "lastLogDate", sanitized: true },
+  { field: "liftTimeBudgetMinutes", sanitized: true },
   { field: "longestStreak", sanitized: true },
   // Pending removal — see the UserProfile declaration. Kept in every
   // allow-list until no shipped client writes it.
   { field: "macroTargets", sanitized: true },
   { field: "maxHeartRate", sanitized: true },
+  { field: "nonRaceGoal", sanitized: true },
   { field: "onboardingComplete", sanitized: false },
   { field: "photoURL", sanitized: true },
   { field: "preferredDistanceUnit", sanitized: true },
@@ -161,8 +163,10 @@ export const PROFILE_FIELD_REGISTRY: readonly ProfileFieldEntry[] = [
   { field: "runFitness", sanitized: true },
   { field: "runFrequency", sanitized: true },
   { field: "runMode", sanitized: true },
+  { field: "runTimeLimits", sanitized: true },
   // Pgm6 run-plan tuning knob (long-run volume preset).
   { field: "runVolume", sanitized: true },
+  { field: "runningBaseline", sanitized: true },
   { field: "sex", sanitized: true },
   { field: "stripeCustomerId", sanitized: false, serverGuarded: true },
   { field: "stripeSubscriptionId", sanitized: false, serverGuarded: true },

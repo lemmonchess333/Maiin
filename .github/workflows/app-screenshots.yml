@@ -55,6 +55,8 @@ jobs:
           architecture: x64
 
       - run: npm ci
+      # The running-coaching capture calls the real server command handler.
+      - run: npm ci --prefix functions
 
       - name: Get Playwright version
         id: playwright-version

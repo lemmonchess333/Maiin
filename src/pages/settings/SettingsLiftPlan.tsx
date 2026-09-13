@@ -1,3 +1,4 @@
+import LiftTimeBudgetSettings from "@/components/program/LiftTimeBudgetSettings";
 /**
  * SettingsLiftPlan — the dedicated lift-plan editing screen (Section-Split,
  * 2026-07). The lifting counterpart to SettingsRunPlan.
@@ -57,6 +58,7 @@ export default function SettingsLiftPlan() {
     updateSettings,
     regenerateProgram,
     refreshRunSchedule,
+    recentLayoff,
   } = useProgram();
 
   const [editLayoutOpen, setEditLayoutOpen] = useState(false);
@@ -83,6 +85,7 @@ export default function SettingsLiftPlan() {
           variant="lift"
           profile={profile}
           programState={programState}
+          recentLayoff={recentLayoff}
           updateSettings={updateSettings}
           regenerateProgram={regenerateProgram}
           refreshProfile={refreshProfile}
@@ -93,6 +96,12 @@ export default function SettingsLiftPlan() {
               ? programState.trainingBlock.focus
               : undefined
           }
+        />
+        <LiftTimeBudgetSettings
+          key={profile.uid}
+          profile={profile}
+          workouts={programState?.workouts ?? []}
+          updateProfile={updateProfile}
         />
       </SettingsSection>
 

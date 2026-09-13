@@ -236,6 +236,14 @@ const EXPECTED = {
     resource:
       "projects/{project}/databases/(default)/documents/users/{uid}/workouts/{workoutId}",
   },
+  onWorkoutUpdated: {
+    kind: "event",
+    maxInstances: 50,
+    secrets: [],
+    eventType: "providers/cloud.firestore/eventTypes/document.update",
+    resource:
+      "projects/{project}/databases/(default)/documents/users/{uid}/workouts/{workoutId}",
+  },
   onRunCreated: {
     kind: "event",
     maxInstances: 50,

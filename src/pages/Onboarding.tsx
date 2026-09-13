@@ -140,7 +140,7 @@ const GOALS = [
 ] as const;
 
 export default function Onboarding() {
-  const { user, refreshProfile } = useAuth();
+  const { user, profile, refreshProfile } = useAuth();
   const navigate = useNavigate();
   const [draft] = useState(() =>
     user ? loadOnboardingDraft(user.uid, 7) : null
@@ -370,7 +370,12 @@ export default function Onboarding() {
           weightKg,
         },
         goalPlan.fitnessGoal,
-        currentDate
+        currentDate,
+        {
+          runningBaseline: profile?.runningBaseline ?? null,
+          runTimeLimits: profile?.runTimeLimits,
+          runFitness: profile?.runFitness,
+        }
       ),
     [
       primaryGoal,
@@ -387,6 +392,9 @@ export default function Onboarding() {
       weightKg,
       goalPlan.fitnessGoal,
       currentDate,
+      profile?.runningBaseline,
+      profile?.runTimeLimits,
+      profile?.runFitness,
     ]
   );
   const effectiveRunMode = plan.profileUpdates.runMode;
@@ -1299,6 +1307,14 @@ export default function Onboarding() {
                 runDays={plan.programState.runDays}
                 freeRunning={freeRunning}
               />
+              {effectiveRunMode === "race_prep" &&
+                (profile?.runTimeLimits?.sessionMinutes ||
+                  profile?.runTimeLimits?.longRunMinutes) && (
+                  <p className="text-sm text-muted-foreground">
+                    This plan uses your saved running time limits. You can
+                    change them in Run plan settings.
+                  </p>
+                )}
               <div className="rounded-2xl bg-card card-shadow divide-y divide-border px-4">
                 {[
                   {

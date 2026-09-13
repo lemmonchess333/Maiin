@@ -28,7 +28,7 @@ interface SessionCompleteScreenProps {
   sessionDurationMinutes: number;
   /** PROGRAM-FLEX-01 / PROGRAM-ADAPT-01: acknowledge a reduced
    *  session positively but without pretending it was the full plan. */
-  sessionVariant?: "express45" | "express30" | "easier_today";
+  sessionVariant?: "express45" | "express30" | "easier_today" | "time_budget";
   completing: boolean;
   saved?: boolean;
   saveStatus?: "queued" | "synced" | "needs-attention";
@@ -148,6 +148,11 @@ export default function SessionCompleteScreen({
           {sessionVariant === "easier_today" ? (
             <p className="text-xs text-muted-foreground">
               Easier session. Your regular plan stays in place.
+            </p>
+          ) : sessionVariant === "time_budget" ? (
+            <p className="text-xs text-muted-foreground">
+              Session prepared for your usual time. Your full programme stays in
+              place.
             </p>
           ) : sessionVariant ? (
             <p className="text-xs text-muted-foreground">

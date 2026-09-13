@@ -834,6 +834,13 @@ function templateToPrefill(
       type: "distance",
       value: tmpl.config.targetDistanceKm * 1000,
     };
+  } else if (tmpl.config.targetDurationMinutes) {
+    // An explicit timed prescription owns the target. An estimated duration
+    // alone must not displace the existing templates' personalized pace.
+    prefill.target = {
+      type: "time",
+      value: tmpl.config.targetDurationMinutes * 60,
+    };
   } else if (tmpl.config.targetPace || paceTable) {
     // Adaptive Paces: resolve the prescribed pace from the user's fitness
     // (e.g. tempo → personalized threshold pace) when a pace table is
@@ -887,6 +894,21 @@ function templateToPrefill(
       tmpl.config.strides,
       seed
     );
+  } else if (tmpl.type === "easy" && tmpl.config.targetDurationMinutes) {
+    // Use the same pause-corrected player, remaining-time display and finish
+    // cue as every structured session. A completed target never auto-saves.
+    prefill.segments = [
+      {
+        type: "easy",
+        label: `Easy ${tmpl.config.targetDurationMinutes} min`,
+        instruction: "Conversational pace",
+        target: {
+          kind: "duration",
+          seconds: tmpl.config.targetDurationMinutes * 60,
+        },
+        cue: `Easy running for ${tmpl.config.targetDurationMinutes} minutes. Keep it conversational.`,
+      },
+    ];
   } else if (longAtRacePace && tmpl.config.targetDistanceKm) {
     const km = tmpl.config.targetDistanceKm;
     prefill.segments = segmentsFromLongWithRacePace(
