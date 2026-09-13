@@ -7,7 +7,6 @@ import {
   Suspense,
 } from "react";
 import { lazyRetry } from "@/lib/lazyRetry";
-import { Button } from "@/components/ui/Button";
 import WeightLogSheet from "@/components/home/WeightLogSheet";
 import { lbToKg } from "@/lib/weightUnits";
 import { readString, writeString } from "@/lib/localStore";
@@ -83,6 +82,7 @@ import { track as trackHomeEvent } from "@/lib/homeAnalytics";
 import TrackSectionView from "@/components/home/TrackSectionView";
 import ContextualTipBanner from "@/components/home/ContextualTipBanner";
 import { IconButton } from "@/components/ui/IconButton";
+import TrialEndedDialog from "@/components/home/TrialEndedDialog";
 import { recalibrationCheckIn } from "@/lib/recalibrationCheckIn";
 
 const ProModal = lazyRetry(() => import("@/components/ProModal"));
@@ -1292,63 +1292,23 @@ export default function Home() {
         }}
       />
 
-      {/* Trial expired — one-time prompt */}
+      {/* Trial expired — one-time prompt. Home owns the surface slot and
+          the one-time flag; the dialog is presentation only. Keep Pro lands
+          on the offer page (the product, then the plans), tagged so the
+          funnel can read this entry. */}
       <AnimatePresence>
         {trialSurface.active && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/50 z-40"
-              onClick={function () {
-                trialSurface.dismiss();
-                updateProfile({ trialExpiryPromptShown: true });
-              }}
-            />
-            <motion.div
-              role="dialog"
-              aria-modal="true"
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="fixed inset-x-4 top-1/2 -translate-y-1/2 z-50 max-w-sm mx-auto rounded-2xl bg-card p-6 space-y-4 shadow-xl border border-border/50"
-            >
-              <div className="flex items-center gap-2">
-                <Sparkles className="size-5 text-primary" />
-                <p className="text-base font-semibold text-foreground">
-                  Your free trial has ended
-                </p>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                Your 7-day trial is over. Subscribe to keep AI photo logging,
-                adaptive macros, and performance insights.
-              </p>
-              <div className="flex gap-3">
-                <Button
-                  variant="ghost"
-                  className="flex-1 text-muted-foreground"
-                  onClick={function () {
-                    trialSurface.dismiss();
-                    updateProfile({ trialExpiryPromptShown: true });
-                  }}
-                >
-                  Maybe later
-                </Button>
-                <Button
-                  variant="primary"
-                  className="flex-1 font-bold"
-                  onClick={function () {
-                    trialSurface.dismiss();
-                    updateProfile({ trialExpiryPromptShown: true });
-                    navigate("/upgrade");
-                  }}
-                >
-                  Upgrade
-                </Button>
-              </div>
-            </motion.div>
-          </>
+          <TrialEndedDialog
+            onDismiss={function () {
+              trialSurface.dismiss();
+              updateProfile({ trialExpiryPromptShown: true });
+            }}
+            onKeep={function () {
+              trialSurface.dismiss();
+              updateProfile({ trialExpiryPromptShown: true });
+              navigate("/upgrade?from=trial_end");
+            }}
+          />
         )}
       </AnimatePresence>
 

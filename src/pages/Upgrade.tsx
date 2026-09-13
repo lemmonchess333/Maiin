@@ -76,6 +76,7 @@ type Beat = "offer" | "plans";
 function sourceFromParam(from: string | null): PaywallSource {
   if (from === "onboarding") return "onboarding";
   if (from === "food") return "food_page";
+  if (from === "trial_end") return "trial_end";
   return "upgrade_page";
 }
 
