@@ -48,6 +48,11 @@ export interface StartCheckoutOptions {
    *  intent. Apple IAP defers to the App Store introductory-offer
    *  config; this flag affects only the Stripe pipeline. */
   withTrial?: boolean;
+  /** Runs after a purchase resolves successfully on this device (the
+   *  Apple / RevenueCat path). On Stripe the window has already left
+   *  for checkout, so the callback is moot there. Callers use it to
+   *  land the new subscriber somewhere useful. */
+  onSuccess?: () => void;
 }
 
 /**
@@ -145,8 +150,9 @@ export function useProCheckout(): UseProCheckoutResult {
         // Success path: on Stripe, purchase() has already navigated
         // the window away. On Apple IAP, success is a verified
         // transaction — Firestore picks up the new tier via the
-        // verifyApplePurchase callable. Either way nothing to do
-        // here beyond clearing the loading flag in finally.
+        // RevenueCat sync / webhook. The caller decides where the new
+        // subscriber lands.
+        if (result.success) options.onSuccess?.();
       } catch (err) {
         const message =
           err instanceof Error

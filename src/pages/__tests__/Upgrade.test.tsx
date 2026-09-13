@@ -412,6 +412,50 @@ describe("Upgrade — where 'not now' goes", () => {
     );
   }
 
+  it("a successful trial checkout lands on Food with the camera context and the trial flag", async () => {
+    authProfileMock.mockReturnValue({
+      hasUsedTrial: false,
+      trialExpiresAt: null,
+    });
+    purchaseMock.mockResolvedValueOnce({ success: true });
+    renderWithProbe("?from=onboarding", { next: "/program?tab=run" });
+    fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: /Start your 7-day free trial/ })
+    );
+    await waitFor(() =>
+      expect(screen.getByLabelText("Current route")).toHaveTextContent(
+        "/food?context=pro-start&trial=1"
+      )
+    );
+  });
+
+  it("a successful checkout without a trial lands on Food without the trial flag", async () => {
+    purchaseMock.mockResolvedValueOnce({ success: true });
+    renderWithProbe("?from=settings");
+    fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+    fireEvent.click(screen.getByRole("button", { name: /Start Pro/ }));
+    await waitFor(() =>
+      expect(screen.getByLabelText("Current route")).toHaveTextContent(
+        "/food?context=pro-start"
+      )
+    );
+    expect(screen.getByLabelText("Current route")).not.toHaveTextContent(
+      "trial=1"
+    );
+  });
+
+  it("a failed checkout stays put", async () => {
+    purchaseMock.mockResolvedValueOnce({ success: false, error: "Declined" });
+    renderWithProbe("?from=settings");
+    fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+    fireEvent.click(screen.getByRole("button", { name: /Start Pro/ }));
+    await waitFor(() => expect(purchaseMock).toHaveBeenCalledTimes(1));
+    expect(screen.getByLabelText("Current route")).toHaveTextContent(
+      "/upgrade"
+    );
+  });
+
   it("from onboarding, 'Continue with Free' lands on the first activity it was handed", () => {
     renderWithProbe("?from=onboarding", { next: "/program?tab=run" });
     fireEvent.click(screen.getByRole("button", { name: "Continue with Free" }));

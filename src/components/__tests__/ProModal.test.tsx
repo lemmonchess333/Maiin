@@ -23,7 +23,7 @@ import {
   cleanup,
   waitFor,
 } from "@testing-library/react";
-import { MemoryRouter } from "react-router-dom";
+import { MemoryRouter, useLocation } from "react-router-dom";
 
 // Sub1a P1 — tests below vary `profile.hasUsedTrial` to exercise the
 // trial vs no-trial CTA paths. The hoisted ref pattern (mirroring
@@ -253,6 +253,41 @@ describe("ProModal — checkout", () => {
     fireEvent.click(screen.getByRole("button", { name: /Start Pro/ }));
     const alert = await screen.findByRole("alert");
     expect(alert.textContent).toContain("Card declined.");
+  });
+});
+
+describe("ProModal — after a successful purchase", () => {
+  function Probe() {
+    const location = useLocation();
+    return (
+      <output aria-label="Current route">
+        {location.pathname + location.search}
+      </output>
+    );
+  }
+
+  it("closes the sheet and lands on Food with the camera context and the trial flag", async () => {
+    authProfileMock.mockReturnValue({
+      hasUsedTrial: false,
+      trialExpiresAt: null,
+    });
+    purchaseMock.mockResolvedValueOnce({ success: true });
+    const onClose = vi.fn();
+    render(
+      <MemoryRouter initialEntries={["/"]}>
+        <ProModal onClose={onClose} featureKey="ai_food_logging" />
+        <Probe />
+      </MemoryRouter>
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: /Start your 7-day free trial/ })
+    );
+    await waitFor(() => expect(onClose).toHaveBeenCalledTimes(1));
+    await waitFor(() =>
+      expect(screen.getByLabelText("Current route")).toHaveTextContent(
+        "/food?context=pro-start&trial=1"
+      )
+    );
   });
 });
 

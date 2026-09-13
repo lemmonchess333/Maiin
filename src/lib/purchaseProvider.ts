@@ -87,6 +87,17 @@ export const APPLE_PRODUCT_IDS: Record<PlanId, string> = {
   yearly: "com.tropos.app.pro.yearly",
 };
 
+/** The plan a stored App Store product id names, if it is one of ours. */
+export function planForProductId(
+  productId: string | null | undefined
+): PlanId | null {
+  if (!productId) return null;
+  const hit = (Object.keys(APPLE_PRODUCT_IDS) as PlanId[]).find(
+    (id) => APPLE_PRODUCT_IDS[id] === productId
+  );
+  return hit ?? null;
+}
+
 // IAP store interface (cordova-plugin-purchase or similar)
 interface IAPStore {
   register: (product: { id: string; type: string }) => void;

@@ -42,6 +42,8 @@ const FoodAnalyzer = lazyRetry(() => import("@/components/FoodAnalyzer"));
 const ProModal = lazyRetry(() => import("@/components/ProModal"));
 import { ServingSizeDrawer } from "@/components/nutrition/ServingSizeDrawer";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { ProStartChip, TrialReminderAsk } from "@/components/food/ProStart";
+import { PRO_START_CONTEXT } from "@/lib/proStart";
 import { Button } from "@/components/ui/Button";
 import { validateFoodEntry } from "@/lib/foodValidation";
 import { offProductToPortion, type OffProductLike } from "@/lib/offNutrition";
@@ -1808,6 +1810,26 @@ export default function Food() {
         }}
         dailyTargets={dailyTargets}
       />
+
+      {/* A new subscriber's landing (proStart.ts). The chip stays while
+          the context is in the URL; the reminder ask runs once, when the
+          checkout started a trial, and clears the context when answered
+          or when there was nothing to ask. */}
+      {searchParams.get("context") === PRO_START_CONTEXT && (
+        <motion.div variants={pageItemVariant}>
+          <ProStartChip />
+          {uid && searchParams.get("trial") === "1" && (
+            <TrialReminderAsk
+              uid={uid}
+              onDone={() => {
+                const params = new URLSearchParams(searchParams);
+                params.delete("trial");
+                setSearchParams(params, { replace: true });
+              }}
+            />
+          )}
+        </motion.div>
+      )}
 
       {/* FOOD-02: post-run refuel handoff. Renders ONLY when arriving via
           RunSummary's "Log recovery food" deep link (?context=post-run),

@@ -70,6 +70,7 @@ import PlanPicker from "@/components/paywall/PlanPicker";
 import ProPreview from "@/components/paywall/ProPreview";
 import ProDemoVideo from "@/components/paywall/ProDemoVideo";
 import { framesForFeature } from "@/components/paywall/previewFrames";
+import { proStartPath } from "@/lib/proStart";
 
 type Beat = "offer" | "plans";
 
@@ -212,6 +213,9 @@ export default function Upgrade() {
       source,
       entryPoint: "upgrade",
       withTrial,
+      // A new subscriber lands on Food with the camera ready, not back
+      // on the page that sold them Pro.
+      onSuccess: () => navigate(proStartPath({ withTrial }), { replace: true }),
     });
   };
 
