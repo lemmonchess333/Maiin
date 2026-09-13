@@ -30,7 +30,15 @@ import {
 } from "@/lib/dateHelpers";
 
 vi.mock("firebase/firestore");
-vi.mock("@/lib/firebase", () => ({ db: {}, functions: {} }));
+vi.mock("@/lib/firebase", () => ({
+  db: {},
+  functions: {},
+  auth: {
+    get currentUser() {
+      return userRefs[currentUid];
+    },
+  },
+}));
 
 import {
   seedFirestore,

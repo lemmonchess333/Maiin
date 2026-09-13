@@ -648,6 +648,19 @@ export default function ProgrammeSettings({
 
       const configurePlanCallable = httpsCallable(functions, "configurePlan");
       await configurePlanCallable({
+        baseProgramState: programState ?? null,
+        baseProfile: Object.fromEntries(
+          Object.keys(plan.profileUpdates)
+            .filter(
+              (key) =>
+                (profile as unknown as Record<string, unknown>)[key] !==
+                undefined
+            )
+            .map((key) => [
+              key,
+              (profile as unknown as Record<string, unknown>)[key],
+            ])
+        ),
         profileUpdates: plan.profileUpdates,
         programState: plan.programState,
         weekSchedule: plan.weekSchedule,
@@ -679,6 +692,13 @@ export default function ProgrammeSettings({
       const code = (err as { code?: string })?.code;
       if (code === "functions/unauthenticated" || code === "unauthenticated") {
         toast.error("Please sign in again to update your plan.");
+      } else if (code?.endsWith("failed-precondition")) {
+        await refreshProfile().catch((error) =>
+          logger.warn("Plan refresh failed", error)
+        );
+        toast.error(
+          "Your programme changed. Reopen settings to review the latest plan before saving."
+        );
       } else if (
         code === "functions/invalid-argument" ||
         code === "invalid-argument"

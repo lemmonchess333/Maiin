@@ -1975,6 +1975,12 @@ function revertEaseWeekCommand(state, command) {
 
 function logExercise(state, command, now) {
   const day = requireWorkoutDay(state, command);
+  // Older clients can replay per-set commands after the final save arrived.
+  // The saved workout now owns progression; only its revisioned correction
+  // path may replace that result.
+  if (day.completed && day.completedWorkoutId) {
+    failedPrecondition("This workout is saved. Correct it from History.");
+  }
   const idx = day.exercises.findIndex(
     (ex) => ex && ex.instanceId === command.exerciseInstanceId
   );

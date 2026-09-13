@@ -9,7 +9,7 @@ import {
   Timestamp,
   where,
 } from "firebase/firestore";
-import { localDateString } from "@/lib/dateHelpers";
+import { localDateString, parseLocalDate } from "@/lib/dateHelpers";
 import { useAuth } from "@/lib/auth";
 import { db } from "@/lib/firebase";
 import { getAdjustedTargets } from "@/lib/phaseNutrition";
@@ -30,6 +30,7 @@ import {
   getWeeklyRunTarget,
   type ScheduleDay,
 } from "@/lib/scheduleUtils";
+import { useLocalDateKey } from "./useLocalDateKey";
 import { useAdaptiveTdee } from "@/hooks/useAdaptiveTdee";
 import type { TargetSource } from "@/lib/adaptiveTarget";
 import type { UserProfile } from "@/lib/auth";
@@ -237,6 +238,7 @@ function computePlannedTargets(
 }
 
 export function useEffectiveTargets(date?: Date): EffectiveTargets {
+  const today = useLocalDateKey();
   const { user, profile } = useAuth();
 
   // Nutr2 (#981 + #982) — adaptive-TDEE resolution. Inactive (formula, no
@@ -301,7 +303,7 @@ export function useEffectiveTargets(date?: Date): EffectiveTargets {
       return;
     }
 
-    const windowStart = new Date();
+    const windowStart = parseLocalDate(today);
     windowStart.setDate(windowStart.getDate() - WINDOW_DAYS);
     const windowStartString = localDateString(windowStart);
     const windowStartTs = Timestamp.fromDate(windowStart);
@@ -363,11 +365,11 @@ export function useEffectiveTargets(date?: Date): EffectiveTargets {
       unsubWorkouts();
       unsubRuns();
     };
-  }, [user]);
+  }, [user, today]);
 
   // ── Derive effective targets ──────────────────────────────────────────
   return useMemo<EffectiveTargets>(() => {
-    const targetDate = date || new Date();
+    const targetDate = date ?? parseLocalDate(today);
     // Ensure primaryGoal is populated for the translator: pre-W1a programState
     // docs lack it, but profile.primaryGoal is its backfill source.
     const programForNutrition: ProgramState | undefined = program
@@ -572,6 +574,7 @@ export function useEffectiveTargets(date?: Date): EffectiveTargets {
     workouts,
     runs,
     date,
+    today,
     adaptiveSource,
     adaptiveValue,
     showWarmup,

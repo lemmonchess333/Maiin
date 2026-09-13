@@ -86,6 +86,7 @@ export interface UseProgrammeScheduleEditorArgs {
    *  `profile.weekSchedule` from useAuth's closure that hasn't
    *  yet propagated from the immediately-preceding updateProfile. */
   refreshRunSchedule: (overrides?: {
+    profileUpdates?: Partial<UserProfile>;
     weekSchedule?: ScheduleDay[];
     weeklyRunDaysTarget?: number;
   }) => Promise<void>;
@@ -96,7 +97,11 @@ export interface UseProgrammeScheduleEditorArgs {
   regenerateProgram: (
     goalOverride?: string,
     weeklyTargetOverride?: number,
-    overrides?: { weekSchedule?: ScheduleDay[]; weeklyRunDaysTarget?: number }
+    overrides?: {
+      weekSchedule?: ScheduleDay[];
+      weeklyRunDaysTarget?: number;
+      profileUpdates?: Partial<UserProfile>;
+    }
   ) => Promise<void>;
 }
 
@@ -231,19 +236,20 @@ export function useProgrammeScheduleEditor(
     pendingRef.current = true;
     setPending("save");
     try {
-      const result = await updateProfile({
+      const profileUpdates = {
         weekSchedule: schedule,
         weeklyWorkoutsTarget: workoutsTarget,
         ...runTargetWriteFields(runsTarget),
-      });
-      // updateProfile reports failures as values. It already shows its error;
-      // stop here so a failed profile write cannot change the programme.
-      if (!result.ok) return "failed";
+      };
       if (profile?.runMode && profile.runMode !== "freeform") {
         await refreshRunSchedule({
           weekSchedule: schedule,
           weeklyRunDaysTarget: runsTarget,
+          profileUpdates,
         });
+      } else {
+        const result = await updateProfile(profileUpdates);
+        if (!result.ok) return "failed";
       }
       return "saved";
     } catch (error) {
@@ -262,15 +268,14 @@ export function useProgrammeScheduleEditor(
     pendingRef.current = true;
     setPending("rebuild");
     try {
-      const result = await updateProfile({
-        weekSchedule: schedule,
-        weeklyWorkoutsTarget: workoutsTarget,
-        ...runTargetWriteFields(runsTarget),
-      });
-      if (!result.ok) return false;
       await regenerateProgram(undefined, pendingLiftDays, {
         weekSchedule: schedule,
         weeklyRunDaysTarget: runsTarget,
+        profileUpdates: {
+          weekSchedule: schedule,
+          weeklyWorkoutsTarget: workoutsTarget,
+          ...runTargetWriteFields(runsTarget),
+        },
       });
       setShowRestructureModal(false);
       void chooseSplit(pendingLiftDays);

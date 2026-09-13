@@ -406,6 +406,19 @@ export default function RunPlanSettings({
       // path could land the goal and lose the plan.
       const configurePlanCallable = httpsCallable(functions, "configurePlan");
       await configurePlanCallable({
+        baseProgramState: programState ?? null,
+        baseProfile: Object.fromEntries(
+          Object.keys(plan.profileUpdates)
+            .filter(
+              (key) =>
+                (profile as unknown as Record<string, unknown>)[key] !==
+                undefined
+            )
+            .map((key) => [
+              key,
+              (profile as unknown as Record<string, unknown>)[key],
+            ])
+        ),
         profileUpdates: plan.profileUpdates,
         programState: plan.programState,
         weekSchedule: plan.weekSchedule,
@@ -424,9 +437,21 @@ export default function RunPlanSettings({
       );
     } catch (e) {
       logger.error("[RunPlanSettings] save failed", e);
-      toast.error("Couldn't save your run plan. Try again.", {
-        id: "run-plan",
-      });
+      const conflict = (e as { code?: string })?.code?.endsWith(
+        "failed-precondition"
+      );
+      if (conflict)
+        await refreshProfile().catch((error) =>
+          logger.warn("Plan refresh failed", error)
+        );
+      toast.error(
+        conflict
+          ? "Your programme changed. Reopen settings to review the latest plan before saving."
+          : "Couldn't save your run plan. Try again.",
+        {
+          id: "run-plan",
+        }
+      );
     } finally {
       setSaving(false);
     }

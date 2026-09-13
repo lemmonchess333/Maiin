@@ -16,7 +16,7 @@ import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
 import { useEffectiveTargets } from "@/hooks/useEffectiveTargets";
 import { setDocGuarded } from "@/lib/firestoreWrite";
-import { localDateString } from "@/lib/dateHelpers";
+import { useLocalDateKey } from "./useLocalDateKey";
 import {
   buildTargetSnapshot,
   snapshotSignature,
@@ -33,6 +33,7 @@ export function useDailyNutritionSnapshot(): void {
   // snapshot until the targets themselves changed. Pinned by "lets a retry
   // through after a failed write, at the SAME target".
   const { user } = useAuth();
+  const today = useLocalDateKey();
   const targets = useEffectiveTargets(); // today
   // Last signature written this session — skips redundant same-value writes.
   const lastSigRef = useRef<string | null>(null);
@@ -44,7 +45,6 @@ export function useDailyNutritionSnapshot(): void {
       lastSigRef.current = null;
       return;
     }
-    const today = localDateString();
     const snapshot = buildTargetSnapshot(today, {
       finalTarget,
       protein,
@@ -70,7 +70,7 @@ export function useDailyNutritionSnapshot(): void {
       lastSigRef.current = null;
       logger.error("[DailyNutritionSnapshot] write failed", err);
     });
-  }, [user, finalTarget, protein, carbs, fat]);
+  }, [user, today, finalTarget, protein, carbs, fat]);
 }
 
 /** Render-null mount point for the single session-wide snapshot writer. */

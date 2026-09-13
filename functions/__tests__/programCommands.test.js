@@ -2350,6 +2350,15 @@ describe("logExercise (reducer wiring — progression math pinned by cross-test)
     };
   }
 
+  it("rejects an old queued set command once a saved workout owns progression", () => {
+    const current = baseState();
+    current.workouts[0].completed = true;
+    current.workouts[0].completedWorkoutId = "programme-session-1";
+    const before = structuredClone(current);
+    expect(() => apply(logCmd({ sessionId: "session-1" }), current)).toThrow("Correct it from History");
+    expect(current).toEqual(before);
+  });
+
   it("autoProgression on: applies progression to the target exercise", () => {
     // inst-a: linear (no progressionType), microloading on, completed set at
     // prescription → +1kg microload (client applyProgression rule).
