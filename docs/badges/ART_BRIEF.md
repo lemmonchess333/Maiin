@@ -117,3 +117,29 @@ Cohesion tips:
 Start with the 8–10 **earnable** badges (consistency streaks + `balanced`) so
 every shown medal is both real _and_ beautiful, then fill the rest as their
 earning rules land.
+
+## The seal (the sealed hexagon a new badge is tapped out of)
+
+`BadgeEarnedModal` shows a new badge inside a sealed hexagon that the user
+taps three times to crack and break open. Since 2026-09-13 the seal is drawn
+in SVG (`src/features/streaks/BadgeSeal.tsx`): a bevelled rim in the badge's
+tier metal, a faceted obsidian face, a wax-seal medallion in the tier metal
+under the lock, cracks that leak the tier's light, and shards that carry the
+same material when it breaks. Review it on `/dev/badge-seal` (dev builds) or
+in the `badge-seal-*` frames on the capture channel.
+
+If it is ever replaced by art, the per-tier prompt is the badge skeleton's
+sibling — one master, then image-edit the rim metal for the other three:
+
+> Premium sealed achievement capsule, **pointy-top hexagon**, thick
+> **{TIER_METAL} beveled metal rim** with a polished specular highlight, a
+> deep **faceted black obsidian** face like a cut stone, a small round
+> **{TIER_METAL} wax seal medallion** embossed in the centre (no symbol on
+> it), subtle inner glow, soft top-left studio key light, dramatic
+> **transparent background**, symmetrical, centred, app-icon style, crisp,
+> high detail, no text, no letters, no numbers.
+
+Four assets (`public/badges/seal_{tier}.webp`, 512×512), one per tier. The
+cracks and the break stay in SVG over the art — the shards would be the art
+cut along `SEAL_SHARDS` with `clip-path`. Not built until an asset exists:
+an image seam nothing exercises is the "unwired seam" CLAUDE.md warns about.
