@@ -1,6 +1,7 @@
 import { addLocalDays, localDateString, parseLocalDate } from "./dateHelpers";
 import { isVolumeEligible } from "./runStatsEligibility";
 import type { RunSummaryItem } from "@/hooks/useRunningStats";
+import { runEvidenceDate } from "./runExecutionEvidence";
 
 /** Four rolling local seven-day windows, including today. This is recorded
  * workload, not a fitness score or a prescription of a safe increase. */
@@ -23,7 +24,7 @@ export function recentRunningContext(
       run.completedAt > now
     )
       return false;
-    const date = localDateString(run.completedAt);
+    const date = runEvidenceDate(run);
     if (date < starts[3] || date > today) return false;
     seen.add(run.id);
     return true;
@@ -34,7 +35,7 @@ export function recentRunningContext(
         ? today
         : localDateString(addLocalDays(parseLocalDate(starts[index - 1]), -1));
     return eligible.filter((run) => {
-      const date = localDateString(run.completedAt);
+      const date = runEvidenceDate(run);
       return date >= start && date <= end;
     });
   });
@@ -44,10 +45,6 @@ export function recentRunningContext(
     averageWeeklyMinutes:
       eligible.reduce((sum, run) => sum + run.duration / 60, 0) / 4,
     longestMinutes: Math.max(0, ...eligible.map((run) => run.duration / 60)),
-    latestDate:
-      eligible
-        .map((run) => localDateString(run.completedAt))
-        .sort()
-        .at(-1) ?? null,
+    latestDate: eligible.map(runEvidenceDate).sort().at(-1) ?? null,
   };
 }

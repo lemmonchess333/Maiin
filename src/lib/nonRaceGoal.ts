@@ -1,5 +1,6 @@
 import { localDateString, localWeekKey } from "./dateHelpers";
 import { isVolumeEligible, type RunRecord } from "./runStatsEligibility";
+import { runEvidenceDate } from "./runExecutionEvidence";
 
 export type NonRaceGoal = { kind: "runs" | "minutes"; target: number };
 
@@ -36,7 +37,8 @@ export function nonRaceGoalProgress(
       run.completedAt > now ||
       !Number.isFinite(run.duration) ||
       run.duration <= 0 ||
-      localDateString(run.completedAt) < start
+      runEvidenceDate(run) < start ||
+      runEvidenceDate(run) > localDateString(now)
     )
       return false;
     seen.add(run.id);

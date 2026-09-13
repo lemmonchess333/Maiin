@@ -37,6 +37,13 @@ function base(overrides: Partial<EaseWeekNudgeInput> = {}): EaseWeekNudgeInput {
 }
 
 describe("evaluateEaseWeekNudge — trigger", () => {
+  it("does not use invalid saved runs as evidence for an easier week", () => {
+    const invalid = [
+      { ...run("2026-07-11", "harder"), isInvalid: true },
+      { ...run("2026-07-09", "harder"), savedAnyway: true },
+    ];
+    expect(evaluateEaseWeekNudge(base({ runs: invalid })).show).toBe(false);
+  });
   it("fires when 2 of the last 3 rated runs were harder, in window", () => {
     const res = evaluateEaseWeekNudge(
       base({
