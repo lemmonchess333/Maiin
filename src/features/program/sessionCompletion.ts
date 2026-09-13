@@ -18,7 +18,7 @@ export interface SessionProgression {
   date: string;
   prescription: SessionPrescription;
   setLogs: LoggedSet[][];
-  sessionVariant?: "express45" | "express30" | "easier_today";
+  sessionVariant?: "express45" | "express30" | "easier_today" | "time_budget";
 }
 
 export function withoutSessionProgression(
@@ -75,6 +75,8 @@ export function applySessionProgression(
               );
               if (
                 session.sessionVariant === "easier_today" ||
+                (session.sessionVariant === "time_budget" &&
+                  logs.length < baseline.sets) ||
                 !last ||
                 !logs.every((set) => set.completed)
               )

@@ -1,6 +1,5 @@
 import type { RaceGoalPlannerState } from "@/lib/raceGoalPlanner";
 import type { RunTimeLimits } from "@/features/program/runTimeLimits";
-import RecentRunningContext from "./RecentRunningContext";
 
 export default function RunAvailabilitySettings({
   value,
@@ -58,7 +57,6 @@ export default function RunAvailabilitySettings({
           </label>
         ))}
       </div>
-      <RecentRunningContext />
       {(value.sessionMinutes !== null || value.longRunMinutes !== null) && (
         <div
           aria-live="polite"

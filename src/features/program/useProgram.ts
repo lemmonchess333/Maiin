@@ -1,3 +1,4 @@
+import type { RunningBaseline } from "@/features/program/runningBaseline";
 import type { RunTimeLimits } from "./runTimeLimits";
 import { commitProgramTransition } from "./programTransition";
 import { ProgrammeConflictError, sameStoredValue } from "./stateTransition";
@@ -116,7 +117,7 @@ export interface CompletedSessionData {
    *  from an abandoned full one. Deliberately NOT copied into the
    *  activity-feed payload below — the variant (and any recovery
    *  reason behind it) never crosses a social or analytics boundary. */
-  sessionVariant?: "express45" | "express30" | "easier_today";
+  sessionVariant?: "express45" | "express30" | "easier_today" | "time_budget";
   /**
    * Free-text notes the lifter typed against an exercise during the
    * session, keyed by its index in the day's exercise list.
@@ -227,6 +228,7 @@ function regenerateRacePlan({
   raceGoal,
   recentLayoff,
   easyPaceSPerKm,
+  runningBaseline,
   runTimeLimits,
   weekSchedule,
   weeklyRunDays,
@@ -260,6 +262,7 @@ function regenerateRacePlan({
    *  it would silently revert a benchmarked runner's long-run ceiling to the
    *  nominal table on the next weekly refresh. */
   easyPaceSPerKm: number | null;
+  runningBaseline: RunningBaseline | null;
   runTimeLimits: RunTimeLimits | null;
   carry?: {
     currentWeek?: number;
@@ -300,6 +303,7 @@ function regenerateRacePlan({
     tuning,
     recentLayoff,
     easyPaceSPerKm,
+    runningBaseline,
     runTimeLimits,
     // The block's original length, so the generator emits the week for where
     // the runner actually IS rather than week 0 of a fresh block. Without it
@@ -539,6 +543,7 @@ export function useProgram() {
             tuning: runTuningFromProfile(profile),
             easyPaceSPerKm: planningEasyPaceSPerKm(profile?.runFitness),
             runTimeLimits: profile?.runTimeLimits ?? null,
+            runningBaseline: profile?.runningBaseline ?? null,
             raceGoal: profile.raceGoal,
             weekSchedule,
             weeklyRunDays: runTarget,
@@ -629,6 +634,7 @@ export function useProgram() {
             easyPaceSPerKm: planningEasyPaceSPerKm(profile?.runFitness),
 
             runTimeLimits: profile?.runTimeLimits ?? null,
+            runningBaseline: profile?.runningBaseline ?? null,
             raceGoal: profile.raceGoal,
             weekSchedule,
             weeklyRunDays: runTarget,
@@ -1013,6 +1019,7 @@ export function useProgram() {
           easyPaceSPerKm: planningEasyPaceSPerKm(profile?.runFitness),
 
           runTimeLimits: profile?.runTimeLimits ?? null,
+          runningBaseline: profile?.runningBaseline ?? null,
           raceGoal: profile.raceGoal,
           weekSchedule,
           weeklyRunDays: runTarget,
@@ -1699,6 +1706,7 @@ export function useProgram() {
           easyPaceSPerKm: planningEasyPaceSPerKm(profile?.runFitness),
 
           runTimeLimits: profile?.runTimeLimits ?? null,
+          runningBaseline: profile?.runningBaseline ?? null,
           raceGoal: profile.raceGoal,
           weekSchedule,
           weeklyRunDays: runTarget,
@@ -2514,6 +2522,7 @@ export function useProgram() {
             easyPaceSPerKm: planningEasyPaceSPerKm(profile?.runFitness),
 
             runTimeLimits: profile?.runTimeLimits ?? null,
+            runningBaseline: profile?.runningBaseline ?? null,
             raceGoal: profile.raceGoal,
             weekSchedule: effectiveSchedule,
             weeklyRunDays: runTarget,
@@ -2676,6 +2685,7 @@ export function useProgram() {
           easyPaceSPerKm: planningEasyPaceSPerKm(profile?.runFitness),
 
           runTimeLimits: profile?.runTimeLimits ?? null,
+          runningBaseline: profile?.runningBaseline ?? null,
           raceGoal: profile.raceGoal,
           weekSchedule,
           weeklyRunDays: runTarget,
@@ -3603,6 +3613,7 @@ export function useProgram() {
       easyPaceSPerKm: planningEasyPaceSPerKm(profile?.runFitness),
 
       runTimeLimits: profile?.runTimeLimits ?? null,
+      runningBaseline: profile?.runningBaseline ?? null,
       raceGoal: profile.raceGoal,
       weekSchedule: profile.weekSchedule ?? [],
       weeklyRunDays: getWeeklyRunTarget(profile) || 3,

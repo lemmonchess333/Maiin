@@ -2,7 +2,11 @@ import { useRunningStats } from "@/hooks/useRunningStats";
 import { recentRunningContext } from "@/lib/recentRunningContext";
 import Button from "@/components/ui/Button";
 
-export default function RecentRunningContext() {
+export default function RecentRunningContext({
+  onUse,
+}: {
+  onUse?: (context: ReturnType<typeof recentRunningContext>) => void;
+} = {}) {
   const { runs, loading, failed, refresh } = useRunningStats(28);
   const context = recentRunningContext(runs, new Date());
   return (
@@ -50,6 +54,11 @@ export default function RecentRunningContext() {
               </span>{" "}
               min.
             </p>
+            {onUse && (
+              <Button variant="outline" onClick={() => onUse(context)}>
+                Use these numbers in my draft
+              </Button>
+            )}
           </>
         )}
         <p>

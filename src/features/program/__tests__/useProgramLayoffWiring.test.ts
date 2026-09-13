@@ -275,6 +275,38 @@ describe("the layoff reaches the plan the runner is given", () => {
     expect(week.some((day) => "timeLimit" in day)).toBe(true);
   });
 
+  it("uses the saved starting point during a real hook rollover", async () => {
+    const runningBaseline = {
+      version: 1 as const,
+      experience: "building" as const,
+      weeklyMinutes: 90,
+      longestRunMinutes: 30,
+      confirmedAt: "2026-01-01",
+      source: "self_reported" as const,
+    };
+    mockProfile = { ...raceProfile(), runningBaseline };
+    seedRunHistory("userA", 1);
+    const { rerender } = renderHook(() => useProgram());
+    await waitFor(() =>
+      expect(persistedRunDays("userA").length).toBeGreaterThan(0)
+    );
+    await ageIntoMidBlock("userA", 9);
+    mockProfile = { ...raceProfile(), runningBaseline };
+    rerender();
+    await waitFor(() =>
+      expect(
+        (
+          readDoc("users/userA/programState/current") as {
+            runPlan?: { currentWeek?: number };
+          }
+        ).runPlan?.currentWeek
+      ).toBeGreaterThan(9)
+    );
+    const week = persistedRunDays("userA");
+    expect(week.every((day) => day.type === "easy")).toBe(true);
+    expect(week.some((day) => "trainingBasis" in day)).toBe(true);
+  });
+
   it("a returning runner rolls into a re-entry week instead", async () => {
     // Same rollover, same block position, same schedule — only the run
     // history differs. This is the whole feature, end to end through the hook.

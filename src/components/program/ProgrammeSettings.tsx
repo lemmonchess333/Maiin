@@ -616,6 +616,7 @@ export default function ProgrammeSettings({
         runTuning: { volume: saved.runVolume, difficulty: saved.runDifficulty },
         // Run17: the long-run ceiling is measured at the confirmed easy pace.
         runFitness: profile.runFitness ?? null,
+        runningBaseline: profile.runningBaseline ?? null,
         runTimeLimits: profile.runTimeLimits ?? null,
         recentLayoff,
         weekSchedule: profile.weekSchedule,

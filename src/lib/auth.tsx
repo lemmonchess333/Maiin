@@ -345,6 +345,11 @@ export interface UserProfileRunning {
    */
   runVolume?: "lighter" | "standard" | "bigger";
   runDifficulty?: "gentler" | "standard" | "harder";
+  runningBaseline?:
+    | import("@/features/program/runningBaseline").RunningBaseline
+    | null;
+  nonRaceGoal?: import("@/lib/nonRaceGoal").NonRaceGoal | null;
+  liftTimeBudgetMinutes?: number | null;
   runTimeLimits?:
     | import("@/features/program/runTimeLimits").RunTimeLimits
     | null;
