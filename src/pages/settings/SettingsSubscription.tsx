@@ -27,25 +27,11 @@ import { useSubscription } from "@/lib/subscription";
 import { useAuth } from "@/lib/auth";
 import { haptic } from "@/lib/haptic";
 import { toast } from "@/lib/toast";
-import { formatDayMonth } from "@/utils/formatters";
-import { getPlan, type PlanId } from "@/lib/proPlans";
+import { describePlanStatus } from "@/lib/subscriptionStatusCopy";
 import { manageSubscription, planForProductId } from "@/lib/purchaseProvider";
 import SettingsSection from "@/components/settings/SettingsSection";
 import AiUsageSection from "@/components/settings/AiUsageSection";
 import TrackSettingsSectionView from "@/components/settings/TrackSettingsSectionView";
-
-/** "then £3.99/mo" for a known plan, or nothing. */
-function priceTail(planId: PlanId | null): string {
-  if (!planId) return "";
-  const plan = getPlan(planId);
-  return `, then ${plan.price}/${plan.shortPeriod}`;
-}
-
-function dateOf(iso: string | null | undefined): string | null {
-  if (!iso) return null;
-  const d = new Date(iso);
-  return Number.isNaN(d.getTime()) ? null : formatDayMonth(d);
-}
 
 export default function SettingsSubscription() {
   const navigate = useNavigate();
@@ -54,51 +40,24 @@ export default function SettingsSubscription() {
     useSubscription();
   const [manageLoading, setManageLoading] = useState(false);
 
-  const planId = planForProductId(profile?.appleProductId);
-  const billedTrial = tier === "pro" && trialKind === "billed";
-  const trialEnd = dateOf(trialEndsAt);
-  const renews = dateOf(profile?.subscriptionExpiresAt);
-
-  // Auto-renew off: access runs to the date and stops. The row still
-  // manages (the store's subscriptions page is where it is turned back
-  // on), but reads "won't renew" and offers Resubscribe — never "unless
-  // you cancel" to someone who has.
-  const cancelled = autoRenew === false;
-
-  let title: string;
-  let statusLabel: string;
-  let action: "manage" | "resubscribe" | "offer";
-  if (billedTrial) {
-    title = "Free trial";
-    if (cancelled) {
-      statusLabel = trialEnd
-        ? `Ends ${trialEnd} · won't renew`
-        : `${trialDaysLeft} day${trialDaysLeft !== 1 ? "s" : ""} left · won't renew`;
-      action = "resubscribe";
-    } else {
-      statusLabel = trialEnd
-        ? `Ends ${trialEnd}${priceTail(planId)} unless you cancel`
-        : `${trialDaysLeft} day${trialDaysLeft !== 1 ? "s" : ""} left${priceTail(planId)}`;
-      action = "manage";
-    }
-  } else if (tier === "pro") {
-    title = "Pro";
-    if (cancelled) {
-      statusLabel = renews ? `Ends ${renews} · won't renew` : "Won't renew";
-      action = "resubscribe";
-    } else {
-      statusLabel = renews ? `Renews ${renews}` : "Full access";
-      action = "manage";
-    }
-  } else if (isInTrial) {
-    title = "Pro trial";
-    statusLabel = `${trialDaysLeft} day${trialDaysLeft !== 1 ? "s" : ""} left`;
-    action = "offer";
-  } else {
-    title = "Upgrade to Pro";
-    statusLabel = "Free — Upgrade for full access";
-    action = "offer";
-  }
+  // One line per state, shared with the offer page's member card
+  // (subscriptionStatusCopy.ts) so the two cannot drift. A cancelled
+  // subscription still MANAGES from here — the store page is where
+  // auto-renew is turned back on — under a Resubscribe label.
+  const {
+    title,
+    detail: statusLabel,
+    action,
+  } = describePlanStatus({
+    tier,
+    isInTrial,
+    trialKind,
+    trialEndsAt,
+    trialDaysLeft,
+    autoRenew,
+    renewsAt: profile?.subscriptionExpiresAt,
+    planId: planForProductId(profile?.appleProductId),
+  });
 
   const handleRow = async () => {
     haptic();

@@ -24,8 +24,10 @@ import {
   fireEvent,
   cleanup,
   waitFor,
+  act,
 } from "@testing-library/react";
 import { MemoryRouter, useLocation } from "react-router-dom";
+import type { SubscriptionInfo } from "@/lib/subscription";
 
 // Sub1a P1 — default profile to `hasUsedTrial: true` so the
 // plan-priced CTA ("Start Pro — £X/yr") is the rendered baseline
@@ -56,21 +58,28 @@ const purchaseMock = vi.fn();
 const manageSubscriptionMock = vi.fn();
 const isNativeIOSMock = vi.fn();
 
-vi.mock("@/lib/purchaseProvider", () => ({
-  purchase: (...args: unknown[]) => purchaseMock(...args),
-  restorePurchases: vi.fn(),
-  manageSubscription: (...args: unknown[]) => manageSubscriptionMock(...args),
-  isNativeIOS: () => isNativeIOSMock(),
-}));
+// Partial: the page names the plan behind the profile's product id
+// (`planForProductId`) for the price on its member card, and the tests
+// below assert that price — stubbing it would make them claims about
+// the stub.
+vi.mock("@/lib/purchaseProvider", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@/lib/purchaseProvider")>();
+  return {
+    ...actual,
+    purchase: (...args: unknown[]) => purchaseMock(...args),
+    restorePurchases: vi.fn(),
+    manageSubscription: (...args: unknown[]) => manageSubscriptionMock(...args),
+    isNativeIOS: () => isNativeIOSMock(),
+  };
+});
 
-const useSubscriptionMock = vi.fn<
-  () => {
-    tier: "free" | "pro";
-    isInTrial: boolean;
-    trialDaysLeft: number;
-    isPro: boolean;
-  }
->(() => ({
+type SubscriptionMock = Pick<
+  SubscriptionInfo,
+  "tier" | "isInTrial" | "trialDaysLeft" | "isPro"
+> &
+  Partial<SubscriptionInfo>;
+const useSubscriptionMock = vi.fn<() => SubscriptionMock>(() => ({
   tier: "free",
   isInTrial: false,
   trialDaysLeft: 0,
@@ -88,7 +97,7 @@ vi.mock("@/lib/subscription", async () => {
   };
 });
 
-import Upgrade from "../Upgrade";
+import Upgrade, { ACTIVATION_SLOW_MS } from "../Upgrade";
 
 function renderPage(entry = "/upgrade", state?: Record<string, unknown>) {
   return render(
@@ -512,6 +521,175 @@ describe("Upgrade — where 'not now' goes", () => {
     fireEvent.click(screen.getByRole("button", { name: /Start Pro/ }));
     await waitFor(() => expect(purchaseMock).toHaveBeenCalledTimes(1));
     expect(purchaseMock.mock.calls[0][3]?.source).toBe("food_page");
+  });
+});
+
+describe("Upgrade — already subscribed", () => {
+  const END = "2026-09-20T09:00:00Z";
+  function billedTrial(autoRenew: boolean | null) {
+    authProfileMock.mockReturnValue({
+      hasUsedTrial: true,
+      subscriptionSource: "stripe",
+      subscriptionExpiresAt: END,
+      appleProductId: "com.tropos.app.pro.monthly",
+    });
+    useSubscriptionMock.mockReturnValue({
+      tier: "pro",
+      isInTrial: true,
+      trialDaysLeft: 7,
+      isPro: true,
+      trialKind: "billed",
+      trialEndsAt: END,
+      autoRenew,
+    });
+  }
+
+  it("a billed trial is a live subscription: it says when it converts and manages — never sells a second one", async () => {
+    billedTrial(true);
+    renderPage();
+    expect(screen.getByText("You're on Pro — free trial")).toBeInTheDocument();
+    expect(
+      screen.getByText("Ends 20 Sept, then £3.99/mo unless you cancel")
+    ).toBeInTheDocument();
+    // What it used to do: reopen the offer and tell them to subscribe.
+    expect(screen.queryByRole("button", { name: "Continue" })).toBeNull();
+    expect(screen.queryByRole("radio")).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: /Start your 7-day free trial/ })
+    ).toBeNull();
+    expect(screen.queryByText(/Subscribe anytime/)).toBeNull();
+    fireEvent.click(
+      screen.getByRole("button", { name: /Manage subscription/ })
+    );
+    await waitFor(() =>
+      expect(manageSubscriptionMock).toHaveBeenCalledWith("test-uid")
+    );
+  });
+
+  it("a cancelled billed trial reads won't-renew and offers Resubscribe, to the same store page", async () => {
+    billedTrial(false);
+    renderPage();
+    expect(screen.getByText("Ends 20 Sept · won't renew")).toBeInTheDocument();
+    expect(screen.queryByText(/unless you cancel/)).toBeNull();
+    expect(screen.queryByRole("button", { name: "Continue" })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: /Resubscribe/ }));
+    await waitFor(() =>
+      expect(manageSubscriptionMock).toHaveBeenCalledWith("test-uid")
+    );
+  });
+
+  it("the legacy onboarding free week still sells — nothing is billed for it", () => {
+    authProfileMock.mockReturnValue({
+      hasUsedTrial: true,
+      trialExpiresAt: "2999-01-01T00:00:00.000Z",
+    });
+    useSubscriptionMock.mockReturnValue({
+      tier: "free",
+      isInTrial: true,
+      trialDaysLeft: 3,
+      isPro: true,
+      trialKind: "onboarding",
+      trialEndsAt: "2999-01-01T00:00:00.000Z",
+      autoRenew: null,
+    });
+    renderPage();
+    expect(
+      screen.getByText(/3 days left on your free trial/)
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Continue" })
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/You're on Pro/)).toBeNull();
+  });
+});
+
+describe("Upgrade — a web checkout landing", () => {
+  function Probe() {
+    const location = useLocation();
+    return (
+      <output aria-label="Current route">
+        {location.pathname}
+        {location.search}
+      </output>
+    );
+  }
+  function tree() {
+    return (
+      <MemoryRouter initialEntries={["/upgrade?checkout=success"]}>
+        <Upgrade />
+        <Probe />
+      </MemoryRouter>
+    );
+  }
+
+  it("holds on 'setting up' rather than re-offering the plans just bought, then lands on Food once the tier arrives", async () => {
+    authProfileMock.mockReturnValue({ hasUsedTrial: true });
+    const { rerender } = render(tree());
+    expect(screen.getByText("Setting up Pro…")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Continue" })).toBeNull();
+    expect(screen.queryByText(/£3\.99\/month or/)).toBeNull();
+    expect(screen.getByLabelText("Current route")).toHaveTextContent(
+      "/upgrade"
+    );
+
+    // The webhook lands: the profile flips to a billed trial.
+    useSubscriptionMock.mockReturnValue({
+      tier: "pro",
+      isInTrial: true,
+      trialDaysLeft: 7,
+      isPro: true,
+      trialKind: "billed",
+      trialEndsAt: "2026-09-20T09:00:00Z",
+      autoRenew: true,
+    });
+    rerender(tree());
+    await waitFor(() =>
+      expect(screen.getByLabelText("Current route")).toHaveTextContent(
+        "/food?context=pro-start&trial=1"
+      )
+    );
+  });
+
+  it("a paid (non-trial) activation lands on Food without the trial flag", async () => {
+    authProfileMock.mockReturnValue({ hasUsedTrial: true });
+    const { rerender } = render(tree());
+    useSubscriptionMock.mockReturnValue({
+      tier: "pro",
+      isInTrial: false,
+      trialDaysLeft: 0,
+      isPro: true,
+      trialKind: null,
+      trialEndsAt: null,
+      autoRenew: true,
+    });
+    rerender(tree());
+    await waitFor(() =>
+      expect(screen.getByLabelText("Current route")).toHaveTextContent(
+        "/food?context=pro-start"
+      )
+    );
+    expect(screen.getByLabelText("Current route")).not.toHaveTextContent(
+      "trial=1"
+    );
+  });
+
+  it("says so when the webhook is slow, and lets the user carry on", () => {
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+    try {
+      authProfileMock.mockReturnValue({ hasUsedTrial: true });
+      render(tree());
+      expect(screen.getByText("Setting up Pro…")).toBeInTheDocument();
+      act(() => {
+        vi.advanceTimersByTime(ACTIVATION_SLOW_MS + 1);
+      });
+      expect(screen.getByText(/Taking longer than usual/)).toBeInTheDocument();
+      expect(
+        screen.getByRole("button", { name: "Keep using the app" })
+      ).toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "Continue" })).toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });
 
