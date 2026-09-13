@@ -92,6 +92,37 @@ describe("resolveEntitlementFromEvent", () => {
     );
     expect(r.tier).toBe("pro");
     expect(r.trialEndsAt).toBe(new Date(IN_7_DAYS_MS).toISOString());
+    expect(r.autoRenew).toBe(false);
+  });
+
+  it("auto-renew is on for a renewing live event, back on after UNCANCELLATION, and null with nothing to renew", () => {
+    expect(resolveEntitlementFromEvent(event(), NOW).autoRenew).toBe(true);
+    expect(
+      resolveEntitlementFromEvent(event({ type: "RENEWAL" }), NOW).autoRenew
+    ).toBe(true);
+    expect(
+      resolveEntitlementFromEvent(event({ type: "UNCANCELLATION" }), NOW)
+        .autoRenew
+    ).toBe(true);
+    expect(
+      resolveEntitlementFromEvent(event({ type: "EXPIRATION" }), NOW).autoRenew
+    ).toBeNull();
+    expect(
+      resolveEntitlementFromEvent(
+        event({ type: "CANCELLATION", expiration_at_ms: YESTERDAY_MS }),
+        NOW
+      ).autoRenew
+    ).toBeNull();
+    expect(
+      resolveEntitlementFromEvent(event({ expiration_at_ms: null }), NOW)
+        .autoRenew
+    ).toBeNull();
+    expect(
+      resolveEntitlementFromEvent(
+        event({ type: "NON_RENEWING_PURCHASE", period_type: "NORMAL" }),
+        NOW
+      ).autoRenew
+    ).toBeNull();
   });
 
   it("EXPIRATION, or an expiry already behind now, is free with no trial end", () => {
@@ -189,6 +220,29 @@ describe("resolveEntitlementFromSubscriber", () => {
     });
   });
 
+  it("a subscriber who turned auto-renew off in the store reads as cancelled; on otherwise", () => {
+    expect(resolveEntitlementFromSubscriber(subscriber(), NOW).autoRenew).toBe(
+      true
+    );
+    const off = subscriber({
+      subscriptions: {
+        "com.tropos.app.pro.yearly": {
+          period_type: "trial",
+          expires_date: new Date(IN_7_DAYS_MS).toISOString(),
+          store: "app_store",
+          unsubscribe_detected_at: "2026-09-14T08:00:00Z",
+        },
+      },
+    });
+    expect(resolveEntitlementFromSubscriber(off, NOW).autoRenew).toBe(false);
+    expect(
+      resolveEntitlementFromSubscriber(
+        { entitlements: {}, subscriptions: {} },
+        NOW
+      ).autoRenew
+    ).toBeNull();
+  });
+
   it("no pro entitlement is free; an expired one is free but the trial stays used", () => {
     expect(
       resolveEntitlementFromSubscriber(
@@ -241,10 +295,22 @@ describe("profileMergeFor", () => {
       subscriptionSource: "ios_iap",
       subscriptionExpiresAt: new Date(IN_7_DAYS_MS).toISOString(),
       subscriptionTrialEndsAt: new Date(IN_7_DAYS_MS).toISOString(),
+      subscriptionAutoRenew: true,
       subscriptionUpdatedAt: 1_700_000_000,
       appleProductId: "com.tropos.app.pro.monthly",
       hasUsedTrial: true,
     });
+    const cancelled = resolveEntitlementFromEvent(
+      event({ type: "CANCELLATION" }),
+      NOW
+    );
+    expect(
+      profileMergeFor(
+        cancelled,
+        { writeTier: "pro", writeSource: "ios_iap" },
+        1
+      )
+    ).toMatchObject({ subscriptionAutoRenew: false });
     const normal = resolveEntitlementFromEvent(
       event({ type: "RENEWAL", period_type: "NORMAL" }),
       NOW

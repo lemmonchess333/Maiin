@@ -166,6 +166,7 @@ export const PROFILE_FIELD_REGISTRY: readonly ProfileFieldEntry[] = [
   { field: "sex", sanitized: true },
   { field: "stripeCustomerId", sanitized: false, serverGuarded: true },
   { field: "stripeSubscriptionId", sanitized: false, serverGuarded: true },
+  { field: "subscriptionAutoRenew", sanitized: false, serverGuarded: true },
   { field: "subscriptionExpiresAt", sanitized: false, serverGuarded: true },
   { field: "subscriptionSource", sanitized: false, serverOnly: true },
   { field: "subscriptionTier", sanitized: false, serverGuarded: true },

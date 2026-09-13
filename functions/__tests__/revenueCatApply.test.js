@@ -29,6 +29,7 @@ const RESOLVED = {
   source: "ios_iap",
   expiresAt: "2026-09-20T12:00:00.000Z",
   trialEndsAt: "2026-09-20T12:00:00.000Z",
+  autoRenew: true,
   productId: "com.tropos.app.pro.monthly",
   usedTrial: true,
 };
@@ -60,6 +61,7 @@ describe("applyRevenueCatEntitlement", () => {
         subscriptionSource: "ios_iap",
         subscriptionExpiresAt: "2026-09-20T12:00:00.000Z",
         subscriptionTrialEndsAt: "2026-09-20T12:00:00.000Z",
+        subscriptionAutoRenew: true,
         subscriptionUpdatedAt: 1_700_000_100,
         appleProductId: "com.tropos.app.pro.monthly",
         hasUsedTrial: true,

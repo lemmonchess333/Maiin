@@ -2054,7 +2054,8 @@ exports.stripeWebhook = functions
           // a unit test (checkoutTrial.test.js cycle 4). Both `active`
           // and `trialing` resolve to "pro" — trial conversion is
           // invisible to the user.
-          const tier = checkoutTrial.mapSubscriptionStatusToTier(status);
+          const { tier, trialEndsAt, autoRenew } =
+            checkoutTrial.subscriptionStateFromStripe(subscription);
 
           // Sub1 P2 — write both tier + source atomically. Helper
           // detects cross-platform overlap (Pro/stripe overwriting
@@ -2078,18 +2079,17 @@ exports.stripeWebhook = functions
           }
 
           // The trial end is what the day-5 reminder and the Home strip
-          // read; Stripe (like Apple) sends the user nothing before a
-          // trial converts. Null once the subscription is past it.
-          const trialEndsAt =
-            status === "trialing" && Number(subscription.trial_end) > 0
-              ? new Date(Number(subscription.trial_end) * 1000).toISOString()
-              : null;
+          // read (Stripe, like Apple, sends the user nothing before a
+          // trial converts); auto-renew off is what keeps them from
+          // being told it "starts unless you cancel" once they have.
+          // Both resolved in `subscriptionStateFromStripe`, pinned there.
           await userDoc.ref.set(
             {
               subscriptionTier: updateDecision.writeTier,
               subscriptionSource: updateDecision.writeSource,
               stripeSubscriptionId: subscription.id,
               subscriptionTrialEndsAt: trialEndsAt,
+              subscriptionAutoRenew: autoRenew,
               subscriptionUpdatedAt:
                 event.created || Math.floor(Date.now() / 1000),
             },
@@ -2172,6 +2172,8 @@ exports.stripeWebhook = functions
               subscriptionTier: "free",
               subscriptionSource: null,
               stripeSubscriptionId: admin.firestore.FieldValue.delete(),
+              subscriptionTrialEndsAt: null,
+              subscriptionAutoRenew: null,
               subscriptionUpdatedAt:
                 event.created || Math.floor(Date.now() / 1000),
             },

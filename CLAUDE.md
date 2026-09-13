@@ -227,20 +227,20 @@ run-surface feature modules.
 
 Runtime: **Node 20** | Language: **Plain JS (CommonJS)**
 
-| Function                        | Trigger                     | Purpose                                                                                                             |
-| ------------------------------- | --------------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| `completeOnboarding`            | HTTPS callable              | Onboarding profile + program setup via Admin SDK (bypasses security rules)                                          |
-| `analyzeFood`                   | HTTPS request               | Vertex AI image-based food analysis                                                                                 |
-| `analyzeFoodText`               | HTTPS request               | Vertex AI text-based food analysis (Pro feature)                                                                    |
-| `computePerformanceWeek`        | HTTPS callable              | Manual performance rollup                                                                                           |
-| `weeklyPerformanceRollup`       | Scheduled (Sun 23:15 UTC)   | Automated weekly rollup for active users (30-day window)                                                            |
-| `dailyPerformanceRefresh`       | Scheduled (daily 02:10 UTC) | Daily performance refresh for recently active users (14-day window)                                                 |
-| `onWorkoutCreated`              | Firestore trigger           | Post-workout: updates lastActiveAt, syncs challenge progress, recomputes performance                                |
-| `onRunCreated`                  | Firestore trigger           | Post-run: updates lastActiveAt, syncs km challenges, recomputes performance                                         |
-| `sendPasswordResetLinkCallable` | HTTPS callable (unauthed)   | Forgot-password: Admin-minted set-password link emailed via Resend (works for OAuth-only accounts)                  |
-| `sendVerificationEmailCallable` | HTTPS callable (authed)     | Email verification: Admin-minted verify link for the caller's own email, emailed via Resend                         |
-| `revenueCatWebhook`             | HTTPS request               | RevenueCat entitlement events → `subscriptionTier` / `subscriptionExpiresAt` / `subscriptionTrialEndsAt` (ADR-0006) |
-| `syncRevenueCatEntitlement`     | HTTPS callable (authed)     | Sync-on-purchase: reads the caller's RevenueCat subscriber and writes the same fields                               |
+| Function                        | Trigger                     | Purpose                                                                                                                                       |
+| ------------------------------- | --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| `completeOnboarding`            | HTTPS callable              | Onboarding profile + program setup via Admin SDK (bypasses security rules)                                                                    |
+| `analyzeFood`                   | HTTPS request               | Vertex AI image-based food analysis                                                                                                           |
+| `analyzeFoodText`               | HTTPS request               | Vertex AI text-based food analysis (Pro feature)                                                                                              |
+| `computePerformanceWeek`        | HTTPS callable              | Manual performance rollup                                                                                                                     |
+| `weeklyPerformanceRollup`       | Scheduled (Sun 23:15 UTC)   | Automated weekly rollup for active users (30-day window)                                                                                      |
+| `dailyPerformanceRefresh`       | Scheduled (daily 02:10 UTC) | Daily performance refresh for recently active users (14-day window)                                                                           |
+| `onWorkoutCreated`              | Firestore trigger           | Post-workout: updates lastActiveAt, syncs challenge progress, recomputes performance                                                          |
+| `onRunCreated`                  | Firestore trigger           | Post-run: updates lastActiveAt, syncs km challenges, recomputes performance                                                                   |
+| `sendPasswordResetLinkCallable` | HTTPS callable (unauthed)   | Forgot-password: Admin-minted set-password link emailed via Resend (works for OAuth-only accounts)                                            |
+| `sendVerificationEmailCallable` | HTTPS callable (authed)     | Email verification: Admin-minted verify link for the caller's own email, emailed via Resend                                                   |
+| `revenueCatWebhook`             | HTTPS request               | RevenueCat entitlement events → `subscriptionTier` / `subscriptionExpiresAt` / `subscriptionTrialEndsAt` / `subscriptionAutoRenew` (ADR-0006) |
+| `syncRevenueCatEntitlement`     | HTTPS callable (authed)     | Sync-on-purchase: reads the caller's RevenueCat subscriber and writes the same fields                                                         |
 
 Helper: `syncChallengeProgress()` — auto-updates challenge participant progress (workout_count, total_volume, total_km)
 

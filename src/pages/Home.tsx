@@ -108,7 +108,13 @@ export default function Home() {
   const { meals, loading: mealsLoading, getDailyTotals } = useMeals();
 
   const effectiveTargets = useEffectiveTargets();
-  const { isPro, isInTrial, trialDaysLeft, trialKind } = useSubscription();
+  const { isPro, isInTrial, trialDaysLeft, trialKind, autoRenew } =
+    useSubscription();
+  // A billed trial the user has already cancelled has no billing to
+  // warn about: the countdown strip stays quiet (the reminder and
+  // Settings carry the end date) and the Pro strip returns once it ends.
+  const showTrialStrip =
+    isInTrial && !(trialKind === "billed" && autoRenew === false);
   // PR-1: pull the action callbacks too so the new DayActionSheet
   // (mounted from DayPeekCard's Manage CTA) can dispatch
   // override/skip/complete without re-implementing them here.
@@ -655,7 +661,7 @@ export default function Home() {
       }
     >
       {/* Persistent trial / upgrade strip */}
-      {isInTrial && (
+      {showTrialStrip && (
         <button
           type="button"
           onClick={function () {

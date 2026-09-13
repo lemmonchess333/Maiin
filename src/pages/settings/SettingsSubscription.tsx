@@ -10,6 +10,9 @@
  *     on web) and never sells one;
  *   - Pro: "Renews 20 Oct" when the expiry is on the profile, else
  *     "Full access" — manages likewise;
+ *   - either of those with auto-renew OFF: "Ends 20 Sept · won't renew"
+ *     and a Resubscribe action to the same store page — never "unless
+ *     you cancel" to someone who has;
  *   - the legacy no-card free week: the countdown, to the offer page;
  *   - free: the offer page, tagged as a Settings entry.
  *
@@ -47,7 +50,7 @@ function dateOf(iso: string | null | undefined): string | null {
 export default function SettingsSubscription() {
   const navigate = useNavigate();
   const { user, profile } = useAuth();
-  const { isInTrial, trialDaysLeft, tier, trialKind, trialEndsAt } =
+  const { isInTrial, trialDaysLeft, tier, trialKind, trialEndsAt, autoRenew } =
     useSubscription();
   const [manageLoading, setManageLoading] = useState(false);
 
@@ -56,19 +59,37 @@ export default function SettingsSubscription() {
   const trialEnd = dateOf(trialEndsAt);
   const renews = dateOf(profile?.subscriptionExpiresAt);
 
+  // Auto-renew off: access runs to the date and stops. The row still
+  // manages (the store's subscriptions page is where it is turned back
+  // on), but reads "won't renew" and offers Resubscribe — never "unless
+  // you cancel" to someone who has.
+  const cancelled = autoRenew === false;
+
   let title: string;
   let statusLabel: string;
-  let action: "manage" | "offer";
+  let action: "manage" | "resubscribe" | "offer";
   if (billedTrial) {
     title = "Free trial";
-    statusLabel = trialEnd
-      ? `Ends ${trialEnd}${priceTail(planId)} unless you cancel`
-      : `${trialDaysLeft} day${trialDaysLeft !== 1 ? "s" : ""} left${priceTail(planId)}`;
-    action = "manage";
+    if (cancelled) {
+      statusLabel = trialEnd
+        ? `Ends ${trialEnd} · won't renew`
+        : `${trialDaysLeft} day${trialDaysLeft !== 1 ? "s" : ""} left · won't renew`;
+      action = "resubscribe";
+    } else {
+      statusLabel = trialEnd
+        ? `Ends ${trialEnd}${priceTail(planId)} unless you cancel`
+        : `${trialDaysLeft} day${trialDaysLeft !== 1 ? "s" : ""} left${priceTail(planId)}`;
+      action = "manage";
+    }
   } else if (tier === "pro") {
     title = "Pro";
-    statusLabel = renews ? `Renews ${renews}` : "Full access";
-    action = "manage";
+    if (cancelled) {
+      statusLabel = renews ? `Ends ${renews} · won't renew` : "Won't renew";
+      action = "resubscribe";
+    } else {
+      statusLabel = renews ? `Renews ${renews}` : "Full access";
+      action = "manage";
+    }
   } else if (isInTrial) {
     title = "Pro trial";
     statusLabel = `${trialDaysLeft} day${trialDaysLeft !== 1 ? "s" : ""} left`;
@@ -113,7 +134,11 @@ export default function SettingsSubscription() {
           </div>
         </div>
         <span className="flex items-center gap-1 text-xs font-medium text-muted-foreground">
-          {action === "manage" ? "Manage" : null}
+          {action === "manage"
+            ? "Manage"
+            : action === "resubscribe"
+              ? "Resubscribe"
+              : null}
           <ChevronRight className="size-4" aria-hidden="true" />
         </span>
       </button>

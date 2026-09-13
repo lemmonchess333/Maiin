@@ -14,14 +14,14 @@ const home = readFileSync(resolve(__dirname, "../Home.tsx"), "utf8");
 
 describe("Home → offer page entries", () => {
   it("the trial countdown strip is tagged as the strip", () => {
-    const start = home.indexOf("{isInTrial && (");
+    const start = home.indexOf("{showTrialStrip && (");
     expect(start).toBeGreaterThan(0);
     const block = home.slice(start, home.indexOf("</button>", start));
     expect(block).toMatch(/navigate\("\/upgrade\?from=trial_strip"\)/);
   });
 
   it("a billed trial's strip manages the live subscription rather than selling one", () => {
-    const start = home.indexOf("{isInTrial && (");
+    const start = home.indexOf("{showTrialStrip && (");
     const block = home.slice(start, home.indexOf("</button>", start));
     // The billed branch is checked FIRST: a live subscription must never
     // reach the sheet or the offer page.
@@ -31,6 +31,12 @@ describe("Home → offer page entries", () => {
     expect(billed).toBeLessThan(sell);
     expect(block).toMatch(/navigate\("\/settings\/subscription"\)/);
     expect(block).toMatch(/"Manage" : "Subscribe"/);
+  });
+
+  it("the countdown strip stays quiet for a billed trial the user has already cancelled", () => {
+    expect(home).toMatch(
+      /const showTrialStrip =\s*isInTrial && !\(trialKind === "billed" && autoRenew === false\)/
+    );
   });
 
   it("nothing on Home reaches the offer page untagged", () => {

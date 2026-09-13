@@ -209,6 +209,54 @@ describe("createTrialCheckoutSession", () => {
     expect(txnWrite.opts).toEqual({ merge: true });
   });
 
+  it("Cycle 4b: subscriptionStateFromStripe carries the trial end while trialing and auto-renew off once cancelled at period end", () => {
+    const { subscriptionStateFromStripe } = require("../lib/checkoutTrial");
+    const trialEnd = 1_789_000_000;
+    expect(
+      subscriptionStateFromStripe({
+        status: "trialing",
+        trial_end: trialEnd,
+        cancel_at_period_end: false,
+      })
+    ).toEqual({
+      tier: "pro",
+      trialEndsAt: new Date(trialEnd * 1000).toISOString(),
+      autoRenew: true,
+    });
+    // Cancelled mid-trial: still Pro to the end, still a trial, no renewal.
+    expect(
+      subscriptionStateFromStripe({
+        status: "trialing",
+        trial_end: trialEnd,
+        cancel_at_period_end: true,
+      })
+    ).toEqual({
+      tier: "pro",
+      trialEndsAt: new Date(trialEnd * 1000).toISOString(),
+      autoRenew: false,
+    });
+    // Converted: the trial end is gone even though Stripe keeps `trial_end`.
+    expect(
+      subscriptionStateFromStripe({ status: "active", trial_end: trialEnd })
+    ).toEqual({ tier: "pro", trialEndsAt: null, autoRenew: true });
+    expect(
+      subscriptionStateFromStripe({
+        status: "active",
+        cancel_at_period_end: true,
+      })
+    ).toMatchObject({ autoRenew: false });
+    // Nothing to renew once the subscription is off.
+    expect(
+      subscriptionStateFromStripe({
+        status: "canceled",
+        cancel_at_period_end: true,
+      })
+    ).toEqual({ tier: "free", trialEndsAt: null, autoRenew: null });
+    expect(
+      subscriptionStateFromStripe({ status: "past_due" }).autoRenew
+    ).toBeNull();
+  });
+
   it("Cycle 4: mapSubscriptionStatusToTier pins trialing → active transition keeps tier=pro", async () => {
     const { mapSubscriptionStatusToTier } = require("../lib/checkoutTrial");
     // The Sub1a P1 invariant: when Stripe flips a subscription from
