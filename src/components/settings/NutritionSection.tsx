@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { formatCalories } from "@/utils/formatNutrition";
 import { motion } from "framer-motion";
 import { formatWeightInUnit, kgToLb, lbToKg } from "@/lib/weightUnits";
 import { haptic } from "@/lib/haptic";
@@ -178,7 +179,7 @@ export default function NutritionSection({
       <AccordionSection
         icon={<Calculator className="size-5 text-primary" />}
         title="TDEE calculator"
-        subtitle={`${tdee.targetCalories} cal/day target`}
+        subtitle={`${formatCalories(tdee.targetCalories)} kcal/day target`}
       >
         <div>
           <label htmlFor="tdee-age" className="text-xs text-muted-foreground">
@@ -348,7 +349,7 @@ export default function NutritionSection({
           </span>
           <span className="text-xs font-mono tabular-nums font-medium text-foreground">
             {goalPlan.dailyOffset > 0 ? "+" : ""}
-            {goalPlan.dailyOffset} cal/day
+            {formatCalories(goalPlan.dailyOffset)} kcal/day
           </span>
         </div>
 
@@ -362,7 +363,7 @@ export default function NutritionSection({
           <div className="space-y-1">
             <div className="flex items-center justify-between text-xs text-muted-foreground">
               <span>Base TDEE</span>
-              <span>{tdee.tdee} cal</span>
+              <span>{formatCalories(tdee.tdee)} kcal</span>
             </div>
             {tdee.deficit !== 0 && (
               <div className="flex items-center justify-between text-xs text-muted-foreground">
@@ -382,7 +383,7 @@ export default function NutritionSection({
                 </span>
                 <span className="font-mono tabular-nums">
                   {tdee.deficit > 0 ? "+" : ""}
-                  {tdee.deficit} cal
+                  {formatCalories(tdee.deficit)} kcal
                 </span>
               </div>
             )}
@@ -397,7 +398,7 @@ export default function NutritionSection({
                 transition={{ type: "spring", stiffness: 300, damping: 20 }}
                 className="text-sm font-bold text-primary"
               >
-                {tdee.targetCalories} cal
+                {formatCalories(tdee.targetCalories)} kcal
               </motion.span>
             </div>
             {/* D6 — is this target engine-adapted, manual, or formula? So the

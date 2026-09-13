@@ -238,6 +238,19 @@ function renderSection(weeklyRateKg = 0.5, tdee: TDEEResult = DEFAULT_TDEE) {
   return { setWeeklyRateKg };
 }
 
+describe("NutritionSection — calories read as the rest of the app writes them", () => {
+  it("prints the target chain in kcal with thousands grouped, like Home's target line", () => {
+    // The section used to print "2950 cal" beside a Home reading
+    // "Target 2,200 kcal" — the same number, two registers, one tap apart.
+    renderSection(0.5, { ...DEFAULT_TDEE, deficit: 550 });
+    expect(screen.getByText("2,950 kcal/day target")).toBeInTheDocument();
+    expect(screen.getByText("2,400 kcal")).toBeInTheDocument();
+    expect(screen.getByText("+550 kcal")).toBeInTheDocument();
+    expect(screen.getByText("2,950 kcal")).toBeInTheDocument();
+    expect(screen.queryByText(/\d cal\b/)).toBeNull();
+  });
+});
+
 describe("NutritionSection — Weekly pace uses SegmentedControl", () => {
   it("renders the pace picker as a labelled radiogroup", () => {
     renderSection();
