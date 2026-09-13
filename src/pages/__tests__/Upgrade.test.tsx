@@ -402,6 +402,24 @@ describe("Upgrade — where 'not now' goes", () => {
     expect(purchaseMock.mock.calls[0][3]?.source).toBe("trial_end");
   });
 
+  it("checkout from Home's trial countdown strip is attributed to it", async () => {
+    purchaseMock.mockResolvedValueOnce({ success: true });
+    renderPage("/upgrade?from=trial_strip");
+    fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+    fireEvent.click(screen.getByRole("button", { name: /Start Pro/ }));
+    await waitFor(() => expect(purchaseMock).toHaveBeenCalledTimes(1));
+    expect(purchaseMock.mock.calls[0][3]?.source).toBe("trial_strip");
+  });
+
+  it("checkout from a Settings entry is attributed to Settings", async () => {
+    purchaseMock.mockResolvedValueOnce({ success: true });
+    renderPage("/upgrade?from=settings");
+    fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+    fireEvent.click(screen.getByRole("button", { name: /Start Pro/ }));
+    await waitFor(() => expect(purchaseMock).toHaveBeenCalledTimes(1));
+    expect(purchaseMock.mock.calls[0][3]?.source).toBe("settings");
+  });
+
   it("checkout from the Food entry is attributed to the Food page", async () => {
     purchaseMock.mockResolvedValueOnce({ success: true });
     renderPage("/upgrade?from=food");

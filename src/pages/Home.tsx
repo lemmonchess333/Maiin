@@ -662,7 +662,7 @@ export default function Home() {
             if (trialDaysLeft <= 2) {
               setShowProModal(true);
             } else {
-              navigate("/upgrade");
+              navigate("/upgrade?from=trial_strip");
             }
           }}
           className="flex items-center gap-2.5 px-3 py-2 rounded-xl w-full text-left bg-primary/8 hover:bg-primary/12 transition-colors"

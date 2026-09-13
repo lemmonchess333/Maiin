@@ -67,7 +67,7 @@ export default function AiUsageSection() {
   return (
     <button
       type="button"
-      onClick={() => navigate("/upgrade")}
+      onClick={() => navigate("/upgrade?from=settings")}
       className="w-full flex items-center justify-between p-4 rounded-2xl bg-card"
       aria-label="AI usage today — upgrade to Pro"
     >
