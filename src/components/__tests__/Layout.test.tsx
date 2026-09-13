@@ -37,6 +37,8 @@ function renderAt(path: string) {
           <Route path="/history" element={<div>history</div>} />
           <Route path="/user/:uid" element={<div>profile</div>} />
           <Route path="/settings" element={<div>settings</div>} />
+          <Route path="/upgrade" element={<div>offer</div>} />
+          <Route path="/run" element={<div>run</div>} />
         </Route>
       </Routes>
     </MemoryRouter>
@@ -108,5 +110,23 @@ describe("Layout bottom-nav retap", () => {
     for (const link of screen.getAllByRole("link")) {
       expect(link).not.toHaveAttribute("aria-current");
     }
+  });
+});
+
+describe("Layout — where the tab bar is not", () => {
+  it("renders no tab bar under the Pro offer or the live run, and keeps it everywhere else", () => {
+    const nav = () =>
+      screen.queryByRole("navigation", { name: /main navigation/i });
+    const { unmount } = renderAt("/upgrade");
+    expect(screen.getByText("offer")).toBeInTheDocument();
+    expect(nav()).toBeNull();
+    unmount();
+
+    const run = renderAt("/run");
+    expect(nav()).toBeNull();
+    run.unmount();
+
+    renderAt("/settings");
+    expect(nav()).toBeInTheDocument();
   });
 });
