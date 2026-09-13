@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import {
@@ -59,20 +59,32 @@ export default function ProDemoVideo({
   className,
 }: Props) {
   const reducedMotion = useReducedMotion();
+  if (sources.length === 0 || reducedMotion || dataSaverOn()) {
+    return <div className={className}>{fallback}</div>;
+  }
+  // A new set of sources is a new attempt: the key remounts the player,
+  // so the last attempt's fate (loaded, failed) goes with it.
+  return (
+    <Player
+      key={sources.map((s) => s.path).join("|")}
+      sources={sources}
+      fallback={fallback}
+      label={label}
+      className={className}
+    />
+  );
+}
+
+function Player({
+  sources,
+  fallback,
+  label,
+  className,
+}: Required<Pick<Props, "sources">> & Omit<Props, "sources">) {
   const [ready, setReady] = useState(false);
   const [failed, setFailed] = useState(false);
-  const key = sources.map((s) => s.path).join("|");
 
-  // A new set of sources is a new attempt: forget the last one's fate.
-  useEffect(() => {
-    setReady(false);
-    setFailed(false);
-  }, [key]);
-
-  const plays =
-    sources.length > 0 && !reducedMotion && !failed && !dataSaverOn();
-
-  if (!plays) return <div className={className}>{fallback}</div>;
+  if (failed) return <div className={className}>{fallback}</div>;
 
   const last = sources.length - 1;
   return (
