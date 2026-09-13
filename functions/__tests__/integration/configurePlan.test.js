@@ -196,16 +196,114 @@ suite("configurePlan — emulator integration", () => {
 
   it("stores recurring availability with its plan and clears it explicitly", async () => {
     const user = db.collection("users").doc(TEST_UID);
-    await user.set({ ...validProfileUpdates(), runTimeLimits: { sessionMinutes: 90, longRunMinutes: 120 } });
+    await user.set({
+      ...validProfileUpdates(),
+      runTimeLimits: { sessionMinutes: 90, longRunMinutes: 120 },
+    });
     const programState = validProgramState();
-    programState.runDays = [{ id: "time-fit", dayIndex: 0, date: "2026-09-13", weekKey: "2026-09-07", templateId: "long_8k", type: "long", status: "planned", timeLimit: { minutes: 45, originalTemplateId: "long_12k" } }];
+    programState.runDays = [
+      {
+        id: "time-fit",
+        dayIndex: 0,
+        date: "2026-09-13",
+        weekKey: "2026-09-07",
+        templateId: "long_8k",
+        type: "long",
+        status: "planned",
+        timeLimit: { minutes: 45, originalTemplateId: "long_12k" },
+      },
+    ];
     const limits = { sessionMinutes: 30, longRunMinutes: 45 };
-    await configurePlan.run({ profileUpdates: { ...validProfileUpdates(), runTimeLimits: limits }, programState, weekSchedule: validWeekSchedule() }, { auth: { uid: TEST_UID } });
+    await configurePlan.run(
+      {
+        profileUpdates: { ...validProfileUpdates(), runTimeLimits: limits },
+        programState,
+        weekSchedule: validWeekSchedule(),
+      },
+      { auth: { uid: TEST_UID } }
+    );
     expect((await user.get()).data().runTimeLimits).toEqual(limits);
-    expect((await user.collection("programState").doc("current").get()).data().runDays[0].timeLimit).toEqual({ minutes: 45, originalTemplateId: "long_12k" });
+    expect(
+      (await user.collection("programState").doc("current").get()).data()
+        .runDays[0].timeLimit
+    ).toEqual({ minutes: 45, originalTemplateId: "long_12k" });
     await db.collection("rateLimits").doc(`${TEST_UID}_configurePlan`).delete();
-    await configurePlan.run({ profileUpdates: { ...validProfileUpdates(), runTimeLimits: null }, programState, weekSchedule: validWeekSchedule() }, { auth: { uid: TEST_UID } });
+    await configurePlan.run(
+      {
+        profileUpdates: { ...validProfileUpdates(), runTimeLimits: null },
+        programState,
+        weekSchedule: validWeekSchedule(),
+      },
+      { auth: { uid: TEST_UID } }
+    );
     expect((await user.get()).data().runTimeLimits).toBeNull();
+  });
+
+  it("persists planning preferences and the explained run dose in the same transaction", async () => {
+    const user = db.collection("users").doc(TEST_UID);
+    await user.set(validProfileUpdates());
+    const runningBaseline = {
+      version: 1,
+      experience: "building",
+      weeklyMinutes: 60,
+      longestRunMinutes: 20,
+      confirmedAt: "2026-09-13",
+      source: "self_reported",
+    };
+    const preferences = {
+      runningBaseline,
+      nonRaceGoal: { kind: "minutes", target: 90 },
+      liftTimeBudgetMinutes: 45,
+    };
+    const programState = validProgramState();
+    const trainingBasis = {
+      originalTemplateId: "long_12k",
+      confirmedAt: "2026-09-13",
+      reason: "experience",
+    };
+    programState.runDays = [
+      {
+        id: "baseline-run",
+        dayIndex: 0,
+        date: "2026-09-13",
+        weekKey: "2026-09-07",
+        templateId: "easy_20",
+        type: "easy",
+        status: "planned",
+        trainingBasis,
+      },
+    ];
+    await configurePlan.run(
+      {
+        profileUpdates: { ...validProfileUpdates(), ...preferences },
+        programState,
+        weekSchedule: validWeekSchedule(),
+      },
+      { auth: { uid: TEST_UID } }
+    );
+    const stored = (await user.get()).data();
+    for (const [key, value] of Object.entries(preferences))
+      expect(stored[key]).toEqual(value);
+    expect(
+      (await user.collection("programState").doc("current").get()).data()
+        .runDays[0].trainingBasis
+    ).toEqual(trainingBasis);
+    await db.collection("rateLimits").doc(`${TEST_UID}_configurePlan`).delete();
+    await configurePlan.run(
+      {
+        profileUpdates: {
+          ...validProfileUpdates(),
+          runningBaseline: null,
+          nonRaceGoal: null,
+          liftTimeBudgetMinutes: null,
+        },
+        programState,
+        weekSchedule: validWeekSchedule(),
+      },
+      { auth: { uid: TEST_UID } }
+    );
+    const cleared = (await user.get()).data();
+    for (const key of Object.keys(preferences)) expect(cleared[key]).toBeNull();
   });
 
   it("rejects payload missing programSchemaVersion (invalid-argument)", async () => {

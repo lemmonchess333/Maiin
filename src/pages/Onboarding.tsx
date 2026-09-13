@@ -372,6 +372,7 @@ export default function Onboarding() {
         goalPlan.fitnessGoal,
         currentDate,
         {
+          runningBaseline: profile?.runningBaseline ?? null,
           runTimeLimits: profile?.runTimeLimits,
           runFitness: profile?.runFitness,
         }
@@ -391,6 +392,7 @@ export default function Onboarding() {
       weightKg,
       goalPlan.fitnessGoal,
       currentDate,
+      profile?.runningBaseline,
       profile?.runTimeLimits,
       profile?.runFitness,
     ]

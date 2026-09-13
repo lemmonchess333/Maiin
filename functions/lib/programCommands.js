@@ -150,7 +150,7 @@ const BLOCK_PACES = new Set(["full", "lighter", "easing"]);
 const BLOCK_DURATION_WEEKS = new Set([4, 8, 12]);
 const MAX_ANCHOR_EXERCISE_IDS = 3;
 const MAX_BLOCK_WHY_LEN = 500;
-const SESSION_VARIANTS = new Set(["express45", "express30"]);
+const SESSION_VARIANTS = new Set(["express45", "express30", "time_budget"]);
 
 // Bounds. Generous but finite — a legitimate command is comfortably inside
 // these; the point is to deny unbounded/poisonous payloads, not to police

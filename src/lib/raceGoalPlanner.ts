@@ -1,3 +1,4 @@
+import type { RunningBaseline } from "@/features/program/runningBaseline";
 import {
   plannedRunMinutes,
   type RunTimeLimits,
@@ -77,6 +78,7 @@ export interface RaceGoalPlannerInput {
    *  commit, or the previewed week structure drifts from the plan.
    *  Optional (absent → standard) for non-editor callers. */
   tuning?: RunTuning;
+  runningBaseline?: RunningBaseline | null;
   runTimeLimits?: RunTimeLimits | null;
   easyPaceSPerKm?: number | null;
   existingState?: ProgramState | null;
@@ -197,6 +199,7 @@ export function getRaceGoalPlannerState(
     currentDate,
     weekStart,
     tuning: input.tuning,
+    runningBaseline: input.runningBaseline,
     runTimeLimits: input.runTimeLimits,
     easyPaceSPerKm: input.easyPaceSPerKm,
     planTotalWeeks: continued?.totalWeeks,

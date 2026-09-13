@@ -7,6 +7,7 @@ export interface RunTemplate {
   estimatedDuration: number;
   config: {
     targetPace?: number;
+    targetDurationMinutes?: number;
     targetDistanceKm?: number;
     intervals?: {
       reps: number;
@@ -46,6 +47,24 @@ export const RUN_TEMPLATES: RunTemplate[] = [
   // Easy runs are a LADDER, not a fixed 30 minutes. A race plan whose only
   // progressing session is the long run pushes the whole weekly increase into
   // one day; see the `EASY_RUN_TIERS` note in runScheduler.ts.
+  {
+    id: "easy_10",
+    name: "Easy 10",
+    type: "easy",
+    icon: "person-standing",
+    description: "A short run at conversational effort",
+    estimatedDuration: 10,
+    config: { targetDurationMinutes: 10 },
+  },
+  {
+    id: "easy_20",
+    name: "Easy 20",
+    type: "easy",
+    icon: "person-standing",
+    description: "An easy run at conversational effort",
+    estimatedDuration: 20,
+    config: { targetDurationMinutes: 20 },
+  },
   {
     id: "easy_40",
     name: "Easy 40",

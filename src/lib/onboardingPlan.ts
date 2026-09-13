@@ -31,6 +31,9 @@ export function buildOnboardingPlan(
   nutritionPhase: Goal,
   currentDate: string,
   runningPreferences?: {
+    runningBaseline?:
+      | import("@/features/program/runningBaseline").RunningBaseline
+      | null;
     runTimeLimits?: RunTimeLimits | null;
     runFitness?: RunFitnessInput | null;
   }
@@ -77,6 +80,7 @@ export function buildOnboardingPlan(
     preferredSplit: "auto",
     runMode,
     weeklyRunDays,
+    runningBaseline: runningPreferences?.runningBaseline,
     runTimeLimits: runningPreferences?.runTimeLimits,
     runFitness: runningPreferences?.runFitness,
     ...(runMode === "race_prep"

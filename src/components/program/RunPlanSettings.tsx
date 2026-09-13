@@ -1,3 +1,11 @@
+import { useLocalDateKey } from "@/hooks/useLocalDateKey";
+import {
+  isRunningBaseline,
+  type RunningBaseline,
+} from "@/features/program/runningBaseline";
+import { isNonRaceGoal, type NonRaceGoal } from "@/lib/nonRaceGoal";
+import RunningBaselineSettings from "@/components/run/RunningBaselineSettings";
+import NonRaceGoalSettings from "@/components/run/NonRaceGoalSettings";
 import {
   normalizeRunTimeLimits,
   type RunTimeLimits,
@@ -178,6 +186,12 @@ export default function RunPlanSettings({
       runVolume: runTuningFromProfile(profile).volume,
       runDifficulty: runTuningFromProfile(profile).difficulty,
       runTimeLimits: normalizeRunTimeLimits(profile.runTimeLimits),
+      runningBaseline: isRunningBaseline(profile.runningBaseline)
+        ? profile.runningBaseline
+        : null,
+      nonRaceGoal: isNonRaceGoal(profile.nonRaceGoal)
+        ? profile.nonRaceGoal
+        : null,
     }),
     [profile]
   );
@@ -224,7 +238,10 @@ export default function RunPlanSettings({
   const raceTimeParsed = raceTimeStr.trim()
     ? parseRaceTimeToSeconds(raceTimeStr.trim())
     : null;
-  const raceTimeInvalid = raceTimeStr.trim() !== "" && raceTimeParsed === null;
+  const raceTimeInvalid =
+    runMode === "race_prep" &&
+    raceTimeStr.trim() !== "" &&
+    raceTimeParsed === null;
   /** The catalogue binding (Q4). Cleared by any manual distance/date
    *  edit — the goal is then no longer that event. */
   const [raceEventSpaceId, setRaceEventSpaceId] = useState<string>(
@@ -241,13 +258,32 @@ export default function RunPlanSettings({
   const [runTimeLimits, setRunTimeLimits] = useState<RunTimeLimits>(
     storedDraft?.runTimeLimits ?? saved.runTimeLimits
   );
+  const [runningBaseline, setRunningBaseline] =
+    useState<RunningBaseline | null>(
+      storedDraft?.runningBaseline !== undefined
+        ? storedDraft.runningBaseline
+        : saved.runningBaseline
+    );
+  const [nonRaceGoal, setNonRaceGoal] = useState<NonRaceGoal | null>(
+    storedDraft?.nonRaceGoal !== undefined
+      ? storedDraft.nonRaceGoal
+      : saved.nonRaceGoal
+  );
+  const baselineInvalid =
+    runMode === "race_prep" &&
+    runningBaseline !== null &&
+    !isRunningBaseline(runningBaseline);
+  const goalInvalid =
+    runMode === "freeform" &&
+    nonRaceGoal !== null &&
+    !isNonRaceGoal(nonRaceGoal);
   const [saving, setSaving] = useState(false);
   /* Anchors for the "bring the invalid field into view" behaviour below.
      The date input lives inside RaceGoalPlanner, so the section wrapper
      is the addressable thing; the goal time has its own id. */
   const raceGoalRef = useRef<HTMLDivElement>(null);
 
-  const today = localDateString(new Date());
+  const today = useLocalDateKey();
   const liftDays = profile.weeklyWorkoutsTarget ?? 4;
 
   // Runway preview — same engine the save commits (raceGoalPlanner.ts).
@@ -262,6 +298,7 @@ export default function RunPlanSettings({
         // Pgm6: preview with the same knobs the save will commit.
         tuning: { volume: runVolume, difficulty: runDifficulty },
         runTimeLimits,
+        runningBaseline,
         easyPaceSPerKm: planningEasyPaceSPerKm(profile.runFitness),
         existingState: programState,
         recentLayoff,
@@ -276,6 +313,7 @@ export default function RunPlanSettings({
       runVolume,
       runDifficulty,
       runTimeLimits,
+      runningBaseline,
       profile.runFitness,
       programState,
       recentLayoff,
@@ -287,6 +325,11 @@ export default function RunPlanSettings({
     runMode === "race_prep" && (!raceTargetDate || raceTargetDate < today);
 
   const dirty =
+    (runMode === "race_prep" &&
+      JSON.stringify(runningBaseline) !==
+        JSON.stringify(saved.runningBaseline)) ||
+    (runMode === "freeform" &&
+      JSON.stringify(nonRaceGoal) !== JSON.stringify(saved.nonRaceGoal)) ||
     runMode !== saved.runMode ||
     (runMode === "race_prep" &&
       (raceDistance !== saved.raceDistance ||
@@ -317,6 +360,8 @@ export default function RunPlanSettings({
         runVolume,
         runDifficulty,
         runTimeLimits,
+        runningBaseline,
+        nonRaceGoal,
       });
     } else {
       clearRunPlanDraft(profile.uid);
@@ -334,6 +379,8 @@ export default function RunPlanSettings({
     runVolume,
     runDifficulty,
     runTimeLimits,
+    runningBaseline,
+    nonRaceGoal,
   ]);
 
   // Door 2 (races plan amendment): the same catalogue the directory
@@ -366,7 +413,15 @@ export default function RunPlanSettings({
 
   // ── Save (RUN-EV-02: one draft computation, one atomic commit) ──────
   async function handleSave(): Promise<void> {
-    if (saving || !dirty || raceDateInvalid || raceTimeInvalid) return;
+    if (
+      saving ||
+      !dirty ||
+      raceDateInvalid ||
+      raceTimeInvalid ||
+      baselineInvalid ||
+      goalInvalid
+    )
+      return;
     setSaving(true);
     try {
       // Everything derives from the CURRENT DRAFT in one buildPlan call:
@@ -395,6 +450,8 @@ export default function RunPlanSettings({
         // Run17: the long-run ceiling is measured at the confirmed easy pace.
         runFitness: profile.runFitness ?? null,
         runTimeLimits,
+        runningBaseline:
+          runMode === "race_prep" ? runningBaseline : saved.runningBaseline,
         ...(runMode === "race_prep"
           ? {
               raceGoal: {
@@ -414,6 +471,9 @@ export default function RunPlanSettings({
         existingState: programState ?? undefined,
         preserveHistory: true,
       });
+
+      plan.profileUpdates.nonRaceGoal =
+        runMode === "freeform" ? nonRaceGoal : saved.nonRaceGoal;
 
       if (runMode === "race_prep") {
         if (raceEventSpaceId && plan.profileUpdates.raceGoal) {
@@ -461,7 +521,7 @@ export default function RunPlanSettings({
       toast.success(
         runMode === "race_prep"
           ? "Race plan saved"
-          : "Switched to freeform running",
+          : "Running goal and settings saved",
         { id: "run-plan" }
       );
     } catch (e) {
@@ -499,15 +559,25 @@ export default function RunPlanSettings({
      (`aria-disabled` + the muted treatment), and spends the tap moving
      the user to the field that needs fixing. `disabled` proper is kept
      for the states with nothing to reveal: not dirty, or mid-save. */
-  const invalid = raceDateInvalid || raceTimeInvalid;
+  const invalid =
+    raceDateInvalid || raceTimeInvalid || baselineInvalid || goalInvalid;
   function revealInvalidField(): void {
     // Date first: it sits higher on the page and is the required one.
     const target = raceDateInvalid
       ? raceGoalRef.current
-      : document.getElementById("ps-race-time");
+      : baselineInvalid
+        ? document.getElementById("running-starting-point")
+        : goalInvalid
+          ? document.getElementById("weekly-running-goal")
+          : document.getElementById("ps-race-time");
     target?.scrollIntoView({ behavior: "smooth", block: "center" });
-    if (target instanceof HTMLInputElement)
-      target.focus({ preventScroll: true });
+    const input =
+      target instanceof HTMLInputElement
+        ? target
+        : target?.querySelector<HTMLInputElement>(
+            'input[aria-invalid="true"], input'
+          );
+    input?.focus({ preventScroll: true });
   }
 
   const saveLabel = saving
@@ -516,9 +586,11 @@ export default function RunPlanSettings({
       ? "Fix race date"
       : raceTimeInvalid
         ? "Fix goal time"
-        : runMode === "race_prep" && plannerState.ctaLabel
-          ? plannerState.ctaLabel
-          : "Save run plan";
+        : baselineInvalid || goalInvalid
+          ? "Check running details"
+          : runMode === "race_prep" && plannerState.ctaLabel
+            ? plannerState.ctaLabel
+            : "Save run plan";
 
   return (
     <div className="space-y-5 pb-6">
@@ -703,6 +775,21 @@ export default function RunPlanSettings({
           preview={plannerState}
           hasConfirmedPace={planningEasyPaceSPerKm(profile.runFitness) !== null}
         />
+      )}
+
+      {runMode === "race_prep" && (
+        <div id="running-starting-point">
+          <RunningBaselineSettings
+            value={runningBaseline}
+            onChange={setRunningBaseline}
+            preview={plannerState}
+          />
+        </div>
+      )}
+      {runMode === "freeform" && (
+        <div id="weekly-running-goal">
+          <NonRaceGoalSettings value={nonRaceGoal} onChange={setNonRaceGoal} />
+        </div>
       )}
 
       {/* ── Pgm6 tuning knobs (race prep only — they shape the periodised

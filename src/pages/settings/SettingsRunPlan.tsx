@@ -101,6 +101,7 @@ export default function SettingsRunPlan() {
       )}
 
       <RunPlanSettings
+        key={profile.uid}
         profile={profile}
         programState={programState}
         recentLayoff={recentLayoff}

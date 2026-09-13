@@ -15,7 +15,9 @@ export default function RunPlanPurpose({
 }) {
   const neighbours = run ? adjacentDemandingRuns(run, runDays) : [];
   const timeLimit = !run?.userOverride ? run?.timeLimit : undefined;
-  if (!purpose && !neighbours.length && !timeLimit) return null;
+  const trainingBasis = !run?.userOverride ? run?.trainingBasis : undefined;
+  if (!purpose && !neighbours.length && !timeLimit && !trainingBasis)
+    return null;
   const days = [
     ...new Set(
       neighbours.map((day) => format(parseLocalDate(day.date!), "EEEE"))
@@ -24,6 +26,16 @@ export default function RunPlanPurpose({
   return (
     <RunPurpose>
       {purpose}
+      {trainingBasis && (
+        <p className="text-sm text-muted-foreground leading-relaxed mt-2">
+          {trainingBasis.reason === "experience"
+            ? "Easy running matches the starting point you chose."
+            : trainingBasis.reason === "review"
+              ? "Easy running is in place until you review your current training."
+              : "This session was shortened to fit the recent running you confirmed."}{" "}
+          You can review this in your run plan settings.
+        </p>
+      )}
       {timeLimit && (
         <p className="text-sm text-muted-foreground leading-relaxed mt-2">
           This shorter session fits your saved time of about{" "}

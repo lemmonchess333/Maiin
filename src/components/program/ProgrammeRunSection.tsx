@@ -1,3 +1,9 @@
+import NonRaceGoalProgress from "@/components/run/NonRaceGoalProgress";
+import { useLocalDateKey } from "@/hooks/useLocalDateKey";
+import {
+  isRunningBaseline,
+  runningBaselineNeedsReview,
+} from "@/features/program/runningBaseline";
 import RunPlanPurpose from "@/components/run/RunPlanPurpose";
 /**
  * Programme Run tab — hybrid training cockpit.
@@ -260,7 +266,12 @@ export default function ProgrammeRunSection({
   // saw that prompt at all.
   const storageUid = useUidForStorageKey();
   const unit = useDistanceUnit();
-  const { runs, weeklyData, loading: runsLoading } = useRunningStats(30);
+  const {
+    runs,
+    weeklyData,
+    loading: runsLoading,
+    failed: runsFailed,
+  } = useRunningStats(30);
   // PR-J Q3 chunk B3b — single source of truth for derived
   // completion. Subscribes to users/{uid}/runs + reads
   // programState.manualCompletions; forwarded to RunWeekStrip so
@@ -313,7 +324,7 @@ export default function ProgrammeRunSection({
    * race-prep user's entire race surface vanished. `resolveRunPlan`
    * reconciles them (profile wins, mirror backfills) and owns the single
    * definition of the recovery window, which was hand-derived here. */
-  const todayKeyDerivation = localDateString(new Date());
+  const todayKeyDerivation = useLocalDateKey();
   const resolvedRunPlan = useMemo(
     () => resolveRunPlan(profile, programState, todayKeyDerivation),
     [profile, programState, todayKeyDerivation]
@@ -1129,6 +1140,12 @@ export default function ProgrammeRunSection({
           the Next · Pending card below for visual coherence. */}
       {currentMode === "freeform" && (
         <div className="space-y-3">
+          <NonRaceGoalProgress
+            goal={profile.nonRaceGoal}
+            runs={runs}
+            loading={runsLoading}
+            failed={runsFailed}
+          />
           <button
             type="button"
             onClick={() => {
@@ -1435,6 +1452,28 @@ export default function ProgrammeRunSection({
           card below: tap a day → that day's command card. Non-freeform only —
           freeform has no scheduled runs ("start whenever"); its hero above
           owns the Start CTA. */}
+      {currentMode === "race_prep" &&
+        !raceElapsed &&
+        !inRecovery &&
+        isRunningBaseline(profile.runningBaseline) &&
+        runningBaselineNeedsReview(
+          profile.runningBaseline,
+          todayKeyDerivation
+        ) && (
+          <Banner
+            variant="info"
+            title="Review your running starting point"
+            description="New weeks use easy running within your last report. Confirm your current training to review the next weeks of your plan."
+            action={
+              <Button
+                variant="outline"
+                onClick={() => navigate("/settings/run-plan")}
+              >
+                Review starting point
+              </Button>
+            }
+          />
+        )}
       {currentMode !== "freeform" && (
         <div
           className="space-y-3"
@@ -1487,7 +1526,11 @@ export default function ProgrammeRunSection({
                     setManageDate(selectedDateKey);
                   }}
                 />
-                <RunPlanPurpose purpose={selectedPurpose.purpose} run={selectedRun.runDay} runDays={runDays} />
+                <RunPlanPurpose
+                  purpose={selectedPurpose.purpose}
+                  run={selectedRun.runDay}
+                  runDays={runDays}
+                />
                 {/* Secondary: an ad-hoc run that does NOT fulfil the plan slot. */}
                 <button
                   type="button"

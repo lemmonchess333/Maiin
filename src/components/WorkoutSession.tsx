@@ -205,7 +205,7 @@ interface Props {
    *  handed a reduced COPY of `day` (Express time budget, or Easier
    *  today). Threaded into the completion write and acknowledged on
    *  the complete screen. */
-  sessionVariant?: "express45" | "express30" | "easier_today";
+  sessionVariant?: "express45" | "express30" | "easier_today" | "time_budget";
   /** Backlog #4: true during a step-back (deload) week — the effort cue
    *  under the set counter switches to the step-back line. */
   deloadWeek?: boolean;

@@ -1,3 +1,4 @@
+import type { RunningBaseline } from "@/features/program/runningBaseline";
 import type { RunTimeLimits } from "./runTimeLimits";
 import {
   continuingRacePlan,
@@ -141,6 +142,7 @@ export interface PlanBuilderInput {
    *  measured at their confirmed easy pace (`planningEasyPaceSPerKm`
    *  applies RUN-EV-08's gate). Omitted → the nominal tier table. */
   runFitness?: RunFitnessInput | null;
+  runningBaseline?: RunningBaseline | null;
   runTimeLimits?: RunTimeLimits | null;
   recentLayoff?: import("./layoffDetection").LayoffClass;
   weekSchedule?: ScheduleDay[];
@@ -217,6 +219,8 @@ export interface PlanBuilderOutput {
     // saved (runTuningFromProfile reads these; missing → standard).
     runVolume: RunTuning["volume"];
     runDifficulty: RunTuning["difficulty"];
+    nonRaceGoal?: import("@/lib/nonRaceGoal").NonRaceGoal | null;
+    runningBaseline?: RunningBaseline | null;
     runTimeLimits?: RunTimeLimits | null;
     // Pgm4: nutrition phase lives on profile.program.goal — that's what
     // every macro/calorie consumer reads (phaseNutrition, useEffectiveTargets,
@@ -396,6 +400,7 @@ function buildRunPlan(
       weekStart,
       tuning: input.runTuning ?? DEFAULT_RUN_TUNING,
       easyPaceSPerKm: planningEasyPaceSPerKm(input.runFitness),
+      runningBaseline: input.runningBaseline,
       runTimeLimits: input.runTimeLimits,
       planTotalWeeks: continued?.totalWeeks,
     });
@@ -459,6 +464,8 @@ function buildProfileUpdates(
     preferredSplit: input.preferredSplit,
     program: { goal: input.nutritionPhase },
   };
+  if (input.runningBaseline !== undefined)
+    updates.runningBaseline = input.runningBaseline;
   if (input.runTimeLimits !== undefined)
     updates.runTimeLimits = input.runTimeLimits;
   if (input.runMode === "race_prep" && input.raceGoal) {

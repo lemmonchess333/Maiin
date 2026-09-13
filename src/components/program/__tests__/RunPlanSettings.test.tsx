@@ -102,6 +102,98 @@ describe("RunPlanSettings", () => {
     localStorage.clear();
   });
 
+  it("saves a weekly goal without a race, scheduled rows or an adherence target", async () => {
+    renderPage({ ...baseProfile, uid: "goal-owner" });
+    fireEvent.change(
+      screen.getByRole("combobox", { name: "Weekly running goal" }),
+      { target: { value: "minutes" } }
+    );
+    fireEvent.change(screen.getByLabelText("Minutes per week"), {
+      target: { value: "120" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save run plan" }));
+    await waitFor(() => expect(configureSpy).toHaveBeenCalledTimes(1));
+    const payload = sentPayload();
+    expect(payload.profileUpdates.nonRaceGoal).toEqual({
+      kind: "minutes",
+      target: 120,
+    });
+    expect(payload.profileUpdates.weeklyRunDaysTarget).toBe(0);
+    expect(payload.profileUpdates.raceGoal).toBeNull();
+    expect(payload.programState.runDays).toEqual([]);
+  });
+
+  it("clears the saved freeform goal without creating scheduled runs", async () => {
+    renderPage({
+      ...baseProfile,
+      uid: "clear-freeform-goal",
+      nonRaceGoal: { kind: "runs", target: 3 },
+    });
+    fireEvent.change(
+      screen.getByRole("combobox", { name: "Weekly running goal" }),
+      { target: { value: "" } }
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Save run plan" }));
+    await waitFor(() => expect(configureSpy).toHaveBeenCalledTimes(1));
+    expect(sentPayload().profileUpdates.nonRaceGoal).toBeNull();
+    expect(sentPayload().programState.runDays).toEqual([]);
+  });
+
+  it("blocks an incomplete starting point, retains it as a draft and saves the confirmed plan", async () => {
+    const profile = {
+      ...baseProfile,
+      uid: "baseline-owner",
+      runMode: "race_prep",
+      raceGoal: { distance: "10k", targetDate: "2027-01-01" },
+    } as UserProfile;
+    const first = renderPage(profile);
+    fireEvent.click(screen.getByRole("button", { name: "Add starting point" }));
+    fireEvent.change(screen.getByLabelText("Recent minutes per week"), {
+      target: { value: "90" },
+    });
+    fireEvent.click(
+      screen.getByRole("button", { name: "Check running details" })
+    );
+    expect(configureSpy).not.toHaveBeenCalled();
+    first.unmount();
+    renderPage(profile);
+    expect(screen.getByLabelText("Recent minutes per week")).toHaveValue(90);
+    fireEvent.change(screen.getByLabelText("Longest recent run, min"), {
+      target: { value: "30" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /Save .*plan/ }));
+    await waitFor(() => expect(configureSpy).toHaveBeenCalledTimes(1));
+    expect(sentPayload().profileUpdates.runningBaseline).toMatchObject({
+      experience: "building",
+      weeklyMinutes: 90,
+      longestRunMinutes: 30,
+      confirmedAt: localDateString(),
+    });
+  });
+
+  it("clears the stored starting point through the atomic plan save", async () => {
+    renderPage({
+      ...baseProfile,
+      uid: "clear-owner",
+      runMode: "race_prep",
+      raceGoal: { distance: "10k", targetDate: "2027-01-01" },
+      runningBaseline: {
+        version: 1,
+        experience: "building",
+        weeklyMinutes: 90,
+        longestRunMinutes: 30,
+        confirmedAt: localDateString(),
+        source: "self_reported",
+      },
+    } as UserProfile);
+    fireEvent.click(
+      screen.getByRole("button", { name: "Remove starting point" })
+    );
+    fireEvent.click(screen.getByRole("button", { name: /Save .*plan/ }));
+    await waitFor(() => expect(configureSpy).toHaveBeenCalledTimes(1));
+    expect(sentPayload().profileUpdates.runningBaseline).toBeNull();
+  });
+
   it("shows only run controls — no lift/nutrition/equipment fields", () => {
     renderPage(baseProfile);
     expect(screen.getByText("Run mode")).toBeInTheDocument();

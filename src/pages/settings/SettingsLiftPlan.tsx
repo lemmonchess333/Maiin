@@ -1,3 +1,4 @@
+import LiftTimeBudgetSettings from "@/components/program/LiftTimeBudgetSettings";
 /**
  * SettingsLiftPlan — the dedicated lift-plan editing screen (Section-Split,
  * 2026-07). The lifting counterpart to SettingsRunPlan.
@@ -95,6 +96,12 @@ export default function SettingsLiftPlan() {
               ? programState.trainingBlock.focus
               : undefined
           }
+        />
+        <LiftTimeBudgetSettings
+          key={profile.uid}
+          profile={profile}
+          workouts={programState?.workouts ?? []}
+          updateProfile={updateProfile}
         />
       </SettingsSection>
 

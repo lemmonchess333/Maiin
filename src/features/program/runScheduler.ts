@@ -1,3 +1,7 @@
+import {
+  fitWeekToRunningBaseline,
+  type RunningBaseline,
+} from "@/features/program/runningBaseline";
 /* ─────────────────────────────────────────────
    Run Day Scheduler
    Auto-distributes run types across the week,
@@ -1042,6 +1046,7 @@ export function scheduleRecoveryWeekV2(input: {
 }
 
 export interface RacePlanV2Input {
+  runningBaseline?: RunningBaseline | null;
   runTimeLimits?: RunTimeLimits | null;
   weekSchedule: ScheduleDay[];
   raceGoal: {
@@ -1616,25 +1621,28 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
   const bothDays = new Set(
     input.weekSchedule.filter((d) => d.type === "both").map((d) => d.day)
   );
-  const flaggedWeeks = weeks.map((week) =>
-    week.map((original) => {
-      const fitted = fitRunToTimeLimit(
-        original,
-        input.runTimeLimits,
-        input.easyPaceSPerKm
-      );
+  const flaggedWeeks = weeks.map((week) => {
+    const limited = week.map((row) =>
+      fitRunToTimeLimit(row, input.runTimeLimits, input.easyPaceSPerKm)
+    );
+    const fitted = fitWeekToRunningBaseline(
+      limited,
+      input.runningBaseline,
+      week[0]?.weekKey && week[0].weekKey > input.currentDate
+        ? week[0].weekKey
+        : input.currentDate,
+      input.easyPaceSPerKm
+    );
+    return fitted.map((row, index) => {
       const rd =
-        fitted === original
-          ? original
-          : {
-              ...fitted,
-              id: generateScheduledRunId(fitted, fitted.weekKey!),
-            };
+        row === week[index]
+          ? row
+          : { ...row, id: generateScheduledRunId(row, row.weekKey!) };
       return HARD_RUN_TYPES.has(rd.type) && bothDays.has(rd.dayIndex)
         ? { ...rd, clashesWithLift: true }
         : rd;
-    })
-  );
+    });
+  });
 
   return { totalWeeks, compressed, belowFloor, weeks: flaggedWeeks };
 }
