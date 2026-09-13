@@ -1600,16 +1600,6 @@ function moveRunDay(state, profile, command) {
   if (target.dayIndex === command.targetDayIndex) {
     return state; // no-op: already there
   }
-  // Integrity: never double-book a day. Two runs sharing a dayIndex corrupts
-  // the week, and the UI's own block on occupied days is not a guarantee.
-  if (
-    state.runDays.some(
-      (rd, i) => i !== idx && rd && rd.dayIndex === command.targetDayIndex
-    )
-  ) {
-    failedPrecondition("There is already a run on that day.");
-  }
-
   const patch = computeRunMove(
     target,
     command.targetDayIndex,
@@ -1617,6 +1607,14 @@ function moveRunDay(state, profile, command) {
   );
   if (!patch) {
     failedPrecondition("That day isn't part of this run's week.");
+  }
+  // Occupancy is a date claim. Carried rows from another week can share a
+  // weekday without occupying the requested destination.
+  if (state.runDays.some((rd, i) => i !== idx && rd && (
+    rd.date ? rd.date === patch.date :
+      (!rd.weekKey || rd.weekKey === target.weekKey) && rd.dayIndex === command.targetDayIndex
+  ))) {
+    failedPrecondition("There is already a run on that day.");
   }
 
   return mapRunDay(state, idx, (rd) => {
@@ -1975,6 +1973,12 @@ function revertEaseWeekCommand(state, command) {
 
 function logExercise(state, command, now) {
   const day = requireWorkoutDay(state, command);
+  // Older clients can replay per-set commands after the final save arrived.
+  // The saved workout now owns progression; only its revisioned correction
+  // path may replace that result.
+  if (day.completed && day.completedWorkoutId) {
+    failedPrecondition("This workout is saved. Correct it from History.");
+  }
   const idx = day.exercises.findIndex(
     (ex) => ex && ex.instanceId === command.exerciseInstanceId
   );

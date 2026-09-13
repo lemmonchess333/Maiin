@@ -1,3 +1,9 @@
+import {
+  normalizeRunTimeLimits,
+  type RunTimeLimits,
+} from "@/features/program/runTimeLimits";
+import { planningEasyPaceSPerKm } from "@/lib/runPaces";
+import RunAvailabilitySettings from "@/components/run/RunAvailabilitySettings";
 /**
  * RunPlanSettings — the focused, run-ONLY plan editor (Run-Split, 2026-07).
  *
@@ -119,6 +125,7 @@ function parseRaceDeepLink(params: URLSearchParams): RaceDeepLink | null {
 }
 
 interface RunPlanSettingsProps {
+  recentLayoff?: import("@/features/program/layoffDetection").LayoffClass;
   profile: UserProfile;
   /** Current programme state — threaded so buildPlan can preserve the
    *  lift prescription (`preserveHistory: true`) through a run-only save. */
@@ -149,6 +156,7 @@ const MODE_OPTIONS: { id: RunMode; label: string; desc: string }[] = [
 ];
 
 export default function RunPlanSettings({
+  recentLayoff = "none",
   profile,
   programState,
   refreshProfile,
@@ -169,6 +177,7 @@ export default function RunPlanSettings({
       // Pgm6 knobs — missing → standard (same lazy default the engine uses).
       runVolume: runTuningFromProfile(profile).volume,
       runDifficulty: runTuningFromProfile(profile).difficulty,
+      runTimeLimits: normalizeRunTimeLimits(profile.runTimeLimits),
     }),
     [profile]
   );
@@ -229,6 +238,9 @@ export default function RunPlanSettings({
   const [runDifficulty, setRunDifficulty] = useState<RunDifficultyPreset>(
     storedDraft?.runDifficulty ?? saved.runDifficulty
   );
+  const [runTimeLimits, setRunTimeLimits] = useState<RunTimeLimits>(
+    storedDraft?.runTimeLimits ?? saved.runTimeLimits
+  );
   const [saving, setSaving] = useState(false);
   /* Anchors for the "bring the invalid field into view" behaviour below.
      The date input lives inside RaceGoalPlanner, so the section wrapper
@@ -249,6 +261,11 @@ export default function RunPlanSettings({
         weeklyRunDays,
         // Pgm6: preview with the same knobs the save will commit.
         tuning: { volume: runVolume, difficulty: runDifficulty },
+        runTimeLimits,
+        easyPaceSPerKm: planningEasyPaceSPerKm(profile.runFitness),
+        existingState: programState,
+        recentLayoff,
+        weekSchedule: profile.weekSchedule,
       }),
     [
       raceDistance,
@@ -258,6 +275,11 @@ export default function RunPlanSettings({
       weeklyRunDays,
       runVolume,
       runDifficulty,
+      runTimeLimits,
+      profile.runFitness,
+      programState,
+      recentLayoff,
+      profile.weekSchedule,
     ]
   );
 
@@ -274,7 +296,9 @@ export default function RunPlanSettings({
         raceEventSpaceId !== saved.raceEventSpaceId ||
         weeklyRunDays !== saved.weeklyRunDays ||
         runVolume !== saved.runVolume ||
-        runDifficulty !== saved.runDifficulty));
+        runDifficulty !== saved.runDifficulty ||
+        runTimeLimits.sessionMinutes !== saved.runTimeLimits.sessionMinutes ||
+        runTimeLimits.longRunMinutes !== saved.runTimeLimits.longRunMinutes));
 
   /* Persist the draft on every change, so leaving the page keeps it.
      Keyed off `dirty` in BOTH directions: a draft that matches the saved
@@ -292,6 +316,7 @@ export default function RunPlanSettings({
         raceEventSpaceId,
         runVolume,
         runDifficulty,
+        runTimeLimits,
       });
     } else {
       clearRunPlanDraft(profile.uid);
@@ -308,6 +333,7 @@ export default function RunPlanSettings({
     raceEventSpaceId,
     runVolume,
     runDifficulty,
+    runTimeLimits,
   ]);
 
   // Door 2 (races plan amendment): the same catalogue the directory
@@ -364,8 +390,11 @@ export default function RunPlanSettings({
         runMode,
         weeklyRunDays,
         runTuning: { volume: runVolume, difficulty: runDifficulty },
+        recentLayoff,
+        weekSchedule: profile.weekSchedule,
         // Run17: the long-run ceiling is measured at the confirmed easy pace.
         runFitness: profile.runFitness ?? null,
+        runTimeLimits,
         ...(runMode === "race_prep"
           ? {
               raceGoal: {
@@ -406,6 +435,19 @@ export default function RunPlanSettings({
       // path could land the goal and lose the plan.
       const configurePlanCallable = httpsCallable(functions, "configurePlan");
       await configurePlanCallable({
+        baseProgramState: programState ?? null,
+        baseProfile: Object.fromEntries(
+          Object.keys(plan.profileUpdates)
+            .filter(
+              (key) =>
+                (profile as unknown as Record<string, unknown>)[key] !==
+                undefined
+            )
+            .map((key) => [
+              key,
+              (profile as unknown as Record<string, unknown>)[key],
+            ])
+        ),
         profileUpdates: plan.profileUpdates,
         programState: plan.programState,
         weekSchedule: plan.weekSchedule,
@@ -424,9 +466,21 @@ export default function RunPlanSettings({
       );
     } catch (e) {
       logger.error("[RunPlanSettings] save failed", e);
-      toast.error("Couldn't save your run plan. Try again.", {
-        id: "run-plan",
-      });
+      const conflict = (e as { code?: string })?.code?.endsWith(
+        "failed-precondition"
+      );
+      if (conflict)
+        await refreshProfile().catch((error) =>
+          logger.warn("Plan refresh failed", error)
+        );
+      toast.error(
+        conflict
+          ? "Your programme changed. Reopen settings to review the latest plan before saving."
+          : "Couldn't save your run plan. Try again.",
+        {
+          id: "run-plan",
+        }
+      );
     } finally {
       setSaving(false);
     }
@@ -640,6 +694,15 @@ export default function RunPlanSettings({
             </button>
           </div>
         </div>
+      )}
+
+      {runMode === "race_prep" && (
+        <RunAvailabilitySettings
+          value={runTimeLimits}
+          onChange={setRunTimeLimits}
+          preview={plannerState}
+          hasConfirmedPace={planningEasyPaceSPerKm(profile.runFitness) !== null}
+        />
       )}
 
       {/* ── Pgm6 tuning knobs (race prep only — they shape the periodised

@@ -194,6 +194,20 @@ suite("configurePlan — emulator integration", () => {
     await clearTestUserState();
   });
 
+  it("stores recurring availability with its plan and clears it explicitly", async () => {
+    const user = db.collection("users").doc(TEST_UID);
+    await user.set({ ...validProfileUpdates(), runTimeLimits: { sessionMinutes: 90, longRunMinutes: 120 } });
+    const programState = validProgramState();
+    programState.runDays = [{ id: "time-fit", dayIndex: 0, date: "2026-09-13", weekKey: "2026-09-07", templateId: "long_8k", type: "long", status: "planned", timeLimit: { minutes: 45, originalTemplateId: "long_12k" } }];
+    const limits = { sessionMinutes: 30, longRunMinutes: 45 };
+    await configurePlan.run({ profileUpdates: { ...validProfileUpdates(), runTimeLimits: limits }, programState, weekSchedule: validWeekSchedule() }, { auth: { uid: TEST_UID } });
+    expect((await user.get()).data().runTimeLimits).toEqual(limits);
+    expect((await user.collection("programState").doc("current").get()).data().runDays[0].timeLimit).toEqual({ minutes: 45, originalTemplateId: "long_12k" });
+    await db.collection("rateLimits").doc(`${TEST_UID}_configurePlan`).delete();
+    await configurePlan.run({ profileUpdates: { ...validProfileUpdates(), runTimeLimits: null }, programState, weekSchedule: validWeekSchedule() }, { auth: { uid: TEST_UID } });
+    expect((await user.get()).data().runTimeLimits).toBeNull();
+  });
+
   it("rejects payload missing programSchemaVersion (invalid-argument)", async () => {
     const ps = validProgramState();
     delete ps.programSchemaVersion;
@@ -405,5 +419,88 @@ suite("completeOnboarding — emulator integration", () => {
       .doc("current")
       .get();
     expect(psDoc.exists).toBe(false);
+  });
+});
+
+suite("configurePlan — concurrent edits", () => {
+  beforeEach(clearTestUserState);
+  it("preserves a newer completion and unrelated profile fields", async () => {
+    const base = validProgramState();
+    const baseProfile = validProfileUpdates();
+    const current = {
+      ...base,
+      fatigueScore: 15,
+      workouts: [
+        {
+          dayName: "Push",
+          dayType: "push",
+          completed: true,
+          completedWorkoutId: "saved",
+          exercises: [],
+        },
+      ],
+    };
+    const user = db.doc(`users/${TEST_UID}`);
+    const program = user.collection("programState").doc("current");
+    await user.set({ ...baseProfile, displayName: "Latest name" });
+    await program.set(current);
+    await configurePlan.run(
+      {
+        baseProgramState: base,
+        baseProfile,
+        profileUpdates: baseProfile,
+        weekSchedule: validWeekSchedule(),
+        programState: {
+          ...base,
+          settings: { autoProgression: false, microloading: true },
+        },
+      },
+      { auth: { uid: TEST_UID } }
+    );
+    expect((await program.get()).data()).toMatchObject({
+      workouts: current.workouts,
+      fatigueScore: 15,
+      settings: { autoProgression: false, microloading: true },
+    });
+    expect((await user.get()).data().displayName).toBe("Latest name");
+  });
+
+  it("rejects a conflicting rebuild without applying its profile half", async () => {
+    const base = validProgramState();
+    const baseProfile = validProfileUpdates();
+    const user = db.doc(`users/${TEST_UID}`);
+    const program = user.collection("programState").doc("current");
+    const current = {
+      ...base,
+      workouts: [
+        { dayName: "Push", dayType: "push", completed: true, exercises: [] },
+      ],
+    };
+    await user.set(baseProfile);
+    await program.set(current);
+    await expect(
+      configurePlan.run(
+        {
+          baseProgramState: base,
+          baseProfile,
+          profileUpdates: { ...baseProfile, primaryGoal: "strength" },
+          weekSchedule: validWeekSchedule(),
+          programState: {
+            ...base,
+            workouts: [
+              {
+                dayName: "New plan",
+                dayType: "push",
+                completed: false,
+                exercises: [],
+              },
+            ],
+          },
+        },
+        { auth: { uid: TEST_UID } }
+      )
+    ).rejects.toMatchObject({ code: "failed-precondition" });
+    expect((await program.get()).data()).toEqual(current);
+    expect((await user.get()).data()).toEqual(baseProfile);
   });
 });

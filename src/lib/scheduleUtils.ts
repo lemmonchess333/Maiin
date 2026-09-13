@@ -278,6 +278,23 @@ export function isValidWeekSchedule(
   return seenDays.size === 7;
 }
 
+/** Keep chosen weekdays when the requested weekly counts have not changed. */
+export function planWeekSchedule(
+  liftDays: number,
+  runDays: number,
+  existing?: ScheduleDay[]
+): ScheduleDay[] {
+  if (
+    isValidWeekSchedule(existing) &&
+    existing.filter((day) => day.type === "lift" || day.type === "both")
+      .length === liftDays &&
+    existing.filter((day) => day.type === "run" || day.type === "both")
+      .length === runDays
+  )
+    return existing;
+  return generateSchedule(liftDays, runDays);
+}
+
 /**
  * Count active days by type.
  *

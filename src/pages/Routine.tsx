@@ -1,8 +1,9 @@
+import type { SessionPrescription } from "@/features/program/sessionCompletion";
+import { commitWorkoutCompletion } from "@/lib/workoutCompletion";
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { format } from "date-fns";
-import { doc, Timestamp } from "firebase/firestore";
-import { setDocGuarded } from "@/lib/firestoreWrite";
+import { Timestamp } from "firebase/firestore";
 import {
   hasQueuedWorkoutCompletion,
   queueWorkoutCompletion,
@@ -89,15 +90,12 @@ export default function Routine() {
      don't participate in progression tracking, so per-set logs are
      a workout-doc concern only and are captured at completion time
      from sessionData. */
-  const handleLogExercise = useCallback(async () => {
-    /* intentional no-op */
-  }, []);
-
   const handleCompleteRoutine = useCallback(
     async (
       _dayIndex: number,
       sessionData: {
         completionId: string;
+        prescription?: SessionPrescription;
         durationMinutes: number;
         /** Lift3 — the doc is dated by when the session started. */
         startedAt?: number;
@@ -136,9 +134,10 @@ export default function Routine() {
       );
       // Deterministic id — a retried/resumed Finish overwrites the same doc.
       const workoutId = `routine-${sessionData.completionId}`;
-      const workoutRef = doc(db, "users", user.uid, "workouts", workoutId);
 
-      const exercises = synthDay.exercises.map((ex, exIndex) => {
+      const exercises = (
+        sessionData.prescription?.exercises ?? synthDay.exercises
+      ).map((ex, exIndex) => {
         const logs = sessionData?.setLogs?.[exIndex];
         // D2: the same shared projection the programme path uses. These two
         // were independent copies of identical logic, which is exactly the
@@ -204,6 +203,7 @@ export default function Routine() {
         date: today,
         exercises,
         totalCalories,
+        burnContext: { bodyweightKg: profile?.weightKg ?? 0 },
         durationMinutes: effectiveDurationMin,
         /* Same omission as the programme path: every server consumer of
              a workout doc reads `totalVolume`, and it was only ever
@@ -218,7 +218,7 @@ export default function Routine() {
       };
       try {
         if (!queued) {
-          await setDocGuarded(workoutRef, workoutData);
+          await commitWorkoutCompletion(db, user.uid, workoutId, workoutData);
           sync = Promise.resolve("synced");
         } else {
           sync = queueWorkoutCompletion(db, user.uid, workoutId, workoutData);
@@ -359,7 +359,6 @@ export default function Routine() {
       day={synthDay}
       dayIndex={ROUTINE_DAY_INDEX}
       draftScope={`routine:${routineId ?? "unknown"}`}
-      onLogExercise={handleLogExercise}
       onCompleteDay={handleCompleteRoutine}
       onClose={() => navigate("/program")}
     />

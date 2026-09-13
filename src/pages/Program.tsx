@@ -1,3 +1,4 @@
+import { workoutCompletionDayIdentity } from "@/lib/workoutCompletion";
 import { liftCompletionContext } from "@/lib/completionPlanContext";
 import ProgramStallReview from "@/components/program/ProgramStallReview";
 import { useState, useMemo, useRef, useEffect, useCallback } from "react";
@@ -136,7 +137,6 @@ function ProgramInner() {
     skipWorkoutDay,
     setNextWorkout,
     advanceToNextWeek,
-    logExercise,
     regenerateProgram,
     reorderDayExercises,
     removeExerciseFromDay,
@@ -1927,56 +1927,14 @@ function ProgramInner() {
                   ? (plan.variant as Exclude<SessionVariant, "full">)
                   : undefined
               }
-              onLogExercise={
-                sessionVariant === "easier_today"
-                  ? // An easier session NEVER touches the stored
-                    // programme: no progression, no lastAttempted /
-                    // lastPerformance updates, no plateau counting.
-                    // (logExercise writes programme state even with
-                    // autoProgression off, so it is skipped entirely —
-                    // the plan the user returns to is exactly the plan
-                    // they left, and a lighter day can't feed future
-                    // load decisions.)
-                    async () => {}
-                  : plan
-                    ? (di, exIdx, reps, weight, rpe, session) =>
-                        logExercise(
-                          di,
-                          plan.sourceIndexes[exIdx] ?? exIdx,
-                          reps,
-                          weight,
-                          rpe,
-                          session
-                        )
-                    : logExercise
-              }
-              onCompleteDay={
-                plan
-                  ? (di, sd) => {
-                      // Re-expand trimmed setLogs to stored-day
-                      // positions. Dropped exercises get [] (recorded
-                      // as zero completed sets — same as an exercise
-                      // the user skipped mid-session), NEVER undefined
-                      // (undefined falls back to planned all-completed
-                      // data, which would fake work never done).
-                      const aligned = storedDay.exercises.map(
-                        () =>
-                          [] as {
-                            weight: number;
-                            reps: number;
-                            completed: boolean;
-                          }[]
-                      );
-                      plan.sourceIndexes.forEach((srcIdx, i) => {
-                        aligned[srcIdx] = sd.setLogs[i] ?? [];
-                      });
-                      return completeWithViewToast(di, {
-                        ...sd,
-                        setLogs: aligned,
-                      });
-                    }
-                  : completeWithViewToast
-              }
+              progressionBaseline={storedDay.exercises}
+              programmeContext={{
+                weekNumber: programState.weekNumber,
+                dayIndex: sessionDayIndex,
+                dayIdentity: workoutCompletionDayIdentity(storedDay) ?? "",
+                trainingBlockId: programState.trainingBlock?.id,
+              }}
+              onCompleteDay={completeWithViewToast}
               onClose={() => {
                 setSessionDayIndex(null);
                 setSessionVariant("full");

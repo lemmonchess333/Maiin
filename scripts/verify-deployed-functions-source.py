@@ -17,8 +17,17 @@ def verify():
         ["gcloud", "auth", "print-access-token"], text=True
     ).strip()
     root = pathlib.Path(__file__).resolve().parent.parent / "functions"
-    paths = ["index.js", "package-lock.json", "lib/publicPhotoUrl.js", "lib/socialCounters.js", "lib/spacePostEngagement.js"]
-    for name in ["addCommentCallable", "addSpacePostCommentCallable"]:
+    comment_paths = ["index.js", "package-lock.json", "lib/publicPhotoUrl.js", "lib/socialCounters.js", "lib/spacePostEngagement.js"]
+    training_paths = ["index.js", "package-lock.json", "lib/stateTransition.js", "lib/workoutCorrections.js", "lib/programCommands.js"]
+    targets = {
+        "addCommentCallable": comment_paths,
+        "addSpacePostCommentCallable": comment_paths,
+        "configurePlan": training_paths,
+        "applyProgramCommand": training_paths,
+        "onWorkoutCreated": training_paths,
+        "onWorkoutUpdated": training_paths,
+    }
+    for name, paths in targets.items():
         endpoint = (
             "https://cloudfunctions.googleapis.com/v1/projects/"
             f"adaptive-fitness-af8bb/locations/us-central1/functions/{name}"

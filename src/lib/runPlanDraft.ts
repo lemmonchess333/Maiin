@@ -1,3 +1,7 @@
+import {
+  isRunTimeLimits,
+  type RunTimeLimits,
+} from "@/features/program/runTimeLimits";
 /**
  * Run-plan draft persistence.
  *
@@ -79,6 +83,8 @@ export interface RunPlanDraft {
   raceEventSpaceId: string;
   runVolume: RunVolumePreset;
   runDifficulty: RunDifficultyPreset;
+  /** Additive in v1: older drafts retain their saved availability. */
+  runTimeLimits?: RunTimeLimits;
 }
 
 interface Envelope extends RunPlanDraft {
@@ -150,6 +156,7 @@ export function loadRunPlanDraft(uid: string): RunPlanDraft | null {
   }
 
   if (
+    (e.runTimeLimits !== undefined && !isRunTimeLimits(e.runTimeLimits)) ||
     !isOneOf(RUN_MODES, e.runMode) ||
     !isOneOf(VALID_RACE_DISTANCE, e.raceDistance) ||
     !isOneOf(VOLUMES, e.runVolume) ||
@@ -178,5 +185,8 @@ export function loadRunPlanDraft(uid: string): RunPlanDraft | null {
     raceEventSpaceId: e.raceEventSpaceId,
     runVolume: e.runVolume,
     runDifficulty: e.runDifficulty,
+    ...(e.runTimeLimits === undefined
+      ? {}
+      : { runTimeLimits: e.runTimeLimits }),
   };
 }

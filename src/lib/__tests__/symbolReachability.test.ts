@@ -204,9 +204,7 @@ const KNOWN_ORPHAN_EXPORTS = [
   "src/lib/backDismiss.ts:useBackDismissController",
 
   "src/features/partnerStreak/streakEngine.ts:partnerToNudge",
-  "src/features/program/raceRunDaysReconcile.ts:areRaceRunDaysStale",
   "src/features/program/raceRunDaysReconcile.ts:honestRaceWeekIndex",
-  "src/features/program/raceRunDaysReconcile.ts:raceIsInFuture",
   "src/features/program/raceRunDaysReconcile.ts:raceMinWeeks",
   "src/features/program/run9Migration.ts:migrateRunStateToRun9",
   "src/features/spaces/spaceDefs.ts:upcomingRaceSpaceDefs",

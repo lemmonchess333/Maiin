@@ -35,6 +35,11 @@ const accountDeletionAuth = require("./lib/accountDeletionAuth");
 const accountDeletionLocks = require("./lib/accountDeletionLocks");
 // Packet 18 — programState command boundary (applyProgramCommand callable).
 const programCommands = require("./lib/programCommands");
+const { reconcileWorkoutMetrics } = require("./lib/workoutCorrections");
+const {
+  mergeChangedFields,
+  ProgrammeConflictError,
+} = require("./lib/stateTransition");
 const {
   runProgramCommandTransaction,
 } = require("./lib/programCommandTransaction");
@@ -965,10 +970,66 @@ exports.configurePlan = functions
       // Atomic — same rationale as completeOnboarding above. The
       // profile patch and programState rebuild commit together or
       // not at all.
-      const batch = db.batch();
-      batch.set(userRef, profileUpdates, { merge: true });
-      batch.set(programRef, cfgProgram.value);
-      await batch.commit();
+      if (Object.prototype.hasOwnProperty.call(data, "baseProgramState")) {
+        const base = data.baseProgramState;
+        if (
+          (base !== null &&
+            (!base ||
+              typeof base !== "object" ||
+              Array.isArray(base) ||
+              programStateTooLarge(base))) ||
+          !data.baseProfile ||
+          typeof data.baseProfile !== "object" ||
+          Array.isArray(data.baseProfile)
+        ) {
+          throw new functions.https.HttpsError(
+            "invalid-argument",
+            "A valid plan baseline is required."
+          );
+        }
+        try {
+          await db.runTransaction(async (transaction) => {
+            const [currentPlan, currentProfile] = await Promise.all([
+              transaction.get(programRef),
+              transaction.get(userRef),
+            ]);
+            if (!!base !== currentPlan.exists)
+              throw new ProgrammeConflictError();
+            const next = base
+              ? mergeChangedFields(base, cfgProgram.value, currentPlan.data())
+              : cfgProgram.value;
+            const before = Object.fromEntries(
+              Object.keys(profileUpdates).map((key) => [
+                key,
+                data.baseProfile[key],
+              ])
+            );
+            const merged = mergeChangedFields(
+              before,
+              profileUpdates,
+              currentProfile.data() || {}
+            );
+            const patch = Object.fromEntries(
+              Object.keys(profileUpdates).map((key) => [key, merged[key]])
+            );
+            transaction.set(userRef, patch, { merge: true });
+            transaction.set(programRef, { ...next, updatedAt: Date.now() });
+          });
+        } catch (error) {
+          if (error instanceof ProgrammeConflictError)
+            throw new functions.https.HttpsError(
+              "failed-precondition",
+              error.message
+            );
+          throw error;
+        }
+      } else {
+        // Compatibility for installed clients preceding the baseline contract.
+        const batch = db.batch();
+        batch.set(userRef, profileUpdates, { merge: true });
+        batch.set(programRef, cfgProgram.value);
+        await batch.commit();
+      }
 
       return { success: true };
     } catch (err) {
@@ -4756,6 +4817,10 @@ exports.onWorkoutCreated = functions
         lifetimeAccrual.liftVolumeKgFor(data),
         workoutId
       );
+      // A correction may have landed before this create event credited its
+      // original snapshot. Repair those ledgers using the current workout.
+      if ((await snap.ref.get()).data()?.revision > 0)
+        await reconcileWorkoutMetrics(db, uid, workoutId);
 
       // SOCIAL S3 (Soc7) — advance partner-streak bonds. BEFORE the
       // rolling-window / cooldown early-returns below so a workout always
@@ -4993,6 +5058,38 @@ exports.onRunCreated = functions
         stack: err.stack,
       });
     }
+    return null;
+  });
+
+// Saved-workout corrections reconcile current source facts, including retries.
+exports.onWorkoutUpdated = functions
+  .runWith({ ...TRIGGER_CAP, failurePolicy: true })
+  .firestore.document("users/{uid}/workouts/{workoutId}")
+  .onUpdate(async (change, context) => {
+    const before = change.before.data() || {};
+    const after = change.after.data() || {};
+    if (
+      !(after.revision > 0) ||
+      (before.revision === after.revision &&
+        before.sharedActivityId === after.sharedActivityId)
+    )
+      return null;
+    const { uid, workoutId } = context.params;
+    if (
+      !(await accountDeletionLocks.shouldSystemWriteProceed(
+        db,
+        uid,
+        "onWorkoutUpdated"
+      ))
+    )
+      return null;
+    await reconcileWorkoutMetrics(db, uid, workoutId);
+    const current = await change.after.ref.get();
+    if (!current.exists) return null;
+    // Older corrections can change the 28-day baseline as well as the current window.
+    const todayKey = getWeekKey(new Date());
+    const key = triggerComputeKey(current.data().date, todayKey) ?? todayKey;
+    await computeAndWritePerformanceForUser(uid, key);
     return null;
   });
 
