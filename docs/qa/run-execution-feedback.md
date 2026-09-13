@@ -95,3 +95,10 @@ Functions dependencies so this test cannot silently turn into a mocked reducer.
   suites passed in the final full run. Two failures introduced during this work
   (an unsupported soft-delete condition and missing image settling in the new
   capture) were corrected before that final run.
+- The first PR CI run on the #2289 combined tree passed all 9,086 active unit
+  tests in one run, plus build, lint, audit, bundle-size and emulator gates.
+  The new capture passed on retry after its first attempt expected the sheet
+  to close within five seconds of clicking Apply. The capture now explicitly
+  waits for the matching Apply/Undo command response before checking the UI
+  and persisted state. UI assertion timeouts and state assertions are retained;
+  subsequent CI results are recorded on the PR.

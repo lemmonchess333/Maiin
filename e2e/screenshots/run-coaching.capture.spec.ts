@@ -179,9 +179,20 @@ test("running feedback follows edits and opens a reversible easier-week preview"
   expect(
     (await db.doc(`users/${uid}/programState/current`).get()).data().runDays
   ).toEqual(before.runDays);
-  await sheet
-    .getByRole("button", { name: "Ease this week", exact: true })
-    .click();
+  // Server work has its own bounded wait; the normal UI assertions below
+  // start after the matching command response, not while it is in flight.
+  const waitForCommand = (kind: string) =>
+    page.waitForResponse(
+      (response) =>
+        response.url().endsWith("/applyProgramCommand") &&
+        response.request().method() === "POST" &&
+        response.request().postDataJSON().data.kind === kind
+    );
+  const [applied] = await Promise.all([
+    waitForCommand("applyEaseWeek"),
+    sheet.getByRole("button", { name: "Ease this week", exact: true }).click(),
+  ]);
+  expect(applied.ok()).toBe(true);
   await expect(sheet).toHaveCount(0);
   await expect(review).toHaveCount(0);
   await expect
@@ -192,9 +203,13 @@ test("running feedback follows edits and opens a reversible easier-week preview"
     )
     .toBe("easy_30");
   await page.getByRole("button", { name: /Adjust this week/ }).click();
-  await sheet
-    .getByRole("button", { name: "Undo easier week", exact: true })
-    .click();
+  const [undone] = await Promise.all([
+    waitForCommand("revertEaseWeek"),
+    sheet
+      .getByRole("button", { name: "Undo easier week", exact: true })
+      .click(),
+  ]);
+  expect(undone.ok()).toBe(true);
   await expect
     .poll(
       async () =>
