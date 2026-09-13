@@ -137,6 +137,39 @@ describe("ProgressPhotos — private-only contract (BODY-VAULT-00)", () => {
     expect(screen.queryByRole("checkbox")).toBeNull();
   });
 
+  it("an empty vault offers ONE check-in action — the empty state's — and the header's returns with the list", async () => {
+    // Two buttons for one act on one screen read as two different
+    // things. The header "+ Check-in" is for a vault with rows to sit
+    // above; until then the empty state carries the action.
+    const { unmount } = render(<ProgressPhotos />);
+    expect(screen.getByText(/track your transformation/i)).toBeInTheDocument();
+    const actions = screen.getAllByRole("button", { name: /check-in/i });
+    expect(actions).toHaveLength(1);
+    expect(actions[0]).toHaveTextContent("+ First check-in");
+    expect(
+      screen.queryByRole("button", { name: "New progress check-in" })
+    ).toBeNull();
+    unmount();
+
+    seedFirestore({
+      [`${VAULT}/p1`]: {
+        storagePath: "progress-photos/u-self/1.enc",
+        iv: [1, 2, 3],
+        date: "2026-07-01",
+        visibility: "private",
+        createdAt: 1,
+      },
+    });
+    render(<ProgressPhotos />);
+    await waitFor(() =>
+      expect(screen.queryByText(/track your transformation/i)).toBeNull()
+    );
+    expect(
+      screen.getByRole("button", { name: "New progress check-in" })
+    ).toBeInTheDocument();
+    expect(screen.queryByText("+ First check-in")).toBeNull();
+  });
+
   it("records every upload as private and never writes 'public' (source pin)", () => {
     // The upload path needs createImageBitmap + canvas + crypto.subtle,
     // none of which jsdom provides — so the write contract is pinned at
