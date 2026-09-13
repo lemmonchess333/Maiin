@@ -1647,11 +1647,11 @@ service cloud.firestore {
     }
 
     match /trialLedger/{uid} {
-      // Durable trial-eligibility tombstone (money-path audit F1). Written by
-      // completeOnboarding (Admin SDK) the first time a uid is granted the
-      // 7-day trial, and intentionally RETAINED past account deletion so the
-      // trial cannot be re-farmed by self-deleting users/{uid} and re-onboarding.
-      // No PII (uid + timestamps only). Clients have no legitimate read/write.
+      // Legacy trial-eligibility tombstones from when completeOnboarding
+      // granted a free 7-day trial on account creation. Nothing writes here
+      // now (the only trial is the card trial at checkout — Sub1a pin 3);
+      // the markers that exist are retained past account deletion. No PII
+      // (uid + timestamps only). Clients have no legitimate read/write.
       allow read, write: if false;
     }
 

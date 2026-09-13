@@ -15,11 +15,13 @@ import { logger } from "@/lib/logger";
  * while the features are still on, rather than discover the lapse at
  * the camera. Cal AI and Runna both promise one on the paywall.
  *
- * Which trial: THIS one — the app-granted trial, no card, nothing is
- * charged when it ends. The billed checkout trial (`hasUsedTrial`,
- * Stripe `trialing` / the App Store intro offer) is a different thing
- * whose end the client cannot see, so it gets no reminder here and the
- * timeline on the offer page does not claim one.
+ * Which trial: the app-granted one — and, since the onboarding grant
+ * was removed (Sub1a pin 3 as written), a LEGACY one: this fires only
+ * for profiles that still carry a live `trialExpiresAt` from before.
+ * The trial new accounts get is the billed checkout trial
+ * (`hasUsedTrial`, Stripe `trialing` / the App Store intro offer),
+ * whose end the client cannot see yet; when the server records it on
+ * the profile, this hook is the place to read it from.
  *
  * Fires at 10:00 local on the calendar day two days before the expiry's
  * local day. Local methods throughout — the expiry is a UTC instant, and
