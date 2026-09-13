@@ -8,7 +8,7 @@
  * tiles render flips with the program's phase.
  */
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { renderHook } from "@testing-library/react";
+import { act, renderHook } from "@testing-library/react";
 
 import { useEffectiveTargets } from "../useEffectiveTargets";
 import type { AdaptiveTdeeView } from "@/lib/adaptiveTarget";
@@ -309,4 +309,27 @@ describe("useEffectiveTargets — training label gating (free→Pro conversion h
     expect(t.taperActive).toBe(false); // but the calorie move is NOT applied
     expect(t.finalTarget).toBe(free.targetCalories); // flat, uncut
   });
+});
+
+it("advances today's day type on resume without reopening Food", async () => {
+  resetFirestore();
+  vi.useFakeTimers({ toFake: ["Date"] });
+  try {
+    const first = new Date(2026, 8, 14, 23, 59);
+    vi.setSystemTime(first);
+    h.profile = makeProfile({
+      weekSchedule: Array.from({ length: 7 }, (_, day) => ({
+        day,
+        type: day === first.getDay() ? "lift" : "rest",
+      })),
+    });
+    const { result, unmount } = renderHook(() => useEffectiveTargets());
+    expect(result.current.dayType).toBe("lift");
+    vi.setSystemTime(new Date(2026, 8, 15, 0, 1));
+    await act(async () => window.dispatchEvent(new Event("focus")));
+    expect(result.current.dayType).toBe("rest");
+    unmount();
+  } finally {
+    vi.useRealTimers();
+  }
 });

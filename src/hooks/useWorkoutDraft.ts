@@ -1,3 +1,5 @@
+import type { SessionPrescription } from "@/features/program/sessionCompletion";
+import type { ProgrammeCompletionContext } from "@/lib/workoutCompletion";
 import { useCallback } from "react";
 import {
   keysWithPrefix,
@@ -90,6 +92,8 @@ export interface WorkoutDraft {
   completionPending?: boolean;
   /** Preserve the original date when retrying a finished session later. */
   startedAt?: number;
+  prescription?: SessionPrescription;
+  programmeContext?: ProgrammeCompletionContext;
 }
 
 /**

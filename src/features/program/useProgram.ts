@@ -1,14 +1,17 @@
+import { commitProgramTransition } from "./programTransition";
+import { ProgrammeConflictError, sameStoredValue } from "./stateTransition";
+import { areRaceRunDaysStale, raceIsInFuture } from "./raceRunDaysReconcile";
+import {
+  commitWorkoutCompletion,
+  type ProgrammeCompletionContext,
+} from "@/lib/workoutCompletion";
+import {
+  applySessionProgression,
+  type SessionPrescription,
+} from "./sessionCompletion";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { captureError } from "@/lib/errorReporting";
-import {
-  doc,
-  getDoc,
-  getDocFromCache,
-  Timestamp,
-  deleteField,
-  writeBatch,
-} from "firebase/firestore";
-import { setDocGuarded } from "@/lib/firestoreWrite";
+import { doc, getDoc, getDocFromCache, Timestamp } from "firebase/firestore";
 import {
   hasQueuedWorkoutCompletion,
   queueWorkoutCompletion,
@@ -17,7 +20,7 @@ import {
 import { describeRejection, stripCallablePrefix } from "@/lib/callableErrors";
 import { stripUndefined } from "@/lib/firestoreGuards";
 import { auth, db } from "@/lib/firebase";
-import { useAuth } from "@/lib/auth";
+import { useAuth, type UserProfile } from "@/lib/auth";
 import { postActivity } from "@/lib/socialApi";
 import { needsEmailVerification } from "@/lib/emailVerificationGate";
 import { compose, enqueueShare, showQueuedToast } from "@/lib/shareComposer";
@@ -97,6 +100,8 @@ export interface CompletedSessionData {
    *  SAME `users/{uid}/workouts/programme-<completionId>` doc instead of
    *  appending a second log. Persisted in the draft (useWorkoutDraft). */
   completionId: string;
+  prescription?: SessionPrescription;
+  programmeContext?: ProgrammeCompletionContext;
   /** Stable idempotency key for packet 18's program-command receipt. Carried
    *  from the draft so a retried/replayed completeWorkoutDay dispatch reuses
    *  the same receipt id. Defaults to `completionId` for older drafts. */
@@ -342,6 +347,7 @@ function regenerateRacePlan({
 }
 
 interface RefreshRunScheduleOverrides {
+  profileUpdates?: Partial<UserProfile>;
   /** Confirmed week schedule from the editor's apply path —
    *  threaded explicitly so a freshly-`updateProfile`'d schedule
    *  doesn't get overwritten by a stale `profile.weekSchedule`
@@ -452,12 +458,6 @@ export function useProgram() {
       // the existing-doc branch below.
       const effectiveRunMode =
         profile.runMode === "structured" ? "freeform" : profile.runMode;
-      if (profile.runMode === "structured") {
-        logger.log("[Run9] migrating legacy structured user → freeform");
-        updateProfile({ runMode: "freeform" }).catch((e) =>
-          logger.warn("[Run9] structured→freeform migration write failed", e)
-        );
-      }
 
       const ref = doc(db, "users", user.uid, "programState", PROGRAM_DOC);
 
@@ -494,103 +494,101 @@ export function useProgram() {
 
       if (snap.exists()) {
         const raw = snap.data() as ProgramState;
-        // Pass profile.primaryGoal as the backfill source so pre-W1a
-        // programState docs — written before primaryGoal was persisted —
-        // still return a normalised state with the user's actual goal,
-        // not an empty field. Onboarding already stores primaryGoal on
-        // the profile, so the backfill is always available at read time.
-        const normalized = normalizeProgramState(raw, {
-          primaryGoal: profile.primaryGoal,
-        });
-
-        // PR-0b-i: shape-aware migration on read. Repairs V1-shaped
-        // runDays (missing id / date / weekKey / status) and aligns
-        // inconsistent completed↔status pairs. Idempotent — healthy
-        // V2 docs return the input reference, and the
-        // JSON.stringify guard below avoids writes when nothing
-        // changed. Migration NEVER regenerates workouts; any
-        // customizations the user made survive untouched.
-        const migrated = migrateProgramState(normalized, localWeekKey());
-
-        // Persist-if-changed guard. Avoids a Firestore write on every
-        // cold app open for users whose docs are already clean. The
-        // stringify comparison is safe here because the doc is plain
-        // JSON (no undefineds, functions, Symbols, or Dates that
-        // wouldn't survive serialisation). It's a write optimisation
-        // — the React state below uses `migrated` directly, so
-        // correctness doesn't depend on this guard firing.
-        if (JSON.stringify(migrated) !== JSON.stringify(raw)) {
-          // Defence-in-depth (issue #845): strip undefined fields
-          // before the write. normalizeProgramState was already
-          // fixed at the source, but any future field that lands
-          // in `migrated` as `undefined` would silently re-introduce
-          // the "Failed to load programme" loop. setDocGuarded strips
-          // undefined recursively (a no-op for already-clean docs).
-          await setDocGuarded(ref, migrated, { merge: true });
-        }
-
-        if (
-          profile.runMode === "structured" &&
-          ((migrated.runDays && migrated.runDays.length > 0) ||
-            migrated.runPlan)
-        ) {
-          // Run9 (3a): retire `structured`. Wipe the orphaned auto-assigned
-          // runDays + runPlan (the user is now freeform; runMode is being
-          // migrated above). deleteField removes the stale runPlan under a
-          // merge write; runDays:[] overwrites the structured days.
-          const localCleared = { ...migrated, runDays: [] } as ProgramState;
-          delete (localCleared as { runPlan?: unknown }).runPlan;
-          await setDocGuarded(
-            ref,
-            { runDays: [], runPlan: deleteField(), updatedAt: Date.now() },
-            { merge: true }
-          );
-          setProgramState(localCleared);
-        } else if (
-          // Hydrate run days only for an active race plan with no days yet.
-          // (Run9: `structured` no longer generates a week — only race_prep.)
-          !migrated.runDays &&
+        let next = migrateProgramState(
+          normalizeProgramState(raw, {
+            primaryGoal: profile.primaryGoal,
+          }),
+          localWeekKey()
+        );
+        const today = localDateString();
+        const thisWeek = localWeekKey();
+        const weekSchedule = profile.weekSchedule ?? [];
+        const runTarget = getWeeklyRunTarget(profile) || 3;
+        // Earlier weeks belong to auto-rollover, which archives their history.
+        // Reconcile only a wrong template in the current week here, inline with
+        // load, so a second effect cannot race the rollover writer.
+        const repairCurrentRaceWeek =
           effectiveRunMode === "race_prep" &&
-          profile.raceGoal
-        ) {
-          // PR-0b-ii: V2 writers. Reads weekSchedule directly so
-          // hybrid Both-day slots get a scheduled run (V1 lost them
-          // because it derived run-eligible days from liftIndices).
-          // PR-0b-i's backfill above guarantees a valid 7-entry
-          // weekSchedule is present on profile by this point.
-          const weekSchedule = profile.weekSchedule ?? [];
-          const runTarget = getWeeklyRunTarget(profile) || 3;
-          const weekStart = localWeekKey();
-          const { runDays, runPlan } = regenerateRacePlan({
-            recentLayoff,
-            tuning: runTuningFromProfile(profile),
-
-            easyPaceSPerKm: planningEasyPaceSPerKm(profile?.runFitness),
+          raceIsInFuture(profile.raceGoal, today) &&
+          !isInRecoveryOn(next.runPlan, today) &&
+          next.runDays?.[0]?.weekKey === thisWeek &&
+          areRaceRunDaysStale({
+            runDays: next.runDays,
             raceGoal: profile.raceGoal,
             weekSchedule,
             weeklyRunDays: runTarget,
-            currentDate: localDateString(),
-            weekStart,
+            todayKey: today,
           });
-
-          const withRuns = { ...migrated, runDays, runPlan };
-          // Issue #845 defence-in-depth — same reason as the
-          // persist-if-changed branch above. `withRuns` inherits any
-          // undefined field that survived `migrated`; setDocGuarded
-          // strips them before the write.
-          await setDocGuarded(
-            ref,
-            { ...withRuns, updatedAt: Date.now() },
-            { merge: true }
-          );
-          setProgramState(withRuns);
-        } else {
-          // PR-0b-i: drive React state from the migrated value so
-          // the UI sees v2-shaped runDays + corrected status/
-          // completed pairs. Pre-PR-0b-i this set `normalized`,
-          // which would leave consumers reading legacy fields.
-          setProgramState(migrated);
+        if (profile.runMode === "structured") {
+          next = { ...next, runDays: [] };
+          delete next.runPlan;
+        } else if (
+          profile.raceGoal &&
+          effectiveRunMode === "race_prep" &&
+          (!next.runDays || repairCurrentRaceWeek)
+        ) {
+          // A cold load must use the same returning-runner evidence as rollover.
+          const layoff = await fetchRecentLayoff(user.uid, today);
+          if (cancelled || auth.currentUser?.uid !== user.uid) return;
+          const runs = regenerateRacePlan({
+            recentLayoff: layoff,
+            tuning: runTuningFromProfile(profile),
+            easyPaceSPerKm: planningEasyPaceSPerKm(profile.runFitness),
+            raceGoal: profile.raceGoal,
+            weekSchedule,
+            weeklyRunDays: runTarget,
+            currentDate: today,
+            weekStart: thisWeek,
+            carry: next.runPlan
+              ? {
+                  currentWeek: next.runPlan.currentWeek,
+                  totalWeeks: next.runPlan.totalWeeks,
+                  completedRaces: next.runPlan.completedRaces,
+                }
+              : undefined,
+            prior: next.runDays
+              ? {
+                  runDays: next.runDays,
+                  manualCompletions: next.manualCompletions,
+                }
+              : undefined,
+          });
+          next = {
+            ...next,
+            runDays: runs.runDays,
+            runPlan: runs.runPlan,
+            ...(runs.manualCompletions
+              ? { manualCompletions: runs.manualCompletions }
+              : {}),
+          };
         }
+        if (cancelled || auth.currentUser?.uid !== user.uid) return;
+        if (!sameStoredValue(next, raw) || profile.runMode === "structured") {
+          try {
+            next = await commitProgramTransition(
+              db,
+              user.uid,
+              raw,
+              next,
+              profile.runMode === "structured"
+                ? { base: profile, patch: { runMode: "freeform" } }
+                : undefined
+            );
+            if (profile.runMode === "structured") await refreshProfile?.();
+          } catch (error) {
+            if (!(error instanceof ProgrammeConflictError)) throw error;
+            // A user action won the race. Paint that state; never retry an old
+            // migration or generation over it.
+            const latest = await getDoc(ref);
+            if (!latest.exists()) return;
+            next = migrateProgramState(
+              normalizeProgramState(latest.data() as ProgramState),
+              thisWeek
+            );
+          }
+        }
+        if (!cancelled && auth.currentUser?.uid === user.uid)
+          setProgramState(next);
       } else {
         const goal = profile.program?.goal ?? "recomp";
         const weeklyTarget = profile.weeklyWorkoutsTarget ?? 4;
@@ -658,8 +656,30 @@ export function useProgram() {
           ...(runPlan !== undefined && { runPlan }),
         };
 
-        await setDocGuarded(ref, initial);
-        setProgramState(initial);
+        if (cancelled || auth.currentUser?.uid !== user.uid) return;
+        try {
+          const saved = await commitProgramTransition(
+            db,
+            user.uid,
+            null,
+            initial,
+            profile.runMode === "structured"
+              ? { base: profile, patch: { runMode: "freeform" } }
+              : undefined
+          );
+          if (profile.runMode === "structured") await refreshProfile?.();
+          if (!cancelled) setProgramState(saved);
+        } catch (error) {
+          if (!(error instanceof ProgrammeConflictError)) throw error;
+          const latest = await getDoc(ref);
+          if (!cancelled && latest.exists())
+            setProgramState(
+              migrateProgramState(
+                normalizeProgramState(latest.data() as ProgramState),
+                localWeekKey()
+              )
+            );
+        }
       }
 
       setLoading(false);
@@ -683,25 +703,50 @@ export function useProgram() {
 
   // Save program to Firestore
   const saveProgram = useCallback(
-    async (state: ProgramState) => {
-      if (!user) return;
-      const ref = doc(db, "users", user.uid, "programState", PROGRAM_DOC);
-      // Strip undefined values — Firestore rejects them
-      const clean = Object.fromEntries(
-        Object.entries({ ...state, updatedAt: Date.now() }).filter(
-          ([, v]) => v !== undefined
-        )
-      );
+    async (state: ProgramState, profilePatch?: Partial<UserProfile>) => {
+      if (!user) throw new Error("Sign in again to save your programme.");
       try {
-        await setDocGuarded(ref, clean);
-        setProgramState(state);
+        const saved = await commitProgramTransition(
+          db,
+          user.uid,
+          programState,
+          state,
+          profilePatch
+            ? { base: profile ?? {}, patch: profilePatch }
+            : undefined
+        );
+        if (auth.currentUser?.uid === user.uid) setProgramState(saved);
+        if (profilePatch) {
+          try {
+            await refreshProfile?.();
+          } catch (error) {
+            logger.warn("[Program] Saved; profile refresh failed", error);
+            window.location.reload();
+          }
+        }
       } catch (error) {
         logger.error("[Program] Save failed:", error);
-        toast.error("Couldn't save your changes. Try again.");
+        if (error instanceof ProgrammeConflictError) {
+          const latest = await getDoc(
+            doc(db, "users", user.uid, "programState", PROGRAM_DOC)
+          ).catch(() => null);
+          if (auth.currentUser?.uid === user.uid && latest?.exists())
+            setProgramState(
+              migrateProgramState(
+                normalizeProgramState(latest.data() as ProgramState),
+                localWeekKey()
+              )
+            );
+        }
+        toast.error(
+          error instanceof ProgrammeConflictError
+            ? error.message
+            : "Couldn't save your changes. Try again."
+        );
         throw error;
       }
     },
-    [user]
+    [user, profile, programState, refreshProfile]
   );
 
   /**
@@ -1160,7 +1205,14 @@ export function useProgram() {
 
       // Build exercises array — from actual setLogs when available,
       // otherwise from planned data (every set assumed completed).
-      const exercises = day.exercises.map((ex, exIndex) => {
+      const sessionExercises =
+        sessionData.prescription?.exercises ??
+        day.exercises.map((ex) =>
+          ex.sessionProgression?.id === sessionData.completionId
+            ? ex.sessionProgression.baseline
+            : ex
+        );
+      const exercises = sessionExercises.map((ex, exIndex) => {
         const logs = sessionData.setLogs?.[exIndex];
         // D2: the no-logs fallback keeps its historical shape — the last
         // ATTEMPTED load and the last actual reps, which is the best guess
@@ -1255,15 +1307,7 @@ export function useProgram() {
       // writeBatch commits both or neither. The id is deterministic
       // (programme-<completionId>) so a retried Finish overwrites the same
       // doc rather than appending a second log.
-      const programRef = doc(
-        db,
-        "users",
-        user.uid,
-        "programState",
-        PROGRAM_DOC
-      );
       const workoutId = `programme-${sessionData.completionId}`;
-      const workoutRef = doc(db, "users", user.uid, "workouts", workoutId);
       const queued =
         navigator.onLine === false ||
         hasQueuedWorkoutCompletion(user.uid, workoutId);
@@ -1273,6 +1317,7 @@ export function useProgram() {
         date: today,
         exercises,
         totalCalories,
+        burnContext: { bodyweightKg },
         durationMinutes: effectiveDurationMin,
         /* The field every SERVER consumer of a workout doc reads —
                `workoutChallengeIncrements` (total_volume + the hybrid
@@ -1281,7 +1326,7 @@ export function useProgram() {
                written onto the workout itself, so all three credited zero
                for every lift ever logged. */
         totalVolume: tonnage,
-        notes: `${day.dayName} — Programme Week ${programState.weekNumber}`,
+        notes: `${sessionData.prescription?.dayName ?? day.dayName} — Programme Week ${sessionData.programmeContext?.weekNumber ?? programState.weekNumber}`,
         createdAt: Timestamp.now(),
         source: "programme",
         completionId: sessionData.completionId,
@@ -1299,31 +1344,66 @@ export function useProgram() {
         },
       });
 
+      const dayIdentity = workoutCompletionDayIdentity(day);
+      const savedContext =
+        sessionData.programmeContext ??
+        (dayIdentity
+          ? {
+              weekNumber: programState.weekNumber,
+              dayIndex,
+              dayIdentity,
+              trainingBlockId: programState.trainingBlock?.id,
+            }
+          : undefined);
+      const completionContext = savedContext
+        ? {
+            ...savedContext,
+            ...(sessionData.prescription
+              ? {
+                  progression: {
+                    completionId: sessionData.completionId,
+                    date: today,
+                    prescription: sessionData.prescription,
+                    setLogs: sessionData.setLogs,
+                    sessionVariant: sessionData.sessionVariant,
+                  },
+                }
+              : {}),
+          }
+        : undefined;
+      const matchesCurrentDay =
+        completionContext?.weekNumber === programState.weekNumber &&
+        completionContext.dayIndex === dayIndex &&
+        completionContext.dayIdentity === dayIdentity &&
+        completionContext.trainingBlockId === programState.trainingBlock?.id &&
+        !(day.completed && day.completedWorkoutId !== workoutId);
+      let committedState: ProgramState | null = matchesCurrentDay
+        ? updated
+        : programState;
+      if (matchesCurrentDay && completionContext?.progression)
+        committedState = applySessionProgression(
+          updated,
+          dayIndex,
+          completionContext.progression
+        );
+
       try {
         if (!queued) {
-          const batch = writeBatch(db);
-          batch.set(
-            programRef,
-            stripUndefined({ ...updated, updatedAt: Date.now() })
+          committedState = await commitWorkoutCompletion(
+            db,
+            user.uid,
+            workoutId,
+            workoutData,
+            completionContext
           );
-          batch.set(workoutRef, workoutData);
-          await batch.commit();
           sync = Promise.resolve("synced");
         } else {
-          const dayIdentity = workoutCompletionDayIdentity(day);
           sync = queueWorkoutCompletion(
             db,
             user.uid,
             workoutId,
             workoutData,
-            dayIdentity
-              ? {
-                  weekNumber: programState.weekNumber,
-                  dayIndex,
-                  dayIdentity,
-                  trainingBlockId: programState.trainingBlock?.id,
-                }
-              : undefined
+            completionContext
           );
           void sync.then((status) => {
             if (status === "failed" && auth.currentUser?.uid === user.uid)
@@ -1331,7 +1411,10 @@ export function useProgram() {
           });
         }
         // Optimistic while offline; completion receipt carries the distinction.
-        if (auth.currentUser?.uid === user.uid) setProgramState(updated);
+        if (auth.currentUser?.uid === user.uid) {
+          if (committedState) setProgramState(committedState);
+          else await refetchProgramState();
+        }
       } catch (error) {
         logger.error("[Program] completion batch failed:", error);
         toast.error(
@@ -2168,6 +2251,9 @@ export function useProgram() {
       session?: { id: string; correction?: boolean }
     ) => {
       if (!programState) return;
+      const currentDay = programState.workouts[dayIndex];
+      if (currentDay?.completed && currentDay.completedWorkoutId)
+        throw new Error("This workout is saved. Correct it from History.");
 
       const settings = programState.settings ?? {
         autoProgression: true,
@@ -2371,7 +2457,11 @@ export function useProgram() {
     async (
       goalOverride?: string,
       weeklyTargetOverride?: number,
-      overrides?: { weekSchedule?: ScheduleDay[]; weeklyRunDaysTarget?: number }
+      overrides?: {
+        weekSchedule?: ScheduleDay[];
+        weeklyRunDaysTarget?: number;
+        profileUpdates?: Partial<UserProfile>;
+      }
     ) => {
       if (!profile) return;
 
@@ -2476,9 +2566,9 @@ export function useProgram() {
         ...(runPlan !== undefined && { runPlan }),
       };
 
-      await saveProgram(newState);
-      // Sync goal to profile so Settings Training Phase stays in sync
-      await updateProfile({
+      // The goal, weekly layout and generated programme become visible together.
+      await saveProgram(newState, {
+        ...overrides?.profileUpdates,
         program: {
           goal,
           startWeight: profile.program?.startWeight ?? profile.weightKg ?? 70,
@@ -2488,7 +2578,7 @@ export function useProgram() {
       setViewingHistoryIndex(null);
       toast.success("Program regenerated");
     },
-    [profile, programState, saveProgram, updateProfile, recentLayoff]
+    [profile, programState, saveProgram, recentLayoff]
   );
 
   // Refresh run schedule without resetting program (called when
@@ -2499,7 +2589,11 @@ export function useProgram() {
   // value.
   const refreshRunSchedule = useCallback(
     async (overrides?: RefreshRunScheduleOverrides) => {
-      if (!programState || !profile) return;
+      if (!programState || !profile) {
+        if (overrides?.profileUpdates)
+          throw new Error("Wait for your programme to load, then try again.");
+        return;
+      }
       if (!profile.runMode || profile.runMode === "freeform") return;
 
       const weekSchedule =
@@ -2598,7 +2692,10 @@ export function useProgram() {
           : rd;
       });
 
-      await saveProgram({ ...programState, runDays, runPlan });
+      await saveProgram(
+        { ...programState, runDays, runPlan },
+        overrides?.profileUpdates
+      );
     },
     [programState, profile, saveProgram, recentLayoff]
   );

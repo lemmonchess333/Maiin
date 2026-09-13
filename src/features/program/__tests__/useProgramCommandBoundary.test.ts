@@ -30,7 +30,11 @@ import { generateSchedule } from "@/lib/scheduleUtils";
 import type { ProgramState } from "../programTypes";
 
 vi.mock("firebase/firestore");
-vi.mock("@/lib/firebase", () => ({ db: {}, functions: {} }));
+vi.mock("@/lib/firebase", () => ({
+  db: {},
+  functions: {},
+  auth: { currentUser: { uid: "test-user-1" } },
+}));
 
 import {
   seedFirestore,

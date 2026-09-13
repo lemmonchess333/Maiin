@@ -403,3 +403,86 @@ suite("completeOnboarding — emulator integration", () => {
     expect(psDoc.exists).toBe(false);
   });
 });
+
+suite("configurePlan — concurrent edits", () => {
+  beforeEach(clearTestUserState);
+  it("preserves a newer completion and unrelated profile fields", async () => {
+    const base = validProgramState();
+    const baseProfile = validProfileUpdates();
+    const current = {
+      ...base,
+      fatigueScore: 15,
+      workouts: [
+        {
+          dayName: "Push",
+          dayType: "push",
+          completed: true,
+          completedWorkoutId: "saved",
+          exercises: [],
+        },
+      ],
+    };
+    const user = db.doc(`users/${TEST_UID}`);
+    const program = user.collection("programState").doc("current");
+    await user.set({ ...baseProfile, displayName: "Latest name" });
+    await program.set(current);
+    await configurePlan.run(
+      {
+        baseProgramState: base,
+        baseProfile,
+        profileUpdates: baseProfile,
+        weekSchedule: validWeekSchedule(),
+        programState: {
+          ...base,
+          settings: { autoProgression: false, microloading: true },
+        },
+      },
+      { auth: { uid: TEST_UID } }
+    );
+    expect((await program.get()).data()).toMatchObject({
+      workouts: current.workouts,
+      fatigueScore: 15,
+      settings: { autoProgression: false, microloading: true },
+    });
+    expect((await user.get()).data().displayName).toBe("Latest name");
+  });
+
+  it("rejects a conflicting rebuild without applying its profile half", async () => {
+    const base = validProgramState();
+    const baseProfile = validProfileUpdates();
+    const user = db.doc(`users/${TEST_UID}`);
+    const program = user.collection("programState").doc("current");
+    const current = {
+      ...base,
+      workouts: [
+        { dayName: "Push", dayType: "push", completed: true, exercises: [] },
+      ],
+    };
+    await user.set(baseProfile);
+    await program.set(current);
+    await expect(
+      configurePlan.run(
+        {
+          baseProgramState: base,
+          baseProfile,
+          profileUpdates: { ...baseProfile, primaryGoal: "strength" },
+          weekSchedule: validWeekSchedule(),
+          programState: {
+            ...base,
+            workouts: [
+              {
+                dayName: "New plan",
+                dayType: "push",
+                completed: false,
+                exercises: [],
+              },
+            ],
+          },
+        },
+        { auth: { uid: TEST_UID } }
+      )
+    ).rejects.toMatchObject({ code: "failed-precondition" });
+    expect((await program.get()).data()).toEqual(current);
+    expect((await user.get()).data()).toEqual(baseProfile);
+  });
+});

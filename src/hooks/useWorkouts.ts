@@ -78,6 +78,8 @@ export interface WorkoutExercise {
    *  every workout logged before notes were persisted. */
   notes?: string;
   sets: WorkoutSet[];
+  /** Immutable number of working sets prescribed at session start. */
+  plannedSetCount?: number;
   caloriesBurned: number;
   // Cardio-specific (optional)
   durationMinutes?: number;
@@ -86,6 +88,10 @@ export interface WorkoutExercise {
 }
 
 export interface Workout {
+  revision?: number;
+  lastCorrectionId?: string;
+  programmeCompletion?: import("@/lib/workoutCompletion").SavedProgrammeCompletion;
+  burnContext?: { bodyweightKg: number; inferred?: boolean };
   id: string;
   date: string;
   exercises: WorkoutExercise[];
