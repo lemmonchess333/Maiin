@@ -452,6 +452,15 @@ describe("Upgrade — where 'not now' goes", () => {
     expect(purchaseMock.mock.calls[0][3]?.source).toBe("trial_strip");
   });
 
+  it("checkout from Home's Pro strip is attributed to it", async () => {
+    purchaseMock.mockResolvedValueOnce({ success: true });
+    renderPage("/upgrade?from=home_strip");
+    fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+    fireEvent.click(screen.getByRole("button", { name: /Start Pro/ }));
+    await waitFor(() => expect(purchaseMock).toHaveBeenCalledTimes(1));
+    expect(purchaseMock.mock.calls[0][3]?.source).toBe("home_strip");
+  });
+
   it("checkout from a Settings entry is attributed to Settings", async () => {
     purchaseMock.mockResolvedValueOnce({ success: true });
     renderPage("/upgrade?from=settings");
