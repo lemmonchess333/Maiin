@@ -63,6 +63,10 @@ function LocationProbe() {
     <output aria-label="Current route">
       {location.pathname}
       {location.search}
+      {/* The offer page is handed where "Continue with Free" goes. */}
+      {(location.state as { next?: string } | null)?.next
+        ? ` → ${(location.state as { next: string }).next}`
+        : ""}
     </output>
   );
 }
@@ -142,7 +146,7 @@ describe("onboarding chapters and commit", () => {
     expect(loadOnboardingDraft("setup-test", 7)).toBeNull();
     await waitFor(() =>
       expect(screen.getByLabelText("Current route")).toHaveTextContent(
-        "/program?tab=lift"
+        "/upgrade?from=onboarding → /program?tab=lift"
       )
     );
     builder.mockRestore();
@@ -247,7 +251,7 @@ describe("activity-relevant setup", () => {
     });
     await waitFor(() =>
       expect(screen.getByLabelText("Current route")).toHaveTextContent(
-        "/program?tab=run"
+        "/upgrade?from=onboarding → /program?tab=run"
       )
     );
   });
@@ -285,7 +289,7 @@ describe("activity-relevant setup", () => {
     expect(complete.mock.calls[0][0].programState.workouts).toHaveLength(3);
     await waitFor(() =>
       expect(screen.getByLabelText("Current route")).toHaveTextContent(
-        "/program?tab=run"
+        "/upgrade?from=onboarding → /program?tab=run"
       )
     );
   });

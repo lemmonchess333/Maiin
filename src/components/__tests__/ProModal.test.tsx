@@ -180,6 +180,13 @@ describe("ProModal — initialPlan", () => {
 });
 
 describe("ProModal — feature-specific hero", () => {
+  it("the AI-food gate shows the product, not a blurred stand-in", () => {
+    renderModal({ onClose: vi.fn(), featureKey: "ai_food_logging" });
+    const frame = screen.getByRole("img", { name: /^Sample: a meal photo/ });
+    expect(frame).toBeInTheDocument();
+    expect(screen.queryByText("Detected: Chicken & rice bowl")).toBeNull();
+  });
+
   it("renders the registry's title for featureKey='adaptive_tdee'", () => {
     renderModal({ onClose: () => {}, featureKey: "adaptive_tdee" });
     // Visible hero h2 should match the registry's `title` value —

@@ -668,9 +668,16 @@ export default function Onboarding() {
 
       // Save succeeded — leave the onboarding surface explicitly. Flipping
       // onboardingComplete=true makes App.tsx switch to the authenticated
-      // route set; open the activity shown in the review. `replace` keeps
-      // Back from returning into the finished onboarding flow.
-      navigate(firstActivityPath, { replace: true });
+      // route set. The first screen of the app is the Pro offer (the
+      // Cal AI / MacroFactor placement: the product, shown once, right
+      // after the plan is made), and its "Continue with Free" lands on the
+      // activity shown in the review. `replace` keeps Back from returning
+      // into the finished onboarding flow; `state.next` carries the
+      // destination so the offer page needs no knowledge of the plan.
+      navigate("/upgrade?from=onboarding", {
+        replace: true,
+        state: { next: firstActivityPath },
+      });
     } catch (err) {
       logger.error("Onboarding save failed:", err);
       const code = (err as { code?: string })?.code?.replace("functions/", "");

@@ -25,7 +25,7 @@ import {
   cleanup,
   waitFor,
 } from "@testing-library/react";
-import { MemoryRouter } from "react-router-dom";
+import { MemoryRouter, useLocation } from "react-router-dom";
 
 // Sub1a P1 — default profile to `hasUsedTrial: true` so the
 // plan-priced CTA ("Start Pro — £X/yr") is the rendered baseline
@@ -90,12 +90,28 @@ vi.mock("@/lib/subscription", async () => {
 
 import Upgrade from "../Upgrade";
 
-function renderPage() {
+function renderPage(entry = "/upgrade", state?: Record<string, unknown>) {
   return render(
-    <MemoryRouter initialEntries={["/upgrade"]}>
+    <MemoryRouter
+      initialEntries={[
+        {
+          pathname: "/upgrade",
+          search: entry.replace(/^\/upgrade/, ""),
+          state,
+        },
+      ]}
+    >
       <Upgrade />
     </MemoryRouter>
   );
+}
+
+/** The page opens on the offer beat; the plan picker sits behind
+ *  "Continue". Every plan / checkout pin below goes through this. */
+function renderPlans() {
+  const view = renderPage();
+  fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+  return view;
 }
 
 beforeEach(() => {
@@ -120,13 +136,13 @@ afterEach(cleanup);
 
 describe("Upgrade — plan radiogroup (free user)", () => {
   it("renders both plans as radios", () => {
-    renderPage();
+    renderPlans();
     const radios = screen.getAllByRole("radio");
     expect(radios).toHaveLength(2);
   });
 
   it("yearly is selected by default (recommended plan)", () => {
-    renderPage();
+    renderPlans();
     const radios = screen.getAllByRole("radio");
     const yearly = radios.find((r) => r.textContent?.includes("Yearly"));
     const monthly = radios.find((r) => r.textContent?.includes("Monthly"));
@@ -135,7 +151,7 @@ describe("Upgrade — plan radiogroup (free user)", () => {
   });
 
   it("tapping Monthly selects Monthly on the same page (no modal opens)", () => {
-    renderPage();
+    renderPlans();
     const radios = screen.getAllByRole("radio");
     const monthly = radios.find((r) => r.textContent?.includes("Monthly"))!;
     fireEvent.click(monthly);
@@ -143,7 +159,7 @@ describe("Upgrade — plan radiogroup (free user)", () => {
   });
 
   it("tapping Yearly after Monthly selects Yearly again", () => {
-    renderPage();
+    renderPlans();
     const radios = screen.getAllByRole("radio");
     const monthly = radios.find((r) => r.textContent?.includes("Monthly"))!;
     const yearly = radios.find((r) => r.textContent?.includes("Yearly"))!;
@@ -157,7 +173,7 @@ describe("Upgrade — plan radiogroup (free user)", () => {
     // ProModal renders a "Close upgrade modal" button — its absence
     // is the regression guard. Tap both plans; that button must not
     // appear on the page (the page now owns selection directly).
-    renderPage();
+    renderPlans();
     const radios = screen.getAllByRole("radio");
     fireEvent.click(radios.find((r) => r.textContent?.includes("Monthly"))!);
     fireEvent.click(radios.find((r) => r.textContent?.includes("Yearly"))!);
@@ -169,12 +185,12 @@ describe("Upgrade — plan radiogroup (free user)", () => {
 
 describe("Upgrade — CTA copy reflects selected plan", () => {
   it("CTA reads 'Start Pro — £34.99/yr' by default (yearly)", () => {
-    renderPage();
+    renderPlans();
     expect(screen.getByText("Start Pro — £34.99/yr")).toBeTruthy();
   });
 
   it("CTA flips to 'Start Pro — £3.99/mo' after selecting Monthly", () => {
-    renderPage();
+    renderPlans();
     const monthly = screen
       .getAllByRole("radio")
       .find((r) => r.textContent?.includes("Monthly"))!;
@@ -183,7 +199,7 @@ describe("Upgrade — CTA copy reflects selected plan", () => {
   });
 
   it("disclosure flips between monthly/annually with the selected plan", () => {
-    renderPage();
+    renderPlans();
     // Default yearly → "Renews annually"
     expect(screen.getByText(/Renews annually/)).toBeTruthy();
     const monthly = screen
@@ -197,7 +213,7 @@ describe("Upgrade — CTA copy reflects selected plan", () => {
 describe("Upgrade — checkout uses selected plan (the original bug)", () => {
   it("default checkout sends 'yearly' (no plan change)", async () => {
     purchaseMock.mockResolvedValueOnce({ success: true });
-    renderPage();
+    renderPlans();
     fireEvent.click(screen.getByRole("button", { name: /Start Pro/ }));
     await waitFor(() => {
       expect(purchaseMock).toHaveBeenCalledTimes(1);
@@ -210,7 +226,7 @@ describe("Upgrade — checkout uses selected plan (the original bug)", () => {
     // Monthly used to silently start a Yearly checkout because
     // the plan tile opened ProModal which defaulted to Yearly.
     purchaseMock.mockResolvedValueOnce({ success: true });
-    renderPage();
+    renderPlans();
     const monthly = screen
       .getAllByRole("radio")
       .find((r) => r.textContent?.includes("Monthly"))!;
@@ -227,7 +243,7 @@ describe("Upgrade — checkout uses selected plan (the original bug)", () => {
       success: false,
       error: "Card declined.",
     });
-    renderPage();
+    renderPlans();
     fireEvent.click(screen.getByRole("button", { name: /Start Pro/ }));
     const alert = await screen.findByRole("alert");
     expect(alert.textContent).toContain("Card declined.");
@@ -239,13 +255,135 @@ describe("Upgrade — checkout uses selected plan (the original bug)", () => {
     // closed-set entryPoint token that the server resolves to a
     // full URL on its side.
     purchaseMock.mockResolvedValueOnce({ success: true });
-    renderPage();
+    renderPlans();
     fireEvent.click(screen.getByRole("button", { name: /Start Pro/ }));
     await waitFor(() => {
       expect(purchaseMock).toHaveBeenCalledTimes(1);
     });
     const options = purchaseMock.mock.calls[0][3];
     expect(options?.entryPoint).toBe("upgrade");
+  });
+});
+
+describe("Upgrade — the offer beat (what the page opens on)", () => {
+  it("leads with the product, not the price list", () => {
+    renderPage();
+    expect(
+      screen.getByRole("heading", { name: "Log a meal from a photo." })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("group", { name: "What Pro looks like" })
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("radio")).toBeNull();
+    expect(
+      screen.getByRole("button", { name: "Continue" })
+    ).toBeInTheDocument();
+  });
+
+  it("tells a trial-eligible user nothing is due today, and when billing starts", () => {
+    authProfileMock.mockReturnValue({ hasUsedTrial: false });
+    renderPage();
+    expect(screen.getByText("No payment due today")).toBeInTheDocument();
+    expect(
+      screen.getByText(/Billing starts when your free trial ends/)
+    ).toBeInTheDocument();
+  });
+
+  it("shows a post-trial user the prices instead of a trial promise", () => {
+    renderPage();
+    expect(screen.queryByText("No payment due today")).toBeNull();
+    expect(
+      screen.getAllByText(/£3\.99\/month or £34\.99\/year/).length
+    ).toBeGreaterThan(0);
+  });
+
+  it("Continue opens the plans; Back returns to the offer", () => {
+    renderPage();
+    fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+    expect(screen.getAllByRole("radio")).toHaveLength(2);
+    expect(
+      screen.getByRole("heading", { name: "Choose your plan" })
+    ).toBeInTheDocument();
+    fireEvent.click(
+      screen.getByRole("button", { name: "Back to the Pro overview" })
+    );
+    expect(screen.queryByRole("radio")).toBeNull();
+    expect(
+      screen.getByRole("button", { name: "Continue" })
+    ).toBeInTheDocument();
+  });
+
+  it("carries the legal links on the offer beat too (Guideline 3.1.2)", () => {
+    renderPage();
+    expect(screen.getByRole("link", { name: "Terms" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Privacy" })).toBeInTheDocument();
+  });
+
+  it("offers Restore only on iOS, as 'Already purchased?'", () => {
+    renderPage();
+    expect(screen.queryByText(/Already purchased/)).toBeNull();
+    cleanup();
+    isNativeIOSMock.mockReturnValue(true);
+    renderPage();
+    expect(screen.getByText(/Already purchased/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Restore" })).toBeInTheDocument();
+  });
+});
+
+describe("Upgrade — where 'not now' goes", () => {
+  function Probe() {
+    const location = useLocation();
+    return (
+      <output aria-label="Current route">
+        {location.pathname}
+        {location.search}
+      </output>
+    );
+  }
+  function renderWithProbe(search: string, state?: Record<string, unknown>) {
+    return render(
+      <MemoryRouter
+        initialEntries={[
+          { pathname: "/settings" },
+          { pathname: "/upgrade", search, state },
+        ]}
+        initialIndex={1}
+      >
+        <Upgrade />
+        <Probe />
+      </MemoryRouter>
+    );
+  }
+
+  it("from onboarding, 'Continue with Free' lands on the first activity it was handed", () => {
+    renderWithProbe("?from=onboarding", { next: "/program?tab=run" });
+    fireEvent.click(screen.getByRole("button", { name: "Continue with Free" }));
+    expect(screen.getByLabelText("Current route")).toHaveTextContent(
+      "/program?tab=run"
+    );
+  });
+
+  it("from onboarding with the handoff state lost, it lands on Home rather than nowhere", () => {
+    renderWithProbe("?from=onboarding");
+    fireEvent.click(screen.getByRole("button", { name: "Continue with Free" }));
+    expect(screen.getByLabelText("Current route")).toHaveTextContent(/^\/$/);
+  });
+
+  it("from anywhere else, 'Not now' goes back", () => {
+    renderWithProbe("?from=food");
+    fireEvent.click(screen.getByRole("button", { name: "Not now" }));
+    expect(screen.getByLabelText("Current route")).toHaveTextContent(
+      "/settings"
+    );
+  });
+
+  it("checkout from the Food entry is attributed to the Food page", async () => {
+    purchaseMock.mockResolvedValueOnce({ success: true });
+    renderPage("/upgrade?from=food");
+    fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+    fireEvent.click(screen.getByRole("button", { name: /Start Pro/ }));
+    await waitFor(() => expect(purchaseMock).toHaveBeenCalledTimes(1));
+    expect(purchaseMock.mock.calls[0][3]?.source).toBe("food_page");
   });
 });
 

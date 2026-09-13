@@ -1,29 +1,40 @@
 /**
- * Upgrade — full Pro pricing + purchase page.
+ * Upgrade — the Pro offer, in two beats.
  *
- * Architecture
- * ------------
- * Pre-unification this page opened ProModal whenever the user
- * tapped a plan tile. Because ProModal defaulted to the recommended
- * plan, tapping "Monthly" silently became a Yearly checkout — the
- * spec's headline bug. The fix isn't to pass `initialPlan` (that
- * would be the shallow fix); it's to make this page do its own
- * selection + direct checkout. ProModal stays for the contextual
- * paywall opened from feature gates — two roles, two surfaces.
+ * Shape (after the 2026-09-13 reshape, from the Cal AI / MacroFactor
+ * paywall pattern): the first thing on screen is the PRODUCT doing the
+ * thing Pro sells, not a price list.
  *
- * Rules this page follows (from the spec):
- *   - Plan cards select; CTA purchases.
- *   - The full Upgrade page does not open another paywall modal.
- *   - Pricing comes from `proPlans.ts` only.
+ *   Beat 1 — offer.  Headline, the product preview rail, the one
+ *   reassurance a trial-eligible user needs ("No payment due today"),
+ *   one CTA ("Continue"), and a visible way to keep using Free. Footer
+ *   carries Restore (iOS), the billing disclosure and the legal links —
+ *   App Store Guideline 3.1.2 wants those on every purchase surface,
+ *   and this beat is one.
+ *
+ *   Beat 2 — plans.  The monthly / yearly picker (`PlanPicker`, shared
+ *   with ProModal so the two cannot drift), the honest trial timeline,
+ *   the priced CTA, disclosure, Restore, legal.
+ *
+ * Entry points, read from `?from=`: onboarding's save lands here with
+ * `state.next` = the first activity, and "Continue with Free" goes
+ * there; the Food page's photo-logging strip sends `from=food`; every
+ * other caller (Settings, Home's trial strip, the AI-usage section)
+ * gets the plain page and "Not now" goes back. The source rides into
+ * every paywall event so the funnel can be read per entry.
+ *
+ * Rules kept from the previous shape:
+ *   - Plan cards select; the CTA purchases. No modal opens from here.
+ *   - Pricing comes from `proPlans.ts` only (localised on the RC build).
  *   - Checkout state comes from `useProCheckout` — same hook as
  *     ProModal so they can't drift.
- *   - Already-Pro users see a Manage subscription action.
- *   - Returning from a Stripe round-trip shows a status banner
- *     and clears `?checkout=...` from the URL.
+ *   - Already-Pro users see Manage; cross-platform Pro users are
+ *     routed to the platform of record (Sub1 P2), never re-charged.
+ *   - Returning from a Stripe round-trip shows a status banner and
+ *     clears `?checkout=...` from the URL.
  */
-import SectionLabel from "@/components/ui/SectionLabel";
 import { useEffect, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { useSubscription } from "@/lib/subscription";
 import { cn } from "@/lib/utils";
 import {
@@ -35,13 +46,13 @@ import {
   AlertCircle,
   XCircle,
   ExternalLink,
+  X,
 } from "lucide-react";
 import { toast } from "@/lib/toast";
 import {
   DEFAULT_PLAN,
   getCheckoutCtaLabel,
   getRenewalDisclosure,
-  weeklyPriceLabel,
   getInlinePriceSummary,
   type PlanId,
 } from "@/lib/proPlans";
@@ -50,13 +61,26 @@ import { useProCheckout } from "@/hooks/useProCheckout";
 import TrialTimeline from "@/components/TrialTimeline";
 import { useProPlanPrices } from "@/hooks/useProPlanPrices";
 import { useAuth } from "@/lib/auth";
-import { track } from "@/lib/paywallAnalytics";
+import { track, type PaywallSource } from "@/lib/paywallAnalytics";
 import { THEME } from "@/lib/theme";
 import { Spinner } from "@/components/ui/Spinner";
+import { Button } from "@/components/ui/Button";
 import { PaywallLegalLinks } from "@/components/paywall/PaywallLegalLinks";
+import PlanPicker from "@/components/paywall/PlanPicker";
+import ProPreview from "@/components/paywall/ProPreview";
+
+type Beat = "offer" | "plans";
+
+/** `?from=` → analytics source. Anything unrecognised is the plain page. */
+function sourceFromParam(from: string | null): PaywallSource {
+  if (from === "onboarding") return "onboarding";
+  if (from === "food") return "food_page";
+  return "upgrade_page";
+}
 
 export default function Upgrade() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, profile } = useAuth();
   // Sub1a P1 — see ProModal.tsx for the corresponding logic;
   // missing profile defaults to trial-eligible (server is
@@ -64,6 +88,10 @@ export default function Upgrade() {
   const withTrial = !profile || !profile.hasUsedTrial;
   const { isPro, isInTrial, trialDaysLeft, tier } = useSubscription();
   const [searchParams, setSearchParams] = useSearchParams();
+  const from = searchParams.get("from");
+  const source = sourceFromParam(from);
+  const fromOnboarding = source === "onboarding";
+  const next = (location.state as { next?: string } | null)?.next ?? null;
 
   // Sub1 P2 — cross-platform Pro guard. When the user holds an
   // active Pro entitlement that originated on a DIFFERENT platform
@@ -82,6 +110,7 @@ export default function Upgrade() {
       ? subscriptionSource
       : null;
 
+  const [beat, setBeat] = useState<Beat>("offer");
   const [selectedPlan, setSelectedPlan] = useState<PlanId>(DEFAULT_PLAN);
   const [manageLoading, setManageLoading] = useState(false);
   // Apple-localized prices on the RC build; hardcoded proPlans fallback
@@ -96,7 +125,7 @@ export default function Upgrade() {
   // same handler shape; `restorePurchases()` on web returns an error, so
   // the button below is gated to native rather than rendering a dead link).
   const handleRestore = async () => {
-    track("restore_purchases_clicked", { source: "upgrade_page", platform });
+    track("restore_purchases_clicked", { source, platform });
     const { restorePurchases } = await import("@/lib/purchaseProvider");
     const result = await restorePurchases();
     const { toast } = await import("sonner");
@@ -110,8 +139,8 @@ export default function Upgrade() {
   // Paywall view event — once per page load. Trial users count too;
   // they're a meaningful conversion target.
   useEffect(() => {
-    track("paywall_viewed", { source: "upgrade_page", platform });
-  }, [platform]);
+    track("paywall_viewed", { source, platform });
+  }, [source, platform]);
 
   // Checkout round-trip status. Stripe redirects back here with
   // ?checkout=success or ?checkout=cancelled. Show a banner, emit
@@ -130,18 +159,36 @@ export default function Upgrade() {
     }
     // Strip the query param after one render so a refresh doesn't
     // re-render the banner. Keep the rest of the search params.
-    const next = new URLSearchParams(searchParams);
-    next.delete("checkout");
-    setSearchParams(next, { replace: true });
+    const params = new URLSearchParams(searchParams);
+    params.delete("checkout");
+    setSearchParams(params, { replace: true });
     // We intentionally don't depend on `setSearchParams` because
     // its identity changes every render under react-router v7.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [checkoutStatus, platform]);
 
+  /** Leave without buying. Onboarding handed us where to go next; a
+   *  reload loses that state, so the onboarding entry falls back to
+   *  Home rather than to a Back that has nowhere to go. */
+  const leave = () => {
+    if (next) {
+      navigate(next, { replace: true });
+    } else if (fromOnboarding) {
+      navigate("/", { replace: true });
+    } else {
+      navigate(-1);
+    }
+  };
+
+  const handleContinue = () => {
+    track("paywall_cta_clicked", { source, platform });
+    setBeat("plans");
+  };
+
   const handlePlanSelect = (plan: PlanId) => {
     setSelectedPlan(plan);
     track("paywall_plan_selected", {
-      source: "upgrade_page",
+      source,
       selectedPlan: plan,
       platform,
     });
@@ -149,12 +196,12 @@ export default function Upgrade() {
 
   const handleCheckout = () => {
     track("paywall_cta_clicked", {
-      source: "upgrade_page",
+      source,
       selectedPlan,
       platform,
     });
     void startCheckout(selectedPlan, {
-      source: "upgrade_page",
+      source,
       entryPoint: "upgrade",
       withTrial,
     });
@@ -199,28 +246,54 @@ export default function Upgrade() {
     }
   }, [checkoutStatus]);
 
-  return (
-    <div className="space-y-6">
-      {/* Header */}
-      <header>
-        <div className="flex items-center gap-3">
+  const canBuy = (!isPro || isInTrial) && !crossPlatformPro;
+  const leaveLabel = fromOnboarding ? "Continue with Free" : "Not now";
+
+  const footer = (
+    <div className="space-y-2">
+      {platform === "ios" ? (
+        <p className="text-caption text-muted-foreground text-center">
+          Already purchased?{" "}
           <button
-            onClick={() => navigate("/settings")}
+            type="button"
+            onClick={handleRestore}
+            disabled={loading}
+            className="underline underline-offset-2 disabled:opacity-50"
+          >
+            Restore
+          </button>
+        </p>
+      ) : null}
+      <PaywallLegalLinks />
+    </div>
+  );
+
+  return (
+    <div className="space-y-4">
+      {/* Header: back on the plans beat, close on the offer beat. */}
+      <header className="flex items-center justify-between min-h-11">
+        {beat === "plans" ? (
+          <button
+            onClick={() => setBeat("offer")}
             type="button"
             className="size-11 inline-flex items-center justify-center -ml-2 rounded-lg hover:bg-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
-            aria-label="Back to settings"
+            aria-label="Back to the Pro overview"
           >
             <ArrowLeft className="size-5 text-foreground" />
           </button>
-          <div>
-            <h1 className="text-xl font-extrabold text-foreground">
-              Upgrade to Pro
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              Unlock the full experience
-            </p>
-          </div>
-        </div>
+        ) : (
+          <span aria-hidden="true" />
+        )}
+        {/* Same exit as the text button below; a distinct name so the two
+            are not one control announced twice. */}
+        <button
+          onClick={leave}
+          type="button"
+          className="size-11 inline-flex items-center justify-center -mr-2 rounded-lg hover:bg-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+          aria-label="Close"
+        >
+          <X className="size-5 text-muted-foreground" />
+        </button>
       </header>
 
       {/* Checkout round-trip status banner */}
@@ -304,7 +377,7 @@ export default function Upgrade() {
             </p>
           </div>
           <p className="text-sm text-muted-foreground">
-            Manage your subscription at tropos.app — Apple&apos;s App Store
+            Manage your subscription at troposfit.com — Apple&apos;s App Store
             isn&apos;t the billing platform for this account.
           </p>
         </div>
@@ -325,9 +398,8 @@ export default function Upgrade() {
           <ul className="space-y-1.5 text-sm text-foreground">
             {[
               "Unlimited AI photo food logging",
-              "Full Performance Engine",
+              "A calorie target that adapts to you",
               "Macros that shift with your training",
-              "Advanced insights",
             ].map((f) => (
               <li key={f} className="flex items-start gap-1.5">
                 <Check
@@ -382,130 +454,100 @@ export default function Upgrade() {
         </div>
       )}
 
-      {/* Comparison + pricing — shown when not paid Pro (trial users
-          still see this so they can subscribe before their trial
-          runs out). Sub1 P2 — also suppressed when the user holds an
-          active Pro entitlement on a different platform; checkout
-          would create a duplicate subscription. */}
-      {(!isPro || isInTrial) && !crossPlatformPro && (
-        <div className="space-y-3">
-          {/* Free vs Pro comparison */}
-          <div className="bg-card rounded-2xl p-4 space-y-3">
-            <div className="grid grid-cols-2 gap-3 text-xs">
-              <div className="space-y-2">
-                <SectionLabel>Free (forever)</SectionLabel>
-                {/* Wave3 H — was text-muted-foreground, which fell below the
-                    AA contrast floor for 12px text on the dark card (REPORT
-                    10.3). Raised a step to text-foreground/80: clears AA in
-                    both themes while staying a touch softer than the Pro
-                    column's full text-foreground, so Pro keeps the emphasis. */}
-                <ul className="space-y-1.5 text-foreground/80">
-                  <li>Weight tracking + trend chart</li>
-                  <li>Manual meal logging</li>
-                  <li>Full workout logging</li>
-                  <li>Basic PR detection</li>
-                  <li>Simple summaries</li>
-                </ul>
-              </div>
-              <div className="space-y-2 bg-primary/5 rounded-lg p-2 -m-1">
-                <SectionLabel className="text-primary">Pro</SectionLabel>
-                <ul className="space-y-1.5 text-foreground">
-                  {[
-                    "Everything in Free +",
-                    "Unlimited AI photo food logging",
-                    "Full Performance Engine",
-                    "Macros that shift with your training",
-                    "Advanced insights",
-                  ].map((f) => (
-                    <li key={f} className="flex items-start gap-1.5">
-                      <Check
-                        className="size-3.5 text-primary mt-0.5 shrink-0"
-                        aria-hidden="true"
-                      />
-                      <span>{f}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
+      {/* ── Beat 1: the offer ─────────────────────────────────────── */}
+      {canBuy && beat === "offer" && (
+        <section className="space-y-4" aria-labelledby="pro-offer-heading">
+          <div className="text-center space-y-2 pt-2">
+            <h1
+              id="pro-offer-heading"
+              className="text-h1 font-extrabold text-foreground leading-tight"
+            >
+              Log a meal from a photo.
+            </h1>
+            <p className="text-sm text-muted-foreground max-w-[340px] mx-auto leading-relaxed">
+              Pro reads the plate and fills in the macros, then keeps your
+              calorie target honest as your weight moves.
+            </p>
           </div>
 
-          {/* Plan selector — radio group. Plan cards select; the CTA
-              below purchases. This page is the full pricing surface —
-              it does not delegate to ProModal. */}
-          <div
-            role="radiogroup"
-            aria-label="Choose Pro billing plan"
-            className="space-y-2 pt-2"
-          >
-            {plans.map((plan) => {
-              const isSelected = selectedPlan === plan.id;
-              return (
-                <button
-                  key={plan.id}
-                  type="button"
-                  role="radio"
-                  aria-checked={isSelected}
-                  disabled={loading}
-                  onClick={() => handlePlanSelect(plan.id)}
-                  className={cn(
-                    "relative w-full flex items-center justify-between p-4 rounded-xl border transition-all text-left",
-                    "min-h-[64px]",
-                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-                    "disabled:opacity-60 disabled:cursor-not-allowed",
-                    isSelected
-                      ? "bg-primary/10 border-primary ring-2 ring-primary/30"
-                      : "bg-card border-border/50 hover:border-primary/50"
-                  )}
-                >
-                  {plan.topBadge ? (
-                    <span className="absolute -top-2.5 left-4 text-caption px-2 py-0.5 rounded-full bg-primary-strong text-primary-foreground font-semibold uppercase tracking-wider">
-                      {plan.topBadge}
-                    </span>
-                  ) : null}
-                  <div className="flex items-center gap-3">
-                    <div
-                      className={cn(
-                        "size-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors",
-                        isSelected ? "border-primary" : "border-border"
-                      )}
-                      aria-hidden="true"
-                    >
-                      {isSelected ? (
-                        <div className="size-2.5 rounded-full bg-primary" />
-                      ) : null}
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-foreground">
-                        {plan.label}
-                      </p>
-                      {plan.savingsLabel ? (
-                        <p className="text-xs font-medium text-success-strong">
-                          {plan.savingsLabel}
-                        </p>
-                      ) : (
-                        <p className="text-xs text-muted-foreground">
-                          Billed {plan.billingFrequency}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-base font-bold text-foreground font-mono tabular-nums">
-                      {plan.price}
-                      <span className="text-xs font-medium text-muted-foreground">
-                        {plan.period}
-                      </span>
-                    </p>
-                    {/* Weekly anchoring (teardown pattern). */}
-                    <p className="text-xs text-muted-foreground font-mono tabular-nums">
-                      {weeklyPriceLabel(plan.id)}
-                    </p>
-                  </div>
-                </button>
-              );
-            })}
+          <ProPreview />
+
+          {withTrial ? (
+            <p className="flex items-center justify-center gap-2 text-base font-bold text-foreground">
+              <Check
+                className="size-5"
+                strokeWidth={3}
+                aria-hidden="true"
+                style={{ color: THEME.success }}
+              />
+              No payment due today
+            </p>
+          ) : (
+            <p className="text-sm text-muted-foreground text-center">
+              {getInlinePriceSummary()}. Cancel any time.
+            </p>
+          )}
+
+          <div className="space-y-2">
+            <button
+              type="button"
+              onClick={handleContinue}
+              className={cn(
+                "w-full min-h-[52px] rounded-2xl text-white font-bold text-base",
+                "flex items-center justify-center gap-2",
+                "active:scale-[0.98] transition-transform duration-150",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+              )}
+              style={{
+                background: `linear-gradient(135deg, ${THEME.brand}, ${THEME.teal})`,
+              }}
+            >
+              Continue
+            </button>
+            <Button
+              variant="ghost"
+              fullWidth
+              className="text-muted-foreground"
+              onClick={leave}
+            >
+              {leaveLabel}
+            </Button>
           </div>
+
+          <p className="text-caption text-muted-foreground text-center leading-snug">
+            {withTrial
+              ? "Billing starts when your free trial ends, unless you cancel before then."
+              : `${getInlinePriceSummary()}. Renews until cancelled.`}
+          </p>
+          {footer}
+        </section>
+      )}
+
+      {/* ── Beat 2: choose a plan ─────────────────────────────────── */}
+      {canBuy && beat === "plans" && (
+        <section className="space-y-4" aria-labelledby="pro-plans-heading">
+          <div className="space-y-1">
+            <h1
+              id="pro-plans-heading"
+              className="text-h1 font-extrabold text-foreground"
+            >
+              Choose your plan
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              {withTrial
+                ? "7 days free on either plan. Cancel before it ends and you pay nothing."
+                : "Both plans include everything in Pro."}
+            </p>
+          </div>
+
+          {/* Plan cards select; the CTA below purchases. This page is the
+              full pricing surface — it does not delegate to ProModal. */}
+          <PlanPicker
+            plans={plans}
+            selectedPlan={selectedPlan}
+            onSelect={handlePlanSelect}
+            disabled={loading}
+          />
 
           {/* Inline error from the checkout hook */}
           {error ? (
@@ -517,19 +559,16 @@ export default function Upgrade() {
             </p>
           ) : null}
 
-          {/* Direct purchase CTA — never opens another modal. */}
           {/* Sub1a trial transparency — what actually happens, before the ask. */}
-          {withTrial ? (
-            <div className="mb-3">
-              <TrialTimeline />
-            </div>
-          ) : null}
+          {withTrial ? <TrialTimeline /> : null}
+
+          {/* Direct purchase CTA — never opens another modal. */}
           <button
             type="button"
             onClick={handleCheckout}
             disabled={loading}
             className={cn(
-              "w-full min-h-[52px] rounded-2xl text-white font-bold text-base mt-1",
+              "w-full min-h-[52px] rounded-2xl text-white font-bold text-base",
               "flex items-center justify-center gap-2",
               "active:scale-[0.98] transition-transform duration-150",
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
@@ -557,23 +596,12 @@ export default function Upgrade() {
             {getRenewalDisclosure(selectedPlan, platform)}
           </p>
 
-          {platform === "ios" ? (
-            <button
-              type="button"
-              onClick={handleRestore}
-              disabled={loading}
-              className="block mx-auto text-caption text-muted-foreground underline underline-offset-2 disabled:opacity-50"
-            >
-              Restore purchases
-            </button>
-          ) : null}
-
-          <PaywallLegalLinks />
+          {footer}
 
           {/* Inline price-summary fallback for users who scrolled past
               the plan cards on a small viewport. */}
           <p className="sr-only">Pricing: {getInlinePriceSummary()}.</p>
-        </div>
+        </section>
       )}
     </div>
   );
