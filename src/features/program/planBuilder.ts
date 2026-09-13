@@ -59,7 +59,7 @@ import {
   CURRENT_PROGRAM_SCHEMA_VERSION,
   CURRENT_WEEKSCHEDULE_VERSION,
 } from "./programTypes";
-import { generateSchedule, type ScheduleDay } from "@/lib/scheduleUtils";
+import { planWeekSchedule, type ScheduleDay } from "@/lib/scheduleUtils";
 import { localWeekKey, parseLocalDate } from "@/lib/dateHelpers";
 import {
   generateProgram,
@@ -142,6 +142,8 @@ export interface PlanBuilderInput {
    *  applies RUN-EV-08's gate). Omitted → the nominal tier table. */
   runFitness?: RunFitnessInput | null;
   runTimeLimits?: RunTimeLimits | null;
+  recentLayoff?: import("./layoffDetection").LayoffClass;
+  weekSchedule?: ScheduleDay[];
   raceGoal?: {
     distance: "5k" | "10k" | "half" | "marathon";
     targetDate: string;
@@ -233,7 +235,7 @@ export interface PlanBuilderOutput {
 /** Produces the 7-day type structure (lift/run/both/rest). Pure. */
 function buildWeekSchedule(input: PlanBuilderInput): ScheduleDay[] {
   const runDays = input.runMode === "freeform" ? 0 : input.weeklyRunDays;
-  return generateSchedule(input.liftDays, runDays);
+  return planWeekSchedule(input.liftDays, runDays, input.weekSchedule);
 }
 
 /**
@@ -385,11 +387,9 @@ function buildRunPlan(
     }
     const racePlan = generateRacePlanV2({
       weekSchedule,
-      /* Run15 — plan CREATION, so "none" is the right answer and not a
-         placeholder: a plan being built for the first time is not a re-entry.
-         A returning runner reaches the generator through the rollover or the
-         realign, both of which resolve the real class. */
-      recentLayoff: "none",
+      // New plans have no prior layoff read; settings pass the same
+      // account-scoped evidence as the live weekly generator.
+      recentLayoff: input.recentLayoff ?? "none",
       raceGoal: input.raceGoal,
       weeklyRunDays: input.weeklyRunDays,
       currentDate: input.currentDate,

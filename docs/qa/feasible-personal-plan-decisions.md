@@ -81,3 +81,8 @@ or moved sessions keep their original identity. A moved row reserves its old
 slot so an edit cannot re-add it. Existing recovery remains intact. A different
 race/date remains an explicit new block. Regression tests compare the real
 preview and save and cover lifting-settings rebuilds through buildPlan.
+
+Settings also pass the existing account-scoped layoff classification into
+preview and save, so retaining block position does not reintroduce quality
+work for a returning runner. Existing weekday choices remain when lift/run
+counts are unchanged; a frequency change still generates a fitting layout.

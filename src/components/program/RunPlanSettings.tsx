@@ -125,6 +125,7 @@ function parseRaceDeepLink(params: URLSearchParams): RaceDeepLink | null {
 }
 
 interface RunPlanSettingsProps {
+  recentLayoff?: import("@/features/program/layoffDetection").LayoffClass;
   profile: UserProfile;
   /** Current programme state — threaded so buildPlan can preserve the
    *  lift prescription (`preserveHistory: true`) through a run-only save. */
@@ -155,6 +156,7 @@ const MODE_OPTIONS: { id: RunMode; label: string; desc: string }[] = [
 ];
 
 export default function RunPlanSettings({
+  recentLayoff = "none",
   profile,
   programState,
   refreshProfile,
@@ -262,6 +264,8 @@ export default function RunPlanSettings({
         runTimeLimits,
         easyPaceSPerKm: planningEasyPaceSPerKm(profile.runFitness),
         existingState: programState,
+        recentLayoff,
+        weekSchedule: profile.weekSchedule,
       }),
     [
       raceDistance,
@@ -274,6 +278,8 @@ export default function RunPlanSettings({
       runTimeLimits,
       profile.runFitness,
       programState,
+      recentLayoff,
+      profile.weekSchedule,
     ]
   );
 
@@ -384,6 +390,8 @@ export default function RunPlanSettings({
         runMode,
         weeklyRunDays,
         runTuning: { volume: runVolume, difficulty: runDifficulty },
+        recentLayoff,
+        weekSchedule: profile.weekSchedule,
         // Run17: the long-run ceiling is measured at the confirmed easy pace.
         runFitness: profile.runFitness ?? null,
         runTimeLimits,

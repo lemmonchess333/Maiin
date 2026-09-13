@@ -29,7 +29,7 @@ import type { ProgramState } from "@/features/program/programTypes";
  *
  * No medical warnings, no performance promises (Run9 / design system).
  */
-import { generateSchedule } from "./scheduleUtils";
+import { planWeekSchedule, type ScheduleDay } from "./scheduleUtils";
 import { localWeekKey, parseLocalDate } from "./dateHelpers";
 import {
   generateRacePlanV2,
@@ -80,6 +80,8 @@ export interface RaceGoalPlannerInput {
   runTimeLimits?: RunTimeLimits | null;
   easyPaceSPerKm?: number | null;
   existingState?: ProgramState | null;
+  recentLayoff?: import("@/features/program/layoffDetection").LayoffClass;
+  weekSchedule?: ScheduleDay[];
 }
 
 export interface RaceGoalPlannerState {
@@ -175,20 +177,20 @@ export function getRaceGoalPlannerState(
   const weeksOut = Math.ceil(daysOut / 7);
 
   // Build the plan through the SAME engine + derivation the save path uses.
-  const weekSchedule = generateSchedule(liftDays, weeklyRunDays);
+  const weekSchedule = planWeekSchedule(
+    liftDays,
+    weeklyRunDays,
+    input.weekSchedule
+  );
   const weekStart = localWeekKey(now);
   const continued = continuingRacePlan(input.existingState?.runPlan, {
     distance,
     targetDate,
   });
   const plan = generateRacePlanV2({
-    /* Run15 — this is the date-picker PREVIEW, which answers "is there time
-       for this race?", a question about the calendar rather than about the
-       runner. Threading a layoff here would make the preview disagree with
-       the plan the user gets on save only when they are ALSO detrained, which
-       is the confusing half of the truth. The re-entry decision belongs to
-       the realign flow, where it can be explained. */
-    recentLayoff: "none",
+    // Settings preview the same returning-runner guard used by the save.
+    // Calendar-only callers deliberately retain the no-history fallback.
+    recentLayoff: input.recentLayoff ?? "none",
     weekSchedule,
     raceGoal: { distance, targetDate },
     weeklyRunDays,

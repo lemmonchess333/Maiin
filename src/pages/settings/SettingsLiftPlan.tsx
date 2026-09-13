@@ -57,6 +57,7 @@ export default function SettingsLiftPlan() {
     updateSettings,
     regenerateProgram,
     refreshRunSchedule,
+    recentLayoff,
   } = useProgram();
 
   const [editLayoutOpen, setEditLayoutOpen] = useState(false);
@@ -83,6 +84,7 @@ export default function SettingsLiftPlan() {
           variant="lift"
           profile={profile}
           programState={programState}
+          recentLayoff={recentLayoff}
           updateSettings={updateSettings}
           regenerateProgram={regenerateProgram}
           refreshProfile={refreshProfile}

@@ -43,6 +43,68 @@ function midBlock() {
 }
 
 describe("same-race plan edits", () => {
+  it("keeps chosen weekdays and the returning-runner guard in preview and save", () => {
+    const existing = midBlock();
+    const customWeek = [0, 1, 2, 3, 4, 5, 6].map((day) => ({
+      day,
+      type: ([0, 1, 3, 5].includes(day)
+        ? "run"
+        : day === 2 || day === 4
+          ? "lift"
+          : "rest") as "run" | "lift" | "rest",
+    }));
+    const limits = { sessionMinutes: 30, longRunMinutes: 45 };
+    const saved = buildPlan({
+      ...base,
+      currentDate: today,
+      preserveHistory: true,
+      existingState: existing,
+      weekSchedule: customWeek,
+      recentLayoff: "detrained",
+      runTimeLimits: limits,
+    });
+    expect(saved.weekSchedule).toEqual(customWeek);
+    expect(
+      saved.programState.runDays!.map((run) => run.dayIndex).sort()
+    ).toEqual([0, 1, 3, 5]);
+    expect(
+      saved.programState.runDays!.some((run) =>
+        ["tempo", "intervals"].includes(run.type)
+      )
+    ).toBe(false);
+    const preview = getRaceGoalPlannerState({
+      distance: goal.distance,
+      targetDate: goal.targetDate,
+      currentDate: today,
+      liftDays: 2,
+      weeklyRunDays: 4,
+      existingState: existing,
+      weekSchedule: customWeek,
+      recentLayoff: "detrained",
+      runTimeLimits: limits,
+    });
+    expect(preview.firstWeekMinutes).toBe(
+      saved.programState.runDays!.reduce(
+        (sum, run) =>
+          sum +
+          RUN_TEMPLATES.find((template) => template.id === run.templateId)!
+            .estimatedDuration,
+        0
+      )
+    );
+    const changed = buildPlan({
+      ...base,
+      currentDate: today,
+      weeklyRunDays: 3,
+      weekSchedule: customWeek,
+    });
+    expect(
+      changed.weekSchedule.filter(
+        (day) => day.type === "run" || day.type === "both"
+      )
+    ).toHaveLength(3);
+  });
+
   it("keeps block position and matches the actual preview and saved prescription", () => {
     const existing = midBlock();
     const limits = { sessionMinutes: 30, longRunMinutes: 45 };

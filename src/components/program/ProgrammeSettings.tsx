@@ -104,6 +104,7 @@ import type { UserProfile } from "@/lib/auth";
 type SplitChoice = (typeof VALID_SPLIT_CHOICES)[number];
 
 interface ProgrammeSettingsProps {
+  recentLayoff?: import("@/features/program/layoffDetection").LayoffClass;
   profile: UserProfile;
   programState: ProgramState | null;
   /** Live-saves the engine toggles (auto-progression / microloading). */
@@ -397,6 +398,7 @@ const INJURY_OPTIONS: {
 
 // Run9 (3a): `structured` retired as a user-selectable mode — running is
 export default function ProgrammeSettings({
+  recentLayoff = "none",
   profile,
   programState,
   updateSettings,
@@ -615,6 +617,8 @@ export default function ProgrammeSettings({
         // Run17: the long-run ceiling is measured at the confirmed easy pace.
         runFitness: profile.runFitness ?? null,
         runTimeLimits: profile.runTimeLimits ?? null,
+        recentLayoff,
+        weekSchedule: profile.weekSchedule,
         ...(saved.runMode === "race_prep" && saved.raceTargetDate
           ? {
               raceGoal: {
