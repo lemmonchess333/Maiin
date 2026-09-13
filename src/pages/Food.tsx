@@ -66,6 +66,7 @@ import { useScanUsage } from "@/hooks/useScanUsage";
 import { useInFlightGuard } from "@/hooks/useInFlightGuard";
 import { useScanButtonOverrides } from "@/components/food/scanButtonOverrides";
 import FoodComposerCard from "@/components/food/FoodComposerCard";
+import FoodProStrip from "@/components/food/FoodProStrip";
 import FoodConsistencyCard from "@/components/food/FoodConsistencyCard";
 import { FoodSkeleton } from "@/components/LoadingSkeleton";
 import type {
@@ -1909,6 +1910,21 @@ export default function Food() {
         </Card>
       )}
 
+      {/* Photo logging gated for this tier: say why the camera is locked
+          and where Pro is, above the composer. Rendered only when it has
+          something to say — an empty wrapper would be a step in the page
+          rhythm. */}
+      {!scanUsage.loading &&
+        !scanUsage.isUnlimited &&
+        scanUsage.limit === 0 && (
+          <motion.div variants={pageItemVariant}>
+            <FoodProStrip
+              limit={scanUsage.limit}
+              isUnlimited={scanUsage.isUnlimited}
+              loading={scanUsage.loading}
+            />
+          </motion.div>
+        )}
       <motion.div variants={pageItemVariant}>
         <FoodComposerCard
           ref={suggestionsRef}

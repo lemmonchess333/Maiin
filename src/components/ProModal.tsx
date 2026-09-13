@@ -36,7 +36,6 @@ import {
   DEFAULT_PLAN,
   getCheckoutCtaLabel,
   getRenewalDisclosure,
-  weeklyPriceLabel,
   type PlanId,
 } from "@/lib/proPlans";
 import { getProFeature, type ProFeatureKey } from "@/lib/proFeatures";
@@ -50,16 +49,19 @@ import { cn } from "@/lib/utils";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { Spinner } from "@/components/ui/Spinner";
 import { PaywallLegalLinks } from "@/components/paywall/PaywallLegalLinks";
+import PlanPicker from "@/components/paywall/PlanPicker";
+import ProPreview from "@/components/paywall/ProPreview";
 
 /**
- * Feature-specific blurred-preview cards. Keyed by `ProFeatureKey`
- * so the lookup is type-safe — any drift between proFeatures.ts
- * and this map gets caught by the compiler.
+ * Feature-specific preview. Keyed by `ProFeatureKey` so the lookup is
+ * type-safe — any drift between proFeatures.ts and this map gets caught
+ * by the compiler.
  *
- * Not every feature key has a custom preview. After #977 the registry
- * is two keys (`ai_food_logging` + `adaptive_tdee`); this map covers the
- * AI-food preview. Keys without a preview fall back to the registry's
- * title + tagline.
+ * The AI-food gate shows the product itself (`ProPreview`, the same
+ * scan-result frame the Upgrade page leads with) rather than the blurred
+ * fake card it used to: a paywall opened at the moment of intent should
+ * show what the tap would have done. Keys without a preview fall back to
+ * the registry's title + tagline.
  */
 const FEATURE_PREVIEWS: Partial<
   Record<ProFeatureKey, { icon: React.ReactNode; preview: React.ReactNode }>
@@ -71,47 +73,7 @@ const FEATURE_PREVIEWS: Partial<
         style={{ color: THEME.semantic.nutrition }}
       />
     ),
-    preview: (
-      <div className="relative rounded-xl overflow-hidden">
-        <div
-          className="blur-sm pointer-events-none select-none p-4 rounded-xl border border-border"
-          style={{ background: `${THEME.semantic.nutrition}12` }}
-        >
-          <div className="text-xs text-muted-foreground mb-2">
-            Detected: Chicken &amp; rice bowl
-          </div>
-          <div className="flex gap-2">
-            {[
-              ["P", "42g", THEME.teal],
-              ["C", "58g", THEME.brand],
-              ["F", "12g", THEME.semantic.nutrition],
-            ].map(([l, v, c]) => (
-              <div
-                key={String(l)}
-                className="flex-1 text-center p-2 rounded-lg"
-                style={{ background: `${c}18` }}
-              >
-                <p className="text-xs font-bold" style={{ color: String(c) }}>
-                  {v}
-                </p>
-                <p className="text-xs text-muted-foreground">{l}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-        <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-card/85">
-          <div className="flex flex-col items-center gap-1">
-            <Utensils
-              className="size-7"
-              style={{ color: THEME.semantic.nutrition }}
-            />
-            <p className="text-xs font-semibold text-foreground">
-              Unlock AI logging
-            </p>
-          </div>
-        </div>
-      </div>
-    ),
+    preview: <ProPreview frames={["scan"]} variant="single" />,
   },
 };
 
@@ -320,83 +282,13 @@ export default function ProModal({ onClose, featureKey, initialPlan }: Props) {
           ))}
         </ul>
 
-        {/* Plan selector — radiogroup. */}
-        <div
-          role="radiogroup"
-          aria-label="Choose Pro billing plan"
-          className="space-y-2"
-        >
-          {plans.map((plan) => {
-            const isSelected = selectedPlan === plan.id;
-            return (
-              <button
-                key={plan.id}
-                type="button"
-                role="radio"
-                aria-checked={isSelected}
-                disabled={loading}
-                onClick={() => handlePlanSelect(plan.id)}
-                className={cn(
-                  "relative w-full flex items-center justify-between p-4 rounded-2xl border transition-colors text-left",
-                  "min-h-[64px]",
-                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-                  "disabled:opacity-60 disabled:cursor-not-allowed",
-                  isSelected
-                    ? "border-primary bg-primary/10"
-                    : "border-border bg-card hover:border-primary/40"
-                )}
-              >
-                {plan.topBadge ? (
-                  <span className="absolute -top-2.5 left-4 text-caption px-2 py-0.5 rounded-full bg-primary-strong text-primary-foreground font-semibold uppercase tracking-wider">
-                    {plan.topBadge}
-                  </span>
-                ) : null}
-
-                <div className="flex items-center gap-3">
-                  <div
-                    className={cn(
-                      "size-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors",
-                      isSelected ? "border-primary" : "border-border"
-                    )}
-                    aria-hidden="true"
-                  >
-                    {isSelected ? (
-                      <div className="size-2.5 rounded-full bg-primary" />
-                    ) : null}
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-foreground leading-tight">
-                      {plan.label}
-                    </p>
-                    {plan.savingsLabel ? (
-                      <p className="text-xs font-medium text-success-strong mt-0.5">
-                        {plan.savingsLabel}
-                      </p>
-                    ) : (
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        Billed {plan.billingFrequency}
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                <div className="text-right">
-                  <p className="text-base font-bold text-foreground font-mono tabular-nums">
-                    {plan.price}
-                    <span className="text-xs font-medium text-muted-foreground">
-                      {plan.period}
-                    </span>
-                  </p>
-                  {/* Weekly anchoring (teardown pattern): both plans in the
-                      same per-week unit makes the annual saving visceral. */}
-                  <p className="text-xs text-muted-foreground font-mono tabular-nums">
-                    {weeklyPriceLabel(plan.id)}
-                  </p>
-                </div>
-              </button>
-            );
-          })}
-        </div>
+        {/* Plan selector — shared with the Upgrade page. */}
+        <PlanPicker
+          plans={plans}
+          selectedPlan={selectedPlan}
+          onSelect={handlePlanSelect}
+          disabled={loading}
+        />
       </div>
 
       {/* Sticky footer — CTA + disclosure + optional restore. */}
