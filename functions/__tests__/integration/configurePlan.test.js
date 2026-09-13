@@ -354,6 +354,10 @@ suite("completeOnboarding — emulator integration", () => {
     expect(Array.isArray(userData.weekSchedule)).toBe(true);
     expect(userData.weekSchedule.length).toBe(7);
     expect(userData.weekScheduleVersion).toBe(1);
+    // No trial is granted at onboarding (Sub1a pin 3): the free tier,
+    // with nothing that would make checkout refuse the card trial.
+    expect(userData.trialExpiresAt ?? null).toBeNull();
+    expect(userData.hasUsedTrial ?? null).toBeNull();
 
     // programState doc — committed in the same batch.
     const psDoc = await getDocSettled(
@@ -401,133 +405,5 @@ suite("completeOnboarding — emulator integration", () => {
       .doc("current")
       .get();
     expect(psDoc.exists).toBe(false);
-  });
-});
-
-// ── Free-week cap per address (Sub1a pin 1's mitigation) ─────────────
-//
-// The onboarding free week is per account and needs no card; after three
-// grants from one network address in seven days, further accounts from
-// it onboard as free. Driven through the real callable against the
-// emulator with the forwarded-for header the platform sets, so the
-// accounting that runs in production is the accounting under test.
-const { ipKey } = require("../../lib/trialIpCap");
-const CAP_IP = "203.0.113.77";
-const OTHER_IP = "198.51.100.5";
-const CAP_UIDS = [
-  "u-ipcap-1",
-  "u-ipcap-2",
-  "u-ipcap-3",
-  "u-ipcap-4",
-  "u-ipcap-5",
-];
-
-async function clearCapState() {
-  for (const uid of CAP_UIDS) {
-    const userRef = db.collection("users").doc(uid);
-    await userRef
-      .collection("programState")
-      .doc("current")
-      .delete()
-      .catch(() => {});
-    await userRef.delete().catch(() => {});
-    await db
-      .collection("trialLedger")
-      .doc(uid)
-      .delete()
-      .catch(() => {});
-    await db
-      .collection("rateLimits")
-      .doc(`${uid}_onboarding`)
-      .delete()
-      .catch(() => {});
-  }
-  for (const ip of [CAP_IP, OTHER_IP]) {
-    await db
-      .collection("rateLimits")
-      .doc(`${ipKey(ip)}_trialGrant`)
-      .delete()
-      .catch(() => {});
-  }
-}
-
-async function onboardFrom(uid, ip) {
-  const result = await completeOnboarding.run(
-    {
-      profileData: {
-        ...validProfileUpdates(),
-        weightKg: 72,
-        heightCm: 180,
-        age: 28,
-        sex: "male",
-        activityLevel: "active",
-      },
-      programState: validProgramState(),
-      weekSchedule: validWeekSchedule(),
-    },
-    { auth: { uid }, rawRequest: { headers: { "x-forwarded-for": ip } } }
-  );
-  expect(result).toMatchObject({ success: true });
-  const doc = await getDocSettled(db.collection("users").doc(uid));
-  return doc.data();
-}
-
-suite("completeOnboarding — free-week cap per address", () => {
-  beforeEach(async () => {
-    await clearCapState();
-  });
-
-  it("grants three free weeks from one address, then onboards the fourth as free — and a different address is unaffected", async () => {
-    for (const uid of CAP_UIDS.slice(0, 3)) {
-      const data = await onboardFrom(uid, CAP_IP);
-      expect(typeof data.trialExpiresAt, uid).toBe("string");
-      expect(Date.parse(data.trialExpiresAt)).toBeGreaterThan(Date.now());
-      // The free week is THE trial: stamped used at grant time.
-      expect(data.hasUsedTrial, uid).toBe(true);
-    }
-
-    const fourth = await onboardFrom("u-ipcap-4", CAP_IP);
-    expect(fourth.onboardingComplete).toBe(true);
-    expect(fourth.subscriptionTier).toBe("free");
-    expect(fourth.trialExpiresAt ?? null).toBeNull();
-    // Nothing granted, nothing consumed: the card trial stays open to them.
-    expect(fourth.hasUsedTrial ?? null).toBeNull();
-    // No durable marker either: nothing was granted, so nothing to tombstone.
-    const ledger = await db.collection("trialLedger").doc("u-ipcap-4").get();
-    expect(ledger.exists).toBe(false);
-
-    const fifth = await onboardFrom("u-ipcap-5", OTHER_IP);
-    expect(typeof fifth.trialExpiresAt).toBe("string");
-
-    // The window doc carries the hash and timestamps, never the address.
-    const window = await db
-      .collection("rateLimits")
-      .doc(`${ipKey(CAP_IP)}_trialGrant`)
-      .get();
-    expect(window.exists).toBe(true);
-    expect(window.data().timestamps).toHaveLength(3);
-    expect(JSON.stringify(window.data())).not.toContain(CAP_IP);
-    expect(window.id).not.toContain(CAP_IP);
-  });
-
-  it("with no address on the request, the free week is granted as before", async () => {
-    const result = await completeOnboarding.run(
-      {
-        profileData: {
-          ...validProfileUpdates(),
-          weightKg: 72,
-          heightCm: 180,
-          age: 28,
-          sex: "male",
-          activityLevel: "active",
-        },
-        programState: validProgramState(),
-        weekSchedule: validWeekSchedule(),
-      },
-      { auth: { uid: "u-ipcap-1" } }
-    );
-    expect(result).toMatchObject({ success: true });
-    const doc = await getDocSettled(db.collection("users").doc("u-ipcap-1"));
-    expect(typeof doc.data().trialExpiresAt).toBe("string");
   });
 });
