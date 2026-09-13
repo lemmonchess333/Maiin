@@ -132,6 +132,27 @@ export function getSubscriptionInfo(
    HOOK
 ================================ */
 
+/**
+ * True once the onboarding free week (`trialExpiresAt`) has lapsed.
+ *
+ * The free week is the reverse trial — full Pro from onboarding, no card
+ * — and the card trial at checkout is offered AFTER it as an extension
+ * ("7 more days free"), so the surfaces that sell Pro need to know which
+ * side of the lapse the user is on: a first-timer is offered a trial, a
+ * lapsed user is offered to keep what they had. Tier-agnostic on
+ * purpose (a subscriber's old expiry is still "lapsed"); callers that
+ * care combine it with `isPro`.
+ */
+export function hasLapsedOnboardingTrial(
+  profile: Pick<UserProfile, "trialExpiresAt"> | null | undefined,
+  now: Date = new Date()
+): boolean {
+  const raw = profile?.trialExpiresAt;
+  if (!raw) return false;
+  const expires = Date.parse(raw);
+  return Number.isFinite(expires) && expires < now.getTime();
+}
+
 export function useSubscription(): SubscriptionInfo {
   const { profile } = useAuth();
   return useMemo(() => getSubscriptionInfo(profile), [profile]);

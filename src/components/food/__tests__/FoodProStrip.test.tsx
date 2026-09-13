@@ -98,6 +98,53 @@ describe("FoodProStrip — copy and destination", () => {
     expect(screen.queryByText(/trial has ended/)).toBeNull();
   });
 
+  it("after the free week lapses, says so and offers to keep Pro", () => {
+    authProfileMock.mockReturnValue({
+      hasUsedTrial: false,
+      trialExpiresAt: "2020-01-01T00:00:00.000Z",
+    });
+    renderStrip();
+    expect(
+      screen.getByText(
+        "Your free week has ended. Typing and search still work."
+      )
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Keep Pro" })
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/Snap the plate/)).toBeNull();
+  });
+
+  it("a lapsed free week after the card trial was used gets no extension to keep", () => {
+    authProfileMock.mockReturnValue({
+      hasUsedTrial: true,
+      trialExpiresAt: "2020-01-01T00:00:00.000Z",
+    });
+    renderStrip();
+    expect(
+      screen.getByText(
+        "Your free trial has ended. Typing and search still work."
+      )
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "See Pro" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Keep Pro" })).toBeNull();
+  });
+
+  it("a live free week never shows the strip's lapsed copy (the camera is open)", () => {
+    // limit === 0 cannot coincide with a live trial in production
+    // (isUnlimited would be true); pin the copy branch anyway so the
+    // helper's boundary, not the quota, is what decides.
+    authProfileMock.mockReturnValue({
+      hasUsedTrial: false,
+      trialExpiresAt: "2999-01-01T00:00:00.000Z",
+    });
+    renderStrip();
+    expect(screen.queryByText(/free week has ended/)).toBeNull();
+    expect(
+      screen.getByRole("button", { name: "Try Pro free" })
+    ).toBeInTheDocument();
+  });
+
   it("the CTA opens the offer page tagged with the Food entry", () => {
     renderStrip();
     fireEvent.click(screen.getByRole("button", { name: "See Pro" }));

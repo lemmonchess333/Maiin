@@ -289,6 +289,43 @@ describe("Upgrade — the offer beat (what the page opens on)", () => {
     ).toBeInTheDocument();
   });
 
+  it("after a lapsed free week, the trial reads as keeping Pro with 7 more days free", () => {
+    authProfileMock.mockReturnValue({
+      hasUsedTrial: false,
+      trialExpiresAt: "2020-01-01T00:00:00.000Z",
+    });
+    renderPage();
+    expect(
+      screen.getByText(
+        /Your free week is over\. Keep Pro with 7 more days free/
+      )
+    ).toBeInTheDocument();
+    expect(screen.getByText("No payment due today")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+    expect(
+      screen.getByText(
+        "7 more days free on either plan. Cancel before it ends and you pay nothing."
+      )
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Keep Pro — 7 more days free" })
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/Start your 7-day free trial/)).toBeNull();
+  });
+
+  it("a first-timer is still offered a trial to start, not an extension", () => {
+    authProfileMock.mockReturnValue({
+      hasUsedTrial: false,
+      trialExpiresAt: null,
+    });
+    renderPage();
+    expect(screen.queryByText(/Your free week is over/)).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+    expect(
+      screen.getByRole("button", { name: /Start your 7-day free trial/ })
+    ).toBeInTheDocument();
+  });
+
   it("shows a post-trial user the prices instead of a trial promise", () => {
     renderPage();
     expect(screen.queryByText("No payment due today")).toBeNull();

@@ -67,6 +67,19 @@ describe("getCheckoutCtaLabel", () => {
     expect(getCheckoutCtaLabel("monthly")).toBe("Start Pro — £3.99/mo");
     expect(getCheckoutCtaLabel("yearly")).toBe("Start Pro — £34.99/yr");
   });
+
+  it("after a lapsed free week the same trial reads as keeping Pro, not starting it", () => {
+    expect(getCheckoutCtaLabel("monthly", true, true)).toBe(
+      "Keep Pro — 7 more days free"
+    );
+    expect(getCheckoutCtaLabel("yearly", true, true)).toBe(
+      "Keep Pro — 7 more days free"
+    );
+    // Extension without a trial to extend is just the priced CTA.
+    expect(getCheckoutCtaLabel("monthly", false, true)).toBe(
+      "Start Pro — £3.99/mo"
+    );
+  });
 });
 
 describe("getRenewalDisclosure", () => {

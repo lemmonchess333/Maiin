@@ -6,6 +6,7 @@ import { useAuth } from "@/lib/auth";
 import { THEME } from "@/lib/theme";
 import { haptic } from "@/lib/haptic";
 import { track } from "@/lib/paywallAnalytics";
+import { hasLapsedOnboardingTrial } from "@/lib/subscription";
 
 /**
  * FoodProStrip — says why the camera is locked, and where Pro is.
@@ -35,6 +36,9 @@ export default function FoodProStrip({ limit, isUnlimited, loading }: Props) {
   if (loading || isUnlimited || limit !== 0) return null;
 
   const trialUsed = !!profile?.hasUsedTrial;
+  // The onboarding free week has lapsed and the card trial is still on
+  // offer: they know photo logging, so this is keeping it, not trying it.
+  const lapsedFreeWeek = !trialUsed && hasLapsedOnboardingTrial(profile);
 
   return (
     <Card size="compact" tone="muted" className="flex items-center gap-3">
@@ -55,7 +59,9 @@ export default function FoodProStrip({ limit, isUnlimited, loading }: Props) {
         <p className="text-xs text-muted-foreground leading-snug mt-0.5">
           {trialUsed
             ? "Your free trial has ended. Typing and search still work."
-            : "Snap the plate, get the macros. Typing and search are free."}
+            : lapsedFreeWeek
+              ? "Your free week has ended. Typing and search still work."
+              : "Snap the plate, get the macros. Typing and search are free."}
         </p>
       </div>
       <Button
@@ -72,7 +78,7 @@ export default function FoodProStrip({ limit, isUnlimited, loading }: Props) {
           navigate("/upgrade?from=food");
         }}
       >
-        {trialUsed ? "See Pro" : "Try Pro free"}
+        {trialUsed ? "See Pro" : lapsedFreeWeek ? "Keep Pro" : "Try Pro free"}
       </Button>
     </Card>
   );
