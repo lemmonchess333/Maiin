@@ -605,6 +605,7 @@ const {
   trialExpiryIso,
   shouldGrantTrial,
 } = require("./lib/durableTrial");
+const { isTrialGrantCapped } = require("./lib/trialIpCap");
 
 exports.completeOnboarding = functions
   .runWith(DEFAULT_HTTP_CAP)
@@ -774,8 +775,23 @@ exports.completeOnboarding = functions
             ledgerExists: ledgerSnap.exists,
           })
         ) {
-          profileData.trialExpiresAt = trialExpiryIso(new Date());
-          grantTrial = true;
+          // Sub1a pin 1's mitigation: the free week is per account and
+          // needs no card, so a fresh email is a fresh week. After three
+          // grants from one network address in seven days, further
+          // accounts from it still onboard — as free. See lib/trialIpCap.
+          const { capped, key } = await isTrialGrantCapped({
+            db,
+            rawRequest: context.rawRequest,
+          });
+          if (capped) {
+            functions.logger.warn("completeOnboarding.trial_ip_capped", {
+              uid,
+              key,
+            });
+          } else {
+            profileData.trialExpiresAt = trialExpiryIso(new Date());
+            grantTrial = true;
+          }
         }
         // else: durable marker present → onboard as free, never re-grant.
         if (!profileData.createdAt) {
