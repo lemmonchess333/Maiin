@@ -32,7 +32,8 @@
  * gradeAdjustedPace / raceGoalPlanner. Local-date math only, via the
  * dateHelpers (never UTC).
  */
-import { localWeekKey, parseLocalDate } from "./dateHelpers";
+import { addLocalDays, localWeekKey, parseLocalDate } from "./dateHelpers";
+import { isRunDateKey, type RunExecutionTarget } from "./runExecutionEvidence";
 
 /** Trailing window (days) a rated run must fall inside to count. */
 export const WINDOW_DAYS = 10;
@@ -59,10 +60,24 @@ export const PACE_RECENT_COUNT = 3;
 /** Minimum "slow" verdicts among those to trigger. */
 export const PACE_MIN_SLOW = 2;
 
+/** Review heuristic only, not a success grade or prescription rule. The
+ * distance claim policy also uses 70%; keeping it local avoids coupling
+ * advisory feedback to the separate slot-completion contract. */
+export const SHORT_TARGET_RATIO = 0.7;
+export const EXECUTION_POLICY_VERSION = "run-execution-v1";
+
 export type RelativeEffort = "easier" | "matched" | "harder" | null;
 export type PaceVerdictTone = "on" | "fast" | "easy-too-fast" | "slow";
 
 export interface EaseWeekNudgeRun {
+  id?: string;
+  completedAtMs?: number;
+  distance?: number;
+  duration?: number;
+  isInvalid?: boolean;
+  savedAnyway?: boolean;
+  routeQuality?: string | null;
+  executionTarget?: RunExecutionTarget | null;
   /** Local YYYY-MM-DD the run was completed. */
   date: string;
   /** The post-run check-in (#1523); null when the athlete skipped it. */
@@ -117,6 +132,20 @@ export type EaseWeekNudgeResult =
       slowCount: number;
       judgedCount: number;
       windowDays: number;
+    }
+  | {
+      show: true;
+      trigger: "short_sessions";
+      shortCount: number;
+      comparedCount: number;
+      windowDays: number;
+      policyVersion: typeof EXECUTION_POLICY_VERSION;
+      evidence: Array<{
+        id: string;
+        date: string;
+        actual: number;
+        target: RunExecutionTarget;
+      }>;
     };
 
 /** Calendar-day gap a→b (b earlier than a → positive). Local midnights,
@@ -124,6 +153,48 @@ export type EaseWeekNudgeResult =
 function daysBetween(a: string, b: string): number {
   const ms = parseLocalDate(a).getTime() - parseLocalDate(b).getTime();
   return Math.round(ms / 86_400_000);
+}
+
+function eligible(run: EaseWeekNudgeRun): boolean {
+  return (
+    isRunDateKey(run.date) &&
+    run.isInvalid !== true &&
+    run.savedAnyway !== true &&
+    (run.distance === undefined ||
+      (Number.isFinite(run.distance) && run.distance >= 50)) &&
+    (run.duration === undefined ||
+      (Number.isFinite(run.duration) && run.duration >= 30))
+  );
+}
+
+function latestFirst(a: EaseWeekNudgeRun, b: EaseWeekNudgeRun): number {
+  return (
+    b.date.localeCompare(a.date) ||
+    (b.completedAtMs ?? 0) - (a.completedAtMs ?? 0) ||
+    (a.id ?? "").localeCompare(b.id ?? "")
+  );
+}
+
+function recentRuns(runs: EaseWeekNudgeRun[]): EaseWeekNudgeRun[] {
+  const seen = new Set<string>();
+  return runs
+    .filter(eligible)
+    .sort(latestFirst)
+    .filter((run) => {
+      if (!run.id) return true; // compatibility with the original pure input
+      if (seen.has(run.id)) return false;
+      seen.add(run.id);
+      return true;
+    });
+}
+
+function judgeableTempo(run: EaseWeekNudgeRun): boolean {
+  return (
+    run.activityType === "tempo" &&
+    ["on", "slow", "fast"].includes(run.paceVerdictTone ?? "") &&
+    run.routeQuality !== "poor" &&
+    run.routeQuality !== "patchy"
+  );
 }
 
 /**
@@ -136,6 +207,7 @@ export function evaluateEaseWeekNudge(
 ): EaseWeekNudgeResult {
   // ── Scope + restraint short-circuits (Run14d / Run14f) ──
   if (!input.isRacePrep) return { show: false };
+  if (!isRunDateKey(input.today)) return { show: false };
   if (input.phaseSuppressed) return { show: false };
   if (input.weekAlreadyEased) return { show: false };
   if (input.fellBehindPending) return { show: false };
@@ -143,7 +215,7 @@ export function evaluateEaseWeekNudge(
   const currentWeekKey = localWeekKey(parseLocalDate(input.today));
   if (input.dismissedWeekKey === currentWeekKey) return { show: false };
 
-  if (input.lastShownAt !== null) {
+  if (isRunDateKey(input.lastShownAt)) {
     const sinceShown = daysBetween(input.today, input.lastShownAt);
     // `sinceShown === 0` is the SAME day the card is currently showing —
     // the card records lastShownAt on mount, and the parent re-evaluates
@@ -154,14 +226,15 @@ export function evaluateEaseWeekNudge(
   }
 
   // ── Trigger (Run14b) ──
-  const recentRated = input.runs
+  const runs = recentRuns(input.runs);
+  const recentRated = runs
     .filter((r) => {
-      if (r.relativeEffort === null) return false;
+      if (!["easier", "matched", "harder"].includes(r.relativeEffort ?? ""))
+        return false;
       const age = daysBetween(input.today, r.date);
       // In window, and never a future-dated run.
       return age >= 0 && age <= WINDOW_DAYS;
     })
-    .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0))
     .slice(0, RECENT_RATED_COUNT);
 
   const harderCount = recentRated.filter(
@@ -178,15 +251,62 @@ export function evaluateEaseWeekNudge(
     };
   }
 
+  // Repeated substantial shortfalls are a reason to REVIEW the remaining
+  // quality, not evidence of fatigue. Compare only unchanged saved targets.
+  const compared = runs
+    .filter((run) => {
+      const age = daysBetween(input.today, run.date);
+      const target = run.executionTarget;
+      const actual = target?.unit === "seconds" ? run.duration : run.distance;
+      return (
+        age >= 0 &&
+        age <= WINDOW_DAYS &&
+        run.routeQuality !== "poor" &&
+        run.routeQuality !== "patchy" &&
+        !!run.id &&
+        !!target &&
+        (target.unit === "seconds" || target.unit === "metres") &&
+        Number.isFinite(target.value) &&
+        target.value > 0 &&
+        typeof actual === "number" &&
+        Number.isFinite(actual) &&
+        actual > 0
+      );
+    })
+    .slice(0, RECENT_RATED_COUNT);
+  const short = compared.filter((run) => {
+    const target = run.executionTarget!;
+    const actual = target.unit === "seconds" ? run.duration! : run.distance!;
+    return actual / target.value < SHORT_TARGET_RATIO;
+  });
+  if (short.length >= MIN_HARDER) {
+    return {
+      show: true,
+      trigger: "short_sessions",
+      shortCount: short.length,
+      comparedCount: compared.length,
+      windowDays: WINDOW_DAYS,
+      policyVersion: EXECUTION_POLICY_VERSION,
+      evidence: short.map((run) => ({
+        id: run.id!,
+        date: run.date,
+        actual:
+          run.executionTarget!.unit === "seconds"
+            ? run.duration!
+            : run.distance!,
+        target: run.executionTarget!,
+      })),
+    };
+  }
+
   // ── A6 trigger: repeated pace misses on quality sessions ──
   // Evaluated only when the user-authored trigger did not fire.
-  const judgedTempo = input.runs
+  const judgedTempo = runs
     .filter((r) => {
-      if (r.activityType !== "tempo" || !r.paceVerdictTone) return false;
+      if (!judgeableTempo(r)) return false;
       const age = daysBetween(input.today, r.date);
       return age >= 0 && age <= PACE_WINDOW_DAYS;
     })
-    .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0))
     .slice(0, PACE_RECENT_COUNT);
 
   const slowCount = judgedTempo.filter(
@@ -211,8 +331,9 @@ export function evaluateEaseWeekNudge(
  * records the weekKey), the interesting question the following week is:
  * did the quality come back? One factual read, in the honest register:
  *
- *   "recovered"     — this week's judged tempo landed on target (or
- *                     fast): the easier week did its job, ramp resumes.
+ *   "recovered"     — legacy internal name: latest tempo was on target.
+ *                     It does not establish recovery or causation.
+ *   "above_window"  — latest tempo was faster than its target window.
  *   "still_missing" — this week's judged tempo is still slow: worth
  *                     keeping the load gentle (the nudge machinery
  *                     stays available; this line only INFORMS).
@@ -223,7 +344,11 @@ export function evaluateEaseWeekNudge(
  * The read uses the LATEST judged tempo of the current week, so an
  * early miss followed by an on-target repeat resolves to "recovered".
  */
-export type PostEaseBounce = "recovered" | "still_missing" | null;
+export type PostEaseBounce =
+  | "recovered"
+  | "still_missing"
+  | "above_window"
+  | null;
 
 export function evaluatePostEaseBounce(input: {
   /** Monday weekKey the athlete applied an easier week in, or null. */
@@ -232,25 +357,22 @@ export function evaluatePostEaseBounce(input: {
   today: string;
   runs: EaseWeekNudgeRun[];
 }): PostEaseBounce {
-  if (!input.easedWeekKey) return null;
+  if (!isRunDateKey(input.easedWeekKey) || !isRunDateKey(input.today))
+    return null;
   const currentWeek = localWeekKey(parseLocalDate(input.today));
-  const lastWeek = localWeekKey(
-    new Date(parseLocalDate(input.today).getTime() - 7 * 86_400_000)
-  );
+  const lastWeek = localWeekKey(addLocalDays(parseLocalDate(input.today), -7));
   // Only the week immediately after the eased week gets the read —
   // later weeks are back to normal evaluation.
   if (input.easedWeekKey !== lastWeek) return null;
 
-  const thisWeekJudged = input.runs
-    .filter(
-      (r) =>
-        r.activityType === "tempo" &&
-        !!r.paceVerdictTone &&
-        localWeekKey(parseLocalDate(r.date)) === currentWeek &&
-        r.date <= input.today
-    )
-    .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
+  const thisWeekJudged = recentRuns(input.runs).filter(
+    (r) =>
+      judgeableTempo(r) &&
+      localWeekKey(parseLocalDate(r.date)) === currentWeek &&
+      r.date <= input.today
+  );
   if (thisWeekJudged.length === 0) return null;
+  if (thisWeekJudged[0].paceVerdictTone === "fast") return "above_window";
   return thisWeekJudged[0].paceVerdictTone === "slow"
     ? "still_missing"
     : "recovered";
