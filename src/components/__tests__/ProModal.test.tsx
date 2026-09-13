@@ -265,6 +265,20 @@ describe("ProModal — Sub1a P1 trial CTA", () => {
     ).toBeTruthy();
   });
 
+  it("after a lapsed free week the CTA reads as keeping Pro with 7 more days free", () => {
+    authProfileMock.mockReturnValue({
+      hasUsedTrial: false,
+      trialExpiresAt: "2020-01-01T00:00:00.000Z",
+    });
+    renderModal({ onClose: () => {} });
+    expect(
+      screen.getByRole("button", { name: "Keep Pro — 7 more days free" })
+    ).toBeTruthy();
+    expect(
+      screen.queryByRole("button", { name: /Start your 7-day free trial/ })
+    ).toBeNull();
+  });
+
   it("Cycle 6: user with hasUsedTrial=true sees standard 'Start Pro — £X/mo' CTA (no trial language)", () => {
     authProfileMock.mockReturnValue({ hasUsedTrial: true });
     renderModal({ onClose: () => {} });

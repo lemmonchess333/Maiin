@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { getSubscriptionInfo } from "../subscription";
+import { getSubscriptionInfo, hasLapsedOnboardingTrial } from "../subscription";
 import type { UserProfile } from "../auth";
 
 function makeProfile(overrides: Partial<UserProfile> = {}): UserProfile {
@@ -257,3 +257,39 @@ describe("getSubscriptionInfo", () => {
 // never read at any callsite. Real Pro gating is verified at the
 // gated surfaces themselves (search `useSubscription().isPro` —
 // Home, Program, Food, Upgrade, useScanUsage).
+
+describe("hasLapsedOnboardingTrial", () => {
+  const now = new Date("2026-09-13T12:00:00Z");
+
+  it("is true once the free week's expiry is behind now", () => {
+    expect(
+      hasLapsedOnboardingTrial({ trialExpiresAt: "2026-09-10T09:00:00Z" }, now)
+    ).toBe(true);
+  });
+
+  it("is false while the free week is live, and for a profile that never had one", () => {
+    expect(
+      hasLapsedOnboardingTrial({ trialExpiresAt: "2026-09-15T09:00:00Z" }, now)
+    ).toBe(false);
+    expect(hasLapsedOnboardingTrial({ trialExpiresAt: null }, now)).toBe(false);
+    expect(hasLapsedOnboardingTrial(null, now)).toBe(false);
+  });
+
+  it("is false for an unreadable expiry — never sells an extension of nothing", () => {
+    expect(
+      hasLapsedOnboardingTrial({ trialExpiresAt: "not a date" }, now)
+    ).toBe(false);
+  });
+
+  it("does not care about tier — a subscriber's old expiry still reads as lapsed", () => {
+    expect(
+      hasLapsedOnboardingTrial(
+        {
+          trialExpiresAt: "2026-09-10T09:00:00Z",
+          subscriptionTier: "pro",
+        } as never,
+        now
+      )
+    ).toBe(true);
+  });
+});
