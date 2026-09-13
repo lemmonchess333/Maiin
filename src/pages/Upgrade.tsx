@@ -35,7 +35,7 @@
  */
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
-import { useSubscription, hasLapsedOnboardingTrial } from "@/lib/subscription";
+import { useSubscription, isCheckoutTrialEligible } from "@/lib/subscription";
 import { cn } from "@/lib/utils";
 import {
   ArrowLeft,
@@ -90,10 +90,10 @@ export default function Upgrade() {
   // Sub1a P1 — see ProModal.tsx for the corresponding logic;
   // missing profile defaults to trial-eligible (server is
   // authoritative).
-  const withTrial = !profile || !profile.hasUsedTrial;
-  // The card trial after a lapsed free week is the same offer, framed
-  // as an extension: they know the product, they are keeping it.
-  const extension = withTrial && hasLapsedOnboardingTrial(profile);
+  // One trial per account: the onboarding free week counts, so after it
+  // this page shows the price. Client-side hint; the server is
+  // authoritative (`checkoutTrial.js`).
+  const withTrial = isCheckoutTrialEligible(profile);
   const { isPro, isInTrial, trialDaysLeft, tier } = useSubscription();
   const [searchParams, setSearchParams] = useSearchParams();
   const from = searchParams.get("from");
@@ -473,11 +473,9 @@ export default function Upgrade() {
               Log a meal from a photo.
             </h1>
             <p className="text-sm text-muted-foreground max-w-[340px] mx-auto leading-relaxed">
-              {extension
-                ? "Your free week is over. Keep Pro with 7 more days free, then the plan you choose. Cancel before it ends and you pay nothing."
-                : fromOnboarding
-                  ? "Your plan is ready. Pro logs the meals around it, and keeps your calorie target honest as your weight moves."
-                  : "Pro reads the plate and fills in the macros, then keeps your calorie target honest as your weight moves."}
+              {fromOnboarding
+                ? "Your plan is ready. Pro logs the meals around it, and keeps your calorie target honest as your weight moves."
+                : "Pro reads the plate and fills in the macros, then keeps your calorie target honest as your weight moves."}
             </p>
           </div>
 
@@ -559,11 +557,9 @@ export default function Upgrade() {
               Choose your plan
             </h1>
             <p className="text-sm text-muted-foreground">
-              {extension
-                ? "7 more days free on either plan. Cancel before it ends and you pay nothing."
-                : withTrial
-                  ? "7 days free on either plan. Cancel before it ends and you pay nothing."
-                  : "Both plans include everything in Pro."}
+              {withTrial
+                ? "7 days free on either plan. Cancel before it ends and you pay nothing."
+                : "Both plans include everything in Pro."}
             </p>
           </div>
 
@@ -615,9 +611,7 @@ export default function Upgrade() {
                 <span>Starting checkout…</span>
               </>
             ) : (
-              <span>
-                {getCheckoutCtaLabel(selectedPlan, withTrial, extension)}
-              </span>
+              <span>{getCheckoutCtaLabel(selectedPlan, withTrial)}</span>
             )}
           </button>
 

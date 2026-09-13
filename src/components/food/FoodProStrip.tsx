@@ -35,10 +35,10 @@ export default function FoodProStrip({ limit, isUnlimited, loading }: Props) {
   const { profile } = useAuth();
   if (loading || isUnlimited || limit !== 0) return null;
 
-  const trialUsed = !!profile?.hasUsedTrial;
-  // The onboarding free week has lapsed and the card trial is still on
-  // offer: they know photo logging, so this is keeping it, not trying it.
-  const lapsedFreeWeek = !trialUsed && hasLapsedOnboardingTrial(profile);
+  // One trial per account: a lapsed onboarding free week counts as the
+  // trial even on a profile stamped before the server recorded it.
+  const trialUsed =
+    !!profile?.hasUsedTrial || hasLapsedOnboardingTrial(profile);
 
   return (
     <Card size="compact" tone="muted" className="flex items-center gap-3">
@@ -59,9 +59,7 @@ export default function FoodProStrip({ limit, isUnlimited, loading }: Props) {
         <p className="text-xs text-muted-foreground leading-snug mt-0.5">
           {trialUsed
             ? "Your free trial has ended. Typing and search still work."
-            : lapsedFreeWeek
-              ? "Your free week has ended. Typing and search still work."
-              : "Snap the plate, get the macros. Typing and search are free."}
+            : "Snap the plate, get the macros. Typing and search are free."}
         </p>
       </div>
       <Button
@@ -78,7 +76,7 @@ export default function FoodProStrip({ limit, isUnlimited, loading }: Props) {
           navigate("/upgrade?from=food");
         }}
       >
-        {trialUsed ? "See Pro" : lapsedFreeWeek ? "Keep Pro" : "Try Pro free"}
+        {trialUsed ? "See Pro" : "Try Pro free"}
       </Button>
     </Card>
   );

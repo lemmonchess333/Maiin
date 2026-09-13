@@ -289,37 +289,41 @@ describe("Upgrade — the offer beat (what the page opens on)", () => {
     ).toBeInTheDocument();
   });
 
-  it("after a lapsed free week, the trial reads as keeping Pro with 7 more days free", () => {
+  it("after the onboarding free week the page shows the price — one trial per account, flag stamped or not", () => {
     authProfileMock.mockReturnValue({
       hasUsedTrial: false,
       trialExpiresAt: "2020-01-01T00:00:00.000Z",
     });
     renderPage();
-    expect(
-      screen.getByText(
-        /Your free week is over\. Keep Pro with 7 more days free/
-      )
-    ).toBeInTheDocument();
-    expect(screen.getByText("No payment due today")).toBeInTheDocument();
+    expect(screen.queryByText("No payment due today")).toBeNull();
+    expect(screen.queryByText(/free week/i)).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Continue" }));
     expect(
-      screen.getByText(
-        "7 more days free on either plan. Cancel before it ends and you pay nothing."
-      )
+      screen.getByText("Both plans include everything in Pro.")
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: "Keep Pro — 7 more days free" })
+      screen.getByRole("button", { name: /Start Pro — £/ })
     ).toBeInTheDocument();
-    expect(screen.queryByText(/Start your 7-day free trial/)).toBeNull();
+    expect(screen.queryByText(/free trial/i)).toBeNull();
   });
 
-  it("a first-timer is still offered a trial to start, not an extension", () => {
+  it("a live free week also reads as the trial already taken", () => {
+    authProfileMock.mockReturnValue({
+      hasUsedTrial: false,
+      trialExpiresAt: "2999-01-01T00:00:00.000Z",
+      subscriptionTier: "free",
+    });
+    renderPage();
+    expect(screen.queryByText("No payment due today")).toBeNull();
+  });
+
+  it("a first-timer — no free week ever held — is offered the trial", () => {
     authProfileMock.mockReturnValue({
       hasUsedTrial: false,
       trialExpiresAt: null,
     });
     renderPage();
-    expect(screen.queryByText(/Your free week is over/)).toBeNull();
+    expect(screen.getByText("No payment due today")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Continue" }));
     expect(
       screen.getByRole("button", { name: /Start your 7-day free trial/ })

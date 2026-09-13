@@ -153,6 +153,24 @@ export function hasLapsedOnboardingTrial(
   return Number.isFinite(expires) && expires < now.getTime();
 }
 
+/**
+ * Whether checkout may offer the card trial. One trial per account,
+ * total: the onboarding free week (`trialExpiresAt`) IS the trial, so a
+ * profile that ever held one — live or lapsed, flag stamped or not — is
+ * offered the price. The flag alone covers accounts whose free week was
+ * withheld (ledger, address cap) and then took the trial at checkout.
+ * No profile (signed-out web) reads as eligible; the server decides.
+ */
+export function isCheckoutTrialEligible(
+  profile:
+    | Pick<UserProfile, "hasUsedTrial" | "trialExpiresAt">
+    | null
+    | undefined
+): boolean {
+  if (!profile) return true;
+  return !profile.hasUsedTrial && !profile.trialExpiresAt;
+}
+
 export function useSubscription(): SubscriptionInfo {
   const { profile } = useAuth();
   return useMemo(() => getSubscriptionInfo(profile), [profile]);

@@ -265,18 +265,15 @@ describe("ProModal — Sub1a P1 trial CTA", () => {
     ).toBeTruthy();
   });
 
-  it("after a lapsed free week the CTA reads as keeping Pro with 7 more days free", () => {
+  it("after the onboarding free week — flag stamped or not — the CTA is the price, never a second trial", () => {
     authProfileMock.mockReturnValue({
       hasUsedTrial: false,
       trialExpiresAt: "2020-01-01T00:00:00.000Z",
     });
     renderModal({ onClose: () => {} });
-    expect(
-      screen.getByRole("button", { name: "Keep Pro — 7 more days free" })
-    ).toBeTruthy();
-    expect(
-      screen.queryByRole("button", { name: /Start your 7-day free trial/ })
-    ).toBeNull();
+    const ctaButton = screen.getByRole("button", { name: /Start Pro/ });
+    expect(ctaButton.textContent).not.toMatch(/free/i);
+    expect(screen.queryByRole("button", { name: /free trial/i })).toBeNull();
   });
 
   it("Cycle 6: user with hasUsedTrial=true sees standard 'Start Pro — £X/mo' CTA (no trial language)", () => {

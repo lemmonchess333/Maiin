@@ -482,12 +482,16 @@ suite("completeOnboarding — free-week cap per address", () => {
       const data = await onboardFrom(uid, CAP_IP);
       expect(typeof data.trialExpiresAt, uid).toBe("string");
       expect(Date.parse(data.trialExpiresAt)).toBeGreaterThan(Date.now());
+      // The free week is THE trial: stamped used at grant time.
+      expect(data.hasUsedTrial, uid).toBe(true);
     }
 
     const fourth = await onboardFrom("u-ipcap-4", CAP_IP);
     expect(fourth.onboardingComplete).toBe(true);
     expect(fourth.subscriptionTier).toBe("free");
     expect(fourth.trialExpiresAt ?? null).toBeNull();
+    // Nothing granted, nothing consumed: the card trial stays open to them.
+    expect(fourth.hasUsedTrial ?? null).toBeNull();
     // No durable marker either: nothing was granted, so nothing to tombstone.
     const ledger = await db.collection("trialLedger").doc("u-ipcap-4").get();
     expect(ledger.exists).toBe(false);

@@ -152,6 +152,34 @@ describe("createTrialCheckoutSession", () => {
     expect(firestore._lastTxnSets).toHaveLength(0);
   });
 
+  it("Cycle 2b: a profile holding the onboarding free week (no flag) gets NO trial — one per account", async () => {
+    const { createTrialCheckoutSession } = require("../lib/checkoutTrial");
+    const { firestore } = makeFirestoreStub({
+      userData: {
+        stripeCustomerId: "cus_existing",
+        trialExpiresAt: "2020-01-01T00:00:00.000Z",
+      },
+    });
+    const { stripe, sessionCreate } = makeStripeStub();
+
+    const result = await createTrialCheckoutSession({
+      stripe,
+      firestore,
+      uid: "uid_legacy",
+      priceId: "price_pro_monthly",
+      mode: "subscription",
+      withTrial: true,
+      successUrl: "https://app.example/success",
+      cancelUrl: "https://app.example/cancel",
+      customerId: "cus_existing",
+      metadata: {},
+    });
+
+    expect(sessionCreate.mock.calls[0][0].subscription_data).toBeUndefined();
+    expect(result.trialGranted).toBe(false);
+    expect(firestore._lastTxnSets).toHaveLength(0);
+  });
+
   it("Cycle 3: withTrial=true + hasUsedTrial=false atomically sets hasUsedTrial=true on the user doc (race-safe)", async () => {
     const { createTrialCheckoutSession } = require("../lib/checkoutTrial");
     const { firestore } = makeFirestoreStub({

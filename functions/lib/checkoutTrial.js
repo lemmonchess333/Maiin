@@ -67,7 +67,14 @@ async function createTrialCheckoutSession({
     if (!withTrial) return false;
 
     const snap = await txn.get(userRef);
-    const alreadyUsed = snap.exists && snap.data() && snap.data().hasUsedTrial === true;
+    const data = (snap.exists && snap.data()) || {};
+    // A profile that ever held the onboarding free week has had its trial,
+    // whether or not the flag was stamped at the time (profiles granted
+    // before completeOnboarding started stamping it carry only the
+    // expiry). The owner's decision is one trial per account, total.
+    const alreadyUsed =
+      data.hasUsedTrial === true ||
+      (typeof data.trialExpiresAt === "string" && data.trialExpiresAt.length > 0);
     if (alreadyUsed) return false;
 
     // Race-safe consumption of the trial slot. Even if the user

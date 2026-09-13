@@ -1299,7 +1299,6 @@ export default function Home() {
       <AnimatePresence>
         {trialSurface.active && (
           <TrialEndedDialog
-            extensionAvailable={!profile?.hasUsedTrial}
             onDismiss={function () {
               trialSurface.dismiss();
               updateProfile({ trialExpiryPromptShown: true });
