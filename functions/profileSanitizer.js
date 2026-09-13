@@ -43,6 +43,7 @@ const SERVER_MANAGED_PROFILE_FIELDS = Object.freeze([
   "appleOriginalTransactionId",
   "appleProductId",
   "subscriptionExpiresAt",
+  "subscriptionTrialEndsAt",
   "trialExpiresAt",
   "createdAt",
 ]);
@@ -246,20 +247,20 @@ const PROFILE_FIELD_VALIDATORS = Object.freeze({
     v === null
       ? null
       : cleanObject(v, {
-      distance: (d) => cleanEnum(d, ["5k", "10k", "half", "marathon"]),
-      targetDate: (d) => cleanString(d, 30),
-      // Optional user-entered event name — free-text, bounded to 60 chars
-      // (control chars stripped by cleanString). Without this entry the
-      // configurePlan/completeOnboarding path silently strips the name.
-      eventName: (d) => cleanString(d, 60),
-      // Optional race-space link (races plan Q4). Validated against the
-      // pinned space-id list — an unknown id is dropped, so the field can
-      // only ever point at a space the deletion sweep + rules know about.
-      eventSpaceId: (d) => cleanEnum(d, SPACE_IDS),
-      // A2: goal finish time in seconds — 10 minutes to 12 hours covers
-      // every supported distance at any honest pace.
-      targetTimeS: (d) => cleanNumber(d, { min: 600, max: 43200 }),
-    }),
+          distance: (d) => cleanEnum(d, ["5k", "10k", "half", "marathon"]),
+          targetDate: (d) => cleanString(d, 30),
+          // Optional user-entered event name — free-text, bounded to 60 chars
+          // (control chars stripped by cleanString). Without this entry the
+          // configurePlan/completeOnboarding path silently strips the name.
+          eventName: (d) => cleanString(d, 60),
+          // Optional race-space link (races plan Q4). Validated against the
+          // pinned space-id list — an unknown id is dropped, so the field can
+          // only ever point at a space the deletion sweep + rules know about.
+          eventSpaceId: (d) => cleanEnum(d, SPACE_IDS),
+          // A2: goal finish time in seconds — 10 minutes to 12 hours covers
+          // every supported distance at any honest pace.
+          targetTimeS: (d) => cleanNumber(d, { min: 600, max: 43200 }),
+        }),
 
   injuries: cleanInjuries,
   weekSchedule: cleanWeekSchedule,

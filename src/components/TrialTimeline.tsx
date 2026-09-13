@@ -1,4 +1,4 @@
-import { Unlock, Crown } from "lucide-react";
+import { Unlock, Bell, Crown } from "lucide-react";
 
 /**
  * Trial-timeline transparency strip (Runna-teardown paywall pattern —
@@ -6,13 +6,14 @@ import { Unlock, Crown } from "lucide-react";
  * anxiety). Shown only when the trial CTA is live (Sub1a P1 eligibility).
  *
  * Copy is deliberately HONEST about today's mechanics. This ladder
- * describes the BILLED checkout trial (`hasUsedTrial` — Stripe
- * `trialing`, or the App Store intro offer), whose end the client cannot
- * see, so no reminder is promised for it. The reminder that does exist
- * (`useTrialReminder`) is for the app-granted onboarding trial, a
- * different thing with nothing to bill. Add a "Day 5 — we'll remind you"
- * step here only when a server-side reminder keyed on the billed trial's
- * end ships — here and nowhere else.
+ * describes the card trial at checkout — the App Store introductory
+ * offer, or Stripe `trialing` — which is the only trial (Sub1a pin 3).
+ * The Day-5 step is real: the server records when the trial ends
+ * (`subscriptionTrialEndsAt`, via the RevenueCat webhook and the Stripe
+ * webhook) and `useTrialReminder` schedules the notification two days
+ * before it; Home's strip counts the days down. Neither Apple nor
+ * Stripe tells the user anything before a trial converts, which is
+ * why the promise has to be ours.
  */
 const STEPS: {
   icon: typeof Unlock;
@@ -23,6 +24,11 @@ const STEPS: {
     icon: Unlock,
     when: "Today",
     what: "Full Pro access. Every feature, no payment due.",
+  },
+  {
+    icon: Bell,
+    when: "Day 5",
+    what: "A reminder that the trial is ending — on Home, and as a notification if you have them on.",
   },
   {
     icon: Crown,
