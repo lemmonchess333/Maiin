@@ -153,7 +153,10 @@ export function getSubscriptionInfo(
     }
   }
 
-  // Check trial
+  // Legacy onboarding free week. completeOnboarding no longer grants
+  // one (Sub1a pin 3: the only trial is the card trial at checkout,
+  // which arrives as `subscriptionTier: "pro"` above). Profiles that
+  // still carry a live expiry keep their Pro until it lapses.
   if (profile.trialExpiresAt) {
     const expiresAt = new Date(profile.trialExpiresAt);
     const now = new Date();
