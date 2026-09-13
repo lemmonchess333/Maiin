@@ -28,8 +28,13 @@ import { track as trackProgram } from "@/lib/programAnalytics";
 export default function SettingsRunPlan() {
   const navigate = useNavigate();
   const { profile, updateProfile, refreshProfile } = useAuth();
-  const { programState, applyEaseWeek, revertEaseWeek, realignRacePlan } =
-    useProgram();
+  const {
+    programState,
+    applyEaseWeek,
+    revertEaseWeek,
+    realignRacePlan,
+    recentLayoff,
+  } = useProgram();
   const [adjustOpen, setAdjustOpen] = useState(false);
 
   if (!profile) {
@@ -96,8 +101,10 @@ export default function SettingsRunPlan() {
       )}
 
       <RunPlanSettings
+        key={profile.uid}
         profile={profile}
         programState={programState}
+        recentLayoff={recentLayoff}
         refreshProfile={refreshProfile}
         onOpenFullSettings={() => navigate("/settings/training")}
       />

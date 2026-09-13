@@ -1,3 +1,12 @@
+import {
+  isRunningBaseline,
+  type RunningBaseline,
+} from "@/features/program/runningBaseline";
+import type { NonRaceGoal } from "@/lib/nonRaceGoal";
+import {
+  isRunTimeLimits,
+  type RunTimeLimits,
+} from "@/features/program/runTimeLimits";
 /**
  * Run-plan draft persistence.
  *
@@ -79,6 +88,10 @@ export interface RunPlanDraft {
   raceEventSpaceId: string;
   runVolume: RunVolumePreset;
   runDifficulty: RunDifficultyPreset;
+  /** Additive in v1: older drafts retain their saved availability. */
+  runTimeLimits?: RunTimeLimits;
+  runningBaseline?: RunningBaseline | null;
+  nonRaceGoal?: NonRaceGoal | null;
 }
 
 interface Envelope extends RunPlanDraft {
@@ -150,6 +163,12 @@ export function loadRunPlanDraft(uid: string): RunPlanDraft | null {
   }
 
   if (
+    (e.runningBaseline != null &&
+      !isRunningBaseline(e.runningBaseline, true)) ||
+    (e.nonRaceGoal != null &&
+      (!(e.nonRaceGoal.kind === "runs" || e.nonRaceGoal.kind === "minutes") ||
+        !Number.isFinite(e.nonRaceGoal.target))) ||
+    (e.runTimeLimits !== undefined && !isRunTimeLimits(e.runTimeLimits)) ||
     !isOneOf(RUN_MODES, e.runMode) ||
     !isOneOf(VALID_RACE_DISTANCE, e.raceDistance) ||
     !isOneOf(VOLUMES, e.runVolume) ||
@@ -178,5 +197,12 @@ export function loadRunPlanDraft(uid: string): RunPlanDraft | null {
     raceEventSpaceId: e.raceEventSpaceId,
     runVolume: e.runVolume,
     runDifficulty: e.runDifficulty,
+    ...(e.runningBaseline === undefined
+      ? {}
+      : { runningBaseline: e.runningBaseline }),
+    ...(e.nonRaceGoal === undefined ? {} : { nonRaceGoal: e.nonRaceGoal }),
+    ...(e.runTimeLimits === undefined
+      ? {}
+      : { runTimeLimits: e.runTimeLimits }),
   };
 }

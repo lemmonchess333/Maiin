@@ -36,6 +36,15 @@ vi.mock("@/lib/firebase", () => ({
   storage: {},
 }));
 
+vi.mock("@/hooks/useRunningStats", () => ({
+  useRunningStats: () => ({
+    runs: [],
+    loading: false,
+    failed: false,
+    refresh: vi.fn(),
+  }),
+}));
+
 const baseProfile = {
   runMode: "freeform",
   weeklyWorkoutsTarget: 4,
@@ -91,6 +100,98 @@ describe("RunPlanSettings", () => {
     // The draft is uid-scoped localStorage; without this a draft written
     // by one test seeds the next one's editor.
     localStorage.clear();
+  });
+
+  it("saves a weekly goal without a race, scheduled rows or an adherence target", async () => {
+    renderPage({ ...baseProfile, uid: "goal-owner" });
+    fireEvent.change(
+      screen.getByRole("combobox", { name: "Weekly running goal" }),
+      { target: { value: "minutes" } }
+    );
+    fireEvent.change(screen.getByLabelText("Minutes per week"), {
+      target: { value: "120" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save run plan" }));
+    await waitFor(() => expect(configureSpy).toHaveBeenCalledTimes(1));
+    const payload = sentPayload();
+    expect(payload.profileUpdates.nonRaceGoal).toEqual({
+      kind: "minutes",
+      target: 120,
+    });
+    expect(payload.profileUpdates.weeklyRunDaysTarget).toBe(0);
+    expect(payload.profileUpdates.raceGoal).toBeNull();
+    expect(payload.programState.runDays).toEqual([]);
+  });
+
+  it("clears the saved freeform goal without creating scheduled runs", async () => {
+    renderPage({
+      ...baseProfile,
+      uid: "clear-freeform-goal",
+      nonRaceGoal: { kind: "runs", target: 3 },
+    });
+    fireEvent.change(
+      screen.getByRole("combobox", { name: "Weekly running goal" }),
+      { target: { value: "" } }
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Save run plan" }));
+    await waitFor(() => expect(configureSpy).toHaveBeenCalledTimes(1));
+    expect(sentPayload().profileUpdates.nonRaceGoal).toBeNull();
+    expect(sentPayload().programState.runDays).toEqual([]);
+  });
+
+  it("blocks an incomplete starting point, retains it as a draft and saves the confirmed plan", async () => {
+    const profile = {
+      ...baseProfile,
+      uid: "baseline-owner",
+      runMode: "race_prep",
+      raceGoal: { distance: "10k", targetDate: "2027-01-01" },
+    } as UserProfile;
+    const first = renderPage(profile);
+    fireEvent.click(screen.getByRole("button", { name: "Add starting point" }));
+    fireEvent.change(screen.getByLabelText("Recent minutes per week"), {
+      target: { value: "90" },
+    });
+    fireEvent.click(
+      screen.getByRole("button", { name: "Check running details" })
+    );
+    expect(configureSpy).not.toHaveBeenCalled();
+    first.unmount();
+    renderPage(profile);
+    expect(screen.getByLabelText("Recent minutes per week")).toHaveValue(90);
+    fireEvent.change(screen.getByLabelText("Longest recent run, min"), {
+      target: { value: "30" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /Save .*plan/ }));
+    await waitFor(() => expect(configureSpy).toHaveBeenCalledTimes(1));
+    expect(sentPayload().profileUpdates.runningBaseline).toMatchObject({
+      experience: "building",
+      weeklyMinutes: 90,
+      longestRunMinutes: 30,
+      confirmedAt: localDateString(),
+    });
+  });
+
+  it("clears the stored starting point through the atomic plan save", async () => {
+    renderPage({
+      ...baseProfile,
+      uid: "clear-owner",
+      runMode: "race_prep",
+      raceGoal: { distance: "10k", targetDate: "2027-01-01" },
+      runningBaseline: {
+        version: 1,
+        experience: "building",
+        weeklyMinutes: 90,
+        longestRunMinutes: 30,
+        confirmedAt: localDateString(),
+        source: "self_reported",
+      },
+    } as UserProfile);
+    fireEvent.click(
+      screen.getByRole("button", { name: "Remove starting point" })
+    );
+    fireEvent.click(screen.getByRole("button", { name: /Save .*plan/ }));
+    await waitFor(() => expect(configureSpy).toHaveBeenCalledTimes(1));
+    expect(sentPayload().profileUpdates.runningBaseline).toBeNull();
   });
 
   it("shows only run controls — no lift/nutrition/equipment fields", () => {
@@ -185,6 +286,52 @@ describe("RunPlanSettings", () => {
     // stored profile.weekSchedule the old path passed (draft default: 3
     // run days, saved liftDays 4).
     expect(sentPayload().weekSchedule).toEqual(generateSchedule(4, 3));
+  });
+
+  it("previews, commits and restores recurring time limits", async () => {
+    const profile = {
+      ...baseProfile,
+      uid: "run-limit-user",
+      runMode: "race_prep",
+      raceGoal: { distance: "marathon", targetDate: "2027-03-07" },
+    } as UserProfile;
+    const first = renderPage(profile);
+    fireEvent.change(screen.getByLabelText("Other runs"), {
+      target: { value: "30" },
+    });
+    fireEvent.change(screen.getByLabelText("Long run"), {
+      target: { value: "45" },
+    });
+    expect(
+      screen.getByText(/Some sessions in this plan will be shorter/)
+    ).toBeInTheDocument();
+    first.unmount();
+    renderPage(profile);
+    expect(screen.getByLabelText("Other runs")).toHaveValue("30");
+    expect(screen.getByLabelText("Long run")).toHaveValue("45");
+    fireEvent.click(
+      await screen.findByRole("button", { name: /Save .*plan/i })
+    );
+    await waitFor(() => expect(configureSpy).toHaveBeenCalledTimes(1));
+    const payload = sentPayload();
+    expect(payload.profileUpdates.runTimeLimits).toEqual({
+      sessionMinutes: 30,
+      longRunMinutes: 45,
+    });
+    const rows = payload.programState
+      .runDays as import("@/features/program/programTypes").ScheduledRunDay[];
+    const { RUN_TEMPLATES } = await import("@/lib/workoutTemplates");
+    const total = rows.reduce(
+      (sum, row) =>
+        sum +
+        RUN_TEMPLATES.find((template) => template.id === row.templateId)!
+          .estimatedDuration,
+      0
+    );
+    expect(
+      screen.getByText(String(Math.round(total)), { selector: "span" })
+    ).toBeInTheDocument();
+    expect(rows.some((row) => row.timeLimit)).toBe(true);
   });
 
   it("RACE-EVENT-IDENTITY-01: saving with an event name includes it in the raceGoal", async () => {

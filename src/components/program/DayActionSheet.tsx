@@ -1,4 +1,4 @@
-import RunPurpose from "@/components/run/RunPurpose";
+import RunPlanPurpose from "@/components/run/RunPlanPurpose";
 /**
  * PR-1: per-day action sheet — canonical surface (post-PR-3).
  *
@@ -197,7 +197,7 @@ export default function DayActionSheet({
         (t) => t.id === (run.runDay?.userOverride || run.runDay?.templateId)
       )
     : null;
-  // Adaptive Paces: the user's personalized pace for this session, appended to
+  // Adaptive Paces: the user's personalised pace for this session, appended to
   // the meta pill (e.g. "10km · 5:25–5:45 /km"). Band-first via the shared
   // sessionPaceDisplay rule (the range is the honest coaching target; singles
   // only for race pace). Null when there's no benchmark.
@@ -357,7 +357,11 @@ export default function DayActionSheet({
                     {selectedRunTemplate.description}
                   </p>
                 )}
-                <RunPurpose>{selectedRunWhy}</RunPurpose>
+                <RunPlanPurpose
+                  purpose={selectedRunWhy}
+                  run={run.runDay}
+                  runDays={programState?.runDays ?? []}
+                />
                 {/* A8: consensus fueling guidance for 75-min+ sessions —
                     one line, same register as the explainer above. */}
                 {selectedRunTemplate &&

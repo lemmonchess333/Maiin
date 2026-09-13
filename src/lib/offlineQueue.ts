@@ -11,6 +11,14 @@ import { logger } from "@/lib/logger";
 import { isAvailable, readJson, remove, writeJson } from "@/lib/localStore";
 import { captureError } from "@/lib/errorReporting";
 import { stripUndefined } from "@/lib/firestoreGuards";
+import {
+  commitWorkoutCompletion,
+  type ProgrammeCompletionContext,
+} from "./workoutCompletion";
+export {
+  workoutCompletionDayIdentity,
+  type ProgrammeCompletionContext,
+} from "./workoutCompletion";
 
 /**
  * Offline write queue — partitioned by uid so a write queued by user
@@ -39,35 +47,6 @@ interface QueuedWrite {
   durable?: boolean;
   workoutCompletion?: { programme?: ProgrammeCompletionContext };
   failed?: boolean;
-}
-
-export interface ProgrammeCompletionContext {
-  weekNumber: number;
-  dayIndex: number;
-  dayIdentity: string;
-  trainingBlockId?: string;
-}
-
-/** Stable row identities, never positional set logs, identify a saved day.
- * Legacy days without identities can still save History; they cannot safely
- * mark a later programme day completed during replay. */
-export function workoutCompletionDayIdentity(day: unknown): string | null {
-  if (!day || typeof day !== "object") return null;
-  const value = day as {
-    dayName?: unknown;
-    dayType?: unknown;
-    exercises?: unknown;
-  };
-  if (
-    typeof value.dayName !== "string" ||
-    typeof value.dayType !== "string" ||
-    !Array.isArray(value.exercises)
-  )
-    return null;
-  const ids = value.exercises.map((exercise) => exercise?.instanceId);
-  if (!ids.length || ids.some((id) => typeof id !== "string" || !id))
-    return null;
-  return JSON.stringify([value.dayName, value.dayType, ids]);
 }
 
 const queueListeners = new Set<() => void>();
@@ -361,53 +340,21 @@ async function flushQueueOnce(db: Firestore, uid: string): Promise<number> {
       const payload = { ...decoded, _offlineCreatedAt: item.timestamp };
       if (item.docId) {
         const docRef = doc(db, item.collectionPath, item.docId);
-        if (item.durable && !item.merge) {
+        if (item.workoutCompletion) {
+          await commitWorkoutCompletion(
+            db,
+            uid,
+            item.docId,
+            payload,
+            item.workoutCompletion.programme
+          );
+        } else if (item.durable && !item.merge) {
           await runTransaction(db, async (transaction) => {
             const current = await transaction.get(docRef);
             if (auth.currentUser?.uid !== uid)
               throw new Error("Sign in again to sync your changes.");
             // An ambiguous acknowledgement must not overwrite later diary edits.
             if (current.exists()) return;
-            const completion = item.workoutCompletion?.programme;
-            if (completion) {
-              const programmeRef = doc(
-                db,
-                "users",
-                uid,
-                "programState",
-                "current"
-              );
-              const snapshot = await transaction.get(programmeRef);
-              if (auth.currentUser?.uid !== uid)
-                throw new Error("Sign in again to sync your workout.");
-              const state = snapshot.data();
-              if (
-                state?.weekNumber === completion.weekNumber &&
-                state.trainingBlock?.id === completion.trainingBlockId &&
-                Array.isArray(state.workouts) &&
-                workoutCompletionDayIdentity(
-                  state.workouts[completion.dayIndex]
-                ) === completion.dayIdentity
-              ) {
-                const next: Record<string, unknown> = {
-                  ...state,
-                  updatedAt: Date.now(),
-                  workouts: state.workouts.map((day, index) =>
-                    index === completion.dayIndex
-                      ? {
-                          ...day,
-                          completed: true,
-                          skipped: false,
-                          completedWorkoutId: item.docId,
-                        }
-                      : day
-                  ),
-                };
-                if (next.nextWorkoutOverride === completion.dayIndex)
-                  delete next.nextWorkoutOverride;
-                transaction.set(programmeRef, next);
-              }
-            }
             transaction.set(docRef, payload);
           });
         } else {

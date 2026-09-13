@@ -84,6 +84,8 @@ import ContextualTipBanner from "@/components/home/ContextualTipBanner";
 import { IconButton } from "@/components/ui/IconButton";
 import TrialEndedDialog from "@/components/home/TrialEndedDialog";
 import { recalibrationCheckIn } from "@/lib/recalibrationCheckIn";
+import { shouldShowHomeProStrip } from "@/lib/homeProStrip";
+import { isCheckoutTrialEligible } from "@/lib/subscription";
 
 const ProModal = lazyRetry(() => import("@/components/ProModal"));
 
@@ -298,6 +300,18 @@ export default function Home() {
   const nowMs = useMemo(function () {
     return new Date().getTime();
   }, []);
+  // Home's Pro strip for a free account (homeProStrip.ts). Trial
+  // eligibility decides the copy: a first-timer is offered the trial,
+  // an account that has had one is offered the plans.
+  const proStripTrialEligible = isCheckoutTrialEligible(profile);
+  const showProStrip = shouldShowHomeProStrip({
+    isPro,
+    isInTrial,
+    snoozed: proStripSnoozed,
+    hadFreeWeek: !!profile?.trialExpiresAt,
+    createdAtMs,
+    nowMs,
+  });
   // Only pay for the full lifetime-runs read while the user is inside the
   // activation window — an established runner never reads their whole runs
   // collection just to drive cold-start copy.
@@ -702,17 +716,18 @@ export default function Home() {
           </span>
         </button>
       )}
-      {/* home-declutter 6b — the post-trial upgrade strip is snoozeable
-          (uid-scoped, 30 days) so the funnel resurfaces monthly instead of
-          living permanently at the top of every session. The TRIAL
-          countdown strip above is exempt: time-critical billing info that
-          self-expires. */}
-      {!isPro && !isInTrial && profile?.trialExpiresAt && !proStripSnoozed && (
+      {/* home-declutter 6b — the upgrade strip is snoozeable (uid-scoped,
+          30 days) so the funnel resurfaces monthly instead of living
+          permanently at the top of every session. Who sees it is
+          `shouldShowHomeProStrip`: a free account a few days old, or one
+          whose old free week has lapsed. The TRIAL countdown strip above
+          is exempt: time-critical billing info that self-expires. */}
+      {showProStrip && (
         <div className="flex items-center gap-1 rounded-xl bg-primary/8 hover:bg-primary/12 transition-colors">
           <button
             type="button"
             onClick={function () {
-              setShowProModal(true);
+              navigate("/upgrade?from=home_strip");
             }}
             className="flex items-center gap-2.5 pl-3 py-2 flex-1 min-h-[44px] text-left"
           >
@@ -721,10 +736,12 @@ export default function Home() {
               className="size-4 text-primary shrink-0"
             />
             <span className="text-xs font-medium text-foreground flex-1 text-pretty">
-              Upgrade to Pro
+              {proStripTrialEligible
+                ? "Log meals from a photo — try Pro free for 7 days"
+                : "Upgrade to Pro"}
             </span>
             <span className="text-caption font-semibold text-primary-foreground bg-primary-strong rounded-full px-2.5 py-1 shrink-0">
-              See plans
+              {proStripTrialEligible ? "Start trial" : "See plans"}
             </span>
           </button>
           <IconButton

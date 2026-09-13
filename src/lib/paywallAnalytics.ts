@@ -47,6 +47,8 @@ export type PaywallSource =
   | "trial_end"
   /** Home's countdown strip while the onboarding trial is live. */
   | "trial_strip"
+  /** Home's Pro strip for a free account. */
+  | "home_strip"
   | "unknown";
 
 export interface PaywallEventMetadata {

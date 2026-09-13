@@ -44,6 +44,7 @@ import ShareCardSheet from "@/components/share/ShareCardSheet";
 import CircleShareSheet from "@/components/social/CircleShareSheet";
 import WorkoutFeedShareSheet from "@/components/workout/WorkoutFeedShareSheet";
 import DeleteSessionAction from "@/components/session/DeleteSessionAction";
+import CorrectWorkoutSheet from "@/components/workout/CorrectWorkoutSheet";
 import {
   workoutTonnageKg,
   workoutTitle,
@@ -103,6 +104,7 @@ function WorkoutDetailContent() {
   const [cardOpen, setCardOpen] = useState(false);
   const [circleOpen, setCircleOpen] = useState(false);
   const [feedOpen, setFeedOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
   /** Set optimistically once a feed post lands so the button flips to its
    *  "shared" state without a refetch. Seeded from the doc on load. */
   const [sharedActivityId, setSharedActivityId] = useState<string | null>(null);
@@ -264,6 +266,15 @@ function WorkoutDetailContent() {
             INSIDE Tropos and read as distinct decisions, so they stay
             named rather than hidden behind a generic picker. */}
         <div className="space-y-2 pt-1">
+          {user && (
+            <Button
+              fullWidth
+              variant="secondary"
+              onClick={() => setEditOpen(true)}
+            >
+              Correct workout
+            </Button>
+          )}
           {sharedActivityId ? (
             // Already posted — the completion flow's composer or an earlier
             // visit here. Re-posting would create a second activity doc for
@@ -309,6 +320,17 @@ function WorkoutDetailContent() {
         )}
       </div>
 
+      {user && editOpen && (
+        <CorrectWorkoutSheet
+          uid={user.uid}
+          workout={workout}
+          onClose={() => setEditOpen(false)}
+          onSaved={() => {
+            setEditOpen(false);
+            retry();
+          }}
+        />
+      )}
       <ShareCardSheet
         open={cardOpen}
         onOpenChange={setCardOpen}

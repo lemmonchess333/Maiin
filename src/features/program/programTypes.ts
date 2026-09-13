@@ -465,6 +465,14 @@ export interface ScheduledRunDay {
    *  at `runPlanMetadata.ts:490` — must not become boolean). */
   userOverride?: string;
 
+  /** Explains a shorter generated prescription selected for saved availability. */
+  timeLimit?: { minutes: number; originalTemplateId: string };
+  trainingBasis?: {
+    originalTemplateId: string;
+    confirmedAt: string;
+    reason: "experience" | "longest" | "weekly" | "review";
+  };
+
   /** Authoritative status enum (v7+). Optional in v1 type because
    *  legacy docs lack the field; migration backfills based on
    *  `completed`. New code (planBuilder, runScheduler) always sets
