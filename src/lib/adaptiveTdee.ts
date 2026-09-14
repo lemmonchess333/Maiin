@@ -39,8 +39,6 @@ export interface AdaptiveTdeeInput {
   intakeByDay: { dateKey: string; kcal: number }[];
   /** Raw weigh-ins within the window — may be sparse / irregularly spaced. */
   weighIns: { dateKey: string; weightKg: number }[];
-  /** Trailing window length in days. Single tunable constant. */
-  windowDays?: number;
   /** Gross-error plausibility floor — intake days below this are excluded as broken logs. */
   plausibilityFloorKcal?: number;
   /** Minimum trusted intake-days before an estimate is produced. */
@@ -69,6 +67,22 @@ export interface AdaptiveTdeeResult {
 }
 
 export const ADAPTIVE_TDEE_DEFAULTS = {
+  /**
+   * The trailing window, in days — applied by the CALLER, not by
+   * `estimateAdaptiveTDEE`. The estimator windows nothing: it consumes
+   * whatever `intakeByDay` / `weighIns` it is handed and gates on their
+   * counts and span. `useAdaptiveEvidence` is what makes the window real,
+   * as the lower bound of its two Firestore queries.
+   *
+   * This used to ALSO exist as an optional `windowDays` on
+   * `AdaptiveTdeeInput`, documented as "Trailing window length in days.
+   * Single tunable constant" — and nothing in the function body ever read
+   * it. Passing `windowDays: 60` widened nothing and reported no error.
+   * Nothing did pass it, so no behaviour was wrong; the option was an
+   * invitation. Removed rather than implemented: re-windowing inside the
+   * estimator would give two owners to one decision, and the caller has to
+   * bound its query anyway.
+   */
   windowDays: 21,
   plausibilityFloorKcal: 800,
   minTrustedDays: 10,

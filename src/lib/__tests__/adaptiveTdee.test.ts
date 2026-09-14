@@ -177,6 +177,110 @@ describe("estimateAdaptiveTDEE — spanDays", () => {
   });
 });
 
+describe("the readiness gates at their boundaries", () => {
+  /* Three of the five gate constants were movable with this suite green.
+     Measured: minTrustedDays 10 -> 4 failed, minSpanDays 14 -> 7 failed,
+     but plausibilityFloorKcal 800 -> 400 and minWeighIns 8 -> 3 both
+     passed, because no case sat anywhere in those gaps — the sub-floor
+     test logs 200 kcal (under either floor) and every ready case supplies
+     21 weigh-ins (over either minimum).
+
+     These gates decide whether the app moves a real person's calorie
+     target off its own estimate, so the direction of an unnoticed drift
+     matters. Dropping the floor lets a half-logged 500 kcal day count as
+     real intake and drags the learned TDEE — and therefore the target —
+     down. Dropping the weigh-in minimum fits a slope through too few
+     points and adapts on noise.
+
+     It takes BOTH halves below to hold this, and the split is the point.
+     The boundary cases derive their inputs from the constants, so they
+     pin STRICTNESS — that the floor is `>=` and the count `<` — and they
+     would pass at any value, because an expectation computed by the code
+     path under test is a consistency check, not a behaviour one. The
+     literal assertion is what pins the VALUES. Written the derived way
+     first, and all five value mutations sailed through; recording that
+     here because `computeWarmupProgress`'s tests below have the same
+     shape and are equally silent about where the gates sit. */
+  const { plausibilityFloorKcal, minWeighIns, minTrustedDays } =
+    ADAPTIVE_TDEE_DEFAULTS;
+
+  it("holds the gate constants at the values the product chose", () => {
+    /* A whole-object compare, so an added or dropped key fails too. Change
+       a number here only alongside the reason it moved. */
+    expect(ADAPTIVE_TDEE_DEFAULTS).toEqual({
+      windowDays: 21,
+      plausibilityFloorKcal: 800,
+      minTrustedDays: 10,
+      minWeighIns: 8,
+      minSpanDays: 14,
+      kcalPerKg: 7700,
+    });
+  });
+
+  it("counts a day exactly at the plausibility floor as real intake", () => {
+    const ds = days(START, 21);
+    const r = estimateAdaptiveTDEE({
+      intakeByDay: ds.map((d) => ({ dateKey: d, kcal: plausibilityFloorKcal })),
+      weighIns: ds.map((d) => ({ dateKey: d, weightKg: 80 })),
+    });
+    expect(r.trustedDays).toBe(21);
+  });
+
+  it("excludes a day one kcal under the floor", () => {
+    const ds = days(START, 21);
+    const r = estimateAdaptiveTDEE({
+      // One broken day among 20 real ones.
+      intakeByDay: ds.map((d, i) => ({
+        dateKey: d,
+        kcal: i === 0 ? plausibilityFloorKcal - 1 : 2500,
+      })),
+      weighIns: ds.map((d) => ({ dateKey: d, weightKg: 80 })),
+    });
+    expect(r.trustedDays).toBe(20);
+  });
+
+  it("is ready at exactly the weigh-in minimum", () => {
+    const ds = days(START, 21);
+    /* Spread them across the full window so the span gate is satisfied and
+       the weigh-in COUNT is the only thing under test. */
+    const spread = Array.from({ length: minWeighIns }, (_, i) =>
+      Math.round((i * 20) / (minWeighIns - 1))
+    );
+    const r = estimateAdaptiveTDEE({
+      intakeByDay: ds.map((d) => ({ dateKey: d, kcal: 2500 })),
+      weighIns: spread.map((i) => ({ dateKey: ds[i], weightKg: 80 })),
+    });
+    expect(r.weighInCount).toBe(minWeighIns);
+    expect(r.ready).toBe(true);
+  });
+
+  it("is not ready one weigh-in short, with the span still cleared", () => {
+    const ds = days(START, 21);
+    const spread = Array.from({ length: minWeighIns - 1 }, (_, i) =>
+      Math.round((i * 20) / (minWeighIns - 2))
+    );
+    const r = estimateAdaptiveTDEE({
+      intakeByDay: ds.map((d) => ({ dateKey: d, kcal: 2500 })),
+      weighIns: spread.map((i) => ({ dateKey: ds[i], weightKg: 80 })),
+    });
+    expect(r.weighInCount).toBe(minWeighIns - 1);
+    expect(r.spanDays).toBe(20); // span is NOT what is failing here
+    expect(r.ready).toBe(false);
+  });
+
+  it("is ready at exactly the trusted-day minimum", () => {
+    const ds = days(START, 21);
+    const r = estimateAdaptiveTDEE({
+      intakeByDay: ds
+        .slice(0, minTrustedDays)
+        .map((d) => ({ dateKey: d, kcal: 2500 })),
+      weighIns: ds.map((d) => ({ dateKey: d, weightKg: 80 })),
+    });
+    expect(r.trustedDays).toBe(minTrustedDays);
+    expect(r.ready).toBe(true);
+  });
+});
+
 describe("computeWarmupProgress", () => {
   const { minTrustedDays, minWeighIns, minSpanDays } = ADAPTIVE_TDEE_DEFAULTS;
 
