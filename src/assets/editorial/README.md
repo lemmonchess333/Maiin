@@ -106,3 +106,20 @@ record. All final assets were checked at normal and 3x brightness. Originals
 remain in the approved `tropos-social-photo-pack.zip`; only optimized covers ship here.
 These photographs illustrate interests and challenges, not Tropos members,
 endorsements or named local events.
+
+### Follow-up Social photo upgrades — 2026-09-14
+
+The Hybrid Training space and hybrid challenges now share Karsten Winegeart's
+battle-rope photograph, with the small apparel and footwear logos removed using
+the built-in image editor. This replaces the crowded Hybrid Training gym cover
+and follows the existing shared-photo treatment for lifting.
+
+The Manchester Marathon cover now uses Timiciuc Andrei's historic street view;
+Great Manchester Run uses Balázs Gábor's riverside path and footbridge. Both are
+real Manchester photographs. Their crops retain the main subject in the wider
+Space header as well as the directory card.
+
+All four assets are landscape WebP files below 120 KB. Photographer credits,
+source URLs, downloaded-image hashes, exact crops, encoding details and the
+logo-removal prompt are recorded in
+[`sources-2026-09-14-followup.json`](./sources-2026-09-14-followup.json).
