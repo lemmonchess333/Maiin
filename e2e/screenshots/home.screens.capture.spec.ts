@@ -10,7 +10,7 @@
  * Mobile viewport (Tropos is mobile-first); fullPage so the whole scroll is
  * captured. Light + dark (dark = the `.dark` class on <html>).
  */
-import { test, type Page } from "@playwright/test";
+import { test, expect, type Page } from "@playwright/test";
 import { signInAsTestUser } from "../helpers/auth";
 import { settleImages } from "../helpers/settleImages";
 import { emulatorActive } from "../helpers/emulator";
@@ -290,6 +290,17 @@ test.describe("app screenshots", () => {
     await page
       .getByRole("navigation", { name: /main navigation/i })
       .waitFor({ state: "visible", timeout: 20000 });
+    /* Prove the stashed value actually landed before shooting. Without
+       this the catch above is a silent failure: a stale literal drops the
+       capture on Analytics and the frame still gets written, still gets
+       committed, and reads in the diff report as a regression in whatever
+       it was pointed at. The tabs are a SegmentedControl, so they are
+       role="radio" — not buttons. */
+    await expect(page.getByRole("radio", { name: "Badges" })).toHaveAttribute(
+      "aria-checked",
+      "true",
+      { timeout: 10000 }
+    );
     await page.waitForTimeout(1600);
     await shootLightDark("badges");
 
