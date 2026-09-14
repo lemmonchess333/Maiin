@@ -1,10 +1,13 @@
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback, useId } from "react";
 import { THEME } from "@/lib/theme";
 import { motion, AnimatePresence } from "framer-motion";
 const lazyConfetti = () => import("canvas-confetti").then((m) => m.default);
 import type { EarnedBadge } from "./badges";
-import { BADGE_ART, BADGE_ICONS, TIER_COLORS } from "./badges";
+import { BADGE_ART, BADGE_ICONS, SEAL_ART, TIER_COLORS } from "./badges";
 import { BadgeHex } from "./BadgeHex";
+import { TIER_PALETTES } from "./tierPalettes";
+import { SealFace, SealShards, SealSweep, SealDust } from "./BadgeSeal";
+import { SEAL_CRACKS } from "./sealGeometry";
 import { Trophy, Lock } from "lucide-react";
 import { useFocusTrap } from "@/hooks/useFocusTrap";
 import { haptic } from "@/lib/haptic";
@@ -60,40 +63,8 @@ function playCrack(step: number) {
   }
 }
 
-// ── Seal geometry (pointy-top hexagon matching the badge silhouette) ────────
-const HEX = "50,3 93,28 93,72 50,97 7,72 7,28";
-const V = [
-  [50, 3],
-  [93, 28],
-  [93, 72],
-  [50, 97],
-  [7, 72],
-  [7, 28],
-] as const;
-// Six triangular shards (centre → each edge) + the px direction each flies on
-// the break. Directions are the outward normal of each shard's outer edge.
-const SHARDS = V.map((v, i) => {
-  const next = V[(i + 1) % V.length];
-  const points = `50,50 ${v[0]},${v[1]} ${next[0]},${next[1]}`;
-  const mx = (v[0] + next[0]) / 2 - 50;
-  const my = (v[1] + next[1]) / 2 - 50;
-  const len = Math.hypot(mx, my) || 1;
-  return {
-    points,
-    dx: (mx / len) * 86,
-    dy: (my / len) * 86,
-    spin: (i % 2 ? 1 : -1) * (24 + i * 6),
-  };
-});
-// Jagged crack lines from the centre outward — revealed two-per-tap.
-const CRACKS = [
-  "M50,50 L57,38 L53,29 L60,17 L57,5",
-  "M50,50 L66,53 L78,47 L93,51",
-  "M50,50 L55,65 L51,77 L58,95",
-  "M50,50 L39,61 L29,58 L13,67",
-  "M50,50 L43,41 L30,43 L16,33",
-  "M50,50 L49,35 L40,27 L43,12",
-];
+// Seal geometry, material and shards live in BadgeSeal.tsx — the same
+// drawing the lab page renders, so what the owner reviews is what ships.
 const TAPS_NEEDED = 3;
 
 export function BadgeEarnedContent({
@@ -111,6 +82,11 @@ export function BadgeEarnedContent({
   const [taps, setTaps] = useState(0);
   const [revealed, setRevealed] = useState(false);
   const tier = TIER_COLORS[badge.tier];
+  const sealId = `seal${useId().replace(/:/g, "")}`;
+  const lockColor = TIER_PALETTES[badge.tier].icon;
+  // The rendered seal carries its own wax medallion with the Tropos
+  // chevron, so the HTML lock glyph is only for a tier without art.
+  const sealArt: string | undefined = SEAL_ART[badge.tier];
 
   // Reduced motion collapses the ceremony to a single tap (no shake / shatter).
   const tapsNeeded = reduce ? 1 : TAPS_NEEDED;
@@ -193,8 +169,8 @@ export function BadgeEarnedContent({
   }, [revealed, tapsNeeded, fireReveal, onDismiss]);
 
   const visibleCracks = revealed
-    ? CRACKS.length
-    : Math.min(stage * 2, CRACKS.length);
+    ? SEAL_CRACKS.length
+    : Math.min(stage * 2, SEAL_CRACKS.length);
 
   return (
     <motion.div
@@ -377,46 +353,20 @@ export function BadgeEarnedContent({
                   height={150}
                   style={{ display: "block" }}
                 >
-                  <defs>
-                    <radialGradient id="seal-face" cx="38%" cy="30%" r="80%">
-                      <stop offset="0%" stopColor="#4a4a55" />
-                      <stop offset="55%" stopColor="#2b2b33" />
-                      <stop offset="100%" stopColor="#17171c" />
-                    </radialGradient>
-                  </defs>
                   <g transform="translate(0,8)">
-                    {/* Frosted metallic seal face + tier-tinted rim. */}
-                    <polygon
-                      points={HEX}
-                      fill="url(#seal-face)"
-                      stroke={tier}
-                      strokeWidth={2.5}
-                      strokeOpacity={0.55}
+                    <SealFace
+                      tier={badge.tier}
+                      idBase={sealId}
+                      visibleCracks={visibleCracks}
+                      imageSrc={sealArt}
                     />
-                    <polygon points={HEX} fill={tier} opacity={0.12} />
-                    {/* Specular sheen across the top. */}
-                    <polygon
-                      points="50,3 93,28 93,46 50,30 7,46 7,28"
-                      fill="#ffffff"
-                      opacity={0.07}
-                    />
-                    {/* Cracks — drawn progressively as the seal weakens. */}
-                    {CRACKS.slice(0, visibleCracks).map((d, i) => (
-                      <motion.path
-                        key={i}
-                        d={d}
-                        fill="none"
-                        stroke="#fff"
-                        strokeWidth={1.4}
-                        strokeLinecap="round"
-                        strokeOpacity={0.85}
-                        initial={{ pathLength: 0, opacity: 0 }}
-                        animate={{ pathLength: 1, opacity: 1 }}
-                        transition={{ duration: 0.25 }}
-                      />
-                    ))}
                   </g>
                 </svg>
+                {/* A band of light crosses the seal on each hit (keyed on
+                    taps so it re-fires); nothing on the first paint. */}
+                {!reduce && taps > 0 && (
+                  <SealSweep key={`sweep-${taps}`} boxUnitsTall={114} dy={8} />
+                )}
                 {/* Centre lock + tap-progress dots. The prompt TEXT moved
                     OUT of the hexagon (device QA 2026-08-09): "Tap to break
                     the seal" at its narrowest fit ran wider than the hex's
@@ -424,17 +374,30 @@ export function BadgeEarnedContent({
                     keeps only what fits — lock + dots — and the words sit
                     below the stage where they have the card's full width. */}
                 <span
-                  className="absolute inset-0 flex flex-col items-center justify-center gap-2 font-semibold pointer-events-none"
-                  style={{ color: "#fff" }}
+                  className="absolute inset-0 pointer-events-none"
+                  style={{ color: lockColor }}
                 >
-                  <Lock
-                    className="size-7"
-                    style={{ opacity: 0.9 }}
-                    aria-hidden="true"
-                  />
+                  {/* On the medallion: the hexagon's centre is viewBox y=58
+                      of 114 → 76px of the 150px box; the dots sit on the
+                      face below it. */}
+                  {!sealArt && (
+                    <Lock
+                      className="size-5 absolute"
+                      style={{
+                        left: "50%",
+                        top: 76,
+                        marginLeft: -10,
+                        marginTop: -10,
+                        opacity: 0.92,
+                      }}
+                      strokeWidth={2.4}
+                      aria-hidden="true"
+                    />
+                  )}
                   {tapsNeeded > 1 && (
                     <span
-                      className="flex items-center gap-1.5"
+                      className="absolute left-0 right-0 flex items-center justify-center gap-1.5"
+                      style={{ top: 112 }}
                       aria-hidden="true"
                     >
                       {Array.from({ length: tapsNeeded }, (_, i) => (
@@ -468,37 +431,15 @@ export function BadgeEarnedContent({
                   marginLeft: -66,
                 }}
               >
-                {SHARDS.map((s, i) => (
-                  <motion.svg
-                    key={i}
-                    viewBox="0 0 100 100"
-                    width={132}
-                    height={132}
-                    className="absolute"
-                    style={{ top: 0, left: 0 }}
-                    initial={{ x: 0, y: 0, opacity: 1, rotate: 0, scale: 1 }}
-                    animate={{
-                      x: s.dx,
-                      y: s.dy,
-                      opacity: 0,
-                      rotate: s.spin,
-                      scale: 0.7,
-                    }}
-                    transition={{
-                      duration: 0.6,
-                      ease: [0.2, 0.8, 0.3, 1],
-                      delay: i * 0.015,
-                    }}
-                  >
-                    <polygon
-                      points={s.points}
-                      fill="#2b2b33"
-                      stroke={tier}
-                      strokeWidth={1.5}
-                      strokeOpacity={0.5}
-                    />
-                  </motion.svg>
-                ))}
+                <SealShards
+                  tier={badge.tier}
+                  idBase={sealId}
+                  size={132}
+                  imageSrc={sealArt}
+                />
+                <div className="absolute" style={{ left: 66, top: 66 }}>
+                  <SealDust tier={badge.tier} />
+                </div>
               </div>
             )
           )}

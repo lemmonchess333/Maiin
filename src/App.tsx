@@ -180,6 +180,14 @@ const WeightPickerLab =
     ? lazyRetry(() => import("@/pages/dev/WeightPickerLab"))
     : null;
 
+// Dev-only Badge seal lab — the badge-earned ceremony per tier, so the seal
+// can be reviewed and filmed without earning a badge. Same build-time
+// stripping as BrandBakeoff.
+const BadgeSealLab =
+  import.meta.env.MODE !== "production"
+    ? lazyRetry(() => import("@/pages/dev/BadgeSealLab"))
+    : null;
+
 // The ambient-emission bake-off (#1252) concluded: candidate A (single
 // brand-purple glow) ships as <AmbientGlow>. The dev harness was retired
 // to avoid a double-render with the shipped layer; it's recoverable from
@@ -847,6 +855,16 @@ function AppRoutes() {
                         element={
                           <RouteErrorBoundary>
                             <WeightPickerLab />
+                          </RouteErrorBoundary>
+                        }
+                      />
+                    )}
+                    {BadgeSealLab && (
+                      <Route
+                        path="/dev/badge-seal"
+                        element={
+                          <RouteErrorBoundary>
+                            <BadgeSealLab />
                           </RouteErrorBoundary>
                         }
                       />
