@@ -25,6 +25,14 @@ import { THEME } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import { haptic } from "@/lib/haptic";
 import { parseLocalDate } from "@/lib/dateHelpers";
+import EmptyState from "@/components/ui/EmptyState";
+import RaceFilters from "@/features/spaces/RaceFilters";
+import {
+  ALL_RACE_FILTERS,
+  filterRaceDefs,
+  RACE_DISTANCE_LABELS,
+  type RaceBrowseFilters,
+} from "@/features/spaces/raceBrowse";
 import type { SpaceDef } from "@/features/spaces/spaceDefs";
 import type { RaceDistance, RaceGoalPlannerState } from "@/lib/raceGoalPlanner";
 import PhaseRail from "./PhaseRail";
@@ -35,13 +43,6 @@ const DISTANCE_OPTIONS: { value: RaceDistance; label: string }[] = [
   { value: "half", label: "Half" },
   { value: "marathon", label: "Full" },
 ];
-
-const DISTANCE_CHIP: Record<string, string> = {
-  "5k": "5K",
-  "10k": "10K",
-  half: "Half",
-  marathon: "Full",
-};
 
 interface RaceGoalPlannerProps {
   distance: RaceDistance;
@@ -72,15 +73,22 @@ interface RaceGoalPlannerProps {
  */
 function UpcomingRacePicker({
   races,
+  distance,
   selectedId,
   onPick,
 }: {
   races: SpaceDef[];
+  distance: RaceDistance;
   selectedId: string;
   onPick: (def: SpaceDef) => void;
 }) {
   const [open, setOpen] = useState(false);
   const selected = races.find((r) => r.id === selectedId);
+  const [filters, setFilters] = useState<RaceBrowseFilters>(() => ({
+    country: selected?.event?.countryCode ?? "GB",
+    distance,
+  }));
+  const filteredRaces = filterRaceDefs(races, filters);
 
   return (
     <div>
@@ -109,66 +117,91 @@ function UpcomingRacePicker({
       </button>
 
       {open && (
-        <div
-          role="listbox"
-          aria-label="Upcoming races"
-          className="mt-1.5 space-y-1"
-        >
-          {races.map((race) => {
-            const isSelected = race.id === selectedId;
-            return (
-              <button
-                key={race.id}
-                type="button"
-                role="option"
-                aria-selected={isSelected}
-                onClick={() => {
-                  haptic();
-                  onPick(race);
-                  setOpen(false);
-                }}
-                className={cn(
-                  "w-full min-h-[44px] flex items-center justify-between gap-2 rounded-lg px-3 py-2 text-left border transition-colors",
-                  isSelected ? "border-transparent" : "border-border/50"
-                )}
-                style={
-                  isSelected ? { background: `${THEME.running}14` } : undefined
-                }
-              >
-                <span className="min-w-0 flex items-center gap-1.5">
-                  {isSelected && (
-                    <Check
-                      className="size-3.5 shrink-0 text-running"
-                      aria-hidden
-                    />
-                  )}
-                  <span className="text-sm font-medium text-foreground truncate">
-                    {race.name}
-                  </span>
-                </span>
-                <span className="shrink-0 flex items-center gap-2">
-                  <span className="text-caption text-muted-foreground font-mono tabular-nums">
-                    {format(parseLocalDate(race.event!.dateKey), "d MMM yyyy")}
-                  </span>
-                  <span
-                    className="text-caption text-muted-foreground"
-                    aria-hidden="true"
-                  >
-                    ·
-                  </span>
-                  <span
+        <div className="mt-3 space-y-2">
+          <RaceFilters value={filters} onChange={setFilters} />
+          {filteredRaces.length === 0 ? (
+            <EmptyState
+              compact
+              icon={Flag}
+              accent={THEME.running}
+              headline="No matching races"
+              sub="Clear the filters or enter your race below."
+              action={{
+                label: "Clear filters",
+                variant: "secondary",
+                onClick: () => setFilters(ALL_RACE_FILTERS),
+              }}
+            />
+          ) : (
+            <div
+              role="listbox"
+              aria-label="Upcoming races"
+              className="space-y-1"
+            >
+              {filteredRaces.map((race) => {
+                const isSelected = race.id === selectedId;
+                return (
+                  <button
+                    key={race.id}
+                    type="button"
+                    role="option"
+                    aria-selected={isSelected}
+                    onClick={() => {
+                      haptic();
+                      onPick(race);
+                      setOpen(false);
+                    }}
                     className={cn(
-                      "text-caption text-foreground",
-                      /\d/.test(DISTANCE_CHIP[race.event!.distance]) &&
-                        "font-mono tabular-nums"
+                      "w-full min-h-[44px] flex flex-col items-start gap-1 rounded-lg px-3 py-2 text-left border transition-colors",
+                      isSelected ? "border-transparent" : "border-border/50"
                     )}
+                    style={
+                      isSelected
+                        ? { background: `${THEME.running}14` }
+                        : undefined
+                    }
                   >
-                    {DISTANCE_CHIP[race.event!.distance]}
-                  </span>
-                </span>
-              </button>
-            );
-          })}
+                    <span className="min-w-0 flex items-center gap-1.5">
+                      {isSelected && (
+                        <Check
+                          className="size-3.5 shrink-0 text-running"
+                          aria-hidden
+                        />
+                      )}
+                      <span className="text-sm font-medium text-foreground">
+                        {race.name}
+                      </span>
+                    </span>
+                    <span className="shrink-0 flex items-center gap-2">
+                      <span className="text-caption text-muted-foreground font-mono tabular-nums">
+                        {format(
+                          parseLocalDate(race.event!.dateKey),
+                          "d MMM yyyy"
+                        )}
+                      </span>
+                      <span
+                        className="text-caption text-muted-foreground"
+                        aria-hidden="true"
+                      >
+                        ·
+                      </span>
+                      <span
+                        className={cn(
+                          "text-caption text-foreground",
+                          /\d/.test(
+                            RACE_DISTANCE_LABELS[race.event!.distance]
+                          ) && "font-mono tabular-nums"
+                        )}
+                      >
+                        {RACE_DISTANCE_LABELS[race.event!.distance]}{" "}
+                        {race.event!.countryFlag}
+                      </span>
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -205,7 +238,9 @@ export default function RaceGoalPlanner({
       {/* Door 2 — catalogue picker (collapses when nothing upcoming) */}
       {upcomingRaces.length > 0 && (
         <UpcomingRacePicker
+          key={`${distance}:${selectedEventSpaceId}`}
           races={upcomingRaces}
+          distance={distance}
           selectedId={selectedEventSpaceId}
           onPick={onPickRace}
         />

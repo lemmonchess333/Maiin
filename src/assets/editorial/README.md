@@ -123,3 +123,31 @@ All four assets are landscape WebP files below 120 KB. Photographer credits,
 source URLs, downloaded-image hashes, exact crops, encoding details and the
 logo-removal prompt are recorded in
 [`sources-2026-09-14-followup.json`](./sources-2026-09-14-followup.json).
+
+### Marathon expansion — 2026-09-14
+
+Fourteen distinct destination photos cover the newly added marathons. All are
+real photographs under the free Unsplash License, downloaded into the app;
+there are no remote image dependencies. Source pages, photographers, location
+evidence, original hashes, crop rectangles and shipped-file hashes are in
+[`sources-marathon-expansion-2026-09-14.json`](./sources-marathon-expansion-2026-09-14.json).
+These show city context rather than official race photography or a promised
+future course. The scope and date sources are documented in
+[`marathon-expansion.md`](../../../docs/proposals/marathon-expansion.md).
+
+| Race                   | Photographer       | Source                                                                                                          |
+| ---------------------- | ------------------ | --------------------------------------------------------------------------------------------------------------- |
+| yorkshire-marathon     | Al Elmes           | [Photo](https://unsplash.com/photos/an-aerial-view-of-a-city-with-a-cathedral-yBPCyAkGfik)                      |
+| chester-marathon       | Martina Jorden     | [Photo](https://unsplash.com/photos/a-group-of-people-walking-down-a-street-next-to-tall-buildings-hvXetOc-gDA) |
+| loch-ness-marathon     | Piotr Musioł       | [Photo](https://unsplash.com/photos/black-wooden-fence-near-lake-during-daytime-1niYyd4NbxE)                    |
+| newport-marathon       | Richard Williams   | [Photo](https://unsplash.com/photos/newport-transporter-bridge-over-river-Pn4zpHUfFwg)                          |
+| belfast-marathon       | K. Mitch Hodge     | [Photo](https://unsplash.com/photos/belfast-city-hall-uk-ctdOWCcXYUM)                                           |
+| leeds-marathon         | Paul Rigel         | [Photo](https://unsplash.com/photos/an-aerial-view-of-a-city-with-tall-buildings-2G6Jl7M7PJc)                   |
+| milton-keynes-marathon | Ethan Wilkinson    | [Photo](https://unsplash.com/photos/aerial-view-of-green-grass-field-near-lake-during-daytime-mdIObkQ8sXA)      |
+| new-york-city-marathon | Brett Wharton      | [Photo](https://unsplash.com/photos/a-view-of-a-city-skyline-from-a-park-hblDWOyKork)                           |
+| chicago-marathon       | Ruben Mavarez      | [Photo](https://unsplash.com/photos/chicago-skyline-with-a-bridge-over-the-river-EccNx7qWjzE)                   |
+| paris-marathon         | Madalena Veloso    | [Photo](https://unsplash.com/photos/arc-de-triomphe-e2rtyRTCsns)                                                |
+| dublin-marathon        | Alessandro Santoro | [Photo](https://unsplash.com/photos/hapenny-bridge-over-river-liffey-dublin-57S4Ui1jtVw)                        |
+| southampton-marathon   | Colin Osborne      | [Photo](https://unsplash.com/photos/a-marina-filled-with-lots-of-boats-next-to-tall-buildings-7w4nbbYLJKY)      |
+| boston-marathon        | Jun Ren            | [Photo](https://unsplash.com/photos/w5PnmpqSX_s)                                                                |
+| berlin-marathon        | Xander Gonera      | [Photo](https://unsplash.com/photos/the-brandenburg-gate-in-berlin-germany-EmGJdoIvp3A)                         |

@@ -31,6 +31,21 @@ const SPACE_IDS = Object.freeze([
   "great-birmingham-run",
   "great-manchester-run",
   "leeds-10k",
+  // Marathon expansion (2026-09-14)
+  "yorkshire-marathon",
+  "chester-marathon",
+  "loch-ness-marathon",
+  "newport-marathon",
+  "belfast-marathon",
+  "leeds-marathon",
+  "milton-keynes-marathon",
+  "southampton-marathon",
+  "new-york-city-marathon",
+  "chicago-marathon",
+  "boston-marathon",
+  "paris-marathon",
+  "berlin-marathon",
+  "dublin-marathon",
 ]);
 
 module.exports = { SPACE_IDS };

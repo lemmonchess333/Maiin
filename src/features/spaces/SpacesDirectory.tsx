@@ -15,8 +15,16 @@
  *
  * Density gate (Spc1c): member counts below
  * SPACE_MEMBER_COUNT_MIN_VISIBLE render as a "New space" chip, never a
- * shame-count. Static everything — no filters, no loops (WKWebView).
+ * shame-count. Native select filters; no animation loops (WKWebView).
  */
+import { useState } from "react";
+import EmptyState from "@/components/ui/EmptyState";
+import RaceFilters from "./RaceFilters";
+import {
+  ALL_RACE_FILTERS,
+  UK_RACE_FILTERS,
+  RACE_DISTANCE_LABELS,
+} from "./raceBrowse";
 import { Link } from "react-router-dom";
 import { format } from "date-fns";
 import {
@@ -150,7 +158,7 @@ function SpaceCard({
               : { background: `${accent}1F`, color: ACCENT_INK[def.accent] }
           }
         >
-          Race
+          {RACE_DISTANCE_LABELS[event.distance]}
         </span>
       )}
 
@@ -172,7 +180,7 @@ function SpaceCard({
 
       <div className="absolute bottom-3 left-3.5 right-3.5 min-w-0">
         <p
-          className={`${compact ? "text-sm" : "text-base"} font-bold leading-tight truncate ${
+          className={`${compact ? "text-sm" : "text-base"} font-bold leading-tight ${event ? "line-clamp-2" : "truncate"} ${
             photo ? "text-white" : "text-foreground"
           }`}
         >
@@ -208,17 +216,19 @@ function SpaceCard({
 }
 
 function CardRow({
+  hideLabel = false,
   label,
   entries,
   compact,
 }: {
+  hideLabel?: boolean;
   label: string;
   entries: SpaceDirectoryEntry[];
   compact: boolean;
 }) {
   return (
     <div className="space-y-2">
-      <SectionLabel>{label}</SectionLabel>
+      {!hideLabel && <SectionLabel>{label}</SectionLabel>}
       {/* -mx-4/px-4 bleeds the scroller to the screen edge so the
           peeking next card invites the swipe (the Runna affordance).
           data-no-page-swipe: a horizontal swipe to scroll this carousel
@@ -259,19 +269,45 @@ export default function SpacesDirectory({
 }) {
   /* Q6 lock: race rows exist ONLY in the full directory — the compact
      Feed row never requests them (and never pays their reads). */
-  const { entries } = useSpacesDirectory(!compact);
+  const [filters, setFilters] = useState(UK_RACE_FILTERS);
+  const { entries, upcomingRaces } = useSpacesDirectory(!compact, filters);
   const shown = excludeJoined ? entries.filter((e) => !e.joined) : entries;
   const interest = shown.filter((e) => e.def.kind !== "race");
   const races = shown.filter((e) => e.def.kind === "race");
-  if (shown.length === 0) return null;
+  const showRaces = !compact && upcomingRaces.length > 0;
+  if (shown.length === 0 && !showRaces) return null;
 
   return (
     <div className="space-y-4">
       {interest.length > 0 && (
         <CardRow label={title} entries={interest} compact={compact} />
       )}
-      {races.length > 0 && (
-        <CardRow label="Races & events" entries={races} compact={compact} />
+      {showRaces && (
+        <section className="space-y-2" aria-label="Races & events">
+          <SectionLabel>Races & events</SectionLabel>
+          <RaceFilters value={filters} onChange={setFilters} />
+          {races.length > 0 ? (
+            <CardRow
+              label="Upcoming races"
+              entries={races}
+              compact={false}
+              hideLabel
+            />
+          ) : (
+            <EmptyState
+              compact
+              icon={Flag}
+              accent={THEME.running}
+              headline="No matching races"
+              sub="Try another country or distance."
+              action={{
+                label: "Clear filters",
+                variant: "secondary",
+                onClick: () => setFilters(ALL_RACE_FILTERS),
+              }}
+            />
+          )}
+        </section>
       )}
     </div>
   );

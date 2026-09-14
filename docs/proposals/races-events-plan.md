@@ -1,3 +1,5 @@
+> Scope update, 14 September 2026: the approved [marathon expansion](./marathon-expansion.md) adds 14 full marathons and shared country/distance filters. The historical 12-race and no-filter scope below is superseded; membership, training-save and evergreen Space contracts still apply.
+
 # Races & Events in Social — plan (2026-07-19)
 
 **Source:** operator walkthrough of Runna's Community tab (12 screenshots,

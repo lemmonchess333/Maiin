@@ -16,10 +16,10 @@ import {
 } from "../spaceDefs";
 
 describe("SPACE_DEFS config invariants", () => {
-  it("ships the locked sets: 8 interest (Spc1e + trail-running) + 12 races (2026-07-19 plan)", () => {
+  it("ships the locked sets: 8 interest + 26 races (2026-09-14 expansion)", () => {
     expect(SPACE_DEFS.filter((d) => d.kind === "interest")).toHaveLength(8);
-    expect(SPACE_DEFS.filter((d) => d.kind === "race")).toHaveLength(12);
-    expect(SPACE_DEFS).toHaveLength(20);
+    expect(SPACE_DEFS.filter((d) => d.kind === "race")).toHaveLength(26);
+    expect(SPACE_DEFS).toHaveLength(34);
   });
 
   it("ids are unique, url-safe slugs", () => {
@@ -66,6 +66,9 @@ describe("race event blocks (Races & Events plan, locked 2026-07-19)", () => {
         d.event.distance
       );
       expect(d.event.city.length, d.id).toBeGreaterThan(0);
+      expect(["GB", "US", "FR", "DE", "IE"], d.id).toContain(
+        d.event.countryCode
+      );
       expect(d.event.countryFlag.length, d.id).toBeGreaterThan(0);
       expect(d.event.websiteUrl, d.id).toMatch(/^https:\/\//);
       if (d.event.elevation !== undefined) {
@@ -82,7 +85,7 @@ describe("race event blocks (Races & Events plan, locked 2026-07-19)", () => {
 
   it("raceSpaceDefs() returns all races sorted soonest first", () => {
     const races = raceSpaceDefs();
-    expect(races).toHaveLength(12);
+    expect(races).toHaveLength(26);
     const keys = races.map((d) => d.event!.dateKey);
     expect(keys).toEqual([...keys].sort());
   });
@@ -97,7 +100,7 @@ describe("race event blocks (Races & Events plan, locked 2026-07-19)", () => {
     const dayAfter = "2026-09-07";
     const after = upcomingRaceSpaceDefs(dayAfter).map((d) => d.event!.dateKey);
     expect(after).not.toContain(first);
-    expect(after).toHaveLength(11);
+    expect(after).toHaveLength(25);
     // Far future: everything hidden, none invented.
     expect(upcomingRaceSpaceDefs("2099-01-01")).toHaveLength(0);
   });

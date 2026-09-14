@@ -22,7 +22,12 @@
  */
 import { useEffect, useSyncExternalStore } from "react";
 import { logger } from "@/lib/logger";
-import { raceSpaceDefs, type SpaceDef, type SpaceEventInfo } from "./spaceDefs";
+import {
+  RACE_COUNTRIES,
+  raceSpaceDefs,
+  type SpaceDef,
+  type SpaceEventInfo,
+} from "./spaceDefs";
 
 export type RaceEventOverride = Partial<SpaceEventInfo>;
 export type RaceEventOverrides = Record<string, RaceEventOverride>;
@@ -66,6 +71,12 @@ export function sanitizeRaceEventOverrides(raw: unknown): RaceEventOverrides {
       v.city.length <= 40
     ) {
       o.city = v.city;
+    }
+    if (
+      typeof v.countryCode === "string" &&
+      Object.hasOwn(RACE_COUNTRIES, v.countryCode)
+    ) {
+      o.countryCode = v.countryCode as SpaceEventInfo["countryCode"];
     }
     if (
       typeof v.countryFlag === "string" &&

@@ -960,7 +960,22 @@ service cloud.firestore {
         'london-marathon', 'manchester-marathon', 'brighton-marathon',
         'edinburgh-marathon', 'great-north-run', 'the-big-half',
         'royal-parks-half', 'cardiff-half', 'london-10000',
-        'great-birmingham-run', 'great-manchester-run', 'leeds-10k'
+        'great-birmingham-run', 'great-manchester-run', 'leeds-10k',
+        // Marathon expansion (2026-09-14)
+        'yorkshire-marathon',
+        'chester-marathon',
+        'loch-ness-marathon',
+        'newport-marathon',
+        'belfast-marathon',
+        'leeds-marathon',
+        'milton-keynes-marathon',
+        'southampton-marathon',
+        'new-york-city-marathon',
+        'chicago-marathon',
+        'boston-marathon',
+        'paris-marathon',
+        'berlin-marathon',
+        'dublin-marathon'
       ];
     }
 
