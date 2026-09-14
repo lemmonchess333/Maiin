@@ -16,6 +16,7 @@ import {
   getVerb,
   getLine,
   EMPTY_STATE_LINE,
+  performanceEmptyCopy,
   type VerbState,
 } from "@/lib/performanceLine";
 import type { PerformanceWeekDoc } from "@/lib/performanceTypes";
@@ -33,6 +34,11 @@ interface PerformanceHeroCardProps {
    *  loading variant; downstream consumers see the empty state once
    *  loading clears with no doc. */
   loading: boolean;
+  /** Whether the user has any logged session at all. Distinguishes the
+   *  cold-start empty state from the short window after a first session is
+   *  saved but before the server has written its performance doc — see
+   *  performanceEmptyCopy. Defaults to false, the cold-start reading. */
+  hasLoggedSession?: boolean;
 }
 
 /* Card geometry — preserved from HealthScoreCard chrome so the
@@ -88,6 +94,7 @@ export default function PerformanceHeroCard({
   previousWeek,
   weeksAvailable,
   loading,
+  hasLoggedSession = false,
 }: PerformanceHeroCardProps) {
   const pi = currentWeek ? Math.round(currentWeek.performanceIndex ?? 0) : 0;
   /* useCountUp is called unconditionally to satisfy the Rules of Hooks
@@ -122,12 +129,13 @@ export default function PerformanceHeroCard({
     );
   }
 
-  /* Empty state — loading has cleared but no doc exists (pre-first-log).
-     Cold-start users genuinely have no data. Wave3 F: the undesigned
-     ring + sentence is replaced by the hexagon EmptyState primitive with
-     a real next step (start a workout — Performance is computed FROM
-     logged sessions, so that's the unlock). */
+  /* Empty state — loading has cleared but no doc exists. Wave3 F: the
+     undesigned ring + sentence is replaced by the hexagon EmptyState
+     primitive. Whether the copy claims nothing is logged, and whether it
+     offers a next step, is performanceEmptyCopy's call — the doc is written
+     by the server, so "no doc" is not the same as "no session". */
   if (!currentWeek) {
+    const copy = performanceEmptyCopy(hasLoggedSession);
     return (
       <div className="p-4 rounded-2xl bg-card card-shadow">
         {/* Eyebrow removed — D20; see the loading branch's note. */}
@@ -135,9 +143,13 @@ export default function PerformanceHeroCard({
           compact
           icon={Activity}
           accent={THEME.brand}
-          headline="No sessions logged yet"
-          sub={EMPTY_STATE_LINE}
-          action={{ label: "Start a workout", href: "/program" }}
+          headline={copy.headline}
+          sub={copy.sub}
+          action={
+            copy.showAction
+              ? { label: "Start a workout", href: "/program" }
+              : undefined
+          }
         />
       </div>
     );

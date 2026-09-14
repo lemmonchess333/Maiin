@@ -5,6 +5,7 @@ import { Activity } from "lucide-react";
 import { THEME } from "@/lib/theme";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { usePerformanceWeeks } from "@/hooks/usePerformance";
+import { performanceEmptyCopy } from "@/lib/performanceLine";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary";
 
@@ -27,7 +28,17 @@ const PerformanceTab = lazyRetry(
   () => import("@/components/analytics/PerformanceTab")
 );
 
-export default function PerformanceSection() {
+interface PerformanceSectionProps {
+  /** Whether the user has any logged session at all. Distinguishes the
+   *  cold-start empty state from the short window after a first session is
+   *  saved but before the server has written its performance doc — see
+   *  performanceEmptyCopy. Defaults to false, the cold-start reading. */
+  hasLoggedSession?: boolean;
+}
+
+export default function PerformanceSection({
+  hasLoggedSession = false,
+}: PerformanceSectionProps = {}) {
   /* usePerformanceWeeks here only gates loading / empty — PerformanceTab
      fetches its own 12-week window for the gauge, trend, and breakdown. */
   const { currentWeek, loading } = usePerformanceWeeks(4);
@@ -78,9 +89,11 @@ export default function PerformanceSection() {
     );
   }
 
-  /* No perf doc yet — designed hexagon empty state. Action routes to the
-     workout flow (Performance is computed from logged sessions). */
+  /* No perf doc yet — designed hexagon empty state. Which sentence, and
+     whether there is an action at all, depends on whether anything has been
+     logged; performanceEmptyCopy owns that split for both surfaces. */
   if (!currentWeek) {
+    const copy = performanceEmptyCopy(hasLoggedSession);
     return (
       <section
         id="analytics-performance"
@@ -99,9 +112,13 @@ export default function PerformanceSection() {
             compact
             icon={Activity}
             accent={THEME.brand}
-            headline="No sessions logged yet"
-            sub="Your Performance Index appears after your first logged session."
-            action={{ label: "Start a workout", href: "/program" }}
+            headline={copy.headline}
+            sub={copy.sub}
+            action={
+              copy.showAction
+                ? { label: "Start a workout", href: "/program" }
+                : undefined
+            }
           />
         </div>
       </section>
