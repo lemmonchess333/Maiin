@@ -51,6 +51,15 @@ function seedMember(docs, uid) {
   docs.set(`goalSpaces/${SPACE}/members/${uid}`, { uid, role: "member" });
 }
 
+/** Fresh seeded store per assertion — each accepted check-in writes a doc,
+ *  so reusing one store across a loop would measure the second call's
+ *  duplicate path rather than the gate under test. */
+function firestoreFor() {
+  const { firestore, docs } = makeStore();
+  seedMember(docs, "alice");
+  return firestore;
+}
+
 function checkInArgs(firestore, overrides = {}) {
   return {
     firestore,
@@ -157,6 +166,31 @@ describe("weeklyCheckIn", () => {
     ]) {
       await expect(
         weeklyCheckIn(checkInArgs(firestore, { weekKey }))
+      ).rejects.toMatchObject({ code: "invalid-argument" });
+    }
+  });
+
+  it("holds the +/-10 day window at its edges, not just at 'years away'", async () => {
+    /* The only out-of-window case was "2020-01-05" — six years out, which
+       a 10-day window and a 365-day one both refuse. Measured: widening
+       WEEK_KEY_WINDOW_MS from 10 days to a year left this whole file
+       green. The window is what stops a client back-dating (or
+       forward-dating) its way to a pile of distinct ${uid}_${weekKey}
+       docs, so the bound is the behaviour, not the fact that 2020 fails.
+
+       NOW is 2026-07-15. Week starts are Mondays (or Sundays, during the
+       RunWk2 transition), so the nearest week starts either side of the
+       10-day edge are picked to sit just inside and just outside it. */
+    const inWindow = ["2026-07-06", "2026-07-20"]; // 9 and 5 days out
+    for (const weekKey of inWindow) {
+      await expect(
+        weeklyCheckIn(checkInArgs(firestoreFor(), { weekKey }))
+      ).resolves.toMatchObject({ ok: true });
+    }
+    const outOfWindow = ["2026-06-29", "2026-07-27"]; // 16 and 12 days out
+    for (const weekKey of outOfWindow) {
+      await expect(
+        weeklyCheckIn(checkInArgs(firestoreFor(), { weekKey }))
       ).rejects.toMatchObject({ code: "invalid-argument" });
     }
   });
