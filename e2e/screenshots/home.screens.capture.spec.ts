@@ -10,7 +10,7 @@
  * Mobile viewport (Tropos is mobile-first); fullPage so the whole scroll is
  * captured. Light + dark (dark = the `.dark` class on <html>).
  */
-import { test, type Page } from "@playwright/test";
+import { test, expect, type Page } from "@playwright/test";
 import { signInAsTestUser } from "../helpers/auth";
 import { settleImages } from "../helpers/settleImages";
 import { emulatorActive } from "../helpers/emulator";
@@ -267,18 +267,21 @@ test.describe("app screenshots", () => {
       );
     }
 
-    // History's Milestones tab — the chronology, with the badge collection
-    // beneath it. The stashed-tab hook (History.tsx reads
-    // sessionStorage("history-tab") on mount) gives a deterministic route
-    // without scripting the tab UI.
+    // History's Badges tab — the badge collection. The stashed-tab hook
+    // (History.tsx reads sessionStorage("history-tab") on mount) gives a
+    // deterministic route without scripting the tab UI.
     //
-    // The stored value is "milestones" now: the tab was renamed from
-    // "badges", and although History still redirects the legacy value, the
-    // catch below swallows a miss silently — so a spec left on the old
-    // value would capture Analytics and look like a Milestones regression.
+    // The stored value has been "badges", then "milestones", and is
+    // "badges" again — the Milestones chronology was removed as a
+    // restatement of the PRs tab. History's stashed-tab read consults
+    // LEGACY_TAB_REDIRECTS, so a stale value still resolves — but the catch
+    // below swallows a genuine miss silently, so a spec left on a value that
+    // is neither current NOR redirected captures Analytics and reads as a
+    // regression in whatever it was pointed at. Keep this literal in step
+    // with VALID_TABS.
     await page.addInitScript(() => {
       try {
-        window.sessionStorage.setItem("history-tab", "milestones");
+        window.sessionStorage.setItem("history-tab", "badges");
       } catch {
         /* fine — capture lands on Analytics instead */
       }
@@ -287,8 +290,19 @@ test.describe("app screenshots", () => {
     await page
       .getByRole("navigation", { name: /main navigation/i })
       .waitFor({ state: "visible", timeout: 20000 });
+    /* Prove the stashed value actually landed before shooting. Without
+       this the catch above is a silent failure: a stale literal drops the
+       capture on Analytics and the frame still gets written, still gets
+       committed, and reads in the diff report as a regression in whatever
+       it was pointed at. The tabs are a SegmentedControl, so they are
+       role="radio" — not buttons. */
+    await expect(page.getByRole("radio", { name: "Badges" })).toHaveAttribute(
+      "aria-checked",
+      "true",
+      { timeout: 10000 }
+    );
     await page.waitForTimeout(1600);
-    await shootLightDark("milestones");
+    await shootLightDark("badges");
 
     // Exercise guide — ExerciseHistory's Form tab (ExerciseFormContent:
     // muscle diagram hero + pills + instructions + watch-out callout).
