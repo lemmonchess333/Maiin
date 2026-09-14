@@ -177,15 +177,24 @@ export function BadgeGrid() {
                        different heights across peers. Growing the name block
                        instead pins every footer to the same baseline. */
                     className="relative p-3 rounded-xl bg-card border border-border/50 text-center flex flex-col"
-                    style={{
-                      transformStyle: "preserve-3d",
-                      // Earned keeps the radial tier tint; the glow itself
-                      // moved onto the badge art (BadgeHex) where it reads
-                      // at grid size — the card-level box-shadow didn't.
-                      backgroundImage: earned
-                        ? `radial-gradient(circle at 50% 18%, ${tierColor}1a, transparent 65%)`
-                        : undefined,
-                    }}
+                    /* No card-level tier wash. It used to paint
+                       `radial-gradient(circle at 50% 18%, <tier>1a, transparent 65%)`
+                       on every earned card, from when the medals were pale
+                       tier-tinted enamel and the wash read as part of them.
+                       The 2026-09-14 regeneration made the medals near-black,
+                       and the wash became the brightest thing in the tile —
+                       and a BOXY one: a circle reaching 65% of a ~110px card
+                       is clipped flat by both card edges, so it renders as a
+                       lit rectangle behind a dark object rather than a bloom.
+                       Owner reported it off a device screenshot ("weird
+                       background issue"). Isolated by rendering the card CSS
+                       four ways against the real asset: dropping the filter
+                       keeps the box, dropping the wash removes it.
+                       Earned still reads as earned three other ways — the
+                       tier glow BadgeHex puts on the art itself, the
+                       foreground name colour, and the date in place of a
+                       progress bar. */
+                    style={{ transformStyle: "preserve-3d" }}
                   >
                     <div className="flex items-center justify-center py-1 mb-2">
                       <BadgeHex
