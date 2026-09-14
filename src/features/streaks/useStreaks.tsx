@@ -23,6 +23,7 @@ import {
   onSnapshot,
   orderBy,
   query,
+  runTransaction,
   writeBatch,
   limit,
   Timestamp,
@@ -169,6 +170,24 @@ function toIsoString(value: unknown): string {
   }
   logger.warn("[Streaks] toIsoString: unexpected value", value);
   return new Date().toISOString();
+}
+
+/**
+ * Hydrate a stored `streaks/data.badges` array against the catalogue: every
+ * definition, in catalogue order, with the stored `earnedAt` (or null).
+ * Stored entries may be full EarnedBadge objects (client writes) or the
+ * minimal `{ id, earnedAt }` pairs the server appends — this is what makes
+ * the two shapes interchangeable, and it auto-backfills new definitions as
+ * unearned for existing users with no migration.
+ */
+function mergeWithCatalogue(
+  stored: readonly { id: string; earnedAt?: string | null }[] | undefined
+): EarnedBadge[] {
+  const saved = Array.isArray(stored) ? stored : [];
+  return BADGE_DEFINITIONS.map((def) => {
+    const hit = saved.find((b) => b && b.id === def.id);
+    return { ...def, earnedAt: hit?.earnedAt || null };
+  });
 }
 
 /**
@@ -461,6 +480,15 @@ function useStreaksInternal() {
   // check effect from firing duplicate concurrent commits for the same
   // badge before the first resolves.
   const awardInFlightRef = useRef<Set<string>>(new Set());
+  // Awards run one after another, never concurrently. Each is a transaction
+  // that reads streaks/data live, so a second award always sees the first
+  // one's commit — two calls in the same tick can no longer overwrite each
+  // other's earnedAt (the pre-transaction code built the whole badges array
+  // from a stale closure and wrote it back, so the later write reverted
+  // the earlier award until the next snapshot re-derived it). Real
+  // Firestore would also retry a contended transaction; the chain means
+  // correctness does not depend on that.
+  const awardChainRef = useRef<Promise<void>>(Promise.resolve());
   // Earned-badge ids already accounted for, so an earnedAt that NEWLY appears
   // in a streaks/data snapshot can be detected as an EXTERNAL (server-side)
   // award and celebrated. null until the first snapshot seeds the baseline
@@ -508,11 +536,7 @@ function useStreaksInternal() {
           const data = snap.data() as StreakData;
           // Merge badge definitions with saved earned dates — this auto-backfills
           // new badges as earnedAt: null for existing users. No migration needed.
-          const savedBadges = data.badges || [];
-          const merged = BADGE_DEFINITIONS.map((def) => {
-            const saved = savedBadges.find((b: EarnedBadge) => b.id === def.id);
-            return { ...def, earnedAt: saved?.earnedAt || null };
-          });
+          const merged = mergeWithCatalogue(data.badges);
           if (!snap.metadata?.hasPendingWrites)
             setConfirmedRevealBadges({ uid, badges: merged });
           // Spread DEFAULT_STREAKS first so legacy docs that pre-date a field
@@ -898,66 +922,125 @@ function useStreaksInternal() {
 
   // ── Badge award helper ─────────────────────────────────────────────────
 
-  const awardBadge = useCallback(
-    async (badgeId: string, silent: boolean) => {
+  /**
+   * Award badges in ONE transaction on streaks/data.
+   *
+   * Transactional because the server awards too (onWorkoutCreated writes
+   * Plate-Club and run milestones into the same array): whichever side
+   * lands second reads the other's earnedAt and leaves it alone. The old
+   * batch write rebuilt the whole array from local state, so a
+   * server-awarded badge that had not reached this client yet was
+   * silently reverted to unearned.
+   *
+   * Only ids this call actually SETS are registered in seenEarnedRef.
+   * That placement is load-bearing: registering a candidate before the
+   * transaction has decided would mark a server-awarded badge as already
+   * seen, and the snapshot's external-award path would then skip its
+   * celebration.
+   *
+   * The reveal queue moved inside for tidiness, NOT correctness — hoisting
+   * it back out was measured against `awardBadges.test.tsx` and changes
+   * nothing, because `queueBadgeReveals` is a dedupe set and the snapshot
+   * path queues the same id anyway. Queuing before the commit is
+   * deliberate either way (inherited): a reveal is INTENT, and `newBadge`
+   * only fires once a snapshot confirms an earnedAt, so intent recorded
+   * for a write that then failed never reveals anything.
+   */
+  const awardBadgeIds = useCallback(
+    async (ids: readonly string[], silent: boolean) => {
       if (!uid) return;
 
-      // Read fresh state via a snapshot of the current badges array
-      const badge = streakData.badges.find((b) => b.id === badgeId);
-      if (!badge || badge.earnedAt) return;
+      // Cheap local pre-filter: unknown ids, ids already earned as far as
+      // this client knows, and ids with a write in flight. The transaction
+      // below is the authority; this just avoids pointless round-trips.
+      const candidates = [...new Set(ids)].filter((id) => {
+        const badge = streakData.badges.find((b) => b.id === id);
+        return !!badge && !badge.earnedAt && !awardInFlightRef.current.has(id);
+      });
+      if (candidates.length === 0) return;
+      for (const id of candidates) awardInFlightRef.current.add(id);
 
-      // Skip if a write for this badge is already in flight.
-      if (awardInFlightRef.current.has(badgeId)) return;
-      awardInFlightRef.current.add(badgeId);
-      // Register the local award so the streaks/data snapshot it triggers
-      // isn't re-detected as an external award (would double-queue the modal).
-      // A silent (first-pass) award still registers, so it never pops a modal.
-      seenEarnedRef.current?.add(badgeId);
+      const run = async () => {
+        const streaksRef = doc(db, "users", uid, "streaks", "data");
+        const publicProfileRef = doc(db, "users", uid, "public", "profile");
+        let setNow: string[] = [];
+        try {
+          const next = await runTransaction(db, async (tx) => {
+            const snap = await tx.get(streaksRef);
+            const stored = snap.exists()
+              ? (snap.data() as { badges?: unknown }).badges
+              : undefined;
+            const badges: EarnedBadge[] = Array.isArray(stored)
+              ? [...(stored as EarnedBadge[])]
+              : [];
+            const now = new Date().toISOString();
+            setNow = [];
+            for (const id of candidates) {
+              const idx = badges.findIndex((b) => b && b.id === id);
+              if (idx === -1) {
+                const def = BADGE_DEFINITIONS.find((d) => d.id === id);
+                if (!def) continue;
+                badges.push({ ...def, earnedAt: now });
+                setNow.push(id);
+              } else if (!badges[idx].earnedAt) {
+                badges[idx] = { ...badges[idx], earnedAt: now };
+                setNow.push(id);
+              }
+            }
+            if (setNow.length === 0) return null;
 
-      const now = new Date().toISOString();
-      const updated: EarnedBadge = { ...badge, earnedAt: now };
-      const updatedBadges = streakData.badges.map((b) =>
-        b.id === badgeId ? updated : b
-      );
+            // Register before the write so the echo snapshot isn't
+            // re-detected as an external award; persist reveal intent
+            // before the ack so a killed app still reveals once the next
+            // snapshot confirms. Both are idempotent, so a transaction
+            // retry re-running this body is harmless.
+            for (const id of setNow) seenEarnedRef.current?.add(id);
+            if (!silent) queueBadgeReveals(uid, setNow);
 
-      // Compute a compact, cross-user-readable badge summary for the public
-      // profile mirror. Full EarnedBadge[] stays on streaks/data (owner-only);
-      // only ids + earnedAt timestamps flow through the public doc.
-      const earnedMap: Record<string, string> = {};
-      for (const b of updatedBadges) {
-        if (!b.earnedAt) continue;
-        earnedMap[b.id] = toIsoString(b.earnedAt);
-      }
-      const badgeSummary = {
-        earnedMap,
-        count: Object.keys(earnedMap).length,
+            // Public mirror: ids + earnedAt only, from the LIVE array — so
+            // a server-earned badge this client had not seen is counted.
+            const earnedMap: Record<string, string> = {};
+            for (const b of badges) {
+              if (!b.earnedAt) continue;
+              earnedMap[b.id] = toIsoString(b.earnedAt);
+            }
+            tx.set(streaksRef, { badges }, { merge: true });
+            tx.set(
+              publicProfileRef,
+              {
+                badgeSummary: {
+                  earnedMap,
+                  count: Object.keys(earnedMap).length,
+                },
+              },
+              { merge: true }
+            );
+            return badges;
+          });
+          if (next) {
+            setConfirmedRevealBadges({ uid, badges: mergeWithCatalogue(next) });
+          }
+        } catch (error) {
+          // Un-register what this call claimed, so a later server award of
+          // the same id is still celebrated as new. Badge awards are
+          // background reconciliation, not a user action — log, no toast
+          // (this used to produce stacked "Failed to save badge" errors).
+          for (const id of setNow) seenEarnedRef.current?.delete(id);
+          logger.error("[Streaks] Badge save failed:", error);
+        } finally {
+          for (const id of candidates) awardInFlightRef.current.delete(id);
+        }
       };
-
-      const streaksRef = doc(db, "users", uid, "streaks", "data");
-      const publicProfileRef = doc(db, "users", uid, "public", "profile");
-      try {
-        const batch = writeBatch(db);
-        batch.set(streaksRef, { badges: updatedBadges }, { merge: true });
-        // Mirror only the summary onto the public profile doc. The
-        // users/{uid}/public/{doc} rule accepts subsets via hasOnly, so a
-        // partial merge with just badgeSummary is valid.
-        batch.set(publicProfileRef, { badgeSummary }, { merge: true });
-        // Persist intent before the async acknowledgement so a killed app
-        // can reveal the badge once the next snapshot confirms the award.
-        if (!silent) queueBadgeReveals(uid, [updated.id]);
-        await batch.commit();
-        setConfirmedRevealBadges({ uid, badges: updatedBadges });
-      } catch (error) {
-        // Badge awards are automatic background reconciliation, not a
-        // user-initiated action — a transient write failure must not
-        // surface a toast (this produced stacked "Failed to save badge"
-        // errors). Log only; the next snapshot/state change retries.
-        logger.error("[Streaks] Badge save failed:", error);
-      } finally {
-        awardInFlightRef.current.delete(badgeId);
-      }
+      const chained = awardChainRef.current.then(run, run);
+      awardChainRef.current = chained;
+      await chained;
     },
     [uid, streakData.badges]
+  );
+
+  const awardBadge = useCallback(
+    (badgeId: string, silent: boolean) => awardBadgeIds([badgeId], silent),
+    [awardBadgeIds]
   );
 
   // ── Badge check logic — runs after every snapshot change once loaded ─
@@ -1150,11 +1233,15 @@ function useStreaksInternal() {
   // from the windowed snapshots the badge pass reads. Idempotent (awardBadge
   // no-ops if already earned / a write is in flight) and non-silent, so it pops
   // the standard celebration via the same queue as every other award.
-  const awardEventBadge = useCallback(
-    (badgeId: string) => {
-      void awardBadge(badgeId, false);
+  const awardEventBadges = useCallback(
+    (badgeIds: readonly string[]) => {
+      void awardBadgeIds(badgeIds, false);
     },
-    [awardBadge]
+    [awardBadgeIds]
+  );
+  const awardEventBadge = useCallback(
+    (badgeId: string) => awardEventBadges([badgeId]),
+    [awardEventBadges]
   );
 
   return {
@@ -1170,6 +1257,7 @@ function useStreaksInternal() {
     allBadges,
     badgeProgressCtx,
     awardEventBadge,
+    awardEventBadges,
     newBadge,
     dismissNewBadge,
     // Per-day target snapshots (date → calories + macros as they stood on that

@@ -22,6 +22,8 @@ const h = vi.hoisted(() => ({
   success: vi.fn(),
   message: vi.fn(),
   user: null as { uid: string } | null,
+  awardEventBadge: vi.fn(),
+  awardEventBadges: vi.fn(),
 }));
 vi.mock("@/lib/auth", () => ({
   useAuth: () => ({ user: h.user, profile: null }),
@@ -37,7 +39,10 @@ vi.mock("@/lib/firebase", () => ({
 }));
 vi.mock("firebase/firestore");
 vi.mock("@/features/streaks/useStreaks", () => ({
-  useStreaks: () => ({ awardEventBadge: vi.fn() }),
+  useStreaks: () => ({
+    awardEventBadge: h.awardEventBadge,
+    awardEventBadges: h.awardEventBadges,
+  }),
 }));
 vi.mock("@/hooks/useWorkoutDraft", () => ({
   useWorkoutDraft: () => ({ load: h.load, save: h.save, clear: h.clear }),
@@ -67,7 +72,11 @@ vi.mock("@/lib/restTimerNotification", () => ({
 }));
 import WorkoutSession from "../WorkoutSession";
 
-function openSession(onCompleteDay = vi.fn(), onClose = vi.fn()) {
+function openSession(
+  onCompleteDay = vi.fn(),
+  onClose = vi.fn(),
+  exercise: Partial<ProgramExercise> = {}
+) {
   render(
     <WorkoutSession
       day={{
@@ -82,6 +91,7 @@ function openSession(onCompleteDay = vi.fn(), onClose = vi.fn()) {
             reps: 8,
             weight: 0,
             restSeconds: 0,
+            ...exercise,
           } as ProgramExercise,
         ],
       }}
@@ -799,5 +809,95 @@ it("Undo followed by finishing early saves only the final completed work", async
     sets: 3,
     reps: 8,
     weight: 0,
+  });
+});
+
+describe("Plate-Club badges are awarded the moment the workout saves", () => {
+  /* The server awards these from onWorkoutCreated too; this pins that the
+     client no longer waits for that round-trip. The owner reported the
+     badge appearing only after leaving and returning to the screen — by
+     then the function had finished. Now the same completed sets the
+     command carries are scored here, in `acknowledge`, and handed to the
+     transactional award. */
+  async function completeAndSave(
+    exercise: Partial<ProgramExercise>,
+    kg: string
+  ) {
+    const onCompleteDay = vi.fn(); // resolves undefined → synced → acknowledge()
+    await act(async () => {
+      openSession(onCompleteDay, vi.fn(), exercise);
+    });
+    for (const n of [1, 2, 3]) {
+      fireEvent.change(
+        screen.getByRole("spinbutton", { name: `Set ${n} weight` }),
+        { target: { value: kg } }
+      );
+    }
+    for (let i = 0; i < 3; i++) {
+      fireEvent.click(
+        screen.getAllByRole("button", { name: "Mark set complete" })[0]
+      );
+    }
+    // Presence, not visibility. The completion card mounts at opacity 0
+    // (framer entrance) and in this file it never gets past that once the
+    // "timers survive a locked phone" describe has run: that group fakes
+    // `Date` and jumps the system clock, and after useRealTimers() framer's
+    // frame loop is left with a stale timestamp, so every later entrance
+    // stalls at 0 for as long as you care to wait (bisected: these three
+    // pass alone and with every other group, fail only after that one).
+    // The file's own last test ("finishing early") sidesteps it the same
+    // way — wait for the button to exist, click it; fireEvent does not
+    // care about opacity. The award is what is under test here, not the
+    // animation.
+    await vi.waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: "Save Workout" })
+      ).toBeInTheDocument()
+    );
+    await act(async () => {
+      fireEvent.click(screen.getByRole("button", { name: "Save Workout" }));
+    });
+    await vi.waitFor(() => expect(onCompleteDay).toHaveBeenCalled());
+    return onCompleteDay;
+  }
+
+  it("a 100 kg compound set awards plate_club AND two_plate on save, in one call", async () => {
+    await completeAndSave({ exerciseId: "squat", name: "Squat" }, "100");
+    await vi.waitFor(() =>
+      expect(h.awardEventBadges).toHaveBeenCalledWith([
+        "plate_club",
+        "two_plate",
+      ])
+    );
+    expect(h.awardEventBadges).toHaveBeenCalledTimes(1);
+  });
+
+  it("scores what the command carries: the weight on the completed sets, not the plan", async () => {
+    // Prescribed 0 kg, lifted 62.5 — the logged weight is what counts.
+    const cmd = await completeAndSave(
+      { exerciseId: "deadlift", name: "Deadlift", weight: 0 },
+      "62.5"
+    );
+    const sent = cmd.mock.calls[0][1] as {
+      setLogs: { weight: number; completed: boolean }[][];
+    };
+    expect(sent.setLogs[0].every((l) => l.completed && l.weight === 62.5)).toBe(
+      true
+    );
+    await vi.waitFor(() =>
+      expect(h.awardEventBadges).toHaveBeenCalledWith(["plate_club"])
+    );
+  });
+
+  it("a non-compound lift at 140 kg awards nothing", async () => {
+    await completeAndSave(
+      { exerciseId: "barbell-curl", name: "Barbell Curl" },
+      "140"
+    );
+    // `acknowledge` is where the award lives, and its first line clears
+    // the draft — so the draft-clear spy is the proof that the code path
+    // ran and chose to award nothing, rather than never running at all.
+    await vi.waitFor(() => expect(h.clear).toHaveBeenCalled());
+    expect(h.awardEventBadges).not.toHaveBeenCalled();
   });
 });
