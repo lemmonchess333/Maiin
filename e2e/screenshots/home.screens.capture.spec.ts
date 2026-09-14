@@ -271,9 +271,9 @@ test.describe("app screenshots", () => {
     // (History.tsx reads sessionStorage("history-tab") on mount) gives a
     // deterministic route without scripting the tab UI.
     //
-    // The stored value has now been "badges", then "milestones", and is
-    // "badges" again (2026-09-14: the Milestones chronology was removed as a
-    // restatement of the PRs tab). History's stashed-tab read consults
+    // The stored value has been "badges", then "milestones", and is
+    // "badges" again — the Milestones chronology was removed as a
+    // restatement of the PRs tab. History's stashed-tab read consults
     // LEGACY_TAB_REDIRECTS, so a stale value still resolves — but the catch
     // below swallows a genuine miss silently, so a spec left on a value that
     // is neither current NOR redirected captures Analytics and reads as a

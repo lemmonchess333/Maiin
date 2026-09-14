@@ -13,6 +13,7 @@
  * FIRESTORE_EMULATOR_HOST is unset; REQUIRE_FIRESTORE_EMULATOR=1 turns
  * that into a hard error for CI lanes.
  */
+import { SPACE_DEFS } from "./src/features/spaces/spaceDefs";
 import { describe, it, beforeAll, afterAll, beforeEach } from "vitest";
 import {
   initializeTestEnvironment,
@@ -134,6 +135,21 @@ suite("firestore.rules — community spaces", () => {
   });
 
   describe("membership", () => {
+    it("accepts each catalogue race for joining, posting and leaving", async () => {
+      for (const race of SPACE_DEFS.filter((def) => def.kind === "race")) {
+        await assertSucceeds(join(MEMBER, race.id));
+        await assertSucceeds(
+          setDoc(
+            doc(db(MEMBER), `spaces/${race.id}/posts/test-post`),
+            validPost(MEMBER)
+          )
+        );
+        await assertSucceeds(
+          deleteDoc(doc(db(MEMBER), `spaces/${race.id}/members/${MEMBER}`))
+        );
+      }
+    });
+
     it("user joins and leaves a known space", async () => {
       await assertSucceeds(join(MEMBER));
       await assertSucceeds(

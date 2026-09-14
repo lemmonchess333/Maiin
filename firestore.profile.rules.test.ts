@@ -1,3 +1,4 @@
+import { raceSpaceDefs } from "./src/features/spaces/spaceDefs";
 /**
  * users/{uid} profile writes, against the real rules engine.
  *
@@ -421,6 +422,21 @@ suite("users/{uid} — raceGoal value gate", () => {
     );
     for (const distance of ["5k", "10k", "half", "marathon"]) {
       await assertSucceeds(write({ raceGoal: { ...VALID, distance } }));
+    }
+  });
+
+  it("accepts every catalogue race binding, including international marathons", async () => {
+    for (const race of raceSpaceDefs()) {
+      await assertSucceeds(
+        write({
+          raceGoal: {
+            distance: race.event!.distance,
+            targetDate: race.event!.dateKey,
+            eventName: race.name,
+            eventSpaceId: race.id,
+          },
+        })
+      );
     }
   });
 

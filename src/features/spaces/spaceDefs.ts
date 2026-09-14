@@ -12,8 +12,18 @@
  * allowlist in firestore.rules (isKnownSpaceId) — the parity test in
  * __tests__/spaceDefs.test.ts pins the two lists equal, the same
  * D1-parity idiom as profileFieldRegistry. Adding a space touches
- * BOTH files or the test fails.
+ * all three files (including functions/lib/spaceIds.js for deletion)
+ * or the parity tests fail.
  */
+
+export const RACE_COUNTRIES = {
+  GB: "United Kingdom",
+  US: "United States",
+  FR: "France",
+  DE: "Germany",
+  IE: "Ireland",
+} as const;
+export type RaceCountryCode = keyof typeof RACE_COUNTRIES;
 
 export type SpaceKind = "interest" | "race" | "location";
 
@@ -42,6 +52,8 @@ export interface SpaceEventInfo {
   dateKey: string;
   distance: RaceEventDistance;
   city: string;
+  /** ISO country code for browsing; UK nations share GB. */
+  countryCode: RaceCountryCode;
   /** Emoji flag rendered beside the city (Runna's card anatomy). */
   countryFlag: string;
   /** Only set where the official site states it — never inferred. */
@@ -57,7 +69,7 @@ export interface SpaceDef {
   name: string;
   /** One-line card/header description (the Runna "A space for…" line). */
   tagline: string;
-  /** v1 ships interest only; race/location are schema-ready (Spc1d). */
+  /** Curated interests and evergreen races; location is reserved. */
   kind: SpaceKind;
   /** Closed-palette accent for tint washes + the no-photo fallback
    *  band: coral = running-flavoured, purple = lifting, brand = mixed. */
@@ -157,6 +169,7 @@ export const SPACE_DEFS: SpaceDef[] = [
       dateKey: "2027-04-25",
       distance: "marathon",
       city: "London",
+      countryCode: "GB",
       countryFlag: "🇬🇧",
       websiteUrl: "https://www.londonmarathonevents.co.uk/london-marathon",
     },
@@ -172,6 +185,7 @@ export const SPACE_DEFS: SpaceDef[] = [
       dateKey: "2027-04-18",
       distance: "marathon",
       city: "Manchester",
+      countryCode: "GB",
       countryFlag: "🇬🇧",
       elevation: "flat",
       websiteUrl: "https://www.manchestermarathon.co.uk",
@@ -188,6 +202,7 @@ export const SPACE_DEFS: SpaceDef[] = [
       dateKey: "2027-04-04",
       distance: "marathon",
       city: "Brighton",
+      countryCode: "GB",
       countryFlag: "🇬🇧",
       websiteUrl:
         "https://www.londonmarathonevents.co.uk/brighton-marathon-weekend",
@@ -204,6 +219,7 @@ export const SPACE_DEFS: SpaceDef[] = [
       dateKey: "2027-05-30",
       distance: "marathon",
       city: "Edinburgh",
+      countryCode: "GB",
       countryFlag: "🏴󠁧󠁢󠁳󠁣󠁴󠁿",
       websiteUrl: "https://www.edinburghmarathon.com",
     },
@@ -219,6 +235,7 @@ export const SPACE_DEFS: SpaceDef[] = [
       dateKey: "2026-09-13",
       distance: "half",
       city: "Newcastle",
+      countryCode: "GB",
       countryFlag: "🇬🇧",
       websiteUrl: "https://www.greatrun.org/events/great-north-run/",
     },
@@ -234,6 +251,7 @@ export const SPACE_DEFS: SpaceDef[] = [
       dateKey: "2026-09-06",
       distance: "half",
       city: "London",
+      countryCode: "GB",
       countryFlag: "🇬🇧",
       elevation: "flat",
       websiteUrl: "https://www.londonmarathonevents.co.uk/big-half",
@@ -250,6 +268,7 @@ export const SPACE_DEFS: SpaceDef[] = [
       dateKey: "2026-10-11",
       distance: "half",
       city: "London",
+      countryCode: "GB",
       countryFlag: "🇬🇧",
       websiteUrl: "https://www.royalparkshalf.com",
     },
@@ -265,6 +284,7 @@ export const SPACE_DEFS: SpaceDef[] = [
       dateKey: "2026-10-04",
       distance: "half",
       city: "Cardiff",
+      countryCode: "GB",
       countryFlag: "🏴󠁧󠁢󠁷󠁬󠁳󠁿",
       elevation: "flat",
       websiteUrl: "https://www.cardiffhalfmarathon.co.uk",
@@ -281,6 +301,7 @@ export const SPACE_DEFS: SpaceDef[] = [
       dateKey: "2026-09-27",
       distance: "10k",
       city: "London",
+      countryCode: "GB",
       countryFlag: "🇬🇧",
       elevation: "flat",
       websiteUrl: "https://www.londonmarathonevents.co.uk/london-10000",
@@ -297,6 +318,7 @@ export const SPACE_DEFS: SpaceDef[] = [
       dateKey: "2027-05-02",
       distance: "10k",
       city: "Birmingham",
+      countryCode: "GB",
       countryFlag: "🇬🇧",
       websiteUrl: "https://www.greatrun.org/events/great-birmingham-run/",
     },
@@ -312,6 +334,7 @@ export const SPACE_DEFS: SpaceDef[] = [
       dateKey: "2027-05-23",
       distance: "10k",
       city: "Manchester",
+      countryCode: "GB",
       countryFlag: "🇬🇧",
       websiteUrl: "https://www.greatrun.org/events/great-manchester-run/",
     },
@@ -327,8 +350,235 @@ export const SPACE_DEFS: SpaceDef[] = [
       dateKey: "2027-06-13",
       distance: "10k",
       city: "Leeds",
+      countryCode: "GB",
       countryFlag: "🇬🇧",
       websiteUrl: "https://www.runforall.com/events/10k/leeds-10k/",
+    },
+  },
+  // Marathon expansion — dates and sources: docs/proposals/marathon-expansion.md
+  {
+    id: "yorkshire-marathon",
+    name: "Yorkshire Marathon",
+    tagline: "Long runs, race plans and support for 26.2 miles around York.",
+    kind: "race",
+    accent: "running",
+    icon: "flag",
+    event: {
+      dateKey: "2026-10-18",
+      distance: "marathon",
+      city: "York",
+      countryCode: "GB",
+      countryFlag: "🇬🇧",
+      websiteUrl:
+        "https://www.runforall.com/events/marathon/yorkshire-marathon/",
+    },
+  },
+  {
+    id: "chester-marathon",
+    name: "Chester Marathon",
+    tagline: "Build towards 26.2 miles with the Chester community.",
+    kind: "race",
+    accent: "running",
+    icon: "flag",
+    event: {
+      dateKey: "2026-10-11",
+      distance: "marathon",
+      city: "Chester",
+      countryCode: "GB",
+      countryFlag: "🇬🇧",
+      websiteUrl: "https://www.activeleisureevents.co.uk/marathon",
+    },
+  },
+  {
+    id: "loch-ness-marathon",
+    name: "Loch Ness Marathon",
+    tagline: "Share the journey to a marathon in the Scottish Highlands.",
+    kind: "race",
+    accent: "running",
+    icon: "flag",
+    event: {
+      dateKey: "2026-09-27",
+      distance: "marathon",
+      city: "Inverness",
+      countryCode: "GB",
+      countryFlag: "🏴󠁧󠁢󠁳󠁣󠁴󠁿",
+      websiteUrl: "https://www.lochnessmarathon.com/event/loch-ness-marathon/",
+    },
+  },
+  {
+    id: "newport-marathon",
+    name: "Newport Marathon",
+    tagline: "Training and race-day support for Newport, Wales.",
+    kind: "race",
+    accent: "running",
+    icon: "flag",
+    event: {
+      dateKey: "2027-04-18",
+      distance: "marathon",
+      city: "Newport",
+      countryCode: "GB",
+      countryFlag: "🏴󠁧󠁢󠁷󠁬󠁳󠁿",
+      websiteUrl: "https://newportwalesmarathon.co.uk/",
+    },
+  },
+  {
+    id: "belfast-marathon",
+    name: "Belfast City Marathon",
+    tagline: "Work towards 26.2 miles through Belfast together.",
+    kind: "race",
+    accent: "running",
+    icon: "flag",
+    event: {
+      dateKey: "2027-05-02",
+      distance: "marathon",
+      city: "Belfast",
+      countryCode: "GB",
+      countryFlag: "🇬🇧",
+      websiteUrl: "https://belfastcitymarathon.com/",
+    },
+  },
+  {
+    id: "leeds-marathon",
+    name: "Rob Burrow Leeds Marathon",
+    tagline: "Share your build-up to the Rob Burrow Leeds Marathon.",
+    kind: "race",
+    accent: "running",
+    icon: "flag",
+    event: {
+      dateKey: "2027-05-09",
+      distance: "marathon",
+      city: "Leeds",
+      countryCode: "GB",
+      countryFlag: "🇬🇧",
+      websiteUrl: "https://www.runforall.com/events/marathon/leeds-marathon/",
+    },
+  },
+  {
+    id: "milton-keynes-marathon",
+    name: "Milton Keynes Marathon",
+    tagline: "Long-run company and race plans for Milton Keynes.",
+    kind: "race",
+    accent: "running",
+    icon: "flag",
+    event: {
+      dateKey: "2027-05-03",
+      distance: "marathon",
+      city: "Milton Keynes",
+      countryCode: "GB",
+      countryFlag: "🇬🇧",
+      websiteUrl: "https://mkmarathon.com/mk-marathon/",
+    },
+  },
+  {
+    id: "southampton-marathon",
+    name: "Southampton Marathon",
+    tagline: "Build towards a full marathon in Southampton together.",
+    kind: "race",
+    accent: "running",
+    icon: "flag",
+    event: {
+      dateKey: "2027-04-11",
+      distance: "marathon",
+      city: "Southampton",
+      countryCode: "GB",
+      countryFlag: "🇬🇧",
+      websiteUrl: "https://www.southamptonmarathon.co.uk/",
+    },
+  },
+  {
+    id: "new-york-city-marathon",
+    name: "New York City Marathon",
+    tagline: "Five boroughs, one marathon — share your New York build-up.",
+    kind: "race",
+    accent: "running",
+    icon: "flag",
+    event: {
+      dateKey: "2026-11-01",
+      distance: "marathon",
+      city: "New York City",
+      countryCode: "US",
+      countryFlag: "🇺🇸",
+      websiteUrl: "https://www.nyrr.org/tcsnycmarathon",
+    },
+  },
+  {
+    id: "chicago-marathon",
+    name: "Chicago Marathon",
+    tagline: "Training, travel and race-day plans for Chicago.",
+    kind: "race",
+    accent: "running",
+    icon: "flag",
+    event: {
+      dateKey: "2026-10-11",
+      distance: "marathon",
+      city: "Chicago",
+      countryCode: "US",
+      countryFlag: "🇺🇸",
+      websiteUrl: "https://www.chicagomarathon.com/",
+    },
+  },
+  {
+    id: "boston-marathon",
+    name: "Boston Marathon",
+    tagline: "Share the preparation for your journey to Boston.",
+    kind: "race",
+    accent: "running",
+    icon: "flag",
+    event: {
+      dateKey: "2027-04-19",
+      distance: "marathon",
+      city: "Boston",
+      countryCode: "US",
+      countryFlag: "🇺🇸",
+      websiteUrl: "https://www.baa.org/races/boston-marathon/",
+    },
+  },
+  {
+    id: "paris-marathon",
+    name: "Paris Marathon",
+    tagline: "Find company for the long road to 26.2 miles in Paris.",
+    kind: "race",
+    accent: "running",
+    icon: "flag",
+    event: {
+      dateKey: "2027-04-04",
+      distance: "marathon",
+      city: "Paris",
+      countryCode: "FR",
+      countryFlag: "🇫🇷",
+      websiteUrl: "https://www.asicsmarathondeparis.com/en",
+    },
+  },
+  {
+    id: "berlin-marathon",
+    name: "Berlin Marathon",
+    tagline: "Long runs, race plans and encouragement for Berlin.",
+    kind: "race",
+    accent: "running",
+    icon: "flag",
+    event: {
+      dateKey: "2026-09-27",
+      distance: "marathon",
+      city: "Berlin",
+      countryCode: "DE",
+      countryFlag: "🇩🇪",
+      websiteUrl: "https://www.bmw-berlin-marathon.com/en/",
+    },
+  },
+  {
+    id: "dublin-marathon",
+    name: "Dublin Marathon",
+    tagline: "Share the miles and the build-up to Dublin race day.",
+    kind: "race",
+    accent: "running",
+    icon: "flag",
+    event: {
+      dateKey: "2026-10-25",
+      distance: "marathon",
+      city: "Dublin",
+      countryCode: "IE",
+      countryFlag: "🇮🇪",
+      websiteUrl: "https://irishlifedublinmarathon.ie/",
     },
   },
 ];

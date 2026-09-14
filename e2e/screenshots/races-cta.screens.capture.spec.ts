@@ -91,8 +91,16 @@ test.describe("race event header + door-2 picker screenshots", () => {
     await page
       .getByRole("button", { name: /choose an upcoming race/i })
       .click();
+    // Browsing starts at the draft distance, which may have no catalogue
+    // matches (e.g. 5K). Select the full-marathon catalogue explicitly.
     await page
-      .getByRole("option", { name: /great north run/i })
+      .getByRole("combobox", { name: "Country", exact: true })
+      .selectOption("GB");
+    await page
+      .getByRole("combobox", { name: "Distance", exact: true })
+      .selectOption("marathon");
+    await page
+      .getByRole("option", { name: /loch ness marathon/i })
       .waitFor({ state: "visible", timeout: 8000 });
     await page.waitForTimeout(500);
     await shootLightDark(page, "race-picker", "Choose an upcoming race");

@@ -114,30 +114,25 @@ const CalorieBalanceChart = lazyRetry(
    folded into Analytics in PR 6. "All" was renamed "analytics" to
    match the page's frame commitment (Hist5a).
 
-   Tabs are Analytics + PRs + Badges. The third slot held a
-   MILESTONES chronology between those changes and 2026-09-14, and
-   the owner called it from using the app: it read as a restatement
-   of the tab beside it. That is what it was. Its dominant entry
+   Tabs are Analytics + PRs + Badges. The third slot briefly held a
+   MILESTONES chronology; do not bring it back. Its dominant entry
    kind was `lift-pr`, which the PRs tab already shows as a
    current-bests table and `ExerciseHistory` — one tap down the
    chevron on every PR row — already shows as a per-lift
-   progression chart. A third, flatter projection of the same
+   progression chart, and the PRs tab carries "Recent bests · Last
+   30 days" on top of that. A third, flatter projection of the same
    lifts is not a third role.
 
-   Two further reads settled it. The PRs tab carries a "Recent
-   bests · Last 30 days" section, so the recency framing was
-   covered too. And the chronology's own shape works against it in
-   both directions: on day one every first log is a "first logged
-   best", so it floods with rows mirroring the PR list, while in
-   steady state new PRs get rare and it thins to a few rows a
-   month. Dense-and-redundant then sparse.
+   Its shape also failed in both directions: on day one every first
+   log is a "first logged best", so it floods with rows mirroring
+   the PR list, and in steady state new PRs get rare and it thins
+   to a few rows a month.
 
-   Nothing was orphaned by the removal — every non-PR entry kind it
-   carried already has a badge (`first-workout` → `first_step`,
-   `block-complete` → `programme_complete`, `race-complete` → the
-   distance badges, and `badge` entries were badges being listed
-   twice on one screen, once in the chronology and again in the
-   grid below it). */
+   Nothing was orphaned — every non-PR entry kind already has a
+   badge (`first-workout` → `first_step`, `block-complete` →
+   `programme_complete`, `race-complete` → the distance badges),
+   and its `badge` entries were badges listed twice on one screen,
+   once in the chronology and again in the grid below it. */
 type FilterTab = "analytics" | "prs" | "badges";
 
 const VALID_TABS: FilterTab[] = ["analytics", "prs", "badges"];

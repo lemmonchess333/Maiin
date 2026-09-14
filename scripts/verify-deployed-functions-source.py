@@ -20,6 +20,7 @@ def verify():
     comment_paths = ["index.js", "package-lock.json", "lib/publicPhotoUrl.js", "lib/socialCounters.js", "lib/spacePostEngagement.js"]
     training_paths = ["index.js", "package-lock.json", "lib/stateTransition.js", "lib/workoutCorrections.js", "lib/programCommands.js"]
     targets = {
+        "deleteMyAccount": ["index.js", "accountDeletion.js", "lib/spaceIds.js"],
         "addCommentCallable": comment_paths,
         "addSpacePostCommentCallable": comment_paths,
         "configurePlan": training_paths,
