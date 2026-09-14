@@ -373,60 +373,63 @@ describe("PR-0b-ii — useProgram writers swap V1 → V2", () => {
     expect(lastWrite.runPlan!.compressed).toBe(true);
   });
 
-  it("race-prep refresh writes V2-shaped runDays + preserves compressed flag", async () => {
-    // Set up an existing race-prep doc, then call refreshRunSchedule.
-    const targetDate = raceDateThreeWeeksOut();
-    mockProfile = raceProfile(targetDate);
-    seedProgram({
-      goal: "recomp",
-      currentPhase: "base",
-      weekNumber: 1,
-      splitType: "ppl",
-      workouts: [],
-      fatigueScore: 0,
-      updatedAt: Date.now(),
-      settings: { autoProgression: true, microloading: true },
-      weekHistory: [],
-      programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
-      runDays: [], // empty so refresh writes
-      runPlan: {
-        mode: "race_prep",
-        raceGoal: mockProfile.raceGoal,
-        totalWeeks: 6,
-        currentWeek: 2,
-      },
-    } as ProgramState);
+  it.each([
+    { raceWeekday: "Sunday", daysFromWeekStart: 27, totalWeeks: 6 },
+    { raceWeekday: "Monday", daysFromWeekStart: 21, totalWeeks: 7 },
+  ])(
+    "race-prep refresh writes V2-shaped runDays + preserves compressed flag ($raceWeekday race)",
+    async ({ daysFromWeekStart, totalWeeks }) => {
+      // Both fixtures provide six training weeks. A Monday race needs one
+      // extra calendar week because its race week has no training days.
+      const targetDate = localDateString(
+        addLocalDays(parseLocalDate(localWeekKey()), daysFromWeekStart)
+      );
+      mockProfile = raceProfile(targetDate);
+      seedProgram({
+        goal: "recomp",
+        currentPhase: "base",
+        weekNumber: 1,
+        splitType: "ppl",
+        workouts: [],
+        fatigueScore: 0,
+        updatedAt: Date.now(),
+        settings: { autoProgression: true, microloading: true },
+        weekHistory: [],
+        programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
+        runDays: [], // empty so refresh writes
+        runPlan: {
+          mode: "race_prep",
+          raceGoal: mockProfile.raceGoal,
+          totalWeeks,
+          currentWeek: totalWeeks - 4,
+        },
+      } as ProgramState);
 
-    const { result } = mountProgram();
-    await waitFor(() => expect(result.current.loading).toBe(false), {
-      timeout: 2000,
-    });
-    markWrites(); // reset to capture only the refresh write
+      const { result } = mountProgram();
+      await waitFor(() => expect(result.current.loading).toBe(false), {
+        timeout: 2000,
+      });
+      markWrites(); // reset to capture only the refresh write
 
-    await act(async () => {
-      await result.current.refreshRunSchedule();
-    });
+      await act(async () => {
+        await result.current.refreshRunSchedule();
+      });
 
-    expect(setDocCalls().length).toBeGreaterThan(0);
-    const lastWrite = setDocCalls()[setDocCalls().length - 1]
-      .data as ProgramState;
-    expect(lastWrite.runDays).toBeDefined();
-    expect(lastWrite.runDays!.length).toBeGreaterThan(0);
-    lastWrite.runDays!.forEach(expectV2Shape);
-    // `compressed` describes the BLOCK, not the days left in it.
-    //
-    // This assertion used to read `.toBe(true)` with the comment "a 3-weeks-out
-    // 10K stays compressed" — which encoded the defect: compression was derived
-    // from weeks REMAINING, so every plan became "compressed" as its race
-    // approached. The fixture carries `totalWeeks: 6` and 10K's `minWeeks` is
-    // 6, so this runner declared a full-length block and is three weeks into
-    // it. That is not a compressed plan.
-    //
-    // The distinction is not cosmetic: the taper branch is gated on
-    // `!compressed`, so under the old reading a real 10K taper lost its quality
-    // session — the one thing Bosquet et al. (2007) say a taper must keep.
-    expect(lastWrite.runPlan!.compressed).toBe(false);
-  });
+      expect(setDocCalls().length).toBeGreaterThan(0);
+      const lastWrite = setDocCalls()[setDocCalls().length - 1]
+        .data as ProgramState;
+      expect(lastWrite.runDays).toBeDefined();
+      expect(lastWrite.runDays!.length).toBeGreaterThan(0);
+      lastWrite.runDays!.forEach(expectV2Shape);
+      // Compression describes the original training block, not the weeks
+      // remaining. A refresh must retain its length and current position.
+      expect(lastWrite.runPlan).toMatchObject({
+        totalWeeks,
+        currentWeek: totalWeeks - 4,
+      });
+      expect(lastWrite.runPlan!.compressed).toBe(false);
+    }
+  );
 
   it("race-prep refresh keeps compressed TRUE for a genuinely short block", async () => {
     // The paired negative for the assertion above: flipping that expectation

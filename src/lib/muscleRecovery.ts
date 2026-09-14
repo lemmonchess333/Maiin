@@ -83,6 +83,9 @@ function daysBetween(fromKey: string, toKey: string): number {
  * Attribution follows the volume tally's rules: DB exercise resolved by
  * exerciseId first, then by name (the saved `category` field has shipped
  * unreliable data — see History.tsx); unattributable lifts are skipped.
+ * Saved sets are completed-only. A planned exercise with no performed sets,
+ * or preparation alone, cannot establish a training hit. Missing set data
+ * stays unknown; legacy completed sets without a type still count.
  */
 export function hitsFromWorkoutDocs(
   docs: {
@@ -90,6 +93,7 @@ export function hitsFromWorkoutDocs(
     exercises?: {
       exerciseId?: unknown;
       exerciseName?: unknown;
+      sets?: { type?: unknown; reps?: unknown; weightKg?: unknown }[];
     }[];
   }[]
 ): MuscleHit[] {
@@ -98,6 +102,20 @@ export function hitsFromWorkoutDocs(
     const date = typeof doc.date === "string" ? doc.date : null;
     if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) continue;
     for (const ex of doc.exercises ?? []) {
+      if (
+        !Array.isArray(ex.sets) ||
+        !ex.sets.some(
+          (set) =>
+            set?.type !== "warmup" &&
+            typeof set?.reps === "number" &&
+            Number.isFinite(set.reps) &&
+            set.reps > 0 &&
+            typeof set.weightKg === "number" &&
+            Number.isFinite(set.weightKg) &&
+            set.weightKg >= 0
+        )
+      )
+        continue;
       const byId =
         typeof ex.exerciseId === "string"
           ? getExerciseById(ex.exerciseId)

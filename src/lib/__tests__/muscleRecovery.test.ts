@@ -16,6 +16,7 @@ import {
 import { CANONICAL_MUSCLE_ORDER } from "@/features/program/volumeModel";
 
 const TODAY = "2026-07-04";
+const sets = [{ reps: 8, weightKg: 40 }];
 
 function entry(
   entries: ReturnType<typeof computeMuscleRecovery>,
@@ -118,7 +119,9 @@ describe("hitsFromWorkoutDocs", () => {
     const hits = hitsFromWorkoutDocs([
       {
         date: "2026-07-03",
-        exercises: [{ exerciseId: "bench-press", exerciseName: "Bench Press" }],
+        exercises: [
+          { exerciseId: "bench-press", exerciseName: "Bench Press", sets },
+        ],
       },
     ]);
     expect(hits).toContainEqual({
@@ -140,7 +143,10 @@ describe("hitsFromWorkoutDocs", () => {
 
   it("falls back to name lookup when the id is missing (legacy docs)", () => {
     const hits = hitsFromWorkoutDocs([
-      { date: "2026-07-03", exercises: [{ exerciseName: "Barbell Squat" }] },
+      {
+        date: "2026-07-03",
+        exercises: [{ exerciseName: "Barbell Squat", sets }],
+      },
     ]);
     expect(hits).toContainEqual({
       muscle: "Quads",
@@ -154,12 +160,15 @@ describe("hitsFromWorkoutDocs", () => {
   it("skips unknown exercises and malformed dates", () => {
     expect(
       hitsFromWorkoutDocs([
-        { date: "2026-07-03", exercises: [{ exerciseName: "Made Up Lift" }] },
+        {
+          date: "2026-07-03",
+          exercises: [{ exerciseName: "Made Up Lift", sets }],
+        },
         {
           date: "not-a-date",
-          exercises: [{ exerciseName: "Bench Press" }],
+          exercises: [{ exerciseName: "Bench Press", sets }],
         },
-        { exercises: [{ exerciseName: "Bench Press" }] },
+        { exercises: [{ exerciseName: "Bench Press", sets }] },
       ])
     ).toEqual([]);
   });
@@ -168,12 +177,44 @@ describe("hitsFromWorkoutDocs", () => {
     const hits = hitsFromWorkoutDocs([
       {
         date: "2026-07-03",
-        exercises: [{ exerciseId: "bench-press" }],
+        exercises: [{ exerciseId: "bench-press", sets }],
       },
     ]);
     const entries = computeMuscleRecovery(hits, TODAY);
     expect(entry(entries, "Chest").status).toBe("recovering");
     expect(entry(entries, "Core").status).toBe("ready");
+  });
+  it("requires actual set evidence and retains completed drop/failure/legacy/bodyweight work", () => {
+    for (const sets of [
+      undefined,
+      [],
+      [{ reps: NaN, weightKg: 20 }],
+      [{ reps: 8, weightKg: -1 }],
+      [{ reps: 0, weightKg: 20 }],
+      [{ type: "warmup", reps: 8, weightKg: 20 }],
+    ]) {
+      expect(
+        hitsFromWorkoutDocs([
+          { date: TODAY, exercises: [{ exerciseId: "squat", sets }] },
+        ])
+      ).toEqual([]);
+    }
+    for (const type of [undefined, "working", "failure", "dropset"]) {
+      expect(
+        hitsFromWorkoutDocs([
+          {
+            date: TODAY,
+            exercises: [
+              { exerciseId: "squat", sets: [{ type, reps: 8, weightKg: 0 }] },
+            ],
+          },
+        ])
+      ).toContainEqual({
+        muscle: "Quads",
+        date: TODAY,
+        involvement: "primary",
+      });
+    }
   });
 });
 
