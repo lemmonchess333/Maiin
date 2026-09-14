@@ -52,7 +52,7 @@ function setup() {
   return {
     onFinish,
     onRequestConfirm,
-    btn: screen.getByRole("button", { name: "Finish run" }),
+    btn: screen.getByRole("button", { name: "Hold to finish run" }),
   };
 }
 
@@ -95,5 +95,28 @@ describe("HoldToFinishButton", () => {
     now = 2000;
     flush();
     expect(onFinish).not.toHaveBeenCalled();
+  });
+});
+
+describe("Label in Name (WCAG 2.5.3)", () => {
+  /* The visible label and the accessible name have to share their words, or
+     a voice-control user reading "HOLD" off the screen says a phrase the
+     control does not answer to. This one used to be named "Finish run" —
+     zero overlap, and the only control in the run cluster that broke the
+     pattern its siblings keep. Asserted as containment rather than equality
+     so the name can stay more descriptive than the label. */
+  it("the accessible name contains the visible label", () => {
+    render(
+      <HoldToFinishButton
+        onFinish={vi.fn()}
+        onRequestConfirm={vi.fn()}
+        holdMs={1500}
+      />
+    );
+    const btn = screen.getByRole("button");
+    const visible = "HOLD";
+    const accessible = btn.getAttribute("aria-label") ?? "";
+    expect(screen.getByText(visible)).toBeInTheDocument();
+    expect(accessible.toLowerCase()).toContain(visible.toLowerCase());
   });
 });
