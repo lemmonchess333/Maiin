@@ -1,0 +1,126 @@
+{
+  "description": "Follow-up Social photo upgrades: two Manchester city covers plus one cleaned stock photograph shared by the hybrid space and challenge.",
+  "sources": [
+    {
+      "assets": ["challenge-hybrid.webp", "space-hybrid-training.webp"],
+      "photographer": "Karsten Winegeart",
+      "subject": "Athlete working battle ropes",
+      "sourceUrl": "https://unsplash.com/photos/0Wra5YYVQJE",
+      "sourcePhotoId": "0Wra5YYVQJE",
+      "sourceCommitUrl": "https://github.com/lemmonchess333/Maiin/commit/f972470d0ccccb550027798c3522fdbeb7130057",
+      "inheritedSourceAsset": "src/assets/editorial/challenge-hybrid.webp",
+      "processing": "Minimal logo removal with the built-in image editor, landscape crop, resize and WebP compression. The cleaned photograph is shared by the hybrid challenge and Hybrid Training space.",
+      "retouch": {
+        "tool": "Built-in image_gen",
+        "model": "Not exposed by the built-in tool",
+        "date": "2026-09-14",
+        "scope": "Remove the vest swoosh and small footwear emblems.",
+        "prompt": "Use case: precise-object-edit.\nAsset type: existing photograph used as a fitness app's hybrid challenge cover.\nInput image: edit target, the provided real photograph of an athlete working battle ropes under a concrete walkway.\nPrimary request: remove the small white Nike swoosh on the athlete's black vest, blending only that mark into the surrounding black fabric. Also remove any small brand emblems on the shoes if visible, preserving the actual shoe shape, seams and material.\nConstraints: make only these very small logo removals. Preserve the athlete's exact identity, face, body, skin texture, pose, vest, shorts and footwear; preserve every rope, the concrete architecture, railings, lighting, colors, shadows, camera perspective and original landscape framing. Keep the photograph natural and otherwise unchanged. No added text, graphics, logos, watermark, or new objects."
+      },
+      "license": "Unsplash License",
+      "licenseUrl": "https://unsplash.com/license",
+      "inheritedSourceNote": "Original stock photo identity and licence recovered from the repository introduction commit; edit input is the existing optimized asset.",
+      "sourceSha256": "ac6e0978deeaad404880f7bc1c17599e8d786bae4ffbd3586b612ba0e948eb24",
+      "sourceSize": {
+        "width": 1280,
+        "height": 855
+      },
+      "cropInput": "Retouched image",
+      "cropInputSha256": "49f00940b01478ade25600e41756a4733eb965e2137410e92978731c0044e777",
+      "cropInputSize": {
+        "width": 1534,
+        "height": 1025
+      },
+      "cropPixels": {
+        "left": 0,
+        "top": 32,
+        "width": 1534,
+        "height": 963
+      },
+      "output": {
+        "width": 1200,
+        "height": 753,
+        "format": "webp",
+        "quality": 86,
+        "bytes": 85076,
+        "sha256": "1cf573dec971fc6add9bc5da17b07d44df2d6a5b29492016b8bf817c68dba4d1"
+      }
+    },
+    {
+      "assets": ["space-manchester-marathon.webp"],
+      "photographer": "Timiciuc Andrei",
+      "subject": "Manchester historic street architecture",
+      "sourceUrl": "https://unsplash.com/photos/a-city-street-with-buildings-and-a-clock-tower-in-the-background-VOWm5X8dLd0",
+      "sourcePhotoId": "VOWm5X8dLd0",
+      "downloadUrl": "https://images.unsplash.com/photo-1705701543947-141d6189540b?fm=jpg&q=60&w=3000&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+      "processing": "Landscape crop concentrating on the historic architecture, with the tower inside the wider header crop; resize and WebP compression. No generated content or retouching.",
+      "license": "Unsplash License",
+      "licenseUrl": "https://unsplash.com/license",
+      "retrievedOn": "2026-09-14",
+      "downloadVariant": "Public 3000px image supplied by the source page, JPEG quality 60.",
+      "sourceSha256": "7c35390f2c21c4d87c42545840ac8169eca51c63d581971187fa58b069b7a14c",
+      "sourceSize": {
+        "width": 3000,
+        "height": 4000
+      },
+      "cropInput": "Downloaded image",
+      "cropInputSha256": "7c35390f2c21c4d87c42545840ac8169eca51c63d581971187fa58b069b7a14c",
+      "cropInputSize": {
+        "width": 3000,
+        "height": 4000
+      },
+      "cropPixels": {
+        "left": 0,
+        "top": 200,
+        "width": 3000,
+        "height": 1883
+      },
+      "output": {
+        "width": 960,
+        "height": 602,
+        "format": "webp",
+        "quality": 68,
+        "bytes": 118942,
+        "sha256": "ed5040efdb24df3cd9bd513cd9d6bec67f0b433a09d94c83fb6e0406d0367259"
+      }
+    },
+    {
+      "assets": ["space-great-manchester-run.webp"],
+      "photographer": "Balázs Gábor",
+      "subject": "Manchester riverside path and footbridge",
+      "sourceUrl": "https://unsplash.com/photos/modern-buildings-alongside-a-canal-path-DJuttHAq5wU",
+      "sourcePhotoId": "DJuttHAq5wU",
+      "downloadUrl": "https://images.unsplash.com/photo-1770631069777-9467c6c777df?fm=jpg&q=60&w=3000&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+      "processing": "Landscape crop retaining the footbridge and riverside path; resize and WebP compression. No generated content or retouching.",
+      "license": "Unsplash License",
+      "licenseUrl": "https://unsplash.com/license",
+      "retrievedOn": "2026-09-14",
+      "downloadVariant": "Public 3000px image supplied by the source page, JPEG quality 60.",
+      "sourceSha256": "b7128542a09c09e3668a1f199b618cbc3510130a50eeeff90a0222885ac9e707",
+      "sourceSize": {
+        "width": 3000,
+        "height": 2000
+      },
+      "cropInput": "Downloaded image",
+      "cropInputSha256": "b7128542a09c09e3668a1f199b618cbc3510130a50eeeff90a0222885ac9e707",
+      "cropInputSize": {
+        "width": 3000,
+        "height": 2000
+      },
+      "cropPixels": {
+        "left": 0,
+        "top": 0,
+        "width": 3000,
+        "height": 1883
+      },
+      "output": {
+        "width": 1200,
+        "height": 753,
+        "format": "webp",
+        "quality": 76,
+        "bytes": 114620,
+        "sha256": "2c473fa8b3a343ba07c003cef1606599e2bc5c315ddf66a457b1847113f5eb30"
+      }
+    }
+  ]
+}
