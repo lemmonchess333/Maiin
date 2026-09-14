@@ -500,6 +500,58 @@ describe("useClaimMap - quality bucket honours userOverride", () => {
     expect(r.claimMap.get("rd-up")?.claimedSavedRunId).toBeUndefined();
   });
 
+  /* The 270 s/km bucket line itself, which nothing held. Measured on the
+     suite as it stood: tightening `defaultPaceBucketFor`'s threshold from
+     270 to 200 left all 15 tests green, while loosening it to 400 or 999
+     failed. Only one direction of drift was caught.
+
+     That asymmetry matters more than it looks. Tightening makes quality
+     days HARDER to claim — at 200 s/km (3:20/km) an ordinary runner's
+     tempo stops completing its own tempo slot and the day reads blank.
+     It is the same shape as the race-day conjunct this file's other
+     tests exist for: "Only a sub-4:30/km amateur was unaffected, which
+     inverts who the leniency was written for."
+
+     `tempo_20` carries no `targetDistanceKm`, so its planned distance is
+     0 and the distance gate is skipped — these two cases turn on pace
+     and nothing else. */
+  it("completes a tempo day at 269 s/km, one second inside the bucket", async () => {
+    const r = await claimWith(
+      {
+        id: "rd-fast",
+        date: "2026-05-26",
+        dayIndex: 2,
+        templateId: "tempo_20",
+        type: "tempo",
+        status: "planned",
+      },
+      269
+    );
+    expect(r.claimMap.get("rd-fast")?.claimedSavedRunId).toBe("saved-b");
+  });
+
+  it("leaves it unclaimed at exactly 270 s/km — the bound is strict", async () => {
+    /* Worth knowing rather than fixing: `tempo_20.config.targetPace` is
+       ALSO 270, so a runner who hits their prescribed tempo pace exactly
+       buckets as "easy" and does not complete the day. avgPace is
+       duration/distance, so landing on 270.000 is measure-zero in
+       practice — but the coincidence is exactly what would tempt someone
+       into flipping `<` to `<=` without noticing they had moved the line
+       for every other template too. Pinned so that change is a decision. */
+    const r = await claimWith(
+      {
+        id: "rd-onthe-line",
+        date: "2026-05-26",
+        dayIndex: 2,
+        templateId: "tempo_20",
+        type: "tempo",
+        status: "planned",
+      },
+      270
+    );
+    expect(r.claimMap.get("rd-onthe-line")?.claimedSavedRunId).toBeUndefined();
+  });
+
   it("a tempo day swapped DOWN to easy IS completed by an easy run", async () => {
     // The user removed the quality requirement; holding them to the tempo's
     // pace bar would be judging a session they chose not to do.
