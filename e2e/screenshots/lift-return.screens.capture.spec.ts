@@ -86,8 +86,12 @@ test.describe("lift return screenshots", () => {
     test.setTimeout(120_000);
 
     // The workout read lands async, so wait on the gap line itself. The
-    // seed stages 24 days, which is past the sheet's 14-day switch from
+    // seed stages 23 days, which is past the sheet's 14-day switch from
     // days to weeks — filming the branch a returning lifter actually sees.
+    // 23 rather than 24 because the seed and this spec can straddle
+    // midnight UTC: the staged gap is centred in the "about 3 weeks"
+    // rounding bucket so a day of drift cannot change the line below.
+    // Pinned by src/components/program/__tests__/liftReturnCaptureFixture.
     await expect(page.getByText(/It's been about 3 weeks/i)).toBeVisible({
       timeout: 25_000,
     });

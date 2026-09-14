@@ -48,8 +48,17 @@ export const LIFTRETURN_CAPTURE_USER = {
 
 /** Comfortably past LAYOFF_DETRAINED_DAYS (21), and past the sheet's
  *  14-day switch from days to weeks, so the frame shows both branches of
- *  the copy that matter. */
-const DAYS_AWAY = 24;
+ *  the copy that matter.
+ *
+ *  CENTRED IN ITS ROUNDING BUCKET, not just inside it. The sheet rounds to
+ *  whole weeks, so 22, 23 and 24 days all read "about 3 weeks" and 25 reads
+ *  "about 4". This seed runs minutes before the specs do, and on 2026-09-13
+ *  the two straddled midnight UTC: 24 days was staged, the capture measured
+ *  25, the sheet said "4 weeks", and the spec — which waits on "3 weeks" to
+ *  prove it filmed the right branch — failed on four PRs at once. At 23 a
+ *  rollover in either direction still lands inside the bucket, and 22 and 24
+ *  are both still detrained. `liftReturnCaptureFixture.test.ts` pins that. */
+const DAYS_AWAY = 23;
 
 async function ensureUser(): Promise<string> {
   try {
