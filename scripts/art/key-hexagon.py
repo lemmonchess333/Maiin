@@ -1,13 +1,23 @@
 #!/usr/bin/env python3
 """Key the flat magenta background to alpha, find the hexagon, and
-normalise it into the app's seal frame: a square where the hexagon's
-bounding box spans x 7..93 and y 3..97 of 100 (SEAL_HEX in
-sealGeometry.ts). Writes a PNG (alpha) and a WebP.
-Usage: python3 scripts/art/key-hexagon.py in.png out-stem [size]"""
+normalise it into one of the app's two hexagon frames — a square where
+the hexagon's bounding box spans a fixed band:
+
+  seal   x 7..93, y 3..97 of 100 — SEAL_HEX in sealGeometry.ts, so the
+         SVG cracks, clip and shards line up with the art.
+  medal  x 5.5..94.5, y 0.5..99.5 of 100 — the framing every badge medal
+         under public/badges/ has always shipped with, so a regenerated
+         set drops into the grid without shifting anything.
+
+Writes a PNG (alpha) and a WebP.
+Usage: python3 scripts/art/key-hexagon.py in.png out-stem [size] [seal|medal]"""
 import sys, numpy as np
 from PIL import Image, ImageFilter
 src, stem = sys.argv[1], sys.argv[2]
 size = int(sys.argv[3]) if len(sys.argv) > 3 else 512
+frame = sys.argv[4] if len(sys.argv) > 4 else "seal"
+FRAMES = {"seal": (0.86, 0.94, 0.03), "medal": (0.89, 0.99, 0.005)}
+fw, fh, ftop = FRAMES[frame]
 im = Image.open(src).convert("RGB")
 a = np.asarray(im).astype(np.int16)
 r, g, b = a[..., 0], a[..., 1], a[..., 2]
@@ -29,11 +39,11 @@ w, h = x1 - x0 + 1, y1 - y0 + 1
 print(f"hex bbox x{x0}-{x1} y{y0}-{y1}  w{w} h{h} ratio {w/h:.3f}")
 rgba = np.dstack([rgb, A])
 crop = Image.fromarray(rgba, "RGBA").crop((x0, y0, x1 + 1, y1 + 1))
-# Map the bbox to the frame: 86% wide, 94% tall, centred.
-tw, th = round(size * 0.86), round(size * 0.94)
+# Map the bbox to the frame, centred horizontally.
+tw, th = round(size * fw), round(size * fh)
 fitted = crop.resize((tw, th), Image.LANCZOS)
 out = Image.new("RGBA", (size, size), (0, 0, 0, 0))
-out.paste(fitted, ((size - tw) // 2, round(size * 0.03)))
+out.paste(fitted, ((size - tw) // 2, round(size * ftop)))
 out.save(stem + ".png")
 out.save(stem + ".webp", quality=88, method=6)
 import os
