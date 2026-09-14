@@ -1,12 +1,15 @@
 # Editorial imagery
 
-Athlete and city photography for **editorial surfaces** — licensed stock
-plus, since 2026-09-14, generated frames where the subject is generic
-(see "Licensing and provenance") (challenge
-cards today; plan/curated surfaces may join later). The peer activity
-feed never uses these — feed cards render user-data imagery (route
-scenes, muscle figures) by design. See `CONTEXT.md` → "Editorial
-imagery" and `src/lib/editorialImages.ts` for the resolution logic.
+Athlete and city photography for **editorial surfaces** — challenge
+cards and Community Space cards today; plan/curated surfaces may join
+later. Licensed stock, plus (since 2026-09-14) generated frames where
+the subject is generic — see "Licensing and provenance" below for which
+route a given file may take.
+
+The peer activity feed never uses these: feed cards render user-data
+imagery (route scenes, muscle figures) by design. See `CONTEXT.md` →
+"Editorial imagery" and `src/lib/editorialImages.ts` for the resolution
+logic.
 
 ## Drop-in contract
 
