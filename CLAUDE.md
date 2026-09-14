@@ -1519,6 +1519,40 @@ matters again.
       advisory fix, and ~130 sites of churn to clear 4 of 18 is a bad trade on
       its own.
 
+### Client `firebase` stays on 12.14 — the minor costs 62 kB gzip
+
+Measured 2026-09-14 against dependabot #2085, which proposes
+`firebase` ^12.14.0 -> ^12.19.0. **Do not merge it, and do not run
+`check-dist-size.mjs --update` to make the gate green** — the gate is
+right.
+
+The growth is a step, not a drift, and it lands entirely on one release:
+
+| `firebase` | `firebase-db` raw | gzip         |
+| ---------- | ----------------- | ------------ |
+| 12.14.0    | 392.6 kB          | **120.9 kB** |
+| 12.15.0    | 610.3 kB          | **182.9 kB** |
+| 12.17.0    | 583.6 kB          | 172.8 kB     |
+| 12.19.0    | 584.7 kB          | 173.1 kB     |
+
+That is **+62 kB gzip on the chunk every signed-in user downloads**, and
+it is new code rather than chunk redistribution: the whole-`dist` total
+moves by the same ~205 kB raw (5658.0 -> 5862.7 kB), so the manual-chunk
+boundary is not the cause. The tell for WHAT arrived is the symbol count
+— `Pipeline` goes from 2 occurrences to 26 across 12.14 -> 12.15, i.e.
+Firestore's Pipelines API entering the `firebase/firestore` entry and
+not tree-shaking out. Tropos uses none of it.
+
+`npm audit --omit=dev` reports **0 vulnerabilities** on 12.14, so nothing
+is being traded for the saving.
+
+Revisit when either a later release tree-shakes Pipelines back out (re-run
+the bisect above — it is four installs and four builds), or a Firestore
+fix we actually need lands in 12.15+. Deliberately NOT pinned to
+`~12.14`: that would also refuse the minors carrying real fixes, and
+`check-dist-size` already forces this conversation on every attempt,
+which is the behaviour we want.
+
 ### Race-day completion predicate (PR #1775)
 
 Affects: `functions/lib/raceDayCompletion.js`, new `functions/lib/raceTemplateIds.js` — both reached from `dailyRaceReconciliationSweep` and `onRunCreated`. Merged 2026-07-26 from a web session that cannot view the deployed source.
