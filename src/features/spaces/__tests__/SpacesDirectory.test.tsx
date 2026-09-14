@@ -5,14 +5,16 @@
  * the Q6 gate (compact Feed row never requests races).
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, fireEvent, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
+import { filterRaceDefs, type RaceBrowseFilters } from "../raceBrowse";
+import { spaceDef } from "../spaceDefs";
 import type { SpaceDirectoryEntry } from "../useSpacesDirectory";
 
 const mockUseSpacesDirectory = vi.fn();
 vi.mock("../useSpacesDirectory", () => ({
-  useSpacesDirectory: (includeRaces: boolean) =>
-    mockUseSpacesDirectory(includeRaces),
+  useSpacesDirectory: (includeRaces: boolean, filters: RaceBrowseFilters) =>
+    mockUseSpacesDirectory(includeRaces, filters),
 }));
 
 import SpacesDirectory from "../SpacesDirectory";
@@ -42,6 +44,7 @@ const RACE: SpaceDirectoryEntry = {
       dateKey: "2026-09-13",
       distance: "half",
       city: "Newcastle",
+      countryCode: "GB",
       countryFlag: "🇬🇧",
       websiteUrl: "https://www.greatrun.org/events/great-north-run/",
     },
@@ -54,6 +57,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   mockUseSpacesDirectory.mockReturnValue({
     entries: [INTEREST, RACE],
+    upcomingRaces: [RACE.def],
     refresh: vi.fn(),
   });
 });
@@ -69,7 +73,10 @@ function renderDirectory(props = {}) {
 describe("SpacesDirectory — Races & Events", () => {
   it("full directory requests races and renders them in their own row", () => {
     renderDirectory();
-    expect(mockUseSpacesDirectory).toHaveBeenCalledWith(true);
+    expect(mockUseSpacesDirectory).toHaveBeenCalledWith(true, {
+      country: "GB",
+      distance: "all",
+    });
     expect(screen.getByText("Races & events")).toBeInTheDocument();
     expect(screen.getByText("Great North Run")).toBeInTheDocument();
     // Interest row unchanged alongside
@@ -77,9 +84,13 @@ describe("SpacesDirectory — Races & Events", () => {
     expect(screen.getByText("Runners")).toBeInTheDocument();
   });
 
-  it("race card shows RACE chip + date · city, not a member count", () => {
+  it("race card shows its distance chip + date · city, not a member count", () => {
     renderDirectory();
-    expect(screen.getByText("Race")).toBeInTheDocument();
+    expect(
+      within(
+        screen.getByRole("link", { name: "Great North Run space" })
+      ).getByText("Half marathon")
+    ).toBeInTheDocument();
     expect(screen.getByText(/13 Sep 2026/)).toBeInTheDocument();
     expect(screen.getByText(/Newcastle/)).toBeInTheDocument();
     // Density gate stays interest-only territory: the race card never
@@ -101,20 +112,63 @@ describe("SpacesDirectory — Races & Events", () => {
   it("compact row never requests races (Q6 calm-feed lock)", () => {
     mockUseSpacesDirectory.mockReturnValue({
       entries: [INTEREST],
+      upcomingRaces: [],
       refresh: vi.fn(),
     });
     renderDirectory({ compact: true, title: "Spaces for you" });
-    expect(mockUseSpacesDirectory).toHaveBeenCalledWith(false);
+    expect(mockUseSpacesDirectory).toHaveBeenCalledWith(false, {
+      country: "GB",
+      distance: "all",
+    });
     expect(screen.queryByText("Races & events")).not.toBeInTheDocument();
   });
 
   it("races row collapses when no upcoming races are in the entries", () => {
     mockUseSpacesDirectory.mockReturnValue({
       entries: [INTEREST],
+      upcomingRaces: [],
       refresh: vi.fn(),
     });
     renderDirectory();
     expect(screen.queryByText("Races & events")).not.toBeInTheDocument();
     expect(screen.getByText("Runners")).toBeInTheDocument();
   });
+});
+
+it("keeps filters visible through no matches and recovers across countries", () => {
+  const berlin = spaceDef("berlin-marathon")!;
+  mockUseSpacesDirectory.mockImplementation((_include, filters) => ({
+    entries: [
+      INTEREST,
+      ...filterRaceDefs([RACE.def, berlin], filters).map((def) => ({
+        def,
+        memberCount: null,
+        joined: false,
+      })),
+    ],
+    upcomingRaces: [RACE.def, berlin],
+    refresh: vi.fn(),
+  }));
+  renderDirectory();
+  expect(
+    screen.queryByRole("link", { name: "Berlin Marathon space" })
+  ).not.toBeInTheDocument();
+  fireEvent.change(screen.getByLabelText("Country"), {
+    target: { value: "DE" },
+  });
+  fireEvent.change(screen.getByLabelText("Distance"), {
+    target: { value: "half" },
+  });
+  expect(screen.getByText("No matching races")).toBeInTheDocument();
+  expect(screen.getByLabelText("Country")).toHaveValue("DE");
+  expect(
+    screen.getByRole("link", { name: "Runners space" })
+  ).toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "Clear filters" }));
+  expect(
+    screen.getByRole("link", { name: "Berlin Marathon space" })
+  ).toBeInTheDocument();
+  expect(
+    screen.getByRole("link", { name: "Great North Run space" })
+  ).toBeInTheDocument();
 });

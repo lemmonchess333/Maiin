@@ -1,0 +1,481 @@
+{
+  "description": "Fourteen licensed destination photographs for the approved marathon catalogue expansion. City context, not official race photography or certification of a future course.",
+  "sources": [
+    {
+      "assets": ["space-yorkshire-marathon.webp"],
+      "raceId": "yorkshire-marathon",
+      "photographer": "Al Elmes",
+      "subject": "York Minster and York skyline",
+      "locationEvidence": "York, UK",
+      "sourceUrl": "https://unsplash.com/photos/an-aerial-view-of-a-city-with-a-cathedral-yBPCyAkGfik",
+      "sourcePhotoId": "yBPCyAkGfik",
+      "downloadUrl": "https://images.unsplash.com/photo-1678889166899-bbbc06682b5e?fm=jpg&q=60&w=3000&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+      "retrievedOn": "2026-09-14",
+      "license": "Unsplash License",
+      "licenseUrl": "https://unsplash.com/license",
+      "downloadVariant": "Public 3000px image supplied by the source page, JPEG quality 60.",
+      "processing": "Landscape crop, resize and WebP compression. No generated content, colour changes or retouching.",
+      "sourceSha256": "7257890059af39350ea34e121a255e3b2ba1de5725a7ada947abb04364afda5e",
+      "sourceSize": {
+        "width": 3000,
+        "height": 1688
+      },
+      "cropPixels": {
+        "left": 155,
+        "top": 0,
+        "width": 2690,
+        "height": 1688
+      },
+      "output": {
+        "width": 1200,
+        "height": 753,
+        "format": "webp",
+        "quality": 78,
+        "bytes": 111170,
+        "sha256": "77b0ec05a91e2a5047d1322ebd33eab2ede22495e7eba9856487f2f1b54af555"
+      }
+    },
+    {
+      "assets": ["space-chester-marathon.webp"],
+      "raceId": "chester-marathon",
+      "photographer": "Martina Jorden",
+      "subject": "a group of people walking down a street next to tall buildings",
+      "locationEvidence": "Chester Uk",
+      "sourceUrl": "https://unsplash.com/photos/a-group-of-people-walking-down-a-street-next-to-tall-buildings-hvXetOc-gDA",
+      "sourcePhotoId": "hvXetOc-gDA",
+      "downloadUrl": "https://images.unsplash.com/photo-1695616104502-389f6045e3ff?fm=jpg&q=60&w=3000&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+      "retrievedOn": "2026-09-14",
+      "license": "Unsplash License",
+      "licenseUrl": "https://unsplash.com/license",
+      "downloadVariant": "Public 3000px image supplied by the source page, JPEG quality 60.",
+      "processing": "Landscape crop, resize and WebP compression. No generated content, colour changes or retouching.",
+      "sourceSha256": "0fcdbd8e43df72d286705026193462cf51db82808620f640e6043a40b22143bf",
+      "sourceSize": {
+        "width": 3000,
+        "height": 2437
+      },
+      "cropPixels": {
+        "left": 0,
+        "top": 150,
+        "width": 3000,
+        "height": 1882
+      },
+      "output": {
+        "width": 1200,
+        "height": 753,
+        "format": "webp",
+        "quality": 68,
+        "bytes": 117758,
+        "sha256": "60abc288af003a356e06fd9aadad9ac1a5062584ff25b00eaf8b2d77b4772ce3"
+      }
+    },
+    {
+      "assets": ["space-loch-ness-marathon.webp"],
+      "raceId": "loch-ness-marathon",
+      "photographer": "Piotr Musioł",
+      "subject": "black wooden fence near lake during daytime",
+      "locationEvidence": "Loch Ness, Wielka Brytania",
+      "sourceUrl": "https://unsplash.com/photos/black-wooden-fence-near-lake-during-daytime-1niYyd4NbxE",
+      "sourcePhotoId": "1niYyd4NbxE",
+      "downloadUrl": "https://images.unsplash.com/photo-1618650684919-93549ee76e3a?fm=jpg&q=60&w=3000&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+      "retrievedOn": "2026-09-14",
+      "license": "Unsplash License",
+      "licenseUrl": "https://unsplash.com/license",
+      "downloadVariant": "Public 3000px image supplied by the source page, JPEG quality 60.",
+      "processing": "Landscape crop, resize and WebP compression. No generated content, colour changes or retouching.",
+      "sourceSha256": "1199f2ae8b9d2ea5b32e3b214135f263f839cc7fdbcc3ec80ecdeb3a70eda1c8",
+      "sourceSize": {
+        "width": 3000,
+        "height": 1993
+      },
+      "cropPixels": {
+        "left": 0,
+        "top": 0,
+        "width": 3000,
+        "height": 1882
+      },
+      "output": {
+        "width": 1200,
+        "height": 753,
+        "format": "webp",
+        "quality": 74,
+        "bytes": 117246,
+        "sha256": "7b876a5595b0acb0d8c83eee12694ac2407d38faf4034009af7735717cf5ae91"
+      }
+    },
+    {
+      "assets": ["space-newport-marathon.webp"],
+      "raceId": "newport-marathon",
+      "photographer": "Richard Williams",
+      "subject": "The Newport Transporter Bridge spanning the River Usk under a cloudy sky",
+      "locationEvidence": "The Newport Transporter Bridge spanning the River Usk under a cloudy sky",
+      "sourceUrl": "https://unsplash.com/photos/newport-transporter-bridge-over-river-Pn4zpHUfFwg",
+      "sourcePhotoId": "Pn4zpHUfFwg",
+      "downloadUrl": "https://images.unsplash.com/photo-1786462610457-ba4d2742a912?fm=jpg&q=60&w=3000&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+      "retrievedOn": "2026-09-14",
+      "license": "Unsplash License",
+      "licenseUrl": "https://unsplash.com/license",
+      "downloadVariant": "Public 3000px image supplied by the source page, JPEG quality 60.",
+      "processing": "Landscape crop, resize and WebP compression. No generated content, colour changes or retouching.",
+      "sourceSha256": "1dc09c8bca48cdcc34fb1cd18cac32a46bb312a98e116d1aa18ca463b9acd810",
+      "sourceSize": {
+        "width": 3000,
+        "height": 2250
+      },
+      "cropPixels": {
+        "left": 0,
+        "top": 60,
+        "width": 3000,
+        "height": 1882
+      },
+      "output": {
+        "width": 1200,
+        "height": 753,
+        "format": "webp",
+        "quality": 84,
+        "bytes": 115078,
+        "sha256": "12e9d2d8c2dd45fad816e06c2461e8f197240bbb99aab10b4bd6639e6a1ec9e2"
+      }
+    },
+    {
+      "assets": ["space-belfast-marathon.webp"],
+      "raceId": "belfast-marathon",
+      "photographer": "K. Mitch Hodge",
+      "subject": "Belfast City Hall, UK",
+      "locationEvidence": "Belfast City Hall, Belfast, Northern Ireland",
+      "sourceUrl": "https://unsplash.com/photos/belfast-city-hall-uk-ctdOWCcXYUM",
+      "sourcePhotoId": "ctdOWCcXYUM",
+      "downloadUrl": "https://images.unsplash.com/photo-1561126669-7c9d34105915?fm=jpg&q=60&w=3000&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+      "retrievedOn": "2026-09-14",
+      "license": "Unsplash License",
+      "licenseUrl": "https://unsplash.com/license",
+      "downloadVariant": "Public 3000px image supplied by the source page, JPEG quality 60.",
+      "processing": "Landscape crop, resize and WebP compression. No generated content, colour changes or retouching.",
+      "sourceSha256": "fa9a912cff853da352481d5583e9090a1c899ce0b341919a0b7f3fe7e81de84d",
+      "sourceSize": {
+        "width": 3000,
+        "height": 2144
+      },
+      "cropPixels": {
+        "left": 0,
+        "top": 0,
+        "width": 3000,
+        "height": 1882
+      },
+      "output": {
+        "width": 1200,
+        "height": 753,
+        "format": "webp",
+        "quality": 78,
+        "bytes": 117486,
+        "sha256": "55adabf69e7853b3366673fbaa673976a4da1f00896d70268874d69fb60daa50"
+      }
+    },
+    {
+      "assets": ["space-leeds-marathon.webp"],
+      "raceId": "leeds-marathon",
+      "photographer": "Paul Rigel",
+      "subject": "an aerial view of a city with tall buildings",
+      "locationEvidence": "Leeds, UK",
+      "sourceUrl": "https://unsplash.com/photos/an-aerial-view-of-a-city-with-tall-buildings-2G6Jl7M7PJc",
+      "sourcePhotoId": "2G6Jl7M7PJc",
+      "downloadUrl": "https://images.unsplash.com/photo-1681643418346-805f97cb0a7c?fm=jpg&q=60&w=3000&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+      "retrievedOn": "2026-09-14",
+      "license": "Unsplash License",
+      "licenseUrl": "https://unsplash.com/license",
+      "downloadVariant": "Public 3000px image supplied by the source page, JPEG quality 60.",
+      "processing": "Landscape crop, resize and WebP compression. No generated content, colour changes or retouching.",
+      "sourceSha256": "039c1819e611abd6046f182c5d1517679bbb667603b4a2fe5ec5dbaab9afc95e",
+      "sourceSize": {
+        "width": 3000,
+        "height": 4000
+      },
+      "cropPixels": {
+        "left": 0,
+        "top": 200,
+        "width": 3000,
+        "height": 1882
+      },
+      "output": {
+        "width": 1200,
+        "height": 753,
+        "format": "webp",
+        "quality": 82,
+        "bytes": 109010,
+        "sha256": "381c791edd7b897259e308ee186a86ecd7823af15102489bc1eabbb59dd29811"
+      }
+    },
+    {
+      "assets": ["space-milton-keynes-marathon.webp"],
+      "raceId": "milton-keynes-marathon",
+      "photographer": "Ethan Wilkinson",
+      "subject": "aerial view of green grass field near lake during daytime",
+      "locationEvidence": "Furzton Lake, Furzton, Milton Keynes, UK",
+      "sourceUrl": "https://unsplash.com/photos/aerial-view-of-green-grass-field-near-lake-during-daytime-mdIObkQ8sXA",
+      "sourcePhotoId": "mdIObkQ8sXA",
+      "downloadUrl": "https://images.unsplash.com/photo-1597834894456-faf2bb6a1162?fm=jpg&q=60&w=3000&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+      "retrievedOn": "2026-09-14",
+      "license": "Unsplash License",
+      "licenseUrl": "https://unsplash.com/license",
+      "downloadVariant": "Public 3000px image supplied by the source page, JPEG quality 60.",
+      "processing": "Landscape crop, resize and WebP compression. No generated content, colour changes or retouching.",
+      "sourceSha256": "eec5fd9ebe6930bad4377ab142740e59d6244c5667bfe4869c67d2a6ba58d3d4",
+      "sourceSize": {
+        "width": 3000,
+        "height": 1688
+      },
+      "cropPixels": {
+        "left": 155,
+        "top": 0,
+        "width": 2690,
+        "height": 1688
+      },
+      "output": {
+        "width": 1200,
+        "height": 753,
+        "format": "webp",
+        "quality": 80,
+        "bytes": 110174,
+        "sha256": "4eabaee5c70666732183c098c3d9a6d7a85891212339f7df517ab23c828611d0"
+      }
+    },
+    {
+      "assets": ["space-new-york-city-marathon.webp"],
+      "raceId": "new-york-city-marathon",
+      "photographer": "Brett Wharton",
+      "subject": "A view of a city skyline from a park",
+      "locationEvidence": "Central Park, New York, NY, USA",
+      "sourceUrl": "https://unsplash.com/photos/a-view-of-a-city-skyline-from-a-park-hblDWOyKork",
+      "sourcePhotoId": "hblDWOyKork",
+      "downloadUrl": "https://images.unsplash.com/photo-1739987586096-ca1eb7e7892c?fm=jpg&q=60&w=3000&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+      "retrievedOn": "2026-09-14",
+      "license": "Unsplash License",
+      "licenseUrl": "https://unsplash.com/license",
+      "downloadVariant": "Public 3000px image supplied by the source page, JPEG quality 60.",
+      "processing": "Landscape crop, resize and WebP compression. No generated content, colour changes or retouching.",
+      "sourceSha256": "d9df7f8d584208dee48de46491a2ef36e41612f67c59099c4b908dc485150e41",
+      "sourceSize": {
+        "width": 3000,
+        "height": 2000
+      },
+      "cropPixels": {
+        "left": 0,
+        "top": 0,
+        "width": 3000,
+        "height": 1882
+      },
+      "output": {
+        "width": 1040,
+        "height": 652,
+        "format": "webp",
+        "quality": 64,
+        "bytes": 118628,
+        "sha256": "9f9d5347a98e9c8d58959083afb4eb59bcb5bdfc865184a19b6e76089d80f880"
+      }
+    },
+    {
+      "assets": ["space-chicago-marathon.webp"],
+      "raceId": "chicago-marathon",
+      "photographer": "Ruben Mavarez",
+      "subject": "Chicago skyline with a bridge over the river",
+      "locationEvidence": "Chicago, IL, USA",
+      "sourceUrl": "https://unsplash.com/photos/chicago-skyline-with-a-bridge-over-the-river-EccNx7qWjzE",
+      "sourcePhotoId": "EccNx7qWjzE",
+      "downloadUrl": "https://images.unsplash.com/photo-1745872262717-69c8951b5c49?fm=jpg&q=60&w=3000&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+      "retrievedOn": "2026-09-14",
+      "license": "Unsplash License",
+      "licenseUrl": "https://unsplash.com/license",
+      "downloadVariant": "Public 3000px image supplied by the source page, JPEG quality 60.",
+      "processing": "Landscape crop, resize and WebP compression. No generated content, colour changes or retouching.",
+      "sourceSha256": "bb42c3f75684c0dcd8805c2518c19bfe96fc0177400d7df7b999e716de41fdd9",
+      "sourceSize": {
+        "width": 3000,
+        "height": 4500
+      },
+      "cropPixels": {
+        "left": 0,
+        "top": 1250,
+        "width": 3000,
+        "height": 1882
+      },
+      "output": {
+        "width": 1120,
+        "height": 703,
+        "format": "webp",
+        "quality": 64,
+        "bytes": 108098,
+        "sha256": "2b31b0545bb02c93e8ce37c7e2852e3612a352bae823383f6458a024450b4cdd"
+      }
+    },
+    {
+      "assets": ["space-paris-marathon.webp"],
+      "raceId": "paris-marathon",
+      "photographer": "Madalena Veloso",
+      "subject": "Arc De Triomphe",
+      "locationEvidence": "Arc de Triomphe, Paris, France",
+      "sourceUrl": "https://unsplash.com/photos/arc-de-triomphe-e2rtyRTCsns",
+      "sourcePhotoId": "e2rtyRTCsns",
+      "downloadUrl": "https://images.unsplash.com/photo-1531616185-33ff6b7a15e4?fm=jpg&q=60&w=3000&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+      "retrievedOn": "2026-09-14",
+      "license": "Unsplash License",
+      "licenseUrl": "https://unsplash.com/license",
+      "downloadVariant": "Public 3000px image supplied by the source page, JPEG quality 60.",
+      "processing": "Landscape crop, resize and WebP compression. No generated content, colour changes or retouching.",
+      "sourceSha256": "1ff3f98a35518a2b7a14192e3f6593b4c2429ff6504548e29f52bf54e2649acf",
+      "sourceSize": {
+        "width": 3000,
+        "height": 4500
+      },
+      "cropPixels": {
+        "left": 0,
+        "top": 950,
+        "width": 3000,
+        "height": 1882
+      },
+      "output": {
+        "width": 1120,
+        "height": 703,
+        "format": "webp",
+        "quality": 64,
+        "bytes": 111492,
+        "sha256": "0f5cfd0dc516f4babad3eac2ff126b53107da6ceba34b4a8e32c058fcd027767"
+      }
+    },
+    {
+      "assets": ["space-dublin-marathon.webp"],
+      "raceId": "dublin-marathon",
+      "photographer": "Alessandro Santoro",
+      "subject": "The Ha'penny Bridge illuminated in green over the River Liffey in Dublin",
+      "locationEvidence": "Ha'penny Bridge, Temple Bar, Dublin, Ireland",
+      "sourceUrl": "https://unsplash.com/photos/hapenny-bridge-over-river-liffey-dublin-57S4Ui1jtVw",
+      "sourcePhotoId": "57S4Ui1jtVw",
+      "downloadUrl": "https://images.unsplash.com/photo-1788108621620-99202a2fd2a9?fm=jpg&q=60&w=3000&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+      "retrievedOn": "2026-09-14",
+      "license": "Unsplash License",
+      "licenseUrl": "https://unsplash.com/license",
+      "downloadVariant": "Public 3000px image supplied by the source page, JPEG quality 60.",
+      "processing": "Landscape crop, resize and WebP compression. No generated content, colour changes or retouching.",
+      "sourceSha256": "4e23d2e821de111e9191eb35f9556b57d0713e7b4fe586b27a419e8d19976c5a",
+      "sourceSize": {
+        "width": 3000,
+        "height": 2250
+      },
+      "cropPixels": {
+        "left": 0,
+        "top": 150,
+        "width": 3000,
+        "height": 1882
+      },
+      "output": {
+        "width": 1120,
+        "height": 703,
+        "format": "webp",
+        "quality": 64,
+        "bytes": 103676,
+        "sha256": "b3d3fa5070b5e45854b18e9ac3ce6c36ed5f204c65728c5ff0d4365b22c36073"
+      }
+    },
+    {
+      "assets": ["space-southampton-marathon.webp"],
+      "raceId": "southampton-marathon",
+      "photographer": "Colin Osborne",
+      "subject": "a marina filled with lots of boats next to tall buildings",
+      "locationEvidence": "The Needles, 4 Maritime Walk, Southampton, United Kingdom",
+      "sourceUrl": "https://unsplash.com/photos/a-marina-filled-with-lots-of-boats-next-to-tall-buildings-7w4nbbYLJKY",
+      "sourcePhotoId": "7w4nbbYLJKY",
+      "downloadUrl": "https://images.unsplash.com/photo-1592224331355-da2971caee3b?fm=jpg&q=60&w=3000&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+      "retrievedOn": "2026-09-14",
+      "license": "Unsplash License",
+      "licenseUrl": "https://unsplash.com/license",
+      "downloadVariant": "Public 3000px image supplied by the source page, JPEG quality 60.",
+      "processing": "Landscape crop, resize and WebP compression. No generated content, colour changes or retouching.",
+      "sourceSha256": "17798aa78d00156ccff77a4295e6eb456beeae7acd141a8d549c934b379672fa",
+      "sourceSize": {
+        "width": 3000,
+        "height": 1544
+      },
+      "cropPixels": {
+        "left": 269,
+        "top": 0,
+        "width": 2461,
+        "height": 1544
+      },
+      "output": {
+        "width": 1200,
+        "height": 753,
+        "format": "webp",
+        "quality": 76,
+        "bytes": 114240,
+        "sha256": "a2c7bedd55245fbb358580cb2c40296aa4517f263dedf59df2cd7d5bb419754c"
+      }
+    },
+    {
+      "assets": ["space-boston-marathon.webp"],
+      "raceId": "boston-marathon",
+      "photographer": "Jun Ren",
+      "subject": "Boston skyline across the water on a clear day",
+      "locationEvidence": "Boston skyline across the water on a clear day",
+      "sourceUrl": "https://unsplash.com/photos/w5PnmpqSX_s",
+      "sourcePhotoId": "w5PnmpqSX_s",
+      "downloadUrl": "https://images.unsplash.com/photo-1770697952050-2753065588b6?fm=jpg&q=60&w=3000&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+      "retrievedOn": "2026-09-14",
+      "license": "Unsplash License",
+      "licenseUrl": "https://unsplash.com/license",
+      "downloadVariant": "Public 3000px image supplied by the source page, JPEG quality 60.",
+      "processing": "Landscape crop, resize and WebP compression. No generated content, colour changes or retouching.",
+      "sourceSha256": "8d225954a6e8df3def597866999f4c076fbec71224ed31f1082d15860fe6aebc",
+      "sourceSize": {
+        "width": 3000,
+        "height": 2000
+      },
+      "cropPixels": {
+        "left": 0,
+        "top": 700,
+        "width": 2000,
+        "height": 1255
+      },
+      "output": {
+        "width": 1200,
+        "height": 753,
+        "format": "webp",
+        "quality": 64,
+        "bytes": 119452,
+        "sha256": "b03753e15332d6483c224fdbea7f24c90029d38b525eb96286cd798386409d6c"
+      }
+    },
+    {
+      "assets": ["space-berlin-marathon.webp"],
+      "raceId": "berlin-marathon",
+      "photographer": "Xander Gonera",
+      "subject": "The brandenburg gate in berlin, germany",
+      "locationEvidence": "Brandenburg Gate, Berlin, Germany",
+      "sourceUrl": "https://unsplash.com/photos/the-brandenburg-gate-in-berlin-germany-EmGJdoIvp3A",
+      "sourcePhotoId": "EmGJdoIvp3A",
+      "downloadUrl": "https://images.unsplash.com/photo-1745878136928-d1b3c10afc35?fm=jpg&q=60&w=3000&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+      "retrievedOn": "2026-09-14",
+      "license": "Unsplash License",
+      "licenseUrl": "https://unsplash.com/license",
+      "downloadVariant": "Public 3000px image supplied by the source page, JPEG quality 60.",
+      "processing": "Landscape crop, resize and WebP compression. No generated content, colour changes or retouching.",
+      "sourceSha256": "f2ea210d8718ed7bdca3ce7274913d67625b6891b74d228e5dc4127d72245540",
+      "sourceSize": {
+        "width": 3000,
+        "height": 1989
+      },
+      "cropPixels": {
+        "left": 0,
+        "top": 0,
+        "width": 3000,
+        "height": 1882
+      },
+      "output": {
+        "width": 1200,
+        "height": 753,
+        "format": "webp",
+        "quality": 66,
+        "bytes": 119828,
+        "sha256": "36e0ae93cefb8fcd085e23025b315143a0b94603fe3462348fb866f9ec61a8a6"
+      }
+    }
+  ]
+}

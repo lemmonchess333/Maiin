@@ -663,6 +663,12 @@ describe("RunPlanSettings", () => {
     fireEvent.click(
       screen.getByRole("button", { name: /Choose an upcoming race/i })
     );
+    fireEvent.change(screen.getByLabelText("Country"), {
+      target: { value: "all" },
+    });
+    fireEvent.change(screen.getByLabelText("Distance"), {
+      target: { value: "all" },
+    });
     fireEvent.click(
       screen.getByRole("option", { name: new RegExp(race.name) })
     );
@@ -690,6 +696,12 @@ describe("RunPlanSettings", () => {
     fireEvent.click(
       screen.getByRole("button", { name: /Choose an upcoming race/i })
     );
+    fireEvent.change(screen.getByLabelText("Country"), {
+      target: { value: "all" },
+    });
+    fireEvent.change(screen.getByLabelText("Distance"), {
+      target: { value: "all" },
+    });
     fireEvent.click(
       screen.getByRole("option", { name: new RegExp(race.name) })
     );

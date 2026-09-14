@@ -69,6 +69,38 @@ describe("Coachmark", () => {
     expect(screen.queryByRole("tooltip")).toBeNull();
   });
 
+  it("keeps the timer deadline across rerenders and calls the latest onDismiss", () => {
+    vi.useFakeTimers();
+    const callbacks = Array.from({ length: 4 }, () => vi.fn());
+    const hint = (index: number) => (
+      <Coachmark
+        storageKey="test-coachmark-v1"
+        content="Hint copy"
+        autoDismissMs={100}
+        onDismiss={callbacks[index]}
+      >
+        <button type="button">Anchor</button>
+      </Coachmark>
+    );
+    const { rerender, unmount } = render(hint(0));
+    try {
+      for (let index = 1; index < callbacks.length; index += 1) {
+        act(() => vi.advanceTimersByTime(25));
+        rerender(hint(index));
+      }
+      expect(window.localStorage.getItem(STORAGE_KEY)).toBeNull();
+      act(() => vi.advanceTimersByTime(25));
+      expect(window.localStorage.getItem(STORAGE_KEY)).toBe("1");
+      expect(callbacks[3]).toHaveBeenCalledTimes(1);
+      for (const callback of callbacks.slice(0, 3)) {
+        expect(callback).not.toHaveBeenCalled();
+      }
+    } finally {
+      unmount();
+      vi.useRealTimers();
+    }
+  });
+
   /* onDismiss callback — added when Soc5 wired
      `social_coachmark_dismissed` telemetry. Fires exactly once
      on the FIRST dismissal regardless of path (manual close,

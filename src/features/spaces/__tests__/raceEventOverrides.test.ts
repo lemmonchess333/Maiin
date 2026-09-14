@@ -115,3 +115,19 @@ describe("upcomingResolvedRaceDefs", () => {
     expect(spaceDef("the-big-half")!.event!.dateKey).toBe(before);
   });
 });
+
+it("validates country codes and retains bundled countries for older remote payloads", () => {
+  const safe = sanitizeRaceEventOverrides({
+    "berlin-marathon": { countryCode: "DE", dateKey: "2027-09-26" },
+    "london-marathon": { countryCode: "__proto__", city: "London" },
+    "paris-marathon": { countryCode: "France" },
+  });
+  expect(safe["berlin-marathon"]?.countryCode).toBe("DE");
+  expect(safe["london-marathon"]).toEqual({ city: "London" });
+  expect(safe["paris-marathon"]).toBeUndefined();
+  expect(
+    resolveRaceEvent(spaceDef("boston-marathon")!, {
+      "boston-marathon": { dateKey: "2028-04-17" },
+    })?.countryCode
+  ).toBe("US");
+});

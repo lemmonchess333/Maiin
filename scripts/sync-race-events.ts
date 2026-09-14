@@ -15,6 +15,7 @@
  *
  * `--dry-run` prints the payload without writing.
  */
+import { isDeepStrictEqual } from "node:util";
 import { initializeApp, applicationDefault } from "firebase-admin/app";
 import { getFirestore, FieldValue } from "firebase-admin/firestore";
 import { raceSpaceDefs } from "../src/features/spaces/spaceDefs";
@@ -29,6 +30,7 @@ for (const def of raceSpaceDefs()) {
     dateKey: def.event.dateKey,
     websiteUrl: def.event.websiteUrl,
     city: def.event.city,
+    countryCode: def.event.countryCode,
     countryFlag: def.event.countryFlag,
     ...(def.event.elevation ? { elevation: def.event.elevation } : {}),
   };
@@ -47,7 +49,11 @@ async function main(): Promise<void> {
   await getFirestore()
     .doc("config/raceEvents")
     .set({ events, updatedAt: FieldValue.serverTimestamp() });
-  console.log("[sync-race-events] config/raceEvents written");
+  const stored = await getFirestore().doc("config/raceEvents").get();
+  if (!isDeepStrictEqual(stored.data()?.events, events)) {
+    throw new Error("Race event readback differs from the source catalogue");
+  }
+  console.log("[sync-race-events] config/raceEvents written and verified");
 }
 
 main().catch((e) => {
