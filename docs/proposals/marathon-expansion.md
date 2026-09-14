@@ -144,7 +144,8 @@ Implemented in the marathon expansion branch:
   `src/assets/editorial/sources-marathon-expansion-2026-09-14.json`.
 - `npm run verify` passed: 795 test files / 9,192 tests; 8 emulator-gated
   files were skipped in that non-emulator run. Production build and audits
-  passed. The changed UI modules also passed lint without warnings.
+  passed. The full verification command passed again after the CI fixes
+  below. The changed UI modules also passed lint without warnings.
 - Local Firestore emulator verification passed for the profile and Spaces
   rules, including every catalogue race's membership/posting and goal
   binding, plus existing rejection cases.
@@ -152,6 +153,17 @@ Implemented in the marathon expansion branch:
   captures), the country/distance controls and US picker. The phone audit
   also exercises no-results recovery, joining without creating a goal,
   international training drafts and manual date entry in a US timezone.
+- CI follow-up: update the existing picker capture to select UK marathons
+  explicitly. Fix the Social coachmark countdown restarting on rerenders,
+  with a regression that fails before the fix and passes afterwards. All
+  five affected real-browser checks now pass, including light/dark picker
+  captures and the six-second auto-dismiss contract.
+- Refresh the bundle-size baseline from a fresh production build using
+  the existing ratchet script. Catalogue metadata grows from 5,109 to
+  9,868 bytes and the shared filters add 1,580 bytes; total JavaScript is
+  5,803,483 bytes, up 0.2% from the previous baseline. The global growth
+  tolerance stays unchanged. The bundle-size and circular-import checks
+  pass.
 
 PR gates and deployed builds are verified before release; their immutable
 run links and final commit are recorded in the pull request. Native release

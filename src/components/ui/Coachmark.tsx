@@ -1,6 +1,7 @@
 import {
   useCallback,
   useEffect,
+  useEffectEvent,
   useRef,
   type ReactElement,
   type ReactNode,
@@ -57,14 +58,17 @@ export default function Coachmark({
     dismiss();
   }, [dismiss, onDismiss]);
 
+  // Parent updates and useCoachMarks can supply fresh callback identities.
+  // Read the latest dismissal without restarting the countdown on each render.
+  const dismissFromTimer = useEffectEvent(dismissAndNotify);
   /* Auto-dismiss runs only while the coachmark is currently shown.
      Once dismissed (by any path), the timer is cleared and won't
      re-fire — useCoachMarks is single-shot per key. */
   useEffect(() => {
     if (!showCoachMarks) return;
-    const t = window.setTimeout(() => dismissAndNotify(), autoDismissMs);
+    const t = window.setTimeout(() => dismissFromTimer(), autoDismissMs);
     return () => window.clearTimeout(t);
-  }, [showCoachMarks, autoDismissMs, dismissAndNotify]);
+  }, [showCoachMarks, autoDismissMs, storageKey]);
 
   return (
     <Tooltip
