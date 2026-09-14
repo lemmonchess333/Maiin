@@ -702,7 +702,30 @@ rig is at fault. Frames written there are thrown away with the runner;
 committing them to the `app-screenshots` branch is still the workflow
 below.
 
-The agent sandbox can't run a browser; CI can. Push any branch's code to
+**The agent sandbox CAN run the whole capture rig — this sentence said
+otherwise until 2026-09-14 and was wrong the way the Storage-emulator row
+was wrong: a false constraint doing real work, sending every agent to CI
+for a loop that runs here in minutes.** The chain is exactly
+`emulator-tests.yml`'s: build with the emulator env
+(`VITE_USE_EMULATORS=true … npm run build:e2e`), then
+`firebase emulators:exec --only auth,firestore --project demo-tropos`
+around the seed chain and `npm run test:e2e -- capture.spec.ts
+--project=auth-emulator`. The ONE thing to know is the browser: the
+pre-installed Chromium is a different build from the one Playwright asks
+for, so pass `PW_CHROMIUM=/opt/pw-browsers/chromium-1194/chrome-linux/chrome`
+— the capture specs' `test.use` already reads it as `executablePath`.
+Full suite locally: 64 passed in 6.8 minutes.
+
+Two caveats worth carrying. **Seed the FULL chain or you will measure the
+wrong thing** — `food-suggest-typed` frames at 430px under `seed:e2e`
+alone and at 142px under the whole chain, because the extra diary content
+is what pushes the composer down; a light seed hides exactly the class of
+bug the rig exists to catch. And **`home.screens.capture`'s "audit
+surfaces" test times out locally** (90s on a fullPage shot of the heaviest
+surface) while passing in CI — verified by running it on clean main, so
+treat that one as environmental rather than a regression.
+
+CI is still the authority. Push any branch's code to
 `claude/screenshot-app` (scratch trigger branch — force-with-lease is fine)
 and `app-screenshots.yml` builds it against the emulator, captures the key
 surfaces light+dark (`e2e/screenshots/home.screens.capture.spec.ts`), and
