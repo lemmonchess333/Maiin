@@ -98,6 +98,44 @@ describe("PerformanceHeroCard — empty state", () => {
     expect(screen.getByText("No sessions logged yet")).toBeInTheDocument();
     expect(screen.queryByText("—")).toBeNull();
   });
+
+  /* The perf doc is written by the server (onWorkoutCreated / onRunCreated),
+     so `!currentWeek` also covers the window between a first session being
+     saved and that trigger landing. Both surfaces used to render the
+     cold-start sentence there, telling a user who had just finished their
+     first workout that they had logged nothing. */
+  it("does not claim nothing is logged when a session exists", () => {
+    renderCard({
+      currentWeek: null,
+      previousWeek: null,
+      weeksAvailable: 0,
+      loading: false,
+      hasLoggedSession: true,
+    });
+    expect(screen.queryByText("No sessions logged yet")).toBeNull();
+    expect(
+      screen.queryByText(
+        /Your Performance will appear after your first logged session/i
+      )
+    ).toBeNull();
+    expect(
+      screen.getByText("Performance is still catching up")
+    ).toBeInTheDocument();
+  });
+
+  it("offers no next step when the session is already logged", () => {
+    // "Start a workout" is advice for someone who has not trained. Here
+    // there is nothing for the user to do but wait.
+    const { container } = renderCard({
+      currentWeek: null,
+      previousWeek: null,
+      weeksAvailable: 0,
+      loading: false,
+      hasLoggedSession: true,
+    });
+    expect(screen.queryByText(/start a workout/i)).toBeNull();
+    expect(container.querySelector('a[href="/program"]')).toBeNull();
+  });
 });
 
 describe("PerformanceHeroCard — loading state", () => {

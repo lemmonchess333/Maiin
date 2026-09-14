@@ -5,6 +5,7 @@ import {
   getLine,
   VERB_LABEL,
   EMPTY_STATE_LINE,
+  performanceEmptyCopy,
   type VerbState,
 } from "../performanceLine";
 import type { PerformanceSignals } from "../performanceTypes";
@@ -219,5 +220,45 @@ describe("getLine — coverage across all states", () => {
 describe("EMPTY_STATE_LINE", () => {
   it("is a non-empty string", () => {
     expect(EMPTY_STATE_LINE.length).toBeGreaterThan(0);
+  });
+});
+
+describe("performanceEmptyCopy", () => {
+  /* The two branches are asserted as whole literal objects rather than
+     field-by-field against the exported constants: an expectation computed
+     from the values under test pins consistency, not behaviour. These pin
+     the words. */
+  it("nothing logged: says so, and offers the next step", () => {
+    expect(performanceEmptyCopy(false)).toEqual({
+      headline: "No sessions logged yet",
+      sub: "Your Performance will appear after your first logged session",
+      showAction: true,
+    });
+  });
+
+  it("a session IS logged: does not claim otherwise, and offers no action", () => {
+    expect(performanceEmptyCopy(true)).toEqual({
+      headline: "Performance is still catching up",
+      sub: "Your Performance Index appears shortly after a session is saved",
+      showAction: false,
+    });
+  });
+
+  it("never tells a user with a logged session that they have none", () => {
+    /* The defect this function exists for. The doc is server-written, so
+       `!currentWeek` covers the window between saving a first session and
+       the trigger landing — stated independently of the exact wording so a
+       future copy edit cannot reintroduce the claim. */
+    const copy = performanceEmptyCopy(true);
+    expect(copy.headline.toLowerCase()).not.toContain("no sessions");
+    expect(copy.sub.toLowerCase()).not.toContain("first logged session");
+  });
+
+  it("the two branches differ in every field", () => {
+    const cold = performanceEmptyCopy(false);
+    const pending = performanceEmptyCopy(true);
+    expect(pending.headline).not.toBe(cold.headline);
+    expect(pending.sub).not.toBe(cold.sub);
+    expect(pending.showAction).not.toBe(cold.showAction);
   });
 });

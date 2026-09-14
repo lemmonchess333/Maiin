@@ -1291,7 +1291,15 @@ export default function History() {
               /history#performance scroll to this section's anchor. */}
             {filter === "analytics" && !isAnalyticsColdStart && (
               <SectionErrorBoundary sectionName="performance-section">
-                <PerformanceSection />
+                <PerformanceSection
+                  /* A meal alone clears the cold-start gate above, so this
+                     section can render for someone with no session at all —
+                     and the perf doc is server-written, so a user who has
+                     just logged their first workout reaches it too. */
+                  hasLoggedSession={
+                    workouts.length > 0 || lifetimeRuns.runCount > 0
+                  }
+                />
               </SectionErrorBoundary>
             )}
 

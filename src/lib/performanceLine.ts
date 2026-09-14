@@ -139,6 +139,58 @@ export function getLine(state: VerbState, signals: PerformanceSignals): string {
 export const EMPTY_STATE_LINE =
   "Your Performance will appear after your first logged session";
 
+/** The same slot, once a session EXISTS but no index has been written. */
+export const PENDING_STATE_HEADLINE = "Performance is still catching up";
+export const PENDING_STATE_LINE =
+  "Your Performance Index appears shortly after a session is saved";
+
+export interface PerformanceEmptyCopy {
+  headline: string;
+  sub: string;
+  /** "Start a workout" is the right nudge only when nothing is logged. */
+  showAction: boolean;
+}
+
+/**
+ * Which empty state the Performance slot should show.
+ *
+ * Both surfaces that render it — Home's hero card and Analytics' section —
+ * key off `!currentWeek`, i.e. NO performance doc. That condition has two
+ * causes and they need different sentences:
+ *
+ *   - nothing logged at all. "No sessions logged yet" is true, and
+ *     "Start a workout" is the thing to do.
+ *   - a session IS logged and the doc has not been written yet. The doc
+ *     comes from the server (`onWorkoutCreated` / `onRunCreated` recompute
+ *     performance), so between saving a first session and that trigger
+ *     landing, the old copy told a user who had just finished their first
+ *     workout that they had logged nothing. There is also nothing for them
+ *     to do, so the action is dropped rather than repeated.
+ *
+ * Narrow window, but every user passes through it, at the moment they are
+ * most invested — they just trained and came to look. Same latency class as
+ * the badge award.
+ *
+ * Note this is NOT the lapsed-user case: `currentWeek` is the newest doc
+ * with no date filter, so someone who trained months ago keeps theirs and
+ * never reaches either branch.
+ */
+export function performanceEmptyCopy(
+  hasLoggedSession: boolean
+): PerformanceEmptyCopy {
+  return hasLoggedSession
+    ? {
+        headline: PENDING_STATE_HEADLINE,
+        sub: PENDING_STATE_LINE,
+        showAction: false,
+      }
+    : {
+        headline: "No sessions logged yet",
+        sub: EMPTY_STATE_LINE,
+        showAction: true,
+      };
+}
+
 /* ─────────────────────────────────────────────
    LIFT-EV-10 — what this file does NOT fix
 

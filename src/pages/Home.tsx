@@ -1058,6 +1058,11 @@ export default function Home() {
                 previousWeek={perfPrevWeek}
                 weeksAvailable={perfWeeks.length}
                 loading={perfLoading}
+                /* The perf doc is written by the server, so "no doc" is not
+                   "no session" — this keeps the card from telling someone who
+                   has just logged their first workout that they logged
+                   nothing. */
+                hasLoggedSession={workouts.length > 0 || lifetimeRunCount > 0}
               />
             </SectionErrorBoundary>
           </TrackSectionView>
