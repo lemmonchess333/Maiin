@@ -18,6 +18,8 @@ vi.mock("firebase/firestore");
 vi.mock("../../lib/firebase", () => ({ db: {} }));
 
 import { useRunningStats } from "../useRunningStats";
+import { useEasierTodayRecommendation } from "@/features/program/useEasierTodayRecommendation";
+import type { WorkoutDay } from "@/features/program/programTypes";
 import { splitRouteSegments } from "@/lib/routeSegments";
 
 import {
@@ -265,6 +267,35 @@ describe("useRunningStats — account switch", () => {
 });
 
 describe("running evidence authority", () => {
+  it("the actual lifting recommendation waits through cached and pending snapshots", () => {
+    seedFirestore({
+      [`${A_RUNS}/a-run`]: {
+        ...run(),
+        date: "2026-07-14",
+        activityType: "tempo",
+        completedAt: Timestamp.fromDate(new Date(2026, 6, 14, 12)),
+      },
+    });
+    deferSnapshots();
+    const day = {
+      exercises: [{ movementCategory: "knee_dominant" }],
+    } as WorkoutDay;
+    const { result } = renderHook(() =>
+      useEasierTodayRecommendation(day, [], false)
+    );
+    const initial = deliveries[0];
+    for (const metadata of [
+      { fromCache: true, hasPendingWrites: false },
+      { fromCache: false, hasPendingWrites: true },
+    ]) {
+      act(() => initial.next(Object.assign(initial.snapshot, { metadata })));
+      expect(result.current?.recommended).toBe(false);
+    }
+    act(() => {
+      releaseSnapshot();
+    });
+    expect(result.current?.reason).toContain("hard run yesterday");
+  });
   it("displays cached facts but waits for server confirmation before coaching", () => {
     deferSnapshots();
     const { result } = renderHook(() => useRunningStats(30));
