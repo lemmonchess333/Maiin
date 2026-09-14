@@ -19,44 +19,68 @@ produce the art and drop it in.
 
 ## Visual identity (keep the whole set cohesive)
 
-One template, only the **motif** and the **tier metal** vary:
+**Regenerated 2026-09-14 to match the seal.** The first set (pastel
+tier-tinted enamel, cream relief motifs) read as visibly plainer than the
+black obsidian capsule it was revealed from — the shell out-dressed the
+prize. The medal is now the same object family as the seal, so the reveal
+reads as one thing opening to show what was inside it:
 
-- **Shape:** pointy-top hexagon medal (matches the existing `BadgeHex`
-  geometry), centred, symmetrical, filling ~90% of a square frame.
-- **Material:** a polished 3D **enamel medal** with a beveled **{tier} metal**
-  rim. Deep glossy enamel face, faintly **{tier}-tinted**.
-- **Motif:** a single iconic emblem in soft cream/white relief (or subtle
-  metal), centred. No text, no letters, no numbers.
-- **Light:** soft top-left studio key light + one crisp specular highlight on
-  the rim; gentle inner glow.
-- **Background:** transparent (or pure black to key out). Dramatic, premium,
-  app-icon quality. Crisp edges.
+- **Shape:** pointy-top hexagon, the seal's rim — a thick bevelled rim of
+  the tier metal with one specular highlight along its upper-left edges.
+- **Face:** deep black polished enamel, smooth (no facets — the facets are
+  the seal's), lit from behind the centre by the tier's glow so it shades
+  from near-black at the rim to the glow colour at the middle.
+- **Motif:** a single emblem sculpted as **solid tier-metal relief**, centred,
+  with a faint glow around it as if lit from within. Filled silhouettes —
+  line art (rings, outlines) reads worse as metal relief on a black face.
+  Kept **inside the face**: an emblem that overruns the rim confuses the
+  keyer (see `marathon` below) and breaks the set.
+- **Background:** flat magenta (#FF00FF) for keying — the one colour none
+  of the four metals or the black face contains.
 
-**Tier metals:** bronze = warm copper (#CD7F32) · silver = brushed silver
-(#C0C0C0) · gold = rich gold (#FFD700) · platinum = cool platinum / white-gold
-(#E5E4E2).
+**Tier metal + glow** (the same pairs the seal uses): bronze = polished
+copper-bronze · warm amber · silver = brushed-steel silver · cool white ·
+gold = polished gold · warm golden · platinum = white-gold platinum · soft
+violet-white.
 
-## Prompt skeleton (Nano Banana / Gemini 2.5 Flash Image)
+## How the medals are made — `scripts/art/generate-badges.py`
 
-> Premium 3D enamel achievement medal, **pointy-top hexagon**, **{TIER_METAL}
-> beveled metal rim** with a polished specular highlight, deep glossy
-> **{TIER_TINT}-tinted enamel** face, a single centred **{MOTIF}** in soft
-> cream relief, subtle inner glow, soft top-left studio key light, dramatic
-> **transparent background**, symmetrical, centred, app-icon style, crisp,
-> high detail, no text, no letters, no numbers.
+The whole run is one script (`GEMINI_API_KEY` from the environment only;
+`gemini-3-pro-image`), four stages, ~35 calls:
 
-Cohesion tips:
+1. **Master** — one gold medal (the `month_master` gemstone), generated with
+   the **gold seal master on magenta** passed as `--seal-ref`, so the rim,
+   camera and lighting are the capsule's. (That reference is a working
+   file from the seal run, not a committed asset — the keyed
+   `seal_gold.webp` is what ships.)
+2. **Tier masters** — bronze / silver / platinum image-edited from the gold
+   master: _"change only the metal and the glow"_.
+3. **Badges** — each of the other 29 image-edited from **its tier master**:
+   _"replace only the centre emblem"_. Editing from the tier master rather
+   than the gold one is what keeps every silver badge the same silver.
+4. **Key + frame** — `key-hexagon.py … 512 medal` keys the magenta to
+   alpha and fits the hexagon to the **medal frame** (x 5.5..94.5,
+   y 0.5..99.5 of 100 — the framing the first set shipped with, so the
+   grid does not shift), then WebP at q82 (~25 KB; q88 was
+   indistinguishable at 2× modal size and 20% heavier).
 
-1. Generate **one master badge first** (e.g. `month_master`), then use Nano
-   Banana's **image-edit** mode — "keep this exact medal style/material/
-   lighting, replace the centre emblem with {MOTIF} and the rim metal with
-   {TIER_METAL}" — for every other badge. Editing from a reference is what
-   keeps the set consistent.
-2. Render at 1024×1024, transparent. Then optimize → **512×512 WebP**
-   (`cwebp -q 82` or squoosh) into `public/badges/<id>.webp` (~10–25 KB each).
-3. Keep emblems simple/iconic — they read at 64px in the grid.
+`--only <id> …` with `--skip-masters` re-rolls a single badge against the
+saved tier masters in `--work`. Two badges needed it on the first run:
+`marathon` (wings drawn inside the coin, unreadable at 64 px; then wings
+overrunning the rim, which the keyer measured as the hexagon and squashed
+it 7%) and `three_plate` (a stubby dumbbell, too close to
+`hybrid_athlete`). Both motif strings in the script carry the fix.
+
+The master prompt and the two edit templates live in the script — edit
+them there, not here, so the doc cannot drift from what actually ran.
 
 ## Per-badge motifs (id · tier · motif)
+
+The original brief's motif list, kept for the intent behind each badge. The
+strings that actually ran — and the ones to edit for a re-roll — are the
+`BADGES` table in `scripts/art/generate-badges.py`; where the two differ
+(`first_pr` is a trophy cup, `three_plate` is a long bar, `marathon`'s wings
+stay inside the face) the script is the truth.
 
 **Consistency**
 
@@ -107,16 +131,13 @@ Cohesion tips:
 
 - **Manual (simplest):** paste the skeleton + each motif into the Gemini app /
   AI Studio ("Nano Banana"), download, optimize, drop in `public/badges/`.
-- **Scripted:** a `scripts/generate-badge-art.ts` that loops `BADGE_DEFINITIONS`,
-  fills the skeleton per badge, calls the Gemini image API (the app already has
-  Vertex creds via `src/lib/gemini.ts`), writes WebP to `public/badges/`.
-  (Not committed yet — easy to add once the model/key path is chosen.)
+- **Scripted (what actually ran):** `scripts/art/generate-badges.py` — see
+  "How the medals are made" above. The motif table lives in the script.
 - **Figma MCP fallback:** the connected Figma server can generate + export
   badge assets if you'd rather design them there than prompt an image model.
 
-Start with the 8–10 **earnable** badges (consistency streaks + `balanced`) so
-every shown medal is both real _and_ beautiful, then fill the rest as their
-earning rules land.
+All 30 are illustrated (first set 2026-08-29, regenerated to match the seal
+2026-09-14).
 
 ## The seal (the sealed hexagon a new badge is tapped out of)
 

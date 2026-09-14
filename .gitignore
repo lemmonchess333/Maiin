@@ -59,3 +59,7 @@ graphify-out/
 # named per-task (wt-mut, wt-flush, ...) and a `git add -A` will happily commit
 # one as an embedded git repository. That happened, so this is not theoretical.
 /wt-*/
+
+# Badge-art intermediates from scripts/art/generate-badges.py (raw generations on magenta,
+# tier masters, keyed PNGs) — only the keyed WebPs under public/badges/ are shipped.
+scripts/art/.work-badges/
