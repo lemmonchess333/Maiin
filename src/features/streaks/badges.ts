@@ -109,6 +109,17 @@ export const BADGE_ART: Record<string, string> = Object.fromEntries(
   ])
 );
 
+/** The sealed capsule a new badge arrives inside (BadgeEarnedModal), one
+ *  per tier. Generated from one master and image-edited into the other
+ *  three metals so the four are the same object — docs/badges/ART_BRIEF.md
+ *  carries the prompts and the keying script. */
+export const SEAL_ART: Record<BadgeTier, string> = {
+  bronze: `${import.meta.env.BASE_URL}badges/seal_bronze.webp`,
+  silver: `${import.meta.env.BASE_URL}badges/seal_silver.webp`,
+  gold: `${import.meta.env.BASE_URL}badges/seal_gold.webp`,
+  platinum: `${import.meta.env.BASE_URL}badges/seal_platinum.webp`,
+};
+
 export interface BadgeDef {
   id: string;
   name: string;

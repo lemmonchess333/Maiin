@@ -127,4 +127,20 @@ describe("BadgeEarnedModal — tap-to-reveal + forward streak hook (#974)", func
     fireEvent.click(screen.getByRole("button", { name: /break the seal/i }));
     expect(onDismiss).not.toHaveBeenCalled();
   });
+
+  it("shows the rendered seal for the tier, its own wax seal standing in for the lock glyph", function () {
+    render(
+      <BadgeEarnedModal
+        badge={makeBadge({ tier: "gold" })}
+        onDismiss={() => {}}
+      />
+    );
+    const art = document.querySelector("image[data-seal-art]");
+    expect(art?.getAttribute("href")).toMatch(/badges\/seal_gold\.webp$/);
+    expect(document.querySelector("svg.lucide-lock")).toBeNull();
+    // The accessible name still says what the tap does.
+    expect(
+      screen.getByRole("button", { name: /break the seal/i })
+    ).toBeInTheDocument();
+  });
 });

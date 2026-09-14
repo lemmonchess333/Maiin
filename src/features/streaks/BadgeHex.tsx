@@ -2,6 +2,7 @@ import { useId } from "react";
 import type { LucideIcon } from "lucide-react";
 import type { BadgeTier } from "./badges";
 import { THEME } from "@/lib/theme";
+import { TIER_PALETTES, type Palette } from "./tierPalettes";
 
 // Tier hue for the earned-art glow. Reads THEME.tier directly (same values
 // TIER_COLORS re-exports) — a ./badges import here would be circular-ish
@@ -26,40 +27,6 @@ const TIER_GLOW: Record<BadgeTier, string> = THEME.tier;
  * The original category icon still shows (Cal AI convention) rather than a
  * lock — colour is the earned/locked signal.
  */
-
-interface Palette {
-  edge: string;
-  base: string;
-  highlight: string;
-  icon: string;
-}
-
-const TIER_PALETTES: Record<BadgeTier, Palette> = {
-  bronze: {
-    edge: "#7a3d0e",
-    base: THEME.tier.bronze,
-    highlight: "#f4b07a",
-    icon: "#ffffff",
-  },
-  silver: {
-    edge: "#6e6e6e",
-    base: THEME.tier.silver,
-    highlight: "#ffffff",
-    icon: "#3a3a3a",
-  },
-  gold: {
-    edge: "#a8740a",
-    base: THEME.tier.gold,
-    highlight: "#fff6c7",
-    icon: "#4a2c00",
-  },
-  platinum: {
-    edge: "#8a8a8a",
-    base: THEME.tier.platinum,
-    highlight: "#ffffff",
-    icon: "#3a3a3a",
-  },
-};
 
 // Cool-grey "not earned yet" palette. Darkened from the original near-white
 // greys (base #cfcfcf / highlight #ebebeb) which vanished on the WHITE

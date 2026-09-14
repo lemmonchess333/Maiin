@@ -31,6 +31,7 @@ import {
   localDateString,
   addLocalDays,
   parseLocalDate,
+  weekPosition,
 } from "@/lib/dateHelpers";
 import { CURRENT_PROGRAM_SCHEMA_VERSION } from "../programTypes";
 import type { ProgramState, ScheduledRunDay } from "../programTypes";
@@ -258,6 +259,32 @@ function structuredProfile(overrides: Partial<MockProfile> = {}): MockProfile {
   };
 }
 
+/**
+ * A race date about three weeks out that never lands on the week's FIRST
+ * day — the one calendar accident that changes the verdict these tests
+ * assert.
+ *
+ * `trainingWeeksOf` deducts a week when the race falls on the week's first
+ * day, because a Monday race holds no training days of its own. That is
+ * correct behaviour, and it made the uncompressed assertion below flip on
+ * every Monday: "today + 21" is the same weekday as today, so on a Monday
+ * a declared 6-week block contained 5 training weeks and 10K's minWeeks of
+ * 6 read it as compressed. The suite went red on main for the calendar
+ * rather than for a defect. Nudging one day off keeps the scenario the
+ * tests describe — three weeks out, full-length block — on every day of
+ * the year.
+ *
+ * Also `localDateString` rather than `toISOString().split("T")[0]`: the
+ * latter converts a LOCAL date through UTC and shifts a day west of
+ * Greenwich, the local/UTC mix CLAUDE.md bans.
+ */
+function raceDateThreeWeeksOut(): string {
+  const target = addLocalDays(new Date(), 21);
+  return localDateString(
+    weekPosition(target.getDay()) === 0 ? addLocalDays(target, 1) : target
+  );
+}
+
 function raceProfile(
   targetDate: string,
   overrides: Partial<MockProfile> = {}
@@ -330,9 +357,7 @@ describe("PR-0b-ii — useProgram writers swap V1 → V2", () => {
 
   it("race-prep initial creation writes compressed flag on runPlan", async () => {
     // 3 weeks until race + 10K (minWeeks=6) → compressed.
-    const threeWeeksOut = new Date();
-    threeWeeksOut.setDate(threeWeeksOut.getDate() + 21);
-    const targetDate = threeWeeksOut.toISOString().split("T")[0];
+    const targetDate = raceDateThreeWeeksOut();
     mockProfile = raceProfile(targetDate);
     resetFirestore();
 
@@ -350,9 +375,7 @@ describe("PR-0b-ii — useProgram writers swap V1 → V2", () => {
 
   it("race-prep refresh writes V2-shaped runDays + preserves compressed flag", async () => {
     // Set up an existing race-prep doc, then call refreshRunSchedule.
-    const threeWeeksOut = new Date();
-    threeWeeksOut.setDate(threeWeeksOut.getDate() + 21);
-    const targetDate = threeWeeksOut.toISOString().split("T")[0];
+    const targetDate = raceDateThreeWeeksOut();
     mockProfile = raceProfile(targetDate);
     seedProgram({
       goal: "recomp",
@@ -409,9 +432,7 @@ describe("PR-0b-ii — useProgram writers swap V1 → V2", () => {
     // The paired negative for the assertion above: flipping that expectation
     // without this one would pass for the wrong reason — `false` is also what
     // you get if the flag stopped being written at all.
-    const threeWeeksOut = new Date();
-    threeWeeksOut.setDate(threeWeeksOut.getDate() + 21);
-    const targetDate = threeWeeksOut.toISOString().split("T")[0];
+    const targetDate = raceDateThreeWeeksOut();
     mockProfile = raceProfile(targetDate);
     seedProgram({
       goal: "recomp",
@@ -455,9 +476,7 @@ describe("PR-0b-ii — useProgram writers swap V1 → V2", () => {
     // the object by reference), so an optional eventName must survive a
     // schedule refresh — a regen that reconstructed the goal field-by-field
     // would silently wipe the name.
-    const threeWeeksOut = new Date();
-    threeWeeksOut.setDate(threeWeeksOut.getDate() + 21);
-    const targetDate = threeWeeksOut.toISOString().split("T")[0];
+    const targetDate = raceDateThreeWeeksOut();
     mockProfile = raceProfile(targetDate, {
       raceGoal: {
         distance: "10k",
