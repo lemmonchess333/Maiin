@@ -17,14 +17,20 @@ const config: CapacitorConfig = {
       // expect apps to feel instantly alive.
       launchShowDuration: 500,
       launchAutoHide: true,
-      backgroundColor: "#7C6EF6",
+      // The app's dark page background, not the brand purple. The splash
+      // hands straight over to the first web frame, which paints
+      // `--background` (public/init.js applies `.dark` before paint unless
+      // the user explicitly chose light), so anything else is a flash.
+      // Pinned against the token by coldStartChrome.test.ts.
+      backgroundColor: "#111113",
       showSpinner: false,
       androidScaleType: "CENTER_CROP",
       splashImmersive: true,
     },
     StatusBar: {
+      // Capacitor's Style.Dark means LIGHT text for a dark background.
       style: "DARK",
-      backgroundColor: "#7C6EF6",
+      backgroundColor: "#111113",
     },
     // Native OAuth sign-in (src/lib/nativeAuth.ts). skipNativeAuth keeps the
     // plugin from signing into the native Firebase SDK — we only want the
@@ -49,7 +55,7 @@ const config: CapacitorConfig = {
     scheme: "Tropos",
   },
   android: {
-    backgroundColor: "#7C6EF6",
+    backgroundColor: "#111113",
   },
 };
 
