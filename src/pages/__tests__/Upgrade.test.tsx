@@ -125,7 +125,13 @@ function renderPlans() {
 
 beforeEach(() => {
   purchaseMock.mockReset();
-  manageSubscriptionMock.mockReset();
+  // Resolved, not bare: the real `manageSubscription` always returns a
+  // PurchaseResult, and a bare reset resolves undefined — so the two
+  // Manage tests below read `.success` off nothing and threw an
+  // unhandled rejection that Vitest reported while every test still
+  // passed. `SettingsSubscription.test.tsx` has always defaulted its
+  // equivalent this way.
+  manageSubscriptionMock.mockReset().mockResolvedValue({ success: true });
   isNativeIOSMock.mockReset();
   authProfileMock.mockReset();
   useSubscriptionMock.mockReset();
