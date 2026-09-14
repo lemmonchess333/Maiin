@@ -234,6 +234,99 @@ describe("the two-phase claim walk", () => {
   });
 });
 
+describe("the 70% distance gate", () => {
+  /* The gate is a LOCKED value, and until this block nothing held it
+     there. Measured on the suite as it stood: moving
+     GENERAL_DISTANCE_RATIO from 0.7 to 0.5 left all 34 tests green.
+     Every other distance case is far from the line — 3000 of 15000, or
+     10000 of 42200 — so they pin "a clearly short run is refused", which
+     any threshold between roughly 0.48 and 0.88 also satisfies.
+
+     That matters because this constant is the one that already shipped
+     broken: it spent months comparing metres to kilometres, making a
+     marathon slot completable by a 29.5-metre run, with a fully green
+     suite (b525af6f). A threshold nothing measures at its boundary is
+     the same exposure in a different dimension.
+
+     The pair below brackets the line to 1 metre either side of 70% of a
+     15 km day, so any move to the ratio fails one of them. */
+  const LONG_DAY = 15000;
+  const AT_70 = LONG_DAY * 0.7; // 10500
+
+  it("accepts a run at exactly 70% of the planned distance", () => {
+    const map = computeClaims(
+      [day("long", "2026-05-12", 2, "long_15k")],
+      [run("r1", "2026-05-12", 100, { distance: AT_70 })],
+      {},
+      "2026-05-12",
+      DEPS
+    );
+    expect(claimOf(map, "long")).toBe("r1");
+  });
+
+  it("refuses a run one metre under 70%", () => {
+    const map = computeClaims(
+      [day("long", "2026-05-12", 2, "long_15k")],
+      [run("r1", "2026-05-12", 100, { distance: AT_70 - 1 })],
+      {},
+      "2026-05-12",
+      DEPS
+    );
+    expect(claimOf(map, "long")).toBeUndefined();
+  });
+
+  it("does not cap the other end — a long day overrun still claims", () => {
+    /* Only a floor, deliberately. Running 18 km on a 15 km day is the
+       same session done generously, not a different one. */
+    const map = computeClaims(
+      [day("long", "2026-05-12", 2, "long_15k")],
+      [run("r1", "2026-05-12", 100, { distance: 18000 })],
+      {},
+      "2026-05-12",
+      DEPS
+    );
+    expect(claimOf(map, "long")).toBe("r1");
+  });
+
+  it("skips the gate entirely when the day has no planned distance", () => {
+    /* `plannedDistanceFor` returns 0 for a template it does not know, and
+       the gate is skipped rather than failing closed — there is nothing
+       to measure against. Pinned because it reads like a bug from the
+       call site: a 400 m jog completing an unknown day is correct here,
+       and "fixing" it would make every unrecognised template
+       uncompletable.
+
+       Note for anyone mutation-testing this file: the `plannedDistance
+       > 0` guard itself is an EQUIVALENT mutant — relaxing it to `>= 0`
+       changes nothing, because a zero planned distance makes the ratio
+       Infinity (or NaN for a distance-less run), and neither is below
+       the threshold. The guard is defensive, not load-bearing, and its
+       surviving a mutation is not a hole in this block. */
+    const map = computeClaims(
+      [day("d", "2026-05-12", 2, "some_unknown_template")],
+      [run("r1", "2026-05-12", 100, { distance: 400 })],
+      {},
+      "2026-05-12",
+      DEPS
+    );
+    expect(claimOf(map, "d")).toBe("r1");
+  });
+
+  it("refuses a run carrying no distance at all on a measured day", () => {
+    /* A doc with no `distance` scores ratio 0, not "unmeasured" — the
+       skip above is keyed on the DAY having no target, never on the run
+       having no reading. */
+    const map = computeClaims(
+      [day("long", "2026-05-12", 2, "long_15k")],
+      [run("r1", "2026-05-12", 100, { distance: undefined })],
+      {},
+      "2026-05-12",
+      DEPS
+    );
+    expect(claimOf(map, "long")).toBeUndefined();
+  });
+});
+
 describe("race day", () => {
   const raceDay = day("race", "2026-05-12", 2, "marathon_race", {
     type: "race",
