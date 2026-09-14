@@ -4,7 +4,7 @@
 The key comes from GEMINI_API_KEY in the environment — never from argv,
 never from a file in the repo. Usage:
   GEMINI_API_KEY=… python3 scripts/art/gemini-image.py --out x.png \
-      --prompt "…" [--ref master.png …] [--model gemini-3-pro-image]
+      --prompt "…" [--ref master.png …] [--aspect 3:2] [--model gemini-3-pro-image]
 
 Used for the badge seal (docs/badges/ART_BRIEF.md, "The seal"): one
 master, then --ref master.png with an edit prompt per tier metal."""
@@ -17,12 +17,13 @@ ap.add_argument("--prompt", required=True)
 ap.add_argument("--ref", action="append", default=[])
 ap.add_argument("--model", default="gemini-3-pro-image")
 ap.add_argument("--size", default="1K")
+ap.add_argument("--aspect", default="1:1", help="1:1, 3:2, 2:3, 16:9, 4:3 … (model-dependent)")
 a = ap.parse_args()
 parts = [{"text": a.prompt}]
 for r in a.ref:
     parts.append({"inlineData": {"mimeType": "image/png", "data": base64.b64encode(open(r, "rb").read()).decode()}})
 body = {"contents": [{"parts": parts}],
-        "generationConfig": {"responseModalities": ["IMAGE"], "imageConfig": {"aspectRatio": "1:1", "imageSize": a.size}}}
+        "generationConfig": {"responseModalities": ["IMAGE"], "imageConfig": {"aspectRatio": a.aspect, "imageSize": a.size}}}
 url = f"https://generativelanguage.googleapis.com/v1beta/models/{a.model}:generateContent"
 def call(b):
     req = urllib.request.Request(url, data=json.dumps(b).encode(), headers={"Content-Type": "application/json", "x-goog-api-key": KEY})
