@@ -42,19 +42,11 @@ import {
 } from "@/features/program/expressSession";
 import {
   buildEasierSession,
-  easierTodayRecommendation,
   pickLighterDay,
-  isLowerBodyDay,
-  recoveringTargetMuscles,
   summarizeEasier,
 } from "@/features/program/easierToday";
-import {
-  computeMuscleRecovery,
-  hitsFromWorkoutDocs,
-} from "@/lib/muscleRecovery";
-import { isHardRun } from "@/lib/hybridGuidance";
-import { addLocalDays, localDateString, localWeekKey } from "@/lib/dateHelpers";
-import { useRunningStats } from "@/hooks/useRunningStats";
+import { localDateString, localWeekKey } from "@/lib/dateHelpers";
+import { useEasierTodayRecommendation } from "@/features/program/useEasierTodayRecommendation";
 import ScheduleLayoutSheet from "@/components/program/ScheduleLayoutSheet";
 import {
   Dumbbell,
@@ -579,50 +571,11 @@ function ProgramInner() {
     return programState.workouts.findIndex((d) => !d.completed && !d.skipped);
   }, [programState, viewingHistoryIndex]);
 
-  // PROGRAM-ADAPT-01 — inputs for the "Easier today" recommendation.
-  // All from EXISTING data sources: recentWorkouts is the page's own
-  // subscription, perfWeek already feeds the deload banner, and
-  // useRunningStats is a bounded one-shot read (2 days covers
-  // "yesterday"). The decision itself is pure (easierToday.ts) and
-  // yields ONE factual reason — never a readiness score, and never the
-  // performance recoveryScore.
-  const { runs: recentRuns } = useRunningStats(2);
-  // Computed for the CURSOR day (not just an open chooser): since the
-  // 2026-08-05 de-interception the recommendation renders as a quiet row on
-  // the session card itself, which exists before any sheet is open. The
-  // chooser day still wins while the sheet is up — it is only ever opened
-  // for the cursor day, so the two agree by construction.
-  const easierRecommendation = useMemo(() => {
-    const dayIdx = expressChooserDay ?? todayIndex;
-    if (dayIdx === null || dayIdx < 0) return null;
-    const day = programState?.workouts[dayIdx];
-    if (!day) return null;
-    const yKey = localDateString(addLocalDays(new Date(), -1));
-    const hardRunYesterday = recentRuns.some(
-      (r) =>
-        !r.isInvalid &&
-        !r.savedAnyway &&
-        localDateString(new Date(r.completedAt)) === yKey &&
-        isHardRun(r)
-    );
-    const entries = computeMuscleRecovery(
-      hitsFromWorkoutDocs(recentWorkouts),
-      localDateString()
-    );
-    return easierTodayRecommendation({
-      hardRunYesterday,
-      lowerBodyDay: isLowerBodyDay(day),
-      recoveringMuscles: recoveringTargetMuscles(day, entries),
-      deloadRecommended: resolveDeloadRecommended(perfWeek),
-    });
-  }, [
-    expressChooserDay,
-    todayIndex,
-    programState,
-    recentRuns,
+  const easierRecommendation = useEasierTodayRecommendation(
+    programState?.workouts[expressChooserDay ?? todayIndex],
     recentWorkouts,
-    perfWeek,
-  ]);
+    resolveDeloadRecommended(perfWeek)
+  );
 
   // Auto-select on week change (not on individual completion). Skips the reset
   // on the FIRST run when the URL pinned a day (back-navigation restore) — only

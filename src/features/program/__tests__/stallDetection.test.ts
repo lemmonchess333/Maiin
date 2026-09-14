@@ -56,18 +56,16 @@ describe("detectStall — the uncalibrated false positive", () => {
     expect(stall?.isBodyweight).toBe(false);
   });
 
-  it("fires once a load exists even if some sets are 0", () => {
-    // A partially-logged session still has a real working weight — the
-    // uncalibrated guard is "no load anywhere", not "any zero present".
+  it("does not infer complete repeated work from zero-rep placeholders", () => {
     const history = sessions("Overhead Press", [
       { weightKg: 40, reps: 8 },
       { weightKg: 0, reps: 0 },
     ]);
-    expect(detectStall(OHP, history)).not.toBeNull();
+    expect(detectStall(OHP, history)).toBeNull();
   });
 });
 
-describe("detectStall — bodyweight lifts judge on reps, not load", () => {
+describe("detectStall — bodyweight performance", () => {
   it("does not call a rep-progressing pull-up a stall", () => {
     // 0 kg every session is CORRECT for a pull-up, and the old weight-series
     // comparison would have called this a plateau while the user added reps.
@@ -130,20 +128,117 @@ describe("detectStall — the ordinary gates", () => {
     const history: LoggedWorkout[] = [
       {
         exercises: [
-          { exerciseName: "Overhead Press", sets: [{ weightKg: 42.5 }] },
+          {
+            exerciseName: "Overhead Press",
+            sets: [{ weightKg: 42.5, reps: 8 }],
+          },
         ],
       },
       {
         exercises: [
-          { exerciseName: "Overhead Press", sets: [{ weightKg: 40 }] },
+          { exerciseName: "Overhead Press", sets: [{ weightKg: 40, reps: 8 }] },
         ],
       },
       {
         exercises: [
-          { exerciseName: "Overhead Press", sets: [{ weightKg: 40 }] },
+          { exerciseName: "Overhead Press", sets: [{ weightKg: 40, reps: 8 }] },
         ],
       },
     ];
+    expect(detectStall(OHP, history)).toBeNull();
+  });
+});
+
+describe("completed work qualifies later plateau advice", () => {
+  it("recognises added reps at the same working load", () => {
+    const history = [10, 9, 8].map((reps) => ({
+      exercises: [{ exerciseName: OHP.name, sets: [{ weightKg: 40, reps }] }],
+    }));
+    expect(detectStall(OHP, history)).toBeNull();
+  });
+  it("recognises added load on a weighted bodyweight exercise", () => {
+    const history = [10, 5, 0].map((weightKg) => ({
+      exercises: [
+        { exerciseName: PULLUPS.name, sets: [{ weightKg, reps: 8 }] },
+      ],
+    }));
+    expect(detectStall(PULLUPS, history)).toBeNull();
+  });
+  it.each(["easier_today", "express30", "express45", "time_budget"])(
+    "a chosen %s session breaks the comparison instead of reviving an older stall",
+    (sessionVariant) => {
+      const history = sessions(OHP.name, [{ weightKg: 40, reps: 8 }], 5);
+      const interrupted = [
+        { ...history[0], sessionVariant },
+        ...history.slice(1),
+      ];
+      expect(detectStall(OHP, interrupted)).toBeNull();
+    }
+  );
+  it("does not infer a plateau from repeated incomplete full sessions", () => {
+    const history = sessions(OHP.name, [{ weightKg: 40, reps: 8 }]).map(
+      (workout) => ({
+        ...workout,
+        exercises: workout.exercises!.map((ex) => ({
+          ...ex,
+          plannedSetCount: 3,
+        })),
+      })
+    );
+    expect(detectStall(OHP, history)).toBeNull();
+  });
+  it.each(["warmup", "dropset"])(
+    "%s alone is not progression evidence",
+    (type) => {
+      const history = sessions(OHP.name, [{ weightKg: 40, reps: 8 }]).map(
+        (workout) => ({
+          ...workout,
+          exercises: workout.exercises!.map((ex) => ({
+            ...ex,
+            sets: ex.sets!.map((set) => ({ ...set, type })),
+          })),
+        })
+      );
+      expect(detectStall(OHP, history)).toBeNull();
+    }
+  );
+  it("changing preparation or drop sets cannot hide unchanged completed working sets", () => {
+    const history = [10, 15, 20].map((weightKg) => ({
+      exercises: [
+        {
+          exerciseName: OHP.name,
+          plannedSetCount: 1,
+          sets: [
+            { type: "warmup", weightKg, reps: 12 },
+            { type: "working", weightKg: 40, reps: 8 },
+            { type: "dropset", weightKg, reps: 12 },
+          ],
+        },
+      ],
+    }));
+    expect(detectStall(OHP, history)).toMatchObject({ weight: 40 });
+  });
+  it("a changed saved target is not three comparable attempts", () => {
+    const history = [10, 9, 8].map((plannedReps) => ({
+      exercises: [
+        {
+          exerciseName: OHP.name,
+          plannedSetCount: 1,
+          sets: [{ weightKg: 40, reps: 8, plannedReps, plannedWeightKg: 40 }],
+        },
+      ],
+    }));
+    expect(detectStall(OHP, history)).toBeNull();
+  });
+  it("does not merge a different exercise that happens to have the same name", () => {
+    const history = sessions(OHP.name, [{ weightKg: 40, reps: 8 }]).map(
+      (workout) => ({
+        exercises: workout.exercises!.map((ex) => ({
+          ...ex,
+          exerciseId: "other-press",
+        })),
+      })
+    );
     expect(detectStall(OHP, history)).toBeNull();
   });
 });
