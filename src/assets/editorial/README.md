@@ -19,9 +19,6 @@ prefer WebP ≤ 120 KB, landscape, ≥ 800 px wide):
 | `space-<spaceId>.webp`  | Community Space cards (directory + header) — |
 |                         | one per id in `spaceDefs.ts` SPACE_DEFS,     |
 |                         | e.g. `space-trail-running.webp`              |
-| `food-breakfast.webp`   | Food calorie hero, morning (before 11:00)    |
-| `food-lunch.webp`       | Food calorie hero, midday (11:00–17:00)      |
-| `food-dinner.webp`      | Food calorie hero, evening (after 17:00)     |
 
 They're picked up at **build time** (`import.meta.glob`) — no code
 change needed. Until a file exists, the surface renders its designed
@@ -39,29 +36,16 @@ overlays white text — so choose images that survive that treatment:
   under a dark scrim + text);
 - avoid busy high-contrast bottoms and embedded text/logos.
 
-For the `food-*` shots specifically: prefer **calm flat-lays** (a plate
-of eggs, a lunch bowl) over busy plated scenes — the calorie number sits
-centred over the image behind a radial scrim, so a quiet centre reads
-crispest. The food hero renders these in **dark mode only** (a photo
-behind the light card washes out muddy); light mode keeps the purple
-halo, so tune candidates against a dark scrim.
+## Removed: the `food-*` stems
 
-**Crop tight — no letterbox.** The food hero paints the image
-edge-to-edge over the whole card (`object-cover`, `absolute inset-0`),
-so any black/blank border baked into the file renders as a hard band
-inside the card and reads as "the photo doesn't fit". When sourcing
-from a phone screenshot, crop to the photo's true bounds — don't leave
-the surrounding letterbox rows in. Check the finished file's outer rows
-and columns are actual image content before committing it.
-
-**Grade the asset dark (mean luminance ≈ 105).** The hero's scrim is
-deliberately light (0.42) so the food stays visible, which means the
-contrast that keeps the ring and captions readable has to come from the
-IMAGE, not the wash. A bright, un-graded shot dropped in as-is will
-wash the text out. The shipped `food-breakfast.webp` was graded to
-≈ 34% darker than its source; match that, or move the
-`--food-photo-scrim` values in `src/index.css` to suit the new photo.
-Check with: `sharp(file).stats()` → mean of the RGB channel means.
+The Food calorie hero rendered an ambient time-of-day photo behind the
+ring (`mealPhotoImage`, `--food-photo-scrim` / `--food-photo-ring-bed`).
+`3929aeb7` ("Simplify daily summaries and reopenable logging controls",
+2026-09-09) took the photo out of `FoodHeroCard` and with it the only
+consumer, but left the three assets, both token pairs and this section
+behind. All of that is gone now. **Don't re-add `food-*.webp` on the
+strength of a table row**: nothing resolves those stems, so the files
+would ship as dead weight in every build.
 
 ## Licensing
 

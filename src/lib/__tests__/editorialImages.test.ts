@@ -1,9 +1,15 @@
 /**
  * Editorial imagery manifest (Social uplift v3) — pins the drop-in
- * contract: with no licensed assets committed (the current state),
- * every metric resolves null so surfaces render their designed
- * no-photo fallback; unknown metrics route to the hybrid stem rather
- * than throwing.
+ * contract: every metric resolves to a string URL or to null, so a
+ * surface renders either the photo or its designed no-photo fallback
+ * and never a broken image; unknown metrics route to the hybrid stem
+ * rather than throwing.
+ *
+ * The assertions are deliberately shape-only, NOT "resolves null". The
+ * header said that when no assets were committed; all three
+ * `challenge-*` stems have shipped since, so the glob resolves real
+ * URLs here and a null-pinning test would have gone red on the commit
+ * that added the art.
  */
 import { describe, it, expect } from "vitest";
 import { challengeEditorialImage } from "../editorialImages";

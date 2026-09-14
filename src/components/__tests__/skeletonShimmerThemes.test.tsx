@@ -20,8 +20,10 @@ import { Skeleton } from "../LoadingSkeleton";
  *
  * Black at the same alpha moves it by 10, against the 9 the dark sweep
  * gets — so a theme-flipped token gives both modes the same perceptual
- * weight. `--food-photo-ring-bed` is the same pattern, already in the
- * stylesheet, for the same reason.
+ * weight. `--skeleton-shimmer` is now the stylesheet's only genuinely
+ * flipped pair (black in light, white in dark); this header used to cite
+ * `--food-photo-ring-bed` as the precedent, and that token went with the
+ * food-photo hero.
  *
  * The composite arithmetic is asserted here rather than described, because
  * the entire argument for the change is that one of those numbers is zero.

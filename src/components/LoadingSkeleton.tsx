@@ -23,8 +23,7 @@ export function Skeleton({ className, stagger }: SkeletonProps) {
            light `bg-muted` (rgb 248,248,249) it changed the pixel by ZERO
            bytes, so every light-mode skeleton in the app had no sweep at
            all — only the `pulse` opacity. Same shape as the ChallengeCard
-           marker that rendered invisibly on the white card, and the same
-           fix `--food-photo-ring-bed` already uses. */
+           marker that rendered invisibly on the white card. */
         backgroundImage:
           "linear-gradient(90deg, transparent 0%, var(--skeleton-shimmer) 50%, transparent 100%)",
         backgroundSize: "200% 100%",
