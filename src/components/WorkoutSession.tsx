@@ -51,6 +51,10 @@ import { auth, db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
 import { DEFAULT_REST_SECONDS } from "@/features/program/programTypes";
 import { useStreaks } from "@/features/streaks/useStreaks";
+import {
+  exercisesForLiftBadges,
+  liftWeightMilestoneBadges,
+} from "@/features/streaks/liftWeightMilestones";
 import { toast } from "@/lib/toast";
 import { track as trackLifecycleEvent } from "@/lib/lifecycleAnalytics";
 import {
@@ -233,7 +237,7 @@ export default function WorkoutSession({
 }: Props) {
   const { user, profile } = useAuth();
   const [initialDay] = useState(incomingDay);
-  const { awardEventBadge } = useStreaks();
+  const { awardEventBadge, awardEventBadges } = useStreaks();
   // LIFT-01: bind the draft to this exact session — scope + epoch +
   // day metadata + executable exercise layout. setLogs/exerciseNotes
   // are positional over day.exercises, so a draft from a different
@@ -1359,13 +1363,16 @@ export default function WorkoutSession({
       // Pass the wall-clock duration + per-set logs so the saved workout
       // record reflects actual execution instead of planned placeholders.
       // The stable completionId makes a retry target the SAME workout doc.
+      // Backlog #12: warm-ups are NOT logged work — see toCompletionSetLogs
+      // for why this boundary matters and why it lives in a pure module.
+      // Computed once: the command carries it, and the Plate-Club check
+      // below scores exactly what the server will build from it.
+      const completionLogs = toCompletionSetLogs(setLogs);
       const receipt = await onCompleteDay(dayIndex, {
         completionId: completionIdRef.current,
         completionCommandId: completionCommandIdRef.current,
         durationMinutes: sessionDurationMinutes,
-        // Backlog #12: warm-ups are NOT logged work — see toCompletionSetLogs
-        // for why this boundary matters and why it lives in a pure module.
-        setLogs: toCompletionSetLogs(setLogs),
+        setLogs: completionLogs,
         sessionVariant,
         // Lift3: the doc is dated by when the session STARTED (draft-resume
         // aware — sessionStartRef is backdated by the draft's elapsed time).
@@ -1396,6 +1403,16 @@ export default function WorkoutSession({
         setSaved(true);
         setSaveStatus("synced");
         if (firedPRs.size > 0) awardEventBadge("first_pr");
+        // Plate-Club (60 / 100 / 140 kg on a compound) is decided here, on
+        // the same completed sets the command just carried, so the seal
+        // cracks now rather than after onWorkoutCreated's round-trip —
+        // which was long enough for the owner to have left the screen. The
+        // server still awards it; the transaction behind awardEventBadges
+        // makes the second arrival a no-op whichever side that is.
+        const lifts = liftWeightMilestoneBadges(
+          exercisesForLiftBadges(day.exercises, completionLogs)
+        );
+        if (lifts.length > 0) awardEventBadges(lifts);
       };
       if (queuedReceipt) {
         setSaved(true);
