@@ -72,13 +72,37 @@ An audit on 2026-09-14 found three shipped files carrying live marks:
 branded plates), `space-lifters` (a Houston Rockets jersey and a Nike
 swoosh) and `space-triathlon-multisport` (a Movistar team skinsuit on a
 CANYON bike). All three rendered on the Social page. They were replaced
-with generated, brand-free frames. When sourcing or generating, check at
+with generated, brand-free frames, then superseded by the licensed photo
+refresh below. When sourcing or generating, check at
 **3x brightness** before committing: a mark that is invisible in the
 thumbnail is still in the file, and the wash the renderer applies does
 not remove it.
 
-Two known and accepted: `space-new-to-tropos` has "TRAINING DEPT" on a
-shirt and `space-womens-running` has race bibs — generic apparel text
-and meet numbers, neither a mark anyone owns. Incidental street signage
-in the city shots (ARNDALE, ATLAS BAR) is the same category: it is what
-the real place looks like.
+Incidental street signage in the city shots (ARNDALE, ATLAS BAR) records
+what the real place looks like.
+
+### Approved Social photo refresh — 2026-09-14
+
+Six licensed Unsplash photographs now cover seven asset stems. The
+lifting photograph is intentionally shared by lifting challenges and the
+Lifters space. Credits, source URLs, licence links, original SHA-256 hashes,
+crop rectangles and final encoding details are recorded in
+[`sources-2026-09-14.json`](./sources-2026-09-14.json).
+
+| Asset                             | Photographer   | Subject                     |
+| --------------------------------- | -------------- | --------------------------- |
+| `space-new-to-tropos`             | Steven Lelham  | Overhead track group        |
+| `space-runners`                   | Fitsum Admasu  | Blue-hour runners           |
+| `challenge-lift`, `space-lifters` | Victor Freitas | Hand and barbell detail     |
+| `challenge-run`                   | Jeremy Lapak   | Runner on a sandstone slope |
+| `space-triathlon-multisport`      | Markus Spiske  | Open-water swimmers         |
+| `space-womens-running`            | Venti Views    | Golden-hour runner          |
+
+The crops follow the approved shortlist, with extra headroom for Runners'
+wider Space header, and exclude out-of-frame apparel logos. The swim caps
+and track-group apparel needed additional local logo
+removal with the built-in image editing tool; exact prompts are in the source
+record. All final assets were checked at normal and 3x brightness. Originals
+remain in the approved `tropos-social-photo-pack.zip`; only optimized covers ship here.
+These photographs illustrate interests and challenges, not Tropos members,
+endorsements or named local events.

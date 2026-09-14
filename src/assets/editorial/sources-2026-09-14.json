@@ -1,0 +1,182 @@
+{
+  "description": "Approved six-photo Social refresh; original downloads retained in tropos-social-photo-pack.zip.",
+  "licenseNotes": "Unsplash permits commercial photo use. This copyright licence does not independently clear trademarks or recognizable people; these images are illustrative covers, not member portraits or endorsements.",
+  "sources": [
+    {
+      "assets": ["space-new-to-tropos.webp"],
+      "photographer": "Steven Lelham",
+      "sourceUrl": "https://unsplash.com/photos/group-of-people-running-on-stadium-atSaEOeE8Nk",
+      "license": "Unsplash License",
+      "licenseUrl": "https://unsplash.com/license",
+      "retrievedOn": "2026-09-14",
+      "sourceSha256": "82d577f794cbdbb48f541179f60bf97b46675c940db280ea562de2d3fc8565fd",
+      "sourceSize": {
+        "width": 3656,
+        "height": 1928
+      },
+      "cropPixels": {
+        "left": 475,
+        "top": 0,
+        "width": 3075,
+        "height": 1928
+      },
+      "output": {
+        "width": 1200,
+        "height": 753,
+        "format": "webp",
+        "quality": 86,
+        "bytes": 64084
+      },
+      "processing": "Crop from approved shortlist, local logo removal using the built-in image generation/editing tool, resize, WebP compression.",
+      "retouch": {
+        "tool": "Built-in image_gen",
+        "date": "2026-09-14",
+        "model": "Not exposed by the built-in tool",
+        "scope": "Removed printed graphics and lettering from apparel.",
+        "prompt": "Use case: precise-object-edit. Input image 1 is the edit target: a licensed real overhead photograph of a group on a red running track. Remove only the printed shirt graphics, brand logos and lettering on the athletes' clothing and shoes, leaving plain fabric of the same color. Preserve everything else exactly: the same eight people, their bodies, faces, hair, poses, locations, realistic clothing folds and shadows; all long cast shadows; the red track, white lane markings, framing, landscape aspect ratio, colors and natural light. This is a minimal local logo-removal edit of a real photo for an app cover. Do not replace, add or remove any person or object. Do not restyle, beautify or recreate the scene. Return the same landscape photograph with plain unbranded apparel."
+      }
+    },
+    {
+      "assets": ["space-runners.webp"],
+      "photographer": "Fitsum Admasu",
+      "sourceUrl": "https://unsplash.com/photos/silhouette-of-three-women-running-on-grey-concrete-road-oGv9xIl7DkY",
+      "license": "Unsplash License",
+      "licenseUrl": "https://unsplash.com/license",
+      "retrievedOn": "2026-09-14",
+      "sourceSha256": "139fd1d0b2a78baca74671cecbbd664144c7428ceb9bbb890a0544af0c861288",
+      "sourceSize": {
+        "width": 6720,
+        "height": 4480
+      },
+      "cropPixels": {
+        "left": 2688,
+        "top": 760,
+        "width": 4032,
+        "height": 2529
+      },
+      "output": {
+        "width": 1200,
+        "height": 753,
+        "format": "webp",
+        "quality": 86,
+        "bytes": 36392
+      },
+      "processing": "Approved shortlist framing expanded upward and rightward to keep heads visible in the wider Space header, resize, WebP compression. No generated content or retouching."
+    },
+    {
+      "assets": ["challenge-lift.webp", "space-lifters.webp"],
+      "photographer": "Victor Freitas",
+      "sourceUrl": "https://unsplash.com/photos/man-holding-black-barbell-hOuJYX2K5DA",
+      "license": "Unsplash License",
+      "licenseUrl": "https://unsplash.com/license",
+      "retrievedOn": "2026-09-14",
+      "sourceSha256": "edd42f6fc01b249203595263a7b2213f51ad6fa8ddb0303eeb64023bd8ebdfdc",
+      "sourceSize": {
+        "width": 4947,
+        "height": 3298
+      },
+      "cropPixels": {
+        "left": 0,
+        "top": 396,
+        "width": 3463,
+        "height": 2172
+      },
+      "output": {
+        "width": 1200,
+        "height": 753,
+        "format": "webp",
+        "quality": 78,
+        "bytes": 106754
+      },
+      "processing": "Crop from approved shortlist, resize, WebP compression. No generated content or retouching."
+    },
+    {
+      "assets": ["challenge-run.webp"],
+      "photographer": "Jeremy Lapak",
+      "sourceUrl": "https://unsplash.com/photos/person-running-on-top-on-hill-during-daytime-CVvFVQ_-oUg",
+      "license": "Unsplash License",
+      "licenseUrl": "https://unsplash.com/license",
+      "retrievedOn": "2026-09-14",
+      "sourceSha256": "b6ce2db1219e8ece2fb8f440398934a8bb61d83a9860bdb125dd82f6e7d6941e",
+      "sourceSize": {
+        "width": 3156,
+        "height": 4203
+      },
+      "cropPixels": {
+        "left": 0,
+        "top": 2186,
+        "width": 3156,
+        "height": 1979
+      },
+      "output": {
+        "width": 1200,
+        "height": 753,
+        "format": "webp",
+        "quality": 82,
+        "bytes": 103866
+      },
+      "processing": "Crop from approved shortlist, resize, WebP compression. No generated content or retouching."
+    },
+    {
+      "assets": ["space-triathlon-multisport.webp"],
+      "photographer": "Markus Spiske",
+      "sourceUrl": "https://unsplash.com/photos/a-group-of-people-swimming-in-the-water-XcvocqxlQ-A",
+      "license": "Unsplash License",
+      "licenseUrl": "https://unsplash.com/license",
+      "retrievedOn": "2026-09-14",
+      "sourceSha256": "fd6a120ed3daee8b3389f63bf69977bcc37184591f65609994bf06fd7825d672",
+      "sourceSize": {
+        "width": 2333,
+        "height": 3500
+      },
+      "cropPixels": {
+        "left": 0,
+        "top": 1015,
+        "width": 2333,
+        "height": 1463
+      },
+      "output": {
+        "width": 1200,
+        "height": 753,
+        "format": "webp",
+        "quality": 74,
+        "bytes": 116230
+      },
+      "processing": "Crop from approved shortlist, local logo removal using the built-in image generation/editing tool, resize, WebP compression.",
+      "retouch": {
+        "tool": "Built-in image_gen",
+        "date": "2026-09-14",
+        "model": "Not exposed by the built-in tool",
+        "scope": "Removed printed lettering and logos from the two swim caps.",
+        "prompt": "Use case: precise-object-edit. Input image 1 is the edit target: a licensed real photograph cropped for a fitness app card. Remove only all printed lettering and logos from the grey swimming cap of the upper swimmer and the blue cap of the lower swimmer. Make those tiny printed areas plain cap material, matching the existing cap color, texture, water droplets, light and shadows. Preserve the entire original photograph otherwise: exact two swimmers, identity, bodies, poses, clothing colors, arm positions, every water ripple and splash, lighting, framing and landscape aspect ratio. Do not add people or objects. Do not beautify, restyle or recreate the photograph. This is a minimal local logo-removal edit. Return only the same landscape photograph with the two caps free of text and logos."
+      }
+    },
+    {
+      "assets": ["space-womens-running.webp"],
+      "photographer": "Venti Views",
+      "sourceUrl": "https://unsplash.com/photos/woman-running-on-los-angeles-hillside-H9xlJ23Vx8U",
+      "license": "Unsplash License",
+      "licenseUrl": "https://unsplash.com/license",
+      "retrievedOn": "2026-09-14",
+      "sourceSha256": "6ac11c2ac3f8fc90ce0239369a339b6d9eb55e088df1ac809f9b2a2c02dfdcb7",
+      "sourceSize": {
+        "width": 4672,
+        "height": 7008
+      },
+      "cropPixels": {
+        "left": 0,
+        "top": 0,
+        "width": 4672,
+        "height": 2930
+      },
+      "output": {
+        "width": 1200,
+        "height": 753,
+        "format": "webp",
+        "quality": 86,
+        "bytes": 22858
+      },
+      "processing": "Crop from approved shortlist, resize, WebP compression. No generated content or retouching."
+    }
+  ]
+}
