@@ -1549,9 +1549,28 @@ is being traded for the saving.
 Revisit when either a later release tree-shakes Pipelines back out (re-run
 the bisect above — it is four installs and four builds), or a Firestore
 fix we actually need lands in 12.15+. Deliberately NOT pinned to
-`~12.14`: that would also refuse the minors carrying real fixes, and
-`check-dist-size` already forces this conversation on every attempt,
-which is the behaviour we want.
+`~12.14`: that would refuse the minors carrying real fixes too.
+
+**But the size gate does NOT block a Dependabot minor, and that is the
+hole to close.** `check-dist-size` runs in the `unit` job, and
+`ci.yml`'s own header says `unit` "runs and reports red but does not
+block auto-merge" — it was never marked a required status check
+(`docs/agents/app-improvement-prompt.md` carries that as an outstanding
+operator item). Meanwhile `dependabot-auto-merge.yml` enables auto-merge
+for every **minor and patch** bump, gated on `emulator-tests` alone. A
+`firebase` minor is exactly that shape.
+
+#2085 is safe only by accident: it groups `firebase-admin` 13 -> 14, so
+fetch-metadata classifies the group as MAJOR and auto-merge never fires.
+The next firebase-ONLY minor — 12.19 -> 12.20, weeks away at their
+cadence — would carry the +62 kB straight past a red `unit`, silently.
+
+The fix is one GitHub setting: Settings -> Rules/Branches -> require
+status checks -> add `CI / unit`. Until that is done, treat this row as
+advisory rather than enforced, and check `firebase` in `package.json`
+after any Dependabot merge. A workflow-level stopgap (excluding
+firebase packages from auto-merge) is possible but narrower than the
+real problem: the unit suite itself is not gating merges either.
 
 ### Race-day completion predicate (PR #1775)
 
