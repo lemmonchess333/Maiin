@@ -69,6 +69,7 @@ export default function PerformanceIndexChart({ weeks }: Props) {
 
       <ResponsiveContainer width="100%" height={180}>
         <AreaChart
+          aria-label="Performance Index over recent weeks, scored 0 to 100"
           data={data}
           /* No NEGATIVE left margin. Pulling the plot 10px left reclaims
              gutter on a chart whose labels are short, and this one's are
