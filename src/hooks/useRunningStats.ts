@@ -17,7 +17,12 @@ import {
 } from "@/lib/offlineQueue";
 import { useUid } from "../lib/auth";
 import { isVolumeEligible } from "../lib/runStatsEligibility";
-import { addLocalDays, localWeekKey, parseLocalDate } from "../lib/dateHelpers";
+import { addLocalDays, parseLocalDate } from "../lib/dateHelpers";
+import {
+  binKeyForDate,
+  granularityForRange,
+  type ChartGranularity,
+} from "../lib/chartGranularity";
 import { useLocalDateKey } from "./useLocalDateKey";
 import {
   isRunDateKey,
@@ -77,17 +82,24 @@ export interface RunSummaryItem {
  * `isVolumeEligible` contributes nothing to count, distance, or
  * pace this week.
  */
-export function aggregateWeeklyData(runs: RunSummaryItem[]): RunningWeekData[] {
+export function aggregateRunBins(
+  runs: RunSummaryItem[],
+  granularity: ChartGranularity = "weekly"
+): RunningWeekData[] {
   const weeks: Record<
     string,
     { distance: number; count: number; paceKmSum: number; paceKm: number }
   > = {};
   for (const run of runs) {
     if (!isVolumeEligible(run)) continue;
-    // Monday-start week key in pure LOCAL date math. Previously this mixed
-    // local getDay()/setDate() with a UTC toISOString() key, so runs logged
-    // near midnight in non-UTC zones bucketed into the wrong week.
-    const key = localWeekKey(parseLocalDate(runEvidenceDate(run)));
+    // Pure LOCAL date math, through the shared binner. At "weekly" this is
+    // `localWeekKey` — the Monday-start key the axis and the sparkline both
+    // read. Mixing local getDay()/setDate() with a UTC toISOString() key put
+    // runs logged near midnight in non-UTC zones in the wrong week.
+    const key = binKeyForDate(
+      parseLocalDate(runEvidenceDate(run)),
+      granularity
+    );
     if (!weeks[key])
       weeks[key] = { distance: 0, count: 0, paceKmSum: 0, paceKm: 0 };
     weeks[key].distance += run.distance / 1000;
@@ -108,6 +120,16 @@ export function aggregateWeeklyData(runs: RunSummaryItem[]): RunningWeekData[] {
       runCount: d.count,
       avgPace: d.paceKm > 0 ? Math.round(d.paceKmSum / d.paceKm) : 0,
     }));
+}
+
+/**
+ * The weekly call, kept as the name every existing consumer uses — and as
+ * ONE implementation rather than two. History's distance sparkline walks
+ * `localWeekKey` values, so its input must stay weekly whatever the chart
+ * beneath it is binning.
+ */
+export function aggregateWeeklyData(runs: RunSummaryItem[]): RunningWeekData[] {
+  return aggregateRunBins(runs, "weekly");
 }
 
 export function parseRunSummary(
@@ -307,7 +329,17 @@ export function useRunningStats(days: number = 30) {
   }, [uid, loadedUid, runs, days, queueVersion, today]);
 
   return {
+    /** Monday weeks, always. History's distance sparkline walks
+     *  `localWeekKey` values, so this output must not follow the window. */
     weeklyData: aggregateWeeklyData(visibleRuns),
+    /** The same aggregation binned FOR the window, which is what a chart
+     *  wants: one bar per day at 1W/1M, per week at 3M, per month beyond.
+     *  Weekly bins over a year are the "~52 unreadable bars" the lifting
+     *  volume chart already moved off (Hist5c pin 7), and the running
+     *  chart would have inherited them the moment it started honouring
+     *  the range. */
+    binnedData: aggregateRunBins(visibleRuns, granularityForRange(days)),
+    granularity: granularityForRange(days),
     runs: visibleRuns,
     loading:
       loading &&
