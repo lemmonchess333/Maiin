@@ -1,0 +1,77 @@
+name: Deploy production
+
+on:
+  push:
+    branches: [main]
+  # Manual redeploys run all prerequisites, including after a partial failure.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+  issues: write
+  pages: write
+  id-token: write
+
+# Never interrupt a backend rollout midway or let different commits race.
+concurrency:
+  group: production-release
+  cancel-in-progress: false
+
+jobs:
+  changes:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    outputs:
+      backend: ${{ steps.changes.outputs.backend }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+      - id: changes
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REDEPLOY: ${{ github.event_name == 'workflow_dispatch' }}
+        run: |
+          set -euo pipefail
+          # Compare with the last SUCCESSFUL release, not the previous push:
+          # a frontend-only follow-up must retry a failed backend release.
+          previous=$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/deploy-production.yml/runs?branch=main&status=success&per_page=1" --jq '.workflow_runs[0].head_sha // empty')
+          backend=true
+          if [[ "$REDEPLOY" != true && "$previous" =~ ^[0-9a-f]{40}$ ]] && git cat-file -e "$previous^{commit}"; then
+            git diff --name-only "$previous" "$GITHUB_SHA" > changed-paths.txt
+            if ! grep -qE '^(functions/|firestore\.(rules|indexes\.json)$|firebase\.json$|scripts/verify[-_]|\.github/workflows/deploy)' changed-paths.txt; then
+              backend=false
+            fi
+          fi
+          echo "backend=$backend" >> "$GITHUB_OUTPUT"
+
+  firestore:
+    needs: changes
+    if: needs.changes.outputs.backend == 'true'
+    uses: ./.github/workflows/deploy-firestore.yml
+    secrets: inherit
+
+  functions:
+    needs: [changes, firestore]
+    if: needs.changes.outputs.backend == 'true'
+    uses: ./.github/workflows/deploy-functions.yml
+    secrets: inherit
+
+  hosting:
+    needs: [changes, firestore, functions]
+    if: >-
+      always() && !cancelled() && needs.changes.result == 'success' &&
+      (needs.changes.outputs.backend == 'false' ||
+      (needs.firestore.result == 'success' && needs.functions.result == 'success'))
+    uses: ./.github/workflows/deploy-hosting.yml
+    secrets: inherit
+
+  pages:
+    needs: [changes, firestore, functions]
+    if: >-
+      always() && !cancelled() && needs.changes.result == 'success' &&
+      (needs.changes.outputs.backend == 'false' ||
+      (needs.firestore.result == 'success' && needs.functions.result == 'success'))
+    uses: ./.github/workflows/deploy.yml
+    secrets: inherit

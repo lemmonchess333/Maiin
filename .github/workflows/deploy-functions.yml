@@ -1,16 +1,8 @@
 name: Deploy Cloud Functions
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - "functions/**"
-  # Manual re-deploy escape hatch. If a deploy ever appears to have
-  # gone green but didn't actually upload (the silent-stranded-deploy
-  # bug from #655's root cause), `workflow_dispatch` lets an operator
-  # force a fresh run without pushing a no-op commit.
-  workflow_dispatch:
+  # Production entry point (including manual redeploys): deploy-production.yml.
+  workflow_call:
 
 permissions:
   contents: read
@@ -97,7 +89,7 @@ jobs:
 
       # Read the DEPLOYED source, including the injected commit marker. A
       # green upload log alone does not establish which bundle is executing.
-      - name: Verify deployed comment function source
+      - name: Verify deployed function source
         run: python3 scripts/verify-deployed-functions-source.py
 
       # A failed PRODUCTION deploy must be loud. CI on PRs stays green

@@ -13,13 +13,14 @@ name: Firebase Emulator Tests
 on:
   push:
     # Fires on main AND on any feature branch starting with
-    # `claude/` so workflow changes can be validated before they
+    # `claude/` or `codex/` so workflow changes can be validated before they
     # merge. Without the feature-branch trigger, every workflow
     # fix has to ride a separate merge cycle to even run, which
     # turns debugging into a guessing game.
     branches:
       - main
       - "claude/**"
+      - "codex/**"
   pull_request:
     branches: ["main"]
   # Manual trigger so the workflow can be re-run on demand

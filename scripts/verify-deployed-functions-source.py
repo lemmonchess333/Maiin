@@ -19,8 +19,16 @@ def verify():
     root = pathlib.Path(__file__).resolve().parent.parent / "functions"
     comment_paths = ["index.js", "package-lock.json", "lib/publicPhotoUrl.js", "lib/socialCounters.js", "lib/spacePostEngagement.js"]
     training_paths = ["index.js", "package-lock.json", "lib/stateTransition.js", "lib/workoutCorrections.js", "lib/programCommands.js"]
+    deletion_paths = ["index.js", "package-lock.json", "accountDeletion.js", "lib/spaceIds.js",
+                      "lib/accountDeletionSocial.js", "lib/accountDeletionRetry.js",
+                      "lib/accountDeletionLocks.js", "lib/accountDeletionAuth.js",
+                      "lib/accountDeletionLedger.js", "lib/accountDeletionMinimisation.js",
+                      "lib/accountDeletionStatus.js"]
     targets = {
-        "deleteMyAccount": ["index.js", "accountDeletion.js", "lib/spaceIds.js"],
+        "deleteMyAccount": deletion_paths,
+        "resumeAccountDeletions": deletion_paths,
+        "completeOnboarding": ["index.js", "lib/accountDeletionLocks.js"],
+        "sendVerificationEmailCallable": ["index.js", "email/accountEmails.js"],
         "addCommentCallable": comment_paths,
         "addSpacePostCommentCallable": comment_paths,
         "configurePlan": training_paths,
