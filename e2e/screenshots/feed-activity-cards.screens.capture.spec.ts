@@ -1,3 +1,4 @@
+import { verifySignupEmail } from "../helpers/verifySignupEmail";
 /**
  * Feed activity cards, light + dark — the surface the 2026-08-21 numeric
  * hierarchy pass changed and NOTHING could look at.
@@ -244,6 +245,7 @@ test.describe("feed activity card screenshots", () => {
     await page
       .getByRole("button", { name: /create account/i })
       .click({ timeout: 8000 });
+    await verifySignupEmail(page, email);
     await page
       .getByRole("button", { name: /build muscle/i })
       .waitFor({ state: "visible", timeout: 30_000 });

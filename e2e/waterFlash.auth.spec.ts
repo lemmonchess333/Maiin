@@ -1,3 +1,4 @@
+import { verifySignupEmail } from "./helpers/verifySignupEmail";
 /**
  * The water total must never travel backwards while you are adding.
  *
@@ -125,6 +126,7 @@ test.describe("water total never travels backwards mid-tap", () => {
     await page
       .getByRole("button", { name: /create account/i })
       .click({ timeout: 8000 });
+    await verifySignupEmail(page, email);
     await page
       .getByRole("button", { name: /build muscle/i })
       .waitFor({ state: "visible", timeout: 30_000 });

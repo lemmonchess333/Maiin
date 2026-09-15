@@ -1,3 +1,4 @@
+import { verifySignupEmail } from "../helpers/verifySignupEmail";
 /**
  * Solo-first Social feed capture (SOCIAL S4 Soc8 PR3 backlog rows,
  * re-read 2026-08-08 against the current surface per the row's own
@@ -180,6 +181,7 @@ test.describe("solo-first feed screenshots", () => {
     await page
       .getByRole("button", { name: /create account/i })
       .click({ timeout: 8000 });
+    await verifySignupEmail(page, email);
     await page
       .getByRole("button", { name: /build muscle/i })
       .waitFor({ state: "visible", timeout: 30_000 });
@@ -224,6 +226,7 @@ test.describe("solo-first feed screenshots", () => {
     await page
       .getByRole("button", { name: /create account/i })
       .click({ timeout: 8000 });
+    await verifySignupEmail(page, email);
     await page
       .getByRole("button", { name: /build muscle/i })
       .waitFor({ state: "visible", timeout: 30_000 });

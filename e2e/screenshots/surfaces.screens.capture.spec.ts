@@ -1,3 +1,4 @@
+import { verifySignupEmail } from "../helpers/verifySignupEmail";
 /**
  * Three surfaces the operator flagged from device screenshots, filmed
  * before/after so the visual change is evidenced rather than asserted
@@ -142,6 +143,7 @@ test.describe(`home + food surfaces (${PHASE})`, () => {
     await page
       .getByRole("button", { name: /create account/i })
       .click({ timeout: 8000 });
+    await verifySignupEmail(page, email);
     await page
       .getByRole("button", { name: /build muscle/i })
       .waitFor({ state: "visible", timeout: 30_000 });

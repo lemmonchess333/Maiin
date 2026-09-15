@@ -1,3 +1,4 @@
+import { verifySignupEmail } from "../helpers/verifySignupEmail";
 /**
  * Onboarding capture — the first-run flow, filmed step by step.
  *
@@ -98,6 +99,7 @@ test.describe("onboarding screenshots", () => {
     await page
       .getByRole("button", { name: /create account/i })
       .click({ timeout: 8000 });
+    await verifySignupEmail(page, email);
 
     // Onboarding step 0 (goal) is the signed-in fallback route.
     await page

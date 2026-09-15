@@ -1,3 +1,4 @@
+import { verifySignupEmail } from "../helpers/verifySignupEmail";
 import { test, expect, type Page } from "@playwright/test";
 import { emulatorActive } from "../helpers/emulator";
 import { signInAsTestUser } from "../helpers/auth";
@@ -61,9 +62,11 @@ test("free running, typed metrics, editable review and recoverable commit", asyn
   test.setTimeout(120_000);
   await page.goto("/");
   await page.getByRole("button", { name: /sign up/i }).click();
-  await page.fill("#login-email", `designer-${Date.now()}@tropos.test`);
+  const email = `designer-${Date.now()}@tropos.test`;
+  await page.fill("#login-email", email);
   await page.fill("#login-password", "test-password-123");
   await page.getByRole("button", { name: /create account/i }).click();
+  await verifySignupEmail(page, email);
   const next = () =>
     page.getByRole("button", { name: "Continue", exact: true }).click();
   await expect(

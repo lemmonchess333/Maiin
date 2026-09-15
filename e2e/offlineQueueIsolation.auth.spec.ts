@@ -1,3 +1,4 @@
+import { verifySignupEmail } from "./helpers/verifySignupEmail";
 /**
  * PR #820 — offline-queue uid isolation, end-to-end on the real app
  * (the two-account "device test" row in the pre-launch QA backlog).
@@ -120,31 +121,6 @@ async function uidByEmail(email: string): Promise<string> {
   const localId = userInfo?.find((u) => u.email === email)?.localId;
   if (!localId) throw new Error(`user ${email} not found in auth emulator`);
   return localId;
-}
-
-/** Public writes (the feed share this spec exercises) require a verified
- *  email — firestore.rules isEmailVerified(). A form-minted emulator
- *  account is unverified, exactly like a real signup before the link is
- *  tapped, so the rig marks it verified the way the emulator allows
- *  (accounts:update under the owner bearer). The next sign-in mints a
- *  token carrying the claim; production users get there via the link. */
-async function markEmailVerified(localId: string): Promise<void> {
-  const res = await fetch(
-    `http://${AUTH_HOST}/identitytoolkit.googleapis.com/v1/accounts:update`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: "Bearer owner",
-      },
-      body: JSON.stringify({ localId, emailVerified: true }),
-    }
-  );
-  if (!res.ok) {
-    throw new Error(
-      `auth emulator accounts:update failed: ${await res.text()}`
-    );
-  }
 }
 
 /** Wait until the signup's own profile write has landed server-side.
@@ -280,6 +256,7 @@ async function mintOnboardedAccount(
   await page
     .getByRole("button", { name: /create account/i })
     .click({ timeout: 8_000 });
+  await verifySignupEmail(page, email);
   // Onboarding step 0 confirms the account + profile doc exist.
   await page
     .getByRole("button", { name: /build muscle/i })
@@ -287,7 +264,6 @@ async function mintOnboardedAccount(
 
   const uid = await uidByEmail(email);
   await awaitSignupProfileDoc(uid);
-  await markEmailVerified(uid);
   await completeOnboardingDirect(uid, displayName);
 
   // Reload into the full shell straight onto the account page, then use

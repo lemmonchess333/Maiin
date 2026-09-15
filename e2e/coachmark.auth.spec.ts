@@ -1,3 +1,4 @@
+import { verifySignupEmail } from "./helpers/verifySignupEmail";
 /**
  * Coachmark first-use contract (pre-launch QA backlog, tooltip-primitive
  * section) — the dismissal matrix that was parked as a manual device
@@ -133,6 +134,7 @@ async function openPeopleAsFreshUser(page: Page): Promise<string> {
   await page
     .getByRole("button", { name: /create account/i })
     .click({ timeout: 8000 });
+  await verifySignupEmail(page, email);
   // Onboarding step 0 confirms the account exists + profile doc is live.
   await page
     .getByRole("button", { name: /build muscle/i })
