@@ -256,7 +256,9 @@ export default function HeroDrillDownSheet({
                 style={{
                   width: `${barFillPct(consumedPct, mode, remaining < 0)}%`,
                   background:
-                    remaining < 0 ? THEME.semantic.nutrition : "var(--primary)",
+                    remaining < 0
+                      ? THEME.semantic.nutrition
+                      : "hsl(var(--primary))",
                 }}
               />
             </div>
