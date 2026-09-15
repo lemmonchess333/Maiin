@@ -62,8 +62,10 @@ export default function RunBackgroundGrantNote({
           <button
             type="button"
             onClick={onOpenSettings}
-            className="mt-2 inline-flex min-h-[44px] items-center rounded-xl px-4 text-sm font-semibold active:scale-[0.97]"
-            style={{ background: THEME.running, color: "#fff" }}
+            /* `running-fill`, for the same reason `primary` uses
+               `--primary-strong`: the coral identity is 3.58:1 under
+               white, which its own token comment says out loud. */
+            className="mt-2 inline-flex min-h-[44px] items-center rounded-xl px-4 text-sm font-semibold active:scale-[0.97] bg-running-fill text-white"
           >
             Open settings
           </button>

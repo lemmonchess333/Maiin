@@ -76,13 +76,13 @@ export default defineConfig([
         },
         {
           selector:
-            "JSXAttribute[name.name='style'] Literal[value=/#[0-9a-fA-F]{6}/]",
+            "JSXAttribute[name.name='style'] Literal[value=/#[0-9a-fA-F]{3,8}/]",
           message:
             "No hardcoded hex in inline style — use a THEME token or Tailwind semantic class (e.g. THEME.success, bg-lifting).",
         },
         {
           selector:
-            "JSXAttribute[name.name='style'] TemplateElement[value.raw=/#[0-9a-fA-F]{6}/]",
+            "JSXAttribute[name.name='style'] TemplateElement[value.raw=/#[0-9a-fA-F]{3,8}/]",
           message:
             "No hardcoded hex in inline style — use a THEME token (e.g. `${THEME.success}` + alpha) or a Tailwind semantic class.",
         },
@@ -114,46 +114,6 @@ export default defineConfig([
         // overlays on the ALWAYS-dark surfaces (active-run screen, camera
         // chrome). Genuinely always-white elements (iOS-style switch thumbs,
         // the camera shutter) carry a line-level eslint-disable with a reason.
-        {
-          selector: "Literal[value=/(^|[\\s:])bg-white(\\s|$)/]",
-          message:
-            "Solid bg-white doesn't flip in dark mode — use bg-card / bg-background. If this surface is genuinely always-white (switch thumb, camera shutter), add an eslint-disable-next-line with the reason.",
-        },
-        {
-          selector: "Literal[value=/(^|[\\s:])text-black(\\s|$)/]",
-          message:
-            "text-black doesn't flip in dark mode — use text-foreground (or text-card-foreground on cards).",
-        },
-      ],
-    },
-  },
-  {
-    // Hex-colour guardrail EXEMPTIONS. The original burn-down list has been
-    // tokenized; these four remain by design, not as TODOs, because the hex
-    // has no faithful THEME/Tailwind token home:
-    //   - ShareCard      generated share IMAGE — fixed colours for export,
-    //                    must not shift with theme.
-    //   - PRBadge        gold badge ARTWORK (#facc15) — no gold token.
-    //   - PRCard         driven by a configurable `accentColor` PROP; the hex
-    //                    are component-config defaults, not stray drift.
-    //   - ActivityCard   the "liked" amber (#F59E0B) has no semantic token
-    //                    (closest is the nutrition orange — wrong meaning).
-    // The `text-muted` + dark-mode-leak guards stay enforced; only the hex
-    // selectors are relaxed for these files.
-    files: [
-      "src/components/analytics/PRBadge.tsx",
-      "src/components/analytics/PRCard.tsx",
-      "src/components/social/ActivityCard.tsx",
-      "src/components/social/ShareCard.tsx",
-    ],
-    rules: {
-      "no-restricted-syntax": [
-        "error",
-        {
-          selector: "Literal[value=/(^|\\s)text-muted(\\s|$)/]",
-          message:
-            'Use "text-muted-foreground" — the bare "text-muted" class maps to the muted SURFACE fill and renders near-invisible text.',
-        },
         {
           selector: "Literal[value=/(^|[\\s:])bg-white(\\s|$)/]",
           message:
