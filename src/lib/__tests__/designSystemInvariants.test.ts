@@ -554,12 +554,14 @@ describe("DS ratchets — surface-level drift", () => {
   });
 
   /* A section label carries no margin of its own — its group's stack
-     places it. Analytics' three labels (and PerformanceSection's) still
-     wear `mt-6 mb-2`, which stacked on their container's own spacing is
-     how one page got 56px between sections while Home got 16; that
-     restructure is Analytics' own change. Counted here so no new label
-     picks the habit up. Multi-line openers included. */
-  const SECTION_LABEL_MARGIN_BASELINE = 10;
+     places it. A label that brings `mt-6 mb-2` to a container that already
+     spaces its children is how one page ends up with 56px between sections
+     while another gets 16. Analytics is fully burned down (its four page
+     sections and PerformanceSection all take their placement from a
+     `space-y-2` section stack); the four left are Shoes, run setup, route
+     setup and the challenge list. Counted so no new label picks the habit
+     up. Multi-line openers included. */
+  const SECTION_LABEL_MARGIN_BASELINE = 4;
   it("section-tier labels with their own vertical margin do not increase", () => {
     const { total, byFile } = scan((src) => {
       let n = 0;

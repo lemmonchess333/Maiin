@@ -101,8 +101,13 @@ export default function TrainingLoadCard({
         </span>
       </div>
 
+      {/* The `-strong` steps, not the bare identities: an identity is a
+          FILL value (the bars and the curve below keep it) and measures
+          3.87:1 for purple / 3.58:1 for coral on the light card, under
+          the 4.5:1 floor these 12px words need. Same hue, same reading,
+          a legible lightness. Pinned by identityColour.test.ts. */}
       <p className="text-xs text-muted-foreground mb-2 font-mono tabular-nums">
-        <span style={{ color: THEME.brand }}>
+        <span className="text-lifting-strong">
           Fitness {numberFmt(last.fitness)}
         </span>
         {" · "}
@@ -163,8 +168,8 @@ export default function TrainingLoadCard({
 
       <p className="text-xs text-muted-foreground mt-2">
         The purple curve is your 6-week training base; the bars are daily
-        sessions (<span style={{ color: THEME.running }}>runs</span> ·{" "}
-        <span style={{ color: THEME.brand }}>lifts</span>). Positive form =
+        sessions (<span className="text-running-strong">runs</span> ·{" "}
+        <span className="text-lifting-strong">lifts</span>). Positive form =
         fresh; deep negative = time to ease off.
       </p>
 

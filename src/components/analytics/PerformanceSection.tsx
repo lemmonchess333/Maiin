@@ -74,12 +74,13 @@ export default function PerformanceSection({
         id="analytics-performance"
         ref={sectionRef}
         aria-label="Performance Index"
+        className="space-y-2"
       >
-        <SectionLabel
-          tier="section"
-          className="mt-6 mb-2"
-          style={{ color: THEME.brand }}
-        >
+        {/* Matches its four peers on this page: `tier="section"` in a
+            `-strong` utility, placed by the section's own stack rather
+            than by margins of its own. The bare brand purple measures
+            3.28:1 as 12px text on the page. */}
+        <SectionLabel tier="section" className="text-lifting-strong">
           Performance
         </SectionLabel>
         <div className="p-4 rounded-2xl bg-card motion-safe:animate-pulse">
@@ -99,12 +100,9 @@ export default function PerformanceSection({
         id="analytics-performance"
         ref={sectionRef}
         aria-label="Performance Index"
+        className="space-y-2"
       >
-        <SectionLabel
-          tier="section"
-          className="mt-6 mb-2"
-          style={{ color: THEME.brand }}
-        >
+        <SectionLabel tier="section" className="text-lifting-strong">
           Performance
         </SectionLabel>
         <div className="rounded-2xl bg-card">
@@ -130,12 +128,9 @@ export default function PerformanceSection({
       id="analytics-performance"
       ref={sectionRef}
       aria-label="Performance Index"
+      className="space-y-2"
     >
-      <SectionLabel
-        tier="section"
-        className="mt-6 mb-2"
-        style={{ color: THEME.brand }}
-      >
+      <SectionLabel tier="section" className="text-lifting-strong">
         Performance
       </SectionLabel>
       <SectionErrorBoundary sectionName="performance-tab-body">
