@@ -264,10 +264,13 @@ test.describe("analytics tab screenshots", () => {
      label naming a distance, read as a finish time). Reading the
      component had not found that; seeing it did.
 
-     The assertions are the unit contract, not the numbers: a row whose
-     label names a DISTANCE must say what its value is measured in, or a
-     pace reads as a time. `prRowUnits.test.ts` holds the same rule
-     against the builder; this holds it against the rendered page.
+     The assertions are the unit contract, not the numbers: a bare M:SS
+     is ambiguous between per-kilometre and per-mile, and under a label
+     naming a distance it reads as a time. `prRowUnits.test.ts` holds
+     that rule against the builder, plus the one the rich-history
+     capture later added — a label may not name a race distance for a
+     figure that is a whole-run average; this holds both against the
+     rendered page.
 
      Expect the FRAME to churn between captures taken on different days:
      every row carries a date ("13 Sept"), and the seeds are relative to
@@ -279,11 +282,12 @@ test.describe("analytics tab screenshots", () => {
     test.setTimeout(180_000);
 
     const uid = await signUpSeedAndOpenHistory(page, "prs");
-    /* A second, SHORTER and FASTER run. `buildPRBucket` draws Fastest 1K
-       from runs >= 1 km and Fastest 5K from runs >= 5 km, so this one
-       takes the 1K best (4:30) and leaves the 5K best to the 5.2 km run
-       (5:35). Without it both rows print the same number and no
-       assertion here can tell them apart. */
+    /* A second, SHORTER and FASTER run. `buildPRBucket` draws "Best
+       pace" from runs >= 1 km and "Best pace · 5K+" from runs >= 5 km,
+       so this one takes the overall best (4:30) and leaves the 5K+ best
+       to the 5.2 km run (5:35). Without it both rows print the same
+       number — the pool of one contains the other — and no assertion
+       here can tell them apart. */
     await patch(`users/${uid}/runs/analytics-capture-r2`, {
       distance: { doubleValue: 1200 },
       duration: { integerValue: "324" },
@@ -304,7 +308,7 @@ test.describe("analytics tab screenshots", () => {
     // The tab strip is a SegmentedControl, so its options are radios.
     await page.getByRole("radio", { name: /^PRs$/ }).click({ timeout: 10_000 });
 
-    await expect(page.getByText("Fastest 5K").first()).toBeVisible({
+    await expect(page.getByText("Best pace · 5K+").first()).toBeVisible({
       timeout: 15_000,
     });
     /* Anchored on values that differ BY ROW, which is why the extra run
