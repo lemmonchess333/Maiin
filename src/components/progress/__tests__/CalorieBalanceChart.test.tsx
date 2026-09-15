@@ -62,3 +62,45 @@ describe("nutrition evidence limits", () => {
     expect(screen.queryByText(/kg\/week/)).not.toBeInTheDocument();
   });
 });
+
+/**
+ * The footer's two numbers, which are the ones a reader compares against
+ * the rest of the page.
+ *
+ * The average gap printed raw — "+1888 kcal" — while the tooltip thirty
+ * lines above it in the same component, and every calorie figure in the
+ * Nutrition section beside it ("target 2,200 kcal"), group their
+ * thousands. One page, one unit, two conventions.
+ *
+ * The denominator was the literal 13 sitting beside a literal 14-day
+ * window and a literal "14 days" label: one number decided in one place
+ * and written out in three others. It is now derived, and asserted
+ * against the chart's own point count rather than against another
+ * literal — the two cannot drift apart without this failing.
+ */
+describe("calorie balance footer", () => {
+  const gap = () =>
+    screen.getByText(/kcal$/, { selector: "p.font-mono" }).textContent!;
+
+  it("groups the thousands in the average gap", () => {
+    // Default profile → maintenance ≈ 2,556, so one 210 kcal day is a
+    // four-digit gap. The regex pins the SEPARATOR, not the value: it
+    // does not re-derive the number through the code under test.
+    render(<CalorieBalanceChart meals={[meal(1, 210)]} />);
+    expect(gap()).toMatch(/^\+\d{1,3},\d{3} kcal$/);
+  });
+
+  it("groups them in the other direction too", () => {
+    render(<CalorieBalanceChart meals={[meal(1, 9000)]} />);
+    expect(gap()).toMatch(/^-\d{1,3},\d{3} kcal$/);
+  });
+
+  it("counts against the window it actually charts", () => {
+    render(<CalorieBalanceChart meals={[meal(1, 210)]} />);
+    const charted = points().length;
+    expect(charted).toBe(14);
+    // Today is excluded from the count, so the denominator is one less
+    // than the number of days on the chart.
+    expect(screen.getByText(`1 / ${charted - 1}`)).toBeInTheDocument();
+  });
+});

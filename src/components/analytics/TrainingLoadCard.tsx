@@ -10,6 +10,7 @@ import {
 import { Activity } from "lucide-react";
 import { THEME } from "@/lib/theme";
 import { CHART_GRID_PROPS, CHART_AXIS_TICK } from "./chartStyles";
+import { formatBinLabel } from "@/lib/chartGranularity";
 import ChartAreaGradient from "./ChartAreaGradient";
 import { evaluateLoadGuardrails, type LoadPoint } from "@/lib/trainingLoad";
 import { Skeleton } from "@/components/LoadingSkeleton";
@@ -69,7 +70,13 @@ export default function TrainingLoadCard({
   const tickEvery = Math.max(1, Math.floor(points.length / 5));
   const data = points.map((p, i) => ({
     ...p,
-    label: i % tickEvery === 0 ? p.dateKey.slice(5).replace("-", "/") : "",
+    // `formatBinLabel`, which is what every other chart axis on this page
+    // uses. Slicing the ISO key gives MM/DD — month-first, the one order
+    // this app does not write — so a September 4th bar read "09/04"
+    // beside a run chart reading "7/9" for September 7th. Same page, two
+    // orders, and the one here is ambiguous rather than merely unusual:
+    // "09/04" is a legible date under either reading.
+    label: i % tickEvery === 0 ? formatBinLabel(p.dateKey, "daily") : "",
   }));
 
   // The load bars ride a separate hidden axis stretched to ~3× the peak
@@ -117,7 +124,10 @@ export default function TrainingLoadCard({
       <ResponsiveContainer width="100%" height={150}>
         <ComposedChart
           data={data}
-          margin={{ top: 4, right: 0, bottom: 0, left: 0 }}
+          /* Side margins so the first and last tick labels are not cut
+             off by the card edge — the leftmost tick sits at x=0, and a
+             centred label there loses its first character. */
+          margin={{ top: 4, right: 10, bottom: 0, left: 10 }}
           barCategoryGap="25%"
         >
           <ChartAreaGradient
