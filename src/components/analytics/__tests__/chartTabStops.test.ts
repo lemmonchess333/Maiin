@@ -53,6 +53,20 @@ describe("decorative charts do not take a tab stop", () => {
     expect(src).toMatch(/<PieChart accessibilityLayer=\{false\}>/);
   });
 
+  it("the exercise chart opts out — its wrapper is already role=img", () => {
+    /* Found on the per-exercise Progress tab, measured as
+       `role=application label=null` on the inner <svg>. The fix is NOT a
+       second label: the wrapper already declares the graphic atomic and
+       carries the full text alternative (session count, range, latest
+       value, PR count). A focusable application region inside a
+       `role="img"` is the aria-hidden shape again — an invitation into a
+       subtree the author declared not to be entered. */
+    const src = read("src/components/analytics/ExerciseProgressChart.tsx");
+    expect(src).toMatch(/role="img"/);
+    expect(src).toMatch(/aria-label=\{ariaLabel\}/);
+    expect(src).toMatch(/accessibilityLayer=\{false\}/);
+  });
+
   it("StatCard's sparkline opts out — the component calls it decorative", () => {
     const src = read("src/components/analytics/StatCard.tsx");
     expect(src).toMatch(/Sparkline is decorative/);
