@@ -47,6 +47,7 @@ for (const set of sets) {
           .toBe(darkBackground);
       }
       const image = guide.locator('img[aria-hidden="false"]');
+      let uprightPixels: Buffer | undefined;
       for (const [index, frame] of set.frames.entries()) {
         await expect(image).toHaveAttribute("src", `/${frame.path}`);
         await expect.poll(() => image.evaluate((node) => {
@@ -55,6 +56,15 @@ for (const set of sets) {
         })).toEqual(frame.dimensions);
         await expect(guide.locator("p[aria-live]")).toContainText(`${index + 1}/6`);
         await expect(page.locator('button[aria-current="step"]')).toContainText(frame.cue);
+        // Compare the displayed pose, not a cue merely claiming to stand tall.
+        if (set.exerciseId === "romanian-deadlift" && index === 0)
+          uprightPixels = await image.screenshot();
+        if (set.exerciseId === "romanian-deadlift" && index === 5) {
+          expect(frame.sha256).toBe("4c8cf219385b9c11d0916c3f38891cae6438a5c116584eb9564551ecfb304f60");
+          expect(frame.progress).toBe(0);
+          expect(uprightPixels).toBeDefined();
+          expect((await image.screenshot()).equals(uprightPixels!)).toBe(true);
+        }
         await guide.screenshot({ path: info.outputPath(`${theme}-${index + 1}.png`) });
         if (index === 0) await page.screenshot({ path: info.outputPath(`${theme}-page.png`), fullPage: true });
         if (index < 5) await guide.getByRole("button", { name: "Next frame", exact: true }).click();
