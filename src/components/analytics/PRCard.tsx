@@ -54,10 +54,12 @@ export default function PRCard({
           >
             <div className="flex items-center gap-2 min-w-0">
               {pr.isNew && (
-                <span
-                  className="text-xs px-1.5 py-0.5 rounded-full font-bold tracking-wider flex-shrink-0"
-                  style={{ background: "var(--ds-orange-500)", color: "#fff" }}
-                >
+                /* `nutrition-fill`, not the bare orange. White on
+                   `--ds-orange-500` measures 3.05:1 at this size, on the
+                   one element on the tab whose whole job is to catch the
+                   eye; the fill step exists for white-on-orange and reads
+                   5.02:1. */
+                <span className="text-xs px-1.5 py-0.5 rounded-full font-bold tracking-wider flex-shrink-0 bg-nutrition-fill text-white">
                   NEW
                 </span>
               )}

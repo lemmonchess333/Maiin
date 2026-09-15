@@ -67,6 +67,15 @@ function playCrack(step: number) {
 // drawing the lab page renders, so what the owner reviews is what ships.
 const TAPS_NEEDED = 3;
 
+/* The ray fan's mask. `#000` is a MASK stop, not a colour: in a
+   mask-image gradient the channel is alpha geometry and never renders, so
+   no theme token would mean anything here — this IS the named home for
+   the value, which is what the hex rule asks for. Naming it also beats
+   two inline `eslint-disable-next-line`s, which bind to whichever line
+   prettier happens to wrap the value onto: one of them silently became a
+   wrong-line disable the moment the property wrapped. */
+const RAY_MASK = "radial-gradient(circle, #000 0%, transparent 60%)";
+
 export function BadgeEarnedContent({
   badge,
   onDismiss,
@@ -229,9 +238,8 @@ export function BadgeEarnedContent({
                 marginLeft: -170,
                 marginTop: -170,
                 background: `repeating-conic-gradient(from 0deg, ${tier}00 0deg, ${tier}26 7deg, ${tier}00 14deg)`,
-                maskImage: "radial-gradient(circle, #000 0%, transparent 60%)",
-                WebkitMaskImage:
-                  "radial-gradient(circle, #000 0%, transparent 60%)",
+                maskImage: RAY_MASK,
+                WebkitMaskImage: RAY_MASK,
               }}
               initial={{ opacity: 0, scale: 0.5, rotate: 0 }}
               animate={{ opacity: 0.5, scale: 1, rotate: reduce ? 0 : 360 }}
@@ -335,6 +343,11 @@ export function BadgeEarnedContent({
                   className="absolute pointer-events-none"
                   style={{
                     inset: -10,
+                    /* The specular hot centre of the medal's glint,
+                       blurred and aria-hidden. It is white because light
+                       is white, not because a theme says so — the tier
+                       colour beside it is the themed half. */
+                    // eslint-disable-next-line no-restricted-syntax
                     background: `radial-gradient(circle at 50% 48%, #fff 0%, ${tier} 40%, transparent 70%)`,
                     filter: "blur(4px)",
                   }}

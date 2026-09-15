@@ -1415,7 +1415,10 @@ export default function Run() {
                       type="button"
                       onClick={handleSwitchToManual}
                       className="w-full py-3.5 rounded-2xl font-semibold text-sm active:scale-95"
-                      style={{ background: THEME.teal, color: "#000" }}
+                      style={{
+                        background: THEME.teal,
+                        color: "hsl(var(--stage))",
+                      }}
                     >
                       Track without GPS
                     </button>
