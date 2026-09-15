@@ -17,18 +17,15 @@
  * runs identical fixtures through both copies across every goal and asserts the
  * scored output is byte-identical. Drift fails CI.
  *
- * The one baseline field with a KNOWN, deliberate derivation difference is
- * `runLongKm` (PERF-L, #1107): the client averages each prior week's longest
- * run (`computeBaseline` — mean of weekly maxes), while the server keeps the
- * single longest run observed across its whole baseline window
- * (`computeBaselineFromAgg` — a max does not scale linearly with window
- * length, so it is exempt from the 28d→7d normalisation the other fields
- * get). The server's baseline is therefore ≥ the client's, so client previews
- * can score `longRatio` slightly hotter than the authoritative rollup. Both
- * are defensible readings of "typical long run"; the discrepancy only shifts
- * 40% of one sub-score and washes out for consistent runners. If it's ever
- * reconciled, prefer changing the CLIENT (the server copy is what users' PI
- * is persisted from).
+ * The baselines themselves are pinned next door, in
+ * `performanceBaselineParity.cross.test.ts`. This paragraph used to exempt
+ * `runLongKm` (PERF-L) as a known, deliberate difference — the client
+ * averaging each prior week's longest run while the server kept the single
+ * longest across its whole window — and told anyone reconciling it to change
+ * the CLIENT. The server had already been reconciled to the mean by then
+ * (`runLongKmWeeklySum` exists for exactly that), so following the
+ * instruction would have re-opened the gap it described. Nothing was holding
+ * the agreement either way, which is how the paragraph outlived it.
  *
  * `confidence` is deliberately NOT part of the seam — the client's
  * `computeConfidence` has a `Date.now()` recency check tied to its weekly-keyed
