@@ -1417,11 +1417,12 @@ export default function History() {
               )}
 
             {showRunningSection && filter === "analytics" && (
-              <section id="analytics-running" aria-label="Running analytics">
-                <SectionLabel
-                  tier="section"
-                  className="mt-6 mb-2 text-running-strong"
-                >
+              <section
+                id="analytics-running"
+                aria-label="Running analytics"
+                className="space-y-2"
+              >
+                <SectionLabel tier="section" className="text-running-strong">
                   Running
                 </SectionLabel>
                 {runsLoading ? (
@@ -1506,11 +1507,12 @@ export default function History() {
             )}
 
             {showLiftingSection && filter === "analytics" && (
-              <section id="analytics-lifting" aria-label="Lifting analytics">
-                <SectionLabel
-                  tier="section"
-                  className="mt-6 mb-2 text-lifting-strong"
-                >
+              <section
+                id="analytics-lifting"
+                aria-label="Lifting analytics"
+                className="space-y-2"
+              >
+                <SectionLabel tier="section" className="text-lifting-strong">
                   Lifting
                 </SectionLabel>
                 {workoutsLoading ? (
@@ -1594,11 +1596,16 @@ export default function History() {
               <section
                 id="analytics-nutrition"
                 aria-label="Nutrition analytics"
+                className="space-y-2"
               >
-                <SectionLabel
-                  className="mt-6 mb-2"
-                  style={{ color: THEME.semantic.nutrition }}
-                >
+                {/* Its three peers on this page are `tier="section"`
+                    coloured by a `-strong` utility. This was neither: no
+                    tier, so it rendered at the in-card caption weight, and
+                    the bare `--nutrition` identity as 12px text, which
+                    measures 2.54:1 on the page against a 4.5:1 floor. The
+                    identity is for fills and icons; `-strong` is the
+                    theme-aware AA step. */}
+                <SectionLabel tier="section" className="text-nutrition-strong">
                   Nutrition
                 </SectionLabel>
                 {mealsLoading ? (
@@ -1838,10 +1845,12 @@ export default function History() {
                 lifetimeTotals.liftCount +
                 lifetimeTotals.daysLogged >
                 0 && (
-                <section id="analytics-lifetime" aria-label="Lifetime totals">
-                  <SectionLabel tier="section" className="mt-6 mb-2">
-                    Lifetime
-                  </SectionLabel>
+                <section
+                  id="analytics-lifetime"
+                  aria-label="Lifetime totals"
+                  className="space-y-2"
+                >
+                  <SectionLabel tier="section">Lifetime</SectionLabel>
                   {/* Three peer tiles, one unit treatment. The runs tile
                       used to push its `km` down into the caption ("km ·
                       1 runs") while the lifting tile beside it carried
