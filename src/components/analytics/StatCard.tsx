@@ -129,6 +129,15 @@ export default function StatCard({
             <AreaChart
               data={sparklineData!.map((v, i) => ({ v, i }))}
               margin={{ top: 1, right: 0, bottom: 0, left: 0 }}
+              /* The comment above removed the misleading MOUSE affordance
+                 and left the keyboard one. Recharts 3 defaults
+                 `accessibilityLayer` to true, so each sparkline put a
+                 `tabIndex="0"` <svg> in the tab order — measured as four
+                 unnamed tab stops on the Analytics tab alone, every one of
+                 them announcing nothing, on a graphic this component has
+                 already declared decorative. The figure above it is the
+                 metric, and it is text. */
+              accessibilityLayer={false}
             >
               {/* Without this the axis defaults to [0, dataMax], which
                   pins every series to the top of the band and turns a
