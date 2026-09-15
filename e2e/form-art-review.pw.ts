@@ -32,7 +32,20 @@ for (const set of sets) {
       await page.getByRole("combobox", { name: "Exercise" }).selectOption(`${set.exerciseId} (draft)`);
       const guide = page.getByRole("region", { name: `${set.exerciseId} form guide`, exact: true });
       await guide.getByRole("button", { name: "Pause", exact: true }).click();
-      if (theme === "light") await page.getByRole("button", { name: "Light theme", exact: true }).click();
+      // Verify the actual surface changes, not merely the toggle's label.
+      await expect(page.locator("html")).toHaveClass(/\bdark\b/);
+      const main = page.locator("main");
+      const darkBackground = await main.evaluate((node) => getComputedStyle(node).backgroundColor);
+      await page.getByRole("button", { name: "Light theme", exact: true }).click();
+      await expect(page.locator("html")).not.toHaveClass(/\bdark\b/);
+      await expect.poll(() => main.evaluate((node) => getComputedStyle(node).backgroundColor))
+        .not.toBe(darkBackground);
+      if (theme === "dark") {
+        await page.getByRole("button", { name: "Dark theme", exact: true }).click();
+        await expect(page.locator("html")).toHaveClass(/\bdark\b/);
+        await expect.poll(() => main.evaluate((node) => getComputedStyle(node).backgroundColor))
+          .toBe(darkBackground);
+      }
       const image = guide.locator('img[aria-hidden="false"]');
       for (const [index, frame] of set.frames.entries()) {
         await expect(image).toHaveAttribute("src", `/${frame.path}`);

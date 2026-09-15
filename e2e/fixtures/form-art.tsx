@@ -1,5 +1,5 @@
 import { createRoot } from "react-dom/client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import "../../src/index.css";
 import ExerciseRigDemo from "../../src/components/ExerciseRigDemo";
 import ExerciseFormFrames from "../../src/components/ExerciseFormFrames";
@@ -28,6 +28,13 @@ const batchDrafts = Object.fromEntries(
 export default function Review() {
   const [id, setId] = useState("barbell-row");
   const [dark, setDark] = useState(true);
+  // Theme tokens and app hooks resolve from html, not an inner preview wrapper.
+  useEffect(() => {
+    const root = document.documentElement;
+    const previous = root.classList.contains("dark");
+    root.classList.toggle("dark", dark);
+    return () => { root.classList.toggle("dark", previous); };
+  }, [dark]);
   const [step, setStep] = useState(0);
   const [request, setRequest] = useState<{ index: number; serial: number }>();
   const draftFiles = [
