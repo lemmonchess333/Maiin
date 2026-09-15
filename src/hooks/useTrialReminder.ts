@@ -30,7 +30,7 @@ export const TRIAL_NOTIFICATION_ID = 3003;
 export const TRIAL_REMINDER_DAYS_BEFORE = 2;
 export const TRIAL_REMINDER_HOUR = 10;
 
-export type TrialReminderKind = "billed" | "onboarding";
+export type TrialReminderKind = "billed" | "billed_cancelled" | "onboarding";
 
 export const TRIAL_REMINDER_COPY: Record<
   TrialReminderKind,
@@ -40,11 +40,33 @@ export const TRIAL_REMINDER_COPY: Record<
     title: "Your free trial ends in 2 days",
     body: "Your subscription starts then unless you cancel before it ends. Manage it in Settings.",
   },
+  // Auto-renew is already off: nothing is charged, Pro stops. Never
+  // "unless you cancel" to someone who has.
+  billed_cancelled: {
+    title: "Your free trial ends in 2 days",
+    body: "You cancelled, so nothing is charged. Photo logging pauses and your calorie target stops adapting after that. Resubscribe in Settings if you change your mind.",
+  },
   onboarding: {
     title: "Your Pro trial ends in 2 days",
     body: "Photo logging pauses and your calorie target stops adapting after that. Nothing is charged unless you subscribe.",
   },
 };
+
+/**
+ * Which register the reminder uses: the billed trial splits on whether
+ * the user has already turned auto-renew off. Null (unknown) reads as
+ * still renewing — the copy that is wrong for a cancelled user is only
+ * chosen when the server has said nothing either way.
+ */
+export function trialReminderKind(input: {
+  trialKind: "billed" | "onboarding" | null;
+  autoRenew: boolean | null;
+}): TrialReminderKind | null {
+  if (input.trialKind === "billed" && input.autoRenew === false) {
+    return "billed_cancelled";
+  }
+  return input.trialKind;
+}
 
 /**
  * When the reminder fires, or null when there is nothing to remind
@@ -69,7 +91,8 @@ export function trialReminderFireAt(input: {
 /** Runs once at the authenticated root (RemindersProvider). Returns nothing. */
 export function useTrialReminderInternal(): void {
   const { loading } = useAuth();
-  const { trialKind, trialEndsAt } = useSubscription();
+  const { trialKind: liveKind, trialEndsAt, autoRenew } = useSubscription();
+  const trialKind = trialReminderKind({ trialKind: liveKind, autoRenew });
   const chain = useRef<Promise<void>>(Promise.resolve());
 
   useEffect(() => {

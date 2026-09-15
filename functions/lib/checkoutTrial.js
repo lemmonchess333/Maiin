@@ -123,9 +123,39 @@ function mapSubscriptionStatusToTier(status) {
   return ACTIVE_STRIPE_STATUSES.includes(status) ? "pro" : "free";
 }
 
+/**
+ * The profile-facing state of a Stripe subscription object, as the
+ * `customer.subscription.created` / `.updated` handler writes it:
+ *
+ *   - `tier` via the mapping above;
+ *   - `trialEndsAt` — the ISO trial end while `trialing` (what the day-5
+ *     reminder and the Home strip read); null once past it;
+ *   - `autoRenew` — false once the user has cancelled at period end
+ *     (`cancel_at_period_end`: access runs to the period end and stops),
+ *     true while it renews, null when there is nothing to renew. The
+ *     reminder and Settings read this so a user who has already
+ *     cancelled is never told the subscription "starts unless you cancel".
+ *
+ * Pure so the handler's merge shape is pinned by a unit test — nothing
+ * drives the webhook itself end to end.
+ * @param {{ status?: string, trial_end?: number | null, cancel_at_period_end?: boolean }} subscription
+ */
+function subscriptionStateFromStripe(subscription) {
+  const status = subscription && subscription.status;
+  const tier = mapSubscriptionStatusToTier(status);
+  const trialEndsAt =
+    status === "trialing" && Number(subscription.trial_end) > 0
+      ? new Date(Number(subscription.trial_end) * 1000).toISOString()
+      : null;
+  const autoRenew =
+    tier === "pro" ? !subscription.cancel_at_period_end : null;
+  return { tier, trialEndsAt, autoRenew };
+}
+
 module.exports = {
   TRIAL_DAYS,
   ACTIVE_STRIPE_STATUSES,
   createTrialCheckoutSession,
   mapSubscriptionStatusToTier,
+  subscriptionStateFromStripe,
 };

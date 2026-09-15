@@ -31,6 +31,7 @@ vi.mock("@/lib/auth", () => ({
 import {
   useTrialReminderInternal,
   trialReminderFireAt,
+  trialReminderKind,
   TRIAL_NOTIFICATION_ID,
   TRIAL_REMINDER_COPY,
 } from "../useTrialReminder";
@@ -103,6 +104,24 @@ describe("trialReminderFireAt", () => {
   });
 });
 
+describe("trialReminderKind", () => {
+  it("splits the billed trial on an explicit auto-renew off; unknown reads as renewing", () => {
+    expect(trialReminderKind({ trialKind: "billed", autoRenew: false })).toBe(
+      "billed_cancelled"
+    );
+    expect(trialReminderKind({ trialKind: "billed", autoRenew: true })).toBe(
+      "billed"
+    );
+    expect(trialReminderKind({ trialKind: "billed", autoRenew: null })).toBe(
+      "billed"
+    );
+    expect(
+      trialReminderKind({ trialKind: "onboarding", autoRenew: false })
+    ).toBe("onboarding");
+    expect(trialReminderKind({ trialKind: null, autoRenew: false })).toBeNull();
+  });
+});
+
 describe("useTrialReminderInternal — the billed trial", () => {
   it("holds one reminder at 10:00 two days before the trial ends, in the billed register", async () => {
     mockProfile = {
@@ -119,6 +138,38 @@ describe("useTrialReminderInternal — the billed trial", () => {
     expect(payload.body).not.toMatch(/Nothing is charged/);
     expect(payload.scheduleAt).toEqual(new Date(2026, 8, 6, 10, 0, 0, 0));
     expect(payload.repeats).toBeFalsy();
+  });
+
+  it("once the user has cancelled, still reminds at the same instant — but never 'unless you cancel'", async () => {
+    mockProfile = {
+      subscriptionTier: "pro",
+      subscriptionExpiresAt: daysFromNow(7),
+      subscriptionTrialEndsAt: daysFromNow(7),
+      subscriptionAutoRenew: false,
+    };
+    renderHook(() => useTrialReminderInternal());
+    await settleNotifications();
+    expect(scheduledIds()).toEqual([TRIAL_NOTIFICATION_ID]);
+    const payload = scheduledAt(TRIAL_NOTIFICATION_ID)!;
+    expect(payload.title).toBe(TRIAL_REMINDER_COPY.billed_cancelled.title);
+    expect(payload.body).toMatch(/nothing is charged/);
+    expect(payload.body).not.toMatch(/unless you cancel/);
+    expect(payload.body).not.toMatch(/subscription starts/);
+    expect(payload.scheduleAt).toEqual(new Date(2026, 8, 6, 10, 0, 0, 0));
+  });
+
+  it("a profile the server has not stamped either way keeps the renewing register", async () => {
+    mockProfile = {
+      subscriptionTier: "pro",
+      subscriptionExpiresAt: daysFromNow(7),
+      subscriptionTrialEndsAt: daysFromNow(7),
+      subscriptionAutoRenew: null,
+    };
+    renderHook(() => useTrialReminderInternal());
+    await settleNotifications();
+    expect(scheduledAt(TRIAL_NOTIFICATION_ID)!.body).toMatch(
+      /unless you cancel/
+    );
   });
 
   it("holds nothing for a subscriber whose trial has converted (trial end behind now, still Pro)", async () => {

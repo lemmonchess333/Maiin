@@ -383,3 +383,60 @@ describe("getSubscriptionInfo — the billed trial", () => {
     expect(info).toMatchObject({ isInTrial: true, trialKind: "onboarding" });
   });
 });
+
+describe("getSubscriptionInfo — auto-renew", () => {
+  const future = (days: number) =>
+    new Date(Date.now() + days * 864e5).toISOString();
+
+  it("carries the server's answer for a live trial and for Pro, only when it is a boolean", () => {
+    const trial = (subscriptionAutoRenew: unknown) =>
+      getSubscriptionInfo(
+        makeProfile({
+          subscriptionTier: "pro",
+          subscriptionExpiresAt: future(7),
+          subscriptionTrialEndsAt: future(7),
+          subscriptionAutoRenew,
+        } as Partial<UserProfile>)
+      );
+    expect(trial(false)).toMatchObject({
+      trialKind: "billed",
+      autoRenew: false,
+    });
+    expect(trial(true)).toMatchObject({ trialKind: "billed", autoRenew: true });
+    expect(trial(undefined).autoRenew).toBeNull();
+    expect(trial(null).autoRenew).toBeNull();
+    expect(trial("false").autoRenew).toBeNull();
+
+    const pro = getSubscriptionInfo(
+      makeProfile({
+        subscriptionTier: "pro",
+        subscriptionExpiresAt: future(30),
+        subscriptionAutoRenew: false,
+      })
+    );
+    expect(pro).toMatchObject({
+      isPro: true,
+      isInTrial: false,
+      autoRenew: false,
+    });
+  });
+
+  it("is null whenever there is nothing to renew: free, lapsed, the legacy week, no profile", () => {
+    expect(getSubscriptionInfo(null).autoRenew).toBeNull();
+    expect(
+      getSubscriptionInfo(makeProfile({ subscriptionTier: "free" })).autoRenew
+    ).toBeNull();
+    expect(
+      getSubscriptionInfo(
+        makeProfile({
+          subscriptionTier: "pro",
+          subscriptionExpiresAt: future(-1),
+          subscriptionAutoRenew: false,
+        })
+      ).autoRenew
+    ).toBeNull();
+    expect(
+      getSubscriptionInfo(makeProfile({ trialExpiresAt: future(3) })).autoRenew
+    ).toBeNull();
+  });
+});

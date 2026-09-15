@@ -225,7 +225,7 @@ service cloud.firestore {
       let protectedFields = [
         'subscriptionTier', 'stripeCustomerId', 'stripeSubscriptionId', 'trialExpiresAt',
         'appleOriginalTransactionId', 'appleProductId', 'subscriptionExpiresAt',
-        'subscriptionTrialEndsAt'
+        'subscriptionTrialEndsAt', 'subscriptionAutoRenew'
       ];
       return (!request.resource.data.diff(resource.data).affectedKeys().hasAny(protectedFields));
     }
@@ -311,7 +311,7 @@ service cloud.firestore {
         'maxHeartRate',
         'trialExpiryPromptShown',
         'appleOriginalTransactionId', 'appleProductId', 'subscriptionExpiresAt',
-        'subscriptionTrialEndsAt'
+        'subscriptionTrialEndsAt', 'subscriptionAutoRenew'
       ];
     }
 
@@ -328,6 +328,7 @@ service cloud.firestore {
       return (!('trialExpiresAt' in request.resource.data) || request.resource.data.trialExpiresAt == null)
         && (!('subscriptionExpiresAt' in request.resource.data) || request.resource.data.subscriptionExpiresAt == null)
         && (!('subscriptionTrialEndsAt' in request.resource.data) || request.resource.data.subscriptionTrialEndsAt == null)
+        && (!('subscriptionAutoRenew' in request.resource.data) || request.resource.data.subscriptionAutoRenew == null)
         && (!('stripeCustomerId' in request.resource.data) || request.resource.data.stripeCustomerId == null)
         && (!('stripeSubscriptionId' in request.resource.data) || request.resource.data.stripeSubscriptionId == null)
         && (!('appleOriginalTransactionId' in request.resource.data) || request.resource.data.appleOriginalTransactionId == null)

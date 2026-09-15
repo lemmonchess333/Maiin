@@ -110,6 +110,38 @@ describe("SettingsSubscription — the plan row", () => {
     ).toBeInTheDocument();
   });
 
+  it("a cancelled billed trial reads won't-renew and offers Resubscribe, to the same store page", async () => {
+    mockProfile = {
+      subscriptionTier: "pro",
+      subscriptionExpiresAt: future(7),
+      subscriptionTrialEndsAt: new Date("2026-09-20T09:00:00Z").toISOString(),
+      subscriptionAutoRenew: false,
+      appleProductId: "com.tropos.app.pro.monthly",
+    };
+    renderPage();
+    expect(screen.getByText("Free trial")).toBeInTheDocument();
+    expect(screen.getByText("Ends 20 Sept · won't renew")).toBeInTheDocument();
+    expect(screen.queryByText(/unless you cancel/)).toBeNull();
+    expect(screen.queryByText(/£3\.99/)).toBeNull();
+    expect(screen.getByText("Resubscribe")).toBeInTheDocument();
+    expect(screen.queryByText("Manage")).toBeNull();
+    fireEvent.click(screen.getByRole("button"));
+    await waitFor(() => expect(manageMock).toHaveBeenCalledWith("u1"));
+    expect(navigateMock).not.toHaveBeenCalled();
+  });
+
+  it("cancelled Pro reads the end date rather than a renewal", () => {
+    mockProfile = {
+      subscriptionTier: "pro",
+      subscriptionExpiresAt: new Date("2026-10-20T09:00:00Z").toISOString(),
+      subscriptionAutoRenew: false,
+    };
+    renderPage();
+    expect(screen.getByText("Ends 20 Oct · won't renew")).toBeInTheDocument();
+    expect(screen.queryByText(/Renews/)).toBeNull();
+    expect(screen.getByText("Resubscribe")).toBeInTheDocument();
+  });
+
   it("Pro shows the renewal date and manages", async () => {
     mockProfile = {
       subscriptionTier: "pro",

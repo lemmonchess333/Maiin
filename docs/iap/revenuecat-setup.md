@@ -143,7 +143,9 @@ env). **Never** put the webhook/REST secrets in Vite — they're server-only.
   I can scaffold it now and you drop the key in.
 - **Slice 3 (#1099):** the real purchase flow through `purchaseProvider.ts` + the
   `revenueCatWebhook` function (writes `subscriptionTier`/`subscriptionExpiresAt`/
-  `subscriptionTrialEndsAt`, marks `hasUsedTrial` when a TRIAL period is seen)
+  `subscriptionTrialEndsAt`/`subscriptionAutoRenew` — the last is false after a
+  CANCELLATION so the reminder and Settings never say "unless you cancel" to
+  someone who has — and marks `hasUsedTrial` when a TRIAL period is seen)
   - the `syncRevenueCatEntitlement` callable. **Backend built** — see
     `functions/lib/revenueCatEntitlement.js` (decision) and
     `functions/lib/revenueCatApply.js` (guarded write). Needs the **webhook +
