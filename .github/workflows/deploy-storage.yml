@@ -1,15 +1,11 @@
 name: Deploy Storage Rules
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - "storage.rules"
-      - "firebase.json"
-  # Manual trigger so the operator can deploy on demand after granting the
-  # cross-service approval, without pushing a new commit.
-  workflow_dispatch:
+  # Preserve the owner approval gate below; deploy through Deploy production.
+  workflow_call:
+
+permissions:
+  contents: read
 
 jobs:
   # Evidence gate: run the storage rules suite (firestore + storage emulators)
@@ -59,7 +55,7 @@ jobs:
 
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
-          node-version: 20
+          node-version: 22
 
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@c200f3691d83b41bf9bbd8638997a462592937ed # v2
