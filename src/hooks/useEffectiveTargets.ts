@@ -1,17 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
-import {
-  collection,
-  doc,
-  limit,
-  onSnapshot,
-  orderBy,
-  query,
-  Timestamp,
-  where,
-} from "firebase/firestore";
+import { useMemo } from "react";
+import { useTrainingFuelData } from "./useTrainingFuelData";
 import { localDateString, parseLocalDate } from "@/lib/dateHelpers";
 import { useAuth } from "@/lib/auth";
-import { db } from "@/lib/firebase";
 import { getAdjustedTargets } from "@/lib/phaseNutrition";
 import {
   classifyDayIntensity,
@@ -24,7 +14,6 @@ import { trainingSignalsForNutrition } from "@/lib/trainingSignals";
 import { useSubscription } from "@/lib/subscription";
 import { buildCaption, type DailyTargetsCaption } from "@/lib/captionBuilder";
 import { isWorkoutOnDate } from "@/lib/workoutDate";
-import { isVolumeEligible } from "@/lib/runStatsEligibility";
 import {
   generateSchedule,
   getWeeklyRunTarget,
@@ -132,22 +121,6 @@ export interface EffectiveTargets {
   taperActive: boolean;
   /** Exact training-aware shift versus a same-calorie REST split. */
   trainingFuel: TrainingFuelAdjustment;
-}
-
-// ── Subscription window ──────────────────────────────────────────────────
-// 30-day rolling window, limit 60 docs. Handles even high-volume users.
-// Viewing a date older than 30 days falls back to actualBurn=0 (display only).
-const WINDOW_DAYS = 30;
-const DOC_LIMIT = 60;
-
-interface WorkoutRow {
-  date: string;
-  totalCalories: number;
-}
-
-interface RunRow {
-  completedAt: Timestamp | null;
-  calories: number;
 }
 
 interface PlannedTargets {
@@ -259,113 +232,8 @@ export function useEffectiveTargets(date?: Date): EffectiveTargets {
   // stay flat baseline. Trial counts as Pro (useSubscription.isPro).
   const { isPro } = useSubscription();
 
-  const [workouts, setWorkouts] = useState<WorkoutRow[]>([]);
-  const [runs, setRuns] = useState<RunRow[]>([]);
-  const [workoutsLoaded, setWorkoutsLoaded] = useState(false);
-  const [runsLoaded, setRunsLoaded] = useState(false);
-
-  // ── Subscribe to the user's programState (READ-ONLY) ────────────────────
-  // The macro fast-loop is driven by the PLANNED training of the day, which
-  // lives in the full ProgramState (currentPhase, weekNumber, primaryGoal,
-  // workouts) — NOT in the narrow `profile.program` mirror. We read the doc
-  // directly (no writes, no migrations) rather than composing useProgram(),
-  // which performs auto-rollover/migration writes on mount that must NOT fire
-  // from the Food/Home render tree. Null until loaded / when absent → the
-  // translator's zero state → legacy phase behaviour (safe).
-  const [program, setProgram] = useState<ProgramState | null>(null);
-  useEffect(() => {
-    if (!user) {
-      setProgram(null); // eslint-disable-line react-hooks/set-state-in-effect
-      return;
-    }
-    const ref = doc(db, "users", user.uid, "programState", "current");
-    const unsub = onSnapshot(
-      ref,
-      (snap) => {
-        setProgram(snap.exists() ? (snap.data() as ProgramState) : null);
-      },
-      () => setProgram(null) // permission/transient error → safe zero state
-    );
-    return unsub;
-  }, [user]);
-
-  // ── Subscribe to windowed workouts + runs (for informational burn) ──────
-  // Nutr1: burn no longer drives the target, but the Today's energy tiles and
-  // Food drill-down still display it, so the windowed subscriptions remain.
-  useEffect(() => {
-    if (!user) {
-      /* eslint-disable react-hooks/set-state-in-effect */
-      setWorkouts([]);
-      setRuns([]);
-      setWorkoutsLoaded(false);
-      setRunsLoaded(false);
-      /* eslint-enable react-hooks/set-state-in-effect */
-      return;
-    }
-
-    const windowStart = parseLocalDate(today);
-    windowStart.setDate(windowStart.getDate() - WINDOW_DAYS);
-    const windowStartString = localDateString(windowStart);
-    const windowStartTs = Timestamp.fromDate(windowStart);
-
-    const workoutsRef = collection(db, "users", user.uid, "workouts");
-    const workoutsQ = query(
-      workoutsRef,
-      where("date", ">=", windowStartString),
-      orderBy("date", "desc"),
-      limit(DOC_LIMIT)
-    );
-    const unsubWorkouts = onSnapshot(workoutsQ, (snap) => {
-      const rows: WorkoutRow[] = snap.docs
-        .map((d) => d.data() as { date?: unknown; totalCalories?: unknown })
-        .filter((d) => typeof d.date === "string")
-        .map((d) => ({
-          date: d.date as string,
-          totalCalories:
-            typeof d.totalCalories === "number" ? d.totalCalories : 0,
-        }));
-      setWorkouts(rows);
-      setWorkoutsLoaded(true);
-    });
-
-    const runsRef = collection(db, "users", user.uid, "runs");
-    const runsQ = query(
-      runsRef,
-      where("completedAt", ">=", windowStartTs),
-      orderBy("completedAt", "desc"),
-      limit(DOC_LIMIT)
-    );
-    const unsubRuns = onSnapshot(runsQ, (snap) => {
-      // Drop non-countable runs (saved-anyway "too-fast" misclicks) so a bad
-      // GPS reading can't inflate the informational burn tiles.
-      const rows: RunRow[] = snap.docs
-        .map((d) => {
-          const raw = d.data() as {
-            completedAt?: unknown;
-            calories?: unknown;
-            isInvalid?: boolean;
-            savedAnyway?: boolean;
-            distance?: number;
-            duration?: number;
-          };
-          if (!isVolumeEligible(raw)) return null;
-          const ts =
-            raw.completedAt instanceof Timestamp ? raw.completedAt : null;
-          return {
-            completedAt: ts,
-            calories: typeof raw.calories === "number" ? raw.calories : 0,
-          };
-        })
-        .filter((row): row is RunRow => row !== null);
-      setRuns(rows);
-      setRunsLoaded(true);
-    });
-
-    return () => {
-      unsubWorkouts();
-      unsubRuns();
-    };
-  }, [user, today]);
+  const { program, workouts, runs, workoutsLoaded, runsLoaded } =
+    useTrainingFuelData(user?.uid ?? null, today);
 
   // ── Derive effective targets ──────────────────────────────────────────
   return useMemo<EffectiveTargets>(() => {

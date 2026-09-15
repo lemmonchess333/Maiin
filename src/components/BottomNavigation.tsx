@@ -5,6 +5,7 @@ import { activeTabForPath } from "@/lib/activeTab";
 import { cn } from "@/lib/utils";
 import { haptic } from "@/lib/haptic";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
+import { preloadTab } from "@/lib/preloadTab";
 
 interface BottomNavigationProps {
   tabs: readonly { to: string; icon: LucideIcon; label: string }[];
@@ -49,6 +50,16 @@ export default function BottomNavigation({
               <Link
                 key={tab.to}
                 to={tab.to}
+                onPointerEnter={(event) => {
+                  if (!isActive && event.pointerType === "mouse")
+                    preloadTab(tab.to);
+                }}
+                onPointerDown={() => {
+                  if (!isActive) preloadTab(tab.to);
+                }}
+                onFocus={() => {
+                  if (!isActive) preloadTab(tab.to);
+                }}
                 aria-label={
                   hasBadge
                     ? `${tab.label}, ${

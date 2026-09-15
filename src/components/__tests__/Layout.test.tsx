@@ -1,7 +1,9 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { lazy, Suspense } from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { MemoryRouter, Routes, Route } from "react-router-dom";
 import Layout from "../Layout";
+import { preloadTab } from "@/lib/preloadTab";
 
 /* Layout pulls in several side-effecting hooks; stub them so the test
  * isolates the bottom-nav retap behaviour. */
@@ -22,6 +24,7 @@ vi.mock("@/lib/offlineQueue", () => ({
 // The pending-sync badge counts THIS account's queued work (uid-scoped).
 vi.mock("@/lib/auth", () => ({ useUid: () => "u-test" }));
 vi.mock("@/lib/haptic", () => ({ haptic: vi.fn() }));
+vi.mock("@/lib/preloadTab", () => ({ preloadTab: vi.fn() }));
 /* reduced-motion ON keeps framer-motion deterministic under jsdom */
 vi.mock("@/hooks/useReducedMotion", () => ({ useReducedMotion: () => true }));
 
@@ -110,6 +113,44 @@ describe("Layout bottom-nav retap", () => {
     for (const link of screen.getAllByRole("link")) {
       expect(link).not.toHaveAttribute("aria-current");
     }
+  });
+
+  it("waits for a destination to be touched or focused before preloading it", () => {
+    renderAt("/");
+    expect(preloadTab).not.toHaveBeenCalled();
+    fireEvent.pointerDown(screen.getByRole("link", { name: "Home" }));
+    expect(preloadTab).not.toHaveBeenCalled();
+    fireEvent.pointerDown(screen.getByRole("link", { name: "Food" }), {
+      pointerType: "touch",
+    });
+    expect(preloadTab).toHaveBeenCalledExactlyOnceWith("/food");
+    expect(screen.getByText("home")).toBeInTheDocument();
+    fireEvent.focus(screen.getByRole("link", { name: "Train" }));
+    expect(preloadTab).toHaveBeenLastCalledWith("/program");
+  });
+
+  it("keeps navigation available while a tab's code is loading", () => {
+    const PendingPage = lazy(
+      () => new Promise<{ default: () => null }>(() => {})
+    );
+    render(
+      <MemoryRouter initialEntries={["/program"]}>
+        <Suspense fallback={<div>Whole app loading</div>}>
+          <Routes>
+            <Route element={<Layout />}>
+              <Route path="/program" element={<PendingPage />} />
+              <Route path="/" element={<div>home</div>} />
+            </Route>
+          </Routes>
+        </Suspense>
+      </MemoryRouter>
+    );
+    expect(screen.queryByText("Whole app loading")).toBeNull();
+    expect(
+      screen.getByRole("navigation", { name: "Main navigation" })
+    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("link", { name: "Home" }));
+    expect(screen.getByText("home")).toBeInTheDocument();
   });
 });
 

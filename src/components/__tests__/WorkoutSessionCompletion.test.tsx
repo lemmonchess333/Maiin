@@ -24,9 +24,13 @@ const h = vi.hoisted(() => ({
   user: null as { uid: string } | null,
   awardEventBadge: vi.fn(),
   awardEventBadges: vi.fn(),
+  authReads: vi.fn(),
 }));
 vi.mock("@/lib/auth", () => ({
-  useAuth: () => ({ user: h.user, profile: null }),
+  useAuth: () => {
+    h.authReads();
+    return { user: h.user, profile: null };
+  },
   useUidForStorageKey: () => "test",
 }));
 vi.mock("@/lib/firebase", () => ({
@@ -756,6 +760,57 @@ describe("WorkoutSession — timers survive a locked phone", () => {
       vi.advanceTimersByTime(3000);
     });
     expect(screen.getByText(/0\/3 sets · 0:0[23]/)).toBeInTheDocument();
+  });
+
+  it("ticks both displays without re-rendering the set editor or saving drafts", async () => {
+    openSession();
+    fireEvent.click(screen.getAllByLabelText("Mark set complete")[0]);
+    // Let mount work settle, then observe real editor renders via its auth read.
+    await act(async () => {});
+    h.authReads.mockClear();
+    h.save.mockClear();
+    await act(async () => {
+      vi.advanceTimersByTime(3000);
+    });
+    expect(screen.getByText(/1\/3 sets · 0:03/)).toBeInTheDocument();
+    expect(screen.getByRole("group", { name: "Rest timer" })).toHaveTextContent(
+      "87 s"
+    );
+    expect(h.authReads).not.toHaveBeenCalled();
+    expect(h.save).not.toHaveBeenCalled();
+
+    fireEvent.change(screen.getByRole("spinbutton", { name: "Set 2 reps" }), {
+      target: { value: "10" },
+    });
+    expect(h.authReads).toHaveBeenCalled();
+    expect(h.save).toHaveBeenLastCalledWith(
+      expect.objectContaining({ elapsedSeconds: 3 })
+    );
+  });
+
+  it("stops paint pulses while hidden and catches up on foreground immediately", async () => {
+    openSession();
+    fireEvent.click(screen.getAllByLabelText("Mark set complete")[0]);
+    await act(async () => {});
+    const hidden = vi.spyOn(document, "hidden", "get").mockReturnValue(true);
+    act(() => {
+      document.dispatchEvent(new Event("visibilitychange"));
+    });
+    h.authReads.mockClear();
+    await act(async () => {
+      vi.advanceTimersByTime(60_000);
+    });
+    expect(screen.getByText(/1\/3 sets · 0:00/)).toBeInTheDocument();
+    expect(h.authReads).not.toHaveBeenCalled();
+    hidden.mockReturnValue(false);
+    act(() => {
+      document.dispatchEvent(new Event("visibilitychange"));
+    });
+    expect(screen.getByText(/1\/3 sets · 1:00/)).toBeInTheDocument();
+    expect(screen.getByRole("group", { name: "Rest timer" })).toHaveTextContent(
+      "30 s"
+    );
+    hidden.mockRestore();
   });
 
   it("re-arms the completion alert when an expired rest is extended", async () => {

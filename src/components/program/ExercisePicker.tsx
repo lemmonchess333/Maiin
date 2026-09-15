@@ -5,12 +5,14 @@ import {
   useEffect,
   useEffectEvent,
   useCallback,
+  Suspense,
 } from "react";
 import { createPortal } from "react-dom";
 import EmptyState from "@/components/ui/EmptyState";
 import { useNavigate } from "react-router-dom";
 import { BottomSheet } from "@/components/ui/BottomSheet";
-import ExerciseFormContent from "@/components/ExerciseFormContent";
+import { lazyRetry } from "@/lib/lazyRetry";
+import { Spinner } from "@/components/ui/Spinner";
 import { EXERCISE_CATEGORIES, getExercisesByCategory } from "@/lib/exercises";
 import type { Exercise } from "@/lib/exercises";
 import { cn } from "@/lib/utils";
@@ -24,6 +26,9 @@ import SectionLabel from "@/components/ui/SectionLabel";
 import { Button } from "@/components/ui/Button";
 
 const ALL_CATEGORIES = ["All", ...EXERCISE_CATEGORIES] as const;
+const ExerciseFormContent = lazyRetry(
+  () => import("@/components/ExerciseFormContent")
+);
 
 interface Props {
   open: boolean;
@@ -392,7 +397,15 @@ export default function ExercisePicker({
           >
             {detail && (
               <div className="px-4 pb-4">
-                <ExerciseFormContent exerciseName={detail.name} active />
+                <Suspense
+                  fallback={
+                    <div className="flex justify-center py-12">
+                      <Spinner label="Loading exercise demo" />
+                    </div>
+                  }
+                >
+                  <ExerciseFormContent exerciseName={detail.name} active />
+                </Suspense>
                 <div className="mt-5">
                   <Button
                     variant={

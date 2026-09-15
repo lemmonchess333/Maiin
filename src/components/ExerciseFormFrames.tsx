@@ -3,7 +3,7 @@ import { ChevronLeft, ChevronRight, Pause, Play } from "lucide-react";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
-import type { FormBeat } from "@/lib/bodyRig";
+import type { FormBeat } from "@/lib/formGuides";
 
 interface Props {
   beats: readonly FormBeat[];

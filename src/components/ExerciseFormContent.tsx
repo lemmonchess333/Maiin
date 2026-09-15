@@ -12,7 +12,7 @@ import { THEME } from "@/lib/theme";
 import { Spinner } from "@/components/ui/Spinner";
 import ExerciseDemoPlayer from "@/components/ExerciseDemoPlayer";
 import ExerciseRigDemo from "@/components/ExerciseRigDemo";
-import { getBodyDemo, getDemoMuscleKey, getFormBeats } from "@/lib/bodyRig";
+import { getDemoMuscleKey, getFormBeats } from "@/lib/formGuides";
 import MuscleKey from "@/components/MuscleKey";
 import { EXERCISES } from "@/lib/exercises";
 import { Button } from "@/components/ui/Button";
@@ -41,10 +41,10 @@ function ExerciseFormContent({ exerciseName, active = true }: Props) {
   const exerciseId = EXERCISES.find(
     (e) => e.name.toLowerCase() === exerciseName.toLowerCase()
   )?.id;
-  const rigDemo = exerciseId ? getBodyDemo(exerciseId) : null;
   const beats = exerciseId ? getFormBeats(exerciseId) : null;
-  const hasLocalGuide = rigDemo !== null || beats !== null;
-  const preferLocal = hasLocalGuide;
+  const [legacyGuide, setLegacyGuide] = useState<string | null>(null);
+  const hasLocalGuide =
+    beats !== null || (exerciseId !== undefined && legacyGuide === exerciseId);
   const cueId = useId();
   const [stepRequest, setStepRequest] = useState<{
     index: number;
@@ -75,8 +75,21 @@ function ExerciseFormContent({ exerciseName, active = true }: Props) {
       setDemoFailed(false);
       setActiveStep(0);
       setStepRequest(undefined);
-      const d = await getExerciseDemo(exerciseName, { preferLocal });
+      let hasLegacyGuide = false;
+      if (!beats && exerciseId) {
+        try {
+          const { getBodyDemo } = await import("@/lib/bodyRig");
+          hasLegacyGuide = getBodyDemo(exerciseId) !== null;
+        } catch {
+          // A failed optional renderer leaves the reference-photo path usable.
+        }
+        if (cancelled) return;
+      }
+      const d = await getExerciseDemo(exerciseName, {
+        preferLocal: beats !== null || hasLegacyGuide,
+      });
       if (cancelled) return;
+      setLegacyGuide(hasLegacyGuide ? (exerciseId ?? null) : null);
       setDemo(d);
       setLoading(false);
     };
@@ -84,7 +97,7 @@ function ExerciseFormContent({ exerciseName, active = true }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [exerciseName, active, preferLocal]);
+  }, [exerciseName, exerciseId, active, beats]);
 
   const primaryMapped = demo
     ? (mapMuscles(demo.primaryMuscles) as Muscle[])
