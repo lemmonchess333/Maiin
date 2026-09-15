@@ -21,6 +21,7 @@ import { paceMinSec, distanceValue } from "../../lib/runLabels";
 import { distanceUnitLabel } from "@/lib/distanceUnits";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 import { Spinner } from "@/components/ui/Spinner";
+import { formatBinLabel } from "@/lib/chartGranularity";
 
 export default function RunningHistorySection() {
   const { weeklyData, runs, loading } = useRunningStats(90);
@@ -63,10 +64,13 @@ export default function RunningHistorySection() {
                 tick={CHART_AXIS_TICK}
                 axisLine={false}
                 tickLine={false}
-                tickFormatter={(v: string) => {
-                  const d = new Date(v);
-                  return `${d.getDate()}/${d.getMonth() + 1}`;
-                }}
+                /* `formatBinLabel`, not a local re-derivation. `week` is
+                   a Monday-anchored LOCAL key from `localWeekKey`, and a
+                   bare `new Date(key)` parses a date-only string as UTC
+                   midnight while `getDate()` reads LOCAL — so west of
+                   UTC every bar is labelled a day early, turning a
+                   chart of Mondays into a column of Sundays. */
+                tickFormatter={(v: string) => formatBinLabel(v, "weekly")}
               />
               <YAxis
                 tick={CHART_AXIS_TICK}

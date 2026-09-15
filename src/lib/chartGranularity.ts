@@ -87,6 +87,11 @@ export function formatBinLabel(
   granularity: ChartGranularity
 ): string {
   const d = new Date(binKey + "T00:00:00Z");
+  // A tick has no honest label for an unparseable key, and "NaN/NaN" on
+  // an axis is worse than a gap. PerformanceIndexChart carried this
+  // guard in its own hand-rolled formatter; it belongs here, with the
+  // parsing.
+  if (Number.isNaN(d.getTime())) return "";
   if (granularity === "monthly") {
     const now = new Date();
     const sameYear = d.getUTCFullYear() === now.getUTCFullYear();
