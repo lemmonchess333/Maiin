@@ -117,7 +117,13 @@ export default function RunningHistorySection() {
                 <p className="text-lg font-bold font-mono tabular-nums text-running-strong">
                   {volume.length}
                 </p>
-                <p className="text-xs text-muted-foreground">total runs</p>
+                {/* Its two neighbours are invariant because they are a unit
+                    ("total km") and a phrase ("best pace"); this one is a
+                    count noun, and the LIFETIME row directly below it on the
+                    same page already reads "1 run". */}
+                <p className="text-xs text-muted-foreground">
+                  total {volume.length === 1 ? "run" : "runs"}
+                </p>
               </div>
               <div className="p-3 rounded-xl bg-card border border-border text-center">
                 <p className="text-lg font-bold font-mono tabular-nums text-running-strong">
