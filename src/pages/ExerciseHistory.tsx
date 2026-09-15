@@ -273,8 +273,10 @@ export default function ExerciseHistory() {
     });
   }, [filteredSessions, metric, isBodyweight, isTimed, prDates]);
 
-  // For BW exercises, the metric toggle simplifies to Reps / Volume — no
-  // weight-based options make sense when the weight is implicit.
+  // For BW exercises the toggle simplifies to Reps / Volume — no
+  // weight-based option makes sense when the weight is implicit. The
+  // "1RM" member is the internal key for that first slot; what a reader
+  // sees is resolved at the pill, beside the value it labels.
   const metricOptions: Metric[] = isTimed
     ? ["1RM"]
     : isBodyweight
@@ -536,7 +538,20 @@ export default function ExerciseHistory() {
                           : undefined
                       }
                     >
-                      {isTimed ? "Seconds" : m}
+                      {/* The label names what the chart plots. For a
+                          bodyweight exercise the "1RM" option charts
+                          `s.totalReps` — a one-rep max is meaningless
+                          when there is no external load — so the pill
+                          said 1RM above a line of rep counts, with the
+                          header stat beside it already reading "Max
+                          reps". The comment on `metricOptions` says
+                          "Reps" too; only the pill did not. Same shape
+                          as the `isTimed` branch that is already here. */}
+                      {isTimed
+                        ? "Seconds"
+                        : isBodyweight && m === "1RM"
+                          ? "Reps"
+                          : m}
                     </button>
                   ))}
                 </div>
