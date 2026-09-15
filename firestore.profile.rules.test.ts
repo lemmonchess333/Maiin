@@ -425,19 +425,17 @@ suite("users/{uid} — raceGoal value gate", () => {
     }
   });
 
-  it("accepts every catalogue race binding, including international marathons", async () => {
-    for (const race of raceSpaceDefs()) {
-      await assertSucceeds(
-        write({
-          raceGoal: {
-            distance: race.event!.distance,
-            targetDate: race.event!.dateKey,
-            eventName: race.name,
-            eventSpaceId: race.id,
-          },
-        })
-      );
-    }
+  it.each(raceSpaceDefs())("accepts the $id race binding", async (race) => {
+    await assertSucceeds(
+      write({
+        raceGoal: {
+          distance: race.event!.distance,
+          targetDate: race.event!.dateKey,
+          eventName: race.name,
+          eventSpaceId: race.id,
+        },
+      })
+    );
   });
 
   it("accepts null — the explicit clear on a freeform switch", async () => {
