@@ -1,0 +1,63 @@
+name: Form artwork review
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'docs/exercise-art/**'
+      - 'src/components/ExerciseFormFrames.tsx'
+      - 'e2e/fixtures/form-art.tsx'
+      - 'e2e/form-art-review.capture.spec.ts'
+      - 'playwright.form-art.config.ts'
+      - 'scripts/export-form-art-review.py'
+      - '.github/workflows/form-art-review.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: form-art-review-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  review-sources:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Verify and package selected original frames
+        run: python3 scripts/export-form-art-review.py --output .art-review
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: form-art-sources
+          path: .art-review/
+          if-no-files-found: error
+          retention-days: 14
+
+  review-player:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Type-check the account-free review fixture
+        run: npx tsc -p e2e/fixtures/tsconfig.form-art.json
+      - name: Install test browser
+        run: npx playwright install --with-deps chromium
+      - name: Capture all frames and verify real player behavior
+        run: npx playwright test --config playwright.form-art.config.ts
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: form-art-playback
+          path: test-results/
+          if-no-files-found: warn
+          retention-days: 14
