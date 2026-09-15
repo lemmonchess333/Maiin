@@ -14,6 +14,7 @@ import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { localDateString, parseLocalDate } from "@/lib/dateHelpers";
 import { isTimedExerciseId } from "@/features/program/repUnits";
+import { REP_BUCKETS, emptyRepBucketNote } from "@/lib/repBuckets";
 
 const ExerciseProgressChart = lazyRetry(
   () => import("@/components/analytics/ExerciseProgressChart")
@@ -36,7 +37,6 @@ const RANGE_ORDER = ["1M", "3M", "6M", "1Y", "All"] as const;
 // Which rep buckets to show in the PRs strip. Four is the sweet spot —
 // 1/3/5/10 covers the most common programming targets without crowding
 // the screen (Hevy shows six, but on mobile that wraps awkwardly).
-const REP_BUCKETS = [1, 3, 5, 10] as const;
 
 type Metric = "1RM" | "Max Weight" | "Volume";
 
@@ -155,7 +155,7 @@ export default function ExerciseHistory() {
     return out;
   }, [workouts, decodedName, isTimed]);
 
-  // Rep-range PRs — heaviest weight ever lifted at exactly that rep
+  // Personal bests by reps — heaviest weight ever lifted at exactly that rep
   // count. For bodyweight exercises this is the heaviest ADDED weight
   // (e.g. weighted pull-ups stored as `weightKg = 10` for +10 kg);
   // pure BW sessions store `weightKg = 0` and just show "BW" with the
@@ -176,6 +176,15 @@ export default function ExerciseHistory() {
     }
     return map;
   }, [allSessions]);
+
+  const repBucketNote = useMemo(
+    () =>
+      emptyRepBucketNote({
+        hasAnyBucketRecord: REP_BUCKETS.some((b) => repRangePRs[b] !== null),
+        isBodyweight,
+      }),
+    [repRangePRs, isBodyweight]
+  );
 
   // Walk sessions chronologically tracking running best. Flag each session
   // whose top-set e1rm beats the previous running best — these get a
@@ -426,13 +435,19 @@ export default function ExerciseHistory() {
         />
       ) : (
         <>
-          {/* ── Rep-range PRs ───────────────────────────────────────── */}
+          {/* ── Personal bests by reps ───────────────────────────────── */}
           {!isTimed && (
             <div className="rounded-2xl bg-card p-4 space-y-3 card-shadow">
               <div className="flex items-center gap-2">
                 <Trophy className="size-4 text-achievement" />
+                {/* One heading, and it is the accurate one. The weighted
+                    branch named this card for rep RANGES, and
+                    nothing here is a range: a set counts for a bucket
+                    only when its reps EQUAL the bucket. The honest
+                    wording already existed three characters away, on the
+                    bodyweight side of this same ternary. */}
                 <h3 className="text-sm font-semibold text-foreground">
-                  {isBodyweight ? "Personal bests by reps" : "Rep-range PRs"}
+                  Personal bests by reps
                 </h3>
               </div>
               <div className="grid grid-cols-4 gap-2">
@@ -462,6 +477,16 @@ export default function ExerciseHistory() {
                   );
                 })}
               </div>
+              {/* Four em-dashes and no explanation is what a lifter
+                  programming eights sees forever, directly under a
+                  confident "Best 1RM 101 kg" taken from those very
+                  sets. Say which counts fill this in, and reconcile it
+                  with the estimate above. */}
+              {repBucketNote && (
+                <p className="text-caption text-muted-foreground">
+                  {repBucketNote}
+                </p>
+              )}
             </div>
           )}
 
