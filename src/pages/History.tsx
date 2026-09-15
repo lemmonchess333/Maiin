@@ -656,7 +656,7 @@ export default function History() {
     /* Pace and outdoor-distance PRs require pace eligibility:
        outdoor GPS source (treadmill / manual record their distance
        from user input, so a 2km / 5:17 treadmill entry shouldn't
-       claim "Fastest 1K 2:38/km"), valid + saved-properly + above
+       claim a 2:38/km best pace), valid + saved-properly + above
        the volume floor + finite positive avgPace. Longest Run
        reads outdoor only too — treadmill distance isn't
        GPS-verified, so it can't set a distance PR. */
@@ -711,18 +711,30 @@ export default function History() {
         date: string;
         isNew: boolean;
       }> = [
-        /* The value carries its unit because the LABEL names a distance.
-           Everywhere else in the app a bare `paceMinSec` sits under a
-           label that names the metric ("Avg pace", "BEST", a split row),
-           so nothing has to be inferred — here the label says "5K", and a
-           bare "5:35" under it reads as a finish time two and a half
-           times the world record. The 1K row hid it for years because at
-           one kilometre the pace and the time are the same number. The
-           race-predictions card on this same page already does it this
-           way: the distance's finish TIME, then the pace beneath it with
-           its unit. */
+        /* Neither of these is a race result, and the labels no longer say
+           one. Both read `avgPace` — the average over a WHOLE run — from
+           a pool filtered by a distance floor. So "Fastest 1K" was the
+           average pace of a run of at least a kilometre, which for a
+           20 km steady run is not a kilometre time and for a user who
+           has only ever run 10 km is a distance they have never covered
+           on its own. `runs5k` is a subset of `runs1k`, so the two also
+           carry the SAME number and date whenever the best-paced run was
+           5 km or longer — two rows, one fact, which is what the filmed
+           rich-history capture shows.
+
+           The value still carries its unit: a bare "5:32" is ambiguous
+           between per-kilometre and per-mile wherever it sits.
+
+           A true fastest kilometre IS reachable — `RunSummary` persists
+           `splits` with `paceSeconds` per km. It is not a relabel away,
+           though: `parseRunSummary` does not read the field, and taking
+           a MIN across runs where only SOME carry splits mixes a
+           best-kilometre with a whole-run average and biases the record
+           toward runs that happen to have them. Doing it properly means
+           qualifying only splits-carrying runs, which silently drops
+           every legacy and treadmill entry from the record. */
         {
-          label: "Fastest 1K",
+          label: "Best pace",
           value: best1k
             ? `${paceMinSec(best1k.avgPace, unit)} ${paceUnitLabel(unit)}`
             : "--",
@@ -730,7 +742,7 @@ export default function History() {
           isNew: best1k ? best1k.completedAt >= sevenDaysAgo : false,
         },
         {
-          label: "Fastest 5K",
+          label: "Best pace · 5K+",
           value: best5k
             ? `${paceMinSec(best5k.avgPace, unit)} ${paceUnitLabel(unit)}`
             : "--",

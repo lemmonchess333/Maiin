@@ -9,7 +9,7 @@ import { isOutdoorGpsRun } from "./runGuards";
  *    total distance, weekly km, lifetime totals, streak days, crew
  *    leaderboards? Includes treadmill + manual.
  *  - {@link isPaceEligible} — does this run count toward Best Pace,
- *    Fastest 1K, Fastest 5K, Longest Run, outdoor-style PRs?
+ *    the best-pace and Longest Run records, outdoor-style PRs?
  *    Outdoor GPS only. Strict policy.
  *  - {@link isPaceTrendEligible} — does this run count toward the pace
  *    trend badge ("PR" / "Faster" / "Steady") on RunSummary? Outdoor
@@ -28,7 +28,7 @@ import { isOutdoorGpsRun } from "./runGuards";
  *
  * The strict policy guards records that ENTER the user's outdoor PR
  * leaderboard — a treadmill 2km / 5:17 record can't masquerade as a
- * Fastest 1K. The lenient policy guards the trend BADGE, where
+ * the best-pace records. The lenient policy guards the trend BADGE, where
  * pre-Sprint-1 docs (missing `activityType`) must remain visible or
  * historical trend data evaporates.
  *
