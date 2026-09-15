@@ -70,7 +70,17 @@ export default function MacroDistribution({
             axe-core aria-hidden-focus violation. */}
         <div className="size-24 shrink-0 relative" aria-hidden="true">
           <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
+            {/* `accessibilityLayer={false}`, and the `rootTabIndex` below
+                is no longer what does the work. Recharts 3 defaults
+                `accessibilityLayer` to TRUE, which puts `tabIndex="0"` on
+                the chart's own <svg> — inside this `aria-hidden`
+                container, that is precisely the axe `aria-hidden-focus`
+                violation the comment above says it prevents. The Pie prop
+                cannot reach the surface, so the guard had been defeated:
+                measured in the browser as
+                `svg[tabindex=0] < div.recharts-wrapper < … <
+                div.size-24[aria-hidden]`. */}
+            <PieChart accessibilityLayer={false}>
               {/* Hist5f S2 + P3: tooltip matches the other two
                   Analytics charts. Shows "Protein · 38% (120g)" on
                   hover/touch — the same info the legend below
