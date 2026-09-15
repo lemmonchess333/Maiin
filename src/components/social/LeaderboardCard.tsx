@@ -112,7 +112,9 @@ export default function LeaderboardCard({
         {/* Quiet, and never the element that gives up room: the title is
             the variable-length half ("Weekly Distance" vs "Hybrid
             Score"), so it truncates and this stays whole. */}
-        <span className="shrink-0 text-caption font-mono tabular-nums text-muted-foreground">
+        {/* Two words and no digits — the numeral face buys nothing here.
+            (The ROWS below it are where the figures live.) */}
+        <span className="shrink-0 text-caption text-muted-foreground">
           This week
         </span>
       </div>
