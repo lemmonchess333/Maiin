@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { useRunningStats } from "../../hooks/useRunningStats";
 import {
   ResponsiveContainer,
@@ -18,14 +19,64 @@ import {
   isPaceEligible,
 } from "../../lib/runStatsEligibility";
 import { paceMinSec, distanceValue } from "../../lib/runLabels";
-import { distanceUnitLabel } from "@/lib/distanceUnits";
+import { distanceIn, distanceUnitLabel } from "@/lib/distanceUnits";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 import { Spinner } from "@/components/ui/Spinner";
-import { formatBinLabel } from "@/lib/chartGranularity";
+import { formatBinLabel, type ChartGranularity } from "@/lib/chartGranularity";
 
-export default function RunningHistorySection() {
-  const { weeklyData, runs, loading } = useRunningStats(90);
+const BIN_CAPTION: Record<ChartGranularity, string> = {
+  daily: "Daily distance",
+  weekly: "Weekly distance",
+  monthly: "Monthly distance",
+};
+
+/**
+ * `rangeDays` is REQUIRED and has no default, deliberately.
+ *
+ * This card sits inside History's range-scoped body, under the time-range
+ * control, and asked for a hardcoded 90 days. So picking "1W"
+ * drew thirteen weeks and picking "1Y" drew ninety days, and the three
+ * tiles beneath the chart reported a 90-day distance, run count and best
+ * pace a few hundred pixels under `PeriodOverview`'s range-scoped totals
+ * for the same two things — one page, two windows, nothing saying which
+ * was which. The page had already computed the right numbers: History
+ * calls `useRunningStats(rangeDays)` itself, and this component re-derived
+ * them against a different window.
+ *
+ * A default would let that drift back silently. Requiring the prop makes
+ * the caller state the window.
+ *
+ * The page's other deliberately range-independent cards — Race
+ * predictions, the muscle map's recovery chips — say so in their own copy
+ * ("As of today — independent of the selected range"). Nothing here was
+ * ever meant to be one of those; a distance history is the thing the range
+ * control exists to scope.
+ */
+export default function RunningHistorySection({
+  rangeDays,
+}: {
+  rangeDays: number;
+}) {
+  const { binnedData, granularity, runs, loading } = useRunningStats(rangeDays);
   const unit = useDistanceUnit();
+
+  /* The bars are plotted in the READER's unit. `totalDistance` is
+     kilometres — the aggregator's own currency — and the chart drew it
+     raw while the three tiles directly beneath convert through
+     `distanceValue(…, unit)`. So a mile-preferring runner read bars
+     about 1.6x their own totals, with the y-axis unlabelled and only the
+     caption's literal "(km)" to explain the gap. The caption now names
+     the unit it is given, which is only true if the data is converted
+     too. */
+  const chartData = useMemo(
+    () =>
+      binnedData.map((bin) => ({
+        ...bin,
+        distance:
+          Math.round(distanceIn(bin.totalDistance * 1000, unit) * 10) / 10,
+      })),
+    [binnedData, unit]
+  );
 
   if (loading) {
     return (
@@ -34,7 +85,7 @@ export default function RunningHistorySection() {
       </div>
     );
   }
-  if (runs.length === 0 && weeklyData.length === 0) return null;
+  if (runs.length === 0 && binnedData.length === 0) return null;
 
   return (
     <div className="space-y-4">
@@ -44,13 +95,17 @@ export default function RunningHistorySection() {
           <h3> repeated it ~450px lower in a different register (14px
           sentence case), so one section announced itself twice. The
           SectionLabel is the app's register for this; the local copy went. */}
-      {weeklyData.length > 0 && (
+      {binnedData.length > 0 && (
         <div className="p-4 rounded-2xl bg-card border border-border">
+          {/* The caption names the BIN, because the bin follows the
+              selected range. A card headed "Weekly distance" over a year
+              of monthly bars is the same claim-vs-reality gap the fixed
+              90-day window was. */}
           <p className="text-xs text-muted-foreground mb-3">
-            Weekly distance (km)
+            {BIN_CAPTION[granularity]} ({distanceUnitLabel(unit)})
           </p>
           <ResponsiveContainer width="100%" height={120}>
-            <BarChart data={weeklyData}>
+            <BarChart data={chartData}>
               <CartesianGrid {...CHART_GRID_PROPS} />
               {/* The shared tokens, not a hand-rolled copy. This was the
                   one analytics chart that never adopted them: it drew a
@@ -70,7 +125,7 @@ export default function RunningHistorySection() {
                    midnight while `getDate()` reads LOCAL — so west of
                    UTC every bar is labelled a day early, turning a
                    chart of Mondays into a column of Sundays. */
-                tickFormatter={(v: string) => formatBinLabel(v, "weekly")}
+                tickFormatter={(v: string) => formatBinLabel(v, granularity)}
               />
               <YAxis
                 tick={CHART_AXIS_TICK}
@@ -79,7 +134,7 @@ export default function RunningHistorySection() {
                 width={28}
               />
               <Bar
-                dataKey="totalDistance"
+                dataKey="distance"
                 fill={THEME.running}
                 radius={[4, 4, 0, 0]}
                 maxBarSize={CHART_BAR_MAX_WIDTH}
