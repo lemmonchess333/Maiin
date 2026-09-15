@@ -69,7 +69,13 @@ export default function PerformanceIndexChart({ weeks }: Props) {
       <ResponsiveContainer width="100%" height={180}>
         <AreaChart
           data={data}
-          margin={{ top: 4, right: 4, bottom: 0, left: -10 }}
+          /* No NEGATIVE left margin. Pulling the plot 10px left reclaims
+             gutter on a chart whose labels are short, and this one's are
+             not: the domain is fixed [0, 100] and the caption above says
+             so, so the top gridline must render three digits. 28px of
+             axis minus 10px of margin left 18, and "100" clipped to "00"
+             — the chart could not draw the number it advertises. */
+          margin={{ top: 4, right: 4, bottom: 0, left: 0 }}
           /* Hist5f S1: tap-attempt telemetry on the PI chart.
              onClick on the AreaChart fires when a data-point's
              activeDot is tapped. activePayload[0].payload is the
@@ -129,7 +135,10 @@ export default function PerformanceIndexChart({ weeks }: Props) {
             tick={CHART_AXIS_TICK}
             axisLine={false}
             tickLine={false}
-            width={28}
+            /* 32, not the 28 its siblings use: theirs label single digits
+               (RunningHistorySection) or abbreviate (VolumeChart's 35 for
+               "2.4k"). Three digits need the room. */
+            width={32}
           />
 
           <Tooltip
