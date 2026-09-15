@@ -557,7 +557,7 @@ export default function RunBottomSheet({
                     style={{
                       fontSize: 46,
                       fontWeight: 700,
-                      color: "#fff",
+                      color: "hsl(var(--stage-foreground))",
                       fontVariantNumeric: "tabular-nums",
                       fontFamily: "var(--font-mono)",
                       lineHeight: 1,
@@ -580,7 +580,7 @@ export default function RunBottomSheet({
                     style={{
                       fontSize: 46,
                       fontWeight: 700,
-                      color: "#fff",
+                      color: "hsl(var(--stage-foreground))",
                       fontVariantNumeric: "tabular-nums",
                       fontFamily: "var(--font-mono)",
                       lineHeight: 1,

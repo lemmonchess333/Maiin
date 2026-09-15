@@ -208,33 +208,43 @@ export default function MuscleHeatMap({ data, recovery }: MuscleHeatMapProps) {
                   <span className="text-xs font-mono tabular-nums text-muted-foreground">
                     {sets} sets
                   </span>
-                  {rec && (
-                    <span
-                      className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-muted/60 text-xs font-semibold text-muted-foreground"
-                      title={
+                  {rec &&
+                    (() => {
+                      const sentence =
                         rec.status === "ready"
                           ? `${group} is recovered`
-                          : `${group} ready in ~${rec.readyInDays}d`
-                      }
-                    >
-                      <span
-                        className="size-1.5 rounded-full"
-                        style={{ background: recoveryDotColor(rec.status) }}
-                        aria-hidden
-                      />
-                      {rec.status === "ready" ? (
-                        "ready"
-                      ) : (
-                        <>
-                          ~
-                          <span className="font-mono tabular-nums">
-                            {rec.readyInDays}
-                          </span>
-                          d
-                        </>
-                      )}
-                    </span>
-                  )}
+                          : `${group} ready in ~${rec.readyInDays}d`;
+                      return (
+                        <span
+                          className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-muted/60 text-xs font-semibold text-muted-foreground"
+                          title={sentence}
+                          /* `title` is a hover affordance and this is a
+                             phone surface, so the sentence would reach
+                             nobody without this. Without it a reader is
+                             announced "tilde one d". */
+                          aria-label={sentence}
+                        >
+                          <span
+                            className="size-1.5 rounded-full"
+                            style={{ background: recoveryDotColor(rec.status) }}
+                            aria-hidden
+                          />
+                          {rec.status === "ready" ? (
+                            "ready"
+                          ) : (
+                            /* ONE element, not three. `gap-1` spaces every
+                               flex child, and a bare `~` and `d` either
+                               side of the number are two anonymous flex
+                               items of their own — so the chip rendered
+                               "~ 1 d", with the tilde detached from the
+                               figure it qualifies. */
+                            <span className="font-mono tabular-nums">
+                              ~{rec.readyInDays}d
+                            </span>
+                          )}
+                        </span>
+                      );
+                    })()}
                 </div>
               );
             })}

@@ -114,8 +114,18 @@ export function isTitleCase(phrase: string): boolean {
 }
 
 const TEXT_NODE = />\s*([A-Za-z][A-Za-z0-9 '’,.!?&/()-]{3,70}?)\s*</g;
+/* Any prop whose NAME ends in a label-ish word, not a fixed list of six.
+   The fixed list read as thorough and covered `label` but not `ctaLabel`,
+   `confirmLabel`, `cancelLabel`, `ariaLabel`, `backLabel`,
+   `primaryActionLabel`, `dismissLabel`, `loadingLabel`, `headerTitle`,
+   `missingHeadline`, `failedSub`, `emptyText` — about a hundred call
+   sites, all of them user-facing strings, none of them looked at. A
+   component that renames its prop stops being checked, which is a strange
+   thing for a copy rule to depend on. Widening it found exactly one
+   offender in the whole tree, so this costs no argument about false
+   positives. */
 const LABEL_PROP =
-  /\b(?:title|label|placeholder|aria-label|sublabel|heading)\s*=\s*"([^"{}]{4,70})"/g;
+  /\b[A-Za-z-]*(?:[Ll]abel|[Tt]itle|[Hh]eadline|[Pp]laceholder|[Ss]ub|[Tt]ext|[Cc]opy|heading)\s*=\s*"([^"{}]{4,70})"/g;
 
 function offenders(): string[] {
   const found: string[] = [];
@@ -165,6 +175,29 @@ describe("user-facing copy is sentence case", () => {
     expect(isTitleCase("Momentum: Stable")).toBe(false);
     // A clause that IS Title Case still fails, so the split is not an escape.
     expect(isTitleCase("Weekly Summary: your week")).toBe(true);
+  });
+
+  it("looks at label props by SHAPE, not by a list of six names", () => {
+    /* The scan surface is the half of this gate that can silently
+       shrink: `isTitleCase` can stay perfect while the regex stops being
+       pointed at anything. A component renaming `label` to `ctaLabel`
+       took its copy out of the check, and nothing said so. */
+    const sample = `
+      <A ctaLabel="Log Meal" />
+      <B confirmLabel="Delete Account" />
+      <C ariaLabel="Weight Trend" />
+      <D headerTitle="Recently Deleted" />
+      <E missingHeadline="Session Missing" />
+      <F emptyText="No Runs Yet" />
+      <G label="Sign Out" />
+      <H aria-label="Start Run" />
+      <I placeholder="Search Foods" />
+      <J heading="Weekly Volume" />
+    `;
+    LABEL_PROP.lastIndex = 0;
+    const seen = [...sample.matchAll(LABEL_PROP)].map((m) => m[1]);
+    expect(seen).toHaveLength(10);
+    expect(seen.every(isTitleCase)).toBe(true);
   });
 
   it("no Title Case labels outside the closed list", () => {
