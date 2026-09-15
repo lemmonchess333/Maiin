@@ -143,3 +143,18 @@ describe("config ↔ functions parity (lib/spaceIds.js)", () => {
     expect(new Set(serverIds)).toEqual(new Set(SPACE_IDS));
   });
 });
+
+describe("race catalogue ↔ coach prompt classification", () => {
+  it("every race receives race-preparation prompts rather than the interest bank", () => {
+    const js = readFileSync(
+      resolve(__dirname, "../../../../functions/lib/coachPrompts.js"),
+      "utf8"
+    );
+    const match = js.match(
+      /RACE_SPACE_IDS = Object\.freeze\(\s*new Set\(\[([\s\S]*?)\]\)/
+    );
+    expect(match, "coach race classification not found").toBeTruthy();
+    const ids = Array.from(match![1].matchAll(/"([^"]+)"/g)).map((m) => m[1]);
+    expect(new Set(ids)).toEqual(new Set(raceSpaceDefs().map((d) => d.id)));
+  });
+});

@@ -35,3 +35,7 @@ This is a curated expansion, not an exhaustive worldwide marathon directory. New
 ## Bundle budget
 
 The 16 additional metadata blocks increase the `spaceDefs` chunk from 9868 to 15217 bytes. Only that chunk budget and the corresponding total delta are updated; no other size limits change.
+
+## Related missing coverage corrected
+
+The coach prompt classifier still recognised only the original 12 races. Added both the previous 14 marathons and this batch to its race-preparation bank, with a catalogue parity test to prevent future omissions. This does not send any messages during the update; the existing scheduled coach-post workflow uses the corrected classification.
