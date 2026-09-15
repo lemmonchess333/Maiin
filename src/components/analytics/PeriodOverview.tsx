@@ -146,9 +146,22 @@ export default function PeriodOverview({
             <div
               key={s.label}
               className="min-w-0 flex flex-col items-center gap-2"
-              style={isEmpty ? { opacity: 0.4 } : undefined}
             >
-              <div className="relative">
+              {/* The dimming rides the RING, never the column.
+                  `--muted-foreground` is tuned to clear 4.5:1 and nothing
+                  more, so ANY alpha over the text drops it under the
+                  floor: at 0.4 the label and sub measure 1.76:1 (light) /
+                  2.15:1 (dark) and the number above them 2.72:1 / 3.37:1,
+                  and even 0.8 only reaches 3.57:1 in light. `isEmpty` is
+                  `ringVal === 0`, which every column satisfies at cold
+                  start — the state most users meet first. The ring is
+                  decoration and the word beneath it carries the meaning,
+                  so only the ring dims. Both halves pinned by
+                  `PeriodOverview.test.tsx`. */}
+              <div
+                className="relative"
+                style={isEmpty ? { opacity: 0.4 } : undefined}
+              >
                 <Ring value={s.ringVal} max={s.ringMax} color={s.color} />
                 <div className="absolute inset-0 flex items-center justify-center">
                   {s.icon}
