@@ -82,6 +82,7 @@ export default function CalorieBalanceChart({ meals }: { meals: Meal[] }) {
       <div className="h-44">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
+            aria-label="Calorie balance: estimated maintenance minus logged food, by day"
             data={data}
             margin={{ top: 5, right: 5, bottom: 5, left: 5 }}
           >

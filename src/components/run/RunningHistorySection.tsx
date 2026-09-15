@@ -105,7 +105,12 @@ export default function RunningHistorySection({
             {BIN_CAPTION[granularity]} ({distanceUnitLabel(unit)})
           </p>
           <ResponsiveContainer width="100%" height={120}>
-            <BarChart data={chartData}>
+            <BarChart
+              data={chartData}
+              /* The label IS the visible caption — a chart named one thing
+                 on screen and another to a reader is two charts. */
+              aria-label={`${BIN_CAPTION[granularity]} (${distanceUnitLabel(unit)})`}
+            >
               <CartesianGrid {...CHART_GRID_PROPS} />
               {/* The shared tokens, not a hand-rolled copy. This was the
                   one analytics chart that never adopted them: it drew a
