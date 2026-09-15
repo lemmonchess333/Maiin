@@ -1,0 +1,47 @@
+name: Form artwork CI diagnostics
+
+on:
+  push:
+    branches: ['codex/form-art-ci-diagnostics']
+    paths: ['.github/workflows/form-art-ci-diagnostics.yml']
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  collect-failure:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Retrieve the exact failed verification job
+        env:
+          GH_TOKEN: ${{ github.token }}
+          JOB_ID: '104535792024'
+          EXPECTED_HEAD: e39bba145f6b019dceb8cdb82a6f466bf9f95292
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p failure-context
+          gh api "repos/$GITHUB_REPOSITORY/actions/jobs/$JOB_ID" --jq '{id,head_sha,run_id,status,conclusion}' > failure-context/job.json
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          job = json.loads(Path('failure-context/job.json').read_text())
+          assert job['head_sha'] == os.environ['EXPECTED_HEAD'], job
+          assert job['conclusion'] == 'failure', job
+          PY
+          gh api "repos/$GITHUB_REPOSITORY/actions/jobs/$JOB_ID/logs" > failure-context/unit.log
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          raw = Path('failure-context/unit.log').read_text(errors='replace')
+          clean = re.sub(r'\x1b\[[0-9;]*m', '', raw)
+          Path('failure-context/tail.txt').write_text('\n'.join(clean.splitlines()[-250:]) + '\n')
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: form-art-ci-failure
+          path: failure-context/
+          if-no-files-found: error
+          retention-days: 3
