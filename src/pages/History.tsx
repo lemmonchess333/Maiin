@@ -15,6 +15,7 @@ import { useLifetimeRunStats } from "@/hooks/useLifetimeRunStats";
 import { useAuth, useUid } from "@/lib/auth";
 import { useEffectiveTargets } from "@/hooks/useEffectiveTargets";
 import { THEME } from "@/lib/theme";
+import { adherenceTone } from "@/lib/adherenceTone";
 import { buildDelta } from "@/lib/deltaFormat";
 import { EXERCISES } from "@/lib/exercises";
 import TimeRangePills from "@/components/analytics/TimeRangePills";
@@ -1654,31 +1655,11 @@ export default function History() {
                 ) : (
                   <>
                     {/* Adherence row — first-class signal, not a footnote.
-                  For a sparse logger this IS the headline metric: the
-                  averages below can't be trusted until logging is more
-                  consistent. For a consistent logger it's quiet
-                  reassurance. Tone scales with adherence:
-                    ≥80%   → green (data is reliable)
-                    50–80% → muted (data is decent)
-                    <50%   → amber (averages below are under-sampled) */}
+                  The bands, why they exist and why every one of them
+                  takes an AA text step live in `adherenceTone`, which is
+                  pure and pinned. */}
                     {(() => {
-                      const adh = nutrition.adherence;
-                      const tone =
-                        adh >= 80
-                          ? { color: THEME.success, bg: `${THEME.success}1A` }
-                          : adh >= 50
-                            ? {
-                                color: "var(--muted-foreground)",
-                                bg: "transparent",
-                              }
-                            : {
-                                /* Text on the -strong step — amberLight
-                                   is the dark-mode amber and measured
-                                   1.70:1 as light text on its own tint.
-                                   The tint concat stays on the hex. */
-                                color: "hsl(var(--warning-strong))",
-                                bg: `${THEME.amberLight}1A`,
-                              };
+                      const tone = adherenceTone(nutrition.adherence);
                       return (
                         <div
                           className="flex items-center justify-between mt-2 px-3 py-2 rounded-xl"
@@ -1699,7 +1680,7 @@ export default function History() {
                             className="text-xs font-semibold font-mono tabular-nums"
                             style={{ color: tone.color }}
                           >
-                            {adh}%
+                            {nutrition.adherence}%
                           </p>
                         </div>
                       );

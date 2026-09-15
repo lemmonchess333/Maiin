@@ -62,7 +62,7 @@ function StatPill({
     <div className="flex-1 text-center py-3 px-2">
       <p
         className="text-2xl font-bold font-mono tabular-nums leading-none"
-        style={{ color: color || "var(--foreground)" }}
+        style={{ color: color || "hsl(var(--foreground))" }}
       >
         {value}
       </p>
