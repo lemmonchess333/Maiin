@@ -11,7 +11,7 @@ import { paceLabel, paceMinSec } from "../../lib/runLabels";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 import { distanceUnitLabel, type DistanceUnit } from "@/lib/distanceUnits";
 import { THEME } from "@/lib/theme";
-import { CHART_AXIS_TICK } from "./chartStyles";
+import { CHART_AXIS_TICK, CHART_BAR_MAX_WIDTH } from "./chartStyles";
 
 interface SplitsBarChartProps {
   splits: Split[];
@@ -75,7 +75,11 @@ export default function SplitsBarChart({
             tickLine={false}
           />
           <YAxis hide />
-          <Bar dataKey="invertedPace" radius={[4, 4, 0, 0]}>
+          <Bar
+            dataKey="invertedPace"
+            radius={[4, 4, 0, 0]}
+            maxBarSize={CHART_BAR_MAX_WIDTH}
+          >
             {data.map((entry, i) => (
               <Cell
                 key={i}

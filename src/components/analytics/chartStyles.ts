@@ -33,6 +33,19 @@ export const CHART_GRID_PROPS = {
   vertical: false,
 } as const;
 
+/**
+ * Cap on bar width.
+ *
+ * A Recharts `<Bar>` with no width constraint expands to fill its category
+ * slot, so a chart holding ONE bin renders a slab across half the card —
+ * which is what every user sees in their first weeks, and what the
+ * range-scoped charts fall back to whenever a range holds one bin.
+ * `CalorieBalanceChart` had already solved it locally with a fixed
+ * `barSize`; this is the same idea shared, and a MAX rather than a fixed
+ * width so a dense range still shrinks its bars naturally.
+ */
+export const CHART_BAR_MAX_WIDTH = 32;
+
 /** The one axis tick treatment (10px, muted token — theme-aware in both
  *  light and dark, unlike the old `currentColor + opacity` dialect). */
 export const CHART_AXIS_TICK = {
