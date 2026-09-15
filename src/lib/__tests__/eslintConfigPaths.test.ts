@@ -20,7 +20,7 @@ import { fileURLToPath } from "node:url";
  * the PRs tab whose job is to catch the eye. The guardrail that exists to
  * catch exactly that was off for the file.
  *
- * Globs are not checked — `**​/*.{ts,tsx}` matching nothing is a different
+ * Globs are not checked: a recursive glob matching nothing is a different
  * and louder failure. This is only for the entries that name a file.
  */
 const here = dirname(fileURLToPath(import.meta.url));
