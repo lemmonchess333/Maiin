@@ -25,7 +25,17 @@ import EmptyState from "@/components/ui/EmptyState";
  *
  * Cold start is a designed state, not a hidden one: without a benchmark the
  * card explains the two unlock paths (auto-derive after 3 outdoor runs — the
- * locked §10 silent-derive — or set a race time in Settings → Training).
+ * locked §10 silent-derive — or set a race time in Settings → Run plan).
+ *
+ * That destination is `/settings/run-plan` because `RunFitnessSection` — the
+ * only writer of `profile.runFitness`, which is the field this card reads —
+ * is rendered there and nowhere else. `/settings/training` holds the race
+ * GOAL (which race, what date); setting one produces no benchmark, so a user
+ * sent there could do everything the page offers and come back to the same
+ * empty card. BOTH settings links here go there — the cold-start action and
+ * the "Update" link under the benchmark line, which edits the same field.
+ * Pinned by `racePredictionsDestination.test.ts`, which resolves the route
+ * through App.tsx rather than trusting this sentence.
  */
 
 const ROWS: { key: RaceDistanceKey; label: string; km: number }[] = [
@@ -59,7 +69,7 @@ export default function RacePredictionsCard() {
           sub="Log three outdoor runs and Tropos estimates your fitness level — or set a recent race time yourself."
           action={{
             label: "Set a race time",
-            href: "/settings/training",
+            href: "/settings/run-plan",
             variant: "sport-tinted",
           }}
         />
@@ -111,7 +121,7 @@ export default function RacePredictionsCard() {
         {/* inline-block + negative-margin padding: keeps the footnote rhythm
             while clearing the 44px touch floor for the only tap target */}
         <Link
-          to="/settings/training"
+          to="/settings/run-plan"
           className="underline underline-offset-2 text-running-strong inline-block px-2 py-3 -mx-2 -my-3"
         >
           Update
