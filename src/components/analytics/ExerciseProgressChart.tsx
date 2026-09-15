@@ -94,7 +94,22 @@ export default function ExerciseProgressChart({ data, accent }: Props) {
   return (
     <div className="h-44" role="img" aria-label={ariaLabel}>
       <ResponsiveContainer width="100%" height="100%">
+        {/* `accessibilityLayer={false}`, because the wrapper above has
+            already done this properly: it declares the graphic atomic
+            with `role="img"` and gives it the full text alternative —
+            session count, range, latest value, PR count.
+
+            Recharts 3 defaults the layer to TRUE, which puts
+            `tabIndex="0"` and `role="application"` on the <svg> INSIDE
+            that `role="img"`. A focusable application region inside an
+            element the author declared to be a single image is the same
+            shape as a tab stop inside `aria-hidden`: the reader is
+            invited into a subtree that is not supposed to be entered,
+            and once there its own navigation keys stop working. The
+            sentence above is the accessible version of this chart; a
+            second, unnamed way in is not an improvement. */}
         <LineChart
+          accessibilityLayer={false}
           data={data}
           margin={{ top: 10, right: 12, bottom: 5, left: 0 }}
         >
