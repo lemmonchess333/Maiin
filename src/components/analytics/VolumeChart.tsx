@@ -11,6 +11,7 @@ import {
 import { formatBinLabel, type ChartGranularity } from "@/lib/chartGranularity";
 import { track as trackHistoryEvent } from "@/lib/historyAnalytics";
 import {
+  CHART_BAR_MAX_WIDTH,
   CHART_TOOLTIP_STYLE,
   CHART_GRID_PROPS,
   CHART_AXIS_TICK,
@@ -126,7 +127,12 @@ export default function VolumeChart({
               }}
               cursor={{ fill: "currentColor", fillOpacity: 0.05 }}
             />
-            <Bar dataKey="volume" radius={[4, 4, 0, 0]} minPointSize={2}>
+            <Bar
+              dataKey="volume"
+              radius={[4, 4, 0, 0]}
+              minPointSize={2}
+              maxBarSize={CHART_BAR_MAX_WIDTH}
+            >
               {data.map((entry, i) => (
                 <Cell
                   key={i}

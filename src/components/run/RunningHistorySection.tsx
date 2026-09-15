@@ -11,6 +11,7 @@ import { THEME } from "../../lib/theme";
 import {
   CHART_GRID_PROPS,
   CHART_AXIS_TICK,
+  CHART_BAR_MAX_WIDTH,
 } from "@/components/analytics/chartStyles";
 import {
   isVolumeEligible,
@@ -77,6 +78,7 @@ export default function RunningHistorySection() {
                 dataKey="totalDistance"
                 fill={THEME.running}
                 radius={[4, 4, 0, 0]}
+                maxBarSize={CHART_BAR_MAX_WIDTH}
               />
             </BarChart>
           </ResponsiveContainer>
