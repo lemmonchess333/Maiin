@@ -62,7 +62,7 @@ export default function TrainingLoadCard({
   }
 
   const last = points[points.length - 1];
-  const formPositive = last.form >= 0;
+  const formFresh = last.form >= 0;
   // B1 guardrails — pure evaluation over the same points the chart draws.
   const guardrails = evaluateLoadGuardrails(points);
 
@@ -95,15 +95,25 @@ export default function TrainingLoadCard({
           />
           <h3 className="text-sm font-bold text-foreground">Training load</h3>
         </div>
-        {/* Form — the takeaway number: fresh (+) or carrying fatigue (−). */}
+        {/* Form — the takeaway number: fresh (+) or carrying fatigue (−).
+            Carrying fatigue is NOT the destructive register. Form is
+            fitness − fatigue, so it sits negative through any ordinary
+            build block — every week whose acute load runs above the
+            4-week base, which is most of them. Red at −1 contradicts
+            this card's own legend two paragraphs down ("deep negative =
+            time to ease off") and is the readiness theater
+            `trainingLoad.ts`'s header rules out. The escalation already
+            exists and is computed from the rolling-mean ratio that
+            module trusts: the amber advisory below. So the chip states
+            the state and leaves the verdict there. */}
         <span
           className={`text-xs font-semibold px-2 py-0.5 rounded-full font-mono tabular-nums ${
-            formPositive
+            formFresh
               ? "bg-success/10 text-success-strong"
-              : "bg-destructive/10 text-destructive-strong"
+              : "bg-muted/60 text-muted-foreground"
           }`}
         >
-          Form {formPositive ? "+" : ""}
+          Form {formFresh ? "+" : ""}
           {numberFmt(last.form)}
         </span>
       </div>
