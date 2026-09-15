@@ -9,6 +9,7 @@ import {
 } from "recharts";
 import { CHART_TOOLTIP_STYLE, CHART_AXIS_TICK } from "./chartStyles";
 import { formatDayMonth, formatDayMonthYear } from "@/utils/formatters";
+import { formatBinLabel } from "@/lib/chartGranularity";
 
 export interface ExerciseProgressPoint {
   date: string;
@@ -60,10 +61,12 @@ function dotRenderer(accent: string) {
 }
 
 export default function ExerciseProgressChart({ data, accent }: Props) {
-  const tickFormatter = (v: string) => {
-    const d = new Date(v + "T12:00:00");
-    return `${d.getDate()}/${d.getMonth() + 1}`;
-  };
+  /* One formatter for every date axis in the app. This copy was
+     CORRECT — the "T12:00:00" suffix forced a local parse to match the
+     local `getDate()` — but two of its four siblings were not, and four
+     hand-rolled copies of the same three lines is how one of them
+     drifts. `chartGranularityUsage.test.ts` bans new copies. */
+  const tickFormatter = (v: string) => formatBinLabel(v, "daily");
   const DotFn = useMemo(() => dotRenderer(accent), [accent]);
 
   if (data.length === 0) {

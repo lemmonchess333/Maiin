@@ -20,6 +20,7 @@ import {
 import ChartAreaGradient from "./ChartAreaGradient";
 import { formatDayMonth } from "@/utils/formatters";
 import { resolveLoadBand } from "@/lib/performanceDocFields";
+import { formatBinLabel } from "@/lib/chartGranularity";
 
 interface Props {
   weeks: PerformanceWeekDoc[];
@@ -121,12 +122,15 @@ export default function PerformanceIndexChart({ weeks }: Props) {
             tick={CHART_AXIS_TICK}
             axisLine={false}
             tickLine={false}
-            tickFormatter={(v: string | number) => {
-              const s = typeof v === "string" ? v : String(v ?? "");
-              const d = new Date(s + "T00:00:00");
-              if (Number.isNaN(d.getTime())) return "";
-              return `${d.getDate()}/${d.getMonth() + 1}`;
-            }}
+            /* The shared formatter. Its NaN guard moved into
+               `formatBinLabel` with the parsing, so an unparseable key
+               still yields an empty tick rather than "NaN/NaN". */
+            tickFormatter={(v: string | number) =>
+              formatBinLabel(
+                typeof v === "string" ? v : String(v ?? ""),
+                "daily"
+              )
+            }
           />
 
           <YAxis
