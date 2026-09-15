@@ -130,7 +130,16 @@ function PIGauge({
 
   return (
     <div className="flex flex-col items-center">
-      <svg width={180} height={100} viewBox="0 0 180 100">
+      {/* 110, not 100. The three scale labels were positioned inside the
+          arc's own stroke band: the ring is 12 wide with round caps, so
+          near each end it occupies y 84..96 and x 14..26 / 154..166, and
+          "0" / "100" sat at baseline 98 — their upper halves under the
+          cap. "50" cleared the top edge by less than nothing, its last
+          two pixels on the amber. Text paints last, so nothing was
+          hidden; the labels were simply crowded onto the ring, which on
+          a 10px numeral reads as a broken glyph. Ten units of room below
+          and a shorter reach for "50" put all three in clear air. */}
+      <svg width={180} height={110} viewBox="0 0 180 110">
         {/* Track */}
         <path
           d={arcPath(RADIUS, Math.PI, 0)}
@@ -165,7 +174,7 @@ function PIGauge({
         {/* Labels */}
         <text
           x={14}
-          y={98}
+          y={107}
           fontSize={10}
           fill="hsl(var(--muted-foreground))"
           textAnchor="middle"
@@ -174,7 +183,7 @@ function PIGauge({
         </text>
         <text
           x={90}
-          y={16}
+          y={10}
           fontSize={10}
           fill="hsl(var(--muted-foreground))"
           textAnchor="middle"
@@ -183,7 +192,7 @@ function PIGauge({
         </text>
         <text
           x={166}
-          y={98}
+          y={107}
           fontSize={10}
           fill="hsl(var(--muted-foreground))"
           textAnchor="middle"
