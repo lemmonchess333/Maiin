@@ -72,6 +72,7 @@ export default function VolumeChart({
         <ResponsiveContainer width="100%" height={140}>
           <BarChart
             data={data}
+            aria-label="Lifting volume over time, kilograms lifted"
             barCategoryGap="25%"
             /* Hist5f S1: tap-attempt telemetry on the bar chart.
              onClick fires on bar tap with the data point payload.

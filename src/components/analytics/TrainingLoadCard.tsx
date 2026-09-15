@@ -134,6 +134,7 @@ export default function TrainingLoadCard({
       <ResponsiveContainer width="100%" height={150}>
         <ComposedChart
           data={data}
+          aria-label="Training load: fitness curve with daily run and lift bars"
           /* Side margins so the first and last tick labels are not cut
              off by the card edge — the leftmost tick sits at x=0, and a
              centred label there loses its first character. */
