@@ -1,7 +1,7 @@
 name: CI
 
 # Runs lint + the unit Vitest suite + the production build on every PR
-# into main, so a failing check BLOCKS the merge.
+# into main and Codex release branches, so a failing check BLOCKS the merge.
 #
 # Why this exists (the gap it closes): deploy.yml runs these exact steps
 # but only on `push: main` — i.e. AFTER a PR merges. emulator-tests.yml
@@ -19,6 +19,8 @@ name: CI
 # reports red but does not block auto-merge.
 
 on:
+  push:
+    branches: ["codex/**"]
   pull_request:
     branches: ["main"]
   workflow_dispatch:
