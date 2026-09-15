@@ -119,9 +119,11 @@ export default function MacroDistribution({
             </PieChart>
           </ResponsiveContainer>
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <p className="text-xs font-mono tabular-nums text-muted-foreground">
-              avg
-            </p>
+            {/* A word, so no numeral face: Archivo's tabular figures align
+                digits and do nothing for letters, and the treatment is
+                scoped to numeric displays. The figures it labels are in
+                the legend beside it. */}
+            <p className="text-xs text-muted-foreground">avg</p>
           </div>
         </div>
         <div className="flex-1 space-y-1.5">
