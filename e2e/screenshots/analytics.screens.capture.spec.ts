@@ -185,12 +185,14 @@ test.describe("analytics tab screenshots", () => {
     });
   }
 
-  test("Analytics leaves skeleton state and renders real content", async ({
-    page,
-  }) => {
-    test.setTimeout(180_000);
-
-    const email = `analytics-${Date.now()}-${Math.floor(Math.random() * 1e6)}@tropos.test`;
+  /** Sign up a fresh account, seed one run + one workout + one meal, and
+   *  land on History. Shared by both tests so the PRs tab is looked at
+   *  with the same data the Analytics tab is. */
+  async function signUpSeedAndOpenHistory(
+    page: Page,
+    prefix: string
+  ): Promise<string> {
+    const email = `${prefix}-${Date.now()}-${Math.floor(Math.random() * 1e6)}@tropos.test`;
     await page.goto("/");
     await page.waitForLoadState("networkidle");
     await page
@@ -206,9 +208,19 @@ test.describe("analytics tab screenshots", () => {
       .getByRole("button", { name: /build muscle/i })
       .waitFor({ state: "visible", timeout: 30_000 });
 
-    await seedTrainingHistory(await uidByEmail(email));
+    const uid = await uidByEmail(email);
+    await seedTrainingHistory(uid);
 
     await page.goto("/Maiin/history");
+    return uid;
+  }
+
+  test("Analytics leaves skeleton state and renders real content", async ({
+    page,
+  }) => {
+    test.setTimeout(180_000);
+
+    await signUpSeedAndOpenHistory(page, "analytics");
     // NOT networkidle — History holds live Firestore listeners open, so
     // the network never goes idle and the wait burns the whole timeout.
     await page.waitForLoadState("domcontentloaded");
@@ -243,5 +255,71 @@ test.describe("analytics tab screenshots", () => {
     await expect(page.getByText(/no meals logged/i)).toHaveCount(0);
 
     await shootBoth(page, "analytics-loaded");
+  });
+
+  /* The third tab had no capture at all — Analytics and Badges were
+     filmed, PRs was not — and the first look at it found a personal
+     record stated in the wrong unit ("Fastest 5K  5:35", a pace under a
+     label naming a distance, read as a finish time). Reading the
+     component had not found that; seeing it did.
+
+     The assertions are the unit contract, not the numbers: a row whose
+     label names a DISTANCE must say what its value is measured in, or a
+     pace reads as a time. `prRowUnits.test.ts` holds the same rule
+     against the builder; this holds it against the rendered page.
+
+     Expect the FRAME to churn between captures taken on different days:
+     every row carries a date ("13 Sept"), and the seeds are relative to
+     now. That is the `badges-grid` family from CLAUDE.md — fixture data
+     moving with the wall clock, not layout — so localise a diff to the
+     date column before chasing it. The assertions above are immune:
+     they read values, not dates. */
+  test("PRs tab states its units", async ({ page }) => {
+    test.setTimeout(180_000);
+
+    const uid = await signUpSeedAndOpenHistory(page, "prs");
+    /* A second, SHORTER and FASTER run. `buildPRBucket` draws Fastest 1K
+       from runs >= 1 km and Fastest 5K from runs >= 5 km, so this one
+       takes the 1K best (4:30) and leaves the 5K best to the 5.2 km run
+       (5:35). Without it both rows print the same number and no
+       assertion here can tell them apart. */
+    await patch(`users/${uid}/runs/analytics-capture-r2`, {
+      distance: { doubleValue: 1200 },
+      duration: { integerValue: "324" },
+      avgPace: { doubleValue: 270 },
+      elevationGain: { integerValue: "4" },
+      calories: { integerValue: "90" },
+      activityType: { stringValue: "freerun" },
+      completedAt: {
+        timestampValue: new Date(Date.now() - 86_400_000).toISOString(),
+      },
+    });
+    await page.reload();
+    await page.waitForLoadState("domcontentloaded");
+    await expect(
+      page.getByRole("heading", { name: /analytics/i }).first()
+    ).toBeVisible({ timeout: 30_000 });
+
+    // The tab strip is a SegmentedControl, so its options are radios.
+    await page.getByRole("radio", { name: /^PRs$/ }).click({ timeout: 10_000 });
+
+    await expect(page.getByText("Fastest 5K").first()).toBeVisible({
+      timeout: 15_000,
+    });
+    /* Anchored on values that differ BY ROW, which is why the extra run
+       above is seeded. With only the 5.2 km run, the 1K and the 5K best
+       are the same pace, so every page-level assertion about "5:35 /km"
+       is satisfied by the 1K row and passes with the 5K row's unit
+       stripped — measured, not assumed: that version survived the
+       mutation twice, as a substring and again anchored. Scoping the
+       locator to the row was the other way out and it is worse: the
+       nearest div containing the label is the label's own wrapper, so
+       the assertion has to know the card's DOM shape. A fixture whose
+       rows differ needs no such knowledge. */
+    await expect(page.getByText(/^5:35 \/km$/).first()).toBeVisible();
+    await expect(page.getByText(/^4:30 \/km$/).first()).toBeVisible();
+    await expect(page.getByText(/^5\.2 km$/).first()).toBeVisible();
+
+    await shootBoth(page, "prs-tab");
   });
 });
