@@ -1,0 +1,111 @@
+{
+  "schemaVersion": 1,
+  "batch": "recovered-originals",
+  "releaseApproved": false,
+  "productionAssetsChanged": false,
+  "selectedFrameCount": 6,
+  "sourceBranch": "codex/exercise-art-registration-04",
+  "completeDraftSets": [
+    {
+      "exerciseId": "deadlift",
+      "status": "draft-awaiting-review",
+      "camera": "Fixed front three-quarter facing left; portrait",
+      "anchors": ["both planted shoes", "camera", "bar dimensions and grip spacing"],
+      "equipment": "Straight barbell, double-overhand grip, one identical modest plate per side.",
+      "muscles": {
+        "primary": ["glutes", "hamstrings"],
+        "secondary": ["quadriceps", "spinal erectors"],
+        "stabilisers": "Subtle lats, abdominals and forearms; qualitative contribution, not measured activation."
+      },
+      "reviewFindings": [
+        "Six separate files from four distinct poses; return frames reuse corresponding lift poses.",
+        "Early pose translated down32px; knee pose left8px/down32px. No body or equipment resizing.",
+        "Lockout abdominal highlight reduced with a bounded colour-only mask; contours preserved.",
+        "Grip spacing, plate silhouette, head/limb dimensions and hip/knee mechanics still require full review.",
+        "Draft ladder differs from production authored cues; reconcile before release. No mobile light/dark playback approval.",
+        "Recovered originals were inspected together at review scale. This confirms a complete candidate sequence, not a strict anatomy or equipment pass.",
+        "The last frame is the early-lift pose on return, not the floor endpoint; inspect the 6-to-1 transition in the actual player before release."
+      ],
+      "frames": [
+        {
+          "frame": 1,
+          "path": "docs/exercise-art/pilots/recovered-deadlift/1.png",
+          "caption": "SET AND BRACE 1/6",
+          "cue": "Brace with the bar over midfoot and arms straight.",
+          "progress": 0,
+          "dimensions": [1024, 1536],
+          "bytes": 849774,
+          "sha256": "7aa5f8608de303ded4054cf1a0b123de572ae7f00cb1e378c6facf58030d0107",
+          "reusedFrom": null,
+          "sourcePath": "docs/exercise-art/pilots/deadlift/1-master.png",
+          "sourceBlobSha": "6fe379c33c613e31b54837f00d412d5893ce1c05"
+        },
+        {
+          "frame": 2,
+          "path": "docs/exercise-art/pilots/recovered-deadlift/2.png",
+          "caption": "LIFT FROM FLOOR 2/6",
+          "cue": "Push through the floor; raise hips and chest together.",
+          "progress": 0.25,
+          "dimensions": [1024, 1536],
+          "bytes": 1128732,
+          "sha256": "90af5b45ab8fdc710f9560cd4ff09c707518f8b728e416db1d8d116eff5beff2",
+          "reusedFrom": null,
+          "sourcePath": "docs/exercise-art/pilots/deadlift/2-early-code-registered.png",
+          "sourceBlobSha": "7febd77cb4b889a2daec5315cb99c98c3150eb05"
+        },
+        {
+          "frame": 3,
+          "path": "docs/exercise-art/pilots/recovered-deadlift/3.png",
+          "caption": "PASS THE KNEES 3/6",
+          "cue": "Keep the bar close as you extend your hips.",
+          "progress": 0.7,
+          "dimensions": [1024, 1536],
+          "bytes": 831224,
+          "sha256": "2502b35a2e48c6e499917ab90f82ba1613e59d6258b728057380f9f0a0612d89",
+          "reusedFrom": null,
+          "sourcePath": "docs/exercise-art/pilots/deadlift/3-knees-code-registered.png",
+          "sourceBlobSha": "e106d4febfe8800da1080a46a207fc07748c7786"
+        },
+        {
+          "frame": 4,
+          "path": "docs/exercise-art/pilots/recovered-deadlift/4.png",
+          "caption": "STAND TALL 4/6",
+          "cue": "Stand tall without leaning back or shrugging.",
+          "progress": 1,
+          "dimensions": [1024, 1536],
+          "bytes": 886312,
+          "sha256": "72d4d7525c266c2a33b364433e85d0334e06fa3d459ba8a39186e86c4e9cee45",
+          "reusedFrom": null,
+          "sourcePath": "docs/exercise-art/pilots/deadlift/4-lockout-colour-refined.png",
+          "sourceBlobSha": "b6ca1606fcdf821997bfa991825620579876c9d9"
+        },
+        {
+          "frame": 5,
+          "path": "docs/exercise-art/pilots/recovered-deadlift/5.png",
+          "caption": "HINGE TO LOWER 5/6",
+          "cue": "Send hips back and keep the bar close.",
+          "progress": 0.7,
+          "dimensions": [1024, 1536],
+          "bytes": 831224,
+          "sha256": "2502b35a2e48c6e499917ab90f82ba1613e59d6258b728057380f9f0a0612d89",
+          "reusedFrom": 3,
+          "sourcePath": "docs/exercise-art/pilots/deadlift/5-lower.png",
+          "sourceBlobSha": "e106d4febfe8800da1080a46a207fc07748c7786"
+        },
+        {
+          "frame": 6,
+          "path": "docs/exercise-art/pilots/recovered-deadlift/6.png",
+          "caption": "CONTROLLED RETURN 6/6",
+          "cue": "Bend knees as the bar passes them; lower under control.",
+          "progress": 0.25,
+          "dimensions": [1024, 1536],
+          "bytes": 1128732,
+          "sha256": "90af5b45ab8fdc710f9560cd4ff09c707518f8b728e416db1d8d116eff5beff2",
+          "reusedFrom": 2,
+          "sourcePath": "docs/exercise-art/pilots/deadlift/6-return.png",
+          "sourceBlobSha": "7febd77cb4b889a2daec5315cb99c98c3150eb05"
+        }
+      ]
+    }
+  ]
+}

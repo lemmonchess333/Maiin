@@ -7,9 +7,10 @@ import { getAuthoredBeats, getFormBeats } from "../../src/lib/bodyRig";
 import { FORM_ARTWORK } from "../../src/lib/formArtwork";
 import { Button } from "../../src/components/ui/Button";
 import batch from "../../docs/exercise-art/BATCH_REVIEW_MANIFEST.json";
+import recovered from "../../docs/exercise-art/RECOVERED_DRAFTS.json";
 
 const batchDrafts = Object.fromEntries(
-  batch.completeDraftSets.map((set) => [
+  [...batch.completeDraftSets, ...recovered.completeDraftSets].map((set) => [
     `${set.exerciseId} (draft)`,
     {
       name: set.exerciseId,
