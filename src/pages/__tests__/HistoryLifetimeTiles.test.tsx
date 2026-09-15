@@ -40,9 +40,18 @@ const historyRaw = readFileSync(
   "utf8"
 );
 
-/** The `<section id="analytics-lifetime">` block, comments removed. */
+/** The `<section id="analytics-lifetime">` block, comments removed.
+ *
+ *  Anchored on the id ALONE, not on `<section id="..."` as one string. The
+ *  tag is formatted by prettier, so the moment it gained a third attribute
+ *  the opening tag wrapped across lines and the combined literal stopped
+ *  matching — a rename of nothing, reported as "the lifetime section is
+ *  gone". Worse, it passes a local run and fails in CI, because lint-staged
+ *  reformats at COMMIT: the source the suite read is not the source that
+ *  was pushed. The id is the stable thing; the whitespace around it is not.
+ */
 function lifetimeSection(): string {
-  const start = historyRaw.indexOf('<section id="analytics-lifetime"');
+  const start = historyRaw.indexOf('id="analytics-lifetime"');
   expect(
     start,
     "the lifetime section is gone — retarget this test"
