@@ -3,12 +3,29 @@
  * scoring engine.
  *
  * The single conceptual PI engine has two physical copies: the client
- * `src/lib/performanceEngine.ts` (Home/analytics previews) and the server
- * `functions/lib/perfScoring.js` (the authoritative copy — the weekly rollup
- * persists the PI users actually see). They derive their BASELINE differently
- * by design (client from `priorWeeks[]`, server by aggregating a baseline
- * window), so the parity seam is the *post-baseline* scoring: the pure
+ * `src/lib/performanceEngine.ts` and the server `functions/lib/perfScoring.js`
+ * (the authoritative copy — the weekly rollup persists the PI users actually
+ * see). They derive their BASELINE differently by design (client from
+ * `priorWeeks[]`, server by aggregating a baseline window), so the parity seam
+ * is the *post-baseline* scoring: the pure
  * `scorePerformance(agg, bl, profile, prevPI)` both expose.
+ *
+ * The client copy is NOT a preview of that number, whatever this paragraph
+ * said before. Nothing in the app computes a PI: Home and Analytics render
+ * the server-written doc through `usePerformanceWeeks`, and production
+ * imports exactly two symbols from the client engine — `weekKeyMinusN` and
+ * `computeLoadBand`, neither of which scores anything. The scoring pipeline
+ * has one non-test caller, `scripts/seed-rich-user.ts`, which manufactures
+ * perf docs so the capture rig's Home hero has a number in it.
+ *
+ * That makes the client copy an oracle plus a fixture generator, and it is
+ * worth saying plainly, because "which copy do users see?" is the question
+ * ADR-0008 was written about — two copies pinned to each other while a third
+ * implementation was the one that ran. Here the authoritative copy IS in the
+ * seam, so the seam is real. But a reader who believes the client previews
+ * the user's PI will mis-rank which side a disagreement matters on, and the
+ * seed script's output is supposed to pass for the server's, which is a
+ * second reason to keep the two honest.
  *
  * History: the server copy silently lagged the client's goal-awareness — all
  * four goal branches (recovery bodyweight thresholds, adherence calorie
