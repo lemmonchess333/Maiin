@@ -6,54 +6,60 @@ import { logger } from "@/lib/logger";
 
 /**
  * Trial-ending reminder — one local notification, two days before the
- * onboarding trial lapses.
+ * trial ends. Whichever trial is running:
  *
- * The 7-day Pro trial granted at onboarding (`trialExpiresAt`) ends
- * quietly: the Home strip counts it down and the trial-ended prompt
- * appears afterwards, but nothing reaches a user who has not opened the
- * app that week. A reminder before the end is what lets someone decide
- * while the features are still on, rather than discover the lapse at
- * the camera. Cal AI and Runna both promise one on the paywall.
+ *   - the BILLED trial (the card trial at checkout — the App Store
+ *     introductory offer via the RevenueCat webhook, or Stripe
+ *     `trialing`): Apple and Stripe send the user nothing before it
+ *     converts, so this is the reminder the offer page's timeline
+ *     promises. "Your free trial ends in 2 days" — the subscription
+ *     starts then unless they cancel;
+ *   - the legacy onboarding free week, for profiles that still hold one:
+ *     nothing is charged when it ends, and the copy says so.
  *
- * Which trial: the app-granted one — and, since the onboarding grant
- * was removed (Sub1a pin 3 as written), a LEGACY one: this fires only
- * for profiles that still carry a live `trialExpiresAt` from before.
- * The trial new accounts get is the billed checkout trial
- * (`hasUsedTrial`, Stripe `trialing` / the App Store intro offer),
- * whose end the client cannot see yet; when the server records it on
- * the profile, this hook is the place to read it from.
- *
- * Fires at 10:00 local on the calendar day two days before the expiry's
- * local day. Local methods throughout — the expiry is a UTC instant, and
+ * Fires at 10:00 local on the calendar day two days before the end's
+ * local day. Local methods throughout — the end is a UTC instant, and
  * the day it lands on is the user's, not the server's.
  *
  * Mirrors the streak reminder: cancel-then-schedule on every evaluation
  * (same-id replacement is not reliable on every platform), one stable
- * id, silent no-op without notification permission. There is no toggle:
- * it is a one-shot about the account's own state, not a recurring nudge.
+ * id, silent without notification permission. There is no toggle: it
+ * is a one-shot about the account's own state, not a recurring nudge.
  */
 export const TRIAL_NOTIFICATION_ID = 3003;
 export const TRIAL_REMINDER_DAYS_BEFORE = 2;
 export const TRIAL_REMINDER_HOUR = 10;
 
-export const TRIAL_REMINDER_TITLE = "Your Pro trial ends in 2 days";
-export const TRIAL_REMINDER_BODY =
-  "Photo logging pauses and your calorie target stops adapting after that. Nothing is charged unless you subscribe.";
+export type TrialReminderKind = "billed" | "onboarding";
+
+export const TRIAL_REMINDER_COPY: Record<
+  TrialReminderKind,
+  { title: string; body: string }
+> = {
+  billed: {
+    title: "Your free trial ends in 2 days",
+    body: "Your subscription starts then unless you cancel before it ends. Manage it in Settings.",
+  },
+  onboarding: {
+    title: "Your Pro trial ends in 2 days",
+    body: "Photo logging pauses and your calorie target stops adapting after that. Nothing is charged unless you subscribe.",
+  },
+};
 
 /**
  * When the reminder fires, or null when there is nothing to remind
- * about: no live trial, a paid tier, an unreadable expiry, or a fire
- * time already behind us (the Home strip carries the last two days).
+ * about: no live trial, an unreadable end, or a fire time already
+ * behind us (the Home strip carries the last two days).
  */
 export function trialReminderFireAt(input: {
-  isInTrial: boolean;
-  trialExpiresAt: string | null | undefined;
+  trialKind: TrialReminderKind | null;
+  trialEndsAt: string | null | undefined;
   now: Date;
 }): Date | null {
-  if (!input.isInTrial || !input.trialExpiresAt) return null;
-  const expires = new Date(input.trialExpiresAt);
-  if (Number.isNaN(expires.getTime())) return null;
-  const fireAt = new Date(expires.getTime());
+  if (!input.trialKind || !input.trialEndsAt) return null;
+  const ends = new Date(input.trialEndsAt);
+  if (Number.isNaN(ends.getTime())) return null;
+  const fireAt = new Date(ends.getTime());
   fireAt.setDate(fireAt.getDate() - TRIAL_REMINDER_DAYS_BEFORE);
   fireAt.setHours(TRIAL_REMINDER_HOUR, 0, 0, 0);
   if (fireAt.getTime() <= input.now.getTime()) return null;
@@ -62,9 +68,8 @@ export function trialReminderFireAt(input: {
 
 /** Runs once at the authenticated root (RemindersProvider). Returns nothing. */
 export function useTrialReminderInternal(): void {
-  const { profile, loading } = useAuth();
-  const { isInTrial } = useSubscription();
-  const trialExpiresAt = profile?.trialExpiresAt ?? null;
+  const { loading } = useAuth();
+  const { trialKind, trialEndsAt } = useSubscription();
   const chain = useRef<Promise<void>>(Promise.resolve());
 
   useEffect(() => {
@@ -76,15 +81,16 @@ export function useTrialReminderInternal(): void {
       });
       if (cancelled) return;
       const fireAt = trialReminderFireAt({
-        isInTrial,
-        trialExpiresAt,
+        trialKind,
+        trialEndsAt,
         now: new Date(),
       });
-      if (!fireAt) return;
+      if (!fireAt || !trialKind) return;
+      const copy = TRIAL_REMINDER_COPY[trialKind];
       await scheduleNotification({
         id: TRIAL_NOTIFICATION_ID,
-        title: TRIAL_REMINDER_TITLE,
-        body: TRIAL_REMINDER_BODY,
+        title: copy.title,
+        body: copy.body,
         scheduleAt: fireAt,
       });
     };
@@ -92,5 +98,5 @@ export function useTrialReminderInternal(): void {
     return () => {
       cancelled = true;
     };
-  }, [loading, isInTrial, trialExpiresAt]);
+  }, [loading, trialKind, trialEndsAt]);
 }

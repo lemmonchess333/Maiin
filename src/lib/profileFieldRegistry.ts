@@ -178,6 +178,7 @@ export const PROFILE_FIELD_REGISTRY: readonly ProfileFieldEntry[] = [
   { field: "subscriptionExpiresAt", sanitized: false, serverGuarded: true },
   { field: "subscriptionSource", sanitized: false, serverOnly: true },
   { field: "subscriptionTier", sanitized: false, serverGuarded: true },
+  { field: "subscriptionTrialEndsAt", sanitized: false, serverGuarded: true },
   { field: "targetCalories", sanitized: true },
   { field: "targetCarbs", sanitized: true },
   { field: "targetFat", sanitized: true },

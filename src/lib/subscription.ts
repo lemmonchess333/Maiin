@@ -79,13 +79,37 @@ export interface SubscriptionInfo {
   isInTrial: boolean;
   trialDaysLeft: number;
   isPro: boolean;
+  /**
+   * Which trial is running, when one is. "billed" is the card trial at
+   * checkout (the App Store introductory offer via the RevenueCat
+   * webhook, or Stripe `trialing`) — the subscription is live and
+   * converts unless cancelled, so the surfaces read "manage", never
+   * "subscribe". "onboarding" is the legacy no-card week for profiles
+   * that still hold one.
+   */
+  trialKind: "billed" | "onboarding" | null;
+  /** ISO end of whichever trial is running; null otherwise. */
+  trialEndsAt: string | null;
+}
+
+const NO_TRIAL = { trialKind: null, trialEndsAt: null } as const;
+
+function daysUntil(iso: string, now: Date): number {
+  const ms = Date.parse(iso) - now.getTime();
+  return Math.max(0, Math.ceil(ms / (1000 * 60 * 60 * 24)));
 }
 
 export function getSubscriptionInfo(
   profile: UserProfile | null
 ): SubscriptionInfo {
   if (!profile) {
-    return { tier: "free", isInTrial: false, trialDaysLeft: 0, isPro: false };
+    return {
+      tier: "free",
+      isInTrial: false,
+      trialDaysLeft: 0,
+      isPro: false,
+      ...NO_TRIAL,
+    };
   }
 
   // Dev override or webhook: subscriptionTier manually set to "pro".
@@ -103,7 +127,29 @@ export function getSubscriptionInfo(
     if (Number.isFinite(expiresMs) && expiresMs < Date.now()) {
       // Expired — fall through to trial / free check below.
     } else {
-      return { tier: "pro", isInTrial: false, trialDaysLeft: 0, isPro: true };
+      // The billed trial: Pro is live and the server has recorded when
+      // the trial period ends. Past that instant the field is stale
+      // until the conversion webhook clears it, so it only counts
+      // while it is ahead of now.
+      const trialRaw = profile.subscriptionTrialEndsAt;
+      const trialMs = trialRaw ? Date.parse(trialRaw) : NaN;
+      if (Number.isFinite(trialMs) && trialMs > Date.now()) {
+        return {
+          tier: "pro",
+          isInTrial: true,
+          trialDaysLeft: daysUntil(trialRaw!, new Date()),
+          isPro: true,
+          trialKind: "billed",
+          trialEndsAt: new Date(trialMs).toISOString(),
+        };
+      }
+      return {
+        tier: "pro",
+        isInTrial: false,
+        trialDaysLeft: 0,
+        isPro: true,
+        ...NO_TRIAL,
+      };
     }
   }
 
@@ -123,12 +169,20 @@ export function getSubscriptionInfo(
         isInTrial: true,
         trialDaysLeft: daysLeft,
         isPro: true, // During trial, user has full Pro access
+        trialKind: "onboarding",
+        trialEndsAt: expiresAt.toISOString(),
       };
     }
   }
 
   // No trial, no pro subscription
-  return { tier: "free", isInTrial: false, trialDaysLeft: 0, isPro: false };
+  return {
+    tier: "free",
+    isInTrial: false,
+    trialDaysLeft: 0,
+    isPro: false,
+    ...NO_TRIAL,
+  };
 }
 
 /* ================================

@@ -110,7 +110,7 @@ export default function Home() {
   const { meals, loading: mealsLoading, getDailyTotals } = useMeals();
 
   const effectiveTargets = useEffectiveTargets();
-  const { isPro, isInTrial, trialDaysLeft } = useSubscription();
+  const { isPro, isInTrial, trialDaysLeft, trialKind } = useSubscription();
   // PR-1: pull the action callbacks too so the new DayActionSheet
   // (mounted from DayPeekCard's Manage CTA) can dispatch
   // override/skip/complete without re-implementing them here.
@@ -673,7 +673,11 @@ export default function Home() {
         <button
           type="button"
           onClick={function () {
-            if (trialDaysLeft <= 2) {
+            // A billed trial is a live subscription: the only action is
+            // to manage it (keep it or cancel), never to subscribe again.
+            if (trialKind === "billed") {
+              navigate("/settings/subscription");
+            } else if (trialDaysLeft <= 2) {
               setShowProModal(true);
             } else {
               navigate("/upgrade?from=trial_strip");
@@ -686,7 +690,13 @@ export default function Home() {
             className="size-4 text-primary shrink-0"
           />
           <span className="text-xs font-medium text-foreground flex-1 text-pretty">
-            {trialDaysLeft <= 1 ? (
+            {trialKind === "billed" ? (
+              <>
+                Free trial &middot;{" "}
+                <span className="font-mono tabular-nums">{trialDaysLeft}</span>{" "}
+                {trialDaysLeft === 1 ? "day" : "days"} left
+              </>
+            ) : trialDaysLeft <= 1 ? (
               "Trial ends tomorrow"
             ) : trialDaysLeft === 2 ? (
               <>
@@ -702,7 +712,7 @@ export default function Home() {
             )}
           </span>
           <span className="text-caption font-semibold text-primary-foreground bg-primary-strong rounded-full px-2.5 py-1 shrink-0">
-            Subscribe
+            {trialKind === "billed" ? "Manage" : "Subscribe"}
           </span>
         </button>
       )}

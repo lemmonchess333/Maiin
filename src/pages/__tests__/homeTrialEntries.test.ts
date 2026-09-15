@@ -20,6 +20,19 @@ describe("Home → offer page entries", () => {
     expect(block).toMatch(/navigate\("\/upgrade\?from=trial_strip"\)/);
   });
 
+  it("a billed trial's strip manages the live subscription rather than selling one", () => {
+    const start = home.indexOf("{isInTrial && (");
+    const block = home.slice(start, home.indexOf("</button>", start));
+    // The billed branch is checked FIRST: a live subscription must never
+    // reach the sheet or the offer page.
+    const billed = block.indexOf('trialKind === "billed"');
+    const sell = block.indexOf("trialDaysLeft <= 2");
+    expect(billed).toBeGreaterThan(-1);
+    expect(billed).toBeLessThan(sell);
+    expect(block).toMatch(/navigate\("\/settings\/subscription"\)/);
+    expect(block).toMatch(/"Manage" : "Subscribe"/);
+  });
+
   it("the Pro strip for free accounts is gated by the shared predicate and tagged as the strip", () => {
     const start = home.indexOf("{showProStrip && (");
     expect(start).toBeGreaterThan(0);

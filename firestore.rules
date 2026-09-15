@@ -224,7 +224,8 @@ service cloud.firestore {
     function subscriptionFieldsUnchanged() {
       let protectedFields = [
         'subscriptionTier', 'stripeCustomerId', 'stripeSubscriptionId', 'trialExpiresAt',
-        'appleOriginalTransactionId', 'appleProductId', 'subscriptionExpiresAt'
+        'appleOriginalTransactionId', 'appleProductId', 'subscriptionExpiresAt',
+        'subscriptionTrialEndsAt'
       ];
       return (!request.resource.data.diff(resource.data).affectedKeys().hasAny(protectedFields));
     }
@@ -309,7 +310,8 @@ service cloud.firestore {
         // profileSanitizer.js.
         'maxHeartRate',
         'trialExpiryPromptShown',
-        'appleOriginalTransactionId', 'appleProductId', 'subscriptionExpiresAt'
+        'appleOriginalTransactionId', 'appleProductId', 'subscriptionExpiresAt',
+        'subscriptionTrialEndsAt'
       ];
     }
 
@@ -325,6 +327,7 @@ service cloud.firestore {
     function billingFieldsUnsetOnCreate() {
       return (!('trialExpiresAt' in request.resource.data) || request.resource.data.trialExpiresAt == null)
         && (!('subscriptionExpiresAt' in request.resource.data) || request.resource.data.subscriptionExpiresAt == null)
+        && (!('subscriptionTrialEndsAt' in request.resource.data) || request.resource.data.subscriptionTrialEndsAt == null)
         && (!('stripeCustomerId' in request.resource.data) || request.resource.data.stripeCustomerId == null)
         && (!('stripeSubscriptionId' in request.resource.data) || request.resource.data.stripeSubscriptionId == null)
         && (!('appleOriginalTransactionId' in request.resource.data) || request.resource.data.appleOriginalTransactionId == null)

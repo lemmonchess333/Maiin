@@ -142,8 +142,14 @@ env). **Never** put the webhook/REST secrets in Vite — they're server-only.
   on Firebase auth change (uid = App User ID). Needs only the **public key**, so
   I can scaffold it now and you drop the key in.
 - **Slice 3 (#1099):** the real purchase flow through `purchaseProvider.ts` + the
-  `revenueCatWebhook` function (writes `subscriptionTier`/`subscriptionExpiresAt`)
-  - a sync-on-purchase callable. Needs the **webhook + REST secrets**.
+  `revenueCatWebhook` function (writes `subscriptionTier`/`subscriptionExpiresAt`/
+  `subscriptionTrialEndsAt`, marks `hasUsedTrial` when a TRIAL period is seen)
+  - the `syncRevenueCatEntitlement` callable. **Backend built** — see
+    `functions/lib/revenueCatEntitlement.js` (decision) and
+    `functions/lib/revenueCatApply.js` (guarded write). Needs the **webhook +
+    REST secrets** provisioned BEFORE the functions deploy that carries it:
+    `firebase functions:secrets:set REVENUECAT_WEBHOOK_AUTH` and
+    `firebase functions:secrets:set REVENUECAT_REST_KEY`.
 - **Slices 4–8:** lifecycle webhooks, restore/manage, the web "Get it on iOS"
   funnel, then the sandbox-device test that retires the hand-rolled Apple path.
 

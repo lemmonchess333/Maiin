@@ -250,6 +250,12 @@ const BILLING_HMAC_SECRET = defineSecret("BILLING_HMAC_SECRET");
 // native app. A key in the client can be extracted and cannot enforce
 // the Pro gate.
 const MAPBOX_DIRECTIONS_TOKEN = defineSecret("MAPBOX_DIRECTIONS_TOKEN");
+// RevenueCat (ADR-0006): the webhook's shared secret arrives verbatim in
+// its Authorization header; the REST key lets syncRevenueCatEntitlement
+// read a subscriber right after a purchase. Both server-only — never in a
+// VITE_* var. Provision before deploy: `firebase functions:secrets:set`.
+const REVENUECAT_WEBHOOK_AUTH = defineSecret("REVENUECAT_WEBHOOK_AUTH");
+const REVENUECAT_REST_KEY = defineSecret("REVENUECAT_REST_KEY");
 
 // Scheduled (pubsub cron) sweeps iterate EVERY active user via
 // sweepActiveUsers. The Cloud Functions v1 default timeout is
@@ -2033,6 +2039,11 @@ exports.stripeWebhook = functions
           break;
         }
 
+        // `created` carries the same object as `updated` and is the one
+        // event a trialing subscription is guaranteed to send at the
+        // start of the trial — without it the trial end below is written
+        // only if something else changes mid-trial.
+        case "customer.subscription.created":
         case "customer.subscription.updated": {
           const subscription = event.data.object;
           const customerId = subscription.customer;
@@ -2127,11 +2138,19 @@ exports.stripeWebhook = functions
             );
           }
 
+          // The trial end is what the day-5 reminder and the Home strip
+          // read; Stripe (like Apple) sends the user nothing before a
+          // trial converts. Null once the subscription is past it.
+          const trialEndsAt =
+            status === "trialing" && Number(subscription.trial_end) > 0
+              ? new Date(Number(subscription.trial_end) * 1000).toISOString()
+              : null;
           await userDoc.ref.set(
             {
               subscriptionTier: updateDecision.writeTier,
               subscriptionSource: updateDecision.writeSource,
               stripeSubscriptionId: subscription.id,
+              subscriptionTrialEndsAt: trialEndsAt,
               subscriptionUpdatedAt:
                 event.created || Math.floor(Date.now() / 1000),
             },
@@ -2285,6 +2304,213 @@ const {
 const db = admin.firestore();
 
 // ── 1) Callable: manual / on-demand compute ──
+
+// ══════════════════════════════════════════════
+// RevenueCat entitlement (ADR-0006) — the webhook and the sync callable
+// ══════════════════════════════════════════════
+//
+// The client shipped against this contract (purchaseProvider.ts nudges
+// syncRevenueCatEntitlement after a purchase and otherwise trusts the
+// webhook); until these existed an iOS purchase changed nothing in
+// Firestore. The decision is lib/revenueCatEntitlement.js; the guarded
+// write is lib/revenueCatApply.js; this is the I/O.
+
+const revenueCatEntitlement = require("./lib/revenueCatEntitlement");
+const { applyRevenueCatEntitlement } = require("./lib/revenueCatApply");
+
+/** Constant-time equality for the webhook's shared secret. */
+function secretsMatch(presented, expected) {
+  if (typeof presented !== "string" || typeof expected !== "string") {
+    return false;
+  }
+  const a = Buffer.from(presented);
+  const b = Buffer.from(expected);
+  if (a.length !== b.length) return false;
+  return require("crypto").timingSafeEqual(a, b);
+}
+
+exports.revenueCatWebhook = functions
+  // ⛔ NEVER add `enforceAppCheck: true` here — RevenueCat's servers call
+  // it and cannot send an App Check token. Auth is the shared secret in
+  // the Authorization header (REVENUECAT_WEBHOOK_AUTH), compared in
+  // constant time. See docs/app-check-rollout.md → "Never enforce".
+  .runWith({ ...DEFAULT_HTTP_CAP, secrets: [REVENUECAT_WEBHOOK_AUTH] })
+  .https.onRequest(async (req, res) => {
+    if (req.method !== "POST") {
+      res.status(405).json({ error: "Method not allowed" });
+      return;
+    }
+    const expected = process.env.REVENUECAT_WEBHOOK_AUTH;
+    if (!expected) {
+      console.error(
+        "revenueCatWebhook: REVENUECAT_WEBHOOK_AUTH not configured"
+      );
+      res.status(500).json({ error: "Webhook not configured" });
+      return;
+    }
+    // RevenueCat sends the configured value verbatim; accept it bare or
+    // as a Bearer token so a dashboard-side change of convention does
+    // not silently 401 every event.
+    const header = String(req.headers.authorization || "");
+    const presented = header.startsWith("Bearer ")
+      ? header.slice("Bearer ".length)
+      : header;
+    if (!secretsMatch(presented, expected)) {
+      res.status(401).json({ error: "Unauthorized" });
+      return;
+    }
+
+    const parsed = revenueCatEntitlement.parseWebhookBody(req.body);
+    if (!parsed.ok) {
+      // A malformed body will never parse on retry; 400 stops the storm.
+      res.status(400).json({ error: parsed.reason });
+      return;
+    }
+    const { event } = parsed;
+    const dbRef = admin.firestore();
+
+    // Idempotency: RevenueCat retries on non-2xx and can deliver twice.
+    // Same transactional claim shape as stripeEvents/{id}.
+    const eventRef = dbRef.collection("revenueCatEvents").doc(event.id);
+    let isDuplicate = false;
+    try {
+      await dbRef.runTransaction(async (txn) => {
+        const snap = await txn.get(eventRef);
+        if (snap.exists) {
+          isDuplicate = true;
+          return;
+        }
+        txn.set(eventRef, {
+          type: event.type,
+          appUserId: event.app_user_id,
+          eventTimestampMs: Number(event.event_timestamp_ms) || null,
+          claimedAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+      });
+    } catch (err) {
+      console.error(
+        `revenueCatWebhook: idempotency claim failed for ${event.id}:`,
+        err.message
+      );
+      res.status(500).json({ error: "Idempotency claim failed; retry" });
+      return;
+    }
+    if (isDuplicate) {
+      res.status(200).json({ received: true, duplicate: true });
+      return;
+    }
+
+    try {
+      const resolved = revenueCatEntitlement.resolveEntitlementFromEvent(
+        event,
+        new Date()
+      );
+      if (!resolved) {
+        // TEST pings, anonymous ids, event types that carry no
+        // entitlement — acknowledged, nothing written.
+        res.status(200).json({ received: true, ignored: event.type });
+        return;
+      }
+      const updatedAtSeconds = resolved.eventTimestampMs
+        ? Math.floor(resolved.eventTimestampMs / 1000)
+        : Math.floor(Date.now() / 1000);
+      const result = await applyRevenueCatEntitlement({
+        db: dbRef,
+        uid: event.app_user_id,
+        resolved,
+        updatedAtSeconds,
+        reason: `revenueCatWebhook:${event.type}`,
+        providerEventId: event.id,
+        eventType: event.type,
+        locks: accountDeletionLocks,
+        reconciliation: subscriptionReconciliation,
+        logger: functions.logger,
+      });
+      functions.logger.info("revenueCatWebhook.applied", {
+        uid: event.app_user_id,
+        type: event.type,
+        applied: result.applied,
+        why: result.why,
+        tier: resolved.tier,
+        trialEndsAt: resolved.trialEndsAt,
+        environment: resolved.environment,
+      });
+      res.status(200).json({ received: true, applied: result.applied });
+    } catch (err) {
+      // Release the claim so RevenueCat's retry can re-attempt — the
+      // same rule the Stripe handler follows for a mid-process failure.
+      await eventRef.delete().catch(() => {});
+      console.error("revenueCatWebhook: handler failed:", err.message);
+      res.status(500).json({ error: "Webhook handler failed" });
+    }
+  });
+
+/**
+ * Sync-on-purchase: the client calls this the moment the RevenueCat
+ * sheet dismisses so Pro is on before the webhook lands. Reads the
+ * caller's own subscriber record with the REST key; writes through the
+ * same guarded path as the webhook. Best-effort on the client — a
+ * failure here never fails a purchase.
+ */
+exports.syncRevenueCatEntitlement = functions
+  .runWith({ ...DEFAULT_HTTP_CAP, secrets: [REVENUECAT_REST_KEY] })
+  .https.onCall(async (_data, context) => {
+    if (!context.auth) {
+      throw new functions.https.HttpsError("unauthenticated", "Auth required.");
+    }
+    const uid = context.auth.uid;
+    if (await isRateLimited(uid, "syncRevenueCat", 10, 600_000)) {
+      throw new functions.https.HttpsError(
+        "resource-exhausted",
+        "Too many attempts. Please wait."
+      );
+    }
+    const key = process.env.REVENUECAT_REST_KEY;
+    if (!key) {
+      throw new functions.https.HttpsError(
+        "failed-precondition",
+        "Entitlement sync is not configured."
+      );
+    }
+    const response = await fetch(
+      `https://api.revenuecat.com/v1/subscribers/${encodeURIComponent(uid)}`,
+      {
+        headers: { Authorization: `Bearer ${key}`, Accept: "application/json" },
+      }
+    );
+    if (!response.ok) {
+      functions.logger.warn("syncRevenueCatEntitlement.fetch_failed", {
+        uid,
+        status: response.status,
+      });
+      throw new functions.https.HttpsError(
+        "unavailable",
+        "Could not read the subscription right now."
+      );
+    }
+    const json = await response.json();
+    const resolved = revenueCatEntitlement.resolveEntitlementFromSubscriber(
+      json && json.subscriber,
+      new Date()
+    );
+    const result = await applyRevenueCatEntitlement({
+      db: admin.firestore(),
+      uid,
+      resolved,
+      updatedAtSeconds: Math.floor(Date.now() / 1000),
+      reason: "syncRevenueCatEntitlement",
+      providerEventId: null,
+      eventType: "sync",
+      locks: accountDeletionLocks,
+      reconciliation: subscriptionReconciliation,
+      logger: functions.logger,
+    });
+    return {
+      applied: result.applied,
+      tier: resolved.tier,
+      trialEndsAt: resolved.trialEndsAt,
+    };
+  });
 
 exports.computePerformanceWeek = functions
   .runWith(DEFAULT_HTTP_CAP)
