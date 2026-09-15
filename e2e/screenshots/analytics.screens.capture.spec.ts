@@ -1,4 +1,5 @@
 import { verifySignupEmail } from "../helpers/verifySignupEmail";
+import { signInAsTestUser } from "../helpers/auth";
 /**
  * Analytics tab capture — the "analytics doesn't load" report.
  *
@@ -321,5 +322,70 @@ test.describe("analytics tab screenshots", () => {
     await expect(page.getByText(/^5\.2 km$/).first()).toBeVisible();
 
     await shootBoth(page, "prs-tab");
+  });
+
+  /* The STEADY state, which nothing had ever filmed.
+     
+     Both tests above sign up a FRESH account and seed it one run, one
+     workout and one meal over REST, so every filmed look at this tab has
+     been of a near-cold-start user. The rich seed — 18 workouts, 10
+     runs, 12 meals, 6 performance weeks — writes to the shared
+     `e2e-test@tropos.test` account that every OTHER capture spec signs
+     in as, and Analytics never looked at it. Running the full CI seed
+     chain changes nothing here, because this spec does not use that
+     account; signing in as it is the fix.
+
+     The first look found a chart that could not draw its own scale: the
+     Performance Index y-axis clipped "100" to "00", invisible to a
+     cold-start capture because the chart renders nothing without
+     performance docs. */
+  test("with a full history", async ({ page }) => {
+    test.setTimeout(180_000);
+
+    await signInAsTestUser(page);
+    await page.goto("/Maiin/history");
+    await page.waitForLoadState("domcontentloaded");
+    await expect(
+      page.getByRole("heading", { name: /analytics/i }).first()
+    ).toBeVisible({ timeout: 30_000 });
+    await expect(page.locator('[class*="animate-pulse"]')).toHaveCount(0, {
+      timeout: 30_000,
+    });
+
+    /* The surfaces a cold-start user does not have at all. */
+    await expect(page.getByText("Performance Index").first()).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Training load" })
+    ).toBeVisible();
+
+    /* Clipping is VISUAL, so the DOM cannot see it: the tick text is
+       present whether or not it is painted, and `getByText("100")`
+       passes either way. Compare boxes — but against the SVG, not the
+       card, which is the correction this assertion needed. Measured:
+       the card's border box starts at x=16 and its CONTENT box at x=32,
+       the chart's `<svg>` starts at 32, and the clipped "100" is drawn
+       at x=23.6 — inside the card, outside the svg, and it is the svg
+       that clips. An assertion against the card passes on the defect. */
+    const card = page
+      .locator("div.bg-card")
+      .filter({ has: page.getByRole("heading", { name: "Performance Index" }) })
+      .first();
+    const svg = card.locator("svg").first();
+    const tick = svg.locator("text", { hasText: /^100$/ }).first();
+    await expect(tick).toBeVisible();
+    const [tickBox, svgBox] = [
+      await tick.boundingBox(),
+      await svg.boundingBox(),
+    ];
+    expect(tickBox, "y-axis tick has no box").not.toBeNull();
+    expect(svgBox, "chart svg has no box").not.toBeNull();
+    expect(
+      tickBox!.x,
+      `the "100" tick is drawn at x=${tickBox!.x}, left of the chart svg at ` +
+        `x=${svgBox!.x} — the axis has no room for three digits and the ` +
+        `label is clipped`
+    ).toBeGreaterThanOrEqual(svgBox!.x);
+
+    await shootBoth(page, "analytics-rich");
   });
 });
