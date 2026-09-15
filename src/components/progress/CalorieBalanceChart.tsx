@@ -15,6 +15,15 @@ import {
 } from "recharts";
 import { calcDayBalance, getBalanceColor } from "@/utils/calorieBalance";
 import { calculateTDEE, type ActivityLevel } from "@/lib/tdee";
+import { formatCalories } from "@/utils/formatNutrition";
+
+/** The chart's window. Today is excluded — it is still in progress, and a
+ *  partial log would read as a deficit — so the denominator beneath the
+ *  chart is the window minus that day. Both used to be written out as
+ *  literals in four places (14, 13, "14 days", "/ 13"), which is one
+ *  number displayed from somewhere other than where it is decided. */
+const WINDOW_DAYS = 14;
+const PAST_DAYS = WINDOW_DAYS - 1;
 
 export default function CalorieBalanceChart({ meals }: { meals: Meal[] }) {
   const { profile } = useAuth();
@@ -29,8 +38,8 @@ export default function CalorieBalanceChart({ meals }: { meals: Meal[] }) {
   const today = format(new Date(), "yyyy-MM-dd");
   const data = useMemo(() => {
     const now = new Date(today + "T12:00:00");
-    return Array.from({ length: 14 }, (_, i) => {
-      const date = subDays(now, 13 - i);
+    return Array.from({ length: WINDOW_DAYS }, (_, i) => {
+      const date = subDays(now, PAST_DAYS - i);
       const dateStr = format(date, "yyyy-MM-dd");
       const entries = meals.filter((meal) => meal.date === dateStr);
       const consumed = entries.reduce(
@@ -63,7 +72,9 @@ export default function CalorieBalanceChart({ meals }: { meals: Meal[] }) {
     <div className="p-4 rounded-2xl bg-card space-y-3">
       <div className="flex items-center justify-between">
         <SectionLabel>Calorie balance</SectionLabel>
-        <span className="text-xs text-muted-foreground">14 days</span>
+        <span className="text-xs text-muted-foreground">
+          {WINDOW_DAYS} days
+        </span>
       </div>
       <p className="text-xs text-muted-foreground">
         Estimated maintenance − logged food. Today is excluded.
@@ -141,7 +152,7 @@ export default function CalorieBalanceChart({ meals }: { meals: Meal[] }) {
           <p className="text-sm font-bold font-mono tabular-nums text-foreground">
             {average === null
               ? "Not enough data"
-              : `${average >= 0 ? "+" : ""}${average} kcal`}
+              : `${average >= 0 ? "+" : ""}${formatCalories(average)} kcal`}
           </p>
         </div>
         <div className="text-center">
@@ -149,7 +160,7 @@ export default function CalorieBalanceChart({ meals }: { meals: Meal[] }) {
             Past days with entries
           </p>
           <p className="text-sm font-bold font-mono tabular-nums text-foreground">
-            {loggedDays.length} / 13
+            {loggedDays.length} / {PAST_DAYS}
           </p>
         </div>
       </div>
