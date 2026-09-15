@@ -1377,7 +1377,8 @@
         "Original bottom raised the near sole31px. Selected fixed-anchor warp restores the sole to y1330 and preserves both plate regions and all pixels above y990 exactly; calf continuity and lower-leg proportions still require review.",
         "Knee bend, bar/plate extents and head/neck alignment vary; comfortable endpoint and rigid-equipment checks remain unresolved.",
         "Plan intended a just-below-knee endpoint, while selected image is closer to knee level. Do not treat the intended pose description as verified output.",
-        "Sequential playback and mobile light/dark review remain unverified."
+        "Sequential playback and mobile light/dark review remain unverified.",
+        "Frame 6 now reuses the original upright master byte-for-byte to match FINISH STANDING and Return tall. Its progress is 0 and reusedFrom is 1; all other selected images are unchanged. The 6-to-1 images are identical; the larger 5-to-6 return step and existing anatomy/equipment findings remain subject to review."
       ],
       "frames": [
         {
@@ -1458,11 +1459,11 @@
             1024,
             1536
           ],
-          "bytes": 853164,
-          "sha256": "0f3d8a9f2e522683e8fc01c4b913a468e31672f140adae8c4fb53cd619d11b07",
-          "reusedFrom": 2,
+          "bytes": 663740,
+          "sha256": "4c8cf219385b9c11d0916c3f38891cae6438a5c116584eb9564551ecfb304f60",
+          "reusedFrom": 1,
           "cue": "Return tall without leaning backwards.",
-          "progress": 0.25
+          "progress": 0
         }
       ]
     },
