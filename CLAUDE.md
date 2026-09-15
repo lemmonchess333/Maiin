@@ -435,6 +435,16 @@ legacy-only — pre-Food9 documents keep rendering, nothing writes it.
   covers `scripts/` and `e2e/` through `tsconfig.scripts.json`: a seed script
   importing a deleted `src/` export is a build error, not a capture-run
   surprise.
+- **`npm run lint`'s LAST line is not its verdict.** eslint ends with
+  "0 errors and N warnings potentially fixable with the `--fix` option" —
+  a count of what `--fix` could repair, which is `0 errors` even when the
+  run failed. The verdict is the `✖ N problems (E errors, W warnings)`
+  line above it, and the exit code. Read one of those two. Misreading the
+  fixable line shipped a `no-irregular-whitespace` error to CI (a
+  zero-width space used to stop a glob closing a block comment) on a
+  branch whose lint had just been "checked". Same shape as the `tsc -p`
+  row above and as `echo $?` after a pipe: a number that looks like the
+  answer to the question you asked.
 - **Adding an import to a component breaks any suite that mocks that module
   wholesale.** `vi.mock("@/lib/auth", () => ({ useAuth: … }))` makes every
   OTHER export `undefined`, and the failure surfaces at the call site
