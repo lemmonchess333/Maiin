@@ -142,7 +142,7 @@ describe("acquireLease", () => {
     expect(doc.attemptCount).toBe(4);
   });
 
-  it("re-initialises a TERMINAL (completed) record as a fresh operation", async () => {
+  it("keeps a completed operation terminal when its response is retried", async () => {
     const db = makeFirestore({
       [`accountDeletionRequests/${UID}`]: {
         uid: UID,
@@ -158,9 +158,9 @@ describe("acquireLease", () => {
       ...fixedIds,
     });
     expect(res).toMatchObject({
-      acquired: true,
-      generation: 1,
-      status: "running",
+      acquired: false,
+      reason: "completed",
+      generation: 9,
     });
   });
 

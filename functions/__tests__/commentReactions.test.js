@@ -27,6 +27,9 @@ function makeFirestore(
   return {
     data: () => stored,
     collection: (name) => {
+      if (name === "accountDeletionRequests" || name === "deletedAccounts") {
+        return { doc: () => ({ _kind: "absent" }) };
+      }
       if (name === "activities") {
         return { doc: () => activityRef };
       }
@@ -45,6 +48,7 @@ function makeFirestore(
     runTransaction: async (fn) =>
       fn({
         get: async (ref) => {
+          if (ref?._kind === "absent") return { exists: false };
           if (ref && ref._kind === "activity") {
             return { exists: activityData !== null, data: () => activityData };
           }

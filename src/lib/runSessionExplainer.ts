@@ -10,7 +10,7 @@
  * safety. Pure and total — returns null rather than guessing when the
  * plan context is missing (freeform runs, extras, legacy docs).
  */
-import { getPhaseForWeek } from "@/features/program/runScheduler";
+import { getPhaseForWeek } from "@/features/program/runPlanTiming";
 
 export interface SessionExplainerInput {
   /** Template type from RUN_TEMPLATES ("easy" | "tempo" | "intervals" |

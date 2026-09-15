@@ -24,7 +24,7 @@ import {
 } from "@/lib/activationFraming";
 
 import { useSubscription } from "@/lib/subscription";
-import { useProgram } from "@/features/program/useProgram";
+import { useHomeProgram } from "@/features/program/useHomeProgram";
 import { liftSessionExplainer } from "@/lib/liftSessionExplainer";
 import { runSessionPresentation } from "@/lib/runSessionExplainer";
 import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
@@ -50,7 +50,7 @@ import { realignResultMessage } from "@/lib/realignCopy";
 import { HomeSkeleton } from "@/components/LoadingSkeleton";
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary";
 import { resolveTrainingDayForDate } from "@/lib/trainingResolver";
-import { useClaimMap } from "@/hooks/useClaimMap";
+import { useClaimMapForProgram } from "@/hooks/useClaimMapForProgram";
 import { goalReachedOffer } from "@/lib/goalWeightPlan";
 import GoalReachedSheet from "@/components/home/GoalReachedSheet";
 import { localDateString, localWeekKey } from "@/lib/dateHelpers";
@@ -127,7 +127,8 @@ export default function Home() {
     dismissFellBehindPrompt,
     realignRacePlan,
     recentLayoff,
-  } = useProgram();
+    controller: programController,
+  } = useHomeProgram();
   const weeklyDayMap = useWeeklyDayMap();
   const navigate = useNavigate();
   const { currentStreak: streak, newBadge, dismissNewBadge } = useStreaks();
@@ -199,7 +200,7 @@ export default function Home() {
   // chunk B3f forwards unclaimedByDate to DayActionSheet for the
   // same-date paradox hint (P74), and Q5 chunk B3g forwards it to
   // DayPeekCard for the extras rows.
-  const { claimMap, unclaimedByDate } = useClaimMap();
+  const { claimMap, unclaimedByDate } = useClaimMapForProgram(programState);
   const resolvedToday = useMemo(
     function () {
       return resolveTrainingDayForDate({
@@ -668,6 +669,7 @@ export default function Home() {
         </>
       }
     >
+      {programController}
       {/* Persistent trial / upgrade strip */}
       {isInTrial && (
         <button

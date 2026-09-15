@@ -20,9 +20,11 @@
 import {
   updatePassword,
   verifyBeforeUpdateEmail,
+  sendEmailVerification as sendFirebaseVerification,
   type User,
 } from "firebase/auth";
 import { getFunctions, httpsCallable } from "firebase/functions";
+import { auth } from "./firebase";
 import { reauthWithPassword } from "./reauth";
 
 /**
@@ -31,11 +33,45 @@ import { reauthWithPassword } from "./reauth";
  * email comes from the branded sender, not noreply@<project>.firebaseapp.com.
  */
 export async function sendVerificationEmail(): Promise<void> {
+  const user = auth.currentUser;
   const fn = httpsCallable<Record<string, never>, { ok: boolean }>(
     getFunctions(),
     "sendVerificationEmailCallable"
   );
-  await fn({});
+  try {
+    await fn({});
+  } catch (error) {
+    const code = String((error as { code?: string })?.code || "");
+    // Mandatory signup must still work during a branded-mail outage. Firebase
+    // Auth has its own delivery and abuse limits. Never bypass a rate-limit or
+    // permission rejection, or send for a replacement account.
+    if (
+      !user ||
+      auth.currentUser?.uid !== user.uid ||
+      ![
+        "functions/internal",
+        "functions/unavailable",
+        "functions/deadline-exceeded",
+        "functions/not-found",
+      ].includes(code)
+    )
+      throw error;
+    await sendFirebaseVerification(user);
+  }
+}
+
+// Share the initial request across React Strict Mode remounts and route visits.
+// Failed delivery remains retryable through the explicit resend button.
+const initialVerificationRequests = new Map<string, Promise<void>>();
+export function sendInitialVerificationEmail(uid: string): Promise<void> {
+  const existing = initialVerificationRequests.get(uid);
+  if (existing) return existing;
+  const request = Promise.resolve().then(() => {
+    if (auth.currentUser?.uid !== uid) throw new Error("Account changed");
+    return sendVerificationEmail();
+  });
+  initialVerificationRequests.set(uid, request);
+  return request;
 }
 
 /**

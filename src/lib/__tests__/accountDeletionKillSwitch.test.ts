@@ -26,7 +26,18 @@ interface BuildStubsOpts {
   configReadError?: Error;
 }
 function buildStubs({ configDoc, configReadError }: BuildStubsOpts = {}) {
-  const mockEmptySnap = { empty: true, docs: [] };
+  const mockEmptySnap = { empty: true, docs: [], size: 0 };
+  const emptyQuery = () => {
+    const q = {
+      get: vi.fn().mockResolvedValue(mockEmptySnap),
+      where: () => q,
+      orderBy: () => q,
+      limit: () => q,
+      startAfter: () => q,
+      select: () => q,
+    };
+    return q;
+  };
   const mockBatch = {
     delete: vi.fn(),
     commit: vi.fn().mockResolvedValue(undefined),
@@ -42,6 +53,8 @@ function buildStubs({ configDoc, configReadError }: BuildStubsOpts = {}) {
   };
 
   const firestore = {
+    recursiveDelete: vi.fn().mockResolvedValue(undefined),
+    collectionGroup: vi.fn(emptyQuery),
     doc: vi.fn((path) => ({
       get: vi.fn().mockImplementation(() => {
         if (path === "system/config" && configReadError) {
@@ -52,6 +65,7 @@ function buildStubs({ configDoc, configReadError }: BuildStubsOpts = {}) {
           data: () => (path === "system/config" ? configDoc : undefined),
         });
       }),
+      set: vi.fn().mockResolvedValue(undefined),
       delete: path === "system/config" ? vi.fn() : mockProfileDocDelete,
     })),
     collection: vi.fn((name?: string) => {
@@ -68,10 +82,9 @@ function buildStubs({ configDoc, configReadError }: BuildStubsOpts = {}) {
         };
       }
       return {
+        ...emptyQuery(),
         doc: vi.fn(() => ({
-          collection: vi.fn(() => ({
-            get: vi.fn().mockResolvedValue(mockEmptySnap),
-          })),
+          collection: vi.fn(emptyQuery),
           delete: mockUserDocDelete,
           get: vi
             .fn()
@@ -85,6 +98,7 @@ function buildStubs({ configDoc, configReadError }: BuildStubsOpts = {}) {
         // collection("fcmTokenClaims").where("uid","==",uid).limit(N).get()
         where: vi.fn(() => {
           const q = {
+            ...emptyQuery(),
             limit: vi.fn(() => q),
             get: vi.fn().mockResolvedValue({ empty: true, docs: [], size: 0 }),
           };

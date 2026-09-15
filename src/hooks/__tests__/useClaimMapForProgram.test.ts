@@ -61,11 +61,14 @@ interface ProgramStateLike {
 }
 let mockProgramState: ProgramStateLike | null = null;
 
-vi.mock("@/features/program/useProgram", () => ({
-  useProgram: () => ({ programState: mockProgramState }),
-}));
-
-import { useClaimMap } from "../useClaimMap";
+import type { ProgramState } from "@/features/program/programTypes";
+import { useClaimMapForProgram } from "../useClaimMapForProgram";
+function useClaimMap(dateAnchor?: string) {
+  return useClaimMapForProgram(
+    mockProgramState as ProgramState | null,
+    dateAnchor
+  );
+}
 
 const RUNS = "users/u1/runs";
 

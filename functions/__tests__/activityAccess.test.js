@@ -21,6 +21,9 @@ function makeCtx(activity, followers = new Set()) {
   const activityRef = { _kind: "activity" };
   const firestore = {
     collection: (name) => {
+      if (name === "accountDeletionRequests" || name === "deletedAccounts") {
+        return { doc: () => ({ _kind: "absent" }) };
+      }
       expect(name).toBe("followers");
       return {
         doc: (authorId) => ({
@@ -36,6 +39,7 @@ function makeCtx(activity, followers = new Set()) {
   };
   const tx = {
     get: vi.fn(async (ref) => {
+      if (ref._kind === "absent") return { exists: false };
       if (ref._kind === "activity") {
         return { exists: activity !== null, data: () => activity };
       }

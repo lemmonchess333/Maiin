@@ -1,7 +1,25 @@
 import { describe, it, expect, vi } from "vitest";
-import { renderHook, act } from "@testing-library/react";
+import { renderHook, act, waitFor } from "@testing-library/react";
 import type { User } from "firebase/auth";
 import { useEmailVerificationGate } from "../useEmailVerificationGate";
+const native = vi.hoisted(() => ({
+  callback: null as null | ((state: { isActive: boolean }) => void),
+  remove: vi.fn(),
+}));
+vi.mock("@capacitor/core", () => ({
+  Capacitor: { isNativePlatform: () => true },
+}));
+vi.mock("@capacitor/app", () => ({
+  App: {
+    addListener: async (
+      _name: string,
+      callback: (state: { isActive: boolean }) => void
+    ) => {
+      native.callback = callback;
+      return { remove: native.remove };
+    },
+  },
+}));
 
 // recheck must reload the Auth user (a verification made elsewhere is
 // invisible to the SDK) and then force a token refresh, because Firestore
@@ -20,6 +38,25 @@ function fakeUser(opts: { verifiedAfterReload: boolean }) {
 }
 
 describe("useEmailVerificationGate", () => {
+  it("checks again when the iPhone app returns from Mail and removes the listener", async () => {
+    const user = fakeUser({ verifiedAfterReload: false });
+    const { result, unmount } = renderHook(() =>
+      useEmailVerificationGate(user, true)
+    );
+    await waitFor(() => expect(native.callback).toBeTypeOf("function"));
+    await act(async () => {});
+    user.reload.mockImplementationOnce(async () => {
+      user.emailVerified = true;
+    });
+    await act(async () => {
+      native.callback?.({ isActive: true });
+    });
+    expect(user.reload).toHaveBeenCalledTimes(2);
+    expect(user.getIdToken).toHaveBeenCalledWith(true);
+    expect(result.current.needsVerification).toBe(false);
+    unmount();
+    expect(native.remove).toHaveBeenCalled();
+  });
   it("reports the gate for an unverified password account", () => {
     const { result } = renderHook(() =>
       useEmailVerificationGate(fakeUser({ verifiedAfterReload: false }))

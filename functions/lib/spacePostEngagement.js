@@ -1,3 +1,4 @@
+const { assertTransactionAccountsLive } = require("./deletionTransactionGuard");
 /**
  * Space-post engagement (SOC-P2c) — the server-owned like ("props")
  * toggle for Community Space posts, closing the loop the weekly Coach
@@ -51,6 +52,7 @@ async function toggleSpacePostLike({
       err.code = POST_NOT_ACCESSIBLE;
       throw err;
     }
+    await assertTransactionAccountsLive({ firestore, tx: txn, uids: [uid, postSnap.data().authorId] });
     const likeSnap = await txn.get(likeRef);
     if (likeSnap.exists) {
       txn.delete(likeRef);
@@ -119,6 +121,7 @@ async function addSpacePostComment({
     };
     const photo = publicPhotoUrl(authorPhotoURL);
     if (photo) data.authorPhotoURL = photo;
+    await assertTransactionAccountsLive({ firestore, tx: txn, uids: [uid, postSnap.data().authorId] });
     txn.set(commentRef, data);
     txn.update(postRef, { commentCount: increment(1) });
   });

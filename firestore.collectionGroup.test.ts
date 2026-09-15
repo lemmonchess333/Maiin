@@ -40,6 +40,8 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from "vitest";
 import {
   initializeTestEnvironment,
+  assertFails,
+  assertSucceeds,
   type RulesTestEnvironment,
 } from "@firebase/rules-unit-testing";
 import { readFileSync } from "node:fs";
@@ -51,6 +53,8 @@ import {
   documentId,
   setDoc,
   getDocs,
+  getDoc,
+  deleteDoc,
 } from "firebase/firestore";
 import { createRequire } from "node:module";
 
@@ -92,6 +96,51 @@ suite("firestore.collectionGroup — what the executor can actually query", () =
 
   beforeEach(async () => {
     await env.clearFirestore();
+  });
+
+  it("denies client reads and writes of deletion work, billing jobs and original comment evidence", async () => {
+    const paths = [
+      `accountDeletionWork/${TARGET_UID}`,
+      `accountDeletionBilling/${TARGET_UID}`,
+      "deletedCommentEvidence/comment-hash",
+    ];
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      for (const path of paths)
+        await setDoc(doc(ctx.firestore(), path), { private: "evidence" });
+    });
+    for (const ctx of [
+      env.authenticatedContext(TARGET_UID),
+      env.unauthenticatedContext(),
+    ]) {
+      for (const path of paths) {
+        await assertFails(getDoc(doc(ctx.firestore(), path)));
+        await assertFails(
+          setDoc(doc(ctx.firestore(), path), { private: "changed" })
+        );
+      }
+    }
+  });
+
+  it("prevents new reverse blocks while allowing removal of an existing block against a deleting account", async () => {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(
+        doc(ctx.firestore(), "accountDeletionRequests", TARGET_UID),
+        { status: "running" }
+      );
+      await setDoc(
+        doc(ctx.firestore(), "blocks", OTHER_UID, "users", TARGET_UID),
+        { createdAt: 1 }
+      );
+    });
+    const db = env.authenticatedContext(OTHER_UID).firestore();
+    await assertSucceeds(
+      deleteDoc(doc(db, "blocks", OTHER_UID, "users", TARGET_UID))
+    );
+    await assertFails(
+      setDoc(doc(db, "blocks", OTHER_UID, "users", TARGET_UID), {
+        createdAt: 2,
+      })
+    );
   });
 
   /** Rules-free read, mimicking the Admin SDK the executor runs as.

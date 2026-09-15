@@ -1,9 +1,15 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { User } from "firebase/auth";
 
+const authState = vi.hoisted(() => ({
+  currentUser: { uid: "u1", email: "a@b.com" },
+}));
+vi.mock("../firebase", () => ({ auth: authState }));
+const firebaseVerification = vi.fn();
 const updatePassword = vi.fn();
 const verifyBeforeUpdateEmail = vi.fn();
 vi.mock("firebase/auth", () => ({
+  sendEmailVerification: (...args: unknown[]) => firebaseVerification(...args),
   updatePassword: (...a: unknown[]) => updatePassword(...a),
   verifyBeforeUpdateEmail: (...a: unknown[]) => verifyBeforeUpdateEmail(...a),
 }));
@@ -39,6 +45,17 @@ describe("sendVerificationEmail", () => {
   it("invokes the server callable", async () => {
     await sendVerificationEmail();
     expect(callableImpl).toHaveBeenCalledOnce();
+  });
+  it("uses Firebase delivery when the branded sender is unavailable", async () => {
+    callableImpl.mockRejectedValueOnce({ code: "functions/internal" });
+    await sendVerificationEmail();
+    expect(firebaseVerification).toHaveBeenCalledWith(authState.currentUser);
+  });
+  it("never bypasses the verification-email rate limit", async () => {
+    const error = { code: "functions/resource-exhausted" };
+    callableImpl.mockRejectedValueOnce(error);
+    await expect(sendVerificationEmail()).rejects.toBe(error);
+    expect(firebaseVerification).not.toHaveBeenCalled();
   });
 });
 

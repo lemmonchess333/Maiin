@@ -16,18 +16,17 @@
  *
  * Caller-injected `firestore`, `auth`, `storageBucket` handles so
  * unit tests can stub them with instrumented mocks. Storage
- * cleanup failures are absorbed per-prefix so a missing bucket
- * doesn't block the auth-user delete — that's a separate
- * invariant the tests pin.
+ * cleanup failures preserve Auth and are retried by the server worker.
  */
 
 const crypto = require("crypto");
 const ledger = require("./lib/accountDeletionLedger");
+const accountDeletionSocial = require("./lib/accountDeletionSocial");
+const { queueAndCancelSubscription } = require("./lib/accountDeletionRetry");
 const goalSpaceCleanup = require("./lib/goalSpaceCleanup");
 const spacesCleanup = require("./lib/spacesCleanup");
 const deletedAccountsTombstone = require("./lib/deletedAccountsTombstone");
 const pushTokenOwnership = require("./lib/pushTokenOwnership");
-const feedFanoutCleanup = require("./lib/feedFanoutCleanup");
 const challengeParticipationCleanup = require("./lib/challengeParticipationCleanup");
 
 /**
@@ -217,7 +216,12 @@ async function deleteAccount({
   // lease/state-machine is deterministically testable.
   leaseOwner,
   now = Date.now(),
+  deadline = Date.now() + 420000,
+  cleanupCrossUserData = accountDeletionSocial.cleanupSocial,
 }) {
+  if (typeof uid !== "string" || !uid || uid.includes("/"))
+    throw new Error("A valid account UID is required");
+
   /* R1A Stress 7 kill-switch — operator-controlled emergency stop
      via `system/config.deletionExecutorEnabled`. Read at start; if
      strictly === false, abort before any deletion step.
@@ -310,37 +314,41 @@ async function deleteAccount({
   let stage = "cascade";
 
   try {
-    // 0. Sub1 R1A pin (b) — cancel active Stripe subscription BEFORE
-    // purging user data. The stripeSubscriptionId lives on the user
-    // doc, which step 5 deletes — so we must read + cancel here
-    // first. Apple IAP subs aren't handled server-side (Apple has no
-    // admin-cancellation API for standard IAP subs; that path is
-    // handled client-side in AccountSection.tsx via the warn-and-
-    // deep-link modal).
-    if (cancelStripeSubscription) {
-      try {
-        const snap = await firestore.collection("users").doc(uid).get();
-        if (snap.exists) {
-          const data = snap.data();
-          if (data && data.stripeSubscriptionId) {
-            await cancelStripeSubscription({
-              uid,
-              stripeSubscriptionId: data.stripeSubscriptionId,
-              logger,
-            });
-          }
+    // Capture a provider retry task durably BEFORE removing its source ID.
+    // Provider downtime does not prevent erasure, but cannot lose cancellation.
+    stage = "billing";
+    await queueAndCancelSubscription({
+      firestore,
+      uid,
+      cancelStripeSubscription,
+      logger,
+      now,
+    });
+
+    stage = "cross_user_social";
+    await cleanupCrossUserData({
+      firestore,
+      uid,
+      now,
+      checkpoint: async () => {
+        if (Date.now() >= deadline) {
+          const error = new Error("Cleanup will continue in the background.");
+          error.code = "deletion-yield";
+          throw error;
         }
-      } catch (err) {
-        // Locked semantic: provider cancellation MUST NOT block
-        // deletion. Surface the failure to Cloud Logging so an
-        // operator can manually cancel via the Stripe dashboard,
-        // but proceed with the data delete regardless.
-        logger.warn("deleteAccount.subscription_cancel_failed", {
-          uid,
-          error: err && err.message,
-        });
-      }
-    }
+        if (
+          !(await ledger.verifyLeaseGeneration({
+            firestore,
+            uid,
+            expectedGeneration: generation,
+          }))
+        ) {
+          const error = new Error("deletion-superseded");
+          error.code = "deletion-superseded";
+          throw error;
+        }
+      },
+    });
 
     // 0b. Goal Spaces (GOALS-CORE-01). MUST run before step 1: it
     // enumerates memberships from users/{uid}/journeys — the index the
@@ -372,12 +380,7 @@ async function deleteAccount({
     // Not covered by anything else: step 2 sweeps `feeds/{uid}/items`, the
     // user's own feed, and each follower's copy is a separate doc in their
     // own tree carrying the author's name, photo URL and session summary.
-    stage = "feed_fanout";
-    await feedFanoutCleanup.removeFanoutCopiesForUser({
-      firestore,
-      uid,
-      logger,
-    });
+    // cleanupSocial queries every feed by author, including former followers.
 
     // 0e. Challenge participations (inventory `challengeParticipations`) —
     // `challenges/{id}/participants/{uid}`, uid-keyed but nested under a
@@ -426,15 +429,18 @@ async function deleteAccount({
       }
     }
 
-    // 3. Activities the user posted. Deliberately NOT touching
-    // comments / kudos the user gave on others' activities — those
-    // are part of the other users' feeds and mutating them
-    // retroactively would surprise people.
+    // Remove engagement trees BEFORE their authored activity disappears.
     const activitiesSnap = await firestore
       .collection("activities")
       .where("authorId", "==", uid)
       .get();
     if (!activitiesSnap.empty) {
+      for (const activity of activitiesSnap.docs) {
+        await firestore.recursiveDelete(
+          firestore.doc(`comments/${activity.id}`)
+        );
+        await firestore.recursiveDelete(firestore.doc(`kudos/${activity.id}`));
+      }
       await deleteRefsInBatches(
         firestore,
         activitiesSnap.docs.map((d) => d.ref)
@@ -461,9 +467,8 @@ async function deleteAccount({
 
     // 3d. Community Spaces (Spc1 PR4) — memberships + authored posts,
     // swept per KNOWN space id (lib/spacesCleanup; bounded config, no
-    // collectionGroup blast radius). Per-space failures are absorbed
-    // inside the helper so this can never wedge the flow; runs BEFORE
-    // the auth user (7) like every other data step.
+    // collectionGroup blast radius). Failures preserve Auth and the worker
+    // retries. The earlier collection-group pass also covers retired rooms.
     await spacesCleanup.cleanupSpacesForUser({ firestore, uid, logger });
 
     // 3c. Apple subscription bindings (money-path audit F8). The
@@ -477,6 +482,8 @@ async function deleteAccount({
     // unprovisioned the binding is KEPT (a locked-out re-signup is
     // recoverable via support; a theft window is not) — log and move
     // on, never block the remaining steps.
+    const billingRetentionUntil = new Date(now);
+    billingRetentionUntil.setUTCMonth(billingRetentionUntil.getUTCMonth() + 13);
     const appleSubsSnap = await firestore
       .collection("appleSubscriptions")
       .where("uid", "==", uid)
@@ -496,10 +503,18 @@ async function deleteAccount({
             provider: "apple",
             reason: "account-deletion",
             createdAt: now,
+            expiresAt: billingRetentionUntil,
           });
           // eslint-disable-next-line no-await-in-loop
           await bindingDoc.ref.delete();
         } catch (e) {
+          // A missing HMAC secret retains the protected provider binding,
+          // with the same bounded retention as the hashed identity. If this
+          // durable expiry cannot be written, cleanup must remain retryable.
+          await bindingDoc.ref.set(
+            { deletionExpiresAt: billingRetentionUntil },
+            { merge: true }
+          );
           logger.warn(
             `deleteAccount: appleSubscriptions binding kept for ${uid} (tombstone unavailable)`,
             e.message
@@ -521,6 +536,11 @@ async function deleteAccount({
 
     // 5. The user document itself
     stage = "user_document";
+    // Recursive deletion also reaches old aliases and nested engine markers.
+    await firestore.recursiveDelete(firestore.doc(`users/${uid}`));
+    for (const { parent } of TOP_LEVEL_USER_KEYED_COLLECTIONS) {
+      await firestore.recursiveDelete(firestore.doc(`${parent}/${uid}`));
+    }
     await firestore.collection("users").doc(uid).delete();
 
     // 6. Attempt all prefixes, including when one fails. An empty prefix
@@ -540,7 +560,9 @@ async function deleteAccount({
       }
     }
     if (storageCleanupFailed) {
-      const error = new Error("Storage cleanup is incomplete. Retry account deletion.");
+      const error = new Error(
+        "Storage cleanup is incomplete. Retry account deletion."
+      );
       error.code = "storage-cleanup-incomplete";
       throw error;
     }
@@ -571,11 +593,18 @@ async function deleteAccount({
     // 7. FINAL irreversible step. The tombstone is committed, so an already-
     // issued ID token cannot recreate Firestore or Storage data.
     stage = "auth_deletion";
-    await auth.deleteUser(uid);
+    try {
+      await auth.deleteUser(uid);
+    } catch (error) {
+      // A prior attempt may have lost its response after deleting Auth. Only
+      // accept this AFTER all data cleanup and the durable tombstone succeed.
+      if (error.code !== "auth/user-not-found") throw error;
+    }
 
     // Success — mark completed + set the 30-day TTL cleanup. Runs AFTER the
     // auth delete (Admin SDK, unaffected by the user being gone); its own
     // failure does not undo a successful deletion, so it is swallowed.
+    await firestore.doc(`accountDeletionWork/${uid}`).delete();
     try {
       await ledger.transitionStatus({
         firestore,
@@ -584,7 +613,8 @@ async function deleteAccount({
         expectedGeneration: generation,
         extraFields: {
           completedAt: now,
-          cleanupAfter: now + ledger.LEDGER_RETENTION_MS,
+          cleanupAfter: new Date(now + ledger.LEDGER_RETENTION_MS),
+          nextAttemptAt: null,
         },
         now,
       });
@@ -593,6 +623,7 @@ async function deleteAccount({
         uid,
         error: completeErr && completeErr.message,
       });
+      throw completeErr;
     }
   } catch (err) {
     // A takeover happened mid-cascade — the taker owns the ledger; do not
@@ -616,6 +647,7 @@ async function deleteAccount({
           // This executor has stopped. Release its lease immediately so a
           // retry isn't blocked for nine minutes by a finished invocation.
           leaseExpiresAt: now,
+          nextAttemptAt: new Date(Date.now() + 60000),
           failedStage: stage,
           lastErrorCode: (err && err.code) || "unknown",
           lastErrorMessage: String((err && err.message) || "").slice(0, 500),

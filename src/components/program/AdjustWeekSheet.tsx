@@ -40,7 +40,7 @@ import {
   classifyRaceTiming,
   raceTrainingWeeks,
   type RaceTiming,
-} from "@/features/program/runScheduler";
+} from "@/features/program/runPlanTiming";
 import { realignResultMessage } from "@/lib/realignCopy";
 import type { ScheduledRunDay } from "@/features/program/programTypes";
 

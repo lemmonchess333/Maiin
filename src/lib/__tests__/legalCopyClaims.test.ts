@@ -74,19 +74,23 @@ describe("meal-photo retention — the quoted window matches the code", () => {
 });
 
 describe("account deletion — both pages, one story", () => {
-  it("the Privacy Policy says server-side erasure is immediate", () => {
-    expect(PRIVACY_PROSE).toMatch(/erased.{0,80}immediately/);
+  it("the Privacy Policy discloses interrupted cleanup and limited retention", () => {
+    expect(PRIVACY_PROSE).toMatch(/background/);
+    expect(PRIVACY_PROSE).toMatch(/365 days/);
+    expect(PRIVACY_PROSE).not.toMatch(/erased.{0,80}immediately/);
   });
 
   it("the Terms say the same thing", () => {
-    expect(TERMS_PROSE).toMatch(/erased immediately/);
+    expect(TERMS_PROSE).toMatch(/cleanup continues in the background/);
+    expect(TERMS_PROSE).toMatch(
+      /Limited security, moderation, and billing records/
+    );
+    expect(TERMS_PROSE).not.toMatch(/erased immediately/);
   });
 
   it("neither page still promises the stale 30-day window", () => {
-    // `functions/accountDeletion.js` deletes synchronously and has no
-    // retention window at all. The old wording was a weaker promise than
-    // the behaviour, and it disagreed with nothing — which is how it
-    // survived on both pages at once.
+    // The executor begins immediately and retries interrupted cleanup.
+    // The 30-day period applies only to the completed request receipt.
     expect(PRIVACY_PROSE).not.toMatch(/within 30 days/);
     expect(TERMS_PROSE).not.toMatch(/within 30 days/);
   });

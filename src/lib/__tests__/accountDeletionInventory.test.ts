@@ -314,7 +314,7 @@ describe("excluded entries — required fields and allowed values", () => {
     ).toContain("HMAC");
   });
 
-  it("commentsAuthoredByMe defines Option C interim: visible 'Comment deleted' + server-only originalText for moderation reversibility", () => {
+  it("commentsAuthoredByMe separates visible placeholders from private moderation evidence", () => {
     const comments = (inventory.excluded as ExcludedEntry[]).find(
       (e) => e.key === "commentsAuthoredByMe"
     );
@@ -337,7 +337,7 @@ describe("excluded entries — required fields and allowed values", () => {
     expect(Array.isArray(renderAudit.renderers)).toBe(true);
     expect(renderAudit.renderers.length).toBeGreaterThan(0);
     expect(renderAudit.originalTextLeakageAudit).toBeTruthy();
-    // Option C interim: originalText preserved server-side with 365d retention
+    // Firestore read rules apply to documents, never individual fields.
     const preserved = (
       comments as unknown as {
         preservedOriginalFields: {
@@ -350,17 +350,20 @@ describe("excluded entries — required fields and allowed values", () => {
         };
       }
     ).preservedOriginalFields;
-    expect(preserved.policy).toContain("Option C");
+    expect(preserved.policy).toContain("deletedCommentEvidence/");
+    expect(preserved.policy).toContain(
+      "Public documents contain no originalText"
+    );
     expect(preserved.fields.length).toBeGreaterThan(0);
     const originalText = preserved.fields.find(
       (f) => f.name === "originalText"
     );
     expect(
       originalText,
-      "originalText must be in preservedOriginalFields per Option C"
+      "originalText must be confined to the private evidence document"
     ).toBeTruthy();
     expect(originalText!.retentionWindow).toContain("365 days");
-    expect(originalText!.readAccess).toContain("server-only");
+    expect(originalText!.readAccess).toContain("client-denied");
   });
 
   it("paymentEventsPostDeletion is NOT marked as indefinite default retention", () => {

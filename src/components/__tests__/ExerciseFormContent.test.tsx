@@ -39,6 +39,8 @@ const keyRef = {
 };
 vi.mock("@/lib/bodyRig", () => ({
   getBodyDemo: () => ({ view: "side", tint: {}, concentricTo: 0 }),
+}));
+vi.mock("@/lib/formGuides", () => ({
   getFormBeats: () => beatsRef.current,
   getDemoMuscleKey: () => keyRef.current,
 }));

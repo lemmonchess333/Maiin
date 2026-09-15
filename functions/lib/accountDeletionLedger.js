@@ -92,6 +92,8 @@ const ALLOWED_FIELDS = Object.freeze([
   "lastErrorMessage",
   "cleanupSummary",
   "pendingCleanupShards",
+  "resumeVersion",
+  "nextAttemptAt",
 ]);
 
 const COLLECTION = "accountDeletionRequests";
@@ -191,10 +193,16 @@ async function acquireLease({
     const snap = await tx.get(ref);
     const data = snap.exists ? snap.data() || {} : null;
 
-    // Fresh operation: no doc, or a prior terminal record we overwrite.
+    if (data?.status === STATUS.COMPLETED) {
+      return { acquired: false, reason: "completed", generation: data.leaseGeneration };
+    }
+
+    // Fresh operation: no doc, or a cancelled request.
     if (!data || TERMINAL_STATUSES.includes(data.status)) {
       const record = {
         uid,
+        resumeVersion: 2,
+        nextAttemptAt: new Date(leaseExpiresAt),
         status: STATUS.RUNNING,
         operationId: generateOperationId(),
         supportCode: generateSupportCodeFn(),
@@ -232,6 +240,8 @@ async function acquireLease({
     const nextGen = (Number(data.leaseGeneration) || 0) + 1;
     const update = {
       leaseOwner,
+      resumeVersion: 2,
+      nextAttemptAt: new Date(leaseExpiresAt),
       leaseGeneration: nextGen,
       leaseExpiresAt,
       lastHeartbeatAt: now,

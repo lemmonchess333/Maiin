@@ -51,9 +51,8 @@ const BATCH_SIZE = 450;
  * never touches, so it can run anywhere in the cascade before the auth user
  * is deleted.
  *
- * Never throws. A failure here must not strand a user mid-deletion with their
- * credentials already gone — the same posture as the storage sweep and
- * `goalSpaceCleanup`.
+ * A failure throws before Auth is removed. The durable request stays frozen
+ * and the server retries; failed cleanup cannot be reported as completion.
  *
  * @returns {Promise<{challenges:number, deleted:number, failedBatches:number}>}
  */
@@ -81,7 +80,7 @@ async function removeChallengeParticipationsForUser({
       uid,
       error: err && err.message,
     });
-    return result;
+    throw err;
   }
 
   result.challenges = challengeIds.length;
@@ -105,13 +104,13 @@ async function removeChallengeParticipationsForUser({
     } catch (err) {
       // Deleting a doc that does not exist is a no-op, so most of these
       // writes are expected to hit nothing — a failure here is a real
-      // Firestore error. Skip the batch and continue: a partial purge beats
-      // aborting the cascade.
+      // Firestore error. Preserve Auth and resume the request on a retry.
       result.failedBatches += 1;
       log.warn("deleteAccount.challenge_participations_batch_failed", {
         uid,
         error: err && err.message,
       });
+      throw err;
     }
   }
 

@@ -73,12 +73,13 @@ async function cleanupGoalSpacesForUser({ firestore, uid, logger = console }) {
       if (err instanceof GoalSpaceError && err.code === "not-found") {
         // The space itself is gone — just drop the stale journey
         // pointer so the index doesn't dangle.
-        await journeyDoc.ref.delete().catch(() => {});
+        await journeyDoc.ref.delete();
       } else {
         logger.warn(
           `cleanupGoalSpacesForUser: space ${spaceId} cleanup failed`,
           err && err.message
         );
+        throw err;
       }
     }
   }

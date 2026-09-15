@@ -284,3 +284,11 @@ export function rejectWrite(index = 0, code = "unavailable"): boolean {
 export function releaseAllWrites(): void {
   firestoreFake.releaseAllWrites();
 }
+
+/** Model cached/pending snapshots through the shared SDK fake. */
+export function setSnapshotMetadata(
+  path: string,
+  metadata: { fromCache: boolean; hasPendingWrites?: boolean }
+): void {
+  firestoreFake.setSnapshotMetadata(path, metadata);
+}

@@ -1,3 +1,4 @@
+const { transactionAccountsLive } = require("./deletionTransactionGuard");
 /**
  * 2026-05-26 audit PR 3 — server-side feed fan-out + notification
  * creation. Closes findings #3 (feed spam), #6 (notification spam),
@@ -160,8 +161,12 @@ async function fanoutActivityToFeeds({
       .doc(rid)
       .collection("items")
       .doc(activityId);
-    await itemRef.set(feedItem);
-    fanned += 1;
+    const written = await firestore.runTransaction(async (tx) => {
+      if (!(await transactionAccountsLive({ firestore, tx, uids: [authorId, rid] }))) return false;
+      tx.set(itemRef, feedItem);
+      return true;
+    });
+    if (written) fanned += 1;
   }
   return { fanned };
 }
@@ -304,8 +309,11 @@ async function createNotification({
     createdAt: serverTimestamp(),
   };
 
-  await itemRef.set(notif);
-  return { notificationId: itemRef.id };
+  return firestore.runTransaction(async (tx) => {
+    if (!(await transactionAccountsLive({ firestore, tx, uids: [fromUid, toUid] }))) return { skipped: true, deleting: true };
+    tx.set(itemRef, notif);
+    return { notificationId: itemRef.id };
+  });
 }
 
 module.exports = {

@@ -124,7 +124,8 @@ exports.sendVerificationEmailCallable = functions
     if (!context.auth) {
       throw new functions.https.HttpsError("unauthenticated", "Sign in first.");
     }
-    const email = context.auth.token.email;
+    const currentUser = await admin.auth().getUser(context.auth.uid);
+    const email = currentUser.email;
     if (!email) {
       throw new functions.https.HttpsError(
         "failed-precondition",
@@ -133,7 +134,7 @@ exports.sendVerificationEmailCallable = functions
     }
     // Token already says verified → nothing to send. (The token can lag a
     // just-completed verification; treating it as success is harmless.)
-    if (context.auth.token.email_verified) {
+    if (currentUser.emailVerified) {
       return { ok: true, alreadyVerified: true };
     }
     const limited = await isEmailRateLimited({

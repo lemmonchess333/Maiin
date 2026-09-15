@@ -30,6 +30,16 @@ beforeEach(() => {
   h.request.mockResolvedValue({ data: { ok: true } });
 });
 describe("deletion completion and identity", () => {
+  it("keeps an accepted background request pending", async () => {
+    h.request.mockResolvedValue({ data: { ok: false, status: "pending" } });
+    await expect(deleteAccount("u1")).resolves.toBe("pending");
+  });
+  it("cannot turn an unexpected callable response into successful deletion", async () => {
+    h.request.mockResolvedValue({ data: { ok: false } });
+    await expect(deleteAccount("u1")).rejects.toThrow(
+      "Deletion wasn't confirmed"
+    );
+  });
   it("uses the authenticated callable and allows time for larger accounts", async () => {
     await deleteAccount("u1");
     expect(h.callable).toHaveBeenCalledWith({}, "deleteMyAccount", {
@@ -48,7 +58,7 @@ describe("deletion completion and identity", () => {
       seedFirestore({ [path]: { status: "completed" } });
       throw new Error("deadline");
     });
-    await expect(deleteAccount("u1")).resolves.toBeUndefined();
+    await expect(deleteAccount("u1")).resolves.toBe("completed");
   });
   it.each(["running", "failed_cleanup"])(
     "does not call %s a successful deletion",

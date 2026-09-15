@@ -185,7 +185,10 @@ export function onSnapshot(
         // snapshot explicitly through its own controlled listener.
         next(
           Object.assign(snapshot, {
-            metadata: { fromCache: false, hasPendingWrites: false },
+            metadata: firestoreFake.snapshotMetadata.get(ref.path) ?? {
+              fromCache: false,
+              hasPendingWrites: false,
+            },
           })
         );
       } catch (err) {

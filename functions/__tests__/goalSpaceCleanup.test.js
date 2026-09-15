@@ -247,7 +247,7 @@ describe("cleanupGoalSpacesForUser", () => {
     expect(db.__docs.has("users/u9/journeys/ghost")).toBe(false);
   });
 
-  it("one bad space is logged and skipped — the rest still clean up", async () => {
+  it("a failed space rejects after preserving completed cleanup for retry", async () => {
     const db = makeFirestore({
       ...seededCircle({ members: ["owner", "u2"] }),
       // Second membership whose space doc is corrupt enough to throw
@@ -279,11 +279,13 @@ describe("cleanupGoalSpacesForUser", () => {
       return ref;
     };
     const warnings = [];
-    await cleanupGoalSpacesForUser({
-      firestore: db,
-      uid: "u2",
-      logger: { warn: (...a) => warnings.push(a.join(" ")) },
-    });
+    await expect(
+      cleanupGoalSpacesForUser({
+        firestore: db,
+        uid: "u2",
+        logger: { warn: (...a) => warnings.push(a.join(" ")) },
+      })
+    ).rejects.toThrow("boom");
     // s1 (healthy) fully cleaned despite s2 failing.
     expect(db.__docs.has("goalSpaces/s1/members/u2")).toBe(false);
     expect(db.__docs.has("users/u2/journeys/s1")).toBe(false);

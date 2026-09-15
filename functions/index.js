@@ -396,7 +396,7 @@ exports.deleteMyAccount = functions
           }
         },
       });
-      return { ok: true };
+      return { ok: true, status: "completed" };
     } catch (err) {
       // Kill-switch trip is an intentional operator-controlled abort,
       // not an internal failure. Surface as `failed-precondition` with
@@ -410,16 +410,23 @@ exports.deleteMyAccount = functions
           { reason: "executor-disabled" }
         );
       }
-      // R1A Chunk 3 — another executor holds a live deletion lease (e.g. a
-      // double-tap). Surface a typed, friendly precondition instead of a
-      // generic internal error.
-      if (err && err.code === "deletion-in-progress") {
-        functions.logger.info("deleteMyAccount.already_in_progress", { uid });
-        throw new functions.https.HttpsError(
-          "failed-precondition",
-          "Your account deletion is already in progress.",
-          { reason: "deletion-in-progress" }
-        );
+      // Report pending only after confirming the durable, authorised request.
+      const request = await admin
+        .firestore()
+        .doc(`accountDeletionRequests/${uid}`)
+        .get();
+      if (
+        request.exists &&
+        request.data().resumeVersion === 2 &&
+        ["running", "failed_cleanup", "pending_cleanup"].includes(
+          request.data().status
+        )
+      ) {
+        return {
+          ok: false,
+          status: "pending",
+          supportCode: request.data().supportCode,
+        };
       }
       functions.logger.error("deleteMyAccount.error", {
         uid,
@@ -431,6 +438,37 @@ exports.deleteMyAccount = functions
         { reason: "cleanup-incomplete" }
       );
     }
+  });
+
+// Durable retries continue an already-authorised request when the phone closes
+// or a provider is temporarily unavailable. No historical records are enrolled.
+exports.resumeAccountDeletions = functions
+  .runWith({
+    ...SCHEDULED_CAP,
+    secrets: [STRIPE_SECRET_KEY, BILLING_HMAC_SECRET],
+  })
+  .pubsub.schedule("every 5 minutes")
+  .timeZone("UTC")
+  .onRun(async () => {
+    const retry = require("./lib/accountDeletionRetry");
+    const firestore = admin.firestore();
+    const deadline = Date.now() + 450000;
+    try {
+      await retry.retryBilling({ firestore, logger: functions.logger });
+    } catch (error) {
+      functions.logger.error("deleteAccount.billing_retry_failed", {
+        code: error.code || "unavailable",
+      });
+    }
+    await retry.resumeDeletions({
+      firestore,
+      deleteAccount: accountDeletion.deleteAccount,
+      auth: admin.auth(),
+      storageBucket: admin.storage().bucket(),
+      logger: functions.logger,
+      deadline,
+    });
+    return null;
   });
 
 // ══════════════════════════════════════════════
@@ -625,6 +663,17 @@ exports.completeOnboarding = functions
       admin.firestore(),
       uid
     );
+
+    if (
+      context.auth.token?.firebase?.sign_in_provider === "password" &&
+      context.auth.token.email_verified !== true
+    ) {
+      throw new functions.https.HttpsError(
+        "failed-precondition",
+        "Verify your email before completing setup.",
+        { reason: "email-unverified" }
+      );
+    }
 
     // Rate limit: 5 onboarding attempts per 10 minutes
     const limited = await isRateLimited(uid, "onboarding", 5, 600_000);

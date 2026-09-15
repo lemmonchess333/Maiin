@@ -199,9 +199,10 @@ export default function PrivacyPolicy() {
               <li>Update or correct your personal information</li>
               <li>
                 Delete your account from within the app (Settings &gt; Delete
-                Account). Everything we hold is erased immediately, and meal
-                photos are cleared from the device you delete from — see section
-                6 for the one thing this cannot reach.
+                Account). We remove your profile, fitness logs, uploaded photos
+                and public social content. Cleanup may continue in the
+                background. See section 6 for retention periods and device
+                photos.
               </li>
               <li>Export your data in a standard format</li>
             </ul>
@@ -253,10 +254,18 @@ export default function PrivacyPolicy() {
               </li>
               <li>
                 <strong className="text-foreground">Data retention:</strong> We
-                retain your data for as long as your account is active. When you
-                delete your account, everything held on our servers is erased{" "}
-                <strong className="text-foreground">immediately</strong> — it is
-                not queued for later deletion.
+                retain your data while your account is active. Deletion freezes
+                new writes, removes your personal data, then removes your
+                sign-in. Failed cleanup is retried in the background. We retain
+                a minimal deletion record for 30 days and a protection record
+                for 90 days. Non-public comment text and minimised moderation
+                records may be retained for up to 365 days for safety review.
+                Protected billing identifiers are retained for 13 months to
+                prevent purchase theft. Expired records are removed by scheduled
+                retention policies; removal is not instantaneous. An outstanding
+                subscription cancellation request is kept until it is resolved.
+                Payment providers may retain their own transaction records under
+                their policies.
               </li>
               <li>
                 <strong className="text-foreground">

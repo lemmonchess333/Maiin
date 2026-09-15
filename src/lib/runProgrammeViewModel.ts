@@ -20,7 +20,7 @@ import type { RunTemplate } from "@/lib/workoutTemplates";
 import {
   getRacePhaseLabel,
   isCurrentWeekInTaper,
-} from "@/features/program/runScheduler";
+} from "@/features/program/runPlanTiming";
 import { parseLocalDate } from "@/lib/dateHelpers";
 
 // R4: the surface resolver + its types now live in `runPlanResolver`, which

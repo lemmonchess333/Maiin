@@ -77,6 +77,15 @@ function makeFirestoreStub({ initial = {}, collections = {} } = {}) {
   }
 
   return {
+    async runTransaction(callback) {
+      const queued = [];
+      const result = await callback({
+        get: (ref) => ref.get(),
+        set: (ref, data) => queued.push([ref, data]),
+      });
+      for (const [ref, data] of queued) await ref.set(data);
+      return result;
+    },
     collection(name) {
       return makeCollection(name);
     },

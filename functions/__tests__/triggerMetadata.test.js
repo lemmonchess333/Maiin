@@ -66,6 +66,13 @@ const require = createRequire(import.meta.url);
 process.env.GCLOUD_PROJECT = process.env.GCLOUD_PROJECT || "tropos-unit-test";
 
 const EXPECTED = {
+  resumeAccountDeletions: {
+    kind: "schedule",
+    maxInstances: 1,
+    timeoutSeconds: 540,
+    secrets: ["BILLING_HMAC_SECRET", "STRIPE_SECRET_KEY"],
+    schedule: "every 5 minutes",
+  },
   applyProgramCommand: {
     kind: "callable",
     maxInstances: 100,

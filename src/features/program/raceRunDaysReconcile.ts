@@ -9,9 +9,10 @@ import {
 } from "@/lib/dateHelpers";
 import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
 import {
-  generateRacePlanV2,
+  raceCalendarWeeks,
+  getPhaseForWeek,
   getRaceMinWeeks,
-} from "@/features/program/runScheduler";
+} from "@/features/program/runPlanTiming";
 import type { ScheduledRunDay } from "@/features/program/programTypes";
 import type { ScheduleDay } from "@/lib/scheduleUtils";
 
@@ -46,7 +47,7 @@ export interface RaceRunDaysStaleArgs {
  * stored week already matches a fresh today-anchored generation.
  */
 export function areRaceRunDaysStale(args: RaceRunDaysStaleArgs): boolean {
-  const { runDays, raceGoal, weekSchedule, weeklyRunDays, todayKey } = args;
+  const { runDays, raceGoal, weekSchedule, todayKey } = args;
   if (!raceGoal) return false;
   if (!runDays || runDays.length === 0) return false;
 
@@ -61,27 +62,21 @@ export function areRaceRunDaysStale(args: RaceRunDaysStaleArgs): boolean {
   // race-template presence. If the stored week and the fresh week disagree
   // on whether this is a race week, the stored content drifted (the
   // "race in base week 1" signature).
-  const fresh = generateRacePlanV2({
-    weekSchedule,
-    /* Run15 — this generation is a COMPARISON probe (does the stored week
-       agree with a fresh one about race-template presence?), not a plan the
-       user receives. It must use the same layoff the stored plan was built
-       under, and the only value that is always true of both is "none";
-       anything else would manufacture drift for every detrained runner and
-       trigger a spurious reconcile. Layoff does not affect race-week
-       placement, which is what this probe reads. */
-    recentLayoff: "none",
-    raceGoal: {
-      distance: raceGoal.distance as RaceDistance,
-      targetDate: raceGoal.targetDate,
-    },
-    weeklyRunDays,
-    currentDate: todayKey,
-    weekStart: thisWeekKey,
-  });
-  const freshWeek = fresh.weeks[0] ?? [];
+  // The scheduler places a race in the final calendar week whenever there
+  // is at least one run slot. Share its timing calculation instead of
+  // generating every session merely to read that fact.
+  const totalWeeks = raceCalendarWeeks(
+    startOfLocalWeek(parseLocalDate(todayKey)),
+    parseLocalDate(raceGoal.targetDate)
+  );
+  const hasRunSlot = weekSchedule.some(
+    (day) => day.type === "run" || day.type === "both"
+  );
   const storedHasRace = runDays.some(isRaceRunDay);
-  const freshHasRace = freshWeek.some(isRaceRunDay);
+  const freshHasRace =
+    hasRunSlot &&
+    getPhaseForWeek(0, totalWeeks, raceGoal.distance as RaceDistance) ===
+      "race";
   return storedHasRace !== freshHasRace;
 }
 
@@ -106,21 +101,10 @@ export function honestRaceWeekIndex(args: {
   todayKey: string;
 }): { currentWeek: number; totalWeeks: number } {
   const { raceGoal, todayKey } = args;
-  const fresh = generateRacePlanV2({
-    // weekSchedule/weeklyRunDays don't affect totalWeeks; pass minimal.
-    // Layoff does not either — it changes week CONTENT, and this reads only
-    // the count — so "none" here is arithmetic, not a policy choice.
-    recentLayoff: "none",
-    weekSchedule: [],
-    raceGoal: {
-      distance: raceGoal.distance as RaceDistance,
-      targetDate: raceGoal.targetDate,
-    },
-    weeklyRunDays: 3,
-    currentDate: todayKey,
-    weekStart: localWeekKey(parseLocalDate(todayKey)),
-  });
-  const totalWeeks = fresh.totalWeeks;
+  const totalWeeks = raceCalendarWeeks(
+    startOfLocalWeek(parseLocalDate(todayKey)),
+    parseLocalDate(raceGoal.targetDate)
+  );
 
   const raceWeekStart = startOfLocalWeek(parseLocalDate(raceGoal.targetDate));
   const thisWeekStart = startOfLocalWeek(parseLocalDate(todayKey));

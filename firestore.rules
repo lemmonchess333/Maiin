@@ -1382,11 +1382,11 @@ service cloud.firestore {
     // ========================================
     match /blocks/{uid}/users/{targetUid} {
       allow read: if isOwner(uid);
-      // R1A-Deletion: writes frozen during owner's deletion. targetUid
-      // deletion is NOT a freeze condition — a user can still block /
-      // unblock someone whose account is mid-deletion (locally
-      // applied, the executor cleans the doc).
-      allow write: if isOwnerAndNotDeleting(uid);
+      // Freeze new reverse edges for either deleting account, so cleanup
+      // cannot be followed by an old client recreating the reference.
+      // The owner can still remove an existing block while the target deletes.
+      allow create, update: if isOwnerAndNotDeleting(uid) && !isWriteFrozen(targetUid);
+      allow delete: if isOwnerAndNotDeleting(uid);
     }
 
     // ========================================
@@ -1642,6 +1642,12 @@ service cloud.firestore {
       allow read: if isOwner(uid);
       allow write: if false;
     }
+
+    // Execution checkpoints, pending provider cancellation, and bounded
+    // moderation evidence are never exposed through the user-readable ledger.
+    match /accountDeletionWork/{uid} { allow read, write: if false; }
+    match /accountDeletionBilling/{uid} { allow read, write: if false; }
+    match /deletedCommentEvidence/{id} { allow read, write: if false; }
 
     match /deletedAccounts/{uid} {
       // Tombstone is for system-writer guards (Admin SDK reads only).

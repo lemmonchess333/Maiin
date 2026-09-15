@@ -112,9 +112,9 @@ function resolveSpecifier(spec: string, fromFile: string): string | null {
 }
 
 /** Eagerly reachable modules, each mapped to the chain that reached it. */
-function eagerGraph(): Map<string, string[]> {
-  const seen = new Map<string, string[]>([[ENTRY, ["src/App.tsx"]]]);
-  const queue = [ENTRY];
+function eagerGraph(entry = ENTRY): Map<string, string[]> {
+  const seen = new Map<string, string[]>([[entry, [relative(ROOT, entry)]]]);
+  const queue = [entry];
   while (queue.length) {
     const file = queue.shift()!;
     const chain = seen.get(file)!;
@@ -171,4 +171,50 @@ describe("eager import graph — what Login pays for", () => {
       ).toBeNull();
     });
   }
+});
+
+describe("Home programme loading", () => {
+  it("reads the current plan without importing its editor or the race generator", () => {
+    const graph = eagerGraph(resolve(SRC, "pages/Home.tsx"));
+    expect(graph.has(resolve(SRC, "features/program/useHomeProgram.tsx"))).toBe(
+      true
+    );
+    for (const path of [
+      "features/program/useProgram.ts",
+      "features/program/runScheduler.ts",
+      "features/program/HomeProgramController.tsx",
+    ]) {
+      expect(
+        graph.get(resolve(SRC, path)),
+        `Home eagerly imports ${path}`
+      ).toBeUndefined();
+    }
+  });
+});
+
+describe("on-demand exercise guides", () => {
+  it("keeps unopened exercise guides off the Programme import graph", () => {
+    const graph = eagerGraph(resolve(SRC, "pages/Program.tsx"));
+    expect(
+      graph.has(resolve(SRC, "components/program/ExercisePicker.tsx"))
+    ).toBe(true);
+    expect(
+      graph.get(resolve(SRC, "components/ExerciseFormContent.tsx"))
+    ).toBeUndefined();
+    expect(graph.get(resolve(SRC, "lib/bodyRig.ts"))).toBeUndefined();
+  });
+
+  it("renders the released still guides without importing the legacy renderer", () => {
+    const graph = eagerGraph(
+      resolve(SRC, "components/ExerciseFormContent.tsx")
+    );
+    expect(graph.has(resolve(SRC, "components/ExerciseFormFrames.tsx"))).toBe(
+      true
+    );
+    expect(graph.has(resolve(SRC, "lib/formGuides.ts"))).toBe(true);
+    expect(graph.get(resolve(SRC, "lib/bodyRig.ts"))).toBeUndefined();
+    expect(
+      graph.get(resolve(SRC, "components/LegacyExerciseRigDemo.tsx"))
+    ).toBeUndefined();
+  });
 });

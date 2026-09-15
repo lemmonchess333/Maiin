@@ -29,7 +29,7 @@ import {
   vdotFromRace,
   type RunFitnessInput,
 } from "./runPaces";
-import { getPhaseForWeek } from "@/features/program/runScheduler";
+import { getPhaseForWeek } from "@/features/program/runPlanTiming";
 
 export type RaceDistance = "5k" | "10k" | "half" | "marathon";
 

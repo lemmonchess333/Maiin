@@ -1,3 +1,5 @@
+import { useAccountDeletionStatus } from "@/hooks/useAccountDeletionStatus";
+import { useEmailVerificationGate } from "@/hooks/useEmailVerificationGate";
 import { Component, type ReactNode, Suspense, useEffect } from "react";
 import {
   BrowserRouter,
@@ -128,6 +130,7 @@ const SettingsSubscription = lazyRetry(
 const SettingsSupportLegal = lazyRetry(
   () => import("@/pages/settings/SettingsSupportLegal")
 );
+const VerifySignupEmail = lazyRetry(() => import("@/pages/VerifySignupEmail"));
 const SettingsAccount = lazyRetry(
   () => import("@/pages/settings/SettingsAccount")
 );
@@ -334,57 +337,17 @@ class ErrorBoundary extends Component<
 }
 
 /* ================================
-   ROUTE PREFETCHING
-================================ */
-
-const PREFETCH_MAP: Record<string, (() => Promise<unknown>)[]> = {
-  "/": [() => import("@/pages/Food"), () => import("@/pages/Program")],
-  "/food": [() => import("@/pages/Home"), () => import("@/pages/History")],
-  "/program": [() => import("@/pages/Home"), () => import("@/pages/Food")],
-  "/social": [() => import("@/pages/Home")],
-  "/history": [
-    () => import("@/pages/Home"),
-    () => import("@/pages/SettingsIndex"),
-  ],
-};
-
-function RoutePrefetcher() {
-  // Pull pathname out of the react-router location object before the
-  // effect so the dep array reads a primitive — react-doctor's
-  // "mutable in deps" heuristic flags `location.*` patterns by name
-  // (assuming `window.location`) even though react-router's
-  // `useLocation()` returns a fresh object per navigation. Extracting
-  // makes the dep explicit and lint-clean without changing semantics.
-  const { pathname } = useLocation();
-
-  useEffect(() => {
-    const prefetches = PREFETCH_MAP[pathname];
-    if (!prefetches) return;
-
-    const rIC =
-      window.requestIdleCallback ??
-      ((cb: IdleRequestCallback) =>
-        window.setTimeout(cb, 1) as unknown as number);
-    const cIC =
-      window.cancelIdleCallback ?? ((id: number) => window.clearTimeout(id));
-
-    const id = rIC(() => {
-      prefetches.forEach((load) => load().catch(() => {}));
-    });
-
-    return () => cIC(id);
-  }, [pathname]);
-
-  return null;
-}
-
-/* ================================
    ROUTES
 ================================ */
 
 function AppRoutes() {
   const { user, profile, loading } = useAuth();
   const uid = user?.uid ?? null;
+  const deletion = useAccountDeletionStatus(user?.uid);
+  const verification = useEmailVerificationGate(
+    user,
+    !profile?.onboardingComplete
+  );
   // Packet 17 — non-prompting FCM token refresh on sign-in + foreground.
   usePushTokenRefresh();
 
@@ -476,6 +439,19 @@ function AppRoutes() {
     );
   }
 
+  if (deletion.pending || deletion.completed) {
+    return (
+      <Suspense fallback={<PageLoader />}>
+        <main
+          className="min-h-dvh bg-background text-foreground px-4 py-6 max-w-lg mx-auto"
+          style={{ paddingTop: "max(1.5rem, env(safe-area-inset-top))" }}
+        >
+          <SettingsAccount duringSetup />
+        </main>
+      </Suspense>
+    );
+  }
+
   if (!profile?.onboardingComplete) {
     return (
       <Suspense fallback={<PageLoader />}>
@@ -500,7 +476,20 @@ function AppRoutes() {
               </RouteErrorBoundary>
             }
           />
-          <Route path="*" element={<Onboarding />} />
+          <Route
+            path="*"
+            element={
+              verification.needsVerification ? (
+                <VerifySignupEmail
+                  key={user.uid}
+                  user={user}
+                  recheck={verification.recheck}
+                />
+              ) : (
+                <Onboarding />
+              )
+            }
+          />
         </Routes>
       </Suspense>
     );
@@ -539,7 +528,6 @@ function AppRoutes() {
               <SurfaceCoordinatorProvider>
                 {/* #995 tier-3: ≤1 inline education card at a time. */}
                 <EducationLaneProvider>
-                  <RoutePrefetcher />
                   {/* Shipped single-hue brand ambient glow. Authenticated root
                     only, so it sits behind every app page but the
                     unauthenticated auth-shell branch (its own ambience) is

@@ -51,10 +51,10 @@ describe("ExercisePicker row: see it vs add it", () => {
     expect(screen.getByText(/1 exercise selected/)).toBeInTheDocument();
   });
 
-  it("the row body opens the detail sheet without touching the selection", () => {
+  it("the row body opens the detail sheet without touching the selection", async () => {
     mount();
     fireEvent.click(screen.getByRole("button", { name: "Dips details" }));
-    expect(screen.getByTestId("form-content")).toHaveTextContent(
+    expect(await screen.findByTestId("form-content")).toHaveTextContent(
       "Form for Dips"
     );
     // The open sheet makes the page behind it inert (modal semantics), so

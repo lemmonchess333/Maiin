@@ -28,7 +28,14 @@ import { useUid } from "@/lib/auth";
 import { motion, AnimatePresence } from "framer-motion";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { useSwipeNavigation } from "@/hooks/useSwipeNavigation";
-import { useEffect, useSyncExternalStore, useCallback, useState } from "react";
+import {
+  Suspense,
+  useEffect,
+  useSyncExternalStore,
+  useCallback,
+  useState,
+} from "react";
+import { PageContentSkeleton } from "@/components/LoadingSkeleton";
 
 /** Queue state describes local persistence, not network connectivity. */
 function useQueuedChanges(uid: string | null) {
@@ -288,7 +295,11 @@ export default function Layout() {
             prefersReducedMotion ? { duration: 0 } : { duration: 0.2 }
           }
         >
-          <Outlet />
+          <Suspense
+            fallback={<PageContentSkeleton pathname={location.pathname} />}
+          >
+            <Outlet />
+          </Suspense>
         </motion.div>
       </main>
 

@@ -41,6 +41,18 @@ const TEST_UID = "user-abc";
  * relevant method after construction.
  */
 function makeStubs(opts = {}) {
+  const emptyQuery = () => {
+    const query = {
+      get: async () => ({ empty: true, docs: [], size: 0 }),
+      where: () => query,
+      orderBy: () => query,
+      limit: () => query,
+      startAfter: () => query,
+      select: () => query,
+    };
+    return query;
+  };
+  const work = new Map();
   const calls = [];
   const tombstones = [];
   // R1A Chunk 3 — the deletedAccounts tombstone store. Modelled SEPARATELY
@@ -157,6 +169,7 @@ function makeStubs(opts = {}) {
                 const docs = (opts.appleSubsDocs || []).map((d) => ({
                   id: d.id,
                   ref: {
+                    set: async () => {},
                     delete: async () => {
                       calls.push(`firestore.appleSubscriptions.${d.id}.delete`);
                     },
@@ -214,7 +227,7 @@ function makeStubs(opts = {}) {
             }),
           };
         }
-        return { doc: (uid) => topLevelDocStub(name, uid) };
+        return { ...emptyQuery(), doc: (uid) => topLevelDocStub(name, uid) };
       },
       async runTransaction(cb) {
         const tx = {
@@ -231,8 +244,31 @@ function makeStubs(opts = {}) {
         };
         return cb(tx);
       },
+      collectionGroup() {
+        return emptyQuery();
+      },
+      async recursiveDelete(ref) {
+        calls.push(`recursiveDelete(${ref.path})`);
+      },
       doc(path) {
+        if (path.startsWith("users/") && path.split("/").length === 2)
+          return this.collection("users").doc(path.split("/")[1]);
         return {
+          id: path.split("/").at(-1),
+          path,
+          get: async () => ({
+            exists: work.has(path),
+            data: () => work.get(path),
+          }),
+          set: async (data, options) => {
+            work.set(
+              path,
+              options?.merge ? { ...work.get(path), ...data } : data
+            );
+          },
+          update: async (data) => {
+            work.set(path, { ...work.get(path), ...data });
+          },
           delete: async () => {
             calls.push(`firestore.doc(${path}).delete`);
             if (opts.publicProfileDeleteThrows) {
@@ -288,7 +324,9 @@ describe("deleteAccount — call ordering", () => {
     const stubs = makeStubs();
     await deleteAccount({ ...stubs, uid: TEST_UID });
 
-    const lastCall = stubs.calls[stubs.calls.length - 1];
+    const lastCall = stubs.calls
+      .filter((call) => !call.includes("accountDeletionWork"))
+      .at(-1);
     expect(lastCall).toBe(`auth.deleteUser(${TEST_UID})`);
   });
 
@@ -380,13 +418,24 @@ describe("deleteAccount — failure semantics", () => {
   it("keeps Auth and records retryable failure until Storage cleanup succeeds", async () => {
     const stubs = makeStubs();
     const originalDeleteFiles = stubs.storageBucket.deleteFiles;
-    stubs.storageBucket.deleteFiles = async () => { throw new Error("storage 503"); };
-    await expect(deleteAccount({ ...stubs, uid: TEST_UID })).rejects.toThrow("Storage cleanup is incomplete");
-    expect(stubs.calls.some((call) => call.startsWith("auth.deleteUser"))).toBe(false);
-    expect(stubs.ledgerStore.doc).toMatchObject({ status: "failed_cleanup", failedStage: "storage" });
+    stubs.storageBucket.deleteFiles = async () => {
+      throw new Error("storage 503");
+    };
+    await expect(deleteAccount({ ...stubs, uid: TEST_UID })).rejects.toThrow(
+      "Storage cleanup is incomplete"
+    );
+    expect(stubs.calls.some((call) => call.startsWith("auth.deleteUser"))).toBe(
+      false
+    );
+    expect(stubs.ledgerStore.doc).toMatchObject({
+      status: "failed_cleanup",
+      failedStage: "storage",
+    });
     stubs.storageBucket.deleteFiles = originalDeleteFiles;
     await deleteAccount({ ...stubs, uid: TEST_UID });
-    expect(stubs.calls.filter((call) => call.startsWith("auth.deleteUser"))).toHaveLength(1);
+    expect(
+      stubs.calls.filter((call) => call.startsWith("auth.deleteUser"))
+    ).toHaveLength(1);
     expect(stubs.ledgerStore.doc.status).toBe("completed");
   });
 
@@ -401,7 +450,9 @@ describe("deleteAccount — failure semantics", () => {
       }
     };
 
-    await expect(deleteAccount({ ...stubs, uid: TEST_UID })).rejects.toThrow("Storage cleanup is incomplete");
+    await expect(deleteAccount({ ...stubs, uid: TEST_UID })).rejects.toThrow(
+      "Storage cleanup is incomplete"
+    );
 
     const prefixesCalled = stubs.calls.filter((c) =>
       c.startsWith("storage.deleteFiles")
@@ -414,18 +465,28 @@ describe("deleteAccount — failure semantics", () => {
   });
 
   it.each(["users/user-abc/public/profile", "scanUsage/user-abc"])(
-    "keeps Auth when deletion of %s fails", async (failedPath) => {
+    "keeps Auth when deletion of %s fails",
+    async (failedPath) => {
       const stubs = makeStubs();
       const originalDoc = stubs.firestore.doc;
-      stubs.firestore.doc = function(path) {
-        if (path === failedPath) return { delete: async () => { throw new Error("unavailable"); } };
+      stubs.firestore.doc = function (path) {
+        if (path === failedPath)
+          return {
+            delete: async () => {
+              throw new Error("unavailable");
+            },
+          };
         return originalDoc.call(this, path);
       };
-      await expect(deleteAccount({ ...stubs, uid: TEST_UID })).rejects.toThrow("unavailable");
-      expect(stubs.calls.some((call) => call.startsWith("auth.deleteUser"))).toBe(false);
+      await expect(deleteAccount({ ...stubs, uid: TEST_UID })).rejects.toThrow(
+        "unavailable"
+      );
+      expect(
+        stubs.calls.some((call) => call.startsWith("auth.deleteUser"))
+      ).toBe(false);
       expect(stubs.ledgerStore.doc.status).toBe("failed_cleanup");
-    });
-
+    }
+  );
 });
 
 describe("deleteAccount — coverage of cleanup targets", () => {
@@ -747,16 +808,17 @@ describe("deleteAccount — Chunk 3 lease + write-freeze (audit F2)", () => {
       now: 1000,
     });
     // Auth still deleted last.
-    expect(stubs.calls[stubs.calls.length - 1]).toBe(
-      `auth.deleteUser(${TEST_UID})`
-    );
+    expect(
+      stubs.calls.filter((call) => !call.includes("accountDeletionWork")).at(-1)
+    ).toBe(`auth.deleteUser(${TEST_UID})`);
     // Ledger went running (freeze engaged) → completed (with TTL).
     const doc = stubs.ledgerStore.doc;
     expect(doc).toBeDefined();
     expect(doc.status).toBe("completed");
     expect(doc.leaseOwner).toBe("exec-A");
     expect(doc.completedAt).toBe(1000);
-    expect(doc.cleanupAfter).toBe(1000 + 30 * 24 * 60 * 60 * 1000);
+    expect(doc.cleanupAfter).toBeInstanceOf(Date);
+    expect(doc.cleanupAfter.getTime()).toBe(1000 + 30 * 24 * 60 * 60 * 1000);
   });
 
   it("flips the ledger to failed_cleanup (freeze STAYS on) when a delete throws", async () => {
@@ -893,9 +955,9 @@ describe("deleteAccount — Chunk 3 lease + write-freeze (audit F2)", () => {
     expect(stubs.calls).not.toContain(
       "firestore.appleSubscriptions.otx-456.delete"
     );
-    expect(stubs.calls[stubs.calls.length - 1]).toBe(
-      `auth.deleteUser(${TEST_UID})`
-    );
+    expect(
+      stubs.calls.filter((call) => !call.includes("accountDeletionWork")).at(-1)
+    ).toBe(`auth.deleteUser(${TEST_UID})`);
   });
 });
 
@@ -1005,9 +1067,9 @@ describe("deleteAccount — deletedAccounts tombstone", () => {
     });
 
     expect(stubs.deletedAccountsStore[TEST_UID]).toBeDefined();
-    expect(stubs.calls[stubs.calls.length - 1]).toBe(
-      `auth.deleteUser(${TEST_UID})`
-    );
+    expect(
+      stubs.calls.filter((call) => !call.includes("accountDeletionWork")).at(-1)
+    ).toBe(`auth.deleteUser(${TEST_UID})`);
     expect(stubs.ledgerStore.doc.status).toBe("completed");
   });
 });
@@ -1020,16 +1082,16 @@ describe("deleteAccount — feed fan-out erasure (step 0d)", () => {
      `swept` line with zero counts. Nothing else in the cascade would
      notice.
 
-     `feedFanoutCleanup` is spied rather than exercised here so the ordering
+     `accountDeletionSocial` is spied rather than exercised here so the ordering
      is asserted against the executor's own reads. The deletes themselves are
-     covered in feedFanoutCleanup.test.js. */
-  const feedFanoutCleanup = require("../lib/feedFanoutCleanup");
+     covered in accountDeletionComplete.test.js. */
+  const socialCleanup = require("../lib/accountDeletionSocial");
 
   /** Records the args of each sweep call into `received` — read AFTER
    *  mockRestore, which clears `spy.mock.calls`. */
   function spyOnSweep(calls, received = []) {
     const spy = vi
-      .spyOn(feedFanoutCleanup, "removeFanoutCopiesForUser")
+      .spyOn(socialCleanup, "cleanupSocial")
       .mockImplementation(async (args) => {
         received.push(args);
         calls.push("feedFanout.sweep");
@@ -1125,7 +1187,10 @@ describe("deleteAccount — challenge participations (step 0e)", () => {
 
   function spyOnSweep(calls, received = []) {
     return vi
-      .spyOn(challengeParticipationCleanup, "removeChallengeParticipationsForUser")
+      .spyOn(
+        challengeParticipationCleanup,
+        "removeChallengeParticipationsForUser"
+      )
       .mockImplementation(async (args) => {
         received.push(args);
         calls.push("challengeParticipations.sweep");

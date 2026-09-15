@@ -1,4 +1,4 @@
-import { isCurrentWeekInRaceWindDown } from "@/features/program/runScheduler";
+import { isCurrentWeekInRaceWindDown } from "@/features/program/runPlanTiming";
 
 export interface DeloadSuggestInput {
   /** `resolveDeloadRecommended(perfWeek)` — the PI's recommendation. */

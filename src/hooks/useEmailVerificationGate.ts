@@ -17,7 +17,10 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { User } from "firebase/auth";
 import { needsEmailVerification } from "@/lib/emailVerificationGate";
 
-export function useEmailVerificationGate(user: User | null | undefined) {
+export function useEmailVerificationGate(
+  user: User | null | undefined,
+  checkOnResume = false
+) {
   const currentUser = useRef(user);
   const [check, setCheck] = useState<{ user: User; verified: boolean } | null>(
     null
@@ -51,6 +54,48 @@ export function useEmailVerificationGate(user: User | null | undefined) {
     setCheck({ user, verified: user.emailVerified });
     return user.emailVerified;
   }, [user]);
+
+  useEffect(() => {
+    if (!checkOnResume || !needsVerification) return;
+    let active = true;
+    let checking = false;
+    const check = () => {
+      if (!active || checking || document.visibilityState === "hidden") return;
+      checking = true;
+      void recheck()
+        .catch(() => {})
+        .finally(() => {
+          checking = false;
+        });
+    };
+    document.addEventListener("visibilitychange", check);
+    window.addEventListener("focus", check);
+    let removeNative: (() => void) | undefined;
+    void import("@capacitor/core")
+      .then(async ({ Capacitor }) => {
+        if (!Capacitor.isNativePlatform()) return;
+        const { App } = await import("@capacitor/app");
+        const listener = await App.addListener(
+          "appStateChange",
+          ({ isActive }) => {
+            if (isActive) check();
+          }
+        );
+        if (!active) void listener.remove();
+        else
+          removeNative = () => {
+            void listener.remove();
+          };
+      })
+      .catch(() => {});
+    check();
+    return () => {
+      active = false;
+      document.removeEventListener("visibilitychange", check);
+      window.removeEventListener("focus", check);
+      removeNative?.();
+    };
+  }, [checkOnResume, needsVerification, recheck]);
 
   return { needsVerification, emailVerified, recheck };
 }

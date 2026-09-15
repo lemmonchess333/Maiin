@@ -140,12 +140,11 @@ export interface CompletedSessionData {
   startedAt?: number;
 }
 import { planningEasyPaceSPerKm } from "@/lib/runPaces";
+import { clampPlanWeek, type RaceTiming } from "./runPlanTiming";
 import {
   generateRacePlanV2,
   scheduleRecoveryWeekV2,
-  clampPlanWeek,
   runTuningFromProfile,
-  type RaceTiming,
   type RunTuning,
 } from "./runScheduler";
 import {

@@ -43,7 +43,7 @@ import {
   repRangeMaxFor,
 } from "./programEngine";
 import { usesUndulation } from "./experienceModel";
-import { getRaceFloorWeeks } from "./runScheduler";
+import { getRaceFloorWeeks } from "./runPlanTiming";
 import type {
   ActiveTrainingBlock,
   BlockPace,

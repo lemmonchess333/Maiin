@@ -98,12 +98,9 @@ import {
 import { logger } from "@/lib/logger";
 import { useScrollEdges } from "@/hooks/useScrollEdges";
 import SessionCompleteScreen from "@/components/workout/SessionCompleteScreen";
-import CompactRestTimer from "@/components/workout/CompactRestTimer";
-import {
-  restNotificationDelaySeconds,
-  scheduleRestEndNotification,
-  cancelRestEndNotification,
-} from "@/lib/restTimerNotification";
+import WorkoutProgress from "@/components/workout/WorkoutProgress";
+import WorkoutRestTimer from "@/components/workout/WorkoutRestTimer";
+import { elapsedSecondsSince } from "@/hooks/useElapsedSeconds";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { IconButton } from "@/components/ui/IconButton";
 import { Spinner } from "@/components/ui/Spinner";
@@ -113,28 +110,6 @@ import InlineNumerals from "@/components/ui/InlineNumerals";
 const ExerciseFormContent = lazyRetry(
   () => import("@/components/ExerciseFormContent")
 );
-
-function playChime() {
-  try {
-    const ctx = new AudioContext();
-    const osc1 = ctx.createOscillator();
-    const osc2 = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc1.frequency.value = 523;
-    osc2.frequency.value = 659;
-    gain.gain.value = 0.15;
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.8);
-    osc1.connect(gain);
-    osc2.connect(gain);
-    gain.connect(ctx.destination);
-    osc1.start(ctx.currentTime);
-    osc2.start(ctx.currentTime + 0.15);
-    osc1.stop(ctx.currentTime + 0.6);
-    osc2.stop(ctx.currentTime + 0.8);
-  } catch {
-    // AudioContext may not be available
-  }
-}
 
 interface WorkoutDay {
   dayName: string;
@@ -364,7 +339,14 @@ export default function WorkoutSession({
     atEnd: railAtEnd,
     measure: measureRail,
   } = useScrollEdges<HTMLDivElement>();
-  const sessionStartRef = useRef(0);
+  // Resuming continues the saved training time; a closed-app gap is excluded.
+  const [sessionStartedAt, setSessionStartedAt] = useState(() =>
+    initialDraft
+      ? initialDraft.completionPending && initialDraft.startedAt !== undefined
+        ? initialDraft.startedAt
+        : Date.now() - initialDraft.elapsedSeconds * 1000
+      : Date.now()
+  );
 
   // a11y: the set-type popover dismisses on backdrop click (mouse) — give
   // keyboard users Escape to close it so it isn't a keyboard trap (#842).
@@ -376,15 +358,6 @@ export default function WorkoutSession({
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [typePopover]);
-  useEffect(() => {
-    // Backdate session start on resume so sessionDurationMinutes reflects
-    // actual training time, not wall-clock from when the user returned.
-    sessionStartRef.current = initialDraft
-      ? initialDraft.completionPending && initialDraft.startedAt !== undefined
-        ? initialDraft.startedAt
-        : Date.now() - initialDraft.elapsedSeconds * 1000
-      : Date.now();
-  }, [initialDraft]);
 
   // Auto-scroll exercise tabs when active exercise changes
   useEffect(() => {
@@ -649,35 +622,8 @@ export default function WorkoutSession({
     fetchPreviousWeights();
   }, [user?.uid, day.exercises]);
 
-  /* Elapsed workout timer, derived from the session's wall-clock anchor
-     rather than counted in ticks.
-
-     iOS freezes WebView timers on a locked or backgrounded phone, so an
-     interval that incremented a counter lost every tick it missed: five
-     minutes with the screen off put 0:01 on the clock. The saved duration
-     never had this problem — `handleFinish` computes it from
-     `sessionStartRef` — so the two disagreed, and the completion screen
-     contradicted the clock the user had been watching. The interval is
-     kept only as a repaint pulse; `Date.now()` is the source of truth, the
-     same way `restStartedAtRef` already anchors the rest timer. */
-  const [nowTick, setNowTick] = useState(() => Date.now());
-  useEffect(() => {
-    const id = setInterval(() => setNowTick(Date.now()), 1000);
-    return () => clearInterval(id);
-  }, []);
-  const elapsedSeconds =
-    sessionStartRef.current > 0
-      ? Math.max(0, Math.floor((nowTick - sessionStartRef.current) / 1000))
-      : (initialDraft?.elapsedSeconds ?? 0);
-
-  // Auto-save in-progress workout to localStorage so abandoned sessions can
-  // be resumed. Saves on meaningful state change (set logs, notes, exercise
-  // nav); elapsedSeconds is snapshotted via ref so we don't write every
-  // second. Only persists once the user has completed at least one set.
-  const elapsedSecondsRef = useRef(elapsedSeconds);
-  useEffect(() => {
-    elapsedSecondsRef.current = elapsedSeconds;
-  }, [elapsedSeconds]);
+  // Save on meaningful edits. Read elapsed time at the save itself, so a
+  // draft stays accurate even when the phone has suspended display ticks.
   useEffect(() => {
     const hasProgress = setLogs.some((exSets) =>
       exSets.some((s) => s.completed)
@@ -689,7 +635,7 @@ export default function WorkoutSession({
       dayName: day.dayName,
       setLogs,
       exerciseNotes,
-      elapsedSeconds: elapsedSecondsRef.current,
+      elapsedSeconds: elapsedSecondsSince(sessionStartedAt),
       currentExIndex,
       completionId: completionIdRef.current,
       completionCommandId: completionCommandIdRef.current,
@@ -707,6 +653,7 @@ export default function WorkoutSession({
     prescription,
     originalStartedAt,
     sessionProgrammeContext,
+    sessionStartedAt,
   ]);
 
   const formatElapsed = formatClock;
@@ -716,31 +663,18 @@ export default function WorkoutSession({
   // the Settings → Workout preferences slider had no effect on
   // the actual session. Now the default is sourced from the
   // profile with a 90s fallback for users who haven't set one.
-  const [restSeconds, setRestSeconds] = useState(0);
   const profileRestDefault =
     typeof profile?.defaultRestSeconds === "number" &&
     profile.defaultRestSeconds > 0
       ? profile.defaultRestSeconds
       : DEFAULT_REST_SECONDS;
-  const [restTarget, setRestTarget] = useState(profileRestDefault);
-  /* P1 (training-book backlog): template-derived exercises carry an authored
-     per-exercise rest (ProgramExercise.restSeconds). startRest prefers it
-     over the profile default.
-
-     There is deliberately no "manual target" latch. A `manualRestRef` used
-     to sit here so a hand-set target won the rest of the session, but the
-     ONLY control that could set one is "+15 s" — which is an extension of
-     the rest in progress, not a statement about every rest to come. Its
-     effect was that extending one 90 s rest silently started the next at
-     105. The rest target is per-rest; the session-wide preference lives in
-     Settings → Workout preferences. */
-  const [isResting, setIsResting] = useState(false);
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const chimeFiredRef = useRef(false);
-  // Wall-clock anchor for the current rest. The displayed seconds derive
-  // from this (not from interval ticks), so a backgrounded/locked WebView
-  // — whose timers iOS freezes — reads correct on return.
-  const restStartedAtRef = useRef(0);
+  const [rest, setRest] = useState<{
+    id: number;
+    startedAt: number;
+    target: number;
+  } | null>(null);
+  const restSequence = useRef(0);
+  const isResting = rest !== null;
   // D-LIFT-16: the Settings → "Auto-start rest timer" toggle existed but was
   // never read here — the same dead-setting class PR E fixed for
   // defaultRestSeconds. Default ON (unset/legacy profiles keep today's
@@ -840,10 +774,10 @@ export default function WorkoutSession({
     // puts on screen from here on is inside the window.
     beginCompletionWindow();
     setSessionDurationMinutes(
-      Math.round((Date.now() - sessionStartRef.current) / 60000)
+      Math.round((Date.now() - sessionStartedAt) / 60000)
     );
     setSessionComplete(true);
-  }, []);
+  }, [sessionStartedAt]);
 
   // Undo last set. PR E: extended with optional PR-context so undo
   // can revert the prMap mutation AND firedPRs entry, not just the
@@ -898,98 +832,22 @@ export default function WorkoutSession({
      prior inline `navigator.vibrate(pattern)` was a no-op on iOS
      Safari — the Vibrate API has never shipped there. */
 
-  // Timer logic
   const startRest = useCallback(
     (exerciseRest?: number) => {
-      // Rest "belongs" to the exercise just performed: call sites pass that
-      // exercise's authored restSeconds (undefined for generated programs).
-      setRestTarget(
-        typeof exerciseRest === "number" && exerciseRest > 0
-          ? exerciseRest
-          : profileRestDefault
-      );
-      restStartedAtRef.current = Date.now();
-      setRestSeconds(0);
-      setIsResting(true);
-      chimeFiredRef.current = false;
+      setRest({
+        id: ++restSequence.current,
+        startedAt: Date.now(),
+        target:
+          typeof exerciseRest === "number" && exerciseRest > 0
+            ? exerciseRest
+            : profileRestDefault,
+      });
       haptic(50);
     },
     [profileRestDefault]
   );
 
-  const stopRest = useCallback(() => {
-    setIsResting(false);
-    setRestSeconds(0);
-    void cancelRestEndNotification();
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-      timerRef.current = null;
-    }
-  }, []);
-
-  useEffect(() => {
-    if (isResting) {
-      timerRef.current = setInterval(() => {
-        // Derived from the wall-clock anchor, not tick-counted. iOS
-        // suspends WebView timers on screen-lock/background, so a
-        // `prev + 1` counter silently stalled for the whole hidden
-        // window — a 3-minute pocket rest read as 40 seconds on
-        // return. The first tick after resume snaps to the truth.
-        setRestSeconds(
-          Math.floor((Date.now() - restStartedAtRef.current) / 1000)
-        );
-      }, 1000);
-    }
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-    };
-  }, [isResting]);
-
-  // Lock-screen half of the rest timer: the OS banner exists only while
-  // the app is HIDDEN — scheduled on hide with the remaining rest,
-  // cancelled on return — so foregrounded users get the in-app chime +
-  // haptic, backgrounded users get the banner, and nobody gets both.
-  // Permission is checked, never prompted, inside
-  // scheduleRestEndNotification.
-  useEffect(() => {
-    if (!isResting) return;
-    const onVisibility = () => {
-      if (document.visibilityState === "hidden") {
-        const delay = restNotificationDelaySeconds({
-          isResting: true,
-          elapsedSeconds: Math.floor(
-            (Date.now() - restStartedAtRef.current) / 1000
-          ),
-          targetSeconds: restTarget,
-          chimeFired: chimeFiredRef.current,
-        });
-        if (delay !== null) {
-          void scheduleRestEndNotification(
-            delay,
-            day.exercises[currentExIndex]?.name
-          );
-        }
-      } else {
-        // Back before it fired → the in-app chime takes over; after it
-        // fired the cancel is a harmless no-op.
-        void cancelRestEndNotification();
-      }
-    };
-    document.addEventListener("visibilitychange", onVisibility);
-    return () => {
-      document.removeEventListener("visibilitychange", onVisibility);
-      void cancelRestEndNotification();
-    };
-  }, [isResting, restTarget, day.exercises, currentExIndex]);
-
-  // Auto-stop timer when it reaches target
-  useEffect(() => {
-    if (isResting && restSeconds >= restTarget && !chimeFiredRef.current) {
-      chimeFiredRef.current = true;
-      haptic([200, 100, 200]);
-      playChime();
-    }
-  }, [isResting, restSeconds, restTarget]);
+  const stopRest = useCallback(() => setRest(null), []);
 
   const setSetType = (exIdx: number, setIdx: number, type: SetType) => {
     setSetLogs((prev) => {
@@ -1375,7 +1233,7 @@ export default function WorkoutSession({
         setLogs: completionLogs,
         sessionVariant,
         // Lift3: the doc is dated by when the session STARTED (draft-resume
-        // aware — sessionStartRef is backdated by the draft's elapsed time).
+        // aware — sessionStartedAt is backdated by the draft's elapsed time).
         startedAt: originalStartedAt,
         prescription,
         programmeContext: sessionProgrammeContext,
@@ -1534,13 +1392,10 @@ export default function WorkoutSession({
     setExerciseNotes({});
     setCurrentExIndex(0);
     setCurrentSetIndex(0);
-    /* Re-anchoring IS the clock reset now that elapsed is derived. The tick
-       is pushed forward with it so the display recomputes from the new
-       anchor immediately instead of carrying an up-to-one-second-stale
-       `nowTick` into the fresh session. */
-    sessionStartRef.current = Date.now();
-    setOriginalStartedAt(sessionStartRef.current);
-    setNowTick(sessionStartRef.current);
+    const freshStart = Date.now();
+    setSessionStartedAt(freshStart);
+    setOriginalStartedAt(freshStart);
+    stopRest();
     clearDraft();
     completionPendingRef.current = false;
     setShowResumePrompt(false);
@@ -1654,10 +1509,12 @@ export default function WorkoutSession({
       <div className="flex items-center justify-between px-4 py-3 border-b border-border/50">
         <div>
           <p className="text-sm font-semibold text-foreground">{day.dayName}</p>
-          <p className="text-xs text-muted-foreground">
-            {totalSetsCompleted}/{totalSetsTotal} sets ·{" "}
-            {formatElapsed(elapsedSeconds)}
-          </p>
+          <WorkoutProgress
+            key={sessionStartedAt}
+            startedAt={sessionStartedAt}
+            completed={totalSetsCompleted}
+            total={totalSetsTotal}
+          />
         </div>
         <button
           type="button"
@@ -1669,24 +1526,13 @@ export default function WorkoutSession({
         </button>
       </div>
 
-      {isResting && (
-        <CompactRestTimer
-          seconds={restSeconds}
-          target={restTarget}
+      {rest && (
+        <WorkoutRestTimer
+          key={rest.id}
+          startedAt={rest.startedAt}
+          initialTarget={rest.target}
+          exerciseName={day.exercises[currentExIndex]?.name}
           onStop={stopRest}
-          onExtend={(seconds) => {
-            /* Extends THIS rest only — `startRest` re-derives the target
-               for the next one. */
-            setRestTarget((current) => {
-              const next = current + seconds;
-              /* Re-arm the chime. Extending an ALREADY-EXPIRED rest starts
-                 a fresh countdown, and without this the flag was still set
-                 from the first expiry, so the second one passed in silence
-                 — a timer running with no alert at the end of it. */
-              if (restSeconds >= current) chimeFiredRef.current = false;
-              return next;
-            });
-          }}
         />
       )}
 

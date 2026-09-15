@@ -1,7 +1,7 @@
 {
   "version": 2,
-  "generatedFrom": "R1A-Deletion Phase 0 codebase scan + Chunk 1.1 schema correction",
-  "schemaNotes": "Single source of truth for account-deletion data classification. Every user-keyed write destination across src/ and functions/ must appear here in either included[] or excluded[]. The drift-prevention test (src/lib/__tests__/accountDeletionDrift.test.ts) scans the codebase and fails if any detected user-keyed write is unclassified. Counts are enforced by EXPECTED_INCLUDED_COUNT / EXPECTED_EXCLUDED_COUNT in src/lib/__tests__/accountDeletionCounts.test.ts — changing inventory size requires a deliberate constant edit. CI must mark these tests as required checks.",
+  "generatedFrom": "R1A inventory plus account-deletion execution audit, 2026-09-15",
+  "schemaNotes": "Single source of truth for account-deletion data classification. Every user-keyed write destination across src/ and functions/ must appear here in either included[] or excluded[]. The drift-prevention test (src/lib/__tests__/accountDeletionDrift.test.ts) scans the codebase and fails if any detected user-keyed write is unclassified. Counts are enforced by EXPECTED_INCLUDED_COUNT / EXPECTED_EXCLUDED_COUNT in src/lib/__tests__/accountDeletionCounts.test.ts \u2014 changing inventory size requires a deliberate constant edit. CI must mark these tests as required checks.",
   "domains": {
     "A_private": "Private user-owned data (food diary, training, weight, etc.)",
     "B_publicProfile": "Public-facing profile / display projection",
@@ -10,49 +10,49 @@
     "E_fanout": "Fan-out / denormalised copies in other users' trees",
     "F_usage": "Usage / rate-limit / diagnostics metadata",
     "G_payment": "Subscription / payment / entitlement metadata",
-    "H_excluded": "Retained or anonymised — see reason on each entry",
+    "H_excluded": "Retained or anonymised \u2014 see reason on each entry",
     "Z_operational": "Records written by the deletion subsystem itself (ledger, tombstone, post-deletion payment log, billing-identity tombstone)"
   },
   "piiCategories": {
-    "uid": "Unique user identifier — personal data under GDPR even without name/email attached",
-    "paymentIdentifier": "Provider transaction IDs / customer IDs / original purchase IDs — linkable to billing identity",
+    "uid": "Unique user identifier \u2014 personal data under GDPR even without name/email attached",
+    "paymentIdentifier": "Provider transaction IDs / customer IDs / original purchase IDs \u2014 linkable to billing identity",
     "location": "GPS coordinates, route data, privacy-zone definitions, route-derived data",
     "healthFitness": "Body metrics, macros, training history, performance data",
-    "userContent": "User-authored text/photos/files — meal descriptions, workout notes, comments, captions, progress photos",
-    "publicProfile": "Display name, photo URL, badge summary — intentionally cross-user-readable",
+    "userContent": "User-authored text/photos/files \u2014 meal descriptions, workout notes, comments, captions, progress photos",
+    "publicProfile": "Display name, photo URL, badge summary \u2014 intentionally cross-user-readable",
     "none": "No personal data on this record"
   },
   "recordPurposes": {
-    "private": "User's private app data — deleted on account deletion",
-    "userContent": "User-generated content visible to others — anonymised or deleted depending on thread-continuity needs",
-    "publicProfile": "Public display projection — deleted",
-    "payment": "Billing/refund/audit retention — bounded retention, minimised",
-    "moderation": "Abuse/report retention — minimised moderation shape, bounded review window",
-    "operational": "Deletion subsystem records — bounded retention, no user content",
-    "system": "Server-only system records (rate limits, performance locks) — deleted with account"
+    "private": "User's private app data \u2014 deleted on account deletion",
+    "userContent": "User-generated content visible to others \u2014 anonymised or deleted depending on thread-continuity needs",
+    "publicProfile": "Public display projection \u2014 deleted",
+    "payment": "Billing/refund/audit retention \u2014 bounded retention, minimised",
+    "moderation": "Abuse/report retention \u2014 minimised moderation shape, bounded review window",
+    "operational": "Deletion subsystem records \u2014 bounded retention, no user content",
+    "system": "Server-only system records (rate limits, performance locks) \u2014 deleted with account"
   },
   "strategies": {
     "deleteSubcollection": "Iterate the subcollection in batches and delete every doc",
     "deleteQueryInBatches": "Run a where() query and batch-delete results until empty",
     "deleteCollectionGroupInBatches": "collectionGroup() across the project, filtered by stored uid field + segment-aware pathFilter, batch-delete",
     "deleteKnownDocIfExists": "Single-doc delete; missing-doc is success",
-    "deleteStoragePrefix": "bucket.deleteFiles({prefix}) — missing files are success",
+    "deleteStoragePrefix": "bucket.deleteFiles({prefix}) \u2014 missing files are success",
     "anonymiseAndOverwriteContent": "Update doc to clear user-identifying fields AND replace user-visible content with a tombstone string (e.g. 'Comment deleted'); preserve original server-side fields only when explicitly justified",
     "anonymiseAuthorOnly": "Update doc to clear authorId/displayName/photoURL only; user-visible content stays. Used when content has thread-continuity value AND contains no PII (kudos counts, etc.)",
-    "anonymiseMinimisedShape": "Strip the doc to a minimised retention shape — drop screenshots, profile links, comment snippets, route context; retain only fields required for the stated retention purpose",
+    "anonymiseMinimisedShape": "Strip the doc to a minimised retention shape \u2014 drop screenshots, profile links, comment snippets, route context; retain only fields required for the stated retention purpose",
     "retain": "Do not delete or modify"
   },
   "lockTypes": {
     "direct-rules": "Firestore rules deny client writes while accountDeletionRequests/{uid}.status is active",
     "callable-actor": "Cloud Function callable rejects writes when context.auth.uid has active deletion (entry check)",
     "referenced-uid": "Cloud Function callable creating cross-user references rejects when any referenced uid has active deletion (transactional check at write commit)",
-    "system-writer": "Background/scheduled/webhook function checks deletedAccounts tombstone immediately before each write (NOT only at function entry — long-running jobs must check per-uid at commit time)",
+    "system-writer": "Background/scheduled/webhook function checks deletedAccounts tombstone immediately before each write (NOT only at function entry \u2014 long-running jobs must check per-uid at commit time)",
     "none": "No lock needed (e.g. read-only, write happens during deletion itself, or the path is operational)"
   },
   "designConstants": {
-    "executionOrder": "Phase A acquire deletion lease/status lock in small transaction · Phase B activate write-freeze (rules + storage custom claim) · Phase C preflight collect content IDs and edge lists AFTER lock is active · Phase D clean cross-user mirrors and content-ID references · Phase E anonymise / minimise UGC records · Phase F delete user-owned subcollections (in dependency order: mirrors before originals, content-ID refs before content) · Phase G delete users/{uid}/public subcollection · Phase H delete users/{uid} root LAST · Phase I verify cleanup (sampled for high-volume paths, exact for low-volume) · Phase J transition status to completed in transaction that re-checks operationId + leaseGeneration + zero pendingCleanupShards",
-    "verificationRule": "Firestore reads/queries are strongly consistent after committed writes — direct path reads and collectionGroup queries verify immediately. Retries are warranted ONLY for: BulkWriter/recursiveDelete promises not fully awaited, time-budgeted cleanup leaving pendingCleanupShards, Storage propagation, async Firestore/Storage triggers, transient ABORTED/UNAVAILABLE errors, stale-lease takeover. Do NOT mask deterministic missed paths with arbitrary sleeps.",
-    "systemWriterCheckTiming": "Scheduled and batch system writers MUST check isTombstoned(uid) immediately before each write commit, not only at function entry. Reason: weeklyPerformanceRollup reads active users, computes for seconds-to-minutes, then writes — between read and write a user may have started deletion.",
+    "executionOrder": "Phase A acquire deletion lease/status lock in small transaction \u00b7 Phase B activate write-freeze (rules + storage custom claim) \u00b7 Phase C preflight collect content IDs and edge lists AFTER lock is active \u00b7 Phase D clean cross-user mirrors and content-ID references \u00b7 Phase E anonymise / minimise UGC records \u00b7 Phase F delete user-owned subcollections (in dependency order: mirrors before originals, content-ID refs before content) \u00b7 Phase G delete users/{uid}/public subcollection \u00b7 Phase H delete users/{uid} root LAST \u00b7 Phase I verify cleanup (sampled for high-volume paths, exact for low-volume) \u00b7 Phase J transition status to completed in transaction that re-checks operationId + leaseGeneration + zero pendingCleanupShards",
+    "verificationRule": "Firestore reads/queries are strongly consistent after committed writes \u2014 direct path reads and collectionGroup queries verify immediately. Retries are warranted ONLY for: BulkWriter/recursiveDelete promises not fully awaited, time-budgeted cleanup leaving pendingCleanupShards, Storage propagation, async Firestore/Storage triggers, transient ABORTED/UNAVAILABLE errors, stale-lease takeover. Do NOT mask deterministic missed paths with arbitrary sleeps.",
+    "systemWriterCheckTiming": "Scheduled and batch system writers MUST check isTombstoned(uid) immediately before each write commit, not only at function entry. Reason: weeklyPerformanceRollup reads active users, computes for seconds-to-minutes, then writes \u2014 between read and write a user may have started deletion.",
     "counterIdempotence": "Counter decrements (memberCount, participantCount, kudosCount) MUST run in a transaction that (1) reads the membership/participant/kudos doc, (2) if it exists, deletes it and decrements; (3) if it does not exist (retry), does NOT decrement. Counter clamped at 0 server-side. Retry-safe by construction.",
     "lockFirstEnumerateSecond": "Do NOT enumerate large user data inside the lease transaction. Acquire lease (small txn), activate write-freeze, then enumerate (activity IDs, run IDs, workout IDs, public share IDs, crew IDs, challenge IDs, follow edge IDs) OUTSIDE the transaction. Use that post-lock enumeration as the preflight list for content-ID reference cleanup."
   },
@@ -69,7 +69,7 @@
       "strategy": "deleteSubcollection",
       "lockNeeded": "direct-rules",
       "hasNestedSubcollections": false,
-      "reason": "User food diary — meal-by-meal log with descriptions, macros, photo refs, timestamps",
+      "reason": "User food diary \u2014 meal-by-meal log with descriptions, macros, photo refs, timestamps",
       "testCoverageKey": "smoke::userSubcollections::meals",
       "testCoverageStatus": "planned"
     },
@@ -85,7 +85,7 @@
       "strategy": "deleteSubcollection",
       "lockNeeded": "direct-rules",
       "hasNestedSubcollections": false,
-      "reason": "Lifting workout log — exercise sets, reps, weight, RPE, dates",
+      "reason": "Lifting workout log \u2014 exercise sets, reps, weight, RPE, dates",
       "testCoverageKey": "smoke::userSubcollections::workouts",
       "testCoverageStatus": "planned"
     },
@@ -101,7 +101,7 @@
       "strategy": "deleteSubcollection",
       "lockNeeded": "direct-rules",
       "hasNestedSubcollections": false,
-      "reason": "Run log — GPS tracks (privacy-zoned), pace splits, durations, dates",
+      "reason": "Run log \u2014 GPS tracks (privacy-zoned), pace splits, durations, dates",
       "testCoverageKey": "smoke::userSubcollections::runs",
       "testCoverageStatus": "planned"
     },
@@ -128,7 +128,7 @@
       "strategy": "deleteSubcollection",
       "lockNeeded": "direct-rules",
       "hasNestedSubcollections": false,
-      "reason": "Bodyweight history — datapoints. Aliases are executable deletion targets (not just informational): legacy collection names retain user data on accounts that wrote pre-rename. Missing alias path is success (NotFound → no-op).",
+      "reason": "Bodyweight history \u2014 datapoints. Aliases are executable deletion targets (not just informational): legacy collection names retain user data on accounts that wrote pre-rename. Missing alias path is success (NotFound \u2192 no-op).",
       "testCoverageKey": "smoke::userSubcollections::bodyweightLogs",
       "testCoverageStatus": "planned"
     },
@@ -150,7 +150,7 @@
       "strategy": "deleteSubcollection",
       "lockNeeded": "direct-rules",
       "hasNestedSubcollections": false,
-      "reason": "Daily hydration log — per-day water intake records. Legacy 'water' alias executable.",
+      "reason": "Daily hydration log \u2014 per-day water intake records. Legacy 'water' alias executable.",
       "testCoverageKey": "smoke::userSubcollections::waterLog",
       "testCoverageStatus": "planned"
     },
@@ -172,7 +172,7 @@
       "strategy": "deleteSubcollection",
       "lockNeeded": "direct-rules",
       "hasNestedSubcollections": false,
-      "reason": "Saved foods — names, macros, serving sizes user has favourited for quick-add. Legacy 'favorites' alias executable.",
+      "reason": "Saved foods \u2014 names, macros, serving sizes user has favourited for quick-add. Legacy 'favorites' alias executable.",
       "testCoverageKey": "smoke::userSubcollections::foodFavourites",
       "testCoverageStatus": "planned"
     },
@@ -188,7 +188,7 @@
       "strategy": "deleteSubcollection",
       "lockNeeded": "direct-rules",
       "hasNestedSubcollections": false,
-      "reason": "Running shoe inventory — names, mileage, retirement dates",
+      "reason": "Running shoe inventory \u2014 names, mileage, retirement dates",
       "testCoverageKey": "smoke::userSubcollections::shoes",
       "testCoverageStatus": "planned"
     },
@@ -204,7 +204,7 @@
       "strategy": "deleteSubcollection",
       "lockNeeded": "direct-rules",
       "hasNestedSubcollections": false,
-      "reason": "GPS coordinates of home/work — explicitly precise location data, must not persist after deletion",
+      "reason": "GPS coordinates of home/work \u2014 explicitly precise location data, must not persist after deletion",
       "testCoverageKey": "smoke::userSubcollections::privacyZones",
       "testCoverageStatus": "planned"
     },
@@ -242,7 +242,7 @@
       "strategy": "deleteSubcollection",
       "lockNeeded": "direct-rules",
       "hasNestedSubcollections": false,
-      "reason": "Personal record map — best lifts, fastest splits, derived from workouts",
+      "reason": "Personal record map \u2014 best lifts, fastest splits, derived from workouts",
       "testCoverageKey": "smoke::userSubcollections::stats",
       "testCoverageStatus": "planned"
     },
@@ -258,7 +258,7 @@
       "strategy": "deleteSubcollection",
       "lockNeeded": "direct-rules",
       "hasNestedSubcollections": false,
-      "reason": "Active workout program plan — current phase, scheduled sessions, progression state",
+      "reason": "Active workout program plan \u2014 current phase, scheduled sessions, progression state",
       "testCoverageKey": "smoke::userSubcollections::programState",
       "testCoverageStatus": "planned"
     },
@@ -274,7 +274,7 @@
       "strategy": "deleteSubcollection",
       "lockNeeded": "direct-rules",
       "hasNestedSubcollections": false,
-      "reason": "User-authored workout routines — exercise lists, naming, organisation",
+      "reason": "User-authored workout routines \u2014 exercise lists, naming, organisation",
       "testCoverageKey": "smoke::userSubcollections::savedRoutines",
       "testCoverageStatus": "planned"
     },
@@ -306,7 +306,7 @@
       "strategy": "deleteSubcollection",
       "lockNeeded": "direct-rules",
       "hasNestedSubcollections": false,
-      "reason": "Daily roll-up logs — per-day summary docs derived from meals/workouts/runs",
+      "reason": "Daily roll-up logs \u2014 per-day summary docs derived from meals/workouts/runs",
       "testCoverageKey": "smoke::userSubcollections::logs",
       "testCoverageStatus": "planned"
     },
@@ -322,7 +322,7 @@
       "strategy": "deleteSubcollection",
       "lockNeeded": "direct-rules",
       "hasNestedSubcollections": false,
-      "reason": "Streak state and badge earn dates — derived from activity history",
+      "reason": "Streak state and badge earn dates \u2014 derived from activity history",
       "testCoverageKey": "smoke::userSubcollections::streaks",
       "testCoverageStatus": "planned"
     },
@@ -354,7 +354,7 @@
       "strategy": "deleteSubcollection",
       "lockNeeded": "system-writer",
       "hasNestedSubcollections": false,
-      "reason": "Weekly performance index rollups — written by scheduled functions, derived from workouts and runs. Lock type is system-writer (server-side writes only; rules already deny client writes per firestore.rules:116-119). System writers must check tombstone immediately before each write per designConstants.systemWriterCheckTiming.",
+      "reason": "Weekly performance index rollups \u2014 written by scheduled functions, derived from workouts and runs. Lock type is system-writer (server-side writes only; rules already deny client writes per firestore.rules:116-119). System writers must check tombstone immediately before each write per designConstants.systemWriterCheckTiming.",
       "testCoverageKey": "smoke::userSubcollections::performance",
       "testCoverageStatus": "planned"
     },
@@ -370,7 +370,7 @@
       "strategy": "deleteSubcollection",
       "lockNeeded": "system-writer",
       "hasNestedSubcollections": false,
-      "reason": "Performance engine concurrency lock doc — written by performance rollup functions to serialise weekly recompute. Tied to user account by path; uid-as-path-segment is PII per piiCategory:uid.",
+      "reason": "Performance engine concurrency lock doc \u2014 written by performance rollup functions to serialise weekly recompute. Tied to user account by path; uid-as-path-segment is PII per piiCategory:uid.",
       "testCoverageKey": "smoke::userSubcollections::engineLock",
       "testCoverageStatus": "planned"
     },
@@ -386,7 +386,7 @@
       "strategy": "deleteSubcollection",
       "lockNeeded": "direct-rules",
       "hasNestedSubcollections": false,
-      "reason": "Cross-user-readable public projection — currently only users/{uid}/public/profile (displayName, photoURL, badgeSummary, currentStreak). Strategy is deleteSubcollection rather than deleteKnownDocIfExists for the profile doc so any future doc added under users/{uid}/public/{otherDoc} is automatically swept. The drift test flags any new write to a different doc under public/ as needing inventory classification. Must delete BEFORE users/{uid} root (Phase G in designConstants.executionOrder).",
+      "reason": "Cross-user-readable public projection \u2014 currently only users/{uid}/public/profile (displayName, photoURL, badgeSummary, currentStreak). Strategy is deleteSubcollection rather than deleteKnownDocIfExists for the profile doc so any future doc added under users/{uid}/public/{otherDoc} is automatically swept. The drift test flags any new write to a different doc under public/ as needing inventory classification. Must delete BEFORE users/{uid} root (Phase G in designConstants.executionOrder).",
       "testCoverageKey": "smoke::publicSubcollection",
       "testCoverageStatus": "planned"
     },
@@ -402,8 +402,8 @@
       "strategy": "deleteKnownDocIfExists",
       "lockNeeded": "direct-rules",
       "hasNestedSubcollections": true,
-      "nestedSubcollectionsHandledBy": "All user subcollections (meals/workouts/runs/etc) are separate inventory entries and are deleted before this root via Phase F of designConstants.executionOrder. The root doc itself stores profile fields (displayName, photoURL, subscriptionTier, stripeCustomerId, appleOriginalTransactionId, lastActiveAt, onboardingComplete, etc.) — no nested subcollections OTHER than those already enumerated. Executor must be tolerant of users/{uid} root being missing (NotFound = success) — see hasNestedSubcollections audit in Chunk 1.1 report.",
-      "reason": "Root user doc — profile, onboarding state, subscription fields (stripeCustomerId / appleOriginalTransactionId), preferences. Must delete LAST after all subcollections (Phase H in designConstants.executionOrder).",
+      "nestedSubcollectionsHandledBy": "All user subcollections (meals/workouts/runs/etc) are separate inventory entries and are deleted before this root via Phase F of designConstants.executionOrder. The root doc itself stores profile fields (displayName, photoURL, subscriptionTier, stripeCustomerId, appleOriginalTransactionId, lastActiveAt, onboardingComplete, etc.) \u2014 no nested subcollections OTHER than those already enumerated. Executor must be tolerant of users/{uid} root being missing (NotFound = success) \u2014 see hasNestedSubcollections audit in Chunk 1.1 report.",
+      "reason": "Root user doc \u2014 profile, onboarding state, subscription fields (stripeCustomerId / appleOriginalTransactionId), preferences. Must delete LAST after all subcollections (Phase H in designConstants.executionOrder).",
       "testCoverageKey": "smoke::userRoot",
       "testCoverageStatus": "planned"
     },
@@ -419,7 +419,7 @@
       "strategy": "deleteSubcollection",
       "lockNeeded": "direct-rules",
       "hasNestedSubcollections": false,
-      "reason": "User's own home feed — denormalised copies of activities they follow. Cleaned together with fan-out (feedFanout) but distinct path",
+      "reason": "User's own home feed \u2014 denormalised copies of activities they follow. Cleaned together with fan-out (feedFanout) but distinct path",
       "testCoverageKey": "smoke::topLevelOwn::feeds",
       "testCoverageStatus": "planned"
     },
@@ -435,7 +435,7 @@
       "strategy": "deleteSubcollection",
       "lockNeeded": "direct-rules",
       "hasNestedSubcollections": false,
-      "reason": "Notifications addressed to the user (kudos received, comments on user's posts, follow events). Field shape: type, fromUserId, fromName (denormalised), activityId, message. Deleting the entire subcollection is correct — these are ephemeral signals.",
+      "reason": "Notifications addressed to the user (kudos received, comments on user's posts, follow events). Field shape: type, fromUserId, fromName (denormalised), activityId, message. Deleting the entire subcollection is correct \u2014 these are ephemeral signals.",
       "testCoverageKey": "smoke::topLevelOwn::notifications",
       "testCoverageStatus": "planned"
     },
@@ -452,7 +452,7 @@
       "lockNeeded": "direct-rules",
       "hasNestedSubcollections": false,
       "executionOrderNote": "MUST be enumerated for followersMirror cleanup BEFORE this subcollection is deleted (Phase C+D in designConstants.executionOrder).",
-      "reason": "List of users this account follows. Mirror in followers/{otherUid}/users/{uid} cleaned via followersMirror — requires this list to be enumerated first.",
+      "reason": "List of users this account follows. Mirror in followers/{otherUid}/users/{uid} cleaned via followersMirror \u2014 requires this list to be enumerated first.",
       "testCoverageKey": "smoke::topLevelOwn::following",
       "testCoverageStatus": "planned"
     },
@@ -518,17 +518,18 @@
       "strategy": "deleteKnownDocIfExists",
       "lockNeeded": "system-writer",
       "hasNestedSubcollections": false,
-      "docIdPattern": "bare uid (verified in functions/index.js resolveReport — S4e PR #722 sets doc at `globalRestrictedUids/{report.targetUid}`)",
-      "reason": "Restricted-user marker per S4e (PR #722). Single doc per restricted UID; doc existence = restricted. Schema: { uid, restrictedAt, restrictionEndsAt: null on manual restriction, lastActionedReport, strikes: null on manual restriction }. Cleanup is mandatory because (a) the doc ID IS the user's uid (PII), (b) restriction is forward-looking with no value after the user is deleted, (c) the report that triggered the restriction is preserved separately in the reports/* collection with anonymised reporter. S4e is the MVP — full strike-counter automation (S4d-original) is deferred per the lock's D2.",
+      "docIdPattern": "bare uid (verified in functions/index.js resolveReport \u2014 S4e PR #722 sets doc at `globalRestrictedUids/{report.targetUid}`)",
+      "reason": "Deletes globalRestrictedUids/{uid} during strict cross-user cleanup.",
       "testCoverageKey": "smoke::topLevelOwn::globalRestrictedUids",
-      "testCoverageStatus": "planned"
+      "testCoverageStatus": "implemented",
+      "implementation": "functions/lib/accountDeletionSocial.js and functions/accountDeletion.js"
     },
     {
       "key": "rateLimits",
       "domain": "F_usage",
       "type": "rangeQueryByDocIdPrefix",
       "path": "rateLimits",
-      "docIdPattern": "${uid}_${action} — verified in functions/index.js:129. All rateLimits docs follow this exact pattern; range query `documentId >= '${uid}_' AND documentId < '${uid}_\\uf8ff'` is safe and matches only this user's rate-limit docs.",
+      "docIdPattern": "${uid}_${action} \u2014 verified in functions/index.js:129. All rateLimits docs follow this exact pattern; range query `documentId >= '${uid}_' AND documentId < '${uid}_\\uf8ff'` is safe and matches only this user's rate-limit docs.",
       "aliases": [],
       "containsPersonalData": true,
       "piiCategory": "uid",
@@ -536,9 +537,10 @@
       "strategy": "deleteQueryInBatches",
       "lockNeeded": "system-writer",
       "hasNestedSubcollections": false,
-      "reason": "Per-action rate-limit counters keyed `${uid}_${action}`. Server-only writes. Cleaned via range query on documentId; pattern audited as exact and consistent.",
+      "reason": "Deletes exact UID-prefixed action records and the verification-email limiter key.",
       "testCoverageKey": "smoke::topLevelOwn::rateLimits",
-      "testCoverageStatus": "planned"
+      "testCoverageStatus": "implemented",
+      "implementation": "functions/lib/accountDeletionSocial.js and functions/accountDeletion.js"
     },
     {
       "key": "activitiesOwn",
@@ -553,8 +555,8 @@
       "strategy": "deleteQueryInBatches",
       "lockNeeded": "callable-actor",
       "hasNestedSubcollections": false,
-      "nestedSubcollectionsAuditNote": "activities/{id} root docs have NO nested subcollections — kudos and comments are TOP-LEVEL collections keyed by activityId at kudos/{activityId}/users and comments/{activityId}/items. Cleaned separately via activitiesOwnKudos and activitiesOwnComments entries which require preflight content-ID collection.",
-      "reason": "Public activities authored by the user (workout/run/PR posts). Already covered today via authorId query — ported to inventory.",
+      "nestedSubcollectionsAuditNote": "activities/{id} root docs have NO nested subcollections \u2014 kudos and comments are TOP-LEVEL collections keyed by activityId at kudos/{activityId}/users and comments/{activityId}/items. Cleaned separately via activitiesOwnKudos and activitiesOwnComments entries which require preflight content-ID collection.",
+      "reason": "Public activities authored by the user (workout/run/PR posts). Already covered today via authorId query \u2014 ported to inventory.",
       "testCoverageKey": "smoke::activities",
       "testCoverageStatus": "planned"
     },
@@ -571,7 +573,7 @@
       "strategy": "deleteQueryInBatches",
       "lockNeeded": "callable-actor",
       "hasNestedSubcollections": false,
-      "reason": "SOCIAL S3 partner-streak bonds (1:1). The deleting user is one of two `members`; the bond is deleted on their account deletion (deletion-safe — the surviving partner reverts to invite state). Query-delete by members array-contains, mirroring activitiesOwn. Executor: accountDeletion.js step 3b.",
+      "reason": "SOCIAL S3 partner-streak bonds (1:1). The deleting user is one of two `members`; the bond is deleted on their account deletion (deletion-safe \u2014 the surviving partner reverts to invite state). Query-delete by members array-contains, mirroring activitiesOwn. Executor: accountDeletion.js step 3b.",
       "testCoverageKey": "smoke::partnerBonds",
       "testCoverageStatus": "planned"
     },
@@ -579,7 +581,7 @@
       "key": "activitiesOwnKudos",
       "domain": "E_fanout",
       "type": "contentIdReferenceCleanup",
-      "preflightSource": "activities where authorId == {uid} — collect activity IDs after lock is active (Phase C)",
+      "preflightSource": "activities where authorId == {uid} \u2014 collect activity IDs after lock is active (Phase C)",
       "perActivityCleanup": "delete subcollection kudos/{activityId}/users for each collected activityId",
       "containsPersonalData": true,
       "piiCategory": "uid",
@@ -587,15 +589,16 @@
       "strategy": "deleteSubcollection",
       "lockNeeded": "callable-actor",
       "hasNestedSubcollections": false,
-      "reason": "Kudos that OTHER users gave on the deleting user's activities. Without preflight content-ID collection these orphan: pointing to a deleted activityId but persisting under kudos/{deletedActivityId}/users/{otherUid}. Phase D cleanup driven by preflight activity-ID list. NOTE: addresses item 14 (content-ID references) and item 13 (document-with-subcollections — activities are deleted but their associated kudos and comments live at top-level keyed by activityId).",
+      "reason": "Recursively deletes kudos/{activityId} before deleting the authored activity.",
       "testCoverageKey": "smoke::activitiesOwnKudos",
-      "testCoverageStatus": "planned"
+      "testCoverageStatus": "implemented",
+      "implementation": "functions/lib/accountDeletionSocial.js and functions/accountDeletion.js"
     },
     {
       "key": "activitiesOwnComments",
       "domain": "E_fanout",
       "type": "contentIdReferenceCleanup",
-      "preflightSource": "activities where authorId == {uid} — collect activity IDs after lock is active (Phase C)",
+      "preflightSource": "activities where authorId == {uid} \u2014 collect activity IDs after lock is active (Phase C)",
       "perActivityCleanup": "delete subcollection comments/{activityId}/items for each collected activityId",
       "containsPersonalData": true,
       "piiCategory": "userContent",
@@ -603,9 +606,10 @@
       "strategy": "deleteSubcollection",
       "lockNeeded": "callable-actor",
       "hasNestedSubcollections": false,
-      "reason": "Comments that OTHER users left on the deleting user's activities. Without preflight content-ID collection these orphan. The deleting user's OWN comments on others' activities are handled separately by commentsAuthoredByMe (anonymisation, not deletion).",
+      "reason": "Recursively deletes comments/{activityId} before deleting the authored activity.",
       "testCoverageKey": "smoke::activitiesOwnComments",
-      "testCoverageStatus": "planned"
+      "testCoverageStatus": "implemented",
+      "implementation": "functions/lib/accountDeletionSocial.js and functions/accountDeletion.js"
     },
     {
       "key": "feedFanout",
@@ -621,9 +625,10 @@
       "strategy": "deleteKnownDocIfExists",
       "lockNeeded": "referenced-uid",
       "hasNestedSubcollections": false,
-      "reason": "Fan-out copies of this user's posts denormalised into other users' feed subcollections — each carries the author's name, photo URL and session summary, so erasure has to reach them. IMPLEMENTED by functions/lib/feedFanoutCleanup.js as executor step 0d, by known doc ref rather than the collectionGroup query this entry's type describes: fan-out doc ids ARE the activity id, so recipients (followers/{uid}/users) x authored activities addresses every copy without querying across trees. Same shape as goalSpaceMemberships, which is also a collectionGroup type served by an index-driven strategy. The collectionGroup form is deferred because firestore.indexes.json declares zero COLLECTION_GROUP indexes, so the query would throw until one is added and built. Path filter feeds/*/items stays the documented scope, checked by the segment-aware matcher (functions/lib/pathFilterMatcher.js) — substring matches like admin/feeds_archive/x/items are explicitly rejected. KNOWN RESIDUE: unfollowUser deletes only the two edge docs, so a copy in the feed of someone who has since unfollowed is not in the recipient set and survives; closing that needs the collectionGroup sweep above.",
+      "reason": "Queries items.authorId across all feeds, including former followers; path-filtered, paged and checkpointed in accountDeletionSocial.js.",
       "testCoverageKey": "unit::accountDeletion.feedFanout",
-      "testCoverageStatus": "implemented"
+      "testCoverageStatus": "implemented",
+      "implementation": "functions/lib/accountDeletionSocial.js and functions/accountDeletion.js"
     },
     {
       "key": "notificationsFromMe",
@@ -639,10 +644,11 @@
       "strategy": "deleteCollectionGroupInBatches",
       "lockNeeded": "referenced-uid",
       "hasNestedSubcollections": false,
-      "schemaAuditNote": "Audited functions/index.js + src/lib/socialApi.ts:616-630 — notification fields stored: type, fromUserId, fromName (denormalised displayName of actor), activityId, message (template string containing fromName). Only fromUserId is a UID field; targetUserId is the parent path key (cleaned via notificationsOwn). No other UID fields (no actorUid/recipientUid/entityOwnerUid/embedded snapshot).",
-      "reason": "Notifications this user generated for others (kudos given, comments made, follow notifications). STILL OPEN, but unlike the entries above its declared strategy is VALID: createNotification writes `fromUserId`, and a collectionGroup field query on `items` works — verified against the emulator in firestore.collectionGroup.test.ts, which also shows the cross-tree spill into feeds/ and comments/ that pathFilter exists to discriminate. Two caveats before implementing: the emulator answers index-free, so production index availability must be confirmed separately (green in the emulator is necessary, not sufficient — the standing deploy rule); and ANONYMOUS notifications omit fromUserId entirely, so a field query cannot reach them, by design, since they carry no uid to erase.",
+      "schemaAuditNote": "Audited functions/index.js + src/lib/socialApi.ts:616-630 \u2014 notification fields stored: type, fromUserId, fromName (denormalised displayName of actor), activityId, message (template string containing fromName). Only fromUserId is a UID field; targetUserId is the parent path key (cleaned via notificationsOwn). No other UID fields (no actorUid/recipientUid/entityOwnerUid/embedded snapshot).",
+      "reason": "Queries items.fromUserId across all notifications with exact path filtering; paged and checkpointed.",
       "testCoverageKey": "smoke::notificationsFromMe",
-      "testCoverageStatus": "planned"
+      "testCoverageStatus": "implemented",
+      "implementation": "functions/lib/accountDeletionSocial.js and functions/accountDeletion.js"
     },
     {
       "key": "followersMirror",
@@ -659,9 +665,10 @@
       "lockNeeded": "callable-actor",
       "hasNestedSubcollections": false,
       "executionOrderNote": "MUST run before followingOwn is deleted (Phase D in designConstants.executionOrder). The deleting user's follow list IS the input list for this cleanup.",
-      "reason": "For each follow this user made, delete the mirror in the target's followers list. Iterate following/{uid}/users BEFORE deleting that subcollection so we have the targetUid list.",
+      "reason": "Paged reference scan removes followers/*/users/{uid}, independently of the owned mirror being present.",
       "testCoverageKey": "smoke::followMirrors::followers",
-      "testCoverageStatus": "planned"
+      "testCoverageStatus": "implemented",
+      "implementation": "functions/lib/accountDeletionSocial.js and functions/accountDeletion.js"
     },
     {
       "key": "followingMirror",
@@ -678,9 +685,10 @@
       "lockNeeded": "callable-actor",
       "hasNestedSubcollections": false,
       "executionOrderNote": "MUST run before followersOwn is deleted.",
-      "reason": "For each follower of this user, delete the mirror in the follower's following list. Iterate followers/{uid}/users BEFORE deleting it.",
+      "reason": "Paged reference scan removes following/*/users/{uid}, independently of the owned mirror being present.",
       "testCoverageKey": "smoke::followMirrors::following",
-      "testCoverageStatus": "planned"
+      "testCoverageStatus": "implemented",
+      "implementation": "functions/lib/accountDeletionSocial.js and functions/accountDeletion.js"
     },
     {
       "key": "blocksReverse",
@@ -696,10 +704,11 @@
       "strategy": "deleteCollectionGroupInBatches",
       "lockNeeded": "callable-actor",
       "hasNestedSubcollections": false,
-      "feasibilityNote": "collectionGroup + documentId/__name__ equality on the leaf is supported in Firestore since 2023 (`where(FieldPath.documentId(), '==', uid)`). pathFilter feeds/*/users uses segment-aware matcher to prevent matching following/{uid}/users or followers/{uid}/users which share the 'users' subcollection name. Fallback option if collectionGroup-docId proves unreliable in emulator: redundant blockedUid field added to blocks doc body (backfill required).",
-      "reason": "Other users who blocked this account — doc id equals the deleted user's uid. STILL OPEN, same mechanism as kudosByMe: The strategy this entry declares is NOT a query Firestore accepts: a collectionGroup documentId comparison requires a FULL document path (\"'uid' is not [valid] because it has an odd number of segments\"), which is exactly what you lack when the question is 'where does this uid appear'. Proven against the emulator by firestore.collectionGroup.test.ts, which was written in Chunk 2 to answer this and never ran until 2026-08-12. and the doc carries no uid field, only the path. The parent set is every user who blocked you, which is not enumerable. Closing it needs a `uid` field at the write site (src/lib/socialApi blockUser) plus a backfill. Genuinely low harm — the surviving doc is a bare id under someone else's tree and the uid is tombstoned — which is why it is last in the queue, not because it is hard to see.",
+      "feasibilityNote": "A bare UID is not a valid collection-group documentId comparison. Implementation uses an ordered, resumable reference scan and checks the full path before mutation.",
+      "reason": "Paged reference scan of the users collection group, matching only blocks/*/users/{uid}. Legacy edges contain no UID field. Checkpoints resume after committed effects.",
       "testCoverageKey": "smoke::blocksReverse",
-      "testCoverageStatus": "planned"
+      "testCoverageStatus": "implemented",
+      "implementation": "functions/lib/accountDeletionSocial.js and functions/accountDeletion.js"
     },
     {
       "key": "crewMemberships",
@@ -716,10 +725,11 @@
       "strategy": "deleteCollectionGroupInBatches",
       "lockNeeded": "callable-actor",
       "hasNestedSubcollections": false,
-      "feasibilityNote": "Same collectionGroup-by-docId pattern as blocksReverse. Counter decrement is idempotent per designConstants.counterIdempotence: transaction reads member doc, deletes it if present + decrements memberCount; if member doc missing (retry), does NOT decrement. memberCount clamped at 0.",
-      "reason": "Crew/group memberships keyed by uid as doc id. DEAD ENTRY as of the 2026-07-20 crews retirement: `groups/` has zero read or write sites left in src/ or functions/ and setCrewMembershipCallable is gone, so no live code produces this data. Separately, The strategy this entry declares is NOT a query Firestore accepts: a collectionGroup documentId comparison requires a FULL document path (\"'uid' is not [valid] because it has an odd number of segments\"), which is exactly what you lack when the question is 'where does this uid appear'. Proven against the emulator by firestore.collectionGroup.test.ts, which was written in Chunk 2 to answer this and never ran until 2026-08-12. Left in `included` rather than moved to `excluded` because `excluded` means a deliberate retention, which this is not — it is a collection that stopped existing. Any residual legacy docs would need a one-off backfill, not an executor step.",
+      "feasibilityNote": "A bare UID is not a valid collection-group documentId comparison. Implementation uses an ordered, resumable reference scan and checks the full path before mutation.",
+      "reason": "Paged members reference scan removes residual groups/*/members/{uid}; transactionally decrements memberCount only when the edge exists.",
       "testCoverageKey": "smoke::crewMemberships",
-      "testCoverageStatus": "planned"
+      "testCoverageStatus": "implemented",
+      "implementation": "functions/lib/accountDeletionSocial.js and functions/accountDeletion.js"
     },
     {
       "key": "challengeParticipations",
@@ -736,10 +746,11 @@
       "strategy": "deleteKnownDocIfExists",
       "lockNeeded": "callable-actor",
       "hasNestedSubcollections": false,
-      "feasibilityNote": "Same pattern as crewMemberships. participantCount decrement idempotent per designConstants.counterIdempotence.",
-      "reason": "Challenge participations keyed by uid as doc id with denormalised progress. IMPLEMENTED by functions/lib/challengeParticipationCleanup.js as executor step 0e, by known doc ref rather than the collectionGroup query this entry used to declare. The strategy this entry declares is NOT a query Firestore accepts: a collectionGroup documentId comparison requires a FULL document path (\"'uid' is not [valid] because it has an odd number of segments\"), which is exactly what you lack when the question is 'where does this uid appear'. Proven against the emulator by firestore.collectionGroup.test.ts, which was written in Chunk 2 to answer this and never ran until 2026-08-12. This entry is reachable anyway because `challenges` is a BOUNDED top-level collection — rolloverChallenges mints a fixed handful per period — so the parents can be enumerated (.select(), ids only) and participants/{uid} addressed by name. kudosByMe and blocksReverse have no such bound and are therefore still open. participantCount is deliberately not adjusted here: deleting the participant doc fires onChallengeParticipantDeleted, which recomputes from an aggregate under an observation-time guard — strictly better than the decrement this entry used to ask for.",
+      "feasibilityNote": "A bare UID is not a valid collection-group documentId comparison. Implementation uses an ordered, resumable reference scan and checks the full path before mutation.",
+      "reason": "Reference scan also reaches participants under missing challenge roots. Existing deletion trigger owns participantCount reconciliation.",
       "testCoverageKey": "unit::accountDeletion.challengeParticipations",
-      "testCoverageStatus": "implemented"
+      "testCoverageStatus": "implemented",
+      "implementation": "functions/lib/accountDeletionSocial.js and functions/accountDeletion.js"
     },
     {
       "key": "kudosByMe",
@@ -756,10 +767,11 @@
       "strategy": "deleteCollectionGroupInBatches",
       "lockNeeded": "callable-actor",
       "hasNestedSubcollections": false,
-      "feasibilityNote": "Identical pattern to blocksReverse. CollectionGroup('users') needs pathFilter to avoid matching following/followers/blocks subcollections (same name). Existing kudos docs lack a userId field; cleanup relies on Firestore __name__ collectionGroup filter. Fallback if __name__ collectionGroup proves unreliable: backfill add userId field to all kudos docs via one-off script + new write sites.",
-      "reason": "Kudos this user gave on others' activities — doc id equals uid. STILL OPEN, and not for want of an index. The strategy this entry declares is NOT a query Firestore accepts: a collectionGroup documentId comparison requires a FULL document path (\"'uid' is not [valid] because it has an odd number of segments\"), which is exactly what you lack when the question is 'where does this uid appear'. Proven against the emulator by firestore.collectionGroup.test.ts, which was written in Chunk 2 to answer this and never ran until 2026-08-12. Nor is a field query available: socialCounters.toggleKudos writes the doc as `{ createdAt }` only, so the uid exists solely in the path. The parent, kudos/{activityId}, is every activity in the app — unbounded, so the enumerate-the-parents approach used for challengeParticipations does not transfer. Closing this needs a `uid` field added at the write site plus a backfill of existing docs, after which collectionGroupByField works. Note firestore.rules leaves the kudos write-freeze off, and that exemption was justified in accountDeletionWriteRulesSnapshot by this sweep existing; the note there has been corrected.",
+      "feasibilityNote": "A bare UID is not a valid collection-group documentId comparison. Implementation uses an ordered, resumable reference scan and checks the full path before mutation.",
+      "reason": "Paged reference scan finds legacy UID-only kudos edges; deletion and the clamped counter decrement commit in one transaction.",
       "testCoverageKey": "smoke::kudosByMe",
-      "testCoverageStatus": "planned"
+      "testCoverageStatus": "implemented",
+      "implementation": "functions/lib/accountDeletionSocial.js and functions/accountDeletion.js"
     },
     {
       "key": "profilePhotosStorage",
@@ -773,7 +785,7 @@
       "strategy": "deleteStoragePrefix",
       "lockNeeded": "system-writer",
       "hasNestedSubcollections": false,
-      "storageAuditNote": "Audited src/lib/profilePhotoUpload.ts:81-94 — only profile-photos/{uid}/{ts}.jpg uploads. No alternate paths.",
+      "storageAuditNote": "Audited src/lib/profilePhotoUpload.ts:81-94 \u2014 only profile-photos/{uid}/{ts}.jpg uploads. No alternate paths.",
       "reason": "Avatar/profile photos. Storage rules write-freeze via custom auth claim (storage.rules cannot read Firestore directly)",
       "testCoverageKey": "smoke::storage::profilePhotos",
       "testCoverageStatus": "planned"
@@ -790,8 +802,8 @@
       "strategy": "deleteStoragePrefix",
       "lockNeeded": "system-writer",
       "hasNestedSubcollections": false,
-      "storageAuditNote": "Audited src/components/social/ProgressPhotos.tsx:175,179 — only progress-photos/{uid}/{ts}.{webp,enc} uploads. No alternate paths.",
-      "storageInventoryAuditNote": "Comprehensive Storage audit across src/: ZERO Food/AI/share/export/route/map storage paths exist. FoodAnalyzer sends images transiently via fetch — no Storage upload. ShareCard renders via html-to-image client-side — no upload. No GPX export storage. The two photo prefixes are the complete Storage inventory.",
+      "storageAuditNote": "Audited src/components/social/ProgressPhotos.tsx:175,179 \u2014 only progress-photos/{uid}/{ts}.{webp,enc} uploads. No alternate paths.",
+      "storageInventoryAuditNote": "Comprehensive Storage audit across src/: ZERO Food/AI/share/export/route/map storage paths exist. FoodAnalyzer sends images transiently via fetch \u2014 no Storage upload. ShareCard renders via html-to-image client-side \u2014 no upload. No GPX export storage. The two photo prefixes are the complete Storage inventory.",
       "reason": "Progress photo blobs (encrypted webp). Storage rules write-freeze via custom auth claim",
       "testCoverageKey": "smoke::storage::progressPhotos",
       "testCoverageStatus": "planned"
@@ -808,7 +820,7 @@
       "strategy": "deleteSubcollection",
       "lockNeeded": "direct-rules",
       "hasNestedSubcollections": false,
-      "reason": "Private Goal Space membership index (GOALS-CORE-01). Enumerated FIRST by the executor's goal_spaces step (lib/goalSpaceCleanup) for membership/event/counter cleanup, then swept by the normal subcollection loop. Was already in USER_SUBCOLLECTIONS without an inventory entry — documented here.",
+      "reason": "Private Goal Space membership index (GOALS-CORE-01). Enumerated FIRST by the executor's goal_spaces step (lib/goalSpaceCleanup) for membership/event/counter cleanup, then swept by the normal subcollection loop. Was already in USER_SUBCOLLECTIONS without an inventory entry \u2014 documented here.",
       "testCoverageKey": "smoke::goalSpaces::journeys",
       "testCoverageStatus": "planned",
       "unitCoverageNote": "Executor behaviour unit-covered in functions/__tests__/goalSpaceCleanup.test.js + the ordering pin in accountDeletion.test.js; this field tracks Chunk-4 SMOKE coverage."
@@ -825,7 +837,7 @@
       "strategy": "deleteSubcollection",
       "lockNeeded": "direct-rules",
       "hasNestedSubcollections": false,
-      "reason": "Weekly nutrition-consistency commitments (NUTR-CONSISTENCY-01). Was already in USER_SUBCOLLECTIONS without an inventory entry — documented here so the inventory stays the single source of truth.",
+      "reason": "Weekly nutrition-consistency commitments (NUTR-CONSISTENCY-01). Was already in USER_SUBCOLLECTIONS without an inventory entry \u2014 documented here so the inventory stays the single source of truth.",
       "testCoverageKey": "smoke::userSubcollections::nutritionCommitments",
       "testCoverageStatus": "planned"
     },
@@ -844,11 +856,12 @@
       "strategy": "deleteQueryInBatches",
       "lockNeeded": "callable-actor",
       "hasNestedSubcollections": false,
-      "feasibilityNote": "Implemented via journey enumeration (users/{uid}/journeys doc ids == spaceIds), NOT a collectionGroup query — every server-created membership writes a journey pointer, so the user's own subcollection is the authoritative membership index. Reuses the live leaveGoalSpace transaction (idempotent: member-doc-missing retry does not decrement; count clamped >= 0).",
-      "reason": "Goal Space (Circle) memberships keyed by uid as doc id, with denormalised displayName/photoURL. ALREADY IMPLEMENTED by executor step 0b (lib/goalSpaceCleanup) — it enumerates from users/{uid}/journeys, the membership index, and performs a real leave per space (member doc + journey deleted, memberCount decremented, space deactivated when the owner leaves). Recorded as implemented on 2026-08-12; it had read as outstanding since Chunk 1 purely because nothing carried its coverage key. The declared collectionGroupByDocId shape would not have worked regardless. The strategy this entry declares is NOT a query Firestore accepts: a collectionGroup documentId comparison requires a FULL document path (\"'uid' is not [valid] because it has an odd number of segments\"), which is exactly what you lack when the question is 'where does this uid appear'. Proven against the emulator by firestore.collectionGroup.test.ts, which was written in Chunk 2 to answer this and never ran until 2026-08-12.",
+      "feasibilityNote": "A bare UID is not a valid collection-group documentId comparison. Implementation uses an ordered, resumable reference scan and checks the full path before mutation.",
+      "reason": "Collection-group UID query plus legacy reference scan; removes memberships even when the journey index is absent. Owner metadata and invite are cleared separately.",
       "testCoverageKey": "unit::accountDeletion.goalSpaceMemberships",
       "testCoverageStatus": "implemented",
-      "unitCoverageNote": "functions/__tests__/goalSpaceCleanup.test.js covers member removal, counter decrement, owner deactivation, vanished-space tolerance and failure isolation."
+      "unitCoverageNote": "functions/__tests__/goalSpaceCleanup.test.js covers member removal, counter decrement, owner deactivation, vanished-space tolerance and failure isolation.",
+      "implementation": "functions/lib/accountDeletionSocial.js and functions/accountDeletion.js"
     },
     {
       "key": "goalSpaceEventsAuthored",
@@ -864,10 +877,11 @@
       "strategy": "deleteQueryInBatches",
       "lockNeeded": "callable-actor",
       "hasNestedSubcollections": false,
-      "feasibilityNote": "Cleaned per-space during the goal_spaces step for every CURRENT membership (subcollection where-query on the event `uid` field, no collection-group index needed). Known edge: events authored in a circle the user LEFT before deletion keep their frozen display snapshot — same posture as comments authored on others' activities (commentsAuthoredByMe, excluded).",
-      "reason": "Summary events (check-ins, milestones, support requests) authored by the user inside their circles. ALREADY IMPLEMENTED by executor step 0b (lib/goalSpaceCleanup), which deletes the user's authored events per space and additionally sweeps their uid out of other members' check-in supporterIds arrays. Recorded as implemented on 2026-08-12 for the same reason as goalSpaceMemberships.",
+      "feasibilityNote": "Cleaned per-space during the goal_spaces step for every CURRENT membership (subcollection where-query on the event `uid` field, no collection-group index needed). Known edge: events authored in a circle the user LEFT before deletion keep their frozen display snapshot \u2014 same posture as comments authored on others' activities (commentsAuthoredByMe, excluded).",
+      "reason": "Queries events.uid and events.supporterIds across all circles, including former memberships; supporter removal is transactional.",
       "testCoverageKey": "unit::accountDeletion.goalSpaceEvents",
-      "testCoverageStatus": "implemented"
+      "testCoverageStatus": "implemented",
+      "implementation": "functions/lib/accountDeletionSocial.js and functions/accountDeletion.js"
     },
     {
       "key": "spaceMemberships",
@@ -882,9 +896,10 @@
       "lockNeeded": "callable-actor",
       "hasNestedSubcollections": false,
       "schemaAuditNote": "Membership docs (Spc1 PR2, src/features/spaces/useSpaceMembership.ts) store joinedAt + denormalised displayName/photoURL + a mirrored uid field (rules-pinned equal to the doc id), so the collectionGroup query filters on the stored uid. Space ids are client config (spaceDefs.ts); doc id == member uid. Path filter spaces/*/members uses the segment-aware matcher and does NOT collide with goalSpaces members (first segment differs) or groups members.",
-      "reason": "Community Spaces memberships (Spc1). One doc per joined space at spaces/{spaceId}/members/{uid}; deleted on account deletion so a removed user vanishes from member counts/lists. IMPLEMENTED in Spc1 PR4: the executor sweeps per KNOWN space id (functions/lib/spacesCleanup.js iterating lib/spaceIds.js — bounded config parity-pinned to the client), not a collectionGroup; strategy updated from the PR2 declaration to match the shipped implementation.",
+      "reason": "Legacy members reference scan also reaches retired spaces. Known-space cleanup remains an additional strict cleanup pass.",
       "testCoverageKey": "unit::accountDeletion.spacesCleanup.memberships",
-      "testCoverageStatus": "implemented"
+      "testCoverageStatus": "implemented",
+      "implementation": "functions/lib/accountDeletionSocial.js and functions/accountDeletion.js"
     },
     {
       "key": "spacePosts",
@@ -901,9 +916,10 @@
       "lockNeeded": "callable-actor",
       "hasNestedSubcollections": false,
       "schemaAuditNote": "Post docs (src/features/spaces/SpacePostComposer.tsx) carry authorId/authorName/authorPhotoURL/title/body/activity snapshot/photoUrl/likeCount/commentCount/createdAt. authorId enables the per-space where-query.",
-      "reason": "Community Space posts authored by the deleting user (Spc1 PR4). Policy: DELETED, not anonymised — posts are top-level room content with nothing threading off them yet (comments are a later slice), so removal is GDPR-cleanest with no thread-continuity cost. Executor: functions/lib/spacesCleanup.js per known space id. Photo blobs swept separately (spacePhotosStorage).",
+      "reason": "Queries posts.authorId across spaces and recursively removes each post and its nested likes/comments, including retired rooms.",
       "testCoverageKey": "unit::accountDeletion.spacesCleanup.posts",
-      "testCoverageStatus": "implemented"
+      "testCoverageStatus": "implemented",
+      "implementation": "functions/lib/accountDeletionSocial.js and functions/accountDeletion.js"
     },
     {
       "key": "spacePhotosStorage",
@@ -917,8 +933,8 @@
       "strategy": "deleteStoragePrefix",
       "lockNeeded": "system-writer",
       "hasNestedSubcollections": false,
-      "storageAuditNote": "Audited src/lib/spacePhotoUpload.ts — only space-photos/{uid}/{ts}.jpg uploads (owner-write / authenticated-read per storage.rules). No alternate paths.",
-      "reason": "Community Space post photos (Spc1 PR4 — the operator's photo-post amendment). Blobs live for the post's lifetime; post deletion does not delete the blob (soft simplicity, same trade-off as food photos), so this prefix sweep is the cleanup path on account deletion. In STORAGE_PREFIX_TEMPLATES (functions/accountDeletion.js step 6).",
+      "storageAuditNote": "Audited src/lib/spacePhotoUpload.ts \u2014 only space-photos/{uid}/{ts}.jpg uploads (owner-write / authenticated-read per storage.rules). No alternate paths.",
+      "reason": "Community Space post photos (Spc1 PR4 \u2014 the operator's photo-post amendment). Blobs live for the post's lifetime; post deletion does not delete the blob (soft simplicity, same trade-off as food photos), so this prefix sweep is the cleanup path on account deletion. In STORAGE_PREFIX_TEMPLATES (functions/accountDeletion.js step 6).",
       "testCoverageKey": "unit::accountDeletion.storagePrefixes",
       "testCoverageStatus": "implemented"
     },
@@ -974,13 +990,13 @@
         "text": "Comment deleted"
       },
       "preservedOriginalFields": {
-        "policy": "DECIDED Option C interim (see functions/R1A-DECISION-LOG.md#1). Original comment text retained server-side in `originalText` field for moderation reversibility with bounded 365-day retention aligned to reportsAboutMe. Client renderers MUST NOT display originalText — visible text always reads from the public `text` field (now 'Comment deleted'). Moderation read paths require server-only access via the Admin SDK.",
+        "policy": "Original text is stored in separate, client-denied deletedCommentEvidence/{sha256(commentPath)} documents with a Date expiresAt 365 days after deletion. Public documents contain no originalText or author identity.",
         "fields": [
           {
             "name": "originalText",
             "containsPersonalData": true,
             "retentionWindow": "365 days post-deletion",
-            "readAccess": "server-only via Admin SDK; firestore.rules denies all client reads of this field",
+            "readAccess": "Admin SDK only; the entire deletedCommentEvidence collection is client-denied.",
             "reason": "Reversibility preservation: founder may later choose to restore original visible text under Option B without data already destroyed by interim Option A. 365d matches reportsAboutMe so a deleted-user comment that triggered a moderation report has aligned retention with the report itself."
           }
         ]
@@ -992,31 +1008,31 @@
           {
             "file": "src/components/social/CommentSheet.tsx",
             "line": "139-144",
-            "verdict": "safe — uses BlockAwareAvatar which handles null uid + null photoURL; displayName 'Deleted user' renders normally; text 'Comment deleted' renders normally"
+            "verdict": "safe \u2014 uses BlockAwareAvatar which handles null uid + null photoURL; displayName 'Deleted user' renders normally; text 'Comment deleted' renders normally"
           },
           {
             "file": "src/components/social/CommentSection.tsx",
             "line": "1-50",
-            "verdict": "safe — same BlockAwareAvatar pattern"
+            "verdict": "safe \u2014 same BlockAwareAvatar pattern"
           },
           {
             "file": "src/components/social/BlockAwareAvatar.tsx",
             "line": "44-60",
-            "verdict": "safe — accepts null/undefined uid and null photoURL by design; falls back to initials from displayName"
+            "verdict": "safe \u2014 accepts null/undefined uid and null photoURL by design; falls back to initials from displayName"
           }
         ],
-        "tapToProfileSafety": "No tap-to-profile route on comment author in CommentSheet.tsx or CommentSection.tsx — authorId is not wrapped in a Link or click handler. Deleted-user comments cannot route to /profile/null.",
-        "originalTextLeakageAudit": "Renderers read only c.text / c.authorName / c.authorId / c.authorPhotoURL — no client reader accesses originalText. firestore.rules denies client reads of originalText (Chunk 2 rule update).",
+        "tapToProfileSafety": "No tap-to-profile route on comment author in CommentSheet.tsx or CommentSection.tsx \u2014 authorId is not wrapped in a Link or click handler. Deleted-user comments cannot route to /profile/null.",
+        "originalTextLeakageAudit": "Original text is in a separate collection denied to all clients. Firestore has no per-field read permissions.",
         "verdict": "Anonymisation strategy {authorId:null, authorName:'Deleted user', authorPhotoURL:null, text:'Comment deleted'} + server-only originalText retention renders safely with no Chunk 4 render guard required."
       },
-      "reason": "Comments this user posted on other users' activities. Decided Option C interim: visible text becomes 'Comment deleted', authorship anonymised, original body retained server-side in originalText for moderation reversibility (365d retention, server-only read). Preserves thread structure + removes PII from visible body + keeps optionality to switch to Option B (preserve substance) later without data loss."
+      "reason": "Anonymises public comment authorship and overwrites visible text. Stores only original text and retention timestamps in separate server-only moderation evidence."
     },
     {
       "key": "reportsAboutMe",
       "domain": "H_excluded",
       "type": "collectionGroupByField",
       "collectionGroup": "reports",
-      "where": ["targetId", "==", "{uid}"],
+      "where": ["targetUid", "==", "{uid}"],
       "containsPersonalData": true,
       "piiCategory": "userContent",
       "recordPurpose": "moderation",
@@ -1024,10 +1040,11 @@
       "minimisedShape": {
         "retainedFields": [
           "reportId",
-          "reason",
-          "type",
+          "category",
+          "targetType",
           "createdAt",
-          "targetIdHash"
+          "status",
+          "expiresAt"
         ],
         "strippedFields": [
           "targetId (replaced with HMAC hash for abuse-pattern detection)",
@@ -1039,12 +1056,12 @@
           "commentSnippets",
           "deepLinks"
         ],
-        "targetIdHashPolicy": "HMAC-SHA256(uid, server-side secret) — bounded-decay 365 days post-deletion, then full removal. Abuse-pattern detection (re-registration under same email by a deleted bad actor) works within the 365-day window without indefinite uid retention.",
-        "abuseIdentityHashSpec": "DESIGN ONLY — implementation requires server-side HMAC secret in Firebase Functions config (functions.config().moderation.hmac_secret). Setting the secret is a manual setup checklist item; if absent, executor falls back to anonymiseAuthorOnly with full targetId removal (no re-registration detection)."
+        "targetIdHashPolicy": "HMAC-SHA256(uid, server-side secret) \u2014 bounded-decay 365 days post-deletion, then full removal. Abuse-pattern detection (re-registration under same email by a deleted bad actor) works within the 365-day window without indefinite uid retention.",
+        "abuseIdentityHashSpec": "DESIGN ONLY \u2014 implementation requires server-side HMAC secret in Firebase Functions config (functions.config().moderation.hmac_secret). Setting the secret is a manual setup checklist item; if absent, executor falls back to anonymiseAuthorOnly with full targetId removal (no re-registration detection)."
       },
       "retentionWindow": "365 days post-deletion (then full removal)",
       "reviewedBy": "R1A-Deletion-Chunk1.1",
-      "reason": "Moderation reports filed BY OTHERS about this user. Founder decision PENDING on retention policy: full unchanged retention vs minimised moderation shape. Interim default (this entry): minimised moderation shape with HMAC-hashed targetId for re-registration detection — bounded 365-day retention then full removal. Abuse-pattern detection works within the window; indefinite retention would itself be a compliance issue (uid is PII). The previous 'retain unchanged indefinitely' justification was inadequate because future re-registration flagging requires an abuse identity, not the raw target uid."
+      "reason": "Minimises reports about the deleted account, clears reportAuthority, and sets a Date expiry 365 days after deletion. Uses the approved no-HMAC fallback: no target UID/hash is retained."
     },
     {
       "key": "reportsByMe",
@@ -1075,7 +1092,7 @@
       },
       "retentionWindow": "365 days post-deletion (then full removal)",
       "reviewedBy": "R1A-Deletion-Chunk1.1",
-      "reason": "Reports this user filed against others. Retain the report content (reason, targetId) for moderation continuity; anonymise reporterId to remove the deleted user's identity from the trail. Bounded retention aligned with reportsAboutMe."
+      "reason": "Removes reporter identity and freeform snapshots while retaining the target and server authority for moderation of the other account, with a Date expiry after 365 days."
     },
     {
       "key": "paymentEventsPostDeletion",
@@ -1090,7 +1107,7 @@
       "minimisationRule": "Only fields permitted: provider (apple|stripe), externalTxnId, eventType, occurredAt, hashedUidPrefix (first 8 chars of SHA256(uid)), action ('skipped'|'logged'|'acknowledged'). NO email, displayName, profile photo URLs, full receipt payloads, transaction amounts, or any user-identifying fields beyond the externalTxnId issued by the provider.",
       "reviewClosureProcess": "Operator reviews event weekly (manual checklist item). After review, sets action='acknowledged'; the 90-day retention timer starts from acknowledgement, not from event creation. Events with action='skipped' or 'logged' retain their createdAt-based 90-day timer.",
       "reviewedBy": "R1A-Deletion-Chunk1.1",
-      "reason": "Created by Apple/Stripe webhooks when a payment event arrives for a uid in the deletedAccounts tombstone (or deletedBillingIdentities tombstone). Operator-reviewable log so genuine billing issues (refund obligations) are visible without leaking PII. INTERIM retention 90 days post-review pending founder decision — previous 'indefinite' default was inappropriate as the operational default."
+      "reason": "Created by Apple/Stripe webhooks when a payment event arrives for a uid in the deletedAccounts tombstone (or deletedBillingIdentities tombstone). Operator-reviewable log so genuine billing issues (refund obligations) are visible without leaking PII. INTERIM retention 90 days post-review pending founder decision \u2014 previous 'indefinite' default was inappropriate as the operational default."
     },
     {
       "key": "accountDeletionLedger",
@@ -1104,7 +1121,7 @@
       "retentionWindow": "30d post-completion via Firestore TTL on cleanupAfter field",
       "minimisationRule": "Only fields permitted from accountDeletionLedger.ALLOWED_FIELDS (functions/lib/accountDeletionLedger.js). Forbidden: meal names, workout notes, route coords, photos, comment bodies, displayName, email, photoURL, receipt payloads. Operational record only.",
       "reviewedBy": "R1A-Deletion-Chunk1.1",
-      "reason": "Operational ledger tracking deletion lease, status transitions, leaseGeneration fencing. Required by spec Phase 2. Bounded retention via Firestore TTL on cleanupAfter field — founder must enable TTL policy after deploy. Uid is PII per piiCategory:uid (Chunk 1 incorrectly marked this 'no PII' — corrected in Chunk 1.1)."
+      "reason": "Operational ledger tracking deletion lease, status transitions, leaseGeneration fencing. Required by spec Phase 2. Bounded retention via Firestore TTL on cleanupAfter field \u2014 founder must enable TTL policy after deploy. Uid is PII per piiCategory:uid (Chunk 1 incorrectly marked this 'no PII' \u2014 corrected in Chunk 1.1)."
     },
     {
       "key": "deletedAccountsTombstone",
@@ -1132,7 +1149,49 @@
       "retentionWindow": "INTERIM 13 months from deletion (pending founder decision)",
       "minimisationRule": "Only fields permitted: provider (apple|stripe), externalIdentifierHash (SHA256 of appleOriginalTransactionId or stripeCustomerId, NOT raw), hashedUidPrefix, deletedAt, expiresAt. Restore-after-deletion behaviour: see designConstants.restoreAfterDeletion (PENDING founder decision).",
       "reviewedBy": "R1A-Deletion-Chunk1.1",
-      "reason": "SEPARATE billing-identity tombstone covering annual subscriptions, delayed renewals, refunds, chargebacks, and late Apple/Stripe events that can exceed the general 90-day deletedAccounts tombstone. INTERIM retention 13 months (pending founder decision per Chunk 1.1 founder questions) — annual Apple subscription renewal + chargeback window justifies the longer retention. Identifier is HASHED (not raw) to limit exposure surface; raw provider identifiers remain in Apple/Stripe dashboards. Restore-after-deletion behaviour for tombstoned billing identities is PENDING founder decision (must be answered before App Store submission). Spec item 8."
+      "reason": "SEPARATE billing-identity tombstone covering annual subscriptions, delayed renewals, refunds, chargebacks, and late Apple/Stripe events that can exceed the general 90-day deletedAccounts tombstone. INTERIM retention 13 months (pending founder decision per Chunk 1.1 founder questions) \u2014 annual Apple subscription renewal + chargeback window justifies the longer retention. Identifier is HASHED (not raw) to limit exposure surface; raw provider identifiers remain in Apple/Stripe dashboards. Restore-after-deletion behaviour for tombstoned billing identities is PENDING founder decision (must be answered before App Store submission). Spec item 8."
+    },
+    {
+      "key": "accountDeletionWork",
+      "domain": "Z_operational",
+      "type": "topLevelByUid",
+      "path": "accountDeletionWork/{uid}",
+      "containsPersonalData": true,
+      "piiCategory": "uid",
+      "recordPurpose": "operational",
+      "strategy": "retain",
+      "retentionWindow": "Until cleanup completes; explicitly deleted before completing the receipt",
+      "minimisationRule": "Only per-scan full-path cursors and done flags. No profile fields, content bodies or billing credentials. Entire collection client-denied.",
+      "reviewedBy": "iphone-account-readiness-2026-09-15",
+      "reason": "Durable cursors let a time-limited worker continue past completed pages without repeating counter decrements."
+    },
+    {
+      "key": "accountDeletionBilling",
+      "domain": "Z_operational",
+      "type": "topLevelByUid",
+      "path": "accountDeletionBilling/{uid}",
+      "containsPersonalData": true,
+      "piiCategory": "paymentIdentifier",
+      "recordPurpose": "payment",
+      "strategy": "retain",
+      "retentionWindow": "Until the pending Stripe cancellation succeeds; explicitly deleted after success",
+      "minimisationRule": "Only stripeSubscriptionId, createdAt, attempts and nextAttemptAt. No name, email, receipt or profile snapshot. Entire collection client-denied.",
+      "reviewedBy": "iphone-account-readiness-2026-09-15",
+      "reason": "A provider outage must not lose the subscription ID when the user profile is erased. The scheduled worker retries cancellation."
+    },
+    {
+      "key": "deletedCommentEvidence",
+      "domain": "H_excluded",
+      "type": "topLevelByAuto",
+      "path": "deletedCommentEvidence",
+      "containsPersonalData": true,
+      "piiCategory": "userContent",
+      "recordPurpose": "moderation",
+      "strategy": "retain",
+      "retentionWindow": "365 days from anonymisation via Firestore TTL on expiresAt",
+      "minimisationRule": "Only originalText, createdAt and expiresAt, keyed by SHA-256 of the comment path. No author UID, display name or photo. Entire collection client-denied.",
+      "reviewedBy": "iphone-account-readiness-2026-09-15",
+      "reason": "Keeps the existing bounded moderation evidence policy without exposing original text as a field on client-readable comments."
     }
   ]
 }

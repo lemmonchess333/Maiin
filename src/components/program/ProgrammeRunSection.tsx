@@ -108,7 +108,7 @@ import { getRunHeroState } from "@/lib/runHeroState";
 import { getFreeformCadence } from "@/lib/freeformCadence";
 import { resolveRunContextualPrompt } from "@/lib/runContextualPrompt";
 import { realignResultMessage } from "@/lib/realignCopy";
-import type { RaceTiming } from "@/features/program/runScheduler";
+import type { RaceTiming } from "@/features/program/runPlanTiming";
 import { useRunningStats } from "@/hooks/useRunningStats";
 import { useClaimMap } from "@/hooks/useClaimMap";
 import { haptic } from "@/lib/haptic";

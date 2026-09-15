@@ -12,7 +12,7 @@
  * than presenting a doomed compressed plan as normal.
  */
 
-import type { RaceTiming } from "@/features/program/runScheduler";
+import type { RaceTiming } from "@/features/program/runPlanTiming";
 
 type RaceDistance = "5k" | "10k" | "half" | "marathon";
 

@@ -39,13 +39,14 @@ async function cleanupSpacesForUser({ firestore, uid, logger = console }) {
         .where("authorId", "==", uid)
         .get();
       for (const postDoc of postsSnap.docs) {
-        await postDoc.ref.delete();
+        await firestore.recursiveDelete(postDoc.ref);
       }
     } catch (err) {
       logger.warn(
-        `deleteAccount: spaces cleanup for ${spaceId} failed (continuing)`,
+        `deleteAccount: spaces cleanup for ${spaceId} failed`,
         err && err.message
       );
+      throw err;
     }
   }
 }

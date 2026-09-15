@@ -34,7 +34,6 @@ import {
 import { setErrorReportingUid } from "./errorReporting";
 import { remove, writeString } from "@/lib/localStore";
 import type { FieldValue, Timestamp } from "firebase/firestore";
-import { sendVerificationEmail } from "@/lib/accountSecurity";
 import { getDeviceTimezone, shouldUpdateTimezone } from "@/lib/captureTimezone";
 import {
   invalidatePushTokenLifecycle,
@@ -995,15 +994,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (auth.currentUser?.uid !== uid) return;
       setProfile(newProfile);
       trackLifecycle("signup_completed", { method: "email" });
-      // Fire-and-forget verification email (branded, via the same Resend path
-      // as password reset). Never blocks signup — an email hiccup shouldn't
-      // stall onboarding, and Settings → Sign-in & security has a resend. A
-      // typo'd signup email is unfixable by forgot-password (the reset goes to
-      // an address the user doesn't own); verification catches it while the
-      // user still remembers their password.
-      sendVerificationEmail().catch((err) =>
-        logger.warn("[AuthProvider] signup verification email failed", err)
-      );
+      // The signup verification screen owns delivery, retry and error feedback.
     },
     [revokeOutgoingAccountDeviceState]
   );

@@ -1,4 +1,5 @@
 "use strict";
+const { assertTransactionAccountsLive } = require("./deletionTransactionGuard");
 
 /**
  * Server-side activity-visibility gate for child interactions (packet 13).
@@ -39,6 +40,7 @@ async function assertCanInteractWithActivity({ tx, firestore, activityRef, uid }
   if (!activitySnap.exists) throw notAccessible();
 
   const activity = activitySnap.data() || {};
+  await assertTransactionAccountsLive({ firestore, tx, uids: [uid, activity.authorId] });
   if (activity.authorId === uid || activity.visibility === "public") {
     return activity;
   }

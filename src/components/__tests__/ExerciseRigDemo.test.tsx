@@ -18,8 +18,14 @@
  * The phase timeline itself is pinned in exerciseTempo.test.ts against
  * the pure repSampleLoopedAt — no rAF mocking there.
  */
+import type { ReactElement } from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, act } from "@testing-library/react";
+import {
+  render as renderSync,
+  screen,
+  act,
+  waitFor,
+} from "@testing-library/react";
 
 const reduceRef = { current: false };
 vi.mock("@/hooks/useReducedMotion", () => ({
@@ -43,15 +49,27 @@ const beatsRef = { current: null as readonly TestBeat[] | null };
    module wholesale, and the failure surfaces at the CALL SITE. */
 vi.mock("@/lib/bodyRig", () => ({
   getBodyDemo: () => demoRef.current,
-  getFormBeats: () => beatsRef.current,
   renderBodyDemo: (id: string, t: number, effort?: number) => {
     drawLog.push({ t, effort });
     return `<svg data-demo="${id}" data-t="${t}"></svg>`;
   },
 }));
 
+vi.mock("@/lib/formGuides", () => ({ getFormBeats: () => beatsRef.current }));
+
 import { PLACARD_TIMING } from "@/lib/exerciseTempo";
 import ExerciseRigDemo from "../ExerciseRigDemo";
+
+async function render(element: ReactElement) {
+  let result!: ReturnType<typeof renderSync>;
+  await act(async () => {
+    result = renderSync(element);
+  });
+  await waitFor(() => {
+    expect(screen.queryByLabelText("Loading exercise demo")).toBeNull();
+  });
+  return result;
+}
 
 /* Controllable rAF harness (the WaterWave pattern): callbacks queue up
  * and step(now) drives exactly one frame at an explicit clock value. */
@@ -81,9 +99,9 @@ beforeEach(() => {
 });
 
 describe("ExerciseRigDemo", () => {
-  it("reduced motion → static two-up, no cue, no loop", () => {
+  it("reduced motion → static two-up, no cue, no loop", async () => {
     reduceRef.current = true;
-    const { container } = render(
+    const { container } = await render(
       <ExerciseRigDemo exerciseId="squat" name="Barbell Squat" />
     );
     expect(
@@ -98,9 +116,9 @@ describe("ExerciseRigDemo", () => {
     reduceRef.current = false;
   });
 
-  it("animated path opens on the Set lead-in cue with the lockout frame", () => {
+  it("animated path opens on the Set lead-in cue with the lockout frame", async () => {
     reduceRef.current = false;
-    const { container } = render(
+    const { container } = await render(
       <ExerciseRigDemo exerciseId="squat" name="Barbell Squat" />
     );
     expect(
@@ -114,9 +132,9 @@ describe("ExerciseRigDemo", () => {
     expect(screen.queryByRole("button")).toBeNull();
   });
 
-  it("the rep loops — no settle, no Rep complete, frames keep coming", () => {
+  it("the rep loops — no settle, no Rep complete, frames keep coming", async () => {
     reduceRef.current = false;
-    render(<ExerciseRigDemo exerciseId="squat" name="Barbell Squat" />);
+    await render(<ExerciseRigDemo exerciseId="squat" name="Barbell Squat" />);
     // Default timing: SET 600 + (1650 ecc + 480 pause + 1050 drive +
     // 480 lockout) = 600 + 3660 cycle.
     step(40);
@@ -135,7 +153,7 @@ describe("ExerciseRigDemo", () => {
     expect(screen.queryByText("Rep complete")).toBeNull();
   });
 
-  it("a phase change never repaints the initial lockout frame (the one-frame flash)", () => {
+  it("a phase change never repaints the initial lockout frame (the one-frame flash)", async () => {
     // Owner device recording 2026-09-02: at every cue change the figure
     // snapped to the lockout pose for a frame. The cue is React state,
     // so a phase change re-rendered the player, and React 19 re-applied
@@ -144,7 +162,7 @@ describe("ExerciseRigDemo", () => {
     // tick. This drives mid-rep, crosses a phase boundary, and asserts
     // the figure still shows the last DRAWN frame, not the initial one.
     reduceRef.current = false;
-    const { container } = render(
+    const { container } = await render(
       <ExerciseRigDemo exerciseId="squat" name="Barbell Squat" />
     );
     step(40);
@@ -156,7 +174,7 @@ describe("ExerciseRigDemo", () => {
     expect(container.querySelector('[data-t="0"]')).toBeNull();
   });
 
-  it("a stretch-start demo opens at the BOTTOM and drives first", () => {
+  it("a stretch-start demo opens at the BOTTOM and drives first", async () => {
     // `concentricTo` says which end finishes the lift, not where it
     // begins. A squat and a deadlift both lock out standing; the squat
     // starts there, the deadlift starts with the bar on the floor. The
@@ -164,7 +182,7 @@ describe("ExerciseRigDemo", () => {
     // with the lift already done (owner, 2026-09-02).
     reduceRef.current = false;
     demoRef.current = { concentricTo: 0, startsAt: "stretch" };
-    const { container } = render(
+    const { container } = await render(
       <ExerciseRigDemo exerciseId="deadlift" name="Deadlift" />
     );
     // concentricTo 0 → lockout at t=0, so the stretched end is t=1.
@@ -178,12 +196,12 @@ describe("ExerciseRigDemo", () => {
     expect(screen.queryByText("Lower under control")).toBeNull();
   });
 
-  it("reduced motion shows the START frame first", () => {
+  it("reduced motion shows the START frame first", async () => {
     // The two-up is start → finish, so a deadlift reads floor-then-
     // standing rather than the reverse.
     reduceRef.current = true;
     demoRef.current = { concentricTo: 0, startsAt: "stretch" };
-    const { container } = render(
+    const { container } = await render(
       <ExerciseRigDemo exerciseId="deadlift" name="Deadlift" />
     );
     const frames = [...container.querySelectorAll("[data-t]")].map((n) =>
@@ -193,12 +211,12 @@ describe("ExerciseRigDemo", () => {
     reduceRef.current = false;
   });
 
-  it("a cycle demo opens at t=0, cues the steady rhythm, and never runs backwards", () => {
+  it("a cycle demo opens at t=0, cues the steady rhythm, and never runs backwards", async () => {
     // A gait, a pedal stroke, a jump-and-step-down: the rep player's
     // there-and-back would walk a treadmill backwards.
     reduceRef.current = false;
     demoRef.current = { concentricTo: 1, cycle: true, cycleMs: 1000 };
-    const { container } = render(
+    const { container } = await render(
       <ExerciseRigDemo exerciseId="treadmill" name="Treadmill" />
     );
     expect(container.querySelector('[data-t="0"]')).not.toBeNull();
@@ -221,10 +239,10 @@ describe("ExerciseRigDemo", () => {
     expect(Math.max(...ts)).toBeGreaterThan(0.9);
   });
 
-  it("a cycle's reduced-motion two-up shows t=0 and its opposite phase t=0.5", () => {
+  it("a cycle's reduced-motion two-up shows t=0 and its opposite phase t=0.5", async () => {
     reduceRef.current = true;
     demoRef.current = { concentricTo: 1, cycle: true };
-    const { container } = render(
+    const { container } = await render(
       <ExerciseRigDemo exerciseId="treadmill" name="Treadmill" />
     );
     const frames = [...container.querySelectorAll("[data-t]")].map((n) =>
@@ -234,9 +252,9 @@ describe("ExerciseRigDemo", () => {
     reduceRef.current = false;
   });
 
-  it("draw spacing is even under a 60Hz rAF (quantized 30fps steps)", () => {
+  it("draw spacing is even under a 60Hz rAF (quantized 30fps steps)", async () => {
     reduceRef.current = false;
-    render(<ExerciseRigDemo exerciseId="squat" name="Barbell Squat" />);
+    await render(<ExerciseRigDemo exerciseId="squat" name="Barbell Squat" />);
     // Drive a 60Hz clock through the middle of the eccentric and read
     // the drawn t values: with quantized stepping every accepted draw
     // lands on the 33.33ms grid, so consecutive t deltas are constant.
@@ -269,10 +287,10 @@ describe("ExerciseRigDemo", () => {
     { t: 1, label: "Bottom position", cue: "Upper arms parallel." },
   ];
 
-  it("opens on its FIRST position, NAMED but not captioned", () => {
+  it("opens on its FIRST position, NAMED but not captioned", async () => {
     reduceRef.current = false;
     beatsRef.current = PLACARD_BEATS;
-    const { container } = render(
+    const { container } = await render(
       <ExerciseRigDemo exerciseId="dips" name="Dips" />
     );
     expect(container.querySelector('[data-t="0"]')).not.toBeNull();
@@ -293,11 +311,11 @@ describe("ExerciseRigDemo", () => {
     expect(screen.queryByText("Primary")).toBeNull();
   });
 
-  it("reports each position to the caller, for the list highlight", () => {
+  it("reports each position to the caller, for the list highlight", async () => {
     reduceRef.current = false;
     beatsRef.current = PLACARD_BEATS;
     const seen: number[] = [];
-    render(
+    await render(
       <ExerciseRigDemo
         exerciseId="dips"
         name="Dips"
@@ -310,10 +328,10 @@ describe("ExerciseRigDemo", () => {
     expect(seen).toEqual([1, 2]);
   });
 
-  it("it HOLDS on a position, then tweens to the next", () => {
+  it("it HOLDS on a position, then tweens to the next", async () => {
     reduceRef.current = false;
     beatsRef.current = PLACARD_BEATS;
-    render(<ExerciseRigDemo exerciseId="dips" name="Dips" />);
+    await render(<ExerciseRigDemo exerciseId="dips" name="Dips" />);
     step(40);
     // Anywhere inside the hold the frame is beat 0 EXACTLY — a still,
     // which is what makes the cue readable.
@@ -336,10 +354,10 @@ describe("ExerciseRigDemo", () => {
     expect(screen.getByText("2/3")).toBeInTheDocument();
   });
 
-  it("the sequence wraps back to the first position and repeats", () => {
+  it("the sequence wraps back to the first position and repeats", async () => {
     reduceRef.current = false;
     beatsRef.current = PLACARD_BEATS;
-    render(<ExerciseRigDemo exerciseId="dips" name="Dips" />);
+    await render(<ExerciseRigDemo exerciseId="dips" name="Dips" />);
     step(40);
     step(2 * SLOT + 100); // third slot → the bottom
     expect(screen.getByText("Bottom position")).toBeInTheDocument();
@@ -350,14 +368,14 @@ describe("ExerciseRigDemo", () => {
     expect(rafQueue.length).toBeGreaterThan(0);
   });
 
-  it("effort brightens on the way to the finished position, not away", () => {
+  it("effort brightens on the way to the finished position, not away", async () => {
     // concentricTo 0: t=0 IS the finished position, so travelling
     // DOWNWARD in t is the drive. The rep player reads this off a named
     // phase; a placard has only the direction of travel.
     reduceRef.current = false;
     beatsRef.current = PLACARD_BEATS;
     demoRef.current = { concentricTo: 0 };
-    render(<ExerciseRigDemo exerciseId="dips" name="Dips" />);
+    await render(<ExerciseRigDemo exerciseId="dips" name="Dips" />);
     step(40);
     drawLog.length = 0;
     step(PLACARD_TIMING.holdMs + 100); // tween 0 → 0.5: away from the finish
@@ -372,12 +390,12 @@ describe("ExerciseRigDemo", () => {
     expect(pressing).toBeGreaterThan(lowering);
   });
 
-  it("reduced motion falls back to the drawn two-up without frames", () => {
+  it("reduced motion falls back to the drawn two-up without frames", async () => {
     // Unframed placards have no pictures to print, so they get the
     // ordinary start-and-end pair like every other demo.
     reduceRef.current = true;
     beatsRef.current = PLACARD_BEATS;
-    const { container } = render(
+    const { container } = await render(
       <ExerciseRigDemo exerciseId="dips" name="Dips" />
     );
     const frames = [...container.querySelectorAll("[data-t]")].map((n) =>
@@ -388,7 +406,7 @@ describe("ExerciseRigDemo", () => {
     reduceRef.current = false;
   });
 
-  it("routes a complete supplied sequence to the frame player without drawing the rig", () => {
+  it("routes a complete supplied sequence to the frame player without drawing the rig", async () => {
     reduceRef.current = false;
     beatsRef.current = Array.from({ length: 6 }, (_, i) => ({
       t: i / 5,
@@ -396,13 +414,15 @@ describe("ExerciseRigDemo", () => {
       cue: `Cue ${i + 1}`,
       image: `form-frames/dips/${i + 1}.webp`,
     }));
-    const view = render(<ExerciseRigDemo exerciseId="dips" name="Dips" />);
+    const view = await render(
+      <ExerciseRigDemo exerciseId="dips" name="Dips" />
+    );
     expect(view.container.querySelectorAll("img")).toHaveLength(2);
     expect(drawLog).toHaveLength(0);
     expect(rafQueue).toHaveLength(0);
   });
 
-  it("a requested cue selects that still and pauses playback", () => {
+  it("a requested cue selects that still and pauses playback", async () => {
     reduceRef.current = false;
     beatsRef.current = Array.from({ length: 6 }, (_, i) => ({
       t: i / 5,
@@ -410,7 +430,9 @@ describe("ExerciseRigDemo", () => {
       cue: `Cue ${i + 1}`,
       image: `form-frames/dips/${i + 1}.webp`,
     }));
-    const view = render(<ExerciseRigDemo exerciseId="dips" name="Dips" />);
+    const view = await render(
+      <ExerciseRigDemo exerciseId="dips" name="Dips" />
+    );
     view.rerender(
       <ExerciseRigDemo
         exerciseId="dips"
@@ -429,17 +451,19 @@ describe("ExerciseRigDemo", () => {
    * the hard way — the spec waited on the two-up's accessible name,
    * the placard's still version has no such element, and the capture
    * run broke at `dips`, losing every demo after it. */
-  it("marks the reduced-motion roots, and ONLY those", () => {
+  it("marks the reduced-motion roots, and ONLY those", async () => {
     reduceRef.current = true;
     beatsRef.current = null;
-    const twoUp = render(
+    const twoUp = await render(
       <ExerciseRigDemo exerciseId="squat" name="Barbell Squat" />
     );
     expect(twoUp.container.querySelector("[data-demo-still]")).not.toBeNull();
     twoUp.unmount();
 
     beatsRef.current = PLACARD_BEATS;
-    const still = render(<ExerciseRigDemo exerciseId="dips" name="Dips" />);
+    const still = await render(
+      <ExerciseRigDemo exerciseId="dips" name="Dips" />
+    );
     expect(still.container.querySelector("[data-demo-still]")).not.toBeNull();
     still.unmount();
 
@@ -447,23 +471,25 @@ describe("ExerciseRigDemo", () => {
        old exact-string locator was really enforcing: a looser selector
        once shipped screenshots of a running loop. */
     reduceRef.current = false;
-    const placard = render(<ExerciseRigDemo exerciseId="dips" name="Dips" />);
+    const placard = await render(
+      <ExerciseRigDemo exerciseId="dips" name="Dips" />
+    );
     expect(placard.container.querySelector("[data-demo-still]")).toBeNull();
     placard.unmount();
 
     beatsRef.current = null;
-    const looping = render(
+    const looping = await render(
       <ExerciseRigDemo exerciseId="squat" name="Barbell Squat" />
     );
     expect(looping.container.querySelector("[data-demo-still]")).toBeNull();
   });
 
-  it("a demo with no beats is untouched by any of it", () => {
+  it("a demo with no beats is untouched by any of it", async () => {
     // The style is opt-in per exercise: everything without a beat list
     // still plays the two-way rep with its phase cues.
     reduceRef.current = false;
     beatsRef.current = null;
-    render(<ExerciseRigDemo exerciseId="squat" name="Barbell Squat" />);
+    await render(<ExerciseRigDemo exerciseId="squat" name="Barbell Squat" />);
     expect(screen.getByText("Set")).toBeInTheDocument();
     expect(screen.queryByText("Primary")).toBeNull();
   });

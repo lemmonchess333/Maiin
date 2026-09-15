@@ -33,11 +33,13 @@ import type { ProgramState } from "@/features/program/programTypes";
 import { planWeekSchedule, type ScheduleDay } from "./scheduleUtils";
 import { localWeekKey, parseLocalDate } from "./dateHelpers";
 import {
-  generateRacePlanV2,
   getRaceMinWeeks,
   getRaceFloorWeeks,
-  recoveryWeeksForDistance,
   getRacePhaseLabel,
+} from "@/features/program/runPlanTiming";
+import {
+  generateRacePlanV2,
+  recoveryWeeksForDistance,
   type RunTuning,
 } from "@/features/program/runScheduler";
 import { raceDistanceLabel } from "./runProgrammeViewModel";

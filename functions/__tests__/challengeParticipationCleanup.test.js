@@ -14,10 +14,9 @@ import { describe, it, expect } from "vitest";
 import { createRequire } from "node:module";
 
 const require_ = createRequire(import.meta.url);
-const {
-  removeChallengeParticipationsForUser,
-  BATCH_SIZE,
-} = require_("../lib/challengeParticipationCleanup.js");
+const { removeChallengeParticipationsForUser, BATCH_SIZE } = require_(
+  "../lib/challengeParticipationCleanup.js"
+);
 
 const UID = "user-1";
 
@@ -115,9 +114,7 @@ describe("removeChallengeParticipationsForUser", () => {
 
     expect(firestore.deletedPaths.length).toBe(3);
     for (const p of firestore.deletedPaths) {
-      expect(p).toMatch(
-        new RegExp(`^challenges/[^/]+/participants/${UID}$`)
-      );
+      expect(p).toMatch(new RegExp(`^challenges/[^/]+/participants/${UID}$`));
     }
   });
 
@@ -176,7 +173,7 @@ describe("removeChallengeParticipationsForUser", () => {
     expect(BATCH_SIZE).toBeLessThanOrEqual(500);
   });
 
-  it("returns zeroes rather than throwing when the listing fails", async () => {
+  it("rejects a failed listing so Auth cannot be deleted prematurely", async () => {
     // A throw here would abort the cascade. That leaves credentials intact,
     // which is the retry invariant — but it also means a transient blip
     // blocks every deletion, and this is not the step to fail them on.
@@ -185,29 +182,23 @@ describe("removeChallengeParticipationsForUser", () => {
       readThrows: "unavailable",
     });
 
-    const result = await removeChallengeParticipationsForUser({
-      firestore,
-      uid: UID,
-    });
-
-    expect(result).toEqual({ challenges: 0, deleted: 0, failedBatches: 0 });
+    await expect(
+      removeChallengeParticipationsForUser({ firestore, uid: UID })
+    ).rejects.toThrow("unavailable");
     expect(firestore.deletedPaths).toEqual([]);
   });
 
-  it("keeps going after a failed batch and reports it", async () => {
+  it("rejects a failed batch so the background worker can retry", async () => {
     const challengeIds = Array.from({ length: 600 }, (_, i) => `ch-${i}`);
     const firestore = makeFirestore({
       challengeIds,
       commitThrowsOnBatch: 0,
     });
 
-    const result = await removeChallengeParticipationsForUser({
-      firestore,
-      uid: UID,
-    });
-
-    expect(result.failedBatches).toBe(1);
-    expect(result.deleted).toBe(600 - BATCH_SIZE);
+    await expect(
+      removeChallengeParticipationsForUser({ firestore, uid: UID })
+    ).rejects.toThrow("commit failed");
+    expect(firestore.deletedPaths).toEqual([]);
   });
 
   it("no-ops on missing arguments", async () => {

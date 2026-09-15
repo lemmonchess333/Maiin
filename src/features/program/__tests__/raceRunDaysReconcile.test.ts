@@ -2,8 +2,7 @@
  * raceRunDaysReconcile — pure read-time staleness detection for race-prep
  * runDays. Targets the "Marathon Race in Base week 1" stale-data symptom:
  * stored runDays that disagree with the current week / the canonical race
- * goal. Additive + unwired; these pin the logic before the (emulator-gated)
- * load-effect wiring lands.
+ * goal. Used by both the Home reader and the programme controller.
  */
 import { describe, it, expect } from "vitest";
 import {
@@ -64,6 +63,53 @@ describe("raceMinWeeks", () => {
 });
 
 describe("areRaceRunDaysStale", () => {
+  it.each(["5k", "10k", "half", "marathon"] as const)(
+    "matches generated weeks across weekday and schedule boundaries for %s",
+    (distance) => {
+      for (const day of [0, 3, 6]) {
+        const todayKey = localDateString(
+          addLocalDays(new Date("2026-09-14T12:00:00"), day)
+        );
+        for (const daysAhead of [0, 3, 10, 60]) {
+          const raceGoal = {
+            distance,
+            targetDate: localDateString(
+              addLocalDays(new Date(`${todayKey}T12:00:00`), daysAhead)
+            ),
+          };
+          for (const weekSchedule of [
+            SCHEDULE,
+            SCHEDULE.map((slot) => ({
+              ...slot,
+              type: slot.day === 3 ? ("both" as const) : ("rest" as const),
+            })),
+          ]) {
+            const fresh = generateRacePlanV2({
+              raceGoal,
+              weekSchedule,
+              weeklyRunDays: 3,
+              currentDate: todayKey,
+              weekStart: localWeekKey(new Date(`${todayKey}T12:00:00`)),
+              recentLayoff: "none",
+            });
+            expect(honestRaceWeekIndex({ raceGoal, todayKey }).totalWeeks).toBe(
+              fresh.totalWeeks
+            );
+            expect(
+              areRaceRunDaysStale({
+                runDays: fresh.weeks[0],
+                raceGoal,
+                weekSchedule,
+                weeklyRunDays: 3,
+                todayKey,
+              }),
+              `${todayKey} to ${raceGoal.targetDate}`
+            ).toBe(false);
+          }
+        }
+      }
+    }
+  );
   const today = "2026-05-30"; // a Saturday
   const raceDate = "2026-10-17"; // ~20 weeks out (marathon)
 

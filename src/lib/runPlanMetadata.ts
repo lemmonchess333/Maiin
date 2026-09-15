@@ -34,8 +34,8 @@ import {
   segmentsFromTempo,
   type SessionSegment,
 } from "./runSegments";
+import { getPhaseForWeek } from "@/features/program/runPlanTiming";
 import {
-  getPhaseForWeek,
   type ScheduledRunDay,
   type RunPlan,
 } from "@/features/program/runScheduler";

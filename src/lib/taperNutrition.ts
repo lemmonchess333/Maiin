@@ -15,7 +15,7 @@
 import { parseLocalDate, localDateString } from "./dateHelpers";
 import { clamp } from "@/lib/utils";
 import { floorTargetCalories } from "./macroConstants";
-import { TAPER_WEEKS_BY_DISTANCE } from "@/features/program/runScheduler";
+import { TAPER_WEEKS_BY_DISTANCE } from "@/features/program/runPlanTiming";
 import type { UserProfile } from "./auth";
 
 /** Taper calorie contraction band (fraction of base), deeper toward the race. */

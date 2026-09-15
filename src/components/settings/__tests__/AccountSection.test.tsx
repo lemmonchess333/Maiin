@@ -1,3 +1,6 @@
+vi.mock("@/hooks/useAccountDeletionStatus", () => ({
+  useAccountDeletionStatus: () => ({ pending: false, completed: false }),
+}));
 /**
  * AccountSection — P0b Sub1 R1A pin (b) Apple-sub warning.
  *
@@ -91,7 +94,7 @@ function renderSection() {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  vi.mocked(deleteAccount).mockReset().mockResolvedValue(undefined);
+  vi.mocked(deleteAccount).mockReset().mockResolvedValue("completed");
   vi.mocked(reauthWithPassword).mockReset().mockResolvedValue(undefined);
   vi.mocked(reauthWithGoogle).mockReset().mockResolvedValue(undefined);
   vi.mocked(reauthWithApple).mockReset().mockResolvedValue(undefined);
@@ -121,7 +124,12 @@ describe("AccountSection — P0b Apple subscription warning", () => {
     fireEvent.click(screen.getByText(/Data & account/i));
     fireEvent.click(screen.getByRole("button", { name: /^Delete account$/i }));
 
-    expect(screen.getByPlaceholderText("Type DELETE")).toBeInTheDocument();
+    expect(
+      screen.getByRole("alertdialog", { name: "Delete account" })
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByPlaceholderText("Type DELETE")
+    ).not.toBeInTheDocument();
     expect(
       screen.queryByText(/Cancel your App Store subscription first/i)
     ).not.toBeInTheDocument();
@@ -157,7 +165,12 @@ describe("AccountSection — P0b Apple subscription warning", () => {
         screen.queryByText(/Cancel your App Store subscription first/i)
       ).not.toBeInTheDocument()
     );
-    expect(screen.getByPlaceholderText("Type DELETE")).toBeInTheDocument();
+    expect(
+      screen.getByRole("alertdialog", { name: "Delete account" })
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByPlaceholderText("Type DELETE")
+    ).not.toBeInTheDocument();
   });
 
   it("opens the App Store subscription deep-link when the user taps 'Open subscription settings'", () => {
@@ -238,10 +251,6 @@ describe("AccountSection — P0b Apple subscription warning", () => {
     renderSection();
     fireEvent.click(screen.getByText(/Data & account/i));
     fireEvent.click(screen.getByRole("button", { name: /^Delete account$/i }));
-
-    fireEvent.change(screen.getByPlaceholderText("Type DELETE"), {
-      target: { value: "DELETE" },
-    });
     // Confirm button inside the modal shares the "Delete account" name
     // with the opener — it is the last one rendered.
     const confirmButtons = screen.getAllByRole("button", {
@@ -270,9 +279,6 @@ function openConfirm(
   return { ...view, signOut };
 }
 function submitDeletion() {
-  fireEvent.change(screen.getByPlaceholderText("Type DELETE"), {
-    target: { value: "DELETE" },
-  });
   fireEvent.click(
     within(
       screen.getByRole("alertdialog", { name: "Delete account" })
@@ -302,9 +308,9 @@ describe("AccountSection deletion recovery", () => {
   });
 
   it("cannot dismiss or start another deletion while cleanup runs", async () => {
-    let resolve!: () => void;
+    let resolve!: (value: "completed") => void;
     vi.mocked(deleteAccount).mockReturnValue(
-      new Promise<void>((done) => {
+      new Promise<"completed" | "pending">((done) => {
         resolve = done;
       })
     );
@@ -314,11 +320,13 @@ describe("AccountSection deletion recovery", () => {
     expect(screen.getByRole("alertdialog")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Cancel" })).toBeDisabled();
     fireEvent.submit(
-      screen.getByPlaceholderText("Type DELETE").closest("form")!
+      screen
+        .getByRole("alertdialog", { name: "Delete account" })
+        .querySelector("form")!
     );
     expect(deleteAccount).toHaveBeenCalledOnce();
     await act(async () => {
-      resolve();
+      resolve("completed");
     });
   });
 
@@ -352,9 +360,9 @@ describe("AccountSection deletion recovery", () => {
   });
 
   it("does not sign out a replacement account when an old request completes", async () => {
-    let resolve!: () => void;
+    let resolve!: (value: "completed") => void;
     vi.mocked(deleteAccount).mockReturnValue(
-      new Promise<void>((done) => {
+      new Promise<"completed" | "pending">((done) => {
         resolve = done;
       })
     );
@@ -368,10 +376,33 @@ describe("AccountSection deletion recovery", () => {
       />
     );
     await act(async () => {
-      resolve();
+      resolve("completed");
     });
     expect(signOut).not.toHaveBeenCalled();
     expect(purgeFoodPhotos).not.toHaveBeenCalled();
+  });
+
+  it("does not carry a pending deletion or device cleanup over to a replacement account", async () => {
+    vi.mocked(deleteAccount).mockResolvedValueOnce("pending");
+    const { rerender, signOut } = openConfirm();
+    submitDeletion();
+    await screen.findByRole("alertdialog", {
+      name: "Account deletion in progress",
+    });
+    await waitFor(() =>
+      expect(purgeFoodPhotos).toHaveBeenCalledWith("user-abc")
+    );
+    rerender(
+      <AccountSection
+        inline
+        user={makeUser({ uid: "new-user" })}
+        signOut={signOut}
+      />
+    );
+    expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
+    await act(async () => {});
+    expect(purgeFoodPhotos).not.toHaveBeenCalledWith("new-user");
+    expect(signOut).not.toHaveBeenCalled();
   });
 
   it("offers sign-in recovery after three failed password attempts", async () => {

@@ -1,3 +1,4 @@
+import { useAccountDeletionStatus } from "@/hooks/useAccountDeletionStatus";
 /** SettingsAccount — Account / Data nested page (Set1.2). */
 import { useAuth } from "@/lib/auth";
 import SettingsSection from "@/components/settings/SettingsSection";
@@ -10,6 +11,7 @@ export default function SettingsAccount({
   duringSetup?: boolean;
 }) {
   const { user, signOut } = useAuth();
+  const deletion = useAccountDeletionStatus(user?.uid);
 
   return (
     <SettingsSection
@@ -19,7 +21,14 @@ export default function SettingsAccount({
       backTo={duringSetup ? "/" : undefined}
       backLabel={duringSetup ? "Setup" : undefined}
     >
-      <SecuritySection inline user={user} />
+      {!deletion.pending && !deletion.completed && (
+        <SecuritySection
+          key={user?.uid}
+          inline
+          user={user}
+          duringSetup={duringSetup}
+        />
+      )}
       {/*
         Export lives INSIDE AccountSection's "Data & account" block, not
         here. #1923 rendered DataExportSection at this level believing the

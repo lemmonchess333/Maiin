@@ -226,6 +226,17 @@ type Listener = { ref: DocRef | CollectionRef; fire: () => void };
 let autoId = 0;
 
 export class FirestoreFake {
+  readonly snapshotMetadata = new Map<
+    string,
+    { fromCache: boolean; hasPendingWrites: boolean }
+  >();
+  setSnapshotMetadata(
+    path: string,
+    metadata: { fromCache: boolean; hasPendingWrites?: boolean }
+  ): void {
+    this.snapshotMetadata.set(path, { hasPendingWrites: false, ...metadata });
+    this.notify();
+  }
   /** path → document data. Paths are "a/b/c/d" (even segment count). */
   private docs = new Map<string, Record<string, unknown>>();
   /**
@@ -264,6 +275,7 @@ export class FirestoreFake {
     [];
 
   reset(): void {
+    this.snapshotMetadata.clear();
     // Settle held writes before the clears — see `settleDeferredWrites`.
     this.settleDeferredWrites();
     this.deferringWrites = false;

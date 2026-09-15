@@ -12,8 +12,8 @@ vi.mock("@/lib/exerciseDemo", () => ({
   needsPosterior: () => false,
   needsAnterior: () => false,
 }));
-vi.mock("@/lib/bodyRig", () => ({
-  getBodyDemo: () => null,
+vi.mock("@/lib/bodyRig", () => ({ getBodyDemo: () => null }));
+vi.mock("@/lib/formGuides", () => ({
   getFormBeats: () => null,
   getDemoMuscleKey: () => null,
 }));

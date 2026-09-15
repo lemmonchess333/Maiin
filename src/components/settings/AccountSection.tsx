@@ -1,3 +1,4 @@
+import { useAccountDeletionStatus } from "@/hooks/useAccountDeletionStatus";
 import { useEffect, useReducer, useRef, useState } from "react";
 import { haptic } from "@/lib/haptic";
 import { writeString } from "@/lib/localStore";
@@ -80,12 +81,25 @@ function providerLabel(providerId: SupportedReauthProviderId): string {
   }
 }
 
-export default function AccountSection({
+export default function AccountSection(props: AccountSectionProps) {
+  // A second account must never inherit an accepted request, password, or
+  // device-cleanup state from the previous account in this mounted route.
+  return (
+    <AccountSectionContent key={props.user?.uid ?? "signed-out"} {...props} />
+  );
+}
+
+function AccountSectionContent({
   user,
   signOut,
   inline = false,
 }: AccountSectionProps) {
   const { profile } = useAuth();
+  const deletion = useAccountDeletionStatus(user?.uid);
+  const [requestPending, setPending] = useState(false);
+  const pending = !deletion.completed && (deletion.pending || requestPending);
+  const completedFlight = useRef(false);
+  const deviceCleanupStarted = useRef(false);
   // Sub1 R1A pin (b) P0b — presence of appleOriginalTransactionId
   // means the user purchased Pro via IAP at some point. Since
   // Apple has no admin-cancellation API, we surface a pre-deletion
@@ -96,7 +110,6 @@ export default function AccountSection({
     profile?.subscriptionSource === "ios_iap";
   const [showAppleWarning, setShowAppleWarning] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [deleteConfirmText, setDeleteConfirmText] = useState("");
   const [password, setPassword] = useState("");
   const [reauthError, setReauthError] = useState<string | null>(null);
   const [modalState, dispatchModal] = useReducer(
@@ -131,7 +144,6 @@ export default function AccountSection({
 
   const closeAndReset = () => {
     setShowDeleteModal(false);
-    setDeleteConfirmText("");
     setPassword("");
     setReauthError(null);
     setDeleteError(null);
@@ -161,6 +173,7 @@ export default function AccountSection({
   const finishDeletion = async () => {
     if (!user || activeUser.current?.uid !== user.uid) return;
     setAccountDeleted(true);
+    setPending(false);
     setFinishing(true);
     const cleanup = await Promise.allSettled([
       discardDeletedAccountPushState(user.uid),
@@ -199,7 +212,13 @@ export default function AccountSection({
   const runDeleteAccount = async (isRetry: boolean): Promise<void> => {
     if (!user || activeUser.current?.uid !== user.uid) return;
     try {
-      await deleteAccount(user.uid);
+      const result = await deleteAccount(user.uid);
+      if (activeUser.current?.uid !== user.uid) return;
+      if (result === "pending") {
+        setPending(true);
+        dispatchModal({ type: "CANCEL_REAUTH" });
+        return;
+      }
     } catch (err) {
       if (activeUser.current?.uid !== user.uid) return;
       const fe = err as {
@@ -234,13 +253,11 @@ export default function AccountSection({
         } else {
           dispatchModal({ type: "REQUIRE_REAUTH" });
         }
-      } else if (fe?.code === "auth/user-not-found") {
-        await finishDeletion();
       } else {
         logger.error("Account deletion failed", err);
         const message =
           fe?.details?.reason === "deletion-in-progress"
-            ? "Deletion is already running. Keep the app open and try again in a few minutes."
+            ? "Deletion is already running on the server. You can close the app and check back later."
             : fe?.details?.errorCode === "token-revoked" ||
                 fe?.code === "functions/unauthenticated"
               ? "Your session has expired. Sign out and back in, then retry account deletion."
@@ -315,13 +332,7 @@ export default function AccountSection({
   };
 
   const handleSubmitDelete = async () => {
-    if (
-      !user ||
-      deleteConfirmText.trim() !== "DELETE" ||
-      inFlight.current ||
-      accountDeleted
-    )
-      return;
+    if (!user || inFlight.current || accountDeleted) return;
     inFlight.current = true;
     setDeleteError(null);
     if (usesApple) {
@@ -336,6 +347,37 @@ export default function AccountSection({
       inFlight.current = false;
     }
   };
+
+  useEffect(() => {
+    if (
+      !user ||
+      deviceCleanupStarted.current ||
+      !(requestPending || (deletion.pending && deletion.confirmed))
+    )
+      return;
+    deviceCleanupStarted.current = true;
+    // The request is durably accepted and cannot be undone. Clear this
+    // phone's private photos even if it closes before cloud cleanup finishes.
+    void Promise.allSettled([
+      discardDeletedAccountPushState(user.uid),
+      purgeFoodPhotos(user.uid),
+    ]).then((results) => {
+      if (
+        results.some((result) => result.status === "rejected") &&
+        activeUser.current?.uid === user.uid
+      ) {
+        setDeleteError(
+          "Deletion continues on the server. Some saved data on this device couldn't be cleared; you can clear it by removing the app."
+        );
+      }
+    });
+  }, [user, requestPending, deletion.pending, deletion.confirmed]);
+  useEffect(() => {
+    if (!deletion.completed || completedFlight.current || inFlight.current)
+      return;
+    completedFlight.current = true;
+    void finishDeletion();
+  });
 
   return (
     <>
@@ -423,7 +465,7 @@ export default function AccountSection({
             floor, in a dialog whose whole job is to make the user pause and
             choose deliberately. `destructive-tinted` for "Delete anyway"
             rather than filled red: it does not delete, it advances to the
-            typed-DELETE modal, which is precisely the gated-danger case
+            final confirmation, which is precisely the gated-danger case
             that variant documents. */}
         <div className="space-y-2">
           <Button
@@ -456,16 +498,18 @@ export default function AccountSection({
       </Dialog>
 
       <Dialog
-        open={showDeleteModal}
+        open={showDeleteModal || pending || deletion.completed}
         onClose={dismiss}
         closeOnBackdrop={!busy && !accountDeleted}
         closeOnEscape={!busy && !accountDeleted}
         title={
           accountDeleted
             ? "Account deleted"
-            : inReauthFlight || modalState.phase === "needs-reauth"
-              ? "Confirm it's you"
-              : "Delete account"
+            : pending
+              ? "Account deletion in progress"
+              : inReauthFlight || modalState.phase === "needs-reauth"
+                ? "Confirm it's you"
+                : "Delete account"
         }
         size="md"
         role="alertdialog"
@@ -480,6 +524,29 @@ export default function AccountSection({
             <Button fullWidth loading={finishing} onClick={finishDeletion}>
               {finishing ? "Signing out…" : "Try signing out again"}
             </Button>
+          ) : pending ? (
+            <div className="space-y-4">
+              <p role="status" className="text-sm text-muted-foreground">
+                Your deletion request has been saved. Cleanup continues on the
+                server, including automatic retries if a service is unavailable.
+                You can close the app. Your sign-in is removed after cleanup
+                completes.
+              </p>
+              {deletion.supportCode && (
+                <p className="text-sm text-muted-foreground">
+                  Support reference: {deletion.supportCode}
+                </p>
+              )}
+              <Button variant="outline" fullWidth onClick={safeSignOut}>
+                Sign out
+              </Button>
+              <a
+                href="mailto:support@troposfit.com"
+                className="min-h-11 flex items-center justify-center text-sm underline"
+              >
+                Contact support
+              </a>
+            </div>
           ) : modalState.phase === "confirm" ||
             modalState.phase === "deleting" ? (
             <form
@@ -491,29 +558,15 @@ export default function AccountSection({
             >
               <p className="text-sm text-muted-foreground">
                 This permanently deletes your account, workouts, meals, runs,
-                photos, and social activity. This cannot be undone. Export
-                anything you want to keep first.
+                photos, and public social content. Limited billing and safety
+                records are retained for their stated periods in our privacy
+                policy. This cannot be undone. Export anything you want to keep
+                first.
               </p>
-              <label className="block space-y-2 text-sm font-medium">
-                <span>Type DELETE to confirm:</span>
-                <input
-                  type="text"
-                  aria-label="Type DELETE to confirm account deletion"
-                  autoComplete="off"
-                  autoCapitalize="characters"
-                  autoCorrect="off"
-                  spellCheck={false}
-                  value={deleteConfirmText}
-                  onChange={(event) => setDeleteConfirmText(event.target.value)}
-                  placeholder="Type DELETE"
-                  disabled={busy}
-                  className="min-h-11 w-full px-3 py-2.5 rounded-xl bg-background border border-border text-base text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 disabled:opacity-50"
-                />
-              </label>
               {busy && (
                 <p role="status" className="text-sm text-muted-foreground">
                   Removing your data. Larger accounts can take several minutes.
-                  Keep the app open.
+                  You can close the app; cleanup continues on the server.
                 </p>
               )}
               <div className="flex gap-2">
@@ -529,7 +582,6 @@ export default function AccountSection({
                   type="submit"
                   variant="destructive"
                   className="flex-1"
-                  disabled={deleteConfirmText.trim() !== "DELETE"}
                   loading={busy}
                 >
                   {busy ? "Deleting…" : "Delete account"}
@@ -617,7 +669,8 @@ export default function AccountSection({
             <div role="status" className="space-y-4">
               <p className="text-sm text-muted-foreground">
                 Identity confirmed. Removing your data. Larger accounts can take
-                several minutes. Keep the app open.
+                several minutes. You can close the app; cleanup continues on the
+                server.
               </p>
               <div className="flex justify-center py-3">
                 <Spinner size="md" label="Deleting account" />

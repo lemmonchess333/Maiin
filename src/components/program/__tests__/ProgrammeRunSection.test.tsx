@@ -88,7 +88,7 @@ vi.mock("@/lib/auth", () => ({
 // which calls useProgram + Firestore onSnapshot. Tests render the
 // component without a Firestore environment, so we mock useClaimMap
 // to return an empty claim map. The hook surface is already covered
-// by src/hooks/__tests__/useClaimMap.test.ts.
+// by src/hooks/__tests__/useClaimMapForProgram.test.ts.
 // Mutable so a test can seed a claim against a planned runDay (Run9 ENG e:
 // startability must consult the claim-map, not just stored status).
 let mockClaimMap = new Map<

@@ -18,7 +18,9 @@ async function deletionCompleted(uid: string): Promise<boolean> {
   }
 }
 
-export async function deleteAccount(uid: string): Promise<void> {
+export async function deleteAccount(
+  uid: string
+): Promise<"completed" | "pending"> {
   const assertIdentity = () => {
     if (!uid || auth.currentUser?.uid !== uid)
       throw new Error("Identity mismatch");
@@ -26,7 +28,7 @@ export async function deleteAccount(uid: string): Promise<void> {
   assertIdentity();
   if (await deletionCompleted(uid)) {
     assertIdentity();
-    return;
+    return "completed";
   }
   assertIdentity();
   // Nine-minute backend timeout, plus time for the response to reach a phone.
@@ -34,10 +36,22 @@ export async function deleteAccount(uid: string): Promise<void> {
     timeout: 600_000,
   });
   try {
-    await request({});
+    const result = await request({});
+    assertIdentity();
+    const response = result.data as
+      | { ok?: boolean; status?: string }
+      | undefined;
+    if (response?.status === "pending") return "pending";
+    if (
+      response?.ok !== true ||
+      (response.status && response.status !== "completed")
+    ) {
+      throw new Error("Deletion wasn't confirmed. Please try again.");
+    }
   } catch (error) {
     assertIdentity();
     if (!(await deletionCompleted(uid))) throw error;
     assertIdentity();
   }
+  return "completed";
 }
