@@ -391,5 +391,30 @@ test.describe("analytics tab screenshots", () => {
     ).toBeGreaterThanOrEqual(svgBox!.x);
 
     await shootBoth(page, "analytics-rich");
+
+    /* The PRs tab's STEADY state, which nothing filmed either.
+       "PRs tab states its units" above signs up a fresh account and
+       seeds it one run and one workout of one exercise — and that
+       cold-start look is exactly what hid a record reading "Fastest 1K"
+       over a whole run's average pace, because with a single run the
+       label's claim and its value are the same number. Seeing this
+       account's records is what showed the two pace rows printing the
+       same figure AND the same date, one pool containing the other.
+
+       The assertion is a floor on richness, not a fixture transcript:
+       each lift record carries a "~68–84 kg 1RM" estimate line, so
+       three of them cannot come from the one-exercise account the
+       other test uses — which is what stops this quietly becoming a
+       second cold-start capture if the sign-in ever changes. */
+    await page.getByRole("radio", { name: /^PRs$/ }).click({ timeout: 10_000 });
+    await expect(page.getByText("Lift PRs")).toBeVisible({ timeout: 15_000 });
+    const oneRepMaxLines = page.getByText(/1RM$/);
+    expect(
+      await oneRepMaxLines.count(),
+      "fewer lift records than the rich account has — is this signed in " +
+        "as the shared seeded user?"
+    ).toBeGreaterThanOrEqual(3);
+
+    await shootBoth(page, "prs-rich");
   });
 });
