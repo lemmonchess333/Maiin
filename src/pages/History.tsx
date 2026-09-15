@@ -711,15 +711,29 @@ export default function History() {
         date: string;
         isNew: boolean;
       }> = [
+        /* The value carries its unit because the LABEL names a distance.
+           Everywhere else in the app a bare `paceMinSec` sits under a
+           label that names the metric ("Avg pace", "BEST", a split row),
+           so nothing has to be inferred — here the label says "5K", and a
+           bare "5:35" under it reads as a finish time two and a half
+           times the world record. The 1K row hid it for years because at
+           one kilometre the pace and the time are the same number. The
+           race-predictions card on this same page already does it this
+           way: the distance's finish TIME, then the pace beneath it with
+           its unit. */
         {
           label: "Fastest 1K",
-          value: best1k ? paceMinSec(best1k.avgPace, unit) : "--",
+          value: best1k
+            ? `${paceMinSec(best1k.avgPace, unit)} ${paceUnitLabel(unit)}`
+            : "--",
           date: best1k ? fmtDate(best1k.completedAt) : "",
           isNew: best1k ? best1k.completedAt >= sevenDaysAgo : false,
         },
         {
           label: "Fastest 5K",
-          value: best5k ? paceMinSec(best5k.avgPace, unit) : "--",
+          value: best5k
+            ? `${paceMinSec(best5k.avgPace, unit)} ${paceUnitLabel(unit)}`
+            : "--",
           date: best5k ? fmtDate(best5k.completedAt) : "",
           isNew: best5k ? best5k.completedAt >= sevenDaysAgo : false,
         },
