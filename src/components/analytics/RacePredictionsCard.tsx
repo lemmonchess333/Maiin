@@ -32,8 +32,10 @@ import EmptyState from "@/components/ui/EmptyState";
  * is rendered there and nowhere else. `/settings/training` holds the race
  * GOAL (which race, what date); setting one produces no benchmark, so a user
  * sent there could do everything the page offers and come back to the same
- * empty card. Pinned by `racePredictionsDestination.test.ts`, which resolves
- * the route through App.tsx rather than trusting this sentence.
+ * empty card. BOTH settings links here go there — the cold-start action and
+ * the "Update" link under the benchmark line, which edits the same field.
+ * Pinned by `racePredictionsDestination.test.ts`, which resolves the route
+ * through App.tsx rather than trusting this sentence.
  */
 
 const ROWS: { key: RaceDistanceKey; label: string; km: number }[] = [
@@ -119,7 +121,7 @@ export default function RacePredictionsCard() {
         {/* inline-block + negative-margin padding: keeps the footnote rhythm
             while clearing the 44px touch floor for the only tap target */}
         <Link
-          to="/settings/training"
+          to="/settings/run-plan"
           className="underline underline-offset-2 text-running-strong inline-block px-2 py-3 -mx-2 -my-3"
         >
           Update

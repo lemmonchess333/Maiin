@@ -27,12 +27,22 @@ const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(here, "../../../..");
 const read = (p: string) => readFileSync(resolve(repoRoot, p), "utf8");
 
-/** The `href` of the card's cold-start action. */
-function ctaHref(): string {
+/** EVERY settings link the card renders, cold-start action and warm-state
+ *  "Update" alike. Checking only the one that was reported would have left
+ *  the other pointing at the same wrong page — the card had two, and the
+ *  second surfaced only because an older test asserted the stale route. */
+function settingsHrefs(): string[] {
   const src = read("src/components/analytics/RacePredictionsCard.tsx");
-  const m = /action=\{\{[\s\S]*?href:\s*"([^"]+)"/.exec(src);
-  if (!m) throw new Error("no cold-start action href — retarget this test");
-  return m[1];
+  const code = src.replace(/\/\*[\s\S]*?\*\//g, "");
+  /* Not de-duplicated: the count is of link SITES, so two links that agree
+     still read as two. De-duplicating would let one of them drift away and
+     the other cover for it. */
+  const hrefs = [
+    ...code.matchAll(/(?:href|to):?=?\s*"(\/settings\/[^"]+)"/g),
+  ].map((m) => m[1]);
+  if (hrefs.length === 0)
+    throw new Error("no settings links — retarget this test");
+  return hrefs;
 }
 
 /** `path="/x"` → the lazy component name → its import path, from App.tsx. */
@@ -52,10 +62,15 @@ function pageModuleForRoute(route: string): string {
   return importMatch[1].replace(/^@\//, "src/") + ".tsx";
 }
 
-describe("race predictions cold-start CTA", () => {
-  it("lands on the page that renders RunFitnessSection", () => {
-    const page = pageModuleForRoute(ctaHref());
-    expect(read(page)).toContain("<RunFitnessSection");
+describe("race predictions settings links", () => {
+  it("both land on the page that renders RunFitnessSection", () => {
+    const hrefs = settingsHrefs();
+    // Two: the cold-start action and the benchmark line's "Update".
+    expect(hrefs).toHaveLength(2);
+    for (const href of hrefs)
+      expect(read(pageModuleForRoute(href)), href).toContain(
+        "<RunFitnessSection"
+      );
   });
 
   it("no OTHER settings page renders it, so the destination is unambiguous", () => {
@@ -75,6 +90,6 @@ describe("race predictions cold-start CTA", () => {
     // `pageModuleForRoute` throws on an unknown path, so a CTA pointing at
     // a route that does not exist fails loudly instead of silently.
     expect(() => pageModuleForRoute("/settings/does-not-exist")).toThrow();
-    expect(ctaHref()).toMatch(/^\/settings\//);
+    for (const href of settingsHrefs()) expect(href).toMatch(/^\/settings\//);
   });
 });

@@ -71,7 +71,7 @@ describe("RacePredictionsCard", () => {
     ).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Update" })).toHaveAttribute(
       "href",
-      "/settings/training"
+      "/settings/run-plan"
     );
   });
 
@@ -82,6 +82,6 @@ describe("RacePredictionsCard", () => {
     ).toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: /set a race time/i })
-    ).toHaveAttribute("href", "/settings/training");
+    ).toHaveAttribute("href", "/settings/run-plan");
   });
 });
