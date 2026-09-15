@@ -132,6 +132,35 @@ suite("revenueCatWebhook — emulator integration", () => {
     expect(after.hasUsedTrial).toBe(true);
   });
 
+  it("CANCELLATION keeps Pro to the expiry with auto-renew off; UNCANCELLATION turns it back on", async () => {
+    const e = event();
+    await post({ event: e });
+    expect((await profile()).subscriptionAutoRenew).toBe(true);
+
+    const cancel = event({
+      id: "evt_cancel",
+      type: "CANCELLATION",
+      event_timestamp_ms: e.event_timestamp_ms + 864e5,
+      expiration_at_ms: e.expiration_at_ms,
+    });
+    expect((await post({ event: cancel })).statusCode).toBe(200);
+    const afterCancel = await profile();
+    expect(afterCancel.subscriptionTier).toBe("pro");
+    expect(afterCancel.subscriptionTrialEndsAt).toBe(
+      new Date(e.expiration_at_ms).toISOString()
+    );
+    expect(afterCancel.subscriptionAutoRenew).toBe(false);
+
+    const uncancel = event({
+      id: "evt_uncancel",
+      type: "UNCANCELLATION",
+      event_timestamp_ms: e.event_timestamp_ms + 2 * 864e5,
+      expiration_at_ms: e.expiration_at_ms,
+    });
+    expect((await post({ event: uncancel })).statusCode).toBe(200);
+    expect((await profile()).subscriptionAutoRenew).toBe(true);
+  });
+
   it("a duplicate delivery is acknowledged and not re-applied; an older event does not roll back", async () => {
     const e = event();
     await post({ event: e });

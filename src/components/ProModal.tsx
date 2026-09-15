@@ -30,7 +30,9 @@
  *      can't diverge on loading / error / auth handling.
  */
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
+import { proStartPath } from "@/lib/proStart";
 import { THEME } from "@/lib/theme";
 import {
   DEFAULT_PLAN,
@@ -131,6 +133,7 @@ export default function ProModal({ onClose, featureKey, initialPlan }: Props) {
   );
   const { loading, error, startCheckout, requiresSignIn } = useProCheckout();
   const { profile } = useAuth();
+  const navigate = useNavigate();
   // Apple-localized prices on the RC build; hardcoded proPlans fallback
   // elsewhere (IAP slice 3, #1099) so the displayed price matches Apple's
   // sheet — a mismatch is an App Review flag.
@@ -180,6 +183,12 @@ export default function ProModal({ onClose, featureKey, initialPlan }: Props) {
       source: featureKey ? "feature_gate" : "unknown",
       featureKey,
       withTrial,
+      // Close the sheet and land on Food with the camera ready — the
+      // gate that opened this sheet is usually that camera.
+      onSuccess: () => {
+        onClose();
+        navigate(proStartPath({ withTrial }), { replace: true });
+      },
     });
   };
 

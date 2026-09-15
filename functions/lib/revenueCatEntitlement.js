@@ -105,6 +105,31 @@ function parseWebhookBody(body) {
   return { ok: true, event };
 }
 
+/** Event types with an expiry but no renewal to switch off. */
+const NON_RENEWING_EVENT_TYPES = Object.freeze([
+  "NON_RENEWING_PURCHASE",
+  "TEMPORARY_ENTITLEMENT_GRANT",
+]);
+
+/**
+ * Whether the live subscription will renew (or a trial convert) when
+ * the expiry arrives. CANCELLATION is auto-renew off — access runs to
+ * the expiry and stops — and UNCANCELLATION turns it back on; every
+ * other live, renewing event means "on". Null when there is nothing to
+ * renew: no live access, no expiry (lifetime), or a purchase that never
+ * renews. The reminder and Settings read this so a user who has already
+ * cancelled is never told their subscription "starts unless you cancel".
+ * @param {string} type
+ * @param {boolean} live
+ * @param {string | null} expiresAt
+ * @returns {boolean | null}
+ */
+function autoRenewForEvent(type, live, expiresAt) {
+  if (!live || expiresAt === null) return null;
+  if (NON_RENEWING_EVENT_TYPES.includes(type)) return null;
+  return type !== "CANCELLATION";
+}
+
 /**
  * The entitlement a webhook event implies, or null when the event is
  * not one to act on (TEST pings, anonymous ids, types outside the
@@ -137,6 +162,7 @@ function resolveEntitlementFromEvent(event, now = new Date()) {
     source: sourceForStore(event.store),
     expiresAt,
     trialEndsAt: inTrial ? expiresAt : null,
+    autoRenew: autoRenewForEvent(event.type, live, expiresAt),
     productId: typeof event.product_id === "string" ? event.product_id : null,
     usedTrial: periodType === "TRIAL",
     environment:
@@ -171,6 +197,12 @@ function resolveEntitlementFromSubscriber(subscriber, now = new Date()) {
 
   const periodType = String((sub && sub.period_type) || "").toLowerCase();
   const inTrial = live && periodType === "trial";
+  // `unsubscribe_detected_at` is set once the user has turned auto-renew
+  // off in the store and cleared if they turn it back on.
+  const autoRenew =
+    live && expiresAt !== null && sub
+      ? !sub.unsubscribe_detected_at
+      : null;
   // A trial that has already converted or lapsed still counts as used:
   // RevenueCat keeps the subscription row with its period type.
   const everTrial =
@@ -184,6 +216,7 @@ function resolveEntitlementFromSubscriber(subscriber, now = new Date()) {
     source: sourceForStore(sub && sub.store),
     expiresAt,
     trialEndsAt: inTrial ? expiresAt : null,
+    autoRenew,
     productId,
     usedTrial: everTrial,
     environment: null,
@@ -205,6 +238,7 @@ function profileMergeFor(resolved, decision, updatedAtSeconds) {
     subscriptionSource: decision.writeSource,
     subscriptionExpiresAt: resolved.expiresAt,
     subscriptionTrialEndsAt: resolved.trialEndsAt,
+    subscriptionAutoRenew: resolved.autoRenew,
     subscriptionUpdatedAt: updatedAtSeconds,
   };
   if (resolved.productId) merge.appleProductId = resolved.productId;
@@ -214,6 +248,7 @@ function profileMergeFor(resolved, decision, updatedAtSeconds) {
 
 module.exports = {
   PRO_ENTITLEMENT_ID,
+  autoRenewForEvent,
   ENTITLEMENT_EVENT_TYPES,
   isAnonymousAppUserId,
   sourceForStore,

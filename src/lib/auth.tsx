@@ -205,6 +205,19 @@ export interface UserProfileSubscription {
    *  converted or lapsed. Apple and Stripe send the user nothing before
    *  a trial converts; the day-5 reminder and the Home strip read this. */
   subscriptionTrialEndsAt?: string | null;
+  /** Whether the live subscription renews (or the billed trial converts)
+   *  at `subscriptionExpiresAt`. Server-only: false once the user has
+   *  turned auto-renew off in the store (RevenueCat CANCELLATION /
+   *  `unsubscribe_detected_at`, Stripe `cancel_at_period_end`), true
+   *  while it is on, null when there is nothing to renew or the writer
+   *  predates the field. Only an explicit false changes any copy — the
+   *  reminder and Settings must never tell a user who has cancelled that
+   *  the subscription "starts unless you cancel". */
+  subscriptionAutoRenew?: boolean | null;
+  /** App Store product id of the live subscription, written server-side
+   *  (RevenueCat webhook / sync, the Apple path). Names the plan for
+   *  the price shown on Settings → Subscription. */
+  appleProductId?: string | null;
   /** Sub1a P1 — lifetime trial-shopping protection.
    *  Set to true by `functions/lib/checkoutTrial.js` when a trial
    *  Stripe checkout session is created, in the same Firestore txn

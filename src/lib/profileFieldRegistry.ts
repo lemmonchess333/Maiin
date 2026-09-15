@@ -94,12 +94,7 @@ export const PROFILE_FIELD_REGISTRY: readonly ProfileFieldEntry[] = [
     sanitized: false,
     serverGuarded: true,
   },
-  {
-    field: "appleProductId",
-    sanitized: false,
-    serverGuarded: true,
-    undeclared: "Apple IAP product id, written by verifyApplePurchase",
-  },
+  { field: "appleProductId", sanitized: false, serverGuarded: true },
   { field: "athleteType", sanitized: true },
   { field: "audioCues", sanitized: true },
   // LEGACY: superseded by the share composer's saved default (#1416) —
@@ -175,6 +170,7 @@ export const PROFILE_FIELD_REGISTRY: readonly ProfileFieldEntry[] = [
   { field: "sex", sanitized: true },
   { field: "stripeCustomerId", sanitized: false, serverGuarded: true },
   { field: "stripeSubscriptionId", sanitized: false, serverGuarded: true },
+  { field: "subscriptionAutoRenew", sanitized: false, serverGuarded: true },
   { field: "subscriptionExpiresAt", sanitized: false, serverGuarded: true },
   { field: "subscriptionSource", sanitized: false, serverOnly: true },
   { field: "subscriptionTier", sanitized: false, serverGuarded: true },

@@ -44,6 +44,7 @@ const SERVER_MANAGED_PROFILE_FIELDS = Object.freeze([
   "appleProductId",
   "subscriptionExpiresAt",
   "subscriptionTrialEndsAt",
+  "subscriptionAutoRenew",
   "trialExpiresAt",
   "createdAt",
 ]);

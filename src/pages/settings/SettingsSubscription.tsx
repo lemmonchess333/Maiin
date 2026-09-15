@@ -1,29 +1,76 @@
 /**
  * SettingsSubscription — Subscription nested page (Set1.2).
  *
- * Compact landing for plan status + a deeplink to /upgrade. Once
- * Sub1-Sub2 land (Manage subscription / Restore purchases / Pro
- * feature inventory), they slot in here as additional rows without
- * touching the index.
+ * The plan row says what the account is actually on, in the terms the
+ * user will recognise from the App Store sheet:
+ *
+ *   - a billed trial: "Free trial · ends 20 Sept, then £3.99/mo" — the
+ *     subscription is live and converts unless cancelled, so the row
+ *     MANAGES it (Apple's subscriptions page on iOS, the Stripe portal
+ *     on web) and never sells one;
+ *   - Pro: "Renews 20 Oct" when the expiry is on the profile, else
+ *     "Full access" — manages likewise;
+ *   - either of those with auto-renew OFF: "Ends 20 Sept · won't renew"
+ *     and a Resubscribe action to the same store page — never "unless
+ *     you cancel" to someone who has;
+ *   - the legacy no-card free week: the countdown, to the offer page;
+ *   - free: the offer page, tagged as a Settings entry.
+ *
+ * Price comes from the plan the profile's product id names; when that
+ * is unknown (a dev override, a Stripe row before the product is
+ * mirrored) the line ends at the date rather than guessing a price.
  */
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Crown, ChevronRight } from "lucide-react";
 import { useSubscription } from "@/lib/subscription";
+import { useAuth } from "@/lib/auth";
 import { haptic } from "@/lib/haptic";
+import { toast } from "@/lib/toast";
+import { describePlanStatus } from "@/lib/subscriptionStatusCopy";
+import { manageSubscription, planForProductId } from "@/lib/purchaseProvider";
 import SettingsSection from "@/components/settings/SettingsSection";
 import AiUsageSection from "@/components/settings/AiUsageSection";
 import TrackSettingsSectionView from "@/components/settings/TrackSettingsSectionView";
 
 export default function SettingsSubscription() {
   const navigate = useNavigate();
-  const { isInTrial, trialDaysLeft, tier } = useSubscription();
+  const { user, profile } = useAuth();
+  const { isInTrial, trialDaysLeft, tier, trialKind, trialEndsAt, autoRenew } =
+    useSubscription();
+  const [manageLoading, setManageLoading] = useState(false);
 
-  const statusLabel =
-    tier === "pro"
-      ? "Pro — Full access"
-      : isInTrial
-        ? `Pro trial — ${trialDaysLeft} day${trialDaysLeft !== 1 ? "s" : ""} left`
-        : "Free — Upgrade for full access";
+  // One line per state, shared with the offer page's member card
+  // (subscriptionStatusCopy.ts) so the two cannot drift. A cancelled
+  // subscription still MANAGES from here — the store page is where
+  // auto-renew is turned back on — under a Resubscribe label.
+  const {
+    title,
+    detail: statusLabel,
+    action,
+  } = describePlanStatus({
+    tier,
+    isInTrial,
+    trialKind,
+    trialEndsAt,
+    trialDaysLeft,
+    autoRenew,
+    renewsAt: profile?.subscriptionExpiresAt,
+    planId: planForProductId(profile?.appleProductId),
+  });
+
+  const handleRow = async () => {
+    haptic();
+    if (action === "offer") {
+      navigate("/upgrade?from=settings");
+      return;
+    }
+    if (!user || manageLoading) return;
+    setManageLoading(true);
+    const result = await manageSubscription(user.uid);
+    if (!result.success && result.error) toast.error(result.error);
+    setManageLoading(false);
+  };
 
   return (
     <SettingsSection
@@ -33,26 +80,26 @@ export default function SettingsSubscription() {
     >
       <button
         type="button"
-        onClick={() => {
-          haptic();
-          navigate("/upgrade?from=settings");
-        }}
-        className="w-full flex items-center justify-between p-4 rounded-2xl bg-card motion-safe:active:scale-[0.99]"
+        onClick={() => void handleRow()}
+        disabled={manageLoading}
+        aria-busy={manageLoading}
+        className="w-full flex items-center justify-between p-4 rounded-2xl bg-card motion-safe:active:scale-[0.99] disabled:opacity-60"
       >
         <div className="flex items-center gap-3">
           <Crown className="size-5 text-primary" />
           <div className="text-left">
-            <p className="text-sm font-medium text-foreground">
-              {tier === "pro"
-                ? "Pro"
-                : isInTrial
-                  ? "Pro trial"
-                  : "Upgrade to Pro"}
-            </p>
+            <p className="text-sm font-medium text-foreground">{title}</p>
             <p className="text-xs text-muted-foreground">{statusLabel}</p>
           </div>
         </div>
-        <ChevronRight className="size-4 text-muted-foreground" />
+        <span className="flex items-center gap-1 text-xs font-medium text-muted-foreground">
+          {action === "manage"
+            ? "Manage"
+            : action === "resubscribe"
+              ? "Resubscribe"
+              : null}
+          <ChevronRight className="size-4" aria-hidden="true" />
+        </span>
       </button>
       {/*
         F1b lock pin #6 — the daily AI-usage pill. It was built, tested,

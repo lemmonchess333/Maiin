@@ -1186,7 +1186,10 @@ describe("moveRunDay (RUN-RESCHEDULE-01)", () => {
   it("retains the same-week occupancy guard for undated legacy rows", () => {
     const s = weekState();
     delete s.runDays[1].date;
-    expectHttps(() => apply(move(4), s, { weekSchedule: SCHEDULE }), "failed-precondition");
+    expectHttps(
+      () => apply(move(4), s, { weekSchedule: SCHEDULE }),
+      "failed-precondition"
+    );
   });
 
   it("is a no-op when the run is already on that day", () => {
@@ -2370,7 +2373,9 @@ describe("logExercise (reducer wiring — progression math pinned by cross-test)
     current.workouts[0].completed = true;
     current.workouts[0].completedWorkoutId = "programme-session-1";
     const before = structuredClone(current);
-    expect(() => apply(logCmd({ sessionId: "session-1" }), current)).toThrow("Correct it from History");
+    expect(() => apply(logCmd({ sessionId: "session-1" }), current)).toThrow(
+      "Correct it from History"
+    );
     expect(current).toEqual(before);
   });
 

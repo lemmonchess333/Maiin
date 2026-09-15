@@ -90,9 +90,25 @@ export interface SubscriptionInfo {
   trialKind: "billed" | "onboarding" | null;
   /** ISO end of whichever trial is running; null otherwise. */
   trialEndsAt: string | null;
+  /**
+   * Whether the live subscription renews (or the billed trial converts)
+   * when it reaches its expiry. False once the user has turned auto-renew
+   * off in the store; true while it is on; null when there is nothing to
+   * renew or the server has not said (a profile written before the field
+   * existed). Only an explicit false changes any copy — the surfaces
+   * that say "unless you cancel" read this so they never say it to
+   * someone who already has.
+   */
+  autoRenew: boolean | null;
 }
 
 const NO_TRIAL = { trialKind: null, trialEndsAt: null } as const;
+
+function autoRenewOf(profile: UserProfile): boolean | null {
+  return typeof profile.subscriptionAutoRenew === "boolean"
+    ? profile.subscriptionAutoRenew
+    : null;
+}
 
 function daysUntil(iso: string, now: Date): number {
   const ms = Date.parse(iso) - now.getTime();
@@ -109,6 +125,7 @@ export function getSubscriptionInfo(
       trialDaysLeft: 0,
       isPro: false,
       ...NO_TRIAL,
+      autoRenew: null,
     };
   }
 
@@ -141,6 +158,7 @@ export function getSubscriptionInfo(
           isPro: true,
           trialKind: "billed",
           trialEndsAt: new Date(trialMs).toISOString(),
+          autoRenew: autoRenewOf(profile),
         };
       }
       return {
@@ -149,6 +167,7 @@ export function getSubscriptionInfo(
         trialDaysLeft: 0,
         isPro: true,
         ...NO_TRIAL,
+        autoRenew: autoRenewOf(profile),
       };
     }
   }
@@ -171,6 +190,7 @@ export function getSubscriptionInfo(
         isPro: true, // During trial, user has full Pro access
         trialKind: "onboarding",
         trialEndsAt: expiresAt.toISOString(),
+        autoRenew: null,
       };
     }
   }
@@ -182,6 +202,7 @@ export function getSubscriptionInfo(
     trialDaysLeft: 0,
     isPro: false,
     ...NO_TRIAL,
+    autoRenew: null,
   };
 }
 
