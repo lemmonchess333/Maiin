@@ -7,7 +7,7 @@ on:
       - 'docs/exercise-art/**'
       - 'src/components/ExerciseFormFrames.tsx'
       - 'e2e/fixtures/form-art.tsx'
-      - 'e2e/form-art-review.capture.spec.ts'
+      - 'e2e/form-art-review.pw.ts'
       - 'playwright.form-art.config.ts'
       - 'scripts/export-form-art-review.py'
       - '.github/workflows/form-art-review.yml'
@@ -28,11 +28,11 @@ jobs:
         with:
           persist-credentials: false
       - name: Verify and package selected original frames
-        run: python3 scripts/export-form-art-review.py --output .art-review
+        run: python3 scripts/export-form-art-review.py --output art-review-output
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: form-art-sources
-          path: .art-review/
+          path: art-review-output/
           if-no-files-found: error
           retention-days: 14
 

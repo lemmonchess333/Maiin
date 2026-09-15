@@ -1,5 +1,9 @@
 import { expect, test, type Page } from "@playwright/test";
-import batch from "../docs/exercise-art/BATCH_REVIEW_MANIFEST.json";
+import { readFileSync } from "node:fs";
+
+// Playwright loads this in Node ESM, unlike Vite's JSON-transforming fixture.
+const batch: typeof import("../docs/exercise-art/BATCH_REVIEW_MANIFEST.json") =
+  JSON.parse(readFileSync(new URL("../docs/exercise-art/BATCH_REVIEW_MANIFEST.json", import.meta.url), "utf8"));
 
 const targets = new Set([
   "db-row", "db-shoulder-press", "incline-db-press",
