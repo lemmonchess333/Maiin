@@ -27,10 +27,13 @@ export async function verifySignupEmail(page: Page, email: string) {
           oobCodes?: { email: string; requestType: string; oobCode: string }[];
         };
         code =
-          body.oobCodes?.findLast(
-            (item) =>
-              item.email === email && item.requestType === "VERIFY_EMAIL"
-          )?.oobCode ?? "";
+          body.oobCodes
+            ?.slice()
+            .reverse()
+            .find(
+              (item) =>
+                item.email === email && item.requestType === "VERIFY_EMAIL"
+            )?.oobCode ?? "";
         return code;
       },
       {
