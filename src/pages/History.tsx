@@ -1641,7 +1641,7 @@ export default function History() {
                       }
                       text="Log meals to see your nutrition trends here"
                       to="/food"
-                      ctaLabel="Log Meal"
+                      ctaLabel="Log meal"
                       variant="nutrition"
                     />
                     {/* Weight tracking is independent of meal logging, so we
