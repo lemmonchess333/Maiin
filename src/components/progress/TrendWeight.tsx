@@ -13,6 +13,7 @@ import {
 import { formatWeightInUnit } from "@/lib/weightUnits";
 import { THEME } from "@/lib/theme";
 import { parseLocalDate } from "@/lib/dateHelpers";
+import { formatBinLabel } from "@/lib/chartGranularity";
 import {
   computeDataConfidence,
   T3_PROJECTION_MIN_POINTS,
@@ -224,10 +225,11 @@ export function TrendWeight() {
               dataKey="date"
               allowDuplicatedCategory={false}
               tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
-              tickFormatter={(v) => {
-                const d = new Date(v);
-                return `${d.getDate()}/${d.getMonth() + 1}`;
-              }}
+              /* Same UTC/local mix as the running chart had: `date` is
+                 a "YYYY-MM-DD" log key, `new Date(key)` is UTC midnight,
+                 `getDate()` is local. Every point west of UTC was
+                 labelled a day early. */
+              tickFormatter={(v) => formatBinLabel(String(v), "daily")}
               axisLine={false}
               tickLine={false}
             />
