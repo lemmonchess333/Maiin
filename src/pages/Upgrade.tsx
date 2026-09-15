@@ -56,7 +56,12 @@ import {
   getInlinePriceSummary,
   type PlanId,
 } from "@/lib/proPlans";
-import { isNativeIOS, manageSubscription } from "@/lib/purchaseProvider";
+import {
+  isNativeIOS,
+  manageSubscription,
+  planForProductId,
+} from "@/lib/purchaseProvider";
+import { describePlanStatus } from "@/lib/subscriptionStatusCopy";
 import { useProCheckout } from "@/hooks/useProCheckout";
 import TrialTimeline from "@/components/TrialTimeline";
 import { useProPlanPrices } from "@/hooks/useProPlanPrices";
@@ -73,6 +78,9 @@ import { framesForFeature } from "@/components/paywall/previewFrames";
 import { proStartPath } from "@/lib/proStart";
 
 type Beat = "offer" | "plans";
+
+/** How long a web checkout return waits for the webhook before saying so. */
+export const ACTIVATION_SLOW_MS = 20_000;
 
 /** `?from=` → analytics source. Anything unrecognised is the plain page. */
 function sourceFromParam(from: string | null): PaywallSource {
@@ -96,7 +104,15 @@ export default function Upgrade() {
   // this page shows the price. Client-side hint; the server is
   // authoritative (`checkoutTrial.js`).
   const withTrial = isCheckoutTrialEligible(profile);
-  const { isPro, isInTrial, trialDaysLeft, tier } = useSubscription();
+  const {
+    isPro,
+    isInTrial,
+    trialDaysLeft,
+    tier,
+    trialKind,
+    trialEndsAt,
+    autoRenew,
+  } = useSubscription();
   const [searchParams, setSearchParams] = useSearchParams();
   const from = searchParams.get("from");
   const source = sourceFromParam(from);
@@ -119,6 +135,23 @@ export default function Upgrade() {
     isPro && subscriptionSource && subscriptionSource !== currentPlatform
       ? subscriptionSource
       : null;
+
+  // One line per account state, shared with Settings → Subscription so
+  // the two cannot drift. A BILLED trial is a live subscription: this
+  // page must never sell it a second one (it did — `isInTrial` used to
+  // reopen the offer, and the trial card told them to "subscribe
+  // anytime" to keep what they had already bought).
+  const planStatus = describePlanStatus({
+    tier,
+    isInTrial,
+    trialKind,
+    trialEndsAt,
+    trialDaysLeft,
+    autoRenew,
+    renewsAt: profile?.subscriptionExpiresAt,
+    planId: planForProductId(profile?.appleProductId),
+  });
+  const billedTrial = planStatus.state === "billed_trial";
 
   const [beat, setBeat] = useState<Beat>("offer");
   const [selectedPlan, setSelectedPlan] = useState<PlanId>(DEFAULT_PLAN);
@@ -231,6 +264,31 @@ export default function Upgrade() {
     setManageLoading(false);
   };
 
+  // A web checkout returns here (`?checkout=success`) BEFORE the Stripe
+  // webhook has flipped the profile, so for a few seconds the page is
+  // looking at a free tier. It used to re-offer the plans just bought
+  // under the "Payment received" banner. Hold on "setting up" instead,
+  // and once the tier lands go where an in-app purchase goes: Food,
+  // camera ready (`proStartPath`). Captured once — the effect above
+  // strips the param after the first paint.
+  const [awaitingActivation] = useState(() => checkoutStatus === "success");
+  const [activationSlow, setActivationSlow] = useState(false);
+  useEffect(() => {
+    if (!awaitingActivation) return;
+    if (tier === "pro") {
+      navigate(proStartPath({ withTrial: trialKind === "billed" }), {
+        replace: true,
+      });
+      return;
+    }
+    const timer = window.setTimeout(
+      () => setActivationSlow(true),
+      ACTIVATION_SLOW_MS
+    );
+    return () => window.clearTimeout(timer);
+  }, [awaitingActivation, tier, trialKind, navigate]);
+  const activating = awaitingActivation && tier !== "pro" && !crossPlatformPro;
+
   // Visible status banner for checkout round-trip. Persists for the
   // duration of this render — the effect above strips the URL param
   // on next paint, but we capture the status here so the banner
@@ -259,7 +317,10 @@ export default function Upgrade() {
     }
   }, [checkoutStatus]);
 
-  const canBuy = (!isPro || isInTrial) && !crossPlatformPro;
+  // Nothing to buy while a subscription is live (paid or a billed
+  // trial), or while a checkout is still landing. The legacy onboarding
+  // free week is tier "free" and still buys.
+  const canBuy = tier !== "pro" && !crossPlatformPro && !awaitingActivation;
   const leaveLabel = fromOnboarding ? "Continue with Free" : "Not now";
 
   const footer = (
@@ -396,18 +457,18 @@ export default function Upgrade() {
         </div>
       )}
 
-      {/* Already-Pro state — same-platform Pro user, standard Manage flow */}
-      {!crossPlatformPro && tier === "pro" && !isInTrial && (
+      {/* Already-Pro state — same-platform Pro user, paid or on the
+          billed trial: the status line says which and when it renews,
+          ends or converts, and the one action manages it. */}
+      {!crossPlatformPro && tier === "pro" && (
         <div className="bg-card rounded-2xl border-l-4 border-primary p-4 space-y-3">
           <div className="flex items-center gap-2">
             <Crown className="size-5 text-primary" aria-hidden="true" />
             <p className="text-base font-semibold text-foreground">
-              You&apos;re on Pro
+              {billedTrial ? "You're on Pro — free trial" : "You're on Pro"}
             </p>
           </div>
-          <p className="text-sm text-muted-foreground">
-            Full access to all features.
-          </p>
+          <p className="text-sm text-muted-foreground">{planStatus.detail}</p>
           <ul className="space-y-1.5 text-sm text-foreground">
             {[
               "Unlimited AI photo food logging",
@@ -444,15 +505,43 @@ export default function Upgrade() {
             ) : (
               <>
                 <ExternalLink className="size-4" aria-hidden="true" />
-                <span>Manage subscription</span>
+                <span>
+                  {planStatus.action === "resubscribe"
+                    ? "Resubscribe"
+                    : "Manage subscription"}
+                </span>
               </>
             )}
           </button>
         </div>
       )}
 
-      {/* Trial state */}
-      {isInTrial && (
+      {/* A web checkout, landing. */}
+      {activating && (
+        <section className="text-center space-y-3 py-6">
+          <Spinner
+            size="md"
+            className="mx-auto"
+            role="presentation"
+            aria-hidden="true"
+          />
+          <p className="text-sm text-foreground" aria-live="polite">
+            {activationSlow
+              ? "Taking longer than usual. Pro switches on by itself once payment is confirmed — you can keep using the app."
+              : "Setting up Pro…"}
+          </p>
+          {activationSlow && (
+            <Button variant="ghost" onClick={leave}>
+              Keep using the app
+            </Button>
+          )}
+        </section>
+      )}
+
+      {/* The legacy onboarding free week — nothing billed, Pro pauses
+          when it lapses, so the offer below still sells. A billed trial
+          never reaches here: it is a live subscription (the card above). */}
+      {isInTrial && !billedTrial && (
         <div className="p-4 rounded-2xl bg-primary/5 border border-primary/10 space-y-2">
           <div className="flex items-center gap-2">
             <Sparkles className="size-4 text-primary" aria-hidden="true" />
