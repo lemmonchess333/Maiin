@@ -46,6 +46,23 @@ const SPACE_IDS = Object.freeze([
   "paris-marathon",
   "berlin-marathon",
   "dublin-marathon",
+  // Marathon coverage expansion (2026-09-15)
+  "richmond-marathon",
+  "eryri-marathon",
+  "windermere-marathon",
+  "shakespeare-marathon",
+  "portsmouth-marathon",
+  "wales-marathon",
+  "tokyo-marathon",
+  "sydney-marathon",
+  "valencia-marathon",
+  "amsterdam-marathon",
+  "rotterdam-marathon",
+  "rome-marathon",
+  "barcelona-marathon",
+  "seville-marathon",
+  "cape-town-marathon",
+  "nice-cannes-marathon",
 ]);
 
 module.exports = { SPACE_IDS };
