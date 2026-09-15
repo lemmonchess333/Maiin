@@ -377,20 +377,17 @@ describe("deleteAccount — failure semantics", () => {
     expect(authCalled).toBe(false);
   });
 
-  it("DOES call auth.deleteUser even when Storage cleanup throws", async () => {
-    // Storage cleanup is best-effort: a missing bucket / transient
-    // outage should not block the auth-user delete. The handler
-    // wraps each prefix in try/catch — this test pins that.
+  it("keeps Auth and records retryable failure until Storage cleanup succeeds", async () => {
     const stubs = makeStubs();
-    stubs.storageBucket.deleteFiles = async ({ prefix }) => {
-      stubs.calls.push(`storage.deleteFiles(${prefix}).throw`);
-      throw new Error("storage 503");
-    };
-
+    const originalDeleteFiles = stubs.storageBucket.deleteFiles;
+    stubs.storageBucket.deleteFiles = async () => { throw new Error("storage 503"); };
+    await expect(deleteAccount({ ...stubs, uid: TEST_UID })).rejects.toThrow("Storage cleanup is incomplete");
+    expect(stubs.calls.some((call) => call.startsWith("auth.deleteUser"))).toBe(false);
+    expect(stubs.ledgerStore.doc).toMatchObject({ status: "failed_cleanup", failedStage: "storage" });
+    stubs.storageBucket.deleteFiles = originalDeleteFiles;
     await deleteAccount({ ...stubs, uid: TEST_UID });
-
-    const authCalled = stubs.calls.some((c) => c.startsWith("auth.deleteUser"));
-    expect(authCalled).toBe(true);
+    expect(stubs.calls.filter((call) => call.startsWith("auth.deleteUser"))).toHaveLength(1);
+    expect(stubs.ledgerStore.doc.status).toBe("completed");
   });
 
   it("continues to next storage prefix when one prefix throws", async () => {
@@ -404,7 +401,7 @@ describe("deleteAccount — failure semantics", () => {
       }
     };
 
-    await deleteAccount({ ...stubs, uid: TEST_UID });
+    await expect(deleteAccount({ ...stubs, uid: TEST_UID })).rejects.toThrow("Storage cleanup is incomplete");
 
     const prefixesCalled = stubs.calls.filter((c) =>
       c.startsWith("storage.deleteFiles")
@@ -416,32 +413,19 @@ describe("deleteAccount — failure semantics", () => {
     expect(prefixesCalled[3]).toContain("space-photos/");
   });
 
-  it("swallows a missing public-profile doc delete (best-effort)", async () => {
-    // The public profile mirror may legitimately not exist (user
-    // never finished onboarding, or already cleaned up). The
-    // handler uses `.catch(() => {})` to keep the flow going.
-    const stubs = makeStubs();
-    const origDoc = stubs.firestore.doc;
-    stubs.firestore.doc = function (path) {
-      const ret = origDoc.call(this, path);
-      if (path.includes("/public/profile")) {
-        return {
-          delete: async () => {
-            stubs.calls.push(`firestore.doc(${path}).delete`);
-            throw new Error("not found");
-          },
-        };
-      }
-      return ret;
-    };
+  it.each(["users/user-abc/public/profile", "scanUsage/user-abc"])(
+    "keeps Auth when deletion of %s fails", async (failedPath) => {
+      const stubs = makeStubs();
+      const originalDoc = stubs.firestore.doc;
+      stubs.firestore.doc = function(path) {
+        if (path === failedPath) return { delete: async () => { throw new Error("unavailable"); } };
+        return originalDoc.call(this, path);
+      };
+      await expect(deleteAccount({ ...stubs, uid: TEST_UID })).rejects.toThrow("unavailable");
+      expect(stubs.calls.some((call) => call.startsWith("auth.deleteUser"))).toBe(false);
+      expect(stubs.ledgerStore.doc.status).toBe("failed_cleanup");
+    });
 
-    // Should NOT throw — the missing doc is absorbed.
-    await expect(
-      deleteAccount({ ...stubs, uid: TEST_UID })
-    ).resolves.toBeUndefined();
-    const authCalled = stubs.calls.some((c) => c.startsWith("auth.deleteUser"));
-    expect(authCalled).toBe(true);
-  });
 });
 
 describe("deleteAccount — coverage of cleanup targets", () => {

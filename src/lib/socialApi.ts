@@ -902,9 +902,4 @@ export async function getBlockedUsers(uid: string): Promise<string[]> {
  * which stranded users in an inconsistent state if any Firestore
  * cleanup step failed afterwards.
  */
-export async function deleteAccount(uid: string): Promise<void> {
-  const authedUid = getAuthUid();
-  if (uid !== authedUid) throw new Error("Identity mismatch");
-  const deleteMyAccount = httpsCallable(getFunctions(), "deleteMyAccount");
-  await deleteMyAccount({});
-}
+export { deleteAccount } from "./accountDeletionClient";

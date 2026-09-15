@@ -483,6 +483,23 @@ function AppRoutes() {
           <Route path="/privacy" element={<PrivacyPolicy />} />
           <Route path="/terms" element={<TermsOfService />} />
           <Route path="/support" element={<Support />} />
+          <Route
+            path="/settings/account"
+            element={
+              <RouteErrorBoundary>
+                <main
+                  key={user.uid}
+                  className="min-h-dvh bg-background text-foreground px-4 py-6 max-w-lg mx-auto"
+                  style={{
+                    paddingTop: "max(1.5rem, env(safe-area-inset-top))",
+                    paddingBottom: "max(1.5rem, env(safe-area-inset-bottom))",
+                  }}
+                >
+                  <SettingsAccount duringSetup />
+                </main>
+              </RouteErrorBoundary>
+            }
+          />
           <Route path="*" element={<Onboarding />} />
         </Routes>
       </Suspense>

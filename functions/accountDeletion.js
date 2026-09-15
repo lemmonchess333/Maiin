@@ -196,11 +196,10 @@ async function deleteRefsInBatches(firestore, refs) {
  *   1. User subcollections (users/{uid}/*) — batch delete each.
  *   2. Top-level user-keyed subcollections — batch delete each.
  *   3. Activities authored by uid — batch delete the matching set.
- *   4. Public profile mirror (users/{uid}/public/profile) —
- *      best-effort delete (missing doc swallowed).
+ *   4. Public profile mirror and scan quota document (deletes are idempotent).
  *   5. The user document itself.
- *   6. Storage files under each prefix — per-prefix try/catch so
- *      a missing folder / storage outage doesn't block (7).
+ *   6. Storage files under each prefix — try every prefix, but leave Auth
+ *      intact if any cleanup fails so the user can retry.
  *   7. The Auth user.
  *
  * `logger` is injected so production passes Cloud Logging's
@@ -509,40 +508,41 @@ async function deleteAccount({
       }
     }
 
-    // 4. Public profile projection — `.catch(() => {})` because a
-    // missing doc (e.g. user never finished onboarding) shouldn't
-    // block the rest of the flow.
-    await firestore
-      .doc(`users/${uid}/public/profile`)
-      .delete()
-      .catch(() => {});
+    // Missing Firestore documents already delete successfully. Swallowing
+    // errors here would also hide permission errors or an unavailable service.
+    await firestore.doc(`users/${uid}/public/profile`).delete();
 
     // 4b. Top-level collections keyed BY uid rather than nested under it,
     // so the users/{uid} sweep above cannot reach them. `scanUsage/{uid}`
     // holds the AI food-scan quota counter (see functions/lib/aiScanQuota
     // .js) and was orphaning on every deletion. `rateLimits` is already
-    // covered by its own range sweep. Same `.catch(() => {})` reasoning as
-    // the profile delete: a user who never scanned has no doc.
-    await firestore
-      .doc(`scanUsage/${uid}`)
-      .delete()
-      .catch(() => {});
+    // covered by its own range sweep.
+    await firestore.doc(`scanUsage/${uid}`).delete();
 
     // 5. The user document itself
     stage = "user_document";
     await firestore.collection("users").doc(uid).delete();
 
-    // 6. Storage files. Per-prefix try/catch — a missing folder or
-    // a transient Storage outage shouldn't block step 7.
+    // 6. Attempt all prefixes, including when one fails. An empty prefix
+    // succeeds naturally; a storage outage must never strand remaining files
+    // behind a deleted Auth account. The frozen ledger makes retries safe.
+    stage = "storage";
+    let storageCleanupFailed = false;
     for (const prefix of storagePrefixesFor(uid)) {
       try {
         await storageBucket.deleteFiles({ prefix });
       } catch (e) {
+        storageCleanupFailed = true;
         logger.warn(
           `deleteAccount: storage cleanup for ${prefix} failed`,
           e.message
         );
       }
+    }
+    if (storageCleanupFailed) {
+      const error = new Error("Storage cleanup is incomplete. Retry account deletion.");
+      error.code = "storage-cleanup-incomplete";
+      throw error;
     }
 
     // Split-brain guard: if a retry took over our lease (generation bumped),
@@ -613,6 +613,9 @@ async function deleteAccount({
         toStatus: ledger.STATUS.FAILED_CLEANUP,
         expectedGeneration: generation,
         extraFields: {
+          // This executor has stopped. Release its lease immediately so a
+          // retry isn't blocked for nine minutes by a finished invocation.
+          leaseExpiresAt: now,
           failedStage: stage,
           lastErrorCode: (err && err.code) || "unknown",
           lastErrorMessage: String((err && err.message) || "").slice(0, 500),

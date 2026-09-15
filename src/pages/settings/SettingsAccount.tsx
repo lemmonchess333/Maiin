@@ -4,7 +4,11 @@ import SettingsSection from "@/components/settings/SettingsSection";
 import AccountSection from "@/components/settings/AccountSection";
 import SecuritySection from "@/components/settings/SecuritySection";
 
-export default function SettingsAccount() {
+export default function SettingsAccount({
+  duringSetup = false,
+}: {
+  duringSetup?: boolean;
+}) {
   const { user, signOut } = useAuth();
 
   return (
@@ -12,6 +16,8 @@ export default function SettingsAccount() {
       title="Account"
       subtitle="Sign-in, data export, delete account"
       section="account"
+      backTo={duringSetup ? "/" : undefined}
+      backLabel={duringSetup ? "Setup" : undefined}
     >
       <SecuritySection inline user={user} />
       {/*

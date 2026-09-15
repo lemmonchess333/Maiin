@@ -325,7 +325,7 @@ export async function unregisterDeviceToken(uid: string): Promise<void> {
   if (!uid || !isCurrentUser(uid)) return;
   const generation = tokenLifecycleGeneration;
 
-  if (skipServerReleaseForDeletedAccount.delete(uid)) {
+  if (skipServerReleaseForDeletedAccount.has(uid)) {
     // Account deletion already removed the canonical record server-side.
     return;
   }
@@ -394,13 +394,13 @@ export async function discardDeletedAccountPushState(
   uid: string
 ): Promise<void> {
   if (!uid) return;
+  skipServerReleaseForDeletedAccount.add(uid);
   const bindings = readStoredDeviceBindings();
   delete bindings[uid];
   writeStoredDeviceBindings(bindings);
   // The deletion executor has removed the server claim and its tombstone will
   // reject future callables. Mark the immediate Auth sign-out to skip a
   // fallback claim/release attempt against that tombstone.
-  skipServerReleaseForDeletedAccount.add(uid);
   try {
     if (await isPushSupported()) {
       await deleteToken(getMessaging(app));

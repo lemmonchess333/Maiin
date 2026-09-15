@@ -23,12 +23,14 @@ import {
   cleanup,
   fireEvent,
   waitFor,
+  within,
+  act,
 } from "@testing-library/react";
 
-vi.mock("@/lib/socialApi", () => ({
+vi.mock("@/lib/accountDeletionClient", () => ({
   deleteAccount: vi.fn(),
 }));
-import { deleteAccount } from "@/lib/socialApi";
+import { deleteAccount } from "@/lib/accountDeletionClient";
 
 vi.mock("@/lib/reauth", () => ({
   reauthWithPassword: vi.fn(),
@@ -61,6 +63,18 @@ vi.mock("@/lib/auth", () => ({
 }));
 
 import AccountSection from "../AccountSection";
+import {
+  reauthWithPassword,
+  reauthWithGoogle,
+  reauthWithApple,
+} from "@/lib/reauth";
+import { toast } from "sonner";
+import { purgeFoodPhotos } from "@/lib/foodPhotoStore";
+import { discardDeletedAccountPushState } from "@/lib/pushNotifications";
+vi.mock("@/lib/foodPhotoStore", () => ({ purgeFoodPhotos: vi.fn() }));
+vi.mock("@/lib/pushNotifications", () => ({
+  discardDeletedAccountPushState: vi.fn(),
+}));
 
 function makeUser(overrides: Record<string, unknown> = {}) {
   return {
@@ -76,7 +90,17 @@ function renderSection() {
 }
 
 beforeEach(() => {
+  vi.clearAllMocks();
+  vi.mocked(deleteAccount).mockReset().mockResolvedValue(undefined);
+  vi.mocked(reauthWithPassword).mockReset().mockResolvedValue(undefined);
+  vi.mocked(reauthWithGoogle).mockReset().mockResolvedValue(undefined);
+  vi.mocked(reauthWithApple).mockReset().mockResolvedValue(undefined);
+  vi.mocked(purgeFoodPhotos).mockReset().mockResolvedValue(undefined);
+  vi.mocked(discardDeletedAccountPushState)
+    .mockReset()
+    .mockResolvedValue(undefined);
   useAuthMock.mockReset();
+  useAuthMock.mockReturnValue({ user: makeUser(), profile: {} });
 });
 
 afterEach(cleanup);
@@ -95,7 +119,7 @@ describe("AccountSection — P0b Apple subscription warning", () => {
     renderSection();
 
     fireEvent.click(screen.getByText(/Data & account/i));
-    fireEvent.click(screen.getByRole("button", { name: /Delete account/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^Delete account$/i }));
 
     expect(screen.getByPlaceholderText("Type DELETE")).toBeInTheDocument();
     expect(
@@ -112,7 +136,7 @@ describe("AccountSection — P0b Apple subscription warning", () => {
     renderSection();
 
     fireEvent.click(screen.getByText(/Data & account/i));
-    fireEvent.click(screen.getByRole("button", { name: /Delete account/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^Delete account$/i }));
 
     // Apple warning shown first.
     expect(
@@ -146,7 +170,7 @@ describe("AccountSection — P0b Apple subscription warning", () => {
     renderSection();
 
     fireEvent.click(screen.getByText(/Data & account/i));
-    fireEvent.click(screen.getByRole("button", { name: /Delete account/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^Delete account$/i }));
     fireEvent.click(
       screen.getByRole("button", { name: /Open subscription settings/i })
     );
@@ -174,7 +198,7 @@ describe("AccountSection — P0b Apple subscription warning", () => {
 
     // Open the AccordionSection so the Delete button is reachable.
     fireEvent.click(screen.getByText(/Data & account/i));
-    fireEvent.click(screen.getByRole("button", { name: /Delete account/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^Delete account$/i }));
 
     // Apple-cancel warning surface is visible.
     expect(
@@ -213,7 +237,7 @@ describe("AccountSection — P0b Apple subscription warning", () => {
 
     renderSection();
     fireEvent.click(screen.getByText(/Data & account/i));
-    fireEvent.click(screen.getByRole("button", { name: /Delete account/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^Delete account$/i }));
 
     fireEvent.change(screen.getByPlaceholderText("Type DELETE"), {
       target: { value: "DELETE" },
@@ -221,7 +245,7 @@ describe("AccountSection — P0b Apple subscription warning", () => {
     // Confirm button inside the modal shares the "Delete account" name
     // with the opener — it is the last one rendered.
     const confirmButtons = screen.getAllByRole("button", {
-      name: /Delete account/i,
+      name: /^Delete account$/i,
     });
     fireEvent.click(confirmButtons[confirmButtons.length - 1]);
 
@@ -229,5 +253,222 @@ describe("AccountSection — P0b Apple subscription warning", () => {
     await waitFor(() =>
       expect(screen.getByText(/Confirm it's you/i)).toBeInTheDocument()
     );
+  });
+});
+
+const recentAuthError = Object.assign(new Error("Reauthentication required"), {
+  code: "functions/failed-precondition",
+  details: { errorCode: "requires-recent-auth" },
+});
+
+function openConfirm(
+  user = makeUser(),
+  signOut = vi.fn().mockResolvedValue(undefined)
+) {
+  const view = render(<AccountSection inline user={user} signOut={signOut} />);
+  fireEvent.click(screen.getByRole("button", { name: "Delete account" }));
+  return { ...view, signOut };
+}
+function submitDeletion() {
+  fireEvent.change(screen.getByPlaceholderText("Type DELETE"), {
+    target: { value: "DELETE" },
+  });
+  fireEvent.click(
+    within(
+      screen.getByRole("alertdialog", { name: "Delete account" })
+    ).getByRole("button", { name: "Delete account" })
+  );
+}
+
+describe("AccountSection deletion recovery", () => {
+  it("reopens with an enabled confirmation after a cleanup failure and cancel", async () => {
+    vi.mocked(deleteAccount).mockRejectedValueOnce(
+      new Error("internal diagnostics")
+    );
+    const { signOut } = openConfirm();
+    submitDeletion();
+    await screen.findByRole("alert");
+    expect(screen.getByRole("alert")).not.toHaveTextContent(
+      "internal diagnostics"
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    await waitFor(() =>
+      expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument()
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Delete account" }));
+    submitDeletion();
+    await waitFor(() => expect(signOut).toHaveBeenCalledOnce());
+    expect(deleteAccount).toHaveBeenCalledTimes(2);
+  });
+
+  it("cannot dismiss or start another deletion while cleanup runs", async () => {
+    let resolve!: () => void;
+    vi.mocked(deleteAccount).mockReturnValue(
+      new Promise<void>((done) => {
+        resolve = done;
+      })
+    );
+    openConfirm();
+    submitDeletion();
+    fireEvent.keyDown(document, { key: "Escape" });
+    expect(screen.getByRole("alertdialog")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Cancel" })).toBeDisabled();
+    fireEvent.submit(
+      screen.getByPlaceholderText("Type DELETE").closest("form")!
+    );
+    expect(deleteAccount).toHaveBeenCalledOnce();
+    await act(async () => {
+      resolve();
+    });
+  });
+
+  it("still signs out after successful server deletion if device cleanup fails", async () => {
+    vi.mocked(purgeFoodPhotos).mockRejectedValueOnce(
+      new Error("device unavailable")
+    );
+    const { signOut } = openConfirm();
+    submitDeletion();
+    await waitFor(() => expect(signOut).toHaveBeenCalledOnce());
+    expect(discardDeletedAccountPushState).toHaveBeenCalledWith("user-abc");
+    expect(toast.error).toHaveBeenCalledWith(
+      expect.stringContaining("Account deleted"),
+      expect.anything()
+    );
+    expect(deleteAccount).toHaveBeenCalledOnce();
+  });
+
+  it("retries sign-out without repeating deletion", async () => {
+    const signOut = vi
+      .fn()
+      .mockRejectedValueOnce(new Error("sign-out failed"))
+      .mockResolvedValue(undefined);
+    openConfirm(makeUser(), signOut);
+    submitDeletion();
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Try signing out again" })
+    );
+    await waitFor(() => expect(signOut).toHaveBeenCalledTimes(2));
+    expect(deleteAccount).toHaveBeenCalledOnce();
+  });
+
+  it("does not sign out a replacement account when an old request completes", async () => {
+    let resolve!: () => void;
+    vi.mocked(deleteAccount).mockReturnValue(
+      new Promise<void>((done) => {
+        resolve = done;
+      })
+    );
+    const { rerender, signOut } = openConfirm();
+    submitDeletion();
+    rerender(
+      <AccountSection
+        inline
+        user={makeUser({ uid: "new-user" })}
+        signOut={signOut}
+      />
+    );
+    await act(async () => {
+      resolve();
+    });
+    expect(signOut).not.toHaveBeenCalled();
+    expect(purgeFoodPhotos).not.toHaveBeenCalled();
+  });
+
+  it("offers sign-in recovery after three failed password attempts", async () => {
+    vi.mocked(deleteAccount).mockRejectedValueOnce(recentAuthError);
+    vi.mocked(reauthWithPassword).mockRejectedValue(
+      Object.assign(new Error("wrong password"), {
+        code: "auth/invalid-credential",
+      })
+    );
+    openConfirm();
+    submitDeletion();
+    fireEvent.change(await screen.findByLabelText("Current password"), {
+      target: { value: "wrong" },
+    });
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      fireEvent.click(
+        screen.getByRole("button", { name: "Confirm with password" })
+      );
+      await waitFor(() =>
+        expect(reauthWithPassword).toHaveBeenCalledTimes(attempt)
+      );
+      if (attempt < 3)
+        await screen.findByRole("button", { name: "Confirm with password" });
+    }
+    await waitFor(() =>
+      expect(toast.error).toHaveBeenCalledWith(
+        expect.stringContaining("Couldn't verify your identity"),
+        expect.anything()
+      )
+    );
+    expect(deleteAccount).toHaveBeenCalledOnce();
+  });
+
+  it("a cancelled provider sheet does not consume failed attempts", async () => {
+    vi.mocked(deleteAccount).mockRejectedValueOnce(recentAuthError);
+    vi.mocked(reauthWithGoogle).mockRejectedValue(
+      Object.assign(new Error("Cancelled"), { code: "ERR_CANCELED" })
+    );
+    openConfirm(makeUser({ providerData: [{ providerId: "google.com" }] }));
+    submitDeletion();
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      fireEvent.click(
+        await screen.findByRole("button", { name: "Confirm with Google" })
+      );
+      await waitFor(() =>
+        expect(reauthWithGoogle).toHaveBeenCalledTimes(attempt)
+      );
+    }
+    await screen.findByRole("button", { name: "Confirm with Google" });
+    expect(toast.error).not.toHaveBeenCalled();
+  });
+
+  it("requires Apple revocation even for a fresh session linked to another provider", async () => {
+    openConfirm(
+      makeUser({
+        providerData: [{ providerId: "password" }, { providerId: "apple.com" }],
+      })
+    );
+    submitDeletion();
+    expect(deleteAccount).not.toHaveBeenCalled();
+    expect(screen.queryByLabelText("Current password")).not.toBeInTheDocument();
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Confirm with Apple" })
+    );
+    await waitFor(() => expect(deleteAccount).toHaveBeenCalledOnce());
+    expect(reauthWithApple).toHaveBeenCalledWith(
+      expect.objectContaining({ uid: "user-abc" }),
+      { forDeletion: true }
+    );
+    expect(vi.mocked(reauthWithApple).mock.invocationCallOrder[0]).toBeLessThan(
+      vi.mocked(deleteAccount).mock.invocationCallOrder[0]
+    );
+  });
+
+  it("does not delete if Apple revocation fails", async () => {
+    vi.mocked(reauthWithApple).mockRejectedValueOnce(
+      new Error("revoke failed")
+    );
+    openConfirm(makeUser({ providerData: [{ providerId: "apple.com" }] }));
+    submitDeletion();
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Confirm with Apple" })
+    );
+    await screen.findByRole("alert");
+    expect(deleteAccount).not.toHaveBeenCalled();
+  });
+
+  it("warns RevenueCat iOS subscribers even without a legacy Apple transaction ID", () => {
+    useAuthMock.mockReturnValue({
+      user: makeUser(),
+      profile: { subscriptionSource: "ios_iap" },
+    });
+    openConfirm();
+    expect(
+      screen.getByRole("alertdialog", {
+        name: "Cancel your App Store subscription first",
+      })
+    ).toBeInTheDocument();
   });
 });

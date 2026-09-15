@@ -736,7 +736,13 @@ export default function Onboarding() {
     >
       <header className="shrink-0 py-3 space-y-3">
         <div className="flex justify-between items-center text-sm">
-          <span className="font-semibold">Tropos</span>
+          <Button
+            variant="ghost"
+            aria-label="Account settings"
+            onClick={() => navigate("/settings/account")}
+          >
+            Account
+          </Button>
           <span className="text-muted-foreground">
             {chapters[chapter]} ·{" "}
             <span className="font-mono tabular-nums">

@@ -8,36 +8,49 @@
  * token until it expires: without the refresh the rules would keep seeing
  * `email_verified: false` for up to an hour after the link was tapped.
  * `reload()` mutates the User in place and fires no auth-state event, so
- * the tick is what re-renders the surface that asked.
+ * the confirmed snapshot is what re-renders the surface that asked.
  *
- * Offline, the reload fails and the current state stands; the token refresh
- * is attempted only once the account reads verified.
+ * A failed reload or token refresh rejects the check. Never announce success
+ * or enable a public write while the server may still see an unverified token.
  */
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { User } from "firebase/auth";
 import { needsEmailVerification } from "@/lib/emailVerificationGate";
 
 export function useEmailVerificationGate(user: User | null | undefined) {
-  const [, setTick] = useState(0);
-  const needsVerification = needsEmailVerification(user);
+  const currentUser = useRef(user);
+  const [check, setCheck] = useState<{ user: User; verified: boolean } | null>(
+    null
+  );
+  useEffect(() => {
+    currentUser.current = user;
+    return () => {
+      currentUser.current = null;
+    };
+  }, [user]);
+  // reload() mutates User in place, including when the subsequent token
+  // refresh fails. Keep that mutation from prematurely opening the gate.
+  const emailVerified =
+    !!user?.emailVerified && (check?.user !== user || check.verified);
+  const needsVerification = needsEmailVerification(
+    user ? { providerData: user.providerData, emailVerified } : user
+  );
 
   const recheck = useCallback(async (): Promise<boolean> => {
-    if (!user) return false;
-    try {
-      await user.reload();
-    } catch {
-      /* offline — fall through to the state the SDK already has */
-    }
+    if (!user || currentUser.current !== user) return false;
+    setCheck({ user, verified: false });
+    await user.reload();
     if (user.emailVerified) {
-      try {
-        await user.getIdToken(true);
-      } catch {
-        /* the next request refreshes it; the rules read the token, not this */
-      }
+      await user.getIdToken(true);
     }
-    setTick((t) => t + 1);
+    if (currentUser.current !== user) {
+      throw new Error(
+        "Account changed. Check verification for your current account."
+      );
+    }
+    setCheck({ user, verified: user.emailVerified });
     return user.emailVerified;
   }, [user]);
 
-  return { needsVerification, recheck };
+  return { needsVerification, emailVerified, recheck };
 }

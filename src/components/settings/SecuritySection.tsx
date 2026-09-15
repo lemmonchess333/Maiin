@@ -7,8 +7,10 @@ import { Button } from "@/components/ui/Button";
 import { toast } from "@/lib/toast";
 import { logger } from "@/lib/logger";
 import { friendlyAuthError } from "@/lib/authErrors";
+import { useEmailVerificationGate } from "@/hooks/useEmailVerificationGate";
 import {
   sendVerificationEmail,
+  resendVerificationErrorMessage,
   changePassword,
   requestEmailChange,
 } from "@/lib/accountSecurity";
@@ -51,8 +53,8 @@ export default function SecuritySection({
   const [formError, setFormError] = useState("");
   const [busy, setBusy] = useState(false);
   const [sendingVerify, setSendingVerify] = useState(false);
-  // Bumped after user.reload() so emailVerified re-reads fresh.
-  const [, setRefreshTick] = useState(0);
+  const [checkingVerify, setCheckingVerify] = useState(false);
+  const { emailVerified, recheck } = useEmailVerificationGate(user);
 
   if (!user) return null;
 
@@ -77,27 +79,25 @@ export default function SecuritySection({
       toast.success("Verification email sent — check your inbox");
     } catch (err) {
       logger.error("[SecuritySection] resend verification failed", err);
-      // Callable errors (rate limit etc.) carry a user-facing message.
-      const msg = err instanceof Error ? err.message : "";
-      toast.error(
-        msg.includes("Too many")
-          ? msg
-          : "Couldn't send the email. Try again in a moment."
-      );
+      toast.error(resendVerificationErrorMessage(err));
     } finally {
       setSendingVerify(false);
     }
   };
 
   const handleVerifiedRefresh = async () => {
+    setCheckingVerify(true);
     try {
-      await user.reload();
-    } catch {
-      /* offline — fall through to the current state */
+      if (await recheck()) toast.success("Email verified");
+      else toast.error("Not verified yet — tap the link in the email first");
+    } catch (err) {
+      logger.error("[SecuritySection] verification check failed", err);
+      toast.error(
+        "Couldn't check verification. Check your connection and try again."
+      );
+    } finally {
+      setCheckingVerify(false);
     }
-    setRefreshTick((t) => t + 1);
-    if (user.emailVerified) toast.success("Email verified");
-    else toast.error("Not verified yet — tap the link in the email first");
   };
 
   const handleChangePassword = async () => {
@@ -163,7 +163,7 @@ export default function SecuritySection({
                 <p className="text-xs text-muted-foreground">Email</p>
                 <p className="text-sm text-foreground truncate">{user.email}</p>
               </div>
-              {user.emailVerified ? (
+              {emailVerified ? (
                 <span className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-success-strong">
                   <CheckCircle2 className="size-3.5" aria-hidden="true" />
                   Verified
@@ -175,26 +175,32 @@ export default function SecuritySection({
                 </span>
               )}
             </div>
-            {!user.emailVerified && (
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="flex-1"
-                  loading={sendingVerify}
-                  onClick={handleResendVerification}
-                >
-                  Resend email
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="flex-1"
-                  onClick={handleVerifiedRefresh}
-                >
-                  I've verified
-                </Button>
-              </div>
+            {!emailVerified && (
+              <>
+                <p className="text-sm text-muted-foreground">
+                  Verify your email to post or comment. You can keep logging
+                  workouts and meals, and manage or delete your account while
+                  unverified.
+                </p>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    className="flex-1"
+                    loading={sendingVerify}
+                    onClick={handleResendVerification}
+                  >
+                    Resend email
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    className="flex-1"
+                    loading={checkingVerify}
+                    onClick={handleVerifiedRefresh}
+                  >
+                    I've verified
+                  </Button>
+                </div>
+              </>
             )}
           </div>
         )}

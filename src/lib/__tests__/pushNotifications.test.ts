@@ -232,3 +232,16 @@ describe("refreshDeviceTokenForCurrentUser (consent-gated re-register)", () => {
     expect(h.claimFn).not.toHaveBeenCalled();
   });
 });
+
+
+describe("confirmed-deletion sign-out", () => {
+  it("keeps repeated sign-out attempts from releasing a tombstoned server account", async () => {
+    const { discardDeletedAccountPushState, unregisterDeviceToken } = await load();
+    await discardDeletedAccountPushState("u1");
+    await unregisterDeviceToken("u1");
+    await unregisterDeviceToken("u1");
+    expect(h.releaseFn).not.toHaveBeenCalled();
+    expect(h.claimFn).not.toHaveBeenCalled();
+  });
+
+});

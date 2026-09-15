@@ -26,6 +26,8 @@ interface SettingsSectionProps {
   title: string;
   /** Optional one-line description rendered under the title. */
   subtitle?: string;
+  backTo?: string;
+  backLabel?: string;
   /**
    * Analytics id. When given, emits `settings_section_viewed` once, the
    * first time the content crosses into view.
@@ -54,6 +56,8 @@ interface SettingsSectionProps {
 export default function SettingsSection({
   title,
   subtitle,
+  backTo = "/settings",
+  backLabel = "Settings",
   section,
   children,
 }: SettingsSectionProps) {
@@ -67,13 +71,13 @@ export default function SettingsSection({
         type="button"
         onClick={() => {
           haptic();
-          navigate("/settings");
+          navigate(backTo);
         }}
-        aria-label="Back to settings"
+        aria-label={`Back to ${backLabel.toLowerCase()}`}
         className="inline-flex items-center gap-1 -ml-2 p-2 min-h-[44px] rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground motion-safe:active:scale-95"
       >
         <ChevronLeft className="size-5" />
-        <span>Settings</span>
+        <span>{backLabel}</span>
       </button>
 
       <header className="space-y-1">

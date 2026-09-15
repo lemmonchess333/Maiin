@@ -27,7 +27,10 @@
 import {
   GoogleAuthProvider,
   OAuthProvider,
+  getAuth,
+  reauthenticateWithCredential,
   type AuthCredential,
+  type User,
 } from "firebase/auth";
 
 /** Native Google sign-in → Firebase credential for `signInWithCredential`. */
@@ -52,4 +55,62 @@ export async function getAppleCredentialNative(): Promise<AuthCredential> {
     idToken: result.credential?.idToken ?? undefined,
     rawNonce: result.credential?.nonce ?? undefined,
   });
+}
+
+/** Apple requires token revocation when deleting an account. Keep the native
+ * SDK signed out (skipNativeAuth), reauthenticate the EXISTING JS user first,
+ * then use Firebase's documented revocation endpoint with the native code.
+ * The plugin's revokeAccessToken uses Auth.auth().currentUser internally and
+ * never completes when skipNativeAuth leaves that native user unset.
+ * Request shape matches Firebase iOS RevokeTokenRequest (CODE, no redirect
+ * URI for native Apple authorization). Never log or persist either token.
+ * https://docs.cloud.google.com/identity-platform/docs/reference/rest/v2/accounts/revokeToken
+ */
+export async function reauthAndRevokeAppleNative(user: User): Promise<void> {
+  const { FirebaseAuthentication } =
+    await import("@capacitor-firebase/authentication");
+  const result = await FirebaseAuthentication.signInWithApple();
+  const code = result.credential?.authorizationCode;
+  const idToken = result.credential?.idToken;
+  const rawNonce = result.credential?.nonce;
+  if (!code || !idToken || !rawNonce) {
+    throw new Error("Apple confirmation was incomplete. Please try again.");
+  }
+  await reauthenticateWithCredential(
+    user,
+    new OAuthProvider("apple.com").credential({ idToken, rawNonce })
+  );
+  const firebaseToken = await user.getIdToken(true);
+  const auth = getAuth();
+  if (auth.currentUser?.uid !== user.uid) throw new Error("auth/user-mismatch");
+  const { App } = await import("@capacitor/app");
+  const { id: bundleId } = await App.getInfo();
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 30_000);
+  try {
+    const response = await fetch(
+      `https://identitytoolkit.googleapis.com/v2/accounts:revokeToken?key=${encodeURIComponent(auth.app.options.apiKey ?? "")}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Ios-Bundle-Identifier": bundleId,
+        },
+        body: JSON.stringify({
+          providerId: "apple.com",
+          tokenType: "CODE",
+          token: code,
+          idToken: firebaseToken,
+          ...(auth.tenantId ? { tenantId: auth.tenantId } : {}),
+        }),
+        signal: controller.signal,
+      }
+    );
+    if (!response.ok)
+      throw new Error(
+        "Couldn't disconnect Sign in with Apple. Please try again."
+      );
+  } finally {
+    clearTimeout(timeout);
+  }
 }

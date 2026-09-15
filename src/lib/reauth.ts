@@ -1,106 +1,69 @@
-/**
- * Reauth helpers used by AccountSection's inline reauth flow.
- *
- * Background: the server-side recent-auth gate (R1A Chunk 2) rejects
- * `deleteMyAccount` calls if the user's `auth_time` JWT claim is too
- * old. Pre-Chunk 4, the client surfaced this as a toast telling the
- * user to manually sign out and back in. Chunk 4 instead reauthenticates
- * inline against the user's existing provider, force-refreshes the
- * JWT so the server sees the new `auth_time`, and auto-retries the
- * deletion call.
- *
- * Three flows mirror the three sign-in surfaces in auth.tsx:
- *   - Email/Password: reauthenticateWithCredential
- *   - Google:         reauthenticateWithPopup (with redirect fallback)
- *   - Apple:          reauthenticateWithPopup (with redirect fallback)
- *
- * CRITICAL: every helper calls `user.getIdToken(true)` after the
- * reauth succeeds. Without this, the JWT in-flight still carries the
- * old `auth_time`, so the auto-retry deletion hits the recent-auth
- * gate AGAIN — silent failure. The force-refresh ensures the next
- * callable reads the fresh token with the new auth_time.
- *
- * Errors:
- *   - Wrong password / cancelled popup / network drop → throw with
- *     Firebase Auth's standard code so the caller can map via
- *     friendlyAuthError.
- *   - Popup blocked by browser / in-app browser → catch the specific
- *     code and retry with reauthenticateWithRedirect. The redirect
- *     navigates away from the page entirely; the caller should treat
- *     this as a one-way operation (caller will lose modal state).
- *   - user-token-expired → not recoverable inline; rethrow so the
- *     caller can fall back to the manual sign-out flow.
+/** Reauthenticate the existing JS Firebase user, then refresh auth_time.
+ * Native OAuth uses the same credential seam as sign-in; it never replaces
+ * the current user. Popup failures remain retryable in the open dialog:
+ * redirecting away must not be mistaken for completed reauthentication.
  */
-
+import { Capacitor } from "@capacitor/core";
 import {
   EmailAuthProvider,
   GoogleAuthProvider,
   OAuthProvider,
+  getAuth,
   reauthenticateWithCredential,
   reauthenticateWithPopup,
-  reauthenticateWithRedirect,
+  revokeAccessToken,
   type User,
 } from "firebase/auth";
 
-/**
- * Email/Password reauth. No popup; runs against the current user's
- * email and the password the user just typed into the reauth view.
- */
 export async function reauthWithPassword(
   user: User,
   password: string
 ): Promise<void> {
-  if (!user.email) {
-    throw new Error("auth/missing-email");
-  }
-  const credential = EmailAuthProvider.credential(user.email, password);
-  await reauthenticateWithCredential(user, credential);
-  /* Force JWT refresh so the next callable's recent-auth gate
-     sees the new auth_time claim. See module docstring. */
+  if (!user.email) throw new Error("auth/missing-email");
+  await reauthenticateWithCredential(
+    user,
+    EmailAuthProvider.credential(user.email, password)
+  );
   await user.getIdToken(true);
 }
 
-/**
- * Google reauth via OAuth popup; falls back to redirect if the
- * environment doesn't support popups (in-app browsers, some
- * Lockdown Mode configs).
- */
 export async function reauthWithGoogle(user: User): Promise<void> {
-  const provider = new GoogleAuthProvider();
-  try {
-    await reauthenticateWithPopup(user, provider);
-  } catch (err) {
-    const code = (err as { code?: string })?.code;
-    if (code === "auth/operation-not-supported-in-this-environment") {
-      /* Popup unavailable — navigate to OAuth provider and back.
-         User loses modal state; on return the page reloads and
-         the deletion flow has to be restarted manually. */
-      await reauthenticateWithRedirect(user, provider);
-      return;
-    }
-    throw err;
+  if (Capacitor.isNativePlatform()) {
+    const { getGoogleCredentialNative } = await import("./nativeAuth");
+    await reauthenticateWithCredential(user, await getGoogleCredentialNative());
+  } else {
+    await reauthenticateWithPopup(user, new GoogleAuthProvider());
   }
   await user.getIdToken(true);
 }
 
-/**
- * Apple reauth via OAuth popup. Same shape as Google but with
- * the `email` + `name` scopes that the original signInWithApple
- * declared (matches auth.tsx:519-520).
- */
-export async function reauthWithApple(user: User): Promise<void> {
-  const provider = new OAuthProvider("apple.com");
-  provider.addScope("email");
-  provider.addScope("name");
-  try {
-    await reauthenticateWithPopup(user, provider);
-  } catch (err) {
-    const code = (err as { code?: string })?.code;
-    if (code === "auth/operation-not-supported-in-this-environment") {
-      await reauthenticateWithRedirect(user, provider);
+export async function reauthWithApple(
+  user: User,
+  options: { forDeletion?: boolean } = {}
+): Promise<void> {
+  if (Capacitor.isNativePlatform()) {
+    const native = await import("./nativeAuth");
+    if (options.forDeletion) {
+      await native.reauthAndRevokeAppleNative(user);
       return;
     }
-    throw err;
+    await reauthenticateWithCredential(
+      user,
+      await native.getAppleCredentialNative()
+    );
+  } else {
+    const provider = new OAuthProvider("apple.com");
+    provider.addScope("email");
+    provider.addScope("name");
+    const result = await reauthenticateWithPopup(user, provider);
+    await user.getIdToken(true);
+    if (options.forDeletion) {
+      const token = OAuthProvider.credentialFromResult(result)?.accessToken;
+      if (!token)
+        throw new Error("Apple confirmation was incomplete. Please try again.");
+      await revokeAccessToken(getAuth(), token);
+    }
+    return;
   }
   await user.getIdToken(true);
 }

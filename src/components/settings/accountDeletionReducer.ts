@@ -43,6 +43,7 @@ export type ModalAction =
   | { type: "REQUIRE_REAUTH" }
   | { type: "REAUTH_START"; provider: SupportedReauthProviderId }
   | { type: "REAUTH_FAIL" }
+  | { type: "REAUTH_CANCEL" }
   | { type: "REAUTH_SUCCESS" }
   | { type: "CANCEL_REAUTH" };
 
@@ -74,6 +75,9 @@ export function modalReducer(
       const next = Math.min(state.failedAttempts + 1, 2) as 0 | 1 | 2;
       return { phase: "needs-reauth", failedAttempts: next };
     }
+    case "REAUTH_CANCEL":
+      if (state.phase !== "reauthenticating") return state;
+      return { phase: "needs-reauth", failedAttempts: state.failedAttempts };
     case "REAUTH_SUCCESS":
       if (state.phase !== "reauthenticating") return state;
       return { phase: "retrying" };

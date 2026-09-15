@@ -60,4 +60,23 @@ describe("VerifyEmailNotice", () => {
     await waitFor(() => expect(toastError).toHaveBeenCalled());
     expect(toastSuccess).not.toHaveBeenCalled();
   });
+  it("shows a retryable error if verification refresh fails", async () => {
+    render(
+      <VerifyEmailNotice
+        onRecheck={async () => {
+          throw new Error("offline");
+        }}
+      />
+    );
+    fireEvent.click(screen.getByRole("button", { name: "I have verified" }));
+    await waitFor(() =>
+      expect(toastError).toHaveBeenCalledWith(
+        expect.stringContaining("Couldn't check verification")
+      )
+    );
+    expect(toastSuccess).not.toHaveBeenCalled();
+    expect(
+      screen.getByRole("button", { name: "I have verified" })
+    ).toBeEnabled();
+  });
 });

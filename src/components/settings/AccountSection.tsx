@@ -1,4 +1,4 @@
-import { useReducer, useState } from "react";
+import { useEffect, useReducer, useRef, useState } from "react";
 import { haptic } from "@/lib/haptic";
 import { writeString } from "@/lib/localStore";
 import { Download, LogOut, Trash2 } from "lucide-react";
@@ -6,8 +6,7 @@ import DataExportSection from "./DataExportSection";
 import TrackSettingsSectionView from "./TrackSettingsSectionView";
 import { toast } from "@/lib/toast";
 import { logger } from "@/lib/logger";
-import {} from "@/lib/export";
-import { deleteAccount } from "@/lib/socialApi";
+import { deleteAccount } from "@/lib/accountDeletionClient";
 import { discardDeletedAccountPushState } from "@/lib/pushNotifications";
 import { purgeFoodPhotos } from "@/lib/foodPhotoStore";
 import {
@@ -92,7 +91,9 @@ export default function AccountSection({
   // Apple has no admin-cancellation API, we surface a pre-deletion
   // warning + deep-link so the user knows billing continues until
   // they cancel via App Store settings.
-  const hasAppleSubscription = !!profile?.appleOriginalTransactionId;
+  const hasAppleSubscription =
+    !!profile?.appleOriginalTransactionId ||
+    profile?.subscriptionSource === "ios_iap";
   const [showAppleWarning, setShowAppleWarning] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
@@ -103,174 +104,196 @@ export default function AccountSection({
     initialModalState
   );
 
+  const inFlight = useRef(false);
+  const activeUser = useRef(user);
+  useEffect(() => {
+    activeUser.current = user;
+    return () => {
+      activeUser.current = null;
+    };
+  }, [user]);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [accountDeleted, setAccountDeleted] = useState(false);
+  const [finishing, setFinishing] = useState(false);
+  const linkedProviders = user ? listSupportedProviders(user) : [];
+  // Even a fresh session must obtain Apple's revocation credential. Linked
+  // Apple accounts use Apple here so another provider cannot skip revocation.
+  const usesApple = linkedProviders.includes("apple.com");
+  const providers = usesApple ? ["apple.com" as const] : linkedProviders;
+  const displayedEmail = user ? displayEmail(user) : null;
+  const inReauthFlight = modalState.phase === "reauthenticating";
+  const busy =
+    inReauthFlight ||
+    modalState.phase === "deleting" ||
+    modalState.phase === "retrying" ||
+    finishing;
+  const showPasswordInput = providers.includes("password");
+
   const closeAndReset = () => {
     setShowDeleteModal(false);
     setDeleteConfirmText("");
     setPassword("");
     setReauthError(null);
-    /* Reducer reset happens implicitly: the modal element is
-       unmounted, so the reducer state is collected. Next OPEN
-       starts fresh at 'confirm'. */
+    setDeleteError(null);
+    dispatchModal({ type: "CANCEL_REAUTH" });
+  };
+  const dismiss = () => {
+    if (!inFlight.current && !accountDeleted) closeAndReset();
+  };
+  const openDeletion = () => {
+    dispatchModal({ type: "CANCEL_REAUTH" });
+    setDeleteError(null);
+    setShowDeleteModal(true);
+  };
+  const safeSignOut = async () => {
+    if (user && activeUser.current?.uid !== user.uid) return;
+    try {
+      await signOut();
+    } catch (error) {
+      logger.error("AccountSection sign-out failed", error);
+      toast.error("Couldn't sign out. Please try again.");
+    }
   };
 
-  /* ── Deletion call ─────────────────────────────────────────────
-     Used by both the initial Delete tap and the auto-retry after a
-     successful reauth. Pulls out the common error handling. */
+  // Server deletion and device cleanup have different outcomes. A device
+  // error must never turn a confirmed server deletion into a failure/retry
+  // of the destructive call. Always attempt sign-out and await its result.
+  const finishDeletion = async () => {
+    if (!user || activeUser.current?.uid !== user.uid) return;
+    setAccountDeleted(true);
+    setFinishing(true);
+    const cleanup = await Promise.allSettled([
+      discardDeletedAccountPushState(user.uid),
+      purgeFoodPhotos(user.uid),
+    ]);
+    cleanup.forEach((result) => {
+      if (result.status === "rejected") {
+        logger.error("Deleted-account device cleanup failed", result.reason);
+      }
+    });
+    if (activeUser.current?.uid !== user.uid) return;
+    writeString("tropos.account_deleted", "1");
+    if (cleanup.some((result) => result.status === "rejected")) {
+      toast.error(
+        "Account deleted. Some saved data on this device couldn't be cleared.",
+        {
+          duration: 10000,
+        }
+      );
+    } else {
+      toast.success("Account deleted. Signing you out…", { duration: 4000 });
+    }
+    try {
+      await signOut();
+      closeAndReset();
+    } catch (error) {
+      logger.error("Deleted-account sign-out failed", error);
+      setDeleteError(
+        "Your account has been deleted. Sign-out didn't finish. Please try again."
+      );
+    } finally {
+      setFinishing(false);
+    }
+  };
+
   const runDeleteAccount = async (isRetry: boolean): Promise<void> => {
-    if (!user) return;
+    if (!user || activeUser.current?.uid !== user.uid) return;
     try {
       await deleteAccount(user.uid);
-      /* Server has deleted the Auth user. Firebase client SDK
-         won't know until the next token refresh (which can be
-         minutes). Sign out programmatically so client state
-         immediately matches server state — user lands on login. */
-      toast.success("Account deleted. Signing you out…", { duration: 4000 });
-      // Read-once flag for the Login screen's persistent confirmation —
-      // the toast alone dies in the sign-out transition (deletion QA
-      // 2026-07-27: user re-attempted login on the deleted account to
-      // verify, and got a red error as their only "confirmation"). Without
-      // storage the toast remains the only confirmation.
-      writeString("tropos.account_deleted", "1");
-      // The executor already removed the server claim + wrote the tombstone
-      // (which rejects future callables). Skip the tombstone-rejected fallback
-      // release; just drop the local token.
-      await discardDeletedAccountPushState(user.uid);
-      /* Food9: meal photos live on the DEVICE, so the server-side
-         executor cannot reach them. This erases the copies on THIS device.
-         Photos on another device the user never reopens stay there —
-         a real narrowing of erasure coverage versus the Storage prefix
-         sweep it replaces, stated in the lock row rather than papered
-         over. */
-      await purgeFoodPhotos(user.uid);
-      signOut();
     } catch (err) {
+      if (activeUser.current?.uid !== user.uid) return;
       const fe = err as {
         code?: string;
         details?: { reason?: string; errorCode?: string };
       } | null;
-      const msg =
-        err instanceof Error ? err.message : "Failed to delete account";
-
+      const msg = err instanceof Error ? err.message : "";
       if (
-        fe?.code === "functions/failed-precondition" &&
-        fe?.details?.reason === "executor-disabled"
+        fe?.details?.reason === "executor-disabled" ||
+        msg.includes("executor-disabled")
       ) {
         toast.error(
           "Account deletion is temporarily paused. Please try again later."
         );
         closeAndReset();
       } else if (
-        // Server recent-auth gate (accountDeletionAuth.js): HttpsError
-        // details carry errorCode "requires-recent-auth" and the message
-        // reads "Recent reauthentication required: ...". The
-        // "requires-recent-login" token below is the Firebase CLIENT-SDK
-        // spelling from the pre-W1f client-side delete path — the server
-        // gate never sends it, so matching only that string dumped the
-        // raw server message in a toast and the reauth modal never
-        // opened (found live 2026-07-27, test account b6768357).
         fe?.details?.errorCode === "requires-recent-auth" ||
         msg.includes("Recent reauthentication required") ||
         msg.includes("requires-recent-login")
       ) {
-        /* The reason Chunk 4 exists. If we got here on a retry
-           (isRetry === true), the reauth succeeded but the
-           recent-auth gate STILL rejected — that's the JWT-not-
-           refreshed footgun the reauth.ts module guards against.
-           If we hit it on retry, something's wrong upstream; fall
-           through to the strikeout flow rather than looping. */
         if (isRetry) {
-          logger.error(
-            "deleteAccount: recent-auth still required after reauth"
-          );
           toast.error("Sign in again to delete your account.", {
             action: {
               label: "Sign out",
               onClick: () => {
-                signOut();
+                void safeSignOut();
               },
             },
             duration: 10000,
           });
           closeAndReset();
         } else {
-          /* First-pass: switch the modal to reauth mode. */
           dispatchModal({ type: "REQUIRE_REAUTH" });
         }
-      } else if (msg.includes("executor-disabled")) {
-        toast.error(
-          "Account deletion is temporarily paused. Please try again later."
-        );
-        closeAndReset();
-      } else if (
-        msg.includes("no user record") ||
-        msg.includes("auth/user-not-found")
-      ) {
-        toast.success("Account already deleted. Signing you out…", {
-          duration: 4000,
-        });
-        writeString("tropos.account_deleted", "1");
-        await discardDeletedAccountPushState(user.uid);
-        /* Food9: meal photos live on the DEVICE, so the server-side
-           executor cannot reach them. This erases the copies on THIS device.
-           Photos on another device the user never reopens stay there —
-           a real narrowing of erasure coverage versus the Storage prefix
-           sweep it replaces, stated in the lock row rather than papered
-           over. */
-        await purgeFoodPhotos(user.uid);
-        signOut();
+      } else if (fe?.code === "auth/user-not-found") {
+        await finishDeletion();
       } else {
-        toast.error(msg);
-        closeAndReset();
+        logger.error("Account deletion failed", err);
+        const message =
+          fe?.details?.reason === "deletion-in-progress"
+            ? "Deletion is already running. Keep the app open and try again in a few minutes."
+            : fe?.details?.errorCode === "token-revoked" ||
+                fe?.code === "functions/unauthenticated"
+              ? "Your session has expired. Sign out and back in, then retry account deletion."
+              : fe?.code === "functions/deadline-exceeded" ||
+                  fe?.code === "functions/unavailable"
+                ? "We couldn't confirm deletion. Check your connection and retry. If cleanup is still running, it will continue on the server."
+                : "Account cleanup couldn't finish. Please retry account deletion. Your sign-in is kept until cleanup succeeds.";
+        setDeleteError(message);
+        dispatchModal({ type: "CANCEL_REAUTH" });
       }
+      return;
     }
+    await finishDeletion();
   };
 
-  /* ── Reauth dispatcher ─────────────────────────────────────────
-     Provider-aware. Returns to needs-reauth on failure with the
-     attempt counter bumped; on success transitions to retrying
-     and fires runDeleteAccount(true). */
   const handleReauth = async (
     provider: SupportedReauthProviderId
   ): Promise<void> => {
-    if (!user) return;
+    if (!user || inFlight.current || modalState.phase !== "needs-reauth")
+      return;
+    inFlight.current = true;
+    const failedAttempts = modalState.failedAttempts;
     setReauthError(null);
     dispatchModal({ type: "REAUTH_START", provider });
     try {
-      if (provider === "password") {
-        await reauthWithPassword(user, password);
-      } else if (provider === "google.com") {
-        await reauthWithGoogle(user);
-      } else if (provider === "apple.com") {
-        await reauthWithApple(user);
-      }
+      if (provider === "password") await reauthWithPassword(user, password);
+      else if (provider === "google.com") await reauthWithGoogle(user);
+      else await reauthWithApple(user, { forDeletion: true });
+      if (activeUser.current?.uid !== user.uid) return;
+      setPassword("");
       dispatchModal({ type: "REAUTH_SUCCESS" });
       await runDeleteAccount(true);
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Reauth failed";
-      /* User cancelling the OAuth popup is silent — no error
-         toast, just return them to the provider picker. */
+      if (activeUser.current?.uid !== user.uid) return;
+      const code = String((err as { code?: string } | null)?.code ?? "");
+      const msg = err instanceof Error ? err.message : "";
       if (
-        msg.includes("popup-closed-by-user") ||
-        msg.includes("cancelled-popup-request")
+        /popup-closed-by-user|cancelled-popup-request|canceled|cancelled|1001/i.test(
+          code + " " + msg
+        )
       ) {
-        dispatchModal({ type: "REAUTH_FAIL" });
+        dispatchModal({ type: "REAUTH_CANCEL" });
         return;
       }
       logger.error("AccountSection reauth failed", err);
-      const next =
-        modalState.phase === "reauthenticating"
-          ? Math.min(modalState.failedAttempts + 1, 3)
-          : 1;
-      if (next >= 3) {
-        /* 3-strike fallback — don't let users loop. Surface the
-           manual sign-out toast and close the modal. */
+      if (failedAttempts + 1 >= 3) {
         toast.error(
           "Couldn't verify your identity. Sign out and back in, then try again.",
           {
             action: {
               label: "Sign out",
               onClick: () => {
-                signOut();
+                void safeSignOut();
               },
             },
             duration: 10000,
@@ -279,26 +302,40 @@ export default function AccountSection({
         closeAndReset();
         return;
       }
-      setReauthError(friendlyAuthError(msg));
+      const friendly = friendlyAuthError(code || msg);
+      setReauthError(
+        friendly === (code || msg)
+          ? "Couldn't confirm your identity. Use the same sign-in account and try again."
+          : friendly
+      );
       dispatchModal({ type: "REAUTH_FAIL" });
+    } finally {
+      inFlight.current = false;
     }
   };
 
-  /* ── Initial deletion submit (from the confirm view) ───────────*/
   const handleSubmitDelete = async () => {
-    if (!user || deleteConfirmText !== "DELETE") return;
+    if (
+      !user ||
+      deleteConfirmText.trim() !== "DELETE" ||
+      inFlight.current ||
+      accountDeleted
+    )
+      return;
+    inFlight.current = true;
+    setDeleteError(null);
+    if (usesApple) {
+      dispatchModal({ type: "REQUIRE_REAUTH" });
+      inFlight.current = false;
+      return;
+    }
     dispatchModal({ type: "DELETE_START" });
-    await runDeleteAccount(false);
+    try {
+      await runDeleteAccount(false);
+    } finally {
+      inFlight.current = false;
+    }
   };
-
-  const providers = user ? listSupportedProviders(user) : [];
-  const displayedEmail = user ? displayEmail(user) : null;
-  const inReauthFlight = modalState.phase === "reauthenticating";
-  const showPasswordInput =
-    modalState.phase === "needs-reauth" ||
-    modalState.phase === "reauthenticating"
-      ? providers.includes("password")
-      : false;
 
   return (
     <>
@@ -306,7 +343,7 @@ export default function AccountSection({
         inline={inline}
         icon={<Download className="size-5 text-primary" />}
         title="Data & account"
-        subtitle="Export, sign out"
+        subtitle="Export, sign out, delete account"
       >
         {/*
           The extracted component, not a second inline copy.
@@ -338,7 +375,12 @@ export default function AccountSection({
 
             Both now route through the `Button` primitive, which is where
             the 44px floor, the focus ring and the 0.97 press live. */}
-        <Button variant="outline" fullWidth onClick={signOut}>
+        <Button
+          variant="outline"
+          fullWidth
+          disabled={busy}
+          onClick={safeSignOut}
+        >
           <LogOut className="size-4" /> Sign out
         </Button>
 
@@ -346,6 +388,7 @@ export default function AccountSection({
         <Button
           variant="destructive"
           fullWidth
+          disabled={busy || accountDeleted}
           onClick={() => {
             haptic("error");
             // P0b: route through the Apple-cancel warning when the
@@ -355,7 +398,7 @@ export default function AccountSection({
             if (hasAppleSubscription) {
               setShowAppleWarning(true);
             } else {
-              setShowDeleteModal(true);
+              openDeletion();
             }
           }}
         >
@@ -397,7 +440,7 @@ export default function AccountSection({
             fullWidth
             onClick={() => {
               setShowAppleWarning(false);
-              setShowDeleteModal(true);
+              openDeletion();
             }}
           >
             Delete anyway
@@ -412,169 +455,174 @@ export default function AccountSection({
         </div>
       </Dialog>
 
-      {/* Delete account Modal (App Store Guideline 5.1.1(v)) */}
       <Dialog
         open={showDeleteModal}
-        onClose={closeAndReset}
-        closeOnBackdrop={!inReauthFlight}
-        closeOnEscape={!inReauthFlight}
+        onClose={dismiss}
+        closeOnBackdrop={!busy && !accountDeleted}
+        closeOnEscape={!busy && !accountDeleted}
+        title={
+          accountDeleted
+            ? "Account deleted"
+            : inReauthFlight || modalState.phase === "needs-reauth"
+              ? "Confirm it's you"
+              : "Delete account"
+        }
+        size="md"
         role="alertdialog"
       >
-        <div aria-live="polite" className="space-y-4">
-          {/* ── Phase: confirm / deleting ────────────────────────*/}
-          {(modalState.phase === "confirm" ||
-            modalState.phase === "deleting") && (
-            <>
-              <h3 className="text-base font-semibold text-destructive-strong">
-                Delete account
-              </h3>
+        <div className="space-y-4" aria-busy={busy}>
+          {deleteError && (
+            <p role="alert" className="text-sm text-destructive-strong">
+              {deleteError}
+            </p>
+          )}
+          {accountDeleted ? (
+            <Button fullWidth loading={finishing} onClick={finishDeletion}>
+              {finishing ? "Signing out…" : "Try signing out again"}
+            </Button>
+          ) : modalState.phase === "confirm" ||
+            modalState.phase === "deleting" ? (
+            <form
+              className="space-y-4"
+              onSubmit={(event) => {
+                event.preventDefault();
+                void handleSubmitDelete();
+              }}
+            >
               <p className="text-sm text-muted-foreground">
-                This will permanently delete your account and all associated
-                data including workouts, meals, runs, and social activity. This
-                action cannot be undone.
+                This permanently deletes your account, workouts, meals, runs,
+                photos, and social activity. This cannot be undone. Export
+                anything you want to keep first.
               </p>
-              <p className="text-sm text-foreground font-medium">
-                Type{" "}
-                <span className="text-destructive-strong font-bold">
-                  DELETE
-                </span>{" "}
-                to confirm:
-              </p>
-              <input
-                type="text"
-                aria-label="Type DELETE to confirm account deletion"
-                value={deleteConfirmText}
-                onChange={(e) => setDeleteConfirmText(e.target.value)}
-                placeholder="Type DELETE"
-                disabled={modalState.phase === "deleting"}
-                className="w-full px-3 py-2 rounded-lg bg-muted border border-border/50 text-foreground text-sm placeholder:text-muted-foreground disabled:opacity-50"
-              />
+              <label className="block space-y-2 text-sm font-medium">
+                <span>Type DELETE to confirm:</span>
+                <input
+                  type="text"
+                  aria-label="Type DELETE to confirm account deletion"
+                  autoComplete="off"
+                  autoCapitalize="characters"
+                  autoCorrect="off"
+                  spellCheck={false}
+                  value={deleteConfirmText}
+                  onChange={(event) => setDeleteConfirmText(event.target.value)}
+                  placeholder="Type DELETE"
+                  disabled={busy}
+                  className="min-h-11 w-full px-3 py-2.5 rounded-xl bg-background border border-border text-base text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 disabled:opacity-50"
+                />
+              </label>
+              {busy && (
+                <p role="status" className="text-sm text-muted-foreground">
+                  Removing your data. Larger accounts can take several minutes.
+                  Keep the app open.
+                </p>
+              )}
               <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={closeAndReset}
-                  disabled={modalState.phase === "deleting"}
-                  className="flex-1 py-2.5 rounded-xl bg-muted text-foreground text-sm font-medium disabled:opacity-50"
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={dismiss}
+                  disabled={busy}
                 >
                   Cancel
-                </button>
-                <button
-                  type="button"
-                  onClick={handleSubmitDelete}
-                  disabled={
-                    deleteConfirmText !== "DELETE" ||
-                    modalState.phase === "deleting"
-                  }
-                  className="flex-1 py-2.5 rounded-xl bg-destructive text-destructive-foreground text-sm font-medium disabled:opacity-50 flex items-center justify-center gap-2"
+                </Button>
+                <Button
+                  type="submit"
+                  variant="destructive"
+                  className="flex-1"
+                  disabled={deleteConfirmText.trim() !== "DELETE"}
+                  loading={busy}
                 >
-                  {modalState.phase === "deleting" ? (
-                    <>
-                      <Spinner
-                        size="sm"
-                        variant="inverse"
-                        label="Deleting account"
-                      />
-                      Deleting…
-                    </>
-                  ) : (
-                    "Delete account"
-                  )}
-                </button>
+                  {busy ? "Deleting…" : "Delete account"}
+                </Button>
               </div>
-            </>
-          )}
-
-          {/* ── Phase: needs-reauth / reauthenticating ───────────*/}
-          {(modalState.phase === "needs-reauth" ||
-            modalState.phase === "reauthenticating") && (
-            <>
-              <h3 className="text-base font-semibold text-foreground">
-                Confirm it's you
-              </h3>
+            </form>
+          ) : modalState.phase === "needs-reauth" || inReauthFlight ? (
+            <form
+              className="space-y-4"
+              onSubmit={(event) => {
+                event.preventDefault();
+                if (showPasswordInput) void handleReauth("password");
+              }}
+            >
               <p className="text-sm text-muted-foreground">
-                For security, re-confirm your identity{" "}
-                {displayedEmail ? (
-                  <>
-                    for{" "}
-                    <span className="font-medium text-foreground">
-                      {displayedEmail}
-                    </span>
-                  </>
-                ) : (
-                  "for this account"
-                )}{" "}
-                before deleting. You won't be charged for anything new.
+                Confirm your identity{" "}
+                {displayedEmail ? `for ${displayedEmail}` : "for this account"}{" "}
+                to finish deleting your account.
               </p>
-
-              {reauthError && (
-                <p className="text-sm text-destructive-strong">{reauthError}</p>
+              {usesApple && (
+                <p className="text-sm text-muted-foreground">
+                  This also disconnects Sign in with Apple from Tropos.
+                </p>
               )}
-
+              {reauthError && (
+                <p role="alert" className="text-sm text-destructive-strong">
+                  {reauthError}
+                </p>
+              )}
               {showPasswordInput && (
                 <input
                   type="password"
                   autoComplete="current-password"
                   aria-label="Current password"
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(event) => setPassword(event.target.value)}
                   placeholder="Password"
-                  disabled={inReauthFlight}
-                  className="w-full px-3 py-2 rounded-lg bg-muted border border-border/50 text-foreground text-sm placeholder:text-muted-foreground disabled:opacity-50"
+                  disabled={busy}
+                  className="min-h-11 w-full px-3 py-2.5 rounded-xl bg-background border border-border text-base text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 disabled:opacity-50"
                 />
               )}
-
               <div className="space-y-2">
-                {providers.map((p) => (
-                  <button
-                    type="button"
-                    key={p}
-                    onClick={() => handleReauth(p)}
-                    disabled={
-                      inReauthFlight ||
-                      (p === "password" && password.length === 0)
+                {providers.map((provider) => (
+                  <Button
+                    key={provider}
+                    fullWidth
+                    type={provider === "password" ? "submit" : "button"}
+                    onClick={
+                      provider === "password"
+                        ? undefined
+                        : () => {
+                            void handleReauth(provider);
+                          }
                     }
-                    className="w-full py-2.5 rounded-xl bg-primary-strong text-primary-foreground text-sm font-medium disabled:opacity-50 flex items-center justify-center gap-2"
+                    disabled={busy || (provider === "password" && !password)}
+                    loading={inReauthFlight && modalState.provider === provider}
                   >
-                    {inReauthFlight && modalState.provider === p ? (
-                      <>
-                        <Spinner
-                          size="sm"
-                          variant="inverse"
-                          label="Confirming"
-                        />
-                        Confirming…
-                      </>
-                    ) : (
-                      providerLabel(p)
-                    )}
-                  </button>
+                    {inReauthFlight && modalState.provider === provider
+                      ? "Confirming…"
+                      : providerLabel(provider)}
+                  </Button>
                 ))}
+                {providers.length === 0 && (
+                  <>
+                    <p className="text-sm text-muted-foreground">
+                      Sign out, then sign in with your usual provider and return
+                      here to delete your account.
+                    </p>
+                    <Button fullWidth onClick={safeSignOut}>
+                      Sign out to confirm
+                    </Button>
+                  </>
+                )}
               </div>
-
-              <button
-                type="button"
-                onClick={closeAndReset}
-                disabled={inReauthFlight}
-                className="w-full py-2.5 rounded-xl bg-muted text-foreground text-sm font-medium disabled:opacity-50"
+              <Button
+                variant="outline"
+                fullWidth
+                onClick={dismiss}
+                disabled={busy}
               >
                 Cancel
-              </button>
-            </>
-          )}
-
-          {/* ── Phase: retrying (post-reauth, deletion in flight) */}
-          {modalState.phase === "retrying" && (
-            <>
-              <h3 className="text-base font-semibold text-destructive-strong">
-                Deleting account…
-              </h3>
+              </Button>
+            </form>
+          ) : (
+            <div role="status" className="space-y-4">
               <p className="text-sm text-muted-foreground">
-                Confirmed. Removing your data — this should take a few seconds.
+                Identity confirmed. Removing your data. Larger accounts can take
+                several minutes. Keep the app open.
               </p>
               <div className="flex justify-center py-3">
                 <Spinner size="md" label="Deleting account" />
               </div>
-            </>
+            </div>
           )}
         </div>
       </Dialog>

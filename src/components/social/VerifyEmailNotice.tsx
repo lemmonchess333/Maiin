@@ -57,6 +57,11 @@ export default function VerifyEmailNotice({
       const verified = await onRecheck();
       if (verified) toast.success("Email verified");
       else toast.error("Not verified yet — tap the link in the email first");
+    } catch (err) {
+      logger.error("[VerifyEmailNotice] verification check failed", err);
+      toast.error(
+        "Couldn't check verification. Check your connection and try again."
+      );
     } finally {
       setChecking(false);
     }

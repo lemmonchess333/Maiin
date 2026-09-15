@@ -58,3 +58,61 @@ describe("useEmailVerificationGate", () => {
     await expect(result.current.recheck()).resolves.toBe(false);
   });
 });
+
+describe("failed and stale verification checks", () => {
+  it("keeps the gate closed if reload succeeds but the new security token fails", async () => {
+    const user = fakeUser({ verifiedAfterReload: true });
+    user.getIdToken.mockRejectedValueOnce(new Error("offline"));
+    const { result, rerender } = renderHook(() =>
+      useEmailVerificationGate(user)
+    );
+    await act(async () => {
+      await expect(result.current.recheck()).rejects.toThrow("offline");
+    });
+    expect(user.emailVerified).toBe(true); // Firebase mutates this before refresh.
+    rerender();
+    expect(result.current.emailVerified).toBe(false);
+    expect(result.current.needsVerification).toBe(true);
+    await act(async () => {
+      await expect(result.current.recheck()).resolves.toBe(true);
+    });
+    expect(result.current.needsVerification).toBe(false);
+  });
+  it("reports a reload failure rather than saying the link was not clicked", async () => {
+    const user = fakeUser({ verifiedAfterReload: true });
+    user.reload.mockRejectedValueOnce(new Error("network"));
+    const { result } = renderHook(() => useEmailVerificationGate(user));
+    await act(async () => {
+      await expect(result.current.recheck()).rejects.toThrow("network");
+    });
+    expect(user.getIdToken).not.toHaveBeenCalled();
+    expect(result.current.needsVerification).toBe(true);
+  });
+  it("does not apply a completed check to a replacement account", async () => {
+    const user = fakeUser({ verifiedAfterReload: true });
+    let finish!: () => void;
+    user.reload.mockImplementationOnce(
+      () =>
+        new Promise<void>((resolve) => {
+          finish = () => {
+            user.emailVerified = true;
+            resolve();
+          };
+        })
+    );
+    const { result, rerender } = renderHook(
+      ({ account }) => useEmailVerificationGate(account),
+      { initialProps: { account: user } }
+    );
+    let pending!: Promise<boolean>;
+    act(() => {
+      pending = result.current.recheck();
+    });
+    rerender({ account: fakeUser({ verifiedAfterReload: false }) });
+    await act(async () => {
+      finish();
+      await expect(pending).rejects.toThrow("Account changed");
+    });
+    expect(result.current.needsVerification).toBe(true);
+  });
+});

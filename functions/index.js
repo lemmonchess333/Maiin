@@ -297,6 +297,8 @@ exports.deleteMyAccount = functions
   // appleSubscriptions sweep (audit F8) — fail-safe if absent.
   .runWith({
     ...DEFAULT_HTTP_CAP,
+    // Match the deletion ledger's nine-minute lease for larger accounts.
+    timeoutSeconds: 540,
     secrets: [STRIPE_SECRET_KEY, BILLING_HMAC_SECRET],
   })
   .https.onCall(async (data, context) => {
@@ -423,7 +425,11 @@ exports.deleteMyAccount = functions
         uid,
         message: err && err.message,
       });
-      throw new functions.https.HttpsError("internal", err.message);
+      throw new functions.https.HttpsError(
+        "internal",
+        "Account cleanup couldn't finish. Please retry account deletion.",
+        { reason: "cleanup-incomplete" }
+      );
     }
   });
 
