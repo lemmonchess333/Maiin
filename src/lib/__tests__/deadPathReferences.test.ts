@@ -71,6 +71,12 @@ const ALLOWED: Record<string, string> = {
     "deleted in #1733, cited as history",
   // Superseded surface, cited as the thing that was replaced.
   "src/lib/healthScore.ts": "superseded surface, cited as history",
+  // Cited BY NAME in eslintConfigPaths.test.ts as the entry that had rotted
+  // in eslint.config.js's hex-exemption block: the file was deleted while
+  // the exemption kept naming it, so the block read as deliberate forever.
+  // The citation IS the evidence for that gate existing.
+  "src/components/social/ShareCard.tsx":
+    "deleted; cited as the stale eslint `files:` entry that motivated the gate",
   // Synthetic hashed-asset URL inside serviceWorkerContract.test.ts's
   // executed-SW fixture — it must LOOK like a Vite asset to route into
   // the cache-first branch, and deliberately names no real file (a real
