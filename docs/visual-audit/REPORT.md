@@ -23,7 +23,7 @@ C. Selected meal pill → nutrition identity orange — `fixes/C-*`
 1. **Hue count: ~6 on one viewport** (scrolled): brand purple (nav, day bubble), coral (run card, calendar dots), orange (Recomp chip, energy bar, Log food), pink/yellow/green (macro rings). Flagged (>4).
 2. Type: sizes look on-scale post-#1220; section labels at the 11px caption step.
 3. Spacing rhythm: WeekStrip → Performance → Today's Energy are three same-weight white cards; only the hero day-bubble breaks the rhythm.
-4. **Empty-state quality — two text-only empties on a RICH account:** the "Welcome to Tropos!" checklist card still renders for a user with 18 workouts + an active race plan, and the Performance card says "appears after your first logged session" despite seeded sessions (rollup hasn't run in the rig, but the empty itself is an undesigned grey-dash + sentence). Both are prime cold-start surfaces (CLAUDE.md: cold-start is a most-seen state).
+4. ~~**Empty-state quality — two text-only empties on a RICH account:** the "Welcome to Tropos!" checklist card still renders for a user with 18 workouts + an active race plan, and the Performance card says "appears after your first logged session" despite seeded sessions.~~ — **both fixed.** The checklist is data-derived through `shouldShowWelcomeChecklist` (`src/lib/activationFraming.ts`), suppressed at 3+ workouts, past the activation window, on completion or on dismiss. The Performance no-doc branch renders the hexagon `EmptyState` primitive. Cold-start remains a most-seen state (CLAUDE.md) — the point of the finding stands even though both instances are gone.
 5. Dark parity: good. No unreadable content found.
 6. Safe areas: top occluder dims scrolled content (pre-fix capture shows partial dimming; post-fix verified in `fixes/A-*`). Bottom nav clears the 34px inset.
 7. Redundant affordances: none egregious on Home.
@@ -33,11 +33,11 @@ C. Selected meal pill → nutrition identity orange — `fixes/C-*`
 
 1. **Hue count: 7+ on the scrolled viewport** — pink/yellow/green macro tiles, orange pill + amber (pre-fix) selected pill, coral paywall, purple nav. The loudest screen in the app.
 2. Type: dense but on-scale.
-3. Spacing: the diary cards (BREAKFAST/LUNCH…) are uniform white cards — fine; the zone above them (Quick Add → composer → ADD TO → paywall → Log manually) stacks five different control shapes with no grouping.
+3. ~~Spacing: the zone above the diary (Quick Add → composer → ADD TO → paywall → Log manually) stacks five different control shapes with no grouping.~~ — **fixed**: collapsed to one composer surface — the textarea with an in-row scan icon, plus the "Add to" pills. Quick Add moved into the dropdown's empty-focus state; the standing manual-log link and the full-width scan card are gone.
 4. Empty states: n/a (seeded).
 5. Dark parity: good; macro bar colours read well on dark.
 6. **Safe-area: Bug A reproduced here** — scrolled content entered the clock zone unprotected (`fixes/A-before-ring-through-statusbar.png`). Fixed.
-7. **Redundant affordances — FOUR simultaneous "add food" entry points in one viewport:** Quick Add chips, the NL composer, the scan CTA (locked → paywall), and "Log manually" — plus a fifth (per-meal "+" buttons) one scroll below. This is the single biggest simplification opportunity on the page.
+7. ~~**Redundant affordances — FOUR simultaneous "add food" entry points in one viewport:** Quick Add chips, the NL composer, the scan CTA (locked → paywall), and "Log manually" — plus a fifth (per-meal "+") one scroll below.~~ — **fixed**: one composer entry surface. Scan is an in-row icon button, Quick Add lives in the dropdown's empty-focus state, manual entry is contextual-only (no-results row, AI-failure fallback), and per-meal "+" routes through composer focus. `FoodComposerCard.test.tsx` pins the shape ("renders the scan affordance as a single icon button in the input row, not a full-width CTA", "manual entry stays reachable via the dropdown's no-results row").
 8. **Selected meal pill (pre-fix) amber-brown vs coral paywall adjacency** — Bug C, fixed (`fixes/C-*`).
 9. Details sheet + pantry typeahead (`02-food-details-sheet`, `02-food-typeahead`): render correctly; typeahead returns the seeded "Pizza slice".
 
@@ -59,29 +59,29 @@ C. Selected meal pill → nutrition identity orange — `fixes/C-*`
 ### 05 Run setup / treadmill — `screens/light/05-run-*.png`
 
 1. Run setup: coral-coded, race-prep context strip ("Race prep · Week 4 of 8 · 10K") — strong. Hue discipline good.
-2. **Treadmill live screen OVERFLOWS at 393px** — the distance input and "Save Treadmill Run" button run off the right edge (`05-run-treadmill-live-top.png`). `TreadmillMode`'s column appears to take content width inside its centring flex parent instead of `w-full`. Functional but visually broken. (Observation only — not in the Phase-2 fix list.)
+2. ~~**Treadmill live screen OVERFLOWS at 393px** — the distance input and "Save Treadmill Run" button run off the right edge (`05-run-treadmill-live-top.png`).~~ — **fixed**, and the diagnosis was exact: `TreadmillMode`'s root column is `w-full` so it fills the centring flex parent instead of shrink-fitting to content, and the distance input carries `min-w-0` so `flex-1` can take it below its intrinsic width.
 3. The treadmill screen is always-dark by design; in "light" theme captures it renders dark — by design (active-run surfaces are theme-independent), but the _transition_ light page → black countdown → black screen is an abrupt flash sequence.
 4. Safe area: Run-family screens render **without the Layout occluder** (they're full-screen, outside Layout). Their layouts keep content out of the clock zone by construction; the lock-screen + map screens pin chrome below `--safe-top` manually. Consistent, but worth knowing there are two safe-area systems.
 
 ### 06 RunDetail — `screens/light/06-run-detail-top.png`
 
-1. **Text collision at 393px:** the "FREE RUN" label and the pace legend ("Faster / On pace / Slower") overlap; the Share pill also crowds the legend row. Genuine layout bug at this width.
-2. The offline-map toast renders **on top of the back button** (top-left) — z/placement collision in the toast position.
+1. ~~**Text collision at 393px:** the "FREE RUN" label and the pace legend ("Faster / On pace / Slower") overlap; the Share pill also crowds the legend row.~~ — **fixed**: `PaceLegend` was the last child inside the fixed `h-72` map container and overflowed it; it now renders in normal flow below the map, so the label and Share pill stack clear of it.
+2. ~~The offline-map toast renders **on top of the back button** (top-left).~~ — **fixed**: the toast dropped its full-width `inset-x-2 top-2` strip for a centred `top-2 left-1/2 -translate-x-1/2` capped at `max-w-[calc(100%-8rem)]`, reserving the top-corner control zones.
 3. Hue count: 6 (legend green/purple/coral + teal pace + orange cal + pink share tint).
-4. **Bottom-nav active state is WRONG: the Food tab is highlighted on `/run/:id`** (also wrong on `/upgrade` — see 10). The active-tab matcher appears to fall through to a default rather than reflecting the current route.
+4. ~~**Bottom-nav active state is WRONG: the Food tab is highlighted on `/run/:id`** (also wrong on `/upgrade` — see 10). The active-tab matcher appears to fall through to a default rather than reflecting the current route.~~ — **fixed**, diagnosis confirmed: the active tab is resolved by the pure `activeTabForPath` matcher (`src/lib/activeTab.ts`), which returns `null` for non-tab routes so nothing highlights. No default-to-Food fallback. Pinned by `src/lib/__tests__/activeTab.test.ts`.
 5. Stat cards: mono numerals ✓, "0 SPLITS" shows a raw zero rather than hiding or explaining the empty splits state.
 
 ### 07 History / Analytics — `screens/light/07-history-*.png`
 
 1. Range pills (1W|1M|3M|6M|1Y) + tab pills (Analytics|PRs|Badges) + THIS MONTH rings — three stacked control rows before any content; hierarchy is flat.
 2. Hue: coral/purple/orange rings + pink charts ≈ 5; borderline.
-3. **Performance empty-state again text-only** ("will appear after your first logged session") — same undesigned pattern as Home.
+3. ~~**Performance empty-state again text-only** ("will appear after your first logged session") — same undesigned pattern as Home.~~ — **fixed**: `PerformanceSection` renders the hexagon `EmptyState` primitive. The sentence itself was also wrong in a second way, found later: `!currentWeek` means "no server-written performance doc", not "nothing logged", so a user who had just saved their first session was told they had logged nothing. Both surfaces now split those two cases (`performanceEmptyCopy`).
 4. Charts render with seeded data ✓; mono numerals ✓.
 5. Dark parity (spot-checked scrolled variant): fine.
 
 ### 08 Social — `screens/dark/08-social-top.png`
 
-1. **Empty states are the page**: "Join a crew or follow people…" is a text-only box; the one designed element (Invite a training partner card) is good. Feed/Crews tabs (captured in fullPage variants) are similarly text-first.
+1. ~~**Empty states are the page**: "Join a crew or follow people…" is a text-only box; the one designed element (Invite a training partner card) is good.~~ — **fixed**: the cold-start Social tab renders the curated `SoloFirstFeed` stack (`src/components/social/SoloFirstFeed.tsx`) rather than a sentence in a box. Note the crews row named here no longer exists — crews were removed, and the stack is PartnerStreak hero → challenge slot → Spaces rail → share-your-training.
 2. Hue: disciplined (purple + neutrals).
 3. Dark parity: good.
 
@@ -94,7 +94,7 @@ C. Selected meal pill → nutrition identity orange — `fixes/C-*`
 ### 10 Upgrade — `screens/dark/10-upgrade-top.png`
 
 1. Clean two-column compare, gradient CTA (the documented brandCta gradient — the only sanctioned gradient), green "Save 27%". Good hierarchy.
-2. **Bottom-nav active state wrong again** (Food highlighted on /upgrade) — confirms finding 06.4 is systemic.
+2. ~~**Bottom-nav active state wrong again** (Food highlighted on /upgrade) — confirms finding 06.4 is systemic.~~ — **fixed with 06.4**: `/upgrade` returns `null` from `activeTabForPath`, so no tab highlights.
 3. Free column uses muted text on dark — borderline-low contrast for the feature list (legible but faint).
 
 ### 11–12 Login / Onboarding — `screens/{light,dark}/11-login*, 12-onboarding*`
@@ -106,16 +106,16 @@ C. Selected meal pill → nutrition identity orange — `fixes/C-*`
 
 ## Ranked top-10 visual issues
 
-1. **Food page redundancy — four simultaneous "add" entry points** (Quick Add / composer / scan / Log manually, + per-meal "+" below). One viewport, five shapes. The page's information architecture problem dwarfs any colour tweak. (`02-food-scrolled`)
+1. ~~**Food page redundancy — four simultaneous "add" entry points** (Quick Add / composer / scan / Log manually, + per-meal "+" below). One viewport, five shapes.~~ — **fixed**: single composer entry surface; see 02.7. (`02-food-scrolled`)
 2. ~~Status-bar collision on scroll~~ — **fixed (A)**: compositor-layer drop + z-tie; occluder now survives scroll on every page.
-3. **RunDetail text collision at 393px** — "FREE RUN" × pace-legend overlap + Share pill crowding; plus the toast covering the back button. (`06-run-detail-top`)
-4. **TreadmillMode overflows the viewport** — input + save button clipped off-right at 393px. (`05-run-treadmill-live-top`)
-5. **Bottom-nav active-tab mismatch** — Food highlighted on `/run/:id` and `/upgrade`. Systemic route-matching bug, visible on every non-tab route. (`06-run-detail-top`, `10-upgrade-top`)
-6. **Undesigned text-only empty states on the highest-traffic surfaces** — Home Performance, History Performance, Social feed/suggestions. All are sentence-in-a-grey-box; none offer a designed next action beyond prose. Cold-start is a most-seen state for the user base. (`01-home-top`, `07-history-top`, `08-social-top`)
+3. ~~**RunDetail text collision at 393px** — "FREE RUN" × pace-legend overlap + Share pill crowding; plus the toast covering the back button.~~ — **fixed**: see 06.1 and 06.2. (`06-run-detail-top`)
+4. ~~**TreadmillMode overflows the viewport** — input + save button clipped off-right at 393px.~~ — **fixed**: see 05.2. (`05-run-treadmill-live-top`)
+5. ~~**Bottom-nav active-tab mismatch** — Food highlighted on `/run/:id` and `/upgrade`. Systemic route-matching bug, visible on every non-tab route.~~ — **fixed**: see 06.4. (`06-run-detail-top`, `10-upgrade-top`)
+6. ~~**Undesigned text-only empty states on the highest-traffic surfaces** — Home Performance, History Performance, Social feed/suggestions. All are sentence-in-a-grey-box; none offer a designed next action beyond prose.~~ — **fixed**: both Performance surfaces use the hexagon `EmptyState` primitive; Social uses the `SoloFirstFeed` stack. Cold-start is still a most-seen state for the user base. (`01-home-top`, `07-history-top`, `08-social-top`)
 7. **Stale cold-start artifacts on rich accounts** — "Welcome to Tropos!" checklist still rendering for an account with months of data. (`01-home-top`)
 8. **Hue overload on Home + Food** (6–7 distinct hues per viewport vs the documented 4-ish semantic system). Macro pink/yellow/green + sport coral/purple + nutrition orange all co-present; the semantic system is intact but the _density_ of simultaneous accents is the issue. (`01-home-scrolled`, `02-food-scrolled`)
 9. ~~Webview desktop scrollbar~~ — **fixed (B)** (suppression CSS; rig cannot render the before state — see device screenshots).
-10. **Streak-priming modal interrupts first Programme visit** — lands mid-task, stacks over the page the user explicitly navigated to. (`03-program-top`)
+10. ~~**Streak-priming modal interrupts first Programme visit** — lands mid-task, stacks over the page the user explicitly navigated to.~~ — **fixed**: the modal fires only on a completed session (`tropos:workout-completed` / `tropos:run-completed`), never on mount or `visibilitychange`, and is gated through the SurfaceCoordinator so it cannot stack. Pinned by `src/components/__tests__/StreakReminderPrimingModal.test.tsx`. (`03-program-top`)
 
 _(Bug C — amber selected-pill clash — fixed; would have ranked ~#8.)_
 
