@@ -31,7 +31,7 @@ jobs:
           assert job['head_sha'] == os.environ['EXPECTED_HEAD'], job
           assert job['conclusion'] == 'failure', job
           PY
-          gh api "repos/$GITHUB_REPOSITORY/actions/jobs/$JOB_ID/logs" > failure-context/unit.log
+          gh api --allow-escape-sequences "repos/$GITHUB_REPOSITORY/actions/jobs/$JOB_ID/logs" > failure-context/unit.log
           python3 - <<'PY'
           from pathlib import Path
           import re
