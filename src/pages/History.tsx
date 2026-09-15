@@ -1515,7 +1515,7 @@ export default function History() {
                       to access them. */}
                     <RacePredictionsCard />
                     <ShoeMileageSection />
-                    <RunningHistorySection />
+                    <RunningHistorySection rangeDays={rangeDays} />
                   </>
                 )}
               </section>

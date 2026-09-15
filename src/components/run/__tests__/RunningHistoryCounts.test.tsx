@@ -48,10 +48,11 @@ function run(distanceMetres: number, avgPace = 300) {
 function setup(runs: ReturnType<typeof run>[]) {
   mockUseRunningStats.mockReturnValue({
     runs,
-    weeklyData: [{ week: "7/9", totalDistance: 5.2 }],
+    binnedData: [{ week: "2026-09-07", totalDistance: 5.2 }],
+    granularity: "weekly",
     loading: false,
   });
-  return render(<RunningHistorySection />);
+  return render(<RunningHistorySection rangeDays={30} />);
 }
 
 beforeEach(() => vi.clearAllMocks());

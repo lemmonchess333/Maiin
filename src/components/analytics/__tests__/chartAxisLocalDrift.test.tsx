@@ -113,7 +113,8 @@ vi.mock("@/hooks/useDistanceUnit", () => ({
 }));
 vi.mock("@/hooks/useRunningStats", () => ({
   useRunningStats: () => ({
-    weeklyData: [
+    granularity: "weekly",
+    binnedData: [
       { week: "2026-08-03", totalDistance: 12.4, runCount: 3, avgPace: 330 },
       { week: "2026-08-10", totalDistance: 9.1, runCount: 2, avgPace: 345 },
     ],
@@ -149,7 +150,7 @@ describe("the running chart's own axis, west of UTC", () => {
   });
 
   it("renders its Monday week keys as Mondays", () => {
-    render(<RunningHistorySection />);
+    render(<RunningHistorySection rangeDays={90} />);
     expect(captured.formatter, "XAxis has no tickFormatter").toBeTypeOf(
       "function"
     );
