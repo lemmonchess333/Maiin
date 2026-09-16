@@ -5,14 +5,14 @@ on:
     paths: [.github/workflows/arnold-image-transfer.yml]
   workflow_dispatch:
 permissions:
-  contents: read
+  contents: write
 jobs:
   verify-transfer:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
       - run: python3 -m pip install Pillow==11.3.0
-      - name: Verify actual decoded images
+      - name: Decode and verify exact original image assets
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -21,27 +21,35 @@ jobs:
           from PIL import Image
           from io import BytesIO
           root = pathlib.Path('transferred'); root.mkdir()
-          req = urllib.request.Request('https://api.github.com/repos/lemmonchess333/Maiin/git/blobs/c448cf389b0de70b76c784febbefab012e2fcf1f', headers={'Authorization': 'Bearer ' + os.environ['GH_TOKEN'], 'Accept': 'application/vnd.github+json'})
-          with urllib.request.urlopen(req, timeout=30) as response: item = json.load(response)
-          text = base64.b64encode(base64.b64decode(item['content'])).decode()
-          for start, end, replacement in [(44979,44980,''),(7973,7973,'ICQEgJASAkB'),(478,500,'')]:
-              text = text[:start] + replacement + text[end:]
-          data = base64.b64decode(text, validate=True)
-          assert hashlib.sha1(('blob ' + str(len(data)) + '\0').encode() + data).hexdigest() == 'cbcd503cf8c963348d0c52cff5c568d5a1e51a23'
-          im = Image.open(BytesIO(data)); im.load(); assert im.size == (1024,1536)
-          (root/'1-repaired.webp').write_bytes(data)
-          print('Repaired first original decodes at native dimensions:', len(data))
-          url = 'https://media.canva.com/v2/image-resize/format:JPG/height:200/quality:75/uri:ifs%3A%2F%2FM%2F999c9276-74bb-4b3f-aa0a-ce845eb59e95/watermark:F/width:133?csig=AAAAAAAAAAAAAAAAAAAAABqzNT0w8e2E9q0ItS1Bps0EXfufxB-anjXRQ9bGajQh&exp=1789609632&osig=AAAAAAAAAAAAAAAAAAAAAP_eNnUR0X95mKJevmMFZgujIXIy1_htIkkbs2vlHL0p&signer=media-rpc&x-canva-quality=thumbnail'
-          url = url.replace('format:JPG','format:PNG').replace('height:200','height:1536').replace('width:133','width:1024').replace('quality:75','quality:100')
+          base = 'https://api.github.com/repos/lemmonchess333/Maiin/git/blobs'
+          def api(url, payload=None):
+              req = urllib.request.Request(url, data=None if payload is None else json.dumps(payload).encode(), headers={'Authorization': 'Bearer ' + os.environ['GH_TOKEN'], 'Accept': 'application/vnd.github+json', 'Content-Type':'application/json'})
+              with urllib.request.urlopen(req, timeout=30) as response: return json.load(response)
+          def read(sha):
+              data = base64.b64decode(api(base+'/'+sha)['content'])
+              assert hashlib.sha1(('blob '+str(len(data))+'\0').encode()+data).hexdigest() == sha
+              return data
+          def publish(number, data, expected):
+              actual = hashlib.sha256(data).hexdigest()
+              assert actual == expected, 'Source bytes differ; refuse to publish'
+              image = Image.open(BytesIO(data)); image.load()
+              assert image.size == (1024,1536) and image.format == 'WEBP'
+              result = api(base, {'encoding':'base64','content':base64.b64encode(data).decode()})
+              assert result['sha'] == hashlib.sha1(('blob '+str(len(data))+'\0').encode()+data).hexdigest()
+              (root/(str(number)+'.webp')).write_bytes(data)
+              print(json.dumps({'frame':number,'gitBlob':result['sha'],'bytes':len(data),'sha256':actual}))
+          text = base64.b64encode(read('c448cf389b0de70b76c784febbefab012e2fcf1f')).decode()
+          for start,end,replacement in [(44979,44980,''),(7973,7973,'ICQEgJASAkB'),(478,500,'')]:
+              text = text[:start]+replacement+text[end:]
+          publish(1,base64.b64decode(text,validate=True),'13ce680d34c67c5ec3494c6c0df3bc1e1df3b9f44312d8f8a25cefaecfe31a0c')
+          parts = [read(sha) for sha in ['3ffe17a1fd91a4f135def786c9d6b50cd97c3bb9','239a208a583a58260b32d61101612c8ed7211be4','fb64be05199c0ee00a9d4b981c52b16938040e27']]
+          for index, part in enumerate(parts): (root/('2-part-'+str(index)+'.txt')).write_bytes(part)
+          candidate = b''.join(parts)
+          (root/'2-transfer.b64').write_bytes(candidate)
           try:
-              with urllib.request.urlopen(url, timeout=30) as response: data = response.read(5000000)
-              im = Image.open(BytesIO(data)).convert('RGB'); im.load()
-              result = {'dimensions': im.size, 'bytes': len(data), 'pixelSha256': hashlib.sha256(im.tobytes()).hexdigest()}
-              (root/'original-transfer.png').write_bytes(data)
-              (root/'native-transfer.json').write_text(json.dumps(result))
-              print('Original-asset native-size transfer:', json.dumps(result))
+              publish(2,base64.b64decode(candidate,validate=True),'678f411d0797ee9e8b9fc34c2150c3152e5159d7f320f37b4600f05f24e1dc07')
           except Exception as error:
-              print('Native-size transfer unavailable:', str(error))
+              print('Frame 2 held for exact transfer correction:',str(error))
           PY
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
