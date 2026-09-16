@@ -752,7 +752,11 @@ export default function History() {
       ];
       if (includeLongest) {
         cards.push({
-          label: "Longest Run",
+          /* Sentence case, like the two rows above it. The pace labels
+             were rewritten when they stopped claiming to be kilometre
+             times; this one kept the Title Case it was written with and
+             sat as the odd row in a three-row list. */
+          label: "Longest run",
           value: longest ? distanceLabel(longest.distance, unit) : "--",
           date: longest ? fmtDate(longest.completedAt) : "",
           isNew: longest ? longest.completedAt >= sevenDaysAgo : false,
