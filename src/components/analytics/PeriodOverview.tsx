@@ -78,18 +78,32 @@ export default function PeriodOverview({
   rangeDays,
 }: PeriodOverviewProps) {
   const unit = useDistanceUnit();
+  /* Every range here is a ROLLING window ending today — History derives
+     it as `since = today - rangeDays` (7 / 30 / 90 / 180 / 365). Three of
+     the five labels named a CALENDAR period instead, which is a different
+     span and usually a much smaller one: on 16 September "This Year" sat
+     over 16 September 2025 onward, and in January it would head eleven
+     months of the previous year. "This week" has the same gap against the
+     app's Monday-anchored week — on a Wednesday the trailing seven days
+     reach back into last week — and it is the gap `ProgrammeRunSection`
+     was already fixed for, where the data could be moved to match the
+     claim. Here it cannot: the range control offers durations, so the
+     window is the honest thing and the label is what has to give.
+
+     The register was already in this list twice. "Last 3 months" and
+     "Last 6 months" name the window and needed nothing. */
   const rangeLabel =
     timeRange === "1W"
-      ? "This week"
+      ? "Last 7 days"
       : timeRange === "1M"
-        ? "This Month"
+        ? "Last 30 days"
         : timeRange === "3M"
-          ? "Last 3 Months"
+          ? "Last 3 months"
           : timeRange === "6M"
-            ? "Last 6 Months"
+            ? "Last 6 months"
             : timeRange === "1Y"
-              ? "This Year"
-              : "This week";
+              ? "Last 12 months"
+              : "Last 7 days";
 
   // Targets prorated from a 5/week aspirational rate. Keeping the ring
   // hardcoded at max=5 meant any range longer than 1W maxed out the
