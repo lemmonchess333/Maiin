@@ -27,7 +27,12 @@ export default function RestDayCard() {
         background: `linear-gradient(135deg, ${THEME.brand}14, ${THEME.brand}05 70%)`,
         boxShadow: `var(--ds-shadow-card), 0 0 0 1px ${THEME.brand}14`,
       }}
-      whileTap={{ scale: 0.99 }}
+      /* No `whileTap`. This card carries no action — the docstring above
+         says so, and there is no onClick or link anywhere on it — so the
+         press-scale was feedback for a press that does nothing. It also
+         cost a tab stop: framer-motion's press gesture sets
+         `tabIndex = 0` on any non-focusable element with `whileTap`, so
+         a rest day put an unnamed, inert stop in Home's tab order. */
     >
       <div
         className="size-12 rounded-xl flex items-center justify-center flex-shrink-0"

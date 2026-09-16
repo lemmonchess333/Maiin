@@ -167,7 +167,13 @@ export function BadgeGrid() {
                         ? { rotateY: 6, rotateX: -4, scale: 1.04, y: -2 }
                         : { scale: 1.02 }
                     }
-                    whileTap={{ scale: 0.95 }}
+                    /* Hover only. A badge tile is not a control — nothing
+                       in this file binds a click — and `whileTap` made
+                       each one a focusable stop with no name via
+                       framer-motion's press gesture, which is thirty of
+                       them on a full grid. `whileHover` uses the hover
+                       gesture and adds no tabindex, so the 3D tilt above
+                       is unaffected. */
                     /* `flex flex-col` + `flex-1` on the name block below.
                        The grid already equalises card HEIGHT, but the card
                        was a plain block, so its contents top-flowed: a

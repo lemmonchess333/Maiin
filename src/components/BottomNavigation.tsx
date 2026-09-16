@@ -131,6 +131,17 @@ export default function BottomNavigation({
                       ))}
                     <motion.div
                       className="relative z-10"
+                      /* `tabIndex={-1}` is load-bearing, not tidying.
+                         framer-motion's press gesture writes
+                         `target.tabIndex = 0` onto any element carrying
+                         `whileTap` that is not natively focusable and has
+                         no tabindex of its own (motion-dom's
+                         `isElementKeyboardAccessible`). This div is
+                         decoration inside the `<a>` that IS the control,
+                         so without the opt-out every tab in the bar put a
+                         second stop in the order announcing nothing —
+                         five of them, on every authenticated screen. */
+                      tabIndex={-1}
                       whileTap={
                         prefersReducedMotion ? undefined : { scale: 0.85 }
                       }
