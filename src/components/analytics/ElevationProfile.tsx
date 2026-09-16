@@ -57,7 +57,7 @@ export default function ElevationProfile({
       </div>
 
       <ResponsiveContainer width="100%" height={100}>
-        <AreaChart data={data}>
+        <AreaChart data={data} aria-label="Elevation profile over the run">
           <ChartAreaGradient
             id="elevGrad"
             color={accentColor}

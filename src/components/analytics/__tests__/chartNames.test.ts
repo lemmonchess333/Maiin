@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 
 /**
  * A chart a reader can tab to has to say what it is.
@@ -27,14 +27,32 @@ import { readFileSync } from "node:fs";
  */
 const read = (p: string) => readFileSync(p, "utf8");
 
-/** The five charts that keep Recharts' accessibility layer. */
+/**
+ * Every chart that keeps Recharts' accessibility layer.
+ *
+ * The last two render on the run surfaces (RunSummary, RunDetail) rather
+ * than the Analytics tab, and they are here for the reason the list
+ * exists at all: they live in `src/components/analytics/`, so a reader
+ * of this file would take an enumeration that skipped them as saying the
+ * directory was covered. It was not — both were unnamed until the sweep
+ * that added this comment.
+ */
 const CHARTS: [string, string][] = [
   ["src/components/analytics/VolumeChart.tsx", "<BarChart"],
   ["src/components/analytics/TrainingLoadCard.tsx", "<ComposedChart"],
   ["src/components/analytics/PerformanceIndexChart.tsx", "<AreaChart"],
   ["src/components/run/RunningHistorySection.tsx", "<BarChart"],
   ["src/components/progress/CalorieBalanceChart.tsx", "<BarChart"],
+  ["src/components/analytics/SplitsBarChart.tsx", "<BarChart"],
+  ["src/components/analytics/ElevationProfile.tsx", "<AreaChart"],
 ];
+
+/**
+ * Nothing in the analytics directory may render a Recharts root without
+ * either naming it or opting out. This is the assertion that would have
+ * caught the two above without anyone thinking to list them.
+ */
+const CHART_ROOT = /<(Bar|Area|Line|Composed|Pie)Chart[\s>]/;
 
 describe("every keyboard-reachable chart is named", () => {
   for (const [file, tag] of CHARTS) {
@@ -50,6 +68,30 @@ describe("every keyboard-reachable chart is named", () => {
       );
     });
   }
+
+  it("no analytics chart is left unnamed and un-opted-out", () => {
+    /* The enumeration above only covers what someone remembered to add.
+       This sweeps the directory, so a new chart cannot arrive unnamed —
+       which is exactly how SplitsBarChart and ElevationProfile sat
+       focusable and anonymous through the sweep that named their five
+       neighbours. */
+    const dir = "src/components/analytics";
+    const offenders = readdirSync(dir)
+      .filter((f) => f.endsWith(".tsx"))
+      .filter((f) => {
+        const src = read(`${dir}/${f}`);
+        if (!CHART_ROOT.test(src)) return false;
+        return (
+          !/aria-label/.test(src) && !/accessibilityLayer=\{false\}/.test(src)
+        );
+      });
+    expect(
+      offenders,
+      "a Recharts root in src/components/analytics with no aria-label and " +
+        'no accessibilityLayer={false} is a focusable role="application" ' +
+        "region that announces nothing"
+    ).toEqual([]);
+  });
 
   it("the running chart's label is its visible caption, not a second name", () => {
     /* A chart called one thing on screen and another to a reader is two
