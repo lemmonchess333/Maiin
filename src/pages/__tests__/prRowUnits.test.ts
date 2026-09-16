@@ -24,6 +24,14 @@ import { fileURLToPath } from "node:url";
  * one pool contains the other. A label may not name a race distance for
  * a figure measured over something else.
  *
+ * A third rule joined them from a capture of the rich account: the two
+ * pace rows were rewritten to sentence case by that second fix and the
+ * distance row was not, so the card rendered one Title-Cased row among
+ * sentence-cased siblings. That is the shape a copy pass leaves behind
+ * when it touches a list one row at a time, and it is worth a rule
+ * because the next row added here will be written by someone reading
+ * whichever sibling they happen to look at.
+ *
  * Scanned rather than rendered because the rows are built inside a
  * `useMemo` in a 1,900-line page; the rule is about what the builder
  * emits, and `buildPRBucket` feeds all three buckets (lifetime, last 30
@@ -48,7 +56,7 @@ describe("PR rows labelled by distance", () => {
     // Without this the sweep passes vacuously the moment the builder is
     // reshaped or the labels are reworded.
     const labels = rows().map((r) => r.label);
-    expect(labels).toEqual(["Best pace", "Best pace · 5K+", "Longest Run"]);
+    expect(labels).toEqual(["Best pace", "Best pace · 5K+", "Longest run"]);
   });
 
   it("every one names its unit in the value", () => {
@@ -92,5 +100,27 @@ describe("PR rows labelled by distance", () => {
         "over it. A trailing '+' reads as a floor on the pool rather " +
         "than a claim about the effort."
     ).toEqual([]);
+  });
+});
+
+describe("PR row labels are sentence case", () => {
+  it("no label Title-Cases a word after the first", () => {
+    /* A capital starting any word but the first. "5K+" does not match —
+       a digit is not [A-Z] — so a distance shorthand stays legal while
+       an ordinary Title-Cased word is caught. */
+    const offenders = rows()
+      .map((r) => r.label)
+      .filter((l) => /\s[A-Z][a-z]/.test(l));
+    expect(
+      offenders,
+      "Title Case in a list whose other rows are sentence case"
+    ).toEqual([]);
+  });
+
+  it("the rule recognises the shape it is written for", () => {
+    // A rule that matched nothing would report a clean list forever.
+    expect(/\s[A-Z][a-z]/.test("Longest Run")).toBe(true);
+    expect(/\s[A-Z][a-z]/.test("Longest run")).toBe(false);
+    expect(/\s[A-Z][a-z]/.test("Best pace · 5K+")).toBe(false);
   });
 });
