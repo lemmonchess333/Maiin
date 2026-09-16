@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync, statSync } from "node:fs";
 
 /**
  * A chart a reader can tab to has to say what it is.
@@ -27,14 +27,44 @@ import { readFileSync } from "node:fs";
  */
 const read = (p: string) => readFileSync(p, "utf8");
 
-/** The five charts that keep Recharts' accessibility layer. */
+/**
+ * Every chart that keeps Recharts' accessibility layer.
+ *
+ * The last two render on the run surfaces (RunSummary, RunDetail) rather
+ * than the Analytics tab, and they are here for the reason the list
+ * exists at all: they live in `src/components/analytics/`, so a reader
+ * of this file would take an enumeration that skipped them as saying the
+ * directory was covered. It was not — both were unnamed until the sweep
+ * that added this comment.
+ */
 const CHARTS: [string, string][] = [
   ["src/components/analytics/VolumeChart.tsx", "<BarChart"],
   ["src/components/analytics/TrainingLoadCard.tsx", "<ComposedChart"],
   ["src/components/analytics/PerformanceIndexChart.tsx", "<AreaChart"],
   ["src/components/run/RunningHistorySection.tsx", "<BarChart"],
   ["src/components/progress/CalorieBalanceChart.tsx", "<BarChart"],
+  ["src/components/analytics/SplitsBarChart.tsx", "<BarChart"],
+  ["src/components/analytics/ElevationProfile.tsx", "<AreaChart"],
+  ["src/components/progress/TrendWeight.tsx", "<ComposedChart"],
 ];
+
+/**
+ * Nothing in the analytics directory may render a Recharts root without
+ * either naming it or opting out. This is the assertion that would have
+ * caught the two above without anyone thinking to list them.
+ */
+const CHART_ROOT = /<(Bar|Area|Line|Composed|Pie|Radar|Scatter)Chart[\s>]/;
+
+/** Every non-test .tsx under a root, recursively. */
+function tsxUnder(dir: string, out: string[] = []): string[] {
+  for (const name of readdirSync(dir)) {
+    if (name === "__tests__" || name === "node_modules") continue;
+    const full = `${dir}/${name}`;
+    if (statSync(full).isDirectory()) tsxUnder(full, out);
+    else if (name.endsWith(".tsx")) out.push(full);
+  }
+  return out;
+}
 
 describe("every keyboard-reachable chart is named", () => {
   for (const [file, tag] of CHARTS) {
@@ -50,6 +80,29 @@ describe("every keyboard-reachable chart is named", () => {
       );
     });
   }
+
+  it("no chart anywhere in src is left unnamed and un-opted-out", () => {
+    /* The enumeration above only covers what someone remembered to add.
+       Two rounds of this sweep prove the point. The first version swept
+       `src/components/analytics` alone and still missed `TrendWeight`,
+       which lives under progress/, renders on the Analytics tab, and was
+       unnamed — a sweep with a directory-shaped hole is the
+       guard-that-looks-like-cover this repo keeps paying for. So it
+       walks every .tsx under src/. */
+    const offenders = tsxUnder("src").filter((f) => {
+      const src = read(f);
+      if (!CHART_ROOT.test(src)) return false;
+      return (
+        !/aria-label/.test(src) && !/accessibilityLayer=\{false\}/.test(src)
+      );
+    });
+    expect(
+      offenders,
+      "a Recharts root with no aria-label and " +
+        'no accessibilityLayer={false} is a focusable role="application" ' +
+        "region that announces nothing"
+    ).toEqual([]);
+  });
 
   it("the running chart's label is its visible caption, not a second name", () => {
     /* A chart called one thing on screen and another to a reader is two
