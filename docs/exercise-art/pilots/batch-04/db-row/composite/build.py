@@ -16,7 +16,8 @@ SOURCES = {
     "../3-mid.png": "9824854faae1272014435f8528fb56a5e52bac0a760e54885d8fa8ac0b1d9b3d",
     "../4-top.png": "ddf95258de771e1e90de7837517d8107c47f209d33e65b5960e3d7d08e0d3ba9",
 }
-ORDER = [0, 1, 2, 3, 2, 1]
+# Reduced-range draft. The former extreme top remains excluded.
+ORDER = [0, 1, 2, 2, 1, 0]
 TRANSLATIONS = [(0, 0), (34, -125), (84, -237), (137, -372)]
 ANCHORS = {
     "head": (260, 0, 445, 225),
@@ -121,8 +122,9 @@ def main():
             "anchorPixelsExact": True, "plateInteriorPixelsExact": True,
         })
     assert np.array_equal(poses[0], master)
-    assert (HERE / "3.png").read_bytes() == (HERE / "5.png").read_bytes()
-    assert (HERE / "2.png").read_bytes() == (HERE / "6.png").read_bytes()
+    assert (HERE / "3.png").read_bytes() == (HERE / "4.png").read_bytes()
+    assert (HERE / "2.png").read_bytes() == (HERE / "5.png").read_bytes()
+    assert (HERE / "1.png").read_bytes() == (HERE / "6.png").read_bytes()
 
     preview = Image.new("RGB", (1536, 724))
     draw = ImageDraw.Draw(preview)
@@ -139,9 +141,14 @@ def main():
         "canonicalLoadBox": box, "anchorRegions": ANCHORS, "plateInteriorRegions": PLATE_INTERIORS,
         "frames": measurements, "masterPixelsExact": True, "loadScaling": 1,
         "farFaceCompletion": "One occluded sector filled once using the master face's median shade; not original pixels.",
+        "selection": "reduced-range-three-pose-draft",
+        "fullRangeEndpointApproved": False,
+        "selectedPoseOrder": ORDER,
+        "selectedLoadRisePixels": [0, 125, 237, 237, 125, 0],
         "strictVisualApproval": False, "sequentialPlaybackVerified": False, "mobileLightDarkVerified": False,
         "limitations": ["Plate interiors prove rigid registration only; outlines are partly occluded.",
                         "Generated shoulder/chest/arm anatomy and hand-to-handle contact still need technique review.",
+                        "This reduced-range sequence does not complete the outstanding full-range endpoint repair.",
                         "Static contact sheets and downloadable animation do not certify the actual mobile player or 6-to-1 loop."],
     }
     (HERE / "measurements.json").write_text(json.dumps(report, indent=2) + "\n")
