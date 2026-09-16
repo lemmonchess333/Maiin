@@ -159,3 +159,28 @@ export function parseLocalDate(s: string): Date {
   const [y, m, d] = s.split("-").map(Number);
   return new Date(y, m - 1, d);
 }
+
+/**
+ * Local midnight of the first day in a rolling window of `days` days
+ * that ENDS TODAY, today included. `rollingWindowStart(7)` is the
+ * Monday of a Sunday, and the window it opens holds seven dates.
+ *
+ * It exists because `days` did not mean `days`. A boundary of
+ * `today - days` against an inclusive comparison opens a window of
+ * `days + 1` dates; keeping a time of day on that boundary drops the
+ * boundary date instead. Analytics had both forms at once, so one range
+ * pill scoped its sections to two different spans. `analyticsWindow
+ * Agreement.test.ts` holds them to one.
+ *
+ * The `+ 1` is the whole point, so it is stated once here rather than
+ * at each call site, where it kept being left out.
+ */
+export function rollingWindowStart(
+  days: number,
+  today: Date = new Date()
+): Date {
+  return addLocalDays(
+    new Date(today.getFullYear(), today.getMonth(), today.getDate()),
+    -(days - 1)
+  );
+}
