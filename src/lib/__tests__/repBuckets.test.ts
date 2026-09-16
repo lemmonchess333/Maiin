@@ -1,111 +1,156 @@
 import { describe, it, expect } from "vitest";
-import { readFileSync } from "node:fs";
-import {
-  REP_BUCKETS,
-  listRepBuckets,
-  emptyRepBucketNote,
-} from "@/lib/repBuckets";
+import { bestSetsByReps, MAX_REP_BUCKETS } from "@/lib/repBuckets";
 
 /**
- * The per-exercise "Personal bests by reps" card, seen with a real
- * training history for the first time.
+ * The "Personal bests by reps" columns are the rep counts this lifter
+ * trains, read off their own sets.
  *
- * It matches EXACTLY — a set counts for a bucket only when its reps
- * equal the bucket — so 1, 3, 5 and 10 are served and 2, 4, 6, 7, 8, 9,
- * 11 and 12 produce nothing. Filmed against the seeded account, whose
- * bench work is eighteen sessions of eights: four em-dashes, under a
- * card reading "Best 1RM 101 kg" that Epley-estimates over EVERY set at
- * any rep count. A confident figure beside four blanks, with nothing on
- * screen to reconcile them.
+ * They were the constant `[1, 3, 5, 10]`, matched exactly, so 2, 4, 6,
+ * 7, 8, 9, 11 and 12 produced nothing — a lifter programming eights saw
+ * four em-dashes for as long as they trained that way, directly beneath
+ * a "Best 1RM" estimate computed from those very sets.
  *
- * Widening the buckets into ranges is NOT the fix and is deliberately
- * not attempted: filing an eight-rep set under "10RM" claims a
- * performance the lifter never gave — the same false-label shape as the
- * running records. What the card owed was an explanation, and a heading
- * that does not promise ranges it never had.
+ * Widening the fixed buckets into ranges was refused: it would file an
+ * eight-rep set under "10RM", claiming a performance the lifter never
+ * gave. Reading the counts off the sets keeps every `{n}RM` label
+ * exactly true and fills the card, which is the option that did not
+ * require choosing between the two.
  */
-describe("listRepBuckets", () => {
-  it("reads as English, from the constant rather than a copy of it", () => {
-    expect(listRepBuckets()).toBe("1, 3, 5 or 10");
-    // Built from REP_BUCKETS, so the sentence cannot drift from the row
-    // it describes. Adding a bucket must change the copy.
-    expect(listRepBuckets([1, 3, 5, 8, 10])).toBe("1, 3, 5, 8 or 10");
-  });
 
-  it("degrades for the short cases rather than emitting a stray 'or'", () => {
-    expect(listRepBuckets([5])).toBe("5");
-    expect(listRepBuckets([3, 5])).toBe("3 or 5");
-    expect(listRepBuckets([])).toBe("");
-  });
+const s = (date: string, sets: [number, number][]) => ({
+  date,
+  sets: sets.map(([reps, weightKg]) => ({ reps, weightKg })),
 });
 
-describe("emptyRepBucketNote", () => {
-  it("says nothing once any bucket has a record", () => {
-    // The figures speak for themselves; a note beside them is noise.
-    expect(
-      emptyRepBucketNote({ hasAnyBucketRecord: true, isBodyweight: false })
-    ).toBeNull();
-    expect(
-      emptyRepBucketNote({ hasAnyBucketRecord: true, isBodyweight: true })
-    ).toBeNull();
+describe("bestSetsByReps", () => {
+  it("serves a lifter who only ever does eights", () => {
+    /* The headline case. Under the fixed buckets this returned nothing
+       at all — four blanks, forever. */
+    const out = bestSetsByReps([
+      s("2026-09-01", [[8, 60]]),
+      s("2026-09-08", [[8, 65]]),
+    ]);
+    expect(out).toEqual([{ reps: 8, weightKg: 65, date: "2026-09-08" }]);
   });
 
-  it("names the counts that fill the row in, and reconciles the estimate", () => {
-    const note = emptyRepBucketNote({
-      hasAnyBucketRecord: false,
-      isBodyweight: false,
-    });
-    expect(note).toBe(
-      "No sets at 1, 3, 5 or 10 reps yet. The 1RM estimate above reads " +
-        "every set, whatever the rep count."
+  it("keeps the heaviest set at each rep count", () => {
+    const out = bestSetsByReps([
+      s("2026-09-01", [
+        [5, 100],
+        [5, 90],
+      ]),
+    ]);
+    expect(out).toEqual([{ reps: 5, weightKg: 100, date: "2026-09-01" }]);
+  });
+
+  it("returns ascending by reps, so the row runs heavy to light", () => {
+    const out = bestSetsByReps([
+      s("2026-09-01", [
+        [10, 50],
+        [3, 90],
+        [8, 60],
+        [5, 80],
+      ]),
+    ]);
+    expect(out.map((r) => r.reps)).toEqual([3, 5, 8, 10]);
+  });
+
+  it("picks the MOST-TRAINED counts when there are more than fit", () => {
+    /* Programming, not outliers: a single curiosity double must not
+       displace a rep count the lifter runs every week. */
+    const out = bestSetsByReps([
+      s("2026-09-01", [
+        [2, 120],
+        [5, 100],
+        [5, 100],
+        [8, 70],
+        [8, 70],
+        [8, 70],
+        [10, 60],
+        [10, 60],
+        [12, 50],
+        [12, 50],
+        [12, 50],
+        [12, 50],
+      ]),
+    ]);
+    expect(out.map((r) => r.reps)).toEqual([5, 8, 10, 12]);
+    expect(out.map((r) => r.reps)).not.toContain(2);
+  });
+
+  it("never returns more columns than the grid has", () => {
+    const sets = Array.from(
+      { length: 12 },
+      (_, i) => [i + 1, 100 - i] as [number, number]
+    );
+    expect(bestSetsByReps([s("2026-09-01", sets)])).toHaveLength(
+      MAX_REP_BUCKETS
     );
   });
 
-  it("drops the second sentence for bodyweight, which shows no 1RM", () => {
-    // That branch's header stat is not an estimate, so the
-    // reconciliation would point at a number the reader cannot see.
-    const note = emptyRepBucketNote({
-      hasAnyBucketRecord: false,
-      isBodyweight: true,
-    });
-    expect(note).toBe("No sets at 1, 3, 5 or 10 reps yet.");
-    expect(note).not.toMatch(/1RM/);
+  it("breaks a tie towards the lower rep count", () => {
+    // Deterministic, and leans the card to the heavier end.
+    const out = bestSetsByReps(
+      [
+        s("2026-09-01", [
+          [3, 90],
+          [12, 40],
+        ]),
+      ],
+      1
+    );
+    expect(out.map((r) => r.reps)).toEqual([3]);
   });
 
-  it("keeps the house register", () => {
-    const note = emptyRepBucketNote({
-      hasAnyBucketRecord: false,
-      isBodyweight: false,
-    })!;
-    expect(note).not.toMatch(/!/);
-    // No motivational tail glued onto the explanation.
-    expect(note).not.toMatch(/keep|journey|unlock|crush/i);
-  });
-});
-
-describe("the page renders it", () => {
-  /* The helper is pure and the card is inside a route page that needs
-     params, auth and Firestore to mount — so this scans for the wiring
-     rather than rendering it. Without it every assertion above is a
-     claim about a function nothing calls. */
-  const page = readFileSync("src/pages/ExerciseHistory.tsx", "utf8");
-
-  it("calls the helper and renders its result", () => {
-    expect(page).toMatch(/emptyRepBucketNote\(/);
-    expect(page).toMatch(/\{repBucketNote\}/);
+  it("dates a repeated best to the FIRST time it was reached", () => {
+    /* Matching a best does not reset its date — that is when you did it.
+       The comparison has to be strictly greater, not >=. */
+    const out = bestSetsByReps([
+      s("2026-09-01", [[5, 100]]),
+      s("2026-09-08", [[5, 100]]),
+    ]);
+    expect(out[0].date).toBe("2026-09-01");
   });
 
-  it("no longer promises ranges it never had", () => {
-    /* A set counts only when `set.reps === bucket`, so "Rep-range PRs"
-       described something the code does not do. */
-    expect(page).not.toMatch(/Rep-range PRs/);
-    expect(page).toMatch(/Personal bests by reps/);
+  it("dates the session that set the record, not the latest session", () => {
+    const out = bestSetsByReps([
+      s("2026-09-01", [[5, 100]]),
+      s("2026-09-08", [[5, 80]]),
+    ]);
+    expect(out[0].date).toBe("2026-09-01");
   });
 
-  it("keeps the exact-match rule this note exists to explain", () => {
-    // If the buckets ever become ranges, the note's wording is wrong and
-    // this test should be the thing that says so.
-    expect(page).toMatch(/set\.reps !== bucket/);
-    expect(REP_BUCKETS).toEqual([1, 3, 5, 10]);
+  it("keeps a bodyweight record at zero added weight", () => {
+    // The card renders this as "BW" — it must not be mistaken for absent.
+    const out = bestSetsByReps([s("2026-09-01", [[12, 0]])]);
+    expect(out).toEqual([{ reps: 12, weightKg: 0, date: "2026-09-01" }]);
+  });
+
+  it("ignores sets with no usable rep count", () => {
+    const out = bestSetsByReps([
+      s("2026-09-01", [
+        [0, 100],
+        [-1, 100],
+        [5, 80],
+      ]),
+    ]);
+    expect(out.map((r) => r.reps)).toEqual([5]);
+  });
+
+  it("returns nothing for a lifter with no sets", () => {
+    expect(bestSetsByReps([])).toEqual([]);
+    expect(bestSetsByReps([s("2026-09-01", [])])).toEqual([]);
+  });
+
+  it("is NOT the old fixed set", () => {
+    /* The regression this exists to stop: hard-coding the columns again
+       would return 1/3/5/10 for a lifter who trains none of them. */
+    const out = bestSetsByReps([
+      s("2026-09-01", [
+        [6, 80],
+        [7, 75],
+      ]),
+    ]);
+    expect(out.map((r) => r.reps)).toEqual([6, 7]);
   });
 });

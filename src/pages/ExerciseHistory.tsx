@@ -14,7 +14,7 @@ import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { localDateString, parseLocalDate } from "@/lib/dateHelpers";
 import { isTimedExerciseId } from "@/features/program/repUnits";
-import { REP_BUCKETS, emptyRepBucketNote } from "@/lib/repBuckets";
+import { bestSetsByReps } from "@/lib/repBuckets";
 
 const ExerciseProgressChart = lazyRetry(
   () => import("@/components/analytics/ExerciseProgressChart")
@@ -160,31 +160,7 @@ export default function ExerciseHistory() {
   // (e.g. weighted pull-ups stored as `weightKg = 10` for +10 kg);
   // pure BW sessions store `weightKg = 0` and just show "BW" with the
   // most recent date that achieved exactly that rep count.
-  const repRangePRs = useMemo(() => {
-    const map: Record<number, { weightKg: number; date: string } | null> = {};
-    for (const bucket of REP_BUCKETS) map[bucket] = null;
-    for (const s of allSessions) {
-      for (const set of s.sets) {
-        for (const bucket of REP_BUCKETS) {
-          if (set.reps !== bucket) continue;
-          const existing = map[bucket];
-          if (!existing || set.weightKg > existing.weightKg) {
-            map[bucket] = { weightKg: set.weightKg, date: s.date };
-          }
-        }
-      }
-    }
-    return map;
-  }, [allSessions]);
-
-  const repBucketNote = useMemo(
-    () =>
-      emptyRepBucketNote({
-        hasAnyBucketRecord: REP_BUCKETS.some((b) => repRangePRs[b] !== null),
-        isBodyweight,
-      }),
-    [repRangePRs, isBodyweight]
-  );
+  const repRangePRs = useMemo(() => bestSetsByReps(allSessions), [allSessions]);
 
   // Walk sessions chronologically tracking running best. Flag each session
   // whose top-set e1rm beats the previous running best — these get a
@@ -452,43 +428,30 @@ export default function ExerciseHistory() {
                   Personal bests by reps
                 </h3>
               </div>
+              {/* The columns are the rep counts THIS lifter trains, so
+                  every one carries a record and the em-dash branch is
+                  gone. A fixed 1/3/5/10 left someone programming eights
+                  looking at four blanks. */}
               <div className="grid grid-cols-4 gap-2">
-                {REP_BUCKETS.map((b) => {
-                  const pr = repRangePRs[b];
-                  return (
-                    <div key={b} className="text-center">
-                      <SectionLabel tier="section">{b}RM</SectionLabel>
-                      <p className="text-sm font-bold font-mono tabular-nums text-foreground mt-0.5">
-                        {pr
-                          ? isBodyweight && pr.weightKg === 0
-                            ? "BW"
-                            : `${pr.weightKg}`
-                          : "—"}
-                        {pr && pr.weightKg > 0 && !isBodyweight && (
-                          <span className="text-caption font-normal text-muted-foreground ml-0.5">
-                            kg
-                          </span>
-                        )}
-                      </p>
-                      {pr && (
-                        <p className="text-caption text-muted-foreground mt-0.5">
-                          {formatDayMonth(parseLocalDate(pr.date))}
-                        </p>
+                {repRangePRs.map((pr) => (
+                  <div key={pr.reps} className="text-center">
+                    <SectionLabel tier="section">{pr.reps}RM</SectionLabel>
+                    <p className="text-sm font-bold font-mono tabular-nums text-foreground mt-0.5">
+                      {isBodyweight && pr.weightKg === 0
+                        ? "BW"
+                        : `${pr.weightKg}`}
+                      {pr.weightKg > 0 && !isBodyweight && (
+                        <span className="text-caption font-normal text-muted-foreground ml-0.5">
+                          kg
+                        </span>
                       )}
-                    </div>
-                  );
-                })}
+                    </p>
+                    <p className="text-caption text-muted-foreground mt-0.5">
+                      {formatDayMonth(parseLocalDate(pr.date))}
+                    </p>
+                  </div>
+                ))}
               </div>
-              {/* Four em-dashes and no explanation is what a lifter
-                  programming eights sees forever, directly under a
-                  confident "Best 1RM 101 kg" taken from those very
-                  sets. Say which counts fill this in, and reconcile it
-                  with the estimate above. */}
-              {repBucketNote && (
-                <p className="text-caption text-muted-foreground">
-                  {repBucketNote}
-                </p>
-              )}
             </div>
           )}
 
