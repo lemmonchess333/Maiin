@@ -11,6 +11,14 @@ const targets = new Set([
 ]);
 const sets = batch.completeDraftSets.filter((set) => targets.has(set.exerciseId));
 if (sets.length !== targets.size) throw new Error("Missing exact exercise review target");
+// Independent source pins: the same incorrect pose at both ends must fail.
+const endpointHashes: Record<string, string> = {
+  "db-row": "d39a9faaa0f6a9de3ec516f1b42f594fd64d555aa8aa36994d17a782344d4aec",
+  "db-shoulder-press": "99b3565ba45ba0b0ec02cf3354451871c87425e19f9771c3f2e1e1b9b09ba8aa",
+  "incline-db-press": "767371f8698295af102eb45c1e3bc8dbff6509ab99dc6ca89f7034db2251e059",
+  "romanian-deadlift": "4c8cf219385b9c11d0916c3f38891cae6438a5c116584eb9564551ecfb304f60",
+  "lat-pulldown": "7b4e90ae31ef44458ca26a31b49898a5bcee2a5f2783bd47dd396687621f4242",
+};
 
 async function localOnly(page: Page) {
   await page.route("**/*", (route) => {
@@ -47,7 +55,8 @@ for (const set of sets) {
           .toBe(darkBackground);
       }
       const image = guide.locator('img[aria-hidden="false"]');
-      let uprightPixels: Buffer | undefined;
+      let startPixels: Buffer | undefined;
+      let rowHoldPixels: Buffer | undefined;
       for (const [index, frame] of set.frames.entries()) {
         await expect(image).toHaveAttribute("src", `/${frame.path}`);
         await expect.poll(() => image.evaluate((node) => {
@@ -56,14 +65,23 @@ for (const set of sets) {
         })).toEqual(frame.dimensions);
         await expect(guide.locator("p[aria-live]")).toContainText(`${index + 1}/6`);
         await expect(page.locator('button[aria-current="step"]')).toContainText(frame.cue);
-        // Compare the displayed pose, not a cue merely claiming to stand tall.
-        if (set.exerciseId === "romanian-deadlift" && index === 0)
-          uprightPixels = await image.screenshot();
-        if (set.exerciseId === "romanian-deadlift" && index === 5) {
-          expect(frame.sha256).toBe("4c8cf219385b9c11d0916c3f38891cae6438a5c116584eb9564551ecfb304f60");
+        // Compare displayed pixels, not a label claiming to reach the endpoint.
+        if (index === 0) {
+          expect(frame.sha256).toBe(endpointHashes[set.exerciseId]);
+          startPixels = await image.screenshot();
+        }
+        if (index === 5) {
+          expect(frame.sha256).toBe(endpointHashes[set.exerciseId]);
           expect(frame.progress).toBe(0);
-          expect(uprightPixels).toBeDefined();
-          expect((await image.screenshot()).equals(uprightPixels!)).toBe(true);
+          expect(startPixels).toBeDefined();
+          expect((await image.screenshot()).equals(startPixels!)).toBe(true);
+        }
+        if (set.exerciseId === "db-row" && index === 2)
+          rowHoldPixels = await image.screenshot();
+        if (set.exerciseId === "db-row" && index === 3) {
+          expect(frame.sha256).toBe("69cdbe337e0458c373d9c819f2ceaeb6536329eec1df24bdaf342a83973e7d96");
+          expect(rowHoldPixels).toBeDefined();
+          expect((await image.screenshot()).equals(rowHoldPixels!)).toBe(true);
         }
         await guide.screenshot({ path: info.outputPath(`${theme}-${index + 1}.png`) });
         if (index === 0) await page.screenshot({ path: info.outputPath(`${theme}-page.png`), fullPage: true });
