@@ -59,6 +59,7 @@ import HistoryOfflineBanner from "@/components/analytics/HistoryOfflineBanner";
    below where it would have rendered. */
 import { granularityForRange, binKeyForDate } from "@/lib/chartGranularity";
 import { getWeeklyRunTarget } from "@/lib/scheduleUtils";
+import { selectRunRecords } from "@/lib/runRecordSelection";
 import {
   localWeekKey,
   startOfLocalWeek,
@@ -692,20 +693,15 @@ export default function History() {
       pool: typeof paceEligible,
       includeLongest: boolean
     ) => {
-      const runs1k = pool.filter((r) => r.distance >= 1000);
-      const best1k = runs1k.length
-        ? runs1k.reduce((best, r) => (r.avgPace < best.avgPace ? r : best))
-        : null;
-
-      const runs5k = pool.filter((r) => r.distance >= 5000);
-      const best5k = runs5k.length
-        ? runs5k.reduce((best, r) => (r.avgPace < best.avgPace ? r : best))
-        : null;
-
-      const longest =
-        includeLongest && pool.length
-          ? pool.reduce((best, r) => (r.distance > best.distance ? r : best))
-          : null;
+      /* Selection lives in `selectRunRecords` so it can be tested. The
+         rule that matters is not the two floors but what they imply:
+         the 5 km pool is a SUBSET of the 1 km one, so the helper returns
+         the sustained record only when a different run holds it. */
+      const {
+        bestPace: best1k,
+        bestSustainedPace: best5k,
+        longest,
+      } = selectRunRecords(pool, { includeLongest });
 
       const cards: Array<{
         label: string;
@@ -743,15 +739,25 @@ export default function History() {
           date: best1k ? fmtDate(best1k.completedAt) : "",
           isNew: best1k ? best1k.completedAt >= sevenDaysAgo : false,
         },
-        {
-          label: "Best pace · 5K+",
-          value: best5k
-            ? `${paceMinSec(best5k.avgPace, unit)} ${paceUnitLabel(unit)}`
-            : "--",
-          date: best5k ? fmtDate(best5k.completedAt) : "",
-          isNew: best5k ? best5k.completedAt >= sevenDaysAgo : false,
-        },
       ];
+      /* The sustained-distance row, and ONLY when it is a different run.
+         `runs5k` is a subset of `runs1k`, so the two rows carry the same
+         figure and the same date whenever the best-paced run was already
+         5 km or longer — which for most runners is most of the time. Two
+         rows saying one thing under two headings reads as a bug, and it
+         is what the filmed rich-history capture showed.
+
+         It still earns its place when a short blast holds the overall
+         record: then "5:32" over 1.2 km and "5:58" over 10 km are two
+         genuinely different facts about the same runner. */
+      if (best5k && best5k !== best1k) {
+        cards.push({
+          label: "Best pace · 5K+",
+          value: `${paceMinSec(best5k.avgPace, unit)} ${paceUnitLabel(unit)}`,
+          date: fmtDate(best5k.completedAt),
+          isNew: best5k.completedAt >= sevenDaysAgo,
+        });
+      }
       if (includeLongest) {
         cards.push({
           /* Sentence case, like the two rows above it. The pace labels
