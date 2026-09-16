@@ -16,6 +16,15 @@ interface PeriodOverviewProps {
    *  and read as "calories eaten"). */
   avgCalories: number;
   nutritionAdherence: number;
+  /**
+   * The user's own weekly training targets, prorated by the range below.
+   * `0` or absent means they have set none — a freeform runner has no run
+   * plan, and a run-only athlete has no lift days — and the ring then
+   * draws its track with no progress arc rather than inventing a figure
+   * to be a fraction of.
+   */
+  weeklyLiftTarget?: number;
+  weeklyRunTarget?: number;
   timeRange?: string;
   /** Range size in days, used to scale ring targets with timeframe so
    *  the rings don't always max out beyond 1W. */
@@ -35,7 +44,11 @@ function Ring({
 }) {
   const r = size / 2 - 5;
   const circ = 2 * Math.PI * r;
-  const pct = Math.min(value / Math.max(max, 1), 1);
+  /* `max === 0` is "no target set", which is different from "target not
+     yet met" — there is no fraction to draw, so the arc is omitted and
+     the track stands alone. The count below the ring still reads. */
+  const hasTarget = max > 0;
+  const pct = hasTarget ? Math.min(value / max, 1) : 0;
   return (
     <svg width={size} height={size} style={{ transform: "rotate(-90deg)" }}>
       <circle
@@ -46,16 +59,18 @@ function Ring({
         stroke={`${color}33`}
         strokeWidth="4"
       />
-      <circle
-        cx={size / 2}
-        cy={size / 2}
-        r={r}
-        fill="none"
-        stroke={color}
-        strokeWidth="4"
-        strokeDasharray={`${circ * pct} ${circ}`}
-        strokeLinecap="round"
-      />
+      {hasTarget && (
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={r}
+          fill="none"
+          stroke={color}
+          strokeWidth="4"
+          strokeDasharray={`${circ * pct} ${circ}`}
+          strokeLinecap="round"
+        />
+      )}
     </svg>
   );
 }
@@ -74,6 +89,8 @@ export default function PeriodOverview({
   liftVolume,
   avgCalories,
   nutritionAdherence,
+  weeklyLiftTarget,
+  weeklyRunTarget,
   timeRange,
   rangeDays,
 }: PeriodOverviewProps) {
@@ -105,13 +122,25 @@ export default function PeriodOverview({
               ? "Last 12 months"
               : "Last 7 days";
 
-  // Targets prorated from a 5/week aspirational rate. Keeping the ring
-  // hardcoded at max=5 meant any range longer than 1W maxed out the
-  // ring on the first ~5 sessions/runs and stayed full for the rest of
-  // the period — a meaningless visualisation. Scaling with rangeDays
-  // gives the ring a real proportional fill at every range.
-  const sessionsTarget = Math.max(1, Math.round(5 * (rangeDays / 7)));
-  const runsTarget = Math.max(1, Math.round(5 * (rangeDays / 7)));
+  /* The user's OWN weekly targets, prorated across the range — not an
+     aspirational 5/week the app picked for them.
+
+     Five was wrong in both directions and quietly. A three-day lifter
+     hitting every session read 60% full, so the surface most likely to
+     say "you are on plan" told them they were behind; a freeform runner,
+     who has no run plan at all, was measured against five runs a week
+     they never agreed to. Both numbers are on the profile already —
+     `daysPerWeek` is what onboarding asked, and `getWeeklyRunTarget` is
+     the canonical run resolver whose default is 0 for exactly this
+     reason.
+
+     A target of 0 is a real answer, not a missing one, so the ring shows
+     its track and no arc. `Math.max(1, …)` would have turned "no plan"
+     into "one per week" and filled the ring on the first session. */
+  const proRate = (perWeek: number) =>
+    perWeek > 0 ? Math.max(1, Math.round(perWeek * (rangeDays / 7))) : 0;
+  const sessionsTarget = proRate(weeklyLiftTarget ?? 0);
+  const runsTarget = proRate(weeklyRunTarget ?? 0);
 
   const stats = [
     {
