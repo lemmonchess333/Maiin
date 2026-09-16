@@ -1,0 +1,35 @@
+name: Arnold image transfer verification
+on:
+  push:
+    branches: [codex/arnold-press-existing-frames]
+    paths: [.github/workflows/arnold-image-transfer.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify-transfer:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Read and verify uploaded candidate blobs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 - <<'PY'
+          import base64, hashlib, json, os, pathlib, urllib.request
+          root = pathlib.Path('transferred'); root.mkdir()
+          shas = ['c448cf389b0de70b76c784febbefab012e2fcf1f', '3d96d8ded1f2d1935a1c5e81997498d0a4bb59ae']
+          for sha in shas:
+              req = urllib.request.Request('https://api.github.com/repos/lemmonchess333/Maiin/git/blobs/' + sha, headers={'Authorization': 'Bearer ' + os.environ['GH_TOKEN'], 'Accept': 'application/vnd.github+json'})
+              with urllib.request.urlopen(req, timeout=30) as response: item = json.load(response)
+              data = base64.b64decode(item['content'])
+              actual = hashlib.sha1(('blob ' + str(len(data)) + '\0').encode() + data).hexdigest()
+              assert actual == sha, 'Git transport integrity mismatch'
+              (root / (sha + '.webp')).write_bytes(data)
+              print(json.dumps({'sha': sha, 'bytes': len(data), 'sha256': hashlib.sha256(data).hexdigest()}))
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: arnold-image-transfer
+          path: transferred/
+          retention-days: 7
