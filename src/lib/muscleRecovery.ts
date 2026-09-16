@@ -169,7 +169,11 @@ const HEAT_MAP_GROUP_MUSCLES: Record<string, CanonicalMuscle[]> = {
   Triceps: ["Triceps"],
   Legs: ["Quads", "Hamstrings", "Glutes", "Calves"],
   Core: ["Core"],
-  // Legacy alias rows (CATEGORY_DISPLAY translations of old workout docs).
+  // The CATEGORY_DISPLAY route — the movement keys a saved workout
+  // stores, and the only route a CUSTOM exercise takes. Not legacy, and
+  // not old documents; this line said both until the header above was
+  // written to correct exactly that, and a reader trimming dead rows
+  // reads the comment ON the table, not the paragraph over it.
   "Quads & Glutes": ["Quads", "Glutes"],
   "Hamstrings & Back": ["Hamstrings", "Back"],
   Lats: ["Back"],
