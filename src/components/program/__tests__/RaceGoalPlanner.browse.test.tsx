@@ -53,6 +53,21 @@ describe("race picker browsing", () => {
     expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
     expect(handlers.onDistanceChange).not.toHaveBeenCalled();
   });
+  it("selects Tokyo through the new Japan filter without changing the existing goal first", () => {
+    const handlers = callbacks();
+    render(<RaceGoalPlanner {...base} {...handlers} />);
+    fireEvent.click(screen.getByRole("button", { name: "Boston Marathon" }));
+    fireEvent.change(screen.getByLabelText("Country"), {
+      target: { value: "JP" },
+    });
+    expect(screen.getByLabelText("Target date")).toHaveValue("2027-04-19");
+    expect(handlers.onPickRace).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("option", { name: /Tokyo Marathon/ }));
+    expect(handlers.onPickRace).toHaveBeenCalledWith(
+      spaceDef("tokyo-marathon")
+    );
+    expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
+  });
   it("keeps manual entry available when the chosen distance has no catalogue races", () => {
     const handlers = callbacks();
     render(

@@ -26,8 +26,8 @@ const { SPACE_IDS } = require("./spaceIds");
 /** Race-kind space ids — the subset of SPACE_IDS whose prompts should
  *  speak to race prep. Kept HERE (single server source) rather than
  *  mirrored from the client kind field; membership in SPACE_IDS is
- *  already pinned three-way by spaceDefs.test.ts, and a race id missing
- *  from this set degrades to the general bank — never a crash. */
+ *  already pinned three-way by spaceDefs.test.ts. That test also pins
+ *  this race subset so new marathons receive race-preparation prompts. */
 const RACE_SPACE_IDS = Object.freeze(
   new Set([
     "london-marathon",
@@ -42,6 +42,36 @@ const RACE_SPACE_IDS = Object.freeze(
     "great-birmingham-run",
     "great-manchester-run",
     "leeds-10k",
+    "yorkshire-marathon",
+    "chester-marathon",
+    "loch-ness-marathon",
+    "newport-marathon",
+    "belfast-marathon",
+    "leeds-marathon",
+    "milton-keynes-marathon",
+    "southampton-marathon",
+    "new-york-city-marathon",
+    "chicago-marathon",
+    "boston-marathon",
+    "paris-marathon",
+    "berlin-marathon",
+    "dublin-marathon",
+    "richmond-marathon",
+    "eryri-marathon",
+    "windermere-marathon",
+    "shakespeare-marathon",
+    "portsmouth-marathon",
+    "wales-marathon",
+    "tokyo-marathon",
+    "sydney-marathon",
+    "valencia-marathon",
+    "amsterdam-marathon",
+    "rotterdam-marathon",
+    "rome-marathon",
+    "barcelona-marathon",
+    "seville-marathon",
+    "cape-town-marathon",
+    "nice-cannes-marathon",
   ])
 );
 

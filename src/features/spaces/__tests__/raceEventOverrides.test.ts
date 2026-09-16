@@ -131,3 +131,19 @@ it("validates country codes and retains bundled countries for older remote paylo
     })?.countryCode
   ).toBe("US");
 });
+
+it("accepts synced event metadata for every newly supported country", () => {
+  for (const id of [
+    "tokyo-marathon",
+    "sydney-marathon",
+    "cape-town-marathon",
+    "rome-marathon",
+    "rotterdam-marathon",
+    "valencia-marathon",
+  ]) {
+    const event = spaceDef(id)!.event!;
+    const safe = sanitizeRaceEventOverrides({ [id]: event });
+    expect(safe[id]?.countryCode).toBe(event.countryCode);
+    expect(safe[id]?.dateKey).toBe(event.dateKey);
+  }
+});
