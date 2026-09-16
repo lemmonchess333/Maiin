@@ -58,6 +58,7 @@ import HistoryOfflineBanner from "@/components/analytics/HistoryOfflineBanner";
 /* AnalyticsAnchorChips removed PR 7b follow-up — see note inline
    below where it would have rendered. */
 import { granularityForRange, binKeyForDate } from "@/lib/chartGranularity";
+import { getWeeklyRunTarget } from "@/lib/scheduleUtils";
 import {
   localWeekKey,
   startOfLocalWeek,
@@ -1430,6 +1431,14 @@ export default function History() {
                     liftVolume={liftingData.liftVolume}
                     avgCalories={nutrition.avgCalories}
                     nutritionAdherence={nutrition.adherence}
+                    /* The user's own weekly targets. `daysPerWeek` is what
+                       onboarding asked for and, capped at 6, is never
+                       reshaped by the engine's 7-day cap — so requested and
+                       actual agree. The run side goes through the canonical
+                       resolver rather than reading either of the two drifted
+                       profile fields directly. */
+                    weeklyLiftTarget={profile?.daysPerWeek ?? 0}
+                    weeklyRunTarget={getWeeklyRunTarget(profile)}
                     timeRange={timeRange}
                     rangeDays={rangeDays}
                   />
