@@ -1,63 +1,61 @@
-# Dumbbell row draft repair
+# Row controlled-endpoint candidate
 
-These six separate 1536 × 1024 PNGs replace the selected draft sequence.
-They remain inactive: generated anatomy, contact and mobile player review
-are unresolved. No production artwork registration changes here.
+The selected six-frame row remains an **inactive, reduced-range draft**.
+It is not a finished full-range guide or a strict anatomy approval.
 
-The earlier first pull rose about 205 pixels, almost reaching the middle
-pose. The recovered early source gives a distinct 125-pixel rise. The four
-selected load positions rise 0, 125, 237 and 372 pixels, followed by the
-middle and early poses on the return. Frame 6 still returns to the full
-hang at the loop boundary; this is not a certified seamless animation.
+## Selection change, 16 September 2026
 
-## Reproduction
+The former extreme top image is no longer selected. It showed substantially
+more shoulder elevation and chest exposure than the preceding images.
+Its exact bytes are preserved in `rejected-twisted-top.png`. The former
+contact sheet and animation are preserved as `legacy-sequence-preview.jpg`
+and `legacy-sequence-preview.webp`; they are not previews of the current
+selection.
+
+The current order uses the original setup, early and middle source poses:
+
+1. Setup and hang.
+2. Begin pulling.
+3. Conservative endpoint.
+4. Brief hold at that same endpoint.
+5. Controlled lower through the early position.
+6. Return to the original full hang.
+
+There are six separate native 1536 by 1024 PNG paths, but three distinct
+positions. Load rise is 0, 125, 237, 237, 125 and 0 pixels. This is a
+shorter demonstrated range than the old 372-pixel extreme. The cue wording
+no longer claims that the elbow passes the ribs or the weight reaches the
+hip. A corrected full-range endpoint still needs to be produced and reviewed.
+
+No new generated pixels, resizing, warping or colour changes enter this
+selection. The first three PNGs are unchanged. Frames 4, 5 and 6 are exact
+copies of 3, 2 and 1 respectively. The 6-to-1 pose does not jump.
+
+## Reproduction and measured scope
 
 Run `python3 docs/exercise-art/pilots/batch-04/db-row/composite/build.py`
-from the repository root with Pillow, NumPy and SciPy installed. The script
-pins all four native source hashes, builds each frame independently, verifies
-the encoded PNG pixels and writes them atomically. It then creates the
-comparison and animation previews from those frames. No deliverable frame
-is cropped or enlarged from a contact sheet.
+with Pillow, NumPy and SciPy. Both the old and revised builder were executed
+locally: the old builder reproduced all six original PNG hashes, and the
+revised builder reproduced the selected three-pose sequence byte-for-byte.
+The source hashes, fixed scene-region checks and canonical dumbbell
+construction are unchanged. The old top source still supplies the small
+unoccluded bench patch behind the hanging arm; its body pose is not selected.
 
-The master supplies the fixed scene. A small unoccluded bench patch from the
-top source fills the area behind the hanging forearm. Only the working
-shoulder, chest and arm region uses the generated poses. The head, support
-hand, supported lower leg/shoe, standing shoe and named bench regions retain
-the master's pixels exactly.
+The revised builder writes current local comparison/animation previews and
+`measurements.json`. The committed legacy previews remain historical only.
+The account-free real player reads the selected files and cues from
+`BATCH_REVIEW_MANIFEST.json`.
 
-One master dumbbell layer is translated by integer offsets, without scaling
-or rotation: `(0, 0)`, `(34, -125)`, `(84, -237)`, `(137, -372)`, then the
-middle and early offsets again. The near plate sits in front of the hand;
-the far plate and handle respect body occlusion. One far-face sector hidden
-by the original hand is completed once with the face's median shade, then
-reused. That reconstructed sector is not original source detail. Interior
-patches on both plate faces remain pixel-identical under each translation;
-this does not establish correct fingers or full equipment outlines where
-the body occludes them.
-
-## Provenance and remaining review
-
-The original early source was generated with the built-in image tool using
-the master and an annotated joint guide. It survived workspace maintenance
-and was recovered byte-for-byte; `generation.json` records its identity and
-the retained guide measurements. The prior local builder and metadata did
-not survive, so this implementation was reconstructed from the recorded
-method and verified again against current main. It is not represented as
-the lost commit's exact bytes or the original prompt's verbatim text.
-
-The guide requested about 90 pixels of lift; the generated pose instead
-registers at 125 pixels. It is selected for improved spacing, not claimed
-to obey the guide exactly. Static six-frame and grip-region inspections are
-complete. Shoulder excursion, chest exposure, projected arm lengths and
-hand/handle occlusion still need technique review. Fixed scene pixels do
-not prove a motionless torso.
+Named head, support-hand, supported-leg/shoe, standing-shoe and bench
+regions match the master pixels. The canonical dumbbell's sampled plate
+interiors remain rigid translations. These checks do not establish correct
+finger anatomy, full equipment outlines, a motionless torso or a suitable
+full range. Retained shoulder/chest projection and arm/grip anatomy still
+need technique review. Browser checks must be rerun on the exact changed
+head, and are not physical-device approval.
 
 [ACE's single-arm row](https://www.acefitness.org/resources/everyone/exercise-library/126/single-arm-row/)
-supports same-side hand/knee support and stable spinal alignment, with the
-pull ending before torso rotation is needed. The cue text describes that
-intent; it does not approve the generated motion.
+describes ending the pull before rotating the torso. That informs the cue
+intent; it does not certify the generated artwork or this candidate's range.
 
-Actual sequential playback, including 6→1, at mobile sizes in both light
-and dark themes remains unverified. `sequence-preview.webp` is a downloadable
-review aid, not evidence from the app's player. Strict visual approval stays
-false until those reviews and the remaining technique findings are resolved.
+Production registrations and all release gates are unchanged. Refs #2333.
