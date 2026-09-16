@@ -63,6 +63,8 @@ import {
   startOfLocalWeek,
   localDateString,
   parseLocalDate,
+  rollingWindowStart,
+  addLocalDays,
 } from "@/lib/dateHelpers";
 import {
   computeMuscleRecovery,
@@ -615,8 +617,7 @@ export default function History() {
     }
     const allWeekKeys: string[] = [];
     {
-      const since = new Date();
-      since.setDate(since.getDate() - rangeDays);
+      const since = rollingWindowStart(rangeDays);
       // Both ends through the shared anchor. The comment below has always
       // said the axis MUST agree with the data's week helper; deriving the
       // boundary by hand made that a promise rather than a fact.
@@ -792,13 +793,15 @@ export default function History() {
   }, [workouts]);
 
   const liftingData = useMemo(() => {
-    const since = new Date();
-    since.setDate(since.getDate() - rangeDays);
+    /* `rollingWindowStart`, not a hand-rolled `today - rangeDays`. The
+       hand-rolled form opens a window of rangeDays + 1 DATES, because the
+       comparison below is inclusive — one date wider than the nutrition
+       block and than the span adherence divides by. */
+    const since = rollingWindowStart(rangeDays);
     // Previous comparable period: the same span of days immediately before
     // `since`. Used for ↑/↓ delta badges on stat cards — matches the
     // Whoop / Apple Fitness convention of "this period vs. last period."
-    const prevSince = new Date(since);
-    prevSince.setDate(prevSince.getDate() - rangeDays);
+    const prevSince = rollingWindowStart(rangeDays, addLocalDays(since, -1));
 
     // w.date is a LOCAL "YYYY-MM-DD" string; `new Date("YYYY-MM-DD")`
     // parses as UTC midnight and shifts the boundary day in negative-
@@ -1071,10 +1074,12 @@ export default function History() {
   }, [workouts, rangeDays]);
 
   const nutrition = useMemo(() => {
-    const since = new Date();
-    since.setDate(since.getDate() - rangeDays);
-    const prevSince = new Date(since);
-    prevSince.setDate(prevSince.getDate() - rangeDays);
+    /* Local midnight, so the boundary DATE is inside the window. A
+       boundary carrying `new Date()`'s clock, compared against each
+       meal's local midnight, pushes that date out instead — the opposite
+       off-by-one to the lifting block above, on the same page. */
+    const since = rollingWindowStart(rangeDays);
+    const prevSince = rollingWindowStart(rangeDays, addLocalDays(since, -1));
 
     type DayTotals = { cal: number; prot: number; carbs: number; fat: number };
     const bucketByDate = (ms: typeof meals) => {
