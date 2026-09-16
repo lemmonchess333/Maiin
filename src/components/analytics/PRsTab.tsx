@@ -113,7 +113,23 @@ function LiftPRRow({ pr }: { pr: LiftPR }) {
             )}{" "}
             × {pr.reps}
           </p>
-          {isBW && pr.weight === 0 ? null : e1rm ? (
+          {/* No estimate on a bodyweight lift, weighted or not. The
+              unweighted case was already suppressed; the weighted one
+              was not, and it was the wrong half to leave in. `pr.weight`
+              on a bodyweight exercise is the ADDED load only, so Epley
+              over it answers a question nobody asked: a weighted pull-up
+              at +20 kg x 5 rendered "~21-26 kg 1RM" directly beneath
+              "+20 kg x 5", dropping the plus that marked the currency.
+              The real load is the lifter's mass plus the belt, which is
+              not a field this row has.
+
+              `ExerciseHistory` — the page this row links to — already
+              settled it: a bodyweight exercise is measured in reps and
+              volume, and its metric toggle offers no 1RM at all. Two
+              surfaces one tap apart disagreed about whether these lifts
+              have a one-rep max. The record itself is unchanged and
+              still fully shown above. */}
+          {isBW ? null : e1rm ? (
             <p className="text-xs text-muted-foreground font-mono tabular-nums">
               ~{formatOneRepMaxRange(e1rm)} 1RM
             </p>
