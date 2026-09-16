@@ -67,7 +67,16 @@ export default function SplitsBarChart({
       </div>
 
       <ResponsiveContainer width="100%" height={160}>
-        <BarChart data={data} barCategoryGap="20%">
+        <BarChart
+          data={data}
+          /* Named, because Recharts 3's accessibility layer makes this
+             `role="application"` and focusable — an unnamed one drops a
+             reader inside a widget with no idea what it is. The lap unit
+             can differ from the reader's own, so the label says which,
+             the way the heading beside it does. */
+          aria-label={`Splits, pace per ${distanceUnitLabel(lapUnit)}`}
+          barCategoryGap="20%"
+        >
           <XAxis
             dataKey="km"
             tick={CHART_AXIS_TICK}
