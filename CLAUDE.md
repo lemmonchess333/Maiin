@@ -393,6 +393,31 @@ These are distilled from the project's own rework history — classes of mistake
 - **`onAuthStateChanged` fires several times per sign-in.** Debounce one-time / side-effecting work (maintenance backfills, etc.) behind a settle timer — a bare `firedRef` guard has a race window during the sign-in settle. Scope any queued or cached writes (offline queue, share queue) by `uid` so they can't leak across an account switch on a shared device. (`9ae1247` debounced the maintenance backfill; PR #820 uid-scoped the offline + share queues.)
 - **Deleting a test file is a documentation change too — grep for prose that cites it.** A header saying "this is exhaustively covered by X" keeps steering people away from writing tests long after X is gone, and it reads as authoritative because it names a file and a test count. `useClaimMap.test.ts` claimed the completion predicate was "exhaustively covered by" `functions/__tests__/scheduledRunCompletion.test.js` (29 tests) + a cross-test; **both were deleted in #1733** and nothing replaced them. So nobody wrote rejection cases, and the locked 70% distance gate ran for months comparing **metres to kilometres** — a marathon slot completable by a 29.5-metre run — with a fully green suite (`b525af6f` fixed the unit, `051e7765` the header). Same shape as PR #1775's `templateId === "race"`: on both, the accept path was fiction and nothing asserted a rejection. When you delete or rename a spec, `rg` its filename across the repo; when you inherit a "covered elsewhere" claim, open the file it names before trusting it.
 - **A centrality or cohesion score is a question, not a defect.** Graph metrics (graphify communities, "god nodes") cannot distinguish a deployment manifest or a shared vocabulary from tangled logic. `functions/index.js` scores the worst cohesion in the codebase (0.023) purely because every deployed function must be exported from one entrypoint — the split has now been re-derived and declined **four** times; the standing hold + its reasoning live in `functions/__tests__/triggerMetadata.test.js`. `RUN_TEMPLATES` bridges seven run communities because a shared run vocabulary is exactly what it should be. ADR-0001 already bars the size argument; treat these scores as prompts to go **read**, and expect the answer to often be "correct as-is". (The 2026-08-02 graph run's value was entirely in what reading turned up while chasing its questions — both of its own headline verdicts were "change nothing".)
+- **A label must name what the number under it actually IS — and when it
+  does not, the right word is usually already on the same screen.** Four
+  corrections in one arc, all on History/Analytics, all the same shape:
+  copy asserting something the data does not support. "Fastest 5K" over a
+  bare `M:SS` that was a per-kilometre pace, not a 5K result (#2335).
+  "Fastest 1K" / "Fastest 5K" over `avgPace` — a WHOLE run's average from
+  a pool filtered by a distance floor, so a 10 km runner held a record
+  for a distance they had never covered alone, and both rows printed the
+  same figure and date whenever one pool contained the other (#2346).
+  "Rep-range PRs" over buckets matched EXACTLY, so 2/4/6/7/8/9/11/12 reps
+  produced nothing at all (#2349). A bodyweight metric pill rendering its
+  internal `Metric` key, "1RM", over a chart of total reps (#2353).
+  The tell that makes these quick: in THREE of the four the correct
+  wording already sat a few lines away — "Max reps" in the header stat
+  beside the 1RM pill, "Personal bests by reps" on the bodyweight side of
+  the very ternary that said "Rep-range PRs", `"Seconds"` in the
+  `isTimed` branch of the pill that said "1RM". Find the sibling that got
+  it right before inventing wording. Two guards hold parts of this —
+  `prRowUnits.test.ts` (a row's value carries its unit; a label may not
+  name a race distance for a whole-run average) and
+  `bodyweightMetricLabel.test.ts` (the pill says Reps, the union keeps
+  its key) — and the rest is judgement, deliberately: a guard that looked
+  like it covered the class would be worse than none. An internal key, a
+  storage field name or a metric id is not copy, and a label that reads
+  as a claim will be read as one.
 - **Verify the three design-system invariants that keep drifting back, per-PR — not in periodic sweeps.** Before committing any UI: every numeric display uses `font-mono` + `tabular-nums`; every colour is a `THEME`/token (no hex literals); every interactive element clears 44px via the `Button`/`IconButton`/`Toggle` primitives (44 CSS px is a Tropos product target, NOT the WCAG AA floor — SC 2.5.8 is 24x24 and 44x44 is the AAA criterion; clearing the size is also not by itself an accessibility pass. DESIGN_GUIDE.md §10 carries the three units and their exceptions). These three regress constantly and keep getting swept up after the fact. (`2dec467` + `97a783d` mono/font audits; `9ef01a1` + `82b5266` tokenized stray hex; `f89d34b` whole-app consistency pass; touch-target policy shipped in 5 parts.)
 
 ## Meal photos are device-local — a standing invariant, not a preference
