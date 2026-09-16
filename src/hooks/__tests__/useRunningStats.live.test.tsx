@@ -53,8 +53,18 @@ describe("running evidence stays current", () => {
 
 it("requeries on local day rollover without remounting", async () => {
   seedFirestore({
+    /* Deliberately the LAST date inside the window, so the rollover has
+       something to push out. With the clock at 13 September and a 30-day
+       window ending today, that window opens on 15 August — one more day
+       and this run is outside it before the test even starts.
+
+       It read 14 August while `useRunningStats(30)` covered 31 dates. The
+       run is still the boundary case it was written to be; the boundary
+       moved when `days` started meaning `days`. Its size is pinned
+       independently by `analyticsWindowAgreement.test.ts`, so this stays
+       a literal rather than being computed from the code under test. */
     "users/runner/runs/edge": {
-      completedAt: Timestamp.fromDate(new Date(2026, 7, 14, 12)),
+      completedAt: Timestamp.fromDate(new Date(2026, 7, 15, 12)),
       distance: 5000,
       duration: 1800,
     },

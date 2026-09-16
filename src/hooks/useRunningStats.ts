@@ -17,7 +17,7 @@ import {
 } from "@/lib/offlineQueue";
 import { useUid } from "../lib/auth";
 import { isVolumeEligible } from "../lib/runStatsEligibility";
-import { addLocalDays, parseLocalDate } from "../lib/dateHelpers";
+import { parseLocalDate, rollingWindowStart } from "../lib/dateHelpers";
 import {
   binKeyForDate,
   granularityForRange,
@@ -196,6 +196,15 @@ export function parseRunSummary(
   };
 }
 
+/**
+ * `days` is a rolling window of exactly that many dates, ENDING TODAY —
+ * so `useRunningStats(7)` covers today and the six days before it.
+ *
+ * The `- 1` is the whole point: a boundary of `today - days` against an
+ * inclusive comparison opens a window of `days + 1` dates, so every
+ * caller's number came up one short of what it got. `ProgrammeRunSection`
+ * describes `useRunningStats(30)` as "4–~4.3 weeks", which is 30 days.
+ */
 export function useRunningStats(days: number = 30) {
   const uid = useUid();
   const today = useLocalDateKey();
@@ -244,7 +253,7 @@ export function useRunningStats(days: number = 30) {
     setLoading(true);
     setAuthoritative(false);
 
-    const since = addLocalDays(parseLocalDate(today), -days);
+    const since = rollingWindowStart(days, parseLocalDate(today));
 
     const runsRef = collection(db, "users", uid, "runs");
     const q = query(
@@ -298,7 +307,7 @@ export function useRunningStats(days: number = 30) {
     const byId = new Map(
       (loadedUid === uid ? runs : []).map((run) => [run.id, run])
     );
-    const since = addLocalDays(parseLocalDate(today), -days);
+    const since = rollingWindowStart(days, parseLocalDate(today));
     if (uid)
       for (const entry of pendingDocumentWrites(uid, `users/${uid}/runs`)) {
         const run = parseRunSummary(entry.id, {
