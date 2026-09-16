@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { readFileSync, readdirSync } from "node:fs";
+import { readFileSync, readdirSync, statSync } from "node:fs";
 
 /**
  * A chart a reader can tab to has to say what it is.
@@ -45,6 +45,7 @@ const CHARTS: [string, string][] = [
   ["src/components/progress/CalorieBalanceChart.tsx", "<BarChart"],
   ["src/components/analytics/SplitsBarChart.tsx", "<BarChart"],
   ["src/components/analytics/ElevationProfile.tsx", "<AreaChart"],
+  ["src/components/progress/TrendWeight.tsx", "<ComposedChart"],
 ];
 
 /**
@@ -52,7 +53,18 @@ const CHARTS: [string, string][] = [
  * either naming it or opting out. This is the assertion that would have
  * caught the two above without anyone thinking to list them.
  */
-const CHART_ROOT = /<(Bar|Area|Line|Composed|Pie)Chart[\s>]/;
+const CHART_ROOT = /<(Bar|Area|Line|Composed|Pie|Radar|Scatter)Chart[\s>]/;
+
+/** Every non-test .tsx under a root, recursively. */
+function tsxUnder(dir: string, out: string[] = []): string[] {
+  for (const name of readdirSync(dir)) {
+    if (name === "__tests__" || name === "node_modules") continue;
+    const full = `${dir}/${name}`;
+    if (statSync(full).isDirectory()) tsxUnder(full, out);
+    else if (name.endsWith(".tsx")) out.push(full);
+  }
+  return out;
+}
 
 describe("every keyboard-reachable chart is named", () => {
   for (const [file, tag] of CHARTS) {
@@ -69,25 +81,24 @@ describe("every keyboard-reachable chart is named", () => {
     });
   }
 
-  it("no analytics chart is left unnamed and un-opted-out", () => {
+  it("no chart anywhere in src is left unnamed and un-opted-out", () => {
     /* The enumeration above only covers what someone remembered to add.
-       This sweeps the directory, so a new chart cannot arrive unnamed —
-       which is exactly how SplitsBarChart and ElevationProfile sat
-       focusable and anonymous through the sweep that named their five
-       neighbours. */
-    const dir = "src/components/analytics";
-    const offenders = readdirSync(dir)
-      .filter((f) => f.endsWith(".tsx"))
-      .filter((f) => {
-        const src = read(`${dir}/${f}`);
-        if (!CHART_ROOT.test(src)) return false;
-        return (
-          !/aria-label/.test(src) && !/accessibilityLayer=\{false\}/.test(src)
-        );
-      });
+       Two rounds of this sweep prove the point. The first version swept
+       `src/components/analytics` alone and still missed `TrendWeight`,
+       which lives under progress/, renders on the Analytics tab, and was
+       unnamed — a sweep with a directory-shaped hole is the
+       guard-that-looks-like-cover this repo keeps paying for. So it
+       walks every .tsx under src/. */
+    const offenders = tsxUnder("src").filter((f) => {
+      const src = read(f);
+      if (!CHART_ROOT.test(src)) return false;
+      return (
+        !/aria-label/.test(src) && !/accessibilityLayer=\{false\}/.test(src)
+      );
+    });
     expect(
       offenders,
-      "a Recharts root in src/components/analytics with no aria-label and " +
+      "a Recharts root with no aria-label and " +
         'no accessibilityLayer={false} is a focusable role="application" ' +
         "region that announces nothing"
     ).toEqual([]);

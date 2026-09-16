@@ -218,6 +218,11 @@ export function TrendWeight() {
       <div className="h-48">
         <ResponsiveContainer width="100%" height="100%">
           <ComposedChart
+            /* Static, and deliberately carries no figure: the
+               hide-the-number mode suppresses every weight VALUE on this
+               card, and a label naming one would leak it straight back
+               out through the screen reader. */
+            aria-label="Weight trend over time"
             data={data}
             margin={{ top: 5, right: 5, bottom: 5, left: 5 }}
           >
