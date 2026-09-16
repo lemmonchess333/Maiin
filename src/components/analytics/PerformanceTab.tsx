@@ -21,9 +21,23 @@ import UITooltip from "@/components/ui/Tooltip";
  * so they stay in sync. PI = 65% load + 25% recovery + 10% adherence
  * per `src/lib/performanceTypes.ts`; the tooltip distils that without
  * leaking the weights, which would invite over-optimisation against
- * a single dimension. */
+ * a single dimension.
+ *
+ * The WINDOW is the part that was wrong, and it is the only explanation
+ * of this number anywhere in the app. The engine scores a 7-day window
+ * (`WINDOW_DAYS`) against a 28-day baseline (`BASELINE_DAYS`) normalised
+ * to a 7-day equivalent — every one of the three factors is measured
+ * over the current week. The sentence said the score combined them
+ * "over the last 4 weeks", which describes the baseline as though it
+ * were the scored period: a reader is told a bad week will weigh on the
+ * figure for a month, when the opposite is nearer the truth, because a
+ * hard week is scored against a calm four.
+ *
+ * `piExplainerWindow.test.ts` reads both constants out of
+ * `functions/performanceEngine.js` and fails if this sentence stops
+ * agreeing with the engine that actually runs. */
 const PI_EXPLAINER =
-  "0–100 score combining your training load, recovery, and consistency over the last 4 weeks. A higher score is not a recommendation to train harder — read it alongside your load and recovery guidance.";
+  "0–100 score for your last 7 days — training load, recovery and consistency, measured against your previous 4 weeks. A higher score is not a recommendation to train harder — read it alongside your load and recovery guidance.";
 
 function pctSigned(x: number) {
   const v = Math.round(x * 100);
