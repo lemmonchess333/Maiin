@@ -205,8 +205,21 @@ export default function MuscleHeatMap({ data, recovery }: MuscleHeatMapProps) {
                   <span className="text-xs text-muted-foreground font-medium">
                     {group}
                   </span>
-                  <span className="text-xs font-mono tabular-nums text-muted-foreground">
-                    {sets} sets
+                  {/* Two fixes on one line. The count is a NOUN phrase,
+                      so a group trained once read "1 sets" — reachable
+                      by anyone who does a single set of an accessory.
+                      And the numeral face was painting the word as well
+                      as the figure; `font-mono` / `tabular-nums` are
+                      scoped to numerals, which is why the column labels
+                      in `PeriodOverview` do not carry them either.
+
+                      One element, not two, for the reason the recovery
+                      chip below records: the row is a `gap-1.5` flex, so
+                      a bare word beside the figure becomes its own flex
+                      item and the space between them doubles. */}
+                  <span className="text-xs text-muted-foreground">
+                    <span className="font-mono tabular-nums">{sets}</span>{" "}
+                    {sets === 1 ? "set" : "sets"}
                   </span>
                   {rec &&
                     (() => {
