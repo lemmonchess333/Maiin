@@ -244,11 +244,11 @@ describe("NutritionSection — calories read as the rest of the app writes them"
     // "Target 2,200 kcal" — the same number, two registers, one tap apart.
     renderSection(0.5, { ...DEFAULT_TDEE, deficit: 550 });
     expect(
-      screen.getByText(`${group(2950)} kcal/day target`)
+      screen.getByText(`${groupText(2950)} kcal/day target`)
     ).toBeInTheDocument();
-    expect(screen.getByText(`${group(2400)} kcal`)).toBeInTheDocument();
+    expect(screen.getByText(`${groupText(2400)} kcal`)).toBeInTheDocument();
     expect(screen.getByText("+550 kcal")).toBeInTheDocument();
-    expect(screen.getByText(`${group(2950)} kcal`)).toBeInTheDocument();
+    expect(screen.getByText(`${groupText(2950)} kcal`)).toBeInTheDocument();
     expect(screen.queryByText(/\d cal\b/)).toBeNull();
   });
 });
@@ -570,7 +570,7 @@ describe("the adapting status line is wired to the learned target", () => {
  * call the gap "Recomp offset −2400 cal", a plan choice the user never made.
  */
 import { macroInfeasibilityMessage } from "@/lib/macroInfeasibility";
-import { group } from "@/test/localeGrouping";
+import { groupText } from "@/test/localeGrouping";
 
 describe("NutritionSection — manual target naming and the infeasible notice", () => {
   function renderWith(profile: Partial<UserProfile>, tdee: TDEEResult) {

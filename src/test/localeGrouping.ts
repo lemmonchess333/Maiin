@@ -59,3 +59,28 @@ export function groupRe(n: number): string {
  * separator belongs.
  */
 export const SEP_RE = GROUP.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+/**
+ * `group(n)` as Testing Library's matchers will see it.
+ *
+ * This is the fr-FR case, and it is not the same bug as the separator
+ * CHARACTER differing. fr-FR groups with U+202F (narrow no-break
+ * space) — so the DOM text node genuinely holds `2`, U+202F, `933` —
+ * but `getByText` / `getByRole({ name })` run text through a default
+ * normalizer that collapses every whitespace run to a single U+0020.
+ * A raw U+202F in the expected string therefore never meets the
+ * normalized haystack, and the failure reads as "unable to find text"
+ * with two strings that look identical in the terminal.
+ *
+ * Use this for anything queried THROUGH Testing Library. Use plain
+ * `group()` when comparing against a raw value — a formatter's return,
+ * or `element.textContent`, neither of which is normalized.
+ */
+export function groupText(n: number): string {
+  return group(n).replace(/\s+/g, " ").trim();
+}
+
+/** `groupText(n)` escaped for a RegExp — the normalized counterpart of `groupRe`. */
+export function groupTextRe(n: number): string {
+  return groupText(n).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}

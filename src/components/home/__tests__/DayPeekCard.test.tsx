@@ -31,7 +31,7 @@ import {
   localWeekKey,
   parseLocalDate,
 } from "@/lib/dateHelpers";
-import { groupRe } from "@/test/localeGrouping";
+import { groupTextRe } from "@/test/localeGrouping";
 
 /* These components read the display unit, which resolves from the auth
    profile — and `useAuth` throws outside an AuthProvider, which none of
@@ -429,7 +429,7 @@ describe("DayPeekCard — planned run rendering (spec gate #11, resolver-aware)"
     expect(screen.queryByText("Run scheduled")).not.toBeInTheDocument();
     expect(screen.getByText(/1 session/)).toBeInTheDocument();
     expect(
-      screen.getByText(new RegExp(`${groupRe(1800)} cal`))
+      screen.getByText(new RegExp(`${groupTextRe(1800)} cal`))
     ).toBeInTheDocument();
   });
 });
@@ -985,7 +985,7 @@ describe("DayPeekCard — the nutrition row opens the diary", () => {
     renderWithTotals(future);
 
     expect(
-      screen.getByText(new RegExp(`${groupRe(1850)} cal`))
+      screen.getByText(new RegExp(`${groupTextRe(1850)} cal`))
     ).toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: /open the food diary/i })
@@ -996,7 +996,7 @@ describe("DayPeekCard — the nutrition row opens the diary", () => {
     // The row's job is unchanged; only its tappability is new.
     renderWithTotals(localDateString(new Date()));
     expect(
-      screen.getByText(new RegExp(`${groupRe(1850)} cal · 140g protein`))
+      screen.getByText(new RegExp(`${groupTextRe(1850)} cal · 140g protein`))
     ).toBeInTheDocument();
   });
 });

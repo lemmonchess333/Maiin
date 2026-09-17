@@ -16,7 +16,7 @@ import { render, screen, cleanup } from "@testing-library/react";
 import { Timestamp } from "firebase/firestore";
 import { ChallengeCard } from "../ChallengeCard";
 import type { Challenge, ChallengeParticipant } from "../useChallenges";
-import { group } from "@/test/localeGrouping";
+import { groupText } from "@/test/localeGrouping";
 
 vi.mock("firebase/firestore");
 vi.mock("@/lib/haptic", () => ({ haptic: vi.fn() }));
@@ -105,8 +105,8 @@ describe("fastest_effort tier markers", () => {
       }),
       9000
     );
-    expect(markerLeft(group(3000))).toBe("20%");
-    expect(markerLeft(group(15000))).toBe("100%");
+    expect(markerLeft(groupText(3000))).toBe("20%");
+    expect(markerLeft(groupText(15000))).toBe("100%");
   });
 });
 
@@ -138,7 +138,7 @@ describe("tier labels at the extremes", () => {
       }),
       44
     );
-    expect(labelFor(group(15000)).className).toContain("-translate-x-1/2");
+    expect(labelFor(groupText(15000)).className).toContain("-translate-x-1/2");
   });
 
   it("leaves a mid-bar label centred on its threshold", () => {
@@ -153,7 +153,7 @@ describe("tier labels at the extremes", () => {
       }),
       44
     );
-    expect(labelFor(group(8000)).className).not.toContain("translate-x");
+    expect(labelFor(groupText(8000)).className).not.toContain("translate-x");
   });
 
   it("keeps the label on one line so it cannot wrap instead of clipping", () => {
@@ -165,6 +165,6 @@ describe("tier labels at the extremes", () => {
       }),
       44
     );
-    expect(labelFor(group(15000)).className).toContain("whitespace-nowrap");
+    expect(labelFor(groupText(15000)).className).toContain("whitespace-nowrap");
   });
 });
