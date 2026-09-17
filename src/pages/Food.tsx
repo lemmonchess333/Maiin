@@ -1274,7 +1274,11 @@ export default function Food() {
     trackFoodEvent("food_meal_slot_tapped", { slot: mealKey });
     // Scroll input into view then focus
     setTimeout(() => {
-      inputRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      /* No `behavior` — the default follows the computed
+         `scroll-behavior`, which is smooth normally and `auto` under
+         Reduce Motion. Naming "smooth" here overrides that by spec and
+         animates for a reader who asked it not to. */
+      inputRef.current?.scrollIntoView({ block: "center" });
       setTimeout(() => inputRef.current?.focus(), 300);
     }, 50);
   };
