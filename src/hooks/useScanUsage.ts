@@ -58,10 +58,13 @@ function getNextLocalMidnight(now = new Date()): Date {
 }
 
 function getTodayKey(now = new Date()): string {
-  // Match the server's en-CA YYYY-MM-DD format produced by
-  // resolveDayKey. Using ISO + slice keeps the client side simple;
-  // edge cases at the local-midnight boundary are bounded by the
-  // server's authoritative count anyway.
+  /* The LOCAL day, matching the YYYY-MM-DD shape the server's
+     `resolveDayKey` produces. Local rather than sliced off an ISO
+     string, which is what the previous comment claimed the body did —
+     that idiom names the UTC day and is banned by `localDayKeyGuard`.
+     Either way this key is display-only: the server owns the counter's
+     rollover, so a disagreement at the local-midnight boundary is
+     bounded by its authoritative count. */
   return localDateString(now);
 }
 

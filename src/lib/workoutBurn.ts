@@ -66,8 +66,14 @@ export interface RunBurnInput {
 
 /**
  * Estimate run calorie burn. Distance-based, duration-independent.
- * Parallels the existing estimateRunCalories in src/lib/gps.ts but accepts
- * distanceKm directly for backfill / helper symmetry.
+ *
+ * This is the ONLY implementation. `gps.estimateRunCalories` takes metres
+ * and delegates straight here, so the two cannot drift — which is worth
+ * stating, because the wording this replaces ("parallels the existing
+ * estimateRunCalories") described them as two copies of one formula and
+ * pointed a reader at a mirror that does not exist. Under this repo's
+ * first recurring-mistake rule, a suspected mirror is something you go
+ * and check; a comment that invents one costs that trip for nothing.
  */
 export function estimateRunBurn(params: RunBurnInput): number {
   const { distanceKm, bodyweightKg } = params;
