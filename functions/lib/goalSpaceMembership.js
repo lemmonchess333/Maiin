@@ -327,6 +327,10 @@ async function removeGoalSpaceMember({ firestore, uid, spaceId, memberUid }) {
 
 module.exports = {
   GOAL_SPACE_MAX_MEMBERS,
+  // Exported so the client<->server parity test can reach it. It was
+  // module-private, which is why mutating it left the whole suite green:
+  // nothing pinned it AND nothing outside this file could see it.
+  GOAL_SPACE_TEXT_MAX,
   GOAL_SPACE_TYPES,
   GoalSpaceError,
   assertNoBlockedPair,
