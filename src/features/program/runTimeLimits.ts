@@ -29,20 +29,45 @@ export function normalizeRunTimeLimits(value: unknown): RunTimeLimits {
     : { sessionMinutes: null, longRunMinutes: null };
 }
 
-/** Long runs have a distance target; only confirmed pace personalises its
- * duration. Other templates already include their full timed session. */
+/** Resolve elapsed session time from the prescription rather than trusting a
+ * catalogue estimate when pace changes the clock. Long runs use confirmed
+ * easy pace; distance-based intervals use confirmed interval pace plus their
+ * actual warm-up/recoveries/cool-down. Without a confirmed pace the catalogue
+ * estimate remains the honest fallback. */
 export function plannedRunMinutes(
   template: RunTemplate,
-  easyPaceSPerKm?: number | null
+  easyPaceSPerKm?: number | null,
+  intervalPaceSPerKm?: number | null
 ): number {
   const km = template.config?.targetDistanceKm;
-  return template.type === "long" &&
+  if (
+    template.type === "long" &&
     km &&
     easyPaceSPerKm &&
     Number.isFinite(easyPaceSPerKm) &&
     easyPaceSPerKm > 0
-    ? (km * easyPaceSPerKm) / 60
-    : template.estimatedDuration;
+  ) {
+    return (km * easyPaceSPerKm) / 60;
+  }
+
+  const intervals = template.config?.intervals;
+  if (
+    template.type === "intervals" &&
+    intervals?.workDistance &&
+    intervalPaceSPerKm &&
+    Number.isFinite(intervalPaceSPerKm) &&
+    intervalPaceSPerKm > 0
+  ) {
+    const workSeconds =
+      intervals.reps * (intervals.workDistance / 1000) * intervalPaceSPerKm;
+    const recoverySeconds =
+      Math.max(0, intervals.reps - 1) * intervals.restDuration;
+    const fixedSeconds =
+      (intervals.warmupDuration ?? 0) + (intervals.cooldownDuration ?? 0);
+    return (workSeconds + recoverySeconds + fixedSeconds) / 60;
+  }
+
+  return template.estimatedDuration;
 }
 
 /** Shape only newly generated prescriptions. Saved completions, moves and
@@ -50,7 +75,8 @@ export function plannedRunMinutes(
 export function fitRunToTimeLimit(
   run: ScheduledRunDay,
   limits: RunTimeLimits | null | undefined,
-  easyPaceSPerKm?: number | null
+  easyPaceSPerKm?: number | null,
+  intervalPaceSPerKm?: number | null
 ): ScheduledRunDay {
   if (
     !isRunTimeLimits(limits) ||
@@ -66,15 +92,15 @@ export function fitRunToTimeLimit(
   if (!original || original.type === "race") return run;
   const limit =
     original.type === "long" ? limits.longRunMinutes : limits.sessionMinutes;
-  if (limit === null || plannedRunMinutes(original, easyPaceSPerKm) <= limit)
+  if (limit === null || plannedRunMinutes(original, easyPaceSPerKm, intervalPaceSPerKm) <= limit)
     return run;
   const candidates = RUN_TEMPLATES.filter(
     (template) =>
       template.type === original.type &&
       Boolean(template.config?.strides) === Boolean(original.config?.strides) &&
-      plannedRunMinutes(template, easyPaceSPerKm) <= limit &&
-      plannedRunMinutes(template, easyPaceSPerKm) <
-        plannedRunMinutes(original, easyPaceSPerKm)
+      plannedRunMinutes(template, easyPaceSPerKm, intervalPaceSPerKm) <= limit &&
+      plannedRunMinutes(template, easyPaceSPerKm, intervalPaceSPerKm) <
+        plannedRunMinutes(original, easyPaceSPerKm, intervalPaceSPerKm)
   ).sort(
     (a, b) =>
       plannedRunMinutes(b, easyPaceSPerKm) -
