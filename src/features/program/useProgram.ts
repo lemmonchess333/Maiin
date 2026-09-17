@@ -139,7 +139,10 @@ export interface CompletedSessionData {
    *  time, the pre-Lift3 behaviour. */
   startedAt?: number;
 }
-import { planningEasyPaceSPerKm } from "@/lib/runPaces";
+import {
+  planningEasyPaceSPerKm,
+  planningIntervalPaceSPerKm,
+} from "@/lib/runPaces";
 import { clampPlanWeek, type RaceTiming } from "./runPlanTiming";
 import {
   generateRacePlanV2,
@@ -227,6 +230,7 @@ function regenerateRacePlan({
   raceGoal,
   recentLayoff,
   easyPaceSPerKm,
+  intervalPaceSPerKm,
   runningBaseline,
   runTimeLimits,
   weekSchedule,
@@ -261,6 +265,7 @@ function regenerateRacePlan({
    *  it would silently revert a benchmarked runner's long-run ceiling to the
    *  nominal table on the next weekly refresh. */
   easyPaceSPerKm: number | null;
+  intervalPaceSPerKm: number | null;
   runningBaseline: RunningBaseline | null;
   runTimeLimits: RunTimeLimits | null;
   carry?: {
@@ -302,6 +307,7 @@ function regenerateRacePlan({
     tuning,
     recentLayoff,
     easyPaceSPerKm,
+    intervalPaceSPerKm,
     runningBaseline,
     runTimeLimits,
     // The block's original length, so the generator emits the week for where
@@ -541,6 +547,7 @@ export function useProgram() {
             recentLayoff: layoff,
             tuning: runTuningFromProfile(profile),
             easyPaceSPerKm: planningEasyPaceSPerKm(profile?.runFitness),
+            intervalPaceSPerKm: planningIntervalPaceSPerKm(profile?.runFitness),
             runTimeLimits: profile?.runTimeLimits ?? null,
             runningBaseline: profile?.runningBaseline ?? null,
             raceGoal: profile.raceGoal,
