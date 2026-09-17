@@ -141,6 +141,36 @@ describe("useSessionPlayer", () => {
     expect(result.current.isComplete).toBe(true);
   });
 
+  it("records completed and skipped segment evidence without inventing future reps", () => {
+    const { result } = renderHook(() => useSessionPlayer(intervalSegs));
+    act(() => result.current.start());
+
+    // Complete the five-minute warm-up.
+    act(() => result.current.tick(301, 500));
+    expect(result.current.state.results).toHaveLength(1);
+    expect(result.current.state.results[0]).toMatchObject({
+      index: 0,
+      type: "warmup",
+      outcome: "completed",
+    });
+
+    // Skip rep 1 after only 150 m. The evidence keeps the partial distance.
+    act(() => result.current.skip(330, 650));
+    expect(result.current.state.results).toHaveLength(2);
+    expect(result.current.state.results[1]).toMatchObject({
+      index: 1,
+      type: "hard",
+      rep: 1,
+      totalReps: 2,
+      outcome: "skipped",
+      distanceMeters: 150,
+    });
+
+    // Recovery and rep 2 have not happened yet, so there is no evidence row
+    // for either. This is the property downstream coaching relies on.
+    expect(result.current.state.results.some((row) => row.index >= 2)).toBe(false);
+  });
+
   it("skip forces the advance tick would take, resetting the phase clock", () => {
     const { result } = renderHook(() => useSessionPlayer(intervalSegs));
     act(() => result.current.start());
