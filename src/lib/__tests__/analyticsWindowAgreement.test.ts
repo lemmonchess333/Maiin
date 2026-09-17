@@ -116,20 +116,73 @@ describe("the three Analytics sections admit the same dates", () => {
   });
 });
 
-describe("no hand-rolled boundary survives", () => {
-  it.each([
-    ["src/pages/History.tsx", /setDate\(\s*\w+\.getDate\(\) - rangeDays\s*\)/],
-    [
-      "src/hooks/useRunningStats.ts",
-      /addLocalDays\(\s*parseLocalDate\(today\),\s*-days\s*\)/,
-    ],
-  ])("%s", (path, pattern) => {
-    /* Each of these re-derived the window by hand, and each was one off
-       from what its own number said. A new copy would reintroduce the
-       disagreement silently, because nothing downstream reads as wrong. */
+/**
+ * Every surface with a range pill resolves its boundary the same way.
+ *
+ * This started as two files with a bespoke regex each, and that shape is
+ * why it missed the third. `ExerciseHistory.tsx` did exactly what the
+ * two named files had done — `cutoff.setDate(cutoff.getDate() - days)`
+ * against an inclusive compare — but spelled the variable `days` rather
+ * than `rangeDays`, so neither pattern saw it. Its "1M" admitted 31
+ * dates while History's identically-labelled pill admitted 30: the same
+ * control, two pages, two spans.
+ *
+ * So the pin is now POSITIVE as well as negative. A negative pattern can
+ * be satisfied by renaming a variable; a positive one cannot — the file
+ * either routes through the shared helper or it does not.
+ */
+const RANGE_PILL_SURFACES = [
+  "src/pages/History.tsx",
+  "src/pages/ExerciseHistory.tsx",
+  "src/hooks/useRunningStats.ts",
+];
+
+describe("every range-pill surface uses the shared boundary", () => {
+  it.each(RANGE_PILL_SURFACES)("%s calls rollingWindowStart", (path) => {
     expect(
-      pattern.test(readFileSync(path, "utf8")),
+      /rollingWindowStart\(/.test(readFileSync(path, "utf8")),
+      `${path} scopes a range pill — its boundary must come from rollingWindowStart`
+    ).toBe(true);
+  });
+
+  it.each(RANGE_PILL_SURFACES)("%s derives no boundary by hand", (path) => {
+    /* The shape all three got wrong: a NAMED day-count subtracted
+       straight from a date, which against an inclusive comparison opens
+       one date too many. `- (days - 1)` is the correct hand-rolled form
+       and is deliberately not matched, so a file that spells the `+ 1`
+       out is not flagged — only one that omits it. */
+    const src = readFileSync(path, "utf8");
+    const HAND_ROLLED =
+      /(?:setDate\(\s*\w+\.getDate\(\)|addLocalDays\([^,]+,)\s*-\s*\w*[dD]ays\b/;
+    expect(
+      HAND_ROLLED.test(src),
       `${path} derives a range boundary by hand — use rollingWindowStart`
     ).toBe(false);
+  });
+
+  it("the hand-rolled pattern matches the three real defects", () => {
+    /* Anchored on the actual text each file carried, so the negative
+       above cannot pass because the regex matches nothing. */
+    const HAND_ROLLED =
+      /(?:setDate\(\s*\w+\.getDate\(\)|addLocalDays\([^,]+,)\s*-\s*\w*[dD]ays\b/;
+    expect(
+      HAND_ROLLED.test("since.setDate(since.getDate() - rangeDays);")
+    ).toBe(true);
+    expect(HAND_ROLLED.test("cutoff.setDate(cutoff.getDate() - days);")).toBe(
+      true
+    );
+    expect(HAND_ROLLED.test("addLocalDays(parseLocalDate(today), -days)")).toBe(
+      true
+    );
+    // …and leaves the correct forms alone.
+    expect(
+      HAND_ROLLED.test(
+        "windowStart.setDate(windowStart.getDate() - (days - 1));"
+      )
+    ).toBe(false);
+    expect(HAND_ROLLED.test("rollingWindowStart(rangeDays)")).toBe(false);
+    expect(HAND_ROLLED.test("cursor.setDate(cursor.getDate() - 1);")).toBe(
+      false
+    );
   });
 });
