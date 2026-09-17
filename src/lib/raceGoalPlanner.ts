@@ -280,7 +280,7 @@ export function getRaceGoalPlannerState(
       );
       return (
         total +
-        (template ? plannedRunMinutes(template, input.easyPaceSPerKm) : 0)
+        (template ? plannedRunMinutes(template, input.easyPaceSPerKm, input.intervalPaceSPerKm) : 0)
       );
     }, 0),
     recoveryWeeks,
