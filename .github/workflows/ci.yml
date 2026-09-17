@@ -98,8 +98,28 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # The two extremes of the inhabited range (UTC-12..UTC+14).
-        tz: ["Pacific/Kiritimati", "Pacific/Midway"]
+        # The two extremes of the inhabited range (UTC-12..UTC+14), plus
+        # one zone that observes DST.
+        #
+        # Auckland is not here for its offset — Kiritimati already covers
+        # the east. It is here because NEITHER extreme observes DST, and
+        # neither does UTC, so without it the whole daylight-saving class
+        # is invisible to this gate. That is not hypothetical: on
+        # 2026-09-17, `TrainingForChip.test.tsx` was ALREADY failing in
+        # Auckland on main and green everywhere else. It asks for a race
+        # 21 days out and expects "3 wks"; Auckland's spring-forward falls
+        # inside that span, so the 21 days measured 20.958 and the chip
+        # said 2. A pre-existing test, written by someone else, caught a
+        # real bug by living through the transition — and the two extreme
+        # offsets would have reported green.
+        #
+        # Detection here is necessarily intermittent: a relative-date test
+        # only exercises a transition during the weeks its span straddles
+        # one. `wholeWeeksBetween.test.ts` pins absolute dates either side
+        # of known transitions and so covers the class deterministically
+        # in every zone; this entry is the backstop for the tests that
+        # compute their dates from today.
+        tz: ["Pacific/Kiritimati", "Pacific/Midway", "Pacific/Auckland"]
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
