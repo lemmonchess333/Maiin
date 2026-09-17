@@ -12,7 +12,11 @@ import { THEME } from "@/lib/theme";
 import { haptic } from "@/lib/haptic";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { localDateString, parseLocalDate } from "@/lib/dateHelpers";
+import {
+  localDateString,
+  parseLocalDate,
+  rollingWindowStart,
+} from "@/lib/dateHelpers";
 import { isTimedExerciseId } from "@/features/program/repUnits";
 import { bestSetsByReps } from "@/lib/repBuckets";
 
@@ -199,13 +203,15 @@ export default function ExerciseHistory() {
   const filteredSessions = useMemo(() => {
     const days = RANGE_DAYS[timeRange];
     if (!Number.isFinite(days)) return allSessions;
-    const cutoff = new Date();
-    cutoff.setDate(cutoff.getDate() - days);
-    // `s.date` is a LOCAL "YYYY-MM-DD" string (workout.date), so the cutoff
-    // must be the LOCAL date too. `cutoff.toISOString()` (UTC) can land on a
-    // different calendar day than the user's local date (direction depends on
-    // the offset + wall-clock hour), shifting the time-range boundary a day.
-    const cutoffStr = localDateString(cutoff);
+    /* `rollingWindowStart`, never a hand-rolled `today - days`. `s.date`
+       is a LOCAL "YYYY-MM-DD" compared INCLUSIVELY, so subtracting the
+       full `days` opens a window of `days + 1` dates — which made this
+       page's "1M" a different span from the identically-labelled pill on
+       History. One pill must mean one window wherever it appears;
+       `analyticsWindowAgreement.test.ts` holds every range-pill surface
+       to this helper. The helper also returns local midnight, which is
+       what keeps the boundary on the user's own calendar day. */
+    const cutoffStr = localDateString(rollingWindowStart(days));
     return allSessions.filter((s) => s.date >= cutoffStr);
   }, [allSessions, timeRange]);
 
