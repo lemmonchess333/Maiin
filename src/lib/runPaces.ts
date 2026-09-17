@@ -266,6 +266,20 @@ export function planningEasyPaceSPerKm(
   return Number.isFinite(mid) && mid > 0 ? mid : null;
 }
 
+/** The interval-work pace the scheduler uses when converting distance-based
+ * quality sessions into real elapsed time for availability checks. Uses the
+ * same prescriptive/consent gate as the run player, so an unconfirmed
+ * auto-derived benchmark cannot silently change the planned dose. */
+export function planningIntervalPaceSPerKm(
+  fitness: RunFitnessInput | null | undefined
+): number | null {
+  const table = prescriptivePaceTableFromFitness(fitness);
+  if (!table) return null;
+  const [fast, slow] = table.interval;
+  const mid = Math.round((fast + slow) / 2);
+  return Number.isFinite(mid) && mid > 0 ? mid : null;
+}
+
 /** Shared vdot resolution: stored vdot wins, else derive from the benchmark;
  *  null when neither is usable. `benchmark` is echoed back only when valid. */
 function resolveFitnessVdot(fitness: RunFitnessInput | null | undefined): {
