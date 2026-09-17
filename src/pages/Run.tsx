@@ -1034,6 +1034,10 @@ export default function Run() {
           runConfig?.activityType === "intervals"
             ? runConfig.intervals
             : undefined,
+        // RUN-EXEC-SEG-01: persist the player's append-only execution
+        // evidence through RunSummary. This is descriptive only — no pace or
+        // fitness judgement is made from it here.
+        segmentResults: sessionSegments ? player.state.results : undefined,
         routeQuality,
       },
     });
