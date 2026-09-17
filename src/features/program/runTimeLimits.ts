@@ -103,8 +103,8 @@ export function fitRunToTimeLimit(
         plannedRunMinutes(original, easyPaceSPerKm, intervalPaceSPerKm)
   ).sort(
     (a, b) =>
-      plannedRunMinutes(b, easyPaceSPerKm) -
-      plannedRunMinutes(a, easyPaceSPerKm)
+      plannedRunMinutes(b, easyPaceSPerKm, intervalPaceSPerKm) -
+      plannedRunMinutes(a, easyPaceSPerKm, intervalPaceSPerKm)
   );
   // The catalogue's shortest long tier can still exceed a slow runner's
   // availability. Keep the date and offer an easy timed session honestly.
