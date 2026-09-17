@@ -365,8 +365,10 @@ export default function WorkoutSession({
     const activeBtn = container?.children[currentExIndex] as
       | HTMLElement
       | undefined;
+    /* No `behavior`: the default defers to the computed
+       `scroll-behavior`, which Reduce Motion turns to `auto`. An
+       explicit "smooth" would animate the rail regardless. */
     activeBtn?.scrollIntoView({
-      behavior: "smooth",
       block: "nearest",
       inline: "center",
     });

@@ -570,7 +570,10 @@ export default function RunPlanSettings({
         : goalInvalid
           ? document.getElementById("weekly-running-goal")
           : document.getElementById("ps-race-time");
-    target?.scrollIntoView({ behavior: "smooth", block: "center" });
+    /* No `behavior`: the default defers to the computed
+       `scroll-behavior`, so Reduce Motion gets an instant jump to the
+       invalid field instead of a page-length glide. */
+    target?.scrollIntoView({ block: "center" });
     const input =
       target instanceof HTMLInputElement
         ? target

@@ -134,6 +134,14 @@ jobs:
       - name: Verify App Check CSP in Chromium
         run: npm run test:e2e -- e2e/appCheckCsp.spec.ts --project=chromium --reporter=line
 
+      # Reduce Motion has to reach scrolling, and only a real browser can
+      # say whether it does — `scroll-behavior` is a computed property no
+      # jsdom test can evaluate. Named explicitly, like the CSP spec
+      # above, because the chromium project is otherwise unrun in CI: a
+      # spec added here without this line is a gate nothing executes.
+      - name: Verify Reduce Motion reaches scrolling
+        run: npm run test:e2e -- e2e/reducedMotionScroll.spec.ts --project=chromium --reporter=line
+
       # ── Suite 1: Firestore rules tests
       # Uses the firebase emulators:exec wrapper which boots the
       # emulator, runs the command, then tears it down. Project ID
