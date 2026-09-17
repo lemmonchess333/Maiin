@@ -638,6 +638,7 @@ export function useProgram() {
             tuning: runTuningFromProfile(profile),
 
             easyPaceSPerKm: planningEasyPaceSPerKm(profile?.runFitness),
+          intervalPaceSPerKm: planningIntervalPaceSPerKm(profile?.runFitness),
 
             runTimeLimits: profile?.runTimeLimits ?? null,
             runningBaseline: profile?.runningBaseline ?? null,
@@ -1023,6 +1024,7 @@ export function useProgram() {
           tuning: runTuningFromProfile(profile),
 
           easyPaceSPerKm: planningEasyPaceSPerKm(profile?.runFitness),
+          intervalPaceSPerKm: planningIntervalPaceSPerKm(profile?.runFitness),
 
           runTimeLimits: profile?.runTimeLimits ?? null,
           runningBaseline: profile?.runningBaseline ?? null,
@@ -1710,6 +1712,7 @@ export function useProgram() {
           tuning: runTuningFromProfile(profile),
 
           easyPaceSPerKm: planningEasyPaceSPerKm(profile?.runFitness),
+          intervalPaceSPerKm: planningIntervalPaceSPerKm(profile?.runFitness),
 
           runTimeLimits: profile?.runTimeLimits ?? null,
           runningBaseline: profile?.runningBaseline ?? null,
@@ -2526,6 +2529,7 @@ export function useProgram() {
             tuning: runTuningFromProfile(profile),
 
             easyPaceSPerKm: planningEasyPaceSPerKm(profile?.runFitness),
+          intervalPaceSPerKm: planningIntervalPaceSPerKm(profile?.runFitness),
 
             runTimeLimits: profile?.runTimeLimits ?? null,
             runningBaseline: profile?.runningBaseline ?? null,
@@ -2689,6 +2693,7 @@ export function useProgram() {
           tuning: overrides?.tuning ?? runTuningFromProfile(profile),
 
           easyPaceSPerKm: planningEasyPaceSPerKm(profile?.runFitness),
+          intervalPaceSPerKm: planningIntervalPaceSPerKm(profile?.runFitness),
 
           runTimeLimits: profile?.runTimeLimits ?? null,
           runningBaseline: profile?.runningBaseline ?? null,
@@ -3617,6 +3622,7 @@ export function useProgram() {
       tuning: runTuningFromProfile(profile),
 
       easyPaceSPerKm: planningEasyPaceSPerKm(profile?.runFitness),
+          intervalPaceSPerKm: planningIntervalPaceSPerKm(profile?.runFitness),
 
       runTimeLimits: profile?.runTimeLimits ?? null,
       runningBaseline: profile?.runningBaseline ?? null,
