@@ -27,6 +27,82 @@ import { dirname, resolve, join } from "node:path";
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
 const claudeMd = readFileSync(resolve(repoRoot, "CLAUDE.md"), "utf8");
 
+describe("CLAUDE.md — the Home composition sentence", () => {
+  /* The document says this line "has now rotted twice": it named
+     `HybridBalanceCard` until that was caught rendering nowhere, and the
+     replacement then named `TodayGuidanceCard` (also gone) and credited
+     StackedCTACards with pills and tiles it has never owned. It also says
+     `componentReachability` catches a dead COMPONENT and nothing catches
+     a dead SENTENCE — which is true, and is what this closes.
+
+     Checked before writing: the sentence is currently ACCURATE. This is
+     not a repair, it is the catch the document asked for. Pinning ORDER
+     as well as membership is the point — two of the three rots were a
+     component that had moved or gone, and a set-equality check would
+     have passed through the second one. */
+  const ORDER = [
+    "WeekStrip",
+    "DayPeekCard",
+    "StackedCTACards",
+    "TodayEnergy",
+    "WaterCard",
+    "WeightStepsTiles",
+    "WeeklyReviewEntry",
+    "PerformanceHeroCard",
+  ];
+
+  const homeSrc = readFileSync(resolve(repoRoot, "src/pages/Home.tsx"), "utf8");
+
+  it("names them in the order Home.tsx renders them", () => {
+    const positions = ORDER.map((name) => {
+      /* Boundary-anchored: a bare indexOf(`<${name}`) also matches
+         `<WeekStripFoo`, so renaming a component would leave this
+         passing. Caught by mutation, not by reading it. */
+      const m = new RegExp(`<${name}(?![A-Za-z0-9_])`).exec(homeSrc);
+      return { name, at: m ? m.index : -1 };
+    });
+
+    const missing = positions.filter((p) => p.at === -1).map((p) => p.name);
+    expect(
+      missing,
+      `CLAUDE.md's Home chain names ${missing.join(", ")}, which Home.tsx ` +
+        `no longer renders. Re-read the sentence against the file and ` +
+        `correct it — a dead name there sends every agent looking for ` +
+        `something that is not there.`
+    ).toEqual([]);
+
+    const rendered = [...positions]
+      .sort((a, b) => a.at - b.at)
+      .map((p) => p.name);
+    expect(
+      rendered,
+      "CLAUDE.md lists the Home chain in render order; Home.tsx now " +
+        "renders them in a different one."
+    ).toEqual(ORDER);
+  });
+
+  it("and the document still spells that chain", () => {
+    /* Anchors the list above to the DOCUMENT, not just to Home.tsx —
+       otherwise this passes happily while the sentence it exists to
+       protect says something else entirely. */
+    for (const name of ORDER) {
+      expect(
+        claudeMd.includes(name),
+        `CLAUDE.md no longer mentions ${name}, so this test is pinning a ` +
+          `chain the document does not describe.`
+      ).toBe(true);
+    }
+  });
+
+  /* Deliberately NOT asserted: that CLAUDE.md never mentions
+     `HybridBalanceCard` or `TodayGuidanceCard`. It mentions both, on
+     purpose — the paragraph recounting how this line rotted twice names
+     them as history, and that history is the whole reason the sentence
+     is worth pinning. A "never mentions" rule would read a correct
+     document as a failure and pressure someone into deleting the
+     explanation to get CI green. Drafted it, ran it, deleted it. */
+});
+
 describe("CLAUDE.md — feature module inventory", () => {
   it("names every module in src/features/", () => {
     const modules = readdirSync(resolve(repoRoot, "src/features"), {
