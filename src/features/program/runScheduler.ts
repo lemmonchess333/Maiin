@@ -483,6 +483,9 @@ export function longRunKmForWeek(input: {
   /** Run17 — the runner's confirmed easy pace, or null for the nominal
    *  table. Decides the ceiling the ramp is clamped to. */
   easyPaceSPerKm?: number | null;
+  /** Confirmed interval-work pace for exact duration budgeting of
+   * distance-based quality sessions. Null keeps catalogue estimates. */
+  intervalPaceSPerKm?: number | null;
 }): number {
   const { weekIndex, totalWeeks, baseLongKm, taperWeeks, volume } = input;
   // No headroom in the PLAN — checked before the knob, so "bigger" cannot
@@ -1416,7 +1419,12 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
   );
   const flaggedWeeks = weeks.map((week) => {
     const limited = week.map((row) =>
-      fitRunToTimeLimit(row, input.runTimeLimits, input.easyPaceSPerKm)
+      fitRunToTimeLimit(
+        row,
+        input.runTimeLimits,
+        input.easyPaceSPerKm,
+        input.intervalPaceSPerKm
+      )
     );
     const fitted = fitWeekToRunningBaseline(
       limited,
