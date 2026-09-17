@@ -166,7 +166,9 @@ describe("TodayEnergy — the calorie line is about the LOG", function () {
 
   it("labels the daily target", function () {
     renderAt(A_DAY);
-    expect(screen.getByText(spanning("Target 2,200 kcal"))).toBeInTheDocument();
+    expect(
+      screen.getByText(spanning(`Target ${group(2200)} kcal`))
+    ).toBeInTheDocument();
   });
 
   it("drops the lapsed 'Nothing logged yet today' row — the zeros say it", function () {
@@ -250,7 +252,9 @@ describe("TodayEnergy — HOME-TARGET-01 truthful targets/copy", () => {
     // The invariant the two phase-chip tests used to carry: whatever the
     // phase, the card states the target and never a +300/-500 delta.
     renderAt({ ...A_DAY, targets: { ...targets, finalTarget: 1700 } });
-    expect(screen.getByText(spanning("Target 1,700 kcal"))).toBeInTheDocument();
+    expect(
+      screen.getByText(spanning(`Target ${group(1700)} kcal`))
+    ).toBeInTheDocument();
     expect(screen.queryByText(/[+\u2212-]\s?\d{3}/)).toBeNull();
   });
 
@@ -275,7 +279,9 @@ describe("TodayEnergy — HOME-TARGET-01 truthful targets/copy", () => {
     expect(screen.queryByText(/already in your target/i)).toBeNull();
     expect(screen.queryByText("Workout")).toBeNull();
     expect(screen.queryByText(/Plan target/)).toBeNull();
-    expect(screen.getByText(spanning("Target 2,200 kcal"))).toBeInTheDocument();
+    expect(
+      screen.getByText(spanning(`Target ${group(2200)} kcal`))
+    ).toBeInTheDocument();
   });
 });
 
@@ -284,6 +290,7 @@ describe("TodayEnergy — HOME-TARGET-01 truthful targets/copy", () => {
  * the same sentence on Home, Food and Settings (macroInfeasibility.ts).
  */
 import { macroInfeasibilityMessage } from "@/lib/macroInfeasibility";
+import { group } from "@/test/localeGrouping";
 
 describe("TodayEnergy — infeasible target notice", function () {
   const infeasible = {
@@ -361,7 +368,7 @@ describe("TodayEnergy — loading is not the same as having logged nothing", fun
       fat: 45,
       mealsLoading: false,
     });
-    expect(screen.getByText("1,450")).toBeInTheDocument();
+    expect(screen.getByText(group(1450))).toBeInTheDocument();
     expect(screen.getByText("90g")).toBeInTheDocument();
     expect(screen.queryByRole("status")).not.toBeInTheDocument();
   });
@@ -370,7 +377,7 @@ describe("TodayEnergy — loading is not the same as having logged nothing", fun
     // A refetch with data in hand must not blank the card: the guard is
     // `calories === 0`, not `mealsLoading` alone.
     renderAt({ ...A_DAY, protein: 90, mealsLoading: true });
-    expect(screen.getByText("1,450")).toBeInTheDocument();
+    expect(screen.getByText(group(1450))).toBeInTheDocument();
     expect(screen.getByText("90g")).toBeInTheDocument();
   });
 

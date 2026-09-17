@@ -31,6 +31,7 @@ import {
   localWeekKey,
   parseLocalDate,
 } from "@/lib/dateHelpers";
+import { groupRe } from "@/test/localeGrouping";
 
 /* These components read the display unit, which resolves from the auth
    profile — and `useAuth` throws outside an AuthProvider, which none of
@@ -427,7 +428,9 @@ describe("DayPeekCard — planned run rendering (spec gate #11, resolver-aware)"
     expect(screen.getByText("Easy 30")).toBeInTheDocument();
     expect(screen.queryByText("Run scheduled")).not.toBeInTheDocument();
     expect(screen.getByText(/1 session/)).toBeInTheDocument();
-    expect(screen.getByText(/1,800 cal/)).toBeInTheDocument();
+    expect(
+      screen.getByText(new RegExp(`${groupRe(1800)} cal`))
+    ).toBeInTheDocument();
   });
 });
 
@@ -887,7 +890,8 @@ describe("DayPeekCard — the badge names what the card holds", () => {
 /**
  * The nutrition summary row is a way IN to that day's diary.
  *
- * It reads "1,850 cal · 140g protein" and, before this, did nothing —
+ * It reads a grouped calorie figure then "· 140g protein", and did
+ * nothing before this —
  * the one row in the card carrying numbers you would want to open. The
  * three things worth pinning are the destination, the guard, and the
  * gesture: the card is itself a tap target that collapses on click, so
@@ -980,7 +984,9 @@ describe("DayPeekCard — the nutrition row opens the diary", () => {
     const future = localDateString(new Date(Date.now() + 2 * 86_400_000));
     renderWithTotals(future);
 
-    expect(screen.getByText(/1,850 cal/)).toBeInTheDocument();
+    expect(
+      screen.getByText(new RegExp(`${groupRe(1850)} cal`))
+    ).toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: /open the food diary/i })
     ).not.toBeInTheDocument();
@@ -989,6 +995,8 @@ describe("DayPeekCard — the nutrition row opens the diary", () => {
   it("keeps the numbers themselves unchanged", () => {
     // The row's job is unchanged; only its tappability is new.
     renderWithTotals(localDateString(new Date()));
-    expect(screen.getByText(/1,850 cal · 140g protein/)).toBeInTheDocument();
+    expect(
+      screen.getByText(new RegExp(`${groupRe(1850)} cal · 140g protein`))
+    ).toBeInTheDocument();
   });
 });

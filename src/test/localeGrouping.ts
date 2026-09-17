@@ -33,3 +33,29 @@ export const GROUP = (1000).toLocaleString().replace(/\d/g, "");
 export function group(n: number): string {
   return n.toLocaleString();
 }
+
+/**
+ * `group(n)` escaped for use inside a RegExp — `groupRe(1800)` builds
+ * `1,800` under en-GB and `1\.800` under de-DE.
+ *
+ * The escaping is the whole point and is easy to miss: de-DE groups with
+ * `.`, which is a regex metacharacter. Interpolating the raw separator
+ * would quietly widen `/1,800 cal/` into a pattern matching "1X800 cal"
+ * for any X — a matcher that still passes while asserting less than it
+ * says. fr-FR's narrow no-break space has the same hazard in reverse:
+ * it looks like a plain space in a diff and is not one.
+ */
+export function groupRe(n: number): string {
+  return group(n).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/**
+ * The separator alone, escaped for a RegExp — for patterns that assert
+ * the SHAPE of a grouped number rather than a particular value, e.g.
+ * `^\\+\\d{1,3}${SEP_RE}\\d{3} kcal$`.
+ *
+ * Same metacharacter hazard as `groupRe`: unescaped, de-DE's `.` turns
+ * such a pattern into one that accepts any character where the
+ * separator belongs.
+ */
+export const SEP_RE = GROUP.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
