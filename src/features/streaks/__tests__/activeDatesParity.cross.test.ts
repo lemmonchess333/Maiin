@@ -98,7 +98,15 @@ function serverSet(
   ).sort();
 }
 
-const NOON = Date.parse("2026-06-01T12:00:00Z");
+/* LOCAL noon, not a `Z` instant. Both sides of this mirror answer in the
+   DEVICE's local day, so a fixture pinned to a UTC instant only names the
+   days below where the offset happens to agree. Measured: at
+   Pacific/Kiritimati (UTC+14) 12:00Z on 1 June is 02:00 on the 2nd
+   locally, so every run slid a day — the junk runs landed on 06-03/06-04
+   and a GOOD run landed on 06-02, which is exactly the day the exclusion
+   below forbids. Local noon plus whole days stays on the named day in
+   every zone (a 1h DST step cannot reach either midnight). */
+const NOON = new Date(2026, 5, 1, 12, 0, 0).getTime();
 const GOOD = { distance: 5000, duration: 1800 };
 
 describe("client active-date set ≡ server streak-nudge derivation", () => {

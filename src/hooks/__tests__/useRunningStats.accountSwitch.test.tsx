@@ -67,7 +67,7 @@ const run = () => ({
   distance: 5000,
   duration: 1500,
   avgPace: 300,
-  completedAt: Timestamp.fromDate(new Date("2026-07-10T10:00:00Z")),
+  completedAt: Timestamp.fromDate(new Date(2026, 6, 10, 10)),
   activityType: "freerun",
 });
 
@@ -96,7 +96,12 @@ beforeEach(async () => {
       error
     )) as typeof firestore.onSnapshot);
   vi.useFakeTimers({ toFake: ["Date"] });
-  vi.setSystemTime(new Date("2026-07-15T12:00:00Z"));
+  /* LOCAL components. "Yesterday" in this suite is a local day, and the
+     run fixtures below are already built locally — a `Z` clock made the
+     two disagree at a far offset. At Pacific/Kiritimati (UTC+14) noon on
+     the 15th UTC is the 16th locally, so the run on the 14th stopped
+     being yesterday and the coaching line never appeared. */
+  vi.setSystemTime(new Date(2026, 6, 15, 12));
   currentUser = { uid: "A" };
   logError.mockClear();
   // Each uid owns its OWN document, so a leak shows up as the wrong id.
