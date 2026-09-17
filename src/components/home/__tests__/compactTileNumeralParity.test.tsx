@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from "vitest";
 import { render } from "@testing-library/react";
 import WaterCard from "../WaterCard";
 import WeightStepsTiles from "../WeightStepsTiles";
+import { groupRe } from "@/test/localeGrouping";
 
 vi.mock("@/lib/haptic", () => ({ haptic: vi.fn() }));
 vi.mock("@/lib/homeAnalytics", () => ({ track: vi.fn() }));
@@ -91,7 +92,7 @@ describe("Home compact tiles share one numeral tier", () => {
       );
 
       const weightNum = numeralOf(container, /70\.0/);
-      const stepsNum = numeralOf(container, /8,432/);
+      const stepsNum = numeralOf(container, new RegExp(groupRe(8432)));
 
       for (const cls of ["text-2xl", "font-extrabold", "tabular-nums"]) {
         expect(weightNum, `weight numeral missing ${cls}`).toHaveClass(cls);

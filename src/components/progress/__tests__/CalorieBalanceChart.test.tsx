@@ -27,6 +27,7 @@ vi.mock("recharts", () => {
   };
 });
 import CalorieBalanceChart from "../CalorieBalanceChart";
+import { SEP_RE } from "@/test/localeGrouping";
 afterEach(cleanup);
 const meal = (daysAgo: number, calories: number) =>
   ({
@@ -87,12 +88,12 @@ describe("calorie balance footer", () => {
     // four-digit gap. The regex pins the SEPARATOR, not the value: it
     // does not re-derive the number through the code under test.
     render(<CalorieBalanceChart meals={[meal(1, 210)]} />);
-    expect(gap()).toMatch(/^\+\d{1,3},\d{3} kcal$/);
+    expect(gap()).toMatch(new RegExp(`^\\+\\d{1,3}${SEP_RE}\\d{3} kcal$`));
   });
 
   it("groups them in the other direction too", () => {
     render(<CalorieBalanceChart meals={[meal(1, 9000)]} />);
-    expect(gap()).toMatch(/^-\d{1,3},\d{3} kcal$/);
+    expect(gap()).toMatch(new RegExp(`^-\\d{1,3}${SEP_RE}\\d{3} kcal$`));
   });
 
   it("counts against the window it actually charts", () => {

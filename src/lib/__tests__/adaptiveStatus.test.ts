@@ -3,6 +3,7 @@ import {
   adaptiveCalorieStatus,
   adaptiveCalorieStatusLabel,
 } from "../adaptiveStatus";
+import { group } from "@/test/localeGrouping";
 
 const NOW = Date.parse("2026-06-11T12:00:00.000Z");
 
@@ -79,7 +80,7 @@ describe("adaptiveCalorieStatusLabel — the adapting line names both numbers", 
   it("states today's target alongside the baseline", () => {
     const label = adaptiveCalorieStatusLabel(adapting, 2919);
     expect(label).toContain("retuned 3d ago");
-    expect(label).toContain("2,919");
+    expect(label).toContain(group(2919));
     expect(label).toMatch(/baseline/i);
   });
 
@@ -104,10 +105,10 @@ describe("adaptiveCalorieStatusLabel — the adapting line names both numbers", 
     // The learned value is meaningless for both — manual pauses adaptation,
     // and formula means it has never applied one.
     expect(adaptiveCalorieStatusLabel({ kind: "manual" }, 2919)).not.toContain(
-      "2,919"
+      group(2919)
     );
     expect(adaptiveCalorieStatusLabel({ kind: "formula" }, 2919)).not.toContain(
-      "2,919"
+      group(2919)
     );
   });
 });

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/Button";
 import { buttonClasses } from "@/components/ui/buttonClasses";
 import { workoutTitle, type Workout } from "@/hooks/useWorkouts";
 import { parseLocalDate } from "@/lib/dateHelpers";
+import { formatDayMonthYear } from "@/utils/formatters";
 
 /** Reuses History's complete subscription; opening records adds no list query. */
 export default function WorkoutHistoryList({
@@ -53,14 +54,7 @@ export default function WorkoutHistoryList({
                     {workoutTitle(workout)}
                   </span>
                   <span className="block text-xs text-muted-foreground">
-                    {parseLocalDate(workout.date).toLocaleDateString(
-                      undefined,
-                      {
-                        day: "numeric",
-                        month: "short",
-                        year: "numeric",
-                      }
-                    )}
+                    {formatDayMonthYear(parseLocalDate(workout.date))}
                   </span>
                 </span>
                 <ChevronRight aria-hidden="true" className="size-4 shrink-0" />

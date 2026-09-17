@@ -18,6 +18,7 @@
 import { describe, it, expect, vi, afterEach, beforeEach } from "vitest";
 import { render, cleanup, waitFor } from "@testing-library/react";
 import { AnimatedNumber } from "../AnimatedNumber";
+import { group } from "@/test/localeGrouping";
 
 afterEach(() => cleanup());
 
@@ -83,7 +84,7 @@ describe("AnimatedNumber — reduced motion", () => {
        async on first paint, but with reduced-motion the value is
        set synchronously in the effect. Wait for the next tick. */
     await waitFor(() => {
-      expect(container.querySelector("span")?.textContent).toBe("1,234");
+      expect(container.querySelector("span")?.textContent).toBe(group(1234));
     });
   });
 });

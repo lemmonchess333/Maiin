@@ -3,6 +3,7 @@ import { render } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import ActivityCard from "../ActivityCard";
 import type { FeedItem } from "../../../hooks/useSocialFeed";
+import { group } from "@/test/localeGrouping";
 
 /* The card pulls auth, blocks, kudos and the viewer's unit. None of that
    is what this asserts, so it is all stubbed to the quietest thing that
@@ -84,7 +85,7 @@ describe("ActivityCard does not leak source comments into the DOM", () => {
     expect(text).not.toMatch(/unconstrained flex row/i);
     // Sanity: the card really did render, so the assertions above are
     // about content rather than about an empty container.
-    expect(text).toContain("12,480");
+    expect(text).toContain(group(12480));
   });
 
   it("renders a run card with no comment syntax in its text", () => {
