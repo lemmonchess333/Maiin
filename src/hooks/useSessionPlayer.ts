@@ -33,11 +33,24 @@ import type { SessionSegment } from "@/lib/runSegments";
  * every structured session pause-correct by construction.
  */
 
+export interface SessionSegmentResult {
+  index: number;
+  type: SessionSegment["type"];
+  rep?: number;
+  totalReps?: number;
+  target: SessionSegment["target"];
+  outcome: "completed" | "skipped";
+  elapsedSeconds: number;
+  distanceMeters: number;
+}
+
 export interface SessionPlayerState {
   /** −1 idle; `segments.length` complete; else the live segment index. */
   index: number;
   phaseElapsed: number;
   phaseDistanceCovered: number;
+  /** Append-only execution evidence for segments the player actually left. */
+  results: SessionSegmentResult[];
 }
 
 export interface SessionPlayer {
@@ -55,6 +68,7 @@ const IDLE: SessionPlayerState = {
   index: -1,
   phaseElapsed: 0,
   phaseDistanceCovered: 0,
+  results: [],
 };
 
 function targetMet(
@@ -93,23 +107,56 @@ export function useSessionPlayer(
     // re-anchors implicitly through advance() on every later segment.
     phaseStartElapsed.current = 0;
     phaseStartDistance.current = 0;
-    setState({ index: 0, phaseElapsed: 0, phaseDistanceCovered: 0 });
+    setState({ index: 0, phaseElapsed: 0, phaseDistanceCovered: 0, results: [] });
   }, [segs.length]);
 
   const advance = useCallback(
     (
       prev: SessionPlayerState,
       totalElapsed: number,
-      totalDistance: number
+      totalDistance: number,
+      outcome: "completed" | "skipped"
     ): SessionPlayerState => {
+      const current = segs[prev.index];
+      const elapsedSeconds = Math.max(
+        0,
+        totalElapsed - phaseStartElapsed.current
+      );
+      const distanceMeters = Math.max(
+        0,
+        totalDistance - phaseStartDistance.current
+      );
+      const results = current
+        ? [
+            ...prev.results,
+            {
+              index: prev.index,
+              type: current.type,
+              ...(current.rep != null ? { rep: current.rep } : {}),
+              ...(current.totalReps != null
+                ? { totalReps: current.totalReps }
+                : {}),
+              target: current.target,
+              outcome,
+              elapsedSeconds,
+              distanceMeters,
+            },
+          ]
+        : prev.results;
       let index = prev.index + 1;
       phaseStartElapsed.current = totalElapsed;
       phaseStartDistance.current = totalDistance;
-      // Bounded walk past degenerate zero-target segments.
+      // Bounded walk past degenerate zero-target segments. These carry no
+      // execution evidence because the runner never occupied them.
       while (index < segs.length && targetMet(segs[index], 0, 0)) {
         index += 1;
       }
-      return { index, phaseElapsed: 0, phaseDistanceCovered: 0 };
+      return {
+        index,
+        phaseElapsed: 0,
+        phaseDistanceCovered: 0,
+        results,
+      };
     },
     [segs]
   );
@@ -123,7 +170,7 @@ export function useSessionPlayer(
         const phaseDistanceCovered = totalDistance - phaseStartDistance.current;
         const seg = segs[prev.index];
         if (targetMet(seg, phaseElapsed, phaseDistanceCovered)) {
-          return advance(prev, totalElapsed, totalDistance);
+          return advance(prev, totalElapsed, totalDistance, "completed");
         }
         return { ...prev, phaseElapsed, phaseDistanceCovered };
       });
@@ -136,7 +183,7 @@ export function useSessionPlayer(
       if (segs.length === 0) return;
       setState((prev) => {
         if (prev.index < 0 || prev.index >= segs.length) return prev;
-        return advance(prev, totalElapsed, totalDistance);
+        return advance(prev, totalElapsed, totalDistance, "skipped");
       });
     },
     [segs, advance]
