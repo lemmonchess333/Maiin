@@ -198,6 +198,64 @@ jobs:
           LANG: ${{ matrix.locale }}
           LC_ALL: ${{ matrix.locale }}
 
+  # The suite had only ever run at ONE moment — whenever CI happened to
+  # start — and a test fixture carrying a date literal is inside whatever
+  # window the code applies only until the clock walks past it. Then it
+  # fails on a calendar morning, with no commit, and the failure names
+  # the assertion rather than the cause.
+  #
+  # Not hypothetical. Measured on 2026-09-17 by shifting the process
+  # clock: `ExerciseHistory.test.tsx` opens the page on its 3-month range
+  # pill against sessions dated "2026-07-20", so both tests pass on
+  # 2026-10-17 and fail on 2026-10-18 — exactly 90 days later, 31 days
+  # after the measurement — with "expected length 2, got 1" and "unable
+  # to find BW × 10".
+  #
+  # 90 days, chosen against two edges rather than picked round:
+  #
+  #   LOW   a shorter horizon finds a bomb with less notice than it takes
+  #         to notice and fix one. A quarter is the smallest warning that
+  #         is comfortably more than the problem.
+  #   HIGH  the race catalogue's last event is 2027-06-13, and a lapsed
+  #         catalogue is DELIBERATELY not a build failure — see
+  #         `scripts/check-race-dates.ts`, which files a monthly issue
+  #         precisely so that a calendar date cannot redden unrelated
+  #         PRs. A horizon past that would contradict it.
+  #
+  # So this gate goes red a quarter BEFORE a fixture expires, which is a
+  # warning with slack rather than a morning surprise.
+  unit-future:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 22
+          cache: "npm"
+      - run: npm ci
+      # Prove the clock actually moved, before trusting a green suite —
+      # the `unit-locale` job's lesson. A mis-set variable or a require
+      # that never reached the workers would leave this running at the
+      # ordinary date and reporting that the fixtures are safe for
+      # another quarter, having checked nothing. `date` is the shell's,
+      # outside any Node process this could have patched.
+      - name: Confirm the clock shifted
+        run: |
+          real=$(date -u +%s)
+          shifted=$(TROPOS_CLOCK_OFFSET_DAYS=90 node --require ./scripts/fake-clock.cjs \
+            -e 'process.stdout.write(String(Math.floor(Date.now() / 1000)))')
+          moved=$(( (shifted - real) / 86400 ))
+          echo "clock moved ${moved} days"
+          if [ "$moved" -ne 90 ]; then
+            echo "fake-clock did not take — this job would pass vacuously"
+            exit 1
+          fi
+      - name: Unit suite 90 days from now
+        run: npm run test -- --run
+        env:
+          TROPOS_CLOCK_OFFSET_DAYS: 90
+
   # Dependency advisories, as a PR gate for the full ROOT tree: `npm audit`
   # fails on high or critical, so a new advisory has to be fixed or
   # consciously addressed before it merges. Development tooling processes

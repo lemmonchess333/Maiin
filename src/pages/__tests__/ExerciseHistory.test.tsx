@@ -35,6 +35,27 @@ vi.mock("@/components/ExerciseFormContent", () => ({
   default: () => <div>Exercise guidance ready</div>,
 }));
 import ExerciseHistory from "../ExerciseHistory";
+import { localDateString } from "@/lib/dateHelpers";
+
+/**
+ * A session date inside the page's DEFAULT range pill.
+ *
+ * The two fixtures below used to carry a literal ("2026-07-20") and the
+ * page opens on "3M", so they were only ever inside the window while the
+ * clock happened to be within 90 days of that literal. Measured rather
+ * than reasoned about: with the process clock shifted forward, both
+ * tests pass on 2026-10-17 and fail on 2026-10-18 — exactly 90 days
+ * after the literal — with "expected length 2, got 1" and "unable to
+ * find BW × 10", neither of which reads as a date problem.
+ *
+ * Neither test is about the range filter; they are about how a timed
+ * hold and a bodyweight set RENDER. So the fixture is pinned to the
+ * clock instead of to a day, and the window can never expire out from
+ * under them.
+ */
+const RECENT_SESSION_DATE = localDateString(
+  new Date(Date.now() - 7 * 86_400_000)
+);
 
 function renderAt(name: string, tab?: "form") {
   return render(
@@ -110,7 +131,7 @@ describe("ExerciseHistory — empty states (shared hexagon EmptyState)", () => {
       workouts: [
         {
           id: "w1",
-          date: "2026-07-20",
+          date: RECENT_SESSION_DATE,
           exercises: [
             {
               exerciseId: "plank",
@@ -149,7 +170,7 @@ describe("ExerciseHistory — empty states (shared hexagon EmptyState)", () => {
       workouts: [
         {
           id: "bodyweight-session",
-          date: "2026-07-20",
+          date: RECENT_SESSION_DATE,
           exercises: [
             {
               exerciseId: "push-ups",
