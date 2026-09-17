@@ -105,6 +105,7 @@ import { BottomSheet } from "@/components/ui/BottomSheet";
 import { IconButton } from "@/components/ui/IconButton";
 import { Spinner } from "@/components/ui/Spinner";
 import InlineNumerals from "@/components/ui/InlineNumerals";
+import { localDateString } from "@/lib/dateHelpers";
 // Form guide is heavy (react-body-highlighter) — lazy-load so it only hydrates
 // when the user opens the "How to" sheet mid-workout (D-LIFT-14).
 const ExerciseFormContent = lazyRetry(
@@ -1004,7 +1005,7 @@ export default function WorkoutSession({
       const nextMap = recordSetBest(prMap, exName, {
         weight: set.weight,
         reps: set.reps,
-        date: new Date().toISOString().split("T")[0],
+        date: localDateString(),
       });
       if (nextMap !== prMap || prResult) {
         prContext = {
@@ -1081,7 +1082,7 @@ export default function WorkoutSession({
             ...prev,
             [exName]: {
               volume: sessionVolume,
-              date: new Date().toISOString().split("T")[0],
+              date: localDateString(),
             },
           }));
         }
@@ -1125,7 +1126,7 @@ export default function WorkoutSession({
       sessionCounts,
       day.exercises,
       logs,
-      new Date().toISOString().split("T")[0]
+      localDateString()
     );
     setPrMap(next.map);
     setPrResults(next.results);
@@ -1297,7 +1298,7 @@ export default function WorkoutSession({
             if (auth.currentUser?.uid !== user.uid) return;
             // Backlog #2: persist volume bests derived from the FINAL set
             // logs — undo-safe (an undone set never inflates the record).
-            const volDate = new Date().toISOString().split("T")[0];
+            const volDate = localDateString();
             /* The rule (a hold has no volume) and the carry-forward live in
              `nextVolumeBest`, where a test can reach them — this block had
              none, in a file that has none. */
