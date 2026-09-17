@@ -149,9 +149,15 @@ describe("aggregateWeeklyData", () => {
   it("buckets runs into Monday-anchored weeks", () => {
     /* Sunday + Monday land in different weeks. 10 May 2026 is a
        Sunday — the last day of its week; 11 May 2026 is the Monday
-       that opens the next one. */
-    const sunday = new Date("2026-05-10T12:00:00Z");
-    const monday = new Date("2026-05-11T12:00:00Z");
+       that opens the next one.
+
+       Built from LOCAL components, because the weekday these names
+       claim is a local one: `localWeekKey` anchors on the local day. A
+       `Z` literal makes the claim true only near UTC — at
+       Pacific/Kiritimati (UTC+14) both instants fell inside one local
+       week and this bucketed them together. */
+    const sunday = new Date(2026, 4, 10, 12, 0, 0);
+    const monday = new Date(2026, 4, 11, 12, 0, 0);
     const result = aggregateWeeklyData([
       run({ distance: 5000, avgPace: 150, completedAt: sunday }),
       run({ distance: 3000, avgPace: 180, completedAt: monday }),

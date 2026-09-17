@@ -2,7 +2,7 @@
  * chartGranularity — Hist5c pin 7 contract tests.
  * Daily 1W/1M; weekly 3M; monthly 6M/1Y.
  */
-import { describe, it, expect, afterEach } from "vitest";
+import { describe, it, expect, afterEach, vi } from "vitest";
 import {
   granularityForRange,
   binKeyForDate,
@@ -43,34 +43,44 @@ describe("granularityForRange", () => {
 });
 
 describe("binKeyForDate", () => {
+  /* Every fixture here is built from LOCAL components, never a `Z`
+     literal. `binKeyForDate` answers in the LOCAL day — that is the
+     whole point of it — so a fixture pinned to a UTC instant only
+     asserts the local day where the two happen to agree, which is near
+     UTC and nowhere else. The world spans UTC-12 to UTC+14.
+
+     Measured on the unmodified suite: at Pacific/Midway (UTC-11) the
+     daily, weekly and monthly "maps to itself" cases all failed, and at
+     Pacific/Kiritimati (UTC+14) the daily one did. 10:00Z on the 21st
+     is the 22nd at +14 and still the 20th at -11. */
   it("daily bin returns the day itself", () => {
-    const d = new Date("2026-05-21T10:00:00Z");
+    const d = new Date(2026, 4, 21, 10, 0, 0);
     expect(binKeyForDate(d, "daily")).toBe("2026-05-21");
   });
 
   it("weekly bin returns the Monday of the week", () => {
     /* 2026-05-21 is a Thursday → previous Monday is 2026-05-18. */
-    const d = new Date("2026-05-21T10:00:00Z");
+    const d = new Date(2026, 4, 21, 10, 0, 0);
     expect(binKeyForDate(d, "weekly")).toBe("2026-05-18");
   });
 
   it("weekly bin: Monday maps to itself", () => {
-    const d = new Date("2026-05-18T10:00:00Z");
+    const d = new Date(2026, 4, 18, 10, 0, 0);
     expect(binKeyForDate(d, "weekly")).toBe("2026-05-18");
   });
 
   it("monthly bin returns the 1st of the month", () => {
-    const d = new Date("2026-05-21T10:00:00Z");
+    const d = new Date(2026, 4, 21, 10, 0, 0);
     expect(binKeyForDate(d, "monthly")).toBe("2026-05-01");
   });
 
   it("monthly bin: 1st of month maps to itself", () => {
-    const d = new Date("2026-05-01T10:00:00Z");
+    const d = new Date(2026, 4, 1, 10, 0, 0);
     expect(binKeyForDate(d, "monthly")).toBe("2026-05-01");
   });
 
   it("same input yields same key across granularities (idempotent)", () => {
-    const d = new Date("2026-05-21T10:00:00Z");
+    const d = new Date(2026, 4, 21, 10, 0, 0);
     expect(binKeyForDate(new Date(d), "daily")).toBe(binKeyForDate(d, "daily"));
     expect(binKeyForDate(new Date(d), "weekly")).toBe(
       binKeyForDate(d, "weekly")
@@ -179,17 +189,75 @@ describe("formatBinLabel", () => {
   });
 
   it("monthly label is short month name in current year", () => {
-    /* Test against May to avoid year-boundary effects. */
-    const currentYear = new Date().getUTCFullYear();
+    /* Test against May to avoid year-boundary effects. LOCAL year: the
+       "current year" this label suppresses is the one the user is living
+       in — see the year-boundary describe below, where reading it off a
+       UTC clock was the defect. */
+    const currentYear = new Date().getFullYear();
     const label = formatBinLabel(`${currentYear}-05-01`, "monthly");
     expect(label).toBe("May");
   });
 
   it("monthly label appends 2-digit year when not current year", () => {
     /* A bin from 2024 should show "May 24" if current year is not 2024. */
-    const currentYear = new Date().getUTCFullYear();
+    const currentYear = new Date().getFullYear();
     const pastYear = currentYear - 2;
     const label = formatBinLabel(`${pastYear}-05-01`, "monthly");
     expect(label).toBe(`May ${String(pastYear).slice(2)}`);
+  });
+});
+
+/**
+ * Year-boundary regression (2026-09-17).
+ *
+ * The monthly label suppresses the year when the bin is in "the current
+ * year", and that comparison read the clock's UTC year:
+ *
+ *   const sameYear = d.getUTCFullYear() === now.getUTCFullYear();
+ *
+ * `d` is the bin KEY parsed at UTC midnight, so reading it back with
+ * `getUTC*` is right — it is a carrier for the string's own digits, not
+ * an instant. `now` is an instant, and an instant only has a year once
+ * you pick a zone. Picking UTC means the axis disagrees with the user's
+ * calendar for as long as their offset holds them in a different year:
+ * up to 14 hours after midnight on 1 January east of UTC, and up to 12
+ * hours before it west of UTC.
+ *
+ * Both directions print a wrong label rather than a merely odd one. East
+ * of UTC on New Year's morning, THIS January reads "Jan 27" while LAST
+ * January reads bare "Jan" — the suppression lands on exactly the bin it
+ * exists to disambiguate. West of UTC on New Year's Eve, the December
+ * the user is standing in reads "Dec 26".
+ *
+ * The suite could not have caught this: both tests above computed their
+ * expected year with `new Date().getUTCFullYear()`, the same idiom as the
+ * defect, so they agreed with it by construction. They now read the local
+ * year, and these pin the boundary itself.
+ */
+describe("formatBinLabel — year boundary away from UTC", () => {
+  const original = process.env.TZ;
+  afterEach(() => {
+    process.env.TZ = original;
+    vi.useRealTimers();
+  });
+
+  it("east of UTC, the local new year is the current year", () => {
+    process.env.TZ = "Pacific/Kiritimati"; // UTC+14
+    vi.useFakeTimers({ toFake: ["Date"] });
+    // 00:30 on 1 January 2027 in Kiritimati — 10:30Z on 31 December 2026.
+    vi.setSystemTime(new Date("2026-12-31T10:30:00Z"));
+
+    expect(formatBinLabel("2027-01-01", "monthly")).toBe("Jan");
+    expect(formatBinLabel("2026-01-01", "monthly")).toBe("Jan 26");
+  });
+
+  it("west of UTC, the local old year is still the current year", () => {
+    process.env.TZ = "Pacific/Midway"; // UTC-11
+    vi.useFakeTimers({ toFake: ["Date"] });
+    // 20:00 on 31 December 2026 in Midway — 07:00Z on 1 January 2027.
+    vi.setSystemTime(new Date("2027-01-01T07:00:00Z"));
+
+    expect(formatBinLabel("2026-12-01", "monthly")).toBe("Dec");
+    expect(formatBinLabel("2025-12-01", "monthly")).toBe("Dec 25");
   });
 });
