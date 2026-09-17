@@ -821,6 +821,18 @@ an hour:
   from a real one — the frame needs an anchor on the DATA it exists to
   show. `e2e/helpers/settleHeight.ts` is still worth calling before a
   fullPage shot; it just is not that fix.
+- **A raw DOM scroll inside a capture spec races the app's own smooth
+  scrolling.** `index.css` sets `html { scroll-behavior: smooth }`, so
+  `el.scrollIntoView({ block: "start" })` ANIMATES, and a spec that then
+  measures inside a fixed `waitForTimeout` can land mid-flight.
+  `food-suggest-typed` did: its height guard refused a frame that was
+  fine, going 1-failed / 2-passed over five full-seed runs while CI
+  stayed green — a coin flip that usually lands right is not a gate.
+  Pass `behavior: "instant"` (an explicit behavior beats the computed
+  property by spec) or use Playwright's `scrollIntoViewIfNeeded()`,
+  which waits for stability itself. The shape to look for is a raw
+  `scrollIntoView` / `window.scrollTo` followed by a measurement rather
+  than by a settle.
 - **Raster art needs `img.decode()`** — `e2e/helpers/settleImages.ts`
   took `races-directory-light` from 10.88% to unchanged, and
   `badges-grid` from churning-in-every-report to unchanged in both
