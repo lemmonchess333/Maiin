@@ -184,3 +184,27 @@ export function rollingWindowStart(
     -(days - 1)
   );
 }
+
+/**
+ * Whole weeks from `fromKey` to `toKey`, both local "YYYY-MM-DD".
+ * Partial weeks round down, so the answer is 0 for anything inside the
+ * final seven days — "race week" on the surfaces that read it.
+ *
+ * The days are counted and ROUNDED before the division, because a DST
+ * spring-forward inside the span makes it an hour SHORT of a round
+ * number of 24-hour periods. Dividing the raw milliseconds by a week
+ * instead lost a whole week to that hour: measured in Europe/London,
+ * 20 March to 3 April 2027 spans 13 d 23 h — 13.958 days — and floored
+ * to 1, so the "Training for …" chip told a marathon trainee exactly two
+ * weeks out that they had one. It is not confined to the 14-day case;
+ * EVERY exact multiple of seven days crossing the transition drops one
+ * (21 → 2, 28 → 3), and a race is an exact multiple of seven days away
+ * one day in every seven. Autumn's extra hour is harmless — 14.04 days
+ * still floors to 2 — which is the asymmetry that kept it unnoticed.
+ */
+export function wholeWeeksBetween(fromKey: string, toKey: string): number {
+  const ms =
+    parseLocalDate(toKey).getTime() - parseLocalDate(fromKey).getTime();
+  if (Number.isNaN(ms)) return 0;
+  return Math.floor(Math.round(ms / 86_400_000) / 7);
+}

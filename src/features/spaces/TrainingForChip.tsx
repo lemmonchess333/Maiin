@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { Flag } from "lucide-react";
 import { spaceDef } from "./spaceDefs";
 import { resolveRaceEvent, useRaceEventOverrides } from "./raceEventOverrides";
-import { localDateString } from "@/lib/dateHelpers";
+import { localDateString, wholeWeeksBetween } from "@/lib/dateHelpers";
 import { THEME } from "@/lib/theme";
 
 /**
@@ -24,11 +24,7 @@ export default function TrainingForChip({ spaceId }: { spaceId: string }) {
   const today = localDateString();
   if (!event || event.dateKey < today) return null;
 
-  // Whole weeks until race day — glanceable, and honest at 0 ("race week").
-  const msOut =
-    new Date(`${event.dateKey}T00:00:00`).getTime() -
-    new Date(`${today}T00:00:00`).getTime();
-  const weeksOut = Math.floor(msOut / (7 * 86_400_000));
+  const weeksOut = wholeWeeksBetween(today, event.dateKey);
 
   return (
     <Link
