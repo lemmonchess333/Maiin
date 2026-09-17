@@ -89,7 +89,24 @@ test.describe("food suggestion actions", () => {
        not being asked to. (Measured both ways: with only `seed:e2e` the
        page is too short to scroll and this is a no-op, which is why the
        problem is invisible on a light seed.) */
-    await anchor.evaluate((el) => el.scrollIntoView({ block: "start" }));
+    /* `behavior: "instant"`, because the app sets
+       `html { scroll-behavior: smooth }` and a default scroll therefore
+       ANIMATES. The 200ms below is not long enough for a page-length
+       glide, so the measurement landed mid-flight and the height guard
+       refused a frame that was fine — flaky, not wrong.
+
+       Measured over five full-seed runs: without this the spec went
+       1-failed / 2-passed; with it, three runs of 2 passed. CI stayed
+       green throughout, which is the tell — a coin flip that usually
+       lands right is not a gate.
+
+       An explicit behavior beats the computed property by spec, which is
+       the same fact that made the app's own `behavior: "smooth"` call
+       sites ignore Reduce Motion. Any capture spec that scrolls the DOM
+       directly and then measures inside a fixed timeout has this shape. */
+    await anchor.evaluate((el) =>
+      el.scrollIntoView({ block: "start", behavior: "instant" })
+    );
     await page.waitForTimeout(200);
     const box = await anchor.boundingBox();
     if (!box) {
