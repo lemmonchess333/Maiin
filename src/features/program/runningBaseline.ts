@@ -61,14 +61,16 @@ export function fitWeekToRunningBaseline(
   week: ScheduledRunDay[],
   baseline: RunningBaseline | null | undefined,
   today: string,
-  easyPaceSPerKm?: number | null
+  easyPaceSPerKm?: number | null,
+  intervalPaceSPerKm?: number | null
 ): ScheduledRunDay[] {
   if (!isRunningBaseline(baseline)) return week;
   const review = runningBaselineNeedsReview(baseline, today);
   const easyOnly = review || baseline.experience !== "regular";
   const templateFor = (row: ScheduledRunDay) =>
     RUN_TEMPLATES.find((t) => t.id === (row.userOverride ?? row.templateId));
-  const minutes = (t: RunTemplate) => plannedRunMinutes(t, easyPaceSPerKm);
+  const minutes = (t: RunTemplate) =>
+    plannedRunMinutes(t, easyPaceSPerKm, intervalPaceSPerKm);
   const protectedRow = (row: ScheduledRunDay) =>
     row.type === "race" ||
     row.completed ||
