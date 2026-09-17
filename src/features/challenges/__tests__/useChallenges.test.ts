@@ -59,11 +59,20 @@ describe("getTimeRemaining", () => {
      local-midnight boundary was under an hour away — and read
      "54m left" (CI, 2026-08-08 23:06Z). The "Ended" case was likewise
      wrong for any timezone west of UTC in the evening. Pin `now`
-     against an explicitly constructed boundary instead. The end-date
-     VALUE uses local noon so its UTC day-key resolves to the intended
-     day in any test timezone with |offset| < 12h (the suite's usual
-     noon trick). */
-  const endDate = new Date(2026, 0, 15, 12, 0, 0); // day-key 2026-01-15
+     against an explicitly constructed boundary instead.
+
+     The end-date VALUE is built with `Date.UTC`, not local noon. The
+     noon trick this used to rely on only holds for |offset| < 12h — its
+     own comment said so — and the world runs from UTC-12 to UTC+14, a
+     26-hour span no single local hour can cover. At Pacific/Kiritimati
+     (UTC+14) local noon on the 15th is 22:00Z on the 14th, so
+     `boundaryDayKey` (which reads `toISOString()`, i.e. UTC) resolved
+     to the wrong day and all three of these read "Ended".
+
+     `Date.UTC` fixes the day-key at every offset. The BOUNDARY stays in
+     local components, because local midnight of that day is exactly
+     what `challengeLocalEndMs` returns. */
+  const endDate = new Date(Date.UTC(2026, 0, 15, 12, 0, 0)); // day-key 2026-01-15
   const endBoundary = new Date(2026, 0, 15, 0, 0, 0).getTime();
 
   it('returns "Ended" at and after the local end boundary', () => {
