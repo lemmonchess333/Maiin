@@ -10,7 +10,10 @@ import {
   normalizeRunTimeLimits,
   type RunTimeLimits,
 } from "@/features/program/runTimeLimits";
-import { planningEasyPaceSPerKm } from "@/lib/runPaces";
+import {
+  planningEasyPaceSPerKm,
+  planningIntervalPaceSPerKm,
+} from "@/lib/runPaces";
 import RunAvailabilitySettings from "@/components/run/RunAvailabilitySettings";
 /**
  * RunPlanSettings — the focused, run-ONLY plan editor (Run-Split, 2026-07).
@@ -300,6 +303,7 @@ export default function RunPlanSettings({
         runTimeLimits,
         runningBaseline,
         easyPaceSPerKm: planningEasyPaceSPerKm(profile.runFitness),
+        intervalPaceSPerKm: planningIntervalPaceSPerKm(profile.runFitness),
         existingState: programState,
         recentLayoff,
         weekSchedule: profile.weekSchedule,
