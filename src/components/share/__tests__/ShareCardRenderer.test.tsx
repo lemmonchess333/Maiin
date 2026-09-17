@@ -7,6 +7,7 @@ import ShareCardRenderer, {
   type ShareFormat,
   type ShareBackground,
 } from "../ShareCardRenderer";
+import { groupText, groupTextRe } from "@/test/localeGrouping";
 
 afterEach(() => cleanup());
 
@@ -191,8 +192,10 @@ describe("ShareCardRenderer", () => {
         offscreen={false}
       />
     );
-    expect(screen.getByText("2,284")).toBeTruthy();
-    expect(screen.getByText(/of 2,300 kcal/)).toBeTruthy();
+    expect(screen.getByText(groupText(2284))).toBeTruthy();
+    expect(
+      screen.getByText(new RegExp(`of ${groupTextRe(2300)} kcal`))
+    ).toBeTruthy();
     expect(screen.getByText(/162P/)).toBeTruthy();
     expect(screen.getByText(/248C/)).toBeTruthy();
   });
