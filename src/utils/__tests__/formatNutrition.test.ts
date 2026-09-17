@@ -4,25 +4,35 @@
  * surfaces.
  *
  * Consistent formatting matters: the same calorie value on two
- * different cards must render identically (2,933 — not 2933 in
- * one place and "2933 kcal" in another). Pin the contract here so
- * a regression in either branch surfaces immediately.
+ * different cards must render identically — grouped, not a bare
+ * "2933" in one place and "2933 kcal" in another.
+ *
+ * The separator CHARACTER is the viewer's, not ours: grouping follows
+ * the locale by design, so "2,933" is one locale's rendering of a value
+ * with no fixed rendering. These assert what holds everywhere —
+ * rounding, grouping present above 1000 and absent below — and take the
+ * expected string from `@/test/localeGrouping`. Spelling a comma pinned
+ * the RUNNER instead: this file passed only where it resolved en-US and
+ * failed under de-DE, which reads "2.933".
  */
 import { describe, it, expect } from "vitest";
 import { formatCalories, formatMacro, CALORIE_UNIT } from "../formatNutrition";
+import { group, GROUP } from "@/test/localeGrouping";
 
 describe("formatCalories", () => {
   it("rounds to a whole number", () => {
-    expect(formatCalories(2932.4)).toBe("2,932");
-    expect(formatCalories(2932.6)).toBe("2,933");
+    expect(formatCalories(2932.4)).toBe(group(2932));
+    expect(formatCalories(2932.6)).toBe(group(2933));
   });
 
-  it("adds a comma thousands separator", () => {
+  it("groups thousands", () => {
     /* The Food hero card displays calories at 48px display
        weight — without a separator "2933" reads as one
-       continuous glyph rather than a number. */
-    expect(formatCalories(1500)).toBe("1,500");
-    expect(formatCalories(10000)).toBe("10,000");
+       continuous glyph rather than a number. Which separator is the
+       viewer's business; that there IS one is ours. */
+    expect(GROUP).not.toBe("");
+    expect(formatCalories(1500)).toBe(group(1500));
+    expect(formatCalories(10000)).toBe(group(10000));
   });
 
   it("does NOT add a separator below 1000", () => {
