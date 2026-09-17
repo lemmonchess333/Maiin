@@ -236,8 +236,19 @@ function FoodComposerCard({
               haptic();
               scanOverrides.onClick();
             }}
+            /* The locked label names the CONTROL and what activating it
+               does, not just the destination. "Unlock unlimited scans" did
+               the opposite: a screen-reader user heard only an offer and
+               never learned this was the scan camera, while the sighted
+               user sees a dimmed camera with a lock badge. "unlock" is
+               also a banned AI-tell in the house voice — FoodProStrip's
+               own docstring says so by name, and ScanQuotaIndicator's
+               exhausted line already had the right words a file away
+               ("Out of scans — upgrade for unlimited"). */
             aria-label={
-              scanOverrides.locked ? "Unlock unlimited scans" : "Scan your meal"
+              scanOverrides.locked
+                ? "Scan your meal — upgrade for unlimited"
+                : "Scan your meal"
             }
             className="relative size-11 inline-flex items-center justify-center rounded-lg active:scale-90 transition-transform shrink-0"
             style={{ color: THEME.food.scan }}

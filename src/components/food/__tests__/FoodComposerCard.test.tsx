@@ -89,12 +89,14 @@ describe("FoodComposerCard — scan icon in the input row (wave2 A)", () => {
     renderComposer({ scanOverrides: { onClick, locked: true } });
     expect(screen.queryByRole("button", { name: "Scan your meal" })).toBeNull();
     const lockedBtn = screen.getByRole("button", {
-      name: "Unlock unlimited scans",
+      name: "Scan your meal — upgrade for unlimited",
     });
     fireEvent.click(lockedBtn);
     expect(onClick).toHaveBeenCalledTimes(1);
     // No full-width locked CTA text either — icon-only.
-    expect(screen.queryByText("Unlock unlimited scans")).toBeNull();
+    expect(
+      screen.queryByText("Scan your meal — upgrade for unlimited")
+    ).toBeNull();
   });
 
   it("send button appears alongside the scan icon when there is input text", () => {
@@ -181,7 +183,9 @@ describe("FoodComposerCard — conditional quota caption (wave2 B)", () => {
     expect(screen.queryByText(/out of scans/i)).toBeNull();
     // The gate is still present — as the locked icon.
     expect(
-      screen.getByRole("button", { name: "Unlock unlimited scans" })
+      screen.getByRole("button", {
+        name: "Scan your meal — upgrade for unlimited",
+      })
     ).toBeTruthy();
   });
 
