@@ -93,8 +93,16 @@ export function formatBinLabel(
   // parsing.
   if (Number.isNaN(d.getTime())) return "";
   if (granularity === "monthly") {
-    const now = new Date();
-    const sameYear = d.getUTCFullYear() === now.getUTCFullYear();
+    // `d` is the bin KEY, parsed at UTC midnight — reading it back with
+    // getUTC* returns the string's own digits, which is the point. `now`
+    // is an INSTANT, and an instant only has a year once a zone is
+    // chosen: the year to compare against is the one the user is living
+    // in, so it is read locally. Reading it as UTC too made the axis
+    // disagree with the user's calendar for up to 14 hours after their
+    // New Year (east of UTC) and 12 before it (west) — see the
+    // year-boundary tests.
+    const nowLocalYear = new Date().getFullYear();
+    const sameYear = d.getUTCFullYear() === nowLocalYear;
     const month = d.toLocaleString("en-GB", {
       month: "short",
       timeZone: "UTC",
