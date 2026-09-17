@@ -1432,7 +1432,8 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
       week[0]?.weekKey && week[0].weekKey > input.currentDate
         ? week[0].weekKey
         : input.currentDate,
-      input.easyPaceSPerKm
+      input.easyPaceSPerKm,
+      input.intervalPaceSPerKm
     );
     return fitted.map((row, index) => {
       const rd =
