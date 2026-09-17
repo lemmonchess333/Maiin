@@ -145,8 +145,17 @@ describe("capture spec — Today's nutrition readiness anchor", () => {
        anchor now spans a child, and a matcher that only looked at one
        text node would have gone quiet here and taken four frames red
        twelve minutes into the capture job instead. */
+    /* Normalise the NEEDLE exactly as the haystack is normalised below.
+       fr-FR groups with U+202F, which `\s+` collapses to a plain space
+       on the element side — so a needle carrying the raw U+202F could
+       never meet it, and the two strings look identical in the failure
+       output. This file already documented that separator; it did not
+       apply the same normalisation to what it was searching FOR. */
     const wanted = new RegExp(
-      `Target ${rendered.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")} kcal`
+      `Target ${rendered
+        .replace(/\s+/g, " ")
+        .trim()
+        .replace(/[.*+?^${}()|[\]\\]/g, "\\$&")} kcal`
     );
     const carrier = Array.from(container.querySelectorAll("*")).find((el) =>
       wanted.test((el.textContent ?? "").replace(/\s+/g, " ").trim())

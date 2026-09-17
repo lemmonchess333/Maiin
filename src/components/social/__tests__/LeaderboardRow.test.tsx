@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import LeaderboardRow from "../LeaderboardRow";
+import { groupText } from "@/test/localeGrouping";
 
 /* Both avatars pull real Firestore/block state. The row's layout
    contract is independent of them, so they are stubbed to keep this
@@ -59,7 +60,7 @@ describe("LeaderboardRow layout contract", () => {
 
   it("holds the score whole — it never shrinks and never wraps", () => {
     renderRow();
-    const score = screen.getByText("12,480").closest("span");
+    const score = screen.getByText(groupText(12480)).closest("span");
     expect(score).toHaveClass("shrink-0");
     expect(score).toHaveClass("whitespace-nowrap");
     expect(score).toHaveClass("font-mono");
@@ -71,7 +72,7 @@ describe("LeaderboardRow layout contract", () => {
     // and forbids mixing 700/800 in one visual tier — the rank beside
     // this is 700. Size carries the hierarchy instead.
     renderRow();
-    const score = screen.getByText("12,480").closest("span");
+    const score = screen.getByText(groupText(12480)).closest("span");
     expect(score).toHaveClass("text-body");
     expect(score).not.toHaveClass("font-extrabold");
     expect(score).toHaveClass("font-bold");

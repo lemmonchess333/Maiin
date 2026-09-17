@@ -132,6 +132,72 @@ jobs:
         env:
           TZ: ${{ matrix.tz }}
 
+  # The suite had only ever run in one LOCALE, the same blind spot the
+  # unit-timezone job above exists for. Measured 2026-09-17: 26
+  # assertions across 14 files failed under de-DE and 18 under fr-FR,
+  # and one was a production defect rather than a fixture — a wrapped
+  # `toLocaleDateString(undefined, …)` rendering every saved workout's
+  # date in the DEVICE's order, which the line-by-line date guard could
+  # not see.
+  #
+  # Two locales because they exercise two DIFFERENT mechanisms, and
+  # neither substitutes for the other:
+  #
+  #   de-DE  the separator is a different CHARACTER (".") — and one that
+  #          is a regex metacharacter, so an unescaped interpolation
+  #          silently widens a pattern instead of failing it.
+  #   fr-FR  the separator is U+202F, which Testing Library's matchers
+  #          normalise to a plain space. A raw needle never meets the
+  #          normalised haystack, and the two strings look identical in
+  #          the failure output.
+  #
+  # Grouping deliberately follows the viewer (see dateTreatment.test.ts),
+  # so this gate is not about forcing one rendering — it is about
+  # assertions not quietly pinning whichever locale CI resolves.
+  unit-locale:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        locale: ["de_DE.UTF-8", "fr_FR.UTF-8"]
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 22
+          cache: "npm"
+      - run: npm ci
+      # Prove the locale actually took, before trusting a green suite.
+      # Node resolves its default locale through ICU from LANG/LC_ALL; if
+      # a runner ever fails to pick it up, the suite would run in en-US
+      # and pass vacuously — a gate reporting success while testing
+      # nothing, which is worse than no gate.
+      - name: Confirm the runtime resolved ${{ matrix.locale }}
+        run: |
+          node -e '
+            const want = process.env.LC_ALL.split(".")[0].replace("_", "-");
+            const got = Intl.NumberFormat().resolvedOptions().locale;
+            const sep = (1000).toLocaleString().replace(/[0-9]/g, "");
+            if (!got.startsWith(want)) {
+              console.error(`locale did not take: wanted ${want}, resolved ${got}`);
+              process.exit(1);
+            }
+            if (sep === ",") {
+              console.error(`${got} grouped with a comma — this job would not exercise the class it exists for`);
+              process.exit(1);
+            }
+            console.log(`${got} groups 1000 as ${(1000).toLocaleString()}`);
+          '
+        env:
+          LANG: ${{ matrix.locale }}
+          LC_ALL: ${{ matrix.locale }}
+      - name: Unit suite in ${{ matrix.locale }}
+        run: npm run test -- --run
+        env:
+          LANG: ${{ matrix.locale }}
+          LC_ALL: ${{ matrix.locale }}
+
   # Dependency advisories, as a PR gate for the full ROOT tree: `npm audit`
   # fails on high or critical, so a new advisory has to be fixed or
   # consciously addressed before it merges. Development tooling processes
