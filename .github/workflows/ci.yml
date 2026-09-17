@@ -80,6 +80,38 @@ jobs:
       # vite.config.ts is a raised warning, not a budget — this is the budget.
       - run: npm run check:dist-size
 
+  # Timezone gate (2026-09-17). The unit suite used to run only in the
+  # runner's UTC, which makes it blind to the exact class CLAUDE.md names
+  # as recurring: "never mix local-date and UTC operations in one
+  # calculation". Measured on unmodified main before this job existed —
+  # 8 tests failed at Pacific/Kiritimati (UTC+14) and 3 at Pacific/Midway
+  # (UTC-11), all of them date FIXTURES pinned to a `Z` instant while the
+  # code under test answers in the local day. Every one was green in UTC.
+  #
+  # Both signs are run because their failures were not the same set: an
+  # eastern offset moves a fixture forward across local midnight, a
+  # western one moves it back, and a test can be wrong in one direction
+  # only. The suite is ~2 minutes, so this costs two parallel runs.
+  unit-timezone:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        # The two extremes of the inhabited range (UTC-12..UTC+14).
+        tz: ["Pacific/Kiritimati", "Pacific/Midway"]
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 22
+          cache: "npm"
+      - run: npm ci
+      - name: Unit suite in ${{ matrix.tz }}
+        run: npm run test -- --run
+        env:
+          TZ: ${{ matrix.tz }}
+
   # Dependency advisories, as a PR gate for the full ROOT tree: `npm audit`
   # fails on high or critical, so a new advisory has to be fixed or
   # consciously addressed before it merges. Development tooling processes

@@ -15,10 +15,15 @@ vi.mock("@/lib/auth", () => ({ useUid: () => "runner" }));
 beforeEach(() => {
   resetFirestore();
   vi.useFakeTimers({ toFake: ["Date"] });
-  vi.setSystemTime(new Date("2026-09-13T12:00:00Z"));
+  /* LOCAL components, not `Z`. The window this suite exercises is a
+     local one, so "today" has to be a local day: at Pacific/Kiritimati
+     (UTC+14) noon on the 13th UTC is already the 14th locally, which
+     shifted the window a day and pushed the boundary run below out of
+     it before the test began. */
+  vi.setSystemTime(new Date(2026, 8, 13, 12));
   seedFirestore({
     "users/runner/runs/a": {
-      completedAt: Timestamp.fromDate(new Date("2026-09-12T12:00:00Z")),
+      completedAt: Timestamp.fromDate(new Date(2026, 8, 12, 12)),
       date: "2026-09-12",
       distance: 5000,
       duration: 1800,
