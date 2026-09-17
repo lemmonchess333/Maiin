@@ -45,15 +45,42 @@ function walk(dir: string, out: string[] = []): string[] {
   return out;
 }
 
+/**
+ * Scan whole FILE text, not line by line.
+ *
+ * Line-at-a-time was a real hole, not a hypothetical one. Prettier wraps
+ * a `toLocaleDateString` call as soon as its arguments are long — which
+ * is precisely when a site passes an options object, the commonest shape
+ * of this bug:
+ *
+ *     .toLocaleDateString(
+ *       undefined,
+ *       { day: "numeric", month: "short", year: "numeric" }
+ *     )
+ *
+ * `.toLocaleDateString(` ends one line and `undefined` begins the next,
+ * so no per-line pattern can ever match it. `WorkoutHistoryList` sat
+ * like that and rendered every saved workout's date in the DEVICE's
+ * order — "Aug 1, 2026" on a US phone, "1. Aug. 2026" on a German one —
+ * while this guard reported clean. Found by running the suite under
+ * de-DE, not by reading.
+ *
+ * Patterns passed here therefore need `\s*` where a newline may fall.
+ */
 function scan(re: RegExp): string[] {
   const hits: string[] = [];
   for (const file of walk(SRC_ROOT)) {
     const text = readFileSync(file, "utf8");
-    const lines = text.split("\n");
-    lines.forEach((line, i) => {
-      if (re.test(line))
-        hits.push(`${file.slice(SRC_ROOT.length + 1)}:${i + 1} ${line.trim()}`);
-    });
+    const rx = new RegExp(
+      re.source,
+      re.flags.includes("g") ? re.flags : re.flags + "g"
+    );
+    for (const m of text.matchAll(rx)) {
+      const line = text.slice(0, m.index).split("\n").length;
+      hits.push(
+        `${file.slice(SRC_ROOT.length + 1)}:${line} ${m[0].replace(/\s+/g, " ").trim()}`
+      );
+    }
   }
   return hits;
 }

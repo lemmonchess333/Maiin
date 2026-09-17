@@ -10,6 +10,7 @@
  */
 import { describe, it, expect } from "vitest";
 import { computeTrajectory } from "../foodTrajectory";
+import { groupRe } from "@/test/localeGrouping";
 
 // Reference midday so the linear-pace ratio is clean (12 / 24 = 0.5).
 const midday = new Date(2026, 0, 1, 12, 0, 0);
@@ -78,9 +79,12 @@ describe("computeTrajectory — pace label", () => {
   });
 
   it("formats the magnitude with a thousands separator", () => {
-    /* 1750 ahead of pace — uses locale-aware toLocaleString so we
-       just check the digits group correctly. */
+    /* 1750 ahead of pace. The magnitude goes through a locale-aware
+       toLocaleString, so the grouped form is the runtime's — the
+       previous `/1,?750/` tolerated a comma or nothing and so still
+       failed under de-DE ("1.750") and fr-FR (a narrow no-break
+       space). */
     const result = computeTrajectory(2750, 2000, midday);
-    expect(result).toMatch(/1,?750 ahead of pace/);
+    expect(result).toMatch(new RegExp(`${groupRe(1750)} ahead of pace`));
   });
 });
