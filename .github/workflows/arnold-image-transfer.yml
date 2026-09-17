@@ -12,7 +12,7 @@ jobs:
     timeout-minutes: 5
     steps:
       - run: python3 -m pip install Pillow==11.3.0
-      - name: Decode and verify exact original image assets
+      - name: Verify existing artwork bytes before storing asset blobs
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -23,35 +23,43 @@ jobs:
           root = pathlib.Path('transferred'); root.mkdir()
           base = 'https://api.github.com/repos/lemmonchess333/Maiin/git/blobs'
           def api(url, payload=None):
-              req = urllib.request.Request(url, data=None if payload is None else json.dumps(payload).encode(), headers={'Authorization': 'Bearer ' + os.environ['GH_TOKEN'], 'Accept': 'application/vnd.github+json', 'Content-Type':'application/json'})
+              req = urllib.request.Request(url, data=None if payload is None else json.dumps(payload).encode(), headers={'Authorization':'Bearer '+os.environ['GH_TOKEN'],'Accept':'application/vnd.github+json','Content-Type':'application/json'})
               with urllib.request.urlopen(req, timeout=30) as response: return json.load(response)
           def read(sha):
               data = base64.b64decode(api(base+'/'+sha)['content'])
               assert hashlib.sha1(('blob '+str(len(data))+'\0').encode()+data).hexdigest() == sha
               return data
+          records = []
           def publish(number, data, expected):
-              actual = hashlib.sha256(data).hexdigest()
-              assert actual == expected, 'Source bytes differ; refuse to publish'
-              image = Image.open(BytesIO(data)); image.load()
-              assert image.size == (1024,1536) and image.format == 'WEBP'
+              assert hashlib.sha256(data).hexdigest() == expected, 'Asset byte mismatch'
+              im = Image.open(BytesIO(data)); im.load()
+              assert im.size == (1024,1536) and im.format == 'WEBP'
               result = api(base, {'encoding':'base64','content':base64.b64encode(data).decode()})
               assert result['sha'] == hashlib.sha1(('blob '+str(len(data))+'\0').encode()+data).hexdigest()
               (root/(str(number)+'.webp')).write_bytes(data)
-              print(json.dumps({'frame':number,'gitBlob':result['sha'],'bytes':len(data),'sha256':actual}))
-          text = base64.b64encode(read('c448cf389b0de70b76c784febbefab012e2fcf1f')).decode()
-          for start,end,replacement in [(44979,44980,''),(7973,7973,'ICQEgJASAkB'),(478,500,'')]:
+              records.append({'frame':number,'gitBlob':result['sha'],'sha256':expected,'bytes':len(data)})
+          publish(1,read('cbcd503cf8c963348d0c52cff5c568d5a1e51a23'),'13ce680d34c67c5ec3494c6c0df3bc1e1df3b9f44312d8f8a25cefaecfe31a0c')
+          text = b''.join(read(s) for s in ['3ffe17a1fd91a4f135def786c9d6b50cd97c3bb9','239a208a583a58260b32d61101612c8ed7211be4','fb64be05199c0ee00a9d4b981c52b16938040e27']).decode()
+          for start,end,replacement in [(7583,7583,'SAkBICQEgJASAkBICQEgJASAkBICQEgJASAkBICQEgJASAkBICQEgJA'),(443,454,'')]:
               text = text[:start]+replacement+text[end:]
-          publish(1,base64.b64decode(text,validate=True),'13ce680d34c67c5ec3494c6c0df3bc1e1df3b9f44312d8f8a25cefaecfe31a0c')
-          parts = [read(sha) for sha in ['3ffe17a1fd91a4f135def786c9d6b50cd97c3bb9','239a208a583a58260b32d61101612c8ed7211be4','fb64be05199c0ee00a9d4b981c52b16938040e27']]
-          for index, part in enumerate(parts): (root/('2-part-'+str(index)+'.txt')).write_bytes(part)
-          candidate = b''.join(parts)
-          (root/'2-transfer.b64').write_bytes(candidate)
+          publish(2,base64.b64decode(text,validate=True),'678f411d0797ee9e8b9fc34c2150c3152e5159d7f320f37b4600f05f24e1dc07')
+          (root/'verified-blobs.json').write_text(json.dumps(records,indent=2))
+          # Owner-approved source only. Never substitute an enlarged thumbnail.
+          url = 'https://media.canva.com/v2/image-resize/format:PNG/height:1536/quality:100/uri:ifs%3A%2F%2FM%2F813b273b-282a-4696-a87d-1398a06961be/watermark:F/width:1024?csig=AAAAAAAAAAAAAAAAAAAAANiQHh4Mdaq6NoMBQuD7bLH6pzcerQF8_JhFUkV6SPWf&exp=1789651737&osig=AAAAAAAAAAAAAAAAAAAAAHW0n3ASxoCkOP5WGSzcjHazE6oGyWa4w64XXPW9guOJ&signer=media-rpc&x-canva-quality=thumbnail'
           try:
-              publish(2,base64.b64decode(candidate,validate=True),'678f411d0797ee9e8b9fc34c2150c3152e5159d7f320f37b4600f05f24e1dc07')
+              with urllib.request.urlopen(url,timeout=30) as response: data=response.read(5000000)
+              im=Image.open(BytesIO(data)).convert('RGB');im.load()
+              actual=hashlib.sha256(im.tobytes()).hexdigest()
+              report={'dimensions':list(im.size),'bytes':len(data),'pixelSha256':actual,'exactOriginalPixels':im.size==(1024,1536) and actual=='f8417414bc4ef8366b39bbbac509ff1a61e0aaa4790c801e234843c29d5bdfc8'}
+              (root/'native-transfer.json').write_text(json.dumps(report,indent=2))
+              if report['exactOriginalPixels']: (root/'native-original-2.png').write_bytes(data)
+              print(json.dumps(report))
           except Exception as error:
-              print('Frame 2 held for exact transfer correction:',str(error))
+              (root/'native-transfer.json').write_text(json.dumps({'exactOriginalPixels':False,'error':str(error)}))
+          print(json.dumps(records))
           PY
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
         with:
           name: arnold-image-transfer
           path: transferred/
