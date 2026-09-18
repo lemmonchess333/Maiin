@@ -2188,7 +2188,7 @@ describe("RUN-RACE-GUARD-01 — race identity is immutable in the writers", () =
     } as ProgramState);
   }
 
-  it("overrideRunDay refuses to swap a scheduled race (no write)", async () => {
+  it("overrideRunDay refuses to swap a scheduled race (no command sent)", async () => {
     seedRaceDay();
     const { result } = mountProgram();
     await waitFor(() => expect(result.current.loading).toBe(false), {
@@ -2196,14 +2196,25 @@ describe("RUN-RACE-GUARD-01 — race identity is immutable in the writers", () =
     });
     markWrites(); // capture only writes after this point
 
+    let returned: unknown;
     await act(async () => {
-      await result.current.overrideRunDay("race_day_1", "easy_30");
+      returned = await result.current.overrideRunDay("race_day_1", "easy_30");
     });
 
+    // The refusal is that no COMMAND goes out. Asserting `setDocCalls` alone
+    // proved nothing: `overrideRunDay` stopped writing documents when it
+    // moved behind the programme command boundary (ADR-0011), so "no write"
+    // was true whether or not the guard fired — deleting the guard entirely
+    // left both tests in this block green. Same shape as the `moveRunDay`
+    // refusal tests CLAUDE.md already records.
+    expect(
+      sentCommands.find((c) => c.kind === "overrideRunDay")
+    ).toBeUndefined();
+    expect(returned).toBe(false);
     expect(setDocCalls().length).toBe(0);
   });
 
-  it("markManualComplete refuses a scheduled race (no write)", async () => {
+  it("markManualComplete refuses a scheduled race (no command sent)", async () => {
     seedRaceDay();
     const { result } = mountProgram();
     await waitFor(() => expect(result.current.loading).toBe(false), {
@@ -2215,6 +2226,10 @@ describe("RUN-RACE-GUARD-01 — race identity is immutable in the writers", () =
       await result.current.markManualComplete("race_day_1");
     });
 
+    // As above: the command channel is what carries the write now.
+    expect(
+      sentCommands.find((c) => c.kind === "setManualRunCompletion")
+    ).toBeUndefined();
     expect(setDocCalls().length).toBe(0);
   });
 });
