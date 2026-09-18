@@ -42,7 +42,17 @@ if (typeof document !== "undefined") {
     /* Bail under fake timers. Awaiting a real `setTimeout` while a fake
      * clock is installed would never resolve — the hook would hang and
      * time the test out. Skipping is safe: a timer scheduled on a fake
-     * clock is discarded with it and never reaches the dispatch. */
+     * clock is discarded with it and never reaches the dispatch.
+     *
+     * This is also NOT the place to settle framer-motion's frame loop,
+     * which a fake clock can latch shut for the rest of a file (see
+     * `WorkoutSessionCompletion.test.tsx` for the two latches). That has
+     * to happen while the fake clock is still installed, and every one of
+     * the 51 suites that fake timers calls `useRealTimers` itself — from
+     * an afterEach, which Vitest's `stack` sequencing runs BEFORE this
+     * hook, or from a `finally` inside the test, which is earlier still.
+     * By the time control reaches here the clock is already real and the
+     * damage is done, so the settle belongs in the suite that faked it. */
     if (vi.isFakeTimers()) return;
     await new Promise((resolve) => setTimeout(resolve, 0));
   });
