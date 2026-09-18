@@ -2117,7 +2117,7 @@ describe("PROGRAM-SESSION-ORDER-01 — setNextWorkout writer contract", () => {
     // open and observe it.
   });
 
-  it("ignores terminal and out-of-range selections (no write)", async () => {
+  it("ignores terminal and out-of-range selections (no command sent)", async () => {
     seedLiftState();
     const result = await mount();
     await act(async () => {
@@ -2126,6 +2126,7 @@ describe("PROGRAM-SESSION-ORDER-01 — setNextWorkout writer contract", () => {
       await result.current.setNextWorkout(1.5); // malformed
     });
     expect(setDocCalls().length).toBe(0);
+    expect(sentCommands.filter((c) => c.kind === "setNextWorkout")).toEqual([]);
   });
 
   it("null resets via a clearNextWorkout COMMAND, dropping the field", async () => {
@@ -2147,13 +2148,16 @@ describe("PROGRAM-SESSION-ORDER-01 — setNextWorkout writer contract", () => {
     expect("dayIndex" in (clear ?? {})).toBe(false);
   });
 
-  it("null with no active override is a no-op (no write)", async () => {
+  it("null with no active override is a no-op (no command sent)", async () => {
     seedLiftState();
     const result = await mount();
     await act(async () => {
       await result.current.setNextWorkout(null);
     });
     expect(setDocCalls().length).toBe(0);
+    expect(sentCommands.filter((c) => c.kind === "clearNextWorkout")).toEqual(
+      []
+    );
   });
 });
 
@@ -2318,7 +2322,7 @@ describe("SESSION-RESTORE-01 — restore writers reverse a skip", () => {
     expect(cmd?.to).toBe("planned");
   });
 
-  it("restoreRunDay: refuses a completed slot (terminal → no write)", async () => {
+  it("restoreRunDay: refuses a completed slot (terminal → no command sent)", async () => {
     mockProfile = raceProfile("2099-09-15");
     seedProgram(
       stateWith([
@@ -2345,6 +2349,9 @@ describe("SESSION-RESTORE-01 — restore writers reverse a skip", () => {
     });
 
     expect(setDocCalls().length).toBe(0);
+    expect(sentCommands.filter((c) => c.kind === "transitionRunDay")).toEqual(
+      []
+    );
   });
 
   it("restoreWorkoutDay: clears `skipped` on a non-completed lift day", async () => {
@@ -2386,7 +2393,7 @@ describe("SESSION-RESTORE-01 — restore writers reverse a skip", () => {
     expect(typeof cmd?.expectedDaySignature).toBe("string");
   });
 
-  it("restoreWorkoutDay: refuses a completed lift day (no write)", async () => {
+  it("restoreWorkoutDay: refuses a completed lift day (no command sent)", async () => {
     mockProfile = structuredProfile();
     seedProgram(
       stateWith(
@@ -2413,6 +2420,9 @@ describe("SESSION-RESTORE-01 — restore writers reverse a skip", () => {
     });
 
     expect(setDocCalls().length).toBe(0);
+    expect(sentCommands.filter((c) => c.kind === "restoreWorkoutDay")).toEqual(
+      []
+    );
   });
 });
 
