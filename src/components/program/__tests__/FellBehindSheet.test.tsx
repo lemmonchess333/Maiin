@@ -11,6 +11,7 @@
  * in race_prep mode with a raceGoal. Structured-mode users only see "Not now"
  * (their plan has no "race" concept).
  */
+import { readFileSync } from "node:fs";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import FellBehindSheet from "../FellBehindSheet";
@@ -216,5 +217,41 @@ describe("FellBehindSheet — detrained register", () => {
       screen.getByRole("button", { name: /Realign my plan/i })
     ).toBeInTheDocument();
     expect(screen.queryByText(/Welcome back/i)).not.toBeInTheDocument();
+  });
+});
+
+describe("sport-coding — the return sheets are two colours, not one", () => {
+  /* The Run return sheet's main CTA was `primary` (purple), the same as
+     the LIFT return sheet's, while its own icon was `text-running`. So
+     the one element on the sheet that was not sport-coded was the
+     largest. Caught by capturing both sheets and putting them side by
+     side; nothing pinned the variant, so a revert would have been
+     silent.
+
+     Asserted in BOTH directions on purpose. "The run CTA is coral" alone
+     is satisfied by painting every CTA coral, which would break the
+     lifting side of the same rule — and the lift sheet is the reason the
+     mismatch was visible at all. */
+  const read = (rel: string) =>
+    readFileSync(new URL(rel, import.meta.url), "utf8");
+
+  it("the run sheet's main action takes the sport variant", () => {
+    expect(read("../FellBehindSheet.tsx")).toMatch(
+      /variant:\s*"sport" as const/
+    );
+  });
+
+  it("and the lift sheet's stays primary", () => {
+    expect(read("../LiftReturnSheet.tsx")).toMatch(
+      /variant:\s*"primary" as const/
+    );
+    expect(read("../LiftReturnSheet.tsx")).not.toMatch(/"sport"/);
+  });
+
+  it("the run sheet still declares itself running elsewhere", () => {
+    /* The icon is what makes the CTA's colour a MISMATCH rather than a
+       preference. If this ever stops being a running surface, the rule
+       above stops applying and this test should be the one that says so. */
+    expect(read("../FellBehindSheet.tsx")).toMatch(/text-running/);
   });
 });
