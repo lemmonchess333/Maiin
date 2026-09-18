@@ -9,6 +9,7 @@ import EditServingsSheet, {
   type EditServingsChanges,
 } from "../EditServingsSheet";
 import type { MealKey } from "../mealConstants";
+import { CALORIE_UNIT } from "@/utils/formatNutrition";
 
 afterEach(cleanup);
 
@@ -133,7 +134,9 @@ describe("EditServingsSheet", function () {
     // After incrementing to 3 → 234 cal preview.
     renderSheet();
     fireEvent.click(screen.getByLabelText("Increase servings"));
-    expect(screen.getByText(/~ 234 cal/)).toBeInTheDocument();
+    expect(
+      screen.getByText(new RegExp(`~ 234 ${CALORIE_UNIT}`))
+    ).toBeInTheDocument();
     expect(screen.getByText(/\(\+1 serving\)/)).toBeInTheDocument();
   });
 
@@ -145,7 +148,9 @@ describe("EditServingsSheet", function () {
     fireEvent.change(screen.getByLabelText("Cal"), {
       target: { value: "100" },
     });
-    expect(screen.getByText(/~ 200 cal/)).toBeInTheDocument();
+    expect(
+      screen.getByText(new RegExp(`~ 200 ${CALORIE_UNIT}`))
+    ).toBeInTheDocument();
   });
 
   it("re-previews when the servings change on top of an edit", function () {
@@ -155,7 +160,9 @@ describe("EditServingsSheet", function () {
       target: { value: "100" },
     });
     fireEvent.click(screen.getByLabelText("Increase servings"));
-    expect(screen.getByText(/~ 300 cal/)).toBeInTheDocument();
+    expect(
+      screen.getByText(new RegExp(`~ 300 ${CALORIE_UNIT}`))
+    ).toBeInTheDocument();
   });
 
   it("keeps the stored average while the calorie field is blank", function () {
@@ -164,7 +171,9 @@ describe("EditServingsSheet", function () {
        zero calories and flash 0 while the user retypes. */
     renderSheet();
     fireEvent.change(screen.getByLabelText("Cal"), { target: { value: "" } });
-    expect(screen.getByText(/~ 156 cal/)).toBeInTheDocument();
+    expect(
+      screen.getByText(new RegExp(`~ 156 ${CALORIE_UNIT}`))
+    ).toBeInTheDocument();
   });
 
   it("does not shift an untouched preview by re-rounding", function () {
@@ -186,7 +195,9 @@ describe("EditServingsSheet", function () {
       },
     });
     fireEvent.click(screen.getByLabelText("Increase servings"));
-    expect(screen.getByText(/~ 236 cal/)).toBeInTheDocument();
+    expect(
+      screen.getByText(new RegExp(`~ 236 ${CALORIE_UNIT}`))
+    ).toBeInTheDocument();
   });
 
   it("preserves the stepper across in-place source rerenders (parent remounts via key)", function () {

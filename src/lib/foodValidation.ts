@@ -26,6 +26,7 @@
  * calories before macros.
  */
 
+import { CALORIE_UNIT } from "@/utils/formatNutrition";
 export interface FoodValuesToValidate {
   calories?: number;
   protein?: number;
@@ -174,6 +175,6 @@ export function checkAggregateAgainstTarget(
 
   return {
     title: "This meal looks unusually high",
-    description: `This scan totals about ${Math.round(totalCalories)} kcal, which is over a full day's target. Check the items before saving.`,
+    description: `This scan totals about ${Math.round(totalCalories)} ${CALORIE_UNIT}, which is over a full day's target. Check the items before saving.`,
   };
 }

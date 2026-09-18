@@ -121,6 +121,7 @@ import { getDistanceComparison } from "@/lib/funComparisons";
 import { elevationLabel } from "@/lib/runLabels";
 import { formatDayMonthYear } from "@/utils/formatters";
 import { gradeAdjustedPace } from "../lib/gradeAdjustedPace";
+import { CALORIE_UNIT } from "@/utils/formatNutrition";
 
 /* Reusable retry banner. Shown above the action row on a save
  * failure. Coral-tinted to read as in-flow rather than modal-alert.
@@ -1133,7 +1134,7 @@ export default function RunSummary() {
               meta: [
                 `${km.toFixed(2)} km`,
                 `${mins}:${secs.toString().padStart(2, "0")}`,
-                calories ? `${Math.round(calories)} cal` : "",
+                calories ? `${Math.round(calories)} ${CALORIE_UNIT}` : "",
               ].filter(Boolean),
             },
             {
