@@ -335,10 +335,20 @@ it ran first. A suite that fakes timers must settle framer's frame loop
 while the fake clock is still installed — `src/test/setup.ts` cannot do
 it for you, and its header says why.
 
-The seeds are FIXED, so the job is deterministic: it pins two orders
-rather than sampling a new one per run. A rotating seed would catch more
-and would also redden an unrelated PR on a Tuesday — the same trade
-`check-race-dates.ts` already made for this repo.
+The seeds are FIXED, which pins the ORDER and nothing else. **The job
+is not deterministic, and this paragraph said it was.** Seed 23 went red
+on one head and green on the next — same test, same seed, one
+branch-update apart — and six local repetitions never reproduced it.
+vitest's `seed` seeds the ordering RNG; the worker pool is separate, so
+which files are in flight together and how long each takes come from the
+machine. Read results accordingly: a GREEN `unit-shuffle` says those two
+orders held once on that runner, NOT that they are clean; a RED one is
+worth chasing but may not reproduce, and the order replays exactly while
+the timing does not — so a failure that will not come back is evidence
+about the defect's shape (a race), not evidence the run lied. The seeds
+stay fixed because a rotating one would catch more and would also redden
+an unrelated PR on a Tuesday — the same trade `check-race-dates.ts`
+already made for this repo.
 
 ### E2E Tests (Playwright)
 
