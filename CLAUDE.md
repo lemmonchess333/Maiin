@@ -293,7 +293,7 @@ Helper: `syncChallengeProgress()` — auto-updates challenge participant progres
   shape, or add a test that pins the number.
 - Run: `npm run test` (single run) or `npm run test:watch` (watch mode)
 
-**CI runs the same suite four ways, and knowing that changes what you
+**CI runs the same suite five ways, and knowing that changes what you
 write.** Each is a full run in `ci.yml`, and each exists because the
 single-condition run had been hiding a real defect:
 
@@ -303,6 +303,7 @@ single-condition run had been hiding a real defect:
 | `unit-timezone` | Kiritimati, Midway, **Auckland**         | a DST transition inside a 21-day span cost a race chip a whole week. Auckland is there for the transition, not the offset — neither extreme observes DST, and nor does UTC |
 | `unit-locale`   | de-DE, fr-FR                             | 26 assertions spelling a comma, and a real defect: a `toLocaleDateString(undefined, …)` rendering every saved workout's date in the DEVICE's order                         |
 | `unit-future`   | clock +90 days, client AND server suites | two fixtures dated against a 3-month range pill that would have gone red on a calendar morning                                                                             |
+| `unit-shuffle`  | `--sequence.shuffle`, seeds 23 and 5     | three files that passed only from where they sat. Two seeds because neither found all three: 23 catches the first two, 5 catches the third                                 |
 
 Practical consequences: do not spell a thousands separator in an
 assertion (`src/test/localeGrouping.ts` builds it), do not pin a fixture
@@ -314,17 +315,22 @@ Locally: `TROPOS_CLOCK_OFFSET_DAYS=90 npm run test` for the future run,
 `TROPOS_CLOCK_AT=2026-10-18 npm run test` to pin the day something
 breaks, `TZ=Pacific/Auckland` and `LC_ALL=de_DE.UTF-8` for the others.
 
-**Test ORDER is swept by hand, not gated** — `npm run test --
---sequence.shuffle` shuffles tests within each file (file-level
-shuffling is clean, so nothing leaks between workers). It found five
-order-dependent files; three are fixed. The two that remain are
-documented where they sit: `WorkoutSessionCompletion.test.tsx` (a
-fake-timer group strands jsdom's animation-frame counter AND
-motion-dom's batcher — two one-way latches, five fixes measured and
-rejected, the fix is its own file) and `useHomeProgram.test.tsx` (its
-assertion counts a `vi.mock` factory run, which is once per module
-registry). No CI job until those close: a gate that is already red
-teaches people to ignore it.
+**Test ORDER is gated, and the shape of what it caught is the useful
+part.** All three survivors were global mutable state, and none was
+visible in written order: `WorkoutSessionCompletion.test.tsx` and
+`Coachmark.test.tsx` each left a fake-timer group holding jsdom's
+animation-frame counter AND motion-dom's batcher shut, so later
+`toBeVisible()` assertions in the same file read `opacity: 0`; and
+`useHomeProgram.test.tsx` asserted a `vi.mock` factory counter that a
+module registry runs once per FILE, so its 0-then-1 was true only when
+it ran first. A suite that fakes timers must settle framer's frame loop
+while the fake clock is still installed — `src/test/setup.ts` cannot do
+it for you, and its header says why.
+
+The seeds are FIXED, so the job is deterministic: it pins two orders
+rather than sampling a new one per run. A rotating seed would catch more
+and would also redden an unrelated PR on a Tuesday — the same trade
+`check-race-dates.ts` already made for this repo.
 
 ### E2E Tests (Playwright)
 
