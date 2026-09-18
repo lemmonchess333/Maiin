@@ -434,9 +434,11 @@ export interface ScheduledRunDay {
    *  `migrateProgramState` backfills lazily on first read. */
   id?: string;
 
-  /** Sunday-start week key (local-date "YYYY-MM-DD"). Used for
-   *  week-bucket queries and adherence calculations. Optional in v1
-   *  type; backfilled by migration. */
+  /** Week key (local-date "YYYY-MM-DD"): the week's FIRST day under
+   *  `WEEK_STARTS_ON`, which is Monday. Used for week-bucket queries and
+   *  adherence calculations. Optional in v1 type; backfilled by
+   *  migration, and pre-v4 Sunday keys are re-anchored on read — see
+   *  `programSchemaVersion` below. */
   weekKey?: string;
 
   /** Calendar date the run is scheduled for (local "YYYY-MM-DD").
@@ -811,7 +813,8 @@ export interface ProgramState {
    */
   easeSnapshot?: EaseSnapshot;
   /**
-   * D1: local week key (Sunday, `localWeekKey()`) of the week the current
+   * D1: local week key (`localWeekKey()`, the week's first day) of the
+   * week the current
    * `workouts` were generated for. The LIFT side's calendar anchor.
    *
    * Why it had to exist. The auto week-rollover was keyed on

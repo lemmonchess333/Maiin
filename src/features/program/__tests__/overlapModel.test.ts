@@ -233,8 +233,29 @@ describe("backToBackPairs — the week's SHAPE, not date-pinned lifts", () => {
     expect(backToBackPairs(sched([1]), 1)).toEqual([]);
   });
 
-  it("detects the recurring Saturday-to-Sunday seam", () => {
-    expect(weekWrapsBackToBack(sched([0, 3, 6]), 3)).toBe(true);
+  /* A Sunday lift is `getDay() === 0` and the LAST session of a Monday
+     week, so these two cases are the whole reason this module orders on
+     `weekPosition` rather than on `getDay()`. Both assert the SAME
+     physical fact — Saturday and Sunday are one calendar day apart —
+     and differ only in which seam carries it, which is what decides
+     whether `orderForAdjacency` penalises the pair or the wrap.
+
+     Written under the Sunday anchor, the first of these asserted
+     `weekWrapsBackToBack(sched([0, 3, 6]), 3) === true`, and it was
+     correct then: Saturday closed the week and Sunday opened the next.
+     The anchor moved and the assertion did not, because the code it
+     tested did not change either — only the meaning of "the week" did. */
+  it("puts the Sat-Sun pair inside the week, not across its seam", () => {
+    // Sun/Wed/Sat → Mon-week order Wed, Sat, Sun.
+    expect(backToBackPairs(sched([0, 3, 6]), 3)).toEqual([false, true]);
+    expect(weekWrapsBackToBack(sched([0, 3, 6]), 3)).toBe(false);
+  });
+
+  it("detects the seam that actually closes a Monday week", () => {
+    // Mon/Thu/Sun → Sunday is last, and next week opens on Monday.
+    expect(backToBackPairs(sched([0, 1, 4]), 3)).toEqual([false, false]);
+    expect(weekWrapsBackToBack(sched([0, 1, 4]), 3)).toBe(true);
+    // Mon/Wed/Fri closes on Friday: two clear days before the next Monday.
     expect(weekWrapsBackToBack(sched([1, 3, 5]), 3)).toBe(false);
   });
 });

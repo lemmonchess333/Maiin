@@ -95,7 +95,8 @@ function LiftRowShell({
  * jump.
  *
  * WHICH DATES REACH THIS ROW. WeekStrip renders the calendar week
- * containing today, Sunday-first, and every one of its cells opens this
+ * containing today, starting on the week's first day, and every one of
+ * its cells opens this
  * card — so the dates are that week, today included. Past days and today
  * carry meals and get a link; future ones do not.
  *
@@ -109,9 +110,9 @@ function LiftRowShell({
  * Today reaching the card is also what makes the `dateKey === todayKey`
  * branch below live. While today's cell scrolled to the session cards
  * instead of opening this one, that branch was unreachable, and the
- * Sunday case was starker than it now is: on a Sunday the week's only
- * elapsed day IS today, so the row appears where it previously could
- * not.
+ * first-day-of-week case was starker than it now is: on the week's first
+ * day (a Monday, under `WEEK_STARTS_ON`) the week's only elapsed day IS
+ * today, so the row appears where it previously could not.
  */
 function DiaryRowShell({
   to,
