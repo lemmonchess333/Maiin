@@ -29,6 +29,7 @@
  * without dragging tiny carb/fat deficits into nagging copy.
  */
 
+import { CALORIE_UNIT } from "@/utils/formatNutrition";
 export interface DailyTotalsForGlance {
   calories: number;
   protein: number;
@@ -124,10 +125,10 @@ export function buildGlanceLine(
        but the wording distinction matches how a coach would say
        it aloud. */
     if (caloriesMeaningfullyOver) {
-      return `${proteinNeeded}g protein left · ${calOver} cal over`;
+      return `${proteinNeeded}g protein left · ${calOver} ${CALORIE_UNIT} over`;
     }
     if (caloriesMeaningfullyUnder) {
-      return `Still need ${proteinNeeded}g protein · ${calLeft} cal left`;
+      return `Still need ${proteinNeeded}g protein · ${calLeft} ${CALORIE_UNIT} left`;
     }
     return `Still need ${proteinNeeded}g protein`;
   }
@@ -136,10 +137,10 @@ export function buildGlanceLine(
      leads when calories are off — protein gets the trailing
      "Protein hit" affirmation. */
   if (caloriesMeaningfullyOver) {
-    return `${calOver} cal over · Protein hit`;
+    return `${calOver} ${CALORIE_UNIT} over · Protein hit`;
   }
   if (caloriesMeaningfullyUnder) {
-    return `Protein hit · ${calLeft} cal left`;
+    return `Protein hit · ${calLeft} ${CALORIE_UNIT} left`;
   }
   return "On track for today";
 }

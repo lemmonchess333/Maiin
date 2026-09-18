@@ -34,6 +34,7 @@ import ExtrasExpandSheet from "@/components/program/ExtrasExpandSheet";
 import { workoutTitle } from "@/hooks/useWorkouts";
 import { distanceIn, distanceUnitLabel } from "@/lib/distanceUnits";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
+import { CALORIE_UNIT } from "@/utils/formatNutrition";
 
 /** Q5 P71 cap — DayPeekCard mirrors RunWeekStrip; up to 2 extras
  *  shown inline before an overflow "+N more" tap-through. */
@@ -465,7 +466,7 @@ export default function DayPeekCard({
                     style={{ color: THEME.success }}
                   />
                   <span className="text-foreground font-mono tabular-nums">
-                    {dailyTotals.calories.toLocaleString()} cal {"·"}{" "}
+                    {dailyTotals.calories.toLocaleString()} {CALORIE_UNIT} {"·"}{" "}
                     {Math.round(dailyTotals.protein)}g protein
                   </span>
                 </DiaryRowShell>
