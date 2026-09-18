@@ -149,7 +149,7 @@ function makeProfile(overrides: Partial<UserProfile> = {}): UserProfile {
     displayName: "Test",
     email: "t@example.com",
     runMode: "race_prep",
-    raceGoal: { distance: "10k", targetDate: "2027-04-18" },
+    raceGoal: { distance: "10k", targetDate: "2099-04-18" },
     ...overrides,
   } as UserProfile;
 }
@@ -172,7 +172,7 @@ function makeProgramState(
     runDays,
     runPlan: {
       mode: "race_prep",
-      raceGoal: { distance: "10k", targetDate: "2027-04-18" },
+      raceGoal: { distance: "10k", targetDate: "2099-04-18" },
       totalWeeks: 12,
       currentWeek: 0,
     },
@@ -234,7 +234,7 @@ function commonProps() {
  * Needed because the section now reads the goal through `resolveRunPlan`,
  * where `profile.raceGoal` is canonical and the `programState.runPlan`
  * mirror only backfills. Several fixtures below used to set the MIRROR
- * alone and leave the profile on `makeProfile`'s default 18 Apr 2027 — a
+ * alone and leave the profile on `makeProfile`'s default 18 Apr 2099 — a
  * disagreement no real user has, which passed only because the section read
  * the mirror. Setting one store and asserting on it proved the component
  * read that store, not that it read the right one.
@@ -394,21 +394,21 @@ describe("ProgrammeRunSection — A1c 'Manage Run Plan' deeplink", () => {
   // Run7 Q5 — race goal form collapses to a one-line summary when a
   // goal is already saved. Pre-Q5 the row was "Race" + "10K — 2026-04-18"
   // + coral Edit button (two-piece header). New shape: a single text
-  // run "Race goal: 10K · 16 Jul 2026" plus a muted-gray Edit chevron.
+  // run "Race goal: 10K · 16 Jul 2099" plus a muted-gray Edit chevron.
   it("renders the RaceCockpitCard with readable distance heading + human date + days-out", () => {
     const programState = makeProgramState([makeRunDay()], {
       runPlan: {
         mode: "race_prep",
-        raceGoal: { distance: "10k", targetDate: "2027-07-16" },
+        raceGoal: { distance: "10k", targetDate: "2099-07-16" },
         totalWeeks: 12,
         currentWeek: 0,
       },
     });
-    renderSection(raceProps("10k", "2027-07-16"), programState);
+    renderSection(raceProps("10k", "2099-07-16"), programState);
     // Cockpit identity: distance as a readable heading (not "MARATHON"
     // machine text), human-readable target date, and the countdown.
     expect(screen.getByRole("heading", { name: "10K" })).toBeInTheDocument();
-    expect(screen.getByText(/16 Jul 2027/)).toBeInTheDocument();
+    expect(screen.getByText(/16 Jul 2099/)).toBeInTheDocument();
     expect(screen.getByText(/days out/i)).toBeInTheDocument();
     // Edit affordance is the muted-gray text-link (navigation discipline),
     // not a coral fill.
@@ -437,7 +437,7 @@ describe("ProgrammeRunSection — A1c 'Manage Run Plan' deeplink", () => {
     } as Partial<ProgramState>);
     renderSection(commonProps(), programState);
     expect(screen.getByRole("heading", { name: "10K" })).toBeInTheDocument();
-    expect(screen.getByText(/18 Apr 2027/)).toBeInTheDocument();
+    expect(screen.getByText(/18 Apr 2099/)).toBeInTheDocument();
   });
 });
 
@@ -817,7 +817,7 @@ describe("ProgrammeRunSection — Q10 banner system", () => {
     const programState = makeProgramState(
       [
         makeRunDay({
-          date: "2027-04-18",
+          date: "2099-04-18",
           templateId: "race",
           type: "race",
           status: "race_no_show",
@@ -826,7 +826,7 @@ describe("ProgrammeRunSection — Q10 banner system", () => {
       {
         runPlan: {
           mode: "race_prep",
-          raceGoal: { distance: "10k", targetDate: "2027-04-18" },
+          raceGoal: { distance: "10k", targetDate: "2099-04-18" },
           totalWeeks: 12,
           currentWeek: 12,
         },
@@ -848,7 +848,7 @@ describe("ProgrammeRunSection — Q10 banner system", () => {
     const programState = makeProgramState([], {
       runPlan: {
         mode: "race_prep",
-        raceGoal: { distance: "10k", targetDate: "2027-04-18" },
+        raceGoal: { distance: "10k", targetDate: "2099-04-18" },
         phase: "recovery",
         recoveryEndDate: "2020-01-01", // long past → recoveryEnded
         totalWeeks: 12,
@@ -882,7 +882,7 @@ describe("ProgrammeRunSection — Q10 banner system", () => {
     const programState = makeProgramState(
       [
         makeRunDay({
-          date: "2027-04-18",
+          date: "2099-04-18",
           templateId: "race",
           type: "race",
           status: "race_no_show",
@@ -891,7 +891,7 @@ describe("ProgrammeRunSection — Q10 banner system", () => {
       {
         runPlan: {
           mode: "race_prep",
-          raceGoal: { distance: "10k", targetDate: "2027-04-18" },
+          raceGoal: { distance: "10k", targetDate: "2099-04-18" },
           phase: "recovery",
           recoveryEndDate: "2020-01-01",
           totalWeeks: 12,
@@ -1275,13 +1275,13 @@ describe("ProgrammeRunSection — below-floor race plans describe themselves hon
     const programState = makeProgramState([makeRunDay()], {
       runPlan: {
         mode: "race_prep",
-        raceGoal: { distance: "10k", targetDate: "2027-07-16" },
+        raceGoal: { distance: "10k", targetDate: "2099-07-16" },
         totalWeeks: 12,
         currentWeek: 0,
         compressed: true,
       },
     });
-    renderSection(raceProps("10k", "2027-07-16"), programState);
+    renderSection(raceProps("10k", "2099-07-16"), programState);
 
     const body = document.body.textContent ?? "";
     expect(body).not.toMatch(/mostly-easy plan/i);

@@ -592,7 +592,7 @@ describe("PR-0b-ii — useProgram writers swap V1 → V2", () => {
     // Run9: structured retired, so the override-threading contract is now
     // exercised via a race plan (the surviving runDays-generating mode). The
     // staleness concern is mode-agnostic.
-    mockProfile = raceProfile("2027-01-01", { weekSchedule: staleSchedule });
+    mockProfile = raceProfile("2099-09-15", { weekSchedule: staleSchedule });
     seedProgram({
       goal: "recomp",
       currentPhase: "base",
@@ -607,7 +607,7 @@ describe("PR-0b-ii — useProgram writers swap V1 → V2", () => {
       runDays: [],
       runPlan: {
         mode: "race_prep",
-        raceGoal: { distance: "10k", targetDate: "2027-01-01" },
+        raceGoal: { distance: "10k", targetDate: "2099-09-15" },
       },
     } as ProgramState);
 
@@ -642,7 +642,7 @@ describe("PR-0b-ii — useProgram writers swap V1 → V2", () => {
     // load-time wipe therefore never actually removed `runPlan`, and
     // regenerate still saw `mode: "structured"`. Under a fake that honours
     // replace-vs-merge the wipe lands, and the assertion had no subject.
-    mockProfile = raceProfile("2027-01-01");
+    mockProfile = raceProfile("2099-09-15");
     seedProgram({
       goal: "recomp",
       currentPhase: "base",
@@ -702,7 +702,7 @@ describe("PR-0b-ii — useProgram writers swap V1 → V2", () => {
       createdAt: 1,
       schemaVersion: 1 as const,
     };
-    mockProfile = raceProfile("2027-01-01");
+    mockProfile = raceProfile("2099-09-15");
     seedProgram({
       goal: "recomp",
       currentPhase: "base",
@@ -735,7 +735,7 @@ describe("PR-0b-ii — useProgram writers swap V1 → V2", () => {
 
   // The other direction, so the carry can't be "always write something".
   it("regenerateProgram writes no block when there was none", async () => {
-    mockProfile = raceProfile("2027-01-01");
+    mockProfile = raceProfile("2099-09-15");
     seedProgram({
       goal: "recomp",
       currentPhase: "base",
@@ -846,6 +846,17 @@ describe("Run9 phase-3 — realign carries completions across regen", () => {
   it("persists a manualCompletions map and never drops an existing completion", async () => {
     const targetDate = localDateString(addLocalDays(new Date(), 70)); // ~10wk out
     mockProfile = raceProfile(targetDate);
+    // The seeded week is TWO weeks behind whatever "today" is, never a
+    // literal. Pinned to 2026-05-10 it drifted further into the past on
+    // every run, and from a clock of ~2028 the gap exceeds the
+    // auto-rollover's 12-iteration cap, so the carry never reaches the
+    // current week and the re-keyed map this test is about is never
+    // written. Two weeks keeps exactly the rollover step it exercises.
+    const staleWeekKey = localWeekKey(addLocalDays(new Date(), -14));
+    const staleRunDate = localDateString(
+      addLocalDays(parseLocalDate(staleWeekKey), 2)
+    );
+    const staleRunId = `runday_${staleWeekKey}_2_tempo_40`;
     const completion = { completedAt: 1_700_000_000_000 };
     seedProgram({
       goal: "recomp",
@@ -858,14 +869,14 @@ describe("Run9 phase-3 — realign carries completions across regen", () => {
       programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
       runDays: [
         {
-          id: "runday_2026-05-10_2_tempo_40",
+          id: staleRunId,
           dayIndex: 2,
           templateId: "tempo_40",
           type: "tempo",
           completed: true,
           status: "completed_exact",
-          date: "2026-05-12",
-          weekKey: "2026-05-10",
+          date: staleRunDate,
+          weekKey: staleWeekKey,
         },
       ],
       runPlan: {
@@ -877,11 +888,11 @@ describe("Run9 phase-3 — realign carries completions across regen", () => {
       // One entry keyed to the seeded runDay, plus a legacy orphan whose id is
       // in no runDay — the carry must preserve it rather than nuke the map.
       manualCompletions: {
-        "runday_2026-05-10_2_tempo_40": completion,
+        [staleRunId]: completion,
         legacy_orphan_key: { completedAt: 1_699_000_000_000 },
       },
       pendingFellBehindPrompt: {
-        weekKey: "2026-05-10",
+        weekKey: staleWeekKey,
         completedRatio: 0.25,
         realRunCount: 1,
         weeklyTarget: 4,
@@ -955,7 +966,7 @@ describe("PR-1 — overrideRunDay accepts string id and number dayIndex", () => 
   it("called with a string id updates the matching runDay", async () => {
     // Run9 (3a): runDays only persist under race_prep now (structured is
     // retired + wiped on load). The override matching logic is mode-agnostic.
-    mockProfile = raceProfile("2027-01-01");
+    mockProfile = raceProfile("2099-09-15");
     seedProgram({
       goal: "recomp",
       currentPhase: "base",
@@ -994,7 +1005,7 @@ describe("PR-1 — overrideRunDay accepts string id and number dayIndex", () => 
   });
 
   it("called with a number dayIndex updates the matching runDay (legacy fallback)", async () => {
-    mockProfile = raceProfile("2027-01-01");
+    mockProfile = raceProfile("2099-09-15");
     seedProgram({
       goal: "recomp",
       currentPhase: "base",
@@ -1031,7 +1042,7 @@ describe("PR-1 — overrideRunDay accepts string id and number dayIndex", () => 
   });
 
   it("refuses to override a non-editable runDay (terminal status)", async () => {
-    mockProfile = raceProfile("2027-01-01");
+    mockProfile = raceProfile("2099-09-15");
     seedProgram({
       goal: "recomp",
       currentPhase: "base",
@@ -1115,7 +1126,7 @@ describe("PR-B — refreshRunSchedule replaces runDays on race_prep → structur
     // baseline. Same replace-not-merge contract; if we ever
     // regress to merging, structured easy_30 entries would leak
     // into race-period weeks.
-    mockProfile = raceProfile("2027-09-15", { weeklyRunDaysTarget: 3 });
+    mockProfile = raceProfile("2099-09-15", { weeklyRunDaysTarget: 3 });
 
     const structuredPeriodRunDays: ScheduledRunDay[] = [
       {
@@ -1526,7 +1537,7 @@ describe("PR-G — auto-rollover on calendar-week change", () => {
     })();
     // Run9: structured retired — auto-rollover (mode-agnostic) is exercised
     // via a race plan, the surviving runDays-bearing mode.
-    mockProfile = raceProfile("2027-01-01", { weeklyRunDaysTarget: 2 });
+    mockProfile = raceProfile("2099-09-15", { weeklyRunDaysTarget: 2 });
     seedProgram({
       goal: "recomp",
       currentPhase: "base",
@@ -1552,7 +1563,7 @@ describe("PR-G — auto-rollover on calendar-week change", () => {
       ],
       runPlan: {
         mode: "race_prep",
-        raceGoal: { distance: "10k", targetDate: "2027-01-01" },
+        raceGoal: { distance: "10k", targetDate: "2099-09-15" },
       },
     } as ProgramState);
 
