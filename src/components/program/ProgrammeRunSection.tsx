@@ -96,6 +96,7 @@ import {
   durationLabel,
   distanceLabel,
   sessionPaceDisplay,
+  storedKmLabel,
 } from "@/lib/runLabels";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 import {
@@ -1259,10 +1260,14 @@ export default function ProgrammeRunSection({
                   <p className="text-muted-foreground">
                     <span className="text-foreground">This week</span>
                     {" · "}
+                    {/* `totalDistance` is stored KILOMETRES. It printed a
+                        bare `km`, so a miles reader got this line's pace
+                        converted and its distance not — and the "Last run"
+                        line directly above, which goes through
+                        `distanceLabel`, disagreed with it. */}
                     <span className="font-mono tabular-nums">
-                      {thisWeek.totalDistance.toFixed(1)}
-                    </span>{" "}
-                    km
+                      {storedKmLabel(thisWeek.totalDistance, unit, true, 1)}
+                    </span>
                     {" · "}
                     <span className="font-mono tabular-nums">
                       {thisWeek.runCount}
