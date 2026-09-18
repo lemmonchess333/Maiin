@@ -882,7 +882,7 @@ export default function WorkoutSession({
     });
   };
 
-  /* "+ Add Set" had no inverse. A mis-tap left an uncompleted set that the
+  /* "Add set" had no inverse. A mis-tap left an uncompleted set that the
      session then counted as outstanding work, so finishing the sets the
      programme actually prescribed still routed the lifter through "Finish
      early" — a warning about their own accidental tap.
@@ -2068,13 +2068,13 @@ export default function WorkoutSession({
             );
           })()}
 
-          {/* Add Set button */}
+          {/* Add-set button */}
           <button
             type="button"
             onClick={() => addSet(currentExIndex)}
             className="w-full min-h-11 py-2.5 border-t border-border/50 text-xs text-muted-foreground hover:text-foreground transition-colors"
           >
-            + Add Set
+            Add set
           </button>
         </div>
 
@@ -2126,7 +2126,7 @@ export default function WorkoutSession({
                     {TYPE_LABELS[type]}
                   </button>
                 ))}
-                {/* The inverse of "+ Add Set", in the menu that set already
+                {/* The inverse of "Add set", in the menu that set already
                     has. Rendered only for a removable extra, so the normal
                     case gains no control. */}
                 {extraSetIndex(currentExIndex) === typePopover && (
