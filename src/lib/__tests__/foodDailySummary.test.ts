@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { buildGlanceLine } from "../foodDailySummary";
+import { CALORIE_UNIT } from "@/utils/formatNutrition";
 
 const TARGETS = { finalTarget: 2200, protein: 160, carbs: 250, fat: 60 };
 
@@ -57,7 +58,7 @@ describe("buildGlanceLine — protein-led states", () => {
         { calories: 1400, protein: 120, carbs: 100, fat: 30 },
         TARGETS
       )
-    ).toBe("Still need 40g protein · 800 cal left");
+    ).toBe(`Still need 40g protein · 800 ${CALORIE_UNIT} left`);
   });
 
   it("leads with protein in compact form when calories are over", () => {
@@ -67,7 +68,7 @@ describe("buildGlanceLine — protein-led states", () => {
         { calories: 2400, protein: 130, carbs: 280, fat: 70 },
         TARGETS
       )
-    ).toBe("30g protein left · 200 cal over");
+    ).toBe(`30g protein left · 200 ${CALORIE_UNIT} over`);
   });
 
   it("omits the calorie clause when calories are within the on-track band", () => {
@@ -83,7 +84,7 @@ describe("buildGlanceLine — protein-led states", () => {
 });
 
 describe("buildGlanceLine — protein hit + calorie variants", () => {
-  it('shows "Protein hit · N cal left" when significantly under calories', () => {
+  it("shows a protein-hit line with the calories left, when well under", () => {
     /* Spec example: "Protein hit · 450 cal left" — and the spec
        explicitly calls out that on-track must NOT show when
        significantly under. */
@@ -92,17 +93,17 @@ describe("buildGlanceLine — protein hit + calorie variants", () => {
         { calories: 1750, protein: 160, carbs: 200, fat: 40 },
         TARGETS
       )
-    ).toBe("Protein hit · 450 cal left");
+    ).toBe(`Protein hit · 450 ${CALORIE_UNIT} left`);
   });
 
-  it('shows "N cal over · Protein hit" when over calories with protein hit', () => {
+  it("shows the overage before the protein hit, when over", () => {
     /* Spec example: "200 cal over · Protein hit" */
     expect(
       buildGlanceLine(
         { calories: 2400, protein: 165, carbs: 280, fat: 70 },
         TARGETS
       )
-    ).toBe("200 cal over · Protein hit");
+    ).toBe(`200 ${CALORIE_UNIT} over · Protein hit`);
   });
 
   it('shows "On track for today" when protein hit and calories within ±150', () => {
@@ -123,7 +124,7 @@ describe("buildGlanceLine — protein hit + calorie variants", () => {
       TARGETS
     );
     expect(result).not.toBe("On track for today");
-    expect(result).toBe("Protein hit · 1000 cal left");
+    expect(result).toBe(`Protein hit · 1000 ${CALORIE_UNIT} left`);
   });
 
   it('treats over-protein as protein hit (not "still need negative grams")', () => {

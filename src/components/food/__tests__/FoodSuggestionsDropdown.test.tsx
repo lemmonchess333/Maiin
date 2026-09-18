@@ -213,6 +213,7 @@ describe("FoodSuggestionsDropdown — OFF serving-size hint (Eval4 slice)", () =
    moved with the feature, not deleted). */
 
 import { beforeEach, afterEach } from "vitest";
+import { CALORIE_UNIT } from "@/utils/formatNutrition";
 
 function makeItem(over: Partial<QuickAddItem> = {}): QuickAddItem {
   return {
@@ -254,11 +255,13 @@ function renderQuickAdd(quickAdd: Partial<QuickAddSection> = {}) {
 }
 
 describe("FoodSuggestionsDropdown — empty-focus Quick Add (wave2 D)", () => {
-  it("renders the user's items under a 'Quick Add' header with kcal", () => {
+  it("renders the user's items under a 'Quick Add' header, with the calorie unit", () => {
     renderQuickAdd({ items: [makeItem({ name: "Protein Shake", cal: 250 })] });
     expect(screen.getByText(/quick add/i)).toBeInTheDocument();
     expect(screen.getByText("Protein Shake")).toBeInTheDocument();
-    expect(screen.getByText(/250 kcal/)).toBeInTheDocument();
+    expect(
+      screen.getByText(new RegExp(`250 ${CALORIE_UNIT}`))
+    ).toBeInTheDocument();
   });
 
   it("frames seeded items as 'Examples' for cold-start accounts", () => {
@@ -448,7 +451,9 @@ describe("FoodSuggestionsDropdown — each row says what tapping it does", () =>
     expect(screen.queryByText("Log")).not.toBeInTheDocument();
     // The portion and calorie detail the row already carried survives.
     expect(screen.getByText(/1 bowl/)).toBeInTheDocument();
-    expect(screen.getByText(/180 cal/)).toBeInTheDocument();
+    expect(
+      screen.getByText(new RegExp(`180 ${CALORIE_UNIT}`))
+    ).toBeInTheDocument();
 
     fireEvent.click(screen.getByText("Porridge"));
     expect(onSelectSuggestion).toHaveBeenCalledTimes(1);
@@ -473,7 +478,9 @@ describe("FoodSuggestionsDropdown — each row says what tapping it does", () =>
     expect(screen.getByText("Log")).toBeInTheDocument();
     expect(screen.queryByText("Select")).not.toBeInTheDocument();
     expect(screen.getByText(/1 bowl/)).toBeInTheDocument();
-    expect(screen.getByText(/200 cal/)).toBeInTheDocument();
+    expect(
+      screen.getByText(new RegExp(`200 ${CALORIE_UNIT}`))
+    ).toBeInTheDocument();
 
     fireEvent.click(screen.getByText("Oats"));
     expect(onSelectPantry).toHaveBeenCalledTimes(1);
@@ -488,7 +495,9 @@ describe("FoodSuggestionsDropdown — each row says what tapping it does", () =>
 
     expect(screen.getByText("Choose portion")).toBeInTheDocument();
     expect(document.querySelector(".lucide-plus")).toBeNull();
-    expect(screen.getByText(/400 cal/)).toBeInTheDocument();
+    expect(
+      screen.getByText(new RegExp(`400 ${CALORIE_UNIT}`))
+    ).toBeInTheDocument();
     expect(screen.getByText(/per 100g/)).toBeInTheDocument();
   });
 

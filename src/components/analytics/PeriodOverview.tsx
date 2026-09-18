@@ -4,6 +4,7 @@ import { Footprints, Dumbbell, UtensilsCrossed } from "lucide-react";
 import { formatVolumeSub } from "@/utils/formatters";
 import { distanceLabel } from "@/lib/runLabels";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
+import { CALORIE_UNIT } from "@/utils/formatNutrition";
 
 interface PeriodOverviewProps {
   runCount: number;
@@ -172,7 +173,10 @@ export default function PeriodOverview({
       ),
       label: "Adherence",
       value: `${nutritionAdherence}%`,
-      sub: avgCalories > 0 ? `${avgCalories.toLocaleString()} kcal/day` : "—",
+      sub:
+        avgCalories > 0
+          ? `${avgCalories.toLocaleString()} ${CALORIE_UNIT}/day`
+          : "—",
       color: THEME.semantic.nutrition,
       ringVal: nutritionAdherence,
       ringMax: 100,
