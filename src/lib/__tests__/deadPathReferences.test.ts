@@ -77,6 +77,12 @@ const ALLOWED: Record<string, string> = {
   // The citation IS the evidence for that gate existing.
   "src/components/social/ShareCard.tsx":
     "deleted; cited as the stale eslint `files:` entry that motivated the gate",
+  // A path INSIDE jsdom, cited as the evidence for why an animation-stall
+  // in WorkoutSessionCompletion.test.tsx is a harness bug rather than a
+  // framer-motion one: jsdom starts its rAF driver only on the 0 -> 1
+  // transition of its own callback counter. Naming the file is what makes
+  // that checkable by the next reader instead of taken on trust.
+  "browser/Window.js": "path inside jsdom, cited as the mechanism's source",
   // Synthetic hashed-asset URL inside serviceWorkerContract.test.ts's
   // executed-SW fixture — it must LOOK like a Vite asset to route into
   // the cache-first branch, and deliberately names no real file (a real
