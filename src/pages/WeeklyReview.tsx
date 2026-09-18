@@ -21,6 +21,7 @@ import { useDismissOnce } from "@/hooks/useDismissOnce";
 import SectionLabel from "@/components/ui/SectionLabel";
 import { Spinner } from "@/components/ui/Spinner";
 import MomentumCheckinCard from "@/components/review/MomentumCheckinCard";
+import { CALORIE_UNIT } from "@/utils/formatNutrition";
 
 function DirectionIcon({ direction }: { direction: "up" | "down" | "stable" }) {
   if (direction === "down")
@@ -239,7 +240,8 @@ export default function WeeklyReview() {
                       </span>
                     </p>
                     <p className="text-xs text-muted-foreground font-mono tabular-nums">
-                      avg {review.nutrition.avgCalories.toLocaleString()} kcal
+                      avg {review.nutrition.avgCalories.toLocaleString()}{" "}
+                      {CALORIE_UNIT}
                       {review.nutrition.target !== null &&
                         ` · target ${review.nutrition.target.toLocaleString()}`}
                     </p>

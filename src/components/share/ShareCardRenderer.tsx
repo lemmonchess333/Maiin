@@ -8,6 +8,7 @@ import {
   type DistanceUnit,
 } from "@/lib/distanceUnits";
 import { paceMinSec, distanceValue, elevationLabel } from "@/lib/runLabels";
+import { CALORIE_UNIT } from "@/utils/formatNutrition";
 
 /** `12.3km` — the compact no-space form this card's small stats use. */
 function distanceLabel2Compact(km: number | undefined, unit: DistanceUnit) {
@@ -812,7 +813,7 @@ function NutritionTemplate({
           value={Math.round(data.calories ?? 0).toLocaleString()}
           label={
             data.calorieTarget
-              ? `of ${Math.round(data.calorieTarget).toLocaleString()} kcal`
+              ? `of ${Math.round(data.calorieTarget).toLocaleString()} ${CALORIE_UNIT}`
               : "kcal"
           }
           color="#ffffff"
