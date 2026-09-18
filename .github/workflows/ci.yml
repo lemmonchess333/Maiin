@@ -219,6 +219,24 @@ jobs:
         env:
           LANG: ${{ matrix.locale }}
           LC_ALL: ${{ matrix.locale }}
+      # The server suite belongs here too, and its absence was a real
+      # blind spot rather than a tidy-up: `unit-future` is the only job
+      # that runs BOTH suites, so `functions/` had never executed outside
+      # an English locale. Running it in de_DE found a bare
+      # `toLocaleString()` in `socialFanout`'s feed summary — a string
+      # the server formats ONCE and fans out to every follower, so it was
+      # taking the container's locale, which is nobody's.
+      #
+      # Cheap: the functions suite is ~22s against the client suite's
+      # ~5 minutes.
+      - run: npm ci
+        working-directory: functions
+      - name: Functions suite in ${{ matrix.locale }}
+        run: npm test
+        working-directory: functions
+        env:
+          LANG: ${{ matrix.locale }}
+          LC_ALL: ${{ matrix.locale }}
 
   # The suite had only ever run at ONE moment — whenever CI happened to
   # start — and a test fixture carrying a date literal is inside whatever
