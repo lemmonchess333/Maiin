@@ -239,21 +239,23 @@ export default function TodayEnergy({
 
       {/* Situational note — never a second way into the food log. */}
       {nudgeText && (
-        <p
-          className="px-4 pb-3 text-xs font-medium text-center"
-          style={{ color: THEME.semantic.nutrition }}
-        >
+        <p className="px-4 pb-3 text-xs font-medium text-center text-nutrition-strong">
           {nudgeText}
         </p>
       )}
 
       {/* The one logging action (#973): its own control, nutrition-orange,
-          full 44px target, haptic on tap, for every segment. */}
+          full 44px target, haptic on tap, for every segment.
+
+          The orange is the `-strong` step, not the identity. Measured on
+          the rendered card, the identity reads 2.77:1 here — the worst
+          text contrast in the app outside decorative art — because 14px
+          semibold needs 4.5:1 and #D9884E is a fill colour. The nudge note
+          above had the same problem at 12px. */}
       <Link
         to="/food"
         onClick={() => haptic()}
-        className="flex items-center justify-center gap-1.5 w-full min-h-[44px] border-t border-border/30 text-sm font-semibold motion-safe:active:scale-[0.99] transition-transform"
-        style={{ color: THEME.semantic.nutrition }}
+        className="flex items-center justify-center gap-1.5 w-full min-h-[44px] border-t border-border/30 text-sm font-semibold text-nutrition-strong motion-safe:active:scale-[0.99] transition-transform"
         aria-label="Log food"
       >
         <UtensilsCrossed className="size-4" aria-hidden="true" />
