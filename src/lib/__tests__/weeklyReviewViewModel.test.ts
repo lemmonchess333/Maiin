@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest";
+import { computeLoadBand } from "@/lib/performanceEngine";
 import {
   buildWeeklyReview,
   weekBounds,
@@ -134,7 +135,10 @@ describe("headline (PI collapse + delta suppression)", () => {
     );
     expect(r?.headline?.delta).toBeNull();
     expect(r?.headline?.deload).toBe(true);
-    expect(r?.headline?.verdict).toMatch(/by design/i);
+    /* The suppression stays (Rev1) — not framing a PI drop as a loss is a
+       choice about emphasis. The VERDICT must not go further and claim
+       the week was intended: the app cannot know that. */
+    expect(r?.headline?.verdict).not.toMatch(/by design/i);
   });
 
   it("deload week keeps a POSITIVE delta", () => {
@@ -150,10 +154,16 @@ describe("headline (PI collapse + delta suppression)", () => {
 });
 
 describe("verdict templates (no AI)", () => {
+  /* Every `loadBand` used below is one `computeLoadBand` can actually
+     emit for the PI beside it, checked in the last test of this block.
+     The fixtures here used to pair `pi: 50` with `loadBand: "deload"`,
+     which the engine cannot produce — `computeLoadBand(50)` is
+     "moderate" — so the copy was being asserted against a state no user
+     can reach. */
   it("maps engine flags to fixed copy", () => {
     expect(
       verdictFor({ delta: -10, loadBand: "deload", deloadRecommended: false })
-    ).toMatch(/by design/i);
+    ).toMatch(/light week/i);
     expect(
       verdictFor({ delta: 0, loadBand: "overreach", deloadRecommended: false })
     ).toMatch(/recovery/i);
@@ -169,6 +179,65 @@ describe("verdict templates (no AI)", () => {
     expect(
       verdictFor({ delta: 1, loadBand: "moderate", deloadRecommended: false })
     ).toMatch(/steady/i);
+  });
+
+  it("never tells the user a week was intentional", () => {
+    /* The defect this replaced, and the reason it is worth a test of its
+       own rather than a changed string. Both branches that produced it
+       fire on data that says nothing about intent:
+
+         deloadRecommended   the engine's FORWARD advice, and it fires on
+                             SUSTAINED HIGH load — its own insight bullet
+                             says so, and its plan adjustment is "reduce
+                             working sets by 30-40%".
+         loadBand "deload"   computeLoadBand(pi) for pi < 25 — a week with
+                             almost no training, which a planned deload
+                             and a missed week produce identically.
+
+       A captured Weekly Review showed PI 92, delta +2 and "2 of 6 lifts"
+       above "A lighter week by design". */
+    for (const args of [
+      { delta: -10, loadBand: "deload", deloadRecommended: false },
+      { delta: 2, loadBand: "overreach", deloadRecommended: true },
+      { delta: 0, loadBand: "moderate", deloadRecommended: true },
+    ]) {
+      expect(verdictFor(args), JSON.stringify(args)).not.toMatch(
+        /by design|on purpose|intended|planned/i
+      );
+    }
+  });
+
+  it("points a recommended deload FORWARD, the way the engine words it", () => {
+    /* deloadRecommended outranks the band — it is checked first — so the
+       overreach pairing below is the one a real user meets: trained hard,
+       engine says ease off. The verdict must not describe the week just
+       gone as light. */
+    const v = verdictFor({
+      delta: 2,
+      loadBand: "overreach",
+      deloadRecommended: true,
+    });
+    expect(v).toMatch(/high/i);
+    expect(v).not.toMatch(/a light week|lighter week/i);
+  });
+
+  it("uses only bands computeLoadBand can emit", () => {
+    /* The guard that would have caught the impossible fixture. A verdict
+       asserted against an unreachable (pi, band) pair is the accept-path
+       fiction this repo keeps finding: the rejection cases stay honest
+       while the acceptance describes a state no user can be in. */
+    const reachable = new Map<string, number>([
+      ["overreach", 92],
+      ["high", 75],
+      ["moderate", 50],
+      ["low", 30],
+      ["deload", 10],
+    ]);
+    for (const [band, pi] of reachable) {
+      expect(computeLoadBand(pi), `${band} at pi ${pi}`).toBe(band);
+    }
+    /* …and the pairing the old fixture used is NOT one of them. */
+    expect(computeLoadBand(50)).not.toBe("deload");
   });
 });
 
