@@ -255,6 +255,22 @@ jobs:
         run: npm run test -- --run
         env:
           TROPOS_CLOCK_OFFSET_DAYS: 90
+      # The server suite has its own expiring fixtures and does not go
+      # through `run-unit-tests.mjs`, so the preload is named directly
+      # here. Measured green at +90 days when this was added — but the
+      # client half being clean would not have proved that, and the one
+      # thing this whole exercise keeps demonstrating is that the copy
+      # you measured is not the copy you were asking about. Running the
+      # functions suite forward is also what turned up the `instanceof
+      # Date` narrowing the preload now guards against.
+      - run: npm ci
+        working-directory: functions
+      - name: Functions suite 90 days from now
+        run: npm test
+        working-directory: functions
+        env:
+          TROPOS_CLOCK_OFFSET_DAYS: 90
+          NODE_OPTIONS: --require=${{ github.workspace }}/scripts/fake-clock.cjs
 
   # Dependency advisories, as a PR gate for the full ROOT tree: `npm audit`
   # fails on high or critical, so a new advisory has to be fixed or

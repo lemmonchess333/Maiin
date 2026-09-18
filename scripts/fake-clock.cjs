@@ -57,5 +57,21 @@ if (offset !== 0) {
       return RealDate.now() + offset;
     }
   }
+  /* `instanceof Date` must keep meaning "is a date".
+     Replacing the global with a SUBCLASS quietly narrows it: a Date
+     built by anything holding a reference to the original — a module
+     loaded before this one, a native binding inside a dependency — is
+     not an instance of the subclass, so `expect(x).toBeInstanceOf(Date)`
+     fails with the uniquely unhelpful "expected 2027-09-15T00:00:00.000Z
+     to be an instance of ShiftedDate".
+
+     Found by running the FUNCTIONS suite under the shift, where
+     firebase-admin hands back dates it made itself; the client suite
+     passed and would not have shown it. That is the mirror rule in its
+     own small way — the copy that was measured is not the copy that
+     proves the property. */
+  Object.defineProperty(ShiftedDate, Symbol.hasInstance, {
+    value: (x) => x instanceof RealDate,
+  });
   globalThis.Date = ShiftedDate;
 }

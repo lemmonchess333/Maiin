@@ -89,6 +89,38 @@ describe("fake-clock", () => {
     expect(r.stdout).toBe("2026-07-20T00:00:00.000Z|1970-01-01T00:00:00.000Z");
   });
 
+  it('keeps `instanceof Date` meaning "is a date"', () => {
+    /* Replacing the global with a subclass quietly narrows `instanceof`:
+       a Date built by anything holding the ORIGINAL constructor — a
+       module loaded before the preload, a native binding inside a
+       dependency — is not an instance of the subclass. The failure is
+       uniquely unhelpful, naming an internal class nobody wrote:
+       "expected 2027-09-15T00:00:00.000Z to be an instance of
+       ShiftedDate".
+
+       Found by running the FUNCTIONS suite under the shift, where
+       firebase-admin returns dates it constructed itself. The client
+       suite was green and could not have shown it — the copy that was
+       measured is not the copy that proves the property. */
+    const r = withClock(
+      { TROPOS_CLOCK_OFFSET_DAYS: "90" },
+      `const original = Object.getPrototypeOf(Date.prototype).constructor;
+       const madeElsewhere = Reflect.construct(
+         Object.getPrototypeOf(Date),
+         [0],
+         Object.getPrototypeOf(Date)
+       );
+       process.stdout.write([
+         new Date() instanceof Date,
+         new Date(0) instanceof Date,
+         madeElsewhere instanceof Date,
+         typeof original,
+       ].join(","))`
+    );
+    expect(r.status).toBe(0);
+    expect(r.stdout).toBe("true,true,true,function");
+  });
+
   it("is a no-op when nothing asks for it", () => {
     /* Every ordinary `npm run test` loads this file only if one of the
        two variables is set, but a stray require must still cost nothing
