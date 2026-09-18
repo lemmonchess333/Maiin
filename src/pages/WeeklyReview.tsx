@@ -15,6 +15,8 @@ import {
   Heart,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
+import { storedKmLabel } from "@/lib/runLabels";
+import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 import { useWeeklyReview, reviewViewedKey } from "@/hooks/useWeeklyReview";
 import { formatWeekRange } from "@/lib/weeklyReviewViewModel";
 import { useDismissOnce } from "@/hooks/useDismissOnce";
@@ -39,6 +41,7 @@ function DirectionIcon({ direction }: { direction: "up" | "down" | "stable" }) {
 export default function WeeklyReview() {
   const navigate = useNavigate();
   const { user, profile } = useAuth();
+  const unit = useDistanceUnit();
   const { loading, review, weekKey } = useWeeklyReview();
 
   // D16 — the personal "why", resurfaced. Empty/whitespace = no why set.
@@ -175,7 +178,9 @@ export default function WeeklyReview() {
                     </div>
                     <div className="min-w-0">
                       <p className="text-sm font-semibold text-foreground font-mono tabular-nums">
-                        {review.training.runs.km} km
+                        {/* Stored KILOMETRES. A bare `km` showed the
+                            metric figure to a miles reader. */}
+                        {storedKmLabel(review.training.runs.km, unit, true, 1)}
                         {review.training.runs.planned !== null && (
                           <span className="font-sans font-normal text-muted-foreground">
                             {" "}
@@ -193,7 +198,13 @@ export default function WeeklyReview() {
                       </p>
                       {review.training.runs.longestKm !== null && (
                         <p className="text-xs text-muted-foreground font-mono tabular-nums">
-                          longest {review.training.runs.longestKm} km
+                          longest{" "}
+                          {storedKmLabel(
+                            review.training.runs.longestKm,
+                            unit,
+                            true,
+                            1
+                          )}
                         </p>
                       )}
                     </div>

@@ -29,6 +29,7 @@ import {
   distanceLabel2,
   nearDistanceLabel,
   elevationLabel,
+  storedKmLabel,
 } from "../runLabels";
 
 describe("paceLabel", () => {
@@ -317,5 +318,50 @@ describe("finishTimeLabel", () => {
   it("guards non-positive input", () => {
     expect(finishTimeLabel(0)).toBe("--:--");
     expect(finishTimeLabel(NaN)).toBe("--:--");
+  });
+});
+
+// storedKmLabel — a quantity this app stores in KILOMETRES rather than
+// metres, rendered in the reader's unit. It had no tests at all, which is
+// worth stating: the helper exists specifically to stop `× 1000` appearing
+// at call sites because a missing one is a silent 1000× error that still
+// renders as a plausible number, and nothing was holding the arithmetic it
+// centralises.
+describe("storedKmLabel", () => {
+  it("converts rather than relabelling", () => {
+    // A marathon, so a wrong conversion is recognisable on sight.
+    expect(storedKmLabel(42.195, "km", true, 1)).toBe("42.2 km");
+    expect(storedKmLabel(42.195, "mi", true, 1)).toBe("26.2 mi");
+  });
+
+  it("rounds whole for wear estimates and keeps a decimal for a week", () => {
+    /* Shoe mileage is an estimate and reads better whole; a week's
+       distance is a figure the runner recognises, so it keeps the
+       decimal the surfaces were already showing. */
+    expect(storedKmLabel(500, "km")).toBe("500 km");
+    expect(storedKmLabel(500, "mi")).toBe("311 mi");
+    expect(storedKmLabel(5, "km", true, 1)).toBe("5.0 km");
+  });
+
+  it("drops the unit when the caller renders it separately", () => {
+    expect(storedKmLabel(500, "km", false)).toBe("500");
+    expect(storedKmLabel(5, "mi", false, 1)).toBe("3.1");
+  });
+
+  it("treats a missing value as zero, not as NaN", () => {
+    // Callers pass aggregates that can legitimately be absent.
+    expect(storedKmLabel(0, "km", true, 1)).toBe("0.0 km");
+    expect(storedKmLabel(NaN, "km")).toBe("0 km");
+  });
+
+  it("spaces the unit, as the house rule requires", () => {
+    for (const out of [
+      storedKmLabel(10, "km"),
+      storedKmLabel(10, "mi"),
+      storedKmLabel(10, "km", true, 1),
+      storedKmLabel(10, "mi", true, 1),
+    ]) {
+      expect(out).toMatch(/^[\d.]+ (km|mi)$/);
+    }
   });
 });

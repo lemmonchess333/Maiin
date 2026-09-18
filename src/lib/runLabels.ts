@@ -208,16 +208,25 @@ export function distanceLabel2(distanceM: number, unit: DistanceUnit): string {
  *
  * A thin wrapper over `distanceIn` that exists to stop `× 1000` appearing
  * at half a dozen call sites, where a missing one is a silent 1000×
- * error that still renders as a plausible number. Rounds to whole units:
- * shoe mileage is a wear estimate, not a measurement.
+ * error that still renders as a plausible number.
+ *
+ * `decimals` because the two callers want different precision, and for a
+ * while only one of them was here. Shoe mileage is a wear estimate, so it
+ * rounds to whole units and that stays the default. A week's distance is
+ * a figure the runner recognises — 5.0 km, not 5 km — so the aggregate
+ * surfaces pass 1. They were printing a bare `km` instead, which is the
+ * reason this docstring named a caller it did not have.
  */
 export function storedKmLabel(
   km: number,
   unit: DistanceUnit,
-  withUnit = true
+  withUnit = true,
+  decimals: 0 | 1 = 0
 ): string {
-  const v = Math.round(distanceIn((km || 0) * 1000, unit));
-  return withUnit ? `${v} ${distanceUnitLabel(unit)}` : `${v}`;
+  const converted = distanceIn((km || 0) * 1000, unit);
+  const v =
+    decimals === 1 ? converted.toFixed(1) : String(Math.round(converted));
+  return withUnit ? `${v} ${distanceUnitLabel(unit)}` : v;
 }
 
 /**

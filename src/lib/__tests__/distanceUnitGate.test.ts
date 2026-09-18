@@ -37,12 +37,37 @@ const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
  */
 const NOT_DISPLAY: Record<string, string> = {
   /* Empty, and worth keeping empty. Every metres→km conversion that
-     actually PRINTS a distance now goes through `runLabels`, and the
-     non-display conversions (pace maths, weekly aggregates, shoe mileage)
-     don't put a literal `km` after the arithmetic, so they never reach the
-     gate in the first place. An entry here would need a reason no marker
+     actually PRINTS a distance goes through `runLabels`, and the
+     non-display conversions (pace maths, the weekly aggregates' own
+     arithmetic, shoe mileage) don't put a literal `km` after it, so they
+     never reach the gate. An entry here would need a reason no marker
      constant could express better. */
 };
+
+/* WHAT THIS GATE CANNOT SEE, stated because the sentence above reads as
+   though it covered this and does not.
+
+   It anchors on ARITHMETIC: a `/ 1000` within a few characters of a
+   literal `km`. A quantity this app already stores in KILOMETRES needs no
+   arithmetic at the display site, so printing it with a hardcoded `km`
+   is invisible here — no `/ 1000` for the pattern to find.
+
+   Three surfaces were doing exactly that with the user's own logged
+   distance, and a miles reader saw kilometres on all three: the Weekly
+   Review's run lane (`runs.km`, `runs.longestKm`), "Your week so far"
+   (`pulse.runs.km`), and the Programme Run tab's "This week" line — the
+   last of which converted the PACE on the same line and not the
+   distance. All three now go through `storedKmLabel`, and each is pinned
+   at its own surface in both units.
+
+   Still outstanding, and a product call rather than a bug: the PRESCRIBED
+   distances, `config.targetDistanceKm` in `DayActionSheet`,
+   `ProgrammeRunSection`'s template meta, `DayPeekCard`, `RunCTACard`, and
+   `RunLaunchCard`'s `distanceKm`. Those are the plan talking rather than
+   the log, and the race templates carry named distances ("5K") whose name
+   should not convert even though their number should. Decide that before
+   widening the pattern, because the widening is only useful once there is
+   somewhere for those five to go. */
 
 function stripComments(src: string): string {
   return src
@@ -69,6 +94,44 @@ const INLINE = /[/*]\s*1000[^\n]{0,40}?\bkm\b/;
 interface Hit {
   site: string;
   line: string;
+}
+
+/**
+ * A LOGGED AGGREGATE printed with a literal unit.
+ *
+ * The gate above anchors on arithmetic, which a stored-kilometre value
+ * does not need — so it cannot see `{runs.km} km`. This one anchors on the
+ * FIELD instead, and only on the three names that hold a distance the user
+ * actually covered: `.km`, `longestKm`, `totalDistance`. All three are
+ * aggregates in kilometres, produced by `weeklyReviewViewModel` and
+ * `useRunningStats`, and never a plan's prescription — so there is no
+ * legitimate reason for any of them to sit beside a hardcoded unit, and
+ * the rule needs no allow-list.
+ *
+ * Deliberately NOT extended to `targetDistanceKm` / `distanceKm`: those
+ * are the plan talking rather than the log, and whether a prescribed
+ * distance converts is an open product call (see the note above
+ * NOT_DISPLAY). Widening this to them before that call is made would
+ * force five allow-list entries, which is how a gate becomes scenery.
+ */
+/* The `}` is load-bearing. Requiring the interpolation to CLOSE before
+   the unit is what separates a printed distance from `tier.km <= km`,
+   where `km` is a local rather than a unit — the same false-positive
+   family the forward-only rule above exists for. */
+const STORED_KM =
+  /\b(\.km|longestKm|totalDistance)\b[^\n]{0,40}?\}[^\n]{0,8}?\bkm\b/;
+
+function scanStoredKm(): Hit[] {
+  const out: Hit[] = [];
+  for (const rel of globSync("src/**/*.{ts,tsx}", { cwd: repoRoot })) {
+    if (rel.includes("__tests__") || rel.includes(".test.")) continue;
+    const src = stripComments(readFileSync(resolve(repoRoot, rel), "utf8"));
+    src.split("\n").forEach((line, i) => {
+      if (STORED_KM.test(line))
+        out.push({ site: `${rel}:${i + 1}`, line: line.trim() });
+    });
+  }
+  return out;
 }
 
 function scan(): Hit[] {
@@ -122,6 +185,31 @@ describe("run distances are formatted through runLabels, not inline", () => {
         `silently left on km. If a surface must stay metric, mark it at the ` +
         `point of use with SPLIT_LAP_IS_METRIC or ` +
         `SHARE_CARD_IS_METRIC:\n  ` +
+        hits.join("\n  ")
+    ).toEqual([]);
+  });
+
+  it("the stored-kilometre detector matches its own shape", () => {
+    // Positive control, for the same reason the one above has one.
+    expect(STORED_KM.test("{pulse.runs.km} km")).toBe(true);
+    expect(STORED_KM.test("longest {runs.longestKm} km")).toBe(true);
+    expect(STORED_KM.test("{thisWeek.totalDistance.toFixed(1)} km")).toBe(true);
+    // A converted call site is not an offender.
+    expect(STORED_KM.test("storedKmLabel(runs.km, unit, true, 1)")).toBe(false);
+    // And the prescribed distances stay out of scope, on purpose.
+    expect(STORED_KM.test("`${config.targetDistanceKm} km`")).toBe(false);
+    // `km` as a local, not a unit — runScheduler's tier lookup.
+    expect(STORED_KM.test("if (tier.km <= km) chosen = tier;")).toBe(false);
+  });
+
+  it("no surface prints a logged aggregate with a hardcoded unit", () => {
+    const hits = scanStoredKm().map((h) => `${h.site}  ${h.line.slice(0, 90)}`);
+    expect(
+      hits,
+      `These fields hold KILOMETRES the user actually ran. Render them with ` +
+        `storedKmLabel(km, unit, true, 1) from src/lib/runLabels.ts so a ` +
+        `miles reader sees their own unit — a hardcoded "km" beside one of ` +
+        `these shows the metric figure to everyone:\n  ` +
         hits.join("\n  ")
     ).toEqual([]);
   });
