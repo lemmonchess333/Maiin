@@ -38,6 +38,15 @@ vi.mock("@/hooks/useWeeklyReview", () => ({
   reviewViewedKey: (weekKey: string) => `tropos-review-viewed:${weekKey}`,
 }));
 
+/* The page renders the real `MomentumCheckinCard`, which awaits a real
+   `getDoc`. Unmocked, that boots the Firestore SDK, which warns
+   asynchronously ~600ms later — after these tests have finished — and
+   under full-suite load that log lands while the worker's RPC is closing,
+   failing the whole job with every test passing. Ported from the same
+   one-liner on `WeeklyReview.trainingWhy.test.tsx`; the bare form is the
+   repo's one Firestore fake (ADR-0009). */
+vi.mock("firebase/firestore");
+
 vi.mock("@/hooks/useDismissOnce", () => ({
   useDismissOnce: () => ({ dismiss: vi.fn(), dismissed: false }),
 }));
