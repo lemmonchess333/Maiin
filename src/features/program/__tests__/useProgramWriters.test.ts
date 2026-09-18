@@ -1090,120 +1090,25 @@ describe("PR-B — refreshRunSchedule replaces runDays on race_prep → structur
   // accidentally introduces a merge-instead-of-replace pattern
   // fails CI before reaching device QA.
 
-  const STRUCTURED_TEMPLATE_IDS = new Set([
-    "long_10k",
-    "tempo_20",
-    "5x1k",
-    "8x400",
-    "easy_30",
-  ]);
-  const RACE_TEMPLATE_IDS = new Set([
-    "5k_race",
-    "10k_race",
-    "half_race",
-    "marathon_race",
-  ]);
-
-  // Run9 (3a): the "refresh INTO structured" scenario is retired — structured
-  // is no longer a target mode (it's migrated to freeform on load). The
-  // orphaned-plan wipe this guarded is now covered by the repurposed
-  // "loading a legacy structured user WIPES the orphaned runDays + runPlan"
-  // test above. Skipped (not deleted) to preserve the merge-vs-replace intent
-  // doc for the surviving inverse test below.
-  it.skip("structured-mode refresh emits zero race-period templates even when previous runDays were race-shaped", async () => {
-    // Profile is already structured (matches the composing handler's
-    // sequence: updateProfile → refreshRunSchedule, with the
-    // refreshRunSchedule call running against the post-update profile).
-    mockProfile = structuredProfile({
-      weeklyRunDaysTarget: 3,
-      // raceGoal preserved per R1 GATED — present on profile, but
-      // refreshRunSchedule's race-branch only fires when runMode is
-      // race_prep, so this should be a no-op input here.
-      raceGoal: { distance: "10k", targetDate: "2027-09-15" },
-    });
-
-    // programState carries the previous race-period runDays. These
-    // are the "leftover entries" the QA brief is worried about. They
-    // include race-day template IDs (10k_race) plus marker IDs that
-    // could not be produced by scheduleStructuredWeekV2 — so if any
-    // of them survive into the post-refresh runDays, we know merge
-    // happened.
-    const racePeriodRunDays: ScheduledRunDay[] = [
-      {
-        id: "LEGACY_RACE_DAY_long_marker",
-        dayIndex: 0,
-        date: "2026-05-17",
-        weekKey: "2026-05-17",
-        templateId: "long_10k", // valid structured ID too — covers the merge-key collision case
-        type: "long",
-        status: "planned",
-      } as ScheduledRunDay,
-      {
-        id: "LEGACY_RACE_DAY_race_marker",
-        dayIndex: 6,
-        date: "2026-05-23",
-        weekKey: "2026-05-17",
-        templateId: "10k_race", // distinctive race-only template
-        type: "race",
-        status: "planned",
-      } as ScheduledRunDay,
-    ];
-
-    seedProgram({
-      goal: "recomp",
-      currentPhase: "base",
-      weekNumber: 1,
-      splitType: "ppl",
-      workouts: [],
-      fatigueScore: 0,
-      updatedAt: Date.now(),
-      settings: { autoProgression: true, microloading: true },
-      weekHistory: [],
-      programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
-      runDays: racePeriodRunDays,
-      runPlan: {
-        mode: "race_prep",
-        raceGoal: { distance: "10k", targetDate: "2027-09-15" },
-        currentWeek: 0,
-        totalWeeks: 12,
-        compressed: false,
-      },
-    } as ProgramState);
-
-    const { result } = mountProgram();
-    await waitFor(() => expect(result.current.loading).toBe(false), {
-      timeout: 2000,
-    });
-    markWrites();
-
-    await act(async () => {
-      await result.current.refreshRunSchedule({
-        weekSchedule: generateSchedule(6, 3),
-        weeklyRunDaysTarget: 3,
-      });
-    });
-
-    expect(setDocCalls().length).toBeGreaterThan(0);
-    const lastWrite = setDocCalls()[setDocCalls().length - 1]
-      .data as ProgramState;
-    const writtenRunDays = lastWrite.runDays ?? [];
-
-    // Replace, not merge: the legacy marker IDs MUST NOT survive.
-    const markerIdsFound = writtenRunDays.filter((rd) =>
-      rd.id?.startsWith("LEGACY_RACE_DAY_")
-    );
-    expect(markerIdsFound).toHaveLength(0);
-
-    // Every written runDay's templateId is in the structured pool.
-    // If a `10k_race` template leaks through, this catches it.
-    writtenRunDays.forEach((rd) => {
-      expect(STRUCTURED_TEMPLATE_IDS.has(rd.templateId)).toBe(true);
-      expect(RACE_TEMPLATE_IDS.has(rd.templateId)).toBe(false);
-    });
-
-    // runPlan also resets to structured shape (not race_prep).
-    expect(lastWrite.runPlan?.mode).toBe("structured");
-  });
+  // The structured→ direction of this contract is retired: structured is no
+  // longer a target mode, and a legacy structured user's orphaned runDays are
+  // wiped on load instead — held by "Run9: loading a legacy structured user
+  // WIPES the orphaned runDays + runPlan" above, which asserts the wipe write
+  // rather than merely that nothing crashed.
+  //
+  // Its test used to sit here as `it.skip`, kept "to preserve the
+  // merge-vs-replace intent doc". That reason does not survive reading: the
+  // intent doc is the comment above this one, which the surviving inverse
+  // test below shares — 110 lines of unrunnable body preserved nothing, and
+  // carried two template-id Sets that nothing else referenced. Deleted, with
+  // the reason kept where the reason lives.
+  //
+  // Note what the surviving direction does NOT check, deliberately: the
+  // retired test asserted every written templateId came from the structured
+  // pool. The inverse has no such assertion and should not — a race-prep week
+  // legitimately contains easy and tempo runs, so "no structured template in
+  // race runDays" would be false. Only the marker id and the runPlan mode are
+  // checkable here.
 
   it("race_prep refresh from a structured-shape runDays array also replaces (inverse direction)", async () => {
     // The reverse case — restoring race_prep from a structured
