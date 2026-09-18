@@ -3,7 +3,7 @@
 /**
  * Server mirror of the one-off run move (RUN-RESCHEDULE-01).
  *
- * Moves a planned run to another day WITHIN its generated Sunday-start week.
+ * Moves a planned run to another day WITHIN its generated week.
  * Moves the plan, not the goalposts: the stable `id`, `templateId`,
  * `userOverride`, `status`, completion truth, race identity (`type`) and the
  * `manualCompletions` map all survive — only `date` / `dayIndex` and the
