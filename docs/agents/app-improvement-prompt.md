@@ -464,10 +464,9 @@ DONE MEANS
   attached to every visual PR.
 - A final report in five sections: FIXED (PR list); DECLINED (reason and
   citation); OPERATOR CHECKLIST (only a human with console access can:
-  mark "CI / unit" a required status check, flip App Check enforcement per
-  docs/app-check-rollout.md, do the Console deployed-source spot-checks,
-  set the Cloud budget alert, turn on GitHub secret scanning and push
-  protection); OPEN DESIGN QUESTIONS (≤5, both options measured); and the
+  flip App Check enforcement per docs/app-check-rollout.md, do the
+  Console deployed-source spot-checks, set the Cloud budget alert, turn
+  on GitHub secret scanning and push protection); OPEN DESIGN QUESTIONS (≤5, both options measured); and the
   NEW BASELINE numbers for the next run of this prompt.
 ```
 
@@ -558,8 +557,14 @@ each so the next run can show movement rather than re-survey.
 These need console access or a GitHub setting an agent does not hold. The
 prompt asks for them as a checklist rather than letting them read as done:
 
-- Mark the `CI / unit` job a required status check on `main` (the header
-  of `.github/workflows/ci.yml` says it reports red but does not block).
+Marking `CI / unit` a required status check was on this list and is DONE
+— verified 2026-09-18 by reading a merge refusal (`405 Repository rule
+violations found / Required status check "unit" is queued`), not the
+settings page. It sat here as outstanding while it was already in force,
+which is the failure mode this section invites: a checklist an agent
+cannot observe drifts silently, in the direction of inventing work.
+Re-verify a claim on this list before repeating it.
+
 - Flip App Check enforcement per `docs/app-check-rollout.md`, only after the
   verified-request telemetry it describes.
 - The Console deployed-source spot-checks in `docs/post-deploy-verification.md`
