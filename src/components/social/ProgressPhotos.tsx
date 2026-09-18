@@ -38,6 +38,7 @@ import {
   type VaultEntry,
   type VaultPhoto,
 } from "@/lib/progressVault";
+import { localDateString } from "@/lib/dateHelpers";
 
 function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   return Promise.race([
@@ -318,7 +319,7 @@ function AccountProgressPhotos({ uid }: { uid: string }) {
             collection(db, "users", uid, "progressPhotos"),
             {
               ...metadata,
-              date: new Date().toISOString().split("T")[0],
+              date: localDateString(),
               // Progress photos are owner-only by contract: both
               // firestore.rules (users/{uid}/progressPhotos) and
               // storage.rules (progress-photos/{uid}/) restrict reads
@@ -407,7 +408,7 @@ function AccountProgressPhotos({ uid }: { uid: string }) {
 
   const openNewCheckIn = useCallback(() => {
     setComposer({
-      date: new Date().toISOString().split("T")[0],
+      date: localDateString(),
       note: "",
       photoIds: {},
     });
