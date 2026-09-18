@@ -59,6 +59,7 @@ import {
   type CircleDetail,
   type CircleSummary,
 } from "@/features/goalSpace/useGoalSpaces";
+import { isFull, memberLine } from "@/features/goalSpace/circleCapacity";
 import CircleWeeklyFocusSheet from "./CircleWeeklyFocusSheet";
 
 // weekly_check_in copy is dynamic (checkInTimelineCopy — the focus
@@ -1177,11 +1178,7 @@ export default function CirclesSection({
           if (!open) setDetailOf(null);
         }}
         title={detailOf?.space.title ?? ""}
-        description={
-          detailOf
-            ? `${detailOf.space.memberCount} of ${detailOf.space.maxMembers} members`
-            : undefined
-        }
+        description={detailOf ? memberLine(detailOf.space) : undefined}
       >
         {detailOf && (
           <div className="px-4 space-y-4 pb-2">
@@ -1210,7 +1207,18 @@ export default function CirclesSection({
                   ))}
                 </div>
 
-                {detailOf.inviteCode && (
+                {/* A full circle cannot take another member — the server
+                    refuses the join with "circle full" — so the code is
+                    not worth sending. Pre-fix the button sat here at 8 of
+                    8 and the refusal landed on the INVITEE, who had done
+                    nothing wrong and could not see the cause. */}
+                {detailOf.inviteCode && isFull(detailOf.space) && (
+                  <p className="text-xs text-muted-foreground">
+                    Nobody else can join until someone leaves. Invite again when
+                    there is room.
+                  </p>
+                )}
+                {detailOf.inviteCode && !isFull(detailOf.space) && (
                   <Button
                     variant="secondary"
                     size="sm"
