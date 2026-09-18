@@ -7,6 +7,7 @@ import { BottomSheet } from "@/components/ui/BottomSheet";
 import SectionLabel from "@/components/ui/SectionLabel";
 import SegmentedControl from "@/components/ui/SegmentedControl";
 import { MEAL_ORDER, MEAL_LABELS, type MealKey } from "./mealConstants";
+import { CALORIE_UNIT } from "@/utils/formatNutrition";
 
 interface ServingSource {
   /** Display name shown at the top of the sheet. */
@@ -456,10 +457,12 @@ function EditServingsSheet({
               Enter 0 or more.
             </span>
           ) : unchanged ? (
-            <span>~ {previewCal} cal</span>
+            <span>
+              ~ {previewCal} {CALORIE_UNIT}
+            </span>
           ) : (
             <span>
-              ~ {previewCal} cal
+              ~ {previewCal} {CALORIE_UNIT}
               {countDelta !== 0 && (
                 <span
                   className="ml-2"
