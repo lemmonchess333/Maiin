@@ -548,16 +548,18 @@ export default function CirclesSection({
     setBusy(true);
     // Format-agnostic: the server resolves a short code or a legacy
     // spaceId.token string, so pass the raw input straight through.
-    const ok = await joinCircle(raw);
+    const outcome = await joinCircle(raw);
     setBusy(false);
-    if (ok) {
+    if (outcome.ok) {
       setShowJoin(false);
       setJoinInput("");
       toast.success("You're in.");
     } else {
-      toast.error(
-        "Couldn't join. The invite may be wrong, or the circle may be full."
-      );
+      // The server distinguishes a full circle, a closed one, a wrong code
+      // and a tripped limiter; `describeJoinRejection` turns each into a
+      // sentence. The line this replaced named two of those causes and
+      // guessed between them, which was wrong outright for the other two.
+      toast.error(outcome.reason);
     }
   };
 
