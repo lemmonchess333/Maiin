@@ -15,7 +15,7 @@ import {
 } from "recharts";
 import { calcDayBalance, getBalanceColor } from "@/utils/calorieBalance";
 import { calculateTDEE, type ActivityLevel } from "@/lib/tdee";
-import { formatCalories } from "@/utils/formatNutrition";
+import { formatCalories, CALORIE_UNIT } from "@/utils/formatNutrition";
 
 /** The chart's window. Today is excluded — it is still in progress, and a
  *  partial log would read as a deficit — so the denominator beneath the
@@ -121,7 +121,7 @@ export default function CalorieBalanceChart({ meals }: { meals: Meal[] }) {
                     </p>
                     <p>
                       Estimated gap: {value > 0 ? "+" : ""}
-                      {Math.round(value).toLocaleString()} kcal
+                      {Math.round(value).toLocaleString()} {CALORIE_UNIT}
                     </p>
                     <p className="text-muted-foreground">
                       Based on logged food; entries may be incomplete.
@@ -153,7 +153,7 @@ export default function CalorieBalanceChart({ meals }: { meals: Meal[] }) {
           <p className="text-sm font-bold font-mono tabular-nums text-foreground">
             {average === null
               ? "Not enough data"
-              : `${average >= 0 ? "+" : ""}${formatCalories(average)} kcal`}
+              : `${average >= 0 ? "+" : ""}${formatCalories(average)} ${CALORIE_UNIT}`}
           </p>
         </div>
         <div className="text-center">

@@ -99,6 +99,7 @@ const PerformanceSection = lazyRetry(
   () => import("@/components/analytics/PerformanceSection")
 );
 import Card from "@/components/ui/Card";
+import { CALORIE_UNIT } from "@/utils/formatNutrition";
 
 const PRsTab = lazyRetry(() => import("@/components/analytics/PRsTab"));
 const BadgeGrid = lazyRetry(() =>
@@ -1767,7 +1768,7 @@ export default function History() {
                         direction={calorieDirection}
                         target={
                           macroTargets?.calories
-                            ? `target ${macroTargets.calories.toLocaleString()} kcal`
+                            ? `target ${macroTargets.calories.toLocaleString()} ${CALORIE_UNIT}`
                             : undefined
                         }
                         sparklineData={
