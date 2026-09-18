@@ -79,8 +79,14 @@ const repoRoot = resolve(here, "../../..");
 // consistent: each one names its counterpart more precisely than the phrasings
 // that were caught. The span is capped and stops at a full stop so it cannot
 // run across sentences into an unrelated path mention.
+// The SIXTH phrasing: `functions/lib/stateTransition.js` opens "Client
+// parity: src/features/program/stateTransition.ts." — it names its
+// counterpart by path, as the best of these always do, and uses "parity"
+// as a noun without the word "seam". Every previous miss has had that
+// same shape, which is the argument for the structural detector below:
+// the prose one is patched once per author, after the fact.
 const MIRROR_RE =
-  /mirror of|mirrors? (?:the )?client|ids mirror the|to mirror `|in lockstep|keep .{0,24}in lockstep|MUST return identical|identical output|parity seam|mirror(?:s|ing)?\b[^.\n]{0,40}?\bsrc\/[\w./-]+/i;
+  /mirror of|mirrors? (?:the )?client|ids mirror the|to mirror `|in lockstep|keep .{0,24}in lockstep|MUST return identical|identical output|parity seam|parity:\s*src\/[\w./-]+|mirror(?:s|ing)?\b[^.\n]{0,40}?\bsrc\/[\w./-]+/i;
 
 // Escape hatches. `@unwired` requires a reason after the colon.
 //
@@ -110,6 +116,14 @@ function functionsJsFiles(): string[] {
 const PINNED: Record<string, string> = {
   "functions/lib/workoutSetRecord.js":
     "src/features/program/__tests__/workoutSetRecord.cross.test.ts",
+  // Optimistic-concurrency merge for the programme command boundary. The
+  // cross-test is not named `*.cross.test.ts` — it is the last case in
+  // `trustedState.test.ts`, which requires the server module and compares
+  // `mergeChangedFields` outcomes (conflict path included) against the
+  // client's. That pin was real and the gate could not see it: this module
+  // was the only basename-paired mirror outside both lists.
+  "functions/lib/stateTransition.js":
+    "src/features/program/__tests__/trustedState.test.ts",
   "functions/performanceEngine.js":
     "src/lib/__tests__/performanceEngineParity.cross.test.ts",
   "functions/lib/perfScoring.js":
@@ -373,6 +387,10 @@ describe("mirror cross-test gate", () => {
         "functions/lib/calorieTargetResolution.js",
         '"mirroring src/<path>" — the gerund, which `mirrors?` cannot match',
       ],
+      [
+        "functions/lib/stateTransition.js",
+        '"Client parity: <path>" — parity as a noun, without "seam"',
+      ],
     ];
     const missed = PHRASINGS.filter(([f]) => !flagged.includes(f)).map(
       ([f, why]) => `${f} (${why})`
@@ -390,6 +408,67 @@ describe("mirror cross-test gate", () => {
         `to a *.cross.test nor classified as not-an-equality-mirror. Add a ` +
         `cross-test + a PINNED entry, or classify in NOT_EQUALITY_MIRROR with a ` +
         `reason: ${unclassified.join(", ")}`
+    ).toEqual([]);
+  });
+
+  /* A detector that chases English loses once per author.
+   *
+   * Six phrasings have now escaped `MIRROR_RE`, and the shape of the misses
+   * has been identical every time: the author named their counterpart MORE
+   * precisely than the phrasings already covered, and was punished for it.
+   * Each escape was patched after the fact, by someone who happened to look.
+   *
+   * There is a structural signal for most of the same surface, and it needs
+   * no prose at all: a `functions/**.js` whose BASENAME also exists under
+   * `src/` is a mirror pair by construction — that is how this repo names
+   * them. Measured on the tree when this was written: thirteen such pairs,
+   * twelve already PINNED or classified, and exactly one outside both lists
+   * (`stateTransition.js`, now pinned above). Zero false positives.
+   *
+   * It does not REPLACE the prose detector, which catches the mirrors that
+   * do not share a basename (`perfScoring.js` ↔ `performanceEngine.ts`,
+   * `timedExerciseIds.js` ↔ `repUnits.ts`). The two overlap deliberately:
+   * this one cannot be escaped by wording, that one cannot be escaped by
+   * renaming a file. */
+  it("every basename-paired functions module is PINNED or classified", () => {
+    const srcBasenames = new Set<string>();
+    const walkSrc = (absDir: string) => {
+      for (const name of readdirSync(absDir)) {
+        const abs = join(absDir, name);
+        if (statSync(abs).isDirectory()) {
+          if (["node_modules", "__tests__", "dist", "coverage"].includes(name))
+            continue;
+          walkSrc(abs);
+        } else if (/\.tsx?$/.test(name) && !/\.(test|spec)\./.test(name)) {
+          srcBasenames.add(name.replace(/\.tsx?$/, ""));
+        }
+      }
+    };
+    walkSrc(resolve(repoRoot, "src"));
+
+    const paired = functionsJsFiles().filter((f) =>
+      srcBasenames.has(basename(f, ".js"))
+    );
+
+    // Anti-vacuity: a broken walk would report zero pairs and pass forever.
+    expect(paired.length).toBeGreaterThanOrEqual(12);
+
+    const unclassified = paired.filter((f) => {
+      const text = readFileSync(resolve(repoRoot, f), "utf8");
+      return (
+        !(f in PINNED) &&
+        !(f in NOT_EQUALITY_MIRROR) &&
+        !ORACLE_RE.test(moduleHeader(text)) &&
+        !UNWIRED_RE.test(moduleHeader(text))
+      );
+    });
+    expect(
+      unclassified,
+      `These functions modules share a basename with a src/ module — this ` +
+        `repo's own naming convention for a mirror pair — but are neither ` +
+        `pinned to a cross-test nor classified. Add a cross-test + a PINNED ` +
+        `entry, classify in NOT_EQUALITY_MIRROR with a reason, or mark the ` +
+        `header @oracle / @unwired: <reason>: ${unclassified.join(", ")}`
     ).toEqual([]);
   });
 
