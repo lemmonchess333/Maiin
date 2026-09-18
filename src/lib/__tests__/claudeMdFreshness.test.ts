@@ -103,78 +103,6 @@ describe("CLAUDE.md — the Home composition sentence", () => {
      explanation to get CI green. Drafted it, ran it, deleted it. */
 });
 
-describe("CLAUDE.md — the CI suite matrices", () => {
-  /* A gate nobody knows about is a gate that gets worked around. The
-     Testing section now names the four ways CI runs the unit suite,
-     because that changes what you WRITE — no spelled thousands
-     separator, no fixture pinned to a date some window has to contain.
-
-     Pinned BOTH ways, unlike the Cloud Functions table below. That table
-     is a selection of ~55 and exhaustiveness there would generate rot;
-     this is four jobs that change rarely, and the failure with teeth
-     runs in the other direction: a matrix added to ci.yml and never
-     written down is invisible to every agent reading this document. */
-  const ci = readFileSync(
-    resolve(repoRoot, ".github/workflows/ci.yml"),
-    "utf8"
-  );
-
-  /** Job keys in ci.yml that run the unit suite under some condition. */
-  const unitJobs = [...ci.matchAll(/^ {2}(unit[a-z-]*):$/gm)].map((m) => m[1]);
-
-  it("ci.yml has the matrices at all", () => {
-    /* Guards the parse. Without it a change to the workflow's shape
-       would empty `unitJobs` and both directions below would pass by
-       asserting nothing about nothing. */
-    expect(unitJobs).toContain("unit");
-    expect(unitJobs.length).toBeGreaterThanOrEqual(4);
-  });
-
-  it("names every unit job ci.yml runs", () => {
-    const unnamed = unitJobs.filter((job) => !claudeMd.includes(job));
-    expect(
-      unnamed,
-      `ci.yml runs ${unnamed.join(", ")} and CLAUDE.md does not mention ` +
-        `${unnamed.length === 1 ? "it" : "them"}. An agent reading the ` +
-        `Testing section would not know the gate exists, which is how a ` +
-        `gate gets worked around instead of satisfied.`
-    ).toEqual([]);
-  });
-
-  it("names no job ci.yml does not run", () => {
-    /* The other direction: a matrix removed from CI while the document
-       goes on promising it is worse than never having documented it —
-       people write to a gate that is no longer there. */
-    const named = [...claudeMd.matchAll(/`(unit-[a-z]+)`/g)].map((m) => m[1]);
-    const gone = [...new Set(named)].filter((j) => !unitJobs.includes(j));
-    expect(
-      gone,
-      `CLAUDE.md names ${gone.join(", ")}, which ci.yml no longer runs.`
-    ).toEqual([]);
-  });
-
-  it("keeps the local incantation matching the wrapper's variables", () => {
-    /* The Testing section tells people how to reproduce the future run
-       locally. Those two variable names are read by
-       `scripts/run-unit-tests.mjs`; if either is renamed, the
-       instructions become a command that silently does nothing — the
-       vacuous-green shape, moved into the documentation. */
-    const wrapper = readFileSync(
-      resolve(repoRoot, "scripts/run-unit-tests.mjs"),
-      "utf8"
-    );
-    for (const name of ["TROPOS_CLOCK_OFFSET_DAYS", "TROPOS_CLOCK_AT"]) {
-      expect(wrapper, `${name} is not read by the test wrapper`).toContain(
-        name
-      );
-      expect(
-        claudeMd,
-        `CLAUDE.md does not tell anyone about ${name}`
-      ).toContain(name);
-    }
-  });
-});
-
 describe("CLAUDE.md — feature module inventory", () => {
   it("names every module in src/features/", () => {
     const modules = readdirSync(resolve(repoRoot, "src/features"), {
@@ -375,5 +303,77 @@ describe("CLAUDE.md — Key Business Logic table ↔ src/lib", () => {
       `Lib modules named in CLAUDE.md that do not exist — the row describes ` +
         `a file an agent will go looking for.`
     ).toEqual([]);
+  });
+});
+
+describe("CLAUDE.md — the CI suite matrices", () => {
+  /* A gate nobody knows about is a gate that gets worked around. The
+     Testing section now names the four ways CI runs the unit suite,
+     because that changes what you WRITE — no spelled thousands
+     separator, no fixture pinned to a date some window has to contain.
+
+     Pinned BOTH ways, unlike the Cloud Functions table below. That table
+     is a selection of ~55 and exhaustiveness there would generate rot;
+     this is four jobs that change rarely, and the failure with teeth
+     runs in the other direction: a matrix added to ci.yml and never
+     written down is invisible to every agent reading this document. */
+  const ci = readFileSync(
+    resolve(repoRoot, ".github/workflows/ci.yml"),
+    "utf8"
+  );
+
+  /** Job keys in ci.yml that run the unit suite under some condition. */
+  const unitJobs = [...ci.matchAll(/^ {2}(unit[a-z-]*):$/gm)].map((m) => m[1]);
+
+  it("ci.yml has the matrices at all", () => {
+    /* Guards the parse. Without it a change to the workflow's shape
+       would empty `unitJobs` and both directions below would pass by
+       asserting nothing about nothing. */
+    expect(unitJobs).toContain("unit");
+    expect(unitJobs.length).toBeGreaterThanOrEqual(4);
+  });
+
+  it("names every unit job ci.yml runs", () => {
+    const unnamed = unitJobs.filter((job) => !claudeMd.includes(job));
+    expect(
+      unnamed,
+      `ci.yml runs ${unnamed.join(", ")} and CLAUDE.md does not mention ` +
+        `${unnamed.length === 1 ? "it" : "them"}. An agent reading the ` +
+        `Testing section would not know the gate exists, which is how a ` +
+        `gate gets worked around instead of satisfied.`
+    ).toEqual([]);
+  });
+
+  it("names no job ci.yml does not run", () => {
+    /* The other direction: a matrix removed from CI while the document
+       goes on promising it is worse than never having documented it —
+       people write to a gate that is no longer there. */
+    const named = [...claudeMd.matchAll(/`(unit-[a-z]+)`/g)].map((m) => m[1]);
+    const gone = [...new Set(named)].filter((j) => !unitJobs.includes(j));
+    expect(
+      gone,
+      `CLAUDE.md names ${gone.join(", ")}, which ci.yml no longer runs.`
+    ).toEqual([]);
+  });
+
+  it("keeps the local incantation matching the wrapper's variables", () => {
+    /* The Testing section tells people how to reproduce the future run
+       locally. Those two variable names are read by
+       `scripts/run-unit-tests.mjs`; if either is renamed, the
+       instructions become a command that silently does nothing — the
+       vacuous-green shape, moved into the documentation. */
+    const wrapper = readFileSync(
+      resolve(repoRoot, "scripts/run-unit-tests.mjs"),
+      "utf8"
+    );
+    for (const name of ["TROPOS_CLOCK_OFFSET_DAYS", "TROPOS_CLOCK_AT"]) {
+      expect(wrapper, `${name} is not read by the test wrapper`).toContain(
+        name
+      );
+      expect(
+        claudeMd,
+        `CLAUDE.md does not tell anyone about ${name}`
+      ).toContain(name);
+    }
   });
 });
