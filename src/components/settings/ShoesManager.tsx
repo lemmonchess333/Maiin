@@ -160,26 +160,30 @@ export default function ShoesManager() {
         </div>
         <div className="flex items-center gap-3">
           {activeShoes.length > 0 && (
-            <button
-              type="button"
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={handleRecalculate}
               disabled={recalculating}
               aria-label="Recalculate mileage from run history"
-              className="flex items-center gap-1 text-xs text-muted-foreground font-medium disabled:opacity-50"
+              className="text-muted-foreground"
+              leftIcon={
+                <RotateCw
+                  className={cn("size-3.5", recalculating && "animate-spin")}
+                />
+              }
             >
-              <RotateCw
-                className={cn("size-3.5", recalculating && "animate-spin")}
-              />
               {recalculating ? "Recalculating…" : "Recalculate"}
-            </button>
+            </Button>
           )}
-          <button
-            type="button"
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={() => setShowAdd(!showAdd)}
-            className="flex items-center gap-1 text-xs text-primary font-medium"
+            leftIcon={<Plus className="size-3.5" />}
           >
-            <Plus className="size-3.5" /> Add
-          </button>
+            Add
+          </Button>
         </div>
       </div>
 
