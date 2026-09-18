@@ -103,6 +103,68 @@ describe("CLAUDE.md — the Home composition sentence", () => {
      explanation to get CI green. Drafted it, ran it, deleted it. */
 });
 
+describe("CLAUDE.md — Cloud Functions section", () => {
+  const functionsIndex = readFileSync(
+    resolve(repoRoot, "functions/index.js"),
+    "utf8"
+  );
+
+  it("states the runtime firebase.json actually deploys", () => {
+    /* The header read "Node 20" while firebase.json, functions/package.json
+       and this document's OWN later section all said 22. That is not a
+       cosmetic slip: the same document records Node 20 as decommissioned
+       on 2026-10-30, so an agent trusting the header would target a dead
+       runtime — and the deploy gotchas list three files that "must agree"
+       without counting the header as one of them. Now it is. */
+    const declared = JSON.parse(
+      readFileSync(resolve(repoRoot, "firebase.json"), "utf8")
+    ).functions?.runtime;
+    const major = String(declared ?? "").replace(/^nodejs/, "");
+    expect(major, "firebase.json declares no functions runtime").toMatch(
+      /^\d+$/
+    );
+    expect(
+      claudeMd,
+      `firebase.json deploys nodejs${major}; CLAUDE.md's Cloud Functions ` +
+        `header names a different runtime.`
+    ).toContain(`Runtime: **Node ${major}**`);
+  });
+
+  it("only names functions that still exist", () => {
+    /* One direction only, deliberately. The table is a selection — 10 of
+       ~55 exports — and requiring it to be exhaustive would mean 42 rows
+       now plus a doc edit per new function, which is the rot-generating
+       shape this file was created to remove (the counts were deleted
+       rather than re-counted for the same reason).
+
+       What DOES need holding is the reverse: a retired function left
+       named here sends an agent looking for something that is gone, and
+       that has happened — `askGeminiText` was retired and the document
+       had to be corrected after the fact. */
+    const section = claudeMd.slice(
+      claudeMd.indexOf("## Cloud Functions (functions/)"),
+      claudeMd.indexOf("## Data Model")
+    );
+    const named = [...section.matchAll(/^\| `([A-Za-z][A-Za-z0-9_]*)`/gm)].map(
+      (m) => m[1]
+    );
+    expect(
+      named.length,
+      "no function rows parsed out of the table"
+    ).toBeGreaterThan(5);
+
+    const gone = named.filter(
+      (n) => !new RegExp(`^exports\\.${n}\\b`, "m").test(functionsIndex)
+    );
+    expect(
+      gone,
+      `CLAUDE.md's Cloud Functions table names ${gone.join(", ")}, which ` +
+        `functions/index.js no longer exports. A retired function left in ` +
+        `the table sends agents looking for something that is gone.`
+    ).toEqual([]);
+  });
+});
+
 describe("CLAUDE.md — feature module inventory", () => {
   it("names every module in src/features/", () => {
     const modules = readdirSync(resolve(repoRoot, "src/features"), {
