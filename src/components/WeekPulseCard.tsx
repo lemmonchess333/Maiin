@@ -1,6 +1,8 @@
 import SectionLabel from "@/components/ui/SectionLabel";
 import { Dumbbell, Footprints, Flame } from "lucide-react";
 import { useWeekPulse } from "@/hooks/useWeekPulse";
+import { storedKmLabel } from "@/lib/runLabels";
+import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 import { THEME } from "@/lib/theme";
 
 /**
@@ -18,6 +20,8 @@ export default function WeekPulseCard({
   pendingLifts?: number;
 } = {}) {
   const pulse = useWeekPulse(pendingLifts);
+  // Before the early return — a hook cannot sit behind one.
+  const unit = useDistanceUnit();
   if (!pulse) return null;
 
   return (
@@ -42,7 +46,9 @@ export default function WeekPulseCard({
           <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-foreground">
             <Footprints className="size-4 text-running" aria-hidden="true" />
             <span className="font-mono tabular-nums">
-              {pulse.runs.km} km
+              {/* Stored KILOMETRES — a bare `km` here showed a miles
+                  reader the metric figure. */}
+              {storedKmLabel(pulse.runs.km, unit, true, 1)}
               {pulse.runs.planned !== null &&
                 ` · ${pulse.runs.count} of ${pulse.runs.planned}`}
             </span>{" "}

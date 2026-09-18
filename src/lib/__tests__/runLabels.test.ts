@@ -29,6 +29,7 @@ import {
   distanceLabel2,
   nearDistanceLabel,
   elevationLabel,
+  storedKmLabel,
 } from "../runLabels";
 
 describe("paceLabel", () => {
@@ -188,24 +189,51 @@ describe("elevationLabel", () => {
   it("is metres for a metric reader and FEET for an imperial one", () => {
     /* 120 m is 393.7 ft. Elevation converts like a distance — divide — not
        like a pace; a hill is not taller because you measure it in feet. */
-    expect(elevationLabel(120, "km")).toBe("120m");
-    expect(elevationLabel(120, "mi")).toBe("394ft");
+    expect(elevationLabel(120, "km")).toBe("120 m");
+    expect(elevationLabel(120, "mi")).toBe("394 ft");
   });
 
   it("rounds AFTER converting, so metres stay the stored whole number", () => {
-    expect(elevationLabel(120.4, "km")).toBe("120m");
-    expect(elevationLabel(1, "mi")).toBe("3ft");
+    expect(elevationLabel(120.4, "km")).toBe("120 m");
+    expect(elevationLabel(1, "mi")).toBe("3 ft");
   });
 
   it("renders a flat run as zero, not a placeholder", () => {
     /* Zero climb is information — the run was flat. An em-dash would read
        as "we don't know", which is a different claim. */
-    expect(elevationLabel(0, "km")).toBe("0m");
-    expect(elevationLabel(0, "mi")).toBe("0ft");
+    expect(elevationLabel(0, "km")).toBe("0 m");
+    expect(elevationLabel(0, "mi")).toBe("0 ft");
   });
 
   it("can omit the suffix for callers that render it separately", () => {
     expect(elevationLabel(120, "mi", false)).toBe("394");
+  });
+
+  it("spaces its unit the way its sibling distanceLabel does", () => {
+    /* The assertion that would have caught this, and the reason it is a
+       COMPARISON rather than another literal.
+
+       This returned "120m" while its own docstring said "120 m / 394 ft"
+       and `distanceLabel`, two functions above it in the same file,
+       spaced correctly. The tests here were written from the
+       implementation, so they pinned the unspaced form and the docstring
+       was the only thing telling the truth.
+
+       On a run detail that produced "30m" for the climb directly beneath
+       "30:00" for the time — an unspaced metre abbreviation under a
+       duration, where it reads as minutes.
+
+       `unitTreatment`'s ratchet cannot help: its header records that it
+       covers kg and km only, because `/\dm\b/` cannot tell a climb from
+       a duration or an id. Tying this label to the sibling that gets it
+       right is the check that does not need such a pattern. */
+    const spacing = (s: string) => /^\S+ \S+$/.test(s);
+    expect(spacing(distanceLabel(5000, "km"))).toBe(true);
+    expect(spacing(elevationLabel(120, "km"))).toBe(true);
+    expect(spacing(elevationLabel(120, "mi"))).toBe(true);
+    /* Anchored: the predicate must reject the form this replaced,
+       otherwise a typo in it would pass everything. */
+    expect(spacing("120m")).toBe(false);
   });
 });
 
@@ -317,5 +345,50 @@ describe("finishTimeLabel", () => {
   it("guards non-positive input", () => {
     expect(finishTimeLabel(0)).toBe("--:--");
     expect(finishTimeLabel(NaN)).toBe("--:--");
+  });
+});
+
+// storedKmLabel — a quantity this app stores in KILOMETRES rather than
+// metres, rendered in the reader's unit. It had no tests at all, which is
+// worth stating: the helper exists specifically to stop `× 1000` appearing
+// at call sites because a missing one is a silent 1000× error that still
+// renders as a plausible number, and nothing was holding the arithmetic it
+// centralises.
+describe("storedKmLabel", () => {
+  it("converts rather than relabelling", () => {
+    // A marathon, so a wrong conversion is recognisable on sight.
+    expect(storedKmLabel(42.195, "km", true, 1)).toBe("42.2 km");
+    expect(storedKmLabel(42.195, "mi", true, 1)).toBe("26.2 mi");
+  });
+
+  it("rounds whole for wear estimates and keeps a decimal for a week", () => {
+    /* Shoe mileage is an estimate and reads better whole; a week's
+       distance is a figure the runner recognises, so it keeps the
+       decimal the surfaces were already showing. */
+    expect(storedKmLabel(500, "km")).toBe("500 km");
+    expect(storedKmLabel(500, "mi")).toBe("311 mi");
+    expect(storedKmLabel(5, "km", true, 1)).toBe("5.0 km");
+  });
+
+  it("drops the unit when the caller renders it separately", () => {
+    expect(storedKmLabel(500, "km", false)).toBe("500");
+    expect(storedKmLabel(5, "mi", false, 1)).toBe("3.1");
+  });
+
+  it("treats a missing value as zero, not as NaN", () => {
+    // Callers pass aggregates that can legitimately be absent.
+    expect(storedKmLabel(0, "km", true, 1)).toBe("0.0 km");
+    expect(storedKmLabel(NaN, "km")).toBe("0 km");
+  });
+
+  it("spaces the unit, as the house rule requires", () => {
+    for (const out of [
+      storedKmLabel(10, "km"),
+      storedKmLabel(10, "mi"),
+      storedKmLabel(10, "km", true, 1),
+      storedKmLabel(10, "mi", true, 1),
+    ]) {
+      expect(out).toMatch(/^[\d.]+ (km|mi)$/);
+    }
   });
 });

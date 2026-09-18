@@ -33,6 +33,16 @@
  * but it cannot be fooled either: any new bare use fails, and the author
  * has to look at the site and either redirect it to the `-strong` step or
  * consciously raise the number. Forcing the look is the whole job.
+ *
+ * AND THE CLASS IS NOT THE ONLY WAY TO SPELL IT. The scan below matched
+ * `text-<token>` and nothing else, so `style={{ color: THEME.… }}` was
+ * invisible to it — and that is where the worst text contrast in the app
+ * was hiding. Home's "Log food" action and the nudge note above it both
+ * painted themselves `THEME.semantic.nutrition`; measured on the rendered
+ * card that is 2.77:1 at 14px semibold, against a 4.5:1 bar. A guard that
+ * forces the look for only one of the two spellings forces it for
+ * whichever half the next author does not use, so the inline form is
+ * counted too.
  */
 import { describe, it, expect } from "vitest";
 import { readFileSync, globSync } from "node:fs";
@@ -92,6 +102,53 @@ const EXPECTED_BARE_USES: Record<(typeof IDENTITY)[number], number> = {
   achievement: 10, // Companion finish removes the decorative trophy.
 };
 
+/**
+ * The inline spelling of the same thing, per expression, as of
+ * 2026-09-18. `color: THEME.<identity>` in a style prop or a style
+ * object — the form the class scan cannot see.
+ *
+ * Only the three DOMAIN identities are pinned. They are the ones with a
+ * `-strong` text step to redirect to, and they are where the contrast
+ * question actually bites. `THEME.brand` is deliberately absent: the
+ * brand purple has no AA text step at all (`--primary-strong` is the
+ * white-on-fill step — `tokenContrast.test.ts` measures it at 2.87:1
+ * against `--muted` in dark and says so), so a count here would name a
+ * destination that does not exist, which is the dead end the last test
+ * in this file guards against.
+ */
+const EXPECTED_INLINE_USES = {
+  "THEME.running": 18,
+  "THEME.lifting": 7,
+  // 2026-09-18: 21 → 19. Home's "Log food" action and the nudge note
+  // above it were the two smallest-text uses and measured 2.77:1; both
+  // moved to `text-nutrition-strong`. The rest are icons and fills.
+  "THEME.semantic.nutrition": 19,
+} as const;
+
+type InlineToken = keyof typeof EXPECTED_INLINE_USES;
+
+function inlineUses(expr: string): string[] {
+  const found: string[] = [];
+  const pattern = new RegExp(
+    `color:\\s*${expr.replace(/\./g, "\\.")}(?![\\w.])`,
+    "g"
+  );
+  for (const file of sourceFiles()) {
+    readFileSync(file, "utf8")
+      .split("\n")
+      .forEach((line, i) => {
+        const hits = line.match(pattern);
+        if (!hits) return;
+        for (let n = 0; n < hits.length; n += 1) {
+          found.push(
+            `${file.replace(process.cwd() + "/", "")}:${i + 1}  ${line.trim()}`
+          );
+        }
+      });
+  }
+  return found;
+}
+
 function sourceFiles(): string[] {
   return globSync("src/**/*.{ts,tsx}", { cwd: process.cwd() })
     .filter((f) => !f.includes("__tests__"))
@@ -131,6 +188,33 @@ describe("identity colour usage is pinned", () => {
         ? `A new bare text-${token} appeared. If it is small text (under 24px, or under 18.66px bold) use text-${token}-strong instead — the identity is under 4.5:1 on a card. If it is an icon or a large numeral it is fine; raise the count.\n${uses.slice(expected).join("\n")}`
         : `Bare text-${token} dropped to ${uses.length} — lower the pinned count to lock the gain in.`
     ).toBe(expected);
+  });
+
+  it.each(Object.keys(EXPECTED_INLINE_USES) as InlineToken[])(
+    "inline `color: %s` has the pinned number of uses",
+    (expr) => {
+      const expected = EXPECTED_INLINE_USES[expr];
+      const uses = inlineUses(expr);
+      expect(
+        uses.length,
+        uses.length > expected
+          ? `A new inline \`color: ${expr}\` appeared. Same rule as the ` +
+              `class form: an icon or a 24px+ numeral is fine (raise the ` +
+              `count), small text needs the \`-strong\` step — as a class ` +
+              `where one fits, or \`hsl(var(--<token>-strong))\` where the ` +
+              `value has to stay inline.\n${uses.slice(expected).join("\n")}`
+          : `Inline \`color: ${expr}\` dropped to ${uses.length} — lower ` +
+              `the pinned count to lock the gain in.`
+      ).toBe(expected);
+    }
+  );
+
+  it("the inline scan is looking at something", () => {
+    /* The class scan has `expect(files.length).toBeGreaterThan(100)` for
+       this reason; the inline one needs its own, because a regex that
+       matched nothing would make every count above pass at zero. */
+    expect(inlineUses("THEME.running").length).toBeGreaterThan(0);
+    expect(inlineUses("THEME.semantic.nutrition").length).toBeGreaterThan(0);
   });
 
   it("the -strong steps this redirects to actually exist", () => {
