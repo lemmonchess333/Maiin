@@ -51,6 +51,29 @@ export default defineConfig({
     {
       name: "auth-emulator",
       testMatch: [/auth\.spec\.ts/, /\.capture\.spec\.ts/],
+      /* Every spec in this project signs in as the SAME seeded account, so
+         its tests share one Firestore document space. `fullyParallel` at
+         the top level would run two of them against that space at once,
+         and they do interfere: `bodyweightUpsert.auth.spec.ts` asserts
+         that a REFUSED save left zero bodyweight rows, while its
+         neighbour in the same file is busy writing one. Measured on a
+         4-CPU machine (2 workers): 4 of 10 repeats failed at the default,
+         0 of 12 at `--workers=1`.
+         CI never saw it because `workers: 1` above is gated on
+         `process.env.CI`, so the only people who meet this are the ones
+         following the documented local command — and the failure reads as
+         a product bug ("a rejected save wrote a row") rather than as a
+         race.
+         Scoped to this project rather than made global: the capture specs
+         share it, but the cost is bounded, whereas a global `workers: 1`
+         would serialise the whole 64-spec capture loop for a problem that
+         only the shared account creates.
+         NOT closed by this: files still run in parallel with each other,
+         and they share the account too — this file's own header records a
+         sweep where a read under parallel-suite load found 0 docs. Any
+         spec that asserts an ABSENCE across the shared account needs data
+         only it touches. */
+      fullyParallel: false,
       use: {
         ...devices["Desktop Chrome"],
         bypassCSP: true,
