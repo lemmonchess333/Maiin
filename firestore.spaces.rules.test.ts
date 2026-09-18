@@ -135,8 +135,9 @@ suite("firestore.rules — community spaces", () => {
   });
 
   describe("membership", () => {
-    it("accepts each catalogue race for joining, posting and leaving", async () => {
-      for (const race of SPACE_DEFS.filter((def) => def.kind === "race")) {
+    it.each(SPACE_DEFS.filter((def) => def.kind === "race"))(
+      "accepts $id for joining, posting and leaving",
+      async (race) => {
         await assertSucceeds(join(MEMBER, race.id));
         await assertSucceeds(
           setDoc(
@@ -148,7 +149,7 @@ suite("firestore.rules — community spaces", () => {
           deleteDoc(doc(db(MEMBER), `spaces/${race.id}/members/${MEMBER}`))
         );
       }
-    });
+    );
 
     it("user joins and leaves a known space", async () => {
       await assertSucceeds(join(MEMBER));
