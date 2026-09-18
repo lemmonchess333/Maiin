@@ -54,6 +54,7 @@ import type {
   ProgramExercise,
   WorkoutDay,
 } from "./programTypes";
+import { weekPosition } from "@/lib/dateHelpers";
 import { weeklyVolumeByMuscle, type CanonicalMuscle } from "./volumeModel";
 import {
   exerciseBank,
@@ -320,9 +321,17 @@ export function capRepeatedLifts(
  * generator simply never received.
  *
  * Returns one flag per within-week adjacent pair (length = sessions − 1).
- * The recurring Saturday→Sunday seam is handled separately by
- * `weekWrapsBackToBack`; those sessions are one calendar day apart even
- * though their weekday numbers sit at opposite ends of the array.
+ * The seam that closes the week — its last lift day to next week's first —
+ * is handled separately by `weekWrapsBackToBack`; those sessions are one
+ * calendar day apart even though their positions sit at opposite ends.
+ *
+ * Ordering is by `weekPosition`, NOT by `Date.getDay()`. The two agree only
+ * under a Sunday anchor, and `WEEK_STARTS_ON` is Monday: a Sunday lift is
+ * `getDay() === 0` and yet the week's LAST session. Sorting on `getDay()`
+ * put it first, so for any schedule containing Sunday every flag described
+ * a different pair than the one `orderForAdjacency` goes on to penalise,
+ * and the closing seam was measured across the wrong pair of days. Every
+ * Sunday-free schedule is unaffected, which is why it kept passing.
  */
 export function backToBackPairs(
   schedule: ReadonlyArray<{ day: number; type: string }> | undefined | null,
@@ -336,8 +345,8 @@ export function backToBackPairs(
   }
   const liftDays = [...schedule]
     .filter((d) => d.type === "lift" || d.type === "both")
-    .sort((a, b) => a.day - b.day)
-    .map((d) => d.day);
+    .map((d) => weekPosition(d.day))
+    .sort((a, b) => a - b);
   return Array.from({ length: sessionCount - 1 }, (_, i) => {
     const a = liftDays[i];
     const b = liftDays[i + 1];
@@ -353,9 +362,9 @@ export function weekWrapsBackToBack(
   if (!schedule || sessionCount <= 1) return false;
   const liftDays = [...schedule]
     .filter((day) => day.type === "lift" || day.type === "both")
-    .sort((a, b) => a.day - b.day)
-    .slice(0, sessionCount)
-    .map((day) => day.day);
+    .map((day) => weekPosition(day.day))
+    .sort((a, b) => a - b)
+    .slice(0, sessionCount);
   if (liftDays.length < sessionCount) return false;
   return (liftDays[0] ?? 0) + 7 - (liftDays[liftDays.length - 1] ?? 0) === 1;
 }
