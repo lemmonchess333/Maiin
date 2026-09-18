@@ -78,8 +78,9 @@ const PROGRAM_STATE_KEYS = new Set([
   //   configurePlan only warns and drops, so an unlisted key would delete
   //     the user's block on every settings save, with nothing surfaced.
   "trainingBlock",
-  // D1: the lift side's calendar anchor (Sunday week key of the week the
-  // current workouts belong to). Client-written by `advanceWeek`; listed here
+  // D1: the lift side's calendar anchor (the week key — first day of the
+  // week — of the week the current workouts belong to). Client-written by
+  // `advanceWeek`; listed here
   // so the server paths that round-trip a whole programState don't strip it
   // and strand the user's rollover.
   "liftWeekKey",

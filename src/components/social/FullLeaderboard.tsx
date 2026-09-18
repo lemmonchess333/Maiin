@@ -6,6 +6,7 @@ import { getDoc, doc } from "firebase/firestore";
 import { db } from "../../lib/firebase";
 import {
   buildLeaderboard,
+  CHALLENGE_LABELS,
   type LeaderboardEntry,
   type ChallengeType,
 } from "../../lib/leaderboard";
@@ -19,12 +20,21 @@ interface EnrichedEntry extends LeaderboardEntry {
   photoURL?: string;
 }
 
-const TABS: { key: ChallengeType; label: string; unit: string }[] = [
-  { key: "weekly_hybrid", label: "Hybrid Score", unit: "pts" },
-  { key: "weekly_volume", label: "Lifting Volume", unit: "kg" },
-  { key: "weekly_distance", label: "Running Distance", unit: "km" },
-  { key: "weekly_workouts", label: "Workouts", unit: "sessions" },
+/* Tab ORDER is this surface's own (hybrid first, the one the card shows);
+   the name and unit are not — they come from `CHALLENGE_LABELS`, which is
+   the only copy. Two surfaces each carrying their own table is what let
+   two of the four names drift apart unnoticed. */
+const TAB_ORDER: ChallengeType[] = [
+  "weekly_hybrid",
+  "weekly_volume",
+  "weekly_distance",
+  "weekly_workouts",
 ];
+const TABS = TAB_ORDER.map((key) => ({
+  key,
+  label: CHALLENGE_LABELS[key].title,
+  unit: CHALLENGE_LABELS[key].unit,
+}));
 
 export default function FullLeaderboard({ onBack }: { onBack: () => void }) {
   const { user, profile } = useAuth();
