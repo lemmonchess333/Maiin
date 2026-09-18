@@ -10,6 +10,7 @@
  */
 import { describe, it, expect } from "vitest";
 import { buildCaption } from "../captionBuilder";
+import { CALORIE_UNIT } from "@/utils/formatNutrition";
 
 describe("buildCaption — rest day short-circuit", () => {
   it("returns null on rest days regardless of activityBonus", () => {
@@ -34,10 +35,10 @@ describe("buildCaption — training type axis", () => {
 });
 
 describe("buildCaption — adjustment axis", () => {
-  it("positive bonus → '+N cal' suffix", () => {
-    expect(buildCaption("lift", 150)?.adjustment).toBe("+150 cal");
-    expect(buildCaption("run", 200)?.adjustment).toBe("+200 cal");
-    expect(buildCaption("both", 50)?.adjustment).toBe("+50 cal");
+  it("positive bonus → a `+N <unit>` suffix", () => {
+    expect(buildCaption("lift", 150)?.adjustment).toBe(`+150 ${CALORIE_UNIT}`);
+    expect(buildCaption("run", 200)?.adjustment).toBe(`+200 ${CALORIE_UNIT}`);
+    expect(buildCaption("both", 50)?.adjustment).toBe(`+50 ${CALORIE_UNIT}`);
   });
 
   it("zero bonus → empty adjustment", () => {
@@ -56,7 +57,7 @@ describe("buildCaption — full shape integration", () => {
   it("returns the full DailyTargetsCaption on a lift day with bonus", () => {
     expect(buildCaption("lift", 150)).toEqual({
       trainingType: "Lift day",
-      adjustment: "+150 cal",
+      adjustment: `+150 ${CALORIE_UNIT}`,
     });
   });
 

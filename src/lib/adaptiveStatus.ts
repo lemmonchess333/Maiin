@@ -8,6 +8,7 @@
  * means the learned target has been applied at least once. A manual
  * `customCalorieTarget` always wins (the user pinned it).
  */
+import { CALORIE_UNIT } from "@/utils/formatNutrition";
 const EPOCH = "1970-01-01T00:00:00.000Z";
 
 export type AdaptiveCalorieStatus =
@@ -72,7 +73,7 @@ export function adaptiveCalorieStatusLabel(
       return typeof appliedTarget === "number" && Number.isFinite(appliedTarget)
         ? `${base} This is your baseline; today's target is ${Math.round(
             appliedTarget
-          ).toLocaleString()} cal.`
+          ).toLocaleString()} ${CALORIE_UNIT}.`
         : base;
     }
     case "formula":
