@@ -211,8 +211,10 @@ describe("Train together hand-off (PROGRAM-CIRCLE-01)", () => {
     fireEvent.click(
       await screen.findByRole("button", { name: "Open Autumn Crew" })
     );
-    // Detail sheet: "<memberCount> of <maxMembers> members".
-    expect(await screen.findByText("3 of 8 members")).toBeInTheDocument();
+    // Detail sheet counts members the way the card behind it does. It
+    // read "3 of 8 members" until the ratio was removed — the same shape
+    // the sheet uses four lines down for "1 of 2 focusing this week".
+    expect(await screen.findByText("3 members")).toBeInTheDocument();
     await waitFor(() => expect(value.loadDetail).toHaveBeenCalledWith("c1"));
   });
 
