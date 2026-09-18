@@ -321,33 +321,39 @@ jobs:
           node-version: 22
           cache: "npm"
       - run: npm ci
-      # Prove the flag took, before trusting a green suite — the
-      # `unit-locale` and `unit-future` jobs both learned this the same
-      # way. An IGNORED `--sequence.shuffle` does not error; it silently
-      # makes this job a second copy of `unit` that reports
-      # order-independence it never examined. Two seeds over one
-      # 41-test file must disagree about what runs first.
+      # Prove the flag still DOES something, before trusting a green
+      # suite — the `unit-locale` and `unit-future` jobs both learned
+      # this the same way. Measured on vitest 4.1.8:
+      # `--sequence.bogusOption=1` exits 0 and runs the suite normally,
+      # so an unknown sequence key is accepted in silence. If
+      # `--sequence.shuffle` were ever renamed, this job would keep
+      # passing as a second copy of `unit`.
+      #
+      # `scripts/shuffleOrderProbe.test.ts` records its own execution
+      # order from inside the run and writes it to a file. The first
+      # version of this step grepped the verbose reporter's console
+      # output instead: it worked locally, found NOTHING on the runner,
+      # and — because it hid stderr — printed the same `<nothing>` for
+      # "vitest never ran" as for "the orders matched". Hence a file,
+      # and an explicit exit-status check on each run.
       - name: Confirm the shuffle took
         run: |
-          # The two seeds must disagree about which test in one 41-test
-          # file runs first. The duration suffix is stripped before the
-          # comparison — leaving it in would make the two strings differ
-          # on timing alone, which is an anti-vacuity check that cannot
-          # fail.
-          first() {
-            npx vitest run --reporter=verbose --sequence.shuffle \
-              --sequence.seed="$1" src/utils/__tests__/formatters.test.ts \
-              2>/dev/null \
-              | grep -E '^[[:space:]]+[^[:space:]]+[[:space:]]+\|' \
-              | head -1 \
-              | sed -E 's/[[:space:]]+[^[:space:]]*ms$//' \
-              | sed -E 's/^.*\.ts > //'
-          }
-          a=$(first 23); b=$(first 5)
-          echo "seed 23 ran first: ${a:-<nothing>}"
-          echo "seed  5 ran first: ${b:-<nothing>}"
-          if [ -z "$a" ] || [ "$a" = "$b" ]; then
-            echo "shuffle did not take — this job would pass vacuously"
+          set -o pipefail
+          for seed in 23 5; do
+            TROPOS_SHUFFLE_PROBE="$RUNNER_TEMP/order-$seed.txt" \
+              npx vitest run --sequence.shuffle --sequence.seed="$seed" \
+              scripts/shuffleOrderProbe.test.ts
+            if [ ! -s "$RUNNER_TEMP/order-$seed.txt" ]; then
+              echo "probe wrote nothing for seed $seed — vitest did not run"
+              exit 1
+            fi
+          done
+          echo "seed 23 order: $(tr '\n' ' ' < "$RUNNER_TEMP/order-23.txt")"
+          echo "seed  5 order: $(tr '\n' ' ' < "$RUNNER_TEMP/order-5.txt")"
+          if diff -q "$RUNNER_TEMP/order-23.txt" "$RUNNER_TEMP/order-5.txt" \
+            >/dev/null; then
+            echo "two seeds produced the SAME order — shuffle did not take,"
+            echo "so this job would report order-independence it never examined"
             exit 1
           fi
       - name: Unit suite in shuffled order (seed ${{ matrix.seed }})
