@@ -529,12 +529,12 @@ function AccountProgressPhotos({ uid }: { uid: string }) {
             </button>
           )}
           {/* An empty vault already carries this action in its empty
-              state ("+ First check-in"); two buttons for one act on one
-              screen read as two different things. The header button
+              state ("Add your first check-in"); two buttons for one act on
+              one screen read as two different things. The header button
               returns once there is a list to sit above. */}
           {entries.length > 0 && (
             <Button onClick={openNewCheckIn} aria-label="New progress check-in">
-              + Check-in
+              New check-in
             </Button>
           )}
         </div>
@@ -595,7 +595,7 @@ function AccountProgressPhotos({ uid }: { uid: string }) {
           headline="Track your transformation"
           sub="A weekly check-in — front, side and back — shows change no mirror can. Never shown to other users."
           accent={THEME.brand}
-          action={{ label: "+ First check-in", onClick: openNewCheckIn }}
+          action={{ label: "Add your first check-in", onClick: openNewCheckIn }}
         />
       )}
 
