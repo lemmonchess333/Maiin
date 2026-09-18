@@ -106,15 +106,31 @@ beforeEach(() => {
   h.controllerMounts = 0;
 });
 describe("Home defers the programme controller", () => {
+  /* `controllerImports` counts how many times the MOCK FACTORY ran, and a
+     module registry runs it once per file — so it is "has this file ever
+     imported the controller", not "did this test". It was asserted as
+     `0` then `1`, which only holds when this test runs first: any other
+     test that reaches the editor leaves it at 1, and `--sequence.shuffle`
+     failed here on 2 of 5 seeds. Resetting the counter in `beforeEach`
+     does not help and fails the other way — the factory never re-runs, so
+     the post-click assertion reads 0.
+
+     `controllerMounts` is the per-test observable (it IS reset), and it
+     carries the same claim: the deferred editor renders only once the
+     hook has resolved the import. The import counter keeps the weaker
+     half — the cached paint fetches nothing NEW — read against a
+     baseline rather than against zero. */
   it("paints a current cached plan without loading the editor, then loads it for an action", async () => {
+    const importsBefore = h.controllerImports;
     emit(h.state as ProgramState, true);
     render(<Harness />);
     await flushSnapshots();
     expect(screen.getByText("Week 3")).toBeInTheDocument();
-    expect(h.controllerImports).toBe(0);
+    expect(h.controllerImports).toBe(importsBefore);
+    expect(h.controllerMounts).toBe(0);
     fireEvent.click(screen.getByText("Skip"));
     await waitFor(() => expect(h.skip).toHaveBeenCalledWith("run"));
-    expect(h.controllerImports).toBe(1);
+    expect(h.controllerMounts).toBe(1);
   });
   it("does not mistake an empty offline cache for a missing programme", async () => {
     emit(null, true);
