@@ -25,6 +25,28 @@ on:
     branches: ["main"]
   workflow_dispatch:
 
+# Supersede, don't stack. Measured 2026-09-18 on one commit
+# (`cfabe9d8`): `auto-update-pr-branches` rewrites every open PR's head
+# whenever main moves, which restarts all of this repo's checks on all of
+# them at once — and nothing cancelled the runs for the heads those
+# rewrites had just obsoleted. Thirteen PRs' worth of runs for commits
+# that would never merge sat in the queue ahead of the ones that would,
+# and a `CI` run created at 08:37 had still not STARTED by 09:08.
+#
+# `github.ref` keeps push and pull_request in SEPARATE groups on purpose.
+# Collapsing them would also cancel the duplicate the two triggers
+# produce for one commit, which is real waste — but a cancelled run
+# posts a cancelled check under the same workflow name on the same sha
+# as the live one, and that is the PR's own gate. Superseding within one
+# event only ever cancels a run for an OLDER commit, whose checks gate
+# nothing. The wider change is a deliberate call, not a tidy-up.
+#
+# main is excluded: every commit that lands there gets verified, even
+# when two land close together.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
 permissions:
   contents: read
 
