@@ -6,6 +6,7 @@ import { buildCalorieOverridePayload } from "@/lib/goalWeightPlan";
 import { toast } from "@/lib/toast";
 import { Dialog } from "@/components/ui/Dialog";
 import { Button } from "@/components/ui/Button";
+import { CALORIE_UNIT } from "@/utils/formatNutrition";
 
 interface StallModalProps {
   exercise: { name: string; weight: number; isBodyweight?: boolean };
@@ -86,7 +87,7 @@ export default function StallModal({ exercise, onClose }: StallModalProps) {
         (exercise.isBodyweight
           ? `${exercise.name} has held the same reps for 3 sessions.`
           : `You've been at ${exercise.weight} kg on ${exercise.name} for 3 sessions.`) +
-        ` A small calorie increase (~150 cal/day) could help you break through.` +
+        ` A small calorie increase (~150 ${CALORIE_UNIT}/day) could help you break through.` +
         // Naming the real consequence: this writes a MANUAL calorie override,
         // and a manual override is what switches adaptive calories off.
         (adaptiveOn
@@ -97,7 +98,7 @@ export default function StallModal({ exercise, onClose }: StallModalProps) {
     >
       <div className="flex gap-3 pt-1">
         <Button onClick={handleAdjust} className="flex-1">
-          Adjust target (+150 cal)
+          Adjust target (+150 {CALORIE_UNIT})
         </Button>
         <Button onClick={handleDismiss} variant="ghost">
           Not now
