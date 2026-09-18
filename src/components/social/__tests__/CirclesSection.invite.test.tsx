@@ -263,3 +263,48 @@ describe("one-member featured circle", () => {
     ).toBeInTheDocument();
   });
 });
+
+describe("a full circle stops offering an invite", () => {
+  /* The server refuses a join into a full circle with "circle full", so
+     a code sent from an 8-of-8 circle can only fail — and the failure
+     lands on the invitee, who did nothing wrong and cannot see why. The
+     sheet offered the button at any size, and the only signal was the
+     header's "8 of 8 members". */
+  async function openDetail(memberCount: number) {
+    mockUseGoalSpaces.mockReturnValue(
+      hookValue({
+        circles: [summary("c1", "Autumn Crew", memberCount, "K7P4-9M2H")],
+      })
+    );
+    render(
+      <MemoryRouter>
+        <CirclesSection uid="me" />
+      </MemoryRouter>
+    );
+    fireEvent.click(screen.getByRole("button", { name: /Autumn Crew/ }));
+    // Anchored on the sheet itself rather than on its member line: the
+    // card behind it renders a member count too, so a text anchor
+    // matches twice.
+    await screen.findByRole("dialog");
+  }
+
+  it("says the circle is full and withholds the code", async () => {
+    await openDetail(8);
+    expect(screen.getByText("8 members · full")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /copy invite code/i })
+    ).toBeNull();
+    expect(
+      screen.getByText(/Nobody else can join until someone leaves/)
+    ).toBeInTheDocument();
+  });
+
+  it("still offers the code with one place left", async () => {
+    await openDetail(7);
+    expect(screen.getByText("7 members")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /copy invite code/i })
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/Nobody else can join/)).toBeNull();
+  });
+});
