@@ -3,7 +3,7 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import RunPlanSettings from "../RunPlanSettings";
 import { upcomingRaceSpaceDefs } from "@/features/spaces/spaceDefs";
-import { localDateString } from "@/lib/dateHelpers";
+import { addLocalDays, localDateString } from "@/lib/dateHelpers";
 import { generateSchedule } from "@/lib/scheduleUtils";
 import type { UserProfile } from "@/lib/auth";
 
@@ -44,6 +44,48 @@ vi.mock("@/hooks/useRunningStats", () => ({
     refresh: vi.fn(),
   }),
 }));
+
+/**
+ * The race date every test here types in. It must stay in the FUTURE:
+ * a race-prep plan is built from the weeks BETWEEN today and the target,
+ * so once the clock passes it there is no block to build and the first
+ * week materializes fewer rows than the target asks for.
+ *
+ * This was the literal RACE_TARGET_DATE until 2026-09-18, and that is exactly
+ * the fixture-expiry class `unit-future` exists to catch: pinned to a
+ * clock of 2026-12-31 or later, two tests in this file fail with
+ * `expected 3 to be 4`. The +90-day job would have gone red on
+ * 2026-10-02 — a fortnight of notice, working as designed, but the
+ * literal is still the defect.
+ *
+ * 105 days keeps the same ~15-week block the literal gave, and moves
+ * with the clock instead of expiring against it.
+ *
+ * It also has to MISS every catalogue race date. "A deep link outranks a
+ * stored draft" asserts the deep-linked race's date differs from the
+ * draft's, and a bare today+105 lands on Brighton/Paris (2027-04-04)
+ * when the clock reads 2026-12-20 — the derived date collides with real
+ * data the literal happened to dodge. Stepping past any taken date keeps
+ * the two provably distinct on every clock.
+ */
+/**
+ * The MARATHON target, separate because a marathon block needs more
+ * runway than the 10K one. Pinned to a literal 170 days out when it was
+ * written, the time-limits test goes red from a clock of ~2027-02-15 —
+ * three weeks from the race, too short for the planner to build a
+ * marathon block, so the preview copy never renders. Keep the ~24 weeks
+ * the literal bought.
+ */
+const MARATHON_TARGET_DATE = localDateString(addLocalDays(new Date(), 170));
+
+const RACE_TARGET_DATE = (() => {
+  const taken = new Set(
+    upcomingRaceSpaceDefs(localDateString()).map((d) => d.event!.dateKey)
+  );
+  let d = addLocalDays(new Date(), 105);
+  while (taken.has(localDateString(d))) d = addLocalDays(d, 1);
+  return localDateString(d);
+})();
 
 const baseProfile = {
   runMode: "freeform",
@@ -144,7 +186,7 @@ describe("RunPlanSettings", () => {
       ...baseProfile,
       uid: "baseline-owner",
       runMode: "race_prep",
-      raceGoal: { distance: "10k", targetDate: "2027-01-01" },
+      raceGoal: { distance: "10k", targetDate: RACE_TARGET_DATE },
     } as UserProfile;
     const first = renderPage(profile);
     fireEvent.click(screen.getByRole("button", { name: "Add starting point" }));
@@ -176,7 +218,7 @@ describe("RunPlanSettings", () => {
       ...baseProfile,
       uid: "clear-owner",
       runMode: "race_prep",
-      raceGoal: { distance: "10k", targetDate: "2027-01-01" },
+      raceGoal: { distance: "10k", targetDate: RACE_TARGET_DATE },
       runningBaseline: {
         version: 1,
         experience: "building",
@@ -214,7 +256,7 @@ describe("RunPlanSettings", () => {
     const { refreshProfile } = renderPage(baseProfile);
     fireEvent.click(screen.getByRole("radio", { name: /Race prep/i }));
     const date = screen.getByLabelText(/Target date/i) as HTMLInputElement;
-    fireEvent.change(date, { target: { value: "2027-01-01" } });
+    fireEvent.change(date, { target: { value: RACE_TARGET_DATE } });
 
     const save = await screen.findByRole("button", { name: /Save .*plan/i });
     fireEvent.click(save);
@@ -223,7 +265,7 @@ describe("RunPlanSettings", () => {
     const payload = sentPayload();
     expect(payload.profileUpdates.runMode).toBe("race_prep");
     expect(payload.profileUpdates.raceGoal).toMatchObject({
-      targetDate: "2027-01-01",
+      targetDate: RACE_TARGET_DATE,
     });
     // Blank event name → the key is OMITTED (never undefined/empty string).
     expect("eventName" in payload.profileUpdates.raceGoal!).toBe(false);
@@ -243,7 +285,7 @@ describe("RunPlanSettings", () => {
     renderPage(profile);
     fireEvent.click(screen.getByRole("radio", { name: /Race prep/i }));
     const date = screen.getByLabelText(/Target date/i) as HTMLInputElement;
-    fireEvent.change(date, { target: { value: "2027-01-01" } });
+    fireEvent.change(date, { target: { value: RACE_TARGET_DATE } });
     // 2 → 4 via the stepper.
     const plus = screen.getByRole("button", { name: /Increase run days/i });
     fireEvent.click(plus);
@@ -276,7 +318,7 @@ describe("RunPlanSettings", () => {
     renderPage(baseProfile);
     fireEvent.click(screen.getByRole("radio", { name: /Race prep/i }));
     const date = screen.getByLabelText(/Target date/i) as HTMLInputElement;
-    fireEvent.change(date, { target: { value: "2027-01-01" } });
+    fireEvent.change(date, { target: { value: RACE_TARGET_DATE } });
     fireEvent.click(
       await screen.findByRole("button", { name: /Save .*plan/i })
     );
@@ -293,7 +335,7 @@ describe("RunPlanSettings", () => {
       ...baseProfile,
       uid: "run-limit-user",
       runMode: "race_prep",
-      raceGoal: { distance: "marathon", targetDate: "2027-03-07" },
+      raceGoal: { distance: "marathon", targetDate: MARATHON_TARGET_DATE },
     } as UserProfile;
     const first = renderPage(profile);
     fireEvent.change(screen.getByLabelText("Other runs"), {
@@ -339,7 +381,7 @@ describe("RunPlanSettings", () => {
     fireEvent.click(screen.getByRole("radio", { name: /Race prep/i }));
 
     const date = screen.getByLabelText(/Target date/i) as HTMLInputElement;
-    fireEvent.change(date, { target: { value: "2027-01-01" } });
+    fireEvent.change(date, { target: { value: RACE_TARGET_DATE } });
     const name = screen.getByLabelText(
       /Event name \(optional\)/i
     ) as HTMLInputElement;
@@ -352,7 +394,7 @@ describe("RunPlanSettings", () => {
     await waitFor(() => expect(configureSpy).toHaveBeenCalledTimes(1));
     expect(sentPayload().profileUpdates.raceGoal).toEqual({
       distance: "10k",
-      targetDate: "2027-01-01",
+      targetDate: RACE_TARGET_DATE,
       eventName: "London Marathon 2027",
     });
   });
@@ -365,7 +407,7 @@ describe("RunPlanSettings", () => {
     expect(screen.getByText("Intensity")).toBeInTheDocument();
 
     const date = screen.getByLabelText(/Target date/i) as HTMLInputElement;
-    fireEvent.change(date, { target: { value: "2027-01-01" } });
+    fireEvent.change(date, { target: { value: RACE_TARGET_DATE } });
     fireEvent.click(screen.getByRole("radio", { name: "Lighter" }));
     fireEvent.click(screen.getByRole("radio", { name: "Gentler" }));
 
@@ -392,7 +434,7 @@ describe("RunPlanSettings", () => {
       runMode: "race_prep",
       weeklyRunDaysTarget: 3,
       weeklyRunsTarget: 3,
-      raceGoal: { distance: "marathon", targetDate: "2027-01-01" },
+      raceGoal: { distance: "marathon", targetDate: RACE_TARGET_DATE },
     } as unknown as UserProfile;
     renderPage(raceProfile);
     fireEvent.click(screen.getByRole("radio", { name: /Freeform/i }));
@@ -423,7 +465,7 @@ describe("RunPlanSettings", () => {
     renderPage(profile);
     fireEvent.click(screen.getByRole("radio", { name: /Race prep/i }));
     const date = screen.getByLabelText(/Target date/i) as HTMLInputElement;
-    fireEvent.change(date, { target: { value: "2027-01-01" } });
+    fireEvent.change(date, { target: { value: RACE_TARGET_DATE } });
     const time = screen.getByLabelText(/Goal time \(optional\)/i);
     fireEvent.change(time, { target: { value: "19:30" } });
 
@@ -445,7 +487,7 @@ describe("RunPlanSettings", () => {
     renderPage(baseProfile);
     fireEvent.click(screen.getByRole("radio", { name: /Race prep/i }));
     const date = screen.getByLabelText(/Target date/i) as HTMLInputElement;
-    fireEvent.change(date, { target: { value: "2027-01-01" } });
+    fireEvent.change(date, { target: { value: RACE_TARGET_DATE } });
     const time = screen.getByLabelText(/Goal time \(optional\)/i);
     fireEvent.change(time, { target: { value: "abc" } });
     expect(screen.getByText(/Enter a time like/i)).toBeInTheDocument();
@@ -467,7 +509,7 @@ describe("RunPlanSettings", () => {
     renderPage(baseProfile);
     fireEvent.click(screen.getByRole("radio", { name: /Race prep/i }));
     fireEvent.change(screen.getByLabelText(/Target date/i), {
-      target: { value: "2027-01-01" },
+      target: { value: RACE_TARGET_DATE },
     });
     fireEvent.change(screen.getByLabelText(/Goal time \(optional\)/i), {
       target: { value: "abc" },
@@ -487,7 +529,7 @@ describe("RunPlanSettings", () => {
     renderPage(baseProfile);
     fireEvent.click(screen.getByRole("radio", { name: /Race prep/i }));
     fireEvent.change(screen.getByLabelText(/Target date/i), {
-      target: { value: "2027-01-01" },
+      target: { value: RACE_TARGET_DATE },
     });
     const time = screen.getByLabelText(/Goal time \(optional\)/i);
     fireEvent.change(time, { target: { value: "abc" } });
@@ -503,7 +545,7 @@ describe("RunPlanSettings", () => {
     renderPage(baseProfile);
     fireEvent.click(screen.getByRole("radio", { name: /Race prep/i }));
     fireEvent.change(screen.getByLabelText(/Target date/i), {
-      target: { value: "2027-01-01" },
+      target: { value: RACE_TARGET_DATE },
     });
     fireEvent.change(screen.getByLabelText(/Goal time \(optional\)/i), {
       target: { value: "24:30" },
@@ -525,7 +567,7 @@ describe("RunPlanSettings", () => {
     const { unmount } = renderPage(baseProfile);
     fireEvent.click(screen.getByRole("radio", { name: /Race prep/i }));
     fireEvent.change(screen.getByLabelText(/Target date/i), {
-      target: { value: "2027-01-01" },
+      target: { value: RACE_TARGET_DATE },
     });
     fireEvent.change(screen.getByLabelText(/Event name/i), {
       target: { value: "Brighton" },
@@ -533,7 +575,7 @@ describe("RunPlanSettings", () => {
     unmount();
 
     renderPage(baseProfile);
-    expect(screen.getByLabelText(/Target date/i)).toHaveValue("2027-01-01");
+    expect(screen.getByLabelText(/Target date/i)).toHaveValue(RACE_TARGET_DATE);
     expect(screen.getByLabelText(/Event name/i)).toHaveValue("Brighton");
   });
 
@@ -543,7 +585,7 @@ describe("RunPlanSettings", () => {
     const { unmount } = renderPage(baseProfile);
     fireEvent.click(screen.getByRole("radio", { name: /Race prep/i }));
     fireEvent.change(screen.getByLabelText(/Target date/i), {
-      target: { value: "2027-01-01" },
+      target: { value: RACE_TARGET_DATE },
     });
     fireEvent.change(screen.getByLabelText(/Goal time \(optional\)/i), {
       target: { value: "3:5" },
@@ -573,7 +615,7 @@ describe("RunPlanSettings", () => {
     const { unmount } = renderPage(baseProfile);
     fireEvent.click(screen.getByRole("radio", { name: /Race prep/i }));
     fireEvent.change(screen.getByLabelText(/Target date/i), {
-      target: { value: "2027-01-01" },
+      target: { value: RACE_TARGET_DATE },
     });
     fireEvent.click(
       await screen.findByRole("button", { name: /Save .*plan|Start .*plan/i })
@@ -594,7 +636,7 @@ describe("RunPlanSettings", () => {
     const { unmount } = renderPage(baseProfile);
     fireEvent.click(screen.getByRole("radio", { name: /Race prep/i }));
     fireEvent.change(screen.getByLabelText(/Target date/i), {
-      target: { value: "2027-01-01" },
+      target: { value: RACE_TARGET_DATE },
     });
     unmount();
 
@@ -605,11 +647,11 @@ describe("RunPlanSettings", () => {
         race.event!.dateKey
       }&spaceId=${race.id}`
     );
-    // The deep link's date, NOT the draft's 2027-01-01.
+    // The deep link's date, NOT the draft's target date.
     expect(screen.getByLabelText(/Target date/i)).toHaveValue(
       race.event!.dateKey
     );
-    expect(race.event!.dateKey).not.toBe("2027-01-01");
+    expect(race.event!.dateKey).not.toBe(RACE_TARGET_DATE);
   });
 
   it("Door 1: a valid deep-link seeds race prep and saves the eventSpaceId binding", async () => {
