@@ -14,6 +14,18 @@
  * does not touch body copy, interpolated strings, or anything with
  * punctuation it cannot reason about — a false positive here costs more
  * than a missed one, because the cost is a contributor deleting the test.
+ *
+ * Copy held in an OBJECT LITERAL and rendered through a `.map()` is out
+ * of scope, and that is a measured call rather than an oversight. Three
+ * Title Case buttons reached the Account page that way — "Export
+ * Workouts (CSV)" and its two siblings, between "Change password" and
+ * "Sign out". Widening the scan to `label:` properties finds 34 phrases
+ * across `src/`, and 31 of them are correct as they stand: exercise
+ * names, shoe models, Circle types, training-block presets, and the
+ * run-cue labels that belong to the spoken coach register the house
+ * voice exempts. A rule that is wrong nine times out of ten gets
+ * suppressed, so those three are pinned at their own site instead, in
+ * `DataExportSection.test.tsx`.
  */
 import { describe, it, expect } from "vitest";
 import { readFileSync, readdirSync, statSync } from "node:fs";

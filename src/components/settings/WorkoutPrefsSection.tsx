@@ -70,7 +70,7 @@ export default function WorkoutPrefsSection({
               const result = await updateProfile({ defaultRestSeconds: val });
               if (!result.ok) setDefaultRestSeconds(prev);
             }}
-            className="bg-card rounded-lg px-2 py-1 text-sm border border-border/50"
+            className="min-h-11 bg-card rounded-lg px-3 text-sm border border-border/50"
           >
             <option value={60}>1:00</option>
             <option value={90}>1:30</option>
