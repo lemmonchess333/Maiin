@@ -41,6 +41,10 @@ import {
   type GoalSpaceType,
   type WeeklyFocus,
 } from "./goalSpaceTypes";
+import { describeJoinRejection } from "./joinRejection";
+
+/** A join either landed, or was refused for a reason worth showing. */
+export type JoinOutcome = { ok: true } | { ok: false; reason: string };
 
 /** goalSpaceWeeklyCheckIn's create/duplicate/update contract. */
 export interface WeeklyCheckInResult {
@@ -159,14 +163,20 @@ export function useGoalSpaces(uid: string | undefined) {
     // Accepts the raw pasted/typed code. The server resolves any accepted
     // form — a short code (K7P4-9M2H), or the legacy spaceId.token string —
     // so the client stays format-agnostic.
-    async (code: string): Promise<boolean> => {
+    //
+    // The refusal is carried back rather than collapsed to `false`: the
+    // server distinguishes a full circle, a closed one, a wrong code and a
+    // tripped rate limit, and the caller is the only place that can say
+    // which. `describeJoinRejection` owns the translation; the log keeps
+    // the raw error for reporting either way.
+    async (code: string): Promise<JoinOutcome> => {
       try {
         await httpsCallable(fns(), "joinGoalSpace")({ code });
         await reload();
-        return true;
+        return { ok: true };
       } catch (err) {
         logger.error("goalSpaces: join failed", err);
-        return false;
+        return { ok: false, reason: describeJoinRejection(err) };
       }
     },
     [reload]
