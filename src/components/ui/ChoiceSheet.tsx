@@ -19,7 +19,7 @@ import { BottomSheet } from "@/components/ui/BottomSheet";
 import { cn } from "@/lib/utils";
 import { logger } from "@/lib/logger";
 
-export type ChoiceVariant = "primary" | "secondary" | "ghost";
+export type ChoiceVariant = "primary" | "secondary" | "ghost" | "sport";
 
 export interface Choice {
   id: string;
@@ -60,6 +60,15 @@ const VARIANT_CLASSES: Record<ChoiceVariant, string> = {
   secondary:
     "bg-card border border-border text-foreground text-sm font-semibold",
   ghost: "text-muted-foreground hover:text-foreground text-sm font-medium",
+  /* The running CTA, added when a second consumer surfaced it exactly as
+     this file's header anticipated: FellBehindSheet is a run surface,
+     coral icon and all, and had no coral to give its main action.
+     `bg-running-fill`, not the bare identity, for the reason
+     `buttonClasses` gives for the same variant: white on #D4637A is
+     3.58:1. These two maps are separate by design (this sheet sizes its
+     own rows), so `choiceSheetSportParity` holds the fill token to the
+     one the Button primitive uses. */
+  sport: "bg-running-fill text-white text-sm font-semibold",
 };
 
 export function ChoiceSheet({
