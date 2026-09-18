@@ -4,6 +4,7 @@ import { THEME } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import type { ProPreviewFrame } from "./previewFrames";
+import { CALORIE_UNIT } from "@/utils/formatNutrition";
 
 interface Props {
   frames?: ProPreviewFrame[];
@@ -63,7 +64,7 @@ function ScanFrame() {
     <div
       className="rounded-2xl border border-border bg-card overflow-hidden"
       role="img"
-      aria-label="Sample: a meal photo, read by Pro as chicken, rice and greens — 540 kcal, 38g protein, 52g carbs, 18g fat"
+      aria-label={`Sample: a meal photo, read by Pro as chicken, rice and greens — 540 ${CALORIE_UNIT}, 38g protein, 52g carbs, 18g fat`}
     >
       {/* The photo slot. A wash, not a picture: meal photos are device-
           local by lock (Food9) and a stock plate would be an asset that
@@ -188,7 +189,7 @@ function TargetFrame() {
     <div
       className="rounded-2xl border border-border bg-card p-3 space-y-3"
       role="img"
-      aria-label="Sample: a calorie target of 2,336 kcal, adapted down by 120 kcal this week from the weight trend"
+      aria-label={`Sample: a calorie target of 2,336 ${CALORIE_UNIT}, adapted down by 120 ${CALORIE_UNIT} this week from the weight trend`}
     >
       <div aria-hidden="true">
         <p className="text-caption font-semibold uppercase tracking-wider text-muted-foreground">
@@ -215,7 +216,8 @@ function TargetFrame() {
         </span>
         <div className="min-w-0">
           <p className="text-xs font-semibold text-foreground leading-snug">
-            Adapted <span className="font-mono tabular-nums">−120 kcal</span>{" "}
+            Adapted{" "}
+            <span className="font-mono tabular-nums">−120 {CALORIE_UNIT}</span>{" "}
             this week
           </p>
           <p className="text-caption text-muted-foreground leading-snug">

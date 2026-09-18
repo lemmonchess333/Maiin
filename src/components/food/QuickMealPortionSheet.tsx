@@ -1,9 +1,14 @@
 import { useRef, useState } from "react";
 import BottomSheet from "@/components/ui/BottomSheet";
 import Button from "@/components/ui/Button";
-import { MEAL_ORDER, MEAL_LABELS, type MealKey } from "@/components/food/mealConstants";
+import {
+  MEAL_ORDER,
+  MEAL_LABELS,
+  type MealKey,
+} from "@/components/food/mealConstants";
 import type { QuickAddItem } from "@/lib/quickAddOrder";
 import { scaleQuickMeal } from "@/lib/quickMealEntry";
+import { CALORIE_UNIT } from "@/utils/formatNutrition";
 
 export default function QuickMealPortionSheet({
   meal,
@@ -62,17 +67,28 @@ export default function QuickMealPortionSheet({
         />
         {valid ? (
           <p className="text-sm font-mono tabular-nums">
-            {Math.round(meal.cal * number)} kcal
+            {Math.round(meal.cal * number)} {CALORIE_UNIT}
           </p>
         ) : (
           <p role="alert" className="text-sm text-destructive-strong">
             Enter a portion greater than 0 and no more than 20.
           </p>
         )}
-        <label htmlFor="quick-meal-slot" className="block text-sm">Add to</label>
-        <select id="quick-meal-slot" className="ds-input w-full min-h-11" value={selectedSlot}
-          disabled={saving} onChange={(event) => setSelectedSlot(event.target.value as MealKey)}>
-          {MEAL_ORDER.map((key) => <option key={key} value={key}>{MEAL_LABELS[key]}</option>)}
+        <label htmlFor="quick-meal-slot" className="block text-sm">
+          Add to
+        </label>
+        <select
+          id="quick-meal-slot"
+          className="ds-input w-full min-h-11"
+          value={selectedSlot}
+          disabled={saving}
+          onChange={(event) => setSelectedSlot(event.target.value as MealKey)}
+        >
+          {MEAL_ORDER.map((key) => (
+            <option key={key} value={key}>
+              {MEAL_LABELS[key]}
+            </option>
+          ))}
         </select>
         <Button
           fullWidth
