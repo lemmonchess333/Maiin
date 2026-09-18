@@ -2,6 +2,7 @@ import type { CSSProperties, Ref } from "react";
 import { formatClock } from "@/utils/formatters";
 import {
   distanceUnitLabel,
+  elevationUnitLabel,
   paceUnitLabel,
   spokenDistanceUnit,
   type DistanceUnit,
@@ -11,6 +12,14 @@ import { paceMinSec, distanceValue, elevationLabel } from "@/lib/runLabels";
 /** `12.3km` — the compact no-space form this card's small stats use. */
 function distanceLabel2Compact(km: number | undefined, unit: DistanceUnit) {
   return `${distanceValue((km ?? 0) * 1000, unit)}${distanceUnitLabel(unit)}`;
+}
+
+/** `120m` — the same compact variant for a climb. The shared
+ *  `elevationLabel` is spaced like the rest of the app; this card's
+ *  documented exemption is the space-constrained rasterised layout, so it
+ *  writes its own form here exactly as it already does for distance. */
+function elevationLabelCompact(metres: number, unit: DistanceUnit) {
+  return `${elevationLabel(metres, unit, false)}${elevationUnitLabel(unit)}`;
 }
 
 /**
@@ -578,7 +587,7 @@ function RunTemplate({
           )}
           {show("elevation") && data.elevationM != null && (
             <Stat
-              value={elevationLabel(data.elevationM, data.unit)}
+              value={elevationLabelCompact(data.elevationM, data.unit)}
               label="elev"
               scale={scale}
             />

@@ -234,7 +234,16 @@ export function elevationLabel(
   withUnit = true
 ): string {
   const v = Math.round(elevationIn(metres, unit));
-  return withUnit ? `${v}${elevationUnitLabel(unit)}` : `${v}`;
+  /* SPACED, like `distanceLabel` two functions up and like the docstring
+     above has always said. It rendered `120m`, so a run detail showed
+     `30m` for the climb directly beneath `30:00` for the time — an
+     unspaced metre abbreviation sitting under a duration, where it reads
+     as minutes.
+     `unitTreatment`'s ratchet covers kg and km only; its header records
+     that bare metres were fixed but deliberately not ratcheted, because
+     `/\dm\b/` cannot tell a climb from a duration or an id. So this one
+     is held by the convention test beside it instead. */
+  return withUnit ? `${v} ${elevationUnitLabel(unit)}` : `${v}`;
 }
 
 /**
