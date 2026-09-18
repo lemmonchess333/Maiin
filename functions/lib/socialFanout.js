@@ -67,8 +67,21 @@ function buildSummary(activity) {
   }
   const name = activity.workoutName || "Workout";
   const exCount = activity.exerciseCount || 0;
+  /* Explicit locale, like every other formatter in functions/. This
+     string is PERSISTED and fanned out to every follower's feed, so it
+     is formatted once on the server and read by everyone — there is no
+     viewer whose locale it could follow. A bare `toLocaleString()` takes
+     the Cloud Functions CONTAINER's locale, which is nobody's choice and
+     can change under the runtime: the same feed would then carry "5,200"
+     on old items and "5.200" on new ones.
+
+     `en-GB` for the comma grouping the house numeric style uses
+     ("2,633 cal"). The siblings already do this — `en-CA` in
+     `streakNudge`, `programCommands` and `aiScanQuota` for ISO-shaped
+     dates, `en-GB` and `en-US` in `pushSchedule` for a 24h hour and a
+     weekday name. This line was the only one left guessing. */
   const vol = activity.totalVolume
-    ? `${Math.round(activity.totalVolume).toLocaleString()} kg volume`
+    ? `${Math.round(activity.totalVolume).toLocaleString("en-GB")} kg volume`
     : "";
   const dur = activity.duration
     ? `${Math.round(activity.duration / 60)} min`

@@ -13,6 +13,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import type { User } from "firebase/auth";
+import { isTitleCase } from "@/lib/__tests__/copyCasing.test";
 
 const exportWorkoutsCSV = vi.fn().mockResolvedValue("w-csv");
 const exportMealsCSV = vi.fn().mockResolvedValue("m-csv");
@@ -52,6 +53,24 @@ describe("DataExportSection", () => {
       /export bodyweight/i,
     ]) {
       expect(screen.getByRole("button", { name: label })).toBeInTheDocument();
+    }
+  });
+
+  it("names them in sentence case, like the rows either side", () => {
+    /* These three sat in Title Case between "Change password" above and
+       "Sign out" below, on a page where nothing else is capitalised that
+       way. The repo-wide guard could not see them: it reads JSX text and
+       label PROPS, and these labels live in an object literal that a
+       `.map()` renders. Held here, at the site, because extending the
+       guard to object literals is not worth it — measured, 34 such
+       Title Case labels across src/ and 31 are exercise names, Circle
+       types, training-block presets or run-cue coach speech, all of
+       which are correct as they are. */
+    render(<DataExportSection user={USER} />);
+    for (const button of screen.getAllByRole("button")) {
+      const name = button.textContent?.trim() ?? "";
+      expect(isTitleCase(name), `"${name}" is Title Case`).toBe(false);
+      expect(name).toMatch(/^Export [a-z]/);
     }
   });
 
