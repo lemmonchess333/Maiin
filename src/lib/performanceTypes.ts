@@ -38,7 +38,14 @@ export interface PerformanceSignals {
 
 /** Raw weekly aggregates before scoring */
 export interface WeeklyAggregates {
-  weekKey: string; // "YYYY-MM-DD" (Sunday start)
+  /* Local-date "YYYY-MM-DD" identifying the aggregated week. NOT a week
+     start: PI1a shifted the persisted semantics to the COMPUTE DATE, and
+     `functions/performanceEngine.js` says so at its own write site. This
+     named the Sunday anchor, which was wrong on both counts — the anchor
+     is Monday now, and this key is not an anchor at all. The only production
+     writer is the server engine; `computePerformanceIndex` here has no
+     caller. */
+  weekKey: string;
 
   // Lifting
   liftTonnage: number; // session tonnage (workoutVolumeKg: stated totalVolume, else weightKg*reps excluding timed holds)
