@@ -233,15 +233,42 @@ describe("refreshDeviceTokenForCurrentUser (consent-gated re-register)", () => {
   });
 });
 
-
 describe("confirmed-deletion sign-out", () => {
+  /* A uid of its own, and not cosmetically. `discardDeletedAccountPushState`
+     records the account in a module-level Set that deliberately outlives a
+     sign-out — a deleted account must not keep asking the server to release
+     a claim that is already gone — so nothing resets it between tests, and
+     `vi.clearAllMocks()` cannot.
+
+     Written with "u1", this test therefore tombstoned the uid every other
+     test registers and releases, and the three `unregisterDeviceToken`
+     tests returned early for the rest of the file. File order hid it: they
+     run before this one. `--sequence.shuffle` seed 3 does not, and all
+     three fail at once, each reporting a mock that was never called rather
+     than the reason it wasn't.
+
+     Two fixes were tried and rejected, both by measurement rather than
+     by reading. Resetting modules in `beforeEach` gives the module under
+     test a fresh `firebase/firestore` mock while the harness keeps the
+     old one, and the consent-gated re-register test breaks instead.
+     Simply passing a different uid makes this test VACUOUS — the release
+     path is only reached for the SIGNED-IN user, so an unrelated uid
+     returns early and the assertion holds whether or not the tombstone
+     was recorded. Mutation-checked both ways: dropping the
+     `discardDeletedAccountPushState` call fails the test as written
+     below, and passes it under that version.
+
+     So the account is deleted AND signed in, which is also what the
+     situation actually is at the moment of a confirmed-deletion sign-out.
+     `beforeEach` restores "u1" for everyone else. */
   it("keeps repeated sign-out attempts from releasing a tombstoned server account", async () => {
-    const { discardDeletedAccountPushState, unregisterDeviceToken } = await load();
-    await discardDeletedAccountPushState("u1");
-    await unregisterDeviceToken("u1");
-    await unregisterDeviceToken("u1");
+    const { discardDeletedAccountPushState, unregisterDeviceToken } =
+      await load();
+    h.setUid("u-deleted");
+    await discardDeletedAccountPushState("u-deleted");
+    await unregisterDeviceToken("u-deleted");
+    await unregisterDeviceToken("u-deleted");
     expect(h.releaseFn).not.toHaveBeenCalled();
     expect(h.claimFn).not.toHaveBeenCalled();
   });
-
 });
