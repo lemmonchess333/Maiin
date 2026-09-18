@@ -947,10 +947,25 @@ describe("Plate-Club badges are awarded the moment the workout saves", () => {
     //     and draining with `advanceTimersByTime(32)` before
     //     `useRealTimers()`: neither revives the driver.
     //
-    // What that leaves is jsdom's counter, which no public API resets.
-    // The tractable routes are a fresh jsdom window for this group (its
-    // own file), or not faking `setInterval` here at all — the group
-    // needs a controllable clock, not necessarily that particular timer.
+    // There are TWO latches, not one, which is why every single-point fix
+    // above fails. Draining jsdom's counter DOES revive the driver —
+    // sweeping `cancelAnimationFrame(1..2000)` after `useRealTimers()`
+    // (cancelling is what decrements, and an unissued handle is a no-op)
+    // takes the probe from `raf=false` to `raf=true`. The tests still
+    // fail, and that is the second latch: motion-dom's batcher only
+    // reschedules through `wake()`, which is guarded by
+    // `if (!runNextFrame)`. While the driver was dead, framer enqueued
+    // work, set `runNextFrame = true`, and handed `processBatch` to an
+    // rAF that never fired. Only `processBatch` clears that flag, and it
+    // is closure-private, so the batcher is stuck whether or not frames
+    // are flowing again.
+    //
+    // Which points at one fix rather than a cleverer hook: give this
+    // group its own FILE, so it gets a fresh jsdom window and a fresh
+    // module registry and can stall neither. (Not faking `setInterval`
+    // here is the other option — the group needs a controllable clock,
+    // not necessarily that timer — but it is the one the tests below it
+    // depend on.)
     // The file's own last test ("finishing early") sidesteps it the same
     // way — wait for the button to exist, click it; fireEvent does not
     // care about opacity. The award is what is under test here, not the
