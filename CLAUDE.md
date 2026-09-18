@@ -1640,26 +1640,37 @@ the bisect above — it is four installs and four builds), or a Firestore
 fix we actually need lands in 12.15+. Deliberately NOT pinned to
 `~12.14`: that would refuse the minors carrying real fixes too.
 
-**But the size gate does NOT block a Dependabot minor, and that is the
-hole to close.** `check-dist-size` runs in the `unit` job, and
-`ci.yml`'s own header says `unit` "runs and reports red but does not
-block auto-merge" — it was never marked a required status check
-(`docs/agents/app-improvement-prompt.md` carries that as an outstanding
-operator item). Meanwhile `dependabot-auto-merge.yml` enables auto-merge
-for every **minor and patch** bump, gated on `emulator-tests` alone. A
-`firebase` minor is exactly that shape.
+**The size gate DOES block a Dependabot minor — this paragraph said it
+did not, and everything it concluded followed from that.** Corrected
+2026-09-18. `unit` is a required status check on main. Measured from the
+API rather than the settings page: a squash-merge attempted while the
+checks were still running was refused with `405 Repository rule
+violations found / Required status check "unit" is queued.`
 
-#2085 is safe only by accident: it groups `firebase-admin` 13 -> 14, so
-fetch-metadata classifies the group as MAJOR and auto-merge never fires.
-The next firebase-ONLY minor — 12.19 -> 12.20, weeks away at their
-cadence — would carry the +62 kB straight past a red `unit`, silently.
+`check-dist-size` is the last step of `unit`, so a bundle regression
+fails the required check and the merge is refused. GitHub's auto-merge
+waits on every required check, not only the ones
+`dependabot-auto-merge.yml` names in its own gating — so a `firebase`
+minor carrying the +62 kB cannot land silently. Nothing needs excluding
+from auto-merge, and no one needs to re-check `firebase` in
+`package.json` after a Dependabot merge.
 
-The fix is one GitHub setting: Settings -> Rules/Branches -> require
-status checks -> add `CI / unit`. Until that is done, treat this row as
-advisory rather than enforced, and check `firebase` in `package.json`
-after any Dependabot merge. A workflow-level stopgap (excluding
-firebase packages from auto-merge) is possible but narrower than the
-real problem: the unit suite itself is not gating merges either.
+The shape of the error is worth keeping. Every claim was reasonable from
+inside the repo — `ci.yml`'s header said `unit` "does not block
+auto-merge", and two operator checklists in `docs/agents/` carried "mark
+CI / unit a required status check" as outstanding. All four agreed,
+which reads as corroboration and was only repetition: three of them cite
+the fourth. None could see the setting, and nothing records when it was
+turned on, so it may well have been in force the whole time. A repo
+cannot observe its own branch protection. Treat every claim of that
+shape as dated hearsay and re-verify it the same way — attempt a merge
+on a PR whose checks have not finished, and read the refusal.
+
+What IS observable is which steps sit inside the required job, and
+`src/lib/__tests__/requiredCheckComposition.test.ts` pins that — move
+the ratchet, the suite or lint out of `unit` and the gate is gone with
+nothing else to say so. It deliberately does not pin the ruleset, which
+no test here can read.
 
 ### Race-day completion predicate (PR #1775)
 
