@@ -214,7 +214,7 @@ export function calculateTDEE(
       : (GOAL_CALORIE_OFFSET[goal] ?? 0);
   // NUTR-L5 safety floor: a deficit can never push the target below
   // min(tdee, MIN_TARGET_CALORIES). The reported `deficit` is the EFFECTIVE
-  // offset after flooring, so UI that renders "±N cal" stays honest when the
+  // offset after flooring, so UI that renders "±N kcal" stays honest when the
   // requested rate couldn't be applied in full.
   //
   // The floor guards the RATE-derived path only. A manual
