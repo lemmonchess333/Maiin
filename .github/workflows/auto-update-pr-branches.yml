@@ -23,35 +23,24 @@
 # PR would sit at `mergeable_state: "blocked"` with ZERO checks until
 # someone nudges its branch manually (the empty-commit dance).
 #
-# We close that ourselves: `workflow_dispatch` and `repository_dispatch`
-# are the DOCUMENTED EXCEPTION to the anti-loop policy — they create runs
-# even when invoked with GITHUB_TOKEN (the call is explicit, not
-# loop-prone; see the 2022-09-08 Actions changelog). So after an update
-# that actually moved the head, we explicitly `gh workflow run` the
-# required check workflows on the PR branch. They run on the new head
-# SHA and report `emulator-tests` / `unit` back onto the PR — no manual
-# nudge needed. (Both workflows declare `workflow_dispatch:`.)
+# A `workflow_dispatch` re-run used to stand in for that, on the
+# grounds that dispatch is the documented exception to the anti-loop
+# policy. It creates the runs, and the runs are useless here: a required
+# status check on this repo is bound to the pull_request event, and a
+# dispatched run is a different event. The checks go GREEN and the
+# ruleset does not count them. The PR sits at `Required status check
+# "unit" is expected`, which no re-run can clear, because no re-run
+# changes the event. That cost PR #1322, and then cost a whole merge
+# queue: eight PRs held there for over an hour, while the only ones that
+# merged were the ones whose branches had been updated through the REST
+# API under a human token.
 #
-# PAT vs GITHUB_TOKEN:
-#   When the optional `AUTO_UPDATE_PR_BRANCHES_PAT` secret is present we
-#   use it for `update-branch` — PAT-attributed pushes trigger the
-#   downstream workflows by themselves (and let pull_request workflows
-#   run without the automation-approval prompt), so we DON'T also
-#   dispatch (that would double-run CI). When the PAT is absent we fall
-#   back to GITHUB_TOKEN + the explicit dispatch above.
-#
-#   IMPORTANT (ruleset gotcha — cost us PR #1322): the GITHUB_TOKEN +
-#   workflow_dispatch fallback puts fresh checks on the new head, but a
-#   `workflow_dispatch` run is NOT the pull_request/push event a branch
-#   RULESET's required status check is bound to. So on a ruleset-gated
-#   repo the dispatched checks can go GREEN WITHOUT satisfying the gate —
-#   the PR sits "blocked / Required status check <name> is expected"
-#   indefinitely even though CI passed, and neither auto-merge nor a
-#   manual merge will fire. For ruleset-gated required checks the PAT is
-#   therefore effectively REQUIRED, not merely "tidier": only a
-#   non-GITHUB_TOKEN push produces ruleset-satisfying CI. The no-PAT path
-#   emits a run-time ::warning:: so this surfaces in the Actions log
-#   rather than as a silently-stuck PR.
+# So this job now REQUIRES `AUTO_UPDATE_PR_BRANCHES_PAT` and does
+# nothing without it. Only a non-GITHUB_TOKEN push produces
+# ruleset-satisfying CI; everything else is a way of making a PR
+# unmergeable. Nothing is lost by standing down, because the ruleset
+# does not require a branch to be up to date — staleness alone never
+# blocked a merge here.
 #
 # This workflow is intentionally tolerant — a single PR that fails to
 # update (conflict) doesn't abort the loop.
@@ -65,7 +54,6 @@ on:
 permissions:
   contents: write
   pull-requests: write
-  actions: write # required for `gh workflow run` (dispatch the checks)
 
 # Serialise the job so two main pushes in quick succession don't race.
 # We don't need to cancel — each run handles whichever PRs are open at
@@ -87,20 +75,28 @@ jobs:
           PAT: ${{ secrets.AUTO_UPDATE_PR_BRANCHES_PAT }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPO: ${{ github.repository }}
-          # Required check workflows to re-dispatch on the new head SHA
-          # when running under GITHUB_TOKEN. Keep in sync with the repo's
-          # required status checks (branch protection / ruleset for main).
-          CHECK_WORKFLOWS: "emulator-tests.yml ci.yml"
         run: |
-          if [ -n "$PAT" ]; then
-            export GH_TOKEN="$PAT"
-            USE_DISPATCH=0
-            echo "Using AUTO_UPDATE_PR_BRANCHES_PAT — its push re-runs the checks on each auto-updated PR."
-          else
-            export GH_TOKEN="$GITHUB_TOKEN"
-            USE_DISPATCH=1
-            echo "::warning::AUTO_UPDATE_PR_BRANCHES_PAT not configured — falling back to GITHUB_TOKEN + workflow_dispatch re-runs. These re-dispatched checks run on the new head but may NOT satisfy a branch RULESET that requires the status check via the pull_request/push event: the PR can then show green checks yet stay unmergeable ('Required status check is expected'). For ruleset-gated required checks, set AUTO_UPDATE_PR_BRANCHES_PAT (a fine-grained PAT or GitHub App token with contents + pull-requests write) — a PAT-attributed push triggers genuine PR CI that the ruleset accepts, and this workflow then skips the dispatch entirely."
+          # Without the PAT this job does nothing, and that is the whole
+          # of the no-PAT path. The `workflow_dispatch` fallback that
+          # used to live here is gone: it put GREEN checks on the new
+          # head that the ruleset does not count, because a required
+          # status check is bound to the pull_request event and a
+          # dispatched run is not that event. The PR then sits at
+          # `Required status check "unit" is expected` with no way out —
+          # no re-run helps, because no re-run changes the event, and
+          # every later push to main updates the branch again.
+          #
+          # Doing nothing is strictly better than updating, because the
+          # ruleset does NOT require a branch to be up to date. Measured
+          # on two PRs merged with bases several commits behind main. So
+          # the update was buying nothing and costing the PR its
+          # mergeability.
+          if [ -z "$PAT" ]; then
+            echo "::warning::AUTO_UPDATE_PR_BRANCHES_PAT is not configured, so this job is a no-op. A GITHUB_TOKEN push cannot produce ruleset-satisfying CI, and updating a branch whose checks then cannot be re-earned leaves the PR permanently unmergeable. Set AUTO_UPDATE_PR_BRANCHES_PAT (a fine-grained PAT or GitHub App token with contents + pull-requests write) to turn this job back on. Until then, branches only go stale, which nothing here requires them not to be."
+            exit 0
           fi
+          export GH_TOKEN="$PAT"
+          echo "Using AUTO_UPDATE_PR_BRANCHES_PAT — its push re-runs the checks on each auto-updated PR."
 
           # Only auto-update PRs that are actually trying to merge: auto-merge
           # enabled, OR carrying the `auto-update` label (an escape hatch for
@@ -137,19 +133,4 @@ jobs:
               continue
             fi
             echo "  PR #$pr branch updated"
-
-            # The update is a GITHUB_TOKEN push, so the anti-loop policy
-            # suppressed emulator-tests / CI on the new head. Re-dispatch them
-            # explicitly (workflow_dispatch is the documented exception) on the
-            # branch ref, which IS updated by the time update-branch returns.
-            if [ "$USE_DISPATCH" = "1" ]; then
-              branch=$(gh pr view "$pr" --repo "$REPO" --json headRefName --jq '.headRefName')
-              for wf in $CHECK_WORKFLOWS; do
-                if gh workflow run "$wf" --repo "$REPO" --ref "$branch"; then
-                  echo "    dispatched $wf on $branch"
-                else
-                  echo "::warning::could not dispatch $wf on $branch for PR #$pr (workflow_dispatch missing? branch gone?)"
-                fi
-              done
-            fi
           done
