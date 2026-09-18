@@ -312,6 +312,93 @@ jobs:
           TROPOS_CLOCK_OFFSET_DAYS: 90
           NODE_OPTIONS: --require=${{ github.workspace }}/scripts/fake-clock.cjs
 
+  # Order-independence gate (2026-09-18). The unit suite had only ever
+  # run in WRITTEN order — file order and, inside each file, source
+  # order. A test that passes only where it sits is not a test of the
+  # code; it is a test of its neighbours. #2391 found three such files by
+  # running `--sequence.shuffle` by hand and fixed them; it left two
+  # behind, and a hand-run is not a gate, so nothing would have found
+  # them again.
+  #
+  # All three survivors were global mutable state, and none was visible
+  # in written order:
+  #
+  #   useHomeProgram.test.tsx        a mock-factory counter that a module
+  #                                  registry runs ONCE per file, asserted
+  #                                  as 0 then 1 — true only first.
+  #   WorkoutSessionCompletion.tsx   a fake-timer block that left
+  #                                  framer-motion's frame loop dead for
+  #                                  the rest of the file, so five later
+  #                                  `toBeVisible()` assertions saw
+  #                                  `opacity: 0`.
+  #   Coachmark.test.tsx             the same stall, in another file: an
+  #                                  AnimatePresence exit that never ran,
+  #                                  leaving a dismissed tooltip in the
+  #                                  DOM. Found only because seed 5 runs
+  #                                  the fake-timer test first.
+  #
+  # The last two are the argument for a second seed. Seed 23 finds the
+  # first two files and not the third; seed 5 finds the third and not the
+  # first. One order is a sample, not a gate.
+  #
+  # The seed is FIXED, so this job is deterministic: it pins two orders
+  # rather than sampling a new one per run. A rotating seed would catch
+  # more and would also redden an unrelated PR on a Tuesday, which is the
+  # trade `check-race-dates.ts` already decided for this repo. Seed 23
+  # and 5 are kept because between them they caught all three, and
+  # neither caught all three alone.
+  unit-shuffle:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        seed: [23, 5]
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 22
+          cache: "npm"
+      - run: npm ci
+      # Prove the flag still DOES something, before trusting a green
+      # suite — the `unit-locale` and `unit-future` jobs both learned
+      # this the same way. Measured on vitest 4.1.8:
+      # `--sequence.bogusOption=1` exits 0 and runs the suite normally,
+      # so an unknown sequence key is accepted in silence. If
+      # `--sequence.shuffle` were ever renamed, this job would keep
+      # passing as a second copy of `unit`.
+      #
+      # `scripts/shuffleOrderProbe.test.ts` records its own execution
+      # order from inside the run and writes it to a file. The first
+      # version of this step grepped the verbose reporter's console
+      # output instead: it worked locally, found NOTHING on the runner,
+      # and — because it hid stderr — printed the same `<nothing>` for
+      # "vitest never ran" as for "the orders matched". Hence a file,
+      # and an explicit exit-status check on each run.
+      - name: Confirm the shuffle took
+        run: |
+          set -o pipefail
+          for seed in 23 5; do
+            TROPOS_SHUFFLE_PROBE="$RUNNER_TEMP/order-$seed.txt" \
+              npx vitest run --sequence.shuffle --sequence.seed="$seed" \
+              scripts/shuffleOrderProbe.test.ts
+            if [ ! -s "$RUNNER_TEMP/order-$seed.txt" ]; then
+              echo "probe wrote nothing for seed $seed — vitest did not run"
+              exit 1
+            fi
+          done
+          echo "seed 23 order: $(tr '\n' ' ' < "$RUNNER_TEMP/order-23.txt")"
+          echo "seed  5 order: $(tr '\n' ' ' < "$RUNNER_TEMP/order-5.txt")"
+          if diff -q "$RUNNER_TEMP/order-23.txt" "$RUNNER_TEMP/order-5.txt" \
+            >/dev/null; then
+            echo "two seeds produced the SAME order — shuffle did not take,"
+            echo "so this job would report order-independence it never examined"
+            exit 1
+          fi
+      - name: Unit suite in shuffled order (seed ${{ matrix.seed }})
+        run: npm run test -- --run --sequence.shuffle --sequence.seed=${{ matrix.seed }}
+
   # Dependency advisories, as a PR gate for the full ROOT tree: `npm audit`
   # fails on high or critical, so a new advisory has to be fixed or
   # consciously addressed before it merges. Development tooling processes
