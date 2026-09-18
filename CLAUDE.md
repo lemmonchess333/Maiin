@@ -305,13 +305,13 @@ Helper: `syncChallengeProgress()` — auto-updates challenge participant progres
 write.** Each is a full run in `ci.yml`, and each exists because the
 single-condition run had been hiding a real defect:
 
-| job             | condition                                | what it caught                                                                                                                                                             |
-| --------------- | ---------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `unit`          | the ordinary run                         | —                                                                                                                                                                          |
-| `unit-timezone` | Kiritimati, Midway, **Auckland**         | a DST transition inside a 21-day span cost a race chip a whole week. Auckland is there for the transition, not the offset — neither extreme observes DST, and nor does UTC |
-| `unit-locale`   | de-DE, fr-FR                             | 26 assertions spelling a comma, and a real defect: a `toLocaleDateString(undefined, …)` rendering every saved workout's date in the DEVICE's order                         |
-| `unit-future`   | clock +90 days, client AND server suites | two fixtures dated against a 3-month range pill that would have gone red on a calendar morning                                                                             |
-| `unit-shuffle`  | `--sequence.shuffle`, seeds 23 and 5     | three files that passed only from where they sat. Two seeds because neither found all three: 23 catches the first two, 5 catches the third                                 |
+| job             | condition                                         | what it caught                                                                                                                                                             |
+| --------------- | ------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `unit`          | the ordinary run                                  | —                                                                                                                                                                          |
+| `unit-timezone` | Kiritimati, Midway, **Auckland**, both suites     | a DST transition inside a 21-day span cost a race chip a whole week. Auckland is there for the transition, not the offset — neither extreme observes DST, and nor does UTC |
+| `unit-locale`   | de-DE, fr-FR                                      | 26 assertions spelling a comma, and a real defect: a `toLocaleDateString(undefined, …)` rendering every saved workout's date in the DEVICE's order                         |
+| `unit-future`   | clock +90 days, client AND server suites          | two fixtures dated against a 3-month range pill that would have gone red on a calendar morning                                                                             |
+| `unit-shuffle`  | `--sequence.shuffle`, seeds 23 and 5, both suites | three files that passed only from where they sat. Two seeds because neither found all three: 23 catches the first two, 5 catches the third                                 |
 
 Practical consequences: do not spell a thousands separator in an
 assertion (`src/test/localeGrouping.ts` builds it), do not pin a fixture

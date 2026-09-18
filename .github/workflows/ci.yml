@@ -161,6 +161,21 @@ jobs:
         run: npm run test -- --run
         env:
           TZ: ${{ matrix.tz }}
+      # The server does its own day and week bucketing — `localWeekKey`,
+      # the scheduled rollups, the race sweep — so "never mix local-date
+      # and UTC in one calculation" applies at least as hard there as on
+      # the client, and `functions/` had never run outside UTC except in
+      # `unit-future`. Added to this leg rather than as its own matrix
+      # entry: the whole functions suite is ~22 s against the client
+      # suite's ~5 minutes, so it is nearly free HERE and a fourth job
+      # would not be.
+      - run: npm ci
+        working-directory: functions
+      - name: Functions suite in ${{ matrix.tz }}
+        run: npm test
+        working-directory: functions
+        env:
+          TZ: ${{ matrix.tz }}
 
   # The suite had only ever run in one LOCALE, the same blind spot the
   # unit-timezone job above exists for. Measured 2026-09-17: 26
@@ -406,6 +421,16 @@ jobs:
           fi
       - name: Unit suite in shuffled order (seed ${{ matrix.seed }})
         run: npm run test -- --run --sequence.shuffle --sequence.seed=${{ matrix.seed }}
+      # Same reasoning as the timezone leg: ~22 s riding an existing job
+      # rather than a fourth matrix entry. The functions suite shares one
+      # Firestore emulator across its files, which is exactly the shape
+      # of global mutable state this job exists to find — and nothing had
+      # ever run it in an order other than written.
+      - run: npm ci
+        working-directory: functions
+      - name: Functions suite in shuffled order (seed ${{ matrix.seed }})
+        run: npm test -- --sequence.shuffle --sequence.seed=${{ matrix.seed }}
+        working-directory: functions
 
   # Dependency advisories, as a PR gate for the full ROOT tree: `npm audit`
   # fails on high or critical, so a new advisory has to be fixed or
