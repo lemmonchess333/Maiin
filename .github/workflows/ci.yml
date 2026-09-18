@@ -272,6 +272,87 @@ jobs:
           TROPOS_CLOCK_OFFSET_DAYS: 90
           NODE_OPTIONS: --require=${{ github.workspace }}/scripts/fake-clock.cjs
 
+  # Order-independence gate (2026-09-18). The unit suite had only ever
+  # run in WRITTEN order — file order and, inside each file, source
+  # order. A test that passes only where it sits is not a test of the
+  # code; it is a test of its neighbours. #2391 found three such files by
+  # running `--sequence.shuffle` by hand and fixed them; it left two
+  # behind, and a hand-run is not a gate, so nothing would have found
+  # them again.
+  #
+  # All three survivors were global mutable state, and none was visible
+  # in written order:
+  #
+  #   useHomeProgram.test.tsx        a mock-factory counter that a module
+  #                                  registry runs ONCE per file, asserted
+  #                                  as 0 then 1 — true only first.
+  #   WorkoutSessionCompletion.tsx   a fake-timer block that left
+  #                                  framer-motion's frame loop dead for
+  #                                  the rest of the file, so five later
+  #                                  `toBeVisible()` assertions saw
+  #                                  `opacity: 0`.
+  #   Coachmark.test.tsx             the same stall, in another file: an
+  #                                  AnimatePresence exit that never ran,
+  #                                  leaving a dismissed tooltip in the
+  #                                  DOM. Found only because seed 5 runs
+  #                                  the fake-timer test first.
+  #
+  # The last two are the argument for a second seed. Seed 23 finds the
+  # first two files and not the third; seed 5 finds the third and not the
+  # first. One order is a sample, not a gate.
+  #
+  # The seed is FIXED, so this job is deterministic: it pins two orders
+  # rather than sampling a new one per run. A rotating seed would catch
+  # more and would also redden an unrelated PR on a Tuesday, which is the
+  # trade `check-race-dates.ts` already decided for this repo. Seed 23
+  # and 5 are kept because between them they caught all three, and
+  # neither caught all three alone.
+  unit-shuffle:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        seed: [23, 5]
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 22
+          cache: "npm"
+      - run: npm ci
+      # Prove the flag took, before trusting a green suite — the
+      # `unit-locale` and `unit-future` jobs both learned this the same
+      # way. An IGNORED `--sequence.shuffle` does not error; it silently
+      # makes this job a second copy of `unit` that reports
+      # order-independence it never examined. Two seeds over one
+      # 41-test file must disagree about what runs first.
+      - name: Confirm the shuffle took
+        run: |
+          # The two seeds must disagree about which test in one 41-test
+          # file runs first. The duration suffix is stripped before the
+          # comparison — leaving it in would make the two strings differ
+          # on timing alone, which is an anti-vacuity check that cannot
+          # fail.
+          first() {
+            npx vitest run --reporter=verbose --sequence.shuffle \
+              --sequence.seed="$1" src/utils/__tests__/formatters.test.ts \
+              2>/dev/null \
+              | grep -E '^[[:space:]]+[^[:space:]]+[[:space:]]+\|' \
+              | head -1 \
+              | sed -E 's/[[:space:]]+[^[:space:]]*ms$//' \
+              | sed -E 's/^.*\.ts > //'
+          }
+          a=$(first 23); b=$(first 5)
+          echo "seed 23 ran first: ${a:-<nothing>}"
+          echo "seed  5 ran first: ${b:-<nothing>}"
+          if [ -z "$a" ] || [ "$a" = "$b" ]; then
+            echo "shuffle did not take — this job would pass vacuously"
+            exit 1
+          fi
+      - name: Unit suite in shuffled order (seed ${{ matrix.seed }})
+        run: npm run test -- --run --sequence.shuffle --sequence.seed=${{ matrix.seed }}
+
   # Dependency advisories, as a PR gate for the full ROOT tree: `npm audit`
   # fails on high or critical, so a new advisory has to be fixed or
   # consciously addressed before it merges. Development tooling processes
