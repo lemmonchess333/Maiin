@@ -73,7 +73,7 @@ export default function ProfileInfoSection({
           if (!result.ok) setName(prev);
         }}
         placeholder="Display name"
-        className="w-full px-4 py-2.5 rounded-lg bg-muted border border-border/50 text-foreground text-sm placeholder:text-muted-foreground"
+        className="w-full min-h-11 px-4 rounded-lg bg-muted border border-border/50 text-foreground text-sm placeholder:text-muted-foreground"
       />
       <div className="grid grid-cols-2 gap-3">
         <div>
@@ -108,7 +108,7 @@ export default function ProfileInfoSection({
               const result = await updateProfile({ weightKg });
               if (!result.ok) setWeightKg(prev);
             }}
-            className="w-full mt-1 px-4 py-2.5 rounded-lg bg-muted border border-border/50 text-foreground text-sm"
+            className="w-full mt-1 min-h-11 px-4 rounded-lg bg-muted border border-border/50 text-foreground text-sm"
           />
           <p className="text-xs text-muted-foreground mt-1">
             For TDEE calc. Log daily weight from Home.
@@ -143,7 +143,7 @@ export default function ProfileInfoSection({
               const result = await updateProfile({ heightCm });
               if (!result.ok) setHeightCm(prev);
             }}
-            className="w-full mt-1 px-4 py-2.5 rounded-lg bg-muted border border-border/50 text-foreground text-sm"
+            className="w-full mt-1 min-h-11 px-4 rounded-lg bg-muted border border-border/50 text-foreground text-sm"
           />
         </div>
       </div>
@@ -197,7 +197,7 @@ export default function ProfileInfoSection({
             else setWhy(next);
           }}
           placeholder="What's driving you?"
-          className="w-full mt-1 px-4 py-2.5 rounded-lg bg-muted border border-border/50 text-foreground text-sm placeholder:text-muted-foreground"
+          className="w-full mt-1 min-h-11 px-4 rounded-lg bg-muted border border-border/50 text-foreground text-sm placeholder:text-muted-foreground"
         />
         <p className="text-xs text-muted-foreground mt-1">
           We resurface this in your weekly review.
