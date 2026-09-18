@@ -20,9 +20,9 @@ export default function DataExportSection({ user }: DataExportSectionProps) {
   return (
     <div className="space-y-2">
       {[
-        { label: "Export Workouts (CSV)", key: "workouts" },
-        { label: "Export Meals (CSV)", key: "meals" },
-        { label: "Export Bodyweight (CSV)", key: "bodyweight" },
+        { label: "Export workouts (CSV)", key: "workouts" },
+        { label: "Export meals (CSV)", key: "meals" },
+        { label: "Export bodyweight (CSV)", key: "bodyweight" },
       ].map(({ label, key }) => (
         <button
           type="button"
