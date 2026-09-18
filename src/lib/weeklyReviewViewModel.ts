@@ -241,8 +241,36 @@ export function verdictFor(args: {
   deloadRecommended: boolean;
 }): string {
   const { delta, loadBand, deloadRecommended } = args;
-  if (deloadRecommended || loadBand === "deload") {
-    return "A lighter week by design — recovery is part of the plan.";
+  /* These two flags mean DIFFERENT things. One sentence covered both —
+     "A lighter week by design — recovery is part of the plan." — and it
+     was wrong for each of them, in opposite directions.
+
+     `deloadRecommended` is the engine's FORWARD-looking advice, and it
+     fires on the opposite of a light week: its own insight bullet reads
+     "Consider a deload week — sustained HIGH load with limited recovery
+     signals", and its plan adjustment is "Reduce working sets by
+     30-40%". Rendering it as a past-tense description told a user who
+     had just trained hard that last week was light.
+
+     `loadBand === "deload"` is `computeLoadBand(pi)` for pi < 25 — a
+     week with almost no training. Calling that "by design" asserts an
+     intention the app cannot know: the same band is produced by a
+     planned deload and by a week the user missed.
+
+     Seen together on one screen: a captured Weekly Review showed PI 92
+     with a +2 delta and "2 of 6 lifts", under "A lighter week by
+     design". 92 is the TOP band, 2 of 6 is a missed week, and the
+     sentence claimed both were intended.
+
+     Neither replacement claims intent. The delta suppression below is
+     untouched — not framing a PI drop as a loss is a kindness the Rev1
+     lock decided on, and it is a choice about emphasis rather than a
+     claim about why. */
+  if (deloadRecommended) {
+    return "Load has run high — this is a good week to ease off.";
+  }
+  if (loadBand === "deload") {
+    return "A light week — the plan picks up from here.";
   }
   if (loadBand === "overreach") {
     return "A big week. Keep an eye on recovery going into this one.";
