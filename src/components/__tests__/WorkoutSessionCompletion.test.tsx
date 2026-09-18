@@ -640,7 +640,7 @@ describe("completed-set corrections", () => {
 });
 
 describe("WorkoutSession — an accidental extra set can be removed", () => {
-  /* "+ Add Set" had no inverse, so a mis-tap left an uncompleted set the
+  /* "Add set" had no inverse, so a mis-tap left an uncompleted set the
      session counted as outstanding: finishing the three sets the programme
      prescribed still routed the lifter through "Finish early". */
   const rows = () => screen.getAllByLabelText(/^Set \d+ reps$/);
@@ -651,7 +651,7 @@ describe("WorkoutSession — an accidental extra set can be removed", () => {
     openSession();
     expect(rows()).toHaveLength(3);
 
-    fireEvent.click(screen.getByRole("button", { name: "+ Add Set" }));
+    fireEvent.click(screen.getByRole("button", { name: "Add set" }));
     expect(rows()).toHaveLength(4);
 
     // Open set 4's menu and remove it.
@@ -672,7 +672,7 @@ describe("WorkoutSession — an accidental extra set can be removed", () => {
     // Splicing from the middle renumbers every set after it and moves the
     // completion cursor under the lifter.
     openSession();
-    fireEvent.click(screen.getByRole("button", { name: "+ Add Set" }));
+    fireEvent.click(screen.getByRole("button", { name: "Add set" }));
     fireEvent.click(screen.getAllByTitle("Set type: working")[1]);
     expect(screen.queryByRole("button", { name: /Remove set/i })).toBeNull();
   });
