@@ -907,7 +907,7 @@ export function useProgram() {
   // runDay into weekHistory BEFORE the auto-transition writes
   // `race_no_show` to it, losing the inferred state.
   //
-  // Detection: `programState.runDays[0]?.weekKey` is the Sunday of
+  // Detection: `programState.runDays[0]?.weekKey` is the first day of
   // the week the runDays were last generated for. If that's
   // before `localWeekKey()`, the user is ≥1 week stale.
   //
@@ -1639,7 +1639,7 @@ export function useProgram() {
     // The original stamped `localWeekKey()` — the current week — reasoning
     // that a user finishing early is still inside it. But the rollover fires
     // on `anchor < localWeekKey()`, so the current-week anchor is already
-    // stale by the next Sunday: advance on Wednesday and the automatic
+    // stale at the next week rollover: advance on Wednesday and the automatic
     // rollover fires four days later, on top of the advance the user just
     // asked for. The new week got four days instead of seven, and for anyone
     // who habitually finishes early the whole periodization compresses —
@@ -1647,7 +1647,7 @@ export function useProgram() {
     // programme week, which is a training defect, not a display one.
     //
     // Anchoring to the next week key means the automatic rollover stays
-    // quiet through that week and fires the Sunday after, so the week the
+    // quiet through that week and fires at the following rollover, so the week the
     // user just advanced into is never silently cut short. If they finish
     // early again they simply advance again — which is the whole point of
     // the button.
@@ -2047,7 +2047,7 @@ export function useProgram() {
   );
 
   // RUN-RESCHEDULE-01: one-off move of a planned run to another day WITHIN
-  // its generated Sunday-start week. Moves the plan, not the goalposts — the
+  // its generated week. Moves the plan, not the goalposts — the
   // stable id, template, override, status, completion truth, race identity,
   // and manualCompletions map all survive; only `date`/`dayIndex` and the
   // truthful clash metadata change (see runReschedule.computeRunMove).
