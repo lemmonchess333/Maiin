@@ -13,9 +13,16 @@ import Coachmark from "../Coachmark";
  * localStorage, auto-dismiss timing, and the no-show-after-dismissed
  * contract.
  *
- * Real timers — fake timers + framer-motion's AnimatePresence exit
- * animation interact badly under jsdom. A short autoDismissMs + waitFor
- * is more reliable. */
+ * Real timers, with one exception below. "Fake timers and framer-motion
+ * interact badly under jsdom" was the standing explanation here, and the
+ * mechanism turns out to be specific and one-way: jsdom drives
+ * `requestAnimationFrame` off `setInterval`, so a frame outstanding when
+ * a fake clock is handed back strands jsdom's frame counter AND
+ * motion-dom's `runNextFrame` flag, and no animation in the file runs
+ * again. An AnimatePresence exit that never completes leaves a dismissed
+ * tooltip in the DOM. A short autoDismissMs + waitFor sidesteps it; the
+ * one test that genuinely needs a controllable clock settles before
+ * restoring it. Full mechanism in `WorkoutSessionCompletion.test.tsx`. */
 
 /* `anon:` is the signed-out bucket — this renders without an AuthProvider,
    which `useUidForStorageKey` treats the same way. The prefix is what keeps
@@ -96,7 +103,19 @@ describe("Coachmark", () => {
         expect(callback).not.toHaveBeenCalled();
       }
     } finally {
+      /* Unmount and tick once more before handing the clock back. jsdom
+         drives `requestAnimationFrame` off `setInterval`, which the fake
+         clock owns here, and framer-motion holds jsdom's rAF from import
+         rather than the global — so leaving with a frame outstanding
+         strands jsdom's frame counter above zero AND motion-dom's
+         `runNextFrame` flag true, and no later animation in this FILE
+         can run. The visible cost was the auto-dismiss test above: its
+         AnimatePresence exit never completes, so the tooltip is still
+         in the DOM. It only showed under `--sequence.shuffle`, because
+         written order puts that test first. The full mechanism is in
+         `WorkoutSessionCompletion.test.tsx`. */
       unmount();
+      act(() => vi.advanceTimersByTime(100));
       vi.useRealTimers();
     }
   });

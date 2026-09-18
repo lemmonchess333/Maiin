@@ -1,7 +1,6 @@
-import { WEEK_STARTS_ON } from "@/lib/dateHelpers";
+import { weekPosition } from "@/lib/dateHelpers";
 import type { ScheduleDay } from "@/lib/scheduleUtils";
 
-const calendarOrder = (day: number) => (day - WEEK_STARTS_ON + 7) % 7;
 const gap = (a: number, b: number) =>
   Math.min(Math.abs(a - b), 7 - Math.abs(a - b));
 
@@ -24,7 +23,7 @@ export function chooseQualityRunSlots({
     .filter(
       (day) => Number.isInteger(day) && day >= 0 && day <= 6 && day !== longDay
     )
-    .sort((a, b) => calendarOrder(a) - calendarOrder(b));
+    .sort((a, b) => weekPosition(a) - weekPosition(b));
   if (!days.length) return [];
   const options =
     count === 2 && days.length >= 2
@@ -41,7 +40,7 @@ export function chooseQualityRunSlots({
         (day) => weekSchedule.find((slot) => slot.day === day)?.type === "both"
       ).length,
       -Math.min(...gaps),
-      ...choice.map(calendarOrder),
+      ...choice.map(weekPosition),
     ];
   };
   options.sort((a, b) => {
