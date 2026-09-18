@@ -428,6 +428,37 @@ These are distilled from the project's own rework history — classes of mistake
 - **Never mix local-date and UTC operations in one calculation.** Use the existing `localWeekKey()` / local-midnight helpers consistently for any day/week bucketing, and pin scheduled functions to explicit **UTC** — a Europe/London schedule anchor silently shifts an hour under BST. (`5ad5794` bucketed weekly run-stats into the wrong week near midnight in non-UTC zones; PR #815 BST shifted the rollup/refresh schedules; `8b856fa` captures `profile.timezone` on boot.)
 - **A negative assertion under `waitFor` proves nothing unless something anchors it.** `await waitFor(() => expect(x).toBeNull())` is satisfied on its FIRST poll by the initial state and returns before the awaited work has landed — so it passes at t=0, and a value that becomes wrong _asynchronously_ is invisible to it. Anchor on a positive first (wait for `loading` to flip, or for the other account's value to appear), or hold the read with `deferReads()` / `releaseRead()` and assert after releasing. Two instances so far, both pinning documented security properties that nothing was actually holding: `usePushSettings` uid-safety passed with EVERY uid guard deleted, and 5 of `useLastRunType`'s 7 tests passed while the hook offered a repeat row to every user including signed-out ones. Both were found by mutating the hook to go wrong AFTER the read — the mutation shape a synchronous probe misses.
 
+- **An absence assertion that is the ONLY assertion in a test stops
+  testing anything the moment its mechanism stops being the one in use.**
+  The sibling of the `waitFor` row above, and the failure is quieter: the
+  test keeps passing, so nothing ever points at it. Six instances, all in
+  `useProgramWriters.test.ts`, all
+  `expect(setDocCalls().length).toBe(0)` on writers that had moved behind
+  the ADR-0011 command boundary and no longer write documents on ANY
+  path — so the assertion was true whatever the guard did. **Deleting the
+  guard outright left every one of them green**, including the two that
+  stop a user erasing a scheduled race by swapping it to an easy run.
+  Fixed by asserting the absence of the COMMAND KIND in `sentCommands`
+  (#2424: `overrideRunDay`, `markManualComplete`; #2425:
+  `restoreWorkoutDay`, `restoreRunDay`, `setNextWorkout` x2) — the
+  pattern the three `moveRunDay` refusal tests in the same file already
+  used, having been repaired when THAT writer moved and nothing swept the
+  rest.
+  The discriminator is not "don't assert on writes". Seven other no-write
+  sites in the repo are sound, and not because their writers still write
+  documents — that was my first answer and it is wrong;
+  `workoutCompletionQueue` writes through a `runTransaction`. They are
+  sound because in each, the empty log is a SECOND assertion:
+  `workoutCorrection` anchors on two `rejects.toThrow(...)`,
+  `workoutCompletionQueue` on the flush return plus both queue lengths,
+  `WeightLogSheetRecovery` on a visible control and an alert's text, and
+  `firestoreFake`'s two are testing `deferWrites` itself, where the empty
+  log IS the behaviour. Anchor an absence on something positive and the
+  write check can stay as corroboration.
+  Only mutation settles it: remove the guard and re-run. If the test
+  still passes it was never testing the guard, and reading the test
+  cannot tell you that.
+
 - **Scope a mutation run across BOTH sides of a mirror, or it will lie to
   you — in the direction that invents work.** The standing rule is that a
   green client suite does not prove the server; the inverse is just as
