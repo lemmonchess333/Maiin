@@ -84,6 +84,10 @@ also surfaced eight latent type errors there — one of them a
 
 - Mark **CI / unit** a required status check on `main`, so a red suite
   blocks a merge rather than reporting after it.
+  STATUS 2026-09-18 — DONE, and possibly already done when this line was
+  written. Verified from a merge refusal (`405 Repository rule violations
+found / Required status check "unit" is queued`) rather than from the
+  settings page, which is the only way a session here can see it.
 - **Firebase Console, deployed source** — the dedup gotcha means green CI
   is necessary, not sufficient: `analyzeFoodText` contains
   `require("./lib/foodTextRequest")` (#2136); the deployed Firestore rules
