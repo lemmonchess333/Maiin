@@ -39,10 +39,10 @@ export async function buildLeaderboard(
   const sinceTs = Timestamp.fromDate(since);
   // `workout.date` is stored as a LOCAL "YYYY-MM-DD" string, so the cutoff
   // for the `where('date', '>=', ...)` query must be the LOCAL date of
-  // `since` — not `since.toISOString()` (UTC). `since` is LOCAL Sunday
-  // midnight; in positive-offset zones (e.g. UTC+9) that instant is still
-  // the previous calendar day in UTC, so the UTC stringify rolls the cutoff
-  // back to the previous Saturday and pulls in an extra day's workouts. The
+  // `since` — not `since.toISOString()` (UTC). `since` is LOCAL midnight on
+  // the week's first day; in positive-offset zones (e.g. UTC+9) that instant
+  // is still the previous calendar day in UTC, so the UTC stringify rolls the
+  // cutoff back a day and pulls in an extra day's workouts. The
   // runs query filters on `completedAt` (a Timestamp) so it correctly uses
   // `sinceTs` and is unaffected.
   const sinceDateStr = localDateString(since);
