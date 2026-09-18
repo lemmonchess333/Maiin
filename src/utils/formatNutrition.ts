@@ -26,5 +26,24 @@ export function formatMacro(value: number): string {
   return String(Math.round(value));
 }
 
-/** Standard calorie unit label — "kcal" everywhere */
+/**
+ * The calorie unit label, in one place.
+ *
+ * "kcal everywhere" is what this said before there was anything holding
+ * it, and the app shipped both words: 34 surfaces wrote the unit as a
+ * literal, roughly half "cal" and half "kcal", and the split did not
+ * follow any boundary a reader could learn. Home's energy card said
+ * "1,790 kcal logged" while the day-detail card one tap away said
+ * "1,790 cal"; the food suggestion dropdown used both, three list
+ * sections apart.
+ *
+ * `calorieUnitGate.test.ts` now refuses a hardcoded calorie unit beside a
+ * value, so in production code the word lives here alone. Changing it is
+ * this line — worth knowing if "cal" (shorter, and what the US food apps
+ * show) is ever preferred to "kcal" (the correct unit, and the UK/EU
+ * convention this app is written in). Measured: flipping it turns ~16
+ * tests red, all of them asserting a whole rendered sentence that happens
+ * to contain the unit. Those are working as intended and are not part of
+ * the sweep; the pin on the word itself lives in this file's own test.
+ */
 export const CALORIE_UNIT = "kcal";
