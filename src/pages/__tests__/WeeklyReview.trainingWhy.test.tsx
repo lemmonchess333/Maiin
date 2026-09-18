@@ -38,6 +38,24 @@ vi.mock("@/hooks/useWeeklyReview", () => ({
   reviewViewedKey: (weekKey: string) => `tropos-review-viewed:${weekKey}`,
 }));
 
+/* The page renders the real `MomentumCheckinCard`, which awaits a real
+   `getDoc`. Unmocked, that boots the Firestore SDK, and the SDK emits a
+   `console.warn` about 600ms in — "Error using user provided cache.
+   Falling back to memory cache" — long after these four tests have
+   finished.
+
+   Under full-suite load that log lands while the worker's RPC is closing,
+   and vitest fails the whole job with `EnvironmentTeardownError: Closing
+   rpc while "onUserConsoleLog" was pending`, every test passing and the
+   run exiting 1. It is always attributed to this file because this is the
+   one suite that boots the SDK: measured on three separate runs before
+   this mock existed.
+
+   The bare form is the repo's one Firestore fake (ADR-0009). Mocking the
+   card instead would work today and would stop working the moment the
+   page grows another Firestore-touching child. */
+vi.mock("firebase/firestore");
+
 vi.mock("@/hooks/useDismissOnce", () => ({
   useDismissOnce: () => ({ dismiss: vi.fn(), dismissed: false }),
 }));
