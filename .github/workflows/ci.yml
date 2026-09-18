@@ -364,12 +364,40 @@ jobs:
   # first two files and not the third; seed 5 finds the third and not the
   # first. One order is a sample, not a gate.
   #
-  # The seed is FIXED, so this job is deterministic: it pins two orders
-  # rather than sampling a new one per run. A rotating seed would catch
-  # more and would also redden an unrelated PR on a Tuesday, which is the
-  # trade `check-race-dates.ts` already decided for this repo. Seed 23
-  # and 5 are kept because between them they caught all three, and
-  # neither caught all three alone.
+  # The seed pins the ORDER, and only the order. This job is NOT
+  # deterministic, and this header said it was until a pair of runs
+  # proved otherwise: seed 23 went RED on #2395's head 4b8de00b
+  # (`useProgramWriters.test.ts`, a `ProgrammeConflictError` out of
+  # `mergeChangedFields`) and GREEN on 854cb0ca — same seed, same job,
+  # same test, one branch-update apart. Six local repetitions at seed 23
+  # never reproduced it.
+  #
+  # The distinction is in vitest's own option docs: `shuffle` is "should
+  # files and tests run in random order" and `seed` is "seed for the
+  # random number generator". Neither touches the worker pool. Files run
+  # in parallel, so which ones are in flight together — and how long each
+  # takes — comes from the machine, not from the seed. Anything
+  # timing-dependent (an `await` racing a write the hook started at load)
+  # is free to differ run to run at a fixed seed.
+  #
+  # Two consequences, worth having BEFORE reading a result:
+  #
+  #   A GREEN run does not certify these two orders. It says they held
+  #   once, on that runner. Order-independence is what this job examines;
+  #   it is not what a pass proves.
+  #
+  #   A RED run is a real signal and worth chasing, but it may not
+  #   reproduce. The order itself replays exactly — measured, three runs
+  #   of the probe below at seed 23 wrote byte-identical output — so a
+  #   failure can be put back in its order locally; the timing cannot.
+  #   Failing to reproduce is evidence about the defect's SHAPE (a race),
+  #   not evidence that the run lied.
+  #
+  # The seeds are fixed because a rotating one would catch more and would
+  # also redden an unrelated PR on a Tuesday, which is the trade
+  # `check-race-dates.ts` already decided for this repo. Seed 23 and 5
+  # are kept because between them they caught all three, and neither
+  # caught all three alone.
   unit-shuffle:
     runs-on: ubuntu-latest
     timeout-minutes: 15
