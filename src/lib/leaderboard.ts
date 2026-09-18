@@ -24,6 +24,43 @@ export type ChallengeType =
   | "weekly_hybrid"
   | "weekly_workouts";
 
+/**
+ * One name and one unit per leaderboard, for every surface that renders it.
+ *
+ * `LeaderboardCard` and `FullLeaderboard` each carried their own table and
+ * had already drifted: `weekly_distance` was "Weekly Distance" on the card
+ * and "Running Distance" in the full view, `weekly_volume` "Weekly Volume"
+ * against "Lifting Volume". The units agreed, which is what let the names
+ * diverge unnoticed — the figure looked right on both.
+ *
+ * It was LATENT rather than live: the only production call site passes
+ * `weekly_hybrid` (FeedView) and the full view defaults to the same, so a
+ * user could only ever reach the two rows that happened to agree. The card's
+ * other three entries sit behind a real `challenge` prop, so the day anyone
+ * uses it the two surfaces disagree about what the user is looking at.
+ *
+ * The full view's wording won, for two reasons that are on the screen rather
+ * than a preference: the card sport-codes its own icon (Footprints tinted
+ * `running`, Dumbbell tinted `lifting`), so "Running"/"Lifting" matches what
+ * is drawn beside the title and "Weekly" does not — and the card already
+ * renders a persistent "This week" eyebrow next to that title, which made
+ * "Weekly Distance · This week" say it twice.
+ *
+ * Casing is deliberately untouched. All four are Title Case and internally
+ * consistent, so the house rule that catches a Title Case stray among
+ * sentence-case siblings does not apply here; whether this whole set should
+ * move to sentence case is a separate question with one answer, not four.
+ */
+export const CHALLENGE_LABELS: Record<
+  ChallengeType,
+  { title: string; unit: string }
+> = {
+  weekly_hybrid: { title: "Hybrid Score", unit: "pts" },
+  weekly_volume: { title: "Lifting Volume", unit: "kg" },
+  weekly_distance: { title: "Running Distance", unit: "km" },
+  weekly_workouts: { title: "Workouts", unit: "sessions" },
+};
+
 export async function buildLeaderboard(
   currentUid: string,
   challenge: ChallengeType
