@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import RecentRunningContext from "../RecentRunningContext";
 import type { RunSummaryItem } from "@/hooks/useRunningStats";
@@ -12,6 +12,22 @@ const state = vi.hoisted(() => ({
 vi.mock("@/hooks/useRunningStats", () => ({ useRunningStats: () => state }));
 
 describe("recent running evidence states", () => {
+  /* Both tests drive the same hoisted `state` object, and each walks it
+     through several values — so the starting point has to be restored,
+     not assumed. It was not: the second test sets `loading = false` and
+     puts back only `runs`, so the first test's opening assertion (the
+     LOADING copy) holds purely because it happens to run first.
+
+     Found with `--sequence.shuffle`, which fails this file on 1 of 5
+     seeds. Restoring every field rather than the one that bit: a partial
+     reset is the thing that produced this. */
+  beforeEach(() => {
+    state.runs = [];
+    state.loading = true;
+    state.failed = false;
+    state.refresh.mockClear();
+  });
+
   it("keeps loading, unavailable and empty distinct, with retry", () => {
     const view = render(<RecentRunningContext />);
     fireEvent.click(screen.getByText("Recent running"));
@@ -59,6 +75,5 @@ describe("recent running evidence states", () => {
         longestMinutes: 30,
       })
     );
-    state.runs = [];
   });
 });
