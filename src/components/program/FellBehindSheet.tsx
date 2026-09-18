@@ -113,7 +113,14 @@ export default function FellBehindSheet({
             id: "realign",
             label: detrained ? "Rebuild my plan" : "Realign my plan",
             pendingLabel: detrained ? "Rebuilding…" : "Realigning…",
-            variant: "primary" as const,
+            /* `sport`, not `primary`: this is the RUN return sheet, and
+               the canonical CTA mapping gives running its coral. The
+               surface already says so — its icon carries the running
+               identity — so
+               purple here was the one element on the sheet not
+               sport-coded. `LiftReturnSheet`, the same sheet for lifting,
+               is purple throughout and stays that way. */
+            variant: "sport" as const,
             onSelect: async () => {
               reportChoice(detrained ? "rebuild" : "realign");
               await realignRacePlan();
