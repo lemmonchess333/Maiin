@@ -2603,7 +2603,7 @@ export function advanceWeek(
   experience?: Experience,
   recovery: RecoveryState = "unknown",
   /**
-   * D1: local Sunday week key the rolled-into week belongs to. Stamped onto
+   * D1: local week key the rolled-into week belongs to. Stamped onto
    * `liftWeekKey` so the calendar rollover has an anchor to compare against
    * next time. Passed in rather than read from the clock here to keep this
    * function pure — every other input is already explicit.
