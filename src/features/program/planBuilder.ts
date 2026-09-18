@@ -44,7 +44,11 @@ import {
  * `buildPlan` coordinates these. Each is independently testable.
  */
 
-import { planningEasyPaceSPerKm, type RunFitnessInput } from "@/lib/runPaces";
+import {
+  planningEasyPaceSPerKm,
+  planningIntervalPaceSPerKm,
+  type RunFitnessInput,
+} from "@/lib/runPaces";
 import type {
   Goal,
   PreferredSplit,
@@ -400,6 +404,7 @@ function buildRunPlan(
       weekStart,
       tuning: input.runTuning ?? DEFAULT_RUN_TUNING,
       easyPaceSPerKm: planningEasyPaceSPerKm(input.runFitness),
+      intervalPaceSPerKm: planningIntervalPaceSPerKm(input.runFitness),
       runningBaseline: input.runningBaseline,
       runTimeLimits: input.runTimeLimits,
       planTotalWeeks: continued?.totalWeeks,

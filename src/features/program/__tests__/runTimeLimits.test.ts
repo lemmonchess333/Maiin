@@ -27,6 +27,32 @@ const template = (id: string) =>
   RUN_TEMPLATES.find((candidate) => candidate.id === id)!;
 
 describe("recurring run availability", () => {
+  it("budgets distance intervals from their prescribed pace and full structure", () => {
+    // 4 x 1 km @ 5:00/km + 5 min warm-up + 3 x 90s recovery + 5 min
+    // cool-down = 34.5 min. The catalogue estimate is 29 min, so this pins
+    // the independent structure calculation rather than testing the helper
+    // against itself.
+    expect(plannedRunMinutes(template("4x1k"), null, 300)).toBe(34.5);
+
+    const run: ScheduledRunDay = {
+      dayIndex: 2,
+      templateId: "4x1k",
+      type: "intervals",
+      status: "planned",
+    };
+    const fitted = fitRunToTimeLimit(
+      run,
+      { sessionMinutes: 30, longRunMinutes: null },
+      null,
+      300
+    );
+    expect(fitted.templateId).not.toBe("4x1k");
+    expect(fitted.timeLimit).toEqual({
+      minutes: 30,
+      originalTemplateId: "4x1k",
+    });
+  });
+
   it("keeps legacy plans identical when no limit is chosen", () => {
     expect(
       generateRacePlanV2({
@@ -41,6 +67,7 @@ describe("recurring run availability", () => {
     const limited = generateRacePlanV2({
       ...input,
       easyPaceSPerKm: 600,
+      intervalPaceSPerKm: 300,
       runTimeLimits: { sessionMinutes: 30, longRunMinutes: 45 },
     });
     expect(limited.weeks.map((week) => week.map((run) => run.date))).toEqual(
@@ -58,7 +85,7 @@ describe("recurring run availability", () => {
           ? 45
           : 30;
       expect(
-        plannedRunMinutes(template(run.templateId), 600)
+        plannedRunMinutes(template(run.templateId), 600, 300)
       ).toBeLessThanOrEqual(limit);
     }
     expect(
@@ -76,6 +103,7 @@ describe("recurring run availability", () => {
     const args = {
       ...input,
       easyPaceSPerKm: 420,
+      intervalPaceSPerKm: 240,
       runTimeLimits: { sessionMinutes: 30, longRunMinutes: 60 },
     };
     const block = generateRacePlanV2(args);

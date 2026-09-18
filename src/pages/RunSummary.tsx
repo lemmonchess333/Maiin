@@ -46,6 +46,7 @@ import { compose, enqueueShare, showQueuedToast } from "../lib/shareComposer";
 import { recordSharedActivity } from "../lib/sessionDelete";
 import type { GPSPoint, Split } from "../lib/gps";
 import type { RunConfig } from "../components/run/RunSetupModal";
+import type { SessionSegmentResult } from "../hooks/useSessionPlayer";
 import RunMap from "../components/run/RunMapLazy";
 import PaceLegend from "../components/run/PaceLegend";
 import SegmentedControl from "../components/ui/SegmentedControl";
@@ -353,6 +354,9 @@ interface RunData {
   elevationGain: number;
   runConfig?: RunConfig | null;
   intervalData?: RunConfig["intervals"];
+  /** RUN-EXEC-SEG-01: exact segment outcomes captured by the in-run player.
+   * Optional for legacy/free runs; descriptive evidence, not a fitness grade. */
+  segmentResults?: SessionSegmentResult[];
   // PR H (audit P1 #9): route-quality metrics computed in Run.tsx
   // at finish time. Null for non-GPS sources (treadmill / manual).
   routeQuality?: import("../lib/routeQuality").RouteQuality | null;
@@ -1009,6 +1013,7 @@ export default function RunSummary() {
       activityType: runConfig?.activityType || "freerun",
       target: runConfig?.target,
       intervalData,
+      segmentResults: state.segmentResults ?? null,
       runConfig,
       shoeId: effectiveShoeId,
       /* Persist the validity verdict alongside the run document so

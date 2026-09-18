@@ -933,6 +933,9 @@ export interface RacePlanV2Input {
    * to the nominal ceiling on the weekly refresh.
    */
   easyPaceSPerKm?: number | null;
+  /** Confirmed interval-work pace for exact duration budgeting of
+   * distance-based quality sessions. Null keeps catalogue estimates. */
+  intervalPaceSPerKm?: number | null;
 }
 
 export interface RacePlanV2Output {
@@ -1416,7 +1419,12 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
   );
   const flaggedWeeks = weeks.map((week) => {
     const limited = week.map((row) =>
-      fitRunToTimeLimit(row, input.runTimeLimits, input.easyPaceSPerKm)
+      fitRunToTimeLimit(
+        row,
+        input.runTimeLimits,
+        input.easyPaceSPerKm,
+        input.intervalPaceSPerKm
+      )
     );
     const fitted = fitWeekToRunningBaseline(
       limited,
@@ -1424,7 +1432,8 @@ export function generateRacePlanV2(input: RacePlanV2Input): RacePlanV2Output {
       week[0]?.weekKey && week[0].weekKey > input.currentDate
         ? week[0].weekKey
         : input.currentDate,
-      input.easyPaceSPerKm
+      input.easyPaceSPerKm,
+      input.intervalPaceSPerKm
     );
     return fitted.map((row, index) => {
       const rd =
