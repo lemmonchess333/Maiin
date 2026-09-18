@@ -6,6 +6,7 @@ import { db } from "../../lib/firebase";
 import { THEME } from "../../lib/theme";
 import {
   buildLeaderboard,
+  CHALLENGE_LABELS,
   type LeaderboardEntry,
   type ChallengeType,
 } from "../../lib/leaderboard";
@@ -28,18 +29,14 @@ export default function LeaderboardCard({
   const [entries, setEntries] = useState<EnrichedEntry[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const challengeLabels: Record<
-    ChallengeType,
-    { title: string; unit: string; icon: string }
-  > = {
-    weekly_distance: {
-      title: "Weekly Distance",
-      unit: "km",
-      icon: "footprints",
-    },
-    weekly_volume: { title: "Weekly Volume", unit: "kg", icon: "dumbbell" },
-    weekly_hybrid: { title: "Hybrid Score", unit: "pts", icon: "zap" },
-    weekly_workouts: { title: "Workouts", unit: "sessions", icon: "dumbbell" },
+  /* Name and unit come from `CHALLENGE_LABELS`; only the ICON is local,
+     because the full view renders a tab row rather than a sport-coded
+     glyph and has no use for it. */
+  const challengeIcons: Record<ChallengeType, string> = {
+    weekly_distance: "footprints",
+    weekly_volume: "dumbbell",
+    weekly_hybrid: "zap",
+    weekly_workouts: "dumbbell",
   };
 
   // Load leaderboard + enrich each UID with displayName + photoURL
@@ -91,7 +88,8 @@ export default function LeaderboardCard({
     };
   }, [load]);
 
-  const { title, unit, icon } = challengeLabels[challenge];
+  const { title, unit } = CHALLENGE_LABELS[challenge];
+  const icon = challengeIcons[challenge];
   const top3 = entries.slice(0, 3);
   const selfEntry = entries.find((e) => e.uid === user?.uid);
   const selfInTop3 = top3.some((e) => e.uid === user?.uid);
@@ -110,8 +108,8 @@ export default function LeaderboardCard({
           <h3 className="text-sm font-bold truncate">{title}</h3>
         </div>
         {/* Quiet, and never the element that gives up room: the title is
-            the variable-length half ("Weekly Distance" vs "Hybrid
-            Score"), so it truncates and this stays whole. */}
+            the variable-length half ("Running Distance" vs "Workouts"),
+            so it truncates and this stays whole. */}
         {/* Two words and no digits — the numeral face buys nothing here.
             (The ROWS below it are where the figures live.) */}
         <span className="shrink-0 text-caption text-muted-foreground">

@@ -733,7 +733,26 @@ describe("WorkoutSession — timers survive a locked phone", () => {
     vi.useFakeTimers({ toFake: ["setInterval", "clearInterval", "Date"] });
     vi.setSystemTime(new Date(2026, 8, 11, 9, 0, 0));
   });
-  afterEach(() => vi.useRealTimers());
+  /* Unmount and settle BEFORE handing the clock back. Faking
+     `setInterval` here puts jsdom's rAF driver on the fake clock, and
+     leaving mid-animation strands both jsdom's frame counter and
+     motion-dom's `runNextFrame` flag — after which every entrance
+     animation later in this FILE sits at `opacity: 0` and five
+     completion-screen assertions fail `toBeVisible()`. Unmounting
+     cancels the animation; the extra tick lets the pending frame fire on
+     jsdom's own driver, which is what opens both latches. The full
+     mechanism, and the five fixes that do NOT work, are recorded above
+     `completeAndSave` in the Plate-Club group.
+
+     Found by `--sequence.shuffle`: written order put every victim ahead
+     of this block, so the file passed. */
+  afterEach(async () => {
+    cleanup();
+    await act(async () => {
+      vi.advanceTimersByTime(100);
+    });
+    vi.useRealTimers();
+  });
 
   /** Jump wall time forward, then let exactly one tick repaint. */
   async function background(ms: number) {
@@ -893,83 +912,59 @@ describe("Plate-Club badges are awarded the moment the workout saves", () => {
         screen.getAllByRole("button", { name: "Mark set complete" })[0]
       );
     }
-    // Presence, not visibility. The completion card mounts at opacity 0
-    // (framer entrance) and in this file it never gets past that once the
-    // "timers survive a locked phone" describe has run: that group fakes
-    // `Date` and jumps the system clock, and every later entrance stalls
-    // at 0 for as long as you care to wait (bisected: these three pass
-    // alone and with every other group, fail only after that one).
-    //
-    // The SYMPTOM and that bisection hold — re-confirmed independently by
-    // running the suite under `--sequence.shuffle`, which fails 3-7 tests
-    // in this file depending on seed and no others once the order-
-    // dependent files elsewhere were fixed. The MECHANISM this comment
-    // used to assert — "framer's frame loop is left with a stale
-    // timestamp" — is wrong. What follows is measured, and is the whole
-    // chain, so the next attempt starts further along than the last two
-    // did.
-    //
-    // 1. The element the assertion fails on is fine. Walking its
-    //    ancestors at the failure shows the stuck one is the
-    //    `fixed inset-0 z-50` overlay carrying an INLINE `opacity: 0` —
-    //    a framer entrance that never ran.
-    // 2. `requestAnimationFrame` never fires again after this group.
-    //    Probed directly: a frame requested in a later test does not
-    //    resolve within 300 ms, and the global is still jsdom's own
-    //    function.
-    // 3. jsdom explains it exactly. `browser/Window.js` starts the rAF
-    //    driver with `setInterval` ONLY on the 0 -> 1 transition of
-    //    `numberOfOngoingAnimationFrameCallbacks`, and only a callback
-    //    actually firing (`removeAnimationFrameCallback`) brings that
-    //    count back down. A frame requested while `setInterval` is faked
-    //    schedules the driver on the FAKE clock; `useRealTimers()` then
-    //    discards it with the count stranded above zero, so the `=== 1`
-    //    guard means no later rAF can ever restart it. A one-way kill,
-    //    for the rest of the file.
-    //
-    // That also disposes of the clock-jump story on its own terms:
-    // motion-dom reads `performance.now()` (`frameloop/sync-time.mjs`,
-    // `frameloop/batcher.mjs`), which a partial toFake of
-    // setInterval/clearInterval/Date leaves untouched — measured. So a
-    // real device waking from sleep cannot hit this either; the
-    // monotonic clock does not jump.
-    //
-    // FOUR fixes tried and measured, none of which works — do not spend
-    // the time again:
-    //   - `shouldClearNativeTimers: false`: no change on any seed.
-    //   - dropping "Date" from `toFake`: WORSE (10 failing; the group
-    //     needs it).
-    //   - reassigning `globalThis.requestAnimationFrame` after the group:
-    //     no change, because motion-dom captures the original at import
-    //     (`createRenderBatcher(requestAnimationFrame, true)`), so a
-    //     later global is never consulted.
-    //   - adding requestAnimationFrame/cancelAnimationFrame to `toFake`,
-    //     and draining with `advanceTimersByTime(32)` before
-    //     `useRealTimers()`: neither revives the driver.
-    //
-    // There are TWO latches, not one, which is why every single-point fix
-    // above fails. Draining jsdom's counter DOES revive the driver —
-    // sweeping `cancelAnimationFrame(1..2000)` after `useRealTimers()`
-    // (cancelling is what decrements, and an unissued handle is a no-op)
-    // takes the probe from `raf=false` to `raf=true`. The tests still
-    // fail, and that is the second latch: motion-dom's batcher only
-    // reschedules through `wake()`, which is guarded by
-    // `if (!runNextFrame)`. While the driver was dead, framer enqueued
-    // work, set `runNextFrame = true`, and handed `processBatch` to an
-    // rAF that never fired. Only `processBatch` clears that flag, and it
-    // is closure-private, so the batcher is stuck whether or not frames
-    // are flowing again.
-    //
-    // Which points at one fix rather than a cleverer hook: give this
-    // group its own FILE, so it gets a fresh jsdom window and a fresh
-    // module registry and can stall neither. (Not faking `setInterval`
-    // here is the other option — the group needs a controllable clock,
-    // not necessarily that timer — but it is the one the tests below it
-    // depend on.)
-    // The file's own last test ("finishing early") sidesteps it the same
-    // way — wait for the button to exist, click it; fireEvent does not
-    // care about opacity. The award is what is under test here, not the
-    // animation.
+    /* Presence, not visibility — and this one is a preference, not a
+       workaround. The award is what is under test; `fireEvent` does not
+       care about opacity, and the file's last test ("finishing early")
+       reads the same way.
+
+       It WAS a workaround. Every entrance animation after the "timers
+       survive a locked phone" group used to stall at `opacity: 0`
+       forever, and the cause is worth keeping because it is two latches
+       rather than one, which is why every single-point fix failed:
+
+       1. jsdom's `browser/Window.js` starts the rAF driver with
+          `setInterval` only on the 0 -> 1 transition of
+          `numberOfOngoingAnimationFrameCallbacks`, and only a callback
+          FIRING brings the count back down. A frame requested while
+          `setInterval` is faked puts the driver on the fake clock;
+          restoring real timers discards it with the count stranded
+          above zero, so no later rAF can restart it.
+       2. motion-dom's batcher reschedules only through `wake()`, guarded
+          by `if (!runNextFrame)`. Framer had already set that flag and
+          handed `processBatch` to the frame that never fired, and only
+          `processBatch` clears it — closure-private, so the batcher
+          stays stuck even once frames flow again.
+
+       Measured, not read: `frameData.timestamp` sits frozen at the value
+       it had when the group ended, for as long as you care to wait.
+
+       The fix is in that group's `afterEach`: unmount, then advance the
+       FAKE clock once more before handing it back. The pending frame
+       then fires on jsdom's own driver — decrementing the counter, which
+       clears latch 1, and running `processBatch`, which clears latch 2 —
+       with nothing left to reschedule because the component is gone.
+       Both latches, one hook.
+
+       Five things that do NOT work, measured rather than reasoned about,
+       so nobody spends the time again:
+
+       - `shouldClearNativeTimers: false` — no change on any seed.
+       - dropping "Date" from `toFake` — worse; the group needs it.
+       - reassigning `globalThis.requestAnimationFrame` afterwards —
+         motion-dom captured the original at import, so a later global is
+         never consulted.
+       - adding rAF to `toFake` and draining — the near-miss. It moves
+         the pending frame onto VITEST's clock, so jsdom's counter never
+         decrements and latch 1 stays shut.
+       - sweeping `cancelAnimationFrame(1..2000)` after `useRealTimers()`
+         — this one genuinely revives the driver, and the tests still
+         fail, which is how the second latch was found.
+
+       One more thing the mechanism settles: a real device waking from
+       sleep cannot hit any of this. motion-dom reads `performance.now()`
+       (`frameloop/sync-time.mjs`), and the monotonic clock does not
+       jump — so this group's own subject is not a route to the bug its
+       neighbours were working around. */
     await vi.waitFor(() =>
       expect(
         screen.getByRole("button", { name: "Save Workout" })
