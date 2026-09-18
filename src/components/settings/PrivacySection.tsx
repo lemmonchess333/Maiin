@@ -90,7 +90,7 @@ export default function PrivacySection({
               const result = await updateProfile({ defaultVisibility: val });
               if (!result.ok) setDefaultVisibility(prev);
             }}
-            className="bg-card rounded-lg px-2 py-1 text-sm border border-border/50"
+            className="min-h-11 bg-card rounded-lg px-3 text-sm border border-border/50"
           >
             <option value="public">Public</option>
             <option value="followers">Followers</option>
@@ -213,14 +213,14 @@ export default function PrivacySection({
               value={newZoneName}
               onChange={(e) => setNewZoneName(e.target.value)}
               placeholder="Zone name (e.g. Home)"
-              className="flex-1 px-3 py-2 rounded-lg bg-card border border-border text-sm"
+              className="flex-1 min-h-11 px-3 rounded-lg bg-card border border-border text-sm"
             />
             <select
               value={newZoneRadius}
               onChange={(e) => setNewZoneRadius(Number(e.target.value))}
-              className="p-2 rounded-lg bg-card border border-border text-sm"
+              className="min-h-11 px-3 rounded-lg bg-card border border-border text-sm"
             >
-              <option value={200}>200m</option>
+              <option value={200}>200 m</option>
               <option value={500}>500 m</option>
               <option value={750}>750 m</option>
               <option value={1000}>1 km</option>

@@ -25,6 +25,7 @@ import {
   registerDeviceToken,
   unregisterDeviceToken,
 } from "@/lib/pushNotifications";
+import { Button } from "@/components/ui/Button";
 
 interface NotificationsSectionProps {
   mealReminders: MealReminders;
@@ -293,7 +294,7 @@ export default function NotificationsSection({
                       [meal]: { ...mealReminders[meal], time: e.target.value },
                     })
                   }
-                  className="bg-card rounded-lg px-2 py-1 text-sm border border-border/50"
+                  className="min-h-11 bg-card rounded-lg px-3 text-sm border border-border/50"
                   disabled={!mealReminders[meal].enabled}
                 />
               </div>
@@ -352,7 +353,7 @@ export default function NotificationsSection({
               aria-label="Workout reminder time"
               value={workoutReminders.time}
               onChange={(e) => updateWorkoutReminders({ time: e.target.value })}
-              className="bg-card rounded-lg px-2 py-1 text-sm border border-border/50"
+              className="min-h-11 bg-card rounded-lg px-3 text-sm border border-border/50"
             />
           </div>
         )}
@@ -417,7 +418,7 @@ export default function NotificationsSection({
               aria-label="Streak reminder time"
               value={streakReminder.time}
               onChange={(e) => updateStreakReminder({ time: e.target.value })}
-              className="bg-card rounded-lg px-2 py-1 text-sm border border-border/50"
+              className="min-h-11 bg-card rounded-lg px-3 text-sm border border-border/50"
             />
           </div>
         )}
@@ -567,13 +568,9 @@ export function ReminderDiagnostics({
           <span>Reminders fire while this tab is open.</span>
         )}
       </div>
-      <button
-        type="button"
-        onClick={onTest}
-        className="shrink-0 text-xs font-semibold text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded"
-      >
+      <Button variant="ghost" size="sm" onClick={onTest} className="shrink-0">
         Send test
-      </button>
+      </Button>
     </div>
   );
 }
