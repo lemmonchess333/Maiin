@@ -13,6 +13,7 @@ import { haptic } from "@/lib/haptic";
 import SectionLabel from "@/components/ui/SectionLabel";
 import type { FoodSuggestion } from "@/lib/nlFoodParser";
 import type { QuickAddItem } from "@/lib/quickAddOrder";
+import { CALORIE_UNIT } from "@/utils/formatNutrition";
 
 /* Long-press gesture constants — moved verbatim from the retired
    FoodQuickAddRow (wave2 D). Rationale unchanged: */
@@ -308,7 +309,7 @@ function FoodSuggestionsDropdown({
                   </span>
                 </span>
                 <span className="text-xs text-muted-foreground font-mono tabular-nums shrink-0">
-                  {item.cal} kcal
+                  {item.cal} {CALORIE_UNIT}
                 </span>
               </button>
               {quickAdd.onEditPortion && !item.example && (
@@ -351,8 +352,9 @@ function FoodSuggestionsDropdown({
                 </span>
               </span>
               <span className="text-xs text-muted-foreground font-mono tabular-nums shrink-0">
-                {Math.round(p.calories)} cal · P {Math.round(p.protein)}g · C{" "}
-                {Math.round(p.carbs)}g · F {Math.round(p.fat)}g
+                {Math.round(p.calories)} {CALORIE_UNIT} · P{" "}
+                {Math.round(p.protein)}g · C {Math.round(p.carbs)}g · F{" "}
+                {Math.round(p.fat)}g
               </span>
             </button>
           ))}
@@ -379,7 +381,8 @@ function FoodSuggestionsDropdown({
                     row read "P30g" eight lines above its sibling's
                     spaced form. Gram UNIT stays unspaced (house style,
                     MacroColumn's rationale). */}
-                {s.calories} cal · P {s.protein}g · C {s.carbs}g · F {s.fat}g
+                {s.calories} {CALORIE_UNIT} · P {s.protein}g · C {s.carbs}g · F{" "}
+                {s.fat}g
               </span>
             </button>
           ))}
@@ -419,7 +422,7 @@ function FoodSuggestionsDropdown({
                         explicit that calorie/macro context belongs to
                         --nutrition, never the generic warm ramp. */}
                     <span className="text-nutrition-strong font-medium">
-                      {food.calories} cal
+                      {food.calories} {CALORIE_UNIT}
                     </span>
                     <span>&middot;</span>
                     <span>P {food.protein}g</span>

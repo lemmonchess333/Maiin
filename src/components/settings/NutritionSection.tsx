@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { formatCalories } from "@/utils/formatNutrition";
+import { formatCalories, CALORIE_UNIT } from "@/utils/formatNutrition";
 import { motion } from "framer-motion";
 import { formatWeightInUnit, kgToLb, lbToKg } from "@/lib/weightUnits";
 import { haptic } from "@/lib/haptic";
@@ -179,7 +179,7 @@ export default function NutritionSection({
       <AccordionSection
         icon={<Calculator className="size-5 text-primary" />}
         title="TDEE calculator"
-        subtitle={`${formatCalories(tdee.targetCalories)} kcal/day target`}
+        subtitle={`${formatCalories(tdee.targetCalories)} ${CALORIE_UNIT}/day target`}
       >
         <div>
           <label htmlFor="tdee-age" className="text-xs text-muted-foreground">
@@ -349,7 +349,7 @@ export default function NutritionSection({
           </span>
           <span className="text-xs font-mono tabular-nums font-medium text-foreground">
             {goalPlan.dailyOffset > 0 ? "+" : ""}
-            {formatCalories(goalPlan.dailyOffset)} kcal/day
+            {formatCalories(goalPlan.dailyOffset)} {CALORIE_UNIT}/day
           </span>
         </div>
 
@@ -363,7 +363,9 @@ export default function NutritionSection({
           <div className="space-y-1">
             <div className="flex items-center justify-between text-xs text-muted-foreground">
               <span>Base TDEE</span>
-              <span>{formatCalories(tdee.tdee)} kcal</span>
+              <span>
+                {formatCalories(tdee.tdee)} {CALORIE_UNIT}
+              </span>
             </div>
             {tdee.deficit !== 0 && (
               <div className="flex items-center justify-between text-xs text-muted-foreground">
@@ -383,7 +385,7 @@ export default function NutritionSection({
                 </span>
                 <span className="font-mono tabular-nums">
                   {tdee.deficit > 0 ? "+" : ""}
-                  {formatCalories(tdee.deficit)} kcal
+                  {formatCalories(tdee.deficit)} {CALORIE_UNIT}
                 </span>
               </div>
             )}
@@ -398,7 +400,7 @@ export default function NutritionSection({
                 transition={{ type: "spring", stiffness: 300, damping: 20 }}
                 className="text-sm font-bold text-primary"
               >
-                {formatCalories(tdee.targetCalories)} kcal
+                {formatCalories(tdee.targetCalories)} {CALORIE_UNIT}
               </motion.span>
             </div>
             {/* D6 — is this target engine-adapted, manual, or formula? So the

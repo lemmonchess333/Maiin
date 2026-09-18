@@ -28,6 +28,7 @@ import {
 } from "@/lib/foodValidation";
 import { filterIdentifiableAiItems } from "@/lib/aiFoodIdentification";
 import { buildFoodNameFromItems } from "@/lib/foodNameBuilder";
+import { CALORIE_UNIT } from "@/utils/formatNutrition";
 
 interface Props {
   date: string;
@@ -1078,7 +1079,7 @@ export default function FoodAnalyzer({
                             </div>
                           )}
                           <span className="text-xs font-mono tabular-nums text-muted-foreground shrink-0 w-14 text-right">
-                            {itemCal} cal
+                            {itemCal} {CALORIE_UNIT}
                           </span>
                           {isMultiItem && (
                             <button
