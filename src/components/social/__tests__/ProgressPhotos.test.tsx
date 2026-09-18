@@ -139,13 +139,13 @@ describe("ProgressPhotos — private-only contract (BODY-VAULT-00)", () => {
 
   it("an empty vault offers ONE check-in action — the empty state's — and the header's returns with the list", async () => {
     // Two buttons for one act on one screen read as two different
-    // things. The header "+ Check-in" is for a vault with rows to sit
+    // things. The header "New check-in" is for a vault with rows to sit
     // above; until then the empty state carries the action.
     const { unmount } = render(<ProgressPhotos />);
     expect(screen.getByText(/track your transformation/i)).toBeInTheDocument();
     const actions = screen.getAllByRole("button", { name: /check-in/i });
     expect(actions).toHaveLength(1);
-    expect(actions[0]).toHaveTextContent("+ First check-in");
+    expect(actions[0]).toHaveTextContent("Add your first check-in");
     expect(
       screen.queryByRole("button", { name: "New progress check-in" })
     ).toBeNull();
@@ -167,7 +167,7 @@ describe("ProgressPhotos — private-only contract (BODY-VAULT-00)", () => {
     expect(
       screen.getByRole("button", { name: "New progress check-in" })
     ).toBeInTheDocument();
-    expect(screen.queryByText("+ First check-in")).toBeNull();
+    expect(screen.queryByText("Add your first check-in")).toBeNull();
   });
 
   it("records every upload as private and never writes 'public' (source pin)", () => {

@@ -640,7 +640,7 @@ describe("completed-set corrections", () => {
 });
 
 describe("WorkoutSession — an accidental extra set can be removed", () => {
-  /* "+ Add Set" had no inverse, so a mis-tap left an uncompleted set the
+  /* "Add set" had no inverse, so a mis-tap left an uncompleted set the
      session counted as outstanding: finishing the three sets the programme
      prescribed still routed the lifter through "Finish early". */
   const rows = () => screen.getAllByLabelText(/^Set \d+ reps$/);
@@ -651,7 +651,7 @@ describe("WorkoutSession — an accidental extra set can be removed", () => {
     openSession();
     expect(rows()).toHaveLength(3);
 
-    fireEvent.click(screen.getByRole("button", { name: "+ Add Set" }));
+    fireEvent.click(screen.getByRole("button", { name: "Add set" }));
     expect(rows()).toHaveLength(4);
 
     // Open set 4's menu and remove it.
@@ -672,7 +672,7 @@ describe("WorkoutSession — an accidental extra set can be removed", () => {
     // Splicing from the middle renumbers every set after it and moves the
     // completion cursor under the lifter.
     openSession();
-    fireEvent.click(screen.getByRole("button", { name: "+ Add Set" }));
+    fireEvent.click(screen.getByRole("button", { name: "Add set" }));
     fireEvent.click(screen.getAllByTitle("Set type: working")[1]);
     expect(screen.queryByRole("button", { name: /Remove set/i })).toBeNull();
   });
@@ -905,27 +905,67 @@ describe("Plate-Club badges are awarded the moment the workout saves", () => {
     // in this file depending on seed and no others once the order-
     // dependent files elsewhere were fixed. The MECHANISM this comment
     // used to assert — "framer's frame loop is left with a stale
-    // timestamp" — is wrong, and is recorded here as wrong so the next
-    // attempt does not start where the last one did:
+    // timestamp" — is wrong. What follows is measured, and is the whole
+    // chain, so the next attempt starts further along than the last two
+    // did.
     //
-    //   motion-dom reads `performance.now()`, not `Date.now()`
-    //   (`frameloop/sync-time.mjs`, `frameloop/batcher.mjs`), and a
-    //   partial `toFake` of setInterval/clearInterval/Date leaves
-    //   `performance.now()` untouched — measured in jsdom, not inferred.
-    //   So the clock jump cannot reach framer's time base at all. It also
-    //   means a real device waking from sleep cannot hit this: the
-    //   monotonic clock does not jump.
+    // 1. The element the assertion fails on is fine. Walking its
+    //    ancestors at the failure shows the stuck one is the
+    //    `fixed inset-0 z-50` overlay carrying an INLINE `opacity: 0` —
+    //    a framer entrance that never ran.
+    // 2. `requestAnimationFrame` never fires again after this group.
+    //    Probed directly: a frame requested in a later test does not
+    //    resolve within 300 ms, and the global is still jsdom's own
+    //    function.
+    // 3. jsdom explains it exactly. `browser/Window.js` starts the rAF
+    //    driver with `setInterval` ONLY on the 0 -> 1 transition of
+    //    `numberOfOngoingAnimationFrameCallbacks`, and only a callback
+    //    actually firing (`removeAnimationFrameCallback`) brings that
+    //    count back down. A frame requested while `setInterval` is faked
+    //    schedules the driver on the FAKE clock; `useRealTimers()` then
+    //    discards it with the count stranded above zero, so the `=== 1`
+    //    guard means no later rAF can ever restart it. A one-way kill,
+    //    for the rest of the file.
     //
-    // Two further theories, both falsified by trying them:
-    // dropping "Date" from `toFake` makes it WORSE (10 failing, because
-    // this group needs it), and `shouldClearNativeTimers: false` — on the
-    // theory that vitest was clearing the native timer behind a pending
-    // rAF batch, leaving the batcher's `runNextFrame` stuck true with
-    // nothing scheduled — changes nothing on any seed.
+    // That also disposes of the clock-jump story on its own terms:
+    // motion-dom reads `performance.now()` (`frameloop/sync-time.mjs`,
+    // `frameloop/batcher.mjs`), which a partial toFake of
+    // setInterval/clearInterval/Date leaves untouched — measured. So a
+    // real device waking from sleep cannot hit this either; the
+    // monotonic clock does not jump.
     //
-    // What is still unexplained is why the stall survives `cleanup()` and
-    // a fresh render. Whatever it is outlives both, so instrumentation
-    // beats reading.
+    // FOUR fixes tried and measured, none of which works — do not spend
+    // the time again:
+    //   - `shouldClearNativeTimers: false`: no change on any seed.
+    //   - dropping "Date" from `toFake`: WORSE (10 failing; the group
+    //     needs it).
+    //   - reassigning `globalThis.requestAnimationFrame` after the group:
+    //     no change, because motion-dom captures the original at import
+    //     (`createRenderBatcher(requestAnimationFrame, true)`), so a
+    //     later global is never consulted.
+    //   - adding requestAnimationFrame/cancelAnimationFrame to `toFake`,
+    //     and draining with `advanceTimersByTime(32)` before
+    //     `useRealTimers()`: neither revives the driver.
+    //
+    // There are TWO latches, not one, which is why every single-point fix
+    // above fails. Draining jsdom's counter DOES revive the driver —
+    // sweeping `cancelAnimationFrame(1..2000)` after `useRealTimers()`
+    // (cancelling is what decrements, and an unissued handle is a no-op)
+    // takes the probe from `raf=false` to `raf=true`. The tests still
+    // fail, and that is the second latch: motion-dom's batcher only
+    // reschedules through `wake()`, which is guarded by
+    // `if (!runNextFrame)`. While the driver was dead, framer enqueued
+    // work, set `runNextFrame = true`, and handed `processBatch` to an
+    // rAF that never fired. Only `processBatch` clears that flag, and it
+    // is closure-private, so the batcher is stuck whether or not frames
+    // are flowing again.
+    //
+    // Which points at one fix rather than a cleverer hook: give this
+    // group its own FILE, so it gets a fresh jsdom window and a fresh
+    // module registry and can stall neither. (Not faking `setInterval`
+    // here is the other option — the group needs a controllable clock,
+    // not necessarily that timer — but it is the one the tests below it
+    // depend on.)
     // The file's own last test ("finishing early") sidesteps it the same
     // way — wait for the button to exist, click it; fireEvent does not
     // care about opacity. The award is what is under test here, not the
