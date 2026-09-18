@@ -12,11 +12,19 @@ name: CI
 # #1010 — its account-deletion drift snapshot test failed only after the
 # merge). This workflow makes the unit suite a PR-time check.
 #
-# To actually GATE merges, the `unit` job must be marked a required
-# status check in the repo's branch-protection / ruleset for main —
-# that's a one-time GitHub Settings action (Settings → Rules/Branches →
-# require status checks → add "CI / unit"). Until then this runs and
-# reports red but does not block auto-merge.
+# `unit` IS a required status check on main, and this header said the
+# opposite for long enough that CLAUDE.md built an argument on it.
+# Measured 2026-09-18 from the API rather than the settings page — a
+# squash-merge attempted while the checks were still running came back:
+#
+#   405 Repository rule violations found
+#   Required status check "unit" is queued.
+#
+# So every step below gates a merge, including the dist-size ratchet at
+# the end of the job. `requiredCheckComposition.test.ts` pins which
+# steps sit in here; it deliberately does NOT try to pin the ruleset
+# itself, which no test in this repo can read. To re-verify, attempt a
+# merge on a PR whose `unit` has not finished and read the refusal.
 
 on:
   push:
