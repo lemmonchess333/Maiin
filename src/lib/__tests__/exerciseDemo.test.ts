@@ -10,12 +10,11 @@
  *   needsPosterior  — body diagram needs a back view?
  *   needsAnterior   — body diagram needs a front view?
  */
-import { describe, it, expect, vi, afterEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import {
   mapMuscles,
   needsPosterior,
   needsAnterior,
-  getExerciseDemo,
   demoMusclesForLabel,
 } from "../exerciseDemo";
 import { EXERCISES } from "@/lib/exercises";
@@ -85,9 +84,34 @@ describe("needsAnterior", () => {
 });
 
 describe("getExerciseDemo — image merge (D-LIFT-18)", () => {
+  /**
+   * `exerciseDemo.ts` caches the fetched catalogue in a module-level
+   * `demoCache`, deliberately — one fetch per session is the point. That
+   * makes these two tests share it, so whichever runs SECOND gets the
+   * first one's stubbed response and its own `stubGlobal("fetch", …)` is
+   * never consulted.
+   *
+   * Found by running the suite with `--sequence.shuffle`: this file
+   * passed on 3 of 5 seeds. The test also passes when run alone, so the
+   * dependency is "must not run after its neighbour" — a position, not
+   * a missing setup, which is exactly the kind that survives review.
+   *
+   * Importing fresh per test is the fix rather than exporting a reset
+   * from the module: the cache is production behaviour and does not need
+   * a test-only seam.
+   */
+  beforeEach(() => {
+    vi.resetModules();
+  });
+
   afterEach(() => {
     vi.unstubAllGlobals();
   });
+
+  /** The module with an empty cache, whatever ran before. */
+  async function freshDemo() {
+    return (await import("../exerciseDemo")).getExerciseDemo;
+  }
 
   it("keeps authored instructions/tip but borrows free-exercise-db images (prefixed)", async () => {
     const fetchMock = vi.fn().mockResolvedValue({
@@ -105,7 +129,7 @@ describe("getExerciseDemo — image merge (D-LIFT-18)", () => {
     });
     vi.stubGlobal("fetch", fetchMock);
 
-    const demo = await getExerciseDemo("Bench Press");
+    const demo = await (await freshDemo())("Bench Press");
     expect(demo).toBeTruthy();
     // Authored local content wins for text (Bench Press has multi-step
     // instructions + a tip), so it is NOT the single remote step.
@@ -122,7 +146,7 @@ describe("getExerciseDemo — image merge (D-LIFT-18)", () => {
   it("carries commonMistakes from the authored exercise (D-LIFT-19/20)", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ json: async () => [] }));
     // Bench Press was backfilled with commonMistakes in D-LIFT-19.
-    const demo = await getExerciseDemo("Bench Press");
+    const demo = await (await freshDemo())("Bench Press");
     expect(demo?.commonMistakes?.length).toBeGreaterThan(0);
   });
 });

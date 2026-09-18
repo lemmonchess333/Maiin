@@ -896,10 +896,36 @@ describe("Plate-Club badges are awarded the moment the workout saves", () => {
     // Presence, not visibility. The completion card mounts at opacity 0
     // (framer entrance) and in this file it never gets past that once the
     // "timers survive a locked phone" describe has run: that group fakes
-    // `Date` and jumps the system clock, and after useRealTimers() framer's
-    // frame loop is left with a stale timestamp, so every later entrance
-    // stalls at 0 for as long as you care to wait (bisected: these three
-    // pass alone and with every other group, fail only after that one).
+    // `Date` and jumps the system clock, and every later entrance stalls
+    // at 0 for as long as you care to wait (bisected: these three pass
+    // alone and with every other group, fail only after that one).
+    //
+    // The SYMPTOM and that bisection hold — re-confirmed independently by
+    // running the suite under `--sequence.shuffle`, which fails 3-7 tests
+    // in this file depending on seed and no others once the order-
+    // dependent files elsewhere were fixed. The MECHANISM this comment
+    // used to assert — "framer's frame loop is left with a stale
+    // timestamp" — is wrong, and is recorded here as wrong so the next
+    // attempt does not start where the last one did:
+    //
+    //   motion-dom reads `performance.now()`, not `Date.now()`
+    //   (`frameloop/sync-time.mjs`, `frameloop/batcher.mjs`), and a
+    //   partial `toFake` of setInterval/clearInterval/Date leaves
+    //   `performance.now()` untouched — measured in jsdom, not inferred.
+    //   So the clock jump cannot reach framer's time base at all. It also
+    //   means a real device waking from sleep cannot hit this: the
+    //   monotonic clock does not jump.
+    //
+    // Two further theories, both falsified by trying them:
+    // dropping "Date" from `toFake` makes it WORSE (10 failing, because
+    // this group needs it), and `shouldClearNativeTimers: false` — on the
+    // theory that vitest was clearing the native timer behind a pending
+    // rAF batch, leaving the batcher's `runNextFrame` stuck true with
+    // nothing scheduled — changes nothing on any seed.
+    //
+    // What is still unexplained is why the stall survives `cleanup()` and
+    // a fresh render. Whatever it is outlives both, so instrumentation
+    // beats reading.
     // The file's own last test ("finishing early") sidesteps it the same
     // way — wait for the button to exist, click it; fireEvent does not
     // care about opacity. The award is what is under test here, not the
