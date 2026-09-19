@@ -203,7 +203,7 @@ export default function SpacePostCard({
                     isCoach
                       ? {
                           background: `${THEME.brand}1F`,
-                          color: THEME.brand,
+                          color: "hsl(var(--lifting-strong))",
                         }
                       : {
                           background: `${THEME.success}1F`,
@@ -392,7 +392,10 @@ export default function SpacePostCard({
             type="button"
             onClick={() => onShareTake(post.title ?? "")}
             className="w-full min-h-[44px] flex items-center justify-center gap-1.5 rounded-xl text-sm font-semibold transition-colors active:scale-[0.98]"
-            style={{ background: `${THEME.brand}14`, color: THEME.brand }}
+            style={{
+              background: `${THEME.brand}14`,
+              color: "hsl(var(--lifting-strong))",
+            }}
           >
             <MessageCircle className="size-4" aria-hidden />
             Share your take

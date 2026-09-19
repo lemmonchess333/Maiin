@@ -182,7 +182,7 @@ export default function Login() {
             <Dumbbell className="size-8" />
           </div>
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.28em] text-primary">
+            <p className="text-xs font-bold uppercase tracking-[0.28em] text-lifting-strong">
               Tropos
             </p>
             <h1 className="text-h2 font-extrabold text-foreground mt-1">
@@ -303,7 +303,7 @@ export default function Login() {
                   type="button"
                   onClick={handleForgotPassword}
                   disabled={isLoading}
-                  className="inline-flex items-center min-h-[44px] px-1 text-sm font-medium text-primary hover:underline disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-md"
+                  className="inline-flex items-center min-h-[44px] px-1 text-sm font-medium text-lifting-strong hover:underline disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-md"
                 >
                   {loadingAction === "reset"
                     ? "Sending reset link…"
@@ -372,7 +372,7 @@ export default function Login() {
               setError("");
             }}
             aria-pressed={isSignUp}
-            className="inline-flex items-center align-middle min-h-[44px] px-2 -my-3 text-primary font-semibold hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-md"
+            className="inline-flex items-center align-middle min-h-[44px] px-2 -my-3 text-lifting-strong font-semibold hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-md"
           >
             {isSignUp ? "Sign In" : "Sign Up"}
           </button>

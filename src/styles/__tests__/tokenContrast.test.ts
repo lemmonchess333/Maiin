@@ -134,6 +134,17 @@ function tintAlphas(token: string): number[] {
  *    shape as `--primary-strong` / `--nutrition-strong`.
  */
 const TOKEN_BARS = [
+  /* The brand, which `text-primary` paints. Held to the large-text bar
+     because that is what its remaining uses are — icons and one 30px
+     numeral; every small-text use took `--lifting-strong`, the same
+     purple's AA step (`identityTextGuard.test.ts` pins the count). It is
+     3.83:1 on the light card and 3.82:1 on the dark one, so a small-text
+     use of it is under AA on both. */
+  {
+    token: "primary",
+    min: AA_LARGE,
+    use: "brand identity, icons and large text only",
+  },
   { token: "teal", min: AA_NORMAL, use: "semantic, any size" },
   { token: "success", min: AA_NORMAL, use: "semantic, any size" },
   { token: "running", min: AA_LARGE, use: "fixed identity, large text only" },

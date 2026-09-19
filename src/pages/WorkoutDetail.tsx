@@ -181,7 +181,7 @@ function WorkoutDetailContent() {
             <button
               type="button"
               onClick={() => setCardOpen(true)}
-              className="inline-flex items-center gap-1.5 px-3 min-h-[44px] rounded-xl text-xs font-medium active:scale-[0.97] transition-transform bg-primary/8 text-primary shrink-0"
+              className="inline-flex items-center gap-1.5 px-3 min-h-[44px] rounded-xl text-xs font-medium active:scale-[0.97] transition-transform bg-primary/8 text-lifting-strong shrink-0"
             >
               <Share2 className="size-3.5" />
               Share

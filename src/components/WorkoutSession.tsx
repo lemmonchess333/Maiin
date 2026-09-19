@@ -1931,7 +1931,7 @@ export default function WorkoutSession({
                               className={cn(
                                 "text-small font-mono tabular-nums text-center w-full",
                                 canFillPrev && !set.completed
-                                  ? "text-primary active:opacity-70"
+                                  ? "text-lifting-strong active:opacity-70"
                                   : "text-muted-foreground"
                               )}
                             >
@@ -2183,7 +2183,7 @@ export default function WorkoutSession({
           className={cn(
             "text-xs px-3 py-1.5 rounded-lg transition-colors mx-auto block",
             showRPE
-              ? "bg-primary/10 text-primary"
+              ? "bg-primary/10 text-lifting-strong"
               : "bg-muted text-muted-foreground"
           )}
         >

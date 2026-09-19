@@ -195,11 +195,13 @@ export function TrendWeight() {
         <SectionLabel>Weight trend</SectionLabel>
         <p className="text-xs text-foreground font-medium">
           {hideNumber ? (
-            <span className="text-primary font-bold">{hiddenHeadline}</span>
+            <span className="text-lifting-strong font-bold">
+              {hiddenHeadline}
+            </span>
           ) : trendDisplay != null ? (
             <>
               Trending at{" "}
-              <span className="text-primary font-bold font-mono tabular-nums">
+              <span className="text-lifting-strong font-bold font-mono tabular-nums">
                 {trendDisplay} {unit}
               </span>
               {goalDiff != null && (
@@ -416,7 +418,7 @@ export function TrendWeight() {
       {user && (
         <Link
           to={`/user/${user.uid}`}
-          className="w-full min-h-[44px] flex items-center justify-between text-sm font-medium text-primary"
+          className="w-full min-h-[44px] flex items-center justify-between text-sm font-medium text-lifting-strong"
         >
           <span>Progress Vault</span>
           <span aria-hidden="true">›</span>

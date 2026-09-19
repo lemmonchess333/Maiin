@@ -558,7 +558,7 @@ export default function FeedView({
                     <button
                       type="button"
                       onClick={openPeople}
-                      className="text-xs font-medium text-primary hover:text-primary/80 transition-colors shrink-0"
+                      className="text-xs font-medium text-lifting-strong hover:text-lifting-strong/80 transition-colors shrink-0"
                     >
                       Find people
                     </button>
@@ -824,7 +824,7 @@ export default function FeedView({
                       <button
                         type="button"
                         onClick={openPeople}
-                        className="text-xs font-medium text-primary hover:text-primary/80 transition-colors shrink-0"
+                        className="text-xs font-medium text-lifting-strong hover:text-lifting-strong/80 transition-colors shrink-0"
                       >
                         Find people
                       </button>

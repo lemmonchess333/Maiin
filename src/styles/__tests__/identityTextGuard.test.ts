@@ -107,18 +107,29 @@ const EXPECTED_BARE_USES: Record<(typeof IDENTITY)[number], number> = {
  * 2026-09-18. `color: THEME.<identity>` in a style prop or a style
  * object — the form the class scan cannot see.
  *
- * Only the three DOMAIN identities are pinned. They are the ones with a
- * `-strong` text step to redirect to, and they are where the contrast
- * question actually bites. `THEME.brand` is deliberately absent: the
- * brand purple has no AA text step at all (`--primary-strong` is the
- * white-on-fill step — `tokenContrast.test.ts` measures it at 2.87:1
- * against `--muted` in dark and says so), so a count here would name a
- * destination that does not exist, which is the dead end the last test
- * in this file guards against.
+ * The three DOMAIN identities and the brand. An earlier version of this
+ * comment left `THEME.brand` out on the grounds that the brand purple
+ * "has no AA text step at all", because `--primary-strong` is the
+ * white-on-fill step (3.26:1 on the dark card). That was looking at the
+ * wrong token: the brand IS the lifting purple — `index.css` defines
+ * `--lifting` as "the literal brand purple", and CLAUDE.md says "purple
+ * always = brand/lifting" — so brand text takes `--lifting-strong`, the
+ * step Analytics already used for its purple prose. See BRAND below for
+ * the class form and the measurements.
  */
 const EXPECTED_INLINE_USES = {
-  "THEME.running": 18,
-  "THEME.lifting": 7,
+  // 2026-09-19: 18 → 17 and 7 → 6. The weekly-layout summary's Run and
+  // Lift numerals are 18px bold — under the 18.66px large-text line by
+  // two thirds of a pixel — so they took the strong steps with the
+  // brand-coloured Double beside them.
+  "THEME.running": 17,
+  "THEME.lifting": 6,
+  // The brand, inline. Icon tints (notification glyphs, the ProModal
+  // feature tiles, the Home tiles' arrows), legend and ring fills, and
+  // TrajectoryCard's 3xl score. The text uses — Home's rest-day eyebrow,
+  // "Connect Health", the Coach badge, "Share your take" — moved to
+  // `text-lifting-strong` / `hsl(var(--lifting-strong))`.
+  "THEME.brand": 41,
   // 2026-09-18: 21 → 19. Home's "Log food" action and the nudge note
   // above it were the two smallest-text uses and measured 2.77:1; both
   // moved to `text-nutrition-strong`. The rest are icons and fills.
@@ -178,7 +189,34 @@ function bareUses(token: string): string[] {
   return found;
 }
 
+/**
+ * The brand purple as a CLASS. `text-primary` is `--primary`, and as small
+ * text it measured 3.83 / 3.62 / 3.25:1 on the light card, muted tile and
+ * page, and 3.82 / 3.36 / 4.42:1 in dark — under 4.5:1 on every surface
+ * in both themes. Forty-three small-text sites (links, "See more", chip
+ * labels, the Login eyebrow, the day cell's number) moved to
+ * `text-lifting-strong`, which clears 5.1:1 and up everywhere including a
+ * 10% brand tint. What is left is icons — the Spinner's default glyph
+ * among them — on the 3:1 non-text bar the identity clears
+ * (`tokenContrast.test.ts` pins that), plus BadgeGrid's 30px extrabold
+ * streak count, which is large text.
+ *
+ * `text-primary-strong` is NOT the redirect. It is the fill under white
+ * text, and it measures 3.26:1 as text on the dark card.
+ */
+const BRAND = { token: "primary", step: "lifting-strong", bare: 52 } as const;
+
 describe("identity colour usage is pinned", () => {
+  it("text-primary has the pinned number of bare uses", () => {
+    const uses = bareUses(BRAND.token);
+    expect(
+      uses.length,
+      uses.length > BRAND.bare
+        ? `A new bare text-${BRAND.token} appeared. If it is small text (under 24px, or under 18.66px bold) use text-${BRAND.step} — the brand purple is under 4.5:1 on every surface in both themes, and text-primary-strong is the fill step, not the text step. If it is an icon or a large numeral it is fine; raise the count.\n${uses.slice(BRAND.bare).join("\n")}`
+        : `Bare text-${BRAND.token} dropped to ${uses.length} — lower the pinned count to lock the gain in.`
+    ).toBe(BRAND.bare);
+  });
+
   it.each(IDENTITY)("text-%s has the pinned number of bare uses", (token) => {
     const expected = EXPECTED_BARE_USES[token];
     const uses = bareUses(token);
@@ -226,5 +264,8 @@ describe("identity colour usage is pinned", () => {
         new RegExp(`--${id}-strong:`)
       );
     }
+    expect(css, `--${BRAND.step} is missing`).toMatch(
+      new RegExp(`--${BRAND.step}:`)
+    );
   });
 });

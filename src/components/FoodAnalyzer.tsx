@@ -833,7 +833,7 @@ export default function FoodAnalyzer({
                 handleResetAll();
                 setCameraOpen(false);
               }}
-              className="text-sm text-primary font-medium"
+              className="text-sm text-lifting-strong font-medium"
             >
               Switch to manual entry
             </button>
@@ -1019,7 +1019,7 @@ export default function FoodAnalyzer({
                               type="button"
                               onClick={() => restoreItem(i)}
                               aria-label={`Restore ${item.name}`}
-                              className="flex items-center gap-1 text-xs font-medium text-primary hover:opacity-80 transition-opacity active:scale-95 shrink-0"
+                              className="flex items-center gap-1 text-xs font-medium text-lifting-strong hover:opacity-80 transition-opacity active:scale-95 shrink-0"
                             >
                               <RotateCcw className="size-3" />
                               Restore

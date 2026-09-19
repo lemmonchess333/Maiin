@@ -131,9 +131,23 @@ function ScheduleLayoutSheetBody({
           aria-label="Weekly layout summary"
         >
           {[
-            { label: "Lift", value: liftSessions, color: THEME.lifting },
-            { label: "Run", value: runSessions, color: THEME.running },
-            { label: "Double", value: doubleDays, color: THEME.brand },
+            /* 18px bold sits under the 18.66px large-text line, so these
+               numerals take the AA text steps, not the identities. */
+            {
+              label: "Lift",
+              value: liftSessions,
+              color: "hsl(var(--lifting-strong))",
+            },
+            {
+              label: "Run",
+              value: runSessions,
+              color: "hsl(var(--running-strong))",
+            },
+            {
+              label: "Double",
+              value: doubleDays,
+              color: "hsl(var(--lifting-strong))",
+            },
           ].map((item) => (
             <div
               key={item.label}
@@ -277,7 +291,7 @@ function ScheduleLayoutSheetBody({
           {pendingLiftDays !== null && (
             <p className="text-sm font-medium text-foreground">
               Your new programme will use a{" "}
-              <span className="text-primary">
+              <span className="text-lifting-strong">
                 {splitLabel(chooseSplit(pendingLiftDays))}
               </span>{" "}
               split.

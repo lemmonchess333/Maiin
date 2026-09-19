@@ -92,22 +92,25 @@ external contributors get wrong.
 Defined in `src/index.css` as HSL vars and bridged to Tailwind. Use them as
 normal Tailwind utilities. They automatically adapt to dark mode.
 
-| Class                                                       | Meaning                                                                                                     |
-| ----------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| `bg-background` / `text-foreground`                         | Page canvas + default text                                                                                  |
-| `bg-card` / `text-card-foreground`                          | Card surface + its text                                                                                     |
-| `bg-muted` / `text-muted-foreground`                        | Subtle fill / secondary "iOS grey" text                                                                     |
-| `bg-primary` / `text-primary`                               | Brand purple (light — **for tints/accents/text**)                                                           |
-| `bg-primary-strong`                                         | Darker brand purple — **for filled CTAs with white text** (clears WCAG AA where `bg-primary` is borderline) |
-| `bg-destructive` / `text-destructive` / `bg-destructive-bg` | Errors (filled / text / tinted surface)                                                                     |
-| `bg-success` / `text-success` / `bg-success-bg`             | Positive states                                                                                             |
-| `bg-warning` / `text-warning` / `bg-warning-bg`             | Warnings                                                                                                    |
-| `border-border`                                             | The standard hairline border                                                                                |
+| Class                                                       | Meaning                                                                                                                                   |
+| ----------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `bg-background` / `text-foreground`                         | Page canvas + default text                                                                                                                |
+| `bg-card` / `text-card-foreground`                          | Card surface + its text                                                                                                                   |
+| `bg-muted` / `text-muted-foreground`                        | Subtle fill / secondary "iOS grey" text                                                                                                   |
+| `bg-primary` / `text-primary`                               | Brand purple (light — **for tints, accents, icons and large numerals**; under 4.5:1 as small text)                                        |
+| `text-lifting-strong`                                       | Brand purple as **small text** — the AA step (the brand and lifting are one purple; `text-primary-strong` is the fill, not the text step) |
+| `bg-primary-strong`                                         | Darker brand purple — **for filled CTAs with white text** (clears WCAG AA where `bg-primary` is borderline)                               |
+| `bg-destructive` / `text-destructive` / `bg-destructive-bg` | Errors (filled / text / tinted surface)                                                                                                   |
+| `bg-success` / `text-success` / `bg-success-bg`             | Positive states                                                                                                                           |
+| `bg-warning` / `text-warning` / `bg-warning-bg`             | Warnings                                                                                                                                  |
+| `border-border`                                             | The standard hairline border                                                                                                              |
 
 > ⚠️ **`bg-primary` vs `bg-primary-strong`:** if white text sits _on_ the
 > colour (a filled button, a "Join"/"Follow" pill), use `bg-primary-strong`.
-> If the colour is a light tint or coloured text on a light surface, use
-> `bg-primary`. The `Button` primitive already does this for you.
+> If the colour is a light tint, use `bg-primary`. Purple TEXT smaller than
+> 24px (18.66px bold) takes `text-lifting-strong`, never `text-primary` —
+> `identityTextGuard.test.ts` counts the bare uses. The `Button` primitive
+> already does this for you.
 
 ### 3b. The `THEME` object (JS constants) — for what classes can't reach
 

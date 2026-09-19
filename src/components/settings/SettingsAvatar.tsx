@@ -142,7 +142,9 @@ export default function SettingsAvatar({ profile }: { profile: UserProfile }) {
         ) : (
           <div className="size-full rounded-full bg-primary/20 flex items-center justify-center">
             {initials ? (
-              <span className="text-lg font-bold text-primary">{initials}</span>
+              <span className="text-lg font-bold text-lifting-strong">
+                {initials}
+              </span>
             ) : (
               <Camera className="size-6 text-primary" />
             )}
