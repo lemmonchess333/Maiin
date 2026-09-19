@@ -72,6 +72,11 @@ jobs:
           # MAPBOX_DIRECTIONS_TOKEN secret are live in production (2026-07-18).
           # Non-secret public flag; the road buttons only render for Pro users.
           VITE_ROUTE_PLANNING_ENABLED: "true"
+          # Admin allowlist for /admin/moderation. Absent from every deploy
+          # until now, so the queue 403'd for everyone including the owner.
+          # Public by design (client-side route gate); listPendingReports
+          # re-checks ADMIN_UIDS server-side, so this is UX, not a boundary.
+          VITE_ADMIN_UIDS: ${{ secrets.VITE_ADMIN_UIDS }}
       # Defence in depth: refuse to deploy a build that contains the
       # E2E marker. The marker is emitted as a top-of-bundle banner
       # only by `npm run build:e2e` (vite.config.ts function-form,

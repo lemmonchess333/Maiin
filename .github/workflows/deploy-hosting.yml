@@ -56,6 +56,11 @@ jobs:
           VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID }}
           VITE_FIREBASE_MEASUREMENT_ID: ${{ secrets.VITE_FIREBASE_MEASUREMENT_ID }}
           VITE_RECAPTCHA_V3_SITE_KEY: ${{ secrets.VITE_RECAPTCHA_V3_SITE_KEY }}
+          # Admin allowlist for /admin/moderation. Absent from every deploy
+          # until now, so the queue 403'd for everyone including the owner.
+          # Public by design (client-side route gate); listPendingReports
+          # re-checks ADMIN_UIDS server-side, so this is UX, not a boundary.
+          VITE_ADMIN_UIDS: ${{ secrets.VITE_ADMIN_UIDS }}
       # Deploy guard: never publish an E2E (mode=test) bundle to production.
       - name: Block accidental E2E bundle deploy
         run: |
