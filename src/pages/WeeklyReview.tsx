@@ -317,7 +317,7 @@ export default function WeeklyReview() {
                   <button
                     type="button"
                     onClick={() => navigate(`/user/${user.uid}`)}
-                    className="w-full min-h-[44px] flex items-center justify-between text-sm font-medium text-primary"
+                    className="w-full min-h-[44px] flex items-center justify-between text-sm font-medium text-lifting-strong"
                   >
                     <span>Progress Vault</span>
                     <span aria-hidden="true">›</span>

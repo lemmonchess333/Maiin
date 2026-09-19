@@ -94,7 +94,7 @@ export default function HealthSection({
                 haptic("light");
                 void openHealthSettings();
               }}
-              className="text-xs font-semibold text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded"
+              className="text-xs font-semibold text-lifting-strong hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded"
             >
               Open settings
             </button>

@@ -136,7 +136,7 @@ function DemoCard({ id }: { id: string }) {
             }}
             className={`flex-1 min-h-[44px] rounded-lg text-micro font-mono tabular-nums font-semibold border transition-colors ${
               Math.abs(t - sample) < 0.005
-                ? "border-primary text-primary"
+                ? "border-primary text-lifting-strong"
                 : "border-border text-muted-foreground"
             }`}
           >

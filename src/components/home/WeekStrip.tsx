@@ -147,7 +147,7 @@ export default function WeekStrip({
         if (day.isSelected) {
           cls += " bg-primary-strong text-primary-foreground";
         } else if (day.isToday) {
-          cls += " border-2 border-primary text-primary";
+          cls += " border-2 border-primary text-lifting-strong";
         } else {
           cls += " text-muted-foreground border-2 border-border";
         }

@@ -50,7 +50,7 @@ export default function WeekOpenerCard({
           variant="ghost"
           size="sm"
           onClick={onStartTraining}
-          className="shrink-0 min-h-[44px] text-primary hover:text-primary/80"
+          className="shrink-0 min-h-[44px] text-lifting-strong hover:text-lifting-strong/80"
         >
           Start training
         </Button>

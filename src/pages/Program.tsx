@@ -909,7 +909,7 @@ function ProgramInner() {
               <button
                 type="button"
                 onClick={() => setReorderMode(false)}
-                className="px-3 py-1.5 min-h-[44px] inline-flex items-center rounded-lg text-xs font-semibold text-primary"
+                className="px-3 py-1.5 min-h-[44px] inline-flex items-center rounded-lg text-xs font-semibold text-lifting-strong"
               >
                 Done
               </button>
@@ -1613,7 +1613,7 @@ function ProgramInner() {
                             setAddPickerDayIndex(idx);
                             setShowAddPicker(true);
                           }}
-                          className="w-full py-3 text-center active:scale-[0.97] transition-all flex items-center justify-center gap-2 bg-card rounded-xl text-primary font-medium text-sm"
+                          className="w-full py-3 text-center active:scale-[0.97] transition-all flex items-center justify-center gap-2 bg-card rounded-xl text-lifting-strong font-medium text-sm"
                         >
                           <Plus className="size-4" /> Add exercise
                         </button>

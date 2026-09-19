@@ -108,7 +108,7 @@ export default function ContextualTipBanner({
               <Link
                 to={ctaHref}
                 onClick={() => haptic("light")}
-                className="inline-flex items-center gap-0.5 mt-1 -mb-1 min-h-[44px] text-xs font-semibold text-primary hover:text-primary/80 transition-colors"
+                className="inline-flex items-center gap-0.5 mt-1 -mb-1 min-h-[44px] text-xs font-semibold text-lifting-strong hover:text-lifting-strong/80 transition-colors"
               >
                 {ctaLabel}
                 <ChevronRight aria-hidden="true" className="size-3" />

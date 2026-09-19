@@ -479,15 +479,15 @@ function EditServingsSheet({
                 </span>
               )}
               {mealChanged && pickedMeal && (
-                <span className="ml-2 text-primary">
+                <span className="ml-2 text-lifting-strong">
                   → {MEAL_LABELS[pickedMeal]}
                 </span>
               )}
               {nameChanged && (
-                <span className="ml-2 text-primary">renamed</span>
+                <span className="ml-2 text-lifting-strong">renamed</span>
               )}
               {macrosChanged && (
-                <span className="ml-2 text-primary">macros updated</span>
+                <span className="ml-2 text-lifting-strong">macros updated</span>
               )}
             </span>
           )}

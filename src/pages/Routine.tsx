@@ -346,7 +346,7 @@ export default function Routine() {
         <button
           type="button"
           onClick={() => navigate("/program")}
-          className="text-xs font-medium text-primary"
+          className="text-xs font-medium text-lifting-strong"
         >
           Back to program
         </button>

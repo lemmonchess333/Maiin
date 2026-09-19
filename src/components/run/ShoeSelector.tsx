@@ -35,7 +35,7 @@ export default function ShoeSelector({ selectedShoeId, onSelect }: Props) {
         <span className="flex-1 text-sm text-muted-foreground">
           Track your shoe mileage
         </span>
-        <span className="flex items-center gap-1 text-xs font-semibold text-primary">
+        <span className="flex items-center gap-1 text-xs font-semibold text-lifting-strong">
           <Plus className="size-3.5" aria-hidden="true" />
           Add shoes
         </span>

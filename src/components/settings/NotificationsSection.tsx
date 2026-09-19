@@ -524,7 +524,9 @@ export default function NotificationsSection({
             className="w-full flex items-center justify-between p-4 rounded-lg bg-muted active:scale-[0.99] transition-transform"
           >
             <span className="text-sm text-foreground">Send a test push</span>
-            <span className="text-sm font-medium text-primary">Send test</span>
+            <span className="text-sm font-medium text-lifting-strong">
+              Send test
+            </span>
           </button>
         )}
       </div>

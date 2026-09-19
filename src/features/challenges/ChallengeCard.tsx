@@ -337,7 +337,7 @@ export function ChallengeCard({
             )}
           </span>
           {percentile !== null && (
-            <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-xs font-semibold font-mono tabular-nums">
+            <span className="px-2 py-0.5 rounded-full bg-primary/10 text-lifting-strong text-xs font-semibold font-mono tabular-nums">
               Top {percentile}%
             </span>
           )}

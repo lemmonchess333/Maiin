@@ -590,7 +590,7 @@ export default function DayPeekCard({
                 <button
                   type="button"
                   onClick={() => onManage(dateKey)}
-                  className="w-full inline-flex items-center justify-center gap-1.5 text-xs font-semibold text-primary px-2 min-h-[44px] rounded-lg active:scale-[0.97]"
+                  className="w-full inline-flex items-center justify-center gap-1.5 text-xs font-semibold text-lifting-strong px-2 min-h-[44px] rounded-lg active:scale-[0.97]"
                 >
                   <Settings2 className="size-3.5" />
                   Manage day

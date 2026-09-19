@@ -304,7 +304,7 @@ export default function CommentSheet({
                             <span
                               className={`inline-flex items-center gap-1 h-6 px-2 rounded-full text-xs transition-colors ${
                                 mine
-                                  ? "bg-primary/10 text-primary"
+                                  ? "bg-primary/10 text-lifting-strong"
                                   : uids.length > 0
                                     ? "bg-muted/70 text-foreground/80"
                                     : "bg-muted/40 text-muted-foreground"
@@ -345,7 +345,7 @@ export default function CommentSheet({
             <button
               type="button"
               onClick={handleLoadMore}
-              className="text-xs text-primary font-medium hover:underline w-full text-center min-h-[44px] inline-flex items-center justify-center"
+              className="text-xs text-lifting-strong font-medium hover:underline w-full text-center min-h-[44px] inline-flex items-center justify-center"
             >
               Load more comments
             </button>
@@ -367,7 +367,7 @@ export default function CommentSheet({
                   type="button"
                   key={chip}
                   onClick={() => setText(chip)}
-                  className="shrink-0 px-2.5 py-1 rounded-full text-xs font-medium transition-colors active:scale-95 bg-primary/10 text-primary"
+                  className="shrink-0 px-2.5 py-1 rounded-full text-xs font-medium transition-colors active:scale-95 bg-primary/10 text-lifting-strong"
                 >
                   {chip}
                 </button>

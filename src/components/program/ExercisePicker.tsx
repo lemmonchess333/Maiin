@@ -279,7 +279,7 @@ export default function ExercisePicker({
                     exit={{ opacity: 0, width: 0 }}
                     transition={{ duration: 0.2 }}
                     onClick={cancelSearch}
-                    className="text-sm font-medium shrink-0 overflow-hidden text-primary"
+                    className="text-sm font-medium shrink-0 overflow-hidden text-lifting-strong"
                   >
                     Cancel
                   </motion.button>

@@ -952,7 +952,7 @@ export default function ProgrammeSettings({
             <button
               type="button"
               onClick={onOpenWeeklyLayout}
-              className="-mr-1 inline-flex min-h-[44px] shrink-0 items-center gap-1 px-1 text-xs font-semibold text-primary transition-transform active:scale-[0.97]"
+              className="-mr-1 inline-flex min-h-[44px] shrink-0 items-center gap-1 px-1 text-xs font-semibold text-lifting-strong transition-transform active:scale-[0.97]"
             >
               Edit days &rarr;
             </button>

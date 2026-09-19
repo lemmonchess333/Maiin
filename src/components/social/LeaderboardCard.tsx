@@ -187,7 +187,7 @@ export default function LeaderboardCard({
         <button
           type="button"
           onClick={onViewFull}
-          className="flex items-center justify-center gap-1 w-full mt-3 pt-3 min-h-[44px] border-t border-border/30 text-xs font-medium text-primary hover:text-primary/80 transition-colors"
+          className="flex items-center justify-center gap-1 w-full mt-3 pt-3 min-h-[44px] border-t border-border/30 text-xs font-medium text-lifting-strong hover:text-lifting-strong/80 transition-colors"
         >
           See full leaderboard
           <ChevronRight size={14} />

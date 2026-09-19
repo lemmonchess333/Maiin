@@ -41,7 +41,7 @@ export default function RestDayCard() {
         <Leaf className="size-5" style={{ color: THEME.brand }} />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-xs font-semibold" style={{ color: THEME.brand }}>
+        <p className="text-xs font-semibold text-lifting-strong">
           Today · Rest day
         </p>
         <p className="text-base font-bold text-foreground leading-tight">

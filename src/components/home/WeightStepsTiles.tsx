@@ -239,10 +239,7 @@ export default function WeightStepsTiles({
             </>
           ) : (
             <div className="flex items-center gap-1.5">
-              <span
-                className="text-xs font-medium"
-                style={{ color: THEME.brand }}
-              >
+              <span className="text-xs font-medium text-lifting-strong">
                 Connect Health
               </span>
               <ArrowRight

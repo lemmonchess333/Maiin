@@ -283,7 +283,7 @@ export default function HeroDrillDownSheet({
                   Fuel for today's training
                 </p>
                 {!isPro && (
-                  <span className="inline-flex items-center gap-1 text-caption font-semibold text-primary">
+                  <span className="inline-flex items-center gap-1 text-caption font-semibold text-lifting-strong">
                     <Lock className="size-3.5" aria-hidden="true" />
                     Pro
                   </span>
