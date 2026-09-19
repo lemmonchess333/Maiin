@@ -3097,3 +3097,126 @@ describe("#2422 — an action computed before another write landed still commits
     expect(sameStoredValue(result.current.programState, stored)).toBe(true);
   });
 });
+
+describe("the rollover waits for the loader's migration", () => {
+  /** A pure lifter's document at a given schema, with the lift anchor in
+   *  whatever vocabulary that schema used. Two days, one never touched, so
+   *  the manual advance gate is closed and only a calendar rollover could
+   *  move the week. */
+  function lifter(liftWeekKey: string, version: number): ProgramState {
+    return {
+      goal: "recomp",
+      currentPhase: "progression",
+      weekNumber: 3,
+      splitType: "upper_lower",
+      fatigueScore: 0,
+      updatedAt: 0,
+      programSchemaVersion: version,
+      liftWeekKey,
+      workouts: [
+        { dayName: "Upper", dayType: "push", completed: true, exercises: [] },
+        { dayName: "Lower", dayType: "legs", completed: false, exercises: [] },
+      ],
+    } as unknown as ProgramState;
+  }
+
+  const lifterProfile = (): MockProfile => ({
+    uid: "test-user-1",
+    weekSchedule: generateSchedule(4, 0),
+    weekScheduleVersion: 1,
+    weeklyWorkoutsTarget: 4,
+    weeklyRunDaysTarget: 0,
+    primaryGoal: "hypertrophy",
+  });
+
+  /** The anchor a pre-Monday document carries for THIS week: the Sunday
+   *  before this Monday. As a string it sorts before today's Monday key,
+   *  which is exactly what read as "last week" to a rollover that had not
+   *  waited for the migration. */
+  const sundayAnchor = () =>
+    localDateString(addLocalDays(parseLocalDate(localWeekKey()), -1));
+
+  // The defect: the mirror handed the effects a document one schema behind,
+  // its anchor still Sunday-first. Compared with a Monday-keyed today that
+  // is "last week", so the lift rollover advanced a week nobody had
+  // finished and wrote it — and the loader's migration commit, arriving
+  // next, found the document moved on every key it touches and gave up.
+  // The store was left at the old schema with a week it never had.
+  //
+  // Pinned at the effect: the snapshot IS mirrored (the invariant holds —
+  // base is what the store holds), and nothing rolls it.
+  it("a snapshot at an older schema is mirrored but never rolled", async () => {
+    mockProfile = lifterProfile();
+    seedProgram(lifter(localWeekKey(), CURRENT_PROGRAM_SCHEMA_VERSION));
+    const { result } = mountProgram();
+    await waitFor(() => expect(result.current.loading).toBe(false), {
+      timeout: 2000,
+    });
+    expect(result.current.programState?.weekNumber).toBe(3);
+    markWrites();
+
+    const anchor = sundayAnchor();
+    seedFirestore({
+      [PROGRAM]: {
+        ...lifter(anchor, CURRENT_PROGRAM_SCHEMA_VERSION - 1),
+        updatedAt: Date.now() + 1,
+      } as unknown as Record<string, unknown>,
+    });
+    await flushSnapshots();
+    await waitFor(() =>
+      expect(result.current.programState?.liftWeekKey).toBe(anchor)
+    );
+    // Room for any effect that wanted to write to have written.
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 25));
+    });
+    expect(setDocCalls()).toEqual([]);
+    expect((readDoc(PROGRAM) as unknown as ProgramState).weekNumber).toBe(3);
+  });
+
+  // How that document reached the effects at all: the mirror was gated on
+  // `loading`, which the load effect sets false on its early return while
+  // the profile is still hydrating. The mirror subscribed in that window
+  // and painted the raw server document before the loader had read it.
+  it("does not mirror before the profile has hydrated and the loader has read", async () => {
+    mockProfile = null;
+    const anchor = sundayAnchor();
+    seedProgram(lifter(anchor, CURRENT_PROGRAM_SCHEMA_VERSION - 1));
+    const { result, rerender } = mountProgram();
+    await waitFor(() => expect(result.current.loading).toBe(false), {
+      timeout: 2000,
+    });
+    expect(result.current.programState).toBeNull();
+
+    // The document is there and a snapshot for it is deliverable; nothing
+    // must pick it up yet.
+    seedFirestore({
+      [PROGRAM]: {
+        ...lifter(anchor, CURRENT_PROGRAM_SCHEMA_VERSION - 1),
+        updatedAt: Date.now() + 1,
+      } as unknown as Record<string, unknown>,
+    });
+    await flushSnapshots();
+    expect(result.current.programState).toBeNull();
+
+    // The profile lands. The loader reads, migrates and commits — and the
+    // week it commits is the one the document had, at the current schema.
+    mockProfile = lifterProfile();
+    rerender();
+    await waitFor(
+      () =>
+        expect(
+          (readDoc(PROGRAM) as unknown as ProgramState).programSchemaVersion
+        ).toBe(CURRENT_PROGRAM_SCHEMA_VERSION),
+      { timeout: 2000 }
+    );
+    const stored = readDoc(PROGRAM) as unknown as ProgramState;
+    expect(stored.weekNumber).toBe(3);
+    expect(stored.liftWeekKey).toBe(localWeekKey());
+    await waitFor(() =>
+      expect(result.current.programState?.programSchemaVersion).toBe(
+        CURRENT_PROGRAM_SCHEMA_VERSION
+      )
+    );
+  });
+});

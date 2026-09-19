@@ -422,6 +422,27 @@ export function useProgram() {
   const recentLayoff: LayoffClass =
     layoffRead.uid && layoffRead.uid === user?.uid ? layoffRead.cls : "none";
   const [loading, setLoading] = useState(true);
+  /**
+   * The mirror's gate — deliberately NOT `loading`.
+   *
+   * `loading` is a UI state, and it is false in two states the mirror
+   * must not subscribe in: after the load effect's early return while the
+   * profile is still hydrating, and across a profile change while the
+   * loader re-reads. Gated on `loading`, the mirror subscribed in the
+   * first of those and handed the effects the RAW server document before
+   * the loader had migrated it. On a pre-Monday document that is a
+   * Sunday-keyed anchor beside a Monday-keyed today, so the lift rollover
+   * read it as last week, advanced the week and wrote it — and the
+   * loader's migration commit then conflicted and gave up, leaving the
+   * document at the old schema with a week it never had.
+   * `mondayWeekMigration.auth.spec.ts` lost that race about half the
+   * time in CI and most of the time locally.
+   *
+   * True only once the loader has read the document for this user and
+   * committed whatever migration it needed; false again the moment a
+   * fresh load starts. The mirror subscribes and unsubscribes with it.
+   */
+  const [mirrorReady, setMirrorReady] = useState(false);
   const [viewingHistoryIndex, setViewingHistoryIndex] = useState<number | null>(
     null
   );
@@ -430,6 +451,7 @@ export function useProgram() {
   useEffect(() => {
     let cancelled = false;
     const loadProgram = async () => {
+      setMirrorReady(false);
       if (!user || !profile) {
         setProgramState(null);
         setLoading(false);
@@ -703,6 +725,7 @@ export function useProgram() {
         }
       }
 
+      if (!cancelled) setMirrorReady(true);
       setLoading(false);
     };
 
@@ -737,10 +760,10 @@ export function useProgram() {
   // (migration, regeneration, initial creation) and this never writes.
   // `fromCache` snapshots are skipped because the load effect owns the
   // cache-first paint, and `hasPendingWrites` ones because a local write
-  // not yet acknowledged is not a state to build a base on. `loading`
+  // not yet acknowledged is not a state to build a base on. `mirrorReady`
   // gates the subscription so it cannot interleave with the load's own
-  // migration commit; `sameStoredValue` keeps a same-state echo from
-  // re-rendering.
+  // migration commit — see its declaration for why `loading` could not;
+  // `sameStoredValue` keeps a same-state echo from re-rendering.
   //
   // The snapshot is set RAW, not normalised — and that is load-bearing.
   // Every writer commits with `programState` as its `base`, and
@@ -762,7 +785,7 @@ export function useProgram() {
   // `refetchProgramState` and both conflict paints hold this same
   // invariant by setting raw too.
   useEffect(() => {
-    if (!user || loading) return;
+    if (!user || !mirrorReady) return;
     const uid = user.uid;
     const ref = doc(db, "users", uid, "programState", PROGRAM_DOC);
     const unsubscribe = onSnapshot(
@@ -784,7 +807,7 @@ export function useProgram() {
       }
     );
     return unsubscribe;
-  }, [user, loading]);
+  }, [user, mirrorReady]);
 
   // Save program to Firestore.
   //
@@ -1028,6 +1051,12 @@ export function useProgram() {
   // runDays is empty (no signal to compare).
   useEffect(() => {
     if (!programState || !profile) return;
+    // A document the loader has not migrated yet is not one to roll: its
+    // week keys are in the OLD vocabulary, and comparing them with today's
+    // reads a week that has not passed as one that has. The loader owns
+    // migration and commits it; the effect re-runs on the result.
+    if (programState.programSchemaVersion !== CURRENT_PROGRAM_SCHEMA_VERSION)
+      return;
     if (!profile.runMode || profile.runMode === "freeform") return;
     // RUN-EV-03: the layoff classification is a REGENERATION DEPENDENCY.
     // The plan paints from the IndexedDB cache in ~ms while
@@ -1218,6 +1247,9 @@ export function useProgram() {
 
   useEffect(() => {
     if (!programState || !profile) return;
+    // Same wait as the run-side effect: never roll an unmigrated document.
+    if (programState.programSchemaVersion !== CURRENT_PROGRAM_SCHEMA_VERSION)
+      return;
 
     // Precisely the complement of the run-side effect's guards, so exactly one
     // of the two can act on any given state.

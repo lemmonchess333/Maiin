@@ -1,7 +1,10 @@
 import { doc, runTransaction, type Firestore } from "firebase/firestore";
 import { stripUndefined } from "@/lib/firestoreGuards";
 import type { UserProfile } from "@/lib/auth";
-import type { ProgramState } from "./programTypes";
+import {
+  CURRENT_PROGRAM_SCHEMA_VERSION,
+  type ProgramState,
+} from "./programTypes";
 import { mergeChangedFields, ProgrammeConflictError } from "./stateTransition";
 
 /**
@@ -87,10 +90,17 @@ async function commit(
       : null;
     let next: ProgramState;
     if ("update" in proposal) {
-      // An update needs a document to update. None means the loader has not
-      // created it yet, or it went away underneath — either way the action
-      // was computed for a document that is not there.
-      if (!current) throw new ProgrammeConflictError();
+      // An update needs a document to update, at the current schema. None
+      // means the loader has not created it yet, or it went away
+      // underneath; an old schema means the loader has not migrated it yet
+      // and the updater would write the old vocabulary back on top of the
+      // migration. Either way the action was computed for a document that
+      // is not there, and refusing lets the loader's commit land first.
+      if (
+        !current ||
+        current.programSchemaVersion !== CURRENT_PROGRAM_SCHEMA_VERSION
+      )
+        throw new ProgrammeConflictError();
       const updated = proposal.update(current);
       if (updated === null) return { state: current, written: false };
       next = updated;
