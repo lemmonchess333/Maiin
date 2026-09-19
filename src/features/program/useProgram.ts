@@ -13,7 +13,13 @@ import {
 } from "./sessionCompletion";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { captureError } from "@/lib/errorReporting";
-import { doc, getDoc, getDocFromCache, Timestamp } from "firebase/firestore";
+import {
+  doc,
+  getDoc,
+  getDocFromCache,
+  onSnapshot,
+  Timestamp,
+} from "firebase/firestore";
 import {
   hasQueuedWorkoutCompletion,
   queueWorkoutCompletion,
@@ -712,6 +718,67 @@ export function useProgram() {
     // effect body — same call style as elsewhere in the file.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, profile]);
+
+  // The load effect above reads the document ONCE, and that read is the
+  // `base` every user action commits against. Anything else moving the
+  // document — the auto-rollover below, `onRunCreated`'s recovery entry,
+  // the daily race sweep, a second device — left this client stale for as
+  // long as the user stayed on the page, and the next overlapping action
+  // failed `mergeChangedFields` with "Your programme changed while you
+  // were editing." They were not editing. Pinned in
+  // useProgramWriters.test.ts: one out-of-band change to `runDays`, and
+  // the very next `realignRacePlan` must commit rather than be refused.
+  //
+  // Mirror server-acknowledged changes into `programState`. Deliberately a
+  // MIRROR, not a second loader: the load effect stays the sole writer
+  // (migration, regeneration, initial creation) and this never writes.
+  // `fromCache` snapshots are skipped because the load effect owns the
+  // cache-first paint, and `hasPendingWrites` ones because a local write
+  // not yet acknowledged is not a state to build a base on. `loading`
+  // gates the subscription so it cannot interleave with the load's own
+  // migration commit; `sameStoredValue` keeps a same-state echo from
+  // re-rendering.
+  //
+  // The snapshot is set RAW, not normalised — and that is load-bearing.
+  // Every writer commits with `programState` as its `base`, and
+  // `mergeChangedFields` refuses when a key it changes differs between
+  // base and store. `normalizeProgramState` adds defaults the store need
+  // not carry (`skipped: false` on a workout day, for one), so a
+  // normalised mirror left base ≠ store on `workouts` and the very next
+  // rollover conflicted, refetched, re-normalised, and conflicted again —
+  // 442 times in one test. The loader can normalise because it COMMITS
+  // the normalised form; a mirror cannot write, so it must hold exactly
+  // what the store holds, which is also what `setProgramState(saved)`
+  // after every write already does.
+  //
+  // What this does NOT close: a user action that starts while the
+  // rollover's own transaction is in flight still commits against the
+  // pre-rollover base, because its proposal was computed from it. That is
+  // the writer-serialisation half of the same defect, handled separately.
+  useEffect(() => {
+    if (!user || loading) return;
+    const uid = user.uid;
+    const ref = doc(db, "users", uid, "programState", PROGRAM_DOC);
+    const unsubscribe = onSnapshot(
+      ref,
+      (snap) => {
+        if (auth.currentUser?.uid !== uid) return;
+        if (snap.metadata.fromCache || snap.metadata.hasPendingWrites) return;
+        if (!snap.exists()) return;
+        const next = snap.data() as ProgramState;
+        setProgramState((prev) =>
+          prev && sameStoredValue(prev, next) ? prev : next
+        );
+      },
+      (err) => {
+        logger.warn(
+          "[useProgram] programme mirror failed; base may go stale until the next load",
+          err
+        );
+      }
+    );
+    return unsubscribe;
+  }, [user, loading]);
 
   // Save program to Firestore
   const saveProgram = useCallback(
