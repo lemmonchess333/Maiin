@@ -596,10 +596,9 @@ export function useProgram() {
             // migration or generation over it.
             const latest = await getDoc(ref);
             if (!latest.exists()) return;
-            next = migrateProgramState(
-              normalizeProgramState(latest.data() as ProgramState),
-              thisWeek
-            );
+            // Raw, not re-normalised: the winner's state IS the store, and
+            // the base every later write commits against must equal it.
+            next = latest.data() as ProgramState;
           }
         }
         if (!cancelled && auth.currentUser?.uid === user.uid)
@@ -755,6 +754,8 @@ export function useProgram() {
   // rollover's own transaction is in flight still commits against the
   // pre-rollover base, because its proposal was computed from it. That is
   // the writer-serialisation half of the same defect, handled separately.
+  // `refetchProgramState` and both conflict paints hold this same
+  // invariant by setting raw too.
   useEffect(() => {
     if (!user || loading) return;
     const uid = user.uid;
@@ -809,13 +810,10 @@ export function useProgram() {
           const latest = await getDoc(
             doc(db, "users", user.uid, "programState", PROGRAM_DOC)
           ).catch(() => null);
+          // Raw — see refetchProgramState. A normalised paint here is what
+          // turned one refused rollover into an endless loop of them.
           if (auth.currentUser?.uid === user.uid && latest?.exists())
-            setProgramState(
-              migrateProgramState(
-                normalizeProgramState(latest.data() as ProgramState),
-                localWeekKey()
-              )
-            );
+            setProgramState(latest.data() as ProgramState);
         }
         toast.error(
           error instanceof ProgrammeConflictError
@@ -849,13 +847,17 @@ export function useProgram() {
     const ref = doc(db, "users", user.uid, "programState", PROGRAM_DOC);
     const snap = await getDoc(ref);
     if (!snap.exists()) return undefined;
-    const normalized = normalizeProgramState(snap.data() as ProgramState, {
-      primaryGoal: profile?.primaryGoal,
-    });
-    const migrated = migrateProgramState(normalized, localWeekKey());
-    setProgramState(migrated);
-    return migrated;
-  }, [user, profile]);
+    // RAW, for the same reason the mirror is raw: `programState` must be
+    // byte-for-byte what the store holds, because it is the `base` every
+    // writer commits against. A normalising refetch adds `skipped: false`
+    // to a workout day the store does not carry, so the next write that
+    // changes `workouts` after ANY applied command finds base ≠ store and
+    // is refused. The loader is the one place that may
+    // normalise, because it commits what it normalised.
+    const raw = snap.data() as ProgramState;
+    setProgramState(raw);
+    return raw;
+  }, [user]);
 
   /**
    * Run a programme command through the server boundary, optimistically.
