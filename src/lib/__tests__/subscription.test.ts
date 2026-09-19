@@ -325,3 +325,61 @@ describe("isCheckoutTrialEligible — one trial per account", () => {
     expect(isCheckoutTrialEligible(null)).toBe(true);
   });
 });
+
+describe("getSubscriptionInfo — the billed trial", () => {
+  const future = (days: number) =>
+    new Date(Date.now() + days * 864e5).toISOString();
+
+  it("Pro with a trial end ahead is in a billed trial with the days left", () => {
+    const info = getSubscriptionInfo(
+      makeProfile({
+        subscriptionTier: "pro",
+        subscriptionExpiresAt: future(7),
+        subscriptionTrialEndsAt: future(7),
+      })
+    );
+    expect(info).toMatchObject({
+      tier: "pro",
+      isPro: true,
+      isInTrial: true,
+      trialKind: "billed",
+      trialDaysLeft: 7,
+    });
+    expect(info.trialEndsAt).not.toBeNull();
+  });
+
+  it("Pro with the trial end behind now has converted — no trial, still Pro", () => {
+    const info = getSubscriptionInfo(
+      makeProfile({
+        subscriptionTier: "pro",
+        subscriptionExpiresAt: future(30),
+        subscriptionTrialEndsAt: future(-1),
+      })
+    );
+    expect(info).toMatchObject({
+      tier: "pro",
+      isPro: true,
+      isInTrial: false,
+      trialKind: null,
+      trialEndsAt: null,
+    });
+  });
+
+  it("a lapsed subscription is free even with a stale trial end on the profile", () => {
+    const info = getSubscriptionInfo(
+      makeProfile({
+        subscriptionTier: "pro",
+        subscriptionExpiresAt: future(-1),
+        subscriptionTrialEndsAt: future(-1),
+      })
+    );
+    expect(info).toMatchObject({ tier: "free", isPro: false, trialKind: null });
+  });
+
+  it("the legacy free week reports its own kind", () => {
+    const info = getSubscriptionInfo(
+      makeProfile({ trialExpiresAt: future(3) })
+    );
+    expect(info).toMatchObject({ isInTrial: true, trialKind: "onboarding" });
+  });
+});

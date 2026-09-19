@@ -198,6 +198,12 @@ export interface UserProfileSubscription {
    *  EXPIRED notification or a missed Stripe webhook leaving a
    *  user permanently Pro on stale data. */
   subscriptionExpiresAt?: string | null;
+  /** ISO end of the BILLED trial while one is running — the introductory
+   *  offer on iOS (via the RevenueCat webhook / sync) or Stripe's
+   *  `trial_end` while `trialing`. Server-only. Null once the trial has
+   *  converted or lapsed. Apple and Stripe send the user nothing before
+   *  a trial converts; the day-5 reminder and the Home strip read this. */
+  subscriptionTrialEndsAt?: string | null;
   /** Sub1a P1 — lifetime trial-shopping protection.
    *  Set to true by `functions/lib/checkoutTrial.js` when a trial
    *  Stripe checkout session is created, in the same Firestore txn
