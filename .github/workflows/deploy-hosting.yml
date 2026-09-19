@@ -55,7 +55,25 @@ jobs:
           VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.VITE_FIREBASE_MESSAGING_SENDER_ID }}
           VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID }}
           VITE_FIREBASE_MEASUREMENT_ID: ${{ secrets.VITE_FIREBASE_MEASUREMENT_ID }}
+          # FCM Web push public VAPID key (#963). Public by design (it ships in
+          # the client bundle); a secret only to match the other VITE_ vars.
+          # Unset, `isPushSupported()` returns false, so the Settings toggle
+          # takes the browser permission grant, writes consent `true`, and THEN
+          # fails with "Couldn't register for push (unsupported)" — leaving the
+          # account asking for push with no device token behind it. Hosting is
+          # the origin troposfit.com will point at; Pages has carried this since
+          # #963 and Hosting never did.
+          VITE_FIREBASE_VAPID_KEY: ${{ secrets.VITE_FIREBASE_VAPID_KEY }}
+          # App Check site key. Deliberately NOT mirrored onto the Pages
+          # deploy: a reCAPTCHA v3 site key is domain-scoped, so the key
+          # registered for this origin would fail verification on
+          # github.io rather than extend coverage to it.
           VITE_RECAPTCHA_V3_SITE_KEY: ${{ secrets.VITE_RECAPTCHA_V3_SITE_KEY }}
+          # Admin allowlist for /admin/moderation. Absent from every deploy
+          # until now, so the queue 403'd for everyone including the owner.
+          # Public by design (client-side route gate); listPendingReports
+          # re-checks ADMIN_UIDS server-side, so this is UX, not a boundary.
+          VITE_ADMIN_UIDS: ${{ secrets.VITE_ADMIN_UIDS }}
       # Deploy guard: never publish an E2E (mode=test) bundle to production.
       - name: Block accidental E2E bundle deploy
         run: |

@@ -252,6 +252,11 @@ The only remaining step — whenever you do the iOS session (needs Mac/Xcode):
    project; same place you grabbed the web `measurementId`).
 2. Add it to the Xcode project (`ios/App/App/`), then:
 
+   (The CI path no longer needs this step: `deploy-ios.yml` writes the
+   file from the `IOS_GOOGLE_SERVICE_INFO_PLIST_BASE64` secret and the
+   project already references it — see `docs/ios-release.md`. Locally the
+   file is gitignored, so drop it in place; the reference is committed.)
+
    ```bash
    npm run build:ios   # runs cap sync ios
    ```
@@ -892,14 +897,19 @@ That's the whole Windows-doable list. Everything else needs a Mac.
 
 Pick these up when you have Mac access:
 
-- Open `ios/App.xcworkspace` in Xcode and build to a real iPhone
-  (`npm run build:ios` → `npx cap sync ios` → `npx cap open ios`)
+- Open `ios/App/App.xcodeproj` in Xcode and build to a real iPhone
+  (`npm run build:ios` → `npx cap sync ios` → `npx cap open ios`). There
+  is no `.xcworkspace`; the project is SPM.
 - Verify `Info.plist` has the three usage descriptions
   (`NSCameraUsageDescription`, `NSLocationWhenInUseUsageDescription`,
   `NSPhotoLibraryUsageDescription`) — auto-picked up from
   `capacitor.config.ts` but worth eyeballing in Xcode's issue nav
-- Verify `PrivacyInfo.xcprivacy` appears in the target's Resources
-  and Xcode shows no "missing privacy manifest" warning
+- ~~Verify `PrivacyInfo.xcprivacy` appears in the target's Resources~~
+  — answered from `project.pbxproj` on 2026-09-19 without Xcode: it did
+  NOT. The file sat in the folder with no file reference and no Resources
+  entry, so every archive to date shipped without a privacy manifest.
+  Added to the target (and pinned by `iosProjectWiring.test.ts`). Still
+  worth confirming Xcode shows no "missing privacy manifest" warning.
 - Test haptics on a real iPhone (commit `79233a1` — can't verify on
   web)
 - Install native App Check plugin + wire iOS App Attest:
