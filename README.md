@@ -215,9 +215,11 @@ geolocation, purchases, deep links), and store release docs.
 - `@capacitor/local-notifications` — meal / workout / streak
   reminders.
 - `@capacitor/core` — platform detection.
-- `cordova-plugin-purchase` (or `@capacitor-community/in-app-purchases`)
-  — wired by `functions/appleIAP.js`. Confirm the installed
-  version matches the expected `IAPTransaction` shape.
+- `@revenuecat/purchases-capacitor` — in-app purchases and entitlement
+  (ADR-0006). The only StoreKit path. `cordova-plugin-purchase` was
+  removed rather than left beside it: `cap sync` re-wires every plugin in
+  `package.json` into the native project, so keeping the dependency meant
+  shipping two StoreKit observers that race to finish a transaction.
 
 ### Native plugins planned
 
