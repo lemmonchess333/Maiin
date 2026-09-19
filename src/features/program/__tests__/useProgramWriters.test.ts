@@ -2992,3 +2992,108 @@ describe("refetchProgramState keeps programState byte-equal to the store", () =>
     expect(caught).toBeUndefined();
   });
 });
+
+describe("#2422 — an action computed before another write landed still commits", () => {
+  function seedCurrentWeekRace() {
+    const targetDate = localDateString(addLocalDays(new Date(), 70));
+    mockProfile = raceProfile(targetDate);
+    const thisWeek = localWeekKey();
+    seedProgram({
+      goal: "recomp",
+      currentPhase: "base",
+      weekNumber: 1,
+      splitType: "ppl",
+      workouts: [],
+      fatigueScore: 0,
+      updatedAt: Date.now(),
+      programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
+      runDays: [
+        {
+          id: "runday_a",
+          dayIndex: 2,
+          templateId: "tempo_40",
+          type: "tempo",
+          completed: false,
+          status: "planned",
+          date: localDateString(addLocalDays(parseLocalDate(thisWeek), 2)),
+          weekKey: thisWeek,
+        },
+      ],
+      runPlan: {
+        mode: "race_prep",
+        raceGoal: { distance: "10k", targetDate },
+        totalWeeks: 12,
+        currentWeek: 2,
+      },
+    } as ProgramState);
+  }
+
+  // The rollover race, modelled at the point it bites. The mirror keeps
+  // `programState` current, but a user action is a closure over the state
+  // it was rendered with: tap Realign while the rollover's transaction is
+  // still in flight and the action's proposal was computed from the
+  // pre-rollover base. A plain proposal then commits against a store that
+  // moved under it on the very keys it changes, and `mergeChangedFields`
+  // refuses with "Your programme changed while you were editing." They
+  // were not editing.
+  //
+  // Held here by capturing the writer BEFORE the other write lands and
+  // calling it after. Two things must be true: the action is not refused,
+  // and it was computed against the LIVE document — `runPlan.currentWeek`
+  // is carried through the realign, so the committed value is the
+  // rollover's 3, not the stale closure's 2.
+  it("a realign captured before a rollover landed commits, computed against the live document", async () => {
+    seedCurrentWeekRace();
+    const { result } = mountProgram();
+    await waitFor(() => expect(result.current.loading).toBe(false), {
+      timeout: 2000,
+    });
+    expect(result.current.programState?.runPlan?.currentWeek).toBe(2);
+
+    // The action as the user saw it: bound to the pre-rollover state.
+    const realignAsRendered = result.current.realignRacePlan;
+
+    // The rollover lands. It moves exactly the keys a realign moves.
+    const seen = readDoc(PROGRAM) as unknown as ProgramState;
+    const nextWeek = localWeekKey(
+      addLocalDays(parseLocalDate(localWeekKey()), 7)
+    );
+    seedFirestore({
+      [PROGRAM]: {
+        ...seen,
+        weekNumber: 2,
+        runDays: [
+          {
+            ...(seen.runDays ?? [])[0],
+            id: "runday_rolled",
+            date: localDateString(addLocalDays(parseLocalDate(nextWeek), 2)),
+            weekKey: nextWeek,
+          },
+        ],
+        runPlan: { ...seen.runPlan, currentWeek: 3 },
+        updatedAt: Date.now() + 1,
+      } as unknown as Record<string, unknown>,
+    });
+    await flushSnapshots();
+    await waitFor(() =>
+      expect(result.current.programState?.runPlan?.currentWeek).toBe(3)
+    );
+
+    let caught: unknown;
+    let outcome: { timing: string; totalWeeks: number } | undefined;
+    await act(async () => {
+      outcome = await realignAsRendered().catch((e) => {
+        caught = e;
+        return undefined;
+      });
+    });
+    expect(caught).toBeUndefined();
+    expect(outcome?.totalWeeks ?? 0).toBeGreaterThan(0);
+
+    const stored = readDoc(PROGRAM) as unknown as ProgramState;
+    expect(stored.runPlan?.currentWeek).toBe(3);
+    expect(stored.weekNumber).toBe(2);
+    expect(stored.runDays?.length ?? 0).toBeGreaterThan(0);
+    expect(sameStoredValue(result.current.programState, stored)).toBe(true);
+  });
+});
