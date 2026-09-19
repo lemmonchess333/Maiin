@@ -42,6 +42,7 @@ const SPACE = "womens-running";
    projectId means one file's clearFirestore() wipes the other's
    seeds mid-test. Distinct id = distinct data plane. */
 const PROJECT_ID = "tropos-spaces-rules-test";
+const RACE_DEFS = SPACE_DEFS.filter((def) => def.kind === "race");
 /** Token claims. Space posts are public content and require
  *  `email_verified`, so the shared context helper carries the verified
  *  claim by default — each post test then asserts the rule it names, not
@@ -94,8 +95,8 @@ suite("firestore.rules — community spaces", () => {
   const db = (uid: string, claims: Record<string, unknown> = VERIFIED) =>
     env.authenticatedContext(uid, claims).firestore();
 
-  const join = (uid: string, space = SPACE) =>
-    setDoc(doc(db(uid), `spaces/${space}/members/${uid}`), {
+  const join = (uid: string, space = SPACE, client = db(uid)) =>
+    setDoc(doc(client, `spaces/${space}/members/${uid}`), {
       joinedAt: new Date(),
       displayName: "Test",
       uid,
@@ -135,20 +136,37 @@ suite("firestore.rules — community spaces", () => {
   });
 
   describe("membership", () => {
-    it("accepts each catalogue race for joining, posting and leaving", async () => {
-      for (const race of SPACE_DEFS.filter((def) => def.kind === "race")) {
-        await assertSucceeds(join(MEMBER, race.id));
-        await assertSucceeds(
-          setDoc(
-            doc(db(MEMBER), `spaces/${race.id}/posts/test-post`),
-            validPost(MEMBER)
-          )
-        );
-        await assertSucceeds(
-          deleteDoc(doc(db(MEMBER), `spaces/${race.id}/members/${MEMBER}`))
-        );
-      }
-    });
+    it(
+      "accepts each catalogue race for joining, posting and leaving",
+      async () => {
+        /* One client for the whole loop. Every `db()` call builds a fresh
+           Firestore instance with its own connection, and three of those
+           per race outgrew vitest's default budget as the catalogue grew.
+           Measured: a shared instance takes about a third of the time;
+           overlapping the races on top of that bought nothing, because
+           the emulator evaluates rules one request at a time. The budget
+           below grows with the catalogue for the same reason — the work
+           here is linear in it. A failure names its race. */
+        const asMember = db(MEMBER);
+        for (const race of RACE_DEFS) {
+          try {
+            await assertSucceeds(join(MEMBER, race.id, asMember));
+            await assertSucceeds(
+              setDoc(
+                doc(asMember, `spaces/${race.id}/posts/test-post`),
+                validPost(MEMBER)
+              )
+            );
+            await assertSucceeds(
+              deleteDoc(doc(asMember, `spaces/${race.id}/members/${MEMBER}`))
+            );
+          } catch (err) {
+            throw new Error(`${race.id}: ${(err as Error).message}`);
+          }
+        }
+      },
+      5_000 + RACE_DEFS.length * 200
+    );
 
     it("user joins and leaves a known space", async () => {
       await assertSucceeds(join(MEMBER));

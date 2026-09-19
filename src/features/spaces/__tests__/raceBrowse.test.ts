@@ -9,13 +9,13 @@ import { upcomingResolvedRaceDefs } from "../raceEventOverrides";
 describe("race browsing", () => {
   const races = upcomingResolvedRaceDefs({}, "2026-09-14");
   it("keeps UK first while making every international marathon discoverable", () => {
-    expect(races).toHaveLength(24);
-    expect(filterRaceDefs(races, UK_RACE_FILTERS)).toHaveLength(18);
+    expect(races).toHaveLength(34);
+    expect(filterRaceDefs(races, UK_RACE_FILTERS)).toHaveLength(23);
     const allFull = filterRaceDefs(races, {
       ...ALL_RACE_FILTERS,
       distance: "marathon",
     });
-    expect(allFull).toHaveLength(18);
+    expect(allFull).toHaveLength(23);
     expect(
       filterRaceDefs(races, { country: "GB", distance: "marathon" })
     ).toHaveLength(12);
@@ -26,6 +26,7 @@ describe("race browsing", () => {
     ).toEqual([
       "chicago-marathon",
       "new-york-city-marathon",
+      "houston-marathon",
       "boston-marathon",
     ]);
     expect(allFull.map((r) => r.event!.dateKey)).toEqual(

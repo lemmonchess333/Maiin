@@ -29,6 +29,10 @@ test.describe("races & events directory screenshots", () => {
   );
 
   test.beforeEach(async ({ page }) => {
+    // Pinned like the races-cta sibling: the directory hides a race once
+    // its date passes, so an unpinned clock lets the row thin out — and
+    // the first card change — every time the calendar overtakes an entry.
+    await page.clock.setFixedTime(new Date("2026-06-01T12:00:00Z"));
     await suppressCoachmarks(page);
     await page.addInitScript(() => {
       document.addEventListener("DOMContentLoaded", () => {
@@ -103,10 +107,13 @@ test.describe("races & events directory screenshots", () => {
     const racesLabel = page.getByText("Races & events");
     await racesLabel.waitFor({ state: "visible", timeout: 15000 });
     await racesLabel.scrollIntoViewIfNeeded();
-    // First race card (soonest, The Big Half) settles once its photo
-    // + date line paint.
+    // The first race card settles once its date line paints. Matched by
+    // SHAPE, not a literal: the soonest race moves whenever a date is
+    // pasted forward, and a literal here only ever fails silently (the
+    // catch below) — it had been matching nothing since the Big Half's
+    // 2026 date passed.
     await page
-      .getByText(/6 Sep 2026/)
+      .getByText(/\b\d{1,2} [A-Z][a-z]{2} 20\d{2}\b/)
       .first()
       .waitFor({ state: "visible", timeout: 8000 })
       .catch(() =>

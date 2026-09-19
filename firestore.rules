@@ -975,7 +975,11 @@ service cloud.firestore {
         'boston-marathon',
         'paris-marathon',
         'berlin-marathon',
-        'dublin-marathon'
+        'dublin-marathon',
+        // Winter and spring additions
+        'valencia-marathon', 'houston-marathon', 'seville-marathon',
+        'brighton-half', 'tokyo-marathon', 'cambridge-half',
+        'bath-half', 'barcelona-marathon'
       ];
     }
 
