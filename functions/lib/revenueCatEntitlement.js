@@ -189,6 +189,27 @@ function sourceForEntitlement(entitlement) {
   return mapped || FALLBACK_SOURCE;
 }
 
+/**
+ * The idempotency claim written to `revenueCatEvents/{eventId}`.
+ *
+ * It carries no user id. The two ledgers beside it set the terms:
+ * `stripeEvents` records the event type and nothing about the user, and
+ * `appleSubscriptions` records the uid but the account-deletion executor
+ * sweeps it. This ledger is keyed by RevenueCat's event id and nothing
+ * sweeps it, so a raw uid written here would outlive the account it
+ * belongs to. The hashed prefix is the same one the post-deletion payment
+ * log uses: enough for an operator to correlate one user's events, not
+ * enough to name the user.
+ */
+function eventLedgerClaim({ type, store, appUserId }) {
+  const { hashedUidPrefix } = require("./accountDeletionMinimisation");
+  return {
+    type,
+    store: store || null,
+    hashedUidPrefix: hashedUidPrefix(appUserId),
+  };
+}
+
 module.exports = {
   PRO_ENTITLEMENT_ID,
   STORE_TO_SOURCE,
@@ -197,5 +218,6 @@ module.exports = {
   parseWebhookEnvelope,
   entitlementFromSubscriber,
   sourceForEntitlement,
+  eventLedgerClaim,
   toMs,
 };

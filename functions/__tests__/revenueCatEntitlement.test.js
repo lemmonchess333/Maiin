@@ -16,8 +16,10 @@ const {
   parseWebhookEnvelope,
   entitlementFromSubscriber,
   sourceForEntitlement,
+  eventLedgerClaim,
   FALLBACK_SOURCE,
 } = require("../lib/revenueCatEntitlement");
+const { hashedUidPrefix } = require("../lib/accountDeletionMinimisation");
 
 const NOW = new Date("2026-09-19T12:00:00.000Z");
 const FUTURE = "2026-10-19T12:00:00.000Z";
@@ -191,6 +193,39 @@ describe("sourceForEntitlement", () => {
        one. */
     expect(
       sourceForEntitlement({ isActive: false, store: "app_store" })
+    ).toBeNull();
+  });
+});
+
+describe("eventLedgerClaim", () => {
+  it("records the event without the user's id", () => {
+    /* stripeEvents carries no identifier and appleSubscriptions is swept
+       on account deletion; this ledger is neither swept nor keyed by
+       user, so the uid must not be in it. The hashed prefix is what the
+       post-deletion payment log already records, so the two stay
+       correlatable by the same key. */
+    const claim = eventLedgerClaim({
+      type: "RENEWAL",
+      store: "APP_STORE",
+      appUserId: "uid-1",
+    });
+    expect(claim).toEqual({
+      type: "RENEWAL",
+      store: "APP_STORE",
+      hashedUidPrefix: hashedUidPrefix("uid-1"),
+    });
+    expect(JSON.stringify(claim)).not.toContain("uid-1");
+  });
+
+  it("stores a missing store as null rather than dropping the key", () => {
+    /* A dashboard grant arrives with no store. The ledger's shape should
+       not vary by event, or an operator query on the field misses rows. */
+    expect(
+      eventLedgerClaim({
+        type: "NON_RENEWING_PURCHASE",
+        store: null,
+        appUserId: "u",
+      }).store
     ).toBeNull();
   });
 });

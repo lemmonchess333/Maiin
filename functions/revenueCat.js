@@ -48,6 +48,7 @@ const {
   parseWebhookEnvelope,
   entitlementFromSubscriber,
   sourceForEntitlement,
+  eventLedgerClaim,
 } = require("./lib/revenueCatEntitlement");
 
 const REVENUECAT_WEBHOOK_AUTH = defineSecret("REVENUECAT_WEBHOOK_AUTH");
@@ -267,9 +268,7 @@ exports.revenueCatWebhook = functions
           return;
         }
         txn.set(eventRef, {
-          type,
-          appUserId,
-          store: store || null,
+          ...eventLedgerClaim({ type, store, appUserId }),
           claimedAt: admin.firestore.FieldValue.serverTimestamp(),
         });
       });
