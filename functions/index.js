@@ -97,6 +97,14 @@ exports.verifyApplePurchase = appleIAP.verifyApplePurchase;
 exports.appleIAPWebhook = appleIAP.appleIAPWebhook;
 exports.restoreApplePurchases = appleIAP.restoreApplePurchases;
 
+// IAP slice 3 / ADR-0006 — the RevenueCat pipeline that replaces
+// the three exports above. Both run during the migration: purchaseProvider
+// picks one at build time via VITE_REVENUECAT_IOS_KEY, and slice 8 (the
+// on-device sandbox sign-off) is what retires the Apple path.
+const revenueCat = require("./revenueCat");
+exports.revenueCatWebhook = revenueCat.revenueCatWebhook;
+exports.syncRevenueCatEntitlement = revenueCat.syncRevenueCatEntitlement;
+
 // PR Q (audit P0 #1/#2/#3 follow-up): pure helpers live in
 // ./helpers.js so the test runner can import them without booting
 // firebase-admin. The underscore-prefixed names below are kept as
@@ -1904,6 +1912,91 @@ exports._isAllowedStripeReturnUrl = _isAllowedStripeReturnUrl;
 // ══════════════════════════════════════════════
 // STRIPE WEBHOOK — subscription lifecycle events
 // ══════════════════════════════════════════════
+
+/**
+ * Stripe billing portal — the Manage Subscription action for web and
+ * Android subscribers (`manageSubscription` in src/lib/purchaseProvider.ts).
+ *
+ * The client has called this since the Upgrade page shipped; nothing
+ * implemented it, so every Stripe subscriber pressing Manage Subscription
+ * got `functions/not-found` rendered as "Couldn't open billing portal".
+ * The comment on the call site said the call "fails gracefully if the
+ * function isn't deployed yet", which is true and was never the point.
+ *
+ * iOS never reaches here — Apple subscriptions are managed in iOS
+ * Settings and purchaseProvider routes to the App Store URL before this
+ * call. ADR-0006 gates Stripe off for v1, so in practice this serves
+ * accounts that subscribed before that gate.
+ */
+exports.createStripeBillingPortal = functions
+  // STRIPE_SECRET_KEY: creates the billing-portal session.
+  .runWith({ ...DEFAULT_HTTP_CAP, secrets: [STRIPE_SECRET_KEY] })
+  .https.onCall(async (data, context) => {
+    if (!context.auth) {
+      throw new functions.https.HttpsError("unauthenticated", "Auth required.");
+    }
+    const uid = context.auth.uid;
+
+    // The client sends its own uid for symmetry with createCheckoutSession.
+    // context.auth.uid is the only one trusted; a mismatch is refused rather
+    // than quietly serving the caller their own portal, so a bug that swaps
+    // the field surfaces instead of looking like it worked.
+    if (data && data.uid && data.uid !== uid) {
+      throw new functions.https.HttpsError("permission-denied", "Forbidden.");
+    }
+
+    const stripeKey = process.env.STRIPE_SECRET_KEY;
+    if (!stripeKey) {
+      console.error("createStripeBillingPortal: STRIPE_SECRET_KEY unset");
+      throw new functions.https.HttpsError(
+        "failed-precondition",
+        "Billing portal is not configured."
+      );
+    }
+
+    const db = admin.firestore();
+    await accountDeletionLocks.assertCallableActorNotDeleting(db, uid);
+
+    const userSnap = await db.collection("users").doc(uid).get();
+    const customerId = userSnap.exists
+      ? (userSnap.data() || {}).stripeCustomerId
+      : null;
+    if (!customerId) {
+      // Not an error state the user can act on by retrying — they have
+      // no Stripe customer because they never subscribed through Stripe.
+      throw new functions.https.HttpsError(
+        "failed-precondition",
+        "No Stripe subscription on this account."
+      );
+    }
+
+    // The client proposes where to land; the server decides. A supplied
+    // URL is honoured only if it passes the same origin allowlist the
+    // checkout return URLs go through, and anything else falls back to
+    // the deploy-resolved settings page — so a compromised client can
+    // redirect the user to Stripe but not away from it.
+    const proposed =
+      data && typeof data.returnUrl === "string" ? data.returnUrl : null;
+    const returnUrl =
+      proposed && helpers.isAllowedStripeReturnUrl(proposed)
+        ? proposed
+        : helpers.buildStripeReturnUrl("settings", "success");
+
+    try {
+      const stripe = require("stripe")(stripeKey);
+      const session = await stripe.billingPortal.sessions.create({
+        customer: customerId,
+        return_url: returnUrl,
+      });
+      return { url: session.url };
+    } catch (err) {
+      console.error(`createStripeBillingPortal: failed for uid=${uid}`, err);
+      throw new functions.https.HttpsError(
+        "internal",
+        "Could not open the billing portal."
+      );
+    }
+  });
 
 exports.stripeWebhook = functions
   // ⛔ NEVER add `enforceAppCheck: true` here. This is an EXTERNAL webhook —
