@@ -34,6 +34,7 @@ import {
   weekPosition,
 } from "@/lib/dateHelpers";
 import { CURRENT_PROGRAM_SCHEMA_VERSION } from "../programTypes";
+import { sameStoredValue } from "../stateTransition";
 import type { ProgramState, ScheduledRunDay } from "../programTypes";
 
 // ─── Firebase mocks ──────────────────────────────────────────────────
@@ -135,6 +136,8 @@ vi.mock("@/lib/firebase", () => ({
 
 import {
   seedFirestore,
+  setSnapshotMetadata,
+  flushSnapshots,
   readDoc,
   resetFirestore,
   seedCache,
@@ -2746,3 +2749,165 @@ function mountProgram() {
   seedFirestore({ "users/test-user-1": mockProfile ?? {} });
   return renderHook(() => useProgram());
 }
+
+// ─── #2422 — the programme mirrors writes it did not make ─────────────
+
+describe("#2422 — programState mirrors server writes this client did not make", () => {
+  function seedCurrentWeekRace() {
+    const targetDate = localDateString(addLocalDays(new Date(), 70));
+    mockProfile = raceProfile(targetDate);
+    const thisWeek = localWeekKey();
+    seedProgram({
+      goal: "recomp",
+      currentPhase: "base",
+      weekNumber: 1,
+      splitType: "ppl",
+      workouts: [],
+      fatigueScore: 0,
+      updatedAt: Date.now(),
+      programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
+      runDays: [
+        {
+          id: "runday_a",
+          dayIndex: 2,
+          templateId: "tempo_40",
+          type: "tempo",
+          completed: false,
+          status: "planned",
+          date: localDateString(addLocalDays(parseLocalDate(thisWeek), 2)),
+          weekKey: thisWeek,
+        },
+      ],
+      runPlan: {
+        mode: "race_prep",
+        raceGoal: { distance: "10k", targetDate },
+        totalWeeks: 12,
+        currentWeek: 2,
+      },
+    } as ProgramState);
+  }
+
+  // The defect, before the mirror: `useProgram` read the document once with
+  // getDoc, and that read was the base every action committed against. A
+  // server trigger, the app's own rollover, or a second device moving the
+  // document left this client stale for as long as the user stayed put —
+  // and the next overlapping action failed the precondition with "Your
+  // programme changed while you were editing." Pinned here as the two
+  // halves that matter: the hook SEES the write, and the action that used
+  // to be refused now commits.
+  it("an out-of-band change reaches programState, and the next action commits against it", async () => {
+    seedCurrentWeekRace();
+    const { result } = mountProgram();
+    await waitFor(() => expect(result.current.loading).toBe(false), {
+      timeout: 2000,
+    });
+    expect(result.current.programState?.runDays?.[0]?.id).toBe("runday_a");
+
+    // Another writer lands. Nothing on this client asked for it.
+    const seen = readDoc(PROGRAM) as unknown as ProgramState;
+    seedFirestore({
+      [PROGRAM]: {
+        ...seen,
+        runDays: [{ ...(seen.runDays ?? [])[0], id: "runday_b" }],
+        updatedAt: Date.now() + 1,
+      } as unknown as Record<string, unknown>,
+    });
+    await flushSnapshots();
+
+    await waitFor(() =>
+      expect(result.current.programState?.runDays?.[0]?.id).toBe("runday_b")
+    );
+
+    let caught: unknown;
+    await act(async () => {
+      await result.current.realignRacePlan().catch((e) => {
+        caught = e;
+      });
+    });
+    expect(caught).toBeUndefined();
+    const lastSave = setDocCalls()[setDocCalls().length - 1]
+      ?.data as ProgramState;
+    expect(lastSave.runDays?.length ?? 0).toBeGreaterThan(0);
+  });
+
+  // The mirror is a mirror: a snapshot this client has not yet had
+  // acknowledged, or one served from the local cache, is not a base to
+  // build on. The loader owns the cache-first paint; a pending local write
+  // is the writer's own to settle.
+  it("ignores cache-served and pending-write snapshots", async () => {
+    seedCurrentWeekRace();
+    const { result } = mountProgram();
+    await waitFor(() => expect(result.current.loading).toBe(false), {
+      timeout: 2000,
+    });
+
+    const seen = readDoc(PROGRAM) as unknown as ProgramState;
+    setSnapshotMetadata(PROGRAM, { fromCache: true });
+    seedFirestore({
+      [PROGRAM]: {
+        ...seen,
+        runDays: [{ ...(seen.runDays ?? [])[0], id: "runday_cache_only" }],
+      } as unknown as Record<string, unknown>,
+    });
+    await flushSnapshots();
+    expect(result.current.programState?.runDays?.[0]?.id).toBe("runday_a");
+
+    setSnapshotMetadata(PROGRAM, { fromCache: false, hasPendingWrites: true });
+    await flushSnapshots();
+    expect(result.current.programState?.runDays?.[0]?.id).toBe("runday_a");
+
+    // Acknowledged: now it lands.
+    setSnapshotMetadata(PROGRAM, { fromCache: false, hasPendingWrites: false });
+    await flushSnapshots();
+    await waitFor(() =>
+      expect(result.current.programState?.runDays?.[0]?.id).toBe(
+        "runday_cache_only"
+      )
+    );
+  });
+
+  // The invariant the mirror must keep, stated directly: what it puts in
+  // `programState` is byte-for-byte what the store holds. Every writer
+  // commits with `programState` as its `base`, and `mergeChangedFields`
+  // refuses when a key it changes differs between base and store. The
+  // store legitimately carries shapes normalisation would "repair" — a
+  // workout day with no `skipped` field is what the rollover writes — so a
+  // normalising mirror set base ≠ store on `workouts`, and the next
+  // rollover conflicted, refetched, re-normalised, and conflicted again
+  // (442 times in useProgramLayoffWiring before this was raw). The four
+  // rollover tests there hold the consequence; this holds the cause.
+  it("mirrors the store byte-for-byte, because writers commit against it as their base", async () => {
+    seedCurrentWeekRace();
+    const { result } = mountProgram();
+    await waitFor(() => expect(result.current.loading).toBe(false), {
+      timeout: 2000,
+    });
+
+    const seen = readDoc(PROGRAM) as unknown as ProgramState;
+    seedFirestore({
+      [PROGRAM]: {
+        ...seen,
+        workouts: [
+          {
+            dayName: "Mirrored day",
+            dayType: "full_body",
+            completed: false,
+            exercises: [],
+          },
+        ],
+        updatedAt: Date.now() + 1,
+      } as unknown as Record<string, unknown>,
+    });
+    await flushSnapshots();
+    await waitFor(() =>
+      expect(result.current.programState?.workouts?.[0]?.dayName).toBe(
+        "Mirrored day"
+      )
+    );
+
+    const held = result.current.programState!;
+    expect(sameStoredValue(held, readDoc(PROGRAM))).toBe(true);
+    // The default a normaliser would add, and the store does not have.
+    expect("skipped" in (held.workouts[0] as object)).toBe(false);
+  });
+});
