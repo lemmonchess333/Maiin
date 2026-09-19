@@ -12,7 +12,9 @@
 # ⚠️ SCAFFOLD — NOT YET VERIFIED. This was authored in a Linux environment
 #   with no macOS runner or Apple credentials, so it has never executed.
 #   Before relying on it, an operator must (one-time):
-#     1. Add the secrets listed under `env:` below (see docs/ios-release.md).
+#     1. Add the Apple signing secrets (see docs/ios-release.md). The
+#        VITE_FIREBASE_* secrets the build step needs are the same ones
+#        deploy.yml already uses, so they are almost certainly set.
 #     2. Run it once via the Actions tab ("Run workflow") and fix any
 #        signing/scheme specifics for this exact project.
 #   It is `workflow_dispatch` ONLY (manual) on purpose — it will never fire
@@ -44,11 +46,18 @@ jobs:
     timeout-minutes: 40
     env:
       # ── App identity (match capacitor.config.ts appId) ──────────────
-      # Non-secret only. Signing secrets are scoped to the individual
+      # Non-secret only. SIGNING secrets stay scoped to the individual
       # steps that need them (2026-07-11 repo audit batch 5): job-level
       # secret env exposed every credential to `npm ci`'s dependency
-      # lifecycle scripts. Install/build/sync now run with NO secrets in
-      # their environment.
+      # lifecycle scripts, so `npm ci` still runs with none in scope.
+      #
+      # That audit moved the signing credentials off the job and the build
+      # step never got its own env block back, so every build here ran with
+      # NO VITE_* config at all — a TestFlight build with a blank Firebase
+      # config, where every sign-in returns auth/internal-error. The build
+      # step below now carries the client config explicitly. It is public
+      # by design (it ships inside the bundle); the scoping rule is about
+      # the signing material, which is still nowhere near npm.
       BUNDLE_ID: com.tropos.app
       SCHEME: App
 
@@ -63,11 +72,71 @@ jobs:
       - name: Install deps
         run: npm ci
 
-      - name: Build web bundle (production)
-        run: npm run build
+      # Fail here rather than 40 minutes later in Xcode, and long before a
+      # tester installs a build that cannot sign anyone in. deploy.yml and
+      # deploy-hosting.yml both run this guard; this workflow was the one
+      # that did not.
+      - name: Check Firebase web config is present
+        run: node scripts/check-web-env.mjs
+        env:
+          VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}
+          VITE_FIREBASE_AUTH_DOMAIN: ${{ secrets.VITE_FIREBASE_AUTH_DOMAIN }}
+          VITE_FIREBASE_PROJECT_ID: ${{ secrets.VITE_FIREBASE_PROJECT_ID }}
+          VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID }}
 
-      - name: Sync web bundle into the iOS project
-        run: npx cap sync ios
+      # `build:ios`, not `build`. Plain `npm run build` leaves CAPACITOR_BUILD
+      # unset, so vite.config resolves `base` to "/Maiin/" — the GitHub Pages
+      # path — and inside the native shell, which serves from the bundle root,
+      # every asset URL points at a directory that does not exist. The app
+      # compiles, archives, uploads, and opens on a white screen.
+      #
+      # build:ios sets the flag and runs `cap sync ios` itself, so it replaces
+      # both steps this used to have and there is one definition of how an iOS
+      # bundle gets made, shared with the local command in the README.
+      - name: Build web bundle and sync into the iOS project
+        run: npm run build:ios
+        env:
+          VITE_FIREBASE_API_KEY: ${{ secrets.VITE_FIREBASE_API_KEY }}
+          VITE_FIREBASE_AUTH_DOMAIN: ${{ secrets.VITE_FIREBASE_AUTH_DOMAIN }}
+          VITE_FIREBASE_PROJECT_ID: ${{ secrets.VITE_FIREBASE_PROJECT_ID }}
+          VITE_FIREBASE_STORAGE_BUCKET: ${{ secrets.VITE_FIREBASE_STORAGE_BUCKET }}
+          VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.VITE_FIREBASE_MESSAGING_SENDER_ID }}
+          VITE_FIREBASE_APP_ID: ${{ secrets.VITE_FIREBASE_APP_ID }}
+          # Parity with the web deploy — the Pro-gated road-align layer is
+          # not a web-only feature.
+          VITE_ROUTE_PLANNING_ENABLED: "true"
+          #
+          # Absent on purpose, so nobody has to re-derive why:
+          #
+          #   VITE_FIREBASE_MEASUREMENT_ID — web Analytics SDK only; the
+          #     native shell reads GoogleService-Info.plist (LAUNCH_TODO #6a).
+          #   VITE_FIREBASE_VAPID_KEY — FCM *web* push; native push is APNs.
+          #   VITE_RECAPTCHA_V3_SITE_KEY — the web App Check provider.
+          #     appCheck.ts takes its isNativePlatform() branch before it ever
+          #     reads the key, so passing it here would do nothing and imply
+          #     native attestation is configured when it is not.
+          #   VITE_REVENUECAT_IOS_KEY — NOT wired, deliberately. Adding the
+          #     line arms RevenueCat the instant the GitHub secret exists, and
+          #     purchaseProvider routes iOS through it with no further gate.
+          #     Add it only after the activation order in
+          #     docs/iap/revenuecat-setup.md is complete, or a purchase is
+          #     taken by Apple and no entitlement is written.
+
+      # Both failures above are invisible in a green build: the bundle
+      # compiles either way and only misbehaves on a device, by which point
+      # it has cost a 40-minute archive and a TestFlight round trip. Assert
+      # them while they are still cheap.
+      - name: Verify the bundle is a Capacitor build
+        run: |
+          set -euo pipefail
+          if grep -Eq '(src|href)="/Maiin/' dist/index.html; then
+            echo "::error::dist/index.html references /Maiin/ — built without CAPACITOR_BUILD=true. The native shell serves from the bundle root, so those assets resolve to nothing and the app opens blank."
+            exit 1
+          fi
+          if [ ! -f ios/App/App/public/index.html ]; then
+            echo "::error::cap sync did not populate ios/App/App/public — the archive would ship whatever web assets were there before, or none."
+            exit 1
+          fi
 
       - name: Import signing certificate + provisioning profile
         env:
