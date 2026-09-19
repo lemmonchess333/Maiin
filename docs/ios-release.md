@@ -50,6 +50,19 @@ from the **Actions** tab when you want a new TestFlight build.
 | `ASC_API_ISSUER_ID`               | Issuer ID from the same page                                                                       | —                                                                           |
 | `ASC_API_KEY_P8_BASE64`           | the `.p8` API key file, base64'd (download is one-time!)                                           | same page → generate key                                                    |
 
+The build step additionally reads the `VITE_FIREBASE_*` client config, the
+same six secrets `deploy.yml` uses for the web deploy, so on this repo they
+are already set. They are listed here because the workflow shipped without
+them: the 2026-07-11 audit scoped the signing credentials to individual steps
+and the build step never regained an env block, so every build produced a
+bundle with a blank Firebase config where every sign-in returns
+`auth/internal-error`. `scripts/check-web-env.mjs` now runs first and fails
+the job instead.
+
+`VITE_REVENUECAT_IOS_KEY` is deliberately NOT wired into this workflow. See
+the comment on the build step, and the activation order in
+`docs/iap/revenuecat-setup.md`.
+
 #### First-run checklist
 
 1. Add all secrets above.
