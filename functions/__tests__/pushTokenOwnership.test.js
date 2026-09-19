@@ -221,6 +221,29 @@ describe("pushTokenOwnership.claimToken", () => {
     expect(fs.__store.has(`fcmTokenClaims/${hash}`)).toBe(false);
   });
 
+  it("rejects after the account is tombstoned; writes nothing", async () => {
+    /* `assertWritableInTransaction` refuses on two states and only one of
+       them was held. The test above covers an ACTIVE deletion; nothing
+       covered the tombstone that outlives it, so removing that branch left
+       every push-token test green while a deleted account could claim a
+       token again and start receiving push. A tombstone with no expiresAt
+       is live by the fail-closed rule in accountDeletionStatus. Found by
+       disabling the branch and re-running. */
+    const fs = makeFirestore({ "deletedAccounts/B": {} });
+    await expect(
+      own.claimToken({
+        firestore: fs,
+        uid: "B",
+        token: TOKEN,
+        platform: "web",
+        bindingId: BIND_B,
+        serverTimestamp: SERVER_TS,
+      })
+    ).rejects.toBeTruthy();
+    expect(fs.__store.has(`users/B/devices/${hash}`)).toBe(false);
+    expect(fs.__store.has(`fcmTokenClaims/${hash}`)).toBe(false);
+  });
+
   it("rejects a binding id already under a live revocation fence", async () => {
     const fs = makeFirestore({
       [`fcmTokenClaims/${hash}`]: {

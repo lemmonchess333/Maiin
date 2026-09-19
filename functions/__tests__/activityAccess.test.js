@@ -121,6 +121,29 @@ describe("assertCanInteractWithActivity", () => {
     ).rejects.toMatchObject({ code: "activity-not-accessible" });
   });
 
+  it("rejects a FOLLOWER on a private activity", async () => {
+    /* The case that separates `private` from `followers`, and the one the
+       other four rejections cannot reach: each of those uses a uid with no
+       follower doc, so the visibility branch and the follower lookup refuse
+       together and neither is distinguishable from the other. Delete the
+       visibility check and every one of them still passes, while a private
+       activity becomes readable by anyone the author accepted — which is
+       the whole difference between the two settings. Found by disabling
+       the guard and re-running. */
+    const { tx, firestore, activityRef } = makeCtx(
+      { visibility: "private", authorId: "bob" },
+      new Set(["bob/carol"]) // carol follows bob, and still must not see this
+    );
+    await expect(
+      assertCanInteractWithActivity({
+        tx,
+        firestore,
+        activityRef,
+        uid: "carol",
+      })
+    ).rejects.toMatchObject({ code: "activity-not-accessible" });
+  });
+
   it("rejects when the parent activity does not exist", async () => {
     const { tx, firestore, activityRef } = makeCtx(null);
     await expect(
