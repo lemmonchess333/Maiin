@@ -16,10 +16,10 @@ import {
 } from "../spaceDefs";
 
 describe("SPACE_DEFS config invariants", () => {
-  it("ships the locked sets: 8 interest + 26 races (2026-09-14 expansion)", () => {
+  it("ships the locked sets: 8 interest + 34 races", () => {
     expect(SPACE_DEFS.filter((d) => d.kind === "interest")).toHaveLength(8);
-    expect(SPACE_DEFS.filter((d) => d.kind === "race")).toHaveLength(26);
-    expect(SPACE_DEFS).toHaveLength(34);
+    expect(SPACE_DEFS.filter((d) => d.kind === "race")).toHaveLength(34);
+    expect(SPACE_DEFS).toHaveLength(42);
   });
 
   it("ids are unique, url-safe slugs", () => {
@@ -66,7 +66,7 @@ describe("race event blocks (Races & Events plan, locked 2026-07-19)", () => {
         d.event.distance
       );
       expect(d.event.city.length, d.id).toBeGreaterThan(0);
-      expect(["GB", "US", "FR", "DE", "IE"], d.id).toContain(
+      expect(["GB", "US", "FR", "DE", "IE", "ES", "JP"], d.id).toContain(
         d.event.countryCode
       );
       expect(d.event.countryFlag.length, d.id).toBeGreaterThan(0);
@@ -85,22 +85,23 @@ describe("race event blocks (Races & Events plan, locked 2026-07-19)", () => {
 
   it("raceSpaceDefs() returns all races sorted soonest first", () => {
     const races = raceSpaceDefs();
-    expect(races).toHaveLength(26);
+    expect(races).toHaveLength(34);
     const keys = races.map((d) => d.event!.dateKey);
     expect(keys).toEqual([...keys].sort());
   });
 
   it("upcomingRaceSpaceDefs hides past races, keeps race day itself (Q2)", () => {
-    const first = raceSpaceDefs()[0].event!.dateKey; // soonest: 2026-09-06
+    const first = raceSpaceDefs()[0].event!.dateKey; // soonest: 2026-09-27
     // On race day the card still shows…
     expect(upcomingRaceSpaceDefs(first).map((d) => d.event!.dateKey)).toContain(
       first
     );
     // …the day after, it's gone, and everything later survives.
-    const dayAfter = "2026-09-07";
+    // Three races share the soonest day, so all three drop the day after.
+    const dayAfter = "2026-09-28";
     const after = upcomingRaceSpaceDefs(dayAfter).map((d) => d.event!.dateKey);
     expect(after).not.toContain(first);
-    expect(after).toHaveLength(25);
+    expect(after).toHaveLength(31);
     // Far future: everything hidden, none invented.
     expect(upcomingRaceSpaceDefs("2099-01-01")).toHaveLength(0);
   });
