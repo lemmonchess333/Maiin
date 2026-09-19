@@ -2911,3 +2911,84 @@ describe("#2422 — programState mirrors server writes this client did not make"
     expect("skipped" in (held.workouts[0] as object)).toBe(false);
   });
 });
+
+// ─── refetch must hold the same invariant the mirror does ─────────────
+
+describe("refetchProgramState keeps programState byte-equal to the store", () => {
+  // The invariant every writer depends on — `programState` is byte-for-byte
+  // what the store holds — is held by the loader (it COMMITS the normalised
+  // form) and by the mirror (it sets the snapshot raw). A refetch that
+  // normalises breaks it: `normalizeProgramState` adds `skipped: false` to a
+  // workout day the store does not carry, so the next write that changes
+  // `workouts` finds base ≠ store on that key and is refused. Every command
+  // path refetches, so this is one skipped day away from a refused
+  // regenerate — or from the rollover conflict loop the mirror's test
+  // describes, since the rollover's refusal handler refetches too.
+  it("a workouts-changing write after a refetch is not refused", async () => {
+    mockProfile = structuredProfile();
+    seedProgram({
+      goal: "recomp",
+      currentPhase: "base",
+      weekNumber: 1,
+      splitType: "ppl",
+      workouts: [],
+      fatigueScore: 0,
+      updatedAt: Date.now(),
+      settings: { autoProgression: true, microloading: true },
+      weekHistory: [],
+      programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
+      runDays: [],
+    } as ProgramState);
+    const { result } = mountProgram();
+    await waitFor(() => expect(result.current.loading).toBe(false), {
+      timeout: 2000,
+    });
+
+    // A store shape normalisation would "repair": a workout day with no
+    // `skipped` field, which is what the rollover writes. Lands out of band,
+    // so the mirror carries it raw and the invariant holds…
+    const seen = readDoc(PROGRAM) as unknown as ProgramState;
+    seedFirestore({
+      [PROGRAM]: {
+        ...seen,
+        workouts: [
+          {
+            dayName: "Raw day",
+            dayType: "full_body",
+            completed: false,
+            exercises: [],
+          },
+        ],
+        updatedAt: Date.now() + 1,
+      } as unknown as Record<string, unknown>,
+    });
+    await flushSnapshots();
+    await waitFor(() =>
+      expect(result.current.programState?.workouts?.[0]?.dayName).toBe(
+        "Raw day"
+      )
+    );
+
+    // …until a refetch. Every applied command ends in one; skipping the
+    // day is the smallest command that touches this fixture.
+    await act(async () => {
+      await result.current.skipWorkoutDay(0);
+    });
+    expect(
+      sentCommands.find((c) => c.kind === "skipWorkoutDay"),
+      "the skip must reach the boundary, or nothing refetched"
+    ).toBeDefined();
+    expect(sameStoredValue(result.current.programState, readDoc(PROGRAM))).toBe(
+      true
+    );
+
+    // The write that changes `workouts` must commit, not be refused.
+    let caught: unknown;
+    await act(async () => {
+      await result.current.regenerateProgram().catch((e) => {
+        caught = e;
+      });
+    });
+    expect(caught).toBeUndefined();
+  });
+});
