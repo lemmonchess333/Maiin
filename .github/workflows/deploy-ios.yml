@@ -20,6 +20,15 @@
 #   It is `workflow_dispatch` ONLY (manual) on purpose — it will never fire
 #   on push, so merging it changes nothing until you deliberately trigger it.
 #
+#   Four certain failures were removed from the scaffold by reading the
+#   project it builds, before any run (2026-09-19): it archived a
+#   `.xcworkspace` that does not exist (the project is SPM — there is only
+#   `App.xcodeproj`), it shipped no `GoogleService-Info.plist` (every Firebase
+#   plugin calls `FirebaseApp.configure()` at launch, which aborts without
+#   one), it left the build number at 1 (App Store Connect refuses the second
+#   upload), and it never registered the Google sign-in URL scheme (the
+#   GoogleSignIn SDK raises without it). The first run is still a bring-up.
+#
 # Canonical pattern: import a distribution cert + provisioning profile into
 # an ephemeral keychain, archive with xcodebuild, export an .ipa, upload
 # with an App Store Connect API key. See docs/ios-release.md for the full
@@ -71,6 +80,58 @@ jobs:
 
       - name: Install deps
         run: npm ci
+
+      # The bridge instantiates every plugin at launch (CapacitorBridge
+      # .registerPlugins → plugin.load), and the three @capacitor-firebase
+      # plugins each call FirebaseApp.configure() when no app is configured
+      # yet. configure() aborts the process when the bundle carries no
+      # GoogleService-Info.plist — so a build without it archives, uploads,
+      # installs, and dies before the first frame. The file is not in git
+      # (ios/.gitignore); it arrives from a secret. The Xcode project
+      # references it in the Resources phase, so if this step is skipped the
+      # archive fails naming the file instead of a tester's phone crashing.
+      - name: Place GoogleService-Info.plist
+        env:
+          IOS_GOOGLE_SERVICE_INFO_PLIST_BASE64: ${{ secrets.IOS_GOOGLE_SERVICE_INFO_PLIST_BASE64 }}
+        run: |
+          set -euo pipefail
+          if [ -z "$IOS_GOOGLE_SERVICE_INFO_PLIST_BASE64" ]; then
+            echo "::error::IOS_GOOGLE_SERVICE_INFO_PLIST_BASE64 is not set. Firebase Console → Project settings → Your apps → iOS app → download GoogleService-Info.plist, then 'base64 -i GoogleService-Info.plist | pbcopy' into a repo secret of that name. Without it the app crashes at launch."
+            exit 1
+          fi
+          PLIST=ios/App/App/GoogleService-Info.plist
+          echo "$IOS_GOOGLE_SERVICE_INFO_PLIST_BASE64" | base64 --decode > "$PLIST"
+          plutil -lint "$PLIST"
+          PLIST_BUNDLE_ID=$(/usr/libexec/PlistBuddy -c "Print :BUNDLE_ID" "$PLIST")
+          if [ "$PLIST_BUNDLE_ID" != "$BUNDLE_ID" ]; then
+            echo "::error::GoogleService-Info.plist is for $PLIST_BUNDLE_ID, not $BUNDLE_ID — that is a different Firebase iOS app."
+            exit 1
+          fi
+
+      # GoogleSignIn raises an NSException from signIn(withPresenting:) when
+      # the app declares no URL scheme for its REVERSED_CLIENT_ID, so without
+      # this "Continue with Google" would crash rather than fail. The value
+      # lives in the plist just placed; derive it rather than commit it. This
+      # is LAUNCH_TODO §15 step 2, done for the CI build — a local Xcode build
+      # still needs it added by hand.
+      - name: Register the Google sign-in URL scheme
+        run: |
+          set -euo pipefail
+          INFO=ios/App/App/Info.plist
+          GSI=ios/App/App/GoogleService-Info.plist
+          if ! REVERSED=$(/usr/libexec/PlistBuddy -c "Print :REVERSED_CLIENT_ID" "$GSI" 2>/dev/null); then
+            echo "::error::GoogleService-Info.plist has no REVERSED_CLIENT_ID — the Firebase iOS app has no OAuth client, so Google sign-in cannot work on this build. Firebase Console → Authentication → Sign-in method → Google → enable, then re-download the plist."
+            exit 1
+          fi
+          if /usr/libexec/PlistBuddy -c "Print :CFBundleURLTypes" "$INFO" >/dev/null 2>&1; then
+            echo "Info.plist already declares CFBundleURLTypes — leaving it as committed."
+          else
+            /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes array" "$INFO"
+            /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0 dict" "$INFO"
+            /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0:CFBundleURLSchemes array" "$INFO"
+            /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:0:CFBundleURLSchemes:0 string $REVERSED" "$INFO"
+          fi
+          /usr/libexec/PlistBuddy -c "Print :CFBundleURLTypes" "$INFO"
 
       # Fail here rather than 40 minutes later in Xcode, and long before a
       # tester installs a build that cannot sign anyone in. deploy.yml and
@@ -165,17 +226,35 @@ jobs:
           mkdir -p "$HOME/Library/MobileDevice/Provisioning Profiles"
           cp "$PROFILE_PATH" "$HOME/Library/MobileDevice/Provisioning Profiles/"
 
+      # `-project`, not `-workspace`: there is no ios/App/App.xcworkspace. The
+      # project consumes Capacitor and every plugin through the local Swift
+      # package `CapApp-SPM` (Package.swift is regenerated by `cap sync`), and
+      # `cap build ios` archives an SPM project exactly this way.
+      #
+      # MARKETING_VERSION / CURRENT_PROJECT_VERSION override the `1.0` / `1`
+      # the project file pins. App Store Connect refuses an upload whose build
+      # number is not higher than the last one, so the second run of this
+      # workflow would fail at upload with the values as committed; the run
+      # number only ever increases. The marketing version comes from
+      # package.json so the App Store listing and Settings → Support
+      # (`__APP_VERSION__`) say the same thing.
       - name: Archive
         env:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
           set -euo pipefail
-          xcodebuild -workspace ios/App/App.xcworkspace \
+          xcodebuild -version
+          xcodebuild -list -project ios/App/App.xcodeproj
+          APP_VERSION=$(node -p "require('./package.json').version")
+          echo "Archiving $APP_VERSION ($GITHUB_RUN_NUMBER)"
+          xcodebuild -project ios/App/App.xcodeproj \
             -scheme "$SCHEME" \
             -configuration Release \
             -archivePath "$RUNNER_TEMP/App.xcarchive" \
             -destination "generic/platform=iOS" \
             DEVELOPMENT_TEAM="$APPLE_TEAM_ID" \
+            MARKETING_VERSION="$APP_VERSION" \
+            CURRENT_PROJECT_VERSION="$GITHUB_RUN_NUMBER" \
             clean archive
 
       - name: Export .ipa

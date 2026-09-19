@@ -59,5 +59,11 @@
 	</array>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Tropos lets you attach progress photos to track visual changes over time.</string>
+	<key>NSHealthShareUsageDescription</key>
+	<string>Tropos reads your step count from Health to show today's steps on Home.</string>
+	<key>NSHealthUpdateUsageDescription</key>
+	<string>Tropos only reads step counts and never writes to Health.</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 </dict>
 </plist>

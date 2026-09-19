@@ -18,7 +18,7 @@ git pull origin main
 npm install
 npm run build          # produces dist/ (verified green in CI)
 npx cap sync ios       # copies dist/ into the iOS project
-open ios/App/App.xcworkspace
+open ios/App/App.xcodeproj   # SPM project — there is no .xcworkspace
 # Xcode → select your device → Run, or Product → Archive → Distribute → TestFlight
 ```
 
@@ -39,16 +39,29 @@ from the **Actions** tab when you want a new TestFlight build.
 
 #### One-time secrets (Settings → Secrets and variables → Actions)
 
-| Secret                            | What it is                                                                                         | How to get it                                                               |
-| --------------------------------- | -------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
-| `APPLE_TEAM_ID`                   | 10-char Apple Developer Team ID                                                                    | Apple Developer → Membership                                                |
-| `IOS_DIST_CERT_P12_BASE64`        | Apple **Distribution** cert + private key, exported as `.p12`, then `base64 -i cert.p12 \| pbcopy` | Keychain Access → export your "Apple Distribution" identity                 |
-| `IOS_DIST_CERT_PASSWORD`          | password you set on the `.p12` export                                                              | —                                                                           |
-| `IOS_PROVISIONING_PROFILE_BASE64` | App Store provisioning profile for `com.tropos.app`, base64'd                                      | Apple Developer → Profiles (App Store distribution profile)                 |
-| `KEYCHAIN_PASSWORD`               | any random string (ephemeral CI keychain)                                                          | `openssl rand -base64 24`                                                   |
-| `ASC_API_KEY_ID`                  | App Store Connect API key ID                                                                       | App Store Connect → Users and Access → Integrations → App Store Connect API |
-| `ASC_API_ISSUER_ID`               | Issuer ID from the same page                                                                       | —                                                                           |
-| `ASC_API_KEY_P8_BASE64`           | the `.p8` API key file, base64'd (download is one-time!)                                           | same page → generate key                                                    |
+| Secret                                 | What it is                                                                                          | How to get it                                                               |
+| -------------------------------------- | --------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| `APPLE_TEAM_ID`                        | 10-char Apple Developer Team ID                                                                     | Apple Developer → Membership                                                |
+| `IOS_DIST_CERT_P12_BASE64`             | Apple **Distribution** cert + private key, exported as `.p12`, then `base64 -i cert.p12 \| pbcopy`  | Keychain Access → export your "Apple Distribution" identity                 |
+| `IOS_DIST_CERT_PASSWORD`               | password you set on the `.p12` export                                                               | —                                                                           |
+| `IOS_PROVISIONING_PROFILE_BASE64`      | App Store provisioning profile for `com.tropos.app`, base64'd                                       | Apple Developer → Profiles (App Store distribution profile)                 |
+| `KEYCHAIN_PASSWORD`                    | any random string (ephemeral CI keychain)                                                           | `openssl rand -base64 24`                                                   |
+| `ASC_API_KEY_ID`                       | App Store Connect API key ID                                                                        | App Store Connect → Users and Access → Integrations → App Store Connect API |
+| `ASC_API_ISSUER_ID`                    | Issuer ID from the same page                                                                        | —                                                                           |
+| `ASC_API_KEY_P8_BASE64`                | the `.p8` API key file, base64'd (download is one-time!)                                            | same page → generate key                                                    |
+| `IOS_GOOGLE_SERVICE_INFO_PLIST_BASE64` | the iOS app's `GoogleService-Info.plist`, base64'd (`base64 -i GoogleService-Info.plist \| pbcopy`) | Firebase Console → Project settings → Your apps → **iOS app** → download    |
+
+`IOS_GOOGLE_SERVICE_INFO_PLIST_BASE64` is not signing material, but it is
+the one secret without which the build is useless: every
+`@capacitor-firebase/*` plugin calls `FirebaseApp.configure()` when the
+bridge loads it at launch, and `configure()` aborts the process if the
+bundle has no `GoogleService-Info.plist`. The file is gitignored
+(`ios/.gitignore`) and referenced by the Xcode project, so on CI the
+workflow writes it from this secret before `cap sync`, checks its
+`BUNDLE_ID` is `com.tropos.app`, and — because the GoogleSignIn SDK
+raises without it — registers the plist's `REVERSED_CLIENT_ID` as a URL
+scheme in `Info.plist` for that build. Locally, drop the same file into
+`ios/App/App/` and add the URL scheme by hand (LAUNCH_TODO §15 step 2).
 
 The build step additionally reads the `VITE_FIREBASE_*` client config, the
 same six secrets `deploy.yml` uses for the web deploy, so on this repo they
@@ -66,14 +79,24 @@ the comment on the build step, and the activation order in
 #### First-run checklist
 
 1. Add all secrets above.
-2. Confirm the Xcode **scheme** is `App` and the workspace is
-   `ios/App/App.xcworkspace` (defaults in the workflow).
+2. Confirm the Xcode **scheme** is `App` and the project is
+   `ios/App/App.xcodeproj` (defaults in the workflow). There is no
+   `.xcworkspace` — Capacitor 8 consumes its plugins through the local
+   Swift package `ios/App/CapApp-SPM`, and the workflow archives with
+   `-project`, the way `cap build ios` does.
 3. Confirm the bundle id in `capacitor.config.ts` (`com.tropos.app`)
    matches the provisioning profile's app id.
 4. Actions tab → **Deploy iOS to TestFlight** → Run workflow.
 5. If signing fails, the usual culprit is a mismatch between the cert type
    (must be **Apple Distribution**), the provisioning profile (must be
    **App Store**), and `signingStyle: manual` in the export options.
+6. Build numbers come from the workflow, not the project. `project.pbxproj`
+   pins `MARKETING_VERSION = 1.0` and `CURRENT_PROJECT_VERSION = 1`; the
+   archive step overrides them with `package.json`'s version and
+   `$GITHUB_RUN_NUMBER`, because App Store Connect refuses any upload
+   whose build number is not higher than the last one. Bump
+   `package.json` to move the version testers and the App Store see; the
+   build number takes care of itself.
 
 #### Optional: auto-build on release
 
