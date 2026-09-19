@@ -133,11 +133,6 @@ const EXPECTED = {
     maxInstances: 100,
     secrets: ["REVENUECAT_REST_KEY"],
   },
-  createStripeBillingPortal: {
-    kind: "callable",
-    maxInstances: 100,
-    secrets: ["STRIPE_SECRET_KEY"],
-  },
   deleteMyAccount: {
     kind: "callable",
     maxInstances: 100,

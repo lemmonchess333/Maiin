@@ -15,9 +15,9 @@ import { dirname, resolve, relative, join } from "node:path";
  * seam, because each side is internally consistent.
  *
  * Two existed when this was written, both on the money path and both
- * in `purchaseProvider.ts`. Both are implemented in the same change that
- * adds this guard, because a guard that lands red is a guard somebody
- * turns off:
+ * in `purchaseProvider.ts`. A guard that lands red is a guard somebody
+ * turns off, so both were closed in the same change — but they were
+ * closed from opposite ends, and which end is the interesting part:
  *
  *   - `syncRevenueCatEntitlement` — called after a successful
  *     RevenueCat purchase AND after a successful restore. Its caller
@@ -26,14 +26,25 @@ import { dirname, resolve, relative, join } from "node:path";
  *     contain the string "revenuecat" anywhere. That branch charged the
  *     card, reported success to the UI, and wrote no entitlement. It
  *     was unreachable only because `VITE_REVENUECAT_IOS_KEY` was unset
- *     in every build.
- *   - `createStripeBillingPortal` — the Manage Subscription action for
- *     every web and Android subscriber, which had never worked.
+ *     in every build. That one is a missing implementation, so the
+ *     implementation was written.
+ *   - `createStripeBillingPortal` — the Manage Subscription action on
+ *     web and Android. This one is NOT a gap. Sub4 keeps the Stripe
+ *     backend dormant and names this callable as the piece that "stays
+ *     unbuilt", because no web billing is sold, and CLAUDE.md says the
+ *     same in as many words. So the CALL SITE went. Implementing it to
+ *     satisfy this guard would have reversed a locked decision to make
+ *     a new test go green, which is precisely what the lock discipline
+ *     exists to prevent — and a first pass at this change did exactly
+ *     that before the lock was read.
  *
- * The comment above the first one is the real lesson. It describes a
- * division of labour with a component that was never built, and it
- * reads as reassurance, so the swallow looks deliberate rather than
- * load-bearing. This guard is the thing that would have said otherwise.
+ * Both halves carry a lesson worth keeping. The comment above the first
+ * describes a division of labour with a component that was never built,
+ * and it reads as reassurance, so the swallow looks deliberate rather
+ * than load-bearing; this guard is the thing that would have said
+ * otherwise. The second is the reminder that an unimplemented callable
+ * is not automatically a defect: read the locks before deciding which
+ * end of the seam is wrong.
  */
 const selfPath = fileURLToPath(import.meta.url);
 const repoRoot = resolve(dirname(selfPath), "../../..");

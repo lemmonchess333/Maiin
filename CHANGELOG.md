@@ -8,11 +8,6 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Added
 
-- **Manage Subscription opens the billing portal.** Subscribers who paid on
-  the web can now open Stripe's portal from Settings to change card, view
-  invoices or cancel. The button had been calling a function that was never
-  built, so it always reported that the portal could not be opened.
-
 - **Saved workouts remain accessible.** History opens saved records, and changing
   accounts or workout routes clears the previous record and sharing state.
 
