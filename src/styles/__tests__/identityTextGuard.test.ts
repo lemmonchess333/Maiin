@@ -133,7 +133,9 @@ const EXPECTED_INLINE_USES = {
   // 2026-09-18: 21 → 19. Home's "Log food" action and the nudge note
   // above it were the two smallest-text uses and measured 2.77:1; both
   // moved to `text-nutrition-strong`. The rest are icons and fills.
-  "THEME.semantic.nutrition": 19,
+  // 2026-09-20: 19 → 18. FoodProStrip (an icon tint on its camera tile)
+  // was retired for the one-line FoodProHint, which paints no identity.
+  "THEME.semantic.nutrition": 18,
 } as const;
 
 type InlineToken = keyof typeof EXPECTED_INLINE_USES;
