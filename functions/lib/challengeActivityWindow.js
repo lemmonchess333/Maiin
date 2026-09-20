@@ -17,17 +17,12 @@
  * write and logs) rather than falling back to `new Date()`.
  */
 
-const DATE_KEY_RE = /^\d{4}-\d{2}-\d{2}$/;
+const { isCalendarDate, DATE_KEY_RE } = require("./dateUtils");
 
-function isValidDateKey(value) {
-  if (typeof value !== "string" || !DATE_KEY_RE.test(value)) return false;
-  const [year, month, day] = value.split("-").map(Number);
-  const date = new Date(Date.UTC(year, month - 1, day));
-  return (
-    Number.isFinite(date.getTime()) &&
-    date.toISOString().slice(0, 10) === value
-  );
-}
+/* Kept as a named export because this module's callers and tests use it;
+   the implementation moved to dateUtils so the Circle target-date paths
+   could share it instead of growing a second copy. */
+const isValidDateKey = isCalendarDate;
 
 function instantToDate(value) {
   if (value instanceof Date) return value;

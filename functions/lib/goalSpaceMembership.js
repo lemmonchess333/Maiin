@@ -20,6 +20,8 @@
  * the space in v1 (rotation callable is a later nicety).
  */
 
+const { isCalendarDate } = require("./dateUtils");
+
 const GOAL_SPACE_MAX_MEMBERS = 8;
 const GOAL_SPACE_TEXT_MAX = 200;
 const GOAL_SPACE_TYPES = Object.freeze([
@@ -130,11 +132,14 @@ async function createGoalSpace({
   if (!title) {
     throw new GoalSpaceError("invalid-argument", "title required");
   }
-  const targetDate =
-    typeof input.targetDate === "string" &&
-    /^\d{4}-\d{2}-\d{2}$/.test(input.targetDate)
-      ? input.targetDate
-      : null;
+  // Same validator as the `continue` path in goalSpaceLifecycle: the two
+  // write paths for this one field disagreed, and create was the weaker —
+  // regex only, so a 30 February was stored verbatim. Create's contract is
+  // unchanged (targetDate is optional; anything unusable becomes null), it
+  // just no longer counts an impossible day as usable.
+  const targetDate = isCalendarDate(input.targetDate)
+    ? input.targetDate
+    : null;
 
   const spaceId = makeId();
   // Short, human-shareable invite code (e.g. "K7P4-9M2H") — reserved via a

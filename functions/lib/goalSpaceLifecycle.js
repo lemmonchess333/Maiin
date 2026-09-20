@@ -27,6 +27,7 @@
  */
 
 const { GoalSpaceError } = require("./goalSpaceMembership");
+const { isCalendarDate, DATE_KEY_RE } = require("./dateUtils");
 
 const RESOLVE_ACTIONS = Object.freeze(["continue", "wrap"]);
 
@@ -39,13 +40,17 @@ function todayUtcKey(now) {
 }
 
 function assertFutureDate(dateStr, now) {
-  if (typeof dateStr !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+  if (typeof dateStr !== "string" || !DATE_KEY_RE.test(dateStr)) {
     throw new GoalSpaceError(
       "invalid-argument",
       "newTargetDate required (YYYY-MM-DD)"
     );
   }
-  if (!Number.isFinite(Date.parse(`${dateStr}T00:00:00Z`))) {
+  // Shape is not existence. This was `Number.isFinite(Date.parse(...))`,
+  // which only rejects an out-of-range MONTH: JS rolls an out-of-range DAY
+  // over instead of refusing, so a 31 September parsed fine and was stored as
+  // that literal string — a finish line on a day that does not exist.
+  if (!isCalendarDate(dateStr)) {
     throw new GoalSpaceError("invalid-argument", "newTargetDate invalid");
   }
   // String compare is timezone-free and avoids an off-by-one from
