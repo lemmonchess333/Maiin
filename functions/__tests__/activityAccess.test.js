@@ -121,23 +121,18 @@ describe("assertCanInteractWithActivity", () => {
     ).rejects.toMatchObject({ code: "activity-not-accessible" });
   });
 
-  /* The refusal these two probe is THREE disjuncts wide — not a followers-only
-     activity, a non-string authorId, or an empty one — and all three throw the
-     same `activity-not-accessible`. "rejects a stranger on a private activity"
-     above does NOT reach its verdict through the visibility disjunct: mallory
-     holds no follower doc, so deleting `visibility !== "followers"` outright
-     still refuses them, one branch later, at `!followerSnap.exists`.
-
-     What that leaves unpinned is the privacy boundary itself. `private` is
-     enforced ONLY by that disjunct: drop it and a private activity falls
-     through to the follower lookup, so anyone the author has accepted as a
-     follower can kudos and comment on a post the author chose not to share
-     with them. The case below is the one the stranger test cannot see — a
-     real follower, on a private activity. */
-  it("rejects an ACCEPTED FOLLOWER on a private activity", async () => {
+  it("rejects a FOLLOWER on a private activity", async () => {
+    /* The case that separates `private` from `followers`, and the one the
+       other four rejections cannot reach: each of those uses a uid with no
+       follower doc, so the visibility branch and the follower lookup refuse
+       together and neither is distinguishable from the other. Delete the
+       visibility check and every one of them still passes, while a private
+       activity becomes readable by anyone the author accepted — which is
+       the whole difference between the two settings. Found by disabling
+       the guard and re-running. */
     const { tx, firestore, activityRef } = makeCtx(
       { visibility: "private", authorId: "bob" },
-      new Set(["bob/carol"]) // carol really does follow bob
+      new Set(["bob/carol"]) // carol follows bob, and still must not see this
     );
     await expect(
       assertCanInteractWithActivity({

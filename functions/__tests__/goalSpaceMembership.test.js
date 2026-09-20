@@ -92,6 +92,59 @@ function joinArgs(firestore, spaceId, inviteCode, uid) {
   };
 }
 
+describe("createGoalSpace — targetDate", () => {
+  /* The same field the `continue` path validates in goalSpaceLifecycle, on
+     its OTHER write path, which had no test at all and the weaker rule: a
+     bare regex, so `2026-02-30` was stored verbatim as a Circle's finish
+     line. Both paths now share `dateUtils.isCalendarDate`.
+
+     Create's contract is unchanged and is deliberately not the lifecycle
+     one: targetDate is optional here, so anything unusable becomes null
+     rather than throwing. What changed is only that an impossible day now
+     counts as unusable. */
+  async function createWith(firestore, targetDate) {
+    return createGoalSpace({
+      firestore,
+      uid: "owner",
+      displayName: "Owner",
+      photoURL: null,
+      input: { type: "strength_block", title: "8-week block", targetDate },
+      now: NOW,
+      makeId,
+    });
+  }
+
+  it("keeps a real calendar day, including a leap day", async () => {
+    for (const good of ["2026-12-31", "2028-02-29"]) {
+      const { firestore, docs } = makeStore();
+      const { spaceId } = await createWith(firestore, good);
+      expect(docs.get(`goalSpaces/${spaceId}`).targetDate).toBe(good);
+    }
+  });
+
+  it("nulls a well-formed date that is not a real day", async () => {
+    // Well-formed and impossible. Pre-fix each of these was stored as-is.
+    for (const bad of [
+      "2026-09-31",
+      "2026-02-30",
+      "2026-13-01",
+      "2026-00-10",
+    ]) {
+      const { firestore, docs } = makeStore();
+      const { spaceId } = await createWith(firestore, bad);
+      expect(docs.get(`goalSpaces/${spaceId}`).targetDate).toBeNull();
+    }
+  });
+
+  it("nulls a malformed or absent targetDate, as before", async () => {
+    for (const bad of ["31/12/2026", "", undefined, 20261231]) {
+      const { firestore, docs } = makeStore();
+      const { spaceId } = await createWith(firestore, bad);
+      expect(docs.get(`goalSpaces/${spaceId}`).targetDate).toBeNull();
+    }
+  });
+});
+
 describe("createGoalSpace", () => {
   it("writes space + owner member + joined event, count 1", async () => {
     const { firestore, docs } = makeStore();

@@ -163,15 +163,19 @@ describe("Home compact tiles share one numeral tier", () => {
     expect(unit).not.toHaveClass("text-2xl");
   });
 
-  it("water's third row carries content on the left axis, not a lone control cluster", () => {
+  it("water's third row is a meta line like weight's, and its only control is in the label row", () => {
     /* The other half of the peer contract, one axis over from the
-       numeral tier. Weight spends its third row on `lastWeightDate` at
-       text-micro; water had no third row at all — in its place sat
-       `flex justify-end mt-auto pt-2`, a control cluster hard against
-       the right edge while every other element in the tile sat on the
-       12px left axis. At 375px that stranded ~47px of empty tile to
-       their left, a third of the row, which is what read as
-       "off centre". Two components, so no per-file check could see it. */
+       numeral tier. Weight spends its third row on `lastWeightDate`;
+       water's third row held two controls through four passes — two
+       rings, a label beside them, one full-width stepper — and read wrong
+       from a device every time, because two 44px targets cannot share a
+       151px row with anything.
+
+       Owner call: one plus, no minus. So the two tiles now have the SAME
+       three rows — icon and label, the figure, a meta line — and water's
+       one control is a disc at the end of its label row, not on row 3.
+       Two components, so no per-file check could see the peer
+       relationship. */
     const { container: water } = render(
       <WaterCard
         compact
@@ -190,21 +194,27 @@ describe("Home compact tiles share one numeral tier", () => {
       />
     );
 
+    // Positive anchor: the peer still has its meta row, so the water
+    // assertions below are about a real third row and not an empty tile.
     const weightMeta = Array.from(weight.querySelectorAll(".text-micro")).find(
       (el) => el.textContent?.trim() === "2 days ago"
     );
     expect(weightMeta, "weight tile lost its meta row").toBeTruthy();
 
+    const waterMeta = Array.from(water.querySelectorAll(".text-micro")).find(
+      (el) => el.textContent?.trim() === "Tap + for 250 ml"
+    ) as HTMLElement;
+    expect(waterMeta, "water tile has no meta line").toBeTruthy();
+    expect(waterMeta).toHaveClass("mt-1");
+    // No control shares the meta line: nothing interactive sits beside it.
+    expect(waterMeta.parentElement?.querySelector("button")).toBeNull();
+
     const add = water.querySelector(
       'button[aria-label^="Add 250"]'
     ) as HTMLElement;
-    const row = add.parentElement!.parentElement as HTMLElement;
-    expect(row.className).not.toMatch(/justify-end/);
-    expect(row.className).toMatch(/justify-between/);
-
-    const waterMeta = row.querySelector(".text-micro") as HTMLElement;
-    expect(waterMeta, "water tile has no meta row").toBeTruthy();
-    expect(waterMeta).toHaveTextContent("250 ml");
-    expect(waterMeta).toHaveClass("font-mono", "tabular-nums");
+    expect(add, "the plus is the tile's one control").toBeTruthy();
+    expect(water.querySelector('button[aria-label^="Remove"]')).toBeNull();
+    // In the label row (top-3 aligns it with the icon tile), not row 3.
+    expect(add).toHaveClass("absolute", "top-3", "right-3");
   });
 });

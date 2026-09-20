@@ -145,7 +145,8 @@ are redundant by construction.
 
 Each was mutation-proved against the **full** functions suite with both
 emulators up: red with the branch neutralised, green with it restored, and no
-other test moving either way. The suite goes 1496 → 1509 tests.
+other test moving either way. Twelve tests in total (+2 / +3 / +3 / +4 across
+the four files); the functions suite reads 1519 after merging main.
 
 ### 5.1 `acquireSendLease` — a non-owner could take a send lease
 
@@ -198,7 +199,20 @@ if (
 
 This is the same guard the _previous_ sweep's fixture was written for — it
 added the case for the second disjunct. The **first** disjunct is what enforces
-`private`, and it was still unheld: `"rejects a stranger on a private activity"`
+`private`, and it was still unheld.
+
+> **Landed independently while this was in flight.** #2438 reached the same
+> conclusion about the same disjunct and merged `rejects a FOLLOWER on a
+private activity` to main first. That test is kept on the merge and the
+> duplicate dropped; what remains here is the pair beside it — an
+> _unrecognised_ visibility value (the same disjunct, a different input class,
+> so a typo'd or future setting cannot silently read as followers-only) and
+> the positive control that shows the refusals are the visibility check rather
+> than a broken follower lookup. Two agents converging on one guard from the
+> same evidence is the strongest signal in this document that the shape is
+> real.
+
+The original reading, which stands: `"rejects a stranger on a private activity"`
 gives mallory no follower doc, so deleting the disjunct still refuses them one
 branch later at `!followerSnap.exists`.
 

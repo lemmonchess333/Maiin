@@ -120,6 +120,46 @@ describe("resolveTarget — continue", () => {
     // The bad-date guard runs before any write.
     expect(docs.get(`goalSpaces/${SPACE}`).targetDate).toBe("2026-07-10");
   });
+
+  it("rejects a date that matches YYYY-MM-DD but is not a real day", async () => {
+    /* The case the four rejections above cannot reach, and the one that was
+       live: each of those fails on SHAPE or on being in the past, so the
+       existence of the day was never asserted. `2026-09-31` and `2026-02-30`
+       are well-formed, in the future, and do not exist — JS rolls them over
+       to 1 October and 2 March rather than refusing, so the old
+       `Number.isFinite(Date.parse(...))` check passed them and the literal
+       string was stored as the Circle's finish line.
+
+       `2026-13-01` and `2026-00-10` are the out-of-range MONTH cases the old
+       check did catch; they are here so a regression that reinstates it
+       fails on the day cases alone rather than going quietly green. */
+    const { firestore, docs } = makeStore();
+    seedSpace(docs);
+    for (const bad of [
+      "2026-09-31",
+      "2026-02-30",
+      "2026-13-01",
+      "2026-00-10",
+    ]) {
+      await expectRejected(
+        () => resolveTarget(args(firestore, { newTargetDate: bad })),
+        "invalid-argument"
+      );
+    }
+    expect(docs.get(`goalSpaces/${SPACE}`).targetDate).toBe("2026-07-10");
+  });
+
+  it("still accepts a real leap day", async () => {
+    // The other side of the same guard: 29 February EXISTS in 2028, and a
+    // rejection rule written as "day > 28 in February" would break it.
+    const { firestore, docs } = makeStore();
+    seedSpace(docs);
+    const res = await resolveTarget(
+      args(firestore, { newTargetDate: "2028-02-29" })
+    );
+    expect(res.targetDate).toBe("2028-02-29");
+    expect(docs.get(`goalSpaces/${SPACE}`).targetDate).toBe("2028-02-29");
+  });
 });
 
 describe("resolveTarget — wrap", () => {

@@ -96,6 +96,11 @@
      domain colour without a token is the one that keeps bypassing the hex
      guardrail. Theme-aware like --success. */
   --color-teal: hsl(var(--teal));
+  /* The glyph ON a teal fill (the compact water tile's plus). White on
+     the light theme's teal is 5.68:1; on the dark theme the teal itself
+     is the light value, so the glyph goes dark — same shape as
+     --success-foreground. */
+  --color-teal-foreground: hsl(var(--teal-foreground));
   --color-success: hsl(var(--success));
   --color-success-strong: hsl(var(--success-strong));
   --color-success-foreground: hsl(var(--success-foreground));
@@ -272,6 +277,7 @@
   --destructive-foreground: 0 0% 98%;
   --destructive-bg: 0 86% 97%;
   --teal: 197 45% 36%; /* #326E85 — 5.68:1 on the white card (AA) */
+  --teal-foreground: 0 0% 100%;
   --success: 142 72% 29%;
   --success-foreground: 0 0% 98%;
   --success-bg: 138 76% 97%;
@@ -364,6 +370,7 @@
   --destructive-foreground: 240 10% 3.9%;
   --destructive-bg: 0 45% 16%;
   --teal: 197 40% 58%; /* #69A6BF — 6.08:1 on the dark card (AA) */
+  --teal-foreground: 240 4% 10%;
   --success: 142 69% 58%;
   --success-foreground: 240 10% 3.9%;
   --success-bg: 142 38% 14%;

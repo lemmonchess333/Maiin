@@ -1,4 +1,5 @@
 import Button from "@/components/ui/Button";
+import { toast } from "sonner";
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { Droplets, Plus, Minus } from "lucide-react";
@@ -30,11 +31,14 @@ function spokenVolume(ml: number): string {
 }
 
 /**
- * Water card (Water "B" millilitre model). Quick − / + repeat the last
- * container size (250 ml initially); tapping the card opens the size sheet
- * to log a real container (Glass / Bottle / Large / custom). The wave
- * fill + ripple identity is unchanged — only the underlying unit moved
- * from whole glasses to millilitres.
+ * Water card (Water "B" millilitre model). The quick control repeats the
+ * last container size (250 ml initially); tapping the card opens the size
+ * sheet to log a real container (Glass / Bottle / Large / custom). The
+ * full-width card keeps a − / + pair beside the reading. The compact tile
+ * keeps ONE plus, in its label row, and moves removal to the toast's Undo
+ * and the sheet's "Remove" row — see the tile for why. The wave fill +
+ * ripple identity is unchanged — only the underlying unit moved from
+ * whole glasses to millilitres.
  */
 export default function WaterCard({
   ml,
@@ -113,14 +117,23 @@ export default function WaterCard({
      write. `onLog` returns false when the log is refused; the sheet path
      below already checked that return and the quick path did not, so a
      refused tap still buzzed and splashed as though it had landed. */
-  function quickLog(deltaMl: number) {
+  function quickLog(deltaMl: number): boolean {
     trackHomeEvent("home_card_tapped", { card: "water" });
-    if (onLog(deltaMl) === false) return;
+    if (onLog(deltaMl) === false) return false;
     announce.current = true;
     if (deltaMl > 0) setRippleKey((k) => k + 1);
+    return true;
   }
   function quickAdd() {
-    quickLog(servingMl);
+    if (!quickLog(servingMl)) return;
+    /* The compact tile has no minus, so the tap's own confirmation
+       carries the way back. Undo reverses exactly this serving; a
+       refused log offers nothing, because there is nothing to undo. */
+    if (compact) {
+      toast(`${formatWaterVolume(servingMl)} added`, {
+        action: { label: "Undo", onClick: () => void quickLog(-servingMl) },
+      });
+    }
   }
   function quickRemove() {
     quickLog(-servingMl);
@@ -194,6 +207,11 @@ export default function WaterCard({
         if (saved !== false) setRippleKey((k) => k + 1);
         return saved;
       }}
+      /* Only the compact tile routes removal through the sheet; the
+         full-width card has its minus beside the reading. Absent when
+         there is nothing to remove, so the row never offers a no-op. */
+      removeMl={compact && hasWater ? servingMl : undefined}
+      onRemove={compact ? (v) => onLog(-v) : undefined}
     />
   );
 
@@ -226,6 +244,37 @@ export default function WaterCard({
             allows one), and 3-4px decorative dots at that size read as
             specks rather than as bubbles. The hero card below keeps
             them, where there is room for the effect to land. */}
+        {/* ONE control on the tile, and it lives in the label row.
+
+            Row 3 held two controls through four passes — two rings, then
+            a label beside them, then one segmented stepper — and each
+            read wrong from a device. The cause was never the alignment:
+            two 44px targets plus anything else cannot share a 151px row,
+            so every layout that tried was lopsided or a form field on a
+            data tile. Owner call, from the options page: keep the plus,
+            drop the minus.
+
+            So the tile has Weight's three rows exactly — icon and label,
+            the figure, a meta line — and the plus is a filled disc at the
+            end of the label row, bookending the icon tile at the same
+            32px. Its hit area is still 44px: the pseudo-element extends
+            6px each side into the tile padding, which is empty. It sits
+            OUTSIDE the body button because a button inside a button is
+            invalid HTML, and above it because the body's hit area runs
+            under the disc.
+
+            Removal moved, not vanished: the tap's own toast carries Undo
+            for this serving, and the size sheet gains a "Remove" row
+            (only while there is something to remove). The full-width card
+            keeps its − / + pair, so the design guide's "equal minus/plus"
+            line now names that card only. */}
+        <IconButton
+          onClick={quickAdd}
+          aria-label={`Add ${servingMl} ml`}
+          size="sm"
+          className="absolute top-3 right-3 z-20 size-8 rounded-full bg-teal text-teal-foreground hover:bg-teal/90 before:absolute before:-inset-1.5 before:content-['']"
+          icon={<Plus className="size-4" />}
+        />
         <div className="relative z-10 flex flex-col flex-1">
           {/* Card body opens the size sheet (choose a container). */}
           {/* Focus ring + 0.97 press mirror the peer tile's button
@@ -240,7 +289,7 @@ export default function WaterCard({
             aria-label={`${reading} Add water — choose a container size.`}
             className="text-left rounded-lg motion-safe:active:scale-[0.97] transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           >
-            <div className="flex items-center gap-2 mb-1.5">
+            <div className="flex items-center gap-2 mb-1.5 pr-10">
               {/* `bg-teal/10` / `text-teal`, not the raw
                   rgba(82,163,189,0.10) + inline hsl() this carried.
                   Those were theme-blind literals — the exact leak the
@@ -276,47 +325,17 @@ export default function WaterCard({
                 {splitWaterVolume(ml).unit}
               </span>
             </p>
-          </button>
-          {/* Row 3 — the compact-tile meta row, which water alone lacked.
-              The weight tile spends this row on `lastWeightDate` at
-              `text-micro mt-1` (WeightStepsTiles.tsx:174-179) and the
-              steps tile on "today". Water had no row 3 at all: in its
-              place sat `flex justify-end mt-auto pt-2`, a lone control
-              cluster hard against the right edge while every other
-              element in the tile sits on the 12px left axis.
-
-              At 375px the inner tile is 143.5px and the controls are
-              92px, so `justify-end` stranded ~47px of empty tile to
-              their left — a third of the row. Giving the row a
-              left-anchored element means there is no lone cluster left
-              to read as off-centre, at any viewport; and unlike
-              `justify-between` on a controls-only row, the gap does not
-              GROW with width (the surplus goes to the label, not to dead
-              space between two live buttons).
-
-              It also puts `servingMl` on screen for the first time. It
-              lived only in the aria-labels while useWaterLog silently
-              resets it to the last container logged through the sheet —
-              so a sighted user could tap + with no way to know whether
-              they were adding 250 ml or 750 ml. aria-hidden because the
-              two buttons already announce the same amount; unhidden it
-              emits a stray orphan "250 ml" between them.
-
-              `mt-auto` is gone on purpose: it pinned this row to the
-              tile floor, which detaches the controls from the number
-              they modify by up to 84px whenever the right column grows
-              taller (native, steps tile present). Without it, surplus
-              height falls BELOW row 3 in both tiles — the rule the peer
-              states in code at WeightStepsTiles.tsx:139-141. */}
-          <div className="mt-1 flex items-center justify-between gap-2">
-            <span
-              aria-hidden="true"
-              className="min-w-0 truncate text-micro text-muted-foreground font-mono tabular-nums"
+            {/* The meta line, where Weight keeps its date. `servingMl`
+                follows the last container logged, so a sighted user must
+                be able to see whether the plus means 250 ml or 750 —
+                the disc's accessible name says it, this says it. */}
+            <p
+              className="text-micro mt-1"
+              style={{ color: "hsl(var(--muted-foreground))" }}
             >
-              {formatWaterVolume(servingMl)}
-            </span>
-            {controls}
-          </div>
+              Tap + for {formatWaterVolume(servingMl)}
+            </p>
+          </button>
         </div>
         {/* Permanently mounted, sr-only when idle — the peer tile's shape
             (WeightStepsTiles.tsx:182-189). A live region inserted with

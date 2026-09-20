@@ -31,4 +31,35 @@ function parseUtcDate(dateStr) {
   return new Date(Date.UTC(y, m - 1, d));
 }
 
-module.exports = { utcDateString, parseUtcDate };
+/** The only YYYY-MM-DD shape check in `functions/`. Shape ONLY — it says
+ *  nothing about whether the digits name a real day; pair it with
+ *  `isCalendarDate` for that. */
+const DATE_KEY_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+/**
+ * Does this string name a day that exists?
+ *
+ * The regex alone does not answer that, and the gap is not obvious: JS
+ * date parsing ROLLS OVER rather than refusing, so 30 February and
+ * 31 September both parse happily (to 2 March and 1 October). A
+ * `Number.isFinite(Date.parse(...))` check therefore catches only the
+ * out-of-range MONTH cases (a 13th month -> NaN) and waves the
+ * out-of-range DAY cases straight through.
+ *
+ * The round trip is what closes it: parse, format back, and require the
+ * result to equal the input. A rolled-over date formats as the day it
+ * rolled to, so it cannot match. This is the same property
+ * `dateUtils.test.js`'s round-trip block already asserts for the pair,
+ * turned into a predicate.
+ *
+ * Lifted from `challengeActivityWindow.isValidDateKey`, which had it
+ * right and kept it private to the challenge module; that export now
+ * delegates here so there is one implementation rather than two.
+ */
+function isCalendarDate(value) {
+  if (typeof value !== "string" || !DATE_KEY_RE.test(value)) return false;
+  const parsed = parseUtcDate(value);
+  return Number.isFinite(parsed.getTime()) && utcDateString(parsed) === value;
+}
+
+module.exports = { utcDateString, parseUtcDate, isCalendarDate, DATE_KEY_RE };
