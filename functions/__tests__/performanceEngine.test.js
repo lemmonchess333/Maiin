@@ -736,6 +736,43 @@ describe("shouldRecommendDeload — sustained-overreach threshold reconciled to 
   it("does not fire from a single high week alone (no previous, decent recovery/adherence)", () => {
     expect(shouldRecommendDeload(88, 70, 70, null)).toBe(false);
   });
+
+  /* Each of the three triggers is `currentPI >= N && <something bad>`, and
+     every case above drives the <something bad> side while sitting exactly ON
+     the floor (80, 70) or leaving the other conjunct false. So the PI floors
+     were never the reason for any verdict: delete `currentPI >= 80`,
+     `currentPI >= 85` and `currentPI >= 70` and the whole block above still
+     passed.
+
+     The floors are what stop a deload being recommended to someone who is
+     barely training. A light-trainer week — low PI, poor sleep — must NOT be
+     told to back off; "recover harder" is the wrong advice for an athlete
+     whose load is already low, and CLAUDE.md treats light-trainers as a real
+     segment rather than an edge case. These three hold each floor from below,
+     paired with the positive case one point above it so a floor that moves in
+     either direction is caught. */
+  it("does NOT recommend deload on poor recovery when the load is LOW", () => {
+    // Low PI, bad recovery: nothing to deload FROM.
+    expect(shouldRecommendDeload(40, 30, 70, null)).toBe(false);
+    expect(shouldRecommendDeload(79, 30, 70, null)).toBe(false);
+    // ...and the floor itself still fires.
+    expect(shouldRecommendDeload(80, 30, 70, null)).toBe(true);
+  });
+
+  it("does NOT recommend deload on poor adherence when the load is LOW", () => {
+    expect(shouldRecommendDeload(40, 70, 30, null)).toBe(false);
+    expect(shouldRecommendDeload(69, 70, 30, null)).toBe(false);
+    expect(shouldRecommendDeload(70, 70, 30, null)).toBe(true);
+  });
+
+  it("does NOT treat a high PREVIOUS week as overreach once this week has dropped", () => {
+    // Last week 90, the week before 70 — a transition into the band. But this
+    // week is 60, so the athlete has already backed off on their own.
+    expect(shouldRecommendDeload(60, 70, 70, 90, 70)).toBe(false);
+    expect(shouldRecommendDeload(84, 70, 70, 90, 70)).toBe(false);
+    // At the floor, with the same history, it does fire.
+    expect(shouldRecommendDeload(85, 70, 70, 90, 70)).toBe(true);
+  });
 });
 
 /* ── The deload transition guard's WIRING ────────────────────────────────
@@ -763,8 +800,12 @@ describe("computeAndWritePerformance — supplies both prior PIs", () => {
   );
 
   it("reads the perf doc two windows back", () => {
-    expect(SOURCE).toMatch(/dateKeyMinusN\(computeKey,\s*WINDOW_DAYS\s*\*\s*2\)/);
-    expect(SOURCE).toContain("weekBeforePreviousPI = priorDeloadIndex(prev2Doc.data())");
+    expect(SOURCE).toMatch(
+      /dateKeyMinusN\(computeKey,\s*WINDOW_DAYS\s*\*\s*2\)/
+    );
+    expect(SOURCE).toContain(
+      "weekBeforePreviousPI = priorDeloadIndex(prev2Doc.data())"
+    );
   });
 
   it("reads BOTH priors in the units the deload trigger asks in", () => {
@@ -774,7 +815,9 @@ describe("computeAndWritePerformance — supplies both prior PIs", () => {
        composite history — a silent unit mix, and the kind that reads fine.
        `priorDeloadIndex` falls back to `performanceIndex` for docs written
        before the field existed, so the transition is behaviour-preserving. */
-    expect(SOURCE).toContain("previousComputePI = priorDeloadIndex(prevDoc.data())");
+    expect(SOURCE).toContain(
+      "previousComputePI = priorDeloadIndex(prevDoc.data())"
+    );
     expect(SOURCE).not.toMatch(/=\s*prevDoc\.data\(\)\.performanceIndex/);
     expect(SOURCE).not.toMatch(/=\s*prev2Doc\.data\(\)\.performanceIndex/);
   });

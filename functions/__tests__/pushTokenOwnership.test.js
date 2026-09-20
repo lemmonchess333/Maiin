@@ -461,6 +461,83 @@ describe("pushTokenOwnership — send leases", () => {
     });
     expect(fs.__store.get(`fcmTokenClaims/${hash}`).sendLease).toBeNull();
   });
+
+  /* The refusal above it is FOUR branches wide — not canonical, wrong uid,
+     wrong bindingId, or a lease already live — and every one of them returns
+     the same bare `null`. The suite reached that null through the last branch
+     only: the "wrong binding never gets a lease" assertion in the first test
+     runs AFTER a lease has been taken on BIND_A, so `activeSendLease` is
+     already true by the time the bindingId is compared. Delete the uid check,
+     the bindingId check and the canonical check together and that test still
+     passed — the branches were indistinguishable.
+
+     These three seed a claim with NO live lease, so the only thing that can
+     return null is the branch under test. Each pairs the null with a positive
+     anchor: the untouched `sendLease` field, and (in the control) a lease that
+     IS granted from the same fixture — an absence assertion on its own would
+     go green again the moment the refusal moved. */
+  const noLeaseClaim = (uid, bindingId) => ({
+    [`fcmTokenClaims/${hashOf(TOKEN)}`]: claimed(uid, bindingId),
+  });
+
+  it("refuses a lease to a uid that does not own the claim, and writes nothing", async () => {
+    const fs = makeFirestore(noLeaseClaim("A", BIND_A));
+    const lease = await own.acquireSendLease({
+      firestore: fs,
+      uid: "B", // A owns this claim
+      tokenHash: hash,
+      bindingId: BIND_A,
+      serverTimestamp: SERVER_TS,
+    });
+    expect(lease).toBeNull();
+    expect(fs.__store.get(`fcmTokenClaims/${hash}`).sendLease).toBeUndefined();
+    expect(fs.__store.get(`fcmTokenClaims/${hash}`).uid).toBe("A");
+  });
+
+  it("refuses a lease for a binding the claim is not currently on, and writes nothing", async () => {
+    const fs = makeFirestore(noLeaseClaim("A", BIND_A));
+    const lease = await own.acquireSendLease({
+      firestore: fs,
+      uid: "A",
+      tokenHash: hash,
+      bindingId: BIND_B, // the claim is on BIND_A
+      serverTimestamp: SERVER_TS,
+    });
+    expect(lease).toBeNull();
+    expect(fs.__store.get(`fcmTokenClaims/${hash}`).sendLease).toBeUndefined();
+    expect(fs.__store.get(`fcmTokenClaims/${hash}`).bindingId).toBe(BIND_A);
+  });
+
+  it("refuses a lease on a revoked (non-canonical) claim, and writes nothing", async () => {
+    const fs = makeFirestore({
+      [`fcmTokenClaims/${hash}`]: claimed("A", BIND_A, { status: "revoked" }),
+    });
+    const lease = await own.acquireSendLease({
+      firestore: fs,
+      uid: "A",
+      tokenHash: hash,
+      bindingId: BIND_A,
+      serverTimestamp: SERVER_TS,
+    });
+    expect(lease).toBeNull();
+    expect(fs.__store.get(`fcmTokenClaims/${hash}`).sendLease).toBeUndefined();
+  });
+
+  it("control: the same fixture DOES grant a lease to the owner on the right binding", async () => {
+    const fs = makeFirestore(noLeaseClaim("A", BIND_A));
+    const lease = await own.acquireSendLease({
+      firestore: fs,
+      uid: "A",
+      tokenHash: hash,
+      bindingId: BIND_A,
+      serverTimestamp: SERVER_TS,
+    });
+    expect(lease).toMatchObject({ tokenHash: hash, bindingId: BIND_A });
+    expect(fs.__store.get(`fcmTokenClaims/${hash}`).sendLease).toMatchObject({
+      uid: "A",
+      bindingId: BIND_A,
+    });
+  });
 });
 
 describe("pushTokenOwnership.removeClaimsForDeletedUser", () => {
