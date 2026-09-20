@@ -63,17 +63,17 @@ is what the `rateLimiter` example in the brief was.
 | ---------------------------------------------- | -------- |
 | refusal guards in `functions/`                 | **577**  |
 | mutation units (guards + individual branches)  | **1089** |
-| caught by the functions suite, emulators up    | **368**  |
+| caught by the functions suite, emulators up    | **361**  |
 | caught **only** by the `src/` mirror           | **63**   |
 | caught only because removal fails to terminate | **1**    |
-| **survivors — nothing on either side**         | **657**  |
+| **survivors — nothing on either side**         | **664**  |
 
 Survivors by file, top of the list:
 
 | count | file                         |
 | ----- | ---------------------------- |
-| 283   | `index.js`                   |
-| 29    | `profileSanitizer.js`        |
+| 285   | `index.js`                   |
+| 34    | `profileSanitizer.js`        |
 | 28    | `lib/pushTokenOwnership.js`  |
 | 23    | `appleIAP.js`                |
 | 23    | `lib/workoutCorrections.js`  |
@@ -81,14 +81,16 @@ Survivors by file, top of the list:
 | 12    | `lib/goalSpaceCheckIn.js`    |
 | 12    | `lib/socialCounters.js`      |
 
-**134 of the 657 are guards whose line no functions-side test even evaluates.**
+**134 of the 664 are guards whose line no functions-side test even evaluates.**
 `index.js` dominates because its ~55 callables and triggers carry per-request
 validation (`req.method !== "POST"`, `!context.auth`, and two rate-limit
 `limited` checks) that the unit suite never reaches.
 
-The `caught` row is the one being re-run serially (§6) — it is the direction
-that can be wrong, and each false _caught_ moves a unit into the survivor
-column. **657 is therefore a floor.**
+Every verdict the sweep recorded as _caught_ was re-run **serially**, because
+that is the direction that can be wrong (§6): of 368, **361 held and 7 did
+not**, each flip confirmed by a second independent full-suite run. Those 7 are
+in the 664. The survivor figure is measured rather than a floor — subject only
+to the limits in §8.
 
 **61–63 units are caught only from `src/`.** A functions-only sweep calls every
 one of them a survivor. This is the standing "the tested copy does not prove the
@@ -128,7 +130,7 @@ rejection test reaches the verdict through a different branch, so the branches
 are indistinguishable_ — is detectable directly: a multi-branch guard whose
 **whole-guard** mutation is caught but at least one of whose **branches** is not.
 
-**50 guards match.** Four are fixtured below. The rest are listed in §7 with a
+**48 guards match.** Four are fixtured below. The rest are listed in §7 with a
 one-line reason, so the next sweep does not re-litigate them.
 
 Two caveats on that count. Guards are grouped by their source text, so two
@@ -283,9 +285,15 @@ answer is in two parts:
   `activityDeleteReversal.test.js` — a test with nothing to do with profile
   sanitisation.
 
-That second bucket means the sweep's _caught_ verdicts can be false, so the
-survivor count is a **floor**, not a point estimate. Every caught verdict is
-therefore being re-run serially; the number in §2 reflects that pass.
+That second bucket means a _caught_ verdict can be false while a _survivor_
+verdict essentially cannot — a flaky failure is common, a flaky pass is not. So
+all 368 caught verdicts were re-run serially. **361 held; 7 flipped to
+survivor**, and each of the 7 was then confirmed by a second independent
+full-suite run: `index.js:1391` and `index.js:1568` (the two negated
+multi-branch guards), and five in one file —
+`profileSanitizer.js:77, 251, 261, 263, 270`. In every case the stage-1 failure
+had been blamed on an emulator-backed integration test with nothing to do with
+the mutated code — the same signature as the two the sample caught.
 
 This matches what CLAUDE.md already says about `unit-shuffle` — "the job is not
 deterministic" — and extends it: the non-determinism is **load-sensitive**, not
@@ -312,8 +320,10 @@ Listed so the next sweep does not re-litigate them. Each was read, not guessed.
 
 ## 8. Limits of this sweep
 
-- **Caught verdicts are less reliable than survivor verdicts.** See §6. The
-  survivor count is a floor.
+- **Caught verdicts are less reliable than survivor verdicts.** See §6. All
+  368 were re-run serially and 7 flipped, so this figure has paid that cost —
+  but the flakiness is a property of the suite under load, not of this sweep,
+  and a future run must budget for it.
 - **Branch neutralisation is not deletion.** A `||` branch is replaced by
   `false` and an `&&` branch by `true`. For a conjunctive guard that _widens_
   the refusal rather than removing it, so those units answer "does anything pin
