@@ -1,5 +1,4 @@
 import { memo, useRef } from "react";
-import { motion, type Variants } from "framer-motion";
 import { ChevronLeft, ChevronRight, CalendarDays } from "lucide-react";
 import { format } from "date-fns";
 import { haptic } from "@/lib/haptic";
@@ -16,19 +15,23 @@ interface FoodDateBarProps {
   /** Native picker bounds (YYYY-MM-DD); also gates the controlled value. */
   minDate?: string;
   maxDate?: string;
-  /** Parent stagger variant so the bar participates in the page animation. */
-  itemVariant?: Variants;
 }
 
 /**
- * Sticky date-switcher bar at the top of the Food page.
+ * The Food page's date switcher: one compact cluster — previous, the
+ * day, next — that sits in the page header's action slot beside the
+ * title.
  *
- * Extracted from `Food.tsx` as part of the W1e component-extraction
- * pass — was ~45 lines of inline JSX mixing motion, haptic, and a
- * hidden `<input type="date">` picker. Keeping it self-contained
- * makes the Food page's top hierarchy easier to reason about and
- * gives the date picker a single home instead of being tangled with
- * the header + hero-card render.
+ * It was a pinned full-width bar on its own row beneath the
+ * title, chevrons at the far edges with a 12px label between them:
+ * two header rows and 90px spent before the day's number, on the
+ * empty-day screen every new user sees. Owner call from the Food
+ * options page: one row. The chevrons sit against the label so the
+ * three read as one control, and the cluster scrolls with the page
+ * the way History's does.
+ *
+ * Still self-contained (the W1e extraction): the hidden native date
+ * input keeps the picker in one place.
  */
 function FoodDateBar({
   selectedDate,
@@ -40,16 +43,11 @@ function FoodDateBar({
   canGoForward = true,
   minDate,
   maxDate,
-  itemVariant,
 }: FoodDateBarProps) {
   const dateInputRef = useRef<HTMLInputElement>(null);
 
   return (
-    <motion.div
-      variants={itemVariant}
-      className="sticky z-30 bg-background flex items-center justify-between rounded-xl py-2 px-3"
-      style={{ top: "var(--safe-top)" }}
-    >
+    <div className="inline-flex items-center rounded-full bg-card card-shadow">
       <button
         type="button"
         onClick={() => {
@@ -58,10 +56,9 @@ function FoodDateBar({
         }}
         disabled={!canGoBack}
         aria-label="Previous day"
-        /* min 44×44 hit area per iOS HIG / WCAG. Pre-F1 was p-2
-           (~36px) — the icon stays 16px so the visual weight is
-           unchanged, only the tappable region grows. */
-        className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg hover:bg-muted active:scale-[0.95] transition-all disabled:opacity-40 disabled:active:scale-100"
+        /* 44×44 hit area; the icon stays 16px so the cluster reads as
+           one pill rather than three buttons. */
+        className="size-11 flex items-center justify-center rounded-full hover:bg-muted active:scale-[0.95] transition-all disabled:opacity-40 disabled:active:scale-100"
       >
         <ChevronLeft aria-hidden="true" className="size-4 text-foreground" />
       </button>
@@ -69,16 +66,19 @@ function FoodDateBar({
         type="button"
         onClick={() => dateInputRef.current?.showPicker?.()}
         aria-label="Select date"
-        className="text-center flex items-center justify-center gap-2 min-h-[44px] px-2 -my-1 active:scale-[0.97] transition-transform"
+        className="flex items-center justify-center gap-1.5 min-h-11 px-1 active:scale-[0.97] transition-transform"
       >
         <CalendarDays
           aria-hidden="true"
           className="size-3.5 text-muted-foreground"
         />
-        <p className="text-xs font-medium text-foreground">
+        {/* Semibold at text-sm: it is a control's label now, not a
+            caption. "EEE d MMM" — day before month, the app's one date
+            treatment — short enough to share the row with the title. */}
+        <p className="text-sm font-semibold text-foreground whitespace-nowrap">
           {isToday
             ? "Today"
-            : format(new Date(selectedDate + "T12:00:00"), "EEE d MMMM")}
+            : format(new Date(selectedDate + "T12:00:00"), "EEE d MMM")}
         </p>
       </button>
       <input
@@ -99,11 +99,11 @@ function FoodDateBar({
         }}
         disabled={!canGoForward}
         aria-label="Next day"
-        className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg hover:bg-muted active:scale-[0.95] transition-all disabled:opacity-40 disabled:active:scale-100"
+        className="size-11 flex items-center justify-center rounded-full hover:bg-muted active:scale-[0.95] transition-all disabled:opacity-40 disabled:active:scale-100"
       >
         <ChevronRight aria-hidden="true" className="size-4 text-foreground" />
       </button>
-    </motion.div>
+    </div>
   );
 }
 
