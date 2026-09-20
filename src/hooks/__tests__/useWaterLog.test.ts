@@ -126,6 +126,53 @@ describe("logging", () => {
     expect(readDoc(PATH)).toMatchObject({ ml: 1000 });
   });
 
+  it("lists each drink and takes back the one it is asked for", async () => {
+    /* The receipts have always held one record per tap; until the
+       sheet grew a log nothing read them back, and the only way to
+       remove water was subtracting an abstract amount — which takes
+       back the wrong drink whenever the sizes differ. */
+    const result = await mountSettled();
+
+    act(() => result.current.logWater(500));
+    act(() => result.current.logWater(250));
+    expect(result.current.ml).toBe(750);
+    // Newest first, and present on the tap rather than a round-trip later.
+    expect(result.current.drinks.map((d) => d.ml)).toEqual([250, 500]);
+
+    const bottle = result.current.drinks[1];
+    act(() => {
+      expect(result.current.removeDrink(bottle.id)).toBe(true);
+    });
+    expect(result.current.ml).toBe(250);
+    expect(result.current.drinks.map((d) => d.ml)).toEqual([250]);
+
+    await act(async () => {
+      await flushWater("u1");
+    });
+    expect(readDoc(PATH)).toMatchObject({ ml: 250 });
+  });
+
+  it("removing the same drink twice takes it back once", async () => {
+    /* A second press — a double tap, or an undo from two devices —
+       must not subtract the drink again. `applyWaterAction` no-ops on a
+       receipt already marked undone; this pins that the hook's path
+       inherits it rather than routing around it. */
+    const result = await mountSettled();
+    act(() => result.current.logWater(500));
+    const drink = result.current.drinks[0];
+
+    act(() => {
+      result.current.removeDrink(drink.id);
+      result.current.removeDrink(drink.id);
+    });
+    expect(result.current.ml).toBe(0);
+
+    await act(async () => {
+      await flushWater("u1");
+    });
+    expect(readDoc(PATH)).toMatchObject({ ml: 0 });
+  });
+
   it("clamps at zero so the − button can't go negative", async () => {
     seedFirestore({ [PATH]: { ml: 250, targetMl: 2000 } });
     const { result } = renderHook(() => useWaterLog());

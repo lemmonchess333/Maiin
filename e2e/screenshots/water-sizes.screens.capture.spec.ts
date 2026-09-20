@@ -83,7 +83,9 @@ test.describe("water size picker", () => {
       .getByRole("button", { name: /choose a container size/i })
       .first()
       .click({ timeout: 5000 });
-    await expect(page.getByRole("dialog", { name: "Add water" })).toBeVisible();
+    await expect(
+      page.getByRole("dialog", { name: "Water today" })
+    ).toBeVisible();
     await page.waitForTimeout(700);
     await expect(page.getByRole("spinbutton")).toHaveCount(0);
     await shootLightDark(page, "water-sheet");
@@ -101,7 +103,7 @@ test.describe("water size picker", () => {
     await shootLightDark(page, "water-custom-filled");
     await page.getByRole("button", { name: "Add", exact: true }).click();
     await expect(
-      page.getByRole("dialog", { name: "Add water" })
+      page.getByRole("dialog", { name: "Water today" })
     ).not.toBeVisible();
   });
 });

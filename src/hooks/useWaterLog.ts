@@ -14,6 +14,7 @@ import {
 } from "@/lib/waterUnits";
 import {
   applyWaterAction,
+  drinksFromReceipts,
   flushWater,
   pendingWater,
   queueWater,
@@ -141,6 +142,27 @@ export function useWaterLog() {
     },
     [uid, target]
   );
+  /* Taking a drink back, by the drink rather than by an amount.
+     `applyWaterAction` has always implemented this — it marks the named
+     receipt undone, applies the inverse, refuses if the day would go
+     below zero and no-ops on a second attempt — and nothing exposed it,
+     so the only way back was subtracting an abstract amount and hoping
+     it matched what you meant. The action's own delta is ignored when
+     `undoOf` is set; 0 is what passes the queue's finite check. */
+  const removeDrink = useCallback(
+    (receiptId: string) => {
+      if (!uid || !receiptId) return false;
+      return queueWater(uid, {
+        id: crypto.randomUUID(),
+        date: localDateString(),
+        delta: 0,
+        targetMl: target,
+        undoOf: receiptId,
+        queuedAt: Date.now(),
+      });
+    },
+    [uid, target]
+  );
   const preferenceKey = uid ? scopedKey("tropos-water-serving", uid) : "";
   const storedServing = uid
     ? readJson<number>(preferenceKey, GLASS_ML)
@@ -160,6 +182,11 @@ export function useWaterLog() {
     target,
     loading: !!uid && snapshot?.key !== key,
     logWater,
+    /* Derived from the same receipts the total is, and from the overlay
+       too — so a drink appears in the list on the tap that logs it, not
+       a round-trip later. */
+    drinks: drinksFromReceipts(state.receipts),
+    removeDrink,
     setWater: (value: number) => logWater(clampMl(value) - state.ml),
     progress: waterProgress(state.ml, target),
     servingMl,

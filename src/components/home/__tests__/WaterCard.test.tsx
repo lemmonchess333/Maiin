@@ -1,13 +1,17 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, act } from "@testing-library/react";
 import WaterCard from "../WaterCard";
 
 vi.mock("@/lib/haptic", () => ({ haptic: vi.fn() }));
 vi.mock("@/lib/homeAnalytics", () => ({ track: vi.fn() }));
-/* The compact tile's Undo rides the toast. Capture the call so the test
-   can press Undo itself: sonner's Toaster is app chrome, not this
-   component's, and is not mounted here. */
-vi.mock("sonner", () => ({ toast: vi.fn() }));
+/* Sonner is mocked so the suite can assert that NOTHING is toasted. The
+   tile briefly carried a toast per tap; the hook had already decided
+   against one ("a 5-second overlay covering the surface below is a real
+   cost for the most repeated… action in the app") and four taps stacked
+   four overlays. The undo moved onto the tile's own line. */
+vi.mock("sonner", () => ({
+  toast: Object.assign(vi.fn(), { success: vi.fn(), error: vi.fn() }),
+}));
 import { toast } from "sonner";
 const toastMock = vi.mocked(toast);
 
@@ -167,7 +171,10 @@ describe("WaterCard compact tile — one plus, and the ways back", () => {
     }
   });
 
-  it("a tap's toast offers Undo for exactly that serving", () => {
+  it("a tap never toasts; the way back is the tile's own line", () => {
+    /* The regression this whole change exists for. A toast per tap
+       stacked one overlay per tap over the page — and the toast was
+       covering the card underneath the tile, not the tile. */
     const onLog = vi.fn();
     render(
       <WaterCard
@@ -176,49 +183,140 @@ describe("WaterCard compact tile — one plus, and the ways back", () => {
         targetMl={2000}
         servingMl={500}
         onLog={onLog}
+        drinks={[{ id: "d1", ml: 500, at: 1 }]}
+        onRemoveDrink={vi.fn()}
       />
     );
     fireEvent.click(screen.getByRole("button", { name: "Add 500 ml" }));
-    expect(toastMock).toHaveBeenCalledTimes(1);
-    const [message, options] = toastMock.mock.calls[0] as [
-      string,
-      { action: { label: string; onClick: () => void } },
-    ];
-    expect(message).toBe("500 ml added");
-    expect(options.action.label).toBe("Undo");
-    options.action.onClick();
-    expect(onLog.mock.calls).toEqual([[500], [-500]]);
+    expect(onLog).toHaveBeenCalledWith(500);
+    expect(toastMock).not.toHaveBeenCalled();
+    expect(screen.getByRole("button", { name: "Undo 500 ml" })).toBeTruthy();
   });
 
-  it("a refused log offers no Undo — there is nothing to undo", () => {
+  it("the line names the newest drink, and Undo takes back THAT drink", () => {
+    /* The label and the action are both derived from `drinks[0]` at
+       render time rather than from an amount captured when the tap
+       happened, so they cannot come to name different things — the
+       failure mode a "750 ml added" burst label would have had while
+       undoing only one drink. */
+    const onRemoveDrink = vi.fn();
+    render(
+      <WaterCard
+        compact
+        ml={1250}
+        targetMl={2000}
+        servingMl={250}
+        onLog={vi.fn()}
+        drinks={[
+          { id: "newest", ml: 750, at: 3 },
+          { id: "older", ml: 500, at: 2 },
+        ]}
+        onRemoveDrink={onRemoveDrink}
+      />
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Add 250 ml" }));
+    const undo = screen.getByRole("button", { name: "Undo 750 ml" });
+    expect(screen.getByText("+750 ml")).toBeInTheDocument();
+    fireEvent.click(undo);
+    expect(onRemoveDrink).toHaveBeenCalledWith("newest");
+  });
+
+  it("the line goes back to naming the step, and the tile never changes height", () => {
+    /* Only ever one of the two lines renders, both text-micro with the
+       same mt-1, so the swap cannot resize the tile — the grid stretches
+       the weight tile beside it, and a jump there on the most repeated
+       action in the app is what the sync line was kept out of the
+       layout to avoid. */
+    vi.useFakeTimers();
+    try {
+      render(
+        <WaterCard
+          compact
+          ml={1000}
+          targetMl={2000}
+          servingMl={250}
+          onLog={vi.fn()}
+          drinks={[{ id: "d1", ml: 250, at: 1 }]}
+          onRemoveDrink={vi.fn()}
+        />
+      );
+      expect(screen.getByText("Tap + for 250 ml")).toBeInTheDocument();
+      fireEvent.click(screen.getByRole("button", { name: "Add 250 ml" }));
+      expect(screen.queryByText("Tap + for 250 ml")).toBeNull();
+      expect(screen.getByRole("button", { name: "Undo 250 ml" })).toBeTruthy();
+
+      act(() => {
+        vi.advanceTimersByTime(4000);
+      });
+      expect(screen.getByText("Tap + for 250 ml")).toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: /^Undo/ })).toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("a refused log offers no way back — there is nothing to undo", () => {
     const onLog = vi.fn(() => false);
-    render(<WaterCard compact ml={1000} targetMl={2000} onLog={onLog} />);
+    render(
+      <WaterCard
+        compact
+        ml={1000}
+        targetMl={2000}
+        onLog={onLog}
+        drinks={[{ id: "d1", ml: 250, at: 1 }]}
+        onRemoveDrink={vi.fn()}
+      />
+    );
     fireEvent.click(screen.getByRole("button", { name: "Add 250 ml" }));
     expect(onLog).toHaveBeenCalledTimes(1);
     expect(toastMock).not.toHaveBeenCalled();
+    expect(screen.queryByRole("button", { name: /^Undo/ })).toBeNull();
   });
 
-  it("the sheet offers Remove while there is water, and not on an empty day", () => {
-    /* The minus left the tile, not the product. Anchored on the positive
-       first: with water logged, the sheet's Remove row exists and
-       removes the remembered serving. Then the empty day, where the row
-       must be absent rather than a no-op. */
-    const onLog = vi.fn();
-    const { unmount } = render(
+  it("the sheet lists today's drinks, each removing the drink it names", () => {
+    /* Replaces a row that read "Remove 250 ml" and subtracted an
+       abstract amount: with a 500 and a 250 logged, that row took back
+       the remembered serving rather than the drink you meant. Each row
+       here carries its own receipt id. */
+    const onRemoveDrink = vi.fn();
+    render(
       <WaterCard
         compact
-        ml={500}
+        ml={750}
         targetMl={2000}
         servingMl={250}
-        onLog={onLog}
+        onLog={vi.fn()}
+        drinks={[
+          { id: "late", ml: 250, at: Date.parse("2026-06-09T11:40:00Z") },
+          { id: "early", ml: 500, at: Date.parse("2026-06-09T07:55:00Z") },
+        ]}
+        onRemoveDrink={onRemoveDrink}
       />
     );
     fireEvent.click(screen.getByRole("button", { name: /add water/i }));
-    fireEvent.click(screen.getByRole("button", { name: "Remove 250 ml" }));
-    expect(onLog.mock.calls).toEqual([[-250]]);
-    unmount();
+    const rows = screen.getAllByRole("button", { name: /^Remove \d+ ml/ });
+    expect(rows).toHaveLength(2);
+    fireEvent.click(rows[1]);
+    expect(onRemoveDrink).toHaveBeenCalledWith("early");
+    /* The sheet stays open: correcting two mis-taps is one trip. The
+       rows are props here, so both still render — what is pinned is
+       that removing did not close the sheet. */
+    expect(
+      screen.getAllByRole("button", { name: /^Remove \d+ ml/ })
+    ).toHaveLength(2);
+  });
 
-    render(<WaterCard compact ml={0} targetMl={2000} onLog={vi.fn()} />);
+  it("an empty day's sheet offers presets and no removals", () => {
+    render(
+      <WaterCard
+        compact
+        ml={0}
+        targetMl={2000}
+        onLog={vi.fn()}
+        drinks={[]}
+        onRemoveDrink={vi.fn()}
+      />
+    );
     fireEvent.click(screen.getByRole("button", { name: /add water/i }));
     expect(
       screen.getByRole("button", { name: /^Add 250 ml glass$/i })

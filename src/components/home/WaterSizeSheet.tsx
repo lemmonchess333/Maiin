@@ -1,28 +1,38 @@
 import { useId, useState } from "react";
-import { ChevronDown } from "lucide-react";
+import { format } from "date-fns";
+import { ChevronDown, Droplets, X } from "lucide-react";
 import Button from "@/components/ui/Button";
+import IconButton from "@/components/ui/IconButton";
+import SectionLabel from "@/components/ui/SectionLabel";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { haptic } from "@/lib/haptic";
 import WaterContainerIcon, {
   type WaterContainerType,
 } from "./WaterContainerIcon";
-import { WATER_PRESETS, MAX_SINGLE_LOG_ML } from "@/lib/waterUnits";
+import {
+  WATER_PRESETS,
+  MAX_SINGLE_LOG_ML,
+  formatWaterVolume,
+} from "@/lib/waterUnits";
+import type { WaterDrink } from "@/lib/waterActions";
 
 export default function WaterSizeSheet({
   open,
   onClose,
   onLog,
-  removeMl,
-  onRemove,
+  totalMl,
+  drinks,
+  onRemoveDrink,
 }: {
   open: boolean;
   onClose: () => void;
   onLog: (ml: number) => void | boolean;
-  /** The serving a "Remove" row takes back, or undefined for no row —
-   *  the compact tile passes it while there is water to remove, since
-   *  that tile has no minus of its own. */
-  removeMl?: number;
-  onRemove?: (ml: number) => void | boolean;
+  /** The day's total, shown beside the title. Undefined on call sites
+   *  that only add (the full-width card), which then render no log. */
+  totalMl?: number;
+  /** Today's drinks, newest first. Each row takes back THAT drink. */
+  drinks?: WaterDrink[];
+  onRemoveDrink?: (id: string) => void | boolean;
 }) {
   const amountId = useId();
   const [customOpen, setCustomOpen] = useState(false);
@@ -43,22 +53,37 @@ export default function WaterSizeSheet({
     haptic();
     onClose();
   }
-  function remove(ml: number) {
-    if (onRemove?.(ml) === false) {
-      setError("Couldn't remove this amount. Try again.");
+  /* Removal keeps the sheet OPEN, unlike a log. Taking one drink back is
+     often a correction inside a longer look at the day — closing on the
+     first tap would make fixing two mis-taps two trips. */
+  function removeDrink(id: string) {
+    if (onRemoveDrink?.(id) === false) {
+      setError("Couldn't remove that drink. Try again.");
       return;
     }
-    haptic();
-    onClose();
+    setError("");
+    haptic("light");
   }
 
   return (
     <BottomSheet
       open={open}
       onOpenChange={(next) => !next && onClose()}
-      title="Add water"
+      title="Water today"
     >
       <div className="overflow-y-auto px-4 py-4 space-y-3">
+        {/* The day's running total, beside the presets that change it.
+            The tile carries this figure too, but the sheet covers the
+            tile the moment it opens — without it you are adding to a
+            number you can no longer see. */}
+        {totalMl !== undefined && (
+          <p className="text-2xl font-extrabold leading-none text-foreground font-mono tabular-nums">
+            {formatWaterVolume(totalMl)}
+            <span className="ml-2 text-xs font-medium font-sans text-muted-foreground">
+              today
+            </span>
+          </p>
+        )}
         <div className="grid grid-cols-3 gap-2">
           {WATER_PRESETS.map((preset) => (
             <Button
@@ -156,16 +181,51 @@ export default function WaterSizeSheet({
             </form>
           )}
         </div>
-        {removeMl !== undefined && onRemove && (
-          <div className="border-t border-border/50 pt-1">
-            <Button
-              variant="ghost"
-              fullWidth
-              className="justify-start px-0 hover:bg-transparent"
-              onClick={() => remove(removeMl)}
-            >
-              Remove {removeMl} ml
-            </Button>
+        {/* The day's log. Each drink is its own record in the water
+            document (`waterReceipts`), so a row takes back exactly the
+            drink it names — the machinery for that (`undoOf`) was
+            written with the queue and never surfaced, and the only way
+            back was a row that subtracted an abstract amount. It also
+            answers "what have I drunk today?", which no surface did.
+
+            Newest first: the thing you are most likely correcting is
+            the thing you just logged. Entries written before receipts
+            carried a time still list; they show no time rather than
+            being dropped. */}
+        {drinks && drinks.length > 0 && onRemoveDrink && (
+          <div className="border-t border-border/50 pt-3 space-y-1">
+            <SectionLabel>Today&rsquo;s drinks</SectionLabel>
+            <ul className="space-y-0.5">
+              {drinks.map((drink) => (
+                <li key={drink.id} className="flex items-center gap-3">
+                  <span
+                    aria-hidden="true"
+                    className="size-7 rounded-lg flex items-center justify-center shrink-0 bg-teal/10"
+                  >
+                    <Droplets className="size-3.5 text-teal" />
+                  </span>
+                  <span className="text-sm font-mono tabular-nums font-semibold text-foreground">
+                    {formatWaterVolume(drink.ml)}
+                  </span>
+                  {drink.at !== undefined && (
+                    <span className="text-micro font-mono tabular-nums text-muted-foreground">
+                      {format(new Date(drink.at), "HH:mm")}
+                    </span>
+                  )}
+                  <IconButton
+                    aria-label={`Remove ${formatWaterVolume(drink.ml)}${
+                      drink.at !== undefined
+                        ? ` logged at ${format(new Date(drink.at), "HH:mm")}`
+                        : ""
+                    }`}
+                    onClick={() => removeDrink(drink.id)}
+                    variant="ghost"
+                    className="ml-auto -mr-2 text-muted-foreground"
+                    icon={<X className="size-4" />}
+                  />
+                </li>
+              ))}
+            </ul>
           </div>
         )}
         {error && (
