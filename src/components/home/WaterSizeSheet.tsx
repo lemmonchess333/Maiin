@@ -12,10 +12,17 @@ export default function WaterSizeSheet({
   open,
   onClose,
   onLog,
+  removeMl,
+  onRemove,
 }: {
   open: boolean;
   onClose: () => void;
   onLog: (ml: number) => void | boolean;
+  /** The serving a "Remove" row takes back, or undefined for no row —
+   *  the compact tile passes it while there is water to remove, since
+   *  that tile has no minus of its own. */
+  removeMl?: number;
+  onRemove?: (ml: number) => void | boolean;
 }) {
   const amountId = useId();
   const [customOpen, setCustomOpen] = useState(false);
@@ -31,6 +38,14 @@ export default function WaterSizeSheet({
   function log(ml: number) {
     if (onLog(ml) === false) {
       setError("Couldn't save this amount. Try again.");
+      return;
+    }
+    haptic();
+    onClose();
+  }
+  function remove(ml: number) {
+    if (onRemove?.(ml) === false) {
+      setError("Couldn't remove this amount. Try again.");
       return;
     }
     haptic();
@@ -141,6 +156,18 @@ export default function WaterSizeSheet({
             </form>
           )}
         </div>
+        {removeMl !== undefined && onRemove && (
+          <div className="border-t border-border/50 pt-1">
+            <Button
+              variant="ghost"
+              fullWidth
+              className="justify-start px-0 hover:bg-transparent"
+              onClick={() => remove(removeMl)}
+            >
+              Remove {removeMl} ml
+            </Button>
+          </div>
+        )}
         {error && (
           <p role="alert" className="text-sm text-destructive-strong">
             {error}

@@ -548,7 +548,11 @@ When something genuinely isn't covered here, ask before inventing._
 summary may use a subtle, static halo made from existing theme tokens to
 restore depth after the photo removal. Keep the ring and its contrast intact;
 no new palette, illustration or motion. Water keeps equal icon-only minus/plus
-controls; presets add immediately and Other amount expands inside the same
-sheet. Avoid extra quick-add settings and a separate total-edit flow in that
+controls (revised 2026-09-20, owner call from the options page: that now
+names the FULL-WIDTH card only — the compact Home tile keeps ONE filled plus
+in its label row, with Undo in the toast and a Remove row in the sheet, because
+two 44 px controls cannot share a 151 px row with anything and four passes
+had proved it); presets add immediately and Other amount expands inside the
+same sheet. Avoid extra quick-add settings and a separate total-edit flow in that
 sheet. Home has no persistent streak-recovery or rest-day banner; native timed
 notifications are a deferred feature in `POST_LAUNCH.md`.
