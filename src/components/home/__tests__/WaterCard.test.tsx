@@ -1,37 +1,18 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import WaterCard from "../WaterCard";
 
 vi.mock("@/lib/haptic", () => ({ haptic: vi.fn() }));
 vi.mock("@/lib/homeAnalytics", () => ({ track: vi.fn() }));
+/* The compact tile's Undo rides the toast. Capture the call so the test
+   can press Undo itself: sonner's Toaster is app chrome, not this
+   component's, and is not mounted here. */
+vi.mock("sonner", () => ({ toast: vi.fn() }));
+import { toast } from "sonner";
+const toastMock = vi.mocked(toast);
 
 describe.each([false, true])("WaterCard compact=%s", (compact) => {
-  it("keeps the remembered serving on both quick controls", () => {
-    const onLog = vi.fn();
-    render(
-      <WaterCard
-        compact={compact}
-        ml={1750}
-        targetMl={2000}
-        servingMl={500}
-        onLog={onLog}
-      />
-    );
-    fireEvent.click(screen.getByRole("button", { name: "Add 500 ml" }));
-    fireEvent.click(screen.getByRole("button", { name: "Remove 500 ml" }));
-    expect(onLog.mock.calls).toEqual([[500], [-500]]);
-  });
-
-  it("cannot remove water from an empty day", () => {
-    const onLog = vi.fn();
-    render(
-      <WaterCard compact={compact} ml={0} targetMl={2000} onLog={onLog} />
-    );
-    const remove = screen.getByRole("button", { name: "Remove 250 ml" });
-    expect(remove).toBeDisabled();
-    fireEvent.click(remove);
-    expect(onLog).not.toHaveBeenCalled();
-  });
+  beforeEach(() => toastMock.mockReset());
 
   it("shows queued status without an unwired Retry button", () => {
     render(
@@ -66,17 +47,64 @@ describe.each([false, true])("WaterCard compact=%s", (compact) => {
   });
 });
 
-/* Compact-only: the tile's third row, the shape the peer weight tile has
-   always had and water lacked. Outside describe.each because the
-   full-width variant composes its controls differently. */
-describe("WaterCard compact tile — the meta row", () => {
-  it("names the serving its quick controls will move", () => {
-    /* `servingMl` is computed once and rendered twice — the glyphs'
-       accessible names and the visible readout. That is the "one value,
+/* The full-width card keeps its − / + pair beside the reading. */
+describe("WaterCard hero — the quick pair", () => {
+  beforeEach(() => toastMock.mockReset());
+
+  it("keeps the remembered serving on both quick controls, with no toast", () => {
+    const onLog = vi.fn();
+    render(
+      <WaterCard ml={1750} targetMl={2000} servingMl={500} onLog={onLog} />
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Add 500 ml" }));
+    fireEvent.click(screen.getByRole("button", { name: "Remove 500 ml" }));
+    expect(onLog.mock.calls).toEqual([[500], [-500]]);
+    // Undo is the compact tile's substitute for a minus this card has.
+    expect(toastMock).not.toHaveBeenCalled();
+  });
+
+  it("cannot remove water from an empty day", () => {
+    const onLog = vi.fn();
+    render(<WaterCard ml={0} targetMl={2000} onLog={onLog} />);
+    const remove = screen.getByRole("button", { name: "Remove 250 ml" });
+    expect(remove).toBeDisabled();
+    fireEvent.click(remove);
+    expect(onLog).not.toHaveBeenCalled();
+  });
+
+  it("both quick controls keep one treatment — an edge, not a fill", () => {
+    /* Measured treatment: every fill candidate 1.00-1.49:1 on the
+       grounds these sit on, a solid teal edge 4.04-6.08:1. This card is
+       the only surface that still carries the pair. */
+    render(<WaterCard ml={500} targetMl={2000} onLog={vi.fn()} />);
+    // Exact form: on this variant the card BODY is also named "Add water —
+    // choose a container size", so a bare /^Add/ matches two buttons.
+    const add = screen.getByRole("button", { name: /^Add \d+ ml$/ });
+    const remove = screen.getByRole("button", { name: /^Remove \d+ ml$/ });
+    for (const cls of ["rounded-full", "border", "border-teal", "text-teal"]) {
+      expect(add, `plus is missing ${cls}`).toHaveClass(cls);
+      expect(remove, `minus is missing ${cls}`).toHaveClass(cls);
+    }
+    for (const cls of ["bg-background", "bg-card", "bg-muted"]) {
+      expect(add, `plus should carry no fill, has ${cls}`).not.toHaveClass(cls);
+      expect(remove, `minus should carry no fill, has ${cls}`).not.toHaveClass(
+        cls
+      );
+    }
+  });
+});
+
+/* Compact-only. The tile has ONE control, and it is not on row 3. Outside
+   describe.each because the full-width variant composes its controls
+   differently. */
+describe("WaterCard compact tile — one plus, and the ways back", () => {
+  beforeEach(() => toastMock.mockReset());
+
+  it("names the serving its plus will add, in the meta line and the name", () => {
+    /* `servingMl` is computed once and rendered twice — the disc's
+       accessible name and the visible meta line. That is the "one value,
        two readers" shape this project keeps regressing on, so pin that
-       they AGREE rather than that either exists. Before this row the
-       amount lived only in the aria-labels, so a sighted user tapping +
-       could not tell whether they were adding 250 ml or 750. */
+       they AGREE rather than that either exists. */
     render(
       <WaterCard
         compact
@@ -89,7 +117,7 @@ describe("WaterCard compact tile — the meta row", () => {
     expect(
       screen.getByRole("button", { name: "Add 750 ml" })
     ).toBeInTheDocument();
-    expect(screen.getByText("750 ml")).toBeInTheDocument();
+    expect(screen.getByText("Tap + for 750 ml")).toBeInTheDocument();
   });
 
   it("keeps one match for each selector the capture specs anchor on", () => {
@@ -97,9 +125,9 @@ describe("WaterCard compact tile — the meta row", () => {
        /add water/i (home:92 + :339, nutrition-card:75,
        designer-onboarding:168, transition.capture:172), and
        water-sizes:63 uses /^Add \d+ ml$/. The body's accessible name
-       now also carries the READING, so this pins that the substring
-       those specs match on survived that rewrite — and that the new
-       meta row did not add a second match for either. */
+       also carries the READING, so this pins that the substring those
+       specs match on survived — and that the disc did not add a second
+       match for either. */
     render(<WaterCard compact ml={0} targetMl={2000} onLog={vi.fn()} />);
     expect(
       screen.getAllByRole("button", { name: /^Add \d+ ml$/ })
@@ -109,37 +137,93 @@ describe("WaterCard compact tile — the meta row", () => {
     );
   });
 
-  it("gives both quick controls one treatment — an edge, not a fill", () => {
-    /* They differed on three axes at once — border presence, background
-       alpha, and the disabled state — so a stepper pair read as two
-       different KINDS of control.
-
-       The EDGE is what defines these, measured rather than assumed.
-       Against the two grounds a disc actually sits on (the card at 0%
-       fill, and the card plus the fill gradient at 100%, both themes)
-       every fill candidate lands between 1.00 and 1.49:1 — bg-background
-       1.16-1.49, bg-muted 1.06-1.33, bg-card 1.00-1.41, teal/15
-       1.19-1.28. None of them draws a control. The old teal/30 edge did
-       not either (1.44-1.71). A solid `border-teal` is 4.04-6.08 across
-       all four states, which clears the 3:1 WCAG 1.4.11 asks of a
-       control boundary.
-
-       So the fill is pinned ABSENT: an opaque `bg-background` disc is
-       darker than the tile in both themes and reads as a hole punched
-       through a teal card, which is what the owner saw on a device. */
+  it("the plus is a filled disc in the label row, outside the body button, with a 44px hit area", () => {
+    /* Row 3 held two controls through four passes and read wrong from a
+       device every time; two 44px targets cannot share a 151px row with
+       anything. Owner call: one plus, no minus. This pins the SHAPE of
+       that decision. The disc sits OUTSIDE the body button — a button
+       inside a button is invalid HTML and the earlier layouts avoided it
+       by keeping the controls on their own row — and its 32px visual
+       keeps the 44px floor through the pseudo-element that reaches into
+       the tile padding. */
     render(<WaterCard compact ml={500} targetMl={2000} onLog={vi.fn()} />);
-    const add = screen.getByRole("button", { name: /^Add/ });
-    const remove = screen.getByRole("button", { name: /^Remove/ });
-    for (const cls of ["rounded-full", "border", "border-teal", "text-teal"]) {
+    const add = screen.getByRole("button", { name: /^Add \d+ ml$/ });
+    const body = screen.getByRole("button", { name: /add water/i });
+    expect(body.contains(add), "plus must not nest inside the body").toBe(
+      false
+    );
+    expect(screen.queryByRole("button", { name: /^Remove/ })).toBeNull();
+    for (const cls of [
+      "absolute",
+      "top-3",
+      "right-3",
+      "size-8",
+      "rounded-full",
+      "bg-teal",
+      "text-teal-foreground",
+      "before:-inset-1.5",
+    ]) {
       expect(add, `plus is missing ${cls}`).toHaveClass(cls);
-      expect(remove, `minus is missing ${cls}`).toHaveClass(cls);
     }
-    for (const cls of ["bg-background", "bg-card", "bg-muted"]) {
-      expect(add, `plus should carry no fill, has ${cls}`).not.toHaveClass(cls);
-      expect(remove, `minus should carry no fill, has ${cls}`).not.toHaveClass(
-        cls
-      );
-    }
+  });
+
+  it("a tap's toast offers Undo for exactly that serving", () => {
+    const onLog = vi.fn();
+    render(
+      <WaterCard
+        compact
+        ml={1000}
+        targetMl={2000}
+        servingMl={500}
+        onLog={onLog}
+      />
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Add 500 ml" }));
+    expect(toastMock).toHaveBeenCalledTimes(1);
+    const [message, options] = toastMock.mock.calls[0] as [
+      string,
+      { action: { label: string; onClick: () => void } },
+    ];
+    expect(message).toBe("500 ml added");
+    expect(options.action.label).toBe("Undo");
+    options.action.onClick();
+    expect(onLog.mock.calls).toEqual([[500], [-500]]);
+  });
+
+  it("a refused log offers no Undo — there is nothing to undo", () => {
+    const onLog = vi.fn(() => false);
+    render(<WaterCard compact ml={1000} targetMl={2000} onLog={onLog} />);
+    fireEvent.click(screen.getByRole("button", { name: "Add 250 ml" }));
+    expect(onLog).toHaveBeenCalledTimes(1);
+    expect(toastMock).not.toHaveBeenCalled();
+  });
+
+  it("the sheet offers Remove while there is water, and not on an empty day", () => {
+    /* The minus left the tile, not the product. Anchored on the positive
+       first: with water logged, the sheet's Remove row exists and
+       removes the remembered serving. Then the empty day, where the row
+       must be absent rather than a no-op. */
+    const onLog = vi.fn();
+    const { unmount } = render(
+      <WaterCard
+        compact
+        ml={500}
+        targetMl={2000}
+        servingMl={250}
+        onLog={onLog}
+      />
+    );
+    fireEvent.click(screen.getByRole("button", { name: /add water/i }));
+    fireEvent.click(screen.getByRole("button", { name: "Remove 250 ml" }));
+    expect(onLog.mock.calls).toEqual([[-250]]);
+    unmount();
+
+    render(<WaterCard compact ml={0} targetMl={2000} onLog={vi.fn()} />);
+    fireEvent.click(screen.getByRole("button", { name: /add water/i }));
+    expect(
+      screen.getByRole("button", { name: /^Add 250 ml glass$/i })
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^Remove/ })).toBeNull();
   });
 });
 

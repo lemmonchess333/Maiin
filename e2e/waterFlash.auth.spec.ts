@@ -183,14 +183,22 @@ test.describe("water total never travels backwards mid-tap", () => {
         `the snapshot that confirms it.`
     ).toEqual([]);
 
-    // The same gap exists on the way down, so the minus button gets the
-    // paired check rather than being assumed symmetric.
+    // The same gap exists on the way down, so removal gets the paired
+    // check rather than being assumed symmetric. The compact tile carries
+    // no minus of its own — taking a serving back lives in the size
+    // sheet's "Remove N ml" row (and the toast's Undo) — so each pass
+    // opens the sheet from the tile body, takes one serving back, and
+    // lets the sheet close. Same optimistic queue underneath, so the
+    // window this measures is the same one.
     await page.evaluate(() => {
       (window as unknown as { __water: number[] }).__water = [];
     });
-    const minus = page.getByRole("button", { name: /remove \d+ ml/i }).first();
+    const body = page.getByRole("button", { name: /add water/i }).first();
     for (let i = 0; i < 2; i++) {
-      await minus.click();
+      await body.click();
+      const remove = page.getByRole("button", { name: /^remove \d+ ml$/i });
+      await remove.waitFor({ state: "visible", timeout: 10_000 });
+      await remove.click();
       await page.waitForTimeout(900);
     }
     await page.waitForTimeout(1500);
