@@ -8,7 +8,7 @@
  * test — exercised only indirectly through the integration suites.
  */
 import { describe, it, expect } from "vitest";
-import { utcDateString, parseUtcDate } from "../lib/dateUtils";
+import { utcDateString, parseUtcDate, isCalendarDate } from "../lib/dateUtils";
 
 describe("utcDateString", () => {
   it("formats a UTC instant as YYYY-MM-DD", () => {
@@ -72,5 +72,63 @@ describe("round-trip", () => {
     const start = parseUtcDate("2026-06-01");
     const threeDaysEarlier = new Date(start.getTime() - 3 * 86400000);
     expect(utcDateString(threeDaysEarlier)).toBe("2026-05-29");
+  });
+});
+
+describe("isCalendarDate", () => {
+  /* The round-trip block above asserts the property for a handful of known
+     dates; this is that property used as a predicate, and the reason it has
+     to be the round trip rather than a parse check.
+
+     JS date construction ROLLS OVER instead of refusing. `2026-09-31`
+     becomes 1 October and `2026-02-30` becomes 2 March, both with a
+     perfectly finite timestamp — so `Number.isFinite(Date.parse(...))`
+     returns true for a day that does not exist. Formatting back and
+     comparing is what catches it: a rolled-over date formats as the day it
+     rolled TO, which cannot equal what was passed in. */
+
+  it("accepts real days, including both leap-year answers", () => {
+    for (const good of [
+      "2026-09-20",
+      "2026-01-01",
+      "2026-12-31",
+      "2024-02-29",
+    ]) {
+      expect(isCalendarDate(good)).toBe(true);
+    }
+  });
+
+  it("rejects an out-of-range DAY, which parses fine by rolling over", () => {
+    // The half a Date.parse check misses. Asserted alongside the rollover
+    // itself so the reason is visible rather than asserted on trust.
+    expect(Number.isFinite(Date.parse("2026-09-31T00:00:00Z"))).toBe(true);
+    expect(utcDateString(parseUtcDate("2026-09-31"))).toBe("2026-10-01");
+    expect(isCalendarDate("2026-09-31")).toBe(false);
+
+    expect(Number.isFinite(Date.parse("2026-02-30T00:00:00Z"))).toBe(true);
+    expect(isCalendarDate("2026-02-30")).toBe(false);
+
+    // 2026 is not a leap year; 2024 is (asserted above).
+    expect(isCalendarDate("2026-02-29")).toBe(false);
+  });
+
+  it("rejects an out-of-range MONTH, the half a parse check did catch", () => {
+    expect(isCalendarDate("2026-13-01")).toBe(false);
+    expect(isCalendarDate("2026-00-10")).toBe(false);
+  });
+
+  it("rejects anything that is not a YYYY-MM-DD string", () => {
+    for (const bad of [
+      "31/12/2026",
+      "2026-1-1",
+      "2026-01-01T00:00:00Z",
+      "",
+      null,
+      undefined,
+      20261231,
+      new Date(),
+    ]) {
+      expect(isCalendarDate(bad)).toBe(false);
+    }
   });
 });
