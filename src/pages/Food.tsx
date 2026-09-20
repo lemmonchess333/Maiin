@@ -66,7 +66,7 @@ import { useScanUsage } from "@/hooks/useScanUsage";
 import { useInFlightGuard } from "@/hooks/useInFlightGuard";
 import { useScanButtonOverrides } from "@/components/food/scanButtonOverrides";
 import FoodComposerCard from "@/components/food/FoodComposerCard";
-import FoodProStrip from "@/components/food/FoodProStrip";
+import FoodProHint from "@/components/food/FoodProHint";
 import FoodConsistencyCard from "@/components/food/FoodConsistencyCard";
 import { FoodSkeleton } from "@/components/LoadingSkeleton";
 import type {
@@ -208,15 +208,17 @@ export default function Food() {
   }, [uid]);
 
   // Cycle the placeholder every 2.8s when the input is idle (empty +
-  // unfocused + not adding to a specific meal). Stops the moment the
-  // user engages so the placeholder doesn't shift mid-typing.
+  // unfocused). Stops the moment the user engages so the placeholder
+  // doesn't shift mid-typing. A targeted meal no longer pauses it: the
+  // pills above the field say where a log goes, so the field is free
+  // to show what a log can look like.
   useEffect(() => {
-    if (nlInput.trim() || inputFocused || targetMeal) return;
+    if (nlInput.trim() || inputFocused) return;
     const id = window.setInterval(() => {
       setPlaceholderIdx((i) => (i + 1) % NL_EXAMPLE_PROMPTS.length);
     }, 2800);
     return () => window.clearInterval(id);
-  }, [nlInput, inputFocused, targetMeal]);
+  }, [nlInput, inputFocused]);
   // Swipe-to-delete: at most ONE row across the whole page can be open. State
   // lives here (at the page level), not per-row or per-section. Food rows
   // receive `isOpen` and `onOpenChange` as props — no context, no refs.
@@ -1715,7 +1717,6 @@ export default function Food() {
       canGoForward={canGoForward}
       minDate={minDateStr}
       maxDate={todayStr}
-      itemVariant={pageItemVariant}
     />
   );
   const readError = mealsError ? (
@@ -1747,10 +1748,10 @@ export default function Food() {
       <PageShell
         {...pullBindProps}
         title="Food"
+        actions={dateBar}
         banner={<FoodOfflineBanner />}
         style={{ paddingBottom: "var(--page-bottom-pad)" }}
       >
-        {dateBar}
         {mealsError ? readError : <FoodSkeleton />}
       </PageShell>
     );
@@ -1760,6 +1761,10 @@ export default function Food() {
     <PageShell
       {...pullBindProps}
       title="Food"
+      /* The date switcher shares the title row (the shell's action
+         slot) instead of taking a sticky row of its own beneath it —
+         two header rows were 90px spent before the day's number. */
+      actions={dateBar}
       banner={<FoodOfflineBanner />}
       /* Bottom padding hooks into the canonical --page-bottom-pad token
          (tab-bar height + env(safe-area-inset-bottom) + 1rem) so the last
@@ -1779,7 +1784,6 @@ export default function Food() {
           />
         </div>
       )}
-      {dateBar}
       {readError}
 
       <motion.div variants={pageItemVariant} key={selectedDate}>
@@ -1914,23 +1918,23 @@ export default function Food() {
         </Card>
       )}
 
-      {/* Photo logging gated for this tier: say why the camera is locked
-          and where Pro is, above the composer. Rendered only when it has
-          something to say — an empty wrapper would be a step in the page
-          rhythm. */}
-      {!scanUsage.loading &&
-        !scanUsage.isUnlimited &&
-        scanUsage.limit === 0 && (
-          <motion.div variants={pageItemVariant}>
-            <FoodProStrip
-              limit={scanUsage.limit}
-              isUnlimited={scanUsage.isUnlimited}
-              loading={scanUsage.loading}
-            />
-          </motion.div>
-        )}
       <motion.div variants={pageItemVariant}>
         <FoodComposerCard
+          /* Photo logging gated for this tier: one line under the field
+             says why the camera is locked and where Pro is. Mounted only
+             when it has something to say, so the ungated tiers never
+             run its hooks and never carry an empty step in the rhythm. */
+          proHint={
+            !scanUsage.loading &&
+            !scanUsage.isUnlimited &&
+            scanUsage.limit === 0 ? (
+              <FoodProHint
+                limit={scanUsage.limit}
+                isUnlimited={scanUsage.isUnlimited}
+                loading={scanUsage.loading}
+              />
+            ) : null
+          }
           ref={suggestionsRef}
           nlInput={nlInput}
           setNlInput={setNlInput}
@@ -1954,7 +1958,6 @@ export default function Food() {
           onParse={handleNLParse}
           inputRef={inputRef}
           targetMeal={targetMeal}
-          setTargetMeal={setTargetMeal}
           onTargetMeal={handleTargetMeal}
           showSuggestions={showSuggestions || quickAddSection !== null}
           suggestions={suggestions}
@@ -2037,11 +2040,6 @@ export default function Food() {
           row's edit sheet. Targeting a slot for NEW logs stays on the
           composer pills. */}
       <motion.div variants={pageItemVariant} className="space-y-3">
-        {/* NUTR-CONSISTENCY-01 — weekly logging focus. Private
-            commitment + derived progress; the only social affordance
-            is the opt-in constant status line once MET. */}
-        {uid && <FoodConsistencyCard uid={uid} />}
-
         <FoodTimeline
           meals={visibleTodaysMeals}
           openRowId={openRowId}
@@ -2049,6 +2047,15 @@ export default function Food() {
           onDelete={handleDeleteMeal}
           onEdit={setEditingGroup}
         />
+
+        {/* NUTR-CONSISTENCY-01 — weekly logging focus. Private
+            commitment + derived progress; the only social affordance
+            is the opt-in constant status line once MET. It follows the
+            diary: a prompt to set one, or a progress row, is about the
+            week, and it sat between the composer and the day's
+            meals — three cards of not-food on an empty day before the
+            empty state (owner call, Food options page, 6). */}
+        {uid && <FoodConsistencyCard uid={uid} />}
 
         {/* Bottom "Copy yesterday's …" button. Renders only when yesterday
             has slots today is missing. Label is intentionally short:
