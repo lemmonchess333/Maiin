@@ -134,16 +134,21 @@ describe("FoodHeroCard — single shared display mode", () => {
   });
 });
 
-describe("FoodHeroCard — day annotation merged into the caption (Wave3 G)", () => {
-  function renderMerged(
-    annotation: string,
-    isToday: boolean,
-    caption: unknown = { trainingType: "Run day", adjustment: "" }
-  ) {
+describe("FoodHeroCard — no day-type caption on the card", () => {
+  /* The top-left line carried "{dayType} · {rationale}" ("Lift day · Hard
+     session") on training days. Owner call from the hero-glow options:
+     the card is the ring and its number, not a briefing — the line goes.
+     The day type and rationale still exist on the targets and still
+     render in the Details sheet (HeroDrillDownSheet's own tests), so
+     this pins ABSENCE on the card while the data stays: the targets are
+     handed the caption and the annotation, and neither reaches the
+     surface. Anchored on the ring being present, so an empty render
+     could not pass it. */
+  function renderWithDayType(isToday: boolean) {
     const targets = {
       ...dailyTargets,
-      annotation,
-      caption,
+      annotation: "Hard session",
+      caption: { trainingType: "Run day", adjustment: "" },
     } as unknown as EffectiveTargets;
     return render(
       <MemoryRouter>
@@ -157,33 +162,49 @@ describe("FoodHeroCard — day annotation merged into the caption (Wave3 G)", ()
     );
   }
 
-  it("merges the rationale into the hero caption today: '{dayType} · {rationale}'", () => {
-    renderMerged("Hard session", true);
-    expect(screen.getByText("Run day · Hard session")).toBeInTheDocument();
-  });
-
-  it("shows only the day type on past/future (diary) views — rationale suppressed", () => {
-    renderMerged("Hard session", false);
-    expect(screen.getByText("Run day")).toBeInTheDocument();
+  it("today: neither the day type nor the rationale renders on the card", () => {
+    renderWithDayType(true);
+    expect(ringButton()).toBeInTheDocument();
+    expect(screen.queryByText(/Run day/)).toBeNull();
     expect(screen.queryByText(/Hard session/)).toBeNull();
   });
 
-  it("does NOT render a separate floating annotation line (single source)", () => {
-    const { container } = renderMerged("Hard session", true);
-    const matches = [...container.querySelectorAll("p")].filter((p) =>
-      /Hard session/.test(p.textContent || "")
+  it("diary views: the same — the caption was never a date-specific thing", () => {
+    renderWithDayType(false);
+    expect(ringButton()).toBeInTheDocument();
+    expect(screen.queryByText(/Run day/)).toBeNull();
+  });
+});
+
+describe("FoodHeroCard — the wash behind the ring", () => {
+  it("the two corner colours reach far enough to meet, in both themes", () => {
+    /* Two ellipses, the food surface's orange top-left and the brand
+       purple bottom-right, each spanning most of the card with a
+       three-stop falloff. Pinned on the recipe's shape rather than its
+       exact alphas: both hue tokens present, each with a mid stop and a
+       far edge (past 70% of the card), and the light theme no longer
+       dimmed to 70% — that dim is what made the last version invisible. */
+    const { container } = render(
+      <MemoryRouter>
+        <FoodHeroCard
+          selectedDate="2026-06-09"
+          isToday
+          dailyTargets={dailyTargets}
+          dailyTotals={dailyTotals}
+        />
+      </MemoryRouter>
     );
-    expect(matches).toHaveLength(1);
-  });
-
-  it("caption shows just the day type when the annotation is empty", () => {
-    renderMerged("", true);
-    expect(screen.getByText("Run day")).toBeInTheDocument();
-  });
-
-  it("renders no day label at all on a rest day (caption null)", () => {
-    renderMerged("", true, null);
-    expect(screen.queryByText(/Run day|Rest day/)).toBeNull();
+    const wash = container.querySelector(
+      '[aria-hidden="true"].absolute.inset-0'
+    ) as HTMLElement;
+    expect(wash, "the wash layer").toBeTruthy();
+    const bg = wash.style.background;
+    expect(bg).toContain("--nutrition");
+    expect(bg).toContain("--primary");
+    expect(bg.match(/transparent (7[5-9]|8\d)%/g)?.length).toBe(2);
+    expect(bg.match(/radial-gradient/g)?.length).toBe(2);
+    expect(wash).toHaveClass("opacity-85", "dark:opacity-100");
+    expect(wash).not.toHaveClass("opacity-70");
   });
 });
 
