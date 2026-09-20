@@ -165,6 +165,12 @@ export default function WaterCard({
   const quickControlClass =
     "rounded-full border border-teal text-teal hover:bg-teal/10";
 
+  /* The compact tile's halves. Square (the pill supplies the radius and
+     the edge), teal glyph, the same teal hover as the hero circles. The
+     focus ring draws inside because the pill clips overflow. */
+  const stepperHalfClass =
+    "flex-none rounded-none text-teal hover:bg-teal/10 focus-visible:ring-inset focus-visible:ring-offset-0";
+
   const controls = (
     <div className="flex items-center gap-1 flex-shrink-0">
       <IconButton
@@ -277,45 +283,79 @@ export default function WaterCard({
               </span>
             </p>
           </button>
-          {/* Row 3 — the compact-tile meta row, which water alone lacked.
-              The weight tile spends this row on `lastWeightDate` at
-              `text-micro mt-1` (WeightStepsTiles.tsx:174-179) and the
-              steps tile on "today". Water had no row 3 at all: in its
-              place sat `flex justify-end mt-auto pt-2`, a lone control
-              cluster hard against the right edge while every other
-              element in the tile sits on the 12px left axis.
+          {/* Row 3 — ONE control, edge to edge.
 
-              At 375px the inner tile is 143.5px and the controls are
-              92px, so `justify-end` stranded ~47px of empty tile to
-              their left — a third of the row. Giving the row a
-              left-anchored element means there is no lone cluster left
-              to read as off-centre, at any viewport; and unlike
-              `justify-between` on a controls-only row, the gap does not
-              GROW with width (the surplus goes to the label, not to dead
-              space between two live buttons).
+              This row was nudged three times in one day from device
+              feedback and still read as "the buttons look off centre". The
+              last diagnosis was that a lone cluster sat right-aligned with
+              nothing on the left axis, and its cure was a serving-size label
+              there as a counterweight. The label is
+              text-micro; the cluster is two 44px rings. A ~36px whisper does
+              not balance ~92px of control — the visual mass stayed on the
+              right and the row still read lopsided, which is what the
+              owner's screenshot shows.
 
-              It also puts `servingMl` on screen for the first time. It
-              lived only in the aria-labels while useWaterLog silently
-              resets it to the last container logged through the sheet —
-              so a sighted user could tap + with no way to know whether
-              they were adding 250 ml or 750 ml. aria-hidden because the
-              two buttons already announce the same amount; unhidden it
-              emits a stray orphan "250 ml" between them.
+              So the shape changes, not the alignment. The two halves and
+              the readout become one segmented stepper spanning the row —
+              the iOS UIStepper idiom, and the shape the food serving sheet
+              already uses (EditServingsSheet: minus, readout, plus). There
+              is nothing left to be off-centre: the row IS the control. The
+              step size sits where it acts, between the glyphs that apply
+              it, rather than as a caption at the far end of the row.
 
-              `mt-auto` is gone on purpose: it pinned this row to the
-              tile floor, which detaches the controls from the number
-              they modify by up to 84px whenever the right column grows
-              taller (native, steps tile present). Without it, surplus
-              height falls BELOW row 3 in both tiles — the rule the peer
-              states in code at WeightStepsTiles.tsx:139-141. */}
-          <div className="mt-1 flex items-center justify-between gap-2">
+              What is kept from the earlier passes, deliberately:
+                - equal icon-only minus/plus halves, IconButton md (44px),
+                  per DESIGN_GUIDE's "Daily logging refinement" direction;
+                - NO fill anywhere — the previous pass measured every fill
+                  candidate at 1.00-1.49:1 on the grounds this sits on, and
+                  a solid `border-teal` edge at 4.04-6.08:1 (the figures are
+                  in quickControlClass's comment above). That edge now belongs
+                  to the pill, the one boundary WCAG 1.4.11 governs; the
+                  inner divider is decorative and can be lighter;
+                - `servingMl` visible (it follows the last drink logged, so
+                  a sighted user must be able to see whether + means 250 ml
+                  or 750), aria-hidden because both halves announce it;
+                - the accessible names five capture specs and the flash
+                  spec anchor on.
+
+              `overflow-hidden` clips the halves' hover fill to the pill, so
+              the focus ring moves INSIDE (ring-inset, offset-0) or it would
+              be clipped too. The readout keeps text-muted-foreground: it is
+              12px TEXT, and the teal glyph's 4.04:1 worst case (light theme,
+              full tile) is a pass for an icon and a miss for small text.
+              The exposure of that ground is unchanged from the row this
+              replaces, which rendered the same string on the same spot.
+
+              At 320px the inner tile is ~116px and two 44px halves leave
+              ~28px for the readout, which truncates. The previous row
+              already overflowed at that width (label + 92px cluster > 116),
+              so this is the same degradation, not a new one. */}
+          <div
+            role="group"
+            aria-label="Quick add"
+            className="mt-2 flex items-stretch rounded-full border border-teal overflow-hidden"
+          >
+            <IconButton
+              onClick={quickRemove}
+              aria-label={`Remove ${servingMl} ml`}
+              disabled={!hasWater}
+              variant="ghost"
+              className={stepperHalfClass}
+              icon={<Minus className="size-4" />}
+            />
             <span
               aria-hidden="true"
-              className="min-w-0 truncate text-micro text-muted-foreground font-mono tabular-nums"
+              className="flex-1 min-w-0 flex items-center justify-center px-1 border-x border-teal/40 text-micro text-muted-foreground font-mono tabular-nums truncate"
             >
               {formatWaterVolume(servingMl)}
             </span>
-            {controls}
+            <IconButton
+              onClick={quickAdd}
+              aria-label={`Add ${servingMl} ml`}
+              variant="ghost"
+              className={stepperHalfClass}
+              icon={<Plus className="size-4" />}
+            />
           </div>
         </div>
         {/* Permanently mounted, sr-only when idle — the peer tile's shape

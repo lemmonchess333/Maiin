@@ -109,27 +109,67 @@ describe("WaterCard compact tile — the meta row", () => {
     );
   });
 
-  it("gives both quick controls one treatment — an edge, not a fill", () => {
-    /* They differed on three axes at once — border presence, background
-       alpha, and the disabled state — so a stepper pair read as two
-       different KINDS of control.
+  it("compact: the halves and the readout are ONE stepper, and the edge is the pill's", () => {
+    /* Row 3 was nudged three times (#2219, #2220, #2223) and still read
+       as "the buttons look off centre". The last diagnosis put a
+       text-micro serving label on the left as a counterweight to two
+       44px rings on the right; a ~36px whisper does not balance ~92px of
+       control, so the mass stayed right and the row stayed lopsided.
 
-       The EDGE is what defines these, measured rather than assumed.
-       Against the two grounds a disc actually sits on (the card at 0%
-       fill, and the card plus the fill gradient at 100%, both themes)
-       every fill candidate lands between 1.00 and 1.49:1 — bg-background
-       1.16-1.49, bg-muted 1.06-1.33, bg-card 1.00-1.41, teal/15
-       1.19-1.28. None of them draws a control. The old teal/30 edge did
-       not either (1.44-1.71). A solid `border-teal` is 4.04-6.08 across
-       all four states, which clears the 3:1 WCAG 1.4.11 asks of a
-       control boundary.
-
-       So the fill is pinned ABSENT: an opaque `bg-background` disc is
-       darker than the tile in both themes and reads as a hole punched
-       through a teal card, which is what the owner saw on a device. */
+       Now the row IS the control: one segmented stepper spanning it —
+       minus, readout, plus — the iOS UIStepper idiom and the shape
+       EditServingsSheet already uses. This pins the STRUCTURE, because
+       that is what changed: the two halves share one parent, the readout
+       sits between them, and the solid `border-teal` edge #2223 measured
+       at 4.04-6.08:1 belongs to that parent, the one boundary WCAG
+       1.4.11 governs. The halves themselves carry no edge, no radius and
+       no fill — a second edge inside the pill would read as three boxes,
+       and every fill candidate measured 1.00-1.49:1 on this ground. */
     render(<WaterCard compact ml={500} targetMl={2000} onLog={vi.fn()} />);
     const add = screen.getByRole("button", { name: /^Add/ });
     const remove = screen.getByRole("button", { name: /^Remove/ });
+
+    const pill = add.parentElement as HTMLElement;
+    expect(remove.parentElement, "halves are not in one control").toBe(pill);
+    expect(pill).toHaveAttribute("role", "group");
+    for (const cls of ["rounded-full", "border", "border-teal"]) {
+      expect(pill, `pill is missing ${cls}`).toHaveClass(cls);
+    }
+
+    const [first, middle, last] = Array.from(pill.children);
+    expect(first, "minus must be the left half").toBe(remove);
+    expect(last, "plus must be the right half").toBe(add);
+    expect(middle, "readout must sit between the halves").toHaveTextContent(
+      "250 ml"
+    );
+
+    for (const half of [remove, add]) {
+      // 44px: IconButton md. Not `sm` — the tile provides no surrounding
+      // padding that would widen a 36px hit area.
+      expect(half).toHaveClass("size-11", "text-teal");
+      for (const cls of [
+        "rounded-full",
+        "border-teal",
+        "bg-background",
+        "bg-card",
+        "bg-muted",
+      ]) {
+        expect(half, `half should not carry ${cls}`).not.toHaveClass(cls);
+      }
+    }
+  });
+
+  it("hero: both quick controls keep one treatment — an edge, not a fill", () => {
+    /* The full-width card keeps its two circles beside the reading; that
+       row has an icon+reading cluster as counterweight and was never the
+       complaint. The pin that used to live on the compact tile moves
+       here unchanged, so #2223's measured treatment stays held on the
+       surface that still uses it. */
+    render(<WaterCard ml={500} targetMl={2000} onLog={vi.fn()} />);
+    // Exact form: on this variant the card BODY is also named "Add water —
+    // choose a container size", so a bare /^Add/ matches two buttons.
+    const add = screen.getByRole("button", { name: /^Add \d+ ml$/ });
+    const remove = screen.getByRole("button", { name: /^Remove \d+ ml$/ });
     for (const cls of ["rounded-full", "border", "border-teal", "text-teal"]) {
       expect(add, `plus is missing ${cls}`).toHaveClass(cls);
       expect(remove, `minus is missing ${cls}`).toHaveClass(cls);

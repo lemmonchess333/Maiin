@@ -163,15 +163,20 @@ describe("Home compact tiles share one numeral tier", () => {
     expect(unit).not.toHaveClass("text-2xl");
   });
 
-  it("water's third row carries content on the left axis, not a lone control cluster", () => {
+  it("water's third row is one full-width control, not a cluster on one edge", () => {
     /* The other half of the peer contract, one axis over from the
-       numeral tier. Weight spends its third row on `lastWeightDate` at
-       text-micro; water had no third row at all — in its place sat
-       `flex justify-end mt-auto pt-2`, a control cluster hard against
-       the right edge while every other element in the tile sat on the
-       12px left axis. At 375px that stranded ~47px of empty tile to
-       their left, a third of the row, which is what read as
-       "off centre". Two components, so no per-file check could see it. */
+       numeral tier. Weight spends its third row on `lastWeightDate`;
+       water's third row has been the trouble spot — `justify-end` left a
+       lone cluster on the right edge (#2220), and #2220's cure, a
+       text-micro label on the left as counterweight, did not balance two
+       44px rings and still read lopsided from a device.
+
+       The row is now ONE control spanning the tile: minus, readout, plus
+       in a single bordered pill. There is no alignment left to get wrong,
+       so this pins the shape rather than a justify-* class: the two
+       halves are the row's first and last children, the readout sits
+       between them, and the row carries no edge-alignment at all. Two
+       components, so no per-file check could see the peer relationship. */
     const { container: water } = render(
       <WaterCard
         compact
@@ -190,6 +195,8 @@ describe("Home compact tiles share one numeral tier", () => {
       />
     );
 
+    // Positive anchor: the peer still has its meta row, so the water
+    // assertions below are about a real third row and not an empty tile.
     const weightMeta = Array.from(weight.querySelectorAll(".text-micro")).find(
       (el) => el.textContent?.trim() === "2 days ago"
     );
@@ -198,13 +205,24 @@ describe("Home compact tiles share one numeral tier", () => {
     const add = water.querySelector(
       'button[aria-label^="Add 250"]'
     ) as HTMLElement;
-    const row = add.parentElement!.parentElement as HTMLElement;
-    expect(row.className).not.toMatch(/justify-end/);
-    expect(row.className).toMatch(/justify-between/);
+    const remove = water.querySelector(
+      'button[aria-label^="Remove 250"]'
+    ) as HTMLElement;
+    const row = add.parentElement as HTMLElement;
+    expect(remove.parentElement, "the halves share one row").toBe(row);
+    expect(row.className).not.toMatch(/justify-(end|between|start)/);
+    expect(row.className).toMatch(/rounded-full/);
 
-    const waterMeta = row.querySelector(".text-micro") as HTMLElement;
-    expect(waterMeta, "water tile has no meta row").toBeTruthy();
-    expect(waterMeta).toHaveTextContent("250 ml");
-    expect(waterMeta).toHaveClass("font-mono", "tabular-nums");
+    const kids = Array.from(row.children);
+    expect(kids[0]).toBe(remove);
+    expect(kids[kids.length - 1]).toBe(add);
+
+    const readout = row.querySelector(".text-micro") as HTMLElement;
+    expect(readout, "water tile has no serving readout").toBeTruthy();
+    expect(readout).toHaveTextContent("250 ml");
+    expect(readout).toHaveClass("font-mono", "tabular-nums");
+    expect(kids.indexOf(readout), "readout must sit between the halves").toBe(
+      1
+    );
   });
 });
