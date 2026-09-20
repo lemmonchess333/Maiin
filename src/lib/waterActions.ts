@@ -21,6 +21,53 @@ export interface WaterReceipt {
   delta: number;
   undone?: boolean;
   rejected?: boolean;
+  /** When the tap happened, ms. Taken from the action's own `queuedAt`,
+   *  so the optimistic pass and the transaction write the same value and
+   *  re-applying is still a no-op. Receipts written before this field
+   *  existed have none — `drinksFromReceipts` sorts those to the bottom
+   *  and the sheet shows them without a time rather than dropping them. */
+  at?: number;
+}
+
+/** One drink in the day's log: a receipt that added water and still
+ *  stands. */
+export interface WaterDrink {
+  id: string;
+  ml: number;
+  at?: number;
+}
+
+/**
+ * The day's drinks, newest first.
+ *
+ * A receipt is a drink when it ADDED water and has not been taken back.
+ * Undo receipts are negative and carry the correction, so they are not
+ * drinks themselves; the entry they reverse is marked `undone` by
+ * `applyWaterAction` and drops out here. `rejected` is an undo that
+ * could not apply (it would have taken the day below zero) and is
+ * bookkeeping, not a drink.
+ *
+ * A raw negative delta — the full-width card's minus, which is the only
+ * caller that still sends one — reduces the total without marking any
+ * receipt undone, so after one the listed drinks sum higher than the
+ * total. The compact tile no longer has that path (its removals all go
+ * through `undoOf`), and the sheet shows the total from the document
+ * rather than from this list, so the number a user reads stays right.
+ */
+export function drinksFromReceipts(
+  receipts: Record<string, WaterReceipt>
+): WaterDrink[] {
+  return Object.entries(receipts ?? {})
+    .filter(
+      ([, receipt]) =>
+        receipt &&
+        Number.isFinite(receipt.delta) &&
+        receipt.delta > 0 &&
+        !receipt.undone &&
+        !receipt.rejected
+    )
+    .map(([id, receipt]) => ({ id, ml: receipt.delta, at: receipt.at }))
+    .sort((a, b) => (b.at ?? 0) - (a.at ?? 0));
 }
 export const WATER_CHANGED = "tropos:water-actions";
 const queuePrefix = (uid: string) =>
@@ -115,7 +162,10 @@ export function applyWaterAction(
     nextReceipts[action.undoOf] = { ...previous, undone: true };
   }
   const next = clampMl(ml + delta);
-  nextReceipts = { ...nextReceipts, [action.id]: { delta: next - ml } };
+  nextReceipts = {
+    ...nextReceipts,
+    [action.id]: { delta: next - ml, at: action.queuedAt },
+  };
   return { ml: next, receipts: nextReceipts };
 }
 export function queueWater(uid: string, action: WaterAction): boolean {

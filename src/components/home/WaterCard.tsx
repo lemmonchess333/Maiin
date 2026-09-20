@@ -1,5 +1,4 @@
 import Button from "@/components/ui/Button";
-import { toast } from "sonner";
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { Droplets, Plus, Minus } from "lucide-react";
@@ -16,6 +15,12 @@ import {
   splitWaterVolume,
   waterProgress,
 } from "@/lib/waterUnits";
+import type { WaterDrink } from "@/lib/waterActions";
+
+/** How long the tile offers to take the last drink back. Long enough to
+ *  notice a mis-tap, short enough that the line is the step size again
+ *  by the time you next look at the card. */
+const UNDO_WINDOW_MS = 4000;
 
 /**
  * The reading, spoken. `formatWaterVolume` renders "2 L" / "250 ml",
@@ -35,10 +40,11 @@ function spokenVolume(ml: number): string {
  * last container size (250 ml initially); tapping the card opens the size
  * sheet to log a real container (Glass / Bottle / Large / custom). The
  * full-width card keeps a − / + pair beside the reading. The compact tile
- * keeps ONE plus, in its label row, and moves removal to the toast's Undo
- * and the sheet's "Remove" row — see the tile for why. The wave fill +
- * ripple identity is unchanged — only the underlying unit moved from
- * whole glasses to millilitres.
+ * keeps ONE plus, in its label row; removal lives in the tile's own meta
+ * line for a few seconds after a tap, and permanently in the sheet's log
+ * of the day's drinks — see the tile for why. The wave fill + ripple
+ * identity is unchanged — only the underlying unit moved from whole
+ * glasses to millilitres.
  */
 export default function WaterCard({
   ml,
@@ -48,6 +54,8 @@ export default function WaterCard({
   servingMl = GLASS_ML,
   syncStatus,
   onRetry,
+  drinks,
+  onRemoveDrink,
 }: {
   /** Consumed millilitres today. */
   ml: number;
@@ -61,9 +69,18 @@ export default function WaterCard({
   servingMl?: number;
   syncStatus?: string;
   onRetry?: () => void;
+  /** Today's drinks, newest first — the sheet's log, and the source of
+   *  the tile's undo affordance. */
+  drinks?: WaterDrink[];
+  /** Takes back the drink with this receipt id. */
+  onRemoveDrink?: (id: string) => void | boolean;
 }) {
   const [rippleKey, setRippleKey] = useState(0);
   const [sheetOpen, setSheetOpen] = useState(false);
+  /* The moment of the last add, or null. It only decides WHETHER the
+     undo line shows; what it says comes from the newest drink at render
+     time, so the line and the button can never name different drinks. */
+  const [justLogged, setJustLogged] = useState<number | null>(null);
   /* Announce the new TOTAL after a log, not the delta — the reading is
      otherwise unreachable to a screen reader (the card body is one
      button and its name is the whole tile). Gated on a ref rather than
@@ -71,6 +88,16 @@ export default function WaterCard({
      arrives from elsewhere does not speak over the user. */
   const announce = useRef(false);
   const [announcement, setAnnouncement] = useState("");
+
+  /* The undo window. A second tap restarts it rather than stacking a
+     second anything — the whole point of moving this off a toast. */
+  useEffect(() => {
+    if (justLogged === null) return;
+    const id = window.setTimeout(() => setJustLogged(null), UNDO_WINDOW_MS);
+    return () => window.clearTimeout(id);
+  }, [justLogged]);
+  const newestDrink = drinks?.[0];
+  const showUndo = justLogged !== null && !!newestDrink && !!onRemoveDrink;
 
   const fillPercent = waterProgress(ml, targetMl) * 100;
   const hasWater = ml > 0;
@@ -126,14 +153,8 @@ export default function WaterCard({
   }
   function quickAdd() {
     if (!quickLog(servingMl)) return;
-    /* The compact tile has no minus, so the tap's own confirmation
-       carries the way back. Undo reverses exactly this serving; a
-       refused log offers nothing, because there is nothing to undo. */
-    if (compact) {
-      toast(`${formatWaterVolume(servingMl)} added`, {
-        action: { label: "Undo", onClick: () => void quickLog(-servingMl) },
-      });
-    }
+    /* A refused log offers nothing, because there is nothing to undo. */
+    if (compact && onRemoveDrink) setJustLogged(Date.now());
   }
   function quickRemove() {
     quickLog(-servingMl);
@@ -208,10 +229,10 @@ export default function WaterCard({
         return saved;
       }}
       /* Only the compact tile routes removal through the sheet; the
-         full-width card has its minus beside the reading. Absent when
-         there is nothing to remove, so the row never offers a no-op. */
-      removeMl={compact && hasWater ? servingMl : undefined}
-      onRemove={compact ? (v) => onLog(-v) : undefined}
+         full-width card has its minus beside the reading. */
+      totalMl={compact ? ml : undefined}
+      drinks={compact ? drinks : undefined}
+      onRemoveDrink={compact ? onRemoveDrink : undefined}
     />
   );
 
@@ -325,17 +346,70 @@ export default function WaterCard({
                 {splitWaterVolume(ml).unit}
               </span>
             </p>
-            {/* The meta line, where Weight keeps its date. `servingMl`
-                follows the last container logged, so a sighted user must
-                be able to see whether the plus means 250 ml or 750 —
-                the disc's accessible name says it, this says it. */}
-            <p
-              className="text-micro mt-1"
-              style={{ color: "hsl(var(--muted-foreground))" }}
-            >
-              Tap + for {formatWaterVolume(servingMl)}
-            </p>
+            {/* The meta line, where Weight keeps its date. At rest it
+                names the step: `servingMl` follows the last container
+                logged, so a sighted user must be able to see whether the
+                plus means 250 ml or 750.
+
+                For a few seconds after a tap it becomes the way back
+                instead. That job belonged to a toast for one release,
+                and to a minus button before that. The toast was the
+                wrong shape and the hook said so before it was written:
+                "a 5-second overlay covering the surface below is a real
+                cost for the most repeated, most trivially reversible
+                action in the app" — and four taps stacked four of them.
+                The line is already here, already this height, and covers
+                nothing; the permanent version of the same job is the
+                sheet's log.
+
+                It names the newest drink RATHER than what was just
+                logged, and the button takes back that same drink, so the
+                two cannot disagree — no captured amount to go stale. */}
+            {!showUndo && (
+              <p
+                className="text-micro mt-1"
+                style={{ color: "hsl(var(--muted-foreground))" }}
+              >
+                Tap + for {formatWaterVolume(servingMl)}
+              </p>
+            )}
           </button>
+          {/* Outside the body button, for the reason the plus is: a
+              button inside a button is invalid HTML. Same tier, same
+              `mt-1`, and only ever one of the two renders, so the tile
+              does not change height when it swaps — the grid stretches
+              the weight tile beside it, and a jump there on the most
+              repeated action in the app is exactly what the sync line
+              was kept out of the layout to avoid.
+
+              The hit area is widened by a pseudo-element rather than by
+              padding, for the same reason: padding would grow the row.
+              It is under the 44px floor, deliberately — a transient
+              affordance whose permanent, full-size equivalent is the
+              sheet's log, one tap away on the same tile. */}
+          {showUndo && newestDrink && (
+            <p className="text-micro mt-1 flex items-center gap-2 text-foreground">
+              <span className="font-medium">
+                +{formatWaterVolume(newestDrink.ml)}
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  haptic("light");
+                  /* The live region is keyed on the total, so the new
+                     total speaks itself once the removal lands. Without
+                     this a screen-reader user hears nothing back. */
+                  announce.current = true;
+                  onRemoveDrink?.(newestDrink.id);
+                  setJustLogged(null);
+                }}
+                aria-label={`Undo ${formatWaterVolume(newestDrink.ml)}`}
+                className="relative font-semibold text-teal rounded before:absolute before:-inset-2 before:content-[''] active:scale-95 transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              >
+                Undo
+              </button>
+            </p>
+          )}
         </div>
         {/* Permanently mounted, sr-only when idle — the peer tile's shape
             (WeightStepsTiles.tsx:182-189). A live region inserted with

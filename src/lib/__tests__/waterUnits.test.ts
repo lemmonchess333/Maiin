@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest";
+import { drinksFromReceipts, type WaterReceipt } from "@/lib/waterActions";
 import {
   splitWaterVolume,
   GLASS_ML,
@@ -118,5 +119,74 @@ describe("splitWaterVolume", () => {
       const { value, unit } = splitWaterVolume(ml);
       expect(`${value} ${unit}`, `${ml} ml`).toBe(formatWaterVolume(ml));
     }
+  });
+});
+
+/**
+ * The day's drinks, derived from the receipts the water document has
+ * always carried.
+ *
+ * Every tap writes its own receipt; `applyWaterAction` marks the one an
+ * undo reverses. Nothing read that back until the sheet grew a log, so
+ * these pin the reading: what counts as a drink, what order they come
+ * in, and that an entry written before receipts carried a time still
+ * appears rather than being dropped.
+ */
+describe("drinksFromReceipts", () => {
+  it("lists what was added and still stands, newest first", () => {
+    expect(
+      drinksFromReceipts({
+        early: { delta: 500, at: 100 },
+        late: { delta: 250, at: 300 },
+        middle: { delta: 750, at: 200 },
+      })
+    ).toEqual([
+      { id: "late", ml: 250, at: 300 },
+      { id: "middle", ml: 750, at: 200 },
+      { id: "early", ml: 500, at: 100 },
+    ]);
+  });
+
+  it("drops an undone drink and the correction that undid it", () => {
+    // The shape `applyWaterAction` leaves behind: the original marked
+    // undone, the undo itself a negative receipt of its own.
+    expect(
+      drinksFromReceipts({
+        drink: { delta: 500, at: 100, undone: true },
+        undo: { delta: -500, at: 200 },
+        kept: { delta: 250, at: 300 },
+      })
+    ).toEqual([{ id: "kept", ml: 250, at: 300 }]);
+  });
+
+  it("ignores a rejected undo and a zero-delta marker", () => {
+    expect(
+      drinksFromReceipts({
+        rejected: { delta: 0, rejected: true },
+        noop: { delta: 0 },
+        real: { delta: 250, at: 1 },
+      })
+    ).toEqual([{ id: "real", ml: 250, at: 1 }]);
+  });
+
+  it("keeps a receipt written before receipts carried a time, below the timed ones", () => {
+    const drinks = drinksFromReceipts({
+      legacy: { delta: 400 },
+      timed: { delta: 250, at: 5 },
+    });
+    expect(drinks.map((d) => d.id)).toEqual(["timed", "legacy"]);
+    expect(drinks[1]).toEqual({ id: "legacy", ml: 400, at: undefined });
+  });
+
+  it("survives a missing or malformed receipt map", () => {
+    expect(
+      drinksFromReceipts(undefined as unknown as Record<string, WaterReceipt>)
+    ).toEqual([]);
+    expect(
+      drinksFromReceipts({
+        bad: { delta: Number.NaN },
+        ok: { delta: 250, at: 1 },
+      })
+    ).toEqual([{ id: "ok", ml: 250, at: 1 }]);
   });
 });

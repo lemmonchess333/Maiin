@@ -136,6 +136,8 @@ export default function Home() {
     ml: waterMl,
     target: waterTargetMl,
     logWater,
+    drinks: waterDrinks,
+    removeDrink: removeWaterDrink,
     servingMl,
     syncStatus: waterSyncStatus,
     retry: retryWater,
@@ -980,6 +982,8 @@ export default function Home() {
               servingMl={servingMl}
               syncStatus={waterSyncStatus}
               onRetry={retryWater}
+              drinks={waterDrinks}
+              onRemoveDrink={removeWaterDrink}
               onLog={function (deltaMl) {
                 closePeek();
                 return logWater(deltaMl);
