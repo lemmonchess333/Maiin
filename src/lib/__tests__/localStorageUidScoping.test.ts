@@ -51,6 +51,8 @@ const DEVICE_SCOPED: Record<string, string> = {
     "written precisely when there is no longer an account to scope to",
   "tropos.food.calorieRingMode":
     "FoodHeroCard display preference (left vs eaten) — a device choice, not a fact about an account",
+  "tropos.food.proHintDismissed":
+    "FoodProHint's dismiss: the line under the composer that says photo logging is part of Pro. A device choice like the ring mode — the gate itself is re-read from the account's tier on every render, so a second account on the phone loses one line of text, not the gate",
   tropos_fcm_device_tokens: "the push token IS the device identity",
   "tropos.run.bgGrantNoteDismissed":
     "acknowledges THIS DEVICE's iOS location grant (While Using vs Always) — an OS per-app setting no account owns; re-nagging a second account about the same grant would be noise",

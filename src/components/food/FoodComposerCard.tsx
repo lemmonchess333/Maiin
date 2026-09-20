@@ -1,8 +1,6 @@
-import type { Ref, RefObject } from "react";
-import SectionLabel from "@/components/ui/SectionLabel";
-import { Button } from "@/components/ui/Button";
+import type { ReactNode, Ref, RefObject } from "react";
 import SegmentedControl from "@/components/ui/SegmentedControl";
-import { Camera, Lock, PenLine, SendHorizontal, X } from "lucide-react";
+import { Camera, Lock, PenLine, SendHorizontal } from "lucide-react";
 import { THEME } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import { haptic } from "@/lib/haptic";
@@ -45,15 +43,20 @@ interface FoodComposerCardProps {
   inputFocused: boolean;
   setInputFocused: (v: boolean) => void;
   setSuggestionsActive: (v: boolean) => void;
-  /** Placeholder string when the input is empty + unfocused +
-   *  no target meal. The parent rotates through example strings;
-   *  this component just renders whichever one it's handed. */
+  /** Placeholder string when the input is empty. The parent rotates
+   *  through example strings; this component just renders whichever
+   *  one it's handed. The meal pills above the field say where a log
+   *  goes, so the placeholder no longer repeats it ("Adding to
+   *  Snacks…") — it shows what a log can look like instead. */
   placeholderPrompt: string;
   onParse: () => void;
   inputRef: RefObject<HTMLTextAreaElement | null>;
   // ── Target meal pills ──────────────────────────────────────────
   targetMeal: MealKey | null;
-  setTargetMeal: (v: MealKey | null) => void;
+  /** Tap a pill to target that meal; tap the selected pill to clear
+   *  it. That toggle is the ONLY way out of a target now — the field
+   *  had carried a cancel X beside the camera, and an X in an empty
+   *  field reads as "clear", which cleared nothing visible. */
   onTargetMeal: (m: MealKey) => void;
   // ── Suggestions dropdown ──────────────────────────────────────
   showSuggestions: boolean;
@@ -77,14 +80,26 @@ interface FoodComposerCardProps {
   scanOverrides: ScanOverrides;
   onUpgrade: () => void;
   onManualOpen: () => void;
+  /** Rendered directly under the field — the page passes the Pro hint
+   *  (FoodProHint) here, so it sits with the control it explains
+   *  rather than as a card above the composer. */
+  proHint?: ReactNode;
   ref?: Ref<HTMLDivElement>;
 }
 
 /**
- * The Food page's input surface: NL textarea (with scan icon, send
- * button + suggestions dropdown), the conditional quota caption, and
- * the "Add to" meal selector. Manual entry is also available directly for
- * people who already know the nutrition values.
+ * The Food page's input surface, in the order a person acts: the meal
+ * pills (which meal), then the NL textarea (what) with the manual-entry
+ * pencil leading it and the scan icon + send button trailing, then the
+ * suggestions dropdown and the conditional quota caption / Pro hint.
+ *
+ * It was one sentence in three places — "Adding to Snacks…" in
+ * the field, the meal 50px below under an ADD TO caption, and an
+ * "Enter manually" ghost button floating alone beneath that. Owner
+ * call from the Food options page (5a): pills head the field, the
+ * pencil IS the manual-entry button it already looked like, and the
+ * caption, the X and the orphan button go. The pills keep their solid
+ * nutrition emphasis — the food surface's one colour, a recorded keep.
  *
  * Extracted from src/pages/Food.tsx — the page previously inlined
  * ~170 lines of composer markup that wove together five distinct
@@ -111,7 +126,6 @@ function FoodComposerCard({
   onParse,
   inputRef,
   targetMeal,
-  setTargetMeal,
   onTargetMeal,
   showSuggestions,
   suggestions,
@@ -127,19 +141,55 @@ function FoodComposerCard({
   scanOverrides,
   onUpgrade,
   onManualOpen,
+  proHint,
   ref: suggestionsRef,
 }: FoodComposerCardProps) {
   return (
     <div className="pb-2">
+      {/* Meal-slot picker — SegmentedControl (ADR-0003) for the radiogroup
+          semantics, keyboard handling and 44px targets, in its `solid`
+          emphasis so the selected slot is a filled orange pill. The orange
+          is load-bearing: it is the food domain's identity, it matches the
+          meal-section add button, and "which meal" therefore reads as one
+          colour across the surface. The neutral track that briefly replaced
+          it made this the only domain in the app with no colour of its own.
+          EditServingsSheet's "Meal slot" mirrors this exactly.
+
+          It HEADS the field: pick the meal, then say what. No caption —
+          four meal names above an input are self-describing. */}
+      <SegmentedControl
+        emphasis="solid"
+        tone="nutrition"
+        ariaLabel="Add to meal"
+        className="mb-2 grid grid-cols-2 min-[360px]:grid-cols-4 [&>button]:min-w-0 [&>button]:px-2 [&>button]:text-xs sm:[&>button]:text-sm"
+        options={MEAL_ORDER.map((mealKey) => ({
+          value: mealKey,
+          label: MEAL_LABELS[mealKey],
+        }))}
+        value={targetMeal}
+        onChange={onTargetMeal}
+      />
       <div className="relative">
-        <PenLine
-          aria-hidden="true"
+        {/* The pencil is the manual-entry control — a 44px button
+            leading the field, where it had been a decorative glyph
+            beside a ghost "Enter manually" button two rows down. The
+            dropdown's no-results row still offers the same path. */}
+        <button
+          type="button"
+          onClick={() => {
+            haptic();
+            setSuggestionsActive(false);
+            onManualOpen();
+          }}
+          aria-label="Enter manually"
           className={cn(
-            "pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 size-4 transition-colors",
+            "absolute left-0 top-1/2 -translate-y-1/2 size-11 inline-flex items-center justify-center rounded-lg active:scale-90 transition-all",
             inputFocused ? "" : "text-muted-foreground"
           )}
           style={inputFocused ? { color: THEME.semantic.nutrition } : undefined}
-        />
+        >
+          <PenLine className="size-4" />
+        </button>
         <textarea
           ref={inputRef}
           value={nlInput}
@@ -169,17 +219,13 @@ function FoodComposerCard({
             haptic();
             onParse();
           }}
-          placeholder={
-            targetMeal
-              ? `Adding to ${MEAL_LABELS[targetMeal]}…`
-              : placeholderPrompt
-          }
+          placeholder={placeholderPrompt}
           aria-label="What did you eat"
           rows={1}
           maxLength={500}
-          /* pr-20: room for the always-present scan icon plus the
-             contextual send / cancel control beside it. */
-          className="w-full pl-10 pr-20 py-3.5 rounded-xl border bg-card text-foreground text-sm resize-none transition-all duration-200 ease-out"
+          /* pl-11: the manual-entry pencil's 44px box; pr-20: the
+             always-present scan icon plus the contextual send button. */
+          className="w-full pl-11 pr-20 py-3.5 rounded-xl border bg-card text-foreground text-sm resize-none transition-all duration-200 ease-out"
           style={{
             borderColor: inputFocused
               ? "var(--ds-color-input-border-focus-nutrition)"
@@ -207,19 +253,6 @@ function FoodComposerCard({
               style={{ color: THEME.semantic.nutrition }}
             >
               <SendHorizontal className="size-5" />
-            </button>
-          )}
-          {!nlInput.trim() && targetMeal && (
-            <button
-              type="button"
-              onClick={() => {
-                haptic("light");
-                setTargetMeal(null);
-              }}
-              aria-label={`Cancel adding to ${MEAL_LABELS[targetMeal]}`}
-              className="size-11 inline-flex items-center justify-center rounded-lg active:scale-90 text-muted-foreground"
-            >
-              <X className="size-4" />
             </button>
           )}
           {/* Scan affordance — a camera icon IN the input row (wave2 A),
@@ -286,6 +319,7 @@ function FoodComposerCard({
           />
         )}
       </div>
+      {proHint}
       {/* Quota caption (wave2 B) — a single 11px muted line directly under
           the input row, ONLY when a real quota is scarce: a consumable
           limit exists (limit > 0) and remaining <= 1. No standing quota
@@ -304,41 +338,6 @@ function FoodComposerCard({
             />
           </div>
         )}
-      {/* Meal-slot picker — SegmentedControl (ADR-0003) for the radiogroup
-          semantics, keyboard handling and 44px targets, in its `solid`
-          emphasis so the selected slot is a filled orange pill. The orange
-          is load-bearing: it is the food domain's identity, it matches the
-          meal-section add button, and "which meal" therefore reads as one
-          colour across the surface. The neutral track that briefly replaced
-          it made this the only domain in the app with no colour of its own.
-          EditServingsSheet's "Meal slot" mirrors this exactly; the label
-          above is the DS2 11px section tier. */}
-      <div className="mt-2 space-y-1.5">
-        <SectionLabel>Add to</SectionLabel>
-        <SegmentedControl
-          emphasis="solid"
-          tone="nutrition"
-          ariaLabel="Add to meal"
-          className="grid grid-cols-2 min-[360px]:grid-cols-4 [&>button]:min-w-0 [&>button]:px-2 [&>button]:text-xs sm:[&>button]:text-sm"
-          options={MEAL_ORDER.map((mealKey) => ({
-            value: mealKey,
-            label: MEAL_LABELS[mealKey],
-          }))}
-          value={targetMeal}
-          onChange={onTargetMeal}
-        />
-      </div>
-      <Button
-        variant="ghost"
-        className="mt-2"
-        onClick={() => {
-          haptic();
-          setSuggestionsActive(false);
-          onManualOpen();
-        }}
-      >
-        Enter manually
-      </Button>
     </div>
   );
 }

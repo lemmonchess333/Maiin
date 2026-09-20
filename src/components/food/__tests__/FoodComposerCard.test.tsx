@@ -105,16 +105,62 @@ describe("FoodComposerCard — scan icon in the input row (wave2 A)", () => {
     expect(screen.getByRole("button", { name: "Scan your meal" })).toBeTruthy();
   });
 
-  it("cancel-target button appears alongside the scan icon when a target meal is set and input is empty", () => {
-    renderComposer({ targetMeal: "dinner" });
-    expect(
-      screen.getByRole("button", { name: /cancel adding to dinner/i })
-    ).toBeTruthy();
+  it('no cancel control: the pills own the meal, and the field never says "Adding to"', () => {
+    /* The field used to carry an X ("Cancel adding to Dinner") beside
+       the camera whenever a meal was targeted and the input empty. An X
+       in an empty field reads as "clear", and clearing nothing did
+       nothing visible. Tapping the selected pill is the one way out of
+       a target (the page's toggle), so the X and the "Adding to…"
+       placeholder that went with it are gone: the pills say where, the
+       placeholder shows what. */
+    renderComposer({ targetMeal: "dinner", nlInput: "" });
+    expect(screen.queryByRole("button", { name: /cancel adding/i })).toBeNull();
+    const field = screen.getByRole("textbox", { name: "What did you eat" });
+    expect(field).toHaveAttribute(
+      "placeholder",
+      "Search food or describe a meal"
+    );
     expect(screen.getByRole("button", { name: "Scan your meal" })).toBeTruthy();
+  });
+
+  it("the meal pills head the field, and there is no caption above them", () => {
+    /* Owner call (Food options page, 5a): pick the meal, then say
+       what. The radiogroup precedes the textbox in document order, and
+       the ADD TO caption that used to sit between field and pills is
+       gone — four meal names above an input are self-describing. */
+    renderComposer();
+    const slots = screen.getByRole("radiogroup", { name: "Add to meal" });
+    const field = screen.getByRole("textbox", { name: "What did you eat" });
+    expect(
+      slots.compareDocumentPosition(field) & Node.DOCUMENT_POSITION_FOLLOWING,
+      "pills must come before the field"
+    ).toBeTruthy();
+    expect(screen.queryByText(/^add to$/i)).toBeNull();
+  });
+
+  it("renders the Pro hint slot directly under the field", () => {
+    renderComposer({ proHint: <p data-testid="hint">hint</p> });
+    const field = screen.getByRole("textbox", { name: "What did you eat" });
+    const hint = screen.getByTestId("hint");
+    expect(
+      field.compareDocumentPosition(hint) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
   });
 });
 
 describe("FoodComposerCard — visible manual entry", () => {
+  it("opens manual entry from the pencil leading the field — one 44px control, no separate button", () => {
+    /* "Enter manually" was a ghost button orphaned two rows below the
+       field while a decorative pencil sat in it. The pencil is the
+       button now; the capture spec that clicks by name still finds it. */
+    renderComposer();
+    const pencil = screen.getByRole("button", { name: "Enter manually" });
+    expect(pencil).toHaveClass("size-11", "absolute", "left-0");
+    expect(
+      screen.getAllByRole("button", { name: "Enter manually" })
+    ).toHaveLength(1);
+  });
+
   it("opens manual entry without a search or a scan", () => {
     const { props } = renderComposer();
     fireEvent.click(screen.getByRole("button", { name: "Enter manually" }));
@@ -136,14 +182,17 @@ describe("FoodComposerCard — visible manual entry", () => {
   it("keeps meal selection separate from scan and manual entry", () => {
     renderComposer({ targetMeal: "dinner" });
     // The meal slots are a SegmentedControl (radiogroup), not pill buttons:
-    // no button carries a meal name, and the only buttons are the scan icon
-    // the clear-target X and manual entry.
+    // no button carries a meal name, and the only buttons are the manual
+    // entry pencil and the scan icon (the clear-target X is gone; the
+    // selected pill's toggle is the way out of a target).
     expect(
       screen.queryByRole("button", {
         name: /^(Breakfast|Lunch|Snacks|Dinner)$/,
       })
     ).toBeNull();
-    expect(screen.getAllByRole("button")).toHaveLength(3);
+    expect(
+      screen.getAllByRole("button").map((b) => b.getAttribute("aria-label"))
+    ).toEqual(["Enter manually", "Scan your meal"]);
     const slots = screen.getByRole("radiogroup", { name: "Add to meal" });
     expect(within(slots).getAllByRole("radio")).toHaveLength(4);
     expect(
