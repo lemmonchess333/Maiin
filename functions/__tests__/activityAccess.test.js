@@ -121,6 +121,70 @@ describe("assertCanInteractWithActivity", () => {
     ).rejects.toMatchObject({ code: "activity-not-accessible" });
   });
 
+  /* The refusal these two probe is THREE disjuncts wide — not a followers-only
+     activity, a non-string authorId, or an empty one — and all three throw the
+     same `activity-not-accessible`. "rejects a stranger on a private activity"
+     above does NOT reach its verdict through the visibility disjunct: mallory
+     holds no follower doc, so deleting `visibility !== "followers"` outright
+     still refuses them, one branch later, at `!followerSnap.exists`.
+
+     What that leaves unpinned is the privacy boundary itself. `private` is
+     enforced ONLY by that disjunct: drop it and a private activity falls
+     through to the follower lookup, so anyone the author has accepted as a
+     follower can kudos and comment on a post the author chose not to share
+     with them. The case below is the one the stranger test cannot see — a
+     real follower, on a private activity. */
+  it("rejects an ACCEPTED FOLLOWER on a private activity", async () => {
+    const { tx, firestore, activityRef } = makeCtx(
+      { visibility: "private", authorId: "bob" },
+      new Set(["bob/carol"]) // carol really does follow bob
+    );
+    await expect(
+      assertCanInteractWithActivity({
+        tx,
+        firestore,
+        activityRef,
+        uid: "carol",
+      })
+    ).rejects.toMatchObject({ code: "activity-not-accessible" });
+  });
+
+  /* The same pairing for a visibility the app does not define. Anything that
+     is not "public" and not "followers" must refuse, follower doc or not —
+     otherwise a typo'd or future value silently reads as followers-only. */
+  it("rejects a follower on an activity with an unrecognised visibility", async () => {
+    const { tx, firestore, activityRef } = makeCtx(
+      { visibility: "friends-only", authorId: "bob" },
+      new Set(["bob/carol"])
+    );
+    await expect(
+      assertCanInteractWithActivity({
+        tx,
+        firestore,
+        activityRef,
+        uid: "carol",
+      })
+    ).rejects.toMatchObject({ code: "activity-not-accessible" });
+  });
+
+  /* Control: the same follower, same fixture, on a followers-only activity IS
+     allowed — so the two rejections above are the visibility check doing the
+     work, not a broken follower lookup. */
+  it("control: that same follower IS allowed once the activity is followers-only", async () => {
+    const { tx, firestore, activityRef } = makeCtx(
+      { visibility: "followers", authorId: "bob" },
+      new Set(["bob/carol"])
+    );
+    await expect(
+      assertCanInteractWithActivity({
+        tx,
+        firestore,
+        activityRef,
+        uid: "carol",
+      })
+    ).resolves.toMatchObject({ authorId: "bob" });
+  });
+
   it("rejects when the parent activity does not exist", async () => {
     const { tx, firestore, activityRef } = makeCtx(null);
     await expect(

@@ -249,6 +249,60 @@ describe("leave / remove", () => {
     });
     expect(docs.get(`goalSpaces/${spaceId}`).memberCount).toBe(1);
   });
+
+  /* `removeGoalSpaceMember` opens with
+       if (typeof memberUid !== "string" || memberUid === uid) throw
+     and nothing above reaches EITHER branch: "remove is owner-only" is
+     refused by the later `space.ownerId !== uid` check, and every accepting
+     call passes some other member's uid. Deleting the whole line left this
+     file green.
+
+     The `memberUid === uid` half is not a type check — it is what keeps the
+     owner out of their own removal path. Leaving is `leaveGoalSpace`, and
+     that sets `active = false` when the owner goes (the test two above pins
+     it). Removal does not. So an owner who removed THEMSELVES would drop
+     their member doc and journey link and decrement the count while the
+     circle stayed active with `ownerId` pointing at someone who is no longer
+     in it — and since removal is owner-only, nobody could ever remove anyone
+     again. The circle would be unreachable rather than closed. */
+  it("an owner cannot remove THEMSELVES through the removal path", async () => {
+    const before = docs.get(`goalSpaces/${spaceId}`).memberCount;
+    await expect(
+      removeGoalSpaceMember({
+        firestore,
+        uid: "owner",
+        spaceId,
+        memberUid: "owner",
+      })
+    ).rejects.toThrow("memberUid required");
+    // the circle is untouched — not merely "no error surfaced"
+    expect(docs.has(`goalSpaces/${spaceId}/members/owner`)).toBe(true);
+    expect(docs.has(`users/owner/journeys/${spaceId}`)).toBe(true);
+    expect(docs.get(`goalSpaces/${spaceId}`).memberCount).toBe(before);
+    expect(docs.get(`goalSpaces/${spaceId}`).active).toBe(true);
+  });
+
+  it("leaving IS the owner's route out, and it closes the circle", async () => {
+    // The contrast that makes the refusal above the right behaviour rather
+    // than a dead end: the owner does have a way out, and it deactivates.
+    await leaveGoalSpace({ firestore, uid: "owner", spaceId });
+    expect(docs.has(`goalSpaces/${spaceId}/members/owner`)).toBe(false);
+    expect(docs.get(`goalSpaces/${spaceId}`).active).toBe(false);
+  });
+
+  it("rejects a non-string memberUid without touching the circle", async () => {
+    const before = docs.get(`goalSpaces/${spaceId}`).memberCount;
+    await expect(
+      removeGoalSpaceMember({
+        firestore,
+        uid: "owner",
+        spaceId,
+        memberUid: undefined,
+      })
+    ).rejects.toThrow("memberUid required");
+    expect(docs.get(`goalSpaces/${spaceId}`).memberCount).toBe(before);
+    expect(docs.get(`goalSpaces/${spaceId}`).active).toBe(true);
+  });
 });
 
 describe("short invite codes", () => {
