@@ -185,20 +185,28 @@ test.describe("water total never travels backwards mid-tap", () => {
 
     // The same gap exists on the way down, so removal gets the paired
     // check rather than being assumed symmetric. The compact tile carries
-    // no minus of its own — taking a serving back lives in the size
-    // sheet's "Remove N ml" row (and the toast's Undo) — so each pass
-    // opens the sheet from the tile body, takes one serving back, and
-    // lets the sheet close. Same optimistic queue underneath, so the
-    // window this measures is the same one.
+    // no minus of its own — taking water back lives in the sheet, which
+    // now lists the day's drinks and removes the one a row names. Same
+    // optimistic queue underneath, so the window this measures is the
+    // same one.
+    //
+    // ONE trip for both removals: a row no longer closes the sheet, so
+    // re-opening it per pass would click the tile body through the
+    // overlay. And the row's accessible name carries the drink's TIME
+    // ("Remove 250 ml logged at 09:12"), so the locator cannot anchor
+    // its end — it matched `/^remove \d+ ml$/i` until the rows stopped
+    // being one nameless amount.
     await page.evaluate(() => {
       (window as unknown as { __water: number[] }).__water = [];
     });
-    const body = page.getByRole("button", { name: /add water/i }).first();
+    await page
+      .getByRole("button", { name: /add water/i })
+      .first()
+      .click();
+    const rows = page.getByRole("button", { name: /^remove \d+ ml/i });
+    await rows.first().waitFor({ state: "visible", timeout: 10_000 });
     for (let i = 0; i < 2; i++) {
-      await body.click();
-      const remove = page.getByRole("button", { name: /^remove \d+ ml$/i });
-      await remove.waitFor({ state: "visible", timeout: 10_000 });
-      await remove.click();
+      await rows.first().click();
       await page.waitForTimeout(900);
     }
     await page.waitForTimeout(1500);

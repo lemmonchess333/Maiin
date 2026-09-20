@@ -352,8 +352,8 @@ export default function WaterCard({
                 plus means 250 ml or 750.
 
                 For a few seconds after a tap it becomes the way back
-                instead. That used to be a toast, and before that the
-                minus button this tile no longer has. The toast was the
+                instead. That job belonged to a toast for one release,
+                and to a minus button before that. The toast was the
                 wrong shape and the hook said so before it was written:
                 "a 5-second overlay covering the surface below is a real
                 cost for the most repeated, most trivially reversible
