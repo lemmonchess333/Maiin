@@ -209,12 +209,12 @@ export default function FoodHeroCard({
     celebratedKey,
   ]);
 
-  // Build the top-left caption. Suppressed on rest days.
-  // Nutr1 (expenditure-inclusive): the caption is just the day-type label —
-  // there's no calorie bonus to surface, so the old "+X cal" adjustment, its
-  // first-time fuel explainer, and the training-burn toast were all removed.
-  const caption = dailyTargets.caption;
-
+  // The top-left line carries ONLY the celebration now. The day-type
+  // caption ("Lift day · Hard session") that sat there is gone — owner
+  // call from the hero-glow options: the card is the ring and its
+  // number, not a briefing. The day type and its rationale still exist
+  // on the targets and still render in the Details sheet, which is
+  // where a person who wants the why goes.
   const celebrationCaptionText = `GOAL HIT ✓`;
 
   // Trajectory line — suppressed; can be reinstated by importing
@@ -244,14 +244,23 @@ export default function FoodHeroCard({
       <div className="relative overflow-hidden p-4 rounded-2xl bg-card card-shadow">
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute inset-0 opacity-70 dark:opacity-100"
+          className="pointer-events-none absolute inset-0 opacity-85 dark:opacity-100"
           style={{
             background:
-              "radial-gradient(ellipse at 20% 25%, hsl(var(--nutrition) / 0.16), transparent 65%), radial-gradient(ellipse at 80% 70%, hsl(var(--primary) / 0.18), transparent 65%)",
+              "radial-gradient(ellipse 85% 75% at 15% 20%, hsl(var(--nutrition) / 0.32) 0%, hsl(var(--nutrition) / 0.12) 45%, transparent 78%), radial-gradient(ellipse 85% 75% at 85% 80%, hsl(var(--primary) / 0.38) 0%, hsl(var(--primary) / 0.14) 45%, transparent 78%)",
           }}
         />
         {/* A static wash gives the whole card depth without a photo or a
-            second focal point. The ring and its readable centre stay above it. */}
+            second focal point: the food surface's orange from the top-left
+            corner, the brand purple from the bottom-right, the ring at the
+            seam. Owner call from the hero-glow options (V2): the same two
+            colours, made to MEET. Before this each ellipse peaked under
+            20%, faded out by 65% of the card and was dimmed a further 30%
+            in light, so the two never reached each other and the middle
+            was flat card — it read as two corner smudges, not a gradient.
+            Now each spans ~85% of the card with a three-stop falloff, and
+            light runs at 85% rather than 70%. Static, token-derived, and
+            the ring and its readable centre stay above it. */}
         <div className="relative">
           {/* Top row: caption (left) + adjust-targets gear (right).
           The gear deep-links straight to the focused Nutrition editor
@@ -279,25 +288,6 @@ export default function FoodHeroCard({
                     }}
                   >
                     {celebrationCaptionText}
-                  </motion.p>
-                ) : caption ? (
-                  <motion.p
-                    key="caption"
-                    initial={{ opacity: 0, y: -4 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -4 }}
-                    transition={{ duration: 0.3 }}
-                    className={`text-xs font-medium truncate text-muted-foreground`}
-                  >
-                    {/* Wave3 G — the day annotation is merged INTO the hero
-                    caption as one line ("{dayType} · {rationale}") instead
-                    of a second, container-less line orphaned below the
-                    macro tiles. Rationale is today-only (matching the old
-                    annotation gating); truncates to one line at 393px. */}
-                    {caption.trainingType}
-                    {isToday && dailyTargets.annotation
-                      ? ` · ${dailyTargets.annotation}`
-                      : ""}
                   </motion.p>
                 ) : null}
               </AnimatePresence>
