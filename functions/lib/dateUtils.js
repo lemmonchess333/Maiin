@@ -40,10 +40,10 @@ const DATE_KEY_RE = /^\d{4}-\d{2}-\d{2}$/;
  * Does this string name a day that exists?
  *
  * The regex alone does not answer that, and the gap is not obvious: JS
- * date parsing ROLLS OVER rather than refusing, so `2026-02-30` and
- * `2026-09-31` both parse happily (to 2 March and 1 October). A
+ * date parsing ROLLS OVER rather than refusing, so 30 February and
+ * 31 September both parse happily (to 2 March and 1 October). A
  * `Number.isFinite(Date.parse(...))` check therefore catches only the
- * out-of-range MONTH cases (`2026-13-01` -> NaN) and waves the
+ * out-of-range MONTH cases (a 13th month -> NaN) and waves the
  * out-of-range DAY cases straight through.
  *
  * The round trip is what closes it: parse, format back, and require the

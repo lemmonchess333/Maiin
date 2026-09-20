@@ -48,7 +48,7 @@ function assertFutureDate(dateStr, now) {
   }
   // Shape is not existence. This was `Number.isFinite(Date.parse(...))`,
   // which only rejects an out-of-range MONTH: JS rolls an out-of-range DAY
-  // over instead of refusing, so `2026-09-31` parsed fine and was stored as
+  // over instead of refusing, so a 31 September parsed fine and was stored as
   // that literal string — a finish line on a day that does not exist.
   if (!isCalendarDate(dateStr)) {
     throw new GoalSpaceError("invalid-argument", "newTargetDate invalid");

@@ -134,7 +134,7 @@ async function createGoalSpace({
   }
   // Same validator as the `continue` path in goalSpaceLifecycle: the two
   // write paths for this one field disagreed, and create was the weaker —
-  // regex only, so `2026-02-30` was stored verbatim. Create's contract is
+  // regex only, so a 30 February was stored verbatim. Create's contract is
   // unchanged (targetDate is optional; anything unusable becomes null), it
   // just no longer counts an impossible day as usable.
   const targetDate = isCalendarDate(input.targetDate)
