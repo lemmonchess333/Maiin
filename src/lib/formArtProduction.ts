@@ -21,8 +21,8 @@ export interface FormArtScene {
 }
 
 export const FORM_ART_STYLE = {
-  version: "anatomy-shorts-v2",
-  reference: "docs/exercise-art/identity/athlete-shorts-v2.png",
+  version: "anatomy-neutral-v3",
+  reference: "docs/exercise-art/identity/athlete-anatomy-v3.png",
   primary: "#7045F5",
   secondary: "#C5B5ED",
   stabilisers: "#E1D8F2",
@@ -36,7 +36,7 @@ export function buildFormArtPrompt(id: string, scene: FormArtScene): string {
   if (scene.status !== "reviewed")
     throw new Error("Review the physical scene before generating art.");
   if (scene.athleteVersion !== FORM_ART_STYLE.version)
-    throw new Error("Rebuild the exercise master from the current canonical athlete in shorts.");
+    throw new Error("Rebuild the exercise master from the current canonical anatomical athlete.");
   if (scene.reference !== `docs/exercise-art/masters/${id}/1.png`)
     throw new Error("Use the exact exercise master, not an unrelated exercise or legacy frame.");
   if (
@@ -109,11 +109,11 @@ LOCKED ATHLETE
 Same bald, faceless, muscular anatomical male as the canonical reference.
 White/light-grey body, crisp muscle separation, fine dark contours, polished 2D
 anatomical illustration on black. Same white shoes, proportions, muscle density,
-head, hands, feet, limb thickness, line weight and shading. Always the same loose,
-opaque charcoal gym shorts ending at mid-thigh, with visible waistband, fabric hems
-and two leg openings. No briefs, tight white underwear, compression shorts, exposed
-groin or anatomical lines through cloth. Never remove shorts to show hidden muscles;
-explain covered muscles in the app cue instead. Same white trainers, never bare feet.
+head, hands, feet, limb thickness, line weight and shading. Full thigh and hip
+muscle visibility in the original white/light-grey anatomical mannequin style.
+Keep the pelvic centre smooth, featureless and neutral: no genital detail, central
+slit, underwear-shaped outline, garment seams or waistband. No shorts obscuring
+upper-leg muscles. Same white trainers in every view, never bare feet.
 No redesign, hair, photorealistic skin or painterly texture. Purple never changes muscle size.
 
 COLOUR HIERARCHY

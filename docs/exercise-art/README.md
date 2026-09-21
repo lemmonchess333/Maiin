@@ -99,3 +99,9 @@ The current production identity is `identity/athlete-shorts-v2.png`. Follow
 `identity/README.md` and `identity/MASTER_REGISTRY.json` before generating any
 more frames. Legacy reference images are not identity masters for new work.
 Cuban Press v2 is available as a draft in the real form-art review fixture.
+
+## Superseding direction: anatomical v3
+
+The owner reverted shorts for leg visibility. The active global reference is
+`identity/athlete-anatomy-v3.png`; follow the current identity README and registry.
+The earlier shorts correction above is historical and no longer applies.

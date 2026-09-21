@@ -1,891 +1,892 @@
 {
-  "version": "anatomy-shorts-v2",
-  "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
-  "globalSha256": "d72e5349f2c04c19f4e8e7d5e0205d4cd64c9874a3fb407e71835be1f3ae0a14",
+  "version": "anatomy-neutral-v3",
+  "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+  "globalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
   "policy": "One global athlete, one immutable per-exercise scene master. Attach both on every edit; adjacent poses are supplementary.",
-  "clothing": "Loose opaque charcoal mid-thigh gym shorts; white trainers. No briefs, compression wear, anatomy through fabric or bare feet.",
+  "clothing": "Original white/light-grey anatomical mannequin, full leg visibility, smooth neutral featureless pelvis, no underwear outline or shorts; consistent white trainers.",
   "exercises": [
     {
       "exerciseId": "bench-press",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/bench-press/1.png",
-      "status": "legacy-master-needs-shorts-rebuild",
+      "status": "legacy-master-needs-identity-review",
       "legacyReference": "public/form-frames/bench-press/1.webp",
-      "visualFinding": "First frame inspected: no loose opaque gym shorts; incompatible with shorts v2."
+      "visualFinding": "Review against anatomical v3 identity and smooth pelvic treatment. Shorts are no longer required."
     },
     {
       "exerciseId": "incline-bench",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/incline-bench/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "decline-bench",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/decline-bench/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "db-bench",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/db-bench/1.png",
-      "status": "legacy-master-needs-shorts-rebuild",
+      "status": "legacy-master-needs-identity-review",
       "legacyReference": "public/form-frames/db-bench/1.webp",
-      "visualFinding": "First frame inspected: no loose opaque gym shorts; incompatible with shorts v2."
+      "visualFinding": "Review against anatomical v3 identity and smooth pelvic treatment. Shorts are no longer required."
     },
     {
       "exerciseId": "incline-db-press",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/incline-db-press/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "decline-db-press",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/decline-db-press/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "db-flyes",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/db-flyes/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "cable-crossover",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/cable-crossover/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "chest-press-machine",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/chest-press-machine/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "pec-deck",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/pec-deck/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "machine-chest-fly",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/machine-chest-fly/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "smith-bench-press",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/smith-bench-press/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "push-ups",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/push-ups/1.png",
-      "status": "legacy-master-needs-shorts-rebuild",
+      "status": "legacy-master-needs-identity-review",
       "legacyReference": "public/form-frames/push-ups/1.webp",
-      "visualFinding": "First frame inspected: no loose opaque gym shorts; incompatible with shorts v2."
+      "visualFinding": "Review against anatomical v3 identity and smooth pelvic treatment. Shorts are no longer required."
     },
     {
       "exerciseId": "pike-push-up",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/pike-push-up/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "weighted-push-ups",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/weighted-push-ups/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "barbell-floor-press",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/barbell-floor-press/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "weighted-chest-dip",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/weighted-chest-dip/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "deadlift",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/deadlift/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "barbell-row",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/barbell-row/1.png",
-      "status": "legacy-master-needs-shorts-rebuild",
+      "status": "legacy-master-needs-identity-review",
       "legacyReference": "public/form-frames/barbell-row/1.webp",
-      "visualFinding": "First frame inspected: no loose opaque gym shorts; incompatible with shorts v2."
+      "visualFinding": "Review against anatomical v3 identity and smooth pelvic treatment. Shorts are no longer required."
     },
     {
       "exerciseId": "pendlay-row",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/pendlay-row/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "db-row",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/db-row/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "chest-supported-db-row",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/chest-supported-db-row/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "meadows-row",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/meadows-row/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "pull-ups",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/pull-ups/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "chin-ups",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/chin-ups/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "lat-pulldown",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/lat-pulldown/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "single-arm-lat-pulldown",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/single-arm-lat-pulldown/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "seated-row",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/seated-row/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "t-bar-row",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/t-bar-row/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "face-pulls",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/face-pulls/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "rack-pull",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/rack-pull/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "straight-arm-pulldown",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/straight-arm-pulldown/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "inverted-row",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/inverted-row/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "overhead-press",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/overhead-press/1.png",
-      "status": "legacy-master-needs-shorts-rebuild",
+      "status": "legacy-master-needs-identity-review",
       "legacyReference": "public/form-frames/overhead-press/1.webp",
-      "visualFinding": "First frame inspected: no loose opaque gym shorts; incompatible with shorts v2."
+      "visualFinding": "Review against anatomical v3 identity and smooth pelvic treatment. Shorts are no longer required."
     },
     {
       "exerciseId": "db-shoulder-press",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/db-shoulder-press/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "lateral-raise",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/lateral-raise/1.png",
-      "status": "legacy-master-needs-shorts-rebuild",
+      "status": "legacy-master-needs-identity-review",
       "legacyReference": "public/form-frames/lateral-raise/1.webp",
-      "visualFinding": "First frame inspected: no loose opaque gym shorts; incompatible with shorts v2."
+      "visualFinding": "Review against anatomical v3 identity and smooth pelvic treatment. Shorts are no longer required."
     },
     {
       "exerciseId": "reverse-pec-deck",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/reverse-pec-deck/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "cable-lateral-raise",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/cable-lateral-raise/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "front-raise",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/front-raise/1.png",
-      "status": "master-created-draft",
+      "status": "superseded-shorts-master",
       "legacyReference": "public/form-frames/front-raise/1.webp",
-      "visualFinding": "New master has loose charcoal shorts and white trainers derived from the canonical athlete. Movement and highlight review remains required.",
+      "visualFinding": "Shorts v2 superseded by owner: rebuild from neutral anatomical v3 master before further frame production.",
       "sceneSha256": "a909a5987c18dae92fc4c7d379a6ce2c65e329ea21e0b2f0c1f1384fdde30633"
     },
     {
       "exerciseId": "reverse-flyes",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/reverse-flyes/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "rear-delt-machine-fly",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/rear-delt-machine-fly/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "arnold-press",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/arnold-press/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "shoulder-press-machine",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/shoulder-press-machine/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "smith-shoulder-press",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/smith-shoulder-press/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "barbell-upright-row",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/barbell-upright-row/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "shrugs",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/shrugs/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "barbell-shrug",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/barbell-shrug/1.png",
-      "status": "legacy-master-needs-shorts-rebuild",
+      "status": "legacy-master-needs-identity-review",
       "legacyReference": "public/form-frames/barbell-shrug/1.webp",
-      "visualFinding": "First frame inspected: no loose opaque gym shorts; incompatible with shorts v2."
+      "visualFinding": "Review against anatomical v3 identity and smooth pelvic treatment. Shorts are no longer required."
     },
     {
       "exerciseId": "cuban-press",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/cuban-press/1.png",
-      "status": "master-created-draft",
-      "sceneSha256": "4b7276147968b86c564fadc35dc4b138922c400c7ae395715297e515b773b731"
+      "status": "superseded-shorts-master",
+      "sceneSha256": "4b7276147968b86c564fadc35dc4b138922c400c7ae395715297e515b773b731",
+      "visualFinding": "Shorts v2 superseded by owner: rebuild from neutral anatomical v3 master before further frame production."
     },
     {
       "exerciseId": "lu-raise",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/lu-raise/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "landmine-press",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/landmine-press/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "barbell-curl",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/barbell-curl/1.png",
-      "status": "legacy-master-needs-shorts-rebuild",
+      "status": "legacy-master-needs-identity-review",
       "legacyReference": "public/form-frames/barbell-curl/1.webp",
-      "visualFinding": "First frame inspected: no loose opaque gym shorts; incompatible with shorts v2."
+      "visualFinding": "Review against anatomical v3 identity and smooth pelvic treatment. Shorts are no longer required."
     },
     {
       "exerciseId": "ez-bar-curl",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/ez-bar-curl/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "db-curl",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/db-curl/1.png",
-      "status": "master-created-draft",
+      "status": "superseded-shorts-master",
       "legacyReference": "public/form-frames/db-curl/1.webp",
-      "visualFinding": "New master has loose charcoal shorts and white trainers derived from the canonical athlete. Movement and highlight review remains required.",
+      "visualFinding": "Shorts v2 superseded by owner: rebuild from neutral anatomical v3 master before further frame production.",
       "sceneSha256": "2ab934c9b9d2249fab56baac1b7c6df6728785ccdff7b031bde426a2f94ad396"
     },
     {
       "exerciseId": "incline-db-curl",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/incline-db-curl/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "hammer-curl",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/hammer-curl/1.png",
-      "status": "master-created-draft",
+      "status": "superseded-shorts-master",
       "legacyReference": "public/form-frames/hammer-curl/1.webp",
-      "visualFinding": "New master has loose charcoal shorts and white trainers derived from the canonical athlete. Movement and highlight review remains required.",
+      "visualFinding": "Shorts v2 superseded by owner: rebuild from neutral anatomical v3 master before further frame production.",
       "sceneSha256": "0663031d356a554193d4aff7765b75a94670d29f803be3efdb402ee3207da263"
     },
     {
       "exerciseId": "cross-body-hammer-curl",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/cross-body-hammer-curl/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "zottman-curl",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/zottman-curl/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "preacher-curl",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/preacher-curl/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "cable-curl",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/cable-curl/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "bayesian-cable-curl",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/bayesian-cable-curl/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "concentration-curl",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/concentration-curl/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "spider-db-curl",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/spider-db-curl/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "reverse-barbell-curl",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/reverse-barbell-curl/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "rope-tricep-pushdown",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/rope-tricep-pushdown/1.png",
-      "status": "legacy-master-needs-shorts-rebuild",
+      "status": "legacy-master-needs-identity-review",
       "legacyReference": "public/form-frames/rope-tricep-pushdown/1.webp",
-      "visualFinding": "First frame inspected: no loose opaque gym shorts; incompatible with shorts v2."
+      "visualFinding": "Review against anatomical v3 identity and smooth pelvic treatment. Shorts are no longer required."
     },
     {
       "exerciseId": "skull-crushers",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/skull-crushers/1.png",
-      "status": "legacy-master-needs-shorts-rebuild",
+      "status": "legacy-master-needs-identity-review",
       "legacyReference": "public/form-frames/skull-crushers/1.webp",
-      "visualFinding": "First frame inspected: no loose opaque gym shorts; incompatible with shorts v2."
+      "visualFinding": "Review against anatomical v3 identity and smooth pelvic treatment. Shorts are no longer required."
     },
     {
       "exerciseId": "overhead-extension",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/overhead-extension/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "overhead-cable-tricep-extension",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/overhead-cable-tricep-extension/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "tricep-dips",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/tricep-dips/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "bench-dips",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/bench-dips/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "close-grip-bench",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/close-grip-bench/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "tricep-kickback",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/tricep-kickback/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "single-arm-cable-pushdown",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/single-arm-cable-pushdown/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "reverse-grip-cable-pushdown",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/reverse-grip-cable-pushdown/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "jm-press",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/jm-press/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "diamond-push-ups",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/diamond-push-ups/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "squat",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/squat/1.png",
-      "status": "legacy-master-needs-shorts-rebuild",
+      "status": "legacy-master-needs-identity-review",
       "legacyReference": "public/form-frames/squat/1.webp",
-      "visualFinding": "First frame inspected: no loose opaque gym shorts; incompatible with shorts v2."
+      "visualFinding": "Review against anatomical v3 identity and smooth pelvic treatment. Shorts are no longer required."
     },
     {
       "exerciseId": "front-squat",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/front-squat/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "goblet-squat",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/goblet-squat/1.png",
-      "status": "legacy-master-needs-shorts-rebuild",
+      "status": "legacy-master-needs-identity-review",
       "legacyReference": "public/form-frames/goblet-squat/1.webp",
-      "visualFinding": "First frame inspected: no loose opaque gym shorts; incompatible with shorts v2."
+      "visualFinding": "Review against anatomical v3 identity and smooth pelvic treatment. Shorts are no longer required."
     },
     {
       "exerciseId": "sissy-squat",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/sissy-squat/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "smith-machine-squat",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/smith-machine-squat/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "hack-squat",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/hack-squat/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "leg-press",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/leg-press/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "leg-extension",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/leg-extension/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "seated-leg-curl",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/seated-leg-curl/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "romanian-deadlift",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/romanian-deadlift/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "db-rdl",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/db-rdl/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "nordic-hamstring-curl",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/nordic-hamstring-curl/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "glute-ham-raise",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/glute-ham-raise/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "sumo-deadlift",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/sumo-deadlift/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "trap-bar-deadlift",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/trap-bar-deadlift/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "lunges",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/lunges/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "bodyweight-lunge",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/bodyweight-lunge/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "bodyweight-squat",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/bodyweight-squat/1.png",
-      "status": "legacy-master-needs-shorts-rebuild",
+      "status": "legacy-master-needs-identity-review",
       "legacyReference": "public/form-frames/bodyweight-squat/1.webp",
-      "visualFinding": "First frame inspected: no loose opaque gym shorts; incompatible with shorts v2."
+      "visualFinding": "Review against anatomical v3 identity and smooth pelvic treatment. Shorts are no longer required."
     },
     {
       "exerciseId": "walking-dumbbell-lunges",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/walking-dumbbell-lunges/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "bulgarian-split",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/bulgarian-split/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "barbell-step-ups",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/barbell-step-ups/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "calf-raise",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/calf-raise/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "standing-calf-raise",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/standing-calf-raise/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "seated-calf-raise",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/seated-calf-raise/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "donkey-calf-raise",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/donkey-calf-raise/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "single-leg-calf-raise",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/single-leg-calf-raise/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "hip-thrust",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/hip-thrust/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "glute-bridge",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/glute-bridge/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "hip-abduction-machine",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/hip-abduction-machine/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "hip-adduction-machine",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/hip-adduction-machine/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "cable-glute-kickback",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/cable-glute-kickback/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "pistol-squat",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/pistol-squat/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "plank",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/plank/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "superman-hold",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/superman-hold/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "side-plank",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/side-plank/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "weighted-plank",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/weighted-plank/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "crunches",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/crunches/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "bicycle-crunch",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/bicycle-crunch/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "decline-sit-up",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/decline-sit-up/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "leg-raise",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/leg-raise/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "toe-touches",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/toe-touches/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "russian-twist",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/russian-twist/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "mountain-climbers",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/mountain-climbers/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "cable-crunch",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/cable-crunch/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "cable-woodchopper",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/cable-woodchopper/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "pallof-press",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/pallof-press/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "dead-bug",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/dead-bug/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "dragon-flag",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/dragon-flag/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "ab-wheel",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/ab-wheel/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "l-sit",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/l-sit/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "clean-and-press",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/clean-and-press/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "kettlebell-swing",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/kettlebell-swing/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "burpees",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/burpees/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "thrusters",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/thrusters/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "farmers-carry",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/farmers-carry/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "sled-push-pull",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/sled-push-pull/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "landmine-squat",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/landmine-squat/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "zercher-squat",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/zercher-squat/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "turkish-get-up",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/turkish-get-up/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "man-maker",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/man-maker/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "battle-ropes",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/battle-ropes/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "box-jumps",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/box-jumps/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "dips",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/dips/1.png",
-      "status": "legacy-master-needs-shorts-rebuild",
+      "status": "legacy-master-needs-identity-review",
       "legacyReference": "public/form-frames/dips/1.webp",
-      "visualFinding": "First frame inspected: no loose opaque gym shorts; incompatible with shorts v2."
+      "visualFinding": "Review against anatomical v3 identity and smooth pelvic treatment. Shorts are no longer required."
     },
     {
       "exerciseId": "muscle-ups",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/muscle-ups/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "handstand-push-ups",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/handstand-push-ups/1.png",
       "status": "master-required"
     },
     {
       "exerciseId": "cable-fly",
-      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/cable-fly/1.png",
       "status": "master-required"
     }

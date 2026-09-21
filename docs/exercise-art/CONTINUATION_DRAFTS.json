@@ -16,6 +16,7 @@
       ],
       "equipment": "Two matching light round dumbbells",
       "reviewFindings": [
+        "SUPERSEDED: owner reverted shorts for leg visibility. Retain this as a historical draft only; regenerate from anatomical v3 before release.",
         "Rebuilt after owner required a single athlete wearing loose gym shorts. All selected frames use the same charcoal shorts and white trainers.",
         "Four separately generated native poses, six separate files; frames 5 and 6 reuse poses 3 and 2 for the reverse movement with distinct cues. No warping, interpolation or montage-derived frames.",
         "Global identity and exercise master attached to every new pose generation.",
