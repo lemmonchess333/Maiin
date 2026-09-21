@@ -1,0 +1,22 @@
+{
+  "status": "partial-candidate-motion-rejected",
+  "files": {
+    "frames/2-rejected.png": "f2f9d8c62ec3a36dd745100e5ad61015aa17eb9b544e1578ee27936c0a335bf7",
+    "frames/1.png": "48bf8bf324a06df8e51f77f3a963cb39b414426b49f030679a0c8895870d139a",
+    "masters/1.png": "48bf8bf324a06df8e51f77f3a963cb39b414426b49f030679a0c8895870d139a"
+  },
+  "canonical_sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+  "cues_sha256": "b28b997bf6369dedcc014156eda47f798e2d8765e94df510a010b95f1d22ff84",
+  "fixed_anchors": [
+    "rear foot floor contact during step/descent",
+    "camera and canvas",
+    "dumbbell structure and grip"
+  ],
+  "missing_approved_frames": [
+    2,
+    3,
+    4,
+    5,
+    6
+  ]
+}
