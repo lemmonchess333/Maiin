@@ -51,8 +51,16 @@ vi.mock("recharts", () => {
       return null;
     },
     Area: Noop,
+    Line: Noop,
     XAxis: Noop,
     CartesianGrid: Noop,
+    /* Wholesale, so every recharts symbol the component imports has to
+       be listed or it renders as `undefined` and the file dies at the
+       JSX call site rather than at the import. `ReferenceArea` arrived
+       with the in-plot bands and `Line` with the rolling average; both
+       are stubs because this file is about the y-axis and nothing else.
+       `piBandsAndAverage.test.tsx` is the one that reads their props. */
+    ReferenceArea: Noop,
     ReferenceLine: Noop,
     Tooltip: Noop,
   };

@@ -129,7 +129,10 @@ const EXPECTED_INLINE_USES = {
   // TrajectoryCard's 3xl score. The text uses — Home's rest-day eyebrow,
   // "Connect Health", the Coach badge, "Share your take" — moved to
   // `text-lifting-strong` / `hsl(var(--lifting-strong))`.
-  "THEME.brand": 41,
+  // 41 → 40. The Performance Index chart's five-item band legend went
+  // when the bands moved into the plot; its "Moderate" swatch was the
+  // one brand fill among them.
+  "THEME.brand": 40,
   // 2026-09-18: 21 → 19. Home's "Log food" action and the nudge note
   // above it were the two smallest-text uses and measured 2.77:1; both
   // moved to `text-nutrition-strong`. The rest are icons and fills.

@@ -154,6 +154,16 @@ export interface PerformanceWeekDoc {
   adherenceScore: number | null;
   loadBand: string;
 
+  /* Optional because this interface never declared it while the field
+     was being written all along: the server stamps `confidence` on every
+     performance document, and `normalisePerformanceDoc` spreads the
+     stored data, so it arrives at render whatever the type said. The
+     12-week average is the first reader that needs it, and pre-field
+     documents genuinely lack it — hence optional rather than required.
+     `PerformanceDoc` above has carried the same union since it was
+     written. */
+  confidence?: "high" | "medium" | "low";
+
   labels?: {
     loadBand: string;
   };
