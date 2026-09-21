@@ -5,6 +5,7 @@ import { validateCableLadder, type CableMachineLadder } from "./formArtCable";
 export interface FormArtScene {
   exerciseId: string;
   status: "draft" | "reviewed";
+  athleteVersion: string;
   reference: string;
   variation: string;
   camera: string;
@@ -20,8 +21,8 @@ export interface FormArtScene {
 }
 
 export const FORM_ART_STYLE = {
-  version: "anatomy-v1",
-  reference: "public/form-frames/barbell-row/1.webp",
+  version: "anatomy-shorts-v2",
+  reference: "docs/exercise-art/identity/athlete-shorts-v2.png",
   primary: "#7045F5",
   secondary: "#C5B5ED",
   stabilisers: "#E1D8F2",
@@ -34,6 +35,10 @@ export function buildFormArtPrompt(id: string, scene: FormArtScene): string {
     throw new Error("An exact catalogue exercise ID is required.");
   if (scene.status !== "reviewed")
     throw new Error("Review the physical scene before generating art.");
+  if (scene.athleteVersion !== FORM_ART_STYLE.version)
+    throw new Error("Rebuild the exercise master from the current canonical athlete in shorts.");
+  if (scene.reference !== `docs/exercise-art/masters/${id}/1.png`)
+    throw new Error("Use the exact exercise master, not an unrelated exercise or legacy frame.");
   if (
     beats?.length !== 6 ||
     beats.some(
@@ -92,6 +97,10 @@ Use case: scientific-educational. Asset: six separate anatomical exercise stills
 EXACT VARIATION: ${scene.variation}
 CANONICAL STYLE REFERENCE: ${FORM_ART_STYLE.reference}
 SCENE REFERENCE: ${scene.reference}
+ATHLETE VERSION: ${FORM_ART_STYLE.version}
+Attach BOTH reference image files to EVERY generation or edit. The global athlete
+locks identity and clothing; the exercise master locks camera, pose scale and equipment.
+An adjacent pose is an additional reference, never a replacement for either master.
 CAMERA: ${scene.camera}
 FIXED ANCHORS: ${scene.anchors}
 EQUIPMENT: ${scene.equipment}
@@ -100,8 +109,12 @@ LOCKED ATHLETE
 Same bald, faceless, muscular anatomical male as the canonical reference.
 White/light-grey body, crisp muscle separation, fine dark contours, polished 2D
 anatomical illustration on black. Same white shoes, proportions, muscle density,
-head, hands, feet, limb thickness, line weight and shading. No redesign, hair,
-photorealistic skin, painterly texture or extra clothing. Purple never changes muscle size.
+head, hands, feet, limb thickness, line weight and shading. Always the same loose,
+opaque charcoal gym shorts ending at mid-thigh, with visible waistband, fabric hems
+and two leg openings. No briefs, tight white underwear, compression shorts, exposed
+groin or anatomical lines through cloth. Never remove shorts to show hidden muscles;
+explain covered muscles in the app cue instead. Same white trainers, never bare feet.
+No redesign, hair, photorealistic skin or painterly texture. Purple never changes muscle size.
 
 COLOUR HIERARCHY
 Primary (${FORM_ART_STYLE.primary}): ${scene.primary}
@@ -113,8 +126,10 @@ dim all muscles simply because the movement is returning; no unrelated highlight
 
 SIX SEPARATE FRAMES
 Each full-quality image must share one canvas, crop, camera, scale, perspective,
-lighting, floor and equipment geometry. Make one master, check it, then EDIT THE
-NEAREST ACCEPTABLE FRAME. Move only the joints and equipment that must move.
+lighting, floor and equipment geometry. Derive the exercise master from the global
+athlete and save it once at SCENE REFERENCE. Check it before adjacent frames.
+EDIT THE NEAREST ACCEPTABLE FRAME while attaching BOTH immutable masters every time.
+Move only the joints and equipment that must move; keep clothing style and coverage.
 Never make a contact sheet, collage or grid to crop/upscale. No blurred edges.
 Keep bar length, plate count/diameter/thickness, grip width and machine dimensions.
 Use a modest illustrative load: one identical plate on each barbell side unless

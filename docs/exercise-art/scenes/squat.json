@@ -44,5 +44,6 @@
       "cableAndStack": "Not applicable; no cable or stack."
     }
   ],
-  "loopBoundary": "Frame 6 is standing after the drive, matching the start setup. Hold across 6 to 1; never play the drive in reverse."
+  "loopBoundary": "Frame 6 is standing after the drive, matching the start setup. Hold across 6 to 1; never play the drive in reverse.",
+  "athleteVersion": "anatomy-v1"
 }

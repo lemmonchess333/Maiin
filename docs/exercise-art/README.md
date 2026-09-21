@@ -92,3 +92,10 @@ See `DB_CURL_REVIEW.md`, `PRODUCTION_BRIEF.md` and `VALIDATION.md` for the pilot
 production rules and measured validation results.
 
 The latest continuation is documented in `COMPOSITE_REPAIR_REVIEW.md`.
+
+## 21 September: single athlete and shorts correction
+
+The current production identity is `identity/athlete-shorts-v2.png`. Follow
+`identity/README.md` and `identity/MASTER_REGISTRY.json` before generating any
+more frames. Legacy reference images are not identity masters for new work.
+Cuban Press v2 is available as a draft in the real form-art review fixture.

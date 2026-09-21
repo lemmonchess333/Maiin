@@ -1,0 +1,117 @@
+{
+  "schemaVersion": 1,
+  "batch": "2026-09-21-cuban-press",
+  "releaseApproved": false,
+  "productionAssetsChanged": false,
+  "selectedFrameCount": 6,
+  "completeDraftSets": [
+    {
+      "exerciseId": "cuban-press",
+      "status": "draft-awaiting-review",
+      "camera": "Fixed near-front three-quarter portrait",
+      "anchors": [
+        "head and torso",
+        "hips and legs",
+        "white shoes and foot contacts"
+      ],
+      "equipment": "Two matching light round dumbbells",
+      "reviewFindings": [
+        "Rebuilt after owner required a single athlete wearing loose gym shorts. All selected frames use the same charcoal shorts and white trainers.",
+        "Four separately generated native poses, six separate files; frames 5 and 6 reuse poses 3 and 2 for the reverse movement with distinct cues. No warping, interpolation or montage-derived frames.",
+        "Global identity and exercise master attached to every new pose generation.",
+        "Head, feet, clothing and framing appear consistent on visual inspection; shoulder shapes and upper-arm muscle colouring need further review.",
+        "The 6-to-1 transition lowers elbows and weights to the start. This is staged still-image playback, not continuous animation.",
+        "Not released to production."
+      ],
+      "frames": [
+        {
+          "frame": 1,
+          "path": "docs/exercise-art/pilots/cuban-press/1.png",
+          "caption": "SET UP 1/6",
+          "cue": "Stand tall with light dumbbells in front of your thighs.",
+          "progress": 0,
+          "dimensions": [
+            1024,
+            1536
+          ],
+          "bytes": 700050,
+          "sha256": "4b7276147968b86c564fadc35dc4b138922c400c7ae395715297e515b773b731",
+          "reusedFrom": null
+        },
+        {
+          "frame": 2,
+          "path": "docs/exercise-art/pilots/cuban-press/2.png",
+          "caption": "RAISE ELBOWS 2/6",
+          "cue": "Lead with your elbows, keeping your wrists below them.",
+          "progress": 0.3,
+          "dimensions": [
+            1024,
+            1536
+          ],
+          "bytes": 1235185,
+          "sha256": "bf5bc58bf34bdc966cfc24bb112baf9b746287f568184cd55662da1a973699fc",
+          "reusedFrom": null
+        },
+        {
+          "frame": 3,
+          "path": "docs/exercise-art/pilots/cuban-press/3.png",
+          "caption": "ROTATE UP 3/6",
+          "cue": "Rotate your forearms up while keeping your elbows bent.",
+          "progress": 0.6,
+          "dimensions": [
+            1024,
+            1536
+          ],
+          "bytes": 1233235,
+          "sha256": "a6345fd42cf3f205fdb5bd73bc9be28dbf94743ad97789df6d3cf29f827c34cc",
+          "reusedFrom": null
+        },
+        {
+          "frame": 4,
+          "path": "docs/exercise-art/pilots/cuban-press/4.png",
+          "caption": "PRESS OVERHEAD 4/6",
+          "cue": "Press overhead without leaning back.",
+          "progress": 1,
+          "dimensions": [
+            1024,
+            1536
+          ],
+          "bytes": 764156,
+          "sha256": "f6861330e3be60b9debc404b33e4647879837efad3a7d7da1b5c5ebeba7f884c",
+          "reusedFrom": null
+        },
+        {
+          "frame": 5,
+          "path": "docs/exercise-art/pilots/cuban-press/5.png",
+          "caption": "LOWER TO GOALPOST 5/6",
+          "cue": "Lower to the goalpost position under control.",
+          "progress": 0.6,
+          "dimensions": [
+            1024,
+            1536
+          ],
+          "bytes": 1233235,
+          "sha256": "a6345fd42cf3f205fdb5bd73bc9be28dbf94743ad97789df6d3cf29f827c34cc",
+          "reusedFrom": 3
+        },
+        {
+          "frame": 6,
+          "path": "docs/exercise-art/pilots/cuban-press/6.png",
+          "caption": "ROTATE DOWN 6/6",
+          "cue": "Rotate your forearms down, then lower your elbows to return to the start.",
+          "progress": 0.3,
+          "dimensions": [
+            1024,
+            1536
+          ],
+          "bytes": 1235185,
+          "sha256": "bf5bc58bf34bdc966cfc24bb112baf9b746287f568184cd55662da1a973699fc",
+          "reusedFrom": 2
+        }
+      ],
+      "athleteVersion": "anatomy-shorts-v2",
+      "globalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+      "sceneReference": "docs/exercise-art/masters/cuban-press/1.png"
+    }
+  ]
+}

@@ -44,5 +44,6 @@
       "cableAndStack": "Not applicable; no machine, cable or stack."
     }
   ],
-  "loopBoundary": "Frame 6 is a near-bottom controlled return, not a duplicate of frame 1. Continue elbow extension from about 25 degrees to about 5 degrees across 6 to 1. No pause jump or ping-pong playback."
+  "loopBoundary": "Frame 6 is a near-bottom controlled return, not a duplicate of frame 1. Continue elbow extension from about 25 degrees to about 5 degrees across 6 to 1. No pause jump or ping-pong playback.",
+  "athleteVersion": "anatomy-v1"
 }

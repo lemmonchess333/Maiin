@@ -1,0 +1,51 @@
+{
+  "exerciseId": "cuban-press",
+  "variation": "Standing light dumbbell Cuban Press: row, external rotation, press, reverse",
+  "generationMode": "built-in image_gen",
+  "canonicalReference": "docs/exercise-art/identity/athlete-shorts-v2.png",
+  "source": "src/lib/exercises.ts: cuban-press",
+  "techniqueReferences": [
+    "https://www.youtube.com/watch?v=SKYSpcIptK8",
+    "https://smartworkout.app/en/exercise-library/shoulders/seated-cuban-press"
+  ],
+  "referenceLimitations": "Retrieved technique description corroborates rotation/press segment; seated source does not establish standing setup. Full independent biomechanical approval outstanding.",
+  "frames": [
+    {
+      "frame": 1,
+      "label": "Set up",
+      "cue": "Stand tall with light dumbbells in front of your thighs."
+    },
+    {
+      "frame": 2,
+      "label": "Raise elbows",
+      "cue": "Lead with your elbows, keeping your wrists below them."
+    },
+    {
+      "frame": 3,
+      "label": "Rotate up",
+      "cue": "Rotate your forearms up while keeping your elbows bent."
+    },
+    {
+      "frame": 4,
+      "label": "Press overhead",
+      "cue": "Press overhead without leaning back."
+    },
+    {
+      "frame": 5,
+      "label": "Lower to goalpost",
+      "cue": "Lower to the goalpost position under control."
+    },
+    {
+      "frame": 6,
+      "label": "Rotate down",
+      "cue": "Rotate your forearms down, then lower your elbows to return to the start."
+    }
+  ],
+  "loopBoundary": "After frame 6 lower elbows and weights to thighs for frame 1. Do not ping-pong.",
+  "generationAttempts": 4,
+  "successfulImages": 4,
+  "selectedImages": 4,
+  "notes": "Shorts v2 supersedes earlier unshorted drafts. Six frame files use four poses; reverse goalpost and row poses reused for exact return registration.",
+  "sceneReference": "docs/exercise-art/masters/cuban-press/1.png",
+  "athleteVersion": "anatomy-shorts-v2"
+}

@@ -2,9 +2,21 @@
 
 Use the user's established bald, faceless, white/light-grey anatomical athlete
 on black, with fine dark contours and crisp polished 2D shading. The current
-canonical style reference is `public/form-frames/barbell-row/1.webp`; match its
+canonical athlete is `docs/exercise-art/identity/athlete-shorts-v2.png`; match its
 body proportions, muscle density, head/hands/feet, limb thickness and white
-shoes. Do not invent another character for each exercise.
+shoes and loose opaque charcoal mid-thigh gym shorts. No briefs, compression
+wear, bare feet or anatomy drawn through shorts. Do not invent another character
+for each exercise. Covered muscles belong in text cues, never exposed by removing
+or making the shorts transparent.
+
+Owner correction, 21 September 2026: one individual for the entire library.
+`identity/MASTER_REGISTRY.json` maps every in-scope exercise to its required
+scene master. Derive that scene from the global athlete, save it once at
+`masters/<exact-exercise-id>/1.png`, and attach BOTH images to every later edit.
+An adjacent pose supplements these references; it never replaces them.
+Legacy first frames are pose/equipment references only, never identity references.
+The old v1 scene specifications remain blocked by the prompt generator until
+their scene master is rebuilt and their athleteVersion updated after inspection.
 
 1. Identify the exact catalogue exercise and variation, equipment, primary and
    secondary muscles, stabilisers, camera and visible movement plane.
