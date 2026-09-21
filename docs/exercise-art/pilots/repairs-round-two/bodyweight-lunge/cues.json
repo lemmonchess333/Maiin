@@ -1,0 +1,32 @@
+[
+  {
+    "frame": 1,
+    "name": "STAND",
+    "cue": "Stand tall with hands on hips."
+  },
+  {
+    "frame": 2,
+    "name": "STEP",
+    "cue": "Take a long forward step, keeping feet hip width apart."
+  },
+  {
+    "frame": 3,
+    "name": "LOWER",
+    "cue": "Bend both knees and lower with control."
+  },
+  {
+    "frame": 4,
+    "name": "BOTTOM",
+    "cue": "Keep the front heel down and torso tall."
+  },
+  {
+    "frame": 5,
+    "name": "DRIVE BACK",
+    "cue": "Drive through the front heel to begin returning."
+  },
+  {
+    "frame": 6,
+    "name": "RESET",
+    "cue": "Return to standing and alternate sides."
+  }
+]

@@ -1,0 +1,335 @@
+{
+  "exerciseCount": 10,
+  "scope": "Ten existing candidate sets reviewed and targeted for repair; no new catalogue exercise conversion claimed.",
+  "releaseApprovedSets": 0,
+  "playback": "Unverified",
+  "exercises": [
+    {
+      "exerciseId": "barbell-step-ups",
+      "status": "unresolved",
+      "releaseApproved": false,
+      "images": [
+        {
+          "path": "barbell-step-ups/rejected/exec-20417fc6-0695-4946-8a87-3f108da7f70f.png",
+          "sha256": "d520eb8967ab4fba3aee3d6c3db42192bcd371c502fe3f91b6f0cd21f84ec662",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "path": "barbell-step-ups/rejected/exec-645a1a1f-ac62-4186-be53-70c93838cdbe.png",
+          "sha256": "18e501b7cf2b7d4c8f7c7a7869f500c309aff15b11f2fbc234961ca47e75db1d",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        }
+      ],
+      "review": "barbell-step-ups/REVIEW.md"
+    },
+    {
+      "exerciseId": "bodyweight-lunge",
+      "status": "partial-improvement",
+      "releaseApproved": false,
+      "images": [
+        {
+          "path": "bodyweight-lunge/frames/1.png",
+          "sha256": "8040087e43e7b1d8b6457977853e6bfb1ed08ef5b7f565dfb1e38505d146c2ff",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "path": "bodyweight-lunge/frames/2.png",
+          "sha256": "b2f69b59320053254d476462a0c4f1035e21c255c8f9760d8b8471845b802a47",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "path": "bodyweight-lunge/frames/3.png",
+          "sha256": "a40c508ddcbef841ce27af294dda820955a9eb95ea7992f7ff58e43e0f1ae931",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "path": "bodyweight-lunge/frames/4.png",
+          "sha256": "59d4ba80a68e0c0253804660f6760a8bcec7ff1bf4208786a8b89ca1e0de68c1",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "path": "bodyweight-lunge/frames/5.png",
+          "sha256": "a40c508ddcbef841ce27af294dda820955a9eb95ea7992f7ff58e43e0f1ae931",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "path": "bodyweight-lunge/frames/6.png",
+          "sha256": "8040087e43e7b1d8b6457977853e6bfb1ed08ef5b7f565dfb1e38505d146c2ff",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "path": "bodyweight-lunge/masters/1.png",
+          "sha256": "8040087e43e7b1d8b6457977853e6bfb1ed08ef5b7f565dfb1e38505d146c2ff",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        }
+      ],
+      "review": "bodyweight-lunge/REVIEW.md"
+    },
+    {
+      "exerciseId": "db-rdl",
+      "status": "unresolved",
+      "releaseApproved": false,
+      "images": [
+        {
+          "path": "db-rdl/rejected/exec-88e88849-4b21-45e8-9d9e-d5489121e9ca.png",
+          "sha256": "a5be45d6e461a80c99655b68dca4ca41500cdec7c6383e93d09599b71838d934",
+          "dimensions": [
+            1024,
+            1536
+          ]
+        }
+      ],
+      "review": "db-rdl/REVIEW.md"
+    },
+    {
+      "exerciseId": "front-squat",
+      "status": "unresolved",
+      "releaseApproved": false,
+      "images": [
+        {
+          "path": "front-squat/rejected/exec-33a70b21-0a43-4810-aeb3-836b69bd47b4.png",
+          "sha256": "9df03efbff438e4d42f0235c328d27450ee907000dfba22e57bf9188a5911994",
+          "dimensions": [
+            1254,
+            1254
+          ]
+        }
+      ],
+      "review": "front-squat/REVIEW.md"
+    },
+    {
+      "exerciseId": "inverted-row",
+      "status": "unresolved",
+      "releaseApproved": false,
+      "images": [
+        {
+          "path": "inverted-row/rejected/chest-contact-correction.png",
+          "sha256": "0a1f5481730ad245addc4b3f26f6ee2e1a37db92b16897d929db2dacd4dffec1",
+          "dimensions": [
+            1254,
+            1254
+          ]
+        }
+      ],
+      "review": "inverted-row/REVIEW.md"
+    },
+    {
+      "exerciseId": "mountain-climbers",
+      "status": "unresolved",
+      "releaseApproved": false,
+      "images": [
+        {
+          "path": "mountain-climbers/frames/1.png",
+          "sha256": "e615feb681aac4478503b2c471ecc463b501c5a7203ca19dde1084e20b68de36",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "path": "mountain-climbers/frames/2.png",
+          "sha256": "d586d4f4c94dc1af31ce1c4786ed35db3ea62fea826be2f880043dc83ca179e2",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "path": "mountain-climbers/frames/3.png",
+          "sha256": "d5f1e7f60555a5971af1cfaab5c8c20fb91514206f4872be41c57ff70ab369f0",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "path": "mountain-climbers/frames/4.png",
+          "sha256": "78ac0fb98be2defd2dd014930237f7ba12130bdd905a1f9e081e9add224aeb19",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "path": "mountain-climbers/frames/5.png",
+          "sha256": "50b91a4056ef47460648bb2c0cfd37e3c98ef2629ecabc14114f3867b6f746b0",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "path": "mountain-climbers/frames/6.png",
+          "sha256": "d5f1e7f60555a5971af1cfaab5c8c20fb91514206f4872be41c57ff70ab369f0",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "path": "mountain-climbers/masters/1.png",
+          "sha256": "d5f1e7f60555a5971af1cfaab5c8c20fb91514206f4872be41c57ff70ab369f0",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "path": "mountain-climbers/rejected/exec-850c4955-02c7-431c-90b9-ef4df0c94d40.png",
+          "sha256": "15e774aaca94e427086540f0f127222ee77f8879976d34fce4aaa5fc295b4465",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "path": "mountain-climbers/rejected/exec-e2a13edc-765d-4d2a-acc2-e81e48e544db.png",
+          "sha256": "8bd9aa67684b8bc31ab757c872aa8d301bdafb89df5ce31e743c56ef94bab932",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        }
+      ],
+      "review": "mountain-climbers/REVIEW.md"
+    },
+    {
+      "exerciseId": "pull-ups",
+      "status": "service-blocked",
+      "releaseApproved": false,
+      "images": [],
+      "review": "pull-ups/REVIEW.md"
+    },
+    {
+      "exerciseId": "reverse-barbell-curl",
+      "status": "unresolved",
+      "releaseApproved": false,
+      "images": [
+        {
+          "path": "reverse-barbell-curl/rejected-attempt.png",
+          "sha256": "acd886fcb2982f2124b234d18dac30b81cff47bfbda85eb61179b201bd24a433",
+          "dimensions": [
+            1024,
+            1536
+          ]
+        }
+      ],
+      "review": "reverse-barbell-curl/REVIEW.md"
+    },
+    {
+      "exerciseId": "reverse-flyes",
+      "status": "unresolved",
+      "releaseApproved": false,
+      "images": [
+        {
+          "path": "reverse-flyes/rejected-attempt.png",
+          "sha256": "377c134861eab514e7c284488795841ff33c5502eba87b3a9188960178aeabc3",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        }
+      ],
+      "review": "reverse-flyes/REVIEW.md"
+    },
+    {
+      "exerciseId": "russian-twist",
+      "status": "targeted-improvement",
+      "releaseApproved": false,
+      "images": [
+        {
+          "path": "russian-twist/frames/1.png",
+          "sha256": "bc90d3b9e4cf6c2ac56e7eafb15b21d10b4aae321c93c20334199dc3cbf26261",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "path": "russian-twist/frames/2.png",
+          "sha256": "cc6435cdbc29c01f8c85db453e5c1f1e95a2d1118d2bcef70c803a58a29488bf",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "path": "russian-twist/frames/3.png",
+          "sha256": "bd004e91a8640586ebf5598c3e51ea7b041b45f2cb23efe0ff04a2859e4fe6a4",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "path": "russian-twist/frames/4.png",
+          "sha256": "bc90d3b9e4cf6c2ac56e7eafb15b21d10b4aae321c93c20334199dc3cbf26261",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "path": "russian-twist/frames/5.png",
+          "sha256": "f01181dd92bf9d823b2a8fffdafa024b86e09adcace25f591c056e1b34d8f89a",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "path": "russian-twist/frames/6.png",
+          "sha256": "bc90d3b9e4cf6c2ac56e7eafb15b21d10b4aae321c93c20334199dc3cbf26261",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "path": "russian-twist/masters/1.png",
+          "sha256": "bc90d3b9e4cf6c2ac56e7eafb15b21d10b4aae321c93c20334199dc3cbf26261",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        }
+      ],
+      "review": "russian-twist/REVIEW.md"
+    }
+  ],
+  "validation": {
+    "pngDecode": "passed",
+    "lint": "passed",
+    "build": "passed",
+    "testsPassed": 9697,
+    "testsSkipped": 347,
+    "note": "Tests ran against the preserved local source snapshot. This commit only adds repair artwork and records."
+  }
+}

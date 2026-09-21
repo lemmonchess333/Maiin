@@ -1,0 +1,97 @@
+{
+  "exerciseId": "front-squat",
+  "status": "unresolved",
+  "releaseApproved": false,
+  "acceptedReplacementFrames": [],
+  "originalSixFrameSequence": [
+    {
+      "path": "pilots/parallel-twenty/front-squat/frames/1.png",
+      "sha256": "8499a80b6fc1039b172591a38a1b247c84286cfeb81aa865090e98f8896184c9",
+      "dimensions": [
+        1254,
+        1254
+      ]
+    },
+    {
+      "path": "pilots/parallel-twenty/front-squat/frames/2.png",
+      "sha256": "04d04da420b26c0c1c86ce52b4a47bfeb051299ce4d335b0450bc629ead2b847",
+      "dimensions": [
+        1254,
+        1254
+      ]
+    },
+    {
+      "path": "pilots/parallel-twenty/front-squat/frames/3.png",
+      "sha256": "d944f554b50423cae3c960c76d783b60940f2a496e3ef21b9798f1ee80ffcff0",
+      "dimensions": [
+        1254,
+        1254
+      ]
+    },
+    {
+      "path": "pilots/parallel-twenty/front-squat/frames/4.png",
+      "sha256": "6099208f472b100757fb412fe26dae791d19df8b81459f290bb5a45948f098fd",
+      "dimensions": [
+        1254,
+        1254
+      ]
+    },
+    {
+      "path": "pilots/parallel-twenty/front-squat/frames/5.png",
+      "sha256": "d944f554b50423cae3c960c76d783b60940f2a496e3ef21b9798f1ee80ffcff0",
+      "dimensions": [
+        1254,
+        1254
+      ]
+    },
+    {
+      "path": "pilots/parallel-twenty/front-squat/frames/6.png",
+      "sha256": "04d04da420b26c0c1c86ce52b4a47bfeb051299ce4d335b0450bc629ead2b847",
+      "dimensions": [
+        1254,
+        1254
+      ]
+    }
+  ],
+  "attempts": [
+    {
+      "path": "pilots/repairs-round-two/front-squat/rejected/exec-33a70b21-0a43-4810-aeb3-836b69bd47b4.png",
+      "sha256": "9df03efbff438e4d42f0235c328d27450ee907000dfba22e57bf9188a5911994",
+      "dimensions": [
+        1254,
+        1254
+      ],
+      "prompt": "Precise-object-edit of image 3, front squat bottom. Image1 canonical athlete identity; image2 standing master fixes canvas/camera and exact shoe positions. Keep the deeply squatting body, bar, hands and head of image3 unchanged. Correct ONLY both shoes and ankles: place each white shoe exactly onto the corresponding master shoe outline/position in image2 (left-screen sole around y1190 and right-screen sole y1148 on 1280 square canvas), adapting the lower shin ends minimally. Do not move whole body or camera. Feet are fixed floor anchors across a squat; preserve master's foot direction, size, separation, sole height. Same pure black background and clean anatomical lines, purple quadriceps, no halo, no text. Preserve full 1280 square composition.",
+      "result": "rejected",
+      "reason": "Targeted feet/ankle correction retained upward sole drift and widened/changed shoe silhouettes. No improvement accepted.",
+      "references": [
+        {
+          "path": "identity/athlete-anatomy-v3.png",
+          "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+          "dimensions": [
+            1024,
+            1536
+          ]
+        },
+        {
+          "path": "pilots/parallel-twenty/front-squat/masters/1.png",
+          "sha256": "8499a80b6fc1039b172591a38a1b247c84286cfeb81aa865090e98f8896184c9",
+          "dimensions": [
+            1254,
+            1254
+          ]
+        },
+        {
+          "path": "pilots/parallel-twenty/front-squat/frames/4.png",
+          "sha256": "6099208f472b100757fb412fe26dae791d19df8b81459f290bb5a45948f098fd",
+          "dimensions": [
+            1254,
+            1254
+          ]
+        }
+      ]
+    }
+  ],
+  "playbackVerified": false,
+  "mobileLightDarkVerified": false
+}

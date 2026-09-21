@@ -1,0 +1,84 @@
+{
+  "exerciseId": "mountain-climbers",
+  "status": "unresolved-original-retained",
+  "releaseApproved": false,
+  "runtimeVerified": false,
+  "review": "Both targeted correction and changed-method master derivation failed to preserve the intended far toe contact. First attempt moved the support too far inward and shortened the leg; second kept the foreground shoe location again. Both rejected. All six original frames retained unchanged; no repair claimed. Far/near support identity drift remains unresolved.",
+  "canonicalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+  "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+  "masterSha256": "d5f1e7f60555a5971af1cfaab5c8c20fb91514206f4872be41c57ff70ab369f0",
+  "cuesSha256": "1b181e4221e1b73ebe98a88b097d0369f6b4162003c88f3c49fb1ecd85200c7e",
+  "originalSet": "docs/exercise-art/pilots/parallel-twenty/mountain-climbers",
+  "frames": [
+    {
+      "frame": 1,
+      "sha256": "e615feb681aac4478503b2c471ecc463b501c5a7203ca19dde1084e20b68de36",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "changedFromOriginal": false,
+      "originalSha256": "e615feb681aac4478503b2c471ecc463b501c5a7203ca19dde1084e20b68de36"
+    },
+    {
+      "frame": 2,
+      "sha256": "d586d4f4c94dc1af31ce1c4786ed35db3ea62fea826be2f880043dc83ca179e2",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "changedFromOriginal": false,
+      "originalSha256": "d586d4f4c94dc1af31ce1c4786ed35db3ea62fea826be2f880043dc83ca179e2"
+    },
+    {
+      "frame": 3,
+      "sha256": "d5f1e7f60555a5971af1cfaab5c8c20fb91514206f4872be41c57ff70ab369f0",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "changedFromOriginal": false,
+      "originalSha256": "d5f1e7f60555a5971af1cfaab5c8c20fb91514206f4872be41c57ff70ab369f0"
+    },
+    {
+      "frame": 4,
+      "sha256": "78ac0fb98be2defd2dd014930237f7ba12130bdd905a1f9e081e9add224aeb19",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "changedFromOriginal": false,
+      "originalSha256": "78ac0fb98be2defd2dd014930237f7ba12130bdd905a1f9e081e9add224aeb19"
+    },
+    {
+      "frame": 5,
+      "sha256": "50b91a4056ef47460648bb2c0cfd37e3c98ef2629ecabc14114f3867b6f746b0",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "changedFromOriginal": false,
+      "originalSha256": "50b91a4056ef47460648bb2c0cfd37e3c98ef2629ecabc14114f3867b6f746b0"
+    },
+    {
+      "frame": 6,
+      "sha256": "d5f1e7f60555a5971af1cfaab5c8c20fb91514206f4872be41c57ff70ab369f0",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "changedFromOriginal": false,
+      "originalSha256": "d5f1e7f60555a5971af1cfaab5c8c20fb91514206f4872be41c57ff70ab369f0"
+    }
+  ],
+  "rejected": [
+    {
+      "path": "rejected/exec-e2a13edc-765d-4d2a-acc2-e81e48e544db.png",
+      "sha256": "8bd9aa67684b8bc31ab757c872aa8d301bdafb89df5ce31e743c56ef94bab932"
+    },
+    {
+      "path": "rejected/exec-850c4955-02c7-431c-90b9-ef4df0c94d40.png",
+      "sha256": "15e774aaca94e427086540f0f127222ee77f8879976d34fce4aaa5fc295b4465"
+    }
+  ]
+}

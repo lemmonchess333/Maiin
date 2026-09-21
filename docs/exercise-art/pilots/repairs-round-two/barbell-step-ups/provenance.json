@@ -1,0 +1,134 @@
+{
+  "exerciseId": "barbell-step-ups",
+  "status": "unresolved",
+  "releaseApproved": false,
+  "acceptedReplacementFrames": [],
+  "originalSixFrameSequence": [
+    {
+      "path": "pilots/parallel-twenty/barbell-step-ups/frames/1.png",
+      "sha256": "097663f0016f108f0c58beb4bc0ced7aff7269d54d188e5549e24d141f87132f",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "path": "pilots/parallel-twenty/barbell-step-ups/frames/2.png",
+      "sha256": "7a3f954a39f36753b1a0c5410c1a47ffd5d18ec32c2a1d05d71a9848e682bac3",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "path": "pilots/parallel-twenty/barbell-step-ups/frames/3.png",
+      "sha256": "2413071fe0ba1fca1599fc277edcde9e95e85c09ba0c2e4544414ed63ea69abd",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "path": "pilots/parallel-twenty/barbell-step-ups/frames/4.png",
+      "sha256": "e361fdcc400e675eef1a7ec142ecbff0249fbcf1a758dd54b32ac18b293cf9f8",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "path": "pilots/parallel-twenty/barbell-step-ups/frames/5.png",
+      "sha256": "7a3f954a39f36753b1a0c5410c1a47ffd5d18ec32c2a1d05d71a9848e682bac3",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "path": "pilots/parallel-twenty/barbell-step-ups/frames/6.png",
+      "sha256": "097663f0016f108f0c58beb4bc0ced7aff7269d54d188e5549e24d141f87132f",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    }
+  ],
+  "attempts": [
+    {
+      "path": "pilots/repairs-round-two/barbell-step-ups/rejected/exec-645a1a1f-ac62-4186-be53-70c93838cdbe.png",
+      "sha256": "18e501b7cf2b7d4c8f7c7a7869f500c309aff15b11f2fbc234961ca47e75db1d",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "prompt": "Precise-object-edit, exercise barbell step-up. Image1 canonical identity, image2 setup master fixes box, image3 target upright top. Retain image3 upright torso, extended knees and bar across traps. Replace ONLY image3 box with the exact fixed box from image2: same corners and dimensions (1536x1024 canvas: front upperleft740,719; upper front right959,719; back right1024,703; front base y911-920). Lower both standing shoes onto that unchanged box top. The lead shoe must match image2 shoe at x802..923 y655..712; accompanying shoe beside it, not displacing it. Preserve same body size, camera, full frame, anatomical man, primary purple thighs, black background. No text, no halo. Do not move or resize box to fit athlete.",
+      "result": "rejected",
+      "reason": "Box top remains raised and output introduces strong white/purple halo; rejected.",
+      "references": [
+        {
+          "path": "identity/athlete-anatomy-v3.png",
+          "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+          "dimensions": [
+            1024,
+            1536
+          ]
+        },
+        {
+          "path": "pilots/parallel-twenty/barbell-step-ups/masters/1.png",
+          "sha256": "097663f0016f108f0c58beb4bc0ced7aff7269d54d188e5549e24d141f87132f",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "path": "pilots/parallel-twenty/barbell-step-ups/frames/4.png",
+          "sha256": "e361fdcc400e675eef1a7ec142ecbff0249fbcf1a758dd54b32ac18b293cf9f8",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        }
+      ]
+    },
+    {
+      "path": "pilots/repairs-round-two/barbell-step-ups/rejected/exec-20417fc6-0695-4946-8a87-3f108da7f70f.png",
+      "sha256": "d520eb8967ab4fba3aee3d6c3db42192bcd371c502fe3f91b6f0cd21f84ec662",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "prompt": "Edit image2 (setup master) into upright completion of barbell step-up, retaining its box perfectly unchanged. Image1 canonical athlete identity; image3 only demonstrates desired upright posture, NOT its misplaced box or shoe positions. Use image2 entire background and box as immutable scene. Keep the already planted leading shoe in exactly its existing place atop the box. Straighten that lead knee and hip, raising torso naturally; lift trailing foot from floor and put it next to lead foot. Bar stays on upper traps. Full 1536x1024 image, fixed camera/scale, do not shift or resize box. Pure black background, crisp clean anatomical white/lilac/purple art without any glowing outline. Head fully visible. No text.",
+      "result": "rejected",
+      "reason": "Changed to master-first reconstruction. Halo absent but box top still around y697 instead of master y719, and leading shoe remains displaced. No replacement accepted.",
+      "references": [
+        {
+          "path": "identity/athlete-anatomy-v3.png",
+          "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+          "dimensions": [
+            1024,
+            1536
+          ]
+        },
+        {
+          "path": "pilots/parallel-twenty/barbell-step-ups/masters/1.png",
+          "sha256": "097663f0016f108f0c58beb4bc0ced7aff7269d54d188e5549e24d141f87132f",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "path": "pilots/parallel-twenty/barbell-step-ups/frames/4.png",
+          "sha256": "e361fdcc400e675eef1a7ec142ecbff0249fbcf1a758dd54b32ac18b293cf9f8",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        }
+      ]
+    }
+  ],
+  "playbackVerified": false,
+  "mobileLightDarkVerified": false
+}

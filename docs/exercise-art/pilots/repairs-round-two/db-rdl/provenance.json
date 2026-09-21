@@ -1,0 +1,97 @@
+{
+  "exerciseId": "db-rdl",
+  "status": "unresolved",
+  "releaseApproved": false,
+  "acceptedReplacementFrames": [],
+  "originalSixFrameSequence": [
+    {
+      "path": "pilots/parallel-twenty/db-rdl/frames/1.png",
+      "sha256": "b389f9624fe16ee63eb8a25f690f47f96d9ed2015d6b7f0370a12fadfaad9362",
+      "dimensions": [
+        1024,
+        1536
+      ]
+    },
+    {
+      "path": "pilots/parallel-twenty/db-rdl/frames/2.png",
+      "sha256": "5a4b5f6fb11c125b0afeb49ae96883b24486e19b2ca51c63097f392aa3b22c2a",
+      "dimensions": [
+        1024,
+        1536
+      ]
+    },
+    {
+      "path": "pilots/parallel-twenty/db-rdl/frames/3.png",
+      "sha256": "298488194d228132bfc880ba54928eab5b587dbd80e6980cfe66aea86f057288",
+      "dimensions": [
+        1024,
+        1536
+      ]
+    },
+    {
+      "path": "pilots/parallel-twenty/db-rdl/frames/4.png",
+      "sha256": "298488194d228132bfc880ba54928eab5b587dbd80e6980cfe66aea86f057288",
+      "dimensions": [
+        1024,
+        1536
+      ]
+    },
+    {
+      "path": "pilots/parallel-twenty/db-rdl/frames/5.png",
+      "sha256": "5a4b5f6fb11c125b0afeb49ae96883b24486e19b2ca51c63097f392aa3b22c2a",
+      "dimensions": [
+        1024,
+        1536
+      ]
+    },
+    {
+      "path": "pilots/parallel-twenty/db-rdl/frames/6.png",
+      "sha256": "b389f9624fe16ee63eb8a25f690f47f96d9ed2015d6b7f0370a12fadfaad9362",
+      "dimensions": [
+        1024,
+        1536
+      ]
+    }
+  ],
+  "attempts": [
+    {
+      "path": "pilots/repairs-round-two/db-rdl/rejected/exec-88e88849-4b21-45e8-9d9e-d5489121e9ca.png",
+      "sha256": "a5be45d6e461a80c99655b68dca4ca41500cdec7c6383e93d09599b71838d934",
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "prompt": "Precise-object-edit for dumbbell Romanian deadlift. Reference1 canonical character. Reference2 exercise master standing fixes shoes and floor; reference3 edit target deep hip hinge. Preserve target's hinged torso, hips, soft knees, arms and identical dumbbells. Change ONLY shoes and ankle connections to match exactly reference2 planted shoe silhouettes/locations: on 1024x1536 canvas left-screen shoe spans x274..495 with sole at y1417, right-screen shoe x507..685 sole at y1477. In target these shoes incorrectly shifted right and upward. Move left shoe about30px left and30px down; right shoe about32px left and30px down, with minimal lower shin adjustment. No camera shift, no scaling, no global body translation. Pure black background without glow. Same bald faceless anatomical athlete, stable purple muscles, no text.",
+      "result": "rejected",
+      "reason": "Shoes moved left partially but soles remain above master and shoe shapes changed. Fixed floor anchor invariant still fails; no replacement accepted.",
+      "references": [
+        {
+          "path": "identity/athlete-anatomy-v3.png",
+          "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+          "dimensions": [
+            1024,
+            1536
+          ]
+        },
+        {
+          "path": "pilots/parallel-twenty/db-rdl/masters/1.png",
+          "sha256": "b389f9624fe16ee63eb8a25f690f47f96d9ed2015d6b7f0370a12fadfaad9362",
+          "dimensions": [
+            1024,
+            1536
+          ]
+        },
+        {
+          "path": "pilots/parallel-twenty/db-rdl/frames/3.png",
+          "sha256": "298488194d228132bfc880ba54928eab5b587dbd80e6980cfe66aea86f057288",
+          "dimensions": [
+            1024,
+            1536
+          ]
+        }
+      ]
+    }
+  ],
+  "playbackVerified": false,
+  "mobileLightDarkVerified": false
+}

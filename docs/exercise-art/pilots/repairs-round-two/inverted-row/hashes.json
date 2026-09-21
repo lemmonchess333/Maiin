@@ -1,0 +1,34 @@
+[
+  {
+    "path": "docs/exercise-art/pilots/parallel-twenty/inverted-row/master.png",
+    "sha256": "3fc61a7d7a9ab16bad45aec36f92e10aaafe245b5ce6b848b1be9432fdfc4536"
+  },
+  {
+    "path": "docs/exercise-art/pilots/parallel-twenty/inverted-row/frames/1.png",
+    "sha256": "3fc61a7d7a9ab16bad45aec36f92e10aaafe245b5ce6b848b1be9432fdfc4536"
+  },
+  {
+    "path": "docs/exercise-art/pilots/parallel-twenty/inverted-row/frames/2.png",
+    "sha256": "f580aa6e7ee6269cc08dfad0782abc4de061b47df976b3db2a9eb63fc5b1c622"
+  },
+  {
+    "path": "docs/exercise-art/pilots/parallel-twenty/inverted-row/frames/3.png",
+    "sha256": "600098492e6f3901781249bc97d12a103fb5ee66ca6ece68637971eeff4b2d19"
+  },
+  {
+    "path": "docs/exercise-art/pilots/parallel-twenty/inverted-row/frames/4.png",
+    "sha256": "6923c64f521ea5659723d3568a376b298a0f76b8147116172f39dca52e1d3a53"
+  },
+  {
+    "path": "docs/exercise-art/pilots/parallel-twenty/inverted-row/frames/5.png",
+    "sha256": "600098492e6f3901781249bc97d12a103fb5ee66ca6ece68637971eeff4b2d19"
+  },
+  {
+    "path": "docs/exercise-art/pilots/parallel-twenty/inverted-row/frames/6.png",
+    "sha256": "f580aa6e7ee6269cc08dfad0782abc4de061b47df976b3db2a9eb63fc5b1c622"
+  },
+  {
+    "path": "docs/exercise-art/pilots/repairs-round-two/inverted-row/rejected/chest-contact-correction.png",
+    "sha256": "0a1f5481730ad245addc4b3f26f6ee2e1a37db92b16897d929db2dacd4dffec1"
+  }
+]
