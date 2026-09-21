@@ -1,0 +1,682 @@
+{
+  "schemaVersion": 1,
+  "batch": "2026-09-21-anatomy-v3-rebuild",
+  "releaseApproved": false,
+  "productionAssetsChanged": false,
+  "selectedFrameCount": 36,
+  "completeDraftSets": [
+    {
+      "exerciseId": "db-curl",
+      "status": "draft-awaiting-review",
+      "athleteVersion": "anatomy-neutral-v3",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+      "sceneReference": "docs/exercise-art/masters/db-curl/1.png",
+      "camera": "Fixed near-front three-quarter portrait, 1024x1536",
+      "anchors": [
+        "head",
+        "torso",
+        "pelvis",
+        "legs",
+        "white shoes",
+        "upper arms"
+      ],
+      "equipment": "Two matching modest round black dumbbells",
+      "reviewFindings": [
+        "Generated from the anatomical v3 global identity plus the exercise master. Full leg visibility and smooth neutral pelvis.",
+        "Six native PNG files; matching return configurations reuse a source pose with a distinct lowering cue.",
+        "Not production-approved. Sequential mobile playback, contour stability and equipment dimensions require review.",
+        "Frame 6 returned closer to the start than the planned 25-degree position; cue reflects the actual image.",
+        "Early/middle poses are qualitative positions, not verified joint-angle measurements. Top-pose torso contours and dumbbell diameter need review."
+      ],
+      "frames": [
+        {
+          "frame": 1,
+          "path": "docs/exercise-art/pilots/anatomy-v3/db-curl/1.png",
+          "caption": "SET UP 1/6",
+          "cue": "Stand tall with palms forward and arms beside your body.",
+          "progress": 0,
+          "dimensions": [
+            1024,
+            1536
+          ],
+          "bytes": 835975,
+          "sha256": "d467c18428420cd96dee33b3efc50af04b9551202f792afd8342c2bdd3547867",
+          "reusedFrom": null
+        },
+        {
+          "frame": 2,
+          "path": "docs/exercise-art/pilots/anatomy-v3/db-curl/2.png",
+          "caption": "BEGIN CURL 2/6",
+          "cue": "Bend your elbows without swinging your torso.",
+          "progress": 0.3,
+          "dimensions": [
+            1024,
+            1536
+          ],
+          "bytes": 1302094,
+          "sha256": "0786e90e0f7e2bb1dcdf2f064e2a2f0574bf93cd228625ad0594272581578412",
+          "reusedFrom": null
+        },
+        {
+          "frame": 3,
+          "path": "docs/exercise-art/pilots/anatomy-v3/db-curl/3.png",
+          "caption": "CURL UP 3/6",
+          "cue": "Keep your upper arms beside your ribs.",
+          "progress": 0.6,
+          "dimensions": [
+            1024,
+            1536
+          ],
+          "bytes": 988941,
+          "sha256": "8e2ccabee61391554eb19b2ada9d0df708dc5f2cf2ea508e5f60376ea6b3a817",
+          "reusedFrom": null
+        },
+        {
+          "frame": 4,
+          "path": "docs/exercise-art/pilots/anatomy-v3/db-curl/4.png",
+          "caption": "TOP 4/6",
+          "cue": "Bring the dumbbells toward your shoulders with straight wrists.",
+          "progress": 1,
+          "dimensions": [
+            1024,
+            1536
+          ],
+          "bytes": 814796,
+          "sha256": "f9ef804ded56f2932692147e8ae70e3429fe64a7a0b86651cf9494afb04718d1",
+          "reusedFrom": null
+        },
+        {
+          "frame": 5,
+          "path": "docs/exercise-art/pilots/anatomy-v3/db-curl/5.png",
+          "caption": "LOWER 5/6",
+          "cue": "Lower the weights under control.",
+          "progress": 0.6,
+          "dimensions": [
+            1024,
+            1536
+          ],
+          "bytes": 988941,
+          "sha256": "8e2ccabee61391554eb19b2ada9d0df708dc5f2cf2ea508e5f60376ea6b3a817",
+          "reusedFrom": 3
+        },
+        {
+          "frame": 6,
+          "path": "docs/exercise-art/pilots/anatomy-v3/db-curl/6.png",
+          "caption": "RETURN 6/6",
+          "cue": "Finish lowering to the starting position.",
+          "progress": 0,
+          "dimensions": [
+            1024,
+            1536
+          ],
+          "bytes": 1196621,
+          "sha256": "9630e1b00d305a5ce9f19e01dd00c07e684d570601921a627679e99e55010b4a",
+          "reusedFrom": null
+        }
+      ],
+      "globalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+      "sceneSha256": "d467c18428420cd96dee33b3efc50af04b9551202f792afd8342c2bdd3547867",
+      "reviewStatus": "visual-playback-review-required"
+    },
+    {
+      "exerciseId": "hammer-curl",
+      "status": "draft-awaiting-review",
+      "athleteVersion": "anatomy-neutral-v3",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+      "sceneReference": "docs/exercise-art/masters/hammer-curl/1.png",
+      "camera": "Fixed near-front three-quarter portrait, 1024x1536",
+      "anchors": [
+        "head",
+        "torso",
+        "pelvis",
+        "legs",
+        "white shoes",
+        "upper arms"
+      ],
+      "equipment": "Two matching modest round black dumbbells",
+      "reviewFindings": [
+        "Generated from the anatomical v3 global identity plus the exercise master. Full leg visibility and smooth neutral pelvis.",
+        "Six native PNG files; matching return configurations reuse a source pose with a distinct lowering cue.",
+        "Not production-approved. Sequential mobile playback, contour stability and equipment dimensions require review.",
+        "Background-only correction removed generated halos from the selected early and middle poses.",
+        "Elbow positions, upper-arm shape and dumbbell plate thickness vary slightly and remain review findings."
+      ],
+      "frames": [
+        {
+          "frame": 1,
+          "path": "docs/exercise-art/pilots/anatomy-v3/hammer-curl/1.png",
+          "caption": "SET UP 1/6",
+          "cue": "Stand tall with palms facing your thighs.",
+          "progress": 0,
+          "dimensions": [
+            1024,
+            1536
+          ],
+          "bytes": 834972,
+          "sha256": "f4fbb1eb05659aeb2af4abda6cc351ccc32b223559f43b62acdd46ef706a9ef0",
+          "reusedFrom": null
+        },
+        {
+          "frame": 2,
+          "path": "docs/exercise-art/pilots/anatomy-v3/hammer-curl/2.png",
+          "caption": "BEGIN CURL 2/6",
+          "cue": "Curl both dumbbells with palms facing inward.",
+          "progress": 0.3,
+          "dimensions": [
+            1024,
+            1536
+          ],
+          "bytes": 798541,
+          "sha256": "79326495ab279f990860fc858617faa664857b9d0e60ad6bad443ed9b6889787",
+          "reusedFrom": null
+        },
+        {
+          "frame": 3,
+          "path": "docs/exercise-art/pilots/anatomy-v3/hammer-curl/3.png",
+          "caption": "CURL UP 3/6",
+          "cue": "Keep your elbows beside your ribs and wrists straight.",
+          "progress": 0.6,
+          "dimensions": [
+            1024,
+            1536
+          ],
+          "bytes": 781669,
+          "sha256": "1edb609354af059d7c69ed19e492aea53ffc8183021c8f2ed160d20987ab0bc1",
+          "reusedFrom": null
+        },
+        {
+          "frame": 4,
+          "path": "docs/exercise-art/pilots/anatomy-v3/hammer-curl/4.png",
+          "caption": "TOP 4/6",
+          "cue": "Bring the dumbbells toward your shoulders without rotating your palms up.",
+          "progress": 1,
+          "dimensions": [
+            1024,
+            1536
+          ],
+          "bytes": 1231657,
+          "sha256": "e07ac2e90ad2baee21dff5852ce29f34dbbd022bd47127e746acceb7ded82d0f",
+          "reusedFrom": null
+        },
+        {
+          "frame": 5,
+          "path": "docs/exercise-art/pilots/anatomy-v3/hammer-curl/5.png",
+          "caption": "LOWER 5/6",
+          "cue": "Lower through the middle position under control.",
+          "progress": 0.6,
+          "dimensions": [
+            1024,
+            1536
+          ],
+          "bytes": 781669,
+          "sha256": "1edb609354af059d7c69ed19e492aea53ffc8183021c8f2ed160d20987ab0bc1",
+          "reusedFrom": 3
+        },
+        {
+          "frame": 6,
+          "path": "docs/exercise-art/pilots/anatomy-v3/hammer-curl/6.png",
+          "caption": "RETURN 6/6",
+          "cue": "Continue lowering before returning to the start.",
+          "progress": 0.3,
+          "dimensions": [
+            1024,
+            1536
+          ],
+          "bytes": 798541,
+          "sha256": "79326495ab279f990860fc858617faa664857b9d0e60ad6bad443ed9b6889787",
+          "reusedFrom": 2
+        }
+      ],
+      "globalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+      "sceneSha256": "f4fbb1eb05659aeb2af4abda6cc351ccc32b223559f43b62acdd46ef706a9ef0",
+      "reviewStatus": "visual-playback-review-required"
+    },
+    {
+      "exerciseId": "front-raise",
+      "status": "draft-awaiting-review",
+      "athleteVersion": "anatomy-neutral-v3",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+      "sceneReference": "docs/exercise-art/masters/front-raise/1.png",
+      "camera": "Fixed near-front three-quarter portrait, 1024x1536",
+      "anchors": [
+        "head",
+        "torso",
+        "pelvis",
+        "legs",
+        "white shoes"
+      ],
+      "equipment": "Two matching modest round black dumbbells",
+      "reviewFindings": [
+        "Generated from the anatomical v3 global identity plus the exercise master. Full leg visibility and smooth neutral pelvis.",
+        "Six native PNG files; matching return configurations reuse a source pose with a distinct lowering cue.",
+        "Not production-approved. Sequential mobile playback, contour stability and equipment dimensions require review.",
+        "Selected poses retain the solid black background and visible leg anatomy.",
+        "Shoulder contour/highlight shape and dumbbell sizing vary across poses and require review before release."
+      ],
+      "frames": [
+        {
+          "frame": 1,
+          "path": "docs/exercise-art/pilots/anatomy-v3/front-raise/1.png",
+          "caption": "SET UP 1/6",
+          "cue": "Stand tall with dumbbells in front of your thighs.",
+          "progress": 0,
+          "dimensions": [
+            1024,
+            1536
+          ],
+          "bytes": 1208449,
+          "sha256": "d46b242df9920b01002f5d04b0810789eb25fed9fe2d130d711c385deeac69b8",
+          "reusedFrom": null
+        },
+        {
+          "frame": 2,
+          "path": "docs/exercise-art/pilots/anatomy-v3/front-raise/2.png",
+          "caption": "BEGIN RAISE 2/6",
+          "cue": "Raise both arms forward without swinging.",
+          "progress": 0.25,
+          "dimensions": [
+            1024,
+            1536
+          ],
+          "bytes": 812022,
+          "sha256": "9bf7e907f3902271d64eb89d71faa90d2669bc8ccc079c6d67da193e0a8434da",
+          "reusedFrom": null
+        },
+        {
+          "frame": 3,
+          "path": "docs/exercise-art/pilots/anatomy-v3/front-raise/3.png",
+          "caption": "RAISE 3/6",
+          "cue": "Keep the same soft bend in your elbows.",
+          "progress": 0.6,
+          "dimensions": [
+            1024,
+            1536
+          ],
+          "bytes": 918401,
+          "sha256": "02b0826579baf0bd6278077ebc453ccad61cd270090b6cd9818a285113576bca",
+          "reusedFrom": null
+        },
+        {
+          "frame": 4,
+          "path": "docs/exercise-art/pilots/anatomy-v3/front-raise/4.png",
+          "caption": "SHOULDER HEIGHT 4/6",
+          "cue": "Stop with your arms at shoulder height.",
+          "progress": 1,
+          "dimensions": [
+            1024,
+            1536
+          ],
+          "bytes": 880243,
+          "sha256": "d7ec7e463285d4a23366c7350ace0937f4e9e98d062f832422f154ee13951db1",
+          "reusedFrom": null
+        },
+        {
+          "frame": 5,
+          "path": "docs/exercise-art/pilots/anatomy-v3/front-raise/5.png",
+          "caption": "LOWER 5/6",
+          "cue": "Lower slowly while keeping your torso still.",
+          "progress": 0.6,
+          "dimensions": [
+            1024,
+            1536
+          ],
+          "bytes": 918401,
+          "sha256": "02b0826579baf0bd6278077ebc453ccad61cd270090b6cd9818a285113576bca",
+          "reusedFrom": 3
+        },
+        {
+          "frame": 6,
+          "path": "docs/exercise-art/pilots/anatomy-v3/front-raise/6.png",
+          "caption": "RETURN 6/6",
+          "cue": "Return toward your thighs under control.",
+          "progress": 0.25,
+          "dimensions": [
+            1024,
+            1536
+          ],
+          "bytes": 812022,
+          "sha256": "9bf7e907f3902271d64eb89d71faa90d2669bc8ccc079c6d67da193e0a8434da",
+          "reusedFrom": 2
+        }
+      ],
+      "globalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+      "sceneSha256": "d46b242df9920b01002f5d04b0810789eb25fed9fe2d130d711c385deeac69b8",
+      "reviewStatus": "visual-playback-review-required"
+    },
+    {
+      "exerciseId": "cuban-press",
+      "status": "draft-awaiting-review",
+      "athleteVersion": "anatomy-neutral-v3",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+      "sceneReference": "docs/exercise-art/masters/cuban-press/1.png",
+      "camera": "Fixed near-front three-quarter portrait, 1024x1536",
+      "anchors": [
+        "head",
+        "torso",
+        "pelvis",
+        "legs",
+        "white shoes"
+      ],
+      "equipment": "Two matching modest round black dumbbells",
+      "reviewFindings": [
+        "Generated from the anatomical v3 global identity plus the exercise master. Full leg visibility and smooth neutral pelvis.",
+        "Six native PNG files; matching return configurations reuse a source pose with a distinct lowering cue.",
+        "Not production-approved. Sequential mobile playback, contour stability and equipment dimensions require review.",
+        "Extra headroom preserves the full overhead dumbbells.",
+        "Top frame changes head and shoe positions slightly; anchor correction or acceptance is outstanding.",
+        "Shoulder geometry and highlight shapes vary with rotation and need technique review."
+      ],
+      "frames": [
+        {
+          "frame": 1,
+          "path": "docs/exercise-art/pilots/anatomy-v3/cuban-press/1.png",
+          "caption": "SET UP 1/6",
+          "cue": "Stand tall with light dumbbells in front of your thighs.",
+          "progress": 0,
+          "dimensions": [
+            1024,
+            1536
+          ],
+          "bytes": 738286,
+          "sha256": "c8261dce54a3424c22abef734e7690e3507024048e7d0436718db20a2e74c8f8",
+          "reusedFrom": null
+        },
+        {
+          "frame": 2,
+          "path": "docs/exercise-art/pilots/anatomy-v3/cuban-press/2.png",
+          "caption": "RAISE ELBOWS 2/6",
+          "cue": "Raise your elbows to shoulder height with wrists below them.",
+          "progress": 0.3,
+          "dimensions": [
+            1024,
+            1536
+          ],
+          "bytes": 679626,
+          "sha256": "1b55ebe3d0893a71c8cb2ad34964d3818a56875db688846fc1dcec9a3d5dbb4b",
+          "reusedFrom": null
+        },
+        {
+          "frame": 3,
+          "path": "docs/exercise-art/pilots/anatomy-v3/cuban-press/3.png",
+          "caption": "ROTATE UP 3/6",
+          "cue": "Rotate your forearms upward while keeping your elbows bent.",
+          "progress": 0.6,
+          "dimensions": [
+            1024,
+            1536
+          ],
+          "bytes": 1052503,
+          "sha256": "bbd71eee00f905442a24825de0488933f3fcaf72fd9537700f00a0a2652e139e",
+          "reusedFrom": null
+        },
+        {
+          "frame": 4,
+          "path": "docs/exercise-art/pilots/anatomy-v3/cuban-press/4.png",
+          "caption": "PRESS 4/6",
+          "cue": "Press overhead without leaning back.",
+          "progress": 1,
+          "dimensions": [
+            1024,
+            1536
+          ],
+          "bytes": 1014025,
+          "sha256": "d68230aaf349c444bc266ce8c7600966d9d0674198abf0194fffb240f6023cd7",
+          "reusedFrom": null
+        },
+        {
+          "frame": 5,
+          "path": "docs/exercise-art/pilots/anatomy-v3/cuban-press/5.png",
+          "caption": "LOWER 5/6",
+          "cue": "Lower the dumbbells to the goalpost position.",
+          "progress": 0.6,
+          "dimensions": [
+            1024,
+            1536
+          ],
+          "bytes": 1052503,
+          "sha256": "bbd71eee00f905442a24825de0488933f3fcaf72fd9537700f00a0a2652e139e",
+          "reusedFrom": 3
+        },
+        {
+          "frame": 6,
+          "path": "docs/exercise-art/pilots/anatomy-v3/cuban-press/6.png",
+          "caption": "ROTATE DOWN 6/6",
+          "cue": "Rotate your forearms down, then lower your elbows to return to the start.",
+          "progress": 0.3,
+          "dimensions": [
+            1024,
+            1536
+          ],
+          "bytes": 679626,
+          "sha256": "1b55ebe3d0893a71c8cb2ad34964d3818a56875db688846fc1dcec9a3d5dbb4b",
+          "reusedFrom": 2
+        }
+      ],
+      "globalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+      "sceneSha256": "c8261dce54a3424c22abef734e7690e3507024048e7d0436718db20a2e74c8f8",
+      "reviewStatus": "corrections-required"
+    },
+    {
+      "exerciseId": "goblet-squat",
+      "status": "draft-awaiting-review",
+      "athleteVersion": "anatomy-neutral-v3",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+      "sceneReference": "docs/exercise-art/masters/goblet-squat/1.png",
+      "camera": "Fixed near-front three-quarter portrait, 1024x1536",
+      "anchors": [
+        "white shoes",
+        "foot contacts",
+        "stance width"
+      ],
+      "equipment": "One vertical modest round black dumbbell cupped at upper head.",
+      "reviewFindings": [
+        "Generated from the anatomical v3 global identity plus the exercise master. Full leg visibility and smooth neutral pelvis.",
+        "Six native PNG files; matching return configurations reuse a source pose with a distinct lowering cue.",
+        "Not production-approved. Sequential mobile playback, contour stability and equipment dimensions require review.",
+        "Foot positions drift slightly upward in the middle and bottom poses; exact anchor correction remains outstanding.",
+        "Dumbbell grip is cupped around the upper head; supporting palm position needs close inspection.",
+        "Bottom pose is deeper than parallel. Depth and pelvis/hip contour need review; no measured angle claims."
+      ],
+      "frames": [
+        {
+          "frame": 1,
+          "path": "docs/exercise-art/pilots/anatomy-v3/goblet-squat/1.png",
+          "caption": "STAND TALL 1/6",
+          "cue": "Hold the dumbbell close to your chest.",
+          "progress": 0,
+          "dimensions": [
+            1024,
+            1536
+          ],
+          "bytes": 906628,
+          "sha256": "17fa5958e214f3bd4ba65f087d820148ff0555e32d2bf0b549a209e11160fe1e",
+          "reusedFrom": null
+        },
+        {
+          "frame": 2,
+          "path": "docs/exercise-art/pilots/anatomy-v3/goblet-squat/2.png",
+          "caption": "BEGIN DESCENT 2/6",
+          "cue": "Bend hips and knees while keeping your heels down.",
+          "progress": 0.25,
+          "dimensions": [
+            1024,
+            1536
+          ],
+          "bytes": 976935,
+          "sha256": "2329ffc1ed31c7aa68cd1a6d6a2130f71da7ba58bb9608022073618b9c48dde4",
+          "reusedFrom": null
+        },
+        {
+          "frame": 3,
+          "path": "docs/exercise-art/pilots/anatomy-v3/goblet-squat/3.png",
+          "caption": "LOWER 3/6",
+          "cue": "Keep your knees following the direction of your toes.",
+          "progress": 0.6,
+          "dimensions": [
+            1024,
+            1536
+          ],
+          "bytes": 1295530,
+          "sha256": "dc6a995bd1f7ce35e0515be7115f070f14b8c2c0b1eeb572211d933fc252eb5a",
+          "reusedFrom": null
+        },
+        {
+          "frame": 4,
+          "path": "docs/exercise-art/pilots/anatomy-v3/goblet-squat/4.png",
+          "caption": "BOTTOM 4/6",
+          "cue": "Stay braced with your chest lifted and feet planted.",
+          "progress": 1,
+          "dimensions": [
+            1024,
+            1536
+          ],
+          "bytes": 779674,
+          "sha256": "38b431ccd8c9bda26b0520249d22f34ee85ec4231809d662484872dda08a900a",
+          "reusedFrom": null
+        },
+        {
+          "frame": 5,
+          "path": "docs/exercise-art/pilots/anatomy-v3/goblet-squat/5.png",
+          "caption": "DRIVE UP 5/6",
+          "cue": "Push through your whole feet to rise.",
+          "progress": 0.6,
+          "dimensions": [
+            1024,
+            1536
+          ],
+          "bytes": 1295530,
+          "sha256": "dc6a995bd1f7ce35e0515be7115f070f14b8c2c0b1eeb572211d933fc252eb5a",
+          "reusedFrom": 3
+        },
+        {
+          "frame": 6,
+          "path": "docs/exercise-art/pilots/anatomy-v3/goblet-squat/6.png",
+          "caption": "FINISH RISING 6/6",
+          "cue": "Finish standing without leaning back.",
+          "progress": 0.25,
+          "dimensions": [
+            1024,
+            1536
+          ],
+          "bytes": 976935,
+          "sha256": "2329ffc1ed31c7aa68cd1a6d6a2130f71da7ba58bb9608022073618b9c48dde4",
+          "reusedFrom": 2
+        }
+      ],
+      "globalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+      "sceneSha256": "17fa5958e214f3bd4ba65f087d820148ff0555e32d2bf0b549a209e11160fe1e",
+      "reviewStatus": "corrections-required"
+    },
+    {
+      "exerciseId": "bodyweight-squat",
+      "status": "draft-awaiting-review",
+      "athleteVersion": "anatomy-neutral-v3",
+      "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+      "sceneReference": "docs/exercise-art/masters/bodyweight-squat/1.png",
+      "camera": "Fixed near-front three-quarter portrait, 1024x1536",
+      "anchors": [
+        "white shoes",
+        "foot contacts",
+        "stance width"
+      ],
+      "equipment": "None; arms forward for balance.",
+      "reviewFindings": [
+        "Generated from the anatomical v3 global identity plus the exercise master. Full leg visibility and smooth neutral pelvis.",
+        "Six native PNG files; matching return configurations reuse a source pose with a distinct lowering cue.",
+        "Not production-approved. Sequential mobile playback, contour stability and equipment dimensions require review.",
+        "The selected early pose received a background-only correction.",
+        "Foot positions drift upward across descent and the bottom pose shifts right. This set fails the fixed-foot review gate and needs correction before production.",
+        "Head and body identity remain similar to the global master; muscle shapes and leg proportions require review."
+      ],
+      "frames": [
+        {
+          "frame": 1,
+          "path": "docs/exercise-art/pilots/anatomy-v3/bodyweight-squat/1.png",
+          "caption": "STAND TALL 1/6",
+          "cue": "Stand tall with both arms held forward.",
+          "progress": 0,
+          "dimensions": [
+            1024,
+            1536
+          ],
+          "bytes": 931860,
+          "sha256": "0e86301b31b68779c10193f0dd63c41109f22d12c4ff128f49caf8604113a442",
+          "reusedFrom": null
+        },
+        {
+          "frame": 2,
+          "path": "docs/exercise-art/pilots/anatomy-v3/bodyweight-squat/2.png",
+          "caption": "BEGIN DESCENT 2/6",
+          "cue": "Bend hips and knees; keep heels grounded.",
+          "progress": 0.25,
+          "dimensions": [
+            1024,
+            1536
+          ],
+          "bytes": 834488,
+          "sha256": "bada6121587345b89b3040c8be0c037f4939d02248cb0a175559fe6a04b598ad",
+          "reusedFrom": null
+        },
+        {
+          "frame": 3,
+          "path": "docs/exercise-art/pilots/anatomy-v3/bodyweight-squat/3.png",
+          "caption": "LOWER 3/6",
+          "cue": "Keep knees following the direction of toes.",
+          "progress": 0.6,
+          "dimensions": [
+            1024,
+            1536
+          ],
+          "bytes": 863764,
+          "sha256": "0296ca5d84a0dc82df0aef34c1cb56a73d82100b39c09b3e3c0e94af045a6a4a",
+          "reusedFrom": null
+        },
+        {
+          "frame": 4,
+          "path": "docs/exercise-art/pilots/anatomy-v3/bodyweight-squat/4.png",
+          "caption": "BOTTOM 4/6",
+          "cue": "Stay braced with your whole feet planted.",
+          "progress": 1,
+          "dimensions": [
+            1024,
+            1536
+          ],
+          "bytes": 1285016,
+          "sha256": "7a42cf583660edeee98cd1a2f9df01131f9d2de7a8ed2dfaf59539d42cee9369",
+          "reusedFrom": null
+        },
+        {
+          "frame": 5,
+          "path": "docs/exercise-art/pilots/anatomy-v3/bodyweight-squat/5.png",
+          "caption": "DRIVE UP 5/6",
+          "cue": "Raise hips and chest together under control.",
+          "progress": 0.6,
+          "dimensions": [
+            1024,
+            1536
+          ],
+          "bytes": 863764,
+          "sha256": "0296ca5d84a0dc82df0aef34c1cb56a73d82100b39c09b3e3c0e94af045a6a4a",
+          "reusedFrom": 3
+        },
+        {
+          "frame": 6,
+          "path": "docs/exercise-art/pilots/anatomy-v3/bodyweight-squat/6.png",
+          "caption": "FINISH RISING 6/6",
+          "cue": "Finish standing without leaning back.",
+          "progress": 0.25,
+          "dimensions": [
+            1024,
+            1536
+          ],
+          "bytes": 834488,
+          "sha256": "bada6121587345b89b3040c8be0c037f4939d02248cb0a175559fe6a04b598ad",
+          "reusedFrom": 2
+        }
+      ],
+      "globalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+      "sceneSha256": "0e86301b31b68779c10193f0dd63c41109f22d12c4ff128f49caf8604113a442",
+      "reviewStatus": "corrections-required"
+    }
+  ]
+}

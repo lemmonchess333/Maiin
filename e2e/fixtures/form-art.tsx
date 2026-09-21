@@ -9,10 +9,11 @@ import { Button } from "../../src/components/ui/Button";
 import batch from "../../docs/exercise-art/BATCH_REVIEW_MANIFEST.json";
 import recovered from "../../docs/exercise-art/RECOVERED_DRAFTS.json";
 import continuation from "../../docs/exercise-art/CONTINUATION_DRAFTS.json";
+import anatomy from "../../docs/exercise-art/ANATOMY_V3_DRAFTS.json";
 
 const batchDrafts = Object.fromEntries(
-  [...batch.completeDraftSets, ...recovered.completeDraftSets, ...continuation.completeDraftSets].map((set) => [
-    `${set.exerciseId} (draft)`,
+  [...batch.completeDraftSets, ...recovered.completeDraftSets, ...continuation.completeDraftSets, ...anatomy.completeDraftSets].map((set) => [
+    `${set.exerciseId}${anatomy.completeDraftSets.includes(set as typeof anatomy.completeDraftSets[number]) ? " (v3 draft)" : " (draft)"}`,
     {
       name: set.exerciseId,
       findings: set.reviewFindings,
@@ -51,7 +52,7 @@ export default function Review() {
   const draft = curlDraft || Boolean(batchDraft);
   const hasReleasedArtwork = Object.hasOwn(
     FORM_ARTWORK,
-    id.replace(/ \(draft\)$/, ""),
+    id.replace(/ \((?:v3 )?draft\)$/, ""),
   );
   const beats = curlDraft
     ? getAuthoredBeats("db-curl")!.map((beat, i) => ({

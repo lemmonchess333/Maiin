@@ -56,6 +56,6 @@ describe("recovered form artwork", () => {
     expect(fixture).toContain('import recovered from "../../docs/exercise-art/RECOVERED_DRAFTS.json"');
     expect(fixture).toContain("...recovered.completeDraftSets");
     expect(audit).toContain('import recovered from "../docs/exercise-art/RECOVERED_DRAFTS.json"');
-    expect(audit).toContain("for (const current of [manifest, recovered, continuation])");
+    expect(audit).toContain("for (const current of [manifest, recovered, continuation, anatomy])");
   });
 });

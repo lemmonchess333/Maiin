@@ -5,6 +5,7 @@ import { EXERCISES } from "../src/lib/exercises";
 import manifest from "../docs/exercise-art/BATCH_REVIEW_MANIFEST.json";
 import recovered from "../docs/exercise-art/RECOVERED_DRAFTS.json";
 import continuation from "../docs/exercise-art/CONTINUATION_DRAFTS.json";
+import anatomy from "../docs/exercise-art/ANATOMY_V3_DRAFTS.json";
 
 // Integrity only. This command never grants visual or technique approval.
 const errors: string[] = [];
@@ -13,11 +14,12 @@ const unique = new Set<string>();
 const root = resolve("docs/exercise-art/pilots");
 let count = 0;
 let bytes = 0;
-for (const current of [manifest, recovered, continuation]) {
+for (const current of [manifest, recovered, continuation, anatomy]) {
   let selected = 0;
   for (const set of current.completeDraftSets) {
-    if (ids.has(set.exerciseId)) errors.push(`${set.exerciseId}: duplicate set`);
-    ids.add(set.exerciseId);
+    const versionKey = `${current === anatomy ? "anatomy-v3" : "legacy"}:${set.exerciseId}`;
+    if (ids.has(versionKey)) errors.push(`${versionKey}: duplicate set`);
+    ids.add(versionKey);
     if (!EXERCISES.some((exercise) => exercise.id === set.exerciseId))
       errors.push(`${set.exerciseId}: unknown exercise`);
     if (set.status !== "draft-awaiting-review" || set.frames.length !== 6)

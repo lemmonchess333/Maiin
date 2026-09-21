@@ -249,10 +249,10 @@
       "exerciseId": "front-raise",
       "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/front-raise/1.png",
-      "status": "superseded-shorts-master",
+      "status": "v3-six-frame-draft-awaiting-review",
       "legacyReference": "public/form-frames/front-raise/1.webp",
-      "visualFinding": "Shorts v2 superseded by owner: rebuild from neutral anatomical v3 master before further frame production.",
-      "sceneSha256": "a909a5987c18dae92fc4c7d379a6ce2c65e329ea21e0b2f0c1f1384fdde30633"
+      "visualFinding": "Rebuilt from anatomical v3. See ANATOMY_V3_DRAFTS.json for selected frames and open review findings.",
+      "sceneSha256": "d46b242df9920b01002f5d04b0810789eb25fed9fe2d130d711c385deeac69b8"
     },
     {
       "exerciseId": "reverse-flyes",
@@ -308,9 +308,9 @@
       "exerciseId": "cuban-press",
       "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/cuban-press/1.png",
-      "status": "superseded-shorts-master",
-      "sceneSha256": "4b7276147968b86c564fadc35dc4b138922c400c7ae395715297e515b773b731",
-      "visualFinding": "Shorts v2 superseded by owner: rebuild from neutral anatomical v3 master before further frame production."
+      "status": "v3-six-frame-draft-awaiting-review",
+      "sceneSha256": "c8261dce54a3424c22abef734e7690e3507024048e7d0436718db20a2e74c8f8",
+      "visualFinding": "Rebuilt from anatomical v3. See ANATOMY_V3_DRAFTS.json for selected frames and open review findings."
     },
     {
       "exerciseId": "lu-raise",
@@ -342,10 +342,10 @@
       "exerciseId": "db-curl",
       "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/db-curl/1.png",
-      "status": "superseded-shorts-master",
+      "status": "v3-six-frame-draft-awaiting-review",
       "legacyReference": "public/form-frames/db-curl/1.webp",
-      "visualFinding": "Shorts v2 superseded by owner: rebuild from neutral anatomical v3 master before further frame production.",
-      "sceneSha256": "2ab934c9b9d2249fab56baac1b7c6df6728785ccdff7b031bde426a2f94ad396"
+      "visualFinding": "Rebuilt from anatomical v3. See ANATOMY_V3_DRAFTS.json for selected frames and open review findings.",
+      "sceneSha256": "d467c18428420cd96dee33b3efc50af04b9551202f792afd8342c2bdd3547867"
     },
     {
       "exerciseId": "incline-db-curl",
@@ -357,10 +357,10 @@
       "exerciseId": "hammer-curl",
       "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/hammer-curl/1.png",
-      "status": "superseded-shorts-master",
+      "status": "v3-six-frame-draft-awaiting-review",
       "legacyReference": "public/form-frames/hammer-curl/1.webp",
-      "visualFinding": "Shorts v2 superseded by owner: rebuild from neutral anatomical v3 master before further frame production.",
-      "sceneSha256": "0663031d356a554193d4aff7765b75a94670d29f803be3efdb402ee3207da263"
+      "visualFinding": "Rebuilt from anatomical v3. See ANATOMY_V3_DRAFTS.json for selected frames and open review findings.",
+      "sceneSha256": "f4fbb1eb05659aeb2af4abda6cc351ccc32b223559f43b62acdd46ef706a9ef0"
     },
     {
       "exerciseId": "cross-body-hammer-curl",
@@ -504,9 +504,10 @@
       "exerciseId": "goblet-squat",
       "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/goblet-squat/1.png",
-      "status": "legacy-master-needs-identity-review",
+      "status": "v3-six-frame-draft-awaiting-review",
       "legacyReference": "public/form-frames/goblet-squat/1.webp",
-      "visualFinding": "Review against anatomical v3 identity and smooth pelvic treatment. Shorts are no longer required."
+      "visualFinding": "Rebuilt from anatomical v3. See ANATOMY_V3_DRAFTS.json for selected frames and open review findings.",
+      "sceneSha256": "17fa5958e214f3bd4ba65f087d820148ff0555e32d2bf0b549a209e11160fe1e"
     },
     {
       "exerciseId": "sissy-squat",
@@ -596,9 +597,10 @@
       "exerciseId": "bodyweight-squat",
       "globalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
       "requiredSceneMaster": "docs/exercise-art/masters/bodyweight-squat/1.png",
-      "status": "legacy-master-needs-identity-review",
+      "status": "v3-six-frame-draft-awaiting-review",
       "legacyReference": "public/form-frames/bodyweight-squat/1.webp",
-      "visualFinding": "Review against anatomical v3 identity and smooth pelvic treatment. Shorts are no longer required."
+      "visualFinding": "Rebuilt from anatomical v3. See ANATOMY_V3_DRAFTS.json for selected frames and open review findings.",
+      "sceneSha256": "0e86301b31b68779c10193f0dd63c41109f22d12c4ff128f49caf8604113a442"
     },
     {
       "exerciseId": "walking-dumbbell-lunges",
