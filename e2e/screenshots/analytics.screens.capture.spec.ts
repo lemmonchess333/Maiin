@@ -333,7 +333,7 @@ test.describe("analytics tab screenshots", () => {
      Both tests above sign up a FRESH account and seed it one run, one
      workout and one meal over REST, so every filmed look at this tab has
      been of a near-cold-start user. The rich seed — 18 workouts, 10
-     runs, 12 meals, 6 performance weeks — writes to the shared
+     runs, 20 meals, 6 performance weeks — writes to the shared
      `e2e-test@tropos.test` account that every OTHER capture spec signs
      in as, and Analytics never looked at it. Running the full CI seed
      chain changes nothing here, because this spec does not use that
