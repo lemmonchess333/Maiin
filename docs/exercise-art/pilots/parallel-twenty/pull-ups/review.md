@@ -1,0 +1,5 @@
+# Pull-ups six-frame candidate
+
+Exact catalogue: overhand grip slightly wider than shoulders, lats primary, biceps/rear delts/core secondary. Canonical v3 anatomical athlete. Built-in imagegen only, canonical+corrected exercise master supplied throughout. Initial portrait/glowing master corrected to square1280 pureblack with contraction headroom. Four native distinct poses: dead hang, early initiation, midpoint, chin above bar. Return5=3 and6=2 mechanically reuse same pose. First requested early pose bent too far, so reclassified as midpoint; actual early pose generated from master with small-angle instruction.
+
+Fixed anchors: bar y183, grips approximately435/815, supports near98/1140. No kipping or leg bend, rear-three-quarter view with profile chin visible, full body and same white trainers. Review concerns: head turn to right and slight torso-length changes across elevations; master elbow extension and overhand thumb wrap need independent confirmation. Candidate only, not production approved; full playback/mobile evidence pending.

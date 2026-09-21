@@ -1,0 +1,34 @@
+[
+  {
+    "frame": 1,
+    "name": "Set your position",
+    "cue": "Pin your hips and thighs; place the roller behind your lower calves."
+  },
+  {
+    "frame": 2,
+    "name": "Begin the curl",
+    "cue": "Grip the handles and curl your heels down."
+  },
+  {
+    "frame": 3,
+    "name": "Curl back",
+    "cue": "Keep your hips still as your heels move back."
+  },
+  {
+    "frame": 4,
+    "name": "Squeeze",
+    "cue": "Finish the curl with your hamstrings; keep your back against the pad."
+  },
+  {
+    "frame": 5,
+    "name": "Controlled return",
+    "cue": "Slowly extend your knees without letting the weight pull you.",
+    "reuses": 3
+  },
+  {
+    "frame": 6,
+    "name": "Maintain tension",
+    "cue": "Continue toward the start without letting the stack touch down.",
+    "reuses": 2
+  }
+]

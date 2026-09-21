@@ -1,0 +1,74 @@
+{
+  "exerciseId": "bicycle-crunch",
+  "status": "six-frame-candidate-needs-review",
+  "approved": false,
+  "issues": [
+    "First opposite-side attempt repeated A and was rejected; targeted correction now clearly extends near leg.",
+    "Six discrete teaching beats with uneven sampling between sides; center is legitimately reused, not a hold.",
+    "Independent still review found opposite pairing plausible; player/mobile playback unverified."
+  ],
+  "frames": [
+    {
+      "frame": 1,
+      "source": "master.png",
+      "sha256": "5d85afbcd8126b9dbcf522018aecab05c2b08be2dd55c69accf230f7e8057afa",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "cue": "Start with hands behind head, knees bent and shoulders lightly raised."
+    },
+    {
+      "frame": 2,
+      "source": "side-a.png",
+      "sha256": "d762e3cc34183219f47b3000466cd032cff2c74acf1bcd1ef1cc8e87cd4e972f",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "cue": "Rotate far elbow toward near knee while extending far leg."
+    },
+    {
+      "frame": 3,
+      "source": "master.png",
+      "sha256": "5d85afbcd8126b9dbcf522018aecab05c2b08be2dd55c69accf230f7e8057afa",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "cue": "Return through center with both knees bent."
+    },
+    {
+      "frame": 4,
+      "source": "side-b.png",
+      "sha256": "11582e20a81c959be2b18660cd9464adb6a0882df735af8530ef2a53be5a09b2",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "cue": "Rotate near elbow toward far knee while extending near leg."
+    },
+    {
+      "frame": 5,
+      "source": "return-b.png",
+      "sha256": "8fcb5835cb41b4b683bc82676ef65a4d069fa041f6a089578a6e112460aa6768",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "cue": "Return toward center under control."
+    },
+    {
+      "frame": 6,
+      "source": "master.png",
+      "sha256": "5d85afbcd8126b9dbcf522018aecab05c2b08be2dd55c69accf230f7e8057afa",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "cue": "Return to centered bent-knee position before repeating."
+    }
+  ],
+  "canonical": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+  "runtimeVerified": false
+}

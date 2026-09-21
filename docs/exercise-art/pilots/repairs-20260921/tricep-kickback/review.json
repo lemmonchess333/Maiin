@@ -1,0 +1,69 @@
+{
+  "exerciseId": "tricep-kickback",
+  "status": "reviewed-unchanged-candidate",
+  "approved": false,
+  "regeneratedFrames": 0,
+  "finding": "Support hand, knee and planted foot remain fixed. Forearm extends from flexed to straight with a consistent held round dumbbell. Endpoint upper arm lifts slightly, which is plausible shoulder movement rather than demonstrated broken anatomy. Playback should determine whether this visually contradicts a keep-upper-arm-still cue. No blind redraw recommended.",
+  "basis": "Native still images inspected in prior batch production and independent review; current sources fingerprinted. No new display measurements claimed.",
+  "outstanding": [
+    "Sequential playback including loop boundary",
+    "Mobile-size light and dark appearance",
+    "Reduced-motion manual navigation"
+  ],
+  "sourceFrames": [
+    {
+      "frame": 1,
+      "path": "docs/exercise-art/pilots/parallel-ten/tricep-kickback/1.png",
+      "sha256": "4d36681dec43cdfde35550e80e7c425d6b584185bf5f97a527a45f536702bc35",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "frame": 2,
+      "path": "docs/exercise-art/pilots/parallel-ten/tricep-kickback/2.png",
+      "sha256": "4da93d4dcdbf81ad5767f0707ff1705fdb5b61a88549e612ade979b9b3787899",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "frame": 3,
+      "path": "docs/exercise-art/pilots/parallel-ten/tricep-kickback/3.png",
+      "sha256": "0c23de2c44d896df53698b64f54f450c9cd9d606e54a9478d2e850b3cfc9bc6f",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "frame": 4,
+      "path": "docs/exercise-art/pilots/parallel-ten/tricep-kickback/4.png",
+      "sha256": "0c23de2c44d896df53698b64f54f450c9cd9d606e54a9478d2e850b3cfc9bc6f",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "frame": 5,
+      "path": "docs/exercise-art/pilots/parallel-ten/tricep-kickback/5.png",
+      "sha256": "4da93d4dcdbf81ad5767f0707ff1705fdb5b61a88549e612ade979b9b3787899",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "frame": 6,
+      "path": "docs/exercise-art/pilots/parallel-ten/tricep-kickback/6.png",
+      "sha256": "4d36681dec43cdfde35550e80e7c425d6b584185bf5f97a527a45f536702bc35",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    }
+  ]
+}

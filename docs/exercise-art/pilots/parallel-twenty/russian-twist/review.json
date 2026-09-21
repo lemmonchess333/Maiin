@@ -1,0 +1,76 @@
+{
+  "exerciseId": "russian-twist",
+  "status": "six-frame-candidate-needs-review",
+  "approved": false,
+  "issues": [
+    "Initial upright master rejected and replaced with reclined master.",
+    "Mid prompt requested away rotation but actual image moves toward near side; sequence and cue describe actual pose.",
+    "Side A appears more upright than master; trunk inclination consistency needs review before release.",
+    "Side A/B halos removed with background-only native edits; anatomy contour variation remains.",
+    "Six discrete teaching phases, center legitimately reused; player/mobile playback unverified."
+  ],
+  "frames": [
+    {
+      "frame": 1,
+      "source": "master.png",
+      "sha256": "bc90d3b9e4cf6c2ac56e7eafb15b21d10b4aae321c93c20334199dc3cbf26261",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "cue": "Sit with feet planted, knees bent and torso reclined."
+    },
+    {
+      "frame": 2,
+      "source": "mid-a.png",
+      "sha256": "cc6435cdbc29c01f8c85db453e5c1f1e95a2d1118d2bcef70c803a58a29488bf",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "cue": "Begin rotating chest and clasped hands toward the near side."
+    },
+    {
+      "frame": 3,
+      "source": "side-a-clean.png",
+      "sha256": "0316e55c07ba1b1d616cc31b662066e5d24e623b00cd04273392bffc384d5643",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "cue": "Rotate toward near hip while keeping feet planted."
+    },
+    {
+      "frame": 4,
+      "source": "master.png",
+      "sha256": "bc90d3b9e4cf6c2ac56e7eafb15b21d10b4aae321c93c20334199dc3cbf26261",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "cue": "Return through center."
+    },
+    {
+      "frame": 5,
+      "source": "side-b-clean.png",
+      "sha256": "f01181dd92bf9d823b2a8fffdafa024b86e09adcace25f591c056e1b34d8f89a",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "cue": "Rotate chest and hands toward the far side."
+    },
+    {
+      "frame": 6,
+      "source": "master.png",
+      "sha256": "bc90d3b9e4cf6c2ac56e7eafb15b21d10b4aae321c93c20334199dc3cbf26261",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "cue": "Return to centered recline before repeating."
+    }
+  ],
+  "canonical": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+  "runtimeVerified": false
+}

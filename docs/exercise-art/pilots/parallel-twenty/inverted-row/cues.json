@@ -1,0 +1,34 @@
+[
+  {
+    "frame": 1,
+    "name": "Hang underneath",
+    "cue": "Use an overhand grip and brace in a straight line from heels to head."
+  },
+  {
+    "frame": 2,
+    "name": "Begin the pull",
+    "cue": "Pull your shoulder blades together and start bending your elbows."
+  },
+  {
+    "frame": 3,
+    "name": "Pull upward",
+    "cue": "Keep your plank as your chest travels toward the bar."
+  },
+  {
+    "frame": 4,
+    "name": "Chest to bar",
+    "cue": "Squeeze your shoulder blades and bring your chest to the bar."
+  },
+  {
+    "frame": 5,
+    "name": "Lower smoothly",
+    "cue": "Lower along the same path without dropping your hips.",
+    "reuses": 3
+  },
+  {
+    "frame": 6,
+    "name": "Finish lowering",
+    "cue": "Continue to full arm extension while keeping your body straight.",
+    "reuses": 2
+  }
+]

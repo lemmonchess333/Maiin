@@ -1,0 +1,87 @@
+{
+  "exerciseId": "reverse-flyes",
+  "status": "six-frame-candidate",
+  "releaseApproved": false,
+  "tool": "built-in image_gen",
+  "reference": "/workspace/scratch/92115cdb9667/tropos-next-exercises/docs/exercise-art/identity/athlete-anatomy-v3.png",
+  "referenceSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+  "prompts": [
+    "Tropos scientific educational anatomical exercise illustration. Exact canonical reference athlete, bald faceless white-grey body with fine dark contours, full leg anatomy visible and white trainers, smooth neutral featureless pelvic center with no garment outlines. Solid black background. One single full-resolution image; no text, no arrows, no collage. Equipment grey realistic compact matching dumbbells. Whole athlete and equipment contained with margins. Reverse dumbbell fly setup. Fixed rear-side three-quarter camera shows both shoulders and hands. Hinge at hips with soft knees and torso almost parallel to floor, spine neutral, hips back. Feet hip width planted. Both arms hanging below chest, palms facing each other, elbows slightly bent. Two equal small hex dumbbells beneath chest. Rear delts strongest purple, rhomboids/traps light lilac. No bench. Landscape 1536x1024 with room to either side for later outstretched arms.",
+    "Image1 canonical identity. Image2 reverse-fly master target. Correct only hip hinge depth: torso should be nearly horizontal, about 15 degrees above floor, chest facing down, neutral spine and neck. Feet/knees same locations, push hips slightly back to lower torso. Arms hang below shoulders with identical dumbbells and soft elbows. Maintain camera, dimensions, body proportions, colors and black background. One full-resolution image no text.",
+    "Image1 canonical athlete identity; image2 exact reverse fly master edit target. Keep head torso hips feet knees and spine pixel positions perfectly fixed. Raise both arms outward sideways halfway, to 45 degrees below shoulder height, soft elbow bend constant. TWO equal dumbbells separate laterally in wide arc; no rowing or elbow flexion. Maintain neutral wrist palms inward as shown. Same camera proportions and black background. Rear delts purple, rhomboids/traps light lilac. Native 1536x1024, no text.",
+    "Image1 canonical; image2 fixed master; image3 raised reverse fly pose. Produce a pose HALFWAY between hanging arms image2 and raised arms image3. ONLY arms and dumbbells move. Preserve exact torso head hips feet knees and camera. Lower both arms about halfway from image3, keeping slight elbow bend, so both weights now hang diagonally outwards below shoulder line, well below top pose. No rowing, no bent elbows beyond master soft bend. Same dumbbells dimensions and colors. One full native 1536x1024 black-background image no text."
+  ],
+  "sourcePaths": [
+    "/workspace/scratch/92115cdb9667/generated_images/exec-6bb6a97d-95cc-4484-8d7f-55597730e175.png",
+    "/workspace/scratch/92115cdb9667/generated_images/exec-99e6c6fd-0db8-4df4-9459-37f89e91a4a6.png",
+    "/workspace/scratch/92115cdb9667/generated_images/exec-077034e9-72e2-47f6-ab04-7285d8978cef.png"
+  ],
+  "cues": [
+    "Hinge forward and let the dumbbells hang below your chest.",
+    "Raise both dumbbells out to the sides with soft elbows.",
+    "Reach shoulder height without lifting your torso.",
+    "Briefly squeeze your rear delts and upper back.",
+    "Lower both dumbbells slowly.",
+    "Return to hanging arms while holding the hinge."
+  ],
+  "cueSha256": "d5040e3bb29ea5f2961cd2c7f449b41d22b9e5478484c679dd070f352e15ea8f",
+  "reuse": {
+    "4": "3 endpoint control/hold",
+    "5": "2 return",
+    "6": "1 return"
+  },
+  "fixedAnchors": [
+    "feet",
+    "camera",
+    "body proportions",
+    "equipment dimensions"
+  ],
+  "sha256": {
+    "frames/2.png": "891dd9449a507a2c2699cee9c6d753cf8928d524998db5427dab2020d6ab1391",
+    "frames/1.png": "8750683025d555799f1f1107cdd45c8d381389a6fd86391f7c9333ca28e7bf52",
+    "frames/4.png": "9b1ad5c9e1f579e7b264161006279cf953d9a4ad95c5d251f46f2a41d9a68efe",
+    "frames/6.png": "8750683025d555799f1f1107cdd45c8d381389a6fd86391f7c9333ca28e7bf52",
+    "frames/5.png": "891dd9449a507a2c2699cee9c6d753cf8928d524998db5427dab2020d6ab1391",
+    "frames/3.png": "9b1ad5c9e1f579e7b264161006279cf953d9a4ad95c5d251f46f2a41d9a68efe",
+    "masters/1.png": "8750683025d555799f1f1107cdd45c8d381389a6fd86391f7c9333ca28e7bf52"
+  },
+  "dimensions": {
+    "frames/2.png": [
+      1536,
+      1024
+    ],
+    "frames/1.png": [
+      1536,
+      1024
+    ],
+    "frames/4.png": [
+      1536,
+      1024
+    ],
+    "frames/6.png": [
+      1536,
+      1024
+    ],
+    "frames/5.png": [
+      1536,
+      1024
+    ],
+    "frames/3.png": [
+      1536,
+      1024
+    ],
+    "masters/1.png": [
+      1536,
+      1024
+    ]
+  },
+  "review": {
+    "singlePoseInspected": true,
+    "playbackVerified": false,
+    "mobileLightDarkVerified": false,
+    "issues": [
+      "Intermediate far-arm travels less than near arm; bilateral symmetry requires correction.",
+      "Perspective makes endpoint arm height hard to judge; mechanical review needed."
+    ]
+  }
+}

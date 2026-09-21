@@ -1,0 +1,26 @@
+{
+  "tool": "built-in image_gen",
+  "canonical": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+  "prompts": [
+    {
+      "id": "ez-bar-curl",
+      "frame": 1,
+      "prompt": "Scientific educational exercise master, one native full-body 1024x1536. Canonical reference same bald faceless white anatomical athlete with neutral featureless pelvis visible anatomical legs and white trainers, fine dark contours. Opaque BLACK background no glow vignette. EZ BAR CURL bottom: standing torso upright feet hip width. Hold a real chrome EZ curl bar at upper thighs, both hands shoulder-width gripping its inward angled zigzag sections in underhand semi-supinated grip. Bar has symmetric shallow angled bends in central shaft and straight outer sleeves; one modest equal round black plate each side, collars. Elbows softly extended beside ribs. Grip anatomically natural. Primary biceps strong purple, forearms pale lilac, other anatomy neutral. Same athlete proportions as reference. Entire equipment and feet in frame. No text collage panels arrows."
+    },
+    {
+      "id": "ez-bar-curl",
+      "frame": 1,
+      "prompt": "Precise equipment-only correction image2 target; image1 canonical. The hands in image2 grip flat portions outside the EZ bar bends. KEEP hands body and scene EXACTLY unchanged. Correct the bar geometry so the inclined grip sections lie WITHIN each hand: each hand encloses a visibly angled diagonal metal section, anatomically comfortable semi-supination. Move outer bends outward under each hand instead of bending only central ungripped section. Real standard symmetric EZ curl bar, shallow opposing angles, rigid fixed overall width and plate positions. No other changes, black background no halo, same 1024x1536."
+    },
+    {
+      "id": "ez-bar-curl",
+      "frame": 3,
+      "prompt": "Precise object edit, image1 canonical identity, image2 EZ curl master. Create TOP curl: bend both elbows keeping upper arms fixed beside ribs and elbow centre height constant. Bring same EZ BAR up near lower shoulders. Wrists in same semi-supinated grip around same angled shaft segments. Rigid exact same EZ bar zigzag bend shape, total width, plate diameters, collars and hand spacing; bar rotates naturally as single rigid object with grip. Do not straighten or enlarge bar. Only forearms hands and attached bar move. Head torso feet pelvis shoulders background exactly unchanged. Black opaque background NO HALO glow or gradients. 1024x1536 native, no text."
+    },
+    {
+      "id": "ez-bar-curl",
+      "frame": 2,
+      "prompt": "Precise object edit. Image1 canonical, image2 fixed master, image3 top endpoint. Draw MIDPOINT EZ bar curl with bar at NAVEL height, forearms approximately horizontal and elbows still beside ribs at original master coordinates. Keep palms semi-supinated under angled grip sections, wrists straight. Same rigid EZ bar exact zigzag bends plate count dimensions length and shoulder grip spacing. Only forearms hands and bar move. Fixed head chest upper arms pelvis legs trainers scene. Solid opaque BLACK background RGB0 NO glow halo vignette. Same 1024x1536, no text."
+    }
+  ]
+}

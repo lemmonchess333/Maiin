@@ -1,0 +1,133 @@
+{
+  "exerciseId": "preacher-curl",
+  "status": "repair-attempt-unresolved-not-release-approved",
+  "releaseApproved": false,
+  "nativeFrameCount": 6,
+  "uniquePoseCount": 3,
+  "master": "master.png",
+  "reference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+  "referenceSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+  "tool": "built-in image_gen",
+  "sequence": "start, intermediate, endpoint, endpoint hold, intermediate return, start return",
+  "fixedAnchors": [
+    "head",
+    "torso",
+    "bench",
+    "support contacts",
+    "shoes"
+  ],
+  "frames": [
+    {
+      "frame": 1,
+      "path": "docs/exercise-art/pilots/parallel-ten/preacher-curl/1.png",
+      "label": "Supported start",
+      "cue": "Rest upper arms on pad; keep elbows soft.",
+      "progress": 0,
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sha256": "758f2896b2f1f2594f41bbc6848d1650e2f7fcea688c0cae6ab3a62269c9da1e",
+      "cueSha256": "722989769e57b7c98d93d065cd958010667aaaf66bff7fd0827a584f430db4db",
+      "reusedFrom": null
+    },
+    {
+      "frame": 2,
+      "path": "docs/exercise-art/pilots/parallel-ten/preacher-curl/2.png",
+      "label": "Curl",
+      "cue": "Curl the bar without lifting your upper arms.",
+      "progress": 0.6,
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sha256": "88b0ca6dc56035bf03837222951fe924bc5f75fd56f002c03028de204d005832",
+      "cueSha256": "2e613d34ec96b45b674e00a5bea949ea1dfb9a343d4d09657616c549522634ba",
+      "reusedFrom": null
+    },
+    {
+      "frame": 3,
+      "path": "docs/exercise-art/pilots/parallel-ten/preacher-curl/3.png",
+      "label": "Top curl",
+      "cue": "Bring the bar up with shoulders still.",
+      "progress": 1,
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sha256": "f61d620c32de3679460b5ac876bfb03b4a2b4177e7cdc4b308cbf53811f6f7f3",
+      "cueSha256": "2644c0aaf42dafd46d4f4b7677a17c292ecdaa8f6325a4b1c40c7800cf9fba58",
+      "reusedFrom": null
+    },
+    {
+      "frame": 4,
+      "path": "docs/exercise-art/pilots/parallel-ten/preacher-curl/4.png",
+      "label": "Brief hold",
+      "cue": "Hold briefly without shrugging or bending wrists.",
+      "progress": 1,
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sha256": "f61d620c32de3679460b5ac876bfb03b4a2b4177e7cdc4b308cbf53811f6f7f3",
+      "cueSha256": "a39214fb50227dc55b04bff7c20995f799eedb254878afe20d571b645ec33e0d",
+      "reusedFrom": 3
+    },
+    {
+      "frame": 5,
+      "path": "docs/exercise-art/pilots/parallel-ten/preacher-curl/5.png",
+      "label": "Controlled lower",
+      "cue": "Lower slowly with upper arms against the pad.",
+      "progress": 0.6,
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sha256": "88b0ca6dc56035bf03837222951fe924bc5f75fd56f002c03028de204d005832",
+      "cueSha256": "0c09384aa6289148c2b01d9597928723c75d47534fbf1bdad478e4cb8c10720f",
+      "reusedFrom": 2
+    },
+    {
+      "frame": 6,
+      "path": "docs/exercise-art/pilots/parallel-ten/preacher-curl/6.png",
+      "label": "Return",
+      "cue": "Stop short of locking your elbows.",
+      "progress": 0,
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sha256": "758f2896b2f1f2594f41bbc6848d1650e2f7fcea688c0cae6ab3a62269c9da1e",
+      "cueSha256": "75a543d1be45d5535c4c2d1e3126e7193888936d724e231fd89edbcb8b8de1cb",
+      "reusedFrom": 1
+    }
+  ],
+  "review": {
+    "staticInspected": true,
+    "sequentialPlaybackVerified": false,
+    "mobileLightDarkVerified": false,
+    "biomechanicalApproval": false,
+    "equipmentApproval": false
+  },
+  "repairPrompts": [
+    "Precise repair: image1 canonical identity, image2 exact master barbell reference, image3 EDIT TARGET halfway preacher curl. Preserve image3 pose, bench, legs, torso, head and elbows. Fix barbell ONLY and grips to preserve master physical bar length, grip separation and plate diameters. Bar is rigid and retains same orientation as master (slight diagonal down to right). Therefore end-to-end projected span approximately 712 pixels, grip centers separated 238 pixels, at original 1536x1024 canvas. Both hands continue hold same shoulder-width underhand grip. Do not shrink bar as it rises. Translate unchanged bar vertically and slightly right according to hand travel. One small equal plate each side as master. No new text; exact same athlete and colors. Do not alter bench geometry."
+  ],
+  "repairResult": {
+    "fixed": [],
+    "unresolved": [
+      "bar projected length/grip span still changes",
+      "repair altered intermediate pose into top pose and was rejected"
+    ],
+    "interpretation": "Projection may account for some scale change as bar moves back toward torso, but no calibrated camera/model establishes consistency; retain unapproved."
+  },
+  "sha256": {
+    "rejected/span-repair.png": "578d8fd2c154c0ac83940c2f0c394cf7bda7c457bddec5e2a0d4fe49366a54f4",
+    "frames/2.png": "88b0ca6dc56035bf03837222951fe924bc5f75fd56f002c03028de204d005832",
+    "frames/1.png": "758f2896b2f1f2594f41bbc6848d1650e2f7fcea688c0cae6ab3a62269c9da1e",
+    "frames/4.png": "f61d620c32de3679460b5ac876bfb03b4a2b4177e7cdc4b308cbf53811f6f7f3",
+    "frames/6.png": "758f2896b2f1f2594f41bbc6848d1650e2f7fcea688c0cae6ab3a62269c9da1e",
+    "frames/5.png": "88b0ca6dc56035bf03837222951fe924bc5f75fd56f002c03028de204d005832",
+    "frames/3.png": "f61d620c32de3679460b5ac876bfb03b4a2b4177e7cdc4b308cbf53811f6f7f3",
+    "masters/1.png": "758f2896b2f1f2594f41bbc6848d1650e2f7fcea688c0cae6ab3a62269c9da1e"
+  }
+}

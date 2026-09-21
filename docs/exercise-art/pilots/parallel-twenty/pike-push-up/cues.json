@@ -1,0 +1,34 @@
+[
+  {
+    "frame": 1,
+    "name": "High pike",
+    "cue": "Walk your feet in and keep your hips high."
+  },
+  {
+    "frame": 2,
+    "name": "Begin lowering",
+    "cue": "Bend your elbows while keeping your hips piked."
+  },
+  {
+    "frame": 3,
+    "name": "Lower with control",
+    "cue": "Lower your head toward the floor in front of your hands."
+  },
+  {
+    "frame": 4,
+    "name": "Bottom",
+    "cue": "Keep your head clear of the floor and your weight through your hands."
+  },
+  {
+    "frame": 5,
+    "name": "Press upward",
+    "cue": "Press back up while maintaining the high pike.",
+    "reuses": 3
+  },
+  {
+    "frame": 6,
+    "name": "Finish pressing",
+    "cue": "Straighten your arms without turning it into a regular push-up.",
+    "reuses": 2
+  }
+]

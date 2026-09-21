@@ -1,0 +1,74 @@
+{
+  "exerciseId": "dead-bug",
+  "status": "six-frame-candidate-needs-review",
+  "approved": false,
+  "issues": [
+    "Half-B initial same-side pairing rejected; targeted edit from full B now preserves far arm/near leg pairing; independent recheck pending.",
+    "Intermediate halos corrected; full A/B pairing independently checked by parent as plausible.",
+    "Discrete six teaching phases; player and mobile playback unverified."
+  ],
+  "frames": [
+    {
+      "frame": 1,
+      "source": "half-a-clean.png",
+      "sha256": "8f674091ebec1672e579b85c03cb6a94c535d520de90ca19a2fa7811accb4d09",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "cue": "Extend near arm and opposite far leg partway, keeping lower back flat."
+    },
+    {
+      "frame": 2,
+      "source": "extension-a.png",
+      "sha256": "5c640e1a54f9526ea75be2db020360dde77f01dcd6f255b253bb420d0922d360",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "cue": "Reach opposite limbs fully without arching the back."
+    },
+    {
+      "frame": 3,
+      "source": "master.png",
+      "sha256": "006de1036cf3e55ad3e8a1cab99444bf2edbab4c12a99735db88c7eef9254ab0",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "cue": "Return both limbs to tabletop."
+    },
+    {
+      "frame": 4,
+      "source": "half-b-corrected.png",
+      "sha256": "16e8b533b08bb7ec79430d5184042c3538ec2416972c88115605e92e4d34f322",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "cue": "Extend far arm and opposite near leg partway."
+    },
+    {
+      "frame": 5,
+      "source": "extension-b.png",
+      "sha256": "3553cb67ba7175eec1cffeecf0f5b6503ce69bd4d73770aaf68c270c16dcef2b",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "cue": "Reach the opposite pair fully, without losing back contact."
+    },
+    {
+      "frame": 6,
+      "source": "master.png",
+      "sha256": "006de1036cf3e55ad3e8a1cab99444bf2edbab4c12a99735db88c7eef9254ab0",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "cue": "Return to tabletop before repeating."
+    }
+  ],
+  "canonical": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+  "runtimeVerified": false
+}

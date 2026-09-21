@@ -1,0 +1,13 @@
+{
+  "cues.json": "6f5ed895dcb5bb73668b5256d618ee3953d4ebede9774ffbd221d0adbdab426f",
+  "frames/1.png": "3fc61a7d7a9ab16bad45aec36f92e10aaafe245b5ce6b848b1be9432fdfc4536",
+  "frames/2.png": "f580aa6e7ee6269cc08dfad0782abc4de061b47df976b3db2a9eb63fc5b1c622",
+  "frames/3.png": "600098492e6f3901781249bc97d12a103fb5ee66ca6ece68637971eeff4b2d19",
+  "frames/4.png": "6923c64f521ea5659723d3568a376b298a0f76b8147116172f39dca52e1d3a53",
+  "frames/5.png": "600098492e6f3901781249bc97d12a103fb5ee66ca6ece68637971eeff4b2d19",
+  "frames/6.png": "f580aa6e7ee6269cc08dfad0782abc4de061b47df976b3db2a9eb63fc5b1c622",
+  "master.png": "3fc61a7d7a9ab16bad45aec36f92e10aaafe245b5ce6b848b1be9432fdfc4536",
+  "prompts.json": "ac9a51856966b233678efb05d283ee07e202c64f0692c7d2b98a7b56884f8b7e",
+  "review.md": "f6bb1431f309f17e7869c10b010d4e1ad643cebdb2c7a45ee4d98bafc8ada767",
+  "../../../identity/athlete-anatomy-v3.png": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+}

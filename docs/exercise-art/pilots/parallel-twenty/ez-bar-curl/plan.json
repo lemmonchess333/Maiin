@@ -1,0 +1,113 @@
+{
+  "exerciseId": "ez-bar-curl",
+  "status": "candidate-needs-review",
+  "releaseApproved": false,
+  "master": "master.png",
+  "canonicalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+  "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+  "masterSha256": "04d2494c58dfd60c7188046667e4a405b1ca95f4d5126a8709034d69e43382a0",
+  "nativeFrameCount": 6,
+  "uniquePoseCount": 3,
+  "fixedAnchors": [
+    "head",
+    "torso",
+    "hips",
+    "feet",
+    "camera"
+  ],
+  "frames": [
+    {
+      "frame": 1,
+      "path": "docs/exercise-art/pilots/parallel-twenty/ez-bar-curl/1.png",
+      "label": "Start",
+      "cue": "Hold the angled sections with palms turned up.",
+      "progress": 0,
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "sha256": "04d2494c58dfd60c7188046667e4a405b1ca95f4d5126a8709034d69e43382a0",
+      "cueSha256": "293edaa877b982d7716c8979139aeda5ca844eabb086415b5bff82d19592982c",
+      "reusedFrom": null
+    },
+    {
+      "frame": 2,
+      "path": "docs/exercise-art/pilots/parallel-twenty/ez-bar-curl/2.png",
+      "label": "Curl",
+      "cue": "Curl upward with elbows beside your ribs.",
+      "progress": 0.5,
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "sha256": "36896cfb04ce1527f61af0bf6c2bfe25a96b26f005b6efc69e3e1a2b99eefde5",
+      "cueSha256": "6e606479da79723eea8516ed25643e80b8b9205953e946ee480e956460a83cc2",
+      "reusedFrom": null
+    },
+    {
+      "frame": 3,
+      "path": "docs/exercise-art/pilots/parallel-twenty/ez-bar-curl/3.png",
+      "label": "Top",
+      "cue": "Keep your wrists straight at the top.",
+      "progress": 1,
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "sha256": "1a477bf141cb887e1df770162aa1e8a8509be6cc51a119b4847d2d79deaffa73",
+      "cueSha256": "9ad19b0d5899801f57ade2c482391acbcec505206734d027d5d6f95948dcdb2e",
+      "reusedFrom": null
+    },
+    {
+      "frame": 4,
+      "path": "docs/exercise-art/pilots/parallel-twenty/ez-bar-curl/4.png",
+      "label": "Brief hold",
+      "cue": "Pause without swinging your upper arms.",
+      "progress": 1,
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "sha256": "1a477bf141cb887e1df770162aa1e8a8509be6cc51a119b4847d2d79deaffa73",
+      "cueSha256": "21653806d22117209e2dd9ada59c4dc79eb945492d59442cf92ec1f28945edea",
+      "reusedFrom": 3
+    },
+    {
+      "frame": 5,
+      "path": "docs/exercise-art/pilots/parallel-twenty/ez-bar-curl/5.png",
+      "label": "Lower",
+      "cue": "Lower the bar slowly under control.",
+      "progress": 0.5,
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "sha256": "36896cfb04ce1527f61af0bf6c2bfe25a96b26f005b6efc69e3e1a2b99eefde5",
+      "cueSha256": "d4cd758fa864f57660cbc7e570769493ac9ce4826f6218d75b673596a830054d",
+      "reusedFrom": 2
+    },
+    {
+      "frame": 6,
+      "path": "docs/exercise-art/pilots/parallel-twenty/ez-bar-curl/6.png",
+      "label": "Return",
+      "cue": "Return toward straight arms without bouncing.",
+      "progress": 0,
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "sha256": "04d2494c58dfd60c7188046667e4a405b1ca95f4d5126a8709034d69e43382a0",
+      "cueSha256": "b20214da71ca403a8dba7573406e77bea151c5ee38caa8f1f70267b8ffde1983",
+      "reusedFrom": 1
+    }
+  ],
+  "reviewFindings": [
+    "First master placed grips outside obvious angled sections. Equipment-only repair moved bar bends outward, but hands still appear near angle junctions; exact angled-section grip and wrist alignment remain unresolved. Rigid bar projection/bend preservation requires independent check. Do not release until grip is clear."
+  ],
+  "staticReview": true,
+  "sequentialPlaybackVerified": false,
+  "mobileLightDarkVerified": false,
+  "reducedMotionVerified": false,
+  "techniqueApproved": false,
+  "equipmentApproved": false
+}

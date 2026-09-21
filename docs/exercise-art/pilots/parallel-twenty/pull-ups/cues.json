@@ -1,0 +1,34 @@
+[
+  {
+    "frame": 1,
+    "name": "Dead hang",
+    "cue": "Hang with an overhand grip slightly wider than your shoulders."
+  },
+  {
+    "frame": 2,
+    "name": "Set your shoulders",
+    "cue": "Pull your shoulder blades down and back to begin."
+  },
+  {
+    "frame": 3,
+    "name": "Pull upward",
+    "cue": "Bring your chest toward the bar without swinging."
+  },
+  {
+    "frame": 4,
+    "name": "Clear the bar",
+    "cue": "Pull until your chin clears the bar, keeping your shoulders down."
+  },
+  {
+    "frame": 5,
+    "name": "Lower with control",
+    "cue": "Lower smoothly along the same path.",
+    "reuses": 3
+  },
+  {
+    "frame": 6,
+    "name": "Return to the hang",
+    "cue": "Continue to full arm extension without bouncing.",
+    "reuses": 2
+  }
+]

@@ -1,0 +1,22 @@
+{
+  "exerciseId": "overhead-extension",
+  "status": "partial-repair-unresolved",
+  "releaseApproved": false,
+  "method": "built-in imagegen",
+  "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+  "frameCount": 2,
+  "failedGate": "bottom elbow drift, attempted correction returned wrong pose",
+  "files": {
+    "REVIEW.md": "fda2310fac6dbcb18848bb4b0c968119169ffac96a95bdb0c8f1f01fd790f0c3",
+    "candidates/bottom-elbow-drift.png": "36690cae1f512be298e7776b1c9c2512f40ea1e41e776944508013b413b7b2ca",
+    "candidates/bottom-tight-headroom.png": "fc6de0353a68420e3335f99d91a350313d0fd4b0aaa726349dc07b5ea9d1ff70",
+    "candidates/middle.png": "92a3b0e2e8ab9cb0d64e254557474c98acead3bf6aa3a66cb8ff8a397adb7f06",
+    "frames/1.png": "173a36970c878fd76eabf78307e955020b7950935739fb7e14530f681ba1ac49",
+    "frames/2.png": "92a3b0e2e8ab9cb0d64e254557474c98acead3bf6aa3a66cb8ff8a397adb7f06",
+    "masters/1.png": "173a36970c878fd76eabf78307e955020b7950935739fb7e14530f681ba1ac49",
+    "prompts.json": "4a10872b1e9ca8772d1090021c8b9a863a48adb2b6c66411611c30be5cf03e0b",
+    "rejected/asymmetric-seated-master.png": "a4208b92b5dcb766f539ef37b91546bbb4c7351c7b3c1e045d6592957758db3f",
+    "rejected/bottom-correction-returned-top.png": "9c3b2136c28f0234cfd0016d6714a5401afe47668e6cd08023af367c35c425c7",
+    "rejected/flared-elbows-rear-master.png": "727d03d1aa475ef9f8b6886b7432689561bb85fec0843fbf3f0e42eecf2cb799"
+  }
+}

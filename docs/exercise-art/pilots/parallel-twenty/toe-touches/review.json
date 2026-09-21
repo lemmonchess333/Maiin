@@ -1,0 +1,73 @@
+{
+  "exerciseId": "toe-touches",
+  "status": "six-frame-candidate-needs-review",
+  "approved": false,
+  "issues": [
+    "Initial and intermediate halo corrected with dedicated background-only edits.",
+    "Full player/mobile verification pending."
+  ],
+  "frames": [
+    {
+      "frame": 1,
+      "source": "master.png",
+      "sha256": "16c5b8f5082cdbca796f5543c348db8b939e8d1064f24f45eb66679866e8a7d8",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "cue": "Set straight legs above hips and arms above chest."
+    },
+    {
+      "frame": 2,
+      "source": "mid.png",
+      "sha256": "6b70795cdb0efd350edab2af04a1ec75426b8a8672a09521e5ce273e1a13efdb",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "cue": "Curl shoulders off mat and reach upward."
+    },
+    {
+      "frame": 3,
+      "source": "top.png",
+      "sha256": "b25fd9d45979dbf1417be0bab0d07ae6fd9ed91d3d1efb7947ecbe2420f8192d",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "cue": "Reach toward toes, keeping hips and legs stable."
+    },
+    {
+      "frame": 4,
+      "source": "top.png",
+      "sha256": "b25fd9d45979dbf1417be0bab0d07ae6fd9ed91d3d1efb7947ecbe2420f8192d",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "cue": "Pause briefly at the top."
+    },
+    {
+      "frame": 5,
+      "source": "mid.png",
+      "sha256": "6b70795cdb0efd350edab2af04a1ec75426b8a8672a09521e5ce273e1a13efdb",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "cue": "Lower shoulders under control."
+    },
+    {
+      "frame": 6,
+      "source": "master.png",
+      "sha256": "16c5b8f5082cdbca796f5543c348db8b939e8d1064f24f45eb66679866e8a7d8",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "cue": "Return shoulders to mat with legs still raised."
+    }
+  ],
+  "canonical": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+  "runtimeVerified": false
+}

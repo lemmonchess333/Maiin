@@ -1,0 +1,116 @@
+{
+  "exerciseId": "zottman-curl",
+  "status": "candidate-needs-review",
+  "releaseApproved": false,
+  "master": "master.png",
+  "canonicalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+  "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+  "masterSha256": "cd2a5187af599f6ce1db8cc475b0ec6243b3f0e415dbad85e48a9028f1aae7f0",
+  "nativeFrameCount": 6,
+  "uniquePoseCount": 6,
+  "fixedAnchors": [
+    "head",
+    "torso",
+    "hips",
+    "feet",
+    "camera"
+  ],
+  "frames": [
+    {
+      "frame": 1,
+      "path": "docs/exercise-art/pilots/parallel-twenty/zottman-curl/1.png",
+      "label": "Palms forward",
+      "cue": "Start with palms forward and elbows soft.",
+      "progress": 0,
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "sha256": "cd2a5187af599f6ce1db8cc475b0ec6243b3f0e415dbad85e48a9028f1aae7f0",
+      "cueSha256": "f29b6cb180c7bc3c3ccbbd1832b80750cd5e0cff7f36f38ef1f3a90d2e876708",
+      "reusedFrom": null
+    },
+    {
+      "frame": 2,
+      "path": "docs/exercise-art/pilots/parallel-twenty/zottman-curl/2.png",
+      "label": "Curl palms up",
+      "cue": "Curl with your palms facing upward.",
+      "progress": 0.5,
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "sha256": "5191003649fd210c9767ab8551531b615122aa70efc517e451f048a661ad306c",
+      "cueSha256": "4b3d83bf3b84f6c3486d12d6ef06b854853724b8dd1f631caf4ae07c13ab85fa",
+      "reusedFrom": null
+    },
+    {
+      "frame": 3,
+      "path": "docs/exercise-art/pilots/parallel-twenty/zottman-curl/3.png",
+      "label": "Top palms up",
+      "cue": "Finish the curl without lifting your elbows.",
+      "progress": 1,
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "sha256": "109346777572436060bc281af9272e5ec5eaf73ddf24ea002330cea2edf1bb81",
+      "cueSha256": "4ecfa7b11720790976b511340d6cf53dec79e7022b1619c7bad4cc80925825f5",
+      "reusedFrom": null
+    },
+    {
+      "frame": 4,
+      "path": "docs/exercise-art/pilots/parallel-twenty/zottman-curl/4.png",
+      "label": "Rotate grip",
+      "cue": "Turn palms away while keeping wrists straight.",
+      "progress": 1,
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "sha256": "1d320e39c6b8056251c149c59bca88ad55c4f4e301483580d1e5933aeedb372b",
+      "cueSha256": "f07927492c3725d575fff4f566b071666cb31e6c8135a0d523dfbe262712368d",
+      "reusedFrom": null
+    },
+    {
+      "frame": 5,
+      "path": "docs/exercise-art/pilots/parallel-twenty/zottman-curl/5.png",
+      "label": "Lower palms down",
+      "cue": "Lower slowly with your palms facing down.",
+      "progress": 0.5,
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "sha256": "128ef4491f931bdff4987c81f94d32f504c49fc14d6488bed54a4e1cfb0dbd69",
+      "cueSha256": "fdca9432bc95d05ce59b253086f01ae1b05894b7634f45a0f078a6590db40a45",
+      "reusedFrom": null
+    },
+    {
+      "frame": 6,
+      "path": "docs/exercise-art/pilots/parallel-twenty/zottman-curl/6.png",
+      "label": "Bottom pronated",
+      "cue": "Finish lowering, then turn palms forward.",
+      "progress": 0,
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "sha256": "1e758956b04fff2b9e601c0f4b02a39777562debba44580f2db1c71ea685b368",
+      "cueSha256": "243e94d5443bea657989c4e00df1c36209a34d0687cd97f2930e8a30a33266fd",
+      "reusedFrom": null
+    }
+  ],
+  "reviewFindings": [
+    "Six genuinely different phases include top forearm rotation and separate palms-down lowering. Lowering initially removed biceps purple; targeted color-only repair restored primary shading. Bottom pronated frame has more purple wrist/hand tint than master. Dumbbell spacing/projection changes with arm travel, and grip anatomy plus exact dimensions require review. 6-to-1 is deliberate forearm rotation at bottom, not identical endpoint."
+  ],
+  "staticReview": true,
+  "sequentialPlaybackVerified": false,
+  "mobileLightDarkVerified": false,
+  "reducedMotionVerified": false,
+  "techniqueApproved": false,
+  "equipmentApproved": false,
+  "targetedRepairNotes": [
+    "Frame6 targeted color-only correction accepted as candidate replacement: wrists/hands now neutral white, forearm/biceps highlights retained. Bottom pronated phase, dumbbells, body and fixed feet retained. Original saved superseded-6-hand-color.png. Frame5 wrist finding remains open. No release approval."
+  ]
+}

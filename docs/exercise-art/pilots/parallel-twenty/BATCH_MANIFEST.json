@@ -1,0 +1,1372 @@
+{
+  "batch": "parallel-twenty-20260921",
+  "exerciseCount": 21,
+  "completeDraftSets": 20,
+  "releaseApprovedSets": 0,
+  "frameFiles": 122,
+  "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+  "codeValidation": {
+    "lint": "passed",
+    "build": "passed",
+    "activeTestsPassed": 9697,
+    "skippedTests": 347
+  },
+  "playback": "App/mobile playback unverified; browser blocked local review URL.",
+  "note": "Native files include explicitly documented matching return or hold reuse. File completeness is not release approval.",
+  "exercises": [
+    {
+      "exerciseId": "cross-body-hammer-curl",
+      "status": "six-frame-draft",
+      "releaseApproved": false,
+      "frames": [
+        {
+          "frame": 1,
+          "path": "cross-body-hammer-curl/1.png",
+          "sha256": "db8bc952f27bfbe36adc488f9dfbb49a5c51a0b9c97c0d9b3ad4a9ddaf2ccab1",
+          "dimensions": [
+            1024,
+            1536
+          ]
+        },
+        {
+          "frame": 2,
+          "path": "cross-body-hammer-curl/2.png",
+          "sha256": "93388ea12fd2d6e76b12ae9db2107dda8e846be0830866939328a1f9b9df7d9f",
+          "dimensions": [
+            1024,
+            1536
+          ]
+        },
+        {
+          "frame": 3,
+          "path": "cross-body-hammer-curl/3.png",
+          "sha256": "8bf15243546b582815b7040416600a3bddb3312a985a647c1375a58149aed21d",
+          "dimensions": [
+            1024,
+            1536
+          ]
+        },
+        {
+          "frame": 4,
+          "path": "cross-body-hammer-curl/4.png",
+          "sha256": "8bf15243546b582815b7040416600a3bddb3312a985a647c1375a58149aed21d",
+          "dimensions": [
+            1024,
+            1536
+          ]
+        },
+        {
+          "frame": 5,
+          "path": "cross-body-hammer-curl/5.png",
+          "sha256": "93388ea12fd2d6e76b12ae9db2107dda8e846be0830866939328a1f9b9df7d9f",
+          "dimensions": [
+            1024,
+            1536
+          ]
+        },
+        {
+          "frame": 6,
+          "path": "cross-body-hammer-curl/6.png",
+          "sha256": "db8bc952f27bfbe36adc488f9dfbb49a5c51a0b9c97c0d9b3ad4a9ddaf2ccab1",
+          "dimensions": [
+            1024,
+            1536
+          ]
+        }
+      ],
+      "uniquePoseFiles": 3,
+      "reviewFiles": [
+        "cross-body-hammer-curl/REVIEW.md"
+      ],
+      "reviewText": "# cross-body-hammer-curl draft review\n\nSix native 1024x1536 images and one exercise master. Three unique generated poses; frame4 intentionally holds frame3, frame5 reuses2, frame6 reuses1. No claim of six unique poses.\n\nDemonstrates one arm only; cue explicitly alternates arms after this rep. Far arm remains down. Near upper-arm/elbow outline changes slightly in top/midpoint and requires measured review; rendered neutral grip is visible. No claim of exact elbow registration.\n\nIndividual source images statically inspected. Fixed body/scene broadly retained, but no biomechanical or release approval. Sequential playback, full anchor/equipment measurement and mobile light/dark/reduced-motion review remain outstanding. No app registry edits.\n"
+    },
+    {
+      "exerciseId": "reverse-barbell-curl",
+      "status": "six-frame-draft",
+      "releaseApproved": false,
+      "frames": [
+        {
+          "frame": 1,
+          "path": "reverse-barbell-curl/1.png",
+          "sha256": "a0fc2362b18875b217f3a489eed13dd82ffac8c702a4a8493c9352e0040c9c22",
+          "dimensions": [
+            1024,
+            1536
+          ]
+        },
+        {
+          "frame": 2,
+          "path": "reverse-barbell-curl/2.png",
+          "sha256": "80c529bdb3c93d56c7679f9c39355d7567bcddf2f923c308cd46c371f2414b57",
+          "dimensions": [
+            1024,
+            1536
+          ]
+        },
+        {
+          "frame": 3,
+          "path": "reverse-barbell-curl/3.png",
+          "sha256": "9f6ec799ef9ee8e3f549b3130b52418425965e9ce4ab21513faf776ceae7019c",
+          "dimensions": [
+            1024,
+            1536
+          ]
+        },
+        {
+          "frame": 4,
+          "path": "reverse-barbell-curl/4.png",
+          "sha256": "9f6ec799ef9ee8e3f549b3130b52418425965e9ce4ab21513faf776ceae7019c",
+          "dimensions": [
+            1024,
+            1536
+          ]
+        },
+        {
+          "frame": 5,
+          "path": "reverse-barbell-curl/5.png",
+          "sha256": "80c529bdb3c93d56c7679f9c39355d7567bcddf2f923c308cd46c371f2414b57",
+          "dimensions": [
+            1024,
+            1536
+          ]
+        },
+        {
+          "frame": 6,
+          "path": "reverse-barbell-curl/6.png",
+          "sha256": "a0fc2362b18875b217f3a489eed13dd82ffac8c702a4a8493c9352e0040c9c22",
+          "dimensions": [
+            1024,
+            1536
+          ]
+        }
+      ],
+      "uniquePoseFiles": 3,
+      "reviewFiles": [
+        "reverse-barbell-curl/REVIEW.md"
+      ],
+      "reviewText": "# reverse-barbell-curl draft review\n\nSix native 1024x1536 images and one exercise master. Three unique generated poses; frame4 intentionally holds frame3, frame5 reuses2, frame6 reuses1. No claim of six unique poses.\n\nTop grey halo rejected and repaired by background-only edit. Overhand hand backs are visible throughout. Forearm proportions and wrist bend at midpoint require review; top bar projection is more horizontal than initial bar, so pixel lengths alone are insufficient evidence of scaling.\n\nIndividual source images statically inspected. Fixed body/scene broadly retained, but no biomechanical or release approval. Sequential playback, full anchor/equipment measurement and mobile light/dark/reduced-motion review remain outstanding. No app registry edits.\n\n## Independent QA targeted correction\n\nOne targeted wrist correction attempted. Body, phase and equipment retained, but hands still visibly droop relative to forearms; correction insufficient. Saved rejected-midpoint-wrist-repair.png. Numeric frames2 and5 unchanged; wrist finding remains open.\n"
+    },
+    {
+      "exerciseId": "ez-bar-curl",
+      "status": "six-frame-draft",
+      "releaseApproved": false,
+      "frames": [
+        {
+          "frame": 1,
+          "path": "ez-bar-curl/1.png",
+          "sha256": "04d2494c58dfd60c7188046667e4a405b1ca95f4d5126a8709034d69e43382a0",
+          "dimensions": [
+            1024,
+            1536
+          ]
+        },
+        {
+          "frame": 2,
+          "path": "ez-bar-curl/2.png",
+          "sha256": "36896cfb04ce1527f61af0bf6c2bfe25a96b26f005b6efc69e3e1a2b99eefde5",
+          "dimensions": [
+            1024,
+            1536
+          ]
+        },
+        {
+          "frame": 3,
+          "path": "ez-bar-curl/3.png",
+          "sha256": "1a477bf141cb887e1df770162aa1e8a8509be6cc51a119b4847d2d79deaffa73",
+          "dimensions": [
+            1024,
+            1536
+          ]
+        },
+        {
+          "frame": 4,
+          "path": "ez-bar-curl/4.png",
+          "sha256": "1a477bf141cb887e1df770162aa1e8a8509be6cc51a119b4847d2d79deaffa73",
+          "dimensions": [
+            1024,
+            1536
+          ]
+        },
+        {
+          "frame": 5,
+          "path": "ez-bar-curl/5.png",
+          "sha256": "36896cfb04ce1527f61af0bf6c2bfe25a96b26f005b6efc69e3e1a2b99eefde5",
+          "dimensions": [
+            1024,
+            1536
+          ]
+        },
+        {
+          "frame": 6,
+          "path": "ez-bar-curl/6.png",
+          "sha256": "04d2494c58dfd60c7188046667e4a405b1ca95f4d5126a8709034d69e43382a0",
+          "dimensions": [
+            1024,
+            1536
+          ]
+        }
+      ],
+      "uniquePoseFiles": 3,
+      "reviewFiles": [
+        "ez-bar-curl/REVIEW.md"
+      ],
+      "reviewText": "# ez-bar-curl draft review\n\nSix native 1024x1536 images and one exercise master. Three unique generated poses; frame4 intentionally holds frame3, frame5 reuses2, frame6 reuses1. No claim of six unique poses.\n\nFirst master placed grips outside obvious angled sections. Equipment-only repair moved bar bends outward, but hands still appear near angle junctions; exact angled-section grip and wrist alignment remain unresolved. Rigid bar projection/bend preservation requires independent check. Do not release until grip is clear.\n\nIndividual source images statically inspected. Fixed body/scene broadly retained, but no biomechanical or release approval. Sequential playback, full anchor/equipment measurement and mobile light/dark/reduced-motion review remain outstanding. No app registry edits.\n"
+    },
+    {
+      "exerciseId": "zottman-curl",
+      "status": "six-frame-draft",
+      "releaseApproved": false,
+      "frames": [
+        {
+          "frame": 1,
+          "path": "zottman-curl/1.png",
+          "sha256": "cd2a5187af599f6ce1db8cc475b0ec6243b3f0e415dbad85e48a9028f1aae7f0",
+          "dimensions": [
+            1024,
+            1536
+          ]
+        },
+        {
+          "frame": 2,
+          "path": "zottman-curl/2.png",
+          "sha256": "5191003649fd210c9767ab8551531b615122aa70efc517e451f048a661ad306c",
+          "dimensions": [
+            1024,
+            1536
+          ]
+        },
+        {
+          "frame": 3,
+          "path": "zottman-curl/3.png",
+          "sha256": "109346777572436060bc281af9272e5ec5eaf73ddf24ea002330cea2edf1bb81",
+          "dimensions": [
+            1024,
+            1536
+          ]
+        },
+        {
+          "frame": 4,
+          "path": "zottman-curl/4.png",
+          "sha256": "1d320e39c6b8056251c149c59bca88ad55c4f4e301483580d1e5933aeedb372b",
+          "dimensions": [
+            1024,
+            1536
+          ]
+        },
+        {
+          "frame": 5,
+          "path": "zottman-curl/5.png",
+          "sha256": "128ef4491f931bdff4987c81f94d32f504c49fc14d6488bed54a4e1cfb0dbd69",
+          "dimensions": [
+            1024,
+            1536
+          ]
+        },
+        {
+          "frame": 6,
+          "path": "zottman-curl/6.png",
+          "sha256": "1e758956b04fff2b9e601c0f4b02a39777562debba44580f2db1c71ea685b368",
+          "dimensions": [
+            1024,
+            1536
+          ]
+        }
+      ],
+      "uniquePoseFiles": 6,
+      "reviewFiles": [
+        "zottman-curl/REVIEW.md"
+      ],
+      "reviewText": "# zottman-curl draft review\n\nSix native 1024x1536 images and one exercise master. Six unique generated poses; top and bottom grip changes are explicit.\n\nSix genuinely different phases include top forearm rotation and separate palms-down lowering. Lowering initially removed biceps purple; targeted color-only repair restored primary shading. Bottom pronated frame has more purple wrist/hand tint than master. Dumbbell spacing/projection changes with arm travel, and grip anatomy plus exact dimensions require review. 6-to-1 is deliberate forearm rotation at bottom, not identical endpoint.\n\nIndividual source images statically inspected. Fixed body/scene broadly retained, but no biomechanical or release approval. Sequential playback, full anchor/equipment measurement and mobile light/dark/reduced-motion review remain outstanding. No app registry edits.\n\n## Independent QA targeted correction\n\nFrame6 targeted color-only correction accepted as candidate replacement: wrists/hands now neutral white, forearm/biceps highlights retained. Bottom pronated phase, dumbbells, body and fixed feet retained. Original saved superseded-6-hand-color.png. Frame5 wrist finding remains open. No release approval.\n"
+    },
+    {
+      "exerciseId": "reverse-flyes",
+      "status": "six-frame-draft",
+      "releaseApproved": false,
+      "frames": [
+        {
+          "frame": 1,
+          "path": "reverse-flyes/frames/1.png",
+          "sha256": "8750683025d555799f1f1107cdd45c8d381389a6fd86391f7c9333ca28e7bf52",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "frame": 2,
+          "path": "reverse-flyes/frames/2.png",
+          "sha256": "891dd9449a507a2c2699cee9c6d753cf8928d524998db5427dab2020d6ab1391",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "frame": 3,
+          "path": "reverse-flyes/frames/3.png",
+          "sha256": "9b1ad5c9e1f579e7b264161006279cf953d9a4ad95c5d251f46f2a41d9a68efe",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "frame": 4,
+          "path": "reverse-flyes/frames/4.png",
+          "sha256": "9b1ad5c9e1f579e7b264161006279cf953d9a4ad95c5d251f46f2a41d9a68efe",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "frame": 5,
+          "path": "reverse-flyes/frames/5.png",
+          "sha256": "891dd9449a507a2c2699cee9c6d753cf8928d524998db5427dab2020d6ab1391",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "frame": 6,
+          "path": "reverse-flyes/frames/6.png",
+          "sha256": "8750683025d555799f1f1107cdd45c8d381389a6fd86391f7c9333ca28e7bf52",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        }
+      ],
+      "uniquePoseFiles": 3,
+      "reviewFiles": [
+        "reverse-flyes/REVIEW.md"
+      ],
+      "reviewText": "# reverse-flyes candidate\n\nSix native frames using three distinct joint configurations with explicit endpoint/return reuse. Not release approved.\n\n- Intermediate far-arm travels less than near arm; bilateral symmetry requires correction.\n- Perspective makes endpoint arm height hard to judge; mechanical review needed.\n\nPlayback/mobile QA pending.\n"
+    },
+    {
+      "exerciseId": "shrugs",
+      "status": "six-frame-draft",
+      "releaseApproved": false,
+      "frames": [
+        {
+          "frame": 1,
+          "path": "shrugs/frames/1.png",
+          "sha256": "657bf5f55e9a4d9d8f368b145f95f8689550236567d3b545df34dcb408ef4838",
+          "dimensions": [
+            1024,
+            1536
+          ]
+        },
+        {
+          "frame": 2,
+          "path": "shrugs/frames/2.png",
+          "sha256": "2dcfab94c3871c479ab6f1545912afe74de69f15331e43ec3a51927833119f5f",
+          "dimensions": [
+            1024,
+            1536
+          ]
+        },
+        {
+          "frame": 3,
+          "path": "shrugs/frames/3.png",
+          "sha256": "9b056c7c0dcfd80c49d015ca9235c42d521c548633fb2009972572d2bd2dc9fe",
+          "dimensions": [
+            1024,
+            1536
+          ]
+        },
+        {
+          "frame": 4,
+          "path": "shrugs/frames/4.png",
+          "sha256": "9b056c7c0dcfd80c49d015ca9235c42d521c548633fb2009972572d2bd2dc9fe",
+          "dimensions": [
+            1024,
+            1536
+          ]
+        },
+        {
+          "frame": 5,
+          "path": "shrugs/frames/5.png",
+          "sha256": "2dcfab94c3871c479ab6f1545912afe74de69f15331e43ec3a51927833119f5f",
+          "dimensions": [
+            1024,
+            1536
+          ]
+        },
+        {
+          "frame": 6,
+          "path": "shrugs/frames/6.png",
+          "sha256": "657bf5f55e9a4d9d8f368b145f95f8689550236567d3b545df34dcb408ef4838",
+          "dimensions": [
+            1024,
+            1536
+          ]
+        }
+      ],
+      "uniquePoseFiles": 3,
+      "reviewFiles": [
+        "shrugs/REVIEW.md"
+      ],
+      "reviewText": "# shrugs candidate\n\nSix native frames using three distinct joint configurations with explicit endpoint/return reuse. Not release approved.\n\n- Minor contour shifts remain; static inspected, playback not verified.\n\nPlayback/mobile QA pending.\n"
+    },
+    {
+      "exerciseId": "db-rdl",
+      "status": "six-frame-draft",
+      "releaseApproved": false,
+      "frames": [
+        {
+          "frame": 1,
+          "path": "db-rdl/frames/1.png",
+          "sha256": "b389f9624fe16ee63eb8a25f690f47f96d9ed2015d6b7f0370a12fadfaad9362",
+          "dimensions": [
+            1024,
+            1536
+          ]
+        },
+        {
+          "frame": 2,
+          "path": "db-rdl/frames/2.png",
+          "sha256": "5a4b5f6fb11c125b0afeb49ae96883b24486e19b2ca51c63097f392aa3b22c2a",
+          "dimensions": [
+            1024,
+            1536
+          ]
+        },
+        {
+          "frame": 3,
+          "path": "db-rdl/frames/3.png",
+          "sha256": "298488194d228132bfc880ba54928eab5b587dbd80e6980cfe66aea86f057288",
+          "dimensions": [
+            1024,
+            1536
+          ]
+        },
+        {
+          "frame": 4,
+          "path": "db-rdl/frames/4.png",
+          "sha256": "298488194d228132bfc880ba54928eab5b587dbd80e6980cfe66aea86f057288",
+          "dimensions": [
+            1024,
+            1536
+          ]
+        },
+        {
+          "frame": 5,
+          "path": "db-rdl/frames/5.png",
+          "sha256": "5a4b5f6fb11c125b0afeb49ae96883b24486e19b2ca51c63097f392aa3b22c2a",
+          "dimensions": [
+            1024,
+            1536
+          ]
+        },
+        {
+          "frame": 6,
+          "path": "db-rdl/frames/6.png",
+          "sha256": "b389f9624fe16ee63eb8a25f690f47f96d9ed2015d6b7f0370a12fadfaad9362",
+          "dimensions": [
+            1024,
+            1536
+          ]
+        }
+      ],
+      "uniquePoseFiles": 3,
+      "reviewFiles": [
+        "db-rdl/REVIEW.md"
+      ],
+      "reviewText": "# db-rdl candidate\n\nSix native frames using three distinct joint configurations with explicit endpoint/return reuse. Not release approved.\n\n- Feet shift by tens of pixels between poses; fixed-anchor invariant fails release.\n- Bottom weights remain near upper shin; cue correctly uses comfortable stretch, no claim of exact mid-shin.\n\nPlayback/mobile QA pending.\n"
+    },
+    {
+      "exerciseId": "decline-db-press",
+      "status": "six-frame-draft",
+      "releaseApproved": false,
+      "frames": [
+        {
+          "frame": 1,
+          "path": "decline-db-press/frames/1.png",
+          "sha256": "830e113ae9ea7ed40b4c71ca2b48f7c4029e3366eccd1f8de44fb41f00e5004d",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "frame": 2,
+          "path": "decline-db-press/frames/2.png",
+          "sha256": "9a3e151fe70326911bfbcfe039df92c4c142fe8a31f2cb27ac0b3fd198199587",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "frame": 3,
+          "path": "decline-db-press/frames/3.png",
+          "sha256": "10edcb5b5db2ab07ea4b263d29a4281933d41b9768895ecd563c3fea059e3cd0",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "frame": 4,
+          "path": "decline-db-press/frames/4.png",
+          "sha256": "10edcb5b5db2ab07ea4b263d29a4281933d41b9768895ecd563c3fea059e3cd0",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "frame": 5,
+          "path": "decline-db-press/frames/5.png",
+          "sha256": "9a3e151fe70326911bfbcfe039df92c4c142fe8a31f2cb27ac0b3fd198199587",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "frame": 6,
+          "path": "decline-db-press/frames/6.png",
+          "sha256": "830e113ae9ea7ed40b4c71ca2b48f7c4029e3366eccd1f8de44fb41f00e5004d",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        }
+      ],
+      "uniquePoseFiles": 3,
+      "reviewFiles": [
+        "decline-db-press/REVIEW.md"
+      ],
+      "reviewText": "# decline-db-press candidate\n\nSix native frames using three distinct joint configurations and explicit endpoint/return reuse. Not release approved.\n\n- Top pose dumbbell ends overlap in projection; verify separation and rigid equipment.\n- Small bench hardware details vary between poses; structural review pending.\n- Chest color covers broad pectoral area rather than narrowly lower fibers; qualitative highlighting only.\n\nPlayback/mobile QA pending.\n"
+    },
+    {
+      "exerciseId": "bodyweight-lunge",
+      "status": "six-frame-draft",
+      "releaseApproved": false,
+      "frames": [
+        {
+          "frame": 1,
+          "path": "bodyweight-lunge/frames/1.png",
+          "sha256": "8040087e43e7b1d8b6457977853e6bfb1ed08ef5b7f565dfb1e38505d146c2ff",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "frame": 2,
+          "path": "bodyweight-lunge/frames/2.png",
+          "sha256": "b2f69b59320053254d476462a0c4f1035e21c255c8f9760d8b8471845b802a47",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "frame": 3,
+          "path": "bodyweight-lunge/frames/3.png",
+          "sha256": "a40c508ddcbef841ce27af294dda820955a9eb95ea7992f7ff58e43e0f1ae931",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "frame": 4,
+          "path": "bodyweight-lunge/frames/4.png",
+          "sha256": "1c946589506139a88e3b91af9d61c2fe32978eead0410369e78250efce3624c4",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "frame": 5,
+          "path": "bodyweight-lunge/frames/5.png",
+          "sha256": "a40c508ddcbef841ce27af294dda820955a9eb95ea7992f7ff58e43e0f1ae931",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "frame": 6,
+          "path": "bodyweight-lunge/frames/6.png",
+          "sha256": "8040087e43e7b1d8b6457977853e6bfb1ed08ef5b7f565dfb1e38505d146c2ff",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        }
+      ],
+      "uniquePoseFiles": 4,
+      "reviewFiles": [
+        "bodyweight-lunge/REVIEW.md"
+      ],
+      "reviewText": "# Bodyweight lunge \u2014 six-frame candidate, rework required\n\nSix native 1536\u00d71024 PNG files, four unique poses. Hands stay on hips and no load is present. Frames 5 and 6 reuse midpoint and standing start respectively, matching controlled return then reset before alternating sides.\n\nKnown defects: bottom rear knee is more open than the catalogue's near-90-degree bend; intermediate phase is close to bottom, so timing is uneven. Rear-foot displacement during the initial stepping action is not itself classified as a planted-support failure; both feet may reposition naturally during that transition. Static images alone do not prove a slide. These remaining mechanics/spacing gates prevent public approval.\n\nIndividual images reviewed; actual app playback and mobile evidence unverified. Prompt provenance and hashes retained. No public or registry changes.\n"
+    },
+    {
+      "exerciseId": "single-leg-calf-raise",
+      "status": "incomplete-pilot",
+      "releaseApproved": false,
+      "frames": [
+        {
+          "frame": 1,
+          "path": "single-leg-calf-raise/frames/1.png",
+          "sha256": "fbebd81cfce565ab461ccf22279a7c109d3131fe0bb2358512de271904e0e558",
+          "dimensions": [
+            1024,
+            1536
+          ]
+        },
+        {
+          "frame": 2,
+          "path": "single-leg-calf-raise/frames/2.png",
+          "sha256": "c85edb027cb2d983c9880458bb3c74d314463b890a1f220511880bfabf08dadd",
+          "dimensions": [
+            1024,
+            1536
+          ]
+        }
+      ],
+      "uniquePoseFiles": 2,
+      "reviewFiles": [
+        "single-leg-calf-raise/REVIEW.md"
+      ],
+      "reviewText": "# Single-leg calf raise \u2014 partial, rework required\n\nMaster and two movement attempts are saved. The first master had unwanted glow and too little headroom; a composition correction resolved both. Subsequent plantarflexion edits shifted the stationary step/rail by roughly 30 pixels and changed body rise disproportionately. A targeted anchor correction restored the equipment but did not produce consistent skeleton motion. The next pose again shifted anchors, so this method was stopped.\n\nThis is not a six-frame set and is not approved for public use. Three unique outputs are retained as evidence. No padding or repeated files were used to imply completion. Only frames 1 and 2 exist at numeric names; frame 3 is explicitly rejected.\n\nPlanned six cues are provenance only. Playback and mobile evidence unverified. No public or registry changes.\n\nReview clarification: heel and body rise are intended motion, not fixed anchors. The concrete anchor failure is the stationary step/rail changing position. The suspicion of disproportionate body rise is a secondary visual concern, not a measured proof of bone-length change.\n"
+    },
+    {
+      "exerciseId": "barbell-step-ups",
+      "status": "six-frame-draft",
+      "releaseApproved": false,
+      "frames": [
+        {
+          "frame": 1,
+          "path": "barbell-step-ups/frames/1.png",
+          "sha256": "097663f0016f108f0c58beb4bc0ced7aff7269d54d188e5549e24d141f87132f",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "frame": 2,
+          "path": "barbell-step-ups/frames/2.png",
+          "sha256": "7a3f954a39f36753b1a0c5410c1a47ffd5d18ec32c2a1d05d71a9848e682bac3",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "frame": 3,
+          "path": "barbell-step-ups/frames/3.png",
+          "sha256": "2413071fe0ba1fca1599fc277edcde9e95e85c09ba0c2e4544414ed63ea69abd",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "frame": 4,
+          "path": "barbell-step-ups/frames/4.png",
+          "sha256": "e361fdcc400e675eef1a7ec142ecbff0249fbcf1a758dd54b32ac18b293cf9f8",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "frame": 5,
+          "path": "barbell-step-ups/frames/5.png",
+          "sha256": "7a3f954a39f36753b1a0c5410c1a47ffd5d18ec32c2a1d05d71a9848e682bac3",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "frame": 6,
+          "path": "barbell-step-ups/frames/6.png",
+          "sha256": "097663f0016f108f0c58beb4bc0ced7aff7269d54d188e5549e24d141f87132f",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        }
+      ],
+      "uniquePoseFiles": 4,
+      "reviewFiles": [
+        "barbell-step-ups/REVIEW.md"
+      ],
+      "reviewText": "# Barbell step-ups \u2014 six-frame candidate\n\nSix native 1536\u00d71024 PNG frames, four unique configurations, derived from canonical identity and one exercise master. The bar is correctly on upper traps with one modest plate per end. The box is roughly knee high, lead foot fully planted, and trailing leg lifts rather than pushing from the floor. Returning frames reuse matching drive and setup positions.\n\nFrames 1\u20133 preserve box and planted lead shoe closely. Top frame 4 introduces an approximately 17px upward movement of box top and moves the planted lead foot laterally, so it still needs an anchor correction before public approval. Bar/plate/grip geometry otherwise appears consistent. No deployment or registry changes.\n\nIndividual images visually reviewed. Actual sequential player and mobile light/dark review remain unverified.\n"
+    },
+    {
+      "exerciseId": "front-squat",
+      "status": "six-frame-draft",
+      "releaseApproved": false,
+      "frames": [
+        {
+          "frame": 1,
+          "path": "front-squat/frames/1.png",
+          "sha256": "8499a80b6fc1039b172591a38a1b247c84286cfeb81aa865090e98f8896184c9",
+          "dimensions": [
+            1254,
+            1254
+          ]
+        },
+        {
+          "frame": 2,
+          "path": "front-squat/frames/2.png",
+          "sha256": "04d04da420b26c0c1c86ce52b4a47bfeb051299ce4d335b0450bc629ead2b847",
+          "dimensions": [
+            1254,
+            1254
+          ]
+        },
+        {
+          "frame": 3,
+          "path": "front-squat/frames/3.png",
+          "sha256": "d944f554b50423cae3c960c76d783b60940f2a496e3ef21b9798f1ee80ffcff0",
+          "dimensions": [
+            1254,
+            1254
+          ]
+        },
+        {
+          "frame": 4,
+          "path": "front-squat/frames/4.png",
+          "sha256": "6099208f472b100757fb412fe26dae791d19df8b81459f290bb5a45948f098fd",
+          "dimensions": [
+            1254,
+            1254
+          ]
+        },
+        {
+          "frame": 5,
+          "path": "front-squat/frames/5.png",
+          "sha256": "d944f554b50423cae3c960c76d783b60940f2a496e3ef21b9798f1ee80ffcff0",
+          "dimensions": [
+            1254,
+            1254
+          ]
+        },
+        {
+          "frame": 6,
+          "path": "front-squat/frames/6.png",
+          "sha256": "04d04da420b26c0c1c86ce52b4a47bfeb051299ce4d335b0450bc629ead2b847",
+          "dimensions": [
+            1254,
+            1254
+          ]
+        }
+      ],
+      "uniquePoseFiles": 4,
+      "reviewFiles": [
+        "front-squat/REVIEW.md"
+      ],
+      "reviewText": "# Front squat \u2014 six-frame candidate, rework required\n\nSix native square PNG frames, four generated configurations. Correct front-rack variation: bar in front of neck across front delts, high forward elbows, matching modest plates. Canonical identity and master supplied to each edit. First movement output had noisy white/magenta halos; a targeted background correction removed them. Current saved frame 2 is the corrected output.\n\nKnown defects: feet move vertically by roughly 20\u201335px in deep positions despite anchor constraints. Frames 3 and 4 are very close in depth, so phase spacing is uneven. Final front-rack contact and near elbow height need close expert review. Return frames reuse matching descent poses 3 and 2.\n\nNot approved for public use. Actual player playback and mobile light/dark review unverified. No public or registry changes.\n"
+    },
+    {
+      "exerciseId": "diamond-push-ups",
+      "status": "six-frame-draft",
+      "releaseApproved": false,
+      "frames": [
+        {
+          "frame": 1,
+          "path": "diamond-push-ups/frames/1.png",
+          "sha256": "817c79c3f761dbe2713b6e39b43eced9c46e40bf50b0344dbf786bf296e79abd",
+          "dimensions": [
+            1254,
+            1254
+          ]
+        },
+        {
+          "frame": 2,
+          "path": "diamond-push-ups/frames/2.png",
+          "sha256": "5123b4f14c2c469e4705b0e75e3afea84d972f75dbee98072c9059edb868e860",
+          "dimensions": [
+            1254,
+            1254
+          ]
+        },
+        {
+          "frame": 3,
+          "path": "diamond-push-ups/frames/3.png",
+          "sha256": "665411f5e9dc37a06ab3d45b866450b10be77b3f4686b9118a72f18d64f97c89",
+          "dimensions": [
+            1254,
+            1254
+          ]
+        },
+        {
+          "frame": 4,
+          "path": "diamond-push-ups/frames/4.png",
+          "sha256": "5e305bbfaa2f7cd0a6d3421d6248b56448c63da5b2376f6b8d900ff92bbcce09",
+          "dimensions": [
+            1254,
+            1254
+          ]
+        },
+        {
+          "frame": 5,
+          "path": "diamond-push-ups/frames/5.png",
+          "sha256": "665411f5e9dc37a06ab3d45b866450b10be77b3f4686b9118a72f18d64f97c89",
+          "dimensions": [
+            1254,
+            1254
+          ]
+        },
+        {
+          "frame": 6,
+          "path": "diamond-push-ups/frames/6.png",
+          "sha256": "5123b4f14c2c469e4705b0e75e3afea84d972f75dbee98072c9059edb868e860",
+          "dimensions": [
+            1254,
+            1254
+          ]
+        }
+      ],
+      "uniquePoseFiles": 4,
+      "reviewFiles": [
+        "diamond-push-ups/review.md"
+      ],
+      "reviewText": "# Diamond push-ups \u2014 six-frame candidate\n\nExact catalogue: triceps primary; chest/front delts secondary. Canonical v3 anatomical athlete, white trainers, featureless pelvis. Built-in imagegen only. Master corrected to true touching index/thumb diamond and neutral neck. First adjacent edit developed fringe; cleanup remained speckled, so changed method to full clean render with master+canonical+pose references. Final files are clean native1280-square renders.\n\nSix beats: straight-arm plank; initial lowering; mid lowering; chest near hands; mid press; finish press back to straight-arm plank. Frames5=3 and6=2 reflect mechanically identical return positions, four distinct rendered poses. Hands and toes are anchors. Elbows track back, body remains broadly plank straight. Candidate review needed for small hand/toe pixel displacement at bottom and invariant body scale. No production approval or mobile/playback evidence asserted.\n"
+    },
+    {
+      "exerciseId": "pike-push-up",
+      "status": "six-frame-draft",
+      "releaseApproved": false,
+      "frames": [
+        {
+          "frame": 1,
+          "path": "pike-push-up/frames/1.png",
+          "sha256": "f3e938c23365876087ced4ad887eea5f230c6af2742ce7ca1685e9c1917cc894",
+          "dimensions": [
+            1254,
+            1254
+          ]
+        },
+        {
+          "frame": 2,
+          "path": "pike-push-up/frames/2.png",
+          "sha256": "df20764f83531b2b7fbd8db917cac4d086f3983f9942824c812e8ac5d55776c2",
+          "dimensions": [
+            1254,
+            1254
+          ]
+        },
+        {
+          "frame": 3,
+          "path": "pike-push-up/frames/3.png",
+          "sha256": "fea2df95c77b25112f0e6cd8d5384fcdee8d8ef459e13107928d11ef9df22ea5",
+          "dimensions": [
+            1254,
+            1254
+          ]
+        },
+        {
+          "frame": 4,
+          "path": "pike-push-up/frames/4.png",
+          "sha256": "9e482064e39267eb960b66d6e8930ba4892c8f23f15071b44efb28773f61f783",
+          "dimensions": [
+            1254,
+            1254
+          ]
+        },
+        {
+          "frame": 5,
+          "path": "pike-push-up/frames/5.png",
+          "sha256": "fea2df95c77b25112f0e6cd8d5384fcdee8d8ef459e13107928d11ef9df22ea5",
+          "dimensions": [
+            1254,
+            1254
+          ]
+        },
+        {
+          "frame": 6,
+          "path": "pike-push-up/frames/6.png",
+          "sha256": "df20764f83531b2b7fbd8db917cac4d086f3983f9942824c812e8ac5d55776c2",
+          "dimensions": [
+            1254,
+            1254
+          ]
+        }
+      ],
+      "uniquePoseFiles": 4,
+      "reviewFiles": [
+        "pike-push-up/review.md"
+      ],
+      "reviewText": "# Pike push-up six-frame candidate\n\nExact catalogue deltoids primary, triceps/upper chest secondary. Four distinct native1280 poses: straight arms high pike, early elbow bend, middle descent, bottom near floor; return5=3 and6=2. Canonical v3 and exercise master supplied to each derivation. Built-in imagegen only. Fixed palms and shoe contacts, constant camera, invertedV retained through all poses. Initial master and several edits showed colored fringe/halo; targeted clean redraws selected instead.\n\nReview concerns: torso is steep but not fully vertical; head orientation and crown-to-floor relation need independent technique review. Hands show slight positional differences between poses. No claim of production approval or mobile/playback validation. All frames outside public and no app integration changes.\n"
+    },
+    {
+      "exerciseId": "inverted-row",
+      "status": "six-frame-draft",
+      "releaseApproved": false,
+      "frames": [
+        {
+          "frame": 1,
+          "path": "inverted-row/frames/1.png",
+          "sha256": "3fc61a7d7a9ab16bad45aec36f92e10aaafe245b5ce6b848b1be9432fdfc4536",
+          "dimensions": [
+            1254,
+            1254
+          ]
+        },
+        {
+          "frame": 2,
+          "path": "inverted-row/frames/2.png",
+          "sha256": "f580aa6e7ee6269cc08dfad0782abc4de061b47df976b3db2a9eb63fc5b1c622",
+          "dimensions": [
+            1254,
+            1254
+          ]
+        },
+        {
+          "frame": 3,
+          "path": "inverted-row/frames/3.png",
+          "sha256": "600098492e6f3901781249bc97d12a103fb5ee66ca6ece68637971eeff4b2d19",
+          "dimensions": [
+            1254,
+            1254
+          ]
+        },
+        {
+          "frame": 4,
+          "path": "inverted-row/frames/4.png",
+          "sha256": "6923c64f521ea5659723d3568a376b298a0f76b8147116172f39dca52e1d3a53",
+          "dimensions": [
+            1254,
+            1254
+          ]
+        },
+        {
+          "frame": 5,
+          "path": "inverted-row/frames/5.png",
+          "sha256": "600098492e6f3901781249bc97d12a103fb5ee66ca6ece68637971eeff4b2d19",
+          "dimensions": [
+            1254,
+            1254
+          ]
+        },
+        {
+          "frame": 6,
+          "path": "inverted-row/frames/6.png",
+          "sha256": "f580aa6e7ee6269cc08dfad0782abc4de061b47df976b3db2a9eb63fc5b1c622",
+          "dimensions": [
+            1254,
+            1254
+          ]
+        }
+      ],
+      "uniquePoseFiles": 4,
+      "reviewFiles": [
+        "inverted-row/review.md"
+      ],
+      "reviewText": "# Inverted row \u2014 six candidate frames, mechanical review hold\n\nCatalogue midback primary; rhomboids/biceps/core secondary, overhand grip. Canonical and exercise master attached throughout built-in imagegen derivations. Rack, bar, grip and heels visually fixed. Four different poses;5=3 and6=2 represent genuine controlled lowering reuse. Initial raised pose stretched body; changed method to explicit heel-centered arc/shoulder rightward translation. An attempted early pose duplicated midpoint and was rejected; final early pose generated from master only with small-angle instructions. Top target initially stopped too low; correction moved chest upward, then cleaned white fringe via fresh render.\n\nMaterial remaining concerns: top body shoulder-to-heel length still appears longer than master despite correction; bar meets very upper chest/clavicle region, not clearly sternum. Not safe to approve as mechanically invariant six-frame animation. Retain candidate HOLD, no public/app changes. Full playback/mobile QA pending. Avoid claiming complete production-ready set.\n"
+    },
+    {
+      "exerciseId": "pull-ups",
+      "status": "six-frame-draft",
+      "releaseApproved": false,
+      "frames": [
+        {
+          "frame": 1,
+          "path": "pull-ups/frames/1.png",
+          "sha256": "5933af5c721b7d1b477d1e91e226cb219392bbd9c0f1fc27897fa64d48f5c6ea",
+          "dimensions": [
+            1254,
+            1254
+          ]
+        },
+        {
+          "frame": 2,
+          "path": "pull-ups/frames/2.png",
+          "sha256": "b0dd24e5296a42389d1cee43c5e644608e22831aa40f47bba64a5e0dbbeb9e54",
+          "dimensions": [
+            1254,
+            1254
+          ]
+        },
+        {
+          "frame": 3,
+          "path": "pull-ups/frames/3.png",
+          "sha256": "2a2b1bd57df37dcc42c4356a5baedf4d4126fab0987212de8f3626fd2f9128b2",
+          "dimensions": [
+            1254,
+            1254
+          ]
+        },
+        {
+          "frame": 4,
+          "path": "pull-ups/frames/4.png",
+          "sha256": "1242d62c08cec76d8351c101cbbc6e2502ce08c15671cdf70f03cd33a4cf4b1f",
+          "dimensions": [
+            1254,
+            1254
+          ]
+        },
+        {
+          "frame": 5,
+          "path": "pull-ups/frames/5.png",
+          "sha256": "2a2b1bd57df37dcc42c4356a5baedf4d4126fab0987212de8f3626fd2f9128b2",
+          "dimensions": [
+            1254,
+            1254
+          ]
+        },
+        {
+          "frame": 6,
+          "path": "pull-ups/frames/6.png",
+          "sha256": "b0dd24e5296a42389d1cee43c5e644608e22831aa40f47bba64a5e0dbbeb9e54",
+          "dimensions": [
+            1254,
+            1254
+          ]
+        }
+      ],
+      "uniquePoseFiles": 4,
+      "reviewFiles": [
+        "pull-ups/review.md"
+      ],
+      "reviewText": "# Pull-ups six-frame candidate\n\nExact catalogue: overhand grip slightly wider than shoulders, lats primary, biceps/rear delts/core secondary. Canonical v3 anatomical athlete. Built-in imagegen only, canonical+corrected exercise master supplied throughout. Initial portrait/glowing master corrected to square1280 pureblack with contraction headroom. Four native distinct poses: dead hang, early initiation, midpoint, chin above bar. Return5=3 and6=2 mechanically reuse same pose. First requested early pose bent too far, so reclassified as midpoint; actual early pose generated from master with small-angle instruction.\n\nFixed anchors: bar y183, grips approximately435/815, supports near98/1140. No kipping or leg bend, rear-three-quarter view with profile chin visible, full body and same white trainers. Review concerns: head turn to right and slight torso-length changes across elevations; master elbow extension and overhand thumb wrap need independent confirmation. Candidate only, not production approved; full playback/mobile evidence pending.\n"
+    },
+    {
+      "exerciseId": "dead-bug",
+      "status": "six-frame-draft",
+      "releaseApproved": false,
+      "frames": [
+        {
+          "frame": 1,
+          "path": "dead-bug/frames/1.png",
+          "sha256": "8f674091ebec1672e579b85c03cb6a94c535d520de90ca19a2fa7811accb4d09",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "frame": 2,
+          "path": "dead-bug/frames/2.png",
+          "sha256": "5c640e1a54f9526ea75be2db020360dde77f01dcd6f255b253bb420d0922d360",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "frame": 3,
+          "path": "dead-bug/frames/3.png",
+          "sha256": "006de1036cf3e55ad3e8a1cab99444bf2edbab4c12a99735db88c7eef9254ab0",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "frame": 4,
+          "path": "dead-bug/frames/4.png",
+          "sha256": "16e8b533b08bb7ec79430d5184042c3538ec2416972c88115605e92e4d34f322",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "frame": 5,
+          "path": "dead-bug/frames/5.png",
+          "sha256": "3553cb67ba7175eec1cffeecf0f5b6503ce69bd4d73770aaf68c270c16dcef2b",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "frame": 6,
+          "path": "dead-bug/frames/6.png",
+          "sha256": "006de1036cf3e55ad3e8a1cab99444bf2edbab4c12a99735db88c7eef9254ab0",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        }
+      ],
+      "uniquePoseFiles": 5,
+      "reviewFiles": [
+        "dead-bug/REVIEW.md",
+        "dead-bug/review.json"
+      ],
+      "reviewText": "# dead-bug\n\nSix native frame files, draft candidate only. Not approved or app-ready.\n\n- Half-B initial same-side pairing rejected; targeted edit from full B now preserves far arm/near leg pairing; independent recheck pending.\n- Intermediate halos corrected; full A/B pairing independently checked by parent as plausible.\n- Discrete six teaching phases; player and mobile playback unverified.\n\nExact source mapping, dimensions and SHA-256 hashes are in review.json. Repeated neutral/return poses are deliberately reused, not newly generated. Earlier rejected/superseded masters and poses are preserved.\n"
+    },
+    {
+      "exerciseId": "toe-touches",
+      "status": "six-frame-draft",
+      "releaseApproved": false,
+      "frames": [
+        {
+          "frame": 1,
+          "path": "toe-touches/frames/1.png",
+          "sha256": "16c5b8f5082cdbca796f5543c348db8b939e8d1064f24f45eb66679866e8a7d8",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "frame": 2,
+          "path": "toe-touches/frames/2.png",
+          "sha256": "6b70795cdb0efd350edab2af04a1ec75426b8a8672a09521e5ce273e1a13efdb",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "frame": 3,
+          "path": "toe-touches/frames/3.png",
+          "sha256": "b25fd9d45979dbf1417be0bab0d07ae6fd9ed91d3d1efb7947ecbe2420f8192d",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "frame": 4,
+          "path": "toe-touches/frames/4.png",
+          "sha256": "b25fd9d45979dbf1417be0bab0d07ae6fd9ed91d3d1efb7947ecbe2420f8192d",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "frame": 5,
+          "path": "toe-touches/frames/5.png",
+          "sha256": "6b70795cdb0efd350edab2af04a1ec75426b8a8672a09521e5ce273e1a13efdb",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "frame": 6,
+          "path": "toe-touches/frames/6.png",
+          "sha256": "16c5b8f5082cdbca796f5543c348db8b939e8d1064f24f45eb66679866e8a7d8",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        }
+      ],
+      "uniquePoseFiles": 3,
+      "reviewFiles": [
+        "toe-touches/REVIEW.md",
+        "toe-touches/review.json"
+      ],
+      "reviewText": "# toe-touches\n\nSix native frame files, draft candidate only. Not approved or app-ready.\n\n- Initial and intermediate halo corrected with dedicated background-only edits.\n- Full player/mobile verification pending.\n\nExact source mapping, dimensions and SHA-256 hashes are in review.json. Repeated neutral/return poses are deliberately reused, not newly generated. Earlier rejected/superseded masters and poses are preserved.\n"
+    },
+    {
+      "exerciseId": "bicycle-crunch",
+      "status": "six-frame-draft",
+      "releaseApproved": false,
+      "frames": [
+        {
+          "frame": 1,
+          "path": "bicycle-crunch/frames/1.png",
+          "sha256": "5d85afbcd8126b9dbcf522018aecab05c2b08be2dd55c69accf230f7e8057afa",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "frame": 2,
+          "path": "bicycle-crunch/frames/2.png",
+          "sha256": "d762e3cc34183219f47b3000466cd032cff2c74acf1bcd1ef1cc8e87cd4e972f",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "frame": 3,
+          "path": "bicycle-crunch/frames/3.png",
+          "sha256": "5d85afbcd8126b9dbcf522018aecab05c2b08be2dd55c69accf230f7e8057afa",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "frame": 4,
+          "path": "bicycle-crunch/frames/4.png",
+          "sha256": "11582e20a81c959be2b18660cd9464adb6a0882df735af8530ef2a53be5a09b2",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "frame": 5,
+          "path": "bicycle-crunch/frames/5.png",
+          "sha256": "8fcb5835cb41b4b683bc82676ef65a4d069fa041f6a089578a6e112460aa6768",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "frame": 6,
+          "path": "bicycle-crunch/frames/6.png",
+          "sha256": "5d85afbcd8126b9dbcf522018aecab05c2b08be2dd55c69accf230f7e8057afa",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        }
+      ],
+      "uniquePoseFiles": 4,
+      "reviewFiles": [
+        "bicycle-crunch/REVIEW.md",
+        "bicycle-crunch/review.json"
+      ],
+      "reviewText": "# bicycle-crunch\n\nSix native frame files, draft candidate only. Not approved or app-ready.\n\n- First opposite-side attempt repeated A and was rejected; targeted correction now clearly extends near leg.\n- Six discrete teaching beats with uneven sampling between sides; center is legitimately reused, not a hold.\n- Independent still review found opposite pairing plausible; player/mobile playback unverified.\n\nExact source mapping, dimensions and SHA-256 hashes are in review.json. Repeated neutral/return poses are deliberately reused, not newly generated. Earlier rejected/superseded masters and poses are preserved.\n"
+    },
+    {
+      "exerciseId": "russian-twist",
+      "status": "six-frame-draft",
+      "releaseApproved": false,
+      "frames": [
+        {
+          "frame": 1,
+          "path": "russian-twist/frames/1.png",
+          "sha256": "bc90d3b9e4cf6c2ac56e7eafb15b21d10b4aae321c93c20334199dc3cbf26261",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "frame": 2,
+          "path": "russian-twist/frames/2.png",
+          "sha256": "cc6435cdbc29c01f8c85db453e5c1f1e95a2d1118d2bcef70c803a58a29488bf",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "frame": 3,
+          "path": "russian-twist/frames/3.png",
+          "sha256": "0316e55c07ba1b1d616cc31b662066e5d24e623b00cd04273392bffc384d5643",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "frame": 4,
+          "path": "russian-twist/frames/4.png",
+          "sha256": "bc90d3b9e4cf6c2ac56e7eafb15b21d10b4aae321c93c20334199dc3cbf26261",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "frame": 5,
+          "path": "russian-twist/frames/5.png",
+          "sha256": "f01181dd92bf9d823b2a8fffdafa024b86e09adcace25f591c056e1b34d8f89a",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "frame": 6,
+          "path": "russian-twist/frames/6.png",
+          "sha256": "bc90d3b9e4cf6c2ac56e7eafb15b21d10b4aae321c93c20334199dc3cbf26261",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        }
+      ],
+      "uniquePoseFiles": 4,
+      "reviewFiles": [
+        "russian-twist/REVIEW.md",
+        "russian-twist/review.json"
+      ],
+      "reviewText": "# russian-twist\n\nSix native frame files, draft candidate only. Not approved or app-ready.\n\n- Initial upright master rejected and replaced with reclined master.\n- Mid prompt requested away rotation but actual image moves toward near side; sequence and cue describe actual pose.\n- Side A appears more upright than master; trunk inclination consistency needs review before release.\n- Side A/B halos removed with background-only native edits; anatomy contour variation remains.\n- Six discrete teaching phases, center legitimately reused; player/mobile playback unverified.\n\nExact source mapping, dimensions and SHA-256 hashes are in review.json. Repeated neutral/return poses are deliberately reused, not newly generated. Earlier rejected/superseded masters and poses are preserved.\n"
+    },
+    {
+      "exerciseId": "mountain-climbers",
+      "status": "six-frame-draft",
+      "releaseApproved": false,
+      "frames": [
+        {
+          "frame": 1,
+          "path": "mountain-climbers/frames/1.png",
+          "sha256": "e615feb681aac4478503b2c471ecc463b501c5a7203ca19dde1084e20b68de36",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "frame": 2,
+          "path": "mountain-climbers/frames/2.png",
+          "sha256": "d586d4f4c94dc1af31ce1c4786ed35db3ea62fea826be2f880043dc83ca179e2",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "frame": 3,
+          "path": "mountain-climbers/frames/3.png",
+          "sha256": "d5f1e7f60555a5971af1cfaab5c8c20fb91514206f4872be41c57ff70ab369f0",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "frame": 4,
+          "path": "mountain-climbers/frames/4.png",
+          "sha256": "78ac0fb98be2defd2dd014930237f7ba12130bdd905a1f9e081e9add224aeb19",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "frame": 5,
+          "path": "mountain-climbers/frames/5.png",
+          "sha256": "50b91a4056ef47460648bb2c0cfd37e3c98ef2629ecabc14114f3867b6f746b0",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "frame": 6,
+          "path": "mountain-climbers/frames/6.png",
+          "sha256": "d5f1e7f60555a5971af1cfaab5c8c20fb91514206f4872be41c57ff70ab369f0",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        }
+      ],
+      "uniquePoseFiles": 5,
+      "reviewFiles": [
+        "mountain-climbers/REVIEW.md"
+      ],
+      "reviewText": "# Mountain climbers \u2014 six-frame candidate\n\nSix native 1536\u00d71024 frame files, five unique poses. Canonical identity and exercise master supplied to each edit. Near and far knee drives are visibly distinct, followed by the shared neutral plank. Hands, shoulders, head, hip height and mat remain visually stable. Hips do not visibly pike. Exact catalogue variation is bodyweight high plank with alternate knee drives.\n\nOpen issue: supporting shoe in both knee-drive sides occupies a very similar foreground location although master has separate near/far toe contacts. This may imply foot-contact identity drift in the near-knee sequence and needs close mechanical review. Half/full drive spacing is small, so timing also needs playback review. No public approval implied.\n\nIndependent reviewer exercise_queue is checking final cues/sequence. Actual app playback and mobile evidence unverified. No public or registry changes. This set replaces the partial single-leg-calf-raise in the requested count; partial calf evidence remains preserved separately.\n"
+    }
+  ]
+}

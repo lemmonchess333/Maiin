@@ -1,0 +1,86 @@
+{
+  "exerciseId": "shrugs",
+  "status": "six-frame-candidate",
+  "releaseApproved": false,
+  "tool": "built-in image_gen",
+  "reference": "/workspace/scratch/92115cdb9667/tropos-next-exercises/docs/exercise-art/identity/athlete-anatomy-v3.png",
+  "referenceSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+  "prompts": [
+    "Tropos scientific educational anatomical exercise illustration. Exact canonical reference athlete, bald faceless white-grey body with fine dark contours, full leg anatomy visible and white trainers, smooth neutral featureless pelvic center with no garment outlines. Solid black background. One single full-resolution image; no text, no arrows, no collage. Equipment grey realistic compact matching dumbbells. Whole athlete and equipment contained with margins. DUMBBELL SHRUG master. Stand upright neutral, feet hip width, arms straight at sides each holding one equal compact grey hex dumbbell, palms inward. Shoulders relaxed down in starting position. Strong purple upper traps ONLY; all other muscles white-grey. Fixed frontal three-quarter camera sees both arms hands and full feet. Portrait 1024x1536, generous headroom. No barbell. Neck neutral, no shrug yet.",
+    "Image1 canonical, image2 exact dumbbell shrug master. Local movement only: elevate BOTH shoulders straight upward halfway toward ears, about 3cm. Arms remain fully straight and dumbbells lift same 3cm with shoulders. No elbow bend, rolling, torso motion or head movement. Preserve exact head torso hips legs shoes placement, camera, scale and equipment. Strong purple traps only. Native portrait canvas same as reference, no text.",
+    "Image1 canonical, image2 exact exercise master, image3 edit target midway shrug. Remove ONLY the grey glowing halo behind athlete in image3; background must be pure solid black exactly matching image2. Preserve all athlete pixels, dumbbells, pose, proportions, purple traps, and canvas. No other changes, no text.",
+    "Image1 canonical, image2 immutable master, image3 midway shrug target. Raise shoulders straight upward another 3cm to peak shrug near ears. Arms straight, weights travel vertically with shoulders same amount, no elbow flexion, head torso feet legs do not move. No rolling shoulders. Preserve exact black background no glow, same camera body proportions hands and dumbbells. Purple upper traps only. One native portrait image no text."
+  ],
+  "sourcePaths": [
+    "/workspace/scratch/92115cdb9667/generated_images/exec-c4a03c2a-5fda-423f-b9f8-3659764918fa.png",
+    "/workspace/scratch/92115cdb9667/generated_images/exec-8d1a2ba0-6b98-4759-b5da-68b392398095.png",
+    "/workspace/scratch/92115cdb9667/generated_images/exec-a7fce110-9df7-48a5-8404-465e17174aa6.png"
+  ],
+  "cues": [
+    "Stand tall with dumbbells at your sides.",
+    "Raise your shoulders straight up.",
+    "Bring your shoulders toward your ears without rolling.",
+    "Squeeze your traps for a beat.",
+    "Lower your shoulders slowly.",
+    "Return to relaxed shoulders and straight arms."
+  ],
+  "cueSha256": "fac3a5ce730ced8090a9109a3fbedecf813ac561bd257a5ccd84d935287e6a7e",
+  "reuse": {
+    "4": "3 endpoint control/hold",
+    "5": "2 return",
+    "6": "1 return"
+  },
+  "fixedAnchors": [
+    "feet",
+    "camera",
+    "body proportions",
+    "equipment dimensions"
+  ],
+  "sha256": {
+    "frames/2.png": "2dcfab94c3871c479ab6f1545912afe74de69f15331e43ec3a51927833119f5f",
+    "frames/1.png": "657bf5f55e9a4d9d8f368b145f95f8689550236567d3b545df34dcb408ef4838",
+    "frames/4.png": "9b056c7c0dcfd80c49d015ca9235c42d521c548633fb2009972572d2bd2dc9fe",
+    "frames/6.png": "657bf5f55e9a4d9d8f368b145f95f8689550236567d3b545df34dcb408ef4838",
+    "frames/5.png": "2dcfab94c3871c479ab6f1545912afe74de69f15331e43ec3a51927833119f5f",
+    "frames/3.png": "9b056c7c0dcfd80c49d015ca9235c42d521c548633fb2009972572d2bd2dc9fe",
+    "masters/1.png": "657bf5f55e9a4d9d8f368b145f95f8689550236567d3b545df34dcb408ef4838"
+  },
+  "dimensions": {
+    "frames/2.png": [
+      1024,
+      1536
+    ],
+    "frames/1.png": [
+      1024,
+      1536
+    ],
+    "frames/4.png": [
+      1024,
+      1536
+    ],
+    "frames/6.png": [
+      1024,
+      1536
+    ],
+    "frames/5.png": [
+      1024,
+      1536
+    ],
+    "frames/3.png": [
+      1024,
+      1536
+    ],
+    "masters/1.png": [
+      1024,
+      1536
+    ]
+  },
+  "review": {
+    "singlePoseInspected": true,
+    "playbackVerified": false,
+    "mobileLightDarkVerified": false,
+    "issues": [
+      "Minor contour shifts remain; static inspected, playback not verified."
+    ]
+  }
+}

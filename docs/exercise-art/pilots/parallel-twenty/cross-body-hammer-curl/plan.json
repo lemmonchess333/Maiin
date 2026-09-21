@@ -1,0 +1,113 @@
+{
+  "exerciseId": "cross-body-hammer-curl",
+  "status": "candidate-needs-review",
+  "releaseApproved": false,
+  "master": "master.png",
+  "canonicalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+  "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+  "masterSha256": "db8bc952f27bfbe36adc488f9dfbb49a5c51a0b9c97c0d9b3ad4a9ddaf2ccab1",
+  "nativeFrameCount": 6,
+  "uniquePoseCount": 3,
+  "fixedAnchors": [
+    "head",
+    "torso",
+    "hips",
+    "feet",
+    "camera"
+  ],
+  "frames": [
+    {
+      "frame": 1,
+      "path": "docs/exercise-art/pilots/parallel-twenty/cross-body-hammer-curl/1.png",
+      "label": "Start",
+      "cue": "Stand tall with palms facing inward.",
+      "progress": 0,
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "sha256": "db8bc952f27bfbe36adc488f9dfbb49a5c51a0b9c97c0d9b3ad4a9ddaf2ccab1",
+      "cueSha256": "4c9b46efdcac04c9825f65ed693c3134f5f601ea1709c79e4d6c33ebe28593be",
+      "reusedFrom": null
+    },
+    {
+      "frame": 2,
+      "path": "docs/exercise-art/pilots/parallel-twenty/cross-body-hammer-curl/2.png",
+      "label": "Curl across",
+      "cue": "Curl one dumbbell across your body.",
+      "progress": 0.5,
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "sha256": "93388ea12fd2d6e76b12ae9db2107dda8e846be0830866939328a1f9b9df7d9f",
+      "cueSha256": "050c97ffaeb88e41bd0e094f634623658fff62b73120f16a66f448628d821507",
+      "reusedFrom": null
+    },
+    {
+      "frame": 3,
+      "path": "docs/exercise-art/pilots/parallel-twenty/cross-body-hammer-curl/3.png",
+      "label": "Opposite shoulder",
+      "cue": "Bring the dumbbell toward your opposite shoulder.",
+      "progress": 1,
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "sha256": "8bf15243546b582815b7040416600a3bddb3312a985a647c1375a58149aed21d",
+      "cueSha256": "70f584aa34d247aa597b8598d80a13b661e17728dd9c45f3c804b17983b368b8",
+      "reusedFrom": null
+    },
+    {
+      "frame": 4,
+      "path": "docs/exercise-art/pilots/parallel-twenty/cross-body-hammer-curl/4.png",
+      "label": "Brief hold",
+      "cue": "Pause with your elbow beside your ribs.",
+      "progress": 1,
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "sha256": "8bf15243546b582815b7040416600a3bddb3312a985a647c1375a58149aed21d",
+      "cueSha256": "815fd71c0103962cf952f2ad88f6a48f21868c4b5c4369174621ae12aa9bec3a",
+      "reusedFrom": 3
+    },
+    {
+      "frame": 5,
+      "path": "docs/exercise-art/pilots/parallel-twenty/cross-body-hammer-curl/5.png",
+      "label": "Lower",
+      "cue": "Lower slowly along the same path.",
+      "progress": 0.5,
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "sha256": "93388ea12fd2d6e76b12ae9db2107dda8e846be0830866939328a1f9b9df7d9f",
+      "cueSha256": "1e69e4635e6798876217d93ff3c01a2d003df2ba6012e486f052554471e3d5e4",
+      "reusedFrom": 2
+    },
+    {
+      "frame": 6,
+      "path": "docs/exercise-art/pilots/parallel-twenty/cross-body-hammer-curl/6.png",
+      "label": "Return",
+      "cue": "Return to your side; alternate arms next.",
+      "progress": 0,
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "sha256": "db8bc952f27bfbe36adc488f9dfbb49a5c51a0b9c97c0d9b3ad4a9ddaf2ccab1",
+      "cueSha256": "efcbf3f8ffc200f02cb201653b589f2fec8104253a66140e1efb85ddc0056491",
+      "reusedFrom": 1
+    }
+  ],
+  "reviewFindings": [
+    "Demonstrates one arm only; cue explicitly alternates arms after this rep. Far arm remains down. Near upper-arm/elbow outline changes slightly in top/midpoint and requires measured review; rendered neutral grip is visible. No claim of exact elbow registration."
+  ],
+  "staticReview": true,
+  "sequentialPlaybackVerified": false,
+  "mobileLightDarkVerified": false,
+  "reducedMotionVerified": false,
+  "techniqueApproved": false,
+  "equipmentApproved": false
+}

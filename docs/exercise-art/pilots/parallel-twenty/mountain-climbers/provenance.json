@@ -1,0 +1,44 @@
+{
+  "exerciseId": "mountain-climbers",
+  "status": "six-frame-candidate-needs-review",
+  "canonicalReference": "/workspace/scratch/92115cdb9667/character-reference/athlete-anatomy-v3.png",
+  "generationMode": "built-in image_gen",
+  "prompts": [
+    "Scientific sports anatomy MOUNTAIN CLIMBERS master. Match supplied canonical adult bald faceless white/grey anatomical mannequin, fine dark contour art and white trainers. Strong purple abdominal core, subtle lilac shoulders/hip flexors/quads, noninvolved muscles grey. High plank on flat plain charcoal mat: head to LEFT, feet RIGHT, hands planted directly beneath shoulders with straight arms, body straight from head through hips to heels. Feet hip-width on toes. Neck neutral looking at mat, hips level not piked. Fixed SIDE view with small elevated three-quarter angle enough to distinguish both hands and legs. Entire body and mat visible with ample space under torso for knee drive. Landscape1536x1024, perfectly SOLID BLACK background, no halo/glow. No text labels arrows or panels. Smooth neutral mannequin anatomy, one athlete.",
+    "Mountain climber NEAR KNEE halfway drive. Ref1 canonical identity, ref2 exact high plank master. Bend NEAR leg (large foreground thigh and rightmost shoe) at hip/knee and bring knee partway under abdomen toward chest; near foot lifts off mat, its ankle drawn under hip. FAR leg stays straight with far toe planted exactly original x1170 y715. BOTH palms/wrists/straight arms, shoulders, head, torso, hip height and entire mat remain pixel fixed. Do not pike or rotate hips. Change only near leg joints. Same limb lengths, canonical anatomy colors, white trainers,1536x1024 pure black no glow, no labels.",
+    "Mountain climber FULL near-knee drive. Ref1 identity ref2 exact master ref3 current half drive. Move ONLY bent NEAR leg further forward so knee approaches under sternum/near elbow, thigh folds closer to abdomen. Bent foot stays airborne below hip, shin folded. Far leg remains straight and its supporting shoe stays exactly where it is in ref3. Both hands, arms, head, chest, pelvis height and mat are pixel identical to ref3; no hips pike/shoulder shift. Same skeletal lengths/colours and full1536x1024 black scene. No text.",
+    "Mountain climber OPPOSITE FAR KNEE halfway drive. Ref1 identity ref2 exact high plank master. Keep FOREGROUND NEAR LEG straight in its original diagonal path, near white shoe supporting at far RIGHT original x1260 y735. Bend ONLY BACKGROUND FAR LEG (whose toe originally x1170y710), bringing its knee forward under abdomen BEHIND the straight near thigh, bent calf and shoe partly visible beneath torso. This must be opposite leg to foreground-knee drive, not same pose. BOTH palms/arms/head/torso/pelvis height and mat stay pixel-identical to master. Far moving foot off floor; no hips pike. Same1536x1024 solid black and canonical muscle colors. No text.",
+    "Mountain climber FULL FAR/BACKGROUND knee drive. Ref1 identity ref2 master ref3 far knee halfway. Move ONLY bent FAR/BACKGROUND leg further toward chest; knee reaches nearer behind sternum, ankle folds toward hip. Keep FOREGROUND NEAR leg straight and planted, entire near leg unchanged as ref3. Bent far thigh/shin remain behind near leg anatomically, not switched sides. Both palms/arms/head/torso/hip height and mat pixel identical. No piking hips, no scale change, no glow, no labels. Same1536x1024 black scene and canonical anatomy colors."
+  ],
+  "cues": [
+    {
+      "frame": 1,
+      "cue": "Drive the near knee partway toward your chest, keeping hips level."
+    },
+    {
+      "frame": 2,
+      "cue": "Bring the near knee further forward without raising the hips."
+    },
+    {
+      "frame": 3,
+      "cue": "Extend the leg back into a tight high plank before switching."
+    },
+    {
+      "frame": 4,
+      "cue": "Drive the far knee forward while the near leg supports the plank."
+    },
+    {
+      "frame": 5,
+      "cue": "Bring the far knee further toward the chest with shoulders steady."
+    },
+    {
+      "frame": 6,
+      "cue": "Return to high plank and continue alternating smoothly."
+    }
+  ],
+  "reuse": {
+    "frames/6.png": "frames/3.png"
+  },
+  "reuseReason": "Same neutral high-plank position between alternate drives.",
+  "substitutionFor": "single-leg-calf-raise remains partial; this additional untouched ID supplies the twentieth complete draft set."
+}

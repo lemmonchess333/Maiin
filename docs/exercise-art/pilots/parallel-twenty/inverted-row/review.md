@@ -1,0 +1,5 @@
+# Inverted row — six candidate frames, mechanical review hold
+
+Catalogue midback primary; rhomboids/biceps/core secondary, overhand grip. Canonical and exercise master attached throughout built-in imagegen derivations. Rack, bar, grip and heels visually fixed. Four different poses;5=3 and6=2 represent genuine controlled lowering reuse. Initial raised pose stretched body; changed method to explicit heel-centered arc/shoulder rightward translation. An attempted early pose duplicated midpoint and was rejected; final early pose generated from master only with small-angle instructions. Top target initially stopped too low; correction moved chest upward, then cleaned white fringe via fresh render.
+
+Material remaining concerns: top body shoulder-to-heel length still appears longer than master despite correction; bar meets very upper chest/clavicle region, not clearly sternum. Not safe to approve as mechanically invariant six-frame animation. Retain candidate HOLD, no public/app changes. Full playback/mobile QA pending. Avoid claiming complete production-ready set.

@@ -1,0 +1,48 @@
+{
+  "exerciseId": "front-squat",
+  "status": "six-frame-candidate-rework-required",
+  "canonicalReference": "/workspace/scratch/92115cdb9667/character-reference/athlete-anatomy-v3.png",
+  "prompts": [
+    "Scientific sports anatomy FRONT SQUAT exercise master. Exact canonical faceless bald grey anatomical adult male with white trainers, purple quadriceps, lighter lilac glutes and very pale purple core. Fine clean 2D contour art, smooth neutral mannequin. Standing upright feet shoulder-width toes slightly out, both entire soles planted. BARBELL FRONT RACK: bar rests across FRONT DELTOIDS in front of neck, NOT upper back; both elbows forward and HIGH with upper arms approximately horizontal, fingertips lightly under bar in clean-grip front rack. Identical modest one grey plate each end, straight rigid bar, both hands visible. Three-quarter side view facing right shows front rack clearly. Full body centered, square 1024x1024 black backdrop, feet near bottom with 8% margin, plenty room around bar ends. No rack or furniture. No words, captions, arrows or labels.",
+    "Front squat early controlled descent. Ref1 canonical identity, ref2 exact master. Bend knees and hips into quarter squat, thighs still steeply diagonal, torso upright. Both shoes remain pixel-fixed at same floor locations. Lower head/torso/bar around100px as unit, with NO bar shape/plate/grip changes. Bar on FRONT deltoids; elbows remain HIGH and forward, fingertips supporting lightly. Constant body limb lengths and full same square canvas. Purple quads lilac glutes/core, white trainers, black backdrop unchanged. No camera move/zoom or text.",
+    "Clean-background correction only. Reference1 canonical identity, reference2 exercise master, reference3 current front squat pose to edit. Preserve every athlete/bar/foot pixel geometry from ref3. Remove all white/magenta/grey noisy halo artefacts surrounding subject and replace the background with uniformly pure black. Keep fine anti-aliased contours without glow. Do not change pose, size, feet, plates, hands, highlights or image dimensions. No text.",
+    "Front squat further descent. Ref1 identity ref2 master ref3 early squat to edit. Keep both shoes EXACTLY fixed. Lower pelvis/torso/bar as hips and knees flex to just ABOVE parallel: thighs slope only about25degrees below horizontal. Torso stays upright, knees track over toes. Bar remains resting on front deltoids, elbows forward/high, identical fingertip grip, same bar width and plate diameters. Preserve head/body size, shin/femur lengths, canvas and camera. Perfect solid black background without halo/noise. Same square resolution, no text.",
+    "Front squat bottom pose. Ref1 canonical identity, ref2 exercise master, ref3 current near-bottom. Lower hip crease a little further until just BELOW knee top, with thighs at/below parallel, torso upright. Feet must return/remain at EXACT MASTER sole positions (near shoe bottom y1190, far shoe bottom y1148 in1280 canvas); keep shoes full flat. Preserve same femur/shin lengths, bar front rack and high elbows, same plate sizes and hand grip. Do not roll bar to neck. Fine canonical anatomy, identical quadriceps/secondary highlights. Pure black background, same square1280x1280. No text or camera motion."
+  ],
+  "cues": [
+    [
+      "FRONT RACK",
+      "Rest the bar on the front delts with elbows high."
+    ],
+    [
+      "DESCEND",
+      "Bend hips and knees while keeping the torso upright."
+    ],
+    [
+      "LOWER",
+      "Keep elbows high as you approach parallel."
+    ],
+    [
+      "BOTTOM",
+      "Reach controlled depth with heels planted."
+    ],
+    [
+      "DRIVE",
+      "Push through the whole foot and begin rising."
+    ],
+    [
+      "CONTINUE RETURN",
+      "Continue standing while maintaining the front rack."
+    ]
+  ],
+  "reuse": {
+    "5.png": "3.png",
+    "6.png": "2.png"
+  },
+  "reuseReason": "Matching joint configurations on ascent.",
+  "limitations": [
+    "Foot anchors drift vertically ~20–35px in deeper poses",
+    "Frames3/4 very similar depth; uneven spacing",
+    "Front rack/near elbow height needs expert check"
+  ]
+}
