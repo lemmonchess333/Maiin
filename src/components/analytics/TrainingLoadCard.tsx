@@ -7,14 +7,28 @@ import {
   YAxis,
   CartesianGrid,
 } from "recharts";
-import { Activity } from "lucide-react";
+import { Activity, Info } from "lucide-react";
 import { THEME } from "@/lib/theme";
+import UITooltip from "@/components/ui/Tooltip";
 import { CHART_GRID_PROPS, CHART_AXIS_TICK } from "./chartStyles";
 import { formatBinLabel } from "@/lib/chartGranularity";
 import ChartAreaGradient from "./ChartAreaGradient";
 import { evaluateLoadGuardrails, type LoadPoint } from "@/lib/trainingLoad";
 import { Skeleton } from "@/components/LoadingSkeleton";
 import EmptyState from "@/components/ui/EmptyState";
+
+/* The card's own legend, moved off the surface and behind the ⓘ. The
+   sport words keep their `-strong` steps: an identity is a fill value
+   and measures 3.87:1 for purple / 3.58:1 for coral at this size, under
+   the 4.5:1 floor 12px words need. Pinned by identityColour.test.ts. */
+const TRAINING_LOAD_EXPLAINER = (
+  <>
+    The purple curve is your 6-week training base; the bars are daily sessions (
+    <span className="text-running-strong">runs</span> ·{" "}
+    <span className="text-lifting-strong">lifts</span>). Positive form = fresh;
+    deep negative = time to ease off.
+  </>
+);
 
 /**
  * Training load — the daily fitness / fatigue / form curve (competitive
@@ -94,6 +108,21 @@ export default function TrainingLoadCard({
             aria-hidden="true"
           />
           <h3 className="text-sm font-bold text-foreground">Training load</h3>
+          {/* How to read the chart, on request. It was a permanent
+              paragraph under the plot — help text, re-read on every
+              visit, holding ~60px between two charts on a page that is
+              already twelve screens. The Performance Index put the same
+              kind of explanation behind this affordance; this is that
+              pattern applied to its neighbours. */}
+          <UITooltip content={TRAINING_LOAD_EXPLAINER}>
+            <button
+              type="button"
+              aria-label="How to read training load"
+              className="p-4 -m-4 text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <Info className="size-3" aria-hidden="true" />
+            </button>
+          </UITooltip>
         </div>
         {/* Form — the takeaway number: fresh (+) or carrying fatigue (−).
             Carrying fatigue is NOT the destructive register. Form is
@@ -186,13 +215,6 @@ export default function TrainingLoadCard({
           />
         </ComposedChart>
       </ResponsiveContainer>
-
-      <p className="text-xs text-muted-foreground mt-2">
-        The purple curve is your 6-week training base; the bars are daily
-        sessions (<span className="text-running-strong">runs</span> ·{" "}
-        <span className="text-lifting-strong">lifts</span>). Positive form =
-        fresh; deep negative = time to ease off.
-      </p>
 
       {/* B1 — the one advisory line, quiet unless a guardrail fires.
           Warning register (THEME.warning), never a red risk score. */}

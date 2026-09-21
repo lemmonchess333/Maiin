@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, fireEvent } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { ReactNode } from "react";
 import { format, subDays } from "date-fns";
@@ -53,6 +53,30 @@ describe("nutrition evidence limits", () => {
       screen.queryByText(/At this rate|Holding —|On track —/)
     ).not.toBeInTheDocument();
   });
+  /* The card's closing paragraph carried two different kinds of sentence.
+     "Estimated maintenance − logged food" and "a gap is a day with no
+     food logged" are a legend, and legends now live behind the ⓘ the
+     Performance Index established. "This chart does not predict weight
+     change" is not a legend — it is what stops a reader taking a run of
+     green bars for weight lost, and a caveat behind a tap is concealment
+     dressed as tidying. So only the legend half moved. */
+  it("puts the legend behind the ⓘ rather than on the card", () => {
+    render(<CalorieBalanceChart meals={[]} />);
+    expect(screen.queryByText(/Estimated maintenance/)).toBeNull();
+    fireEvent.click(
+      screen.getByRole("button", { name: "How calorie balance is measured" })
+    );
+    expect(screen.getByText(/Estimated maintenance/)).toBeInTheDocument();
+    expect(screen.getByText(/day with no food logged/)).toBeInTheDocument();
+  });
+
+  it("keeps the weight-change caveat visible without a tap", () => {
+    render(<CalorieBalanceChart meals={[]} />);
+    expect(
+      screen.getByText(/does not predict weight change/)
+    ).toBeInTheDocument();
+  });
+
   it("counts only past days with entries and discloses incomplete logs", () => {
     render(<CalorieBalanceChart meals={[meal(1, 210), meal(0, 100)]} />);
     expect(points().filter((point) => point.balance !== null)).toHaveLength(1);
