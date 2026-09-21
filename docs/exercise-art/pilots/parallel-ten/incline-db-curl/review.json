@@ -1,0 +1,44 @@
+{
+  "exerciseId": "incline-db-curl",
+  "status": "blocked-master",
+  "approved": false,
+  "generatedFrameCount": 0,
+  "masterAttempts": 1,
+  "issues": [
+    "Far hand and dumbbell fully occluded in master.",
+    "Bench looks steeper than catalogue 45 degrees.",
+    "White trainer design drifts from canonical.",
+    "Correction rejected by image tool safety system (output sexual); no retry of blocked correction."
+  ],
+  "fixedAnchors": [
+    "bench",
+    "feet",
+    "seat contact",
+    "upper arm",
+    "back support"
+  ],
+  "review": "Visual review of master attempts only; no sequential playback or mobile light/dark review possible. No app files changed.",
+  "generationMode": "built-in imagegen",
+  "canonicalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+  "files": [
+    {
+      "file": "prompts.json",
+      "sha256": "83105d5c7ce2d05b5cce3b8519e5aa534ea5ac1b611cb09c0aedfc0c1743c64f",
+      "bytes": 1892
+    },
+    {
+      "file": "1.png",
+      "sha256": "508e99b2231c143f3413ef5955b787ce5a6857e5ae985b844949e3ecd67da805",
+      "bytes": 1107328,
+      "dimensions": [
+        1024,
+        1536
+      ]
+    },
+    {
+      "file": "cues.json",
+      "sha256": "3c99e286985a10dcb453bb7a62b6b0ab90569889bf88c8fdb35ebfdc4b68b204",
+      "bytes": 1113
+    }
+  ]
+}

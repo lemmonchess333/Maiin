@@ -1,0 +1,63 @@
+{
+  "status": "six-frame-candidate-needs-review",
+  "files": {
+    "frames/2.png": {
+      "sha256": "8fa4170b613a3dda36b616c831e0577c976ba69f1161c80be7923b0e1c444ebd",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    "frames/1.png": {
+      "sha256": "08cf5fc19c83299a6b7bf4798177ea30ea4d1ba450d5b6311e50a3baf112c0d5",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    "frames/4.png": {
+      "sha256": "6fd3ed8e9a91c5fadb5319b845adbe503946182f224dd830af3865697984fee4",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    "frames/6.png": {
+      "sha256": "8fa4170b613a3dda36b616c831e0577c976ba69f1161c80be7923b0e1c444ebd",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    "frames/5.png": {
+      "sha256": "45307474d633da67b8aba39370af4f660a0efaa41ccf6ec385258a6107a077ff",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    "frames/3.png": {
+      "sha256": "45307474d633da67b8aba39370af4f660a0efaa41ccf6ec385258a6107a077ff",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    "masters/1.png": {
+      "sha256": "08cf5fc19c83299a6b7bf4798177ea30ea4d1ba450d5b6311e50a3baf112c0d5",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    }
+  },
+  "canonical_sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+  "cues_sha256": "944fb83af1b85fa1d71c100f04434f0ed5b98c2ec5ba1f7a2f31b0b58387b41e",
+  "fixed_anchors": [
+    "bench corners and feet",
+    "front sole contact",
+    "rear laces bench contact"
+  ],
+  "sequence_review": "individual images inspected; actual player not tested",
+  "publicApproved": false
+}

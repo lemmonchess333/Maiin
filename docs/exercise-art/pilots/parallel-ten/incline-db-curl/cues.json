@@ -1,0 +1,44 @@
+[
+  {
+    "frame": 1,
+    "label": "Start stretch",
+    "cue": "Back supported by 45 degree bench; both arms hang; palms forward.",
+    "asset": null,
+    "status": "planned-not-generated"
+  },
+  {
+    "frame": 2,
+    "label": "Begin curl",
+    "cue": "Flex elbows about 40 degrees, upper arms vertical and fixed.",
+    "asset": null,
+    "status": "planned-not-generated"
+  },
+  {
+    "frame": 3,
+    "label": "Mid curl",
+    "cue": "Flex elbows about 80 degrees, wrists neutral.",
+    "asset": null,
+    "status": "planned-not-generated"
+  },
+  {
+    "frame": 4,
+    "label": "Top curl",
+    "cue": "Flex elbows about 120 degrees, no upper arm drift.",
+    "asset": null,
+    "status": "planned-not-generated"
+  },
+  {
+    "frame": 5,
+    "label": "Controlled lowering",
+    "cue": "Lower to about 80 degrees elbow flexion; reuse frame 3 when equivalent.",
+    "asset": null,
+    "status": "planned-not-generated"
+  },
+  {
+    "frame": 6,
+    "label": "Return toward stretch",
+    "cue": "Lower to about 40 degrees; reuse frame 2 when equivalent.",
+    "asset": null,
+    "status": "planned-not-generated"
+  }
+]

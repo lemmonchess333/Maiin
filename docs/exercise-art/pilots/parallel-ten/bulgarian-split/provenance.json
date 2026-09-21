@@ -1,0 +1,53 @@
+{
+  "exerciseId": "bulgarian-split",
+  "status": "six-frame-candidate-needs-review",
+  "canonicalReference": "/workspace/scratch/92115cdb9667/character-reference/athlete-anatomy-v3.png",
+  "generationMode": "built-in image_gen",
+  "prompts": [
+    "Scientific-educational sports anatomy illustration, exercise master for DUMBBELL BULGARIAN SPLIT SQUAT. Use supplied canonical bald faceless adult anatomical mannequin, exact white/light grey body with fine dark contours and white trainers. Purple quadriceps, lilac glutes and hamstrings, subtle pale purple core. Smooth neutral mannequin hip surface as reference. Solid black background. Landscape 1536x1024, entire body visible at stable scale. Camera STRICT SIDE VIEW facing right with minimal 10 degree three-quarter reveal so both identical grey hex dumbbells at sides and both hands are visible. Subject centered. Low simple charcoal flat bench at LEFT, near working foot flat on floor at RIGHT, about two feet ahead of bench. Rear leg reaches back, knee bent, top of rear shoe LACES DOWN resting on bench top (not toes planted). Start/top position: front knee slightly bent, torso upright with subtle natural forward incline, hip over front heel. Arms hang straight down holding identical modest dumbbells with neutral grips. Show single bench with two legs fixed floor contact, all bench and weights in view. No text, captions, arrows, labels or panels. One athlete. Flat clean 2D canonical art.",
+    "Identity-preserving scientific sports illustration edit. Image 1 canonical athlete, Image 2 Bulgarian split squat MASTER and exact scene. ONLY articulate joints into shallow first-third descent: bend front knee to roughly 35 degrees and drop pelvis and head about 100 pixels vertically; let rear knee drop toward floor. Keep front trainer EXACTLY at x900–1060 y850–930. Keep rear shoe contact EXACTLY on bench x430–550 y655. Keep entire bench pixel-identical. Rear instep remains laces-down on bench. Preserve same fixed camera, 1536x1024 canvas, white trainers, full body proportions, linework, black background, muscle highlight colors, identical dumbbell dimensions and grips. Arms stay straight attached to torso so dumbbells lower with body. Torso controlled near upright. No camera zoom, scene scale shift, foot slide, bench distortion, new clothing, text or arrows. Small range descent only, not bottom squat.",
+    "Sports illustration correction only. References: image 1 identity, image 2 standing Bulgarian split squat master, image 3 current BOTTOM position edit target. Keep image 3 body pose, bench, feet, head and camera pixel-identical. Restore the missing FAR hand with its matching grey hex dumbbell hanging vertically beside the far hip, mostly occluded by torso/front thigh as physically appropriate but showing far wrist/hand and outer dumbbell hex head on the right of the body. Match far dumbbell in image 2 exactly in size/material and grip, lower it with torso in bottom position. Preserve existing near dumbbell and hand unchanged. No changes to body position, bench, foot contacts, scale, highlights, canvas or background. One athlete, two dumbbells, no text.",
+    "Scientific exercise animation in-between. Image 1 canonical identity. Image 2 is exact TOP pose master, image 3 exact BOTTOM pose. Generate ONE halfway pose at exactly HALF THE VERTICAL DISTANCE BETWEEN reference 2 and reference 3. Top of head near y100 (top=20, bottom=180). Pelvis y520, front knee bent approximately 55 degrees, front thigh diagonal down-right rather than horizontal. Full body proportions and skeleton constant. Both trainer contact points and entire bench must remain at identical pixel locations as both references. Front trainer x900–1060 y850–930. Rear shoe rests laces-down on bench x430–550 y655. Preserve BOTH hands and identical dumbbells at sides lowered halfway with torso, far dumbbell visible beyond hip. Same canvas 1536x1024, same camera, black background, purple quadriceps/lilac glutes. No text or other changes. A genuinely intermediate pose between references.",
+    "Create a very shallow Bulgarian split squat in-between pose. Ref 1 canonical identity. Ref 2 standing TOP master at head y20. Ref 3 MID descent at head y128. Edit ref 2 so head/pelvis/torso drop ONLY 45 pixels, less than half way to ref 3, bending front knee slightly more and rear knee lower slightly. Upper body stays exactly same shape and size; only translate it down 45 pixels and physically articulate legs. Front thigh is still steep diagonal, not horizontal. Bench, both shoe contact points, floor remain pixel fixed. Both identical dumbbells hang in unchanged grips and translate down with torso. Same anatomy, muscles, colors, 1536x1024 black scene, scale and view. NO text, arrows, additional objects, or new attire."
+  ],
+  "cues": [
+    [
+      "SET UP",
+      "Brace with your rear foot laces-down on the bench and front foot planted."
+    ],
+    [
+      "BEGIN LOWERING",
+      "Bend the front knee and lower the back knee while keeping both foot contacts fixed."
+    ],
+    [
+      "LOWER",
+      "Continue descending with the front knee tracking over the toes."
+    ],
+    [
+      "BOTTOM",
+      "Pause at a controlled comfortable depth with the front thigh near horizontal."
+    ],
+    [
+      "DRIVE UP",
+      "Press through your front heel to rise through the same mid-range position."
+    ],
+    [
+      "FINISH RETURN",
+      "Continue rising toward the start without pushing off the rear foot."
+    ]
+  ],
+  "sequence": [
+    "frames/1.png",
+    "frames/2.png",
+    "frames/3.png",
+    "frames/4.png",
+    "frames/5.png",
+    "frames/6.png"
+  ],
+  "reuse": {
+    "frames/5.png": "frames/3.png",
+    "frames/6.png": "frames/2.png"
+  },
+  "reuseReason": "Same joint configurations traversed on controlled return; distinct cues identify direction.",
+  "actualPoseOrder": "standing master; generated halfway; generated later depth; corrected bottom; later depth return; halfway return"
+}

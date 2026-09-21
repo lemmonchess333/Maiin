@@ -1,0 +1,93 @@
+{
+  "exerciseId": "spider-db-curl",
+  "status": "complete-six-frame-candidate-not-release-approved",
+  "generationMethod": "built-in image_gen.imagegen",
+  "canonicalReference": "/workspace/scratch/92115cdb9667/tropos-next-exercises/docs/exercise-art/identity/athlete-anatomy-v3.png",
+  "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+  "prompts": [
+    "Scientific educational fitness illustration for Tropos. Reference canonical identity: exact same bald faceless white-grey anatomical man, fine dark lines, white trainers, full leg anatomy visible; neutral smooth pelvis with no genital detail or garment seams. Pure black background no text or arrows. ONE full-resolution landscape 1536x1024 frame. SPIDER DUMBBELL CURL master/start pose. Lie face DOWN chest fully pinned to black 45-degree incline bench, head above upper edge, neutral neck/spine; legs behind with white trainers planted. Upper arms hang vertically downward from shoulders, elbows straight, arms on either side of bench, TWO equal compact grey hex dumbbells. SUPINATED grip: palms face forward away from feet, handles across palms. Camera front-side three-quarter sees both dumbbells and biceps, whole body and bench in frame with margins. Biceps strongest purple, forearms light lilac only. Bench equipment simple rigid and realistic. Start long arms hanging down with weights clear of floor.",
+    "Precise local edit: image1 canonical athlete, image2 spider curl exercise master EXACT target. Preserve image2 bench, torso, head, legs, shoes, shoulders, upper arms and ELBOW PIXEL LOCATIONS. Only rotate both forearms upwards about fixed elbows until both elbows flexed 70 degrees (halfway curl). Both upper arms remain hanging vertically, NOT rowing backwards. Supinated wrists and both equal grey hex dumbbells unchanged size, palms now upward as forearms rise. Chest firmly against same bench pad. Do not move or scale anything else. Biceps purple and forearms pale lilac same as target. No text, black background, same landscape 1536x1024. Dumbbells mid-height between original weights and shoulders.",
+    "Precise local pose edit. Image1 canonical identity, image2 immutable spider curl master, image3 mid-curl EDIT TARGET. Complete elbow flexion to TOP of spider curl: dumbbells rise toward shoulders, forearms near vertical upward, elbows remain exactly at same screen positions as image3. BOTH upper arms stay hanging straight down; no rowing and no shoulder swing. Chest pinned to pad, head torso legs shoes and entire bench pixel locations unchanged. Only rotate forearms about stationary elbows. Same supinated palms, same identical compact grey dumbbells held fully in hands, same size. Same purple biceps/light lilac forearms anatomy. No additional muscles highlighted. Exact original landscape canvas, no text."
+  ],
+  "sourcePaths": [
+    "/workspace/scratch/92115cdb9667/generated_images/exec-544e89d7-c1f7-401b-ac91-58f4c3678f46.png",
+    "/workspace/scratch/92115cdb9667/generated_images/exec-95a689a3-3cad-4809-b886-9a4ce9de6159.png",
+    "/workspace/scratch/92115cdb9667/generated_images/exec-dbc6dfbc-5e9c-4c49-9533-f3b799db67f7.png"
+  ],
+  "framePoseMap": [
+    0,
+    1,
+    2,
+    2,
+    1,
+    0
+  ],
+  "reuse": "Frame4 repeats peak frame3 as a brief squeeze; frame5 repeats mid pose2 on return; frame6 returns to start pose1. All are native full-resolution copies, not crops.",
+  "cues": [
+    "Let your arms hang with palms facing forward.",
+    "Curl upward while keeping your upper arms still.",
+    "Bring the dumbbells toward your shoulders.",
+    "Briefly squeeze your biceps with your chest on the pad.",
+    "Lower slowly through the middle of the curl.",
+    "Return to straight arms with control."
+  ],
+  "cueSha256": "14a6fc9d3c4306fd7c9b152cc4e072ec645f0ad405ccea517d780d9d8adb8fb1",
+  "sha256": {
+    "frames/1.png": "57aa19cad7864c06a0e51308dba49d5dac5852ec334987a9a22d6a06b66826d7",
+    "frames/2.png": "d5782759a908ed056c2b7c80af43e13fd92f8225a5c33d8570cdb2f5eaa459fe",
+    "frames/3.png": "c5c0ee34cb9d746ad5c6cd4b19c2a8118482a86de07b2c5dc8cf0fb27d398fe2",
+    "frames/4.png": "c5c0ee34cb9d746ad5c6cd4b19c2a8118482a86de07b2c5dc8cf0fb27d398fe2",
+    "frames/5.png": "d5782759a908ed056c2b7c80af43e13fd92f8225a5c33d8570cdb2f5eaa459fe",
+    "frames/6.png": "57aa19cad7864c06a0e51308dba49d5dac5852ec334987a9a22d6a06b66826d7",
+    "masters/1.png": "57aa19cad7864c06a0e51308dba49d5dac5852ec334987a9a22d6a06b66826d7"
+  },
+  "dimensions": {
+    "frames/1.png": [
+      1536,
+      1024
+    ],
+    "frames/2.png": [
+      1536,
+      1024
+    ],
+    "frames/3.png": [
+      1536,
+      1024
+    ],
+    "frames/4.png": [
+      1536,
+      1024
+    ],
+    "frames/5.png": [
+      1536,
+      1024
+    ],
+    "frames/6.png": [
+      1536,
+      1024
+    ],
+    "masters/1.png": [
+      1536,
+      1024
+    ]
+  },
+  "fixedAnchors": [
+    "bench frame",
+    "bench pad",
+    "chest contact",
+    "head",
+    "hips",
+    "feet"
+  ],
+  "review": {
+    "singlePoseVisualInspection": "all generated poses inspected",
+    "sixFiles": true,
+    "runtimeSequentialPlayback": "pending",
+    "mobileLightDark": "pending",
+    "releaseApproved": false,
+    "issues": [
+      "Small elbow-location variation between start and curl poses; review before release.",
+      "Full app light/dark and sequential playback QA pending."
+    ]
+  }
+}

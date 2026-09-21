@@ -1,0 +1,59 @@
+{
+  "exerciseId": "leg-extension",
+  "status": "six-frame-candidate-rework-required",
+  "canonicalReference": "/workspace/scratch/92115cdb9667/character-reference/athlete-anatomy-v3.png",
+  "generationMode": "built-in image_gen",
+  "prompts": [
+    "Scientific sports anatomy exercise master for SEATED LEG EXTENSION machine. Match supplied canonical adult bald faceless grey anatomical mannequin with white trainers and fine dark line art. Purple quadriceps, subtle lilac hip flexors. Smooth neutral mannequin surface. Whole athlete and whole machine in frame, black background, 1536x1024 landscape. Strict right-facing SIDE VIEW slightly elevated with very small three-quarter angle exposing both legs/hands. Compact realistic grey plate-loaded leg extension machine: padded seat and near-vertical backrest, two simple side handles at hips; an external pivot visibly aligned with the knee joint; rigid lever from knee-height pivot to ONE cylindrical padded roller across front of both lower shins just above ankles. One modest grey weight plate on the lever's outside loading peg. No cables or stack. Seated athlete grips handles, back and hips pressed against pads, thighs horizontal, knees bent 90 degrees and shins vertical, feet hanging off floor. Both ankles behind roller. No extra thigh hold-down pad. Frame must allow lower legs to extend fully horizontally forward without clipping. One anatomy mannequin, no text, arrows, labels, symbols, watermark.",
+    "Scientific sports pose edit. Reference 1 canonical adult anatomy mannequin; reference 2 leg-extension exercise master is EXACT scene to preserve. Generate early extension: extend both knees by 25 degrees from the master, so shins angle forward toward bottom LEFT, rather than hanging vertical. ONLY lower legs/shoes and machine rotating lever/roller/weight assembly move. Keep head, torso, hips, thighs, knee pivot axes, both hands on handles, seat, backrest, base legs, and floor pixel-identical. Roller stays against lower shins just above ankles. Rotate the entire rigid lever with roller and its attached modest weight plate around fixed knee-level pivot; preserve lever geometry, roller width, one plate, plate dimensions. White trainers same size, quadriceps purple unchanged. No body scaling, camera move, labels or text. Same 1536x1024.",
+    "Sports anatomy pose edit. Ref 1 identity, ref 2 MASTER and fixed machine, ref 3 early extension edit target. Further extend both knees until shins angle 30 degrees BELOW horizontal (60 degrees extension from master). Preserve thighs, hips, torso/head, hands, seat/backrest/base completely unchanged. Rotate lower legs and trainer shoes together, maintaining tibia length. Roller stays against lower shins ABOVE ankles and lever rotates with it. CRITICAL: visible circular metal machine PIVOT remains centered at EXACT master coordinates x555 y462, not translated with the lever. It is bolted to fixed frame. The single weight plate, peg, lever and roller form one rigid rotating assembly. Constant plate diameter/roller length, unchanged camera and 1536x1024 frame. Black background, same canonical anatomy colors, no text.",
+    "Scientific exercise image edit, final top of leg extension. Ref1 canonical identity, ref2 exact exercise master, ref3 nearly-extended preceding pose to edit. Extend both knees the remaining ~25 degrees until thighs and shins form straight lines, legs fully straight without hyperextension. Feet and roller therefore lift LEFT and UP until lower legs align with thighs in perspective, not above thighs. Move only lower legs, trainers, and rigid lever/roller/plate assembly. Preserve every stationary region: entire head/torso/hips/thighs, both hands fixed gripping handles, seat/backrest/base. Circular knee-height metal pivot stays at same location as reference 3. Roller must remain on lower shins just above ankles, not migrate to knees. Keep the rigid lever and plate geometry and radius constant. Same full 1536x1024 black scene, white trainers, canonical anatomy colours, fine contours. No text, arrows, redraw of fixed scene or new objects.",
+    "Mechanical correction of sports exercise image. Ref1 identity, Ref2 MASTER with correct fixed pivot location, Ref3 FULL EXTENSION image to edit. Keep the athlete pose, roller/shin contact, all hands and all stationary seat/base exactly unchanged from image 3. Correct ONLY the machine linkage so the circular fixed axle returns to the MASTER location x555 y462, centered there. Current image3 incorrectly moves axle upward to x525 y411. Move this axle down-right by 30px and 51px to x555 y462, adjusting connected metal bars accordingly while maintaining a credible rigid linkage and the same weight plate. The axle attaches to immobile machine frame at knee height; it MUST NOT rise with the shins. Do not change legs, roller, athlete, scene scale, or camera. No text."
+  ],
+  "cues": [
+    [
+      "SET UP",
+      "Sit with hips against the pad and the roller just above the ankles."
+    ],
+    [
+      "INITIATE",
+      "Extend both knees smoothly while gripping the handles."
+    ],
+    [
+      "EXTEND",
+      "Continue raising the shins with hips and thighs stable."
+    ],
+    [
+      "SQUEEZE",
+      "Straighten the knees without snapping into lockout and squeeze your quads."
+    ],
+    [
+      "LOWER",
+      "Lower the shins through mid-range under control."
+    ],
+    [
+      "CONTROLLED RETURN",
+      "Continue returning toward the bent-knee start without dropping the load."
+    ]
+  ],
+  "sequence": [
+    "frames/1.png",
+    "frames/2.png",
+    "frames/3.png",
+    "frames/4.png",
+    "frames/5.png",
+    "frames/6.png"
+  ],
+  "reuse": {
+    "frames/5.png": "frames/3.png",
+    "frames/6.png": "frames/2.png"
+  },
+  "reuseReason": "Return passes same knee positions with controlled lowering cues.",
+  "mechanicsFailure": "Fixed machine axle changes position between poses; apparent rigid lever geometry varies.",
+  "correctionBlocker": {
+    "requestId": "c495dcbf-130b-49e2-889d-e6a3ef2e0e12",
+    "code": "moderation_blocked",
+    "category": "sexual",
+    "stage": "output"
+  }
+}

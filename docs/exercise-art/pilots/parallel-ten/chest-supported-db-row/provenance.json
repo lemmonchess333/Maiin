@@ -1,0 +1,94 @@
+{
+  "exerciseId": "chest-supported-db-row",
+  "status": "complete-six-frame-candidate-not-release-approved",
+  "generationMethod": "built-in image_gen.imagegen",
+  "canonicalReference": "/workspace/scratch/92115cdb9667/tropos-next-exercises/docs/exercise-art/identity/athlete-anatomy-v3.png",
+  "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+  "prompts": [
+    "Scientific educational fitness illustration for Tropos. Exact identity/style from reference: bald faceless white-grey anatomical male with fine black contours, white trainers, all leg muscles visible, neutral featureless smooth pelvis no clothing seams. Black background, no text or arrows. Full body and equipment visible with generous margins, fixed SIDE three-quarter camera facing left. Lie face DOWN with chest firmly supported on a realistic black incline bench at 40 degrees. Head above upper edge, feet planted wide on floor behind, straight neutral neck and trunk, knees slightly bent. Arms hang independently either side of bench. TWO equal compact grey hex dumbbells, neutral hammer grips. Strong purple mid-back musculature, lighter lilac rear delts and biceps. Realistic proportions, bench support frame immobile. Preserve canonical character. One single 1536x1024 landscape image. Master/start pose: arms hanging vertically straight below shoulders, dumbbells close to floor with clearance, palms inward. Three-quarter side camera sees both hands and dumbbells and back muscles. No rowing yet. Chest remains fully pressed to incline pad.",
+    "Precise local pose edit. Image1 canonical identity only. Image2 exact exercise master EDIT TARGET. Preserve canvas, all bench pixels, feet legs pelvis torso head exactly. Change ONLY arms: row BOTH identical dumbbells halfway up toward hips, elbows flexed about 50 degrees and moving backward beside torso. Hands retain neutral grip. Chest stays firmly glued to pad. Equal dumbbells remain same exact size. No scale or camera change. Strong purple midback and light lilac biceps/rear delts unchanged. Same black background and no text. One native full-resolution landscape frame.",
+    "Precise pose edit. Image1 canonical athlete; image2 exact master setup; image3 top row pose. Produce the INTERMEDIATE position exactly halfway between arms in image2 and image3. Preserve all other pixels from image2: same bench, legs shoes head torso scale composition. Hands/dumbbells must be halfway between hanging position and waist position. Elbows partly bent about 35 degrees and only slightly behind start, NOT pulled to ribs. This is EARLY PULL at 40% travel, with dumbbells at bench lower-end height, well below ribs. Neutral grip, two identical dumbbells unchanged size. Chest pinned. Primary purple midback, secondary light lilac rear delts/biceps consistent. No text. Same 1536x1024 canvas."
+  ],
+  "sourcePaths": [
+    "/workspace/scratch/92115cdb9667/generated_images/exec-6167913d-0048-422a-9833-e8048c60a667.png",
+    "/workspace/scratch/92115cdb9667/generated_images/exec-4040bd6e-a8e6-40ac-a570-352e3d32226e.png",
+    "/workspace/scratch/92115cdb9667/generated_images/exec-71541b92-5d8c-40c7-a944-6e56c13e7ec0.png"
+  ],
+  "framePoseMap": [
+    0,
+    1,
+    2,
+    2,
+    1,
+    0
+  ],
+  "reuse": "Frame4 repeats peak frame3 as a brief squeeze; frame5 repeats mid pose2 on return; frame6 returns to start pose1. All are native full-resolution copies, not crops.",
+  "cues": [
+    "Let both dumbbells hang beneath your shoulders.",
+    "Drive your elbows back while keeping your chest on the pad.",
+    "Row the dumbbells toward your hips.",
+    "Briefly squeeze your shoulder blades together.",
+    "Lower both dumbbells under control.",
+    "Return to a full stretch with your chest supported."
+  ],
+  "cueSha256": "b0fcffddd99d01715d3fb32afb167e7f2f7a0bb1f7eed9df94d9d33989ada5aa",
+  "sha256": {
+    "frames/1.png": "c653688121b16517520f697531cadbc4f4ebb0795e18f776088c5af6950b2032",
+    "frames/2.png": "9608f9a4c65942c7a26eb0d9cc34e1e2a1846d305cb56f173b83b9843f73ea51",
+    "frames/3.png": "08227af2299248f6d516d9f2f9deb0e8cfc1ab716a594fd47a23c5238b7ea319",
+    "frames/4.png": "08227af2299248f6d516d9f2f9deb0e8cfc1ab716a594fd47a23c5238b7ea319",
+    "frames/5.png": "9608f9a4c65942c7a26eb0d9cc34e1e2a1846d305cb56f173b83b9843f73ea51",
+    "frames/6.png": "c653688121b16517520f697531cadbc4f4ebb0795e18f776088c5af6950b2032",
+    "masters/1.png": "c653688121b16517520f697531cadbc4f4ebb0795e18f776088c5af6950b2032"
+  },
+  "dimensions": {
+    "frames/1.png": [
+      1536,
+      1024
+    ],
+    "frames/2.png": [
+      1536,
+      1024
+    ],
+    "frames/3.png": [
+      1536,
+      1024
+    ],
+    "frames/4.png": [
+      1536,
+      1024
+    ],
+    "frames/5.png": [
+      1536,
+      1024
+    ],
+    "frames/6.png": [
+      1536,
+      1024
+    ],
+    "masters/1.png": [
+      1536,
+      1024
+    ]
+  },
+  "fixedAnchors": [
+    "bench frame",
+    "bench pad",
+    "chest contact",
+    "head",
+    "hips",
+    "feet"
+  ],
+  "review": {
+    "singlePoseVisualInspection": "all generated poses inspected",
+    "sixFiles": true,
+    "runtimeSequentialPlayback": "pending",
+    "mobileLightDark": "pending",
+    "releaseApproved": false,
+    "issues": [
+      "Bench support strut shape changes slightly between start and pulling poses; fixed equipment invariant requires correction before release.",
+      "Secondary deltoid highlight extends beyond rear delts; review anatomical placement.",
+      "Feet floor contact inferred on black background; needs runtime viewing."
+    ]
+  }
+}
