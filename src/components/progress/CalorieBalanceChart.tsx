@@ -1,5 +1,13 @@
 import { useMemo } from "react";
 import SectionLabel from "@/components/ui/SectionLabel";
+import UITooltip from "@/components/ui/Tooltip";
+
+/* The metric's definition and the gaps legend, moved off the surface.
+   The caveat that follows the chart stays visible — see the title row
+   for why the two halves of that paragraph parted company. */
+const CALORIE_BALANCE_EXPLAINER =
+  "Estimated maintenance − logged food, with today excluded. A gap in the chart is a day with no food logged.";
+import { Info } from "lucide-react";
 import type { Meal } from "@/hooks/useMeals";
 import { useAuth } from "@/lib/auth";
 import { format, subDays } from "date-fns";
@@ -71,14 +79,26 @@ export default function CalorieBalanceChart({ meals }: { meals: Meal[] }) {
   return (
     <div className="p-4 rounded-2xl bg-card space-y-3">
       <div className="flex items-center justify-between">
-        <SectionLabel>Calorie balance</SectionLabel>
+        <div className="flex items-center gap-1.5">
+          <SectionLabel>Calorie balance</SectionLabel>
+          {/* What the bars are, on request. The DISCLOSURE below stays on
+              the surface — a caveat that stops a reader concluding they
+              are losing weight is not help text, and putting it behind a
+              tap would be hiding it rather than tidying it. */}
+          <UITooltip content={CALORIE_BALANCE_EXPLAINER}>
+            <button
+              type="button"
+              aria-label="How calorie balance is measured"
+              className="p-4 -m-4 text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <Info className="size-3" aria-hidden="true" />
+            </button>
+          </UITooltip>
+        </div>
         <span className="text-xs text-muted-foreground">
           {WINDOW_DAYS} days
         </span>
       </div>
-      <p className="text-xs text-muted-foreground">
-        Estimated maintenance − logged food. Today is excluded.
-      </p>
       <div className="h-44">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart
@@ -166,9 +186,8 @@ export default function CalorieBalanceChart({ meals }: { meals: Meal[] }) {
         </div>
       </div>
       <p className="text-xs text-muted-foreground">
-        Gaps mean no food was logged. Partial logs can overstate a deficit, so
-        this chart does not predict weight change or confirm progress toward
-        your goal.
+        Partial logs can overstate a deficit, so this chart does not predict
+        weight change or confirm progress toward your goal.
       </p>
     </div>
   );

@@ -7,6 +7,7 @@ import { EXERCISES } from "@/lib/exercises";
 import { estimate1RMRange, formatOneRepMaxRange } from "@/lib/analytics";
 import PRBadge from "@/components/analytics/PRBadge";
 import PRCard from "@/components/analytics/PRCard";
+import { samePRSet, runningPRKey, liftPRKey } from "@/lib/prSetIdentity";
 
 /* PR 7b follow-up — collapse the lifetime Lift PRs list to the
    most-recently-set N entries by default. A serious lifter logs
@@ -43,6 +44,9 @@ interface RunningPR {
   value: string;
   date: string;
   isNew?: boolean;
+  /** The run that holds this record, when one does. Absent on a bucket
+   *  with nothing in it, where the row renders a "--" placeholder. */
+  runId?: string;
 }
 
 interface RunningPRBuckets {
@@ -221,6 +225,23 @@ export default function PRsTab({
 }: PRsTabProps) {
   const hasNoPRs = !hasAnyLifetimeRun && !hasAnyLifetimeWorkout;
 
+  /* Until a user's history outgrows the 30-day window, "Recent bests"
+     holds the same records as the all-time card and the tab prints each
+     row twice. Rather than hide the fact, the single card says both
+     things in its subtitle — these ARE the all-time bests, and they were
+     all set inside the window. The second card returns the day the two
+     sets diverge, which is the day it starts carrying news. */
+  const runningRecentIsDuplicate = samePRSet(
+    runningPRs.lifetime,
+    runningPRs.recent30d,
+    runningPRKey
+  );
+  const liftRecentIsDuplicate = samePRSet(
+    lifetimePRs,
+    recentLiftPRs,
+    liftPRKey
+  );
+
   /* Hist5d Stress 6 — cold-state designed as onboarding, not as a
      fallback. Cohesive single surface (not stacked empty cards)
      with both Start run + Start lift CTAs side-by-side. The
@@ -280,11 +301,15 @@ export default function PRsTab({
           <SectionLabel className="text-running-strong">Running</SectionLabel>
           <PRCard
             title="Running PRs"
-            subtitle="All-time · outdoor GPS only"
+            subtitle={
+              runningRecentIsDuplicate
+                ? "All-time and last 30 days · outdoor GPS only"
+                : "All-time · outdoor GPS only"
+            }
             prs={runningPRs.lifetime}
             accentColor={THEME.running}
           />
-          {runningPRs.hasAnyRecent && (
+          {runningPRs.hasAnyRecent && !runningRecentIsDuplicate && (
             <PRCard
               title="Recent bests"
               subtitle="Last 30 days · outdoor GPS only"
@@ -314,11 +339,13 @@ export default function PRsTab({
           <LiftPRList
             prs={lifetimePRs}
             title="Lift PRs"
-            subtitle="All-time"
+            subtitle={
+              liftRecentIsDuplicate ? "All-time and last 30 days" : "All-time"
+            }
             emptyText="Log your first workout to set your starting PRs."
             collapseAfter={LIFT_PR_DEFAULT_LIMIT}
           />
-          {recentLiftPRs.length > 0 && (
+          {recentLiftPRs.length > 0 && !liftRecentIsDuplicate && (
             <LiftPRList
               prs={recentLiftPRs}
               title="Recent bests"
