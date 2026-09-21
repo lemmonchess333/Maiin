@@ -1644,6 +1644,29 @@ export default function History() {
               <WorkoutHistoryList workouts={workouts} />
             )}
 
+            {/* Weight is a body measurement, not a food one, and the code
+                said so three times before it said it once: TrendWeight was
+                rendered in all three branches of the Nutrition section,
+                each with a comment noting that weight is independent of
+                meal logging. The section's own gate disagreed —
+                `showNutritionSection` is meal-based, so a user who logged
+                weight and never logged a meal got no weight chart at all.
+                Its own section, gated on nothing but the tab, settles both:
+                the workaround comments go, and the weight-only user gets
+                their chart. */}
+            {filter === "analytics" && (
+              <section
+                id="analytics-body"
+                aria-label="Body analytics"
+                className="space-y-2"
+              >
+                <SectionLabel tier="section">Body</SectionLabel>
+                <SectionErrorBoundary sectionName="trend-weight">
+                  <TrendWeight />
+                </SectionErrorBoundary>
+              </section>
+            )}
+
             {showNutritionSection && filter === "analytics" && (
               <section
                 id="analytics-nutrition"
@@ -1673,13 +1696,6 @@ export default function History() {
                     <p className="text-xs text-muted-foreground italic px-1">
                       No meals logged in this period
                     </p>
-                    {/* TrendWeight stays visible — weight is independent
-                      of meal logging. Returning users get their weight
-                      chart even when nutrition is dormant for the
-                      selected window. */}
-                    <SectionErrorBoundary sectionName="trend-weight">
-                      <TrendWeight />
-                    </SectionErrorBoundary>
                   </>
                 ) : nutrition.avgCalories === 0 ? (
                   <>
@@ -1695,13 +1711,6 @@ export default function History() {
                       ctaLabel="Log meal"
                       variant="nutrition"
                     />
-                    {/* Weight tracking is independent of meal logging, so we
-                      keep TrendWeight visible even when there's no nutrition
-                      data yet — a user logging weight without meals still
-                      gets a chart. */}
-                    <SectionErrorBoundary sectionName="trend-weight">
-                      <TrendWeight />
-                    </SectionErrorBoundary>
                   </>
                 ) : (
                   <>
@@ -1860,9 +1869,6 @@ export default function History() {
                       fat={nutrition.avgFat}
                     />
 
-                    <SectionErrorBoundary sectionName="trend-weight">
-                      <TrendWeight />
-                    </SectionErrorBoundary>
                     <SectionErrorBoundary sectionName="calorie-balance">
                       <CalorieBalanceChart meals={meals} />
                     </SectionErrorBoundary>
