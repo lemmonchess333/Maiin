@@ -135,6 +135,15 @@ vi.mock("recharts", () => {
     },
     YAxis: Noop,
     CartesianGrid: Noop,
+    /* This mock is WHOLESALE, so every recharts symbol the component
+       imports has to appear here or it renders as `undefined` and the
+       whole suite dies at the JSX call site rather than at the import.
+       Cell and Tooltip arrived with the chart's hover layer and bar
+       emphasis; they are stubs because this file is about the x-axis
+       formatter and nothing else. `bar-emphasis.test.tsx` is the one
+       that reads their props. */
+    Cell: Noop,
+    Tooltip: Noop,
   };
 });
 
