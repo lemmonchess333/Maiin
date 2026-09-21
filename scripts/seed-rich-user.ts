@@ -22,7 +22,7 @@ import { getAuth } from "firebase-admin/auth";
 import { getFirestore, Timestamp } from "firebase-admin/firestore";
 import { assertEmulatorEnvOrExit } from "../e2e/helpers/emulator";
 import { computePerformanceIndex } from "../src/lib/performanceEngine";
-import { localWeekKey } from "../src/lib/dateHelpers";
+import { localDateString, localWeekKey } from "../src/lib/dateHelpers";
 import { vdotFromRace } from "../src/lib/runPaces";
 import type {
   WeeklyAggregates,
@@ -42,7 +42,18 @@ const day = (offset: number) => {
   d.setDate(d.getDate() - offset);
   return d;
 };
-const ymd = (d: Date) => d.toISOString().slice(0, 10);
+/* LOCAL, like `localWeekKey` beside it and like both sibling capture
+   seeds. It read `toISOString().slice(0, 10)` — a UTC day taken off a
+   Date whose hour was set in local time, which is the mix this repo
+   names as its own recurring bug. Two live consequences, both measured
+   rather than argued: east of UTC each local day split across two UTC
+   dates, so the seeded meal days came out one higher than intended; and
+   on Midway the meals landed on TOMORROW's key, outside the window any
+   chart draws. The workouts had it worse — that path sets no hour at
+   all, so their dates moved with the wall-clock time the seed happened
+   to be RUN at. Nothing depended on the answer until the calorie chart
+   started gating on a day COUNT. */
+const ymd = (d: Date) => localDateString(d);
 
 async function main() {
   const user = await auth.getUserByEmail(EMAIL);
@@ -143,7 +154,12 @@ async function main() {
       });
   }
 
-  // ── Meals: last 3 days × 4 meals (drives Food rich state + history). ──
+  /* ── Meals: last 5 days × 4 meals (drives Food rich state + history).
+     Four days of them are PAST days, which is what the calorie-balance
+     chart counts — it withholds its plot under three, and at three the
+     fixture would sit exactly on the boundary with nothing to spare.
+     Three days was also a thin reading of "rich": a user with two past
+     days of food is a cold-start user wherever the page counts days. ── */
   const mealPlan: [string, number, number, number, number][] = [
     ["Oats & berries", 420, 14, 68, 9],
     ["Chicken & rice", 650, 52, 70, 14],
@@ -177,7 +193,7 @@ async function main() {
   )}`;
   const slots = ["breakfast", "lunch", "snacks", "dinner"];
   const slotHours = [8, 13, 16, 19];
-  for (let dd = 0; dd < 3; dd++) {
+  for (let dd = 0; dd < 5; dd++) {
     mealPlan.forEach((m, mi) => {
       const at = day(dd);
       at.setHours(slotHours[mi], 10 + mi * 7, 0, 0);
@@ -535,7 +551,7 @@ async function main() {
     });
 
   console.log(
-    `[seed-rich] ${uid}: ${wIdx} workouts, 10 runs, 12 meals, ` +
+    `[seed-rich] ${uid}: ${wIdx} workouts, 10 runs, 20 meals, ` +
       `${weekKeys.length} performance weeks, ` +
       `${Object.keys(feedActivities).length} public feed activities written.`
   );
