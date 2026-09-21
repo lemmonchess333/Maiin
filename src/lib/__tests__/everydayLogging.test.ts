@@ -180,6 +180,47 @@ describe("committed water awaiting its snapshot", () => {
     expect(settledWater("u1").map((a) => a.id)).toEqual(["s2"]);
   });
 
+  /* The cap has to age from the COMMIT, not the tap.
+     On a weak connection a tap can sit in the queue for minutes before
+     its transaction returns, so measuring from `queuedAt` meant it
+     arrived on the bridge already past the cap — and the very next
+     snapshot, one that predates the commit and carries no receipt for
+     it, tore the bridge down. The total then fell by a whole drink
+     until the receipt landed: a dip on exactly the connection the
+     bridge exists to cover. The pair below is the contract — the wait
+     does not age the bridge, and the backstop still fires. */
+  it("holds the bridge for a tap that waited out the cap in the queue", async () => {
+    const clock = vi.spyOn(Date, "now");
+    const tapped = 1_700_000_000_000;
+    clock.mockReturnValue(tapped);
+    queueWater("u1", { ...drink("slow", 250), queuedAt: tapped });
+    clock.mockReturnValue(tapped + 120_000);
+    await flushWater("u1");
+
+    retireSettled("u1", {});
+
+    expect(
+      settledWater("u1").map((a) => a.id),
+      "a two-minute wait in the queue is not two minutes on the bridge"
+    ).toEqual(["slow"]);
+  });
+
+  it("still drops a bridge entry no snapshot ever accounts for", async () => {
+    const clock = vi.spyOn(Date, "now");
+    const tapped = 1_700_000_000_000;
+    clock.mockReturnValue(tapped);
+    queueWater("u1", { ...drink("stuck", 250), queuedAt: tapped });
+    await flushWater("u1");
+
+    clock.mockReturnValue(tapped + 61_000);
+    retireSettled("u1", {});
+
+    expect(
+      settledWater("u1"),
+      "the backstop is what stops a lost receipt inflating the total forever"
+    ).toHaveLength(0);
+  });
+
   it("retires it the moment a snapshot carries its receipt", async () => {
     queueWater("u1", drink("s3", 250));
     await flushWater("u1");

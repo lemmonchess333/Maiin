@@ -16,6 +16,15 @@ export interface WaterAction {
   targetMl: number;
   undoOf?: string;
   queuedAt: number;
+  /** Set only on a SETTLED record: the moment the transaction returned.
+   *  The bridge's age cap is measured from this, never from `queuedAt`.
+   *  A tap that waited two minutes in the queue on a weak connection
+   *  commits already older than the cap, so ageing from the tap retired
+   *  its bridge entry on the very next snapshot — one that predates the
+   *  commit and carries no receipt for it. The total then fell by a
+   *  whole drink until the receipt-bearing snapshot landed, on exactly
+   *  the connection the bridge exists to cover. */
+  committedAt?: number;
 }
 export interface WaterReceipt {
   delta: number;
@@ -127,7 +136,13 @@ export function settledWater(uid: string): WaterAction[] {
  * Drop settled actions the given receipts now account for. The age cap
  * is a backstop, not the mechanism: a receipt normally arrives within a
  * frame or two, and an entry that outlives one is already a no-op
- * against any snapshot carrying it.
+ * against any snapshot carrying it. It ages from `committedAt` — see
+ * that field for why the tap time is the wrong clock.
+ *
+ * Call this only once the snapshot carrying `receipts` has been
+ * committed to the state the card renders from. Dropping an entry
+ * before its replacement lands leaves a render with neither, which is
+ * the flash this whole mechanism exists to prevent.
  */
 export function retireSettled(
   uid: string,
@@ -136,7 +151,8 @@ export function retireSettled(
   const now = Date.now();
   for (const uidKey of keysWithPrefix(settledPrefix(uid))) {
     const a = readJson<WaterAction | null>(uidKey, null);
-    if (!a || receipts[a.id] || now - a.queuedAt >= 60_000) remove(uidKey);
+    const since = a?.committedAt ?? a?.queuedAt ?? 0;
+    if (!a || receipts[a.id] || now - since >= 60_000) remove(uidKey);
   }
 }
 
@@ -224,7 +240,10 @@ export function flushWater(uid: string): Promise<void> {
         // Committed, but the listener has not said so yet. Best-effort:
         // if storage refuses the entry the total stays correct and only
         // the pre-snapshot frame flashes.
-        writeJson(`${settledPrefix(uid)}${action.id}`, action);
+        writeJson(`${settledPrefix(uid)}${action.id}`, {
+          ...action,
+          committedAt: Date.now(),
+        });
         if (result.receipts[action.id]?.rejected) {
           const { toast } = await import("@/lib/toast");
           toast.error(
