@@ -1,0 +1,140 @@
+/**
+ * The lift session's exercise list, folded behind one row.
+ *
+ * Three frames, because the design is three states and the middle one is
+ * the whole point: collapsed (what the page now costs), expanded (nothing
+ * lost, one tap away), and the drag mode entered from the PAGE HEADER's
+ * overflow while the list was collapsed — the case where a naive fold
+ * would put a user into reorder with nothing on screen to drag.
+ *
+ * fullPage, deliberately. The change is about page height, and a viewport
+ * shot cannot show it.
+ */
+import { test, expect, type Page } from "@playwright/test";
+import { signInAsTestUser } from "../helpers/auth";
+import { emulatorActive } from "../helpers/emulator";
+import { suppressCoachmarks } from "../helpers/suppressCoachmarks";
+
+test.use({
+  viewport: { width: 393, height: 852 },
+  ...(process.env.PW_CHROMIUM
+    ? { launchOptions: { executablePath: process.env.PW_CHROMIUM } }
+    : {}),
+});
+
+test.describe("exercise list fold", () => {
+  test.skip(
+    !emulatorActive,
+    "needs the Firebase emulator (auth-emulator project)"
+  );
+
+  test.beforeEach(async ({ page }) => {
+    await suppressCoachmarks(page);
+    await page.addInitScript(() => {
+      document.addEventListener("DOMContentLoaded", () => {
+        const style = document.createElement("style");
+        style.textContent =
+          ".firebase-emulator-warning{display:none !important}";
+        document.head.appendChild(style);
+      });
+    });
+    await signInAsTestUser(page);
+  });
+
+  async function dismissSeal(page: Page) {
+    for (let i = 0; i < 3; i++) {
+      await page.mouse.click(8, 8).catch(() => {});
+      await page.waitForTimeout(150);
+    }
+    const nice = page.getByRole("button", { name: /^nice$/i });
+    if (await nice.isVisible().catch(() => false)) {
+      await nice.click().catch(() => {});
+      await page.waitForTimeout(200);
+    }
+  }
+
+  async function openTrain(page: Page) {
+    await page.goto("program");
+    await page
+      .getByRole("navigation", { name: /main navigation/i })
+      .waitFor({ state: "visible", timeout: 20000 });
+    await dismissSeal(page);
+    await page
+      .getByRole("heading", { name: /^train$/i })
+      .waitFor({ state: "visible", timeout: 15000 });
+    await page.waitForTimeout(400);
+  }
+
+  async function shoot(page: Page, name: string) {
+    await page.evaluate(() =>
+      document.documentElement.classList.remove("dark")
+    );
+    await page.waitForTimeout(250);
+    await page.screenshot({
+      animations: "disabled",
+      fullPage: true,
+      path: `screenshots/${name}-light.png`,
+    });
+    await page.evaluate(() => document.documentElement.classList.add("dark"));
+    await page.waitForTimeout(300);
+    await page.screenshot({
+      animations: "disabled",
+      fullPage: true,
+      path: `screenshots/${name}-dark.png`,
+    });
+    await page.evaluate(() =>
+      document.documentElement.classList.remove("dark")
+    );
+  }
+
+  test("collapsed, then expanded — light + dark", async ({ page }) => {
+    test.setTimeout(180_000);
+    await openTrain(page);
+
+    const row = page.getByRole("button", { name: /^Exercises/ });
+    await expect(row).toBeVisible();
+    await expect(row).toHaveAttribute("aria-expanded", "false");
+    await shoot(page, "exercise-fold-collapsed");
+
+    await row.click();
+    await expect(row).toHaveAttribute("aria-expanded", "true");
+    // The affordance the fold defers rather than removes.
+    await expect(
+      page.getByRole("button", { name: /More options for /i }).first()
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: /^Add exercise$/i })
+    ).toBeVisible();
+    await shoot(page, "exercise-fold-expanded");
+  });
+
+  test("the drag mode opens the fold it was launched over — dark", async ({
+    page,
+  }) => {
+    test.setTimeout(180_000);
+    await openTrain(page);
+
+    // Leave the list collapsed, then enter reorder from the page header.
+    await expect(
+      page.getByRole("button", { name: /^Exercises/ })
+    ).toHaveAttribute("aria-expanded", "false");
+    await page.getByRole("button", { name: /more options/i }).click();
+    await page.getByText(/reorder exercises/i).click();
+    await page.waitForTimeout(400);
+
+    // The panel is open, and its collapse control is gone — the exit is
+    // the header's own Done.
+    await expect(page.getByText("Exercises", { exact: true })).toBeVisible();
+    await expect(page.getByRole("button", { name: /^Exercises/ })).toHaveCount(
+      0
+    );
+    await expect(page.getByRole("button", { name: /^done$/i })).toBeVisible();
+    await page.evaluate(() => document.documentElement.classList.add("dark"));
+    await page.waitForTimeout(300);
+    await page.screenshot({
+      animations: "disabled",
+      fullPage: true,
+      path: "screenshots/exercise-fold-reorder-dark.png",
+    });
+  });
+});
