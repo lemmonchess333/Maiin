@@ -1,0 +1,48 @@
+{
+  "exerciseId": "reverse-barbell-curl",
+  "method": "New symmetric frontal master; elbow rotation only with neutral wrists.",
+  "releaseApproved": false,
+  "beats": [
+    {
+      "frame": 1,
+      "name": "Set",
+      "state": "Bar at thighs; nearly straight elbows; overhand grip."
+    },
+    {
+      "frame": 2,
+      "name": "Curl",
+      "state": "Curl upward with wrists straight; bar raised in front of the abdomen."
+    },
+    {
+      "frame": 3,
+      "name": "Squeeze",
+      "state": "Bar near shoulders; elbows remain by ribs; overhand grip."
+    },
+    {
+      "frame": 4,
+      "name": "Brief hold",
+      "state": "Same high position as frame 3; intentional hold."
+    },
+    {
+      "frame": 5,
+      "name": "Lower",
+      "state": "Return through the same intermediate position as frame 2."
+    },
+    {
+      "frame": 6,
+      "name": "Reset",
+      "state": "Bar at thighs as frame 1; ready for next rep."
+    }
+  ],
+  "anchors": [
+    "Head and neck",
+    "Torso and pelvis",
+    "Feet and floor",
+    "Upper arms by ribs"
+  ],
+  "equipmentInvariants": [
+    "Straight shaft length",
+    "Equal plates",
+    "Shoulder-width grip"
+  ]
+}

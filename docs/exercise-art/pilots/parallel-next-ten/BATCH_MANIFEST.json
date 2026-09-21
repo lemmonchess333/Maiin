@@ -1,0 +1,548 @@
+{
+  "batch": "parallel-next-ten",
+  "exercisesAttempted": 10,
+  "completeDraftSets": 8,
+  "frameFiles": 49,
+  "releaseApprovedSets": 0,
+  "coverage": "Verified actual art absent from local paths and remote main, active cuban-press rebuild, named arnold-press-existing-frames and our branch; generic renderer audit screenshots did not count as conversions. Skull crushers excluded due existing frames.",
+  "validation": {
+    "allPngsDecoded": 75,
+    "lint": "passed",
+    "build": "passed",
+    "activeTestsPassed": 9697,
+    "testsSkipped": 347,
+    "playback": "App/mobile/light-dark unverified"
+  },
+  "exercises": [
+    {
+      "exerciseId": "barbell-floor-press",
+      "status": "six-frame-draft",
+      "releaseApproved": false,
+      "frames": [
+        {
+          "frame": 1,
+          "path": "barbell-floor-press/frames/1.png",
+          "sha256": "58454b5dc4e76484255152f28ad3e0ef459f525257bdbd766aebc3808b2c28ac",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "frame": 2,
+          "path": "barbell-floor-press/frames/2.png",
+          "sha256": "bd70c803dda2198046d29186e7396792946b4ab440bf0c215bb98d6aa453ee99",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "frame": 3,
+          "path": "barbell-floor-press/frames/3.png",
+          "sha256": "87bb56f7e7a9ff41119fae28bf38ddc1d95d3dba215f774d72516a199b3799b1",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "frame": 4,
+          "path": "barbell-floor-press/frames/4.png",
+          "sha256": "87bb56f7e7a9ff41119fae28bf38ddc1d95d3dba215f774d72516a199b3799b1",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "frame": 5,
+          "path": "barbell-floor-press/frames/5.png",
+          "sha256": "bd70c803dda2198046d29186e7396792946b4ab440bf0c215bb98d6aa453ee99",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "frame": 6,
+          "path": "barbell-floor-press/frames/6.png",
+          "sha256": "58454b5dc4e76484255152f28ad3e0ef459f525257bdbd766aebc3808b2c28ac",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        }
+      ],
+      "uniquePoseFiles": 3,
+      "review": "# Barbell floor press draft\n\nSix frame files use three native generated poses: high, intermediate descent, and floor pause. Frame 4 intentionally holds frame 3; frame 5 reuses frame 2 during the press; frame 6 reuses the high master. No cropped collage frames.\n\nBoth hands and the full body are visible. Near upper arm reaches the floor at the low position while the bar remains above the chest. The far upper arm is partly obscured, so its contact is less certain. Rack, head, hips and planted feet remain broadly stable. Small plate perspective/contour differences remain. Rack posts extend beyond the top edge; this does not hide the athlete but is an equipment-framing limitation.\n\nParent inspected the high master before adjacent generation. These remain candidates awaiting independent sequence and mobile playback review. PNG decoding passed at native 1536 by 1024. No runtime asset changed.\n"
+    },
+    {
+      "exerciseId": "bench-dips",
+      "status": "incomplete-pilot",
+      "releaseApproved": false,
+      "frames": [],
+      "uniquePoseFiles": 0,
+      "review": "# Bench dips: incomplete master\n\nThe initial master has a plausible near-arm support and extended-leg pose but hides the far arm and hand. A single targeted camera/visibility correction exposed fingers at an ambiguous location while leaving the arm connection obscured and added a strong grey halo. The corrected master is rejected.\n\nThe failed method was stopped before buying adjacent frames. No six-frame sequence exists, and the six planned cues are not completed artwork. Two native attempts and their exact prompts/hashes are retained for audit. No claim of conversion or release approval. A later attempt would require a materially different camera/setup method.\n"
+    },
+    {
+      "exerciseId": "arnold-press",
+      "status": "six-frame-draft",
+      "releaseApproved": false,
+      "frames": [
+        {
+          "frame": 1,
+          "path": "arnold-press/frames/1.png",
+          "sha256": "9b65ea7378d6ba67ba95ab7844a92d0a144964f0ea6358f9e7a41dd431bb5d04",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "frame": 2,
+          "path": "arnold-press/frames/2.png",
+          "sha256": "34739d5318653d23944fc761ff810b3f6921014eb74f262d220bdd5070141536",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "frame": 3,
+          "path": "arnold-press/frames/3.png",
+          "sha256": "c0a7f521fd703208e6155555d9d95eb9847177932c60159793a650471374a700",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "frame": 4,
+          "path": "arnold-press/frames/4.png",
+          "sha256": "c0a7f521fd703208e6155555d9d95eb9847177932c60159793a650471374a700",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "frame": 5,
+          "path": "arnold-press/frames/5.png",
+          "sha256": "34739d5318653d23944fc761ff810b3f6921014eb74f262d220bdd5070141536",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "frame": 6,
+          "path": "arnold-press/frames/6.png",
+          "sha256": "9b65ea7378d6ba67ba95ab7844a92d0a144964f0ea6358f9e7a41dd431bb5d04",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        }
+      ],
+      "uniquePoseFiles": 3,
+      "review": "# arnold-press candidate review\n\nThree distinct grip/joint configurations, with explicit top hold and matching returns. Start palms face athlete; intermediate opens elbows and partially rotates grips; top palms face forward. Halo correction succeeded but top correction shifted head/bench/feet upward approximately 25\u201335 pixels and altered displayed scale slightly. Upper-chest highlight is lighter at later poses. Intermediate grip angle remains visually subtle; actual playback/manual grip confirmation required. NOT release approved.\n\nFixed anchors: head, pelvis, both shoe contacts, bench seat/back/base. Six native files; identical hold/return states are copied openly, not interpolated or collage crops. Loop 6\u21921 follows the documented return. Canonical identity and exercise master supplied to each downstream edit.\n"
+    },
+    {
+      "exerciseId": "lu-raise",
+      "status": "six-frame-draft",
+      "releaseApproved": false,
+      "frames": [
+        {
+          "frame": 1,
+          "path": "lu-raise/frames/1.png",
+          "sha256": "a42cfa83aea3b2dd897508fcf3afe8e3e78a308e905440cd7990c442c1274d6f",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "frame": 2,
+          "path": "lu-raise/frames/2.png",
+          "sha256": "f206468a6ebf33e4a83d057deb2be8ed389612dcff7b9353cf170211e0c8dfaf",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "frame": 3,
+          "path": "lu-raise/frames/3.png",
+          "sha256": "833a36798db7c1018c554e80e0343a850df7a4ae0bf74f4d050b1401e246b5b6",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "frame": 4,
+          "path": "lu-raise/frames/4.png",
+          "sha256": "80655fccc8cfb321c464010cc31ac28c9be011f223532bca641f9fc68a5f3c79",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "frame": 5,
+          "path": "lu-raise/frames/5.png",
+          "sha256": "833a36798db7c1018c554e80e0343a850df7a4ae0bf74f4d050b1401e246b5b6",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "frame": 6,
+          "path": "lu-raise/frames/6.png",
+          "sha256": "f206468a6ebf33e4a83d057deb2be8ed389612dcff7b9353cf170211e0c8dfaf",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        }
+      ],
+      "uniquePoseFiles": 4,
+      "review": "# lu-raise candidate review\n\nFour distinct poses show exact local catalogue path: lateral raise to shoulder height, sweep forward at shoulder height, reverse both segments. This catalogue does not prescribe overhead elevation. Halos corrected successfully. Head/feet/torso anchors appear substantially stable in still comparison, grips retained, weights remain separate. Forward pose has overlapping projected weights and arm foreshortening needing mobile readability/playback review. No actual playback or light/dark mobile verification; NOT release approved.\n\nFixed anchors: head, pelvis, both shoe contacts. Six native files; identical hold/return states are copied openly, not interpolated or collage crops. Loop 6\u21921 follows the documented return. Canonical identity and exercise master supplied to each downstream edit.\n"
+    },
+    {
+      "exerciseId": "barbell-upright-row",
+      "status": "six-frame-draft",
+      "releaseApproved": false,
+      "frames": [
+        {
+          "frame": 1,
+          "path": "barbell-upright-row/frames/1.png",
+          "sha256": "1b112dedfa1a33944a518e4d423907aafbde975267609aaf53f62e35dd09fbf2",
+          "dimensions": [
+            1024,
+            1536
+          ]
+        },
+        {
+          "frame": 2,
+          "path": "barbell-upright-row/frames/2.png",
+          "sha256": "9ee18ba2fb8b9492b89a316dcda883be5555dbf56574d270e3e39b1623258e3c",
+          "dimensions": [
+            1024,
+            1536
+          ]
+        },
+        {
+          "frame": 3,
+          "path": "barbell-upright-row/frames/3.png",
+          "sha256": "a658f56abad226900c6f1d8ae75a10bdaeae668e180cca861fefa680f919cab8",
+          "dimensions": [
+            1024,
+            1536
+          ]
+        },
+        {
+          "frame": 4,
+          "path": "barbell-upright-row/frames/4.png",
+          "sha256": "a658f56abad226900c6f1d8ae75a10bdaeae668e180cca861fefa680f919cab8",
+          "dimensions": [
+            1024,
+            1536
+          ]
+        },
+        {
+          "frame": 5,
+          "path": "barbell-upright-row/frames/5.png",
+          "sha256": "9ee18ba2fb8b9492b89a316dcda883be5555dbf56574d270e3e39b1623258e3c",
+          "dimensions": [
+            1024,
+            1536
+          ]
+        },
+        {
+          "frame": 6,
+          "path": "barbell-upright-row/frames/6.png",
+          "sha256": "1b112dedfa1a33944a518e4d423907aafbde975267609aaf53f62e35dd09fbf2",
+          "dimensions": [
+            1024,
+            1536
+          ]
+        }
+      ],
+      "uniquePoseFiles": 3,
+      "review": "# barbell-upright-row\n\nSix-file candidate using three distinct native poses; frames4/5/6 explicitly reuse3/2/1 for top transition/return/end. Starting grip corrected inward successfully. Head, feet and bar endpoints remain visually stable. Elbows appear level with or below shoulder joints at top, bar at chest. Grip centres widen by roughly15px each between master and moving poses; this remains a continuity caveat. Bar diameters broadly stable. Actual playback/mobile QA pending; not release approved.\n\nGenerated with built-in imagegen only. No pixel editing. Parent handles npm run verify.\n"
+    },
+    {
+      "exerciseId": "landmine-press",
+      "status": "six-frame-draft",
+      "releaseApproved": false,
+      "frames": [
+        {
+          "frame": 1,
+          "path": "landmine-press/frames/1.png",
+          "sha256": "0ce2d6bddf80be04b01177e602aa0f2f1c9ff8b30a5a41c2da6dce1bdbb4da7d",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "frame": 2,
+          "path": "landmine-press/frames/2.png",
+          "sha256": "27810a0c6bdf97e0386c76f47b9479597aba55bcb19dca7fcae580d67ff34aa7",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "frame": 3,
+          "path": "landmine-press/frames/3.png",
+          "sha256": "1f7afe9ec2d683ae7279e87bc3835d75985873977564e8c1fdcf4b675778d975",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "frame": 4,
+          "path": "landmine-press/frames/4.png",
+          "sha256": "1f7afe9ec2d683ae7279e87bc3835d75985873977564e8c1fdcf4b675778d975",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "frame": 5,
+          "path": "landmine-press/frames/5.png",
+          "sha256": "27810a0c6bdf97e0386c76f47b9479597aba55bcb19dca7fcae580d67ff34aa7",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "frame": 6,
+          "path": "landmine-press/frames/6.png",
+          "sha256": "0ce2d6bddf80be04b01177e602aa0f2f1c9ff8b30a5a41c2da6dce1bdbb4da7d",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        }
+      ],
+      "uniquePoseFiles": 3,
+      "review": "# landmine-press\n\nSix-file draft with three native poses and explicit3/2/1 reuse for4/5/6. Exact standing staggered single-arm variation. Initial halo corrected. Requested half-press generated full extension instead, retained as top; a separate middle was generated. First middle shortened rigid bar and was rejected. One correction improved middle shaft length, but apparent pivot-to-grip distance still differs modestly and pivot housing geometry varies. Fixed base and feet broadly stable, top hand has very tight headroom. Middle elbow extension is weak and timing uneven. Qualitative bilateral shoulder tint includes resting shoulder. Needs independent equipment/sequence QA and playback; not release approved.\n\nGenerated with built-in imagegen only. No pixel editing. Parent handles npm run verify.\n"
+    },
+    {
+      "exerciseId": "meadows-row",
+      "status": "six-frame-draft",
+      "releaseApproved": false,
+      "frames": [
+        {
+          "frame": 1,
+          "path": "meadows-row/frames/1.png",
+          "sha256": "b7a6df43d80437a0868d4dfd7e81771e99479807cbdb4d2e201a58584fd5756d",
+          "dimensions": [
+            1024,
+            1536
+          ]
+        },
+        {
+          "frame": 2,
+          "path": "meadows-row/frames/2.png",
+          "sha256": "e191fa063c3bfd0dedb8df5115a3d6838889c5be08cc3b28a7e07561290d859a",
+          "dimensions": [
+            1024,
+            1536
+          ]
+        },
+        {
+          "frame": 3,
+          "path": "meadows-row/frames/3.png",
+          "sha256": "78f6b44423b6efcfdbd483156711c830637eb01355cd9fc9a34359708c57407a",
+          "dimensions": [
+            1024,
+            1536
+          ]
+        },
+        {
+          "frame": 4,
+          "path": "meadows-row/frames/4.png",
+          "sha256": "d52f226422fc53e2c7239c76bc44fee58662ed0d78fa96ac0876dc2d52fc75dd",
+          "dimensions": [
+            1024,
+            1536
+          ]
+        },
+        {
+          "frame": 5,
+          "path": "meadows-row/frames/5.png",
+          "sha256": "78f6b44423b6efcfdbd483156711c830637eb01355cd9fc9a34359708c57407a",
+          "dimensions": [
+            1024,
+            1536
+          ]
+        },
+        {
+          "frame": 6,
+          "path": "meadows-row/frames/6.png",
+          "sha256": "e191fa063c3bfd0dedb8df5115a3d6838889c5be08cc3b28a7e07561290d859a",
+          "dimensions": [
+            1024,
+            1536
+          ]
+        }
+      ],
+      "uniquePoseFiles": 4,
+      "review": "# meadows-row candidate review\n\nSix native frame files with four unique poses. Frames 5 and 6 honestly reuse the same joint configurations on controlled return; the loop completes the stretch at frame 1. Identity, head, torso, both feet, support hand and floor pivot remain visually stable. The working arm rows toward the lower ribs/hip. Bar shaft markings change, and its projected length increases materially as the end rises; some projection change is expected, but rigid-length consistency has not been established. Equipment geometry and sequential playback remain open review gates. No app activation or mobile verification.\n"
+    },
+    {
+      "exerciseId": "pendlay-row",
+      "status": "incomplete-pilot",
+      "releaseApproved": false,
+      "frames": [
+        {
+          "frame": 1,
+          "path": "pendlay-row/frames/1.png",
+          "sha256": "cf7d6f675bee0701388071b56c695ebbaebcd8942c6c94c11157c68206ed0431",
+          "dimensions": [
+            1024,
+            1536
+          ]
+        }
+      ],
+      "uniquePoseFiles": 1,
+      "review": "# pendlay-row candidate review\n\nIncomplete: one floor-start candidate, no complete six-frame sequence. Initial halo and upright torso were improved in the corrected master. First intermediate widened the grip substantially relative to the shaft; the single correction still changed the grip and bar perspective. Both intermediates rejected and downstream work stopped. Six planned cues are recorded as a plan, with availability flags; missing files have not been fabricated. Master torso is near-horizontal but camera is still oblique and requires final mechanics review. No app activation or mobile verification.\n"
+    },
+    {
+      "exerciseId": "decline-sit-up",
+      "status": "six-frame-draft",
+      "releaseApproved": false,
+      "frames": [
+        {
+          "frame": 1,
+          "path": "decline-sit-up/frames/1.png",
+          "sha256": "0ad38031721a863f26205bb92b51785c1f4be80fc668e4fc89684b618ceb4051",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "frame": 2,
+          "path": "decline-sit-up/frames/2.png",
+          "sha256": "ef948275546b9ce9ab97ac607519d3fcef6ec5cd01c42931568dd0ce5b5926d6",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "frame": 3,
+          "path": "decline-sit-up/frames/3.png",
+          "sha256": "401f4c97076b68ab50e831d96b109d9dfab1995df1ac92108337d8d164ea1519",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "frame": 4,
+          "path": "decline-sit-up/frames/4.png",
+          "sha256": "401f4c97076b68ab50e831d96b109d9dfab1995df1ac92108337d8d164ea1519",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "frame": 5,
+          "path": "decline-sit-up/frames/5.png",
+          "sha256": "ef948275546b9ce9ab97ac607519d3fcef6ec5cd01c42931568dd0ce5b5926d6",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "frame": 6,
+          "path": "decline-sit-up/frames/6.png",
+          "sha256": "0ad38031721a863f26205bb92b51785c1f4be80fc668e4fc89684b618ceb4051",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        }
+      ],
+      "uniquePoseFiles": 3,
+      "review": "# decline-sit-up candidate\n\nFirst two three-quarter masters failed to establish supported head/reclined endpoint and were superseded. Changed side-profile master clearly supports head and back. Three distinct poses show supported low, middle curl and high sit-up, with explicit hold/return reuse. Feet/rollers/hips and bench geometry broadly stay fixed. Top head margin is narrow; head angle changes substantially between middle and high pose and deserves playback review. Pad has a shallow fixed bend. No full-set release approval.\n\nSix native 1536\u00d71024 files, three distinct poses. Exact prompts/cues and image hashes accompany the set. Actual app/mobile/light-dark playback unverified. No runtime or public activation.\n"
+    },
+    {
+      "exerciseId": "superman-hold",
+      "status": "six-frame-draft",
+      "releaseApproved": false,
+      "frames": [
+        {
+          "frame": 1,
+          "path": "superman-hold/frames/1.png",
+          "sha256": "13dca2f8de1020053b0432d42fbe092636fa21778e99fb60ab8997ed217c4a47",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "frame": 2,
+          "path": "superman-hold/frames/2.png",
+          "sha256": "7b25f6c1ef31264999963ae0cb95585badd37f8b4202550fcad5ffa2e02f3ccf",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "frame": 3,
+          "path": "superman-hold/frames/3.png",
+          "sha256": "5cfb029845bd8c3ef60aed98654dd26eb755800df2b99a03f7c0a494beb2611d",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "frame": 4,
+          "path": "superman-hold/frames/4.png",
+          "sha256": "5cfb029845bd8c3ef60aed98654dd26eb755800df2b99a03f7c0a494beb2611d",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "frame": 5,
+          "path": "superman-hold/frames/5.png",
+          "sha256": "7b25f6c1ef31264999963ae0cb95585badd37f8b4202550fcad5ffa2e02f3ccf",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "frame": 6,
+          "path": "superman-hold/frames/6.png",
+          "sha256": "13dca2f8de1020053b0432d42fbe092636fa21778e99fb60ab8997ed217c4a47",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        }
+      ],
+      "uniquePoseFiles": 3,
+      "review": "# superman-hold candidate\n\nThree distinct native poses show prone setup, initial lift and modest hold; explicit 3=4 hold, 2=5 controlled return and 1=6 reset. Mat geometry remains fixed and face points down. Pelvis/body contours vary modestly through extension; fine anatomical invariance and actual playback remain unverified. Primary lumbar purple and secondary glute/hamstring lilac remain stable. Independent still review found no definite major mechanics defect.\n\nSix native 1536\u00d71024 files, three distinct poses. Exact prompts/cues and image hashes accompany the set. Actual app/mobile/light-dark playback unverified. No runtime or public activation.\n"
+    }
+  ]
+}

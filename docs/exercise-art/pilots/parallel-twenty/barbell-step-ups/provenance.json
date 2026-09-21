@@ -1,0 +1,46 @@
+{
+  "exerciseId": "barbell-step-ups",
+  "status": "six-frame-candidate-needs-review",
+  "canonicalReference": "/workspace/scratch/92115cdb9667/character-reference/athlete-anatomy-v3.png",
+  "prompts": [
+    "Scientific sports anatomy BARBELL STEP UP exercise master. Canonical bald faceless grey adult anatomical model, fine dark lines, white trainers, purple quads and lilac glutes/hamstrings. Barbell racked on UPPER TRAPS behind neck with hands symmetrically holding it, one modest small round grey plate per end, rigid straight bar. No dumbbells. Sturdy matte grey knee-high box at RIGHT. Athlete facing RIGHT beside box, standing on left/trailing leg on floor; right/leading foot already planted fully flat ON TOP OF BOX, front knee bent about90 degrees. Torso upright, bar upper back. Fixed side three-quarter view showing both hands/bar ends and whole box. Landscape 1536x1024; athlete modest size (standing floor head around y350) with LARGE empty space overhead for full body rise onto box without recropping. Whole body, bar, box and floor visible. Black background, no words labels arrows or panels.",
+    "Barbell step-up EARLY DRIVE. Ref1 identity ref2 exact master. Keep BOX pixel-identical and lead shoe fully fixed on its top x800–923 y704. Drive through top foot by extending lead knee partly, raising pelvis/head/bar about70px and shifting body forward toward lead foot. Trailing floor foot lifts free from floor, trailing knee slightly bends. No hop, no toe pushing, back foot should be visibly airborne. Whole athlete and bar maintain original size and geometry; hands stay attached and bar on upper traps, exactly one equal modest plate per end. Same 1536x1024 black scene, no camera move, no text, no change to anatomy highlight.",
+    "Barbell step-up NEAR TOP. Ref1 identity ref2 master ref3 current mid drive. Keep box and lead shoe exactly pixel-fixed. Straighten lead working leg almost fully and raise torso/upper-trap bar accordingly, preserving body length and scale. Bring trailing foot forward and UP alongside box just above top surface, toe not yet placed. Bar remains rigid on upper traps, same grips and one plate per side. Full body including head must remain in frame; do not zoom, head should be near top margin. Same black1536x1024 scene, muscle colors. No text.",
+    "Barbell step-up TOP FINISH. Ref1 identity ref2 exercise master ref3 near-top edit target. Keep reference3 exactly same athlete torso/head, bar/plates/grips, lead leg and planted lead shoe, box and scene. ONLY move trailing leg's foot forward onto box top beside lead foot so BOTH feet are fully planted shoulder width apart on box. Both knees extended naturally, torso tall; no knee drive, no jump. Do not change bar height, scale, camera, equipment or colors. 1536x1024 black background. No labels/text."
+  ],
+  "cues": [
+    [
+      "SET UP",
+      "Rack the bar on the upper traps and place the lead foot fully on the box."
+    ],
+    [
+      "DRIVE",
+      "Drive through the lead heel without pushing off the floor leg."
+    ],
+    [
+      "RISE",
+      "Straighten the lead leg and bring the trailing leg up."
+    ],
+    [
+      "STAND",
+      "Stand tall with both feet securely on the box."
+    ],
+    [
+      "LOWER",
+      "Step the trailing leg back down under control."
+    ],
+    [
+      "RESET",
+      "Return the trailing foot quietly to the floor before the next repetition."
+    ]
+  ],
+  "reuse": {
+    "5.png": "2.png",
+    "6.png": "1.png"
+  },
+  "reuseReason": "Controlled step-down passes same drive configuration and ends at original lead-foot-on-box setup.",
+  "limitations": [
+    "Top frame raises box top ~17px and shifts planted lead foot laterally",
+    "Whole-set player review unverified"
+  ]
+}

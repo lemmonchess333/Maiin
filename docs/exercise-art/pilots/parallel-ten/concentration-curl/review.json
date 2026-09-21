@@ -1,0 +1,141 @@
+{
+  "exerciseId": "concentration-curl",
+  "status": "six-frame-candidate",
+  "approved": false,
+  "generatedFrameCount": 3,
+  "deliveredFrameFiles": 6,
+  "generationAttempts": 5,
+  "reusedFrames": {
+    "4": 3,
+    "5": 2,
+    "6": 1
+  },
+  "issues": [
+    "Original frontal master and correction had inadequate brace and are superseded.",
+    "New three-quarter master exposes upper-arm/inner-thigh brace; parent independently inspected master.",
+    "Moderate upper-arm contour variation during flexion requires joint playback review.",
+    "Full app mobile light/dark and sequential playback review pending."
+  ],
+  "fixedAnchors": [
+    "bench",
+    "both feet",
+    "head",
+    "torso",
+    "nonworking hand on thigh",
+    "working upper arm against thigh"
+  ],
+  "canonicalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+  "master": "master-side.png",
+  "generationMode": "built-in imagegen",
+  "files": [
+    {
+      "file": "cues.json",
+      "sha256": "c92b79431c32e13477bea543fd3ecdc321aa550e6d2c37cfd994c04e31dea776",
+      "bytes": 1084
+    },
+    {
+      "file": "frames/1.png",
+      "sha256": "45cfd0fd4230fda03a58f63534cf407e61456bfe2b8d0ef15559ed2fa5848828",
+      "bytes": 1082699,
+      "dimensions": [
+        1024,
+        1536
+      ]
+    },
+    {
+      "file": "frames/2.png",
+      "sha256": "d8a5a3cb4fc8811fc945778684ee6c0617fe47b73a5a45699d7c48b5ebd1c715",
+      "bytes": 1385536,
+      "dimensions": [
+        1024,
+        1536
+      ]
+    },
+    {
+      "file": "frames/3.png",
+      "sha256": "358ddc6d09c1fbd0e6fcfdeabc145cce921d3b522100d93c26731d1302e4ba56",
+      "bytes": 1231775,
+      "dimensions": [
+        1024,
+        1536
+      ]
+    },
+    {
+      "file": "frames/4.png",
+      "sha256": "358ddc6d09c1fbd0e6fcfdeabc145cce921d3b522100d93c26731d1302e4ba56",
+      "bytes": 1231775,
+      "dimensions": [
+        1024,
+        1536
+      ]
+    },
+    {
+      "file": "frames/5.png",
+      "sha256": "d8a5a3cb4fc8811fc945778684ee6c0617fe47b73a5a45699d7c48b5ebd1c715",
+      "bytes": 1385536,
+      "dimensions": [
+        1024,
+        1536
+      ]
+    },
+    {
+      "file": "frames/6.png",
+      "sha256": "45cfd0fd4230fda03a58f63534cf407e61456bfe2b8d0ef15559ed2fa5848828",
+      "bytes": 1082699,
+      "dimensions": [
+        1024,
+        1536
+      ]
+    },
+    {
+      "file": "master-correction.png",
+      "sha256": "f3107e141fed60ff4d3020d808463299c5d91830fb1a6b6fa7294f5242d65214",
+      "bytes": 1319838,
+      "dimensions": [
+        1024,
+        1536
+      ]
+    },
+    {
+      "file": "master-side.png",
+      "sha256": "45cfd0fd4230fda03a58f63534cf407e61456bfe2b8d0ef15559ed2fa5848828",
+      "bytes": 1082699,
+      "dimensions": [
+        1024,
+        1536
+      ]
+    },
+    {
+      "file": "master.png",
+      "sha256": "8cd0d73cb5a23ea1a085a2700e5baca353cb7abcf376b5bf398e7bcb69274d5c",
+      "bytes": 916475,
+      "dimensions": [
+        1024,
+        1536
+      ]
+    },
+    {
+      "file": "mid.png",
+      "sha256": "d8a5a3cb4fc8811fc945778684ee6c0617fe47b73a5a45699d7c48b5ebd1c715",
+      "bytes": 1385536,
+      "dimensions": [
+        1024,
+        1536
+      ]
+    },
+    {
+      "file": "prompts.json",
+      "sha256": "ea5eb21d126821a6044cca22531ec400af22c0bcb629ab421a2b2a27ff55ca07",
+      "bytes": 4493
+    },
+    {
+      "file": "top.png",
+      "sha256": "358ddc6d09c1fbd0e6fcfdeabc145cce921d3b522100d93c26731d1302e4ba56",
+      "bytes": 1231775,
+      "dimensions": [
+        1024,
+        1536
+      ]
+    }
+  ]
+}

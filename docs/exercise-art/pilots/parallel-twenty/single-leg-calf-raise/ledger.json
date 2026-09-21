@@ -1,0 +1,42 @@
+{
+  "status": "partial-rework-required",
+  "files": {
+    "frames/2.png": {
+      "sha256": "c85edb027cb2d983c9880458bb3c74d314463b890a1f220511880bfabf08dadd",
+      "dimensions": [
+        1024,
+        1536
+      ]
+    },
+    "frames/3-rejected.png": {
+      "sha256": "23a5180acd41518fca84b0bd1334f633da3f4c0da6fce32c483e7c4e144522b2",
+      "dimensions": [
+        1024,
+        1536
+      ]
+    },
+    "frames/1.png": {
+      "sha256": "fbebd81cfce565ab461ccf22279a7c109d3131fe0bb2358512de271904e0e558",
+      "dimensions": [
+        1024,
+        1536
+      ]
+    },
+    "masters/1.png": {
+      "sha256": "fbebd81cfce565ab461ccf22279a7c109d3131fe0bb2358512de271904e0e558",
+      "dimensions": [
+        1024,
+        1536
+      ]
+    }
+  },
+  "canonical_sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+  "cues_sha256": "4280ab6702f5f712489e7d3e69b746c0ae408e55b77f5d98048c64987171c224",
+  "fixed_anchors": [
+    "step top",
+    "rail",
+    "working forefoot"
+  ],
+  "sequence_review": "individual images reviewed; actual app playback unverified",
+  "publicApproved": false
+}

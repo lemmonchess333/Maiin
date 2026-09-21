@@ -1,0 +1,48 @@
+{
+  "exerciseId": "bodyweight-lunge",
+  "status": "six-frame-candidate-rework-required",
+  "canonicalReference": "/workspace/scratch/92115cdb9667/character-reference/athlete-anatomy-v3.png",
+  "prompts": [
+    "Scientific sports anatomy BODYWEIGHT FORWARD LUNGE exercise master. Same canonical bald faceless grey adult anatomical athlete, white trainers, fine dark contours. Purple quads, lilac glutes/hamstrings. NO dumbbells or weights. Hands resting on hips throughout. Upright standing with feet hip width and knees soft. Fixed RIGHT-facing true side view with tiny three-quarter reveal of rear leg. Wide landscape 1536x1024. Athlete occupies LEFT HALF of canvas, full head to feet visible with 10% margins; empty black room to the RIGHT for long forward lunge. Black background, subtle flat floor contact. Keep entire athlete at a modest scale to fit long stride without zoom. Smooth neutral mannequin identity. No captions text labels or arrows.",
+    "Bodyweight forward lunge first STEP. Image1 canonical, image2 exact master to edit. The NEAR foot (currently x350\u2013505) takes a long forward step to RIGHT, placing heel around x810, toe x960 on SAME floor y965. Rear foot remains with TOE planted at original x345 y949, heel naturally lifts. Do NOT slide rear toe backward. Torso/hips translate right midway between feet, stay tall, both hands on hips. Both knees just slightly bent for this initial long stance, no deep descent yet. Preserve exact athlete body lengths, scale, camera, white shoes, purple muscles, 1536x1024 black background. No weights, no text.",
+    "Bodyweight lunge half descent. Reference1 canonical identity, reference2 standing master, reference3 current step target. Keep BOTH feet exactly at positions in reference3 (front sole x845\u20131030 y930, rear toe x385 y913). Lower hips and head by 100 pixels as front and rear knees flex. Hands on hips, torso upright, same body bone lengths and camera. Front shin moves towards vertical, back knee lowers toward floor; not yet full depth. White trainers, purple quads/lilac glutes/hamstrings identical, 1536x1024 black scene. No foot slide, zoom, weights, text.",
+    "Create single midpoint BODYWEIGHT LUNGE pose between image3 and image4. Ref1 identity, ref2 standing master, ref3 long high stride, ref4 bottom. Keep feet exactly in image3/4 same locations and hands on hips. Head top halfway between y35 and y144, around y90; front thigh slopes down-right halfway between current references, front knee bent about 55degrees. Rear knee lower than image3 and higher than image4. Same limb lengths and torso, no camera/scale shift, no weights. Exact same black 1536x1024 scene, canonical grey/purple anatomy and white shoes. No text."
+  ],
+  "cues": [
+    [
+      "STAND",
+      "Stand tall with hands on hips."
+    ],
+    [
+      "STEP",
+      "Take a long forward step, keeping feet hip width apart."
+    ],
+    [
+      "LOWER",
+      "Bend both knees and lower with control."
+    ],
+    [
+      "BOTTOM",
+      "Keep the front heel down and torso tall."
+    ],
+    [
+      "DRIVE BACK",
+      "Drive through the front heel to begin returning."
+    ],
+    [
+      "RESET",
+      "Return to standing and alternate sides."
+    ]
+  ],
+  "reuse": {
+    "5.png": "3.png",
+    "6.png": "1.png"
+  },
+  "reuseReason": "Same midpoint on return; sixth legitimately completes return to starting stance.",
+  "limitations": [
+    "Back knee bottom not near90 degrees as catalogue",
+    "Uneven phase spacing",
+    "Playback unverified"
+  ],
+  "reviewClarification": "Initial stepping foot motion is not by itself a planted-anchor failure."
+}

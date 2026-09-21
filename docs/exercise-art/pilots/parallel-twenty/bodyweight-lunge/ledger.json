@@ -1,0 +1,62 @@
+{
+  "status": "six-frame-candidate-rework-required",
+  "files": {
+    "frames/2.png": {
+      "sha256": "b2f69b59320053254d476462a0c4f1035e21c255c8f9760d8b8471845b802a47",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    "frames/1.png": {
+      "sha256": "8040087e43e7b1d8b6457977853e6bfb1ed08ef5b7f565dfb1e38505d146c2ff",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    "frames/4.png": {
+      "sha256": "1c946589506139a88e3b91af9d61c2fe32978eead0410369e78250efce3624c4",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    "frames/6.png": {
+      "sha256": "8040087e43e7b1d8b6457977853e6bfb1ed08ef5b7f565dfb1e38505d146c2ff",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    "frames/5.png": {
+      "sha256": "a40c508ddcbef841ce27af294dda820955a9eb95ea7992f7ff58e43e0f1ae931",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    "frames/3.png": {
+      "sha256": "a40c508ddcbef841ce27af294dda820955a9eb95ea7992f7ff58e43e0f1ae931",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    "masters/1.png": {
+      "sha256": "8040087e43e7b1d8b6457977853e6bfb1ed08ef5b7f565dfb1e38505d146c2ff",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    }
+  },
+  "canonical_sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+  "cues_sha256": "fc2ed3d13cc8f0301d89fb9340779e6c7806bcf60d41c59b660f6c9d419bc1e5",
+  "fixed_anchors": [
+    "rear toe during step",
+    "both feet in descent"
+  ],
+  "sequence_review": "individual images reviewed; actual app playback unverified",
+  "publicApproved": false
+}

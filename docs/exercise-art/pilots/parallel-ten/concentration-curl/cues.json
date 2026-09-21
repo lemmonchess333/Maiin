@@ -1,0 +1,44 @@
+[
+  {
+    "frame": 1,
+    "label": "Brace and extend",
+    "cue": "Brace the back of your upper arm against the inner thigh, palm up.",
+    "asset": "frames/1.png",
+    "status": "draft"
+  },
+  {
+    "frame": 2,
+    "label": "Curl upward",
+    "cue": "Bend the elbow while keeping your upper arm supported.",
+    "asset": "frames/2.png",
+    "status": "draft"
+  },
+  {
+    "frame": 3,
+    "label": "Finish the curl",
+    "cue": "Curl toward the shoulder without lifting the upper arm away.",
+    "asset": "frames/3.png",
+    "status": "draft"
+  },
+  {
+    "frame": 4,
+    "label": "Squeeze",
+    "cue": "Hold briefly with a neutral wrist and no torso swing.",
+    "asset": "frames/4.png",
+    "status": "draft"
+  },
+  {
+    "frame": 5,
+    "label": "Controlled lowering",
+    "cue": "Lower along the same path, maintaining thigh support.",
+    "asset": "frames/5.png",
+    "status": "draft"
+  },
+  {
+    "frame": 6,
+    "label": "Return to stretch",
+    "cue": "Reach a near-straight elbow under control before the next curl.",
+    "asset": "frames/6.png",
+    "status": "draft"
+  }
+]

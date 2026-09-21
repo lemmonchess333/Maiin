@@ -1,0 +1,34 @@
+[
+  {
+    "frame": 1,
+    "name": "Dead hang",
+    "cue": "Start with straight arms and a shoulder-width underhand grip."
+  },
+  {
+    "frame": 2,
+    "name": "Initiate pull",
+    "cue": "Set your shoulders and pull your elbows down."
+  },
+  {
+    "frame": 3,
+    "name": "Pull upward",
+    "cue": "Bring your chest toward the bar without swinging."
+  },
+  {
+    "frame": 4,
+    "name": "Clear the bar",
+    "cue": "Lift your chin above the bar and squeeze your lats and biceps."
+  },
+  {
+    "frame": 5,
+    "name": "Lower under control",
+    "cue": "Lower smoothly through the same path.",
+    "reuses": 3
+  },
+  {
+    "frame": 6,
+    "name": "Finish the descent",
+    "cue": "Keep lowering to the full dead hang before your next rep.",
+    "reuses": 2
+  }
+]

@@ -1,0 +1,21 @@
+{
+  "tool": "built-in image_gen",
+  "canonical": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+  "prompts": [
+    {
+      "id": "cross-body-hammer-curl",
+      "frame": 1,
+      "prompt": "Educational fitness still, native 1024x1536 portrait single image. Reference1 canonical athlete identity; preserve this same bald faceless white anatomical muscular man, fine dark contours, neutral smooth featureless pelvis and visible leg anatomy, white trainers, NO garments seams or genital detail. Plain black background. CROSS-BODY HAMMER CURL master, standing front three-quarter facing slightly left. Full body in frame. Feet hip width planted torso upright. Two identical modest black round dumbbells one in each hand at sides; neutral hammer grip palms inward. Both arms initially straight but soft elbows. Primary biceps purple, secondary brachioradialis pale lilac; other muscles neutral. Allow space for right working hand to travel diagonally toward LEFT shoulder across chest. Fixed lighting floor canvas and identity. No text arrows collage logos. This is bottom initial pose for unilateral alternating cross-body hammer curl."
+    },
+    {
+      "id": "cross-body-hammer-curl",
+      "frame": 3,
+      "prompt": "Precise object edit of image2 master; image1 canonical identity. CROSS-BODY HAMMER CURL top with near arm (on image RIGHT). Keep near elbow beside ribs at master position. Flex that elbow and angle forearm diagonally across front torso so near hand finishes just below OPPOSITE shoulder (upper image-left chest). Keep neutral hammer grip, dumbbell shaft aligned with hand like a hammer, not supinated palm-up curl. Same exact dumbbell dimensions, rigid heads, attached hand. Far arm and dumbbell stay hanging unchanged. Head shoulders upper arms torso legs feet canvas background stay fixed. 1024x1536, same anatomy and muscle colors. No text, no changes outside working forearm hand/dumbbell. This is cross-body to opposite shoulder, not same-side curl."
+    },
+    {
+      "id": "cross-body-hammer-curl",
+      "frame": 2,
+      "prompt": "Precise object edit. Image1 canonical; image2 master; image3 top endpoint. Create midway CROSS-BODY HAMMER CURL near arm halfway from bottom to opposite shoulder. Near elbow fixed beside ribs at image2 location, forearm bent roughly 90 degrees extending diagonally across lower chest, hand/dumbbell around upper abdomen (not shoulder). Neutral hammer grip unchanged, same dumbbell size. Far arm dumbbell head torso shoulders legs white shoes background unchanged. Lock exact canvas and fixed regions of image2, only near forearm hand dumbbell rotate about elbow. Same anatomical model, colors, 1024x1536 native, no text."
+    }
+  ]
+}

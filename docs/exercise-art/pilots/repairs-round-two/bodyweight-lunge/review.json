@@ -1,0 +1,75 @@
+{
+  "exerciseId": "bodyweight-lunge",
+  "status": "partial-repair-candidate",
+  "releaseApproved": false,
+  "runtimeVerified": false,
+  "review": "Frame 4 rear knee is visibly more flexed, closer to a right angle, with rear thigh more vertical. Front heel, upright torso and hands on hips retained. Rear femur appears shorter and lower-leg contour changes; anatomical length consistency remains unresolved. Rear knee remains above floor, and uneven phase spacing persists. Not a fully repaired sequence.",
+  "canonicalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+  "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+  "masterSha256": "8040087e43e7b1d8b6457977853e6bfb1ed08ef5b7f565dfb1e38505d146c2ff",
+  "cuesSha256": "00410215b723467033c6e46beb7721ab72082126d5c38f8833cb64d43ffaa5a6",
+  "originalSet": "docs/exercise-art/pilots/parallel-twenty/bodyweight-lunge",
+  "frames": [
+    {
+      "frame": 1,
+      "sha256": "8040087e43e7b1d8b6457977853e6bfb1ed08ef5b7f565dfb1e38505d146c2ff",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "changedFromOriginal": false,
+      "originalSha256": "8040087e43e7b1d8b6457977853e6bfb1ed08ef5b7f565dfb1e38505d146c2ff"
+    },
+    {
+      "frame": 2,
+      "sha256": "b2f69b59320053254d476462a0c4f1035e21c255c8f9760d8b8471845b802a47",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "changedFromOriginal": false,
+      "originalSha256": "b2f69b59320053254d476462a0c4f1035e21c255c8f9760d8b8471845b802a47"
+    },
+    {
+      "frame": 3,
+      "sha256": "a40c508ddcbef841ce27af294dda820955a9eb95ea7992f7ff58e43e0f1ae931",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "changedFromOriginal": false,
+      "originalSha256": "a40c508ddcbef841ce27af294dda820955a9eb95ea7992f7ff58e43e0f1ae931"
+    },
+    {
+      "frame": 4,
+      "sha256": "59d4ba80a68e0c0253804660f6760a8bcec7ff1bf4208786a8b89ca1e0de68c1",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "changedFromOriginal": true,
+      "originalSha256": "1c946589506139a88e3b91af9d61c2fe32978eead0410369e78250efce3624c4"
+    },
+    {
+      "frame": 5,
+      "sha256": "a40c508ddcbef841ce27af294dda820955a9eb95ea7992f7ff58e43e0f1ae931",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "changedFromOriginal": false,
+      "originalSha256": "a40c508ddcbef841ce27af294dda820955a9eb95ea7992f7ff58e43e0f1ae931"
+    },
+    {
+      "frame": 6,
+      "sha256": "8040087e43e7b1d8b6457977853e6bfb1ed08ef5b7f565dfb1e38505d146c2ff",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "changedFromOriginal": false,
+      "originalSha256": "8040087e43e7b1d8b6457977853e6bfb1ed08ef5b7f565dfb1e38505d146c2ff"
+    }
+  ],
+  "rejected": []
+}

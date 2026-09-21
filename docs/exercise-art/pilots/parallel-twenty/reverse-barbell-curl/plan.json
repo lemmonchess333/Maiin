@@ -1,0 +1,116 @@
+{
+  "exerciseId": "reverse-barbell-curl",
+  "status": "candidate-needs-review",
+  "releaseApproved": false,
+  "master": "master.png",
+  "canonicalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+  "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+  "masterSha256": "a0fc2362b18875b217f3a489eed13dd82ffac8c702a4a8493c9352e0040c9c22",
+  "nativeFrameCount": 6,
+  "uniquePoseCount": 3,
+  "fixedAnchors": [
+    "head",
+    "torso",
+    "hips",
+    "feet",
+    "camera"
+  ],
+  "frames": [
+    {
+      "frame": 1,
+      "path": "docs/exercise-art/pilots/parallel-twenty/reverse-barbell-curl/1.png",
+      "label": "Overhand start",
+      "cue": "Hold the bar with your palms facing back.",
+      "progress": 0,
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "sha256": "a0fc2362b18875b217f3a489eed13dd82ffac8c702a4a8493c9352e0040c9c22",
+      "cueSha256": "4e3c75e48d9202432cd097c08f2514401788ca50d48c289be0f56dd400416d6c",
+      "reusedFrom": null
+    },
+    {
+      "frame": 2,
+      "path": "docs/exercise-art/pilots/parallel-twenty/reverse-barbell-curl/2.png",
+      "label": "Curl",
+      "cue": "Curl upward while keeping palms facing down.",
+      "progress": 0.5,
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "sha256": "80c529bdb3c93d56c7679f9c39355d7567bcddf2f923c308cd46c371f2414b57",
+      "cueSha256": "0ee3861af93aa810bc7f95d2fa6f9528cca3181f74f0d2a65149d4ab09de8bd6",
+      "reusedFrom": null
+    },
+    {
+      "frame": 3,
+      "path": "docs/exercise-art/pilots/parallel-twenty/reverse-barbell-curl/3.png",
+      "label": "Top",
+      "cue": "Keep wrists straight and elbows by ribs.",
+      "progress": 1,
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "sha256": "9f6ec799ef9ee8e3f549b3130b52418425965e9ce4ab21513faf776ceae7019c",
+      "cueSha256": "3963da8efd42658ead9b24bc4a3f7e872c357d7f4bd38a8d3fbfe04aff592027",
+      "reusedFrom": null
+    },
+    {
+      "frame": 4,
+      "path": "docs/exercise-art/pilots/parallel-twenty/reverse-barbell-curl/4.png",
+      "label": "Brief hold",
+      "cue": "Pause without raising your shoulders.",
+      "progress": 1,
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "sha256": "9f6ec799ef9ee8e3f549b3130b52418425965e9ce4ab21513faf776ceae7019c",
+      "cueSha256": "3a72d3c8681b3f76e1f19bb3380fc38237baa8d1e714b7c83bcd58b3245ffc03",
+      "reusedFrom": 3
+    },
+    {
+      "frame": 5,
+      "path": "docs/exercise-art/pilots/parallel-twenty/reverse-barbell-curl/5.png",
+      "label": "Lower",
+      "cue": "Lower slowly with the overhand grip.",
+      "progress": 0.5,
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "sha256": "80c529bdb3c93d56c7679f9c39355d7567bcddf2f923c308cd46c371f2414b57",
+      "cueSha256": "904365d0713ba7a283dc0dbb4a164378e3240d204091018e445caf898ab2cd8e",
+      "reusedFrom": 2
+    },
+    {
+      "frame": 6,
+      "path": "docs/exercise-art/pilots/parallel-twenty/reverse-barbell-curl/6.png",
+      "label": "Return",
+      "cue": "Return the bar toward your thighs.",
+      "progress": 0,
+      "dimensions": [
+        1024,
+        1536
+      ],
+      "sha256": "a0fc2362b18875b217f3a489eed13dd82ffac8c702a4a8493c9352e0040c9c22",
+      "cueSha256": "2049408481371d17018465651e7e2f5b7ef3f3b4fa77f499c8b712ad089415b9",
+      "reusedFrom": 1
+    }
+  ],
+  "reviewFindings": [
+    "Top grey halo rejected and repaired by background-only edit. Overhand hand backs are visible throughout. Forearm proportions and wrist bend at midpoint require review; top bar projection is more horizontal than initial bar, so pixel lengths alone are insufficient evidence of scaling."
+  ],
+  "staticReview": true,
+  "sequentialPlaybackVerified": false,
+  "mobileLightDarkVerified": false,
+  "reducedMotionVerified": false,
+  "techniqueApproved": false,
+  "equipmentApproved": false,
+  "targetedRepairNotes": [
+    "One targeted wrist correction attempted. Body, phase and equipment retained, but hands still visibly droop relative to forearms; correction insufficient. Saved rejected-midpoint-wrist-repair.png. Numeric frames2 and5 unchanged; wrist finding remains open."
+  ]
+}

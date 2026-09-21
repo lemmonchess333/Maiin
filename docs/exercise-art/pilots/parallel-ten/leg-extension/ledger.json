@@ -1,0 +1,65 @@
+{
+  "status": "six-frame-candidate-rework-required",
+  "files": {
+    "frames/2.png": {
+      "sha256": "48aa43b76a73ba1e3f101eb5fe7d472e6f78b131e34738855e11c5337cda2482",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    "frames/1.png": {
+      "sha256": "cf96479772e0af178578ef771a7930df0d535b1c778d1b30ac2f9245818b8c8e",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    "frames/4.png": {
+      "sha256": "0ffa89a3a5f235e7034fe5933259f749e567eb6fc49027b5a42328c5677d1ebe",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    "frames/6.png": {
+      "sha256": "48aa43b76a73ba1e3f101eb5fe7d472e6f78b131e34738855e11c5337cda2482",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    "frames/5.png": {
+      "sha256": "08ac6603943e1b5433136437118eaa99ef683d73c4300fb160fed5617caaef0b",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    "frames/3.png": {
+      "sha256": "08ac6603943e1b5433136437118eaa99ef683d73c4300fb160fed5617caaef0b",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    "masters/1.png": {
+      "sha256": "cf96479772e0af178578ef771a7930df0d535b1c778d1b30ac2f9245818b8c8e",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    }
+  },
+  "canonical_sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+  "cues_sha256": "89e271ac0d489f93037ad2eab894a35ce07c009f4ab192bd2f4e3e6c8019e557",
+  "fixed_anchors": [
+    "seat and backrest",
+    "head torso hips thighs",
+    "hands/handles",
+    "machine base",
+    "knee-axis pivot (FAILED)"
+  ],
+  "sequence_review": "individual frames inspected; actual app playback unverified",
+  "publicApproved": false
+}

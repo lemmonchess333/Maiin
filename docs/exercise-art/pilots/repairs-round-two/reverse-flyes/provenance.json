@@ -1,0 +1,84 @@
+{
+  "exerciseId": "reverse-flyes",
+  "status": "unresolved-generation-failure",
+  "releaseApproved": false,
+  "acceptedReplacementCount": 0,
+  "tool": "built-in image_gen",
+  "review": "Rejected: far arm now reaches behind the torso at approximately shoulder height, while near arm remains below shoulder level. Bilateral phase mismatch is not repaired. Near arm also moves despite preservation request.",
+  "canonicalReference": {
+    "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+    "dimensions": [
+      1024,
+      1536
+    ]
+  },
+  "exerciseMaster": {
+    "path": "docs/exercise-art/pilots/parallel-twenty/reverse-flyes/masters/1.png",
+    "sha256": "8750683025d555799f1f1107cdd45c8d381389a6fd86391f7c9333ca28e7bf52",
+    "dimensions": [
+      1536,
+      1024
+    ]
+  },
+  "unchangedFrames": [
+    {
+      "path": "docs/exercise-art/pilots/parallel-twenty/reverse-flyes/frames/1.png",
+      "sha256": "8750683025d555799f1f1107cdd45c8d381389a6fd86391f7c9333ca28e7bf52",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "path": "docs/exercise-art/pilots/parallel-twenty/reverse-flyes/frames/2.png",
+      "sha256": "891dd9449a507a2c2699cee9c6d753cf8928d524998db5427dab2020d6ab1391",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "path": "docs/exercise-art/pilots/parallel-twenty/reverse-flyes/frames/3.png",
+      "sha256": "9b1ad5c9e1f579e7b264161006279cf953d9a4ad95c5d251f46f2a41d9a68efe",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "path": "docs/exercise-art/pilots/parallel-twenty/reverse-flyes/frames/4.png",
+      "sha256": "9b1ad5c9e1f579e7b264161006279cf953d9a4ad95c5d251f46f2a41d9a68efe",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "path": "docs/exercise-art/pilots/parallel-twenty/reverse-flyes/frames/5.png",
+      "sha256": "891dd9449a507a2c2699cee9c6d753cf8928d524998db5427dab2020d6ab1391",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "path": "docs/exercise-art/pilots/parallel-twenty/reverse-flyes/frames/6.png",
+      "sha256": "8750683025d555799f1f1107cdd45c8d381389a6fd86391f7c9333ca28e7bf52",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    }
+  ],
+  "playbackVerified": false,
+  "mobileLightDarkVerified": false,
+  "rejectedOutput": {
+    "path": "docs/exercise-art/pilots/repairs-round-two/reverse-flyes/rejected-attempt.png",
+    "sha256": "377c134861eab514e7c284488795841ff33c5502eba87b3a9188960178aeabc3",
+    "dimensions": [
+      1536,
+      1024
+    ]
+  }
+}

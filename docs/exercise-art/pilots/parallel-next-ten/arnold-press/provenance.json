@@ -1,0 +1,101 @@
+{
+  "exerciseId": "arnold-press",
+  "releaseApproved": false,
+  "status": "six-frame-draft-with-review-caveats",
+  "frameCount": 6,
+  "uniquePoses": 3,
+  "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+  "cueSha256": "a0521fe8f26c9280488cd439b63c3d489f69b8735ed67ff497d09289a8594a44",
+  "generationSources": [
+    "ca7a9f0f-19bb-4a09-9aa3-bde304593674",
+    "8975444a-d382-473c-acd3-7dc2695bc787",
+    "bedb6fd3-1092-46ec-bd7a-6f4d7795d96b"
+  ],
+  "rejectedSources": [
+    "93e2df34-2f91-4dd3-9c83-ecfac5cb1d1b",
+    "021b0921-6580-4b2e-98de-1fef1f278391",
+    "2d35efc2-92b9-4c9e-a15e-cf529a076ce9"
+  ],
+  "images": [
+    {
+      "path": "rejected/2.png",
+      "sha256": "ee32807603661ba829d02d79afd56938a5a298b7e5cf8c5a1fe5d6507dbf7c97",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "path": "rejected/1.png",
+      "sha256": "7851cf19d9a58e3f71f499d2076b7057b0c3e8ca84a86040d1438fa7d58d3d89",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "path": "rejected/3.png",
+      "sha256": "ca65faa5aead4d300788e8e39cde796024bf1033ab7478bb2f8733c574c627f7",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "path": "frames/2.png",
+      "sha256": "34739d5318653d23944fc761ff810b3f6921014eb74f262d220bdd5070141536",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "path": "frames/1.png",
+      "sha256": "9b65ea7378d6ba67ba95ab7844a92d0a144964f0ea6358f9e7a41dd431bb5d04",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "path": "frames/4.png",
+      "sha256": "c0a7f521fd703208e6155555d9d95eb9847177932c60159793a650471374a700",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "path": "frames/6.png",
+      "sha256": "9b65ea7378d6ba67ba95ab7844a92d0a144964f0ea6358f9e7a41dd431bb5d04",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "path": "frames/5.png",
+      "sha256": "34739d5318653d23944fc761ff810b3f6921014eb74f262d220bdd5070141536",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "path": "frames/3.png",
+      "sha256": "c0a7f521fd703208e6155555d9d95eb9847177932c60159793a650471374a700",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "path": "masters/arnold-press/1.png",
+      "sha256": "9b65ea7378d6ba67ba95ab7844a92d0a144964f0ea6358f9e7a41dd431bb5d04",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    }
+  ]
+}

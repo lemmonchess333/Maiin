@@ -1,0 +1,44 @@
+{
+  "exerciseId": "lunges",
+  "equipment": "Dumbbells",
+  "status": "partial-candidate-motion-rejected",
+  "generationMode": "built-in image_gen",
+  "canonicalReference": "/workspace/scratch/92115cdb9667/character-reference/athlete-anatomy-v3.png",
+  "masterPrompt": "Use case: scientific-educational sports anatomy illustration. Create a DUMBBELL FORWARD LUNGE exercise master, matching the supplied canonical faceless bald adult anatomical model with white trainers, fine dark linework, smooth grey mannequin body and visible leg muscle structure. Full-body standing start position, facing right in strict side view with slight three-quarter angle so both hands and dumbbells are visible. Hold two identical moderate grey hex dumbbells hanging at sides with neutral palms and straight arms. Feet hip width apart, knees soft, torso tall, shoulders relaxed, head neutral. Strong purple quadriceps, lighter lilac glutes and hamstrings, subtle pale purple core. Solid black background, portrait 1024x1536 canvas; entire body and dumbbells visible and enough horizontal room for a forward step to right without camera motion. Small subtle floor shadow. No text, labels, arrows, panels, captions or logos. Preserve canonical athlete identity and proportions. One adult athletic anatomy mannequin only.",
+  "frame2Prompt": "Sports anatomy illustration pose edit. Image 1 canonical adult athlete identity; image 2 exercise master and exact scene target. Change only necessary leg/hip posture for frame 2 of forward dumbbell lunge: the near leg takes a long step forward to the RIGHT of the canvas, near front heel gently planted at far right with whole foot in frame. Rear foot stays at original position, rear heel beginning to lift. Both knees only slightly bent, torso remains tall and braced. Carry both identical hex dumbbells at sides, hands attached and arms straight, no change to dumbbell structure or grips. Preserve camera, canvas 1024x1536, illustration scale, lighting, black backdrop, exact athlete identity, all muscle highlight colours. Front shin nearly vertical, legs on hip-width parallel tracks. Keep full body and both weights visible, no crop, no text or labels. Do not move the camera or shrink athlete to fit.",
+  "beats": [
+    [
+      "STAND TALL",
+      "Hold dumbbells at your sides with feet hip width apart."
+    ],
+    [
+      "STEP FORWARD",
+      "Take a long forward step while keeping your torso upright."
+    ],
+    [
+      "LOWER",
+      "Bend both knees and lower your back knee toward the floor."
+    ],
+    [
+      "BOTTOM",
+      "Keep the front shin near vertical with both knees near 90 degrees."
+    ],
+    [
+      "DRIVE UP",
+      "Press through the front heel and straighten the legs."
+    ],
+    [
+      "RETURN",
+      "Step back to standing, then alternate sides."
+    ]
+  ],
+  "files": {
+    "master": "masters/1.png",
+    "acceptedCandidateFrames": [
+      "frames/1.png"
+    ],
+    "rejectedFrames": [
+      "frames/2-rejected.png"
+    ]
+  }
+}

@@ -1,0 +1,235 @@
+[
+  {
+    "path": "docs/exercise-art/pilots/parallel-twenty/inverted-row/frames/4.png",
+    "sha256": "6923c64f521ea5659723d3568a376b298a0f76b8147116172f39dca52e1d3a53",
+    "inspection": "native still visually inspected"
+  },
+  {
+    "path": "docs/exercise-art/pilots/repairs-round-two/inverted-row/rejected/chest-contact-correction.png",
+    "sha256": "0a1f5481730ad245addc4b3f26f6ee2e1a37db92b16897d929db2dacd4dffec1",
+    "inspection": "native still visually inspected"
+  },
+  {
+    "path": "docs/exercise-art/pilots/parallel-twenty/reverse-flyes/frames/2.png",
+    "sha256": "891dd9449a507a2c2699cee9c6d753cf8928d524998db5427dab2020d6ab1391",
+    "inspection": "native still visually inspected"
+  },
+  {
+    "path": "docs/exercise-art/pilots/repairs-round-two/reverse-flyes/rejected-attempt.png",
+    "sha256": "377c134861eab514e7c284488795841ff33c5502eba87b3a9188960178aeabc3",
+    "inspection": "native still visually inspected"
+  },
+  {
+    "path": "docs/exercise-art/pilots/parallel-twenty/reverse-barbell-curl/2.png",
+    "sha256": "80c529bdb3c93d56c7679f9c39355d7567bcddf2f923c308cd46c371f2414b57",
+    "inspection": "native still visually inspected"
+  },
+  {
+    "path": "docs/exercise-art/pilots/repairs-round-two/reverse-barbell-curl/rejected-attempt.png",
+    "sha256": "acd886fcb2982f2124b234d18dac30b81cff47bfbda85eb61179b201bd24a433",
+    "inspection": "native still visually inspected"
+  },
+  {
+    "path": "docs/exercise-art/pilots/parallel-twenty/front-squat/frames/1.png",
+    "sha256": "8499a80b6fc1039b172591a38a1b247c84286cfeb81aa865090e98f8896184c9",
+    "inspection": "native still visually inspected"
+  },
+  {
+    "path": "docs/exercise-art/pilots/parallel-twenty/db-rdl/frames/1.png",
+    "sha256": "b389f9624fe16ee63eb8a25f690f47f96d9ed2015d6b7f0370a12fadfaad9362",
+    "inspection": "native still visually inspected"
+  },
+  {
+    "path": "docs/exercise-art/pilots/parallel-twenty/barbell-step-ups/frames/1.png",
+    "sha256": "097663f0016f108f0c58beb4bc0ced7aff7269d54d188e5549e24d141f87132f",
+    "inspection": "native still visually inspected"
+  },
+  {
+    "path": "docs/exercise-art/pilots/parallel-twenty/russian-twist/frames/1.png",
+    "sha256": "bc90d3b9e4cf6c2ac56e7eafb15b21d10b4aae321c93c20334199dc3cbf26261",
+    "inspection": "native still visually inspected"
+  },
+  {
+    "path": "docs/exercise-art/pilots/parallel-twenty/russian-twist/frames/3.png",
+    "sha256": "0316e55c07ba1b1d616cc31b662066e5d24e623b00cd04273392bffc384d5643",
+    "inspection": "native still visually inspected"
+  },
+  {
+    "path": "docs/exercise-art/pilots/repairs-round-two/russian-twist/frames/3.png",
+    "sha256": "bd004e91a8640586ebf5598c3e51ea7b041b45f2cb23efe0ff04a2859e4fe6a4",
+    "inspection": "native still visually inspected"
+  },
+  {
+    "path": "docs/exercise-art/pilots/parallel-twenty/bodyweight-lunge/frames/4.png",
+    "sha256": "1c946589506139a88e3b91af9d61c2fe32978eead0410369e78250efce3624c4",
+    "inspection": "native still visually inspected"
+  },
+  {
+    "path": "docs/exercise-art/pilots/repairs-round-two/bodyweight-lunge/frames/4.png",
+    "sha256": "59d4ba80a68e0c0253804660f6760a8bcec7ff1bf4208786a8b89ca1e0de68c1",
+    "inspection": "native still visually inspected"
+  },
+  {
+    "path": "docs/exercise-art/pilots/parallel-twenty/mountain-climbers/frames/1.png",
+    "sha256": "e615feb681aac4478503b2c471ecc463b501c5a7203ca19dde1084e20b68de36",
+    "inspection": "native still visually inspected"
+  },
+  {
+    "path": "docs/exercise-art/pilots/parallel-twenty/mountain-climbers/frames/2.png",
+    "sha256": "d586d4f4c94dc1af31ce1c4786ed35db3ea62fea826be2f880043dc83ca179e2",
+    "inspection": "native still visually inspected"
+  },
+  {
+    "path": "docs/exercise-art/pilots/repairs-round-two/front-squat/rejected/exec-33a70b21-0a43-4810-aeb3-836b69bd47b4.png",
+    "sha256": "9df03efbff438e4d42f0235c328d27450ee907000dfba22e57bf9188a5911994",
+    "inspection": "native still visually inspected"
+  },
+  {
+    "path": "docs/exercise-art/pilots/repairs-round-two/db-rdl/rejected/exec-88e88849-4b21-45e8-9d9e-d5489121e9ca.png",
+    "sha256": "a5be45d6e461a80c99655b68dca4ca41500cdec7c6383e93d09599b71838d934",
+    "inspection": "native still visually inspected"
+  },
+  {
+    "path": "docs/exercise-art/pilots/repairs-round-two/barbell-step-ups/rejected/exec-20417fc6-0695-4946-8a87-3f108da7f70f.png",
+    "sha256": "d520eb8967ab4fba3aee3d6c3db42192bcd371c502fe3f91b6f0cd21f84ec662",
+    "inspection": "native still visually inspected"
+  },
+  {
+    "path": "docs/exercise-art/pilots/repairs-round-two/barbell-step-ups/rejected/exec-645a1a1f-ac62-4186-be53-70c93838cdbe.png",
+    "sha256": "18e501b7cf2b7d4c8f7c7a7869f500c309aff15b11f2fbc234961ca47e75db1d",
+    "inspection": "native still visually inspected"
+  },
+  {
+    "path": "docs/exercise-art/pilots/repairs-round-two/mountain-climbers/rejected/exec-e2a13edc-765d-4d2a-acc2-e81e48e544db.png",
+    "sha256": "8bd9aa67684b8bc31ab757c872aa8d301bdafb89df5ce31e743c56ef94bab932",
+    "inspection": "native still visually inspected"
+  },
+  {
+    "path": "docs/exercise-art/pilots/repairs-round-two/mountain-climbers/rejected/exec-850c4955-02c7-431c-90b9-ef4df0c94d40.png",
+    "sha256": "15e774aaca94e427086540f0f127222ee77f8879976d34fce4aaa5fc295b4465",
+    "inspection": "native still visually inspected"
+  },
+  {
+    "path": "docs/exercise-art/pilots/repairs-round-two/russian-twist/frames/1.png",
+    "sha256": "bc90d3b9e4cf6c2ac56e7eafb15b21d10b4aae321c93c20334199dc3cbf26261",
+    "matchesOriginal": true,
+    "inspection": "hash binding, not full new visual review"
+  },
+  {
+    "path": "docs/exercise-art/pilots/repairs-round-two/russian-twist/frames/2.png",
+    "sha256": "cc6435cdbc29c01f8c85db453e5c1f1e95a2d1118d2bcef70c803a58a29488bf",
+    "matchesOriginal": true,
+    "inspection": "hash binding, not full new visual review"
+  },
+  {
+    "path": "docs/exercise-art/pilots/repairs-round-two/russian-twist/frames/3.png",
+    "sha256": "bd004e91a8640586ebf5598c3e51ea7b041b45f2cb23efe0ff04a2859e4fe6a4",
+    "matchesOriginal": false,
+    "inspection": "hash binding, not full new visual review"
+  },
+  {
+    "path": "docs/exercise-art/pilots/repairs-round-two/russian-twist/frames/4.png",
+    "sha256": "bc90d3b9e4cf6c2ac56e7eafb15b21d10b4aae321c93c20334199dc3cbf26261",
+    "matchesOriginal": true,
+    "inspection": "hash binding, not full new visual review"
+  },
+  {
+    "path": "docs/exercise-art/pilots/repairs-round-two/russian-twist/frames/5.png",
+    "sha256": "f01181dd92bf9d823b2a8fffdafa024b86e09adcace25f591c056e1b34d8f89a",
+    "matchesOriginal": true,
+    "inspection": "hash binding, not full new visual review"
+  },
+  {
+    "path": "docs/exercise-art/pilots/repairs-round-two/russian-twist/frames/6.png",
+    "sha256": "bc90d3b9e4cf6c2ac56e7eafb15b21d10b4aae321c93c20334199dc3cbf26261",
+    "matchesOriginal": true,
+    "inspection": "hash binding, not full new visual review"
+  },
+  {
+    "path": "docs/exercise-art/pilots/repairs-round-two/russian-twist/cues.json",
+    "sha256": "b0f51adc98d466b2db24f8d9c22ce36c299fd270e0a5e20d98c4692f61bbf1b4",
+    "inspection": "cue text read"
+  },
+  {
+    "path": "docs/exercise-art/pilots/repairs-round-two/bodyweight-lunge/frames/1.png",
+    "sha256": "8040087e43e7b1d8b6457977853e6bfb1ed08ef5b7f565dfb1e38505d146c2ff",
+    "matchesOriginal": true,
+    "inspection": "hash binding, not full new visual review"
+  },
+  {
+    "path": "docs/exercise-art/pilots/repairs-round-two/bodyweight-lunge/frames/2.png",
+    "sha256": "b2f69b59320053254d476462a0c4f1035e21c255c8f9760d8b8471845b802a47",
+    "matchesOriginal": true,
+    "inspection": "hash binding, not full new visual review"
+  },
+  {
+    "path": "docs/exercise-art/pilots/repairs-round-two/bodyweight-lunge/frames/3.png",
+    "sha256": "a40c508ddcbef841ce27af294dda820955a9eb95ea7992f7ff58e43e0f1ae931",
+    "matchesOriginal": true,
+    "inspection": "hash binding, not full new visual review"
+  },
+  {
+    "path": "docs/exercise-art/pilots/repairs-round-two/bodyweight-lunge/frames/4.png",
+    "sha256": "59d4ba80a68e0c0253804660f6760a8bcec7ff1bf4208786a8b89ca1e0de68c1",
+    "matchesOriginal": false,
+    "inspection": "hash binding, not full new visual review"
+  },
+  {
+    "path": "docs/exercise-art/pilots/repairs-round-two/bodyweight-lunge/frames/5.png",
+    "sha256": "a40c508ddcbef841ce27af294dda820955a9eb95ea7992f7ff58e43e0f1ae931",
+    "matchesOriginal": true,
+    "inspection": "hash binding, not full new visual review"
+  },
+  {
+    "path": "docs/exercise-art/pilots/repairs-round-two/bodyweight-lunge/frames/6.png",
+    "sha256": "8040087e43e7b1d8b6457977853e6bfb1ed08ef5b7f565dfb1e38505d146c2ff",
+    "matchesOriginal": true,
+    "inspection": "hash binding, not full new visual review"
+  },
+  {
+    "path": "docs/exercise-art/pilots/repairs-round-two/bodyweight-lunge/cues.json",
+    "sha256": "00410215b723467033c6e46beb7721ab72082126d5c38f8833cb64d43ffaa5a6",
+    "inspection": "cue text read"
+  },
+  {
+    "path": "docs/exercise-art/pilots/repairs-round-two/mountain-climbers/frames/1.png",
+    "sha256": "e615feb681aac4478503b2c471ecc463b501c5a7203ca19dde1084e20b68de36",
+    "matchesOriginal": true,
+    "inspection": "hash binding, not full new visual review"
+  },
+  {
+    "path": "docs/exercise-art/pilots/repairs-round-two/mountain-climbers/frames/2.png",
+    "sha256": "d586d4f4c94dc1af31ce1c4786ed35db3ea62fea826be2f880043dc83ca179e2",
+    "matchesOriginal": true,
+    "inspection": "hash binding, not full new visual review"
+  },
+  {
+    "path": "docs/exercise-art/pilots/repairs-round-two/mountain-climbers/frames/3.png",
+    "sha256": "d5f1e7f60555a5971af1cfaab5c8c20fb91514206f4872be41c57ff70ab369f0",
+    "matchesOriginal": true,
+    "inspection": "hash binding, not full new visual review"
+  },
+  {
+    "path": "docs/exercise-art/pilots/repairs-round-two/mountain-climbers/frames/4.png",
+    "sha256": "78ac0fb98be2defd2dd014930237f7ba12130bdd905a1f9e081e9add224aeb19",
+    "matchesOriginal": true,
+    "inspection": "hash binding, not full new visual review"
+  },
+  {
+    "path": "docs/exercise-art/pilots/repairs-round-two/mountain-climbers/frames/5.png",
+    "sha256": "50b91a4056ef47460648bb2c0cfd37e3c98ef2629ecabc14114f3867b6f746b0",
+    "matchesOriginal": true,
+    "inspection": "hash binding, not full new visual review"
+  },
+  {
+    "path": "docs/exercise-art/pilots/repairs-round-two/mountain-climbers/frames/6.png",
+    "sha256": "d5f1e7f60555a5971af1cfaab5c8c20fb91514206f4872be41c57ff70ab369f0",
+    "matchesOriginal": true,
+    "inspection": "hash binding, not full new visual review"
+  },
+  {
+    "path": "docs/exercise-art/pilots/repairs-round-two/mountain-climbers/cues.json",
+    "sha256": "1b181e4221e1b73ebe98a88b097d0369f6b4162003c88f3c49fb1ecd85200c7e",
+    "inspection": "cue text read"
+  }
+]

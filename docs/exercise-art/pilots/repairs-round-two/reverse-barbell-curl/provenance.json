@@ -1,0 +1,84 @@
+{
+  "exerciseId": "reverse-barbell-curl",
+  "status": "unresolved-generation-failure",
+  "releaseApproved": false,
+  "acceptedReplacementCount": 0,
+  "tool": "built-in image_gen",
+  "review": "Rejected: changed-method derivation from starting master still produces hands drooping relative to forearms, plus large grey background halo. Original midpoint retained; no successful wrist correction claimed.",
+  "canonicalReference": {
+    "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+    "dimensions": [
+      1024,
+      1536
+    ]
+  },
+  "exerciseMaster": {
+    "path": "docs/exercise-art/pilots/parallel-twenty/reverse-barbell-curl/master.png",
+    "sha256": "a0fc2362b18875b217f3a489eed13dd82ffac8c702a4a8493c9352e0040c9c22",
+    "dimensions": [
+      1024,
+      1536
+    ]
+  },
+  "unchangedFrames": [
+    {
+      "path": "docs/exercise-art/pilots/parallel-twenty/reverse-barbell-curl/1.png",
+      "sha256": "a0fc2362b18875b217f3a489eed13dd82ffac8c702a4a8493c9352e0040c9c22",
+      "dimensions": [
+        1024,
+        1536
+      ]
+    },
+    {
+      "path": "docs/exercise-art/pilots/parallel-twenty/reverse-barbell-curl/2.png",
+      "sha256": "80c529bdb3c93d56c7679f9c39355d7567bcddf2f923c308cd46c371f2414b57",
+      "dimensions": [
+        1024,
+        1536
+      ]
+    },
+    {
+      "path": "docs/exercise-art/pilots/parallel-twenty/reverse-barbell-curl/3.png",
+      "sha256": "9f6ec799ef9ee8e3f549b3130b52418425965e9ce4ab21513faf776ceae7019c",
+      "dimensions": [
+        1024,
+        1536
+      ]
+    },
+    {
+      "path": "docs/exercise-art/pilots/parallel-twenty/reverse-barbell-curl/4.png",
+      "sha256": "9f6ec799ef9ee8e3f549b3130b52418425965e9ce4ab21513faf776ceae7019c",
+      "dimensions": [
+        1024,
+        1536
+      ]
+    },
+    {
+      "path": "docs/exercise-art/pilots/parallel-twenty/reverse-barbell-curl/5.png",
+      "sha256": "80c529bdb3c93d56c7679f9c39355d7567bcddf2f923c308cd46c371f2414b57",
+      "dimensions": [
+        1024,
+        1536
+      ]
+    },
+    {
+      "path": "docs/exercise-art/pilots/parallel-twenty/reverse-barbell-curl/6.png",
+      "sha256": "a0fc2362b18875b217f3a489eed13dd82ffac8c702a4a8493c9352e0040c9c22",
+      "dimensions": [
+        1024,
+        1536
+      ]
+    }
+  ],
+  "playbackVerified": false,
+  "mobileLightDarkVerified": false,
+  "rejectedOutput": {
+    "path": "docs/exercise-art/pilots/repairs-round-two/reverse-barbell-curl/rejected-attempt.png",
+    "sha256": "acd886fcb2982f2124b234d18dac30b81cff47bfbda85eb61179b201bd24a433",
+    "dimensions": [
+      1024,
+      1536
+    ]
+  }
+}

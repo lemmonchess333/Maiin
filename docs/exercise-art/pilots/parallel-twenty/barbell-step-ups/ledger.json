@@ -1,0 +1,63 @@
+{
+  "status": "six-frame-candidate-needs-review",
+  "files": {
+    "frames/2.png": {
+      "sha256": "7a3f954a39f36753b1a0c5410c1a47ffd5d18ec32c2a1d05d71a9848e682bac3",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    "frames/1.png": {
+      "sha256": "097663f0016f108f0c58beb4bc0ced7aff7269d54d188e5549e24d141f87132f",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    "frames/4.png": {
+      "sha256": "e361fdcc400e675eef1a7ec142ecbff0249fbcf1a758dd54b32ac18b293cf9f8",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    "frames/6.png": {
+      "sha256": "097663f0016f108f0c58beb4bc0ced7aff7269d54d188e5549e24d141f87132f",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    "frames/5.png": {
+      "sha256": "7a3f954a39f36753b1a0c5410c1a47ffd5d18ec32c2a1d05d71a9848e682bac3",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    "frames/3.png": {
+      "sha256": "2413071fe0ba1fca1599fc277edcde9e95e85c09ba0c2e4544414ed63ea69abd",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    "masters/1.png": {
+      "sha256": "097663f0016f108f0c58beb4bc0ced7aff7269d54d188e5549e24d141f87132f",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    }
+  },
+  "canonical_sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+  "cues_sha256": "b0b29f0dbde15b1364bd680cc386196951d95fbf24450870f68376d5b02c2312",
+  "fixed_anchors": [
+    "box corners",
+    "lead foot on box",
+    "bar length and grips"
+  ],
+  "sequence_review": "individual images reviewed; actual app playback unverified",
+  "publicApproved": false
+}

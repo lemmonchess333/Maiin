@@ -1,0 +1,3 @@
+# pendlay-row candidate review
+
+Incomplete: one floor-start candidate, no complete six-frame sequence. Initial halo and upright torso were improved in the corrected master. First intermediate widened the grip substantially relative to the shaft; the single correction still changed the grip and bar perspective. Both intermediates rejected and downstream work stopped. Six planned cues are recorded as a plan, with availability flags; missing files have not been fabricated. Master torso is near-horizontal but camera is still oblique and requires final mechanics review. No app activation or mobile verification.

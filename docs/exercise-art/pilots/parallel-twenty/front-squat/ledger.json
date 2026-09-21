@@ -1,0 +1,63 @@
+{
+  "status": "six-frame-candidate-rework-required",
+  "files": {
+    "frames/2.png": {
+      "sha256": "04d04da420b26c0c1c86ce52b4a47bfeb051299ce4d335b0450bc629ead2b847",
+      "dimensions": [
+        1254,
+        1254
+      ]
+    },
+    "frames/1.png": {
+      "sha256": "8499a80b6fc1039b172591a38a1b247c84286cfeb81aa865090e98f8896184c9",
+      "dimensions": [
+        1254,
+        1254
+      ]
+    },
+    "frames/4.png": {
+      "sha256": "6099208f472b100757fb412fe26dae791d19df8b81459f290bb5a45948f098fd",
+      "dimensions": [
+        1254,
+        1254
+      ]
+    },
+    "frames/6.png": {
+      "sha256": "04d04da420b26c0c1c86ce52b4a47bfeb051299ce4d335b0450bc629ead2b847",
+      "dimensions": [
+        1254,
+        1254
+      ]
+    },
+    "frames/5.png": {
+      "sha256": "d944f554b50423cae3c960c76d783b60940f2a496e3ef21b9798f1ee80ffcff0",
+      "dimensions": [
+        1254,
+        1254
+      ]
+    },
+    "frames/3.png": {
+      "sha256": "d944f554b50423cae3c960c76d783b60940f2a496e3ef21b9798f1ee80ffcff0",
+      "dimensions": [
+        1254,
+        1254
+      ]
+    },
+    "masters/1.png": {
+      "sha256": "8499a80b6fc1039b172591a38a1b247c84286cfeb81aa865090e98f8896184c9",
+      "dimensions": [
+        1254,
+        1254
+      ]
+    }
+  },
+  "canonical_sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+  "cues_sha256": "f07ec557a6e1a711645ee69fe1c37b23743c0fe67f829764b813323d38863204",
+  "fixed_anchors": [
+    "both soles",
+    "bar dimensions",
+    "front rack grip"
+  ],
+  "sequence_review": "individual images reviewed; actual app playback unverified",
+  "publicApproved": false
+}

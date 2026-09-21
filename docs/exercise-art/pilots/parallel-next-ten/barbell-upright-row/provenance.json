@@ -1,0 +1,92 @@
+{
+  "exerciseId": "barbell-upright-row",
+  "status": "six-frame-draft-review-required",
+  "releaseApproved": false,
+  "sequenceFrames": 6,
+  "uniqueSequencePoses": 3,
+  "reuseMap": [
+    1,
+    2,
+    3,
+    3,
+    2,
+    1
+  ],
+  "canonicalReference": {
+    "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+  },
+  "files": [
+    {
+      "path": "frames/1.png",
+      "sha256": "1b112dedfa1a33944a518e4d423907aafbde975267609aaf53f62e35dd09fbf2",
+      "dimensions": [
+        1024,
+        1536
+      ]
+    },
+    {
+      "path": "frames/2.png",
+      "sha256": "9ee18ba2fb8b9492b89a316dcda883be5555dbf56574d270e3e39b1623258e3c",
+      "dimensions": [
+        1024,
+        1536
+      ]
+    },
+    {
+      "path": "frames/3.png",
+      "sha256": "a658f56abad226900c6f1d8ae75a10bdaeae668e180cca861fefa680f919cab8",
+      "dimensions": [
+        1024,
+        1536
+      ]
+    },
+    {
+      "path": "frames/4.png",
+      "sha256": "a658f56abad226900c6f1d8ae75a10bdaeae668e180cca861fefa680f919cab8",
+      "dimensions": [
+        1024,
+        1536
+      ]
+    },
+    {
+      "path": "frames/5.png",
+      "sha256": "9ee18ba2fb8b9492b89a316dcda883be5555dbf56574d270e3e39b1623258e3c",
+      "dimensions": [
+        1024,
+        1536
+      ]
+    },
+    {
+      "path": "frames/6.png",
+      "sha256": "1b112dedfa1a33944a518e4d423907aafbde975267609aaf53f62e35dd09fbf2",
+      "dimensions": [
+        1024,
+        1536
+      ]
+    },
+    {
+      "path": "masters/1.png",
+      "sha256": "1b112dedfa1a33944a518e4d423907aafbde975267609aaf53f62e35dd09fbf2",
+      "dimensions": [
+        1024,
+        1536
+      ]
+    },
+    {
+      "path": "rejected/1.png",
+      "sha256": "cd94b898542d1b84fb6f3d083648755b7c672668afba873a6ced50c94ad4ea66",
+      "dimensions": [
+        1024,
+        1536
+      ]
+    }
+  ],
+  "cueSha256": "87744b2913d962aa286037e4cb0f3e81bad0af3261cd69562677d1e02b73fc71",
+  "promptSha256": "8716af106f7c5a94412c6bd119b04c3168c881706b91b13e415a1b369b54e8c4",
+  "validation": {
+    "pngDecode": "passed",
+    "playback": "pending",
+    "mobileLightDark": "pending"
+  }
+}

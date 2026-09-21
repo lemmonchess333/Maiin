@@ -1,0 +1,34 @@
+[
+  {
+    "frame": 1,
+    "name": "High plank",
+    "cue": "Set your hands in a diamond below your chest and brace."
+  },
+  {
+    "frame": 2,
+    "name": "Lower",
+    "cue": "Bend your elbows back along your ribs."
+  },
+  {
+    "frame": 3,
+    "name": "Stay straight",
+    "cue": "Lower your chest while keeping shoulders, hips and heels aligned."
+  },
+  {
+    "frame": 4,
+    "name": "Bottom",
+    "cue": "Bring your chest close to your hands without sagging."
+  },
+  {
+    "frame": 5,
+    "name": "Press",
+    "cue": "Press through your hands with elbows tucked.",
+    "reuses": 3
+  },
+  {
+    "frame": 6,
+    "name": "Finish pressing",
+    "cue": "Continue to straight arms, keeping your core braced.",
+    "reuses": 2
+  }
+]

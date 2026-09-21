@@ -1,0 +1,22 @@
+{
+  "tool": "built-in image_gen",
+  "canonical": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+  "prompts": [
+    {
+      "id": "preacher-curl",
+      "frame": 1,
+      "prompt": "Use case: scientific-educational. Create one full resolution text-free exercise master, landscape 1536x1024. Image 1 is the canonical athlete identity: preserve exact bald faceless white/light grey anatomical illustration proportions, white trainers, smooth neutral featureless pelvis, visible anatomical legs, fine dark contours. Black background. PREACHER CURL exact catalogue variation: seated on a compact dark charcoal preacher curl bench, both upper arms fully supported on the forward downward sloping pad, armpits at upper pad edge; feet planted. Camera front-side three-quarter so both hands and elbows are visible. Both palms supinated underhand shoulder-width grip on one STRAIGHT rigid barbell with a single small identical black round plate at each end. Master BOTTOM starting pose: elbows only slightly bent, forearms descend forward along same plane as pad, bar held clear of pad bottom, do not hyperextend. Upright stationary torso. Biceps strongest purple, forearms lighter lilac, rest neutral anatomical white. Whole athlete bench feet bar included with margin to permit curl upward. No text arrows panels logos, no shorts underwear seams or genital detail. This is one native frame not a collage."
+    },
+    {
+      "id": "preacher-curl",
+      "frame": 2,
+      "prompt": "Use case precise-object-edit. Image1 canonical identity, image2 EDIT TARGET and fixed scene master. Produce frame 2 of seated preacher CURL on exactly same 1536x1024 canvas. Change ONLY both forearms hands and rigid straight barbell to an intermediate curl: elbows flex about 70 degrees, bar rises toward lower chest, wrists straight supinated, forearms raised with both upper arms still pressed on pad. Elbows keep exact master positions. Preserve every fixed scene feature: head face torso shoulders upper arms legs white shoes bench pad frame camera crop lighting. Same bar LENGTH plate sizes and spacing, two small identical round plates. Biceps same purple forearms same lilac. No text. This is upward elbow curl not arm raise. Keep scene scale exactly."
+    },
+    {
+      "id": "preacher-curl",
+      "frame": 2,
+      "prompt": "Precise-object-edit scientific exercise still. Image1 canonical athlete. Image2 fixed seated preacher-curl MASTER with almost straight arms. Image3 full curl adjacent endpoint. Edit image2 to make a genuinely halfway pose between image2 and image3. Keep exact original elbow centres pinned to preacher pad, same upper arm lengths and supported positions. Bar centre should be midway in HEIGHT between images2 and3 (around y400 on 1024-high canvas); forearms project forward from elbows almost horizontally. BOTH hands attached with palms up, preserve wrist-to-elbow lengths. Same straight bar length and small plates, unchanged grip width. Everything else fixed pixel registration: black background, bench pad frame, legs feet head chest. Same 1536x1024 canvas, no zoom crop or text. Anatomical athlete white trainers, purple biceps lilac forearms unchanged. Only forearms and attached rigid bar move.",
+      "note": "prior frame2 request yielded endpoint, retained as frame3"
+    }
+  ]
+}

@@ -1,0 +1,76 @@
+{
+  "exerciseId": "pull-ups",
+  "status": "blocked-image-service",
+  "releaseApproved": false,
+  "acceptedReplacementCount": 0,
+  "tool": "built-in image_gen",
+  "review": "Image service rejected the full-extension repair at output safety stage (other), request ID 984a2770-5745-4877-8331-d66eb136feff. No output asset delivered. Not retried or reworded. Original bent starting elbows remain unresolved.",
+  "canonicalReference": {
+    "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+    "dimensions": [
+      1024,
+      1536
+    ]
+  },
+  "exerciseMaster": {
+    "path": "docs/exercise-art/pilots/parallel-twenty/pull-ups/master.png",
+    "sha256": "5933af5c721b7d1b477d1e91e226cb219392bbd9c0f1fc27897fa64d48f5c6ea",
+    "dimensions": [
+      1254,
+      1254
+    ]
+  },
+  "unchangedFrames": [
+    {
+      "path": "docs/exercise-art/pilots/parallel-twenty/pull-ups/frames/1.png",
+      "sha256": "5933af5c721b7d1b477d1e91e226cb219392bbd9c0f1fc27897fa64d48f5c6ea",
+      "dimensions": [
+        1254,
+        1254
+      ]
+    },
+    {
+      "path": "docs/exercise-art/pilots/parallel-twenty/pull-ups/frames/2.png",
+      "sha256": "b0dd24e5296a42389d1cee43c5e644608e22831aa40f47bba64a5e0dbbeb9e54",
+      "dimensions": [
+        1254,
+        1254
+      ]
+    },
+    {
+      "path": "docs/exercise-art/pilots/parallel-twenty/pull-ups/frames/3.png",
+      "sha256": "2a2b1bd57df37dcc42c4356a5baedf4d4126fab0987212de8f3626fd2f9128b2",
+      "dimensions": [
+        1254,
+        1254
+      ]
+    },
+    {
+      "path": "docs/exercise-art/pilots/parallel-twenty/pull-ups/frames/4.png",
+      "sha256": "1242d62c08cec76d8351c101cbbc6e2502ce08c15671cdf70f03cd33a4cf4b1f",
+      "dimensions": [
+        1254,
+        1254
+      ]
+    },
+    {
+      "path": "docs/exercise-art/pilots/parallel-twenty/pull-ups/frames/5.png",
+      "sha256": "2a2b1bd57df37dcc42c4356a5baedf4d4126fab0987212de8f3626fd2f9128b2",
+      "dimensions": [
+        1254,
+        1254
+      ]
+    },
+    {
+      "path": "docs/exercise-art/pilots/parallel-twenty/pull-ups/frames/6.png",
+      "sha256": "b0dd24e5296a42389d1cee43c5e644608e22831aa40f47bba64a5e0dbbeb9e54",
+      "dimensions": [
+        1254,
+        1254
+      ]
+    }
+  ],
+  "playbackVerified": false,
+  "mobileLightDarkVerified": false
+}

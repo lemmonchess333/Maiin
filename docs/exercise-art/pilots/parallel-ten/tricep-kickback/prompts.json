@@ -1,0 +1,27 @@
+{
+  "tool": "built-in image_gen",
+  "canonical": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+  "prompts": [
+    {
+      "id": "tricep-kickback",
+      "frame": 1,
+      "prompt": "Use case scientific-educational. Create ONE full resolution landscape 1536x1024 native exercise master, not collage. Image1 canonical athlete identity: same bald faceless white anatomical figure fine contours visible leg anatomy smooth neutral pelvis without garments seams or genital detail, same white trainers. Black background. TRICEP KICKBACK with ONE dumbbell bench-supported exact variation. Side three-quarter view of athlete facing LEFT: left hand and left knee supported firmly on a horizontal dark charcoal flat bench, right white shoe planted on floor, right side nearest camera. Torso hinged nearly parallel to floor, spine long neutral head. RIGHT upper arm held horizontal beside torso with elbow behind shoulder at hip height; right elbow flexed 90 degrees, forearm hanging vertically downward holding one small dark round dumbbell with neutral hammer grip. Left supporting arm straight attached to pad. Show whole bench athlete and shoe with margin on right for straightening working forearm backward. RIGHT triceps strongest purple, rear deltoid light lilac, subtle core pale; rest neutral white anatomy. Fixed equipment plausible modest dumbbell two equal round heads, no text arrows logo. Make elbow and grip unambiguous."
+    },
+    {
+      "id": "tricep-kickback",
+      "frame": 3,
+      "prompt": "Precise-object-edit. Image1 canonical athlete; image2 EDIT TARGET exercise master. Create ENDPOINT tricep kickback, change ONLY working right forearm and attached dumbbell. Keep right elbow EXACTLY at master location around x725 y194. Extend elbow so right forearm points straight BACK to the RIGHT, continuing the upper arm line toward about x970 y210; hand holds same small round black dumbbell securely neutral grip. Entire upper arm shoulder elbow remain unchanged, only forearm rotates around elbow until straight. Preserve forearm length, dumbbell dimensions head counts and grip. Other scene pixels exactly fixed: head chest spine pelvis both legs shoe supporting knee and hand bench feet shadows camera black background entire 1536x1024 canvas. No zoom crop perspective change text. Same purple triceps lighter rear delt subtle core unchanged. Do not rotate torso or lift elbow. One native image."
+    },
+    {
+      "id": "tricep-kickback",
+      "frame": 2,
+      "prompt": "Precise-object-edit educational exercise. Image1 canonical identity; image2 fixed master 90 degree bent elbow; image3 fully extended adjacent endpoint. Generate middle tricep kickback pose exactly halfway between these positions. Edit image2 ONLY working right forearm and dumbbell. Elbow stays at same master centre around x725 y194, upper arm remains horizontal and immobile. Forearm rotated back diagonally DOWN-RIGHT at about 45 degrees, hand around x865 y365, same forearm length. Same small rigid dumbbell rotates naturally with neutral wrist. Keep chest head neck shoulder upper arm triceps mass exactly master (not endpoint's subtly lifted upper arm), other support hand knee shoe legs bench black background camera canvas all UNCHANGED. 1536x1024 native frame. Anatomical identity same visible legs smooth featureless pelvis white trainers, purple triceps and lilac rear delt. No texts arrows collage."
+    },
+    {
+      "id": "tricep-kickback",
+      "frame": 2,
+      "prompt": "Use case background-extraction precise-object-edit. Image1 canonical identity, image2 correct master background and scene, image3 EDIT TARGET middle kickback pose. SINGLE correction: remove the glowing grey halo behind athlete and bench in image3, replace all background with uniform solid BLACK matching image2. Preserve exact pose silhouette linework interior anatomy dumbbell bench and all coordinates of image3. No reshaping or repositioning. Absolutely no glow shadow vignette fog gradient. Same 1536x1024 canvas. This is background-only repair, no other edits.",
+      "note": "targeted background repair of rejected halo"
+    }
+  ]
+}

@@ -1,0 +1,93 @@
+{
+  "exerciseId": "lu-raise",
+  "releaseApproved": false,
+  "status": "six-frame-draft-with-review-caveats",
+  "frameCount": 6,
+  "uniquePoses": 4,
+  "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+  "cueSha256": "2c0c51ec0ed93d9b931a5dbd3096c7d58985416e9d2aca83be3b163c23defe1c",
+  "generationSources": [
+    "8b960ef8-b1ae-4345-94db-7c4d2122029e",
+    "1ab7ecd5-ae60-486e-a067-171f8d0b75a0",
+    "46302362-4396-45cd-8c54-6c9892f56b4c",
+    "184c1d86-2d4e-438f-9075-d1d0801bb31a"
+  ],
+  "rejectedSources": [
+    "76bd3242-1447-4473-9dc9-f1c752d856f4",
+    "2dba1ef5-cda7-4f55-ab1b-9efd28c7eda9"
+  ],
+  "images": [
+    {
+      "path": "rejected/2.png",
+      "sha256": "14fff90cc21769f412f9146f708cf85edd0993dc514a13547ae74d6a0ad94ab1",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "path": "rejected/1.png",
+      "sha256": "3658164ae5a98451e8f2837e7098ac3c9b01e063476fcd931db5bb4173475366",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "path": "frames/2.png",
+      "sha256": "f206468a6ebf33e4a83d057deb2be8ed389612dcff7b9353cf170211e0c8dfaf",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "path": "frames/1.png",
+      "sha256": "a42cfa83aea3b2dd897508fcf3afe8e3e78a308e905440cd7990c442c1274d6f",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "path": "frames/4.png",
+      "sha256": "80655fccc8cfb321c464010cc31ac28c9be011f223532bca641f9fc68a5f3c79",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "path": "frames/6.png",
+      "sha256": "f206468a6ebf33e4a83d057deb2be8ed389612dcff7b9353cf170211e0c8dfaf",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "path": "frames/5.png",
+      "sha256": "833a36798db7c1018c554e80e0343a850df7a4ae0bf74f4d050b1401e246b5b6",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "path": "frames/3.png",
+      "sha256": "833a36798db7c1018c554e80e0343a850df7a4ae0bf74f4d050b1401e246b5b6",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "path": "masters/lu-raise/1.png",
+      "sha256": "a42cfa83aea3b2dd897508fcf3afe8e3e78a308e905440cd7990c442c1274d6f",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    }
+  ]
+}

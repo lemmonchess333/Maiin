@@ -1,0 +1,69 @@
+{
+  "exerciseId": "spider-db-curl",
+  "status": "reviewed-unchanged-candidate",
+  "approved": false,
+  "regeneratedFrames": 0,
+  "finding": "Both grips remain visible, chest stays on incline pad, bench and feet fixed. Elbow drift is modest; curl does not turn into a row. No clear material defect in the reviewed stills.",
+  "basis": "Native still images inspected in prior batch production and independent review; current sources fingerprinted. No new display measurements claimed.",
+  "outstanding": [
+    "Sequential playback including loop boundary",
+    "Mobile-size light and dark appearance",
+    "Reduced-motion manual navigation"
+  ],
+  "sourceFrames": [
+    {
+      "frame": 1,
+      "path": "docs/exercise-art/pilots/parallel-ten/spider-db-curl/frames/1.png",
+      "sha256": "57aa19cad7864c06a0e51308dba49d5dac5852ec334987a9a22d6a06b66826d7",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "frame": 2,
+      "path": "docs/exercise-art/pilots/parallel-ten/spider-db-curl/frames/2.png",
+      "sha256": "d5782759a908ed056c2b7c80af43e13fd92f8225a5c33d8570cdb2f5eaa459fe",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "frame": 3,
+      "path": "docs/exercise-art/pilots/parallel-ten/spider-db-curl/frames/3.png",
+      "sha256": "c5c0ee34cb9d746ad5c6cd4b19c2a8118482a86de07b2c5dc8cf0fb27d398fe2",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "frame": 4,
+      "path": "docs/exercise-art/pilots/parallel-ten/spider-db-curl/frames/4.png",
+      "sha256": "c5c0ee34cb9d746ad5c6cd4b19c2a8118482a86de07b2c5dc8cf0fb27d398fe2",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "frame": 5,
+      "path": "docs/exercise-art/pilots/parallel-ten/spider-db-curl/frames/5.png",
+      "sha256": "d5782759a908ed056c2b7c80af43e13fd92f8225a5c33d8570cdb2f5eaa459fe",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "frame": 6,
+      "path": "docs/exercise-art/pilots/parallel-ten/spider-db-curl/frames/6.png",
+      "sha256": "57aa19cad7864c06a0e51308dba49d5dac5852ec334987a9a22d6a06b66826d7",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    }
+  ]
+}

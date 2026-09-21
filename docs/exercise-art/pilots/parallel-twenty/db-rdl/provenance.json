@@ -1,0 +1,87 @@
+{
+  "exerciseId": "db-rdl",
+  "status": "six-frame-candidate",
+  "releaseApproved": false,
+  "tool": "built-in image_gen",
+  "reference": "/workspace/scratch/92115cdb9667/tropos-next-exercises/docs/exercise-art/identity/athlete-anatomy-v3.png",
+  "referenceSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+  "prompts": [
+    "Tropos scientific educational anatomical exercise illustration. Exact canonical reference athlete, bald faceless white-grey body with fine dark contours, full leg anatomy visible and white trainers, smooth neutral featureless pelvic center with no garment outlines. Solid black background. One single full-resolution image; no text, no arrows, no collage. Equipment grey realistic compact matching dumbbells. Whole athlete and equipment contained with margins. Dumbbell Romanian deadlift standing master. Fixed side three-quarter camera athlete facing left, full body portrait 1024x1536. Feet hip-width planted, knees softly unlocked. Stand tall and neutral holding TWO identical modest grey hex dumbbells immediately in front of thighs, arms straight. Strongest purple hamstrings, lighter lilac glutes, subtle lower back/traps. Dumbbells hang vertically with palms facing thighs. Keep torso neutral, no lean back. This is top/start position, not bent yet.",
+    "Image1 canonical identity, image2 target. Remove ONLY background glow/halo from image2 so all background is solid pure black. Preserve entire athlete, weights and pose pixel positions. No text, no anatomy changes.",
+    "Image1 canonical, image2 immutable RDL master. Create halfway hip hinge: hips move backward, torso inclines forward 45 degrees, spine stays straight and neck neutral, soft knees only slight bend no squat. Straight arms lower SAME two dumbbells close along front thighs to kneecap height. Feet shoes stay pixel-fixed, camera and scale unchanged, no elbow bend, no rotation. Purple hamstrings/lilac glutes/lower back unchanged. Solid pure black background with NO glow. Full native portrait image no text.",
+    "Image1 canonical, image2 master, image3 half hinge target. Continue HIP HINGE to bottom RDL: torso nearly horizontal straight spine, head aligned with spine looking floor; hips travel back, knees stay same softly bent angle, shins near vertical. Straight arms dumbbells follow close down shins to mid-shin height. SAME feet pixel positions, no squatting, no rounded back. Exactly same dumbbells and colors. Preserve camera composition and body size. Pure black background no glow, native portrait no text."
+  ],
+  "sourcePaths": [
+    "/workspace/scratch/92115cdb9667/generated_images/exec-ad0dc057-382b-4d9a-93c7-aab7297cfe65.png",
+    "/workspace/scratch/92115cdb9667/generated_images/exec-81f8d048-a483-4596-978f-09c91fcaa11b.png",
+    "/workspace/scratch/92115cdb9667/generated_images/exec-103e0cf1-e931-4b98-be9b-7deaf3245e3c.png"
+  ],
+  "cues": [
+    "Stand with dumbbells at your thighs and soft knees.",
+    "Push your hips back and keep weights close to your legs.",
+    "Lower to a comfortable hamstring stretch.",
+    "Control the bottom position with a neutral back.",
+    "Drive your hips forward while keeping weights close.",
+    "Stand tall without leaning back."
+  ],
+  "cueSha256": "3472efa7cfa1acb487e34d2d662379a050ef314621549b5f79bf33bf94bedaf8",
+  "reuse": {
+    "4": "3 endpoint control/hold",
+    "5": "2 return",
+    "6": "1 return"
+  },
+  "fixedAnchors": [
+    "feet",
+    "camera",
+    "body proportions",
+    "equipment dimensions"
+  ],
+  "sha256": {
+    "frames/2.png": "5a4b5f6fb11c125b0afeb49ae96883b24486e19b2ca51c63097f392aa3b22c2a",
+    "frames/1.png": "b389f9624fe16ee63eb8a25f690f47f96d9ed2015d6b7f0370a12fadfaad9362",
+    "frames/4.png": "298488194d228132bfc880ba54928eab5b587dbd80e6980cfe66aea86f057288",
+    "frames/6.png": "b389f9624fe16ee63eb8a25f690f47f96d9ed2015d6b7f0370a12fadfaad9362",
+    "frames/5.png": "5a4b5f6fb11c125b0afeb49ae96883b24486e19b2ca51c63097f392aa3b22c2a",
+    "frames/3.png": "298488194d228132bfc880ba54928eab5b587dbd80e6980cfe66aea86f057288",
+    "masters/1.png": "b389f9624fe16ee63eb8a25f690f47f96d9ed2015d6b7f0370a12fadfaad9362"
+  },
+  "dimensions": {
+    "frames/2.png": [
+      1024,
+      1536
+    ],
+    "frames/1.png": [
+      1024,
+      1536
+    ],
+    "frames/4.png": [
+      1024,
+      1536
+    ],
+    "frames/6.png": [
+      1024,
+      1536
+    ],
+    "frames/5.png": [
+      1024,
+      1536
+    ],
+    "frames/3.png": [
+      1024,
+      1536
+    ],
+    "masters/1.png": [
+      1024,
+      1536
+    ]
+  },
+  "review": {
+    "singlePoseInspected": true,
+    "playbackVerified": false,
+    "mobileLightDarkVerified": false,
+    "issues": [
+      "Feet shift by tens of pixels between poses; fixed-anchor invariant fails release.",
+      "Bottom weights remain near upper shin; cue correctly uses comfortable stretch, no claim of exact mid-shin."
+    ]
+  }
+}

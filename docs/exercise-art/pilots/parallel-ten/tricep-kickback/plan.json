@@ -1,0 +1,112 @@
+{
+  "exerciseId": "tricep-kickback",
+  "status": "candidate-needs-review",
+  "releaseApproved": false,
+  "nativeFrameCount": 6,
+  "uniquePoseCount": 3,
+  "master": "master.png",
+  "reference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+  "referenceSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+  "tool": "built-in image_gen",
+  "sequence": "start, intermediate, endpoint, endpoint hold, intermediate return, start return",
+  "fixedAnchors": [
+    "head",
+    "torso",
+    "bench",
+    "support contacts",
+    "shoes"
+  ],
+  "frames": [
+    {
+      "frame": 1,
+      "path": "docs/exercise-art/pilots/parallel-ten/tricep-kickback/1.png",
+      "label": "Supported start",
+      "cue": "Brace on the bench; hold upper arm level.",
+      "progress": 0,
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sha256": "4d36681dec43cdfde35550e80e7c425d6b584185bf5f97a527a45f536702bc35",
+      "cueSha256": "f45e09e1e6d3d28b1036ff92c6087c82b9da126a3d16a8ee077e37aea904908d",
+      "reusedFrom": null
+    },
+    {
+      "frame": 2,
+      "path": "docs/exercise-art/pilots/parallel-ten/tricep-kickback/2.png",
+      "label": "Extend",
+      "cue": "Straighten your elbow without moving your upper arm.",
+      "progress": 0.5,
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sha256": "4da93d4dcdbf81ad5767f0707ff1705fdb5b61a88549e612ade979b9b3787899",
+      "cueSha256": "61d44f369dfb1a3148f4a2a9a24eaad1b2893eb965910439bfeeb6dd290593c4",
+      "reusedFrom": null
+    },
+    {
+      "frame": 3,
+      "path": "docs/exercise-art/pilots/parallel-ten/tricep-kickback/3.png",
+      "label": "Straight arm",
+      "cue": "Extend the arm back with your wrist straight.",
+      "progress": 1,
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sha256": "0c23de2c44d896df53698b64f54f450c9cd9d606e54a9478d2e850b3cfc9bc6f",
+      "cueSha256": "2b785cb1799d4437e154d73d0e0bae68ee8ffb768cccf33b512de34ebf1e0763",
+      "reusedFrom": null
+    },
+    {
+      "frame": 4,
+      "path": "docs/exercise-art/pilots/parallel-ten/tricep-kickback/4.png",
+      "label": "Brief hold",
+      "cue": "Hold briefly without lifting your shoulder.",
+      "progress": 1,
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sha256": "0c23de2c44d896df53698b64f54f450c9cd9d606e54a9478d2e850b3cfc9bc6f",
+      "cueSha256": "af7a57d0b08a656da19115266b2f81ea5dfb8d5fb951cfed0246f8a06170f62e",
+      "reusedFrom": 3
+    },
+    {
+      "frame": 5,
+      "path": "docs/exercise-art/pilots/parallel-ten/tricep-kickback/5.png",
+      "label": "Controlled return",
+      "cue": "Bend your elbow slowly; keep upper arm level.",
+      "progress": 0.5,
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sha256": "4da93d4dcdbf81ad5767f0707ff1705fdb5b61a88549e612ade979b9b3787899",
+      "cueSha256": "55eb10fb47f1b1e52fbe06444685f3a5f2cfaac84803c8675089b3f12b1df564",
+      "reusedFrom": 2
+    },
+    {
+      "frame": 6,
+      "path": "docs/exercise-art/pilots/parallel-ten/tricep-kickback/6.png",
+      "label": "Return",
+      "cue": "Return to the bent-elbow starting position.",
+      "progress": 0,
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "sha256": "4d36681dec43cdfde35550e80e7c425d6b584185bf5f97a527a45f536702bc35",
+      "cueSha256": "877779023503aa305991b12e0b562e8af61f823e6e1f921ef8bfa2ae69e675b5",
+      "reusedFrom": 1
+    }
+  ],
+  "review": {
+    "staticInspected": true,
+    "sequentialPlaybackVerified": false,
+    "mobileLightDarkVerified": false,
+    "biomechanicalApproval": false,
+    "equipmentApproval": false
+  }
+}

@@ -1,0 +1,96 @@
+{
+  "exerciseId": "overhead-extension",
+  "status": "incomplete-candidate-requires-correction",
+  "method": "built-in image_gen.imagegen",
+  "canonical": "/workspace/scratch/9fe37925471a/tropos/docs/exercise-art/identity/athlete-anatomy-v3.png",
+  "master": "/workspace/scratch/92115cdb9667/upper-body/overhead-extension/masters/1.png",
+  "prompts": {
+    "master": "Use case: scientific-educational. Asset: Tropos anatomical exercise form illustration. Canonical image is identity and style reference: exact same bald faceless white/light-grey athletic anatomical man, fine dark contours, white trainers, visible full legs. Smooth neutral featureless pelvic center with no genital detail, central slit, underwear outline, waistband or seams. Pure black background. No words, borders, arrows, UI, collage. Primary triceps strong purple, shoulders subtle light lilac, other anatomy white grey, maintain the exact palette. Standing two-hand ONE dumbbell overhead triceps extension. One compact black/grey hex dumbbell vertical, both hands cupped securely beneath the inner face of its upper bell, lower bell hangs below hands. Fixed three-quarter SIDE view facing left, enough rearward view to see triceps and bent elbows. Full body trainers to dumbbell in frame with 10% safety margin. Feet shoulder-width anchored, pelvis and ribcage stacked, no lumbar arch, knees soft. Both upper arms vertical beside ears and parallel; ONLY elbows hinge, keep hands attached to upper end of same dumbbell. Full-body portrait composition with generous overhead clearance, no perspective distortion. Generate the exercise MASTER frame 1: elbows fully extended overhead without hyperextension. One dumbbell held vertically directly above crown; hands at its upper end. Upper arms snug near ears. Straight neutral torso, same body proportions as reference. Ensure realistic two-handed overhead triceps extension grip. No other dumbbells. This is one single image, not a panel.",
+    "frame2": "Use case: scientific-educational. Asset: Tropos anatomical exercise form illustration. Canonical image is identity and style reference: exact same bald faceless white/light-grey athletic anatomical man, fine dark contours, white trainers, visible full legs. Smooth neutral featureless pelvic center with no genital detail, central slit, underwear outline, waistband or seams. Pure black background. No words, borders, arrows, UI, collage. Primary triceps strong purple, shoulders subtle light lilac, other anatomy white grey, maintain the exact palette. Standing two-hand ONE dumbbell overhead triceps extension. One compact black/grey hex dumbbell vertical, both hands cupped securely beneath the inner face of its upper bell, lower bell hangs below hands. Fixed three-quarter SIDE view facing left, enough rearward view to see triceps and bent elbows. Full body trainers to dumbbell in frame with 10% safety margin. Feet shoulder-width anchored, pelvis and ribcage stacked, no lumbar arch, knees soft. Both upper arms vertical beside ears and parallel; ONLY elbows hinge, keep hands attached to upper end of same dumbbell. Full-body portrait composition with generous overhead clearance, no perspective distortion. Image 1 canonical identity, image 2 EDIT TARGET EXERCISE MASTER. Derive frame 2 by changing only elbow angle: bend both elbows 45 degrees, forearms rotate backwards, carrying the same vertical dumbbell backward and down behind crown. Upper arms and elbows stay exactly where shown. Do not move shoulder, torso, head, legs, feet, framing or camera. Keep identical image dimensions and anatomy scale. Hands securely cup same upper dumbbell end. The dumbbell is behind the head, not in front of face. No text.",
+    "frame3": "Use case: scientific-educational. Asset: Tropos anatomical exercise form illustration. Canonical image is identity and style reference: exact same bald faceless white/light-grey athletic anatomical man, fine dark contours, white trainers, visible full legs. Smooth neutral featureless pelvic center with no genital detail, central slit, underwear outline, waistband or seams. Pure black background. No words, borders, arrows, UI, collage. Primary triceps strong purple, shoulders subtle light lilac, other anatomy white grey, maintain the exact palette. Standing two-hand ONE dumbbell overhead triceps extension. One compact black/grey hex dumbbell vertical, both hands cupped securely beneath the inner face of its upper bell, lower bell hangs below hands. Fixed three-quarter SIDE view facing left, enough rearward view to see triceps and bent elbows. Full body trainers to dumbbell in frame with 10% safety margin. Feet shoulder-width anchored, pelvis and ribcage stacked, no lumbar arch, knees soft. Both upper arms vertical beside ears and parallel; ONLY elbows hinge, keep hands attached to upper end of same dumbbell. Full-body portrait composition with generous overhead clearance, no perspective distortion. Image 1 canonical identity; image 2 exercise MASTER anchor; image 3 adjacent pose EDIT TARGET. Create frame 3 halfway down: elbow flexion about 90 degrees, forearms near horizontal directed backward, hands and upper end of vertical dumbbell behind the skull at crown height, bottom bell behind neck. Keep both upper arms vertical alongside ears, elbow points overhead stationary. Change forearms and dumbbell ONLY relative to image 3. EXACT same head/shoulder/hip/knee/shoe pixel positions, body scale, black canvas and camera. Same dumbbell and same two-hand grip. Do not shrink body or move feet upward. No text.",
+    "earlyBendCorrection": "Use case: precise-object-edit. Image 1 is canonical character identity. Image 2 is EXACT EDIT TARGET master of overhead dumbbell triceps extension. Preserve image 2 pixel for pixel below the shoulders: same shoe endpoints, same knees and pelvis, same head, same body scale and placement, same black canvas. Do not recompose. Change ONLY the forearms and single dumbbell: rotate forearms backward at elbows by about 45 degrees while keeping upper arms and elbows fixed. Hands stay cupped under top dumbbell head, identical vertical dumbbell moves slightly down and backwards. Facing left, dumbbell travels to right behind crown, never in front of face. No other changes, no text. Smooth neutral pelvis, anatomical white-grey faceless same athlete, white trainers, same purple triceps. Preserve full original 1024x1536 composition. This is a surgical local edit, not a redraw.\n"
+  },
+  "cues": [
+    {
+      "frame": 1,
+      "name": "Overhead setup",
+      "cue": "Stand tall with both hands supporting one dumbbell overhead.",
+      "state": "elbows extended"
+    },
+    {
+      "frame": 2,
+      "name": "Begin lowering",
+      "cue": "Keep your upper arms beside your ears as you bend your elbows.",
+      "state": "early elbow flexion"
+    },
+    {
+      "frame": 3,
+      "name": "Lower under control",
+      "cue": "Lower the dumbbell behind your head without arching your back.",
+      "state": "approximately 90-degree elbow flexion"
+    },
+    {
+      "frame": 4,
+      "name": "Comfortable stretch",
+      "cue": "Pause at a comfortable triceps stretch.",
+      "state": "deeper comfortable flexion",
+      "generated": false
+    },
+    {
+      "frame": 5,
+      "name": "Extend upward",
+      "cue": "Straighten your elbows while keeping your upper arms still.",
+      "state": "return through frame3 pose",
+      "generated": false
+    },
+    {
+      "frame": 6,
+      "name": "Finish the return",
+      "cue": "Continue extending smoothly toward the overhead position.",
+      "state": "return through frame2 pose",
+      "generated": false
+    }
+  ],
+  "fixedAnchors": [
+    "white trainer soles",
+    "ankles",
+    "knees",
+    "pelvis",
+    "sternum",
+    "head",
+    "shoulders",
+    "upper-arm position"
+  ],
+  "review": {
+    "passed": [
+      "single athlete identity matches canonical general style",
+      "one two-hand vertical dumbbell",
+      "six movement beats authored from exact catalogue",
+      "no text or garment seams",
+      "frames2 and3 lower-body anchors visually close"
+    ],
+    "failed": [
+      "frame1-to-frame2 body vertical shift around 30 pixels",
+      "upper arm geometry changes between images",
+      "master overhead clearance too tight",
+      "exact elbow angle control weak",
+      "targeted correction: asymmetric arm geometry and incorrect early-bend depth"
+    ],
+    "notDone": [
+      "frames4-6",
+      "six-frame playback",
+      "mobile light/dark review"
+    ],
+    "releaseApproved": false,
+    "correctionResult": "Targeted local-edit prompt restored lower-body placement much closer to master, but produced asymmetric elbow/forearm geometry and substantially deeper flexion than requested. Rejected. Stop same-method retries."
+  },
+  "sha256": {
+    "masters/1.png": "4d09b2a5acdf178e30d2d73560725494686dcf19f0ef4a78ce1877890caf2ce3",
+    "frames/1.png": "4d09b2a5acdf178e30d2d73560725494686dcf19f0ef4a78ce1877890caf2ce3",
+    "frames/2.png": "a4ea7567aad4bc78e7cf8835a45adf7a13584300dd3ac3b837431f776146bfeb",
+    "frames/3.png": "c9d7761928116d91402bf70fdc16aa813b5b5ed94e31a042bd27275a1feabc60",
+    "canonical": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+    "rejected/early-bend-correction.png": "d41f4b8f6ce203c36b4d02d63991e8483127dfe1ab8e0c03e82ad57ba27fbb02"
+  },
+  "cueSha256": "166033e410f5429e6f6972e2a806666ab9d85c802bb146d03c97af2f6b1175d1"
+}

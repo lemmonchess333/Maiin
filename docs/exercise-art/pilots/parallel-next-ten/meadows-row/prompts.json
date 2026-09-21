@@ -1,0 +1,47 @@
+[
+  {
+    "beat": "master",
+    "prompt": "Scientific educational Meadows row master. Derive exact bald faceless white/light-grey anatomical athlete from reference, fine dark contours, smooth neutral featureless pelvic centre, visible legs and white trainers. Pure solid black background without glow, no text. Entire athlete and entire modest landmine barbell within frame with generous margin. Three-quarter rear-side camera showing working arm and back. Athlete standing PERPENDICULAR to anchored bar in staggered stance, hips hinged, flat stable back. Non-working hand braced on forward thigh, working hand grips free loaded sleeve end OVERHAND, arm fully extended in bottom stretch. One modest small plate beside working hand. Long straight shaft visibly extends diagonally away from athlete to floor-mounted landmine pivot at other end. Strong purple working lat, lilac rear deltoid/rhomboids/biceps. Real geometry, single athlete, ground support clear. Later row raises loaded end toward hip around fixed visible landmine pivot; establish realistic rigid bar geometry now.",
+    "references": [
+      "/workspace/scratch/92115cdb9667/tropos-next-exercises/docs/exercise-art/identity/athlete-anatomy-v3.png"
+    ],
+    "output": "masters/1.png",
+    "tool": "builtin image_gen",
+    "note": "Intermediate Meadows reference saved as frames/2.png at generation time, finalized as frames/3.png."
+  },
+  {
+    "beat": "middle",
+    "prompt": "Image1 Meadows row MASTER is edit target; image2 canonical identity. Create midpoint of ascent. Keep athlete head, torso hinge, hips, legs, BOTH FEET, free hand bracing thigh, camera, canvas, and landmine base at lower right exactly fixed. Bend working elbow halfway drawing it back behind rib cage; raise loaded free end toward working hip. Bar is a RIGID rod rotating UP around the exact fixed lower-right pivot, not translating, stretching or changing sleeve/plate. Keep hand attached overhand to same sleeve, same small plate. Moderate elbow bend, halfway stretch to hip. Same anatomy colours, pure black background, no halo/text. Only working arm and bar rotation change.",
+    "references": [
+      "/workspace/scratch/92115cdb9667/tropos-next-exercises/docs/exercise-art/pilots/parallel-next-ten/meadows-row/masters/1.png",
+      "/workspace/scratch/92115cdb9667/tropos-next-exercises/docs/exercise-art/identity/athlete-anatomy-v3.png"
+    ],
+    "output": "frames/3.png",
+    "tool": "builtin image_gen",
+    "note": "Intermediate Meadows reference saved as frames/2.png at generation time, finalized as frames/3.png."
+  },
+  {
+    "beat": "top",
+    "prompt": "Finish Meadows row contraction, keeping fixed scene in image1 master and identity image2; image3 adjacent intermediate supplemental. Draw working elbow back toward ceiling and behind torso, working hand and loaded sleeve end close beside hip/lower ribs, shoulder not shrugged. Keep original torso hinge/head/legs/both shoes/non-working bracing hand and exact landmine floor base untouched. Rigid bar pivots around fixed lower-right joint, unchanged real bar length, same plate and same continuous shaft markings as master. Working wrist neutral, overhand sleeve grip retained. No equipment sliding/stretching or new segments. Exact black background, anatomical muscles and same camera scale. One image without text.",
+    "references": [
+      "/workspace/scratch/92115cdb9667/tropos-next-exercises/docs/exercise-art/pilots/parallel-next-ten/meadows-row/masters/1.png",
+      "/workspace/scratch/92115cdb9667/tropos-next-exercises/docs/exercise-art/identity/athlete-anatomy-v3.png",
+      "/workspace/scratch/92115cdb9667/tropos-next-exercises/docs/exercise-art/pilots/parallel-next-ten/meadows-row/frames/3.png"
+    ],
+    "output": "frames/4.png",
+    "tool": "builtin image_gen",
+    "note": "Intermediate Meadows reference saved as frames/2.png at generation time, finalized as frames/3.png."
+  },
+  {
+    "beat": "early",
+    "prompt": "Meadows row EARLY ascent: image1 master target, image2 athlete identity, image3 midpoint supplemental. Make pose exactly BETWEEN master straight-arm bottom and image3 midpoint: working elbow only slightly bent, loaded end raised a little (about one quarter of full pull). Keep same torso, head, thigh-bracing other hand, feet, hips, stance, camera and lower-right landmine base absolutely unchanged. Bar rigidly rotates about same floor joint, same one plate and sleeve, no new pieces or length changes. Exact overhand hand-to-sleeve grip. Original purple muscles, white anatomy, pure black background, no text. This is a lower position than image3, not a duplicate midpoint or full contraction.",
+    "references": [
+      "/workspace/scratch/92115cdb9667/tropos-next-exercises/docs/exercise-art/pilots/parallel-next-ten/meadows-row/masters/1.png",
+      "/workspace/scratch/92115cdb9667/tropos-next-exercises/docs/exercise-art/identity/athlete-anatomy-v3.png",
+      "/workspace/scratch/92115cdb9667/tropos-next-exercises/docs/exercise-art/pilots/parallel-next-ten/meadows-row/frames/3.png"
+    ],
+    "output": "frames/2.png",
+    "tool": "builtin image_gen",
+    "note": "Intermediate Meadows reference saved as frames/2.png at generation time, finalized as frames/3.png."
+  }
+]

@@ -1,0 +1,22 @@
+{
+  "status": "blocked-partial-candidate",
+  "files": {
+    "frames/1.png": "6a57c3fe33babcecc27fe1bb26b94c256c768e35cc308a911b51f4e1f9cf508a",
+    "masters/1.png": "6a57c3fe33babcecc27fe1bb26b94c256c768e35cc308a911b51f4e1f9cf508a"
+  },
+  "canonical_sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+  "cues_sha256": "1b5dc2ce51721e3ce938ec653c93a3b8f3b0cef56d4f19c308f188b8bbf59d91",
+  "fixed_anchors": [
+    "mat corners",
+    "head and shoulders",
+    "arms and hands",
+    "trainer sole contacts"
+  ],
+  "missing_frames": [
+    2,
+    3,
+    4,
+    5,
+    6
+  ]
+}

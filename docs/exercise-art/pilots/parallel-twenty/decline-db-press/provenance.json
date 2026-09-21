@@ -1,0 +1,88 @@
+{
+  "exerciseId": "decline-db-press",
+  "status": "six-frame-candidate",
+  "releaseApproved": false,
+  "tool": "built-in image_gen",
+  "reference": "/workspace/scratch/92115cdb9667/tropos-next-exercises/docs/exercise-art/identity/athlete-anatomy-v3.png",
+  "referenceSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+  "prompts": [
+    "Tropos scientific educational anatomical exercise illustration. Exact canonical reference athlete, bald faceless white-grey body with fine dark contours, full leg anatomy visible and white trainers, smooth neutral featureless pelvic center with no garment outlines. Solid black background. One single full-resolution image; no text, no arrows, no collage. Equipment grey realistic compact matching dumbbells. Whole athlete and equipment contained with margins. Decline dumbbell chest press master bottom/start. Landscape 1536x1024 side three-quarter camera. Athlete lying on a realistic black DECLINE bench with head LOWER than hips by about 15 degrees, head at left of image, legs secured under visible ankle roller pads at raised foot end on right. Shoulder blades and back against pad. TWO equal modest grey hex dumbbells at either side of lower chest, elbows about 70-90 degrees flexed and tucked 45 degrees from torso, forearms vertical, palms toward feet. Primary lower pectorals strong purple, triceps/front delts light lilac. Whole bench and body in view with room overhead for vertical press. No glow.",
+    "Image1 canonical athlete, image2 immutable decline DB press master. Preserve entire bench geometry, ankle rollers and all leg torso head pixels. Change ONLY both arms: press both equal dumbbells vertically upward halfway from chest toward lockout. Elbows now only 35-45 degrees bent, forearms remain vertical, dumbbells arc slightly inward. Do not change weights size, grip, body shape or camera. Strong purple lower chest and lilac triceps/front delts unchanged. Head stays lower than hips, feet secured same rollers. Black background no glow. Full native landscape no text.",
+    "Image1 canonical, image2 immutable decline DB master, image3 halfway press target. Finish pressing dumbbells to top: both arms fully extended vertically above lower chest, elbows straight without hyperextension. Both equal dumbbells near each other but not touching, still above chest not face. Maintain grip wrists neutral. Preserve every bench pixel, leg/feet restraints, head torso, camera and scale. Only arms/weights move. Same colors and pure black background, native full landscape no text."
+  ],
+  "sourcePaths": [
+    "/workspace/scratch/92115cdb9667/generated_images/exec-6089738a-3573-46f9-a1c2-ae3097aeb52c.png",
+    "/workspace/scratch/92115cdb9667/generated_images/exec-79baaaf2-94eb-4dda-b8dc-e902448f123c.png",
+    "/workspace/scratch/92115cdb9667/generated_images/exec-322dae0a-08ff-4691-9d0a-e4050eb6335c.png"
+  ],
+  "cues": [
+    "Secure your legs and hold the dumbbells beside your lower chest.",
+    "Press upward with wrists stacked over your elbows.",
+    "Extend your arms without locking your elbows harshly.",
+    "Control the dumbbells over your chest.",
+    "Lower slowly along the same path.",
+    "Return to chest level with your shoulder blades pinned."
+  ],
+  "cueSha256": "f2a57230d1ca9f48dcacfff719c7d998beb82b12b07784548f7f3e80ffabbf33",
+  "reuse": {
+    "4": "3 controlled endpoint",
+    "5": "2 return",
+    "6": "1 return"
+  },
+  "fixedAnchors": [
+    "bench geometry",
+    "leg restraints",
+    "head",
+    "torso",
+    "equipment dimensions"
+  ],
+  "sha256": {
+    "frames/2.png": "9a3e151fe70326911bfbcfe039df92c4c142fe8a31f2cb27ac0b3fd198199587",
+    "frames/1.png": "830e113ae9ea7ed40b4c71ca2b48f7c4029e3366eccd1f8de44fb41f00e5004d",
+    "frames/4.png": "10edcb5b5db2ab07ea4b263d29a4281933d41b9768895ecd563c3fea059e3cd0",
+    "frames/6.png": "830e113ae9ea7ed40b4c71ca2b48f7c4029e3366eccd1f8de44fb41f00e5004d",
+    "frames/5.png": "9a3e151fe70326911bfbcfe039df92c4c142fe8a31f2cb27ac0b3fd198199587",
+    "frames/3.png": "10edcb5b5db2ab07ea4b263d29a4281933d41b9768895ecd563c3fea059e3cd0",
+    "masters/1.png": "830e113ae9ea7ed40b4c71ca2b48f7c4029e3366eccd1f8de44fb41f00e5004d"
+  },
+  "dimensions": {
+    "frames/2.png": [
+      1536,
+      1024
+    ],
+    "frames/1.png": [
+      1536,
+      1024
+    ],
+    "frames/4.png": [
+      1536,
+      1024
+    ],
+    "frames/6.png": [
+      1536,
+      1024
+    ],
+    "frames/5.png": [
+      1536,
+      1024
+    ],
+    "frames/3.png": [
+      1536,
+      1024
+    ],
+    "masters/1.png": [
+      1536,
+      1024
+    ]
+  },
+  "review": {
+    "singlePoseInspected": true,
+    "playbackVerified": false,
+    "mobileLightDarkVerified": false,
+    "issues": [
+      "Top pose dumbbell ends overlap in projection; verify separation and rigid equipment.",
+      "Small bench hardware details vary between poses; structural review pending.",
+      "Chest color covers broad pectoral area rather than narrowly lower fibers; qualitative highlighting only."
+    ]
+  }
+}

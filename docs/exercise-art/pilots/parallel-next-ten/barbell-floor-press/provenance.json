@@ -1,0 +1,97 @@
+{
+  "exerciseId": "barbell-floor-press",
+  "status": "six-frame-draft",
+  "releaseApproved": false,
+  "canonical": {
+    "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+  },
+  "images": [
+    {
+      "path": "bottom.png",
+      "sha256": "87bb56f7e7a9ff41119fae28bf38ddc1d95d3dba215f774d72516a199b3799b1",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "path": "frames/1.png",
+      "sha256": "58454b5dc4e76484255152f28ad3e0ef459f525257bdbd766aebc3808b2c28ac",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "path": "frames/2.png",
+      "sha256": "bd70c803dda2198046d29186e7396792946b4ab440bf0c215bb98d6aa453ee99",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "path": "frames/3.png",
+      "sha256": "87bb56f7e7a9ff41119fae28bf38ddc1d95d3dba215f774d72516a199b3799b1",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "path": "frames/4.png",
+      "sha256": "87bb56f7e7a9ff41119fae28bf38ddc1d95d3dba215f774d72516a199b3799b1",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "path": "frames/5.png",
+      "sha256": "bd70c803dda2198046d29186e7396792946b4ab440bf0c215bb98d6aa453ee99",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "path": "frames/6.png",
+      "sha256": "58454b5dc4e76484255152f28ad3e0ef459f525257bdbd766aebc3808b2c28ac",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "path": "master.png",
+      "sha256": "58454b5dc4e76484255152f28ad3e0ef459f525257bdbd766aebc3808b2c28ac",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "path": "midpoint.png",
+      "sha256": "bd70c803dda2198046d29186e7396792946b4ab440bf0c215bb98d6aa453ee99",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    }
+  ],
+  "cueSha256": "41cab902f1670c33ab14b16002898b0a35f18c1af8765a8ef0534d0a91bb756f",
+  "nativeGenerationCalls": 3,
+  "frameCount": 6,
+  "uniqueSequencePoses": 3,
+  "fixedAnchors": [
+    "Rack",
+    "Head/back/pelvis",
+    "Planted feet"
+  ],
+  "validation": {
+    "pngDecode": "passed",
+    "sequentialPlayback": "not performed",
+    "mobileLightDark": "not performed"
+  }
+}

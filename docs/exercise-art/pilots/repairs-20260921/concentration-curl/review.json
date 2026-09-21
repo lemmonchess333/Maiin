@@ -1,0 +1,69 @@
+{
+  "exerciseId": "concentration-curl",
+  "status": "reviewed-unchanged-candidate",
+  "approved": false,
+  "regeneratedFrames": 0,
+  "finding": "Working upper-arm/inner-thigh contact now reads credibly in the side master and derived poses. Supporting hand, feet, head and bench stay in place. Contracting biceps changes contour; this alone is not a geometry defect. No definite material correction justified from stills.",
+  "basis": "Native still images inspected in prior batch production and independent review; current sources fingerprinted. No new display measurements claimed.",
+  "outstanding": [
+    "Sequential playback including loop boundary",
+    "Mobile-size light and dark appearance",
+    "Reduced-motion manual navigation"
+  ],
+  "sourceFrames": [
+    {
+      "frame": 1,
+      "path": "docs/exercise-art/pilots/parallel-ten/concentration-curl/frames/1.png",
+      "sha256": "45cfd0fd4230fda03a58f63534cf407e61456bfe2b8d0ef15559ed2fa5848828",
+      "dimensions": [
+        1024,
+        1536
+      ]
+    },
+    {
+      "frame": 2,
+      "path": "docs/exercise-art/pilots/parallel-ten/concentration-curl/frames/2.png",
+      "sha256": "d8a5a3cb4fc8811fc945778684ee6c0617fe47b73a5a45699d7c48b5ebd1c715",
+      "dimensions": [
+        1024,
+        1536
+      ]
+    },
+    {
+      "frame": 3,
+      "path": "docs/exercise-art/pilots/parallel-ten/concentration-curl/frames/3.png",
+      "sha256": "358ddc6d09c1fbd0e6fcfdeabc145cce921d3b522100d93c26731d1302e4ba56",
+      "dimensions": [
+        1024,
+        1536
+      ]
+    },
+    {
+      "frame": 4,
+      "path": "docs/exercise-art/pilots/parallel-ten/concentration-curl/frames/4.png",
+      "sha256": "358ddc6d09c1fbd0e6fcfdeabc145cce921d3b522100d93c26731d1302e4ba56",
+      "dimensions": [
+        1024,
+        1536
+      ]
+    },
+    {
+      "frame": 5,
+      "path": "docs/exercise-art/pilots/parallel-ten/concentration-curl/frames/5.png",
+      "sha256": "d8a5a3cb4fc8811fc945778684ee6c0617fe47b73a5a45699d7c48b5ebd1c715",
+      "dimensions": [
+        1024,
+        1536
+      ]
+    },
+    {
+      "frame": 6,
+      "path": "docs/exercise-art/pilots/parallel-ten/concentration-curl/frames/6.png",
+      "sha256": "45cfd0fd4230fda03a58f63534cf407e61456bfe2b8d0ef15559ed2fa5848828",
+      "dimensions": [
+        1024,
+        1536
+      ]
+    }
+  ]
+}

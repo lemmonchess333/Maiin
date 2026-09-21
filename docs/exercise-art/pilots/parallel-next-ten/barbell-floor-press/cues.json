@@ -1,0 +1,38 @@
+[
+  {
+    "frame": 1,
+    "name": "Set",
+    "cue": "Hold the bar over your chest with arms extended.",
+    "pose": "top"
+  },
+  {
+    "frame": 2,
+    "name": "Lower",
+    "cue": "Lower under control, keeping wrists stacked.",
+    "pose": "midpoint"
+  },
+  {
+    "frame": 3,
+    "name": "Floor contact",
+    "cue": "Let your upper arms meet the floor.",
+    "pose": "bottom"
+  },
+  {
+    "frame": 4,
+    "name": "Pause",
+    "cue": "Pause on the floor without bouncing.",
+    "pose": "bottom; intentional hold"
+  },
+  {
+    "frame": 5,
+    "name": "Press",
+    "cue": "Drive the bar upward while keeping your feet planted.",
+    "pose": "midpoint; return"
+  },
+  {
+    "frame": 6,
+    "name": "Reset",
+    "cue": "Finish with arms extended, ready for the next repetition.",
+    "pose": "top; return"
+  }
+]

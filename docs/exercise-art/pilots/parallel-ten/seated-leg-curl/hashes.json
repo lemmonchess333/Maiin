@@ -1,0 +1,15 @@
+{
+  "cues.json": "5095856f6f3e9e28c92daa3238078516091e28c97d3a0ba1346bcf539173dab4",
+  "frames/1.png": "c859ec9ed7be1a617124eb524260890cd6113ed6b1f8bd4c0afb17be05b0b54f",
+  "frames/2.png": "1fe97ab6237a1f6d88bc7b5e0b3cc096584220e66908ac753e7b845fb3879949",
+  "frames/3.png": "be17ca6b74b1a428ac5eca0c03bc70030c728b487db7c0950d80cc33741d6c8a",
+  "frames/4.png": "b32ad0dd1c5746bf4e9938fea75875ec43c98f678cf7b763690ef597bd4a2382",
+  "frames/5.png": "be17ca6b74b1a428ac5eca0c03bc70030c728b487db7c0950d80cc33741d6c8a",
+  "frames/6.png": "1fe97ab6237a1f6d88bc7b5e0b3cc096584220e66908ac753e7b845fb3879949",
+  "master.png": "c859ec9ed7be1a617124eb524260890cd6113ed6b1f8bd4c0afb17be05b0b54f",
+  "prompts.json": "3984156e5d269d8e13ad31a2c6a3132c3ffd1da6ca0b1742d84d2689d507a66f",
+  "rejected/front-shin-roller.png": "0e1a40bbebf6b4d830c58f561d63ce189445b834be2d56b307d977ffde80a34d",
+  "rejected/side-profile-hinge-misaligned.png": "b6a6b0a72387ce82e14a4d270b05e05485802124f0ecfe3bf2c882634026f832",
+  "review.md": "e594354e1f5841b3dce9c0f09708ab42d802cdecd1323d0d00f53f3f997bf3b4",
+  "../../../identity/athlete-anatomy-v3.png": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+}

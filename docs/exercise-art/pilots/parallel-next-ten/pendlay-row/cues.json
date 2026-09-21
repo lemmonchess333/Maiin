@@ -1,0 +1,38 @@
+[
+  {
+    "frame": 1,
+    "name": "Dead stop",
+    "cue": "Set the bar over midfoot with a flat, near-horizontal torso.",
+    "available": true
+  },
+  {
+    "frame": 2,
+    "name": "Brace",
+    "cue": "Keep the floor-supported bar still and brace your trunk.",
+    "available": false
+  },
+  {
+    "frame": 3,
+    "name": "Row up",
+    "cue": "Drive the elbows back without raising your torso.",
+    "available": false
+  },
+  {
+    "frame": 4,
+    "name": "Lower chest",
+    "cue": "Bring the bar to your lower chest.",
+    "available": false
+  },
+  {
+    "frame": 5,
+    "name": "Controlled descent",
+    "cue": "Lower the bar while keeping the hinge fixed.",
+    "available": false
+  },
+  {
+    "frame": 6,
+    "name": "Reset on floor",
+    "cue": "Let both plates settle before the next rep.",
+    "available": false
+  }
+]

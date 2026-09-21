@@ -1,0 +1,35 @@
+[
+  {
+    "frame": 1,
+    "cue": "Stand tall with an overhand grip just inside shoulder width.",
+    "pose": 1
+  },
+  {
+    "frame": 2,
+    "cue": "Lead with your elbows as the bar rises close to your body.",
+    "pose": 2
+  },
+  {
+    "frame": 3,
+    "cue": "Stop at chest level with elbows no higher than shoulders.",
+    "pose": 3
+  },
+  {
+    "frame": 4,
+    "cue": "Keep the top position controlled before lowering.",
+    "pose": 3,
+    "reusesFrame": 3
+  },
+  {
+    "frame": 5,
+    "cue": "Lower along your body under control.",
+    "pose": 2,
+    "reusesFrame": 2
+  },
+  {
+    "frame": 6,
+    "cue": "Return the bar to your thighs without bouncing.",
+    "pose": 1,
+    "reusesFrame": 1
+  }
+]

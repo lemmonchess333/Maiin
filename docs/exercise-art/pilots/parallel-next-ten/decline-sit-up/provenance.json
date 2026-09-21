@@ -1,0 +1,92 @@
+{
+  "exerciseId": "decline-sit-up",
+  "tool": "built-in imagegen",
+  "releaseApproved": false,
+  "status": "six-frame-draft",
+  "canonical": {
+    "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+  },
+  "master": "masters/decline-sit-up/1.png",
+  "frameReuse": {
+    "4": 3,
+    "5": 2,
+    "6": 1
+  },
+  "cueSha256": "937e9e9b124c34f2a7b626406d7e7064e4977ded859ab09071771042b10a4bbf",
+  "images": [
+    {
+      "path": "frames/1.png",
+      "sha256": "0ad38031721a863f26205bb92b51785c1f4be80fc668e4fc89684b618ceb4051",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "path": "frames/2.png",
+      "sha256": "ef948275546b9ce9ab97ac607519d3fcef6ec5cd01c42931568dd0ce5b5926d6",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "path": "frames/3.png",
+      "sha256": "401f4c97076b68ab50e831d96b109d9dfab1995df1ac92108337d8d164ea1519",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "path": "frames/4.png",
+      "sha256": "401f4c97076b68ab50e831d96b109d9dfab1995df1ac92108337d8d164ea1519",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "path": "frames/5.png",
+      "sha256": "ef948275546b9ce9ab97ac607519d3fcef6ec5cd01c42931568dd0ce5b5926d6",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "path": "frames/6.png",
+      "sha256": "0ad38031721a863f26205bb92b51785c1f4be80fc668e4fc89684b618ceb4051",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "path": "masters/decline-sit-up/1.png",
+      "sha256": "0ad38031721a863f26205bb92b51785c1f4be80fc668e4fc89684b618ceb4051",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "path": "rejected/initial-master.png",
+      "sha256": "4a7d108b9443c07f47f6a1c80d7e5e462c15f642ba7f5e2af8095a1140383a66",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "path": "rejected/unsupported-head-master.png",
+      "sha256": "7acf050a61d5e69a1fc41f6961351a4e72fccb3cb95966cc491046e952f2e397",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    }
+  ],
+  "playback": "Unverified"
+}

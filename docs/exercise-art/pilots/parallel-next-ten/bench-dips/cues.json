@@ -1,0 +1,38 @@
+[
+  {
+    "frame": 1,
+    "name": "Support",
+    "cue": "Support your hips just in front of the bench with arms straight.",
+    "pose": "top"
+  },
+  {
+    "frame": 2,
+    "name": "Lower",
+    "cue": "Bend your elbows back and lower your hips.",
+    "pose": "midpoint"
+  },
+  {
+    "frame": 3,
+    "name": "Bottom",
+    "cue": "Reach about a right angle at the elbows.",
+    "pose": "bottom"
+  },
+  {
+    "frame": 4,
+    "name": "Reverse",
+    "cue": "Change direction under control.",
+    "pose": "bottom; brief turnaround"
+  },
+  {
+    "frame": 5,
+    "name": "Press",
+    "cue": "Push through your hands and straighten your arms.",
+    "pose": "midpoint; return"
+  },
+  {
+    "frame": 6,
+    "name": "Reset",
+    "cue": "Finish with shoulders down and arms straight.",
+    "pose": "top; return"
+  }
+]

@@ -1,0 +1,665 @@
+{
+  "batch": "parallel-ten-20260921",
+  "exerciseCount": 10,
+  "completeDraftSets": 9,
+  "releaseApprovedSets": 0,
+  "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+  "note": "Six native files may contain mechanically justified reused return/hold poses. File completeness is not visual approval.",
+  "codeValidation": {
+    "lint": "passed",
+    "build": "passed",
+    "activeTestsPassed": 9697,
+    "skippedTests": 347,
+    "initialTestFailure": "Shared node_modules symlink led to denied worker module access; full tests passed after copying dependencies locally."
+  },
+  "playback": "Local browser review blocked with ERR_BLOCKED_BY_CLIENT; app/mobile light-dark playback unverified.",
+  "exercises": [
+    {
+      "exerciseId": "chest-supported-db-row",
+      "sixFrameFilesPresent": true,
+      "status": "six-frame-draft",
+      "releaseApproved": false,
+      "frames": [
+        {
+          "frame": 1,
+          "path": "chest-supported-db-row/frames/1.png",
+          "sha256": "c653688121b16517520f697531cadbc4f4ebb0795e18f776088c5af6950b2032",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "frame": 2,
+          "path": "chest-supported-db-row/frames/2.png",
+          "sha256": "9608f9a4c65942c7a26eb0d9cc34e1e2a1846d305cb56f173b83b9843f73ea51",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "frame": 3,
+          "path": "chest-supported-db-row/frames/3.png",
+          "sha256": "08227af2299248f6d516d9f2f9deb0e8cfc1ab716a594fd47a23c5238b7ea319",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "frame": 4,
+          "path": "chest-supported-db-row/frames/4.png",
+          "sha256": "08227af2299248f6d516d9f2f9deb0e8cfc1ab716a594fd47a23c5238b7ea319",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "frame": 5,
+          "path": "chest-supported-db-row/frames/5.png",
+          "sha256": "9608f9a4c65942c7a26eb0d9cc34e1e2a1846d305cb56f173b83b9843f73ea51",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "frame": 6,
+          "path": "chest-supported-db-row/frames/6.png",
+          "sha256": "c653688121b16517520f697531cadbc4f4ebb0795e18f776088c5af6950b2032",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        }
+      ],
+      "uniquePoseFiles": 3,
+      "findings": "Fixed bench-strut detail drifts; shoulder highlight too broad.",
+      "reviewFiles": [
+        "chest-supported-db-row/REVIEW.md",
+        "chest-supported-db-row/provenance.json"
+      ]
+    },
+    {
+      "exerciseId": "spider-db-curl",
+      "sixFrameFilesPresent": true,
+      "status": "six-frame-draft",
+      "releaseApproved": false,
+      "frames": [
+        {
+          "frame": 1,
+          "path": "spider-db-curl/frames/1.png",
+          "sha256": "57aa19cad7864c06a0e51308dba49d5dac5852ec334987a9a22d6a06b66826d7",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "frame": 2,
+          "path": "spider-db-curl/frames/2.png",
+          "sha256": "d5782759a908ed056c2b7c80af43e13fd92f8225a5c33d8570cdb2f5eaa459fe",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "frame": 3,
+          "path": "spider-db-curl/frames/3.png",
+          "sha256": "c5c0ee34cb9d746ad5c6cd4b19c2a8118482a86de07b2c5dc8cf0fb27d398fe2",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "frame": 4,
+          "path": "spider-db-curl/frames/4.png",
+          "sha256": "c5c0ee34cb9d746ad5c6cd4b19c2a8118482a86de07b2c5dc8cf0fb27d398fe2",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "frame": 5,
+          "path": "spider-db-curl/frames/5.png",
+          "sha256": "d5782759a908ed056c2b7c80af43e13fd92f8225a5c33d8570cdb2f5eaa459fe",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "frame": 6,
+          "path": "spider-db-curl/frames/6.png",
+          "sha256": "57aa19cad7864c06a0e51308dba49d5dac5852ec334987a9a22d6a06b66826d7",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        }
+      ],
+      "uniquePoseFiles": 3,
+      "findings": "No major definite mechanical defect in independent still review; playback remains unverified.",
+      "reviewFiles": [
+        "spider-db-curl/REVIEW.md",
+        "spider-db-curl/provenance.json"
+      ]
+    },
+    {
+      "exerciseId": "incline-db-curl",
+      "sixFrameFilesPresent": false,
+      "status": "incomplete-pilot",
+      "releaseApproved": false,
+      "frames": [
+        {
+          "frame": 1,
+          "path": "incline-db-curl/1.png",
+          "sha256": "508e99b2231c143f3413ef5955b787ce5a6857e5ae985b844949e3ecd67da805",
+          "dimensions": [
+            1024,
+            1536
+          ]
+        }
+      ],
+      "uniquePoseFiles": 1,
+      "findings": "Far grip hidden; corrective generation rejected by image service. Incomplete.",
+      "reviewFiles": [
+        "incline-db-curl/README.md",
+        "incline-db-curl/cues.json",
+        "incline-db-curl/prompts.json",
+        "incline-db-curl/review.json"
+      ]
+    },
+    {
+      "exerciseId": "concentration-curl",
+      "sixFrameFilesPresent": true,
+      "status": "six-frame-draft",
+      "releaseApproved": false,
+      "frames": [
+        {
+          "frame": 1,
+          "path": "concentration-curl/frames/1.png",
+          "sha256": "45cfd0fd4230fda03a58f63534cf407e61456bfe2b8d0ef15559ed2fa5848828",
+          "dimensions": [
+            1024,
+            1536
+          ]
+        },
+        {
+          "frame": 2,
+          "path": "concentration-curl/frames/2.png",
+          "sha256": "d8a5a3cb4fc8811fc945778684ee6c0617fe47b73a5a45699d7c48b5ebd1c715",
+          "dimensions": [
+            1024,
+            1536
+          ]
+        },
+        {
+          "frame": 3,
+          "path": "concentration-curl/frames/3.png",
+          "sha256": "358ddc6d09c1fbd0e6fcfdeabc145cce921d3b522100d93c26731d1302e4ba56",
+          "dimensions": [
+            1024,
+            1536
+          ]
+        },
+        {
+          "frame": 4,
+          "path": "concentration-curl/frames/4.png",
+          "sha256": "358ddc6d09c1fbd0e6fcfdeabc145cce921d3b522100d93c26731d1302e4ba56",
+          "dimensions": [
+            1024,
+            1536
+          ]
+        },
+        {
+          "frame": 5,
+          "path": "concentration-curl/frames/5.png",
+          "sha256": "d8a5a3cb4fc8811fc945778684ee6c0617fe47b73a5a45699d7c48b5ebd1c715",
+          "dimensions": [
+            1024,
+            1536
+          ]
+        },
+        {
+          "frame": 6,
+          "path": "concentration-curl/frames/6.png",
+          "sha256": "45cfd0fd4230fda03a58f63534cf407e61456bfe2b8d0ef15559ed2fa5848828",
+          "dimensions": [
+            1024,
+            1536
+          ]
+        }
+      ],
+      "uniquePoseFiles": 3,
+      "findings": "Changed camera establishes inner-thigh brace; see final exercise review.",
+      "reviewFiles": [
+        "concentration-curl/README.md",
+        "concentration-curl/cues.json",
+        "concentration-curl/prompts.json",
+        "concentration-curl/review.json"
+      ]
+    },
+    {
+      "exerciseId": "preacher-curl",
+      "sixFrameFilesPresent": true,
+      "status": "six-frame-draft",
+      "releaseApproved": false,
+      "frames": [
+        {
+          "frame": 1,
+          "path": "preacher-curl/1.png",
+          "sha256": "758f2896b2f1f2594f41bbc6848d1650e2f7fcea688c0cae6ab3a62269c9da1e",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "frame": 2,
+          "path": "preacher-curl/2.png",
+          "sha256": "88b0ca6dc56035bf03837222951fe924bc5f75fd56f002c03028de204d005832",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "frame": 3,
+          "path": "preacher-curl/3.png",
+          "sha256": "f61d620c32de3679460b5ac876bfb03b4a2b4177e7cdc4b308cbf53811f6f7f3",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "frame": 4,
+          "path": "preacher-curl/4.png",
+          "sha256": "f61d620c32de3679460b5ac876bfb03b4a2b4177e7cdc4b308cbf53811f6f7f3",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "frame": 5,
+          "path": "preacher-curl/5.png",
+          "sha256": "88b0ca6dc56035bf03837222951fe924bc5f75fd56f002c03028de204d005832",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "frame": 6,
+          "path": "preacher-curl/6.png",
+          "sha256": "758f2896b2f1f2594f41bbc6848d1650e2f7fcea688c0cae6ab3a62269c9da1e",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        }
+      ],
+      "uniquePoseFiles": 3,
+      "findings": "Potential bar/grip width change requires review; perspective may contribute.",
+      "reviewFiles": [
+        "preacher-curl/REVIEW.md",
+        "preacher-curl/plan.json",
+        "preacher-curl/prompts.json"
+      ]
+    },
+    {
+      "exerciseId": "tricep-kickback",
+      "sixFrameFilesPresent": true,
+      "status": "six-frame-draft",
+      "releaseApproved": false,
+      "frames": [
+        {
+          "frame": 1,
+          "path": "tricep-kickback/1.png",
+          "sha256": "4d36681dec43cdfde35550e80e7c425d6b584185bf5f97a527a45f536702bc35",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "frame": 2,
+          "path": "tricep-kickback/2.png",
+          "sha256": "4da93d4dcdbf81ad5767f0707ff1705fdb5b61a88549e612ade979b9b3787899",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "frame": 3,
+          "path": "tricep-kickback/3.png",
+          "sha256": "0c23de2c44d896df53698b64f54f450c9cd9d606e54a9478d2e850b3cfc9bc6f",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "frame": 4,
+          "path": "tricep-kickback/4.png",
+          "sha256": "0c23de2c44d896df53698b64f54f450c9cd9d606e54a9478d2e850b3cfc9bc6f",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "frame": 5,
+          "path": "tricep-kickback/5.png",
+          "sha256": "4da93d4dcdbf81ad5767f0707ff1705fdb5b61a88549e612ade979b9b3787899",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "frame": 6,
+          "path": "tricep-kickback/6.png",
+          "sha256": "4d36681dec43cdfde35550e80e7c425d6b584185bf5f97a527a45f536702bc35",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        }
+      ],
+      "uniquePoseFiles": 3,
+      "findings": "Clear extension and stable support in independent still review; playback remains unverified.",
+      "reviewFiles": [
+        "tricep-kickback/REVIEW.md",
+        "tricep-kickback/plan.json",
+        "tricep-kickback/prompts.json"
+      ]
+    },
+    {
+      "exerciseId": "bulgarian-split",
+      "sixFrameFilesPresent": true,
+      "status": "six-frame-draft",
+      "releaseApproved": false,
+      "frames": [
+        {
+          "frame": 1,
+          "path": "bulgarian-split/frames/1.png",
+          "sha256": "08cf5fc19c83299a6b7bf4798177ea30ea4d1ba450d5b6311e50a3baf112c0d5",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "frame": 2,
+          "path": "bulgarian-split/frames/2.png",
+          "sha256": "8fa4170b613a3dda36b616c831e0577c976ba69f1161c80be7923b0e1c444ebd",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "frame": 3,
+          "path": "bulgarian-split/frames/3.png",
+          "sha256": "45307474d633da67b8aba39370af4f660a0efaa41ccf6ec385258a6107a077ff",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "frame": 4,
+          "path": "bulgarian-split/frames/4.png",
+          "sha256": "6fd3ed8e9a91c5fadb5319b845adbe503946182f224dd830af3865697984fee4",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "frame": 5,
+          "path": "bulgarian-split/frames/5.png",
+          "sha256": "45307474d633da67b8aba39370af4f660a0efaa41ccf6ec385258a6107a077ff",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "frame": 6,
+          "path": "bulgarian-split/frames/6.png",
+          "sha256": "8fa4170b613a3dda36b616c831e0577c976ba69f1161c80be7923b0e1c444ebd",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        }
+      ],
+      "uniquePoseFiles": 4,
+      "findings": "Stable feet/bench; uneven spacing between movement phases.",
+      "reviewFiles": [
+        "bulgarian-split/REVIEW.md",
+        "bulgarian-split/ledger.json",
+        "bulgarian-split/provenance.json"
+      ]
+    },
+    {
+      "exerciseId": "leg-extension",
+      "sixFrameFilesPresent": true,
+      "status": "six-frame-draft",
+      "releaseApproved": false,
+      "frames": [
+        {
+          "frame": 1,
+          "path": "leg-extension/frames/1.png",
+          "sha256": "cf96479772e0af178578ef771a7930df0d535b1c778d1b30ac2f9245818b8c8e",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "frame": 2,
+          "path": "leg-extension/frames/2.png",
+          "sha256": "48aa43b76a73ba1e3f101eb5fe7d472e6f78b131e34738855e11c5337cda2482",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "frame": 3,
+          "path": "leg-extension/frames/3.png",
+          "sha256": "08ac6603943e1b5433136437118eaa99ef683d73c4300fb160fed5617caaef0b",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "frame": 4,
+          "path": "leg-extension/frames/4.png",
+          "sha256": "0ffa89a3a5f235e7034fe5933259f749e567eb6fc49027b5a42328c5677d1ebe",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "frame": 5,
+          "path": "leg-extension/frames/5.png",
+          "sha256": "08ac6603943e1b5433136437118eaa99ef683d73c4300fb160fed5617caaef0b",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "frame": 6,
+          "path": "leg-extension/frames/6.png",
+          "sha256": "48aa43b76a73ba1e3f101eb5fe7d472e6f78b131e34738855e11c5337cda2482",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        }
+      ],
+      "uniquePoseFiles": 4,
+      "findings": "Fixed machine axle drifts. Mechanical rework required; not approved for instructional release.",
+      "reviewFiles": [
+        "leg-extension/REVIEW.md",
+        "leg-extension/ledger.json",
+        "leg-extension/provenance.json"
+      ]
+    },
+    {
+      "exerciseId": "seated-leg-curl",
+      "sixFrameFilesPresent": true,
+      "status": "six-frame-draft",
+      "releaseApproved": false,
+      "frames": [
+        {
+          "frame": 1,
+          "path": "seated-leg-curl/frames/1.png",
+          "sha256": "c859ec9ed7be1a617124eb524260890cd6113ed6b1f8bd4c0afb17be05b0b54f",
+          "dimensions": [
+            1254,
+            1254
+          ]
+        },
+        {
+          "frame": 2,
+          "path": "seated-leg-curl/frames/2.png",
+          "sha256": "1fe97ab6237a1f6d88bc7b5e0b3cc096584220e66908ac753e7b845fb3879949",
+          "dimensions": [
+            1254,
+            1254
+          ]
+        },
+        {
+          "frame": 3,
+          "path": "seated-leg-curl/frames/3.png",
+          "sha256": "be17ca6b74b1a428ac5eca0c03bc70030c728b487db7c0950d80cc33741d6c8a",
+          "dimensions": [
+            1254,
+            1254
+          ]
+        },
+        {
+          "frame": 4,
+          "path": "seated-leg-curl/frames/4.png",
+          "sha256": "b32ad0dd1c5746bf4e9938fea75875ec43c98f678cf7b763690ef597bd4a2382",
+          "dimensions": [
+            1254,
+            1254
+          ]
+        },
+        {
+          "frame": 5,
+          "path": "seated-leg-curl/frames/5.png",
+          "sha256": "be17ca6b74b1a428ac5eca0c03bc70030c728b487db7c0950d80cc33741d6c8a",
+          "dimensions": [
+            1254,
+            1254
+          ]
+        },
+        {
+          "frame": 6,
+          "path": "seated-leg-curl/frames/6.png",
+          "sha256": "1fe97ab6237a1f6d88bc7b5e0b3cc096584220e66908ac753e7b845fb3879949",
+          "dimensions": [
+            1254,
+            1254
+          ]
+        }
+      ],
+      "uniquePoseFiles": 4,
+      "findings": "Machine pilot corrected; see final exercise review for movement-stage result.",
+      "reviewFiles": [
+        "seated-leg-curl/cues.json",
+        "seated-leg-curl/hashes.json",
+        "seated-leg-curl/prompts.json",
+        "seated-leg-curl/review.md"
+      ]
+    },
+    {
+      "exerciseId": "chin-ups",
+      "sixFrameFilesPresent": true,
+      "status": "six-frame-draft",
+      "releaseApproved": false,
+      "frames": [
+        {
+          "frame": 1,
+          "path": "chin-ups/frames/1.png",
+          "sha256": "201e36465f881e01e5c460837f9a533d678ed01e8847ac07bdef6f177721b78c",
+          "dimensions": [
+            1254,
+            1254
+          ]
+        },
+        {
+          "frame": 2,
+          "path": "chin-ups/frames/2.png",
+          "sha256": "6ceb8daf91862e6c0f67db60f35d694f096646eb61c0462ef9973266794bf23c",
+          "dimensions": [
+            1254,
+            1254
+          ]
+        },
+        {
+          "frame": 3,
+          "path": "chin-ups/frames/3.png",
+          "sha256": "37ac35f436e7e6696ff4c8745451c39e58c640500aa0bf0501c235add58d882a",
+          "dimensions": [
+            1254,
+            1254
+          ]
+        },
+        {
+          "frame": 4,
+          "path": "chin-ups/frames/4.png",
+          "sha256": "6daff6417eea11ab5e4bfbe8da82e35b1241a72678d992c1ba7ff3aa464d4e70",
+          "dimensions": [
+            1254,
+            1254
+          ]
+        },
+        {
+          "frame": 5,
+          "path": "chin-ups/frames/5.png",
+          "sha256": "37ac35f436e7e6696ff4c8745451c39e58c640500aa0bf0501c235add58d882a",
+          "dimensions": [
+            1254,
+            1254
+          ]
+        },
+        {
+          "frame": 6,
+          "path": "chin-ups/frames/6.png",
+          "sha256": "6ceb8daf91862e6c0f67db60f35d694f096646eb61c0462ef9973266794bf23c",
+          "dimensions": [
+            1254,
+            1254
+          ]
+        }
+      ],
+      "uniquePoseFiles": 4,
+      "findings": "Underhand grip consistent; slight torso perspective variation. Playback remains unverified.",
+      "reviewFiles": [
+        "chin-ups/cues.json",
+        "chin-ups/hashes.json",
+        "chin-ups/prompts.json",
+        "chin-ups/review.md"
+      ]
+    }
+  ]
+}

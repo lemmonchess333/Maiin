@@ -1,0 +1,167 @@
+{
+  "scope": "Rebuilt masters for three unresolved existing exercises using changed cameras.",
+  "releaseApprovedSets": 0,
+  "completeDraftSets": 1,
+  "validation": {
+    "pngFilesDecoded": 16,
+    "lint": "passed",
+    "build": "passed",
+    "activeTestsPassed": 9697,
+    "testsSkipped": 347,
+    "playback": "Unverified"
+  },
+  "exercises": [
+    {
+      "exerciseId": "db-rdl",
+      "status": "incomplete-rebuild",
+      "releaseApproved": false,
+      "frameFiles": 1,
+      "images": [
+        {
+          "path": "db-rdl/frames/1.png",
+          "sha256": "a53f6d4c1ed3bd561361f29bc28151d8193b852335b20ed607882efa6e271190",
+          "dimensions": [
+            1024,
+            1536
+          ]
+        },
+        {
+          "path": "db-rdl/masters/1.png",
+          "sha256": "a53f6d4c1ed3bd561361f29bc28151d8193b852335b20ed607882efa6e271190",
+          "dimensions": [
+            1024,
+            1536
+          ]
+        },
+        {
+          "path": "db-rdl/rejected/initial-master.png",
+          "sha256": "22d6b132eea8bcfc0335ec7716336d142d9b648550a093b450ffabb1cf758f12",
+          "dimensions": [
+            1024,
+            1536
+          ]
+        },
+        {
+          "path": "db-rdl/rejected/mid-anchor-correction-failed.png",
+          "sha256": "85e327d995a35725c3b0465a1d317b688ca7624d73273b9d48e61195e0909506",
+          "dimensions": [
+            1024,
+            1536
+          ]
+        },
+        {
+          "path": "db-rdl/rejected/mid-anchor-drift.png",
+          "sha256": "d41dacb9c15e7aaa9d30ad6d6c8ad32346835a925a2c382e5289fa3dda102e56",
+          "dimensions": [
+            1024,
+            1536
+          ]
+        }
+      ]
+    },
+    {
+      "exerciseId": "reverse-barbell-curl",
+      "status": "six-frame-draft-wrist-visibility-unverified",
+      "releaseApproved": false,
+      "frameFiles": 6,
+      "images": [
+        {
+          "path": "reverse-barbell-curl/frames/1.png",
+          "sha256": "435a709d453e905bda30ca7a648014933f8230d18e23de870540df1eeb26275a",
+          "dimensions": [
+            1024,
+            1536
+          ]
+        },
+        {
+          "path": "reverse-barbell-curl/frames/2.png",
+          "sha256": "b5eb7bef3656ca1710ef02459248c94f7bd41e0f4068b23874fe2f75502f4f95",
+          "dimensions": [
+            1024,
+            1536
+          ]
+        },
+        {
+          "path": "reverse-barbell-curl/frames/3.png",
+          "sha256": "787b745202d11cbec906aeadcb0cd83ee2725291344210d7ee6c10c995134c86",
+          "dimensions": [
+            1024,
+            1536
+          ]
+        },
+        {
+          "path": "reverse-barbell-curl/frames/4.png",
+          "sha256": "787b745202d11cbec906aeadcb0cd83ee2725291344210d7ee6c10c995134c86",
+          "dimensions": [
+            1024,
+            1536
+          ]
+        },
+        {
+          "path": "reverse-barbell-curl/frames/5.png",
+          "sha256": "b5eb7bef3656ca1710ef02459248c94f7bd41e0f4068b23874fe2f75502f4f95",
+          "dimensions": [
+            1024,
+            1536
+          ]
+        },
+        {
+          "path": "reverse-barbell-curl/frames/6.png",
+          "sha256": "435a709d453e905bda30ca7a648014933f8230d18e23de870540df1eeb26275a",
+          "dimensions": [
+            1024,
+            1536
+          ]
+        },
+        {
+          "path": "reverse-barbell-curl/masters/reverse-barbell-curl/1.png",
+          "sha256": "435a709d453e905bda30ca7a648014933f8230d18e23de870540df1eeb26275a",
+          "dimensions": [
+            1024,
+            1536
+          ]
+        },
+        {
+          "path": "reverse-barbell-curl/midpoint-candidate.png",
+          "sha256": "b5eb7bef3656ca1710ef02459248c94f7bd41e0f4068b23874fe2f75502f4f95",
+          "dimensions": [
+            1024,
+            1536
+          ]
+        },
+        {
+          "path": "reverse-barbell-curl/top-candidate.png",
+          "sha256": "787b745202d11cbec906aeadcb0cd83ee2725291344210d7ee6c10c995134c86",
+          "dimensions": [
+            1024,
+            1536
+          ]
+        }
+      ]
+    },
+    {
+      "exerciseId": "reverse-flyes",
+      "status": "incomplete-rebuild",
+      "releaseApproved": false,
+      "frameFiles": 0,
+      "images": [
+        {
+          "path": "reverse-flyes/rejected/1.png",
+          "sha256": "c6a586a3f717ed42bc84c4066e0aece5689b10958d0a83f01804e70423accff5",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        },
+        {
+          "path": "reverse-flyes/rejected/2.png",
+          "sha256": "7d67f46533621781fe26c7e4d95898a3197a33a4be4bee39f88c3f3bbd2db1f1",
+          "dimensions": [
+            1536,
+            1024
+          ]
+        }
+      ]
+    }
+  ]
+}

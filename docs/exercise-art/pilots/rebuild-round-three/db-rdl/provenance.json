@@ -1,0 +1,91 @@
+{
+  "exerciseId": "db-rdl",
+  "status": "incomplete-fixed-anchor-failure",
+  "releaseApproved": false,
+  "generatedCalls": 4,
+  "acceptedDistinctPoses": 1,
+  "completedSequence": false,
+  "canonicalReference": {
+    "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+  },
+  "cueSha256": "b8739ecc4629721f31e31f18d73aa90e1a20c35e71eea7887071e1872fb66f8b",
+  "promptSha256": "5aa334c5767079ab0554f23cd54dbf4e287b8596d1f6f0252f92f86088a45bcf",
+  "files": [
+    {
+      "path": "frames/1.png",
+      "sha256": "a53f6d4c1ed3bd561361f29bc28151d8193b852335b20ed607882efa6e271190",
+      "dimensions": [
+        1024,
+        1536
+      ]
+    },
+    {
+      "path": "masters/1.png",
+      "sha256": "a53f6d4c1ed3bd561361f29bc28151d8193b852335b20ed607882efa6e271190",
+      "dimensions": [
+        1024,
+        1536
+      ]
+    },
+    {
+      "path": "rejected/initial-master.png",
+      "sha256": "22d6b132eea8bcfc0335ec7716336d142d9b648550a093b450ffabb1cf758f12",
+      "dimensions": [
+        1024,
+        1536
+      ]
+    },
+    {
+      "path": "rejected/mid-anchor-correction-failed.png",
+      "sha256": "85e327d995a35725c3b0465a1d317b688ca7624d73273b9d48e61195e0909506",
+      "dimensions": [
+        1024,
+        1536
+      ]
+    },
+    {
+      "path": "rejected/mid-anchor-drift.png",
+      "sha256": "d41dacb9c15e7aaa9d30ad6d6c8ad32346835a925a2c382e5289fa3dda102e56",
+      "dimensions": [
+        1024,
+        1536
+      ]
+    }
+  ],
+  "referenceRoles": [
+    {
+      "call": 1,
+      "references": [
+        "canonical"
+      ]
+    },
+    {
+      "call": 2,
+      "references": [
+        "initial-master",
+        "canonical"
+      ]
+    },
+    {
+      "call": 3,
+      "references": [
+        "corrected-master",
+        "canonical"
+      ]
+    },
+    {
+      "call": 4,
+      "references": [
+        "mid-anchor-drift",
+        "corrected-master",
+        "canonical"
+      ]
+    }
+  ],
+  "validation": {
+    "pngDecode": "passed",
+    "playback": "not performed: incomplete",
+    "mobileLightDark": "not performed"
+  }
+}

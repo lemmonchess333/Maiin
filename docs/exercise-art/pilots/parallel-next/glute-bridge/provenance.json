@@ -1,0 +1,46 @@
+{
+  "exerciseId": "glute-bridge",
+  "status": "blocked-partial-candidate",
+  "generationMode": "built-in image_gen",
+  "canonicalReference": "/workspace/scratch/92115cdb9667/character-reference/athlete-anatomy-v3.png",
+  "masterPrompt": "Use case: scientific-educational. Create the text-free exercise master for BODYWEIGHT GLUTE BRIDGE, derived from the supplied canonical athlete identity reference. Same bald faceless adult male white/light-grey anatomical athlete with fine dark contours, visible hip/thigh anatomy, smooth neutral featureless pelvis without genital detail, slit, clothing seams or underwear outline. Same white trainers. Solid black background. Full body side view slightly elevated 15 degrees so both knees, feet and hands are distinguishable; head at left, feet at right. Wide landscape canvas 1536x1024. Athlete lies supine on a subtle flat charcoal exercise mat at bottom half of frame, head, shoulders, pelvis resting on floor, knees bent around 90 degrees, feet flat hip-width apart, arms straight alongside torso palms down. Entire body and mat visible with ample space above hips for lifting. Feet and shoulder contact points will remain immobile across subsequent frames. Strong purple on glutes, lighter lilac hamstrings, very subtle pale purple abdominal stabilisers; preserve anatomical contour details. No words, arrows, panels, text, border, labels, captions, watermarks. One athlete only. Flat crisp refined 2D anatomical illustration matching reference, not 3D render. Show credible bone lengths and clearly flexed knees, no hyperextension.",
+  "blockedFrame2Prompt": "Use case identity-preserve, precise exercise pose edit. Image 1 is canonical athlete identity; Image 2 is GLUTE BRIDGE exercise master and EXACT scene/composition target. Edit ONLY necessary torso/pelvis/thigh joint positions in image 2 to show early upward glute bridge: pelvis rises modestly around 12 cm off the mat (one third of full lift), posterior pelvic tilt, ribs down, no lumbar arch. Head, shoulder contact, arms/hands, shoes/soles contact points, mat, canvas, camera, scale and background remain at EXACT same pixel positions. Feet flat and knees remain aligned; shin may pivot naturally slightly. Same anatomical adult, same smooth neutral featureless pelvis, white trainers, dark contour art, strong purple glutes and lilac hamstrings. Preserve full resolution 1536x1024 landscape. No text, labels, arrows, panels, anatomy additions or clothing. No camera move or zoom. Full body.",
+  "blocker": {
+    "code": "moderation_blocked",
+    "stage": "output",
+    "category": "sexual",
+    "requestId": "e76df6a9-2197-4e85-98bb-9e2a254e2086"
+  },
+  "beats": [
+    [
+      "SET UP",
+      "Lie on your back with knees bent, feet flat and arms beside you."
+    ],
+    [
+      "INITIATE LIFT",
+      "Press through heels and raise your hips slightly with ribs down."
+    ],
+    [
+      "LIFT",
+      "Continue raising the hips while keeping the feet and shoulders planted."
+    ],
+    [
+      "SQUEEZE",
+      "Finish with shoulders, hips and knees aligned; squeeze the glutes."
+    ],
+    [
+      "LOWER",
+      "Lower the hips under control without changing foot position."
+    ],
+    [
+      "CONTROLLED RETURN",
+      "Continue lowering toward the mat before the next repetition."
+    ]
+  ],
+  "files": {
+    "master": "masters/1.png",
+    "frames": [
+      "frames/1.png"
+    ]
+  }
+}

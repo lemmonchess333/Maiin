@@ -1,0 +1,29 @@
+{
+  "exerciseId": "reverse-flyes",
+  "releaseApproved": false,
+  "status": "unresolved-no-valid-master",
+  "sequenceFrameCount": 0,
+  "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+  "images": [
+    {
+      "path": "docs/exercise-art/pilots/rebuild-round-three/reverse-flyes/rejected/1.png",
+      "source": "exec-4520b680-810e-46a4-8910-a11b4208b2d9.png",
+      "sha256": "c6a586a3f717ed42bc84c4066e0aece5689b10958d0a83f01804e70423accff5",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "status": "rejected-master"
+    },
+    {
+      "path": "docs/exercise-art/pilots/rebuild-round-three/reverse-flyes/rejected/2.png",
+      "source": "exec-f77884cf-3a1c-4db8-9df0-6d6c9a4931fd.png",
+      "sha256": "7d67f46533621781fe26c7e4d95898a3197a33a4be4bee39f88c3f3bbd2db1f1",
+      "dimensions": [
+        1536,
+        1024
+      ],
+      "status": "rejected-master"
+    }
+  ]
+}

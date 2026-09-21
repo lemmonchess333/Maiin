@@ -1,0 +1,96 @@
+{
+  "exerciseId": "reverse-barbell-curl",
+  "releaseApproved": false,
+  "status": "six-frame-draft-wrist-visibility-unverified",
+  "canonical": {
+    "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+  },
+  "framesUnique": 3,
+  "nativeGenerationCalls": 3,
+  "framesReused": {
+    "4": "3 intentional high hold",
+    "5": "2 controlled return",
+    "6": "1 reset"
+  },
+  "cueSha256": "2da3e6179328e374853ab7fe2824e10f3043316c974b5d27c8b099c3b15ce7a2",
+  "images": [
+    {
+      "path": "frames/1.png",
+      "sha256": "435a709d453e905bda30ca7a648014933f8230d18e23de870540df1eeb26275a",
+      "dimensions": [
+        1024,
+        1536
+      ]
+    },
+    {
+      "path": "frames/2.png",
+      "sha256": "b5eb7bef3656ca1710ef02459248c94f7bd41e0f4068b23874fe2f75502f4f95",
+      "dimensions": [
+        1024,
+        1536
+      ]
+    },
+    {
+      "path": "frames/3.png",
+      "sha256": "787b745202d11cbec906aeadcb0cd83ee2725291344210d7ee6c10c995134c86",
+      "dimensions": [
+        1024,
+        1536
+      ]
+    },
+    {
+      "path": "frames/4.png",
+      "sha256": "787b745202d11cbec906aeadcb0cd83ee2725291344210d7ee6c10c995134c86",
+      "dimensions": [
+        1024,
+        1536
+      ]
+    },
+    {
+      "path": "frames/5.png",
+      "sha256": "b5eb7bef3656ca1710ef02459248c94f7bd41e0f4068b23874fe2f75502f4f95",
+      "dimensions": [
+        1024,
+        1536
+      ]
+    },
+    {
+      "path": "frames/6.png",
+      "sha256": "435a709d453e905bda30ca7a648014933f8230d18e23de870540df1eeb26275a",
+      "dimensions": [
+        1024,
+        1536
+      ]
+    },
+    {
+      "path": "masters/reverse-barbell-curl/1.png",
+      "sha256": "435a709d453e905bda30ca7a648014933f8230d18e23de870540df1eeb26275a",
+      "dimensions": [
+        1024,
+        1536
+      ]
+    },
+    {
+      "path": "midpoint-candidate.png",
+      "sha256": "b5eb7bef3656ca1710ef02459248c94f7bd41e0f4068b23874fe2f75502f4f95",
+      "dimensions": [
+        1024,
+        1536
+      ]
+    },
+    {
+      "path": "top-candidate.png",
+      "sha256": "787b745202d11cbec906aeadcb0cd83ee2725291344210d7ee6c10c995134c86",
+      "dimensions": [
+        1024,
+        1536
+      ]
+    }
+  ],
+  "validation": {
+    "pngDecode": "passed",
+    "sequentialPlayback": "not performed",
+    "mobileLightDark": "not performed"
+  }
+}

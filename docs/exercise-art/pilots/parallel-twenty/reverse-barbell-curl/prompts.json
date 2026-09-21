@@ -1,0 +1,33 @@
+{
+  "tool": "built-in image_gen",
+  "canonical": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+  "prompts": [
+    {
+      "id": "reverse-barbell-curl",
+      "frame": 1,
+      "prompt": "Scientific educational exercise master. Native single full-body image 1024x1536 black background. Canonical identity reference exact bald faceless white anatomical athlete white trainers neutral smooth featureless pelvis visible leg muscles no garments seams genital detail. REVERSE BARBELL CURL: athlete standing upright front three-quarter slightly facing left. Both arms down, slight elbow softness, holding a STRAIGHT rigid barbell across upper thighs at shoulder width with PRONATED OVERHAND grip: knuckles on top, palms face BACKWARD toward thighs, thumbs wrap. One identical modest black round plate each end with collars, not EZ bar. Allow room overhead for curling to chest. Biceps purple primary, brachioradialis forearm lilac secondary qualitative. Feet planted hip-width, torso still. No text panels arrows. Ensure palms-down reverse grip unmistakable, unlike regular curl."
+    },
+    {
+      "id": "reverse-barbell-curl",
+      "frame": 3,
+      "prompt": "Precise object edit image2 master, image1 canonical. Reverse barbell curl TOP. Flex elbows and bring bar just below shoulder level. Preserve OVERHAND PRONATED grip throughout: backs of hands face upward/outward, fingers wrapped OVER bar, palms face downward in curl, never supinated. Wrists straight. Upper arms and elbow centres pinned beside ribs at original master height, not raised toward shoulders. Same straight bar RIGID length, plate diameters, collars and shoulder-width grip. Only forearms hands bar rotate/translate naturally around fixed elbow. All body head chest legs feet anatomy purple/lilac markings background fixed. No zoom, no text, 1024x1536 native."
+    },
+    {
+      "id": "reverse-barbell-curl",
+      "frame": 3,
+      "prompt": "Background-only repair. Image1 canonical, image2 master proper black backdrop, image3 EDIT TARGET reverse curl endpoint. Remove ALL grey halo/glow from image3, replacing only backdrop with uniform opaque RGB(0,0,0) black. Retain image3 body anatomy pose bar dimensions grip pixels as accurately as possible. No lighting changes, no shading around silhouette, no vignette, no haze or gradient. Exact same 1024x1536 canvas and pose. All foreground unchanged."
+    },
+    {
+      "id": "reverse-barbell-curl",
+      "frame": 2,
+      "prompt": "Precise object edit. Image1 canonical, image2 fixed master, image3 top endpoint. Draw midpoint reverse barbell curl: same bar at navel height, both forearms nearly horizontal, elbows held at same original centres beside ribs. Strong PRONATED OVERHAND grip palms DOWN, backs hands UP, fingers curled over bar. Same bar length plate sizes angle grip spacing as master. Only forearms and bar move; same exact head shoulders torso pelvis legs trainers camera crop. 1024x1536 native. CRITICAL background flat opaque solid BLACK RGB(0,0,0), absolutely no grey halo, glow vignette or atmospheric lighting. Same muscles purple biceps lilac forearms. No text."
+    },
+    {
+      "frame": 2,
+      "purpose": "independent QA targeted correction",
+      "prompt": "Use case: precise-object-edit. Image1 canonical athlete identity; image2 exercise master style/body anchors; image3 is the EDIT TARGET reverse-barbell curl midpoint. Change ONLY both wrists/hands alignment: remove downward wrist flexion, align back of hands straight with forearms in neutral wrist position while retaining pronated overhand closed grips. Keep bar at exact same waist height and same rigid straight shaft/plate dimensions and grip spacing. Keep elbows, mid-curl phase, head, torso, feet, camera, crop, white anatomical legs and neutral pelvis, trainers, purple biceps and lilac forearms and black background unchanged. No new objects, no text. Do not change exercise phase or rotate to palms-up. Output one full native1024x1536 image.",
+      "accepted": false,
+      "output": "rejected-midpoint-wrist-repair.png"
+    }
+  ]
+}
