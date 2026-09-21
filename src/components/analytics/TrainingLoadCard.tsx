@@ -3,14 +3,20 @@ import {
   ComposedChart,
   Area,
   Bar,
+  Line,
   XAxis,
   YAxis,
   CartesianGrid,
+  Tooltip,
 } from "recharts";
 import { Activity, Info } from "lucide-react";
 import { THEME } from "@/lib/theme";
 import UITooltip from "@/components/ui/Tooltip";
-import { CHART_GRID_PROPS, CHART_AXIS_TICK } from "./chartStyles";
+import {
+  CHART_GRID_PROPS,
+  CHART_AXIS_TICK,
+  CHART_TOOLTIP_STYLE,
+} from "./chartStyles";
 import { formatBinLabel } from "@/lib/chartGranularity";
 import ChartAreaGradient from "./ChartAreaGradient";
 import { evaluateLoadGuardrails, type LoadPoint } from "@/lib/trainingLoad";
@@ -23,10 +29,12 @@ import EmptyState from "@/components/ui/EmptyState";
    the 4.5:1 floor 12px words need. Pinned by identityColour.test.ts. */
 const TRAINING_LOAD_EXPLAINER = (
   <>
-    The purple curve is your 6-week training base; the bars are daily sessions (
+    The purple curve is your 6-week training base; the dashed line is the
+    fatigue you are carrying now, and the bars are daily sessions (
     <span className="text-running-strong">runs</span> ·{" "}
-    <span className="text-lifting-strong">lifts</span>). Positive form = fresh;
-    deep negative = time to ease off.
+    <span className="text-lifting-strong">lifts</span>). All three are
+    effort-weighted minutes on one scale. Positive form = fresh; deep negative =
+    time to ease off.
   </>
 );
 
@@ -93,10 +101,25 @@ export default function TrainingLoadCard({
     label: i % tickEvery === 0 ? formatBinLabel(p.dateKey, "daily") : "",
   }));
 
-  // The load bars ride a separate hidden axis stretched to ~3× the peak
-  // day, pinning them to the bottom third so the fitness curve owns the
-  // card and training days read as baseline texture.
-  const maxDayLoad = Math.max(1, ...points.map((p) => p.load));
+  /* One scale, because there has only ever been one unit.
+     `trainingLoad.ts`'s header says so in its own words — "Load unit is
+     EFFORT-WEIGHTED TRAINING MINUTES — deliberately, so run and lift
+     compose on one axis" — and fitness and fatigue are EWMAs OF that
+     load, so a day's 60 minutes and a fitness of 17 are the same
+     quantity measured over different windows.
+
+     The card put them on two axes anyway, both hidden, the second
+     stretched to three times the peak day. That is the first entry in
+     the chart anti-pattern catalogue, and here it cost the card its
+     point: with no scale drawn and no hover readout, the three numbers
+     in the header — Fitness, Fatigue, Form — had no path to any pixel.
+     "Fitness 17" was unlocatable by construction.
+
+     The ~3x is not deleted so much as revealed: fitness converges on
+     your average daily minutes, and a training day runs two or three
+     times that, so the peak day really does sit near the top of a
+     shared axis. The curve sitting low against spiky days is the
+     relationship, not a rendering fault. */
 
   return (
     <div className="p-4 rounded-2xl bg-card card-shadow">
@@ -163,7 +186,7 @@ export default function TrainingLoadCard({
       <ResponsiveContainer width="100%" height={150}>
         <ComposedChart
           data={data}
-          aria-label="Training load: fitness curve with daily run and lift bars"
+          aria-label="Training load: fitness and fatigue curves with daily run and lift bars, in effort-weighted minutes"
           /* Side margins so the first and last tick labels are not cut
              off by the card edge — the leftmost tick sits at x=0, and a
              centred label there loses its first character. */
@@ -183,11 +206,21 @@ export default function TrainingLoadCard({
             axisLine={false}
             tickLine={false}
           />
-          <YAxis yAxisId="fitness" hide domain={[0, "auto"]} />
-          <YAxis yAxisId="load" hide domain={[0, maxDayLoad * 3]} />
+          {/* Visible, and wide enough for three digits — effort-minutes
+              run to three figures on a heavy day. `allowDecimals` off
+              because an auto domain over a near-empty window otherwise
+              labels the gridlines 0.5 / 1 / 1.5, and half a minute of
+              training is not a reading anyone needs. */}
+          <YAxis
+            tick={CHART_AXIS_TICK}
+            axisLine={false}
+            tickLine={false}
+            width={32}
+            domain={[0, "auto"]}
+            allowDecimals={false}
+          />
           {/* Daily training, sport-coded: coral run + purple lift. */}
           <Bar
-            yAxisId="load"
             dataKey="runLoad"
             stackId="day"
             fill={THEME.running}
@@ -195,7 +228,6 @@ export default function TrainingLoadCard({
             isAnimationActive={false}
           />
           <Bar
-            yAxisId="load"
             dataKey="liftLoad"
             stackId="day"
             fill={THEME.brand}
@@ -204,7 +236,6 @@ export default function TrainingLoadCard({
             isAnimationActive={false}
           />
           <Area
-            yAxisId="fitness"
             type="monotone"
             dataKey="fitness"
             stroke={THEME.brand}
@@ -212,6 +243,51 @@ export default function TrainingLoadCard({
             fill="url(#load-fitness)"
             dot={false}
             isAnimationActive={false}
+          />
+          {/* Fatigue, drawn at last. The header has always printed three
+              numbers and the plot carried one of them; Form is
+              fitness - fatigue, so without this line the card's headline
+              figure was the distance between a curve and a number that
+              was nowhere on the chart. It is the GAP between these two
+              now — widening when you are fresh, closing and crossing
+              when the acute load runs over the base.
+
+              Muted and dashed rather than a third identity colour: a
+              derived reference line is not a sport, and coral already
+              means running on the bars beneath it. */}
+          <Line
+            type="monotone"
+            dataKey="fatigue"
+            stroke="hsl(var(--muted-foreground))"
+            strokeWidth={1.5}
+            strokeDasharray="4 4"
+            dot={false}
+            activeDot={false}
+            isAnimationActive={false}
+          />
+          {/* The readout the card never had. Everything shares a scale
+              now, so one hover answers all three header figures for a
+              given day plus what was actually done that day. */}
+          <Tooltip
+            contentStyle={CHART_TOOLTIP_STYLE}
+            cursor={{ stroke: "currentColor", strokeOpacity: 0.15 }}
+            labelFormatter={(_label, payload) => {
+              const key = payload?.[0]?.payload?.dateKey;
+              return typeof key === "string"
+                ? formatBinLabel(key, "daily")
+                : "";
+            }}
+            formatter={(value, name) => {
+              const labels: Record<string, string> = {
+                fitness: "Fitness",
+                fatigue: "Fatigue",
+                runLoad: "Run",
+                liftLoad: "Lift",
+              };
+              const n = typeof name === "string" ? name : String(name ?? "");
+              const v = typeof value === "number" ? value : Number(value ?? 0);
+              return [numberFmt(v), labels[n] ?? n] as [string, string];
+            }}
           />
         </ComposedChart>
       </ResponsiveContainer>

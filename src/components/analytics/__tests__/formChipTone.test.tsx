@@ -39,6 +39,14 @@ vi.mock("recharts", () => {
     XAxis: Noop,
     YAxis: Noop,
     CartesianGrid: Noop,
+    /* Wholesale, so every recharts symbol the component imports must be
+       listed or it renders as `undefined` and React throws at the JSX
+       call site. Line and Tooltip arrived with the fatigue curve and the
+       hover readout; both are stubs because this file is about something
+       else. `rechartsMockCompleteness` is the gate that now says so
+       before a full-suite run has to. */
+    Line: Noop,
+    Tooltip: Noop,
   };
 });
 
