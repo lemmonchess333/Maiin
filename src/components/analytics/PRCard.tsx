@@ -1,4 +1,5 @@
-import { Trophy } from "lucide-react";
+import { Trophy, ChevronRight } from "lucide-react";
+import { Link } from "react-router-dom";
 import { THEME } from "@/lib/theme";
 
 interface PR {
@@ -6,6 +7,11 @@ interface PR {
   value: string;
   date: string;
   isNew?: boolean;
+  /** The run holding this record. A row that has one opens it, the way a
+   *  lift row has always opened its exercise history — every running
+   *  record IS a specific saved run, and the rows were the only inert
+   *  ones on the tab. Absent on a placeholder row, which stays inert. */
+  runId?: string;
 }
 
 interface PRCardProps {
@@ -47,34 +53,63 @@ export default function PRCard({
         </div>
       </div>
       <div className="divide-y divide-border/20">
-        {prs.map((pr) => (
-          <div
-            key={pr.label}
-            className="flex items-center justify-between px-4 py-3"
-          >
-            <div className="flex items-center gap-2 min-w-0">
-              {pr.isNew && (
-                /* `nutrition-fill`, not the bare orange. White on
-                   `--ds-orange-500` measures 3.05:1 at this size, on the
-                   one element on the tab whose whole job is to catch the
-                   eye; the fill step exists for white-on-orange and reads
-                   5.02:1. */
-                <span className="text-xs px-1.5 py-0.5 rounded-full font-bold tracking-wider flex-shrink-0 bg-nutrition-fill text-white">
-                  NEW
+        {prs.map((pr) => {
+          const content = (
+            <>
+              <div className="flex items-center gap-2 min-w-0">
+                {pr.isNew && (
+                  /* `nutrition-fill`, not the bare orange. White on
+                     `--ds-orange-500` measures 3.05:1 at this size, on the
+                     one element on the tab whose whole job is to catch the
+                     eye; the fill step exists for white-on-orange and reads
+                     5.02:1. */
+                  <span className="text-xs px-1.5 py-0.5 rounded-full font-bold tracking-wider flex-shrink-0 bg-nutrition-fill text-white">
+                    NEW
+                  </span>
+                )}
+                <span className="text-xs text-muted-foreground truncate">
+                  {pr.label}
                 </span>
-              )}
-              <span className="text-xs text-muted-foreground truncate">
-                {pr.label}
-              </span>
+              </div>
+              <div className="flex items-center gap-2 flex-shrink-0 ml-3">
+                <div className="text-right">
+                  <p className="text-sm font-bold font-mono tabular-nums text-foreground">
+                    {pr.value}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {pr.date}
+                  </p>
+                </div>
+                {pr.runId && (
+                  <ChevronRight
+                    className="size-4 text-muted-foreground"
+                    aria-hidden="true"
+                  />
+                )}
+              </div>
+            </>
+          );
+          const rowClass = "flex items-center justify-between px-4 py-3";
+          /* Two explicit branches rather than one polymorphic element: a
+             `Link` requires `to`, so a component variable that is
+             sometimes a plain div cannot be typed without widening
+             `LinkProps`, and widening it would let a row ship without a
+             destination. */
+          return pr.runId ? (
+            <Link
+              key={pr.label}
+              to={`/run/${pr.runId}`}
+              aria-label={`${pr.label}, ${pr.value}, ${pr.date}. View this run.`}
+              className={`${rowClass} active:bg-muted/40 transition-colors`}
+            >
+              {content}
+            </Link>
+          ) : (
+            <div key={pr.label} className={rowClass}>
+              {content}
             </div>
-            <div className="text-right flex-shrink-0 ml-3">
-              <p className="text-sm font-bold font-mono tabular-nums text-foreground">
-                {pr.value}
-              </p>
-              <p className="text-xs text-muted-foreground mt-0.5">{pr.date}</p>
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
