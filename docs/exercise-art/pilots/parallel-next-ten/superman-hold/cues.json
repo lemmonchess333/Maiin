@@ -1,0 +1,35 @@
+[
+  {
+    "frame": 1,
+    "name": "Set",
+    "cue": "Lie face-down with arms extended overhead and legs straight."
+  },
+  {
+    "frame": 2,
+    "name": "Lift",
+    "cue": "Lift your arms, chest and legs slightly, keeping your gaze down."
+  },
+  {
+    "frame": 3,
+    "name": "Reach long",
+    "cue": "Reach through your fingers and toes with a small controlled lift."
+  },
+  {
+    "frame": 4,
+    "name": "Hold",
+    "cue": "Hold briefly without tipping your head back.",
+    "reuses": 3
+  },
+  {
+    "frame": 5,
+    "name": "Lower",
+    "cue": "Lower your arms, chest and legs under control.",
+    "reuses": 2
+  },
+  {
+    "frame": 6,
+    "name": "Reset",
+    "cue": "Return to the mat before the next repetition.",
+    "reuses": 1
+  }
+]

@@ -1,0 +1,60 @@
+{
+  "exerciseId": "pendlay-row",
+  "status": "incomplete-grip-correction-failed",
+  "releaseApproved": false,
+  "frameCount": 1,
+  "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+  "cueSha256": "f78fd243739c2131f038e20bc014bf2f12a267a659bb4dccee8a86da1b9c8b97",
+  "images": [
+    {
+      "path": "frames/1.png",
+      "sha256": "cf7d6f675bee0701388071b56c695ebbaebcd8942c6c94c11157c68206ed0431",
+      "dimensions": [
+        1024,
+        1536
+      ]
+    },
+    {
+      "path": "masters/1.png",
+      "sha256": "cf7d6f675bee0701388071b56c695ebbaebcd8942c6c94c11157c68206ed0431",
+      "dimensions": [
+        1024,
+        1536
+      ]
+    },
+    {
+      "path": "rejected/initial-master.png",
+      "sha256": "64bcb7910c4354beb829a0bc3cf1dad9bfa8f0fcbd91b815a24e9855c6eb749e",
+      "dimensions": [
+        1024,
+        1536
+      ]
+    },
+    {
+      "path": "rejected/middle-correction.png",
+      "sha256": "654eaee4af3236c1ba8c61632cc78e0f0828fe2088fd6ad5529836e1d55336b6",
+      "dimensions": [
+        1024,
+        1536
+      ]
+    },
+    {
+      "path": "rejected/middle-grip-drift.png",
+      "sha256": "2ab6860a3977b9468861479d437d38f5c9bbe461392605d2c7c276bf145d344a",
+      "dimensions": [
+        1024,
+        1536
+      ]
+    }
+  ],
+  "fixedAnchors": [
+    "head",
+    "torso hinge",
+    "hips",
+    "feet",
+    "bar grip width",
+    "plate dimensions"
+  ],
+  "playback": "Not verified in app or mobile light/dark",
+  "reuse": {}
+}

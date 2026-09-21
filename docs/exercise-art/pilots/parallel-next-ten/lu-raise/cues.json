@@ -1,0 +1,32 @@
+[
+  {
+    "frame": 1,
+    "cue": "Stand tall, weights at your sides.",
+    "poseIndex": 0
+  },
+  {
+    "frame": 2,
+    "cue": "Raise both arms out to the sides.",
+    "poseIndex": 1
+  },
+  {
+    "frame": 3,
+    "cue": "Reach shoulder height with soft elbows.",
+    "poseIndex": 2
+  },
+  {
+    "frame": 4,
+    "cue": "Sweep forward, bringing the weights close together.",
+    "poseIndex": 3
+  },
+  {
+    "frame": 5,
+    "cue": "Open back out at shoulder height.",
+    "poseIndex": 2
+  },
+  {
+    "frame": 6,
+    "cue": "Lower steadily; continue to your sides.",
+    "poseIndex": 1
+  }
+]

@@ -1,0 +1,76 @@
+{
+  "exerciseId": "superman-hold",
+  "tool": "built-in imagegen",
+  "releaseApproved": false,
+  "status": "six-frame-draft",
+  "canonical": {
+    "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+  },
+  "master": "masters/superman-hold/1.png",
+  "frameReuse": {
+    "4": 3,
+    "5": 2,
+    "6": 1
+  },
+  "cueSha256": "d08dc0aa3634f8afc85e89b2e53889cfcee5d84a609b34295b33bd351753e49c",
+  "images": [
+    {
+      "path": "frames/1.png",
+      "sha256": "13dca2f8de1020053b0432d42fbe092636fa21778e99fb60ab8997ed217c4a47",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "path": "frames/2.png",
+      "sha256": "7b25f6c1ef31264999963ae0cb95585badd37f8b4202550fcad5ffa2e02f3ccf",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "path": "frames/3.png",
+      "sha256": "5cfb029845bd8c3ef60aed98654dd26eb755800df2b99a03f7c0a494beb2611d",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "path": "frames/4.png",
+      "sha256": "5cfb029845bd8c3ef60aed98654dd26eb755800df2b99a03f7c0a494beb2611d",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "path": "frames/5.png",
+      "sha256": "7b25f6c1ef31264999963ae0cb95585badd37f8b4202550fcad5ffa2e02f3ccf",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "path": "frames/6.png",
+      "sha256": "13dca2f8de1020053b0432d42fbe092636fa21778e99fb60ab8997ed217c4a47",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "path": "masters/superman-hold/1.png",
+      "sha256": "13dca2f8de1020053b0432d42fbe092636fa21778e99fb60ab8997ed217c4a47",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    }
+  ],
+  "playback": "Unverified"
+}

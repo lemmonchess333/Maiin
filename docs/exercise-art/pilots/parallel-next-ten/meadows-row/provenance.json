@@ -1,0 +1,79 @@
+{
+  "exerciseId": "meadows-row",
+  "status": "draft-needs-review",
+  "releaseApproved": false,
+  "frameCount": 6,
+  "canonicalSha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b",
+  "cueSha256": "72be56c11e8df0faccf211803bef036c9e26e25610b5af8898c52c173de76cfa",
+  "images": [
+    {
+      "path": "frames/1.png",
+      "sha256": "b7a6df43d80437a0868d4dfd7e81771e99479807cbdb4d2e201a58584fd5756d",
+      "dimensions": [
+        1024,
+        1536
+      ]
+    },
+    {
+      "path": "frames/2.png",
+      "sha256": "e191fa063c3bfd0dedb8df5115a3d6838889c5be08cc3b28a7e07561290d859a",
+      "dimensions": [
+        1024,
+        1536
+      ]
+    },
+    {
+      "path": "frames/3.png",
+      "sha256": "78f6b44423b6efcfdbd483156711c830637eb01355cd9fc9a34359708c57407a",
+      "dimensions": [
+        1024,
+        1536
+      ]
+    },
+    {
+      "path": "frames/4.png",
+      "sha256": "d52f226422fc53e2c7239c76bc44fee58662ed0d78fa96ac0876dc2d52fc75dd",
+      "dimensions": [
+        1024,
+        1536
+      ]
+    },
+    {
+      "path": "frames/5.png",
+      "sha256": "78f6b44423b6efcfdbd483156711c830637eb01355cd9fc9a34359708c57407a",
+      "dimensions": [
+        1024,
+        1536
+      ]
+    },
+    {
+      "path": "frames/6.png",
+      "sha256": "e191fa063c3bfd0dedb8df5115a3d6838889c5be08cc3b28a7e07561290d859a",
+      "dimensions": [
+        1024,
+        1536
+      ]
+    },
+    {
+      "path": "masters/1.png",
+      "sha256": "b7a6df43d80437a0868d4dfd7e81771e99479807cbdb4d2e201a58584fd5756d",
+      "dimensions": [
+        1024,
+        1536
+      ]
+    }
+  ],
+  "fixedAnchors": [
+    "head",
+    "torso hinge",
+    "hips",
+    "feet",
+    "thigh-bracing hand",
+    "landmine floor base"
+  ],
+  "playback": "Not verified in app or mobile light/dark",
+  "reuse": {
+    "5": "3",
+    "6": "2"
+  }
+}

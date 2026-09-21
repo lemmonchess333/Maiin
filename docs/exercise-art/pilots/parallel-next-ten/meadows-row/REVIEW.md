@@ -1,0 +1,3 @@
+# meadows-row candidate review
+
+Six native frame files with four unique poses. Frames 5 and 6 honestly reuse the same joint configurations on controlled return; the loop completes the stretch at frame 1. Identity, head, torso, both feet, support hand and floor pivot remain visually stable. The working arm rows toward the lower ribs/hip. Bar shaft markings change, and its projected length increases materially as the end rises; some projection change is expected, but rigid-length consistency has not been established. Equipment geometry and sequential playback remain open review gates. No app activation or mobile verification.

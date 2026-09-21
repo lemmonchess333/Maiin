@@ -1,0 +1,32 @@
+[
+  {
+    "frame": 1,
+    "cue": "Start seated, palms facing you.",
+    "poseIndex": 0
+  },
+  {
+    "frame": 2,
+    "cue": "Press and rotate outward through the middle.",
+    "poseIndex": 1
+  },
+  {
+    "frame": 3,
+    "cue": "Extend overhead with palms facing forward.",
+    "poseIndex": 2
+  },
+  {
+    "frame": 4,
+    "cue": "Briefly hold without clashing the weights.",
+    "poseIndex": 2
+  },
+  {
+    "frame": 5,
+    "cue": "Lower while reversing the rotation.",
+    "poseIndex": 1
+  },
+  {
+    "frame": 6,
+    "cue": "Return palms toward you at chest height.",
+    "poseIndex": 0
+  }
+]

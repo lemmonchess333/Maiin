@@ -1,0 +1,35 @@
+[
+  {
+    "frame": 1,
+    "name": "Set",
+    "cue": "Secure your feet at the raised end of a decline bench and cross your arms."
+  },
+  {
+    "frame": 2,
+    "name": "Curl",
+    "cue": "Curl your shoulders and torso off the bench."
+  },
+  {
+    "frame": 3,
+    "name": "Sit up",
+    "cue": "Bring your chest toward your knees while keeping your feet secured."
+  },
+  {
+    "frame": 4,
+    "name": "Control",
+    "cue": "Pause without pulling on your neck.",
+    "reuses": 3
+  },
+  {
+    "frame": 5,
+    "name": "Lower",
+    "cue": "Uncurl your torso toward the bench with control.",
+    "reuses": 2
+  },
+  {
+    "frame": 6,
+    "name": "Reset",
+    "cue": "Return to the extended position without slamming.",
+    "reuses": 1
+  }
+]

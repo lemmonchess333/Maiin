@@ -1,0 +1,100 @@
+{
+  "exerciseId": "landmine-press",
+  "status": "six-frame-draft-review-required",
+  "releaseApproved": false,
+  "sequenceFrames": 6,
+  "uniqueSequencePoses": 3,
+  "reuseMap": [
+    1,
+    2,
+    3,
+    3,
+    2,
+    1
+  ],
+  "canonicalReference": {
+    "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+  },
+  "files": [
+    {
+      "path": "frames/1.png",
+      "sha256": "0ce2d6bddf80be04b01177e602aa0f2f1c9ff8b30a5a41c2da6dce1bdbb4da7d",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "path": "frames/2.png",
+      "sha256": "27810a0c6bdf97e0386c76f47b9479597aba55bcb19dca7fcae580d67ff34aa7",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "path": "frames/3.png",
+      "sha256": "1f7afe9ec2d683ae7279e87bc3835d75985873977564e8c1fdcf4b675778d975",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "path": "frames/4.png",
+      "sha256": "1f7afe9ec2d683ae7279e87bc3835d75985873977564e8c1fdcf4b675778d975",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "path": "frames/5.png",
+      "sha256": "27810a0c6bdf97e0386c76f47b9479597aba55bcb19dca7fcae580d67ff34aa7",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "path": "frames/6.png",
+      "sha256": "0ce2d6bddf80be04b01177e602aa0f2f1c9ff8b30a5a41c2da6dce1bdbb4da7d",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "path": "masters/1.png",
+      "sha256": "0ce2d6bddf80be04b01177e602aa0f2f1c9ff8b30a5a41c2da6dce1bdbb4da7d",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "path": "rejected/1.png",
+      "sha256": "76753f6949432b76f410e982780c11b29c868c942a6b3c856edae362d4644c15",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "path": "rejected/2.png",
+      "sha256": "e691cd9d12e02df469f5dfe5ed691fef9539d0cbb174c88bcf7fc73e0bc0f3f8",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    }
+  ],
+  "cueSha256": "eb7667afe2f6934328a75d2555aa0b9d7707261ac9ee72cd22e3dec8f8f6127e",
+  "promptSha256": "e0eadd12813b46b3d2d1145d7952594d66aae8d0a89117b3a329b582d63c5684",
+  "validation": {
+    "pngDecode": "passed",
+    "playback": "pending",
+    "mobileLightDark": "pending"
+  }
+}

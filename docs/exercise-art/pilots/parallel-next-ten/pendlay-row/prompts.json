@@ -1,0 +1,46 @@
+[
+  {
+    "beat": "master",
+    "prompt": "Scientific educational exercise artwork, Pendlay row master starting pose. Reference is exact canonical athlete identity and style: bald faceless white/light-grey anatomical male, fine dark contours, neutral smooth featureless pelvis, visible full legs and white trainers. Solid black background, no halo, no text. Full-body three-quarter side camera clearly showing both overhand hands and barbell. Torso flat and parallel to floor, hip hinge, knees moderately bent, neutral neck. Bar on ground directly over midfoot, both arms straight down, grips just outside knees. One modest standard-diameter plate on each end, equal load, rigid straight bar. Everything entirely in frame with generous margins. Strong purple lats, lighter lilac rhomboids/rear delts/biceps, subtle core stabilisers. Anatomically accurate proportions. This exact floor, stance, bar dimensions, grip, hinge and camera must be usable as fixed anchors for later row poses.",
+    "references": [
+      "/workspace/scratch/92115cdb9667/tropos-next-exercises/docs/exercise-art/identity/athlete-anatomy-v3.png"
+    ],
+    "output": "rejected/initial-master.png",
+    "tool": "builtin image_gen",
+    "note": "Intermediate Meadows reference saved as frames/2.png at generation time, finalized as frames/3.png."
+  },
+  {
+    "beat": "corrected-master",
+    "prompt": "Correct this Pendlay row pilot. Image1 edit target; image2 exact athlete identity. Change camera to a TRUE SIDE view with only slight three-quarter angle to see both grips, and show spine and torso genuinely horizontal, parallel to ground, hips at shoulder height, neck aligned, knees bent enough to grasp floor-resting barbell over midfoot. This is not a 45-degree bent-over row. Keep one modest plate each end, straight arms and overhand hands just outside knees. Remove ALL white background glow completely, pure black everywhere outside athlete and barbell. Entire athlete and bar inside canvas with margins. Same white anatomy, purple lats/lilac assisting muscles, neutral featureless pelvis, no text. This is one corrected master starting pose.",
+    "references": [
+      "/workspace/scratch/92115cdb9667/tropos-next-exercises/docs/exercise-art/pilots/parallel-next-ten/pendlay-row/rejected/initial-master.png",
+      "/workspace/scratch/92115cdb9667/tropos-next-exercises/docs/exercise-art/identity/athlete-anatomy-v3.png"
+    ],
+    "output": "masters/1.png",
+    "tool": "builtin image_gen",
+    "note": "Intermediate Meadows reference saved as frames/2.png at generation time, finalized as frames/3.png."
+  },
+  {
+    "beat": "middle",
+    "prompt": "Image1 is fixed Pendlay row master and edit target, image2 canonical identity. Generate middle of row ascent: keep exact torso, spine, head, hips, knees, feet, floor, camera and canvas unchanged. Bend both elbows to about 90 degrees and draw elbows backwards, raising rigid barbell and both equal plates halfway from floor toward lower chest. Hands remain overhand same width attached to same shaft positions. Bar stays level in original perspective with exactly same plate dimensions. Athlete must NOT stand up or lift torso. Keep same purple/lilac anatomical regions and pure black background without glow, no text. Only shoulder/elbow/forearm articulation and bar location change.",
+    "references": [
+      "/workspace/scratch/92115cdb9667/tropos-next-exercises/docs/exercise-art/pilots/parallel-next-ten/pendlay-row/masters/1.png",
+      "/workspace/scratch/92115cdb9667/tropos-next-exercises/docs/exercise-art/identity/athlete-anatomy-v3.png"
+    ],
+    "output": "rejected/middle-grip-drift.png",
+    "tool": "builtin image_gen",
+    "note": "Intermediate Meadows reference saved as frames/2.png at generation time, finalized as frames/3.png."
+  },
+  {
+    "beat": "middle-correction",
+    "prompt": "Correct Pendlay row intermediate image3 using image1 exact master equipment/grip and image2 identity. Image3 wrongly widened grip. Put hands on precisely same SHAFT POSITIONS as image1, retaining the narrower projected hand separation and barbell length. Raise bar only halfway from master floor to chest; elbows moderately flexed. Keep image1 torso/legs/head/feet exactly fixed. Same original plate dimensions and shaft, both hands overhand attached, no sliding along bar. Pure black background, identical anatomical purple colour regions, no text. Create corrected intermediate only.",
+    "references": [
+      "/workspace/scratch/92115cdb9667/tropos-next-exercises/docs/exercise-art/pilots/parallel-next-ten/pendlay-row/masters/1.png",
+      "/workspace/scratch/92115cdb9667/tropos-next-exercises/docs/exercise-art/identity/athlete-anatomy-v3.png",
+      "/workspace/scratch/92115cdb9667/tropos-next-exercises/docs/exercise-art/pilots/parallel-next-ten/pendlay-row/rejected/middle-grip-drift.png"
+    ],
+    "output": "rejected/middle-correction.png",
+    "tool": "builtin image_gen",
+    "note": "Intermediate Meadows reference saved as frames/2.png at generation time, finalized as frames/3.png."
+  }
+]

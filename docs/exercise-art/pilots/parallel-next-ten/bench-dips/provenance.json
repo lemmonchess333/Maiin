@@ -1,0 +1,41 @@
+{
+  "exerciseId": "bench-dips",
+  "status": "partial-master-rejected",
+  "releaseApproved": false,
+  "canonical": {
+    "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+  },
+  "images": [
+    {
+      "path": "initial-master.png",
+      "sha256": "0d99777dfe875c9c5f68e3e1ca98b65303e462bc0e162fd12367cc03979ad178",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "path": "rejected-visibility-correction.png",
+      "sha256": "9851777f247a3f2230776839f4abf9b42302865129eb176108b8521c9267be54",
+      "dimensions": [
+        1536,
+        1024
+      ]
+    }
+  ],
+  "cueSha256": "b03e01095116a3f099a2ab58e2e8fdf8b246473c2a325b3889fbde52e5e6d040",
+  "nativeGenerationCalls": 2,
+  "frameCount": 0,
+  "uniqueSequencePoses": 0,
+  "fixedAnchors": [
+    "Bench geometry",
+    "Hand contacts",
+    "Heel contacts"
+  ],
+  "validation": {
+    "pngDecode": "passed",
+    "sequentialPlayback": "not performed",
+    "mobileLightDark": "not performed"
+  }
+}

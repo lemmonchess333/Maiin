@@ -1,0 +1,35 @@
+[
+  {
+    "frame": 1,
+    "cue": "Stagger your stance and hold the bar end at your shoulder.",
+    "pose": 1
+  },
+  {
+    "frame": 2,
+    "cue": "Begin pressing up and forward with your ribs down.",
+    "pose": 2
+  },
+  {
+    "frame": 3,
+    "cue": "Extend your arm along the bar’s arc without leaning back.",
+    "pose": 3
+  },
+  {
+    "frame": 4,
+    "cue": "Control the extended position before lowering.",
+    "pose": 3,
+    "reusesFrame": 3
+  },
+  {
+    "frame": 5,
+    "cue": "Lower the bar end toward your shoulder.",
+    "pose": 2,
+    "reusesFrame": 2
+  },
+  {
+    "frame": 6,
+    "cue": "Return to shoulder height, keeping your stance steady.",
+    "pose": 1,
+    "reusesFrame": 1
+  }
+]

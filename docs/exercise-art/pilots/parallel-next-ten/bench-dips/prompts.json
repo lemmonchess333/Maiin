@@ -1,0 +1,10 @@
+[
+  {
+    "id": "master",
+    "prompt": "Scientific educational Tropos anatomical BENCH DIPS exercise master. Use attached canonical athlete identity: same bald faceless white/lightgrey anatomical man, visible legs smooth featureless pelvis white trainers crisp black muscle contours. Entire full body in side three-quarter view head upperleft feet lowerright. Simple low sturdy padded bench behind hips at screenleft. Athlete facing right has BOTH palms gripping bench FRONT edge beside hips, fingers curl forward over edge, arms straight support his suspended hips just in front of bench. Legs straight extended forward, heels planted floor, toes up. Chest upright shoulders down, hips close bench. Strong purple triceps, light lilac chest and frontdelts; other anatomy neutral. Both hands visibly attached, entire bench and fullbody within image with margins. Pureblack background no halo gradient labels text arrows. This is top benchdip position before bending elbows backward to descend. Stable camera and floor, simple compact bench. Landscape1536x1024."
+  },
+  {
+    "id": "master-hand-visibility-correction",
+    "prompt": "Precise educational pose correction. Canonical identity image1, benchdip top master image2. Image2 far arm and hand are hidden: adjust camera only slightly toward FRONT so BOTH hands gripping the same front edge beside hips are clearly visible on either side of hips. Maintain entire bench and fullbody, exact pose hips just off bench, straight supporting elbows, extended legs heels planted, shoulders down. Same anatomy crisp greywhite blackbackground purpletriceps lilac chest/frontdelts. Both hands on front edge at shoulder-width, fingers curled over forward edge, far hand must be visible adjacent far hip. Pureblack no halo. New fixed camera master replacing hidden-hand version. No text."
+  }
+]

@@ -1,0 +1,38 @@
+[
+  {
+    "frame": 1,
+    "name": "Full stretch",
+    "cue": "Keep the hinge steady with the working arm extended.",
+    "available": true
+  },
+  {
+    "frame": 2,
+    "name": "Start the row",
+    "cue": "Draw the elbow back without turning the torso.",
+    "available": true
+  },
+  {
+    "frame": 3,
+    "name": "Continue the pull",
+    "cue": "Keep the wrist aligned and pull toward your hip.",
+    "available": true
+  },
+  {
+    "frame": 4,
+    "name": "Squeeze the lat",
+    "cue": "Bring the loaded end beside your hip and lower ribs.",
+    "available": true
+  },
+  {
+    "frame": 5,
+    "name": "Lower under control",
+    "cue": "Follow the same arc down with a steady torso.",
+    "available": true
+  },
+  {
+    "frame": 6,
+    "name": "Return to the stretch",
+    "cue": "Extend the arm smoothly to the starting position.",
+    "available": true
+  }
+]
