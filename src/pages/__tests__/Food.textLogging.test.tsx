@@ -176,6 +176,21 @@ describe("food text logging", () => {
 
   it("falls back to local food parsing after a stalled request and preserves the next draft", async () => {
     vi.useFakeTimers();
+    /* Pin the clock to the middle of the day before advancing it.
+       `Food.tsx` recomputes `todayStr` from `new Date()` on every
+       render, and this test advances fake timers by 50 seconds in
+       total. Run it inside the last minute before local midnight and
+       the rollover flips `selectedDate`, whose own guard clears the
+       typed draft on purpose — so the draft assertion at the end fails
+       on the calendar rather than on the behaviour it is about.
+       Measured: 23:59:20 fails, 12:00 passes, same code.
+
+       Midday is derived from the current date rather than written as a
+       literal, so the pin cannot expire the way a dated fixture would
+       and it still moves under a shifted clock. */
+    const middayToday = new Date();
+    middayToday.setHours(12, 0, 0, 0);
+    vi.setSystemTime(middayToday);
     const fetchMock = vi.fn(
       (_url: string, init: RequestInit) =>
         new Promise<Response>((_resolve, reject) => {
