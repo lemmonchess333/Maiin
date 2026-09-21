@@ -709,6 +709,10 @@ export default function History() {
         value: string;
         date: string;
         isNew: boolean;
+        /* Which run holds the record, so the row can open it. Every one
+           of these records IS a saved run; the rows were the only inert
+           ones on the tab while every lift row opened its history. */
+        runId?: string;
       }> = [
         /* Neither of these is a race result, and the labels no longer say
            one. Both read `avgPace` — the average over a WHOLE run — from
@@ -739,6 +743,7 @@ export default function History() {
             : "--",
           date: best1k ? fmtDate(best1k.completedAt) : "",
           isNew: best1k ? best1k.completedAt >= sevenDaysAgo : false,
+          ...(best1k ? { runId: best1k.id } : {}),
         },
       ];
       /* The sustained-distance row, and ONLY when it is a different run.
@@ -757,6 +762,7 @@ export default function History() {
           value: `${paceMinSec(best5k.avgPace, unit)} ${paceUnitLabel(unit)}`,
           date: fmtDate(best5k.completedAt),
           isNew: best5k.completedAt >= sevenDaysAgo,
+          runId: best5k.id,
         });
       }
       if (includeLongest) {
@@ -769,6 +775,7 @@ export default function History() {
           value: longest ? distanceLabel(longest.distance, unit) : "--",
           date: longest ? fmtDate(longest.completedAt) : "",
           isNew: longest ? longest.completedAt >= sevenDaysAgo : false,
+          ...(longest ? { runId: longest.id } : {}),
         });
       }
       return cards;
