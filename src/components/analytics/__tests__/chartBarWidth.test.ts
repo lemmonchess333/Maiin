@@ -33,7 +33,10 @@ const srcRoot = resolve(here, "../../..");
  */
 const EXEMPT: Record<string, string> = {
   "components/analytics/TrainingLoadCard.tsx":
-    "stacked daily bins over a fixed 6-week window — ~42 bars, never sparse",
+    "one stacked bin per day across the page's own range pill — 7 bars at " +
+    "1W up to 365 at 1Y, so the width is set by the window rather than by " +
+    "sparseness, and the single-bin slab this rule exists to stop cannot " +
+    "occur when the bin count IS the window in days",
 };
 
 function tsxFiles(dir: string, out: string[] = []): string[] {
