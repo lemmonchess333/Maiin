@@ -6,7 +6,8 @@ import {
   XAxis,
   YAxis,
   CartesianGrid,
-  ReferenceLine,
+  ReferenceArea,
+  Line,
   Tooltip,
 } from "recharts";
 import type { PerformanceWeekDoc } from "@/lib/performanceTypes";
@@ -19,42 +20,47 @@ import {
 } from "./chartStyles";
 import ChartAreaGradient from "./ChartAreaGradient";
 import { formatDayMonth } from "@/utils/formatters";
-import { resolveLoadBand } from "@/lib/performanceDocFields";
+import {
+  averageCaption,
+  averagePerformanceIndex,
+  averageWeekCount,
+  rollingAverageSeries,
+} from "@/lib/performanceAverage";
 import { formatBinLabel } from "@/lib/chartGranularity";
 
 interface Props {
   weeks: PerformanceWeekDoc[];
 }
 
+/**
+ * The bands, as y-ranges, read straight off `computeLoadBand`'s
+ * thresholds. Written here as a table rather than re-derived so the
+ * boundaries are legible beside the labels they carry; the cross-test
+ * above keeps the two engines honest about the numbers themselves.
+ */
+const BANDS = [
+  { label: "Deload", from: 0, to: 25, warn: false },
+  { label: "Low", from: 25, to: 45, warn: false },
+  { label: "Moderate", from: 45, to: 70, warn: false },
+  { label: "High", from: 70, to: 85, warn: false },
+  { label: "Overreach", from: 85, to: 100, warn: true },
+] as const;
+
 export default function PerformanceIndexChart({ weeks }: Props) {
-  const data = weeks.map((d) => ({
+  const average = rollingAverageSeries(weeks);
+  const data = weeks.map((d, i) => ({
     week: d.weekKey,
     pi: d.performanceIndex,
     liftLoad: d.breakdown.liftLoadScore,
     runLoad: d.breakdown.runLoadScore,
     recovery: d.breakdown.recoveryScore,
-    band: resolveLoadBand(d),
+    avg: average[i],
   }));
 
   if (data.length === 0) return null;
 
-  const bandColor = (band: string) => {
-    switch (band) {
-      case "overreach":
-        return THEME.danger;
-      case "high":
-        return THEME.warning;
-      case "moderate":
-        return THEME.brand;
-      case "low":
-        return THEME.teal;
-      default:
-        // "Deload" / unknown — a theme-aware neutral. THEME.textMuted is
-        // rgba(255,255,255,0.22), invisible on the light bg-card; the muted
-        // token reads on both themes.
-        return "hsl(var(--muted-foreground))";
-    }
-  };
+  const avgValue = averagePerformanceIndex(weeks);
+  const avgWeeks = averageWeekCount(weeks);
 
   return (
     <div className="p-4 rounded-2xl bg-card">
@@ -104,19 +110,54 @@ export default function PerformanceIndexChart({ weeks }: Props) {
 
           <CartesianGrid {...CHART_GRID_PROPS} />
 
-          {/* Zone reference lines */}
-          <ReferenceLine
-            y={70}
-            stroke={THEME.warning}
-            strokeDasharray="4 4"
-            strokeOpacity={0.4}
-          />
-          <ReferenceLine
-            y={85}
-            stroke={THEME.danger}
-            strokeDasharray="4 4"
-            strokeOpacity={0.4}
-          />
+          {/* The bands, in the plot, where they belong.
+
+              `computeLoadBand` is a pure function of the PI value —
+              85 / 70 / 45 / 25, identical in `src/lib/performanceEngine`
+              and `functions/lib/perfScoring`, pinned by
+              `performanceEngineParity.cross.test.ts`. So a band IS a
+              y-range on this axis, and the two dashed threshold lines
+              this replaces were already drawing two of its four
+              boundaries. Drawing all five as zones states the same fact
+              once, positionally, and retires the five-item dot legend
+              that existed to decode a colour the y-position had already
+              given away.
+
+              NOT five hues. `performanceColour.ts` locks PI to two —
+              brand purple, amber when backing off — and a rainbow behind
+              a purple line would invent a sixth vocabulary on a surface
+              that has two. The lower four zones are one neutral at
+              alternating weight so the strips separate; only Overreach
+              carries a colour, because only Overreach is a caution. */}
+          {BANDS.map((b, i) => (
+            <ReferenceArea
+              key={b.label}
+              y1={b.from}
+              y2={b.to}
+              fill={b.warn ? THEME.amber : "hsl(var(--muted-foreground))"}
+              fillOpacity={b.warn ? 0.12 : i % 2 === 0 ? 0.09 : 0.05}
+              stroke="none"
+              /* Pinned to the zone's own top edge, not floated in its
+                 middle. Filmed at `insideRight` first and the reader it
+                 was drawn for walked straight into it: this account sits
+                 at PI 88-92, so "Overreach" printed across its own data
+                 line. A label on a boundary reads as an annotation of
+                 that boundary; one in the middle of a band reads as
+                 something the series has to get around.
+
+                 Half opacity for the same reason — the bands are the
+                 reference scale, and a scale that competes with the
+                 series it exists to calibrate has the hierarchy
+                 backwards. */
+              label={{
+                value: b.label,
+                position: "insideTopRight",
+                fill: "hsl(var(--muted-foreground))",
+                fillOpacity: 0.65,
+                fontSize: 9,
+              }}
+            />
+          ))}
 
           <XAxis
             dataKey="week"
@@ -175,11 +216,41 @@ export default function PerformanceIndexChart({ weeks }: Props) {
             stroke={THEME.brand}
             strokeWidth={2.5}
             fill="url(#pi-gradient)"
+            /* Recharts sweeps an area in from the left on mount, over
+               about a second and a half, driven by requestAnimationFrame
+               — so it is not a CSS animation and Playwright's
+               `animations: "disabled"` does not touch it. Adding the
+               average line shifted this chart's render timing enough for
+               a capture to land mid-sweep: the frame showed the fill
+               ending at x=233 of a 357-wide plot, with a hard vertical
+               edge, which measured as a real difference against the
+               pre-change frame rather than as noise.
+
+               Off, for two reasons beyond the rig. Nothing gates it on
+               `prefers-reduced-motion` — `useReducedMotion` covers
+               framer, and Recharts has never been wired to it — so the
+               sweep plays for a reader who asked the OS for no motion.
+               And the chart's content is a six-point trend that is
+               readable the instant it paints; an entrance that hides the
+               left half of it for a second buys nothing. */
+            isAnimationActive={false}
+            /* One colour, because the zone behind the dot now says what
+               band the week was in. The dot was painted from
+               `resolveLoadBand`, which resolves to `computeLoadBand(pi)`
+               — so its colour was a function of its own height, and the
+               legend under the chart existed to translate a y-position
+               back into the y-position. That redundancy is what went.
+
+               Still a custom renderer rather than a `dot` object, for
+               the card-coloured cutout ring: `THEME.surface` (#1A1A1F)
+               as a fixed stroke drew a dark halo on the white light-mode
+               card, and the ring is what keeps the dots legible where
+               the line doubles back on itself. */
             dot={(props) => {
               const { cx, cy, payload } = props as {
                 cx: number;
                 cy: number;
-                payload: { week: string; band: string };
+                payload: { week: string };
               };
               return (
                 <circle
@@ -188,40 +259,41 @@ export default function PerformanceIndexChart({ weeks }: Props) {
                   cy={cy}
                   r={3.5}
                   strokeWidth={1.5}
-                  // fill/stroke via `style` (not SVG attributes) so the
-                  // hsl(var(--…)) deload colour + card-coloured cutout ring
-                  // resolve. THEME.surface (#1A1A1F) as a fixed stroke drew a
-                  // dark halo on the white light-mode card.
-                  style={{
-                    fill: bandColor(payload.band),
-                    stroke: "hsl(var(--card))",
-                  }}
+                  style={{ fill: THEME.brand, stroke: "hsl(var(--card))" }}
                 />
               );
             }}
             activeDot={{ r: 5, stroke: THEME.brand, strokeWidth: 2 }}
           />
+
+          {/* P2d pin 5 — "dashed muted-gray average line vs solid
+              colored PI series". Specified in the lock, never built.
+              After the Area so it draws over the fill rather than under
+              it, and `connectNulls` so a week with no baseline behind it
+              leaves a gap instead of a drop to zero. */}
+          <Line
+            type="monotone"
+            dataKey="avg"
+            stroke="hsl(var(--muted-foreground))"
+            strokeWidth={1.5}
+            strokeDasharray="4 4"
+            dot={false}
+            activeDot={false}
+            connectNulls={false}
+            isAnimationActive={false}
+          />
         </AreaChart>
       </ResponsiveContainer>
 
-      {/* Zone legend */}
-      <div className="flex items-center justify-center gap-4 mt-2">
-        {[
-          { label: "Deload", color: "hsl(var(--muted-foreground))" },
-          { label: "Low", color: THEME.teal },
-          { label: "Moderate", color: THEME.brand },
-          { label: "High", color: THEME.warning },
-          { label: "Overreach", color: THEME.danger },
-        ].map((z) => (
-          <div key={z.label} className="flex items-center gap-1">
-            <span
-              className="size-2 rounded-full"
-              style={{ backgroundColor: z.color }}
-            />
-            <span className="text-xs text-muted-foreground">{z.label}</span>
-          </div>
-        ))}
-      </div>
+      {/* The five-item legend is gone with the dot colours it decoded.
+          What stands here instead is pin 6's tertiary caption — "average
+          is context not headline" — naming the figure and, crucially,
+          the number of weeks it actually covers. */}
+      {avgValue !== null && (
+        <p className="text-xs text-muted-foreground mt-2 text-center">
+          {averageCaption(avgValue, avgWeeks)}
+        </p>
+      )}
     </div>
   );
 }

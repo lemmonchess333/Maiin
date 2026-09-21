@@ -4,6 +4,10 @@ import WeeklyReviewRow from "@/components/analytics/WeeklyReviewRow";
 import PerformanceIndexChart from "@/components/analytics/PerformanceIndexChart";
 import StatCard from "@/components/analytics/StatCard";
 import { usePerformanceWeeks } from "@/hooks/usePerformance";
+import {
+  averagePerformanceIndex,
+  averageWeekCount,
+} from "@/lib/performanceAverage";
 import { THEME } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import { getPlainLanguageSummary } from "@/lib/performanceSummary";
@@ -339,6 +343,8 @@ export default function PerformanceTab() {
   }
 
   const prev = weeks.length >= 2 ? weeks[weeks.length - 2] : null;
+  const avgPI = averagePerformanceIndex(weeks);
+  const avgWeeks = averageWeekCount(weeks);
   const delta = prev
     ? Math.round(currentWeek.performanceIndex - prev.performanceIndex)
     : null;
@@ -582,15 +588,21 @@ export default function PerformanceTab() {
                   unit=""
                   accentColor={THEME.brand}
                 />
+                {/* The window in the label is the window in the number.
+
+                    It read "Avg PI (12w)" over a mean of every fetched
+                    week, so a user three weeks in was told twelve, and a
+                    user back from a break had their silent weeks pulling
+                    the figure down. P2d pins both halves by hand —
+                    "user with 5 weeks shows 5-week average … honest
+                    about sample size", and "computed only from weeks
+                    with confidence >= medium — inactive weeks excluded".
+                    `performanceAverage` owns the arithmetic; this reads
+                    the count it actually used. */}
                 <StatCard
-                  label="Avg PI (12w)"
-                  value={String(
-                    Math.round(
-                      weeks.reduce((s, w) => s + w.performanceIndex, 0) /
-                        weeks.length
-                    )
-                  )}
-                  unit="/100"
+                  label={`Avg PI (${avgWeeks}w)`}
+                  value={avgPI === null ? "—" : String(avgPI)}
+                  unit={avgPI === null ? "" : "/100"}
                   accentColor={THEME.brand}
                 />
               </div>
