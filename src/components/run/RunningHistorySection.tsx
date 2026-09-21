@@ -7,12 +7,15 @@ import {
   XAxis,
   YAxis,
   CartesianGrid,
+  Cell,
+  Tooltip,
 } from "recharts";
 import { THEME } from "../../lib/theme";
 import {
   CHART_GRID_PROPS,
   CHART_AXIS_TICK,
   CHART_BAR_MAX_WIDTH,
+  CHART_TOOLTIP_STYLE,
 } from "@/components/analytics/chartStyles";
 import {
   isVolumeEligible,
@@ -138,12 +141,51 @@ export default function RunningHistorySection({
                 tickLine={false}
                 width={28}
               />
+              {/* The value on demand. This was the one bar chart on the
+                  tab with no hover layer at all — its sibling
+                  `VolumeChart` has carried one since it was written — so
+                  the only way to read a bin was to estimate it off the
+                  axis. On bars the mark is its own hit target, so no
+                  cursor line is needed beyond the wash. */}
+              <Tooltip
+                contentStyle={CHART_TOOLTIP_STYLE}
+                labelFormatter={(v) => formatBinLabel(String(v), granularity)}
+                formatter={(value) => {
+                  const n =
+                    typeof value === "number" ? value : Number(value ?? 0);
+                  /* One decimal, which is what the three tiles under this
+                     chart already print via `distanceValue(…, unit)`. The
+                     bar values were rounded to 1dp on the way in, so
+                     anything finer would be inventing precision. */
+                  return [
+                    `${n.toFixed(1)} ${distanceUnitLabel(unit)}`,
+                    BIN_CAPTION[granularity],
+                  ] as [string, string];
+                }}
+                cursor={{ fill: "currentColor", fillOpacity: 0.05 }}
+              />
               <Bar
                 dataKey="distance"
-                fill={THEME.running}
                 radius={[4, 4, 0, 0]}
                 maxBarSize={CHART_BAR_MAX_WIDTH}
-              />
+              >
+                {/* The same emphasis its sibling already uses: the bin
+                    you are in now at full strength, the ones behind it
+                    stepped back. Eight bars in one flat hue state a
+                    series and point at nothing; the rule here is
+                    `VolumeChart`'s, not a second vocabulary invented for
+                    one chart on the same tab.
+
+                    Opacity rather than a second colour, so coral still
+                    means running the whole way along. */}
+                {chartData.map((entry, i) => (
+                  <Cell
+                    key={entry.week}
+                    fill={THEME.running}
+                    fillOpacity={i === chartData.length - 1 ? 1 : 0.5}
+                  />
+                ))}
+              </Bar>
             </BarChart>
           </ResponsiveContainer>
         </div>
