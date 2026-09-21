@@ -4,11 +4,24 @@ import { track as trackHistoryEvent } from "@/lib/historyAnalytics";
 import { THEME } from "@/lib/theme";
 import { CHART_TOOLTIP_STYLE } from "./chartStyles";
 import { percentagesSummingTo100 } from "@/utils/formatters";
+import { formatCalories, CALORIE_UNIT } from "@/utils/formatNutrition";
 
 interface MacroDistributionProps {
   protein: number;
   carbs: number;
   fat: number;
+  /** Average calories per logged day, for the hole in the middle.
+   *
+   *  Passed in rather than derived, and the difference is not academic.
+   *  `total` below is the Atwater reconstruction of the three gram
+   *  figures; this is the mean of each day's own logged `totalCalories`.
+   *  They diverge whenever a meal's stored calories disagree with 4/4/9
+   *  on its stored macros — barcode, AI and parsed entries carry both
+   *  fields independently, and a drink carries calories with no macro at
+   *  all. The repo's own capture fixture is such a case: 620 logged
+   *  against 606 reconstructed. Deriving here would print one of those
+   *  under a ring while the stat card two rows up printed the other. */
+  avgCalories: number;
 }
 
 type MacroSlice = {
@@ -30,6 +43,7 @@ export default function MacroDistribution({
   protein,
   carbs,
   fat,
+  avgCalories,
 }: MacroDistributionProps) {
   const pCal = protein * 4;
   const cCal = carbs * 4;
@@ -128,12 +142,23 @@ export default function MacroDistribution({
               </Pie>
             </PieChart>
           </ResponsiveContainer>
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            {/* A word, so no numeral face: Archivo's tabular figures align
-                digits and do nothing for letters, and the treatment is
-                scoped to numeric displays. The figures it labels are in
-                the legend beside it. */}
-            <p className="text-xs text-muted-foreground">avg</p>
+          <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+            {/* The hole held the word "avg" — a label for a figure that
+                was not there, the average of nothing in particular. It
+                holds the figure now.
+
+                `leading-none` because the hole is 56px across inside a
+                96px box, and two lines at default leading touch the ring.
+
+                The unit line stays out of the numeral face: Archivo's
+                tabular figures align digits and do nothing for letters,
+                and the treatment is scoped to numeric displays. */}
+            <p className="text-xs font-extrabold font-mono leading-none text-foreground">
+              {formatCalories(avgCalories)}
+            </p>
+            <p className="text-caption leading-none text-muted-foreground mt-0.5">
+              {CALORIE_UNIT}/day
+            </p>
           </div>
         </div>
         <div className="flex-1 space-y-1.5">

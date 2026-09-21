@@ -68,6 +68,7 @@ import {
   rollingWindowStart,
   addLocalDays,
 } from "@/lib/dateHelpers";
+import { completedWeeklySeries } from "@/lib/completedWeeks";
 import {
   computeMuscleRecovery,
   hitsFromWorkoutDocs,
@@ -635,7 +636,13 @@ export default function History() {
         cursor.setDate(cursor.getDate() + 7);
       }
     }
-    const distanceSparkline = allWeekKeys.map((k) => distanceByWeek[k] ?? 0);
+    /* Without the current week. The walk above ends on the week
+       CONTAINING today, so its last bucket always holds a part-week —
+       and a month of running read as a cliff on the tile because of it. */
+    const distanceSparkline = completedWeeklySeries(
+      allWeekKeys,
+      (k) => distanceByWeek[k] ?? 0
+    );
 
     // Pace is a RATE metric — a week with no runs has no pace, not 0
     // sec/km (which would mean infinite speed). Don't zero-pad. Use
@@ -919,8 +926,17 @@ export default function History() {
         cursor.setDate(cursor.getDate() + 7);
       }
     }
-    const volumeSparkline = allWeekKeys.map((w) => sparkVolumeMap[w] ?? 0);
-    const sessionsSparkline = allWeekKeys.map((w) => sparkSessionsMap[w] ?? 0);
+    /* Both without the current week, for the reason the running side
+       carries: the walk ends on the week containing today, so the final
+       bucket is a part-week and drew a fall that had not happened. */
+    const volumeSparkline = completedWeeklySeries(
+      allWeekKeys,
+      (w) => sparkVolumeMap[w] ?? 0
+    );
+    const sessionsSparkline = completedWeeklySeries(
+      allWeekKeys,
+      (w) => sparkSessionsMap[w] ?? 0
+    );
 
     // Build all-time best e1rm per exercise. epley1RMExact carries the
     // reps<=0 guard (a failed set must not score weight×1.0) and the
@@ -1874,6 +1890,7 @@ export default function History() {
                       protein={nutrition.avgProtein}
                       carbs={nutrition.avgCarbs}
                       fat={nutrition.avgFat}
+                      avgCalories={nutrition.avgCalories}
                     />
 
                     <SectionErrorBoundary sectionName="calorie-balance">
