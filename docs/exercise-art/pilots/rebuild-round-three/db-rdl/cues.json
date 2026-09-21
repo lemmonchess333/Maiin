@@ -1,0 +1,41 @@
+[
+  {
+    "frame": 1,
+    "beat": "Stand ready",
+    "cue": "Stand tall with soft knees and dumbbells close to your thighs.",
+    "pose": "standing"
+  },
+  {
+    "frame": 2,
+    "beat": "Hinge back",
+    "cue": "Push your hips back; keep your back flat and the weights close.",
+    "pose": "mid-hinge"
+  },
+  {
+    "frame": 3,
+    "beat": "Reach comfortable stretch",
+    "cue": "Stop at your hamstring limit with soft knees and a neutral spine.",
+    "pose": "bottom"
+  },
+  {
+    "frame": 4,
+    "beat": "Reverse smoothly",
+    "cue": "Keep the same bottom position as you begin to drive through your feet.",
+    "pose": "bottom",
+    "reuse": 3
+  },
+  {
+    "frame": 5,
+    "beat": "Drive hips forward",
+    "cue": "Bring your hips forward with the weights close to your legs.",
+    "pose": "mid-hinge",
+    "reuse": 2
+  },
+  {
+    "frame": 6,
+    "beat": "Stand tall",
+    "cue": "Finish upright and squeeze your glutes without leaning back.",
+    "pose": "standing",
+    "reuse": 1
+  }
+]
