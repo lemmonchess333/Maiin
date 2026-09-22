@@ -8,6 +8,7 @@ import ProgramStallReview from "@/components/program/ProgramStallReview";
 import { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import type { ReactNode } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { focusLabel } from "@/features/program/trainingBlock";
 import { useProgram } from "@/features/program/useProgram";
 import { useStreaks } from "@/features/streaks/useStreaks";
 import { useAuth } from "@/lib/auth";
@@ -19,7 +20,6 @@ import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { Button } from "@/components/ui/Button";
 import WorkoutSession from "@/components/WorkoutSession";
 import SavedRoutinesSection from "@/components/program/SavedRoutinesSection";
-import WeeklyVolumeCard from "@/components/program/WeeklyVolumeCard";
 import ProgrammeWeekSelector from "@/components/program/ProgrammeWeekSelector";
 import type { ProgrammeWeekSelectorCell } from "@/components/program/ProgrammeWeekSelector";
 import ExerciseListFooter, {
@@ -52,6 +52,7 @@ import { localDateString, localWeekKey } from "@/lib/dateHelpers";
 import { useEasierTodayRecommendation } from "@/features/program/useEasierTodayRecommendation";
 import ScheduleLayoutSheet from "@/components/program/ScheduleLayoutSheet";
 import {
+  CalendarRange,
   Dumbbell,
   Settings2,
   CalendarDays,
@@ -65,7 +66,6 @@ import {
   Repeat,
   Trash2,
   Info,
-  ChevronRight,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import PageShell from "@/components/ui/PageShell";
@@ -347,6 +347,12 @@ function ProgramInner() {
 
   // Exercise card state — read-only, tap opens info sheet
   const [reorderMode, setReorderMode] = useState(false);
+  /* The training block's detail sheet, driven from the page ⋯ now that
+     the running block's own row is gone — its title was the week row's
+     string and its subtitle repeated the number. The card still renders
+     "Start a training block" and "Block complete" itself; only the
+     running state moved. */
+  const [blockDetailOpen, setBlockDetailOpen] = useState(false);
   /* The exercise list's own fold. Held HERE rather than in the
      disclosure because the list mounts inside the day pager's
      `motion.div key={idx}`: state inside it would reset on every day
@@ -1702,6 +1708,9 @@ function ProgramInner() {
                           onAdoptLegacy={adoptLegacyTrainingBlock}
                           onRelease={releaseTrainingBlock}
                           onKeepFocus={keepTrainingBlockFocus}
+                          hideRunningRow
+                          detailOpen={blockDetailOpen}
+                          onDetailOpenChange={setBlockDetailOpen}
                         />
                       )}
                     </div>
@@ -1718,46 +1727,22 @@ function ProgramInner() {
           when the user has no saved entries, so users who don't use
           the feature never see the section. Lift tab only — the
           surfaces are workout-centric. */}
-      {/* Weekly sets-per-muscle volume summary (D-LIFT-1) — read-only, for the
-          viewed week, against goal landmarks. */}
-      {activeTab === "lift" && (
-        <WeeklyVolumeCard
-          workouts={displayWorkouts}
-          // Blk2 / M4: the programState copy, which is what a block owns
-          // and what balanceWeeklyVolume already targets. Reading the
-          // profile copy painted a "Get stronger" block's week against the
-          // PRE-block band — "below target · 12-20/week" for volume the
-          // block deliberately chose, under a header reading
-          // "Built for Strength".
-          primaryGoal={programState.primaryGoal ?? profile?.primaryGoal}
-        />
-      )}
-
+      {/* The weekly sets-per-muscle table moved to Settings › Lift plan
+          (D-LIFT-1 lives on, in a new home). Collapsed, it said "4 muscles
+          below target" — a count of problems, not a finding, two screens
+          away from the fields that fix it. Expanded it is a plan-quality
+          readout, and the lift editor is where the days it rates are
+          edited. */}
       {activeTab === "lift" && <SavedRoutinesSection />}
 
       {/* ROUTINE-EXCHANGE-01 — curated blueprint shelf. Read-only
           intents; saving creates a private routine copy, never a
           programme change. */}
 
-      {/* Section-Split: focused "Edit lift plan" entry — mirrors the Run
-          tab's "Edit run plan ›" footer. Deep-links to the lift-only editor
-          (/settings/lift-plan) instead of the full programme form. The ⋯
-          menu's "Edit programme" still opens the everything editor. */}
-      {activeTab === "lift" && (
-        <div className="flex justify-end pt-2 border-t border-border/30">
-          <button
-            type="button"
-            onClick={() => {
-              haptic();
-              navigate("/settings/lift-plan");
-            }}
-            className="inline-flex items-center gap-0.5 min-h-[44px] px-2 -my-1 -mr-1 text-xs font-medium text-muted-foreground hover:text-foreground motion-safe:active:scale-[0.97] transition-transform rounded-md"
-          >
-            Edit lift plan
-            <ChevronRight className="size-3.5" />
-          </button>
-        </div>
-      )}
+      {/* The "Edit lift plan ›" footnote is gone — 10 px muted text under
+          a hairline, a third edit entry beside the two already in ⋯. On
+          the Lift tab that menu's edit row now points at the lift editor
+          itself, which is also where the volume table went. */}
 
       {/* ── Context Menu ── */}
       <AnimatePresence>
@@ -2045,6 +2030,33 @@ function ProgramInner() {
                     icon: it's a low-frequency plan edit, so it lives with the
                     other edit actions instead of occupying header space. Only
                     offered where it works — Lift tab with logged workouts. */}
+                {/* Managing a RUNNING block, which no longer has a row of
+                    its own on the page. Only while one is running: the
+                    card still renders "Start a training block" when there
+                    is none and "Block complete" when one has finished,
+                    because those two say something the page does not. */}
+                {activeTab === "lift" && programState?.trainingBlock && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowOverflow(false);
+                      setBlockDetailOpen(true);
+                    }}
+                    className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-left hover:bg-muted transition-colors"
+                    style={{ minHeight: 44 }}
+                  >
+                    <CalendarRange className="size-5 text-muted-foreground" />
+                    <span className="flex-1">
+                      <span className="block text-sm font-medium text-foreground">
+                        Training block
+                      </span>
+                      <span className="block text-xs text-muted-foreground">
+                        {focusLabel(programState.trainingBlock.focus)}
+                      </span>
+                    </span>
+                  </button>
+                )}
+
                 {activeTab === "lift" &&
                   (programState?.workouts?.length ?? 0) > 0 && (
                     <button
@@ -2098,7 +2110,11 @@ function ProgramInner() {
                   type="button"
                   onClick={() => {
                     setShowOverflow(false);
-                    navigate("/settings/training");
+                    navigate(
+                      activeTab === "lift"
+                        ? "/settings/lift-plan"
+                        : "/settings/training"
+                    );
                   }}
                   className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-left hover:bg-muted transition-colors"
                   style={{ minHeight: 44 }}
@@ -2106,10 +2122,14 @@ function ProgramInner() {
                   <Settings2 className="size-5 text-muted-foreground" />
                   <span className="flex-1">
                     <span className="block text-sm font-medium text-foreground">
-                      Edit programme
+                      {activeTab === "lift"
+                        ? "Edit lift plan"
+                        : "Edit programme"}
                     </span>
                     <span className="block text-xs text-muted-foreground">
-                      Goal, nutrition, lifting, running, equipment, injuries
+                      {activeTab === "lift"
+                        ? "Focus, lift days, equipment, injuries, weekly volume"
+                        : "Goal, nutrition, lifting, running, equipment, injuries"}
                     </span>
                   </span>
                 </button>
