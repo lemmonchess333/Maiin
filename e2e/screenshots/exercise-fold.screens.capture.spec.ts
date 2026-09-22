@@ -144,9 +144,9 @@ test.describe("exercise list fold", () => {
     await expect(
       page.getByRole("button", { name: /^Exercises,/ })
     ).toHaveAttribute("aria-expanded", "true");
-    await expect(
-      page.getByRole("button", { name: /More options for /i }).first()
-    ).toBeVisible();
+    // The panel itself, not a per-row "…": in reorder mode the rows
+    // carry drag handles and the manage button is not rendered.
+    await expect(page.locator("#lift-exercise-panel")).toBeVisible();
     await expect(page.getByRole("button", { name: /^done$/i })).toBeVisible();
     await page.evaluate(() => document.documentElement.classList.add("dark"));
     await page.waitForTimeout(300);
