@@ -20,7 +20,7 @@ import { MoreHorizontal, Play, Footprints, Dumbbell } from "lucide-react";
 import SectionLabel from "@/components/ui/SectionLabel";
 import MetaLine from "@/components/ui/MetaLine";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/Button";
+import { Button, type ButtonVariant } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
 
 interface SessionCommandCardProps {
@@ -35,6 +35,17 @@ interface SessionCommandCardProps {
    *  eyebrow + title + meta with no Start button. Run always passes both. */
   primaryActionLabel?: string;
   onPrimaryAction?: () => void;
+  /**
+   * The primary action's icon and weight, when the action is not a start.
+   *
+   * The Lift card's slot carries "Start workout" on the startable day and
+   * "Make this next" on an upcoming one — a cursor move, not a session
+   * launch, so it takes its own icon and the `secondary` weight the row
+   * already gave it rather than the filled Play CTA. Omitted, both fall
+   * back to what Start has always used, which is what Run passes.
+   */
+  primaryActionIcon?: ReactNode;
+  primaryActionVariant?: ButtonVariant;
   onManage?: () => void;
   /**
    * A full-bleed strip along the card's bottom edge, inside its radius.
@@ -55,6 +66,8 @@ export default function SessionCommandCard({
   sport,
   primaryActionLabel,
   onPrimaryAction,
+  primaryActionIcon,
+  primaryActionVariant,
   onManage,
   footer,
 }: SessionCommandCardProps) {
@@ -124,10 +137,16 @@ export default function SessionCommandCard({
 
         {primaryActionLabel && onPrimaryAction && (
           <Button
-            variant={sport === "run" ? "sport" : "primary"}
+            variant={
+              primaryActionVariant ?? (sport === "run" ? "sport" : "primary")
+            }
             size="lg"
             fullWidth
-            leftIcon={<Play className="size-4" fill="currentColor" />}
+            leftIcon={
+              primaryActionIcon ?? (
+                <Play className="size-4" fill="currentColor" />
+              )
+            }
             onClick={onPrimaryAction}
           >
             {primaryActionLabel}

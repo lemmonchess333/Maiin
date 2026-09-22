@@ -1211,33 +1211,58 @@ function ProgramInner() {
                             ? []
                             : [`~${estimatedMinutes} min`]
                         }
+                        /* The card always carries the day's ONE action.
+                           Start on the startable day; on an upcoming one
+                           "Make this next" IS the action (you cannot start
+                           it), so it takes the slot rather than floating in
+                           a row beneath. A completed or skipped day has no
+                           action and the slot stays empty. History weeks
+                           are records, not prescriptions — the same gate
+                           the row used. */
                         primaryActionLabel={
                           status === "today" && !selectedWorkout.completed
                             ? "Start workout"
-                            : undefined
+                            : status === "upcoming" && !isViewingHistory
+                              ? "Make this next"
+                              : undefined
+                        }
+                        primaryActionIcon={
+                          status === "upcoming" ? (
+                            <ArrowUp className="size-4" />
+                          ) : undefined
+                        }
+                        primaryActionVariant={
+                          status === "upcoming" ? "secondary" : undefined
                         }
                         onPrimaryAction={
-                          status === "today" && !selectedWorkout.completed
+                          status === "upcoming" && !isViewingHistory
                             ? () => {
                                 haptic("light");
-                                // Begin means begin (operator, 2026-08-05:
-                                // the every-tap chooser was "too much
-                                // choice"). Hevy / Strong / Fitbod all start
-                                // on tap — the CLAUDE.md reference bar for
-                                // surfacing an interstitial isn't met. The
-                                // honest versions stay one tap away: the
-                                // "Short on time?" link opens the chooser,
-                                // and a signal-backed easier day surfaces as
-                                // its own row below, so PROGRAM-ADAPT-01's
-                                // never-auto-applied offer survives without
-                                // taxing every session start.
-                                setSessionBudgetMinutes(usualBudget ?? 60);
-                                setSessionVariant(
-                                  usualBudget === null ? "full" : "time_budget"
-                                );
-                                setSessionDayIndex(idx);
+                                void setNextWorkout(idx);
                               }
-                            : undefined
+                            : status === "today" && !selectedWorkout.completed
+                              ? () => {
+                                  haptic("light");
+                                  // Begin means begin (operator, 2026-08-05:
+                                  // the every-tap chooser was "too much
+                                  // choice"). Hevy / Strong / Fitbod all start
+                                  // on tap — the CLAUDE.md reference bar for
+                                  // surfacing an interstitial isn't met. The
+                                  // honest versions stay one tap away: the
+                                  // "Short on time?" link opens the chooser,
+                                  // and a signal-backed easier day surfaces as
+                                  // its own row below, so PROGRAM-ADAPT-01's
+                                  // never-auto-applied offer survives without
+                                  // taxing every session start.
+                                  setSessionBudgetMinutes(usualBudget ?? 60);
+                                  setSessionVariant(
+                                    usualBudget === null
+                                      ? "full"
+                                      : "time_budget"
+                                  );
+                                  setSessionDayIndex(idx);
+                                }
+                              : undefined
                         }
                         footer={
                           <ExerciseListFooter
@@ -1359,17 +1384,6 @@ function ProgramInner() {
                                 disabled and gave a keyboard user no focus
                                 ring — the same defect fixed for "Short on
                                 time?" above, which left these two behind. */}
-                            {status === "upcoming" && (
-                              <Button
-                                variant="secondary"
-                                onClick={() => {
-                                  haptic("light");
-                                  void setNextWorkout(idx);
-                                }}
-                              >
-                                Make this next
-                              </Button>
-                            )}
                             <Button
                               variant="ghost"
                               onClick={() => {
