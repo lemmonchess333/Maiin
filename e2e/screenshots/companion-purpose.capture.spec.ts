@@ -20,11 +20,11 @@ test("companion purpose — narrow light and dark", async ({ page }) => {
     .getByRole("region")
     .filter({ has: page.getByRole("button", { name: "Start workout" }) });
   await expect(card).toBeVisible({ timeout: 20_000 });
-  // The card says what the session IS. It used to do that with a count
-  // ("6 exercises") directly above a row that also said 6; it now does it
-  // by naming the lifts in its footer, so the assertion moves to the
-  // control that carries them rather than to the count that went.
-  await expect(card.getByRole("button", { name: /^Exercises,/ })).toBeVisible();
+  // The card says what the session IS without restating what is directly
+  // beneath it. Not a count of the exercises and not their names — the
+  // list itself is the next thing on the page — but the one fact you
+  // decide on before tapping Start.
+  await expect(card).toContainText(/~\d+\s*min/);
   await expect(card).not.toContainText(/Week \d+ of \d+/);
   for (const dark of [false, true]) {
     await page.evaluate(

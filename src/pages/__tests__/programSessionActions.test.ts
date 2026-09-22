@@ -21,7 +21,7 @@ import { dirname, resolve } from "node:path";
  * file exists after the layout changed.
  *
  * Pinned at the source, for the reason the header of
- * `programExerciseFold.test.ts` gives: Program.tsx mounts charts, sheets
+ * `programExerciseList.test.ts` gives: Program.tsx mounts charts, sheets
  * and several Firestore hooks, and nothing in the repo renders it in
  * jsdom. A source pin cannot prove what a user sees, so these stay
  * narrow.

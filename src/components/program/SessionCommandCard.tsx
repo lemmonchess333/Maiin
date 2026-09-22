@@ -47,15 +47,6 @@ interface SessionCommandCardProps {
   primaryActionIcon?: ReactNode;
   primaryActionVariant?: ButtonVariant;
   onManage?: () => void;
-  /**
-   * A full-bleed strip along the card's bottom edge, inside its radius.
-   *
-   * The Lift card passes its exercise-list trigger here. It is a slot
-   * rather than a prop-shaped preview because the footer owns its own
-   * control: the card is a `<section>`, so Start, the manage button and
-   * this are three siblings and none is nested in another.
-   */
-  footer?: ReactNode;
 }
 
 export default function SessionCommandCard({
@@ -69,7 +60,6 @@ export default function SessionCommandCard({
   primaryActionIcon,
   primaryActionVariant,
   onManage,
-  footer,
 }: SessionCommandCardProps) {
   const isRun = sport === "run";
   const Icon = isRun ? Footprints : Dumbbell;
@@ -153,7 +143,6 @@ export default function SessionCommandCard({
           </Button>
         )}
       </div>
-      {footer && <div className="relative">{footer}</div>}
     </section>
   );
 }
