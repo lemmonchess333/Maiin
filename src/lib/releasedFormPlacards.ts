@@ -15,6 +15,40 @@ const placard = (
 });
 
 export const RELEASED_FORM_PLACARDS = {
+  "barbell-floor-press": placard(
+    "barbell-floor-press",
+    ["Pectorals"],
+    ["Triceps", "Front deltoids"],
+    [
+      [0, "Set", "Hold bar over chest with arms extended."],
+      [0.5, "Lower", "Lower under control, keeping wrists stacked."],
+      [1, "Floor contact", "Let your upper arms meet the floor."],
+      [1, "Pause", "Pause on the floor without bouncing."],
+      [0.5, "Press", "Press upward while keeping your feet planted."],
+      [0, "Reset", "Finish arms extended; prepare the next repetition."],
+    ]
+  ),
+  "incline-bench": placard(
+    "incline-bench",
+    ["Pectorals"],
+    ["Triceps", "Front deltoids"],
+    [
+      [0, "Set and brace", "Stay supported; hold bar above your shoulders."],
+      [
+        0.5,
+        "Lower under control",
+        "Lower toward upper chest; keep wrists stacked.",
+      ],
+      [1, "Upper chest touch", "Touch upper chest; keep your hips down."],
+      [1, "Pause without bouncing", "Pause briefly; keep shoulder blades set."],
+      [0.5, "Press up and back", "Press up and back; keep feet planted."],
+      [
+        0,
+        "Finish the press",
+        "Finish above shoulders with controlled elbow extension.",
+      ],
+    ]
+  ),
   "weighted-push-ups": placard(
     "weighted-push-ups",
     ["Pectorals"],
