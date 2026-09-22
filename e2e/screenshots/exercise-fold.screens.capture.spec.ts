@@ -1,11 +1,12 @@
 /**
- * The lift session's exercise list, folded behind one row.
+ * The lift session's exercise list, as the command card's footer.
  *
  * Three frames, because the design is three states and the middle one is
- * the whole point: collapsed (what the page now costs), expanded (nothing
- * lost, one tap away), and the drag mode entered from the PAGE HEADER's
- * overflow while the list was collapsed — the case where a naive fold
- * would put a user into reorder with nothing on screen to drag.
+ * the whole point: collapsed (what the page now costs, with the names
+ * still readable), expanded (nothing lost, one tap away), and the drag
+ * mode entered from the PAGE HEADER's overflow while the list was
+ * collapsed — the case where a naive fold would put a user into reorder
+ * with nothing on screen to drag.
  *
  * fullPage, deliberately. The change is about page height, and a viewport
  * shot cannot show it.
@@ -104,17 +105,19 @@ test.describe("exercise list fold", () => {
     test.setTimeout(180_000);
     await openTrain(page);
 
-    const row = page.getByRole("button", { name: /^Exercises/ });
+    const row = page.getByRole("button", { name: /^Exercises,/ });
     await expect(row).toBeVisible();
     await expect(row).toHaveAttribute("aria-expanded", "false");
+    // The footer earns its place by naming the day's first lift.
+    await expect(row).not.toHaveText(/^\s*$/);
     await shoot(page, "exercise-fold-collapsed");
 
     await row.click();
     await expect(row).toHaveAttribute("aria-expanded", "true");
     // The affordance the fold defers rather than removes.
-    await expect(
-      page.getByRole("button", { name: /More options for /i }).first()
-    ).toBeVisible();
+    // The panel itself, not a per-row "…": in reorder mode the rows
+    // carry drag handles and the manage button is not rendered.
+    await expect(page.locator("#lift-exercise-panel")).toBeVisible();
     await expect(
       page.getByRole("button", { name: /^Add exercise$/i })
     ).toBeVisible();
@@ -129,18 +132,21 @@ test.describe("exercise list fold", () => {
 
     // Leave the list collapsed, then enter reorder from the page header.
     await expect(
-      page.getByRole("button", { name: /^Exercises/ })
+      page.getByRole("button", { name: /^Exercises,/ })
     ).toHaveAttribute("aria-expanded", "false");
     await page.getByRole("button", { name: /more options/i }).click();
     await page.getByText(/reorder exercises/i).click();
     await page.waitForTimeout(400);
 
-    // The panel is open, and its collapse control is gone — the exit is
-    // the header's own Done.
-    await expect(page.getByText("Exercises", { exact: true })).toBeVisible();
-    await expect(page.getByRole("button", { name: /^Exercises/ })).toHaveCount(
-      0
-    );
+    // The panel is open and the footer reads as open. Its chevron is
+    // gone — the exit is the header's own Done — but the footer itself
+    // stays, because it is the card's own edge rather than a row.
+    await expect(
+      page.getByRole("button", { name: /^Exercises,/ })
+    ).toHaveAttribute("aria-expanded", "true");
+    await expect(
+      page.getByRole("button", { name: /More options for /i }).first()
+    ).toBeVisible();
     await expect(page.getByRole("button", { name: /^done$/i })).toBeVisible();
     await page.evaluate(() => document.documentElement.classList.add("dark"));
     await page.waitForTimeout(300);
