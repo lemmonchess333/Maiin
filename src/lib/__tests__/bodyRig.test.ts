@@ -4933,7 +4933,7 @@ describe("supplied placard frames", () => {
     getAuthoredBeats(id)!.some((b) => b.image)
   );
 
-  /** WebP is a RIFF container, and it has two shapes here.
+  /** WebP is a RIFF container, including lossy, lossless and extended forms.
    *
    *  A plain lossy file is `VP8 ` with 14-bit dimensions after the sync
    *  code. Once the frames gained an alpha channel — the card's
@@ -4954,6 +4954,12 @@ describe("supplied placard frames", () => {
         w: buf.readUIntLE(24, 3) + 1,
         h: buf.readUIntLE(27, 3) + 1,
       };
+    if (kind === "VP8L") {
+      // Native lossless artwork: signature followed by two packed 14-bit sizes.
+      expect(buf[20]).toBe(0x2f);
+      const bits = buf.readUInt32LE(21);
+      return { w: (bits & 0x3fff) + 1, h: ((bits >>> 14) & 0x3fff) + 1 };
+    }
     expect(kind).toBe("VP8 ");
     return {
       w: buf.readUInt16LE(26) & 0x3fff,
