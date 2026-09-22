@@ -22,6 +22,7 @@ import WorkoutSession from "@/components/WorkoutSession";
 import SavedRoutinesSection from "@/components/program/SavedRoutinesSection";
 import ProgrammeWeekSelector from "@/components/program/ProgrammeWeekSelector";
 import type { ProgrammeWeekSelectorCell } from "@/components/program/ProgrammeWeekSelector";
+import { dayFocusLabel } from "@/lib/liftDayLabel";
 import SessionCommandCard from "@/components/program/SessionCommandCard";
 import TrainingBlockCard from "@/components/program/TrainingBlockCard";
 import ExperienceSuggestionCard from "@/components/program/ExperienceSuggestionCard";
@@ -685,13 +686,14 @@ function ProgramInner() {
     (w, i) => ({
       key: String(i),
       center: String(i + 1),
-      // Show only the split CATEGORY ("Push" / "Pull" / "Legs" / "Upper" /
-      // "Full Body") on the chip, not the full "Push — Chest Focus". The chip
-      // is `line-clamp-1`, so the full name truncated to a dangling "Push —…"
-      // — and it's redundant: the full name already shows in the day header
-      // below ("Day N · Push — Chest Focus"). The category alone reads clean
-      // and makes the rotation legible across the week.
-      bottomLabel: w.dayName.split(/\s*[—–-]\s*/)[0].trim() || w.dayName,
+      // The day's FOCUS ("Squat", "Chest", "Shoulder"), not its split
+      // category. The chip is `line-clamp-1` so the full "Push — Chest
+      // Focus" cannot go here, and the category is the wrong half to
+      // keep: it is already the page header's subtitle, and it REPEATS —
+      // a Full Body rotation labels all three days "Full Body", and a
+      // Push/Pull/Legs x2 week labels days 1 and 4 both "Push". The
+      // focus is what varies within a week by construction.
+      bottomLabel: dayFocusLabel(w.dayName),
       status: w.completed ? "completed" : w.skipped ? "skipped" : "upcoming",
       isToday: !isViewingHistory && i === todayIndex,
     })
@@ -1306,87 +1308,6 @@ function ProgramInner() {
                         />
                       )}
 
-                      {/* Secondary action: skip this session — mirrors the
-                          Run card's "Start free run instead" link. Offered on
-                          the cursor day AND any upcoming day of the CURRENT
-                          week (owner request 2026-07-11: "let me move to next
-                          week when I want" — skipping the remaining days is
-                          the deliberate, per-day path to the Advance button).
-                          History weeks are records, not prescriptions. */}
-                      {(status === "today" || status === "upcoming") &&
-                        !isViewingHistory && (
-                          <div className="flex items-center justify-center">
-                            {/* The chooser's new home (2026-08-05): the
-                                time-budget / easier / lighter-day menu is a
-                                menu you ASK for, not an interception. Only on
-                                the startable day — express variants execute
-                                today's session. */}
-                            {status === "today" &&
-                              !selectedWorkout.completed && (
-                                /* Was a hand-rolled button in
-                                   text-muted-foreground with NO focus
-                                   styling: it read as disabled, and a
-                                   keyboard user got no focus indicator at
-                                   all. `ghost` is the guide's variant for
-                                   a low-emphasis action, and md is the
-                                   same geometry these already had
-                                   (min-h-44 / px-4 / text-sm), so this is
-                                   a drop-in that buys foreground contrast,
-                                   a hover tint and the focus-visible ring.
-                                   Transparent background keeps it from
-                                   competing with the filled Begin
-                                   Workout CTA above. */
-                                <Button
-                                  variant="ghost"
-                                  onClick={() => {
-                                    haptic("light");
-                                    setExpressChooserDay(idx);
-                                  }}
-                                >
-                                  Short on time?
-                                </Button>
-                              )}
-                            {/* PROGRAM-SESSION-ORDER-01: real weeks rarely
-                                happen in order. "Make this next" moves the
-                                startable cursor to this unfinished day — a
-                                cursor change, never a schedule rewrite; the
-                                overridden cursor day offers the way back.
-                                History weeks are records, not prescriptions
-                                (same gate as Skip above).
-
-                                It leads the row, and in `secondary` rather
-                                than ghost, because on a day you cannot start
-                                it IS the action: ghost put it level with
-                                Skip session, and the hand-rolled
-                                muted-foreground button it replaces read as
-                                disabled and gave a keyboard user no focus
-                                ring — the same defect fixed for "Short on
-                                time?" above, which left these two behind. */}
-                            <Button
-                              variant="ghost"
-                              onClick={() => {
-                                setSkipTargetDay(idx);
-                                setShowSkipConfirm(true);
-                              }}
-                            >
-                              Skip session
-                            </Button>
-
-                            {status === "today" &&
-                              programState?.nextWorkoutOverride === idx && (
-                                <Button
-                                  variant="secondary"
-                                  onClick={() => {
-                                    haptic("light");
-                                    void setNextWorkout(null);
-                                  }}
-                                >
-                                  Follow programme order
-                                </Button>
-                              )}
-                          </div>
-                        )}
-
                       {/* The day's exercises, on screen rather than behind a tap.
                           The list IS the page: a card that states the session
                           above a control that hides it says one thing twice, and
@@ -1464,19 +1385,19 @@ function ProgramInner() {
                                                 </span>
                                                 s
                                               </>
+                                            ) : isBW ? (
+                                              <>
+                                                BW ×{" "}
+                                                <span className="font-mono tabular-nums">
+                                                  {lastPerf.reps}
+                                                </span>
+                                              </>
                                             ) : lastPerf.weight > 0 ? (
                                               <>
                                                 <span className="font-mono tabular-nums">
                                                   {lastPerf.weight}
                                                 </span>{" "}
                                                 kg ×{" "}
-                                                <span className="font-mono tabular-nums">
-                                                  {lastPerf.reps}
-                                                </span>
-                                              </>
-                                            ) : isBW ? (
-                                              <>
-                                                BW ×{" "}
                                                 <span className="font-mono tabular-nums">
                                                   {lastPerf.reps}
                                                 </span>
@@ -1585,6 +1506,13 @@ function ProgramInner() {
                                                 </span>
                                                 s
                                               </>
+                                            ) : isBW ? (
+                                              <>
+                                                BW ×{" "}
+                                                <span className="font-mono tabular-nums">
+                                                  {lastPerf.reps}
+                                                </span>
+                                              </>
                                             ) : lastPerf.weight > 0 ? (
                                               <>
                                                 <span className="font-mono tabular-nums">
@@ -1597,10 +1525,10 @@ function ProgramInner() {
                                               </>
                                             ) : (
                                               <>
+                                                — ×{" "}
                                                 <span className="font-mono tabular-nums">
                                                   {lastPerf.reps}
-                                                </span>{" "}
-                                                reps
+                                                </span>
                                               </>
                                             )}
                                           </p>
@@ -1655,6 +1583,85 @@ function ProgramInner() {
                           </button>
                         )}
                       </div>
+
+                      {/* Session modifiers, BELOW the list rather than
+                          between it and the card.
+
+                          Both are judgements about work you have to have
+                          seen: "short on time?" against five exercises and
+                          an estimate, "skip session" against what skipping
+                          costs. Asking above the list asks blind, and it
+                          put two secondary links between the card that
+                          states the session and the rows that ARE it.
+
+                          Offered on the cursor day AND any upcoming day of
+                          the CURRENT week (owner request: skipping the
+                          remaining days is the deliberate, per-day path to
+                          the Advance button). History weeks are records,
+                          not prescriptions. */}
+                      {(status === "today" || status === "upcoming") &&
+                        !isViewingHistory && (
+                          <div className="flex items-center justify-center">
+                            {/* The chooser's new home (2026-08-05): the
+                                time-budget / easier / lighter-day menu is a
+                                menu you ASK for, not an interception. Only on
+                                the startable day — express variants execute
+                                today's session. */}
+                            {status === "today" &&
+                              !selectedWorkout.completed && (
+                                /* Was a hand-rolled button in
+                                   text-muted-foreground with NO focus
+                                   styling: it read as disabled, and a
+                                   keyboard user got no focus indicator at
+                                   all. `ghost` is the guide's variant for
+                                   a low-emphasis action, and md is the
+                                   same geometry these already had
+                                   (min-h-44 / px-4 / text-sm), so this is
+                                   a drop-in that buys foreground contrast,
+                                   a hover tint and the focus-visible ring.
+                                   Transparent background keeps it from
+                                   competing with the filled Begin
+                                   Workout CTA above. */
+                                <Button
+                                  variant="ghost"
+                                  onClick={() => {
+                                    haptic("light");
+                                    setExpressChooserDay(idx);
+                                  }}
+                                >
+                                  Short on time?
+                                </Button>
+                              )}
+                            {/* Ghost, like its neighbour, and a Button
+                                rather than a hand-rolled one: a
+                                muted-foreground span reads as disabled
+                                and gives a keyboard user no focus ring.
+                                "Make this next" is not in this row — it
+                                takes the card's own action slot. */}
+                            <Button
+                              variant="ghost"
+                              onClick={() => {
+                                setSkipTargetDay(idx);
+                                setShowSkipConfirm(true);
+                              }}
+                            >
+                              Skip session
+                            </Button>
+
+                            {status === "today" &&
+                              programState?.nextWorkoutOverride === idx && (
+                                <Button
+                                  variant="secondary"
+                                  onClick={() => {
+                                    haptic("light");
+                                    void setNextWorkout(null);
+                                  }}
+                                >
+                                  Follow programme order
+                                </Button>
+                              )}
+                          </div>
+                        )}
 
                       {/* ── Completed Session Summary ── */}
                       {status === "completed" && (
