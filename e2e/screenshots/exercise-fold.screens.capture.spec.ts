@@ -14,6 +14,8 @@ import { test, expect, type Page } from "@playwright/test";
 import { signInAsTestUser } from "../helpers/auth";
 import { emulatorActive } from "../helpers/emulator";
 import { suppressCoachmarks } from "../helpers/suppressCoachmarks";
+import { settleFullPageHeight } from "../helpers/settleHeight";
+import { settleImages } from "../helpers/settleImages";
 
 test.use({
   viewport: { width: 393, height: 852 },
@@ -65,11 +67,20 @@ test.describe("exercise list fold", () => {
     await page.waitForTimeout(400);
   }
 
+  /* Both settles before every shot, not once per test. A fullPage frame's
+     dimensions are a claim about final layout, and the fold CHANGES that
+     layout by ~478px on the seeded account — so the frame this spec
+     exists to measure is exactly the one a premature shutter gets wrong.
+     The theme flip gets its own pair because it can relayout (`dark:`
+     variants change type and card metrics), and the exercise rows carry
+     no raster art but the cards around them do. */
   async function shoot(page: Page, name: string) {
     await page.evaluate(() =>
       document.documentElement.classList.remove("dark")
     );
     await page.waitForTimeout(250);
+    await settleFullPageHeight(page);
+    await settleImages(page);
     await page.screenshot({
       animations: "disabled",
       fullPage: true,
@@ -77,6 +88,8 @@ test.describe("exercise list fold", () => {
     });
     await page.evaluate(() => document.documentElement.classList.add("dark"));
     await page.waitForTimeout(300);
+    await settleFullPageHeight(page);
+    await settleImages(page);
     await page.screenshot({
       animations: "disabled",
       fullPage: true,
@@ -131,6 +144,8 @@ test.describe("exercise list fold", () => {
     await expect(page.getByRole("button", { name: /^done$/i })).toBeVisible();
     await page.evaluate(() => document.documentElement.classList.add("dark"));
     await page.waitForTimeout(300);
+    await settleFullPageHeight(page);
+    await settleImages(page);
     await page.screenshot({
       animations: "disabled",
       fullPage: true,
