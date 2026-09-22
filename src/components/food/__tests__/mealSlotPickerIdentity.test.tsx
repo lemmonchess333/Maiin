@@ -69,3 +69,23 @@ describe("meal slot picker keeps the food surface's orange", () => {
     expect(users).toEqual([...SANCTIONED].sort());
   });
 });
+
+/* Owner call, 2026-09-22: the "Your usual" row's Log is the food orange.
+   A purple Log sat directly above the orange meal pills, and every other
+   food control on the page is orange. CLAUDE.md's Button mapping still says
+   Food CTAs default to primary, and records this row as the exception — so
+   a sweep that follows the default would revert it without this pin. */
+describe("the usual row's Log is the food orange", () => {
+  it("renders the nutrition variant, not primary", () => {
+    const src = readFileSync(join(SRC, "pages/Food.tsx"), "utf8");
+    const start = src.indexOf("aria-labelledby={usualHeadingId}");
+    expect(
+      start,
+      "the usual row is still labelled by its heading"
+    ).toBeGreaterThan(-1);
+    const row = src.slice(start, src.indexOf("</Card>", start));
+    const log = row.slice(row.lastIndexOf("<Button"));
+    expect(log).toMatch(/>\s*Log\s*<\/Button>/);
+    expect(log).toContain('variant="nutrition"');
+  });
+});

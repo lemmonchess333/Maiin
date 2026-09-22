@@ -283,12 +283,12 @@ export default function MacroColumn({
           bar fades the whole track to reduce visual noise without
           causing a layout jump on first log.
 
-          Empty means the fill, not the intake. The fade used to key on
-          `consumed === 0`, which is an empty bar only in EATEN mode. In
-          LEFT mode — the default — nothing eaten is a FULL bar, so every
-          morning opened on three macro-coloured bars dimmed to 40%
-          (maroon, olive, dark green on the dark card), and the first log
-          then brightened them as they drained. */}
+          Empty means the fill, not the intake: `consumed === 0` is an
+          empty bar only in EATEN mode. In LEFT mode — the default —
+          nothing eaten is a FULL bar, and fading on intake would dim
+          three full macro-coloured bars to 40% every morning (maroon,
+          olive, dark green on the dark card), then brighten them as the
+          first log drained them. */}
       <div
         data-macro-bar=""
         className="relative w-full mt-2.5 h-1.5 rounded-full overflow-hidden transition-opacity duration-300"

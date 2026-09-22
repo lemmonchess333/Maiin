@@ -1890,6 +1890,12 @@ export default function Food() {
            truncated first. Edit is the pencil the Quick Add rows already
            use for the same sheet. Both controls stay 44px.
 
+           Log is the food orange, not brand purple (owner call): every
+           other food control on the page is orange, and a purple Log
+           would sit directly above the orange meal pills. Purple stays
+           for Pro ("Try Pro free"). CLAUDE.md's Button mapping records
+           the exception; mealSlotPickerIdentity.test.tsx pins it.
+
            The group takes its name FROM the visible heading, so the two
            cannot disagree. */
         <Card
@@ -1922,6 +1928,7 @@ export default function Food() {
             icon={<Pencil className="size-4" />}
           />
           <Button
+            variant="nutrition"
             disabled={quickAdding !== null}
             onClick={() => void handleQuickMealAdd(usual)}
           >

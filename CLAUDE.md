@@ -998,6 +998,12 @@ orange IS the meaning, and keep ordinary Food CTAs (Add, Save, Log) on `primary`
 The scan affordance stays its own special coral case (the camera icon in
 `FoodComposerCard.tsx`), not this variant.
 
+**Exception, owner call 2026-09-22:** the "Your usual" row's Log on the Food
+page is `nutrition`. Every other food control on that page is orange, and a
+purple Log sat directly above the orange meal pills. Brand purple stays for
+Pro there ("Try Pro free"). This is the one exception; other Food CTAs follow
+the rule above until the owner says otherwise.
+
 Scope note: this is for **buttons** — visual CTA/action controls. It is NOT a
 mandate to wrap every `<button>` element: pressable cards, list/table rows,
 day-cells, chips, and icon taps are legitimately their own controls (use
