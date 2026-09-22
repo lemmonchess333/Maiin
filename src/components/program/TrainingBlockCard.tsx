@@ -115,6 +115,22 @@ interface Props {
   onAdoptLegacy: (legacy: TrainingBlock) => Promise<boolean>;
   onRelease: () => Promise<boolean>;
   onKeepFocus: () => Promise<boolean>;
+  /**
+   * Suppress the row for a RUNNING block, leaving the two that say
+   * something the page does not already say: "Start a training block"
+   * when there is none, and "Block complete" when one has finished.
+   *
+   * The running row's title was `liftWeekLabel` — the same string, from
+   * the same function, that the week row renders 400 px above it — and
+   * its subtitle repeated the number a third time for a legacy block.
+   * Managing a running block moves to the page's ⋯, which opens the
+   * detail sheet through the two props below.
+   */
+  hideRunningRow?: boolean;
+  /** Controlled detail sheet. Uncontrolled when omitted, which is what
+   *  keeps the card usable on its own and its tests unchanged. */
+  detailOpen?: boolean;
+  onDetailOpenChange?: (open: boolean) => void;
 }
 
 function todayLocal(): string {
@@ -160,11 +176,18 @@ export default function TrainingBlockCard({
   onAdoptLegacy,
   onRelease,
   onKeepFocus,
+  hideRunningRow = false,
+  detailOpen,
+  onDetailOpenChange,
 }: Props) {
   const navigate = useNavigate();
   const { blocks, archiveBlock, loadReviewWorkouts } = useTrainingBlock(uid);
   const [showCreate, setShowCreate] = useState(false);
-  const [showDetail, setShowDetail] = useState(false);
+  const [ownDetail, setOwnDetail] = useState(false);
+  /* Controlled when the page passes both, uncontrolled otherwise —
+     Program drives it from ⋯ now that the running row is gone. */
+  const showDetail = detailOpen ?? ownDetail;
+  const setShowDetail = onDetailOpenChange ?? setOwnDetail;
   const [confirmEnd, setConfirmEnd] = useState<"switch" | "end" | null>(null);
   const [showReview, setShowReview] = useState(false);
   const [focus, setFocus] = useState<PrimaryGoal>(currentFocus);
@@ -310,7 +333,11 @@ export default function TrainingBlockCard({
         </button>
       )}
 
-      {block && (
+      {/* A running block's row is suppressed when the page asks: its
+          title was the week row's own string, and for a legacy block its
+          subtitle said the number a third time. "Block complete" always
+          renders — nothing else on the page offers the review. */}
+      {block && (finished || !hideRunningRow) && (
         <button
           type="button"
           onClick={() => {
