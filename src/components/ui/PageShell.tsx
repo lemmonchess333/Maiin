@@ -56,11 +56,13 @@ export interface PageShellProps extends RootProps {
   leading?: ReactNode;
   /** A line beneath the title. */
   subtitle?: ReactNode;
-  /** Reserve two lines of subtitle height so a subtitle that changes
-   *  length (Train's is tab-aware) does not move everything below it.
-   *  `line-clamp-2` caps it so it cannot grow to three and reintroduce
-   *  the jump. */
-  subtitleReserveLines?: 2;
+  /** Reserve a fixed subtitle height so a subtitle that changes length
+   *  (Train's is tab-aware) does not move everything below it. The clamp
+   *  caps it at the same number so it cannot grow and reintroduce the
+   *  jump. Train reserves 1: every line it can render — Lift's split and
+   *  day count, and all four Run variants — is at most 37 characters and
+   *  fits one line at 393 px. */
+  subtitleReserveLines?: 1 | 2;
   /** The right-hand action cluster: icon buttons, pills, a settings link. */
   actions?: ReactNode;
   /** A controls row inside the header zone, beneath the title —
@@ -124,6 +126,7 @@ export default function PageShell({
               <p
                 className={cn(
                   "text-xs text-muted-foreground mt-1",
+                  subtitleReserveLines === 1 && "line-clamp-1 min-h-[1rem]",
                   subtitleReserveLines === 2 && "line-clamp-2 min-h-[2rem]"
                 )}
               >

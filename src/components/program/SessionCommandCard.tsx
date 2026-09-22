@@ -15,6 +15,7 @@ import InlineNumerals from "@/components/ui/InlineNumerals";
  * colours. 44px+ touch targets via the Button/IconButton primitives.
  */
 
+import type { ReactNode } from "react";
 import { MoreHorizontal, Play, Footprints, Dumbbell } from "lucide-react";
 import SectionLabel from "@/components/ui/SectionLabel";
 import MetaLine from "@/components/ui/MetaLine";
@@ -35,6 +36,15 @@ interface SessionCommandCardProps {
   primaryActionLabel?: string;
   onPrimaryAction?: () => void;
   onManage?: () => void;
+  /**
+   * A full-bleed strip along the card's bottom edge, inside its radius.
+   *
+   * The Lift card passes its exercise-list trigger here. It is a slot
+   * rather than a prop-shaped preview because the footer owns its own
+   * control: the card is a `<section>`, so Start, the manage button and
+   * this are three siblings and none is nested in another.
+   */
+  footer?: ReactNode;
 }
 
 export default function SessionCommandCard({
@@ -46,6 +56,7 @@ export default function SessionCommandCard({
   primaryActionLabel,
   onPrimaryAction,
   onManage,
+  footer,
 }: SessionCommandCardProps) {
   const isRun = sport === "run";
   const Icon = isRun ? Footprints : Dumbbell;
@@ -65,7 +76,7 @@ export default function SessionCommandCard({
     <section
       aria-label={`${eyebrow} — ${title}`}
       className={cn(
-        "relative overflow-hidden rounded-2xl border p-4 card-shadow",
+        "relative overflow-hidden rounded-2xl border card-shadow",
         surfaceClass
       )}
     >
@@ -76,7 +87,7 @@ export default function SessionCommandCard({
           background: `radial-gradient(circle, hsl(${haloVar} / 0.18), transparent 70%)`,
         }}
       />
-      <div className="relative space-y-4">
+      <div className="relative space-y-4 p-4">
         <div className="flex items-start gap-3">
           <div
             className={cn(
@@ -123,6 +134,7 @@ export default function SessionCommandCard({
           </Button>
         )}
       </div>
+      {footer && <div className="relative">{footer}</div>}
     </section>
   );
 }

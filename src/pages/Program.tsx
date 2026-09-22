@@ -22,7 +22,9 @@ import SavedRoutinesSection from "@/components/program/SavedRoutinesSection";
 import WeeklyVolumeCard from "@/components/program/WeeklyVolumeCard";
 import ProgrammeWeekSelector from "@/components/program/ProgrammeWeekSelector";
 import type { ProgrammeWeekSelectorCell } from "@/components/program/ProgrammeWeekSelector";
-import ExerciseListDisclosure from "@/components/program/ExerciseListDisclosure";
+import ExerciseListFooter, {
+  EXERCISE_PANEL_ID,
+} from "@/components/program/ExerciseListDisclosure";
 import SessionCommandCard from "@/components/program/SessionCommandCard";
 import TrainingBlockCard from "@/components/program/TrainingBlockCard";
 import ExperienceSuggestionCard from "@/components/program/ExperienceSuggestionCard";
@@ -709,8 +711,6 @@ function ProgramInner() {
     selectedWorkout && usualBudget !== null
       ? buildTimeBudgetSession(selectedWorkout, usualBudget)
       : null;
-  const exerciseCount =
-    usualPlan?.exercises.length ?? selectedWorkout?.exercises.length ?? 0;
   // Was an inline copy of the old sets x 2.5 formula. A second copy of a
   // shared rule is the drift this repo keeps paying for — and it would now
   // disagree with the chooser sheet on the same screen.
@@ -760,9 +760,18 @@ function ProgramInner() {
     if (!programState) return "";
     const goalText = primaryGoalLabel(programState.primaryGoal);
     const dayCount = programState.workouts.length;
+    // Run-only: no lift days means no week row beneath, so this is the
+    // only line that says why the tab is empty. The goal stays here.
     if (dayCount === 0) return `Built for ${goalText}`;
     const daysLabel = dayCount === 1 ? "1 day/week" : `${dayCount} days/week`;
-    return `Built for ${goalText} · ${splitLabel(programState.splitType)} · ${daysLabel}`;
+    // The GOAL is deliberately absent from this branch. The week row
+    // states it on every render — as `focusLabel` while a block runs
+    // ("Build muscle") and as `primaryGoalLabel` otherwise
+    // ("Hypertrophy"). Carrying it here as well meant the page named one
+    // field twice, and with a block running it named it twice in two
+    // different vocabularies, which reads as two settings that disagree.
+    // Split and day count are stated in words nowhere else, so they stay.
+    return `${splitLabel(programState.splitType)} · ${daysLabel}`;
   })();
 
   // Run-tab header line — so the subtitle stops being lift-led when the
@@ -909,7 +918,7 @@ function ProgramInner() {
          while the run line is one, and without the reserve everything
          below shifted ~12px on Lift↔Run. */
       subtitle={activeTab === "run" ? programRunHeaderLine : programHeaderLine}
-      subtitleReserveLines={2}
+      subtitleReserveLines={1}
       /* Overflow, plus a "Done" exit only while reordering. */
       actions={
         <>
@@ -1189,15 +1198,12 @@ function ProgramInner() {
                               : status === "today"
                                 ? "Up next"
                                 : "Upcoming"
-                        } · Day ${idx + 1}`}
+                        }`}
                         title={selectedWorkout.dayName}
                         meta={
                           status === "completed"
                             ? []
-                            : [
-                                `${exerciseCount} exercises`,
-                                `~${estimatedMinutes} min`,
-                              ]
+                            : [`~${estimatedMinutes} min`]
                         }
                         primaryActionLabel={
                           status === "today" && !selectedWorkout.completed
@@ -1226,6 +1232,16 @@ function ProgramInner() {
                                 setSessionDayIndex(idx);
                               }
                             : undefined
+                        }
+                        footer={
+                          <ExerciseListFooter
+                            names={selectedWorkout.exercises.map(
+                              (ex) => ex.name
+                            )}
+                            open={exercisesExpanded}
+                            onOpenChange={setExercisesExpanded}
+                            forceOpen={reorderMode}
+                          />
                         }
                       />
 
@@ -1373,279 +1389,274 @@ function ProgramInner() {
                           </div>
                         )}
 
-                      {/* ── Exercise list, folded (Train scroll budget).
-                            The command card above already states the day, the
-                            exercise count and the time, so the list rendering
-                            beneath it said the same session twice. `forceOpen` is
-                            what keeps "Reorder exercises" — a PAGE-HEADER overflow
-                            action, not a row action — from dropping the user into
-                            a drag mode with nothing on screen to drag. ── */}
-                      <ExerciseListDisclosure
-                        count={selectedWorkout.exercises.length}
-                        open={exercisesExpanded}
-                        onOpenChange={setExercisesExpanded}
-                        forceOpen={reorderMode}
-                      >
-                        {/* ── Exercise Cards ── */}
-                        {reorderMode ? (
-                          <DndContext
-                            sensors={sensors}
-                            collisionDetection={closestCenter}
-                            onDragEnd={(event) => handleDragEnd(idx, event)}
-                          >
-                            <SortableContext
-                              items={selectedWorkout.exercises.map((ex, i) =>
-                                rowId(ex, idx, i)
-                              )}
-                              strategy={verticalListSortingStrategy}
+                      {/* The exercise list. Its TRIGGER is the command card's footer
+                            above; this is only the panel, so the two sit flush and the
+                            page no longer ends on a detached row. `reorderMode` opens
+                            it because "Reorder exercises" is a page-header action and
+                            can be tapped while the list is collapsed. */}
+                      {(exercisesExpanded || reorderMode) && (
+                        <div id={EXERCISE_PANEL_ID} className="space-y-2">
+                          {/* ── Exercise Cards ── */}
+                          {reorderMode ? (
+                            <DndContext
+                              sensors={sensors}
+                              collisionDetection={closestCenter}
+                              onDragEnd={(event) => handleDragEnd(idx, event)}
                             >
-                              <div className="space-y-2">
-                                {selectedWorkout.exercises.map((ex, i) => {
-                                  const isBW =
-                                    getExerciseById(ex.exerciseId)
-                                      ?.equipment === "Bodyweight";
-                                  const lastPerf = lastPerformanceMap.get(
-                                    ex.exerciseId
-                                  );
-                                  return (
+                              <SortableContext
+                                items={selectedWorkout.exercises.map((ex, i) =>
+                                  rowId(ex, idx, i)
+                                )}
+                                strategy={verticalListSortingStrategy}
+                              >
+                                <div className="space-y-2">
+                                  {selectedWorkout.exercises.map((ex, i) => {
+                                    const isBW =
+                                      getExerciseById(ex.exerciseId)
+                                        ?.equipment === "Bodyweight";
+                                    const lastPerf = lastPerformanceMap.get(
+                                      ex.exerciseId
+                                    );
+                                    return (
+                                      <SortableExerciseRow
+                                        key={rowId(ex, idx, i)}
+                                        id={rowId(ex, idx, i)}
+                                        label={ex.name}
+                                        justDropped={
+                                          justDroppedId === rowId(ex, idx, i)
+                                        }
+                                        showHandle={true}
+                                      >
+                                        <div
+                                          data-swipe-card="true"
+                                          className="p-3 rounded-xl bg-card"
+                                        >
+                                          <p className="text-sm font-semibold text-foreground truncate">
+                                            {ex.name}
+                                          </p>
+                                          <p className="text-xs text-muted-foreground">
+                                            <span className="font-mono tabular-nums">
+                                              {ex.sets}
+                                            </span>{" "}
+                                            sets ×{" "}
+                                            <span className="font-mono tabular-nums">
+                                              {formatRepTarget(ex)}
+                                            </span>{" "}
+                                            {ex.repUnit === "seconds"
+                                              ? ""
+                                              : "reps"}
+                                            {!isBW && ex.weight > 0 ? (
+                                              <>
+                                                {" · "}
+                                                <span className="font-mono tabular-nums">
+                                                  {ex.weight}
+                                                </span>
+                                                {" kg"}
+                                              </>
+                                            ) : null}
+                                          </p>
+                                          {lastPerf && (
+                                            <p className="text-xs mt-0.5 text-muted-foreground">
+                                              Last:{" "}
+                                              {ex.repUnit === "seconds" ? (
+                                                <>
+                                                  <span className="font-mono tabular-nums">
+                                                    {lastPerf.reps}
+                                                  </span>
+                                                  s
+                                                </>
+                                              ) : lastPerf.weight > 0 ? (
+                                                <>
+                                                  <span className="font-mono tabular-nums">
+                                                    {lastPerf.weight}
+                                                  </span>{" "}
+                                                  kg ×{" "}
+                                                  <span className="font-mono tabular-nums">
+                                                    {lastPerf.reps}
+                                                  </span>
+                                                </>
+                                              ) : isBW ? (
+                                                <>
+                                                  BW ×{" "}
+                                                  <span className="font-mono tabular-nums">
+                                                    {lastPerf.reps}
+                                                  </span>
+                                                </>
+                                              ) : (
+                                                <>
+                                                  — ×{" "}
+                                                  <span className="font-mono tabular-nums">
+                                                    {lastPerf.reps}
+                                                  </span>
+                                                </>
+                                              )}
+                                            </p>
+                                          )}
+                                        </div>
+                                      </SortableExerciseRow>
+                                    );
+                                  })}
+                                </div>
+                              </SortableContext>
+                            </DndContext>
+                          ) : (
+                            <div className="space-y-2">
+                              {selectedWorkout.exercises.map((ex, i) => {
+                                const isBW =
+                                  getExerciseById(ex.exerciseId)?.equipment ===
+                                  "Bodyweight";
+                                const lastPerf = lastPerformanceMap.get(
+                                  ex.exerciseId
+                                );
+                                return (
+                                  <div
+                                    key={rowId(ex, idx, i)}
+                                    data-swipe-card="true"
+                                  >
                                     <SortableExerciseRow
-                                      key={rowId(ex, idx, i)}
                                       id={rowId(ex, idx, i)}
                                       label={ex.name}
-                                      justDropped={
-                                        justDroppedId === rowId(ex, idx, i)
-                                      }
-                                      showHandle={true}
+                                      showHandle={false}
+                                      onDelete={() => removeExFromDay(idx, i)}
                                     >
-                                      <div
-                                        data-swipe-card="true"
-                                        className="p-3 rounded-xl bg-card"
-                                      >
-                                        <p className="text-sm font-semibold text-foreground truncate">
-                                          {ex.name}
-                                        </p>
-                                        <p className="text-xs text-muted-foreground">
-                                          <span className="font-mono tabular-nums">
-                                            {ex.sets}
-                                          </span>{" "}
-                                          sets ×{" "}
-                                          <span className="font-mono tabular-nums">
-                                            {formatRepTarget(ex)}
-                                          </span>{" "}
-                                          {ex.repUnit === "seconds"
-                                            ? ""
-                                            : "reps"}
-                                          {!isBW && ex.weight > 0 ? (
-                                            <>
-                                              {" · "}
-                                              <span className="font-mono tabular-nums">
-                                                {ex.weight}
-                                              </span>
-                                              {" kg"}
-                                            </>
-                                          ) : null}
-                                        </p>
-                                        {lastPerf && (
-                                          <p className="text-xs mt-0.5 text-muted-foreground">
-                                            Last:{" "}
-                                            {ex.repUnit === "seconds" ? (
-                                              <>
-                                                <span className="font-mono tabular-nums">
-                                                  {lastPerf.reps}
-                                                </span>
-                                                s
-                                              </>
-                                            ) : lastPerf.weight > 0 ? (
-                                              <>
-                                                <span className="font-mono tabular-nums">
-                                                  {lastPerf.weight}
-                                                </span>{" "}
-                                                kg ×{" "}
-                                                <span className="font-mono tabular-nums">
-                                                  {lastPerf.reps}
-                                                </span>
-                                              </>
-                                            ) : isBW ? (
-                                              <>
-                                                BW ×{" "}
-                                                <span className="font-mono tabular-nums">
-                                                  {lastPerf.reps}
-                                                </span>
-                                              </>
-                                            ) : (
-                                              <>
-                                                — ×{" "}
-                                                <span className="font-mono tabular-nums">
-                                                  {lastPerf.reps}
-                                                </span>
-                                              </>
-                                            )}
-                                          </p>
-                                        )}
-                                      </div>
-                                    </SortableExerciseRow>
-                                  );
-                                })}
-                              </div>
-                            </SortableContext>
-                          </DndContext>
-                        ) : (
-                          <div className="space-y-2">
-                            {selectedWorkout.exercises.map((ex, i) => {
-                              const isBW =
-                                getExerciseById(ex.exerciseId)?.equipment ===
-                                "Bodyweight";
-                              const lastPerf = lastPerformanceMap.get(
-                                ex.exerciseId
-                              );
-                              return (
-                                <div
-                                  key={rowId(ex, idx, i)}
-                                  data-swipe-card="true"
-                                >
-                                  <SortableExerciseRow
-                                    id={rowId(ex, idx, i)}
-                                    label={ex.name}
-                                    showHandle={false}
-                                    onDelete={() => removeExFromDay(idx, i)}
-                                  >
-                                    {/* Owner request 2026-09-02: removing an
+                                      {/* Owner request 2026-09-02: removing an
                                         exercise was reachable only by swipe or
                                         long-press. The "…" opens the same
                                         manage menu (Replace / Remove / Move)
                                         visibly; swipe and long-press stay. */}
-                                    <div className="flex items-center rounded-xl bg-card">
-                                      <button
-                                        type="button"
-                                        onClick={() =>
-                                          navigate(
-                                            `/history/exercise/${encodeURIComponent(ex.name)}`,
-                                            { state: { initialTab: "form" } }
-                                          )
-                                        }
-                                        className="flex-1 min-w-0 p-3 text-left active:scale-[0.97] transition-transform"
-                                        onTouchStart={(e) =>
-                                          handleLongPressStart(idx, i, e)
-                                        }
-                                        onTouchMove={handleLongPressCancel}
-                                        onTouchEnd={handleLongPressCancel}
-                                        onContextMenu={(e) => {
-                                          // D-LIFT-17: long-press is touch-only —
-                                          // right-click is its pointer/desktop
-                                          // equivalent for the same manage menu.
-                                          e.preventDefault();
-                                          setContextMenu({
-                                            dayIndex: idx,
-                                            exIndex: i,
-                                            x: e.clientX,
-                                            y: e.clientY,
-                                          });
-                                        }}
-                                      >
-                                        <p className="text-sm font-semibold text-foreground truncate">
-                                          {ex.name}
-                                        </p>
-                                        <p className="text-xs text-muted-foreground">
-                                          <span className="font-mono tabular-nums">
-                                            {ex.sets}
-                                          </span>{" "}
-                                          sets ×{" "}
-                                          <span className="font-mono tabular-nums">
-                                            {formatRepTarget(ex)}
-                                          </span>{" "}
-                                          {ex.repUnit === "seconds"
-                                            ? ""
-                                            : "reps"}
-                                          {!isBW && ex.weight > 0 ? (
-                                            <>
-                                              {" · "}
-                                              <span className="font-mono tabular-nums">
-                                                {ex.weight}
-                                              </span>
-                                              {" kg"}
-                                            </>
-                                          ) : null}
-                                        </p>
-                                        {lastPerf && (
-                                          <p className="text-xs mt-0.5 text-muted-foreground">
-                                            Last:{" "}
-                                            {ex.repUnit === "seconds" ? (
-                                              <>
-                                                <span className="font-mono tabular-nums">
-                                                  {lastPerf.reps}
-                                                </span>
-                                                s
-                                              </>
-                                            ) : lastPerf.weight > 0 ? (
-                                              <>
-                                                <span className="font-mono tabular-nums">
-                                                  {lastPerf.weight}
-                                                </span>{" "}
-                                                kg ×{" "}
-                                                <span className="font-mono tabular-nums">
-                                                  {lastPerf.reps}
-                                                </span>
-                                              </>
-                                            ) : (
-                                              <>
-                                                <span className="font-mono tabular-nums">
-                                                  {lastPerf.reps}
-                                                </span>{" "}
-                                                reps
-                                              </>
-                                            )}
+                                      <div className="flex items-center rounded-xl bg-card">
+                                        <button
+                                          type="button"
+                                          onClick={() =>
+                                            navigate(
+                                              `/history/exercise/${encodeURIComponent(ex.name)}`,
+                                              { state: { initialTab: "form" } }
+                                            )
+                                          }
+                                          className="flex-1 min-w-0 p-3 text-left active:scale-[0.97] transition-transform"
+                                          onTouchStart={(e) =>
+                                            handleLongPressStart(idx, i, e)
+                                          }
+                                          onTouchMove={handleLongPressCancel}
+                                          onTouchEnd={handleLongPressCancel}
+                                          onContextMenu={(e) => {
+                                            // D-LIFT-17: long-press is touch-only —
+                                            // right-click is its pointer/desktop
+                                            // equivalent for the same manage menu.
+                                            e.preventDefault();
+                                            setContextMenu({
+                                              dayIndex: idx,
+                                              exIndex: i,
+                                              x: e.clientX,
+                                              y: e.clientY,
+                                            });
+                                          }}
+                                        >
+                                          <p className="text-sm font-semibold text-foreground truncate">
+                                            {ex.name}
                                           </p>
-                                        )}
-                                        {ex.notes && (
-                                          <p className="text-xs mt-1 text-muted-foreground flex items-start gap-1">
-                                            <Info className="size-3 shrink-0 mt-0.5" />
-                                            <span>{ex.notes}</span>
+                                          <p className="text-xs text-muted-foreground">
+                                            <span className="font-mono tabular-nums">
+                                              {ex.sets}
+                                            </span>{" "}
+                                            sets ×{" "}
+                                            <span className="font-mono tabular-nums">
+                                              {formatRepTarget(ex)}
+                                            </span>{" "}
+                                            {ex.repUnit === "seconds"
+                                              ? ""
+                                              : "reps"}
+                                            {!isBW && ex.weight > 0 ? (
+                                              <>
+                                                {" · "}
+                                                <span className="font-mono tabular-nums">
+                                                  {ex.weight}
+                                                </span>
+                                                {" kg"}
+                                              </>
+                                            ) : null}
                                           </p>
-                                        )}
-                                      </button>
-                                      <IconButton
-                                        aria-label={`More options for ${ex.name}`}
-                                        icon={
-                                          <MoreHorizontal className="size-5" />
-                                        }
-                                        variant="ghost"
-                                        size="md"
-                                        className="mr-1 text-muted-foreground"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          const r = (
-                                            e.currentTarget as HTMLElement
-                                          ).getBoundingClientRect();
-                                          setContextMenu({
-                                            dayIndex: idx,
-                                            exIndex: i,
-                                            x: r.left + r.width / 2,
-                                            y: r.bottom + 4,
-                                          });
-                                        }}
-                                      />
-                                    </div>
-                                  </SortableExerciseRow>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        )}
+                                          {lastPerf && (
+                                            <p className="text-xs mt-0.5 text-muted-foreground">
+                                              Last:{" "}
+                                              {ex.repUnit === "seconds" ? (
+                                                <>
+                                                  <span className="font-mono tabular-nums">
+                                                    {lastPerf.reps}
+                                                  </span>
+                                                  s
+                                                </>
+                                              ) : lastPerf.weight > 0 ? (
+                                                <>
+                                                  <span className="font-mono tabular-nums">
+                                                    {lastPerf.weight}
+                                                  </span>{" "}
+                                                  kg ×{" "}
+                                                  <span className="font-mono tabular-nums">
+                                                    {lastPerf.reps}
+                                                  </span>
+                                                </>
+                                              ) : (
+                                                <>
+                                                  <span className="font-mono tabular-nums">
+                                                    {lastPerf.reps}
+                                                  </span>{" "}
+                                                  reps
+                                                </>
+                                              )}
+                                            </p>
+                                          )}
+                                          {ex.notes && (
+                                            <p className="text-xs mt-1 text-muted-foreground flex items-start gap-1">
+                                              <Info className="size-3 shrink-0 mt-0.5" />
+                                              <span>{ex.notes}</span>
+                                            </p>
+                                          )}
+                                        </button>
+                                        <IconButton
+                                          aria-label={`More options for ${ex.name}`}
+                                          icon={
+                                            <MoreHorizontal className="size-5" />
+                                          }
+                                          variant="ghost"
+                                          size="md"
+                                          className="mr-1 text-muted-foreground"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            const r = (
+                                              e.currentTarget as HTMLElement
+                                            ).getBoundingClientRect();
+                                            setContextMenu({
+                                              dayIndex: idx,
+                                              exIndex: i,
+                                              x: r.left + r.width / 2,
+                                              y: r.bottom + 4,
+                                            });
+                                          }}
+                                        />
+                                      </div>
+                                    </SortableExerciseRow>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
 
-                        {/* ── + Add exercise (not on completed/skipped) ── */}
-                        {status !== "completed" && status !== "skipped" && (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setAddPickerDayIndex(idx);
-                              setShowAddPicker(true);
-                            }}
-                            className="w-full py-3 text-center active:scale-[0.97] transition-all flex items-center justify-center gap-2 bg-card rounded-xl text-lifting-strong font-medium text-sm"
-                          >
-                            <Plus className="size-4" /> Add exercise
-                          </button>
-                        )}
-                      </ExerciseListDisclosure>
+                          {/* ── + Add exercise (not on completed/skipped) ── */}
+                          {status !== "completed" && status !== "skipped" && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setAddPickerDayIndex(idx);
+                                setShowAddPicker(true);
+                              }}
+                              className="w-full py-3 text-center active:scale-[0.97] transition-all flex items-center justify-center gap-2 bg-card rounded-xl text-lifting-strong font-medium text-sm"
+                            >
+                              <Plus className="size-4" /> Add exercise
+                            </button>
+                          )}
+                        </div>
+                      )}
 
                       {/* ── Completed Session Summary ── */}
                       {status === "completed" && (
