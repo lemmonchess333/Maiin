@@ -1,7 +1,7 @@
 /**
  * Cut a screen recording into the Pro demo loop the offer page plays.
  *
- * The offer page (`ProDemoVideo`) plays whatever `proDemoVideo.ts` lists
+ * The offer page (`ProDemoVideo`) plays whatever `proDemoVideoManifest.ts` lists
  * from `public/pro-demo/`. The recording it wants is the real app doing
  * the thing Pro sells — Food, the camera, a real plate, the result, then
  * Home's target — about ten seconds, recorded on a phone. This script
@@ -119,7 +119,7 @@ if (total > BUDGET_BYTES) {
   );
 }
 console.log(`
-Now list them in src/components/paywall/proDemoVideo.ts:
+Now list them in src/components/paywall/proDemoVideoManifest.ts:
 
   export const PRO_DEMO_SOURCES: readonly ProDemoSource[] = [
     { path: "pro-demo/scan.mp4", type: "video/mp4" },

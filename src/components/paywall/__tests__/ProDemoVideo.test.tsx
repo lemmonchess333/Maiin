@@ -20,7 +20,7 @@ vi.mock("@/hooks/useReducedMotion", () => ({
 
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import ProDemoVideo from "../ProDemoVideo";
-import { PRO_DEMO_SOURCES, publicUrl } from "../proDemoVideo";
+import { PRO_DEMO_SOURCES, publicUrl } from "../proDemoVideoManifest";
 
 const SOURCES = [
   { path: "pro-demo/scan.mp4", type: "video/mp4" as const },
