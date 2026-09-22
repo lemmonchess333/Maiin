@@ -75,48 +75,52 @@ test("usual meals are visible and offline adds can be undone", async ({
   await expect(composer).not.toHaveValue("");
   const before = await request.get(`${DOCS}/users/${uid}/meals`, { headers });
   expect((await before.json()).documents ?? []).toHaveLength(0);
-  const yesterday = new Date();
-  yesterday.setDate(yesterday.getDate() - 1);
-  const date = `${yesterday.getFullYear()}-${String(yesterday.getMonth() + 1).padStart(2, "0")}-${String(yesterday.getDate()).padStart(2, "0")}`;
-  for (const slot of ["breakfast", "lunch", "dinner", "snacks"]) {
-    const seed = await request.patch(
-      `${DOCS}/users/${uid}/meals/usual-${slot}`,
-      {
-        headers,
-        data: {
-          fields: {
-            date: { stringValue: date },
-            meal: { stringValue: slot },
-            foodName: { stringValue: "Oats and berries" },
-            createdAt: { timestampValue: yesterday.toISOString() },
-            confidence: { stringValue: "manual" },
-            totalCalories: { integerValue: "420" },
-            totalProtein: { integerValue: "20" },
-            totalCarbs: { integerValue: "50" },
-            totalFat: { integerValue: "15" },
-            items: {
-              arrayValue: {
-                values: [
-                  {
-                    mapValue: {
-                      fields: {
-                        name: { stringValue: "Oats and berries" },
-                        portionSize: { stringValue: "80 g" },
-                        calories: { integerValue: "420" },
-                        protein: { integerValue: "20" },
-                        carbs: { integerValue: "50" },
-                        fat: { integerValue: "15" },
+  // Two earlier days per slot: "Your usual" needs the meal to have repeated
+  // (usualMeal.ts, USUAL_MIN_LOGS). One log reads "Last time at …".
+  for (const daysAgo of [1, 2]) {
+    const day = new Date();
+    day.setDate(day.getDate() - daysAgo);
+    const date = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, "0")}-${String(day.getDate()).padStart(2, "0")}`;
+    for (const slot of ["breakfast", "lunch", "dinner", "snacks"]) {
+      const seed = await request.patch(
+        `${DOCS}/users/${uid}/meals/usual-${slot}-${daysAgo}`,
+        {
+          headers,
+          data: {
+            fields: {
+              date: { stringValue: date },
+              meal: { stringValue: slot },
+              foodName: { stringValue: "Oats and berries" },
+              createdAt: { timestampValue: day.toISOString() },
+              confidence: { stringValue: "manual" },
+              totalCalories: { integerValue: "420" },
+              totalProtein: { integerValue: "20" },
+              totalCarbs: { integerValue: "50" },
+              totalFat: { integerValue: "15" },
+              items: {
+                arrayValue: {
+                  values: [
+                    {
+                      mapValue: {
+                        fields: {
+                          name: { stringValue: "Oats and berries" },
+                          portionSize: { stringValue: "80 g" },
+                          calories: { integerValue: "420" },
+                          protein: { integerValue: "20" },
+                          carbs: { integerValue: "50" },
+                          fat: { integerValue: "15" },
+                        },
                       },
                     },
-                  },
-                ],
+                  ],
+                },
               },
             },
           },
-        },
-      }
-    );
-    expect(seed.ok()).toBe(true);
+        }
+      );
+      expect(seed.ok()).toBe(true);
+    }
   }
   await page.reload();
   await expect(page.getByText(/^Your usual at /)).toBeVisible();

@@ -279,15 +279,23 @@ export default function MacroColumn({
       {/* Progress bar */}
       {/* Track — inset shadow reads as a recessed channel cut into the
           white card surface, with the coloured fill sitting inside the
-          groove. Shadow is deliberately subtle (0.06 opacity). At
-          empty (consumed === 0) the whole track fades to reduce visual
-          noise without causing a layout jump on first log. */}
+          groove. Shadow is deliberately subtle (0.06 opacity). An EMPTY
+          bar fades the whole track to reduce visual noise without
+          causing a layout jump on first log.
+
+          Empty means the fill, not the intake. The fade used to key on
+          `consumed === 0`, which is an empty bar only in EATEN mode. In
+          LEFT mode — the default — nothing eaten is a FULL bar, so every
+          morning opened on three macro-coloured bars dimmed to 40%
+          (maroon, olive, dark green on the dark card), and the first log
+          then brightened them as they drained. */}
       <div
+        data-macro-bar=""
         className="relative w-full mt-2.5 h-1.5 rounded-full overflow-hidden transition-opacity duration-300"
         style={{
           background: "hsl(var(--muted))",
           boxShadow: "inset 0 1px 2px rgb(0 0 0 / 0.06)",
-          opacity: consumed === 0 ? 0.4 : 1,
+          opacity: barFillPct === 0 ? 0.4 : 1,
         }}
       >
         <motion.div

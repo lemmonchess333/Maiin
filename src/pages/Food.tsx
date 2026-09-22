@@ -6,6 +6,7 @@ import {
   useRef,
   useMemo,
   useCallback,
+  useId,
   Suspense,
 } from "react";
 import { lazyRetry } from "@/lib/lazyRetry";
@@ -32,7 +33,7 @@ import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { Timestamp } from "firebase/firestore";
 import { createMealEntry, notifyMealsLogged } from "@/lib/mealEntry";
 import { copySelectedMeals, type MealCopySelection } from "@/lib/mealCopy";
-import { usualMeal } from "@/lib/usualMeal";
+import { usualMeal, usualMealHeading, usualMealPortion } from "@/lib/usualMeal";
 import { duplicatedServingPayload } from "@/lib/servingEdit";
 import { parseFoodText, getFoodSuggestions } from "@/lib/nlFoodParser";
 import type { ParsedFood, FoodSuggestion } from "@/lib/nlFoodParser";
@@ -1568,6 +1569,8 @@ export default function Food() {
     () => usualMeal(meals, usualSlot, selectedDate),
     [meals, usualSlot, selectedDate]
   );
+  const usualHeadingId = useId();
+  const usualPortion = usual && usualMealPortion(usual);
   const [copyPreviewOpen, setCopyPreviewOpen] = useState(false);
   const [portionMeal, setPortionMeal] = useState<QuickAddItem | null>(null);
   const handleQuickMealAdd = async (
@@ -1885,10 +1888,22 @@ export default function Food() {
            and figures share a baseline row — the name truncates, the
            figures never do, because the figures are what make the row
            tappable without thinking. The button row stays 44px: that is
-           the touch-target floor. */
-        <Card size="compact" className="space-y-1" aria-label="Your usual meal">
-          <p className="text-caption leading-tight text-muted-foreground">
-            Your usual at {usualSlot}
+           the touch-target floor.
+
+           The group takes its name FROM the visible heading, so the two
+           cannot disagree: a fixed "Your usual meal" label on a bare div
+           was both unannounced and, for a meal logged once, untrue. */
+        <Card
+          size="compact"
+          className="space-y-1"
+          role="group"
+          aria-labelledby={usualHeadingId}
+        >
+          <p
+            id={usualHeadingId}
+            className="text-caption leading-tight text-muted-foreground"
+          >
+            {usualMealHeading(usual, usualSlot)}
           </p>
           <div className="flex items-baseline justify-between gap-2">
             <p className="text-base font-semibold truncate">{usual.name}</p>
@@ -1896,7 +1911,7 @@ export default function Food() {
               <span className="font-mono tabular-nums">
                 {Math.round(usual.cal)}
               </span>{" "}
-              kcal · {usual.portionSize}
+              kcal{usualPortion && ` · ${usualPortion}`}
             </p>
           </div>
           <div className="flex gap-2">
