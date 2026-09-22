@@ -6,7 +6,7 @@ import {
   PRO_DEMO_SOURCES,
   publicUrl,
   type ProDemoSource,
-} from "./proDemoVideo";
+} from "./proDemoVideoManifest";
 
 /**
  * ProDemoVideo — the app, recorded, in a device frame.
