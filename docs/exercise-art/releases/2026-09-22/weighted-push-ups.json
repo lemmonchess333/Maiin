@@ -1,0 +1,170 @@
+{
+  "exerciseId": "weighted-push-ups",
+  "version": "anatomy-v3-2026-09-22",
+  "width": 1536,
+  "height": 1024,
+  "decision": "approved",
+  "reviewer": "Codex visual and implementation review",
+  "reviewedAt": "2026-09-22T09:38:18.996Z",
+  "reference": {
+    "path": "form-frames/weighted-push-ups/1.webp",
+    "sha256": "621f3efee49e900e99a31fb5d3a9c4d8ab08f93bb4479d00c03427781f41b9d7"
+  },
+  "cueSha256": "9610d9d2c2cbd5f748b61579341543eb7f5a41ddc23a5f0edf4473375041eb17",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Compared with canonical athlete-anatomy-v3: bald faceless white/grey anatomical figure, featureless pelvic centre, white trainers and fine outlines. Same figure retained through all poses."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Same 1536x1024 canvas and three-quarter view throughout. Both fixed sole-front intersections drift at most one native pixel; their measured spans are unchanged."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Inspected all three native poses and all six in the real player. Continuous limbs, hands, wrists and ankles; no extra limbs or clipping. Torso and legs lower together and return along the same sequence."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "One modest plate on the upper back throughout. Its changing projected ellipse follows torso rotation; no plate additions, detached plate or visible sliding off the back."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Both palms and toes remain planted visually, and the plate stays supported on the upper back. Sole measurements are attached. The near finger threshold differs by two native pixels; no visible sliding at the reviewed mobile scale. Palm bounding-box widths were not treated as invariant because those ROIs include the rotating wrist."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "High plank lowers through the midpoint into a low push-up and presses back without hip sag or plate separation. Elbows bend behind the hands. This is qualitative illustration review, not a calibrated measurement of joint angles or floor distance."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Pectorals retain the strongest purple, triceps and anterior deltoids lighter lilac, core a pale tint. No activation reversal on return; repeated poses are byte-identical pairs."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Each exact weighted-push-ups beat matches its image: brace, lower, pause low, hold, press, reset. Plate placement/stability cues belong to this variation rather than the generic push-up set."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "Real ExerciseFormFrames manually stepped 1→2→3→4→5→6→1; automatic advancement and pause observed. Frames 4=3, 5=2, 6=1 are intentional pause/return reuse."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "Real ExerciseFormFrames with repository CSS/fonts at browser viewport 390x844: all six frames and loop visually inspected in light theme; captions readable, no clipping or horizontal overflow, all controls at least 44px high."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "Same real component at 390x844 in actual dark theme: all six frames and loop inspected; captions readable, no clipping or horizontal overflow. Screenshots and accessibility evidence are preserved in the Codex task tool results."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/weighted-push-ups/1.webp",
+      "sha256": "621f3efee49e900e99a31fb5d3a9c4d8ab08f93bb4479d00c03427781f41b9d7",
+      "anchors": {
+        "farSoleFront": {
+          "x": 1120,
+          "y": 718
+        },
+        "nearSoleFront": {
+          "x": 1291,
+          "y": 748
+        }
+      },
+      "invariantDimensions": {
+        "farSoleSpanAtContactRow": 94,
+        "nearSoleSpanAtContactRow": 106
+      }
+    },
+    {
+      "path": "form-frames/weighted-push-ups/2.webp",
+      "sha256": "71f41f9d3e5e6fb3e55816d227414128d523a5861c874c9f04be9d365dcbfb0b",
+      "anchors": {
+        "farSoleFront": {
+          "x": 1119,
+          "y": 718
+        },
+        "nearSoleFront": {
+          "x": 1290,
+          "y": 748
+        }
+      },
+      "invariantDimensions": {
+        "farSoleSpanAtContactRow": 94,
+        "nearSoleSpanAtContactRow": 106
+      }
+    },
+    {
+      "path": "form-frames/weighted-push-ups/3.webp",
+      "sha256": "b4b0e55eab9a0ce9354373797c40a9ac708103867ab082b5a63cd5548d56913c",
+      "anchors": {
+        "farSoleFront": {
+          "x": 1119,
+          "y": 718
+        },
+        "nearSoleFront": {
+          "x": 1290,
+          "y": 748
+        }
+      },
+      "invariantDimensions": {
+        "farSoleSpanAtContactRow": 94,
+        "nearSoleSpanAtContactRow": 106
+      }
+    },
+    {
+      "path": "form-frames/weighted-push-ups/4.webp",
+      "sha256": "b4b0e55eab9a0ce9354373797c40a9ac708103867ab082b5a63cd5548d56913c",
+      "anchors": {
+        "farSoleFront": {
+          "x": 1119,
+          "y": 718
+        },
+        "nearSoleFront": {
+          "x": 1290,
+          "y": 748
+        }
+      },
+      "invariantDimensions": {
+        "farSoleSpanAtContactRow": 94,
+        "nearSoleSpanAtContactRow": 106
+      }
+    },
+    {
+      "path": "form-frames/weighted-push-ups/5.webp",
+      "sha256": "71f41f9d3e5e6fb3e55816d227414128d523a5861c874c9f04be9d365dcbfb0b",
+      "anchors": {
+        "farSoleFront": {
+          "x": 1119,
+          "y": 718
+        },
+        "nearSoleFront": {
+          "x": 1290,
+          "y": 748
+        }
+      },
+      "invariantDimensions": {
+        "farSoleSpanAtContactRow": 94,
+        "nearSoleSpanAtContactRow": 106
+      }
+    },
+    {
+      "path": "form-frames/weighted-push-ups/6.webp",
+      "sha256": "621f3efee49e900e99a31fb5d3a9c4d8ab08f93bb4479d00c03427781f41b9d7",
+      "anchors": {
+        "farSoleFront": {
+          "x": 1120,
+          "y": 718
+        },
+        "nearSoleFront": {
+          "x": 1291,
+          "y": 748
+        }
+      },
+      "invariantDimensions": {
+        "farSoleSpanAtContactRow": 94,
+        "nearSoleSpanAtContactRow": 106
+      }
+    }
+  ]
+}

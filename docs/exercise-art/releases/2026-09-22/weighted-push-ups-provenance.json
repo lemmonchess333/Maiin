@@ -1,0 +1,44 @@
+{
+  "modelPath": "Built-in image_gen; unchanged model path",
+  "canonicalReference": {
+    "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+  },
+  "sourceFrames": [
+    {
+      "frame": 1,
+      "sha256": "a63d15a1da4db4cc26fe9d9ce658087d951d2cb276bb69b3e9739bbe8dcd5e58"
+    },
+    {
+      "frame": 2,
+      "sha256": "29344a02e910401be41614e89d467cc4cd981e7ca8462009d926c12abc4206ac"
+    },
+    {
+      "frame": 3,
+      "sha256": "e5152e55cedcdb9dae05de0cf0e89359971d875eb3807e56a95637c2fe4e143f"
+    },
+    {
+      "frame": 4,
+      "sha256": "e5152e55cedcdb9dae05de0cf0e89359971d875eb3807e56a95637c2fe4e143f"
+    },
+    {
+      "frame": 5,
+      "sha256": "29344a02e910401be41614e89d467cc4cd981e7ca8462009d926c12abc4206ac"
+    },
+    {
+      "frame": 6,
+      "sha256": "a63d15a1da4db4cc26fe9d9ce658087d951d2cb276bb69b3e9739bbe8dcd5e58"
+    }
+  ],
+  "conversion": "Sharp lossless WebP at native size. Decoded RGB bytes checked equal to each reviewed PNG.",
+  "reuse": {
+    "4": 3,
+    "5": 2,
+    "6": 1
+  },
+  "measurementMethod": "Native RGB scanline intersection with white/grey shoe sole: min RGB >100 and channel spread <35. Two fixed sole cross-sections measured at the same rows in all frames. This measures sole stability only; it does not certify palm geometry, whole-body proportions, plate physics or technique.",
+  "scanlines": {
+    "farSole": [1100, 1280, 718],
+    "nearSole": [1280, 1460, 748]
+  }
+}

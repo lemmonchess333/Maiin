@@ -1,4 +1,4 @@
-/** Exact cues for the owner-authorized September release. See docs/exercise-art/releases. */
+/** Exact cues for released artwork. See docs/exercise-art/releases. */
 const placard = (
   id: string,
   primary: string[],
@@ -15,6 +15,19 @@ const placard = (
 });
 
 export const RELEASED_FORM_PLACARDS = {
+  "weighted-push-ups": placard(
+    "weighted-push-ups",
+    ["Pectorals"],
+    ["Triceps", "Front deltoids", "Core"],
+    [
+      [0, "Brace at the top", "Brace straight; plate centred on upper back."],
+      [0.5, "Lower together", "Lower together; elbows angled back about 45°."],
+      [1, "Pause above the floor", "Stop with your chest just above floor."],
+      [1, "Hold control", "Keep your core tight and weight still."],
+      [0.5, "Press up", "Press up without letting your hips sag."],
+      [0, "Reset at the top", "Finish arms extended; keep the plate stable."],
+    ]
+  ),
   "db-curl": placard(
     "db-curl",
     ["Biceps"],
