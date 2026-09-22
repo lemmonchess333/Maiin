@@ -37,7 +37,7 @@ import { usualMeal, usualMealHeading, usualMealPortion } from "@/lib/usualMeal";
 import { duplicatedServingPayload } from "@/lib/servingEdit";
 import { parseFoodText, getFoodSuggestions } from "@/lib/nlFoodParser";
 import type { ParsedFood, FoodSuggestion } from "@/lib/nlFoodParser";
-import { RotateCcw, X } from "lucide-react";
+import { Pencil, RotateCcw, X } from "lucide-react";
 import IconButton from "@/components/ui/IconButton";
 const FoodAnalyzer = lazyRetry(() => import("@/components/FoodAnalyzer"));
 const ProModal = lazyRetry(() => import("@/components/ProModal"));
@@ -1882,54 +1882,51 @@ export default function Food() {
           its Log button ends above 760px at 375px wide, and the calorie
           hero above it leaves only just enough room. Keep it first. */}
       {usual && (
-        /* Compact by requirement, not by taste: this row has to clear the
-           fold at 375px (see the ordering note above), and a separate line
-           each for the name, the kcal and the portion does not fit. Name
-           and figures share a baseline row — the name truncates, the
-           figures never do, because the figures are what make the row
-           tappable without thinking. The button row stays 44px: that is
-           the touch-target floor.
+        /* One row: what and how much on the left, Edit and Log on the
+           right. It sits above the composer and, on a 390x844 phone,
+           decides whether the composer is on screen at all, so it takes
+           the least height that keeps the name whole: the name gets its
+           own line rather than sharing one with the figures, where it
+           truncated first. Edit is the pencil the Quick Add rows already
+           use for the same sheet. Both controls stay 44px.
 
            The group takes its name FROM the visible heading, so the two
-           cannot disagree: a fixed "Your usual meal" label on a bare div
-           was both unannounced and, for a meal logged once, untrue. */
+           cannot disagree. */
         <Card
           size="compact"
-          className="space-y-1"
+          className="flex items-center gap-2"
           role="group"
           aria-labelledby={usualHeadingId}
         >
-          <p
-            id={usualHeadingId}
-            className="text-caption leading-tight text-muted-foreground"
-          >
-            {usualMealHeading(usual, usualSlot)}
-          </p>
-          <div className="flex items-baseline justify-between gap-2">
-            <p className="text-base font-semibold truncate">{usual.name}</p>
-            <p className="text-xs text-muted-foreground shrink-0">
+          <div className="min-w-0 flex-1">
+            <p
+              id={usualHeadingId}
+              className="text-micro leading-tight text-muted-foreground"
+            >
+              {usualMealHeading(usualSlot)}
+            </p>
+            <p className="text-base font-semibold leading-snug truncate">
+              {usual.name}
+            </p>
+            <p className="text-xs leading-tight text-muted-foreground truncate">
               <span className="font-mono tabular-nums">
                 {Math.round(usual.cal)}
               </span>{" "}
               kcal{usualPortion && ` · ${usualPortion}`}
             </p>
           </div>
-          <div className="flex gap-2">
-            <Button
-              disabled={quickAdding !== null}
-              onClick={() => void handleQuickMealAdd(usual)}
-            >
-              Log
-            </Button>
-            <Button
-              variant="ghost"
-              aria-label="Adjust portion or meal"
-              disabled={quickAdding !== null}
-              onClick={() => setPortionMeal(usual)}
-            >
-              Edit
-            </Button>
-          </div>
+          <IconButton
+            aria-label="Adjust portion or meal"
+            disabled={quickAdding !== null}
+            onClick={() => setPortionMeal(usual)}
+            icon={<Pencil className="size-4" />}
+          />
+          <Button
+            disabled={quickAdding !== null}
+            onClick={() => void handleQuickMealAdd(usual)}
+          >
+            Log
+          </Button>
         </Card>
       )}
 

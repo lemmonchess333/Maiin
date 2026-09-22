@@ -75,9 +75,10 @@ test("usual meals are visible and offline adds can be undone", async ({
   await expect(composer).not.toHaveValue("");
   const before = await request.get(`${DOCS}/users/${uid}/meals`, { headers });
   expect((await before.json()).documents ?? []).toHaveLength(0);
-  // Two earlier days per slot: "Your usual" needs the meal to have repeated
-  // (usualMeal.ts, USUAL_MIN_LOGS). One log reads "Last time at …".
-  for (const daysAgo of [1, 2]) {
+  // Three earlier days per slot: the smallest history that is a usual
+  // (usualMeal.ts — USUAL_MIN_DAYS of the last USUAL_WINDOW_DAYS). With
+  // fewer, there is no row at all.
+  for (const daysAgo of [1, 2, 3]) {
     const day = new Date();
     day.setDate(day.getDate() - daysAgo);
     const date = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, "0")}-${String(day.getDate()).padStart(2, "0")}`;
