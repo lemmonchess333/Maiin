@@ -41,10 +41,9 @@ test.describe("back-to-dismiss (web)", () => {
     await expect(page.locator("h1", { hasText: "Food" })).toBeVisible();
     const urlBefore = page.url();
 
-    // Open an overlay from the Food composer's scan control.
-    // Both states' labels start "Scan your meal" — the locked one adds
-    // "— upgrade for unlimited" — so this matches either.
-    await page.getByLabel(/Scan your meal/).click();
+    // Open an overlay from the Food composer's Scan button. It opens the
+    // scanner for every account; a free one lands on its Barcode tab.
+    await page.getByRole("button", { name: "Scan a meal" }).click();
     await expect(page.getByRole("dialog").first()).toBeVisible();
 
     // Browser back must dismiss the overlay, NOT navigate off the Food tab.

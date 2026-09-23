@@ -170,15 +170,15 @@ values in light mode). Use the raw values only for dots/tints/bars.
 
 ### 3e. Semantic colour meanings are fixed
 
-| Colour              | Always means                                                                          |
-| ------------------- | ------------------------------------------------------------------------------------- |
-| Purple `#7B72E9`    | Brand / lifting                                                                       |
-| Coral `#D4637A`     | Running / vitals / recovery                                                           |
-| Orange `#D9884E`    | Nutrition / calories / macros                                                         |
-| Teal `#52A3BD`      | Hydration / water                                                                     |
-| Green `#4DB872`     | Positive (streak, PR, success)                                                        |
-| Coral-red `#FF6B4A` | The Food-page **Scan** affordance only — the composer camera icon (`THEME.food.scan`) |
-| Amber `#D97706`     | Warning _banners_ only (`THEME.amber`) — distinct from nutrition orange               |
+| Colour              | Always means                                                                                                                                                                                                          |
+| ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Purple `#7B72E9`    | Brand / lifting                                                                                                                                                                                                       |
+| Coral `#D4637A`     | Running / vitals / recovery                                                                                                                                                                                           |
+| Orange `#D9884E`    | Nutrition / calories / macros                                                                                                                                                                                         |
+| Teal `#52A3BD`      | Hydration / water                                                                                                                                                                                                     |
+| Green `#4DB872`     | Positive (streak, PR, success)                                                                                                                                                                                        |
+| Coral-red `#FF6B4A` | Scanning, inside the scanner only — the selected tab and the shutter ring (`THEME.food.scan`), and the scan art in the Pro preview. The Food page's Scan button is food orange (owner call, CLAUDE.md Button mapping) |
+| Amber `#D97706`     | Warning _banners_ only (`THEME.amber`) — distinct from nutrition orange                                                                                                                                               |
 
 Never repurpose one of these for an unrelated feature.
 

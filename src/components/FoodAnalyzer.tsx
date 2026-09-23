@@ -17,7 +17,10 @@ import { safeNum } from "@/lib/foodParseHelpers";
 import { toast } from "@/lib/toast";
 import { haptic } from "@/lib/haptic";
 import { isPhotoShareSupported, sharePhotoToLibrary } from "@/lib/sharePhoto";
-import FoodCameraModal, { type ScanFailureKind } from "./FoodCameraModal";
+import FoodCameraModal, {
+  type PhotoLock,
+  type ScanFailureKind,
+} from "./FoodCameraModal";
 import MealMacroBar from "./food/MealMacroBar";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Spinner } from "@/components/ui/Spinner";
@@ -53,6 +56,9 @@ interface Props {
      when omitted the aggregate check is skipped (parent still
      loading targets, or caller doesn't want the gate). */
   effectiveDailyTarget?: number;
+  /** Photo scanning is not on this account's tier: the scanner opens on
+   *  Barcode and its photo tabs carry the Pro offer. See PhotoLock. */
+  photoLock?: PhotoLock | null;
 }
 
 type MealResult = {
@@ -147,6 +153,7 @@ export default function FoodAnalyzer({
   onRequestTypedInput,
   onRequestManualLog,
   effectiveDailyTarget,
+  photoLock = null,
 }: Props) {
   const uid = useUid();
   const { addFavourite } = useFoodFavourites();
@@ -780,6 +787,7 @@ export default function FoodAnalyzer({
         }}
         onCaptureBase64={onCaptureBase64}
         onBarcodeDetected={onBarcodeDetected}
+        photoLock={photoLock}
         loading={showLoading}
         locked={scanLocked}
         failure={scanFailure}

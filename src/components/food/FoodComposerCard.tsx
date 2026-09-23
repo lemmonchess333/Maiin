@@ -1,6 +1,7 @@
 import type { ReactNode, Ref, RefObject } from "react";
 import SegmentedControl from "@/components/ui/SegmentedControl";
-import { Camera, Lock, PenLine, SendHorizontal } from "lucide-react";
+import { Camera, PenLine, SendHorizontal } from "lucide-react";
+import Button from "@/components/ui/Button";
 import { THEME } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import { haptic } from "@/lib/haptic";
@@ -20,7 +21,8 @@ import { MEAL_ORDER, MEAL_LABELS, type MealKey } from "./mealConstants";
    FoodComposerCard doesn't pull in the hook itself. */
 interface ScanOverrides {
   onClick: () => void;
-  /** Quota-exhausted upsell state — drives ScanMealButton's locked look. */
+  /** No photo scans on this tier. The button looks the same either way;
+   *  the page hands this to the scanner, which opens on Barcode. */
   locked?: boolean;
 }
 
@@ -28,7 +30,7 @@ interface ScanUsageSnapshot {
   loading: boolean;
   remaining: number;
   /** Per-tier cap for the action. 0 = the action is Pro-only for this
-   *  tier (not a consumed quota) — the locked scan icon carries that
+   *  tier (not a consumed quota) — the scanner's photo tabs carry that
    *  gate, so the quota caption must NOT render for it. */
   limit: number;
   isUnlimited: boolean;
@@ -90,8 +92,9 @@ interface FoodComposerCardProps {
 /**
  * The Food page's input surface, in the order a person acts: the meal
  * pills (which meal), then the NL textarea (what) with the manual-entry
- * pencil leading it and the scan icon + send button trailing, then the
- * suggestions dropdown and the conditional quota caption / Pro hint.
+ * pencil leading it, the send button trailing and the Scan button beside
+ * it, then the suggestions dropdown and the conditional quota caption /
+ * Pro hint.
  *
  * It was one sentence in three places — "Adding to Snacks…" in
  * the field, the meal 50px below under an ADD TO caption, and an
@@ -170,135 +173,133 @@ function FoodComposerCard({
         onChange={onTargetMeal}
       />
       <div className="relative">
-        {/* The pencil is the manual-entry control — a 44px button
-            leading the field, where it had been a decorative glyph
-            beside a ghost "Enter manually" button two rows down. The
-            dropdown's no-results row still offers the same path. */}
-        <button
-          type="button"
-          onClick={() => {
-            haptic();
-            setSuggestionsActive(false);
-            onManualOpen();
-          }}
-          aria-label="Enter manually"
-          className={cn(
-            "absolute left-0 top-1/2 -translate-y-1/2 size-11 inline-flex items-center justify-center rounded-lg active:scale-90 transition-all",
-            inputFocused ? "" : "text-muted-foreground"
-          )}
-          style={inputFocused ? { color: THEME.semantic.nutrition } : undefined}
-        >
-          <PenLine className="size-4" />
-        </button>
-        <textarea
-          ref={inputRef}
-          value={nlInput}
-          onChange={(e) => setNlInput(e.target.value)}
-          onFocus={() => {
-            setSuggestionsActive(true);
-            setInputFocused(true);
-          }}
-          onBlur={() => {
-            setInputFocused(false);
-            setTimeout(() => setSuggestionsActive(false), 200);
-          }}
-          onKeyDown={(e) => {
-            // Return / Enter submits. Two-tap confirm when the
-            // suggestion dropdown is active so the parser doesn't
-            // fire while the user is still mid-selection — first
-            // tap dismisses, second tap sends. Mobile-first: no
-            // Shift+Enter newline / Escape branch since neither
-            // exists on iOS/Android software keyboards.
-            if (e.key !== "Enter") return;
-            e.preventDefault();
-            if (showSuggestions) {
-              setSuggestionsActive(false);
-              return;
-            }
-            if (!nlInput.trim() || nlParsing) return;
-            haptic();
-            onParse();
-          }}
-          placeholder={placeholderPrompt}
-          aria-label="What did you eat"
-          rows={1}
-          maxLength={500}
-          /* pl-11: the manual-entry pencil's 44px box; pr-20: the
-             always-present scan icon plus the contextual send button. */
-          className="w-full pl-11 pr-20 py-3.5 rounded-xl border bg-card text-foreground text-sm resize-none transition-all duration-200 ease-out"
-          style={{
-            borderColor: inputFocused
-              ? "var(--ds-color-input-border-focus-nutrition)"
-              : "var(--ds-color-input-border-rest)",
-            outline: "none",
-            boxShadow: inputFocused
-              ? "var(--ds-shadow-input-focus-nutrition)"
-              : "var(--ds-shadow-input-rest)",
-          }}
-        />
-        <div className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center">
-          {nlInput.trim() && (
+        {/* The field and the Scan button share a row; the dropdown sits
+            below both at the row's full width, outside the flex row so
+            it can never stretch the button. */}
+        <div className="flex gap-2">
+          <div className="relative min-w-0 flex-1">
+            {/* The pencil is the manual-entry control — a 44px button
+                leading the field, where it had been a decorative glyph
+                beside a ghost "Enter manually" button two rows down. The
+                dropdown's no-results row still offers the same path. */}
             <button
               type="button"
               onClick={() => {
                 haptic();
+                setSuggestionsActive(false);
+                onManualOpen();
+              }}
+              aria-label="Enter manually"
+              className={cn(
+                "absolute left-0 top-1/2 -translate-y-1/2 size-11 inline-flex items-center justify-center rounded-lg active:scale-90 transition-all",
+                inputFocused ? "" : "text-muted-foreground"
+              )}
+              style={
+                inputFocused ? { color: THEME.semantic.nutrition } : undefined
+              }
+            >
+              <PenLine className="size-4" />
+            </button>
+            <textarea
+              ref={inputRef}
+              value={nlInput}
+              onChange={(e) => setNlInput(e.target.value)}
+              onFocus={() => {
+                setSuggestionsActive(true);
+                setInputFocused(true);
+              }}
+              onBlur={() => {
+                setInputFocused(false);
+                setTimeout(() => setSuggestionsActive(false), 200);
+              }}
+              onKeyDown={(e) => {
+                // Return / Enter submits. Two-tap confirm when the
+                // suggestion dropdown is active so the parser doesn't
+                // fire while the user is still mid-selection — first
+                // tap dismisses, second tap sends. Mobile-first: no
+                // Shift+Enter newline / Escape branch since neither
+                // exists on iOS/Android software keyboards.
+                if (e.key !== "Enter") return;
+                e.preventDefault();
+                if (showSuggestions) {
+                  setSuggestionsActive(false);
+                  return;
+                }
+                if (!nlInput.trim() || nlParsing) return;
+                haptic();
                 onParse();
               }}
-              disabled={nlParsing}
-              aria-label="Log meal"
+              placeholder={placeholderPrompt}
+              aria-label="What did you eat"
+              rows={1}
+              maxLength={500}
+              /* pl-11: the manual-entry pencil's 44px box. The right
+                 edge clears the send button only while there is text
+                 for it to send (the one time it shows): beside the Scan
+                 button the field is narrow, and an empty field needs
+                 that width for its placeholder. */
               className={cn(
-                "p-1.5 relative before:absolute before:-inset-1.5 before:content-[''] rounded-lg transition-all active:scale-90",
-                nlParsing ? "opacity-50" : ""
+                "w-full pl-11 py-3.5 rounded-xl border bg-card text-foreground text-sm resize-none transition-all duration-200 ease-out",
+                nlInput.trim() ? "pr-11" : "pr-3"
               )}
-              style={{ color: THEME.semantic.nutrition }}
-            >
-              <SendHorizontal className="size-5" />
-            </button>
-          )}
-          {/* Scan affordance — a camera icon IN the input row (wave2 A),
-              replacing the old full-width gradient ScanMealButton card
-              section. The coral scan identity travels with the icon
-              (DESIGN_GUIDE 3e: #FF6B4A = scan affordance only). Locked
-              (quota exhausted / Pro-only) keeps the calm receded
-              philosophy: dimmed icon + small lock badge, no glow — tap
-              opens the upgrade path via the unchanged
-              useScanButtonOverrides contract. */}
-          <button
-            type="button"
+              style={{
+                borderColor: inputFocused
+                  ? "var(--ds-color-input-border-focus-nutrition)"
+                  : "var(--ds-color-input-border-rest)",
+                outline: "none",
+                boxShadow: inputFocused
+                  ? "var(--ds-shadow-input-focus-nutrition)"
+                  : "var(--ds-shadow-input-rest)",
+              }}
+            />
+            {nlInput.trim() && (
+              <div className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center">
+                <button
+                  type="button"
+                  onClick={() => {
+                    haptic();
+                    onParse();
+                  }}
+                  disabled={nlParsing}
+                  aria-label="Log meal"
+                  className={cn(
+                    "p-1.5 relative before:absolute before:-inset-1.5 before:content-[''] rounded-lg transition-all active:scale-90",
+                    nlParsing ? "opacity-50" : ""
+                  )}
+                  style={{ color: THEME.semantic.nutrition }}
+                >
+                  <SendHorizontal className="size-5" />
+                </button>
+              </div>
+            )}
+          </div>
+          {/* Scan — a labelled button beside the field, the height of the
+              field, not an icon inside it. Photo scanning is one of the
+              page's main actions, and a 20px icon in the text box read as
+              decoration; Apple's guidance is to use text when a short
+              label says more than an icon (HIG, Buttons). It is the only
+              camera on the page.
+
+              Food orange, the `nutrition` variant: an owner call recorded
+              in CLAUDE.md's Button mapping. Coral stays inside the
+              scanner.
+
+              Every account gets the same button. A locked account (no
+              photo scans on its tier) opens the scanner on Barcode, which
+              is free, and the photo tabs there carry the Pro offer — the
+              scanner reads `scanOverrides.locked`, not this button. */}
+          <Button
+            variant="nutrition"
+            aria-label="Scan a meal"
+            leftIcon={<Camera className="size-5" />}
             onClick={() => {
               haptic();
               scanOverrides.onClick();
             }}
-            /* The locked label names the CONTROL and what activating it
-               does, not just the destination. "Unlock unlimited scans" did
-               the opposite: a screen-reader user heard only an offer and
-               never learned this was the scan camera, while the sighted
-               user sees a dimmed camera with a lock badge. "unlock" is
-               also a banned AI-tell in the house voice — FoodProStrip's
-               own docstring says so by name, and ScanQuotaIndicator's
-               exhausted line already had the right words a file away
-               ("Out of scans — upgrade for unlimited"). */
-            aria-label={
-              scanOverrides.locked
-                ? "Scan your meal — upgrade for unlimited"
-                : "Scan your meal"
-            }
-            className="relative size-11 inline-flex items-center justify-center rounded-lg active:scale-90 transition-transform shrink-0"
-            style={{ color: THEME.food.scan }}
+            className="shrink-0 self-stretch"
           >
-            <Camera
-              className={cn("size-5", scanOverrides.locked && "opacity-60")}
-              strokeWidth={2}
-            />
-            {scanOverrides.locked && (
-              <span
-                aria-hidden="true"
-                className="absolute bottom-1.5 right-1.5 inline-flex items-center justify-center size-3.5 rounded-full bg-card"
-              >
-                <Lock className="size-2.5" strokeWidth={2.5} />
-              </span>
-            )}
-          </button>
+            Scan
+          </Button>
         </div>
         {showSuggestions && (
           <FoodSuggestionsDropdown
@@ -324,8 +325,8 @@ function FoodComposerCard({
           the input row, ONLY when a real quota is scarce: a consumable
           limit exists (limit > 0) and remaining <= 1. No standing quota
           furniture when the user has headroom; limit === 0 (Pro-only
-          tier) renders nothing because the locked scan icon already
-          carries that gate. */}
+          tier) renders nothing because the scanner's photo tabs carry
+          that gate. */}
       {!scanUsage.isUnlimited &&
         !scanUsage.loading &&
         scanUsage.limit > 0 &&
