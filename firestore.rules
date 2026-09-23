@@ -635,7 +635,7 @@ service cloud.firestore {
           'muscleGroups', 'exercises',
           'prHit', 'prExercise', 'prWeight', 'prCount',
           'challengeMilestone', 'badgeEarned',
-          'routePreview'
+          'routePreview', 'caption'
         ])
         // Required fields + types
         && request.resource.data.authorName is string
@@ -731,6 +731,14 @@ service cloud.firestore {
         && (
           !('badgeEarned' in request.resource.data.keys())
           || request.resource.data.badgeEarned.size() <= 200
+        )
+        // The share sheets' optional note, cut at CAPTION_MAX
+        // (src/lib/activityPost.ts). size() counts UTF-16 code units,
+        // the unit the sheets cut in, so the two limits are one number.
+        && (
+          !('caption' in request.resource.data.keys())
+          || (request.resource.data.caption is string
+              && request.resource.data.caption.size() <= 140)
         );
 
       // 2026-05-26 audit PR 2 (finding #2) — counter writes are now

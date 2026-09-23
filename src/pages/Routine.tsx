@@ -21,6 +21,7 @@ import { projectWorkoutSets } from "@/features/program/workoutSetRecord";
 import { compose, enqueueShare, showQueuedToast } from "../lib/shareComposer";
 import { recordSharedActivity } from "../lib/sessionDelete";
 import { postActivity } from "../lib/socialApi";
+import type { ActivityPost } from "../lib/activityPost";
 import { needsEmailVerification } from "../lib/emailVerificationGate";
 import { toast } from "@/lib/toast";
 
@@ -256,7 +257,7 @@ export default function Routine() {
             }
           );
           if (decision && auth.currentUser?.uid === user.uid) {
-            const payload = {
+            const payload: ActivityPost = {
               authorId: user.uid,
               authorName: profile?.displayName || "Athlete",
               ...(profile?.photoURL
