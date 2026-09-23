@@ -30,8 +30,6 @@ interface PrivacySectionProps {
     data: Partial<UserProfile>,
     opts?: { allowProtected?: boolean }
   ) => Promise<UpdateProfileResult>;
-  defaultVisibility: "public" | "followers" | "private";
-  setDefaultVisibility: (v: "public" | "followers" | "private") => void;
   privacyZones: PrivacyZone[];
   addZone: (zone: Omit<PrivacyZone, "id">) => Promise<void>;
   removeZone: (id: string) => Promise<void>;
@@ -46,8 +44,6 @@ export default function PrivacySection({
   user,
   profile,
   updateProfile,
-  defaultVisibility,
-  setDefaultVisibility,
   privacyZones,
   addZone,
   removeZone,
@@ -74,37 +70,11 @@ export default function PrivacySection({
         title="Social & privacy"
         subtitle="Visibility, auto-post, GPS zones"
       >
-        <div className="flex items-center justify-between p-4 rounded-lg bg-muted">
-          <div>
-            <p className="text-sm text-foreground">Default visibility</p>
-            <p className="text-xs text-muted-foreground">
-              Who can see your posts
-            </p>
-          </div>
-          <select
-            value={defaultVisibility}
-            onChange={async (e) => {
-              const prev = defaultVisibility;
-              const val = e.target.value as "public" | "followers" | "private";
-              setDefaultVisibility(val);
-              const result = await updateProfile({ defaultVisibility: val });
-              if (!result.ok) setDefaultVisibility(prev);
-            }}
-            className="min-h-11 bg-card rounded-lg px-3 text-sm border border-border/50"
-          >
-            <option value="public">Public</option>
-            <option value="followers">Followers</option>
-            <option value="private">Private</option>
-          </select>
-        </div>
-
-        {/* Auto-posting is owned by the share composer's saved default, not
-            by a profile flag. Two `autoPostRuns` / `autoPostWorkouts`
-            toggles used to sit here; the composer replaced them (#1416,
-            see useProgram's completion path) and nothing has read either
-            field since — so the switches persisted a value, changed
-            nothing, and contradicted the composer whenever the two
-            disagreed. This row edits the setting that actually runs. */}
+        {/* Who sees a finished session is this row and nothing else: the
+            finish screen reads it (SessionShareRow). Do not add a second
+            control for it. Three that wrote profile fields nothing read
+            (two auto-post toggles and a "Default visibility" select) each
+            saved a value, changed nothing, and contradicted this row. */}
         <ShareDefaultsRow uid={user?.uid ?? null} />
 
         {/* F1 AI analysis opt-out. Undefined / true = enabled (default);

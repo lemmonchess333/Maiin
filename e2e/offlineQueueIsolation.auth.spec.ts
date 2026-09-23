@@ -52,9 +52,10 @@ import { verifySignupEmail } from "./helpers/verifySignupEmail";
  * the same journey, and since the #1887 fix (this PR) the ENQUEUE half
  * is driven for real: still offline, A saves a synthetic finished run
  * through the actual RunSummary journey (the page hydrates from router
- * navigation state — no GPS involved), shares it to followers, and the
- * pre-gated offline branch queues the post with the once-unreachable
- * "Post queued" toast asserted. Before #1887, every enqueueShare site
+ * navigation state — no GPS involved), answers the finish screen's
+ * one-time share question with followers, and the pre-gated offline branch
+ * queues the post, with the finish screen's "Will share with your
+ * followers when you're back online" asserted. Before #1887, every enqueueShare site
  * sat behind an awaited Firestore write that PARKS offline (the SDK
  * durably queues the mutation and acks only on reconnect; it never
  * rejects for connectivity), so the share queue was drain-only
@@ -589,16 +590,16 @@ test.describe("offline-queue uid isolation across an account switch", () => {
     ).toBeVisible({
       timeout: 15_000,
     });
+    // A's first finish asks once; answering shares this run straight away,
+    // which offline means queueing it, and the finish screen says so.
     await page
-      .getByRole("button", { name: "Share this session", exact: true })
-      .click();
-    await page
-      .getByRole("button", { name: "Share to followers" })
+      .getByRole("button", { name: "Share with followers", exact: true })
       .click({ timeout: 15_000 });
-    // The once-unreachable queued-post toast, now reachable:
-    await expect(page.getByText(/Post queued/i)).toBeVisible({
-      timeout: 10_000,
-    });
+    await expect(
+      page.getByText("Will share with your followers when you're back online", {
+        exact: true,
+      })
+    ).toBeVisible({ timeout: 10_000 });
     const queuedRuns = (await readQueue(page)).filter(
       (entry) => entry.collectionPath === `users/${uidA}/runs`
     );

@@ -7,9 +7,6 @@ import PrivacySection from "@/components/settings/PrivacySection";
 
 export default function SettingsPrivacy() {
   const { user, profile, updateProfile } = useAuth();
-  const [defaultVisibility, setDefaultVisibility] = useState<
-    "public" | "followers" | "private"
-  >(profile?.defaultVisibility ?? "public");
   const { zones: privacyZones, addZone, removeZone } = usePrivacyZones();
   const [newZoneName, setNewZoneName] = useState("");
   const [newZoneRadius, setNewZoneRadius] = useState(500);
@@ -27,8 +24,6 @@ export default function SettingsPrivacy() {
         user={user}
         profile={profile}
         updateProfile={updateProfile}
-        defaultVisibility={defaultVisibility}
-        setDefaultVisibility={setDefaultVisibility}
         privacyZones={privacyZones}
         addZone={addZone}
         removeZone={removeZone}

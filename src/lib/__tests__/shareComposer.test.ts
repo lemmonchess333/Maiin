@@ -6,7 +6,10 @@ import {
   getShareDefault,
   clearShareDefault,
   setShareDefault,
+  answerShareQuestion,
+  finishShareStart,
   enqueueShare,
+  cancelQueuedShare,
   getQueueLength,
   drainQueue,
   subscribeShareComposer,
@@ -38,10 +41,15 @@ describe("compose / resolveCompose", function () {
     setShareDefault(UID, "workout", "never");
     const listener = vi.fn();
     const stop = subscribeShareComposer(listener);
-    const promise = compose(UID, WORKOUT_PREVIEW, { forcePrompt: true });
-    expect(listener).toHaveBeenLastCalledWith(expect.objectContaining({ open: true }));
+    const promise = compose(UID, WORKOUT_PREVIEW);
+    expect(listener).toHaveBeenLastCalledWith(
+      expect.objectContaining({ open: true })
+    );
     resolveCompose({ visibility: "followers", caption: "" }, false);
-    await expect(promise).resolves.toEqual({ visibility: "followers", caption: "" });
+    await expect(promise).resolves.toEqual({
+      visibility: "followers",
+      caption: "",
+    });
     expect(getShareDefault(UID, "workout")).toBe("never");
     stop();
   });
@@ -62,29 +70,36 @@ describe("compose / resolveCompose", function () {
     });
   });
 
-  it("short-circuits with the saved 'always' preference instead of opening the sheet", async function () {
-    resolveCompose({ visibility: "public", caption: "" }, true);
-    // Above call had no in-flight compose; it just persists the default
-    // when remember is true and a type is in state. Repro the contract:
-    // user opens the sheet once, picks "Make public" with remember,
-    // closes; the next compose() should resolve immediately.
-    const first = compose(UID, WORKOUT_PREVIEW);
-    resolveCompose({ visibility: "public", caption: "" }, true);
-    await first;
-    const second = compose(UID, WORKOUT_PREVIEW);
-    await expect(second).resolves.toEqual({
-      visibility: "public",
-      caption: "",
-    });
-    expect(getShareDefault(UID, "workout")).toBe("public");
+  it("opens the sheet even when a default is saved: the finish screen applies the default, not compose", async function () {
+    /* compose() used to short-circuit on a saved default. From 2026-09-06
+       every caller bypassed that, so the default applied nowhere and the
+       Settings row promising "Shared automatically" shared nothing. The
+       default is applied by the finish screen now (finishShareStart), and
+       compose() is only ever the one-off sheet. */
+    for (const saved of ["public", "never"] as const) {
+      setShareDefault(UID, "workout", saved);
+      const promise = compose(UID, WORKOUT_PREVIEW);
+      let settled = false;
+      void promise.then(() => {
+        settled = true;
+      });
+      await Promise.resolve();
+      expect(settled, `saved ${saved}`).toBe(false);
+      resolveCompose(null, false);
+      await expect(promise).resolves.toBeNull();
+      expect(getShareDefault(UID, "workout")).toBe(saved);
+    }
   });
 
-  it("returns null without opening the sheet when 'never' is stored", async function () {
+  it("the sheet's remember box saves the default the finish screen will apply", async function () {
     const first = compose(UID, RUN_PREVIEW);
     resolveCompose(null, true);
     await first;
     expect(getShareDefault(UID, "run")).toBe("never");
-    await expect(compose(UID, RUN_PREVIEW)).resolves.toBeNull();
+    expect(finishShareStart(getShareDefault(UID, "run"), false)).toEqual({
+      kind: "hold",
+      reason: "never",
+    });
   });
 
   it("scopes preferences per type — workout default does not leak to runs", async function () {
@@ -116,9 +131,9 @@ describe("compose / resolveCompose", function () {
     // fan-out rather than silently clearing.
     localStorage.setItem(`tropos.share.always.${UID}.run`, "crews");
     expect(getShareDefault(UID, "run")).toBe("followers");
-    await expect(compose(UID, RUN_PREVIEW)).resolves.toEqual({
+    expect(finishShareStart(getShareDefault(UID, "run"), false)).toEqual({
+      kind: "post",
       visibility: "followers",
-      caption: "",
     });
   });
 
@@ -130,9 +145,13 @@ describe("compose / resolveCompose", function () {
     expect(getShareDefault("user-a", "workout")).toBe("public");
 
     // User B signs in on the SAME device. B's workout must NOT inherit A's
-    // pref: getShareDefault is null for B, and compose opens the sheet
-    // (unresolved) instead of silently auto-posting under B's account.
+    // pref: getShareDefault is null for B, so the finish screen asks B
+    // rather than auto-posting under B's account, and compose opens the
+    // sheet (unresolved).
     expect(getShareDefault("user-b", "workout")).toBeNull();
+    expect(
+      finishShareStart(getShareDefault("user-b", "workout"), false)
+    ).toEqual({ kind: "ask" });
     const b = compose("user-b", WORKOUT_PREVIEW);
     let settled = false;
     void b.then(() => {
@@ -142,6 +161,78 @@ describe("compose / resolveCompose", function () {
     expect(settled).toBe(false);
     resolveCompose(null, false);
     await b;
+  });
+});
+
+describe("finishShareStart — what the finish screen does on save", function () {
+  it("asks when no default is saved", function () {
+    expect(finishShareStart(null, false)).toEqual({ kind: "ask" });
+    expect(finishShareStart(null, true)).toEqual({ kind: "ask" });
+  });
+
+  it("posts with the saved audience, with no sheet", function () {
+    expect(finishShareStart("followers", false)).toEqual({
+      kind: "post",
+      visibility: "followers",
+    });
+    expect(finishShareStart("public", false)).toEqual({
+      kind: "post",
+      visibility: "public",
+    });
+  });
+
+  it("holds on 'never'", function () {
+    expect(finishShareStart("never", false)).toEqual({
+      kind: "hold",
+      reason: "never",
+    });
+    expect(finishShareStart("never", true)).toEqual({
+      kind: "hold",
+      reason: "never",
+    });
+  });
+
+  it("never posts for an account the rules will refuse (unverified email)", function () {
+    for (const saved of ["followers", "public"] as const) {
+      expect(finishShareStart(saved, true)).toEqual({
+        kind: "hold",
+        reason: "verify",
+      });
+    }
+  });
+});
+
+describe("answerShareQuestion — the one question, asked once", function () {
+  it("answers for runs and workouts together when neither has a default", function () {
+    expect(answerShareQuestion(UID, "workout", "followers").sort()).toEqual([
+      "run",
+      "workout",
+    ]);
+    expect(getShareDefault(UID, "workout")).toBe("followers");
+    expect(getShareDefault(UID, "run")).toBe("followers");
+  });
+
+  it("never overwrites a default the user already chose for the other type", function () {
+    setShareDefault(UID, "run", "never");
+    expect(answerShareQuestion(UID, "workout", "public")).toEqual(["workout"]);
+    expect(getShareDefault(UID, "workout")).toBe("public");
+    expect(getShareDefault(UID, "run")).toBe("never");
+  });
+
+  it("saves 'Don't share' as never, so the question is not asked again", function () {
+    answerShareQuestion(UID, "run", "never");
+    expect(finishShareStart(getShareDefault(UID, "run"), false).kind).toBe(
+      "hold"
+    );
+    expect(finishShareStart(getShareDefault(UID, "workout"), false).kind).toBe(
+      "hold"
+    );
+  });
+
+  it("is scoped to the account that answered", function () {
+    answerShareQuestion("user-a", "run", "public");
+    expect(getShareDefault("user-b", "run")).toBeNull();
+    expect(getShareDefault("user-b", "workout")).toBeNull();
   });
 });
 
@@ -229,6 +320,60 @@ describe("offline queue", function () {
       { id: "a" },
       { kind: "workout", id: "w-9" }
     );
+  });
+
+  it("keeps one pending post per session: queueing a session again replaces it", function () {
+    /* A retried save re-runs its finish screen, and with sharing automatic
+       that queues the same session again. Two items would post it twice. */
+    const source = { kind: "workout" as const, id: "w-1" };
+    enqueueShare(UID_A, { attempt: 1 }, source);
+    enqueueShare(UID_A, { attempt: 2 }, source);
+    enqueueShare(UID_A, { attempt: 1 }, { kind: "run", id: "w-1" });
+    enqueueShare(UID_B, { attempt: 1 }, source);
+    enqueueShare(UID_A, { noSource: true });
+    enqueueShare(UID_A, { noSource: true });
+    expect(getQueueLength(UID_A)).toBe(4);
+    expect(getQueueLength(UID_B)).toBe(1);
+  });
+
+  it("cancelQueuedShare drops only that account's post for that session", async function () {
+    const source = { kind: "run" as const, id: "r-1" };
+    enqueueShare(UID_A, { mine: true }, source);
+    enqueueShare(UID_A, { other: true }, { kind: "run", id: "r-2" });
+    enqueueShare(UID_B, { theirs: true }, source);
+    expect(cancelQueuedShare(UID_A, source)).toBe(true);
+    expect(cancelQueuedShare(UID_A, source)).toBe(false);
+    const post = vi.fn().mockResolvedValue(undefined);
+    await drainQueue(UID_A, post);
+    expect(post).toHaveBeenCalledTimes(1);
+    expect(post).toHaveBeenCalledWith(
+      { other: true },
+      { kind: "run", id: "r-2" }
+    );
+    expect(getQueueLength(UID_B)).toBe(1);
+  });
+
+  it("a post cancelled while the drain is running is not posted", async function () {
+    const first = { kind: "run" as const, id: "r-1" };
+    const second = { kind: "run" as const, id: "r-2" };
+    enqueueShare(UID_A, { n: 1 }, first);
+    enqueueShare(UID_A, { n: 2 }, second);
+    const post = vi.fn(async (payload: Record<string, unknown>) => {
+      // The user taps Undo on the second session while the first posts.
+      if (payload.n === 1) cancelQueuedShare(UID_A, second);
+    });
+    await drainQueue(UID_A, post);
+    expect(post).toHaveBeenCalledTimes(1);
+    expect(getQueueLength(UID_A)).toBe(0);
+  });
+
+  it("a post queued while the drain is running survives it", async function () {
+    enqueueShare(UID_A, { n: 1 });
+    const post = vi.fn(async () => {
+      enqueueShare(UID_A, { n: 2 }, { kind: "workout", id: "w-late" });
+    });
+    await drainQueue(UID_A, post);
+    expect(getQueueLength(UID_A)).toBe(1);
   });
 
   it("drainQueue only replays items belonging to the given uid", async function () {

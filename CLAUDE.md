@@ -1896,9 +1896,10 @@ Affects: `src/lib/offlineQueue.ts`, `src/lib/shareComposer.ts`.
       `activities` docs, A's return posts A's share and empties the queue.
       The ENQUEUE half is driven for real too, via the run-save journey
       (RunSummary hydrates from router state — no GPS rig needed): still
-      offline, A saves a synthetic run, shares it, and the pre-gated
-      offline branch queues the post with the "Post queued" toast
-      asserted. That path only became reachable with the #1887 fix (same
+      offline, A saves a synthetic run, answers the finish screen's
+      one-time share question, and the pre-gated offline branch queues
+      the post, with the finish screen's "Will share … when you're back
+      online" line asserted. That path only became reachable with the #1887 fix (same
       PR): every `enqueueShare` site used to sit behind an awaited
       Firestore write that parks offline (never rejects) — the saves are
       now pre-gated on `navigator.onLine` and proceed on the durable

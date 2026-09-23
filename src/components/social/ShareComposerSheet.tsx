@@ -40,8 +40,9 @@ const REMEMBER_HINT: Record<ShareType, string> = {
 
 /**
  * App-level share composer. Mounted once (App.tsx) and listens to the
- * shareComposer singleton — opens whenever a save chain calls
- * `compose()` and the user has no stored preference.
+ * shareComposer singleton — opens when a finish screen's "Share this
+ * session" calls `compose()` for a one-off post. Automatic sharing never
+ * opens it: the finish screen posts with the saved default directly.
  *
  * Doubles as the place where the offline share queue is drained: when
  * the user comes back online, any postActivity calls that were queued

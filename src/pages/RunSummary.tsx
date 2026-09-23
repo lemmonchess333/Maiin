@@ -40,11 +40,11 @@ import {
   toGPX,
   estimateRunCalories,
 } from "../lib/gps";
-import { postActivity } from "../lib/socialApi";
 import type { ActivityPost } from "../lib/activityPost";
-import { needsEmailVerification } from "../lib/emailVerificationGate";
-import { compose, enqueueShare, showQueuedToast } from "../lib/shareComposer";
-import { recordSharedActivity } from "../lib/sessionDelete";
+import {
+  createSessionShare,
+  type SessionShareAction,
+} from "../lib/sessionPost";
 import type { GPSPoint, Split } from "../lib/gps";
 import type { RunConfig } from "../components/run/RunSetupModal";
 import RunMap from "../components/run/RunMapLazy";
@@ -427,14 +427,14 @@ export default function RunSummary() {
       : null
   );
   const [updating, setUpdating] = useState(false);
-  /* Post-write steps that must run once per saved run, however many times
-     the chain is resumed after a failure: the share prompt (a second prompt
-     could post the run twice) and the shoe-mileage increment (a second
-     call double-counts the distance). */
-  const shareHandledRef = useRef(false);
-  const [shareSaved, setShareSaved] = useState<
-    (() => Promise<void>) | undefined
+  /* The finish screen's share action. A chain resumed after a failure sets
+     it again for the same run id, and sessionPost remembers a run's post
+     by that id, so the run is never posted twice. */
+  const [shareAction, setShareAction] = useState<
+    SessionShareAction | undefined
   >();
+  /* Must run once per saved run, however many times the chain is resumed
+     after a failure: a second call double-counts the distance. */
   const mileageAppliedRef = useRef(false);
 
   // Pull dismissal state from localStorage whenever the saved-run
@@ -1093,60 +1093,54 @@ export default function RunSummary() {
         }
       }
 
-      // Prepare an explicit share action only after this run is persisted.
-      setShareSaved(() => async () => {
-        if (auth.currentUser?.uid !== user.uid) return;
-        if (!isInvalid && !shareHandledRef.current) {
-          // Share composer: prompts the user (or replays their saved
-          // default) for visibility + caption. When offline, the post is
-          // queued and replayed by ShareComposerSheet's drain effect.
-          const runName =
-            runConfig?.activityType === "intervals"
-              ? "Interval Run"
-              : runConfig?.activityType === "guided"
-                ? "Guided Run"
-                : "Run";
-          const km = distance / 1000;
-          const mins = Math.floor(elapsed / 60);
-          const secs = Math.round(elapsed % 60);
-          // Compute once before the choice: this exact geometry is previewed
-          // and posted. Loading/failed privacy settings withhold the route.
-          const sharedRoutePoints =
-            privacyZonesLoading || privacyZonesError
-              ? []
-              : profile?.hideSharedRouteEnds === false
-                ? points
-                : clipRouteEnds(points, DEFAULT_CLIP_METERS);
-          const routePreview = sampleRoute(sharedRoutePoints, 20).map((p) => ({
-            lat: p.lat,
-            lon: p.lon,
-            ...(p.breakBefore ? { breakBefore: true } : {}),
-          }));
-          const decision = await compose(
-            user.uid,
-            {
+      // Sharing happens on the finish screen once the run is persisted:
+      // automatically when the user has said so, or from its share button.
+      // A run saved anyway under the thresholds is never offered.
+      if (isInvalid) {
+        setShareAction(undefined);
+      } else {
+        const runName =
+          runConfig?.activityType === "intervals"
+            ? "Interval Run"
+            : runConfig?.activityType === "guided"
+              ? "Guided Run"
+              : "Run";
+        const km = distance / 1000;
+        const mins = Math.floor(elapsed / 60);
+        const secs = Math.round(elapsed % 60);
+        // Computed once, before any choice: this exact geometry is
+        // previewed and posted. Loading/failed privacy settings withhold
+        // the route.
+        const routeWithheld = privacyZonesLoading || privacyZonesError;
+        const sharedRoutePoints = routeWithheld
+          ? []
+          : profile?.hideSharedRouteEnds === false
+            ? points
+            : clipRouteEnds(points, DEFAULT_CLIP_METERS);
+        const routePreview = sampleRoute(sharedRoutePoints, 20).map((p) => ({
+          lat: p.lat,
+          lon: p.lon,
+          ...(p.breakBefore ? { breakBefore: true } : {}),
+        }));
+        setShareAction(
+          createSessionShare({
+            uid: user.uid,
+            type: "run",
+            source: { kind: "run", id: savedId },
+            preview: () => ({
               type: "run",
               title: runName,
               routePreview,
-              routePrivacyNote:
-                privacyZonesLoading || privacyZonesError
-                  ? "Route withheld because privacy settings are unavailable."
-                  : "This is the route included in your post.",
+              routePrivacyNote: routeWithheld
+                ? "Route withheld because privacy settings are unavailable."
+                : "This is the route included in your post.",
               meta: [
                 `${km.toFixed(2)} km`,
                 `${mins}:${secs.toString().padStart(2, "0")}`,
                 calories ? `${Math.round(calories)} ${CALORIE_UNIT}` : "",
               ].filter(Boolean),
-            },
-            {
-              needsEmailVerification: needsEmailVerification(user),
-              forcePrompt: true,
-            }
-          );
-          // Decided (posted, queued or declined) — never prompt again for
-          // this run, even if a later step fails and the chain resumes.
-          if (decision && auth.currentUser?.uid === user.uid) {
-            const payload: ActivityPost = {
+            }),
+            payload: (decision): ActivityPost => ({
               authorId: user.uid,
               authorName: profile?.displayName || "Athlete",
               ...(profile?.photoURL
@@ -1163,39 +1157,10 @@ export default function RunSummary() {
               elevationGain,
               calories,
               routePreview,
-            };
-            const runSource = { kind: "run" as const, id: savedId };
-            if (isOnline) {
-              try {
-                const activityId = await postActivity(payload);
-                shareHandledRef.current = true;
-                /* The link that lets deleting this run clear its post —
-                 without it the post is stranded (sessionDelete's
-                 asymmetry note, now closed). Workout save-composers have
-                 written their marker since the share sheet shipped; the
-                 run path never did. Best-effort inside the helper. */
-                await recordSharedActivity(user.uid, runSource, activityId);
-              } catch (socialErr) {
-                const lostNet =
-                  typeof navigator !== "undefined" &&
-                  navigator.onLine === false;
-                if (lostNet) {
-                  enqueueShare(user.uid, payload, runSource);
-                  shareHandledRef.current = true;
-                  showQueuedToast();
-                } else {
-                  logger.warn("[RunSave] postActivity failed:", socialErr);
-                  throw socialErr;
-                }
-              }
-            } else {
-              enqueueShare(user.uid, payload, runSource);
-              shareHandledRef.current = true;
-              showQueuedToast();
-            }
-          }
-        }
-      });
+            }),
+          })
+        );
+      }
 
       // Update shoe mileage against whichever shoe was resolved above —
       // once per run (see mileageAppliedRef).
@@ -2012,7 +1977,7 @@ export default function RunSummary() {
                   </p>
                 );
               })()}
-            {saved && <CompletionExtras onShare={shareSaved} />}
+            {saved && <CompletionExtras share={shareAction} />}
 
             {/* The save action the post-save fields never had. It appears
                 only once they differ from what was written, so a user who
