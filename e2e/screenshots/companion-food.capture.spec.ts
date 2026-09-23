@@ -132,6 +132,14 @@ test("usual meals are visible and offline adds can be undone", async ({
   await expect(scan).toBeVisible();
   const scanBox = (await scan.boundingBox())!;
   expect(scanBox.y + scanBox.height).toBeLessThan(760);
+  // The text box and the camera button are one row: same top, same
+  // height. Sized by rows={1}, the box is 50px and the 56px button
+  // hangs 6px below it (measured on an iPhone).
+  const fieldBox = (await page
+    .getByRole("textbox", { name: "What did you eat" })
+    .boundingBox())!;
+  expect(Math.abs(fieldBox.y - scanBox.y)).toBeLessThan(1);
+  expect(Math.abs(fieldBox.height - scanBox.height)).toBeLessThan(1);
   const logButton = page.getByRole("button", { name: "Log", exact: true });
   await expect(logButton).toBeVisible();
   expect((await logButton.boundingBox())!.y).toBeGreaterThan(scanBox.y);

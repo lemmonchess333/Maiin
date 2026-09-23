@@ -145,7 +145,7 @@ describe("EditServingsSheet", function () {
        by the saved count, while Save wrote the typed per-serving value.
        Correcting 78 to 100 previewed 156 for two servings and saved 200. */
     renderSheet();
-    fireEvent.change(screen.getByLabelText("Cal"), {
+    fireEvent.change(screen.getByLabelText("Per-serving calories"), {
       target: { value: "100" },
     });
     expect(
@@ -156,7 +156,7 @@ describe("EditServingsSheet", function () {
   it("re-previews when the servings change on top of an edit", function () {
     // Both inputs feed one number; changing either must move it.
     renderSheet();
-    fireEvent.change(screen.getByLabelText("Cal"), {
+    fireEvent.change(screen.getByLabelText("Per-serving calories"), {
       target: { value: "100" },
     });
     fireEvent.click(screen.getByLabelText("Increase servings"));
@@ -170,7 +170,9 @@ describe("EditServingsSheet", function () {
        "unchanged for this dimension". The preview must not read that as
        zero calories and flash 0 while the user retypes. */
     renderSheet();
-    fireEvent.change(screen.getByLabelText("Cal"), { target: { value: "" } });
+    fireEvent.change(screen.getByLabelText("Per-serving calories"), {
+      target: { value: "" },
+    });
     expect(
       screen.getByText(new RegExp(`~ 156 ${CALORIE_UNIT}`))
     ).toBeInTheDocument();
@@ -391,7 +393,7 @@ describe("EditServingsSheet", function () {
     // Per-serving (rounded): 78 / 6 / 1 / 5.
     renderSheet();
     expect(
-      (screen.getByLabelText("Per-serving cal") as HTMLInputElement).value
+      (screen.getByLabelText("Per-serving calories") as HTMLInputElement).value
     ).toBe("78");
     expect(
       (screen.getByLabelText("Per-serving protein") as HTMLInputElement).value
@@ -407,7 +409,7 @@ describe("EditServingsSheet", function () {
   it("enables Save when ANY macro input differs from the seeded per-serving value", function () {
     renderSheet();
     expect(screen.getByRole("button", { name: "Save" })).toBeDisabled();
-    fireEvent.change(screen.getByLabelText("Per-serving cal"), {
+    fireEvent.change(screen.getByLabelText("Per-serving calories"), {
       target: { value: "90" },
     });
     expect(screen.getByRole("button", { name: "Save" })).not.toBeDisabled();
@@ -417,7 +419,7 @@ describe("EditServingsSheet", function () {
     const onSave = vi.fn();
     renderSheet({ onSave });
     // Touch only cal + protein; carbs/fat stay at their seeded values
-    fireEvent.change(screen.getByLabelText("Per-serving cal"), {
+    fireEvent.change(screen.getByLabelText("Per-serving calories"), {
       target: { value: "90" },
     });
     fireEvent.change(screen.getByLabelText("Per-serving protein"), {
@@ -438,7 +440,7 @@ describe("EditServingsSheet", function () {
 
   it("treats blank / non-numeric / negative macro inputs as unchanged", function () {
     renderSheet();
-    const cal = screen.getByLabelText("Per-serving cal");
+    const cal = screen.getByLabelText("Per-serving calories");
     fireEvent.change(cal, { target: { value: "" } });
     // Blank → unchanged → Save stays disabled
     expect(screen.getByRole("button", { name: "Save" })).toBeDisabled();
@@ -450,7 +452,7 @@ describe("EditServingsSheet", function () {
 
   it("re-typing the seeded value back is treated as no-change", function () {
     renderSheet();
-    const cal = screen.getByLabelText("Per-serving cal");
+    const cal = screen.getByLabelText("Per-serving calories");
     fireEvent.change(cal, { target: { value: "90" } });
     expect(screen.getByRole("button", { name: "Save" })).not.toBeDisabled();
     // Type back to the seeded "78"
@@ -501,7 +503,7 @@ describe("EditServingsSheet", function () {
     fireEvent.click(screen.getByLabelText("Increase servings"));
     expect(screen.getByRole("button", { name: "Save" })).not.toBeDisabled();
 
-    fireEvent.change(screen.getByLabelText("Per-serving cal"), {
+    fireEvent.change(screen.getByLabelText("Per-serving calories"), {
       target: { value: "-40" },
     });
     const save = screen.getByRole("button", { name: "Save" });
@@ -523,7 +525,7 @@ describe("EditServingsSheet", function () {
     expect(carbs).toHaveAttribute("aria-describedby", message.id);
     // Only the field at fault — otherwise "which number?" is still the
     // user's problem to solve.
-    expect(screen.getByLabelText("Per-serving cal")).not.toHaveAttribute(
+    expect(screen.getByLabelText("Per-serving calories")).not.toHaveAttribute(
       "aria-invalid"
     );
   });
@@ -532,10 +534,10 @@ describe("EditServingsSheet", function () {
     const onSave = vi.fn();
     renderSheet({ onSave });
     fireEvent.click(screen.getByLabelText("Increase servings"));
-    fireEvent.change(screen.getByLabelText("Per-serving cal"), {
+    fireEvent.change(screen.getByLabelText("Per-serving calories"), {
       target: { value: "-40" },
     });
-    fireEvent.change(screen.getByLabelText("Per-serving cal"), {
+    fireEvent.change(screen.getByLabelText("Per-serving calories"), {
       target: { value: "90" },
     });
     expect(screen.queryByText("Enter 0 or more.")).not.toBeInTheDocument();
@@ -569,5 +571,107 @@ describe("EditServingsSheet", function () {
       targetName: null,
       targetMacros: null,
     });
+  });
+  /* Calories lead. A food the local parser does not know is logged at
+     0 kcal, and this sheet is where its calories get set, so the field
+     has to be found and has to take a number cleanly. */
+
+  it("opens a logged zero as an empty field, so typing 300 saves 300", function () {
+    /* A field holding "0" puts the caret on one side of the digit or
+       the other, so 300 typed into it becomes 3000 or 0300. */
+    const onSave = vi.fn();
+    renderSheet({
+      onSave,
+      source: {
+        foodName: "Mystery stew",
+        currentCount: 1,
+        currentTotalCalories: 0,
+        currentMeal: "lunch",
+      },
+    });
+    const cal = screen.getByLabelText(
+      "Per-serving calories"
+    ) as HTMLInputElement;
+    expect(cal.value).toBe("");
+    expect(cal).toHaveAttribute("placeholder", "0");
+    for (const macro of ["protein", "carbs", "fat"]) {
+      expect(
+        (screen.getByLabelText(`Per-serving ${macro}`) as HTMLInputElement)
+          .value
+      ).toBe("");
+    }
+    fireEvent.change(cal, { target: { value: "300" } });
+    expect(screen.getByText(new RegExp(`~ 300 ${CALORIE_UNIT}`))).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+    expect(onSave).toHaveBeenCalledWith({
+      targetCount: 1,
+      targetMeal: null,
+      targetName: null,
+      targetMacros: { totalCalories: 300 },
+    });
+  });
+
+  it("saves no macros for an untouched zero", function () {
+    const onSave = vi.fn();
+    renderSheet({
+      onSave,
+      source: {
+        foodName: "Mystery stew",
+        currentCount: 1,
+        currentTotalCalories: 0,
+        currentMeal: "lunch",
+      },
+    });
+    fireEvent.click(screen.getByRole("radio", { name: "Dinner" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+    expect(onSave).toHaveBeenCalledWith({
+      targetCount: 1,
+      targetMeal: "dinner",
+      targetName: null,
+      targetMacros: null,
+    });
+  });
+
+  it("puts calories first, on their own row, with the macros in grams after", function () {
+    renderSheet();
+    const cal = screen.getByLabelText("Per-serving calories");
+    const protein = screen.getByLabelText("Per-serving protein");
+    expect(
+      cal.compareDocumentPosition(protein) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+    // Its own row: the macro grid holds the other three and not it.
+    const grid = protein.closest(".grid") as HTMLElement;
+    expect(grid).toHaveClass("grid-cols-3");
+    expect(grid.contains(cal)).toBe(false);
+    // The larger number of the four.
+    expect(cal).toHaveClass("text-2xl");
+    expect(protein).not.toHaveClass("text-2xl");
+    // Its unit beside it; the macros carry grams.
+    expect(cal.parentElement).toHaveTextContent(CALORIE_UNIT);
+    expect(protein.parentElement).toHaveTextContent("g");
+  });
+
+  it("lays the four meal slots out on one row, like the composer's", function () {
+    renderSheet();
+    const slots = screen.getByRole("radiogroup", { name: "Meal slot" });
+    expect(slots).toHaveClass("grid", "min-[360px]:grid-cols-4");
+  });
+  it("keeps Cancel and Save pinned under a scrolling form", function () {
+    /* The sheet is capped at 85% of the screen. On an SE, or on any
+       phone with the keyboard up, the form runs taller than that, and
+       Save has to stay on screen. */
+    renderSheet({ onDelete: vi.fn() });
+    const body = screen
+      .getByLabelText("Per-serving calories")
+      .closest(".overflow-y-auto") as HTMLElement;
+    expect(body).toBeTruthy();
+    expect(body).toHaveClass("min-h-0", "flex-1");
+    for (const name of ["Save", "Cancel"]) {
+      expect(body.contains(screen.getByRole("button", { name }))).toBe(false);
+    }
+    // Delete stays with the form, away from Save.
+    expect(body.contains(screen.getByRole("button", { name: /delete/i }))).toBe(
+      true
+    );
   });
 });
