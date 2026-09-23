@@ -74,8 +74,14 @@ describe("FoodComposerCard — the camera button beside the field", () => {
     // name still says what it does.
     expect(scans[0]).toHaveTextContent("");
     expect(scans[0].querySelector("svg")).toBeTruthy();
-    // A square, the height of the field.
+    // A square, the height of the field: both are 56px. Sized by
+    // rows={1}, the field is 50px and the button hangs 6px below it.
+    // jsdom has no layout; companion-food.capture.spec.ts measures the
+    // two boxes in a browser.
     expect(scans[0]).toHaveClass("size-14");
+    expect(
+      screen.getByRole("textbox", { name: "What did you eat" })
+    ).toHaveClass("block", "h-14");
     // The food orange (the nutrition variant) — the owner call recorded
     // in CLAUDE.md's Button mapping — not the brand purple.
     expect(scans[0]).toHaveClass("bg-nutrition-fill");

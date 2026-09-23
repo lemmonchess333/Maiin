@@ -40,6 +40,11 @@ describe("meal slot picker keeps the food surface's orange", () => {
       expect(src, `${file} keeps tone="nutrition"`).toContain(
         'tone="nutrition"'
       );
+      // One layout for both: left to wrap, the sheet's pills put
+      // "Dinner" on a line of its own.
+      expect(src, `${file} lays the slots out with the shared grid`).toContain(
+        "MEAL_PICKER_LAYOUT"
+      );
     }
   });
 

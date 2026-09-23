@@ -12,7 +12,12 @@ import FoodSuggestionsDropdown, {
   type QuickAddSection,
 } from "./FoodSuggestionsDropdown";
 import ScanQuotaIndicator from "./ScanQuotaIndicator";
-import { MEAL_ORDER, MEAL_LABELS, type MealKey } from "./mealConstants";
+import {
+  MEAL_ORDER,
+  MEAL_LABELS,
+  MEAL_PICKER_LAYOUT,
+  type MealKey,
+} from "./mealConstants";
 
 /* Scan button override shape — matches the existing
    useScanButtonOverrides hook return surface in
@@ -166,7 +171,7 @@ function FoodComposerCard({
         emphasis="solid"
         tone="nutrition"
         ariaLabel="Add to meal"
-        className="mb-2 grid grid-cols-2 min-[360px]:grid-cols-4 [&>button]:min-w-0 [&>button]:px-2 [&>button]:text-xs sm:[&>button]:text-sm"
+        className={cn("mb-2", MEAL_PICKER_LAYOUT)}
         options={MEAL_ORDER.map((mealKey) => ({
           value: mealKey,
           label: MEAL_LABELS[mealKey],
@@ -235,13 +240,23 @@ function FoodComposerCard({
               aria-label="What did you eat"
               rows={1}
               maxLength={500}
-              /* pl-11: the manual-entry pencil's 44px box. The right
+              /* h-14: the camera button's height, so the two read as one
+                 row. Left to rows={1}, the field sizes itself to one
+                 20px line plus padding, 50px, and the 56px button hangs
+                 6px below it. py-[17px] centres that one line in the
+                 56px box (1 + 17 + 20 + 17 + 1), level with the pencil
+                 and the send button, which centre on the row. `block`,
+                 because an inline textarea sits on a text baseline and
+                 leaves a gap under it that makes the row taller than
+                 either.
+
+                 pl-11: the manual-entry pencil's 44px box. The right
                  edge clears the send button only while there is text
                  for it to send (the one time it shows): beside the
                  camera button the field is narrower, and an empty field
                  needs that width for its placeholder. */
               className={cn(
-                "w-full pl-11 py-3.5 rounded-xl border bg-card text-foreground text-sm resize-none transition-all duration-200 ease-out",
+                "block h-14 w-full pl-11 py-[17px] rounded-xl border bg-card text-foreground text-sm resize-none transition-all duration-200 ease-out",
                 nlInput.trim() ? "pr-11" : "pr-3"
               )}
               style={{
