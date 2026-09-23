@@ -78,18 +78,28 @@ describe("feed post fields: postActivity and firestore.rules agree", () => {
   });
 
   it("the session savers type their posts, so an unknown field fails the build", () => {
-    /* These three build the post in a variable and hand it to both
-       postActivity and the offline queue. TypeScript checks a literal's
-       extra fields only where it meets a declared type, so an untyped
-       `const payload = {…}` would carry any field straight to the rules. */
+    /* The three savers build the post in a callback that createSessionShare
+       hands to postActivity and to the offline queue. TypeScript checks a
+       literal's extra fields only where it meets a declared type, so each
+       callback's return is annotated: an unannotated one would carry any
+       field straight to the rules. */
     for (const file of [
       "src/pages/RunSummary.tsx",
       "src/pages/Routine.tsx",
       "src/features/program/useProgram.ts",
     ]) {
       const source = readFileSync(resolve(repoRoot, file), "utf8");
-      expect(source, file).toContain("const payload: ActivityPost = {");
-      expect(source, file).toContain("postActivity(payload)");
+      expect(source, file).toContain("createSessionShare(");
+      expect(source, file).toContain("payload: (decision): ActivityPost => ({");
+      expect(source, file).not.toContain("postActivity(");
     }
+    const helper = readFileSync(
+      resolve(repoRoot, "src/lib/sessionPost.ts"),
+      "utf8"
+    );
+    expect(helper).toContain(
+      "payload: (decision: ShareDecision) => ActivityPost;"
+    );
+    expect(helper).toContain("postActivity(payload)");
   });
 });

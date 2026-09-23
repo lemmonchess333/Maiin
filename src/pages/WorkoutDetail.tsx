@@ -9,11 +9,10 @@
  *
  * That gap had a second, sharper consequence. Sharing a workout was a
  * ONE-SHOT: the post-completion screen was the only surface that could do
- * it, so missing that moment made a session unshareable forever. Worse
- * after the share-default change — a user whose stored default is "never"
- * has `compose()` silently decline every session, with no way to post an
- * individual one. This page is the escape hatch that makes that default
- * safe to pick.
+ * it, so missing that moment made a session unshareable forever. That
+ * matters most to a user whose saved default is "never": nothing of theirs
+ * is posted automatically, and this page is how they post one old session
+ * later. It is what makes that default safe to pick.
  *
  * It also removes the reason two share controls used to sit on the
  * completion screen BEFORE the save ran: "Share to circle" published a

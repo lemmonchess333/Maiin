@@ -40,6 +40,13 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- **Sessions share automatically once you say so.** The first time you finish
+  a run or workout, the finish screen asks once: share with followers, share
+  publicly, or don't share. After that each session posts with no sheet, and
+  the finish screen says where it went, with Undo. Settings → Privacy changes
+  the answer any time. The Settings choice had said "Shared automatically"
+  since 6 September without anything being shared; it works again. The
+  "Default visibility" setting, which nothing read, is gone.
 - **Shared routes keep privacy gaps.** Maps, share images, GPX exports and saved
   routes preserve disconnected sections. Sharing waits for confirmed privacy
   settings, and the post composer shows the route that will be included.

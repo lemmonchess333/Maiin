@@ -1,8 +1,10 @@
 /**
  * ShareDefaultsRow — the only place a share default can be CHOSEN.
  *
- * The share composer short-circuits `compose()` once a default is saved, so
- * this preference decides whether the app asks at all. It used to be
+ * The finish screen reads this preference (SessionShareRow): a saved
+ * audience posts every session automatically, "Never" posts nothing, and
+ * no default asks the one question. So it decides whether the app asks at
+ * all. It used to be
  * writable in one direction only: the post-session sheet could set it, this
  * row could only clear it, and the row rendered nothing at all until a
  * default existed. So a user who wanted "never share my workouts" had to
@@ -12,7 +14,8 @@
  * The tests are about what the user can reach:
  *   - the control EXISTS before any default does (a row that hides itself
  *     until the sheet has run is not a setting), and
- *   - each choice writes the value `compose()` actually reads. Asserting
+ *   - each choice writes the value the finish screen actually reads
+ *     (`getShareDefault`, through `finishShareStart`). Asserting
  *     the selected segment alone would pass against a component that only
  *     updated its own state.
  *
@@ -111,9 +114,9 @@ describe("ShareDefaultsRow", () => {
   });
 
   it("CLEARS the stored preference when Ask is picked", () => {
-    // "Ask" is the absence of a default, not a fourth stored value —
-    // `compose()` only short-circuits on a stored preference, so storing
-    // "ask" would silence the sheet forever.
+    // "Ask" is the absence of a default, not a fourth stored value — the
+    // finish screen asks only when nothing is stored, so storing "ask"
+    // would silence the question forever.
     setShareDefault(UID, "run", "public");
     render(<ShareDefaultsRow uid={UID} />);
 

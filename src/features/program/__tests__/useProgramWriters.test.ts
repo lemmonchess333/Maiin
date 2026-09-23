@@ -1846,14 +1846,13 @@ describe("packet 15 — completeWorkoutDay atomic batch", () => {
       });
       expect(compose).not.toHaveBeenCalled();
       expect(postActivity).not.toHaveBeenCalled();
-      await receipt.share();
+      await receipt.share.post();
     });
     expect(compose).toHaveBeenCalledWith(
       expect.any(String),
       expect.objectContaining({
         meta: expect.arrayContaining(["1 exercise"]),
-      }),
-      expect.anything()
+      })
     );
     expect(postActivity).toHaveBeenCalledWith(
       expect.objectContaining({

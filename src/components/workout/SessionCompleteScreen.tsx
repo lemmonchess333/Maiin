@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { motion } from "framer-motion";
 import { setPRDescription, type SetPR, type RepBucket } from "@/lib/prTracking";
 import type { ProgramExercise } from "@/features/program/programTypes";
+import type { SessionShareAction } from "@/lib/sessionPost";
 
 type SetType = "working" | "warmup" | "dropset" | "failure";
 
@@ -33,7 +34,9 @@ interface SessionCompleteScreenProps {
   saved?: boolean;
   saveStatus?: "queued" | "synced" | "needs-attention";
   planContext?: { progress: string; next: string };
-  onShare?: () => Promise<void>;
+  /** The saved session's feed post. The finish screen asks once, posts
+   *  automatically, or offers the one-off share (`SessionShareRow`). */
+  share?: SessionShareAction;
   onFinish: () => void;
   onEdit?: () => void;
   onClose: () => void;
@@ -50,7 +53,7 @@ export default function SessionCompleteScreen({
   saved = false,
   saveStatus,
   planContext,
-  onShare,
+  share,
   onFinish,
   onEdit,
   onClose,
@@ -271,7 +274,7 @@ export default function SessionCompleteScreen({
           </div>
         )}
         {saved && <WeekPulseCard />}
-        {saved && <CompletionExtras onShare={onShare} />}
+        {saved && <CompletionExtras share={share} />}
         {prResults && prResults.size > 0 && (
           <div className="ds-card p-4 space-y-2">
             {[...prResults.entries()].map(([key, result]) => (
