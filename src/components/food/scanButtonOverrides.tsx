@@ -11,7 +11,7 @@
 export function useScanButtonOverrides(
   remaining: number,
   isUnlimited: boolean,
-  onScan: () => void
-): { onClick: () => void; locked: boolean } {
+  onScan: (origin?: DOMRect) => void
+): { onClick: (origin?: DOMRect) => void; locked: boolean } {
   return { onClick: onScan, locked: !isUnlimited && remaining <= 0 };
 }

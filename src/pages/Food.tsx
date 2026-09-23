@@ -67,6 +67,8 @@ import { useScanUsage } from "@/hooks/useScanUsage";
 import { useInFlightGuard } from "@/hooks/useInFlightGuard";
 import { useScanButtonOverrides } from "@/components/food/scanButtonOverrides";
 import FoodComposerCard from "@/components/food/FoodComposerCard";
+import ScanGrow from "@/components/food/ScanGrow";
+import { useReducedMotion } from "@/hooks/useReducedMotion";
 import FoodProHint from "@/components/food/FoodProHint";
 import FoodConsistencyCard from "@/components/food/FoodConsistencyCard";
 import { FoodSkeleton } from "@/components/LoadingSkeleton";
@@ -173,6 +175,16 @@ export default function Food() {
     );
   };
   const [scanOpen, setScanOpen] = useState(false);
+  /* Each Scan tap starts a fresh scanner session. The analyzer stays
+     mounted after its camera is closed with the X, so a tap that toggled
+     it would close it, and a second tap would be needed to open it.
+     Keying it by session remounts it, and its camera opens on every tap. */
+  const [scanSession, setScanSession] = useState(0);
+  /* The opening animation: the Scan button's box when tapped, until the
+     layer that grows out of it has faded (null under reduced motion). */
+  const [scanGrowFrom, setScanGrowFrom] = useState<DOMRect | null>(null);
+  const [scannerShown, setScannerShown] = useState(false);
+  const reducedMotion = useReducedMotion();
   const [{ text: nlInput, revision: nlInputRevision }, setNlDraft] = useState({
     text: "",
     revision: 0,
@@ -346,9 +358,12 @@ export default function Food() {
   const scanOverrides = useScanButtonOverrides(
     scanUsage.remaining,
     scanUsage.isUnlimited,
-    () => {
+    (origin) => {
       haptic();
-      setScanOpen(!scanOpen);
+      setScannerShown(false);
+      setScanGrowFrom(origin && !reducedMotion ? origin : null);
+      setScanSession((n) => n + 1);
+      setScanOpen(true);
     }
   );
 
@@ -2007,6 +2022,13 @@ export default function Food() {
         />
       )}
 
+      {scanGrowFrom && (
+        <ScanGrow
+          from={scanGrowFrom}
+          scannerShown={scannerShown}
+          onDone={() => setScanGrowFrom(null)}
+        />
+      )}
       {scanOpen && (
         <Suspense
           fallback={
@@ -2016,6 +2038,8 @@ export default function Food() {
           }
         >
           <FoodAnalyzer
+            key={scanSession}
+            onCameraShown={() => setScannerShown(true)}
             date={selectedDate}
             meal={targetMeal}
             /* Pass the day's effective calorie target so AI scans

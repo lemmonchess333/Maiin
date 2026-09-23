@@ -65,13 +65,17 @@ function renderComposer(over: Record<string, any> = {}) {
   return { ...render(<FoodComposerCard {...(props as any)} />), props };
 }
 
-describe("FoodComposerCard — the labelled Scan button beside the field", () => {
-  it("renders one scan control: a labelled food-orange button beside the field, not an icon inside it", () => {
+describe("FoodComposerCard — the camera button beside the field", () => {
+  it("renders one scan control: a food-orange camera square beside the field, not an icon inside it", () => {
     renderComposer();
     const scans = screen.getAllByRole("button", { name: "Scan a meal" });
     expect(scans).toHaveLength(1);
-    // A word on the button, not a bare icon.
-    expect(scans[0]).toHaveTextContent("Scan");
+    // Camera only (owner call): no word beside the camera. The accessible
+    // name still says what it does.
+    expect(scans[0]).toHaveTextContent("");
+    expect(scans[0].querySelector("svg")).toBeTruthy();
+    // A square, the height of the field.
+    expect(scans[0]).toHaveClass("size-14");
     // The food orange (the nutrition variant) — the owner call recorded
     // in CLAUDE.md's Button mapping — not the brand purple.
     expect(scans[0]).toHaveClass("bg-nutrition-fill");
@@ -83,11 +87,15 @@ describe("FoodComposerCard — the labelled Scan button beside the field", () =>
     ).toBeTruthy();
   });
 
-  it("fires the overrides onClick (opens the scanner)", () => {
+  it("opens the scanner and hands over the button's box to grow the scanner from", () => {
     const onClick = vi.fn();
     renderComposer({ scanOverrides: { onClick, locked: false } });
-    fireEvent.click(screen.getByRole("button", { name: "Scan a meal" }));
+    const button = screen.getByRole("button", { name: "Scan a meal" });
+    const box = new DOMRect(280, 630, 56, 56);
+    vi.spyOn(button, "getBoundingClientRect").mockReturnValue(box);
+    fireEvent.click(button);
     expect(onClick).toHaveBeenCalledTimes(1);
+    expect(onClick).toHaveBeenCalledWith(box);
   });
 
   it("a locked account gets the same button, and it still opens the scanner", () => {
@@ -97,7 +105,6 @@ describe("FoodComposerCard — the labelled Scan button beside the field", () =>
     const onClick = vi.fn();
     renderComposer({ scanOverrides: { onClick, locked: true } });
     const button = screen.getByRole("button", { name: "Scan a meal" });
-    expect(button).toHaveTextContent("Scan");
     expect(button).toHaveClass("bg-nutrition-fill");
     fireEvent.click(button);
     expect(onClick).toHaveBeenCalledTimes(1);
@@ -116,7 +123,7 @@ describe("FoodComposerCard — the labelled Scan button beside the field", () =>
     expect(scan.parentElement!.contains(noMatches)).toBe(false);
   });
 
-  it("send button appears in the field alongside the Scan button when there is input text", () => {
+  it("send button appears in the field alongside the camera button when there is input text", () => {
     renderComposer({ nlInput: "2 eggs" });
     const send = screen.getByRole("button", { name: "Log meal" });
     const field = screen.getByRole("textbox", { name: "What did you eat" });
