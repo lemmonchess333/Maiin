@@ -100,8 +100,10 @@ const DEFAULT_QUICK_MEALS = [
 // parse as natural language. The first prompt makes both modes
 // explicit; subsequent rotations show real strings the parser
 // handles, which serve as both decoration and a working tutorial.
+// Each must fit the composer's field on one line at 375px, where the
+// Scan button beside it leaves the field about 180px for text.
 const NL_EXAMPLE_PROMPTS = [
-  "Search food or describe a meal",
+  "Search or describe a meal",
   "Eggs",
   "200g chicken & rice",
   "Large coffee, no sugar",
@@ -344,7 +346,6 @@ export default function Food() {
   const scanOverrides = useScanButtonOverrides(
     scanUsage.remaining,
     scanUsage.isUnlimited,
-    handleUpgrade,
     () => {
       haptic();
       setScanOpen(!scanOpen);
@@ -1876,67 +1877,13 @@ export default function Food() {
         </motion.div>
       )}
 
-      {/* Logging group: the eligible usual, then the composer and slot.
-          The usual row leads because it is the one-tap repeat, and because
-          it has to clear the fold: `companion-food.capture.spec.ts` asserts
-          its Log button ends above 760px at 375px wide, and the calorie
-          hero above it leaves only just enough room. Keep it first. */}
-      {usual && (
-        /* One row: what and how much on the left, Edit and Log on the
-           right. It sits above the composer and, on a 390x844 phone,
-           decides whether the composer is on screen at all, so it takes
-           the least height that keeps the name whole: the name gets its
-           own line rather than sharing one with the figures, where it
-           truncated first. Edit is the pencil the Quick Add rows already
-           use for the same sheet. Both controls stay 44px.
-
-           Log is the food orange, not brand purple (owner call): every
-           other food control on the page is orange, and a purple Log
-           would sit directly above the orange meal pills. Purple stays
-           for Pro ("Try Pro free"). CLAUDE.md's Button mapping records
-           the exception; mealSlotPickerIdentity.test.tsx pins it.
-
-           The group takes its name FROM the visible heading, so the two
-           cannot disagree. */
-        <Card
-          size="compact"
-          className="flex items-center gap-2"
-          role="group"
-          aria-labelledby={usualHeadingId}
-        >
-          <div className="min-w-0 flex-1">
-            <p
-              id={usualHeadingId}
-              className="text-micro leading-tight text-muted-foreground"
-            >
-              {usualMealHeading(usualSlot)}
-            </p>
-            <p className="text-base font-semibold leading-snug truncate">
-              {usual.name}
-            </p>
-            <p className="text-xs leading-tight text-muted-foreground truncate">
-              <span className="font-mono tabular-nums">
-                {Math.round(usual.cal)}
-              </span>{" "}
-              kcal{usualPortion && ` · ${usualPortion}`}
-            </p>
-          </div>
-          <IconButton
-            aria-label="Adjust portion or meal"
-            disabled={quickAdding !== null}
-            onClick={() => setPortionMeal(usual)}
-            icon={<Pencil className="size-4" />}
-          />
-          <Button
-            variant="nutrition"
-            disabled={quickAdding !== null}
-            onClick={() => void handleQuickMealAdd(usual)}
-          >
-            Log
-          </Button>
-        </Card>
-      )}
-
+      {/* Logging group: the composer and slot, then the eligible usual.
+          The composer leads so the page's main input, and its Scan button,
+          are on screen when the page opens (owner call). With the usual row
+          above it, the text box sat under the tab bar for a habitual user
+          on a 390x844 phone and on an SE. The usual row follows as the
+          one-tap repeat; `companion-food.capture.spec.ts` checks its Log
+          still clears the tab bar at 375px wide. */}
       <motion.div variants={pageItemVariant}>
         <FoodComposerCard
           /* Photo logging gated for this tier: one line under the field
@@ -1994,6 +1941,61 @@ export default function Food() {
           onManualOpen={() => setManualOpen(true)}
         />
       </motion.div>
+      {usual && (
+        /* One row: what and how much on the left, Edit and Log on the
+           right. It sits under the composer, where on a 390x844 phone it
+           decides whether the one-tap Log clears the tab bar, so it takes
+           the least height that keeps the name whole: the name gets its
+           own line rather than sharing one with the figures, where it
+           truncated first. Edit is the pencil the Quick Add rows already
+           use for the same sheet. Both controls stay 44px.
+
+           Log is the food orange, not brand purple (owner call): every
+           other food control on the page is orange, the meal pills and
+           the Scan button included. Purple stays for Pro ("Try Pro
+           free"). CLAUDE.md's Button mapping records the exception;
+           mealSlotPickerIdentity.test.tsx pins it.
+
+           The group takes its name FROM the visible heading, so the two
+           cannot disagree. */
+        <Card
+          size="compact"
+          className="flex items-center gap-2"
+          role="group"
+          aria-labelledby={usualHeadingId}
+        >
+          <div className="min-w-0 flex-1">
+            <p
+              id={usualHeadingId}
+              className="text-micro leading-tight text-muted-foreground"
+            >
+              {usualMealHeading(usualSlot)}
+            </p>
+            <p className="text-base font-semibold leading-snug truncate">
+              {usual.name}
+            </p>
+            <p className="text-xs leading-tight text-muted-foreground truncate">
+              <span className="font-mono tabular-nums">
+                {Math.round(usual.cal)}
+              </span>{" "}
+              kcal{usualPortion && ` · ${usualPortion}`}
+            </p>
+          </div>
+          <IconButton
+            aria-label="Adjust portion or meal"
+            disabled={quickAdding !== null}
+            onClick={() => setPortionMeal(usual)}
+            icon={<Pencil className="size-4" />}
+          />
+          <Button
+            variant="nutrition"
+            disabled={quickAdding !== null}
+            onClick={() => void handleQuickMealAdd(usual)}
+          >
+            Log
+          </Button>
+        </Card>
+      )}
       {copyPreviewOpen && (
         <CopyMealsSheet
           key={`${uid}:${selectedDate}`}
@@ -2023,6 +2025,20 @@ export default function Food() {
                bonus calories) via useEffectiveTargets, so the
                threshold scales with the user's planned day. */
             effectiveDailyTarget={dailyTargets.finalTarget}
+            /* No photo scans on this tier: the scanner opens on Barcode,
+               which is free, and its photo tabs carry the Pro offer. The
+               offer closes the scanner before opening the Pro sheet, the
+               same hand-off as onRequestManualLog below. */
+            photoLock={
+              scanOverrides.locked
+                ? {
+                    onUpgrade: () => {
+                      setScanOpen(false);
+                      setTimeout(handleUpgrade, 50);
+                    },
+                  }
+                : null
+            }
             onSaved={() => {
               setScanOpen(false);
             }}

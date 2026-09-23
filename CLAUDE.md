@@ -995,14 +995,21 @@ paint Food buttons orange.** Orange is a domain/data identity (section labels,
 macro rings, calorie data), not a per-screen button colour: reserve the filled
 `nutrition` variant for genuinely nutrition-PRIMARY, glanceable actions where
 orange IS the meaning, and keep ordinary Food CTAs (Add, Save, Log) on `primary`.
-The scan affordance stays its own special coral case (the camera icon in
-`FoodComposerCard.tsx`), not this variant.
 
-**Exception, owner call 2026-09-22:** the "Your usual" row's Log on the Food
-page is `nutrition`. Every other food control on that page is orange, and a
-purple Log sat directly above the orange meal pills. Brand purple stays for
-Pro there ("Try Pro free"). This is the one exception; other Food CTAs follow
-the rule above until the owner says otherwise.
+**Exceptions, owner calls:** two Food-page buttons are `nutrition`. Brand
+purple stays for Pro there ("Try Pro free"). Other Food CTAs follow the rule
+above until the owner says otherwise.
+
+- **2026-09-22 — the "Your usual" row's Log.** Every other food control on
+  that page is orange, and a purple Log sat directly above the orange meal
+  pills.
+- **2026-09-23 — the Scan button beside the composer's text box.** It
+  replaced the coral camera icon inside the field (itself the June Wave 2
+  shrink of a full-width scan CTA): photo scanning is one of the page's main
+  actions, and a 20px unlabelled icon read as decoration. Coral
+  (`THEME.food.scan`) now stays inside the scanner. Every account gets the
+  same button; a free account's opens the scanner on Barcode, which is always
+  free (F2b), with the photo tabs holding the Pro offer.
 
 Scope note: this is for **buttons** — visual CTA/action controls. It is NOT a
 mandate to wrap every `<button>` element: pressable cards, list/table rows,

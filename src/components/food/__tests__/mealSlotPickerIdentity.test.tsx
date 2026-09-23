@@ -88,4 +88,17 @@ describe("the usual row's Log is the food orange", () => {
     expect(log).toMatch(/>\s*Log\s*<\/Button>/);
     expect(log).toContain('variant="nutrition"');
   });
+
+  it("comes after the composer, so the text box and Scan are on screen when the page opens", () => {
+    /* Owner call. Above the composer, the usual row put the text box
+       under the tab bar for a habitual user on a 390x844 phone and on
+       an SE; companion-food.capture.spec.ts checks the row's Log still
+       clears the tab bar from here. */
+    const src = readFileSync(join(SRC, "pages/Food.tsx"), "utf8");
+    const composer = src.indexOf("<FoodComposerCard");
+    const usual = src.indexOf("aria-labelledby={usualHeadingId}");
+    expect(composer).toBeGreaterThan(-1);
+    expect(usual).toBeGreaterThan(-1);
+    expect(composer).toBeLessThan(usual);
+  });
 });

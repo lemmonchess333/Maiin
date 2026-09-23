@@ -9,8 +9,11 @@ import {
   Camera,
   CameraOff,
   Keyboard,
+  Lock,
 } from "lucide-react";
+import Button from "@/components/ui/Button";
 import { Spinner } from "@/components/ui/Spinner";
+import ScanProButton from "@/components/food/ScanProButton";
 import { useFocusTrap } from "@/hooks/useFocusTrap";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import {
@@ -52,6 +55,13 @@ type CameraState = "idle" | "granted" | "denied" | "unavailable";
  */
 export type ScanFailureKind = "no-food" | "error" | "offline";
 
+/**
+ * Photo scanning is not on this account's tier (a free account: its
+ * image-AI limit is 0). `onUpgrade` closes the scanner and opens the
+ * Pro sheet.
+ */
+export type PhotoLock = { onUpgrade: () => void };
+
 type Props = {
   open: boolean;
   onClose: () => void;
@@ -87,6 +97,11 @@ type Props = {
    * should close the modal and focus the NL input.
    */
   onRequestTypedInput?: () => void;
+  /** Set when photo scanning is not on the account's tier. The scanner
+   *  opens on Barcode, which is free; the photo tabs show the Pro offer
+   *  where the shutter would be; and nothing offers a photo upload,
+   *  because every photo goes to AI analysis. */
+  photoLock?: PhotoLock | null;
 };
 
 function dataUrlToBase64(dataUrl: string) {
@@ -123,6 +138,7 @@ export default function FoodCameraModal({
   failureDetail = null,
   onScanRetry,
   onRequestTypedInput,
+  photoLock = null,
 }: Props) {
   const focusTrapRef = useFocusTrap<HTMLDivElement>(open);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -144,7 +160,14 @@ export default function FoodCameraModal({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const stopZXingRef = useRef<null | (() => void)>(null);
 
-  const [tab, setTab] = useState<TabMode>("food");
+  const [tab, setTab] = useState<TabMode>(photoLock ? "barcode" : "food");
+  // Read by the open-reset below. A ref, so the lock resolving while the
+  // scanner is already open (the scan allowance still loading) never
+  // re-runs that reset and restarts a live camera.
+  const photoLockedRef = useRef(!!photoLock);
+  useEffect(() => {
+    photoLockedRef.current = !!photoLock;
+  }, [photoLock]);
   const stageLine = useScanStages(
     loading,
     tab === "label" ? SCAN_STAGES_LABEL : SCAN_STAGES_FOOD
@@ -194,10 +217,11 @@ export default function FoodCameraModal({
     return () => window.removeEventListener("keydown", onKey);
   }, [open]);
 
-  // Reset UI state whenever the modal opens.
+  // Reset UI state whenever the modal opens. A locked account starts on
+  // Barcode, the one scan its tier includes.
   useEffect(() => {
     if (!open) return;
-    setTab("food");
+    setTab(photoLockedRef.current ? "barcode" : "food");
     setFacing("environment");
     setBusy(false);
     setBarcodeHint("Align barcode in frame");
@@ -857,7 +881,9 @@ export default function FoodCameraModal({
     const deniedCopy =
       cameraState === "denied"
         ? "Camera access was denied. Tropos only uses the camera to scan meals and barcodes. Your photo is sent to Google for analysis and kept only on this device — never on our servers."
-        : "No camera available right now. You can still log your meal by uploading a photo or typing it in.";
+        : photoLock
+          ? "No camera available right now. You can still log your meal by typing it in."
+          : "No camera available right now. You can still log your meal by uploading a photo or typing it in.";
     return (
       <div
         ref={focusTrapRef}
@@ -918,17 +944,21 @@ export default function FoodCameraModal({
             )}
           </div>
           <div className="w-full max-w-[320px] space-y-2 pt-2">
-            <button
-              type="button"
-              onClick={() => {
-                haptic("light");
-                fileInputRef.current?.click();
-              }}
-              className="w-full h-12 rounded-xl bg-nutrition-fill text-white font-medium text-sm flex items-center justify-center gap-2"
-            >
-              <ImageIcon className="size-4" />
-              Upload a photo instead
-            </button>
+            {/* A photo upload is an AI scan, so a locked account is not
+                offered one. */}
+            {!photoLock && (
+              <button
+                type="button"
+                onClick={() => {
+                  haptic("light");
+                  fileInputRef.current?.click();
+                }}
+                className="w-full h-12 rounded-xl bg-nutrition-fill text-white font-medium text-sm flex items-center justify-center gap-2"
+              >
+                <ImageIcon className="size-4" />
+                Upload a photo instead
+              </button>
+            )}
             {onRequestTypedInput && (
               <button
                 type="button"
@@ -1071,12 +1101,13 @@ export default function FoodCameraModal({
               <button
                 type="button"
                 key={key}
+                aria-pressed={tab === key}
                 onClick={() => {
                   haptic("light");
                   setTab(key);
                 }}
                 className={cn(
-                  "px-4 py-2 rounded-full text-sm font-medium transition-all",
+                  "inline-flex items-center gap-1 px-4 py-2 rounded-full text-sm font-medium transition-all",
                   tab === key
                     ? "text-white shadow-sm"
                     : "text-white/70 hover:text-white"
@@ -1085,6 +1116,9 @@ export default function FoodCameraModal({
                   tab === key ? { background: THEME.food.scan } : undefined
                 }
               >
+                {photoLock && key !== "barcode" && (
+                  <Lock className="size-3" aria-hidden="true" />
+                )}
                 {label}
               </button>
             ))}
@@ -1120,24 +1154,48 @@ export default function FoodCameraModal({
             </AnimatePresence>
           </div>
 
-          {/* capture row — library · shutter · flip-camera (symmetrical) */}
-          <div className="flex items-center justify-between">
-            {/* Photo library — haptics like every other control on this
-                surface (it was the one silent button in the row). */}
-            <button
-              type="button"
-              onClick={() => {
-                haptic("light");
-                pickFromLibrary();
-              }}
-              className="size-12 rounded-full bg-black/50 text-white flex items-center justify-center"
-              aria-label="Photo library"
-              disabled={loading || busy}
-            >
-              <ImageIcon className="size-5" />
-            </button>
+          {/* capture row — library · shutter · flip-camera (symmetrical).
+              On a photo tab of a locked account the row is the offer
+              instead, at the shutter's height so the tabs above never
+              move when switching. */}
+          {photoLock && tab !== "barcode" ? (
+            <div className="h-[72px] flex items-center justify-center gap-2">
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  haptic("light");
+                  setTab("barcode");
+                }}
+              >
+                Scan a barcode
+              </Button>
+              <ScanProButton onUpgrade={photoLock.onUpgrade} />
+            </div>
+          ) : (
+            <div className="flex items-center justify-between">
+              {/* Photo library — haptics like every other control on this
+                surface (it was the one silent button in the row). A
+                picked photo always goes to AI analysis, whatever the
+                tab, so a locked account gets an empty slot of the same
+                size, keeping flip-camera anchored. */}
+              {photoLock ? (
+                <div className="size-12" aria-hidden="true" />
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => {
+                    haptic("light");
+                    pickFromLibrary();
+                  }}
+                  className="size-12 rounded-full bg-black/50 text-white flex items-center justify-center"
+                  aria-label="Photo library"
+                  disabled={loading || busy}
+                >
+                  <ImageIcon className="size-5" />
+                </button>
+              )}
 
-            {/* Shutter — only rendered in modes that actually capture
+              {/* Shutter — only rendered in modes that actually capture
                 (Scan Food, Food label). Barcode mode auto-detects, so
                 showing a disabled "shutter" + helper copy explaining
                 that it doesn't work was confusing UX — users would
@@ -1146,43 +1204,44 @@ export default function FoodCameraModal({
                 library + flip-camera buttons stay anchored at the
                 edges and the layout doesn't shift when switching
                 modes. */}
-            {tab !== "barcode" ? (
+              {tab !== "barcode" ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    haptic("medium");
+                    takePhoto();
+                  }}
+                  disabled={disableShutter}
+                  className={cn(
+                    "size-[72px] rounded-full border-[5px] flex items-center justify-center transition-transform active:scale-90",
+                    disableShutter && "opacity-50"
+                  )}
+                  style={{ borderColor: THEME.food.scan }}
+                  aria-label="Capture"
+                >
+                  {/* eslint-disable-next-line no-restricted-syntax -- camera shutter is white in every theme (universal camera idiom on the always-black camera chrome) */}
+                  <div className="size-[60px] rounded-full bg-white" />
+                </button>
+              ) : (
+                <div className="size-[72px]" aria-hidden="true" />
+              )}
+
+              {/* Flip camera — balances the library icon on the left */}
               <button
                 type="button"
                 onClick={() => {
-                  haptic("medium");
-                  takePhoto();
+                  haptic("light");
+                  setFacing((p) =>
+                    p === "environment" ? "user" : "environment"
+                  );
                 }}
-                disabled={disableShutter}
-                className={cn(
-                  "size-[72px] rounded-full border-[5px] flex items-center justify-center transition-transform active:scale-90",
-                  disableShutter && "opacity-50"
-                )}
-                style={{ borderColor: THEME.food.scan }}
-                aria-label="Capture"
+                className="size-12 rounded-full bg-black/50 text-white flex items-center justify-center"
+                aria-label="Flip camera"
               >
-                {/* eslint-disable-next-line no-restricted-syntax -- camera shutter is white in every theme (universal camera idiom on the always-black camera chrome) */}
-                <div className="size-[60px] rounded-full bg-white" />
+                <RefreshCw className="size-5" />
               </button>
-            ) : (
-              <div className="size-[72px]" aria-hidden="true" />
-            )}
-
-            {/* Flip camera — balances the library icon on the left */}
-            <button
-              type="button"
-              onClick={() => {
-                haptic("light");
-                setFacing((p) =>
-                  p === "environment" ? "user" : "environment"
-                );
-              }}
-              className="size-12 rounded-full bg-black/50 text-white flex items-center justify-center"
-              aria-label="Flip camera"
-            >
-              <RefreshCw className="size-5" />
-            </button>
-          </div>
+            </div>
+          )}
 
           {/* Per-mode helper text under the shutter. Crossfaded on tab
               change so the swap doesn't read as a hard content flash —
@@ -1202,9 +1261,11 @@ export default function FoodCameraModal({
               >
                 {tab === "barcode"
                   ? "Aim at the barcode · auto-detects"
-                  : tab === "label"
-                    ? "Align the nutrition label"
-                    : "Point at your meal"}
+                  : photoLock
+                    ? "Photo scanning is part of Pro"
+                    : tab === "label"
+                      ? "Align the nutrition label"
+                      : "Point at your meal"}
               </motion.p>
             </AnimatePresence>
           </div>

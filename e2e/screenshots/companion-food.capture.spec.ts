@@ -125,11 +125,16 @@ test("usual meals are visible and offline adds can be undone", async ({
   }
   await page.reload();
   await expect(page.getByText(/^Your usual at /)).toBeVisible();
+  // The composer leads (owner call): its Scan button clears the tab bar
+  // when the page opens, and the usual row follows it, a scroll away on
+  // a phone this size.
+  const scan = page.getByRole("button", { name: "Scan a meal" });
+  await expect(scan).toBeVisible();
+  const scanBox = (await scan.boundingBox())!;
+  expect(scanBox.y + scanBox.height).toBeLessThan(760);
   const logButton = page.getByRole("button", { name: "Log", exact: true });
   await expect(logButton).toBeVisible();
-  expect(
-    (await logButton.boundingBox())!.y + (await logButton.boundingBox())!.height
-  ).toBeLessThan(760);
+  expect((await logButton.boundingBox())!.y).toBeGreaterThan(scanBox.y);
   for (const dark of [false, true]) {
     await page.evaluate(
       (value) => document.documentElement.classList.toggle("dark", value),
