@@ -996,20 +996,26 @@ macro rings, calorie data), not a per-screen button colour: reserve the filled
 `nutrition` variant for genuinely nutrition-PRIMARY, glanceable actions where
 orange IS the meaning, and keep ordinary Food CTAs (Add, Save, Log) on `primary`.
 
-**Exceptions, owner calls:** two Food-page buttons are `nutrition`. Brand
+**Exceptions, owner calls:** three Food-page buttons are `nutrition`. Brand
 purple stays for Pro there ("Try Pro free"). Other Food CTAs follow the rule
 above until the owner says otherwise.
 
 - **2026-09-22 — the "Your usual" row's Log.** Every other food control on
   that page is orange, and a purple Log sat directly above the orange meal
   pills.
-- **2026-09-23 — the Scan button beside the composer's text box.** It
+- **2026-09-23 — the camera button beside the composer's text box.** It
   replaced the coral camera icon inside the field (itself the June Wave 2
   shrink of a full-width scan CTA): photo scanning is one of the page's main
-  actions, and a 20px unlabelled icon read as decoration. Coral
-  (`THEME.food.scan`) now stays inside the scanner. Every account gets the
-  same button; a free account's opens the scanner on Barcode, which is always
-  free (F2b), with the photo tabs holding the Pro offer.
+  actions, and a 20px grey icon read as decoration. It is a filled square,
+  camera only: it carried the word "Scan" for a day, and the owner found a
+  camera beside "Scan" read as two different actions. Its accessible name is
+  "Scan a meal". Coral (`THEME.food.scan`) now stays inside the scanner.
+  Every account gets the same button; a free account's opens the scanner on
+  Barcode, which is always free (F2b), with the photo tabs holding the Pro
+  offer. The scanner opens by growing out of it (`ScanGrow`).
+- **2026-09-23 — the scan result sheet's Log** ("Log to Breakfast"). It
+  matches the usual row's Log: logging food is the page's one action, and
+  the sheet opens over the orange camera button that started it.
 
 Scope note: this is for **buttons** — visual CTA/action controls. It is NOT a
 mandate to wrap every `<button>` element: pressable cards, list/table rows,

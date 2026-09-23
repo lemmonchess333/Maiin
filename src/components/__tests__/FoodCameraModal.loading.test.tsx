@@ -139,7 +139,7 @@ describe("FoodCameraModal — analysis in flight", () => {
     // Tab is chosen BEFORE the shutter in the real flow — and the
     // chrome is inert under the overlay, so it must be here too.
     const { rerender } = render(<FoodCameraModal {...props} loading={false} />);
-    fireEvent.click(screen.getByText("Food label"));
+    fireEvent.click(screen.getByRole("button", { name: "Label" }));
     rerender(<FoodCameraModal {...props} loading />);
     await armPhoto();
     expect(screen.getByText(SCAN_STAGES_LABEL[0])).toBeTruthy();
@@ -355,7 +355,7 @@ describe("FoodCameraModal — the failure beat", () => {
 
   it("label mode fails in label words — a nutrition panel is not a plate", async () => {
     render(<FoodCameraModal {...props} loading={false} failure="no-food" />);
-    fireEvent.click(screen.getByText("Food label"));
+    fireEvent.click(screen.getByRole("button", { name: "Label" }));
     const failureText = screen.getByTestId("scan-failure").textContent ?? "";
     expect(failureText).toContain("Couldn't read the label");
     expect(failureText).not.toContain("No food detected");

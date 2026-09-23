@@ -1,7 +1,7 @@
 import type { ReactNode, Ref, RefObject } from "react";
 import SegmentedControl from "@/components/ui/SegmentedControl";
 import { Camera, PenLine, SendHorizontal } from "lucide-react";
-import Button from "@/components/ui/Button";
+import IconButton from "@/components/ui/IconButton";
 import { THEME } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import { haptic } from "@/lib/haptic";
@@ -20,7 +20,9 @@ import { MEAL_ORDER, MEAL_LABELS, type MealKey } from "./mealConstants";
    structural type rather than importing the hook's named type so
    FoodComposerCard doesn't pull in the hook itself. */
 interface ScanOverrides {
-  onClick: () => void;
+  /** `origin` is the button's box when tapped: the scanner grows out of
+   *  it. */
+  onClick: (origin?: DOMRect) => void;
   /** No photo scans on this tier. The button looks the same either way;
    *  the page hands this to the scanner, which opens on Barcode. */
   locked?: boolean;
@@ -235,9 +237,9 @@ function FoodComposerCard({
               maxLength={500}
               /* pl-11: the manual-entry pencil's 44px box. The right
                  edge clears the send button only while there is text
-                 for it to send (the one time it shows): beside the Scan
-                 button the field is narrow, and an empty field needs
-                 that width for its placeholder. */
+                 for it to send (the one time it shows): beside the
+                 camera button the field is narrower, and an empty field
+                 needs that width for its placeholder. */
               className={cn(
                 "w-full pl-11 py-3.5 rounded-xl border bg-card text-foreground text-sm resize-none transition-all duration-200 ease-out",
                 nlInput.trim() ? "pr-11" : "pr-3"
@@ -273,12 +275,14 @@ function FoodComposerCard({
               </div>
             )}
           </div>
-          {/* Scan — a labelled button beside the field, the height of the
-              field, not an icon inside it. Photo scanning is one of the
-              page's main actions, and a 20px icon in the text box read as
-              decoration; Apple's guidance is to use text when a short
-              label says more than an icon (HIG, Buttons). It is the only
-              camera on the page.
+          {/* Scan — a filled camera button beside the field, a square the
+              height of the field, not an icon inside it. Photo scanning is
+              one of the page's main actions, and a 20px grey icon in the
+              text box read as decoration. A filled square carries that on
+              its own; the word "Scan" beside a camera read as two
+              different actions (owner call), and a camera next to a text
+              box is the familiar "or send a photo" pattern. VoiceOver
+              hears "Scan a meal". It is the only camera on the page.
 
               Food orange, the `nutrition` variant: an owner call recorded
               in CLAUDE.md's Button mapping. Coral stays inside the
@@ -287,19 +291,20 @@ function FoodComposerCard({
               Every account gets the same button. A locked account (no
               photo scans on its tier) opens the scanner on Barcode, which
               is free, and the photo tabs there carry the Pro offer — the
-              scanner reads `scanOverrides.locked`, not this button. */}
-          <Button
+              scanner reads `scanOverrides.locked`, not this button. The
+              tap hands over the button's box, which the scanner grows
+              out of. */}
+          <IconButton
             variant="nutrition"
+            size="lg"
             aria-label="Scan a meal"
-            leftIcon={<Camera className="size-5" />}
-            onClick={() => {
+            icon={<Camera className="size-6" />}
+            onClick={(e) => {
               haptic();
-              scanOverrides.onClick();
+              scanOverrides.onClick(e.currentTarget.getBoundingClientRect());
             }}
-            className="shrink-0 self-stretch"
-          >
-            Scan
-          </Button>
+            className="size-14 self-center"
+          />
         </div>
         {showSuggestions && (
           <FoodSuggestionsDropdown
