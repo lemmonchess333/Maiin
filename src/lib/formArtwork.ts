@@ -90,6 +90,18 @@ export const FORM_ARTWORK: Record<string, FormArtwork> = {
     reviewFile:
       "docs/exercise-art/releases/2026-09-22/barbell-floor-press.json",
   },
+  "pec-deck": {
+    version: "anatomy-v3-2026-09-24",
+    status: "approved",
+    width: 1536,
+    height: 1024,
+    frames: Array.from(
+      { length: 6 },
+      (_, i) => `form-frames/pec-deck/${i + 1}.webp`
+    ),
+    reference: "form-frames/pec-deck/1.webp",
+    reviewFile: "docs/exercise-art/releases/2026-09-24/pec-deck.json",
+  },
   "weighted-push-ups": {
     version: "anatomy-v3-2026-09-22",
     status: "approved",

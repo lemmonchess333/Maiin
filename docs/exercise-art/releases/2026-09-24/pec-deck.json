@@ -1,0 +1,170 @@
+{
+  "exerciseId": "pec-deck",
+  "version": "anatomy-v3-2026-09-24",
+  "width": 1536,
+  "height": 1024,
+  "decision": "approved",
+  "reviewer": "Codex visual and implementation review",
+  "reviewedAt": "2026-09-24T16:07:32.894Z",
+  "reference": {
+    "path": "form-frames/pec-deck/1.webp",
+    "sha256": "d831f34f8cb92b1d1a6de8b08ea2d8d3aa5273476eafeecbecc7e8fb0afb7b59"
+  },
+  "cueSha256": "ad2540f15770641e0eb54c1b492d0b7f8176c4b2b78084d2c625970caa6422dd",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Canonical anatomy-v3 bald faceless white-grey athlete, smooth pelvis and white shoes retained in all three poses."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Native1536x1024 frontal composition remains fixed; head, seat, tower and planted feet retain position."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Bent elbows and inward shoulder adduction form a qualitative pec-deck sequence. Frontal pads obscure portions of forearms; no calibrated 3D joint-angle claim."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Same overhead fixed pivots, rotating top beams, descending posts and short direct pad attachments in selected poses. Prior long-crossbar and shifted-housing variants excluded."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Hands remain visibly wrapped around handles; forearms align behind pads in each pose. Exact pressure surface is partly occluded by front-facing pads; seat/back support and both planted shoes remain consistent."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Visible top beams rotate and foreshorten while posts remain connected directly to pads. Fixed housing anchors/spans pass unrounded1px/1percent limits at unobstructed y103. Hidden stack/transmission and exact 3D segment lengths unverified."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Pectorals purple, anterior shoulders pale lilac; no new highlighted secondary groups."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Six cues at most seven words match setup, inward squeeze, finish, pause and controlled return. Finish shows a small pad gap and cue does not claim pad contact."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "Open1, midpoint2, finish3, pause4=3, return5=2, reset6=1. All6 and loop manually stepped in real ExerciseFormFrames player; three unique native poses inspected."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "Actual player390x844 light theme: all6 beats/loop stepped, three unique poses visually inspected, readable cues, no horizontal overflow, native image1536x1024 loaded."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "Actual player390x844 dark theme: all6 beats/loop stepped, three unique poses visually inspected, readable cues and controls."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/pec-deck/1.webp",
+      "sha256": "d831f34f8cb92b1d1a6de8b08ea2d8d3aa5273476eafeecbecc7e8fb0afb7b59",
+      "anchors": {
+        "leftPivotLeft": {
+          "x": 572.8080808080808,
+          "y": 103
+        },
+        "rightPivotLeft": {
+          "x": 905.6538461538462,
+          "y": 103
+        }
+      },
+      "invariantDimensions": {
+        "leftPivotSpan": 50.28830473408789,
+        "rightPivotSpan": 49.68543956043948
+      }
+    },
+    {
+      "path": "form-frames/pec-deck/2.webp",
+      "sha256": "ece010b559b71417516d577ff8e44e37109628b570bfd3abe64cbf04aa99f6c6",
+      "anchors": {
+        "leftPivotLeft": {
+          "x": 572.709090909091,
+          "y": 103
+        },
+        "rightPivotLeft": {
+          "x": 905.6125,
+          "y": 103
+        }
+      },
+      "invariantDimensions": {
+        "leftPivotSpan": 50.609090909090924,
+        "rightPivotSpan": 50.036984536082514
+      }
+    },
+    {
+      "path": "form-frames/pec-deck/3.webp",
+      "sha256": "8bd3f8911124e56af1ade818aa5270131ffa4e8d3325190875d0c68da5991cdf",
+      "anchors": {
+        "leftPivotLeft": {
+          "x": 572.8602150537635,
+          "y": 103
+        },
+        "rightPivotLeft": {
+          "x": 905.7142857142857,
+          "y": 103
+        }
+      },
+      "invariantDimensions": {
+        "leftPivotSpan": 50.4428152492668,
+        "rightPivotSpan": 49.79960317460325
+      }
+    },
+    {
+      "path": "form-frames/pec-deck/4.webp",
+      "sha256": "8bd3f8911124e56af1ade818aa5270131ffa4e8d3325190875d0c68da5991cdf",
+      "anchors": {
+        "leftPivotLeft": {
+          "x": 572.8602150537635,
+          "y": 103
+        },
+        "rightPivotLeft": {
+          "x": 905.7142857142857,
+          "y": 103
+        }
+      },
+      "invariantDimensions": {
+        "leftPivotSpan": 50.4428152492668,
+        "rightPivotSpan": 49.79960317460325
+      }
+    },
+    {
+      "path": "form-frames/pec-deck/5.webp",
+      "sha256": "ece010b559b71417516d577ff8e44e37109628b570bfd3abe64cbf04aa99f6c6",
+      "anchors": {
+        "leftPivotLeft": {
+          "x": 572.709090909091,
+          "y": 103
+        },
+        "rightPivotLeft": {
+          "x": 905.6125,
+          "y": 103
+        }
+      },
+      "invariantDimensions": {
+        "leftPivotSpan": 50.609090909090924,
+        "rightPivotSpan": 50.036984536082514
+      }
+    },
+    {
+      "path": "form-frames/pec-deck/6.webp",
+      "sha256": "d831f34f8cb92b1d1a6de8b08ea2d8d3aa5273476eafeecbecc7e8fb0afb7b59",
+      "anchors": {
+        "leftPivotLeft": {
+          "x": 572.8080808080808,
+          "y": 103
+        },
+        "rightPivotLeft": {
+          "x": 905.6538461538462,
+          "y": 103
+        }
+      },
+      "invariantDimensions": {
+        "leftPivotSpan": 50.28830473408789,
+        "rightPivotSpan": 49.68543956043948
+      }
+    }
+  ]
+}
