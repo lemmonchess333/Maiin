@@ -15,6 +15,7 @@ const placard = (
 });
 
 export const RELEASED_FORM_PLACARDS = {
+ "ez-bar-curl": placard("ez-bar-curl", ["Biceps"], ["Forearms"], [[0,"Set","Grip angled sections; keep elbows beside ribs."],[0.5,"Curl","Bend elbows, keeping your torso still."],[1,"Squeeze","Curl toward shoulders without moving elbows forward."],[1,"Control","Hold briefly with wrists aligned."],[0.5,"Lower","Lower slowly, keeping elbows beside your ribs."],[0,"Return","Extend arms under control; keep tension."]]),
   "db-flyes": placard(
     "db-flyes",
     ["Pectorals"],
