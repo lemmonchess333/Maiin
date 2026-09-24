@@ -102,6 +102,7 @@ export const FORM_ARTWORK: Record<string, FormArtwork> = {
     reference: "form-frames/cable-crossover/1.webp",
     reviewFile: "docs/exercise-art/releases/2026-09-24/cable-crossover.json",
   },
+  "lu-raise": { version: "anatomy-v3-2026-09-24", status: "approved", width: 1536, height: 1024, frames: Array.from({length:6}, (_,i) => `form-frames/lu-raise/${i+1}.webp`), reference: "form-frames/lu-raise/1.webp", reviewFile: "docs/exercise-art/releases/2026-09-24/lu-raise.json" },
   "weighted-push-ups": {
     version: "anatomy-v3-2026-09-22",
     status: "approved",

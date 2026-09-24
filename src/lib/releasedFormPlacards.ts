@@ -15,6 +15,7 @@ const placard = (
 });
 
 export const RELEASED_FORM_PLACARDS = {
+ "lu-raise": placard("lu-raise", ["Deltoids"], ["Front delts", "Side delts"], [[0,"Start","Stand tall, weights at your sides."],[0.25,"Raise laterally","Raise both arms out to the sides."],[0.5,"Shoulder height","Reach shoulder height with soft elbows."],[1,"Sweep forward","Sweep forward, bringing the weights close together."],[0.5,"Open laterally","Open back out at shoulder height."],[0.25,"Lower","Lower steadily; continue to your sides."]]),
   "cable-crossover": placard(
     "cable-crossover",
     ["Pectorals"],
