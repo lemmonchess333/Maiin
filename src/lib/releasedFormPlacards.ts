@@ -16,6 +16,35 @@ const placard = (
 
 export const RELEASED_FORM_PLACARDS = {
  "decline-db-press": placard("decline-db-press", ["Lower Chest"], ["Triceps", "Front Delts"], [[0,"Set","Secure ankles; brace with weights beside chest."],[0.5,"Press","Press upward, keeping wrists stacked over elbows."],[1,"Extend","Extend arms, keeping the dumbbells slightly apart."],[1,"Control","Hold steady with shoulders against the pad."],[0.5,"Lower","Lower both weights along the same path."],[0,"Return","Return beside your chest with control."]]),
+  "db-flyes": placard(
+    "db-flyes",
+    ["Pectorals"],
+    ["Front deltoids"],
+    [
+      [0, "Set the soft bend", "Keep elbows softly bent above your chest."],
+      [
+        0.5,
+        "Open in an arc",
+        "Lower outward, maintaining the same elbow bend.",
+      ],
+      [
+        1,
+        "Controlled stretch",
+        "Stop at chest level; keep shoulders supported.",
+      ],
+      [
+        1,
+        "Hold control",
+        "Pause briefly without lowering beyond comfortable range.",
+      ],
+      [0.5, "Sweep inward", "Bring weights together along the same arc."],
+      [
+        0,
+        "Reset above chest",
+        "Finish above chest without clashing the weights.",
+      ],
+    ]
+  ),
  "superman-hold": placard("superman-hold", ["Lower Back"], ["Glutes", "Hamstrings"], [[0,"Set","Lie face-down; reach arms overhead."],[0.5,"Lift","Lift arms, chest, and legs slightly."],[1,"Reach","Reach long through fingers and toes."],[1,"Hold","Hold briefly, keeping your gaze down."],[0.5,"Lower","Lower your limbs slowly with control."],[0,"Reset","Return gently to the mat."]]),
   "chest-press-machine": placard(
     "chest-press-machine",
