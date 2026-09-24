@@ -16,6 +16,7 @@ const placard = (
 
 export const RELEASED_FORM_PLACARDS = {
  "meadows-row": placard("meadows-row", ["Lats"], ["Rhomboids", "Rear Delts", "Biceps"], [[0,"Stretch","Brace your thigh; extend the working arm."],[0.5,"Pull","Draw your elbow back; keep hips steady."],[1,"Row","Bring the loaded end toward your hip."],[1,"Control","Keep your wrist aligned and torso steady."],[0.5,"Lower","Lower along the same arc with control."],[0,"Return","Return to a full arm stretch."]]),
+ "arnold-press": placard("arnold-press", ["Deltoids"], ["Triceps", "Upper chest"], [[0,"Start tucked","Start seated with palms facing you."],[0.5,"Rotate and press","Press upward while rotating palms outward."],[1,"Extend overhead","Extend overhead with palms facing forward."],[1,"Hold","Keep the dumbbells separate above shoulders."],[0.5,"Lower smoothly","Lower while reversing the rotation."],[0,"Return tucked","Return palms inward at chest height."]]),
   "db-flyes": placard(
     "db-flyes",
     ["Pectorals"],
