@@ -1,0 +1,170 @@
+{
+  "exerciseId": "db-flyes",
+  "version": "anatomy-v3-2026-09-24",
+  "width": 1536,
+  "height": 1024,
+  "decision": "approved",
+  "reviewer": "Codex visual and implementation review",
+  "reviewedAt": "2026-09-24T15:18:49.249Z",
+  "reference": {
+    "path": "form-frames/db-flyes/1.webp",
+    "sha256": "8566b8132276a66d97589e7b723667e364c494c7e273b50156c69cc09029d2a9"
+  },
+  "cueSha256": "760df832fef93f1de23e75a2f61503cccd37c54dee3f2809616a4b363543d25c",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Canonical bald faceless white-grey anatomy and white trainers preserved in all three native poses. Pelvic centre remains smooth and neutral."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Fixed three-quarter camera, 1536x1024 canvas and horizontal bench. Head-end support and foot-base scanline anchors and spans pass unrounded one-pixel/one-percent limits."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Native poses re-inspected together. Start now has visible soft elbow bends; midpoint and open pose show continuous arms and grips without a deep press-style bend. Projected elbow angles differ through foreshortening; exact 3D angle constancy is not measurable from these illustrations."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Two modest matching hex dumbbells remain in closed hands and fully framed. Projected head shapes and axial directions change with the arm arc; no detached head, broken handle or added weight. This is qualitative equipment review, not a calibrated dimension claim. Bench remains fixed."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Head, upper back and hips stay on the flat bench; both feet remain planted. Both hands remain wrapped around their dumbbell handles. Revised open pose separates near weight from the far shoe."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Weights travel from above chest outward into foreground/background lateral arcs and return along the same poses. No visible deep elbow collapse or movement of supported torso/hips. Foreshortening and wrist orientation limit precise 3D assessment; approval is for the visible qualitative fly sequence."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Pectorals stay strongest blue-violet and front deltoids pale lilac; arms/forearms otherwise neutral. Hue is consistent within set, with the same slightly blue-violet primary used by this source candidate."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Exact db-flyes catalogue variation: flat bench, soft elbow bend, wide arc and return above chest. Six cues are at most seven words each. Bottom cue limits descent and supported shoulders; no cue directs a press."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "All six beats plus 6-to-1 reviewed in actual ExerciseFormFrames after every refinement. Intentional reuse 4=3,5=2,6=1; reference is refined frame1."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "Real player with repository CSS/fonts, actual light theme at verified390x844: all six beats and loop checked, all three unique poses visually inspected. Captions legible, native image loaded, no horizontal overflow."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "Same six-beat and loop review in actual dark theme at390x844. All unique poses visually inspected after viewport settled; no missing image or clipped caption."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/db-flyes/1.webp",
+      "sha256": "8566b8132276a66d97589e7b723667e364c494c7e273b50156c69cc09029d2a9",
+      "anchors": {
+        "headBenchSupportLeft": {
+          "x": 365.4,
+          "y": 750
+        },
+        "footBenchSupportLeft": {
+          "x": 913.047619047619,
+          "y": 790
+        }
+      },
+      "invariantDimensions": {
+        "headBenchSupportSpan": 53.3857142857143,
+        "footBenchSupportSpan": 76.04329004329009
+      }
+    },
+    {
+      "path": "form-frames/db-flyes/2.webp",
+      "sha256": "65a55709a5a21ecc4b2bf4c05355edef302ce8e0516190c3131576bc9dc1587d",
+      "anchors": {
+        "headBenchSupportLeft": {
+          "x": 365.02,
+          "y": 750
+        },
+        "footBenchSupportLeft": {
+          "x": 913.2173913043479,
+          "y": 790
+        }
+      },
+      "invariantDimensions": {
+        "headBenchSupportSpan": 53.50631578947372,
+        "footBenchSupportSpan": 75.83260869565208
+      }
+    },
+    {
+      "path": "form-frames/db-flyes/3.webp",
+      "sha256": "72502eea7335014fb35b4ddfbb067ea9a2c896a4896b261ff5d1dafe6887312a",
+      "anchors": {
+        "headBenchSupportLeft": {
+          "x": 364.7692307692308,
+          "y": 750
+        },
+        "footBenchSupportLeft": {
+          "x": 913.304347826087,
+          "y": 790
+        }
+      },
+      "invariantDimensions": {
+        "headBenchSupportSpan": 53.757085020242926,
+        "footBenchSupportSpan": 75.87747035573113
+      }
+    },
+    {
+      "path": "form-frames/db-flyes/4.webp",
+      "sha256": "72502eea7335014fb35b4ddfbb067ea9a2c896a4896b261ff5d1dafe6887312a",
+      "anchors": {
+        "headBenchSupportLeft": {
+          "x": 364.7692307692308,
+          "y": 750
+        },
+        "footBenchSupportLeft": {
+          "x": 913.304347826087,
+          "y": 790
+        }
+      },
+      "invariantDimensions": {
+        "headBenchSupportSpan": 53.757085020242926,
+        "footBenchSupportSpan": 75.87747035573113
+      }
+    },
+    {
+      "path": "form-frames/db-flyes/5.webp",
+      "sha256": "65a55709a5a21ecc4b2bf4c05355edef302ce8e0516190c3131576bc9dc1587d",
+      "anchors": {
+        "headBenchSupportLeft": {
+          "x": 365.02,
+          "y": 750
+        },
+        "footBenchSupportLeft": {
+          "x": 913.2173913043479,
+          "y": 790
+        }
+      },
+      "invariantDimensions": {
+        "headBenchSupportSpan": 53.50631578947372,
+        "footBenchSupportSpan": 75.83260869565208
+      }
+    },
+    {
+      "path": "form-frames/db-flyes/6.webp",
+      "sha256": "8566b8132276a66d97589e7b723667e364c494c7e273b50156c69cc09029d2a9",
+      "anchors": {
+        "headBenchSupportLeft": {
+          "x": 365.4,
+          "y": 750
+        },
+        "footBenchSupportLeft": {
+          "x": 913.047619047619,
+          "y": 790
+        }
+      },
+      "invariantDimensions": {
+        "headBenchSupportSpan": 53.3857142857143,
+        "footBenchSupportSpan": 76.04329004329009
+      }
+    }
+  ]
+}

@@ -42,6 +42,18 @@ const ownerReleased = (
 // These entries do not claim that the art passes the new consistency standard.
 export const FORM_ARTWORK: Record<string, FormArtwork> = {
   "lu-raise": { version: "anatomy-v3-2026-09-24", status: "approved", width: 1536, height: 1024, frames: Array.from({length:6}, (_,i) => `form-frames/lu-raise/${i+1}.webp`), reference: "form-frames/lu-raise/1.webp", reviewFile: "docs/exercise-art/releases/2026-09-24/lu-raise.json" },
+  "db-flyes": {
+    version: "anatomy-v3-2026-09-24",
+    status: "approved",
+    width: 1536,
+    height: 1024,
+    frames: Array.from(
+      { length: 6 },
+      (_, i) => `form-frames/db-flyes/${i + 1}.webp`
+    ),
+    reference: "form-frames/db-flyes/1.webp",
+    reviewFile: "docs/exercise-art/releases/2026-09-24/db-flyes.json",
+  },
   "chest-press-machine": {
     version: "anatomy-v3-2026-09-24",
     status: "approved",
