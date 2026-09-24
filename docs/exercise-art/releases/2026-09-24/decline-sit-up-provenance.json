@@ -1,0 +1,74 @@
+{
+  "modelPath": "Built-in image_gen unchanged. Original supported recline is master. Refined midpoint corrects neck posture; top includes authorized stationary bench-foot correction. No moving anatomy edited deterministically.",
+  "canonicalReference": {
+    "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+  },
+  "sourceFrames": [
+    {
+      "frame": 1,
+      "sha256": "0ad38031721a863f26205bb92b51785c1f4be80fc668e4fc89684b618ceb4051"
+    },
+    {
+      "frame": 2,
+      "sha256": "4b897c9d67a5a9f08049db2e4afe97a41addeaf211fcf542950454dff1b9aa7c"
+    },
+    {
+      "frame": 3,
+      "sha256": "a7465c543e11c8eaddc5e185aeb7668e14f3d1252860455a9c764303403e6ad1"
+    },
+    {
+      "frame": 4,
+      "sha256": "a7465c543e11c8eaddc5e185aeb7668e14f3d1252860455a9c764303403e6ad1"
+    },
+    {
+      "frame": 5,
+      "sha256": "4b897c9d67a5a9f08049db2e4afe97a41addeaf211fcf542950454dff1b9aa7c"
+    },
+    {
+      "frame": 6,
+      "sha256": "0ad38031721a863f26205bb92b51785c1f4be80fc668e4fc89684b618ceb4051"
+    }
+  ],
+  "generation": [
+    {
+      "file": "mid-prompt.json",
+      "prompt": "Precise edit of image1 decline sit-up MIDPOINT. Image2 canonical athlete identity/style reference. Change ONLY head/neck posture: gently tuck chin so head follows curling torso, face directed toward knees instead of tilted backward/up. Keep same midpoint torso angle, arms crossed on chest, abdomen shape and purple highlights, lilac hip flexors, hips/pelvis location, both bent knees and secured shoes, rollers, entire bench shape/texture/frame/feet, camera/framing/pureblack background unchanged. Preserve neutral faceless white-grey anatomical athlete with white shoes and neutral featureless pelvis. Same native1536x1024 landscape. No text/arrows. Natural neck continuity, no excessive chin-to-chest compression. This must remain the midpoint, not become the seated top.",
+      "generation": "d0fd341c-a8f2-4c42-b420-809c72327a66",
+      "tool": "built-in image_gen",
+      "status": "candidate: neck follows torso, upper torso also changed somewhat; distinct from both endpoints; fixed geometry and mobile review pending"
+    }
+  ],
+  "originalPilotPrompts": [
+    "Use case: scientific-educational. Create DECLINE SIT-UP master, using attached canonical anatomical athlete identity. Same bald faceless white/light-grey male, neutral smooth featureless pelvis, full legs visible and white trainers; fine dark contour 2D, black background, no glow or labels. Fullbody elevated side three-quarter camera, landscape1536x1024 with margins. One simple rigid dark grey DECLINE abdominal bench: foot end at RIGHT is clearly HIGHER than head end atLEFT, padded surface slopes downward toward head by about20degrees, stable twoleg steel base, padded ankle rollers at high end. Athlete reclined with back supported along sloping pad, head lowLEFT, feet securely held at highRIGHT under ankle rollers, knees comfortably bent, hips on pad. Arms crossed over chest (NOplate), hands on opposite shoulders. Primary abs visible strongestpurple, hip flexors lightlilac; all other muscles white-grey. Both feet/trainer contacts, ankle restraints and entire bench structure visible enough to preserve throughout motion. Anatomically correct proportions. No extra equipment. One native image, no grid.",
+    "Use case: precise-object-edit. Correct the START position of this decline sit-up master (image1); canonical identity image2. Keep absolutely everything about the bench, both ankles/feet/rollers, bent knees, hips, crossed arms, camera, crop and lighting unchanged. Lower the shoulders, upper back and head BACK onto the sloping padded bench so torso is extended along the bench rather than already curling up. Back of head gently supported on pad near its lowleft end, neck neutral with torso. Retain exact skeleton proportions and crossed hands on opposite shoulders. Do not lower or move the entire bench. No other changes, no halo,text or newobjects. Native1536x1024.",
+    "Use case: scientific-educational. New DECLINE SIT-UP master with TRUE SIDE PROFILE camera to make physical bench support unambiguous. Use canonical athlete image solely identity/style. Landscape1536x1024 fullbody and entire bench with margins. Athlete bald faceless whitegrey anatomy smoothneutralfeatureless pelvis white trainers. Long single straight padded decline bench slopes20degrees UP from headLEFT to feetRIGHT. The SAME20degree slope is followed by the athlete's ENTIRE reclining spine and neck: backofhead, shoulders, back and buttocks ALL visibly resting directly along that ONE padded surface; no raised head, no hovering shoulders. Extend bench pad past backofhead so headcannot overhang. Knees bend upward; white trainers secured under simple padded ankle roller at elevatedfootend. Arms crossed over chest, hands on opposite shoulders. Pure side profile makes head-to-buttock alignment and bench contact clear, with small enough lateral separation that both feet and forearms are readable. Primary abs purple, hip flexors lightlilac, rest whitegrey. Rigid simple steel benchbase, no text, no halo, no grid, pureblack background. This is the extended low position BEFORE the torso curls up.",
+    "Use case: precise-object-edit. Image1 is the DECLINE SIT-UP master, image2 canonical identity. Derive initial-to-MIDDLE CURL: cross arms stay across chest, lift head/shoulders and upper back off bench, curl trunk toward knees to a halfway sit-up position, approximately30degrees above its starting recline. Neck follows curled torso neutral, no headtilt/yanking. Hips/buttocks stay absolutely fixed on pad at samecoordinates; knees/legs/ankles/trainers and footroller positions EXACTLY UNCHANGED. Bench pad contour and all steel legs/bolts/base/rollers are rigid unchanged, camera/framing and scale unchanged. Preserve skeleton lengths and fullbody, qualitative abs-purple/hip-flexor-lilac unchanged. No halo,text or addedobjects. Native1536x1024.",
+    "Use case: precise-object-edit. Image1 is middle decline sit-up, image2 exercise master for fixed supports, image3 canonical identity. Derive HIGH SIT-UP: curl chest further toward knees, bringing torso near upright, arms crossed on chest, hands stay on opposite shoulders. Head follows torso with chin gently tucked, face toward knees rather than ceiling, no neck overextension. Do not move hips/buttocks or bend/change legs: exactly same knees, thighs, calves, foot contacts and rollers, same skeletonsegmentlengths. Keep entire bench pad contour and steelbase absolutely fixed, same camera/canvas/scale/bodyidentity/highlighting. Keep head and fullbody visible within existingcanvas withoutzooming. One native1536x1024 image, no labels/halo."
+  ],
+  "fixedAreaCorrection": {
+    "authorization": "User approved master-copy for fixed areas",
+    "master": "C:\\Users\\myles\\Documents\\Codex\\2026-09-22\\continue-on-with-making-the-6-2\\work\\Maiin\\docs\\exercise-art\\pilots\\parallel-next-ten\\decline-sit-up\\frames\\1.png",
+    "masterSha256": "0ad38031721a863f26205bb92b51785c1f4be80fc668e4fc89684b618ceb4051",
+    "source": "C:\\Users\\myles\\Documents\\Codex\\2026-09-22\\continue-on-with-making-the-6-2\\work\\Maiin\\docs\\exercise-art\\pilots\\parallel-next-ten\\decline-sit-up\\frames\\3.png",
+    "sourceSha256": "401f4c97076b68ab50e831d96b109d9dfab1995df1ac92108337d8d164ea1519",
+    "output": "C:\\Users\\myles\\Documents\\Codex\\2026-09-22\\continue-on-with-making-the-6-2\\work\\decline-sit-up-production-review\\top-fixed-bench-foot.png",
+    "outputSha256": "a7465c543e11c8eaddc5e185aeb7668e14f3d1252860455a9c764303403e6ad1",
+    "rectangleXYXY": [
+      65,
+      755,
+      295,
+      835
+    ],
+    "changedPixels": 10420,
+    "changedPixelsOutsideRectangle": 0,
+    "scope": "Stationary left bench foot and adjacent fixed upright only; no athlete or moving equipment; applied to frames3/4."
+  },
+  "conversion": "Lossless WebP: all decoded RGB bytes match selected native PNG sources.",
+  "reuse": {
+    "4": 3,
+    "5": 2,
+    "6": 1
+  },
+  "measurementMethod": "Unrounded interpolated min-RGB30 boundary measurements at stationary left bench foot and right roller-support upright. Native contact and moving anatomy review remains separate."
+}
