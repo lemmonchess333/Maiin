@@ -28,6 +28,19 @@ export const RELEASED_FORM_PLACARDS = {
       [0, "Reset", "Keep chest lifted and feet planted."],
     ]
   ),
+  "cable-crossover": placard(
+    "cable-crossover",
+    ["Pectorals"],
+    ["Front deltoids"],
+    [
+      [0, "Wide start", "Plant feet; keep a soft elbow bend."],
+      [0.35, "Sweep inward", "Sweep handles inward with elbows softly bent."],
+      [1, "Squeeze", "Bring hands together in front of hips."],
+      [1, "Pause", "Hold the squeeze without shrugging."],
+      [0.35, "Open slowly", "Resist the cables along the return arc."],
+      [0, "Reset", "Return wide while keeping cable tension."],
+    ]
+  ),
   "decline-bench": placard(
     "decline-bench",
     ["Pectorals"],
