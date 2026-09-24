@@ -1,0 +1,170 @@
+{
+  "exerciseId": "decline-bench",
+  "version": "anatomy-v3-2026-09-24",
+  "width": 1536,
+  "height": 1024,
+  "decision": "approved",
+  "reviewer": "Codex visual and implementation review",
+  "reviewedAt": "2026-09-24T14:36:17.397Z",
+  "reference": {
+    "path": "form-frames/decline-bench/3.webp",
+    "sha256": "4fbfe76005d1c1803ef9e2f53d41e84487a23e79255e4a954c3d65b1860d2278"
+  },
+  "cueSha256": "109089149d8ed701c5be793a612f7ef4a6da22e6058ca03fcd26c1d7aaed898b",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Canonical anatomy-v3 bald faceless white/grey athlete, smooth featureless pelvis and white trainers retained across all three native poses."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Fixed three-quarter view and native 1536x1024 canvas. Whole athlete, bar and decline bench remain framed. Two unobstructed support anchors and spans meet the one-pixel/one-percent limits using unrounded threshold crossings."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Native poses inspected for continuous arms, wrists and grips; head, torso, hips and legs remain supported. No extra limbs or clipped anatomy."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "One plate at each end of a continuous bar, two connected grips and stable decline bench with ankle restraints. Small projected bar-slope and plate/grip differences are disclosed; this is not calibrated 3D geometry. Only the unobstructed head-end support was master-copied."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Head, back and hips remain on the bench, ankles stay secured, and both hands remain wrapped around the bar. Bottom shaft crosses the chest surface; exact lower-sternum depth cannot be physically measured from the illustration."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Controlled lowering toward lower chest, pause without bouncing or lifting hips, then return above shoulders. Same midpoint and top reused on return; no dropped bar or lost support."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Chest stays strongest blue-violet and triceps/front deltoids lighter lilac. The hue differs slightly from the incline set while retaining a consistent primary/secondary hierarchy within this set."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Each exact decline-bench cue matches support, descent, chest touch, pause, press and extension. Final captions mention ankle restraints and supported head/hips, and stay within seven words."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "All six beats and 6-to-1 manually reviewed in the real ExerciseFormFrames component. Intentional reuse 4=3, 5=2, 6=1. Frame 3 is the selected bottom master, so it is also the release reference."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "Real component with repository CSS/fonts at 390x844 in actual light theme: every beat and loop checked; all three unique poses visually inspected. Captions readable, no clipping, seam or horizontal overflow; native image loads."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "Same checks at 390x844 in dark theme. All six captions and return transition checked; no missing images or correction seam. Tool results retain visual evidence."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/decline-bench/1.webp",
+      "sha256": "efdbf9417fce3a06b5733fc7e236c8352826f65ffe9bdacc5407c82d334fee11",
+      "anchors": {
+        "headEndSupportLeft": {
+          "x": 317.4,
+          "y": 750
+        },
+        "footEndSupportLeft": {
+          "x": 1219.5925925925926,
+          "y": 750
+        }
+      },
+      "invariantDimensions": {
+        "headEndSupportSpan": 37.05454545454546,
+        "footEndSupportSpan": 25.58024691358014
+      }
+    },
+    {
+      "path": "form-frames/decline-bench/2.webp",
+      "sha256": "afa0145746e479d15923147886e6d56e5c6af5a062e104e72f7724ab881bb3f4",
+      "anchors": {
+        "headEndSupportLeft": {
+          "x": 317.4,
+          "y": 750
+        },
+        "footEndSupportLeft": {
+          "x": 1219.6626506024097,
+          "y": 750
+        }
+      },
+      "invariantDimensions": {
+        "headEndSupportSpan": 37.05454545454546,
+        "footEndSupportSpan": 25.423063683304463
+      }
+    },
+    {
+      "path": "form-frames/decline-bench/3.webp",
+      "sha256": "4fbfe76005d1c1803ef9e2f53d41e84487a23e79255e4a954c3d65b1860d2278",
+      "anchors": {
+        "headEndSupportLeft": {
+          "x": 317.4,
+          "y": 750
+        },
+        "footEndSupportLeft": {
+          "x": 1219.4299065420562,
+          "y": 750
+        }
+      },
+      "invariantDimensions": {
+        "headEndSupportSpan": 37.05454545454546,
+        "footEndSupportSpan": 25.643264189651063
+      }
+    },
+    {
+      "path": "form-frames/decline-bench/4.webp",
+      "sha256": "4fbfe76005d1c1803ef9e2f53d41e84487a23e79255e4a954c3d65b1860d2278",
+      "anchors": {
+        "headEndSupportLeft": {
+          "x": 317.4,
+          "y": 750
+        },
+        "footEndSupportLeft": {
+          "x": 1219.4299065420562,
+          "y": 750
+        }
+      },
+      "invariantDimensions": {
+        "headEndSupportSpan": 37.05454545454546,
+        "footEndSupportSpan": 25.643264189651063
+      }
+    },
+    {
+      "path": "form-frames/decline-bench/5.webp",
+      "sha256": "afa0145746e479d15923147886e6d56e5c6af5a062e104e72f7724ab881bb3f4",
+      "anchors": {
+        "headEndSupportLeft": {
+          "x": 317.4,
+          "y": 750
+        },
+        "footEndSupportLeft": {
+          "x": 1219.6626506024097,
+          "y": 750
+        }
+      },
+      "invariantDimensions": {
+        "headEndSupportSpan": 37.05454545454546,
+        "footEndSupportSpan": 25.423063683304463
+      }
+    },
+    {
+      "path": "form-frames/decline-bench/6.webp",
+      "sha256": "efdbf9417fce3a06b5733fc7e236c8352826f65ffe9bdacc5407c82d334fee11",
+      "anchors": {
+        "headEndSupportLeft": {
+          "x": 317.4,
+          "y": 750
+        },
+        "footEndSupportLeft": {
+          "x": 1219.5925925925926,
+          "y": 750
+        }
+      },
+      "invariantDimensions": {
+        "headEndSupportSpan": 37.05454545454546,
+        "footEndSupportSpan": 25.58024691358014
+      }
+    }
+  ]
+}
