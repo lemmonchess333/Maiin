@@ -66,6 +66,19 @@ export const FORM_ARTWORK: Record<string, FormArtwork> = {
     reviewFile:
       "docs/exercise-art/releases/2026-09-22/barbell-floor-press.json",
   },
+  "chest-press-machine": {
+    version: "anatomy-v3-2026-09-24",
+    status: "approved",
+    width: 1536,
+    height: 1024,
+    frames: Array.from(
+      { length: 6 },
+      (_, i) => `form-frames/chest-press-machine/${i + 1}.webp`
+    ),
+    reference: "form-frames/chest-press-machine/1.webp",
+    reviewFile:
+      "docs/exercise-art/releases/2026-09-24/chest-press-machine.json",
+  },
   "weighted-push-ups": {
     version: "anatomy-v3-2026-09-22",
     status: "approved",
