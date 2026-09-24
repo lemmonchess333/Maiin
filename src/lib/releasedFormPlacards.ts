@@ -16,6 +16,7 @@ const placard = (
 
 export const RELEASED_FORM_PLACARDS = {
  "lu-raise": placard("lu-raise", ["Deltoids"], ["Front delts", "Side delts"], [[0,"Start","Stand tall, weights at your sides."],[0.25,"Raise laterally","Raise both arms out to the sides."],[0.5,"Shoulder height","Reach shoulder height with soft elbows."],[1,"Sweep forward","Sweep forward, bringing the weights close together."],[0.5,"Open laterally","Open back out at shoulder height."],[0.25,"Lower","Lower steadily; continue to your sides."]]),
+ "superman-hold": placard("superman-hold", ["Lower Back"], ["Glutes", "Hamstrings"], [[0,"Set","Lie face-down; reach arms overhead."],[0.5,"Lift","Lift arms, chest, and legs slightly."],[1,"Reach","Reach long through fingers and toes."],[1,"Hold","Hold briefly, keeping your gaze down."],[0.5,"Lower","Lower your limbs slowly with control."],[0,"Reset","Return gently to the mat."]]),
   "chest-press-machine": placard(
     "chest-press-machine",
     ["Pectorals"],

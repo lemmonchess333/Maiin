@@ -1,0 +1,122 @@
+{
+  "modelPath": "Built-in image_gen unchanged. Original prone pose is master. Original generated anatomy retained; authorized fixed mat-tip correction in frames2/3/4/5 only.",
+  "canonicalReference": {
+    "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+  },
+  "sourceFrames": [
+    {
+      "frame": 1,
+      "sha256": "13dca2f8de1020053b0432d42fbe092636fa21778e99fb60ab8997ed217c4a47"
+    },
+    {
+      "frame": 2,
+      "sha256": "01f3111a229d169ff38954333d44c1cf5b552f687eba6e650fdfff950b9bf26a"
+    },
+    {
+      "frame": 3,
+      "sha256": "b0b1ecec84c769fa2e1e619e36df91a89d53256f4e36c2cfd05117d76a7877f8"
+    },
+    {
+      "frame": 4,
+      "sha256": "b0b1ecec84c769fa2e1e619e36df91a89d53256f4e36c2cfd05117d76a7877f8"
+    },
+    {
+      "frame": 5,
+      "sha256": "01f3111a229d169ff38954333d44c1cf5b552f687eba6e650fdfff950b9bf26a"
+    },
+    {
+      "frame": 6,
+      "sha256": "13dca2f8de1020053b0432d42fbe092636fa21778e99fb60ab8997ed217c4a47"
+    }
+  ],
+  "generation": [
+    "Use case: scientific-educational. Create exercise master for Superman Hold, using attached canonical athlete as identity/style reference. One bald faceless white/light-grey anatomical male, neutral smooth featureless pelvic area, visible leg anatomy, consistent white trainers. Full body horizontal landscape composition with wide margins. Start pose: lying FACE-DOWN flat on a thin dark-grey rectangular exercise mat, both straight arms stretched forward overhead in line with torso, palms facing down, legs straight parallel behind, feet resting. Neck neutral and face points down toward mat; no looking forward. Elevated side three-quarter camera from rear quarter enough to show both arms, both legs and lumbar back; exact joint configuration clearly visible. Primary LOWER BACK lumbar erectors strongest purple; glutes and hamstrings lighter lilac; no purple shoulders, arms or calves. Black plain background, crisp fine dark contour 2D illustration, no halo, labels, arrows or UI. Mat provides visible fixed support plane. One native1536x1024 full-resolution image.",
+    "Use case: precise-object-edit. Image1 is the Superman Hold exercise master and image2 canonical identity. Derive a SMALL initial lift from this exact master: lift BOTH straight arms, upper chest and BOTH straight legs just slightly off the mat, only a few centimetres, while pelvis/lower belly stays in exactly the same place on the mat. Neck neutral, face remains directed down, not chin lifted forward. Knees/elbows remain straight. Retain exactly same body segment lengths, hand/foot size, mat corners/texture, camera, crop, scale, background and muscle shading. No halo or outline glow. Lumbar back purple, glutes/hamstrings lilac, rest white-grey. One native1536x1024 image, no text.",
+    "Use case: precise-object-edit. Image1 is the initial SMALL-lift Superman pose; image2 is immutable exercise master; image3 canonical identity. Derive the modest TOP HOLD: raise both straight reaching arms and upper chest just a little further than image1, with both straight legs also a little higher, maintaining a long gentle curve not a sharp back bend. Gaze stays down and neck aligned with upper spine. Lift only a few inches above mat overall; do not look forward. Pelvis/lower belly contact point absolutely fixed, identical mat corner coordinates, body/limb segment lengths, trainers and hands, camera/crop/lighting/black background and stable purple/lilac pattern. No halo, text or extra objects. One native1536x1024 landscape image."
+  ],
+  "originalPilotPrompts": [
+    "Use case: scientific-educational. Create exercise master for Superman Hold, using attached canonical athlete as identity/style reference. One bald faceless white/light-grey anatomical male, neutral smooth featureless pelvic area, visible leg anatomy, consistent white trainers. Full body horizontal landscape composition with wide margins. Start pose: lying FACE-DOWN flat on a thin dark-grey rectangular exercise mat, both straight arms stretched forward overhead in line with torso, palms facing down, legs straight parallel behind, feet resting. Neck neutral and face points down toward mat; no looking forward. Elevated side three-quarter camera from rear quarter enough to show both arms, both legs and lumbar back; exact joint configuration clearly visible. Primary LOWER BACK lumbar erectors strongest purple; glutes and hamstrings lighter lilac; no purple shoulders, arms or calves. Black plain background, crisp fine dark contour 2D illustration, no halo, labels, arrows or UI. Mat provides visible fixed support plane. One native1536x1024 full-resolution image.",
+    "Use case: precise-object-edit. Image1 is the Superman Hold exercise master and image2 canonical identity. Derive a SMALL initial lift from this exact master: lift BOTH straight arms, upper chest and BOTH straight legs just slightly off the mat, only a few centimetres, while pelvis/lower belly stays in exactly the same place on the mat. Neck neutral, face remains directed down, not chin lifted forward. Knees/elbows remain straight. Retain exactly same body segment lengths, hand/foot size, mat corners/texture, camera, crop, scale, background and muscle shading. No halo or outline glow. Lumbar back purple, glutes/hamstrings lilac, rest white-grey. One native1536x1024 image, no text.",
+    "Use case: precise-object-edit. Image1 is the initial SMALL-lift Superman pose; image2 is immutable exercise master; image3 canonical identity. Derive the modest TOP HOLD: raise both straight reaching arms and upper chest just a little further than image1, with both straight legs also a little higher, maintaining a long gentle curve not a sharp back bend. Gaze stays down and neck aligned with upper spine. Lift only a few inches above mat overall; do not look forward. Pelvis/lower belly contact point absolutely fixed, identical mat corner coordinates, body/limb segment lengths, trainers and hands, camera/crop/lighting/black background and stable purple/lilac pattern. No halo, text or extra objects. One native1536x1024 landscape image."
+  ],
+  "fixedAreaCorrection": {
+    "authorization": "User approved master-copy for fixed areas",
+    "masterFrame": 1,
+    "masterSha256": "13dca2f8de1020053b0432d42fbe092636fa21778e99fb60ab8997ed217c4a47",
+    "rectangleXYXY": [
+      1100,
+      810,
+      1440,
+      870
+    ],
+    "scope": "Unobstructed lower mat tip only; all anatomy above patch. Frame2 reused5;3 reused4.",
+    "outputs": [
+      {
+        "sourceFrame": 2,
+        "sourceSha256": "7b25f6c1ef31264999963ae0cb95585badd37f8b4202550fcad5ffa2e02f3ccf",
+        "outputSha256": "01f3111a229d169ff38954333d44c1cf5b552f687eba6e650fdfff950b9bf26a",
+        "changedPixels": 8883,
+        "changedPixelsOutsideRectangle": 0
+      },
+      {
+        "sourceFrame": 3,
+        "sourceSha256": "5cfb029845bd8c3ef60aed98654dd26eb755800df2b99a03f7c0a494beb2611d",
+        "outputSha256": "b0b1ecec84c769fa2e1e619e36df91a89d53256f4e36c2cfd05117d76a7877f8",
+        "changedPixels": 12929,
+        "changedPixelsOutsideRectangle": 0
+      }
+    ]
+  },
+  "conversion": "Lossless WebP: all decoded RGB bytes match selected native PNG sources.",
+  "reuse": {
+    "4": 3,
+    "5": 2,
+    "6": 1
+  },
+  "outerMatDiagnostics": [
+    {
+      "frame": 1,
+      "lowerEdgeYAtX": {
+        "100": 498.1515151515151,
+        "500": 615.1290322580645
+      }
+    },
+    {
+      "frame": 2,
+      "lowerEdgeYAtX": {
+        "100": 498.1034482758621,
+        "500": 615.0689655172414
+      }
+    },
+    {
+      "frame": 3,
+      "lowerEdgeYAtX": {
+        "100": 497.57142857142856,
+        "500": 614.7777777777778
+      }
+    },
+    {
+      "frame": 4,
+      "lowerEdgeYAtX": {
+        "100": 497.57142857142856,
+        "500": 614.7777777777778
+      }
+    },
+    {
+      "frame": 5,
+      "lowerEdgeYAtX": {
+        "100": 498.1034482758621,
+        "500": 615.0689655172414
+      }
+    },
+    {
+      "frame": 6,
+      "lowerEdgeYAtX": {
+        "100": 498.1515151515151,
+        "500": 615.1290322580645
+      }
+    }
+  ],
+  "measurementMethod": "Unrounded min-RGB30 interpolated mat cross-section boundaries at y820 and835. Body contacts require separate native review."
+}
