@@ -1,0 +1,61 @@
+{
+  "modelPath": "Built-in image_gen; unchanged model path. High-pulley cable crossover; open frame1 is master. Closed grip refined to remove extra wrist loops. No deterministic pixel correction.",
+  "canonicalReference": {
+    "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+  },
+  "sourceFrames": [
+    {
+      "frame": 1,
+      "sha256": "5ea6830bd3b081fdd75ec1ffc845420750ba9356192248ab8f32711470d788ed"
+    },
+    {
+      "frame": 2,
+      "sha256": "bd74ffb2a813c5edae7d39c2b7c75cb6f097b0443e93c7e74dae37bf05bdb69d"
+    },
+    {
+      "frame": 3,
+      "sha256": "4c0479bcf4af647a4ea9e211c8c70bddbeb75234ac47184f69f638d7b0f1788e"
+    },
+    {
+      "frame": 4,
+      "sha256": "4c0479bcf4af647a4ea9e211c8c70bddbeb75234ac47184f69f638d7b0f1788e"
+    },
+    {
+      "frame": 5,
+      "sha256": "bd74ffb2a813c5edae7d39c2b7c75cb6f097b0443e93c7e74dae37bf05bdb69d"
+    },
+    {
+      "frame": 6,
+      "sha256": "5ea6830bd3b081fdd75ec1ffc845420750ba9356192248ab8f32711470d788ed"
+    }
+  ],
+  "generation": {
+    "closedGripCorrection": "Precise exercise illustration correction. FIRST image is the cable crossover CLOSED pose edit target; SECOND is wide exercise master defining the two identical D handles and locked scene; THIRD canonical athlete identity. Correct ONLY handles and hands: exactly one small D-shaped cable handle per hand, each with one straight grip bar grasped firmly by curled fingers and thumb. Remove the extra curved wrist loops/bands currently surrounding the backs of both wrists. Nothing encircles the wrists. Each single D frame connects at its outer apex to its existing carabiner and taut cable; fingers wrap its straight inner grip. Maintain two separate fists near one another in front of hips, straight neutral wrists, soft elbow bends. Keep the existing arm pose, all muscle highlighting, face/head/torso, staggered feet, towers/pulleys, camera, black background and 1536x1024 composition unchanged. Same white-grey bald faceless anatomy with featureless pelvis, purple pecs, pale lilac anterior shoulders, white shoes. No added loops, straps, duplicate handles, fingers or text."
+  },
+  "originalPrompts": {
+    "master": "Scientific exercise anatomy master: CABLE CROSSOVER HIGH PULLEY, wide starting position. Canonical reference mandatory athlete identity: bald faceless white/lightgrey anatomical adult, white trainers, smoothfeaturelesspelvis no clothing or genital details. Strongpurplepectoral muscles, lilac anterior deltoids, allothermusclesneutral. Fullbody front view with slight threequarter camera showing both grips and staggeredfeet. Athlete centred standing one foot forward, mild forwardlean, bothfeetflat, knees soft. Arms spread wide just below shoulderheight with constantsoft15degree elbowbend, palmsdown grasping identicalsmallDhandles. Grey functional dualcable machine: two slender vertical towers farleft/farright with fixed HIGH pulleys abovehead, continuous straight taut cable from each highpulley to correspondinghandle. Cable enters closed tower housing behind each highpulley: mechanism fully concealed by identical opaque grey shrouds, no visible stackplates or fabricated routing. Rigid towerbase floorcontacts and topcrossbeam. Equipment modestquietgrey, athlete clearlyprimary. Entire athlete and entireequipment fit1536x1024 blackbackground withmargin. Generous room betweenhands and towers. Finecanonical anatomical contours crispuniform lighting nofloorgradient nohalo noarrows nocaptions nolegend. Oneperson twohandles twocables. Fullapparatusfixed for later shoulder-driven handsdownandinward towardhips. Closedthumb grips, relaxedneutralwrists. No cables intersectbody.",
+    "midpoint": "Edit image1 master CABLE CROSSOVER highpulley midpoint. Image2 canonical identity. Move both nearlystraight arms downandinward in wide shoulderarc, keeping same small elbowbend. Hands at approximately(565,530) and(975,530), halfway from widestart to together infrontofhips. Do not move headshoulderstorsofeetmachinecamera. Torso slightforwardlean and splitstance identical. Handsclosed on sameDhandles, palmsdown. Each cable stays taut straight continuous from its SAME top pulley to handleclip, cablelength outside housing increases naturally. Internalweights remain concealed by opaquehousings, never addstackwindows. Do not tilt tower shiftbase shrinkathlete. Samepurplepecslilacfrontdelts neutralrest, samecanvas1536x1024 black background no text. Equipmentandbody proportionsmatchmaster. Onehandle eachhand, nocrossedcables. Only movingparts arms hands handles and cablelines.",
+    "endpoint": "Edit image1 cablecrossover adjacentpose into END SQUEEZE. Image2 master scene, image3 canonical identity. Bring hands a littlecloser together infrontofthehips until knuckles nearlymeet aroundimagex750,y565. Keep one separate identicalDhandle perhand, palmsdown, softelbowangle same, wristsstraight. Cable endpoints attach correspondinghandle, taut straight lines to samehighpulleys, no slack/no cablecrossing. Only arms move inward from previouspose; fixedheadneckshoulderpositiontorsofootplacement machinegeometrycrop. Fullbody same1536x1024 blackwhitegrey anatomy, purplepecslilacfrontdelts. Do not crosswrists, interlockfingers, fusehandles or overlapgrips. Two closedfists separated bysmallgap atbodymidline justinfrontofhiplevel, slightforwardreach notrestingonbody. Enclosedtowerhousingsunchanged. No text.",
+    "midpointCorrection": "Image1 cable crossover TOP MASTER, image2 canonical athlete. Make a SMALL change only from widestart: lowerbothhands about50pixels and moveeachhand inwardabout130pixels, so leftfist centre(525,485), rightfistcentre(1000,485) on1536x1024. This is HALF OPEN, arms diagonaloutward fromshoulders and hands still FAR OUTSIDE hips/torso. Hands span roughly twice shoulderwidth. Do NOT bringhands besidehips ortogether. Maintainnearstraightarms softlybent elbows andrigidsegment lengths. Shoulderjoint rotation only, fixed headtorsofeetneckshoulderanchorsmachinecrop. Dhandles exactlyonesecuregrip each, palmsdown. Cabletautfromsamehighpulley to correspondinghandleclip. Sameenclosedgreycolumns, samepurplepectorals lilacfrontdelts whitegreybody blackcanvas. Keepfullcanvas1536x1024. Modestarmmovementfrommaster, no press."
+  },
+  "conversion": "Native lossless WebP; every decoded RGB byte verified identical to refined reviewed PNG.",
+  "reuse": {
+    "4": 3,
+    "5": 2,
+    "6": 1
+  },
+  "measurementMethod": "Unrounded native min-RGB80 linearly interpolated boundary crossings.",
+  "scanlines": {
+    "leftTower": [
+      20,
+      180,
+      700
+    ],
+    "rightTower": [
+      1360,
+      1520,
+      700
+    ]
+  }
+}

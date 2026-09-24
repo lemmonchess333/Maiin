@@ -102,6 +102,18 @@ export const FORM_ARTWORK: Record<string, FormArtwork> = {
     reviewFile:
       "docs/exercise-art/releases/2026-09-22/barbell-floor-press.json",
   },
+  "cable-crossover": {
+    version: "anatomy-v3-2026-09-24",
+    status: "approved",
+    width: 1536,
+    height: 1024,
+    frames: Array.from(
+      { length: 6 },
+      (_, i) => `form-frames/cable-crossover/${i + 1}.webp`
+    ),
+    reference: "form-frames/cable-crossover/1.webp",
+    reviewFile: "docs/exercise-art/releases/2026-09-24/cable-crossover.json",
+  },
   "weighted-push-ups": {
     version: "anatomy-v3-2026-09-22",
     status: "approved",
