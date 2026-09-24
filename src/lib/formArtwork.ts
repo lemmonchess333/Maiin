@@ -41,6 +41,19 @@ const ownerReleased = (
 // Preserve the seven previously shipped sets while replacements are reviewed.
 // These entries do not claim that the art passes the new consistency standard.
 export const FORM_ARTWORK: Record<string, FormArtwork> = {
+  "barbell-upright-row": { version: "anatomy-v3-2026-09-24", status: "approved", width: 1536, height: 1024, frames: Array.from({length:6}, (_,i) => `form-frames/barbell-upright-row/${i+1}.webp`), reference: "form-frames/barbell-upright-row/3.webp", reviewFile: "docs/exercise-art/releases/2026-09-24/barbell-upright-row.json" },
+  "pec-deck": {
+    version: "anatomy-v3-2026-09-24",
+    status: "approved",
+    width: 1536,
+    height: 1024,
+    frames: Array.from(
+      { length: 6 },
+      (_, i) => `form-frames/pec-deck/${i + 1}.webp`
+    ),
+    reference: "form-frames/pec-deck/1.webp",
+    reviewFile: "docs/exercise-art/releases/2026-09-24/pec-deck.json",
+  },
   "decline-bench": {
     version: "anatomy-v3-2026-09-24",
     status: "approved",
@@ -102,7 +115,6 @@ export const FORM_ARTWORK: Record<string, FormArtwork> = {
     reference: "form-frames/cable-crossover/1.webp",
     reviewFile: "docs/exercise-art/releases/2026-09-24/cable-crossover.json",
   },
-  "barbell-upright-row": { version: "anatomy-v3-2026-09-24", status: "approved", width: 1536, height: 1024, frames: Array.from({length:6}, (_,i) => `form-frames/barbell-upright-row/${i+1}.webp`), reference: "form-frames/barbell-upright-row/3.webp", reviewFile: "docs/exercise-art/releases/2026-09-24/barbell-upright-row.json" },
   "weighted-push-ups": {
     version: "anatomy-v3-2026-09-22",
     status: "approved",

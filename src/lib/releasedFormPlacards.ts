@@ -16,6 +16,19 @@ const placard = (
 
 export const RELEASED_FORM_PLACARDS = {
  "barbell-upright-row": placard("barbell-upright-row", ["Traps"], ["Side delts", "Biceps"], [[0,"Start","Stand tall; keep an overhand grip."],[0.5,"Lead with elbows","Lead with elbows; keep the bar close."],[1,"Chest height","Stop at chest height, elbows below shoulders."],[1,"Controlled top","Hold briefly without lifting elbows higher."],[0.5,"Lower","Lower the bar close to your body."],[0,"Return","Return to thighs without bouncing."]]),
+  "pec-deck": placard(
+    "pec-deck",
+    ["Pectorals"],
+    ["Front deltoids"],
+    [
+      [0, "Set up", "Keep back supported and feet planted."],
+      [0.5, "Squeeze", "Press forearms into pads; bring arms inward."],
+      [1, "Finish", "Squeeze chest without lifting shoulders."],
+      [1, "Pause", "Hold tension; keep forearms against pads."],
+      [0.5, "Return", "Open slowly with elbows bent."],
+      [0, "Reset", "Keep chest lifted and feet planted."],
+    ]
+  ),
   "cable-crossover": placard(
     "cable-crossover",
     ["Pectorals"],
