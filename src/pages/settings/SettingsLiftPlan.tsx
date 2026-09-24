@@ -1,4 +1,5 @@
 import LiftTimeBudgetSettings from "@/components/program/LiftTimeBudgetSettings";
+import WeeklyVolumeCard from "@/components/program/WeeklyVolumeCard";
 /**
  * SettingsLiftPlan — the dedicated lift-plan editing screen (Section-Split,
  * 2026-07). The lifting counterpart to SettingsRunPlan.
@@ -14,6 +15,13 @@ import LiftTimeBudgetSettings from "@/components/program/LiftTimeBudgetSettings"
  * Composition mirrors SettingsTraining: useAuth for profile, useProgram for
  * the settings/rebuild/refresh writers, ProgrammeSettings for the grouped
  * form, and a page-level ScheduleLayoutSheet the form links out to.
+ *
+ * It also carries the weekly sets-per-muscle table (D-LIFT-1), which used
+ * to sit on the Train tab. There it was a verdict you could not act on
+ * without leaving: collapsed it said "4 muscles below target", a count of
+ * problems rather than a finding, and the fields that fix it were two
+ * screens away. Here the finding and its remedy are on one page — it rates
+ * the very days and focus this form edits — and Train keeps one fewer card.
  */
 import { useState } from "react";
 import { useLocation } from "react-router-dom";
@@ -102,6 +110,16 @@ export default function SettingsLiftPlan() {
           profile={profile}
           workouts={programState?.workouts ?? []}
           updateProfile={updateProfile}
+        />
+        {/* Last, and collapsed: it rates what the fields above prescribe,
+            so it reads as the result of this form rather than another
+            setting. The goal comes from programState, which is what a
+            running block owns and what balanceWeeklyVolume targets —
+            the profile copy would rate a block's week against the
+            PRE-block band. */}
+        <WeeklyVolumeCard
+          workouts={programState?.workouts ?? []}
+          primaryGoal={programState?.primaryGoal ?? profile.primaryGoal}
         />
       </SettingsSection>
 

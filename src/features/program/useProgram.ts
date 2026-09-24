@@ -34,6 +34,7 @@ import { stripUndefined } from "@/lib/firestoreGuards";
 import { auth, db } from "@/lib/firebase";
 import { useAuth, type UserProfile } from "@/lib/auth";
 import { postActivity } from "@/lib/socialApi";
+import type { ActivityPost } from "@/lib/activityPost";
 import { needsEmailVerification } from "@/lib/emailVerificationGate";
 import { compose, enqueueShare, showQueuedToast } from "@/lib/shareComposer";
 import { recordSharedActivity } from "@/lib/sessionDelete";
@@ -1604,7 +1605,7 @@ export function useProgram() {
                 performedExercises.map((ex) => ex.category).filter(Boolean)
               ),
             ];
-            const payload = {
+            const payload: ActivityPost = {
               authorId: user.uid,
               authorName: profile?.displayName || "Athlete",
               ...(profile?.photoURL

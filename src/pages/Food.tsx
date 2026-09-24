@@ -6,6 +6,7 @@ import {
   useRef,
   useMemo,
   useCallback,
+  useId,
   Suspense,
 } from "react";
 import { lazyRetry } from "@/lib/lazyRetry";
@@ -32,11 +33,11 @@ import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { Timestamp } from "firebase/firestore";
 import { createMealEntry, notifyMealsLogged } from "@/lib/mealEntry";
 import { copySelectedMeals, type MealCopySelection } from "@/lib/mealCopy";
-import { usualMeal } from "@/lib/usualMeal";
+import { usualMeal, usualMealHeading, usualMealPortion } from "@/lib/usualMeal";
 import { duplicatedServingPayload } from "@/lib/servingEdit";
 import { parseFoodText, getFoodSuggestions } from "@/lib/nlFoodParser";
 import type { ParsedFood, FoodSuggestion } from "@/lib/nlFoodParser";
-import { RotateCcw, X } from "lucide-react";
+import { Pencil, RotateCcw, X } from "lucide-react";
 import IconButton from "@/components/ui/IconButton";
 const FoodAnalyzer = lazyRetry(() => import("@/components/FoodAnalyzer"));
 const ProModal = lazyRetry(() => import("@/components/ProModal"));
@@ -66,6 +67,8 @@ import { useScanUsage } from "@/hooks/useScanUsage";
 import { useInFlightGuard } from "@/hooks/useInFlightGuard";
 import { useScanButtonOverrides } from "@/components/food/scanButtonOverrides";
 import FoodComposerCard from "@/components/food/FoodComposerCard";
+import ScanGrow from "@/components/food/ScanGrow";
+import { useReducedMotion } from "@/hooks/useReducedMotion";
 import FoodProHint from "@/components/food/FoodProHint";
 import FoodConsistencyCard from "@/components/food/FoodConsistencyCard";
 import { FoodSkeleton } from "@/components/LoadingSkeleton";
@@ -99,8 +102,10 @@ const DEFAULT_QUICK_MEALS = [
 // parse as natural language. The first prompt makes both modes
 // explicit; subsequent rotations show real strings the parser
 // handles, which serve as both decoration and a working tutorial.
+// Each must fit the composer's field on one line at 375px, where the
+// Scan button beside it leaves the field about 180px for text.
 const NL_EXAMPLE_PROMPTS = [
-  "Search food or describe a meal",
+  "Search or describe a meal",
   "Eggs",
   "200g chicken & rice",
   "Large coffee, no sugar",
@@ -170,6 +175,16 @@ export default function Food() {
     );
   };
   const [scanOpen, setScanOpen] = useState(false);
+  /* Each Scan tap starts a fresh scanner session. The analyzer stays
+     mounted after its camera is closed with the X, so a tap that toggled
+     it would close it, and a second tap would be needed to open it.
+     Keying it by session remounts it, and its camera opens on every tap. */
+  const [scanSession, setScanSession] = useState(0);
+  /* The opening animation: the Scan button's box when tapped, until the
+     layer that grows out of it has faded (null under reduced motion). */
+  const [scanGrowFrom, setScanGrowFrom] = useState<DOMRect | null>(null);
+  const [scannerShown, setScannerShown] = useState(false);
+  const reducedMotion = useReducedMotion();
   const [{ text: nlInput, revision: nlInputRevision }, setNlDraft] = useState({
     text: "",
     revision: 0,
@@ -343,10 +358,12 @@ export default function Food() {
   const scanOverrides = useScanButtonOverrides(
     scanUsage.remaining,
     scanUsage.isUnlimited,
-    handleUpgrade,
-    () => {
+    (origin) => {
       haptic();
-      setScanOpen(!scanOpen);
+      setScannerShown(false);
+      setScanGrowFrom(origin && !reducedMotion ? origin : null);
+      setScanSession((n) => n + 1);
+      setScanOpen(true);
     }
   );
 
@@ -1568,6 +1585,8 @@ export default function Food() {
     () => usualMeal(meals, usualSlot, selectedDate),
     [meals, usualSlot, selectedDate]
   );
+  const usualHeadingId = useId();
+  const usualPortion = usual && usualMealPortion(usual);
   const [copyPreviewOpen, setCopyPreviewOpen] = useState(false);
   const [portionMeal, setPortionMeal] = useState<QuickAddItem | null>(null);
   const handleQuickMealAdd = async (
@@ -1873,51 +1892,13 @@ export default function Food() {
         </motion.div>
       )}
 
-      {/* Logging group: the eligible usual, then the composer and slot.
-          The usual row leads because it is the one-tap repeat, and because
-          it has to clear the fold: `companion-food.capture.spec.ts` asserts
-          its Log button ends above 760px at 375px wide, and the calorie
-          hero above it leaves only just enough room. Keep it first. */}
-      {usual && (
-        /* Compact by requirement, not by taste: this row has to clear the
-           fold at 375px (see the ordering note above), and a separate line
-           each for the name, the kcal and the portion does not fit. Name
-           and figures share a baseline row — the name truncates, the
-           figures never do, because the figures are what make the row
-           tappable without thinking. The button row stays 44px: that is
-           the touch-target floor. */
-        <Card size="compact" className="space-y-1" aria-label="Your usual meal">
-          <p className="text-caption leading-tight text-muted-foreground">
-            Your usual at {usualSlot}
-          </p>
-          <div className="flex items-baseline justify-between gap-2">
-            <p className="text-base font-semibold truncate">{usual.name}</p>
-            <p className="text-xs text-muted-foreground shrink-0">
-              <span className="font-mono tabular-nums">
-                {Math.round(usual.cal)}
-              </span>{" "}
-              kcal · {usual.portionSize}
-            </p>
-          </div>
-          <div className="flex gap-2">
-            <Button
-              disabled={quickAdding !== null}
-              onClick={() => void handleQuickMealAdd(usual)}
-            >
-              Log
-            </Button>
-            <Button
-              variant="ghost"
-              aria-label="Adjust portion or meal"
-              disabled={quickAdding !== null}
-              onClick={() => setPortionMeal(usual)}
-            >
-              Edit
-            </Button>
-          </div>
-        </Card>
-      )}
-
+      {/* Logging group: the composer and slot, then the eligible usual.
+          The composer leads so the page's main input, and its Scan button,
+          are on screen when the page opens (owner call). With the usual row
+          above it, the text box sat under the tab bar for a habitual user
+          on a 390x844 phone and on an SE. The usual row follows as the
+          one-tap repeat; `companion-food.capture.spec.ts` checks its Log
+          still clears the tab bar at 375px wide. */}
       <motion.div variants={pageItemVariant}>
         <FoodComposerCard
           /* Photo logging gated for this tier: one line under the field
@@ -1975,6 +1956,61 @@ export default function Food() {
           onManualOpen={() => setManualOpen(true)}
         />
       </motion.div>
+      {usual && (
+        /* One row: what and how much on the left, Edit and Log on the
+           right. It sits under the composer, where on a 390x844 phone it
+           decides whether the one-tap Log clears the tab bar, so it takes
+           the least height that keeps the name whole: the name gets its
+           own line rather than sharing one with the figures, where it
+           truncated first. Edit is the pencil the Quick Add rows already
+           use for the same sheet. Both controls stay 44px.
+
+           Log is the food orange, not brand purple (owner call): every
+           other food control on the page is orange, the meal pills and
+           the Scan button included. Purple stays for Pro ("Try Pro
+           free"). CLAUDE.md's Button mapping records the exception;
+           mealSlotPickerIdentity.test.tsx pins it.
+
+           The group takes its name FROM the visible heading, so the two
+           cannot disagree. */
+        <Card
+          size="compact"
+          className="flex items-center gap-2"
+          role="group"
+          aria-labelledby={usualHeadingId}
+        >
+          <div className="min-w-0 flex-1">
+            <p
+              id={usualHeadingId}
+              className="text-micro leading-tight text-muted-foreground"
+            >
+              {usualMealHeading(usualSlot)}
+            </p>
+            <p className="text-base font-semibold leading-snug truncate">
+              {usual.name}
+            </p>
+            <p className="text-xs leading-tight text-muted-foreground truncate">
+              <span className="font-mono tabular-nums">
+                {Math.round(usual.cal)}
+              </span>{" "}
+              kcal{usualPortion && ` · ${usualPortion}`}
+            </p>
+          </div>
+          <IconButton
+            aria-label="Adjust portion or meal"
+            disabled={quickAdding !== null}
+            onClick={() => setPortionMeal(usual)}
+            icon={<Pencil className="size-4" />}
+          />
+          <Button
+            variant="nutrition"
+            disabled={quickAdding !== null}
+            onClick={() => void handleQuickMealAdd(usual)}
+          >
+            Log
+          </Button>
+        </Card>
+      )}
       {copyPreviewOpen && (
         <CopyMealsSheet
           key={`${uid}:${selectedDate}`}
@@ -1986,6 +2022,13 @@ export default function Food() {
         />
       )}
 
+      {scanGrowFrom && (
+        <ScanGrow
+          from={scanGrowFrom}
+          scannerShown={scannerShown}
+          onDone={() => setScanGrowFrom(null)}
+        />
+      )}
       {scanOpen && (
         <Suspense
           fallback={
@@ -1995,6 +2038,8 @@ export default function Food() {
           }
         >
           <FoodAnalyzer
+            key={scanSession}
+            onCameraShown={() => setScannerShown(true)}
             date={selectedDate}
             meal={targetMeal}
             /* Pass the day's effective calorie target so AI scans
@@ -2004,6 +2049,20 @@ export default function Food() {
                bonus calories) via useEffectiveTargets, so the
                threshold scales with the user's planned day. */
             effectiveDailyTarget={dailyTargets.finalTarget}
+            /* No photo scans on this tier: the scanner opens on Barcode,
+               which is free, and its photo tabs carry the Pro offer. The
+               offer closes the scanner before opening the Pro sheet, the
+               same hand-off as onRequestManualLog below. */
+            photoLock={
+              scanOverrides.locked
+                ? {
+                    onUpgrade: () => {
+                      setScanOpen(false);
+                      setTimeout(handleUpgrade, 50);
+                    },
+                  }
+                : null
+            }
             onSaved={() => {
               setScanOpen(false);
             }}

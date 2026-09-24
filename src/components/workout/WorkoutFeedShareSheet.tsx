@@ -26,13 +26,12 @@ import { toast } from "@/lib/toast";
 import { logger } from "@/lib/logger";
 import { recordSharedActivity } from "@/lib/sessionDelete";
 import { postActivity } from "@/lib/socialApi";
+import { CAPTION_MAX } from "@/lib/activityPost";
 import { containsProfanity } from "@/lib/profanityFilter";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { useEmailVerificationGate } from "@/hooks/useEmailVerificationGate";
 import { workoutTonnageKg, type Workout } from "@/hooks/useWorkouts";
 import VerifyEmailNotice from "@/components/social/VerifyEmailNotice";
-
-const CAPTION_MAX = 140;
 
 interface Props {
   open: boolean;

@@ -21,6 +21,7 @@ import {
   deleteDocGuarded,
 } from "@/lib/firestoreWrite";
 import { httpsCallable, getFunctions } from "firebase/functions";
+import type { ActivityPost } from "./activityPost";
 
 // ============================================
 // Auth helper — single source of truth for identity
@@ -101,36 +102,7 @@ export async function getFollowerIds(uid: string): Promise<Set<string>> {
 // `formatPace` moved into `functions/lib/socialFanout.js` along
 // with `buildFeedItem`.
 // ============================================
-export async function postActivity(activity: {
-  authorId: string;
-  authorName: string;
-  /**
-   * Denormalised author avatar URL. Carried on the activity doc and
-   * on each fan-out feed item so ActivityCard can render the author
-   * row without a per-card profile fetch. Optional — absent when the
-   * user hasn't uploaded a photo; the UI falls back to initials.
-   */
-  authorPhotoURL?: string;
-  type: "run" | "workout";
-  visibility: "public" | "followers" | "private";
-  // Enriched fields
-  workoutName?: string;
-  runName?: string;
-  exerciseCount?: number;
-  totalVolume?: number;
-  duration?: number;
-  distance?: number;
-  avgPace?: number | string;
-  elevationGain?: number;
-  calories?: number;
-  muscleGroups?: string[];
-  prHit?: boolean;
-  prExercise?: string;
-  prWeight?: number;
-  challengeMilestone?: string;
-  badgeEarned?: string;
-  [key: string]: unknown;
-}) {
+export async function postActivity(activity: ActivityPost) {
   const authedUid = getAuthUid();
   if (activity.authorId !== authedUid) throw new Error("Identity mismatch");
   // Only the activity doc is written client-side. Fan-out to follower feeds + author feed

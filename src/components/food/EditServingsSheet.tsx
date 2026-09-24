@@ -4,9 +4,15 @@ import { THEME } from "@/lib/theme";
 import { haptic } from "@/lib/haptic";
 import { cn } from "@/lib/utils";
 import { BottomSheet } from "@/components/ui/BottomSheet";
+import Button from "@/components/ui/Button";
 import SectionLabel from "@/components/ui/SectionLabel";
 import SegmentedControl from "@/components/ui/SegmentedControl";
-import { MEAL_ORDER, MEAL_LABELS, type MealKey } from "./mealConstants";
+import {
+  MEAL_ORDER,
+  MEAL_LABELS,
+  MEAL_PICKER_LAYOUT,
+  type MealKey,
+} from "./mealConstants";
 import { CALORIE_UNIT } from "@/utils/formatNutrition";
 
 interface ServingSource {
@@ -147,17 +153,22 @@ function EditServingsSheet({
       fat: Math.round(source.currentTotalFat / div),
     };
   })();
+  /* A zero starts as an empty field showing a "0" placeholder. A field
+     that holds the digit puts the caret on one side of it or the other,
+     so typing 300 into it gives 3000 or 0300. Blank is "unchanged" to
+     parseMacro below, so an untouched zero still saves nothing. */
+  const fieldText = (n: number) => (n === 0 ? "" : String(n));
   const [pickedCal, setPickedCal] = useState<string>(
-    String(initialPerServing.cal)
+    fieldText(initialPerServing.cal)
   );
   const [pickedPro, setPickedPro] = useState<string>(
-    String(initialPerServing.pro)
+    fieldText(initialPerServing.pro)
   );
   const [pickedCar, setPickedCar] = useState<string>(
-    String(initialPerServing.car)
+    fieldText(initialPerServing.car)
   );
   const [pickedFat, setPickedFat] = useState<string>(
-    String(initialPerServing.fat)
+    fieldText(initialPerServing.fat)
   );
   const [saving, setSaving] = useState(false);
 
@@ -267,6 +278,52 @@ function EditServingsSheet({
     }
   };
 
+  /* One per-serving number field. The four share everything but their
+     size: the calorie field is the large one. */
+  const numberField = ({
+    id,
+    value,
+    setter,
+    ariaLabel,
+    sizeClass,
+  }: {
+    id: "edit-meal-cal" | "edit-meal-pro" | "edit-meal-car" | "edit-meal-fat";
+    value: string;
+    setter: (v: string) => void;
+    ariaLabel: string;
+    sizeClass: string;
+  }) => {
+    const invalid = invalidMacroIds.has(id);
+    return (
+      <input
+        id={id}
+        type="number"
+        inputMode="numeric"
+        min={0}
+        placeholder="0"
+        value={value}
+        onChange={(e) => setter(e.target.value)}
+        disabled={saving}
+        aria-label={ariaLabel}
+        aria-invalid={invalid || undefined}
+        aria-describedby={invalid ? MACRO_ERROR_ID : undefined}
+        className={cn(
+          "w-full text-center font-mono tabular-nums text-foreground bg-muted/50",
+          "rounded-xl border border-border/70 placeholder:text-muted-foreground",
+          "focus:outline-none focus:border-border focus:bg-card transition-colors",
+          "disabled:opacity-60",
+          sizeClass,
+          /* The field the user has to go back to. Without it the only
+             signal is a Save that refuses, which says nothing about
+             which of the four numbers is at fault. */
+          invalid &&
+            "border-destructive bg-destructive/10 focus:border-destructive",
+          "[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+        )}
+      />
+    );
+  };
+
   return (
     <BottomSheet
       open
@@ -276,8 +333,16 @@ function EditServingsSheet({
       title={`Edit servings for ${foodName}`}
       hideHeader
     >
-      <div className="p-5 space-y-5">
-        <div className="w-10 h-1 rounded-full bg-border mx-auto" />
+      <div className="flex justify-center pt-3 pb-1">
+        <div className="w-10 h-1 rounded-full bg-border" />
+      </div>
+      {/* The form scrolls inside the sheet's height cap, and Cancel and
+          Save stay pinned under it. The cap is 85% of the screen, and the
+          form runs taller than that on an SE, and on any phone once the
+          keyboard is up, which is when a calorie figure gets typed. With
+          everything in one unscrolled column, Save sits past the cap with
+          nothing to bring it into view. */}
+      <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-5 pt-2 pb-4">
         <div className="text-center space-y-1">
           {/* F5a rename input. Styled to look like the static heading
               it replaced (centered, semibold, base size) so the sheet
@@ -314,12 +379,13 @@ function EditServingsSheet({
             slots, where snapping all docs to one slot via this picker IS the
             intended outcome but the section label here would be
             misleading. */}
-        <div className="space-y-1.5">
+        <div className="space-y-2">
           <SectionLabel className="text-center">Meal slot</SectionLabel>
           <SegmentedControl
             emphasis="solid"
             tone="nutrition"
             ariaLabel="Meal slot"
+            className={MEAL_PICKER_LAYOUT}
             options={MEAL_ORDER.map((slot) => ({
               value: slot,
               label: MEAL_LABELS[slot],
@@ -333,26 +399,40 @@ function EditServingsSheet({
           />
         </div>
 
-        {/* F5a macro inputs. Per-serving figures derived from group
-            totals — on save, the picked per-serving value is written
-            to each underlying doc via editMeal so the group's new
-            total = N × per-serving. Inputs use type=number with
-            inputMode="numeric" so mobile shows the numeric keypad
-            but the input still accepts the typing-friendly empty
-            state. Only dimensions the user actually changes are
-            propagated to editMeal — parseMacro() above gates which
-            fields land in macroOverrides. */}
-        <div className="space-y-1.5">
+        {/* F5a per-serving figures, derived from the group totals. On
+            save, the picked per-serving value is written to each
+            underlying doc via editMeal, so the group's new total is
+            N x per-serving; only the dimensions the user changed are
+            propagated (parseMacro() above gates them). type=number with
+            inputMode="numeric" brings up the numeric keypad and still
+            takes an empty field mid-edit.
+
+            Calories lead, on a row of their own in a larger number:
+            they are what most people log by, and as the first of four
+            equal tiles labelled "Cal" the field reads as a readout and
+            is easy to miss. Protein, carbs and fat follow in grams.
+            Every field has a border at rest, so it reads as something
+            to type in. */}
+        <div className="space-y-2">
           <SectionLabel className="text-center">Per serving</SectionLabel>
-          <div className="grid grid-cols-4 gap-2">
+          <div className="relative">
+            {numberField({
+              id: "edit-meal-cal",
+              value: pickedCal,
+              setter: setPickedCal,
+              ariaLabel: "Per-serving calories",
+              sizeClass: "px-14 py-2 text-2xl font-bold",
+            })}
+            <span
+              aria-hidden="true"
+              className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-sm text-muted-foreground"
+            >
+              {CALORIE_UNIT}
+            </span>
+          </div>
+          <div className="grid grid-cols-3 gap-2">
             {(
               [
-                {
-                  id: "edit-meal-cal",
-                  label: "Cal",
-                  value: pickedCal,
-                  setter: setPickedCal,
-                },
                 {
                   id: "edit-meal-pro",
                   label: "Protein",
@@ -379,33 +459,21 @@ function EditServingsSheet({
                       rides inside as a span — treatment stays canonical. */}
                   <SectionLabel as="span">{label}</SectionLabel>
                 </label>
-                <input
-                  id={id}
-                  type="number"
-                  inputMode="numeric"
-                  min={0}
-                  value={value}
-                  onChange={(e) => setter(e.target.value)}
-                  disabled={saving}
-                  aria-label={`Per-serving ${label.toLowerCase()}`}
-                  aria-invalid={invalidMacroIds.has(id) || undefined}
-                  aria-describedby={
-                    invalidMacroIds.has(id) ? MACRO_ERROR_ID : undefined
-                  }
-                  className={cn(
-                    "w-full text-center text-base font-mono tabular-nums font-semibold text-foreground bg-muted/50",
-                    "rounded-lg px-2 py-1.5 border border-transparent",
-                    "focus:outline-none focus:border-border focus:bg-card transition-colors",
-                    "disabled:opacity-60",
-                    /* The field the user has to go back to. Without it the
-                       only signal is a Save that refuses, which says
-                       nothing about which of the four numbers is at
-                       fault. */
-                    invalidMacroIds.has(id) &&
-                      "border-destructive bg-destructive/10 focus:border-destructive",
-                    "[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                  )}
-                />
+                <div className="relative w-full">
+                  {numberField({
+                    id,
+                    value,
+                    setter,
+                    ariaLabel: `Per-serving ${label.toLowerCase()}`,
+                    sizeClass: "px-6 py-2.5 text-base font-semibold",
+                  })}
+                  <span
+                    aria-hidden="true"
+                    className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground"
+                  >
+                    g
+                  </span>
+                </div>
               </div>
             ))}
           </div>
@@ -493,34 +561,10 @@ function EditServingsSheet({
           )}
         </div>
 
-        <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={onCancel}
-            disabled={saving}
-            className="flex-1 py-3 rounded-xl bg-muted text-foreground text-sm font-medium active:scale-[0.98] disabled:opacity-60"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            onClick={handleSave}
-            disabled={unchanged || hasInvalidMacro || saving}
-            className={cn(
-              "flex-1 py-3 rounded-xl text-sm font-semibold active:scale-[0.98]",
-              unchanged || hasInvalidMacro || saving
-                ? "bg-muted text-muted-foreground"
-                : "bg-primary-strong text-primary-foreground"
-            )}
-          >
-            {saving ? "Saving…" : "Save"}
-          </button>
-        </div>
-
         {/* Discoverable delete path — the tap-to-edit counterpart to the
-            row's swipe-to-delete (kept). Low-emphasis destructive text so
-            it never competes with Save; no confirm dialog because the
-            parent's optimistic-delete Undo toast is the safety net. */}
+            row's swipe-to-delete (kept). Low-emphasis destructive text at
+            the end of the form, away from Save; no confirm dialog because
+            the parent's optimistic-delete Undo toast is the safety net. */}
         {onDelete && (
           <button
             type="button"
@@ -535,6 +579,26 @@ function EditServingsSheet({
             Delete
           </button>
         )}
+      </div>
+
+      <div className="flex gap-2 border-t border-border/40 px-5 pt-3 pb-4">
+        <Button
+          variant="secondary"
+          size="lg"
+          className="flex-1"
+          onClick={onCancel}
+          disabled={saving}
+        >
+          Cancel
+        </Button>
+        <Button
+          size="lg"
+          className="flex-1"
+          onClick={handleSave}
+          disabled={unchanged || hasInvalidMacro || saving}
+        >
+          {saving ? "Saving…" : "Save"}
+        </Button>
       </div>
     </BottomSheet>
   );

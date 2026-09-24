@@ -36,6 +36,16 @@ vi.mock("framer-motion", function () {
     AnimatePresence: function ({ children }: any) {
       return children;
     },
+    // The row's offset: at rest in this mock, since drag is stripped.
+    useMotionValue: function (initial: number) {
+      return { get: () => initial };
+    },
+    useTransform: function (
+      value: { get: () => number },
+      transform: (v: number) => unknown
+    ) {
+      return transform(value.get());
+    },
   };
 });
 

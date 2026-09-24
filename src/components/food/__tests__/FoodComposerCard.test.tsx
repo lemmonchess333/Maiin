@@ -65,44 +65,76 @@ function renderComposer(over: Record<string, any> = {}) {
   return { ...render(<FoodComposerCard {...(props as any)} />), props };
 }
 
-describe("FoodComposerCard — scan icon in the input row (wave2 A)", () => {
-  it("renders the scan affordance as a single icon button in the input row, not a full-width CTA", () => {
+describe("FoodComposerCard — the camera button beside the field", () => {
+  it("renders one scan control: a food-orange camera square beside the field, not an icon inside it", () => {
     renderComposer();
-    const scans = screen.getAllByRole("button", { name: "Scan your meal" });
+    const scans = screen.getAllByRole("button", { name: "Scan a meal" });
     expect(scans).toHaveLength(1);
-    // Icon-only: no visible label text inside the control.
-    expect(scans[0].textContent).toBe("");
-    // The old full-width button carried its label as text — assert the
-    // string only exists as an aria-label now.
-    expect(screen.queryByText("Scan your meal")).toBeNull();
+    // Camera only (owner call): no word beside the camera. The accessible
+    // name still says what it does.
+    expect(scans[0]).toHaveTextContent("");
+    expect(scans[0].querySelector("svg")).toBeTruthy();
+    // A square, the height of the field: both are 56px. Sized by
+    // rows={1}, the field is 50px and the button hangs 6px below it.
+    // jsdom has no layout; companion-food.capture.spec.ts measures the
+    // two boxes in a browser.
+    expect(scans[0]).toHaveClass("size-14");
+    expect(
+      screen.getByRole("textbox", { name: "What did you eat" })
+    ).toHaveClass("block", "h-14");
+    // The food orange (the nutrition variant) — the owner call recorded
+    // in CLAUDE.md's Button mapping — not the brand purple.
+    expect(scans[0]).toHaveClass("bg-nutrition-fill");
+    // Beside the field, not inside it, and after it in the row.
+    const field = screen.getByRole("textbox", { name: "What did you eat" });
+    expect(field.parentElement!.contains(scans[0])).toBe(false);
+    expect(
+      field.compareDocumentPosition(scans[0]) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
   });
 
-  it("active scan icon fires the overrides onClick (open scanner)", () => {
+  it("opens the scanner and hands over the button's box to grow the scanner from", () => {
     const onClick = vi.fn();
     renderComposer({ scanOverrides: { onClick, locked: false } });
-    fireEvent.click(screen.getByRole("button", { name: "Scan your meal" }));
+    const button = screen.getByRole("button", { name: "Scan a meal" });
+    const box = new DOMRect(280, 630, 56, 56);
+    vi.spyOn(button, "getBoundingClientRect").mockReturnValue(box);
+    fireEvent.click(button);
     expect(onClick).toHaveBeenCalledTimes(1);
+    expect(onClick).toHaveBeenCalledWith(box);
   });
 
-  it("locked scan icon is labelled for upgrade and fires the overrides onClick (paywall)", () => {
+  it("a locked account gets the same button, and it still opens the scanner", () => {
+    /* The scanner carries the gate: it opens on Barcode, which is free,
+       and holds the photo tabs behind the Pro offer. A locked button
+       that went to the paywall left free accounts no way to a barcode. */
     const onClick = vi.fn();
     renderComposer({ scanOverrides: { onClick, locked: true } });
-    expect(screen.queryByRole("button", { name: "Scan your meal" })).toBeNull();
-    const lockedBtn = screen.getByRole("button", {
-      name: "Scan your meal — upgrade for unlimited",
-    });
-    fireEvent.click(lockedBtn);
+    const button = screen.getByRole("button", { name: "Scan a meal" });
+    expect(button).toHaveClass("bg-nutrition-fill");
+    fireEvent.click(button);
     expect(onClick).toHaveBeenCalledTimes(1);
-    // No full-width locked CTA text either — icon-only.
-    expect(
-      screen.queryByText("Scan your meal — upgrade for unlimited")
-    ).toBeNull();
   });
 
-  it("send button appears alongside the scan icon when there is input text", () => {
+  it("the suggestions dropdown sits outside the field-and-button row, so it cannot stretch the button", () => {
+    renderComposer({
+      showSuggestions: true,
+      offEmpty: true,
+      offSearchQuery: "zzqxv",
+    });
+    const scan = screen.getByRole("button", { name: "Scan a meal" });
+    const noMatches = screen.getByRole("button", {
+      name: /no matches found/i,
+    });
+    expect(scan.parentElement!.contains(noMatches)).toBe(false);
+  });
+
+  it("send button appears in the field alongside the camera button when there is input text", () => {
     renderComposer({ nlInput: "2 eggs" });
-    expect(screen.getByRole("button", { name: "Log meal" })).toBeTruthy();
-    expect(screen.getByRole("button", { name: "Scan your meal" })).toBeTruthy();
+    const send = screen.getByRole("button", { name: "Log meal" });
+    const field = screen.getByRole("textbox", { name: "What did you eat" });
+    expect(field.parentElement!.contains(send)).toBe(true);
+    expect(screen.getByRole("button", { name: "Scan a meal" })).toBeTruthy();
   });
 
   it('no cancel control: the pills own the meal, and the field never says "Adding to"', () => {
@@ -120,7 +152,7 @@ describe("FoodComposerCard — scan icon in the input row (wave2 A)", () => {
       "placeholder",
       "Search food or describe a meal"
     );
-    expect(screen.getByRole("button", { name: "Scan your meal" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Scan a meal" })).toBeTruthy();
   });
 
   it("the meal pills head the field, and there is no caption above them", () => {
@@ -183,7 +215,7 @@ describe("FoodComposerCard — visible manual entry", () => {
     renderComposer({ targetMeal: "dinner" });
     // The meal slots are a SegmentedControl (radiogroup), not pill buttons:
     // no button carries a meal name, and the only buttons are the manual
-    // entry pencil and the scan icon (the clear-target X is gone; the
+    // entry pencil and the Scan button (the clear-target X is gone; the
     // selected pill's toggle is the way out of a target).
     expect(
       screen.queryByRole("button", {
@@ -192,7 +224,7 @@ describe("FoodComposerCard — visible manual entry", () => {
     ).toBeNull();
     expect(
       screen.getAllByRole("button").map((b) => b.getAttribute("aria-label"))
-    ).toEqual(["Enter manually", "Scan your meal"]);
+    ).toEqual(["Enter manually", "Scan a meal"]);
     const slots = screen.getByRole("radiogroup", { name: "Add to meal" });
     expect(within(slots).getAllByRole("radio")).toHaveLength(4);
     expect(
@@ -224,18 +256,14 @@ describe("FoodComposerCard — conditional quota caption (wave2 B)", () => {
     expect(screen.queryByText(/out of scans/i)).toBeNull();
   });
 
-  it("renders NO quota caption when limit === 0 (Pro-only tier — the locked icon carries the gate)", () => {
+  it("renders NO quota caption when limit === 0 (Pro-only tier — the scanner carries the gate)", () => {
     renderComposer({
       scanUsage: quota({ remaining: 0, limit: 0 }),
       scanOverrides: { onClick: vi.fn(), locked: true },
     });
     expect(screen.queryByText(/out of scans/i)).toBeNull();
-    // The gate is still present — as the locked icon.
-    expect(
-      screen.getByRole("button", {
-        name: "Scan your meal — upgrade for unlimited",
-      })
-    ).toBeTruthy();
+    // The way in is still there: the same Scan button.
+    expect(screen.getByRole("button", { name: "Scan a meal" })).toBeTruthy();
   });
 
   it("renders the last-scan caption at remaining === 1", () => {

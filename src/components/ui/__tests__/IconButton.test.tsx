@@ -75,6 +75,19 @@ describe("IconButton — icon rendering", () => {
     render(<IconButton aria-label="Close dialog" icon={<StubIcon />} />);
     expect(screen.getByRole("button", { name: "Close dialog" })).toBeDefined();
   });
+
+  it("centres an icon smaller than its box", () => {
+    /* The wrapper is the size's default icon box (20px at md), and
+       callers pass smaller icons — nine did at the time of the fix.
+       Without centring, a `size-3.5` X sat in the box's top-left
+       corner: Food's Pro-hint dismiss measured 3pt above its row. jsdom
+       has no layout, so the classes are the observable contract. */
+    render(<IconButton aria-label="Dismiss" icon={<StubIcon />} />);
+    const wrapper = screen.getByTestId("stub-icon").parentElement;
+    expect(wrapper).toHaveClass("size-5");
+    expect(wrapper).toHaveClass("items-center");
+    expect(wrapper).toHaveClass("justify-center");
+  });
 });
 
 describe("IconButton — loading state", () => {

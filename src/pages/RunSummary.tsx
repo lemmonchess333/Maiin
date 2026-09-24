@@ -41,6 +41,7 @@ import {
   estimateRunCalories,
 } from "../lib/gps";
 import { postActivity } from "../lib/socialApi";
+import type { ActivityPost } from "../lib/activityPost";
 import { needsEmailVerification } from "../lib/emailVerificationGate";
 import { compose, enqueueShare, showQueuedToast } from "../lib/shareComposer";
 import { recordSharedActivity } from "../lib/sessionDelete";
@@ -1145,7 +1146,7 @@ export default function RunSummary() {
           // Decided (posted, queued or declined) — never prompt again for
           // this run, even if a later step fails and the chain resumes.
           if (decision && auth.currentUser?.uid === user.uid) {
-            const payload = {
+            const payload: ActivityPost = {
               authorId: user.uid,
               authorName: profile?.displayName || "Athlete",
               ...(profile?.photoURL

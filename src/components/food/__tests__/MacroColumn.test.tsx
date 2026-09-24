@@ -15,7 +15,7 @@
  * went away.
  */
 import { describe, it, expect, vi } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { cleanup, render, screen, fireEvent } from "@testing-library/react";
 import { Beef } from "lucide-react";
 
 import MacroColumn from "../MacroColumn";
@@ -285,5 +285,76 @@ describe("MacroColumn — the goal-reached state stays in the accessible name", 
     expect(screen.getByRole("button")).not.toHaveAccessibleName(
       /goal reached/i
     );
+  });
+});
+
+/**
+ * The bar fades when it is EMPTY — not when nothing has been eaten.
+ *
+ * Those are the same state only in EATEN mode. LEFT mode (the default)
+ * draws what is left, so a day with nothing eaten is a FULL bar. The fade
+ * keyed on `consumed === 0`, which dimmed three full bars to 40% every
+ * morning — on the dark card, the maroon, olive and dark-green bars under
+ * the macro tiles — and made the first log of the day BRIGHTEN the bars as
+ * they drained.
+ *
+ * Each case anchors on the accessible name first, so the opacity is read
+ * from the state the test claims to be in.
+ */
+describe("MacroColumn — the bar fades only when it is empty", () => {
+  function renderAt(mode: "left" | "eaten", consumed: number) {
+    const { container } = render(
+      <MacroColumn
+        macroKey="protein"
+        Icon={Beef}
+        consumed={consumed}
+        target={150}
+        label="PROTEIN"
+        color="#EC4899"
+        mode={mode}
+      />
+    );
+    const bar = container.querySelector<HTMLElement>("[data-macro-bar]");
+    expect(bar).not.toBeNull();
+    return bar!;
+  }
+
+  it("LEFT mode with nothing eaten draws the full bar at full strength", () => {
+    const bar = renderAt("left", 0);
+    expect(
+      screen.getByRole("button", {
+        name: "Show protein eaten. 0g eaten of 150g",
+      })
+    ).toBeInTheDocument();
+    expect(bar.style.opacity).toBe("1");
+  });
+
+  it("EATEN mode with nothing eaten fades the empty track", () => {
+    const bar = renderAt("eaten", 0);
+    expect(
+      screen.getByRole("button", {
+        name: "Show protein remaining. 0g eaten of 150g",
+      })
+    ).toBeInTheDocument();
+    expect(bar.style.opacity).toBe("0.4");
+  });
+
+  it("LEFT mode with the target used up fades the now-empty bar", () => {
+    const bar = renderAt("left", 150);
+    expect(
+      screen.getByRole("button", { name: /150g eaten of 150g$/ })
+    ).toBeInTheDocument();
+    expect(bar.style.opacity).toBe("0.4");
+  });
+
+  it("a part-eaten bar is at full strength in both modes", () => {
+    for (const mode of ["left", "eaten"] as const) {
+      const bar = renderAt(mode, 60);
+      expect(
+        screen.getByRole("button", { name: /60g eaten of 150g$/ })
+      ).toBeInTheDocument();
+      expect(bar.style.opacity).toBe("1");
+      cleanup();
+    }
   });
 });

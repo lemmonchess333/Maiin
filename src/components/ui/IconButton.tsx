@@ -135,9 +135,16 @@ function IconButton({
           className={cn("animate-spin", ICON_SIZE_CLASS[size])}
         />
       ) : (
+        /* The box is the size's default icon size, and callers routinely
+           pass a smaller icon (`size-4` in `md`'s 20px box). Uncentred,
+           that icon sat in the box's top-left corner — Food's Pro-hint
+           dismiss rendered 3pt above the text it shares a row with. */
         <span
           aria-hidden="true"
-          className={cn("inline-flex", ICON_SIZE_CLASS[size])}
+          className={cn(
+            "inline-flex items-center justify-center",
+            ICON_SIZE_CLASS[size]
+          )}
         >
           {icon}
         </span>
