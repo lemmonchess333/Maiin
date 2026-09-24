@@ -1,0 +1,105 @@
+{
+  "modelPath": "Built-in image_gen unchanged. Selected landscape plain-shaft start with corrected fork pivot is master; midpoint and top derived from it. Earlier pilot excluded. No deterministic pixel corrections.",
+  "canonicalReference": {
+    "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+  },
+  "sourceFrames": [
+    {
+      "frame": 1,
+      "sha256": "8b9f7aebd91903e6f95162f19633825589d958be8957c2528c2e0fdf23e2616a"
+    },
+    {
+      "frame": 2,
+      "sha256": "3d9e8f0403dbe464c52acca5f659e343e3080337d081889c977bf576297cb53e"
+    },
+    {
+      "frame": 3,
+      "sha256": "2713807a244437706a7c46d47bf5247dcbaa0d3820224e2506f1fc1980b78648"
+    },
+    {
+      "frame": 4,
+      "sha256": "2713807a244437706a7c46d47bf5247dcbaa0d3820224e2506f1fc1980b78648"
+    },
+    {
+      "frame": 5,
+      "sha256": "3d9e8f0403dbe464c52acca5f659e343e3080337d081889c977bf576297cb53e"
+    },
+    {
+      "frame": 6,
+      "sha256": "8b9f7aebd91903e6f95162f19633825589d958be8957c2528c2e0fdf23e2616a"
+    }
+  ],
+  "shaftAxisDiagnostics": [
+    {
+      "file": "start-pivot.png",
+      "shaftSlope": 0.46037496476912515,
+      "shaftIntercept": 219.0386867763904,
+      "shaftYAtX1400": 863.5636374531656,
+      "note": "Projected shaft centerline only; visible bolt face offset and 3D projection prevent treating this as calibrated pivot position."
+    },
+    {
+      "file": "mid-pivot.png",
+      "shaftSlope": 0.6045413923717976,
+      "shaftIntercept": 15.188935689925364,
+      "shaftYAtX1400": 861.5468850104421,
+      "note": "Projected shaft centerline only; visible bolt face offset and 3D projection prevent treating this as calibrated pivot position."
+    },
+    {
+      "file": "top-pivot.png",
+      "shaftSlope": 0.6197333164135848,
+      "shaftIntercept": -10.983062004628675,
+      "shaftYAtX1400": 856.64358097439,
+      "note": "Projected shaft centerline only; visible bolt face offset and 3D projection prevent treating this as calibrated pivot position."
+    }
+  ],
+  "generation": [
+    {
+      "file": "start-prompt.json",
+      "prompt": "Scientific educational Meadows row START master, native1536x1024 LANDSCAPE. Image1 exercise reference for supported hip hinge and single-arm overhand sleeve grip; image2 exactcanonical athlete identity/style. Entirebody and equipment visible with80px margins onblackbackground. Athlete left of scene, threequarter rear side view showing workinglat and grip, staggeredstance perpendicular to bar, torso hinged forward flatback, freehand braced on frontthigh. Workingarm extended down in fullstretch, overhandgrip on loaded thick sleeve, one modest plate just beyond hand toward pivot. One plain straight smooth silverbar (NO segment seams, telescoping marks or multiple collars) slopes from loadedend near athlete to floorpivot at farRIGHT. Low simple landminebase with visible hinge axle and short receivingtube perfectlycollinear withbar, no tallcylinder. Bar/plate size physically plausible with fullarmextension; design suited to samefixedradius arc inlaterposes. Canonicalbald faceless whitegrey anatomy, neutral smoothpelvis, whitetrainers. Workinglat strongestpurple, rhomboids/reardelt/biceps lightlilac, otherregionsneutral. No labels/arrows/glow. Preserve exact identity and make floorbase, feet and supporthand clearly readable.",
+      "generation": "cdcab321-64d6-43e4-9032-e0573697fb5f",
+      "tool": "built-in image_gen",
+      "status": "candidate: landscape and plainshaft achieved; requested simple visible axle not achieved, retains cylinder. No sequence approval."
+    },
+    {
+      "file": "pivot-prompt.json",
+      "prompt": "Precise equipment-only edit of Meadows row image. Change ONLY lower-right landmine mount: replace upright hollow cylinder with realistic compact two-axis landmine hinge: low floorplate, short fork brackets, visible pivot bolt, short receiving tube coaxial with straight bar. Keep bar axis and loaded end at exact positions, all athlete anatomy/pose/grip/feet/supporthand completely unchanged. Same canvas1536x1024, black background andstyle. Show believable mechanical connection, no text. Small localized mount replacement only; do not alter bar length, plate, or athlete.",
+      "generation": "fd592c89-c1e4-4d58-ad7f-bf2e835f26be",
+      "tool": "built-in image_gen",
+      "status": "visible pivot candidate; sequence validation pending"
+    },
+    {
+      "file": "top-prompt.json",
+      "prompt": "Image1 Meadows row start is exact master; image2 canonical identity. Derive TOP ROW: bend working elbow backward, pull loaded bar-end beside same hip/lower ribs, squeeze workinglat; maintain overhand grip on same sleeve segment. Keep head/torso hinge, pelvis, both knees/shoes, supportinghand on thigh, camera/framing exactly unchanged. SAME rigid smoothbarbell and sameplate/collar/sleeve, no telescoping seams or new parts. It rotates as one rigidbody around existing lower-right hinge; receivingtube stays collinear and pivots about same visiblebolt, floorplate remainsfixed. Natural 3D foreshortening, no physically stretching bar. Same native1536x1024 blackbackground, canonicalwhitegrey facelessanatomy,purplelat/lilacrhomb/reardelt/biceps. Both feet/supporthand and pivot visible. No text/arrows. Only workingarm/shoulder and connected bar assembly change.",
+      "generation": "bf40b6ec-064e-4235-96a4-35bf7c2f70e3",
+      "tool": "built-in image_gen",
+      "status": "top candidate; body/support broadly stable and plainshaft retained; quantitative fixed anchors and equipment consistency review pending"
+    },
+    {
+      "file": "mid-prompt.json",
+      "prompt": "Image1 Meadows row START master; image2 TOP endpoint; image3 canonical identity. Create MIDDLE of this exact row, working elbow partly bent and drawn backward, grip/loaded plate halfway between endpoint positions. Keep head, torso hinge, hips, bothlegs/trainers, thigh supporthand, floorbase and camera EXACTLY fixed to image1. Same one rigidplainbar and plate/sleeve/collar, rotates naturally in3D about samevisible floorhinge with receivingtube collinear. Overhandgrip stayssame sleevepoint, wristneutral. No shaftseams, no stretching, no addedparts. Moderate elbowbend clearly between straightstart and top. Preserve whitegrey faceless anatomy, neutralpelvis, purplelat/lilacreardelt/rhomboid/biceps. Native1536x1024 blackbackground, no labels, fullbody.",
+      "generation": "9a86967c-323e-4eb6-8444-3d519bc7c1a6",
+      "tool": "built-in image_gen",
+      "status": "mid candidate; final measurement and sequence review pending"
+    }
+  ],
+  "conversion": "Lossless WebP: all decoded RGB bytes match selected native PNG sources.",
+  "reuse": {
+    "4": 3,
+    "5": 2,
+    "6": 1
+  },
+  "measurementMethod": "Linear interpolation at minimum RGB 150 across planted shoe scanlines. These measure shoe boundaries only; equipment mechanics reviewed separately.",
+  "scanlines": {
+    "rearShoe": {
+      "x0": 60,
+      "x1": 265,
+      "y": 810
+    },
+    "nearShoe": {
+      "x0": 420,
+      "x1": 660,
+      "y": 885
+    }
+  }
+}

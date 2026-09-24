@@ -1,0 +1,170 @@
+{
+  "exerciseId": "ez-bar-curl",
+  "version": "anatomy-v3-2026-09-24",
+  "width": 1024,
+  "height": 1536,
+  "decision": "approved",
+  "reviewer": "Codex visual and implementation review",
+  "reviewedAt": "2026-09-24T20:32:13.965Z",
+  "reference": {
+    "path": "form-frames/ez-bar-curl/1.webp",
+    "sha256": "4812ee408e88da86a1fda7f80b03f0acd1c709d8ab6e49e4a43fa80878dca6e2"
+  },
+  "cueSha256": "437849828b09bc0b2c176783d75a8309a0e0c5f9abc2ebbdba560379b1ab44e4",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Canonical bald faceless white-grey mannequin, white trainers and neutral pelvis retained. Top halo/heavy outlines corrected before selection."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Native1024x1536 portrait improves actual mobile readability over rejected landscape framing. Full body and equipment fit. Fixed shoes pass unrounded1px/1% limits."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Elbows extend, bend near90degrees, then flex deeply while upper arms remain beside ribs. Torso remains upright. Muscle shape and projected joint outlines vary with flexion; qualitative assessment, not calibrated3D elbow coordinates or limb lengths."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Continuous EZ bar with two equal modest plates, collars and sleeves. Both hands visibly surround middle angled portions with exposed angled metal beside grips. Projected outer bar spans799/805/803px; grip and bend geometry assessed qualitatively, not proof of invariant3D distances."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Both hands remain wrapped around the angled grip sections. No visible detached thumb or open grip. Exact contact point is partly hidden by fingers; no subpixel material-point tracking claim. Feet planted; authorized top far-shoe correction only, zero changed pixels outside."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Bar rises from thighs through upper abdomen to shoulder/upper chest height, then reverses; no visible lean or shoulder shrug. Elbow/forearm projection changes are reviewed qualitatively; no calibrated3D dynamics claim."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Biceps strong purple and forearms lilac match exact catalogue hierarchy, retained on return. Other muscles neutral."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Six cues match exact ez-bar-curl angled grip, stationary torso/upper arms, curl and controlled return, each at most seven words."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "All six plus6-to-1 manually stepped in actual player in light/dark. Three distinct poses;4=3,5=2,6=1. Continuous timed playback not claimed."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "All six and loop inspected390x844 light theme, native1024x1536 confirmed. Full figure/equipment fit, cues readable, DOMscrollWidth390. Portrait makes bar/grips larger than discarded landscape. Fine grip details supplemented by native review."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "All six and loop inspected390x844 dark theme. Curl progression and purple hierarchy readable, no clipping or overflow. Portrait framing improves anatomy visibility; fine contact detail checked natively."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/ez-bar-curl/1.webp",
+      "sha256": "4812ee408e88da86a1fda7f80b03f0acd1c709d8ab6e49e4a43fa80878dca6e2",
+      "anchors": {
+        "farShoe": {
+          "x": 284.25563909774434,
+          "y": 1330
+        },
+        "nearShoe": {
+          "x": 520.3448275862069,
+          "y": 1380
+        }
+      },
+      "invariantDimensions": {
+        "farShoeSpan": 208.912502495176,
+        "nearShoeSpan": 169.23680506685434
+      }
+    },
+    {
+      "path": "form-frames/ez-bar-curl/2.webp",
+      "sha256": "7d742784680ddda007149c30543872d8ffb924ef6f695fa8b4601b21a2d9854a",
+      "anchors": {
+        "farShoe": {
+          "x": 283.6666666666667,
+          "y": 1330
+        },
+        "nearShoe": {
+          "x": 520.4907975460122,
+          "y": 1380
+        }
+      },
+      "invariantDimensions": {
+        "farShoeSpan": 209.40952380952382,
+        "nearShoeSpan": 169.45586912065448
+      }
+    },
+    {
+      "path": "form-frames/ez-bar-curl/3.webp",
+      "sha256": "39a2bee8c5ea5b5e749137912d585de3db99e13091ac8884c3e24f6641f51032",
+      "anchors": {
+        "farShoe": {
+          "x": 284.25563909774434,
+          "y": 1330
+        },
+        "nearShoe": {
+          "x": 520.3611111111111,
+          "y": 1380
+        }
+      },
+      "invariantDimensions": {
+        "farShoeSpan": 208.912502495176,
+        "nearShoeSpan": 170.75845410628017
+      }
+    },
+    {
+      "path": "form-frames/ez-bar-curl/4.webp",
+      "sha256": "39a2bee8c5ea5b5e749137912d585de3db99e13091ac8884c3e24f6641f51032",
+      "anchors": {
+        "farShoe": {
+          "x": 284.25563909774434,
+          "y": 1330
+        },
+        "nearShoe": {
+          "x": 520.3611111111111,
+          "y": 1380
+        }
+      },
+      "invariantDimensions": {
+        "farShoeSpan": 208.912502495176,
+        "nearShoeSpan": 170.75845410628017
+      }
+    },
+    {
+      "path": "form-frames/ez-bar-curl/5.webp",
+      "sha256": "7d742784680ddda007149c30543872d8ffb924ef6f695fa8b4601b21a2d9854a",
+      "anchors": {
+        "farShoe": {
+          "x": 283.6666666666667,
+          "y": 1330
+        },
+        "nearShoe": {
+          "x": 520.4907975460122,
+          "y": 1380
+        }
+      },
+      "invariantDimensions": {
+        "farShoeSpan": 209.40952380952382,
+        "nearShoeSpan": 169.45586912065448
+      }
+    },
+    {
+      "path": "form-frames/ez-bar-curl/6.webp",
+      "sha256": "4812ee408e88da86a1fda7f80b03f0acd1c709d8ab6e49e4a43fa80878dca6e2",
+      "anchors": {
+        "farShoe": {
+          "x": 284.25563909774434,
+          "y": 1330
+        },
+        "nearShoe": {
+          "x": 520.3448275862069,
+          "y": 1380
+        }
+      },
+      "invariantDimensions": {
+        "farShoeSpan": 208.912502495176,
+        "nearShoeSpan": 169.23680506685434
+      }
+    }
+  ]
+}

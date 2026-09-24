@@ -1,0 +1,101 @@
+{
+  "modelPath": "Built-in image_gen unchanged; Native portrait pilot endpoints retained; higher intermediate generated from top after original and first replacement retained unclear wrist alignment. No deterministic image correction.",
+  "canonicalReference": {
+    "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+  },
+  "sourceFrames": [
+    {
+      "frame": 1,
+      "path": "docs/exercise-art/pilots/parallel-twenty/reverse-barbell-curl/1.png",
+      "sha256": "a0fc2362b18875b217f3a489eed13dd82ffac8c702a4a8493c9352e0040c9c22"
+    },
+    {
+      "frame": 2,
+      "path": "generation exec-173bcee1-0be9-4793-88a4-2e7b4166c07f.png",
+      "sha256": "aa8d6504433099713d4fdad6bfb8888f03762f7e2cf3f3d2f93fcbd9198f164b"
+    },
+    {
+      "frame": 3,
+      "path": "docs/exercise-art/pilots/parallel-twenty/reverse-barbell-curl/3.png",
+      "sha256": "9f6ec799ef9ee8e3f549b3130b52418425965e9ce4ab21513faf776ceae7019c"
+    },
+    {
+      "frame": 4,
+      "path": "docs/exercise-art/pilots/parallel-twenty/reverse-barbell-curl/4.png",
+      "sha256": "9f6ec799ef9ee8e3f549b3130b52418425965e9ce4ab21513faf776ceae7019c"
+    },
+    {
+      "frame": 5,
+      "path": "generation exec-173bcee1-0be9-4793-88a4-2e7b4166c07f.png",
+      "sha256": "aa8d6504433099713d4fdad6bfb8888f03762f7e2cf3f3d2f93fcbd9198f164b"
+    },
+    {
+      "frame": 6,
+      "path": "docs/exercise-art/pilots/parallel-twenty/reverse-barbell-curl/6.png",
+      "sha256": "a0fc2362b18875b217f3a489eed13dd82ffac8c702a4a8493c9352e0040c9c22"
+    }
+  ],
+  "generation": {
+    "original": {
+      "tool": "built-in image_gen",
+      "canonical": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+      "prompts": [
+        {
+          "id": "reverse-barbell-curl",
+          "frame": 1,
+          "prompt": "Scientific educational exercise master. Native single full-body image 1024x1536 black background. Canonical identity reference exact bald faceless white anatomical athlete white trainers neutral smooth featureless pelvis visible leg muscles no garments seams genital detail. REVERSE BARBELL CURL: athlete standing upright front three-quarter slightly facing left. Both arms down, slight elbow softness, holding a STRAIGHT rigid barbell across upper thighs at shoulder width with PRONATED OVERHAND grip: knuckles on top, palms face BACKWARD toward thighs, thumbs wrap. One identical modest black round plate each end with collars, not EZ bar. Allow room overhead for curling to chest. Biceps purple primary, brachioradialis forearm lilac secondary qualitative. Feet planted hip-width, torso still. No text panels arrows. Ensure palms-down reverse grip unmistakable, unlike regular curl."
+        },
+        {
+          "id": "reverse-barbell-curl",
+          "frame": 3,
+          "prompt": "Precise object edit image2 master, image1 canonical. Reverse barbell curl TOP. Flex elbows and bring bar just below shoulder level. Preserve OVERHAND PRONATED grip throughout: backs of hands face upward/outward, fingers wrapped OVER bar, palms face downward in curl, never supinated. Wrists straight. Upper arms and elbow centres pinned beside ribs at original master height, not raised toward shoulders. Same straight bar RIGID length, plate diameters, collars and shoulder-width grip. Only forearms hands bar rotate/translate naturally around fixed elbow. All body head chest legs feet anatomy purple/lilac markings background fixed. No zoom, no text, 1024x1536 native."
+        },
+        {
+          "id": "reverse-barbell-curl",
+          "frame": 3,
+          "prompt": "Background-only repair. Image1 canonical, image2 master proper black backdrop, image3 EDIT TARGET reverse curl endpoint. Remove ALL grey halo/glow from image3, replacing only backdrop with uniform opaque RGB(0,0,0) black. Retain image3 body anatomy pose bar dimensions grip pixels as accurately as possible. No lighting changes, no shading around silhouette, no vignette, no haze or gradient. Exact same 1024x1536 canvas and pose. All foreground unchanged."
+        },
+        {
+          "id": "reverse-barbell-curl",
+          "frame": 2,
+          "prompt": "Precise object edit. Image1 canonical, image2 fixed master, image3 top endpoint. Draw midpoint reverse barbell curl: same bar at navel height, both forearms nearly horizontal, elbows held at same original centres beside ribs. Strong PRONATED OVERHAND grip palms DOWN, backs hands UP, fingers curled over bar. Same bar length plate sizes angle grip spacing as master. Only forearms and bar move; same exact head shoulders torso pelvis legs trainers camera crop. 1024x1536 native. CRITICAL background flat opaque solid BLACK RGB(0,0,0), absolutely no grey halo, glow vignette or atmospheric lighting. Same muscles purple biceps lilac forearms. No text."
+        },
+        {
+          "frame": 2,
+          "purpose": "independent QA targeted correction",
+          "prompt": "Use case: precise-object-edit. Image1 canonical athlete identity; image2 exercise master style/body anchors; image3 is the EDIT TARGET reverse-barbell curl midpoint. Change ONLY both wrists/hands alignment: remove downward wrist flexion, align back of hands straight with forearms in neutral wrist position while retaining pronated overhand closed grips. Keep bar at exact same waist height and same rigid straight shaft/plate dimensions and grip spacing. Keep elbows, mid-curl phase, head, torso, feet, camera, crop, white anatomical legs and neutral pelvis, trainers, purple biceps and lilac forearms and black background unchanged. No new objects, no text. Do not change exercise phase or rotate to palms-up. Output one full native1024x1536 image.",
+          "accepted": false,
+          "output": "rejected-midpoint-wrist-repair.png"
+        }
+      ]
+    },
+    "rejected": {
+      "prompt": "Use case: precise-object-edit. Image1 canonical athlete identity. Image2 reverse barbell curl exercise master fixes framing, feet, body and equipment. Image3 top endpoint is the edit target. Create a new intermediate LOWERING pose by opening both elbows from image3 until forearms slope upward about 25 degrees above horizontal. Keep both wrists straight as continuations of the forearms: knuckles and back-of-hand plane aligned, no drooping hand at wrist. Preserve the PRONATED overhand grip from image3, closed fingers around the straight bar, palms directed down/away, never supinated. Move the entire rigid bar and both attached hands together to upper-abdomen height. Keep same material grip points, shoulder-width grip, bar length, one equal modest plate each side and sleeve lengths. Elbow centres stay beside ribs, upper arms vertical, no torso swing. Exact image2 head, shoulders, torso, pelvis, legs and shoes with the same 1024x1536 native portrait crop. Fine white-grey anatomy contours, strongest purple biceps and light lilac forearms, smooth neutral featureless pelvis, white trainers. Solid pure black background with no halo. One image, no text.",
+      "method": "Derive a higher intermediate lowering pose from the top endpoint, rather than repeat the failed wrist-only patch to the original midpoint."
+    },
+    "selected": {
+      "prompt": "Precise pose edit for reverse barbell curl. Reference1 canonical style; reference2 exercise start master for fixed body/camera/equipment; reference3 TOP POSE EDIT TARGET. Make a distinctly partial curl by lowering the entire bar from its current y310 to approximately y420 on the same 1024x1536 canvas, only about 110 pixels lower. BOTH forearms should still point diagonally UP, about 55-60 degrees above horizontal, not horizontal. Preserve the exact STRAIGHT WRIST alignment of the top pose while opening the elbows a little. Closed pronated OVERHAND grip, same material points on bar, same hand spacing, hands and rigid bar move together. No hand dropping or hinged downward wrist, no palm-up grip. Keep elbow centres fixed beside ribs around y515. Keep image2 head torso shoulders legs planted shoes, camera, crop, fine white-grey anatomical style, smooth featureless neutral pelvis and purple biceps/lilac forearms. Same rigid straight bar, equal modest plates and collars. Pure black background, no halo, text or collage. This is an intermediate pose nearer top, NOT the top itself and NOT a horizontal-forearm pose.",
+      "reason": "First new midpoint still leaves wrist alignment unclear. Reduce the edit distance from the top endpoint, explicitly retaining upward-sloping forearms."
+    }
+  },
+  "conversion": "Lossless WebP: all decoded RGB bytes match selected native PNG sources.",
+  "reuse": {
+    "4": 3,
+    "5": 2,
+    "6": 1
+  },
+  "measurementMethod": "Interpolated minimum RGB150 shoe scanline boundaries on native unmodified PNGs. Unrounded comparisons; no deterministic pixel edits. These fixed anchors do not measure moving anatomy or dumbbell rigidity.",
+  "scanlines": {
+    "farShoe": [
+      250,
+      500,
+      1390
+    ],
+    "nearShoe": [
+      500,
+      710,
+      1450
+    ]
+  }
+}

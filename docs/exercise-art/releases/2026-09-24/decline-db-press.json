@@ -1,0 +1,170 @@
+{
+  "exerciseId": "decline-db-press",
+  "version": "anatomy-v3-2026-09-24",
+  "width": 1536,
+  "height": 1024,
+  "decision": "approved",
+  "reviewer": "Codex visual and implementation review",
+  "reviewedAt": "2026-09-24T20:04:47.788Z",
+  "reference": {
+    "path": "form-frames/decline-db-press/1.webp",
+    "sha256": "9d54d23d62841d5e150eb7b2de11825d725bc5aad28769e130a8e7f2ffe09844"
+  },
+  "cueSha256": "6be13393bc59502b74e23387c6b6ea06294f024e36b502749e3e0774b4c3433b",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Canonical bald faceless white-grey anatomy model, white trainers and neutral pelvis retained in all poses."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Fixed native1536x1024 landscape camera, full body and bench retained. Both measured bench anchors and spans pass unrounded1px/1% limits."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Shoulders and head supported, knees bent and ankles secured. Both elbows progressively extend then flex on return; revised midpoint follows endpoint hand positions. Projected joints and limb proportions assessed qualitatively, not calibrated3D measurements."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Two separate modest hex dumbbells, each held on its own handle. Original top overlap corrected; small top gap remains visible on mobile. Projected silhouettes vary with pose; no calibrated3D dimensions claimed. Unobstructed bench brace hardware copied from start master under explicit fixed-area authorization."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Hands visibly wrap handles; wrists remain aligned with forearms. Head/back remain against pad and ankles behind rollers. Fine grip details inspected natively, not inferred only from mobile."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Weights rise and converge slightly over lower chest while elbows extend; shoulders remain supported. Revised midpoint avoids original sideward hand excursion. No obvious contact separation or elbow hyperextension; qualitative assessment only."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Pectorals strong purple, triceps/front delts lilac, matching primary/secondary hierarchy. Chest tint is broad pectoral coverage, not precise isolated lower-fibre activation; this limitation is retained."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Six cues match exact decline-db-press setup, upward press, controlled hold and return, each at most seven words."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "All six and6-to-1 manually stepped in actual player in both themes. Three distinct poses,4=3,5=2,6=1. Continuous timed playback not claimed."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "All six plus loop reviewed390x844 light theme. No body/equipment clipping, cues readable, DOM viewport and scrollWidth390, native1536x1024. Fine weights/hand detail supplemented by native review."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "All six plus loop reviewed390x844 dark theme. Press/return distinguishable, cues readable and full bench/body fit. Top weight gap small but visible; no clipping."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/decline-db-press/1.webp",
+      "sha256": "9d54d23d62841d5e150eb7b2de11825d725bc5aad28769e130a8e7f2ffe09844",
+      "anchors": {
+        "nearBenchFoot": {
+          "x": 344.6140350877193,
+          "y": 940
+        },
+        "farUpright": {
+          "x": 1283.245283018868,
+          "y": 600
+        }
+      },
+      "invariantDimensions": {
+        "nearBenchFootSpan": 60.81453634085216,
+        "farUprightSpan": 52.186089530151776
+      }
+    },
+    {
+      "path": "form-frames/decline-db-press/2.webp",
+      "sha256": "d710dbeee3a425cc31c1517ac559b6f771563b13f63c7d1f104fbc368a0f88b0",
+      "anchors": {
+        "nearBenchFoot": {
+          "x": 344.8723404255319,
+          "y": 940
+        },
+        "farUpright": {
+          "x": 1283.5384615384614,
+          "y": 600
+        }
+      },
+      "invariantDimensions": {
+        "nearBenchFootSpan": 60.65397536394181,
+        "farUprightSpan": 52.282967032967235
+      }
+    },
+    {
+      "path": "form-frames/decline-db-press/3.webp",
+      "sha256": "981bfdfe75ebbb20357c1bc6c9c4db37f119ad901e1f117d60e8ad39ecad6b2d",
+      "anchors": {
+        "nearBenchFoot": {
+          "x": 344.78846153846155,
+          "y": 940
+        },
+        "farUpright": {
+          "x": 1283.340425531915,
+          "y": 600
+        }
+      },
+      "invariantDimensions": {
+        "nearBenchFootSpan": 60.61504723346826,
+        "farUprightSpan": 52.199257007767756
+      }
+    },
+    {
+      "path": "form-frames/decline-db-press/4.webp",
+      "sha256": "981bfdfe75ebbb20357c1bc6c9c4db37f119ad901e1f117d60e8ad39ecad6b2d",
+      "anchors": {
+        "nearBenchFoot": {
+          "x": 344.78846153846155,
+          "y": 940
+        },
+        "farUpright": {
+          "x": 1283.340425531915,
+          "y": 600
+        }
+      },
+      "invariantDimensions": {
+        "nearBenchFootSpan": 60.61504723346826,
+        "farUprightSpan": 52.199257007767756
+      }
+    },
+    {
+      "path": "form-frames/decline-db-press/5.webp",
+      "sha256": "d710dbeee3a425cc31c1517ac559b6f771563b13f63c7d1f104fbc368a0f88b0",
+      "anchors": {
+        "nearBenchFoot": {
+          "x": 344.8723404255319,
+          "y": 940
+        },
+        "farUpright": {
+          "x": 1283.5384615384614,
+          "y": 600
+        }
+      },
+      "invariantDimensions": {
+        "nearBenchFootSpan": 60.65397536394181,
+        "farUprightSpan": 52.282967032967235
+      }
+    },
+    {
+      "path": "form-frames/decline-db-press/6.webp",
+      "sha256": "9d54d23d62841d5e150eb7b2de11825d725bc5aad28769e130a8e7f2ffe09844",
+      "anchors": {
+        "nearBenchFoot": {
+          "x": 344.6140350877193,
+          "y": 940
+        },
+        "farUpright": {
+          "x": 1283.245283018868,
+          "y": 600
+        }
+      },
+      "invariantDimensions": {
+        "nearBenchFootSpan": 60.81453634085216,
+        "farUprightSpan": 52.186089530151776
+      }
+    }
+  ]
+}
