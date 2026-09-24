@@ -15,6 +15,7 @@ const placard = (
 });
 
 export const RELEASED_FORM_PLACARDS = {
+ "barbell-upright-row": placard("barbell-upright-row", ["Traps"], ["Side delts", "Biceps"], [[0,"Start","Stand tall; keep an overhand grip."],[0.5,"Lead with elbows","Lead with elbows; keep the bar close."],[1,"Chest height","Stop at chest height, elbows below shoulders."],[1,"Controlled top","Hold briefly without lifting elbows higher."],[0.5,"Lower","Lower the bar close to your body."],[0,"Return","Return to thighs without bouncing."]]),
   "cable-crossover": placard(
     "cable-crossover",
     ["Pectorals"],

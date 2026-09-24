@@ -1,0 +1,170 @@
+{
+  "exerciseId": "barbell-upright-row",
+  "version": "anatomy-v3-2026-09-24",
+  "width": 1536,
+  "height": 1024,
+  "decision": "approved",
+  "reviewer": "Codex visual and implementation review",
+  "reviewedAt": "2026-09-24T17:26:58.471Z",
+  "reference": {
+    "path": "form-frames/barbell-upright-row/3.webp",
+    "sha256": "a0c2d040ea999078cc2ad37d8fccb37577a70f3849bf4a60fb4e7f6fc9aa634f"
+  },
+  "cueSha256": "39e081572ee392c8e315a1563158cc2016ca41027444b22efbca233d3f281426",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Canonical bald faceless white-grey anatomy-v3 athlete, smooth neutral pelvis and white shoes retained in all three native poses."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Native landscape1536x1024, full body/bar visible. Head, torso and feet stay visually aligned; both shoe anchors and spans satisfy unrounded1px/1% limits."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Standing upright row, bent elbows lead wrists; top elbow joints remain below shoulder level. Anatomical review is qualitative; no calibrated3D joint-angle claim."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "One modest plate per side, horizontal rigid bar. Rejected widened-grip and shortened-bar variants excluded. Selected top master seeded lower poses with bar/hands moved together. Bar span varies under0.1%; grip spacing visually consistent natively. Hand/body overlap prevents independent threshold-based grip-centre measurement."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Both overhand grips remain wrapped around shaft and feet planted throughout. No deterministic image correction used."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Bar rises vertically from thighs to chest, elbows lead and return reverses same path. No leg bounce indicated. Fixed feet and projected bar endpoints measured separately."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Trapezius strong purple; side deltoids and biceps lilac. Incorrect extra triceps tint in start removed with built-in color-only edit."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "All six cues match positions and contain at most seven words. Top cue limits elbow height; return cues follow reversed poses."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "All six beats and6→1 stepped in real player both themes.4=3,5=2,6=1 intentionally reuse matching poses."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "Three unique poses visually inspected and all six beats/loop checked at390x844, real player light theme. Full athlete/bar fit, captions readable, no horizontal overflow. Fine hand detail also checked natively."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "Three unique poses visually inspected and all six beats/loop checked at390x844, real player dark theme. Bar height progression clear; no clipping."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/barbell-upright-row/1.webp",
+      "sha256": "7ac9fa5011a6c28c580d433c9065c8a181df38038349e35ba79973ba34c9a079",
+      "anchors": {
+        "leftShoeLeft": {
+          "x": 632.3913043478261,
+          "y": 935
+        },
+        "rightShoeLeft": {
+          "x": 835.0625,
+          "y": 935
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeSpan": 65.80422637843083,
+        "rightShoeSpan": 65.38035714285718
+      }
+    },
+    {
+      "path": "form-frames/barbell-upright-row/2.webp",
+      "sha256": "887e7ed8ed0c9caee039e2eaf03efd77da34694d5a1656860b141df5e94cca77",
+      "anchors": {
+        "leftShoeLeft": {
+          "x": 632.5353535353536,
+          "y": 935
+        },
+        "rightShoeLeft": {
+          "x": 835.2666666666667,
+          "y": 935
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeSpan": 65.77346999405813,
+        "rightShoeSpan": 64.99487179487176
+      }
+    },
+    {
+      "path": "form-frames/barbell-upright-row/3.webp",
+      "sha256": "a0c2d040ea999078cc2ad37d8fccb37577a70f3849bf4a60fb4e7f6fc9aa634f",
+      "anchors": {
+        "leftShoeLeft": {
+          "x": 632.4728260869565,
+          "y": 935
+        },
+        "rightShoeLeft": {
+          "x": 834.9316770186335,
+          "y": 935
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeSpan": 65.37463154016211,
+        "rightShoeSpan": 65.210334815686
+      }
+    },
+    {
+      "path": "form-frames/barbell-upright-row/4.webp",
+      "sha256": "a0c2d040ea999078cc2ad37d8fccb37577a70f3849bf4a60fb4e7f6fc9aa634f",
+      "anchors": {
+        "leftShoeLeft": {
+          "x": 632.4728260869565,
+          "y": 935
+        },
+        "rightShoeLeft": {
+          "x": 834.9316770186335,
+          "y": 935
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeSpan": 65.37463154016211,
+        "rightShoeSpan": 65.210334815686
+      }
+    },
+    {
+      "path": "form-frames/barbell-upright-row/5.webp",
+      "sha256": "887e7ed8ed0c9caee039e2eaf03efd77da34694d5a1656860b141df5e94cca77",
+      "anchors": {
+        "leftShoeLeft": {
+          "x": 632.5353535353536,
+          "y": 935
+        },
+        "rightShoeLeft": {
+          "x": 835.2666666666667,
+          "y": 935
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeSpan": 65.77346999405813,
+        "rightShoeSpan": 64.99487179487176
+      }
+    },
+    {
+      "path": "form-frames/barbell-upright-row/6.webp",
+      "sha256": "7ac9fa5011a6c28c580d433c9065c8a181df38038349e35ba79973ba34c9a079",
+      "anchors": {
+        "leftShoeLeft": {
+          "x": 632.3913043478261,
+          "y": 935
+        },
+        "rightShoeLeft": {
+          "x": 835.0625,
+          "y": 935
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeSpan": 65.80422637843083,
+        "rightShoeSpan": 65.38035714285718
+      }
+    }
+  ]
+}
