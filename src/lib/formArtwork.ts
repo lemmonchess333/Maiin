@@ -53,6 +53,19 @@ export const FORM_ARTWORK: Record<string, FormArtwork> = {
     reference: "form-frames/db-flyes/1.webp",
     reviewFile: "docs/exercise-art/releases/2026-09-24/db-flyes.json",
   },
+  "chest-press-machine": {
+    version: "anatomy-v3-2026-09-24",
+    status: "approved",
+    width: 1536,
+    height: 1024,
+    frames: Array.from(
+      { length: 6 },
+      (_, i) => `form-frames/chest-press-machine/${i + 1}.webp`
+    ),
+    reference: "form-frames/chest-press-machine/1.webp",
+    reviewFile:
+      "docs/exercise-art/releases/2026-09-24/chest-press-machine.json",
+  },
   "machine-chest-fly": {
     version: "anatomy-v3-2026-09-24",
     status: "approved",
