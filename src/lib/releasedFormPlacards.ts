@@ -16,6 +16,7 @@ const placard = (
 
 export const RELEASED_FORM_PLACARDS = {
  "decline-db-press": placard("decline-db-press", ["Lower Chest"], ["Triceps", "Front Delts"], [[0,"Set","Secure ankles; brace with weights beside chest."],[0.5,"Press","Press upward, keeping wrists stacked over elbows."],[1,"Extend","Extend arms, keeping the dumbbells slightly apart."],[1,"Control","Hold steady with shoulders against the pad."],[0.5,"Lower","Lower both weights along the same path."],[0,"Return","Return beside your chest with control."]]),
+ "arnold-press": placard("arnold-press", ["Deltoids"], ["Triceps", "Upper chest"], [[0,"Start tucked","Start seated with palms facing you."],[0.5,"Rotate and press","Press upward while rotating palms outward."],[1,"Extend overhead","Extend overhead with palms facing forward."],[1,"Hold","Keep the dumbbells separate above shoulders."],[0.5,"Lower smoothly","Lower while reversing the rotation."],[0,"Return tucked","Return palms inward at chest height."]]),
   "db-flyes": placard(
     "db-flyes",
     ["Pectorals"],
