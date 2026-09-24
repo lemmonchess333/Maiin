@@ -15,6 +15,7 @@ const placard = (
 });
 
 export const RELEASED_FORM_PLACARDS = {
+ "reverse-barbell-curl": placard("reverse-barbell-curl", ["Biceps"], ["Brachioradialis","Forearms"], [[0,"Set","Use overhand grip; keep your wrists straight."],[0.65,"Curl","Curl upward, keeping elbows beside your ribs."],[1,"Top","Bring the bar toward your shoulders."],[1,"Hold","Pause briefly without bending your wrists."],[0.65,"Lower","Lower slowly with your overhand grip locked."],[0,"Return","Return to thighs without swinging your torso."]]),
   "db-flyes": placard(
     "db-flyes",
     ["Pectorals"],
