@@ -41,6 +41,30 @@ const ownerReleased = (
 // Preserve the seven previously shipped sets while replacements are reviewed.
 // These entries do not claim that the art passes the new consistency standard.
 export const FORM_ARTWORK: Record<string, FormArtwork> = {
+  "machine-chest-fly": {
+    version: "anatomy-v3-2026-09-24",
+    status: "approved",
+    width: 1536,
+    height: 1024,
+    frames: Array.from(
+      { length: 6 },
+      (_, i) => `form-frames/machine-chest-fly/${i + 1}.webp`
+    ),
+    reference: "form-frames/machine-chest-fly/3.webp",
+    reviewFile: "docs/exercise-art/releases/2026-09-24/machine-chest-fly.json",
+  },
+  "decline-bench": {
+    version: "anatomy-v3-2026-09-24",
+    status: "approved",
+    width: 1536,
+    height: 1024,
+    frames: Array.from(
+      { length: 6 },
+      (_, i) => `form-frames/decline-bench/${i + 1}.webp`
+    ),
+    reference: "form-frames/decline-bench/3.webp",
+    reviewFile: "docs/exercise-art/releases/2026-09-24/decline-bench.json",
+  },
   "weighted-chest-dip": {
     version: "anatomy-v3-2026-09-22",
     status: "approved",
@@ -77,18 +101,6 @@ export const FORM_ARTWORK: Record<string, FormArtwork> = {
     reference: "form-frames/barbell-floor-press/1.webp",
     reviewFile:
       "docs/exercise-art/releases/2026-09-22/barbell-floor-press.json",
-  },
-  "machine-chest-fly": {
-    version: "anatomy-v3-2026-09-24",
-    status: "approved",
-    width: 1536,
-    height: 1024,
-    frames: Array.from(
-      { length: 6 },
-      (_, i) => `form-frames/machine-chest-fly/${i + 1}.webp`
-    ),
-    reference: "form-frames/machine-chest-fly/3.webp",
-    reviewFile: "docs/exercise-art/releases/2026-09-24/machine-chest-fly.json",
   },
   "weighted-push-ups": {
     version: "anatomy-v3-2026-09-22",
