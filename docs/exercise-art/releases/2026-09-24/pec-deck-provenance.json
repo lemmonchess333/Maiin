@@ -1,0 +1,64 @@
+{
+  "modelPath": "Built-in image_gen; unchanged model path. Frontal direct-support sequence; open frame1 is master. Earlier defective moving-support and pivot variants excluded. No deterministic pixel correction.",
+  "canonicalReference": {
+    "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+  },
+  "sourceFrames": [
+    {
+      "frame": 1,
+      "sha256": "ac9a7f76ae940c9056a970527f4e7ffa2f79e8a0d44388ab0b3a14c6ba655a84"
+    },
+    {
+      "frame": 2,
+      "sha256": "17ecd324020fef33034362a564e2851cc245aa377884f07aefd4de52c14b8fb5"
+    },
+    {
+      "frame": 3,
+      "sha256": "30b1e16006efc164fbdb9cd8af5f36f6ccb0711610e8efafa78d16f1e24ae91b"
+    },
+    {
+      "frame": 4,
+      "sha256": "30b1e16006efc164fbdb9cd8af5f36f6ccb0711610e8efafa78d16f1e24ae91b"
+    },
+    {
+      "frame": 5,
+      "sha256": "17ecd324020fef33034362a564e2851cc245aa377884f07aefd4de52c14b8fb5"
+    },
+    {
+      "frame": 6,
+      "sha256": "ac9a7f76ae940c9056a970527f4e7ffa2f79e8a0d44388ab0b3a14c6ba655a84"
+    }
+  ],
+  "generation": {
+    "closed": "Use case: precise-object-edit. FIRST image is the open pec-deck exercise master to edit. SECOND image is athlete identity reference only. Create the CLOSED SQUEEZE pose of this exact exercise, native1536x1024. The two black forearm pads must meet side by side at the sternum: left pad approximately x696-764, right pad x770-838. Both hands grip handles above their corresponding pads; bent elbows and vertical forearms press the pads. Keep upper arms lifted, chest squeezed. Crucial machine mechanics: overhead cylinders centered at x600 and x930 remain fixed. Each existing top beam rotates FORWARD and INWARD around its cylinder's vertical axis; its descending post follows the beam's endpoint, ending directly alongside its own pad. Preserve the original short direct post-to-pad attachment; DO NOT add a long horizontal lower crossbar. The descending posts should be immediately outside the now-close pads, NOT out at shoulder width. Keep all physical segment lengths consistent through perspective foreshortening. Same two arms and joints, connected throughout. Keep central tower, base, seat, torso, head, legs, planted shoes, black background, camera and framing unchanged. White-grey faceless bald athlete, smooth featureless pelvis, purple pectorals and pale lilac front deltoids, white shoes. No labels or arrows.",
+    "midpoint": "Edit FIRST image (closed pec-deck pose) into the HALFWAY OPEN pose, between first and SECOND image (fully open master). THIRD image canonical identity only. Keep the FIRST image's exact fixed overhead cylindrical housings, top caps, central tower, head, torso, seat, feet and camera completely unchanged. Only swing the machine's two existing rigid arms and the athlete's arms halfway outward. Place pads approximately x550-615 and x915-980, with vertical forearms pressed firmly against pads, hands on attached upright handles, elbows bent. Each descending post remains immediately outside its pad, with the exact SHORT direct pad attachment; no long lower crossbars or added joints. The upper beams rotate about the unchanged cylindrical axes and remain connected, showing foreshortening. All physical segment lengths constant. Black background, faceless bald white-grey anatomical athlete, purple chest, pale lilac front shoulders, smooth pelvis, white trainers. One native1536x1024 landscape image, no labels."
+  },
+  "originalPrompts": {
+    "master": "Scientific anatomy exercise illustration PEC DECK with FOREARM PADS, starting wide position. Mandatory canonical athlete reference: bald faceless whitegrey anatomical adult, finecontours white trainers smoothneutralfeaturelesspelvis no clothes. Strong purplepectorals, lightlilacfrontdelts, restneutral. Fullbody seated upright againstverticalbackpad, hips onseat, bothfeetflat apart. Camera straight FRONT with slightelevation, bothforearms/padcontacts perfectlyvisible. Shoulders neutral upperarms out to sides atshoulderheight butnotbehindtorso. Elbows bent90degrees, FOREARMS VERTICAL, eachforearm pressedagainst insideface of itsown vertical darkgreyrectangular paddedwing. Hands lightlyholdshortuprightgrips above pads. Bothpads run fromelbowtojustbelowwrist, anatomicallyappropriate size. This is forearmpad pecdeck NOT straightarmmachinefly orchestpress. Machine stablegreysteelbase verticalbacksupport, enclosedrearweighttower. Two overhead horizontal swingarms on fixed VERTICALAXIS pivots aboveeachshoulder, rigid matchedLshaped supports descendoutsideeachpad. Pads sweep horizontally inwardtowardbodymidline when armsclose; elbowsremainbent allposes. Fullapparatus within1536x1024 blackcanvas generousmargin; quietgreyhardware with unambiguouspad/forearmcontact, no unsupportedfloatingpads. No cablesexposed, stack concealedinsideopaquehousing. No text logos arrows glow. Oneperson exacttwoarms twoelbows twopads. Pectoralsremainvisiblespacebetweenthepads inwidestart.",
+    "masterCorrection": "Edit this PEC DECK MASTER only at pelvis and face. Canonical identity image2 authority. Replace apparent brief-shaped pelvic outline and centreline with smooth neutral continuous anatomical grey-white pelvic surface. NO underwear silhouette, no V shaped garmentedges, no central slit or seams, no anatomical genital detail. Retain full natural thigh/hip anatomy continuing into torso. Face completelyfeatureless: remove nose/mouth marks whilekeepingheadshape. Keep ALL other machine, pose, forearms on pads, grips, colours,feet,frame exactlysame.1536x1024 black no addedtext.",
+    "midpoint": "Edit image1 PEC DECK forearmpadmaster into halfway squeeze. Image2canonicalidentity. Both ELBOWS STAY BENT90degrees, forearmsVERTICALand pressed against same pads. Swingupperarms/pads inward halfway inhorizontal chestfly arc, padcentres move fromwideedges to roughlyx590and945 whilepadheightstayssame. Bothhandsstay on uprightgrips abovepads. Fixedbodyheadfeetseatbackpadrearhousingand overheadverticalpivotaxes EXACTLY unchanged. Horizontaloverheadswingarms rotatearoundtheir originalfixedverticalaxes; rigidmatchinglengths, postsstayvertical, padsizeunchanged. Do not translatepivotaxes, shrinkmachineor movebase. Upperarmsnowpartlyforward showingforeshortening notshortening, shoulderstoelbowsnatural. Cheststrongpurplefrontdeltslightlilac othermusclesneutral. Same1536x1024blackcanvas smoothfeaturelesspelvis. No text ornewobjects. Keep two separate pads withwidegap infrontofchest, notfullclosedposition.",
+    "endpoint": "Image1 originalPECDECKmaster governs ALLfixedgeometry, image2adjacentintermediate pose, image3canonical. Closepadstogetherinfrontofchest. Both elbowanglesremain90degrees, forearmsverticalbehindandagainstpads, handsclosedarounduprightgrips. Padcentres roughly(715,320) and(815,320), smallgapbetweenpads, NOT overlapped/fused. MachineLsupports rotateinwardaround image1 originaloverheadverticalpivotcentres; preserveallrigidlengths. Maintain originalpivotpositions,rearhousingheadbackpadtorsohipsfeetseatbase exactlyunchanged. Shoulder-drivenhorizontalfly not elbowextension. Pads samewidthheightthickness. Noaddedpads extrahands or disconnectedhardware. Headnotobscured; padsinfrontofchestnaturallyoccludepartofpectorals. Samepurplechestlightlilacfrontdelts, otherneutral.1536x1024blackcanvas samecamera no text. Closestpadedgesnearlytouch atbodymidline infrontofchest with forearmsparallel.",
+    "endpointCorrection": "Edit IMAGE1 pecdeck endpoint, image2 master fixedanchors, image3canonical. Correct endpoint: pads must nearly TOUCH edge-to-edge infrontofchest, not leavewidegap. Moveleftpad about45pixelsright andrightpad45pixelsleft so centreedges leaveonly10pixelgap. Moveforearms/handswithpads without changing90degreeelbowbend. Pads samewidthheight, forearmsverticalonpads, twohandsatgrips. Upperarmsforwardforeshortened. Keep originalmaster overheadpivotpositions FIXED; horizontalarmsrotateaboutthem. Do not movefixedrearhousing/seat/backpad/headtorsolegsfeet. No shapeshiftingpadposts, maintainrigidlengths. Originalpose has gap too wide, makefinalsqueeze mechanicallyclear. Nootherchanges sameblack1536x1024.",
+    "endpointTouchCorrection": "Create corrected PEC DECK final squeeze by editing image1 ORIGINALMASTER. Image2 previousattempt shows armsclosing but pads too farapart; image3canonicalidentity. Atfinalsqueeze the TWO BLACK PADS TOUCH EACH OTHER along their INNER VERTICAL EDGES, visiblyforming a double-width block directlyinfrontofsternum. NO BLACK GAP betweenpads, NO visiblechest strip betweenpads. Bothforearmsverticalbehindpads andhandsgripuprighthandlesabove, elbowsbent90degrees andforward. This naturallyoccludesmostchest, thatisintended. Preserveoriginalfixedmachinepivotpositions, backpadheadtorsoseatlegsfeet, nozoom. MovingtwoLarmsrotatehorizontallyinwardaroundoriginalverticalpivots tobringpadstogether. Do not shrinkpads, do notgrowlowerbars. Noextraarms. Onepadperforearm, two separatedgrips. Same1536x1024blackcanvas canonicalwhitegrey fineanatomy purplepecslilacfrontdelts smoothfeaturelesspelvis. Essential correction: PAD INNER EDGES ACTUALLY TOUCH atmidline infrontofchest."
+  },
+  "conversion": "Native lossless WebP; every decoded RGB byte verified identical to refined reviewed PNG.",
+  "reuse": {
+    "4": 3,
+    "5": 2,
+    "6": 1
+  },
+  "measurementMethod": "Unrounded native min-RGB80 linearly interpolated boundary crossings.",
+  "scanlines": {
+    "leftPivot": [
+      560,
+      635,
+      103
+    ],
+    "rightPivot": [
+      900,
+      975,
+      103
+    ]
+  }
+}
