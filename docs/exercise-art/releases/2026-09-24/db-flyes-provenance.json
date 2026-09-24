@@ -1,0 +1,70 @@
+{
+  "modelPath": "Built-in image_gen; unchanged model path. Soft-bend master, open endpoint and midpoint refined with canonical and exercise-master references; no deterministic pixel correction needed.",
+  "canonicalReference": {
+    "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+  },
+  "sourceFrames": [
+    {
+      "frame": 1,
+      "sha256": "b2cf08e009de17f0d4323d2527274dbbb756a5e058aab8c6a7351208aa9ab9f7"
+    },
+    {
+      "frame": 2,
+      "sha256": "823e6eca1f4a98c9a6beeda545a430c2865c537dca5167f489aeea429faa9323"
+    },
+    {
+      "frame": 3,
+      "sha256": "c8767cf9cbd14d1054300273e381f750f10cea06b282eaab817fcbb649269347"
+    },
+    {
+      "frame": 4,
+      "sha256": "c8767cf9cbd14d1054300273e381f750f10cea06b282eaab817fcbb649269347"
+    },
+    {
+      "frame": 5,
+      "sha256": "823e6eca1f4a98c9a6beeda545a430c2865c537dca5167f489aeea429faa9323"
+    },
+    {
+      "frame": 6,
+      "sha256": "b2cf08e009de17f0d4323d2527274dbbb756a5e058aab8c6a7351208aa9ab9f7"
+    }
+  ],
+  "generation": {
+    "master": "Edit FIRST image only: existing dumbbell-fly top/start master. SECOND is canonical athlete identity. Keep exact native1536x1024 canvas, fixed three-quarter camera, horizontal flat bench, head/torso/hips/legs/feet and black background unchanged. Targeted correction: give BOTH elbows a small clearly visible soft bend, about20 degrees away from full lockout, with upper arms still raised above chest and dumbbells held close together over mid chest. Forearms angle slightly inward; hands remain closed around the same modest matching hex dumbbell handles, palms facing each other. Do not turn this into a chest press or deeply bent elbows. Preserve limb lengths and all supported body contacts. Pectorals strongest purple, front deltoids pale lilac, forearms neutralwhitegrey. Preserve smooth featureless pelvic centre, bald faceless white/lightgrey anatomy, fine contours, white trainers. Single full frame, no text or collage. Preserve bench and planted feet geometry exactly.",
+    "endpoint": "Edit FIRST image (new soft-bend dumbbell-fly master) to bottom/open fly position. SECOND original open pose is only a movement-plane reference; THIRD canonical identity. Preserve FIRST image camera, canvas1536x1024, entire horizontal bench, supported head/back/hips, legs and planted feet, body proportions and muscle colours. Move ONLY arms and their two dumbbells in lateral arcs at shoulder level: open out to sides until upper arms are level with torso, never below. Maintain SAME small ~20 degree elbow bend from first image on BOTH arms; no locked elbows, no deep press bend, no reaching toward thighs. Use second image's clearly lateral foreground/background opening but correct both elbow bends to match first. Near arm travels into foreground (projected lower-right), far arm into background (upper-left), symmetric anatomical abduction. Both wrists straight, palms face inward throughout, closed grip on identical modest hex dumbbells. Keep exact arm lengths. No overlap that fuses foreground dumbbell with shoe: depth separation and black gap where possible without moving foot or camera. Strongest purple pecs, pale lilac frontdelts, neutral forearms; same faceless anatomical athlete, featureless pelvis and white shoes. Black background, no text, one full frame.",
+    "midpoint": "Edit FIRST image, dumbbell fly soft-bend TOP MASTER, into halfway outward lowering position. SECOND is approved-for-study OPEN endpoint; THIRD is canonical identity. Same native1536x1024 fixed camera, horizontal bench and supported body, feet, framing and blackbackground. Move ONLY arms and the two matching hex dumbbells along lateral fly arcs halfway between first and second. Both upper arms roughly45degrees above torso plane, SAME small soft elbow bend as first and second; do not straighten/lock elbows and do not deepen into a press. Near hand should be between top (~700,185) and open (~950,630), about(~875,375); far hand halfway (~570,170) to(~300,300), around(~410,210). These are pose guidance, preserve actual natural limb lengths and anatomical symmetry. Near arm opens into foreground, not along thigh; far arm into background. Wristsstraight closedgrips palmsfacinginward, same weights. Freeze head/torso/hips/legs/feet and bench geometry. Strongpurplepecs, pale lilacfrontdelts, restneutralwhitegrey canonical faceless athlete, featurelesspelvis whitetrainers. No text, no collage. Halfwaypose visibly differs from bothendpoints.",
+    "outputs": {
+      "master": "exec-6c62b102-19d1-4ae0-81bf-43ece17a279b.png",
+      "endpoint": "exec-b42fe6c5-2f9e-4935-96ea-9e3cfa64098c.png",
+      "midpoint": "exec-3ffcf69b-fac8-428d-8857-a86196fbbab2.png"
+    }
+  },
+  "originalPrompts": {
+    "master": "Scientific anatomy exercise illustration DUMBBELL FLYES on FLAT BENCH, master TOP position. Attached reference is the mandatory canonical athlete IDENTITY and fine linework style: bald faceless white/light grey anatomical mannequin, smooth neutral featureless pelvic centre, white trainers, no clothing. Strong purple pectorals, lighter lilac anterior deltoids only, all other muscles neutral grey. One athlete lying SUPINE on genuinely horizontal flat padded bench, head upper centre and feet toward lower foreground. Fixed frontal three-quarter view FROM FOOT END at modest elevation, showing both arms symmetrically, both closed grips, whole head/body/feet/bench. Head upper back and pelvis rest on pad. Feet flat planted apart. Hold TWO identical small grey hex dumbbells above mid chest with neutral palms FACING EACH OTHER. Arms nearly extended but with a fixed15degree soft elbow bend (165degree elbow interior angle), NOT a deep pressing bend. Dumbbells held close but not touching, one in each hand. Keep generous empty space to both sides for later wide arm opening; athlete/body modest size so full later wingspan fits within1536x1024 landscape. Pure BLACK background, crisp canonical anatomical illustration, subtle grey bench. No text numbers captions arrows glow gradients or multiple panels. Two dumbbells each with exactly two identical hex heads and one short handle. At top both arms point upward above chest; no seated pose.",
+    "masterSceneCorrection": "Create DUMBBELL FLYES exercise master using image1 as physical FLAT-BENCH scene reference and image2 as canonical ATHLETE/style authority. Preserve supine body, supported skull, flat bench, feet planted, head at LEFT feet RIGHT, camera side three-quarter. Change the current press setup into fly TOP: two modest identical grey dumbbells held CLOSE ABOVE MID CHEST with palms facing each other (neutral grip), wrists straight. Set both elbows to a slight15degree bend and retain normal limb lengths. Arms rise over chest, not behind head. Do not deeply bend elbows. Strong purple pectorals only; lighter lilac anterior deltoids, triceps/forearms neutral grey instead of broadly highlighted. Canonical bald faceless white-grey anatomy, smooth featureless pelvic centre, white trainers, fine contours. Use compact hex dumbbells so equipment does not obscure hands. Frame whole scene slightly smaller than reference1 to leave generous lateral room for open-fly arms. Same1536x1024 landscape BLACK background, no captions, no glow. One person. Clearly lying on a flat horizontal bench, never seated or incline.",
+    "midpoint": "DUMBBELL FLYES midpoint opening, image1 exact exercise master/edit target, image2 canonical identity. Open BOTH arms outward in broad shoulder-centred arcs halfway toward a wide T, about45degrees away from vertical. Keep each elbow's small15degree bend CONSTANT from master: do NOT fold elbows to90degrees, do not make a dumbbell press. Upper arm plus forearm acts as nearly straight slightly bent rigid linkage. Move near/foreground hand toward imageRIGHT and down, far/background hand toward imageLEFT and down, spreading both dumbbells apart at same stage of arc. Both palms remain facing each other across chest, wrists neutral, closed grips on identical same-size small hex dumbbells. Keep exact head, chest, pelvis, legs, shoes, bench and frame pixels unchanged. Arms remain above torso plane at this intermediate pose. Pectorals strongest purple, anterior deltoids light lilac, rest neutral. Camera and1536x1024 black background fixed, no text or new objects. Full equipment remains within margins. The diagnostic constraint is SAME SOFT ELBOW ANGLE; motion is in shoulders, not elbows.",
+    "endpoint": "Dumbbell FLYES controlled wide bottom endpoint. Image1 is locked top master scene, image2 canonical anatomy identity, image3 adjacent midpoint. Continue BOTH arms outward at shoulders into wide T across chest until upper arms reach torso plane, no deeper. Constant small soft elbow bend as master and midpoint, never press-style folded elbows. Near foreground arm extends toward right-lower foreground from its shoulder, far arm toward left-upper background; perspective correctly projects a T perpendicular to head-to-feet torso axis. Both hands hold same compact hex dumbbells neutral wrists, palms face up at bottom as shoulders open; natural closed grips. Head, neck, chest position, pelvis, legs feet bench anchors camera crop stay EXACTLY unchanged. Do not sit up. Supine flatbench feet planted. Strong purple pectorals, light lilac frontdelts, remaining neutralgrey, canonical fine anatomical contours. Black1536x1024 single frame, generous margins all equipment visible, no text. Symmetric shoulder abduction in three dimensions despite projected asymmetry. Keep endpoint conservative, upperarms no lower than back/torso.",
+    "endpointCorrection": "Correct ONLY arm direction in attached fly endpoint image1. Image2 locked master and image3 canonical identity. Foreground arm is incorrectly reaching along torso toward thigh. It must open laterally ACROSS bench width toward LOWER foreground: near shoulder at(680,525), near elbow about(840,680), near wrist about(1000,790), dumbbell centre(1015,800). This forms a wide T perpendicular to torso longaxis. Preserve near upperarm/forearm lengths and a smallsoft15degree elbowbend. Far arm stays extended toward upperleft, with wrist near(315,305). Keep torso bench feet head geometry absolutely unchanged, even where arm overlaps foot/bench. No duplicate limbs. Dumbbell maintained identicalsmallhexdesign securegrip neutralwrist. Upperarms at torso plane in real3D, supported head and hips. This is a lateral chestfly stretch, NOT arms reaching beside thighs. Purplepecs/lilacfrontdelts blackbackground1536x1024 no text.",
+    "midpointCorrection": "Edit image1 DUMBBELL FLY midpoint to match a smooth shoulder-centred circular arc between image2 top and image3 open endpoint. Image4 canonical anatomical identity. Keep body bench head feet crop exactly fixed. Correct foreground hand from too far toward thigh: move foreground wrist to approximately (900,360), elbow to (770,430), shoulder stays (670,525) on1536x1024. Smallsoft elbow bend constant, nearly extended arm. Near arm lifts toward viewer and up, not toward knees. Far hand stays around(400,245). Identical compacthexweights with two headsonehandle, closed secure neutralgrips. No extra digits/limbs. Keep samepurplepecs lightlilacfrontdelts finegreycontours blackbackground. This remains halfway between raisedtop and lateralwideendpoint, not a press. No text. Improve anatomical continuity only."
+  },
+  "conversion": "Native lossless WebP; every decoded RGB byte verified identical to refined reviewed PNG.",
+  "reuse": {
+    "4": 3,
+    "5": 2,
+    "6": 1
+  },
+  "measurementMethod": "Unrounded native min-RGB30 linearly interpolated boundary crossings.",
+  "scanlines": {
+    "headBenchSupport": [
+      340,
+      450,
+      750
+    ],
+    "footBenchSupport": [
+      820,
+      1020,
+      790
+    ]
+  }
+}
