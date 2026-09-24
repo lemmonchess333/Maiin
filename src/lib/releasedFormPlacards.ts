@@ -16,6 +16,27 @@ const placard = (
 
 export const RELEASED_FORM_PLACARDS = {
  "lu-raise": placard("lu-raise", ["Deltoids"], ["Front delts", "Side delts"], [[0,"Start","Stand tall, weights at your sides."],[0.25,"Raise laterally","Raise both arms out to the sides."],[0.5,"Shoulder height","Reach shoulder height with soft elbows."],[1,"Sweep forward","Sweep forward, bringing the weights close together."],[0.5,"Open laterally","Open back out at shoulder height."],[0.25,"Lower","Lower steadily; continue to your sides."]]),
+  "machine-chest-fly": placard(
+    "machine-chest-fly",
+    ["Pectorals"],
+    ["Front deltoids"],
+    [
+      [0, "Set the soft bend", "Keep back supported; hold a soft bend."],
+      [
+        0.5,
+        "Sweep inward",
+        "Bring handles inward without bending elbows further.",
+      ],
+      [
+        1,
+        "Squeeze in front",
+        "Bring handles together without leaning forward.",
+      ],
+      [1, "Hold the squeeze", "Pause with your back against the pad."],
+      [0.5, "Open slowly", "Return slowly along the same wide arc."],
+      [0, "Control the stretch", "Stop before forcing your arms behind you."],
+    ]
+  ),
   "pec-deck": placard(
     "pec-deck",
     ["Pectorals"],
