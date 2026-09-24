@@ -15,6 +15,35 @@ const placard = (
 });
 
 export const RELEASED_FORM_PLACARDS = {
+  "decline-bench": placard(
+    "decline-bench",
+    ["Pectorals"],
+    ["Triceps", "Front deltoids"],
+    [
+      [
+        0,
+        "Set above shoulders",
+        "Secure ankles; keep head and hips supported.",
+      ],
+      [
+        0.5,
+        "Lower under control",
+        "Lower toward lower chest; keep wrists stacked.",
+      ],
+      [1, "Gentle chest touch", "Touch lower chest with shoulder blades set."],
+      [
+        1,
+        "Pause without bouncing",
+        "Pause gently; keep head and hips supported.",
+      ],
+      [0.5, "Press up and back", "Press up and back with ankles secured."],
+      [
+        0,
+        "Complete the press",
+        "Finish above shoulders with controlled elbow extension.",
+      ],
+    ]
+  ),
   "weighted-chest-dip": placard(
     "weighted-chest-dip",
     ["Pectorals"],
