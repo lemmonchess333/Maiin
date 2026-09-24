@@ -16,6 +16,7 @@ const placard = (
 
 export const RELEASED_FORM_PLACARDS = {
  "cross-body-hammer-curl": placard("cross-body-hammer-curl", ["Biceps"], ["Brachioradialis","Forearms"], [[0,"Start","Stand tall with palms facing inward."],[0.5,"Curl across","Curl one dumbbell across your body."],[1,"Opposite shoulder","Bring the dumbbell toward your opposite shoulder."],[1,"Brief hold","Pause with your elbow beside your ribs."],[0.5,"Lower","Lower slowly along the same path."],[0,"Return","Return to your side; alternate arms next."]]),
+ "arnold-press": placard("arnold-press", ["Deltoids"], ["Triceps", "Upper chest"], [[0,"Start tucked","Start seated with palms facing you."],[0.5,"Rotate and press","Press upward while rotating palms outward."],[1,"Extend overhead","Extend overhead with palms facing forward."],[1,"Hold","Keep the dumbbells separate above shoulders."],[0.5,"Lower smoothly","Lower while reversing the rotation."],[0,"Return tucked","Return palms inward at chest height."]]),
   "db-flyes": placard(
     "db-flyes",
     ["Pectorals"],

@@ -1,0 +1,163 @@
+{
+  "modelPath": "Built-in image_gen; unchanged model path. Enlarged overhead frame3 is exercise master. Small framing and halo variants rejected; start weights refined. Authorized deterministic correction only to unobstructed bench feet; full proof included.",
+  "canonicalReference": {
+    "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+  },
+  "sourceFrames": [
+    {
+      "frame": 1,
+      "sha256": "93b4ac2e96b18fb54872be5a160d17a36ea6a058a98cdafa06577c0804de5d78"
+    },
+    {
+      "frame": 2,
+      "sha256": "4f25edae5aab2d78771d454106aa1338d707e48730a5c1ad3d99297adc85146d"
+    },
+    {
+      "frame": 3,
+      "sha256": "886ee17a4477a746ac808227bc1b74eb655aaebeeb851e23323b54e516c0c517"
+    },
+    {
+      "frame": 4,
+      "sha256": "886ee17a4477a746ac808227bc1b74eb655aaebeeb851e23323b54e516c0c517"
+    },
+    {
+      "frame": 5,
+      "sha256": "4f25edae5aab2d78771d454106aa1338d707e48730a5c1ad3d99297adc85146d"
+    },
+    {
+      "frame": 6,
+      "sha256": "93b4ac2e96b18fb54872be5a160d17a36ea6a058a98cdafa06577c0804de5d78"
+    }
+  ],
+  "generation": {
+    "reframing": [
+      {
+        "key": "arnoldLargeTopPrompt",
+        "prompt": "Reframe FIRST image, the fully extended seated ARNOLD PRESS FINISH, as a larger clear exercise master. SECOND canonical athlete identity. Preserve same pose, three-quarter angle, modest hex dumbbells, separate overhead arms with palms FORWARD (visible palms), neutral wrists, seated upright on same bench, feet planted. Native1536x1024 landscape. Uniformly enlarge and recenter the WHOLE athlete and bench so the top of overhead dumbbells sits around y45 and lowest shoe y980; head will sit around y200. Keep full equipment, dumbbells, head and shoes inside frame with small margins. No cropping, no stretching body parts or changing relative proportions. Crisp native rendering. Strong purple deltoids, lighter lilac triceps and upper chest, neutral rest. White-grey bald faceless anatomy, smooth featureless pelvis, white shoes, pure black background. No text. This is OVERHEAD FINISH and defines framing for all subsequent poses."
+      },
+      {
+        "key": "arnoldBlackPrompt",
+        "prompt": "Use case: precise-object-edit. FIRST image is edit target and exercise master: enlarged Arnold press overhead finish. SECOND is canonical identity reference only. Remove ONLY the grey glowing halo and floor glow from first image and replace all background with uniform pure black #000000. Preserve every athlete, dumbbell and bench position, size, shape, color and detail. Preserve framing native 1536x1024, dumbbell top around y40, head y193, shoe bottoms y962. Preserve overhead palms-forward pose, purple deltoids, lilac triceps and upper chest. No other changes, no text, no shadows or glow outside subject."
+      },
+      {
+        "key": "arnoldLargeStartPrompt2",
+        "prompt": "Use case: identity-preserve. Create the START pose of the seated Arnold press by editing FIRST image, the overhead exercise master. SECOND canonical athlete identity. THIRD image is POSE ONLY reference (do not copy its smaller scale). Keep FIRST image native1536x1024 framing, head position at y193, torso, pelvis, legs, shoes, seat and every bench part exactly unchanged. Move ONLY arms and dumbbells: bend elbows down and tucked slightly forward of torso, dumbbells at upper chest, palms facing inward toward athlete, knuckles/back of hands visible to camera as in third reference. Neutral wrists with fingers wrapped around each handle. Keep FIRST image body scale, shoulder width, dumbbell size, camera, black background. Deltoids purple, triceps and upper chest lilac. No extra glow or objects or text. Do not recenter or resize the athlete to fill space vacated by overhead arms."
+      }
+    ],
+    "midpoint": {
+      "prompt": "Edit FIRST image ONLY to show Arnold press midpoint. SECOND canonical identity only. Change only arms and dumbbells. Bend elbows to90degrees, upper arms spread out at shoulder height and forearms vertical, dumbbells beside temples at y240, palms turning outward. Absolutely preserve FIRST head top at y193, head size/face, torso/chest, seated pelvis, knees, shoes bottomy962, bench seat y650 and bench feet, all pixels outside arms as closely as possible. Same1536x1024 canvas and athlete scale. Do not shrink, move, reframe or redraw the rest of the body or bench. Keep equipment/hand proportions. Purple deltoids, lilac triceps/upperchest, whitegrey rest, black background. No glow/text.",
+      "output": "large-mid.png",
+      "generation": "exec-daaff7c3-d844-4f40-84e8-9ba2f852e5b1"
+    },
+    "startWeights": {
+      "prompt": "Precise exercise equipment consistency edit. FIRST image is target seated Arnold press START. SECOND image overhead exercise master fixes identity, scale and SAME dumbbell geometry; THIRD canonical athlete. In FIRST only correct the pair of dumbbells so each hex head matches the physical size in SECOND: roughly64pixels tall rather than current56, complete dumbbell roughly145pixels long rather than125. Keep palm-inward start grip and tucked elbows, hands continuously closed around handles, same wrist positions and neutral alignment. Rotate/foreshorten realistically but preserve head size. Do not change body, pose, head, legs, bench, camera, colors, blackbackground or canvas1536x1024. Do not move athlete. No other edits. Keep both weights separated.",
+      "output": "large-start-weights.png",
+      "generation": "exec-f092020f-d6eb-423b-87b4-60b430b83fac"
+    }
+  },
+  "fixedAreaProof": {
+    "authorization": "Owner approved deterministic master copy for stationary equipment/planted contacts.",
+    "masterSha256": "468eaa5f5e7d8fa7265e58cc0a6e12d3e533d858c03f46bbaf7bc73379b08e63",
+    "rectanglesXYXY": [
+      [
+        650,
+        830,
+        749,
+        910
+      ],
+      [
+        910,
+        825,
+        997,
+        891
+      ]
+    ],
+    "scope": "Unobstructed front and rear bench foot areas only; excludes anatomy and moving weights.",
+    "frames": [
+      {
+        "frame": 1,
+        "sourceSha256": "9b46f9c31a22e2cc9aab036c86104c2ff51a2398c172af38ad85cffb07b52bed",
+        "sha256": "93b4ac2e96b18fb54872be5a160d17a36ea6a058a98cdafa06577c0804de5d78",
+        "changedPixels": 9396,
+        "changedOutsideRectangles": 0
+      },
+      {
+        "frame": 2,
+        "sourceSha256": "85b415ba53a9cd094879a96d39d7f0c8a54aea83a16794148db71caa39474aa1",
+        "sha256": "4f25edae5aab2d78771d454106aa1338d707e48730a5c1ad3d99297adc85146d",
+        "changedPixels": 8944,
+        "changedOutsideRectangles": 0
+      },
+      {
+        "frame": 3,
+        "sourceSha256": "468eaa5f5e7d8fa7265e58cc0a6e12d3e533d858c03f46bbaf7bc73379b08e63",
+        "sha256": "886ee17a4477a746ac808227bc1b74eb655aaebeeb851e23323b54e516c0c517",
+        "changedPixels": 0,
+        "changedOutsideRectangles": 0
+      },
+      {
+        "frame": 4,
+        "sourceSha256": "468eaa5f5e7d8fa7265e58cc0a6e12d3e533d858c03f46bbaf7bc73379b08e63",
+        "sha256": "886ee17a4477a746ac808227bc1b74eb655aaebeeb851e23323b54e516c0c517",
+        "changedPixels": 0,
+        "changedOutsideRectangles": 0
+      },
+      {
+        "frame": 5,
+        "sourceSha256": "85b415ba53a9cd094879a96d39d7f0c8a54aea83a16794148db71caa39474aa1",
+        "sha256": "4f25edae5aab2d78771d454106aa1338d707e48730a5c1ad3d99297adc85146d",
+        "changedPixels": 8944,
+        "changedOutsideRectangles": 0
+      },
+      {
+        "frame": 6,
+        "sourceSha256": "9b46f9c31a22e2cc9aab036c86104c2ff51a2398c172af38ad85cffb07b52bed",
+        "sha256": "93b4ac2e96b18fb54872be5a160d17a36ea6a058a98cdafa06577c0804de5d78",
+        "changedPixels": 9396,
+        "changedOutsideRectangles": 0
+      }
+    ]
+  },
+  "originalPrompts": {
+    "tool": "builtin-imagegen",
+    "prompts": [
+      "Scientific educational exercise illustration using exactly same canonical bald faceless white/light-grey anatomical athlete, smooth neutral featureless pelvis, white trainers, fine crisp muscle lines, black background, no text/glow. New master ARNOLD PRESS start: seated on simple dark upright backrest bench, feet flat comfortably apart. Dumbbells at upper chest height, elbows in front of ribs bent tightly, BOTH PALMS FACING ATHLETE'S FACE (backs of fingers face camera). Identical modest dark hex dumbbells separated slightly before chest. Camera front three-quarter, slightly to athlete's left, full body and full bench with plentiful overhead space for extended arms in later frames. Landscape 1536x1024. Deltoids strongest purple, triceps and upper chest lilac. Anatomically correct neutral seated posture. Preserve canonical proportions. Bench back upright 85degrees, single fixed base. This is bottom internally facing grip phase of Arnold press.",
+      "Image1 canonical identity; image2 Arnold press start edit target. Keep EXACT pose, palm-facing-self grip, seated anatomy, bench and colors. Only reframe: reduce athlete and bench to 70 percent present scale and position toward bottom of same landscape black canvas, shoes at 90percent canvas height, head at 35percent canvas height. Leave generous 35percent black overhead area so later full extended arms and dumbbells fit with margins. No other pose change, no text, pure black background.",
+      "Image1 canonical athlete, image2 fixed Arnold press master edit target. Change ONLY both arms and attached dumbbells to halfway rotating Arnold press phase: open elbows outward until upper arms slope down 30degrees from shoulders, elbows bent about90degrees, forearms vertical, dumbbells alongside temples. Palms rotated halfway from facing athlete toward facing forward, so palms face partly inward at45degrees. Both arms move together. Keep EXACT seated torso/head/legs/feet/bench pixels, same scale and camera, same dumbbells and muscle colors. Do not lift torso or zoom. Pure black no glow/text.",
+      "Image1 canonical, image2 locked exercise master, image3 intermediate edit target. Keep intermediate pose exactly and all bench/body anchors. Restore ONLY subtle lilac upper-chest highlighting lost from master to image3. Also ensure both palms intermediate diagonally face inward/forward at45degrees with neutral straight wrists; preserve identical dumbbell size. Keep same scale, proportions, black backdrop, no halos or text.",
+      "Image1 canonical identity, image2 fixed Arnold master, image3 nearest intermediate. Produce overhead Arnold press endpoint: straighten BOTH elbows fully, upper arms nearly vertical beside ears, dumbbells overhead separated shoulder width, BOTH PALMS FACING FORWARD away from athlete at lockout; show finger palms toward camera. Keep wrists straight. Preserve exact seated torso/head/feet/bench positions and scale of image3; only arms/weights move. Same dumbbells, purple deltoids, lilac triceps and upper chest. Pure black no text no glow. Head still at same pixel position. Do not enlarge upper arms.",
+      "Image1 canonical; image2 fixed exercise master; image3 overhead pose edit target. Remove ONLY ALL grey-white halo/background glow from image3, replacing all background with pure solid black. Preserve every anatomical contour, fully extended arms and forward-facing palms, dumbbells, bench, feet, positions, scale and purple/lilac muscle colors exactly. No text."
+    ]
+  },
+  "conversion": "Native lossless WebP; every decoded RGB byte verified identical to refined reviewed PNG.",
+  "reuse": {
+    "4": 3,
+    "5": 2,
+    "6": 1
+  },
+  "measurementMethod": "Native min-RGB30 linearly interpolated boundaries, unrounded.",
+  "scanlines": {
+    "frontBenchFoot": [
+      650,
+      740,
+      885
+    ],
+    "rearBenchFoot": [
+      915,
+      995,
+      873
+    ]
+  },
+  "excludedVariants": [
+    "rejected-large-start.png: insufficient overhead headroom",
+    "rejected-small-mid.png: wrong framing",
+    "large-start.png: undersized dumbbells",
+    "large-top-halo.png: glow removed to derive selected overhead master"
+  ],
+  "selectedNativeSources": {
+    "1/6": "large-start-weights.png (exec-f092020f-d6eb-423b-87b4-60b430b83fac), then documented bench correction",
+    "2/5": "large-mid.png (exec-daaff7c3-d844-4f40-84e8-9ba2f852e5b1), then documented bench correction",
+    "3/4": "large-top-black.png (exec-4c50e961-dba7-4c72-b99e-3c0db5b5cb6e)"
+  }
+}
