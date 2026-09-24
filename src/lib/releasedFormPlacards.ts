@@ -15,6 +15,7 @@ const placard = (
 });
 
 export const RELEASED_FORM_PLACARDS = {
+ "bench-dips": placard("bench-dips", ["Triceps"], ["Chest", "Front delts"], [[0,"Start","Grip the edge; keep your hips forward."],[0.5,"Lower","Bend your elbows, tracking them back."],[1,"Bottom","Lower until elbows reach about ninety degrees."],[1,"Control","Keep shoulders down and hands firmly planted."],[0.5,"Press","Press through your palms to rise."],[0,"Return","Straighten your arms without shrugging."]]),
   "pec-deck": placard(
     "pec-deck",
     ["Pectorals"],

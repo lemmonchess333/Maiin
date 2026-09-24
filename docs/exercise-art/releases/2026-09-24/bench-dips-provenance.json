@@ -1,0 +1,105 @@
+{
+  "modelPath": "Built-in image_gen unchanged. Selected corrected top is master; bottom and midpoint derived from it. Earlier failed camera/contact studies excluded. No deterministic pixel corrections.",
+  "canonicalReference": {
+    "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+  },
+  "sourceFrames": [
+    {
+      "frame": 1,
+      "sha256": "ac89448a2b5318d1299792b1f2f3326b40bee20b8ae83c4c72c106b4f75c4d4a"
+    },
+    {
+      "frame": 2,
+      "sha256": "ce20489f8bfb42baf91e4c0b39e02da5e27d0827e6df21f9386f7fe513629995"
+    },
+    {
+      "frame": 3,
+      "sha256": "3997d6ede9662832d81c6668e63a1dddac64491c0f2ccf750fb9eb01534cd545"
+    },
+    {
+      "frame": 4,
+      "sha256": "3997d6ede9662832d81c6668e63a1dddac64491c0f2ccf750fb9eb01534cd545"
+    },
+    {
+      "frame": 5,
+      "sha256": "ce20489f8bfb42baf91e4c0b39e02da5e27d0827e6df21f9386f7fe513629995"
+    },
+    {
+      "frame": 6,
+      "sha256": "ac89448a2b5318d1299792b1f2f3326b40bee20b8ae83c4c72c106b4f75c4d4a"
+    }
+  ],
+  "generation": [
+    {
+      "file": "front-master-prompt.json",
+      "prompt": "Scientific educational bench-dip TOP exercise master, native1536x1024landscape. Reference is canonical athlete identity only. Use a NEW FRONT three-quarter camera, about25degrees off straight frontal, slightly elevated, so BOTH shoulders, complete upperarms/forearms and BOTH hands are visible on either side of torso. Do not use side profile. Bald faceless white/lightgrey anatomical athlete with smooth featureless pelvis, white trainers. A simple low flat padded bench runs horizontally behind athlete. Both palms planted on FRONT lip of bench beside hips, fingers visibly curl over front edge, supporting bodyweight with STRAIGHT arms and shoulders down. Hips suspended just forward of edge, not resting on seat. Legs extended forward toward camera with heels planted on floor, toes up. Both feet and entirebench visible, fullbody fits margins. Strongpurple triceps, lightlilac chest and anterior deltoids, restneutral. Pureblackbackground no glow. Real anatomy and plausible benchdip support; clear unoccluded continuous arm-to-hand-to-bench connections on BOTH sides. No text, arrows, labels, decoration.",
+      "generation": "exec-6615b56c-e186-4a71-9e2f-570be85d92b2",
+      "output": "front-master.png",
+      "review": "Both complete arms and grips visible with new front three-quarter camera; top candidate pending adjacent consistency/mobile review."
+    },
+    {
+      "file": "angled-bottom-prompt.json",
+      "tool": "built-in image_gen",
+      "generationId": "fbac271f-de2a-4d8a-a23d-eb2e672bec64",
+      "prompt": "Create one native 1536x1024 scientific-educational exercise illustration, no text. Reference 1 is the canonical bald faceless white/lightgrey anatomical athlete: preserve identity, contour treatment, white trainers and smooth featureless pelvis. Reference 2 is a previous bench-dip scene for equipment and muscle colors ONLY; change camera and pose. Show BOTTOM of a bodyweight BENCH DIP on one simple low flat black bench, legs extended forward with heels on floor, hips suspended just in front of the bench edge. Both palms firmly on front bench edge beside hips, fingers curled over edge. Both elbows bend about ninety degrees and point back toward the bench, upper arms roughly horizontal pointing behind torso, forearms roughly vertical to fixed hands, shoulders down. Show actual full-length upper arms, no shrinking them into shoulder stubs. Camera from front-side three-quarter, approximately 60 degrees away from front (30 degrees from pure side), at chest height: choose orientation so near elbow bend is clearly visible in profile and far hand and elbow remain visibly separated from torso. Athlete facing left, feet toward image left, bench extending back/right. Entire head, both hands, both feet, complete bench supports visible with black margins. Primary triceps vivid purple, chest and FRONT delts lighter lilac; rest neutral white-grey. Pure black background, crisp consistent fine anatomical lines, no glow, no labels, no inset, no collage. Mechanically plausible full-length limbs, planted heels, continuous palm contact, no seated hips.",
+      "status": "held: near elbow clearer, far upper arm hidden; insufficient top margin for straight-arm pose"
+    },
+    {
+      "file": "reframe-prompt.json",
+      "prompt": "Edit FIRST bench-dip bottom illustration, SECOND canonical athlete identity. Reframe scene at slightly smaller scale on SAME1536x1024 black canvas: reserve 220px clear black ABOVE head so future straight-arm top can rise without cropping, all feet/bench still fit. Also rotate camera about15degrees toward frontal so FAR upper arm and elbow become visible beside torso while retaining clear near elbow bend. Do not deform or shorten limbs. Bottom bench dip: hips hover just in front of seat, both hands firmly wrapped bench edge beside hips, upper arms travel backward, elbows bent roughly90degrees, forearms vertical; extended legs and heels planted. Preserve athlete identity and neutral smooth featureless pelvis, white trainers, strongpurple triceps, lightlilac chest/frontdelts. One continuous plausible body, bilateral arms same physical length. Pureblack background, no glow/text/diagrams. Full length near upperarm to elbow clearly shown; far hand and bent elbow both visibly separated from torso. Keep lowflatbench style, camera at chestheight. This is a revised exercise master with comfortable headroom.",
+      "generation": "b22c6045-5856-48b3-a2f8-257d4f487d27",
+      "tool": "built-in image_gen",
+      "status": "Candidate: near elbow bend and both grips clear; far upper arm occluded by torso. Adequate headroom for top remains to be tested."
+    },
+    {
+      "file": "angled-top-prompt.json",
+      "prompt": "FIRST is exercise master at bottom of bench dip; SECOND canonical athlete identity. Produce TOP/STRAIGHT-ARM pose by editing FIRST only moving anatomy: keep exact camera,1536x1024canvas, scene scale, bench geometry and positions, both hands firmly fixed on their same bench-edge locations, and BOTH heels fixed. Push torso/head/hips upward by straightening both elbows completely, upperarms now along torso, shoulders down, hips still suspended slightly forward of bench edge never seated. Legs stay straight and pivot at planted heels naturally. Do not slide feet or hands. Maintain exact body proportions, head size, musclecolors (purpletriceps, lilacchest/frontdelts), featureless neutral pelvis, fine outlines, white trainers. Top head must fit within existing upper black margin; do not zoom/reframe. Both hand grips stay visible, elbows clearly straight and wrists supportive. Blackbackground no glow/text. Bench dip top is supported by hands and heels, not seated.",
+      "generation": "5e377229-01f0-4010-b144-87c757c6eb17",
+      "tool": "built-in image_gen",
+      "status": "held: far hand disappears behind thigh and near hand shifts; correct before sequence"
+    },
+    {
+      "file": "contact-prompt.json",
+      "prompt": "Edit FIRST top bench-dip candidate. SECOND is the exact exercise master bottom pose and THIRD canonical identity. Correct only arms/hand contact continuity, preserving torso/legs/top position/bench/camera/colors/canvas. In master the far hand visibly grips bench lip centered x701 y563; near hand grips at x992 y590. Restore BOTH grips at exactly those positions with clearly readable fingers over edge. The far hand must be visible between bench lip and outer far thigh silhouette, attached to its straight forearm; do not omit it or draw disconnected fingers. Near hand currently slid left: move it back to master position and reconnect anatomically to straight arm. Both elbows remain fully extended at this TOP position. Maintain full-length arms and shoulders down, same anatomy, same1536x1024frame and fixed bench/heels. Do not change camera, zoom, lighting, head proportions, no text.",
+      "generation": "55d31e8a-6537-496d-8f60-bcd4e37d2680",
+      "tool": "built-in image_gen",
+      "status": "Both hands now present, but grips do not match bottom master. Held, not approved. No deterministic anatomy edits."
+    },
+    {
+      "file": "bottom-from-new-top-prompt.json",
+      "prompt": "FIRST is NEW TOP exercise master for bench dip. SECOND canonical athlete. Make BOTTOM pose by lowering head/torso/hips roughly110pixels, keeping exact same camera and body dimensions. Bend elbows backward toward bench about90degrees; near upper arm roughly horizontal pointing backward and near forearm nearvertical. Crucially LOCK both palm/finger contacts exactly where FIRST has them, near hand x956 y586 and far hand x675 y531: do NOT move hands along bench. As torso/legs lower, reveal far hand naturally at that original fixed bench point, connected by forearm to bent far elbow behind torso. Hips remain suspended in front of edge, legs straight rotate toward fixed heels. Do NOT move or redraw bench, its supports, shoes/heel contacts, camera, scale or background. Preserve canonical athlete fine anatomy, smooth neutral pelvis, white trainers, purpletriceps lightlilacchest/frontdelts. Same1536x1024native image, no text or glow. Bottom must show clear near90degree elbow bend with continuous grip and plausible constant arm length.",
+      "generation": "c057973d-641c-4a0d-a390-e113987b5d87",
+      "tool": "built-in image_gen",
+      "status": "candidate: both grips retained; bent elbow visible. Needs native measurement, sequence and mobile review."
+    },
+    {
+      "file": "mid-from-new-top-prompt.json",
+      "prompt": "FIRST top master, SECOND canonicalidentity, THIRD bottom adjacent pose. Create MID-DESCENT benchdip exactly halfway between first/third head/torso height, headtop about145px instead of64top or230bottom. Slight partial elbow bend halfway to90degrees, upperarms tracking back. LOCK exact same two bench-edge hand contacts and bothheels; nearpalm x955y585 and farpalm x675y531. Keep palms/fingers exactly in place, reconnect moving forearms anatomically. Both grips readable, continuous hands-arms-body. Same bench, same camera/scale/bodydimensions/canvas1536x1024, straightlegs pivot at fixedheels, hips suspended in frontofedge. Preserve purpletriceps/lilacchest/frontdelts, neutral featurelesspelvis,white trainers,blackbackground,no glow/text. Clearly distinct intermediate height, no shrugging, no zoom.",
+      "generation": "f8778d6f-b441-4009-b62e-89124a367259",
+      "tool": "built-in image_gen",
+      "status": "candidate: intermediate pose closer to bottom, both grips visible; pending geometry and mobile review"
+    }
+  ],
+  "conversion": "Lossless WebP: all decoded RGB bytes match selected native PNG sources.",
+  "reuse": {
+    "4": 3,
+    "5": 2,
+    "6": 1
+  },
+  "measurementMethod": "Unrounded interpolated min-RGB30 boundary measurements at stationary near bench foot and upright. Heel silhouettes overlap and were not independently threshold measured; review them natively. Moving joints reviewed qualitatively.",
+  "scanlines": {
+    "nearBenchFoot": [
+      1080,
+      1210,
+      878,
+      30
+    ],
+    "nearBenchUpright": [
+      1170,
+      1290,
+      750,
+      30
+    ]
+  }
+}
