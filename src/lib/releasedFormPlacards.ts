@@ -16,6 +16,23 @@ const placard = (
 
 export const RELEASED_FORM_PLACARDS = {
  "barbell-upright-row": placard("barbell-upright-row", ["Traps"], ["Side delts", "Biceps"], [[0,"Start","Stand tall; keep an overhand grip."],[0.5,"Lead with elbows","Lead with elbows; keep the bar close."],[1,"Chest height","Stop at chest height, elbows below shoulders."],[1,"Controlled top","Hold briefly without lifting elbows higher."],[0.5,"Lower","Lower the bar close to your body."],[0,"Return","Return to thighs without bouncing."]]),
+  "chest-press-machine": placard(
+    "chest-press-machine",
+    ["Pectorals"],
+    ["Triceps", "Front deltoids"],
+    [
+      [0, "Set and brace", "Plant feet; keep your back against pad."],
+      [0.5, "Press forward", "Press forward with wrists straight and stacked."],
+      [1, "Finish the press", "Extend arms while keeping your back supported."],
+      [1, "Hold control", "Hold briefly without lifting from the pad."],
+      [0.5, "Return slowly", "Bend elbows slowly, keeping both grips secure."],
+      [
+        0,
+        "Reset under tension",
+        "Return under control; avoid dropping the stack.",
+      ],
+    ]
+  ),
   "machine-chest-fly": placard(
     "machine-chest-fly",
     ["Pectorals"],
