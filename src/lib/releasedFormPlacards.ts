@@ -16,6 +16,23 @@ const placard = (
 
 export const RELEASED_FORM_PLACARDS = {
  "arnold-press": placard("arnold-press", ["Deltoids"], ["Triceps", "Upper chest"], [[0,"Start tucked","Start seated with palms facing you."],[0.5,"Rotate and press","Press upward while rotating palms outward."],[1,"Extend overhead","Extend overhead with palms facing forward."],[1,"Hold","Keep the dumbbells separate above shoulders."],[0.5,"Lower smoothly","Lower while reversing the rotation."],[0,"Return tucked","Return palms inward at chest height."]]),
+  "chest-press-machine": placard(
+    "chest-press-machine",
+    ["Pectorals"],
+    ["Triceps", "Front deltoids"],
+    [
+      [0, "Set and brace", "Plant feet; keep your back against pad."],
+      [0.5, "Press forward", "Press forward with wrists straight and stacked."],
+      [1, "Finish the press", "Extend arms while keeping your back supported."],
+      [1, "Hold control", "Hold briefly without lifting from the pad."],
+      [0.5, "Return slowly", "Bend elbows slowly, keeping both grips secure."],
+      [
+        0,
+        "Reset under tension",
+        "Return under control; avoid dropping the stack.",
+      ],
+    ]
+  ),
   "machine-chest-fly": placard(
     "machine-chest-fly",
     ["Pectorals"],

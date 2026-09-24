@@ -1,0 +1,66 @@
+{
+  "modelPath": "Built-in image_gen; unchanged model path. Refined midpoint generated with canonical, start master and endpoint references; no deterministic pixel correction needed.",
+  "canonicalReference": {
+    "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+  },
+  "sourceFrames": [
+    {
+      "frame": 1,
+      "sha256": "b145b3f32afbfe23d30bd3f257bb80d9e5744d08c0ccde209ef9f48a8922a692"
+    },
+    {
+      "frame": 2,
+      "sha256": "d66be55af5818b67afe911c7630bf3c495e62c08aba9267b6920ed3686cea44d"
+    },
+    {
+      "frame": 3,
+      "sha256": "d17c38d7193f8565aaecd21033298813a7f181c64c4fd510d577f3e4f4f1ddb8"
+    },
+    {
+      "frame": 4,
+      "sha256": "d17c38d7193f8565aaecd21033298813a7f181c64c4fd510d577f3e4f4f1ddb8"
+    },
+    {
+      "frame": 5,
+      "sha256": "d66be55af5818b67afe911c7630bf3c495e62c08aba9267b6920ed3686cea44d"
+    },
+    {
+      "frame": 6,
+      "sha256": "b145b3f32afbfe23d30bd3f257bb80d9e5744d08c0ccde209ef9f48a8922a692"
+    }
+  ],
+  "generation": {
+    "prompt": "Edit FIRST attached image, the chest-press-machine START master. SECOND image is its fully pressed endpoint; THIRD is canonical identity. Produce one genuinely HALFWAY press pose, native1536x1024, identical fixed camera and unchanged machine body, overhead pivot centres, athlete head/torso/pelvis/legs/feet, seat and back pad. Move only both arms/hands and the two rigid rotating lever assemblies about their EXISTING overhead pivots. Near hand grip should travel about HALF the image distance from start grip near x690,y355 to endpoint grip near x770,y310: target around x730,y333. Far grip likewise halfway between endpoints, not fully extended. Both elbows visibly still bent, natural unchanged limb lengths, wrists straight, closed grips stay continuously wrapped around the SAME handles. Entire bent metal lever assemblies rotate as rigid shapes, no telescoping, stretching or sliding overhead pivots. Preserve anatomical smooth bald faceless white-grey figure, featureless pelvic centre, white shoes, purple pectorals/pale lilac secondary muscles. Full canvas, solid blackbackground, no text/no collage. Preserve stationary pixels wherever possible. This is a midpoint, NOT a near-finished press.",
+    "output": "exec-1e9bd864-d30e-4a1f-9f99-a4d599194717.png",
+    "purpose": "Improve midpoint spacing while preserving fixed scene; requires renewed mechanics and mobile review."
+  },
+  "originalPrompts": {
+    "master": "Scientific anatomy exercise illustration: seated CHEST PRESS MACHINE starting position. Reference canonical athlete: bald faceless white/lightgrey anatomical adult, fine dark contours, white trainers, smooth neutral featureless pelvis, no clothes. Strong purplepectorals; lighterlilac anterior deltoids and triceps; othermusclesneutral. Oneathlete seated upright backflat against tallverticalbackpad, hips onseparate shortflatseat, bothfeet planted. Camera fixed FRONT THREEQUARTER from athleteleft so both closedhandgrips elbows torso and fullmachine visible. Athlete faces towardimageRIGHT. Handles levelwith MIDCHEST, elbows bent about90degrees, shouldersneutral elbowsnotbehindtorso. Hands securely grip TWO short horizontal blackgrips palmsdown. Machine grey selectorized seatedpress: rigidbase supportingseatandbackpad; fixedoverhead crossaxle behindhead, TWO rigidleverarms eachrunning from visible fixedpivot above/behindshoulder downforward to its ownhandle atchestheight. Bothleverarms constantlength and parallel in3D; handlestravel forward inarc withleverrotation. Narrow enclosedweightstacktowerbehindseat, internalmechanismhidden byopaqueshroud, no inventedexposedcables. Modestequipment quietgrey no logos/labels. Neitherlever blocksface orgrip.1536x1024 landscape blackbackground entirebody feet machine inside generousmargins, crispclean anatomy canonicalstyle, nohalos nofloorgradient no captions. Startinghandles CLOSEtochest ratherthanoutstretched. Backpad remainscontinuousfrompelvis toshoulderblades. Normalproportions and comfortablekneeangle.",
+    "endpoint": "Edit image1 exact seatedchestpress MASTER into full forwardextension. Image2 canonicalidentity. BOTH elbows extend untilnearlystraight whilebackremainspinnedtobackpad, shoulders notshrugged, headhipslegsfeet EXACTLY unchanged. Handsstayclosed on SAME blackhandles: arms press FORWARD in directionathletefaces towardimageright, notoutwardsideways. Bothrigidgrey machineleverarms rotateforward together about EXISTING overheadpivotcentres; preserveleverlengththicknessbendshandlelength and spacingin3D. Pivotcircles, crossaxle, rearstacktower, seatbackpadbase fixed. Leverrotation raiseshandles onlyslightlytochest/shoulderlevel; notanoverheadpress. Normalshouldertoelbowtohandsegmentlengths. Perspectivecanforeshortenfararm butshowbothgrips. No newhinge, no telescopingparts, no equipmentreshape. Fullbodyfullmachine same1536x1024blackcanvas, samepurplepectorals lilacfrontdelts/triceps neutralotheranatomy. No text orglow. Extend both arms smoothly without torsolean, hipsliftoff or footshift.",
+    "endpointCorrection": "Correct image1 fullpress endpoint using image2 master as exactfixedgeometry authority and image3 canonical. Move overheadpivot centres back to masterpositions near(478,55), far(810,70). Crossaxle and fixedtower geometry must exactly match master. Preserve current fullyextendedbodyarmsclosedgrips and handlepositions. Rigidleverarms attachthese fixedpivots, sameoriginalconstantlengthandbend, with correct3D projection. Do not shift anyseatbackpadheadtorsofeet. Correct musclecolour: ONLY pectoralsstrongpurple, anterior deltoids and posteriorupperarm TRICEPS lightlilac; anteriorupperarm BICEPS and allforearms neutralwhitegrey, no broadpurpleelbow. Keepfineanatomicalcontours.1536x1024 blackbackground sameframing no text.",
+    "endpointRestart": "Edit ONLY athlete's arms and the TWO MOVING LEVERS of IMAGE1 starting master to press forward to full armextension. IMAGE2 shows desired armextension but its altered FIXED FRAME is rejected: DO NOT copy image2 fixedframe. IMAGE3 canonicalidentity. Freeze all pixels in image1 overheadcrossaxle, circularpivotcentres, verticalpost, rearweightshroud, paddedseat/backpad, headtorsohipslegsandfeet. Pivot centres must stayexactly at SAME places as IMAGE1: DO NOT reshape or extend upperpost. Levers rotateabout thoseunchangedpivots, armsstraightforwardatmidchestheight, handsattached. Forearms/bicepswhitegrey; chestpurple; triceps/frontdeltslilaconly. Cameraandcanvas1536x1024black unchanged. Fullpress sameasimage2 but MACHINEFIXEDFRAME is IMAGE1. Do not improveorredesignanyequipment. Twohands twoblackgrips.",
+    "midpoint": "Edit image1 chestpress START MASTER to midway forwardpress. Image2 accepted full extension is endpointreference, image3canonicalidentity. Halfway between firsttwo poses ONLY in elbows/shoulders/movinglevers. Nearhand centre about(735,335) farhand(950,335); both elbows stillpartlybent, notlocked. Keep SAMEoriginaloverheadcrossaxle and pivotcentres ofimage1 completelyfixed, no equipmentredesign. Levers rigid constantlengthandbend rotate half asfar asimage2. Handlesattachedclosedgrips alltimes. Torsoheadhipskneesfeetbackpadseatbaseandverticaltower unchanged. Preserveanatomylength/scale. Forearms/bicepsneutralwhitegrey; strongestpurplepecs; lighterlilacfrontdelts/triceps. Same1536x1024blackcanvas no text. Intermediatepress shouldclearly differfrombentstart andstraightfinish. No newhinges, no movedpivots, no flareelbows.",
+    "midpointCorrection": "Image1 is starting seatedchestpress MASTER; image2canonical. Make a SMALL initialpress only: bothhandlesmove forward JUST ONE THIRD of the fullmovement, about40pixelsright and10pixelsup oncanvas. Elbowsremainobviouslybent, about110degreesinsideangle. Nearhand from(687,356) to(727,346), farhandfrom(933,351) to(951,341). Machine moving arms swing onlya fewdegrees, theirendsfollowhandles. FREEZE overheadcrossbar/pivotcentres exactly; no lengthchanges inleverarms, noheadtorsohipslegsfeetmoves. Do not straightenthearms; do not usefullpressfinish. Bothhandsclosedonsamehorizontalgrips atmidchest. Sameanatomicalmusclecolors,blackbackground1536x1024 fullbodyfullmachine. Subtleprogressfromimage1, not a bigpress.",
+    "midpointAnchorCorrection": "IMAGE1 MASTER IS EDIT TARGET. IMAGE2 desired intermediate athlete arm pose only. IMAGE3canonical. Transfer only the slightlypartlyextended arm pose fromimage2 toimage1. Retain IMAGE1 overheadcrossbar, circularpivots and verticalpost EXACTLY as drawn. Image2 shiftedpivots are rejected; never transfer itsmachinefixedparts. Leversrotatearound IMAGE1 originalpivots and connect tohands naturally. Hands stay on sameblackhandles. Keep SAMEleverlengthbend3D spacing. Fixedbackpadtorsoheadseatfeetlegs andframe. Purplepectoralsstrongest, delts/tricepslighterlilac, biceps/forearmsneutral. Arms onlypartwaypress, elbowsobviouslybent, notfullstraight. Fullnative1536x1024black nootherchanges no text."
+  },
+  "conversion": "Native lossless WebP; every decoded RGB byte verified identical to refined reviewed PNG.",
+  "reuse": {
+    "4": 3,
+    "5": 2,
+    "6": 1
+  },
+  "measurementMethod": "Unrounded native min-RGB80 linearly interpolated boundary crossings.",
+  "scanlines": {
+    "towerOuter": [
+      315,
+      425,
+      700
+    ],
+    "towerUpright": [
+      450,
+      550,
+      700
+    ]
+  }
+}
