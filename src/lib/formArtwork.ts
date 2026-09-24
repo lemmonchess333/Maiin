@@ -41,6 +41,19 @@ const ownerReleased = (
 // Preserve the seven previously shipped sets while replacements are reviewed.
 // These entries do not claim that the art passes the new consistency standard.
 export const FORM_ARTWORK: Record<string, FormArtwork> = {
+  "meadows-row": { version: "anatomy-v3-2026-09-24", status: "approved", width: 1536, height: 1024, frames: Array.from({length:6}, (_,i) => `form-frames/meadows-row/${i+1}.webp`), reference: "form-frames/meadows-row/1.webp", reviewFile: "docs/exercise-art/releases/2026-09-24/meadows-row.json" },
+  "db-flyes": {
+    version: "anatomy-v3-2026-09-24",
+    status: "approved",
+    width: 1536,
+    height: 1024,
+    frames: Array.from(
+      { length: 6 },
+      (_, i) => `form-frames/db-flyes/${i + 1}.webp`
+    ),
+    reference: "form-frames/db-flyes/1.webp",
+    reviewFile: "docs/exercise-art/releases/2026-09-24/db-flyes.json",
+  },
   "chest-press-machine": {
     version: "anatomy-v3-2026-09-24",
     status: "approved",
@@ -140,7 +153,6 @@ export const FORM_ARTWORK: Record<string, FormArtwork> = {
     reviewFile: "docs/exercise-art/releases/2026-09-24/cable-crossover.json",
   },
   "superman-hold": { version: "anatomy-v3-2026-09-24", status: "approved", width: 1536, height: 1024, frames: Array.from({length:6}, (_,i) => `form-frames/superman-hold/${i+1}.webp`), reference: "form-frames/superman-hold/1.webp", reviewFile: "docs/exercise-art/releases/2026-09-24/superman-hold.json" },
-  "meadows-row": { version: "anatomy-v3-2026-09-24", status: "approved", width: 1536, height: 1024, frames: Array.from({length:6}, (_,i) => `form-frames/meadows-row/${i+1}.webp`), reference: "form-frames/meadows-row/1.webp", reviewFile: "docs/exercise-art/releases/2026-09-24/meadows-row.json" },
   "weighted-push-ups": {
     version: "anatomy-v3-2026-09-22",
     status: "approved",
