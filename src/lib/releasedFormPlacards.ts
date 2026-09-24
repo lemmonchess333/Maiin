@@ -32,6 +32,19 @@ export const RELEASED_FORM_PLACARDS = {
       ],
     ]
   ),
+  "pec-deck": placard(
+    "pec-deck",
+    ["Pectorals"],
+    ["Front deltoids"],
+    [
+      [0, "Set up", "Keep back supported and feet planted."],
+      [0.5, "Squeeze", "Press forearms into pads; bring arms inward."],
+      [1, "Finish", "Squeeze chest without lifting shoulders."],
+      [1, "Pause", "Hold tension; keep forearms against pads."],
+      [0.5, "Return", "Open slowly with elbows bent."],
+      [0, "Reset", "Keep chest lifted and feet planted."],
+    ]
+  ),
   "cable-crossover": placard(
     "cable-crossover",
     ["Pectorals"],
