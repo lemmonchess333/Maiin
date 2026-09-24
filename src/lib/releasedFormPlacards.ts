@@ -16,6 +16,27 @@ const placard = (
 
 export const RELEASED_FORM_PLACARDS = {
  "bench-dips": placard("bench-dips", ["Triceps"], ["Chest", "Front delts"], [[0,"Start","Grip the edge; keep your hips forward."],[0.5,"Lower","Bend your elbows, tracking them back."],[1,"Bottom","Lower until elbows reach about ninety degrees."],[1,"Control","Keep shoulders down and hands firmly planted."],[0.5,"Press","Press through your palms to rise."],[0,"Return","Straighten your arms without shrugging."]]),
+  "machine-chest-fly": placard(
+    "machine-chest-fly",
+    ["Pectorals"],
+    ["Front deltoids"],
+    [
+      [0, "Set the soft bend", "Keep back supported; hold a soft bend."],
+      [
+        0.5,
+        "Sweep inward",
+        "Bring handles inward without bending elbows further.",
+      ],
+      [
+        1,
+        "Squeeze in front",
+        "Bring handles together without leaning forward.",
+      ],
+      [1, "Hold the squeeze", "Pause with your back against the pad."],
+      [0.5, "Open slowly", "Return slowly along the same wide arc."],
+      [0, "Control the stretch", "Stop before forcing your arms behind you."],
+    ]
+  ),
   "pec-deck": placard(
     "pec-deck",
     ["Pectorals"],
