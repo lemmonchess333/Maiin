@@ -16,6 +16,23 @@ const placard = (
 
 export const RELEASED_FORM_PLACARDS = {
  "decline-sit-up": placard("decline-sit-up", ["Abs"], ["Hip Flexors"], [[0,"Set","Secure your feet; cross your arms."],[0.5,"Curl","Curl your torso off the bench."],[1,"Sit up","Bring your chest toward your knees."],[1,"Control","Keep your feet secured; avoid bouncing."],[0.5,"Lower","Uncurl your torso slowly with control."],[0,"Reset","Lie back gently without slamming."]]),
+  "chest-press-machine": placard(
+    "chest-press-machine",
+    ["Pectorals"],
+    ["Triceps", "Front deltoids"],
+    [
+      [0, "Set and brace", "Plant feet; keep your back against pad."],
+      [0.5, "Press forward", "Press forward with wrists straight and stacked."],
+      [1, "Finish the press", "Extend arms while keeping your back supported."],
+      [1, "Hold control", "Hold briefly without lifting from the pad."],
+      [0.5, "Return slowly", "Bend elbows slowly, keeping both grips secure."],
+      [
+        0,
+        "Reset under tension",
+        "Return under control; avoid dropping the stack.",
+      ],
+    ]
+  ),
   "machine-chest-fly": placard(
     "machine-chest-fly",
     ["Pectorals"],
