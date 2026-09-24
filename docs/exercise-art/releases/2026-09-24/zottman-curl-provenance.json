@@ -1,0 +1,122 @@
+{
+  "modelPath": "Built-in image_gen unchanged; Six distinct native portrait phases. Frame5 rebuilt as early pronated descent; wrist-droop and elbow-drop attempts excluded. No deterministic pixel correction.",
+  "canonicalReference": {
+    "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+  },
+  "sourceFrames": [
+    {
+      "frame": 1,
+      "path": "docs/exercise-art/pilots/parallel-twenty/zottman-curl/1.png",
+      "sha256": "cd2a5187af599f6ce1db8cc475b0ec6243b3f0e415dbad85e48a9028f1aae7f0"
+    },
+    {
+      "frame": 2,
+      "path": "docs/exercise-art/pilots/parallel-twenty/zottman-curl/2.png",
+      "sha256": "5191003649fd210c9767ab8551531b615122aa70efc517e451f048a661ad306c"
+    },
+    {
+      "frame": 3,
+      "path": "docs/exercise-art/pilots/parallel-twenty/zottman-curl/3.png",
+      "sha256": "109346777572436060bc281af9272e5ec5eaf73ddf24ea002330cea2edf1bb81"
+    },
+    {
+      "frame": 4,
+      "path": "docs/exercise-art/pilots/parallel-twenty/zottman-curl/4.png",
+      "sha256": "1d320e39c6b8056251c149c59bca88ad55c4f4e301483580d1e5933aeedb372b"
+    },
+    {
+      "frame": 5,
+      "path": "generation exec-b73a561d-75b4-4eb8-b5aa-d43270f0f5c9.png",
+      "sha256": "4bafd15890758390c5c1a7095625ee2a5078febe1e3282d5e4711e207290c384"
+    },
+    {
+      "frame": 6,
+      "path": "docs/exercise-art/pilots/parallel-twenty/zottman-curl/6.png",
+      "sha256": "1e758956b04fff2b9e601c0f4b02a39777562debba44580f2db1c71ea685b368"
+    }
+  ],
+  "generation": {
+    "original": {
+      "tool": "built-in image_gen",
+      "canonical": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+      "prompts": [
+        {
+          "id": "zottman-curl",
+          "frame": 1,
+          "prompt": "Scientific educational ZOTTMAN CURL master single full-body 1024x1536. Canonical image1 exact identity bald faceless white anatomical athlete visible legs neutral featureless pelvis and white trainers. Front three-quarter slightly left, black opaque background no glow vignette. Stand tall feet hip-width, arms down beside torso elbows soft. Hold TWO IDENTICAL modest round black dumbbells with SUPINATED PALMS FORWARD (toward camera), hand undersides visible, dumbbell shafts roughly across body left-right. This is bottom palms-forward starting grip, NOT hammer neutral. Biceps strong purple, forearms light lilac unchanged throughout future rotation. Same head torso feet as canonical, all equipment in frame. No text panels arrows."
+        },
+        {
+          "id": "zottman-curl",
+          "frame": 3,
+          "prompt": "Precise object edit. Image1 canonical, image2 Zottman curl master. Produce TOP SUPINATED curl: both elbows flex bringing identical dumbbells close to respective shoulders. Palms UP and inward toward shoulders (supinated), fingers under shafts. Both elbow centres remain pinned beside ribs original height; no upper arm raise. Fixed exact body head torso pelvis feet camera black opaque background no glow. Same dumbbell shaft lengths round head sizes and grip intact, no scaling. Only forearms hands weights move. Preserve 1024x1536 anatomy colors no text."
+        },
+        {
+          "id": "zottman-curl",
+          "frame": 4,
+          "prompt": "Precise object edit. Image1 canonical, image2 master, image3 curled top edit target. Zottman TOP GRIP ROTATION: retain exact elbow flexion and elbow/hand centres of image3, rotate BOTH forearms about their long axis from supination to PRONATION. Palms now face AWAY from athlete, forward toward camera, finger pads visible wrapped over shaft, thumbs reverse direction; palms will face DOWN during lowering. Do not merely spin symmetric dumbbells while leaving hands unchanged: visibly turn HANDS and forearms 180 degrees relative to image3, with wrists straight and unchanged arm positions. Same dumbbells exact heads lengths weights and centres. Body head shoulders feet black background unchanged no glow. Native 1024x1536. No text."
+        },
+        {
+          "id": "zottman-curl",
+          "frame": 2,
+          "prompt": "Precise object edit. Image1 canonical, image2 fixed master, image3 supinated top. Zottman ASCENDING MIDPOINT: forearms horizontal at waist/navel height, elbow centres same master beside ribs. Both palms face UP, supporting dumbbell shafts from BELOW, finger pads curl upwards (supinated regular curl). Keep dumbbell dimensions and axis orientation, same two modest round dumbbells. Fixed upper arms torso head pelvis legs feet, camera canvas unchanged. Only forearms hands weights move. Opaque pure black background, absolutely no halo. 1024x1536 no text."
+        },
+        {
+          "id": "zottman-curl",
+          "frame": 5,
+          "prompt": "Precise object edit. Image1 canonical, image2 master, image3 PRONATED top endpoint. Produce descending midpoint of ZOTTMAN curl: lower both weights to navel height with forearms near horizontal and original elbows beside ribs. PALMS FACE DOWN: both hands on TOP of dumbbell shafts, knuckles uppermost, fingers curled downward around front of shafts. This must visibly differ from palms-up ascent. Keep same dumbbell geometry/round heads/lengths, wrists straight. Fixed head shoulders upper arms torso pelvis feet scene and colors. Opaque flat black backdrop no glow. 1024x1536 no text."
+        },
+        {
+          "id": "zottman-curl",
+          "frame": 5,
+          "prompt": "Precise COLOR ONLY correction. Image1 canonical; image2 exercise master colors; image3 EDIT TARGET descending Zottman pose. Keep ALL pose geometry grips equipment background pixels of image3. Restore purple PRIMARY BICEPS on both upper arms matching image2 exactly: visible biceps areas currently white must be strong purple. Make forearm secondary tint lighter lilac as image2. Do NOT change muscle hierarchy on lowering. Do not move joints hands bar feet or contours. Opaque black background no glow. Same1024x1536."
+        },
+        {
+          "id": "zottman-curl",
+          "frame": 6,
+          "prompt": "Precise object edit. Image1 canonical, image2 original master, image3 descending PRONATED grip. Zottman BOTTOM PRONATED: both elbows extend to original bottom height with dumbbells near thighs; retain palms BACKWARD toward thighs / knuckles facing camera, overhand reverse grip. Unlike master palms forward. Arms otherwise same original positions. Keep same dumbbells size and axis, thumbs wrap clearly. Preserve both BICEPS strongly purple and forearms pale lilac regardless of phase. Exact head torso legs feet scene fixed, pure black background NO halo glow.1024x1536. Frame shows end of palms-down lowering BEFORE rotating palms forward for next rep. No text."
+        },
+        {
+          "frame": 6,
+          "purpose": "independent QA targeted correction",
+          "prompt": "Use case: precise-object-edit. Image1 canonical athlete reference; image2 Zottman master; image3 EDIT TARGET final bottom PRONATED pose. COLOR-ONLY targeted correction: remove all purple/lilac tint from both wrists and hands, restoring neutral white/light grey hand anatomy identical palette to torso. End lilac forearm highlight above wrist crease; retain lilac forearm muscle bellies and vivid purple biceps. Preserve EVERY pose and object contour: palms face backward with knuckles front, dumbbells beside thighs, arms down, exact dumbbell dimensions/location, fingers and grip, face, anatomy, smooth neutral pelvis, visible legs, white trainers, camera/crop and black background. No pose rotation, no equipment changes, no text. One full native1024x1536 image.",
+          "accepted": true,
+          "output": "6.png"
+        }
+      ]
+    },
+    "corrections": [
+      {
+        "file": "lower-from-top-prompt.json",
+        "prompt": "Precise pose edit for Zottman curl LOWERING phase. Image1 canonical identity; image2 exercise master locks body, camera and dumbbells; image3 pronated top endpoint is the edit target. Lower BOTH dumbbells together only partway from shoulders to upper abdomen, by opening elbows. Both forearms still slope UP about 45 degrees, not down. Keep image3 pronated grip: palms down/away, knuckles above handles, thumbs closed around the same dumbbells. Keep BOTH WRISTS STRAIGHT in line with the forearms, with no drooping hand or backward bend. Elbows stay beside ribs, torso upright unchanged. Retain identical modest round black dumbbells, handles and plates; hands attached. Do not supinate on this descent. Purple biceps, light lilac brachioradialis/forearms; hands and wrists neutral white. Exact native1024x1536 portrait, fixed head/shoulders/torso/legs/planted white shoes, fine contour anatomical style and smooth featureless neutral pelvis. Pure black background without halo. No text, no arrows, one image.",
+        "reason": "Pilot frame5 shows drooping wrists; derive a higher partial lowering phase from the pronated top, retaining straight alignment."
+      },
+      {
+        "file": "early-descent-prompt.json",
+        "prompt": "Use case precise-object-edit, educational Zottman curl. Image1 canonical athlete; image2 exercise master locks identity and fixed body/camera; image3 is the EDIT TARGET top pronated pose. Make a VERY SMALL initial lowering movement from image3: open both elbows by only 15 degrees, keeping forearms nearly upright. Move both hands and their attached dumbbells only about70 pixels LOWER than image3. Dumbbells must remain ABOVE the nipple line near upper chest, NOT down at abdomen. Preserve the top pose's pronated grip and straight wrist alignment exactly while rotating the entire forearm-hand-weight assembly at each elbow. No motion at the wrist joint. Palms remain facing forward/down as in image3, not palms-up. Maintain closed fingers around the handles, same weights and head sizes. Exact same head, shoulders, upper arms beside ribs, torso, pelvis, legs, planted trainers,1024x1536 portrait. Fine white/lightgrey anatomy, purple biceps lightlilac forearms, hands neutralwhite and neutral smooth featureless pelvis. Pure black background without halo. No text. This is EARLY descent just below top, NOT the usual half-curl midpoint.",
+        "reason": "Change method to a very small initial descent from pronated top; previous upper-abdomen descent kept drooping wrists."
+      },
+      {
+        "file": "early-descent-elbow-prompt.json",
+        "prompt": "Precise anatomical correction. Image1 canonical, image2 Zottman exercise master locks upper-arm length and elbow centres, image3 target early-descent pose. Keep image3 pronated grips, straight wrists, hand/dumbbell positions around upper chest exactly. Correct ONLY upper-arm/elbow geometry: its elbows have dropped about30px below the master. Restore both elbow centres and lower elbow tips to their master height (approximately y510 to520), with normal original upper-arm lengths and elbows tucked beside ribs. Reconnect the forearms naturally with perspective shortening toward viewer, keeping hands/wrists/weights fixed; do NOT translate entire arms downward. Keep shoulders/head/torso/hips/legs/shoes/purple hierarchy/background/canvas unchanged. Native1024x1536. Fine white-grey anatomy, featureless neutral pelvis. No text or halo.",
+        "reason": "Early descent improves wrist continuity but elbows drop about30px; restore master upper-arm lengths before selection."
+      }
+    ]
+  },
+  "conversion": "Lossless WebP: all decoded RGB bytes match selected native PNG sources.",
+  "reuse": null,
+  "sequence": "Six distinct phases: supinated bottom/ascent/top, pronated top/early descent/bottom;6-to1 re-supinates.",
+  "measurementMethod": "Interpolated minimum RGB150 shoe scanline boundaries on native unmodified PNGs. Unrounded comparisons; no deterministic pixel edits. These fixed anchors do not measure moving anatomy or dumbbell rigidity.",
+  "scanlines": {
+    "farShoe": [
+      250,
+      500,
+      1390
+    ],
+    "nearShoe": [
+      500,
+      710,
+      1450
+    ]
+  }
+}

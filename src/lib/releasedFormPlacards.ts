@@ -15,6 +15,7 @@ const placard = (
 });
 
 export const RELEASED_FORM_PLACARDS = {
+ "zottman-curl": placard("zottman-curl", ["Biceps"], ["Brachioradialis","Forearms"], [[0,"Set","Stand tall with palms facing forward."],[0.5,"Curl","Curl upward with your palms facing up."],[1,"Top","Reach shoulder height without swinging your torso."],[1,"Rotate","Turn palms down; keep your wrists straight."],[0.9,"Lower","Begin lowering slowly with palms facing down."],[0,"Reset","Finish lowering, then turn palms forward again."]]),
  "arnold-press": placard("arnold-press", ["Deltoids"], ["Triceps", "Upper chest"], [[0,"Start tucked","Start seated with palms facing you."],[0.5,"Rotate and press","Press upward while rotating palms outward."],[1,"Extend overhead","Extend overhead with palms facing forward."],[1,"Hold","Keep the dumbbells separate above shoulders."],[0.5,"Lower smoothly","Lower while reversing the rotation."],[0,"Return tucked","Return palms inward at chest height."]]),
   "db-flyes": placard(
     "db-flyes",
