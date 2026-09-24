@@ -44,6 +44,19 @@ export const RELEASED_FORM_PLACARDS = {
       ],
     ]
   ),
+  "weighted-chest-dip": placard(
+    "weighted-chest-dip",
+    ["Pectorals"],
+    ["Triceps", "Front deltoids"],
+    [
+      [0, "Support", "Hold forward lean; keep the weight still."],
+      [0.5, "Lower", "Bend elbows while maintaining your forward lean."],
+      [1, "Controlled depth", "Stop when upper arms reach roughly parallel."],
+      [1, "Pause", "Pause briefly with shoulders controlled and stable."],
+      [0.5, "Press", "Press upward without swinging the hanging weight."],
+      [0, "Reset", "Finish arms extended, keeping your forward lean."],
+    ]
+  ),
   "barbell-floor-press": placard(
     "barbell-floor-press",
     ["Pectorals"],

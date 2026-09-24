@@ -1,0 +1,170 @@
+{
+  "exerciseId": "weighted-chest-dip",
+  "version": "anatomy-v3-2026-09-22",
+  "width": 1536,
+  "height": 1024,
+  "decision": "approved",
+  "reviewer": "Codex visual and implementation review",
+  "reviewedAt": "2026-09-22T10:52:34.048Z",
+  "reference": {
+    "path": "form-frames/weighted-chest-dip/1.webp",
+    "sha256": "36c7e31ed1727d6222035b72747299bf7c36ec84269ea57673384e24321167f8"
+  },
+  "cueSha256": "586e25de1128d8f729b0782c7d2feeba4e00949715dacb1556d523c53a254009",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Canonical anatomy-v3 bald faceless white/grey figure, smooth featureless pelvis and white shoes. Canonical reference used for all generations; exercise master also attached to both movement edits."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Native 1536x1024 canvas and fixed three-quarter camera. Complete athlete and station remain framed. Two base anchors and spans meet the one-pixel/one-percent thresholds with unrounded subpixel measurements."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "All three native poses inspected for continuous limbs, hands and wrists; both elbows bend through the descent. Projected upper-arm shapes vary with the pose; no calibrated 3D joint-angle claim."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Same parallel dip station and one modest hanging plate. Belt and taut chain support the plate throughout; no detached grip, added plate or visible floor collision."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Both hands remain continuously wrapped at the same rail locations. Station base stays planted; athlete and weight remain suspended, with shoes clear of the floor."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Body lowers with elbows bending until near upper arm is approximately horizontal, pauses, then retraces the midpoint and top. Forward lean remains visible; plate descends with pelvis without a visible swing."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Pectorals retain primary purple; triceps and anterior deltoids lighter lilac. Return poses reuse identical images, preserving the contribution hierarchy."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Exact weighted-chest-dip cues match support, lowering, controlled depth, pause, press and reset. Each cue is at most seven words and refers to the hanging-weight variation."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "Manually stepped the real ExerciseFormFrames through 1-2-3-4-5-6-1 in both themes. Intentional pause/return pairs 4=3, 5=2, 6=1."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "Real player with repository CSS/fonts at 390x844: all six beats and loop checked in actual light theme, with all three unique poses visually inspected. Captions readable; loaded native image and no horizontal overflow confirmed."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "Same real player at 390x844: all six beats and loop checked in dark theme, with all three unique poses visually inspected. No clipping, missing image or broken caption. Evidence in task browser tool results."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/weighted-chest-dip/1.webp",
+      "sha256": "36c7e31ed1727d6222035b72747299bf7c36ec84269ea57673384e24321167f8",
+      "anchors": {
+        "farBaseLeft": {
+          "x": 423.15,
+          "y": 880
+        },
+        "nearBaseLeft": {
+          "x": 779.6029411764706,
+          "y": 940
+        }
+      },
+      "invariantDimensions": {
+        "farBaseSpan": 121.00384615384621,
+        "nearBaseSpan": 88.51134453781515
+      }
+    },
+    {
+      "path": "form-frames/weighted-chest-dip/2.webp",
+      "sha256": "5893c83b95dac334b2a6b8763176a47a3b9acb8ec7a275ac3820ae369819031f",
+      "anchors": {
+        "farBaseLeft": {
+          "x": 423.22727272727275,
+          "y": 880
+        },
+        "nearBaseLeft": {
+          "x": 779.7954545454545,
+          "y": 940
+        }
+      },
+      "invariantDimensions": {
+        "farBaseSpan": 120.37272727272727,
+        "nearBaseSpan": 87.97377622377621
+      }
+    },
+    {
+      "path": "form-frames/weighted-chest-dip/3.webp",
+      "sha256": "ccaa32e90551f1f43e7615ce0a049343e7ead61c9c8602c98045603e77087ce2",
+      "anchors": {
+        "farBaseLeft": {
+          "x": 423,
+          "y": 880
+        },
+        "nearBaseLeft": {
+          "x": 779.6140350877193,
+          "y": 940
+        }
+      },
+      "invariantDimensions": {
+        "farBaseSpan": 120.6521739130435,
+        "nearBaseSpan": 88.41453634085212
+      }
+    },
+    {
+      "path": "form-frames/weighted-chest-dip/4.webp",
+      "sha256": "ccaa32e90551f1f43e7615ce0a049343e7ead61c9c8602c98045603e77087ce2",
+      "anchors": {
+        "farBaseLeft": {
+          "x": 423,
+          "y": 880
+        },
+        "nearBaseLeft": {
+          "x": 779.6140350877193,
+          "y": 940
+        }
+      },
+      "invariantDimensions": {
+        "farBaseSpan": 120.6521739130435,
+        "nearBaseSpan": 88.41453634085212
+      }
+    },
+    {
+      "path": "form-frames/weighted-chest-dip/5.webp",
+      "sha256": "5893c83b95dac334b2a6b8763176a47a3b9acb8ec7a275ac3820ae369819031f",
+      "anchors": {
+        "farBaseLeft": {
+          "x": 423.22727272727275,
+          "y": 880
+        },
+        "nearBaseLeft": {
+          "x": 779.7954545454545,
+          "y": 940
+        }
+      },
+      "invariantDimensions": {
+        "farBaseSpan": 120.37272727272727,
+        "nearBaseSpan": 87.97377622377621
+      }
+    },
+    {
+      "path": "form-frames/weighted-chest-dip/6.webp",
+      "sha256": "36c7e31ed1727d6222035b72747299bf7c36ec84269ea57673384e24321167f8",
+      "anchors": {
+        "farBaseLeft": {
+          "x": 423.15,
+          "y": 880
+        },
+        "nearBaseLeft": {
+          "x": 779.6029411764706,
+          "y": 940
+        }
+      },
+      "invariantDimensions": {
+        "farBaseSpan": 121.00384615384621,
+        "nearBaseSpan": 88.51134453781515
+      }
+    }
+  ]
+}
