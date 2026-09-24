@@ -54,6 +54,18 @@ export const FORM_ARTWORK: Record<string, FormArtwork> = {
     reviewFile:
       "docs/exercise-art/releases/2026-09-24/chest-press-machine.json",
   },
+  "machine-chest-fly": {
+    version: "anatomy-v3-2026-09-24",
+    status: "approved",
+    width: 1536,
+    height: 1024,
+    frames: Array.from(
+      { length: 6 },
+      (_, i) => `form-frames/machine-chest-fly/${i + 1}.webp`
+    ),
+    reference: "form-frames/machine-chest-fly/3.webp",
+    reviewFile: "docs/exercise-art/releases/2026-09-24/machine-chest-fly.json",
+  },
   "pec-deck": {
     version: "anatomy-v3-2026-09-24",
     status: "approved",
