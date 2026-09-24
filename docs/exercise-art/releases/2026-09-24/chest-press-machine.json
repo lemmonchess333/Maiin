@@ -1,0 +1,170 @@
+{
+  "exerciseId": "chest-press-machine",
+  "version": "anatomy-v3-2026-09-24",
+  "width": 1536,
+  "height": 1024,
+  "decision": "approved",
+  "reviewer": "Codex visual and implementation review",
+  "reviewedAt": "2026-09-24T15:04:26.341Z",
+  "reference": {
+    "path": "form-frames/chest-press-machine/1.webp",
+    "sha256": "814f2db721603cb6c39f3bfb8053d38e35f9d6ee8388f872d902420bfc0e9f30"
+  },
+  "cueSha256": "5b3a4a702cc63064d9ebb9cf7d05962d6ba9907677c0825e44cec221b7171f74",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Bald faceless white-grey anatomy-v3 athlete, smooth neutral pelvic centre and white trainers remain consistent in all three native poses."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Fixed three-quarter camera, native 1536x1024 canvas and framing. Two tower anchors and widths pass unrounded one-pixel/one-percent checks."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Three native poses inspected: continuous arms, natural elbow extension and intact hands; no extra limbs. New midpoint has clearly bent elbows between start and finish. Near-arm foreshortening remains illustrative."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Both levers remain attached to the same overhead pivots and horizontal grips. Tower, seat and support remain stable. Visible lever projection varies through rotation; this is qualitative visual review, not calibrated 3D rigidity verification."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Both hands wrap the same grips throughout. Head/torso, hips and feet remain supported by back pad, seat and floor respectively; no visible grip separation."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Forward/upward handle arc accompanies elbow extension around stable overhead pivots; controlled reversal reuses the intermediate and start poses. Enclosed stack and transmission are not visible, so routing ratio and selected-stack lift cannot be verified. No visible contradictory motion was found; approval concerns the illustrated external press movement."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Pectorals remain strongest purple; shoulder and upper-arm secondary highlights lighter lilac. Forearms remain white-grey. Colours indicate qualitative emphasis, not measured activation."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Six cues match supported setup, forward press, extension, hold, controlled return and reset. The stack-control cue is an instruction, not a claim that the concealed plates are visible. Every cue has at most seven words."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "Refined frames reviewed in real ExerciseFormFrames for all six beats and 6-to-1. Near grip now progresses approximately x690 to x730 to x770; not a claim of exact joint interpolation. Intentional reuse 4=3,5=2,6=1."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "Refined sequence reviewed at 390x844 in actual light theme with repository CSS/fonts; all beats and loop checked and all three unique poses visually inspected. Readable captions, loaded native image and no horizontal overflow."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "Same real-player checks in dark theme at 390x844, including changed frames 2/5 and return loop. Captions readable and no clipping or missing image observed."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/chest-press-machine/1.webp",
+      "sha256": "814f2db721603cb6c39f3bfb8053d38e35f9d6ee8388f872d902420bfc0e9f30",
+      "anchors": {
+        "towerOuterLeft": {
+          "x": 334.22935779816515,
+          "y": 700
+        },
+        "towerUprightLeft": {
+          "x": 478.7979797979798,
+          "y": 700
+        }
+      },
+      "invariantDimensions": {
+        "towerOuterSpan": 76.98846398401304,
+        "towerUprightSpan": 43.929292929292956
+      }
+    },
+    {
+      "path": "form-frames/chest-press-machine/2.webp",
+      "sha256": "67800a8fc77e80e9fd92159e8979dd6378fa648b4947c9798897731174652d20",
+      "anchors": {
+        "towerOuterLeft": {
+          "x": 334.26666666666665,
+          "y": 700
+        },
+        "towerUprightLeft": {
+          "x": 479.06944444444446,
+          "y": 700
+        }
+      },
+      "invariantDimensions": {
+        "towerOuterSpan": 77.06666666666666,
+        "towerUprightSpan": 44.05415106117357
+      }
+    },
+    {
+      "path": "form-frames/chest-press-machine/3.webp",
+      "sha256": "43d595150d952f5eb768d2667bccd8d71912933afc6b406b7b87f846bb1db63c",
+      "anchors": {
+        "towerOuterLeft": {
+          "x": 334.24,
+          "y": 700
+        },
+        "towerUprightLeft": {
+          "x": 479.2888888888889,
+          "y": 700
+        }
+      },
+      "invariantDimensions": {
+        "towerOuterSpan": 77.23244094488189,
+        "towerUprightSpan": 43.99371980676324
+      }
+    },
+    {
+      "path": "form-frames/chest-press-machine/4.webp",
+      "sha256": "43d595150d952f5eb768d2667bccd8d71912933afc6b406b7b87f846bb1db63c",
+      "anchors": {
+        "towerOuterLeft": {
+          "x": 334.24,
+          "y": 700
+        },
+        "towerUprightLeft": {
+          "x": 479.2888888888889,
+          "y": 700
+        }
+      },
+      "invariantDimensions": {
+        "towerOuterSpan": 77.23244094488189,
+        "towerUprightSpan": 43.99371980676324
+      }
+    },
+    {
+      "path": "form-frames/chest-press-machine/5.webp",
+      "sha256": "67800a8fc77e80e9fd92159e8979dd6378fa648b4947c9798897731174652d20",
+      "anchors": {
+        "towerOuterLeft": {
+          "x": 334.26666666666665,
+          "y": 700
+        },
+        "towerUprightLeft": {
+          "x": 479.06944444444446,
+          "y": 700
+        }
+      },
+      "invariantDimensions": {
+        "towerOuterSpan": 77.06666666666666,
+        "towerUprightSpan": 44.05415106117357
+      }
+    },
+    {
+      "path": "form-frames/chest-press-machine/6.webp",
+      "sha256": "814f2db721603cb6c39f3bfb8053d38e35f9d6ee8388f872d902420bfc0e9f30",
+      "anchors": {
+        "towerOuterLeft": {
+          "x": 334.22935779816515,
+          "y": 700
+        },
+        "towerUprightLeft": {
+          "x": 478.7979797979798,
+          "y": 700
+        }
+      },
+      "invariantDimensions": {
+        "towerOuterSpan": 76.98846398401304,
+        "towerUprightSpan": 43.929292929292956
+      }
+    }
+  ]
+}
