@@ -1,0 +1,170 @@
+{
+  "exerciseId": "superman-hold",
+  "version": "anatomy-v3-2026-09-24",
+  "width": 1536,
+  "height": 1024,
+  "decision": "approved",
+  "reviewer": "Codex visual and implementation review",
+  "reviewedAt": "2026-09-24T19:05:31.882Z",
+  "reference": {
+    "path": "form-frames/superman-hold/1.webp",
+    "sha256": "99565c667a11afdaf06170564f23d6f71f4be04bd05bbf5de3547f98fe3d7ca4"
+  },
+  "cueSha256": "a20085385e64bbb9dd28c70243872db7f96834d8e5eabd2fdf86a528d6999fd4",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Canonical bald faceless white-grey anatomy-v3 athlete, neutral pelvis and white trainers retained in three native poses."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Fixed native1536x1024 landscape. Entire athlete and mat fit; fingertips have tight but unclipped left margin. Mat-tip cross-sections exact after correction; untouched lower edges atx100/500 drift under0.581px."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Straight arms overhead and nearly straight legs lift progressively. Head faces down without obvious neck extension. Qualitative projected anatomy review, not calibrated joint angles."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Single mat retains outline. Authorized patch only at lower mat tip in2/3/4/5, exact master/source/output hashes and zero outside changes recorded. Two untouched edge anchors additionally measured."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Torso and pelvis remain supported by mat while chest and limbs lift; native and mobile views show no gross sliding or whole-body floating. Exact hidden contact and pressure cannot be measured from these stills."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Controlled prone extension around supported torso/pelvis, then return. Limb height progression readable without head cranking. No precise lift-height measurement claimed."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Spinal lower-back region purple; glutes and hamstrings lilac. Other visible anatomy neutral, matching exact catalogue hierarchy."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Six cues of at most seven words follow superman-hold catalogue: prone reach, slight lift, reach, hold with gaze down, lower, reset."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "All six frames and6-to-1 stepped in real ExerciseFormFrames in both themes.4=3,5=2,6=1; hold and reset intentional repeats. Manual stepping, not continuous timed playback."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "All six frames plus loop viewed at390x844 light theme. Fullbody/mat fit, captions readable; DOM scrollWidth390, nativeimages1536x1024."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "All six frames plus loop viewed at390x844 dark theme. Purple/lilac regions and lift progression visible, no clipping or horizontal overflow. Fine anatomy additionally reviewed natively."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/superman-hold/1.webp",
+      "sha256": "99565c667a11afdaf06170564f23d6f71f4be04bd05bbf5de3547f98fe3d7ca4",
+      "anchors": {
+        "matLowerCrossSectionLeft": {
+          "x": 1182.4615384615386,
+          "y": 820
+        },
+        "matTipCrossSectionLeft": {
+          "x": 1231.25,
+          "y": 835
+        }
+      },
+      "invariantDimensions": {
+        "matLowerCrossSectionSpan": 152.61538461538453,
+        "matTipCrossSectionSpan": 90.01086956521749
+      }
+    },
+    {
+      "path": "form-frames/superman-hold/2.webp",
+      "sha256": "beb95a6d5c204debde5dfd9ee6fdf6e5672d7c7a9e1d7fcf0f4c5f72776034ad",
+      "anchors": {
+        "matLowerCrossSectionLeft": {
+          "x": 1182.4615384615386,
+          "y": 820
+        },
+        "matTipCrossSectionLeft": {
+          "x": 1231.25,
+          "y": 835
+        }
+      },
+      "invariantDimensions": {
+        "matLowerCrossSectionSpan": 152.61538461538453,
+        "matTipCrossSectionSpan": 90.01086956521749
+      }
+    },
+    {
+      "path": "form-frames/superman-hold/3.webp",
+      "sha256": "d2372dee3ea37ee331b6ea7710a6b7eab86fd0043174606ca1375b73b15a2de1",
+      "anchors": {
+        "matLowerCrossSectionLeft": {
+          "x": 1182.4615384615386,
+          "y": 820
+        },
+        "matTipCrossSectionLeft": {
+          "x": 1231.25,
+          "y": 835
+        }
+      },
+      "invariantDimensions": {
+        "matLowerCrossSectionSpan": 152.61538461538453,
+        "matTipCrossSectionSpan": 90.01086956521749
+      }
+    },
+    {
+      "path": "form-frames/superman-hold/4.webp",
+      "sha256": "d2372dee3ea37ee331b6ea7710a6b7eab86fd0043174606ca1375b73b15a2de1",
+      "anchors": {
+        "matLowerCrossSectionLeft": {
+          "x": 1182.4615384615386,
+          "y": 820
+        },
+        "matTipCrossSectionLeft": {
+          "x": 1231.25,
+          "y": 835
+        }
+      },
+      "invariantDimensions": {
+        "matLowerCrossSectionSpan": 152.61538461538453,
+        "matTipCrossSectionSpan": 90.01086956521749
+      }
+    },
+    {
+      "path": "form-frames/superman-hold/5.webp",
+      "sha256": "beb95a6d5c204debde5dfd9ee6fdf6e5672d7c7a9e1d7fcf0f4c5f72776034ad",
+      "anchors": {
+        "matLowerCrossSectionLeft": {
+          "x": 1182.4615384615386,
+          "y": 820
+        },
+        "matTipCrossSectionLeft": {
+          "x": 1231.25,
+          "y": 835
+        }
+      },
+      "invariantDimensions": {
+        "matLowerCrossSectionSpan": 152.61538461538453,
+        "matTipCrossSectionSpan": 90.01086956521749
+      }
+    },
+    {
+      "path": "form-frames/superman-hold/6.webp",
+      "sha256": "99565c667a11afdaf06170564f23d6f71f4be04bd05bbf5de3547f98fe3d7ca4",
+      "anchors": {
+        "matLowerCrossSectionLeft": {
+          "x": 1182.4615384615386,
+          "y": 820
+        },
+        "matTipCrossSectionLeft": {
+          "x": 1231.25,
+          "y": 835
+        }
+      },
+      "invariantDimensions": {
+        "matLowerCrossSectionSpan": 152.61538461538453,
+        "matTipCrossSectionSpan": 90.01086956521749
+      }
+    }
+  ]
+}
