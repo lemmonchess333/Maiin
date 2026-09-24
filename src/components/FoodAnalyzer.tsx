@@ -4,9 +4,9 @@ import { useCountUp } from "@/hooks/useCountUp";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { useFoodFavourites } from "@/hooks/useFoodFavourites";
 import { THEME } from "@/lib/theme";
-import { cn } from "@/lib/utils";
-import { RotateCcw, Save, Check, Plus, Minus, Download, X } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { RotateCcw, Check, Plus, Minus, Download, X } from "lucide-react";
+import { motion } from "framer-motion";
+import { Drawer } from "vaul";
 import { Timestamp } from "firebase/firestore";
 import { createMealEntry, notifyMealsLogged } from "@/lib/mealEntry";
 import { saveFoodPhoto } from "@/lib/foodPhotoStore";
@@ -17,11 +17,19 @@ import { safeNum } from "@/lib/foodParseHelpers";
 import { toast } from "@/lib/toast";
 import { haptic } from "@/lib/haptic";
 import { isPhotoShareSupported, sharePhotoToLibrary } from "@/lib/sharePhoto";
-import FoodCameraModal, { type ScanFailureKind } from "./FoodCameraModal";
+import FoodCameraModal, {
+  type PhotoLock,
+  type ScanFailureKind,
+  type ScanMode,
+} from "./FoodCameraModal";
 import MealMacroBar from "./food/MealMacroBar";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Spinner } from "@/components/ui/Spinner";
 import Button from "@/components/ui/Button";
+import IconButton from "@/components/ui/IconButton";
+import BottomSheet from "@/components/ui/BottomSheet";
+import { MEAL_LABELS } from "./food/mealConstants";
+import { mealSlotFor } from "@/lib/mealSlots";
 import {
   validateFoodEntry,
   checkAggregateAgainstTarget,
@@ -53,6 +61,12 @@ interface Props {
      when omitted the aggregate check is skipped (parent still
      loading targets, or caller doesn't want the gate). */
   effectiveDailyTarget?: number;
+  /** Photo scanning is not on this account's tier: the scanner opens on
+   *  Barcode and its photo tabs carry the Pro offer. See PhotoLock. */
+  photoLock?: PhotoLock | null;
+  /** Fired each time the scanner comes on screen (the page's opening
+   *  animation waits for it). */
+  onCameraShown?: () => void;
 }
 
 type MealResult = {
@@ -147,6 +161,8 @@ export default function FoodAnalyzer({
   onRequestTypedInput,
   onRequestManualLog,
   effectiveDailyTarget,
+  photoLock = null,
+  onCameraShown,
 }: Props) {
   const uid = useUid();
   const { addFavourite } = useFoodFavourites();
@@ -160,6 +176,10 @@ export default function FoodAnalyzer({
   } = useFoodAnalysis();
 
   const [cameraOpen, setCameraOpen] = useState(false);
+  /* The mode a reopened scanner starts on: Retake on a barcode result
+     goes back to Barcode, on a label photo back to Label. */
+  const [cameraTab, setCameraTab] = useState<ScanMode>("food");
+  const lastCaptureModeRef = useRef<"food" | "label">("food");
   /* Ref mirror for async capture handlers: `onCaptureBase64` awaits a
      network round-trip, and the `cameraOpen` it closed over is stale
      by the time the await resolves. Reading the ref answers "is the
@@ -411,6 +431,24 @@ export default function FoodAnalyzer({
     return null;
   }, [capturedBase64, activeResult?.imageUrl]);
 
+  /* The sheet shows the result once the scanner has closed over it. */
+  const sheetOpen = !!activeResult && !cameraOpen;
+  /* The name the diary row will carry (performSave builds the same). */
+  const resultTitle = !activeResult
+    ? ""
+    : isBarcode
+      ? activeResult.foodName
+      : buildFoodNameFromItems(
+          isMultiItem ? activeItems : activeResult.items,
+          activeResult.foodName
+        );
+  /* Where the log lands: the targeted meal, or the slot the diary will
+     file it under by the time of day. */
+  const logSlot = mealSlotFor({
+    meal: targetMealCategory ?? undefined,
+    createdAt: Timestamp.now(),
+  });
+
   const showLoading = aiLoading || barcodeLoading;
   const showError = aiError || barcodeError;
 
@@ -422,6 +460,15 @@ export default function FoodAnalyzer({
     setServings(1);
     clearScanFailure();
     resetAI();
+  };
+
+  /* Back to the scanner, on the tab the result came from. */
+  const retake = () => {
+    haptic("light");
+    const mode: ScanMode = isBarcode ? "barcode" : lastCaptureModeRef.current;
+    handleResetAll();
+    setCameraTab(mode);
+    setCameraOpen(true);
   };
 
   const performSave = async (meal: MealResult) => {
@@ -633,7 +680,7 @@ export default function FoodAnalyzer({
   };
 
   const handleSave = async () => {
-    if (!activeResult) return;
+    if (!activeResult || saving || saved) return;
 
     const meal: MealResult = {
       foodName: activeResult.foodName ?? "Meal",
@@ -651,9 +698,8 @@ export default function FoodAnalyzer({
     await saveMeal(meal);
   };
 
-  // Matches FoodCameraModal: (base64, mode). `mode` previously gated
-  // the capture toast wording; now no toast fires (UI transitions
-  // straight to the analysis result), so the parameter is unused.
+  // Matches FoodCameraModal: (base64, mode). `mode` is remembered so
+  // Retake reopens the scanner on the tab the photo came from.
   //
   // Every outcome resolves VISIBLY inside the modal:
   //  - usable result  → 420ms locked beat (motion users), then close
@@ -672,7 +718,8 @@ export default function FoodAnalyzer({
   // branch handled it, and the close ran unconditionally. The page-
   // level error/empty cards remain as the landing if the user exits
   // the modal instead of retaking.
-  const onCaptureBase64 = async (base64: string, _mode: "food" | "label") => {
+  const onCaptureBase64 = async (base64: string, mode: "food" | "label") => {
+    lastCaptureModeRef.current = mode;
     setBarcodeResult(null);
     setBarcodeError(null);
     setCapturedBase64(base64);
@@ -780,6 +827,9 @@ export default function FoodAnalyzer({
         }}
         onCaptureBase64={onCaptureBase64}
         onBarcodeDetected={onBarcodeDetected}
+        photoLock={photoLock}
+        initialTab={cameraTab}
+        onShown={onCameraShown}
         loading={showLoading}
         locked={scanLocked}
         failure={scanFailure}
@@ -890,371 +940,324 @@ export default function FoodAnalyzer({
         </div>
       )}
 
-      {/* AnimatePresence enter-only: no exit animation keeps it snappy.
-          Reduced-motion gate matches the item rows inside the card —
-          positional travel is exactly the class of motion the
-          preference suppresses. */}
-      <AnimatePresence>
+      {/* The result, as a sheet over the page. A card added below the
+          composer lands behind the tab bar when the scanner closes, with
+          its Log button a screen and a half down, and nothing scrolls to
+          it. The sheet keeps Log on screen and closes on log, retake, or
+          a swipe down (which drops the result). */}
+      <BottomSheet
+        open={sheetOpen}
+        onOpenChange={(next) => {
+          if (!next) handleResetAll();
+        }}
+        title={null}
+        hideHeader
+        dismissible={!saving && !saved}
+        maxHeight="max-h-[88dvh]"
+      >
         {activeResult && (
-          <motion.div
-            key="result"
-            initial={reducedMotion ? false : { opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.2 }}
-            className="space-y-4"
-          >
-            {/* Low-confidence pre-save banner. Renders ABOVE the
-                review card and sticks to the top of the modal
-                content area while the per-item list scrolls,
-                so the user keeps seeing the warning while
-                editing. Replaces the older corner pill on the
-                hero image (too easy to miss next to the food
-                title). Save stays enabled — banner informs,
-                doesn't block. */}
-            {activeResult.confidence === "low" && (
-              <div
-                className="sticky top-0 z-10 -mx-1 px-3 py-2.5 rounded-xl border border-warning/30 bg-warning-bg text-warning-strong flex items-start gap-2"
-                role="status"
-              >
-                <span aria-hidden="true">⚠</span>
-                <div className="text-xs leading-relaxed">
-                  <span className="font-semibold">
-                    AI estimate — review carefully.
-                  </span>
-                  <span className="ml-1 opacity-80">
-                    Some items may need correcting before you save.
-                  </span>
+          <>
+            <div className="flex justify-center pt-3 pb-1">
+              <div className="h-1 w-10 rounded-full bg-border" />
+            </div>
+            <div
+              data-testid="scan-result-sheet"
+              className="min-h-0 flex-1 space-y-4 overflow-y-auto px-4 pt-2 pb-4"
+            >
+              {/* Low-confidence pre-save banner. Sticks to the top of the
+                  sheet while the item list scrolls, so the warning stays
+                  in view while editing. Save stays enabled — the banner
+                  informs, it doesn't block. */}
+              {activeResult.confidence === "low" && (
+                <div
+                  className="sticky top-0 z-10 px-3 py-2.5 rounded-xl border border-warning/30 bg-warning-bg text-warning-strong flex items-start gap-2"
+                  role="status"
+                >
+                  <span aria-hidden="true">⚠</span>
+                  <div className="text-xs leading-relaxed">
+                    <span className="font-semibold">
+                      AI estimate — review carefully.
+                    </span>
+                    <span className="ml-1 opacity-80">
+                      Some items may need correcting before you save.
+                    </span>
+                  </div>
                 </div>
-              </div>
-            )}
-            <div className="bg-card rounded-2xl overflow-hidden">
-              {/* Hero photo — user's captured image for AI scan, OpenFoodFacts
-                  product shot for barcode. Low-confidence warning has
-                  moved to the sticky banner above, so the hero stays
-                  clean. */}
-              {heroImageSrc && (
-                <div className="relative aspect-[5/3] bg-muted">
+              )}
+
+              {/* Title block. The title is the name the diary row will
+                  carry: the product for a barcode, the name built from the
+                  items for a photo. The AI's own title is not shown; it
+                  tends to be a category such as "Lunch Plate". The title
+                  follows the edits, so removing an item renames the log.
+                  The photo is a thumbnail: you took it a second ago, and
+                  at full width it pushed the items down by about 215pt. */}
+              <div className="flex items-center gap-3">
+                {heroImageSrc && (
                   <img
                     src={heroImageSrc}
-                    alt={activeResult.foodName}
-                    className="size-full object-cover"
+                    alt=""
+                    className="size-16 shrink-0 rounded-xl bg-muted object-cover"
+                  />
+                )}
+                <div className="min-w-0">
+                  <Drawer.Title className="text-lg font-bold text-foreground line-clamp-2 text-balance">
+                    {resultTitle}
+                  </Drawer.Title>
+                  <p className="text-sm text-muted-foreground truncate">
+                    {isBarcode
+                      ? (activeResult.brand ?? "From its barcode")
+                      : "AI estimate · check the portions"}
+                  </p>
+                </div>
+              </div>
+
+              {/* Totals before the items: the number you are logging
+                  reads first. Mono numerals, sans units, and the thin
+                  P/C/F bar rather than coloured tiles, which read as
+                  detached from the rest of the Food page. */}
+              <div className="rounded-xl bg-muted/30 p-3 space-y-2">
+                <div className="flex items-baseline justify-between gap-3 flex-wrap">
+                  <p className="text-foreground">
+                    <AnimatedCalories
+                      value={Math.round(displayTotals.calories)}
+                    />
+                    <span className="text-sm text-muted-foreground font-normal ml-1">
+                      {CALORIE_UNIT}
+                    </span>
+                  </p>
+                  <p className="text-small text-muted-foreground">
+                    <span className="font-mono tabular-nums text-foreground">
+                      {Math.round(displayTotals.protein)}
+                    </span>
+                    g protein
+                    {" · "}
+                    <span className="font-mono tabular-nums text-foreground">
+                      {Math.round(displayTotals.carbs)}
+                    </span>
+                    g carbs
+                    {" · "}
+                    <span className="font-mono tabular-nums text-foreground">
+                      {Math.round(displayTotals.fat)}
+                    </span>
+                    g fat
+                  </p>
+                </div>
+                <MealMacroBar
+                  totalProtein={displayTotals.protein}
+                  totalCarbs={displayTotals.carbs}
+                  totalFat={displayTotals.fat}
+                />
+              </div>
+
+              {/* Serving size adjuster — shown for barcode results */}
+              {isBarcode && (
+                <div className="flex items-center justify-center gap-4">
+                  <IconButton
+                    variant="secondary"
+                    aria-label="Decrease servings"
+                    icon={<Minus className="size-4" />}
+                    onClick={() => setServings(Math.max(0.5, servings - 0.5))}
+                    className="rounded-full"
+                  />
+                  <div className="text-center">
+                    <p className="text-2xl font-bold font-mono tabular-nums text-foreground">
+                      {servings}
+                    </p>
+                    <p className="text-xs text-muted-foreground">servings</p>
+                  </div>
+                  <IconButton
+                    variant="secondary"
+                    aria-label="Increase servings"
+                    icon={<Plus className="size-4" />}
+                    onClick={() => setServings(servings + 0.5)}
+                    className="rounded-full"
                   />
                 </div>
               )}
 
-              <div className="p-4 space-y-3">
-                {/* Title block.
-                    - Barcode results carry a clean product name like
-                      "Big Mac" — keep it as the prominent title.
-                    - AI photo / text results return a verbose
-                      auto-generated label (e.g. "Plate with Fish,
-                      Fries, Salad, and Roasted vegetables") that
-                      truncates awkwardly and reads as machine-written.
-                      Use a stable header instead, with the AI's
-                      label demoted to a muted subtitle so the user
-                      still sees what the model thought it saw.
-                    Trust copy: a one-line "AI estimate — adjust
-                    before logging" cue under non-barcode titles
-                    sets the expectation that the result is a draft
-                    the user is meant to correct, not a final answer. */}
-                <div className="min-w-0">
-                  {isBarcode ? (
-                    <>
-                      <h3 className="text-base font-semibold text-foreground truncate">
-                        {activeResult.foodName}
-                      </h3>
-                      {activeResult.brand && (
-                        <p className="text-xs text-muted-foreground truncate">
-                          {activeResult.brand}
-                        </p>
-                      )}
-                    </>
-                  ) : (
-                    <>
-                      <h3 className="text-base font-semibold text-foreground">
-                        Scanned meal
-                      </h3>
-                      {activeResult.foodName && (
-                        <p className="text-xs text-muted-foreground line-clamp-1 italic">
-                          {activeResult.foodName}
-                        </p>
-                      )}
-                      <p className="text-caption text-muted-foreground mt-1">
-                        AI estimate — adjust portions before logging.
-                      </p>
-                    </>
-                  )}
-                </div>
-
-                {/* Per-item breakdown — editable for multi-item AI results
-                    (PR N), read-only for single-item or barcode. The
-                    edit affordances let the user remove a wrongly-detected
-                    item and bump per-item portions before save without
-                    rescanning. */}
-                {activeResult.items.length > 1 && (
-                  <div className="space-y-1.5 border-t border-border/40 pt-2.5">
-                    {editedItems.map((item) => {
-                      const i = item.index;
-                      const itemCal = Math.round(
-                        safeNum(item.calories) * item.multiplier
-                      );
-                      if (item.removed) {
-                        return (
-                          <motion.div
-                            key={`${item.name}-${i}-removed`}
-                            initial={
-                              reducedMotion ? false : { opacity: 0, y: 8 }
-                            }
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{
-                              duration: 0.25,
-                              delay: Math.min(i, 6) * 0.05,
-                            }}
-                            className="flex items-center justify-between gap-2 py-1"
-                          >
-                            <p className="text-sm text-muted-foreground line-through truncate flex-1">
-                              {item.name}
-                            </p>
-                            <button
-                              type="button"
-                              onClick={() => restoreItem(i)}
-                              aria-label={`Restore ${item.name}`}
-                              className="flex items-center gap-1 text-xs font-medium text-lifting-strong hover:opacity-80 transition-opacity active:scale-95 shrink-0"
-                            >
-                              <RotateCcw className="size-3" />
-                              Restore
-                            </button>
-                          </motion.div>
-                        );
-                      }
+              {/* Per-item breakdown — editable for multi-item AI results,
+                  so a wrongly detected item can be removed and a portion
+                  changed without rescanning. The calories sit under the
+                  name with the portion ("150 g · 248 kcal"), which gives
+                  the name the row's width: beside a stepper, a calorie
+                  column and a remove button it cut off at "Grilled
+                  chicken br…". */}
+              {activeResult.items.length > 1 && (
+                <div className="space-y-2 border-t border-border/40 pt-3">
+                  {editedItems.map((item) => {
+                    const i = item.index;
+                    const itemCal = Math.round(
+                      safeNum(item.calories) * item.multiplier
+                    );
+                    if (item.removed) {
                       return (
                         <motion.div
-                          key={`${item.name}-${i}`}
+                          key={`${item.name}-${i}-removed`}
                           initial={reducedMotion ? false : { opacity: 0, y: 8 }}
                           animate={{ opacity: 1, y: 0 }}
-                          transition={{
-                            duration: 0.25,
-                            delay: Math.min(i, 6) * 0.05,
-                          }}
-                          className="flex items-center gap-2"
+                          transition={{ duration: 0.25 }}
+                          className="flex items-center justify-between gap-2 py-1"
                         >
-                          <div className="min-w-0 flex-1">
-                            <p className="text-sm text-foreground truncate">
-                              {item.name}
-                            </p>
-                            <p className="text-xs text-muted-foreground truncate">
-                              {item.portionSize}
-                            </p>
-                          </div>
-                          {isMultiItem && (
-                            <div
-                              className="flex items-center gap-1 shrink-0"
-                              aria-label={`${item.name} portion`}
-                            >
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  setItemMultiplier(i, item.multiplier - 0.5)
-                                }
-                                aria-label={`Decrease ${item.name} portion`}
-                                disabled={item.multiplier <= 0.5}
-                                className="size-6 relative before:absolute before:-inset-2.5 before:content-[''] rounded-full bg-muted flex items-center justify-center text-muted-foreground hover:bg-muted/70 disabled:opacity-40 active:scale-90 transition-transform"
-                              >
-                                <Minus className="size-3" />
-                              </button>
-                              <span className="text-xs font-mono tabular-nums text-foreground w-9 text-center">
-                                {item.multiplier}×
-                              </span>
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  setItemMultiplier(i, item.multiplier + 0.5)
-                                }
-                                aria-label={`Increase ${item.name} portion`}
-                                disabled={item.multiplier >= 4}
-                                className="size-6 relative before:absolute before:-inset-2.5 before:content-[''] rounded-full bg-muted flex items-center justify-center text-muted-foreground hover:bg-muted/70 disabled:opacity-40 active:scale-90 transition-transform"
-                              >
-                                <Plus className="size-3" />
-                              </button>
-                            </div>
-                          )}
-                          <span className="text-xs font-mono tabular-nums text-muted-foreground shrink-0 w-14 text-right">
-                            {itemCal} {CALORIE_UNIT}
-                          </span>
-                          {isMultiItem && (
-                            <button
-                              type="button"
-                              onClick={() => removeItem(i)}
-                              aria-label={`Remove ${item.name}`}
-                              className="size-6 relative before:absolute before:-inset-2.5 before:content-[''] rounded-full flex items-center justify-center text-muted-foreground hover:text-destructive-strong hover:bg-destructive/10 active:scale-90 transition-all shrink-0"
-                            >
-                              <X className="size-3.5" />
-                            </button>
-                          )}
+                          <p className="text-sm text-muted-foreground line-through truncate flex-1">
+                            {item.name}
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() => restoreItem(i)}
+                            aria-label={`Restore ${item.name}`}
+                            className="flex items-center gap-1 text-xs font-medium text-lifting-strong hover:opacity-80 transition-opacity active:scale-95 shrink-0 relative before:absolute before:-inset-3 before:content-['']"
+                          >
+                            <RotateCcw className="size-3" />
+                            Restore
+                          </button>
                         </motion.div>
                       );
-                    })}
-                  </div>
-                )}
-
-                {/* "All items removed" recovery prompt. Only shown for
-                    multi-item AI results when every row has been removed —
-                    saving a 0-calorie meal is never the user's intent. */}
-                {allRemoved && (
-                  <div className="rounded-lg bg-muted/40 px-3 py-2 text-xs text-muted-foreground text-center">
-                    All items removed. Restore one above or Reset to scan again.
-                  </div>
-                )}
-
-                {/* Unified macro summary.
-                    Replaces an older four-box pastel grid (cal / protein
-                    / carbs / fat each in its own coloured tile) that
-                    looked stylistically detached from the rest of the
-                    Food page. The new layout matches the design
-                    language used elsewhere — mono numerals + sans
-                    units, single neutral surface, and a thin three-
-                    segment MealMacroBar carrying the P/C/F proportional
-                    read instead of separate coloured chips. The
-                    underlying values are the same `displayTotals`
-                    consumed elsewhere. */}
-                <div className="rounded-xl bg-muted/30 p-3 space-y-2">
-                  <div className="flex items-baseline justify-between gap-3 flex-wrap">
-                    <p className="text-foreground">
-                      <AnimatedCalories
-                        value={Math.round(displayTotals.calories)}
-                      />
-                      <span className="text-sm text-muted-foreground font-normal ml-1">
-                        cal
-                      </span>
-                    </p>
-                    <p className="text-small text-muted-foreground">
-                      <span className="font-mono tabular-nums text-foreground/80">
-                        {Math.round(displayTotals.protein)}
-                      </span>
-                      g protein
-                      {" · "}
-                      <span className="font-mono tabular-nums text-foreground/80">
-                        {Math.round(displayTotals.carbs)}
-                      </span>
-                      g carbs
-                      {" · "}
-                      <span className="font-mono tabular-nums text-foreground/80">
-                        {Math.round(displayTotals.fat)}
-                      </span>
-                      g fat
-                    </p>
-                  </div>
-                  <MealMacroBar
-                    totalProtein={displayTotals.protein}
-                    totalCarbs={displayTotals.carbs}
-                    totalFat={displayTotals.fat}
-                  />
+                    }
+                    return (
+                      <motion.div
+                        key={`${item.name}-${i}`}
+                        initial={reducedMotion ? false : { opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{
+                          duration: 0.25,
+                          delay: Math.min(i, 6) * 0.05,
+                        }}
+                        className="flex items-center gap-2"
+                        data-testid="scan-result-item"
+                      >
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-medium text-foreground truncate">
+                            {item.name}
+                          </p>
+                          <p className="text-xs text-muted-foreground truncate">
+                            {item.portionSize}
+                            {" · "}
+                            <span className="font-mono tabular-nums">
+                              {itemCal}
+                            </span>{" "}
+                            {CALORIE_UNIT}
+                          </p>
+                        </div>
+                        {isMultiItem && (
+                          <div
+                            className="flex items-center gap-1 shrink-0"
+                            aria-label={`${item.name} portion`}
+                          >
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setItemMultiplier(i, item.multiplier - 0.5)
+                              }
+                              aria-label={`Decrease ${item.name} portion`}
+                              disabled={item.multiplier <= 0.5}
+                              className="size-7 relative before:absolute before:-inset-2 before:content-[''] rounded-full bg-muted flex items-center justify-center text-muted-foreground hover:bg-muted/70 disabled:opacity-40 active:scale-90 transition-transform"
+                            >
+                              <Minus className="size-3.5" />
+                            </button>
+                            <span className="text-xs font-mono tabular-nums text-foreground w-9 text-center">
+                              {item.multiplier}×
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setItemMultiplier(i, item.multiplier + 0.5)
+                              }
+                              aria-label={`Increase ${item.name} portion`}
+                              disabled={item.multiplier >= 4}
+                              className="size-7 relative before:absolute before:-inset-2 before:content-[''] rounded-full bg-muted flex items-center justify-center text-muted-foreground hover:bg-muted/70 disabled:opacity-40 active:scale-90 transition-transform"
+                            >
+                              <Plus className="size-3.5" />
+                            </button>
+                          </div>
+                        )}
+                        {isMultiItem && (
+                          <button
+                            type="button"
+                            onClick={() => removeItem(i)}
+                            aria-label={`Remove ${item.name}`}
+                            className="size-7 relative before:absolute before:-inset-2 before:content-[''] rounded-full flex items-center justify-center text-muted-foreground hover:text-destructive-strong hover:bg-destructive/10 active:scale-90 transition-all shrink-0"
+                          >
+                            <X className="size-3.5" />
+                          </button>
+                        )}
+                      </motion.div>
+                    );
+                  })}
                 </div>
+              )}
 
-                {/* Serving size adjuster — shown for barcode results */}
-                {isBarcode && (
-                  <div className="flex items-center justify-center gap-4 pt-1">
-                    <button
-                      type="button"
-                      onClick={() => setServings(Math.max(0.5, servings - 0.5))}
-                      aria-label="Decrease servings"
-                      className="size-9 rounded-full bg-muted flex items-center justify-center"
-                    >
-                      <Minus className="size-4" />
-                    </button>
-                    <div className="text-center">
-                      <p className="text-2xl font-bold text-foreground">
-                        {servings}
-                      </p>
-                      <p className="text-xs text-muted-foreground">servings</p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setServings(servings + 0.5)}
-                      aria-label="Increase servings"
-                      className="size-9 rounded-full bg-muted flex items-center justify-center"
-                    >
-                      <Plus className="size-4" />
-                    </button>
-                  </div>
-                )}
-              </div>
+              {/* "All items removed" recovery prompt. Only shown for
+                  multi-item AI results when every row has been removed —
+                  saving a 0-calorie meal is never the user's intent. */}
+              {allRemoved && (
+                <div className="rounded-lg bg-muted/40 px-3 py-2 text-xs text-muted-foreground text-center">
+                  All items removed. Restore one above, or retake the photo.
+                </div>
+              )}
             </div>
 
-            {/* Action row.
-                Previously three equal-weight bordered buttons (Reset /
-                Save photo / Log meal). Only Log meal is the primary
-                action; flat-equal weight underplayed it. New hierarchy:
-                  - Reset → small ghost text button (left)
-                  - Save photo → icon-only secondary (when supported)
-                  - Log meal → flex-1 primary fill (dominant)
-                Behaviour unchanged; this is purely visual reweighting. */}
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={handleResetAll}
-                aria-label="Reset food analysis"
-                className="p-3 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors active:scale-95"
+            {/* The actions, fixed at the sheet's foot so the log is always
+                a tap away. Log names where the meal goes: the pills that
+                pick the slot are on the page, well away from this button.
+                Food orange, an owner call recorded in CLAUDE.md's Button
+                mapping. */}
+            <div className="flex items-center gap-2 border-t border-border/40 px-4 pt-3 pb-4">
+              <Button
+                variant="secondary"
+                size="lg"
+                onClick={retake}
+                disabled={saving || saved}
               >
-                Reset
-              </button>
+                {isBarcode ? "Scan again" : "Retake"}
+              </Button>
 
               {/* Save photo to camera roll via Web Share API. Hidden on
                   platforms that don't support navigator.share with files
                   (Android < 12, desktop browsers). The support check is a
                   module-level cached constant — no per-mount cost. */}
               {isPhotoShareSupported() && capturedBase64 && (
-                <button
-                  type="button"
-                  onClick={handleSavePhoto}
+                <IconButton
+                  variant="outline"
+                  size="lg"
                   aria-label="Save photo to Photos library"
-                  className="size-11 rounded-xl border border-border text-muted-foreground hover:text-foreground hover:bg-muted transition-colors flex items-center justify-center shrink-0 active:scale-95"
-                >
-                  <Download className="size-4" />
-                </button>
+                  icon={<Download className="size-4" />}
+                  onClick={handleSavePhoto}
+                />
               )}
 
-              <button
-                type="button"
+              <Button
+                variant="nutrition"
+                size="lg"
+                className="flex-1"
                 onClick={handleSave}
-                /* Disabled when:
-                   - already saving (prevents double-tap)
-                   - all items removed (would persist a 0-calorie meal —
-                     never the user's intent; the recovery prompt above
-                     points them at Restore or Reset). */
+                /* Disabled while saving (no double-tap) and when every
+                   item was removed (a 0-calorie log is never meant). */
                 disabled={saving || allRemoved}
-                className={cn(
-                  "flex-1 py-3 rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-2 active:scale-[0.98]",
-                  saved
-                    ? "text-white"
-                    : "bg-primary-strong text-primary-foreground hover:opacity-90",
-                  (saving || allRemoved) && "opacity-50 cursor-not-allowed"
-                )}
-                /* Saved-state fill from the palette (was raw green-500). */
+                /* Saved-state fill from the palette. */
                 style={saved ? { background: THEME.success } : undefined}
               >
                 {saved ? (
                   <>
-                    <Check className="size-4" /> Saved!
+                    <Check className="size-4" aria-hidden="true" /> Saved
                   </>
                 ) : saving ? (
-                  "Saving..."
+                  "Saving…"
                 ) : (
-                  <>
-                    <Save className="size-4" /> Log meal
-                  </>
+                  `Log to ${MEAL_LABELS[logSlot]}`
                 )}
-              </button>
+              </Button>
             </div>
-          </motion.div>
+          </>
         )}
-      </AnimatePresence>
+      </BottomSheet>
       {/* Suspicious-value override prompt for AI photo saves. The
           pending save is captured at validation time so the
           dialog commits the same totals the user was warned about
           even if state shifts between prompt and confirm. */}
       <ConfirmDialog
         open={warnTitle !== null}
+        overSheet={sheetOpen}
         title={warnTitle ?? ""}
         description={warnDescription}
         confirmLabel="Save anyway"

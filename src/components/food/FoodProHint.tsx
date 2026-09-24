@@ -2,24 +2,23 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Lock, X } from "lucide-react";
 import IconButton from "@/components/ui/IconButton";
-import { useAuth } from "@/lib/auth";
 import { haptic } from "@/lib/haptic";
 import { readString, writeString } from "@/lib/localStore";
 import { track } from "@/lib/paywallAnalytics";
-import { hasLapsedOnboardingTrial } from "@/lib/subscription";
+import { useProCtaLabel } from "@/hooks/useProCtaLabel";
 
 /**
- * FoodProHint — one quiet line under the composer that says why the
- * camera wears a lock, and where Pro is.
+ * FoodProHint — one quiet line under the composer that says photo
+ * logging is part of Pro, and where Pro is.
  *
  * This replaces FoodProStrip: a muted card with a filled purple button,
  * rendered ABOVE the composer for every post-trial free user, saying
  * "Photo logging is a Pro feature · Your free trial has ended". The
- * camera 60px below it already carries the gate (the lock badge; a tap
- * opens the Pro sheet), so the strip was the same message twice, and
- * the louder copy — and it pushed the page's primary action, the
- * composer, into the lower half of the screen. Owner call from the
- * Food options page: the lock carries it.
+ * scanner carries the gate itself (a free account's Scan opens it on
+ * Barcode, and its photo tabs show the Pro offer), so the strip was the
+ * same message twice, and the louder copy — and it pushed the page's
+ * primary action, the composer, into the lower half of the screen.
+ * Owner call from the Food options page: the gate carries it.
  *
  * So: a text-micro line, a lock glyph, the link, and a dismiss that
  * persists on this device. No "your trial has ended" — the observation
@@ -43,16 +42,11 @@ interface Props {
 
 export default function FoodProHint({ limit, isUnlimited, loading }: Props) {
   const navigate = useNavigate();
-  const { profile } = useAuth();
+  const ctaLabel = useProCtaLabel();
   const [dismissed, setDismissed] = useState(
     () => readString(DISMISSED_KEY) === "1"
   );
   if (loading || isUnlimited || limit !== 0 || dismissed) return null;
-
-  // One trial per account: a lapsed onboarding free week counts as the
-  // trial even on a profile stamped before the server recorded it.
-  const trialUsed =
-    !!profile?.hasUsedTrial || hasLapsedOnboardingTrial(profile);
 
   return (
     <div
@@ -76,7 +70,7 @@ export default function FoodProHint({ limit, isUnlimited, loading }: Props) {
         }}
         className="min-h-11 px-1 font-semibold text-lifting-strong active:scale-[0.97] transition-transform"
       >
-        {trialUsed ? "See Pro" : "Try Pro free"}
+        {ctaLabel}
       </button>
       <IconButton
         aria-label="Dismiss"

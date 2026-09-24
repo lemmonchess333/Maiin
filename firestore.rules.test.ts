@@ -17,7 +17,7 @@
  *   FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 npx vitest run firestore.rules.test.ts
  */
 
-import { describe, it, beforeAll, afterAll, beforeEach } from "vitest";
+import { describe, it, expect, beforeAll, afterAll, beforeEach } from "vitest";
 import {
   initializeTestEnvironment,
   assertFails,
@@ -35,6 +35,7 @@ import {
   serverTimestamp,
   writeBatch,
 } from "firebase/firestore";
+import { CAPTION_MAX } from "./src/lib/activityPost";
 
 const EMULATOR_HOST = process.env.FIRESTORE_EMULATOR_HOST;
 const REQUIRE_EMULATOR = process.env.REQUIRE_FIRESTORE_EMULATOR === "1";
@@ -1764,7 +1765,84 @@ suite(
             prCount: 1,
             challengeMilestone: "Week 3 complete",
             badgeEarned: "consistency-7",
+            caption: "Felt strong today",
           })
+        )
+      );
+    });
+
+    /* The share sheets' optional note. Every sheet sends one when it is
+       typed, and every captioned post was refused until 'caption' joined
+       the field list: no test here sent one. activityPostFields.cross
+       .test.ts now holds the list to postActivity's type. */
+    it("a captioned run post creates", async () => {
+      const ownerDb = env.authenticatedContext(OWNER_UID, VERIFIED).firestore();
+      await assertSucceeds(
+        setDoc(
+          doc(ownerDb, "activities", "captioned-run"),
+          makeValidActivity({
+            type: "run",
+            runName: "Morning run",
+            activityTitle: "Morning run",
+            distance: 5000,
+            duration: 1500,
+            avgPace: 300,
+            caption: "Legs felt fresh",
+          })
+        )
+      );
+    });
+
+    it("a caption at the share sheets' limit creates; one character more is refused", async () => {
+      const ownerDb = env.authenticatedContext(OWNER_UID, VERIFIED).firestore();
+      await assertSucceeds(
+        setDoc(
+          doc(ownerDb, "activities", "caption-at-cap"),
+          makeValidActivity({ caption: "a".repeat(CAPTION_MAX) })
+        )
+      );
+      await assertFails(
+        setDoc(
+          doc(ownerDb, "activities", "caption-over-cap"),
+          makeValidActivity({ caption: "a".repeat(CAPTION_MAX + 1) })
+        )
+      );
+    });
+
+    it("counts a caption in the units the share sheets cut it in", async () => {
+      // The sheets cut with String.slice, in UTF-16 code units, and so
+      // does the rules' size(). A full box of emoji (two units each) or
+      // of CJK (three bytes each in UTF-8) must still post.
+      const ownerDb = env.authenticatedContext(OWNER_UID, VERIFIED).firestore();
+      const emoji = "\u{1F3C3}".repeat(CAPTION_MAX / 2);
+      const cjk = "\u6F22".repeat(CAPTION_MAX);
+      expect(emoji.length).toBe(CAPTION_MAX);
+      await assertSucceeds(
+        setDoc(
+          doc(ownerDb, "activities", "caption-emoji"),
+          makeValidActivity({ caption: emoji })
+        )
+      );
+      await assertSucceeds(
+        setDoc(
+          doc(ownerDb, "activities", "caption-cjk"),
+          makeValidActivity({ caption: cjk })
+        )
+      );
+    });
+
+    it("a caption that is not a string is refused", async () => {
+      const ownerDb = env.authenticatedContext(OWNER_UID, VERIFIED).firestore();
+      await assertFails(
+        setDoc(
+          doc(ownerDb, "activities", "caption-number"),
+          makeValidActivity({ caption: 42 })
+        )
+      );
+      await assertFails(
+        setDoc(
+          doc(ownerDb, "activities", "caption-list"),
+          makeValidActivity({ caption: ["Felt strong"] })
         )
       );
     });

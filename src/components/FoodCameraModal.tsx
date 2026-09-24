@@ -9,8 +9,11 @@ import {
   Camera,
   CameraOff,
   Keyboard,
+  Lock,
 } from "lucide-react";
+import Button from "@/components/ui/Button";
 import { Spinner } from "@/components/ui/Spinner";
+import ScanProButton from "@/components/food/ScanProButton";
 import { useFocusTrap } from "@/hooks/useFocusTrap";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import {
@@ -24,7 +27,48 @@ import { THEME } from "@/lib/theme";
 
 type CaptureMode = "food" | "label";
 
-type TabMode = "food" | "barcode" | "label";
+/** The scanner's three modes: a meal photo, a barcode, a nutrition label. */
+export type ScanMode = "food" | "barcode" | "label";
+type TabMode = ScanMode;
+
+/* The mode names: three short nouns, so the tabs read as a set. */
+const MODE_TABS: ReadonlyArray<{ key: TabMode; label: string }> = [
+  { key: "food", label: "Meal" },
+  { key: "barcode", label: "Barcode" },
+  { key: "label", label: "Label" },
+];
+const BARCODE_HINT = "Point at a barcode";
+
+/** How long a found barcode holds its orange frame before the lookup
+ *  covers it — long enough to see what was read. Skipped under reduced
+ *  motion, like the photo scan's completion beat. */
+const BARCODE_FOUND_HOLD_MS = 250;
+
+/** Reads the barcode in a picked photo, on the device. A photo in Barcode
+ *  mode is never an AI scan: it costs nothing and needs no Pro. Resolves
+ *  null when the picture has no readable code. */
+async function decodeBarcodeFromDataUrl(
+  dataUrl: string
+): Promise<string | null> {
+  const { BrowserMultiFormatReader } =
+    (await import("@zxing/browser")) as unknown as {
+      BrowserMultiFormatReader: new () => {
+        decodeFromImageUrl: (
+          url: string
+        ) => Promise<{ getText?: () => string; text?: string }>;
+      };
+    };
+  try {
+    const result = await new BrowserMultiFormatReader().decodeFromImageUrl(
+      dataUrl
+    );
+    const text = String(result.getText?.() ?? result.text ?? "").trim();
+    return text || null;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Camera state machine.
  *  - `idle`       — stream starting, video tag visible
@@ -51,6 +95,13 @@ type CameraState = "idle" | "granted" | "denied" | "unavailable";
  *                 burning the sweep on a fetch that must fail
  */
 export type ScanFailureKind = "no-food" | "error" | "offline";
+
+/**
+ * Photo scanning is not on this account's tier (a free account: its
+ * image-AI limit is 0). `onUpgrade` closes the scanner and opens the
+ * Pro sheet.
+ */
+export type PhotoLock = { onUpgrade: () => void };
 
 type Props = {
   open: boolean;
@@ -87,6 +138,18 @@ type Props = {
    * should close the modal and focus the NL input.
    */
   onRequestTypedInput?: () => void;
+  /** Set when photo scanning is not on the account's tier. The scanner
+   *  opens on Barcode, which is free; the photo tabs show the Pro offer
+   *  where the shutter would be; and the photo library is offered only
+   *  in Barcode mode, where a picked photo is read on the device rather
+   *  than sent for AI analysis. */
+  photoLock?: PhotoLock | null;
+  /** The mode the scanner opens on (default Meal). A locked account
+   *  always opens on Barcode. */
+  initialTab?: ScanMode;
+  /** Fired each time the scanner comes on screen. The page's opening
+   *  animation holds the screen until this lands. */
+  onShown?: () => void;
 };
 
 function dataUrlToBase64(dataUrl: string) {
@@ -123,6 +186,9 @@ export default function FoodCameraModal({
   failureDetail = null,
   onScanRetry,
   onRequestTypedInput,
+  photoLock = null,
+  initialTab = "food",
+  onShown,
 }: Props) {
   const focusTrapRef = useFocusTrap<HTMLDivElement>(open);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -143,17 +209,48 @@ export default function FoodCameraModal({
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const stopZXingRef = useRef<null | (() => void)>(null);
+  /* A code whose lookup failed. The reader keeps scanning after a
+     failure, and without this it would read the same code straight
+     back and repeat the failed lookup for as long as it stayed in view. */
+  const lastFailedCodeRef = useRef<string | null>(null);
+  /* Read inside the decoder's callback, which outlives renders. */
+  const reducedMotionRef = useRef(reducedMotion);
+  useEffect(() => {
+    reducedMotionRef.current = reducedMotion;
+  }, [reducedMotion]);
 
-  const [tab, setTab] = useState<TabMode>("food");
+  const [tab, setTab] = useState<TabMode>(photoLock ? "barcode" : initialTab);
+  // Read by the open-reset below. Refs, so the lock resolving while the
+  // scanner is already open (the scan allowance still loading) never
+  // re-runs that reset and restarts a live camera.
+  const photoLockedRef = useRef(!!photoLock);
+  useEffect(() => {
+    photoLockedRef.current = !!photoLock;
+  }, [photoLock]);
+  const initialTabRef = useRef(initialTab);
+  useEffect(() => {
+    initialTabRef.current = initialTab;
+  }, [initialTab]);
+  const onShownRef = useRef(onShown);
+  useEffect(() => {
+    onShownRef.current = onShown;
+  }, [onShown]);
+  useEffect(() => {
+    if (open) onShownRef.current?.();
+  }, [open]);
   const stageLine = useScanStages(
     loading,
     tab === "label" ? SCAN_STAGES_LABEL : SCAN_STAGES_FOOD
   );
   const [facing, setFacing] = useState<"environment" | "user">("environment");
   const [busy, setBusy] = useState(false);
-  const [barcodeHint, setBarcodeHint] = useState<string>(
-    "Align barcode in frame"
-  );
+  const [barcodeHint, setBarcodeHint] = useState<string>(BARCODE_HINT);
+  /* A code was read: the frame's corners turn orange for a beat before
+     the lookup covers the screen, so the scan visibly lands. */
+  const [barcodeFound, setBarcodeFound] = useState(false);
+  /* Bumped to restart the live barcode reader after it was stopped for a
+     picked photo that turned out to hold no code. */
+  const [barcodeRun, setBarcodeRun] = useState(0);
   const [cameraState, setCameraState] = useState<CameraState>("idle");
 
   // Keep onClose stable across renders so effects don't tear down / rebuild
@@ -194,13 +291,16 @@ export default function FoodCameraModal({
     return () => window.removeEventListener("keydown", onKey);
   }, [open]);
 
-  // Reset UI state whenever the modal opens.
+  // Reset UI state whenever the modal opens. A locked account starts on
+  // Barcode, the one scan its tier includes.
   useEffect(() => {
     if (!open) return;
-    setTab("food");
+    setTab(photoLockedRef.current ? "barcode" : initialTabRef.current);
     setFacing("environment");
     setBusy(false);
-    setBarcodeHint("Align barcode in frame");
+    setBarcodeHint(BARCODE_HINT);
+    setBarcodeFound(false);
+    lastFailedCodeRef.current = null;
     setCameraState("idle");
   }, [open]);
 
@@ -273,7 +373,8 @@ export default function FoodCameraModal({
     if (tab !== "barcode") {
       stopZXingRef.current?.();
       stopZXingRef.current = null;
-      setBarcodeHint("Align barcode in frame");
+      setBarcodeHint(BARCODE_HINT);
+      setBarcodeFound(false);
       return;
     }
 
@@ -290,7 +391,8 @@ export default function FoodCameraModal({
         const videoEl = videoRef.current;
         if (!videoEl) return;
 
-        setBarcodeHint("Scanning…");
+        // The line moving across the frame says it is scanning.
+        setBarcodeFound(false);
 
         const mod = await import("@zxing/browser");
         const { BrowserMultiFormatReader } = mod as unknown as {
@@ -318,7 +420,7 @@ export default function FoodCameraModal({
             if (!result) return;
 
             const text = String(result.getText?.() ?? result.text ?? "").trim();
-            if (!text) return;
+            if (!text || text === lastFailedCodeRef.current) return;
 
             // stop after first detection
             try {
@@ -328,9 +430,22 @@ export default function FoodCameraModal({
             }
             stopZXingRef.current = null;
             if (cancelled) return;
-            setBarcodeHint("Found");
+            setBarcodeFound(true);
+            setBarcodeHint("Found it");
+            haptic("success");
+            if (!reducedMotionRef.current) {
+              await new Promise((r) => setTimeout(r, BARCODE_FOUND_HOLD_MS));
+              if (cancelled) return;
+            }
 
             await onBarcodeDetectedRef.current(text);
+            /* A successful lookup closes the scanner, which cancels this
+               run. Still here means the lookup failed (the page says why):
+               scan on, past the code that just failed. */
+            if (cancelled) return;
+            lastFailedCodeRef.current = text;
+            setBarcodeHint(BARCODE_HINT);
+            setBarcodeRun((n) => n + 1);
           }
         );
 
@@ -363,7 +478,7 @@ export default function FoodCameraModal({
       stopZXingRef.current?.();
       stopZXingRef.current = null;
     };
-  }, [tab, open]);
+  }, [tab, open, barcodeRun]);
 
   const pickFromLibrary = () => {
     fileInputRef.current?.click();
@@ -380,6 +495,29 @@ export default function FoodCameraModal({
       reader.onload = async () => {
         try {
           const dataUrl = String(reader.result || "");
+          if (tab === "barcode") {
+            /* Barcode mode reads the code in the picture, on the device.
+               Sent for AI food analysis like the other tabs, a picture of
+               a barcode would spend a scan and come back "No food
+               detected". The live reader stops meanwhile, so it cannot
+               fire a second lookup of its own. */
+            stopZXingRef.current?.();
+            stopZXingRef.current = null;
+            const code = await decodeBarcodeFromDataUrl(dataUrl);
+            if (code) {
+              setBarcodeFound(true);
+              setBarcodeHint("Found it");
+              haptic("success");
+              await onBarcodeDetected(code);
+              setBarcodeHint(BARCODE_HINT);
+            } else {
+              setBarcodeHint("No barcode found in that photo");
+            }
+            // Still open (no code, or its lookup failed): scan live again.
+            setBarcodeFound(false);
+            setBarcodeRun((n) => n + 1);
+            return;
+          }
           const base64 = dataUrlToBase64(dataUrl);
           setPreview(dataUrl);
           await onCaptureBase64(base64, tab === "label" ? "label" : "food");
@@ -453,6 +591,21 @@ export default function FoodCameraModal({
     loading || busy || tab === "barcode" || cameraState !== "granted";
   const cameraBlocked =
     cameraState === "denied" || cameraState === "unavailable";
+
+  /* The one instruction above the frame. In Barcode mode it carries the
+     reader's state ("Found it", "No barcode found in that photo"). */
+  const modeHint =
+    tab === "barcode"
+      ? barcodeHint
+      : photoLock
+        ? "Photo scanning is part of Pro"
+        : tab === "label"
+          ? "Fit the nutrition panel in the frame"
+          : "Fit the whole plate in the frame";
+  const scanLineStyle = {
+    background: THEME.semantic.nutrition,
+    boxShadow: `0 0 12px 2px ${THEME.semantic.nutrition}`,
+  };
 
   /* Failure copy, resolved per kind AND per mode — "No food detected"
      is the wrong sentence when the user was photographing a nutrition
@@ -857,7 +1010,9 @@ export default function FoodCameraModal({
     const deniedCopy =
       cameraState === "denied"
         ? "Camera access was denied. Tropos only uses the camera to scan meals and barcodes. Your photo is sent to Google for analysis and kept only on this device — never on our servers."
-        : "No camera available right now. You can still log your meal by uploading a photo or typing it in.";
+        : photoLock
+          ? "No camera available right now. You can still log your meal by typing it in."
+          : "No camera available right now. You can still log your meal by uploading a photo or typing it in.";
     return (
       <div
         ref={focusTrapRef}
@@ -918,17 +1073,21 @@ export default function FoodCameraModal({
             )}
           </div>
           <div className="w-full max-w-[320px] space-y-2 pt-2">
-            <button
-              type="button"
-              onClick={() => {
-                haptic("light");
-                fileInputRef.current?.click();
-              }}
-              className="w-full h-12 rounded-xl bg-nutrition-fill text-white font-medium text-sm flex items-center justify-center gap-2"
-            >
-              <ImageIcon className="size-4" />
-              Upload a photo instead
-            </button>
+            {/* A photo upload is an AI scan, so a locked account is not
+                offered one. */}
+            {!photoLock && (
+              <button
+                type="button"
+                onClick={() => {
+                  haptic("light");
+                  fileInputRef.current?.click();
+                }}
+                className="w-full h-12 rounded-xl bg-nutrition-fill text-white font-medium text-sm flex items-center justify-center gap-2"
+              >
+                <ImageIcon className="size-4" />
+                Upload a photo instead
+              </button>
+            )}
             {onRequestTypedInput && (
               <button
                 type="button"
@@ -1018,25 +1177,41 @@ export default function FoodCameraModal({
         autoPlay
       />
 
-      {/* Alignment frame — always shown as a visual aid to help the user
-          centre the subject (Cal AI / face-verification pattern). Barcode
-          and label modes use a narrow rectangle with strong darkening
-          outside because the crop matters to the decoder. Food mode uses
-          a larger square-ish frame with lighter darkening — the corner
-          brackets just help you centre the plate without forcing it into
-          a tiny box.
+      {/* Alignment frame, with the mode's one instruction above it.
+          Barcode and label modes use a narrow frame with strong darkening
+          outside because the crop matters to the reader; Meal uses a
+          large square with light darkening, there to help centre the
+          plate. Label is taller than it is wide, the shape of a
+          nutrition panel.
 
-          The container reserves 220px of bottom space so the reticle
-          centres in the *visible* viewfinder area rather than across
-          the whole screen. Without this the bottom edge of the
-          square food reticle (86% width × aspect-square ≈ 335px tall on
-          iPhone 14) extended down behind the segmented control bar,
-          which read as a layout bug — corner brackets visibly clipped
-          by the tabs row. The padding leaves clear separation between
-          the reticle and the bar across all phone sizes (verified
-          down to iPhone SE 568px tall: the smallest reticle still has
-          ~80px of clearance). */}
-      <div className="absolute inset-0 pointer-events-none flex items-center justify-center pb-[220px]">
+          The instruction sits above the frame, where the eye already is,
+          and there is one of it: small lines under the shutter go unread,
+          and Barcode mode needs no second line to say it is scanning (the
+          moving line does).
+
+          The bottom padding keeps the column centred in the visible
+          viewfinder, clear of the controls. */}
+      <div className="absolute inset-0 pointer-events-none flex flex-col items-center justify-center gap-3 pb-[196px]">
+        {/* Raised above the frame: the frame darkens everything around it
+            with a wide shadow, and that shadow would dim this line too. */}
+        <div
+          className="relative z-10 flex h-8 items-center justify-center"
+          aria-live="polite"
+          data-testid="scan-hint"
+        >
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.p
+              key={modeHint}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.15 }}
+              className="whitespace-nowrap rounded-full bg-black/60 px-3.5 py-1.5 text-sm font-medium text-white"
+            >
+              {modeHint}
+            </motion.p>
+          </AnimatePresence>
+        </div>
         {tab === "food" ? (
           <div className="w-[86%] max-w-[420px] aspect-square relative rounded-3xl shadow-[0_0_0_9999px_rgba(0,0,0,0.18)]">
             <div className="absolute top-0 left-0 size-8 border-l-[3px] border-t-[3px] border-white/90 rounded-tl-2xl" />
@@ -1045,14 +1220,85 @@ export default function FoodCameraModal({
             <div className="absolute bottom-0 right-0 size-8 border-r-[3px] border-b-[3px] border-white/90 rounded-br-2xl" />
           </div>
         ) : (
-          <div className="w-[78%] max-w-[360px] aspect-[4/2.3] relative rounded-2xl shadow-[0_0_0_9999px_rgba(0,0,0,0.35)]">
-            <div className="absolute top-0 left-0 size-6 border-l-[3px] border-t-[3px] border-white/85 rounded-tl-xl" />
-            <div className="absolute top-0 right-0 size-6 border-r-[3px] border-t-[3px] border-white/85 rounded-tr-xl" />
-            <div className="absolute bottom-0 left-0 size-6 border-l-[3px] border-b-[3px] border-white/85 rounded-bl-xl" />
-            <div className="absolute bottom-0 right-0 size-6 border-r-[3px] border-b-[3px] border-white/85 rounded-br-xl" />
+          <div
+            data-testid="scan-frame-live"
+            data-mode={tab}
+            className={cn(
+              "relative rounded-2xl shadow-[0_0_0_9999px_rgba(0,0,0,0.35)]",
+              tab === "label"
+                ? "w-[64%] max-w-[300px] aspect-[3/4]"
+                : "w-[78%] max-w-[360px] aspect-[4/2.3]"
+            )}
+          >
+            {[
+              "top-0 left-0 border-l-[3px] border-t-[3px] rounded-tl-xl",
+              "top-0 right-0 border-r-[3px] border-t-[3px] rounded-tr-xl",
+              "bottom-0 left-0 border-l-[3px] border-b-[3px] rounded-bl-xl",
+              "bottom-0 right-0 border-r-[3px] border-b-[3px] rounded-br-xl",
+            ].map((corner) => (
+              <div
+                key={corner}
+                data-testid="scan-frame-corner"
+                className={cn(
+                  "absolute size-6",
+                  corner,
+                  !barcodeFound && "border-white/85"
+                )}
+                /* A read barcode turns the corners orange for a beat
+                   before the lookup covers the screen. */
+                style={
+                  barcodeFound
+                    ? { borderColor: THEME.semantic.nutrition }
+                    : undefined
+                }
+              />
+            ))}
+            {/* Barcode mode has no shutter, so something has to say it is
+                looking: a line crossing the frame. It is the live screen's
+                one moving thing, and it holds still under reduced motion. */}
+            {tab === "barcode" && !barcodeFound && (
+              <div
+                aria-hidden
+                data-testid="barcode-scan-line"
+                className="absolute inset-x-3 inset-y-2 overflow-hidden"
+              >
+                {reducedMotion ? (
+                  <div
+                    className="absolute inset-x-0 top-1/2 h-0.5 -translate-y-1/2 rounded-full"
+                    style={scanLineStyle}
+                  />
+                ) : (
+                  <motion.div
+                    className="absolute inset-0 will-change-transform"
+                    initial={{ y: "-50%" }}
+                    animate={{ y: "50%" }}
+                    transition={{
+                      duration: 1.4,
+                      ease: "easeInOut",
+                      repeat: Infinity,
+                      repeatType: "mirror",
+                    }}
+                  >
+                    <div
+                      className="absolute inset-x-0 top-1/2 h-0.5 -translate-y-1/2 rounded-full"
+                      style={scanLineStyle}
+                    />
+                  </motion.div>
+                )}
+              </div>
+            )}
           </div>
         )}
       </div>
+
+      {/* A dark band behind the controls, like the Camera app's bottom
+          bar. Labels sitting straight on the photo cannot be read over a
+          bright plate. */}
+      <div
+        aria-hidden
+        data-testid="camera-scrim"
+        className="pointer-events-none absolute inset-x-0 bottom-0 h-72 bg-gradient-to-t from-black/85 via-black/60 to-transparent"
+      />
 
       {/* bottom — inert while the overlay is up (see `overlayUp`). */}
       <div
@@ -1060,85 +1306,78 @@ export default function FoodCameraModal({
         inert={overlayUp || undefined}
         data-testid="camera-chrome"
       >
-        <div className="mx-auto max-w-[520px] space-y-3">
-          {/* tabs — pill/segment pattern matching app style */}
-          <div className="flex gap-1.5 justify-center bg-black/30 rounded-full p-1">
-            {[
-              { key: "food" as const, label: "Scan Food" },
-              { key: "barcode" as const, label: "Barcode" },
-              { key: "label" as const, label: "Food label" },
-            ].map(({ key, label }) => (
+        <div className="mx-auto max-w-[520px] space-y-4">
+          {/* Mode tabs. The selected mode is a near-white chip with dark
+              text; it was white on the scan coral, 2.8:1, below the 4.5:1
+              that text this size needs. Coral stays on the shutter ring.
+              44px tall, the touch-target floor. */}
+          <div
+            role="group"
+            aria-label="Scan mode"
+            className="mx-auto flex w-fit gap-1 rounded-full bg-white/10 p-1"
+          >
+            {MODE_TABS.map(({ key, label }) => (
               <button
                 type="button"
                 key={key}
+                aria-pressed={tab === key}
                 onClick={() => {
                   haptic("light");
                   setTab(key);
                 }}
                 className={cn(
-                  "px-4 py-2 rounded-full text-sm font-medium transition-all",
+                  "inline-flex min-h-11 min-w-[84px] items-center justify-center gap-1 rounded-full px-4 text-sm transition-colors",
                   tab === key
-                    ? "text-white shadow-sm"
-                    : "text-white/70 hover:text-white"
+                    ? "bg-stage-foreground font-semibold text-stage"
+                    : "font-medium text-white/85 hover:text-white"
                 )}
-                style={
-                  tab === key ? { background: THEME.food.scan } : undefined
-                }
               >
+                {photoLock && key !== "barcode" && (
+                  <Lock className="size-3" aria-hidden="true" />
+                )}
                 {label}
               </button>
             ))}
           </div>
 
-          {/* Barcode-mode hint slot.
-              Always rendered with a fixed line-height so switching
-              tabs doesn't shift the segmented control above it.
-              Previously this was a `{tab === 'barcode' && <p>...}` —
-              when the hint appeared the bar above lifted by ~28px and
-              when it disappeared it dropped, which read as a layout
-              jump every time the user toggled tabs. Reserving the
-              row's height + crossfading the text keeps the scaffold
-              stable; AnimatePresence is keyed on the hint string so a
-              hint change ("Scanning…" → "Found") also crossfades. */}
-          <div
-            className="h-4 flex items-center justify-center"
-            aria-live="polite"
-          >
-            <AnimatePresence mode="wait">
-              {tab === "barcode" && (
-                <motion.p
-                  key={barcodeHint}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.15 }}
-                  className="text-center text-xs text-white/80"
-                >
-                  {barcodeHint}
-                </motion.p>
-              )}
-            </AnimatePresence>
-          </div>
+          {/* capture row — library · shutter · flip-camera (symmetrical).
+              On a photo tab of a locked account the row is the offer
+              instead, at the shutter's height so the tabs above never
+              move when switching. */}
+          {photoLock && tab !== "barcode" ? (
+            <div className="h-[72px] flex items-center justify-center gap-2">
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  haptic("light");
+                  setTab("barcode");
+                }}
+              >
+                Scan a barcode
+              </Button>
+              <ScanProButton onUpgrade={photoLock.onUpgrade} />
+            </div>
+          ) : (
+            <div className="flex items-center justify-between">
+              {/* Photo library — haptics like every other control on this
+                surface. On Meal and Label a picked photo goes to AI
+                analysis; in Barcode mode it is read on the device, which
+                is why a locked account gets it there too. */}
+              <button
+                type="button"
+                onClick={() => {
+                  haptic("light");
+                  pickFromLibrary();
+                }}
+                className="size-12 rounded-full bg-black/50 text-white flex items-center justify-center"
+                aria-label="Photo library"
+                disabled={loading || busy}
+              >
+                <ImageIcon className="size-5" />
+              </button>
 
-          {/* capture row — library · shutter · flip-camera (symmetrical) */}
-          <div className="flex items-center justify-between">
-            {/* Photo library — haptics like every other control on this
-                surface (it was the one silent button in the row). */}
-            <button
-              type="button"
-              onClick={() => {
-                haptic("light");
-                pickFromLibrary();
-              }}
-              className="size-12 rounded-full bg-black/50 text-white flex items-center justify-center"
-              aria-label="Photo library"
-              disabled={loading || busy}
-            >
-              <ImageIcon className="size-5" />
-            </button>
-
-            {/* Shutter — only rendered in modes that actually capture
-                (Scan Food, Food label). Barcode mode auto-detects, so
+              {/* Shutter — only rendered in modes that actually capture
+                (Meal, Label). Barcode mode reads codes by itself, so
                 showing a disabled "shutter" + helper copy explaining
                 that it doesn't work was confusing UX — users would
                 tap and nothing would happen. We render an empty
@@ -1146,68 +1385,44 @@ export default function FoodCameraModal({
                 library + flip-camera buttons stay anchored at the
                 edges and the layout doesn't shift when switching
                 modes. */}
-            {tab !== "barcode" ? (
+              {tab !== "barcode" ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    haptic("medium");
+                    takePhoto();
+                  }}
+                  disabled={disableShutter}
+                  className={cn(
+                    "size-[72px] rounded-full border-[5px] flex items-center justify-center transition-transform active:scale-90",
+                    disableShutter && "opacity-50"
+                  )}
+                  style={{ borderColor: THEME.food.scan }}
+                  aria-label="Capture"
+                >
+                  {/* eslint-disable-next-line no-restricted-syntax -- camera shutter is white in every theme (universal camera idiom on the always-black camera chrome) */}
+                  <div className="size-[60px] rounded-full bg-white" />
+                </button>
+              ) : (
+                <div className="size-[72px]" aria-hidden="true" />
+              )}
+
+              {/* Flip camera — balances the library icon on the left */}
               <button
                 type="button"
                 onClick={() => {
-                  haptic("medium");
-                  takePhoto();
+                  haptic("light");
+                  setFacing((p) =>
+                    p === "environment" ? "user" : "environment"
+                  );
                 }}
-                disabled={disableShutter}
-                className={cn(
-                  "size-[72px] rounded-full border-[5px] flex items-center justify-center transition-transform active:scale-90",
-                  disableShutter && "opacity-50"
-                )}
-                style={{ borderColor: THEME.food.scan }}
-                aria-label="Capture"
+                className="size-12 rounded-full bg-black/50 text-white flex items-center justify-center"
+                aria-label="Flip camera"
               >
-                {/* eslint-disable-next-line no-restricted-syntax -- camera shutter is white in every theme (universal camera idiom on the always-black camera chrome) */}
-                <div className="size-[60px] rounded-full bg-white" />
+                <RefreshCw className="size-5" />
               </button>
-            ) : (
-              <div className="size-[72px]" aria-hidden="true" />
-            )}
-
-            {/* Flip camera — balances the library icon on the left */}
-            <button
-              type="button"
-              onClick={() => {
-                haptic("light");
-                setFacing((p) =>
-                  p === "environment" ? "user" : "environment"
-                );
-              }}
-              className="size-12 rounded-full bg-black/50 text-white flex items-center justify-center"
-              aria-label="Flip camera"
-            >
-              <RefreshCw className="size-5" />
-            </button>
-          </div>
-
-          {/* Per-mode helper text under the shutter. Crossfaded on tab
-              change so the swap doesn't read as a hard content flash —
-              the modes are about user intent (point / align / scan)
-              and a soft transition reinforces "you switched tools"
-              instead of "the screen reset". Container height is
-              reserved (h-4) for layout stability across modes. */}
-          <div className="h-4 flex items-center justify-center">
-            <AnimatePresence mode="wait">
-              <motion.p
-                key={tab}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.15 }}
-                className="text-center text-xs text-white/70"
-              >
-                {tab === "barcode"
-                  ? "Aim at the barcode · auto-detects"
-                  : tab === "label"
-                    ? "Align the nutrition label"
-                    : "Point at your meal"}
-              </motion.p>
-            </AnimatePresence>
-          </div>
+            </div>
+          )}
         </div>
       </div>
 

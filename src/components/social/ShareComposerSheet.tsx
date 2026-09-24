@@ -8,6 +8,7 @@ import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { useEmailVerificationGate } from "@/hooks/useEmailVerificationGate";
 import { useAuth, useUid } from "@/lib/auth";
 import { postActivity } from "@/lib/socialApi";
+import { CAPTION_MAX } from "@/lib/activityPost";
 import { recordSharedActivity } from "@/lib/sessionDelete";
 import { containsProfanity } from "@/lib/profanityFilter";
 import VerifyEmailNotice from "./VerifyEmailNotice";
@@ -19,8 +20,6 @@ import {
   type ShareVisibility,
   type ActivityPreview,
 } from "@/lib/shareComposer";
-
-const CAPTION_MAX = 140;
 
 const TITLE: Record<ShareType, string> = {
   workout: "Share this workout?",

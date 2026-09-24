@@ -30,6 +30,15 @@ export const MEAL_LABELS: Record<MealKey, string> = {
 };
 
 /**
+ * Layout for both meal-slot pickers, the composer's row and the edit
+ * sheet's: the four slots on one row from 360px up, two by two below
+ * that. Left to the solid SegmentedControl's own wrapping, the sheet's
+ * pills fit three to a line and leave "Dinner" on a line of its own.
+ */
+export const MEAL_PICKER_LAYOUT =
+  "grid grid-cols-2 min-[360px]:grid-cols-4 [&>button]:min-w-0 [&>button]:px-2 [&>button]:text-xs sm:[&>button]:text-sm";
+
+/**
  * Best-guess meal slot for "now" (local hour), used to pre-select the
  * logging destination so the common case doesn't force a breakfast/
  * lunch/snacks/dinner decision before every save. Kept here with the

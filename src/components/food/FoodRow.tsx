@@ -1,5 +1,11 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { motion, AnimatePresence, type PanInfo } from "framer-motion";
+import {
+  motion,
+  AnimatePresence,
+  useMotionValue,
+  useTransform,
+  type PanInfo,
+} from "framer-motion";
 import { Trash2, Pencil } from "lucide-react";
 import { THEME } from "@/lib/theme";
 import { haptic } from "@/lib/haptic";
@@ -141,6 +147,13 @@ export default function FoodRow({
   // Close the row externally (when another row opens) by resetting drag via key.
   // We use Framer Motion's animate prop to drive the x value directly.
   const targetX = isOpen ? OPEN_OFFSET : 0;
+  /* The row's offset, shared by the drag, the open/close animation and
+     the Delete panel under it. The panel shows only while the row is off
+     zero. At rest the row covers it exactly, but the card's rounded
+     corner clips both layers with the same soft edge, and the red shows
+     through that edge as a hairline along the last row's corners. */
+  const x = useMotionValue(0);
+  const deletePanelOpacity = useTransform(x, (v) => (v < -0.5 ? 1 : 0));
 
   // Reset the "fired haptic" flags whenever the row closes so the next drag
   // can fire again.
@@ -321,11 +334,12 @@ export default function FoodRow({
           right edge so they stay put as the row slides past OPEN_OFFSET.
           Tapping the exposed strip deletes.
         */}
-        <button
+        <motion.button
           type="button"
           onClick={onDelete}
           aria-label={`Delete ${group.foodName}`}
-          className="absolute inset-0 flex items-center justify-end bg-destructive text-destructive-foreground active:opacity-90 transition-opacity"
+          className="absolute inset-0 flex items-center justify-end bg-destructive text-destructive-foreground active:brightness-90"
+          style={{ opacity: deletePanelOpacity }}
         >
           <span
             className="flex flex-col items-center justify-center gap-1 text-caption font-medium tracking-wide"
@@ -338,7 +352,7 @@ export default function FoodRow({
             />
             Delete
           </span>
-        </button>
+        </motion.button>
 
         {/* Draggable row content on top. Tapping it opens the edit sheet
             (or closes the row when already swiped open). */}
@@ -350,6 +364,7 @@ export default function FoodRow({
           onDrag={handleDrag}
           onDragEnd={handleDragEnd}
           onTap={handleTap}
+          style={{ x }}
           animate={{ x: targetX }}
           transition={{ type: "spring", stiffness: 400, damping: 35 }}
           role="button"

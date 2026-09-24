@@ -362,12 +362,23 @@ export default function Space() {
             aria-hidden
           />
         )}
+        {/* Back sits on a round chip of its own. Bare over a cover photo,
+            a white arrow disappeared on light covers (a sunlit sky, a pale
+            street), and people did not know they could go back. Over a
+            photo the chip is the dark scrim RunDetail's back button uses
+            over its map; over the plain tinted hero it is the page colour. */}
         <div className="absolute top-3 left-3">
           <IconButton
             onClick={() => navigate(-1)}
             aria-label="Back"
             icon={<ArrowLeft />}
-            className={photo ? "text-white" : undefined}
+            data-testid="space-back"
+            className={
+              photo
+                ? "rounded-full text-white backdrop-blur-md border border-white/20"
+                : "rounded-full bg-background/80 border border-border/60"
+            }
+            style={photo ? { background: THEME.scrim } : undefined}
           />
         </div>
         <div className="absolute bottom-4 left-4 right-4 min-w-0">

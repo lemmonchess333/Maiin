@@ -8,6 +8,7 @@ import ProgramStallReview from "@/components/program/ProgramStallReview";
 import { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import type { ReactNode } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { focusLabel } from "@/features/program/trainingBlock";
 import { useProgram } from "@/features/program/useProgram";
 import { useStreaks } from "@/features/streaks/useStreaks";
 import { useAuth } from "@/lib/auth";
@@ -19,12 +20,9 @@ import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { Button } from "@/components/ui/Button";
 import WorkoutSession from "@/components/WorkoutSession";
 import SavedRoutinesSection from "@/components/program/SavedRoutinesSection";
-import WeeklyVolumeCard from "@/components/program/WeeklyVolumeCard";
 import ProgrammeWeekSelector from "@/components/program/ProgrammeWeekSelector";
 import type { ProgrammeWeekSelectorCell } from "@/components/program/ProgrammeWeekSelector";
-import ExerciseListFooter, {
-  EXERCISE_PANEL_ID,
-} from "@/components/program/ExerciseListDisclosure";
+import { dayFocusLabel } from "@/lib/liftDayLabel";
 import SessionCommandCard from "@/components/program/SessionCommandCard";
 import TrainingBlockCard from "@/components/program/TrainingBlockCard";
 import ExperienceSuggestionCard from "@/components/program/ExperienceSuggestionCard";
@@ -52,6 +50,7 @@ import { localDateString, localWeekKey } from "@/lib/dateHelpers";
 import { useEasierTodayRecommendation } from "@/features/program/useEasierTodayRecommendation";
 import ScheduleLayoutSheet from "@/components/program/ScheduleLayoutSheet";
 import {
+  CalendarRange,
   Dumbbell,
   Settings2,
   CalendarDays,
@@ -65,7 +64,6 @@ import {
   Repeat,
   Trash2,
   Info,
-  ChevronRight,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import PageShell from "@/components/ui/PageShell";
@@ -347,15 +345,12 @@ function ProgramInner() {
 
   // Exercise card state — read-only, tap opens info sheet
   const [reorderMode, setReorderMode] = useState(false);
-  /* The exercise list's own fold. Held HERE rather than in the
-     disclosure because the list mounts inside the day pager's
-     `motion.div key={idx}`: state inside it would reset on every day
-     swipe, so a user who opened the list would have to reopen it for
-     each day of the week. Not persisted across visits — collapsed is
-     the default the scroll budget was measured against, and a
-     remembered "always open" quietly returns the page to its old
-     height for exactly the users who notice height. */
-  const [exercisesExpanded, setExercisesExpanded] = useState(false);
+  /* The training block's detail sheet, driven from the page ⋯ now that
+     the running block's own row is gone — its title was the week row's
+     string and its subtitle repeated the number. The card still renders
+     "Start a training block" and "Block complete" itself; only the
+     running state moved. */
+  const [blockDetailOpen, setBlockDetailOpen] = useState(false);
   // PR-2: reorderMode is meaningless outside the Lift tab — the
   // DndContext that consumes it only renders when activeTab === "lift"
   // (and only when there are exercises). Without this effect the
@@ -691,13 +686,14 @@ function ProgramInner() {
     (w, i) => ({
       key: String(i),
       center: String(i + 1),
-      // Show only the split CATEGORY ("Push" / "Pull" / "Legs" / "Upper" /
-      // "Full Body") on the chip, not the full "Push — Chest Focus". The chip
-      // is `line-clamp-1`, so the full name truncated to a dangling "Push —…"
-      // — and it's redundant: the full name already shows in the day header
-      // below ("Day N · Push — Chest Focus"). The category alone reads clean
-      // and makes the rotation legible across the week.
-      bottomLabel: w.dayName.split(/\s*[—–-]\s*/)[0].trim() || w.dayName,
+      // The day's FOCUS ("Squat", "Chest", "Shoulder"), not its split
+      // category. The chip is `line-clamp-1` so the full "Push — Chest
+      // Focus" cannot go here, and the category is the wrong half to
+      // keep: it is already the page header's subtitle, and it REPEATS —
+      // a Full Body rotation labels all three days "Full Body", and a
+      // Push/Pull/Legs x2 week labels days 1 and 4 both "Push". The
+      // focus is what varies within a week by construction.
+      bottomLabel: dayFocusLabel(w.dayName),
       status: w.completed ? "completed" : w.skipped ? "skipped" : "upcoming",
       isToday: !isViewingHistory && i === todayIndex,
     })
@@ -1182,8 +1178,8 @@ function ProgramInner() {
                       {/* ── Session hero — shared command-card chrome
                             (SessionCommandCard sport="lift"), mirroring the Run
                             tab so both sports get the same "what's next"
-                            moment. Cursor-aware eyebrow; the primary "Begin
-                            Workout" CTA renders only on the startable cursor
+                            moment. Cursor-aware eyebrow; the primary "Start
+                            workout" CTA renders only on the startable cursor
                             session (terminal/upcoming days show status, no
                             button). The editable exercise list stays its own
                             body below. Replaces the old hand-rolled header that
@@ -1205,43 +1201,58 @@ function ProgramInner() {
                             ? []
                             : [`~${estimatedMinutes} min`]
                         }
+                        /* The card always carries the day's ONE action.
+                           Start on the startable day; on an upcoming one
+                           "Make this next" IS the action (you cannot start
+                           it), so it takes the slot rather than floating in
+                           a row beneath. A completed or skipped day has no
+                           action and the slot stays empty. History weeks
+                           are records, not prescriptions — the same gate
+                           the row used. */
                         primaryActionLabel={
                           status === "today" && !selectedWorkout.completed
                             ? "Start workout"
-                            : undefined
+                            : status === "upcoming" && !isViewingHistory
+                              ? "Make this next"
+                              : undefined
+                        }
+                        primaryActionIcon={
+                          status === "upcoming" ? (
+                            <ArrowUp className="size-4" />
+                          ) : undefined
+                        }
+                        primaryActionVariant={
+                          status === "upcoming" ? "secondary" : undefined
                         }
                         onPrimaryAction={
-                          status === "today" && !selectedWorkout.completed
+                          status === "upcoming" && !isViewingHistory
                             ? () => {
                                 haptic("light");
-                                // Begin means begin (operator, 2026-08-05:
-                                // the every-tap chooser was "too much
-                                // choice"). Hevy / Strong / Fitbod all start
-                                // on tap — the CLAUDE.md reference bar for
-                                // surfacing an interstitial isn't met. The
-                                // honest versions stay one tap away: the
-                                // "Short on time?" link opens the chooser,
-                                // and a signal-backed easier day surfaces as
-                                // its own row below, so PROGRAM-ADAPT-01's
-                                // never-auto-applied offer survives without
-                                // taxing every session start.
-                                setSessionBudgetMinutes(usualBudget ?? 60);
-                                setSessionVariant(
-                                  usualBudget === null ? "full" : "time_budget"
-                                );
-                                setSessionDayIndex(idx);
+                                void setNextWorkout(idx);
                               }
-                            : undefined
-                        }
-                        footer={
-                          <ExerciseListFooter
-                            names={selectedWorkout.exercises.map(
-                              (ex) => ex.name
-                            )}
-                            open={exercisesExpanded}
-                            onOpenChange={setExercisesExpanded}
-                            forceOpen={reorderMode}
-                          />
+                            : status === "today" && !selectedWorkout.completed
+                              ? () => {
+                                  haptic("light");
+                                  // Begin means begin (operator, 2026-08-05:
+                                  // the every-tap chooser was "too much
+                                  // choice"). Hevy / Strong / Fitbod all start
+                                  // on tap — the CLAUDE.md reference bar for
+                                  // surfacing an interstitial isn't met. The
+                                  // honest versions stay one tap away: the
+                                  // "Short on time?" link opens the chooser,
+                                  // and a signal-backed easier day surfaces as
+                                  // its own row below, so PROGRAM-ADAPT-01's
+                                  // never-auto-applied offer survives without
+                                  // taxing every session start.
+                                  setSessionBudgetMinutes(usualBudget ?? 60);
+                                  setSessionVariant(
+                                    usualBudget === null
+                                      ? "full"
+                                      : "time_budget"
+                                  );
+                                  setSessionDayIndex(idx);
+                                }
+                              : undefined
                         }
                       />
 
@@ -1297,13 +1308,297 @@ function ProgramInner() {
                         />
                       )}
 
-                      {/* Secondary action: skip this session — mirrors the
-                          Run card's "Start free run instead" link. Offered on
-                          the cursor day AND any upcoming day of the CURRENT
-                          week (owner request 2026-07-11: "let me move to next
-                          week when I want" — skipping the remaining days is
-                          the deliberate, per-day path to the Advance button).
-                          History weeks are records, not prescriptions. */}
+                      {/* The day's exercises, on screen rather than behind a tap.
+                          The list IS the page: a card that states the session
+                          above a control that hides it says one thing twice, and
+                          the per-row Replace / Remove / Move menu lives nowhere
+                          else — `DayActionSheet` is day-scoped and offers none of
+                          the three. "Reorder exercises" is a page-header action,
+                          so it needs rows on screen the moment it is tapped. */}
+                      <div className="space-y-2">
+                        {/* ── Exercise Cards ── */}
+                        {reorderMode ? (
+                          <DndContext
+                            sensors={sensors}
+                            collisionDetection={closestCenter}
+                            onDragEnd={(event) => handleDragEnd(idx, event)}
+                          >
+                            <SortableContext
+                              items={selectedWorkout.exercises.map((ex, i) =>
+                                rowId(ex, idx, i)
+                              )}
+                              strategy={verticalListSortingStrategy}
+                            >
+                              <div className="space-y-2">
+                                {selectedWorkout.exercises.map((ex, i) => {
+                                  const isBW =
+                                    getExerciseById(ex.exerciseId)
+                                      ?.equipment === "Bodyweight";
+                                  const lastPerf = lastPerformanceMap.get(
+                                    ex.exerciseId
+                                  );
+                                  return (
+                                    <SortableExerciseRow
+                                      key={rowId(ex, idx, i)}
+                                      id={rowId(ex, idx, i)}
+                                      label={ex.name}
+                                      justDropped={
+                                        justDroppedId === rowId(ex, idx, i)
+                                      }
+                                      showHandle={true}
+                                    >
+                                      <div
+                                        data-swipe-card="true"
+                                        className="p-3 rounded-xl bg-card"
+                                      >
+                                        <p className="text-sm font-semibold text-foreground truncate">
+                                          {ex.name}
+                                        </p>
+                                        <p className="text-xs text-muted-foreground">
+                                          <span className="font-mono tabular-nums">
+                                            {ex.sets}
+                                          </span>{" "}
+                                          sets ×{" "}
+                                          <span className="font-mono tabular-nums">
+                                            {formatRepTarget(ex)}
+                                          </span>{" "}
+                                          {ex.repUnit === "seconds"
+                                            ? ""
+                                            : "reps"}
+                                          {!isBW && ex.weight > 0 ? (
+                                            <>
+                                              {" · "}
+                                              <span className="font-mono tabular-nums">
+                                                {ex.weight}
+                                              </span>
+                                              {" kg"}
+                                            </>
+                                          ) : null}
+                                        </p>
+                                        {lastPerf && (
+                                          <p className="text-xs mt-0.5 text-muted-foreground">
+                                            Last:{" "}
+                                            {ex.repUnit === "seconds" ? (
+                                              <>
+                                                <span className="font-mono tabular-nums">
+                                                  {lastPerf.reps}
+                                                </span>
+                                                s
+                                              </>
+                                            ) : isBW ? (
+                                              <>
+                                                BW ×{" "}
+                                                <span className="font-mono tabular-nums">
+                                                  {lastPerf.reps}
+                                                </span>
+                                              </>
+                                            ) : lastPerf.weight > 0 ? (
+                                              <>
+                                                <span className="font-mono tabular-nums">
+                                                  {lastPerf.weight}
+                                                </span>{" "}
+                                                kg ×{" "}
+                                                <span className="font-mono tabular-nums">
+                                                  {lastPerf.reps}
+                                                </span>
+                                              </>
+                                            ) : (
+                                              <>
+                                                — ×{" "}
+                                                <span className="font-mono tabular-nums">
+                                                  {lastPerf.reps}
+                                                </span>
+                                              </>
+                                            )}
+                                          </p>
+                                        )}
+                                      </div>
+                                    </SortableExerciseRow>
+                                  );
+                                })}
+                              </div>
+                            </SortableContext>
+                          </DndContext>
+                        ) : (
+                          <div className="space-y-2">
+                            {selectedWorkout.exercises.map((ex, i) => {
+                              const isBW =
+                                getExerciseById(ex.exerciseId)?.equipment ===
+                                "Bodyweight";
+                              const lastPerf = lastPerformanceMap.get(
+                                ex.exerciseId
+                              );
+                              return (
+                                <div
+                                  key={rowId(ex, idx, i)}
+                                  data-swipe-card="true"
+                                >
+                                  <SortableExerciseRow
+                                    id={rowId(ex, idx, i)}
+                                    label={ex.name}
+                                    showHandle={false}
+                                    onDelete={() => removeExFromDay(idx, i)}
+                                  >
+                                    {/* Owner request 2026-09-02: removing an
+                                      exercise was reachable only by swipe or
+                                      long-press. The "…" opens the same
+                                      manage menu (Replace / Remove / Move)
+                                      visibly; swipe and long-press stay. */}
+                                    <div className="flex items-center rounded-xl bg-card">
+                                      <button
+                                        type="button"
+                                        onClick={() =>
+                                          navigate(
+                                            `/history/exercise/${encodeURIComponent(ex.name)}`,
+                                            { state: { initialTab: "form" } }
+                                          )
+                                        }
+                                        className="flex-1 min-w-0 p-3 text-left active:scale-[0.97] transition-transform"
+                                        onTouchStart={(e) =>
+                                          handleLongPressStart(idx, i, e)
+                                        }
+                                        onTouchMove={handleLongPressCancel}
+                                        onTouchEnd={handleLongPressCancel}
+                                        onContextMenu={(e) => {
+                                          // D-LIFT-17: long-press is touch-only —
+                                          // right-click is its pointer/desktop
+                                          // equivalent for the same manage menu.
+                                          e.preventDefault();
+                                          setContextMenu({
+                                            dayIndex: idx,
+                                            exIndex: i,
+                                            x: e.clientX,
+                                            y: e.clientY,
+                                          });
+                                        }}
+                                      >
+                                        <p className="text-sm font-semibold text-foreground truncate">
+                                          {ex.name}
+                                        </p>
+                                        <p className="text-xs text-muted-foreground">
+                                          <span className="font-mono tabular-nums">
+                                            {ex.sets}
+                                          </span>{" "}
+                                          sets ×{" "}
+                                          <span className="font-mono tabular-nums">
+                                            {formatRepTarget(ex)}
+                                          </span>{" "}
+                                          {ex.repUnit === "seconds"
+                                            ? ""
+                                            : "reps"}
+                                          {!isBW && ex.weight > 0 ? (
+                                            <>
+                                              {" · "}
+                                              <span className="font-mono tabular-nums">
+                                                {ex.weight}
+                                              </span>
+                                              {" kg"}
+                                            </>
+                                          ) : null}
+                                        </p>
+                                        {lastPerf && (
+                                          <p className="text-xs mt-0.5 text-muted-foreground">
+                                            Last:{" "}
+                                            {ex.repUnit === "seconds" ? (
+                                              <>
+                                                <span className="font-mono tabular-nums">
+                                                  {lastPerf.reps}
+                                                </span>
+                                                s
+                                              </>
+                                            ) : isBW ? (
+                                              <>
+                                                BW ×{" "}
+                                                <span className="font-mono tabular-nums">
+                                                  {lastPerf.reps}
+                                                </span>
+                                              </>
+                                            ) : lastPerf.weight > 0 ? (
+                                              <>
+                                                <span className="font-mono tabular-nums">
+                                                  {lastPerf.weight}
+                                                </span>{" "}
+                                                kg ×{" "}
+                                                <span className="font-mono tabular-nums">
+                                                  {lastPerf.reps}
+                                                </span>
+                                              </>
+                                            ) : (
+                                              <>
+                                                — ×{" "}
+                                                <span className="font-mono tabular-nums">
+                                                  {lastPerf.reps}
+                                                </span>
+                                              </>
+                                            )}
+                                          </p>
+                                        )}
+                                        {ex.notes && (
+                                          <p className="text-xs mt-1 text-muted-foreground flex items-start gap-1">
+                                            <Info className="size-3 shrink-0 mt-0.5" />
+                                            <span>{ex.notes}</span>
+                                          </p>
+                                        )}
+                                      </button>
+                                      <IconButton
+                                        aria-label={`More options for ${ex.name}`}
+                                        icon={
+                                          <MoreHorizontal className="size-5" />
+                                        }
+                                        variant="ghost"
+                                        size="md"
+                                        className="mr-1 text-muted-foreground"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          const r = (
+                                            e.currentTarget as HTMLElement
+                                          ).getBoundingClientRect();
+                                          setContextMenu({
+                                            dayIndex: idx,
+                                            exIndex: i,
+                                            x: r.left + r.width / 2,
+                                            y: r.bottom + 4,
+                                          });
+                                        }}
+                                      />
+                                    </div>
+                                  </SortableExerciseRow>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+
+                        {/* ── + Add exercise (not on completed/skipped) ── */}
+                        {status !== "completed" && status !== "skipped" && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setAddPickerDayIndex(idx);
+                              setShowAddPicker(true);
+                            }}
+                            className="w-full py-3 text-center active:scale-[0.97] transition-all flex items-center justify-center gap-2 bg-card rounded-xl text-lifting-strong font-medium text-sm"
+                          >
+                            <Plus className="size-4" /> Add exercise
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Session modifiers, BELOW the list rather than
+                          between it and the card.
+
+                          Both are judgements about work you have to have
+                          seen: "short on time?" against five exercises and
+                          an estimate, "skip session" against what skipping
+                          costs. Asking above the list asks blind, and it
+                          put two secondary links between the card that
+                          states the session and the rows that ARE it.
+
+                          Offered on the cursor day AND any upcoming day of
+                          the CURRENT week (owner request: skipping the
+                          remaining days is the deliberate, per-day path to
+                          the Advance button). History weeks are records,
+                          not prescriptions. */}
                       {(status === "today" || status === "upcoming") &&
                         !isViewingHistory && (
                           <div className="flex items-center justify-center">
@@ -1337,33 +1632,12 @@ function ProgramInner() {
                                   Short on time?
                                 </Button>
                               )}
-                            {/* PROGRAM-SESSION-ORDER-01: real weeks rarely
-                                happen in order. "Make this next" moves the
-                                startable cursor to this unfinished day — a
-                                cursor change, never a schedule rewrite; the
-                                overridden cursor day offers the way back.
-                                History weeks are records, not prescriptions
-                                (same gate as Skip above).
-
-                                It leads the row, and in `secondary` rather
-                                than ghost, because on a day you cannot start
-                                it IS the action: ghost put it level with
-                                Skip session, and the hand-rolled
-                                muted-foreground button it replaces read as
-                                disabled and gave a keyboard user no focus
-                                ring — the same defect fixed for "Short on
-                                time?" above, which left these two behind. */}
-                            {status === "upcoming" && (
-                              <Button
-                                variant="secondary"
-                                onClick={() => {
-                                  haptic("light");
-                                  void setNextWorkout(idx);
-                                }}
-                              >
-                                Make this next
-                              </Button>
-                            )}
+                            {/* Ghost, like its neighbour, and a Button
+                                rather than a hand-rolled one: a
+                                muted-foreground span reads as disabled
+                                and gives a keyboard user no focus ring.
+                                "Make this next" is not in this row — it
+                                takes the card's own action slot. */}
                             <Button
                               variant="ghost"
                               onClick={() => {
@@ -1388,275 +1662,6 @@ function ProgramInner() {
                               )}
                           </div>
                         )}
-
-                      {/* The exercise list. Its TRIGGER is the command card's footer
-                            above; this is only the panel, so the two sit flush and the
-                            page no longer ends on a detached row. `reorderMode` opens
-                            it because "Reorder exercises" is a page-header action and
-                            can be tapped while the list is collapsed. */}
-                      {(exercisesExpanded || reorderMode) && (
-                        <div id={EXERCISE_PANEL_ID} className="space-y-2">
-                          {/* ── Exercise Cards ── */}
-                          {reorderMode ? (
-                            <DndContext
-                              sensors={sensors}
-                              collisionDetection={closestCenter}
-                              onDragEnd={(event) => handleDragEnd(idx, event)}
-                            >
-                              <SortableContext
-                                items={selectedWorkout.exercises.map((ex, i) =>
-                                  rowId(ex, idx, i)
-                                )}
-                                strategy={verticalListSortingStrategy}
-                              >
-                                <div className="space-y-2">
-                                  {selectedWorkout.exercises.map((ex, i) => {
-                                    const isBW =
-                                      getExerciseById(ex.exerciseId)
-                                        ?.equipment === "Bodyweight";
-                                    const lastPerf = lastPerformanceMap.get(
-                                      ex.exerciseId
-                                    );
-                                    return (
-                                      <SortableExerciseRow
-                                        key={rowId(ex, idx, i)}
-                                        id={rowId(ex, idx, i)}
-                                        label={ex.name}
-                                        justDropped={
-                                          justDroppedId === rowId(ex, idx, i)
-                                        }
-                                        showHandle={true}
-                                      >
-                                        <div
-                                          data-swipe-card="true"
-                                          className="p-3 rounded-xl bg-card"
-                                        >
-                                          <p className="text-sm font-semibold text-foreground truncate">
-                                            {ex.name}
-                                          </p>
-                                          <p className="text-xs text-muted-foreground">
-                                            <span className="font-mono tabular-nums">
-                                              {ex.sets}
-                                            </span>{" "}
-                                            sets ×{" "}
-                                            <span className="font-mono tabular-nums">
-                                              {formatRepTarget(ex)}
-                                            </span>{" "}
-                                            {ex.repUnit === "seconds"
-                                              ? ""
-                                              : "reps"}
-                                            {!isBW && ex.weight > 0 ? (
-                                              <>
-                                                {" · "}
-                                                <span className="font-mono tabular-nums">
-                                                  {ex.weight}
-                                                </span>
-                                                {" kg"}
-                                              </>
-                                            ) : null}
-                                          </p>
-                                          {lastPerf && (
-                                            <p className="text-xs mt-0.5 text-muted-foreground">
-                                              Last:{" "}
-                                              {ex.repUnit === "seconds" ? (
-                                                <>
-                                                  <span className="font-mono tabular-nums">
-                                                    {lastPerf.reps}
-                                                  </span>
-                                                  s
-                                                </>
-                                              ) : lastPerf.weight > 0 ? (
-                                                <>
-                                                  <span className="font-mono tabular-nums">
-                                                    {lastPerf.weight}
-                                                  </span>{" "}
-                                                  kg ×{" "}
-                                                  <span className="font-mono tabular-nums">
-                                                    {lastPerf.reps}
-                                                  </span>
-                                                </>
-                                              ) : isBW ? (
-                                                <>
-                                                  BW ×{" "}
-                                                  <span className="font-mono tabular-nums">
-                                                    {lastPerf.reps}
-                                                  </span>
-                                                </>
-                                              ) : (
-                                                <>
-                                                  — ×{" "}
-                                                  <span className="font-mono tabular-nums">
-                                                    {lastPerf.reps}
-                                                  </span>
-                                                </>
-                                              )}
-                                            </p>
-                                          )}
-                                        </div>
-                                      </SortableExerciseRow>
-                                    );
-                                  })}
-                                </div>
-                              </SortableContext>
-                            </DndContext>
-                          ) : (
-                            <div className="space-y-2">
-                              {selectedWorkout.exercises.map((ex, i) => {
-                                const isBW =
-                                  getExerciseById(ex.exerciseId)?.equipment ===
-                                  "Bodyweight";
-                                const lastPerf = lastPerformanceMap.get(
-                                  ex.exerciseId
-                                );
-                                return (
-                                  <div
-                                    key={rowId(ex, idx, i)}
-                                    data-swipe-card="true"
-                                  >
-                                    <SortableExerciseRow
-                                      id={rowId(ex, idx, i)}
-                                      label={ex.name}
-                                      showHandle={false}
-                                      onDelete={() => removeExFromDay(idx, i)}
-                                    >
-                                      {/* Owner request 2026-09-02: removing an
-                                        exercise was reachable only by swipe or
-                                        long-press. The "…" opens the same
-                                        manage menu (Replace / Remove / Move)
-                                        visibly; swipe and long-press stay. */}
-                                      <div className="flex items-center rounded-xl bg-card">
-                                        <button
-                                          type="button"
-                                          onClick={() =>
-                                            navigate(
-                                              `/history/exercise/${encodeURIComponent(ex.name)}`,
-                                              { state: { initialTab: "form" } }
-                                            )
-                                          }
-                                          className="flex-1 min-w-0 p-3 text-left active:scale-[0.97] transition-transform"
-                                          onTouchStart={(e) =>
-                                            handleLongPressStart(idx, i, e)
-                                          }
-                                          onTouchMove={handleLongPressCancel}
-                                          onTouchEnd={handleLongPressCancel}
-                                          onContextMenu={(e) => {
-                                            // D-LIFT-17: long-press is touch-only —
-                                            // right-click is its pointer/desktop
-                                            // equivalent for the same manage menu.
-                                            e.preventDefault();
-                                            setContextMenu({
-                                              dayIndex: idx,
-                                              exIndex: i,
-                                              x: e.clientX,
-                                              y: e.clientY,
-                                            });
-                                          }}
-                                        >
-                                          <p className="text-sm font-semibold text-foreground truncate">
-                                            {ex.name}
-                                          </p>
-                                          <p className="text-xs text-muted-foreground">
-                                            <span className="font-mono tabular-nums">
-                                              {ex.sets}
-                                            </span>{" "}
-                                            sets ×{" "}
-                                            <span className="font-mono tabular-nums">
-                                              {formatRepTarget(ex)}
-                                            </span>{" "}
-                                            {ex.repUnit === "seconds"
-                                              ? ""
-                                              : "reps"}
-                                            {!isBW && ex.weight > 0 ? (
-                                              <>
-                                                {" · "}
-                                                <span className="font-mono tabular-nums">
-                                                  {ex.weight}
-                                                </span>
-                                                {" kg"}
-                                              </>
-                                            ) : null}
-                                          </p>
-                                          {lastPerf && (
-                                            <p className="text-xs mt-0.5 text-muted-foreground">
-                                              Last:{" "}
-                                              {ex.repUnit === "seconds" ? (
-                                                <>
-                                                  <span className="font-mono tabular-nums">
-                                                    {lastPerf.reps}
-                                                  </span>
-                                                  s
-                                                </>
-                                              ) : lastPerf.weight > 0 ? (
-                                                <>
-                                                  <span className="font-mono tabular-nums">
-                                                    {lastPerf.weight}
-                                                  </span>{" "}
-                                                  kg ×{" "}
-                                                  <span className="font-mono tabular-nums">
-                                                    {lastPerf.reps}
-                                                  </span>
-                                                </>
-                                              ) : (
-                                                <>
-                                                  <span className="font-mono tabular-nums">
-                                                    {lastPerf.reps}
-                                                  </span>{" "}
-                                                  reps
-                                                </>
-                                              )}
-                                            </p>
-                                          )}
-                                          {ex.notes && (
-                                            <p className="text-xs mt-1 text-muted-foreground flex items-start gap-1">
-                                              <Info className="size-3 shrink-0 mt-0.5" />
-                                              <span>{ex.notes}</span>
-                                            </p>
-                                          )}
-                                        </button>
-                                        <IconButton
-                                          aria-label={`More options for ${ex.name}`}
-                                          icon={
-                                            <MoreHorizontal className="size-5" />
-                                          }
-                                          variant="ghost"
-                                          size="md"
-                                          className="mr-1 text-muted-foreground"
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            const r = (
-                                              e.currentTarget as HTMLElement
-                                            ).getBoundingClientRect();
-                                            setContextMenu({
-                                              dayIndex: idx,
-                                              exIndex: i,
-                                              x: r.left + r.width / 2,
-                                              y: r.bottom + 4,
-                                            });
-                                          }}
-                                        />
-                                      </div>
-                                    </SortableExerciseRow>
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          )}
-
-                          {/* ── + Add exercise (not on completed/skipped) ── */}
-                          {status !== "completed" && status !== "skipped" && (
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setAddPickerDayIndex(idx);
-                                setShowAddPicker(true);
-                              }}
-                              className="w-full py-3 text-center active:scale-[0.97] transition-all flex items-center justify-center gap-2 bg-card rounded-xl text-lifting-strong font-medium text-sm"
-                            >
-                              <Plus className="size-4" /> Add exercise
-                            </button>
-                          )}
-                        </div>
-                      )}
 
                       {/* ── Completed Session Summary ── */}
                       {status === "completed" && (
@@ -1702,6 +1707,9 @@ function ProgramInner() {
                           onAdoptLegacy={adoptLegacyTrainingBlock}
                           onRelease={releaseTrainingBlock}
                           onKeepFocus={keepTrainingBlockFocus}
+                          hideRunningRow
+                          detailOpen={blockDetailOpen}
+                          onDetailOpenChange={setBlockDetailOpen}
                         />
                       )}
                     </div>
@@ -1718,46 +1726,22 @@ function ProgramInner() {
           when the user has no saved entries, so users who don't use
           the feature never see the section. Lift tab only — the
           surfaces are workout-centric. */}
-      {/* Weekly sets-per-muscle volume summary (D-LIFT-1) — read-only, for the
-          viewed week, against goal landmarks. */}
-      {activeTab === "lift" && (
-        <WeeklyVolumeCard
-          workouts={displayWorkouts}
-          // Blk2 / M4: the programState copy, which is what a block owns
-          // and what balanceWeeklyVolume already targets. Reading the
-          // profile copy painted a "Get stronger" block's week against the
-          // PRE-block band — "below target · 12-20/week" for volume the
-          // block deliberately chose, under a header reading
-          // "Built for Strength".
-          primaryGoal={programState.primaryGoal ?? profile?.primaryGoal}
-        />
-      )}
-
+      {/* The weekly sets-per-muscle table moved to Settings › Lift plan
+          (D-LIFT-1 lives on, in a new home). Collapsed, it said "4 muscles
+          below target" — a count of problems, not a finding, two screens
+          away from the fields that fix it. Expanded it is a plan-quality
+          readout, and the lift editor is where the days it rates are
+          edited. */}
       {activeTab === "lift" && <SavedRoutinesSection />}
 
       {/* ROUTINE-EXCHANGE-01 — curated blueprint shelf. Read-only
           intents; saving creates a private routine copy, never a
           programme change. */}
 
-      {/* Section-Split: focused "Edit lift plan" entry — mirrors the Run
-          tab's "Edit run plan ›" footer. Deep-links to the lift-only editor
-          (/settings/lift-plan) instead of the full programme form. The ⋯
-          menu's "Edit programme" still opens the everything editor. */}
-      {activeTab === "lift" && (
-        <div className="flex justify-end pt-2 border-t border-border/30">
-          <button
-            type="button"
-            onClick={() => {
-              haptic();
-              navigate("/settings/lift-plan");
-            }}
-            className="inline-flex items-center gap-0.5 min-h-[44px] px-2 -my-1 -mr-1 text-xs font-medium text-muted-foreground hover:text-foreground motion-safe:active:scale-[0.97] transition-transform rounded-md"
-          >
-            Edit lift plan
-            <ChevronRight className="size-3.5" />
-          </button>
-        </div>
-      )}
+      {/* The "Edit lift plan ›" footnote is gone — 10 px muted text under
+          a hairline, a third edit entry beside the two already in ⋯. On
+          the Lift tab that menu's edit row now points at the lift editor
+          itself, which is also where the volume table went. */}
 
       {/* ── Context Menu ── */}
       <AnimatePresence>
@@ -2045,6 +2029,33 @@ function ProgramInner() {
                     icon: it's a low-frequency plan edit, so it lives with the
                     other edit actions instead of occupying header space. Only
                     offered where it works — Lift tab with logged workouts. */}
+                {/* Managing a RUNNING block, which no longer has a row of
+                    its own on the page. Only while one is running: the
+                    card still renders "Start a training block" when there
+                    is none and "Block complete" when one has finished,
+                    because those two say something the page does not. */}
+                {activeTab === "lift" && programState?.trainingBlock && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowOverflow(false);
+                      setBlockDetailOpen(true);
+                    }}
+                    className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-left hover:bg-muted transition-colors"
+                    style={{ minHeight: 44 }}
+                  >
+                    <CalendarRange className="size-5 text-muted-foreground" />
+                    <span className="flex-1">
+                      <span className="block text-sm font-medium text-foreground">
+                        Training block
+                      </span>
+                      <span className="block text-xs text-muted-foreground">
+                        {focusLabel(programState.trainingBlock.focus)}
+                      </span>
+                    </span>
+                  </button>
+                )}
+
                 {activeTab === "lift" &&
                   (programState?.workouts?.length ?? 0) > 0 && (
                     <button
@@ -2098,7 +2109,11 @@ function ProgramInner() {
                   type="button"
                   onClick={() => {
                     setShowOverflow(false);
-                    navigate("/settings/training");
+                    navigate(
+                      activeTab === "lift"
+                        ? "/settings/lift-plan"
+                        : "/settings/training"
+                    );
                   }}
                   className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-left hover:bg-muted transition-colors"
                   style={{ minHeight: 44 }}
@@ -2106,10 +2121,14 @@ function ProgramInner() {
                   <Settings2 className="size-5 text-muted-foreground" />
                   <span className="flex-1">
                     <span className="block text-sm font-medium text-foreground">
-                      Edit programme
+                      {activeTab === "lift"
+                        ? "Edit lift plan"
+                        : "Edit programme"}
                     </span>
                     <span className="block text-xs text-muted-foreground">
-                      Goal, nutrition, lifting, running, equipment, injuries
+                      {activeTab === "lift"
+                        ? "Focus, lift days, equipment, injuries, weekly volume"
+                        : "Goal, nutrition, lifting, running, equipment, injuries"}
                     </span>
                   </span>
                 </button>
