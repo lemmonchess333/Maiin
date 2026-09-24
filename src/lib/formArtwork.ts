@@ -41,6 +41,7 @@ const ownerReleased = (
 // Preserve the seven previously shipped sets while replacements are reviewed.
 // These entries do not claim that the art passes the new consistency standard.
 export const FORM_ARTWORK: Record<string, FormArtwork> = {
+  "lu-raise": { version: "anatomy-v3-2026-09-24", status: "approved", width: 1536, height: 1024, frames: Array.from({length:6}, (_,i) => `form-frames/lu-raise/${i+1}.webp`), reference: "form-frames/lu-raise/1.webp", reviewFile: "docs/exercise-art/releases/2026-09-24/lu-raise.json" },
   "arnold-press": { version: "anatomy-v3-2026-09-24", status: "approved", width: 1536, height: 1024, frames: Array.from({length:6}, (_,i) => `form-frames/arnold-press/${i+1}.webp`), reference: "form-frames/arnold-press/3.webp", reviewFile: "docs/exercise-art/releases/2026-09-24/arnold-press.json" },
   "db-flyes": {
     version: "anatomy-v3-2026-09-24",
