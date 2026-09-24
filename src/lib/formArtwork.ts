@@ -41,6 +41,19 @@ const ownerReleased = (
 // Preserve the seven previously shipped sets while replacements are reviewed.
 // These entries do not claim that the art passes the new consistency standard.
 export const FORM_ARTWORK: Record<string, FormArtwork> = {
+  "chest-press-machine": {
+    version: "anatomy-v3-2026-09-24",
+    status: "approved",
+    width: 1536,
+    height: 1024,
+    frames: Array.from(
+      { length: 6 },
+      (_, i) => `form-frames/chest-press-machine/${i + 1}.webp`
+    ),
+    reference: "form-frames/chest-press-machine/1.webp",
+    reviewFile:
+      "docs/exercise-art/releases/2026-09-24/chest-press-machine.json",
+  },
   "machine-chest-fly": {
     version: "anatomy-v3-2026-09-24",
     status: "approved",
