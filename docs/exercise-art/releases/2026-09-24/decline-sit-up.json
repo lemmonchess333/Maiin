@@ -1,0 +1,170 @@
+{
+  "exerciseId": "decline-sit-up",
+  "version": "anatomy-v3-2026-09-24",
+  "width": 1536,
+  "height": 1024,
+  "decision": "approved",
+  "reviewer": "Codex visual and implementation review",
+  "reviewedAt": "2026-09-24T18:44:58.209Z",
+  "reference": {
+    "path": "form-frames/decline-sit-up/1.webp",
+    "sha256": "edc716815c85584cfbe9ec31caee14dd9a1b85a1d079bf60d18c1ad009f638f9"
+  },
+  "cueSha256": "a198f5b0880887cf6f7751017dbeffab466d85fd5cd0db81ec4bd93921e957df",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Canonical bald faceless white-grey anatomy-v3 athlete, neutral pelvis and white trainers retained across native poses."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Fixed native1536x1024 landscape, full athlete and bench visible; top head margin approximately31px. Two bench anchors and widths meet unrounded1px/1% limits."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Reclined, partial curl and seated curl distinguishable. Refined midpoint head follows torso with gentle tuck. Crossed arms retained. Qualitative projected anatomy review, not calibrated joint-angle measurement."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Same decline bench, raised ankle rollers and steel supports. Authorized fixed left-foot patch in3/4; source/master/output hashes and zero changes outside rectangle recorded in provenance."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Native inspection shows back of head supported at recline, hips on pad, feet beneath rollers throughout. Knees and ankle positions visually stable. Contact assessment qualitative."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Torso curls toward knees with secured feet, then returns to supported recline. No floating head at lower endpoint or displaced support. Bench-foot correction affects stationary equipment only."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Abs strong purple and hip flexors lilac match exact catalogue hierarchy. Other musculature neutral white-grey."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Six cues match exact decline-sit-up catalogue variation, arms crossed without plate. Every cue contains at most seven words."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "All six beats plus6-to-1 stepped in actual player in both themes. Revised midpoint distinct from endpoints.4=3,5=2,6=1. Manual stepping reviewed, not continuous timed playback."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "All six frames and loop inspected in actual ExerciseFormFrames at390x844 light theme. Athlete/equipment fit, captions readable; DOM width390 without horizontal overflow."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "All six frames and loop inspected at390x844 dark theme. Purple abdomen and curl progression clear. Fine contacts additionally inspected natively."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/decline-sit-up/1.webp",
+      "sha256": "edc716815c85584cfbe9ec31caee14dd9a1b85a1d079bf60d18c1ad009f638f9",
+      "anchors": {
+        "leftBenchFootLeft": {
+          "x": 88.69767441860465,
+          "y": 800
+        },
+        "rightBenchUprightLeft": {
+          "x": 1338.2410714285713,
+          "y": 650
+        }
+      },
+      "invariantDimensions": {
+        "leftBenchFootSpan": 171.0971973762671,
+        "rightBenchUprightSpan": 45.209908963585576
+      }
+    },
+    {
+      "path": "form-frames/decline-sit-up/2.webp",
+      "sha256": "1d497ccddaf700f4c555922c1495f1d4b22a5c950a771649aa2c0f799d84f898",
+      "anchors": {
+        "leftBenchFootLeft": {
+          "x": 88.35526315789474,
+          "y": 800
+        },
+        "rightBenchUprightLeft": {
+          "x": 1338.2718446601941,
+          "y": 650
+        }
+      },
+      "invariantDimensions": {
+        "leftBenchFootSpan": 171.5733082706767,
+        "rightBenchUprightSpan": 45.47101248266313
+      }
+    },
+    {
+      "path": "form-frames/decline-sit-up/3.webp",
+      "sha256": "aab31cdf6dbedd667931f18ed9e27f1f246140834b3856512e5af4bfdc4003a9",
+      "anchors": {
+        "leftBenchFootLeft": {
+          "x": 88.69767441860465,
+          "y": 800
+        },
+        "rightBenchUprightLeft": {
+          "x": 1338.1652173913044,
+          "y": 650
+        }
+      },
+      "invariantDimensions": {
+        "leftBenchFootSpan": 171.0971973762671,
+        "rightBenchUprightSpan": 45.46555183946475
+      }
+    },
+    {
+      "path": "form-frames/decline-sit-up/4.webp",
+      "sha256": "aab31cdf6dbedd667931f18ed9e27f1f246140834b3856512e5af4bfdc4003a9",
+      "anchors": {
+        "leftBenchFootLeft": {
+          "x": 88.69767441860465,
+          "y": 800
+        },
+        "rightBenchUprightLeft": {
+          "x": 1338.1652173913044,
+          "y": 650
+        }
+      },
+      "invariantDimensions": {
+        "leftBenchFootSpan": 171.0971973762671,
+        "rightBenchUprightSpan": 45.46555183946475
+      }
+    },
+    {
+      "path": "form-frames/decline-sit-up/5.webp",
+      "sha256": "1d497ccddaf700f4c555922c1495f1d4b22a5c950a771649aa2c0f799d84f898",
+      "anchors": {
+        "leftBenchFootLeft": {
+          "x": 88.35526315789474,
+          "y": 800
+        },
+        "rightBenchUprightLeft": {
+          "x": 1338.2718446601941,
+          "y": 650
+        }
+      },
+      "invariantDimensions": {
+        "leftBenchFootSpan": 171.5733082706767,
+        "rightBenchUprightSpan": 45.47101248266313
+      }
+    },
+    {
+      "path": "form-frames/decline-sit-up/6.webp",
+      "sha256": "edc716815c85584cfbe9ec31caee14dd9a1b85a1d079bf60d18c1ad009f638f9",
+      "anchors": {
+        "leftBenchFootLeft": {
+          "x": 88.69767441860465,
+          "y": 800
+        },
+        "rightBenchUprightLeft": {
+          "x": 1338.2410714285713,
+          "y": 650
+        }
+      },
+      "invariantDimensions": {
+        "leftBenchFootSpan": 171.0971973762671,
+        "rightBenchUprightSpan": 45.209908963585576
+      }
+    }
+  ]
+}

@@ -1,0 +1,170 @@
+{
+  "exerciseId": "cross-body-hammer-curl",
+  "version": "anatomy-v3-2026-09-24",
+  "width": 1024,
+  "height": 1536,
+  "decision": "approved",
+  "reviewer": "Codex visual and implementation review",
+  "reviewedAt": "2026-09-24T20:54:44.448Z",
+  "reference": {
+    "path": "form-frames/cross-body-hammer-curl/1.webp",
+    "sha256": "a816ca65cc5c65cdf47dd993e3109ef23b498fbb8b5fb53c779a6917dee0a51b"
+  },
+  "cueSha256": "9c2c5d94c8a7a180259c4b5826adc1eb80b448e8d0b7c5acca73d146e6b1d5ec",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Canonical white-grey bald faceless anatomical athlete, fine contours, neutral smooth pelvis and white trainers retained across the three native poses."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Native 1024x1536 portrait; full body and both weights visible. Two planted shoe anchors drift less than 0.20px and spans less than 0.71%, using unrounded measurements without image correction."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Near elbow flexes to bring the forearm across the torso. Upper arm remains adjacent to ribs; the elbow outline changes with flexion and is not registered to an exact pixel or calibrated 3D joint. Torso, head and legs remain visually still; no obvious shoulder-led swing."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Two modest black round dumbbells retain separate heads and connecting handles. Working dumbbell rotates with the neutral hammer grip; projected head ellipses vary with orientation. Rigid dimensions are assessed qualitatively rather than asserted as calibrated 3D measurements."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Working fingers stay visibly wrapped around the handle between its heads; far hand retains its hanging weight. Fine contact reviewed natively because fingers are small at mobile scale. Planted shoes pass measured limits. No deterministic pixel correction was needed."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Working hand moves from beside the thigh across the abdomen to the opposite shoulder, then retraces the path. Far arm stays down. No visible trunk lean or shrug; moving limb projection and elbow outline are qualitative review limits."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Biceps purple with brachioradialis/forearms lilac matches exact catalogue primary and secondary groups. Both arms retain highlights, including the inactive arm; these identify exercise muscle groups rather than instantaneous unilateral activation."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Six cues of at most seven words describe neutral grip, cross-body path, opposite shoulder, elbow beside ribs and controlled return. Final cue explicitly instructs alternating arms next; the images demonstrate one arm only."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "All six frames and 6-to-1 transition manually stepped in the actual player in both themes. Three distinct poses with 4=3,5=2,6=1. Continuous timed playback is not claimed."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "All six and loop reviewed at 390x844 in actual light-theme player. Whole athlete and both weights fit, cross-body progression distinguishable, all captions readable without overflow. Native dimensions 1024x1536 and DOM scrollWidth390 confirmed."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "All six and loop reviewed at 390x844 in actual dark-theme player. Clear three-stage movement and purple hierarchy; no clipping. Fine grip assessment supplemented by native image review."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/cross-body-hammer-curl/1.webp",
+      "sha256": "a816ca65cc5c65cdf47dd993e3109ef23b498fbb8b5fb53c779a6917dee0a51b",
+      "anchors": {
+        "farShoe": {
+          "x": 270.3636363636364,
+          "y": 1390
+        },
+        "nearShoe": {
+          "x": 508.3059701492537,
+          "y": 1450
+        }
+      },
+      "invariantDimensions": {
+        "farShoeSpan": 220.9597169297768,
+        "nearShoeSpan": 146.34402985074627
+      }
+    },
+    {
+      "path": "form-frames/cross-body-hammer-curl/2.webp",
+      "sha256": "a3f356885bdf0b44ad3da22854b08b8965c885c3583127a7a9da77f9eee168f9",
+      "anchors": {
+        "farShoe": {
+          "x": 270.4727272727273,
+          "y": 1390
+        },
+        "nearShoe": {
+          "x": 508.42028985507244,
+          "y": 1450
+        }
+      },
+      "invariantDimensions": {
+        "farShoeSpan": 221.018070273285,
+        "nearShoeSpan": 147.008281573499
+      }
+    },
+    {
+      "path": "form-frames/cross-body-hammer-curl/3.webp",
+      "sha256": "69944c8f831aa8cffa189fea6e1960ec731353f88a251fe0fd31657df9452d4d",
+      "anchors": {
+        "farShoe": {
+          "x": 270.5595238095238,
+          "y": 1390
+        },
+        "nearShoe": {
+          "x": 508.31617647058823,
+          "y": 1450
+        }
+      },
+      "invariantDimensions": {
+        "farShoeSpan": 220.6279761904762,
+        "nearShoeSpan": 145.31239495798314
+      }
+    },
+    {
+      "path": "form-frames/cross-body-hammer-curl/4.webp",
+      "sha256": "69944c8f831aa8cffa189fea6e1960ec731353f88a251fe0fd31657df9452d4d",
+      "anchors": {
+        "farShoe": {
+          "x": 270.5595238095238,
+          "y": 1390
+        },
+        "nearShoe": {
+          "x": 508.31617647058823,
+          "y": 1450
+        }
+      },
+      "invariantDimensions": {
+        "farShoeSpan": 220.6279761904762,
+        "nearShoeSpan": 145.31239495798314
+      }
+    },
+    {
+      "path": "form-frames/cross-body-hammer-curl/5.webp",
+      "sha256": "a3f356885bdf0b44ad3da22854b08b8965c885c3583127a7a9da77f9eee168f9",
+      "anchors": {
+        "farShoe": {
+          "x": 270.4727272727273,
+          "y": 1390
+        },
+        "nearShoe": {
+          "x": 508.42028985507244,
+          "y": 1450
+        }
+      },
+      "invariantDimensions": {
+        "farShoeSpan": 221.018070273285,
+        "nearShoeSpan": 147.008281573499
+      }
+    },
+    {
+      "path": "form-frames/cross-body-hammer-curl/6.webp",
+      "sha256": "a816ca65cc5c65cdf47dd993e3109ef23b498fbb8b5fb53c779a6917dee0a51b",
+      "anchors": {
+        "farShoe": {
+          "x": 270.3636363636364,
+          "y": 1390
+        },
+        "nearShoe": {
+          "x": 508.3059701492537,
+          "y": 1450
+        }
+      },
+      "invariantDimensions": {
+        "farShoeSpan": 220.9597169297768,
+        "nearShoeSpan": 146.34402985074627
+      }
+    }
+  ]
+}

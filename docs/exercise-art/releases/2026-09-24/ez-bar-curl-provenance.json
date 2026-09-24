@@ -1,0 +1,144 @@
+{
+  "modelPath": "Built-in image_gen unchanged. Landscape grip correction retained as reference, then native portrait master built to improve actual mobile readability. Portrait mid/top derived from it; top halo and heavy contours corrected. Only top far planted shoe region copied under owner authorization; moving anatomy and bar never edited deterministically.",
+  "canonicalReference": {
+    "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+  },
+  "sourceFrames": [
+    {
+      "frame": 1,
+      "sha256": "34a89fe177fc1d6a7de4f3e6d5cb73226dbea437ef040ec4d35d844eb35f6b4c"
+    },
+    {
+      "frame": 2,
+      "sha256": "772a08760371b31815de294059601ebd17fd47186ab4a70e7d7195bc10fbfa39"
+    },
+    {
+      "frame": 3,
+      "sha256": "e62c07e9b8a2131daae00f37212d77a553bc8b984b731b2c1cba52e5c2fe7259"
+    },
+    {
+      "frame": 4,
+      "sha256": "e62c07e9b8a2131daae00f37212d77a553bc8b984b731b2c1cba52e5c2fe7259"
+    },
+    {
+      "frame": 5,
+      "sha256": "772a08760371b31815de294059601ebd17fd47186ab4a70e7d7195bc10fbfa39"
+    },
+    {
+      "frame": 6,
+      "sha256": "34a89fe177fc1d6a7de4f3e6d5cb73226dbea437ef040ec4d35d844eb35f6b4c"
+    }
+  ],
+  "fixedAreaCorrection": {
+    "sourceSha256": "9a46ce7d314296f5b40d253e863ffa9811cf6458168e38b0f8412552ffd3fa46",
+    "masterSha256": "34a89fe177fc1d6a7de4f3e6d5cb73226dbea437ef040ec4d35d844eb35f6b4c",
+    "outputSha256": "e62c07e9b8a2131daae00f37212d77a553bc8b984b731b2c1cba52e5c2fe7259",
+    "rectangle": [
+      270,
+      1300,
+      505,
+      1370
+    ],
+    "changedPixelsOutside": 0,
+    "reason": "Correct1.604px far planted shoe edge drift only."
+  },
+  "projectedEquipmentDiagnostics": [
+    {
+      "file": "portrait-start.png",
+      "equipment": {
+        "projectedBarLeft": 110,
+        "projectedBarRight": 908,
+        "projectedBarSpan": 799
+      }
+    },
+    {
+      "file": "portrait-mid.png",
+      "equipment": {
+        "projectedBarLeft": 107,
+        "projectedBarRight": 911,
+        "projectedBarSpan": 805
+      }
+    },
+    {
+      "file": "portrait-top-black.png",
+      "equipment": {
+        "projectedBarLeft": 105,
+        "projectedBarRight": 907,
+        "projectedBarSpan": 803
+      }
+    }
+  ],
+  "generation": [
+    {
+      "file": "master-prompt.json",
+      "prompt": "Scientific educational fitness illustration of the supplied canonical anatomical mannequin doing an EZ BAR CURL, bottom/start pose. New landscape1536x1024 full-body composition, fixed near-frontal three-quarter camera only slightly to the athlete's left, whole figure and bar with comfortable margins. Exact white-grey faceless bald muscle model and white trainers from reference. Strong purple biceps, lighter lilac forearms, all other muscles neutral. Standing upright, feet hip-width, core steady, upper arms beside ribs, elbows almost straight, bar in front of upper thighs. IMPORTANT EQUIPMENT: a realistic short symmetrical chrome EZ curl bar with ONE modest equal grey plate each end and collars. Both hands must visibly ENCLOSE THE MIDDLE of the matching diagonal/angled grip sections in a semi-supinated grip, wrists aligned with forearms. Make each diagonal grip section long enough that a short angled metal segment is visible on BOTH sides of the hand before its adjoining bends. Neither hand touches a bend/junction or straight outer sleeve. The bar is one continuous rigid tube with clear smooth bends; no extra segments, no bowed straight portions. Both hands maintain fixed shoulder-width grip, palms obliquely forward/up. Keep a single athlete, precise dark muscle contours, neutral featureless mannequin pelvic surface. Black background, no text, no glow, no borders, no diagram overlays. One native full-resolution image.",
+      "tool": "built-in image_gen",
+      "reference": "canonical anatomy-v3",
+      "generationId": "e73dff88-ba30-48e6-8170-846aa2ebd175"
+    },
+    {
+      "file": "mid-prompt.json",
+      "prompt": "Edit image2, the exact EZ bar curl starting master. Image1 is the canonical scientific anatomical mannequin identity. Make the MID-CURL pose: bend both elbows to about90degrees while upper arms and elbow joint locations stay pinned beside the ribs. Both hands and held bar rise together to upper-abdomen/lower-chest height, aroundy350 on this native1536x1024 frame. Wrists straight relative to forearms, semi-supinated grip. CRITICAL: both hands stay centered on the SAME angled grip sections, same spacing; do not slide toward the bends or outer sleeves. The SAME one-piece EZ bar, bend lengths, collars, one modest plate each end and sleeves move rigidly with the hands, allowing natural perspective from forearm rotation but never changing equipment geometry or loads. Keep all head/torso/hips/legs/shoes, floor position, camera, lighting and crop unchanged. Do not lean or lift shoulders. Strong purple biceps and light lilac forearms stable, rest neutralwhitegrey. One educational inanimate mannequin, black background, no labels or glow. Full-resolution1536x1024 landscape.",
+      "tool": "built-in image_gen",
+      "generationId": "297b9998-24fb-42f4-9fd1-1d566d5b166e"
+    },
+    {
+      "file": "top-prompt.json",
+      "prompt": "Image1 canonical educational muscle mannequin, image2 immutable EZ curl bottom master, image3 accepted mid-curl pose. Create the TOP CURL: same bar now close to shoulder height/upper chest, elbows deeply flexed while both upper arms and elbow joints remain pinned at ribs at their original height. Do not raise the shoulders, lean back or move elbows forward. Hands stay fixed on precisely the same middle portions of the angled grip sections with short diagonal bar visible either side of each grip. Wrists remain aligned, not bent back. SAME continuous rigid EZ bar, exact bend lengths, handle spacing, plates, collars, sleeve lengths and projected scene scale; move bar and hands as one unit, allow only physically natural foreshortening. Both biceps strong purple and forearms lilac as reference, no extra highlighted muscles. Preserve head torso pelvis legs shoes camera crop and all stationary regions. Native1536x1024 landscape, black background, one mannequin, no labels no glow. Make this a clear flexed endpoint distinct from midpoint.",
+      "tool": "built-in image_gen",
+      "generationId": "531c70f3-44c8-4348-9328-b0562b219329"
+    },
+    {
+      "file": "start-grip-correction-prompt.json",
+      "prompt": "Edit image2 (EZ curl starting pose); image1 canonical mannequin identity and image3 the curled pose for matching grip contact only. Correct ONE thing in image2: move the nearer hand on image-right about15pixels INWARD along its existing angled grip section, toward the middle of the bar, so it grips the same material location on that section as image3. Its hand center should be aroundx820 rather thanx835 on the1536wide image. Adjust only that wrist and the immediately connected lower forearm naturally so wrist remains straight; keep elbow, upper arm and shoulder fixed. Do NOT move or redraw the bar, bends, plates, collars or sleeves. Do NOT change the far hand, any other body area, feet, head or framing. Both arms remain nearly extended at this START pose; do not curl toward chest. The hand must close firmly around the diagonal shaft, short diagonal metal exposed on either side before bends. Keep all mannequin anatomy style and muscle colours exactly same; scientific fitness model, black background, no additions. Native1536x1024 landscape.",
+      "tool": "built-in image_gen",
+      "generationId": "d115c725-9386-4fab-8ab6-a3c30fca39a0"
+    },
+    {
+      "file": "portrait-start-prompt.json",
+      "prompt": "Reframe image2 into a PORTRAIT 1024x1536 native exercise illustration. Image1 is canonical educational mannequin identity; image2 is the approved-pose EZ curl start and equipment/grip reference. Preserve the EXACT starting joint pose, same realistic EZ bar and hand contact on middle angled grip sections, one modest equal plate each side, wrist alignment, muscle colours, proportions and three-quarter camera. Change only framing/scene size: athlete height about1400pixels with head near y60 and shoes ending near y1480, centered horizontally; bar and sleeves span about860pixels, fit comfortably inside left/right edges with at least60pixels margin. Whole body and ALL equipment visible. This is a tall portrait composition, not a wide landscape canvas with blank side columns. Biceps strongpurple, forearms lightlilac, other anatomy neutralwhitegrey; white trainers and the canonical clinical mannequin design. Pure black background, no text/no glow. Render one native1024x1536 portrait image.",
+      "tool": "built-in image_gen",
+      "reason": "Landscape body and angled grips too small in actual390x844 player.",
+      "generationId": "93539c89-a600-4ba3-9b62-562a0086fdc4"
+    },
+    {
+      "file": "portrait-mid-prompt.json",
+      "prompt": "Image1 canonical educational mannequin. Image2 immutable PORTRAIT1024x1536 EZ bar curl master and edit target. Create midpoint curl: elbows bent90degrees with upper arms and elbow joints fixed beside ribs. Raise the bar and both gripped hands to abouty500 at upper abdomen, keeping wrists straight and semi-supinated. Both hands stay on EXACT same material points in the middle of the two angled sections; preserve visible lengths of metal between each hand and adjacent bends, grip spacing, real one-piece bar shape, one equal modest plate each end, sleeves and collars. Natural rigid-bar perspective may change slightly as forearms rotate, but no hand sliding or independently changing bends. Keep head, torso, pelvis, legs, shoes, floor, camera, framing and all colours unchanged. Strong purple biceps, light lilac forearms only. No lean, no shoulder shrug. One fullresolution1024x1536 portrait with same margins, no text or glow.",
+      "tool": "built-in image_gen",
+      "generationId": "982d3754-d612-4284-8c3a-577734153875"
+    },
+    {
+      "file": "portrait-top-prompt.json",
+      "prompt": "Image1 canonical scientific mannequin, image2 immutable PORTRAIT1024x1536 EZ curl start/master, image3 midpoint. Generate top curl, same exact framing/camera and stationary head/body/legs/feet. Both elbows deeply flexed, forearms up, bar at shoulder/upper-chest height aroundy315, not chin height. Keep upper arms and elbow centers beside ribs at their initial positions; do not move elbows outward/forward, lift shoulders or inflate biceps. BOTH hands keep same contact points centered on the two diagonal grip segments; wrists straight. Same rigid continuous EZ bar, bend lengths, spacing, equal modest plates, collars and sleeves. No sliding grip, no additional weight, no changing gear size. Only elbow flexion/forearm rotation, carried hands and bar move. Stable purple biceps, light lilac forearms; other muscles neutralwhitegrey. One educational muscle model, black background no text/no glow. Full native1024x1536 PORTRAIT.",
+      "tool": "built-in image_gen",
+      "generationId": "921fec9d-2f35-4c31-9abf-2bc5c788ffea"
+    },
+    {
+      "file": "portrait-top-style-repair-prompt.json",
+      "prompt": "Image1 canonical identity, image2 immutable portrait start master/style, image3 EDIT TARGET top EZ curl pose. Repair the style regression in image3 only: remove ALL grey/purple glow, halos, vignette and floor spotlight. Background must be uniformly pure black right up to the contours everywhere, including between arms/body, between legs, around feet, around bar/plates and above head. Restore the fine delicate dark anatomical outlines and subtle grey shading of image2, not image3's heavy cartoon outlines. Preserve image3's curled arm pose, hand contacts centered on angled grips, wrist alignment and continuous bar geometry, plates/collars/sleeves. Keep the image2 athlete identity/proportions and unchanged stationary head/body/legs/shoes/camera registration. Biceps strongpurple, forearms pale lilac, rest neutralgreywhite. Do not add any text or visual effect. One native1024x1536 portrait clinical exercise diagram.",
+      "tool": "built-in image_gen",
+      "finding": "Top introduced grey/purple halo and heavy outlines; rejected.",
+      "generationId": "18f0cd96-f670-4eb9-b778-3e58182c818b"
+    }
+  ],
+  "conversion": "Lossless WebP: all decoded RGB bytes match selected native PNG sources.",
+  "reuse": {
+    "4": 3,
+    "5": 2,
+    "6": 1
+  },
+  "measurementMethod": "Minimum RGB150 interpolated shoe scanline boundaries. Top far-shoe scanline is byte-identical to master after authorized correction. Other scanlines untouched. Bar spans are projected diagnostics, not3D calibration.",
+  "scanlines": {
+    "farShoe": [
+      260,
+      515,
+      1330
+    ],
+    "nearShoe": [
+      500,
+      730,
+      1380
+    ]
+  }
+}

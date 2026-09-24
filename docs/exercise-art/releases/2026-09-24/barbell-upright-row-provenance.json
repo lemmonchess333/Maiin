@@ -1,0 +1,161 @@
+{
+  "modelPath": "Built-in image_gen; unchanged model path. Native landscape rerender, refined top frame3 is exercise master. Lower poses derived with bar and hands as one moving unit. Rejected widened-grip, shortened-bar and halo variants excluded. Start triceps tint corrected. No deterministic pixel correction.",
+  "canonicalReference": {
+    "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+  },
+  "sourceFrames": [
+    {
+      "frame": 1,
+      "sha256": "8d31cc843563a6e764e6c5c0e62f568db61907167f6eb61a42f43656418309d9"
+    },
+    {
+      "frame": 2,
+      "sha256": "69034592138d33e6d51047cadbfbdf01e0c503cf089b4dfbbda38c854321d4ab"
+    },
+    {
+      "frame": 3,
+      "sha256": "604cfc0c3ec2dd4add782c0b44b1c56ad2fad15a0c247fde1f8a69b226870c52"
+    },
+    {
+      "frame": 4,
+      "sha256": "604cfc0c3ec2dd4add782c0b44b1c56ad2fad15a0c247fde1f8a69b226870c52"
+    },
+    {
+      "frame": 5,
+      "sha256": "69034592138d33e6d51047cadbfbdf01e0c503cf089b4dfbbda38c854321d4ab"
+    },
+    {
+      "frame": 6,
+      "sha256": "8d31cc843563a6e764e6c5c0e62f568db61907167f6eb61a42f43656418309d9"
+    }
+  ],
+  "generation": [
+    {
+      "file": "master-prompt.json",
+      "prompt": "Reframe FIRST image barbell upright-row START as native1536x1024 landscape exercise master. SECOND canonical athlete identity. Keep the same front view, full body, bald faceless whitegrey anatomy, smooth featureless pelvis, white shoes, single modest identical plate per side, straight horizontal bar at thighs, overhand grip just inside shoulders. Uniformly scale the WHOLE scene to fit: head top aroundy30, shoe bottoms aroundy980, center athlete atx768, barbell fullyvisible with comfortable side margins. Preserve proportions, no crop/stretch. Primary trapezius strongest purple, secondary lateral deltoids and biceps light lilac, restneutral. Pureblackbackground, no glow/text. This master must show wrists aligned and hands fullywrapped; grip just inside shoulderwidth. Do not change pose.",
+      "generation": "exec-e4a735f6-229e-4b15-a58d-9efb70ef9ff0",
+      "output": "master.png"
+    },
+    {
+      "file": "top-prompt.json",
+      "prompt": "Create the TOP pose of barbell upright row by editing FIRST native1536x1024 landscape exercise master. SECOND canonical identity. Preserve head/torso/legs/shoes/camera/framing exactly. Move barbell ONLY vertically upward to chest level aroundy280, keep horizontal, same length/endpoints atx378and1157, same single plates per side and dimensions. Both hands must remain at precisely same bar attachment coordinates x665 and x868, same203px grip width, overhand fingerswrapped. Bend elbows outward to lead the pull, but elbowcentres must stay at or BELOW shoulderjointheight aroundy220, never above shoulders. Neutral stable wrists as anatomically possible, bar close to torso. Keep traps strongestpurple, side delts/biceps lilac. Preserve all fixed regions; no scaling/shifting torso, no added glow, no text. Correct physically plausible bent arms to maintain this grip rather than widening hands.",
+      "generation": "exec-69aeb396-b3f6-498e-9665-a343b3d7ae57",
+      "decision": "Reject: grip widened from master."
+    },
+    {
+      "file": "grip-fix-prompt.json",
+      "prompt": "Precise local correction FIRST image upright-row top pose. SECOND exercise master defines exact hand spacing. THIRD canonical identity. In FIRST shift left-side hand20pixels toward imagecentre to x665, and right-side hand22pixels toward centre to x868. Both hands must be closer together by42pixels total, matching SECOND203pixel gripcentre spacing. Keep bar at y271, identical endpoints/plates/shaft. Adjust ONLY hands, wrists and necessary adjoining forearm contours to attach naturally; leave elbow positions/head/torso/legs/shoes untouched. Keep fingerswrapped over bar, two complete grips and normal anatomy. No change to colors, camera, blackbackground,1536x1024canvas. The purpose is visibly narrower spacing than FIRST, not an identical copy. Do not move or rescale bar.",
+      "generation": "exec-68b5d58e-6bcf-47b0-b78f-250f6f9b1b79",
+      "output": "top-narrow.png",
+      "note": "Narrower grip; must reconcile start to same contact positions before approval."
+    },
+    {
+      "file": "start-from-top-prompt.json",
+      "prompt": "Derive START of upright row directly from FIRST top-pose master. SECOND canonical identity. Take the ENTIRE barbell AND both wrapped hands in FIRST as one rigid unit and translate vertically DOWN fromy271 toy525, with ZERO horizontal change to either hand or bar part. Keep original endpointx378to1157, platescentres~459and1079, fingers/handgrips atx676and855. The exact same barandtwohands, simply lower asunit. Straighten arms naturally to reach the lowered wrists at upperthighheight, only changing arms. Head/neck/torso/hips/legs/shoes, samefrontview, cameraandscale unchanged. Native1536x1024 pureblack no glowtext. Traps purple, side delts/biceps lilac. Do not redraw the bar shorter or slide the hands.",
+      "generation": "exec-e30a1bd8-c38a-4670-bf5b-95336ce73938",
+      "output": "start-from-top.png",
+      "note": "Grip and bar visually consistent; extra outer-upper-arm tint needs review."
+    },
+    {
+      "file": "start-color-prompt.json",
+      "prompt": "Color-only precise edit FIRST upright-row start image. SECOND top exercise master, THIRD canonical anatomy. Remove lilac from the thin OUTSIDE triceps strips of both upper arms below the shoulder caps (roughlyx621-646 and891-915,y260-333); restore those triceps areas neutral white/lightgrey matching surrounding anatomy. Retain lilac on the anterior biceps ovals (aroundx670and861) and lateral shoulder caps; retain strongpurple trapezius. Absolutely preserve all contours, body/hand positions, bar length, barheight, plates, grips, camera,1536x1024framing and pureblackbackground. No changes except those small incorrect triceps highlights. No text.",
+      "generation": "exec-eeccebec-5d74-4162-9c43-08aec3b42926",
+      "output": "start-color-fixed.png"
+    },
+    {
+      "file": "mid-prompt.json",
+      "prompt": "Derive MIDPOINT upright row directly from FIRST top-pose exercise master. SECOND canonical identity. Translate the ENTIRE barbell AND both wrapped hands as one rigid unit vertically DOWN fromy271 toy395, ZERO horizontal change of hands/bar. Exact samebar: endpointsx378/1157, platescentres459/1079, handcentres676/855,179px gripspacing. Keep bar horizontal and close to upperabdomen, elbows partially lowered/bent outward above wrists but wellbelow shoulders. Arms naturally connect to original shoulder positions. Preserve head/neck/torso/pelvis/legs/shoes and camera/1536x1024framing. Strongpurple trapezius; lightlilac side deltoids and BICEPS only, triceps neutralwhitegrey. Pureblackbackground. No text/glow, no barshrinking, no handsliding.",
+      "generation": "exec-310182ca-4065-4540-8eb5-2b4e7399fed3",
+      "output": "mid-halo.png",
+      "note": "Remove unwanted halo before review."
+    },
+    {
+      "file": "mid-black-prompt.json",
+      "prompt": "Background-only precise edit FIRST upright-row midpoint. SECOND exercise master, THIRD canonical identity. Replace all grey/purple halo and floor glow outside athlete/barbell with uniform pureblack #000000. Preserve every athlete/bar/plate/hand contour, position, scale, color and detail exactly. Keep1536x1024canvas. No newshadows/glow, no text, no movement or reframe. Only remove unwanted background glow.",
+      "generation": "exec-2d66fe76-0728-4156-a204-3b7e9a81a81d",
+      "output": "mid-black.png"
+    }
+  ],
+  "movingEquipmentDiagnostics": [
+    {
+      "frame": 1,
+      "barY": 517,
+      "barEndpoints": [
+        376.4041450777202,
+        1156.74213836478
+      ],
+      "barSpan": 780.3379932870598
+    },
+    {
+      "frame": 2,
+      "barY": 376,
+      "barEndpoints": [
+        376.8494623655914,
+        1157.5102040816328
+      ],
+      "barSpan": 780.6607417160413
+    },
+    {
+      "frame": 3,
+      "barY": 271,
+      "barEndpoints": [
+        376.8,
+        1156.8839285714287
+      ],
+      "barSpan": 780.0839285714287
+    },
+    {
+      "frame": 4,
+      "barY": 271,
+      "barEndpoints": [
+        376.8,
+        1156.8839285714287
+      ],
+      "barSpan": 780.0839285714287
+    },
+    {
+      "frame": 5,
+      "barY": 376,
+      "barEndpoints": [
+        376.8494623655914,
+        1157.5102040816328
+      ],
+      "barSpan": 780.6607417160413
+    },
+    {
+      "frame": 6,
+      "barY": 517,
+      "barEndpoints": [
+        376.4041450777202,
+        1156.74213836478
+      ],
+      "barSpan": 780.3379932870598
+    }
+  ],
+  "originalPrompts": [
+    "Scientific educational 2D anatomy exercise illustration, one pose only no text. Attached image is canonical identity; preserve exactly this bald faceless white/light grey muscular male, fine dark anatomical outlines, neutral smooth featureless pelvis and white trainers. New BARBELL UPRIGHT ROW master standing upright at starting position. Front camera, full body all shoes with generous black margins; pure black background no glow. Feet hip width, soft knees, tall neutral torso. Straight barbell held in front of upper thighs, both palms face body in pronated overhand grip just inside shoulder width, arms straight. One modest identical grey plate per bar end and collars; level straight bar long enough beyond hands, realistic modest load. Trapezius primary purple, lateral deltoids and biceps lighter lilac, all other anatomy grey-white. Anatomically consistent same athlete. 1024x1536. No floor line, no UI, no labels.",
+    "Edit image1 barbell upright row master; image2 canonical identity. Correct ONLY grip width: move both hands 40 pixels inward along same bar, bringing hand centres to x367 and x646, just inside shoulders. Both palms face body overhand; arms straight angle slightly inward from shoulders. Keep the bar at EXACT same position/length, plates, body, feet, head, camera, highlights and all background unchanged. No text.",
+    "Edit image1 accepted upright-row master, image2 canonical identity. Adjacent halfway upright-row: raise bar vertically to navel height y540, bar perfectly horizontal same length and same plates/diameters. Grip centres retain x378 and x638. Elbows bend outward and lead the movement at about y495, clearly higher than wrists but well below shoulders y335. Hands remain pronated attached to bar. Shoulders/body/feet/head/camera remain fixed exactly; no torso lean, no shrug to ears, no leg movement. Preserve trapezius purple and lighter lateral delt/biceps tint, all other anatomy neutral. Pure black,1024x1536,no glow/text.",
+    "Edit image1 halfway upright row to controlled top. Image2 locked exercise master, image3 canonical identity. Raise bar to chest level y405 while elbows lead outward and stay at or BELOW shoulder joint height, y350 or lower. Bar stays below elbows, never under chin. Use comfortable chest endpoint rather than raising elbows above shoulders. Both hands keep SAME overhand grip, centres x378/x638 as master. Same perfectly straight horizontal bar x22..1000, identical one plate per end, same diameters. Keep full body/head/feet anchored exactly, same proportions no leaning, no shrugging head or torso upwards. Only arms/shoulder joint rotation and attached bar move. Same highlights background canvas. No glow/text."
+  ],
+  "conversion": "Native lossless WebP; every decoded RGB byte verified identical to refined reviewed PNG.",
+  "reuse": {
+    "4": 3,
+    "5": 2,
+    "6": 1
+  },
+  "measurementMethod": "Unrounded native min-RGB150 interpolated boundaries for planted shoes. Moving-bar endpoint diagnostics separately use minRGB80. Grip reviewed natively; white hand/body overlap prevents independent threshold-based grip-centre measurement.",
+  "scanlines": {
+    "leftShoe": [
+      620,
+      730,
+      935
+    ],
+    "rightShoe": [
+      810,
+      910,
+      935
+    ]
+  }
+}

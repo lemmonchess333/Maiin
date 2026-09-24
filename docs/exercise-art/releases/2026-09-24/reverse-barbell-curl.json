@@ -1,0 +1,170 @@
+{
+  "exerciseId": "reverse-barbell-curl",
+  "version": "anatomy-v3-2026-09-24",
+  "width": 1024,
+  "height": 1536,
+  "decision": "approved",
+  "reviewer": "Codex visual and implementation review",
+  "reviewedAt": "2026-09-24T21:04:46.676Z",
+  "reference": {
+    "path": "form-frames/reverse-barbell-curl/1.webp",
+    "sha256": "529b0144bb430c610bf0c55281ce32df417e3a62bbddad887a8fda5c9b9ffcfb"
+  },
+  "cueSha256": "8d57aaca948a91be3d05db959c120475d0f0e9121ccee38d03b5229ae80fe9f6",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Canonical white-grey bald faceless anatomical athlete, fine contours, neutral smooth pelvis and white trainers retained. Native portrait style consistent across selected poses."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "All 1024x1536 native portrait. Full body and bar sleeves fit. Unrounded shoe anchors drift less than 0.25px and spans less than 0.27%, without deterministic correction."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Selected intermediate replaces the original drooping-wrist pose. Forearms slope upward and back-of-hand alignment is visibly clearer. Elbow outlines vary with flexion but remain beside ribs; upper arms and torso do not visibly swing. Qualitative anatomy review, not exact joint registration or calibrated 3D angles."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Straight bar, two modest equal round plates, collars and sleeves persist. Projected angle and plate ellipses vary; native qualitative inspection supports equipment continuity, not calibrated 3D invariance."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Both hands remain closed around the bar in an overhand grip. The selected higher intermediate improves wrist-to-forearm continuity versus the original and first replacement. Fingers obscure material contact points, so no exact grip-point tracking claim. Both planted shoes pass measured limits."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Bar travels from thighs through upper abdomen toward shoulders, then returns with no visible torso lean. Intermediate is not an exact temporal halfway pose. No deterministic edits to moving anatomy or bar were used."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Biceps strongest purple, brachioradialis and forearms light lilac match exact catalogue hierarchy; other muscles neutral. Highlights retained on lowering."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Six cues of at most seven words match exact reverse-barbell-curl overhand grip, straight wrists, elbows beside ribs, shoulder-height curl and controlled return."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "All six and 6-to-1 manually stepped in the actual player in both themes. Three distinct poses; 4=3,5=2,6=1. Continuous timed playback not claimed."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "All six and loop inspected at 390x844 in actual light-theme player. Whole athlete and bar fit, three curl positions and captions readable. Native 1024x1536 and scrollWidth390 confirmed. Fine wrist and grip inspection supplemented by native review."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "All six and loop inspected at 390x844 dark theme; no clipping or overflow. Clear progression and muscle hierarchy. Fine contact details checked natively."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/reverse-barbell-curl/1.webp",
+      "sha256": "529b0144bb430c610bf0c55281ce32df417e3a62bbddad887a8fda5c9b9ffcfb",
+      "anchors": {
+        "farShoe": {
+          "x": 270.88194444444446,
+          "y": 1390
+        },
+        "nearShoe": {
+          "x": 508.55797101449275,
+          "y": 1450
+        }
+      },
+      "invariantDimensions": {
+        "farShoeSpan": 220.64477311280746,
+        "nearShoeSpan": 146.55967604433079
+      }
+    },
+    {
+      "path": "form-frames/reverse-barbell-curl/2.webp",
+      "sha256": "cb2d8f779f0c1a76cc698d13b4c5a15d53667181f5c03b16cabae698466593c0",
+      "anchors": {
+        "farShoe": {
+          "x": 270.6333333333333,
+          "y": 1390
+        },
+        "nearShoe": {
+          "x": 508.4296875,
+          "y": 1450
+        }
+      },
+      "invariantDimensions": {
+        "farShoeSpan": 220.8601731601732,
+        "nearShoeSpan": 146.24422554347825
+      }
+    },
+    {
+      "path": "form-frames/reverse-barbell-curl/3.webp",
+      "sha256": "e53b82dd79fd4b007065efa18b8a41fb5f757c1395b24af6b31b19f5835d0d0a",
+      "anchors": {
+        "farShoe": {
+          "x": 270.8048780487805,
+          "y": 1390
+        },
+        "nearShoe": {
+          "x": 508.4890510948905,
+          "y": 1450
+        }
+      },
+      "invariantDimensions": {
+        "farShoeSpan": 220.58752701451067,
+        "nearShoeSpan": 146.17761557177613
+      }
+    },
+    {
+      "path": "form-frames/reverse-barbell-curl/4.webp",
+      "sha256": "e53b82dd79fd4b007065efa18b8a41fb5f757c1395b24af6b31b19f5835d0d0a",
+      "anchors": {
+        "farShoe": {
+          "x": 270.8048780487805,
+          "y": 1390
+        },
+        "nearShoe": {
+          "x": 508.4890510948905,
+          "y": 1450
+        }
+      },
+      "invariantDimensions": {
+        "farShoeSpan": 220.58752701451067,
+        "nearShoeSpan": 146.17761557177613
+      }
+    },
+    {
+      "path": "form-frames/reverse-barbell-curl/5.webp",
+      "sha256": "cb2d8f779f0c1a76cc698d13b4c5a15d53667181f5c03b16cabae698466593c0",
+      "anchors": {
+        "farShoe": {
+          "x": 270.6333333333333,
+          "y": 1390
+        },
+        "nearShoe": {
+          "x": 508.4296875,
+          "y": 1450
+        }
+      },
+      "invariantDimensions": {
+        "farShoeSpan": 220.8601731601732,
+        "nearShoeSpan": 146.24422554347825
+      }
+    },
+    {
+      "path": "form-frames/reverse-barbell-curl/6.webp",
+      "sha256": "529b0144bb430c610bf0c55281ce32df417e3a62bbddad887a8fda5c9b9ffcfb",
+      "anchors": {
+        "farShoe": {
+          "x": 270.88194444444446,
+          "y": 1390
+        },
+        "nearShoe": {
+          "x": 508.55797101449275,
+          "y": 1450
+        }
+      },
+      "invariantDimensions": {
+        "farShoeSpan": 220.64477311280746,
+        "nearShoeSpan": 146.55967604433079
+      }
+    }
+  ]
+}
