@@ -140,6 +140,7 @@ export const FORM_ARTWORK: Record<string, FormArtwork> = {
     reviewFile: "docs/exercise-art/releases/2026-09-24/cable-crossover.json",
   },
   "superman-hold": { version: "anatomy-v3-2026-09-24", status: "approved", width: 1536, height: 1024, frames: Array.from({length:6}, (_,i) => `form-frames/superman-hold/${i+1}.webp`), reference: "form-frames/superman-hold/1.webp", reviewFile: "docs/exercise-art/releases/2026-09-24/superman-hold.json" },
+  "decline-db-press": { version: "anatomy-v3-2026-09-24", status: "approved", width: 1536, height: 1024, frames: Array.from({length:6}, (_,i) => `form-frames/decline-db-press/${i+1}.webp`), reference: "form-frames/decline-db-press/1.webp", reviewFile: "docs/exercise-art/releases/2026-09-24/decline-db-press.json" },
   "weighted-push-ups": {
     version: "anatomy-v3-2026-09-22",
     status: "approved",
