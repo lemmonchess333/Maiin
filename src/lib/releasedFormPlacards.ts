@@ -15,6 +15,27 @@ const placard = (
 });
 
 export const RELEASED_FORM_PLACARDS = {
+  "machine-chest-fly": placard(
+    "machine-chest-fly",
+    ["Pectorals"],
+    ["Front deltoids"],
+    [
+      [0, "Set the soft bend", "Keep back supported; hold a soft bend."],
+      [
+        0.5,
+        "Sweep inward",
+        "Bring handles inward without bending elbows further.",
+      ],
+      [
+        1,
+        "Squeeze in front",
+        "Bring handles together without leaning forward.",
+      ],
+      [1, "Hold the squeeze", "Pause with your back against the pad."],
+      [0.5, "Open slowly", "Return slowly along the same wide arc."],
+      [0, "Control the stretch", "Stop before forcing your arms behind you."],
+    ]
+  ),
   "weighted-chest-dip": placard(
     "weighted-chest-dip",
     ["Pectorals"],
