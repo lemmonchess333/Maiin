@@ -1,0 +1,88 @@
+{
+  "modelPath": "Built-in image_gen; unchanged model path",
+  "sourceFrames": [
+    {
+      "frame": 1,
+      "sha256": "58454b5dc4e76484255152f28ad3e0ef459f525257bdbd766aebc3808b2c28ac"
+    },
+    {
+      "frame": 2,
+      "sha256": "bd70c803dda2198046d29186e7396792946b4ab440bf0c215bb98d6aa453ee99"
+    },
+    {
+      "frame": 3,
+      "sha256": "14bf6b3e6ac84d7c9ef446dc4752513672cfcabb7b520e984b0093f0552b36ac"
+    },
+    {
+      "frame": 4,
+      "sha256": "14bf6b3e6ac84d7c9ef446dc4752513672cfcabb7b520e984b0093f0552b36ac"
+    },
+    {
+      "frame": 5,
+      "sha256": "bd70c803dda2198046d29186e7396792946b4ab440bf0c215bb98d6aa453ee99"
+    },
+    {
+      "frame": 6,
+      "sha256": "58454b5dc4e76484255152f28ad3e0ef459f525257bdbd766aebc3808b2c28ac"
+    }
+  ],
+  "conversion": "Native lossless WebP; every decoded RGB byte verified equal to reviewed corrected PNG.",
+  "reuse": {
+    "4": 3,
+    "5": 2,
+    "6": 1
+  },
+  "measurementMethod": "Native min-RGB80 scanlines, linearly interpolated first and last boundary crossings; no coordinate rounding. Measures fixed rack base and planted near-shoe sole only.",
+  "correction": {
+    "authorization": "User approved: Use this method for fixed areas.",
+    "boxes": [
+      [15, 600, 315, 790],
+      [1110, 815, 1335, 900]
+    ],
+    "operation": "Master RGB copy into original bottom frames3/4 only. Lower near shoe avoids ankle/leg joints; rack base is unobstructed.",
+    "frames": [
+      {
+        "frame": 1,
+        "sourceSha256": "58454b5dc4e76484255152f28ad3e0ef459f525257bdbd766aebc3808b2c28ac",
+        "sha256": "58454b5dc4e76484255152f28ad3e0ef459f525257bdbd766aebc3808b2c28ac",
+        "changedPixels": 0,
+        "changedOutsideAuthorizedAreas": 0
+      },
+      {
+        "frame": 2,
+        "sourceSha256": "bd70c803dda2198046d29186e7396792946b4ab440bf0c215bb98d6aa453ee99",
+        "sha256": "bd70c803dda2198046d29186e7396792946b4ab440bf0c215bb98d6aa453ee99",
+        "changedPixels": 0,
+        "changedOutsideAuthorizedAreas": 0
+      },
+      {
+        "frame": 3,
+        "sourceSha256": "87bb56f7e7a9ff41119fae28bf38ddc1d95d3dba215f774d72516a199b3799b1",
+        "sha256": "14bf6b3e6ac84d7c9ef446dc4752513672cfcabb7b520e984b0093f0552b36ac",
+        "changedPixels": 38639,
+        "changedOutsideAuthorizedAreas": 0
+      },
+      {
+        "frame": 4,
+        "sourceSha256": "87bb56f7e7a9ff41119fae28bf38ddc1d95d3dba215f774d72516a199b3799b1",
+        "sha256": "14bf6b3e6ac84d7c9ef446dc4752513672cfcabb7b520e984b0093f0552b36ac",
+        "changedPixels": 38639,
+        "changedOutsideAuthorizedAreas": 0
+      },
+      {
+        "frame": 5,
+        "sourceSha256": "bd70c803dda2198046d29186e7396792946b4ab440bf0c215bb98d6aa453ee99",
+        "sha256": "bd70c803dda2198046d29186e7396792946b4ab440bf0c215bb98d6aa453ee99",
+        "changedPixels": 0,
+        "changedOutsideAuthorizedAreas": 0
+      },
+      {
+        "frame": 6,
+        "sourceSha256": "58454b5dc4e76484255152f28ad3e0ef459f525257bdbd766aebc3808b2c28ac",
+        "sha256": "58454b5dc4e76484255152f28ad3e0ef459f525257bdbd766aebc3808b2c28ac",
+        "changedPixels": 0,
+        "changedOutsideAuthorizedAreas": 0
+      }
+    ]
+  }
+}

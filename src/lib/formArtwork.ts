@@ -53,6 +53,31 @@ export const FORM_ARTWORK: Record<string, FormArtwork> = {
     reference: "form-frames/decline-bench/3.webp",
     reviewFile: "docs/exercise-art/releases/2026-09-24/decline-bench.json",
   },
+  "incline-bench": {
+    version: "anatomy-v3-2026-09-22",
+    status: "approved",
+    width: 1536,
+    height: 1024,
+    frames: Array.from(
+      { length: 6 },
+      (_, i) => `form-frames/incline-bench/${i + 1}.webp`
+    ),
+    reference: "form-frames/incline-bench/1.webp",
+    reviewFile: "docs/exercise-art/releases/2026-09-22/incline-bench.json",
+  },
+  "barbell-floor-press": {
+    version: "anatomy-v3-2026-09-22",
+    status: "approved",
+    width: 1536,
+    height: 1024,
+    frames: Array.from(
+      { length: 6 },
+      (_, i) => `form-frames/barbell-floor-press/${i + 1}.webp`
+    ),
+    reference: "form-frames/barbell-floor-press/1.webp",
+    reviewFile:
+      "docs/exercise-art/releases/2026-09-22/barbell-floor-press.json",
+  },
   "weighted-push-ups": {
     version: "anatomy-v3-2026-09-22",
     status: "approved",

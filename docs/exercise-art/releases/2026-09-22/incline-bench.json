@@ -1,0 +1,170 @@
+{
+  "exerciseId": "incline-bench",
+  "version": "anatomy-v3-2026-09-22",
+  "width": 1536,
+  "height": 1024,
+  "decision": "approved",
+  "reviewer": "Codex visual and implementation review",
+  "reviewedAt": "2026-09-22T10:30:33.121Z",
+  "reference": {
+    "path": "form-frames/incline-bench/1.webp",
+    "sha256": "bba515ce1ec06953de041e2d2ee71f41c1dbabe8321c4140c37b4e89556d9cb3"
+  },
+  "cueSha256": "e7a01fec4add079346cc680c8150e8de769d390e8df376f33f2337725ecb02e0",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Canonical bald, faceless white/grey anatomy athlete, smooth pelvis and white shoes retained across three native poses."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Same native 1536x1024 framing throughout. Attached unrounded fixed-feature measurements satisfy one-pixel anchor and one-percent dimension limits."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "All three native poses inspected: continuous limbs and grips, no extra anatomy. Moving anatomy is unchanged by the fixed-area correction."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Rack and bar remain continuous. User-authorized master copying corrects only unobstructed fixed regions in frames 3/4. Small projected plate/shaft variations were reviewed qualitatively, not treated as calibrated 3D measurements."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Head, back and hips remain supported on the incline bench; feet stay planted and both grips remain visible."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Bar lowers to upper chest and returns above shoulders, with supported torso and controlled elbows."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Pectorals are primary purple; triceps and front deltoids lighter lilac throughout. Return poses reuse the same images."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Six exact exercise cues match setup, lowering, bottom contact, pause, press and reset. Each cue contains at most seven words."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "Real ExerciseFormFrames stepped through all six frames and 6-to-1 transition. Intentional pause/return reuse: 4=3, 5=2, 6=1."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "All six corrected frames and loop inspected in the real component at 390x844 with actual light theme and repository CSS/fonts. Captions and images remained visible without clipping."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "All six corrected frames and loop inspected in the real component at 390x844 with actual dark theme. Captions readable, no visible seam or image-loading failure."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/incline-bench/1.webp",
+      "sha256": "bba515ce1ec06953de041e2d2ee71f41c1dbabe8321c4140c37b4e89556d9cb3",
+      "anchors": {
+        "nearRackBaseLeftEdge": {
+          "x": 290.40983606557376,
+          "y": 850
+        },
+        "nearRackTop": {
+          "x": 355,
+          "y": 190.66666666666666
+        }
+      },
+      "invariantDimensions": {
+        "nearRackBaseWidth": 198.27981910684002,
+        "nearRackTopToBaseHeight": 678.4458333333333
+      }
+    },
+    {
+      "path": "form-frames/incline-bench/2.webp",
+      "sha256": "a6594f69ba468296476d3cfccc43b69210732f27fb7d7b31cd88c556589ed705",
+      "anchors": {
+        "nearRackBaseLeftEdge": {
+          "x": 289.8433734939759,
+          "y": 850
+        },
+        "nearRackTop": {
+          "x": 355,
+          "y": 190.55633802816902
+        }
+      },
+      "invariantDimensions": {
+        "nearRackBaseWidth": 198.4066265060241,
+        "nearRackTopToBaseHeight": 678.483661971831
+      }
+    },
+    {
+      "path": "form-frames/incline-bench/3.webp",
+      "sha256": "978ac9215f40b0d96fcfcb1b4ab6eee6b66fd28e281cfc14d0210bc4c82c0163",
+      "anchors": {
+        "nearRackBaseLeftEdge": {
+          "x": 289.8181818181818,
+          "y": 850
+        },
+        "nearRackTop": {
+          "x": 355,
+          "y": 190.66666666666666
+        }
+      },
+      "invariantDimensions": {
+        "nearRackBaseWidth": 199.399209486166,
+        "nearRackTopToBaseHeight": 678.0196078431372
+      }
+    },
+    {
+      "path": "form-frames/incline-bench/4.webp",
+      "sha256": "978ac9215f40b0d96fcfcb1b4ab6eee6b66fd28e281cfc14d0210bc4c82c0163",
+      "anchors": {
+        "nearRackBaseLeftEdge": {
+          "x": 289.8181818181818,
+          "y": 850
+        },
+        "nearRackTop": {
+          "x": 355,
+          "y": 190.66666666666666
+        }
+      },
+      "invariantDimensions": {
+        "nearRackBaseWidth": 199.399209486166,
+        "nearRackTopToBaseHeight": 678.0196078431372
+      }
+    },
+    {
+      "path": "form-frames/incline-bench/5.webp",
+      "sha256": "a6594f69ba468296476d3cfccc43b69210732f27fb7d7b31cd88c556589ed705",
+      "anchors": {
+        "nearRackBaseLeftEdge": {
+          "x": 289.8433734939759,
+          "y": 850
+        },
+        "nearRackTop": {
+          "x": 355,
+          "y": 190.55633802816902
+        }
+      },
+      "invariantDimensions": {
+        "nearRackBaseWidth": 198.4066265060241,
+        "nearRackTopToBaseHeight": 678.483661971831
+      }
+    },
+    {
+      "path": "form-frames/incline-bench/6.webp",
+      "sha256": "bba515ce1ec06953de041e2d2ee71f41c1dbabe8321c4140c37b4e89556d9cb3",
+      "anchors": {
+        "nearRackBaseLeftEdge": {
+          "x": 290.40983606557376,
+          "y": 850
+        },
+        "nearRackTop": {
+          "x": 355,
+          "y": 190.66666666666666
+        }
+      },
+      "invariantDimensions": {
+        "nearRackBaseWidth": 198.27981910684002,
+        "nearRackTopToBaseHeight": 678.4458333333333
+      }
+    }
+  ]
+}
