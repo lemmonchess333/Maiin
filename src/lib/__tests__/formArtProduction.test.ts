@@ -1,4 +1,5 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
+import * as bodyRig from "../bodyRig";
 import { buildFormArtPrompt, type FormArtScene } from "../formArtProduction";
 import curl from "../../../docs/exercise-art/scenes/db-curl.json";
 import rope from "../../../docs/exercise-art/scenes/rope-tricep-pushdown.json";
@@ -24,12 +25,17 @@ describe("six-frame production brief", () => {
     ).toThrow(/six/);
   });
   it("never substitutes four catalogue instructions for six authored beats", () => {
-    expect(() =>
-      buildFormArtPrompt("concentration-curl", {
-        ...scene,
-        exerciseId: "concentration-curl",
-      })
-    ).toThrow(/six/);
+    const authored = vi.spyOn(bodyRig, "getAuthoredBeats").mockReturnValue(null);
+    try {
+      expect(() =>
+        buildFormArtPrompt("concentration-curl", {
+          ...scene,
+          exerciseId: "concentration-curl",
+        })
+      ).toThrow(/six/);
+    } finally {
+      authored.mockRestore();
+    }
   });
   it("includes a physical selected-stack ladder and rejects reversed movement", () => {
     const plan = structuredClone(rope) as FormArtScene;

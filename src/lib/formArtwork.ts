@@ -41,6 +41,7 @@ const ownerReleased = (
 // Preserve the seven previously shipped sets while replacements are reviewed.
 // These entries do not claim that the art passes the new consistency standard.
 export const FORM_ARTWORK: Record<string, FormArtwork> = {
+  "concentration-curl": { version: "anatomy-v3-2026-09-25", status: "approved", width: 1024, height: 1536, frames: Array.from({length:6}, (_,i) => `form-frames/concentration-curl/${i+1}.webp`), reference: "form-frames/concentration-curl/1.webp", reviewFile: "docs/exercise-art/releases/2026-09-25/concentration-curl.json" },
   "reverse-barbell-curl": { version: "anatomy-v3-2026-09-24", status: "approved", width: 1024, height: 1536, frames: Array.from({length:6}, (_,i) => `form-frames/reverse-barbell-curl/${i+1}.webp`), reference: "form-frames/reverse-barbell-curl/1.webp", reviewFile: "docs/exercise-art/releases/2026-09-24/reverse-barbell-curl.json" },
   "cross-body-hammer-curl": { version: "anatomy-v3-2026-09-24", status: "approved", width: 1024, height: 1536, frames: Array.from({length:6}, (_,i) => `form-frames/cross-body-hammer-curl/${i+1}.webp`), reference: "form-frames/cross-body-hammer-curl/1.webp", reviewFile: "docs/exercise-art/releases/2026-09-24/cross-body-hammer-curl.json" },
   "ez-bar-curl": { version: "anatomy-v3-2026-09-24", status: "approved", width: 1024, height: 1536, frames: Array.from({length:6}, (_,i) => `form-frames/ez-bar-curl/${i+1}.webp`), reference: "form-frames/ez-bar-curl/1.webp", reviewFile: "docs/exercise-art/releases/2026-09-24/ez-bar-curl.json" },
