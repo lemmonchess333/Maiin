@@ -97,6 +97,14 @@ exports.verifyApplePurchase = appleIAP.verifyApplePurchase;
 exports.appleIAPWebhook = appleIAP.appleIAPWebhook;
 exports.restoreApplePurchases = appleIAP.restoreApplePurchases;
 
+// IAP slice 3 / ADR-0006 — the RevenueCat pipeline that replaces
+// the three exports above. Both run during the migration: purchaseProvider
+// picks one at build time via VITE_REVENUECAT_IOS_KEY, and slice 8 (the
+// on-device sandbox sign-off) is what retires the Apple path.
+const revenueCat = require("./revenueCat");
+exports.revenueCatWebhook = revenueCat.revenueCatWebhook;
+exports.syncRevenueCatEntitlement = revenueCat.syncRevenueCatEntitlement;
+
 // PR Q (audit P0 #1/#2/#3 follow-up): pure helpers live in
 // ./helpers.js so the test runner can import them without booting
 // firebase-admin. The underscore-prefixed names below are kept as

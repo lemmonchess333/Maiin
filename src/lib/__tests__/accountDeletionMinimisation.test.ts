@@ -162,6 +162,26 @@ describe("assertPaymentEventShape", () => {
     ).toThrow(/forbidden field on paymentEventsPostDeletion/);
   });
 
+  it("accepts revenuecat as a provider and still refuses an unknown one", () => {
+    /* The RevenueCat pipeline (ADR-0006) logs here when a billing event
+       arrives for a deleting or tombstoned account, so its provider had
+       to join the enum. The second half is the half that matters: the
+       list is an allowlist, and widening it by one must not turn it into
+       a free-text field. */
+    const record = (provider: string) => ({
+      provider,
+      externalTxnId: "x",
+      eventType: "RENEWAL",
+      occurredAt: 1,
+      hashedUidPrefix: "abcdef01",
+      action: "logged",
+    });
+    expect(() => assertPaymentEventShape(record("revenuecat"))).not.toThrow();
+    expect(() => assertPaymentEventShape(record("paddle"))).toThrow(
+      /invalid provider/
+    );
+  });
+
   it("PAYMENT_EVENT_ALLOWED_FIELDS exposes the canonical 6 fields", () => {
     expect([...PAYMENT_EVENT_ALLOWED_FIELDS].sort()).toEqual([
       "action",

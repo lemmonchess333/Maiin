@@ -118,6 +118,21 @@ const EXPECTED = {
       "STRIPE_SECRET_KEY",
     ],
   },
+  // IAP slice 3 / ADR-0006. The webhook binds the REST key as
+  // well as its own auth secret because it resolves entitlement by
+  // asking RevenueCat rather than trusting the event body — see the
+  // header of lib/revenueCatEntitlement.js. Dropping REVENUECAT_REST_KEY
+  // here would leave the webhook authenticating fine and writing nothing.
+  revenueCatWebhook: {
+    kind: "http",
+    maxInstances: 100,
+    secrets: ["REVENUECAT_REST_KEY", "REVENUECAT_WEBHOOK_AUTH"],
+  },
+  syncRevenueCatEntitlement: {
+    kind: "callable",
+    maxInstances: 100,
+    secrets: ["REVENUECAT_REST_KEY"],
+  },
   deleteMyAccount: {
     kind: "callable",
     maxInstances: 100,
