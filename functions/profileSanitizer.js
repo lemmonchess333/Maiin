@@ -43,6 +43,7 @@ const SERVER_MANAGED_PROFILE_FIELDS = Object.freeze([
   "appleOriginalTransactionId",
   "appleProductId",
   "subscriptionExpiresAt",
+  "subscriptionTrialEndsAt",
   "trialExpiresAt",
   "createdAt",
 ]);

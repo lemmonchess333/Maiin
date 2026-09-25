@@ -101,6 +101,19 @@ const EXPECTED = {
     maxInstances: 100,
     secrets: ["STRIPE_SECRET_KEY"],
   },
+  // ADR-0006 — the RevenueCat entitlement path. Both bindings are deploy
+  // gates: provision REVENUECAT_WEBHOOK_AUTH and REVENUECAT_REST_KEY
+  // before merging or every functions deploy fails (the #1636 class).
+  revenueCatWebhook: {
+    kind: "http",
+    maxInstances: 100,
+    secrets: ["REVENUECAT_WEBHOOK_AUTH"],
+  },
+  syncRevenueCatEntitlement: {
+    kind: "callable",
+    maxInstances: 100,
+    secrets: ["REVENUECAT_REST_KEY"],
+  },
   appleIAPWebhook: {
     kind: "http",
     maxInstances: 100,
