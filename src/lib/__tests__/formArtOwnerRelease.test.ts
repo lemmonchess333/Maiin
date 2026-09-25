@@ -81,14 +81,16 @@ describe("owner-authorized artwork activation", () => {
         );
     }
   }, 30_000);
-  it("does not activate incomplete pilots or borrow a related exercise's artwork", () => {
+  it("keeps incomplete pilots inactive while releasing reviewed exact-ID guides", () => {
     for (const id of [
       "lat-pulldown",
       "deadlift",
       "incline-db-bench",
-      "concentration-curl",
     ])
       expect(getReleasedFormArtwork(id), id).toBeNull();
+    expect(getReleasedFormArtwork("concentration-curl")?.status).toBe("approved");
+    const { review, expected } = evidence("concentration-curl");
+    expect(validateArtworkReview(review, expected)).toEqual([]);
   });
   it("rejects missing permission, erased findings, certified checks and stale release data", () => {
     const { review, expected } = evidence("barbell-shrug");
