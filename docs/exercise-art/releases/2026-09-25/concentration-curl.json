@@ -1,0 +1,170 @@
+{
+  "exerciseId": "concentration-curl",
+  "version": "anatomy-v3-2026-09-25",
+  "width": 1024,
+  "height": 1536,
+  "decision": "approved",
+  "reviewer": "Codex visual and implementation review",
+  "reviewedAt": "2026-09-24T23:49:27.605Z",
+  "reference": {
+    "path": "form-frames/concentration-curl/1.webp",
+    "sha256": "02839e92a8a8c8a87ec5acfff9e21d292d94013b3123058fbba5513bf66898cf"
+  },
+  "cueSha256": "e718d1351921260da17ed3726e94cf7a3209533140439aca384525fc89fe3666",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Canonical anatomy-v3 bald faceless white-grey athlete, neutral featureless pelvis, fine contours and white trainers retained in all three unique poses."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Native1024x1536 fixed three-quarter seated view. Head, torso, support hand, bench and feet retain placement; no camera flip or crop change."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Working elbow flexes through hanging, intermediate and top curl while upper arm remains against inner thigh. Contracting biceps changes contour. Wrist/forearm alignment is qualitatively continuous; no calibrated3D angle claim."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "One modest round dumbbell with two matching ends stays in the working hand. Apparent face size/ellipse changes as the weight approaches the torso; exact3D dimensions are not established from these stills. Bench frame remains consistent."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Working upper-arm/inner-thigh contact reads consistently in all poses; support hand stays on opposite thigh, hips stay on bench. Authorized lower-left-trainer master-copy in2/3/4/5 corrects a1.7319percent scanline span variation. Provenance proves zero changed pixels outside fixed shoe rectangle; moving arm/weight untouched."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Dumbbell follows elbow flexion with no torso swing, extra weight or detached grip. Qualitative motion and load contact reviewed, not calibrated rigid-body simulation. Two shoe anchors drift under0.24px and spans under0.21percent after fixed-area correction, unrounded."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Working biceps strongest purple, working forearm pale lilac; stable hierarchy through return. Other arm and unrelated muscles remain neutral. Colours indicate qualitative contribution, not measured activation."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Six cues at most seven words match brace, curl, top, hold, controlled lower and reset; no cue claims a hidden machine or unsupported equipment action."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "All six frames and6-to1 loop manually stepped in actual ExerciseFormFrames player. Hold4=3, lowering5=2 and reset6=1 are mechanically appropriate reuse. No continuous timed playback claim."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "Actual player390x844 light theme: all six frames plus loop visually inspected, native1024x1536 image loaded, scrollWidth390, readable cues and manual controls. Fine grip detail supplemented by native review."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "Actual player390x844 dark theme: all six frames plus loop visually inspected. Full athlete/weight visible with clear purple/lilac hierarchy, readable cues and manual controls; corrected shoe has no visible seam."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/concentration-curl/1.webp",
+      "sha256": "02839e92a8a8c8a87ec5acfff9e21d292d94013b3123058fbba5513bf66898cf",
+      "anchors": {
+        "leftShoe": {
+          "x": 192.26315789473685,
+          "y": 1280
+        },
+        "rightShoe": {
+          "x": 739.5797872340426,
+          "y": 1240
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeSpan": 127.79357969391563,
+        "rightShoeSpan": 250.71369102682706
+      }
+    },
+    {
+      "path": "form-frames/concentration-curl/2.webp",
+      "sha256": "98b200944472434c11b01c846e9875b3a7ba1af129e0e39023eefbf778a0cae8",
+      "anchors": {
+        "leftShoe": {
+          "x": 192.26315789473685,
+          "y": 1280
+        },
+        "rightShoe": {
+          "x": 739.3486842105264,
+          "y": 1240
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeSpan": 127.79357969391563,
+        "rightShoeSpan": 250.20687134502919
+      }
+    },
+    {
+      "path": "form-frames/concentration-curl/3.webp",
+      "sha256": "90ec74ac0422e90cb12e9b525531c35fe8916a2178c2b48f4bd27a4b771d5fbf",
+      "anchors": {
+        "leftShoe": {
+          "x": 192.26315789473685,
+          "y": 1280
+        },
+        "rightShoe": {
+          "x": 739.4,
+          "y": 1240
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeSpan": 127.79357969391563,
+        "rightShoeSpan": 250.33913043478265
+      }
+    },
+    {
+      "path": "form-frames/concentration-curl/4.webp",
+      "sha256": "90ec74ac0422e90cb12e9b525531c35fe8916a2178c2b48f4bd27a4b771d5fbf",
+      "anchors": {
+        "leftShoe": {
+          "x": 192.26315789473685,
+          "y": 1280
+        },
+        "rightShoe": {
+          "x": 739.4,
+          "y": 1240
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeSpan": 127.79357969391563,
+        "rightShoeSpan": 250.33913043478265
+      }
+    },
+    {
+      "path": "form-frames/concentration-curl/5.webp",
+      "sha256": "98b200944472434c11b01c846e9875b3a7ba1af129e0e39023eefbf778a0cae8",
+      "anchors": {
+        "leftShoe": {
+          "x": 192.26315789473685,
+          "y": 1280
+        },
+        "rightShoe": {
+          "x": 739.3486842105264,
+          "y": 1240
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeSpan": 127.79357969391563,
+        "rightShoeSpan": 250.20687134502919
+      }
+    },
+    {
+      "path": "form-frames/concentration-curl/6.webp",
+      "sha256": "02839e92a8a8c8a87ec5acfff9e21d292d94013b3123058fbba5513bf66898cf",
+      "anchors": {
+        "leftShoe": {
+          "x": 192.26315789473685,
+          "y": 1280
+        },
+        "rightShoe": {
+          "x": 739.5797872340426,
+          "y": 1240
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeSpan": 127.79357969391563,
+        "rightShoeSpan": 250.71369102682706
+      }
+    }
+  ]
+}

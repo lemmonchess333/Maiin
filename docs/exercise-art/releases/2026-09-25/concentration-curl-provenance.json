@@ -1,0 +1,142 @@
+{
+  "modelPath": "Existing built-in image_gen anatomy-v3 native portrait pilot reviewed; same model path. No new generation for this release. Only owner-authorized fixed trainer master-copy correction.",
+  "canonicalReference": {
+    "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+  },
+  "sourceFrames": [
+    {
+      "frame": 1,
+      "originalPath": "docs/exercise-art/pilots/parallel-ten/concentration-curl/frames/1.png",
+      "originalSha256": "45cfd0fd4230fda03a58f63534cf407e61456bfe2b8d0ef15559ed2fa5848828",
+      "selectedPngSha256": "45cfd0fd4230fda03a58f63534cf407e61456bfe2b8d0ef15559ed2fa5848828"
+    },
+    {
+      "frame": 2,
+      "originalPath": "docs/exercise-art/pilots/parallel-ten/concentration-curl/frames/2.png",
+      "originalSha256": "d8a5a3cb4fc8811fc945778684ee6c0617fe47b73a5a45699d7c48b5ebd1c715",
+      "selectedPngSha256": "855d1588108b85c2c8c62b3932fafc1ba582299a4166f2e9694340e74b8a3d4b"
+    },
+    {
+      "frame": 3,
+      "originalPath": "docs/exercise-art/pilots/parallel-ten/concentration-curl/frames/3.png",
+      "originalSha256": "358ddc6d09c1fbd0e6fcfdeabc145cce921d3b522100d93c26731d1302e4ba56",
+      "selectedPngSha256": "89db158da748afbeb66d2a5eccd9a37aeaf449f3ee67f510a26033712deccc30"
+    },
+    {
+      "frame": 4,
+      "originalPath": "docs/exercise-art/pilots/parallel-ten/concentration-curl/frames/4.png",
+      "originalSha256": "358ddc6d09c1fbd0e6fcfdeabc145cce921d3b522100d93c26731d1302e4ba56",
+      "selectedPngSha256": "89db158da748afbeb66d2a5eccd9a37aeaf449f3ee67f510a26033712deccc30"
+    },
+    {
+      "frame": 5,
+      "originalPath": "docs/exercise-art/pilots/parallel-ten/concentration-curl/frames/5.png",
+      "originalSha256": "d8a5a3cb4fc8811fc945778684ee6c0617fe47b73a5a45699d7c48b5ebd1c715",
+      "selectedPngSha256": "855d1588108b85c2c8c62b3932fafc1ba582299a4166f2e9694340e74b8a3d4b"
+    },
+    {
+      "frame": 6,
+      "originalPath": "docs/exercise-art/pilots/parallel-ten/concentration-curl/frames/6.png",
+      "originalSha256": "45cfd0fd4230fda03a58f63534cf407e61456bfe2b8d0ef15559ed2fa5848828",
+      "selectedPngSha256": "45cfd0fd4230fda03a58f63534cf407e61456bfe2b8d0ef15559ed2fa5848828"
+    }
+  ],
+  "generation": [
+    "Use case scientific-educational fitness instruction. Create one 1024x1536 clean anatomical training mannequin illustration, using image 1 as exact character/style reference. CONCENTRATION CURL master starting position: adult faceless bald anatomy mannequin sitting on a simple flat charcoal padded bench. Feet in reference white trainers planted widely apart; knees apart; torso hinged forward slightly. Camera front three-quarter toward working RIGHT arm so working elbow support visible. Right upper arm braced firmly against inside right thigh just above knee, right elbow almost straight, palm supinated holding one modest grey hex dumbbell hanging between legs clear of floor. LEFT hand rests open on left thigh, empty. No other dumbbells. Right biceps deep purple, right forearm light lilac. All other anatomy neutral white/grey matching reference. Pure black background. Preserve the reference mannequin's non-detailed neutral anatomy and simple white shoes, fine contours and muscle separation. Full head bench and both feet visible with generous margins. Educational clinical depiction, no text, no panels, no arrows.",
+    "Precise exercise biomechanics correction to Image 2 concentration curl master. Image 1 is canonical identity. Change only working right upper-arm/elbow placement: the BACK OF THE UPPER ARM immediately above elbow must be visibly pressed against the INSIDE of the right thigh just above the knee, not hovering in front of the thigh. Lean the torso enough toward right thigh to permit this anchored brace. Keep dumbbell arm nearly straight downward, supinated grip, wrist neutral. Preserve exact bench feet non-working hand camera framing and 1024x1536 canvas, mannequin identity and purple biceps/lilac forearm. One clinical fitness image, no text.",
+    "Scientific-educational exercise illustration. New concentration-curl instructional master from canonical mannequin reference. Use a SIDE THREE-QUARTER CAMERA viewing the athlete's working RIGHT side; prioritize an unobstructed view of the upper-arm-to-thigh brace. Athlete sits on short charcoal flat bench, torso leans forward about 40 degrees, knees spread, feet planted wearing same simple white trainers. The BACK of the working right upper arm just above elbow rests firmly against INNER right thigh near knee. That contact must be visibly touching, supporting upper arm. Right elbow nearly extended, forearm descends between spread knees, supinated hand holding one small round dumbbell; other hand empty rests on other knee. A physically correct concentration curl, not free-hanging arm. Deep purple working triceps? NO: working BICEPS primary purple, forearm light lilac; all other muscles remain light grey. Match exact bald faceless adult clinical mannequin and anatomical fine outlines of reference. Full bench/body/feet visible on pure black, no text or arrows. Single native 1536x1024 image.",
+    "Precise-object-edit educational concentration curl: Image 1 canonical athlete, Image 2 approved scene master/edit target. Change ONLY working RIGHT forearm, hand and held dumbbell by flexing elbow to about 85 degrees: dumbbell rises toward right shoulder halfway up, forearm roughly horizontal. Maintain supinated grip and neutral wrist, same round dumbbell. CRITICAL upper arm stays at same location, back of upper arm braced against inner right thigh; elbow pivot about x440,y650 stays fixed. Preserve exact bench, legs feet, torso, head, resting hand, shoulders, camera crop and black background from image2. No body or bench rescaling. Same purple biceps/lilac forearm. One portrait 1024x1536 frame, no text.",
+    "Create concentration-curl intermediate frame using image1 canonical identity, image2 original master scene, image3 top contracted reference. EDIT image2: working forearm and dumbbell move only to an INTERMEDIATE position halfway between supplied bottom and top. Elbow stays fixed near (430,650). Wrist should be roughly (650,710) and dumbbell around (665,730), BELOW elbow height and well below chest, not up at chest. Forearm slopes diagonally DOWN toward image-right at about 25 degrees below horizontal; approximately 60 degree elbow flexion from straight. Preserve same round dumbbell size, hand closed supinated on handle, wrist straight. Upper arm brace against inner thigh stays fixed; no movement of head torso legs shoes nonworking hand or bench. Exact 1024x1536 camera and black backdrop image2. Keep muscle palette unchanged, no text. One separate native image."
+  ],
+  "fixedCorrection": {
+    "authorization": "User approved deterministic master-copy for fixed equipment and planted contact areas.",
+    "master": {
+      "path": "work\\Maiin\\docs\\exercise-art\\pilots\\parallel-ten\\concentration-curl\\frames\\1.png",
+      "sha256": "45cfd0fd4230fda03a58f63534cf407e61456bfe2b8d0ef15559ed2fa5848828"
+    },
+    "scope": "Only lower planted left trainer and surrounding black pixels; rectangle excludes moving arm, dumbbell and thigh. No moving anatomy edited.",
+    "reason": "Original left shoe scanline span varied1.7319percent; restore fixed shoe from setup master.",
+    "corrections": [
+      {
+        "frame": 2,
+        "sourcePath": "work\\Maiin\\docs\\exercise-art\\pilots\\parallel-ten\\concentration-curl\\frames\\2.png",
+        "sourceSha256": "d8a5a3cb4fc8811fc945778684ee6c0617fe47b73a5a45699d7c48b5ebd1c715",
+        "outputPath": "work\\concentration-curl-production-review\\fixed-frames\\2.png",
+        "outputSha256": "855d1588108b85c2c8c62b3932fafc1ba582299a4166f2e9694340e74b8a3d4b",
+        "rectangle": [
+          175,
+          1160,
+          355,
+          1340
+        ],
+        "changedPixels": 24594,
+        "changedPixelsOutsideRectangle": 0
+      },
+      {
+        "frame": 3,
+        "sourcePath": "work\\Maiin\\docs\\exercise-art\\pilots\\parallel-ten\\concentration-curl\\frames\\3.png",
+        "sourceSha256": "358ddc6d09c1fbd0e6fcfdeabc145cce921d3b522100d93c26731d1302e4ba56",
+        "outputPath": "work\\concentration-curl-production-review\\fixed-frames\\3.png",
+        "outputSha256": "89db158da748afbeb66d2a5eccd9a37aeaf449f3ee67f510a26033712deccc30",
+        "rectangle": [
+          175,
+          1160,
+          355,
+          1340
+        ],
+        "changedPixels": 24077,
+        "changedPixelsOutsideRectangle": 0
+      },
+      {
+        "frame": 4,
+        "sourcePath": "work\\Maiin\\docs\\exercise-art\\pilots\\parallel-ten\\concentration-curl\\frames\\4.png",
+        "sourceSha256": "358ddc6d09c1fbd0e6fcfdeabc145cce921d3b522100d93c26731d1302e4ba56",
+        "outputPath": "work\\concentration-curl-production-review\\fixed-frames\\4.png",
+        "outputSha256": "89db158da748afbeb66d2a5eccd9a37aeaf449f3ee67f510a26033712deccc30",
+        "rectangle": [
+          175,
+          1160,
+          355,
+          1340
+        ],
+        "changedPixels": 24077,
+        "changedPixelsOutsideRectangle": 0
+      },
+      {
+        "frame": 5,
+        "sourcePath": "work\\Maiin\\docs\\exercise-art\\pilots\\parallel-ten\\concentration-curl\\frames\\5.png",
+        "sourceSha256": "d8a5a3cb4fc8811fc945778684ee6c0617fe47b73a5a45699d7c48b5ebd1c715",
+        "outputPath": "work\\concentration-curl-production-review\\fixed-frames\\5.png",
+        "outputSha256": "855d1588108b85c2c8c62b3932fafc1ba582299a4166f2e9694340e74b8a3d4b",
+        "rectangle": [
+          175,
+          1160,
+          355,
+          1340
+        ],
+        "changedPixels": 24594,
+        "changedPixelsOutsideRectangle": 0
+      }
+    ]
+  },
+  "conversion": "Lossless WebP decoded RGB matches selected native PNGs exactly.",
+  "reuse": {
+    "4": 3,
+    "5": 2,
+    "6": 1
+  },
+  "measurementMethod": "Interpolated minimum RGB150 shoe scanline boundaries on native PNGs after authorized lower-left-trainer master-copy in2/3/4/5; provenance records zero changes outside rectangle. Unrounded comparisons. Fixed anchors do not measure moving anatomy or dumbbell rigidity.",
+  "scanlines": {
+    "leftShoe": [
+      160,
+      365,
+      1280
+    ],
+    "rightShoe": [
+      715,
+      1015,
+      1240
+    ]
+  }
+}
