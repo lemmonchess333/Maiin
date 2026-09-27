@@ -88,15 +88,21 @@ const EXPECTED_BARE_USES: Record<(typeof IDENTITY)[number], number> = {
   // tile, taking two tinted-tile icons with them.
   // 2026-09-27: 45 → 44. The run finish screen's distance tile went: the
   // distance is its headline now, in the foreground colour.
-  running: 44, // Calendar status icons now use the strong colour step.
+  // 2026-09-27: 44 → 45. Analytics' Go deeper tiles: the Running tile's
+  // footprints ICON (3:1 non-text); its words are foreground.
+  running: 45, // Calendar status icons now use the strong colour step.
   // 2026-09-27: 19 → 18. DS3's Home lift card lost its dumbbell tile:
   // the exercise drawing is the card's picture now.
   // 2026-09-27: 18 → 17. The same on the workout screen: the dumbbell
   // beside the exercise name gave way to its drawing.
   // 2026-09-27: 17 → 16. The finish screen's volume tile lost its
   // dumbbell: DS3 sets the three numbers plain, with no icons.
-  lifting: 16, // Redesign consolidates onboarding option icons.
-  nutrition: 4,
+  // 2026-09-27: 16 → 17. Analytics' Go deeper tiles: the Lifting tile's
+  // dumbbell ICON; its words are foreground.
+  lifting: 17, // Redesign consolidates onboarding option icons.
+  // 2026-09-27: 4 → 5. Analytics' Go deeper tiles: the Food tile's apple
+  // ICON; its words are foreground.
+  nutrition: 5,
   destructive: 0,
   success: 0,
   warning: 0,

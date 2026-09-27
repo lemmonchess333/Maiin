@@ -27,6 +27,10 @@ import PeriodOverview from "@/components/analytics/PeriodOverview";
 import StatCard from "@/components/analytics/StatCard";
 import WorkoutHistoryList from "@/components/workout/WorkoutHistoryList";
 import SectionEmptyCTA from "@/components/analytics/SectionEmptyCTA";
+import AnalyticsGoDeeper, {
+  AnalyticsBackRow,
+  type AnalyticsPage,
+} from "@/components/analytics/AnalyticsGoDeeper";
 import RacePredictionsCard from "@/components/analytics/RacePredictionsCard";
 import TrainingLoadCard from "@/components/analytics/TrainingLoadCard";
 import { useTrainingLoadSeries } from "@/hooks/useTrainingLoadSeries";
@@ -174,6 +178,21 @@ const LEGACY_TAB_TO_HASH: Partial<Record<string, string>> = {
   performance: "performance",
 };
 
+/* DS3: the Analytics tab is a short overview with four pages behind it,
+   chosen by `?view=`. Absent or unknown is the overview. Each page is one
+   discipline's charts, which used to stack into a single scroll about
+   4,700 px tall on a phone. */
+type AnalyticsView = "overview" | AnalyticsPage;
+const ANALYTICS_VIEWS: AnalyticsPage[] = ["lifting", "running", "body", "food"];
+
+/* Pre-Hist5 `?tab=` values that named a discipline land on its page now,
+   rather than on the top of one long scroll. */
+const LEGACY_TAB_TO_VIEW: Partial<Record<string, AnalyticsPage>> = {
+  running: "running",
+  lifting: "lifting",
+  nutrition: "food",
+};
+
 // Module-level so the useCallback consuming it has a stable
 // reference across renders (the exhaustive-deps lint rule rightly
 // flags an in-component const). Mirrors TimeRangePills' default
@@ -277,6 +296,39 @@ export default function History() {
     [setSearchParams]
   );
 
+  /* Which Analytics page is open. A legacy `?tab=running` resolves to its
+     page on this very render, before the reconciliation below rewrites
+     the URL, so the overview never flashes first. */
+  const viewFromUrl = searchParams.get("view");
+  const view: AnalyticsView = ANALYTICS_VIEWS.includes(
+    viewFromUrl as AnalyticsPage
+  )
+    ? (viewFromUrl as AnalyticsPage)
+    : ((tabFromUrl ? LEGACY_TAB_TO_VIEW[tabFromUrl] : undefined) ?? "overview");
+  /* A push, not a replace: the back gesture on a page returns to the
+     overview, the way a pushed screen would. */
+  const setView = useCallback(
+    (next: AnalyticsView) => {
+      setSearchParams((params) => {
+        const updated = new URLSearchParams(params);
+        if (next === "overview") updated.delete("view");
+        else updated.set("view", next);
+        return updated;
+      });
+    },
+    [setSearchParams]
+  );
+  // A page opens at its top. Skipped on mount, where a #performance
+  // deep-link owns the scroll position.
+  const viewMountedRef = useRef(false);
+  useEffect(() => {
+    if (!viewMountedRef.current) {
+      viewMountedRef.current = true;
+      return;
+    }
+    window.scrollTo({ top: 0 });
+  }, [view]);
+
   // One-shot reconciliation on mount: if the URL doesn't already
   // carry a tab AND a hash / sessionStorage hint exists, promote
   // that hint to the URL so the rest of the page can rely on URL
@@ -299,7 +351,22 @@ export default function History() {
        /history#performance and scrolls to the Performance section
        inside Analytics. */
     if (tabFromUrl && LEGACY_TAB_REDIRECTS[tabFromUrl]) {
-      setFilter(LEGACY_TAB_REDIRECTS[tabFromUrl]);
+      const legacyView = LEGACY_TAB_TO_VIEW[tabFromUrl];
+      if (legacyView) {
+        // One update: two setSearchParams calls in a tick overwrite
+        // each other.
+        setSearchParams(
+          (params) => {
+            const updated = new URLSearchParams(params);
+            updated.delete("tab");
+            updated.set("view", legacyView);
+            return updated;
+          },
+          { replace: true }
+        );
+      } else {
+        setFilter(LEGACY_TAB_REDIRECTS[tabFromUrl]);
+      }
       const hashTarget = LEGACY_TAB_TO_HASH[tabFromUrl];
       if (hashTarget && typeof window !== "undefined") {
         /* Set the hash WITHOUT scrolling here — the anchor scroll
@@ -1356,21 +1423,32 @@ export default function History() {
               Suppressed in cold-start: the "No analytics yet" card below
               stands in until the first session is logged. Deep-links to
               /history#performance scroll to this section's anchor. */}
-            {filter === "analytics" && !isAnalyticsColdStart && (
-              <SectionErrorBoundary sectionName="performance-section">
-                <PerformanceSection
-                  /* A meal alone clears the cold-start gate above, so this
+            {/* A deeper page's way back to the overview. */}
+            {filter === "analytics" && view !== "overview" && (
+              <AnalyticsBackRow onBack={() => setView("overview")} />
+            )}
+
+            {filter === "analytics" &&
+              view === "overview" &&
+              !isAnalyticsColdStart && (
+                <SectionErrorBoundary sectionName="performance-section">
+                  <PerformanceSection
+                    /* A meal alone clears the cold-start gate above, so this
                      section can render for someone with no session at all —
                      and the perf doc is server-written, so a user who has
                      just logged their first workout reaches it too. */
-                  hasLoggedSession={
-                    workouts.length > 0 || lifetimeRuns.runCount > 0
-                  }
-                />
-              </SectionErrorBoundary>
-            )}
+                    hasLoggedSession={
+                      workouts.length > 0 || lifetimeRuns.runCount > 0
+                    }
+                  />
+                </SectionErrorBoundary>
+              )}
 
-            <TimeRangePills selected={timeRange} onChange={setTimeRange} />
+            {/* The range scopes the history below it. The Body page's
+                weight chart keeps its own, so it gets none here. */}
+            {view !== "body" && (
+              <TimeRangePills selected={timeRange} onChange={setTimeRange} />
+            )}
 
             {/* Hist5b pin 1 — sticky anchor chip row. Only renders on
               the Analytics tab AND only when there are 2+ sections
@@ -1397,7 +1475,7 @@ export default function History() {
                 Splitting the three states keeps them mutually exclusive and
                 exhaustive: loading → skeleton, then cold-start → card, else
                 → overview. */}
-            {filter === "analytics" && dataLoading && (
+            {filter === "analytics" && view === "overview" && dataLoading && (
               <div className="p-4 rounded-2xl bg-card space-y-3">
                 <Skeleton className="h-3 w-20" />
                 <div className="grid grid-cols-3 gap-2">
@@ -1422,40 +1500,46 @@ export default function History() {
               subscriptions with no re-subscribe handle from here, and
               remounting the page genuinely re-establishes them.
             */}
-            {filter === "analytics" && stalledSources.length > 0 && (
-              <div
-                role="status"
-                className="p-4 rounded-2xl bg-card space-y-2 card-shadow"
-              >
-                <p className="text-sm font-semibold text-foreground">
-                  Still loading your {formatSourceList(stalledSources)}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  This is taking longer than it should. Your data is safe — the
-                  connection to it has stalled.
-                </p>
-                <Button
-                  variant="secondary"
-                  onClick={() => window.location.reload()}
+            {filter === "analytics" &&
+              view === "overview" &&
+              stalledSources.length > 0 && (
+                <div
+                  role="status"
+                  className="p-4 rounded-2xl bg-card space-y-2 card-shadow"
                 >
-                  Reload
-                </Button>
-              </div>
-            )}
+                  <p className="text-sm font-semibold text-foreground">
+                    Still loading your {formatSourceList(stalledSources)}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    This is taking longer than it should. Your data is safe —
+                    the connection to it has stalled.
+                  </p>
+                  <Button
+                    variant="secondary"
+                    onClick={() => window.location.reload()}
+                  >
+                    Reload
+                  </Button>
+                </div>
+              )}
 
             {/* Cold-start: one calm expectation-setting card instead of a
                 wall of zeroed rings + redundant PI strip. */}
-            {filter === "analytics" && !dataLoading && isAnalyticsColdStart && (
-              <EmptyState
-                icon={LineChart}
-                accent={THEME.brand}
-                headline="No analytics yet"
-                sub="Log a workout, run or meal and your trends will show up here."
-                action={{ label: "Start a workout", href: "/program" }}
-              />
-            )}
+            {filter === "analytics" &&
+              view === "overview" &&
+              !dataLoading &&
+              isAnalyticsColdStart && (
+                <EmptyState
+                  icon={LineChart}
+                  accent={THEME.brand}
+                  headline="No analytics yet"
+                  sub="Log a workout, run or meal and your trends will show up here."
+                  action={{ label: "Start a workout", href: "/program" }}
+                />
+              )}
 
             {filter === "analytics" &&
+              view === "overview" &&
               !dataLoading &&
               !isAnalyticsColdStart && (
                 <>
@@ -1491,7 +1575,16 @@ export default function History() {
                 </>
               )}
 
-            {showRunningSection && filter === "analytics" && (
+            {/* The way into the four pages. Shown in cold start too: the
+                Body page holds a weight chart that needs no session. */}
+            {filter === "analytics" && view === "overview" && !dataLoading && (
+              <AnalyticsGoDeeper onOpen={setView} />
+            )}
+
+            {/* On its own page a section renders whatever its data: each
+                one's own branches say "log your first run" and the like,
+                which the overview's "has anything" gates never let it. */}
+            {filter === "analytics" && view === "running" && (
               <section
                 id="analytics-running"
                 aria-label="Running analytics"
@@ -1581,7 +1674,7 @@ export default function History() {
               </section>
             )}
 
-            {showLiftingSection && filter === "analytics" && (
+            {filter === "analytics" && view === "lifting" && (
               <section
                 id="analytics-lifting"
                 aria-label="Lifting analytics"
@@ -1663,9 +1756,9 @@ export default function History() {
               </section>
             )}
 
-            {filter === "analytics" && !workoutsLoading && (
-              <WorkoutHistoryList workouts={workouts} />
-            )}
+            {filter === "analytics" &&
+              view === "lifting" &&
+              !workoutsLoading && <WorkoutHistoryList workouts={workouts} />}
 
             {/* Weight is a body measurement, not a food one, and the code
                 said so three times before it said it once: TrendWeight was
@@ -1677,7 +1770,7 @@ export default function History() {
                 Its own section, gated on nothing but the tab, settles both:
                 the workaround comments go, and the weight-only user gets
                 their chart. */}
-            {filter === "analytics" && (
+            {filter === "analytics" && view === "body" && (
               <section
                 id="analytics-body"
                 aria-label="Body analytics"
@@ -1690,10 +1783,10 @@ export default function History() {
               </section>
             )}
 
-            {showNutritionSection && filter === "analytics" && (
+            {filter === "analytics" && view === "food" && (
               <section
                 id="analytics-nutrition"
-                aria-label="Nutrition analytics"
+                aria-label="Food analytics"
                 className="space-y-2"
               >
                 {/* Its sport-coded peers on this page are section
@@ -1703,7 +1796,7 @@ export default function History() {
                     page against a 4.5:1 floor. The identity is for fills
                     and icons; `-strong` is the theme-aware AA step. */}
                 <SectionHeading className="text-nutrition-strong">
-                  Nutrition
+                  Food
                 </SectionHeading>
                 {mealsLoading ? (
                   <div className="space-y-2">
@@ -1901,6 +1994,7 @@ export default function History() {
             )}
 
             {filter === "analytics" &&
+              view === "overview" &&
               !dataLoading &&
               lifetimeTotals.runCount +
                 lifetimeTotals.liftCount +

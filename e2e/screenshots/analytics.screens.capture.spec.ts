@@ -241,21 +241,41 @@ test.describe("analytics tab screenshots", () => {
     });
     await expect(page.getByText(/loading analytics/i)).toHaveCount(0);
 
+    await shootBoth(page, "analytics-loaded");
+
     // And the content the skeletons were standing in for is present —
     // one assertion per seeded discipline, so a section that renders its
     // heading but never its data still fails. All three feed `dataLoading`
-    // and all three must have arrived.
-    await expect(
-      page.getByText("Monthly volume", { exact: true })
-    ).toBeVisible();
+    // and all three must have arrived. DS3 put each discipline on its own
+    // page behind the overview's Go deeper tiles, so the check opens each
+    // page, and comes back the way a user does.
+    const overview = page.getByRole("button", {
+      name: "Overview",
+      exact: true,
+    });
+    await page.getByRole("button", { name: /^Lifting/ }).click();
+    await expect(page.getByText("Monthly volume", { exact: true })).toBeVisible(
+      { timeout: 15_000 }
+    );
     await expect(page.getByText("2.2k").first()).toBeVisible();
+    await expect(page.locator('[class*="animate-pulse"]')).toHaveCount(0, {
+      timeout: 30_000,
+    });
+    await shootBoth(page, "analytics-lifting");
+    await overview.click();
+
+    await page.getByRole("button", { name: /^Running/ }).click();
     await expect(
       page.getByText("Monthly distance", { exact: true })
-    ).toBeVisible();
+    ).toBeVisible({ timeout: 15_000 });
     await expect(page.getByText("5.2").first()).toBeVisible();
-    await expect(page.getByText(/no meals logged/i)).toHaveCount(0);
+    await overview.click();
 
-    await shootBoth(page, "analytics-loaded");
+    await page.getByRole("button", { name: /^Food/ }).click();
+    await expect(
+      page.getByRole("heading", { name: "Food", exact: true })
+    ).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText(/no meals logged/i)).toHaveCount(0);
   });
 
   /* The third tab had no capture at all — Analytics and Badges were
