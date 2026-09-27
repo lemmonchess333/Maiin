@@ -360,7 +360,7 @@ already made for this repo.
 
 - **deploy-production.yml ("Deploy production") is the one entry point for the web and backend deploys.** It runs on every push to `main` and on a manual `workflow_dispatch`, one release at a time (the `production-release` concurrency group queues a new release behind the running one rather than cancelling it). The five workflows below are `workflow_call` only, so none of them can be run on its own — to redeploy anything, re-run Deploy production. Its `changes` job diffs against the last SUCCESSFUL release, not the previous push, and runs the backend chain only when something under `functions/`, `firestore.rules`, `firestore.indexes.json`, `storage.rules`, `firebase.json`, `scripts/verify-*` or `.github/workflows/deploy*` changed; a manual dispatch always runs it. Order: Firestore → Storage → Functions, then Hosting and Pages once all three succeed (or straight away when the backend was skipped).
 - **deploy-firestore.yml:** Firestore rules (read back after deploying), then indexes.
-- **deploy-storage.yml:** Storage rules, gated behind the `STORAGE_XSERVICE_APPROVED` repo variable (see the packet-11 QA row).
+- **deploy-storage.yml:** Storage rules, gated behind the `STORAGE_XSERVICE_APPROVED` repo variable (set since 2026-09-15; the packet-11 QA row has the one-time permission those rules still need confirmed).
 - **deploy-functions.yml:** Cloud Functions — injects the per-commit bundle marker, runs `firebase deploy --only functions --force` (so a removed export is deleted, not refused), then reads the deployed source back (`scripts/verify-deployed-functions-source.py`). A failure files or updates one rolling "deploy-functions failing on main" issue.
 - **deploy.yml:** Builds and deploys to GitHub Pages.
 - **deploy-hosting.yml:** Builds with `base: "/"` and deploys to Firebase Hosting. The web build's security headers (HSTS, `nosniff`, Referrer-Policy, `X-Frame-Options`, a `frame-ancestors 'none'` CSP header, Permissions-Policy) live in `firebase.json` and ship ONLY via Hosting — GitHub Pages cannot set response headers, accepted because Pages is the preview surface, not the product. `frame-ancestors` is ignored in a `<meta>` CSP, which is why it is a header. Pinned by `hostingSecurityHeaders.test.ts`.
@@ -1191,11 +1191,12 @@ plus two new ones the platform change introduces.
 **Follow-up, NOT done in this change — legacy Storage blobs.** New
 writes stopped; the blobs already under `food-photos/{uid}/` were left
 in place so pre-Food9 diary rows keep rendering, and the `storage.rules`
-block stays (editing it is blocked behind `STORAGE_XSERVICE_APPROVED`,
-which `workflow_dispatch` does not bypass). Sweeping them is a separate
-piece of work. Until it happens, "Tropos stores no meal photos" is true
-of everything written from 2026-08-18 onward and NOT of what came
-before — do not read the Food9 lock as meaning the bucket is empty.
+block stays (changing it was blocked behind `STORAGE_XSERVICE_APPROVED`
+until 2026-09-15; a change now deploys with the next release). Sweeping
+them is a separate piece of work. Until it happens, "Tropos stores no
+meal photos" is true of everything written from 2026-08-18 onward and
+NOT of what came before — do not read the Food9 lock as meaning the
+bucket is empty.
 
 ### Scan failure beat + no-food prompt contract (2026-08-18, PR #2066)
 
@@ -1520,7 +1521,7 @@ Affects: `src/lib/foodPhotoUpload.ts`, `src/components/FoodAnalyzer.tsx` (post-s
 
 - [ ] Real AI food scan on device: save the meal, confirm the photo card pops into the diary timeline within a few seconds (background upload + onSnapshot merge), and the Storage console shows `food-photos/<uid>/<ts>.jpg` at ≤1280px. (The ≤1280px downscale is the part no automated suite covers.)
 - [ ] Offline scan: save while airplane-moded — meal must save as a text row with NO error surfaced; photo is silently skipped (never re-tried).
-- [x] Signed-out and cross-uid reads of a food-photos path are denied — covered by `storage.rules.test.ts` against the emulator. Note the rules block itself IS deployed: the ungated `a990d4bb` run (2026-07-12) shipped it. Only the later account-deletion write freeze (`779ca7ba`) is held back by the packet-11 gate.
+- [x] Signed-out and cross-uid reads of a food-photos path are denied — covered by `storage.rules.test.ts` against the emulator. Note the rules block itself IS deployed: the ungated `a990d4bb` run (2026-07-12) shipped it. The later account-deletion write freeze (`779ca7ba`) was held back by the packet-11 gate until 2026-09-15; that row has the permission it still needs confirmed.
 - [ ] Account deletion (test account): confirm the executor logs the `food-photos/<uid>/` prefix sweep alongside progress/profile photos.
 
 ### Tooltip + Coachmark primitive (`claude/tooltip-primitive`)
@@ -2063,9 +2064,12 @@ already wrote stay in Firestore; clients hide them (`isMemberFacing`), and
 the like and comment callables still never notify their author. The two
 coach rows below are superseded — replace them with:**
 
-- [ ] **The prune landed.** The first functions deploy after the
+- [x] **The prune landed.** The first functions deploy after the
       retirement logs `Successful delete operation` for
       `weeklyCoachPrompts`, and no coach post dated after it exists.
+      Confirmed from the deploy log: run 36310769458 deleted it at
+      10:00 UTC on 2026-09-27. It was the only writer of coach posts, so
+      none can be dated after that.
 - [ ] **Old coach posts are gone from new builds.** Open a space that had
       them, and Feed → My communities: no "Tropos Coach" post, no Coach
       badge. An older build still shows them until it updates.
@@ -2138,16 +2142,45 @@ consistency, not behaviour.
 
 ### Storage deletion write-freeze — cross-service approval + first deploy (packet 11, operator-in-loop)
 
+**STATUS 2026-09-27 — the freeze is live, and nothing shows the permission
+it depends on was ever granted.** The gate opened on 2026-09-15: the
+re-run of Deploy production run 34976838538 was the first release of the
+freeze (`uploading rules storage.rules`, 14:22 UTC), and every backend
+release since reads the live ruleset back and matches it to
+`storage.rules` by SHA-256. That release came from CI, not from an owner's machine as step 1
+says, and firebase-tools checks and grants the cross-service role only in
+an interactive session (`checkStorageRulesIamPermissions` in its
+`rulesDeploy.js` returns early otherwise). So it granted nothing, and no
+earlier `storage.rules` read Firestore, so no earlier deploy did either.
+If the role is missing, every photo upload and delete is refused —
+progress photos, the profile photo, Space post photos — while reads still
+work. Step 1 cannot fix it now: with the rules already live, `firebase
+deploy --only storage` skips the upload, and the permission check only
+runs on the upload path.
+
+- [ ] **Confirm the role, or grant it.** Quickest check: change the
+      profile photo in the production app — the toast "Upload not
+      permitted…" means the role is missing. Or, in GCP Console → IAM
+      with "Include Google-provided role grants" ticked, look for
+      `service-<project-number>@gcp-sa-firebasestorage.iam.gserviceaccount.com`
+      holding **Firebase Rules Firestore Service Agent**. To grant it:
+
+      ```bash
+      gcloud projects add-iam-policy-binding adaptive-fitness-af8bb \
+        --member="serviceAccount:service-$(gcloud projects describe adaptive-fitness-af8bb --format='value(projectNumber)')@gcp-sa-firebasestorage.iam.gserviceaccount.com" \
+        --role="roles/firebaserules.firestoreServiceAgent"
+      ```
+
 Affects: `storage.rules` (the account-deletion write freeze), `.github/workflows/deploy-storage.yml`. Code is landed and tested; **it is deliberately NOT deployed yet** — the deploy job is gated so nothing reaches production until the operator does the two steps below.
 
 Why gated: `storage.rules` now reads Firestore (`accountDeletionRequests` / `deletedAccounts`) to freeze photo uploads/deletes during and after an account deletion — the same freeze Firestore already enforces. That **cross-service** read requires a one-time interactive approval in the Firebase Console. If the rule deploys **before** that approval exists, the predicate errors → denies → **all photo uploads are blocked app-wide**. The `deploy-storage.yml` `deploy` job therefore stays skipped until the operator opts in.
 
 Rollout sequence (operator, not agent) — do these in order, ideally after packet 10's Functions deploy:
 
-- [ ] **Grant cross-service access.** Run `firebase deploy --only storage --project adaptive-fitness-af8bb` **from a project-owner machine** and approve the Firebase prompt that lets Storage Rules read Firestore. (This first deploy is intentionally a human action — do not try to route the approval through the CI service account.)
+- [ ] ~~**Grant cross-service access.** Run `firebase deploy --only storage --project adaptive-fitness-af8bb` **from a project-owner machine** and approve the Firebase prompt that lets Storage Rules read Firestore. (This first deploy is intentionally a human action — do not try to route the approval through the CI service account.)~~ Superseded by the STATUS above: CI released the rules first, so this command no longer prompts.
 - [ ] **Verify the freeze on a NON-production project first:** seed an `accountDeletionRequests/<uid>` doc with `status: "running"` (or a `deletedAccounts/<uid>` tombstone) and confirm an owner upload/delete to `progress-photos/<uid>/…` is denied, while reads still succeed and a user with no deletion record can still upload.
-- [ ] **(Optional) re-enable CI auto-deploy** for future storage.rules changes: set the repo variable `STORAGE_XSERVICE_APPROVED=true` (GitHub → Settings → Secrets and variables → Actions → Variables). Until then the ONLY way to ship a storage-rules change is the manual `firebase deploy` above — **`workflow_dispatch` does not work as an escape hatch here**, unlike `deploy-functions.yml`. The `deploy` job's `if: vars.STORAGE_XSERVICE_APPROVED == 'true'` is evaluated for dispatch runs too, so a manual re-run skips the deploy and still reports green. (This doc line claimed the opposite until 2026-07-26; an operator following it in an incident would have believed the rules shipped when nothing had.) The `report-not-deployed` job now fails on any gated run so the skip is legible instead of silent.
-- [ ] Spot-check the deployed rule in the Firebase Console (Storage → Rules) contains `isDeletionWriteFrozen`.
+- [x] **(Optional) re-enable CI auto-deploy** — set 2026-09-15, between the first attempt of run 34976838538 (deploy skipped) and its re-run (deployed). For future storage.rules changes: set the repo variable `STORAGE_XSERVICE_APPROVED=true` (GitHub → Settings → Secrets and variables → Actions → Variables). Until then the ONLY way to ship a storage-rules change is the manual `firebase deploy` above — **`workflow_dispatch` does not work as an escape hatch here**, unlike `deploy-functions.yml`. The `deploy` job's `if: vars.STORAGE_XSERVICE_APPROVED == 'true'` is evaluated for dispatch runs too, so a manual re-run skips the deploy and still reports green. (This doc line claimed the opposite until 2026-07-26; an operator following it in an incident would have believed the rules shipped when nothing had.) The `report-not-deployed` job now fails on any gated run so the skip is legible instead of silent.
+- [x] Spot-check the deployed rule in the Firebase Console (Storage → Rules) contains `isDeletionWriteFrozen`. Automated: each backend release's `Verify active Storage Rules source` step matches the live ruleset to `storage.rules`, which carries it.
 
 ### App Check enforcement rollout — operator-in-loop
 
