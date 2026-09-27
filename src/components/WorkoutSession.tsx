@@ -2339,9 +2339,13 @@ export default function WorkoutSession({
               }
               leftIcon={<Check className="size-4" aria-hidden="true" />}
             >
-              Complete set{" "}
-              <span className="font-mono tabular-nums">
-                {currentSetIndex + 1}
+              {/* One span, so the Button's gap cannot open between the
+                  words and the number. */}
+              <span>
+                Complete set{" "}
+                <span className="font-mono tabular-nums">
+                  {currentSetIndex + 1}
+                </span>
               </span>
             </Button>
           );

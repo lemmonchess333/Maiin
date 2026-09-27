@@ -682,6 +682,7 @@ describe("WorkoutSession — rest timer", () => {
   /* The fixture carries `restSeconds: 0` and a null profile, so every rest
      falls back to the 90s default. That makes the default the thing a leak
      would visibly overwrite. */
+  // The time left reads as a clock (DS3): "1:30", not "90 s".
   const restLabel = () =>
     screen.getByRole("group", { name: "Rest timer" }).textContent ?? "";
 
@@ -692,9 +693,9 @@ describe("WorkoutSession — rest timer", () => {
 
   it("+15 s extends the rest in progress", () => {
     startFirstRest();
-    expect(restLabel()).toContain("90");
+    expect(restLabel()).toContain("1:30");
     fireEvent.click(screen.getByLabelText("Add 15 seconds of rest"));
-    expect(restLabel()).toContain("105");
+    expect(restLabel()).toContain("1:45");
   });
 
   it("does NOT carry the extension into the next rest", () => {
@@ -704,12 +705,12 @@ describe("WorkoutSession — rest timer", () => {
        preference. */
     startFirstRest();
     fireEvent.click(screen.getByLabelText("Add 15 seconds of rest"));
-    expect(restLabel()).toContain("105");
+    expect(restLabel()).toContain("1:45");
 
     // End this rest and complete the next set: a fresh rest, fresh target.
     fireEvent.click(screen.getByRole("button", { name: "End rest" }));
     fireEvent.click(screen.getAllByLabelText("Mark set complete")[0]);
-    expect(restLabel()).toContain("90");
+    expect(restLabel()).toContain("1:30");
   });
 
   it("extends repeatedly within one rest — the counterweight", () => {
@@ -718,7 +719,7 @@ describe("WorkoutSession — rest timer", () => {
     startFirstRest();
     fireEvent.click(screen.getByLabelText("Add 15 seconds of rest"));
     fireEvent.click(screen.getByLabelText("Add 15 seconds of rest"));
-    expect(restLabel()).toContain("120");
+    expect(restLabel()).toContain("2:00");
   });
 });
 
@@ -793,7 +794,7 @@ describe("WorkoutSession — timers survive a locked phone", () => {
     });
     expect(screen.getByText(/1\/3 sets · 0:03/)).toBeInTheDocument();
     expect(screen.getByRole("group", { name: "Rest timer" })).toHaveTextContent(
-      "87 s"
+      "1:27"
     );
     expect(h.authReads).not.toHaveBeenCalled();
     expect(h.save).not.toHaveBeenCalled();
@@ -827,7 +828,7 @@ describe("WorkoutSession — timers survive a locked phone", () => {
     });
     expect(screen.getByText(/1\/3 sets · 1:00/)).toBeInTheDocument();
     expect(screen.getByRole("group", { name: "Rest timer" })).toHaveTextContent(
-      "30 s"
+      "0:30"
     );
     hidden.mockRestore();
   });

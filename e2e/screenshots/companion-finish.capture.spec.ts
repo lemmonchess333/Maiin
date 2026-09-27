@@ -154,6 +154,26 @@ for (const budget of [null, 30] as const) {
       .nth(warmups)
       .click();
     const endRest = page.getByRole("button", { name: "End rest", exact: true });
+    if (!capturePrefix) {
+      // The rest that follows a working set, when the account rests
+      // automatically. Its seconds tick, so the frame's time can differ
+      // by one between captures.
+      const rest = page.getByRole("group", { name: "Rest timer" });
+      await rest.waitFor({ timeout: 3_000 }).catch(() => {});
+      if (await rest.isVisible()) {
+        for (const dark of [false, true]) {
+          await page.evaluate(
+            (value) => document.documentElement.classList.toggle("dark", value),
+            dark
+          );
+          await settleImages(page);
+          await page.screenshot({
+            path: `screenshots/workout-rest-${dark ? "dark" : "light"}.png`,
+            animations: "disabled",
+          });
+        }
+      }
+    }
     if (await endRest.isVisible()) await endRest.click();
     if (!capturePrefix) {
       // The workout screen itself, one working set in: a done row, the
