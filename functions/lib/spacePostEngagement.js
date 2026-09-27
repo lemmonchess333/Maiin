@@ -1,8 +1,7 @@
 const { assertTransactionAccountsLive } = require("./deletionTransactionGuard");
 /**
  * Space-post engagement (SOC-P2c) — the server-owned like ("props")
- * toggle for Community Space posts, closing the loop the weekly Coach
- * prompts open: an answered prompt can now be backed by the room.
+ * toggle for Community Space posts.
  *
  * Mirrors the activity-kudos lockdown (socialCounters.toggleKudos):
  * likeCount on the post is SERVER-OWNED (rules deny any client diff
@@ -23,6 +22,12 @@ const { assertTransactionAccountsLive } = require("./deletionTransactionGuard");
 /** Thrown-code the callable maps to a generic permission error —
  *  never disclose whether a post exists vs was removed. */
 const POST_NOT_ACCESSIBLE = "space-post-not-accessible";
+
+/** Author of the weekly coach questions, which Tropos no longer writes.
+ *  The posts already written are still in Firestore and an older build
+ *  can still like or reply to one, so the callables keep this id out of
+ *  notifications: it is not a user. Clients hide those posts. */
+const COACH_AUTHOR_ID = "tropos-coach";
 const { publicPhotoUrl } = require("./publicPhotoUrl");
 
 async function toggleSpacePostLike({
@@ -179,4 +184,5 @@ module.exports = {
   addSpacePostComment,
   deleteSpacePostComment,
   POST_NOT_ACCESSIBLE,
+  COACH_AUTHOR_ID,
 };

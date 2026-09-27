@@ -2052,10 +2052,28 @@ Affects: `functions/index.js` (`onWorkoutCreated` / `onRunCreated` now call `app
 
 Affects: `functions/lib/coachPrompts.js` + `weeklyCoachPrompts` (scheduled Mon 06:00 UTC), `functions/lib/spacePostEngagement.js` + three callables (`toggleSpacePostLikeCallable`, `addSpacePostCommentCallable`, `deleteSpacePostCommentCallable`), firestore.rules (space likes/comments read blocks, public-profile `trainingForSpaceId` value gate). Eighteen PRs shipped in one day from a design-panel roadmap (Runna's context-over-graph model); client behaviour is test-pinned, but the server half needs the standard deploy proofs.
 
-- [ ] **Deployed-source spot-check (do first).** Console → `weeklyCoachPrompts` source contains `require("./lib/coachPrompts")`; `toggleSpacePostLikeCallable` source contains `spacePostEngagement`. All were `.js` changes so the bundle-hash dedup shouldn't bite, but CI-green ≠ uploaded (the standing gotcha).
-- [ ] **First Monday firing (04:00-07:00 UTC window).** Logs show `weeklyCoachPrompts: starting` → `done — spaces=20, created=20, alreadyExisted=0`. Spot-check one interest space and one race space in the app: a "Tropos Coach" post (purple Coach badge, Sparkles tile) dated Monday, with "Share your take" opening the composer prefilled `Re: <title>`. Week 2: `created=20` again with DIFFERENT prompts (rotation), never duplicates (`alreadyExisted` counts a retried run, not a normal one).
+**STATUS 2026-09-27 — the weekly coach posts are retired (owner call: a
+question every Monday read as low-effort engagement; a space carries its
+members' posts). `weeklyCoachPrompts` and `lib/coachPrompts.js` are
+deleted, and the deploy's `--force` prunes the function. The posts it
+already wrote stay in Firestore; clients hide them (`isMemberFacing`), and
+the like and comment callables still never notify their author. The two
+coach rows below are superseded — replace them with:**
+
+- [ ] **The prune landed.** The first functions deploy after the
+      retirement logs `Successful delete operation` for
+      `weeklyCoachPrompts`, and no coach post dated after it exists.
+- [ ] **Old coach posts are gone from new builds.** Open a space that had
+      them, and Feed → My communities: no "Tropos Coach" post, no Coach
+      badge. An older build still shows them until it updates.
+- [ ] **The reworked Space page on a device.** Join and Joined read on
+      every cover photo and on a space without one; Leave asks first; an
+      empty space's "Share your last session" opens the composer with that
+      session attached.
+- [ ] ~~**Deployed-source spot-check (do first).** Console → `weeklyCoachPrompts` source contains `require("./lib/coachPrompts")`; `toggleSpacePostLikeCallable` source contains `spacePostEngagement`.~~ Superseded; the `spacePostEngagement` half still applies.
+- [ ] ~~**First Monday firing (04:00-07:00 UTC window).**~~ Superseded: the job no longer exists.
 - [ ] **Like round-trip on device.** Tap the flame on a space post → fills coral + count bumps instantly; kill the app, reopen → state persisted (server txn landed). Re-tap → count returns. A second account liking YOUR post lands a coral `space_post_like` tray row that deep-links to the space.
-- [ ] **Comment round-trip on device.** Comment on another account's post → author gets the `space_post_comment` tray row → tapping it opens the space. Delete your own comment → count decrements. Confirm a comment on a COACH post produces NO notification (the coach isn't a notifiable user — check logs stay clean of `notification_failed`).
+- [ ] **Comment round-trip on device.** Comment on another account's post → author gets the `space_post_comment` tray row → tapping it opens the space. Delete your own comment → count decrements. (A comment on a retired COACH post, reachable only from an older build, must still produce NO notification.)
 - [ ] **Race identity opt-in.** With a race goal set, the bound race space shows the "Show on your profile" toggle (and ONLY there — other race spaces must not). Toggle on → your profile shows "Training for {race} · N wks" in coral, linking to the space. Toggle off → chip gone. After race day passes, the chip must disappear ON ITS OWN (display gate) even if the toggle was left on.
 - [ ] **Communities feed source.** Feed → source sheet → "My communities": joined-space posts newest-first under space-name eyebrows; empty states are the join prompt (no spaces) or the quiet-week line (spaces joined, nothing posted) — never a blank column. Pull-to-refresh refetches this stream while active.
 - [ ] **Rules deploys landed.** Firebase Console → Firestore Rules contains `match /likes/{likeUid}`, `match /comments/{commentId}` (both read-only), and the `trainingForSpaceId` value gate on the public profile. Three rules deploys shipped today — verify the LAST one is live.

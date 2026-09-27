@@ -42,6 +42,7 @@ const NAMED = [
   "Performance Index",
   "Progress Vault",
   "Weekly Review",
+  "Tropos Team",
   "Together",
   "Explore",
   "Privacy Policy",

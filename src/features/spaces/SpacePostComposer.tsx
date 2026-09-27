@@ -12,7 +12,7 @@
  * Profanity check is client-side UX only, same posture as CommentSheet;
  * report/block + official moderation delete are the real teeth.
  */
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { collection, serverTimestamp } from "firebase/firestore";
 import { Camera, Dumbbell, Footprints, X } from "lucide-react";
 import { db } from "@/lib/firebase";
@@ -29,15 +29,11 @@ import SustainedOfflineBanner from "@/components/ui/SustainedOfflineBanner";
 import { Button } from "@/components/ui/Button";
 import SectionLabel from "@/components/ui/SectionLabel";
 import { THEME } from "@/lib/theme";
-import {
-  useWorkouts,
-  workoutTonnageKg,
-  type Workout,
-} from "@/hooks/useWorkouts";
-import { useRunningStats, type RunSummaryItem } from "@/hooks/useRunningStats";
+import { workoutTonnageKg } from "@/hooks/useWorkouts";
 import { useEmailVerificationGate } from "@/hooks/useEmailVerificationGate";
 import VerifyEmailNotice from "@/components/social/VerifyEmailNotice";
 import type { SpacePostActivitySnapshot } from "./spaceTypes";
+import type { RecentSession } from "./useRecentSessions";
 import { distanceLabel } from "@/lib/runLabels";
 import type { DistanceUnit } from "@/lib/distanceUnits";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
@@ -48,17 +44,13 @@ const BODY_MAX = 4000;
  *  keeping the RouteScene silhouette intact. */
 const ROUTE_POINTS_MAX = 40;
 
-type Attachable =
-  | { kind: "workout"; workout: Workout }
-  | { kind: "run"; run: RunSummaryItem };
-
 function downsample<T>(points: T[], max: number): T[] {
   if (points.length <= max) return points;
   const step = (points.length - 1) / (max - 1);
   return Array.from({ length: max }, (_, i) => points[Math.round(i * step)]);
 }
 
-function toSnapshot(a: Attachable): SpacePostActivitySnapshot {
+function toSnapshot(a: RecentSession): SpacePostActivitySnapshot {
   if (a.kind === "run") {
     const r = a.run;
     return {
@@ -89,7 +81,7 @@ function toSnapshot(a: Attachable): SpacePostActivitySnapshot {
   };
 }
 
-function attachableLabel(a: Attachable, unit: DistanceUnit): string {
+function attachableLabel(a: RecentSession, unit: DistanceUnit): string {
   if (a.kind === "run") {
     return `${distanceLabel(a.run.distance, unit)} run`;
   }
@@ -105,36 +97,29 @@ export default function SpacePostComposer({
   open,
   onOpenChange,
   onPosted,
-  initialTitle,
+  sessions,
+  attachLatest = false,
 }: {
   spaceId: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onPosted: () => void;
-  /** SOC-P2b — a coach prompt's "Share your take" opens the composer
-   *  with the prompt title pre-seeded (applied on open, and only when
-   *  the user hasn't already typed a title — never clobbers input). */
-  initialTitle?: string;
+  /** The caller's recent sessions, newest first (`useRecentSessions`). */
+  sessions: RecentSession[];
+  /** Start with the newest of `sessions` attached — the empty space's
+   *  "Share your last session" opens the composer this way. The user can
+   *  remove it or pick another; either choice sticks for this draft. */
+  attachLatest?: boolean;
 }) {
   const { user, profile } = useAuth();
   const gate = useEmailVerificationGate(user);
   const unit = useDistanceUnit();
-  const { workouts } = useWorkouts();
-  const { runs } = useRunningStats(30);
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
-
-  /* Apply the prefill on the open TRANSITION only: re-renders while
-     open must not overwrite what the user typed. */
-  const prevOpenRef = useRef(false);
-  useEffect(() => {
-    if (open && !prevOpenRef.current && initialTitle && title === "") {
-      setTitle(initialTitle);
-    }
-    prevOpenRef.current = open;
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- open-transition effect; title read is a guard, not a dep
-  }, [open, initialTitle]);
-  const [attached, setAttached] = useState<Attachable | null>(null);
+  const [picked, setPicked] = useState<RecentSession | null>(null);
+  /* Set once the user removes the session attachLatest put there, so the
+     latest does not reattach itself on the next render. */
+  const [latestRemoved, setLatestRemoved] = useState(false);
   const [busy, setBusy] = useState(false);
   /* Photo attach (Spc1 PR4 — the operator's Runna-parity amendment).
      Preview via object URL, revoked on remove/replace. */
@@ -150,21 +135,10 @@ export default function SpacePostComposer({
     setPhotoFile(file);
   };
 
-  /* Most-recent five sessions across both disciplines — enough to
-     attach "what I just did" without building a browser. */
-  const attachables = useMemo<Attachable[]>(() => {
-    const ws: Attachable[] = workouts
-      .slice(0, 5)
-      .map((workout) => ({ kind: "workout", workout }));
-    const rs: Attachable[] = runs
-      .slice(0, 5)
-      .map((run) => ({ kind: "run", run }));
-    const at = (x: Attachable) =>
-      x.kind === "run"
-        ? x.run.completedAt.getTime()
-        : (x.workout.createdAt?.toDate?.().getTime() ?? 0);
-    return [...ws, ...rs].sort((a, b) => at(b) - at(a)).slice(0, 5);
-  }, [workouts, runs]);
+  /* Derived rather than copied into state: the sessions load after the
+     sheet opens, and the latest one should appear when they arrive. */
+  const attached =
+    picked ?? (attachLatest && !latestRemoved ? (sessions[0] ?? null) : null);
 
   const profane = containsProfanity(title) || containsProfanity(body);
   // Space posts are public content: the rules refuse an unverified email,
@@ -225,7 +199,8 @@ export default function SpacePostComposer({
       toast.success(message);
       setTitle("");
       setBody("");
-      setAttached(null);
+      setPicked(null);
+      setLatestRemoved(false);
       pickPhoto(null);
       onOpenChange(false);
       onPosted();
@@ -330,7 +305,7 @@ export default function SpacePostComposer({
         </div>
 
         {/* Attach a recent session */}
-        {attachables.length > 0 && (
+        {sessions.length > 0 && (
           <div className="space-y-2">
             <SectionLabel>Attach a session</SectionLabel>
             {attached ? (
@@ -351,7 +326,10 @@ export default function SpacePostComposer({
                 </span>
                 <button
                   type="button"
-                  onClick={() => setAttached(null)}
+                  onClick={() => {
+                    setPicked(null);
+                    setLatestRemoved(true);
+                  }}
                   aria-label="Remove attached session"
                   className="p-3 -m-2 text-muted-foreground hover:text-foreground"
                 >
@@ -360,11 +338,11 @@ export default function SpacePostComposer({
               </div>
             ) : (
               <div className="space-y-1.5">
-                {attachables.map((a, i) => (
+                {sessions.map((a, i) => (
                   <button
                     key={i}
                     type="button"
-                    onClick={() => setAttached(a)}
+                    onClick={() => setPicked(a)}
                     className="w-full flex items-center gap-2 p-3 rounded-xl bg-muted/40 hover:bg-muted/70 text-left transition-colors"
                   >
                     {a.kind === "run" ? (

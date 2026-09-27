@@ -1,13 +1,12 @@
 /**
- * SpacePostCard — Coach variant (SOC-P2b).
+ * SpacePostCard — the author badge and the like toggle.
  *
- * The weekly coach prompt (server-written, authorId "tropos-coach")
- * must read as the APP's voice, never a person: brand-marked tile
- * instead of an initials avatar, a purple "Coach" badge instead of the
- * green Tropos Team badge, and a "Share your take" reply affordance
- * that opens the composer prefilled — rendered only where posting is
- * possible (onShareTake passed). Ordinary official posts keep the
- * Tropos Team badge (regression pin).
+ * The weekly coach posts are retired and pages drop them before they
+ * reach this card (`isMemberFacing`), so the card has no coach variant.
+ * The last block pins that filter, and pins the retired author id to the
+ * value the server still checks: the old posts are in Firestore under
+ * it, and a drifted id on either side would show them again or notify a
+ * user who does not exist.
  */
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
@@ -29,17 +28,21 @@ vi.mock("@/components/social/MiniMuscleFigure", () => ({
 }));
 vi.mock("@/components/social/ReportModal", () => ({ default: () => null }));
 
+import { createRequire } from "node:module";
 import SpacePostCard from "../SpacePostCard";
-import { COACH_AUTHOR_ID } from "../spaceTypes";
+import { COACH_AUTHOR_ID, isMemberFacing } from "../spaceTypes";
 import type { SpacePostDoc } from "../spaceTypes";
+
+const require = createRequire(import.meta.url);
+const server = require("../../../../functions/lib/spacePostEngagement.js") as {
+  COACH_AUTHOR_ID: string;
+};
 
 function makePost(overrides: Partial<SpacePostDoc> = {}): SpacePostDoc {
   return {
-    authorId: COACH_AUTHOR_ID,
-    authorName: "Tropos Coach",
-    title: "What's your week one win?",
-    body: "New week, clean slate.",
-    official: true,
+    authorId: "member-uid-28-chars-long-abcd",
+    authorName: "Priya S.",
+    body: "First 10K done this morning.",
     likeCount: 0,
     commentCount: 0,
     createdAt: { toDate: () => new Date() } as SpacePostDoc["createdAt"],
@@ -47,54 +50,38 @@ function makePost(overrides: Partial<SpacePostDoc> = {}): SpacePostDoc {
   };
 }
 
-function renderCard(post: SpacePostDoc, onShareTake?: (t: string) => void) {
+function renderCard(post: SpacePostDoc) {
   return render(
     <SpacePostCard
       spaceId="runners"
-      postId="coach-2026-07-20"
+      postId="p1"
       post={post}
       accent="#D4637A"
       onRemoved={() => {}}
-      onShareTake={onShareTake}
     />
   );
 }
 
-describe("SpacePostCard — coach variant", () => {
-  it("shows the purple Coach badge, not Tropos Team", () => {
-    renderCard(makePost());
-    expect(screen.getByText("Coach")).toBeInTheDocument();
-    expect(screen.queryByText("Tropos Team")).toBeNull();
-  });
-
-  it("ordinary official posts keep the Tropos Team badge", () => {
-    renderCard(
-      makePost({ authorId: "some-real-uid-28-chars-long1", authorName: "Ops" })
-    );
+describe("SpacePostCard — author badge", () => {
+  it("marks an official post as Tropos Team", () => {
+    renderCard(makePost({ official: true, authorName: "Ops" }));
     expect(screen.getByText("Tropos Team")).toBeInTheDocument();
-    expect(screen.queryByText("Coach")).toBeNull();
   });
 
-  it("offers Share your take when posting is possible, passing the prompt title", () => {
-    const onShareTake = vi.fn();
-    renderCard(makePost(), onShareTake);
-    fireEvent.click(screen.getByRole("button", { name: /share your take/i }));
-    expect(onShareTake).toHaveBeenCalledWith("What's your week one win?");
-  });
-
-  it("renders no reply affordance when onShareTake is absent (non-member)", () => {
-    renderCard(makePost(), undefined);
-    expect(
-      screen.queryByRole("button", { name: /share your take/i })
-    ).toBeNull();
-  });
-
-  it("never offers Share your take on a human post", () => {
-    const onShareTake = vi.fn();
+  it("says Pinned on the time line, leaving the name row to the name", () => {
     renderCard(
-      makePost({ authorId: "some-real-uid-28-chars-long1", official: false }),
-      onShareTake
+      makePost({ official: true, pinned: true, authorName: "Tropos Team" })
     );
+    const line = screen.getByText(/ · Pinned$/);
+    expect(line.textContent).not.toContain("Tropos Team");
+    expect(screen.getByText("Tropos Team", { selector: "span" })).toBeVisible();
+  });
+
+  it("shows a member's post with no badge and no reply prompt", () => {
+    renderCard(makePost());
+    expect(screen.getByText("Priya S.")).toBeInTheDocument();
+    expect(screen.queryByText("Tropos Team")).toBeNull();
+    expect(screen.queryByText("Coach")).toBeNull();
     expect(
       screen.queryByRole("button", { name: /share your take/i })
     ).toBeNull();
@@ -149,5 +136,20 @@ describe("SpacePostCard — like toggle (SOC-P2c)", () => {
     );
     expect(screen.queryByRole("button", { name: /give props/i })).toBeNull();
     expect(screen.getByText("4")).toBeInTheDocument();
+  });
+});
+
+describe("retired coach posts", () => {
+  it("drops the coach's posts and keeps members' and the team's", () => {
+    expect(isMemberFacing(makePost({ authorId: COACH_AUTHOR_ID }))).toBe(false);
+    expect(isMemberFacing(makePost())).toBe(true);
+    expect(
+      isMemberFacing(makePost({ authorId: "ops-uid", official: true }))
+    ).toBe(true);
+  });
+
+  it("uses the author id the old posts were written with, on both sides", () => {
+    expect(COACH_AUTHOR_ID).toBe("tropos-coach");
+    expect(server.COACH_AUTHOR_ID).toBe(COACH_AUTHOR_ID);
   });
 });

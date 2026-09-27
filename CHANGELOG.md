@@ -47,6 +47,13 @@ follows [Semantic Versioning](https://semver.org/).
   the answer any time. The Settings choice had said "Shared automatically"
   since 6 September without anything being shared; it works again. The
   "Default visibility" setting, which nothing read, is gone.
+- **Spaces show their members.** The weekly "Tropos Coach" question is
+  gone. A space now opens on its name, its size and how many posts went up
+  this week, with a small Join button beside them (Joined, once you're in;
+  leaving asks first). A pinned Tropos Team note sits above the members'
+  posts, and an empty space offers to share your last session with it
+  already attached.
+
 - **Shared routes keep privacy gaps.** Maps, share images, GPX exports and saved
   routes preserve disconnected sections. Sharing waits for confirmed privacy
   settings, and the post composer shows the route that will be included.

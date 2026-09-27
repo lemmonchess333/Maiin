@@ -244,14 +244,13 @@ describe("FeedView — My communities source (SOC-P3a)", () => {
         items: [
           {
             spaceId: "runners",
-            postId: "coach-2026-07-20",
+            postId: "post-1",
             post: {
-              authorId: "tropos-coach",
-              authorName: "Tropos Coach",
-              body: "prompt",
+              authorId: "member-1",
+              authorName: "Priya S.",
+              body: "First 10K done this morning.",
               likeCount: 0,
               commentCount: 0,
-              official: true,
               createdAt: { toDate: () => new Date() },
             },
           },
@@ -265,9 +264,7 @@ describe("FeedView — My communities source (SOC-P3a)", () => {
         followingCount,
         showSoloFeed: followingCount === 0,
       });
-      expect(screen.getByTestId("space-post")).toHaveTextContent(
-        "coach-2026-07-20"
-      );
+      expect(screen.getByTestId("space-post")).toHaveTextContent("post-1");
       expect(screen.getByRole("link", { name: /runners/i })).toHaveAttribute(
         "href",
         "/space/runners"
