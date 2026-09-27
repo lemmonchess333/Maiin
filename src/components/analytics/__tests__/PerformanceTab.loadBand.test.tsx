@@ -122,12 +122,17 @@ describe("PerformanceTab — load-band copy (regression: mirror drift)", () => {
     expect(screen.getByText(/High training load/)).toBeInTheDocument();
   });
 
-  it("renders the deload banner when the engine recommends one", () => {
+  it("says the deload advice once, in the verdict, when the engine recommends one", () => {
     /* Second half of the same drift: the gate read `flags?.deloadRecommended`,
-       a map no writer emits, so this banner had NEVER rendered — the app's
-       primary "back off" signal was dark for every user. */
+       a map no writer emits, so the recommendation had NEVER rendered — the
+       app's primary "back off" signal was dark for every user. It still
+       reaches the user, now once: DS3 folded the banner that repeated the
+       verdict into the verdict itself. */
     renderWith(history(88, "overreach", true));
-    expect(screen.getByText(/Consider a deload week/)).toBeInTheDocument();
+    expect(
+      screen.getByText("Backing off — make room for recovery")
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/Consider a deload week/)).toBeNull();
   });
 
   it.each([

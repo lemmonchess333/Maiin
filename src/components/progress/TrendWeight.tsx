@@ -1,15 +1,10 @@
-import { useMemo, useState, useEffect } from "react";
 import { Scale } from "lucide-react";
 import { Link } from "react-router-dom";
 import SectionLabel from "@/components/ui/SectionLabel";
 import EmptyState from "@/components/ui/EmptyState";
 import { useAuth } from "@/lib/auth";
-import { fetchBodyweightLogs, type BodyweightLog } from "@/lib/api";
-import {
-  calculateEMA,
-  deriveGoalWeightKg,
-  projectGoalDate,
-} from "@/utils/weightTrend";
+import { useBodyweightTrend } from "@/hooks/useBodyweightTrend";
+import { deriveGoalWeightKg, projectGoalDate } from "@/utils/weightTrend";
 import { formatWeightInUnit } from "@/lib/weightUnits";
 import { THEME } from "@/lib/theme";
 import { parseLocalDate } from "@/lib/dateHelpers";
@@ -18,6 +13,10 @@ import {
   computeDataConfidence,
   T3_PROJECTION_MIN_POINTS,
 } from "@/lib/dataConfidence";
+import {
+  CHART_AXIS_TICK,
+  CHART_TOOLTIP_STYLE,
+} from "@/components/analytics/chartStyles";
 import {
   ResponsiveContainer,
   ComposedChart,
@@ -31,27 +30,10 @@ import {
 
 export function TrendWeight() {
   const { user, profile } = useAuth();
-  const [entries, setEntries] = useState<BodyweightLog[]>([]);
-
-  useEffect(() => {
-    if (!user) return;
-    fetchBodyweightLogs(user.uid).then(setEntries);
-  }, [user]);
-
-  const data = useMemo(() => {
-    const filtered = entries
-      .filter((e) => e.weight > 0 && Number.isFinite(e.weight))
-      .map((e) => ({ date: e.date, weight: e.weight }));
-
-    // Deduplicate by date — keep the last entry for each date.
-    // Defence against upstream Firestore data with multiple logs per day.
-    const byDate = new Map<string, { date: string; weight: number }>();
-    for (const entry of filtered) {
-      byDate.set(entry.date, entry);
-    }
-
-    return calculateEMA([...byDate.values()]);
-  }, [entries]);
+  /* One reading per day, invalid weights dropped, then the EMA — shared
+     with the Analytics overview's Body weight row, so the row quotes the
+     figure this chart draws. */
+  const { entries, points: data } = useBodyweightTrend();
 
   const unit = profile?.preferredWeightUnit === "lbs" ? "lbs" : "kg";
   // #984 "Hide the number" anti-anxiety mode. When on, every raw
@@ -231,7 +213,7 @@ export function TrendWeight() {
             <XAxis
               dataKey="date"
               allowDuplicatedCategory={false}
-              tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
+              tick={CHART_AXIS_TICK}
               /* Same UTC/local mix as the running chart had: `date` is
                  a "YYYY-MM-DD" log key, `new Date(key)` is UTC midnight,
                  `getDate()` is local. Every point west of UTC was
@@ -246,11 +228,7 @@ export function TrendWeight() {
                 doesn't leave an empty 45px column. */}
             <YAxis
               domain={["auto", "auto"]}
-              tick={
-                hideNumber
-                  ? false
-                  : { fontSize: 10, fill: "hsl(var(--muted-foreground))" }
-              }
+              tick={hideNumber ? false : CHART_AXIS_TICK}
               axisLine={false}
               tickLine={false}
               width={hideNumber ? 8 : 45}
@@ -263,11 +241,7 @@ export function TrendWeight() {
                       angle: -90,
                       position: "insideLeft",
                       offset: 0,
-                      style: {
-                        fontSize: 10,
-                        fill: "hsl(var(--muted-foreground))",
-                        textAnchor: "middle",
-                      },
+                      style: { ...CHART_AXIS_TICK, textAnchor: "middle" },
                     }
               }
             />
@@ -304,21 +278,11 @@ export function TrendWeight() {
                   : "";
 
                 return (
-                  <div
-                    style={{
-                      background: "hsl(var(--card))",
-                      border: "1px solid hsl(var(--border))",
-                      borderRadius: 12,
-                      fontSize: 12,
-                      boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-                      padding: "10px 14px",
-                    }}
-                  >
+                  <div style={CHART_TOOLTIP_STYLE}>
                     <div
                       style={{
                         fontWeight: 600,
                         marginBottom: hideNumber ? 0 : 4,
-                        color: "hsl(var(--foreground))",
                       }}
                     >
                       {label}
@@ -329,11 +293,14 @@ export function TrendWeight() {
                       relevant.map((entry, i) => (
                         <div
                           key={i}
+                          /* The tooltip is dark in both themes: the trend
+                             keeps its line's colour, the raw reading takes
+                             the on-dark secondary. */
                           style={{
                             color:
                               entry.dataKey === "trend"
                                 ? THEME.brand
-                                : "hsl(var(--muted-foreground))",
+                                : THEME.textSecondary,
                           }}
                         >
                           {entry.dataKey === "trend" ? "Trend" : "Actual"}:{" "}

@@ -90,7 +90,9 @@ const EXPECTED_BARE_USES: Record<(typeof IDENTITY)[number], number> = {
   // distance is its headline now, in the foreground colour.
   // 2026-09-27: 44 → 45. Analytics' Go deeper tiles: the Running tile's
   // footprints ICON (3:1 non-text); its words are foreground.
-  running: 45, // Calendar status icons now use the strong colour step.
+  // 2026-09-27: 45 → 44. The Analytics summary's three rings went
+  // (PeriodOverview), and the Runs ring's footprints icon with them.
+  running: 44, // Calendar status icons now use the strong colour step.
   // 2026-09-27: 19 → 18. DS3's Home lift card lost its dumbbell tile:
   // the exercise drawing is the card's picture now.
   // 2026-09-27: 18 → 17. The same on the workout screen: the dumbbell
@@ -99,7 +101,9 @@ const EXPECTED_BARE_USES: Record<(typeof IDENTITY)[number], number> = {
   // dumbbell: DS3 sets the three numbers plain, with no icons.
   // 2026-09-27: 16 → 17. Analytics' Go deeper tiles: the Lifting tile's
   // dumbbell ICON; its words are foreground.
-  lifting: 17, // Redesign consolidates onboarding option icons.
+  // 2026-09-27: 17 → 16. The Sessions ring's dumbbell went with the
+  // summary's rings.
+  lifting: 16, // Redesign consolidates onboarding option icons.
   // 2026-09-27: 4 → 5. Analytics' Go deeper tiles: the Food tile's apple
   // ICON; its words are foreground.
   nutrition: 5,
@@ -143,7 +147,9 @@ const EXPECTED_INLINE_USES = {
   // two thirds of a pixel — so they took the strong steps with the
   // brand-coloured Double beside them.
   "THEME.running": 17,
-  "THEME.lifting": 6,
+  // 2026-09-27: 6 → 5. The Sessions ring's stroke, retired with the
+  // summary's rings (PeriodOverview).
+  "THEME.lifting": 5,
   // The brand, inline. Icon tints (notification glyphs, the ProModal
   // feature tiles, the Home tiles' arrows), legend and ring fills, and
   // TrajectoryCard's 3xl score. The text uses — Home's rest-day eyebrow,

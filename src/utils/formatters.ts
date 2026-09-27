@@ -15,13 +15,6 @@ export function formatLoadKg(kg: number): string {
   return `${kg % 1 === 0 ? kg.toFixed(0) : kg.toFixed(1)} kg`;
 }
 
-/** Format volume as a compact subtitle string (e.g. "1.5k vol" or "500 kg vol") */
-export function formatVolumeSub(kg: number): string {
-  if (kg <= 0) return "\u2014";
-  if (kg >= 1000) return (kg / 1000).toFixed(1) + "k vol";
-  return Math.round(kg) + " kg vol";
-}
-
 /**
  * Abbreviate a number with a "k" suffix past 1000 (e.g. 1500 -> "1.5k",
  * 500 -> "500"). The single home for the thousands-abbreviation that was

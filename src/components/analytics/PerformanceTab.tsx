@@ -10,14 +10,17 @@ import {
 } from "@/lib/performanceAverage";
 import { THEME } from "@/lib/theme";
 import { cn } from "@/lib/utils";
-import { getPlainLanguageSummary } from "@/lib/performanceSummary";
+import {
+  getPlainLanguageSummary,
+  insightBulletsWithoutVerdict,
+} from "@/lib/performanceSummary";
 import { getVerb, getVerbState } from "@/lib/performanceLine";
 import {
   resolveLoadBand,
   resolveDeloadRecommended,
   isEstablishingBaseline,
 } from "@/lib/performanceDocFields";
-import { ChevronDown, Flame, Dumbbell, Footprints, Info } from "lucide-react";
+import { ChevronDown, Dumbbell, Footprints, Info } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import UITooltip from "@/components/ui/Tooltip";
 
@@ -387,43 +390,22 @@ export default function PerformanceTab() {
 
   const summaryColor = bandPalette(pi, establishing, backingOff).text;
 
-  const insightBullets = currentWeek.insight?.bullets;
+  const insightBullets = insightBulletsWithoutVerdict(
+    currentWeek.insight?.bullets,
+    deloadRecommended
+  );
   const planAdj = (
     currentWeek as { planAdjustments?: { lift: string[]; run: string[] } }
   ).planAdjustments;
 
   return (
     <div className="space-y-4">
-      {/* Deload banner */}
-      {/* Was `flags?.deloadRecommended` — never written, so this banner
-          had never rendered for any user. */}
-      {deloadRecommended && (
-        <div
-          className="p-4 rounded-2xl flex items-start gap-3"
-          style={{ background: THEME.warning + "14" }}
-        >
-          {/* Icon + heading on the -strong step, tint from the identity —
-              the treatment DeloadBanner (program) already carries. The
-              identity as 14px text measured ~3.1:1 on the light tint. */}
-          <Flame
-            className="size-5 shrink-0 mt-0.5"
-            style={{ color: "hsl(var(--warning-strong))" }}
-          />
-          <div>
-            <p
-              className="text-sm font-semibold"
-              style={{ color: "hsl(var(--warning-strong))" }}
-            >
-              Consider a deload week
-            </p>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              Your training load has been high with signs of reduced recovery. A
-              lighter week can help you come back stronger.
-            </p>
-          </div>
-        </div>
-      )}
-
+      {/* DS3: the deload advice is said once, by the verdict below. A
+          "Consider a deload week" banner sat above it (and a server
+          insight bullet said it again), three statements of one piece of
+          advice on one card. `resolveDeloadRecommended` still drives the
+          verdict, so the signal that banner was added to surface — it had
+          never rendered before 2026-08 — still reaches the user. */}
       {/* Hero — the gauge is the single number-of-record (number + band +
           Info tooltip live inside PIGauge); the plain-language verdict and
           delta sit beneath it. Promoted out of the old "technical details"

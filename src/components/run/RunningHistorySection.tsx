@@ -40,7 +40,7 @@ const BIN_CAPTION: Record<ChartGranularity, string> = {
  * control, and asked for a hardcoded 90 days. So picking "1W"
  * drew thirteen weeks and picking "1Y" drew ninety days, and the three
  * tiles beneath the chart reported a 90-day distance, run count and best
- * pace a few hundred pixels under `PeriodOverview`'s range-scoped totals
+ * pace a few hundred pixels under the page's range-scoped summary totals
  * for the same two things — one page, two windows, nothing saying which
  * was which. The page had already computed the right numbers: History
  * calls `useRunningStats(rangeDays)` itself, and this component re-derived

@@ -10,7 +10,7 @@ import type React from "react";
  * History's range-scoped body, directly under the time-range control. So
  * "1W" drew thirteen weeks, "1Y" drew ninety days, and the three tiles
  * below the chart reported a 90-day distance, run count and best pace a
- * few hundred pixels under `PeriodOverview`'s range-scoped totals for the
+ * few hundred pixels under the page's range-scoped summary totals for the
  * same two quantities — one page, two windows, with nothing on screen
  * saying which was which. Filmed at 1W and 1Y against the rich seed: the
  * chart was pixel-identical at both.

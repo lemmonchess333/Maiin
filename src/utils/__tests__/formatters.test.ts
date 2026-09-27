@@ -1,7 +1,6 @@
 import { describe, it, expect } from "vitest";
 import {
   formatVolume,
-  formatVolumeSub,
   formatDistance,
   macroRingState,
   abbreviateK,
@@ -39,26 +38,6 @@ describe("formatVolume", () => {
 
   it("formats large volumes", () => {
     expect(formatVolume(14020)).toEqual({ value: "14.0k", unit: "kg" });
-  });
-});
-
-describe("formatVolumeSub", () => {
-  it("returns dash for zero", () => {
-    expect(formatVolumeSub(0)).toBe("\u2014");
-  });
-
-  it("formats sub-1000 as `X kg vol` (space before unit)", () => {
-    expect(formatVolumeSub(500)).toBe("500 kg vol");
-  });
-
-  it("formats 1000+ as X.Xk vol (no double unit)", () => {
-    expect(formatVolumeSub(1500)).toBe("1.5k vol");
-    expect(formatVolumeSub(14020)).toBe("14.0k vol");
-  });
-
-  it("never produces kkg", () => {
-    const result = formatVolumeSub(1500);
-    expect(result).not.toContain("kkg");
   });
 });
 

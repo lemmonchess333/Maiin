@@ -113,3 +113,24 @@ export function getPlainLanguageSummary(
 
   return { headline, body };
 }
+
+/**
+ * The week's insight bullets, less the one that repeats the verdict (DS3:
+ * the deload advice is said once).
+ *
+ * When the engine recommends a deload, the Performance card's verdict
+ * already says so ("Backing off — make room for recovery", with the
+ * lighter-week line under it). The server's bullets carry the same
+ * advice in its own words ("Consider a deload week — sustained high
+ * load…"), and a banner above the card said it a third time. The banner
+ * is gone; this drops the bullet. Without a recommendation nothing is
+ * dropped, so a bullet that mentions deloads for another reason stays.
+ */
+export function insightBulletsWithoutVerdict(
+  bullets: readonly string[] | undefined,
+  deloadRecommended: boolean
+): string[] {
+  if (!bullets) return [];
+  if (!deloadRecommended) return [...bullets];
+  return bullets.filter((bullet) => !/\bdeload\b/i.test(bullet));
+}

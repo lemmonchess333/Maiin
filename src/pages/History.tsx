@@ -23,7 +23,29 @@ import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import SectionHeading from "@/components/ui/SectionHeading";
 import { Button } from "@/components/ui/Button";
 import EmptyState from "@/components/ui/EmptyState";
-import PeriodOverview from "@/components/analytics/PeriodOverview";
+import PeriodSummaryCard, {
+  type SummaryFigure,
+} from "@/components/analytics/PeriodSummaryCard";
+import PerformanceOverviewCard from "@/components/analytics/PerformanceOverviewCard";
+import AnalyticsTrends from "@/components/analytics/AnalyticsTrends";
+import AnalyticsMuscles from "@/components/analytics/AnalyticsMuscles";
+import {
+  nutritionRows,
+  predictionRow,
+  weightRow,
+  type TrendRow,
+} from "@/components/analytics/trendRows";
+import {
+  countChange,
+  percentChange,
+  previousRangeLabel,
+  rollingRangeLabel,
+  summaryBins,
+  summaryGranularity,
+} from "@/lib/periodSummary";
+import { useBodyweightTrend } from "@/hooks/useBodyweightTrend";
+import { predictedRaceTimesFromFitness } from "@/lib/runPaces";
+import { runEvidenceDate } from "@/lib/runExecutionEvidence";
 import StatCard from "@/components/analytics/StatCard";
 import WorkoutHistoryList from "@/components/workout/WorkoutHistoryList";
 import SectionEmptyCTA from "@/components/analytics/SectionEmptyCTA";
@@ -34,7 +56,7 @@ import AnalyticsGoDeeper, {
 import RacePredictionsCard from "@/components/analytics/RacePredictionsCard";
 import TrainingLoadCard from "@/components/analytics/TrainingLoadCard";
 import { useTrainingLoadSeries } from "@/hooks/useTrainingLoadSeries";
-import { isPaceEligible } from "@/lib/runStatsEligibility";
+import { isPaceEligible, isVolumeEligible } from "@/lib/runStatsEligibility";
 import { paceMinSec, distanceLabel } from "@/lib/runLabels";
 import {
   distanceIn,
@@ -169,28 +191,38 @@ const LEGACY_TAB_REDIRECTS: Record<string, FilterTab> = {
   milestones: "badges",
 };
 
-/* Tab values that, in addition to a `?tab=` rewrite, also force a
-   hash anchor to scroll to a specific section on the redirected
-   tab. Currently only `performance` — clicking on Home's PI hero
-   card (which deep-links to /history#performance per PR #635)
-   should land on the Performance section inside Analytics. */
-const LEGACY_TAB_TO_HASH: Partial<Record<string, string>> = {
-  performance: "performance",
-};
+/* The section anchors Performance used to be scrolled to. Home's
+   Performance row still links to `#performance`, and so do older
+   bookmarks; each now opens the Performance page. */
+const PERFORMANCE_ANCHORS = new Set([
+  "performance",
+  "performance-expanded",
+  "analytics-performance",
+  "analytics-performance-detail",
+]);
 
-/* DS3: the Analytics tab is a short overview with four pages behind it,
-   chosen by `?view=`. Absent or unknown is the overview. Each page is one
-   discipline's charts, which used to stack into a single scroll about
-   4,700 px tall on a phone. */
-type AnalyticsView = "overview" | AnalyticsPage;
-const ANALYTICS_VIEWS: AnalyticsPage[] = ["lifting", "running", "body", "food"];
+/* DS3: the Analytics tab is a short overview with pages behind it,
+   chosen by `?view=`. Absent or unknown is the overview. Four pages hold
+   one discipline's charts each, which used to stack into a single scroll
+   about 4,700 px tall on a phone; the fifth, Performance, holds the
+   index's gauge, chart, insights and training load, opened from the
+   overview's Performance card and from Home. */
+type AnalyticsView = "overview" | AnalyticsPage | "performance";
+const ANALYTICS_VIEWS: AnalyticsView[] = [
+  "lifting",
+  "running",
+  "body",
+  "food",
+  "performance",
+];
 
 /* Pre-Hist5 `?tab=` values that named a discipline land on its page now,
    rather than on the top of one long scroll. */
-const LEGACY_TAB_TO_VIEW: Partial<Record<string, AnalyticsPage>> = {
+const LEGACY_TAB_TO_VIEW: Partial<Record<string, AnalyticsView>> = {
   running: "running",
   lifting: "lifting",
   nutrition: "food",
+  performance: "performance",
 };
 
 // Module-level so the useCallback consuming it has a stable
@@ -300,11 +332,18 @@ export default function History() {
      page on this very render, before the reconciliation below rewrites
      the URL, so the overview never flashes first. */
   const viewFromUrl = searchParams.get("view");
+  /* Read here rather than after the reconciliation below rewrites it, so
+     a `#performance` link opens on the Performance page, not on the
+     overview for a frame. */
+  const hashOpensPerformance =
+    typeof window !== "undefined" &&
+    PERFORMANCE_ANCHORS.has(window.location.hash.replace(/^#/, ""));
   const view: AnalyticsView = ANALYTICS_VIEWS.includes(
-    viewFromUrl as AnalyticsPage
+    viewFromUrl as AnalyticsView
   )
-    ? (viewFromUrl as AnalyticsPage)
-    : ((tabFromUrl ? LEGACY_TAB_TO_VIEW[tabFromUrl] : undefined) ?? "overview");
+    ? (viewFromUrl as AnalyticsView)
+    : ((tabFromUrl ? LEGACY_TAB_TO_VIEW[tabFromUrl] : undefined) ??
+      (hashOpensPerformance ? "performance" : "overview"));
   /* A push, not a replace: the back gesture on a page returns to the
      overview, the way a pushed screen would. */
   const setView = useCallback(
@@ -318,8 +357,8 @@ export default function History() {
     },
     [setSearchParams]
   );
-  // A page opens at its top. Skipped on mount, where a #performance
-  // deep-link owns the scroll position.
+  // A page opens at its top. Skipped on mount, where the browser owns
+  // the scroll position.
   const viewMountedRef = useRef(false);
   useEffect(() => {
     if (!viewMountedRef.current) {
@@ -344,12 +383,8 @@ export default function History() {
        canonical Hist5 value on first mount. Share-cards / push
        notifications / bookmarks from before the tab consolidation
        still land on the right surface; the URL bar reflects the
-       new contract once they arrive.
-       Tab values that need to also preserve their identity via
-       a section anchor (LEGACY_TAB_TO_HASH) get the hash set
-       alongside the rewrite — so /history?tab=performance becomes
-       /history#performance and scrolls to the Performance section
-       inside Analytics. */
+       new contract once they arrive. A value that named a page —
+       a discipline, or Performance — opens that page. */
     if (tabFromUrl && LEGACY_TAB_REDIRECTS[tabFromUrl]) {
       const legacyView = LEGACY_TAB_TO_VIEW[tabFromUrl];
       if (legacyView) {
@@ -366,17 +401,6 @@ export default function History() {
         );
       } else {
         setFilter(LEGACY_TAB_REDIRECTS[tabFromUrl]);
-      }
-      const hashTarget = LEGACY_TAB_TO_HASH[tabFromUrl];
-      if (hashTarget && typeof window !== "undefined") {
-        /* Set the hash WITHOUT scrolling here — the anchor scroll
-           happens in the post-reconciliation effect below (after the
-           filter update has propagated through render). */
-        window.history.replaceState(
-          null,
-          "",
-          window.location.pathname + window.location.search + "#" + hashTarget
-        );
       }
     }
 
@@ -417,21 +441,29 @@ export default function History() {
       /* private mode */
     }
     if (typeof window !== "undefined" && window.location.hash) {
-      /* PR 6 — preserve section-anchor hashes. `#performance` (the
-         Home PI hero deep-link target, per PR #635) AND
-         `#performance-expanded` (PerformanceSection's expanded-state
-         persistence, Hist5b pin 3) are not tab hints — they're
-         scroll-anchor + accordion-state markers. Leave them in the
-         URL; the section's own useEffect handles the scroll. Strip
-         only the now-irrelevant legacy tab hashes. */
+      /* `#performance` (Home's Performance row, PR #635) and the other
+         Performance anchors named a section of one long scroll; the
+         section is a page now. The render above already opened it; this
+         moves that into the URL, which drops the hash. Skipped when a
+         legacy `?tab=` rewrite is in flight: two updates in one tick
+         overwrite each other, and that rewrite names its own page.
+         Every other hash was a one-shot tab hint, and is stripped. */
       const currentHash = window.location.hash.replace(/^#/, "");
-      const SECTION_ANCHOR_HASHES = new Set([
-        "performance",
-        "performance-expanded",
-        "analytics-performance",
-        "analytics-performance-detail",
-      ]);
-      if (!SECTION_ANCHOR_HASHES.has(currentHash)) {
+      const legacyRewrite = !!(tabFromUrl && LEGACY_TAB_REDIRECTS[tabFromUrl]);
+      if (
+        PERFORMANCE_ANCHORS.has(currentHash) &&
+        !viewFromUrl &&
+        !legacyRewrite
+      ) {
+        setSearchParams(
+          (params) => {
+            const updated = new URLSearchParams(params);
+            updated.set("view", "performance");
+            return updated;
+          },
+          { replace: true }
+        );
+      } else {
         window.history.replaceState(
           null,
           "",
@@ -519,9 +551,9 @@ export default function History() {
   const unit = useDistanceUnit();
   /**
    * The cross-cutting gate. Only the surfaces that genuinely SPAN all
-   * three disciplines may use it — PeriodOverview sums runs + lifts +
-   * nutrition into one row, and the cold-start decision needs to know
-   * that all three came back empty.
+   * three disciplines may use it — the period summary counts runs and
+   * lifts together, and the cold-start decision needs to know that all
+   * three came back empty.
    *
    * The per-sport sections below each gate on their OWN hook instead.
    * They used to share this flag, which meant the slowest of the three
@@ -1302,6 +1334,130 @@ export default function History() {
     }
   })();
 
+  /* DS3 period summary — the overview's first card. Sessions bar by bar
+     across the range, and the range before it for the changes. Lifts
+     count by their local date, runs by the day they were recorded, both
+     as the page's other totals count them; runs before the window come
+     from the lifetime read, which already holds every run, because
+     `useRunningStats` reads only the window. */
+  const periodSummary = useMemo(() => {
+    const now = new Date();
+    const since = rollingWindowStart(rangeDays);
+    const prevSince = rollingWindowStart(rangeDays, addLocalDays(since, -1));
+    const sinceKey = localDateString(since);
+    const granularity = summaryGranularity(rangeDays);
+    const bins = summaryBins({
+      since,
+      today: now,
+      liftDates: workouts.filter((w) => w.date >= sinceKey).map((w) => w.date),
+      runDates: runs
+        .filter((r) => isVolumeEligible(r))
+        .map((r) => runEvidenceDate(r))
+        .filter((d) => d >= sinceKey),
+      granularity,
+    });
+    // A failed or pending read is an unknown, not a range with no runs.
+    const previousRuns =
+      lifetimeRuns.loading || lifetimeRuns.failed
+        ? null
+        : lifetimeRuns.dated.filter(
+            (r) =>
+              r.completedAtMs >= prevSince.getTime() &&
+              r.completedAtMs < since.getTime()
+          );
+    return {
+      granularity,
+      bins,
+      prevRunCount: previousRuns ? previousRuns.length : null,
+      prevRunKm: previousRuns
+        ? previousRuns.reduce((sum, r) => sum + r.distanceM, 0) / 1000
+        : null,
+    };
+  }, [
+    rangeDays,
+    workouts,
+    runs,
+    lifetimeRuns.dated,
+    lifetimeRuns.loading,
+    lifetimeRuns.failed,
+  ]);
+
+  const summarySessions = liftingData.liftCount + runningTotals.runCount;
+  const summaryFigures: SummaryFigure[] = [
+    {
+      value: String(summarySessions),
+      unit: summarySessions === 1 ? "session" : "sessions",
+      change: countChange(
+        summarySessions,
+        periodSummary.prevRunCount === null
+          ? null
+          : liftingData.prevLiftCount + periodSummary.prevRunCount
+      ),
+    },
+    {
+      value:
+        liftingData.liftVolume > 0
+          ? formatVolume(liftingData.liftVolume).value
+          : "0",
+      unit: "kg lifted",
+      change: percentChange(liftingData.liftVolume, liftingData.prevLiftVolume),
+    },
+    {
+      value:
+        runningTotals.runDistance > 0
+          ? formatDistance(distanceIn(runningTotals.runDistance * 1000, unit))
+          : "0",
+      unit: `${distanceUnitLabel(unit)} run`,
+      change: percentChange(runningTotals.runDistance, periodSummary.prevRunKm),
+    },
+  ];
+
+  /* The overview's Trends: the measures that move, each with the page
+     that charts it. Weight comes from the same trend read as the Body
+     page's chart, so the row quotes the figure the chart draws. */
+  const bodyweight = useBodyweightTrend();
+  const targetCalories = effectiveTargets.finalTarget ?? 0;
+  const targetProtein = effectiveTargets.protein ?? 0;
+  const trendRows = useMemo(() => {
+    const rows: TrendRow[] = [];
+    const weight = weightRow({
+      points: bodyweight.points,
+      sinceKey: localDateString(rollingWindowStart(rangeDays)),
+      unit: profile?.preferredWeightUnit === "lbs" ? "lbs" : "kg",
+      hideNumber: !!profile?.hideWeightNumber,
+    });
+    if (weight) rows.push(weight);
+    rows.push(
+      ...nutritionRows({
+        daysLogged: nutrition.daysLogged,
+        avgCalories: nutrition.avgCalories,
+        avgProtein: nutrition.avgProtein,
+        caloriesSeries: nutrition.caloriesSparkline,
+        proteinSeries: nutrition.proteinSparkline,
+        showSeries: nutrition.showSparklines,
+        targetCalories,
+        targetProtein,
+      })
+    );
+    const fitness = profile?.runFitness ?? null;
+    const times = predictedRaceTimesFromFitness(fitness);
+    const prediction = predictionRow({
+      tenKSeconds: times ? times["10k"] : null,
+      source: fitness?.source,
+    });
+    if (prediction) rows.push(prediction);
+    return rows;
+  }, [
+    bodyweight.points,
+    rangeDays,
+    profile?.preferredWeightUnit,
+    profile?.hideWeightNumber,
+    profile?.runFitness,
+    nutrition,
+    targetCalories,
+    targetProtein,
+  ]);
+
   /* Hist5d cross-cut + Hist5 grill Q2 Stress 6 — section auto-hide
      two-tier rule. Only applies on the "all" filter; per-sport
      filtered tabs always render their section (the user explicitly
@@ -1345,7 +1501,7 @@ export default function History() {
 
   /* True cold-start: the user has never logged a run, lift, or meal, so
      every sport section is Tier-1 suppressed. Rather than show a wall of
-     zeroed rings (PeriodOverview) plus a redundant "PI appears later" strip,
+     zeroed figures plus a redundant "PI appears later" strip,
      render ONE calm card that sets the expectation. The moment anything is
      logged, lifetime>0 flips this off and the normal analytics return. */
   const isAnalyticsColdStart =
@@ -1415,39 +1571,64 @@ export default function History() {
           </SectionErrorBoundary>
         ) : (
           <>
-            {/* Hist6 — PI hero pinned to the top, range-independent
+            {/* Hist6 — Performance pinned to the top, range-independent
               ("this week"). The TimeRange control below scopes only the
-              historical body (PeriodOverview + sport sections), so changing
-              the range never moves the hero — the two mental models
-              (current form vs adjustable history) are separated spatially.
-              Suppressed in cold-start: the "No analytics yet" card below
-              stands in until the first session is logged. Deep-links to
-              /history#performance scroll to this section's anchor. */}
+              history under it, so changing the range never moves the
+              index — the two mental models (current form vs adjustable
+              history) are separated spatially. Suppressed in cold-start:
+              the "No analytics yet" card below stands in until the first
+              session is logged. `/history#performance` opens the
+              Performance page. */}
             {/* A deeper page's way back to the overview. */}
             {filter === "analytics" && view !== "overview" && (
               <AnalyticsBackRow onBack={() => setView("overview")} />
             )}
 
+            {/* The week's index, range-independent, above the range
+                pills (Hist6): the pills scope everything below them. The
+                overview shows the card; its Details open the page. */}
             {filter === "analytics" &&
               view === "overview" &&
               !isAnalyticsColdStart && (
                 <SectionErrorBoundary sectionName="performance-section">
-                  <PerformanceSection
-                    /* A meal alone clears the cold-start gate above, so this
-                     section can render for someone with no session at all —
-                     and the perf doc is server-written, so a user who has
-                     just logged their first workout reaches it too. */
+                  <PerformanceOverviewCard
                     hasLoggedSession={
                       workouts.length > 0 || lifetimeRuns.runCount > 0
                     }
+                    onOpenDetails={() => setView("performance")}
                   />
                 </SectionErrorBoundary>
               )}
+            {filter === "analytics" && view === "performance" && (
+              <SectionErrorBoundary sectionName="performance-section">
+                <PerformanceSection
+                  /* A meal alone clears the cold-start gate, so this can
+                     render for someone with no session at all — and the
+                     perf doc is server-written, so a user who has just
+                     logged their first workout reaches it too. */
+                  hasLoggedSession={
+                    workouts.length > 0 || lifetimeRuns.runCount > 0
+                  }
+                />
+              </SectionErrorBoundary>
+            )}
 
             {/* The range scopes the history below it. The Body page's
                 weight chart keeps its own, so it gets none here. */}
             {view !== "body" && (
               <TimeRangePills selected={timeRange} onChange={setTimeRange} />
+            )}
+
+            {/* Fitness, fatigue and form across lifting and running: the
+                load behind the index, so it sits on the Performance page,
+                under the range it follows. */}
+            {filter === "analytics" && view === "performance" && (
+              <SectionErrorBoundary sectionName="training-load">
+                <TrainingLoadCard
+                  points={trainingLoad.points}
+                  loading={trainingLoad.loading}
+                />
+              </SectionErrorBoundary>
             )}
 
             {/* Hist5b pin 1 — sticky anchor chip row. Only renders on
@@ -1543,34 +1724,33 @@ export default function History() {
               !dataLoading &&
               !isAnalyticsColdStart && (
                 <>
-                  <PeriodOverview
-                    runCount={runningTotals.runCount}
-                    runDistance={runningTotals.runDistance}
-                    liftCount={liftingData.liftCount}
-                    liftVolume={liftingData.liftVolume}
-                    avgCalories={nutrition.avgCalories}
-                    nutritionAdherence={nutrition.adherence}
-                    /* The user's own weekly targets. `daysPerWeek` is what
-                       onboarding asked for and, capped at 6, is never
-                       reshaped by the engine's 7-day cap — so requested and
-                       actual agree. The run side goes through the canonical
-                       resolver rather than reading either of the two drifted
-                       profile fields directly. */
-                    weeklyLiftTarget={profile?.daysPerWeek ?? 0}
-                    weeklyRunTarget={getWeeklyRunTarget(profile)}
-                    timeRange={timeRange}
-                    rangeDays={rangeDays}
-                  />
-                  {/* Fitness/fatigue/form spanning run+lift (teardown #4).
-                      Cross-sport, so it lives with the range-scoped overview
-                      rather than inside either sport section. */}
-                  <SectionErrorBoundary sectionName="training-load">
-                    <div className="mt-2">
-                      <TrainingLoadCard
-                        points={trainingLoad.points}
-                        loading={trainingLoad.loading}
-                      />
-                    </div>
+                  <SectionErrorBoundary sectionName="period-summary">
+                    <PeriodSummaryCard
+                      title={rollingRangeLabel(timeRange)}
+                      comparedWith={previousRangeLabel(timeRange)}
+                      figures={summaryFigures}
+                      bins={periodSummary.bins}
+                      granularity={periodSummary.granularity}
+                      /* The user's own weekly targets. `daysPerWeek` is what
+                         onboarding asked for and, capped at 6, is never
+                         reshaped by the engine's 7-day cap — so requested
+                         and actual agree. The run side goes through the
+                         canonical resolver rather than reading either of
+                         the two drifted profile fields directly. */
+                      plannedThisWeek={
+                        (profile?.daysPerWeek ?? 0) +
+                        getWeeklyRunTarget(profile)
+                      }
+                    />
+                  </SectionErrorBoundary>
+                  <SectionErrorBoundary sectionName="trends">
+                    <AnalyticsTrends rows={trendRows} onOpen={setView} />
+                  </SectionErrorBoundary>
+                  <SectionErrorBoundary sectionName="muscles">
+                    <AnalyticsMuscles
+                      data={liftingData.muscleData}
+                      onOpen={() => setView("lifting")}
+                    />
                   </SectionErrorBoundary>
                 </>
               )}

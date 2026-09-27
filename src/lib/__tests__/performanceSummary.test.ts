@@ -6,7 +6,10 @@
  * the ±5pt delta noise floor.
  */
 import { describe, it, expect } from "vitest";
-import { getPlainLanguageSummary } from "../performanceSummary";
+import {
+  getPlainLanguageSummary,
+  insightBulletsWithoutVerdict,
+} from "../performanceSummary";
 import { computeLoadBand } from "../performanceEngine";
 
 describe("getPlainLanguageSummary — establishing baseline (cold-start)", () => {
@@ -187,5 +190,26 @@ describe("getPlainLanguageSummary — delta trend sentence", () => {
   it("negative delta > 5pt surfaces 'Down' with the absolute integer points", () => {
     const body = getPlainLanguageSummary(50, "moderate", -12).body;
     expect(body).toContain("Down 12 pts from last week");
+  });
+});
+
+describe("insightBulletsWithoutVerdict — the deload advice said once", () => {
+  const bullets = [
+    "Consider a deload week — sustained high load with limited recovery signals.",
+    "Both lifting and running loads are strong this week.",
+  ];
+
+  it("drops the bullet that repeats a deload recommendation", () => {
+    expect(insightBulletsWithoutVerdict(bullets, true)).toEqual([
+      "Both lifting and running loads are strong this week.",
+    ]);
+  });
+
+  it("keeps every bullet when no deload is recommended", () => {
+    expect(insightBulletsWithoutVerdict(bullets, false)).toEqual(bullets);
+  });
+
+  it("has nothing to drop when the week has no bullets", () => {
+    expect(insightBulletsWithoutVerdict(undefined, true)).toEqual([]);
   });
 });

@@ -27,6 +27,11 @@ import { formatCalories, CALORIE_UNIT } from "@/utils/formatNutrition";
 import { computeDataConfidence, T5_BARS_MIN_COUNT } from "@/lib/dataConfidence";
 import { AnimatePresence, motion } from "framer-motion";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
+import { THEME } from "@/lib/theme";
+import {
+  CHART_AXIS_TICK,
+  CHART_TOOLTIP_STYLE,
+} from "@/components/analytics/chartStyles";
 
 /** The chart's window. Today is excluded — it is still in progress, and a
  *  partial log would read as a deficit — so the denominator beneath the
@@ -154,19 +159,13 @@ export default function CalorieBalanceChart({ meals }: { meals: Meal[] }) {
                 >
                   <XAxis
                     dataKey="day"
-                    tick={{
-                      fontSize: 11,
-                      fill: "hsl(var(--muted-foreground))",
-                    }}
+                    tick={CHART_AXIS_TICK}
                     axisLine={false}
                     tickLine={false}
                     interval={1}
                   />
                   <YAxis
-                    tick={{
-                      fontSize: 11,
-                      fill: "hsl(var(--muted-foreground))",
-                    }}
+                    tick={CHART_AXIS_TICK}
                     axisLine={false}
                     tickLine={false}
                     width={35}
@@ -187,7 +186,7 @@ export default function CalorieBalanceChart({ meals }: { meals: Meal[] }) {
                       if (!Number.isFinite(value)) return null;
                       const point = entry.payload as { date: string };
                       return (
-                        <div className="rounded-xl border border-border bg-card p-3 text-xs text-foreground shadow-sm">
+                        <div style={CHART_TOOLTIP_STYLE}>
                           <p className="font-semibold">
                             {format(
                               new Date(point.date + "T12:00:00"),
@@ -198,7 +197,10 @@ export default function CalorieBalanceChart({ meals }: { meals: Meal[] }) {
                             Estimated gap: {value > 0 ? "+" : ""}
                             {Math.round(value).toLocaleString()} {CALORIE_UNIT}
                           </p>
-                          <p className="text-muted-foreground">
+                          {/* The tooltip is dark in both themes, so its
+                              quieter line takes the on-dark secondary, not
+                              the page's muted token. */}
+                          <p style={{ color: THEME.textSecondary }}>
                             Based on logged food; entries may be incomplete.
                           </p>
                         </div>

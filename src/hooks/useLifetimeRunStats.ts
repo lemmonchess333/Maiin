@@ -3,7 +3,11 @@ import { collection, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useUid } from "@/lib/auth";
 import { logger } from "@/lib/logger";
-import { sumLifetimeRunTotals } from "@/lib/runStatsEligibility";
+import {
+  isVolumeEligible,
+  sumLifetimeRunTotals,
+} from "@/lib/runStatsEligibility";
+import { parseRunSummary } from "@/hooks/useRunningStats";
 import {
   recordedRaceMilestones,
   type MilestoneRace,
@@ -17,6 +21,41 @@ export interface LifetimeRunStats {
   firstRun: { id: string; date: string; distanceMetres: number } | null;
   /** Explicitly recorded races from the same read, with no second scan. */
   races: MilestoneRace[];
+  /**
+   * Every run the totals count, as a finish time and a distance, from the
+   * same read. Analytics compares its window with the one before it, and
+   * `useRunningStats` only reads the window itself.
+   */
+  dated: DatedRun[];
+}
+
+export interface DatedRun {
+  completedAtMs: number;
+  distanceM: number;
+}
+
+const EMPTY: LifetimeRunStats = {
+  runCount: 0,
+  totalDistanceM: 0,
+  firstRun: null,
+  races: [],
+  dated: [],
+};
+
+/** The runs the totals count, as a finish time and a distance. */
+function datedRuns(
+  docs: readonly { id: string; [key: string]: unknown }[]
+): DatedRun[] {
+  const out: DatedRun[] = [];
+  for (const doc of docs) {
+    const run = parseRunSummary(doc.id, doc);
+    if (!run || !isVolumeEligible(run)) continue;
+    out.push({
+      completedAtMs: run.completedAt.getTime(),
+      distanceM: run.distance,
+    });
+  }
+  return out;
 }
 
 /**
@@ -35,12 +74,7 @@ export interface LifetimeRunStats {
 export function useLifetimeRunStats(options?: { enabled?: boolean }) {
   const enabled = options?.enabled ?? true;
   const uid = useUid();
-  const [stats, setStats] = useState<LifetimeRunStats>({
-    runCount: 0,
-    totalDistanceM: 0,
-    firstRun: null,
-    races: [],
-  });
+  const [stats, setStats] = useState<LifetimeRunStats>(EMPTY);
   const [loadedUid, setLoadedUid] = useState<string | null>(null);
   const [statsUid, setStatsUid] = useState<string | null>(null);
   /**
@@ -69,6 +103,7 @@ export function useLifetimeRunStats(options?: { enabled?: boolean }) {
         setStats({
           ...sumLifetimeRunTotals(runs),
           races: recordedRaceMilestones(runs),
+          dated: datedRuns(runs),
         });
         setStatsUid(uid);
         setLoadedUid(uid);
@@ -86,10 +121,7 @@ export function useLifetimeRunStats(options?: { enabled?: boolean }) {
 
   // Account changes must hide the old account's race/session identifiers
   // synchronously, before the next effect or read can run.
-  const visible =
-    uid && enabled && statsUid === uid
-      ? stats
-      : { runCount: 0, totalDistanceM: 0, firstRun: null, races: [] };
+  const visible = uid && enabled && statsUid === uid ? stats : EMPTY;
   return {
     ...visible,
     loading: Boolean(uid && enabled && loadedUid !== uid),
