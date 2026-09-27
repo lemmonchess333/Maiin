@@ -609,6 +609,46 @@ function ProgramInner() {
     window.scrollTo(0, 0);
   }, [selectedDayIndex]);
 
+  // Home's Today card links here with `?day=N&start=1` (DS3): Start on Home
+  // begins the session. Begin it the way this page's own Start does (the
+  // usual session time when one is set), once, then drop `start` from the
+  // URL so a refresh or a back navigation lands on the day instead of
+  // starting it again. A finished or skipped day just opens. N is the day
+  // Home showed, which can differ from this page's rotation cursor
+  // (ADR-0002: Home resolves a lift by weekday); starting a day off the
+  // cursor is already supported, it is what the lighter-day swap does.
+  const startRequested = searchParams.get("start") === "1";
+  useEffect(() => {
+    if (!startRequested || !programState) return;
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        next.delete("start");
+        return next;
+      },
+      { replace: true }
+    );
+    if (viewingHistoryIndex !== null || urlDay === null) return;
+    const day = programState.workouts[urlDay];
+    if (!day || day.completed || day.skipped) return;
+    const budget = isLiftTimeBudget(profile?.liftTimeBudgetMinutes)
+      ? profile!.liftTimeBudgetMinutes!
+      : null;
+    /* eslint-disable react-hooks/set-state-in-effect -- a one-shot reaction
+       to the deep link, consumed above so it cannot repeat */
+    setSessionBudgetMinutes(budget ?? 60);
+    setSessionVariant(budget === null ? "full" : "time_budget");
+    setSessionDayIndex(urlDay);
+    /* eslint-enable react-hooks/set-state-in-effect */
+  }, [
+    startRequested,
+    programState,
+    viewingHistoryIndex,
+    urlDay,
+    profile,
+    setSearchParams,
+  ]);
+
   if (loading) {
     // Mirror the in-Layout Suspense fallback (PageContentSkeleton →
     // ProgramSkeleton) so the route-chunk placeholder and this

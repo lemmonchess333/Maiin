@@ -48,6 +48,7 @@ describe("CLAUDE.md — the Home composition sentence", () => {
     "WaterCard",
     "WeightStepsTiles",
     "WeeklyReviewEntry",
+    "WeekSummary",
     "PerformanceHeroCard",
   ];
 

@@ -332,10 +332,12 @@ describe("DS ratchets — surface-level drift", () => {
   // detail sub-pages) are grandfathered here and burn down as they adopt
   // the shell.
   //
-  // Two sanctioned exceptions to `text-h1`, both pinned below rather than
-  // counted here: the Home brand WORDMARK (tracked uppercase — a brand
-  // mark, not a page name) and the `PageShell` primitive itself, whose h1
-  // takes its class from a variable the regex cannot read.
+  // One sanctioned exception to `text-h1`, pinned below rather than
+  // counted here: the `PageShell` primitive itself, whose h1 takes its
+  // class from a variable the regex cannot read. There used to be a
+  // second, Home's brand WORDMARK (tracked uppercase); DS3 retired it for
+  // a plain "Today" title with the date above it, so the primitive now
+  // has no way off the token at all.
   const OFF_SCALE_H1_BASELINE = 22;
   const H1_PRIMITIVE = "src/components/ui/PageShell.tsx";
   it("<h1> elements off the H1 token do not increase", () => {
@@ -362,8 +364,14 @@ describe("DS ratchets — surface-level drift", () => {
     expect(shell).toMatch(
       /text-h1 leading-tight tracking-tight font-extrabold/
     );
-    // And the brand variant is the ONE way off the token: tracked uppercase.
-    expect(shell).toMatch(/tracking-\[0\.14em\] uppercase/);
+    // And nothing takes the title off it: the tracked-uppercase brand
+    // variant, the one way off the token, is gone (DS3). Checked on the
+    // code alone, because the header comment still tells its history.
+    const code = shell
+      .replace(/\/\*[\s\S]*?\*\//g, " ")
+      .replace(/\/\/[^\n]*/g, " ");
+    expect(code).not.toMatch(/uppercase/);
+    expect(code).not.toMatch(/\bbrand\b/);
   });
 
   it("every route page renders its title through PageShell, not a local <h1>", () => {

@@ -84,7 +84,9 @@ const EXPECTED_BARE_USES: Record<(typeof IDENTITY)[number], number> = {
   // is already eased" row — an icon, which the 4.5:1 small-text bar does
   // not apply to; its label beside it is `text-foreground`.
   running: 47, // Calendar status icons now use the strong colour step.
-  lifting: 19, // Redesign consolidates onboarding option icons.
+  // 2026-09-27: 19 → 18. DS3's Home lift card lost its dumbbell tile:
+  // the exercise drawing is the card's picture now.
+  lifting: 18, // Redesign consolidates onboarding option icons.
   nutrition: 4,
   destructive: 0,
   success: 0,
@@ -134,7 +136,9 @@ const EXPECTED_INLINE_USES = {
   // one brand fill among them.
   // 2026-09-23: 40 → 39. The weekly coach posts were retired, and their
   // sparkle tile with them.
-  "THEME.brand": 39,
+  // 2026-09-27: 39 → 38. DS3's rest-day card tints its leaf with the
+  // `text-lifting-strong` class instead of the inline brand colour.
+  "THEME.brand": 38,
   // 2026-09-18: 21 → 19. Home's "Log food" action and the nudge note
   // above it were the two smallest-text uses and measured 2.77:1; both
   // moved to `text-nutrition-strong`. The rest are icons and fills.
@@ -211,7 +215,9 @@ function bareUses(token: string): string[] {
  * `text-primary-strong` is NOT the redirect. It is the fill under white
  * text, and it measures 3.26:1 as text on the dark card.
  */
-const BRAND = { token: "primary", step: "lifting-strong", bare: 52 } as const;
+// 2026-09-27: 52 → 51. The Weekly Review entry was a card with a
+// calendar icon; DS3 made it a text link on Home's "This week" heading.
+const BRAND = { token: "primary", step: "lifting-strong", bare: 51 } as const;
 
 describe("identity colour usage is pinned", () => {
   it("text-primary has the pinned number of bare uses", () => {

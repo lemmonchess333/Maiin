@@ -38,3 +38,32 @@ export function dayFocusLabel(dayName: string): string {
   const focus = parts.slice(1).join(" ").trim().replace(FOCUS_SUFFIX, "");
   return focus.trim() || full;
 }
+
+/**
+ * A lift day's name split for a card: the category above ("Pull") and the
+ * focus as the title ("Lat focus"), from "Pull — Lat Focus".
+ *
+ * Home's Today card (DS3) puts the category in its eyebrow, beside the
+ * session's place in the rotation, and the focus in the title. Setting the
+ * whole name as a title broke it at the dash on a phone ("Pull —" over
+ * "Lat Focus"). The trailing noun stays, lower-cased, because a title can
+ * afford "focus" where a selector cell cannot. A name with no separator (a
+ * custom or renamed day) is the title, with no category.
+ */
+export function liftDayTitle(dayName: string): {
+  category: string | null;
+  title: string;
+} {
+  const full = dayName.trim();
+  const parts = full.split(SEPARATOR);
+  if (parts.length < 2) return { category: null, title: full };
+  const category = parts[0].trim();
+  const title = parts
+    .slice(1)
+    .join(" ")
+    .trim()
+    .replace(/\bFocus$/, "focus");
+  return category && title
+    ? { category, title }
+    : { category: null, title: full };
+}

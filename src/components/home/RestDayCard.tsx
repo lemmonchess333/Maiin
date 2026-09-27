@@ -1,56 +1,69 @@
-import { motion } from "framer-motion";
 import { Leaf } from "lucide-react";
-import { THEME } from "@/lib/theme";
+import { Button } from "@/components/ui/Button";
+import InlineNumerals from "@/components/ui/InlineNumerals";
 import { cardClasses } from "@/components/ui/cardClasses";
+import { haptic } from "@/lib/haptic";
+import { track as trackHomeEvent } from "@/lib/homeAnalytics";
 
 /**
- * Home CTA card for rest days. Matches the Lift and Run CTA card
- * rhythm (icon square left, stacked labels middle, nothing on the
- * right — rest days don't have an action). Calm purple tint instead
- * of the lift-purple / run-coral tint so the rest day doesn't feel
- * like a dimmed-out lift day.
+ * Home's lead card on a rest day (DS3).
  *
- * The page previously just hid the Lift + Run cards on rest days,
- * leaving a gap between the Health Score and Water cards and no
- * positive indication that today was scheduled rest. Without this,
- * users on rest days couldn't tell whether their program was
- * broken or the day was intentional.
+ * Without it, a rest day showed no lead card at all and users could not
+ * tell scheduled rest from a broken programme. It says the day is rest,
+ * offers the one suggestion that fits a rest day, and, when tomorrow has
+ * a session, names it with a way to look at it. There is no Start: rest
+ * days have nothing to begin, and a card with a dead button would say
+ * otherwise.
  */
-export default function RestDayCard() {
+export default function RestDayCard({
+  tomorrow = null,
+  navigate,
+}: {
+  /** Tomorrow's session, when there is one: its name and where it opens. */
+  tomorrow?: { label: string; target: string } | null;
+  navigate?: (path: string) => void;
+}) {
   return (
-    <motion.div
+    <div
       className={cardClasses({
-        tone: "tinted",
-        className: "flex items-center gap-4",
+        className: "space-y-3",
       })}
-      style={{
-        background: `linear-gradient(135deg, ${THEME.brand}14, ${THEME.brand}05 70%)`,
-        boxShadow: `var(--ds-shadow-card), 0 0 0 1px ${THEME.brand}14`,
-      }}
-      /* No `whileTap`. This card carries no action — the docstring above
-         says so, and there is no onClick or link anywhere on it — so the
-         press-scale was feedback for a press that does nothing. It also
-         cost a tab stop: framer-motion's press gesture sets
-         `tabIndex = 0` on any non-focusable element with `whileTap`, so
-         a rest day put an unnamed, inert stop in Home's tab order. */
     >
-      <div
-        className="size-12 rounded-xl flex items-center justify-center flex-shrink-0"
-        style={{ backgroundColor: `${THEME.brand}1F` }}
-      >
-        <Leaf className="size-5" style={{ color: THEME.brand }} />
+      <div className="flex items-start gap-4">
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-bold text-lifting-strong">
+            Today · Rest day
+          </p>
+          <p className="mt-1 text-h2 font-extrabold leading-tight tracking-tight text-foreground">
+            Recover today
+          </p>
+          <p className="mt-2 text-sm font-medium text-muted-foreground">
+            A walk or some mobility helps.
+            {tomorrow && (
+              <>
+                {" "}
+                Tomorrow: <InlineNumerals>{tomorrow.label}</InlineNumerals>.
+              </>
+            )}
+          </p>
+        </div>
+        <div className="size-12 shrink-0 rounded-2xl flex items-center justify-center bg-lifting/10">
+          <Leaf className="size-6 text-lifting-strong" aria-hidden="true" />
+        </div>
       </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-xs font-semibold text-lifting-strong">
-          Today · Rest day
-        </p>
-        <p className="text-base font-bold text-foreground leading-tight">
-          Take it easy
-        </p>
-        <p className="text-xs text-muted-foreground mt-0.5">
-          Rest is part of the programme
-        </p>
-      </div>
-    </motion.div>
+      {tomorrow && navigate && (
+        <Button
+          variant="secondary"
+          className="w-full"
+          onClick={function () {
+            haptic();
+            trackHomeEvent("home_card_tapped", { card: "rest_tomorrow" });
+            navigate(tomorrow.target);
+          }}
+        >
+          See tomorrow
+        </Button>
+      )}
+    </div>
   );
 }

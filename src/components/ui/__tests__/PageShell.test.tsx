@@ -25,18 +25,22 @@ describe("PageShell header", () => {
     expect(h1.className).toMatch(/font-extrabold/);
   });
 
-  it("gives the brand wordmark its own treatment instead of the H1 scale", () => {
-    // Home's header is the brand, not a page name — tracked uppercase is
-    // that design, kept as an option rather than forced onto the scale.
+  it("puts the eyebrow above the title, outside the heading", () => {
+    // Home's date sits over "Today". It is not part of the page's name,
+    // so it stays out of the h1's accessible name.
     render(
-      <PageShell brand title="TROPOS">
+      <PageShell eyebrow="Sunday 27 September" title="Today">
         x
       </PageShell>
     );
-    const h1 = screen.getByRole("heading", { level: 1, name: "TROPOS" });
-    expect(h1.className).toMatch(/uppercase/);
-    expect(h1.className).toMatch(/tracking-\[0\.14em\]/);
-    expect(h1.className).not.toMatch(/\btext-h1\b/);
+    const h1 = screen.getByRole("heading", { level: 1, name: "Today" });
+    expect(h1.className).toMatch(/\btext-h1\b/);
+    const eyebrow = screen.getByText("Sunday 27 September");
+    expect(eyebrow.tagName).toBe("P");
+    expect(h1.contains(eyebrow)).toBe(false);
+    expect(
+      eyebrow.compareDocumentPosition(h1) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
   });
 
   it("renders leading tile, subtitle and actions in their slots", () => {

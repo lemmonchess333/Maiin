@@ -14,13 +14,15 @@
  * pages render through rather than a paragraph they are asked to follow.
  * This is the page-level equivalent. What it owns:
  *
- *   - the header: title at the real H1 scale, an optional leading tile,
- *     an optional subtitle with a reservable height, a right action
- *     cluster, and an optional controls row beneath (a segmented control)
- *   - the two deliberate header designs, kept as first-class options
- *     rather than flattened: Home's brand WORDMARK (`brand`), and Train's
- *     sport-tinted header zone (`accent`) whose colour makes the page
- *     answer to the active mode
+ *   - the header: title at the real H1 scale, an optional line above it
+ *     (Home's date), an optional leading tile, an optional subtitle with
+ *     a reservable height, a right action cluster, and an optional
+ *     controls row beneath (a segmented control)
+ *   - Train's sport-tinted header zone (`accent`), whose colour makes the
+ *     page answer to the active mode. Home's uppercase TROPOS wordmark
+ *     (`brand`) was the other deliberate header; DS3 replaced it with the
+ *     date and "Today", so Home names the day like every other page names
+ *     itself
  *   - the entrance stagger, which Food, Social and History each declared
  *     identically and Home inlined
  *   - the rhythm between page sections
@@ -47,11 +49,10 @@ type RootProps = Omit<
 >;
 
 export interface PageShellProps extends RootProps {
-  /** The page name. On Home this is the brand wordmark — pass `brand`. */
+  /** The page name. */
   title: ReactNode;
-  /** Brand treatment for the wordmark: tracked uppercase rather than the
-   *  H1 scale. Home only. */
-  brand?: boolean;
+  /** A short line above the title — Home's date. */
+  eyebrow?: ReactNode;
   /** A small tile before the title — Train's sport icon. */
   leading?: ReactNode;
   /** A line beneath the title. */
@@ -83,7 +84,7 @@ export interface PageShellProps extends RootProps {
 
 export default function PageShell({
   title,
-  brand = false,
+  eyebrow,
   leading,
   subtitle,
   subtitleReserveLines,
@@ -95,9 +96,8 @@ export default function PageShell({
   className,
   ...rest
 }: PageShellProps) {
-  const titleClass = brand
-    ? "text-2xl font-extrabold tracking-[0.14em] uppercase leading-none text-foreground"
-    : "text-h1 leading-tight tracking-tight font-extrabold text-foreground";
+  const titleClass =
+    "text-h1 leading-tight tracking-tight font-extrabold text-foreground";
 
   return (
     <motion.div
@@ -118,6 +118,11 @@ export default function PageShell({
       >
         <div className="flex items-start justify-between gap-3 pt-1 pb-1">
           <div className="min-w-0 flex-1">
+            {eyebrow !== undefined && (
+              <p className="text-sm font-semibold text-muted-foreground">
+                {eyebrow}
+              </p>
+            )}
             <div className="flex items-center gap-2">
               {leading}
               <h1 className={titleClass}>{title}</h1>

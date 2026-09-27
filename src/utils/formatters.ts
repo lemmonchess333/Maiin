@@ -114,7 +114,10 @@ export function formatClock(totalSeconds: number): string {
     : mmss;
 }
 
-/** Calculate macro ring percentage (clamped 0–1.3) and done state (±10% of target) */
+/** Macro progress against its target: the share (clamped 0–1.3) and whether
+ *  it is reached (within 10% of the target either way). Named for the macro
+ *  rings it was written for; Home's food card reads `done` for its macro
+ *  bars' "target reached" (DS3 replaced the rings with bars). */
 export function macroRingState(
   value: number,
   target: number

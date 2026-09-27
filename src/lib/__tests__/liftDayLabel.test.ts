@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { dayFocusLabel } from "../liftDayLabel";
+import { dayFocusLabel, liftDayTitle } from "../liftDayLabel";
 
 /**
  * The property the cells exist for: within one week, no two labels are
@@ -94,5 +94,48 @@ describe("the label itself", () => {
     // A trailing separator, or a focus that is only the dropped noun.
     expect(dayFocusLabel("Push — Focus")).toBe("Push — Focus");
     expect(dayFocusLabel("")).toBe("");
+  });
+});
+
+describe("liftDayTitle — Home's Today card", () => {
+  it("splits every real rotation day into its category and focus", () => {
+    // The card sets the category as the eyebrow and the focus as the
+    // title, so no title can break at the dash ("Pull —" over "Lat Focus").
+    for (const name of [...FULL_BODY_3, ...PPL_X2]) {
+      const { category, title } = liftDayTitle(name);
+      expect(category).not.toBeNull();
+      expect(title).not.toMatch(/[—–]/);
+      expect(`${category} — ${title}`.toLowerCase()).toBe(name.toLowerCase());
+    }
+  });
+
+  it("keeps the noun a title can afford, lower-cased", () => {
+    expect(liftDayTitle("Pull — Lat Focus")).toEqual({
+      category: "Pull",
+      title: "Lat focus",
+    });
+    expect(liftDayTitle("Upper-Lower — Squat Focus")).toEqual({
+      category: "Upper-Lower",
+      title: "Squat focus",
+    });
+  });
+
+  it("gives a custom or renamed day no category", () => {
+    expect(liftDayTitle("Upper A")).toEqual({
+      category: null,
+      title: "Upper A",
+    });
+    expect(liftDayTitle("  Leg Day  ")).toEqual({
+      category: null,
+      title: "Leg Day",
+    });
+  });
+
+  it("keeps the whole name when either half would be empty", () => {
+    expect(liftDayTitle("Push — ")).toEqual({
+      category: null,
+      title: "Push —",
+    });
+    expect(liftDayTitle("")).toEqual({ category: null, title: "" });
   });
 });
