@@ -17,7 +17,7 @@ import {
  * of this table, and Train's run card (DS3) needed a third. A run type
  * that gains an icon now gains it everywhere at once.
  */
-const RUN_TEMPLATE_ICONS: Record<string, LucideIcon> = {
+export const RUN_TEMPLATE_ICONS: Readonly<Record<string, LucideIcon>> = {
   "person-standing": PersonStanding,
   zap: Zap,
   "refresh-cw": RefreshCw,

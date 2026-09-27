@@ -14,7 +14,7 @@ import RunPurpose from "./RunPurpose";
  * case that needs it. See scratchpad spec `spec-run-fast-launch.md` §4.
  */
 import { ArrowLeft, Play } from "lucide-react";
-import { runTemplateIcon } from "./runTemplateIcons";
+import RunTemplateIcon from "./RunTemplateIcon";
 import Button from "@/components/ui/Button";
 import IconButton from "@/components/ui/IconButton";
 import ShoeSelector from "./ShoeSelector";
@@ -67,7 +67,6 @@ export default function RunLaunchCard({
   purpose,
 }: RunLaunchCardProps) {
   const unit = useDistanceUnit();
-  const Icon = runTemplateIcon(workout.icon);
 
   const target = prefill.target;
   // Primary metric shown next to the name: distance or a timed target.
@@ -106,7 +105,10 @@ export default function RunLaunchCard({
         <div className="rounded-2xl bg-running/8 p-5">
           <div className="flex items-center gap-3">
             <div className="size-12 rounded-xl flex items-center justify-center bg-running/9 shrink-0">
-              <Icon className="size-6 text-running" />
+              <RunTemplateIcon
+                icon={workout.icon}
+                className="size-6 text-running"
+              />
             </div>
             <div className="min-w-0">
               <p className="text-xs font-semibold text-running-strong">

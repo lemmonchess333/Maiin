@@ -2,7 +2,7 @@ import InlineNumerals from "@/components/ui/InlineNumerals";
 import { Button } from "@/components/ui/Button";
 import { localDateString } from "@/lib/dateHelpers";
 import { Play } from "lucide-react";
-import { runTemplateIcon } from "@/components/run/runTemplateIcons";
+import RunTemplateIcon from "@/components/run/RunTemplateIcon";
 import { haptic } from "@/lib/haptic";
 import { track as trackHomeEvent } from "@/lib/homeAnalytics";
 import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
@@ -52,7 +52,6 @@ export default function RunCTACard({
   if (todayRun?.id)
     params.push("scheduledRunId=" + encodeURIComponent(todayRun.id));
   const queryString = params.length ? "?" + params.join("&") : "";
-  const RunIconComp = runTemplateIcon(runIcon);
 
   // Key metric = the planned distance, read from the template config (the
   // source of truth) rather than regex-parsed out of the prose description.
@@ -120,7 +119,11 @@ export default function RunCTACard({
           )}
         </div>
         <div className="size-12 shrink-0 rounded-2xl flex items-center justify-center bg-running/12">
-          <RunIconComp className="size-6 text-running" aria-hidden="true" />
+          <RunTemplateIcon
+            icon={runIcon}
+            className="size-6 text-running"
+            aria-hidden="true"
+          />
         </div>
       </div>
       <div className="relative z-10 px-5 pb-5 pt-4">
