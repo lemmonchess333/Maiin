@@ -212,9 +212,23 @@ for (const budget of [null, 30] as const) {
       page.getByRole("heading", { name: "Workout saved", exact: true })
     ).toBeVisible({ timeout: 20_000 });
     await expect(page.getByRole("dialog")).toHaveCount(0);
+    // A first finish asks once, inline, with three equal answers. Nothing
+    // is posted until one is picked.
     await expect(
-      page.getByRole("button", { name: "Share this session", exact: true })
+      page.getByRole("heading", {
+        name: "Share sessions automatically?",
+        exact: true,
+      })
     ).toBeVisible();
+    for (const name of [
+      "Share with followers",
+      "Share publicly",
+      "Don't share",
+    ]) {
+      await expect(
+        page.getByRole("button", { name, exact: true })
+      ).toBeVisible();
+    }
     for (const dark of [false, true]) {
       await page.evaluate(
         (value) => document.documentElement.classList.toggle("dark", value),

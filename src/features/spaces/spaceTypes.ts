@@ -19,12 +19,22 @@
  */
 import type { Timestamp } from "firebase/firestore";
 
-/** SOC-P2b — the system Coach author id. MIRROR of COACH_AUTHOR.authorId
- *  in functions/lib/coachPrompts.js (the weekly prompt cron's writer).
- *  Not a real uid: firestore.rules bind client-created posts to auth.uid,
- *  so only the Admin SDK can post as the coach — matching on this id is
- *  therefore safe to drive UI (the coach card variant + reply prefill). */
+/** The author of the retired weekly coach questions. MIRROR of
+ *  COACH_AUTHOR_ID in functions/lib/spacePostEngagement.js, which keeps
+ *  those posts out of notifications. Not a real uid: firestore.rules bind
+ *  client-created posts to auth.uid, so only the Admin SDK ever wrote it,
+ *  and matching on it is safe.
+ *
+ *  The Monday job that wrote them is gone (owner call: a question every
+ *  week read as low-effort engagement; a space carries its members'
+ *  posts, the Strava club way). The posts it already wrote are still in
+ *  Firestore, so every reader drops them with `isMemberFacing`. */
 export const COACH_AUTHOR_ID = "tropos-coach";
+
+/** False for the retired coach posts, true for everything a space shows. */
+export function isMemberFacing(post: Pick<SpacePostDoc, "authorId">): boolean {
+  return post.authorId !== COACH_AUTHOR_ID;
+}
 
 export interface SpaceMemberDoc {
   joinedAt: Timestamp;

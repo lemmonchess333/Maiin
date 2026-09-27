@@ -127,12 +127,14 @@ const EXPECTED_INLINE_USES = {
   // The brand, inline. Icon tints (notification glyphs, the ProModal
   // feature tiles, the Home tiles' arrows), legend and ring fills, and
   // TrajectoryCard's 3xl score. The text uses — Home's rest-day eyebrow,
-  // "Connect Health", the Coach badge, "Share your take" — moved to
-  // `text-lifting-strong` / `hsl(var(--lifting-strong))`.
+  // "Connect Health" — moved to `text-lifting-strong` /
+  // `hsl(var(--lifting-strong))`.
   // 41 → 40. The Performance Index chart's five-item band legend went
   // when the bands moved into the plot; its "Moderate" swatch was the
   // one brand fill among them.
-  "THEME.brand": 40,
+  // 2026-09-23: 40 → 39. The weekly coach posts were retired, and their
+  // sparkle tile with them.
+  "THEME.brand": 39,
   // 2026-09-18: 21 → 19. Home's "Log food" action and the nudge note
   // above it were the two smallest-text uses and measured 2.77:1; both
   // moved to `text-nutrition-strong`. The rest are icons and fills.

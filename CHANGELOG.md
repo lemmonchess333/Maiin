@@ -40,6 +40,20 @@ follows [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
+- **Sessions share automatically once you say so.** The first time you finish
+  a run or workout, the finish screen asks once: share with followers, share
+  publicly, or don't share. After that each session posts with no sheet, and
+  the finish screen says where it went, with Undo. Settings → Privacy changes
+  the answer any time. The Settings choice had said "Shared automatically"
+  since 6 September without anything being shared; it works again. The
+  "Default visibility" setting, which nothing read, is gone.
+- **Spaces show their members.** The weekly "Tropos Coach" question is
+  gone. A space now opens on its name, its size and how many posts went up
+  this week, with a small Join button beside them (Joined, once you're in;
+  leaving asks first). A pinned Tropos Team note sits above the members'
+  posts, and an empty space offers to share your last session with it
+  already attached.
+
 - **Shared routes keep privacy gaps.** Maps, share images, GPX exports and saved
   routes preserve disconnected sections. Sharing waits for confirmed privacy
   settings, and the post composer shows the route that will be included.

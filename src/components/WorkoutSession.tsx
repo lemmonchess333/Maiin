@@ -106,6 +106,10 @@ import { IconButton } from "@/components/ui/IconButton";
 import { Spinner } from "@/components/ui/Spinner";
 import InlineNumerals from "@/components/ui/InlineNumerals";
 import { localDateString } from "@/lib/dateHelpers";
+import {
+  isSessionShareAction,
+  type SessionShareAction,
+} from "@/lib/sessionPost";
 // Form guide is heavy (react-body-highlighter) — lazy-load so it only hydrates
 // when the user opens the "How to" sheet mid-workout (D-LIFT-14).
 const ExerciseFormContent = lazyRetry(
@@ -712,8 +716,8 @@ export default function WorkoutSession({
   const [saveStatus, setSaveStatus] = useState<
     "queued" | "synced" | "needs-attention" | undefined
   >(initialDraft?.completionPending ? "needs-attention" : undefined);
-  const [shareSaved, setShareSaved] = useState<
-    (() => Promise<void>) | undefined
+  const [shareAction, setShareAction] = useState<
+    SessionShareAction | undefined
   >();
   const [sessionDurationMinutes, setSessionDurationMinutes] = useState(
     initialDraft?.completionPending
@@ -1284,7 +1288,7 @@ export default function WorkoutSession({
           else {
             setSaved(false);
             setSaveStatus("needs-attention");
-            setShareSaved(undefined);
+            setShareAction(undefined);
           }
         });
       } else acknowledge();
@@ -1370,10 +1374,9 @@ export default function WorkoutSession({
         receipt &&
         typeof receipt === "object" &&
         "share" in receipt &&
-        typeof receipt.share === "function"
+        isSessionShareAction(receipt.share)
       ) {
-        const share = receipt.share as () => Promise<void>;
-        setShareSaved(() => share);
+        setShareAction(receipt.share);
       }
     } catch (error) {
       // The core save failed. Do NOT clear the draft, reset set logs, close
@@ -1430,7 +1433,7 @@ export default function WorkoutSession({
           saved={saved}
           saveStatus={saveStatus}
           planContext={planContext}
-          onShare={shareSaved}
+          share={shareAction}
           onFinish={handleFinish}
           onEdit={
             !completionPendingRef.current

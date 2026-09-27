@@ -354,13 +354,14 @@ export function useMeals(dateWindow?: { from: string; to: string }) {
   //
   // NOTE this comment used to claim "the 24h auto-purge cron CF
   // hard-deletes after the window expires". There is NO such function
-  // — all seven scheduled functions in `functions/index.js` were
-  // checked (weeklyPerformanceRollup, dailyPerformanceRefresh,
-  // rolloverChallenges, weeklyCoachPrompts, hourlyStreakNudge,
-  // dailyRaceReconciliationSweep, weeklyFellBehindCheck) and none
-  // touches `meals`. A soft-deleted meal doc lives forever unless the
-  // user taps "Delete permanently" in Settings → Recently Deleted
-  // (`hardDeleteMeal`), or the account is deleted. The "24h window" is
+  // — the scheduled functions in `functions/index.js` were checked
+  // (weeklyPerformanceRollup, dailyPerformanceRefresh,
+  // rolloverChallenges, hourlyStreakNudge, dailyRaceReconciliationSweep,
+  // weeklyFellBehindCheck; resumeAccountDeletions only continues an
+  // account deletion) and none purges `meals`. A soft-deleted meal doc
+  // lives forever unless the user taps "Delete permanently" in Settings
+  // → Recently Deleted (`hardDeleteMeal`), or the account is deleted.
+  // The "24h window" is
   // therefore a UI convention on the archive screen, not a retention
   // guarantee — treat it as such when reasoning about anything hung
   // off a meal doc's lifetime.

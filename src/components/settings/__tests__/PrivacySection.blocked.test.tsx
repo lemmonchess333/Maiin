@@ -50,8 +50,6 @@ function renderSignedIn() {
       user={{ uid: "me" } as never}
       profile={{ aiAnalysisEnabled: false, hideSharedRouteEnds: false }}
       updateProfile={vi.fn().mockResolvedValue({ ok: true })}
-      defaultVisibility="private"
-      setDefaultVisibility={vi.fn()}
       privacyZones={[]}
       addZone={vi.fn().mockResolvedValue(undefined)}
       removeZone={vi.fn().mockResolvedValue(undefined)}

@@ -1,13 +1,13 @@
 /**
  * Community Space page (Spc1 PR2 shell + PR3 posting).
  *
- * Photo hero header (editorial pipeline, tinted fallback until the
- * licensed asset lands), join/leave, density-gated member count, the
- * post list (pinned Tropos Team posts first, blocked authors filtered)
- * and the members-only composer (title + body + attach-a-session).
- * Post cards carry the moderation kit (author delete / report /
- * block); the interactive like/comment kit is a later callable-backed
- * slice.
+ * A photo hero with the space's name, its size and this week's post
+ * count, and one small membership control (Join, or Joined with a
+ * confirmed Leave). Below it: the tagline, the race header on race spaces,
+ * any pinned Tropos Team note, then the members' posts. The retired
+ * weekly coach posts and blocked authors are filtered out. An empty space
+ * offers to share the member's last session. Post cards carry the
+ * moderation kit (author delete / report / block) and likes and comments.
  */
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
@@ -36,16 +36,15 @@ import { useAuth } from "@/lib/auth";
 import { THEME } from "@/lib/theme";
 import { spaceEditorialImage } from "@/lib/editorialImages";
 import { localDateString, parseLocalDate } from "@/lib/dateHelpers";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { IconButton } from "@/components/ui/IconButton";
+import InlineNumerals from "@/components/ui/InlineNumerals";
 import SectionLabel from "@/components/ui/SectionLabel";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { useBlockedUsers } from "@/hooks/useBlockedUsers";
-import {
-  spaceDef,
-  SPACE_MEMBER_COUNT_MIN_VISIBLE,
-  type SpaceEventInfo,
-} from "@/features/spaces/spaceDefs";
+import { spaceDef, type SpaceEventInfo } from "@/features/spaces/spaceDefs";
 import {
   resolveRaceEvent,
   useRaceEventOverrides,
@@ -56,7 +55,15 @@ import { useSpacePostLikes } from "@/features/spaces/useSpacePostLikes";
 import RaceIdentityToggle from "@/features/spaces/RaceIdentityToggle";
 import SpaceCommentSheet from "@/features/spaces/SpaceCommentSheet";
 import SpacePostComposer from "@/features/spaces/SpacePostComposer";
-import type { SpacePostDoc } from "@/features/spaces/spaceTypes";
+import { useRecentSessions } from "@/features/spaces/useRecentSessions";
+import {
+  countPostsThisWeek,
+  spaceHeroMeta,
+} from "@/features/spaces/spaceHeroMeta";
+import {
+  isMemberFacing,
+  type SpacePostDoc,
+} from "@/features/spaces/spaceTypes";
 
 const ICON_MAP: Record<string, LucideIcon> = {
   sprout: Sprout,
@@ -188,6 +195,12 @@ function RaceEventHeader({
   );
 }
 
+/* The two round chips on the hero (Back, Joined): scrim glass over a
+   cover photo, the page colour over the plain tinted band. */
+const PHOTO_CHIP =
+  "rounded-full text-white backdrop-blur-md border border-white/20";
+const PLAIN_CHIP = "rounded-full bg-background/80 border border-border/60";
+
 const ACCENT_HEX: Record<"running" | "lifting" | "brand", string> = {
   running: THEME.running,
   lifting: THEME.lifting,
@@ -195,6 +208,9 @@ const ACCENT_HEX: Record<"running" | "lifting" | "brand", string> = {
 };
 
 type PostItem = SpacePostDoc & { id: string };
+
+/** Posts one page load reads. The week count says "50+" when it hits it. */
+const POSTS_FETCH_LIMIT = 50;
 
 export default function Space() {
   const { spaceId } = useParams<{ spaceId: string }>();
@@ -204,36 +220,36 @@ export default function Space() {
   const { joined, memberCount, busy, join, leave } =
     useSpaceMembership(spaceId);
   const { blocked: blockedUsers } = useBlockedUsers();
+  const sessions = useRecentSessions();
   const [posts, setPosts] = useState<PostItem[] | null>(null);
-  /* SOC-P2c — viewer like state for the rendered posts (bounded batch
-     read + optimistic toggle; counts stay server-owned). */
-  const postIds = useMemo(() => (posts ?? []).map((p) => p.id), [posts]);
-  const spaceLikes = useSpacePostLikes(spaceId ?? "", postIds);
   /* SOC-P2g — comment sheet target + per-post optimistic count deltas
      (same grammar as likes; server owns the stored count). */
   const [commentsFor, setCommentsFor] = useState<string | null>(null);
   const [commentDeltas, setCommentDeltas] = useState<Record<string, number>>(
     {}
   );
-  const [composerOpen, setComposerOpen] = useState(false);
-  /* SOC-P2b — a coach prompt's "Share your take" seeds the composer
-     title. Cleared when the composer closes so a later manual post
-     doesn't inherit a stale prompt title. */
-  const [composerPrefillTitle, setComposerPrefillTitle] = useState<
-    string | undefined
-  >(undefined);
+  /* `attachLatest` starts the draft with the newest session attached: the
+     empty space's "Share your last session" and the post-race hand-off. */
+  const [composer, setComposer] = useState({
+    open: false,
+    attachLatest: false,
+  });
+  const openComposer = (attachLatest: boolean) =>
+    setComposer({ open: true, attachLatest });
+  const [confirmLeave, setConfirmLeave] = useState(false);
   const [reloadNonce, setReloadNonce] = useState(0);
 
   /* Races plan PR4 — `?compose=1` (the post-race share hand-off from
-   * RunSummary) opens the composer as soon as membership allows. For a
-   * non-member the param survives until they tap Join, then the
-   * composer opens — the intended "join, then post" flow. Consumed
-   * once (replace) so back/refresh doesn't re-open it. */
+   * RunSummary) opens the composer as soon as membership allows, with the
+   * race attached: it is the newest session. For a non-member the param
+   * survives until they tap Join, then the composer opens — the intended
+   * "join, then post" flow. Consumed once (replace) so back/refresh
+   * doesn't re-open it. */
   const [searchParams, setSearchParams] = useSearchParams();
   const composeRequested = searchParams.get("compose") === "1";
   useEffect(() => {
     if (!composeRequested || joined !== true) return;
-    setComposerOpen(true);
+    setComposer({ open: true, attachLatest: true });
     const next = new URLSearchParams(searchParams);
     next.delete("compose");
     setSearchParams(next, { replace: true });
@@ -248,19 +264,11 @@ export default function Space() {
           query(
             collection(db, "spaces", spaceId, "posts"),
             orderBy("createdAt", "desc"),
-            limit(50)
+            limit(POSTS_FETCH_LIMIT)
           )
         );
         if (cancelled) return;
-        const items = snap.docs.map(
-          (d) => ({ id: d.id, ...d.data() }) as PostItem
-        );
-        // Pinned Team posts lead regardless of age (Runna's pinned
-        // intro pattern); everything else stays newest-first.
-        items.sort(
-          (a, b) => Number(b.pinned ?? false) - Number(a.pinned ?? false)
-        );
-        setPosts(items);
+        setPosts(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as PostItem));
       } catch {
         if (!cancelled) setPosts([]);
       }
@@ -269,6 +277,24 @@ export default function Space() {
       cancelled = true;
     };
   }, [def, spaceId, reloadNonce]);
+
+  /* Retired coach posts and blocked authors are dropped. Pinned Tropos
+     Team notes sit above the members' posts rather than among them. */
+  const visiblePosts = useMemo(
+    () =>
+      (posts ?? []).filter(
+        (p) =>
+          isMemberFacing(p) && (!blockedUsers || !blockedUsers.has(p.authorId))
+      ),
+    [posts, blockedUsers]
+  );
+  const pinnedPosts = visiblePosts.filter((p) => p.pinned);
+  const memberPosts = visiblePosts.filter((p) => !p.pinned);
+
+  /* SOC-P2c — viewer like state for the rendered posts (bounded batch
+     read + optimistic toggle; counts stay server-owned). */
+  const postIds = useMemo(() => visiblePosts.map((p) => p.id), [visiblePosts]);
+  const spaceLikes = useSpacePostLikes(spaceId ?? "", postIds);
 
   const photo = useMemo(
     () => (spaceId ? spaceEditorialImage(spaceId) : null),
@@ -284,14 +310,6 @@ export default function Space() {
     def?.kind === "race" && def.event
       ? resolveRaceEvent(def, overrides)
       : undefined;
-
-  const visiblePosts = useMemo(
-    () =>
-      (posts ?? []).filter(
-        (p) => !blockedUsers || !blockedUsers.has(p.authorId)
-      ),
-    [posts, blockedUsers]
-  );
 
   const handleRemoved = useCallback((postId: string) => {
     setPosts((prev) => prev?.filter((p) => p.id !== postId) ?? prev);
@@ -312,13 +330,38 @@ export default function Space() {
 
   const accent = ACCENT_HEX[def.accent];
   const Icon = ICON_MAP[def.icon] ?? Users;
-  const showCount =
-    memberCount !== null && memberCount >= SPACE_MEMBER_COUNT_MIN_VISIBLE;
+  const week = countPostsThisWeek(visiblePosts, new Date(), {
+    size: posts?.length ?? 0,
+    limit: POSTS_FETCH_LIMIT,
+    oldest: posts?.[posts.length - 1],
+  });
+  const meta = spaceHeroMeta({
+    memberCount,
+    postsThisWeek: week.count,
+    capped: week.capped,
+  });
+
+  const renderPost = (post: PostItem) => (
+    <SpacePostCard
+      key={post.id}
+      spaceId={def.id}
+      postId={post.id}
+      post={post}
+      accent={accent}
+      onRemoved={handleRemoved}
+      liked={spaceLikes.liked.has(post.id)}
+      likeDelta={spaceLikes.deltas[post.id] ?? 0}
+      onToggleLike={user ? () => spaceLikes.toggle(post.id) : undefined}
+      commentDelta={commentDeltas[post.id] ?? 0}
+      onOpenComments={user ? () => setCommentsFor(post.id) : undefined}
+    />
+  );
 
   return (
     <div className="pb-6">
       {/* Hero header — photo (wash + scrim, white text) or the tinted
-          fallback band. Back button floats on the art. */}
+          fallback band. Back button floats on the art; membership sits
+          beside the name as one small control. */}
       <div
         className="relative h-44 overflow-hidden"
         style={
@@ -373,32 +416,53 @@ export default function Space() {
             aria-label="Back"
             icon={<ArrowLeft />}
             data-testid="space-back"
-            className={
-              photo
-                ? "rounded-full text-white backdrop-blur-md border border-white/20"
-                : "rounded-full bg-background/80 border border-border/60"
-            }
+            className={photo ? PHOTO_CHIP : PLAIN_CHIP}
             style={photo ? { background: THEME.scrim } : undefined}
           />
         </div>
-        <div className="absolute bottom-4 left-4 right-4 min-w-0">
-          <h1
-            className={`text-h2 font-extrabold leading-tight ${
-              photo ? "text-white" : "text-foreground"
-            }`}
-          >
-            {def.name}
-          </h1>
-          <p
-            className={`text-caption font-medium mt-1 flex items-center gap-1 ${
-              photo ? "text-white/85" : "text-muted-foreground"
-            }`}
-          >
-            <Users className="size-3" aria-hidden />
-            {showCount
-              ? `${memberCount.toLocaleString()} members`
-              : "New space"}
-          </p>
+        <div className="absolute bottom-4 left-4 right-4 flex items-end gap-3">
+          <div className="flex-1 min-w-0">
+            <h1
+              className={`text-h2 font-extrabold leading-tight ${
+                photo ? "text-white" : "text-foreground"
+              }`}
+            >
+              {def.name}
+            </h1>
+            <p
+              className={`text-caption font-medium mt-1 ${
+                photo ? "text-white/85" : "text-muted-foreground"
+              }`}
+            >
+              <InlineNumerals>{meta}</InlineNumerals>
+            </p>
+          </div>
+          {joined === false && (
+            <Button
+              className="rounded-full px-5 shrink-0"
+              loading={busy}
+              onClick={join}
+            >
+              Join
+            </Button>
+          )}
+          {joined === true && (
+            <Button
+              variant="ghost"
+              className={cn(
+                "rounded-full px-4 shrink-0",
+                photo ? PHOTO_CHIP : PLAIN_CHIP
+              )}
+              style={photo ? { background: THEME.scrim } : undefined}
+              leftIcon={<Check className="size-4" />}
+              aria-label={`Joined. Leave ${def.name}`}
+              aria-haspopup="dialog"
+              disabled={busy}
+              onClick={() => setConfirmLeave(true)}
+            >
+              Joined
+            </Button>
+          )}
         </div>
       </div>
 
@@ -418,97 +482,74 @@ export default function Space() {
           </>
         )}
 
-        {joined ? (
-          <div className="space-y-2">
-            <Button
-              variant="primary"
-              fullWidth
-              leftIcon={<PenLine className="size-4" />}
-              onClick={() => setComposerOpen(true)}
-            >
-              Write a post
-            </Button>
-            <button
-              type="button"
-              onClick={leave}
-              disabled={busy}
-              className="w-full min-h-[44px] text-xs font-medium text-muted-foreground hover:text-destructive-strong transition-colors disabled:opacity-60"
-            >
-              Leave space
-            </button>
-          </div>
-        ) : (
-          <Button
-            variant="primary"
-            fullWidth
-            loading={busy}
-            onClick={join}
-            disabled={joined === null}
-          >
-            Join space
-          </Button>
-        )}
+        {pinnedPosts.map(renderPost)}
 
-        <div className="space-y-3">
-          <SectionLabel>Posts</SectionLabel>
+        <section className="space-y-2">
+          <div className="flex items-center justify-between gap-2">
+            <SectionLabel as="h2" tier="section">
+              From members
+            </SectionLabel>
+            {joined === true && memberPosts.length > 0 && (
+              <Button
+                variant="secondary"
+                className="rounded-full"
+                leftIcon={<PenLine className="size-4" />}
+                onClick={() => openComposer(false)}
+              >
+                Write a post
+              </Button>
+            )}
+          </div>
           {posts === null ? (
             <div
               className="h-24 rounded-2xl bg-muted/40 motion-safe:animate-pulse"
               aria-hidden
             />
-          ) : visiblePosts.length === 0 ? (
+          ) : memberPosts.length === 0 ? (
             <EmptyState
               icon={MessagesSquare}
-              headline="No posts yet"
+              headline="No posts from members yet"
               sub={
-                joined
-                  ? "Be the first — introduce yourself or share a session."
-                  : "Join the space to be part of the conversation."
+                joined === true
+                  ? "Share a session, ask a question, or say what you're training for."
+                  : joined === false
+                    ? "Join to post here."
+                    : undefined
               }
               accent={accent}
               compact
               action={
-                joined
-                  ? {
-                      label: "Write a post",
-                      onClick: () => setComposerOpen(true),
-                    }
-                  : undefined
+                joined !== true
+                  ? undefined
+                  : sessions.length > 0
+                    ? {
+                        label: "Share your last session",
+                        onClick: () => openComposer(true),
+                      }
+                    : {
+                        label: "Write a post",
+                        onClick: () => openComposer(false),
+                      }
               }
             />
           ) : (
-            visiblePosts.map((post) => (
-              <SpacePostCard
-                key={post.id}
-                spaceId={def.id}
-                postId={post.id}
-                post={post}
-                accent={accent}
-                onRemoved={handleRemoved}
-                onShareTake={
-                  joined === true
-                    ? (promptTitle) => {
-                        setComposerPrefillTitle(
-                          promptTitle ? `Re: ${promptTitle}` : undefined
-                        );
-                        setComposerOpen(true);
-                      }
-                    : undefined
-                }
-                liked={spaceLikes.liked.has(post.id)}
-                likeDelta={spaceLikes.deltas[post.id] ?? 0}
-                onToggleLike={
-                  user ? () => spaceLikes.toggle(post.id) : undefined
-                }
-                commentDelta={commentDeltas[post.id] ?? 0}
-                onOpenComments={
-                  user ? () => setCommentsFor(post.id) : undefined
-                }
-              />
-            ))
+            memberPosts.map(renderPost)
           )}
-        </div>
+        </section>
       </div>
+
+      <ConfirmDialog
+        open={confirmLeave}
+        title={`Leave ${def.name}?`}
+        description="You can join again at any time. Your posts stay in the space."
+        confirmLabel="Leave"
+        destructive
+        onConfirm={() => {
+          setConfirmLeave(false);
+          void leave();
+        }}
+        onCancel={() => setConfirmLeave(false)}
+      />
 
       {commentsFor && (
         <SpaceCommentSheet
@@ -529,13 +570,11 @@ export default function Space() {
 
       <SpacePostComposer
         spaceId={def.id}
-        open={composerOpen}
-        onOpenChange={(o) => {
-          setComposerOpen(o);
-          if (!o) setComposerPrefillTitle(undefined);
-        }}
+        open={composer.open}
+        onOpenChange={(open) => setComposer((c) => ({ ...c, open }))}
         onPosted={() => setReloadNonce((n) => n + 1)}
-        initialTitle={composerPrefillTitle}
+        sessions={sessions}
+        attachLatest={composer.attachLatest}
       />
     </div>
   );
