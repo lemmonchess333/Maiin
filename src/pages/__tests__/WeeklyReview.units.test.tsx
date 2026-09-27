@@ -24,6 +24,14 @@ import type { UserProfile } from "@/lib/auth";
 let mockProfile: Partial<UserProfile> | null = null;
 let mockReview: unknown = null;
 
+/* The first card's counts count up as the recap opens (DS3). These tests
+   read the figures, so they run with Reduce Motion on, where each is
+   plain text from the first paint. */
+const motionPref = vi.hoisted(() => ({ reduce: true }));
+vi.mock("@/hooks/useReducedMotion", () => ({
+  useReducedMotion: () => motionPref.reduce,
+}));
+
 vi.mock("@/lib/auth", () => ({
   useAuth: () => ({ user: { uid: "u-1" }, profile: mockProfile }),
   useUid: () => "u-1",

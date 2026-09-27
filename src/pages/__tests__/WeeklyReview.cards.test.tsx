@@ -4,7 +4,13 @@
  * scroll carried is still here, one card at a time.
  */
 import { describe, it, expect, vi, afterEach, beforeEach } from "vitest";
-import { render, screen, cleanup, fireEvent } from "@testing-library/react";
+import {
+  render,
+  screen,
+  cleanup,
+  fireEvent,
+  waitFor,
+} from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import type { UserProfile } from "@/lib/auth";
 
@@ -24,6 +30,14 @@ vi.mock("@/hooks/useWeeklyReview", () => ({
     weekKey: "2026-W27",
   }),
   reviewViewedKey: (weekKey: string) => `tropos-review-viewed:${weekKey}`,
+}));
+
+/* The first card's counts count up as the recap opens (DS3). These tests
+   read the figures, so they run with Reduce Motion on, where each is
+   plain text from the first paint. */
+const motionPref = vi.hoisted(() => ({ reduce: true }));
+vi.mock("@/hooks/useReducedMotion", () => ({
+  useReducedMotion: () => motionPref.reduce,
 }));
 
 // The real MomentumCheckinCard reads Firestore; the one fake (ADR-0009).
@@ -128,6 +142,21 @@ describe("WeeklyReview — the recap as cards", () => {
     expect(screen.getByText("km run, longest 6.2 km")).toBeInTheDocument();
     expect(screen.getByText("5 of 7")).toBeInTheDocument();
     expect(screen.getByText("days with food logged")).toBeInTheDocument();
+  });
+
+  it("counts the week's numbers up as it opens, when motion is allowed", async () => {
+    motionPref.reduce = false;
+    try {
+      mockReview = normal();
+      renderRecap();
+      const lifted = screen.getByText("kg lifted").previousElementSibling!;
+      expect(lifted.textContent).toBe("0");
+      await waitFor(() =>
+        expect(lifted.textContent).toBe((13280).toLocaleString())
+      );
+    } finally {
+      motionPref.reduce = true;
+    }
   });
 
   it("closes the first card on the week's index and its verdict", () => {
