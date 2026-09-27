@@ -156,8 +156,13 @@ export default function LiftCTACard({
           </InlineNumerals>
           {minutes !== null && (
             <>
-              {" · about "}
-              <span className="font-mono tabular-nums">{minutes}</span> min
+              {" · "}
+              {/* One unit when the line wraps: on a 375px phone the text
+                  column beside the drawing broke "about 43" from "min". */}
+              <span className="whitespace-nowrap">
+                about <span className="font-mono tabular-nums">{minutes}</span>{" "}
+                min
+              </span>
             </>
           )}
         </p>
