@@ -82,11 +82,13 @@ describe("owner-authorized artwork activation", () => {
     }
   }, 30_000);
   it("keeps incomplete pilots inactive while releasing reviewed exact-ID guides", () => {
-    for (const id of ["lat-pulldown", "deadlift", "incline-db-bench"])
+    for (const id of [
+      "lat-pulldown",
+      "deadlift",
+      "incline-db-bench",
+    ])
       expect(getReleasedFormArtwork(id), id).toBeNull();
-    expect(getReleasedFormArtwork("concentration-curl")?.status).toBe(
-      "approved"
-    );
+    expect(getReleasedFormArtwork("concentration-curl")?.status).toBe("approved");
     const { review, expected } = evidence("concentration-curl");
     expect(validateArtworkReview(review, expected)).toEqual([]);
   });

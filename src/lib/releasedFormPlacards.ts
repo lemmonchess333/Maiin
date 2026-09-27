@@ -15,196 +15,20 @@ const placard = (
 });
 
 export const RELEASED_FORM_PLACARDS = {
-  "tricep-kickback": placard(
-    "tricep-kickback",
-    ["Triceps"],
-    ["Rear Delts", "Core stabilisers"],
-    [
-      [0, "Set", "Brace your hand and knee on bench."],
-      [0.5, "Extend", "Extend your elbow with upper arm lifted."],
-      [1, "Straighten", "Straighten your arm behind your torso."],
-      [1, "Squeeze", "Squeeze your triceps; keep your wrist straight."],
-      [0.5, "Return", "Bend your elbow slowly, keeping it lifted."],
-      [0, "Reset", "Return your elbow to roughly ninety degrees."],
-    ]
-  ),
-  "spider-db-curl": placard(
-    "spider-db-curl",
-    ["Biceps"],
-    ["Forearms"],
-    [
-      [0, "Set", "Keep your chest against the incline pad."],
-      [0.5, "Curl", "Curl upward without moving your upper arms."],
-      [1, "Top", "Bring the dumbbells toward your shoulders."],
-      [1, "Hold", "Squeeze your biceps with straight wrists."],
-      [0.5, "Lower", "Lower slowly while keeping your chest supported."],
-      [0, "Reset", "Finish lowering with tension in your biceps."],
-    ]
-  ),
-  "concentration-curl": placard(
-    "concentration-curl",
-    ["Biceps"],
-    ["Forearms"],
-    [
-      [0, "Set", "Brace your upper arm against inner thigh."],
-      [0.5, "Curl", "Curl upward while keeping your elbow braced."],
-      [1, "Top", "Squeeze your biceps without moving your torso."],
-      [1, "Hold", "Keep your wrist straight at the top."],
-      [0.5, "Lower", "Lower slowly with your upper arm braced."],
-      [0, "Reset", "Finish lowering before starting the next rep."],
-    ]
-  ),
-  "reverse-barbell-curl": placard(
-    "reverse-barbell-curl",
-    ["Biceps"],
-    ["Brachioradialis", "Forearms"],
-    [
-      [0, "Set", "Use overhand grip; keep your wrists straight."],
-      [0.65, "Curl", "Curl upward, keeping elbows beside your ribs."],
-      [1, "Top", "Bring the bar toward your shoulders."],
-      [1, "Hold", "Pause briefly without bending your wrists."],
-      [0.65, "Lower", "Lower slowly with your overhand grip locked."],
-      [0, "Return", "Return to thighs without swinging your torso."],
-    ]
-  ),
-  "cross-body-hammer-curl": placard(
-    "cross-body-hammer-curl",
-    ["Biceps"],
-    ["Brachioradialis", "Forearms"],
-    [
-      [0, "Start", "Stand tall with palms facing inward."],
-      [0.5, "Curl across", "Curl one dumbbell across your body."],
-      [
-        1,
-        "Opposite shoulder",
-        "Bring the dumbbell toward your opposite shoulder.",
-      ],
-      [1, "Brief hold", "Pause with your elbow beside your ribs."],
-      [0.5, "Lower", "Lower slowly along the same path."],
-      [0, "Return", "Return to your side; alternate arms next."],
-    ]
-  ),
-  "ez-bar-curl": placard(
-    "ez-bar-curl",
-    ["Biceps"],
-    ["Forearms"],
-    [
-      [0, "Set", "Grip angled sections; keep elbows beside ribs."],
-      [0.5, "Curl", "Bend elbows, keeping your torso still."],
-      [1, "Squeeze", "Curl toward shoulders without moving elbows forward."],
-      [1, "Control", "Hold briefly with wrists aligned."],
-      [0.5, "Lower", "Lower slowly, keeping elbows beside your ribs."],
-      [0, "Return", "Extend arms under control; keep tension."],
-    ]
-  ),
-  "decline-db-press": placard(
-    "decline-db-press",
-    ["Lower Chest"],
-    ["Triceps", "Front Delts"],
-    [
-      [0, "Set", "Secure ankles; brace with weights beside chest."],
-      [0.5, "Press", "Press upward, keeping wrists stacked over elbows."],
-      [1, "Extend", "Extend arms, keeping the dumbbells slightly apart."],
-      [1, "Control", "Hold steady with shoulders against the pad."],
-      [0.5, "Lower", "Lower both weights along the same path."],
-      [0, "Return", "Return beside your chest with control."],
-    ]
-  ),
-  "meadows-row": placard(
-    "meadows-row",
-    ["Lats"],
-    ["Rhomboids", "Rear Delts", "Biceps"],
-    [
-      [0, "Stretch", "Brace your thigh; extend the working arm."],
-      [0.5, "Pull", "Draw your elbow back; keep hips steady."],
-      [1, "Row", "Bring the loaded end toward your hip."],
-      [1, "Control", "Keep your wrist aligned and torso steady."],
-      [0.5, "Lower", "Lower along the same arc with control."],
-      [0, "Return", "Return to a full arm stretch."],
-    ]
-  ),
-  "decline-sit-up": placard(
-    "decline-sit-up",
-    ["Abs"],
-    ["Hip Flexors"],
-    [
-      [0, "Set", "Secure your feet; cross your arms."],
-      [0.5, "Curl", "Curl your torso off the bench."],
-      [1, "Sit up", "Bring your chest toward your knees."],
-      [1, "Control", "Keep your feet secured; avoid bouncing."],
-      [0.5, "Lower", "Uncurl your torso slowly with control."],
-      [0, "Reset", "Lie back gently without slamming."],
-    ]
-  ),
-  "bench-dips": placard(
-    "bench-dips",
-    ["Triceps"],
-    ["Chest", "Front delts"],
-    [
-      [0, "Start", "Grip the edge; keep your hips forward."],
-      [0.5, "Lower", "Bend your elbows, tracking them back."],
-      [1, "Bottom", "Lower until elbows reach about ninety degrees."],
-      [1, "Control", "Keep shoulders down and hands firmly planted."],
-      [0.5, "Press", "Press through your palms to rise."],
-      [0, "Return", "Straighten your arms without shrugging."],
-    ]
-  ),
-  "barbell-upright-row": placard(
-    "barbell-upright-row",
-    ["Traps"],
-    ["Side delts", "Biceps"],
-    [
-      [0, "Start", "Stand tall; keep an overhand grip."],
-      [0.5, "Lead with elbows", "Lead with elbows; keep the bar close."],
-      [1, "Chest height", "Stop at chest height, elbows below shoulders."],
-      [1, "Controlled top", "Hold briefly without lifting elbows higher."],
-      [0.5, "Lower", "Lower the bar close to your body."],
-      [0, "Return", "Return to thighs without bouncing."],
-    ]
-  ),
-  "zottman-curl": placard(
-    "zottman-curl",
-    ["Biceps"],
-    ["Brachioradialis", "Forearms"],
-    [
-      [0, "Set", "Stand tall with palms facing forward."],
-      [0.5, "Curl", "Curl upward with your palms facing up."],
-      [1, "Top", "Reach shoulder height without swinging your torso."],
-      [1, "Rotate", "Turn palms down; keep your wrists straight."],
-      [0.9, "Lower", "Begin lowering slowly with palms facing down."],
-      [0, "Reset", "Finish lowering, then turn palms forward again."],
-    ]
-  ),
-  "lu-raise": placard(
-    "lu-raise",
-    ["Deltoids"],
-    ["Front delts", "Side delts"],
-    [
-      [0, "Start", "Stand tall, weights at your sides."],
-      [0.25, "Raise laterally", "Raise both arms out to the sides."],
-      [0.5, "Shoulder height", "Reach shoulder height with soft elbows."],
-      [
-        1,
-        "Sweep forward",
-        "Sweep forward, bringing the weights close together.",
-      ],
-      [0.5, "Open laterally", "Open back out at shoulder height."],
-      [0.25, "Lower", "Lower steadily; continue to your sides."],
-    ]
-  ),
-  "arnold-press": placard(
-    "arnold-press",
-    ["Deltoids"],
-    ["Triceps", "Upper chest"],
-    [
-      [0, "Start tucked", "Start seated with palms facing you."],
-      [0.5, "Rotate and press", "Press upward while rotating palms outward."],
-      [1, "Extend overhead", "Extend overhead with palms facing forward."],
-      [1, "Hold", "Keep the dumbbells separate above shoulders."],
-      [0.5, "Lower smoothly", "Lower while reversing the rotation."],
-      [0, "Return tucked", "Return palms inward at chest height."],
-    ]
-  ),
+ "tricep-kickback": placard("tricep-kickback", ["Triceps"], ["Rear Delts", "Core stabilisers"], [[0,"Set","Brace your hand and knee on bench."],[0.5,"Extend","Extend your elbow with upper arm lifted."],[1,"Straighten","Straighten your arm behind your torso."],[1,"Squeeze","Squeeze your triceps; keep your wrist straight."],[0.5,"Return","Bend your elbow slowly, keeping it lifted."],[0,"Reset","Return your elbow to roughly ninety degrees."]]),
+ "spider-db-curl": placard("spider-db-curl", ["Biceps"], ["Forearms"], [[0,"Set","Keep your chest against the incline pad."],[0.5,"Curl","Curl upward without moving your upper arms."],[1,"Top","Bring the dumbbells toward your shoulders."],[1,"Hold","Squeeze your biceps with straight wrists."],[0.5,"Lower","Lower slowly while keeping your chest supported."],[0,"Reset","Finish lowering with tension in your biceps."]]),
+ "concentration-curl": placard("concentration-curl", ["Biceps"], ["Forearms"], [[0,"Set","Brace your upper arm against inner thigh."],[0.5,"Curl","Curl upward while keeping your elbow braced."],[1,"Top","Squeeze your biceps without moving your torso."],[1,"Hold","Keep your wrist straight at the top."],[0.5,"Lower","Lower slowly with your upper arm braced."],[0,"Reset","Finish lowering before starting the next rep."]]),
+ "reverse-barbell-curl": placard("reverse-barbell-curl", ["Biceps"], ["Brachioradialis","Forearms"], [[0,"Set","Use overhand grip; keep your wrists straight."],[0.65,"Curl","Curl upward, keeping elbows beside your ribs."],[1,"Top","Bring the bar toward your shoulders."],[1,"Hold","Pause briefly without bending your wrists."],[0.65,"Lower","Lower slowly with your overhand grip locked."],[0,"Return","Return to thighs without swinging your torso."]]),
+ "cross-body-hammer-curl": placard("cross-body-hammer-curl", ["Biceps"], ["Brachioradialis","Forearms"], [[0,"Start","Stand tall with palms facing inward."],[0.5,"Curl across","Curl one dumbbell across your body."],[1,"Opposite shoulder","Bring the dumbbell toward your opposite shoulder."],[1,"Brief hold","Pause with your elbow beside your ribs."],[0.5,"Lower","Lower slowly along the same path."],[0,"Return","Return to your side; alternate arms next."]]),
+ "ez-bar-curl": placard("ez-bar-curl", ["Biceps"], ["Forearms"], [[0,"Set","Grip angled sections; keep elbows beside ribs."],[0.5,"Curl","Bend elbows, keeping your torso still."],[1,"Squeeze","Curl toward shoulders without moving elbows forward."],[1,"Control","Hold briefly with wrists aligned."],[0.5,"Lower","Lower slowly, keeping elbows beside your ribs."],[0,"Return","Extend arms under control; keep tension."]]),
+ "decline-db-press": placard("decline-db-press", ["Lower Chest"], ["Triceps", "Front Delts"], [[0,"Set","Secure ankles; brace with weights beside chest."],[0.5,"Press","Press upward, keeping wrists stacked over elbows."],[1,"Extend","Extend arms, keeping the dumbbells slightly apart."],[1,"Control","Hold steady with shoulders against the pad."],[0.5,"Lower","Lower both weights along the same path."],[0,"Return","Return beside your chest with control."]]),
+ "meadows-row": placard("meadows-row", ["Lats"], ["Rhomboids", "Rear Delts", "Biceps"], [[0,"Stretch","Brace your thigh; extend the working arm."],[0.5,"Pull","Draw your elbow back; keep hips steady."],[1,"Row","Bring the loaded end toward your hip."],[1,"Control","Keep your wrist aligned and torso steady."],[0.5,"Lower","Lower along the same arc with control."],[0,"Return","Return to a full arm stretch."]]),
+ "decline-sit-up": placard("decline-sit-up", ["Abs"], ["Hip Flexors"], [[0,"Set","Secure your feet; cross your arms."],[0.5,"Curl","Curl your torso off the bench."],[1,"Sit up","Bring your chest toward your knees."],[1,"Control","Keep your feet secured; avoid bouncing."],[0.5,"Lower","Uncurl your torso slowly with control."],[0,"Reset","Lie back gently without slamming."]]),
+ "bench-dips": placard("bench-dips", ["Triceps"], ["Chest", "Front delts"], [[0,"Start","Grip the edge; keep your hips forward."],[0.5,"Lower","Bend your elbows, tracking them back."],[1,"Bottom","Lower until elbows reach about ninety degrees."],[1,"Control","Keep shoulders down and hands firmly planted."],[0.5,"Press","Press through your palms to rise."],[0,"Return","Straighten your arms without shrugging."]]),
+ "barbell-upright-row": placard("barbell-upright-row", ["Traps"], ["Side delts", "Biceps"], [[0,"Start","Stand tall; keep an overhand grip."],[0.5,"Lead with elbows","Lead with elbows; keep the bar close."],[1,"Chest height","Stop at chest height, elbows below shoulders."],[1,"Controlled top","Hold briefly without lifting elbows higher."],[0.5,"Lower","Lower the bar close to your body."],[0,"Return","Return to thighs without bouncing."]]),
+ "zottman-curl": placard("zottman-curl", ["Biceps"], ["Brachioradialis","Forearms"], [[0,"Set","Stand tall with palms facing forward."],[0.5,"Curl","Curl upward with your palms facing up."],[1,"Top","Reach shoulder height without swinging your torso."],[1,"Rotate","Turn palms down; keep your wrists straight."],[0.9,"Lower","Begin lowering slowly with palms facing down."],[0,"Reset","Finish lowering, then turn palms forward again."]]),
+ "lu-raise": placard("lu-raise", ["Deltoids"], ["Front delts", "Side delts"], [[0,"Start","Stand tall, weights at your sides."],[0.25,"Raise laterally","Raise both arms out to the sides."],[0.5,"Shoulder height","Reach shoulder height with soft elbows."],[1,"Sweep forward","Sweep forward, bringing the weights close together."],[0.5,"Open laterally","Open back out at shoulder height."],[0.25,"Lower","Lower steadily; continue to your sides."]]),
+ "arnold-press": placard("arnold-press", ["Deltoids"], ["Triceps", "Upper chest"], [[0,"Start tucked","Start seated with palms facing you."],[0.5,"Rotate and press","Press upward while rotating palms outward."],[1,"Extend overhead","Extend overhead with palms facing forward."],[1,"Hold","Keep the dumbbells separate above shoulders."],[0.5,"Lower smoothly","Lower while reversing the rotation."],[0,"Return tucked","Return palms inward at chest height."]]),
   "db-flyes": placard(
     "db-flyes",
     ["Pectorals"],
@@ -234,19 +58,7 @@ export const RELEASED_FORM_PLACARDS = {
       ],
     ]
   ),
-  "superman-hold": placard(
-    "superman-hold",
-    ["Lower Back"],
-    ["Glutes", "Hamstrings"],
-    [
-      [0, "Set", "Lie face-down; reach arms overhead."],
-      [0.5, "Lift", "Lift arms, chest, and legs slightly."],
-      [1, "Reach", "Reach long through fingers and toes."],
-      [1, "Hold", "Hold briefly, keeping your gaze down."],
-      [0.5, "Lower", "Lower your limbs slowly with control."],
-      [0, "Reset", "Return gently to the mat."],
-    ]
-  ),
+ "superman-hold": placard("superman-hold", ["Lower Back"], ["Glutes", "Hamstrings"], [[0,"Set","Lie face-down; reach arms overhead."],[0.5,"Lift","Lift arms, chest, and legs slightly."],[1,"Reach","Reach long through fingers and toes."],[1,"Hold","Hold briefly, keeping your gaze down."],[0.5,"Lower","Lower your limbs slowly with control."],[0,"Reset","Return gently to the mat."]]),
   "chest-press-machine": placard(
     "chest-press-machine",
     ["Pectorals"],

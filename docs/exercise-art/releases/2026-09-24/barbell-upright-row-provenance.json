@@ -81,37 +81,55 @@
     {
       "frame": 1,
       "barY": 517,
-      "barEndpoints": [376.4041450777202, 1156.74213836478],
+      "barEndpoints": [
+        376.4041450777202,
+        1156.74213836478
+      ],
       "barSpan": 780.3379932870598
     },
     {
       "frame": 2,
       "barY": 376,
-      "barEndpoints": [376.8494623655914, 1157.5102040816328],
+      "barEndpoints": [
+        376.8494623655914,
+        1157.5102040816328
+      ],
       "barSpan": 780.6607417160413
     },
     {
       "frame": 3,
       "barY": 271,
-      "barEndpoints": [376.8, 1156.8839285714287],
+      "barEndpoints": [
+        376.8,
+        1156.8839285714287
+      ],
       "barSpan": 780.0839285714287
     },
     {
       "frame": 4,
       "barY": 271,
-      "barEndpoints": [376.8, 1156.8839285714287],
+      "barEndpoints": [
+        376.8,
+        1156.8839285714287
+      ],
       "barSpan": 780.0839285714287
     },
     {
       "frame": 5,
       "barY": 376,
-      "barEndpoints": [376.8494623655914, 1157.5102040816328],
+      "barEndpoints": [
+        376.8494623655914,
+        1157.5102040816328
+      ],
       "barSpan": 780.6607417160413
     },
     {
       "frame": 6,
       "barY": 517,
-      "barEndpoints": [376.4041450777202, 1156.74213836478],
+      "barEndpoints": [
+        376.4041450777202,
+        1156.74213836478
+      ],
       "barSpan": 780.3379932870598
     }
   ],
@@ -129,7 +147,15 @@
   },
   "measurementMethod": "Unrounded native min-RGB150 interpolated boundaries for planted shoes. Moving-bar endpoint diagnostics separately use minRGB80. Grip reviewed natively; white hand/body overlap prevents independent threshold-based grip-centre measurement.",
   "scanlines": {
-    "leftShoe": [620, 730, 935],
-    "rightShoe": [810, 910, 935]
+    "leftShoe": [
+      620,
+      730,
+      935
+    ],
+    "rightShoe": [
+      810,
+      910,
+      935
+    ]
   }
 }

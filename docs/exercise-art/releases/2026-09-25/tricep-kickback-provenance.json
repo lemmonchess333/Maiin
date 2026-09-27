@@ -78,7 +78,17 @@
   },
   "measurementMethod": "Interpolated minimumRGB scanline boundaries on native unmodified PNGs. Unrounded1px/1percent limits. Fixed anchors do not measure moving anatomy.",
   "scanlines": {
-    "benchSeat": [80, 870, 625, 40],
-    "plantedShoe": [770, 1005, 925, 150]
+    "benchSeat": [
+      80,
+      870,
+      625,
+      40
+    ],
+    "plantedShoe": [
+      770,
+      1005,
+      925,
+      150
+    ]
   }
 }

@@ -34,7 +34,12 @@
     "sourceSha256": "9a46ce7d314296f5b40d253e863ffa9811cf6458168e38b0f8412552ffd3fa46",
     "masterSha256": "34a89fe177fc1d6a7de4f3e6d5cb73226dbea437ef040ec4d35d844eb35f6b4c",
     "outputSha256": "e62c07e9b8a2131daae00f37212d77a553bc8b984b731b2c1cba52e5c2fe7259",
-    "rectangle": [270, 1300, 505, 1370],
+    "rectangle": [
+      270,
+      1300,
+      505,
+      1370
+    ],
     "changedPixelsOutside": 0,
     "reason": "Correct1.604px far planted shoe edge drift only."
   },
@@ -125,7 +130,15 @@
   },
   "measurementMethod": "Minimum RGB150 interpolated shoe scanline boundaries. Top far-shoe scanline is byte-identical to master after authorized correction. Other scanlines untouched. Bar spans are projected diagnostics, not3D calibration.",
   "scanlines": {
-    "farShoe": [260, 515, 1330],
-    "nearShoe": [500, 730, 1380]
+    "farShoe": [
+      260,
+      515,
+      1330
+    ],
+    "nearShoe": [
+      500,
+      730,
+      1380
+    ]
   }
 }

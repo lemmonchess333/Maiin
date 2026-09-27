@@ -37,7 +37,12 @@
       "masterSha256": "830e113ae9ea7ed40b4c71ca2b48f7c4029e3366eccd1f8de44fb41f00e5004d",
       "output": "mid-from-top-fixed-brace.png",
       "outputSha256": "373ae798add4f0ccbb42a559cfd4b45de2e1ae5b15430ac7e0436a52b4a9a34d",
-      "rectangle": [920, 560, 1260, 750],
+      "rectangle": [
+        920,
+        560,
+        1260,
+        750
+      ],
       "changedPixelsOutside": 0
     },
     {
@@ -46,7 +51,12 @@
       "masterSha256": "830e113ae9ea7ed40b4c71ca2b48f7c4029e3366eccd1f8de44fb41f00e5004d",
       "output": "top-separated-fixed-brace.png",
       "outputSha256": "510975c9ad1c88f0428d314cae6fab404f9121e794ca155bc8d42a83ef9af1d7",
-      "rectangle": [920, 560, 1260, 750],
+      "rectangle": [
+        920,
+        560,
+        1260,
+        750
+      ],
       "changedPixelsOutside": 0
     }
   ],
@@ -98,13 +108,34 @@
       "masters/1.png": "830e113ae9ea7ed40b4c71ca2b48f7c4029e3366eccd1f8de44fb41f00e5004d"
     },
     "dimensions": {
-      "frames/2.png": [1536, 1024],
-      "frames/1.png": [1536, 1024],
-      "frames/4.png": [1536, 1024],
-      "frames/6.png": [1536, 1024],
-      "frames/5.png": [1536, 1024],
-      "frames/3.png": [1536, 1024],
-      "masters/1.png": [1536, 1024]
+      "frames/2.png": [
+        1536,
+        1024
+      ],
+      "frames/1.png": [
+        1536,
+        1024
+      ],
+      "frames/4.png": [
+        1536,
+        1024
+      ],
+      "frames/6.png": [
+        1536,
+        1024
+      ],
+      "frames/5.png": [
+        1536,
+        1024
+      ],
+      "frames/3.png": [
+        1536,
+        1024
+      ],
+      "masters/1.png": [
+        1536,
+        1024
+      ]
     },
     "review": {
       "singlePoseInspected": true,
@@ -151,7 +182,17 @@
   },
   "measurementMethod": "Linear interpolation of minimum RGB threshold across two stationary bench cross-sections. Brace correction is outside both measured regions. Moving anatomy and weight projection assessed qualitatively.",
   "scanlines": {
-    "nearBenchFoot": [300, 430, 940, 50],
-    "farUpright": [1250, 1360, 600, 30]
+    "nearBenchFoot": [
+      300,
+      430,
+      940,
+      50
+    ],
+    "farUpright": [
+      1250,
+      1360,
+      600,
+      30
+    ]
   }
 }

@@ -65,7 +65,15 @@
   },
   "measurementMethod": "Interpolated minimum RGB150 shoe scanline boundaries on native unmodified PNGs. Unrounded comparisons; no deterministic pixel edits. These fixed anchors do not measure moving anatomy or dumbbell rigidity.",
   "scanlines": {
-    "farShoe": [250, 500, 1390],
-    "nearShoe": [500, 710, 1450]
+    "farShoe": [
+      250,
+      500,
+      1390
+    ],
+    "nearShoe": [
+      500,
+      710,
+      1450
+    ]
   }
 }

@@ -41,177 +41,20 @@ const ownerReleased = (
 // Preserve the seven previously shipped sets while replacements are reviewed.
 // These entries do not claim that the art passes the new consistency standard.
 export const FORM_ARTWORK: Record<string, FormArtwork> = {
-  "tricep-kickback": {
-    version: "anatomy-v3-2026-09-25",
-    status: "approved",
-    width: 1536,
-    height: 1024,
-    frames: Array.from(
-      { length: 6 },
-      (_, i) => `form-frames/tricep-kickback/${i + 1}.webp`
-    ),
-    reference: "form-frames/tricep-kickback/1.webp",
-    reviewFile: "docs/exercise-art/releases/2026-09-25/tricep-kickback.json",
-  },
-  "spider-db-curl": {
-    version: "anatomy-v3-2026-09-25",
-    status: "approved",
-    width: 1536,
-    height: 1024,
-    frames: Array.from(
-      { length: 6 },
-      (_, i) => `form-frames/spider-db-curl/${i + 1}.webp`
-    ),
-    reference: "form-frames/spider-db-curl/1.webp",
-    reviewFile: "docs/exercise-art/releases/2026-09-25/spider-db-curl.json",
-  },
-  "concentration-curl": {
-    version: "anatomy-v3-2026-09-25",
-    status: "approved",
-    width: 1024,
-    height: 1536,
-    frames: Array.from(
-      { length: 6 },
-      (_, i) => `form-frames/concentration-curl/${i + 1}.webp`
-    ),
-    reference: "form-frames/concentration-curl/1.webp",
-    reviewFile: "docs/exercise-art/releases/2026-09-25/concentration-curl.json",
-  },
-  "reverse-barbell-curl": {
-    version: "anatomy-v3-2026-09-24",
-    status: "approved",
-    width: 1024,
-    height: 1536,
-    frames: Array.from(
-      { length: 6 },
-      (_, i) => `form-frames/reverse-barbell-curl/${i + 1}.webp`
-    ),
-    reference: "form-frames/reverse-barbell-curl/1.webp",
-    reviewFile:
-      "docs/exercise-art/releases/2026-09-24/reverse-barbell-curl.json",
-  },
-  "cross-body-hammer-curl": {
-    version: "anatomy-v3-2026-09-24",
-    status: "approved",
-    width: 1024,
-    height: 1536,
-    frames: Array.from(
-      { length: 6 },
-      (_, i) => `form-frames/cross-body-hammer-curl/${i + 1}.webp`
-    ),
-    reference: "form-frames/cross-body-hammer-curl/1.webp",
-    reviewFile:
-      "docs/exercise-art/releases/2026-09-24/cross-body-hammer-curl.json",
-  },
-  "ez-bar-curl": {
-    version: "anatomy-v3-2026-09-24",
-    status: "approved",
-    width: 1024,
-    height: 1536,
-    frames: Array.from(
-      { length: 6 },
-      (_, i) => `form-frames/ez-bar-curl/${i + 1}.webp`
-    ),
-    reference: "form-frames/ez-bar-curl/1.webp",
-    reviewFile: "docs/exercise-art/releases/2026-09-24/ez-bar-curl.json",
-  },
-  "decline-db-press": {
-    version: "anatomy-v3-2026-09-24",
-    status: "approved",
-    width: 1536,
-    height: 1024,
-    frames: Array.from(
-      { length: 6 },
-      (_, i) => `form-frames/decline-db-press/${i + 1}.webp`
-    ),
-    reference: "form-frames/decline-db-press/1.webp",
-    reviewFile: "docs/exercise-art/releases/2026-09-24/decline-db-press.json",
-  },
-  "meadows-row": {
-    version: "anatomy-v3-2026-09-24",
-    status: "approved",
-    width: 1536,
-    height: 1024,
-    frames: Array.from(
-      { length: 6 },
-      (_, i) => `form-frames/meadows-row/${i + 1}.webp`
-    ),
-    reference: "form-frames/meadows-row/1.webp",
-    reviewFile: "docs/exercise-art/releases/2026-09-24/meadows-row.json",
-  },
-  "decline-sit-up": {
-    version: "anatomy-v3-2026-09-24",
-    status: "approved",
-    width: 1536,
-    height: 1024,
-    frames: Array.from(
-      { length: 6 },
-      (_, i) => `form-frames/decline-sit-up/${i + 1}.webp`
-    ),
-    reference: "form-frames/decline-sit-up/1.webp",
-    reviewFile: "docs/exercise-art/releases/2026-09-24/decline-sit-up.json",
-  },
-  "bench-dips": {
-    version: "anatomy-v3-2026-09-24",
-    status: "approved",
-    width: 1536,
-    height: 1024,
-    frames: Array.from(
-      { length: 6 },
-      (_, i) => `form-frames/bench-dips/${i + 1}.webp`
-    ),
-    reference: "form-frames/bench-dips/1.webp",
-    reviewFile: "docs/exercise-art/releases/2026-09-24/bench-dips.json",
-  },
-  "barbell-upright-row": {
-    version: "anatomy-v3-2026-09-24",
-    status: "approved",
-    width: 1536,
-    height: 1024,
-    frames: Array.from(
-      { length: 6 },
-      (_, i) => `form-frames/barbell-upright-row/${i + 1}.webp`
-    ),
-    reference: "form-frames/barbell-upright-row/3.webp",
-    reviewFile:
-      "docs/exercise-art/releases/2026-09-24/barbell-upright-row.json",
-  },
-  "zottman-curl": {
-    version: "anatomy-v3-2026-09-24",
-    status: "approved",
-    width: 1024,
-    height: 1536,
-    frames: Array.from(
-      { length: 6 },
-      (_, i) => `form-frames/zottman-curl/${i + 1}.webp`
-    ),
-    reference: "form-frames/zottman-curl/1.webp",
-    reviewFile: "docs/exercise-art/releases/2026-09-24/zottman-curl.json",
-  },
-  "lu-raise": {
-    version: "anatomy-v3-2026-09-24",
-    status: "approved",
-    width: 1536,
-    height: 1024,
-    frames: Array.from(
-      { length: 6 },
-      (_, i) => `form-frames/lu-raise/${i + 1}.webp`
-    ),
-    reference: "form-frames/lu-raise/1.webp",
-    reviewFile: "docs/exercise-art/releases/2026-09-24/lu-raise.json",
-  },
-  "arnold-press": {
-    version: "anatomy-v3-2026-09-24",
-    status: "approved",
-    width: 1536,
-    height: 1024,
-    frames: Array.from(
-      { length: 6 },
-      (_, i) => `form-frames/arnold-press/${i + 1}.webp`
-    ),
-    reference: "form-frames/arnold-press/3.webp",
-    reviewFile: "docs/exercise-art/releases/2026-09-24/arnold-press.json",
-  },
+  "tricep-kickback": { version: "anatomy-v3-2026-09-25", status: "approved", width: 1536, height: 1024, frames: Array.from({length:6}, (_,i) => `form-frames/tricep-kickback/${i+1}.webp`), reference: "form-frames/tricep-kickback/1.webp", reviewFile: "docs/exercise-art/releases/2026-09-25/tricep-kickback.json" },
+  "spider-db-curl": { version: "anatomy-v3-2026-09-25", status: "approved", width: 1536, height: 1024, frames: Array.from({length:6}, (_,i) => `form-frames/spider-db-curl/${i+1}.webp`), reference: "form-frames/spider-db-curl/1.webp", reviewFile: "docs/exercise-art/releases/2026-09-25/spider-db-curl.json" },
+  "concentration-curl": { version: "anatomy-v3-2026-09-25", status: "approved", width: 1024, height: 1536, frames: Array.from({length:6}, (_,i) => `form-frames/concentration-curl/${i+1}.webp`), reference: "form-frames/concentration-curl/1.webp", reviewFile: "docs/exercise-art/releases/2026-09-25/concentration-curl.json" },
+  "reverse-barbell-curl": { version: "anatomy-v3-2026-09-24", status: "approved", width: 1024, height: 1536, frames: Array.from({length:6}, (_,i) => `form-frames/reverse-barbell-curl/${i+1}.webp`), reference: "form-frames/reverse-barbell-curl/1.webp", reviewFile: "docs/exercise-art/releases/2026-09-24/reverse-barbell-curl.json" },
+  "cross-body-hammer-curl": { version: "anatomy-v3-2026-09-24", status: "approved", width: 1024, height: 1536, frames: Array.from({length:6}, (_,i) => `form-frames/cross-body-hammer-curl/${i+1}.webp`), reference: "form-frames/cross-body-hammer-curl/1.webp", reviewFile: "docs/exercise-art/releases/2026-09-24/cross-body-hammer-curl.json" },
+  "ez-bar-curl": { version: "anatomy-v3-2026-09-24", status: "approved", width: 1024, height: 1536, frames: Array.from({length:6}, (_,i) => `form-frames/ez-bar-curl/${i+1}.webp`), reference: "form-frames/ez-bar-curl/1.webp", reviewFile: "docs/exercise-art/releases/2026-09-24/ez-bar-curl.json" },
+  "decline-db-press": { version: "anatomy-v3-2026-09-24", status: "approved", width: 1536, height: 1024, frames: Array.from({length:6}, (_,i) => `form-frames/decline-db-press/${i+1}.webp`), reference: "form-frames/decline-db-press/1.webp", reviewFile: "docs/exercise-art/releases/2026-09-24/decline-db-press.json" },
+  "meadows-row": { version: "anatomy-v3-2026-09-24", status: "approved", width: 1536, height: 1024, frames: Array.from({length:6}, (_,i) => `form-frames/meadows-row/${i+1}.webp`), reference: "form-frames/meadows-row/1.webp", reviewFile: "docs/exercise-art/releases/2026-09-24/meadows-row.json" },
+  "decline-sit-up": { version: "anatomy-v3-2026-09-24", status: "approved", width: 1536, height: 1024, frames: Array.from({length:6}, (_,i) => `form-frames/decline-sit-up/${i+1}.webp`), reference: "form-frames/decline-sit-up/1.webp", reviewFile: "docs/exercise-art/releases/2026-09-24/decline-sit-up.json" },
+  "bench-dips": { version: "anatomy-v3-2026-09-24", status: "approved", width: 1536, height: 1024, frames: Array.from({length:6}, (_,i) => `form-frames/bench-dips/${i+1}.webp`), reference: "form-frames/bench-dips/1.webp", reviewFile: "docs/exercise-art/releases/2026-09-24/bench-dips.json" },
+  "barbell-upright-row": { version: "anatomy-v3-2026-09-24", status: "approved", width: 1536, height: 1024, frames: Array.from({length:6}, (_,i) => `form-frames/barbell-upright-row/${i+1}.webp`), reference: "form-frames/barbell-upright-row/3.webp", reviewFile: "docs/exercise-art/releases/2026-09-24/barbell-upright-row.json" },
+  "zottman-curl": { version: "anatomy-v3-2026-09-24", status: "approved", width: 1024, height: 1536, frames: Array.from({length:6}, (_,i) => `form-frames/zottman-curl/${i+1}.webp`), reference: "form-frames/zottman-curl/1.webp", reviewFile: "docs/exercise-art/releases/2026-09-24/zottman-curl.json" },
+  "lu-raise": { version: "anatomy-v3-2026-09-24", status: "approved", width: 1536, height: 1024, frames: Array.from({length:6}, (_,i) => `form-frames/lu-raise/${i+1}.webp`), reference: "form-frames/lu-raise/1.webp", reviewFile: "docs/exercise-art/releases/2026-09-24/lu-raise.json" },
+  "arnold-press": { version: "anatomy-v3-2026-09-24", status: "approved", width: 1536, height: 1024, frames: Array.from({length:6}, (_,i) => `form-frames/arnold-press/${i+1}.webp`), reference: "form-frames/arnold-press/3.webp", reviewFile: "docs/exercise-art/releases/2026-09-24/arnold-press.json" },
   "db-flyes": {
     version: "anatomy-v3-2026-09-24",
     status: "approved",
@@ -322,18 +165,7 @@ export const FORM_ARTWORK: Record<string, FormArtwork> = {
     reference: "form-frames/cable-crossover/1.webp",
     reviewFile: "docs/exercise-art/releases/2026-09-24/cable-crossover.json",
   },
-  "superman-hold": {
-    version: "anatomy-v3-2026-09-24",
-    status: "approved",
-    width: 1536,
-    height: 1024,
-    frames: Array.from(
-      { length: 6 },
-      (_, i) => `form-frames/superman-hold/${i + 1}.webp`
-    ),
-    reference: "form-frames/superman-hold/1.webp",
-    reviewFile: "docs/exercise-art/releases/2026-09-24/superman-hold.json",
-  },
+  "superman-hold": { version: "anatomy-v3-2026-09-24", status: "approved", width: 1536, height: 1024, frames: Array.from({length:6}, (_,i) => `form-frames/superman-hold/${i+1}.webp`), reference: "form-frames/superman-hold/1.webp", reviewFile: "docs/exercise-art/releases/2026-09-24/superman-hold.json" },
   "weighted-push-ups": {
     version: "anatomy-v3-2026-09-22",
     status: "approved",

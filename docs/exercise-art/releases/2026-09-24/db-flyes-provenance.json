@@ -56,7 +56,15 @@
   },
   "measurementMethod": "Unrounded native min-RGB30 linearly interpolated boundary crossings.",
   "scanlines": {
-    "headBenchSupport": [340, 450, 750],
-    "footBenchSupport": [820, 1020, 790]
+    "headBenchSupport": [
+      340,
+      450,
+      750
+    ],
+    "footBenchSupport": [
+      820,
+      1020,
+      790
+    ]
   }
 }

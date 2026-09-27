@@ -71,7 +71,15 @@
   },
   "measurementMethod": "Unrounded native min-RGB80 linearly interpolated boundary crossings.",
   "scanlines": {
-    "towerLeft": [920, 1005, 650],
-    "towerRight": [1030, 1150, 650]
+    "towerLeft": [
+      920,
+      1005,
+      650
+    ],
+    "towerRight": [
+      1030,
+      1150,
+      650
+    ]
   }
 }

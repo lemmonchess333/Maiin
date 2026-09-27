@@ -44,7 +44,12 @@
     "authorization": "User approved master-copy for fixed areas",
     "masterFrame": 1,
     "masterSha256": "13dca2f8de1020053b0432d42fbe092636fa21778e99fb60ab8997ed217c4a47",
-    "rectangleXYXY": [1100, 810, 1440, 870],
+    "rectangleXYXY": [
+      1100,
+      810,
+      1440,
+      870
+    ],
     "scope": "Unobstructed lower mat tip only; all anatomy above patch. Frame2 reused5;3 reused4.",
     "outputs": [
       {

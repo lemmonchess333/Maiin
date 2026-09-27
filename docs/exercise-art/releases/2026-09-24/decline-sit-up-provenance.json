@@ -54,7 +54,12 @@
     "sourceSha256": "401f4c97076b68ab50e831d96b109d9dfab1995df1ac92108337d8d164ea1519",
     "output": "C:\\Users\\myles\\Documents\\Codex\\2026-09-22\\continue-on-with-making-the-6-2\\work\\decline-sit-up-production-review\\top-fixed-bench-foot.png",
     "outputSha256": "a7465c543e11c8eaddc5e185aeb7668e14f3d1252860455a9c764303403e6ad1",
-    "rectangleXYXY": [65, 755, 295, 835],
+    "rectangleXYXY": [
+      65,
+      755,
+      295,
+      835
+    ],
     "changedPixels": 10420,
     "changedPixelsOutsideRectangle": 0,
     "scope": "Stationary left bench foot and adjacent fixed upright only; no athlete or moving equipment; applied to frames3/4."

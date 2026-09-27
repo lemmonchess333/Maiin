@@ -33,7 +33,14 @@
   "fixedAreaProof": {
     "authorization": "Owner approved deterministic master copy for stationary equipment/planted contacts.",
     "masterSha256": "a42cfa83aea3b2dd897508fcf3afe8e3e78a308e905440cd7990c442c1274d6f",
-    "rectanglesXYXY": [[752, 890, 894, 973]],
+    "rectanglesXYXY": [
+      [
+        752,
+        890,
+        894,
+        973
+      ]
+    ],
     "scope": "Planted right shoe lower contact area only, below y890; excludes moving anatomy and weights.",
     "frames": [
       {
@@ -98,7 +105,15 @@
   },
   "measurementMethod": "Native min-RGB150 linearly interpolated boundary crossings, unrounded.",
   "scanlines": {
-    "leftShoe": [590, 755, 910],
-    "rightShoe": [745, 900, 945]
+    "leftShoe": [
+      590,
+      755,
+      910
+    ],
+    "rightShoe": [
+      745,
+      900,
+      945
+    ]
   }
 }

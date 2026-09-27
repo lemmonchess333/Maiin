@@ -89,7 +89,17 @@
   },
   "measurementMethod": "Unrounded interpolated min-RGB30 boundary measurements at stationary near bench foot and upright. Heel silhouettes overlap and were not independently threshold measured; review them natively. Moving joints reviewed qualitatively.",
   "scanlines": {
-    "nearBenchFoot": [1080, 1210, 878, 30],
-    "nearBenchUpright": [1170, 1290, 750, 30]
+    "nearBenchFoot": [
+      1080,
+      1210,
+      878,
+      30
+    ],
+    "nearBenchUpright": [
+      1170,
+      1290,
+      750,
+      30
+    ]
   }
 }

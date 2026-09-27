@@ -25,9 +25,7 @@ describe("six-frame production brief", () => {
     ).toThrow(/six/);
   });
   it("never substitutes four catalogue instructions for six authored beats", () => {
-    const authored = vi
-      .spyOn(bodyRig, "getAuthoredBeats")
-      .mockReturnValue(null);
+    const authored = vi.spyOn(bodyRig, "getAuthoredBeats").mockReturnValue(null);
     try {
       expect(() =>
         buildFormArtPrompt("concentration-curl", {

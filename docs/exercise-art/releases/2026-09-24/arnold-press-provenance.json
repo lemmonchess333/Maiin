@@ -60,8 +60,18 @@
     "authorization": "Owner approved deterministic master copy for stationary equipment/planted contacts.",
     "masterSha256": "468eaa5f5e7d8fa7265e58cc0a6e12d3e533d858c03f46bbaf7bc73379b08e63",
     "rectanglesXYXY": [
-      [650, 830, 749, 910],
-      [910, 825, 997, 891]
+      [
+        650,
+        830,
+        749,
+        910
+      ],
+      [
+        910,
+        825,
+        997,
+        891
+      ]
     ],
     "scope": "Unobstructed front and rear bench foot areas only; excludes anatomy and moving weights.",
     "frames": [
@@ -128,8 +138,16 @@
   },
   "measurementMethod": "Native min-RGB30 linearly interpolated boundaries, unrounded.",
   "scanlines": {
-    "frontBenchFoot": [650, 740, 885],
-    "rearBenchFoot": [915, 995, 873]
+    "frontBenchFoot": [
+      650,
+      740,
+      885
+    ],
+    "rearBenchFoot": [
+      915,
+      995,
+      873
+    ]
   },
   "excludedVariants": [
     "rejected-large-start.png: insufficient overhead headroom",

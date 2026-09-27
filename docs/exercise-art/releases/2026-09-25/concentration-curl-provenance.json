@@ -64,7 +64,12 @@
         "sourceSha256": "d8a5a3cb4fc8811fc945778684ee6c0617fe47b73a5a45699d7c48b5ebd1c715",
         "outputPath": "work\\concentration-curl-production-review\\fixed-frames\\2.png",
         "outputSha256": "855d1588108b85c2c8c62b3932fafc1ba582299a4166f2e9694340e74b8a3d4b",
-        "rectangle": [175, 1160, 355, 1340],
+        "rectangle": [
+          175,
+          1160,
+          355,
+          1340
+        ],
         "changedPixels": 24594,
         "changedPixelsOutsideRectangle": 0
       },
@@ -74,7 +79,12 @@
         "sourceSha256": "358ddc6d09c1fbd0e6fcfdeabc145cce921d3b522100d93c26731d1302e4ba56",
         "outputPath": "work\\concentration-curl-production-review\\fixed-frames\\3.png",
         "outputSha256": "89db158da748afbeb66d2a5eccd9a37aeaf449f3ee67f510a26033712deccc30",
-        "rectangle": [175, 1160, 355, 1340],
+        "rectangle": [
+          175,
+          1160,
+          355,
+          1340
+        ],
         "changedPixels": 24077,
         "changedPixelsOutsideRectangle": 0
       },
@@ -84,7 +94,12 @@
         "sourceSha256": "358ddc6d09c1fbd0e6fcfdeabc145cce921d3b522100d93c26731d1302e4ba56",
         "outputPath": "work\\concentration-curl-production-review\\fixed-frames\\4.png",
         "outputSha256": "89db158da748afbeb66d2a5eccd9a37aeaf449f3ee67f510a26033712deccc30",
-        "rectangle": [175, 1160, 355, 1340],
+        "rectangle": [
+          175,
+          1160,
+          355,
+          1340
+        ],
         "changedPixels": 24077,
         "changedPixelsOutsideRectangle": 0
       },
@@ -94,7 +109,12 @@
         "sourceSha256": "d8a5a3cb4fc8811fc945778684ee6c0617fe47b73a5a45699d7c48b5ebd1c715",
         "outputPath": "work\\concentration-curl-production-review\\fixed-frames\\5.png",
         "outputSha256": "855d1588108b85c2c8c62b3932fafc1ba582299a4166f2e9694340e74b8a3d4b",
-        "rectangle": [175, 1160, 355, 1340],
+        "rectangle": [
+          175,
+          1160,
+          355,
+          1340
+        ],
         "changedPixels": 24594,
         "changedPixelsOutsideRectangle": 0
       }
@@ -108,7 +128,15 @@
   },
   "measurementMethod": "Interpolated minimum RGB150 shoe scanline boundaries on native PNGs after authorized lower-left-trainer master-copy in2/3/4/5; provenance records zero changes outside rectangle. Unrounded comparisons. Fixed anchors do not measure moving anatomy or dumbbell rigidity.",
   "scanlines": {
-    "leftShoe": [160, 365, 1280],
-    "rightShoe": [715, 1015, 1240]
+    "leftShoe": [
+      160,
+      365,
+      1280
+    ],
+    "rightShoe": [
+      715,
+      1015,
+      1240
+    ]
   }
 }

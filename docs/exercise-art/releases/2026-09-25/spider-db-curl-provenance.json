@@ -63,8 +63,18 @@
         "outputPath": "work\\spider-db-curl-production-review\\fixed-frames\\2.png",
         "outputSha256": "28cb60540220604884501fc7c0251c77d442c8ad31a4bf4d5bd58725997c4365",
         "rectangles": [
-          [740, 850, 1130, 970],
-          [420, 785, 740, 855]
+          [
+            740,
+            850,
+            1130,
+            970
+          ],
+          [
+            420,
+            785,
+            740,
+            855
+          ]
         ],
         "changedPixels": 42865,
         "changedPixelsOutsideRectangles": 0
@@ -76,8 +86,18 @@
         "outputPath": "work\\spider-db-curl-production-review\\fixed-frames\\3.png",
         "outputSha256": "79129f498e195cfe1d5c40c82e82a2eeec7c3a048a931de79bb610af45393c6e",
         "rectangles": [
-          [740, 850, 1130, 970],
-          [420, 785, 740, 855]
+          [
+            740,
+            850,
+            1130,
+            970
+          ],
+          [
+            420,
+            785,
+            740,
+            855
+          ]
         ],
         "changedPixels": 43912,
         "changedPixelsOutsideRectangles": 0
@@ -89,8 +109,18 @@
         "outputPath": "work\\spider-db-curl-production-review\\fixed-frames\\4.png",
         "outputSha256": "79129f498e195cfe1d5c40c82e82a2eeec7c3a048a931de79bb610af45393c6e",
         "rectangles": [
-          [740, 850, 1130, 970],
-          [420, 785, 740, 855]
+          [
+            740,
+            850,
+            1130,
+            970
+          ],
+          [
+            420,
+            785,
+            740,
+            855
+          ]
         ],
         "changedPixels": 43912,
         "changedPixelsOutsideRectangles": 0
@@ -102,8 +132,18 @@
         "outputPath": "work\\spider-db-curl-production-review\\fixed-frames\\5.png",
         "outputSha256": "28cb60540220604884501fc7c0251c77d442c8ad31a4bf4d5bd58725997c4365",
         "rectangles": [
-          [740, 850, 1130, 970],
-          [420, 785, 740, 855]
+          [
+            740,
+            850,
+            1130,
+            970
+          ],
+          [
+            420,
+            785,
+            740,
+            855
+          ]
         ],
         "changedPixels": 42865,
         "changedPixelsOutsideRectangles": 0
@@ -118,7 +158,15 @@
   },
   "measurementMethod": "Interpolated minimum RGB40 bench-base scanline boundaries on native PNGs after owner-authorized fixed front/rear base correction in2/3/4/5. Unrounded comparisons; provenance proves zero changes outside stationary equipment rectangles. Fixed anchors do not measure moving anatomy or dumbbell rigidity.",
   "scanlines": {
-    "frontBase": [745, 1130, 910],
-    "rearBase": [425, 735, 815]
+    "frontBase": [
+      745,
+      1130,
+      910
+    ],
+    "rearBase": [
+      425,
+      735,
+      815
+    ]
   }
 }
