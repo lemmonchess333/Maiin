@@ -97,8 +97,9 @@ store returns "product not found":
 8. **Configure the webhook** (Project → Integrations → Webhooks) pointing at the
    Cloud Function URL slice 3 will create
    (`https://us-central1-adaptive-fitness-af8bb.cloudfunctions.net/revenueCatWebhook`),
-   with the `Authorization` header set to the secret from B7. _(You'll paste the
-   real URL after slice 3 deploys — fine to set this up last.)_
+   with the `Authorization` header set to the secret from B7 (the bare secret or
+   `Bearer <secret>`; the function accepts either). _(You'll paste the real URL
+   after slice 3 deploys — fine to set this up last.)_
 
 ---
 
@@ -141,9 +142,13 @@ env). **Never** put the webhook/REST secrets in Vite — they're server-only.
 - **Slice 2 (#1098):** `@revenuecat/purchases-capacitor` init + `logIn`/`logOut`
   on Firebase auth change (uid = App User ID). Needs only the **public key**, so
   I can scaffold it now and you drop the key in.
-- **Slice 3 (#1099):** the real purchase flow through `purchaseProvider.ts` + the
-  `revenueCatWebhook` function (writes `subscriptionTier`/`subscriptionExpiresAt`)
-  - a sync-on-purchase callable. Needs the **webhook + REST secrets**.
+- **Slice 3 (#1099):** the real purchase flow through `purchaseProvider.ts`
+  (client, #1454), plus the `revenueCatWebhook` function and the
+  `syncRevenueCatEntitlement` callable (server, `functions/revenueCat.js`). Both
+  re-read the subscriber from the REST API and write `subscriptionTier` /
+  `subscriptionExpiresAt`, which also covers the lifecycle events slice 4
+  planned. Needs the **webhook + REST secrets** before it merges; the QA row in
+  CLAUDE.md has the checks.
 - **Slices 4–8:** lifecycle webhooks, restore/manage, the web "Get it on iOS"
   funnel, then the sandbox-device test that retires the hand-rolled Apple path.
 

@@ -124,7 +124,7 @@ function hashedUidPrefix(uid) {
  * assertPaymentEventShape before write.
  */
 const PAYMENT_EVENT_ALLOWED_FIELDS = Object.freeze([
-  "provider",       // "apple" | "stripe"
+  "provider",       // "apple" | "stripe" | "revenuecat"
   "externalTxnId",  // provider's transaction id; safe to log
   "eventType",      // e.g. "DID_RENEW", "checkout.session.completed"
   "occurredAt",     // server timestamp
@@ -132,7 +132,7 @@ const PAYMENT_EVENT_ALLOWED_FIELDS = Object.freeze([
   "action",         // "skipped" | "logged"
 ]);
 
-const VALID_PROVIDERS = Object.freeze(["apple", "stripe"]);
+const VALID_PROVIDERS = Object.freeze(["apple", "stripe", "revenuecat"]);
 const VALID_ACTIONS = Object.freeze(["skipped", "logged"]);
 
 function assertPaymentEventShape(record) {
