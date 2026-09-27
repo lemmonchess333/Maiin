@@ -360,7 +360,7 @@ already made for this repo.
 
 - **deploy-production.yml ("Deploy production") is the one entry point for the web and backend deploys.** It runs on every push to `main` and on a manual `workflow_dispatch`, one release at a time (the `production-release` concurrency group queues a new release behind the running one rather than cancelling it). The five workflows below are `workflow_call` only, so none of them can be run on its own — to redeploy anything, re-run Deploy production. Its `changes` job diffs against the last SUCCESSFUL release, not the previous push, and runs the backend chain only when something under `functions/`, `firestore.rules`, `firestore.indexes.json`, `storage.rules`, `firebase.json`, `scripts/verify-*` or `.github/workflows/deploy*` changed; a manual dispatch always runs it. Order: Firestore → Storage → Functions, then Hosting and Pages once all three succeed (or straight away when the backend was skipped).
 - **deploy-firestore.yml:** Firestore rules (read back after deploying), then indexes.
-- **deploy-storage.yml:** Storage rules, gated behind the `STORAGE_XSERVICE_APPROVED` repo variable (set since 2026-09-15; the packet-11 QA row has the one-time permission those rules still need confirmed).
+- **deploy-storage.yml:** Storage rules, gated behind the `STORAGE_XSERVICE_APPROVED` repo variable (set since 2026-09-15). Before releasing rules that read Firestore it confirms the Storage service agent holds the role they need (`scripts/verify_storage_rules_iam.py`), and fails the release if the role is missing or unreadable — firebase-tools grants it only interactively, never from CI. The packet-11 QA row has the one-time grant.
 - **deploy-functions.yml:** Cloud Functions — injects the per-commit bundle marker, runs `firebase deploy --only functions --force` (so a removed export is deleted, not refused), then reads the deployed source back (`scripts/verify-deployed-functions-source.py`). A failure files or updates one rolling "deploy-functions failing on main" issue.
 - **deploy.yml:** Builds and deploys to GitHub Pages.
 - **deploy-hosting.yml:** Builds with `base: "/"` and deploys to Firebase Hosting. The web build's security headers (HSTS, `nosniff`, Referrer-Policy, `X-Frame-Options`, a `frame-ancestors 'none'` CSP header, Permissions-Policy) live in `firebase.json` and ship ONLY via Hosting — GitHub Pages cannot set response headers, accepted because Pages is the preview surface, not the product. `frame-ancestors` is ignored in a `<meta>` CSP, which is why it is a header. Pinned by `hostingSecurityHeaders.test.ts`.
@@ -2170,6 +2170,22 @@ runs on the upload path.
         --member="serviceAccount:service-$(gcloud projects describe adaptive-fitness-af8bb --format='value(projectNumber)')@gcp-sa-firebasestorage.iam.gserviceaccount.com" \
         --role="roles/firebaserules.firestoreServiceAgent"
       ```
+
+- [x] **A release now stops instead of shipping this again.** The Storage
+      deploy runs `scripts/verify_storage_rules_iam.py` before it releases
+      rules that read Firestore, and fails the release if the Storage
+      service agent lacks the role, or if the deploy identity cannot read
+      the project's IAM policy. Unconfirmed counts as a failure, as it
+      does for the source read-back. When the policy can't be read, the
+      job summary says why and gives the fix: read access to IAM policies
+      for the deploy service account (for example
+      `roles/iam.securityReviewer`), or enabling the Cloud Resource
+      Manager API. Until the role is in place, every backend release
+      stops at this step, and Hosting and Pages wait with it. To confirm
+      a grant without waiting for a release, run Actions → Verify Active
+      Production Rules, which runs the same check. Where it runs is
+      pinned by `storageDeployIamCheck.test.ts`; what it decides by
+      `scripts/test_verify_storage_rules_iam.py`.
 
 Affects: `storage.rules` (the account-deletion write freeze), `.github/workflows/deploy-storage.yml`. Code is landed and tested; **it is deliberately NOT deployed yet** — the deploy job is gated so nothing reaches production until the operator does the two steps below.
 

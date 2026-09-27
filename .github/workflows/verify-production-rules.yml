@@ -8,7 +8,11 @@ on:
     paths:
       - scripts/verify_deployed_rules.py
       - scripts/test_verify_deployed_rules.py
+      - scripts/verify_storage_rules_iam.py
+      - scripts/test_verify_storage_rules_iam.py
       - .github/workflows/verify-production-rules.yml
+  # Also the quick way to confirm a Storage permission grant took effect,
+  # without waiting for a release.
   workflow_dispatch:
 
 permissions:
@@ -21,9 +25,10 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-      - name: Test Rules source verifier without credentials
-        run: python3 -m unittest discover -s scripts -p 'test_verify_deployed_rules.py' -v
+      - name: Test the verifiers without credentials
+        run: python3 -m unittest discover -s scripts -p 'test_verify*.py' -v
       - name: Authenticate with the existing deploy identity
+        id: auth
         uses: google-github-actions/auth@c200f3691d83b41bf9bbd8638997a462592937ed # v2
         with:
           credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
@@ -31,3 +36,8 @@ jobs:
         env:
           TROPOS_STORAGE_BUCKET: ${{ secrets.VITE_FIREBASE_STORAGE_BUCKET }}
         run: python3 scripts/verify_deployed_rules.py
+      - name: Confirm Storage rules can read Firestore
+        # Runs even when the source comparison fails: the two answer
+        # different questions, and a missing grant is worth knowing either way.
+        if: ${{ !cancelled() && steps.auth.outcome == 'success' }}
+        run: python3 scripts/verify_storage_rules_iam.py
