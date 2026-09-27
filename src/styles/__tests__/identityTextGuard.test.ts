@@ -86,7 +86,9 @@ const EXPECTED_BARE_USES: Record<(typeof IDENTITY)[number], number> = {
   // 2026-09-27: 47 → 45. DS3's Train Run tab: the free-run hero became
   // the shared session card and the race-goal nudge lost its trophy
   // tile, taking two tinted-tile icons with them.
-  running: 45, // Calendar status icons now use the strong colour step.
+  // 2026-09-27: 45 → 44. The run finish screen's distance tile went: the
+  // distance is its headline now, in the foreground colour.
+  running: 44, // Calendar status icons now use the strong colour step.
   // 2026-09-27: 19 → 18. DS3's Home lift card lost its dumbbell tile:
   // the exercise drawing is the card's picture now.
   // 2026-09-27: 18 → 17. The same on the workout screen: the dumbbell
