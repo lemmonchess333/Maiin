@@ -218,28 +218,17 @@ describe("WeeklyReview — the recap as cards", () => {
       vi.unstubAllGlobals();
     });
 
-    it("Next glides to the next card", () => {
+    it("Next moves to the next card and leaves the glide to CSS", () => {
       mockReview = normal();
       renderRecap();
       fireEvent.click(screen.getByRole("button", { name: "Your best moment" }));
-      expect(scrollTo).toHaveBeenCalledWith({ left: 393, behavior: "smooth" });
-    });
-
-    it("Next jumps instead under Reduce Motion", () => {
-      vi.stubGlobal(
-        "matchMedia",
-        (query: string) =>
-          ({
-            matches: query.includes("reduce"),
-            media: query,
-            addEventListener: () => {},
-            removeEventListener: () => {},
-          }) as unknown as MediaQueryList
+      expect(scrollTo).toHaveBeenCalledWith({ left: 393 });
+      // No behaviour of its own: an explicit one beats Reduce Motion's
+      // reset by spec. The track glides by CSS, where motion is allowed.
+      expect(scrollTo.mock.calls[0][0]).not.toHaveProperty("behavior");
+      expect(screen.getByRole("region", { name: "Weekly recap" })).toHaveClass(
+        "motion-safe:scroll-smooth"
       );
-      mockReview = normal();
-      renderRecap();
-      fireEvent.click(screen.getByRole("button", { name: "Your best moment" }));
-      expect(scrollTo).toHaveBeenCalledWith({ left: 393, behavior: "auto" });
     });
 
     it("the progress bars follow a swipe", () => {

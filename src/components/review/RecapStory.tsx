@@ -1,7 +1,6 @@
 import { useCallback, useState, type ReactNode } from "react";
 import { X } from "lucide-react";
 import IconButton from "@/components/ui/IconButton";
-import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { cn } from "@/lib/utils";
 
 export interface RecapSlide {
@@ -20,7 +19,11 @@ export interface RecapSlide {
  * phone's own gesture (momentum and all, in WKWebView too) and a card
  * taller than the screen still scrolls vertically inside itself. Each
  * card ends in a button to the next, so nothing needs a swipe to reach.
- * Under Reduce Motion that button jumps instead of gliding.
+ *
+ * That button passes no scroll behaviour of its own. The track glides
+ * by CSS, and only where motion is allowed: an explicit behaviour would
+ * beat Reduce Motion's reset (animations.css) by spec, which is the
+ * rule reducedMotionScroll.spec.ts holds every source to.
  */
 export default function RecapStory({
   eyebrow,
@@ -38,19 +41,15 @@ export default function RecapStory({
      cannot rule out. */
   const [track, setTrack] = useState<HTMLDivElement | null>(null);
   const [index, setIndex] = useState(0);
-  const reducedMotion = useReducedMotion();
 
   const goTo = useCallback(
     (target: number) => {
       if (!track) return;
       const i = Math.max(0, Math.min(slides.length - 1, target));
       // Optional only because jsdom has no element scrolling.
-      track.scrollTo?.({
-        left: i * track.clientWidth,
-        behavior: reducedMotion ? "auto" : "smooth",
-      });
+      track.scrollTo?.({ left: i * track.clientWidth });
     },
-    [track, slides.length, reducedMotion]
+    [track, slides.length]
   );
 
   return (
@@ -100,7 +99,7 @@ export default function RecapStory({
             setIndex(Math.round(el.scrollLeft / el.clientWidth));
           }
         }}
-        className="flex min-h-0 flex-1 snap-x snap-mandatory overflow-x-auto overscroll-x-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="flex min-h-0 flex-1 snap-x snap-mandatory overflow-x-auto overscroll-x-contain motion-safe:scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         {slides.map((slide, i) => (
           <section
