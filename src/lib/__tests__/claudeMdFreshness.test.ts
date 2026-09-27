@@ -439,3 +439,65 @@ describe("CLAUDE.md — the CI suite matrices", () => {
     }
   });
 });
+
+describe("CLAUDE.md — the deploy workflows", () => {
+  /* The CI/CD section said `deploy-functions.yml` "deploys Cloud Functions
+     when functions/** changes" long after every deploy workflow had become
+     `workflow_call` only, run by Deploy production. The gotchas below it
+     sent an operator to that workflow's `workflow_dispatch`, which no
+     longer exists, as the escape hatch for a stranded production deploy.
+
+     Pinned both ways on the one fact an agent acts on: which workflow runs
+     by itself. A bullet mentions a push to main exactly when its workflow
+     has a push trigger, and every deploy workflow has a bullet. */
+  const workflowsDir = resolve(repoRoot, ".github/workflows");
+  const deployWorkflows = readdirSync(workflowsDir).filter((f) =>
+    /^deploy.*\.ya?ml$/.test(f)
+  );
+  const cicd = claudeMd.slice(
+    claudeMd.indexOf("## CI/CD"),
+    claudeMd.indexOf("### Cloud Functions deploy")
+  );
+
+  /** Trigger keys of a workflow's top-level `on:` block. */
+  function triggers(file: string): string[] {
+    const src = readFileSync(join(workflowsDir, file), "utf8");
+    const block = src.match(/^on:\n((?: {2}.*\n|\s*\n|#.*\n)+)/m)?.[1] ?? "";
+    return [...block.matchAll(/^ {2}([a-z_]+):/gm)].map((m) => m[1]);
+  }
+
+  /** The CI/CD bullet that opens with this workflow's file name. */
+  function bullet(file: string): string | undefined {
+    return cicd.split("\n").find((line) => line.startsWith(`- **${file}`));
+  }
+
+  it("finds the workflows and the section", () => {
+    /* Guards the parse, as the matrix pin above does. */
+    expect(deployWorkflows).toContain("deploy-production.yml");
+    expect(cicd.length).toBeGreaterThan(0);
+    expect(triggers("deploy-production.yml")).toContain("push");
+  });
+
+  it("describes every deploy workflow", () => {
+    const missing = deployWorkflows.filter((f) => !bullet(f));
+    expect(
+      missing,
+      `CLAUDE.md's CI/CD section has no bullet for ${missing.join(", ")}.`
+    ).toEqual([]);
+  });
+
+  it("says a push to main runs a workflow only when it does", () => {
+    const wrong = deployWorkflows.filter((f) => {
+      const text = bullet(f);
+      return (
+        text !== undefined &&
+        /\bpush\b/.test(text) !== triggers(f).includes("push")
+      );
+    });
+    expect(
+      wrong,
+      `The CI/CD bullets for ${wrong.join(", ")} disagree with their ` +
+        `workflows about running on push. An agent follows the bullet.`
+    ).toEqual([]);
+  });
+});
