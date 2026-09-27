@@ -59,7 +59,7 @@ import { useDismissOnce } from "@/hooks/useDismissOnce";
 import { useCountUp } from "@/hooks/useCountUp";
 
 import { StreakFlame } from "@/components/StreakFlame";
-import SectionLabel from "@/components/ui/SectionLabel";
+import SectionHeading from "@/components/ui/SectionHeading";
 import WeekStrip from "@/components/home/WeekStrip";
 import DayPeekCard from "@/components/home/DayPeekCard";
 import FellBehindSheet from "@/components/program/FellBehindSheet";
@@ -809,9 +809,7 @@ export default function Home() {
           within a group (space-y-2, the dense-stack step), airy between
           (the shell's space-y-4), via SectionLabel headers. */}
       <div className="space-y-2">
-        <SectionLabel tier="section" className="px-1">
-          This week
-        </SectionLabel>
+        <SectionHeading className="px-1">This week</SectionHeading>
         <motion.div
           ref={weekStripRef}
           variants={{
@@ -888,9 +886,7 @@ export default function Home() {
       {/* Home2-hierarchy: Today group — contextual nudges + energy +
           quick actions + insight, clustered under one "Today" header. */}
       <div className="space-y-2">
-        <SectionLabel tier="section" className="px-1">
-          Today
-        </SectionLabel>
+        <SectionHeading className="px-1">Today</SectionHeading>
 
         {/* Today's energy promoted above the CTA stack — calorie/macro tracking
           is the primary daily answer this page has to give, and buried at the
@@ -1048,9 +1044,7 @@ export default function Home() {
           delta chip stay — a compact numbers row does not carry the weekly
           verdict the same way. Detailed interpretation remains in Analytics. */}
       <div className="space-y-2">
-        <SectionLabel tier="section" className="px-1">
-          Performance
-        </SectionLabel>
+        <SectionHeading className="px-1">Performance</SectionHeading>
         <motion.div
           variants={{
             hidden: { opacity: 0, y: 12 },

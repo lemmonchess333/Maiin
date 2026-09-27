@@ -155,7 +155,9 @@ export default function SpacePostCard({
               <p className="text-sm font-bold font-mono tabular-nums leading-none text-foreground">
                 {activity.exerciseCount}
               </p>
-              <SectionLabel className="mt-0.5">exercises</SectionLabel>
+              <SectionLabel className="mt-0.5">
+                {activity.exerciseCount === 1 ? "exercise" : "exercises"}
+              </SectionLabel>
             </div>
           )}
         </div>

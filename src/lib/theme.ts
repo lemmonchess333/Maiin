@@ -1,10 +1,12 @@
 // Dark mode colour system — used as enhancement for dark mode toggle
 // Accent colours are used in both light and dark themes
 export const THEME = {
-  // Dark mode backgrounds — warm neutrals, not cold blue-black
-  bg: "#121214",
-  surface: "#1A1A1F",
-  elevated: "#242429",
+  // Dark mode backgrounds — the DS3 neutrals, mirroring `.dark` in
+  // index.css (page, card, raised). The run surfaces paint these directly
+  // because they are always dark, whatever the app theme.
+  bg: "#0E0E11",
+  surface: "#17171B",
+  elevated: "#212127",
 
   // Accent colours (sport-specific — desaturated for calm dark mode)
   running: "#D4637A",

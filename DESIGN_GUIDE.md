@@ -47,14 +47,20 @@ If you only remember ten things:
 
 - **Aesthetic:** Calm iOS-inspired grouped surfaces in both themes. Dark is the
   first-run/runtime default; light remains a fully supported user choice.
-- **Dark mode:** Warm true-dark (`#121214`, surfaces `#1A1A1F`), not cold
-  blue-black. Light uses the warm grouped-background/card treatment. Every
-  visual change must be reviewed in both.
+- **Dark mode:** A deep, cool neutral (DS3, 2026-09-27): page `#0E0E11`,
+  cards `#17171B`, raised surfaces `#212127`, text `#F4F4F6`. The page is a
+  plain canvas — the brand-purple glow that used to sit at the top of every
+  signed-in page is retired, so colour belongs to content. Light uses the
+  warm grouped-background/card treatment. Every visual change must be
+  reviewed in both.
+- **One colour per job (DS3):** purple is lifting and the brand, coral is
+  running, orange is food, teal is water, gold is a new best — and nothing
+  else. A colour that means a sport or a domain is not decoration.
 - **Brand colour:** Purple `#7B72E9`. Used **sparingly** — active tab
   indicators, CTAs, progress bars, accents. Never as a full-page background
   (the only purple "fills" are gradient CTA buttons and the auth logo).
 - **Sport-coding:** Lifting = purple `#7B72E9`, Running = coral `#D4637A`.
-  These two colours recur in calendar dots, section labels, icon tints, and
+  These two colours recur in calendar dots, section headings, icon tints, and
   contextual cards.
 - **Logo:** Purple gradient hexagon with an upward chevron cutout + "TROPOS"
   wordmark, top-left of home.
@@ -234,11 +240,11 @@ characters so they render on one line.
 | -------------- | ----- | ---------------------------------------------------------------- |
 | `text-display` | 48px  | Hero stat numbers (e.g. health score)                            |
 | `text-h1`      | ~31px | Page titles ("Program", "Social")                                |
-| `text-h2`      | 25px  | Section headers ("RUNNING", "NUTRITION")                         |
-| `text-h3`      | 20px  | Card titles                                                      |
+| `text-h2`      | 25px  | Large display headings                                           |
+| `text-h3`      | 20px  | Page section headings ("This week", "Running"), hero card titles |
 | `text-body`    | 16px  | Standard text (accessibility baseline — don't go below for body) |
 | `text-small`   | 14px  | Secondary descriptions                                           |
-| `text-micro`   | 12px  | Labels, captions, uppercase tracking headers (floor)             |
+| `text-micro`   | 12px  | Labels and captions, sentence case (floor)                       |
 
 **Onboarding question role (approved first release, 7 September 2026):**
 The question heading uses the existing `text-h1` token with `font-extrabold`,
@@ -264,16 +270,27 @@ burned down. It is not: of 269 sized uses, 113 are `text-sm` and 105 are
 `text-xs`, with none above. It earned its place in the scale by being used
 consistently; the guard now protects the boundary rather than the count.
 
-Section labels are a deliberate style: UPPERCASE, letter-spaced, 12px, at
-exactly two ROLE tiers of `SectionLabel`. The default **caption** tier
-(semibold · tracking-wider · muted) lives inside one card: a stat's name above
-its number, an eyebrow, a pill, a form-field label. The **section** tier
-(bold · tracking-widest · foreground) heads a group of sibling cards or rows
-on a page, tab or sheet. The tiers used to differ by one pixel and nothing
-else, with the page-level tier the smaller one, so a caption inside a tile
-outranked the header above it; nothing sits at 11px now. Pick the tier by
-what the label heads, not by how small it should look, and use the primitive
-rather than hand-rolling the classes.
+**Headings and labels (DS3, 2026-09-27).** Everything is written in
+sentence case; capitals are kept for table column headers. Two primitives,
+picked by role:
+
+- **`SectionHeading`** opens a group of sibling cards or rows. It is a real
+  heading element: `page` size (20px bold, the H3 step) on a page or tab,
+  `compact` (16px bold) inside a sheet, a card or a dense settings form,
+  with an optional `action` (a text link such as "Weekly review") on the
+  same row. It replaced the 12px uppercase, letter-spaced group label,
+  which sat in the same register as a stat's caption one weight heavier —
+  so a page read as a flat list of small shouting labels and a card's own
+  title outranked the heading of its section.
+- **`SectionLabel`** (caption tier) is the small label inside one card: a
+  stat's name above its number, an eyebrow, a pill, a form-field label.
+  12px semibold muted, no letter-spacing. Write it the way it is said
+  ("Total volume"); it renders as written.
+
+The label's legacy `section` tier (uppercase, bold, tracked) survives only
+on two Food surfaces until the Food redesign, and a test keeps it there.
+Nothing sits at 11px. Use the primitives rather than hand-rolling the
+classes.
 
 ---
 
@@ -419,9 +436,9 @@ behaviour.
 
 - **WCAG AA contrast** for text. This is _why_ `primary-strong`,
   `MACROS_TEXT_LIGHT`, and the darker semantic tokens exist — use them.
-- **Body text ≥ 16px**, micro labels ≥ 12px. `SectionLabel`'s two tiers both
-  sit at 12px (see §4); `text-caption` (11px) is the scale's named floor for
-  dense numerals and units, not for labels.
+- **Body text ≥ 16px**, micro labels ≥ 12px. `SectionLabel` sits at 12px
+  (see §4); `text-caption` (11px) is the scale's named floor for dense
+  numerals and units, not for labels.
 - **Semantic roles:** `Banner` uses `status`/`alert`; respect ARIA. Icon-only
   controls need labels. Inputs/anchors need accessible names.
 - **Keyboard:** focusable, Enter/Escape behave, focus returns to the trigger

@@ -70,7 +70,7 @@ describe("PageShell header", () => {
       </PageShell>
     );
     const p = screen.getByText("one line");
-    expect(p.className).toMatch(/min-h-\[2rem\]/);
+    expect(p.className).toMatch(/min-h-\[2.5rem\]/);
     expect(p.className).toMatch(/line-clamp-2/);
   });
 

@@ -2,6 +2,7 @@ import WeekPulseCard from "@/components/WeekPulseCard";
 import InlineNumerals from "@/components/ui/InlineNumerals";
 import CompletionExtras from "@/components/workout/CompletionExtras";
 import SectionLabel from "@/components/ui/SectionLabel";
+import SectionHeading from "@/components/ui/SectionHeading";
 import { THEME } from "@/lib/theme";
 import { Clock, Dumbbell, Target } from "lucide-react";
 import { Button } from "@/components/ui/Button";
@@ -297,7 +298,7 @@ export default function SessionCompleteScreen({
             transition={{ delay: 0.4 }}
           >
             <div className="px-4 pt-4 pb-2">
-              <SectionLabel tier="section">Exercises</SectionLabel>
+              <SectionHeading size="compact">Exercises</SectionHeading>
             </div>
             <div className="divide-y divide-border/30">
               {exerciseSummary.map((ex, i) => (

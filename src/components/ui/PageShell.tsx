@@ -125,9 +125,9 @@ export default function PageShell({
             {subtitle !== undefined && (
               <p
                 className={cn(
-                  "text-xs text-muted-foreground mt-1",
-                  subtitleReserveLines === 1 && "line-clamp-1 min-h-[1rem]",
-                  subtitleReserveLines === 2 && "line-clamp-2 min-h-[2rem]"
+                  "text-sm text-muted-foreground mt-1",
+                  subtitleReserveLines === 1 && "line-clamp-1 min-h-[1.25rem]",
+                  subtitleReserveLines === 2 && "line-clamp-2 min-h-[2.5rem]"
                 )}
               >
                 {subtitle}

@@ -61,6 +61,7 @@ import { Toggle } from "@/components/ui/Toggle";
 import { Button } from "@/components/ui/Button";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import BaseSectionLabel from "@/components/ui/SectionLabel";
+import SectionHeading from "@/components/ui/SectionHeading";
 import { logger } from "@/lib/logger";
 import { buildPlan } from "@/features/program/planBuilder";
 import {
@@ -153,14 +154,14 @@ interface ProgrammeSettingsProps {
   activeBlockFocus?: PrimaryGoal;
 }
 
-/* Programme-settings convenience wrapper — the page's section labels
-   are the 10px section tier with a consistent mb-2. Delegates to the
-   shared SectionLabel primitive so the treatment can't drift. */
-function SectionLabel({ children }: { children: React.ReactNode }) {
+/* Programme-settings convenience wrapper — each field group opens with a
+   compact section heading and a consistent mb-2. Delegates to the shared
+   SectionHeading primitive so the treatment can't drift. */
+function GroupHeading({ children }: { children: React.ReactNode }) {
   return (
-    <BaseSectionLabel tier="section" className="mb-2">
+    <SectionHeading size="compact" className="mb-2">
       {children}
-    </BaseSectionLabel>
+    </SectionHeading>
   );
 }
 
@@ -738,7 +739,7 @@ export default function ProgrammeSettings({
         subtitle="We'll shape the programme around this."
       >
         <div>
-          <SectionLabel>Training focus</SectionLabel>
+          <GroupHeading>Training focus</GroupHeading>
           {activeBlockFocus ? (
             /* Blk2: a block OWNS the focus while it runs, so this becomes a
                read-only display pointing at the one place that sets it —
@@ -781,7 +782,7 @@ export default function ProgrammeSettings({
             one place that sets it. Hidden in the lift-only view. */}
         {!liftOnly && (
           <div>
-            <SectionLabel>Nutrition phase</SectionLabel>
+            <GroupHeading>Nutrition phase</GroupHeading>
             <Link
               to="/settings/nutrition"
               className="flex items-center gap-3 rounded-2xl border border-border/70 bg-card px-3.5 py-3 shadow-sm transition-all active:scale-[0.98]"
@@ -807,7 +808,7 @@ export default function ProgrammeSettings({
         )}
 
         <div>
-          <SectionLabel>Experience</SectionLabel>
+          <GroupHeading>Experience</GroupHeading>
           <div className="space-y-2">
             {EXPERIENCE_OPTIONS.map((opt, i) => (
               <SettingsOptionCard
@@ -830,7 +831,7 @@ export default function ProgrammeSettings({
         subtitle="Set the training rhythm we'll build around."
       >
         <div>
-          <SectionLabel>Lift days per week</SectionLabel>
+          <GroupHeading>Lift days per week</GroupHeading>
           <SegmentedControl
             ariaLabel="Lift days per week"
             options={[2, 3, 4, 5, 6].map((d) => ({
@@ -847,7 +848,7 @@ export default function ProgrammeSettings({
             weekly training days; the user expresses preference via lift-days +
             the exercise editor, not a split toggle. */}
         <div>
-          <SectionLabel>Split</SectionLabel>
+          <GroupHeading>Split</GroupHeading>
           <div className="rounded-xl bg-muted px-3 py-2.5">
             <p className="text-sm font-medium text-foreground">
               {currentSplitLabel}
@@ -881,7 +882,7 @@ export default function ProgrammeSettings({
             way. Hidden in the lift-only view. */}
         {!liftOnly && (
           <div>
-            <SectionLabel>Running</SectionLabel>
+            <GroupHeading>Running</GroupHeading>
             <Link
               to="/settings/run-plan"
               className="flex items-center gap-3 rounded-2xl border border-border/70 bg-card px-3.5 py-3 shadow-sm transition-all active:scale-[0.98]"
@@ -966,7 +967,7 @@ export default function ProgrammeSettings({
         subtitle="We'll choose exercises around what you have and what you need to avoid."
       >
         <div>
-          <SectionLabel>Equipment access</SectionLabel>
+          <GroupHeading>Equipment access</GroupHeading>
           <div className="space-y-2">
             {EQUIPMENT_OPTIONS.map((opt, i) => (
               <SettingsOptionCard
@@ -983,7 +984,7 @@ export default function ProgrammeSettings({
         </div>
 
         <div>
-          <SectionLabel>Injuries</SectionLabel>
+          <GroupHeading>Injuries</GroupHeading>
           <div className="space-y-2">
             {INJURY_OPTIONS.map((opt, i) => (
               <SettingsOptionCard
@@ -1140,7 +1141,7 @@ export default function ProgrammeSettings({
               {/* What's changing — recap of the touched fields (rebuild only). */}
               {!confirmReset && changes.length > 0 && (
                 <div className="rounded-xl bg-muted/60 px-3 py-2.5">
-                  <BaseSectionLabel tier="section" className="mb-1.5">
+                  <BaseSectionLabel className="mb-1.5 text-foreground">
                     Changes
                   </BaseSectionLabel>
                   <ul className="space-y-1 max-h-44 overflow-y-auto">

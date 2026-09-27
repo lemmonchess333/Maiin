@@ -235,6 +235,13 @@ describe("CLAUDE.md — retired features", () => {
       // discipline the plan-file lock rule uses.
       allowedMentions: 2,
     },
+    {
+      name: "AmbientGlow",
+      probe: "src/components/AmbientGlow.tsx",
+      retiredIn: "DS3 foundations (the page is a plain canvas)",
+      // The one mention is the Visual Identity line saying it is gone.
+      allowedMentions: 1,
+    },
   ];
 
   for (const entry of RETIRED) {

@@ -175,7 +175,7 @@ export default function WaterCard({
      vanishes against a full tile — `waterProgress` clamps at 1, so a
      362% day covers the tile with a gradient strongest at the bottom
      (rgba(30,120,155,0.25)), exactly where these sit. The diagnosis was
-     right and the cure was wrong: on the dark theme the page surface is
+     right and the cure was wrong: on the dark theme the page surface was
      #121214, so the pair read as two black holes punched through a teal
      card. Owner feedback, from a device: "the contrast looks weird…
      it's not high fidelity enough."

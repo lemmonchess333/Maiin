@@ -22,7 +22,7 @@ const config: CapacitorConfig = {
       // `--background` (public/init.js applies `.dark` before paint unless
       // the user explicitly chose light), so anything else is a flash.
       // Pinned against the token by coldStartChrome.test.ts.
-      backgroundColor: "#111113",
+      backgroundColor: "#0e0e11",
       showSpinner: false,
       androidScaleType: "CENTER_CROP",
       splashImmersive: true,
@@ -30,7 +30,7 @@ const config: CapacitorConfig = {
     StatusBar: {
       // Capacitor's Style.Dark means LIGHT text for a dark background.
       style: "DARK",
-      backgroundColor: "#111113",
+      backgroundColor: "#0e0e11",
     },
     // Native OAuth sign-in (src/lib/nativeAuth.ts). skipNativeAuth keeps the
     // plugin from signing into the native Firebase SDK — we only want the
@@ -55,7 +55,7 @@ const config: CapacitorConfig = {
     scheme: "Tropos",
   },
   android: {
-    backgroundColor: "#111113",
+    backgroundColor: "#0e0e11",
   },
 };
 

@@ -177,9 +177,9 @@ export default function Layout() {
     >
       {/* Top safe-area occluder — hides scrolling content under the iOS status bar.
           Uses the shared `.ds-safe-top-occluder` class (translucent
-          background + backdrop-blur) so the ambient background gradient
-          flows continuously through the safe area rather than getting
-          cut by a 95%-opaque flat strip. Mirrors the role of the bottom
+          background + backdrop-blur) so the page flows continuously
+          through the safe area rather than getting cut by a 95%-opaque
+          flat strip. Mirrors the role of the bottom
           nav at the bottom of the screen. */}
       <div
         aria-hidden="true"

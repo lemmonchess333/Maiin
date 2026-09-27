@@ -1,5 +1,6 @@
 import { useState } from "react";
 import SectionLabel from "@/components/ui/SectionLabel";
+import SectionHeading from "@/components/ui/SectionHeading";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { Button } from "@/components/ui/Button";
 import { haptic } from "@/lib/haptic";
@@ -136,7 +137,7 @@ export default function RunFitnessSection({
 
   return (
     <div className="space-y-3">
-      <SectionLabel tier="section">Your running fitness</SectionLabel>
+      <SectionHeading size="compact">Your running fitness</SectionHeading>
 
       {insight && (
         <PaceInsightCard

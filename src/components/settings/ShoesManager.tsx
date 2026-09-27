@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import SectionLabel from "@/components/ui/SectionLabel";
+import SectionHeading from "@/components/ui/SectionHeading";
 import { Button } from "@/components/ui/Button";
 import { useShoes, type Shoe } from "@/hooks/useShoes";
 import { cn } from "@/lib/utils";
@@ -342,9 +342,9 @@ export default function ShoesManager() {
 
       {retired.length > 0 && (
         <div className="pt-2">
-          <SectionLabel tier="section" className="mb-2">
+          <SectionHeading size="compact" className="mb-2">
             Retired
-          </SectionLabel>
+          </SectionHeading>
           {retired.map((shoe) => (
             <div
               key={shoe.id}

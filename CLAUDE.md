@@ -631,10 +631,11 @@ held to it, so it is now the APP-WIDE standard, not an insights-file local:
 
 ### Visual Identity
 
-- **Aesthetic:** Dark is the DEFAULT theme — a true dark glass aesthetic (bg #121214, surfaces #1A1A1F). It is what new users and the signed-out/Login state see.
+- **Aesthetic:** Dark is the DEFAULT theme — a deep, cool neutral: page #0E0E11, cards #17171B, raised #212127, text #F4F4F6 (DS3, 2026-09-27; it was #121214 / #1A1A1F under DS2). It is what new users and the signed-out/Login state see. There is no ambient glow: DS3 retired the brand-purple wash that sat at the top of every signed-in page (`AmbientGlow`), so colour belongs to content.
+- **DS3 redesign (owner-approved 2026-09-27, lock row DS3 in the plan file):** one colour per job, one big thing per screen, drawings where they help. It ships screen by screen — foundations, Home, Train and the workout, Running, Analytics, moments and polish — and the Food page waits for its own design pass. Read the DS3 row before re-deciding any of it.
 - **Light mode:** The opt-in alternate (selectable in Settings → writes `profile.darkMode = false`). It's a clean, warm, iOS-inspired look (#F2F2F7 grouped background, cards on white — minimal and calm with subtle depth, NOT a dark-glass app rendered light). Default-dark is applied pre-React in `public/init.js` (dark unless an explicit `"false"` is stored) and mirrored by the `profile.darkMode` defaults in `src/lib/auth.tsx`.
 - **Brand colour:** Purple #7B72E9 — used sparingly for accents, active tab indicators, CTAs, progress bars. Never as full backgrounds except gradient CTA buttons.
-- **Sport-coding:** Lifting = purple (#7B72E9), Running = coral (#D4637A). These two colours appear in calendar dots, section labels, icon tints, and contextual cards.
+- **Sport-coding:** Lifting = purple (#7B72E9), Running = coral (#D4637A). These two colours appear in calendar dots, section headings, icon tints, and contextual cards.
 - **Logo:** Purple gradient hexagon with upward chevron cutout. Top-left of home screen with "TROPOS" wordmark.
 
 ### Colour System (src/styles/tokens.css + src/lib/theme.ts)
@@ -645,9 +646,11 @@ held to it, so it is now the APP-WIDE standard, not an insights-file local:
 - Hydration teal: #52A3BD
 - Success green: #4DB872 / #22b558
 - Icon backgrounds: rgba(123, 114, 233, 0.10) — subtle purple tint
-- Card backgrounds: white (light) / #1A1A1F (dark)
-- Page background: hsl(240 5% 96%) = ~#F2F2F7 (light) / #121214 (dark)
-- Text muted: the theme-aware `--muted-foreground` token (light `240 3.8% 43%`, dark `240 4% 64%`) — tuned to clear 4.5:1 on card, muted AND page background in both themes. The old fixed #8E8E93 was deleted in the DS2 consolidation (2026-08-22, owner-decided): one grey serving both themes measured 2.53–3.26:1 across the light surfaces it rendered on. No fractional `text-muted-foreground/<n>` anywhere — de-emphasis is the type scale's job (banned + pinned in `tokenContrast.test.ts`). In JS/style contexts use `"hsl(var(--muted-foreground))"`.
+- Card backgrounds: white (light) / #17171B (dark)
+- Page background: `240 6% 93%` ≈ #ECECEE (light) / #0E0E11 (dark). The dark page is also the cold-start colour (splash, manifest, theme-color), derived from the token and pinned by `coldStartChrome.test.ts`: move the token, re-run `node scripts/art/gen-splash.mjs`, and update the three hex copies it names
+- Raised surface (`--muted`: chips, tracks, tiles inside a card): #212127 (dark)
+- New bests: gold, the `--achievement` family (`text-achievement-strong` for small text). Gold means a personal best and nothing else
+- Text muted: the theme-aware `--muted-foreground` token (light `240 3.8% 43%`, dark `240 5% 65%` ≈ #A1A1AA) — tuned to clear 4.5:1 on card, muted AND page background in both themes. The old fixed #8E8E93 was deleted in the DS2 consolidation (2026-08-22, owner-decided): one grey serving both themes measured 2.53–3.26:1 across the light surfaces it rendered on. No fractional `text-muted-foreground/<n>` anywhere — de-emphasis is the type scale's job (banned + pinned in `tokenContrast.test.ts`). In JS/style contexts use `"hsl(var(--muted-foreground))"`.
 
 ### Typography (Plus Jakarta Sans + Archivo)
 
@@ -656,11 +659,11 @@ held to it, so it is now the APP-WIDE standard, not an insights-file local:
 - **Scale (1.25 modular):**
   - Display: 3rem/48px — hero stat numbers (health score)
   - H1: ~31px — page titles ("Program", "Social", "Analytics")
-  - H2: 25px — section headers ("RUNNING", "LIFTING", "NUTRITION")
-  - H3: 20px — card titles
+  - H2: 25px
+  - H3: 20px — page section headings (`SectionHeading`, "This week", "Running") and hero card titles
   - Body: 16px — standard text
   - Small: 14px — secondary descriptions
-  - Micro: 12px — labels, captions, uppercase tracking headers
+  - Micro: 12px — labels and captions, in sentence case
 - **Weight rules:** 800 (extrabold) for hero numbers and page titles. 700 (bold) for section headings and card titles. 600 (semibold) for pill text and button labels. Never mix 700 and 800 in the same visual tier.
 - **Numeric displays:** Always use font-mono + tabular-nums for alignment
 - **Medium (500, `font-medium`) IS a tier — the small-text emphasis
@@ -678,8 +681,10 @@ held to it, so it is now the APP-WIDE standard, not an insights-file local:
 
 - **Cards render through the `Card` primitive** (`src/components/ui/Card.tsx`;
   pressable cards take the same look from `cardClasses` in its `.ts`
-  sibling). Two sizes, decided once: **hero** = rounded-2xl (16px) + p-4,
-  **compact** = rounded-xl (12px) + p-3. The old "standard card, padding
+  sibling). Two sizes, decided once: **hero** = rounded-2xl + p-4,
+  **compact** = rounded-xl + p-3. The radius curve is DS2's (`--radius`
+  10px), so rounded-2xl is 22px and rounded-xl 16px, not Tailwind's
+  defaults. The old "standard card, padding
   3-4" was the drift — 45 `bg-card` surfaces sat on some third pairing.
   `designSystemInvariants.test.ts` ratchets hand-rolled off-pairing
   `bg-card` surfaces down and bans the `shadow-card` class outright: it is
@@ -692,7 +697,8 @@ held to it, so it is now the APP-WIDE standard, not an insights-file local:
   the sport-coloured CTA cards (`LiftCTACard` / `RunCTACard`), and food
   logging is the "Log food" action at the foot of `TodayEnergy`.
 - **Inline banners:** the `Banner` primitive (`src/components/ui/Banner.tsx`), three variants — `info` (coral, running context), `warning` (amber), `neutral` (muted, no domain colour) — on the compact-card pairing, `rounded-xl p-3`. The sustained-offline notices render through `neutral` and render NOTHING while idle: the permanent live-region wrapper they used to keep was an empty first child in the page rhythm, pushing Food's and Train's headers down a step. Pinned in `designSystemInvariants.test.ts`. The global online/offline strip in `Layout` (`ds-status-banner`) is app-shell chrome, not an inline banner.
-- **Section labels:** `SectionLabel`, uppercase, 12px, two ROLE tiers: default caption (semibold · wider · muted) inside a card; `tier="section"` (bold · widest · foreground) heading a group of cards or rows on a page, tab or sheet. Pick by role, not size. No hand-rolled label classes (ratcheted in `designSystemInvariants.test.ts`), no third tier
+- **Section headings:** a group of cards or rows opens with `SectionHeading` (`src/components/ui/SectionHeading.tsx`) — a real heading in sentence case: `page` size (20px bold, the H3 step) on a page or tab, `compact` (16px bold) inside a sheet, a card or a dense settings form, with an optional `action` on the same row. DS3 retired the 12px capital-letter group label; its `tier="section"` survives only on two Food surfaces awaiting the Food redesign, pinned by `designSystemInvariants.test.ts`.
+- **Labels inside a card:** `SectionLabel`'s caption tier — 12px semibold muted, **sentence case**, no letter-spacing. Write the text the way it is said ("Total volume"); it renders as written. Capitals are kept for table column headers. No hand-rolled label classes (ratcheted in `designSystemInvariants.test.ts`)
 
 ### Training plan primitives
 
@@ -754,7 +760,7 @@ Constraints these primitives must keep:
 
 - **Page horizontal padding:** px-4 (16px)
 - **Card internal padding:** p-3 (12px) for compact, p-4 (16px) for hero cards
-- **Stack rhythm (vertical):** three steps and nothing between them. space-y-2 (8px) within a group — the cards under one section label, rows inside a card; space-y-3 (12px) for a break inside a card; space-y-4 (16px) between page sections, which `PageShell` owns. No half steps (`space-y-2.5` was Home's group rhythm beside `space-y-8` on Analytics — the same role at 10px and 32px), and a section label carries no margin of its own: its group's stack places it. Ratcheted in `designSystemInvariants.test.ts`; the five route pages and the shell are pinned to the scale outright.
+- **Stack rhythm (vertical):** three steps and nothing between them. space-y-2 (8px) within a group — the cards under one section heading, rows inside a card; space-y-3 (12px) for a break inside a card; space-y-4 (16px) between page sections, which `PageShell` owns. No half steps (`space-y-2.5` was Home's group rhythm beside `space-y-8` on Analytics — the same role at 10px and 32px), and a section heading carries no margin of its own: its group's stack places it. Ratcheted in `designSystemInvariants.test.ts`; the five route pages and the shell are pinned to the scale outright.
 - **Grid gap:** gap-2 (8px) for compact grids
 - **Icon container:** w-9 h-9 (36px) for standard, w-12 h-12 (48px) for hero
 - **Icon inside container:** w-4 h-4 (16px) standard, w-5 h-5 (20px) hero
@@ -1061,8 +1067,8 @@ or touching a CTA button, route it through `Button` with the variant above.
 ### Current Known Design Considerations
 
 - The water card has a complex animated fill effect (WaterWave + WaterBubbles) — treat carefully when modifying
-- Section labels use uppercase with tracking at 12px (`SectionLabel`'s two role tiers, differing in weight, tracking and colour) — a deliberate typographic choice, not an error. The old 11px section tier is gone: nothing sits below the 12px micro floor except `text-caption` numerals and units
-- The "NEW" badge on PR items uses orange background — this is the nutrition/warm accent colour
+- Group headings are sentence-case `SectionHeading`s and in-card labels are sentence-case captions (DS3). Nothing sits below the 12px micro floor except `text-caption` numerals and units
+- New-best and PR badges are gold (`--achievement`), never the food orange
 
 ## Reference apps — for /grill-me and /grill-with-docs sessions
 

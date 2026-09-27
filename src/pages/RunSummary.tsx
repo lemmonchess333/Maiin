@@ -1,5 +1,5 @@
 import CompletionExtras from "@/components/workout/CompletionExtras";
-import SectionLabel from "@/components/ui/SectionLabel";
+import SectionHeading from "@/components/ui/SectionHeading";
 import {
   useState,
   useEffect,
@@ -1872,9 +1872,9 @@ export default function RunSummary() {
                 below keeps free text but no longer owns "how did it feel". */}
             {!isInvalid && (
               <div className="space-y-1.5">
-                <SectionLabel tier="section" className="px-1">
+                <SectionHeading size="compact" className="px-1">
                   How did it feel?
-                </SectionLabel>
+                </SectionHeading>
                 <SegmentedControl
                   options={[
                     { value: "easier", label: "Easier" },

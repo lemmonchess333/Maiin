@@ -20,7 +20,7 @@ import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 import { useWeeklyReview, reviewViewedKey } from "@/hooks/useWeeklyReview";
 import { formatWeekRange } from "@/lib/weeklyReviewViewModel";
 import { useDismissOnce } from "@/hooks/useDismissOnce";
-import SectionLabel from "@/components/ui/SectionLabel";
+import SectionHeading from "@/components/ui/SectionHeading";
 import { Spinner } from "@/components/ui/Spinner";
 import MomentumCheckinCard from "@/components/review/MomentumCheckinCard";
 import { CALORIE_UNIT } from "@/utils/formatNutrition";
@@ -142,9 +142,7 @@ export default function WeeklyReview() {
             {/* Training — sport-coded lanes */}
             {review.training && (
               <div className="p-4 rounded-2xl bg-card border border-border/50 space-y-3">
-                <SectionLabel tier="section" as="h2">
-                  Training
-                </SectionLabel>
+                <SectionHeading size="compact">Training</SectionHeading>
                 {review.training.lifts && (
                   <div className="flex items-center gap-3">
                     <div className="flex size-9 items-center justify-center rounded-xl bg-lifting/10">
@@ -232,9 +230,7 @@ export default function WeeklyReview() {
             {/* Nutrition — adherence-neutral */}
             {review.nutrition && (
               <div className="p-4 rounded-2xl bg-card border border-border/50 space-y-2">
-                <SectionLabel tier="section" as="h2">
-                  Nutrition
-                </SectionLabel>
+                <SectionHeading size="compact">Nutrition</SectionHeading>
                 <div className="flex items-center gap-3">
                   <div className="flex size-9 items-center justify-center rounded-xl bg-nutrition/10">
                     <UtensilsCrossed
@@ -273,9 +269,7 @@ export default function WeeklyReview() {
             {/* Body — trend only; respects hide-the-number */}
             {review.body && (
               <div className="p-4 rounded-2xl bg-card border border-border/50 space-y-2">
-                <SectionLabel tier="section" as="h2">
-                  Body
-                </SectionLabel>
+                <SectionHeading size="compact">Body</SectionHeading>
                 <div className="flex items-center gap-3">
                   <div className="flex size-9 items-center justify-center rounded-xl bg-primary/10">
                     <Scale className="size-4 text-primary" aria-hidden="true" />
@@ -331,9 +325,7 @@ export default function WeeklyReview() {
         {/* The week ahead — static plan preview (current engine week) */}
         {!loading && review && (
           <div className="p-4 rounded-2xl bg-card border border-border/50 space-y-2">
-            <SectionLabel tier="section" as="h2">
-              The week ahead
-            </SectionLabel>
+            <SectionHeading size="compact">The week ahead</SectionHeading>
             <div className="flex items-center gap-3">
               <div className="flex size-9 items-center justify-center rounded-xl bg-primary/10">
                 <CalendarRange
@@ -385,9 +377,7 @@ export default function WeeklyReview() {
             one. Calm, brand-tinted, verbatim quote of their reason. */}
         {!loading && review && trainingWhy && (
           <div className="p-4 rounded-2xl bg-primary/5 border border-primary/20 space-y-1.5">
-            <SectionLabel tier="section" as="h2">
-              Why you train
-            </SectionLabel>
+            <SectionHeading size="compact">Why you train</SectionHeading>
             <div className="flex items-start gap-3">
               <div className="flex size-9 items-center justify-center rounded-xl bg-primary/10 shrink-0">
                 <Heart className="size-4 text-primary" aria-hidden="true" />

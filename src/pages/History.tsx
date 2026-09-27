@@ -20,7 +20,7 @@ import { buildDelta } from "@/lib/deltaFormat";
 import { EXERCISES } from "@/lib/exercises";
 import TimeRangePills from "@/components/analytics/TimeRangePills";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
-import SectionLabel from "@/components/ui/SectionLabel";
+import SectionHeading from "@/components/ui/SectionHeading";
 import { Button } from "@/components/ui/Button";
 import EmptyState from "@/components/ui/EmptyState";
 import PeriodOverview from "@/components/analytics/PeriodOverview";
@@ -1225,9 +1225,9 @@ export default function History() {
       case "1M":
         return "Monthly";
       case "3M":
-        return "3-Month";
+        return "3-month";
       case "6M":
-        return "6-Month";
+        return "6-month";
       case "1Y":
         return "Annual";
       default:
@@ -1497,9 +1497,9 @@ export default function History() {
                 aria-label="Running analytics"
                 className="space-y-2"
               >
-                <SectionLabel tier="section" className="text-running-strong">
+                <SectionHeading className="text-running-strong">
                   Running
-                </SectionLabel>
+                </SectionHeading>
                 {runsLoading ? (
                   <div className="grid grid-cols-2 gap-2">
                     <Skeleton className="h-24 w-full rounded-xl" />
@@ -1551,7 +1551,7 @@ export default function History() {
                   <>
                     <div className="grid grid-cols-2 gap-2 mt-2">
                       <StatCard
-                        label={`${periodLabel} Distance`}
+                        label={`${periodLabel} distance`}
                         value={formatDistance(
                           distanceIn(runningTotals.runDistance * 1000, unit)
                         )}
@@ -1587,9 +1587,9 @@ export default function History() {
                 aria-label="Lifting analytics"
                 className="space-y-2"
               >
-                <SectionLabel tier="section" className="text-lifting-strong">
+                <SectionHeading className="text-lifting-strong">
                   Lifting
-                </SectionLabel>
+                </SectionHeading>
                 {workoutsLoading ? (
                   <div className="space-y-2">
                     <div className="grid grid-cols-2 gap-2">
@@ -1614,7 +1614,7 @@ export default function History() {
                   <>
                     <div className="grid grid-cols-2 gap-2 mt-2">
                       <StatCard
-                        label={`${periodLabel} Volume`}
+                        label={`${periodLabel} volume`}
                         value={formatVolume(liftingData.liftVolume).value}
                         unit={formatVolume(liftingData.liftVolume).unit}
                         delta={buildDelta(
@@ -1626,7 +1626,7 @@ export default function History() {
                         accentColor={THEME.lifting}
                       />
                       <StatCard
-                        label={`${periodLabel} Sessions`}
+                        label={`${periodLabel} sessions`}
                         value={String(liftingData.liftCount)}
                         delta={buildDelta(
                           liftingData.liftCount,
@@ -1683,7 +1683,7 @@ export default function History() {
                 aria-label="Body analytics"
                 className="space-y-2"
               >
-                <SectionLabel tier="section">Body</SectionLabel>
+                <SectionHeading>Body</SectionHeading>
                 <SectionErrorBoundary sectionName="trend-weight">
                   <TrendWeight />
                 </SectionErrorBoundary>
@@ -1696,16 +1696,15 @@ export default function History() {
                 aria-label="Nutrition analytics"
                 className="space-y-2"
               >
-                {/* Its three peers on this page are `tier="section"`
-                    coloured by a `-strong` utility. This was neither: no
-                    tier, so it rendered at the in-card caption weight, and
-                    the bare `--nutrition` identity as 12px text, which
-                    measures 2.54:1 on the page against a 4.5:1 floor. The
-                    identity is for fills and icons; `-strong` is the
-                    theme-aware AA step. */}
-                <SectionLabel tier="section" className="text-nutrition-strong">
+                {/* Its sport-coded peers on this page are section
+                    headings coloured by a `-strong` utility. This one once
+                    rendered at the in-card caption weight in the bare
+                    `--nutrition` identity, which measures 2.54:1 on the
+                    page against a 4.5:1 floor. The identity is for fills
+                    and icons; `-strong` is the theme-aware AA step. */}
+                <SectionHeading className="text-nutrition-strong">
                   Nutrition
-                </SectionLabel>
+                </SectionHeading>
                 {mealsLoading ? (
                   <div className="space-y-2">
                     <div className="grid grid-cols-2 gap-2">
@@ -1912,7 +1911,7 @@ export default function History() {
                   aria-label="Lifetime totals"
                   className="space-y-2"
                 >
-                  <SectionLabel tier="section">Lifetime</SectionLabel>
+                  <SectionHeading>Lifetime</SectionHeading>
                   {/* Three peer tiles, one unit treatment. The runs tile
                       used to push its `km` down into the caption ("km ·
                       1 runs") while the lifting tile beside it carried

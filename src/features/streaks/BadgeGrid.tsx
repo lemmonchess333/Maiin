@@ -1,4 +1,5 @@
 import SectionLabel from "@/components/ui/SectionLabel";
+import SectionHeading from "@/components/ui/SectionHeading";
 import { motion } from "framer-motion";
 import { useStreaks } from "./useStreaks";
 import {
@@ -140,7 +141,7 @@ export function BadgeGrid() {
 
         return (
           <div key={cat} className="space-y-2">
-            <SectionLabel tier="section">{CATEGORY_LABELS[cat]}</SectionLabel>
+            <SectionHeading>{CATEGORY_LABELS[cat]}</SectionHeading>
             <div
               className="grid grid-cols-3 gap-2"
               style={{ perspective: "800px" }}

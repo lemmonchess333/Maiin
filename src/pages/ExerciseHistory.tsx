@@ -324,11 +324,7 @@ export default function ExerciseHistory() {
           </h1>
           {exercise && (
             <div className="flex items-center gap-2 mt-0.5">
-              <SectionLabel
-                as="span"
-                tier="section"
-                className="text-lifting-strong"
-              >
+              <SectionLabel as="span" className="font-bold text-lifting-strong">
                 {exercise.muscleGroup}
               </SectionLabel>
               <span className="text-xs text-muted-foreground">
@@ -360,7 +356,7 @@ export default function ExerciseHistory() {
       {tab === "progress" && (
         <div className="grid grid-cols-3 gap-2">
           <div className="p-3 rounded-xl bg-card card-shadow">
-            <SectionLabel tier="section">
+            <SectionLabel>
               {isTimed
                 ? "Longest hold"
                 : isBodyweight
@@ -385,13 +381,13 @@ export default function ExerciseHistory() {
             </p>
           </div>
           <div className="p-3 rounded-xl bg-card card-shadow">
-            <SectionLabel tier="section">Sessions</SectionLabel>
+            <SectionLabel>Sessions</SectionLabel>
             <p className="text-lg font-extrabold font-mono tabular-nums text-foreground mt-1">
               {headerStats.totalSessions}
             </p>
           </div>
           <div className="p-3 rounded-xl bg-card card-shadow">
-            <SectionLabel tier="section">Total sets</SectionLabel>
+            <SectionLabel>Total sets</SectionLabel>
             <p className="text-lg font-extrabold font-mono tabular-nums text-foreground mt-1">
               {headerStats.totalSets}
             </p>
@@ -441,7 +437,7 @@ export default function ExerciseHistory() {
               <div className="grid grid-cols-4 gap-2">
                 {repRangePRs.map((pr) => (
                   <div key={pr.reps} className="text-center">
-                    <SectionLabel tier="section">{pr.reps}RM</SectionLabel>
+                    <SectionLabel>{pr.reps}RM</SectionLabel>
                     <p className="text-sm font-bold font-mono tabular-nums text-foreground mt-0.5">
                       {isBodyweight && pr.weightKg === 0
                         ? "BW"

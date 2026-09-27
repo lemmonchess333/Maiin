@@ -1,5 +1,5 @@
 import { useState } from "react";
-import SectionLabel from "@/components/ui/SectionLabel";
+import SectionHeading from "@/components/ui/SectionHeading";
 import WeeklyReviewRow from "@/components/analytics/WeeklyReviewRow";
 import PerformanceIndexChart from "@/components/analytics/PerformanceIndexChart";
 import StatCard from "@/components/analytics/StatCard";
@@ -488,9 +488,9 @@ export default function PerformanceTab() {
       {/* Weekly insight bullets */}
       {insightBullets && insightBullets.length > 0 && (
         <div className="p-4 rounded-2xl bg-card space-y-2">
-          <SectionLabel tier="section" as="h3">
+          <SectionHeading size="compact" as="h3">
             Weekly insights
-          </SectionLabel>
+          </SectionHeading>
           <ul className="space-y-1.5">
             {insightBullets.map((bullet, i) => (
               <li

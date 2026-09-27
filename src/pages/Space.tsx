@@ -41,7 +41,7 @@ import { Button } from "@/components/ui/Button";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { IconButton } from "@/components/ui/IconButton";
 import InlineNumerals from "@/components/ui/InlineNumerals";
-import SectionLabel from "@/components/ui/SectionLabel";
+import SectionHeading from "@/components/ui/SectionHeading";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { useBlockedUsers } from "@/hooks/useBlockedUsers";
 import { spaceDef, type SpaceEventInfo } from "@/features/spaces/spaceDefs";
@@ -486,9 +486,7 @@ export default function Space() {
 
         <section className="space-y-2">
           <div className="flex items-center justify-between gap-2">
-            <SectionLabel as="h2" tier="section">
-              From members
-            </SectionLabel>
+            <SectionHeading>From members</SectionHeading>
             {joined === true && memberPosts.length > 0 && (
               <Button
                 variant="secondary"
