@@ -155,6 +155,27 @@ for (const budget of [null, 30] as const) {
       .click();
     const endRest = page.getByRole("button", { name: "End rest", exact: true });
     if (await endRest.isVisible()) await endRest.click();
+    if (!capturePrefix) {
+      // The workout screen itself, one working set in: a done row, the
+      // current row and the rows still to come.
+      await expect(
+        page.getByRole("button", {
+          name: `Edit completed set ${warmups + 1}`,
+          exact: true,
+        })
+      ).toBeVisible();
+      for (const dark of [false, true]) {
+        await page.evaluate(
+          (value) => document.documentElement.classList.toggle("dark", value),
+          dark
+        );
+        await settleImages(page);
+        await page.screenshot({
+          path: `screenshots/workout-session-${dark ? "dark" : "light"}.png`,
+          animations: "disabled",
+        });
+      }
+    }
     await page
       .getByRole("button", {
         name: `Edit completed set ${warmups + 1}`,

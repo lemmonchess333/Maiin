@@ -1017,3 +1017,63 @@ describe("Plate-Club badges are awarded the moment the workout saves", () => {
     expect(h.awardEventBadges).not.toHaveBeenCalled();
   });
 });
+
+/* DS3: the screen names the day as Train does and says what comes next. */
+describe("wayfinding between exercises", () => {
+  function openPullDay() {
+    render(
+      <WorkoutSession
+        day={{
+          dayName: "Pull — Lat Focus",
+          dayType: "upper",
+          completed: false,
+          exercises: [
+            {
+              exerciseId: "pull-ups",
+              name: "Pull-Ups",
+              sets: 1,
+              reps: 8,
+              weight: 0,
+              restSeconds: 0,
+            } as ProgramExercise,
+            {
+              exerciseId: "barbell-row",
+              name: "Barbell Row",
+              sets: 3,
+              reps: 10,
+              weight: 32.5,
+              restSeconds: 0,
+            } as ProgramExercise,
+          ],
+        }}
+        dayIndex={0}
+        onCompleteDay={vi.fn()}
+        onClose={vi.fn()}
+      />
+    );
+  }
+
+  it("names the day as Train and Home do", () => {
+    openPullDay();
+    expect(screen.getByText("Pull · Lat focus")).toBeInTheDocument();
+    expect(screen.queryByText("Pull — Lat Focus")).toBeNull();
+  });
+
+  it("names the next exercise with sets left, and nothing once only this one is", () => {
+    openPullDay();
+    const upNext = () => screen.getByText("Up next").parentElement!;
+    expect(upNext()).toHaveTextContent("Barbell Row");
+    expect(upNext()).toHaveTextContent("3 sets × 10 reps · 32.5 kg");
+
+    fireEvent.click(screen.getByRole("button", { name: "Barbell Row" }));
+    expect(upNext()).toHaveTextContent("Pull-Ups");
+
+    fireEvent.click(screen.getByRole("button", { name: "Pull-Ups" }));
+    fireEvent.click(screen.getByRole("button", { name: "Mark set complete" }));
+    fireEvent.click(screen.getByRole("button", { name: "Barbell Row" }));
+    expect(
+      screen.getByRole("button", { name: "Pull-Ups, done" })
+    ).toBeVisible();
+    expect(screen.queryByText("Up next")).toBeNull();
+  });
+});

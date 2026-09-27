@@ -86,7 +86,9 @@ const EXPECTED_BARE_USES: Record<(typeof IDENTITY)[number], number> = {
   running: 47, // Calendar status icons now use the strong colour step.
   // 2026-09-27: 19 → 18. DS3's Home lift card lost its dumbbell tile:
   // the exercise drawing is the card's picture now.
-  lifting: 18, // Redesign consolidates onboarding option icons.
+  // 2026-09-27: 18 → 17. The same on the workout screen: the dumbbell
+  // beside the exercise name gave way to its drawing.
+  lifting: 17, // Redesign consolidates onboarding option icons.
   nutrition: 4,
   destructive: 0,
   success: 0,
