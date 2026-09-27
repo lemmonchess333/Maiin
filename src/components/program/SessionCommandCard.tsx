@@ -17,11 +17,12 @@ import InlineNumerals from "@/components/ui/InlineNumerals";
  * DS3: the sport wash is 12%, the Home Today card's, and the halo that sat
  * behind the icon corner is gone with the app's other glows. The title is
  * the card's one big line (the H2 step). A lift day passes `figure`, the
- * muscles the day works, which stands at the right in place of the sport
- * icon tile; Run keeps its tile until its own redesign.
+ * muscles the day works, which stands at the right. A run passes its
+ * type's `icon`, drawn in a tile at the right, the way Home's run card
+ * draws it, so the two Today cards and Train's two tabs share one layout.
  */
 
-import type { ReactNode } from "react";
+import type { ComponentType, ReactNode } from "react";
 import { MoreHorizontal, Play, Footprints, Dumbbell } from "lucide-react";
 import MetaLine from "@/components/ui/MetaLine";
 import { cn } from "@/lib/utils";
@@ -55,6 +56,9 @@ interface SessionCommandCardProps {
   /** A picture of the session, drawn at the right of the title in place
    *  of the sport icon tile. Lift passes the day's muscles. */
   figure?: ReactNode;
+  /** The tile's glyph when there is no figure: a run passes its type's
+   *  (`runTemplateIcon`). Defaults to the sport's own icon. */
+  icon?: ComponentType<{ className?: string }>;
 }
 
 export default function SessionCommandCard({
@@ -69,9 +73,10 @@ export default function SessionCommandCard({
   primaryActionVariant,
   onManage,
   figure,
+  icon,
 }: SessionCommandCardProps) {
   const isRun = sport === "run";
-  const Icon = isRun ? Footprints : Dumbbell;
+  const Icon = icon ?? (isRun ? Footprints : Dumbbell);
   // DS1b: sport tint via tokens (both branches are in-scope sport colours).
   const surfaceClass = isRun ? "bg-running/12" : "bg-lifting/12";
   const tileClass = isRun ? "bg-running/12" : "bg-lifting/12";
@@ -87,23 +92,24 @@ export default function SessionCommandCard({
     >
       <div className="relative space-y-4 p-4">
         <div className="flex items-start gap-3">
-          {!figure && (
-            <div
-              className={cn(
-                "size-11 rounded-2xl flex items-center justify-center shrink-0",
-                tileClass
-              )}
-            >
-              <Icon className={cn("size-5", accentText)} aria-hidden="true" />
-            </div>
-          )}
           <div className="flex-1 min-w-0">
             <p className={cn("text-sm font-bold", accentText)}>{eyebrow}</p>
             <h3 className="mt-1 text-h2 font-extrabold leading-tight tracking-tight text-foreground text-balance">
               {title}
             </h3>
           </div>
-          {figure && <div className="shrink-0 -my-1">{figure}</div>}
+          {figure ? (
+            <div className="shrink-0 -my-1">{figure}</div>
+          ) : (
+            <div
+              className={cn(
+                "size-12 rounded-2xl flex items-center justify-center shrink-0",
+                tileClass
+              )}
+            >
+              <Icon className={cn("size-6", accentText)} aria-hidden="true" />
+            </div>
+          )}
           {onManage && (
             <IconButton
               aria-label="Manage session"

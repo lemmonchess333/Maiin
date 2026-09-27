@@ -722,9 +722,11 @@ Primitives (all in `src/components/program/`, fed by the pure view model in
   opens the day sheet. Temporal eyebrow ("Up next" / "Due today" /
   "Tomorrow" / "Pending") — never "Next · Pending". DS3: a lift day's
   eyebrow leads with its category and its title is the focus ("Pull · Up
-  next" over "Lat focus", as on Home); it shows the muscles the day works
-  (`figure`) where the run card keeps its sport icon tile; the halo went
-  with the app's other glows. Train's day list below it draws each
+  next" over "Lat focus", as on Home); its picture sits at the right, as
+  on Home's cards: a lift day's muscles (`figure`), or a run's type in a
+  tile (`icon`, from `runTemplateIcon`); the halo went with the app's
+  other glows. A free runner's Run tab leads with the same card ("Start a
+  run" over "Pick your pace today"). Train's day list below it draws each
   exercise through `ExerciseRowSummary` (`ExerciseThumb`: the cut-out
   drawing, else the category's muscles, else a dumbbell), and Train shows
   one advice notice at a time (`programNotices`).

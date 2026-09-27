@@ -83,7 +83,10 @@ const EXPECTED_BARE_USES: Record<(typeof IDENTITY)[number], number> = {
   // 2026-08-11: 53 → 54. The Feather icon on AdjustWeekSheet's "this week
   // is already eased" row — an icon, which the 4.5:1 small-text bar does
   // not apply to; its label beside it is `text-foreground`.
-  running: 47, // Calendar status icons now use the strong colour step.
+  // 2026-09-27: 47 → 45. DS3's Train Run tab: the free-run hero became
+  // the shared session card and the race-goal nudge lost its trophy
+  // tile, taking two tinted-tile icons with them.
+  running: 45, // Calendar status icons now use the strong colour step.
   // 2026-09-27: 19 → 18. DS3's Home lift card lost its dumbbell tile:
   // the exercise drawing is the card's picture now.
   // 2026-09-27: 18 → 17. The same on the workout screen: the dumbbell

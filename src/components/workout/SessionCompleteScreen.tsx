@@ -2,6 +2,7 @@ import WeekPulseCard from "@/components/WeekPulseCard";
 import InlineNumerals from "@/components/ui/InlineNumerals";
 import CompletionExtras from "@/components/workout/CompletionExtras";
 import SectionHeading from "@/components/ui/SectionHeading";
+import StatFigure from "@/components/ui/StatFigure";
 import { Card } from "@/components/ui/Card";
 import ExerciseThumb from "@/components/program/ExerciseThumb";
 import MiniMuscleFigure, {
@@ -47,19 +48,6 @@ interface SessionCompleteScreenProps {
   onFinish: () => void;
   onEdit?: () => void;
   onClose: () => void;
-}
-
-/** The session's three headline numbers, each a value over the word that
- *  says what it counts (DS3: big plain numbers, no tiles, no icons). */
-function Stat({ value, unit }: { value: string; unit: string }) {
-  return (
-    <div className="px-2 text-center">
-      <p className="text-h2 font-extrabold font-mono tabular-nums leading-tight text-foreground">
-        {value}
-      </p>
-      <p className="mt-0.5 text-sm text-muted-foreground">{unit}</p>
-    </div>
-  );
 }
 
 export default function SessionCompleteScreen({
@@ -258,9 +246,10 @@ export default function SessionCompleteScreen({
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
         >
-          <Stat value={duration.value} unit={duration.unit} />
-          <Stat value={work.value} unit={work.unit} />
-          <Stat
+          <StatFigure size="lg" value={duration.value} unit={duration.unit} />
+          <StatFigure size="lg" value={work.value} unit={work.unit} />
+          <StatFigure
+            size="lg"
             value={String(totalSetsCompleted)}
             unit={totalSetsCompleted === 1 ? "set" : "sets"}
           />

@@ -1,16 +1,8 @@
 import InlineNumerals from "@/components/ui/InlineNumerals";
 import { Button } from "@/components/ui/Button";
 import { localDateString } from "@/lib/dateHelpers";
-import {
-  Play,
-  Footprints,
-  PersonStanding,
-  Zap,
-  RefreshCw,
-  Wind,
-  Route,
-  Flag,
-} from "lucide-react";
+import { Play } from "lucide-react";
+import { runTemplateIcon } from "@/components/run/runTemplateIcons";
 import { haptic } from "@/lib/haptic";
 import { track as trackHomeEvent } from "@/lib/homeAnalytics";
 import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
@@ -21,18 +13,6 @@ import {
   isScheduledRunStartable,
 } from "@/lib/scheduledRunStatus";
 import { cardClasses } from "@/components/ui/cardClasses";
-
-const RUN_ICON_MAP: Record<
-  string,
-  React.ComponentType<{ className?: string }>
-> = {
-  "person-standing": PersonStanding,
-  zap: Zap,
-  "refresh-cw": RefreshCw,
-  wind: Wind,
-  route: Route,
-  flag: Flag,
-};
 
 /**
  * Today's run, as Home's lead card (DS3). Twin of LiftCTACard: Start
@@ -72,8 +52,7 @@ export default function RunCTACard({
   if (todayRun?.id)
     params.push("scheduledRunId=" + encodeURIComponent(todayRun.id));
   const queryString = params.length ? "?" + params.join("&") : "";
-  const RunIconComp =
-    runIcon && RUN_ICON_MAP[runIcon] ? RUN_ICON_MAP[runIcon] : Footprints;
+  const RunIconComp = runTemplateIcon(runIcon);
 
   // Key metric = the planned distance, read from the template config (the
   // source of truth) rather than regex-parsed out of the prose description.

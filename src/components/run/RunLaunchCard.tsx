@@ -13,17 +13,8 @@ import RunPurpose from "./RunPurpose";
  * an effect would be silent. "Customize" swaps to the full modal for the rare
  * case that needs it. See scratchpad spec `spec-run-fast-launch.md` §4.
  */
-import {
-  ArrowLeft,
-  Play,
-  Footprints,
-  PersonStanding,
-  Zap,
-  RefreshCw,
-  Wind,
-  Route,
-  Flag,
-} from "lucide-react";
+import { ArrowLeft, Play } from "lucide-react";
+import { runTemplateIcon } from "./runTemplateIcons";
 import Button from "@/components/ui/Button";
 import IconButton from "@/components/ui/IconButton";
 import ShoeSelector from "./ShoeSelector";
@@ -33,18 +24,6 @@ import { paceUnitLabel } from "@/lib/distanceUnits";
 import type { RunTemplate } from "@/lib/workoutTemplates";
 import type { RunConfig } from "./runConfigDefaults";
 import type { ProgramContextStrip } from "./RunSetupModal";
-
-const RUN_ICON_MAP: Record<
-  string,
-  React.ComponentType<{ className?: string }>
-> = {
-  "person-standing": PersonStanding,
-  zap: Zap,
-  "refresh-cw": RefreshCw,
-  wind: Wind,
-  route: Route,
-  flag: Flag,
-};
 
 interface RunLaunchCardProps {
   workout: RunTemplate;
@@ -88,7 +67,7 @@ export default function RunLaunchCard({
   purpose,
 }: RunLaunchCardProps) {
   const unit = useDistanceUnit();
-  const Icon = RUN_ICON_MAP[workout.icon] ?? Footprints;
+  const Icon = runTemplateIcon(workout.icon);
 
   const target = prefill.target;
   // Primary metric shown next to the name: distance or a timed target.
