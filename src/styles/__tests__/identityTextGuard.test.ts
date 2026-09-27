@@ -217,7 +217,9 @@ function bareUses(token: string): string[] {
  */
 // 2026-09-27: 52 → 51. The Weekly Review entry was a card with a
 // calendar icon; DS3 made it a text link on Home's "This week" heading.
-const BRAND = { token: "primary", step: "lifting-strong", bare: 51 } as const;
+// 2026-09-27: 51 → 49. Train's training-block rows lost their tinted icon
+// tiles (a flag, a calendar), DS3's plain rows.
+const BRAND = { token: "primary", step: "lifting-strong", bare: 49 } as const;
 
 describe("identity colour usage is pinned", () => {
   it("text-primary has the pinned number of bare uses", () => {

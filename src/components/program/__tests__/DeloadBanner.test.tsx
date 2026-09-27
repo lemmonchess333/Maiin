@@ -96,6 +96,28 @@ describe("DeloadBanner", () => {
     expect(screen.getByText(/Consider a deload week/i)).toBeInTheDocument();
   });
 
+  it("takes its dismissal from the page when the page owns it", () => {
+    // Train owns it (one advice notice at a time), so dismissing goes
+    // through the page's handler and the page's answer decides.
+    const onDismiss = vi.fn();
+    const { rerender } = render(
+      <DeloadBanner
+        visible
+        weekKey="w14"
+        dismissed={false}
+        onDismiss={onDismiss}
+      />
+    );
+    fireEvent.click(screen.getByLabelText(/Dismiss deload banner/i));
+    expect(onDismiss).toHaveBeenCalledTimes(1);
+    // Still up: the page has not said so yet.
+    expect(screen.getByText(/Consider a deload week/i)).toBeInTheDocument();
+    rerender(
+      <DeloadBanner visible weekKey="w14" dismissed onDismiss={onDismiss} />
+    );
+    expect(screen.queryByText(/Consider a deload week/i)).toBeNull();
+  });
+
   // PROGRAM-DELOAD-01 — the Apply CTA v1 reserved.
 
   it("shows the Apply CTA only when onApply is provided", () => {

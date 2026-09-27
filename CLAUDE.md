@@ -716,13 +716,23 @@ Primitives (all in `src/components/program/`, fed by the pure view model in
   engine phases (`getPhaseForWeek`): **Base · Build · Taper · Race** — no
   invented "Peak" segment, so the active highlight always maps to a phase
   the scheduler can emit. Renders ONLY in the race-goal overlay.
-- **`SessionCommandCard`** — the "what's next" command surface. Title + meta
-  pills + a single primary Start action (its own control, NOT the whole
-  card) + an overflow that opens the day sheet. Temporal eyebrow ("Up next"
-  / "Due today" / "Tomorrow" / "Pending") — never "Next · Pending".
+- **`SessionCommandCard`** — the "what's next" command surface. Eyebrow +
+  title (the card's one big line, H2) + one quiet meta line + a single
+  primary action (its own control, NOT the whole card) + an overflow that
+  opens the day sheet. Temporal eyebrow ("Up next" / "Due today" /
+  "Tomorrow" / "Pending") — never "Next · Pending". DS3: a lift day's
+  eyebrow leads with its category and its title is the focus ("Pull · Up
+  next" over "Lat focus", as on Home); it shows the muscles the day works
+  (`figure`) where the run card keeps its sport icon tile; the halo went
+  with the app's other glows. Train's day list below it draws each
+  exercise through `ExerciseRowSummary` (`ExerciseThumb`: the cut-out
+  drawing, else the category's muscles, else a dumbbell), and Train shows
+  one advice notice at a time (`programNotices`).
 - **`ProgrammeWeekSelector`** — the one day-navigation primitive per tab
   (`2b4e07b8`, "competing navigators" unification): circular sport-coloured
-  day cells (purple lift / coral run) in the Home WeekStrip visual language,
+  day cells (purple lift / coral run) in the Home WeekStrip visual language
+  (a done day is filled with its sport at 30% with a check, as Home fills a
+  logged day; it was the success green until DS3),
   a real selected-key controller driving the content beneath it. Lift tab =
   split-ordered rotation cursor; Run tab = date-pinned 7-day selector
   (ADR-0002's dual ontology, per tab). Extras (logged runs that claimed no

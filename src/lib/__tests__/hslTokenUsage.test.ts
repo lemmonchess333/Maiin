@@ -48,10 +48,10 @@ function code(src: string): string {
  *  shape is correct and this scan cannot see it. Each needs the site that
  *  does the wrapping named. */
 const INDIRECT = new Map<string, string>([
-  [
-    "src/components/program/SessionCommandCard.tsx",
-    "haloVar is interpolated into `hsl(${haloVar} / 0.18)` at its one use",
-  ],
+  /* Empty since DS3. Its one entry was SessionCommandCard's `haloVar`,
+     interpolated into `hsl(${haloVar} / 0.18)`; the halo went with the
+     app's other glows. A new entry names the site that does the wrapping,
+     and the second test below holds it to that. */
 ]);
 
 function sourceFiles(dir: string, out: string[] = []): string[] {

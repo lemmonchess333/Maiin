@@ -13,11 +13,16 @@ import InlineNumerals from "@/components/ui/InlineNumerals";
  * Sport-coded: running uses coral (`sport` Button variant), lifting uses
  * brand purple (`primary`). Tinted surface only — no gradients, no new
  * colours. 44px+ touch targets via the Button/IconButton primitives.
+ *
+ * DS3: the sport wash is 12%, the Home Today card's, and the halo that sat
+ * behind the icon corner is gone with the app's other glows. The title is
+ * the card's one big line (the H2 step). A lift day passes `figure`, the
+ * muscles the day works, which stands at the right in place of the sport
+ * icon tile; Run keeps its tile until its own redesign.
  */
 
 import type { ReactNode } from "react";
 import { MoreHorizontal, Play, Footprints, Dumbbell } from "lucide-react";
-import SectionLabel from "@/components/ui/SectionLabel";
 import MetaLine from "@/components/ui/MetaLine";
 import { cn } from "@/lib/utils";
 import { Button, type ButtonVariant } from "@/components/ui/Button";
@@ -47,6 +52,9 @@ interface SessionCommandCardProps {
   primaryActionIcon?: ReactNode;
   primaryActionVariant?: ButtonVariant;
   onManage?: () => void;
+  /** A picture of the session, drawn at the right of the title in place
+   *  of the sport icon tile. Lift passes the day's muscles. */
+  figure?: ReactNode;
 }
 
 export default function SessionCommandCard({
@@ -60,52 +68,42 @@ export default function SessionCommandCard({
   primaryActionIcon,
   primaryActionVariant,
   onManage,
+  figure,
 }: SessionCommandCardProps) {
   const isRun = sport === "run";
   const Icon = isRun ? Footprints : Dumbbell;
   // DS1b: sport tint via tokens (both branches are in-scope sport colours).
-  const surfaceClass = isRun
-    ? "bg-running/6 border-running/19"
-    : "bg-lifting/6 border-lifting/19";
+  const surfaceClass = isRun ? "bg-running/12" : "bg-lifting/12";
   const tileClass = isRun ? "bg-running/12" : "bg-lifting/12";
   const accentText = isRun ? "text-running-strong" : "text-lifting-strong";
-  // DS2: sport-hue ambient halo — the cohesion twin of the Performance /
-  // Food hero halos, in the session's sport colour. A soft directional glow
-  // from the icon corner layered over the flat tint for depth (functional
-  // sport-state expression, not a new colour/gradient palette).
-  const haloVar = isRun ? "var(--running)" : "var(--lifting)";
 
   return (
     <section
       aria-label={`${eyebrow} — ${title}`}
       className={cn(
-        "relative overflow-hidden rounded-2xl border card-shadow",
+        "relative overflow-hidden rounded-2xl card-shadow",
         surfaceClass
       )}
     >
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute -left-6 -top-6 size-40 rounded-full"
-        style={{
-          background: `radial-gradient(circle, hsl(${haloVar} / 0.18), transparent 70%)`,
-        }}
-      />
       <div className="relative space-y-4 p-4">
         <div className="flex items-start gap-3">
-          <div
-            className={cn(
-              "size-11 rounded-2xl flex items-center justify-center shrink-0",
-              tileClass
-            )}
-          >
-            <Icon className={cn("size-5", accentText)} aria-hidden="true" />
-          </div>
+          {!figure && (
+            <div
+              className={cn(
+                "size-11 rounded-2xl flex items-center justify-center shrink-0",
+                tileClass
+              )}
+            >
+              <Icon className={cn("size-5", accentText)} aria-hidden="true" />
+            </div>
+          )}
           <div className="flex-1 min-w-0">
-            <SectionLabel className={accentText}>{eyebrow}</SectionLabel>
-            <h3 className="text-xl font-extrabold leading-tight text-foreground">
+            <p className={cn("text-sm font-bold", accentText)}>{eyebrow}</p>
+            <h3 className="mt-1 text-h2 font-extrabold leading-tight tracking-tight text-foreground text-balance">
               {title}
             </h3>
           </div>
+          {figure && <div className="shrink-0 -my-1">{figure}</div>}
           {onManage && (
             <IconButton
               aria-label="Manage session"

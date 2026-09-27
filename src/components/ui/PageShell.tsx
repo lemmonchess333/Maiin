@@ -15,14 +15,13 @@
  * This is the page-level equivalent. What it owns:
  *
  *   - the header: title at the real H1 scale, an optional line above it
- *     (Home's date), an optional leading tile, an optional subtitle with
- *     a reservable height, a right action cluster, and an optional
- *     controls row beneath (a segmented control)
- *   - Train's sport-tinted header zone (`accent`), whose colour makes the
- *     page answer to the active mode. Home's uppercase TROPOS wordmark
- *     (`brand`) was the other deliberate header; DS3 replaced it with the
- *     date and "Today", so Home names the day like every other page names
- *     itself
+ *     (Home's date), an optional subtitle with a reservable height, a
+ *     right action cluster, and an optional controls row beneath (a
+ *     segmented control). Every page's header is the same plain one: DS3
+ *     retired the two that differed, Home's uppercase TROPOS wordmark
+ *     (`brand`) for the date and "Today", and Train's sport-tinted header
+ *     zone (`accent`) with its icon tile (`leading`), because the Lift/Run
+ *     switch and the page's own content already say which mode is on
  *   - the entrance stagger, which Food, Social and History each declared
  *     identically and Home inlined
  *   - the rhythm between page sections
@@ -53,8 +52,6 @@ export interface PageShellProps extends RootProps {
   title: ReactNode;
   /** A short line above the title — Home's date. */
   eyebrow?: ReactNode;
-  /** A small tile before the title — Train's sport icon. */
-  leading?: ReactNode;
   /** A line beneath the title. */
   subtitle?: ReactNode;
   /** Reserve a fixed subtitle height so a subtitle that changes length
@@ -69,11 +66,6 @@ export interface PageShellProps extends RootProps {
   /** A controls row inside the header zone, beneath the title —
    *  Train's Lift/Run switch. */
   controls?: ReactNode;
-  /** A colour that tints the whole header zone at low alpha, so the
-   *  header reads as belonging to the active mode. Train passes the
-   *  sport colour; it cross-fades on tab change (a colour transition,
-   *  which composites — never a filter). */
-  accent?: string;
   /** Rendered above the header, inside the rhythm — the offline notices
    *  Food and Train show before their title. */
   banner?: ReactNode;
@@ -85,12 +77,10 @@ export interface PageShellProps extends RootProps {
 export default function PageShell({
   title,
   eyebrow,
-  leading,
   subtitle,
   subtitleReserveLines,
   actions,
   controls,
-  accent,
   banner,
   children,
   className,
@@ -108,14 +98,7 @@ export default function PageShell({
       variants={pageStaggerContainer}
     >
       {banner}
-      <motion.header
-        variants={pageItemVariant}
-        className={cn(
-          accent &&
-            "rounded-2xl px-3 pt-1.5 pb-2.5 transition-colors duration-300"
-        )}
-        style={accent ? { backgroundColor: `${accent}0F` } : undefined}
-      >
+      <motion.header variants={pageItemVariant}>
         <div className="flex items-start justify-between gap-3 pt-1 pb-1">
           <div className="min-w-0 flex-1">
             {eyebrow !== undefined && (
@@ -123,10 +106,7 @@ export default function PageShell({
                 {eyebrow}
               </p>
             )}
-            <div className="flex items-center gap-2">
-              {leading}
-              <h1 className={titleClass}>{title}</h1>
-            </div>
+            <h1 className={titleClass}>{title}</h1>
             {subtitle !== undefined && (
               <p
                 className={cn(

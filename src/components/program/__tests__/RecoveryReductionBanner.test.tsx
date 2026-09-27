@@ -137,4 +137,28 @@ describe("RecoveryReductionBanner (LIFT-EV-05)", () => {
     render(<RecoveryReductionBanner muscles={["Chest"]} weekKey="w15" />);
     expect(screen.getByText(/Eased this week/i)).toBeInTheDocument();
   });
+
+  it("takes its dismissal from the page when the page owns it", () => {
+    const onDismiss = vi.fn();
+    const { rerender } = render(
+      <RecoveryReductionBanner
+        muscles={["Chest"]}
+        weekKey="w14"
+        dismissed={false}
+        onDismiss={onDismiss}
+      />
+    );
+    fireEvent.click(screen.getByLabelText(/Dismiss recovery banner/i));
+    expect(onDismiss).toHaveBeenCalledTimes(1);
+    expect(screen.getByText(/Eased this week/i)).toBeInTheDocument();
+    rerender(
+      <RecoveryReductionBanner
+        muscles={["Chest"]}
+        weekKey="w14"
+        dismissed
+        onDismiss={onDismiss}
+      />
+    );
+    expect(screen.queryByText(/Eased this week/i)).toBeNull();
+  });
 });
