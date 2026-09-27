@@ -246,11 +246,11 @@ test.describe("analytics tab screenshots", () => {
     // heading but never its data still fails. All three feed `dataLoading`
     // and all three must have arrived.
     await expect(
-      page.getByText("Monthly Volume", { exact: true })
+      page.getByText("Monthly volume", { exact: true })
     ).toBeVisible();
     await expect(page.getByText("2.2k").first()).toBeVisible();
     await expect(
-      page.getByText("Monthly Distance", { exact: true })
+      page.getByText("Monthly distance", { exact: true })
     ).toBeVisible();
     await expect(page.getByText("5.2").first()).toBeVisible();
     await expect(page.getByText(/no meals logged/i)).toHaveCount(0);
