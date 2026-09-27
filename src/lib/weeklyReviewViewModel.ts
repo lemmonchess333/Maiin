@@ -99,6 +99,18 @@ export interface WeekAheadPlan {
   phaseNote: string | null;
 }
 
+/** One new best: the set, and the best it beat. */
+export interface WeekBest {
+  /** The library id, for the drawing; null for a custom exercise. */
+  exerciseId: string | null;
+  exerciseName: string;
+  weight: number;
+  reps: number;
+  /** Local "YYYY-MM-DD" of the session that set it. */
+  date: string;
+  previous: { weight: number; reps: number; date: string } | null;
+}
+
 export interface WeeklyReviewData {
   /** Monday key of the REVIEWED (last completed) week. */
   weekKey: string;
@@ -110,6 +122,8 @@ export interface WeeklyReviewData {
   weighIns: { date: string; weight: number }[];
   /** PRs fired inside the week (data layer via prTracking); null = unknown. */
   prsHit: number | null;
+  /** The week's biggest new best, for the recap's Best moment card. */
+  bestMoment?: WeekBest | null;
   perf: ReviewPerfWeek | null;
   prevPi: number | null;
   plannedLifts: number | null;
@@ -152,6 +166,8 @@ export interface WeeklyReview {
       planned: number | null;
     } | null;
     prsHit: number | null;
+    /** The week's biggest new best; null when none fired. */
+    best: WeekBest | null;
   } | null;
   nutrition: {
     daysLogged: number;
@@ -370,7 +386,12 @@ export function buildWeeklyReview(data: WeeklyReviewData): WeeklyReview | null {
       : null;
   const training =
     liftLane || runLane
-      ? { lifts: liftLane, runs: runLane, prsHit: data.prsHit }
+      ? {
+          lifts: liftLane,
+          runs: runLane,
+          prsHit: data.prsHit,
+          best: data.bestMoment ?? null,
+        }
       : null;
 
   /* Nutrition — adherence-neutral: days logged + average, never a

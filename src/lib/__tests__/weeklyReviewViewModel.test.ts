@@ -287,6 +287,29 @@ describe("training lanes", () => {
     expect(r?.training?.lifts?.done).toBe(1);
     expect(r?.training?.runs).toBeNull();
   });
+
+  it("carries the week's best moment through, or none", () => {
+    const best = {
+      exerciseId: "bench-press",
+      exerciseName: "Bench Press",
+      weight: 80,
+      reps: 8,
+      date: "2026-06-24",
+      previous: { weight: 77.5, reps: 8, date: "2026-06-03" },
+    };
+    const withBest = buildWeeklyReview(
+      base({
+        workouts: [{ date: "2026-06-24", tonnageKg: 3000 }],
+        prsHit: 1,
+        bestMoment: best,
+      })
+    );
+    expect(withBest?.training?.best).toEqual(best);
+    const without = buildWeeklyReview(
+      base({ workouts: [{ date: "2026-06-24", tonnageKg: 3000 }] })
+    );
+    expect(without?.training?.best).toBeNull();
+  });
 });
 
 describe("nutrition (adherence-neutral)", () => {

@@ -28,9 +28,11 @@ import {
   buildWeeklyReview,
   weekBounds,
   inWeek,
+  type WeekBest,
   type WeeklyReview,
   type WeeklyReviewData,
 } from "@/lib/weeklyReviewViewModel";
+import { epley1RMExact } from "@/lib/analytics";
 import { workoutTonnageKg } from "@/hooks/useWorkouts";
 import { resolveSnapshotCalorieTarget } from "@/lib/adaptiveTarget";
 import { useSubscription } from "@/lib/subscription";
@@ -66,6 +68,7 @@ const PR_BASELINE_LIMIT = 200;
 interface WorkoutDocLite {
   date: string;
   exercises: {
+    exerciseId?: string;
     exerciseName: string;
     repUnit?: "reps" | "seconds";
     sets: { weightKg: number; reps: number; type?: string }[];
@@ -77,11 +80,16 @@ function isWorkoutDoc(d: unknown): d is WorkoutDocLite {
   return typeof w?.date === "string" && Array.isArray(w?.exercises);
 }
 
-/** PRs fired inside the week, judged against a pre-week baseline map. */
-export function countWeekPRs(
+/**
+ * The week's new bests: how many the sessions fired, and the one that
+ * moved furthest past what it beat (by estimated one-rep max, the
+ * measure the bests are judged on), for the recap's Best moment card.
+ * Ties go to the later session.
+ */
+export function weekNewBests(
   baseline: WorkoutDocLite[],
   weekWorkouts: WorkoutDocLite[]
-): number {
+): { count: number; best: WeekBest | null } {
   let map = buildPRMap(baseline);
   const sessionCounts: Record<string, number> = {};
   for (const w of baseline) {
@@ -91,6 +99,8 @@ export function countWeekPRs(
     }
   }
   let fired = 0;
+  let best: WeekBest | null = null;
+  let bestGain = -Infinity;
   const chronological = [...weekWorkouts].sort((a, b) =>
     a.date.localeCompare(b.date)
   );
@@ -114,7 +124,32 @@ export function countWeekPRs(
           map,
           sessionCounts
         );
-        if (bucket?.kind === "best") fired++;
+        if (bucket?.kind === "best") {
+          fired++;
+          const previous = bucket.previousBest;
+          const gain = previous
+            ? epley1RMExact(set.weightKg, set.reps) /
+                epley1RMExact(previous.weight, previous.reps) -
+              1
+            : 0;
+          if (gain >= bestGain) {
+            bestGain = gain;
+            best = {
+              exerciseId: ex.exerciseId ?? null,
+              exerciseName: ex.exerciseName,
+              weight: set.weightKg,
+              reps: set.reps,
+              date: w.date,
+              previous: previous
+                ? {
+                    weight: previous.weight,
+                    reps: previous.reps,
+                    date: previous.date,
+                  }
+                : null,
+            };
+          }
+        }
         map = recordSetBest(map, ex.exerciseName, {
           weight: set.weightKg,
           reps: set.reps,
@@ -127,7 +162,7 @@ export function countWeekPRs(
         (sessionCounts[ex.exerciseName] || 0) + 1;
     }
   }
-  return fired;
+  return { count: fired, best };
 }
 
 /* ── Entry eligibility (Home row + Analytics row) ─────────────── */
@@ -476,7 +511,10 @@ export function useWeeklyReview(): UseWeeklyReviewResult {
           runs,
           mealDays,
           weighIns,
-          prsHit: countWeekPRs(baselineDocs, weekWorkoutDocs) || null,
+          ...(() => {
+            const bests = weekNewBests(baselineDocs, weekWorkoutDocs);
+            return { prsHit: bests.count || null, bestMoment: bests.best };
+          })(),
           perf,
           prevPi,
           plannedLifts: liftDays > 0 ? liftDays : null,

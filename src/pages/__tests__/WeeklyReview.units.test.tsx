@@ -84,17 +84,20 @@ afterEach(() => {
 });
 
 describe("WeeklyReview — run distances follow the reader's unit", () => {
+  /* DS3's recap card sets the week's distance as a big figure over the
+     words that say what it is, so the number and its unit are separate
+     lines: "42.2" over "km run, longest 21.1 km". */
   it("prints kilometres for a metric reader", () => {
     renderAt("km");
-    expect(screen.getByText(/42\.2 km/)).toBeTruthy();
-    expect(screen.getByText(/longest\s*21\.1 km/)).toBeTruthy();
+    expect(screen.getByText("42.2")).toBeTruthy();
+    expect(screen.getByText(/^km run, longest\s*21\.1 km$/)).toBeTruthy();
     expect(screen.queryByText(/mi\b/)).toBeNull();
   });
 
   it("converts for a miles reader instead of relabelling", () => {
     renderAt("mi");
-    expect(screen.getByText(/26\.2 mi/)).toBeTruthy();
-    expect(screen.getByText(/longest\s*13\.1 mi/)).toBeTruthy();
+    expect(screen.getByText("26.2")).toBeTruthy();
+    expect(screen.getByText(/^mi run, longest\s*13\.1 mi$/)).toBeTruthy();
     // The pre-fix rendering: the metric number under a metric unit.
     expect(screen.queryByText(/42\.2/)).toBeNull();
     expect(screen.queryByText(/\bkm\b/)).toBeNull();
