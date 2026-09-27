@@ -1,0 +1,170 @@
+{
+  "exerciseId": "meadows-row",
+  "version": "anatomy-v3-2026-09-24",
+  "width": 1536,
+  "height": 1024,
+  "decision": "approved",
+  "reviewer": "Codex visual and implementation review",
+  "reviewedAt": "2026-09-24T19:33:51.258Z",
+  "reference": {
+    "path": "form-frames/meadows-row/1.webp",
+    "sha256": "7961d3f929b80a28138331d0db65d2cdf67f4289e0306ced4942b4e859564c61"
+  },
+  "cueSha256": "51ab2b3ceefa49afb59e0c495f15b1e7f23dc753559665ff35b2e81a87c9812e",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Canonical bald faceless white-grey anatomy-v3 athlete, neutral pelvis and white trainers retained in all native poses."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Fixed1536x1024 landscape framing; all equipment and body visible. Both shoe anchors and spans meet unrounded1px/1% limits. Head margin tight but unclipped."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Working arm extends, partially bends, then elbow travels back beside torso. Grip reaches hip/lower-rib area; support arm stays on thigh. Qualitative projected joint review, not calibrated limb lengths."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "New plain shaft removes changing segment seams from old pilot; visible fork/bolt pivot replaces cylinder. Plate/collar/sleeve remain connected in native and mobile views. Projected bar length and plate silhouette vary with 3D swing; no calibrated rigid-radius proof claimed. Shaft-fit diagnostic is retained with its projection limits."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Overhand hand wraps loaded sleeve; free hand remains on front thigh. Both feet planted with measured shoe boundaries. No obvious detached grip or mount in reviewed frames. Fine hand and pivot details assessed natively."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Hinge and stance remain steady while elbow pulls load toward hip, reversing on descent. Plain shaft visibly straight and connected to rotating receiving tube; no obvious kink or support jump. Visual qualitative assessment only, not reconstructed 3D mechanics."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Working lat strong purple; rear deltoid/rhomboid/biceps lilac. Other visible anatomy neutral, matching exact catalogue hierarchy."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Six cues match exact meadows-row variation and contain at most seven words. Described support, elbow travel, hip target and controlled return agree with poses."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "All six beats plus6-to-1 manually stepped in actual player in both themes. Three poses distinguishable, with4=3,5=2,6=1. Continuous timed playback not claimed."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "All six and loop reviewed at390x844 light theme; all body/equipment fit and cues readable. DOM scrollWidth390 and native1536x1024. Fine pivot/grip features supplemented by native views."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "All six and loop reviewed at390x844 dark theme. Pull progression and purple lat visible; no clipping or horizontal overflow. Equipment tiny at mobile size, reviewed natively as well."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/meadows-row/1.webp",
+      "sha256": "7961d3f929b80a28138331d0db65d2cdf67f4289e0306ced4942b4e859564c61",
+      "anchors": {
+        "rearShoe": {
+          "x": 83.06422018348624,
+          "y": 810
+        },
+        "nearShoe": {
+          "x": 450.1818181818182,
+          "y": 885
+        }
+      },
+      "invariantDimensions": {
+        "rearShoeSpan": 157.92547053816324,
+        "nearShoeSpan": 183.4073291050035
+      }
+    },
+    {
+      "path": "form-frames/meadows-row/2.webp",
+      "sha256": "30fa501b1183bf47721c2aa74c3e7a247f92d42615867dc60119db7f817f734f",
+      "anchors": {
+        "rearShoe": {
+          "x": 82.734375,
+          "y": 810
+        },
+        "nearShoe": {
+          "x": 449.64251207729467,
+          "y": 885
+        }
+      },
+      "invariantDimensions": {
+        "rearShoeSpan": 157.45817158385094,
+        "nearShoeSpan": 183.08792270531399
+      }
+    },
+    {
+      "path": "form-frames/meadows-row/3.webp",
+      "sha256": "39894c29da31bc90c100958e4fb1923c309b097e33a16b7ebb0821f69a3017bf",
+      "anchors": {
+        "rearShoe": {
+          "x": 82.89156626506023,
+          "y": 810
+        },
+        "nearShoe": {
+          "x": 449.8076923076923,
+          "y": 885
+        }
+      },
+      "invariantDimensions": {
+        "rearShoeSpan": 157.32582503928757,
+        "nearShoeSpan": 183.2153846153846
+      }
+    },
+    {
+      "path": "form-frames/meadows-row/4.webp",
+      "sha256": "39894c29da31bc90c100958e4fb1923c309b097e33a16b7ebb0821f69a3017bf",
+      "anchors": {
+        "rearShoe": {
+          "x": 82.89156626506023,
+          "y": 810
+        },
+        "nearShoe": {
+          "x": 449.8076923076923,
+          "y": 885
+        }
+      },
+      "invariantDimensions": {
+        "rearShoeSpan": 157.32582503928757,
+        "nearShoeSpan": 183.2153846153846
+      }
+    },
+    {
+      "path": "form-frames/meadows-row/5.webp",
+      "sha256": "30fa501b1183bf47721c2aa74c3e7a247f92d42615867dc60119db7f817f734f",
+      "anchors": {
+        "rearShoe": {
+          "x": 82.734375,
+          "y": 810
+        },
+        "nearShoe": {
+          "x": 449.64251207729467,
+          "y": 885
+        }
+      },
+      "invariantDimensions": {
+        "rearShoeSpan": 157.45817158385094,
+        "nearShoeSpan": 183.08792270531399
+      }
+    },
+    {
+      "path": "form-frames/meadows-row/6.webp",
+      "sha256": "7961d3f929b80a28138331d0db65d2cdf67f4289e0306ced4942b4e859564c61",
+      "anchors": {
+        "rearShoe": {
+          "x": 83.06422018348624,
+          "y": 810
+        },
+        "nearShoe": {
+          "x": 450.1818181818182,
+          "y": 885
+        }
+      },
+      "invariantDimensions": {
+        "rearShoeSpan": 157.92547053816324,
+        "nearShoeSpan": 183.4073291050035
+      }
+    }
+  ]
+}

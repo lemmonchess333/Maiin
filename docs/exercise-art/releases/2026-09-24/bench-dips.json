@@ -1,0 +1,170 @@
+{
+  "exerciseId": "bench-dips",
+  "version": "anatomy-v3-2026-09-24",
+  "width": 1536,
+  "height": 1024,
+  "decision": "approved",
+  "reviewer": "Codex visual and implementation review",
+  "reviewedAt": "2026-09-24T17:58:10.348Z",
+  "reference": {
+    "path": "form-frames/bench-dips/1.webp",
+    "sha256": "b93a52f52ccb2c14c1725fc474be516d8ea6b1eec35619aef599b13029f6b315"
+  },
+  "cueSha256": "8c8c51b2ddfe358a56e33e81e05982d7ff86964d81d40a5d7099c8c84d6b8f3c",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Bald faceless white-grey canonical anatomy-v3 athlete, neutral featureless pelvis and white trainers retained in all three native poses."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Fixed native 1536x1024 landscape framing. Full head, feet and bench remain in frame. Bench foot and upright boundaries meet unrounded one-pixel and one-percent limits."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Straight-arm top, partial bend and deeper bent-arm bottom are distinguishable. Near elbow tracks backward; far upper arm is partly occluded by torso. Qualitative projected joint review, not calibrated 3D angles or limb lengths."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Single low flat bench with unchanged pad, upright and floor support arrangement. Fixed foot and upright spans measured. No deterministic pixel correction."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Native inspection confirms both palms/fingers contact the bench edge and heels remain planted. Far hand is partially hidden by thigh at top but fingers remain visible; it emerges during descent. Overlapping shoe silhouettes prevent independent threshold-based heel measurement; no such measurement claimed."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Hips remain forward of bench edge, supported through palms and heels. Body lowers as elbows bend backward and rises as elbows extend. Extended legs pivot toward fixed heels. No detached hands or moving bench."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Primary triceps strong purple; chest and front deltoids light lilac. Other anatomy neutral."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Six cues match exact bench-dips catalogue variation and contain at most seven words. Bottom cue describes approximate ninety-degree bend; no precise angle measurement claimed."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "All six beats and 6-to-1 loop stepped in real player in both themes. Frame 4 repeats 3, 5 repeats 2, 6 repeats 1. Intermediate pose is closer to bottom than halfway; it still shows a distinct partial bend."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "All six frames and loop reviewed at 390x844 in actual player, light theme. Body and bench fit, captions readable, no horizontal overflow. Far grip fine detail additionally reviewed natively."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "All six frames and loop reviewed at 390x844 in actual player, dark theme. Near elbow movement and descending body height distinguish positions. Fine far-hand detail partly occluded, supplemented by native review."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/bench-dips/1.webp",
+      "sha256": "b93a52f52ccb2c14c1725fc474be516d8ea6b1eec35619aef599b13029f6b315",
+      "anchors": {
+        "nearBenchFootLeft": {
+          "x": 1094.5777777777778,
+          "y": 878
+        },
+        "nearBenchUprightLeft": {
+          "x": 1197.4285714285713,
+          "y": 750
+        }
+      },
+      "invariantDimensions": {
+        "nearBenchFootSpan": 99.47777777777787,
+        "nearBenchUprightSpan": 65.79365079365084
+      }
+    },
+    {
+      "path": "form-frames/bench-dips/2.webp",
+      "sha256": "bc5cb59936d4df53284495dd6670608be100077035247d41cbe1b53eac3828de",
+      "anchors": {
+        "nearBenchFootLeft": {
+          "x": 1094.4444444444443,
+          "y": 878
+        },
+        "nearBenchUprightLeft": {
+          "x": 1197.2641509433963,
+          "y": 750
+        }
+      },
+      "invariantDimensions": {
+        "nearBenchFootSpan": 98.78632478632494,
+        "nearBenchUprightSpan": 65.6262600155078
+      }
+    },
+    {
+      "path": "form-frames/bench-dips/3.webp",
+      "sha256": "1a4b3e065cde6961378b37e59f6e22bac318cffd447822a30e5f30bae3cae732",
+      "anchors": {
+        "nearBenchFootLeft": {
+          "x": 1094.2058823529412,
+          "y": 878
+        },
+        "nearBenchUprightLeft": {
+          "x": 1197.271028037383,
+          "y": 750
+        }
+      },
+      "invariantDimensions": {
+        "nearBenchFootSpan": 98.71719457013569,
+        "nearBenchUprightSpan": 65.57897196261683
+      }
+    },
+    {
+      "path": "form-frames/bench-dips/4.webp",
+      "sha256": "1a4b3e065cde6961378b37e59f6e22bac318cffd447822a30e5f30bae3cae732",
+      "anchors": {
+        "nearBenchFootLeft": {
+          "x": 1094.2058823529412,
+          "y": 878
+        },
+        "nearBenchUprightLeft": {
+          "x": 1197.271028037383,
+          "y": 750
+        }
+      },
+      "invariantDimensions": {
+        "nearBenchFootSpan": 98.71719457013569,
+        "nearBenchUprightSpan": 65.57897196261683
+      }
+    },
+    {
+      "path": "form-frames/bench-dips/5.webp",
+      "sha256": "bc5cb59936d4df53284495dd6670608be100077035247d41cbe1b53eac3828de",
+      "anchors": {
+        "nearBenchFootLeft": {
+          "x": 1094.4444444444443,
+          "y": 878
+        },
+        "nearBenchUprightLeft": {
+          "x": 1197.2641509433963,
+          "y": 750
+        }
+      },
+      "invariantDimensions": {
+        "nearBenchFootSpan": 98.78632478632494,
+        "nearBenchUprightSpan": 65.6262600155078
+      }
+    },
+    {
+      "path": "form-frames/bench-dips/6.webp",
+      "sha256": "b93a52f52ccb2c14c1725fc474be516d8ea6b1eec35619aef599b13029f6b315",
+      "anchors": {
+        "nearBenchFootLeft": {
+          "x": 1094.5777777777778,
+          "y": 878
+        },
+        "nearBenchUprightLeft": {
+          "x": 1197.4285714285713,
+          "y": 750
+        }
+      },
+      "invariantDimensions": {
+        "nearBenchFootSpan": 99.47777777777787,
+        "nearBenchUprightSpan": 65.79365079365084
+      }
+    }
+  ]
+}

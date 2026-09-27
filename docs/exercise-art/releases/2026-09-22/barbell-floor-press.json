@@ -1,0 +1,170 @@
+{
+  "exerciseId": "barbell-floor-press",
+  "version": "anatomy-v3-2026-09-22",
+  "width": 1536,
+  "height": 1024,
+  "decision": "approved",
+  "reviewer": "Codex visual and implementation review",
+  "reviewedAt": "2026-09-22T10:30:37.487Z",
+  "reference": {
+    "path": "form-frames/barbell-floor-press/1.webp",
+    "sha256": "b7a0180caae2adc778a5a9c28b7ba683cfea00d6337b27684c627fbd2615d900"
+  },
+  "cueSha256": "1b219a962dca844f24bdea48a0e1c88e48e81f7a5b68d073e671817ae4f81460",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Canonical bald, faceless white/grey anatomy athlete, smooth pelvis and white shoes retained across three native poses."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Same native 1536x1024 framing throughout. Attached unrounded fixed-feature measurements satisfy one-pixel anchor and one-percent dimension limits."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "All three native poses inspected: continuous limbs and grips, no extra anatomy. Moving anatomy is unchanged by the fixed-area correction."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Rack and bar remain continuous. User-authorized master copying corrects only unobstructed fixed regions in frames 3/4. Small projected plate/shaft variations were reviewed qualitatively, not treated as calibrated 3D measurements."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Head and hips stay on the floor, bent legs and feet remain planted. Near upper arm reaches the floor at the bottom; far upper-arm contact is partly occluded."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Bar lowers until upper arms meet the floor, pauses above the chest, then returns to arm extension."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Pectorals are primary purple; triceps and front deltoids lighter lilac throughout. Return poses reuse the same images."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Six exact exercise cues match setup, lowering, bottom contact, pause, press and reset. Each cue contains at most seven words."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "Real ExerciseFormFrames stepped through all six frames and 6-to-1 transition. Intentional pause/return reuse: 4=3, 5=2, 6=1."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "All six corrected frames and loop inspected in the real component at 390x844 with actual light theme and repository CSS/fonts. Captions and images remained visible without clipping."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "All six corrected frames and loop inspected in the real component at 390x844 with actual dark theme. Captions readable, no visible seam or image-loading failure."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/barbell-floor-press/1.webp",
+      "sha256": "b7a0180caae2adc778a5a9c28b7ba683cfea00d6337b27684c627fbd2615d900",
+      "anchors": {
+        "rackBaseLeftEdge": {
+          "x": 139.34615384615384,
+          "y": 700
+        },
+        "nearShoeSoleLeftEdge": {
+          "x": 1142.6923076923076,
+          "y": 850
+        }
+      },
+      "invariantDimensions": {
+        "rackBaseSpan": 86.32051282051282,
+        "nearShoeSoleSpan": 173.86669851887245
+      }
+    },
+    {
+      "path": "form-frames/barbell-floor-press/2.webp",
+      "sha256": "5b960f6ae5a1add5adf5b018dfbf4560cde0f51b01906ffa9cc97acaced10823",
+      "anchors": {
+        "rackBaseLeftEdge": {
+          "x": 139.94117647058823,
+          "y": 700
+        },
+        "nearShoeSoleLeftEdge": {
+          "x": 1143.3255813953488,
+          "y": 850
+        }
+      },
+      "invariantDimensions": {
+        "rackBaseSpan": 87.1064425770308,
+        "nearShoeSoleSpan": 173.1196740791038
+      }
+    },
+    {
+      "path": "form-frames/barbell-floor-press/3.webp",
+      "sha256": "34e9ad038eab1b952096f3f39accbff3bea4d0868ca44b0c7999d778c3344bde",
+      "anchors": {
+        "rackBaseLeftEdge": {
+          "x": 139.34615384615384,
+          "y": 700
+        },
+        "nearShoeSoleLeftEdge": {
+          "x": 1142.6923076923076,
+          "y": 850
+        }
+      },
+      "invariantDimensions": {
+        "rackBaseSpan": 86.32051282051282,
+        "nearShoeSoleSpan": 173.86669851887245
+      }
+    },
+    {
+      "path": "form-frames/barbell-floor-press/4.webp",
+      "sha256": "34e9ad038eab1b952096f3f39accbff3bea4d0868ca44b0c7999d778c3344bde",
+      "anchors": {
+        "rackBaseLeftEdge": {
+          "x": 139.34615384615384,
+          "y": 700
+        },
+        "nearShoeSoleLeftEdge": {
+          "x": 1142.6923076923076,
+          "y": 850
+        }
+      },
+      "invariantDimensions": {
+        "rackBaseSpan": 86.32051282051282,
+        "nearShoeSoleSpan": 173.86669851887245
+      }
+    },
+    {
+      "path": "form-frames/barbell-floor-press/5.webp",
+      "sha256": "5b960f6ae5a1add5adf5b018dfbf4560cde0f51b01906ffa9cc97acaced10823",
+      "anchors": {
+        "rackBaseLeftEdge": {
+          "x": 139.94117647058823,
+          "y": 700
+        },
+        "nearShoeSoleLeftEdge": {
+          "x": 1143.3255813953488,
+          "y": 850
+        }
+      },
+      "invariantDimensions": {
+        "rackBaseSpan": 87.1064425770308,
+        "nearShoeSoleSpan": 173.1196740791038
+      }
+    },
+    {
+      "path": "form-frames/barbell-floor-press/6.webp",
+      "sha256": "b7a0180caae2adc778a5a9c28b7ba683cfea00d6337b27684c627fbd2615d900",
+      "anchors": {
+        "rackBaseLeftEdge": {
+          "x": 139.34615384615384,
+          "y": 700
+        },
+        "nearShoeSoleLeftEdge": {
+          "x": 1142.6923076923076,
+          "y": 850
+        }
+      },
+      "invariantDimensions": {
+        "rackBaseSpan": 86.32051282051282,
+        "nearShoeSoleSpan": 173.86669851887245
+      }
+    }
+  ]
+}

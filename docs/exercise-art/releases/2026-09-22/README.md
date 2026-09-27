@@ -1,4 +1,12 @@
-# Weighted push-up artwork release
+# Reviewed artwork releases
+
+Incline bench and barbell floor press each add six native 1536 × 1024 lossless WebP frames under their exact catalogue IDs. Both use three reviewed poses with intentional pause/return reuse (4=3, 5=2, 6=1), matching cues of at most seven words, and frame 1 as the reference.
+
+User-authorized master-copy corrections affect only fixed regions in bottom frames 3/4: the unobstructed incline rack, and the floor-press rack base and planted lower shoe. Provenance records the precise rectangles, before/after hashes and verification that no pixels outside those rectangles changed. Moving anatomy and the barbell were preserved. Unrounded scanline measurements meet the one-pixel anchor and one-percent fixed-dimension limits; every released image decodes to the reviewed PNG's exact RGB pixels.
+
+Native review and all six frames plus the loop in the real mobile player passed in both themes at 390 × 844. Incline review confirms supported torso and upper-chest lowering. Floor press shows the near upper arm reaching the floor and the bar stopping above the chest; the far upper arm is partly occluded. These are qualitative illustration reviews, not calibrated measurements of every joint or plate projection. Hash-bound review files record the release evidence and these limits.
+
+## Weighted push-up artwork
 
 This release adds six native 1536 × 1024 frames to the exact `weighted-push-ups` catalogue ID, with seven-word cues for the weighted variation. The three distinct poses are top, midpoint and bottom; frames 4, 5 and 6 intentionally reuse 3, 2 and 1 for the pause and return. Frame 1 is also the exercise master, avoiding a redundant download.
 

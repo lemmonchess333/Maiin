@@ -1,0 +1,170 @@
+{
+  "exerciseId": "machine-chest-fly",
+  "version": "anatomy-v3-2026-09-24",
+  "width": 1536,
+  "height": 1024,
+  "decision": "approved",
+  "reviewer": "Codex visual and implementation review",
+  "reviewedAt": "2026-09-24T15:42:35.862Z",
+  "reference": {
+    "path": "form-frames/machine-chest-fly/3.webp",
+    "sha256": "b65f8b2e86ae81d78e972dab8398475892abde4aa409a24c326f3b0a659883ed"
+  },
+  "cueSha256": "de723b272af0948da691382906b03e58035f9821620ab0cfd5e12c68e290ae94",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Canonical bald faceless white-grey athlete, neutral smooth pelvic centre and white trainers retained in all three original selected poses."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Fixed native1536x1024 three-quarter framing. Two rear-tower anchors and widths pass unrounded one-pixel/one-percent tests. Pivot locations visually remain stable in this original sequence; high-view replacement with shifted pivot was rejected."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Original selected poses inspected at native resolution. Both arms remain continuous; closed pose retains long visible segments and soft bend. Midpoint near arm has foreshortening; no calibrated elbow-angle constancy claim. Failed replacement poses with much deeper apparent folding are excluded."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Visible distal round hinges permit an articulated lower-arm interpretation. Lower posts need not remain vertical on every real fly machine: Life Fitness Axiom product and assembly manual document separate pivoted lower arms. Generic art is not claimed to be that exact model. Both grips connect continuously through lower arms to upper levers. Exact 3D lengths not proven."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Back and hips remain supported, both feet planted, both hands closed on same grips. No detached handles in selected original poses; disconnected frontal replacement was rejected."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Supported seated fly moves handles inward and returns along same poses; visible hinges plausibly allow changing lower-arm slant. Review is qualitative external motion only. Enclosed stack routing and selected-stack travel are invisible and unverified. This finding corrects earlier unsupported assumption that all hanging posts must remain vertical."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Pectorals strongest purple and front deltoids lighter lilac throughout selected revised original sequence; forearms neutral. Prior saturated closed deltoid was corrected in original selected frame3."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Exact machine-chest-fly variation uses hands on handles, soft elbows, supported back, inward sweep and controlled return. Six cues each at most seven words. Cues state technique rather than asserting measured joint angles."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "Original selected six frames and6-to-1 reviewed in actual ExerciseFormFrames after mechanism reassessment. Uneven projected spacing disclosed. Reuse4=3,5=2,6=1. Selected master/reference remains closed frame3."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "All six beats andloop reviewed in real component with repoCSS/fonts at verified390x844 in lighttheme; allunique poses visuallyinspected. Readable captions, nativeimage1536x1024 loaded, nohorizontaloverflow."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "Same real-player review in darktheme, allunique poses andsix captions/loop inspected; no clipping or missingimage."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/machine-chest-fly/1.webp",
+      "sha256": "538b829661f2a74cc74a63bd28b2975ee9572653782fc66135044926e8acae94",
+      "anchors": {
+        "towerLeftLeft": {
+          "x": 945.9634146341464,
+          "y": 650
+        },
+        "towerRightLeft": {
+          "x": 1060.8369565217392,
+          "y": 650
+        }
+      },
+      "invariantDimensions": {
+        "towerLeftSpan": 31.144693473961752,
+        "towerRightSpan": 55.44082125603859
+      }
+    },
+    {
+      "path": "form-frames/machine-chest-fly/2.webp",
+      "sha256": "b6610b2c9c936b74b4e1942374d44666d638b58ac8e53653fb34407e22beba6d",
+      "anchors": {
+        "towerLeftLeft": {
+          "x": 946.2528735632184,
+          "y": 650
+        },
+        "towerRightLeft": {
+          "x": 1061.592,
+          "y": 650
+        }
+      },
+      "invariantDimensions": {
+        "towerLeftSpan": 31.05860184661765,
+        "towerRightSpan": 55.64395505617972
+      }
+    },
+    {
+      "path": "form-frames/machine-chest-fly/3.webp",
+      "sha256": "b65f8b2e86ae81d78e972dab8398475892abde4aa409a24c326f3b0a659883ed",
+      "anchors": {
+        "towerLeftLeft": {
+          "x": 946.3061224489796,
+          "y": 650
+        },
+        "towerRightLeft": {
+          "x": 1061.6065573770493,
+          "y": 650
+        }
+      },
+      "invariantDimensions": {
+        "towerLeftSpan": 31.103713616594177,
+        "towerRightSpan": 55.029806259314455
+      }
+    },
+    {
+      "path": "form-frames/machine-chest-fly/4.webp",
+      "sha256": "b65f8b2e86ae81d78e972dab8398475892abde4aa409a24c326f3b0a659883ed",
+      "anchors": {
+        "towerLeftLeft": {
+          "x": 946.3061224489796,
+          "y": 650
+        },
+        "towerRightLeft": {
+          "x": 1061.6065573770493,
+          "y": 650
+        }
+      },
+      "invariantDimensions": {
+        "towerLeftSpan": 31.103713616594177,
+        "towerRightSpan": 55.029806259314455
+      }
+    },
+    {
+      "path": "form-frames/machine-chest-fly/5.webp",
+      "sha256": "b6610b2c9c936b74b4e1942374d44666d638b58ac8e53653fb34407e22beba6d",
+      "anchors": {
+        "towerLeftLeft": {
+          "x": 946.2528735632184,
+          "y": 650
+        },
+        "towerRightLeft": {
+          "x": 1061.592,
+          "y": 650
+        }
+      },
+      "invariantDimensions": {
+        "towerLeftSpan": 31.05860184661765,
+        "towerRightSpan": 55.64395505617972
+      }
+    },
+    {
+      "path": "form-frames/machine-chest-fly/6.webp",
+      "sha256": "538b829661f2a74cc74a63bd28b2975ee9572653782fc66135044926e8acae94",
+      "anchors": {
+        "towerLeftLeft": {
+          "x": 945.9634146341464,
+          "y": 650
+        },
+        "towerRightLeft": {
+          "x": 1060.8369565217392,
+          "y": 650
+        }
+      },
+      "invariantDimensions": {
+        "towerLeftSpan": 31.144693473961752,
+        "towerRightSpan": 55.44082125603859
+      }
+    }
+  ]
+}

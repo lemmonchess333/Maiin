@@ -1,0 +1,84 @@
+{
+  "modelPath": "Built-in image_gen; unchanged model path",
+  "sourceFrames": [
+    {
+      "frame": 1,
+      "sha256": "e27c56011ac7ea0f406de9ce8ee8b50322f727ac9558f7e9a8c467f8c0286275"
+    },
+    {
+      "frame": 2,
+      "sha256": "7e70f2eebd524d6a7f49ac14c433e323069cc70eb0f8524b4affa9adc27d672e"
+    },
+    {
+      "frame": 3,
+      "sha256": "112eb48734fd415f73a6431c3dc33f279dc5a492968c7af3aef14502f75f7ad0"
+    },
+    {
+      "frame": 4,
+      "sha256": "112eb48734fd415f73a6431c3dc33f279dc5a492968c7af3aef14502f75f7ad0"
+    },
+    {
+      "frame": 5,
+      "sha256": "7e70f2eebd524d6a7f49ac14c433e323069cc70eb0f8524b4affa9adc27d672e"
+    },
+    {
+      "frame": 6,
+      "sha256": "e27c56011ac7ea0f406de9ce8ee8b50322f727ac9558f7e9a8c467f8c0286275"
+    }
+  ],
+  "conversion": "Native lossless WebP; every decoded RGB byte verified equal to reviewed corrected PNG.",
+  "reuse": {
+    "4": 3,
+    "5": 2,
+    "6": 1
+  },
+  "measurementMethod": "Same min-RGB 80 boundary and same scanlines as rack-measurements.json. Linearly interpolate between adjacent sample intensities at each first/last threshold crossing. Coordinates and distances remain unrounded for gate comparisons.",
+  "correction": {
+    "authorization": "User: do both yeah, approving the pending precise rack-copy request.",
+    "operation": "Copy master RGB pixels inside [335,180,395,430) into frames 3 and 4 only. This rectangle contains the unobstructed near rack, no athlete or barbell.",
+    "frames": [
+      {
+        "frame": 1,
+        "sourceSha256": "e27c56011ac7ea0f406de9ce8ee8b50322f727ac9558f7e9a8c467f8c0286275",
+        "sha256": "e27c56011ac7ea0f406de9ce8ee8b50322f727ac9558f7e9a8c467f8c0286275",
+        "changedPixels": 0,
+        "changedOutsideRack": 0
+      },
+      {
+        "frame": 2,
+        "sourceSha256": "7e70f2eebd524d6a7f49ac14c433e323069cc70eb0f8524b4affa9adc27d672e",
+        "sha256": "7e70f2eebd524d6a7f49ac14c433e323069cc70eb0f8524b4affa9adc27d672e",
+        "changedPixels": 0,
+        "changedOutsideRack": 0
+      },
+      {
+        "frame": 3,
+        "sourceSha256": "02e00b16791cbd5a177fa10f660579d7033e206d1de5b281cebe731e37616d4e",
+        "sha256": "112eb48734fd415f73a6431c3dc33f279dc5a492968c7af3aef14502f75f7ad0",
+        "changedPixels": 13578,
+        "changedOutsideRack": 0
+      },
+      {
+        "frame": 4,
+        "sourceSha256": "02e00b16791cbd5a177fa10f660579d7033e206d1de5b281cebe731e37616d4e",
+        "sha256": "112eb48734fd415f73a6431c3dc33f279dc5a492968c7af3aef14502f75f7ad0",
+        "changedPixels": 13578,
+        "changedOutsideRack": 0
+      },
+      {
+        "frame": 5,
+        "sourceSha256": "7e70f2eebd524d6a7f49ac14c433e323069cc70eb0f8524b4affa9adc27d672e",
+        "sha256": "7e70f2eebd524d6a7f49ac14c433e323069cc70eb0f8524b4affa9adc27d672e",
+        "changedPixels": 0,
+        "changedOutsideRack": 0
+      },
+      {
+        "frame": 6,
+        "sourceSha256": "e27c56011ac7ea0f406de9ce8ee8b50322f727ac9558f7e9a8c467f8c0286275",
+        "sha256": "e27c56011ac7ea0f406de9ce8ee8b50322f727ac9558f7e9a8c467f8c0286275",
+        "changedPixels": 0,
+        "changedOutsideRack": 0
+      }
+    ]
+  }
+}

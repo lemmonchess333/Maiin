@@ -1,0 +1,94 @@
+{
+  "modelPath": "Built-in image_gen; unchanged model path, followed by user-authorized fixed-support master copying.",
+  "canonicalReference": {
+    "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+  },
+  "sourceFrames": [
+    {
+      "frame": 1,
+      "sha256": "bdd071b18ecfb472b5928da7910f907b809ca62ed057354aae79e4c170147a3f"
+    },
+    {
+      "frame": 2,
+      "sha256": "31da77370b803fdcae2eddcbae46b09350dd08fe44b54fea985fa2e01f8a0d9e"
+    },
+    {
+      "frame": 3,
+      "sha256": "0ef8c356782990bb72a830cf6ed45695a3bccd4f30a1bdde2aa10633367698f1"
+    },
+    {
+      "frame": 4,
+      "sha256": "0ef8c356782990bb72a830cf6ed45695a3bccd4f30a1bdde2aa10633367698f1"
+    },
+    {
+      "frame": 5,
+      "sha256": "31da77370b803fdcae2eddcbae46b09350dd08fe44b54fea985fa2e01f8a0d9e"
+    },
+    {
+      "frame": 6,
+      "sha256": "bdd071b18ecfb472b5928da7910f907b809ca62ed057354aae79e4c170147a3f"
+    }
+  ],
+  "correction": {
+    "authorization": "User approved master-copy method for fixed areas.",
+    "masterFrame": 3,
+    "box": [295, 690, 380, 910],
+    "operation": "Copy unobstructed head-end bench support only from the selected bottom master. Preserve all moving anatomy and barbell pixels.",
+    "frames": [
+      {
+        "frame": 1,
+        "beforeSha256": "da2db44d3438eaa97c1294b6cc284daf9b859c9ccced62881aaed0b0d9636052",
+        "afterSha256": "bdd071b18ecfb472b5928da7910f907b809ca62ed057354aae79e4c170147a3f",
+        "changedPixels": 12345,
+        "changedOutsideFixedRegion": 0
+      },
+      {
+        "frame": 2,
+        "beforeSha256": "6db45c3b85389cd38d2b76dc2c0016435e40865c7867b631caf464c6a63a11d2",
+        "afterSha256": "31da77370b803fdcae2eddcbae46b09350dd08fe44b54fea985fa2e01f8a0d9e",
+        "changedPixels": 13031,
+        "changedOutsideFixedRegion": 0
+      },
+      {
+        "frame": 3,
+        "beforeSha256": "0ef8c356782990bb72a830cf6ed45695a3bccd4f30a1bdde2aa10633367698f1",
+        "afterSha256": "0ef8c356782990bb72a830cf6ed45695a3bccd4f30a1bdde2aa10633367698f1",
+        "changedPixels": 0,
+        "changedOutsideFixedRegion": 0
+      },
+      {
+        "frame": 4,
+        "beforeSha256": "0ef8c356782990bb72a830cf6ed45695a3bccd4f30a1bdde2aa10633367698f1",
+        "afterSha256": "0ef8c356782990bb72a830cf6ed45695a3bccd4f30a1bdde2aa10633367698f1",
+        "changedPixels": 0,
+        "changedOutsideFixedRegion": 0
+      },
+      {
+        "frame": 5,
+        "beforeSha256": "6db45c3b85389cd38d2b76dc2c0016435e40865c7867b631caf464c6a63a11d2",
+        "afterSha256": "31da77370b803fdcae2eddcbae46b09350dd08fe44b54fea985fa2e01f8a0d9e",
+        "changedPixels": 13031,
+        "changedOutsideFixedRegion": 0
+      },
+      {
+        "frame": 6,
+        "beforeSha256": "da2db44d3438eaa97c1294b6cc284daf9b859c9ccced62881aaed0b0d9636052",
+        "afterSha256": "bdd071b18ecfb472b5928da7910f907b809ca62ed057354aae79e4c170147a3f",
+        "changedPixels": 12345,
+        "changedOutsideFixedRegion": 0
+      }
+    ]
+  },
+  "conversion": "Native lossless WebP; every decoded RGB byte verified identical to corrected reviewed PNG.",
+  "reuse": {
+    "4": 3,
+    "5": 2,
+    "6": 1
+  },
+  "measurementMethod": "Unrounded native min-RGB80 linearly interpolated boundary crossings.",
+  "scanlines": {
+    "headEndSupport": [290, 380, 750],
+    "footEndSupport": [1170, 1280, 750]
+  }
+}

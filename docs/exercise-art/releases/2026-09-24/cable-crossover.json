@@ -1,0 +1,170 @@
+{
+  "exerciseId": "cable-crossover",
+  "version": "anatomy-v3-2026-09-24",
+  "width": 1536,
+  "height": 1024,
+  "decision": "approved",
+  "reviewer": "Codex visual and implementation review",
+  "reviewedAt": "2026-09-24T16:21:19.369Z",
+  "reference": {
+    "path": "form-frames/cable-crossover/1.webp",
+    "sha256": "2bf40fd0c782fd1b316e3dded539f2ab0564592bba09130deec7317c8cfceffc"
+  },
+  "cueSha256": "ad045802aa4d9cc4011dfbfffaf87e31c3dad94c758284c97597be7340617f44",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Canonical anatomy-v3 faceless bald white-grey athlete, smooth pelvis, white shoes preserved across three native poses."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Fixed frontal/slight three-quarter camera at1536x1024; towers, head, torso and split stance visually stable."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Shoulder-driven down/inward arc with soft elbows, then return. Projected elbow bend and slight forward lean are qualitative, not calibrated3D measurements."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Same dual towers and high pulleys, two separate D handles and one cable to each. Closed pose refined to remove extra wrist loops."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Fingers and thumbs hold the grip bars; separate hands/handles approach in front of hips, with both shoes planted. Grip details small on mobile and assessed at native resolution."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Visible cables taut and continuous from fixed high pulleys to corresponding carabiners, without crossing body. Tower anchors/spans pass unrounded1px/1percent limits. Concealed stacks, internal routing and3D elbow-angle constancy are unverified."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Pectorals purple and front deltoids lilac; remaining anatomy neutral."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Six cues of at most seven words match visible wide start, inward sweep, close squeeze, pause and controlled return; no assertion about unseen stack movement."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "Three unique poses;4=3,5=2,6=1. Every beat and6to1 loop stepped in actual ExerciseFormFrames."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "Real player390x844 light theme: all6/loop stepped,3unique poses visually reviewed. All6 images loaded1536x1024; no horizontal overflow. Cues readable."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "Real player390x844 dark theme: all6/loop stepped,3unique poses visually reviewed. Athlete smaller to fit full apparatus; posture and cable paths remain discernible, fine grip assessed natively."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/cable-crossover/1.webp",
+      "sha256": "2bf40fd0c782fd1b316e3dded539f2ab0564592bba09130deec7317c8cfceffc",
+      "anchors": {
+        "leftTowerLeft": {
+          "x": 38.5974025974026,
+          "y": 700
+        },
+        "rightTowerLeft": {
+          "x": 1375.952380952381,
+          "y": 700
+        }
+      },
+      "invariantDimensions": {
+        "leftTowerSpan": 120.30670699163849,
+        "rightTowerSpan": 119.71428571428578
+      }
+    },
+    {
+      "path": "form-frames/cable-crossover/2.webp",
+      "sha256": "499d447ad17a52b1489bf644a308f4ba8e682d7219d3520203ae0c1b4a5b420f",
+      "anchors": {
+        "leftTowerLeft": {
+          "x": 38.641975308641975,
+          "y": 700
+        },
+        "rightTowerLeft": {
+          "x": 1376.1612903225807,
+          "y": 700
+        }
+      },
+      "invariantDimensions": {
+        "leftTowerSpan": 120.17052469135803,
+        "rightTowerSpan": 119.29585253456207
+      }
+    },
+    {
+      "path": "form-frames/cable-crossover/3.webp",
+      "sha256": "0441612cdf26eee8fa7cbbf4257071f57b831e3fa09ee8206e31c131c2728935",
+      "anchors": {
+        "leftTowerLeft": {
+          "x": 38.55421686746988,
+          "y": 700
+        },
+        "rightTowerLeft": {
+          "x": 1376.155172413793,
+          "y": 700
+        }
+      },
+      "invariantDimensions": {
+        "leftTowerSpan": 120.87131504742374,
+        "rightTowerSpan": 119.96482758620687
+      }
+    },
+    {
+      "path": "form-frames/cable-crossover/4.webp",
+      "sha256": "0441612cdf26eee8fa7cbbf4257071f57b831e3fa09ee8206e31c131c2728935",
+      "anchors": {
+        "leftTowerLeft": {
+          "x": 38.55421686746988,
+          "y": 700
+        },
+        "rightTowerLeft": {
+          "x": 1376.155172413793,
+          "y": 700
+        }
+      },
+      "invariantDimensions": {
+        "leftTowerSpan": 120.87131504742374,
+        "rightTowerSpan": 119.96482758620687
+      }
+    },
+    {
+      "path": "form-frames/cable-crossover/5.webp",
+      "sha256": "499d447ad17a52b1489bf644a308f4ba8e682d7219d3520203ae0c1b4a5b420f",
+      "anchors": {
+        "leftTowerLeft": {
+          "x": 38.641975308641975,
+          "y": 700
+        },
+        "rightTowerLeft": {
+          "x": 1376.1612903225807,
+          "y": 700
+        }
+      },
+      "invariantDimensions": {
+        "leftTowerSpan": 120.17052469135803,
+        "rightTowerSpan": 119.29585253456207
+      }
+    },
+    {
+      "path": "form-frames/cable-crossover/6.webp",
+      "sha256": "2bf40fd0c782fd1b316e3dded539f2ab0564592bba09130deec7317c8cfceffc",
+      "anchors": {
+        "leftTowerLeft": {
+          "x": 38.5974025974026,
+          "y": 700
+        },
+        "rightTowerLeft": {
+          "x": 1375.952380952381,
+          "y": 700
+        }
+      },
+      "invariantDimensions": {
+        "leftTowerSpan": 120.30670699163849,
+        "rightTowerSpan": 119.71428571428578
+      }
+    }
+  ]
+}

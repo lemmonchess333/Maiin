@@ -1,0 +1,170 @@
+{
+  "exerciseId": "lu-raise",
+  "version": "anatomy-v3-2026-09-24",
+  "width": 1536,
+  "height": 1024,
+  "decision": "approved",
+  "reviewer": "Codex visual and implementation review",
+  "reviewedAt": "2026-09-24T17:10:04.809Z",
+  "reference": {
+    "path": "form-frames/lu-raise/1.webp",
+    "sha256": "424e07fb859cdc11275a169e4580a70ddcd9258d73499720cd8ecaf4b83f97cd"
+  },
+  "cueSha256": "0ac47063c2abbf19edc4ba92d41785a67b2994f9c072262e27a00d62a8f1788d",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Canonical bald faceless white-grey anatomy-v3 athlete, smooth pelvis and white shoes retained across four native poses."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Same native1536x1024 framing, head, torso and pelvis alignment; both planted shoe anchors remain within one pixel."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Four native poses reviewed: arms at sides, partial lateral raise, shoulder-height lateral raise, forward sweep. Soft elbows and continuous two-hand grip. Foreshortening assessed qualitatively, not calibrated3D."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Two light hex dumbbells retained. Forward pose has overlapping projection, but both grips and separate heads remain visible; review does not infer collision from overlap."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Both feet planted. Right shoe lower contact region corrected from master1 under explicit owner authorization; zero differences outside rectangle [752,890,894,973]. Native joins inspected."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Standing lateral raise followed by forward sweep at shoulder height matches exact local catalogue; return reverses both segments. No overhead raise substituted."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Deltoids retain strongest purple across all poses; front/side deltoid emphasis is part of same highlighted region. Other anatomy remains neutral."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Six cues match actual poses and are at most seven words. Final cue continues lowering through6→1."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "Real player stepped through all6and6→1 in both themes. Four distinct poses,5reuses3and6reuses2; final-to-start completes lowering."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "Allfour unique poses viewed at390x844 in real player light theme, all6andloop checked. Full body/weights fit, text readable, no horizontal overflow. Forward sweep and two weights remain distinguishable."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "Allfour unique poses viewed at390x844 in real player dark theme, all6andloop checked. No clipping, readable captions and clear lateral/forward difference."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/lu-raise/1.webp",
+      "sha256": "424e07fb859cdc11275a169e4580a70ddcd9258d73499720cd8ecaf4b83f97cd",
+      "anchors": {
+        "leftShoeLeft": {
+          "x": 608.6703910614525,
+          "y": 910
+        },
+        "rightShoeLeft": {
+          "x": 764.2727272727273,
+          "y": 945
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeSpan": 134.93377560521412,
+        "rightShoeSpan": 99.87878787878788
+      }
+    },
+    {
+      "path": "form-frames/lu-raise/2.webp",
+      "sha256": "2ce463cffffee3b8130ec8ff53a90892dbcb9d70f2994934bbbb7f80d15d5166",
+      "anchors": {
+        "leftShoeLeft": {
+          "x": 608.2945205479452,
+          "y": 910
+        },
+        "rightShoeLeft": {
+          "x": 764.2727272727273,
+          "y": 945
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeSpan": 135.3626223091976,
+        "rightShoeSpan": 99.87878787878788
+      }
+    },
+    {
+      "path": "form-frames/lu-raise/3.webp",
+      "sha256": "68a393cd64a3fcf84860740f8edb41218477a5f49497df1da9ee5f8a3757a9fe",
+      "anchors": {
+        "leftShoeLeft": {
+          "x": 608.5434782608696,
+          "y": 910
+        },
+        "rightShoeLeft": {
+          "x": 764.2727272727273,
+          "y": 945
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeSpan": 135.45652173913038,
+        "rightShoeSpan": 99.87878787878788
+      }
+    },
+    {
+      "path": "form-frames/lu-raise/4.webp",
+      "sha256": "6dabebedf672a70684ccf75440b0e14a6a0513436b7fd0cb7863ede016e8dd4f",
+      "anchors": {
+        "leftShoeLeft": {
+          "x": 608.4525139664804,
+          "y": 910
+        },
+        "rightShoeLeft": {
+          "x": 764.2727272727273,
+          "y": 945
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeSpan": 135.6448886309222,
+        "rightShoeSpan": 99.87878787878788
+      }
+    },
+    {
+      "path": "form-frames/lu-raise/5.webp",
+      "sha256": "68a393cd64a3fcf84860740f8edb41218477a5f49497df1da9ee5f8a3757a9fe",
+      "anchors": {
+        "leftShoeLeft": {
+          "x": 608.5434782608696,
+          "y": 910
+        },
+        "rightShoeLeft": {
+          "x": 764.2727272727273,
+          "y": 945
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeSpan": 135.45652173913038,
+        "rightShoeSpan": 99.87878787878788
+      }
+    },
+    {
+      "path": "form-frames/lu-raise/6.webp",
+      "sha256": "2ce463cffffee3b8130ec8ff53a90892dbcb9d70f2994934bbbb7f80d15d5166",
+      "anchors": {
+        "leftShoeLeft": {
+          "x": 608.2945205479452,
+          "y": 910
+        },
+        "rightShoeLeft": {
+          "x": 764.2727272727273,
+          "y": 945
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeSpan": 135.3626223091976,
+        "rightShoeSpan": 99.87878787878788
+      }
+    }
+  ]
+}

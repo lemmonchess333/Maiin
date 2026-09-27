@@ -1,0 +1,55 @@
+{
+  "modelPath": "Built-in image_gen; unchanged model path",
+  "canonicalReference": {
+    "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+  },
+  "sourceFrames": [
+    {
+      "frame": 1,
+      "sha256": "5f5b15ff3465dc899e37a919ed4c3bb49b055b8741c2f635b3b662e49339c271"
+    },
+    {
+      "frame": 2,
+      "sha256": "dff469c9844343dc66ee3a0f956e91ecfc6d4e046bfb125a4073ffd2e05ac9da"
+    },
+    {
+      "frame": 3,
+      "sha256": "ef2487cb879d528bf0b7546042682e5942bf055ca97e97d597c043ced353f33a"
+    },
+    {
+      "frame": 4,
+      "sha256": "ef2487cb879d528bf0b7546042682e5942bf055ca97e97d597c043ced353f33a"
+    },
+    {
+      "frame": 5,
+      "sha256": "dff469c9844343dc66ee3a0f956e91ecfc6d4e046bfb125a4073ffd2e05ac9da"
+    },
+    {
+      "frame": 6,
+      "sha256": "5f5b15ff3465dc899e37a919ed4c3bb49b055b8741c2f635b3b662e49339c271"
+    }
+  ],
+  "generation": {
+    "master": "Create one native 1536x1024 landscape exercise illustration, no text. Use the attached canonical athlete exactly: bald faceless white/light-grey anatomical figure, fine contours, smooth featureless pelvic centre, white trainers, solid black background. Weighted CHEST DIP top master: complete athlete and complete compact free-standing parallel bar station fit inside canvas with ample black margins. Three-quarter side camera shows BOTH hands continuously wrapped around the two parallel horizontal handles, both elbows and shoulders. Arms extended supporting suspended body, torso held about 30 degrees forward from vertical, knees slightly bent, shoes clear of floor. One modest weight plate hangs vertically on a short chain from a real dark dip belt around waist, chain under pelvis but no anatomical detail; weight clear of feet and floor. Rigid simple grey dip station, two parallel equal rails and stable feet. Pectorals strongest purple (lower chest emphasis), triceps and anterior deltoids pale lilac; rest white grey. Natural proportions consistent with reference. No spare limbs, no disconnected grip, no labels, no arrows, no grid. This will be a fixed-camera master for lowering into a dip; leave room below body for descent.",
+    "bottom": "Edit the FIRST attached image (weighted chest dip master), retaining its exact 1536x1024 canvas, fixed camera, athlete scale, background, stationary dip station and BOTH grip coordinates. The SECOND image is canonical athlete identity. Produce the BOTTOM of a controlled weighted CHEST DIP: lower the whole torso/hips about 120 pixels by bending elbows until upper arms approximately horizontal, no deeper. Maintain the master's slight forward torso lean and bent knees; shoulders controlled, forearms approximately vertical, both hands stay wrapped continuously at exactly the same rail locations. Athlete and belt/chain/one modest hanging plate descend together, plate remains clear of floor and shins, chain taut. Do not shorten forearms, change grip width, move rails or floor feet. Preserve bald faceless anatomy, smooth pelvis, white shoes, purple pectorals and pale lilac triceps/front deltoids exactly. Single full-resolution frame, no text/grid. Keep complete head and shoes visible.",
+    "midpoint": "Edit FIRST image weighted chest dip TOP master to one MIDPOINT frame halfway between first top and THIRD attached bottom. SECOND reference canonical athlete identity. Same native1536x1024 canvas, camera, exact station geometry and both hand grip positions, black background. Bend both elbows moderately (halfway from straight to bottom), lowering torso and hips halfway toward third image; hold forward lean consistently. Keep natural uncompressed torso, unchanged limb lengths and continuous wrist/hand/rail contact. One hanging plate/belt/chain moves down with pelvis, no swing or size change; shoes still clear of floor. Preserve primary purple chest and pale lilac front deltoids/triceps, white anatomical figure and trainers. Do not move stationary bar supports or base feet. No text, no collage, one complete figure.",
+    "outputs": {
+      "master": "exec-4c8c7b30-9fd9-4c23-a565-b6fc887a788a.png",
+      "bottom": "exec-9e4d23ec-b2f3-4d6f-a695-172ff0733228.png",
+      "midpoint": "exec-4042aeb3-9fc1-4934-8b51-8c5418bb3aba.png"
+    }
+  },
+  "conversion": "Native lossless WebP; decoded RGB bytes verified identical to reviewed PNGs.",
+  "reuse": {
+    "4": 3,
+    "5": 2,
+    "6": 1
+  },
+  "measurementMethod": "Unrounded native min-RGB80 linearly interpolated boundary crossings.",
+  "scanlines": {
+    "farBase": [350, 850, 880],
+    "nearBase": [680, 1160, 940]
+  },
+  "correction": "None required; generated fixed geometry passed."
+}

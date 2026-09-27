@@ -1,0 +1,170 @@
+{
+  "exerciseId": "zottman-curl",
+  "version": "anatomy-v3-2026-09-24",
+  "width": 1024,
+  "height": 1536,
+  "decision": "approved",
+  "reviewer": "Codex visual and implementation review",
+  "reviewedAt": "2026-09-24T21:21:24.128Z",
+  "reference": {
+    "path": "form-frames/zottman-curl/1.webp",
+    "sha256": "fec9ddba08bf82cc35bd798db84c03fbcd850dcc42ddfbb0f430a07621e1d7ae"
+  },
+  "cueSha256": "8918276c334725a5b226d28bec50d040238f637214881684ecd526bdf95c0547",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Canonical white-grey bald faceless anatomical athlete, fine contours, smooth neutral pelvis and white trainers retained. Six native portrait poses retain identity and lighting."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "All native1024x1536 portrait with full athlete and dumbbells visible. Two shoe anchors drift less than0.20px and spans less than0.39%, unrounded, without deterministic correction."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Supinated flexion, top pronation, early pronated extension and bottom reset are distinct. Selected lowering corrects the prior drooping wrists and subsequent elbow drop. Forearm silhouettes change with rotation; joint geometry assessed qualitatively, not calibrated3D or exact elbow registration."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Two modest black round dumbbells with handles remain separate and attached. Projected plate ellipses and spacing vary with rotation and flexion; qualitative equipment review does not establish calibrated3D invariants."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Both hands remain closed around handles. Top3-to4 switches palm orientation; bottom6-to1 reverses it. Corrected frame5 keeps straighter wrist alignment, with original finger/thumb detail reviewed natively. Exact material grip points are partly occluded. Feet pass measured limits."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Both weights rise with palms up, rotate at the top, begin descent with palms down, then finish at thighs before re-supinating. Frame5 is early descent rather than midpoint. No visible trunk swing; upper-arm length correction excludes the earlier elbow-drop variant."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Biceps strongest purple and brachioradialis/forearms lilac match exact catalogue hierarchy. Hands and wrists neutral white; primary highlight retained on descent. Other muscles neutral."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Six cues of at most seven words match the exact Zottman sequence. Lower explicitly says begin lowering; Reset says finish then turn palms forward, matching the6-to1 rotation. Ascent is not reused for pronated descent."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "Six distinct native poses and6-to1 manually stepped in actual player in both themes. Both top and bottom grip changes inspected.5-to6 covers the rest of lowering; no claim of evenly spaced motion samples or continuous timed playback."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "All six plus loop reviewed390x844 light theme. Athlete and weights fit, captions readable, top rotation and early lowering distinguishable. Fine grip anatomy reviewed natively. Native dimensions1024x1536 and scrollWidth390 verified."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "All six plus loop reviewed390x844 dark theme. Clear movement stages and muscle hierarchy with no clipping. Captions clarify subtle hand rotation at mobile scale; fine finger contact checked natively."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/zottman-curl/1.webp",
+      "sha256": "fec9ddba08bf82cc35bd798db84c03fbcd850dcc42ddfbb0f430a07621e1d7ae",
+      "anchors": {
+        "farShoe": {
+          "x": 270.5057471264368,
+          "y": 1390
+        },
+        "nearShoe": {
+          "x": 508.3972602739726,
+          "y": 1450
+        }
+      },
+      "invariantDimensions": {
+        "farShoeSpan": 221.03364681295716,
+        "nearShoeSpan": 145.7663760896637
+      }
+    },
+    {
+      "path": "form-frames/zottman-curl/2.webp",
+      "sha256": "1195e43d27f91cd469b3586cdd0e643652b7a051899f986e2e5b976d2c95556c",
+      "anchors": {
+        "farShoe": {
+          "x": 270.65384615384613,
+          "y": 1390
+        },
+        "nearShoe": {
+          "x": 508.4029850746269,
+          "y": 1450
+        }
+      },
+      "invariantDimensions": {
+        "farShoeSpan": 220.8183760683761,
+        "nearShoeSpan": 145.61588284990142
+      }
+    },
+    {
+      "path": "form-frames/zottman-curl/3.webp",
+      "sha256": "8a09409c4819353cb72bb243c7afbafc4cff634ea1c98a9f4a8921f3b49f5664",
+      "anchors": {
+        "farShoe": {
+          "x": 270.5780346820809,
+          "y": 1390
+        },
+        "nearShoe": {
+          "x": 508.38129496402877,
+          "y": 1450
+        }
+      },
+      "invariantDimensions": {
+        "farShoeSpan": 220.79910817506197,
+        "nearShoeSpan": 145.83439131048107
+      }
+    },
+    {
+      "path": "form-frames/zottman-curl/4.webp",
+      "sha256": "618dc23d8ea6a1393b772aa3b6c45cab995b2082c4414eb0e42ef5e139925219",
+      "anchors": {
+        "farShoe": {
+          "x": 270.4225352112676,
+          "y": 1390
+        },
+        "nearShoe": {
+          "x": 508.21,
+          "y": 1450
+        }
+      },
+      "invariantDimensions": {
+        "farShoeSpan": 220.97369120382677,
+        "nearShoeSpan": 145.9527906976744
+      }
+    },
+    {
+      "path": "form-frames/zottman-curl/5.webp",
+      "sha256": "6ac35265c3c2855dbfea8f80bc34bf255435fb556d032e6772cc9ec0438e7e90",
+      "anchors": {
+        "farShoe": {
+          "x": 270.31538461538463,
+          "y": 1390
+        },
+        "nearShoe": {
+          "x": 508.30434782608694,
+          "y": 1450
+        }
+      },
+      "invariantDimensions": {
+        "farShoeSpan": 221.15992402659066,
+        "nearShoeSpan": 145.20676328502412
+      }
+    },
+    {
+      "path": "form-frames/zottman-curl/6.webp",
+      "sha256": "5d2d782f79335ed7c240ecfb65f959a55947c0d4f077af80733b7a0a6c1781c2",
+      "anchors": {
+        "farShoe": {
+          "x": 270.42105263157896,
+          "y": 1390
+        },
+        "nearShoe": {
+          "x": 508.34453781512605,
+          "y": 1450
+        }
+      },
+      "invariantDimensions": {
+        "farShoeSpan": 221.10015948963314,
+        "nearShoeSpan": 145.92469295410467
+      }
+    }
+  ]
+}

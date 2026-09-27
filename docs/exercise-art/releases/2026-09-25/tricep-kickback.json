@@ -1,0 +1,170 @@
+{
+  "exerciseId": "tricep-kickback",
+  "version": "anatomy-v3-2026-09-25",
+  "width": 1536,
+  "height": 1024,
+  "decision": "approved",
+  "reviewer": "Codex visual and implementation review",
+  "reviewedAt": "2026-09-25T00:35:58.414Z",
+  "reference": {
+    "path": "form-frames/tricep-kickback/1.webp",
+    "sha256": "4a040d5f7ad81019320c56eb16496e6b0ddc43111da97c67e672509d22d67cb4"
+  },
+  "cueSha256": "5136aab7c9e1fe586ede56ba174615208b4ea6c3c8947c76cc28b582ef462a53",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Canonical anatomy-v3 bald faceless white-grey athlete with fine contours, neutral featureless pelvis and white trainers retained in all three native poses."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Native1536x1024 fixed side three-quarter camera retains the whole athlete, dumbbell and flat bench without crop, flip or zoom changes."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Working elbow extends from roughly ninety degrees to near straight. Upper arm rises modestly at the endpoint but remains lifted beside the torso, without a large shoulder swing. Native and manually stepped mobile views judged acceptable; no pixel-immobile elbow or calibrated3D angle claim."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "One modest round dumbbell stays attached to a closed neutral grip through extension and return. Flat bench topology remains intact. Apparent dumbbell projection changes with the forearm; no exact3D geometry measurement claim."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Supporting hand and knee remain on the bench and free shoe planted. Working hand retains the dumbbell. No deterministic corrections or moving-anatomy edits in this release."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Forearm extends backward about the elbow with supported torso and no visible body swing. Fixed bench-seat and shoe scanline anchors drift under0.54px and spans under0.13percent unrounded; these do not certify moving geometry."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Triceps strongest purple, rear deltoid lighter lilac and subtle pale core stabilisers match the original generation brief. Colour indicates qualitative contribution, not measured activation."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Six reviewed cues at most seven words match the supported setup, elbow extension, straight arm, contraction, return and reset. Cues require a lifted upper arm without claiming pixel-immobility."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "All six frames and6-to1 transition manually stepped in actual ExerciseFormFrames. Hold4=3, return5=2 and reset6=1 use appropriate pose reuse. No continuous timed-playback claim."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "All six plus loop visually inspected in actual390x844 light player; native1536x1024 loaded and scrollWidth390. Whole figure, equipment and movement visible with readable cues. Native inspection supplements fine grip detail."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "All six plus loop visually inspected in actual390x844 dark player. Triceps highlight, elbow extension and supported contacts remain legible; no clipping or background halo."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/tricep-kickback/1.webp",
+      "sha256": "4a040d5f7ad81019320c56eb16496e6b0ddc43111da97c67e672509d22d67cb4",
+      "anchors": {
+        "benchSeat": {
+          "x": 99.92857142857143,
+          "y": 625
+        },
+        "plantedShoe": {
+          "x": 780.9867549668874,
+          "y": 925
+        }
+      },
+      "invariantDimensions": {
+        "benchSeatSpan": 760.2093596059113,
+        "plantedShoeSpan": 208.70555272542038
+      }
+    },
+    {
+      "path": "form-frames/tricep-kickback/2.webp",
+      "sha256": "2bd65ead2eea4b0595e3eb4ce0b5a7e58885ce15e8b1a5def6dcfe0f9a17fc79",
+      "anchors": {
+        "benchSeat": {
+          "x": 99.8695652173913,
+          "y": 625
+        },
+        "plantedShoe": {
+          "x": 781.375,
+          "y": 925
+        }
+      },
+      "invariantDimensions": {
+        "benchSeatSpan": 760.3409610983982,
+        "plantedShoeSpan": 208.44899999999996
+      }
+    },
+    {
+      "path": "form-frames/tricep-kickback/3.webp",
+      "sha256": "cdb73fc3d36a447f70e6c1a12751ffde58e56a730ae33a70c6ebd7108fb351da",
+      "anchors": {
+        "benchSeat": {
+          "x": 99.66666666666667,
+          "y": 625
+        },
+        "plantedShoe": {
+          "x": 781.5260416666666,
+          "y": 925
+        }
+      },
+      "invariantDimensions": {
+        "benchSeatSpan": 760.3859649122808,
+        "plantedShoeSpan": 208.48071509009014
+      }
+    },
+    {
+      "path": "form-frames/tricep-kickback/4.webp",
+      "sha256": "cdb73fc3d36a447f70e6c1a12751ffde58e56a730ae33a70c6ebd7108fb351da",
+      "anchors": {
+        "benchSeat": {
+          "x": 99.66666666666667,
+          "y": 625
+        },
+        "plantedShoe": {
+          "x": 781.5260416666666,
+          "y": 925
+        }
+      },
+      "invariantDimensions": {
+        "benchSeatSpan": 760.3859649122808,
+        "plantedShoeSpan": 208.48071509009014
+      }
+    },
+    {
+      "path": "form-frames/tricep-kickback/5.webp",
+      "sha256": "2bd65ead2eea4b0595e3eb4ce0b5a7e58885ce15e8b1a5def6dcfe0f9a17fc79",
+      "anchors": {
+        "benchSeat": {
+          "x": 99.8695652173913,
+          "y": 625
+        },
+        "plantedShoe": {
+          "x": 781.375,
+          "y": 925
+        }
+      },
+      "invariantDimensions": {
+        "benchSeatSpan": 760.3409610983982,
+        "plantedShoeSpan": 208.44899999999996
+      }
+    },
+    {
+      "path": "form-frames/tricep-kickback/6.webp",
+      "sha256": "4a040d5f7ad81019320c56eb16496e6b0ddc43111da97c67e672509d22d67cb4",
+      "anchors": {
+        "benchSeat": {
+          "x": 99.92857142857143,
+          "y": 625
+        },
+        "plantedShoe": {
+          "x": 780.9867549668874,
+          "y": 925
+        }
+      },
+      "invariantDimensions": {
+        "benchSeatSpan": 760.2093596059113,
+        "plantedShoeSpan": 208.70555272542038
+      }
+    }
+  ]
+}

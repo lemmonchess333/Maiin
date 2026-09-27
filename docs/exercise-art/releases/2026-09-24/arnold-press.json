@@ -1,0 +1,170 @@
+{
+  "exerciseId": "arnold-press",
+  "version": "anatomy-v3-2026-09-24",
+  "width": 1536,
+  "height": 1024,
+  "decision": "approved",
+  "reviewer": "Codex visual and implementation review",
+  "reviewedAt": "2026-09-24T16:57:43.353Z",
+  "reference": {
+    "path": "form-frames/arnold-press/3.webp",
+    "sha256": "f2b4f69d46e29a5747105e51108f091311a393bbf670023186e5ff8bea5ba1ce"
+  },
+  "cueSha256": "b956abc06c95833b5aee5840bbd1c1669a3dd6b474caf2d4c116a05f61b2f0b6",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Canonical bald faceless white-grey anatomy-v3 athlete, featureless pelvis and white shoes retained; all three native poses viewed."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Enlarged overhead master defines fixed framing. Smaller midpoint rejected. Head, torso, pelvis and feet remain visually aligned; measured stationary bench geometry passes."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Seated upright, tucked start, outward rotation to spread bent elbows, overhead extension. Native grip and joint review is qualitative, not calibrated 3D joint measurement."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Two modest hex dumbbells and same upright bench. Initial undersized start weights corrected with built-in editing. Projected head silhouettes vary with orientation; no claim of calibrated 3D size invariance."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Hands remain wrapped around handles; feet planted and pelvis seated. User-authorized master-copy restricted to two unobstructed bench-foot rectangles; zero changed pixels outside masks."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Visible seated dumbbell press and reversed return are coherent. No hidden machine mechanism. Bench fixed anchors and spans match exactly after restricted correction."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Purple deltoids; lilac triceps and upper chest; neutral remainder. Qualitative contribution hierarchy retained."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "All six cues match displayed poses; each is at most seven words. Return explicitly reverses rotation."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "All six beats stepped in real player in both themes including6→1.4=3,5=2,6=1 intentionally reuse matching poses."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "390x844 real ExerciseFormFrames: all six beats and loop checked; final corrected start rechecked. No cropping/overflow, captions readable. Fine finger orientation inspected natively because mobile reduces it."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "390x844 real ExerciseFormFrames: three unique poses viewed, all six beats and loop checked, final corrected start rechecked. Larger framing improves pose readability; fine finger detail remains native-review scope."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/arnold-press/1.webp",
+      "sha256": "5d6f59ace013ad12331f6b07c56f350c2bdbe981ad0422f50d8cbcd84440f760",
+      "anchors": {
+        "frontBenchFootLeft": {
+          "x": 671.2558139534884,
+          "y": 885
+        },
+        "rearBenchFootLeft": {
+          "x": 929.2022471910112,
+          "y": 873
+        }
+      },
+      "invariantDimensions": {
+        "frontBenchFootSpan": 60.077519379844944,
+        "rearBenchFootSpan": 50.047752808988776
+      }
+    },
+    {
+      "path": "form-frames/arnold-press/2.webp",
+      "sha256": "c1b283f3b2aedbdc8830325620c611342264012fb8a4c7cdd1d12f070b19d0ef",
+      "anchors": {
+        "frontBenchFootLeft": {
+          "x": 671.2558139534884,
+          "y": 885
+        },
+        "rearBenchFootLeft": {
+          "x": 929.2022471910112,
+          "y": 873
+        }
+      },
+      "invariantDimensions": {
+        "frontBenchFootSpan": 60.077519379844944,
+        "rearBenchFootSpan": 50.047752808988776
+      }
+    },
+    {
+      "path": "form-frames/arnold-press/3.webp",
+      "sha256": "f2b4f69d46e29a5747105e51108f091311a393bbf670023186e5ff8bea5ba1ce",
+      "anchors": {
+        "frontBenchFootLeft": {
+          "x": 671.2558139534884,
+          "y": 885
+        },
+        "rearBenchFootLeft": {
+          "x": 929.2022471910112,
+          "y": 873
+        }
+      },
+      "invariantDimensions": {
+        "frontBenchFootSpan": 60.077519379844944,
+        "rearBenchFootSpan": 50.047752808988776
+      }
+    },
+    {
+      "path": "form-frames/arnold-press/4.webp",
+      "sha256": "f2b4f69d46e29a5747105e51108f091311a393bbf670023186e5ff8bea5ba1ce",
+      "anchors": {
+        "frontBenchFootLeft": {
+          "x": 671.2558139534884,
+          "y": 885
+        },
+        "rearBenchFootLeft": {
+          "x": 929.2022471910112,
+          "y": 873
+        }
+      },
+      "invariantDimensions": {
+        "frontBenchFootSpan": 60.077519379844944,
+        "rearBenchFootSpan": 50.047752808988776
+      }
+    },
+    {
+      "path": "form-frames/arnold-press/5.webp",
+      "sha256": "c1b283f3b2aedbdc8830325620c611342264012fb8a4c7cdd1d12f070b19d0ef",
+      "anchors": {
+        "frontBenchFootLeft": {
+          "x": 671.2558139534884,
+          "y": 885
+        },
+        "rearBenchFootLeft": {
+          "x": 929.2022471910112,
+          "y": 873
+        }
+      },
+      "invariantDimensions": {
+        "frontBenchFootSpan": 60.077519379844944,
+        "rearBenchFootSpan": 50.047752808988776
+      }
+    },
+    {
+      "path": "form-frames/arnold-press/6.webp",
+      "sha256": "5d6f59ace013ad12331f6b07c56f350c2bdbe981ad0422f50d8cbcd84440f760",
+      "anchors": {
+        "frontBenchFootLeft": {
+          "x": 671.2558139534884,
+          "y": 885
+        },
+        "rearBenchFootLeft": {
+          "x": 929.2022471910112,
+          "y": 873
+        }
+      },
+      "invariantDimensions": {
+        "frontBenchFootSpan": 60.077519379844944,
+        "rearBenchFootSpan": 50.047752808988776
+      }
+    }
+  ]
+}

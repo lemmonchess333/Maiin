@@ -1,0 +1,170 @@
+{
+  "exerciseId": "spider-db-curl",
+  "version": "anatomy-v3-2026-09-25",
+  "width": 1536,
+  "height": 1024,
+  "decision": "approved",
+  "reviewer": "Codex visual and implementation review",
+  "reviewedAt": "2026-09-25T00:07:14.211Z",
+  "reference": {
+    "path": "form-frames/spider-db-curl/1.webp",
+    "sha256": "3c174a2b0e9c5605f8af0f28427bbca75891e3b41f1afac085e172f704ef9bf2"
+  },
+  "cueSha256": "017a7612d39e65af77dd42beb70dd41fec62b91bd7fe4996d4d438319c6d06c2",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Canonical anatomy-v3 bald faceless white-grey athlete, featureless neutral pelvis, fine muscle contours and white trainers retained in three native poses."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Fixed native1536x1024 front three-quarter view retains full body, both grips and incline bench. No flip, zoom or crop change."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Both elbows flex through hanging, middle and top curl. Upper arms remain down alongside pad with modest contour/position variation and no rowing movement. No calibrated3D joint-angle claim."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Two modest matching hex dumbbells remain in closed grips. Apparent hex face orientation changes with the forearms; exact3D lengths not measured. Incline bench support topology remains intact."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Chest remains on incline pad; shoes and body keep their positions. Both palms hold the handles throughout. Authorized front/rear bench-base master-copy in2/3/4/5 changes zero pixels outside two unobstructed stationary rectangles; no anatomy or dumbbell edits."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Dumbbells follow elbow flexion with chest supported and no torso swing. Both fixed bench scanline anchors/spans match the setup master exactly after correction; these measurements do not prove moving rigid-body geometry."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Both biceps strongest purple and forearms pale lilac, stable through lowering; no new unrelated highlighted muscles. Colours communicate qualitative contribution rather than measured activation."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Six reviewed cues at most seven words match chest support, curl, top, hold, slow lowering and reset without introducing a different variation."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "All six images and6-to1 loop manually stepped in actual ExerciseFormFrames; hold4=3, return5=2 and reset6=1 valid pose reuse. No continuous timed playback claim."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "All six plus loop reviewed in actual390x844 light player. Native1536x1024 loaded, scrollWidth390. Whole body/bench/motion visible and cues readable; fine grip detail supplemented by native inspection."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "All six plus loop reviewed in actual390x844 dark player. Biceps/forearms, supported torso and dumbbell movement read clearly at phone size. Bench-base correction has no visible seam."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/spider-db-curl/1.webp",
+      "sha256": "3c174a2b0e9c5605f8af0f28427bbca75891e3b41f1afac085e172f704ef9bf2",
+      "anchors": {
+        "frontBase": {
+          "x": 759.0138888888889,
+          "y": 910
+        },
+        "rearBase": {
+          "x": 434.7692307692308,
+          "y": 815
+        }
+      },
+      "invariantDimensions": {
+        "frontBaseSpan": 185.20833333333326,
+        "rearBaseSpan": 291.4307692307693
+      }
+    },
+    {
+      "path": "form-frames/spider-db-curl/2.webp",
+      "sha256": "6e87af07c422bde4c6d6a015a83dc64a21a6fb1a8907b442abfbbbf133688cbc",
+      "anchors": {
+        "frontBase": {
+          "x": 759.0138888888889,
+          "y": 910
+        },
+        "rearBase": {
+          "x": 434.7692307692308,
+          "y": 815
+        }
+      },
+      "invariantDimensions": {
+        "frontBaseSpan": 185.20833333333326,
+        "rearBaseSpan": 291.4307692307693
+      }
+    },
+    {
+      "path": "form-frames/spider-db-curl/3.webp",
+      "sha256": "526175c4626428c086c0edb3d8ce5eddfbd6b4e0429eeaf2eb4a04d520777ffe",
+      "anchors": {
+        "frontBase": {
+          "x": 759.0138888888889,
+          "y": 910
+        },
+        "rearBase": {
+          "x": 434.7692307692308,
+          "y": 815
+        }
+      },
+      "invariantDimensions": {
+        "frontBaseSpan": 185.20833333333326,
+        "rearBaseSpan": 291.4307692307693
+      }
+    },
+    {
+      "path": "form-frames/spider-db-curl/4.webp",
+      "sha256": "526175c4626428c086c0edb3d8ce5eddfbd6b4e0429eeaf2eb4a04d520777ffe",
+      "anchors": {
+        "frontBase": {
+          "x": 759.0138888888889,
+          "y": 910
+        },
+        "rearBase": {
+          "x": 434.7692307692308,
+          "y": 815
+        }
+      },
+      "invariantDimensions": {
+        "frontBaseSpan": 185.20833333333326,
+        "rearBaseSpan": 291.4307692307693
+      }
+    },
+    {
+      "path": "form-frames/spider-db-curl/5.webp",
+      "sha256": "6e87af07c422bde4c6d6a015a83dc64a21a6fb1a8907b442abfbbbf133688cbc",
+      "anchors": {
+        "frontBase": {
+          "x": 759.0138888888889,
+          "y": 910
+        },
+        "rearBase": {
+          "x": 434.7692307692308,
+          "y": 815
+        }
+      },
+      "invariantDimensions": {
+        "frontBaseSpan": 185.20833333333326,
+        "rearBaseSpan": 291.4307692307693
+      }
+    },
+    {
+      "path": "form-frames/spider-db-curl/6.webp",
+      "sha256": "3c174a2b0e9c5605f8af0f28427bbca75891e3b41f1afac085e172f704ef9bf2",
+      "anchors": {
+        "frontBase": {
+          "x": 759.0138888888889,
+          "y": 910
+        },
+        "rearBase": {
+          "x": 434.7692307692308,
+          "y": 815
+        }
+      },
+      "invariantDimensions": {
+        "frontBaseSpan": 185.20833333333326,
+        "rearBaseSpan": 291.4307692307693
+      }
+    }
+  ]
+}
