@@ -170,7 +170,7 @@ describe("set completion through row controls", () => {
     expect(log).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole("button", { name: "Mark set complete" }));
     await vi.waitFor(() =>
-      expect(screen.getByRole("button", { name: "Save Workout" })).toBeVisible()
+      expect(screen.getByRole("button", { name: "Save workout" })).toBeVisible()
     );
     expect(log).not.toHaveBeenCalled();
   });
@@ -250,7 +250,7 @@ it("rebuilds corrected records from full history without dropping an older valid
     fireEvent.click(
       screen.getAllByRole("button", { name: "Mark set complete" })[0]
     );
-  fireEvent.click(await screen.findByRole("button", { name: "Save Workout" }));
+  fireEvent.click(await screen.findByRole("button", { name: "Save workout" }));
   await vi.waitFor(() => expect(readDoc(path)?.invalidated).toBe(false));
   expect(readDoc(path)).toMatchObject({
     revision: 4,
@@ -282,7 +282,7 @@ it("an open session cannot replace records invalidated by a newer correction", a
     fireEvent.click(
       screen.getAllByRole("button", { name: "Mark set complete" })[0]
     );
-  fireEvent.click(await screen.findByRole("button", { name: "Save Workout" }));
+  fireEvent.click(await screen.findByRole("button", { name: "Save workout" }));
   await vi.waitFor(() => expect(readDoc(path)?.revision).toBe(5));
   expect(readDoc(path)).toMatchObject({ invalidated: true, map: {} });
 });
@@ -307,13 +307,13 @@ describe("workout save acknowledgement", () => {
       );
     await vi.waitFor(() =>
       expect(
-        screen.getByRole("button", { name: "Save Workout" })
+        screen.getByRole("button", { name: "Save workout" })
       ).toBeInTheDocument()
     );
     expect(
       screen.getByRole("heading", { name: "Review workout" })
     ).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Save Workout" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save workout" }));
     await vi.waitFor(() => expect(h.error).toHaveBeenCalled());
     expect(
       screen.getByRole("heading", { name: "Review workout" })
@@ -355,10 +355,10 @@ async function finishAndSave(complete = vi.fn().mockResolvedValue(undefined)) {
   }
   await vi.waitFor(() =>
     expect(
-      screen.getByRole("button", { name: "Save Workout" })
+      screen.getByRole("button", { name: "Save workout" })
     ).toBeInTheDocument()
   );
-  fireEvent.click(screen.getByRole("button", { name: "Save Workout" }));
+  fireEvent.click(screen.getByRole("button", { name: "Save workout" }));
 }
 
 it("keeps the recovery draft while queued, then clears it only when synced", async () => {
@@ -628,7 +628,7 @@ describe("completed-set corrections", () => {
     await vi.waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
     expect(log).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole("button", { name: "Finish workout" }));
-    fireEvent.click(screen.getByRole("button", { name: "Save Workout" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save workout" }));
     await vi.waitFor(() => expect(complete).toHaveBeenCalledOnce());
     expect(
       complete.mock.calls[0][1].setLogs[0].map(
@@ -873,7 +873,7 @@ it("Undo followed by finishing early saves only the final completed work", async
   fireEvent.click(
     screen.getByRole("button", { name: "Review completed work" })
   );
-  fireEvent.click(screen.getByRole("button", { name: "Save Workout" }));
+  fireEvent.click(screen.getByRole("button", { name: "Save workout" }));
   await vi.waitFor(() => expect(complete).toHaveBeenCalledOnce());
   expect(
     complete.mock.calls[0][1].setLogs[0].filter(
@@ -968,11 +968,11 @@ describe("Plate-Club badges are awarded the moment the workout saves", () => {
        neighbours were working around. */
     await vi.waitFor(() =>
       expect(
-        screen.getByRole("button", { name: "Save Workout" })
+        screen.getByRole("button", { name: "Save workout" })
       ).toBeInTheDocument()
     );
     await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: "Save Workout" }));
+      fireEvent.click(screen.getByRole("button", { name: "Save workout" }));
     });
     await vi.waitFor(() => expect(onCompleteDay).toHaveBeenCalled());
     return onCompleteDay;

@@ -1,10 +1,16 @@
 import WeekPulseCard from "@/components/WeekPulseCard";
 import InlineNumerals from "@/components/ui/InlineNumerals";
 import CompletionExtras from "@/components/workout/CompletionExtras";
-import SectionLabel from "@/components/ui/SectionLabel";
 import SectionHeading from "@/components/ui/SectionHeading";
-import { THEME } from "@/lib/theme";
-import { Clock, Dumbbell, Target } from "lucide-react";
+import { Card } from "@/components/ui/Card";
+import ExerciseThumb from "@/components/program/ExerciseThumb";
+import MiniMuscleFigure, {
+  hasMuscleFigure,
+} from "@/components/social/MiniMuscleFigure";
+import { CATEGORY_DISPLAY } from "@/components/analytics/muscleGroupTaxonomy";
+import { movementCategoryLabel } from "@/lib/exerciseMovementCategory";
+import { liftDayLine } from "@/lib/liftDayLabel";
+import { Trophy } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { motion } from "framer-motion";
 import { setPRDescription, type SetPR, type RepBucket } from "@/lib/prTracking";
@@ -43,6 +49,19 @@ interface SessionCompleteScreenProps {
   onClose: () => void;
 }
 
+/** The session's three headline numbers, each a value over the word that
+ *  says what it counts (DS3: big plain numbers, no tiles, no icons). */
+function Stat({ value, unit }: { value: string; unit: string }) {
+  return (
+    <div className="px-2 text-center">
+      <p className="text-h2 font-extrabold font-mono tabular-nums leading-tight text-foreground">
+        {value}
+      </p>
+      <p className="mt-0.5 text-sm text-muted-foreground">{unit}</p>
+    </div>
+  );
+}
+
 export default function SessionCompleteScreen({
   dayName,
   exercises,
@@ -65,10 +84,18 @@ export default function SessionCompleteScreen({
       : saved
         ? "Workout saved"
         : "Review workout";
-  const durationDisplay =
-    sessionDurationMinutes >= 60
-      ? `${Math.floor(sessionDurationMinutes / 60)}h ${sessionDurationMinutes % 60}m`
-      : `${sessionDurationMinutes}m`;
+  // The day as Train, Home and the workout screen name it: "Legs ·
+  // Deadlift focus". A routine's own name, with no separator, is itself.
+  const dayLabel = liftDayLine(dayName);
+
+  const minutes = sessionDurationMinutes;
+  const duration =
+    minutes >= 60
+      ? {
+          value: `${Math.floor(minutes / 60)}:${String(minutes % 60).padStart(2, "0")}`,
+          unit: "hours",
+        }
+      : { value: String(minutes), unit: minutes === 1 ? "minute" : "minutes" };
 
   /* Timed exercises contribute no tonnage — a hold's `reps` is a
      DURATION, so weight × reps is not a weight moved. Every writer
@@ -95,6 +122,27 @@ export default function SessionCompleteScreen({
 
   const totalVolumeDisplay = Math.round(totalVolume).toLocaleString("en-GB");
 
+  /* A bodyweight session lifts no load the app can weigh, and "0 kg
+     lifted" over a set of pull-ups reads as nothing done. Its reps are
+     the honest measure, so they take the middle number. Holds still
+     count for neither: their `reps` are seconds. */
+  const totalReps = setLogs.reduce((sum, logs, exIdx) => {
+    if (exercises[exIdx]?.repUnit === "seconds") return sum;
+    return (
+      sum +
+      logs
+        .filter((s) => s.completed && s.type !== "warmup")
+        .reduce((t, s) => t + s.reps, 0)
+    );
+  }, 0);
+  const work =
+    totalVolume > 0 || totalReps === 0
+      ? { value: totalVolumeDisplay, unit: "kg lifted" }
+      : {
+          value: totalReps.toLocaleString("en-GB"),
+          unit: totalReps === 1 ? "rep" : "reps",
+        };
+
   // WORKING sets only. This was the one header stat that did not exclude
   // warm-ups, so it counted the auto-generated ramp that VOLUME and the
   // per-exercise "n/m sets" rows both correctly leave out — a session showing
@@ -103,6 +151,41 @@ export default function SessionCompleteScreen({
   const totalSetsCompleted = setLogs
     .flat()
     .filter((s) => s.completed && s.type !== "warmup").length;
+
+  /* New bests (DS3: gold means a personal best and nothing else). A
+     "best" beat the exercise's previous best; a "bucket-first" is the
+     first set in a rep range, which the screen reports without the gold
+     because the exercise's best stands. Keys are `${name}:${bucket}`. */
+  const prRows = [...(prResults ?? new Map<string, SetPR>()).entries()].map(
+    ([key, result]) => {
+      const name = key.slice(0, key.lastIndexOf(":"));
+      return {
+        key,
+        name,
+        exerciseId: exercises.find((ex) => ex.name === name)?.exerciseId,
+        result,
+      };
+    }
+  );
+  const bests = prRows.filter(({ result }) => result.kind === "best");
+  const firsts = prRows.filter(({ result }) => result.kind !== "best");
+
+  /* Muscles worked: working sets per movement category, most first. The
+     figure tints the same categories, from the front or the back as the
+     session leans. */
+  const setsByCategory = new Map<string, number>();
+  exercises.forEach((ex, exIdx) => {
+    const working = (setLogs[exIdx] ?? []).filter(
+      (s) => s.completed && s.type !== "warmup"
+    ).length;
+    if (working > 0 && ex.movementCategory)
+      setsByCategory.set(
+        ex.movementCategory,
+        (setsByCategory.get(ex.movementCategory) ?? 0) + working
+      );
+  });
+  const muscleRows = [...setsByCategory.entries()].sort((a, b) => b[1] - a[1]);
+  const muscleCategories = muscleRows.map(([category]) => category);
 
   const exerciseSummary = exercises
     .map((ex, exIdx) => {
@@ -142,24 +225,26 @@ export default function SessionCompleteScreen({
       <div className="max-w-md mx-auto px-5 py-8 space-y-6">
         {/* Hero Section */}
         <motion.div
-          className="text-center space-y-3"
+          className="text-center space-y-2"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
         >
-          <h2 className="text-2xl font-bold text-foreground">{heading}</h2>
-          <p className="text-sm text-muted-foreground">{dayName}</p>
+          <h2 className="text-h1 font-extrabold tracking-tight text-foreground text-balance">
+            {heading}
+          </h2>
+          <p className="text-base text-muted-foreground">{dayLabel}</p>
           {sessionVariant === "easier_today" ? (
-            <p className="text-xs text-muted-foreground">
+            <p className="text-sm text-muted-foreground">
               Easier session. Your regular plan stays in place.
             </p>
           ) : sessionVariant === "time_budget" ? (
-            <p className="text-xs text-muted-foreground">
+            <p className="text-sm text-muted-foreground">
               Session prepared for your usual time. Your full programme stays in
               place.
             </p>
           ) : sessionVariant ? (
-            <p className="text-xs text-muted-foreground">
+            <p className="text-sm text-muted-foreground">
               Express {sessionVariant === "express45" ? "45" : "30"} — the
               essentials, done.
             </p>
@@ -168,45 +253,103 @@ export default function SessionCompleteScreen({
 
         {/* The result stays visible; only the exercise breakdown is optional. */}
         <motion.div
-          className="grid grid-cols-3 gap-3"
+          className="grid grid-cols-3 divide-x divide-border"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
         >
-          <div className="p-4 rounded-2xl bg-card text-center space-y-1">
-            <Clock
-              className="size-4 mx-auto"
-              style={{ color: "hsl(var(--muted-foreground))" }}
-            />
-            <p className="text-lg font-bold font-mono tabular-nums text-foreground">
-              {durationDisplay}
-            </p>
-            <SectionLabel>Duration</SectionLabel>
-          </div>
-          <div className="p-4 rounded-2xl bg-card text-center space-y-1">
-            <Dumbbell className="size-4 mx-auto text-lifting" />
-            <p className="text-lg font-bold font-mono tabular-nums text-foreground">
-              {totalVolumeDisplay}
-              <span
-                className="ml-1 text-xs font-normal font-sans"
-                style={{ color: "hsl(var(--muted-foreground))" }}
-              >
-                kg
-              </span>
-            </p>
-            <SectionLabel>Volume</SectionLabel>
-          </div>
-          <div className="p-4 rounded-2xl bg-card text-center space-y-1">
-            <Target
-              className="size-4 mx-auto"
-              style={{ color: THEME.semantic.positive }}
-            />
-            <p className="text-lg font-bold font-mono tabular-nums text-foreground">
-              {totalSetsCompleted}
-            </p>
-            <SectionLabel>Sets</SectionLabel>
-          </div>
+          <Stat value={duration.value} unit={duration.unit} />
+          <Stat value={work.value} unit={work.unit} />
+          <Stat
+            value={String(totalSetsCompleted)}
+            unit={totalSetsCompleted === 1 ? "set" : "sets"}
+          />
         </motion.div>
+
+        {bests.length > 0 && (
+          <section aria-labelledby="session-new-bests" className="space-y-2">
+            <SectionHeading
+              size="compact"
+              id="session-new-bests"
+              className="flex items-center gap-2"
+            >
+              New bests
+              <span className="rounded-full bg-achievement/15 px-2 text-sm font-bold font-mono tabular-nums text-achievement-strong">
+                {bests.length}
+              </span>
+            </SectionHeading>
+            <Card padded={false} className="divide-y divide-border">
+              {bests.map(({ key, name, exerciseId, result }) => (
+                <div key={key} className="flex items-center gap-3 p-3">
+                  <ExerciseThumb exerciseId={exerciseId ?? ""} />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold text-foreground">
+                      {name}
+                    </p>
+                    <p className="text-lg font-extrabold font-mono tabular-nums text-achievement-strong">
+                      {result.weight} kg × {result.reps}
+                    </p>
+                    {result.previousBest && (
+                      <p className="text-xs text-muted-foreground">
+                        Was{" "}
+                        <span className="font-mono tabular-nums">
+                          {result.previousBest.weight} kg ×{" "}
+                          {result.previousBest.reps}
+                        </span>
+                      </p>
+                    )}
+                  </div>
+                  <Trophy
+                    className="size-5 shrink-0 text-achievement"
+                    aria-hidden="true"
+                  />
+                </div>
+              ))}
+            </Card>
+          </section>
+        )}
+
+        {firsts.length > 0 && (
+          <Card size="compact" tone="muted" className="space-y-1">
+            {firsts.map(({ key, name, result }) => (
+              <p key={key} className="text-sm text-muted-foreground">
+                <span className="font-semibold text-foreground">{name}</span>
+                {" · "}
+                <InlineNumerals>{setPRDescription(result)}</InlineNumerals>
+              </p>
+            ))}
+          </Card>
+        )}
+
+        {hasMuscleFigure(muscleCategories) && (
+          <Card className="flex items-center gap-4">
+            <MiniMuscleFigure
+              categories={muscleCategories}
+              className="h-32 w-auto shrink-0"
+            />
+            <div className="min-w-0 flex-1">
+              <SectionHeading size="compact" as="h3">
+                Muscles worked
+              </SectionHeading>
+              <ul className="mt-2 space-y-1">
+                {muscleRows.slice(0, 4).map(([category, sets]) => (
+                  <li
+                    key={category}
+                    className="flex items-baseline justify-between gap-3 text-sm"
+                  >
+                    <span className="truncate text-foreground">
+                      {CATEGORY_DISPLAY[category] ??
+                        movementCategoryLabel(category)}
+                    </span>
+                    <span className="shrink-0 font-mono tabular-nums text-muted-foreground">
+                      {sets} {sets === 1 ? "set" : "sets"}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </Card>
+        )}
 
         <div className="space-y-2">
           <p
@@ -225,12 +368,13 @@ export default function SessionCompleteScreen({
           </p>
           <Button
             fullWidth
+            size="lg"
             aria-label={
               saved
                 ? "Done"
                 : saveStatus === "needs-attention"
                   ? "Retry sync"
-                  : "Save Workout"
+                  : "Save workout"
             }
             onClick={saved ? onClose : onFinish}
             loading={completing}
@@ -239,7 +383,7 @@ export default function SessionCompleteScreen({
               ? "Done"
               : saveStatus === "needs-attention"
                 ? "Retry sync"
-                : "Save Workout"}
+                : "Save workout"}
           </Button>
           {!saved && onEdit && (
             <Button
@@ -276,16 +420,6 @@ export default function SessionCompleteScreen({
         )}
         {saved && <WeekPulseCard />}
         {saved && <CompletionExtras share={share} />}
-        {prResults && prResults.size > 0 && (
-          <div className="ds-card p-4 space-y-2">
-            {[...prResults.entries()].map(([key, result]) => (
-              <p key={key} className="text-sm text-muted-foreground">
-                {key.slice(0, key.lastIndexOf(":"))} —{" "}
-                <InlineNumerals>{setPRDescription(result)}</InlineNumerals>
-              </p>
-            ))}
-          </div>
-        )}
         <details className="space-y-4">
           <summary className="min-h-11 py-3 cursor-pointer text-sm font-semibold text-foreground">
             Session details

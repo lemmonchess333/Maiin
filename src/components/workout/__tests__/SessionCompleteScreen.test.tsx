@@ -13,10 +13,17 @@
  * volume card were untested when their bugs shipped.
  */
 import { describe, it, expect, vi } from "vitest";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import {
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+  within,
+} from "@testing-library/react";
 
 import SessionCompleteScreen from "../SessionCompleteScreen";
 import type { ProgramExercise } from "@/features/program/programTypes";
+import type { SetPR } from "@/lib/prTracking";
 
 vi.mock("@/lib/haptic", () => ({ haptic: vi.fn() }));
 vi.mock("@/lib/auth", () => ({
@@ -71,15 +78,15 @@ describe("SessionCompleteScreen — header stats agree with each other", () => {
     renderScreen([
       [{ reps: 12, weight: 10, completed: true, type: "working" }],
     ]);
-    await waitFor(() => expect(screen.getByText("24m")).toBeVisible());
+    await waitFor(() => expect(screen.getByText("24")).toBeVisible());
     expect(screen.getByText("120")).toBeVisible();
     expect(screen.getByText("1")).toBeVisible();
-    expect(screen.getByText("24m").closest("details")).toBeNull();
+    expect(screen.getByText("24").closest("details")).toBeNull();
     expect(
       screen
-        .getByText("24m")
+        .getByText("24")
         .compareDocumentPosition(
-          screen.getByRole("button", { name: "Save Workout" })
+          screen.getByRole("button", { name: "Save workout" })
         ) & Node.DOCUMENT_POSITION_FOLLOWING
     ).toBeTruthy();
   });
@@ -212,7 +219,7 @@ describe("SessionCompleteScreen — header stats agree with each other", () => {
     expect(
       screen.getByRole("heading", { name: "Review workout" })
     ).toBeInTheDocument();
-    expect(screen.getByText("Legs — Deadlift Focus")).toBeInTheDocument();
+    expect(screen.getByText("Legs · Deadlift focus")).toBeInTheDocument();
   });
 });
 
@@ -220,7 +227,7 @@ describe("SessionCompleteScreen — header stats agree with each other", () => {
  * No share affordance on this screen — the phantom-post regression pin.
  *
  * Until 2026-08-04 this screen carried "Share Workout" (image card) and
- * "Share to circle". Both fired BEFORE the save, because "Save Workout" is a
+ * "Share to circle". Both fired BEFORE the save, because "Save workout" is a
  * separate button — so "Share to circle" → "Close without saving" published
  * a `session_completed` event for a session that was never written. Sharing
  * moved to `/workout/:id`, where the record exists first and that sequence
@@ -266,7 +273,7 @@ describe("save comes before session detail", () => {
     expect(detail.open).toBe(false);
     expect(
       screen
-        .getByRole("button", { name: "Save Workout" })
+        .getByRole("button", { name: "Save workout" })
         .compareDocumentPosition(detail) & Node.DOCUMENT_POSITION_FOLLOWING
     ).toBeTruthy();
   });
@@ -285,7 +292,7 @@ describe("save comes before session detail", () => {
         onClose={close}
       />
     );
-    const save = screen.getByRole("button", { name: /Save Workout/ });
+    const save = screen.getByRole("button", { name: /Save workout/ });
     expect(save).toBeDisabled();
     const cancel = screen.getByRole("button", { name: "Close without saving" });
     expect(cancel).toBeDisabled();
@@ -293,5 +300,138 @@ describe("save comes before session detail", () => {
     fireEvent.click(cancel);
     expect(finish).not.toHaveBeenCalled();
     expect(close).not.toHaveBeenCalled();
+  });
+});
+
+/**
+ * DS3's finish screen: the numbers as plain figures over the words that say
+ * what they count, new bests in gold with their drawing, and the muscles the
+ * session worked.
+ */
+describe("SessionCompleteScreen — what the session did (DS3)", () => {
+  const benchBest = {
+    kind: "best",
+    bucket: "8rm",
+    weight: 80,
+    reps: 8,
+    previousBest: { weight: 77.5, reps: 8, date: "2026-09-20" },
+  } as unknown as SetPR;
+
+  function renderWith(
+    props: Partial<Parameters<typeof SessionCompleteScreen>[0]>,
+    setLogs: Array<Array<Record<string, unknown>>> = [
+      [{ reps: 12, weight: 10, completed: true, type: "working" }],
+    ],
+    exercises: ProgramExercise[] = [exercise("Cable Crunch", 2)]
+  ) {
+    return render(
+      <SessionCompleteScreen
+        dayName="Push — Chest Focus"
+        exercises={exercises}
+        setLogs={setLogs as never}
+        firedPRs={new Map()}
+        sessionDurationMinutes={24}
+        completing={false}
+        onFinish={() => {}}
+        onClose={() => {}}
+        {...props}
+      />
+    );
+  }
+
+  it("names each number by what it counts", () => {
+    renderWith({});
+    expect(screen.getByText("minutes")).toBeInTheDocument();
+    expect(screen.getByText("kg lifted")).toBeInTheDocument();
+    expect(screen.getByText("set")).toBeInTheDocument();
+  });
+
+  it("writes an hour or more as hours and minutes", () => {
+    renderWith({ sessionDurationMinutes: 65 });
+    expect(screen.getByText("1:05")).toBeInTheDocument();
+    expect(screen.getByText("hours")).toBeInTheDocument();
+  });
+
+  it("gives a bodyweight session its reps rather than 0 kg lifted", () => {
+    renderWith({}, [
+      [
+        { reps: 8, weight: 0, completed: true, type: "working" },
+        { reps: 7, weight: 0, completed: true, type: "working" },
+      ],
+    ]);
+    expect(screen.getByText("15")).toBeInTheDocument();
+    expect(screen.getByText("reps")).toBeInTheDocument();
+    expect(screen.queryByText("kg lifted")).toBeNull();
+  });
+
+  it("puts a new best in gold, with its drawing and what it beat", () => {
+    const bench = {
+      ...exercise("Bench Press", 3),
+      exerciseId: "bench-press",
+      movementCategory: "horizontal_push",
+    } as ProgramExercise;
+    renderWith(
+      { prResults: new Map([["Bench Press:8rm", benchBest]]) },
+      [[{ reps: 8, weight: 80, completed: true, type: "working" }]],
+      [bench]
+    );
+    const heading = screen.getByRole("heading", { name: /New bests/ });
+    const card = heading.parentElement!;
+    expect(card).toHaveTextContent("Bench Press");
+    expect(within(card).getByText("80 kg × 8")).toHaveClass(
+      "text-achievement-strong"
+    );
+    expect(card).toHaveTextContent("Was 77.5 kg × 8");
+    expect(card.querySelector('[data-thumb="drawing"]')).not.toBeNull();
+  });
+
+  it("reports a first set in a rep range without the gold", () => {
+    const first = {
+      kind: "bucket-first",
+      bucket: "3rm",
+      weight: 90,
+      reps: 3,
+      previousBest: { weight: 80, reps: 8, date: "2026-09-20" },
+    } as unknown as SetPR;
+    renderWith({ prResults: new Map([["Cable Crunch:3rm", first]]) });
+    expect(screen.queryByRole("heading", { name: /New bests/ })).toBeNull();
+    const line = screen.getByText(/First time at/).closest("p")!;
+    expect(line).toHaveTextContent("Cable Crunch · First time at 2–3 reps.");
+    expect(line.querySelector(".text-achievement-strong")).toBeNull();
+  });
+
+  it("counts working sets by muscle group, most first, warm-ups left out", () => {
+    const press = {
+      ...exercise("Bench Press", 3),
+      exerciseId: "bench-press",
+      movementCategory: "horizontal_push",
+    } as ProgramExercise;
+    const dips = {
+      ...exercise("Dips", 2),
+      exerciseId: "dips",
+      movementCategory: "arms_triceps",
+    } as ProgramExercise;
+    renderWith(
+      {},
+      [
+        [
+          { reps: 10, weight: 40, completed: true, type: "warmup" },
+          { reps: 8, weight: 80, completed: true, type: "working" },
+          { reps: 8, weight: 80, completed: true, type: "working" },
+          { reps: 8, weight: 80, completed: true, type: "working" },
+        ],
+        [{ reps: 10, weight: 0, completed: true, type: "working" }],
+      ],
+      [press, dips]
+    );
+    const heading = screen.getByRole("heading", { name: "Muscles worked" });
+    const rows = within(heading.parentElement!).getAllByRole("listitem");
+    expect(rows.map((row) => row.textContent)).toEqual([
+      "Chest3 sets",
+      "Triceps1 set",
+    ]);
+    expect(
+      screen.getByRole("img", { name: "Muscles trained this session" })
+    ).toBeInTheDocument();
   });
 });

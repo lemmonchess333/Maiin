@@ -22,7 +22,7 @@ import { createPortal } from "react-dom";
 import type { ProgramExercise } from "@/features/program/programTypes";
 import { cn } from "@/lib/utils";
 import ExerciseThumb from "@/components/program/ExerciseThumb";
-import { liftDayTitle } from "@/lib/liftDayLabel";
+import { liftDayLine } from "@/lib/liftDayLabel";
 import { haptic } from "@/lib/haptic";
 import {
   Play,
@@ -822,7 +822,6 @@ export default function WorkoutSession({
   }, [safeExIndex, currentExIndex]);
 
   const currentExercise = day.exercises[safeExIndex];
-  const dayTitle = liftDayTitle(day.dayName);
 
   // #985 — barbell plate breakdown for the prescribed weight. Read-only hint;
   // barbell-only (dumbbell/machine lifts don't load plates). Standard plates;
@@ -1533,9 +1532,7 @@ export default function WorkoutSession({
       <div className="flex items-center justify-between gap-3 px-4 py-2 border-b border-border/50">
         <div className="min-w-0">
           <p className="truncate text-base font-bold text-foreground">
-            {dayTitle.category
-              ? `${dayTitle.category} · ${dayTitle.title}`
-              : dayTitle.title}
+            {liftDayLine(day.dayName)}
           </p>
           <WorkoutProgress
             key={sessionStartedAt}

@@ -88,7 +88,9 @@ const EXPECTED_BARE_USES: Record<(typeof IDENTITY)[number], number> = {
   // the exercise drawing is the card's picture now.
   // 2026-09-27: 18 → 17. The same on the workout screen: the dumbbell
   // beside the exercise name gave way to its drawing.
-  lifting: 17, // Redesign consolidates onboarding option icons.
+  // 2026-09-27: 17 → 16. The finish screen's volume tile lost its
+  // dumbbell: DS3 sets the three numbers plain, with no icons.
+  lifting: 16, // Redesign consolidates onboarding option icons.
   nutrition: 4,
   destructive: 0,
   success: 0,
@@ -103,7 +105,10 @@ const EXPECTED_BARE_USES: Record<(typeof IDENTITY)[number], number> = {
   // to 4.82:1. The icon was legitimate under this ratchet (3:1 non-text),
   // so this is a free gain rather than a fix — locked in per the rule
   // that a count may fall freely.
-  achievement: 10, // Companion finish removes the decorative trophy.
+  // 2026-09-27: 10 → 11. The finish screen's New bests rows each end in
+  // a gold Trophy ICON (3:1 non-text); the figure beside it, which is
+  // text, takes `text-achievement-strong`.
+  achievement: 11, // Companion finish removes the decorative trophy.
 };
 
 /**
