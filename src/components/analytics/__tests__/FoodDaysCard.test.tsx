@@ -33,8 +33,12 @@ describe("FoodDaysCard", () => {
 
   it("sets the weekend beside the week, in the page's own figures", () => {
     render(<FoodDaysCard reading={READING} proteinPerKg={null} />);
-    expect(screen.getByText(formatCalories(2650))).toBeInTheDocument();
-    expect(screen.getByText(formatCalories(2080))).toBeInTheDocument();
+    // Row text is raw textContent, so it carries the runtime's grouping
+    // as the formatter wrote it (fr-FR's U+202F included).
+    expect(rowText("Weekend days")).toBe(
+      `Weekend days${formatCalories(2650)} kcal`
+    );
+    expect(rowText("Weekdays")).toBe(`Weekdays${formatCalories(2080)} kcal`);
   });
 
   it("gives protein per kilogram, when there is a weight to divide by", () => {

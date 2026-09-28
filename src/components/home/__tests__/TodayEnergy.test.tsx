@@ -42,7 +42,7 @@ vi.mock("@/lib/haptic", function () {
 
 import TodayEnergy from "../TodayEnergy";
 import { macroInfeasibilityMessage } from "@/lib/macroInfeasibility";
-import { groupText } from "@/test/localeGrouping";
+import { group, groupText } from "@/test/localeGrouping";
 
 const targets: any = {
   finalTarget: 2200,
@@ -152,9 +152,11 @@ describe("TodayEnergy — the calorie line is about the LOG", function () {
 
   it("reads the whole target as left on an empty day, and still shows the macros", function () {
     renderAt({ calories: 0, protein: 0, carbs: 0, fat: 0 });
-    // The headline is the figure beside "kcal left".
+    // The headline is the figure beside "kcal left". Raw textContent, so
+    // the runtime's own grouping (`group`), not Testing Library's
+    // normalized form: fr-FR groups with U+202F.
     expect(screen.getByText("kcal left").previousSibling?.textContent).toBe(
-      groupText(2200)
+      group(2200)
     );
     expect(
       screen.getByText(spanning(`0 of ${groupText(2200)} kcal logged`))
