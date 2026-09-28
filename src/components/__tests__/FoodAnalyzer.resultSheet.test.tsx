@@ -223,6 +223,38 @@ describe("FoodAnalyzer — the result sheet", () => {
     expect(rows[0]).toHaveTextContent("150 g · 248 kcal");
   });
 
+  it("gives each item control its own 44px tap area", async () => {
+    /* jsdom has no layout, so this pins the classes and the sums.
+       + and Remove are 28px (size-7) and reach 8px past their box
+       (before:-inset-2), 44px in all. With only the row's 8px gap
+       between them, both reached across the whole gap, and Remove,
+       drawn later, took every tap in it. Remove's own 8px margin makes
+       the gap 16px, so the two reaches meet in the middle. */
+    await scan();
+    const [row] = screen.getAllByTestId("scan-result-item");
+    expect(row).toHaveClass("gap-2");
+    const plus = within(row).getByRole("button", {
+      name: "Increase Grilled chicken breast portion",
+    });
+    const remove = within(row).getByRole("button", {
+      name: "Remove Grilled chicken breast",
+    });
+    for (const control of [plus, remove]) {
+      expect(control).toHaveClass("size-7", "before:-inset-2");
+    }
+    expect(remove).toHaveClass("ml-2");
+
+    /* Restore is a 16px line of text. A 14px reach each side makes 44px.
+       Its row is 36px, as an item row is, so like theirs the reach ends
+       4px past the row, where the next row's controls' reach begins. */
+    fireEvent.click(remove);
+    const restore = screen.getByRole("button", {
+      name: "Restore Grilled chicken breast",
+    });
+    expect(restore).toHaveClass("text-xs", "before:-inset-3.5");
+    expect(restore.parentElement).toHaveClass("min-h-9");
+  });
+
   it("follows the edits: removing an item renames the log", async () => {
     await scan();
     fireEvent.click(screen.getByRole("button", { name: "Remove Avocado" }));

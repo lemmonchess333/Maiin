@@ -1128,7 +1128,11 @@ export default function FoodAnalyzer({
                           initial={reducedMotion ? false : { opacity: 0, y: 8 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ duration: 0.25 }}
-                          className="flex items-center justify-between gap-2 py-1"
+                          /* An item row's height, so Restore's tap area
+                             reaches past this row by the 4px the item
+                             controls reach past theirs: the areas meet
+                             between rows and never overlap. */
+                          className="flex min-h-9 items-center justify-between gap-2 py-1"
                         >
                           <p className="text-sm text-muted-foreground line-through truncate flex-1">
                             {item.name}
@@ -1137,7 +1141,9 @@ export default function FoodAnalyzer({
                             type="button"
                             onClick={() => restoreItem(i)}
                             aria-label={`Restore ${item.name}`}
-                            className="flex items-center gap-1 text-xs font-medium text-lifting-strong hover:opacity-80 transition-opacity active:scale-95 shrink-0 relative before:absolute before:-inset-3 before:content-['']"
+                            /* 16px of text, reaching 14px past it each
+                               side: a 44px tap area. */
+                            className="flex items-center gap-1 text-xs font-medium text-lifting-strong hover:opacity-80 transition-opacity active:scale-95 shrink-0 relative before:absolute before:-inset-3.5 before:content-['']"
                           >
                             <RotateCcw className="size-3" />
                             Restore
@@ -1207,7 +1213,12 @@ export default function FoodAnalyzer({
                             type="button"
                             onClick={() => removeItem(i)}
                             aria-label={`Remove ${item.name}`}
-                            className="size-7 relative before:absolute before:-inset-2 before:content-[''] rounded-full flex items-center justify-center text-muted-foreground hover:text-destructive-strong hover:bg-destructive/10 active:scale-90 transition-all shrink-0"
+                            /* ml-2 on top of the row's gap-2: + and this
+                               button each reach 8px past their box, so a
+                               16px gap lets the two reaches meet rather
+                               than overlap, where this one, drawn later,
+                               would take every tap. */
+                            className="ml-2 size-7 relative before:absolute before:-inset-2 before:content-[''] rounded-full flex items-center justify-center text-muted-foreground hover:text-destructive-strong hover:bg-destructive/10 active:scale-90 transition-all shrink-0"
                           >
                             <X className="size-3.5" />
                           </button>
