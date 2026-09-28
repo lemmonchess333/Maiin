@@ -1,15 +1,26 @@
+import { useRef, useState, type KeyboardEvent } from "react";
 import Card from "@/components/ui/Card";
 import { parseLocalDate } from "@/lib/dateHelpers";
 import { formatBinLabel } from "@/lib/chartGranularity";
+import {
+  distanceIn,
+  distanceUnitLabel,
+  type DistanceUnit,
+} from "@/lib/distanceUnits";
 import type {
   SummaryBin,
   SummaryChange,
   SummaryGranularity,
 } from "@/lib/periodSummary";
-import { formatDayMonth } from "@/utils/formatters";
+import { abbreviateK, formatDayMonth } from "@/utils/formatters";
 import { cn } from "@/lib/utils";
 
+/** What the bars can show: the three figures above them. */
+export type SummaryMetric = "sessions" | "volume" | "distance";
+
 export interface SummaryFigure {
+  /** Which bars this figure puts on the chart. */
+  metric: SummaryMetric;
   value: string;
   /** The words under the number: "sessions", "kg lifted", "km run". */
   unit: string;
@@ -43,14 +54,31 @@ function sessionsPhrase(lifts: number, runs: number): string {
   return parts.join(" and ");
 }
 
+/** A bin's kilograms as the figure writes them: "12.3k kg", "850 kg". */
+function kgPhrase(kg: number): string {
+  return `${abbreviateK(kg)} kg`;
+}
+
+function distancePhrase(metres: number, unit: DistanceUnit): string {
+  return `${distanceIn(metres, unit).toFixed(1)} ${distanceUnitLabel(unit)}`;
+}
+
 /**
  * The overview's period summary (DS3, "the month"): three headline
- * numbers with their change on the range before, then the sessions bar by
- * bar — lifting purple under running coral, and for the current week an
- * outline up to what the plan asks for.
+ * numbers with their change on the range before, then one of them bar by
+ * bar. The numbers are the switch: sessions draw lifting purple under
+ * running coral, with an outline on the current week up to what the plan
+ * asks for; kilograms draw the lifting alone and distance the running
+ * alone, so a climbing week or a quiet one shows in the measure the user
+ * trains by, not only in how often they trained.
  *
  * A drop reads in the muted text, not red: fewer sessions after a hard
  * block is a plan working, and green, amber and red are kept for status.
+ *
+ * The bars take their colours from classes, not `fill="hsl(var(…))"`:
+ * WKWebView does not reliably substitute var() in an SVG presentation
+ * attribute (see WaterContainerIcon), and the chart would draw nothing on
+ * the iPhone.
  */
 export default function PeriodSummaryCard({
   title,
@@ -59,6 +87,7 @@ export default function PeriodSummaryCard({
   bins,
   granularity,
   plannedThisWeek,
+  distanceUnit,
 }: {
   title: string;
   /** "the 30 days before" — what each change is measured against. */
@@ -72,27 +101,83 @@ export default function PeriodSummaryCard({
    * app made up.
    */
   plannedThisWeek: number;
+  /** The reader's distance unit, for the distance bars' description. */
+  distanceUnit: DistanceUnit;
 }) {
-  const showPlan = granularity === "weekly" && plannedThisWeek > 0;
+  const [metric, setMetric] = useState<SummaryMetric>("sessions");
+  const optionRefs = useRef<(HTMLButtonElement | null)[]>([]);
+
+  const showPlan =
+    metric === "sessions" && granularity === "weekly" && plannedThisWeek > 0;
+  const amount = (b: SummaryBin) =>
+    metric === "volume"
+      ? b.volumeKg
+      : metric === "distance"
+        ? b.distanceM
+        : b.lifts + b.runs;
   const peak = Math.max(
-    1,
+    Number.EPSILON,
     ...bins.map((b) =>
-      Math.max(b.lifts + b.runs, b.current && showPlan ? plannedThisWeek : 0)
+      Math.max(amount(b), b.current && showPlan ? plannedThisWeek : 0)
     )
   );
   const slot = CHART_W / Math.max(bins.length, 1);
   const barW = Math.min(24, slot * 0.6);
-  const unit = (CHART_H - GAP) / peak;
+  const scale = (CHART_H - GAP) / peak;
   /* Label every bar while they fit; past seven, every few, counted back
      from the current bar so it is always named. */
   const every = bins.length <= 7 ? 1 : Math.ceil(bins.length / 4);
-  const described = bins
-    .map(
-      (b) =>
-        `${binLabel(b, granularity)}: ${sessionsPhrase(b.lifts, b.runs)}` +
-        (b.current && showPlan ? `, ${plannedThisWeek} planned` : "")
-    )
-    .join("; ");
+
+  const describeBin = (b: SummaryBin) => {
+    const label = binLabel(b, granularity);
+    if (metric === "volume") return `${label}: ${kgPhrase(b.volumeKg)}`;
+    if (metric === "distance")
+      return `${label}: ${distancePhrase(b.distanceM, distanceUnit)}`;
+    return (
+      `${label}: ${sessionsPhrase(b.lifts, b.runs)}` +
+      (b.current && showPlan ? `, ${plannedThisWeek} planned` : "")
+    );
+  };
+  const chartName =
+    metric === "volume"
+      ? "Kilograms lifted"
+      : metric === "distance"
+        ? "Distance run"
+        : "Sessions";
+  const selectedIndex = Math.max(
+    0,
+    figures.findIndex((f) => f.metric === metric)
+  );
+
+  function choose(index: number) {
+    const figure = figures[index];
+    if (!figure) return;
+    optionRefs.current[index]?.focus();
+    setMetric(figure.metric);
+  }
+
+  /* The WAI-ARIA radio group, as SegmentedControl implements it: the
+     arrows move the choice and the focus together, wrapping. */
+  function onKeyDown(event: KeyboardEvent, index: number) {
+    const last = figures.length - 1;
+    const target =
+      event.key === "ArrowRight" || event.key === "ArrowDown"
+        ? index === last
+          ? 0
+          : index + 1
+        : event.key === "ArrowLeft" || event.key === "ArrowUp"
+          ? index === 0
+            ? last
+            : index - 1
+          : event.key === "Home"
+            ? 0
+            : event.key === "End"
+              ? last
+              : null;
+    if (target === null) return;
+    event.preventDefault();
+    choose(target);
+  }
 
   return (
     <Card as="section" aria-label={title} className="space-y-4">
@@ -103,36 +188,65 @@ export default function PeriodSummaryCard({
         </p>
       </div>
 
-      <div className="grid grid-cols-3 gap-2">
-        {figures.map((f) => (
-          <div key={f.unit} className="min-w-0">
-            <p className="text-h2 font-extrabold font-mono tabular-nums leading-tight text-foreground">
-              {f.value}
-            </p>
-            <p className="text-sm text-muted-foreground truncate">{f.unit}</p>
-            {f.change && (
-              <p
-                className={cn(
-                  "text-xs font-semibold",
-                  f.change.direction === "up"
-                    ? "text-success-strong"
-                    : "text-muted-foreground"
-                )}
-              >
-                <span aria-hidden="true">
-                  {f.change.direction === "up" ? "↑" : "↓"}{" "}
-                  <span className="font-mono tabular-nums">
-                    {f.change.text}
+      {/* The figures are the chart's switch. Their backgrounds reach into
+          the card's padding, so the numbers still start on the title's
+          edge. */}
+      <div
+        role="radiogroup"
+        aria-label="Show on the chart"
+        className="-mx-2 grid grid-cols-3 gap-1"
+      >
+        {figures.map((f, i) => {
+          const selected = i === selectedIndex;
+          return (
+            <button
+              key={f.metric}
+              ref={(el) => {
+                optionRefs.current[i] = el;
+              }}
+              type="button"
+              role="radio"
+              aria-checked={selected}
+              tabIndex={selected ? 0 : -1}
+              onClick={() => choose(i)}
+              onKeyDown={(event) => onKeyDown(event, i)}
+              className={cn(
+                "min-w-0 rounded-xl px-2 py-2 text-left",
+                "active:scale-[0.97] motion-safe:transition-[background-color,transform]",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
+                selected && "bg-muted"
+              )}
+            >
+              <span className="block text-h2 font-extrabold font-mono tabular-nums leading-tight text-foreground">
+                {f.value}
+              </span>
+              <span className="block text-sm text-muted-foreground truncate">
+                {f.unit}
+              </span>
+              {f.change && (
+                <span
+                  className={cn(
+                    "block text-xs font-semibold",
+                    f.change.direction === "up"
+                      ? "text-success-strong"
+                      : "text-muted-foreground"
+                  )}
+                >
+                  <span aria-hidden="true">
+                    {f.change.direction === "up" ? "↑" : "↓"}{" "}
+                    <span className="font-mono tabular-nums">
+                      {f.change.text}
+                    </span>
+                  </span>
+                  <span className="sr-only">
+                    {f.change.direction === "up" ? "Up" : "Down"}{" "}
+                    {f.change.text} on {comparedWith}
                   </span>
                 </span>
-                <span className="sr-only">
-                  {f.change.direction === "up" ? "Up" : "Down"} {f.change.text}{" "}
-                  on {comparedWith}
-                </span>
-              </p>
-            )}
-          </div>
-        ))}
+              )}
+            </button>
+          );
+        })}
       </div>
 
       {bins.length > 0 && (
@@ -141,17 +255,28 @@ export default function PeriodSummaryCard({
             viewBox={`0 0 ${CHART_W} ${CHART_H}`}
             width="100%"
             role="img"
-            aria-label={`Sessions: ${described}`}
+            aria-label={`${chartName}: ${bins.map(describeBin).join("; ")}`}
+            data-metric={metric}
           >
             {bins.map((b, i) => {
               const x = i * slot + (slot - barW) / 2;
-              const liftH = b.lifts * unit;
-              const runH = b.runs * unit;
-              const done = b.lifts + b.runs;
+              const done = amount(b);
               const planH =
                 b.current && showPlan && plannedThisWeek > done
-                  ? plannedThisWeek * unit
+                  ? plannedThisWeek * scale
                   : 0;
+              const liftH =
+                metric === "volume"
+                  ? b.volumeKg * scale
+                  : metric === "sessions"
+                    ? b.lifts * scale
+                    : 0;
+              const runH =
+                metric === "distance"
+                  ? b.distanceM * scale
+                  : metric === "sessions"
+                    ? b.runs * scale
+                    : 0;
               return (
                 <g key={b.key}>
                   {planH > 0 && (
@@ -162,7 +287,7 @@ export default function PeriodSummaryCard({
                       height={planH - 1.5}
                       rx={4}
                       fill="none"
-                      stroke="hsl(var(--muted-foreground))"
+                      className="stroke-muted-foreground"
                       strokeWidth={1.5}
                       strokeDasharray="3 3"
                     />
@@ -174,7 +299,7 @@ export default function PeriodSummaryCard({
                       width={barW}
                       height={3}
                       rx={1.5}
-                      fill="hsl(var(--muted))"
+                      className="fill-muted"
                     />
                   )}
                   {liftH > 0 && (
@@ -182,9 +307,9 @@ export default function PeriodSummaryCard({
                       x={x}
                       y={CHART_H - liftH}
                       width={barW}
-                      height={liftH}
+                      height={Math.max(liftH, 1)}
                       rx={4}
-                      fill="hsl(var(--lifting))"
+                      className="fill-lifting"
                     />
                   )}
                   {runH > 0 && (
@@ -194,7 +319,7 @@ export default function PeriodSummaryCard({
                       width={barW}
                       height={Math.max(runH - (liftH > 0 ? GAP : 0), 1)}
                       rx={4}
-                      fill="hsl(var(--running))"
+                      className="fill-running"
                     />
                   )}
                 </g>
@@ -228,14 +353,20 @@ export default function PeriodSummaryCard({
             className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground"
             aria-hidden="true"
           >
-            <span className="inline-flex items-center gap-1.5">
-              <span className="size-2 rounded-full bg-lifting" />
-              Lifts
-            </span>
-            <span className="inline-flex items-center gap-1.5">
-              <span className="size-2 rounded-full bg-running" />
-              Runs
-            </span>
+            {metric !== "distance" && (
+              <span className="inline-flex items-center gap-1.5">
+                <span className="size-2 rounded-full bg-lifting" />
+                {metric === "volume" ? "kg lifted" : "Lifts"}
+              </span>
+            )}
+            {metric !== "volume" && (
+              <span className="inline-flex items-center gap-1.5">
+                <span className="size-2 rounded-full bg-running" />
+                {metric === "distance"
+                  ? `${distanceUnitLabel(distanceUnit)} run`
+                  : "Runs"}
+              </span>
+            )}
             {showPlan && (
               <span className="inline-flex items-center gap-1.5">
                 <span className="size-2 rounded-full border border-dashed border-muted-foreground" />
