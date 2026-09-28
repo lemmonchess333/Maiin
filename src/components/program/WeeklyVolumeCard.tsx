@@ -8,7 +8,7 @@ import {
   judgementLandmark,
   classifyVolume,
   JUDGEMENT_MUSCLE_ORDER,
-  type JudgementMuscle,
+  JUDGEMENT_MUSCLE_LABEL,
   type VolumeStatus,
 } from "@/features/program/volumeModel";
 import type { WorkoutDay } from "@/features/program/programTypes";
@@ -47,24 +47,6 @@ const STATUS_LABEL: Record<VolumeStatus, string> = {
   low: "below target",
   optimal: "on target",
   high: "high",
-};
-
-/** Display names for the judgement groups. */
-const MUSCLE_LABEL: Record<JudgementMuscle, string> = {
-  Chest: "Chest",
-  FrontDelts: "Front delts",
-  SideDelts: "Side delts",
-  RearDelts: "Rear delts",
-  Lats: "Lats",
-  UpperBack: "Upper back",
-  LowerBack: "Lower back",
-  Biceps: "Biceps",
-  Triceps: "Triceps",
-  Quads: "Quads",
-  Hamstrings: "Hamstrings",
-  Glutes: "Glutes",
-  Calves: "Calves",
-  Abs: "Abs",
 };
 
 export default function WeeklyVolumeCard({
@@ -148,7 +130,7 @@ export default function WeeklyVolumeCard({
             return (
               <div key={muscle} className="flex items-center gap-3">
                 <span className="text-sm text-foreground w-24 shrink-0">
-                  {MUSCLE_LABEL[muscle]}
+                  {JUDGEMENT_MUSCLE_LABEL[muscle]}
                 </span>
                 <div className="flex-1 h-1.5 rounded-full bg-muted overflow-hidden">
                   <div

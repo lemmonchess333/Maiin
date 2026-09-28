@@ -100,4 +100,14 @@ describe("History — Lifetime tiles", () => {
       "DESIGN_GUIDE: never mix 700 and 800 in the same visual tier"
     ).not.toMatch(/text-xs font-bold/);
   });
+
+  it("writes the distance in the reader's unit, never a literal km", () => {
+    // It read "km" to a miles runner, over a figure in kilometres.
+    const section = lifetimeSection();
+    expect(section).toMatch(
+      /distanceIn\(\s*lifetimeTotals\.runKm \* 1000,\s*unit\s*\)/
+    );
+    expect(section).toMatch(/distanceUnitLabel\(unit\)/);
+    expect(section).not.toMatch(/>\s*km\s*</);
+  });
 });

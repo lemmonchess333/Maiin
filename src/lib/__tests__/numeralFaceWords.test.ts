@@ -10,10 +10,12 @@ import { fileURLToPath } from "node:url";
  * proportional with tabular figures forced on — it buys digit alignment and
  * nothing else. On a word it buys nothing and quietly says "this is a
  * readout" about something that is not one. CLAUDE.md scopes the treatment
- * to numeric displays, and `PeriodOverview.test.tsx` already asserts it for
- * that card's column labels ("NOT font-mono: this is a word, and that
+ * to numeric displays, and the Analytics summary card's own test asserted it
+ * for its column labels ("NOT font-mono: this is a word, and that
  * treatment is scoped to numerals") — one card holding a rule the rest of
- * the tree was free to break.
+ * the tree was free to break. (That card is now `PeriodSummaryCard`, and
+ * `PeriodSummaryCard.test.tsx` carries the same assertion for its unit
+ * words.)
  *
  * Two sites had: the macro donut's centre label ("avg") and the
  * leaderboard's period chip ("This week"). Both sit BESIDE the figures

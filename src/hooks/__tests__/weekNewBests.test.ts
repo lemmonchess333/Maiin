@@ -1,10 +1,10 @@
 /**
- * countWeekPRs — the weekly recap's "PRs hit" number.
+ * weekNewBests — the weekly recap's new bests: how many the week's
+ * sessions fired, and the one its Best moment card shows.
  *
- * A pure function that had no test, exported from a hook module — the same
- * unreachability that kept `nextVolumeBest` and `exerciseFromRoutine`
- * unpinned until they moved. It stays here because the module boundary is
- * fine; only the coverage was missing.
+ * The count was `countWeekPRs` until DS3's recap needed the best itself
+ * as well; the count is now read off the same pass, so the two cannot
+ * disagree about which sets counted.
  *
  * What it must replay is the LIVE gate: the recap is a claim about what
  * that week's sessions celebrated, and the sessions refuse warm-ups and
@@ -22,7 +22,13 @@ vi.mock("@/lib/logger", () => ({
   logger: { warn: vi.fn(), error: vi.fn(), info: vi.fn() },
 }));
 
-import { countWeekPRs } from "../useWeeklyReview";
+import { weekNewBests } from "../useWeeklyReview";
+
+type Docs = Parameters<typeof weekNewBests>[0];
+
+/** The count half: how many new bests the week fired. */
+const countWeekPRs = (baseline: Docs, week: Docs) =>
+  weekNewBests(baseline, week).count;
 
 /** ≥3 baseline sessions so the min-session gate is open. */
 function baseline(exerciseName: string, weightKg: number, reps: number) {
@@ -32,7 +38,7 @@ function baseline(exerciseName: string, weightKg: number, reps: number) {
   }));
 }
 
-describe("countWeekPRs", () => {
+describe("weekNewBests — how many the week fired", () => {
   it("counts a working set that beats the baseline", () => {
     expect(
       countWeekPRs(baseline("Bench", 100, 5), [
@@ -141,5 +147,85 @@ describe("countWeekPRs", () => {
         },
       ])
     ).toBe(1);
+  });
+});
+
+describe("weekNewBests — the recap's Best moment", () => {
+  const session = (
+    date: string,
+    sets: { exerciseName: string; weightKg: number; reps: number }[]
+  ) => ({
+    date,
+    exercises: sets.map(({ exerciseName, weightKg, reps }) => ({
+      exerciseName,
+      sets: [{ weightKg, reps, type: "working" }],
+    })),
+  });
+
+  it("names the best that moved furthest past what it beat", () => {
+    const history = [
+      ...baseline("Bench", 100, 5),
+      ...baseline("Squat", 140, 5),
+    ];
+    const { count, best } = weekNewBests(history, [
+      // Bench 100 -> 102.5 at 5 reps is +2.5%; squat 140 -> 150 is +7.1%.
+      session("2026-08-11", [
+        { exerciseName: "Bench", weightKg: 102.5, reps: 5 },
+      ]),
+      session("2026-08-13", [
+        { exerciseName: "Squat", weightKg: 150, reps: 5 },
+      ]),
+    ]);
+    expect(count).toBe(2);
+    expect(best).toEqual({
+      exerciseId: null,
+      exerciseName: "Squat",
+      weight: 150,
+      reps: 5,
+      date: "2026-08-13",
+      // The best dates from the session that first set it; matching it
+      // later does not move it.
+      previous: { weight: 140, reps: 5, date: "2026-07-01" },
+    });
+  });
+
+  it("measures the gain against the best it beat, not the heavier lift", () => {
+    // 20 kg on curls is a smaller number than 150 kg on squat, and the
+    // bigger step: +25% against +3.6%.
+    const { best } = weekNewBests(
+      [...baseline("Curl", 16, 8), ...baseline("Squat", 145, 5)],
+      [
+        session("2026-08-11", [
+          { exerciseName: "Squat", weightKg: 150, reps: 5 },
+          { exerciseName: "Curl", weightKg: 20, reps: 8 },
+        ]),
+      ]
+    );
+    expect(best?.exerciseName).toBe("Curl");
+  });
+
+  it("gives a tie to the later session", () => {
+    const { best } = weekNewBests(
+      [...baseline("Bench", 100, 5), ...baseline("Row", 100, 5)],
+      [
+        session("2026-08-11", [
+          { exerciseName: "Bench", weightKg: 105, reps: 5 },
+        ]),
+        session("2026-08-14", [
+          { exerciseName: "Row", weightKg: 105, reps: 5 },
+        ]),
+      ]
+    );
+    expect(best?.exerciseName).toBe("Row");
+  });
+
+  it("is empty when nothing beat a best", () => {
+    expect(
+      weekNewBests(baseline("Bench", 100, 5), [
+        session("2026-08-11", [
+          { exerciseName: "Bench", weightKg: 95, reps: 5 },
+        ]),
+      ])
+    ).toEqual({ count: 0, best: null });
   });
 });

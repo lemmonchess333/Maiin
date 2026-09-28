@@ -49,11 +49,15 @@ const ANALYTICS_PAGES: Record<
 const ORDER: AnalyticsPage[] = ["lifting", "running", "body", "food"];
 
 /** The overview's way into the four pages: a two-by-two of plain cards,
- *  each an icon in its discipline's colour over a name and what it holds. */
+ *  each an icon in its discipline's colour over a name and one line: what
+ *  the page holds for this user when there is something (`goDeeperLines`),
+ *  otherwise what it holds at all. */
 export default function AnalyticsGoDeeper({
   onOpen,
+  lines = {},
 }: {
   onOpen: (page: AnalyticsPage) => void;
+  lines?: Partial<Record<AnalyticsPage, string>>;
 }) {
   return (
     <section aria-label="Go deeper" className="space-y-2">
@@ -79,7 +83,9 @@ export default function AnalyticsGoDeeper({
               <span className="text-base font-bold text-foreground">
                 {title}
               </span>
-              <span className="text-sm text-muted-foreground">{detail}</span>
+              <span className="text-sm text-muted-foreground">
+                {lines[page] ?? detail}
+              </span>
             </button>
           );
         })}

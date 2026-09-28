@@ -192,7 +192,7 @@ describe("capture specs — theme toggles settle before the shot", () => {
  * Adoption is one `await settleFullPageHeight(page)` before the shot. The
  * count below must not GROW; lower it as specs adopt the helper.
  */
-const UNSETTLED_FULLPAGE_SPECS = 16;
+const UNSETTLED_FULLPAGE_SPECS = 15;
 
 describe("capture specs — fullPage shots settle the document height", () => {
   const files = specFiles(e2eRoot);

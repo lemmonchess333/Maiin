@@ -86,15 +86,15 @@ describe("getVerb — state + label", () => {
 });
 
 describe("getLine — backing-off state", () => {
-  it("recoveryWeak signal: 'Recovery signals down — ease this week'", () => {
+  it("recoveryWeak signal: names the recovery score", () => {
     expect(
       getLine("backing-off", { ...ZERO_SIGNALS, recoveryWeak: true })
-    ).toBe("Recovery signals down — ease this week");
+    ).toBe("Recovery score is low — ease off this week");
   });
 
-  it("no recoveryWeak: generic 'Loads high — ease this week'", () => {
+  it("no recoveryWeak: the load", () => {
     expect(getLine("backing-off", ZERO_SIGNALS)).toBe(
-      "Loads high — ease this week"
+      "Load is high — ease off this week"
     );
   });
 });
@@ -111,7 +111,7 @@ describe("getLine — sharpening state", () => {
       ...ZERO_SIGNALS,
       liftAheadOfBaseline: 0.18,
     });
-    expect(line).toBe("Lifting load 18% above baseline");
+    expect(line).toBe("Lifting volume 18% above your usual week");
   });
 
   it("runAheadOfBaseline > 0.2: cites the percentage", () => {
@@ -119,7 +119,7 @@ describe("getLine — sharpening state", () => {
       ...ZERO_SIGNALS,
       runAheadOfBaseline: 0.25,
     });
-    expect(line).toBe("Run volume 25% up");
+    expect(line).toBe("Running distance 25% above your usual week");
   });
 
   it("bothLoadsStrong takes precedence over individual aheadOfBaseline", () => {
@@ -132,22 +132,20 @@ describe("getLine — sharpening state", () => {
     expect(line).toBe("Lifting and running both strong this week");
   });
 
-  it("no signals: generic 'Strong week — keep it going'", () => {
-    expect(getLine("sharpening", ZERO_SIGNALS)).toBe(
-      "Strong week — keep it going"
-    );
+  it("no signals: says what the band means, with no cheer", () => {
+    expect(getLine("sharpening", ZERO_SIGNALS)).toBe("Load is high this week");
   });
 
   it("liftAheadOfBaseline at exactly 0.15 falls through (strict >)", () => {
     expect(
       getLine("sharpening", { ...ZERO_SIGNALS, liftAheadOfBaseline: 0.15 })
-    ).toBe("Strong week — keep it going");
+    ).toBe("Load is high this week");
   });
 
   it("runAheadOfBaseline at exactly 0.2 falls through (strict >)", () => {
     expect(
       getLine("sharpening", { ...ZERO_SIGNALS, runAheadOfBaseline: 0.2 })
-    ).toBe("Strong week — keep it going");
+    ).toBe("Load is high this week");
   });
 });
 

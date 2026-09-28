@@ -21,6 +21,7 @@ import { signInAsTestUser } from "../helpers/auth";
 import { test, expect, type Page } from "@playwright/test";
 import { emulatorActive } from "../helpers/emulator";
 import { suppressCoachmarks } from "../helpers/suppressCoachmarks";
+import { settleFullPageHeight } from "../helpers/settleHeight";
 
 const AUTH_HOST = process.env.FIREBASE_AUTH_EMULATOR_HOST ?? "127.0.0.1:9099";
 const FS_HOST = process.env.FIRESTORE_EMULATOR_HOST ?? "127.0.0.1:8080";
@@ -254,9 +255,9 @@ test.describe("analytics tab screenshots", () => {
       exact: true,
     });
     await page.getByRole("button", { name: /^Lifting/ }).click();
-    await expect(page.getByText("Monthly volume", { exact: true })).toBeVisible(
-      { timeout: 15_000 }
-    );
+    await expect(
+      page.getByRole("heading", { name: "Volume", exact: true })
+    ).toBeVisible({ timeout: 15_000 });
     await expect(page.getByText("2.2k").first()).toBeVisible();
     await expect(page.locator('[class*="animate-pulse"]')).toHaveCount(0, {
       timeout: 30_000,
@@ -266,7 +267,7 @@ test.describe("analytics tab screenshots", () => {
 
     await page.getByRole("button", { name: /^Running/ }).click();
     await expect(
-      page.getByText("Monthly distance", { exact: true })
+      page.getByRole("heading", { name: "Distance", exact: true })
     ).toBeVisible({ timeout: 15_000 });
     await expect(page.getByText("5.2").first()).toBeVisible();
     await overview.click();
@@ -376,8 +377,31 @@ test.describe("analytics tab screenshots", () => {
       timeout: 30_000,
     });
 
-    /* The surfaces a cold-start user does not have at all. */
-    await expect(page.getByText("Performance Index").first()).toBeVisible();
+    /* The overview's cards (DS3): the week's index, the range's summary,
+       the trends and the muscles. The rich seed carries all four; a
+       cold-start account has none of them. */
+    await expect(
+      page.getByRole("heading", { name: "Performance", exact: true })
+    ).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Last 30 days" })
+    ).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Trends" })).toBeVisible();
+    await expect(
+      page
+        .getByRole("region", { name: "Muscles trained" })
+        .getByRole("listitem")
+        .first()
+    ).toBeVisible({ timeout: 15_000 });
+    await settleFullPageHeight(page);
+    await shootBoth(page, "analytics-rich");
+
+    /* The index's gauge, chart and training load moved to the
+       Performance page, one tap from the overview's card. */
+    await page.getByRole("button", { name: "Details", exact: true }).click();
+    await expect(
+      page.getByRole("heading", { name: "Performance Index" })
+    ).toBeVisible({ timeout: 15_000 });
     await expect(
       page.getByRole("heading", { name: "Training load" })
     ).toBeVisible();
@@ -410,7 +434,9 @@ test.describe("analytics tab screenshots", () => {
         `label is clipped`
     ).toBeGreaterThanOrEqual(svgBox!.x);
 
-    await shootBoth(page, "analytics-rich");
+    await settleFullPageHeight(page);
+    await shootBoth(page, "analytics-performance");
+    await page.getByRole("button", { name: "Overview", exact: true }).click();
 
     /* The PRs tab's STEADY state, which nothing filmed either.
        "PRs tab states its units" above signs up a fresh account and

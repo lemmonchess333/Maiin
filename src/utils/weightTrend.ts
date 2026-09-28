@@ -1,4 +1,12 @@
-import { localDateString } from "@/lib/dateHelpers";
+import {
+  addLocalDays,
+  localDateString,
+  localWeekKey,
+  parseLocalDate,
+  startOfLocalWeek,
+} from "@/lib/dateHelpers";
+import { attestedWeeklyRateKg } from "@/lib/goalWeightPlan";
+import { computeDataConfidence } from "@/lib/dataConfidence";
 export interface WeightTrend {
   current: number;
   avg7d: number;
@@ -84,21 +92,37 @@ export function calculateEMA(
 }
 
 /**
- * Goal weight implied by the programme: startWeight −5kg for a cut,
- * +3kg for a lean bulk, startWeight itself for maintain. Extracted
- * from TrendWeight (Rev1) so the Weekly Review derives the SAME goal
- * the Progress chart shows — one source of truth, no drift.
+ * The goal weight the USER set (Settings → Nutrition), or none.
+ *
+ * The weight chart and the Weekly Review derived one instead:
+ * the programme's start weight less 5 kg for a cut, plus 3 kg for a lean
+ * bulk, the start weight itself otherwise. The user's own target has been
+ * stored since the goal-weight plan shipped (`goalWeightKg`, written with
+ * its signed `weeklyRateKg` and the phase by `buildGoalWeightPersistPayload`)
+ * and owns the nutrition direction, but neither surface read it: someone
+ * cutting from 90 kg to 78 kg was told they were "7 kg to goal" at 82 kg,
+ * against a goal of 85 they never set.
+ *
+ * A goal counts when the user is travelling toward it: a rate the phase
+ * agrees with (`attestedWeeklyRateKg`). Onboarding stores the signup
+ * weight as the target with a rate of 0, which is maintenance, not a
+ * goal, and a maintainer is shown none.
  */
-export function deriveGoalWeightKg(
-  program:
-    | { startWeight?: number | null; goal?: string | null }
+export function userGoalWeightKg(
+  profile:
+    | {
+        goalWeightKg?: number | null;
+        weeklyRateKg?: number | null;
+        program?: { goal?: string } | null;
+      }
     | null
     | undefined
 ): number | undefined {
-  if (!program?.startWeight) return undefined;
-  if (program.goal === "cut") return program.startWeight - 5;
-  if (program.goal === "lean bulk") return program.startWeight + 3;
-  return program.startWeight;
+  const goal = profile?.goalWeightKg;
+  if (typeof goal !== "number" || !Number.isFinite(goal) || goal <= 0)
+    return undefined;
+  if (attestedWeeklyRateKg(profile) === null) return undefined;
+  return goal;
 }
 
 export interface GoalProjection {
@@ -129,14 +153,12 @@ export function projectGoalDate(args: {
   if (!hasProjection) return null;
   if (trendSeries.length < 2) return null;
 
-  const first = trendSeries[0];
   const last = trendSeries[trendSeries.length - 1];
-  const daysSpan =
-    (new Date(last.date).getTime() - new Date(first.date).getTime()) /
-    (1000 * 60 * 60 * 24);
-  if (daysSpan <= 0) return null;
-
-  const slope = (last.trend - first.trend) / daysSpan; // kg/day
+  // The CURRENT rate, the one the Body page states beside this date: a
+  // year that held a bulk and then a cut is not moving at its average.
+  const rate = recentWeeklyRate(trendSeries);
+  if (!rate) return null;
+  const slope = rate.kgPerWeek / 7; // kg/day
   const remaining = goalWeight - last.trend; // +ve if goal is higher
   if (slope === 0) return null;
   // Directions mismatch → not on track for goal, suppress.
@@ -153,4 +175,123 @@ export function projectGoalDate(args: {
     year: eta.getFullYear() !== now.getFullYear() ? "numeric" : undefined,
   });
   return { date: dateLabel, weeks: Math.round(daysToGoal / 7) };
+}
+
+/** The span a "current" rate is read over: four weeks, long enough that a
+ *  week of water weight does not swing it, short enough to be now. */
+export const RATE_WINDOW_DAYS = 28;
+
+/** Under this many kg a week the trend reads as holding. */
+export const STEADY_RATE_KG = 0.05;
+
+const DAY_MS = 86_400_000;
+
+/**
+ * How fast the trend weight is moving, in kg a week: from the trend at the
+ * newest point to the trend at the latest point `days` or more before it,
+ * or the first point when the history is shorter. The goal projection and
+ * the Body page's rate both read this, so "at this rate" names the rate
+ * the page states. Null without two points on different days.
+ */
+export function recentWeeklyRate(
+  points: readonly { date: string; trend: number }[],
+  days: number = RATE_WINDOW_DAYS
+): { kgPerWeek: number; fromDate: string; toDate: string } | null {
+  if (points.length < 2) return null;
+  const last = points[points.length - 1];
+  const cutoff = localDateString(
+    addLocalDays(parseLocalDate(last.date), -days)
+  );
+  let from = points[0];
+  for (const p of points) {
+    if (p.date > cutoff) break;
+    from = p;
+  }
+  const spanDays = Math.round(
+    (parseLocalDate(last.date).getTime() -
+      parseLocalDate(from.date).getTime()) /
+      DAY_MS
+  );
+  if (spanDays <= 0) return null;
+  return {
+    kgPerWeek: ((last.trend - from.trend) / spanDays) * 7,
+    fromDate: from.date,
+    toDate: last.date,
+  };
+}
+
+/**
+ * The rate, when the history can carry one: the weight chart's own gate
+ * for a projection (T3, a month of history and five weigh-ins), since
+ * below it a rate is two noisy mornings. The Body page's card and the
+ * overview's Body tile both read this, so neither states a rate the other
+ * would not.
+ */
+export function currentWeightRate(
+  points: readonly { date: string; trend: number }[]
+): { kgPerWeek: number; fromDate: string; toDate: string } | null {
+  if (points.length < 2) return null;
+  const windowDays = Math.round(
+    (parseLocalDate(points[points.length - 1].date).getTime() -
+      parseLocalDate(points[0].date).getTime()) /
+      DAY_MS
+  );
+  const { hasProjection } = computeDataConfidence({
+    pointsInWindow: points.length,
+    pointsInPriorWindow: 0,
+    windowDays,
+  });
+  return hasProjection ? recentWeeklyRate(points) : null;
+}
+
+export interface WeekAverage {
+  /** The week's Monday, "YYYY-MM-DD". */
+  weekKey: string;
+  /** The mean of the week's weigh-ins, in kg. */
+  averageKg: number;
+  weighIns: number;
+  /** Against the week before's average, when that week had weigh-ins. */
+  changeKg: number | null;
+  /** The week holding today, still going. */
+  current: boolean;
+}
+
+/**
+ * The weigh-ins averaged by Monday week, newest first: the number a
+ * weekly weigher and a daily one can both compare, since a single morning
+ * swings by more than a week's real change. Weeks without a weigh-in are
+ * left out rather than shown as zero, and a week's change is against the
+ * week before only when that week was weighed.
+ */
+export function weeklyWeightAverages(
+  weighIns: readonly { date: string; actual: number }[],
+  { today, limit = 6 }: { today: Date; limit?: number }
+): WeekAverage[] {
+  const byWeek = new Map<string, number[]>();
+  for (const w of weighIns) {
+    if (!(w.actual > 0) || !Number.isFinite(w.actual)) continue;
+    const key = localWeekKey(parseLocalDate(w.date));
+    const list = byWeek.get(key) ?? [];
+    list.push(w.actual);
+    byWeek.set(key, list);
+  }
+  const currentKey = localWeekKey(today);
+  const keys = [...byWeek.keys()].sort().reverse().slice(0, limit);
+  return keys.map((key) => {
+    const list = byWeek.get(key)!;
+    const averageKg = list.reduce((a, b) => a + b, 0) / list.length;
+    const previousKey = localWeekKey(
+      addLocalDays(startOfLocalWeek(parseLocalDate(key)), -7)
+    );
+    const previous = byWeek.get(previousKey);
+    return {
+      weekKey: key,
+      averageKg,
+      weighIns: list.length,
+      changeKg: previous
+        ? averageKg - previous.reduce((a, b) => a + b, 0) / previous.length
+        : null,
+      current: key === currentKey,
+    };
+  });
 }
