@@ -2186,7 +2186,17 @@ work. Step 1 cannot fix it now: with the rules already live, `firebase
 deploy --only storage` skips the upload, and the permission check only
 runs on the upload path.
 
-- [ ] **Confirm the role, or grant it.** Quickest check: change the
+**STATUS 2026-09-28 — the role is in place; no grant is needed.** Deploy
+production run 36443298145 (the #2495 merge) ran the new check, `Confirm
+Storage rules can read Firestore`, before it released the rules, and the
+check passed. It reads the live IAM policy, and it passes only when the
+Storage service agent holds `roles/firebaserules.firestoreServiceAgent`
+unconditionally, so photo uploads and deletes work. Nothing records when
+or how the role was granted. Every backend release repeats the check.
+
+- [x] **Confirm the role, or grant it.** Confirmed 2026-09-28 by the
+      release check (STATUS above). The steps stay for the day a release
+      stops at that check again. Quickest check: change the
       profile photo in the production app — the toast "Upload not
       permitted…" means the role is missing. Or, in GCP Console → IAM
       with "Include Google-provided role grants" ticked, look for
