@@ -85,7 +85,7 @@ exists — pinned by `claudeMdFreshness.test.ts` in both directions
 | -------------------------------------- | ---------------------------------- | ------------------------------------------------------------------------------ |
 | `Home.tsx`                             | `/`                                | Main dashboard — WeekStrip, hero cards, energy, insights                       |
 | `Food.tsx`                             | `/food`                            | Food/meal logging with camera, NL parsing, barcode (`/log` redirects here)     |
-| `History.tsx`                          | `/history`                         | Workout & run history with analytics charts                                    |
+| `History.tsx`                          | `/history`                         | Analytics: an overview, with Lifting / Running / Body / Food pages (`?view=`)  |
 | `ExerciseHistory.tsx`                  | `/history/exercise/:name`          | Per-exercise progression chart + rep-bucket PR strip                           |
 | `Program.tsx`                          | `/program`                         | Workout program builder & scheduling                                           |
 | `Routine.tsx`                          | `/routine/:routineId`              | Saved-routine workout runner (reuses `WorkoutSession`)                         |
@@ -266,7 +266,7 @@ Helper: `syncChallengeProgress()` — auto-updates challenge participant progres
 - **Lib functions:** Named exports, camelCase filenames
 - **Tests:** Colocated in `__tests__/` directories, `*.test.ts` suffix
 - **Styling:** Tailwind utility classes, `THEME` object from `src/lib/theme.ts` for chart colors
-- **Icons:** lucide-react (import individual icons)
+- **Icons:** lucide-react (import individual icons). The drawn exceptions live in `src/components/icons/`: the tab bar's own set (`TabIcons.tsx`, an outline and a filled form each) and the avocado macro icon; the brand mark is `ui/BrandMark.tsx`
 - **Toasts:** sonner (`toast.success()`, `toast.error()`)
 - **UI patterns:** Drawer (vaul), bottom sheets, pressable cards
 - **Class names:** `clsx()` + `twMerge()` for conditional/merged Tailwind classes
@@ -636,7 +636,7 @@ held to it, so it is now the APP-WIDE standard, not an insights-file local:
 - **Light mode:** The opt-in alternate (selectable in Settings → writes `profile.darkMode = false`). It's a clean, warm, iOS-inspired look (#F2F2F7 grouped background, cards on white — minimal and calm with subtle depth, NOT a dark-glass app rendered light). Default-dark is applied pre-React in `public/init.js` (dark unless an explicit `"false"` is stored) and mirrored by the `profile.darkMode` defaults in `src/lib/auth.tsx`.
 - **Brand colour:** Purple #7B72E9 — used sparingly for accents, active tab indicators, CTAs, progress bars. Never as full backgrounds except gradient CTA buttons.
 - **Sport-coding:** Lifting = purple (#7B72E9), Running = coral (#D4637A). These two colours appear in calendar dots, section headings, icon tints, and contextual cards.
-- **Logo:** Purple gradient hexagon with upward chevron cutout. Top-left of home screen with "TROPOS" wordmark.
+- **Logo:** Purple gradient hexagon with upward chevron cutout — the app icon and the sign-in screens. Home no longer carries the "TROPOS" wordmark: DS3 titles it with the date and "Today", and the user's initials open Settings. The mark itself signs Home, small, before the date (`BrandMark`, the app icon's geometry), so "Today" keeps the left edge the cards below it start on.
 
 ### Colour System (src/styles/tokens.css + src/lib/theme.ts)
 
@@ -691,11 +691,11 @@ held to it, so it is now the APP-WIDE standard, not an insights-file local:
   a Tailwind shadow COLOUR, not a shadow, and cards that used it were flat.
   The elevation utility is `card-shadow`.
 - **Hero card (Health Score, Water):** `Card` (hero), larger icon (48px container), icon in purple-tinted bg square
-- **Compact tile (Weight, Steps):** `Card size="compact" tone="muted"` (one step darker than the page), 2-col grid
-- **CTA card (Today's workout/run/rest):** `cardClasses({ tone: "tinted" })` — the hero pairing with the sport-coloured 8% wash painted at the call site, Play button pill right-aligned. All three sit on one radius now; Lift and Run were rounded-xl beside a rounded-2xl Rest.
-- **Quick actions:** there is no longer a pill row. Today's actions are
-  the sport-coloured CTA cards (`LiftCTACard` / `RunCTACard`), and food
-  logging is the "Log food" action at the foot of `TodayEnergy`.
+- **Compact tile (Weight, Steps):** the compact pairing on the card surface (`bg-card card-shadow`), 2-col grid. It sat one step darker than the page (`tone="muted"`) until DS3 deepened the dark surfaces, where a muted tile read as a hole beside the cards around it.
+- **Today card (`LiftCTACard` / `RunCTACard`, DS3):** the hero radius with the sport's 12% wash (`bg-lifting/12`, `bg-running/12`), the session as a 25px title, its dose ("5 exercises · about 50 min", "5 km · about 30 min") and a full-width Start (`primary` for a lift, `sport` for a run). Start begins the session (`/program?day=N&start=1`, `/run?template=…`); the rest of the card is a sibling button that opens the day in Train to look it over, because a button cannot sit inside a button. A lift shows the cut-out drawing of its first exercise that has one (`formArtCutouts`). A finished or skipped day shows its status instead of Start. No rationale and no plan position ("Base · week 3 of 16") on Home: owner direction 2026-09-09, pinned in `SessionPurpose.test.tsx`. `RestDayCard` is a plain hero card naming tomorrow's session.
+- **Quick actions:** there is no pill row. Today's actions are the Start
+  buttons on the Today cards, and food logging is the "Log food" button in
+  `TodayEnergy`'s header.
 - **Inline banners:** the `Banner` primitive (`src/components/ui/Banner.tsx`), three variants — `info` (coral, running context), `warning` (amber), `neutral` (muted, no domain colour) — on the compact-card pairing, `rounded-xl p-3`. The sustained-offline notices render through `neutral` and render NOTHING while idle: the permanent live-region wrapper they used to keep was an empty first child in the page rhythm, pushing Food's and Train's headers down a step. Pinned in `designSystemInvariants.test.ts`. The global online/offline strip in `Layout` (`ds-status-banner`) is app-shell chrome, not an inline banner.
 - **Section headings:** a group of cards or rows opens with `SectionHeading` (`src/components/ui/SectionHeading.tsx`) — a real heading in sentence case: `page` size (20px bold, the H3 step) on a page or tab, `compact` (16px bold) inside a sheet, a card or a dense settings form, with an optional `action` on the same row. DS3 retired the 12px capital-letter group label; its `tier="section"` survives only on two Food surfaces awaiting the Food redesign, pinned by `designSystemInvariants.test.ts`.
 - **Labels inside a card:** `SectionLabel`'s caption tier — 12px semibold muted, **sentence case**, no letter-spacing. Write the text the way it is said ("Total volume"); it renders as written. Capitals are kept for table column headers. No hand-rolled label classes (ratcheted in `designSystemInvariants.test.ts`)
@@ -716,13 +716,25 @@ Primitives (all in `src/components/program/`, fed by the pure view model in
   engine phases (`getPhaseForWeek`): **Base · Build · Taper · Race** — no
   invented "Peak" segment, so the active highlight always maps to a phase
   the scheduler can emit. Renders ONLY in the race-goal overlay.
-- **`SessionCommandCard`** — the "what's next" command surface. Title + meta
-  pills + a single primary Start action (its own control, NOT the whole
-  card) + an overflow that opens the day sheet. Temporal eyebrow ("Up next"
-  / "Due today" / "Tomorrow" / "Pending") — never "Next · Pending".
+- **`SessionCommandCard`** — the "what's next" command surface. Eyebrow +
+  title (the card's one big line, H2) + one quiet meta line + a single
+  primary action (its own control, NOT the whole card) + an overflow that
+  opens the day sheet. Temporal eyebrow ("Up next" / "Due today" /
+  "Tomorrow" / "Pending") — never "Next · Pending". DS3: a lift day's
+  eyebrow leads with its category and its title is the focus ("Pull · Up
+  next" over "Lat focus", as on Home); its picture sits at the right, as
+  on Home's cards: a lift day's muscles (`figure`), or a run's type in a
+  tile (`icon`, from `runTemplateIcon`); the halo went with the app's
+  other glows. A free runner's Run tab leads with the same card ("Start a
+  run" over "Pick your pace today"). Train's day list below it draws each
+  exercise through `ExerciseRowSummary` (`ExerciseThumb`: the cut-out
+  drawing, else the category's muscles, else a dumbbell), and Train shows
+  one advice notice at a time (`programNotices`).
 - **`ProgrammeWeekSelector`** — the one day-navigation primitive per tab
   (`2b4e07b8`, "competing navigators" unification): circular sport-coloured
-  day cells (purple lift / coral run) in the Home WeekStrip visual language,
+  day cells (purple lift / coral run) in the Home WeekStrip visual language
+  (a done day is filled with its sport at 30% with a check, as Home fills a
+  logged day; it was the success green until DS3),
   a real selected-key controller driving the content beneath it. Lift tab =
   split-ordered rotation cursor; Run tab = date-pinned 7-day selector
   (ADR-0002's dual ontology, per tab). Extras (logged runs that claimed no
@@ -769,7 +781,7 @@ Constraints these primitives must keep:
 
 - **Tap feedback:** scale(0.97) on active, 150ms cubic-bezier transition
 - **Haptic:** Called on all button/card taps via haptic() utility
-- **Count-up animation:** Hero numbers animate from 0 on first load (useCountUp hook)
+- **Count-up animation:** the moments' numbers count up as they appear: Home's streak and performance score (`useCountUp`, once a session), the Food ring and macros, the workout finish screen's three figures and the weekly recap's first card (`AnimatedNumber`, which is plain text from the first paint under Reduce Motion)
 - **Water card:** Fill-from-bottom gradient animation, wave SVG, bubble particles, ripple on add
 - **Bottom sheet:** Vaul drawer for editing (exercises, weight logging)
 - **Tab navigation:** Horizontal scrolling tabs with active pill indicator
@@ -801,10 +813,18 @@ reduced-motion` always gets the settled static state — no entrance, no
   `success`/`semantic.positive` remain value-aliases (pixel-correct,
   name-only debt, pinned in `colorCanonical.test.ts` alongside the
   warning≠nutrition inequality that IS the D19 contract).
-- **Framer Motion is gated globally; CSS animations are not.**
-  `useReducedMotion` covers every `motion.*` element, but a Tailwind
-  `animate-*` class runs under Reduce Motion unless it carries the
-  `motion-safe:` variant. Every skeleton pulse and ping does;
+- **Framer Motion is gated globally only for POSITION; CSS animations
+  are not gated at all.** `MotionConfig reducedMotion="user"` in
+  `App.tsx` settles positional values (x, y, scale, rotate, width,
+  height) and nothing else: opacity, a stroke offset, `pathLength` and a
+  motion-value count-up all still animate under Reduce Motion. This
+  paragraph said the global gate covered "every `motion.*` element",
+  and Home's two rings drew in for everyone because of it until DS3's
+  polish pass gated `ProgressRing` itself. A non-positional animation
+  asks `useReducedMotion` in its own component (`ProgressRing`,
+  `CalorieRing`, `EmptyState`, `AnimatedNumber` are the patterns). A
+  Tailwind `animate-*` class runs under Reduce Motion unless it carries
+  the `motion-safe:` variant. Every skeleton pulse and ping does;
   `animate-spin` spinners are progress feedback and stay unprefixed
   (`UNGUARDED_ANIMATION_BASELINE = 8` in `designSystemInvariants.test.ts`
   is exactly the spinner set).
@@ -1035,8 +1055,10 @@ or touching a CTA button, route it through `Button` with the variant above.
 
 - **Pages:** src/pages/ — route-level, lazy-loaded
 - **Home screen built from:** WeekStrip → DayPeekCard → StackedCTACards
-  (LiftCTACard / RunCTACard / RestDayCard — no pills) → TodayEnergy →
-  WaterCard → WeightStepsTiles → WeeklyReviewEntry → PerformanceHeroCard.
+  (LiftCTACard / RunCTACard / RestDayCard — Start on the card, no pills) →
+  TodayEnergy → WaterCard → WeightStepsTiles → the "This week" card:
+  WeeklyReviewEntry (a link on its heading while a review waits) →
+  WeekSummary → PerformanceHeroCard (a row since DS3, 2026-09-27).
   Performance sits LAST by owner decision: the first thing on the scroll
   should be something to do today, not a verdict on the week just gone.
   This line has now rotted twice. It named `HybridBalanceCard` until it
@@ -1046,7 +1068,7 @@ or touching a CTA button, route it through `Button` with the variant above.
   owned. `componentReachability` catches a dead COMPONENT; nothing
   catches a dead SENTENCE, which is why this one is worth re-reading
   against `src/pages/Home.tsx` rather than trusting.
-- **Icons:** lucide-react (individual imports only)
+- **Icons:** lucide-react (individual imports only), except the drawn set in `src/components/icons/` (the tab bar's icons, the avocado) and `ui/BrandMark.tsx`
 - **Toasts:** sonner
 - **Charts:** Recharts (bar charts, line charts in History)
 - **Animations:** Framer Motion (AnimatePresence, motion.div, whileTap)

@@ -143,10 +143,13 @@ describe("Home's day tap — every cell opens its detail card", () => {
       start,
       "handleDayTap is gone from Home.tsx — retarget this pin"
     ).toBeGreaterThan(-1);
-    const end = HOME.indexOf("[dayTapSeenKey]", start);
+    /* Ends at the declaration after it. It used to end at the handler's
+       dependency array, `[dayTapSeenKey]`, which went with the one-time
+       "tap a day" hint (DS3): the circles' states say a day is tappable. */
+    const end = HOME.indexOf("const closePeek", start);
     expect(
       end,
-      "handleDayTap's dependency array moved — retarget this pin"
+      "closePeek no longer follows handleDayTap — retarget this pin"
     ).toBeGreaterThan(start);
     return HOME.slice(start, end);
   }

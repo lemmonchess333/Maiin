@@ -21,6 +21,7 @@ import { signInAsTestUser } from "../helpers/auth";
 import { test, expect, type Page } from "@playwright/test";
 import { emulatorActive } from "../helpers/emulator";
 import { suppressCoachmarks } from "../helpers/suppressCoachmarks";
+import { settleFullPageHeight } from "../helpers/settleHeight";
 
 const AUTH_HOST = process.env.FIREBASE_AUTH_EMULATOR_HOST ?? "127.0.0.1:9099";
 const FS_HOST = process.env.FIRESTORE_EMULATOR_HOST ?? "127.0.0.1:8080";
@@ -241,21 +242,41 @@ test.describe("analytics tab screenshots", () => {
     });
     await expect(page.getByText(/loading analytics/i)).toHaveCount(0);
 
+    await shootBoth(page, "analytics-loaded");
+
     // And the content the skeletons were standing in for is present —
     // one assertion per seeded discipline, so a section that renders its
     // heading but never its data still fails. All three feed `dataLoading`
-    // and all three must have arrived.
+    // and all three must have arrived. DS3 put each discipline on its own
+    // page behind the overview's Go deeper tiles, so the check opens each
+    // page, and comes back the way a user does.
+    const overview = page.getByRole("button", {
+      name: "Overview",
+      exact: true,
+    });
+    await page.getByRole("button", { name: /^Lifting/ }).click();
     await expect(
-      page.getByText("Monthly volume", { exact: true })
-    ).toBeVisible();
+      page.getByRole("heading", { name: "Volume", exact: true })
+    ).toBeVisible({ timeout: 15_000 });
     await expect(page.getByText("2.2k").first()).toBeVisible();
-    await expect(
-      page.getByText("Monthly distance", { exact: true })
-    ).toBeVisible();
-    await expect(page.getByText("5.2").first()).toBeVisible();
-    await expect(page.getByText(/no meals logged/i)).toHaveCount(0);
+    await expect(page.locator('[class*="animate-pulse"]')).toHaveCount(0, {
+      timeout: 30_000,
+    });
+    await shootBoth(page, "analytics-lifting");
+    await overview.click();
 
-    await shootBoth(page, "analytics-loaded");
+    await page.getByRole("button", { name: /^Running/ }).click();
+    await expect(
+      page.getByRole("heading", { name: "Distance", exact: true })
+    ).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText("5.2").first()).toBeVisible();
+    await overview.click();
+
+    await page.getByRole("button", { name: /^Food/ }).click();
+    await expect(
+      page.getByRole("heading", { name: "Food", exact: true })
+    ).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText(/no meals logged/i)).toHaveCount(0);
   });
 
   /* The third tab had no capture at all — Analytics and Badges were
@@ -356,8 +377,31 @@ test.describe("analytics tab screenshots", () => {
       timeout: 30_000,
     });
 
-    /* The surfaces a cold-start user does not have at all. */
-    await expect(page.getByText("Performance Index").first()).toBeVisible();
+    /* The overview's cards (DS3): the week's index, the range's summary,
+       the trends and the muscles. The rich seed carries all four; a
+       cold-start account has none of them. */
+    await expect(
+      page.getByRole("heading", { name: "Performance", exact: true })
+    ).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Last 30 days" })
+    ).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Trends" })).toBeVisible();
+    await expect(
+      page
+        .getByRole("region", { name: "Muscles trained" })
+        .getByRole("listitem")
+        .first()
+    ).toBeVisible({ timeout: 15_000 });
+    await settleFullPageHeight(page);
+    await shootBoth(page, "analytics-rich");
+
+    /* The index's gauge, chart and training load moved to the
+       Performance page, one tap from the overview's card. */
+    await page.getByRole("button", { name: "Details", exact: true }).click();
+    await expect(
+      page.getByRole("heading", { name: "Performance Index" })
+    ).toBeVisible({ timeout: 15_000 });
     await expect(
       page.getByRole("heading", { name: "Training load" })
     ).toBeVisible();
@@ -390,7 +434,9 @@ test.describe("analytics tab screenshots", () => {
         `label is clipped`
     ).toBeGreaterThanOrEqual(svgBox!.x);
 
-    await shootBoth(page, "analytics-rich");
+    await settleFullPageHeight(page);
+    await shootBoth(page, "analytics-performance");
+    await page.getByRole("button", { name: "Overview", exact: true }).click();
 
     /* The PRs tab's STEADY state, which nothing filmed either.
        "PRs tab states its units" above signs up a fresh account and

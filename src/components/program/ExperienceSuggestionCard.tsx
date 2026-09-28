@@ -29,10 +29,16 @@ import Card from "@/components/ui/Card";
 export default function ExperienceSuggestionCard({
   workouts,
   context,
+  suppressed = false,
 }: {
   workouts: readonly WorkoutDay[] | undefined;
   /** programState.weekNumber + goal — the promotion gates' inputs. */
   context?: ExperienceDetectionContext;
+  /** True while a week-level notice (the recovery reduction or a deload
+   *  recommendation) is on the page: advice waits its turn, one at a time
+   *  (`programNotices`). The suggestion comes back once that notice has
+   *  gone; nothing is dismissed. */
+  suppressed?: boolean;
 }) {
   const { profile, updateProfile } = useAuth();
   const navigate = useNavigate();
@@ -42,7 +48,7 @@ export default function ExperienceSuggestionCard({
     [workouts, profile?.experience, context]
   );
 
-  if (!suggestion) return null;
+  if (!suggestion || suppressed) return null;
   const signature = suggestionSignature(suggestion);
   if (profile?.experienceSuggestionDismissed?.signature === signature) {
     return null;

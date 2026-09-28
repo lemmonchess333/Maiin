@@ -24,8 +24,8 @@ const UNDO_WINDOW_MS = 4000;
 
 /**
  * The reading, spoken. `formatWaterVolume` renders "2 L" / "250 ml",
- * whose units a screen reader pronounces as bare letters; MacroRing
- * spells "grams" for the same reason (MacroRing.tsx:51-60). Visual copy
+ * whose units a screen reader pronounces as bare letters; Home's food
+ * card spells "grams" in its macro names for the same reason. Visual copy
  * keeps the symbols — only the accessible name uses this.
  */
 function spokenVolume(ml: number): string {
@@ -105,13 +105,13 @@ export default function WaterCard({
      card freezes — 2 L and 7.25 L are pixel-identical. The full tile
      means "≥100%", a range with no upper bound, which collapses the one
      motivating moment on the card into the same picture as a day at
-     three times the goal. `met` is a plain `>= 1`, NOT MacroRing's
+     three times the goal. `met` is a plain `>= 1`, NOT the old macro rings'
      `done` BAND (0.9–1.1): a band would un-tick this card at 2.3 L while
      `hydration_hero` (badges.ts) had already awarded the day on
      `ml >= target`. Two surfaces disagreeing about the same day is the
      defect, not the rounding. */
   const met = targetMl > 0 && ml >= targetMl;
-  /* Initialised to the CURRENT value, MacroRing's shape: Home remounts
+  /* Initialised to the CURRENT value: Home remounts
      on every navigation back, so a ref seeded false would replay the
      completion haptic several times a day. */
   const wasMet = useRef(met);

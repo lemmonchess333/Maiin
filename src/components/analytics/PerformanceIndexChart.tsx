@@ -181,9 +181,8 @@ export default function PerformanceIndexChart({ weeks }: Props) {
             tick={CHART_AXIS_TICK}
             axisLine={false}
             tickLine={false}
-            /* 32, not the 28 its siblings use: theirs label single digits
-               (RunningHistorySection) or abbreviate (VolumeChart's 35 for
-               "2.4k"). Three digits need the room. */
+            /* 32, not the 28 of a chart labelling single digits: three
+               digits need the room. */
             width={32}
           />
 
@@ -193,7 +192,8 @@ export default function PerformanceIndexChart({ weeks }: Props) {
               const s = typeof label === "string" ? label : String(label ?? "");
               const d = new Date(s + "T00:00:00");
               if (Number.isNaN(d.getTime())) return "";
-              return `Week of ${formatDayMonth(d)}`;
+              // Each score covers the seven days ENDING on its date.
+              return `Week to ${formatDayMonth(d)}`;
             }}
             formatter={(value, name) => {
               const labels: Record<string, string> = {
@@ -201,6 +201,8 @@ export default function PerformanceIndexChart({ weeks }: Props) {
                 liftLoad: "Lift load",
                 runLoad: "Run load",
                 recovery: "Recovery",
+                // It showed as a raw "avg": the dashed line's key.
+                avg: "Average",
               };
 
               const n = typeof name === "string" ? name : String(name ?? "");

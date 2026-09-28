@@ -336,6 +336,25 @@ export const JUDGEMENT_MUSCLE_ORDER: JudgementMuscle[] = [
   "Abs",
 ];
 
+/** Display names for the judgement groups: the lift plan's volume card
+ *  and Analytics' sets per muscle name them alike. */
+export const JUDGEMENT_MUSCLE_LABEL: Record<JudgementMuscle, string> = {
+  Chest: "Chest",
+  FrontDelts: "Front delts",
+  SideDelts: "Side delts",
+  RearDelts: "Rear delts",
+  Lats: "Lats",
+  UpperBack: "Upper back",
+  LowerBack: "Lower back",
+  Biceps: "Biceps",
+  Triceps: "Triceps",
+  Quads: "Quads",
+  Hamstrings: "Hamstrings",
+  Glutes: "Glutes",
+  Calves: "Calves",
+  Abs: "Abs",
+};
+
 /** Which canonical (display) group a judgement group reports under. */
 export const JUDGEMENT_TO_CANONICAL: Record<JudgementMuscle, CanonicalMuscle> =
   {
@@ -554,8 +573,23 @@ export function classifyVolume(
  * counting rule, not inventing an exchange rate (same class as the Cardio
  * exclusion above it).
  */
+/**
+ * What the judgement tally reads of a day: whether it was skipped, and
+ * each exercise's id, movement and set count. A programme `WorkoutDay` is
+ * one; so is a performed session mapped to this shape, which is how
+ * Analytics judges the sets a user actually did against the same bands
+ * the programme plans to (`performedVolume.ts`).
+ */
+export interface VolumeDay {
+  skipped?: boolean;
+  exercises: readonly Pick<
+    ProgramExercise,
+    "exerciseId" | "movementCategory" | "sets"
+  >[];
+}
+
 function judgementCreditsFor(
-  ex: ProgramExercise
+  ex: Pick<ProgramExercise, "exerciseId" | "movementCategory">
 ): Map<JudgementMuscle, number> | null {
   const credits = new Map<JudgementMuscle, number>();
   const dbEx: Exercise | undefined = getExerciseById(ex.exerciseId);
@@ -599,7 +633,7 @@ export function primaryJudgementForExercise(
 
 /** Weekly sets per JUDGEMENT group — the tally classification runs on. */
 export function weeklyVolumeByJudgementMuscle(
-  workouts: WorkoutDay[]
+  workouts: readonly VolumeDay[]
 ): Array<{ muscle: JudgementMuscle; sets: number }> {
   const tally = new Map<JudgementMuscle, number>();
   for (const day of workouts) {

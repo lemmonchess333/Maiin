@@ -1,6 +1,7 @@
 /**
- * The week strip is three stacked rows — letter, date, indicator — and they
- * only read as a row while every cell shares their baselines.
+ * The week strip is two stacked rows — letter and date (DS3 dropped the
+ * indicator row) — and they only read as a row while every cell shares
+ * their baselines.
  *
  * Today used to render at `size-12` against its neighbours' `size-10`. In a
  * `flex-col items-center` cell, a circle 8px taller pushes its own weekday
@@ -55,9 +56,7 @@ describe("week strip geometry", () => {
 
   it("marks today without resizing it", () => {
     const { container } = renderStrip();
-    const today = circles(container).find((c) =>
-      c.className.includes("ring-primary")
-    );
+    const today = circles(container).find((c) => c.hasAttribute("data-today"));
     expect(today).toBeTruthy();
     expect(today!.className).not.toMatch(/size-12/);
   });
@@ -67,12 +66,13 @@ describe("today and selected compose", () => {
   it("keeps the today ring when today is the selected day", () => {
     const { container } = renderStrip(todayKey);
     const selected = circles(container).find((c) =>
-      c.className.includes("bg-primary-strong")
+      c.className.includes("ring-foreground")
     );
     expect(selected).toBeTruthy();
-    // Fill says selected; the ring has to survive it or the strip stops
-    // saying which day is today exactly when you are standing on it.
-    expect(selected!.className).toMatch(/ring-primary/);
+    // The outer ring says selected; today's own ring has to survive it or
+    // the strip stops saying which day is today exactly when you are
+    // standing on it.
+    expect(selected!.className).toMatch(/border-primary/);
   });
 
   it("does not ring a selected day that is not today", () => {
@@ -87,10 +87,10 @@ describe("today and selected compose", () => {
     other.setDate(other.getDate() + (other.getDay() === 1 ? 1 : -1));
     const { container } = renderStrip(localDateString(other));
     const selected = circles(container).find((c) =>
-      c.className.includes("bg-primary-strong")
+      c.className.includes("ring-foreground")
     );
     expect(selected).toBeTruthy();
-    expect(selected!.className).not.toMatch(/ring-primary/);
+    expect(selected!.className).not.toMatch(/border-primary/);
   });
 });
 

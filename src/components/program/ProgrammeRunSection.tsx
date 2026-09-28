@@ -76,6 +76,9 @@ import RunPlanPurpose from "@/components/run/RunPlanPurpose";
 import { useState, useMemo, useRef, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/Button";
 import SectionLabel from "@/components/ui/SectionLabel";
+import StatFigure from "@/components/ui/StatFigure";
+import { Card } from "@/components/ui/Card";
+import { runTemplateIcon } from "@/components/run/runTemplateIcons";
 import { readString, writeString } from "@/lib/localStore";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
@@ -93,11 +96,13 @@ import { THEME } from "@/lib/theme";
 import { logger } from "@/lib/logger";
 import {
   paceLabel,
+  paceMinSec,
   durationLabel,
   distanceLabel,
   sessionPaceDisplay,
   storedKmLabel,
 } from "@/lib/runLabels";
+import { distanceUnitLabel, paceUnitLabel } from "@/lib/distanceUnits";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 import {
   getScheduledRunStatus,
@@ -1162,39 +1167,20 @@ export default function ProgrammeRunSection({
             loading={runsLoading}
             failed={runsFailed}
           />
-          <button
-            type="button"
-            onClick={() => {
+          {/* DS3: the same session card the Lift tab and a planned run
+              use, where a hand-built row carried a gradient "Go" pill. */}
+          <SessionCommandCard
+            sport="run"
+            eyebrow="Start a run"
+            title="Pick your pace today"
+            description="Easy, tempo, intervals or just go."
+            meta={[]}
+            primaryActionLabel="Start run"
+            onPrimaryAction={() => {
               haptic();
               navigate("/run");
             }}
-            className="w-full rounded-xl p-4 text-left flex items-center gap-3 bg-running/6 border border-running/19"
-          >
-            <div className="size-10 rounded-lg flex items-center justify-center shrink-0 bg-running/10">
-              <Footprints className="size-5 text-running" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-xs font-semibold mb-0.5 text-running-strong">
-                Start a run
-              </p>
-              <p className="text-sm font-bold text-foreground">
-                Pick your pace today
-              </p>
-              <p className="text-micro text-muted-foreground">
-                Easy, tempo, intervals or just go
-              </p>
-            </div>
-            <div
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold shadow-sm shrink-0"
-              style={{
-                background: `linear-gradient(135deg, ${THEME.running}, ${THEME.runningLight})`,
-                color: "white",
-              }}
-            >
-              <Play className="size-3" fill="white" />
-              Go
-            </div>
-          </button>
+          />
 
           {/* Recent-run context. Hero shell paints immediately;
               these two lines fade in once useRunningStats resolves.
@@ -1221,78 +1207,81 @@ export default function ProgrammeRunSection({
               back up whenever you're ready.
             </p>
           ) : (
-            <div className="space-y-1 text-xs">
+            <Card className="space-y-3">
               {/* R2-1 descriptive cadence headline (not a target). */}
-              <p className="text-foreground font-semibold">
+              <p className="text-sm font-semibold text-foreground">
                 You've run {freeformCadence.count}× in the last{" "}
                 {freeformCadence.weeks} weeks
               </p>
-              {/* Stat lines: prose labels (Last run / This week / run / avg)
-                  use the body font; only the numeric segments are mono +
-                  tabular-nums, per the typography rule. */}
-              <div className="space-y-1">
-                {lastRun && (
-                  <p className="text-muted-foreground">
-                    <span className="text-foreground">Last run</span>
-                    {" · "}
-                    <span className="font-mono tabular-nums">
-                      {distanceLabel(lastRun.distance, unit)}
-                    </span>
-                    {" · "}
-                    <span className="font-mono tabular-nums">
-                      {durationLabel(lastRun.duration)}
-                    </span>
-                    {lastRun.avgPace > 0 && (
-                      <>
-                        {" · "}
-                        <span className="font-mono tabular-nums">
-                          {paceLabel(lastRun.avgPace, unit)}
-                        </span>
-                      </>
-                    )}
-                    {" · "}
-                    {formatDistanceToNowStrict(lastRun.completedAt, {
-                      addSuffix: true,
-                    })}
-                  </p>
-                )}
-                {thisWeek && (
-                  <p className="text-muted-foreground">
-                    <span className="text-foreground">This week</span>
-                    {" · "}
-                    {/* `totalDistance` is stored KILOMETRES. It printed a
-                        bare `km`, so a miles reader got this line's pace
-                        converted and its distance not — and the "Last run"
-                        line directly above, which goes through
-                        `distanceLabel`, disagreed with it. */}
-                    <span className="font-mono tabular-nums">
-                      {storedKmLabel(thisWeek.totalDistance, unit, true, 1)}
-                    </span>
-                    {" · "}
-                    <span className="font-mono tabular-nums">
-                      {thisWeek.runCount}
-                    </span>{" "}
-                    run{thisWeek.runCount === 1 ? "" : "s"}
-                    {thisWeek.avgPace > 0 && (
-                      <>
-                        {" · "}
-                        <span className="font-mono tabular-nums">
-                          {paceLabel(thisWeek.avgPace, unit)}
-                        </span>{" "}
-                        avg
-                      </>
-                    )}
-                  </p>
-                )}
-              </div>
-            </div>
+              {/* DS3: the week as three plain numbers, where one grey line
+                  carried all of them at 12px. */}
+              {thisWeek && (
+                <div>
+                  <SectionLabel>This week</SectionLabel>
+                  <div className="mt-2 grid grid-cols-3 divide-x divide-border">
+                    {/* `totalDistance` is stored KILOMETRES, so it goes
+                        through `storedKmLabel` into the reader's unit. A
+                        bare `km` once showed a miles reader the metric
+                        figure beside a converted pace. */}
+                    <StatFigure
+                      value={storedKmLabel(
+                        thisWeek.totalDistance,
+                        unit,
+                        false,
+                        1
+                      )}
+                      unit={distanceUnitLabel(unit)}
+                    />
+                    <StatFigure
+                      value={String(thisWeek.runCount)}
+                      unit={thisWeek.runCount === 1 ? "run" : "runs"}
+                    />
+                    <StatFigure
+                      value={
+                        thisWeek.avgPace > 0
+                          ? paceMinSec(thisWeek.avgPace, unit)
+                          : "—"
+                      }
+                      unit={`${paceUnitLabel(unit)} avg`}
+                    />
+                  </div>
+                </div>
+              )}
+              {/* Prose labels in the body font; only the numerals take
+                  the numeral font. */}
+              {lastRun && (
+                <p className="text-sm text-muted-foreground">
+                  <span className="text-foreground">Last run</span>
+                  {" · "}
+                  <span className="font-mono tabular-nums">
+                    {distanceLabel(lastRun.distance, unit)}
+                  </span>
+                  {" · "}
+                  <span className="font-mono tabular-nums">
+                    {durationLabel(lastRun.duration)}
+                  </span>
+                  {lastRun.avgPace > 0 && (
+                    <>
+                      {" · "}
+                      <span className="font-mono tabular-nums">
+                        {paceLabel(lastRun.avgPace, unit)}
+                      </span>
+                    </>
+                  )}
+                  {" · "}
+                  {formatDistanceToNowStrict(lastRun.completedAt, {
+                    addSuffix: true,
+                  })}
+                </p>
+              )}
+            </Card>
           )}
 
           {/* #975: one-time "Set a race goal" entry. Routes to the Race Goal
               Planner (/settings/run-plan). Dismissible; once a goal is set the
               mode flips to race_prep and this freeform block stops rendering. */}
           {!setRaceGoalDismissed && (
-            <div className="w-full rounded-xl p-4 flex items-center gap-3 bg-running/4 border border-running/15">
+            <Card size="compact" className="flex items-center gap-3">
               <button
                 type="button"
                 onClick={() => {
@@ -1302,17 +1291,17 @@ export default function ProgrammeRunSection({
                 className="flex-1 flex items-center gap-3 text-left min-w-0"
                 style={{ minHeight: 44 }}
               >
-                <div className="size-10 rounded-lg flex items-center justify-center shrink-0 bg-running/10">
-                  <Trophy className="size-5 text-running" />
-                </div>
+                {/* DS3: a plain card, words first. The tinted trophy tile
+                    it led with repeated the coral the eyebrow already
+                    carries. */}
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-semibold mb-0.5 text-running-strong">
+                  <p className="text-sm font-bold text-running-strong">
                     Set a race goal
                   </p>
-                  <p className="text-sm font-bold text-foreground">
+                  <p className="text-base font-bold text-foreground">
                     Training for a race?
                   </p>
-                  <p className="text-micro text-muted-foreground">
+                  <p className="text-sm text-muted-foreground">
                     Pick a distance and date — we'll build the plan.
                   </p>
                 </div>
@@ -1329,7 +1318,7 @@ export default function ProgrammeRunSection({
               >
                 <X className="size-4" />
               </button>
-            </div>
+            </Card>
           )}
         </div>
       )}
@@ -1525,6 +1514,7 @@ export default function ProgrammeRunSection({
               <div className="space-y-2">
                 <SessionCommandCard
                   sport="run"
+                  icon={runTemplateIcon(selectedTemplate?.icon)}
                   eyebrow={`${selectedEyebrow} · ${selectedDateLabel}`}
                   title={selectedTemplate?.name ?? "Run"}
                   description={selectedTemplate?.description}

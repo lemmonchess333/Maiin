@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen, cleanup, fireEvent } from "@testing-library/react";
 import LiftCTACard from "../LiftCTACard";
 import RunCTACard from "../RunCTACard";
@@ -19,7 +19,7 @@ describe("session purpose command surfaces", () => {
       { weekNumber: 3, currentPhase: "progression" },
       "2026-09-06"
     )!;
-    render(
+    const { container } = render(
       <LiftCTACard
         nextWorkout={{
           dayName: "Pull — Lat Focus",
@@ -31,8 +31,8 @@ describe("session purpose command surfaces", () => {
         navigate={vi.fn()}
       />
     );
-    expect(screen.getByRole("button")).not.toHaveTextContent(purpose);
-    expect(screen.getByRole("button")).toHaveTextContent("Back · Biceps");
+    expect(container).not.toHaveTextContent(purpose);
+    expect(container).toHaveTextContent("Back · Biceps");
     cleanup();
     render(
       <SessionCommandCard
@@ -56,7 +56,7 @@ describe("session purpose command surfaces", () => {
     };
     const { purpose, weekLabel } = runSessionPresentation(input);
     const run = { templateId: "easy_30", completed: false } as ScheduledRunDay;
-    render(
+    const { container } = render(
       <RunCTACard
         todayRun={run}
         navigate={vi.fn()}
@@ -64,13 +64,11 @@ describe("session purpose command surfaces", () => {
         weekLabel={weekLabel}
       />
     );
-    expect(screen.getByRole("button")).not.toHaveTextContent(
-      runSessionExplainer(input)!
-    );
-    expect(screen.getByRole("button")).not.toHaveTextContent(
-      "Base · week 3 of 16"
-    );
-    expect(screen.getByRole("button")).toHaveTextContent("View run");
+    expect(container).not.toHaveTextContent(runSessionExplainer(input)!);
+    expect(container).not.toHaveTextContent("Base · week 3 of 16");
+    expect(
+      screen.getByRole("button", { name: "Start run" })
+    ).toBeInTheDocument();
     cleanup();
     render(
       <SessionCommandCard
@@ -86,17 +84,36 @@ describe("session purpose command surfaces", () => {
     );
     expect(screen.getByRole("region")).toHaveTextContent(weekLabel!);
   });
-  it("omits invented programme reasons and gives a free run its neutral existing choice", () => {
-    render(<RunCTACard todayRun={null} navigate={vi.fn()} />);
-    expect(screen.getByRole("button")).toHaveTextContent("Start a run");
-    expect(screen.getByRole("button")).not.toHaveTextContent(/week \d/i);
+  it("omits invented programme reasons and calls an unplanned run a free run", () => {
+    /* "Free run" is Train's own name for the same choice ("Start free
+       run"). The card's title was "Start a run" while the whole card was
+       the button; beside a separate Start it would say the same thing
+       twice. */
+    const navigate = vi.fn();
+    const { container } = render(
+      <RunCTACard todayRun={null} navigate={navigate} />
+    );
+    expect(screen.getByText("Free run")).toBeInTheDocument();
+    expect(container).not.toHaveTextContent(/week \d/i);
+    fireEvent.click(screen.getByRole("button", { name: "Start run" }));
+    expect(navigate).toHaveBeenCalledExactlyOnceWith("/run");
   });
 });
 
 describe("Home session actions and metadata", () => {
+  /* The run card's preview opens today's date in Train, so the date is
+     pinned. Only Date is faked; no timers move. */
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date(2026, 8, 27, 12, 0, 0));
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it("shows an exercise count with muscle groups and preserves the selected lift day", () => {
     const navigate = vi.fn();
-    render(
+    const { container } = render(
       <LiftCTACard
         nextWorkout={{
           dayName: "Upper body",
@@ -108,16 +125,69 @@ describe("Home session actions and metadata", () => {
         navigate={navigate}
       />
     );
-    expect(screen.getByRole("button")).toHaveTextContent(
-      "2 exercises · Chest · Back"
+    expect(container).toHaveTextContent("2 exercises");
+    expect(container).toHaveTextContent("Chest · Back");
+    fireEvent.click(
+      screen.getByRole("button", { name: "Open Upper body in Train" })
     );
-    fireEvent.click(screen.getByRole("button"));
-    expect(navigate).toHaveBeenCalledWith("/program?day=2");
+    expect(navigate).toHaveBeenLastCalledWith("/program?day=2");
+    fireEvent.click(screen.getByRole("button", { name: "Start workout" }));
+    expect(navigate).toHaveBeenLastCalledWith("/program?day=2&start=1");
+  });
+
+  it("prices the session only when every exercise carries its sets", () => {
+    const { container, rerender } = render(
+      <LiftCTACard
+        nextWorkout={{
+          dayName: "Upper body",
+          dayType: "upper",
+          exercises: [
+            { name: "Bench", sets: 3, restSeconds: 90 },
+            { name: "Row", sets: 3, restSeconds: 90 },
+          ],
+        }}
+        navigate={vi.fn()}
+      />
+    );
+    expect(container).toHaveTextContent(/2 exercises · about \d+ min/);
+    rerender(
+      <LiftCTACard
+        nextWorkout={{
+          dayName: "Upper body",
+          dayType: "upper",
+          exercises: [{ name: "Bench", sets: 3 }, { name: "Row" }],
+        }}
+        navigate={vi.fn()}
+      />
+    );
+    expect(container).toHaveTextContent("2 exercises");
+    expect(container).not.toHaveTextContent(/min/);
+  });
+
+  it("splits a programme day's name into its category and focus", () => {
+    const { container } = render(
+      <LiftCTACard
+        nextWorkout={{
+          dayName: "Pull — Lat Focus",
+          dayType: "pull",
+          exercises: [],
+        }}
+        dayIndex={3}
+        navigate={vi.fn()}
+      />
+    );
+    /* The whole name as a title broke at the dash on a phone ("Pull —"
+       over "Lat Focus"). No rotation position rides the eyebrow: Home
+       shows the session and its dose (owner direction, 2026-09-09). */
+    expect(screen.getByText("Pull")).toBeInTheDocument();
+    expect(screen.getByText("Lat focus")).toBeInTheDocument();
+    expect(container).not.toHaveTextContent("Pull —");
+    expect(container).not.toHaveTextContent(/Session \d/);
   });
 
   it("uses the real template duration and preserves the planned run identity", () => {
     const navigate = vi.fn();
-    render(
+    const { container } = render(
       <RunCTACard
         todayRun={
           {
@@ -129,9 +199,9 @@ describe("Home session actions and metadata", () => {
         navigate={navigate}
       />
     );
-    expect(screen.getByRole("button")).toHaveTextContent("30 min");
-    fireEvent.click(screen.getByRole("button"));
-    expect(navigate).toHaveBeenCalledWith(
+    expect(container).toHaveTextContent("About 30 min");
+    fireEvent.click(screen.getByRole("button", { name: "Start run" }));
+    expect(navigate).toHaveBeenCalledExactlyOnceWith(
       "/run?template=easy_30&scheduledRunId=planned%20run"
     );
   });
@@ -150,9 +220,13 @@ describe("Home session actions and metadata", () => {
         navigate={navigate}
       />
     );
-    expect(screen.getByRole("button")).toHaveTextContent("Completed");
-    expect(screen.queryByText("Go")).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button"));
-    expect(navigate).toHaveBeenCalledWith("/program?tab=run");
+    expect(screen.getByText("Completed")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Start run" })).toBeNull();
+    fireEvent.click(
+      screen.getByRole("button", { name: "Open Easy 30 in Train" })
+    );
+    expect(navigate).toHaveBeenCalledExactlyOnceWith(
+      "/program?tab=run&rday=2026-09-27"
+    );
   });
 });
