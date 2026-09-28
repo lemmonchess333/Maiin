@@ -264,7 +264,7 @@ function FoodSuggestionsDropdown({
             <SectionLabel as="span" tier="section">
               {quickAdd.asExamples
                 ? "Examples — tap to describe your own"
-                : "Quick Add"}
+                : "Quick add"}
             </SectionLabel>
           </div>
           {quickAdd.items.map((item) => (

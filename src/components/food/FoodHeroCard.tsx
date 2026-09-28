@@ -215,7 +215,7 @@ export default function FoodHeroCard({
   // number, not a briefing. The day type and its rationale still exist
   // on the targets and still render in the Details sheet, which is
   // where a person who wants the why goes.
-  const celebrationCaptionText = `GOAL HIT ✓`;
+  const celebrationCaptionText = `Goal hit ✓`;
 
   // Trajectory line — suppressed; can be reinstated by importing
   // computeTrajectory from "@/lib/foodTrajectory" and passing its result.
