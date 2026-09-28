@@ -138,6 +138,19 @@ describe("liftDayTitle — Home's Today card", () => {
     });
     expect(liftDayTitle("")).toEqual({ category: null, title: "" });
   });
+
+  it("divides at the first separator and keeps the rest as typed", () => {
+    // A routine's own name can carry more than one dash. Only the first
+    // divides it; after that it is the lifter's wording, dashes and all.
+    expect(liftDayTitle("Push — Pull — Legs")).toEqual({
+      category: "Push",
+      title: "Pull — Legs",
+    });
+    expect(liftDayTitle("Mon - Upper - Heavy")).toEqual({
+      category: "Mon",
+      title: "Upper - Heavy",
+    });
+  });
 });
 
 describe("liftDayLine — the day on one line", () => {
@@ -151,5 +164,10 @@ describe("liftDayLine — the day on one line", () => {
   it("leaves a routine's own name as it is", () => {
     expect(liftDayLine("Upper A")).toBe("Upper A");
     expect(liftDayLine("Upper-Lower day")).toBe("Upper-Lower day");
+  });
+
+  it("loses none of a name with two separators", () => {
+    expect(liftDayLine("Push — Pull — Legs")).toBe("Push · Pull — Legs");
+    expect(liftDayLine("Mon - Upper - Heavy")).toBe("Mon · Upper - Heavy");
   });
 });
