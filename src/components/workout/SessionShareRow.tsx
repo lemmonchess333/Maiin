@@ -157,11 +157,10 @@ export default function SessionShareRow({
     const { outcome } = state;
     setState({ kind: "live", outcome, undoing: true });
     try {
-      await withdrawSessionPost(action, outcome);
-      setState({
-        kind: "held",
-        note: outcome.status === "posted" ? "removed" : "cancelled",
-      });
+      // What was done, not what the outcome was: a post queued offline can
+      // have gone out by the time Undo is tapped, and then it was removed.
+      const note = await withdrawSessionPost(action, outcome);
+      setState({ kind: "held", note });
     } catch (err) {
       logger.warn("[SessionShareRow] undo failed:", err);
       toast.error("Couldn't remove the post. Try again.");

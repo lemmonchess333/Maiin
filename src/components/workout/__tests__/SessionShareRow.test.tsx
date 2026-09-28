@@ -229,7 +229,7 @@ describe("Undo", () => {
     const a = action("workout");
     render(<SessionShareRow action={a} />);
     await screen.findByText("Shared with your followers");
-    h.withdraw.mockResolvedValue(undefined);
+    h.withdraw.mockResolvedValue("removed");
     fireEvent.click(screen.getByRole("button", { name: "Undo sharing" }));
     await screen.findByText("Removed from the feed.");
     expect(h.withdraw).toHaveBeenCalledWith(a, {
@@ -257,9 +257,31 @@ describe("Undo", () => {
     await screen.findByText(
       "Will share with your followers when you're back online"
     );
-    h.withdraw.mockResolvedValue(undefined);
+    h.withdraw.mockResolvedValue("cancelled");
     fireEvent.click(screen.getByRole("button", { name: "Undo sharing" }));
     await screen.findByText("It won't be shared.");
+  });
+
+  it("an offline post that went out before Undo says it was removed, not that it won't be shared", async () => {
+    setShareDefault("u1", "run", "followers");
+    const a = action(
+      "run",
+      vi.fn(
+        async (): Promise<ShareOutcome> => ({
+          status: "queued",
+          visibility: "followers",
+        })
+      )
+    );
+    render(<SessionShareRow action={a} />);
+    await screen.findByText(
+      "Will share with your followers when you're back online"
+    );
+    // Back online, the queue posted it before the tap; Undo deleted it.
+    h.withdraw.mockResolvedValue("removed");
+    fireEvent.click(screen.getByRole("button", { name: "Undo sharing" }));
+    await screen.findByText("Removed from the feed.");
+    expect(screen.queryByText("It won't be shared.")).toBeNull();
   });
 
   it("keeps showing the post when Undo fails", async () => {

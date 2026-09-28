@@ -95,6 +95,9 @@ export default function ShareComposerSheet() {
           if (source) {
             await recordSharedActivity(uid, source, activityId);
           }
+          // Passed back so an Undo can delete this post by its id, without
+          // depending on the link above having been written.
+          return activityId;
         });
         if (cancelled) return;
       } catch {

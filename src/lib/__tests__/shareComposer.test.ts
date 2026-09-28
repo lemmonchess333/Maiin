@@ -12,6 +12,7 @@ import {
   cancelQueuedShare,
   getQueueLength,
   drainQueue,
+  withdrawQueuedShare,
   subscribeShareComposer,
   type ActivityPreview,
 } from "../shareComposer";
@@ -374,6 +375,127 @@ describe("offline queue", function () {
     });
     await drainQueue(UID_A, post);
     expect(getQueueLength(UID_A)).toBe(1);
+  });
+
+  it("takes an item out of the queue while it posts: Undo waits for the post and learns its id", async function () {
+    /* Left in the queue during the request, the item could be "cancelled"
+       while the post was already on its way, and then the post landed. */
+    const source = { kind: "workout" as const, id: "w-1" };
+    enqueueShare(UID_A, { n: 1 }, source);
+    let land!: (activityId: string) => void;
+    const post = vi.fn(
+      () =>
+        new Promise<string>((resolve) => {
+          land = resolve;
+        })
+    );
+    const draining = drainQueue(UID_A, post);
+    await vi.waitFor(() => expect(post).toHaveBeenCalledTimes(1));
+
+    expect(cancelQueuedShare(UID_A, source)).toBe(false);
+    const withdrawn = withdrawQueuedShare(UID_A, source);
+    land("act-9");
+    await draining;
+    await expect(withdrawn).resolves.toEqual({
+      status: "posted",
+      activityId: "act-9",
+    });
+  });
+
+  it("a post that fails on its way goes back in the queue, where Undo cancels it", async function () {
+    const source = { kind: "run" as const, id: "r-1" };
+    enqueueShare(UID_A, { n: 1 }, source);
+    let fail!: (err: Error) => void;
+    const post = vi.fn(
+      () =>
+        new Promise<string>((_resolve, reject) => {
+          fail = reject;
+        })
+    );
+    const draining = drainQueue(UID_A, post);
+    await vi.waitFor(() => expect(post).toHaveBeenCalledTimes(1));
+
+    const withdrawn = withdrawQueuedShare(UID_A, source);
+    fail(new Error("network"));
+    await draining;
+    await expect(withdrawn).resolves.toEqual({ status: "cancelled" });
+    expect(getQueueLength(UID_A)).toBe(0);
+  });
+
+  it("remembers the id the drain passed back, for an Undo after the drain", async function () {
+    const source = { kind: "workout" as const, id: "w-2" };
+    enqueueShare(UID_A, { n: 1 }, source);
+    await drainQueue(UID_A, vi.fn().mockResolvedValue("act-7"));
+    await expect(withdrawQueuedShare(UID_A, source)).resolves.toEqual({
+      status: "posted",
+      activityId: "act-7",
+    });
+    // Nothing is known about a session this app never queued.
+    await expect(
+      withdrawQueuedShare(UID_A, { kind: "workout", id: "w-never" })
+    ).resolves.toEqual({ status: "unknown" });
+  });
+
+  it("forgets a drained post's id once the session is queued again", async function () {
+    const source = { kind: "workout" as const, id: "w-3" };
+    enqueueShare(UID_A, { attempt: 1 }, source);
+    await drainQueue(UID_A, vi.fn().mockResolvedValue("act-old"));
+    // Shared again, and this time sent by a drain this app did not run (a
+    // second tab), so only the session's link can say which post it was.
+    enqueueShare(UID_A, { attempt: 2 }, source);
+    localStorage.setItem("tropos.share.queue", "[]");
+    await expect(withdrawQueuedShare(UID_A, source)).resolves.toEqual({
+      status: "unknown",
+    });
+  });
+
+  it("runs one drain at a time, so a connection that drops and returns cannot send a post twice", async function () {
+    /* The sheet drains on every return to online. A drop and return in the
+       middle of a post starts a second drain while the first is waiting. */
+    enqueueShare(UID_A, { n: 1 }, { kind: "workout", id: "w-1" });
+    enqueueShare(UID_A, { n: 2 }, { kind: "run", id: "r-2" });
+    let land!: () => void;
+    const post = vi.fn((payload: Record<string, unknown>) =>
+      payload.n === 1
+        ? new Promise<string>((resolve) => {
+            land = () => resolve("act-1");
+          })
+        : Promise.resolve("act-2")
+    );
+    const first = drainQueue(UID_A, post);
+    const second = drainQueue(UID_A, post);
+    await vi.waitFor(() => expect(post).toHaveBeenCalledTimes(1));
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    // The second drain waits for the first rather than sending alongside it.
+    expect(post).toHaveBeenCalledTimes(1);
+
+    land();
+    await Promise.all([first, second]);
+    expect(post.mock.calls.map(([payload]) => payload.n)).toEqual([1, 2]);
+    expect(getQueueLength(UID_A)).toBe(0);
+  });
+
+  it("one account's drain waiting on its post does not hold up another account's", async function () {
+    // A's post waits on a write that goes out only when A signs back in.
+    enqueueShare(UID_A, { n: 1 }, { kind: "workout", id: "w-a" });
+    enqueueShare(UID_B, { n: 2 }, { kind: "workout", id: "w-b" });
+    let landA!: () => void;
+    const postA = vi.fn(
+      () =>
+        new Promise<string>((resolve) => {
+          landA = () => resolve("act-a");
+        })
+    );
+    const drainingA = drainQueue(UID_A, postA);
+    await vi.waitFor(() => expect(postA).toHaveBeenCalledTimes(1));
+
+    const postB = vi.fn().mockResolvedValue("act-b");
+    await drainQueue(UID_B, postB);
+    expect(postB).toHaveBeenCalledTimes(1);
+    expect(getQueueLength(UID_B)).toBe(0);
+
+    landA();
+    await drainingA;
   });
 
   it("drainQueue only replays items belonging to the given uid", async function () {

@@ -289,6 +289,18 @@ function isFor(item: PendingShare, uid: string, source: ShareSource): boolean {
   );
 }
 
+function sessionKey(uid: string, source: ShareSource): string {
+  return `${uid}:${source.kind}:${source.id}`;
+}
+
+/** Posts the drain has taken out of the queue and is sending, by session.
+ *  Each resolves to the posted activity's id, or null when the post failed
+ *  and went back in the queue. */
+const sending = new Map<string, Promise<string | null>>();
+/** Posts the drain has sent in this app session, by session: the id it was
+ *  passed back, so an Undo after the drain can delete the post by id. */
+const sent = new Map<string, string>();
+
 export function enqueueShare(
   uid: string,
   payload: Record<string, unknown>,
@@ -300,6 +312,9 @@ export function enqueueShare(
   const items = source
     ? readQueue().filter((item) => !isFor(item, uid, source))
     : readQueue();
+  // A new post for the session: one the drain sent earlier is not the one
+  // an Undo of this queued post means.
+  if (source) sent.delete(sessionKey(uid, source));
   const id = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
   items.push({
     id,
@@ -312,7 +327,8 @@ export function enqueueShare(
 }
 
 /** Drops a session's pending post (the finish screen's Undo while offline).
- *  False when there was none, e.g. the queue drained first. */
+ *  False when there was none: the queue drained first, or the drain is
+ *  sending it now (see `withdrawQueuedShare`). */
 export function cancelQueuedShare(uid: string, source: ShareSource): boolean {
   const items = readQueue();
   const kept = items.filter((item) => !isFor(item, uid, source));
@@ -326,34 +342,113 @@ export function getQueueLength(uid?: string): number {
   return uid ? items.filter((q) => q.uid === uid).length : items.length;
 }
 
-/** Replay queued shares for `uid`. Caller supplies the post fn
- *  (typically `postActivity`). Items belonging to other uids are
- *  left in the queue for that user's next sign-in. Items that throw
- *  stay in the queue for the next drain attempt.
+export type QueuedShareWithdrawal =
+  /** It was still waiting, and now never posts. */
+  | { status: "cancelled" }
+  /** The drain posted it: this is the post, for the caller to delete. */
+  | { status: "posted"; activityId: string }
+  /** Not queued, and not sent by a drain in this app session. */
+  | { status: "unknown" };
+
+/**
+ * Takes back a session's queued post (the finish screen's Undo). A post the
+ * drain is sending cannot be cancelled any more, so this waits for it and
+ * returns its id, for the caller to delete once it exists. While the
+ * connection is down that wait lasts until it returns: the post cannot be
+ * deleted before it has an id.
+ */
+export async function withdrawQueuedShare(
+  uid: string,
+  source: ShareSource
+): Promise<QueuedShareWithdrawal> {
+  const key = sessionKey(uid, source);
+  for (let onItsWay = sending.get(key); onItsWay; onItsWay = sending.get(key)) {
+    const activityId = await onItsWay;
+    if (activityId) return { status: "posted", activityId };
+    // It failed and went back in the queue, where it can be cancelled.
+  }
+  if (cancelQueuedShare(uid, source)) return { status: "cancelled" };
+  const activityId = sent.get(key);
+  return activityId ? { status: "posted", activityId } : { status: "unknown" };
+}
+
+/**
+ * An account's drains run one at a time. The sheet starts one on every
+ * return to online, and a connection that drops and returns while a post is
+ * on its way starts a second one alongside the first. Chained, the second
+ * waits, re-reads the queue, and finds the first's work already done.
+ *
+ * Chained per account, because a post can wait on a write that is only sent
+ * once its own account signs back in, and that must not hold up the drains
+ * of the account using the phone now.
+ */
+const drainChains = new Map<string, Promise<unknown>>();
+
+/** Replay queued shares for `uid`. Caller supplies the post fn, which
+ *  resolves with the posted activity's id. Items belonging to other uids
+ *  are left in the queue for that user's next sign-in. Items that throw go
+ *  back in the queue for the next drain attempt.
  *
  *  The queue is re-read around every post, not snapshotted once: an item
  *  cancelled while the drain is running must not be posted, and one
  *  queued meanwhile must not be erased by writing the snapshot back. */
-export async function drainQueue(
+export function drainQueue(
   uid: string,
   post: (
     payload: Record<string, unknown>,
     source?: ShareSource
-  ) => Promise<unknown>
+  ) => Promise<string | void>
+): Promise<void> {
+  const run = () => drainOnce(uid, post);
+  const result = (drainChains.get(uid) ?? Promise.resolve()).then(run, run);
+  // A rejected drain must not break the chain for every later one.
+  drainChains.set(
+    uid,
+    result.catch(() => {})
+  );
+  return result;
+}
+
+async function drainOnce(
+  uid: string,
+  post: (
+    payload: Record<string, unknown>,
+    source?: ShareSource
+  ) => Promise<string | void>
 ): Promise<void> {
   const mine = readQueue().filter((item) => item.uid === uid);
-  if (mine.length === 0) return;
-  const posted = new Set<string>();
   for (const item of mine) {
-    if (!readQueue().some((q) => q.id === item.id)) continue;
-    try {
-      await post(item.payload, item.source);
-      posted.add(item.id);
-    } catch {
-      // stays queued for the next drain
+    const queue = readQueue();
+    if (!queue.some((q) => q.id === item.id)) continue;
+    // Out of the queue before the request goes, so an Undo while the post
+    // is on its way cannot find it there and report it cancelled, and an
+    // app closed mid-request cannot send it a second time from the queue.
+    writeQueue(queue.filter((q) => q.id !== item.id));
+    const key = item.source ? sessionKey(uid, item.source) : null;
+    let settle: (activityId: string | null) => void = () => {};
+    if (key) {
+      sending.set(
+        key,
+        new Promise((resolve) => {
+          settle = resolve;
+        })
+      );
     }
-  }
-  if (posted.size > 0) {
-    writeQueue(readQueue().filter((item) => !posted.has(item.id)));
+    let activityId: string | null = null;
+    try {
+      const posted = await post(item.payload, item.source);
+      activityId = typeof posted === "string" ? posted : null;
+      if (key && activityId) sent.set(key, activityId);
+    } catch {
+      // Back in the queue for the next drain, unless the session has been
+      // queued again meanwhile (one pending post per session).
+      const current = readQueue();
+      const source = item.source;
+      if (!source || !current.some((q) => isFor(q, uid, source))) {
+        writeQueue([...current, item]);
+      }
+    }
+    if (key) sending.delete(key);
+    settle(activityId);
   }
 }

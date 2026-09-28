@@ -213,6 +213,21 @@ describe("drain records the share link", () => {
     );
   });
 
+  it("passes the posted id back, so Undo can take the post back by id", async () => {
+    const { enqueueShare, withdrawQueuedShare } =
+      await import("@/lib/shareComposer");
+    const { postActivity } = await import("@/lib/socialApi");
+    vi.mocked(postActivity).mockResolvedValue("act-79");
+    enqueueShare(UID, { type: "run" }, { kind: "run", id: "r-43" });
+
+    render(<ShareComposerSheet />);
+    await act(async () => {});
+
+    await expect(
+      withdrawQueuedShare(UID, { kind: "run", id: "r-43" })
+    ).resolves.toEqual({ status: "posted", activityId: "act-79" });
+  });
+
   it("posts a legacy source-less item without attempting a marker", async () => {
     const { enqueueShare } = await import("@/lib/shareComposer");
     const { postActivity } = await import("@/lib/socialApi");
