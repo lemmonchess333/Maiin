@@ -43,12 +43,14 @@ export function dayFocusLabel(dayName: string): string {
  * A lift day's name split for a card: the category above ("Pull") and the
  * focus as the title ("Lat focus"), from "Pull — Lat Focus".
  *
- * Home's Today card (DS3) puts the category in its eyebrow, beside the
- * session's place in the rotation, and the focus in the title. Setting the
- * whole name as a title broke it at the dash on a phone ("Pull —" over
- * "Lat Focus"). The trailing noun stays, lower-cased, because a title can
- * afford "focus" where a selector cell cannot. A name with no separator (a
- * custom or renamed day) is the title, with no category.
+ * Home's Today card (DS3) puts the category in its eyebrow and the focus
+ * in the title; it shows no place in the rotation. Train's session card
+ * does the same, with the day's status beside the category ("Pull · Up
+ * next"). Setting the whole name as a title broke it at the dash on a
+ * phone ("Pull —" over "Lat Focus"). The trailing noun stays, lower-cased,
+ * because a title can afford "focus" where a selector cell cannot. A name
+ * with no separator (a custom or renamed day) is the title, with no
+ * category.
  */
 export function liftDayTitle(dayName: string): {
   category: string | null;

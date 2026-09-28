@@ -359,6 +359,10 @@ describe("TodayEnergy — loading is not the same as having logged nothing", fun
   it("shows no calorie figure while meals are still loading", function () {
     renderAt({ calories: 0, mealsLoading: true });
     expect(screen.queryByText("kcal left")).not.toBeInTheDocument();
+    // "0 of 2,200 kcal logged" is the same false zero in smaller type.
+    // Its presence once loading is done is pinned below ("still shows a
+    // real zero once loading is done").
+    expect(screen.queryByText(/kcal logged/)).not.toBeInTheDocument();
     expect(
       screen.getByRole("status", { name: /calories still loading/i })
     ).toBeInTheDocument();

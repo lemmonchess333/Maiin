@@ -156,17 +156,25 @@ export default function TodayEnergy({
               </span>
             </p>
           )}
-          {/* The target is NAMED in words, not implied by a slash. */}
-          <p className="mt-1.5 text-sm font-medium text-muted-foreground">
-            <span className="font-mono tabular-nums">
-              {formatCalories(logged)}
-            </span>{" "}
-            of{" "}
-            <span className="font-mono tabular-nums">
-              {formatCalories(tCal)}
-            </span>{" "}
-            {CALORIE_UNIT} logged
-          </p>
+          {/* The target is NAMED in words, not implied by a slash. While
+              the day's meals are arriving the line waits with the
+              headline: "0 of 2,200 kcal logged" is the same false zero in
+              smaller type. The placeholder keeps the line's height, so the
+              card does not grow when the meals land. */}
+          {caloriesPending ? (
+            <Skeleton className="mt-1.5 h-5 w-40" />
+          ) : (
+            <p className="mt-1.5 text-sm font-medium text-muted-foreground">
+              <span className="font-mono tabular-nums">
+                {formatCalories(logged)}
+              </span>{" "}
+              of{" "}
+              <span className="font-mono tabular-nums">
+                {formatCalories(tCal)}
+              </span>{" "}
+              {CALORIE_UNIT} logged
+            </p>
+          )}
         </div>
       </div>
 

@@ -172,12 +172,15 @@ export default function LiftCTACard({
           </p>
         )}
       </div>
-      <div className="relative z-10 px-5 pb-5 pt-4">
+      {/* The action row lets taps through to the preview like the rest of
+          the content, so its padding and a status pill open the day. Start
+          is the one control that takes its own taps. */}
+      <div className="pointer-events-none relative z-10 px-5 pb-5 pt-4">
         {state === "planned" ? (
           <Button
             variant="primary"
             size="lg"
-            className="w-full"
+            className="pointer-events-auto w-full"
             onClick={function () {
               haptic();
               trackHomeEvent("home_card_tapped", { card: "today_workout" });
