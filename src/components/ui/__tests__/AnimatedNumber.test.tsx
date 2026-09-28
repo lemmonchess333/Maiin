@@ -89,6 +89,33 @@ describe("AnimatedNumber — reduced motion", () => {
   });
 });
 
+describe("AnimatedNumber — the first paint under Reduce Motion", () => {
+  it("is the final figure at once, with no frame at zero", () => {
+    /* A motion value reaches the screen a frame after it is set, so the
+       counter used to paint "0" first even with motion off. Asserted
+       straight after render, with nothing awaited: the waitFor above
+       would pass either way. */
+    Object.defineProperty(window, "matchMedia", {
+      configurable: true,
+      writable: true,
+      value: vi.fn().mockImplementation(() => ({
+        matches: true,
+        media: "(prefers-reduced-motion: reduce)",
+        onchange: null,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        dispatchEvent: vi.fn(),
+      })),
+    });
+    const { container } = render(
+      <AnimatedNumber value={1234} format={(n) => `${Math.round(n)} kg`} />
+    );
+    expect(container.querySelector("span")?.textContent).toBe("1234 kg");
+  });
+});
+
 describe("AnimatedNumber — custom formatter", () => {
   it("uses the format prop instead of the default toLocaleString", async () => {
     Object.defineProperty(window, "matchMedia", {

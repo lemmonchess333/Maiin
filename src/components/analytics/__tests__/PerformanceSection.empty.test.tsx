@@ -20,7 +20,18 @@ import { MemoryRouter } from "react-router-dom";
 
 const mockUsePerformanceWeeks = vi.fn();
 vi.mock("@/hooks/usePerformance", () => ({
-  usePerformanceWeeks: (...args: unknown[]) => mockUsePerformanceWeeks(...args),
+  /* The hook returns one document per week; a fixture of weekly
+     documents is already that series, so its week before the newest is
+     the previous week and its length is the document count. */
+  usePerformanceWeeks: (...args: unknown[]) => {
+    const served = mockUsePerformanceWeeks(...args);
+    const weeks = served?.weeks ?? [];
+    return {
+      previousWeek: weeks.length >= 2 ? weeks[weeks.length - 2] : null,
+      docsAvailable: weeks.length,
+      ...served,
+    };
+  },
 }));
 
 import PerformanceSection from "../PerformanceSection";
@@ -97,5 +108,7 @@ describe("the signal reaches both surfaces", () => {
   it("Analytics passes it to the section", () => {
     const src = read("pages/History.tsx");
     expect(src).toMatch(/<PerformanceSection[\s\S]*?hasLoggedSession=/);
+    // The running figures follow the reader's unit, not a default.
+    expect(src).toMatch(/<PerformanceSection[\s\S]*?distanceUnit=\{unit\}/);
   });
 });

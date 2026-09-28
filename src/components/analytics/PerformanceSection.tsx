@@ -5,6 +5,7 @@ import { Activity } from "lucide-react";
 import { THEME } from "@/lib/theme";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { usePerformanceWeeks } from "@/hooks/usePerformance";
+import type { DistanceUnit } from "@/lib/distanceUnits";
 import { performanceEmptyCopy } from "@/lib/performanceLine";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary";
@@ -34,10 +35,14 @@ interface PerformanceSectionProps {
    *  saved but before the server has written its performance doc — see
    *  performanceEmptyCopy. Defaults to false, the cold-start reading. */
   hasLoggedSession?: boolean;
+  /** The reader's distance unit, for the running figures. History passes
+   *  its own; `km` stands in only where nothing does. */
+  distanceUnit?: DistanceUnit;
 }
 
 export default function PerformanceSection({
   hasLoggedSession = false,
+  distanceUnit = "km",
 }: PerformanceSectionProps = {}) {
   /* usePerformanceWeeks here only gates loading / empty — PerformanceTab
      fetches its own 12-week window for the gauge, trend, and breakdown. */
@@ -139,7 +144,7 @@ export default function PerformanceSection({
             <div className="p-4 rounded-2xl bg-card motion-safe:animate-pulse h-48" />
           }
         >
-          <PerformanceTab />
+          <PerformanceTab distanceUnit={distanceUnit} />
         </Suspense>
       </SectionErrorBoundary>
     </section>

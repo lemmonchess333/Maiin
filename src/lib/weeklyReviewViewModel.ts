@@ -31,7 +31,7 @@
 
 import {
   calculateEMA,
-  deriveGoalWeightKg,
+  userGoalWeightKg,
   projectGoalDate,
 } from "@/utils/weightTrend";
 import { computeDataConfidence } from "@/lib/dataConfidence";
@@ -99,6 +99,18 @@ export interface WeekAheadPlan {
   phaseNote: string | null;
 }
 
+/** One new best: the set, and the best it beat. */
+export interface WeekBest {
+  /** The library id, for the drawing; null for a custom exercise. */
+  exerciseId: string | null;
+  exerciseName: string;
+  weight: number;
+  reps: number;
+  /** Local "YYYY-MM-DD" of the session that set it. */
+  date: string;
+  previous: { weight: number; reps: number; date: string } | null;
+}
+
 export interface WeeklyReviewData {
   /** Monday key of the REVIEWED (last completed) week. */
   weekKey: string;
@@ -110,6 +122,8 @@ export interface WeeklyReviewData {
   weighIns: { date: string; weight: number }[];
   /** PRs fired inside the week (data layer via prTracking); null = unknown. */
   prsHit: number | null;
+  /** The week's biggest new best, for the recap's Best moment card. */
+  bestMoment?: WeekBest | null;
   perf: ReviewPerfWeek | null;
   prevPi: number | null;
   plannedLifts: number | null;
@@ -121,8 +135,13 @@ export interface WeeklyReviewData {
   /** Any deliberate event exists BEFORE the reviewed week (quiet-week gate). */
   established: boolean;
   weekAhead: WeekAheadPlan;
-  goalProgram:
-    | { startWeight?: number | null; goal?: string | null }
+  /** The goal the user set, for the projection (`userGoalWeightKg`). */
+  goalProfile:
+    | {
+        goalWeightKg?: number | null;
+        weeklyRateKg?: number | null;
+        program?: { goal?: string } | null;
+      }
     | null
     | undefined;
   /** Injected clock (projection labels); defaults to now. */
@@ -152,6 +171,8 @@ export interface WeeklyReview {
       planned: number | null;
     } | null;
     prsHit: number | null;
+    /** The week's biggest new best; null when none fired. */
+    best: WeekBest | null;
   } | null;
   nutrition: {
     daysLogged: number;
@@ -370,7 +391,12 @@ export function buildWeeklyReview(data: WeeklyReviewData): WeeklyReview | null {
       : null;
   const training =
     liftLane || runLane
-      ? { lifts: liftLane, runs: runLane, prsHit: data.prsHit }
+      ? {
+          lifts: liftLane,
+          runs: runLane,
+          prsHit: data.prsHit,
+          best: data.bestMoment ?? null,
+        }
       : null;
 
   /* Nutrition — adherence-neutral: days logged + average, never a
@@ -412,7 +438,7 @@ export function buildWeeklyReview(data: WeeklyReviewData): WeeklyReview | null {
     });
     const projection = projectGoalDate({
       trendSeries: series,
-      goalWeight: deriveGoalWeightKg(data.goalProgram),
+      goalWeight: userGoalWeightKg(data.goalProfile),
       hasProjection: confidence.hasProjection,
       now: data.now,
     });

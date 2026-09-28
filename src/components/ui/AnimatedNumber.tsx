@@ -14,6 +14,15 @@ interface Props {
 
 const DEFAULT_EASE: [number, number, number, number] = [0.32, 0.72, 0, 1];
 
+/**
+ * A number that counts to its value: from zero when it first appears,
+ * then from wherever it was when the value changes.
+ *
+ * Under Reduce Motion it is plain text from the first paint. A motion
+ * value only reaches the screen a frame after it is set, so the counter
+ * showed "0" for a frame even with motion off, and a test reading the
+ * figure had to wait for a number that never moved.
+ */
 export function AnimatedNumber({
   value,
   className,
@@ -23,9 +32,9 @@ export function AnimatedNumber({
 }: Props) {
   const reduce = useReducedMotion();
   const count = useMotionValue(0);
-  const display = useTransform(count, (v) =>
-    format ? format(v) : Math.round(v).toLocaleString()
-  );
+  const formatted = (v: number) =>
+    format ? format(v) : Math.round(v).toLocaleString();
+  const display = useTransform(count, formatted);
 
   useEffect(() => {
     if (reduce) {
@@ -36,5 +45,6 @@ export function AnimatedNumber({
     return () => controls.stop();
   }, [value, reduce, count, duration, ease]);
 
+  if (reduce) return <span className={className}>{formatted(value)}</span>;
   return <motion.span className={className}>{display}</motion.span>;
 }

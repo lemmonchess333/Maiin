@@ -97,7 +97,9 @@ export default function ExerciseFormFrames({
               aria-hidden={i !== index}
               draggable={false}
               decoding="async"
-              className="absolute inset-0 size-full object-contain"
+              // The frames are drawn on black. Lighten merges that black
+              // into the stage so no darker box sits behind the figure.
+              className="absolute inset-0 size-full object-contain mix-blend-lighten"
               style={{
                 visibility:
                   i === index && failed !== index ? "visible" : "hidden",
