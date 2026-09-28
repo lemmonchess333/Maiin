@@ -140,6 +140,14 @@ export function useSocialFeed(
           };
         });
 
+        // A copy whose post is gone, or can no longer be read, is not
+        // drawn. Deleting a post removes its copies on the server
+        // (onActivityDeleted), but a copy can outlive the post for a
+        // moment, and copies of posts removed before that trigger existed
+        // stay. Drawn from the copy's summary, it would be a card for a
+        // post that no longer exists, whose kudos and comments cannot land.
+        enriched = enriched.filter((item) => item.activity);
+
         // Filter out blocked users
         if (blockedUsers && blockedUsers.size > 0) {
           enriched = enriched.filter(
