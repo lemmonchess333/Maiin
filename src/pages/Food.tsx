@@ -1947,8 +1947,9 @@ export default function Food() {
           are on screen when the page opens (owner call). With the usual row
           above it, the text box sat under the tab bar for a habitual user
           on a 390x844 phone and on an SE. The usual row follows as the
-          one-tap repeat; `companion-food.capture.spec.ts` checks its Log
-          still clears the tab bar at 375px wide. */}
+          one-tap repeat; `companion-food.capture.spec.ts` checks, at 375px
+          wide, that the Scan button clears the tab bar and that the usual
+          row's Log comes after it. */}
       <motion.div variants={pageItemVariant}>
         <FoodComposerCard
           /* Photo logging gated for this tier: one line under the field
