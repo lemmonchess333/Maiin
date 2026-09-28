@@ -2052,10 +2052,13 @@ export default function Food() {
             onClick={() => setPortionMeal(usual)}
             icon={<Pencil className="size-4" />}
           />
+          {/* Logs to the slot the heading names. With no slot selected the
+              heading names the hour's slot, and a meal saved without one
+              is filed by the diary's own hour rule, which differs. */}
           <Button
             variant="nutrition"
             disabled={quickAdding !== null}
-            onClick={() => void handleQuickMealAdd(usual)}
+            onClick={() => void handleQuickMealAdd(usual, usualSlot)}
           >
             Log
           </Button>
