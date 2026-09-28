@@ -9,6 +9,7 @@ import {
   formatDayMonthYear,
   formatClock,
   formatLoadKg,
+  keepTogether,
 } from "../formatters";
 
 describe("formatVolume", () => {
@@ -184,6 +185,14 @@ describe("formatDayMonth / formatDayMonthYear", () => {
   it("both variants agree on the day+month prefix", () => {
     const d = new Date("2026-12-31T12:00:00");
     expect(formatDayMonthYear(d).startsWith(formatDayMonth(d))).toBe(true);
+  });
+});
+
+describe("keepTogether", () => {
+  it("makes every space non-breaking, and nothing else", () => {
+    expect(keepTogether("target 180 g")).toBe("target\u00A0180\u00A0g");
+    expect(keepTogether("30 Aug")).toBe("30\u00A0Aug");
+    expect(keepTogether("2,350")).toBe("2,350");
   });
 });
 

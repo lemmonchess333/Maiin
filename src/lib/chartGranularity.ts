@@ -1,36 +1,16 @@
 /* ─────────────────────────────────────────────
-   Chart granularity — adaptive binning by TimeRange
+   Chart bins: the day, Monday week or month a date falls in, and a
+   bin's axis label.
 
-   Hist5c pin 7. Replaces the prior universal weekly-bar aggregation
-   on VolumeChart, which produced ~52 unreadable bars at TimeRange=1Y.
-   Per-range granularity:
-
-     1W / 1M  → daily bars
-     3M       → weekly bars (Monday-anchored)
-     6M / 1Y  → monthly bars (first-of-month)
-
-   Used by History.tsx's lifting-volume aggregator + VolumeChart's
-   X-axis label formatter so the bar bin and the label match.
-
-   Kept as a separate module (rather than inlined in History.tsx)
-   because future consumers — CalorieBalanceChart's per-day bars
-   could adopt the same coarse-bin behavior at long ranges — will
-   share the policy.
+   The Analytics period cards bin through `binKeyForDate`
+   (`periodSummary`), as does the weekly run aggregation
+   (`useRunningStats`); every date axis on the page labels its ticks
+   with `formatBinLabel`, so a bar's bin and its label agree.
    ───────────────────────────────────────────── */
 
 import { localDateString, localWeekKey } from "./dateHelpers";
 
 export type ChartGranularity = "daily" | "weekly" | "monthly";
-
-/**
- * Pick granularity for a window of `rangeDays`. Thresholds match
- * the locked Hist5c pin 7 table; revisit only with explicit grill.
- */
-export function granularityForRange(rangeDays: number): ChartGranularity {
-  if (rangeDays <= 30) return "daily";
-  if (rangeDays <= 90) return "weekly";
-  return "monthly";
-}
 
 /**
  * Compute the bin key for `date` under the chosen granularity.

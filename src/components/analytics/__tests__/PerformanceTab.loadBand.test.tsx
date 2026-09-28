@@ -166,7 +166,7 @@ describe("PerformanceTab — load-band copy (regression: mirror drift)", () => {
       ).toBeInTheDocument();
       expect(screen.queryByText(/^Peak$/)).toBeNull();
       expect(
-        screen.queryByText(/your training is on track|keep the cadence/)
+        screen.queryByRole("heading", { name: /^(Strong|Solid) week$/ })
       ).toBeNull();
     }
   );

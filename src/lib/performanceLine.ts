@@ -80,22 +80,27 @@ export function getVerb(
  * (data-rich) to least-specific (generic) so the most informative
  * variant fires when its signal is present.
  */
+/* The engine's baseline is the average of the weeks trained in the four
+   before this one: lifting by kilograms lifted, running by distance. The
+   line names both halves, so "18%" is never a figure against nothing. */
+const liftingAbove = (s: PerformanceSignals) =>
+  `Lifting volume ${Math.round(s.liftAheadOfBaseline * 100)}% above your usual week`;
+const runningAbove = (s: PerformanceSignals) =>
+  `Running distance ${Math.round(s.runAheadOfBaseline * 100)}% above your usual week`;
+
 export function getLine(state: VerbState, signals: PerformanceSignals): string {
   switch (state) {
     case "backing-off":
-      if (signals.recoveryWeak) return "Recovery signals down — ease this week";
-      return "Loads high — ease this week";
+      if (signals.recoveryWeak)
+        return "Recovery score is low — ease off this week";
+      return "Load is high — ease off this week";
 
     case "sharpening":
       if (signals.bothLoadsStrong)
         return "Lifting and running both strong this week";
-      if (signals.liftAheadOfBaseline > 0.15) {
-        return `Lifting load ${Math.round(signals.liftAheadOfBaseline * 100)}% above baseline`;
-      }
-      if (signals.runAheadOfBaseline > 0.2) {
-        return `Run volume ${Math.round(signals.runAheadOfBaseline * 100)}% up`;
-      }
-      return "Strong week — keep it going";
+      if (signals.liftAheadOfBaseline > 0.15) return liftingAbove(signals);
+      if (signals.runAheadOfBaseline > 0.2) return runningAbove(signals);
+      return "Load is high this week";
 
     case "cruising":
       if (signals.adherenceWeak) return "Fewer sessions than usual";
@@ -114,12 +119,8 @@ export function getLine(state: VerbState, signals: PerformanceSignals): string {
 
          The SCORE is deliberately untouched — see the note at the bottom of
          this file. This makes the words honest, not the number different. */
-      if (signals.runAheadOfBaseline > 0.2) {
-        return `Run volume ${Math.round(signals.runAheadOfBaseline * 100)}% up`;
-      }
-      if (signals.liftAheadOfBaseline > 0.15) {
-        return `Lifting load ${Math.round(signals.liftAheadOfBaseline * 100)}% above baseline`;
-      }
+      if (signals.runAheadOfBaseline > 0.2) return runningAbove(signals);
+      if (signals.liftAheadOfBaseline > 0.15) return liftingAbove(signals);
       return "Holding a steady rhythm";
 
     case "building":

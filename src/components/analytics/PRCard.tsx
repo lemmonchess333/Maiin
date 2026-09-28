@@ -7,10 +7,10 @@ import { THEME } from "@/lib/theme";
  * for new bests and nothing else: it was a white-on-orange "NEW", the
  * food colour, in capitals the rest of the app retired.
  */
-export function NewRecordChip() {
+export function NewRecordChip({ label = "New" }: { label?: string }) {
   return (
     <span className="inline-flex shrink-0 items-center rounded-full bg-achievement/15 px-1.5 py-0.5 text-xs font-semibold text-achievement-strong">
-      New
+      {label}
     </span>
   );
 }

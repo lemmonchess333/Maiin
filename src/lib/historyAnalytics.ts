@@ -38,7 +38,7 @@ export type HistoryRange = "1W" | "1M" | "3M" | "6M" | "1Y";
 export type HistoryRangeType = "pill" | "custom";
 
 /** Hist5f S1 — which chart did the user tap. */
-export type HistoryChart = "volume" | "macro" | "pi";
+export type HistoryChart = "volume" | "distance" | "macro" | "pi";
 
 export interface HistoryEventMetadata {
   /** history_tab_selected: which top-level filter tab. */
@@ -64,8 +64,9 @@ export interface HistoryEventMetadata {
    *  per chartGranularity). */
   binKey?: string;
   /** history_chart_tap_attempted: value at the tapped data point —
-   *  volume kg for VolumeChart, calorie-share % for MacroDistribution,
-   *  PI 0-100 for PerformanceIndexChart. */
+   *  kg for the Lifting page's week bars, metres for the Running page's,
+   *  calorie-share % for MacroDistribution, PI 0-100 for
+   *  PerformanceIndexChart. */
   value?: number;
 }
 

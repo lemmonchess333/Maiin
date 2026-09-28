@@ -181,9 +181,8 @@ export default function PerformanceIndexChart({ weeks }: Props) {
             tick={CHART_AXIS_TICK}
             axisLine={false}
             tickLine={false}
-            /* 32, not the 28 its siblings use: theirs label single digits
-               (RunningHistorySection) or abbreviate (VolumeChart's 35 for
-               "2.4k"). Three digits need the room. */
+            /* 32, not the 28 of a chart labelling single digits: three
+               digits need the room. */
             width={32}
           />
 
