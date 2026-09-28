@@ -193,7 +193,8 @@ export default function PerformanceIndexChart({ weeks }: Props) {
               const s = typeof label === "string" ? label : String(label ?? "");
               const d = new Date(s + "T00:00:00");
               if (Number.isNaN(d.getTime())) return "";
-              return `Week of ${formatDayMonth(d)}`;
+              // Each score covers the seven days ENDING on its date.
+              return `Week to ${formatDayMonth(d)}`;
             }}
             formatter={(value, name) => {
               const labels: Record<string, string> = {
@@ -201,6 +202,8 @@ export default function PerformanceIndexChart({ weeks }: Props) {
                 liftLoad: "Lift load",
                 runLoad: "Run load",
                 recovery: "Recovery",
+                // It showed as a raw "avg": the dashed line's key.
+                avg: "Average",
               };
 
               const n = typeof name === "string" ? name : String(name ?? "");

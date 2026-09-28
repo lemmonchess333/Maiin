@@ -1,4 +1,5 @@
 import { localDateString } from "@/lib/dateHelpers";
+import { attestedWeeklyRateKg } from "@/lib/goalWeightPlan";
 export interface WeightTrend {
   current: number;
   avg7d: number;
@@ -84,21 +85,37 @@ export function calculateEMA(
 }
 
 /**
- * Goal weight implied by the programme: startWeight −5kg for a cut,
- * +3kg for a lean bulk, startWeight itself for maintain. Extracted
- * from TrendWeight (Rev1) so the Weekly Review derives the SAME goal
- * the Progress chart shows — one source of truth, no drift.
+ * The goal weight the USER set (Settings → Nutrition), or none.
+ *
+ * The weight chart and the Weekly Review derived one instead:
+ * the programme's start weight less 5 kg for a cut, plus 3 kg for a lean
+ * bulk, the start weight itself otherwise. The user's own target has been
+ * stored since the goal-weight plan shipped (`goalWeightKg`, written with
+ * its signed `weeklyRateKg` and the phase by `buildGoalWeightPersistPayload`)
+ * and owns the nutrition direction, but neither surface read it: someone
+ * cutting from 90 kg to 78 kg was told they were "7 kg to goal" at 82 kg,
+ * against a goal of 85 they never set.
+ *
+ * A goal counts when the user is travelling toward it: a rate the phase
+ * agrees with (`attestedWeeklyRateKg`). Onboarding stores the signup
+ * weight as the target with a rate of 0, which is maintenance, not a
+ * goal, and a maintainer is shown none.
  */
-export function deriveGoalWeightKg(
-  program:
-    | { startWeight?: number | null; goal?: string | null }
+export function userGoalWeightKg(
+  profile:
+    | {
+        goalWeightKg?: number | null;
+        weeklyRateKg?: number | null;
+        program?: { goal?: string } | null;
+      }
     | null
     | undefined
 ): number | undefined {
-  if (!program?.startWeight) return undefined;
-  if (program.goal === "cut") return program.startWeight - 5;
-  if (program.goal === "lean bulk") return program.startWeight + 3;
-  return program.startWeight;
+  const goal = profile?.goalWeightKg;
+  if (typeof goal !== "number" || !Number.isFinite(goal) || goal <= 0)
+    return undefined;
+  if (attestedWeeklyRateKg(profile) === null) return undefined;
+  return goal;
 }
 
 export interface GoalProjection {

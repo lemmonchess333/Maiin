@@ -15,7 +15,18 @@ import { MemoryRouter } from "react-router-dom";
 
 const mockUsePerformanceWeeks = vi.fn();
 vi.mock("@/hooks/usePerformance", () => ({
-  usePerformanceWeeks: (...args: unknown[]) => mockUsePerformanceWeeks(...args),
+  /* The hook returns one document per week; a fixture of weekly
+     documents is already that series, so its week before the newest is
+     the previous week and its length is the document count. */
+  usePerformanceWeeks: (...args: unknown[]) => {
+    const served = mockUsePerformanceWeeks(...args);
+    const weeks = served?.weeks ?? [];
+    return {
+      previousWeek: weeks.length >= 2 ? weeks[weeks.length - 2] : null,
+      docsAvailable: weeks.length,
+      ...served,
+    };
+  },
 }));
 vi.mock("@/lib/homeAnalytics", () => ({ track: vi.fn() }));
 vi.mock("@/lib/haptic", () => ({ haptic: vi.fn() }));

@@ -11,6 +11,7 @@ import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { useStallWatch } from "@/hooks/useStallWatch";
 import { useRunningStats } from "@/hooks/useRunningStats";
 import { useWorkouts, workoutTonnageKg } from "@/hooks/useWorkouts";
+import { bestSetPerExercise } from "@/lib/liftRecords";
 import { useLifetimeRunStats } from "@/hooks/useLifetimeRunStats";
 import { useAuth, useUid } from "@/lib/auth";
 import { useEffectiveTargets } from "@/hooks/useEffectiveTargets";
@@ -75,7 +76,6 @@ import {
   abbreviateK,
   formatDayMonth,
 } from "@/utils/formatters";
-import { epley1RMExact } from "@/lib/analytics";
 import {
   track as trackHistoryEvent,
   type HistoryRange,
@@ -770,8 +770,14 @@ export default function History() {
        claim a 2:38/km best pace), valid + saved-properly + above
        the volume floor + finite positive avgPace. Longest Run
        reads outdoor only too — treadmill distance isn't
-       GPS-verified, so it can't set a distance PR. */
-    const paceEligible = runs.filter((r) => isPaceEligible(r));
+       GPS-verified, so it can't set a distance PR.
+
+       ALL-TIME means every run, so the pool is the lifetime read, not the
+       page's range. It was `runs` — `useRunningStats(rangeDays)` — which
+       made "All-time" the last 30 days at the default range and left a
+       runner whose best runs predated the range looking at "--". */
+    const allRuns = lifetimeRuns.runs;
+    const paceEligible = allRuns.filter((r) => isPaceEligible(r));
 
     /* Hist5 grill Q3 Stress 3 round 1 + Hist5b pin 5 — Indoor PRs
        tracked separately for users who run primarily on a
@@ -781,7 +787,7 @@ export default function History() {
        floor. Sublabeled distinctly so the user doesn't conflate
        indoor pace (user-entered distance) with outdoor pace
        (GPS-verified). */
-    const indoorEligible = runs.filter(
+    const indoorEligible = allRuns.filter(
       (r) =>
         requiresManualDistance(
           r.activityType as Parameters<typeof requiresManualDistance>[0]
@@ -898,7 +904,9 @@ export default function History() {
       hasAnyIndoor: indoorEligible.length > 0,
       hasAnyRecent: paceEligible.some((r) => r.completedAt >= thirtyDaysAgo),
     };
-  }, [runs]);
+    // `unit` too: the values are written in it, and a unit switch left
+    // them in the old one until the runs changed.
+  }, [lifetimeRuns.runs, unit]);
 
   // Per-group recovery chips for the muscle heat map (Tier-2 #6 second
   // half). NOW-state — always computed over the last RECOVERY_LOOKBACK_DAYS
@@ -1038,155 +1046,28 @@ export default function History() {
       (w) => sparkSessionsMap[w] ?? 0
     );
 
-    // Build all-time best e1rm per exercise. epley1RMExact carries the
-    // reps<=0 guard (a failed set must not score weight×1.0) and the
-    // reps===1 identity the raw inline formula lacked.
-    const allTimeBest: Record<string, number> = {};
-    workouts.forEach((w) => {
-      w.exercises?.forEach((ex) => {
-        ex.sets?.forEach((set) => {
-          const e1rm = epley1RMExact(set.weightKg, set.reps);
-          allTimeBest[ex.exerciseName] = Math.max(
-            allTimeBest[ex.exerciseName] || 0,
-            e1rm
-          );
-        });
-      });
-    });
-
-    // Best set per exercise from the last 7 days only (local-date key
-    // comparison — same convention as the range filters above).
+    /* Hist5b pin 4 / PR 7a — lifetime PRs for the dedicated PRs tab:
+       each exercise's best set across every logged workout
+       (`liftRecords.ts`). A rolling 7-day "prTimeline" was computed
+       beside it, a full e1RM pass over every set, for a card deleted
+       long ago; nothing read it, and it is gone. */
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-    const sevenDaysAgoKey = localDateString(sevenDaysAgo);
-    const recentWorkouts = workouts.filter((w) => w.date >= sevenDaysAgoKey);
-    const prMap: Record<
-      string,
-      { weight: number; reps: number; date: string; isAllTimeBest: boolean }
-    > = {};
-    recentWorkouts.forEach((w) => {
-      w.exercises?.forEach((ex) => {
-        const name = ex.exerciseName;
-        const exInfo = EXERCISES.find((e) => e.name === name);
-        const isBWExercise = exInfo?.equipment === "Bodyweight";
-        ex.sets?.forEach((set) => {
-          if (!isBWExercise && set.weightKg <= 0) return;
-          const e1rm = epley1RMExact(set.weightKg, set.reps);
-          const score = isBWExercise && set.weightKg === 0 ? set.reps : e1rm;
-          const prevScore = prMap[name]
-            ? isBWExercise && prMap[name].weight === 0
-              ? prMap[name].reps
-              : epley1RMExact(prMap[name].weight, prMap[name].reps)
-            : -1;
-          if (score > prevScore) {
-            prMap[name] = {
-              weight: set.weightKg,
-              reps: set.reps,
-              date: w.date,
-              isAllTimeBest: Math.abs(e1rm - (allTimeBest[name] || 0)) < 0.01,
-            };
-          }
-        });
-      });
-    });
-    const prTimeline = Object.entries(prMap)
-      .map(([name, data]) => ({ name, ...data }))
-      .sort((a, b) => b.date.localeCompare(a.date))
-      .slice(0, 8);
-
-    /* Hist5b pin 4 / PR 7a — lifetime PRs for the dedicated PRs tab.
-       Distinct from prTimeline above (which is a rolling 7-day
-       view scheduled for removal when the PRs tab fully takes
-       over). For each exercise, find the single set with the
-       highest e1rm-equivalent score across all logged workouts.
-       Bodyweight exercises score on reps (weight=0); weighted
-       exercises score on weight × (1 + reps/30). */
-    const lifetimeBestSet: Record<
-      string,
-      { weight: number; reps: number; date: string; score: number }
-    > = {};
-    workouts.forEach((w) => {
-      w.exercises?.forEach((ex) => {
-        const name = ex.exerciseName;
-        const exInfo = EXERCISES.find((e) => e.name === name);
-        const isBWExercise = exInfo?.equipment === "Bodyweight";
-        ex.sets?.forEach((set) => {
-          if (!isBWExercise && set.weightKg <= 0) return;
-          const e1rm = epley1RMExact(set.weightKg, set.reps);
-          const score = isBWExercise && set.weightKg === 0 ? set.reps : e1rm;
-          const prev = lifetimeBestSet[name];
-          if (!prev || score > prev.score) {
-            lifetimeBestSet[name] = {
-              weight: set.weightKg,
-              reps: set.reps,
-              date: w.date,
-              score,
-            };
-          }
-        });
-      });
-    });
-    const lifetimePRs = Object.entries(lifetimeBestSet)
-      .map(([name, data]) => ({
-        name,
-        weight: data.weight,
-        reps: data.reps,
-        date: data.date,
-      }))
-      .sort((a, b) => {
-        /* Sort by date desc (most-recently-set PR first). Provides
-           a sense of momentum on the PRs tab — the lifts the user
-           has been pushing most recently float to the top. */
-        return b.date.localeCompare(a.date);
-      });
+    // w.date is a LOCAL "YYYY-MM-DD" string, so the cutoffs are LOCAL
+    // dates too (same UTC/local-mixing family as the sparkline axes above).
+    const newSinceKey = localDateString(sevenDaysAgo);
+    const lifetimePRs = bestSetPerExercise(workouts, { newSinceKey });
 
     /* Hist5b pin 4 / PR 7b — Recent bests subsection (rolling 30
        days). Same per-exercise top-set logic as lifetimePRs but
-       constrained to the last 30 days. Distinct from prTimeline
-       (last 7 days, used by the prior Analytics card we just
-       deleted). Lives in the PRs tab as a sublabeled subsection
-       so the user reads "Lifetime" vs "Last 30 days" as two
-       different scopes. */
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    // w.date is a LOCAL "YYYY-MM-DD" string, so the cutoff must be the LOCAL
-    // date too (same UTC/local-mixing family as the sparkline axes above).
-    const thirtyDaysAgoKey = localDateString(thirtyDaysAgo);
-    const recentBestSet: Record<
-      string,
-      { weight: number; reps: number; date: string; score: number }
-    > = {};
-    workouts
-      .filter((w) => w.date >= thirtyDaysAgoKey)
-      .forEach((w) => {
-        w.exercises?.forEach((ex) => {
-          const name = ex.exerciseName;
-          const exInfo = EXERCISES.find((e) => e.name === name);
-          const isBWExercise = exInfo?.equipment === "Bodyweight";
-          ex.sets?.forEach((set) => {
-            if (!isBWExercise && set.weightKg <= 0) return;
-            const e1rm = epley1RMExact(set.weightKg, set.reps);
-            const score = isBWExercise && set.weightKg === 0 ? set.reps : e1rm;
-            const prev = recentBestSet[name];
-            if (!prev || score > prev.score) {
-              recentBestSet[name] = {
-                weight: set.weightKg,
-                reps: set.reps,
-                date: w.date,
-                score,
-              };
-            }
-          });
-        });
-      });
-    const recentLiftPRs = Object.entries(recentBestSet)
-      .map(([name, data]) => ({
-        name,
-        weight: data.weight,
-        reps: data.reps,
-        date: data.date,
-      }))
-      .sort((a, b) => b.date.localeCompare(a.date));
+       constrained to the last 30 days, so the user reads "All-time"
+       and "Last 30 days" as two different scopes. */
+    const recentLiftPRs = bestSetPerExercise(workouts, {
+      sinceKey: localDateString(thirtyDaysAgo),
+      newSinceKey,
+    });
 
     return {
       liftCount,
@@ -1194,7 +1075,6 @@ export default function History() {
       muscleData,
       weeklyVolume,
       weeklyVolumeGranularity: granularity,
-      prTimeline,
       lifetimePRs,
       recentLiftPRs,
       prevLiftCount,
@@ -1620,6 +1500,7 @@ export default function History() {
                   hasLoggedSession={
                     workouts.length > 0 || lifetimeRuns.runCount > 0
                   }
+                  distanceUnit={unit}
                 />
               </SectionErrorBoundary>
             )}
@@ -2214,8 +2095,13 @@ export default function History() {
                     <Card size="compact" className="text-center">
                       <Footprints className="size-4 mx-auto mb-1.5 text-running" />
                       <p className="text-base font-extrabold font-mono tabular-nums text-foreground leading-tight">
-                        {abbreviateK(lifetimeTotals.runKm)}
-                        <span className="text-xs font-medium ml-0.5">km</span>
+                        {/* In the reader's unit: it read "km" to everyone. */}
+                        {abbreviateK(
+                          distanceIn(lifetimeTotals.runKm * 1000, unit)
+                        )}
+                        <span className="text-xs font-medium ml-0.5">
+                          {distanceUnitLabel(unit)}
+                        </span>
                       </p>
                       <p className="text-caption text-muted-foreground mt-0.5">
                         {lifetimeTotals.runCount}{" "}

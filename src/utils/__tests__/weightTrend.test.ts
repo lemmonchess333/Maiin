@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   calcWeightTrend,
   calculateEMA,
-  deriveGoalWeightKg,
+  userGoalWeightKg,
   projectGoalDate,
 } from "../weightTrend";
 
@@ -196,17 +196,74 @@ describe("calculateEMA", () => {
   });
 });
 
-describe("deriveGoalWeightKg (Rev1 extraction — mirrors TrendWeight)", () => {
-  it("cut → −5kg, lean bulk → +3kg, maintain → startWeight", () => {
-    expect(deriveGoalWeightKg({ startWeight: 80, goal: "cut" })).toBe(75);
-    expect(deriveGoalWeightKg({ startWeight: 80, goal: "lean bulk" })).toBe(83);
-    expect(deriveGoalWeightKg({ startWeight: 80, goal: "maintain" })).toBe(80);
+describe("userGoalWeightKg — the goal the user set, never one derived", () => {
+  it("is the target weight while the user travels toward it", () => {
+    expect(
+      userGoalWeightKg({
+        goalWeightKg: 78,
+        weeklyRateKg: -0.5,
+        program: { goal: "cut" },
+      })
+    ).toBe(78);
+    expect(
+      userGoalWeightKg({
+        goalWeightKg: 84,
+        weeklyRateKg: 0.25,
+        program: { goal: "lean bulk" },
+      })
+    ).toBe(84);
   });
 
-  it("no startWeight → undefined", () => {
-    expect(deriveGoalWeightKg({ goal: "cut" })).toBeUndefined();
-    expect(deriveGoalWeightKg(null)).toBeUndefined();
-    expect(deriveGoalWeightKg(undefined)).toBeUndefined();
+  it("is not the programme's start weight less 5 kg", () => {
+    // What the chart used to invent: 90 - 5 = 85, a goal nobody set.
+    expect(
+      userGoalWeightKg({
+        goalWeightKg: 78,
+        weeklyRateKg: -0.5,
+        program: { goal: "cut", startWeight: 90 } as { goal: string },
+      })
+    ).toBe(78);
+    expect(
+      userGoalWeightKg({
+        program: { goal: "cut", startWeight: 90 } as { goal: string },
+      })
+    ).toBeUndefined();
+  });
+
+  it("is none for maintenance, including onboarding's signup-weight default", () => {
+    // Onboarding stores the signup weight as the target with a rate of 0.
+    expect(
+      userGoalWeightKg({
+        goalWeightKg: 82,
+        weeklyRateKg: 0,
+        program: { goal: "recomp" },
+      })
+    ).toBeUndefined();
+  });
+
+  it("is none when a legacy rate's sign contradicts the phase", () => {
+    // Pre-NUTR-M2 unsigned rate on a cut: the direction cannot be trusted.
+    expect(
+      userGoalWeightKg({
+        goalWeightKg: 78,
+        weeklyRateKg: 0.5,
+        program: { goal: "cut" },
+      })
+    ).toBeUndefined();
+  });
+
+  it("is none without a usable target", () => {
+    for (const goalWeightKg of [undefined, null, 0, -3, Number.NaN]) {
+      expect(
+        userGoalWeightKg({
+          goalWeightKg,
+          weeklyRateKg: -0.5,
+          program: { goal: "cut" },
+        })
+      ).toBeUndefined();
+    }
+    expect(userGoalWeightKg(null)).toBeUndefined();
+    expect(userGoalWeightKg(undefined)).toBeUndefined();
   });
 });
 

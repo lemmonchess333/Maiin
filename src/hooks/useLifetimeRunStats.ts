@@ -7,7 +7,7 @@ import {
   isVolumeEligible,
   sumLifetimeRunTotals,
 } from "@/lib/runStatsEligibility";
-import { parseRunSummary } from "@/hooks/useRunningStats";
+import { parseRunSummary, type RunSummaryItem } from "@/hooks/useRunningStats";
 import {
   recordedRaceMilestones,
   type MilestoneRace,
@@ -27,6 +27,15 @@ export interface LifetimeRunStats {
    * `useRunningStats` only reads the window itself.
    */
   dated: DatedRun[];
+  /**
+   * Every run, parsed, whatever its eligibility: the pool ALL-TIME records
+   * are drawn from. The PRs tab built "All-time" from the Analytics
+   * window's runs (`useRunningStats(rangeDays)`), so at the default range
+   * its all-time records were the last 30 days', and a runner whose best
+   * runs predated the range saw "--". Each record applies its own
+   * eligibility to this pool.
+   */
+  runs: RunSummaryItem[];
 }
 
 export interface DatedRun {
@@ -40,7 +49,20 @@ const EMPTY: LifetimeRunStats = {
   firstRun: null,
   races: [],
   dated: [],
+  runs: [],
 };
+
+/** Every run doc that parses, oldest first by finish. */
+function parsedRuns(
+  docs: readonly { id: string; [key: string]: unknown }[]
+): RunSummaryItem[] {
+  const out: RunSummaryItem[] = [];
+  for (const doc of docs) {
+    const run = parseRunSummary(doc.id, doc);
+    if (run) out.push(run);
+  }
+  return out.sort((a, b) => a.completedAt.getTime() - b.completedAt.getTime());
+}
 
 /** The runs the totals count, as a finish time and a distance. */
 function datedRuns(
@@ -104,6 +126,7 @@ export function useLifetimeRunStats(options?: { enabled?: boolean }) {
           ...sumLifetimeRunTotals(runs),
           races: recordedRaceMilestones(runs),
           dated: datedRuns(runs),
+          runs: parsedRuns(runs),
         });
         setStatsUid(uid);
         setLoadedUid(uid);
