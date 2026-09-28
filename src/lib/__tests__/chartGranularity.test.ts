@@ -3,44 +3,8 @@
  * Daily 1W/1M; weekly 3M; monthly 6M/1Y.
  */
 import { describe, it, expect, afterEach, vi } from "vitest";
-import {
-  granularityForRange,
-  binKeyForDate,
-  formatBinLabel,
-} from "../chartGranularity";
+import { binKeyForDate, formatBinLabel } from "../chartGranularity";
 import { parseLocalDate } from "../dateHelpers";
-
-describe("granularityForRange", () => {
-  it("returns daily for 1W (7 days)", () => {
-    expect(granularityForRange(7)).toBe("daily");
-  });
-
-  it("returns daily for 1M (30 days)", () => {
-    expect(granularityForRange(30)).toBe("daily");
-  });
-
-  it("returns weekly for 3M (90 days)", () => {
-    expect(granularityForRange(90)).toBe("weekly");
-  });
-
-  it("returns monthly for 6M (180 days)", () => {
-    expect(granularityForRange(180)).toBe("monthly");
-  });
-
-  it("returns monthly for 1Y (365 days)", () => {
-    expect(granularityForRange(365)).toBe("monthly");
-  });
-
-  it("boundary at 30 days inclusive (daily)", () => {
-    expect(granularityForRange(30)).toBe("daily");
-    expect(granularityForRange(31)).toBe("weekly");
-  });
-
-  it("boundary at 90 days inclusive (weekly)", () => {
-    expect(granularityForRange(90)).toBe("weekly");
-    expect(granularityForRange(91)).toBe("monthly");
-  });
-});
 
 describe("binKeyForDate", () => {
   /* Every fixture here is built from LOCAL components, never a `Z`

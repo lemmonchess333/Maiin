@@ -39,21 +39,7 @@ import {
 import RunStatGrid from "@/components/run/RunStatGrid";
 import { splitsForDisplay } from "@/lib/gps";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
-import { elevationLabel } from "@/lib/runLabels";
-
-const ACTIVITY_LABELS: Record<string, string> = {
-  freerun: "Free Run",
-  easy: "Easy Run",
-  tempo: "Tempo Run",
-  intervals: "Intervals",
-  longrun: "Long Run",
-  race: "Race",
-  treadmill: "Treadmill",
-  /* 'manual' = "Track without GPS" path. Outdoor user, GPS never
-     locked. Distinguished from treadmill so the detail header reads
-     honestly. */
-  manual: "Manual Run",
-};
+import { elevationLabel, runTypeTitle } from "@/lib/runLabels";
 
 export default function RunDetail() {
   const unit = useDistanceUnit();
@@ -197,7 +183,7 @@ export default function RunDetail() {
   };
 
   const shareThisRoute = () => {
-    const label = ACTIVITY_LABELS[run.activityType] ?? "Run";
+    const label = runTypeTitle(run.activityType);
     shareRouteWithPrivacy(
       `${label} · ${distanceLabel(run.distance, unit)}`,
       run.points
@@ -208,7 +194,7 @@ export default function RunDetail() {
   // "save/reuse" half of route planning v1. Same store the planner and GPX
   // import write to; it then appears under Saved routes in run setup.
   const saveThisRoute = async () => {
-    const label = ACTIVITY_LABELS[run.activityType] ?? "Run";
+    const label = runTypeTitle(run.activityType);
     const ok = await saveRoute({
       name: `${label} · ${distanceLabel(run.distance, unit)}`,
       points: run.points,
@@ -374,7 +360,7 @@ export default function RunDetail() {
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <p className="text-sm font-bold text-running-strong">
-                {ACTIVITY_LABELS[run.activityType] ?? "Run"}
+                {runTypeTitle(run.activityType)}
               </p>
               <h1 className="mt-1 text-display font-extrabold font-mono tabular-nums leading-none text-foreground">
                 {distanceValue(run.distance, unit, 2)}{" "}

@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { motion } from "framer-motion";
+import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { cn } from "@/lib/utils";
 
 interface ProgressRingProps {
@@ -27,8 +28,11 @@ interface ProgressRingProps {
  * the week's performance score. The arc starts at twelve o'clock and fills
  * clockwise. It is decorative: the number it frames, and the sentence
  * beside it, carry the reading, so the SVG is hidden from assistive tech.
- * The fill animates in once; framer-motion's global reduced-motion gate
- * renders it settled.
+ * The fill draws in from empty, and under Reduce Motion it is simply
+ * there. That gate is this component's own: the app's
+ * `MotionConfig reducedMotion="user"` settles only positional values
+ * (x, y, scale, width, height), and a stroke offset is not one, so this
+ * ring drew in for everyone until it asked the preference itself.
  */
 export default function ProgressRing({
   value,
@@ -42,6 +46,7 @@ export default function ProgressRing({
   const r = (size - stroke) / 2;
   const circumference = 2 * Math.PI * r;
   const clamped = Math.min(1, Math.max(0, Number.isFinite(value) ? value : 0));
+  const reduce = useReducedMotion();
   return (
     <div
       className={cn("relative flex-shrink-0", className)}
@@ -72,9 +77,11 @@ export default function ProgressRing({
             strokeWidth={stroke}
             strokeLinecap="round"
             strokeDasharray={circumference}
-            initial={{ strokeDashoffset: circumference }}
+            initial={reduce ? false : { strokeDashoffset: circumference }}
             animate={{ strokeDashoffset: circumference * (1 - clamped) }}
-            transition={{ duration: 0.8, ease: "easeOut" }}
+            transition={
+              reduce ? { duration: 0 } : { duration: 0.8, ease: "easeOut" }
+            }
           />
         )}
       </svg>

@@ -20,7 +20,18 @@ const mockUsePerformanceWeeks = vi.fn();
 // outside the component-test boundary alongside the data subscriptions.
 vi.mock("@/lib/historyAnalytics", () => ({ track: vi.fn() }));
 vi.mock("@/hooks/usePerformance", () => ({
-  usePerformanceWeeks: (...args: unknown[]) => mockUsePerformanceWeeks(...args),
+  /* The hook returns one document per week; a fixture of weekly
+     documents is already that series, so its week before the newest is
+     the previous week and its length is the document count. */
+  usePerformanceWeeks: (...args: unknown[]) => {
+    const served = mockUsePerformanceWeeks(...args);
+    const weeks = served?.weeks ?? [];
+    return {
+      previousWeek: weeks.length >= 2 ? weeks[weeks.length - 2] : null,
+      docsAvailable: weeks.length,
+      ...served,
+    };
+  },
 }));
 // WeeklyReviewRow subscribes to Firestore for review eligibility — not
 // under test here, and its row is unrelated to the band copy.
@@ -84,10 +95,13 @@ const history = (finalPi: number, finalBand: string, deload = false) => [
 describe("PerformanceTab — load-band copy (regression: mirror drift)", () => {
   beforeEach(() => mockUsePerformanceWeeks.mockReset());
 
-  it("a HIGH-band week says High training load, not Low", () => {
+  it("a HIGH-band week reads as high, not low", () => {
     // The exact device case: PI 77, which computeLoadBand bands "high".
+    // The band's own sentence is gone (it restated the band); what names
+    // the band now is the gauge's verb, shared with Home.
     renderWith(history(77, "high"));
-    expect(screen.getByText(/High training load/)).toBeInTheDocument();
+    expect(screen.getByText(/^Sharpening$/)).toBeInTheDocument();
+    expect(screen.queryByText(/^Building$/)).toBeNull();
     expect(screen.queryByText(/Low training load/)).toBeNull();
   });
 
@@ -100,9 +114,10 @@ describe("PerformanceTab — load-band copy (regression: mirror drift)", () => {
     expect(screen.queryByText(/increase intensity/)).toBeNull();
   });
 
-  it("a genuinely LOW week still says Low training load", () => {
+  it("a genuinely LOW week still reads as low", () => {
     renderWith(history(30, "low"));
-    expect(screen.getByText(/Low training load/)).toBeInTheDocument();
+    expect(screen.getByText(/^Building$/)).toBeInTheDocument();
+    expect(screen.queryByText(/^Sharpening$/)).toBeNull();
   });
 
   it("resolves the band even when the doc stores none (derives from PI)", () => {
@@ -119,15 +134,20 @@ describe("PerformanceTab — load-band copy (regression: mirror drift)", () => {
         <PerformanceTab />
       </MemoryRouter>
     );
-    expect(screen.getByText(/High training load/)).toBeInTheDocument();
+    expect(screen.getByText(/^Sharpening$/)).toBeInTheDocument();
   });
 
-  it("renders the deload banner when the engine recommends one", () => {
+  it("says the deload advice once, in the verdict, when the engine recommends one", () => {
     /* Second half of the same drift: the gate read `flags?.deloadRecommended`,
-       a map no writer emits, so this banner had NEVER rendered — the app's
-       primary "back off" signal was dark for every user. */
+       a map no writer emits, so the recommendation had NEVER rendered — the
+       app's primary "back off" signal was dark for every user. It still
+       reaches the user, now once: DS3 folded the banner that repeated the
+       verdict into the verdict itself. */
     renderWith(history(88, "overreach", true));
-    expect(screen.getByText(/Consider a deload week/)).toBeInTheDocument();
+    expect(
+      screen.getByText("Backing off — make room for recovery")
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/Consider a deload week/)).toBeNull();
   });
 
   it.each([
@@ -146,7 +166,7 @@ describe("PerformanceTab — load-band copy (regression: mirror drift)", () => {
       ).toBeInTheDocument();
       expect(screen.queryByText(/^Peak$/)).toBeNull();
       expect(
-        screen.queryByText(/your training is on track|keep the cadence/)
+        screen.queryByRole("heading", { name: /^(Strong|Solid) week$/ })
       ).toBeNull();
     }
   );

@@ -1626,7 +1626,7 @@ function ProgramInner() {
                               navigate(
                                 completedWorkoutId
                                   ? `/workout/${completedWorkoutId}`
-                                  : "/history"
+                                  : "/history?view=lifting"
                               )
                             }
                           >

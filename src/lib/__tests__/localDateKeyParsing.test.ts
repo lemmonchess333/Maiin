@@ -52,7 +52,7 @@ const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
  * mutation run is what surfaced that: reverting all five fixes produced
  * three offenders, not five.
  *
- * All eight entries are SPANS — `later − earlier`, divided into days — or
+ * All six entries are SPANS — `later − earlier`, divided into days — or
  * the sort comparator feeding one. A constant offset cancels in a
  * subtraction, so UTC parsing is not merely harmless here, it is BETTER:
  * UTC days are uniformly 86 400 000 ms, while local midnights straddling a
@@ -65,8 +65,6 @@ const SPAN_ONLY: Record<string, Record<string, string>> = {
   "src/utils/weightTrend.ts": {
     "a.date": "sort comparator; a constant offset cancels in the comparison",
     "b.date": "sort comparator; a constant offset cancels in the comparison",
-    "last.date": "first→last day span — offset cancels, UTC days DST-uniform",
-    "first.date": "first→last day span — offset cancels, UTC days DST-uniform",
   },
   "src/components/progress/TrendWeight.tsx": {
     "data[0].date": "daysSpan feeding the thin-data projection gate",

@@ -398,7 +398,7 @@ behaviour.
     empty-state; extend this primitive.
 - **Toasts:** `sonner` — `toast.success()` / `toast.error()`. This is the
   channel for transient feedback.
-- **Icons:** `lucide-react`, imported individually. No other icon set.
+- **Icons:** `lucide-react`, imported individually, with two drawn exceptions. The tab bar has its own set (`src/components/icons/TabIcons.tsx`, DS3): drawn together on one 24 grid with one stroke, each with a filled form for the open tab, because filling a stock outline filled some of them oddly. The avocado macro icon sits beside it. No other icon set.
 - **Class merging:** `cn()` (`clsx` + `tailwind-merge`) for conditional classes.
 
 ---
@@ -408,14 +408,19 @@ behaviour.
 - **Tap feedback:** `scale(0.97)` on `:active`, 150ms `cubic-bezier(0.4,0,0.2,1)`.
   Use `.pressable` or the primitives (which bake it in).
 - **Haptics:** call the `haptic()` utility on button/card taps (Capacitor).
-- **Count-up:** hero numbers animate from 0 on first load (`useCountUp`).
+- **Count-up:** the moments' numbers count up as they appear, through
+  `AnimatedNumber` (or `useCountUp` for a once-a-session count on Home).
+  Under Reduce Motion `AnimatedNumber` is plain text from the first paint.
 - **Entrance:** `ds-fade-up` / `ds-scale-in` with `ds-stagger-*` delays.
 - **Number updates:** `.ds-stat-updated` flash; PRs use `.ds-badge-new-pr`.
 - **Focus ring:** `focus-visible` only (mouse clicks shouldn't draw it) —
   `ring-2 ring-primary/40 ring-offset-2`. The primitives already do this.
 - **Reduced motion:** `prefers-reduced-motion: reduce` is honoured globally
-  (animations.css) _and_ by the primitives. If you add a custom animation,
-  gate it — either via the `useReducedMotion` hook or a CSS media query.
+  for CSS (animations.css) and, through `MotionConfig`, for framer's
+  POSITIONAL values only (x, y, scale, width, height). Opacity, stroke
+  offsets, `pathLength` and count-ups are not covered: if you add one,
+  gate it in the component with the `useReducedMotion` hook, as
+  `ProgressRing` and `AnimatedNumber` do.
 
 ---
 

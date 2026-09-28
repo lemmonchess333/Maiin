@@ -21,6 +21,13 @@ interface MuscleHeatMapProps {
    * as before.
    */
   recovery?: Record<string, GroupRecovery>;
+  /**
+   * `compact` is the Analytics overview's Muscles card (DS3): the two
+   * figures small beside the four most-trained groups, with no card of
+   * its own, since the caller's card is the thing you tap. `full` is the
+   * Lifting page's card.
+   */
+  variant?: "full" | "compact";
 }
 
 const LOW_COLOR = THEME.liftingLight;
@@ -61,7 +68,11 @@ function recoveryDotColor(status: GroupRecovery["status"]): string {
   return MID_COLOR;
 }
 
-export default function MuscleHeatMap({ data, recovery }: MuscleHeatMapProps) {
+export default function MuscleHeatMap({
+  data,
+  recovery,
+  variant = "full",
+}: MuscleHeatMapProps) {
   const isDark = useSyncExternalStore(
     subscribeDarkMode,
     getIsDark,
@@ -135,7 +146,7 @@ export default function MuscleHeatMap({ data, recovery }: MuscleHeatMapProps) {
     [exerciseData, topGroup]
   );
 
-  const renderView = (type: "anterior" | "posterior") => (
+  const renderView = (type: "anterior" | "posterior", width = 140) => (
     <div className="relative">
       <BodyMapGlow
         data={glowHigh}
@@ -143,7 +154,7 @@ export default function MuscleHeatMap({ data, recovery }: MuscleHeatMapProps) {
         color={MID_COLOR}
         opacity={0.55}
         delay={0.1}
-        width={140}
+        width={width}
       />
       <BodyMapGlow
         data={glowMid}
@@ -151,7 +162,7 @@ export default function MuscleHeatMap({ data, recovery }: MuscleHeatMapProps) {
         color={LOW_COLOR}
         opacity={0.28}
         delay={0.4}
-        width={140}
+        width={width}
       />
       <BodyMapGlow
         data={glowTop}
@@ -159,17 +170,43 @@ export default function MuscleHeatMap({ data, recovery }: MuscleHeatMapProps) {
         color={THEME.liftingLight}
         opacity={0.45}
         pulse
-        width={140}
+        width={width}
       />
       <Model
         data={exerciseData}
-        style={{ width: 140 }}
+        style={{ width }}
         highlightedColors={[LOW_COLOR, MID_COLOR, HIGH_COLOR]}
         bodyColor={bodyColor}
         type={type}
       />
     </div>
   );
+
+  if (variant === "compact") {
+    return (
+      <div className="flex items-center gap-4">
+        <div className="flex shrink-0 gap-1">
+          {renderView("anterior", 60)}
+          {renderView("posterior", 60)}
+        </div>
+        <ul className="min-w-0 flex-1 space-y-2">
+          {trainedGroups.slice(0, 4).map(([group, sets]) => (
+            <li
+              key={group}
+              className="flex items-baseline justify-between gap-2 text-sm"
+            >
+              <span className="truncate text-foreground">{group}</span>
+              {/* One element, for the reason the legend below gives. */}
+              <span className="shrink-0 text-muted-foreground">
+                <span className="font-mono tabular-nums">{sets}</span>{" "}
+                {sets === 1 ? "set" : "sets"}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </div>
+    );
+  }
 
   return (
     <div className="p-4 rounded-2xl border border-border/50 bg-card">
@@ -210,8 +247,8 @@ export default function MuscleHeatMap({ data, recovery }: MuscleHeatMapProps) {
                       by anyone who does a single set of an accessory.
                       And the numeral face was painting the word as well
                       as the figure; `font-mono` / `tabular-nums` are
-                      scoped to numerals, which is why the column labels
-                      in `PeriodOverview` do not carry them either.
+                      scoped to numerals, which is why the unit words in
+                      the period summary do not carry them either.
 
                       One element, not two, for the reason the recovery
                       chip below records: the row is a `gap-1.5` flex, so
