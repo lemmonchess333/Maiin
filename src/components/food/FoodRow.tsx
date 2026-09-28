@@ -191,9 +191,9 @@ export default function FoodRow({
 
   /* Shared inner content (name, quantity/edited pills, kcal). The row
      used to open with a dot coloured by whichever macro gave the most
-     calories. Nothing on the page said so, and a purple or orange dot
-     beside a food read as a status nobody could name, so it went in the
-     Food pass. A food's macros are one tap away, in its edit sheet. */
+     calories. Nothing on the page said so, and a pink, yellow or green
+     dot beside a food read as a status nobody could name, so it went in
+     the Food pass. A food's macros are one tap away, in its edit sheet. */
   const rowBody = (
     <>
       <div className="flex-1 min-w-0 mr-2">
