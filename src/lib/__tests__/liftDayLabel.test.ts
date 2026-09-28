@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { dayFocusLabel, liftDayTitle } from "../liftDayLabel";
+import { dayFocusLabel, liftDayLine, liftDayTitle } from "../liftDayLabel";
 
 /**
  * The property the cells exist for: within one week, no two labels are
@@ -137,5 +137,19 @@ describe("liftDayTitle — Home's Today card", () => {
       title: "Push —",
     });
     expect(liftDayTitle("")).toEqual({ category: null, title: "" });
+  });
+});
+
+describe("liftDayLine — the day on one line", () => {
+  it("joins the category and the focus the way the screens say it", () => {
+    expect(liftDayLine("Pull — Lat Focus")).toBe("Pull · Lat focus");
+    expect(liftDayLine("Full Body — Squat Focus")).toBe(
+      "Full Body · Squat focus"
+    );
+  });
+
+  it("leaves a routine's own name as it is", () => {
+    expect(liftDayLine("Upper A")).toBe("Upper A");
+    expect(liftDayLine("Upper-Lower day")).toBe("Upper-Lower day");
   });
 });

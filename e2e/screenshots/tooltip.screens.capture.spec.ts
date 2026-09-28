@@ -49,7 +49,8 @@ test.describe("tooltip screenshots", () => {
 
   test("Performance Index tooltip — light + dark", async ({ page }) => {
     test.setTimeout(120_000);
-    await page.goto("history");
+    // The index's gauge, and its tooltip, live on the Performance page.
+    await page.goto("history?view=performance");
     await page
       .getByRole("navigation", { name: /main navigation/i })
       .waitFor({ state: "visible", timeout: 20_000 });
