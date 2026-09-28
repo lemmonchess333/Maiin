@@ -1041,12 +1041,18 @@ export default function FoodCameraModal({
   );
 
   if (cameraBlocked) {
+    /* In Barcode mode a picked photo is read on the device, which every
+       account may do. In Meal or Label mode it is an AI scan, which a
+       locked account is not offered. */
+    const barcodeUpload = tab === "barcode";
     const deniedCopy =
       cameraState === "denied"
         ? "Camera access was denied. Tropos only uses the camera to scan meals and barcodes. Your photo is sent to Google for analysis and kept only on this device — never on our servers."
-        : photoLock
-          ? "No camera available right now. You can still log your meal by typing it in."
-          : "No camera available right now. You can still log your meal by uploading a photo or typing it in.";
+        : barcodeUpload
+          ? "No camera available right now. You can still log your meal by uploading a photo of its barcode or typing it in."
+          : photoLock
+            ? "No camera available right now. You can still log your meal by typing it in."
+            : "No camera available right now. You can still log your meal by uploading a photo or typing it in.";
     return (
       <div
         ref={focusTrapRef}
@@ -1107,9 +1113,9 @@ export default function FoodCameraModal({
             )}
           </div>
           <div className="w-full max-w-[320px] space-y-2 pt-2">
-            {/* A photo upload is an AI scan, so a locked account is not
-                offered one. */}
-            {!photoLock && (
+            {/* onFileChange routes by mode: a barcode photo to the reader
+                on the device, any other photo to AI analysis. */}
+            {(barcodeUpload || !photoLock) && (
               <button
                 type="button"
                 onClick={() => {
@@ -1119,7 +1125,9 @@ export default function FoodCameraModal({
                 className="w-full h-12 rounded-xl bg-nutrition-fill text-white font-medium text-sm flex items-center justify-center gap-2"
               >
                 <ImageIcon className="size-4" />
-                Upload a photo instead
+                {barcodeUpload
+                  ? "Upload a barcode photo"
+                  : "Upload a photo instead"}
               </button>
             )}
             {onRequestTypedInput && (
@@ -1134,6 +1142,15 @@ export default function FoodCameraModal({
                 <Keyboard className="size-4" />
                 Type it instead
               </button>
+            )}
+            {/* The reader's answer to a barcode photo, such as "No barcode
+                found in that photo". The camera screen shows it above the
+                frame; this screen has none. Mounted while in Barcode mode
+                so a change of text is announced. */}
+            {barcodeUpload && (
+              <p role="status" className="text-sm text-muted-foreground">
+                {barcodeHint === BARCODE_HINT ? "" : barcodeHint}
+              </p>
             )}
           </div>
         </div>
