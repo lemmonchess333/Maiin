@@ -29,6 +29,11 @@ import {
 } from "@testing-library/react";
 
 const analyzeFoodMock = vi.fn();
+/* The modal's barcode handler, as the analyzer last passed it, so a test
+   can read what a lookup answers. */
+const probe = vi.hoisted(() => ({
+  lookUp: null as null | ((raw: string) => Promise<unknown>),
+}));
 
 vi.mock("@/hooks/useFoodAnalysis", () => ({
   useFoodAnalysis: () => ({
@@ -48,26 +53,29 @@ vi.mock("@/components/FoodCameraModal", () => ({
     failure?: string | null;
     failureDetail?: string | null;
     onCaptureBase64: (b64: string, mode: string) => Promise<void>;
-    onBarcodeDetected: (raw: string) => Promise<void>;
+    onBarcodeDetected: (raw: string) => Promise<unknown>;
     onScanRetry?: () => void;
     onClose: () => void;
-  }) => (
-    <div
-      data-testid="stub-modal"
-      data-open={String(props.open)}
-      data-failure={props.failure ?? ""}
-      data-detail={props.failureDetail ?? ""}
-    >
-      <button onClick={() => void props.onCaptureBase64("QUJD", "food")}>
-        stub-capture
-      </button>
-      <button onClick={() => void props.onBarcodeDetected("5000112637922")}>
-        stub-barcode
-      </button>
-      <button onClick={() => props.onScanRetry?.()}>stub-retry</button>
-      <button onClick={() => props.onClose()}>stub-close</button>
-    </div>
-  ),
+  }) => {
+    probe.lookUp = props.onBarcodeDetected;
+    return (
+      <div
+        data-testid="stub-modal"
+        data-open={String(props.open)}
+        data-failure={props.failure ?? ""}
+        data-detail={props.failureDetail ?? ""}
+      >
+        <button onClick={() => void props.onCaptureBase64("QUJD", "food")}>
+          stub-capture
+        </button>
+        <button onClick={() => void props.onBarcodeDetected("5000112637922")}>
+          stub-barcode
+        </button>
+        <button onClick={() => props.onScanRetry?.()}>stub-retry</button>
+        <button onClick={() => props.onClose()}>stub-close</button>
+      </div>
+    );
+  },
 }));
 
 /* Reduced motion TRUE: the success path's 420ms locked beat is
@@ -293,5 +301,70 @@ describe("FoodAnalyzer — scan outcome routing", () => {
     });
     expect(modal().dataset.failure).toBe("");
     expect(modal().dataset.open).toBe("false");
+  });
+});
+
+/* The scanner passes over a code the database does not have, and tries
+   again one whose lookup could not reach it, so the lookup has to say
+   which of the two it was. */
+describe("FoodAnalyzer — how a barcode lookup failed", () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  async function lookUp(response: () => Promise<unknown>) {
+    vi.stubGlobal("fetch", vi.fn(response));
+    render(<FoodAnalyzer date="2026-08-18" />);
+    await waitFor(() => expect(modal().dataset.open).toBe("true"));
+    let answer: unknown;
+    await act(async () => {
+      answer = await probe.lookUp!("5000112637922");
+    });
+    cleanup();
+    return answer;
+  }
+
+  it("a product the database does not have is not found", async () => {
+    expect(
+      await lookUp(async () => ({
+        ok: true,
+        status: 200,
+        json: async () => ({ status: 0 }),
+      }))
+    ).toBe("not-found");
+    // An unknown code can also come back as a 404.
+    expect(
+      await lookUp(async () => ({
+        ok: false,
+        status: 404,
+        json: async () => ({ status: 0 }),
+      }))
+    ).toBe("not-found");
+  });
+
+  it("a lookup that could not reach the database is unreachable", async () => {
+    const { toast } = await import("@/lib/toast");
+    expect(
+      await lookUp(async () => {
+        throw new TypeError("Failed to fetch");
+      })
+    ).toBe("unreachable");
+    // The scanner tries it again, so the toast is one that updates in
+    // place rather than a new one per try.
+    expect(vi.mocked(toast.error)).toHaveBeenLastCalledWith(
+      "Couldn't reach the barcode database. Check your connection.",
+      expect.objectContaining({ id: expect.any(String) })
+    );
+    expect(
+      await lookUp(async () => ({
+        ok: false,
+        status: 503,
+        json: async () => ({}),
+      }))
+    ).toBe("unreachable");
+    setOnline(false);
+    expect(
+      await lookUp(async () => {
+        throw new Error("offline lookups are never sent");
+      })
+    ).toBe("unreachable");
   });
 });

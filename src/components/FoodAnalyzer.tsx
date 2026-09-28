@@ -18,6 +18,7 @@ import { toast } from "@/lib/toast";
 import { haptic } from "@/lib/haptic";
 import { isPhotoShareSupported, sharePhotoToLibrary } from "@/lib/sharePhoto";
 import FoodCameraModal, {
+  type BarcodeLookupFailure,
   type PhotoLock,
   type ScanFailureKind,
   type ScanMode,
@@ -89,20 +90,28 @@ type MealResult = {
   brand?: string;
 };
 
+/** The database answered, and has no product with this code. */
+class BarcodeNotFoundError extends Error {}
+const BARCODE_NOT_FOUND = "Barcode not found. Log it manually instead.";
+
 async function fetchOpenFoodFacts(barcode: string): Promise<MealResult> {
   const url =
     `https://world.openfoodfacts.org/api/v2/product/${encodeURIComponent(barcode)}.json` +
     `?fields=product_name,brands,nutriments,serving_size,image_url`;
 
   const res = await fetch(url);
+  /* An unknown code can come back as a 404 as well as with `status: 0`.
+     Either way the database has no such product, which is not a failure
+     to reach it. */
+  if (res.status === 404) throw new BarcodeNotFoundError(BARCODE_NOT_FOUND);
   if (!res.ok) throw new Error("Couldn't look up barcode. Try again.");
   const data = await res.json();
 
   if (!data || data.status !== 1 || !data.product) {
     /* Throw message becomes the toast body when caught at the
-       call site (line 433 toast.error(msg)). Direct the user to
+       call site (onBarcodeDetected). Direct the user to
        the manual fallback rather than a dead-end. */
-    throw new Error("Barcode not found. Log it manually instead.");
+    throw new BarcodeNotFoundError(BARCODE_NOT_FOUND);
   }
 
   // One converter for OFF data, shared with the Food search results —
@@ -765,7 +774,12 @@ export default function FoodAnalyzer({
     }
   };
 
-  const onBarcodeDetected = async (raw: string) => {
+  /* Resolves to how the lookup failed, which decides whether the scanner
+     tries the same code again, or to undefined once the product is found
+     (which closes the scanner). */
+  const onBarcodeDetected = async (
+    raw: string
+  ): Promise<BarcodeLookupFailure | undefined> => {
     const code = raw.replace(/\s+/g, "");
 
     /* Drop any capture left over from an earlier food scan in this same
@@ -783,7 +797,7 @@ export default function FoodAnalyzer({
       const msg = "You're offline — barcode lookup needs a connection.";
       setBarcodeError(msg);
       toast.error(msg, { id: "barcode-offline" });
-      return;
+      return "unreachable";
     }
 
     setBarcodeLoading(true);
@@ -796,6 +810,7 @@ export default function FoodAnalyzer({
       setBarcodeResult(meal);
       setCameraOpen(false);
       toast.success("Barcode found");
+      return undefined;
     } catch (e: unknown) {
       /* TypeError = the fetch itself failed (connection dropped
          mid-lookup) — its message is browser-internal, never copy. */
@@ -806,7 +821,10 @@ export default function FoodAnalyzer({
             ? e.message
             : "Barcode lookup failed.";
       setBarcodeError(msg);
-      toast.error(msg);
+      /* One id, because the scanner tries an unreachable code again while
+         it stays in view, and each try would otherwise add a toast. */
+      toast.error(msg, { id: "barcode-lookup" });
+      return e instanceof BarcodeNotFoundError ? "not-found" : "unreachable";
     } finally {
       setBarcodeLoading(false);
     }

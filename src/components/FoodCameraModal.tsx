@@ -44,6 +44,12 @@ const BARCODE_HINT = "Point at a barcode";
  *  motion, like the photo scan's completion beat. */
 const BARCODE_FOUND_HOLD_MS = 250;
 
+/** How long a code whose lookup could not reach the database is passed
+ *  over before it is looked up again. The reader reads a code in view
+ *  about twice a second, so without a pause the failure would repeat on
+ *  every read; after it, the product scans once the connection is back. */
+const BARCODE_RETRY_MS = 3000;
+
 /** Reads the barcode in a picked photo, on the device. A photo in Barcode
  *  mode is never an AI scan: it costs nothing and needs no Pro. Resolves
  *  null when the picture has no readable code. */
@@ -103,11 +109,21 @@ export type ScanFailureKind = "no-food" | "error" | "offline";
  */
 export type PhotoLock = { onUpgrade: () => void };
 
+/**
+ * How a barcode lookup failed: the database answered and has no such
+ * product ("not-found"), or it could not be asked ("unreachable":
+ * offline, no connection, a server error).
+ */
+export type BarcodeLookupFailure = "not-found" | "unreachable";
+
 type Props = {
   open: boolean;
   onClose: () => void;
   onCaptureBase64: (base64: string, mode: CaptureMode) => Promise<void>;
-  onBarcodeDetected: (raw: string) => Promise<void>;
+  /** Looks a read code up. A lookup that finds the product closes the
+   *  scanner; one that fails says how, which decides whether the reader
+   *  tries the same code again. */
+  onBarcodeDetected: (raw: string) => Promise<BarcodeLookupFailure | void>;
   loading: boolean;
   /** The completion beat: analysis has LANDED and the parent is holding
    *  the modal open for a few hundred ms so the scan visibly resolves —
@@ -209,10 +225,15 @@ export default function FoodCameraModal({
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const stopZXingRef = useRef<null | (() => void)>(null);
-  /* A code whose lookup failed. The reader keeps scanning after a
-     failure, and without this it would read the same code straight
-     back and repeat the failed lookup for as long as it stayed in view. */
-  const lastFailedCodeRef = useRef<string | null>(null);
+  /* A code whose lookup failed, and when it may be looked up again. The
+     reader keeps scanning after a failure, and without this it would read
+     the same code straight back and repeat the failed lookup for as long
+     as it stayed in view. A product the database does not have is passed
+     over until the tab changes or the scanner reopens; a lookup that
+     could not reach the database is retried after BARCODE_RETRY_MS. */
+  const lastFailedCodeRef = useRef<{ code: string; retryAt: number } | null>(
+    null
+  );
   /* Read inside the decoder's callback, which outlives renders. */
   const reducedMotionRef = useRef(reducedMotion);
   useEffect(() => {
@@ -375,6 +396,8 @@ export default function FoodCameraModal({
       stopZXingRef.current = null;
       setBarcodeHint(BARCODE_HINT);
       setBarcodeFound(false);
+      // Coming back to Barcode looks every code up afresh.
+      lastFailedCodeRef.current = null;
       return;
     }
 
@@ -420,7 +443,9 @@ export default function FoodCameraModal({
             if (!result) return;
 
             const text = String(result.getText?.() ?? result.text ?? "").trim();
-            if (!text || text === lastFailedCodeRef.current) return;
+            const failed = lastFailedCodeRef.current;
+            if (!text || (failed?.code === text && Date.now() < failed.retryAt))
+              return;
 
             // stop after first detection
             try {
@@ -438,12 +463,21 @@ export default function FoodCameraModal({
               if (cancelled) return;
             }
 
-            await onBarcodeDetectedRef.current(text);
+            const failure = await onBarcodeDetectedRef.current(text);
             /* A successful lookup closes the scanner, which cancels this
                run. Still here means the lookup failed (the page says why):
-               scan on, past the code that just failed. */
+               scan on, past the code that just failed. A product the
+               database does not have is passed over until the tab changes;
+               any other failure is tried again after a pause, so the code
+               scans once the connection is back. */
             if (cancelled) return;
-            lastFailedCodeRef.current = text;
+            lastFailedCodeRef.current = {
+              code: text,
+              retryAt:
+                failure === "not-found"
+                  ? Infinity
+                  : Date.now() + BARCODE_RETRY_MS,
+            };
             setBarcodeHint(BARCODE_HINT);
             setBarcodeRun((n) => n + 1);
           }
