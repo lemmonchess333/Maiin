@@ -30,6 +30,6 @@ export function liftCompletionContext(
     progress: `${week} · ${done} of ${state.workouts.length} planned lifts complete`,
     next: next
       ? `Next: ${liftDayLine(next.day.dayName)}`
-      : "All planned lifts complete — review your week on Program",
+      : "All planned lifts complete — review your week on Train",
   };
 }
