@@ -806,12 +806,12 @@ export default function RunSummary() {
     });
   })();
 
-  // Run8 PR3d — context-aware primary stat. Intervals get a
-  // work-set summary ("N × distance @ pace") instead of the raw
-  // session avg pace (which mixes work + rest and reads slow); race
-  // runs lead with elapsed time (the metric runners care about). All
-  // other activity types fall through to the existing 3-col stats
-  // grid where distance / time / pace are equal-weighted.
+  // The context-aware primary stat, a card above the stats card of four.
+  // Intervals get a work-set summary ("N × distance @ pace") instead of
+  // the raw session average pace, which mixes work and rest and reads
+  // slow. A race gets its finishing time, the figure a racer wants under
+  // the distance headline. Every other run has none: the distance
+  // headline and the stats card of four are its read.
   const primaryStat = (() => {
     if (activityType === "intervals") {
       const iv = runConfig?.intervals;
@@ -1599,10 +1599,10 @@ export default function RunSummary() {
               </div>
             )}
 
-          {/* Run8 PR3d — context-aware primary stat. Renders above
-              the standard 3-col grid for intervals + race; everything
-              else falls through and the 3-col grid below is the
-              primary read. */}
+          {/* The context-aware primary stat, for intervals and races
+              only, above the stats card of four. A race's is its time,
+              under the distance headline at the top of the page. Every
+              other run goes from the headline to the stats card. */}
           {primaryStat && (
             <div className="mx-4 mb-3 p-4 rounded-2xl text-center card-shadow bg-running/8">
               <p className="text-3xl font-extrabold font-mono tabular-nums leading-tight text-running">
