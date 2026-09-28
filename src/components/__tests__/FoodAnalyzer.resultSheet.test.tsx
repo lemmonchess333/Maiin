@@ -100,8 +100,6 @@ vi.mock("@/hooks/useFoodFavourites", () => ({
 }));
 
 import FoodAnalyzer from "../FoodAnalyzer";
-import { mealSlotFor } from "@/lib/mealSlots";
-import { MEAL_LABELS } from "../food/mealConstants";
 
 const MEAL = {
   foodName: "Lunch Plate",
@@ -183,6 +181,7 @@ afterEach(() => {
   cleanup();
   vi.clearAllMocks();
   vi.unstubAllGlobals();
+  vi.useRealTimers();
 });
 
 describe("FoodAnalyzer — the result sheet", () => {
@@ -207,13 +206,26 @@ describe("FoodAnalyzer — the result sheet", () => {
     expect(log).toHaveClass("bg-nutrition-fill");
   });
 
-  it("with no meal targeted, names the slot the diary files it under", async () => {
-    await scan(null);
-    const slot = mealSlotFor({ createdAt: { toDate: () => new Date() } });
-    expect(
-      screen.getByRole("button", { name: `Log to ${MEAL_LABELS[slot]}` })
-    ).toBeTruthy();
-  });
+  it.each([
+    { time: "09:00", hour: 9, minute: 0, label: "Breakfast" },
+    // Mid-afternoon the hour suggests snack time, but the diary files an
+    // untargeted meal under Lunch until 17:00.
+    { time: "15:30", hour: 15, minute: 30, label: "Lunch" },
+  ])(
+    "with no meal targeted at $time, names the slot the diary files it under",
+    async ({ hour, minute, label }) => {
+      /* Only Date is faked, so waitFor keeps its timers, and the day
+         comes from the clock, so the pin cannot expire. */
+      vi.useFakeTimers({ toFake: ["Date"] });
+      const at = new Date();
+      at.setHours(hour, minute, 0, 0);
+      vi.setSystemTime(at);
+      await scan(null);
+      expect(
+        screen.getByRole("button", { name: `Log to ${label}` })
+      ).toBeTruthy();
+    }
+  );
 
   it("gives each item's name the row: portion and calories sit under it", async () => {
     await scan();
