@@ -13,10 +13,10 @@ function clock(total: number): string {
 /** A stable header row: resting never changes the set action's label.
  *
  * DS3: the time left is the row's one big thing, in the numeral font,
- * beside a ring that empties as the rest runs down. The ring turns green
- * when the rest is over (green is status), and its motion is a stroke
- * offset stepping once a second, so there is nothing to animate for
- * Reduce Motion. */
+ * beside a ring that empties as the rest runs down. When the rest is over
+ * the ring is drawn whole again, in green (green is status): an emptied
+ * ring has no arc left to colour. Its motion is a stroke offset stepping
+ * once a second, so there is nothing to animate for Reduce Motion. */
 export default function CompactRestTimer({
   seconds,
   target,
@@ -43,13 +43,17 @@ export default function CompactRestTimer({
         className="size-9 shrink-0 -rotate-90"
         aria-hidden="true"
       >
+        {/* The track is ProgressRing's groove, as on Home's rings.
+            `stroke-muted` is a near-white tile colour in the light theme,
+            lighter than the workout page, so it cannot show the emptied
+            part of the ring there. */}
         <circle
           cx="18"
           cy="18"
           r="15"
           fill="none"
           strokeWidth="4"
-          className="stroke-muted"
+          stroke="hsl(var(--muted-foreground) / 0.22)"
         />
         <circle
           cx="18"
@@ -59,7 +63,7 @@ export default function CompactRestTimer({
           strokeWidth="4"
           strokeLinecap="round"
           strokeDasharray={RING}
-          strokeDashoffset={RING * elapsed}
+          strokeDashoffset={done ? 0 : RING * elapsed}
           className={done ? "stroke-success" : "stroke-primary"}
         />
       </svg>

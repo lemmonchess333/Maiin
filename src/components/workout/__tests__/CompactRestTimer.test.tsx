@@ -52,8 +52,30 @@ describe("CompactRestTimer", () => {
     const group = screen.getByRole("group", { name: "Rest timer" });
     expect(group).toHaveTextContent("Rest done");
     expect(group).toHaveTextContent("0:00");
-    expect(container.querySelectorAll("circle")[1]).toHaveClass(
-      "stroke-success"
+    const arc = container.querySelectorAll("circle")[1];
+    expect(arc).toHaveClass("stroke-success");
+    // The green has to be drawn to be seen. An arc offset by its whole
+    // length paints nothing, which is where an emptied ring leaves it.
+    expect(Number(arc.getAttribute("stroke-dashoffset"))).toBe(0);
+  });
+
+  it("draws the full green ring on the second the rest runs out", () => {
+    const { container } = row(90, 90);
+    const arc = container.querySelectorAll("circle")[1];
+    expect(arc).toHaveClass("stroke-success");
+    expect(Number(arc.getAttribute("stroke-dashoffset"))).toBe(0);
+  });
+
+  it("draws the track in the rings' groove, which reads on the page", () => {
+    // `stroke-muted` is a near-white tile colour in the light theme, lighter
+    // than the workout page behind it, so the emptied part of the ring
+    // disappeared there. ProgressRing's track is the groove Home's rings use.
+    const { container } = row(10, 90);
+    const track = container.querySelectorAll("circle")[0];
+    expect(track).not.toHaveClass("stroke-muted");
+    expect(track).toHaveAttribute(
+      "stroke",
+      "hsl(var(--muted-foreground) / 0.22)"
     );
   });
 
