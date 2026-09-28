@@ -6,6 +6,8 @@ import {
   rollingRangeLabel,
   summaryBins,
   summaryGranularity,
+  usualBinAmount,
+  USUAL_BIN_MIN_BINS,
   volumeChange,
 } from "../periodSummary";
 import { rollingWindowStart } from "../dateHelpers";
@@ -256,5 +258,56 @@ describe("the changes", () => {
       direction: "up",
       text: "5.0 km",
     });
+  });
+});
+
+describe("the usual bin", () => {
+  const since = rollingWindowStart(30, TODAY);
+  const sinceKey = [
+    since.getFullYear(),
+    String(since.getMonth() + 1).padStart(2, "0"),
+    String(since.getDate()).padStart(2, "0"),
+  ].join("-");
+  // TODAY is a Sunday, so its week began on 21 Sep and is not over.
+  const bins = summaryBins({
+    since,
+    today: TODAY,
+    lifts: [],
+    runs: [
+      run(sinceKey, 50_000),
+      run("2026-09-01", 30_000),
+      // Nothing in the week of 7 Sep.
+      run("2026-09-16", 40_000),
+      run("2026-09-22", 9_000),
+    ],
+    granularity: "weekly",
+  });
+  const metres = (b: { distanceM: number }) => b.distanceM;
+
+  it("averages the whole bins, a quiet one included, not the part ones", () => {
+    // The weeks of 31 Aug, 7 and 14 Sep: 30, 0 and 40 km. The range's
+    // first day and this week so far are left out.
+    expect(
+      usualBinAmount(bins, metres, { sinceKey, firstSessionKey: "2026-01-01" })
+    ).toBe(70_000 / 3);
+  });
+
+  it("leaves out the bins from before the user's first session", () => {
+    expect(
+      usualBinAmount(bins, metres, { sinceKey, firstSessionKey: "2026-09-07" })
+    ).toBe(20_000);
+  });
+
+  it("is not an average of one week, or of none", () => {
+    expect(USUAL_BIN_MIN_BINS).toBe(2);
+    expect(
+      usualBinAmount(bins, metres, { sinceKey, firstSessionKey: "2026-09-08" })
+    ).toBeNull();
+    expect(
+      usualBinAmount(bins, metres, { sinceKey, firstSessionKey: "2026-09-22" })
+    ).toBeNull();
+    expect(
+      usualBinAmount(bins, metres, { sinceKey, firstSessionKey: null })
+    ).toBeNull();
   });
 });

@@ -74,12 +74,21 @@ const PAGES: {
   {
     name: "lifting",
     path: "/Maiin/history?view=lifting",
-    anchor: (page) => page.getByText(/Muscle groups trained/i).first(),
+    // Each lift's progress needs a lift trained twice in the range, and
+    // sets per muscle a whole week: neither renders for a thin account.
+    // The summary line's three forms (MuscleVolumeCard).
+    anchor: (page) =>
+      page
+        .getByText(
+          /^Below range: |muscles below their range$|^Every muscle is in its range$/
+        )
+        .first(),
   },
   {
     name: "running",
     path: "/Maiin/history?view=running",
-    anchor: (page) => page.getByRole("heading", { name: "Race predictions" }),
+    // Fastest kilometres need a run with km splits.
+    anchor: (page) => page.getByRole("heading", { name: "Fastest kilometres" }),
   },
   {
     name: "body",

@@ -1,18 +1,17 @@
 import { useRef, useState, type KeyboardEvent } from "react";
 import Card from "@/components/ui/Card";
-import { parseLocalDate } from "@/lib/dateHelpers";
-import { formatBinLabel } from "@/lib/chartGranularity";
 import {
   distanceIn,
   distanceUnitLabel,
   type DistanceUnit,
 } from "@/lib/distanceUnits";
-import type {
-  SummaryBin,
-  SummaryChange,
-  SummaryGranularity,
+import {
+  summaryBinLabel,
+  type SummaryBin,
+  type SummaryChange,
+  type SummaryGranularity,
 } from "@/lib/periodSummary";
-import { abbreviateK, formatDayMonth } from "@/utils/formatters";
+import { abbreviateK } from "@/utils/formatters";
 import { cn } from "@/lib/utils";
 
 /** What the bars can show: the three figures above them. */
@@ -31,20 +30,6 @@ export interface SummaryFigure {
 const CHART_W = 300;
 const CHART_H = 88;
 const GAP = 2;
-
-function binLabel(bin: SummaryBin, granularity: SummaryGranularity): string {
-  if (granularity === "daily") {
-    return bin.current
-      ? "Today"
-      : parseLocalDate(bin.key).toLocaleDateString("en-GB", {
-          weekday: "short",
-        });
-  }
-  if (granularity === "weekly") {
-    return bin.current ? "This week" : formatDayMonth(parseLocalDate(bin.key));
-  }
-  return bin.current ? "This month" : formatBinLabel(bin.key, "monthly");
-}
 
 function sessionsPhrase(lifts: number, runs: number): string {
   const parts = [
@@ -129,7 +114,7 @@ export default function PeriodSummaryCard({
   const every = bins.length <= 7 ? 1 : Math.ceil(bins.length / 4);
 
   const describeBin = (b: SummaryBin) => {
-    const label = binLabel(b, granularity);
+    const label = summaryBinLabel(b, granularity);
     if (metric === "volume") return `${label}: ${kgPhrase(b.volumeKg)}`;
     if (metric === "distance")
       return `${label}: ${distancePhrase(b.distanceM, distanceUnit)}`;
@@ -344,7 +329,7 @@ export default function PeriodSummaryCard({
                     i === bins.length - 1 && every > 1 && "text-right"
                   )}
                 >
-                  {shown ? binLabel(b, granularity) : ""}
+                  {shown ? summaryBinLabel(b, granularity) : ""}
                 </span>
               );
             })}

@@ -44,7 +44,7 @@ import {
 import { assertEmulatorEnvOrExit } from "../e2e/helpers/emulator";
 import { computePerformanceIndex } from "../src/lib/performanceEngine";
 import { localDateString } from "../src/lib/dateHelpers";
-import { calculateSplits, type GPSPoint } from "../src/lib/gps";
+import { calculateSplits, totalDistance, type GPSPoint } from "../src/lib/gps";
 import { vdotFromRace } from "../src/lib/runPaces";
 import { inferMovementCategory } from "../src/lib/exerciseMovementCategory";
 import type {
@@ -328,16 +328,47 @@ function pacePlan(kind: RunKind, km: number, week: number): number[] {
   });
 }
 
-/** A loop of `metres`, walked at the planned paces, as the GPS would. */
+/**
+ * A loop of `metres`, walked at the planned paces, as the GPS would.
+ *
+ * The loop wiggles, which makes it longer than a circle of the same
+ * radius, so it is drawn once, measured, and drawn again at the radius
+ * that makes its measured length the distance the run records. Without
+ * that, the splits the app cuts from the trace ran four per cent short of
+ * the run's own distance, and a 48:48 10K held a 46:43 best 10K.
+ */
 function tracePoints(
   metres: number,
   paces: number[],
   start: Date,
   centre: { lat: number; lon: number }
 ): GPSPoint[] {
+  const first = loopPoints(
+    metres,
+    metres / (2 * Math.PI),
+    paces,
+    start,
+    centre
+  );
+  const scale = metres / totalDistance(first);
+  return loopPoints(
+    metres,
+    (metres / (2 * Math.PI)) * scale,
+    paces,
+    start,
+    centre
+  );
+}
+
+function loopPoints(
+  metres: number,
+  radius: number,
+  paces: number[],
+  start: Date,
+  centre: { lat: number; lon: number }
+): GPSPoint[] {
   const stepM = 25;
   const steps = Math.max(2, Math.round(metres / stepM));
-  const radius = metres / (2 * Math.PI);
   const latPerM = 1 / 111_320;
   const lonPerM = 1 / (111_320 * Math.cos((centre.lat * Math.PI) / 180));
   const points: GPSPoint[] = [];

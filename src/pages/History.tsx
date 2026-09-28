@@ -12,6 +12,11 @@ import { useStallWatch } from "@/hooks/useStallWatch";
 import { useRunningStats } from "@/hooks/useRunningStats";
 import { useWorkouts, workoutTonnageKg } from "@/hooks/useWorkouts";
 import { bestSetPerExercise } from "@/lib/liftRecords";
+import { liftProgress, NEW_BEST_DAYS } from "@/lib/liftProgress";
+import { performedWeeklyVolume, volumeWeekKeys } from "@/lib/performedVolume";
+import { runningPageInsight } from "@/lib/runInsights";
+import { focusLabel } from "@/features/program/trainingBlock";
+import type { PrimaryGoal } from "@/features/program/programTypes";
 import { useLifetimeRunStats } from "@/hooks/useLifetimeRunStats";
 import { useAuth, useUid } from "@/lib/auth";
 import { useEffectiveTargets } from "@/hooks/useEffectiveTargets";
@@ -30,6 +35,17 @@ import PeriodSummaryCard, {
 import PerformanceOverviewCard from "@/components/analytics/PerformanceOverviewCard";
 import AnalyticsTrends from "@/components/analytics/AnalyticsTrends";
 import AnalyticsMuscles from "@/components/analytics/AnalyticsMuscles";
+import TrainingWeeksCard from "@/components/analytics/TrainingWeeksCard";
+import {
+  liftingBins,
+  liftingFigures,
+  runningBins,
+  runningFigures,
+} from "@/lib/trainingWeeks";
+import LiftProgressCard from "@/components/analytics/LiftProgressCard";
+import MuscleVolumeCard from "@/components/analytics/MuscleVolumeCard";
+import RunPaceCard from "@/components/analytics/RunPaceCard";
+import FastestKilometresCard from "@/components/analytics/FastestKilometresCard";
 import {
   nutritionRows,
   predictionRow,
@@ -43,6 +59,7 @@ import {
   rollingRangeLabel,
   summaryBins,
   summaryGranularity,
+  usualBinAmount,
   volumeChange,
 } from "@/lib/periodSummary";
 import { useBodyweightTrend } from "@/hooks/useBodyweightTrend";
@@ -84,18 +101,14 @@ import {
 import HistoryOfflineBanner from "@/components/analytics/HistoryOfflineBanner";
 /* AnalyticsAnchorChips removed PR 7b follow-up — see note inline
    below where it would have rendered. */
-import { granularityForRange, binKeyForDate } from "@/lib/chartGranularity";
 import { getWeeklyRunTarget } from "@/lib/scheduleUtils";
 import { selectRunRecords } from "@/lib/runRecordSelection";
 import {
-  localWeekKey,
-  startOfLocalWeek,
   localDateString,
   parseLocalDate,
   rollingWindowStart,
   addLocalDays,
 } from "@/lib/dateHelpers";
-import { completedWeeklySeries } from "@/lib/completedWeeks";
 import {
   computeMuscleRecovery,
   hitsFromWorkoutDocs,
@@ -103,17 +116,11 @@ import {
   RECOVERY_LOOKBACK_DAYS,
 } from "@/lib/muscleRecovery";
 
-const VolumeChart = lazyRetry(
-  () => import("@/components/analytics/VolumeChart")
-);
 const MuscleHeatMap = lazyRetry(
   () => import("@/components/analytics/MuscleHeatMap")
 );
 const MacroDistribution = lazyRetry(
   () => import("@/components/analytics/MacroDistribution")
-);
-const RunningHistorySection = lazyRetry(
-  () => import("@/components/run/RunningHistorySection")
 );
 const ShoeMileageSection = lazyRetry(
   () => import("@/components/run/ShoeMileageSection")
@@ -694,65 +701,8 @@ export default function History() {
       (sum, week) => sum + week.totalDistance,
       0
     );
-    // Distance-weighted across weeks (weekly avgPace is itself distance-
-    // weighted in aggregateWeeklyData). An unweighted mean of weekly means
-    // let a single 1 km jog week drag the headline as much as a 40 km
-    // training week — the classic average-of-averages skew.
-    const paceWeeks = weeklyData.filter(
-      (w) => w.avgPace > 0 && w.totalDistance > 0
-    );
-    const paceKm = paceWeeks.reduce((s, w) => s + w.totalDistance, 0);
-    const avgPace =
-      paceKm > 0
-        ? Math.round(
-            paceWeeks.reduce((s, w) => s + w.avgPace * w.totalDistance, 0) /
-              paceKm
-          )
-        : 0;
-
-    // Zero-padded weekly distance across every Monday-anchored week
-    // in the time range. Distance is a count metric — a week with no
-    // runs is legitimately 0 km, so the sparkline shape correctly
-    // tells the consistency story (valleys at 0 = rest weeks, spikes
-    // = training weeks).
-    const distanceByWeek: Record<string, number> = {};
-    for (const w of weeklyData) {
-      distanceByWeek[w.week] = w.totalDistance;
-    }
-    const allWeekKeys: string[] = [];
-    {
-      const since = rollingWindowStart(rangeDays);
-      // Both ends through the shared anchor. The comment below has always
-      // said the axis MUST agree with the data's week helper; deriving the
-      // boundary by hand made that a promise rather than a fact.
-      const cursor = startOfLocalWeek(since);
-      const end = startOfLocalWeek(new Date());
-      while (cursor <= end) {
-        // weeklyData[].week is keyed by localWeekKey (useRunningStats),
-        // so the axis MUST use the same local-week helper. The prior
-        // cursor.toISOString() (UTC) key never matched in non-UTC zones,
-        // flatlining the sparkline.
-        allWeekKeys.push(localWeekKey(cursor));
-        cursor.setDate(cursor.getDate() + 7);
-      }
-    }
-    /* Without the current week. The walk above ends on the week
-       CONTAINING today, so its last bucket always holds a part-week —
-       and a month of running read as a cliff on the tile because of it. */
-    const distanceSparkline = completedWeeklySeries(
-      allWeekKeys,
-      (k) => distanceByWeek[k] ?? 0
-    );
-
-    // Pace is a RATE metric — a week with no runs has no pace, not 0
-    // sec/km (which would mean infinite speed). Don't zero-pad. Use
-    // only the weeks that actually had runs, in order.
-    const paceSparkline = weeklyData
-      .filter((w) => w.avgPace > 0)
-      .map((w) => w.avgPace);
-
-    return { runCount, runDistance, avgPace, distanceSparkline, paceSparkline };
-  }, [weeklyData, rangeDays]);
+    return { runCount, runDistance };
+  }, [weeklyData]);
 
   const runningPRs = useMemo(() => {
     const sevenDaysAgo = new Date();
@@ -929,15 +879,13 @@ export default function History() {
        block and than the span adherence divides by. */
     const since = rollingWindowStart(rangeDays);
     // Previous comparable period: the same span of days immediately before
-    // `since`. Used for ↑/↓ delta badges on stat cards — matches the
-    // Whoop / Apple Fitness convention of "this period vs. last period."
+    // `since`, for the overview's changes on the range before.
     const prevSince = rollingWindowStart(rangeDays, addLocalDays(since, -1));
 
     // w.date is a LOCAL "YYYY-MM-DD" string; `new Date("YYYY-MM-DD")`
     // parses as UTC midnight and shifts the boundary day in negative-
-    // offset timezones (the same UTC/local-mixing family the sparkline
-    // axes and the 30-day PR window were already fixed for). String
-    // comparison against a local key is the in-file convention.
+    // offset timezones. String comparison against a local key is the
+    // in-file convention.
     const sinceKey = localDateString(since);
     const prevSinceKey = localDateString(prevSince);
 
@@ -976,76 +924,6 @@ export default function History() {
     );
     const prevLiftCount = prevFiltered.length;
 
-    const weekMap: Record<string, number> = {};
-    const sessionWeekMap: Record<string, number> = {};
-    /* The sparklines are ALWAYS weekly (they zero-pad across Monday-
-       anchored weeks below), while the VolumeChart bins adaptively
-       (daily/weekly/monthly with the range). They therefore need their
-       OWN weekly-keyed maps: reusing the granularity-keyed weekMap made
-       the sparkline lookups miss on every range except 3M — daily keys
-       for 1W/1M, monthly keys for 6M/1Y — flatlining both sparklines
-       to zero for a user who trains all week but never on a Monday. */
-    const sparkVolumeMap: Record<string, number> = {};
-    const sparkSessionsMap: Record<string, number> = {};
-    /* Hist5c pin 7 — adaptive chart granularity. At 1W/1M we bin
-       daily; at 3M we bin weekly (Monday-anchored, the prior
-       universal behaviour); at 6M/1Y we bin monthly. Avoids the
-       52-bar unreadable mess at long windows. */
-    const granularity = granularityForRange(rangeDays);
-    filtered.forEach((w) => {
-      // `w.date` is a LOCAL "YYYY-MM-DD"; `new Date(s)` parses it as UTC
-      // midnight, which put the data on a different footing from the axis
-      // cursor below (a local wall-clock Date). Both feeding the same
-      // binKeyForDate hid the mismatch rather than fixing it.
-      const d = parseLocalDate(w.date);
-      const key = binKeyForDate(d, granularity);
-      const weeklyKey = binKeyForDate(d, "weekly");
-      const vol = workoutTonnageKg(w);
-      weekMap[key] = (weekMap[key] || 0) + vol;
-      sessionWeekMap[key] = (sessionWeekMap[key] || 0) + 1;
-      sparkVolumeMap[weeklyKey] = (sparkVolumeMap[weeklyKey] || 0) + vol;
-      sparkSessionsMap[weeklyKey] = (sparkSessionsMap[weeklyKey] || 0) + 1;
-    });
-    const sortedWeekKeys = Object.keys(weekMap).sort((a, b) =>
-      a.localeCompare(b)
-    );
-    const weeklyVolume = sortedWeekKeys.map((week) => ({
-      week,
-      volume: weekMap[week],
-    }));
-
-    // Zero-pad sparklines across every Monday-anchored week in the
-    // range. For activity (volume + sessions), missing weeks are
-    // legitimately zero — the user didn't lift that week — so the
-    // sparkline shape correctly tells the consistency story instead
-    // of compressing logged-only weeks into an uninterrupted line.
-    const allWeekKeys: string[] = [];
-    {
-      // Same anchor as the data side, for the same reason as above.
-      const cursor = startOfLocalWeek(since);
-      const end = startOfLocalWeek(new Date());
-      while (cursor <= end) {
-        // sparkVolumeMap is keyed by binKeyForDate(d, "weekly") (local-
-        // Monday), so the axis MUST derive its keys with the SAME helper.
-        // The prior local-cursor + cursor.toISOString() key never matched
-        // binKeyForDate's UTC-anchored week key in non-UTC zones, flatlining
-        // the sparkline.
-        allWeekKeys.push(binKeyForDate(cursor, "weekly"));
-        cursor.setDate(cursor.getDate() + 7);
-      }
-    }
-    /* Both without the current week, for the reason the running side
-       carries: the walk ends on the week containing today, so the final
-       bucket is a part-week and drew a fall that had not happened. */
-    const volumeSparkline = completedWeeklySeries(
-      allWeekKeys,
-      (w) => sparkVolumeMap[w] ?? 0
-    );
-    const sessionsSparkline = completedWeeklySeries(
-      allWeekKeys,
-      (w) => sparkSessionsMap[w] ?? 0
-    );
-
     /* Hist5b pin 4 / PR 7a — lifetime PRs for the dedicated PRs tab:
        each exercise's best set across every logged workout
        (`liftRecords.ts`). A rolling 7-day "prTimeline" was computed
@@ -1053,11 +931,11 @@ export default function History() {
        long ago; nothing read it, and it is gone. */
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
     // w.date is a LOCAL "YYYY-MM-DD" string, so the cutoffs are LOCAL
-    // dates too (same UTC/local-mixing family as the sparkline axes above).
-    const newSinceKey = localDateString(sevenDaysAgo);
+    // dates too. The Lifting page's "New best" reads the same window.
+    const newSinceKey = localDateString(
+      addLocalDays(new Date(), -NEW_BEST_DAYS)
+    );
     const lifetimePRs = bestSetPerExercise(workouts, { newSinceKey });
 
     /* Hist5b pin 4 / PR 7b — Recent bests subsection (rolling 30
@@ -1073,14 +951,10 @@ export default function History() {
       liftCount,
       liftVolume,
       muscleData,
-      weeklyVolume,
-      weeklyVolumeGranularity: granularity,
       lifetimePRs,
       recentLiftPRs,
       prevLiftCount,
       prevLiftVolume,
-      volumeSparkline,
-      sessionsSparkline,
     };
   }, [workouts, rangeDays]);
 
@@ -1193,28 +1067,6 @@ export default function History() {
     };
   }, [rangeMeals, rangeDays]);
 
-  // Range-adaptive prefix for stat-card labels. The values inside
-  // those cards are TOTALS for the selected window (e.g. "Volume" is
-  // the sum across rangeDays, not a weekly average), so a static
-  // "Weekly" prefix on a 1M view reads as a label bug. Adapt the
-  // prefix to match the window the data actually covers.
-  const periodLabel = (() => {
-    switch (timeRange) {
-      case "1W":
-        return "Weekly";
-      case "1M":
-        return "Monthly";
-      case "3M":
-        return "3-month";
-      case "6M":
-        return "6-month";
-      case "1Y":
-        return "Annual";
-      default:
-        return "Weekly";
-    }
-  })();
-
   /* DS3 period summary — the overview's first card. Sessions, kilograms
      and distance bar by bar across the range, and the range before it for
      the changes. Lifts count by their local date and their guarded
@@ -1265,6 +1117,68 @@ export default function History() {
     lifetimeRuns.loading,
     lifetimeRuns.failed,
   ]);
+
+  /* The Lifting page's reading of the range: each main lift's progress,
+     the sets each muscle got a week against the range for the user's
+     focus, the range's sets, and the weekly average the volume bars stand
+     against. `workouts` holds every session, so a lift's best and the
+     user's first session are both all-time. */
+  const liftGoal = profile?.primaryGoal as PrimaryGoal | undefined;
+  const liftingInsight = useMemo(() => {
+    const today = new Date();
+    const since = rollingWindowStart(rangeDays);
+    const sinceKey = localDateString(since);
+    let firstSessionKey: string | null = null;
+    let sets = 0;
+    for (const w of workouts) {
+      if (!firstSessionKey || w.date < firstSessionKey) {
+        firstSessionKey = w.date;
+      }
+      if (w.date < sinceKey) continue;
+      for (const ex of w.exercises ?? []) {
+        for (const set of ex.sets ?? []) {
+          if (set.type !== "warmup" && set.reps > 0) sets += 1;
+        }
+      }
+    }
+    const weekKeys = volumeWeekKeys({ since, today, firstSessionKey });
+    return {
+      progress: liftProgress(workouts, { sinceKey, today }),
+      sets,
+      muscleWeeks: weekKeys.length,
+      muscles: performedWeeklyVolume(workouts, {
+        weekKeys,
+        primaryGoal: liftGoal,
+      }),
+      averageKg: usualBinAmount(periodSummary.bins, (b) => b.volumeKg, {
+        sinceKey,
+        firstSessionKey,
+      }),
+    };
+  }, [workouts, rangeDays, liftGoal, periodSummary.bins]);
+
+  /* The Running page's reading of the range (`runningPageInsight`): pace
+     by kind of run, best efforts, the longest run, time on the move and
+     the weekly average. The best-ever claims wait for the one-shot read
+     of every run; the function's header says why. */
+  const allRunsKnown = !lifetimeRuns.loading && !lifetimeRuns.failed;
+  const runningInsight = useMemo(() => {
+    const since = rollingWindowStart(rangeDays);
+    return {
+      ...runningPageInsight({
+        windowRuns: runs,
+        allRuns: lifetimeRuns.runs,
+        allRunsKnown,
+        sinceKey: localDateString(since),
+        prevSinceKey: localDateString(
+          rollingWindowStart(rangeDays, addLocalDays(since, -1))
+        ),
+        todayKey: localDateString(),
+        bins: periodSummary.bins,
+      }),
+      newSinceKey: localDateString(addLocalDays(new Date(), -NEW_BEST_DAYS)),
+    };
+  }, [runs, lifetimeRuns.runs, allRunsKnown, rangeDays, periodSummary.bins]);
 
   const summarySessions = liftingData.liftCount + runningTotals.runCount;
   const summaryFigures: SummaryFigure[] = [
@@ -1715,33 +1629,75 @@ export default function History() {
                   />
                 ) : (
                   <>
-                    <div className="grid grid-cols-2 gap-2 mt-2">
-                      <StatCard
-                        label={`${periodLabel} distance`}
-                        value={formatDistance(
-                          distanceIn(runningTotals.runDistance * 1000, unit)
-                        )}
-                        unit={distanceUnitLabel(unit)}
-                        direction="up-good"
-                        sparklineData={runningTotals.distanceSparkline}
-                        accentColor={THEME.running}
+                    <SectionErrorBoundary sectionName="run-weeks">
+                      <TrainingWeeksCard
+                        title="Distance"
+                        subtitle={rollingRangeLabel(timeRange)}
+                        figures={runningFigures({
+                          distanceM: runningTotals.runDistance * 1000,
+                          runs: runningTotals.runCount,
+                          seconds: runningInsight.seconds,
+                          unit,
+                        })}
+                        bins={periodSummary.bins}
+                        granularity={periodSummary.granularity}
+                        sport="running"
+                        reading={runningBins(unit)}
+                        onPick={(b) =>
+                          trackHistoryEvent("history_chart_tap_attempted", {
+                            chart: "distance",
+                            binKey: b.key,
+                            value: b.distanceM,
+                          })
+                        }
+                        average={
+                          runningInsight.averageM === null
+                            ? null
+                            : distanceIn(runningInsight.averageM, unit)
+                        }
+                        averageText={
+                          runningInsight.averageM === null
+                            ? ""
+                            : distanceLabel(runningInsight.averageM, unit)
+                        }
+                        footer={
+                          runningInsight.longest && (
+                            <p className="text-sm text-muted-foreground">
+                              Longest run{" "}
+                              <span className="font-mono tabular-nums font-semibold text-foreground">
+                                {distanceLabel(
+                                  runningInsight.longest.distanceM,
+                                  unit
+                                )}
+                              </span>{" "}
+                              ·{" "}
+                              {formatDayMonth(
+                                parseLocalDate(runningInsight.longest.date)
+                              )}
+                            </p>
+                          )
+                        }
                       />
-                      <StatCard
-                        label="Avg pace"
-                        value={paceMinSec(runningTotals.avgPace, unit)}
-                        unit={paceUnitLabel(unit)}
-                        direction="down-good"
-                        sparklineData={runningTotals.paceSparkline}
-                        accentColor={THEME.running}
+                    </SectionErrorBoundary>
+                    <SectionErrorBoundary sectionName="fastest-kilometres">
+                      <FastestKilometresCard
+                        rows={runningInsight.efforts}
+                        unit={unit}
+                        subtitle={rollingRangeLabel(timeRange)}
+                        newSinceKey={runningInsight.newSinceKey}
                       />
-                    </div>
-                    {/* Hist5b PR 7a — Running PRs migrated off Analytics
-                      to the dedicated PRs tab (Tier 2 lifetime
-                      contract). Tap the PRs tab in the top filter
-                      to access them. */}
+                    </SectionErrorBoundary>
+                    <SectionErrorBoundary sectionName="run-pace">
+                      <RunPaceCard
+                        rows={runningInsight.pace.rows}
+                        intervalsLeftOut={runningInsight.pace.intervalsLeftOut}
+                        unit={unit}
+                        subtitle={rollingRangeLabel(timeRange)}
+                        comparedWith={previousRangeLabel(timeRange)}
+                      />
+                    </SectionErrorBoundary>
                     <RacePredictionsCard />
                     <ShoeMileageSection />
-                    <RunningHistorySection rangeDays={rangeDays} />
                   </>
                 )}
               </section>
@@ -1778,36 +1734,46 @@ export default function History() {
                   />
                 ) : (
                   <>
-                    <div className="grid grid-cols-2 gap-2 mt-2">
-                      <StatCard
-                        label={`${periodLabel} volume`}
-                        value={formatVolume(liftingData.liftVolume).value}
-                        unit={formatVolume(liftingData.liftVolume).unit}
-                        delta={buildDelta(
-                          liftingData.liftVolume,
-                          liftingData.prevLiftVolume
-                        )}
-                        direction="up-good"
-                        sparklineData={liftingData.volumeSparkline}
-                        accentColor={THEME.lifting}
+                    <SectionErrorBoundary sectionName="lift-progress">
+                      <LiftProgressCard
+                        rows={liftingInsight.progress}
+                        subtitle={rollingRangeLabel(timeRange)}
+                        hasSessions={liftingData.liftCount > 0}
                       />
-                      <StatCard
-                        label={`${periodLabel} sessions`}
-                        value={String(liftingData.liftCount)}
-                        delta={buildDelta(
-                          liftingData.liftCount,
-                          liftingData.prevLiftCount
-                        )}
-                        direction="up-good"
-                        sparklineData={liftingData.sessionsSparkline}
-                        accentColor={THEME.lifting}
+                    </SectionErrorBoundary>
+                    <SectionErrorBoundary sectionName="lift-weeks">
+                      <TrainingWeeksCard
+                        title="Volume"
+                        subtitle={rollingRangeLabel(timeRange)}
+                        figures={liftingFigures({
+                          volumeKg: liftingData.liftVolume,
+                          sessions: liftingData.liftCount,
+                          sets: liftingInsight.sets,
+                        })}
+                        bins={periodSummary.bins}
+                        granularity={periodSummary.granularity}
+                        sport="lifting"
+                        reading={liftingBins}
+                        onPick={(b) =>
+                          trackHistoryEvent("history_chart_tap_attempted", {
+                            chart: "volume",
+                            binKey: b.key,
+                            value: b.volumeKg,
+                          })
+                        }
+                        average={liftingInsight.averageKg}
+                        averageText={
+                          liftingInsight.averageKg === null
+                            ? ""
+                            : `${abbreviateK(liftingInsight.averageKg)} kg`
+                        }
                       />
-                    </div>
-                    <SectionErrorBoundary sectionName="volume-chart">
-                      <VolumeChart
-                        data={liftingData.weeklyVolume}
-                        accentColor={THEME.lifting}
-                        granularity={liftingData.weeklyVolumeGranularity}
+                    </SectionErrorBoundary>
+                    <SectionErrorBoundary sectionName="muscle-volume">
+                      <MuscleVolumeCard
+                        rows={liftingInsight.muscles}
+                        weeks={liftingInsight.muscleWeeks}
+                        focus={focusLabel(liftGoal ?? "general")}
                       />
                     </SectionErrorBoundary>
                     <SectionErrorBoundary sectionName="muscle-heatmap">
@@ -1817,13 +1783,6 @@ export default function History() {
                         recovery={muscleRecovery}
                       />
                     </SectionErrorBoundary>
-                    {/* Hist5b PR 7a — Lift PRs migrated off Analytics to the
-                  dedicated PRs tab (Tier 2 lifetime contract). The
-                  prior surface was a 7-day-hardcoded view that
-                  disagreed with the section's TimeRange-scoped
-                  framing; the new home gives PRs their true
-                  lifetime semantics. Tap the PRs tab in the top
-                  filter to access them. */}
                   </>
                 )}
               </section>
