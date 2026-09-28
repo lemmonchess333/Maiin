@@ -358,7 +358,7 @@ already made for this repo.
 
 ## CI/CD
 
-- **deploy-production.yml ("Deploy production") is the one entry point for the web and backend deploys.** It runs on every push to `main` and on a manual `workflow_dispatch`, one release at a time (the `production-release` concurrency group queues a new release behind the running one rather than cancelling it). The five workflows below are `workflow_call` only, so none of them can be run on its own — to redeploy anything, re-run Deploy production. Its `changes` job diffs against the last SUCCESSFUL release, not the previous push, and runs the backend chain only when something under `functions/`, `firestore.rules`, `firestore.indexes.json`, `storage.rules`, `firebase.json`, `scripts/verify-*` or `.github/workflows/deploy*` changed; a manual dispatch always runs it. Order: Firestore → Storage → Functions, then Hosting and Pages once all three succeed (or straight away when the backend was skipped).
+- **deploy-production.yml ("Deploy production") is the one entry point for the web and backend deploys.** It runs on every push to `main` and on a manual `workflow_dispatch`, one release at a time (the `production-release` concurrency group queues a new release behind the running one rather than cancelling it). The five workflows below are `workflow_call` only, so none of them can be run on its own — to redeploy anything, re-run Deploy production. Its `changes` job diffs against the last SUCCESSFUL release, not the previous push, and runs the backend chain only when something under `functions/`, `firestore.rules`, `firestore.indexes.json`, `storage.rules`, `firebase.json`, `scripts/verify-*`, `scripts/verify_*` or `.github/workflows/deploy*` changed; a manual dispatch always runs it. Order: Firestore → Storage → Functions, then Hosting and Pages once all three succeed (or straight away when the backend was skipped).
 - **deploy-firestore.yml:** Firestore rules (read back after deploying), then indexes.
 - **deploy-storage.yml:** Storage rules, gated behind the `STORAGE_XSERVICE_APPROVED` repo variable (set since 2026-09-15). Before releasing rules that read Firestore it confirms the Storage service agent holds the role they need (`scripts/verify_storage_rules_iam.py`), and fails the release if the role is missing or unreadable — firebase-tools grants it only interactively, never from CI. The packet-11 QA row has the one-time grant.
 - **deploy-functions.yml:** Cloud Functions — injects the per-commit bundle marker, runs `firebase deploy --only functions --force` (so a removed export is deleted, not refused), then reads the deployed source back (`scripts/verify-deployed-functions-source.py`). A failure files or updates one rolling "deploy-functions failing on main" issue.
@@ -2215,10 +2215,13 @@ or how the role was granted. Every backend release repeats the check.
       service agent lacks the role, or if the deploy identity cannot read
       the project's IAM policy. Unconfirmed counts as a failure, as it
       does for the source read-back. When the policy can't be read, the
-      job summary says why and gives the fix: read access to IAM policies
-      for the deploy service account (for example
-      `roles/iam.securityReviewer`), or enabling the Cloud Resource
-      Manager API. Until the role is in place, every backend release
+      job summary says why and what to do, and names a role only when
+      Google answered 403: read access to IAM policies for the deploy
+      service account (for example `roles/iam.securityReviewer`). It gives
+      the command that enables the Cloud Resource Manager API when that is
+      off, says to re-run after a network failure or a busy or failing
+      Google API, and points at the deploy credentials when the token is
+      missing or rejected. Until the role is in place, every backend release
       stops at this step, and Hosting and Pages wait with it. To confirm
       a grant without waiting for a release, run Actions → Verify Active
       Production Rules, which runs the same check. Where it runs is
