@@ -71,6 +71,7 @@ import {
   previousRangeLabel,
   rollingRangeLabel,
   summaryBins,
+  summaryFirstDayKey,
   summaryGranularity,
   usualBinAmount,
   volumeChange,
@@ -115,7 +116,11 @@ import HistoryOfflineBanner from "@/components/analytics/HistoryOfflineBanner";
 /* AnalyticsAnchorChips removed PR 7b follow-up — see note inline
    below where it would have rendered. */
 import { getWeeklyRunTarget } from "@/lib/scheduleUtils";
-import { selectRunRecords } from "@/lib/runRecordSelection";
+import {
+  isAllTimeRecord,
+  selectRunRecords,
+  type RunRecords,
+} from "@/lib/runRecordSelection";
 import {
   localDateString,
   parseLocalDate,
@@ -766,9 +771,14 @@ export default function History() {
        between Lifetime / Recent / Indoor buckets — only the input
        filter changes. Returns the same UI-ready array shape as
        before. */
+    type RecordRun = (typeof paceEligible)[number];
     const buildPRBucket = (
       pool: typeof paceEligible,
-      includeLongest: boolean
+      includeLongest: boolean,
+      /* The records over every run, for a narrower pool: its rows say New
+         only where the same run holds the record here too, since New is
+         gold and gold means a personal best. */
+      allTime?: RunRecords<RecordRun>
     ) => {
       /* Selection lives in `selectRunRecords` so it can be tested. The
          rule that matters is not the two floors but what they imply:
@@ -779,6 +789,9 @@ export default function History() {
         bestSustainedPace: best5k,
         longest,
       } = selectRunRecords(pool, { includeLongest });
+      const isNew = (run: RecordRun, kind: keyof RunRecords<RecordRun>) =>
+        run.completedAt >= sevenDaysAgo &&
+        (!allTime || isAllTimeRecord(allTime, kind, run));
 
       const cards: Array<{
         label: string;
@@ -818,7 +831,7 @@ export default function History() {
             ? `${paceMinSec(best1k.avgPace, unit)} ${paceUnitLabel(unit)}`
             : "--",
           date: best1k ? fmtDate(best1k.completedAt) : "",
-          isNew: best1k ? best1k.completedAt >= sevenDaysAgo : false,
+          isNew: best1k ? isNew(best1k, "bestPace") : false,
           ...(best1k ? { runId: best1k.id } : {}),
         },
       ];
@@ -837,7 +850,7 @@ export default function History() {
           label: "Best pace · 5K+",
           value: `${paceMinSec(best5k.avgPace, unit)} ${paceUnitLabel(unit)}`,
           date: fmtDate(best5k.completedAt),
-          isNew: best5k.completedAt >= sevenDaysAgo,
+          isNew: isNew(best5k, "bestSustainedPace"),
           runId: best5k.id,
         });
       }
@@ -850,7 +863,7 @@ export default function History() {
           label: "Longest run",
           value: longest ? distanceLabel(longest.distance, unit) : "--",
           date: longest ? fmtDate(longest.completedAt) : "",
-          isNew: longest ? longest.completedAt >= sevenDaysAgo : false,
+          isNew: longest ? isNew(longest, "longest") : false,
           ...(longest ? { runId: longest.id } : {}),
         });
       }
@@ -861,7 +874,8 @@ export default function History() {
       lifetime: buildPRBucket(paceEligible, /* includeLongest */ true),
       recent30d: buildPRBucket(
         paceEligible.filter((r) => r.completedAt >= thirtyDaysAgo),
-        /* includeLongest */ true
+        /* includeLongest */ true,
+        selectRunRecords(paceEligible, { includeLongest: true })
       ),
       indoor: buildPRBucket(indoorEligible, /* includeLongest */ false),
       hasAnyIndoor: indoorEligible.length > 0,
@@ -1093,16 +1107,26 @@ export default function History() {
     const prevSince = rollingWindowStart(rangeDays, addLocalDays(since, -1));
     const sinceKey = localDateString(since);
     const granularity = summaryGranularity(rangeDays);
+    /* Each bar is the whole week or month it names, so the first one
+       takes its days from before the window too (`summaryFirstDayKey`).
+       `workouts` holds every session. Inside the window the bars count
+       the window's run read, as the figures above them do, and the first
+       bar's earlier days take theirs from the lifetime read. */
+    const firstDayKey = summaryFirstDayKey(since, granularity);
+    const binRuns = [
+      ...lifetimeRuns.runs.filter((r) => runEvidenceDate(r) < sinceKey),
+      ...runs.filter((r) => runEvidenceDate(r) >= sinceKey),
+    ];
     const bins = summaryBins({
       since,
       today: now,
       lifts: workouts
-        .filter((w) => w.date >= sinceKey)
+        .filter((w) => w.date >= firstDayKey)
         .map((w) => ({ date: w.date, volumeKg: workoutTonnageKg(w) })),
-      runs: runs
+      runs: binRuns
         .filter((r) => isVolumeEligible(r))
         .map((r) => ({ date: runEvidenceDate(r), distanceM: r.distance ?? 0 }))
-        .filter((r) => r.date >= sinceKey),
+        .filter((r) => r.date >= firstDayKey),
       granularity,
     });
     // A failed or pending read is an unknown, not a range with no runs.
@@ -1126,6 +1150,7 @@ export default function History() {
     rangeDays,
     workouts,
     runs,
+    lifetimeRuns.runs,
     lifetimeRuns.dated,
     lifetimeRuns.loading,
     lifetimeRuns.failed,
@@ -1255,12 +1280,15 @@ export default function History() {
     bodyweight.points.length > 0
       ? bodyweight.points[bodyweight.points.length - 1].trend
       : null;
+  /* Finished days only, as the card's other rows count them: the card
+     says "Before today". */
   const proteinPerKg =
     !profile?.hideWeightNumber &&
     latestTrendKg !== null &&
     latestTrendKg > 0 &&
-    nutrition.avgProtein > 0
-      ? nutrition.avgProtein / latestTrendKg
+    foodDays.averageProtein !== null &&
+    foodDays.averageProtein > 0
+      ? foodDays.averageProtein / latestTrendKg
       : null;
   /* The card is drawn once all three reads are in. Each fills different
      rows, so drawn as they arrive, the target rows would push in above

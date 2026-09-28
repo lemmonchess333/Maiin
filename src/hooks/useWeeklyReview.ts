@@ -37,7 +37,13 @@ import { workoutTonnageKg } from "@/hooks/useWorkouts";
 import { resolveSnapshotCalorieTarget } from "@/lib/adaptiveTarget";
 import { useSubscription } from "@/lib/subscription";
 import { isVolumeEligible } from "@/lib/runStatsEligibility";
-import { buildPRMap, checkSetPR, recordSetBest } from "@/lib/prTracking";
+import {
+  buildPRMap,
+  checkSetPR,
+  recordSetBest,
+  type ExercisePR,
+  type PRMap,
+} from "@/lib/prTracking";
 import { isSetEligibleForStrengthPr } from "@/features/program/sessionSetPolicy";
 import { fetchBodyweightLogs } from "@/lib/api";
 import { resolveRunPlanSurface } from "@/lib/runProgrammeViewModel";
@@ -80,17 +86,43 @@ function isWorkoutDoc(d: unknown): d is WorkoutDocLite {
   return typeof w?.date === "string" && Array.isArray(w?.exercises);
 }
 
+/** The exercise's best across every rep range, as `checkSetPR` finds it. */
+function exerciseBest(map: PRMap, exerciseName: string): ExercisePR | null {
+  let top: ExercisePR | null = null;
+  for (const record of Object.values(map[exerciseName] ?? {})) {
+    if (
+      record &&
+      (!top ||
+        epley1RMExact(record.weight, record.reps) >
+          epley1RMExact(top.weight, top.reps))
+    ) {
+      top = record;
+    }
+  }
+  return top;
+}
+
 /**
- * The week's new bests: how many the sessions fired, and the one that
- * moved furthest past what it beat (by estimated one-rep max, the
- * measure the bests are judged on), for the recap's Best moment card.
- * Ties go to the later session.
+ * The week's new bests: how many the sessions set, and the one that
+ * moved furthest past the exercise's best from before the week (by
+ * estimated one-rep max, the measure the bests are judged on), for the
+ * recap's Best moment card. Ties go to the later session.
+ *
+ * The recap speaks for the whole week, so it counts bests as the finish
+ * screen does, once per exercise and rep range, and measures each one
+ * against where the week started. Beating the bench best on Monday and
+ * again on Thursday is one new best, and the card names Thursday's.
+ *
+ * Whether a set fired is still judged against the running record, as
+ * its session judged it, so a set the week had already beaten counts
+ * for nothing even when it clears the best from before the week.
  */
 export function weekNewBests(
   baseline: WorkoutDocLite[],
   weekWorkouts: WorkoutDocLite[]
 ): { count: number; best: WeekBest | null } {
-  let map = buildPRMap(baseline);
+  const beforeWeek = buildPRMap(baseline);
+  let map = beforeWeek;
   const sessionCounts: Record<string, number> = {};
   for (const w of baseline) {
     for (const ex of w.exercises) {
@@ -98,7 +130,8 @@ export function weekNewBests(
         (sessionCounts[ex.exerciseName] || 0) + 1;
     }
   }
-  let fired = 0;
+  /* `${exerciseName}:${bucket}`, the finish screen's key for a best. */
+  const fired = new Set<string>();
   let best: WeekBest | null = null;
   let bestGain = -Infinity;
   const chronological = [...weekWorkouts].sort((a, b) =>
@@ -125,8 +158,11 @@ export function weekNewBests(
           sessionCounts
         );
         if (bucket?.kind === "best") {
-          fired++;
-          const previous = bucket.previousBest;
+          fired.add(`${ex.exerciseName}:${bucket.bucket}`);
+          /* A later best of an exercise had to beat the earlier ones to
+             fire, so against this fixed starting point the week's top
+             best of each exercise is also its biggest gain. */
+          const previous = exerciseBest(beforeWeek, ex.exerciseName);
           const gain = previous
             ? epley1RMExact(set.weightKg, set.reps) /
                 epley1RMExact(previous.weight, previous.reps) -
@@ -162,7 +198,7 @@ export function weekNewBests(
         (sessionCounts[ex.exerciseName] || 0) + 1;
     }
   }
-  return { count: fired, best };
+  return { count: fired.size, best };
 }
 
 /* ── Entry eligibility (Home row + Analytics row) ─────────────── */

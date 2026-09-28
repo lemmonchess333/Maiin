@@ -63,3 +63,22 @@ export function selectRunRecords<T extends RunRecordCandidate>(
         : null,
   };
 }
+
+/**
+ * Whether `run`, holding `kind` over some narrower pool, holds it over
+ * every run as well. A row that says New does so in gold, and gold means
+ * a personal best: the fastest run of the last 30 days is not one while
+ * an older run was faster.
+ *
+ * `allTime` is the selection over every run. Its sustained record is null
+ * when the best-paced run holds that one too, and null is then the right
+ * answer: a narrower pool holding that run would fold the two records the
+ * same way, so its own sustained record is always a slower run.
+ */
+export function isAllTimeRecord<T extends RunRecordCandidate>(
+  allTime: RunRecords<T>,
+  kind: keyof RunRecords<T>,
+  run: T
+): boolean {
+  return allTime[kind] === run;
+}

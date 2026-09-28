@@ -294,7 +294,7 @@ function BestMoment({
   next,
 }: {
   best: WeekBest;
-  /** Every new best the week fired, this one included. */
+  /** The week's new bests, one per exercise and rep range, this one included. */
   count: number;
   next: () => void;
 }) {

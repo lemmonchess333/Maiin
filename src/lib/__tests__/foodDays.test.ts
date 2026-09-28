@@ -98,6 +98,37 @@ describe("foodDaysReading", () => {
     expect(reading.calories.judged).toBe(0);
   });
 
+  describe("average protein", () => {
+    /* The protein per kilogram row sits under the card's "Before today",
+       so its average is of finished days, as every other row's is. */
+    it("averages the finished logged days, leaving today out", () => {
+      const reading = foodDaysReading({
+        meals: [meal(0, 300, 20), meal(3, 2300, 150), meal(4, 2100, 130)],
+        targets: new Map(),
+        ...SPAN,
+      });
+      expect(reading.averageProtein).toBe(140);
+    });
+
+    it("leaves out a day logged as nothing and days before the range", () => {
+      const reading = foodDaysReading({
+        meals: [meal(3, 0, 40), meal(40, 2300, 200), meal(4, 2100, 130)],
+        targets: new Map(),
+        ...SPAN,
+      });
+      expect(reading.averageProtein).toBe(130);
+    });
+
+    it("has none before a finished day is logged", () => {
+      const reading = foodDaysReading({
+        meals: [meal(0, 900, 60)],
+        targets: new Map(),
+        ...SPAN,
+      });
+      expect(reading.averageProtein).toBeNull();
+    });
+  });
+
   describe("the weekend against the week", () => {
     const weekdays = [meal(3, 2000), meal(4, 2100), meal(5, 2200)];
 

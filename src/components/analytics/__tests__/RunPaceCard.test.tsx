@@ -54,6 +54,33 @@ describe("RunPaceCard", () => {
     expect(screen.getByText("42.0 km")).toBeInTheDocument();
   });
 
+  it("counts one run as one run", () => {
+    // A single race read "1 runs".
+    render(
+      <RunPaceCard
+        rows={[
+          ...ROWS,
+          {
+            kind: "race",
+            runs: 1,
+            distanceM: 5_000,
+            paceSecPerKm: 290,
+            previousPaceSecPerKm: null,
+          },
+        ]}
+        intervalsLeftOut={0}
+        unit="km"
+        subtitle="Last 30 days"
+        comparedWith="the 30 days before"
+      />
+    );
+    const meta = (label: string) =>
+      screen.getByText(label).closest("li")?.querySelector("p.text-xs")
+        ?.textContent;
+    expect(meta("Races")).toBe("1 run · 5.0 km");
+    expect(meta("Easy runs")).toBe("5 runs · 42.0 km");
+  });
+
   it("states a change in seconds, and none where there is nothing to compare", () => {
     renderCard();
     expect(screen.getByText("8 s/km faster")).toBeInTheDocument();

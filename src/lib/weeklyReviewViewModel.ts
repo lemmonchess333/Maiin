@@ -120,7 +120,10 @@ export interface WeeklyReviewData {
   mealDays: ReviewMealDay[];
   /** Full available weigh-in history up to the review moment (asc or desc). */
   weighIns: { date: string; weight: number }[];
-  /** PRs fired inside the week (data layer via prTracking); null = unknown. */
+  /**
+   * New bests set inside the week, one per exercise and rep range (data
+   * layer via prTracking); null = unknown.
+   */
   prsHit: number | null;
   /** The week's biggest new best, for the recap's Best moment card. */
   bestMoment?: WeekBest | null;

@@ -75,7 +75,7 @@ export default function RunPaceCard({
                 </p>
                 <p className="text-xs text-muted-foreground">
                   <span className="font-mono tabular-nums">{row.runs}</span>{" "}
-                  runs ·{" "}
+                  {row.runs === 1 ? "run" : "runs"} ·{" "}
                   <span className="font-mono tabular-nums">
                     {distanceLabel(row.distanceM, unit)}
                   </span>

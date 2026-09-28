@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   selectRunRecords,
+  isAllTimeRecord,
   PACE_RECORD_MIN_METRES,
   SUSTAINED_RECORD_MIN_METRES,
 } from "@/lib/runRecordSelection";
@@ -119,5 +120,67 @@ describe("selectRunRecords", () => {
     expect(oldBest5k).toBe(oldBest1k);
     expect(oldBest5k.avgPace).toBe(oldBest1k.avgPace);
     expect(oldBest5k.completedAt).toEqual(oldBest1k.completedAt);
+  });
+});
+
+describe("isAllTimeRecord", () => {
+  /* A "Recent bests" row says New in gold, and gold means a personal
+     best. The fastest run of the last 30 days is not one while an older
+     run was faster, yet its row said New whenever it fell in the last
+     week. */
+  const within = (
+    pool: ReturnType<typeof run>[],
+    ...recent: ReturnType<typeof run>[]
+  ) => ({
+    allTime: selectRunRecords(pool, { includeLongest: true }),
+    recent: selectRunRecords(recent, { includeLongest: true }),
+  });
+
+  it("is false for a window's record that an older run beats", () => {
+    const older = run(10000, 300, 1);
+    const recentRun = run(8000, 320, 25);
+    const { allTime, recent } = within([older, recentRun], recentRun);
+    expect(isAllTimeRecord(allTime, "bestPace", recent.bestPace!)).toBe(false);
+    expect(isAllTimeRecord(allTime, "longest", recent.longest!)).toBe(false);
+  });
+
+  it("is true for a window's record that beats every run", () => {
+    const older = run(5000, 330, 1);
+    const recentRun = run(8000, 320, 25);
+    const { allTime, recent } = within([older, recentRun], recentRun);
+    expect(isAllTimeRecord(allTime, "bestPace", recent.bestPace!)).toBe(true);
+    expect(isAllTimeRecord(allTime, "longest", recent.longest!)).toBe(true);
+  });
+
+  it("finds the sustained record on its own row when a short blast holds the overall one", () => {
+    const blast = run(1200, 280, 1);
+    const long = run(10000, 300, 25);
+    const recentBlast = run(1500, 290, 26);
+    const { allTime, recent } = within(
+      [blast, long, recentBlast],
+      long,
+      recentBlast
+    );
+    expect(recent.bestSustainedPace).toBe(long);
+    expect(isAllTimeRecord(allTime, "bestSustainedPace", long)).toBe(true);
+    expect(isAllTimeRecord(allTime, "bestPace", recentBlast)).toBe(false);
+  });
+
+  it("is false for a window's sustained record when one older run holds both", () => {
+    // One older 10 km run is the fastest thing overall, so it holds the
+    // 5 km record too, and the all-time selection has no separate one.
+    const fastest = run(10000, 300, 1);
+    const recentBlast = run(1200, 305, 25);
+    const recentLong = run(6000, 310, 26);
+    const { allTime, recent } = within(
+      [fastest, recentBlast, recentLong],
+      recentBlast,
+      recentLong
+    );
+    expect(allTime.bestSustainedPace).toBeNull();
+    expect(recent.bestSustainedPace).toBe(recentLong);
+    expect(isAllTimeRecord(allTime, "bestSustainedPace", recentLong)).toBe(
+      false
+    );
   });
 });
