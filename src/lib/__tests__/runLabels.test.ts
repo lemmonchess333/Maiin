@@ -31,6 +31,7 @@ import {
   elevationLabel,
   storedKmLabel,
   runTypeTitle,
+  noSplitsReason,
 } from "../runLabels";
 
 describe("paceLabel", () => {
@@ -405,5 +406,24 @@ describe("runTypeTitle", () => {
     expect(runTypeTitle("manual")).toBe("Manual Run");
     expect(runTypeTitle("something-new")).toBe("Run");
     expect(runTypeTitle(undefined)).toBe("Run");
+  });
+});
+
+describe("noSplitsReason", () => {
+  it("measures a miles reader's run against a mile, the lap they are cut in", () => {
+    // 1.2 km crosses a kilometre and no mile. A miles reader's laps are
+    // miles, so there is not one whole lap to show, and "No splits yet"
+    // would suggest a split had gone missing.
+    expect(noSplitsReason(true, 1200, "mi")).toBe("Under a mile");
+    expect(noSplitsReason(true, 1700, "mi")).toBe("No splits yet");
+  });
+
+  it("measures a kilometre reader's run against a kilometre", () => {
+    expect(noSplitsReason(true, 800, "km")).toBe("Under 1 km");
+    expect(noSplitsReason(true, 1200, "km")).toBe("No splits yet");
+  });
+
+  it("says a run with no route has none to cut", () => {
+    expect(noSplitsReason(false, 5000, "km")).toBe("No GPS route");
   });
 });
