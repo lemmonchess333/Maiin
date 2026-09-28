@@ -1,4 +1,4 @@
-// RevenueCat server side (ADR-0006, IAP slice 3 backend, #1099 / #1100).
+// RevenueCat server side (ADR-0006, IAP slice 3 backend).
 //
 // The client's RevenueCat purchase path (src/lib/purchaseProvider.ts) calls
 // `syncRevenueCatEntitlement` straight after a purchase and relies on
@@ -7,7 +7,8 @@
 // same thing: fetch the subscriber from RevenueCat's REST API and write what
 // it says (decided in lib/revenueCatEntitlement.js). Neither trusts the
 // event body for an entitlement, so a replayed or reordered delivery cannot
-// grant or remove Pro on its own say-so.
+// grant or remove Pro on its own say-so. Both go through syncUser, which is
+// where a sandbox purchase is held to REVENUECAT_SANDBOX_UIDS.
 //
 // 1st-gen triggers, like every export here: firebase-functions/v1.
 const functions = require("firebase-functions/v1");
@@ -79,6 +80,10 @@ async function fetchSubscriber(uid, { apiKey, fetchImpl = fetch }) {
  * Never creates a user document: an App User ID with no `users/{uid}` is
  * reported as `no-user` before RevenueCat is called. The write runs in a
  * transaction so the staleness check and the write see the same document.
+ *
+ * A sandbox purchase counts only when the uid is on REVENUECAT_SANDBOX_UIDS.
+ * The webhook and the callable both reach the plan through here, so the
+ * list is checked in one place for both.
  */
 async function syncUser({
   db,
@@ -94,12 +99,15 @@ async function syncUser({
   const snapshot = entitlement.readEntitlement(
     await fetchSubscriber(uid, { apiKey, fetchImpl })
   );
+  const sandboxAllowed = entitlement.isSandboxAllowedUid(uid);
 
   const outcome = await db.runTransaction(async (txn) => {
     const userSnap = await txn.get(userRef);
     if (!userSnap.exists) return { result: "no-user" };
     const userData = userSnap.data() || {};
-    const plan = entitlement.planEntitlementWrite(userData, snapshot);
+    const plan = entitlement.planEntitlementWrite(userData, snapshot, {
+      sandboxAllowed,
+    });
     if (plan.write) {
       txn.set(
         userRef,
@@ -112,11 +120,23 @@ async function syncUser({
       result: plan.result,
       conflict: plan.conflict,
       conflictReason: plan.conflictReason,
+      sandboxRefused: plan.sandboxRefused === true,
       tier: after.subscriptionTier || "free",
       expiresAt: after.subscriptionExpiresAt || null,
     };
   });
 
+  if (outcome.sandboxRefused) {
+    // A TestFlight tester who is not on the list, or someone attaching a
+    // free purchase to this App User ID. The uid is enough to follow it up,
+    // so no transaction or receipt id is logged.
+    logger.warn("revenueCat.sandbox_refused", {
+      uid,
+      store: snapshot.store,
+      productId: snapshot.productId,
+      result: outcome.result,
+    });
+  }
   if (outcome.conflict) {
     // Same forensic breadcrumb as the Apple path. No automatic Stripe
     // cancel: Stripe is dormant (Sub4) and this path has no Stripe key.

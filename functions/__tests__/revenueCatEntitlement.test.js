@@ -10,9 +10,12 @@
  *     finish out of order cannot resurrect or revoke Pro.
  *   - Billing grace keeps Pro until the grace period ends; a refund or
  *     revocation (an expiry in the past) reads as inactive.
+ *   - A sandbox purchase is free, so it grants Pro only to a uid on
+ *     REVENUECAT_SANDBOX_UIDS. For anyone else it counts as no entitlement,
+ *     and an unset or empty list grants it to nobody.
  *   - The webhook secret check fails closed: no secret, no entry.
  */
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { createRequire } from "node:module";
 
 const require = createRequire(import.meta.url);
@@ -67,15 +70,34 @@ const snapshot = (options) => rc.readEntitlement(subscriberResponse(options));
 
 describe("readEntitlement", () => {
   it("reads an active subscription with its expiry, product and store", () => {
-    expect(snapshot({ sandbox: true })).toEqual({
+    expect(snapshot()).toEqual({
       present: true,
       active: true,
       expiresAtMs: NOW + 30 * DAY,
       productId: MONTHLY,
       store: "app_store",
-      sandbox: true,
+      sandbox: false,
       syncedAtMs: NOW,
     });
+  });
+
+  it("marks a sandbox purchase and leaves what it is worth to planEntitlementWrite", () => {
+    // What a sandbox purchase grants depends on whose it is; the sandbox
+    // block under planEntitlementWrite pins that.
+    expect(snapshot({ sandbox: true })).toMatchObject({
+      store: "app_store",
+      sandbox: true,
+    });
+  });
+
+  it("reads a purchase as production only when RevenueCat says so", () => {
+    for (const flag of [undefined, null, "false", 0]) {
+      const response = subscriberResponse();
+      const purchase = response.subscriber.subscriptions[MONTHLY];
+      if (flag === undefined) delete purchase.is_sandbox;
+      else purchase.is_sandbox = flag;
+      expect(rc.readEntitlement(response).sandbox, String(flag)).toBe(true);
+    }
   });
 
   it("keeps Pro through a billing grace period, until the grace ends", () => {
@@ -313,6 +335,172 @@ describe("planEntitlementWrite", () => {
     );
     expect(second.write).toEqual(first.write);
     expect(second.conflict).toBe(false);
+  });
+
+  describe("sandbox purchases", () => {
+    const sandbox = (options) => snapshot({ sandbox: true, ...options });
+    const LISTED = { sandboxAllowed: true };
+
+    it("grant Pro when the uid is on the list", () => {
+      const plan = rc.planEntitlementWrite(FREE, sandbox(), LISTED);
+      expect(plan.result).toBe("granted");
+      expect(plan.sandboxRefused).toBeUndefined();
+      expect(plan.write).toMatchObject({
+        subscriptionTier: "pro",
+        subscriptionSource: "ios_iap",
+        subscriptionExpiresAt: iso(NOW + 30 * DAY),
+        revenueCat: { entitlementActive: true, sandbox: true },
+      });
+    });
+
+    it("grant nothing to anyone else, and say they were refused", () => {
+      // Only `true` lets one through: a missing option fails closed.
+      for (const options of [
+        undefined,
+        {},
+        { sandboxAllowed: false },
+        { sandboxAllowed: "true" },
+        { sandboxAllowed: 1 },
+      ]) {
+        const name = JSON.stringify(options);
+        const plan = rc.planEntitlementWrite(FREE, sandbox(), options);
+        expect(plan.result, name).toBe("not-ours");
+        expect(plan.sandboxRefused, name).toBe(true);
+        expect(plan.write, name).toEqual({
+          revenueCat: {
+            entitlementActive: false,
+            productId: MONTHLY,
+            store: "app_store",
+            expiresAt: iso(NOW + 30 * DAY),
+            sandbox: true,
+            syncedAtMs: NOW,
+          },
+        });
+      }
+    });
+
+    it("leave Pro from another source alone", () => {
+      const cases = {
+        stripe: { subscriptionTier: "pro", subscriptionSource: "stripe" },
+        "legacy Apple path": {
+          subscriptionTier: "pro",
+          subscriptionSource: "ios_iap",
+        },
+        "granted by hand": { subscriptionTier: "pro" },
+        lifetime: rcPro({ planKind: "lifetime" }),
+      };
+      for (const [name, userData] of Object.entries(cases)) {
+        const plan = rc.planEntitlementWrite(userData, sandbox());
+        expect(plan.sandboxRefused, name).toBe(true);
+        expect(Object.keys(plan.write), name).toEqual(["revenueCat"]);
+        expect(plan.write.revenueCat.entitlementActive, name).toBe(false);
+      }
+    });
+
+    it("do not make RevenueCat the owner of Pro it never granted", () => {
+      // Legacy Apple Pro, then a refused sandbox purchase, then that
+      // purchase lapsing. Had the refusal been recorded as an active
+      // entitlement, the lapse would take the Apple Pro away.
+      const legacyApple = {
+        subscriptionTier: "pro",
+        subscriptionSource: "ios_iap",
+      };
+      const refusal = rc.planEntitlementWrite(legacyApple, sandbox());
+      const lapse = rc.planEntitlementWrite(
+        { ...legacyApple, ...refusal.write },
+        sandbox({ expires: NOW + DAY, requestMs: NOW + 2 * DAY })
+      );
+      expect(lapse.result).toBe("not-ours");
+      expect(Object.keys(lapse.write)).toEqual(["revenueCat"]);
+    });
+
+    it("take back the Pro a sandbox purchase gave once the uid is off the list", () => {
+      const tester = rcPro({
+        revenueCat: { ...rcPro().revenueCat, sandbox: true },
+      });
+      const plan = rc.planEntitlementWrite(tester, sandbox());
+      expect(plan.result).toBe("revoked");
+      expect(plan.sandboxRefused).toBe(true);
+      expect(plan.write).toMatchObject({
+        subscriptionTier: "free",
+        subscriptionSource: null,
+        subscriptionExpiresAt: null,
+        revenueCat: { entitlementActive: false, sandbox: true },
+      });
+    });
+
+    it("are not refused once they have lapsed anyway", () => {
+      const plan = rc.planEntitlementWrite(
+        FREE,
+        sandbox({ expires: NOW - DAY })
+      );
+      expect(plan.result).toBe("not-ours");
+      expect(plan.sandboxRefused).toBeUndefined();
+    });
+
+    it("change nothing for a production purchase, listed or not", () => {
+      for (const options of [undefined, { sandboxAllowed: false }, LISTED]) {
+        const name = JSON.stringify(options);
+        const plan = rc.planEntitlementWrite(FREE, snapshot(), options);
+        expect(plan.result, name).toBe("granted");
+        expect(plan.sandboxRefused, name).toBeUndefined();
+        expect(plan.write.subscriptionTier, name).toBe("pro");
+        expect(plan.write.revenueCat.entitlementActive, name).toBe(true);
+      }
+    });
+  });
+});
+
+describe("the sandbox allow-list (REVENUECAT_SANDBOX_UIDS)", () => {
+  const original = process.env.REVENUECAT_SANDBOX_UIDS;
+  beforeEach(() => {
+    delete process.env.REVENUECAT_SANDBOX_UIDS;
+  });
+  afterEach(() => {
+    if (original === undefined) delete process.env.REVENUECAT_SANDBOX_UIDS;
+    else process.env.REVENUECAT_SANDBOX_UIDS = original;
+  });
+
+  it("is empty when unset or blank, so nobody's sandbox purchase counts", () => {
+    for (const value of [undefined, "", "   ", ",", " , ,"]) {
+      if (value === undefined) delete process.env.REVENUECAT_SANDBOX_UIDS;
+      else process.env.REVENUECAT_SANDBOX_UIDS = value;
+      const name = JSON.stringify(value);
+      expect(rc.getSandboxUidAllowlist().size, name).toBe(0);
+      expect(rc.isSandboxAllowedUid("uid-owner"), name).toBe(false);
+    }
+  });
+
+  it("trims each entry and drops empty ones", () => {
+    process.env.REVENUECAT_SANDBOX_UIDS = " uid-owner , ,uid-review ,";
+    expect([...rc.getSandboxUidAllowlist()]).toEqual([
+      "uid-owner",
+      "uid-review",
+    ]);
+    expect(rc.isSandboxAllowedUid("uid-owner")).toBe(true);
+    expect(rc.isSandboxAllowedUid("uid-review")).toBe(true);
+  });
+
+  it("matches whole uids only", () => {
+    process.env.REVENUECAT_SANDBOX_UIDS = "uid-owner";
+    for (const uid of ["uid-other", "uid-owne", "uid-owner2", " uid-owner"]) {
+      expect(rc.isSandboxAllowedUid(uid), uid).toBe(false);
+    }
+  });
+
+  it("refuses anything that is not a non-empty string", () => {
+    process.env.REVENUECAT_SANDBOX_UIDS = "undefined,null,42";
+    for (const uid of [undefined, null, 42, "", {}]) {
+      expect(rc.isSandboxAllowedUid(uid), String(uid)).toBe(false);
+    }
+  });
+
+  it("reads the environment on every call", () => {
+    process.env.REVENUECAT_SANDBOX_UIDS = "uid-owner";
+    expect(rc.isSandboxAllowedUid("uid-owner")).toBe(true);
+    process.env.REVENUECAT_SANDBOX_UIDS = "uid-review";
+    expect(rc.isSandboxAllowedUid("uid-owner")).toBe(false);
+    expect(rc.isSandboxAllowedUid("uid-review")).toBe(true);
   });
 });
 

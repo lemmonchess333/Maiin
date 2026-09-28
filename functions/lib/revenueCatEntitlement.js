@@ -18,6 +18,9 @@
  *     a later snapshot knows whether RevenueCat granted the Pro it may take
  *     away. Clients cannot write it: it is not in the rules allow-list.
  *
+ * A sandbox purchase grants Pro only to the uids in REVENUECAT_SANDBOX_UIDS
+ * (see getSandboxUidAllowlist); for anyone else it counts as no entitlement.
+ *
  * Pinned by functions/__tests__/revenueCatEntitlement.test.js.
  */
 
@@ -48,6 +51,40 @@ const STORE_SOURCES = Object.freeze({
 
 class RevenueCatResponseError extends Error {}
 
+/**
+ * The uids whose sandbox purchases grant Pro: the owner's account and App
+ * Review's demo login. A sandbox purchase (TestFlight, StoreKit testing, a
+ * Play licence tester) costs nothing, and anyone with a test build can attach
+ * one to any App User ID through the public SDK key, so it must never be Pro
+ * by default.
+ *
+ * Provisioned like ADMIN_UIDS (functions/adminAuth.js): a plain environment
+ * variable, not a secret, so no Secret Manager binding. Comma-separated,
+ * whitespace tolerant:
+ *
+ *   # functions/.env
+ *   REVENUECAT_SANDBOX_UIDS=uid1,uid2
+ *
+ * Both revenueCatWebhook and syncRevenueCatEntitlement read it, so both
+ * functions need it. Read on every call, never at module load. Unset or
+ * empty means no sandbox purchase grants Pro to anyone.
+ */
+function getSandboxUidAllowlist() {
+  const raw = process.env.REVENUECAT_SANDBOX_UIDS || "";
+  const list = String(raw)
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  return new Set(list);
+}
+
+/** Whether this uid's sandbox purchases grant Pro. False for an empty list
+ *  and for anything that is not a non-empty string. */
+function isSandboxAllowedUid(uid) {
+  if (typeof uid !== "string" || !uid) return false;
+  return getSandboxUidAllowlist().has(uid);
+}
+
 function parseDateMs(value, field) {
   if (value === null) return null;
   const ms = typeof value === "string" ? Date.parse(value) : NaN;
@@ -75,6 +112,11 @@ function purchaseFor(subscriber, productId) {
  * the entitlement until `grace_period_expires_date`, so the effective expiry
  * is the later of the two. Refunds and revocations arrive as an expiry in
  * the past, so they read as inactive with no special case.
+ *
+ * `active` reads the expiry only. Whether a sandbox purchase counts depends
+ * on whose it is, which planEntitlementWrite decides. A purchase is read as
+ * production only when RevenueCat says so (`is_sandbox: false`), so a
+ * missing or malformed flag cannot pass a free purchase off as a paid one.
  *
  * Throws RevenueCatResponseError on a response it cannot read rather than
  * guessing at an entitlement.
@@ -109,7 +151,7 @@ function readEntitlement(response) {
     expiresAtMs,
     productId,
     store: purchase && typeof purchase.store === "string" ? purchase.store : null,
-    sandbox: Boolean(purchase && purchase.is_sandbox === true),
+    sandbox: Boolean(purchase) && purchase.is_sandbox !== false,
     syncedAtMs,
   };
 }
@@ -131,20 +173,32 @@ function revenueCatOwnsPro(userData) {
 /**
  * Decide the merge-write for one user from one entitlement snapshot.
  *
- * Returns `{ write, result, conflict?, conflictReason? }`. `write` is the
- * merge payload (null for nothing to write). `result` is a fixed code for
- * logs and the webhook's event record:
+ * `sandboxAllowed` is whether this user's sandbox purchases count
+ * (isSandboxAllowedUid). Anything but `true` refuses them.
+ *
+ * Returns `{ write, result, conflict?, conflictReason?, sandboxRefused? }`.
+ * `write` is the merge payload (null for nothing to write). `result` is a
+ * fixed code for logs and the webhook's event record:
  *   granted | revoked | stale | lifetime | unsupported-store | not-ours
+ * `sandboxRefused` is true when an unexpired sandbox purchase did not count.
  */
-function planEntitlementWrite(userData, entitlement) {
+function planEntitlementWrite(userData, entitlement, { sandboxAllowed = false } = {}) {
   const stored = userData.revenueCat;
   if (stored && Number(stored.syncedAtMs) > entitlement.syncedAtMs) {
     return { write: null, result: "stale" };
   }
+  // A refused sandbox purchase counts as no entitlement. It grants nothing,
+  // and like a lapse it takes away only Pro that RevenueCat granted, so a
+  // tester taken off the list loses the Pro a sandbox purchase gave them,
+  // while Pro from Stripe, a lifetime purchase or the legacy Apple path stays.
+  const sandboxRefused =
+    entitlement.active && entitlement.sandbox && sandboxAllowed !== true;
+  const active = entitlement.active && !sandboxRefused;
+  const refused = sandboxRefused ? { sandboxRefused: true } : {};
   const expiresAt =
     entitlement.expiresAtMs === null ? null : new Date(entitlement.expiresAtMs).toISOString();
   const record = {
-    entitlementActive: entitlement.active,
+    entitlementActive: active,
     productId: entitlement.productId,
     store: entitlement.store,
     expiresAt,
@@ -155,10 +209,10 @@ function planEntitlementWrite(userData, entitlement) {
   // A lifetime purchase is never touched by a subscription snapshot, the
   // same protection applySubscriptionToUser gives it.
   if (userData.planKind === "lifetime") {
-    return { write: { revenueCat: record }, result: "lifetime" };
+    return { write: { revenueCat: record }, result: "lifetime", ...refused };
   }
 
-  if (entitlement.active) {
+  if (active) {
     const source = entitlement.store ? STORE_SOURCES[entitlement.store] : undefined;
     if (!source) {
       return { write: { revenueCat: record }, result: "unsupported-store" };
@@ -185,7 +239,7 @@ function planEntitlementWrite(userData, entitlement) {
   // Inactive. Take away only Pro that RevenueCat itself gave: Pro from
   // Stripe, from the legacy Apple path or granted by hand stays.
   if (!revenueCatOwnsPro(userData)) {
-    return { write: { revenueCat: record }, result: "not-ours" };
+    return { write: { revenueCat: record }, result: "not-ours", ...refused };
   }
   const { writeTier, writeSource } = resolveSubscriptionUpdate({
     currentTier: userData.subscriptionTier,
@@ -197,10 +251,13 @@ function planEntitlementWrite(userData, entitlement) {
     write: {
       subscriptionTier: writeTier,
       subscriptionSource: writeSource,
-      subscriptionExpiresAt: expiresAt,
+      // A refused purchase's expiry is not this user's to keep, so none is
+      // written, as when the entitlement is gone altogether.
+      subscriptionExpiresAt: sandboxRefused ? null : expiresAt,
       revenueCat: record,
     },
     result: "revoked",
+    ...refused,
   };
 }
 
@@ -258,6 +315,8 @@ module.exports = {
   ENTITLEMENT_ID,
   STORE_SOURCES,
   RevenueCatResponseError,
+  getSandboxUidAllowlist,
+  isSandboxAllowedUid,
   readEntitlement,
   planEntitlementWrite,
   revenueCatOwnsPro,

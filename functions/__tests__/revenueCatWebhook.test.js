@@ -12,6 +12,9 @@
  *     and a late delivery cannot undo a newer snapshot.
  *   - No user document is ever created, and a deleting account gets a
  *     minimised log instead of a write.
+ *   - A sandbox purchase grants Pro through either entry point only to a
+ *     uid on REVENUECAT_SANDBOX_UIDS; a refusal is logged with the uid and
+ *     no transaction id.
  *   - Neither secret appears in a response or a log line.
  */
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
@@ -33,12 +36,14 @@ const REST_KEY = "sk_rest_key_value";
 const NOW = Date.parse("2026-09-27T12:00:00Z");
 const DAY = 86_400_000;
 const MONTHLY = "com.tropos.app.pro.monthly";
+const STORE_TRANSACTION_ID = "2000000456";
 const iso = (ms) => new Date(ms).toISOString();
 
 function subscriber({
   expires = NOW + 30 * DAY,
   requestMs = NOW,
   entitlement = true,
+  sandbox = false,
 } = {}) {
   return {
     request_date_ms: requestMs,
@@ -56,7 +61,8 @@ function subscriber({
         [MONTHLY]: {
           expires_date: iso(expires),
           store: "app_store",
-          is_sandbox: false,
+          is_sandbox: sandbox,
+          store_transaction_id: STORE_TRANSACTION_ID,
         },
       },
       non_subscriptions: {},
@@ -151,15 +157,23 @@ const purchase = (overrides = {}) => ({
   ...overrides,
 });
 
+const SANDBOX_UIDS = process.env.REVENUECAT_SANDBOX_UIDS;
+
 beforeEach(() => {
   logs = [];
+  delete process.env.REVENUECAT_SANDBOX_UIDS;
 });
 
 afterEach(() => {
   const printed = JSON.stringify(logs);
   expect(printed).not.toContain(SECRET);
   expect(printed).not.toContain(REST_KEY);
+  if (SANDBOX_UIDS === undefined) delete process.env.REVENUECAT_SANDBOX_UIDS;
+  else process.env.REVENUECAT_SANDBOX_UIDS = SANDBOX_UIDS;
 });
+
+const refusals = () =>
+  logs.filter(([, message]) => message === "revenueCat.sandbox_refused");
 
 describe("revenueCatWebhook — the gate", () => {
   it("refuses a missing or wrong Authorization header before any read", async () => {
@@ -502,5 +516,124 @@ describe("syncRevenueCatEntitlement", () => {
       )
     ).rejects.toMatchObject({ code: "unavailable" });
     expect(rc.calls).toHaveLength(0);
+  });
+});
+
+describe("sandbox purchases, through the webhook and the sync", () => {
+  it("grant Pro to a listed uid", async () => {
+    process.env.REVENUECAT_SANDBOX_UIDS = " uid-owner , ,uid-review ,";
+    const db = memoryFirestore({
+      "users/uid-owner": { subscriptionTier: "free" },
+      "users/uid-review": { subscriptionTier: "free" },
+    });
+    const rc = fakeRevenueCat({
+      "uid-owner": subscriber({ sandbox: true }),
+      "uid-review": subscriber({ sandbox: true }),
+    });
+
+    const res = await deliver(
+      db,
+      rc,
+      purchase({ app_user_id: "uid-owner", id: "evt-s1" })
+    );
+    expect(res.statusCode).toBe(200);
+    expect(db.data.get("users/uid-owner")).toMatchObject({
+      subscriptionTier: "pro",
+      subscriptionSource: "ios_iap",
+      revenueCat: { entitlementActive: true, sandbox: true },
+    });
+
+    expect(
+      await handleSync({ auth: { uid: "uid-review" } }, deps(db, rc.fetchImpl))
+    ).toEqual({
+      result: "granted",
+      tier: "pro",
+      expiresAt: iso(NOW + 30 * DAY),
+    });
+    expect(refusals()).toEqual([]);
+  });
+
+  it("grant nothing to anyone else, and log the refusal without a transaction id", async () => {
+    process.env.REVENUECAT_SANDBOX_UIDS = "uid-owner";
+    const db = memoryFirestore({ "users/uid-1": { subscriptionTier: "free" } });
+    const rc = fakeRevenueCat({ "uid-1": subscriber({ sandbox: true }) });
+
+    const res = await deliver(db, rc, purchase({ id: "evt-s2" }));
+    expect(res.statusCode).toBe(200);
+    expect(db.data.get("revenueCatEvents/evt-s2").results).toEqual([
+      "not-ours",
+    ]);
+    expect(
+      await handleSync({ auth: { uid: "uid-1" } }, deps(db, rc.fetchImpl))
+    ).toEqual({ result: "not-ours", tier: "free", expiresAt: null });
+
+    const user = db.data.get("users/uid-1");
+    expect(user).toMatchObject({
+      subscriptionTier: "free",
+      revenueCat: { entitlementActive: false, sandbox: true },
+    });
+    expect(user).not.toHaveProperty("subscriptionSource");
+    expect(user).not.toHaveProperty("subscriptionExpiresAt");
+
+    const refused = {
+      uid: "uid-1",
+      store: "app_store",
+      productId: MONTHLY,
+      result: "not-ours",
+    };
+    expect(refusals()).toEqual([
+      ["warn", "revenueCat.sandbox_refused", refused],
+      ["warn", "revenueCat.sandbox_refused", refused],
+    ]);
+    const printed = JSON.stringify(logs);
+    expect(printed).not.toContain(STORE_TRANSACTION_ID);
+    expect(printed).not.toContain(purchase().original_transaction_id);
+  });
+
+  it("leave Pro from another source alone", async () => {
+    process.env.REVENUECAT_SANDBOX_UIDS = "uid-owner";
+    const stripePro = { subscriptionTier: "pro", subscriptionSource: "stripe" };
+    const db = memoryFirestore({ "users/uid-1": structuredClone(stripePro) });
+    const rc = fakeRevenueCat({ "uid-1": subscriber({ sandbox: true }) });
+    await deliver(db, rc, purchase({ id: "evt-s3" }));
+    await handleSync({ auth: { uid: "uid-1" } }, deps(db, rc.fetchImpl));
+    expect(db.data.get("users/uid-1")).toMatchObject(stripePro);
+    expect(refusals()).toHaveLength(2);
+  });
+
+  it("grant nothing to anybody while the list is unset or empty", async () => {
+    for (const [i, value] of [undefined, "", "   ", " , ,"].entries()) {
+      if (value === undefined) delete process.env.REVENUECAT_SANDBOX_UIDS;
+      else process.env.REVENUECAT_SANDBOX_UIDS = value;
+      const name = JSON.stringify(value);
+      const db = memoryFirestore({
+        "users/uid-1": { subscriptionTier: "free" },
+      });
+      const rc = fakeRevenueCat({ "uid-1": subscriber({ sandbox: true }) });
+      await deliver(db, rc, purchase({ id: `evt-empty-${i}` }));
+      const synced = await handleSync(
+        { auth: { uid: "uid-1" } },
+        deps(db, rc.fetchImpl)
+      );
+      expect(synced.tier, name).toBe("free");
+      expect(db.data.get("users/uid-1").subscriptionTier, name).toBe("free");
+    }
+  });
+
+  it("still grant a production purchase with no list at all", async () => {
+    const db = memoryFirestore({
+      "users/uid-1": { subscriptionTier: "free" },
+      "users/uid-2": { subscriptionTier: "free" },
+    });
+    const rc = fakeRevenueCat({
+      "uid-1": subscriber(),
+      "uid-2": subscriber(),
+    });
+    await deliver(db, rc, purchase({ id: "evt-s5" }));
+    expect(db.data.get("users/uid-1").subscriptionTier).toBe("pro");
+    expect(
+      await handleSync({ auth: { uid: "uid-2" } }, deps(db, rc.fetchImpl))
+    ).toMatchObject({ result: "granted", tier: "pro" });
+    expect(refusals()).toEqual([]);
   });
 });

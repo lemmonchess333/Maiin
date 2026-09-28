@@ -376,7 +376,7 @@ These lessons cost a full day to find. Read before changing the deploy pipeline.
 - **Blaze plan is required for any Cloud Functions deploy.** Scheduled functions (Pub/Sub), Apple/Stripe webhook secrets, and the build-step machinery all live behind Blaze. If billing is detached (card expiry, manual unlink, etc.), every functions/-touching PR fails with `Extensions require the Blaze plan` — which is misleading; Tropos has no extensions, the error is firebase-tools' generic guard for any Blaze-only feature.
 - **`maxInstances` is mandatory on every HTTP and Firestore-trigger function.** Cloud Functions v1 has NO default cap; a runaway client / DDoS / accidental call-in-render loop can spin up thousands of containers and rack up hundreds of pounds in hours. `functions/index.js` declares three tiers (`DEFAULT_HTTP_CAP = 100`, `ADMIN_HTTP_CAP = 10`, `TRIGGER_CAP = 50`) and uses `functions.runWith({...})` on each export. Don't add a new HTTP/trigger function without one of those caps.
 - **Production deploy verification:** the only conclusive proof a function deployed is to view the deployed source in Firebase Console (https://console.cloud.google.com/functions/details/us-central1/<name>/source). CI green is a _necessary but not sufficient_ signal — see the dedup gotcha above. `deploy-functions.yml` now reads back the deployed source of the functions `scripts/verify-deployed-functions-source.py` lists and fails if any differs from the bundle it uploaded; for a function it does not list, spot-check that the deployed source matches main by searching for a recent string (e.g. a new comment from the PR).
-- **1st-gen API lives under `firebase-functions/v1`; `functions.config()` is gone.** As of firebase-functions v7, the bare `require("firebase-functions")` resolves to the **2nd-gen** API, and every export here is **1st-gen** (`runWith().https.onCall/onRequest`, `.pubsub.schedule`, `.firestore.document().onCreate`, `https.HttpsError`, `logger`). They import from `firebase-functions/v1` — keep new 1st-gen functions on that import or they silently become `undefined` triggers. `functions.config()` **throws** in v7 (the Cloud Runtime Config API was shut down 2025-12-31); secrets now come from Secret Manager via `firebase-functions/params` `defineSecret(...)`, listed in each function's `runWith({ secrets: [...] })`, and read at runtime as `process.env.<NAME>`. Provision before deploy with `firebase functions:secrets:set <NAME>` — **a deploy referencing an unprovisioned bound secret fails**, which is the safety gate. Current bound secrets: `STRIPE_SECRET_KEY` (deleteMyAccount, createCheckoutSession, stripeWebhook, all 3 Apple callables), `STRIPE_WEBHOOK_SECRET` (stripeWebhook), `APPLE_KEY_ID/ISSUER_ID/PRIVATE_KEY` + `BILLING_HMAC_SECRET` (+ `BILLING_PREVIOUS_HMAC_SECRET` during rotation only) on `restoreApplePurchases`, `RESEND_API_KEY` (sendPasswordResetLinkCallable — password-reset email delivery), `REVENUECAT_WEBHOOK_AUTH` + `REVENUECAT_REST_KEY` (revenueCatWebhook; the REST key also on syncRevenueCatEntitlement). Non-secret config (`ADMIN_UIDS`, `RESEND_FROM`) stays a plain env var — no binding needed. `npm run secrets:check` (in `functions/`) prints the authoritative provision list from the source.
+- **1st-gen API lives under `firebase-functions/v1`; `functions.config()` is gone.** As of firebase-functions v7, the bare `require("firebase-functions")` resolves to the **2nd-gen** API, and every export here is **1st-gen** (`runWith().https.onCall/onRequest`, `.pubsub.schedule`, `.firestore.document().onCreate`, `https.HttpsError`, `logger`). They import from `firebase-functions/v1` — keep new 1st-gen functions on that import or they silently become `undefined` triggers. `functions.config()` **throws** in v7 (the Cloud Runtime Config API was shut down 2025-12-31); secrets now come from Secret Manager via `firebase-functions/params` `defineSecret(...)`, listed in each function's `runWith({ secrets: [...] })`, and read at runtime as `process.env.<NAME>`. Provision before deploy with `firebase functions:secrets:set <NAME>` — **a deploy referencing an unprovisioned bound secret fails**, which is the safety gate. Current bound secrets: `STRIPE_SECRET_KEY` (deleteMyAccount, createCheckoutSession, stripeWebhook, all 3 Apple callables), `STRIPE_WEBHOOK_SECRET` (stripeWebhook), `APPLE_KEY_ID/ISSUER_ID/PRIVATE_KEY` + `BILLING_HMAC_SECRET` (+ `BILLING_PREVIOUS_HMAC_SECRET` during rotation only) on `restoreApplePurchases`, `RESEND_API_KEY` (sendPasswordResetLinkCallable — password-reset email delivery), `REVENUECAT_WEBHOOK_AUTH` + `REVENUECAT_REST_KEY` (revenueCatWebhook; the REST key also on syncRevenueCatEntitlement). Non-secret config (`ADMIN_UIDS`, `RESEND_FROM`, `REVENUECAT_SANDBOX_UIDS`) stays a plain env var — no binding needed. `npm run secrets:check` (in `functions/`) prints the authoritative provision list from the source.
 - **A functions deploy needs the whole GCP readiness chain, not just Blaze + a fresh bundle.** The Secret Manager API must be **enabled** AND **propagated** before deploy. Enabling it (`gcloud services enable secretmanager.googleapis.com`) returns _before_ the data plane actually answers, so a deploy that races straight ahead still 403s — the CI fix was two steps: enable the API (`1a529ec`), then **wait for propagation** before `firebase deploy` (`b953eac`). If a functions deploy 403s on secrets right after an org/billing/API change, suspect propagation lag, not config.
 
 ### Account-deletion safety rails
@@ -1978,20 +1978,43 @@ Pro that RevenueCat granted: Pro from Stripe, the legacy Apple path, a
 lifetime purchase or a hand grant is left alone. Billing grace keeps Pro
 until the grace period ends.
 
+**Sandbox purchases grant Pro only to the uids in `REVENUECAT_SANDBOX_UIDS`**
+(the owner's account and App Review's demo login). A sandbox purchase
+(TestFlight, StoreKit testing) costs nothing, and anyone with a test build
+can attach one to any App User ID, so the legacy Apple path refuses them in
+production and this one lists who may use them. For anyone else a sandbox
+purchase counts as no entitlement: it grants nothing, it takes away only Pro
+that RevenueCat granted (as a lapse does), and the function logs
+`revenueCat.sandbox_refused` with the uid. An unset or empty list grants
+sandbox Pro to nobody. Production purchases are unaffected.
+
 - [ ] **Secrets provisioned, then merge.** `npm run secrets:check` in
       `functions/` lists both.
+- [ ] **`REVENUECAT_SANDBOX_UIDS` set on both functions**: your uid and App
+      Review's demo account uid, comma-separated. It is a plain env var,
+      set the way `ADMIN_UIDS` is (`functions/.env`, no Secret Manager).
+      **App Review's demo uid must be on it before submission**, or the
+      reviewer's test purchase will not unlock Pro. A CI deploy keeps what a
+      function already has but gives a newly created function nothing, so
+      set it after the first deploy creates these two functions and confirm
+      it in the Cloud console. Steps: `docs/iap/revenuecat-setup.md` Part C.
 - [ ] **Webhook configured** in RevenueCat → Integrations → Webhooks: URL
       `https://us-central1-adaptive-fitness-af8bb.cloudfunctions.net/revenueCatWebhook`,
       Authorization header = the secret, bare or as `Bearer <secret>`. The
       dashboard's test event gets a 200.
 - [ ] **Deploy verification.** The functions deploy log reports a
       successful create operation for both functions.
-- [ ] **Sandbox purchase on a device.** `users/{uid}` shows
+- [ ] **Sandbox purchase on a listed account.** `users/{uid}` shows
       `subscriptionTier: "pro"`, `subscriptionSource: "ios_iap"`, a future
       `subscriptionExpiresAt` and a `revenueCat` map, and an AI scan works
       as soon as the purchase sheet closes.
-- [ ] **Sandbox expiry.** Let the sandbox subscription lapse (a sandbox
-      month is a few minutes): the user reads as free again.
+- [ ] **Sandbox purchase on an account not on the list.** The purchase
+      sheet completes but the user stays free: `revenueCat.entitlementActive`
+      is `false`, and the function log has `revenueCat.sandbox_refused` with
+      that uid.
+- [ ] **Sandbox expiry.** On the listed account, let the sandbox
+      subscription lapse (a sandbox month is a few minutes): the user reads
+      as free again.
 - [ ] **Not built, decide later.** Account deletion leaves the RevenueCat
       subscriber record (purchase history keyed by the uid) in place, and a
       RevenueCat promotional grant does not grant Pro. Comps are written in
