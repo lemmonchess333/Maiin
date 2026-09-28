@@ -2,6 +2,19 @@ import { Trophy, ChevronRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { THEME } from "@/lib/theme";
 
+/**
+ * "New" beside a record set in the last week. Gold, the colour DS3 keeps
+ * for new bests and nothing else: it was a white-on-orange "NEW", the
+ * food colour, in capitals the rest of the app retired.
+ */
+export function NewRecordChip({ label = "New" }: { label?: string }) {
+  return (
+    <span className="inline-flex shrink-0 items-center rounded-full bg-achievement/15 px-1.5 py-0.5 text-xs font-semibold text-achievement-strong">
+      {label}
+    </span>
+  );
+}
+
 interface PR {
   label: string;
   value: string;
@@ -57,16 +70,7 @@ export default function PRCard({
           const content = (
             <>
               <div className="flex items-center gap-2 min-w-0">
-                {pr.isNew && (
-                  /* `nutrition-fill`, not the bare orange. White on
-                     `--ds-orange-500` measures 3.05:1 at this size, on the
-                     one element on the tab whose whole job is to catch the
-                     eye; the fill step exists for white-on-orange and reads
-                     5.02:1. */
-                  <span className="text-xs px-1.5 py-0.5 rounded-full font-bold tracking-wider flex-shrink-0 bg-nutrition-fill text-white">
-                    NEW
-                  </span>
-                )}
+                {pr.isNew && <NewRecordChip />}
                 <span className="text-xs text-muted-foreground truncate">
                   {pr.label}
                 </span>

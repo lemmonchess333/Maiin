@@ -38,7 +38,8 @@ export default function PerformanceOverviewCard({
   hasLoggedSession: boolean;
   onOpenDetails: () => void;
 }) {
-  const { weeks, currentWeek, loading } = usePerformanceWeeks(WEEKS_SHOWN);
+  const { weeks, currentWeek, previousWeek, docsAvailable, loading } =
+    usePerformanceWeeks(WEEKS_SHOWN);
 
   const details = (
     <button
@@ -95,13 +96,14 @@ export default function PerformanceOverviewCard({
   const line = getLine(verb.state, currentWeek.signals);
   const { hue, textHue } = getCardColour(pi, loadBand, deloadRecommended);
   const establishing = isEstablishingBaseline({
-    docsAvailable: weeks.length,
+    docsAvailable,
     lifetimeWeeks: currentWeek.signals?.lifetimeWeeks,
   });
-  const previous = weeks.length >= 2 ? weeks[weeks.length - 2] : null;
-  const delta = previous
+  // The week directly before, never an older one standing in for it.
+  const delta = previousWeek
     ? Math.round(
-        (currentWeek.performanceIndex ?? 0) - (previous.performanceIndex ?? 0)
+        (currentWeek.performanceIndex ?? 0) -
+          (previousWeek.performanceIndex ?? 0)
       )
     : null;
   // Same gate as Home's chip: a change is noise until the baseline forms,

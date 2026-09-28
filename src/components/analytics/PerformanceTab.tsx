@@ -1,19 +1,18 @@
 import { useState } from "react";
-import SectionHeading from "@/components/ui/SectionHeading";
 import WeeklyReviewRow from "@/components/analytics/WeeklyReviewRow";
 import PerformanceIndexChart from "@/components/analytics/PerformanceIndexChart";
 import StatCard from "@/components/analytics/StatCard";
+import PerformanceWeekBreakdown from "@/components/analytics/PerformanceWeekBreakdown";
 import { usePerformanceWeeks } from "@/hooks/usePerformance";
+import { performanceWeekBreakdown } from "@/lib/performanceWeekBreakdown";
+import type { DistanceUnit } from "@/lib/distanceUnits";
 import {
   averagePerformanceIndex,
   averageWeekCount,
 } from "@/lib/performanceAverage";
 import { THEME } from "@/lib/theme";
 import { cn } from "@/lib/utils";
-import {
-  getPlainLanguageSummary,
-  insightBulletsWithoutVerdict,
-} from "@/lib/performanceSummary";
+import { getPlainLanguageSummary } from "@/lib/performanceSummary";
 import { getVerb, getVerbState } from "@/lib/performanceLine";
 import {
   resolveLoadBand,
@@ -45,11 +44,6 @@ import UITooltip from "@/components/ui/Tooltip";
  * agreeing with the engine that actually runs. */
 const PI_EXPLAINER =
   "0–100 score for your last 7 days — training load, recovery and consistency, measured against your previous 4 weeks. A higher score is not a recommendation to train harder — read it alongside your load and recovery guidance.";
-
-function pctSigned(x: number) {
-  const v = Math.round(x * 100);
-  return (v >= 0 ? "+" : "") + `${v}%`;
-}
 
 /* Band colour, in the CardColour hue/textHue shape (DS2). `identity` is
  * the fixed THEME hex — correct for the gauge arc (decorative data-viz)
@@ -321,8 +315,14 @@ function loadBandLabel(band: string): string {
   }
 }
 
-export default function PerformanceTab() {
-  const { weeks, currentWeek, loading } = usePerformanceWeeks(12);
+export default function PerformanceTab({
+  distanceUnit = "km",
+}: {
+  /** The reader's unit, for the running figures in the breakdown. */
+  distanceUnit?: DistanceUnit;
+} = {}) {
+  const { weeks, currentWeek, previousWeek, docsAvailable, loading } =
+    usePerformanceWeeks(12);
   const [showTechnical, setShowTechnical] = useState(false);
 
   if (loading) {
@@ -345,14 +345,13 @@ export default function PerformanceTab() {
     );
   }
 
-  const prev = weeks.length >= 2 ? weeks[weeks.length - 2] : null;
   const avgPI = averagePerformanceIndex(weeks);
   const avgWeeks = averageWeekCount(weeks);
-  const delta = prev
-    ? Math.round(currentWeek.performanceIndex - prev.performanceIndex)
+  // Against the week directly before, never an older one standing in.
+  const delta = previousWeek
+    ? Math.round(currentWeek.performanceIndex - previousWeek.performanceIndex)
     : null;
   const b = currentWeek.breakdown;
-  const m = currentWeek.multipliers;
 
   const pi = Math.round(currentWeek.performanceIndex);
   /* Canonical read (2026-08-09 fix). This was `currentWeek.labels?.loadBand`
@@ -377,23 +376,26 @@ export default function PerformanceTab() {
      the recent window. Home said confident, Analytics said establishing,
      about the same week. */
   const establishing = isEstablishingBaseline({
-    docsAvailable: weeks.length,
+    docsAvailable,
     lifetimeWeeks: currentWeek.signals?.lifetimeWeeks,
   });
   const { headline, body } = getPlainLanguageSummary(
     pi,
     loadBand,
-    establishing ? null : delta,
     establishing,
     deloadRecommended
   );
 
   const summaryColor = bandPalette(pi, establishing, backingOff).text;
 
-  const insightBullets = insightBulletsWithoutVerdict(
-    currentWeek.insight?.bullets,
-    deloadRecommended
-  );
+  /* What went into the score, from the score's own document: the seven
+     days against the usual week, and the food logged. It replaces the
+     server's bullets ("…great progression"), one of which cited sleep the
+     app never records. */
+  const weekBreakdown = performanceWeekBreakdown(currentWeek, {
+    distanceUnit,
+    establishing,
+  });
   const planAdj = (
     currentWeek as { planAdjustments?: { lift: string[]; run: string[] } }
   ).planAdjustments;
@@ -467,28 +469,7 @@ export default function PerformanceTab() {
           is the single trend surface. */}
       {weeks.length >= 2 && <PerformanceIndexChart weeks={weeks} />}
 
-      {/* Weekly insight bullets */}
-      {insightBullets && insightBullets.length > 0 && (
-        <div className="p-4 rounded-2xl bg-card space-y-2">
-          <SectionHeading size="compact" as="h3">
-            Weekly insights
-          </SectionHeading>
-          <ul className="space-y-1.5">
-            {insightBullets.map((bullet, i) => (
-              <li
-                key={i}
-                className="flex items-start gap-2 text-xs text-muted-foreground leading-relaxed"
-              >
-                <span
-                  className="size-1 rounded-full mt-1.5 shrink-0"
-                  style={{ background: THEME.brand }}
-                />
-                {bullet}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
+      <PerformanceWeekBreakdown breakdown={weekBreakdown} />
 
       {/* Disclosure — the same "Details" + chevron the Home energy card
           uses; open/closed is carried by the chevron and aria-expanded. */}
@@ -589,54 +570,11 @@ export default function PerformanceTab() {
                 />
               </div>
 
-              <div className="p-4 rounded-2xl bg-card">
-                <h3 className="text-sm font-semibold text-foreground mb-2">
-                  This week adjustments
-                </h3>
-                {/*
-                  Every figure here is a RATIO AGAINST BASELINE
-                  (`liftProgression = safeRatio(thisWeekTonnage,
-                  baselineTonnage)`), so while the baseline is still
-                  forming they divide by a number that does not mean
-                  anything yet. That is how the card came to read
-                  "Lifting progression: +324%" — arithmetically correct,
-                  a 4.24x ratio against a one-session baseline, and
-                  nonsense as a statement about the user's training.
-
-                  Same root cause as the gauge's "Peak" above: a figure
-                  derived from an unestablished baseline presented as a
-                  finding. Suppressed rather than clamped, because a
-                  capped number is still a claim.
-                */}
-                {establishing ? (
-                  <p className="text-sm text-muted-foreground">
-                    Week-on-week adjustments start once your baseline settles —
-                    there is nothing meaningful to compare against yet.
-                  </p>
-                ) : (
-                  <ul className="text-sm text-muted-foreground space-y-1">
-                    <li>
-                      Lifting progression:{" "}
-                      <span className="text-foreground font-medium">
-                        {pctSigned(m.liftProgression - 1)}
-                      </span>
-                    </li>
-                    <li>
-                      Run volume:{" "}
-                      <span className="text-foreground font-medium">
-                        {pctSigned(m.runVolume - 1)}
-                      </span>
-                    </li>
-                    <li>
-                      Run pace adjustment:{" "}
-                      <span className="text-foreground font-medium">
-                        {pctSigned(m.runPaceAdjustmentPct)}
-                      </span>
-                    </li>
-                  </ul>
-                )}
-              </div>
-
+              {/* The "This week adjustments" ratios (lifting and running
+                  against baseline, and a run pace adjustment the engine
+                  writes as a constant 0) are gone: the breakdown above
+                  states both weeks' figures, which the ratios were made
+                  from. */}
               {/* Plan adjustments from engine */}
               {planAdj &&
                 (planAdj.lift.length > 0 || planAdj.run.length > 0) && (

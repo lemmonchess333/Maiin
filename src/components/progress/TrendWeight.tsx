@@ -4,7 +4,7 @@ import SectionLabel from "@/components/ui/SectionLabel";
 import EmptyState from "@/components/ui/EmptyState";
 import { useAuth } from "@/lib/auth";
 import { useBodyweightTrend } from "@/hooks/useBodyweightTrend";
-import { deriveGoalWeightKg, projectGoalDate } from "@/utils/weightTrend";
+import { userGoalWeightKg, projectGoalDate } from "@/utils/weightTrend";
 import { formatWeightInUnit } from "@/lib/weightUnits";
 import { THEME } from "@/lib/theme";
 import { parseLocalDate } from "@/lib/dateHelpers";
@@ -91,9 +91,9 @@ export function TrendWeight() {
 
   const startWeight = data[0].actual;
   const currentTrend = data[data.length - 1].trend;
-  // Rev1: derivation extracted to weightTrend.deriveGoalWeightKg so the
-  // Weekly Review shows the same goal this chart does.
-  const goalWeight = deriveGoalWeightKg(profile?.program);
+  // The goal the user set, shared with the Weekly Review so the two show
+  // the same one (weightTrend.userGoalWeightKg).
+  const goalWeight = userGoalWeightKg(profile);
 
   const trendDisplay = Number.isFinite(currentTrend)
     ? convert(currentTrend)
@@ -315,6 +315,10 @@ export function TrendWeight() {
             {goalDisplay != null && (
               <ReferenceLine
                 y={goalWeight!}
+                /* The goal is usually outside the weights logged so far
+                   (that is what makes it a goal), and an "auto" domain
+                   drawn from the data alone left the line off the chart. */
+                ifOverflow="extendDomain"
                 stroke={THEME.success}
                 strokeDasharray="4 4"
                 label={{

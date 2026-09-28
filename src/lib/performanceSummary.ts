@@ -1,14 +1,25 @@
 /**
  * Plain-language summary copy for the Performance Index (PI) card.
  *
- * Mapped from the three signals the PI hero exposes:
+ * Mapped from the signals the PI hero exposes:
  *   - `pi` 0-100: drives the headline tier (Strong / Solid / Moderate /
  *     Light) — the user-facing "this week was…" verdict.
- *   - `loadBand` (recovery hint): four bands map to four distinct
- *     coaching messages keyed off the user's pushed-hard / pushed-
- *     balanced / pushed-light state.
- *   - `delta` vs prior week: when present and exceeding the ±5pt
- *     noise floor, a trend sentence is appended.
+ *   - `loadBand`, with the deload recommendation: a body sentence only
+ *     where there is ADVICE to give — overreach, a recommended deload, a
+ *     deload-light week, or a baseline still forming.
+ *
+ * The headline names the tier and stops. Each once ran on into a coaching
+ * tail ("keep the cadence", "room to push or hold") that the week's own
+ * figures beneath it say better.
+ *
+ * The high, moderate and low bands each carried a sentence ("High
+ * training load. Keep nutrition and sleep on point.", "Balanced load. This
+ * is the sustainable middle of your range."): restatements of the band in
+ * a coaching voice, with sleep advice the app has no data for. The page now
+ * shows what the week held beneath the verdict (PerformanceWeekBreakdown),
+ * so those bands say nothing here rather than something general. The
+ * week-on-week sentence went too: the delta chip beside the headline
+ * already says it, in the same place, as a number.
  *
  * Extracted from PerformanceTab.tsx so the copy contract can be
  * tested in isolation and reused on any future PI surface (the
@@ -37,7 +48,6 @@ export function getPlainLanguageSummary(
    * missing value from silently becoming a wrong claim again.
    */
   loadBand: LoadBand,
-  delta: number | null,
   /**
    * Cold-start gate. When the user has too few weeks of history, the PI's
    * load band and "vs baseline" framing are not yet meaningful (the baseline
@@ -62,38 +72,31 @@ export function getPlainLanguageSummary(
   const headline = backingOff
     ? "Backing off — make room for recovery"
     : pi >= 80
-      ? "Strong week — your training is on track"
+      ? "Strong week"
       : pi >= 60
-        ? "Solid week — keep the cadence"
+        ? "Solid week"
         : pi >= 40
-          ? "Moderate load — room to push or hold"
-          : "Light week — focus on recovery or ramp up";
+          ? "Moderate week"
+          : "Light week";
 
-  // Exhaustive over the five real bands — no catch-all. `deload` used to
-  // fall into the low-load message; it now says its own thing, because
-  // "increase intensity" is wrong advice during planned recovery and the
-  // engine can't tell a planned deload from simple inactivity.
+  // Exhaustive over the five real bands — no catch-all. Only two carry
+  // advice. `deload` says its own thing, because "increase intensity" is
+  // wrong advice during planned recovery and the engine can't tell a
+  // planned deload from simple inactivity.
   let body: string;
   switch (loadBand) {
     case "overreach":
       body =
         "You're pushing hard — recovery matters. Consider a lighter session.";
       break;
-    case "high":
-      body = "High training load. Keep nutrition and sleep on point.";
-      break;
-    case "moderate":
-      // Deliberately NOT an echo of the "room to push or hold" headline
-      // this band pairs with at PI 45-59 — a repeated sentence spends
-      // attention without adding information.
-      body = "Balanced load. This is the sustainable middle of your range.";
-      break;
-    case "low":
-      body = "Low training load. Good time to recover or increase intensity.";
-      break;
     case "deload":
       body =
         "Very light week. If that was planned recovery you're on track — otherwise an easy session is the way back in.";
+      break;
+    case "high":
+    case "moderate":
+    case "low":
+      body = "";
       break;
   }
 
@@ -104,33 +107,5 @@ export function getPlainLanguageSummary(
     body = "A lighter week is recommended. Give yourself room to recover.";
   }
 
-  if (delta !== null && Math.abs(delta) > 5) {
-    body +=
-      delta > 0
-        ? ` Trending up ${delta} pts from last week.`
-        : ` Down ${Math.abs(delta)} pts from last week.`;
-  }
-
   return { headline, body };
-}
-
-/**
- * The week's insight bullets, less the one that repeats the verdict (DS3:
- * the deload advice is said once).
- *
- * When the engine recommends a deload, the Performance card's verdict
- * already says so ("Backing off — make room for recovery", with the
- * lighter-week line under it). The server's bullets carry the same
- * advice in its own words ("Consider a deload week — sustained high
- * load…"), and a banner above the card said it a third time. The banner
- * is gone; this drops the bullet. Without a recommendation nothing is
- * dropped, so a bullet that mentions deloads for another reason stays.
- */
-export function insightBulletsWithoutVerdict(
-  bullets: readonly string[] | undefined,
-  deloadRecommended: boolean
-): string[] {
-  if (!bullets) return [];
-  if (!deloadRecommended) return [...bullets];
-  return bullets.filter((bullet) => !/\bdeload\b/i.test(bullet));
 }

@@ -255,9 +255,9 @@ test.describe("analytics tab screenshots", () => {
       exact: true,
     });
     await page.getByRole("button", { name: /^Lifting/ }).click();
-    await expect(page.getByText("Monthly volume", { exact: true })).toBeVisible(
-      { timeout: 15_000 }
-    );
+    await expect(
+      page.getByRole("heading", { name: "Volume", exact: true })
+    ).toBeVisible({ timeout: 15_000 });
     await expect(page.getByText("2.2k").first()).toBeVisible();
     await expect(page.locator('[class*="animate-pulse"]')).toHaveCount(0, {
       timeout: 30_000,
@@ -267,7 +267,7 @@ test.describe("analytics tab screenshots", () => {
 
     await page.getByRole("button", { name: /^Running/ }).click();
     await expect(
-      page.getByText("Monthly distance", { exact: true })
+      page.getByRole("heading", { name: "Distance", exact: true })
     ).toBeVisible({ timeout: 15_000 });
     await expect(page.getByText("5.2").first()).toBeVisible();
     await overview.click();

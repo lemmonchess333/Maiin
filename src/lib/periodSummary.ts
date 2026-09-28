@@ -10,14 +10,14 @@
  * rings card this replaced (PeriodOverview), which carried the reasoning
  * first.
  */
-import { binKeyForDate } from "./chartGranularity";
+import { binKeyForDate, formatBinLabel } from "./chartGranularity";
 import { addLocalDays, parseLocalDate, startOfLocalWeek } from "./dateHelpers";
 import {
   distanceIn,
   distanceUnitLabel,
   type DistanceUnit,
 } from "./distanceUnits";
-import { abbreviateK } from "@/utils/formatters";
+import { abbreviateK, formatDayMonth } from "@/utils/formatters";
 
 /** The heading for a range: the window it actually covers. */
 export function rollingRangeLabel(range: string | undefined): string {
@@ -55,14 +55,32 @@ export type SummaryGranularity = "daily" | "weekly" | "monthly";
 
 /**
  * One bar per day across a week, per week up to three months, per month
- * beyond. Coarser than the charts' `granularityForRange` at 1M on
- * purpose: thirty daily bars of one or two sessions read as noise, and
- * the question this card answers is how the weeks went.
+ * beyond. Thirty daily bars of one or two sessions read as noise; the
+ * question these cards answer is how the weeks went.
  */
 export function summaryGranularity(rangeDays: number): SummaryGranularity {
   if (rangeDays <= 7) return "daily";
   if (rangeDays <= 90) return "weekly";
   return "monthly";
+}
+
+/** A bin's name on the axis and to a screen reader: "Today", "Mon",
+ *  "This week", "14 Sept", "This month", "Aug". */
+export function summaryBinLabel(
+  bin: { key: string; current: boolean },
+  granularity: SummaryGranularity
+): string {
+  if (granularity === "daily") {
+    return bin.current
+      ? "Today"
+      : parseLocalDate(bin.key).toLocaleDateString("en-GB", {
+          weekday: "short",
+        });
+  }
+  if (granularity === "weekly") {
+    return bin.current ? "This week" : formatDayMonth(parseLocalDate(bin.key));
+  }
+  return bin.current ? "This month" : formatBinLabel(bin.key, "monthly");
 }
 
 export interface SummaryBin {
@@ -231,4 +249,32 @@ export function distanceChange(
     direction: diff > 0 ? "up" : "down",
     text: `${amount.toFixed(1)} ${distanceUnitLabel(unit)}`,
   };
+}
+
+/** The fewest whole bins an average is taken over: one week is that
+ *  week, not an average of anything. */
+export const USUAL_BIN_MIN_BINS = 2;
+
+/**
+ * The usual bin: the mean of the range's bins that are over and that the
+ * user could have trained all of. The current bin is part-done and would
+ * pull it down; the range's first bin is usually cut by the range's start;
+ * a bin that began before the user's first session holds days before they
+ * started. Null with fewer than `USUAL_BIN_MIN_BINS` left, rather than an
+ * average of one week, or of nothing.
+ */
+export function usualBinAmount(
+  bins: readonly SummaryBin[],
+  amount: (bin: SummaryBin) => number,
+  {
+    sinceKey,
+    firstSessionKey,
+  }: { sinceKey: string; firstSessionKey: string | null }
+): number | null {
+  if (!firstSessionKey) return null;
+  const whole = bins.filter(
+    (b) => !b.current && b.key >= sinceKey && b.key >= firstSessionKey
+  );
+  if (whole.length < USUAL_BIN_MIN_BINS) return null;
+  return whole.reduce((sum, b) => sum + amount(b), 0) / whole.length;
 }

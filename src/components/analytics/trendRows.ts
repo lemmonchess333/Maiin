@@ -10,7 +10,7 @@ import { parseLocalDate } from "@/lib/dateHelpers";
 import { finishTimeLabel } from "@/lib/runLabels";
 import { formatWeightInUnit } from "@/lib/weightUnits";
 import { THEME } from "@/lib/theme";
-import { formatDayMonth } from "@/utils/formatters";
+import { formatDayMonth, keepTogether } from "@/utils/formatters";
 import { CALORIE_UNIT, formatCalories } from "@/utils/formatNutrition";
 
 export interface TrendRow {
@@ -61,18 +61,20 @@ export function weightRow({
   let detail: string;
   if (!base) {
     // Nothing to compare inside the range: say when, not a change.
-    detail = `Last weighed ${formatDayMonth(parseLocalDate(last.date))}`;
+    detail = `Last weighed ${keepTogether(
+      formatDayMonth(parseLocalDate(last.date))
+    )}`;
   } else {
     const change = last.trend - base.trend;
-    const since = formatDayMonth(parseLocalDate(base.date));
+    // The detail wraps under the label: each figure keeps its unit.
+    const since = keepTogether(formatDayMonth(parseLocalDate(base.date)));
     if (Math.abs(change) < STEADY_KG) detail = `Steady since ${since}`;
     else if (hideNumber)
       detail = `Trending ${change < 0 ? "down" : "up"} since ${since}`;
     else
-      detail = `${change < 0 ? "Down" : "Up"} ${formatWeightInUnit(
-        Math.abs(change),
-        unit
-      )} ${unit} since ${since}`;
+      detail = `${change < 0 ? "Down" : "Up"} ${keepTogether(
+        `${formatWeightInUnit(Math.abs(change), unit)} ${unit}`
+      )} since ${since}`;
   }
 
   return {
@@ -114,7 +116,9 @@ export function nutritionRows({
       label: "Calories",
       detail:
         targetCalories > 0
-          ? `Daily average · target ${formatCalories(targetCalories)}`
+          ? `Daily average · ${keepTogether(
+              `target ${formatCalories(targetCalories)}`
+            )}`
           : "Daily average",
       value: formatCalories(avgCalories),
       unit: CALORIE_UNIT,
@@ -129,7 +133,9 @@ export function nutritionRows({
       label: "Protein",
       detail:
         targetProtein > 0
-          ? `Daily average · target ${Math.round(targetProtein)} g`
+          ? `Daily average · ${keepTogether(
+              `target ${Math.round(targetProtein)} g`
+            )}`
           : "Daily average",
       value: String(Math.round(avgProtein)),
       unit: "g",

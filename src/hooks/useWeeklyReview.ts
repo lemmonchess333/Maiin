@@ -538,7 +538,13 @@ export function useWeeklyReview(): UseWeeklyReviewResult {
             runs: weekAheadRuns,
             phaseNote,
           },
-          goalProgram: profile?.program ?? null,
+          goalProfile: profile
+            ? {
+                goalWeightKg: profile.goalWeightKg,
+                weeklyRateKg: profile.weeklyRateKg,
+                program: profile.program,
+              }
+            : null,
         };
 
         setState({ loading: false, review: buildWeeklyReview(data), weekKey });

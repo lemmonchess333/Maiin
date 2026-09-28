@@ -368,20 +368,17 @@ export default function Home() {
     effectiveTargets?.protein ?? null
   );
 
-  // Performance data for the hero card.
-  // Pull up to 4 weeks: currentWeek powers the home card, the prior
-  // week feeds the delta chip, and the count drives the baseline-
-  // establishing copy when <4 weeks of data are available.
+  // Performance data for the hero card: this week's score, and the week
+  // before it for the delta chip. The documents are daily, so "the one
+  // before" is yesterday's rolling week; the hook steps back a whole week
+  // (performanceSeries.ts). The raw document count feeds the
+  // baseline-establishing gate.
   const {
-    weeks: perfWeeks,
     currentWeek: perfWeek,
+    previousWeek: perfPrevWeek,
+    docsAvailable: perfDocsAvailable,
     loading: perfLoading,
-  } = usePerformanceWeeks(4);
-
-  // The Performance hero is the only voice in this position — nothing
-  // else competes for it, so nothing needs suppressing.
-  const perfPrevWeek =
-    perfWeeks.length >= 2 ? perfWeeks[perfWeeks.length - 2] : null;
+  } = usePerformanceWeeks(2);
 
   // Meal history for the energy row's cold-start state. TodayEnergy gets
   // no meal-pattern insight or post-workout nudge — one voice per screen;
@@ -1103,7 +1100,7 @@ export default function Home() {
                   <PerformanceHeroCard
                     currentWeek={perfWeek ?? null}
                     previousWeek={perfPrevWeek}
-                    weeksAvailable={perfWeeks.length}
+                    weeksAvailable={perfDocsAvailable}
                     loading={perfLoading}
                     /* The perf doc is written by the server, so "no doc" is
                        not "no session" — this keeps the row from telling
