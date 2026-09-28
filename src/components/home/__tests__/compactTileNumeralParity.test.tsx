@@ -110,12 +110,14 @@ describe("Home compact tiles share one numeral tier", () => {
   });
 
   it("both tiles name themselves in the same register", () => {
-    /* Water rendered "Water" in sentence case beside "WEIGHT" in the
-       canonical uppercase, because it hand-rolled `text-xs font-medium`
-       instead of using `SectionLabel` — one of the last survivors of the
-       ~60 variants that primitive was created to consolidate. Same
+    /* Water once rendered "Water" in sentence case beside "WEIGHT" in
+       the then-canonical uppercase, because it hand-rolled `text-xs
+       font-medium` instead of using `SectionLabel` — one of the last
+       survivors of the ~60 variants that primitive consolidated. Same
        peer-tile mismatch as the numeral tier, one line further up the
-       card. */
+       card. DS3 (2026-09-27) made the caption register sentence case, so
+       what both must share now is the caption tier's classes, with no
+       capitals on either. */
     const { container: water } = render(
       <WaterCard compact ml={0} targetMl={2000} onLog={vi.fn()} />
     );
@@ -140,10 +142,13 @@ describe("Home compact tiles share one numeral tier", () => {
       [water, "Water"],
       [weight, "Weight"],
     ] as const) {
-      expect(
-        labelOf(root, text),
-        `"${text}" is not the canonical label`
-      ).toHaveClass("uppercase");
+      const label = labelOf(root, text);
+      expect(label, `"${text}" is not the canonical label`).toHaveClass(
+        "text-xs",
+        "font-semibold",
+        "text-muted-foreground"
+      );
+      expect(label).not.toHaveClass("uppercase");
     }
   });
 

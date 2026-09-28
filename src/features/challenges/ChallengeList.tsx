@@ -1,4 +1,4 @@
-import SectionLabel from "@/components/ui/SectionLabel";
+import SectionHeading from "@/components/ui/SectionHeading";
 import { useState, useEffect, type MutableRefObject } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -321,9 +321,7 @@ export function ChallengeList({
 
         {/* Secondary: this-week standings among people you follow. */}
         {(rankingsLoading || weeklyRankings.length > 0) && (
-          <SectionLabel tier="section" className="mt-4 mb-2">
-            This week
-          </SectionLabel>
+          <SectionHeading className="mt-4 mb-2">This week</SectionHeading>
         )}
 
         <div className="space-y-1.5">
@@ -408,7 +406,7 @@ export function ChallengeList({
       {/* Other joined challenges */}
       {otherMy.length > 0 && (
         <div className="space-y-2">
-          <SectionLabel tier="section">Your challenges</SectionLabel>
+          <SectionHeading>Your challenges</SectionHeading>
           {otherMy.map((ch) => (
             <ChallengeCard
               key={ch.id}
@@ -434,7 +432,7 @@ export function ChallengeList({
       {otherAvailable.length > 0 &&
         (showAllAvailable ? (
           <div className="space-y-2">
-            <SectionLabel tier="section">Available</SectionLabel>
+            <SectionHeading>Available</SectionHeading>
             {otherAvailable.map((ch) => (
               <ChallengeCard
                 key={ch.id}

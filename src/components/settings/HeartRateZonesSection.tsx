@@ -1,5 +1,5 @@
 import { useState } from "react";
-import SectionLabel from "@/components/ui/SectionLabel";
+import SectionHeading from "@/components/ui/SectionHeading";
 import { Button } from "@/components/ui/Button";
 import { haptic } from "@/lib/haptic";
 import { useHeartRate } from "@/hooks/useHeartRate";
@@ -59,7 +59,7 @@ export default function HeartRateZonesSection({
 
   return (
     <div className="space-y-3">
-      <SectionLabel tier="section">Heart-rate zones</SectionLabel>
+      <SectionHeading size="compact">Heart-rate zones</SectionHeading>
 
       <div className="rounded-xl bg-card border border-border/40 p-3 space-y-3">
         {maxHr > 0 ? (

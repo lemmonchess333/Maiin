@@ -1,7 +1,6 @@
 import { describe, it, expect } from "vitest";
 import {
   formatVolume,
-  formatVolumeSub,
   formatDistance,
   macroRingState,
   abbreviateK,
@@ -10,6 +9,7 @@ import {
   formatDayMonthYear,
   formatClock,
   formatLoadKg,
+  keepTogether,
 } from "../formatters";
 
 describe("formatVolume", () => {
@@ -39,26 +39,6 @@ describe("formatVolume", () => {
 
   it("formats large volumes", () => {
     expect(formatVolume(14020)).toEqual({ value: "14.0k", unit: "kg" });
-  });
-});
-
-describe("formatVolumeSub", () => {
-  it("returns dash for zero", () => {
-    expect(formatVolumeSub(0)).toBe("\u2014");
-  });
-
-  it("formats sub-1000 as `X kg vol` (space before unit)", () => {
-    expect(formatVolumeSub(500)).toBe("500 kg vol");
-  });
-
-  it("formats 1000+ as X.Xk vol (no double unit)", () => {
-    expect(formatVolumeSub(1500)).toBe("1.5k vol");
-    expect(formatVolumeSub(14020)).toBe("14.0k vol");
-  });
-
-  it("never produces kkg", () => {
-    const result = formatVolumeSub(1500);
-    expect(result).not.toContain("kkg");
   });
 });
 
@@ -205,6 +185,14 @@ describe("formatDayMonth / formatDayMonthYear", () => {
   it("both variants agree on the day+month prefix", () => {
     const d = new Date("2026-12-31T12:00:00");
     expect(formatDayMonthYear(d).startsWith(formatDayMonth(d))).toBe(true);
+  });
+});
+
+describe("keepTogether", () => {
+  it("makes every space non-breaking, and nothing else", () => {
+    expect(keepTogether("target 180 g")).toBe("target\u00A0180\u00A0g");
+    expect(keepTogether("30 Aug")).toBe("30\u00A0Aug");
+    expect(keepTogether("2,350")).toBe("2,350");
   });
 });
 

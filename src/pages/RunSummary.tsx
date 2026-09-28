@@ -1,5 +1,5 @@
 import CompletionExtras from "@/components/workout/CompletionExtras";
-import SectionLabel from "@/components/ui/SectionLabel";
+import SectionHeading from "@/components/ui/SectionHeading";
 import {
   useState,
   useEffect,
@@ -80,7 +80,7 @@ import {
   raceDistanceKeyFromKm,
 } from "../lib/runPaces";
 import { resolvePaceVerdict } from "../lib/paceVerdict";
-import { paceMinSec, distanceLabel2 } from "../lib/runLabels";
+import { paceMinSec, distanceLabel2, distanceValue } from "../lib/runLabels";
 import { splitsForDisplay } from "../lib/gps";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 import {
@@ -88,7 +88,9 @@ import {
   type DistanceUnit,
   paceUnitLabel,
   distanceUnitLabel,
+  elevationUnitLabel,
 } from "@/lib/distanceUnits";
+import RunStatGrid from "@/components/run/RunStatGrid";
 import { useRunningStats } from "../hooks/useRunningStats";
 import { getWeeklyRunTarget } from "../lib/scheduleUtils";
 import { isVolumeEligible, isPaceEligible } from "../lib/runStatsEligibility";
@@ -1304,11 +1306,38 @@ export default function RunSummary() {
         />
       ) : (
         <>
-          <div className="text-center pb-4 px-4">
-            <h1 className="text-xl font-extrabold text-foreground">
+          {/* DS3: the finish leads with the map and the distance, the way
+              the run detail does. The route map comes first. */}
+          {points.length > 1 && (
+            <div className="mx-4 mb-4 rounded-2xl overflow-hidden">
+              <RunMap
+                points={points}
+                currentPoint={null}
+                interactive={true}
+                distanceMarkers={true}
+                height="h-64"
+                paceColored={true}
+                avgPaceSecPerKm={avgPaceSeconds}
+                darkMode={!!profile?.darkMode}
+              />
+              <PaceLegend />
+            </div>
+          )}
+
+          <div className="pb-4 px-4">
+            <h1 className="text-base font-bold text-running-strong">
               {heroCopy}
             </h1>
-            <p className="text-sm text-muted-foreground">
+            {/* The distance is the page's one big number, in the reader's
+                unit. It was a tile reading km whatever the unit setting
+                said, beside a pace that also ignored it. */}
+            <p className="mt-1 text-display font-extrabold font-mono tabular-nums leading-none text-foreground">
+              {distanceValue(distance, unit, 2)}{" "}
+              <span className="font-sans text-h3 font-bold text-muted-foreground">
+                {distanceUnitLabel(unit)}
+              </span>
+            </p>
+            <p className="mt-2 text-sm text-muted-foreground">
               {/* en-GB, like every other dated surface in the app. This
                   was one of two rendered dates still pinned to en-US. */}
               {new Date().toLocaleDateString("en-GB", {
@@ -1320,7 +1349,7 @@ export default function RunSummary() {
             {/* Plan-vs-actual pace verdict — coral for the running domain,
                 calm register (never shames a slow day). */}
             {paceVerdict && (
-              <p className="mt-2 mx-auto max-w-xs text-xs leading-relaxed rounded-xl px-3 py-2 bg-running/6 border border-running/15 text-foreground">
+              <p className="mt-3 text-sm leading-relaxed rounded-xl px-3 py-2 bg-running/6 border border-running/15 text-foreground">
                 {paceVerdict.line}
               </p>
             )}
@@ -1333,7 +1362,7 @@ export default function RunSummary() {
                 the VALID branch, so a sub-threshold GPS glitch never
                 claims "4 Great Wall sections". */}
             {funComparison && (
-              <p className="mt-2 text-center text-xs font-medium text-muted-foreground">
+              <p className="mt-2 text-sm text-muted-foreground">
                 {funComparison}
               </p>
             )}
@@ -1570,23 +1599,6 @@ export default function RunSummary() {
               </div>
             )}
 
-          {/* Pace-coloured route map */}
-          {points.length > 1 && (
-            <div className="mx-4 mb-4 rounded-2xl overflow-hidden">
-              <RunMap
-                points={points}
-                currentPoint={null}
-                interactive={true}
-                distanceMarkers={true}
-                height="h-56"
-                paceColored={true}
-                avgPaceSecPerKm={avgPaceSeconds}
-                darkMode={!!profile?.darkMode}
-              />
-              <PaceLegend />
-            </div>
-          )}
-
           {/* Run8 PR3d — context-aware primary stat. Renders above
               the standard 3-col grid for intervals + race; everything
               else falls through and the 3-col grid below is the
@@ -1602,49 +1614,27 @@ export default function RunSummary() {
             </div>
           )}
 
-          {/* Stats */}
-          <div className="grid grid-cols-3 gap-3 px-4 mb-4">
-            <div className="p-3 rounded-xl bg-card text-center card-shadow">
-              <p className="text-2xl font-bold font-mono tabular-nums text-running">
-                {(distance / 1000).toFixed(2)}
-              </p>
-              <p className="text-xs text-muted-foreground mt-0.5">km</p>
-            </div>
-            <div className="p-3 rounded-xl bg-card text-center card-shadow">
-              <p className="text-2xl font-bold font-mono tabular-nums text-foreground">
-                {formatTime(elapsed)}
-              </p>
-              <p className="text-xs text-muted-foreground mt-0.5">time</p>
-            </div>
-            <div className="p-3 rounded-xl bg-card text-center card-shadow">
-              {/* Tokenised (was `style={{ color: THEME.teal }}`). The JS THEME
-                  constants are STATIC, so an inline hex cannot respond to the
-                  theme: #52A3BD measured 2.86:1 on the light card, under the
-                  3:1 WCAG AA floor for large text. `text-teal` resolves the
-                  theme-aware token (5.68:1 light / 6.08:1 dark). */}
-              <p className="text-2xl font-bold font-mono tabular-nums text-teal">
-                {avgPace}
-              </p>
-              <p className="text-xs text-muted-foreground mt-0.5">/km pace</p>
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-3 px-4 mb-4">
-            <div className="p-3 rounded-xl bg-card text-center card-shadow">
-              {/* Same fix, and here the correct token ALREADY existed:
-                  `--success` is theme-aware (5.07:1 light / 9.33:1 dark) while
-                  the static THEME.success (#4DB872) this used measured
-                  2.50:1 on the light card. */}
-              <p className="text-lg font-bold font-mono tabular-nums text-success-strong">
-                {calories}
-              </p>
-              <p className="text-xs text-muted-foreground">calories</p>
-            </div>
-            <div className="p-3 rounded-xl bg-card text-center card-shadow">
-              <p className="text-lg font-bold font-mono tabular-nums text-foreground">
-                {elevationLabel(elevationGain, unit)}
-              </p>
-              <p className="text-xs text-muted-foreground">elevation gain</p>
-            </div>
+          {/* Stats (DS3): time, pace, calories and climb in one card of
+              four, the distance having moved up to the headline. Each
+              figure is plain: pace was the hydration teal and calories the
+              success green, colour spent on nothing. */}
+          <div className="px-4 mb-4">
+            <RunStatGrid
+              stats={[
+                { label: "Time", value: formatTime(elapsed) },
+                {
+                  label: "Average pace",
+                  value: paceMinSec(avgPaceSeconds, unit),
+                  unit: paceUnitLabel(unit),
+                },
+                { label: "Calories", value: `${calories}`, unit: "kcal" },
+                {
+                  label: "Elevation gain",
+                  value: elevationLabel(elevationGain, unit, false),
+                  unit: elevationUnitLabel(unit),
+                },
+              ]}
+            />
           </div>
 
           {/* Grade-adjusted pace — one calm line, only when the climb was
@@ -1803,7 +1793,7 @@ export default function RunSummary() {
               <SplitsBarChart
                 splits={displaySplits}
                 avgPaceSeconds={avgPaceSeconds}
-                accentColor={THEME.teal}
+                accentColor={THEME.running}
                 lapUnit={lapUnit}
               />
 
@@ -1872,9 +1862,9 @@ export default function RunSummary() {
                 below keeps free text but no longer owns "how did it feel". */}
             {!isInvalid && (
               <div className="space-y-1.5">
-                <SectionLabel tier="section" className="px-1">
+                <SectionHeading size="compact" className="px-1">
                   How did it feel?
-                </SectionLabel>
+                </SectionHeading>
                 <SegmentedControl
                   options={[
                     { value: "easier", label: "Easier" },

@@ -171,12 +171,12 @@ test.describe(`home + food surfaces (${PHASE})`, () => {
     // ── 2 + 3. Home ───────────────────────────────────────────────
     await page.goto("/Maiin/");
     await page.waitForLoadState("domcontentloaded");
-    await expect(page.getByText(/today's nutrition/i)).toBeVisible({
-      timeout: 30_000,
-    });
+    await expect(
+      page.getByRole("region", { name: "Today's food" })
+    ).toBeVisible({ timeout: 30_000 });
     /* Then anchor on the DATA, not the heading. The heading renders
        immediately; the card's target arrives from the profile, and until
-       it does the card shows "/ 0 kcal" and the weight tile beside it
+       it does the card shows "0 of 0 kcal logged" and the weight tile beside it
        shows "Tap to log" — a legitimate empty state, not a skeleton, so
        nothing generic can tell the two apart.
 
@@ -199,7 +199,7 @@ test.describe(`home + food surfaces (${PHASE})`, () => {
       // three and still refuses a leading zero, which is the actual
       // signal. Pinned against a real render in
       // `energyCaptureAnchor.test.tsx`, including this runtime's grouping.
-      page.getByText(/Target [1-9][\d.,\s\u00a0\u202f]*kcal/).first(),
+      page.getByText(/of [1-9][\d.,\s\u00a0\u202f]*kcal logged/).first(),
       "the energy card never loaded its target — the frame would capture " +
         "the pre-load state, which is what made this frame swing 267px"
     ).toBeVisible({ timeout: 20_000 });

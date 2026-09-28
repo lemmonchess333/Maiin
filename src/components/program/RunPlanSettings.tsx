@@ -60,7 +60,7 @@ import { cn } from "@/lib/utils";
 import { haptic } from "@/lib/haptic";
 import { logger } from "@/lib/logger";
 import { THEME } from "@/lib/theme";
-import BaseSectionLabel from "@/components/ui/SectionLabel";
+import SectionHeading from "@/components/ui/SectionHeading";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import RaceGoalPlanner from "@/components/program/RaceGoalPlanner";
 import {
@@ -599,7 +599,7 @@ export default function RunPlanSettings({
     <div className="space-y-5 pb-6">
       {/* ── Mode ─────────────────────────────────────────────────────── */}
       <div className="space-y-2">
-        <BaseSectionLabel tier="section">Run mode</BaseSectionLabel>
+        <SectionHeading size="compact">Run mode</SectionHeading>
         <div
           role="radiogroup"
           aria-label="Run mode"

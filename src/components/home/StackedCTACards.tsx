@@ -23,9 +23,9 @@ const fadeUp = {
 };
 
 /**
- * Today's session stack (home-declutter 4a, locked 2026-07-20):
+ * Today's session stack (home-declutter 4a, locked 2026-07-20; DS3 cards):
  * lift / run / rest cards ONLY — the page's primary action, rendered
- * first in the Today group. Water and weight/steps moved out to Home
+ * directly under the week strip. Water and weight/steps moved out to Home
  * below the energy row (they're vitals, not the day's mission), and
  * the WelcomeBackCard was deleted outright (returned daily, carried
  * no action — one voice per screen).
@@ -46,6 +46,7 @@ export default function StackedCTACards({
   firstWorkout = false,
   firstRun = false,
   firstMeal = false,
+  tomorrow = null,
 }: {
   liftPurpose?: string | null;
   runPurpose?: string | null;
@@ -53,7 +54,13 @@ export default function StackedCTACards({
   nextWorkout: {
     dayName: string;
     dayType: string;
-    exercises: { name: string }[];
+    exercises: {
+      name: string;
+      exerciseId?: string;
+      sets?: number;
+      restSeconds?: number;
+      weight?: number;
+    }[];
   } | null;
   /** HOME-ACTION-01: the resolved lift slot's day index + startability,
    *  threaded to LiftCTACard for `?day=N` deep-linking and the Done state. */
@@ -69,6 +76,9 @@ export default function StackedCTACards({
   firstWorkout?: boolean;
   firstRun?: boolean;
   firstMeal?: boolean;
+  /** Tomorrow's session, for the rest-day card: its name and where it
+   *  opens. Null when tomorrow is rest too. */
+  tomorrow?: { label: string; target: string } | null;
 }) {
   const hasLiftDay = todayType === "lift" || todayType === "both";
   const showLift = hasLiftDay && nextWorkout;
@@ -141,7 +151,11 @@ export default function StackedCTACards({
           {/* #972: on a rest day a new user has no workout to frame, so
               drive the first meal instead (per-domain: gated on meals === 0
               within the window). */}
-          {firstMeal ? <FirstMealCard navigate={navigate} /> : <RestDayCard />}
+          {firstMeal ? (
+            <FirstMealCard navigate={navigate} />
+          ) : (
+            <RestDayCard tomorrow={tomorrow} navigate={navigate} />
+          )}
         </motion.div>
       )}
     </motion.div>

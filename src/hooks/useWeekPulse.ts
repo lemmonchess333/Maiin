@@ -8,7 +8,7 @@
  * saved. The header used to claim "both callers render after their session
  * doc is saved, so the fresh session is included" — that was false in both
  * directions: the lift screen renders under `sessionComplete`, which is a
- * pure setState, while the save is dispatched later by the "Save Workout"
+ * pure setState, while the save is dispatched later by the "Save workout"
  * button on that same screen. So the card fetched BEFORE the write, and
  * since the screen unmounts on save success, the excluding number was the
  * only one the user ever saw ("0 of 6 lifts" straight after finishing one).

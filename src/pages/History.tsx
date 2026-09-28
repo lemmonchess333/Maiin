@@ -11,6 +11,12 @@ import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { useStallWatch } from "@/hooks/useStallWatch";
 import { useRunningStats } from "@/hooks/useRunningStats";
 import { useWorkouts, workoutTonnageKg } from "@/hooks/useWorkouts";
+import { bestSetPerExercise } from "@/lib/liftRecords";
+import { liftProgress, NEW_BEST_DAYS } from "@/lib/liftProgress";
+import { performedWeeklyVolume, volumeWeekKeys } from "@/lib/performedVolume";
+import { runningPageInsight } from "@/lib/runInsights";
+import { focusLabel } from "@/features/program/trainingBlock";
+import type { PrimaryGoal } from "@/features/program/programTypes";
 import { useLifetimeRunStats } from "@/hooks/useLifetimeRunStats";
 import { useAuth, useUid } from "@/lib/auth";
 import { useEffectiveTargets } from "@/hooks/useEffectiveTargets";
@@ -20,17 +26,69 @@ import { buildDelta } from "@/lib/deltaFormat";
 import { EXERCISES } from "@/lib/exercises";
 import TimeRangePills from "@/components/analytics/TimeRangePills";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
-import SectionLabel from "@/components/ui/SectionLabel";
+import SectionHeading from "@/components/ui/SectionHeading";
 import { Button } from "@/components/ui/Button";
 import EmptyState from "@/components/ui/EmptyState";
-import PeriodOverview from "@/components/analytics/PeriodOverview";
+import PeriodSummaryCard, {
+  type SummaryFigure,
+} from "@/components/analytics/PeriodSummaryCard";
+import PerformanceOverviewCard from "@/components/analytics/PerformanceOverviewCard";
+import AnalyticsTrends from "@/components/analytics/AnalyticsTrends";
+import AnalyticsMuscles from "@/components/analytics/AnalyticsMuscles";
+import TrainingWeeksCard from "@/components/analytics/TrainingWeeksCard";
+import {
+  liftingBins,
+  liftingFigures,
+  runningBins,
+  runningFigures,
+} from "@/lib/trainingWeeks";
+import LiftProgressCard from "@/components/analytics/LiftProgressCard";
+import MuscleVolumeCard from "@/components/analytics/MuscleVolumeCard";
+import RunPaceCard from "@/components/analytics/RunPaceCard";
+import FastestKilometresCard from "@/components/analytics/FastestKilometresCard";
+import WeightRateCard from "@/components/analytics/WeightRateCard";
+import FoodDaysCard from "@/components/analytics/FoodDaysCard";
+import { foodDaysReading } from "@/lib/foodDays";
+import { useDailyTargetsInRange } from "@/hooks/useDailyTargetsInRange";
+import {
+  bodyLine,
+  foodLine,
+  goDeeperLines,
+  liftingLine,
+  runningLine,
+} from "@/components/analytics/goDeeperLines";
+import { currentWeightRate } from "@/utils/weightTrend";
+import { attestedWeeklyRateKg } from "@/lib/goalWeightPlan";
+import {
+  nutritionRows,
+  predictionRow,
+  weightRow,
+  type TrendRow,
+} from "@/components/analytics/trendRows";
+import {
+  countChange,
+  distanceChange,
+  previousRangeLabel,
+  rollingRangeLabel,
+  summaryBins,
+  summaryGranularity,
+  usualBinAmount,
+  volumeChange,
+} from "@/lib/periodSummary";
+import { useBodyweightTrend } from "@/hooks/useBodyweightTrend";
+import { predictedRaceTimesFromFitness } from "@/lib/runPaces";
+import { runEvidenceDate } from "@/lib/runExecutionEvidence";
 import StatCard from "@/components/analytics/StatCard";
 import WorkoutHistoryList from "@/components/workout/WorkoutHistoryList";
 import SectionEmptyCTA from "@/components/analytics/SectionEmptyCTA";
+import AnalyticsGoDeeper, {
+  AnalyticsBackRow,
+  type AnalyticsPage,
+} from "@/components/analytics/AnalyticsGoDeeper";
 import RacePredictionsCard from "@/components/analytics/RacePredictionsCard";
 import TrainingLoadCard from "@/components/analytics/TrainingLoadCard";
 import { useTrainingLoadSeries } from "@/hooks/useTrainingLoadSeries";
-import { isPaceEligible } from "@/lib/runStatsEligibility";
+import { isPaceEligible, isVolumeEligible } from "@/lib/runStatsEligibility";
 import { paceMinSec, distanceLabel } from "@/lib/runLabels";
 import {
   distanceIn,
@@ -48,7 +106,6 @@ import {
   abbreviateK,
   formatDayMonth,
 } from "@/utils/formatters";
-import { epley1RMExact } from "@/lib/analytics";
 import {
   track as trackHistoryEvent,
   type HistoryRange,
@@ -57,18 +114,14 @@ import {
 import HistoryOfflineBanner from "@/components/analytics/HistoryOfflineBanner";
 /* AnalyticsAnchorChips removed PR 7b follow-up — see note inline
    below where it would have rendered. */
-import { granularityForRange, binKeyForDate } from "@/lib/chartGranularity";
 import { getWeeklyRunTarget } from "@/lib/scheduleUtils";
 import { selectRunRecords } from "@/lib/runRecordSelection";
 import {
-  localWeekKey,
-  startOfLocalWeek,
   localDateString,
   parseLocalDate,
   rollingWindowStart,
   addLocalDays,
 } from "@/lib/dateHelpers";
-import { completedWeeklySeries } from "@/lib/completedWeeks";
 import {
   computeMuscleRecovery,
   hitsFromWorkoutDocs,
@@ -76,17 +129,11 @@ import {
   RECOVERY_LOOKBACK_DAYS,
 } from "@/lib/muscleRecovery";
 
-const VolumeChart = lazyRetry(
-  () => import("@/components/analytics/VolumeChart")
-);
 const MuscleHeatMap = lazyRetry(
   () => import("@/components/analytics/MuscleHeatMap")
 );
 const MacroDistribution = lazyRetry(
   () => import("@/components/analytics/MacroDistribution")
-);
-const RunningHistorySection = lazyRetry(
-  () => import("@/components/run/RunningHistorySection")
 );
 const ShoeMileageSection = lazyRetry(
   () => import("@/components/run/ShoeMileageSection")
@@ -165,12 +212,37 @@ const LEGACY_TAB_REDIRECTS: Record<string, FilterTab> = {
   milestones: "badges",
 };
 
-/* Tab values that, in addition to a `?tab=` rewrite, also force a
-   hash anchor to scroll to a specific section on the redirected
-   tab. Currently only `performance` — clicking on Home's PI hero
-   card (which deep-links to /history#performance per PR #635)
-   should land on the Performance section inside Analytics. */
-const LEGACY_TAB_TO_HASH: Partial<Record<string, string>> = {
+/* The section anchors Performance used to be scrolled to. Home's
+   Performance row still links to `#performance`, and so do older
+   bookmarks; each now opens the Performance page. */
+const PERFORMANCE_ANCHORS = new Set([
+  "performance",
+  "performance-expanded",
+  "analytics-performance",
+  "analytics-performance-detail",
+]);
+
+/* DS3: the Analytics tab is a short overview with pages behind it,
+   chosen by `?view=`. Absent or unknown is the overview. Four pages hold
+   one discipline's charts each, which used to stack into a single scroll
+   about 4,700 px tall on a phone; the fifth, Performance, holds the
+   index's gauge, chart, insights and training load, opened from the
+   overview's Performance card and from Home. */
+type AnalyticsView = "overview" | AnalyticsPage | "performance";
+const ANALYTICS_VIEWS: AnalyticsView[] = [
+  "lifting",
+  "running",
+  "body",
+  "food",
+  "performance",
+];
+
+/* Pre-Hist5 `?tab=` values that named a discipline land on its page now,
+   rather than on the top of one long scroll. */
+const LEGACY_TAB_TO_VIEW: Partial<Record<string, AnalyticsView>> = {
+  running: "running",
+  lifting: "lifting",
+  nutrition: "food",
   performance: "performance",
 };
 
@@ -277,6 +349,46 @@ export default function History() {
     [setSearchParams]
   );
 
+  /* Which Analytics page is open. A legacy `?tab=running` resolves to its
+     page on this very render, before the reconciliation below rewrites
+     the URL, so the overview never flashes first. */
+  const viewFromUrl = searchParams.get("view");
+  /* Read here rather than after the reconciliation below rewrites it, so
+     a `#performance` link opens on the Performance page, not on the
+     overview for a frame. */
+  const hashOpensPerformance =
+    typeof window !== "undefined" &&
+    PERFORMANCE_ANCHORS.has(window.location.hash.replace(/^#/, ""));
+  const view: AnalyticsView = ANALYTICS_VIEWS.includes(
+    viewFromUrl as AnalyticsView
+  )
+    ? (viewFromUrl as AnalyticsView)
+    : ((tabFromUrl ? LEGACY_TAB_TO_VIEW[tabFromUrl] : undefined) ??
+      (hashOpensPerformance ? "performance" : "overview"));
+  /* A push, not a replace: the back gesture on a page returns to the
+     overview, the way a pushed screen would. */
+  const setView = useCallback(
+    (next: AnalyticsView) => {
+      setSearchParams((params) => {
+        const updated = new URLSearchParams(params);
+        if (next === "overview") updated.delete("view");
+        else updated.set("view", next);
+        return updated;
+      });
+    },
+    [setSearchParams]
+  );
+  // A page opens at its top. Skipped on mount, where the browser owns
+  // the scroll position.
+  const viewMountedRef = useRef(false);
+  useEffect(() => {
+    if (!viewMountedRef.current) {
+      viewMountedRef.current = true;
+      return;
+    }
+    window.scrollTo({ top: 0 });
+  }, [view]);
+
   // One-shot reconciliation on mount: if the URL doesn't already
   // carry a tab AND a hash / sessionStorage hint exists, promote
   // that hint to the URL so the rest of the page can rely on URL
@@ -292,24 +404,24 @@ export default function History() {
        canonical Hist5 value on first mount. Share-cards / push
        notifications / bookmarks from before the tab consolidation
        still land on the right surface; the URL bar reflects the
-       new contract once they arrive.
-       Tab values that need to also preserve their identity via
-       a section anchor (LEGACY_TAB_TO_HASH) get the hash set
-       alongside the rewrite — so /history?tab=performance becomes
-       /history#performance and scrolls to the Performance section
-       inside Analytics. */
+       new contract once they arrive. A value that named a page —
+       a discipline, or Performance — opens that page. */
     if (tabFromUrl && LEGACY_TAB_REDIRECTS[tabFromUrl]) {
-      setFilter(LEGACY_TAB_REDIRECTS[tabFromUrl]);
-      const hashTarget = LEGACY_TAB_TO_HASH[tabFromUrl];
-      if (hashTarget && typeof window !== "undefined") {
-        /* Set the hash WITHOUT scrolling here — the anchor scroll
-           happens in the post-reconciliation effect below (after the
-           filter update has propagated through render). */
-        window.history.replaceState(
-          null,
-          "",
-          window.location.pathname + window.location.search + "#" + hashTarget
+      const legacyView = LEGACY_TAB_TO_VIEW[tabFromUrl];
+      if (legacyView) {
+        // One update: two setSearchParams calls in a tick overwrite
+        // each other.
+        setSearchParams(
+          (params) => {
+            const updated = new URLSearchParams(params);
+            updated.delete("tab");
+            updated.set("view", legacyView);
+            return updated;
+          },
+          { replace: true }
         );
+      } else {
+        setFilter(LEGACY_TAB_REDIRECTS[tabFromUrl]);
       }
     }
 
@@ -350,21 +462,29 @@ export default function History() {
       /* private mode */
     }
     if (typeof window !== "undefined" && window.location.hash) {
-      /* PR 6 — preserve section-anchor hashes. `#performance` (the
-         Home PI hero deep-link target, per PR #635) AND
-         `#performance-expanded` (PerformanceSection's expanded-state
-         persistence, Hist5b pin 3) are not tab hints — they're
-         scroll-anchor + accordion-state markers. Leave them in the
-         URL; the section's own useEffect handles the scroll. Strip
-         only the now-irrelevant legacy tab hashes. */
+      /* `#performance` (Home's Performance row, PR #635) and the other
+         Performance anchors named a section of one long scroll; the
+         section is a page now. The render above already opened it; this
+         moves that into the URL, which drops the hash. Skipped when a
+         legacy `?tab=` rewrite is in flight: two updates in one tick
+         overwrite each other, and that rewrite names its own page.
+         Every other hash was a one-shot tab hint, and is stripped. */
       const currentHash = window.location.hash.replace(/^#/, "");
-      const SECTION_ANCHOR_HASHES = new Set([
-        "performance",
-        "performance-expanded",
-        "analytics-performance",
-        "analytics-performance-detail",
-      ]);
-      if (!SECTION_ANCHOR_HASHES.has(currentHash)) {
+      const legacyRewrite = !!(tabFromUrl && LEGACY_TAB_REDIRECTS[tabFromUrl]);
+      if (
+        PERFORMANCE_ANCHORS.has(currentHash) &&
+        !viewFromUrl &&
+        !legacyRewrite
+      ) {
+        setSearchParams(
+          (params) => {
+            const updated = new URLSearchParams(params);
+            updated.set("view", "performance");
+            return updated;
+          },
+          { replace: true }
+        );
+      } else {
         window.history.replaceState(
           null,
           "",
@@ -452,9 +572,9 @@ export default function History() {
   const unit = useDistanceUnit();
   /**
    * The cross-cutting gate. Only the surfaces that genuinely SPAN all
-   * three disciplines may use it — PeriodOverview sums runs + lifts +
-   * nutrition into one row, and the cold-start decision needs to know
-   * that all three came back empty.
+   * three disciplines may use it — the period summary counts runs and
+   * lifts together, and the cold-start decision needs to know that all
+   * three came back empty.
    *
    * The per-sport sections below each gate on their OWN hook instead.
    * They used to share this flag, which meant the slowest of the three
@@ -594,65 +714,8 @@ export default function History() {
       (sum, week) => sum + week.totalDistance,
       0
     );
-    // Distance-weighted across weeks (weekly avgPace is itself distance-
-    // weighted in aggregateWeeklyData). An unweighted mean of weekly means
-    // let a single 1 km jog week drag the headline as much as a 40 km
-    // training week — the classic average-of-averages skew.
-    const paceWeeks = weeklyData.filter(
-      (w) => w.avgPace > 0 && w.totalDistance > 0
-    );
-    const paceKm = paceWeeks.reduce((s, w) => s + w.totalDistance, 0);
-    const avgPace =
-      paceKm > 0
-        ? Math.round(
-            paceWeeks.reduce((s, w) => s + w.avgPace * w.totalDistance, 0) /
-              paceKm
-          )
-        : 0;
-
-    // Zero-padded weekly distance across every Monday-anchored week
-    // in the time range. Distance is a count metric — a week with no
-    // runs is legitimately 0 km, so the sparkline shape correctly
-    // tells the consistency story (valleys at 0 = rest weeks, spikes
-    // = training weeks).
-    const distanceByWeek: Record<string, number> = {};
-    for (const w of weeklyData) {
-      distanceByWeek[w.week] = w.totalDistance;
-    }
-    const allWeekKeys: string[] = [];
-    {
-      const since = rollingWindowStart(rangeDays);
-      // Both ends through the shared anchor. The comment below has always
-      // said the axis MUST agree with the data's week helper; deriving the
-      // boundary by hand made that a promise rather than a fact.
-      const cursor = startOfLocalWeek(since);
-      const end = startOfLocalWeek(new Date());
-      while (cursor <= end) {
-        // weeklyData[].week is keyed by localWeekKey (useRunningStats),
-        // so the axis MUST use the same local-week helper. The prior
-        // cursor.toISOString() (UTC) key never matched in non-UTC zones,
-        // flatlining the sparkline.
-        allWeekKeys.push(localWeekKey(cursor));
-        cursor.setDate(cursor.getDate() + 7);
-      }
-    }
-    /* Without the current week. The walk above ends on the week
-       CONTAINING today, so its last bucket always holds a part-week —
-       and a month of running read as a cliff on the tile because of it. */
-    const distanceSparkline = completedWeeklySeries(
-      allWeekKeys,
-      (k) => distanceByWeek[k] ?? 0
-    );
-
-    // Pace is a RATE metric — a week with no runs has no pace, not 0
-    // sec/km (which would mean infinite speed). Don't zero-pad. Use
-    // only the weeks that actually had runs, in order.
-    const paceSparkline = weeklyData
-      .filter((w) => w.avgPace > 0)
-      .map((w) => w.avgPace);
-
-    return { runCount, runDistance, avgPace, distanceSparkline, paceSparkline };
-  }, [weeklyData, rangeDays]);
+    return { runCount, runDistance };
+  }, [weeklyData]);
 
   const runningPRs = useMemo(() => {
     const sevenDaysAgo = new Date();
@@ -670,8 +733,14 @@ export default function History() {
        claim a 2:38/km best pace), valid + saved-properly + above
        the volume floor + finite positive avgPace. Longest Run
        reads outdoor only too — treadmill distance isn't
-       GPS-verified, so it can't set a distance PR. */
-    const paceEligible = runs.filter((r) => isPaceEligible(r));
+       GPS-verified, so it can't set a distance PR.
+
+       ALL-TIME means every run, so the pool is the lifetime read, not the
+       page's range. It was `runs` — `useRunningStats(rangeDays)` — which
+       made "All-time" the last 30 days at the default range and left a
+       runner whose best runs predated the range looking at "--". */
+    const allRuns = lifetimeRuns.runs;
+    const paceEligible = allRuns.filter((r) => isPaceEligible(r));
 
     /* Hist5 grill Q3 Stress 3 round 1 + Hist5b pin 5 — Indoor PRs
        tracked separately for users who run primarily on a
@@ -681,7 +750,7 @@ export default function History() {
        floor. Sublabeled distinctly so the user doesn't conflate
        indoor pace (user-entered distance) with outdoor pace
        (GPS-verified). */
-    const indoorEligible = runs.filter(
+    const indoorEligible = allRuns.filter(
       (r) =>
         requiresManualDistance(
           r.activityType as Parameters<typeof requiresManualDistance>[0]
@@ -798,7 +867,9 @@ export default function History() {
       hasAnyIndoor: indoorEligible.length > 0,
       hasAnyRecent: paceEligible.some((r) => r.completedAt >= thirtyDaysAgo),
     };
-  }, [runs]);
+    // `unit` too: the values are written in it, and a unit switch left
+    // them in the old one until the runs changed.
+  }, [lifetimeRuns.runs, unit]);
 
   // Per-group recovery chips for the muscle heat map (Tier-2 #6 second
   // half). NOW-state — always computed over the last RECOVERY_LOOKBACK_DAYS
@@ -821,15 +892,13 @@ export default function History() {
        block and than the span adherence divides by. */
     const since = rollingWindowStart(rangeDays);
     // Previous comparable period: the same span of days immediately before
-    // `since`. Used for ↑/↓ delta badges on stat cards — matches the
-    // Whoop / Apple Fitness convention of "this period vs. last period."
+    // `since`, for the overview's changes on the range before.
     const prevSince = rollingWindowStart(rangeDays, addLocalDays(since, -1));
 
     // w.date is a LOCAL "YYYY-MM-DD" string; `new Date("YYYY-MM-DD")`
     // parses as UTC midnight and shifts the boundary day in negative-
-    // offset timezones (the same UTC/local-mixing family the sparkline
-    // axes and the 30-day PR window were already fixed for). String
-    // comparison against a local key is the in-file convention.
+    // offset timezones. String comparison against a local key is the
+    // in-file convention.
     const sinceKey = localDateString(since);
     const prevSinceKey = localDateString(prevSince);
 
@@ -868,239 +937,37 @@ export default function History() {
     );
     const prevLiftCount = prevFiltered.length;
 
-    const weekMap: Record<string, number> = {};
-    const sessionWeekMap: Record<string, number> = {};
-    /* The sparklines are ALWAYS weekly (they zero-pad across Monday-
-       anchored weeks below), while the VolumeChart bins adaptively
-       (daily/weekly/monthly with the range). They therefore need their
-       OWN weekly-keyed maps: reusing the granularity-keyed weekMap made
-       the sparkline lookups miss on every range except 3M — daily keys
-       for 1W/1M, monthly keys for 6M/1Y — flatlining both sparklines
-       to zero for a user who trains all week but never on a Monday. */
-    const sparkVolumeMap: Record<string, number> = {};
-    const sparkSessionsMap: Record<string, number> = {};
-    /* Hist5c pin 7 — adaptive chart granularity. At 1W/1M we bin
-       daily; at 3M we bin weekly (Monday-anchored, the prior
-       universal behaviour); at 6M/1Y we bin monthly. Avoids the
-       52-bar unreadable mess at long windows. */
-    const granularity = granularityForRange(rangeDays);
-    filtered.forEach((w) => {
-      // `w.date` is a LOCAL "YYYY-MM-DD"; `new Date(s)` parses it as UTC
-      // midnight, which put the data on a different footing from the axis
-      // cursor below (a local wall-clock Date). Both feeding the same
-      // binKeyForDate hid the mismatch rather than fixing it.
-      const d = parseLocalDate(w.date);
-      const key = binKeyForDate(d, granularity);
-      const weeklyKey = binKeyForDate(d, "weekly");
-      const vol = workoutTonnageKg(w);
-      weekMap[key] = (weekMap[key] || 0) + vol;
-      sessionWeekMap[key] = (sessionWeekMap[key] || 0) + 1;
-      sparkVolumeMap[weeklyKey] = (sparkVolumeMap[weeklyKey] || 0) + vol;
-      sparkSessionsMap[weeklyKey] = (sparkSessionsMap[weeklyKey] || 0) + 1;
-    });
-    const sortedWeekKeys = Object.keys(weekMap).sort((a, b) =>
-      a.localeCompare(b)
+    /* Hist5b pin 4 / PR 7a — lifetime PRs for the dedicated PRs tab:
+       each exercise's best set across every logged workout
+       (`liftRecords.ts`). A rolling 7-day "prTimeline" was computed
+       beside it, a full e1RM pass over every set, for a card deleted
+       long ago; nothing read it, and it is gone. */
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    // w.date is a LOCAL "YYYY-MM-DD" string, so the cutoffs are LOCAL
+    // dates too. The Lifting page's "New best" reads the same window.
+    const newSinceKey = localDateString(
+      addLocalDays(new Date(), -NEW_BEST_DAYS)
     );
-    const weeklyVolume = sortedWeekKeys.map((week) => ({
-      week,
-      volume: weekMap[week],
-    }));
-
-    // Zero-pad sparklines across every Monday-anchored week in the
-    // range. For activity (volume + sessions), missing weeks are
-    // legitimately zero — the user didn't lift that week — so the
-    // sparkline shape correctly tells the consistency story instead
-    // of compressing logged-only weeks into an uninterrupted line.
-    const allWeekKeys: string[] = [];
-    {
-      // Same anchor as the data side, for the same reason as above.
-      const cursor = startOfLocalWeek(since);
-      const end = startOfLocalWeek(new Date());
-      while (cursor <= end) {
-        // sparkVolumeMap is keyed by binKeyForDate(d, "weekly") (local-
-        // Monday), so the axis MUST derive its keys with the SAME helper.
-        // The prior local-cursor + cursor.toISOString() key never matched
-        // binKeyForDate's UTC-anchored week key in non-UTC zones, flatlining
-        // the sparkline.
-        allWeekKeys.push(binKeyForDate(cursor, "weekly"));
-        cursor.setDate(cursor.getDate() + 7);
-      }
-    }
-    /* Both without the current week, for the reason the running side
-       carries: the walk ends on the week containing today, so the final
-       bucket is a part-week and drew a fall that had not happened. */
-    const volumeSparkline = completedWeeklySeries(
-      allWeekKeys,
-      (w) => sparkVolumeMap[w] ?? 0
-    );
-    const sessionsSparkline = completedWeeklySeries(
-      allWeekKeys,
-      (w) => sparkSessionsMap[w] ?? 0
-    );
-
-    // Build all-time best e1rm per exercise. epley1RMExact carries the
-    // reps<=0 guard (a failed set must not score weight×1.0) and the
-    // reps===1 identity the raw inline formula lacked.
-    const allTimeBest: Record<string, number> = {};
-    workouts.forEach((w) => {
-      w.exercises?.forEach((ex) => {
-        ex.sets?.forEach((set) => {
-          const e1rm = epley1RMExact(set.weightKg, set.reps);
-          allTimeBest[ex.exerciseName] = Math.max(
-            allTimeBest[ex.exerciseName] || 0,
-            e1rm
-          );
-        });
-      });
-    });
-
-    // Best set per exercise from the last 7 days only (local-date key
-    // comparison — same convention as the range filters above).
-    const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-    const sevenDaysAgoKey = localDateString(sevenDaysAgo);
-    const recentWorkouts = workouts.filter((w) => w.date >= sevenDaysAgoKey);
-    const prMap: Record<
-      string,
-      { weight: number; reps: number; date: string; isAllTimeBest: boolean }
-    > = {};
-    recentWorkouts.forEach((w) => {
-      w.exercises?.forEach((ex) => {
-        const name = ex.exerciseName;
-        const exInfo = EXERCISES.find((e) => e.name === name);
-        const isBWExercise = exInfo?.equipment === "Bodyweight";
-        ex.sets?.forEach((set) => {
-          if (!isBWExercise && set.weightKg <= 0) return;
-          const e1rm = epley1RMExact(set.weightKg, set.reps);
-          const score = isBWExercise && set.weightKg === 0 ? set.reps : e1rm;
-          const prevScore = prMap[name]
-            ? isBWExercise && prMap[name].weight === 0
-              ? prMap[name].reps
-              : epley1RMExact(prMap[name].weight, prMap[name].reps)
-            : -1;
-          if (score > prevScore) {
-            prMap[name] = {
-              weight: set.weightKg,
-              reps: set.reps,
-              date: w.date,
-              isAllTimeBest: Math.abs(e1rm - (allTimeBest[name] || 0)) < 0.01,
-            };
-          }
-        });
-      });
-    });
-    const prTimeline = Object.entries(prMap)
-      .map(([name, data]) => ({ name, ...data }))
-      .sort((a, b) => b.date.localeCompare(a.date))
-      .slice(0, 8);
-
-    /* Hist5b pin 4 / PR 7a — lifetime PRs for the dedicated PRs tab.
-       Distinct from prTimeline above (which is a rolling 7-day
-       view scheduled for removal when the PRs tab fully takes
-       over). For each exercise, find the single set with the
-       highest e1rm-equivalent score across all logged workouts.
-       Bodyweight exercises score on reps (weight=0); weighted
-       exercises score on weight × (1 + reps/30). */
-    const lifetimeBestSet: Record<
-      string,
-      { weight: number; reps: number; date: string; score: number }
-    > = {};
-    workouts.forEach((w) => {
-      w.exercises?.forEach((ex) => {
-        const name = ex.exerciseName;
-        const exInfo = EXERCISES.find((e) => e.name === name);
-        const isBWExercise = exInfo?.equipment === "Bodyweight";
-        ex.sets?.forEach((set) => {
-          if (!isBWExercise && set.weightKg <= 0) return;
-          const e1rm = epley1RMExact(set.weightKg, set.reps);
-          const score = isBWExercise && set.weightKg === 0 ? set.reps : e1rm;
-          const prev = lifetimeBestSet[name];
-          if (!prev || score > prev.score) {
-            lifetimeBestSet[name] = {
-              weight: set.weightKg,
-              reps: set.reps,
-              date: w.date,
-              score,
-            };
-          }
-        });
-      });
-    });
-    const lifetimePRs = Object.entries(lifetimeBestSet)
-      .map(([name, data]) => ({
-        name,
-        weight: data.weight,
-        reps: data.reps,
-        date: data.date,
-      }))
-      .sort((a, b) => {
-        /* Sort by date desc (most-recently-set PR first). Provides
-           a sense of momentum on the PRs tab — the lifts the user
-           has been pushing most recently float to the top. */
-        return b.date.localeCompare(a.date);
-      });
+    const lifetimePRs = bestSetPerExercise(workouts, { newSinceKey });
 
     /* Hist5b pin 4 / PR 7b — Recent bests subsection (rolling 30
        days). Same per-exercise top-set logic as lifetimePRs but
-       constrained to the last 30 days. Distinct from prTimeline
-       (last 7 days, used by the prior Analytics card we just
-       deleted). Lives in the PRs tab as a sublabeled subsection
-       so the user reads "Lifetime" vs "Last 30 days" as two
-       different scopes. */
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    // w.date is a LOCAL "YYYY-MM-DD" string, so the cutoff must be the LOCAL
-    // date too (same UTC/local-mixing family as the sparkline axes above).
-    const thirtyDaysAgoKey = localDateString(thirtyDaysAgo);
-    const recentBestSet: Record<
-      string,
-      { weight: number; reps: number; date: string; score: number }
-    > = {};
-    workouts
-      .filter((w) => w.date >= thirtyDaysAgoKey)
-      .forEach((w) => {
-        w.exercises?.forEach((ex) => {
-          const name = ex.exerciseName;
-          const exInfo = EXERCISES.find((e) => e.name === name);
-          const isBWExercise = exInfo?.equipment === "Bodyweight";
-          ex.sets?.forEach((set) => {
-            if (!isBWExercise && set.weightKg <= 0) return;
-            const e1rm = epley1RMExact(set.weightKg, set.reps);
-            const score = isBWExercise && set.weightKg === 0 ? set.reps : e1rm;
-            const prev = recentBestSet[name];
-            if (!prev || score > prev.score) {
-              recentBestSet[name] = {
-                weight: set.weightKg,
-                reps: set.reps,
-                date: w.date,
-                score,
-              };
-            }
-          });
-        });
-      });
-    const recentLiftPRs = Object.entries(recentBestSet)
-      .map(([name, data]) => ({
-        name,
-        weight: data.weight,
-        reps: data.reps,
-        date: data.date,
-      }))
-      .sort((a, b) => b.date.localeCompare(a.date));
+       constrained to the last 30 days, so the user reads "All-time"
+       and "Last 30 days" as two different scopes. */
+    const recentLiftPRs = bestSetPerExercise(workouts, {
+      sinceKey: localDateString(thirtyDaysAgo),
+      newSinceKey,
+    });
 
     return {
       liftCount,
       liftVolume,
       muscleData,
-      weeklyVolume,
-      weeklyVolumeGranularity: granularity,
-      prTimeline,
       lifetimePRs,
       recentLiftPRs,
       prevLiftCount,
       prevLiftVolume,
-      volumeSparkline,
-      sessionsSparkline,
     };
   }, [workouts, rangeDays]);
 
@@ -1213,27 +1080,264 @@ export default function History() {
     };
   }, [rangeMeals, rangeDays]);
 
-  // Range-adaptive prefix for stat-card labels. The values inside
-  // those cards are TOTALS for the selected window (e.g. "Volume" is
-  // the sum across rangeDays, not a weekly average), so a static
-  // "Weekly" prefix on a 1M view reads as a label bug. Adapt the
-  // prefix to match the window the data actually covers.
-  const periodLabel = (() => {
-    switch (timeRange) {
-      case "1W":
-        return "Weekly";
-      case "1M":
-        return "Monthly";
-      case "3M":
-        return "3-Month";
-      case "6M":
-        return "6-Month";
-      case "1Y":
-        return "Annual";
-      default:
-        return "Weekly";
+  /* DS3 period summary — the overview's first card. Sessions, kilograms
+     and distance bar by bar across the range, and the range before it for
+     the changes. Lifts count by their local date and their guarded
+     tonnage, runs by the day they were recorded and their stored metres,
+     as the page's other totals count them; runs before the window come
+     from the lifetime read, which already holds every run, because
+     `useRunningStats` reads only the window. */
+  const periodSummary = useMemo(() => {
+    const now = new Date();
+    const since = rollingWindowStart(rangeDays);
+    const prevSince = rollingWindowStart(rangeDays, addLocalDays(since, -1));
+    const sinceKey = localDateString(since);
+    const granularity = summaryGranularity(rangeDays);
+    const bins = summaryBins({
+      since,
+      today: now,
+      lifts: workouts
+        .filter((w) => w.date >= sinceKey)
+        .map((w) => ({ date: w.date, volumeKg: workoutTonnageKg(w) })),
+      runs: runs
+        .filter((r) => isVolumeEligible(r))
+        .map((r) => ({ date: runEvidenceDate(r), distanceM: r.distance ?? 0 }))
+        .filter((r) => r.date >= sinceKey),
+      granularity,
+    });
+    // A failed or pending read is an unknown, not a range with no runs.
+    const previousRuns =
+      lifetimeRuns.loading || lifetimeRuns.failed
+        ? null
+        : lifetimeRuns.dated.filter(
+            (r) =>
+              r.completedAtMs >= prevSince.getTime() &&
+              r.completedAtMs < since.getTime()
+          );
+    return {
+      granularity,
+      bins,
+      prevRunCount: previousRuns ? previousRuns.length : null,
+      prevRunM: previousRuns
+        ? previousRuns.reduce((sum, r) => sum + r.distanceM, 0)
+        : null,
+    };
+  }, [
+    rangeDays,
+    workouts,
+    runs,
+    lifetimeRuns.dated,
+    lifetimeRuns.loading,
+    lifetimeRuns.failed,
+  ]);
+
+  /* The Lifting page's reading of the range: each main lift's progress,
+     the sets each muscle got a week against the range for the user's
+     focus, the range's sets, and the weekly average the volume bars stand
+     against. `workouts` holds every session, so a lift's best and the
+     user's first session are both all-time. */
+  const liftGoal = profile?.primaryGoal as PrimaryGoal | undefined;
+  const liftingInsight = useMemo(() => {
+    const today = new Date();
+    const since = rollingWindowStart(rangeDays);
+    const sinceKey = localDateString(since);
+    let firstSessionKey: string | null = null;
+    let sets = 0;
+    for (const w of workouts) {
+      if (!firstSessionKey || w.date < firstSessionKey) {
+        firstSessionKey = w.date;
+      }
+      if (w.date < sinceKey) continue;
+      for (const ex of w.exercises ?? []) {
+        for (const set of ex.sets ?? []) {
+          if (set.type !== "warmup" && set.reps > 0) sets += 1;
+        }
+      }
     }
-  })();
+    const weekKeys = volumeWeekKeys({ since, today, firstSessionKey });
+    return {
+      progress: liftProgress(workouts, { sinceKey, today }),
+      sets,
+      muscleWeeks: weekKeys.length,
+      muscles: performedWeeklyVolume(workouts, {
+        weekKeys,
+        primaryGoal: liftGoal,
+      }),
+      averageKg: usualBinAmount(periodSummary.bins, (b) => b.volumeKg, {
+        sinceKey,
+        firstSessionKey,
+      }),
+    };
+  }, [workouts, rangeDays, liftGoal, periodSummary.bins]);
+
+  /* The Running page's reading of the range (`runningPageInsight`): pace
+     by kind of run, best efforts, the longest run, time on the move and
+     the weekly average. The best-ever claims wait for the one-shot read
+     of every run; the function's header says why. */
+  const allRunsKnown = !lifetimeRuns.loading && !lifetimeRuns.failed;
+  const runningInsight = useMemo(() => {
+    const since = rollingWindowStart(rangeDays);
+    return {
+      ...runningPageInsight({
+        windowRuns: runs,
+        allRuns: lifetimeRuns.runs,
+        allRunsKnown,
+        sinceKey: localDateString(since),
+        prevSinceKey: localDateString(
+          rollingWindowStart(rangeDays, addLocalDays(since, -1))
+        ),
+        todayKey: localDateString(),
+        bins: periodSummary.bins,
+      }),
+      newSinceKey: localDateString(addLocalDays(new Date(), -NEW_BEST_DAYS)),
+    };
+  }, [runs, lifetimeRuns.runs, allRunsKnown, rangeDays, periodSummary.bins]);
+
+  const summarySessions = liftingData.liftCount + runningTotals.runCount;
+  const summaryFigures: SummaryFigure[] = [
+    {
+      metric: "sessions",
+      value: String(summarySessions),
+      unit: summarySessions === 1 ? "session" : "sessions",
+      change: countChange(
+        summarySessions,
+        periodSummary.prevRunCount === null
+          ? null
+          : liftingData.prevLiftCount + periodSummary.prevRunCount
+      ),
+    },
+    {
+      metric: "volume",
+      value:
+        liftingData.liftVolume > 0
+          ? formatVolume(liftingData.liftVolume).value
+          : "0",
+      unit: "kg lifted",
+      change: volumeChange(liftingData.liftVolume, liftingData.prevLiftVolume),
+    },
+    {
+      metric: "distance",
+      value:
+        runningTotals.runDistance > 0
+          ? formatDistance(distanceIn(runningTotals.runDistance * 1000, unit))
+          : "0",
+      unit: `${distanceUnitLabel(unit)} run`,
+      change: distanceChange(
+        runningTotals.runDistance * 1000,
+        periodSummary.prevRunM,
+        unit
+      ),
+    },
+  ];
+
+  /* The overview's Trends: the measures that move, each with the page
+     that charts it. Weight comes from the same trend read as the Body
+     page's chart, so the row quotes the figure the chart draws. */
+  const bodyweight = useBodyweightTrend();
+
+  /* The Food page's day-by-day reading (`foodDays`): each finished day
+     against the target it had that day, and protein over the trend
+     weight. Hidden-number users get no protein per kg: with the protein
+     figure beside it, it would give the weight away. */
+  const { targets: dayTargets, loading: dayTargetsLoading } =
+    useDailyTargetsInRange(uid, rangeDays);
+  const foodDays = useMemo(
+    () =>
+      foodDaysReading({
+        meals: rangeMeals,
+        targets: dayTargets,
+        sinceKey: localDateString(rollingWindowStart(rangeDays)),
+        todayKey: localDateString(),
+      }),
+    [rangeMeals, dayTargets, rangeDays]
+  );
+  const latestTrendKg =
+    bodyweight.points.length > 0
+      ? bodyweight.points[bodyweight.points.length - 1].trend
+      : null;
+  const proteinPerKg =
+    !profile?.hideWeightNumber &&
+    latestTrendKg !== null &&
+    latestTrendKg > 0 &&
+    nutrition.avgProtein > 0
+      ? nutrition.avgProtein / latestTrendKg
+      : null;
+  /* The card is drawn once all three reads are in. Each fills different
+     rows, so drawn as they arrive, the target rows would push in above
+     the weekend rows and the protein row would land last. */
+  const foodDaysSettled =
+    !rangeMealsLoading && !dayTargetsLoading && !bodyweight.loading;
+
+  /* A live line on each Go deeper tile, from what its page shows. */
+  const goDeeper = useMemo(
+    () =>
+      goDeeperLines({
+        lifting: liftingLine(liftingInsight.progress),
+        running: runningLine({
+          pace: runningInsight.pace.rows,
+          longest: runningInsight.longest,
+          unit,
+        }),
+        body: bodyLine({
+          kgPerWeek: currentWeightRate(bodyweight.points)?.kgPerWeek ?? null,
+          unit: profile?.preferredWeightUnit === "lbs" ? "lbs" : "kg",
+          hideNumber: !!profile?.hideWeightNumber,
+        }),
+        food: foodLine({ daysLogged: nutrition.daysLogged, rangeDays }),
+      }),
+    [
+      liftingInsight.progress,
+      runningInsight.pace.rows,
+      runningInsight.longest,
+      unit,
+      bodyweight.points,
+      profile?.preferredWeightUnit,
+      profile?.hideWeightNumber,
+      nutrition.daysLogged,
+      rangeDays,
+    ]
+  );
+  const targetCalories = effectiveTargets.finalTarget ?? 0;
+  const targetProtein = effectiveTargets.protein ?? 0;
+  const trendRows = useMemo(() => {
+    const rows: TrendRow[] = [];
+    const weight = weightRow({
+      points: bodyweight.points,
+      sinceKey: localDateString(rollingWindowStart(rangeDays)),
+      unit: profile?.preferredWeightUnit === "lbs" ? "lbs" : "kg",
+      hideNumber: !!profile?.hideWeightNumber,
+    });
+    if (weight) rows.push(weight);
+    rows.push(
+      ...nutritionRows({
+        daysLogged: nutrition.daysLogged,
+        avgCalories: nutrition.avgCalories,
+        avgProtein: nutrition.avgProtein,
+        caloriesSeries: nutrition.caloriesSparkline,
+        proteinSeries: nutrition.proteinSparkline,
+        showSeries: nutrition.showSparklines,
+        targetCalories,
+        targetProtein,
+      })
+    );
+    const fitness = profile?.runFitness ?? null;
+    const times = predictedRaceTimesFromFitness(fitness);
+    const prediction = predictionRow({
+      tenKSeconds: times ? times["10k"] : null,
+      source: fitness?.source,
+    });
+    if (prediction) rows.push(prediction);
+    return rows;
+  }, [
+    bodyweight.points,
+    rangeDays,
+    profile?.preferredWeightUnit,
+    profile?.hideWeightNumber,
+    profile?.runFitness,
+    nutrition,
+    targetCalories,
+    targetProtein,
+  ]);
 
   /* Hist5d cross-cut + Hist5 grill Q2 Stress 6 — section auto-hide
      two-tier rule. Only applies on the "all" filter; per-sport
@@ -1278,7 +1382,7 @@ export default function History() {
 
   /* True cold-start: the user has never logged a run, lift, or meal, so
      every sport section is Tier-1 suppressed. Rather than show a wall of
-     zeroed rings (PeriodOverview) plus a redundant "PI appears later" strip,
+     zeroed figures plus a redundant "PI appears later" strip,
      render ONE calm card that sets the expectation. The moment anything is
      logged, lifetime>0 flips this off and the normal analytics return. */
   const isAnalyticsColdStart =
@@ -1348,29 +1452,66 @@ export default function History() {
           </SectionErrorBoundary>
         ) : (
           <>
-            {/* Hist6 — PI hero pinned to the top, range-independent
+            {/* Hist6 — Performance pinned to the top, range-independent
               ("this week"). The TimeRange control below scopes only the
-              historical body (PeriodOverview + sport sections), so changing
-              the range never moves the hero — the two mental models
-              (current form vs adjustable history) are separated spatially.
-              Suppressed in cold-start: the "No analytics yet" card below
-              stands in until the first session is logged. Deep-links to
-              /history#performance scroll to this section's anchor. */}
-            {filter === "analytics" && !isAnalyticsColdStart && (
+              history under it, so changing the range never moves the
+              index — the two mental models (current form vs adjustable
+              history) are separated spatially. Suppressed in cold-start:
+              the "No analytics yet" card below stands in until the first
+              session is logged. `/history#performance` opens the
+              Performance page. */}
+            {/* A deeper page's way back to the overview. */}
+            {filter === "analytics" && view !== "overview" && (
+              <AnalyticsBackRow onBack={() => setView("overview")} />
+            )}
+
+            {/* The week's index, range-independent, above the range
+                pills (Hist6): the pills scope everything below them. The
+                overview shows the card; its Details open the page. */}
+            {filter === "analytics" &&
+              view === "overview" &&
+              !isAnalyticsColdStart && (
+                <SectionErrorBoundary sectionName="performance-section">
+                  <PerformanceOverviewCard
+                    hasLoggedSession={
+                      workouts.length > 0 || lifetimeRuns.runCount > 0
+                    }
+                    onOpenDetails={() => setView("performance")}
+                  />
+                </SectionErrorBoundary>
+              )}
+            {filter === "analytics" && view === "performance" && (
               <SectionErrorBoundary sectionName="performance-section">
                 <PerformanceSection
-                  /* A meal alone clears the cold-start gate above, so this
-                     section can render for someone with no session at all —
-                     and the perf doc is server-written, so a user who has
-                     just logged their first workout reaches it too. */
+                  /* A meal alone clears the cold-start gate, so this can
+                     render for someone with no session at all — and the
+                     perf doc is server-written, so a user who has just
+                     logged their first workout reaches it too. */
                   hasLoggedSession={
                     workouts.length > 0 || lifetimeRuns.runCount > 0
                   }
+                  distanceUnit={unit}
                 />
               </SectionErrorBoundary>
             )}
 
-            <TimeRangePills selected={timeRange} onChange={setTimeRange} />
+            {/* The range scopes the history below it. The Body page's
+                weight chart keeps its own, so it gets none here. */}
+            {view !== "body" && (
+              <TimeRangePills selected={timeRange} onChange={setTimeRange} />
+            )}
+
+            {/* Fitness, fatigue and form across lifting and running: the
+                load behind the index, so it sits on the Performance page,
+                under the range it follows. */}
+            {filter === "analytics" && view === "performance" && (
+              <SectionErrorBoundary sectionName="training-load">
+                <TrainingLoadCard
+                  points={trainingLoad.points}
+                  loading={trainingLoad.loading}
+                />
+              </SectionErrorBoundary>
+            )}
 
             {/* Hist5b pin 1 — sticky anchor chip row. Only renders on
               the Analytics tab AND only when there are 2+ sections
@@ -1397,7 +1538,7 @@ export default function History() {
                 Splitting the three states keeps them mutually exclusive and
                 exhaustive: loading → skeleton, then cold-start → card, else
                 → overview. */}
-            {filter === "analytics" && dataLoading && (
+            {filter === "analytics" && view === "overview" && dataLoading && (
               <div className="p-4 rounded-2xl bg-card space-y-3">
                 <Skeleton className="h-3 w-20" />
                 <div className="grid grid-cols-3 gap-2">
@@ -1422,84 +1563,99 @@ export default function History() {
               subscriptions with no re-subscribe handle from here, and
               remounting the page genuinely re-establishes them.
             */}
-            {filter === "analytics" && stalledSources.length > 0 && (
-              <div
-                role="status"
-                className="p-4 rounded-2xl bg-card space-y-2 card-shadow"
-              >
-                <p className="text-sm font-semibold text-foreground">
-                  Still loading your {formatSourceList(stalledSources)}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  This is taking longer than it should. Your data is safe — the
-                  connection to it has stalled.
-                </p>
-                <Button
-                  variant="secondary"
-                  onClick={() => window.location.reload()}
+            {filter === "analytics" &&
+              view === "overview" &&
+              stalledSources.length > 0 && (
+                <div
+                  role="status"
+                  className="p-4 rounded-2xl bg-card space-y-2 card-shadow"
                 >
-                  Reload
-                </Button>
-              </div>
-            )}
+                  <p className="text-sm font-semibold text-foreground">
+                    Still loading your {formatSourceList(stalledSources)}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    This is taking longer than it should. Your data is safe —
+                    the connection to it has stalled.
+                  </p>
+                  <Button
+                    variant="secondary"
+                    onClick={() => window.location.reload()}
+                  >
+                    Reload
+                  </Button>
+                </div>
+              )}
 
             {/* Cold-start: one calm expectation-setting card instead of a
                 wall of zeroed rings + redundant PI strip. */}
-            {filter === "analytics" && !dataLoading && isAnalyticsColdStart && (
-              <EmptyState
-                icon={LineChart}
-                accent={THEME.brand}
-                headline="No analytics yet"
-                sub="Log a workout, run or meal and your trends will show up here."
-                action={{ label: "Start a workout", href: "/program" }}
-              />
-            )}
+            {filter === "analytics" &&
+              view === "overview" &&
+              !dataLoading &&
+              isAnalyticsColdStart && (
+                <EmptyState
+                  icon={LineChart}
+                  accent={THEME.brand}
+                  headline="No analytics yet"
+                  sub="Log a workout, run or meal and your trends will show up here."
+                  action={{ label: "Start a workout", href: "/program" }}
+                />
+              )}
 
             {filter === "analytics" &&
+              view === "overview" &&
               !dataLoading &&
               !isAnalyticsColdStart && (
                 <>
-                  <PeriodOverview
-                    runCount={runningTotals.runCount}
-                    runDistance={runningTotals.runDistance}
-                    liftCount={liftingData.liftCount}
-                    liftVolume={liftingData.liftVolume}
-                    avgCalories={nutrition.avgCalories}
-                    nutritionAdherence={nutrition.adherence}
-                    /* The user's own weekly targets. `daysPerWeek` is what
-                       onboarding asked for and, capped at 6, is never
-                       reshaped by the engine's 7-day cap — so requested and
-                       actual agree. The run side goes through the canonical
-                       resolver rather than reading either of the two drifted
-                       profile fields directly. */
-                    weeklyLiftTarget={profile?.daysPerWeek ?? 0}
-                    weeklyRunTarget={getWeeklyRunTarget(profile)}
-                    timeRange={timeRange}
-                    rangeDays={rangeDays}
-                  />
-                  {/* Fitness/fatigue/form spanning run+lift (teardown #4).
-                      Cross-sport, so it lives with the range-scoped overview
-                      rather than inside either sport section. */}
-                  <SectionErrorBoundary sectionName="training-load">
-                    <div className="mt-2">
-                      <TrainingLoadCard
-                        points={trainingLoad.points}
-                        loading={trainingLoad.loading}
-                      />
-                    </div>
+                  <SectionErrorBoundary sectionName="period-summary">
+                    <PeriodSummaryCard
+                      title={rollingRangeLabel(timeRange)}
+                      comparedWith={previousRangeLabel(timeRange)}
+                      figures={summaryFigures}
+                      bins={periodSummary.bins}
+                      granularity={periodSummary.granularity}
+                      /* The user's own weekly targets. `daysPerWeek` is what
+                         onboarding asked for and, capped at 6, is never
+                         reshaped by the engine's 7-day cap — so requested
+                         and actual agree. The run side goes through the
+                         canonical resolver rather than reading either of
+                         the two drifted profile fields directly. */
+                      plannedThisWeek={
+                        (profile?.daysPerWeek ?? 0) +
+                        getWeeklyRunTarget(profile)
+                      }
+                      distanceUnit={unit}
+                    />
+                  </SectionErrorBoundary>
+                  <SectionErrorBoundary sectionName="trends">
+                    <AnalyticsTrends rows={trendRows} onOpen={setView} />
+                  </SectionErrorBoundary>
+                  <SectionErrorBoundary sectionName="muscles">
+                    <AnalyticsMuscles
+                      data={liftingData.muscleData}
+                      onOpen={() => setView("lifting")}
+                    />
                   </SectionErrorBoundary>
                 </>
               )}
 
-            {showRunningSection && filter === "analytics" && (
+            {/* The way into the four pages. Shown in cold start too: the
+                Body page holds a weight chart that needs no session. */}
+            {filter === "analytics" && view === "overview" && !dataLoading && (
+              <AnalyticsGoDeeper onOpen={setView} lines={goDeeper} />
+            )}
+
+            {/* On its own page a section renders whatever its data: each
+                one's own branches say "log your first run" and the like,
+                which the overview's "has anything" gates never let it. */}
+            {filter === "analytics" && view === "running" && (
               <section
                 id="analytics-running"
                 aria-label="Running analytics"
                 className="space-y-2"
               >
-                <SectionLabel tier="section" className="text-running-strong">
+                <SectionHeading className="text-running-strong">
                   Running
-                </SectionLabel>
+                </SectionHeading>
                 {runsLoading ? (
                   <div className="grid grid-cols-2 gap-2">
                     <Skeleton className="h-24 w-full rounded-xl" />
@@ -1549,47 +1705,89 @@ export default function History() {
                   />
                 ) : (
                   <>
-                    <div className="grid grid-cols-2 gap-2 mt-2">
-                      <StatCard
-                        label={`${periodLabel} Distance`}
-                        value={formatDistance(
-                          distanceIn(runningTotals.runDistance * 1000, unit)
-                        )}
-                        unit={distanceUnitLabel(unit)}
-                        direction="up-good"
-                        sparklineData={runningTotals.distanceSparkline}
-                        accentColor={THEME.running}
+                    <SectionErrorBoundary sectionName="run-weeks">
+                      <TrainingWeeksCard
+                        title="Distance"
+                        subtitle={rollingRangeLabel(timeRange)}
+                        figures={runningFigures({
+                          distanceM: runningTotals.runDistance * 1000,
+                          runs: runningTotals.runCount,
+                          seconds: runningInsight.seconds,
+                          unit,
+                        })}
+                        bins={periodSummary.bins}
+                        granularity={periodSummary.granularity}
+                        sport="running"
+                        reading={runningBins(unit)}
+                        onPick={(b) =>
+                          trackHistoryEvent("history_chart_tap_attempted", {
+                            chart: "distance",
+                            binKey: b.key,
+                            value: b.distanceM,
+                          })
+                        }
+                        average={
+                          runningInsight.averageM === null
+                            ? null
+                            : distanceIn(runningInsight.averageM, unit)
+                        }
+                        averageText={
+                          runningInsight.averageM === null
+                            ? ""
+                            : distanceLabel(runningInsight.averageM, unit)
+                        }
+                        footer={
+                          runningInsight.longest && (
+                            <p className="text-sm text-muted-foreground">
+                              Longest run{" "}
+                              <span className="font-mono tabular-nums font-semibold text-foreground">
+                                {distanceLabel(
+                                  runningInsight.longest.distanceM,
+                                  unit
+                                )}
+                              </span>{" "}
+                              ·{" "}
+                              {formatDayMonth(
+                                parseLocalDate(runningInsight.longest.date)
+                              )}
+                            </p>
+                          )
+                        }
                       />
-                      <StatCard
-                        label="Avg pace"
-                        value={paceMinSec(runningTotals.avgPace, unit)}
-                        unit={paceUnitLabel(unit)}
-                        direction="down-good"
-                        sparklineData={runningTotals.paceSparkline}
-                        accentColor={THEME.running}
+                    </SectionErrorBoundary>
+                    <SectionErrorBoundary sectionName="fastest-kilometres">
+                      <FastestKilometresCard
+                        rows={runningInsight.efforts}
+                        unit={unit}
+                        subtitle={rollingRangeLabel(timeRange)}
+                        newSinceKey={runningInsight.newSinceKey}
                       />
-                    </div>
-                    {/* Hist5b PR 7a — Running PRs migrated off Analytics
-                      to the dedicated PRs tab (Tier 2 lifetime
-                      contract). Tap the PRs tab in the top filter
-                      to access them. */}
+                    </SectionErrorBoundary>
+                    <SectionErrorBoundary sectionName="run-pace">
+                      <RunPaceCard
+                        rows={runningInsight.pace.rows}
+                        intervalsLeftOut={runningInsight.pace.intervalsLeftOut}
+                        unit={unit}
+                        subtitle={rollingRangeLabel(timeRange)}
+                        comparedWith={previousRangeLabel(timeRange)}
+                      />
+                    </SectionErrorBoundary>
                     <RacePredictionsCard />
                     <ShoeMileageSection />
-                    <RunningHistorySection rangeDays={rangeDays} />
                   </>
                 )}
               </section>
             )}
 
-            {showLiftingSection && filter === "analytics" && (
+            {filter === "analytics" && view === "lifting" && (
               <section
                 id="analytics-lifting"
                 aria-label="Lifting analytics"
                 className="space-y-2"
               >
-                <SectionLabel tier="section" className="text-lifting-strong">
+                <SectionHeading className="text-lifting-strong">
                   Lifting
-                </SectionLabel>
+                </SectionHeading>
                 {workoutsLoading ? (
                   <div className="space-y-2">
                     <div className="grid grid-cols-2 gap-2">
@@ -1612,36 +1810,46 @@ export default function History() {
                   />
                 ) : (
                   <>
-                    <div className="grid grid-cols-2 gap-2 mt-2">
-                      <StatCard
-                        label={`${periodLabel} Volume`}
-                        value={formatVolume(liftingData.liftVolume).value}
-                        unit={formatVolume(liftingData.liftVolume).unit}
-                        delta={buildDelta(
-                          liftingData.liftVolume,
-                          liftingData.prevLiftVolume
-                        )}
-                        direction="up-good"
-                        sparklineData={liftingData.volumeSparkline}
-                        accentColor={THEME.lifting}
+                    <SectionErrorBoundary sectionName="lift-progress">
+                      <LiftProgressCard
+                        rows={liftingInsight.progress}
+                        subtitle={rollingRangeLabel(timeRange)}
+                        hasSessions={liftingData.liftCount > 0}
                       />
-                      <StatCard
-                        label={`${periodLabel} Sessions`}
-                        value={String(liftingData.liftCount)}
-                        delta={buildDelta(
-                          liftingData.liftCount,
-                          liftingData.prevLiftCount
-                        )}
-                        direction="up-good"
-                        sparklineData={liftingData.sessionsSparkline}
-                        accentColor={THEME.lifting}
+                    </SectionErrorBoundary>
+                    <SectionErrorBoundary sectionName="lift-weeks">
+                      <TrainingWeeksCard
+                        title="Volume"
+                        subtitle={rollingRangeLabel(timeRange)}
+                        figures={liftingFigures({
+                          volumeKg: liftingData.liftVolume,
+                          sessions: liftingData.liftCount,
+                          sets: liftingInsight.sets,
+                        })}
+                        bins={periodSummary.bins}
+                        granularity={periodSummary.granularity}
+                        sport="lifting"
+                        reading={liftingBins}
+                        onPick={(b) =>
+                          trackHistoryEvent("history_chart_tap_attempted", {
+                            chart: "volume",
+                            binKey: b.key,
+                            value: b.volumeKg,
+                          })
+                        }
+                        average={liftingInsight.averageKg}
+                        averageText={
+                          liftingInsight.averageKg === null
+                            ? ""
+                            : `${abbreviateK(liftingInsight.averageKg)} kg`
+                        }
                       />
-                    </div>
-                    <SectionErrorBoundary sectionName="volume-chart">
-                      <VolumeChart
-                        data={liftingData.weeklyVolume}
-                        accentColor={THEME.lifting}
-                        granularity={liftingData.weeklyVolumeGranularity}
+                    </SectionErrorBoundary>
+                    <SectionErrorBoundary sectionName="muscle-volume">
+                      <MuscleVolumeCard
+                        rows={liftingInsight.muscles}
+                        weeks={liftingInsight.muscleWeeks}
+                        focus={focusLabel(liftGoal ?? "general")}
                       />
                     </SectionErrorBoundary>
                     <SectionErrorBoundary sectionName="muscle-heatmap">
@@ -1651,21 +1859,14 @@ export default function History() {
                         recovery={muscleRecovery}
                       />
                     </SectionErrorBoundary>
-                    {/* Hist5b PR 7a — Lift PRs migrated off Analytics to the
-                  dedicated PRs tab (Tier 2 lifetime contract). The
-                  prior surface was a 7-day-hardcoded view that
-                  disagreed with the section's TimeRange-scoped
-                  framing; the new home gives PRs their true
-                  lifetime semantics. Tap the PRs tab in the top
-                  filter to access them. */}
                   </>
                 )}
               </section>
             )}
 
-            {filter === "analytics" && !workoutsLoading && (
-              <WorkoutHistoryList workouts={workouts} />
-            )}
+            {filter === "analytics" &&
+              view === "lifting" &&
+              !workoutsLoading && <WorkoutHistoryList workouts={workouts} />}
 
             {/* Weight is a body measurement, not a food one, and the code
                 said so three times before it said it once: TrendWeight was
@@ -1677,35 +1878,43 @@ export default function History() {
                 Its own section, gated on nothing but the tab, settles both:
                 the workaround comments go, and the weight-only user gets
                 their chart. */}
-            {filter === "analytics" && (
+            {filter === "analytics" && view === "body" && (
               <section
                 id="analytics-body"
                 aria-label="Body analytics"
                 className="space-y-2"
               >
-                <SectionLabel tier="section">Body</SectionLabel>
+                <SectionHeading>Body</SectionHeading>
                 <SectionErrorBoundary sectionName="trend-weight">
                   <TrendWeight />
+                </SectionErrorBoundary>
+                <SectionErrorBoundary sectionName="weight-rate">
+                  <WeightRateCard
+                    points={bodyweight.points}
+                    unit={profile?.preferredWeightUnit === "lbs" ? "lbs" : "kg"}
+                    targetKgPerWeek={attestedWeeklyRateKg(profile)}
+                    hideNumber={!!profile?.hideWeightNumber}
+                    today={new Date()}
+                  />
                 </SectionErrorBoundary>
               </section>
             )}
 
-            {showNutritionSection && filter === "analytics" && (
+            {filter === "analytics" && view === "food" && (
               <section
                 id="analytics-nutrition"
-                aria-label="Nutrition analytics"
+                aria-label="Food analytics"
                 className="space-y-2"
               >
-                {/* Its three peers on this page are `tier="section"`
-                    coloured by a `-strong` utility. This was neither: no
-                    tier, so it rendered at the in-card caption weight, and
-                    the bare `--nutrition` identity as 12px text, which
-                    measures 2.54:1 on the page against a 4.5:1 floor. The
-                    identity is for fills and icons; `-strong` is the
-                    theme-aware AA step. */}
-                <SectionLabel tier="section" className="text-nutrition-strong">
-                  Nutrition
-                </SectionLabel>
+                {/* Its sport-coded peers on this page are section
+                    headings coloured by a `-strong` utility. This one once
+                    rendered at the in-card caption weight in the bare
+                    `--nutrition` identity, which measures 2.54:1 on the
+                    page against a 4.5:1 floor. The identity is for fills
+                    and icons; `-strong` is the theme-aware AA step. */}
+                <SectionHeading className="text-nutrition-strong">
+                  Food
+                </SectionHeading>
                 {mealsLoading ? (
                   <div className="space-y-2">
                     <div className="grid grid-cols-2 gap-2">
@@ -1780,6 +1989,14 @@ export default function History() {
                         Averages below are based on too few logged days to be
                         reliable.
                       </p>
+                    )}
+                    {foodDaysSettled && (
+                      <SectionErrorBoundary sectionName="food-days">
+                        <FoodDaysCard
+                          reading={foodDays}
+                          proteinPerKg={proteinPerKg}
+                        />
+                      </SectionErrorBoundary>
                     )}
                     {/* Top row: calories + protein. Sparkline + delta both
                   conditionally suppressed when sample is too thin (see
@@ -1902,6 +2119,7 @@ export default function History() {
             )}
 
             {filter === "analytics" &&
+              view === "overview" &&
               !dataLoading &&
               lifetimeTotals.runCount +
                 lifetimeTotals.liftCount +
@@ -1912,7 +2130,7 @@ export default function History() {
                   aria-label="Lifetime totals"
                   className="space-y-2"
                 >
-                  <SectionLabel tier="section">Lifetime</SectionLabel>
+                  <SectionHeading>Lifetime</SectionHeading>
                   {/* Three peer tiles, one unit treatment. The runs tile
                       used to push its `km` down into the caption ("km ·
                       1 runs") while the lifting tile beside it carried
@@ -1929,8 +2147,13 @@ export default function History() {
                     <Card size="compact" className="text-center">
                       <Footprints className="size-4 mx-auto mb-1.5 text-running" />
                       <p className="text-base font-extrabold font-mono tabular-nums text-foreground leading-tight">
-                        {abbreviateK(lifetimeTotals.runKm)}
-                        <span className="text-xs font-medium ml-0.5">km</span>
+                        {/* In the reader's unit: it read "km" to everyone. */}
+                        {abbreviateK(
+                          distanceIn(lifetimeTotals.runKm * 1000, unit)
+                        )}
+                        <span className="text-xs font-medium ml-0.5">
+                          {distanceUnitLabel(unit)}
+                        </span>
                       </p>
                       <p className="text-caption text-muted-foreground mt-0.5">
                         {lifetimeTotals.runCount}{" "}

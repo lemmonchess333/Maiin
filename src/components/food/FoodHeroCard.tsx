@@ -396,7 +396,7 @@ export default function FoodHeroCard({
         columns equal by construction, and `min-w-0` on each cell lets a
         long number shrink inside its own tile instead of pushing the
         row wider. gap-2 matches the compact-grid rule in the design
-        system and the sibling PeriodOverview grid. */}
+        system and the Analytics period summary's figures. */}
       <div className="grid grid-cols-3 gap-2 mt-4">
         <Card size="compact" className="min-w-0 flex">
           <MacroColumn

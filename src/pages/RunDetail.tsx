@@ -6,6 +6,7 @@ import {
   Navigation,
   Share2,
   Bookmark,
+  Repeat,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { usePrivacyZones } from "@/hooks/usePrivacyZones";
@@ -29,49 +30,16 @@ import ShareCardSheet from "@/components/share/ShareCardSheet";
 import DeleteSessionAction from "@/components/session/DeleteSessionAction";
 import SessionLoadState from "@/components/session/SessionLoadState";
 import { useSessionDoc } from "@/hooks/useSessionDoc";
-import { distanceLabel, distanceLabel2, paceMinSec } from "@/lib/runLabels";
-import { distanceUnitLabel, paceUnitLabel } from "@/lib/distanceUnits";
+import { distanceLabel, distanceValue, paceMinSec } from "@/lib/runLabels";
+import {
+  distanceUnitLabel,
+  elevationUnitLabel,
+  paceUnitLabel,
+} from "@/lib/distanceUnits";
+import RunStatGrid from "@/components/run/RunStatGrid";
 import { splitsForDisplay } from "@/lib/gps";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
-import { elevationLabel } from "@/lib/runLabels";
-
-const ACTIVITY_LABELS: Record<string, string> = {
-  freerun: "Free Run",
-  easy: "Easy Run",
-  tempo: "Tempo Run",
-  intervals: "Intervals",
-  longrun: "Long Run",
-  race: "Race",
-  treadmill: "Treadmill",
-  /* 'manual' = "Track without GPS" path. Outdoor user, GPS never
-     locked. Distinguished from treadmill so the detail header reads
-     honestly. */
-  manual: "Manual Run",
-};
-
-function StatPill({
-  value,
-  label,
-  color,
-}: {
-  value: string;
-  label: string;
-  color?: string;
-}) {
-  return (
-    <div className="flex-1 text-center py-3 px-2">
-      <p
-        className="text-2xl font-bold font-mono tabular-nums leading-none"
-        style={{ color: color || "hsl(var(--foreground))" }}
-      >
-        {value}
-      </p>
-      <p className="text-xs uppercase tracking-widest text-muted-foreground mt-1">
-        {label}
-      </p>
-    </div>
-  );
-}
+import { elevationLabel, runTypeTitle } from "@/lib/runLabels";
 
 export default function RunDetail() {
   const unit = useDistanceUnit();
@@ -215,7 +183,7 @@ export default function RunDetail() {
   };
 
   const shareThisRoute = () => {
-    const label = ACTIVITY_LABELS[run.activityType] ?? "Run";
+    const label = runTypeTitle(run.activityType);
     shareRouteWithPrivacy(
       `${label} · ${distanceLabel(run.distance, unit)}`,
       run.points
@@ -226,7 +194,7 @@ export default function RunDetail() {
   // "save/reuse" half of route planning v1. Same store the planner and GPX
   // import write to; it then appears under Saved routes in run setup.
   const saveThisRoute = async () => {
-    const label = ACTIVITY_LABELS[run.activityType] ?? "Run";
+    const label = runTypeTitle(run.activityType);
     const ok = await saveRoute({
       name: `${label} · ${distanceLabel(run.distance, unit)}`,
       points: run.points,
@@ -241,7 +209,7 @@ export default function RunDetail() {
     <div className="min-h-screen bg-background pb-24">
       {/* Map — full bleed, tall */}
       {run.points?.length > 1 ? (
-        <div className="relative h-72">
+        <div className="relative h-80">
           <RunMap
             points={run.points}
             currentPoint={null}
@@ -386,15 +354,19 @@ export default function RunDetail() {
           </div>
         )}
 
-        {/* Header */}
+        {/* Header (DS3): the run's type, then the distance as the page's
+            one big number, then when. */}
         <div>
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-xs uppercase tracking-widest text-muted-foreground mb-0.5">
-                {ACTIVITY_LABELS[run.activityType] ?? "Run"}
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-sm font-bold text-running-strong">
+                {runTypeTitle(run.activityType)}
               </p>
-              <h1 className="text-xl font-extrabold text-foreground font-mono tabular-nums">
-                {distanceLabel2(run.distance, unit)}
+              <h1 className="mt-1 text-display font-extrabold font-mono tabular-nums leading-none text-foreground">
+                {distanceValue(run.distance, unit, 2)}{" "}
+                <span className="font-sans text-h3 font-bold text-muted-foreground">
+                  {distanceUnitLabel(unit)}
+                </span>
               </h1>
             </div>
             {/* The `sport-tinted` variant, not a hand-copy of it. This was
@@ -410,58 +382,87 @@ export default function RunDetail() {
               Share
             </Button>
           </div>
-          <p className="text-xs text-muted-foreground mt-1">{dateStr}</p>
+          <p className="mt-2 text-sm text-muted-foreground">{dateStr}</p>
         </div>
 
-        {/* Primary stats row */}
-        <div className="rounded-2xl bg-card card-shadow flex divide-x divide-border/40">
-          <StatPill value={formatTime(run.duration)} label="Time" />
-          <StatPill
-            value={paceMinSec(avgPace, unit)}
-            label={`${paceUnitLabel(unit)} Pace`}
-            color={"hsl(var(--teal))"}
+        <RunStatGrid
+          stats={[
+            { label: "Time", value: formatTime(run.duration) },
+            {
+              label: "Average pace",
+              value: paceMinSec(avgPace, unit),
+              unit: paceUnitLabel(unit),
+            },
+            {
+              label: "Elevation gain",
+              value: elevationLabel(run.elevationGain ?? 0, unit, false),
+              unit: elevationUnitLabel(unit),
+            },
+            {
+              label: "Calories",
+              value: `${run.calories ?? 0}`,
+              unit: "kcal",
+            },
+          ]}
+        />
+
+        {/* No splits: say why, once, where the split bars would be.
+            Splits are per-kilometre (or per-mile) segments of the GPS
+            trace; a run has none without a trace, under one lap, or when
+            the trace recorded none. */}
+        {splitCount === 0 && (
+          <p className="text-center text-sm text-muted-foreground">
+            Splits · {splitsEmptyReason}
+          </p>
+        )}
+
+        {/* Grade-adjusted pace — one calm line, only when the climb was
+            material (Run13 item 4, display-only; never feeds trends/PRs). */}
+        {gap && (
+          <p className="text-center text-xs text-muted-foreground">
+            Grade-adjusted pace{" "}
+            <span className="font-mono tabular-nums font-semibold text-foreground">
+              {paceMinSec(gap.gapSecondsPerKm, unit)}
+            </span>
+            {paceUnitLabel(unit)} — flat-equivalent for this climb
+          </p>
+        )}
+
+        {/* Splits chart */}
+        {displaySplits.length > 0 && (
+          <SplitsBarChart
+            splits={displaySplits}
+            avgPaceSeconds={avgPace}
+            accentColor={THEME.running}
+            lapUnit={lapUnit}
           />
-          <StatPill
-            value={`${run.calories ?? 0}`}
-            label="Cal"
-            color={"hsl(var(--warning-strong))"}
-          />
-        </div>
+        )}
 
-        {/* Re-run this route (follow its GPS line), save it as a reusable
-            favourite, or export the .gpx. Only when there's a real trace.
+        {/* Elevation profile */}
+        {run.points?.length > 0 && (
+          <ElevationProfile points={run.points} accentColor={THEME.running} />
+        )}
 
-            1 + 2 rather than three-up. At 393px a three-way split leaves
-            ~59px of label room per button, which "Save route" already
-            overflowed — it was the one wrapping button in a row of equal
-            peers — and the rename below makes the third label longer
-            still. Re-run is the primary action here anyway, so it takes
-            the full width and the two utilities pair beneath it.
-
-            "Export GPX", not "Share": the header action 165px above is
-            also called Share and does something else entirely (a visual
-            card image). This one hands over a .gpx file — which is what
-            this block's own comment always said it did, while the button
-            said otherwise. */}
+        {/* Run this route again (follow its GPS line), save it as a
+            reusable favourite, or export the .gpx. Only when there's a
+            real trace. DS3: after the run's own numbers and charts, since
+            the page is for reading the run; "Run this route again" is the
+            one full-width action and the two utilities pair beneath it
+            (three-up left "Save route" wrapping at 393px). "Export GPX",
+            not "Share": the header's Share makes a picture card, this
+            hands over a .gpx file. */}
         {hasGpsTrace && (
           <div className="space-y-2">
-            {/* `sport`, not `sport-tinted`. The variant table puts a main
-                running CTA on solid coral, and while this button was one of
-                three equal-width utilities the tinted step was defensible.
-                Full-width it is not: the frame shows a coral-tinted pill
-                sitting a short scroll above the equally-tinted destructive
-                "Delete this run", two soft red-ish bars of nearly the same
-                weight. Solid separates them by weight as well as hue, and
-                matches what this control now is on the page. */}
             <Button
               variant="sport"
+              size="lg"
               fullWidth
+              leftIcon={<Repeat className="size-4" aria-hidden="true" />}
               onClick={() =>
                 navigate("/run", { state: { followRoute: run.points } })
               }
             >
-              <Navigation className="size-4" aria-hidden="true" />
-              Re-run
+              Run this route again
             </Button>
             <div className="flex gap-2">
               <Button
@@ -482,61 +483,6 @@ export default function RunDetail() {
               </Button>
             </div>
           </div>
-        )}
-
-        {/* Secondary stats */}
-        <div className="grid grid-cols-2 gap-2">
-          <div className="p-3 rounded-xl bg-card text-center card-shadow">
-            <p className="text-lg font-bold font-mono tabular-nums text-foreground">
-              {elevationLabel(run.elevationGain ?? 0, unit)}
-            </p>
-            <p className="text-xs uppercase tracking-widest text-muted-foreground mt-0.5">
-              Elevation gain
-            </p>
-          </div>
-          <div className="p-3 rounded-xl bg-card text-center card-shadow flex flex-col justify-center">
-            {splitCount > 0 ? (
-              <p className="text-lg font-bold font-mono tabular-nums text-foreground">
-                {splitCount}
-              </p>
-            ) : (
-              /* Empty splits: one muted explanatory line in place of a raw
-                 "0", matching the real reason (audit #6.5). */
-              <p className="text-sm text-muted-foreground leading-snug px-1">
-                {splitsEmptyReason}
-              </p>
-            )}
-            <p className="text-xs uppercase tracking-widest text-muted-foreground mt-0.5">
-              Splits
-            </p>
-          </div>
-        </div>
-
-        {/* Grade-adjusted pace — one calm line, only when the climb was
-            material (Run13 item 4, display-only; never feeds trends/PRs). */}
-        {gap && (
-          <p className="text-center text-xs text-muted-foreground">
-            Grade-adjusted pace{" "}
-            <span className="font-mono tabular-nums font-semibold text-foreground">
-              {paceMinSec(gap.gapSecondsPerKm, unit)}
-            </span>
-            {paceUnitLabel(unit)} — flat-equivalent for this climb
-          </p>
-        )}
-
-        {/* Splits chart */}
-        {displaySplits.length > 0 && (
-          <SplitsBarChart
-            splits={displaySplits}
-            avgPaceSeconds={avgPace}
-            accentColor={THEME.teal}
-            lapUnit={lapUnit}
-          />
-        )}
-
-        {/* Elevation profile */}
-        {run.points?.length > 0 && (
-          <ElevationProfile points={run.points} accentColor={THEME.running} />
         )}
 
         {/* ADR-0012. Last on the page and behind a confirm: a records

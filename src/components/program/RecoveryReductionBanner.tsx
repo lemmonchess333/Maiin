@@ -5,14 +5,10 @@ import { THEME } from "@/lib/theme";
 import { haptic } from "@/lib/haptic";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { useDismissOnce } from "@/hooks/useDismissOnce";
+import { recoveryDismissKey } from "@/lib/programNotices";
 import { track as trackProgrammeEvent } from "@/lib/programmeAnalytics";
 import { Button } from "@/components/ui/Button";
 import type { CanonicalMuscle } from "@/features/program/muscleTaxonomy";
-
-/** Per-week dismissal, same scoping rationale as DeloadBanner: a new week
- *  is a new reduction decision, so the banner reopens if the signal
- *  fires again. */
-const DISMISSED_STORAGE_PREFIX = "tropos-pgm-recovery-dismissed";
 
 interface RecoveryReductionBannerProps {
   /** The muscles whose sets/reps this week's rollover halved —
@@ -26,6 +22,14 @@ interface RecoveryReductionBannerProps {
    *  banner then auto-dismisses for the week; the caller owns the
    *  success toast. Absent → informational only. */
   onUndo?: () => Promise<boolean>;
+  /** Whether this week's banner was dismissed, and how to dismiss it,
+   *  when the page owns that answer (Train does: it holds other advice
+   *  back while this shows, `programNotices`). Omitted, the banner keeps
+   *  its own. Either way it is per week (`recoveryDismissKey`): a new
+   *  week is a new reduction decision, so the banner reopens if the
+   *  signal fires again. */
+  dismissed?: boolean;
+  onDismiss?: () => void;
 }
 
 /** "Chest and Quads" / "Chest, Quads and Hamstrings". */
@@ -54,10 +58,12 @@ export default function RecoveryReductionBanner({
   muscles,
   weekKey,
   onUndo,
+  dismissed: dismissedProp,
+  onDismiss,
 }: RecoveryReductionBannerProps) {
-  const { dismissed, dismiss } = useDismissOnce(
-    `${DISMISSED_STORAGE_PREFIX}:${weekKey}`
-  );
+  const own = useDismissOnce(recoveryDismissKey(weekKey));
+  const dismissed = dismissedProp ?? own.dismissed;
+  const dismiss = onDismiss ?? own.dismiss;
   const prefersReducedMotion = useReducedMotion();
   const viewedFiredRef = useRef(false);
   const [undoing, setUndoing] = useState(false);

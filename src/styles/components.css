@@ -250,8 +250,8 @@ select.ds-input:focus {
    breathing room above the card, not just the bare safe-area inset.
 
    Ambient gradient is intentionally local to the auth shell only —
-   the global body canvas is plain neutral grey now (see comment
-   above body{} in index.css). Opacities are deliberately small
+   the global body canvas is plain (see comment above body{} in
+   index.css). Opacities are deliberately small
    (0.045 / 0.025 light; 0.10 / 0.055 dark) so the gradient adds a
    hint of warmth around the auth card without staining the
    page. If this still reads muddy in practice, drop the gradient
@@ -319,12 +319,12 @@ select.ds-input:focus {
 /* Fixed iOS safe-area cover. Sits behind the iOS status bar /
    Dynamic Island and hides scrolling content from showing behind the
    clock. Implemented as a soft gradient scrim (see below) so it never
-   reads as a hard frosted bar over the shipped ambient glow. */
+   reads as a hard frosted bar at the top of the page. */
 .ds-safe-top-occluder {
   /* Soft top SCRIM, not a flat bar. Opaque behind the status-bar clock,
      fading to transparent at its lower edge — so there is NO hard
-     horizontal seam over the ambient glow (top of page) or over content
-     scrolling underneath. The earlier flat `hsl(bg / 0.47)` fill left a
+     horizontal seam at the top of the page or over content scrolling
+     underneath. The earlier flat `hsl(bg / 0.47)` fill left a
      visible frosted "bar" with a hard bottom edge, worst once scrolled.
      The backdrop blur is masked to fade out together with the scrim so
      the blur rect doesn't reintroduce an edge. */

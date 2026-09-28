@@ -1,47 +1,38 @@
-import { energyBarGeometry } from "@/lib/energyBarGeometry";
-import SectionLabel from "@/components/ui/SectionLabel";
-import { THEME } from "@/lib/theme";
 import { Link } from "react-router-dom";
-import { motion } from "framer-motion";
-import { UtensilsCrossed } from "lucide-react";
+import { Beef, Plus, Wheat } from "lucide-react";
+import type { ComponentType, SVGProps } from "react";
+import { THEME } from "@/lib/theme";
 import { haptic } from "@/lib/haptic";
 import { formatCalories, CALORIE_UNIT } from "@/utils/formatNutrition";
+import { macroRingState } from "@/utils/formatters";
 import { Skeleton } from "@/components/LoadingSkeleton";
 import type { EffectiveTargets } from "@/hooks/useEffectiveTargets";
-import MacroRing from "@/components/home/MacroRing";
 import { useMacroPalette } from "@/hooks/useMacroPalette";
 import { macroInfeasibilityMessage } from "@/lib/macroInfeasibility";
+import { Avocado } from "@/components/icons/Avocado";
+import ProgressRing from "@/components/ui/ProgressRing";
+import { cardClasses } from "@/components/ui/cardClasses";
+import { buttonClasses } from "@/components/ui/buttonClasses";
+
+type MacroIcon = ComponentType<SVGProps<SVGSVGElement>>;
 
 /**
- * Today's nutrition — Home's food summary.
+ * Home's food card (DS3).
  *
- * One card, everything visible, no disclosure. Calories against their
- * target, the three macros against theirs, and a single way into the
- * food log. Calories and macros are everyday information: they were
- * behind a "Details" toggle, with a compact "P 98/140g · C 141/273g ·
- * F 38/61g" line standing in for them, which asked the reader to decode
- * a string to learn what three rings say at a glance — and cost a tap
- * to see the rings that were the point.
+ * Calories lead: an orange ring for the share of the target logged, and
+ * beside it what is left of the target (or how far past it the day is).
+ * The line under that says what was logged against what. Then protein,
+ * carbs and fat, each with its icon and colour from the Food page, its
+ * figure against its target and a bar.
  *
  * The verb is "logged", not "eaten". The app knows what reached the
- * diary; it does not know what reached the person. An empty diary is a
- * statement about the log, so an empty card reads "0 kcal logged"
- * rather than asserting the reader has eaten nothing.
+ * diary, not what reached the person, so an empty diary reads "0 of 2,200
+ * kcal logged" rather than asserting the reader ate nothing. "Left" is a
+ * statement about the target, which the app does know.
  *
- * The "Burned today" breakdown is deliberately NOT here, and its absence
- * is a de-duplication rather than a loss: Food's nutrition drill-down
- * already carries an "Activity today" section with the same figures split
- * by lifting and running, the same total, and the same Nutr1 sentence
- * about not eating them back. Keeping both meant the one surface a user
- * reads every day paid 93px for a copy of the explanation, and paid it
- * only on the days they had actually trained, which is when the card is
- * most crowded.
- *
- * Two rows were removed because nothing could ever render them: a
- * "Plan target" line shown when the header's target differed from the
- * breakdown's — but Home builds the breakdown FROM the header's target
- * (HOME-TARGET-01), so they never differ — and a `nutritionInsight` prop no
- * caller produced.
+ * Everything stays visible, with no disclosure: macros are everyday
+ * information (the 2026-09-08 note in DESIGN_GUIDE). The "Burned today"
+ * breakdown is not here: Food's nutrition drill-down carries it.
  */
 export default function TodayEnergy({
   calories,
@@ -65,172 +56,199 @@ export default function TodayEnergy({
 }) {
   const tCal = targets.finalTarget;
   // Nutr3: below the essential-fat floor the split funds no protein or
-  // carbs, so those two carry NO goal ("No target" on the rings) rather
-  // than a 0 g goal every meal "meets". Fat keeps its floor figure.
+  // carbs, so those two carry NO goal ("No target") rather than a 0 g
+  // goal every meal "meets". Fat keeps its floor figure.
   const tProt = targets.targetInfeasible ? 0 : targets.protein;
   const tCarbs = targets.targetInfeasible ? 0 : targets.carbs;
   const tFat = targets.fat;
-  const calPct = (calories / tCal) * 100;
 
   /**
-   * A confident "0 kcal logged" while the day's meals are still arriving
-   * is a false statement, not a neutral placeholder: it is
-   * indistinguishable from a day with nothing logged, and the reader most
-   * likely to see it is the returning user who logged a full day
-   * yesterday. The guard is `calories === 0` rather than `mealsLoading`
-   * alone so a load that already has a figure keeps showing it instead of
-   * flickering back to a skeleton. Same shape as WeightStepsTiles'
-   * `pending`.
-   *
-   * It gates the RINGS as well as the calorie figure, which is also what
-   * keeps MacroRing's completion flash honest: mounting the rings only
-   * once the day has settled means their `done` baseline is the real one,
-   * so arriving data cannot fire a celebration for a target that was
-   * already met before this render.
+   * A confident "0 kcal" while the day's meals are still arriving is a
+   * false statement, not a neutral placeholder: it is indistinguishable
+   * from a day with nothing logged, and the reader most likely to see it
+   * is the returning user who logged a full day yesterday. The guard is
+   * `calories === 0` rather than `mealsLoading` alone, so a load that
+   * already has a figure keeps showing it instead of flickering back to a
+   * skeleton. Same shape as WeightStepsTiles' `pending`.
    */
   const caloriesPending = mealsLoading && calories === 0;
+  const logged = Math.round(calories || 0);
+  const hasTarget = tCal > 0;
+  const over = hasTarget && logged > tCal;
+  const headline = hasTarget ? Math.abs(tCal - logged) : logged;
+  const headlineUnit = !hasTarget
+    ? `${CALORIE_UNIT} logged`
+    : over
+      ? `${CALORIE_UNIT} over`
+      : `${CALORIE_UNIT} left`;
+
   const nudgeText =
     postWorkoutNudge && postWorkoutNudge.proteinRemaining > 0
       ? postWorkoutNudge.type === "run"
-        ? "Post-run — refuel with carbs + protein soon"
+        ? "Post-run: refuel with carbs and protein soon"
         : // HOME-TARGET-01: grams left to the user's own protein target,
           // not a claimed recovery effect.
-          `Post-lift — ${postWorkoutNudge.proteinRemaining}g protein to your target`
+          `Post-lift: ${postWorkoutNudge.proteinRemaining} g protein to your target`
       : null;
 
-  /* The palette's THEME-AWARE track, not the raw accents. `THEME.macros`
-     is one fixed set for both themes, and on a white card carbs
-     (#EAB308) is 1.92:1 — the FILLED part of the ring, the half that
-     carries the reading, effectively invisible in light mode. The hook
-     exists for exactly this and swaps to #A16207 / #BE185D / #4F7D43
-     there (4.92 / 6.04 / 4.83). Dark is unchanged: `text` is `accent`. */
-  const { text: macroText } = useMacroPalette();
-  const macros = [
+  /* Text colours are the palette's THEME-AWARE step: on a white card the
+     raw carbs yellow is 1.92:1, so light mode swaps to the darker set
+     (useMacroPalette). The bars keep the identity colours, which are
+     fills rather than text. */
+  const { accent, text } = useMacroPalette();
+  const macros: {
+    key: "protein" | "carbs" | "fat";
+    label: string;
+    Icon: MacroIcon;
+    value: number;
+    target: number;
+  }[] = [
     {
+      key: "protein",
       label: "Protein",
+      Icon: Beef,
       value: protein,
       target: tProt,
-      color: macroText.protein,
     },
-    { label: "Carbs", value: carbs, target: tCarbs, color: macroText.carbs },
-    { label: "Fat", value: fat, target: tFat, color: macroText.fat },
+    { key: "carbs", label: "Carbs", Icon: Wheat, value: carbs, target: tCarbs },
+    { key: "fat", label: "Fat", Icon: Avocado, value: fat, target: tFat },
   ];
 
   return (
-    <div className="rounded-2xl bg-card overflow-hidden">
-      <div
-        className="px-4 pt-4 pb-4"
-        style={{
-          background:
-            "linear-gradient(135deg, " +
-            THEME.semantic.nutrition +
-            "08 0%, transparent 70%)",
-        }}
-      >
-        <div className="mb-2.5">
-          <SectionLabel>Today's nutrition</SectionLabel>
-        </div>
+    <section aria-label="Today's food" className={cardClasses()}>
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="text-lg font-bold text-foreground">Food</h2>
+        {/* The one way into the food log: nutrition-tinted, a full 44px
+            target. The orange is the -strong step, not the identity: the
+            identity is a fill colour and reads 2.77:1 as text here. */}
+        <Link
+          to="/food"
+          onClick={() => haptic()}
+          className={buttonClasses({
+            variant: "nutrition-tinted",
+            className: "rounded-full",
+          })}
+        >
+          <Plus className="size-4" aria-hidden="true" />
+          Log food
+        </Link>
+      </div>
 
-        {/* Calories. The target is NAMED rather than implied by a slash:
-            "/ 2,200 kcal" beside a big number leaves the reader to infer
-            which of the two figures is the goal. */}
-        <div className="flex items-baseline justify-between gap-3">
-          <div className="flex items-baseline gap-1.5 min-w-0">
-            {caloriesPending ? (
-              <span role="status" aria-label="Today's calories still loading">
-                <Skeleton className="h-7 w-20" />
-              </span>
-            ) : (
-              <span className="text-3xl font-extrabold font-mono tabular-nums leading-none text-foreground">
-                {formatCalories(calories || 0)}
-              </span>
-            )}
-            <span className="text-xs text-muted-foreground">
-              {CALORIE_UNIT} logged
+      <div className="mt-3 flex items-center gap-4">
+        <ProgressRing
+          value={hasTarget ? logged / tCal : 0}
+          size={84}
+          stroke={10}
+          color={THEME.semantic.nutrition}
+        />
+        <div className="min-w-0">
+          {caloriesPending ? (
+            <span role="status" aria-label="Today's calories still loading">
+              <Skeleton className="h-9 w-28" />
             </span>
-          </div>
-          <span className="text-xs text-muted-foreground whitespace-nowrap">
-            Target{" "}
+          ) : (
+            <p className="flex items-baseline gap-1.5">
+              <span className="text-4xl font-extrabold font-mono tabular-nums leading-none text-foreground">
+                {formatCalories(headline)}
+              </span>
+              <span className="text-sm font-semibold text-muted-foreground">
+                {headlineUnit}
+              </span>
+            </p>
+          )}
+          {/* The target is NAMED in words, not implied by a slash. */}
+          <p className="mt-1.5 text-sm font-medium text-muted-foreground">
+            <span className="font-mono tabular-nums">
+              {formatCalories(logged)}
+            </span>{" "}
+            of{" "}
             <span className="font-mono tabular-nums">
               {formatCalories(tCal)}
             </span>{" "}
-            {CALORIE_UNIT}
-          </span>
-        </div>
-
-        {(() => {
-          const { barWidth, tickPct } = energyBarGeometry(calPct);
-          return (
-            <div className="relative h-2.5 mt-2.5">
-              {/* Same neutral groove as the macro rings below. `bg-muted`
-                  measures 1.06:1 against the card, so an unfilled bar was
-                  as invisible as the rings were. */}
-              <div
-                className="absolute inset-0 rounded-full overflow-hidden"
-                style={{
-                  backgroundColor: "hsl(var(--muted-foreground) / 0.22)",
-                }}
-              >
-                <motion.div
-                  initial={{ width: 0 }}
-                  animate={{ width: barWidth + "%" }}
-                  transition={{ duration: 0.7, ease: "easeOut" }}
-                  className="h-full rounded-full"
-                  style={{ background: THEME.semantic.nutrition }}
-                />
-              </div>
-              {/* The target tick appears only once the track has stretched
-                  past target — under target the track's end IS the target.
-                  Centred on its position so a 2px marker lands on the value
-                  rather than beside it. */}
-              {tickPct !== null && (
-                <div
-                  aria-hidden="true"
-                  className="absolute top-0 h-full w-0.5 rounded-full -translate-x-1/2"
-                  style={{
-                    left: tickPct + "%",
-                    backgroundColor: "hsl(var(--muted-foreground))",
-                  }}
-                />
-              )}
-            </div>
-          );
-        })()}
-
-        {/* The three macros, always visible. */}
-        <div className="mt-3.5 grid grid-cols-3 gap-1">
-          {caloriesPending
-            ? macros.map((m) => (
-                <div
-                  key={m.label}
-                  className="flex flex-col items-center gap-1.5"
-                  aria-hidden="true"
-                >
-                  <Skeleton className="size-16 rounded-full" />
-                  <Skeleton className="h-3 w-12" />
-                  <Skeleton className="h-3 w-14" />
-                </div>
-              ))
-            : macros.map((m) => (
-                <MacroRing
-                  key={m.label}
-                  value={m.value}
-                  target={m.target}
-                  color={m.color}
-                  label={m.label}
-                  unit="g"
-                />
-              ))}
+            {CALORIE_UNIT} logged
+          </p>
         </div>
       </div>
 
-      {/* A target below the essential-fat floor's own cost: the rings
-          above would otherwise read "Target 0g" as if 0 g were the goal.
+      <div className="mt-4 border-t border-border pt-3 grid grid-cols-3 gap-3">
+        {macros.map((m) => {
+          const share = m.target > 0 ? Math.min(1, m.value / m.target) : 0;
+          /* Reached means within 10% of the target either way, the rule
+             the macro rings used (`macroRingState`): 200 g of a 160 g
+             protein target is over it, not "reached". */
+          const met = m.target > 0 && macroRingState(m.value, m.target).done;
+          return (
+            <div
+              key={m.key}
+              data-macro={m.key}
+              className="min-w-0"
+              aria-label={
+                caloriesPending
+                  ? `${m.label} loading`
+                  : m.target > 0
+                    ? `${m.label} ${Math.round(m.value)} of ${m.target} grams${met ? ", target reached" : ""}`
+                    : `${m.label} ${Math.round(m.value)} grams, no target`
+              }
+              role="group"
+            >
+              <p className="flex items-center gap-1 text-xs font-semibold text-muted-foreground">
+                <m.Icon
+                  className="size-3.5 shrink-0"
+                  style={{ color: text[m.key] }}
+                  aria-hidden="true"
+                />
+                {m.label}
+              </p>
+              {caloriesPending ? (
+                <Skeleton className="mt-1.5 h-5 w-16" />
+              ) : (
+                <p
+                  className="mt-1 text-sm text-muted-foreground"
+                  aria-hidden="true"
+                >
+                  <span className="text-base font-extrabold font-mono tabular-nums text-foreground">
+                    {Math.round(m.value)}
+                  </span>
+                  {m.target > 0 ? (
+                    <>
+                      {" / "}
+                      <span className="font-mono tabular-nums">
+                        {m.target}
+                      </span>{" "}
+                      g
+                    </>
+                  ) : (
+                    " g · No target"
+                  )}
+                </p>
+              )}
+              <div
+                className="mt-1.5 h-1.5 rounded-full overflow-hidden"
+                style={{
+                  backgroundColor: "hsl(var(--muted-foreground) / 0.22)",
+                }}
+                aria-hidden="true"
+              >
+                <div
+                  className="h-full rounded-full motion-safe:transition-[width] motion-safe:duration-700"
+                  style={{
+                    width: `${share * 100}%`,
+                    backgroundColor: accent[m.key],
+                  }}
+                />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* A target below the essential-fat floor's own cost: the figures
+          above would otherwise read "/ 0 g" as if 0 g were the goal.
           Same sentence as Settings and Food (macroInfeasibility.ts). */}
       {targets.targetInfeasible && (
         <p
           role="status"
-          className="px-4 py-2.5 text-xs leading-snug border-t border-border/30"
+          className="mt-3 text-xs leading-snug"
           style={{ color: "hsl(var(--warning-strong))" }}
         >
           {macroInfeasibilityMessage(targets.minFeasibleKcal)}
@@ -239,28 +257,10 @@ export default function TodayEnergy({
 
       {/* Situational note — never a second way into the food log. */}
       {nudgeText && (
-        <p className="px-4 pb-3 text-xs font-medium text-center text-nutrition-strong">
+        <p className="mt-3 text-xs font-medium text-nutrition-strong">
           {nudgeText}
         </p>
       )}
-
-      {/* The one logging action (#973): its own control, nutrition-orange,
-          full 44px target, haptic on tap, for every segment.
-
-          The orange is the `-strong` step, not the identity. Measured on
-          the rendered card, the identity reads 2.77:1 here — the worst
-          text contrast in the app outside decorative art — because 14px
-          semibold needs 4.5:1 and #D9884E is a fill colour. The nudge note
-          above had the same problem at 12px. */}
-      <Link
-        to="/food"
-        onClick={() => haptic()}
-        className="flex items-center justify-center gap-1.5 w-full min-h-[44px] border-t border-border/30 text-sm font-semibold text-nutrition-strong motion-safe:active:scale-[0.99] transition-transform"
-        aria-label="Log food"
-      >
-        <UtensilsCrossed className="size-4" aria-hidden="true" />
-        Log food
-      </Link>
-    </div>
+    </section>
   );
 }

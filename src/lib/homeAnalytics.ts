@@ -30,6 +30,7 @@ export type HomeCard =
   | "today_workout"
   | "today_run"
   | "first_meal"
+  | "rest_tomorrow"
   | "trial_status"
   | "trajectory";
 

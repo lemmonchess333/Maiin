@@ -73,7 +73,7 @@ async function loadPlugin(): Promise<Plugin | null> {
   }
 }
 
-const CARD_BG = "#1A1A1F" as const; // dark surface — the run overlay is always-dark
+const CARD_BG = "#17171B" as const; // THEME.surface — the run overlay is always-dark
 /* Literal hex is DELIBERATE here (DS2 exemption): the Live Activity plugin
    renders natively and cannot resolve CSS custom properties, and this
    overlay is always-dark, where #8E8E93 measures ~4.9:1 — passing. */

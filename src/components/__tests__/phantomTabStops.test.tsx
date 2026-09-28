@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from "vitest";
 import { render } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Home, Dumbbell } from "lucide-react";
+import { HomeTabIcon, TrainTabIcon } from "@/components/icons/TabIcons";
 import BottomNavigation from "../BottomNavigation";
 import RestDayCard from "../home/RestDayCard";
 import { BadgeGrid } from "@/features/streaks/BadgeGrid";
@@ -139,8 +139,8 @@ describe("shipped surfaces put no unnamed stop in the tab order", () => {
       <MemoryRouter>
         <BottomNavigation
           tabs={[
-            { to: "/", icon: Home, label: "Home" },
-            { to: "/program", icon: Dumbbell, label: "Train" },
+            { to: "/", icon: HomeTabIcon, label: "Home" },
+            { to: "/program", icon: TrainTabIcon, label: "Train" },
           ]}
           pathname="/"
           unreadCount={0}
@@ -159,8 +159,8 @@ describe("shipped surfaces put no unnamed stop in the tab order", () => {
       <MemoryRouter>
         <BottomNavigation
           tabs={[
-            { to: "/", icon: Home, label: "Home" },
-            { to: "/program", icon: Dumbbell, label: "Train" },
+            { to: "/", icon: HomeTabIcon, label: "Home" },
+            { to: "/program", icon: TrainTabIcon, label: "Train" },
           ]}
           pathname="/"
           unreadCount={0}

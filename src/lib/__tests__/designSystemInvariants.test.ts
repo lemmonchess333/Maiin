@@ -332,10 +332,12 @@ describe("DS ratchets — surface-level drift", () => {
   // detail sub-pages) are grandfathered here and burn down as they adopt
   // the shell.
   //
-  // Two sanctioned exceptions to `text-h1`, both pinned below rather than
-  // counted here: the Home brand WORDMARK (tracked uppercase — a brand
-  // mark, not a page name) and the `PageShell` primitive itself, whose h1
-  // takes its class from a variable the regex cannot read.
+  // One sanctioned exception to `text-h1`, pinned below rather than
+  // counted here: the `PageShell` primitive itself, whose h1 takes its
+  // class from a variable the regex cannot read. There used to be a
+  // second, Home's brand WORDMARK (tracked uppercase); DS3 retired it for
+  // a plain "Today" title with the date above it, so the primitive now
+  // has no way off the token at all.
   const OFF_SCALE_H1_BASELINE = 22;
   const H1_PRIMITIVE = "src/components/ui/PageShell.tsx";
   it("<h1> elements off the H1 token do not increase", () => {
@@ -362,8 +364,14 @@ describe("DS ratchets — surface-level drift", () => {
     expect(shell).toMatch(
       /text-h1 leading-tight tracking-tight font-extrabold/
     );
-    // And the brand variant is the ONE way off the token: tracked uppercase.
-    expect(shell).toMatch(/tracking-\[0\.14em\] uppercase/);
+    // And nothing takes the title off it: the tracked-uppercase brand
+    // variant, the one way off the token, is gone (DS3). Checked on the
+    // code alone, because the header comment still tells its history.
+    const code = shell
+      .replace(/\/\*[\s\S]*?\*\//g, " ")
+      .replace(/\/\/[^\n]*/g, " ");
+    expect(code).not.toMatch(/uppercase/);
+    expect(code).not.toMatch(/\bbrand\b/);
   });
 
   it("every route page renders its title through PageShell, not a local <h1>", () => {
@@ -476,19 +484,44 @@ describe("DS ratchets — surface-level drift", () => {
     );
   });
 
-  it("SectionLabel's two tiers share a size and differ on every other axis (positive pin)", () => {
-    // The ratchet above sends labels to the primitive; this is what the
-    // primitive promises. One pixel of difference between the tiers is
-    // the drift being closed, so the size is pinned EQUAL and the rest
-    // pinned different.
+  it("SectionLabel's caption tier is sentence case, and the section tier stays 12px (positive pin)", () => {
+    // DS3 (2026-09-27): capitals are for table column headers. A caption
+    // inside a card is written the way it is said, so the tier carries no
+    // `uppercase` and no letter-spacing. The section tier is the legacy
+    // group label (pinned below to the Food surfaces awaiting their
+    // redesign); both stay on the 12px micro step.
     const src = readFileSync(resolve(repoRoot, LABEL_PRIMITIVE), "utf8");
     expect(src).toMatch(
-      /caption: "text-xs font-semibold tracking-wider text-muted-foreground"/
+      /caption: "text-xs font-semibold text-muted-foreground"/
     );
     expect(src).toMatch(
-      /section: "text-xs font-bold tracking-widest text-foreground"/
+      /section: "uppercase text-xs font-bold tracking-widest text-foreground"/
     );
     expect(src).not.toMatch(/text-caption/);
+  });
+
+  /* The capital-letter group label is retired (DS3). A group of cards or
+     rows opens with a `SectionHeading` — a real heading, 20px on a page,
+     16px in a sheet, card or form. The legacy `tier="section"` label
+     survives only on the Food surfaces, which move over in the Food
+     redesign; nothing else may pick it up. */
+  const SECTION_TIER_ALLOWED = new Set([
+    "src/components/food/HeroDrillDownSheet.tsx",
+    "src/components/food/FoodSuggestionsDropdown.tsx",
+  ]);
+  it("the legacy section-tier label appears only on the Food surfaces awaiting their redesign", () => {
+    const { byFile } = scan(
+      (src) => (src.match(/tier="section"/g) ?? []).length
+    );
+    const outside = [...byFile.keys()].filter(
+      (f) => !SECTION_TIER_ALLOWED.has(f)
+    );
+    expect(
+      outside,
+      `tier="section" outside the Food carve-out — head the group with ` +
+        `<SectionHeading> (size "compact" in a sheet, card or form):\n  ` +
+        outside.join("\n  ")
+    ).toEqual([]);
   });
 
   /* Inline banners. `Banner` and `SustainedOfflineBanner` each carried
@@ -553,28 +586,31 @@ describe("DS ratchets — surface-level drift", () => {
     }
   });
 
-  /* A section label carries no margin of its own — its group's stack
-     places it. A label that brings `mt-6 mb-2` to a container that already
-     spaces its children is how one page ends up with 56px between sections
-     while another gets 16. Analytics is fully burned down (its four page
-     sections and PerformanceSection all take their placement from a
-     `space-y-2` section stack); the four left are Shoes, run setup, route
-     setup and the challenge list. Counted so no new label picks the habit
-     up. Multi-line openers included. */
-  const SECTION_LABEL_MARGIN_BASELINE = 4;
-  it("section-tier labels with their own vertical margin do not increase", () => {
+  /* A section heading carries no margin of its own — its group's stack
+     places it. A heading that brings `mt-6 mb-2` to a container that
+     already spaces its children is how one page ends up with 56px between
+     sections while another gets 16. Analytics is fully burned down (its
+     four page sections and PerformanceSection all take their placement
+     from a `space-y-2` section stack); the five left are Shoes, run
+     setup, route setup, the challenge list and Programme settings' field
+     groups. Counted across `SectionHeading` and the legacy section-tier
+     label, so neither picks the habit up. Multi-line openers included. */
+  const SECTION_LABEL_MARGIN_BASELINE = 5;
+  it("section headings with their own vertical margin do not increase", () => {
     const { total, byFile } = scan((src) => {
       let n = 0;
-      for (const m of src.matchAll(/<SectionLabel\b([^>]*)>/g)) {
-        const attrs = m[1];
-        if (!/tier="section"/.test(attrs)) continue;
+      for (const m of src.matchAll(
+        /<(SectionHeading|SectionLabel)\b([^>]*)>/g
+      )) {
+        const attrs = m[2];
+        if (m[1] === "SectionLabel" && !/tier="section"/.test(attrs)) continue;
         const c = /className="([^"]*)"/.exec(attrs);
         if (c && /\bm[tb]-[0-9.]+\b/.test(c[1])) n++;
       }
       return n;
     });
     expectRatchet(
-      "section label self-margin",
+      "section heading self-margin",
       total,
       SECTION_LABEL_MARGIN_BASELINE,
       byFile
