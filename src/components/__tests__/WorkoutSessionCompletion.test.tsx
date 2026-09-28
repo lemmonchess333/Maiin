@@ -363,6 +363,43 @@ describe("the new-best moment (DS3)", () => {
       expect(screen.queryByTestId("new-best-moment")).toBeNull()
     );
   });
+
+  it("finishes with the best from before the workout, however many steps it took", async () => {
+    // Three rising sets in one rep range are three moments, each against
+    // the set before it, which the moment dates "today". The finish sums
+    // up the workout, so its "Was" is the best the lifter came in with:
+    // "Was 65 kg × 8" there reads as the old best and is not.
+    seedBest();
+    await act(async () => {
+      openSession();
+    });
+    const lift = (set: number, weight: string) => {
+      fireEvent.change(
+        screen.getByRole("spinbutton", { name: `Set ${set} weight` }),
+        { target: { value: weight } }
+      );
+      fireEvent.click(
+        screen.getAllByRole("button", { name: "Mark set complete" })[0]
+      );
+    };
+    lift(1, "62.5");
+    lift(2, "65");
+    // The first set's card may still be leaving as the second arrives.
+    expect(
+      screen.getAllByTestId("new-best-moment").map((card) => card.textContent)
+    ).toContainEqual(expect.stringContaining("Was 62.5 kg × 8, today"));
+    // The last set finishes the workout.
+    lift(3, "67.5");
+    await vi.waitFor(() =>
+      expect(screen.getByRole("button", { name: "Save workout" })).toBeVisible()
+    );
+    const bests = screen
+      .getByRole("heading", { name: /New bests/ })
+      .closest("section")!;
+    expect(bests).toHaveTextContent("67.5 kg × 8");
+    expect(bests).toHaveTextContent("Was 60 kg × 8");
+    expect(bests).not.toHaveTextContent("Was 65 kg × 8");
+  });
 });
 
 it("rebuilds corrected records from full history without dropping an older valid record", async () => {

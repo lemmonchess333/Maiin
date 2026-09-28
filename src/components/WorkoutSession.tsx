@@ -69,6 +69,7 @@ import {
   buildPRMap,
   bumpSessionCounts,
   checkSetPR,
+  exerciseBest,
   type SetPR,
   recordSetBest,
   buildVolumeBest,
@@ -1063,10 +1064,15 @@ export default function WorkoutSession({
         };
         setPrMap(nextMap);
         if (prResult) {
+          const bestBeforeSession = exerciseBest(
+            recordBaseline.current,
+            exName
+          );
           setPrResults((previous) =>
             new Map(previous).set(`${exName}:${prBucket}`, {
               ...prResult,
               setKey: `${currentExIndex}:${setIdx}`,
+              bestBeforeSession,
             })
           );
           if (prResult.kind === "best") {
