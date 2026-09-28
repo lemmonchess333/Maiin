@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useFoodAnalysis } from "@/hooks/useFoodAnalysis";
 import { useCountUp } from "@/hooks/useCountUp";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
@@ -194,9 +194,12 @@ export default function FoodAnalyzer({
      by the time the await resolves. Reading the ref answers "is the
      modal still open NOW?" — without it, an X-out during a slow scan
      followed by a late failure would park `scanFailure` on a CLOSED
-     modal, and the next scan session would open onto a stale verdict. */
+     modal, and the next scan session would open onto a stale verdict.
+     A layout effect, so the ref changes in the same commit as the modal:
+     a passive effect runs later, and a barcode read in between would
+     find the scanner on screen but the ref still closed. */
   const cameraOpenRef = useRef(cameraOpen);
-  useEffect(() => {
+  useLayoutEffect(() => {
     cameraOpenRef.current = cameraOpen;
   }, [cameraOpen]);
   /* The scan's completion beat: after a USABLE analysis lands, the
