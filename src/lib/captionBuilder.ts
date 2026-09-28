@@ -7,9 +7,9 @@ import type { DayType } from "@/lib/types";
  *
  * Sentence case for the decorative eyebrow: "Lift day · +150 kcal" reads
  * as information rather than a heading, which matches how the caption is
- * actually used (an info line above a bigger number). Reserves all-caps for
- * structural dividers (BREAKFAST, PROTEIN, etc.) so uppercase stays a real
- * signal instead of ambient noise.
+ * actually used (an info line above a bigger number). Every label on the
+ * Food page is sentence case now ("Protein", "kcal left"); the capitals
+ * went in DS3 and the Food pass.
  *
  * Pre-F4 the suffix was a vague noun — "+150 Recovery" / "+200 Fuel" —
  * which omitted the unit. Users read "Fuel" as the metric being shown

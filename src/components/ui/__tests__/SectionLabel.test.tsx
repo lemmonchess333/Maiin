@@ -5,8 +5,9 @@
  *   1. The caption tier (default) is 12px semibold muted, in SENTENCE
  *      case — no `uppercase`, no letter-spacing. DS3 (2026-09-27) took
  *      the capitals off: a stat's name reads the way it is written.
- *   2. The section tier is the legacy uppercase group label, kept only on
- *      the Food surfaces until the Food redesign; groups everywhere else
+ *   2. The section tier is the small group label inside a sheet or list
+ *      (the Food details sheet, the food suggestions): 12px bold in the
+ *      foreground, sentence case since the Food pass. Groups on a page
  *      open with a `SectionHeading`. Both tiers are 12px.
  *   3. `className` rides through (spacing + token colour overrides like
  *      text-running win over the muted default via twMerge).
@@ -33,15 +34,16 @@ describe("SectionLabel", () => {
     expect(tokens.some((k) => k.startsWith("tracking-"))).toBe(false);
   });
 
-  it("keeps the legacy section tier uppercase, bold and in the foreground — same size", () => {
+  it("keeps the section tier bold and in the foreground, same size, sentence case", () => {
     render(<SectionLabel tier="section">Your pantry</SectionLabel>);
     const el = screen.getByText("Your pantry");
     const tokens = el.className.split(/\s+/);
     expect(tokens).toContain("text-xs");
     expect(tokens).toContain("font-bold");
-    expect(tokens).toContain("tracking-widest");
     expect(tokens).toContain("text-foreground");
-    expect(tokens).toContain("uppercase");
+    // The Food pass took the capitals and letter-spacing off this tier too.
+    expect(tokens).not.toContain("uppercase");
+    expect(tokens.some((k) => k.startsWith("tracking-"))).toBe(false);
     // Nothing from the caption tier leaks across, and no 11px step remains.
     expect(tokens).not.toContain("font-semibold");
     expect(tokens).not.toContain("text-muted-foreground");

@@ -88,7 +88,7 @@ export default function CalorieRing({
 
   /* Colour stays purple in both modes — the toggle changes the displayed
      value, not the ring's visual identity. The centre label text is the
-     only mode indicator ("KCAL LEFT" vs "KCAL EATEN").
+     only mode indicator ("kcal left" vs "kcal eaten").
 
      Theme split (the chip's #1728 pattern, applied to the number): DARK
      keeps the brand purple on the dark card; LIGHT uses the deeper ring
@@ -377,7 +377,7 @@ export default function CalorieRing({
                   over the hero photo. Either way it stays one purple
                   identity. */}
               <span
-                className="mt-1.5 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-caption font-semibold uppercase tracking-wider"
+                className="mt-1.5 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-caption font-semibold"
                 style={{
                   color: chipTextColor,
                   backgroundColor: chipBackground,

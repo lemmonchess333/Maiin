@@ -1,4 +1,7 @@
 import { describe, it, expect } from "vitest";
+import { readFileSync } from "node:fs";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { parseFoodText, getFoodSuggestions } from "@/lib/nlFoodParser";
 
 describe("parseFoodText", () => {
@@ -128,7 +131,7 @@ describe("parseFoodText", () => {
 
 describe("parseFoodText — mass/volume portion handling (PR O)", () => {
   it("scales macros against serving grams for '200g chicken'", () => {
-    // chicken serving = "3 oz cooked (85g)", 165 cal
+    // chicken serving = "85g cooked", 165 cal
     // 200g / 85g ≈ 2.353x → ~388 cal
     const result = parseFoodText("200g chicken");
     expect(result).toHaveLength(1);
@@ -143,7 +146,7 @@ describe("parseFoodText — mass/volume portion handling (PR O)", () => {
   });
 
   it("handles 'kg' suffix: '1.5kg rice'", () => {
-    // rice serving = "1 cup cooked (158g)", 200 cal
+    // rice serving = "158g cooked", 200 cal
     // 1500g / 158g ≈ 9.49x → ~1899 cal
     const result = parseFoodText("1.5kg rice");
     expect(result).toHaveLength(1);
@@ -153,7 +156,7 @@ describe("parseFoodText — mass/volume portion handling (PR O)", () => {
   });
 
   it("scales macros against serving ml for '150ml milk'", () => {
-    // milk serving = "1 cup (240ml)", 150 cal
+    // milk serving = "240ml", 150 cal
     // 150ml / 240ml = 0.625x → ~94 cal
     const result = parseFoodText("150ml milk");
     expect(result).toHaveLength(1);
@@ -164,7 +167,7 @@ describe("parseFoodText — mass/volume portion handling (PR O)", () => {
 
   it("handles 'l' suffix: '1l water' (zero-cal beverages still scale cleanly)", () => {
     const result = parseFoodText("1l orange juice");
-    // orange juice serving = "1 cup (240ml)", 110 cal
+    // orange juice serving = "240ml", 110 cal
     // 1000ml / 240ml ≈ 4.17x → ~459 cal
     expect(result).toHaveLength(1);
     expect(result[0].calories).toBeGreaterThan(400);
@@ -320,5 +323,34 @@ describe("parseFoodText — conjunctions", () => {
       (r) => r.name
     );
     expect(names).toEqual(["Eggs (x2)", "Toast", "Banana"]);
+  });
+});
+
+describe("built-in servings lead with grams or ml", () => {
+  /* The app weighs food in grams: the diary, the scan result and the
+     edit sheet all do. The built-in list opened with American measures
+     ("3 oz cooked (85g)", "1 cup (240ml)") for about 100 foods, so the
+     suggestions under the text box said ounces to people who never
+     use them. A weighed serving now leads with its metric amount; a
+     counted one ("1 large (50g)", "1 tbsp (14g)") keeps its count. */
+  const source = readFileSync(
+    resolve(dirname(fileURLToPath(import.meta.url)), "../nlFoodParser.ts"),
+    "utf8"
+  );
+  const servings = [...source.matchAll(/serving: "([^"]+)"/g)].map((m) => m[1]);
+
+  it("has no serving measured in ounces or cups", () => {
+    expect(servings.length).toBeGreaterThan(150);
+    expect(servings.filter((s) => /\b(oz|cups?)\b/.test(s))).toEqual([]);
+  });
+
+  it("shows the grams first in a suggestion", () => {
+    const chicken = getFoodSuggestions("chicken breast")[0];
+    expect(chicken.serving).toBe("85g cooked");
+  });
+
+  it("still scales a weighed portion against the leading grams", () => {
+    // 85g cooked, 165 cal: 170g is exactly two servings.
+    expect(parseFoodText("170g chicken breast")[0].calories).toBe(330);
   });
 });

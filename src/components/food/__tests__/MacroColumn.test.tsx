@@ -29,7 +29,7 @@ describe("MacroColumn — tap contract", () => {
         Icon={Beef}
         consumed={42}
         target={120}
-        label="PROTEIN"
+        label="Protein"
         color="#000"
         mode="eaten"
         onTap={onTap}
@@ -46,7 +46,7 @@ describe("MacroColumn — tap contract", () => {
         Icon={Beef}
         consumed={42}
         target={120}
-        label="PROTEIN"
+        label="Protein"
         color="#000"
         mode="eaten"
       />
@@ -166,7 +166,7 @@ describe("MacroColumn — accessible toggle label", () => {
         Icon={Beef}
         consumed={42}
         target={120}
-        label="PROTEIN"
+        label="Protein"
         color="#000"
         mode={mode}
       />
@@ -200,7 +200,7 @@ describe("MacroColumn — accessible toggle label", () => {
         Icon={Beef}
         consumed={10}
         target={200}
-        label="CARBS"
+        label="Carbs"
         color="#000"
         mode="eaten"
       />
@@ -225,7 +225,7 @@ describe("MacroColumn — numeric hierarchy", () => {
         Icon={Beef}
         consumed={42}
         target={120}
-        label="PROTEIN"
+        label="Protein"
         color="#000"
         mode="eaten"
       />
@@ -264,7 +264,7 @@ describe("MacroColumn — the goal-reached state stays in the accessible name", 
         Icon={Beef}
         consumed={consumed}
         target={target}
-        label="PROTEIN"
+        label="Protein"
         color="#000"
         mode="eaten"
       />
@@ -309,7 +309,7 @@ describe("MacroColumn — the bar fades only when it is empty", () => {
         Icon={Beef}
         consumed={consumed}
         target={150}
-        label="PROTEIN"
+        label="Protein"
         color="#EC4899"
         mode={mode}
       />
