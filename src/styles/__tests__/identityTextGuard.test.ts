@@ -108,7 +108,9 @@ const EXPECTED_BARE_USES: Record<(typeof IDENTITY)[number], number> = {
   // summary's rings.
   // 2026-09-27: 16 → 15. The weekly recap's dumbbell icon, for the same
   // reason as its footprints: a coloured rule marks the number now.
-  lifting: 15, // Redesign consolidates onboarding option icons.
+  // 2026-09-27: 15 → 16. The brand mark before Home's date (BrandMark):
+  // a solid hexagon, an ICON (3:1 non-text), in the literal brand purple.
+  lifting: 16, // Redesign consolidates onboarding option icons.
   // 2026-09-27: 4 → 5. Analytics' Go deeper tiles: the Food tile's apple
   // ICON; its words are foreground.
   // 2026-09-27: 5 → 4. The weekly recap's food icon, retired with its

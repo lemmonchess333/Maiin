@@ -83,6 +83,15 @@ export function formatWeekdayDayMonth(d: Date): string {
   });
 }
 
+/**
+ * The spaces in a short phrase made non-breaking, so a line that wraps
+ * keeps "180 g", "30 Aug" or "target 2,350" whole. A lone "g" under
+ * "target 180" reads as a second, unexplained figure.
+ */
+export function keepTogether(phrase: string): string {
+  return phrase.replace(/ /g, "\u00A0");
+}
+
 /** Format distance, showing "—" when zero/null */
 export function formatDistance(km: number | null | undefined): string {
   if (!km || km <= 0) return "\u2014";

@@ -38,10 +38,8 @@ const read = (p: string) => readFileSync(p, "utf8");
  * that added this comment.
  */
 const CHARTS: [string, string][] = [
-  ["src/components/analytics/VolumeChart.tsx", "<BarChart"],
   ["src/components/analytics/TrainingLoadCard.tsx", "<ComposedChart"],
   ["src/components/analytics/PerformanceIndexChart.tsx", "<AreaChart"],
-  ["src/components/run/RunningHistorySection.tsx", "<BarChart"],
   ["src/components/progress/CalorieBalanceChart.tsx", "<BarChart"],
   ["src/components/analytics/SplitsBarChart.tsx", "<BarChart"],
   ["src/components/analytics/ElevationProfile.tsx", "<AreaChart"],
@@ -102,17 +100,5 @@ describe("every keyboard-reachable chart is named", () => {
         'no accessibilityLayer={false} is a focusable role="application" ' +
         "region that announces nothing"
     ).toEqual([]);
-  });
-
-  it("the running chart's label is its visible caption, not a second name", () => {
-    /* A chart called one thing on screen and another to a reader is two
-       charts. This one has a caption that already varies with the bin and
-       the reader's unit, so the label is that same expression. */
-    const src = read("src/components/run/RunningHistorySection.tsx");
-    const caption = "{BIN_CAPTION[granularity]} ({distanceUnitLabel(unit)})";
-    expect(src).toContain(caption);
-    expect(src).toMatch(
-      /aria-label=\{`\$\{BIN_CAPTION\[granularity\]\} \(\$\{distanceUnitLabel\(unit\)\}\)`\}/
-    );
   });
 });

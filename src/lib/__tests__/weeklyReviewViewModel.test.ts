@@ -29,7 +29,7 @@ function base(overrides: Partial<WeeklyReviewData> = {}): WeeklyReviewData {
     hideWeightNumber: false,
     established: true,
     weekAhead: { lifts: 4, runs: 3, phaseNote: null },
-    goalProgram: null,
+    goalProfile: null,
     now: new Date("2026-06-28T10:00:00"),
     ...overrides,
   };
@@ -356,7 +356,12 @@ describe("body (trend + projection reuse + hide-the-number)", () => {
     const r = buildWeeklyReview(
       base({
         weighIns: history,
-        goalProgram: { startWeight: 80, goal: "cut" }, // goal 75kg
+        // The user's own goal: 75 kg at half a kilo a week.
+        goalProfile: {
+          goalWeightKg: 75,
+          weeklyRateKg: -0.5,
+          program: { goal: "cut" },
+        },
       })
     );
     expect(r?.body).not.toBeNull();
@@ -371,7 +376,11 @@ describe("body (trend + projection reuse + hide-the-number)", () => {
       base({
         weighIns: history,
         hideWeightNumber: true,
-        goalProgram: { startWeight: 80, goal: "cut" },
+        goalProfile: {
+          goalWeightKg: 75,
+          weeklyRateKg: -0.5,
+          program: { goal: "cut" },
+        },
       })
     );
     expect(r?.body?.hidden).toBe(true);

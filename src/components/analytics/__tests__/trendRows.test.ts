@@ -29,7 +29,7 @@ describe("weightRow", () => {
     expect(row.value).toBe("81.6");
     expect(row.unit).toBe("kg");
     // en-GB spells September "Sept" in current ICU and "Sep" in older.
-    expect(row.detail).toMatch(/^Down 0\.5 kg since 1 Sept?$/);
+    expect(row.detail).toMatch(/^Down 0\.5\u00A0kg since 1\u00A0Sept?$/);
     expect(row.series).toEqual([82.1, 81.9, 81.6]);
     expect(row.page).toBe("body");
   });
@@ -43,7 +43,7 @@ describe("weightRow", () => {
     })!;
     expect(row.value).toBe("179.9");
     expect(row.unit).toBe("lbs");
-    expect(row.detail).toMatch(/^Down 1\.1 lbs since /);
+    expect(row.detail).toMatch(/^Down 1\.1\u00A0lbs since /);
   });
 
   it("under hide-the-number, says which way and never a figure", () => {
@@ -82,7 +82,7 @@ describe("weightRow", () => {
       unit: "kg",
       hideNumber: false,
     })!;
-    expect(row.detail).toMatch(/^Last weighed 26 Sept?$/);
+    expect(row.detail).toMatch(/^Last weighed 26\u00A0Sept?$/);
     expect(row.series).toBeUndefined();
   });
 
@@ -129,10 +129,10 @@ describe("nutritionRows", () => {
   it("gives calories and protein against their targets", () => {
     const [calories, protein] = nutritionRows(base);
     expect(calories.label).toBe("Calories");
-    expect(calories.detail).toMatch(/^Daily average · target 2.200$/);
+    expect(calories.detail).toMatch(/^Daily average · target\u00A02.200$/);
     expect(calories.value).toMatch(/^1.790$/);
     expect(calories.unit).toBe("kcal");
-    expect(protein.detail).toBe("Daily average · target 163 g");
+    expect(protein.detail).toBe("Daily average · target\u00A0163\u00A0g");
     expect(protein.value).toBe("125");
     expect(protein.unit).toBe("g");
     expect(calories.page).toBe("food");

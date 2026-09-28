@@ -24,6 +24,11 @@ import MomentumCheckinCard from "@/components/review/MomentumCheckinCard";
 import RecapStory, { type RecapSlide } from "@/components/review/RecapStory";
 import { CALORIE_UNIT } from "@/utils/formatNutrition";
 import { cn } from "@/lib/utils";
+import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
+
+/** How long the recap's counts take: the Food ring's count, not the
+ *  counter's slower default, so they land before the eye moves on. */
+const COUNT_SECONDS = 0.6;
 
 /** One of the week's numbers, big, over the words that say what it is,
  *  with a rule in the colour of its job (DS3's recap card). */
@@ -36,7 +41,8 @@ function StatRow({
 }: {
   /** A background utility for the rule: `bg-lifting`, `bg-running`… */
   rule: string;
-  value: string;
+  /** The figure, or its count-up (`AnimatedNumber`). */
+  value: ReactNode;
   caption: string;
   /** False for a word ("Steady"), which does not take the numeral face. */
   numeral?: boolean;
@@ -106,24 +112,44 @@ function YourWeek({
         {training && (training.lifts || training.runs) && (
           <StatRow
             rule="bg-lifting"
-            value={String(
-              (training.lifts?.done ?? 0) + (training.runs?.count ?? 0)
-            )}
+            /* The week's three counts count up as the recap opens (DS3):
+               the moment the numbers are the news. Plain text under
+               Reduce Motion, from the first paint. */
+            value={
+              <AnimatedNumber
+                value={
+                  (training.lifts?.done ?? 0) + (training.runs?.count ?? 0)
+                }
+                duration={COUNT_SECONDS}
+              />
+            }
             caption={sessionsCaption(training)}
           />
         )}
         {training?.lifts && (
           <StatRow
             rule="bg-lifting"
-            value={training.lifts.tonnageKg.toLocaleString()}
+            value={
+              <AnimatedNumber
+                value={training.lifts.tonnageKg}
+                duration={COUNT_SECONDS}
+              />
+            }
             caption="kg lifted"
           />
         )}
         {training?.runs && (
           <StatRow
             rule="bg-running"
-            /* Stored KILOMETRES, shown in the reader's unit. */
-            value={storedKmLabel(training.runs.km, unit, false, 1)}
+            /* Stored KILOMETRES, shown in the reader's unit at every
+               step of the count. */
+            value={
+              <AnimatedNumber
+                value={training.runs.km}
+                format={(km) => storedKmLabel(km, unit, false, 1)}
+                duration={COUNT_SECONDS}
+              />
+            }
             caption={
               `${distanceUnitLabel(unit)} run` +
               (training.runs.longestKm !== null

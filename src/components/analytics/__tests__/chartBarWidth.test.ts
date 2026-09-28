@@ -70,9 +70,11 @@ describe("Recharts bars — width is constrained", () => {
   const files = rechartsBarFiles();
 
   it("finds the chart files (a scan that matches nothing proves nothing)", () => {
-    expect(files.length).toBeGreaterThanOrEqual(4);
-    expect(files).toContain("components/analytics/VolumeChart.tsx");
+    // The sport pages' week bars are SVG, not Recharts
+    // (`TrainingWeeksCard`), and set their own width from the bin count.
+    expect(files.length).toBeGreaterThanOrEqual(3);
     expect(files).toContain("components/progress/CalorieBalanceChart.tsx");
+    expect(files).toContain("components/analytics/SplitsBarChart.tsx");
   });
 
   it("excludes LoadingSkeleton's own non-Recharts Bar", () => {

@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import type { LucideIcon } from "lucide-react";
+import type { TabIcon } from "@/components/icons/TabIcons";
 import { LayoutGroup, motion } from "framer-motion";
 import { activeTabForPath } from "@/lib/activeTab";
 import { cn } from "@/lib/utils";
@@ -8,7 +8,7 @@ import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { preloadTab } from "@/lib/preloadTab";
 
 interface BottomNavigationProps {
-  tabs: readonly { to: string; icon: LucideIcon; label: string }[];
+  tabs: readonly { to: string; icon: TabIcon; label: string }[];
   pathname: string;
   unreadCount: number;
   onSocialVisit: () => void;
@@ -162,14 +162,14 @@ export default function BottomNavigation({
                           damping: 30,
                         }}
                       >
+                        {/* DS3's own tab icons: an outline, and a
+                            filled form drawn for the open tab. */}
                         <Icon
-                          aria-hidden="true"
+                          active={isActive}
                           className={cn(
-                            "size-5",
+                            "size-[22px]",
                             isActive && "ds-tab-active-icon"
                           )}
-                          fill={isActive ? "currentColor" : "none"}
-                          strokeWidth={isActive ? 2 : 1.75}
                         />
                       </motion.div>
                       {/* Notification badge */}

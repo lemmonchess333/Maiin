@@ -26,24 +26,27 @@ const prs = [
   { label: "Fastest 5K", value: "24:10", date: "18 Aug" },
 ];
 
-describe("the NEW badge sits on the fill step", () => {
-  it("uses bg-nutrition-fill, not the bare orange identity", () => {
+describe("the New chip is gold, the colour kept for new bests", () => {
+  it("takes the achievement tokens, with its text on the -strong step", () => {
+    /* DS3: gold means a new best and nothing else. The chip was
+       white-on-orange, the FOOD colour, reading "NEW" in capitals the app
+       retired; the fill-step rule above held its contrast, and the rule it
+       now follows is the colour's meaning. Small text takes the -strong
+       step, as the finish screen's and the workout's gold does. */
     render(<PRCard title="Running PRs" prs={prs} />);
-    const badge = screen.getByText("NEW");
-    expect(badge).toHaveClass("bg-nutrition-fill");
-    expect(badge).toHaveClass("text-white");
-    // Nothing paints it inline any more — the identity reached the badge
-    // through a `style` prop, which is also how it evaded the class-based
-    // contrast guards.
-    expect(badge.getAttribute("style")).toBeNull();
+    const chip = screen.getByText("New");
+    expect(chip).toHaveClass("text-achievement-strong");
+    expect(chip.className).toMatch(/\bbg-achievement\/\d+/);
+    expect(chip.className).not.toMatch(/nutrition|text-white/);
+    expect(chip.getAttribute("style")).toBeNull();
   });
 
-  it("renders no badge on a row that is not new", () => {
-    // Anchors the assertion above: if the badge stopped rendering
+  it("renders no chip on a row that is not new", () => {
+    // Anchors the assertion above: if the chip stopped rendering
     // entirely, `getByText` would throw rather than pass — but a suite
     // that only ever renders `isNew` rows would not notice the flag
     // being ignored in the other direction.
     render(<PRCard title="Running PRs" prs={[prs[1]]} />);
-    expect(screen.queryByText("NEW")).toBeNull();
+    expect(screen.queryByText("New")).toBeNull();
   });
 });

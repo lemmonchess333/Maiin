@@ -31,7 +31,7 @@
 
 import {
   calculateEMA,
-  deriveGoalWeightKg,
+  userGoalWeightKg,
   projectGoalDate,
 } from "@/utils/weightTrend";
 import { computeDataConfidence } from "@/lib/dataConfidence";
@@ -135,8 +135,13 @@ export interface WeeklyReviewData {
   /** Any deliberate event exists BEFORE the reviewed week (quiet-week gate). */
   established: boolean;
   weekAhead: WeekAheadPlan;
-  goalProgram:
-    | { startWeight?: number | null; goal?: string | null }
+  /** The goal the user set, for the projection (`userGoalWeightKg`). */
+  goalProfile:
+    | {
+        goalWeightKg?: number | null;
+        weeklyRateKg?: number | null;
+        program?: { goal?: string } | null;
+      }
     | null
     | undefined;
   /** Injected clock (projection labels); defaults to now. */
@@ -433,7 +438,7 @@ export function buildWeeklyReview(data: WeeklyReviewData): WeeklyReview | null {
     });
     const projection = projectGoalDate({
       trendSeries: series,
-      goalWeight: deriveGoalWeightKg(data.goalProgram),
+      goalWeight: userGoalWeightKg(data.goalProfile),
       hasProjection: confidence.hasProjection,
       now: data.now,
     });
