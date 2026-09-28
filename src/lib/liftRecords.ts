@@ -61,7 +61,14 @@ export function bestSetPerExercise(
             ? set.reps
             : epley1RMExact(set.weightKg, set.reps);
         const prev = best.get(name);
-        if (!prev || score > prev.score) {
+        // A tie keeps the day the best was FIRST set: a lifter holding
+        // 105 kg × 5 for four weeks has not set a record each week, and
+        // the row must not move its date, or say New, every session.
+        if (
+          !prev ||
+          score > prev.score ||
+          (score === prev.score && w.date < prev.date)
+        ) {
           best.set(name, {
             weight: set.weightKg,
             reps: set.reps,

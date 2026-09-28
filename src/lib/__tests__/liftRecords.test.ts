@@ -165,4 +165,18 @@ describe("bestSetPerExercise", () => {
     );
     expect(records.map((r) => r.name)).toEqual(["Bench Press", "Deadlift"]);
   });
+
+  it("keeps the day a tied best was first set, whatever order sessions arrive in", () => {
+    // A squat held at 105 kg × 5 for four weeks is one record, set once.
+    const held = ["2026-09-25", "2026-09-18", "2026-09-11", "2026-09-04"].map(
+      (date) =>
+        session(date, [
+          { exerciseName: "Barbell Squat", sets: [{ weightKg: 105, reps: 5 }] },
+        ])
+    );
+    for (const order of [held, [...held].reverse()]) {
+      const [record] = bestSetPerExercise(order, { newSinceKey: NEW_SINCE });
+      expect(record).toMatchObject({ date: "2026-09-04", isNew: false });
+    }
+  });
 });

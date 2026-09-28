@@ -315,6 +315,10 @@ export function TrendWeight() {
             {goalDisplay != null && (
               <ReferenceLine
                 y={goalWeight!}
+                /* The goal is usually outside the weights logged so far
+                   (that is what makes it a goal), and an "auto" domain
+                   drawn from the data alone left the line off the chart. */
+                ifOverflow="extendDomain"
                 stroke={THEME.success}
                 strokeDasharray="4 4"
                 label={{
