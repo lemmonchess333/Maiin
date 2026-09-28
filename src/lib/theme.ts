@@ -129,20 +129,30 @@ export const THEME = {
     fat: "#7CB46C", // sage avocado
   },
 
-  // Calorie-ring arc gradient stops — purpose-built purple shades around
-  // the brand: `light` sits above brandLight (#9590E0), `deep` below
-  // brandStrong (#6560C8) for the overshoot arc. Named here (Food7) so
-  // the Food hero's focal colour isn't a stray hex in CalorieRing.tsx.
+  // The Food calorie ring's shades around the food orange
+  // (`semantic.nutrition`, #D9884E). The ring was brand purple until the
+  // owner's Food call of 2026-09-28: food is orange on Home's food card,
+  // in Analytics and on the rest of this page, and the ring was the one
+  // purple thing on it. Named here (Food7) so the Food hero's focal
+  // colour isn't a stray hex in CalorieRing.tsx.
   calorieRing: {
-    light: "#A8A2EF", // lighter stop for the arc gradient
-    deep: "#5D55C9", // deeper stop for the overshoot arc
-    /* The mode chip's LIGHT backing: iconBg (10% brand tint) flattened
-       onto white — 0.9*255 + 0.1*(123,114,233) = rgb(242,241,253).
-       Identical rendered colour to the translucent tint on the plain
-       white card, but OPAQUE, so over the hero photo the chip keeps a
-       designed surface instead of going sheer (the #1728 failure mode,
+    /* The arc gradient's top stop, and the chip's text in dark mode:
+       6.9:1 on the chip's orange backing over the dark card. */
+    light: "#F2AE7A",
+    /* The overshoot lap, and the number and chip text in light mode. The
+       `--nutrition-strong` light value: 5.7:1 on white, 5.2:1 on the
+       chip. It fails AA on the dark card (3.1:1), which is why dark mode
+       takes the other two. */
+    deep: "#A64C08",
+    /* The mode chip's LIGHT backing: the 10% orange tint flattened onto
+       white — 0.9*255 + 0.1*(217,136,78) = rgb(251,243,237). Identical
+       rendered colour to the translucent tint on the plain white card,
+       but OPAQUE, so over the hero photo the chip keeps a designed
+       surface instead of going sheer (the #1728 failure mode,
        light-side). */
-    chipBgLight: "#F2F1FD",
+    chipBgLight: "#FBF3ED",
+    /* The light-mode track: the orange at 12%, a groove in the card. */
+    track: "rgba(217, 136, 78, 0.12)",
   },
 
   // Swipe-action colours (FoodRow). Deliberate iOS-HIG system tones —

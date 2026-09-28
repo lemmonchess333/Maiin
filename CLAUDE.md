@@ -635,7 +635,7 @@ held to it, so it is now the APP-WIDE standard, not an insights-file local:
 ### Visual Identity
 
 - **Aesthetic:** Dark is the DEFAULT theme — a deep, cool neutral: page #0E0E11, cards #17171B, raised #212127, text #F4F4F6 (DS3, 2026-09-27; it was #121214 / #1A1A1F under DS2). It is what new users and the signed-out/Login state see. There is no ambient glow: DS3 retired the brand-purple wash that sat at the top of every signed-in page (`AmbientGlow`), so colour belongs to content.
-- **DS3 redesign (owner-approved 2026-09-27, lock row DS3 in the plan file):** one colour per job, one big thing per screen, drawings where they help. It ships screen by screen — foundations, Home, Train and the workout, Running, Analytics, moments and polish — and the Food page waits for its own design pass. Read the DS3 row before re-deciding any of it.
+- **DS3 redesign (owner-approved 2026-09-27, lock row DS3 in the plan file):** one colour per job, one big thing per screen, drawings where they help. It ships screen by screen — foundations, Home, Train and the workout, Running, Analytics, moments and polish — and the Food page had its own pass. The owner kept Food's layout and its one timeline (Food8) on 2026-09-28, and chose two changes from the mockups: a week strip above the calorie card (`FoodWeekStrip`, Home's strip with each day a ring of calories eaten against that day's target), and the calorie ring, its number and its pill in the food orange instead of purple. Read the DS3 row before re-deciding any of it.
 - **Light mode:** The opt-in alternate (selectable in Settings → writes `profile.darkMode = false`). It's a clean, warm, iOS-inspired look (#F2F2F7 grouped background, cards on white — minimal and calm with subtle depth, NOT a dark-glass app rendered light). Default-dark is applied pre-React in `public/init.js` (dark unless an explicit `"false"` is stored) and mirrored by the `profile.darkMode` defaults in `src/lib/auth.tsx`.
 - **Brand colour:** Purple #7B72E9 — used sparingly for accents, active tab indicators, CTAs, progress bars. Never as full backgrounds except gradient CTA buttons.
 - **Sport-coding:** Lifting = purple (#7B72E9), Running = coral (#D4637A). These two colours appear in calendar dots, section headings, icon tints, and contextual cards.
@@ -2186,7 +2186,17 @@ work. Step 1 cannot fix it now: with the rules already live, `firebase
 deploy --only storage` skips the upload, and the permission check only
 runs on the upload path.
 
-- [ ] **Confirm the role, or grant it.** Quickest check: change the
+**STATUS 2026-09-28 — the role is in place; no grant is needed.** Deploy
+production run 36443298145 (the #2495 merge) ran the new check, `Confirm
+Storage rules can read Firestore`, before it released the rules, and the
+check passed. It reads the live IAM policy, and it passes only when the
+Storage service agent holds `roles/firebaserules.firestoreServiceAgent`
+unconditionally, so photo uploads and deletes work. Nothing records when
+or how the role was granted. Every backend release repeats the check.
+
+- [x] **Confirm the role, or grant it.** Confirmed 2026-09-28 by the
+      release check (STATUS above). The steps stay for the day a release
+      stops at that check again. Quickest check: change the
       profile photo in the production app — the toast "Upload not
       permitted…" means the role is missing. Or, in GCP Console → IAM
       with "Include Google-provided role grants" ticked, look for
