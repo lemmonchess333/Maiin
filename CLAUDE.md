@@ -2144,6 +2144,31 @@ read, so the feed loads, and draws nothing for it.
       and the unread badge counts one only if it is newer than the last
       time Social was opened. Delete them by hand if they matter.
 
+### The share answer lives on the account (Soc11, 2026-09-28)
+
+Affects: `src/lib/shareDefaults.ts` (new), `src/lib/auth.tsx`
+(`updateShareDefaults`, and the move of a device's own answers),
+`SessionShareRow`, `ShareDefaultsRow`, `ShareComposerSheet`,
+`firestore.rules` (`shareDefaultsValid`), `functions/profileSanitizer.js`.
+
+The answer to "Share sessions automatically?" was kept in each device's
+local storage, so Never set on the web left a phone that had answered
+Share publicly posting publicly. It is now `shareDefaults` on
+`users/{uid}`, and a device's own answers move to the account once at
+sign-in, the more private answer winning.
+
+- [ ] **Rules first.** A build that writes `shareDefaults` needs the rules
+      that allow it. Deploy production releases rules before Hosting, but a
+      TestFlight build made from a branch before the merge sees its saves
+      refused (put back, with a toast) and keeps its answers on the device.
+- [ ] **One answer on every device.** Set Runs to Never in Settings on the
+      web, then finish a run on a phone that had the app open since before:
+      nothing is posted, and the finish screen offers its one-off share
+      button instead.
+- [ ] **A phone's old answer moves.** On a phone that answered on an older
+      build, open the app online after updating: Settings on the web shows
+      that answer, or the account's own where it was more private.
+
 ### Global hybrid challenge + hybrid_score sync (SOCIAL S4 Soc8, PR2)
 
 Affects: `functions/lib/challengeDefs.js` (new `global-monthly-*` hybrid definition), `functions/index.js` (`onWorkoutCreated` / `onRunCreated` now sync `hybrid_score`). Deploys via `deploy-functions.yml`. The daily `rolloverChallenges` cron materialises the new challenge doc; the trigger sync feeds it.
