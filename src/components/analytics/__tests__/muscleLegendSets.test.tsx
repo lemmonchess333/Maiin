@@ -92,3 +92,37 @@ describe("the recovery table's second block is not described as legacy", () => {
     ).toEqual([]);
   });
 });
+
+describe("the overview's compact map", () => {
+  /* DS3's Muscles card: the four groups trained most, beside the small
+     figures. Same count rules as the full legend. */
+  it("lists the four most-trained groups, most first", () => {
+    render(
+      <MuscleHeatMap
+        variant="compact"
+        data={{ Chest: 32, Back: 30, Legs: 28, Shoulders: 18, Arms: 6 }}
+      />
+    );
+    const rows = screen.getAllByRole("listitem");
+    expect(rows.map((r) => r.firstChild?.textContent)).toEqual([
+      "Chest",
+      "Back",
+      "Legs",
+      "Shoulders",
+    ]);
+    expect(screen.queryByText("Arms")).toBeNull();
+  });
+
+  it("says set, not sets, for a group trained once", () => {
+    render(<MuscleHeatMap variant="compact" data={{ Chest: 1 }} />);
+    expect(screen.getByRole("listitem").textContent).toMatch(/1\s*set$/);
+  });
+
+  it("brings no card or heading of its own", () => {
+    const { container } = render(
+      <MuscleHeatMap variant="compact" data={{ Chest: 4 }} />
+    );
+    expect(container.querySelector(".bg-card")).toBeNull();
+    expect(screen.queryByRole("heading")).toBeNull();
+  });
+});

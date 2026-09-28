@@ -106,3 +106,38 @@ describe("SessionCommandCard", () => {
     expect(liftBtn.className).toContain("bg-primary-strong");
   });
 });
+
+describe("SessionCommandCard — the picture at the right (DS3)", () => {
+  it("draws a run's type in a tile after the title, as Home's run card does", async () => {
+    const { runTemplateIcon } =
+      await import("@/components/run/runTemplateIcons");
+    const { container } = renderCard({ icon: runTemplateIcon("zap") });
+    const heading = screen.getByRole("heading", { name: "Long 15K" });
+    const tile = container.querySelector("svg.lucide-zap")!;
+    expect(tile).not.toBeNull();
+    // After the title in reading order: the words lead, the picture follows.
+    expect(
+      heading.compareDocumentPosition(tile) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+  });
+
+  it("lets a figure take the tile's place", () => {
+    const { container } = renderCard({
+      sport: "lift",
+      figure: <span data-testid="muscles" />,
+    });
+    expect(screen.getByTestId("muscles")).toBeInTheDocument();
+    expect(container.querySelector("svg.lucide-dumbbell")).toBeNull();
+  });
+});
+
+describe("runTemplateIcon", () => {
+  it("maps a template's icon key and falls back to footprints", async () => {
+    const { runTemplateIcon } =
+      await import("@/components/run/runTemplateIcons");
+    const { Flag, Footprints } = await import("lucide-react");
+    expect(runTemplateIcon("flag")).toBe(Flag);
+    expect(runTemplateIcon("no-such-icon")).toBe(Footprints);
+    expect(runTemplateIcon(undefined)).toBe(Footprints);
+  });
+});

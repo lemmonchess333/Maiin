@@ -122,12 +122,15 @@ describe("client PI engine — production consumers", () => {
     );
   });
 
-  it("the seed script is the one non-test caller of the scoring pipeline", () => {
-    /* It manufactures perf docs so the capture rig's Home hero renders a
-       number. If this moves, the frames go empty — and the reasoning in
-       performanceEngineParity's header needs rewriting, not just this line. */
+  it("the seeds are the only non-test callers of the scoring pipeline", () => {
+    /* They manufacture perf docs: the rich seed so the capture rig's Home
+       hero renders a number, the season seed a document a day from its
+       own sessions, as production writes them. If this moves, the frames
+       go empty — and the reasoning in performanceEngineParity's header
+       needs rewriting, not just this line. */
     expect(Object.fromEntries(importsAcross(["scripts"]))).toEqual({
       "scripts/seed-rich-user.ts": ["computePerformanceIndex"],
+      "scripts/seed-season-athlete.ts": ["computePerformanceIndex"],
     });
   });
 
