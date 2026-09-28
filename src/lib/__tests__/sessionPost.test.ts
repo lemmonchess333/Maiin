@@ -148,7 +148,7 @@ describe("posting a session", () => {
 
   it("without a decision, opens the sheet and posts what the user picks", async () => {
     const pending = workoutShare().post();
-    resolveCompose({ visibility: "public", caption: "Felt good" }, false);
+    resolveCompose({ visibility: "public", caption: "Felt good" });
     const outcome = await pending;
     expect(outcome).toMatchObject({ status: "posted", visibility: "public" });
     expect(postActivity).toHaveBeenCalledWith(
@@ -158,7 +158,7 @@ describe("posting a session", () => {
 
   it("declining in the sheet posts nothing", async () => {
     const pending = workoutShare().post();
-    resolveCompose(null, false);
+    resolveCompose(null);
     await expect(pending).resolves.toEqual({ status: "declined" });
     expect(activityPaths()).toEqual([]);
   });

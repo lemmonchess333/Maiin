@@ -71,7 +71,7 @@ const DEVICE_SCOPED: Record<string, string> = {
  */
 const LEGACY_PURGE = [
   "socialPreferenceKeys.ts",
-  "shareComposer.ts",
+  "shareDefaults.ts",
   "runResumeStorage.ts",
   "useWorkoutDraft.ts",
   "pushNotifications.ts",

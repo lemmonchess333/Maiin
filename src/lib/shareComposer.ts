@@ -1,12 +1,8 @@
 /**
- * Share composer — the saved sharing default, the one-off share sheet, and
- * the offline share queue.
+ * Share composer — the one-off share sheet and the offline share queue.
  *
- * The saved default ("Share sessions automatically?", per type) is what the
- * finish screens read: `finishShareStart` turns it into what happens to a
- * session the moment it is saved — ask once, post without a sheet, or hold.
- * It is asked for once (`answerShareQuestion`) and edited in Settings →
- * Privacy.
+ * The saved default ("Share sessions automatically?", per type), which the
+ * finish screens act on, lives in `shareDefaults.ts`.
  *
  * `compose(preview)` is the one-off path: it always opens the sheet and
  * resolves with the user's choice (visibility + caption), or null if they
@@ -24,13 +20,7 @@
  * is mounted once at app root.
  */
 
-import {
-  readJson,
-  readString,
-  remove,
-  writeJson,
-  writeString,
-} from "@/lib/localStore";
+import { readJson, writeJson } from "@/lib/localStore";
 import type { ShareSource } from "@/lib/sessionDelete";
 
 export type ShareType = "workout" | "run";
@@ -43,7 +33,7 @@ export type ShareType = "workout" | "run";
  *
  *  (A third `crews` option existed until the crews retirement,
  *  2026-07-20 — it was the followers fan-out plus a crewId tag. A
- *  stored "crews" always-pref migrates to "followers" on read.) */
+ *  device's saved "crews" answer reads, and moves, as "followers".) */
 export type ShareVisibility = "followers" | "public";
 
 export interface ActivityPreview {
@@ -66,8 +56,8 @@ interface SheetState {
   open: boolean;
   type: ShareType | null;
   preview: ActivityPreview | null;
-  /** uid of the session that opened the composer — scopes the "always" pref
-   *  so resolveCompose persists it under the same account compose() read. */
+  /** uid of the session that opened the composer. The sheet saves "Make
+   *  this my default" only while that account is the one signed in. */
   uid: string | null;
 }
 
@@ -92,113 +82,6 @@ export function subscribeShareComposer(listener: (s: SheetState) => void) {
   };
 }
 
-// ── Per-type "Always do this" preference ─────────────────────────
-
-export type AlwaysPref = ShareVisibility | "never" | null;
-
-const SHARE_TYPES: readonly ShareType[] = ["run", "workout"];
-const PREF_KEY_PREFIX = "tropos.share.always";
-
-function prefKey(uid: string, type: ShareType): string {
-  // uid-scoped (money-path audit F9): a global key bled across account
-  // switches on a shared device — user A's "always share publicly" would
-  // auto-post user B's next workout under B's account.
-  return `${PREF_KEY_PREFIX}.${uid}.${type}`;
-}
-
-function readAlways(uid: string, type: ShareType): AlwaysPref {
-  // Purge the pre-uid-scoping global key. Never migrated: a global pref
-  // can't be safely attributed to one account (that IS the leak), so the
-  // user re-picks once after upgrade.
-  remove(`${PREF_KEY_PREFIX}.${type}`);
-  const raw = readString(prefKey(uid, type));
-  if (raw === "followers" || raw === "public" || raw === "never") return raw;
-  // Crews retirement migration: the retired audience falls back to
-  // its underlying fan-out rather than silently clearing the pref.
-  if (raw === "crews") return "followers";
-  return null;
-}
-
-function writeAlways(uid: string, type: ShareType, value: AlwaysPref) {
-  if (value === null) remove(prefKey(uid, type));
-  else writeString(prefKey(uid, type), value);
-}
-
-/** Used by Settings (ShareDefaultsRow) to let the user clear their saved
- *  default. Without this the default is a one-way door: once saved, the
- *  finish screen never asks again. */
-export function clearShareDefault(uid: string, type: ShareType): void {
-  writeAlways(uid, type, null);
-}
-
-/** Sets the saved default WITHOUT going through the composer sheet.
- *
- *  The sheet was the only writer until 2026-08-04, which made the setting
- *  reachable in exactly one direction: you could arrive at a default by
- *  finishing a session and ticking a box, and Settings could only take it
- *  away again. A user who wanted "never share my workouts" had to finish a
- *  workout to say so. Settings owns both directions now. */
-export function setShareDefault(
-  uid: string,
-  type: ShareType,
-  value: ShareVisibility | "never"
-): void {
-  writeAlways(uid, type, value);
-}
-
-/** Reads the saved "Always do this" preference, or null if the user has
- *  never ticked it for this type. Settings renders it so the choice is
- *  visible and reversible. */
-export function getShareDefault(uid: string, type: ShareType): AlwaysPref {
-  return readAlways(uid, type);
-}
-
-/**
- * Saves the answer to the finish screen's one question ("Share sessions
- * automatically?") for every session type that has no default yet, and
- * returns the types it set. `asking` is always among them: the question
- * only appears while that type has no default.
- *
- * A type that already has one keeps it. The user chose it on purpose, in
- * Settings or with the share sheet's "Make this my default", and answering
- * the question after a workout must not overwrite a "never" they picked
- * for runs.
- */
-export function answerShareQuestion(
-  uid: string,
-  asking: ShareType,
-  value: ShareVisibility | "never"
-): ShareType[] {
-  const unset = SHARE_TYPES.filter(
-    (type) => type === asking || readAlways(uid, type) === null
-  );
-  for (const type of unset) writeAlways(uid, type, value);
-  return unset;
-}
-
-/** What a finish screen does with a session the moment it is saved. */
-export type FinishShareStart =
-  /** No default yet: ask the one question. */
-  | { kind: "ask" }
-  /** Post it now, with no sheet. */
-  | { kind: "post"; visibility: ShareVisibility }
-  /** Post nothing; offer the one-off share button. */
-  | { kind: "hold"; reason: "never" | "verify" };
-
-export function finishShareStart(
-  pref: AlwaysPref,
-  needsEmailVerification: boolean
-): FinishShareStart {
-  if (pref === null) return { kind: "ask" };
-  if (pref === "never") return { kind: "hold", reason: "never" };
-  // An unverified email/password account cannot post publicly (the rules'
-  // isEmailVerified). A post the rules will refuse must never be attempted
-  // on the strength of a remembered choice: hold it, and let the one-off
-  // sheet, where the verification notice lives, do the posting.
-  if (needsEmailVerification) return { kind: "hold", reason: "verify" };
-  return { kind: "post", visibility: pref };
-}
-
 // ── compose / resolve ────────────────────────────────────────────
 
 /** Opens the share sheet for one session and resolves with the user's
@@ -217,22 +100,15 @@ export function compose(
 
 /**
  * Called by the sheet UI when the user picks an action. `decision === null`
- * means "Don't share this one". When `remember` is true, the choice is
- * persisted as the always-pref for this type.
+ * means "Don't share this one". Saving the choice as the default ("Make
+ * this my default") is the sheet's to do: the default lives on the
+ * account, which only React code can write.
  */
-export function resolveCompose(
-  decision: ShareDecision | null,
-  remember: boolean
-): void {
-  const type = state.type;
-  const uid = state.uid;
+export function resolveCompose(decision: ShareDecision | null): void {
   if (resolveCb) {
     const cb = resolveCb;
     resolveCb = null;
     cb(decision);
-  }
-  if (remember && type && uid) {
-    writeAlways(uid, type, decision === null ? "never" : decision.visibility);
   }
   state = { open: false, type: null, preview: null, uid: null };
   emit();

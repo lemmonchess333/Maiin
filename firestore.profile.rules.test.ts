@@ -25,7 +25,7 @@ import {
   assertSucceeds,
   type RulesTestEnvironment,
 } from "@firebase/rules-unit-testing";
-import { doc, setDoc } from "firebase/firestore";
+import { doc, setDoc, updateDoc } from "firebase/firestore";
 import { readFileSync } from "node:fs";
 import {
   PROFILE_FIELD_REGISTRY,
@@ -543,6 +543,129 @@ suite("users/{uid} — raceGoal value gate", () => {
       setDoc(doc(ok, "users/rg3"), {
         ...signupProfile("rg3"),
         raceGoal: VALID,
+      })
+    );
+  });
+});
+
+/**
+ * `shareDefaults` value gate.
+ *
+ * Who sees a finished session, per type — the answer to "Share sessions
+ * automatically?", which the finish screen acts on without asking again.
+ * `allowedUserFields()` gates key NAMES only, so without a value gate any
+ * map could stand in for an answer. The client writes one field path per
+ * type (`shareDefaults.run`); the rule reads the whole map as it will be.
+ * Each rejection is paired with the nearest accepted shape, so a gate that
+ * refused everything could not pass.
+ */
+suite("users/{uid} — shareDefaults value gate", () => {
+  const UID = "sd1";
+
+  async function signedIn() {
+    await seedProfile(UID);
+    return env.authenticatedContext(UID).firestore();
+  }
+
+  async function write(patch: Record<string, unknown>) {
+    const db = await signedIn();
+    return setDoc(doc(db, `users/${UID}`), patch, { merge: true });
+  }
+
+  it("accepts the one-type field-path update the app sends", async () => {
+    const db = await signedIn();
+    await assertSucceeds(
+      updateDoc(doc(db, `users/${UID}`), { "shareDefaults.run": "never" })
+    );
+    await assertSucceeds(
+      updateDoc(doc(db, `users/${UID}`), {
+        "shareDefaults.workout": "public",
+        "shareDefaults.run": null,
+      })
+    );
+  });
+
+  it("accepts each answer, null for a cleared type, and a whole-field null", async () => {
+    for (const answer of ["followers", "public", "never", null]) {
+      await assertSucceeds(
+        write({ shareDefaults: { run: answer, workout: answer } })
+      );
+    }
+    await assertSucceeds(write({ shareDefaults: {} }));
+    await assertSucceeds(write({ shareDefaults: null }));
+  });
+
+  it("refuses a value that is not an answer", async () => {
+    await assertSucceeds(write({ shareDefaults: { run: "public" } }));
+    for (const bad of ["crews", "ask", "Public", "", 1, true, {}, ["public"]]) {
+      await assertFails(write({ shareDefaults: { run: bad } }));
+    }
+    const db = await signedIn();
+    await assertFails(
+      updateDoc(doc(db, `users/${UID}`), {
+        "shareDefaults.workout": "everyone",
+      })
+    );
+  });
+
+  it("refuses any key but the two session types", async () => {
+    await assertFails(write({ shareDefaults: { badge: "public" } }));
+    await assertFails(
+      write({ shareDefaults: { run: "public", extra: "never" } })
+    );
+    const db = await signedIn();
+    await assertFails(
+      updateDoc(doc(db, `users/${UID}`), { "shareDefaults.badge": "public" })
+    );
+  });
+
+  it("refuses a value that is not a map", async () => {
+    for (const bad of ["public", 1, true, ["public"]]) {
+      await assertFails(write({ shareDefaults: bad }));
+    }
+  });
+
+  it("does not block unrelated writes for a user whose stored map is bad", async () => {
+    await seedProfile(UID);
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(
+        doc(ctx.firestore(), `users/${UID}`),
+        { shareDefaults: { run: "everyone" } },
+        { merge: true }
+      );
+    });
+    const db = env.authenticatedContext(UID).firestore();
+    await assertSucceeds(
+      setDoc(doc(db, `users/${UID}`), { darkMode: false }, { merge: true })
+    );
+    // ...but the map itself only changes into a valid one.
+    await assertFails(
+      setDoc(
+        doc(db, `users/${UID}`),
+        { shareDefaults: { run: "everyone", workout: "never" } },
+        { merge: true }
+      )
+    );
+    await assertSucceeds(
+      updateDoc(doc(db, `users/${UID}`), {
+        shareDefaults: { run: "never" },
+      })
+    );
+  });
+
+  it("gates create as well as update", async () => {
+    const db = env.authenticatedContext("sd2").firestore();
+    await assertFails(
+      setDoc(doc(db, "users/sd2"), {
+        ...signupProfile("sd2"),
+        shareDefaults: { run: "everyone" },
+      })
+    );
+    const ok = env.authenticatedContext("sd3").firestore();
+    await assertSucceeds(
+      setDoc(doc(ok, "users/sd3"), {
+        ...signupProfile("sd3"),
+        shareDefaults: { run: "never" },
       })
     );
   });

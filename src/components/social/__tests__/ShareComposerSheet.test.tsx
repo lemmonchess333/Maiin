@@ -8,6 +8,12 @@ import {
   act,
 } from "@testing-library/react";
 
+const h = vi.hoisted(() => ({
+  /** AuthProvider's `updateShareDefaults`: the account is where a
+   *  remembered choice is saved. */
+  save: vi.fn(async () => ({ ok: true as const })),
+}));
+
 vi.mock("@/lib/haptic", () => ({ haptic: vi.fn() }));
 vi.mock("@/lib/socialApi", () => ({ postActivity: vi.fn() }));
 vi.mock("@/lib/sessionDelete", () => ({ recordSharedActivity: vi.fn() }));
@@ -17,6 +23,7 @@ vi.mock("@/lib/auth", () => ({
   useUid: () => "u1",
   useAuth: () => ({
     user: { uid: "u1", emailVerified: true, providerData: [] },
+    updateShareDefaults: h.save,
   }),
 }));
 vi.mock("@/hooks/useOnlineStatus", () => ({
@@ -26,11 +33,14 @@ vi.mock("@/hooks/useOnlineStatus", () => ({
 import ShareComposerSheet from "../ShareComposerSheet";
 import {
   compose,
-  finishShareStart,
-  getShareDefault,
   resolveCompose,
   type ActivityPreview,
 } from "@/lib/shareComposer";
+import {
+  finishShareStart,
+  savedShareDefault,
+  type ShareDefaults,
+} from "@/lib/shareDefaults";
 
 const UID = "u1";
 
@@ -41,10 +51,10 @@ const WORKOUT: ActivityPreview = {
 };
 
 /** Drives the one-off share's `compose()` call and lets the sheet react. */
-function openSheet() {
+function openSheet(uid = UID, preview = WORKOUT) {
   let promise!: Promise<unknown>;
   act(() => {
-    promise = compose(UID, WORKOUT);
+    promise = compose(uid, preview);
   });
   return promise;
 }
@@ -53,11 +63,19 @@ function rememberBox(): HTMLInputElement {
   return screen.getByRole("checkbox") as HTMLInputElement;
 }
 
+/** The answers the sheet saved on the account, one call per save. */
+function saved(): ShareDefaults[] {
+  return h.save.mock.calls.map(
+    (call) => (call as unknown[])[0] as ShareDefaults
+  );
+}
+
 beforeEach(() => {
   localStorage.clear();
+  h.save.mockClear();
 });
 afterEach(() => {
-  act(() => resolveCompose(null, false));
+  act(() => resolveCompose(null));
   cleanup();
 });
 
@@ -66,11 +84,10 @@ describe("ShareComposerSheet", () => {
     render(<ShareComposerSheet />);
     void openSheet();
     expect(rememberBox().checked).toBe(false);
-    expect(getShareDefault(UID, "workout")).toBeNull();
     expect(screen.getByText(/Applies to this session only/)).toBeTruthy();
   });
 
-  it("sharing once does not automatically share the next workout", async () => {
+  it("sharing once does not save a default for the next workout", async () => {
     render(<ShareComposerSheet />);
     const first = openSheet();
     fireEvent.click(
@@ -80,7 +97,7 @@ describe("ShareComposerSheet", () => {
       visibility: "followers",
       caption: "",
     });
-    expect(getShareDefault(UID, "workout")).toBeNull();
+    expect(saved()).toEqual([]);
     void openSheet();
     expect(rememberBox().checked).toBe(false);
   });
@@ -92,12 +109,12 @@ describe("ShareComposerSheet", () => {
       screen.getByRole("button", { name: /don't share this one/i })
     );
     await expect(first).resolves.toBeNull();
-    expect(getShareDefault(UID, "workout")).toBeNull();
+    expect(saved()).toEqual([]);
     void openSheet();
     expect(rememberBox()).toBeTruthy();
   });
 
-  it("remembers an audience only after an explicit opt-in and choice", async () => {
+  it("remembers an audience on the account only after an explicit opt-in and choice", async () => {
     render(<ShareComposerSheet />);
     const first = openSheet();
     fireEvent.click(rememberBox());
@@ -108,13 +125,12 @@ describe("ShareComposerSheet", () => {
       screen.getByRole("button", { name: /share to followers/i })
     );
     await first;
-    expect(getShareDefault(UID, "workout")).toBe("followers");
+    // Workouts only; runs keep whatever they had.
+    expect(saved()).toEqual([{ workout: "followers" }]);
     // The finish screen applies it: the next workout posts with no sheet.
-    expect(finishShareStart(getShareDefault(UID, "workout"), false)).toEqual({
-      kind: "post",
-      visibility: "followers",
-    });
-    expect(getShareDefault(UID, "run")).toBeNull();
+    expect(
+      finishShareStart(savedShareDefault(saved()[0], "workout"), false)
+    ).toEqual({ kind: "post", visibility: "followers" });
   });
 
   it("allows an explicit never-share default", async () => {
@@ -125,11 +141,10 @@ describe("ShareComposerSheet", () => {
       screen.getByRole("button", { name: /don't share future workouts/i })
     );
     await expect(first).resolves.toBeNull();
-    expect(getShareDefault(UID, "workout")).toBe("never");
-    expect(finishShareStart(getShareDefault(UID, "workout"), false)).toEqual({
-      kind: "hold",
-      reason: "never",
-    });
+    expect(saved()).toEqual([{ workout: "never" }]);
+    expect(
+      finishShareStart(savedShareDefault(saved()[0], "workout"), false)
+    ).toEqual({ kind: "hold", reason: "never" });
   });
 
   it("closing after ticking remember never saves a default", async () => {
@@ -138,16 +153,17 @@ describe("ShareComposerSheet", () => {
     fireEvent.click(rememberBox());
     fireEvent.keyDown(document, { key: "Escape" });
     await expect(first).resolves.toBeNull();
-    expect(getShareDefault(UID, "workout")).toBeNull();
+    expect(saved()).toEqual([]);
     void openSheet();
     expect(rememberBox().checked).toBe(false);
   });
 
   it("saves run defaults independently after explicit opt-in", async () => {
     render(<ShareComposerSheet />);
-    let first!: Promise<unknown>;
-    act(() => {
-      first = compose(UID, { ...WORKOUT, type: "run", title: "Easy run" });
+    const first = openSheet(UID, {
+      ...WORKOUT,
+      type: "run",
+      title: "Easy run",
     });
     expect(rememberBox().checked).toBe(false);
     fireEvent.click(rememberBox());
@@ -156,8 +172,7 @@ describe("ShareComposerSheet", () => {
       screen.getByRole("button", { name: /don't share future runs/i })
     );
     await expect(first).resolves.toBeNull();
-    expect(getShareDefault(UID, "run")).toBe("never");
-    expect(getShareDefault(UID, "workout")).toBeNull();
+    expect(saved()).toEqual([{ run: "never" }]);
   });
 
   it("allows the user to change their mind about remembering", async () => {
@@ -167,7 +182,23 @@ describe("ShareComposerSheet", () => {
     fireEvent.click(rememberBox());
     fireEvent.click(screen.getByRole("button", { name: /make public/i }));
     await expect(first).resolves.toEqual({ visibility: "public", caption: "" });
-    expect(getShareDefault(UID, "workout")).toBeNull();
+    expect(saved()).toEqual([]);
+  });
+
+  it("saves a default only for the account that opened the sheet", async () => {
+    // Opened for a session of another account than the one signed in now:
+    // the post still resolves, but nothing is saved on the wrong account.
+    render(<ShareComposerSheet />);
+    const first = openSheet("someone-else");
+    fireEvent.click(rememberBox());
+    fireEvent.click(
+      screen.getByRole("button", { name: /share to followers/i })
+    );
+    await expect(first).resolves.toEqual({
+      visibility: "followers",
+      caption: "",
+    });
+    expect(saved()).toEqual([]);
   });
 });
 
