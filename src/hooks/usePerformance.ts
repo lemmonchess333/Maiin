@@ -13,20 +13,35 @@ import type {
   PerformanceWeekDoc,
 } from "@/lib/performanceTypes";
 import { captureError } from "@/lib/errorReporting";
+import {
+  documentsForWeeks,
+  weeklyPerformanceSeries,
+} from "@/lib/performanceSeries";
 
 function sortAsc(a: PerformanceWeekDoc, b: PerformanceWeekDoc) {
   return a.weekKey.localeCompare(b.weekKey);
 }
 
+/**
+ * The user's Performance Index, one score per WEEK, newest last.
+ *
+ * The documents are written per compute DAY (see `performanceSeries.ts`),
+ * so this reads enough of them to cover `maxWeeks` weeks and keeps one per
+ * seven-day step back from the newest. `previousWeek` is the week directly
+ * before the newest, never an older one standing in for it, so a change
+ * "on last week" is exactly that. `docsAvailable` is the raw document
+ * count, for `isEstablishingBaseline`'s "has the engine produced anything
+ * yet" floor, which is about documents, not weeks.
+ */
 export function usePerformanceWeeks(maxWeeks: number = 12) {
   const uid = useUid();
-  const [weeks, setWeeks] = useState<PerformanceWeekDoc[]>([]);
+  const [docs, setDocs] = useState<PerformanceWeekDoc[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!uid) {
       const reset = () => {
-        setWeeks([]);
+        setDocs([]);
         setLoading(false);
       };
       reset();
@@ -34,22 +49,26 @@ export function usePerformanceWeeks(maxWeeks: number = 12) {
     }
 
     const ref = collection(db, "users", uid, "performance");
-    const q = query(ref, orderBy("weekKey", "desc"), limit(maxWeeks));
+    const q = query(
+      ref,
+      orderBy("weekKey", "desc"),
+      limit(documentsForWeeks(maxWeeks))
+    );
 
     const unsub = onSnapshot(
       q,
       (snap) => {
-        const docs = snap.docs
+        const next = snap.docs
           .map((d) =>
             normalisePerformanceDoc(d.id, d.data() as Record<string, unknown>)
           )
           .sort(sortAsc);
 
-        setWeeks(docs);
+        setDocs(next);
         setLoading(false);
       },
       () => {
-        setWeeks([]);
+        setDocs([]);
         setLoading(false);
       }
     );
@@ -57,12 +76,20 @@ export function usePerformanceWeeks(maxWeeks: number = 12) {
     return unsub;
   }, [uid, maxWeeks]);
 
-  const currentWeek = useMemo(
-    () => (weeks.length ? weeks[weeks.length - 1] : null),
-    [weeks]
+  const series = useMemo(
+    () => weeklyPerformanceSeries(docs, maxWeeks),
+    [docs, maxWeeks]
   );
+  const weeks = series.weeks;
+  const currentWeek = weeks.length ? weeks[weeks.length - 1] : null;
 
-  return { weeks, currentWeek, loading };
+  return {
+    weeks,
+    currentWeek,
+    previousWeek: series.previous,
+    docsAvailable: docs.length,
+    loading,
+  };
 }
 
 /**

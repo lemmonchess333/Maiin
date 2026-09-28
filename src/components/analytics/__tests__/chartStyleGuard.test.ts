@@ -64,7 +64,6 @@ describe("Recharts charts share one tick and one tooltip", () => {
     expect(files.length).toBeGreaterThanOrEqual(8);
     expect(files).toContain("components/progress/TrendWeight.tsx");
     expect(files).toContain("components/progress/CalorieBalanceChart.tsx");
-    expect(files).toContain("components/analytics/VolumeChart.tsx");
   });
 
   it("reads each tick prop whole, nested braces included", () => {

@@ -34,7 +34,13 @@ import { THEME } from "@/lib/theme";
 import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import PageShell from "@/components/ui/PageShell";
-import { Dumbbell, Sparkles, UtensilsCrossed, X, Target } from "lucide-react";
+import BrandMark from "@/components/ui/BrandMark";
+import {
+  AnalyticsTabIcon,
+  FoodTabIcon,
+  TrainTabIcon,
+} from "@/components/icons/TabIcons";
+import { Sparkles, X } from "lucide-react";
 import { useWaterLog } from "@/hooks/useWaterLog";
 import { toast } from "@/lib/toast";
 import { realignResultMessage } from "@/lib/realignCopy";
@@ -362,20 +368,17 @@ export default function Home() {
     effectiveTargets?.protein ?? null
   );
 
-  // Performance data for the hero card.
-  // Pull up to 4 weeks: currentWeek powers the home card, the prior
-  // week feeds the delta chip, and the count drives the baseline-
-  // establishing copy when <4 weeks of data are available.
+  // Performance data for the hero card: this week's score, and the week
+  // before it for the delta chip. The documents are daily, so "the one
+  // before" is yesterday's rolling week; the hook steps back a whole week
+  // (performanceSeries.ts). The raw document count feeds the
+  // baseline-establishing gate.
   const {
-    weeks: perfWeeks,
     currentWeek: perfWeek,
+    previousWeek: perfPrevWeek,
+    docsAvailable: perfDocsAvailable,
     loading: perfLoading,
-  } = usePerformanceWeeks(4);
-
-  // The Performance hero is the only voice in this position — nothing
-  // else competes for it, so nothing needs suppressing.
-  const perfPrevWeek =
-    perfWeeks.length >= 2 ? perfWeeks[perfWeeks.length - 2] : null;
+  } = usePerformanceWeeks(2);
 
   // Meal history for the energy row's cold-start state. TodayEnergy gets
   // no meal-pattern insight or post-workout nudge — one voice per screen;
@@ -696,8 +699,15 @@ export default function Home() {
     <PageShell
       /* DS3: Home names the day, as every other page names itself. The
          TROPOS wordmark it replaced is already on the launch icon and the
-         splash; here the date and "Today" say what the page is about. */
-      eyebrow={formatWeekdayDayMonth(today)}
+         splash; here the date and "Today" say what the page is about.
+         The mark before the date signs the app's first page, small, so
+         "Today" keeps the left edge every card below it starts on. */
+      eyebrow={
+        <span className="inline-flex items-center gap-1.5">
+          <BrandMark />
+          {formatWeekdayDayMonth(today)}
+        </span>
+      }
       title="Today"
       actions={
         <>
@@ -855,27 +865,37 @@ export default function Home() {
           </div>
           <div className="space-y-2">
             {/* Hints map 1:1 to the real bottom-nav tabs (Programme / Food /
-                Analytics). There is no "Log" tab — workouts and runs both
-                start from Programme, meals are logged from Food. */}
+                Analytics), and draw each with that tab's own icon (DS3), so
+                the hint points at the button it names. There is no "Log"
+                tab — workouts and runs both start from Programme, meals are
+                logged from Food. */}
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <Dumbbell className="size-4 text-primary shrink-0" />
+              <TrainTabIcon
+                active={false}
+                className="size-4 text-primary shrink-0"
+              />
               <span>
                 Tap <strong className="text-foreground">Train</strong> to start
                 a workout or run
               </span>
             </div>
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <UtensilsCrossed
-                className="size-4 shrink-0"
+              <span
+                className="inline-flex shrink-0"
                 style={{ color: THEME.semantic.nutrition }}
-              />
+              >
+                <FoodTabIcon active={false} className="size-4" />
+              </span>
               <span>
                 Tap <strong className="text-foreground">Food</strong> to log
                 meals
               </span>
             </div>
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <Target className="size-4 text-primary shrink-0" />
+              <AnalyticsTabIcon
+                active={false}
+                className="size-4 text-primary shrink-0"
+              />
               <span>
                 Check <strong className="text-foreground">Analytics</strong> to
                 view your progress
@@ -1080,7 +1100,7 @@ export default function Home() {
                   <PerformanceHeroCard
                     currentWeek={perfWeek ?? null}
                     previousWeek={perfPrevWeek}
-                    weeksAvailable={perfWeeks.length}
+                    weeksAvailable={perfDocsAvailable}
                     loading={perfLoading}
                     /* The perf doc is written by the server, so "no doc" is
                        not "no session" — this keeps the row from telling

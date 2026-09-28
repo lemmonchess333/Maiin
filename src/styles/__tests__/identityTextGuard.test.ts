@@ -92,7 +92,10 @@ const EXPECTED_BARE_USES: Record<(typeof IDENTITY)[number], number> = {
   // footprints ICON (3:1 non-text); its words are foreground.
   // 2026-09-27: 45 → 44. The Analytics summary's three rings went
   // (PeriodOverview), and the Runs ring's footprints icon with them.
-  running: 44, // Calendar status icons now use the strong colour step.
+  // 2026-09-27: 44 → 43. DS3's weekly recap: its week-in-numbers card
+  // marks each number with a coloured rule, not an icon, so the old
+  // page's footprints icon went.
+  running: 43, // Calendar status icons now use the strong colour step.
   // 2026-09-27: 19 → 18. DS3's Home lift card lost its dumbbell tile:
   // the exercise drawing is the card's picture now.
   // 2026-09-27: 18 → 17. The same on the workout screen: the dumbbell
@@ -103,10 +106,16 @@ const EXPECTED_BARE_USES: Record<(typeof IDENTITY)[number], number> = {
   // dumbbell ICON; its words are foreground.
   // 2026-09-27: 17 → 16. The Sessions ring's dumbbell went with the
   // summary's rings.
+  // 2026-09-27: 16 → 15. The weekly recap's dumbbell icon, for the same
+  // reason as its footprints: a coloured rule marks the number now.
+  // 2026-09-27: 15 → 16. The brand mark before Home's date (BrandMark):
+  // a solid hexagon, an ICON (3:1 non-text), in the literal brand purple.
   lifting: 16, // Redesign consolidates onboarding option icons.
   // 2026-09-27: 4 → 5. Analytics' Go deeper tiles: the Food tile's apple
   // ICON; its words are foreground.
-  nutrition: 5,
+  // 2026-09-27: 5 → 4. The weekly recap's food icon, retired with its
+  // other row icons for the coloured rule.
+  nutrition: 4,
   destructive: 0,
   success: 0,
   warning: 0,
@@ -243,7 +252,10 @@ function bareUses(token: string): string[] {
 // calendar icon; DS3 made it a text link on Home's "This week" heading.
 // 2026-09-27: 51 → 49. Train's training-block rows lost their tinted icon
 // tiles (a flag, a calendar), DS3's plain rows.
-const BRAND = { token: "primary", step: "lifting-strong", bare: 49 } as const;
+// 2026-09-27: 49 → 45. DS3's weekly recap as cards: the old page's
+// weight scale, week-ahead calendar and why-you-train heart tiles went,
+// and the retune sparkle takes the lifting text step.
+const BRAND = { token: "primary", step: "lifting-strong", bare: 45 } as const;
 
 describe("identity colour usage is pinned", () => {
   it("text-primary has the pinned number of bare uses", () => {

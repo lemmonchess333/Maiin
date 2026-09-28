@@ -49,30 +49,48 @@ test.describe("weekly review screenshots", () => {
     // Relative (no leading slash) — a leading '/' escapes the /Maiin/
     // baseURL and lands on the server's base-path error page.
     await page.goto("review");
-    // Let the fetch-on-open assembly settle (spinner → content).
+    /* DS3: the recap is cards now. The first card's heading is the
+       anchor that the fetch-on-open assembly has settled. */
     await page
-      .getByText("Weekly Review", { exact: true })
-      .waitFor({ timeout: 10_000 })
-      .catch(() => {});
-    await page.waitForTimeout(1500);
+      .getByRole("heading", {
+        name: /^(Your week|A quiet week|Your first review)$/,
+      })
+      .waitFor({ timeout: 15_000 });
+    await page.waitForTimeout(800);
 
-    /* The settle is the other half of the fix in `shoot` above, and it is
-       the half `animations: "disabled"` cannot supply. Freezing transitions
-       lands CSS colours on their end state, but `useIsDarkMode` and
-       `MuscleHeatMap` read this class in JAVASCRIPT — they need a React
-       re-render before their colours change, and a screenshot taken in the
-       same tick catches the previous theme. 57 toggles across the capture
-       specs already wait; this file's did not, which is why its frame was
-       the one that lied. */
-    await page.evaluate(() =>
-      document.documentElement.classList.remove("dark")
-    );
-    await page.waitForTimeout(400);
-    await shoot(page, "weekly-review-light");
+    const track = page.locator('[aria-roledescription="carousel"]');
+    const cards = await page.getByRole("group").count();
+    /* An instant scroll, not the app's smooth one: a smooth scroll lands
+       mid-flight inside any fixed wait (CLAUDE.md, capture gotchas). */
+    const showCard = (i: number) =>
+      track.evaluate((el, index) => {
+        el.scrollTo({ left: index * el.clientWidth, behavior: "instant" });
+      }, i);
 
-    await page.evaluate(() => document.documentElement.classList.add("dark"));
-    await page.waitForTimeout(400);
-    await shoot(page, "weekly-review-dark");
+    for (const theme of ["light", "dark"] as const) {
+      /* The settle is the other half of the fix in `shoot` above, and it
+         is the half `animations: "disabled"` cannot supply. Freezing
+         transitions lands CSS colours on their end state, but
+         `useIsDarkMode` and `MuscleHeatMap` read this class in
+         JAVASCRIPT — they need a React re-render before their colours
+         change, and a screenshot taken in the same tick catches the
+         previous theme. */
+      await page.evaluate(
+        (dark) => document.documentElement.classList.toggle("dark", dark),
+        theme === "dark"
+      );
+      await page.waitForTimeout(400);
+      for (let i = 0; i < cards; i++) {
+        await showCard(i);
+        await page.waitForTimeout(400);
+        // The first card keeps the frame's old name, so the diff report
+        // compares it with the page it replaced.
+        await shoot(
+          page,
+          i === 0 ? `weekly-review-${theme}` : `weekly-review-${i + 1}-${theme}`
+        );
+      }
+    }
 
     await page.evaluate(() =>
       document.documentElement.classList.remove("dark")

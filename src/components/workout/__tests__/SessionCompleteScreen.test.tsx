@@ -26,6 +26,14 @@ import type { ProgramExercise } from "@/features/program/programTypes";
 import type { SetPR } from "@/lib/prTracking";
 
 vi.mock("@/lib/haptic", () => ({ haptic: vi.fn() }));
+/* The three headline figures count up as the screen opens (DS3). These
+   tests read the figures, so they run with Reduce Motion on, where each
+   is plain text from the first paint; the count itself is pinned in the
+   last describe, with motion allowed. */
+const motionPref = vi.hoisted(() => ({ reduce: true }));
+vi.mock("@/hooks/useReducedMotion", () => ({
+  useReducedMotion: () => motionPref.reduce,
+}));
 vi.mock("@/lib/auth", () => ({
   useAuth: () => ({
     profile: { preferredWeightUnit: "kg" },
@@ -433,5 +441,31 @@ describe("SessionCompleteScreen — what the session did (DS3)", () => {
     expect(
       screen.getByRole("img", { name: "Muscles trained this session" })
     ).toBeInTheDocument();
+  });
+});
+
+describe("SessionCompleteScreen — the figures count up (DS3)", () => {
+  it("counts each headline figure up from zero when motion is allowed", async () => {
+    motionPref.reduce = false;
+    try {
+      renderScreen([
+        [{ reps: 12, weight: 10, completed: true, type: "working" }],
+      ]);
+      const weight = screen.getByText("kg lifted").previousElementSibling!;
+      // Anchored on a positive: it starts at nothing, then lands.
+      expect(weight.textContent).toBe("0");
+      await waitFor(() => expect(weight.textContent).toBe("120"));
+    } finally {
+      motionPref.reduce = true;
+    }
+  });
+
+  it("writes the figure plainly from the first paint under Reduce Motion", () => {
+    renderScreen([
+      [{ reps: 12, weight: 10, completed: true, type: "working" }],
+    ]);
+    expect(
+      screen.getByText("kg lifted").previousElementSibling!.textContent
+    ).toBe("120");
   });
 });
