@@ -26,8 +26,6 @@ import { captureError } from "@/lib/errorReporting";
    so sub-component lazy loads (Soc5 item 10) can share it. */
 import { lazyRetry } from "@/lib/lazyRetry";
 import MinVersionGate from "@/components/MinVersionGate";
-// Shipped ambient brand glow — eager (tiny, renders on every authed page).
-import AmbientGlow from "@/components/AmbientGlow";
 
 /* Two root-mounted components that render null until something happens.
    A static import is unconditional, so theirs were the entire reason a
@@ -191,11 +189,10 @@ const BadgeSealLab =
     ? lazyRetry(() => import("@/pages/dev/BadgeSealLab"))
     : null;
 
-// The ambient-emission bake-off (#1252) concluded: candidate A (single
-// brand-purple glow) ships as <AmbientGlow>. The dev harness was retired
-// to avoid a double-render with the shipped layer; it's recoverable from
-// history + the contact sheet in docs/visual-audit/ambient/ if a future
-// re-tune needs it.
+// The ambient-emission bake-off (#1252) shipped a single brand-purple
+// glow behind every signed-in page as <AmbientGlow>. DS3 (2026-09-27)
+// retired it: the page is a plain canvas and colour belongs to content.
+// The bake-off's contact sheet is in docs/visual-audit/ambient/.
 
 function PageLoader() {
   // Route-aware skeleton instead of a bare centered spinner. This is the
@@ -528,12 +525,6 @@ function AppRoutes() {
               <SurfaceCoordinatorProvider>
                 {/* #995 tier-3: ≤1 inline education card at a time. */}
                 <EducationLaneProvider>
-                  {/* Shipped single-hue brand ambient glow. Authenticated root
-                    only, so it sits behind every app page but the
-                    unauthenticated auth-shell branch (its own ambience) is
-                    untouched. Renders nothing on run/map routes and under
-                    prefers-reduced-transparency. */}
-                  <AmbientGlow />
                   {/* Mounted at App root (not in Settings) so the priming check runs
             on every foreground event regardless of which page the user is
             on. The modal internally gates on currentStreak >= 2 and

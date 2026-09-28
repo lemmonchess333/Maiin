@@ -27,6 +27,19 @@ import { localDateString, localWeekKey } from "@/lib/dateHelpers";
 
 const emptyClaimMap: Map<string, ClaimState> = new Map();
 
+/** Each day circle's state, in strip order (DS3: the circle carries the
+ *  day's state; there is no dot row beneath it). */
+function circleStates(container: HTMLElement): string[] {
+  return Array.from(container.querySelectorAll("[data-state]")).map(
+    (el) => el.getAttribute("data-state") ?? ""
+  );
+}
+function todayCircle(container: HTMLElement): HTMLElement {
+  const el = container.querySelector("[data-today]");
+  if (!el) throw new Error("no circle marked today");
+  return el as HTMLElement;
+}
+
 function claimMapWith(
   entries: Array<[string, Partial<ClaimState>]>
 ): Map<string, ClaimState> {
@@ -84,7 +97,7 @@ function makeProgramState(runDays: ScheduledRunDay[]): ProgramState {
 }
 
 describe("WeekStrip — runDay status precedence (spec gate #11, resolver-aware)", () => {
-  it("renders the planned-run rhombus when today's runDay is planned and not completed", () => {
+  it("shows today's planned, not-completed run as planned", () => {
     const today = new Date();
     const todayDow = today.getDay();
     const todayKey = localDateString(today);
@@ -114,15 +127,12 @@ describe("WeekStrip — runDay status precedence (spec gate #11, resolver-aware)
       />
     );
 
-    // Coral rhombus — planned, not completed.
-    const rhombuses = container.querySelectorAll(".rotate-45");
-    expect(rhombuses.length).toBeGreaterThan(0);
-    // No Check icon — planned (not completed) does not render a check.
-    const checks = container.querySelectorAll(".lucide-check");
-    expect(checks.length).toBe(0);
+    // Planned, not completed: an outlined circle, not a filled one.
+    expect(todayCircle(container).getAttribute("data-state")).toBe("planned");
+    expect(circleStates(container)).not.toContain("run-done");
   });
 
-  it("renders a Check icon for a completed run day (precedence over recurring rhombus)", () => {
+  it("fills today for a completed run day (derived completion wins)", () => {
     // PR-J chunk B3c — resolver-derived completion. The legacy
     // doc carries status="completed_exact" + the claim map's
     // `legacyCompleted` entry is what surfaces the ✅ (matches
@@ -161,11 +171,10 @@ describe("WeekStrip — runDay status precedence (spec gate #11, resolver-aware)
       />
     );
 
-    const checks = container.querySelectorAll(".lucide-check");
-    expect(checks.length).toBeGreaterThan(0);
+    expect(todayCircle(container).getAttribute("data-state")).toBe("run-done");
   });
 
-  it("renders a Check icon when the claim map carries a manual completion (B2 writer)", () => {
+  it("fills today when the claim map carries a manual completion (B2 writer)", () => {
     // PR-J chunk B3c — the new manualCompletions writer path:
     // runDay.status stays "planned", but the ✅ surfaces because
     // the claim map says manualCompleted.
@@ -204,8 +213,7 @@ describe("WeekStrip — runDay status precedence (spec gate #11, resolver-aware)
       />
     );
 
-    const checks = container.querySelectorAll(".lucide-check");
-    expect(checks.length).toBeGreaterThan(0);
+    expect(todayCircle(container).getAttribute("data-state")).toBe("run-done");
   });
 
   it("anchors every strip day on ONE week key, so none can borrow another week's runDay", () => {
@@ -271,11 +279,13 @@ describe("WeekStrip — runDay status precedence (spec gate #11, resolver-aware)
        all seven share today's week key — so all six resolve. An anchor
        that drifted per-day (a strip starting mid-week, say, which would
        straddle two week keys) would drop some of them. */
-    const checks = container.querySelectorAll(".lucide-check");
-    expect(checks.length, `todayDow=${todayDow}`).toBe(6);
+    expect(
+      circleStates(container).filter((st) => st === "run-done").length,
+      `todayDow=${todayDow}`
+    ).toBe(6);
   });
 
-  it("renders the recurring rhombus when programState is omitted (back-compat)", () => {
+  it("still shows today's planned run when programState is omitted (back-compat)", () => {
     const schedule = makeSchedule([
       "run",
       "run",
@@ -298,8 +308,8 @@ describe("WeekStrip — runDay status precedence (spec gate #11, resolver-aware)
       />
     );
 
-    const rhombuses = container.querySelectorAll(".rotate-45");
-    expect(rhombuses.length).toBeGreaterThan(0);
+    // A run every day: today is planned, earlier days have passed.
+    expect(todayCircle(container).getAttribute("data-state")).toBe("planned");
   });
 });
 
@@ -602,12 +612,11 @@ describe("WeekStrip — the week you are in, not the week ahead", () => {
   });
 });
 
-describe("WeekStrip — today is a colour and a soft halo, never a second ring", () => {
-  // `ring-2 ring-primary ring-offset-2` on top of the 2px `border-primary`
-  // drew today as two concentric rings (border, gap, ring). Today is now a
-  // 4px translucent halo with no offset — the same mark the Run and Lift
-  // selectors use — so the three strips read as one control.
-  it("marks today with a translucent halo and no offset ring", () => {
+describe("WeekStrip — today is a ring, selection a second ring outside it", () => {
+  // DS3: today is the purple ring on whichever state the day is in, so a
+  // finished today still reads as today. Selection is a ring OUTSIDE the
+  // circle, so the two compose instead of one masking the other.
+  it("marks today with the purple ring and nothing else", () => {
     const { container } = render(
       <WeekStrip
         dayMap={new Map()}
@@ -620,15 +629,12 @@ describe("WeekStrip — today is a colour and a soft halo, never a second ring",
     );
     const todayButton = container.querySelector('button[aria-current="date"]');
     expect(todayButton).not.toBeNull();
-    const circle = todayButton!.querySelector("div.rounded-full");
-    expect(circle).not.toBeNull();
-    const cls = circle!.className;
-    expect(cls).toContain("ring-4 ring-primary/10");
-    expect(cls).not.toContain("ring-offset");
-    expect(cls).not.toContain("ring-2");
+    const cls = todayCircle(container).className;
+    expect(cls).toContain("border-primary");
+    expect(cls).not.toContain("ring-foreground");
   });
 
-  it("keeps the halo when today is also the selected day", () => {
+  it("keeps today's ring when today is also the selected day", () => {
     const todayKey = localDateString(new Date());
     const { container } = render(
       <WeekStrip
@@ -640,9 +646,111 @@ describe("WeekStrip — today is a colour and a soft halo, never a second ring",
         onDayTap={vi.fn()}
       />
     );
-    const todayButton = container.querySelector('button[aria-current="date"]')!;
-    const cls = todayButton.querySelector("div.rounded-full")!.className;
-    expect(cls).toContain("bg-primary-strong");
-    expect(cls).toContain("ring-4 ring-primary/10");
+    const cls = todayCircle(container).className;
+    expect(cls).toContain("border-primary");
+    expect(cls).toContain("ring-foreground");
+  });
+});
+
+describe("WeekStrip — the circle is a statement about the date (DS3)", () => {
+  const liftWeek = () =>
+    makeProfile(
+      makeSchedule(["lift", "lift", "lift", "lift", "lift", "lift", "lift"])
+    );
+
+  it("fills a day on which a lift session was logged, planned or not", () => {
+    const todayKey = localDateString(new Date());
+    const { container } = render(
+      <WeekStrip
+        dayMap={new Map()}
+        profile={makeProfile(
+          makeSchedule(["rest", "rest", "rest", "rest", "rest", "rest", "rest"])
+        )}
+        programState={null}
+        claimMap={emptyClaimMap}
+        selectedDate={null}
+        onDayTap={vi.fn()}
+        loggedLiftDates={new Set([todayKey])}
+      />
+    );
+    expect(todayCircle(container).getAttribute("data-state")).toBe("lift-done");
+    expect(
+      todayCircle(container).closest("button")!.getAttribute("aria-label")
+    ).toMatch(/completed lift/);
+  });
+
+  it("fills a day with an extra run that claimed no planned day", () => {
+    const todayKey = localDateString(new Date());
+    const { container } = render(
+      <WeekStrip
+        dayMap={new Map()}
+        profile={makeProfile(
+          makeSchedule(["rest", "rest", "rest", "rest", "rest", "rest", "rest"])
+        )}
+        programState={null}
+        claimMap={emptyClaimMap}
+        selectedDate={null}
+        onDayTap={vi.fn()}
+        extraRunDates={new Set([todayKey])}
+      />
+    );
+    expect(todayCircle(container).getAttribute("data-state")).toBe("run-done");
+  });
+
+  it("splits a day with both a lift and a run", () => {
+    const todayKey = localDateString(new Date());
+    const { container } = render(
+      <WeekStrip
+        dayMap={new Map()}
+        profile={liftWeek()}
+        programState={null}
+        claimMap={emptyClaimMap}
+        selectedDate={null}
+        onDayTap={vi.fn()}
+        loggedLiftDates={new Set([todayKey])}
+        extraRunDates={new Set([todayKey])}
+      />
+    );
+    expect(todayCircle(container).getAttribute("data-state")).toBe("both-done");
+  });
+
+  it("says missed for a planned day that has passed, planned for today and later", () => {
+    const { container } = render(
+      <WeekStrip
+        dayMap={new Map()}
+        profile={liftWeek()}
+        programState={null}
+        claimMap={emptyClaimMap}
+        selectedDate={null}
+        onDayTap={vi.fn()}
+      />
+    );
+    const states = circleStates(container);
+    const todayIdx = Array.from(
+      container.querySelectorAll("[data-state]")
+    ).indexOf(todayCircle(container));
+    expect(states.slice(0, todayIdx).every((st) => st === "missed")).toBe(true);
+    expect(states.slice(todayIdx).every((st) => st === "planned")).toBe(true);
+    const labels = Array.from(container.querySelectorAll("button")).map(
+      (b) => b.getAttribute("aria-label") ?? ""
+    );
+    for (const label of labels.slice(0, todayIdx))
+      expect(label).toMatch(/missed lift/);
+  });
+
+  it("leaves a rest day bare", () => {
+    const { container } = render(
+      <WeekStrip
+        dayMap={new Map()}
+        profile={makeProfile(
+          makeSchedule(["rest", "rest", "rest", "rest", "rest", "rest", "rest"])
+        )}
+        programState={null}
+        claimMap={emptyClaimMap}
+        selectedDate={null}
+        onDayTap={vi.fn()}
+      />
+    );
+    expect(new Set(circleStates(container))).toEqual(new Set(["rest"]));
   });
 });

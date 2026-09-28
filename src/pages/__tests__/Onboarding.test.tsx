@@ -607,3 +607,51 @@ describe("new runners", () => {
     expect(targetAfterPicking(/Occasional runner/)).toBe(2);
   });
 });
+
+/* DS3: each choice shows a drawing of what it leads to. The drawings are
+   decorative, so the exact names below prove they add nothing to what a
+   screen reader hears, and the e2e selectors that find these cards by
+   name keep working. */
+describe("choices with drawings", () => {
+  const artOf = (name: string | RegExp) => {
+    const card = screen.getByRole("button", { name });
+    return {
+      img: card.querySelector("img")?.getAttribute("src") ?? "",
+      kind: card
+        .querySelector("[data-choice-art]")
+        ?.getAttribute("data-choice-art"),
+    };
+  };
+
+  it("draws each goal, and the drawing adds nothing to its name", () => {
+    open();
+    expect(artOf("Build muscle").img).toMatch(/\/form-art\/db-curl\.webp$/);
+    expect(artOf("Get stronger").img).toMatch(/\/form-art\/squat\.webp$/);
+    expect(artOf("Lose fat").kind).toBe("muscles");
+    expect(artOf("General fitness").img).toMatch(/\/form-art\/push-ups\.webp$/);
+    expect(artOf("Improve running").kind).toBe("route");
+  });
+
+  it("draws the kit each setup means, and experience as a level", () => {
+    open();
+    fireEvent.click(screen.getByRole("button", { name: /Build muscle/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+    fireEvent.click(screen.getByRole("radio", { name: "Lifting" }));
+    fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+    expect(artOf(/Full gym/).img).toMatch(/chest-press-machine\.webp$/);
+    expect(artOf(/Home gym/).img).toMatch(/db-bench\.webp$/);
+    expect(artOf(/Minimal/).img).toMatch(/bodyweight-squat\.webp$/);
+    for (const [name, solid] of [
+      [/New to lifting/, 1],
+      [/Some experience/, 2],
+      [/Experienced/, 3],
+    ] as const) {
+      const card = screen.getByRole("button", { name });
+      expect(
+        [...card.querySelectorAll("polyline")].filter(
+          (c) => c.getAttribute("stroke-opacity") === "1"
+        )
+      ).toHaveLength(solid);
+    }
+  });
+});

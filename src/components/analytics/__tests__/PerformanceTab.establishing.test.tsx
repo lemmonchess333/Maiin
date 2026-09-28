@@ -12,20 +12,33 @@
  * whether there was enough history to support a verdict. The same screen
  * also read "Lifting progression: +324%", which is `safeRatio(thisWeek,
  * baseline)` against a baseline that had not formed — arithmetically
- * correct and meaningless.
+ * correct and meaningless. That ratio card is gone; the page now states
+ * the week's lifting beside the usual week, and the same rule holds it:
+ * no usual week until the baseline has formed.
  *
  * CLAUDE.md's cold-start rule is the reason this matters rather than
  * being cosmetic: every new user lives in this window, so across a real
  * user base it is one of the most-seen states in the app.
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 
 const mockUsePerformanceWeeks = vi.fn();
 vi.mock("@/lib/historyAnalytics", () => ({ track: vi.fn() }));
 vi.mock("@/hooks/usePerformance", () => ({
-  usePerformanceWeeks: (...args: unknown[]) => mockUsePerformanceWeeks(...args),
+  /* The hook returns one document per week; a fixture of weekly
+     documents is already that series, so its week before the newest is
+     the previous week and its length is the document count. */
+  usePerformanceWeeks: (...args: unknown[]) => {
+    const served = mockUsePerformanceWeeks(...args);
+    const weeks = served?.weeks ?? [];
+    return {
+      previousWeek: weeks.length >= 2 ? weeks[weeks.length - 2] : null,
+      docsAvailable: weeks.length,
+      ...served,
+    };
+  },
 }));
 vi.mock("@/hooks/useWeeklyReview", () => ({
   useReviewEligibility: () => ({ eligible: false, weekKey: null }),
@@ -33,7 +46,12 @@ vi.mock("@/hooks/useWeeklyReview", () => ({
 
 import PerformanceTab from "../PerformanceTab";
 
-function week(weekKey: string, pi: number, lifetimeWeeks: number) {
+function week(
+  weekKey: string,
+  pi: number,
+  lifetimeWeeks: number,
+  baselineWeeks = lifetimeWeeks
+) {
   return {
     weekKey,
     performanceIndex: pi,
@@ -51,7 +69,10 @@ function week(weekKey: string, pi: number, lifetimeWeeks: number) {
       runVolume: 1,
       runPaceAdjustmentPct: 0,
     },
-    aggregates: {},
+    // The device case: 12.4k kg this week against a baseline of one
+    // session's 2.9k, which is where "+324%" came from.
+    aggregates: { liftSessions: 3, liftTonnage: 12400 },
+    baseline: { liftTonnage: 2925, weeksUsed: baselineWeeks },
     adherenceScore: 100,
     signals: { lifetimeWeeks, daysSinceLastTraining: 1 },
   };
@@ -68,21 +89,6 @@ function renderWeeks(weeks: ReturnType<typeof week>[]) {
       <PerformanceTab />
     </MemoryRouter>
   );
-}
-
-/**
- * The "This week adjustments" card lives inside the collapsed technical
- * section, so it has to be opened before anything in it can be asserted.
- *
- * Worth stating why this is a helper rather than an inline click: the
- * FIRST version of the suppression test passed without it. `queryByText`
- * for "+324%" was null because the whole card was unmounted, not because
- * the ratio was suppressed — it would have passed just as happily against
- * the unfixed component. A negative assertion about a collapsed subtree
- * proves nothing about the subtree.
- */
-function openDetails() {
-  fireEvent.click(screen.getByRole("button", { name: "Details" }));
 }
 
 /** One week of history + lifetimeWeeks 1 — squarely establishing. */
@@ -116,20 +122,16 @@ describe("PerformanceTab — establishing baseline", () => {
     expect(screen.getByText(/Early read/i)).toBeInTheDocument();
   });
 
-  it("suppresses ratios against a baseline that has not formed", () => {
-    // "+324%" is safeRatio(thisWeek, baseline) with a one-session
-    // baseline. Suppressed rather than clamped — a capped number is
-    // still a claim.
+  it("offers no usual week while the baseline has not formed", () => {
+    // A one-session baseline is not anyone's usual week. Suppressed rather
+    // than shown small: a comparison with it is still a claim.
     renderWeeks(COLD);
-    openDetails();
-    // The card itself is still here — this is a suppressed FIGURE, not a
-    // hidden section. Anchoring on the heading is what stops the null
-    // below from being satisfied by an unrendered card.
-    expect(screen.getByText("This week adjustments")).toBeInTheDocument();
+    // The week's own figure is here; only the comparison is withheld.
+    // Anchoring on it is what stops the null below being satisfied by a
+    // card that did not render at all.
+    expect(screen.getByText("12.4k kg")).toBeInTheDocument();
+    expect(screen.queryByText(/usual week/)).toBeNull();
     expect(screen.queryByText(/\+324%/)).toBeNull();
-    expect(
-      screen.getByText(/adjustments start once your baseline settles/i)
-    ).toBeInTheDocument();
   });
 
   it("DOES give a settled 81 its verdict — the control", () => {
@@ -147,15 +149,23 @@ describe("PerformanceTab — establishing baseline", () => {
     expect(screen.queryByText(/Establishing your baseline/i)).toBeNull();
   });
 
-  it("shows the adjustment figures once the baseline is settled", () => {
-    // The control for the suppression test: same 4.24x multiplier, only
-    // the history differs. Without it, "suppressed" would be satisfied by
-    // a component that had simply stopped rendering the figures.
+  it("states the usual week once the baseline is settled", () => {
+    // The control for the suppression test: same figures, only the
+    // history differs. Without it, "withheld" would be satisfied by a
+    // component that had simply stopped comparing.
     renderWeeks(WARM);
-    openDetails();
-    expect(screen.getByText("+324%")).toBeInTheDocument();
-    expect(
-      screen.queryByText(/adjustments start once your baseline settles/i)
-    ).toBeNull();
+    expect(screen.getByText("12.4k kg")).toBeInTheDocument();
+    expect(screen.getByText(/usual week/)).toBeInTheDocument();
+    expect(screen.getByText("2.9k kg")).toBeInTheDocument();
+  });
+
+  it("offers no usual week from a baseline of one active week, even when settled", () => {
+    // Settled history, but only one active week inside the baseline
+    // window: one week is not a usual week either.
+    renderWeeks(
+      WARM.map((w) => ({ ...w, baseline: { ...w.baseline, weeksUsed: 1 } }))
+    );
+    expect(screen.getByText("12.4k kg")).toBeInTheDocument();
+    expect(screen.queryByText(/usual week/)).toBeNull();
   });
 });

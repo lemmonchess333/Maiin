@@ -25,32 +25,34 @@ describe("PageShell header", () => {
     expect(h1.className).toMatch(/font-extrabold/);
   });
 
-  it("gives the brand wordmark its own treatment instead of the H1 scale", () => {
-    // Home's header is the brand, not a page name — tracked uppercase is
-    // that design, kept as an option rather than forced onto the scale.
+  it("puts the eyebrow above the title, outside the heading", () => {
+    // Home's date sits over "Today". It is not part of the page's name,
+    // so it stays out of the h1's accessible name.
     render(
-      <PageShell brand title="TROPOS">
+      <PageShell eyebrow="Sunday 27 September" title="Today">
         x
       </PageShell>
     );
-    const h1 = screen.getByRole("heading", { level: 1, name: "TROPOS" });
-    expect(h1.className).toMatch(/uppercase/);
-    expect(h1.className).toMatch(/tracking-\[0\.14em\]/);
-    expect(h1.className).not.toMatch(/\btext-h1\b/);
+    const h1 = screen.getByRole("heading", { level: 1, name: "Today" });
+    expect(h1.className).toMatch(/\btext-h1\b/);
+    const eyebrow = screen.getByText("Sunday 27 September");
+    expect(eyebrow.tagName).toBe("P");
+    expect(h1.contains(eyebrow)).toBe(false);
+    expect(
+      eyebrow.compareDocumentPosition(h1) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
   });
 
-  it("renders leading tile, subtitle and actions in their slots", () => {
+  it("renders subtitle and actions in their slots", () => {
     render(
       <PageShell
         title="Train"
-        leading={<span data-testid="tile" />}
         subtitle="Race prep · Marathon"
         actions={<button type="button">More</button>}
       >
         x
       </PageShell>
     );
-    expect(screen.getByTestId("tile")).toBeInTheDocument();
     expect(screen.getByText("Race prep · Marathon")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "More" })).toBeInTheDocument();
   });
@@ -70,25 +72,14 @@ describe("PageShell header", () => {
       </PageShell>
     );
     const p = screen.getByText("one line");
-    expect(p.className).toMatch(/min-h-\[2rem\]/);
+    expect(p.className).toMatch(/min-h-\[2.5rem\]/);
     expect(p.className).toMatch(/line-clamp-2/);
   });
 
-  it("tints the header zone from the accent at low alpha", () => {
-    // Train's sport tint: the whole zone answers to the active mode. The
-    // alpha suffix keeps it a wash rather than a filled block.
-    render(
-      <PageShell title="Train" accent="#D4637A">
-        x
-      </PageShell>
-    );
-    const header = screen.getByRole("banner");
-    expect(header.style.backgroundColor).not.toBe("");
-    expect(header.className).toMatch(/rounded-2xl/);
-  });
-
-  it("does not tint or pad the header without an accent", () => {
-    render(<PageShell title="Food">x</PageShell>);
+  it("draws every header the same plain way", () => {
+    // DS3 retired Train's sport-tinted header zone: no page's header is
+    // a tinted, padded block any more.
+    render(<PageShell title="Train">x</PageShell>);
     const header = screen.getByRole("banner");
     expect(header.style.backgroundColor).toBe("");
     expect(header.className).not.toMatch(/rounded-2xl/);

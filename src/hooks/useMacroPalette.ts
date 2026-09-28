@@ -25,7 +25,7 @@ function getIsDark() {
  *     (used at 10% alpha), dots, chart fills, and any other graphical
  *     usage. Identical in light and dark mode.
  *   • `text`   — contrast-safe values for text rendered on card surfaces.
- *     In dark mode this is the bright palette (high contrast on #1A1A1F);
+ *     In dark mode this is the bright palette (high contrast on the dark card);
  *     in light mode this switches to the darker variants in
  *     `MACROS_TEXT_LIGHT` so labels clear WCAG AA on white.
  *

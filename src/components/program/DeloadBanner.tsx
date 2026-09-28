@@ -7,12 +7,7 @@ import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { useDismissOnce } from "@/hooks/useDismissOnce";
 import { track as trackProgrammeEvent } from "@/lib/programmeAnalytics";
 import { Button } from "@/components/ui/Button";
-
-/** localStorage key prefix for the per-week dismissal flag. Dismissal
- *  is scoped to the active week — moving into a new week reopens the
- *  banner if the deload signal still applies, since the user's load
- *  picture has changed. */
-const DISMISSED_STORAGE_PREFIX = "tropos-pgm-deload-dismissed";
+import { deloadDismissKey } from "@/lib/programNotices";
 
 interface DeloadBannerProps {
   /** When false the banner is hidden regardless of dismissal state.
@@ -54,6 +49,14 @@ interface DeloadBannerProps {
    *  the caller owns the success/undo toast. Absent → the banner
    *  stays informational (pre-wire behaviour). */
   onApply?: () => Promise<boolean>;
+  /** Whether this week's recommendation was dismissed, and how to dismiss
+   *  it, when the page owns that answer: Train does, so it can hold other
+   *  advice back while this notice shows (one advice notice at a time,
+   *  `programNotices`). Omitted, the banner keeps its own. Dismissal is
+   *  per week either way (`deloadDismissKey`): a new week reopens the
+   *  banner if the signal still applies. */
+  dismissed?: boolean;
+  onDismiss?: () => void;
 }
 
 /**
@@ -92,15 +95,17 @@ export default function DeloadBanner({
   runsEased,
   experience,
   onApply,
+  dismissed: dismissedProp,
+  onDismiss,
 }: DeloadBannerProps) {
   // Mirrors the recipe branch in programEngine.applyDeload /
   // functions/lib/deloadEngine.js exactly: only these two tiers hold
   // load; beginner AND unknown fall back to the novice cut.
   const deloadHoldsLoad =
     experience === "intermediate" || experience === "advanced";
-  const { dismissed, dismiss } = useDismissOnce(
-    `${DISMISSED_STORAGE_PREFIX}:${weekKey}`
-  );
+  const own = useDismissOnce(deloadDismissKey(weekKey));
+  const dismissed = dismissedProp ?? own.dismissed;
+  const dismiss = onDismiss ?? own.dismiss;
   /* The run half, named. Empty when the deload did not touch the runs —
      which is the automatic week-4 case, and silence is then correct. */
   const runsEasedClause =

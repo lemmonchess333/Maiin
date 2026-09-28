@@ -1,15 +1,8 @@
 import InlineNumerals from "@/components/ui/InlineNumerals";
-import { THEME } from "@/lib/theme";
-import { motion } from "framer-motion";
-import {
-  Footprints,
-  PersonStanding,
-  Zap,
-  RefreshCw,
-  Wind,
-  Route,
-  Flag,
-} from "lucide-react";
+import { Button } from "@/components/ui/Button";
+import { localDateString } from "@/lib/dateHelpers";
+import { Play } from "lucide-react";
+import RunTemplateIcon from "@/components/run/RunTemplateIcon";
 import { haptic } from "@/lib/haptic";
 import { track as trackHomeEvent } from "@/lib/homeAnalytics";
 import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
@@ -21,18 +14,13 @@ import {
 } from "@/lib/scheduledRunStatus";
 import { cardClasses } from "@/components/ui/cardClasses";
 
-const RUN_ICON_MAP: Record<
-  string,
-  React.ComponentType<{ className?: string }>
-> = {
-  "person-standing": PersonStanding,
-  zap: Zap,
-  "refresh-cw": RefreshCw,
-  wind: Wind,
-  route: Route,
-  flag: Flag,
-};
-
+/**
+ * Today's run, as Home's lead card (DS3). Twin of LiftCTACard: Start
+ * begins the run, anywhere else on the card opens it in Train, and a
+ * finished or skipped run says so instead of offering Start. The card
+ * shows the session and its dose; why this run matters lives in Train's
+ * day details ("Why this run"), per the 2026-09-09 daily-logging note.
+ */
 export default function RunCTACard({
   todayRun,
   navigate,
@@ -52,7 +40,9 @@ export default function RunCTACard({
         return t.id === (todayRun.userOverride || todayRun.templateId);
       })
     : null;
-  const runLabel = tmpl ? tmpl.name : "Start a run";
+  /* A run day with no planned run yet (a new plan, or a legacy schedule)
+     is a free run, the name Train's Run tab gives the same choice. */
+  const runLabel = tmpl ? tmpl.name : "Free run";
   const runIcon = tmpl?.icon;
   // P0-6: pass scheduledRunId so Run.tsx can pin the exact runDay
   // being fulfilled. Falls back to ?template= alone for legacy
@@ -62,8 +52,6 @@ export default function RunCTACard({
   if (todayRun?.id)
     params.push("scheduledRunId=" + encodeURIComponent(todayRun.id));
   const queryString = params.length ? "?" + params.join("&") : "";
-  const RunIconComp =
-    runIcon && RUN_ICON_MAP[runIcon] ? RUN_ICON_MAP[runIcon] : Footprints;
 
   // Key metric = the planned distance, read from the template config (the
   // source of truth) rather than regex-parsed out of the prose description.
@@ -74,10 +62,8 @@ export default function RunCTACard({
     ? `${tmpl.config.targetDistanceKm} km`
     : null;
 
-  // HOME-ACTION-01: startability decides BOTH the pill label AND where the
-  // tap goes. A terminal/reconciliation run must not relaunch the
-  // run flow — the tap opens the Programme run view to review it instead.
-  // No todayRun (cold-start) is treated as startable ("Go").
+  // HOME-ACTION-01: a terminal/reconciliation run must not relaunch the run
+  // flow, so it gets no Start. No todayRun (cold-start) is startable.
   const status = todayRun ? getScheduledRunStatus(todayRun) : "planned";
   const isCompleted = completed ?? isScheduledRunCompleted(status);
   const startable = !isCompleted && isScheduledRunStartable(status);
@@ -87,59 +73,80 @@ export default function RunCTACard({
       ? "Skipped"
       : "Needs review";
 
+  // The card opens today's run in Train's Run tab to look it over; Start
+  // begins the run. A finished or skipped run has no Start.
+  const dayTarget = "/program?tab=run&rday=" + localDateString(new Date());
+  /* No plan position ("Base · week 3 of 16") and no rationale: Home
+     shows the session and its dose, and both live in the day's details
+     (owner direction, 2026-09-09; pinned in SessionPurpose.test.tsx). */
+  const eyebrow = isFirst ? "Your first run" : "Today · Run day";
+
   return (
-    <motion.button
-      whileTap={{ scale: 0.97 }}
-      onClick={function () {
-        haptic();
-        trackHomeEvent("home_card_tapped", { card: "today_run" });
-        navigate(startable ? "/run" + queryString : "/program?tab=run");
-      }}
-      type="button"
+    <div
       className={cardClasses({
         tone: "tinted",
-        className:
-          "w-full bg-running/8 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+        padded: false,
+        className: "relative overflow-hidden bg-running/12",
       })}
     >
-      <div className="flex items-center gap-3">
-        <div className="size-10 shrink-0 rounded-lg flex items-center justify-center bg-running/9">
-          <RunIconComp className="size-5 text-running" aria-hidden="true" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-xs font-semibold mb-0.5 text-running-strong">
-            {isFirst ? "Your first run" : "Today · Run day"}
+      {/* The card-wide preview, beneath the content (see LiftCTACard). */}
+      <button
+        type="button"
+        onClick={function () {
+          haptic();
+          trackHomeEvent("home_card_tapped", { card: "today_run" });
+          navigate(dayTarget);
+        }}
+        aria-label={tmpl ? `Open ${tmpl.name} in Train` : "Open today in Train"}
+        className="absolute inset-0 z-0 rounded-[inherit] motion-safe:active:bg-running/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset"
+      />
+      <div className="pointer-events-none relative z-10 flex items-start gap-4 px-5 pt-5">
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-bold text-running-strong">
+            <InlineNumerals>{eyebrow}</InlineNumerals>
           </p>
-          <p className="text-base font-bold leading-snug text-foreground">
+          <p className="mt-1 text-h2 font-extrabold leading-tight tracking-tight text-foreground text-balance">
             <InlineNumerals>{runLabel}</InlineNumerals>
           </p>
           {tmpl && (
-            <p className="mt-1 text-micro leading-relaxed text-muted-foreground">
+            <p className="mt-2 text-sm font-medium text-muted-foreground">
               <InlineNumerals>
-                {runKeyMetric ?? `${tmpl.estimatedDuration} min`}
+                {runKeyMetric
+                  ? `${runKeyMetric} · about ${tmpl.estimatedDuration} min`
+                  : `About ${tmpl.estimatedDuration} min`}
               </InlineNumerals>
             </p>
           )}
         </div>
-        {/* PR-0b-iii + HOME-ACTION-01: "Go" pill only when startable;
-            terminal / reconciliation states show a calm "Done" chip with
-            no Play icon (the run can't be relaunched). */}
+        <div className="size-12 shrink-0 rounded-2xl flex items-center justify-center bg-running/12">
+          <RunTemplateIcon
+            icon={runIcon}
+            className="size-6 text-running"
+            aria-hidden="true"
+          />
+        </div>
+      </div>
+      <div className="relative z-10 px-5 pb-5 pt-4">
         {startable ? (
-          <div
-            className="flex min-h-11 shrink-0 items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-bold shadow-sm"
-            style={{
-              background: `linear-gradient(135deg, ${THEME.running}, ${THEME.runningLight})`,
-              color: "white",
+          <Button
+            variant="sport"
+            size="lg"
+            className="w-full"
+            onClick={function () {
+              haptic();
+              trackHomeEvent("home_card_tapped", { card: "today_run" });
+              navigate("/run" + queryString);
             }}
           >
-            View run
-          </div>
+            <Play className="size-4 fill-current" aria-hidden="true" />
+            Start run
+          </Button>
         ) : (
-          <div className="flex min-h-11 shrink-0 items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-bold bg-muted text-muted-foreground">
+          <p className="pointer-events-none inline-flex min-h-11 items-center rounded-full bg-muted px-4 text-sm font-semibold text-muted-foreground">
             {statusLabel}
-          </div>
+          </p>
         )}
       </div>
-    </motion.button>
+    </div>
   );
 }

@@ -107,11 +107,13 @@ export default function WeightStepsTiles({
     : "Steps not yet connected. Connect Apple Health to track steps.";
 
   return (
-    /* home-declutter pyramid: this component now lives in the RIGHT
-       column of the water/weight duo, so the tiles stack vertically
-       (weight above steps on native) instead of going 2-up — 2-up
-       inside a half-width cell would cramp both. h-full lets the
-       weight tile stretch to match the water tile beside it. */
+    /* home-declutter pyramid: this component lives in the RIGHT column
+       of the water/weight duo, so the tiles stack vertically (weight
+       above steps on native) instead of going 2-up — 2-up inside a
+       half-width cell would cramp both. h-full lets the weight tile
+       stretch to match the water tile beside it. DS3: both tiles sit on
+       the card surface, like the water tile, rather than the darker
+       muted tile. */
     <div className="grid grid-cols-1 gap-2 h-full">
       <button
         type="button"
@@ -121,7 +123,7 @@ export default function WeightStepsTiles({
           onLogWeight();
         }}
         aria-label={weightAriaLabel}
-        className="p-3 rounded-xl text-left motion-safe:active:scale-[0.97] bg-muted h-full flex flex-col focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+        className="p-3 rounded-xl text-left motion-safe:active:scale-[0.97] bg-card card-shadow h-full flex flex-col focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
       >
         <div className="flex items-center gap-2 mb-1.5">
           <div
@@ -199,7 +201,7 @@ export default function WeightStepsTiles({
             if (!stepsConnected) onConnectSteps?.();
           }}
           aria-label={stepsAriaLabel}
-          className="p-3 rounded-xl text-left motion-safe:active:scale-[0.97] bg-muted group"
+          className="p-3 rounded-xl text-left motion-safe:active:scale-[0.97] bg-card card-shadow group"
         >
           <div className="flex items-center gap-2 mb-1.5">
             <div

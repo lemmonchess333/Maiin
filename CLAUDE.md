@@ -85,7 +85,7 @@ exists — pinned by `claudeMdFreshness.test.ts` in both directions
 | -------------------------------------- | ---------------------------------- | ------------------------------------------------------------------------------ |
 | `Home.tsx`                             | `/`                                | Main dashboard — WeekStrip, hero cards, energy, insights                       |
 | `Food.tsx`                             | `/food`                            | Food/meal logging with camera, NL parsing, barcode (`/log` redirects here)     |
-| `History.tsx`                          | `/history`                         | Workout & run history with analytics charts                                    |
+| `History.tsx`                          | `/history`                         | Analytics: an overview, with Lifting / Running / Body / Food pages (`?view=`)  |
 | `ExerciseHistory.tsx`                  | `/history/exercise/:name`          | Per-exercise progression chart + rep-bucket PR strip                           |
 | `Program.tsx`                          | `/program`                         | Workout program builder & scheduling                                           |
 | `Routine.tsx`                          | `/routine/:routineId`              | Saved-routine workout runner (reuses `WorkoutSession`)                         |
@@ -266,7 +266,7 @@ Helper: `syncChallengeProgress()` — auto-updates challenge participant progres
 - **Lib functions:** Named exports, camelCase filenames
 - **Tests:** Colocated in `__tests__/` directories, `*.test.ts` suffix
 - **Styling:** Tailwind utility classes, `THEME` object from `src/lib/theme.ts` for chart colors
-- **Icons:** lucide-react (import individual icons)
+- **Icons:** lucide-react (import individual icons). The drawn exceptions live in `src/components/icons/`: the tab bar's own set (`TabIcons.tsx`, an outline and a filled form each) and the avocado macro icon; the brand mark is `ui/BrandMark.tsx`
 - **Toasts:** sonner (`toast.success()`, `toast.error()`)
 - **UI patterns:** Drawer (vaul), bottom sheets, pressable cards
 - **Class names:** `clsx()` + `twMerge()` for conditional/merged Tailwind classes
@@ -358,10 +358,13 @@ already made for this repo.
 
 ## CI/CD
 
-- **deploy.yml:** Builds and deploys to GitHub Pages on push to `main`
-- **deploy-functions.yml:** Deploys Cloud Functions when `functions/**` changes
-- **deploy-firestore.yml:** Deploys Firestore security rules
-- **deploy-hosting.yml:** Builds with `base: "/"` and deploys to Firebase Hosting on push to `main`. The web build's security headers (HSTS, `nosniff`, Referrer-Policy, `X-Frame-Options`, a `frame-ancestors 'none'` CSP header, Permissions-Policy) live in `firebase.json` and ship ONLY via Hosting — GitHub Pages cannot set response headers, accepted because Pages is the preview surface, not the product. `frame-ancestors` is ignored in a `<meta>` CSP, which is why it is a header. Pinned by `hostingSecurityHeaders.test.ts`.
+- **deploy-production.yml ("Deploy production") is the one entry point for the web and backend deploys.** It runs on every push to `main` and on a manual `workflow_dispatch`, one release at a time (the `production-release` concurrency group queues a new release behind the running one rather than cancelling it). The five workflows below are `workflow_call` only, so none of them can be run on its own — to redeploy anything, re-run Deploy production. Its `changes` job diffs against the last SUCCESSFUL release, not the previous push, and runs the backend chain only when something under `functions/`, `firestore.rules`, `firestore.indexes.json`, `storage.rules`, `firebase.json`, `scripts/verify-*` or `.github/workflows/deploy*` changed; a manual dispatch always runs it. Order: Firestore → Storage → Functions, then Hosting and Pages once all three succeed (or straight away when the backend was skipped).
+- **deploy-firestore.yml:** Firestore rules (read back after deploying), then indexes.
+- **deploy-storage.yml:** Storage rules, gated behind the `STORAGE_XSERVICE_APPROVED` repo variable (set since 2026-09-15). Before releasing rules that read Firestore it confirms the Storage service agent holds the role they need (`scripts/verify_storage_rules_iam.py`), and fails the release if the role is missing or unreadable — firebase-tools grants it only interactively, never from CI. The packet-11 QA row has the one-time grant.
+- **deploy-functions.yml:** Cloud Functions — injects the per-commit bundle marker, runs `firebase deploy --only functions --force` (so a removed export is deleted, not refused), then reads the deployed source back (`scripts/verify-deployed-functions-source.py`). A failure files or updates one rolling "deploy-functions failing on main" issue.
+- **deploy.yml:** Builds and deploys to GitHub Pages.
+- **deploy-hosting.yml:** Builds with `base: "/"` and deploys to Firebase Hosting. The web build's security headers (HSTS, `nosniff`, Referrer-Policy, `X-Frame-Options`, a `frame-ancestors 'none'` CSP header, Permissions-Policy) live in `firebase.json` and ship ONLY via Hosting — GitHub Pages cannot set response headers, accepted because Pages is the preview surface, not the product. `frame-ancestors` is ignored in a `<meta>` CSP, which is why it is a header. Pinned by `hostingSecurityHeaders.test.ts`.
+- **deploy-ios.yml:** Separate and manual-only (`workflow_dispatch`): builds the web bundle into the iOS project and uploads to TestFlight. Its header marks it an unverified scaffold.
 - **Firebase project:** `adaptive-fitness-af8bb`
 
 ### Cloud Functions deploy — known gotchas
@@ -369,10 +372,10 @@ already made for this repo.
 These lessons cost a full day to find. Read before changing the deploy pipeline.
 
 - **firebase-tools deduplicates uploads against the deployed bundle hash.** If a `functions/**` PR doesn't change any `.js` files (e.g. a docs-only PR like a CHANGELOG, README, or new markdown), the workflow triggers but `firebase deploy --only functions` will skip the actual upload and report success. Production stays on the previous bundle — but CI is green and nothing surfaces the drift. **deploy-functions.yml has a `Force unique bundle hash` step** that prepends a per-commit comment marker to `functions/index.js` before deploy, defeating the dedup. Do not remove that step; if you must, add a different mechanism that guarantees a fresh bundle hash per workflow run.
-- **A cascade of failed deploys followed by one docs-only success is the worst case.** If billing or auth issues cause N consecutive deploys to fail at the deploy step, then the next PR happens to be docs-only and the dedup logic kicks in, the workflow reports success but production has been stranded for the entire N-day window. The build-marker step prevents this scenario, but the **`workflow_dispatch` trigger** is the escape hatch — re-run the workflow manually from the Actions UI without pushing a new commit.
+- **A cascade of failed deploys followed by one docs-only success is the worst case.** If billing or auth issues cause N consecutive deploys to fail at the deploy step, then the next PR happens to be docs-only and the dedup logic kicks in, the workflow reports success but production has been stranded for the entire N-day window. The build-marker step prevents this scenario, but the **`workflow_dispatch` trigger on Deploy production** is the escape hatch — re-run it from the Actions UI without pushing a new commit. A dispatch always runs the whole backend chain, and so does the next push after a failed backend release, because `changes` compares against the last successful one.
 - **Blaze plan is required for any Cloud Functions deploy.** Scheduled functions (Pub/Sub), Apple/Stripe webhook secrets, and the build-step machinery all live behind Blaze. If billing is detached (card expiry, manual unlink, etc.), every functions/-touching PR fails with `Extensions require the Blaze plan` — which is misleading; Tropos has no extensions, the error is firebase-tools' generic guard for any Blaze-only feature.
 - **`maxInstances` is mandatory on every HTTP and Firestore-trigger function.** Cloud Functions v1 has NO default cap; a runaway client / DDoS / accidental call-in-render loop can spin up thousands of containers and rack up hundreds of pounds in hours. `functions/index.js` declares three tiers (`DEFAULT_HTTP_CAP = 100`, `ADMIN_HTTP_CAP = 10`, `TRIGGER_CAP = 50`) and uses `functions.runWith({...})` on each export. Don't add a new HTTP/trigger function without one of those caps.
-- **Production deploy verification:** the only conclusive proof a function deployed is to view the deployed source in Firebase Console (https://console.cloud.google.com/functions/details/us-central1/<name>/source). CI green is a _necessary but not sufficient_ signal — see the dedup gotcha above. After a deploy that touches `functions/`, spot-check that the deployed source matches main by searching for a recent string (e.g. a new comment from the PR).
+- **Production deploy verification:** the only conclusive proof a function deployed is to view the deployed source in Firebase Console (https://console.cloud.google.com/functions/details/us-central1/<name>/source). CI green is a _necessary but not sufficient_ signal — see the dedup gotcha above. `deploy-functions.yml` now reads back the deployed source of the functions `scripts/verify-deployed-functions-source.py` lists and fails if any differs from the bundle it uploaded; for a function it does not list, spot-check that the deployed source matches main by searching for a recent string (e.g. a new comment from the PR).
 - **1st-gen API lives under `firebase-functions/v1`; `functions.config()` is gone.** As of firebase-functions v7, the bare `require("firebase-functions")` resolves to the **2nd-gen** API, and every export here is **1st-gen** (`runWith().https.onCall/onRequest`, `.pubsub.schedule`, `.firestore.document().onCreate`, `https.HttpsError`, `logger`). They import from `firebase-functions/v1` — keep new 1st-gen functions on that import or they silently become `undefined` triggers. `functions.config()` **throws** in v7 (the Cloud Runtime Config API was shut down 2025-12-31); secrets now come from Secret Manager via `firebase-functions/params` `defineSecret(...)`, listed in each function's `runWith({ secrets: [...] })`, and read at runtime as `process.env.<NAME>`. Provision before deploy with `firebase functions:secrets:set <NAME>` — **a deploy referencing an unprovisioned bound secret fails**, which is the safety gate. Current bound secrets: `STRIPE_SECRET_KEY` (deleteMyAccount, createCheckoutSession, stripeWebhook, all 3 Apple callables), `STRIPE_WEBHOOK_SECRET` (stripeWebhook), `APPLE_KEY_ID/ISSUER_ID/PRIVATE_KEY` + `BILLING_HMAC_SECRET` (+ `BILLING_PREVIOUS_HMAC_SECRET` during rotation only) on `restoreApplePurchases`, `RESEND_API_KEY` (sendPasswordResetLinkCallable — password-reset email delivery), `REVENUECAT_WEBHOOK_AUTH` + `REVENUECAT_REST_KEY` (revenueCatWebhook; the REST key also on syncRevenueCatEntitlement). Non-secret config (`ADMIN_UIDS`, `RESEND_FROM`) stays a plain env var — no binding needed. `npm run secrets:check` (in `functions/`) prints the authoritative provision list from the source.
 - **A functions deploy needs the whole GCP readiness chain, not just Blaze + a fresh bundle.** The Secret Manager API must be **enabled** AND **propagated** before deploy. Enabling it (`gcloud services enable secretmanager.googleapis.com`) returns _before_ the data plane actually answers, so a deploy that races straight ahead still 403s — the CI fix was two steps: enable the API (`1a529ec`), then **wait for propagation** before `firebase deploy` (`b953eac`). If a functions deploy 403s on secrets right after an org/billing/API change, suspect propagation lag, not config.
 
@@ -631,11 +634,12 @@ held to it, so it is now the APP-WIDE standard, not an insights-file local:
 
 ### Visual Identity
 
-- **Aesthetic:** Dark is the DEFAULT theme — a true dark glass aesthetic (bg #121214, surfaces #1A1A1F). It is what new users and the signed-out/Login state see.
+- **Aesthetic:** Dark is the DEFAULT theme — a deep, cool neutral: page #0E0E11, cards #17171B, raised #212127, text #F4F4F6 (DS3, 2026-09-27; it was #121214 / #1A1A1F under DS2). It is what new users and the signed-out/Login state see. There is no ambient glow: DS3 retired the brand-purple wash that sat at the top of every signed-in page (`AmbientGlow`), so colour belongs to content.
+- **DS3 redesign (owner-approved 2026-09-27, lock row DS3 in the plan file):** one colour per job, one big thing per screen, drawings where they help. It ships screen by screen — foundations, Home, Train and the workout, Running, Analytics, moments and polish — and the Food page had its own pass. The owner kept Food's layout and its one timeline (Food8) on 2026-09-28, and chose two changes from the mockups: a week strip above the calorie card (`FoodWeekStrip`, Home's strip with each day a ring of calories eaten against that day's target), and the calorie ring, its number and its pill in the food orange instead of purple. Read the DS3 row before re-deciding any of it.
 - **Light mode:** The opt-in alternate (selectable in Settings → writes `profile.darkMode = false`). It's a clean, warm, iOS-inspired look (#F2F2F7 grouped background, cards on white — minimal and calm with subtle depth, NOT a dark-glass app rendered light). Default-dark is applied pre-React in `public/init.js` (dark unless an explicit `"false"` is stored) and mirrored by the `profile.darkMode` defaults in `src/lib/auth.tsx`.
 - **Brand colour:** Purple #7B72E9 — used sparingly for accents, active tab indicators, CTAs, progress bars. Never as full backgrounds except gradient CTA buttons.
-- **Sport-coding:** Lifting = purple (#7B72E9), Running = coral (#D4637A). These two colours appear in calendar dots, section labels, icon tints, and contextual cards.
-- **Logo:** Purple gradient hexagon with upward chevron cutout. Top-left of home screen with "TROPOS" wordmark.
+- **Sport-coding:** Lifting = purple (#7B72E9), Running = coral (#D4637A). These two colours appear in calendar dots, section headings, icon tints, and contextual cards.
+- **Logo:** Purple gradient hexagon with upward chevron cutout — the app icon and the sign-in screens. Home no longer carries the "TROPOS" wordmark: DS3 titles it with the date and "Today", and the user's initials open Settings. The mark itself signs Home, small, before the date (`BrandMark`, the app icon's geometry), so "Today" keeps the left edge the cards below it start on.
 
 ### Colour System (src/styles/tokens.css + src/lib/theme.ts)
 
@@ -645,9 +649,11 @@ held to it, so it is now the APP-WIDE standard, not an insights-file local:
 - Hydration teal: #52A3BD
 - Success green: #4DB872 / #22b558
 - Icon backgrounds: rgba(123, 114, 233, 0.10) — subtle purple tint
-- Card backgrounds: white (light) / #1A1A1F (dark)
-- Page background: hsl(240 5% 96%) = ~#F2F2F7 (light) / #121214 (dark)
-- Text muted: the theme-aware `--muted-foreground` token (light `240 3.8% 43%`, dark `240 4% 64%`) — tuned to clear 4.5:1 on card, muted AND page background in both themes. The old fixed #8E8E93 was deleted in the DS2 consolidation (2026-08-22, owner-decided): one grey serving both themes measured 2.53–3.26:1 across the light surfaces it rendered on. No fractional `text-muted-foreground/<n>` anywhere — de-emphasis is the type scale's job (banned + pinned in `tokenContrast.test.ts`). In JS/style contexts use `"hsl(var(--muted-foreground))"`.
+- Card backgrounds: white (light) / #17171B (dark)
+- Page background: `240 6% 93%` ≈ #ECECEE (light) / #0E0E11 (dark). The dark page is also the cold-start colour (splash, manifest, theme-color), derived from the token and pinned by `coldStartChrome.test.ts`: move the token, re-run `node scripts/art/gen-splash.mjs`, and update the three hex copies it names
+- Raised surface (`--muted`: chips, tracks, tiles inside a card): #212127 (dark)
+- New bests: gold, the `--achievement` family (`text-achievement-strong` for small text). Gold means a personal best and nothing else
+- Text muted: the theme-aware `--muted-foreground` token (light `240 3.8% 43%`, dark `240 5% 65%` ≈ #A1A1AA) — tuned to clear 4.5:1 on card, muted AND page background in both themes. The old fixed #8E8E93 was deleted in the DS2 consolidation (2026-08-22, owner-decided): one grey serving both themes measured 2.53–3.26:1 across the light surfaces it rendered on. No fractional `text-muted-foreground/<n>` anywhere — de-emphasis is the type scale's job (banned + pinned in `tokenContrast.test.ts`). In JS/style contexts use `"hsl(var(--muted-foreground))"`.
 
 ### Typography (Plus Jakarta Sans + Archivo)
 
@@ -656,11 +662,11 @@ held to it, so it is now the APP-WIDE standard, not an insights-file local:
 - **Scale (1.25 modular):**
   - Display: 3rem/48px — hero stat numbers (health score)
   - H1: ~31px — page titles ("Program", "Social", "Analytics")
-  - H2: 25px — section headers ("RUNNING", "LIFTING", "NUTRITION")
-  - H3: 20px — card titles
+  - H2: 25px
+  - H3: 20px — page section headings (`SectionHeading`, "This week", "Running") and hero card titles
   - Body: 16px — standard text
   - Small: 14px — secondary descriptions
-  - Micro: 12px — labels, captions, uppercase tracking headers
+  - Micro: 12px — labels and captions, in sentence case
 - **Weight rules:** 800 (extrabold) for hero numbers and page titles. 700 (bold) for section headings and card titles. 600 (semibold) for pill text and button labels. Never mix 700 and 800 in the same visual tier.
 - **Numeric displays:** Always use font-mono + tabular-nums for alignment
 - **Medium (500, `font-medium`) IS a tier — the small-text emphasis
@@ -678,21 +684,24 @@ held to it, so it is now the APP-WIDE standard, not an insights-file local:
 
 - **Cards render through the `Card` primitive** (`src/components/ui/Card.tsx`;
   pressable cards take the same look from `cardClasses` in its `.ts`
-  sibling). Two sizes, decided once: **hero** = rounded-2xl (16px) + p-4,
-  **compact** = rounded-xl (12px) + p-3. The old "standard card, padding
+  sibling). Two sizes, decided once: **hero** = rounded-2xl + p-4,
+  **compact** = rounded-xl + p-3. The radius curve is DS2's (`--radius`
+  10px), so rounded-2xl is 22px and rounded-xl 16px, not Tailwind's
+  defaults. The old "standard card, padding
   3-4" was the drift — 45 `bg-card` surfaces sat on some third pairing.
   `designSystemInvariants.test.ts` ratchets hand-rolled off-pairing
   `bg-card` surfaces down and bans the `shadow-card` class outright: it is
   a Tailwind shadow COLOUR, not a shadow, and cards that used it were flat.
   The elevation utility is `card-shadow`.
 - **Hero card (Health Score, Water):** `Card` (hero), larger icon (48px container), icon in purple-tinted bg square
-- **Compact tile (Weight, Steps):** `Card size="compact" tone="muted"` (one step darker than the page), 2-col grid
-- **CTA card (Today's workout/run/rest):** `cardClasses({ tone: "tinted" })` — the hero pairing with the sport-coloured 8% wash painted at the call site, Play button pill right-aligned. All three sit on one radius now; Lift and Run were rounded-xl beside a rounded-2xl Rest.
-- **Quick actions:** there is no longer a pill row. Today's actions are
-  the sport-coloured CTA cards (`LiftCTACard` / `RunCTACard`), and food
-  logging is the "Log food" action at the foot of `TodayEnergy`.
+- **Compact tile (Weight, Steps):** the compact pairing on the card surface (`bg-card card-shadow`), 2-col grid. It sat one step darker than the page (`tone="muted"`) until DS3 deepened the dark surfaces, where a muted tile read as a hole beside the cards around it.
+- **Today card (`LiftCTACard` / `RunCTACard`, DS3):** the hero radius with the sport's 12% wash (`bg-lifting/12`, `bg-running/12`), the session as a 25px title, its dose ("5 exercises · about 50 min", "5 km · about 30 min") and a full-width Start (`primary` for a lift, `sport` for a run). Start begins the session (`/program?day=N&start=1`, `/run?template=…`); the rest of the card is a sibling button that opens the day in Train to look it over, because a button cannot sit inside a button. A lift shows the cut-out drawing of its first exercise that has one (`formArtCutouts`). A finished or skipped day shows its status instead of Start. No rationale and no plan position ("Base · week 3 of 16") on Home: owner direction 2026-09-09, pinned in `SessionPurpose.test.tsx`. `RestDayCard` is a plain hero card naming tomorrow's session.
+- **Quick actions:** there is no pill row. Today's actions are the Start
+  buttons on the Today cards, and food logging is the "Log food" button in
+  `TodayEnergy`'s header.
 - **Inline banners:** the `Banner` primitive (`src/components/ui/Banner.tsx`), three variants — `info` (coral, running context), `warning` (amber), `neutral` (muted, no domain colour) — on the compact-card pairing, `rounded-xl p-3`. The sustained-offline notices render through `neutral` and render NOTHING while idle: the permanent live-region wrapper they used to keep was an empty first child in the page rhythm, pushing Food's and Train's headers down a step. Pinned in `designSystemInvariants.test.ts`. The global online/offline strip in `Layout` (`ds-status-banner`) is app-shell chrome, not an inline banner.
-- **Section labels:** `SectionLabel`, uppercase, 12px, two ROLE tiers: default caption (semibold · wider · muted) inside a card; `tier="section"` (bold · widest · foreground) heading a group of cards or rows on a page, tab or sheet. Pick by role, not size. No hand-rolled label classes (ratcheted in `designSystemInvariants.test.ts`), no third tier
+- **Section headings:** a group of cards or rows opens with `SectionHeading` (`src/components/ui/SectionHeading.tsx`) — a real heading in sentence case: `page` size (20px bold, the H3 step) on a page or tab, `compact` (16px bold) inside a sheet, a card or a dense settings form, with an optional `action` on the same row. DS3 retired the 12px capital-letter group label. `SectionLabel`'s `tier="section"` now marks a small group inside a Food sheet or list only (the Details sheet, the food suggestions): 12px bold, sentence case since the Food pass. Its surfaces are pinned by `designSystemInvariants.test.ts`.
+- **Labels inside a card:** `SectionLabel`'s caption tier — 12px semibold muted, **sentence case**, no letter-spacing. Write the text the way it is said ("Total volume"); it renders as written. Capitals are kept for table column headers. No hand-rolled label classes (ratcheted in `designSystemInvariants.test.ts`)
 
 ### Training plan primitives
 
@@ -710,13 +719,25 @@ Primitives (all in `src/components/program/`, fed by the pure view model in
   engine phases (`getPhaseForWeek`): **Base · Build · Taper · Race** — no
   invented "Peak" segment, so the active highlight always maps to a phase
   the scheduler can emit. Renders ONLY in the race-goal overlay.
-- **`SessionCommandCard`** — the "what's next" command surface. Title + meta
-  pills + a single primary Start action (its own control, NOT the whole
-  card) + an overflow that opens the day sheet. Temporal eyebrow ("Up next"
-  / "Due today" / "Tomorrow" / "Pending") — never "Next · Pending".
+- **`SessionCommandCard`** — the "what's next" command surface. Eyebrow +
+  title (the card's one big line, H2) + one quiet meta line + a single
+  primary action (its own control, NOT the whole card) + an overflow that
+  opens the day sheet. Temporal eyebrow ("Up next" / "Due today" /
+  "Tomorrow" / "Pending") — never "Next · Pending". DS3: a lift day's
+  eyebrow leads with its category and its title is the focus ("Pull · Up
+  next" over "Lat focus", as on Home); its picture sits at the right, as
+  on Home's cards: a lift day's muscles (`figure`), or a run's type in a
+  tile (`icon`, from `runTemplateIcon`); the halo went with the app's
+  other glows. A free runner's Run tab leads with the same card ("Start a
+  run" over "Pick your pace today"). Train's day list below it draws each
+  exercise through `ExerciseRowSummary` (`ExerciseThumb`: the cut-out
+  drawing, else the category's muscles, else a dumbbell), and Train shows
+  one advice notice at a time (`programNotices`).
 - **`ProgrammeWeekSelector`** — the one day-navigation primitive per tab
   (`2b4e07b8`, "competing navigators" unification): circular sport-coloured
-  day cells (purple lift / coral run) in the Home WeekStrip visual language,
+  day cells (purple lift / coral run) in the Home WeekStrip visual language
+  (a done day is filled with its sport at 30% with a check, as Home fills a
+  logged day; it was the success green until DS3),
   a real selected-key controller driving the content beneath it. Lift tab =
   split-ordered rotation cursor; Run tab = date-pinned 7-day selector
   (ADR-0002's dual ontology, per tab). Extras (logged runs that claimed no
@@ -754,7 +775,7 @@ Constraints these primitives must keep:
 
 - **Page horizontal padding:** px-4 (16px)
 - **Card internal padding:** p-3 (12px) for compact, p-4 (16px) for hero cards
-- **Stack rhythm (vertical):** three steps and nothing between them. space-y-2 (8px) within a group — the cards under one section label, rows inside a card; space-y-3 (12px) for a break inside a card; space-y-4 (16px) between page sections, which `PageShell` owns. No half steps (`space-y-2.5` was Home's group rhythm beside `space-y-8` on Analytics — the same role at 10px and 32px), and a section label carries no margin of its own: its group's stack places it. Ratcheted in `designSystemInvariants.test.ts`; the five route pages and the shell are pinned to the scale outright.
+- **Stack rhythm (vertical):** three steps and nothing between them. space-y-2 (8px) within a group — the cards under one section heading, rows inside a card; space-y-3 (12px) for a break inside a card; space-y-4 (16px) between page sections, which `PageShell` owns. No half steps (`space-y-2.5` was Home's group rhythm beside `space-y-8` on Analytics — the same role at 10px and 32px), and a section heading carries no margin of its own: its group's stack places it. Ratcheted in `designSystemInvariants.test.ts`; the five route pages and the shell are pinned to the scale outright.
 - **Grid gap:** gap-2 (8px) for compact grids
 - **Icon container:** w-9 h-9 (36px) for standard, w-12 h-12 (48px) for hero
 - **Icon inside container:** w-4 h-4 (16px) standard, w-5 h-5 (20px) hero
@@ -763,7 +784,7 @@ Constraints these primitives must keep:
 
 - **Tap feedback:** scale(0.97) on active, 150ms cubic-bezier transition
 - **Haptic:** Called on all button/card taps via haptic() utility
-- **Count-up animation:** Hero numbers animate from 0 on first load (useCountUp hook)
+- **Count-up animation:** the moments' numbers count up as they appear: Home's streak and performance score (`useCountUp`, once a session), the Food ring and macros, the workout finish screen's three figures and the weekly recap's first card (`AnimatedNumber`, which is plain text from the first paint under Reduce Motion)
 - **Water card:** Fill-from-bottom gradient animation, wave SVG, bubble particles, ripple on add
 - **Bottom sheet:** Vaul drawer for editing (exercises, weight logging)
 - **Tab navigation:** Horizontal scrolling tabs with active pill indicator
@@ -795,10 +816,18 @@ reduced-motion` always gets the settled static state — no entrance, no
   `success`/`semantic.positive` remain value-aliases (pixel-correct,
   name-only debt, pinned in `colorCanonical.test.ts` alongside the
   warning≠nutrition inequality that IS the D19 contract).
-- **Framer Motion is gated globally; CSS animations are not.**
-  `useReducedMotion` covers every `motion.*` element, but a Tailwind
-  `animate-*` class runs under Reduce Motion unless it carries the
-  `motion-safe:` variant. Every skeleton pulse and ping does;
+- **Framer Motion is gated globally only for POSITION; CSS animations
+  are not gated at all.** `MotionConfig reducedMotion="user"` in
+  `App.tsx` settles positional values (x, y, scale, rotate, width,
+  height) and nothing else: opacity, a stroke offset, `pathLength` and a
+  motion-value count-up all still animate under Reduce Motion. This
+  paragraph said the global gate covered "every `motion.*` element",
+  and Home's two rings drew in for everyone because of it until DS3's
+  polish pass gated `ProgressRing` itself. A non-positional animation
+  asks `useReducedMotion` in its own component (`ProgressRing`,
+  `CalorieRing`, `EmptyState`, `AnimatedNumber` are the patterns). A
+  Tailwind `animate-*` class runs under Reduce Motion unless it carries
+  the `motion-safe:` variant. Every skeleton pulse and ping does;
   `animate-spin` spinners are progress feedback and stay unprefixed
   (`UNGUARDED_ANIMATION_BASELINE = 8` in `designSystemInvariants.test.ts`
   is exactly the spinner set).
@@ -1029,8 +1058,10 @@ or touching a CTA button, route it through `Button` with the variant above.
 
 - **Pages:** src/pages/ — route-level, lazy-loaded
 - **Home screen built from:** WeekStrip → DayPeekCard → StackedCTACards
-  (LiftCTACard / RunCTACard / RestDayCard — no pills) → TodayEnergy →
-  WaterCard → WeightStepsTiles → WeeklyReviewEntry → PerformanceHeroCard.
+  (LiftCTACard / RunCTACard / RestDayCard — Start on the card, no pills) →
+  TodayEnergy → WaterCard → WeightStepsTiles → the "This week" card:
+  WeeklyReviewEntry (a link on its heading while a review waits) →
+  WeekSummary → PerformanceHeroCard (a row since DS3, 2026-09-27).
   Performance sits LAST by owner decision: the first thing on the scroll
   should be something to do today, not a verdict on the week just gone.
   This line has now rotted twice. It named `HybridBalanceCard` until it
@@ -1040,7 +1071,7 @@ or touching a CTA button, route it through `Button` with the variant above.
   owned. `componentReachability` catches a dead COMPONENT; nothing
   catches a dead SENTENCE, which is why this one is worth re-reading
   against `src/pages/Home.tsx` rather than trusting.
-- **Icons:** lucide-react (individual imports only)
+- **Icons:** lucide-react (individual imports only), except the drawn set in `src/components/icons/` (the tab bar's icons, the avocado) and `ui/BrandMark.tsx`
 - **Toasts:** sonner
 - **Charts:** Recharts (bar charts, line charts in History)
 - **Animations:** Framer Motion (AnimatePresence, motion.div, whileTap)
@@ -1061,8 +1092,8 @@ or touching a CTA button, route it through `Button` with the variant above.
 ### Current Known Design Considerations
 
 - The water card has a complex animated fill effect (WaterWave + WaterBubbles) — treat carefully when modifying
-- Section labels use uppercase with tracking at 12px (`SectionLabel`'s two role tiers, differing in weight, tracking and colour) — a deliberate typographic choice, not an error. The old 11px section tier is gone: nothing sits below the 12px micro floor except `text-caption` numerals and units
-- The "NEW" badge on PR items uses orange background — this is the nutrition/warm accent colour
+- Group headings are sentence-case `SectionHeading`s and in-card labels are sentence-case captions (DS3). Nothing sits below the 12px micro floor except `text-caption` numerals and units
+- New-best and PR badges are gold (`--achievement`), never the food orange
 
 ## Reference apps — for /grill-me and /grill-with-docs sessions
 
@@ -1188,11 +1219,12 @@ plus two new ones the platform change introduces.
 **Follow-up, NOT done in this change — legacy Storage blobs.** New
 writes stopped; the blobs already under `food-photos/{uid}/` were left
 in place so pre-Food9 diary rows keep rendering, and the `storage.rules`
-block stays (editing it is blocked behind `STORAGE_XSERVICE_APPROVED`,
-which `workflow_dispatch` does not bypass). Sweeping them is a separate
-piece of work. Until it happens, "Tropos stores no meal photos" is true
-of everything written from 2026-08-18 onward and NOT of what came
-before — do not read the Food9 lock as meaning the bucket is empty.
+block stays (changing it was blocked behind `STORAGE_XSERVICE_APPROVED`
+until 2026-09-15; a change now deploys with the next release). Sweeping
+them is a separate piece of work. Until it happens, "Tropos stores no
+meal photos" is true of everything written from 2026-08-18 onward and
+NOT of what came before — do not read the Food9 lock as meaning the
+bucket is empty.
 
 ### Scan failure beat + no-food prompt contract (2026-08-18, PR #2066)
 
@@ -1517,7 +1549,7 @@ Affects: `src/lib/foodPhotoUpload.ts`, `src/components/FoodAnalyzer.tsx` (post-s
 
 - [ ] Real AI food scan on device: save the meal, confirm the photo card pops into the diary timeline within a few seconds (background upload + onSnapshot merge), and the Storage console shows `food-photos/<uid>/<ts>.jpg` at ≤1280px. (The ≤1280px downscale is the part no automated suite covers.)
 - [ ] Offline scan: save while airplane-moded — meal must save as a text row with NO error surfaced; photo is silently skipped (never re-tried).
-- [x] Signed-out and cross-uid reads of a food-photos path are denied — covered by `storage.rules.test.ts` against the emulator. Note the rules block itself IS deployed: the ungated `a990d4bb` run (2026-07-12) shipped it. Only the later account-deletion write freeze (`779ca7ba`) is held back by the packet-11 gate.
+- [x] Signed-out and cross-uid reads of a food-photos path are denied — covered by `storage.rules.test.ts` against the emulator. Note the rules block itself IS deployed: the ungated `a990d4bb` run (2026-07-12) shipped it. The later account-deletion write freeze (`779ca7ba`) was held back by the packet-11 gate until 2026-09-15; that row has the permission it still needs confirmed.
 - [ ] Account deletion (test account): confirm the executor logs the `food-photos/<uid>/` prefix sweep alongside progress/profile photos.
 
 ### Tooltip + Coachmark primitive (`claude/tooltip-primitive`)
@@ -1584,7 +1616,7 @@ Needs a 24h + 1-week observation cycle in production to see each trigger fire at
 
 Affects: `functions/index.js` (`dailyRaceReconciliationSweep` L3) + new `functions/lib/runModeResolution.js`. Merged + deployed 2026-05-29. Mirrors, server-side, the client's `resolveRecoveryExit` materialization invariant. Deploy was merged from a web session that **cannot** verify the deployed source — these checks are the conclusive proof CI-green can't give (the dedup/bundle-hash gotcha means a green workflow does not prove the new bundle actually uploaded).
 
-- [ ] **Deployed-source spot-check (do this first).** In the Console (`console.cloud.google.com/functions/details/us-central1/dailyRaceReconciliationSweep/source`), confirm the deployed bundle contains `_recoveryEndDateForRace` and the `require("./lib/runModeResolution")`. If absent, the dedup logic skipped the upload — re-run `deploy-functions.yml` via `workflow_dispatch`.
+- [ ] **Deployed-source spot-check (do this first).** In the Console (`console.cloud.google.com/functions/details/us-central1/dailyRaceReconciliationSweep/source`), confirm the deployed bundle contains `_recoveryEndDateForRace` and the `require("./lib/runModeResolution")`. If absent, the dedup logic skipped the upload — re-run Deploy production (`deploy-production.yml`) via `workflow_dispatch`.
 - [ ] **First natural firing materializes.** At the next 04:00 UTC sweep, spot-check a race-prep user whose recovery ended >7 days ago (`runPlan.phase === "recovery"`, `today >= recoveryEndDate + 7d`) with **no** successor race: their profile should flip to `runMode: "freeform"` + `raceGoal: null`, and `programState.runPlan` should have `phase: null`, `recoveryEndDate: null`, `raceGoal: null`. Logs show `done — noShow=X, recoveryCleared=Y` with no `fatal error:`.
 - [ ] **Newer-race case preserved.** A user who set a new FUTURE race during recovery (anchor mismatch) must stay `runMode: "race_prep"` with that raceGoal intact after the sweep — only `phase`/`recoveryEndDate` cleared. Confirm the sweep does NOT delete the successor race.
 
@@ -1785,7 +1817,7 @@ Affects: `functions/lib/raceDayCompletion.js`, new `functions/lib/raceTemplateId
 
 **This is the highest-value deploy check in the backlog**, because the bug it fixes was silent and total: `isStrictRaceRun` compared `savedRun.actualTemplateId` against the literal `"race"`, which no document ever carries (RunSummary writes the template id, and the race ids are `5k_race` … `marathon_race`). The predicate was therefore **always false** — every completed race read as a no-show, and the post-race recovery entry never fired for anyone. Its own golden fixtures hid it by using `"race"` on the accept path and real ids on the rejects, so the rejections were honest and the acceptance was fiction. Fixing the predicate broke 14 tests, all on the accept path — the proof the whole server race path had been verified against a value production never writes.
 
-- [ ] **Deployed-source spot-check (do this first).** In the Console (`console.cloud.google.com/functions/details/us-central1/dailyRaceReconciliationSweep/source`, then `…/onRunCreated/source`), confirm the bundle contains `require("./raceTemplateIds")` and the string `marathon_race`. This is a `.js` change so the bundle-hash dedup should not bite, but green CI is still not proof — re-run `deploy-functions.yml` via `workflow_dispatch` if absent.
+- [ ] **Deployed-source spot-check (do this first).** In the Console (`console.cloud.google.com/functions/details/us-central1/dailyRaceReconciliationSweep/source`, then `…/onRunCreated/source`), confirm the bundle contains `require("./raceTemplateIds")` and the string `marathon_race`. This is a `.js` change so the bundle-hash dedup should not bite, but green CI is still not proof — re-run Deploy production (`deploy-production.yml`) via `workflow_dispatch` if absent.
 - [ ] **A completed race now clears the no-show.** Log a race-templated run on a race-prep user's race date at ≥95% of planned distance. `onRunCreated` logs should include `recovery-entry written for {uid}`, and `programState.runPlan.phase` should flip to `"recovery"` with the race-day runDay id appended to `completedRaces[]`. Pre-fix this never happened for any user.
 - [ ] **Past races are not retroactively repaired — and there is a 14-day point of no return.** Verified mechanism, not a guess: `_needsRaceNoShowEvaluation` bails on `raceDayRunDay.status !== "planned"`, so once a slot is `race_no_show` the sweep never re-evaluates it. The predicate fix therefore does NOT self-heal past races. Two windows:
   - **Within 14 days of the race** the state is recoverable by the user: PR-D locked `race_no_show` as a soft-terminal status (`LEGAL_TRANSITIONS.race_no_show: ["planned"]`), surfaced as the **Restore** action on the locked day in `DayActionSheet`. Nothing automatic clears it — the lock deliberately made recovery a user action.
@@ -2104,9 +2136,12 @@ already wrote stay in Firestore; clients hide them (`isMemberFacing`), and
 the like and comment callables still never notify their author. The two
 coach rows below are superseded — replace them with:**
 
-- [ ] **The prune landed.** The first functions deploy after the
+- [x] **The prune landed.** The first functions deploy after the
       retirement logs `Successful delete operation` for
       `weeklyCoachPrompts`, and no coach post dated after it exists.
+      Confirmed from the deploy log: run 36310769458 deleted it at
+      10:00 UTC on 2026-09-27. It was the only writer of coach posts, so
+      none can be dated after that.
 - [ ] **Old coach posts are gone from new builds.** Open a space that had
       them, and Feed → My communities: no "Tropos Coach" post, no Coach
       badge. An older build still shows them until it updates.
@@ -2179,16 +2214,71 @@ consistency, not behaviour.
 
 ### Storage deletion write-freeze — cross-service approval + first deploy (packet 11, operator-in-loop)
 
+**STATUS 2026-09-27 — the freeze is live, and nothing shows the permission
+it depends on was ever granted.** The gate opened on 2026-09-15: the
+re-run of Deploy production run 34976838538 was the first release of the
+freeze (`uploading rules storage.rules`, 14:22 UTC), and every backend
+release since reads the live ruleset back and matches it to
+`storage.rules` by SHA-256. That release came from CI, not from an owner's machine as step 1
+says, and firebase-tools checks and grants the cross-service role only in
+an interactive session (`checkStorageRulesIamPermissions` in its
+`rulesDeploy.js` returns early otherwise). So it granted nothing, and no
+earlier `storage.rules` read Firestore, so no earlier deploy did either.
+If the role is missing, every photo upload and delete is refused —
+progress photos, the profile photo, Space post photos — while reads still
+work. Step 1 cannot fix it now: with the rules already live, `firebase
+deploy --only storage` skips the upload, and the permission check only
+runs on the upload path.
+
+**STATUS 2026-09-28 — the role is in place; no grant is needed.** Deploy
+production run 36443298145 (the #2495 merge) ran the new check, `Confirm
+Storage rules can read Firestore`, before it released the rules, and the
+check passed. It reads the live IAM policy, and it passes only when the
+Storage service agent holds `roles/firebaserules.firestoreServiceAgent`
+unconditionally, so photo uploads and deletes work. Nothing records when
+or how the role was granted. Every backend release repeats the check.
+
+- [x] **Confirm the role, or grant it.** Confirmed 2026-09-28 by the
+      release check (STATUS above). The steps stay for the day a release
+      stops at that check again. Quickest check: change the
+      profile photo in the production app — the toast "Upload not
+      permitted…" means the role is missing. Or, in GCP Console → IAM
+      with "Include Google-provided role grants" ticked, look for
+      `service-<project-number>@gcp-sa-firebasestorage.iam.gserviceaccount.com`
+      holding **Firebase Rules Firestore Service Agent**. To grant it:
+
+      ```bash
+      gcloud projects add-iam-policy-binding adaptive-fitness-af8bb \
+        --member="serviceAccount:service-$(gcloud projects describe adaptive-fitness-af8bb --format='value(projectNumber)')@gcp-sa-firebasestorage.iam.gserviceaccount.com" \
+        --role="roles/firebaserules.firestoreServiceAgent"
+      ```
+
+- [x] **A release now stops instead of shipping this again.** The Storage
+      deploy runs `scripts/verify_storage_rules_iam.py` before it releases
+      rules that read Firestore, and fails the release if the Storage
+      service agent lacks the role, or if the deploy identity cannot read
+      the project's IAM policy. Unconfirmed counts as a failure, as it
+      does for the source read-back. When the policy can't be read, the
+      job summary says why and gives the fix: read access to IAM policies
+      for the deploy service account (for example
+      `roles/iam.securityReviewer`), or enabling the Cloud Resource
+      Manager API. Until the role is in place, every backend release
+      stops at this step, and Hosting and Pages wait with it. To confirm
+      a grant without waiting for a release, run Actions → Verify Active
+      Production Rules, which runs the same check. Where it runs is
+      pinned by `storageDeployIamCheck.test.ts`; what it decides by
+      `scripts/test_verify_storage_rules_iam.py`.
+
 Affects: `storage.rules` (the account-deletion write freeze), `.github/workflows/deploy-storage.yml`. Code is landed and tested; **it is deliberately NOT deployed yet** — the deploy job is gated so nothing reaches production until the operator does the two steps below.
 
 Why gated: `storage.rules` now reads Firestore (`accountDeletionRequests` / `deletedAccounts`) to freeze photo uploads/deletes during and after an account deletion — the same freeze Firestore already enforces. That **cross-service** read requires a one-time interactive approval in the Firebase Console. If the rule deploys **before** that approval exists, the predicate errors → denies → **all photo uploads are blocked app-wide**. The `deploy-storage.yml` `deploy` job therefore stays skipped until the operator opts in.
 
 Rollout sequence (operator, not agent) — do these in order, ideally after packet 10's Functions deploy:
 
-- [ ] **Grant cross-service access.** Run `firebase deploy --only storage --project adaptive-fitness-af8bb` **from a project-owner machine** and approve the Firebase prompt that lets Storage Rules read Firestore. (This first deploy is intentionally a human action — do not try to route the approval through the CI service account.)
+- [ ] ~~**Grant cross-service access.** Run `firebase deploy --only storage --project adaptive-fitness-af8bb` **from a project-owner machine** and approve the Firebase prompt that lets Storage Rules read Firestore. (This first deploy is intentionally a human action — do not try to route the approval through the CI service account.)~~ Superseded by the STATUS above: CI released the rules first, so this command no longer prompts.
 - [ ] **Verify the freeze on a NON-production project first:** seed an `accountDeletionRequests/<uid>` doc with `status: "running"` (or a `deletedAccounts/<uid>` tombstone) and confirm an owner upload/delete to `progress-photos/<uid>/…` is denied, while reads still succeed and a user with no deletion record can still upload.
-- [ ] **(Optional) re-enable CI auto-deploy** for future storage.rules changes: set the repo variable `STORAGE_XSERVICE_APPROVED=true` (GitHub → Settings → Secrets and variables → Actions → Variables). Until then the ONLY way to ship a storage-rules change is the manual `firebase deploy` above — **`workflow_dispatch` does not work as an escape hatch here**, unlike `deploy-functions.yml`. The `deploy` job's `if: vars.STORAGE_XSERVICE_APPROVED == 'true'` is evaluated for dispatch runs too, so a manual re-run skips the deploy and still reports green. (This doc line claimed the opposite until 2026-07-26; an operator following it in an incident would have believed the rules shipped when nothing had.) The `report-not-deployed` job now fails on any gated run so the skip is legible instead of silent.
-- [ ] Spot-check the deployed rule in the Firebase Console (Storage → Rules) contains `isDeletionWriteFrozen`.
+- [x] **(Optional) re-enable CI auto-deploy** — set 2026-09-15, between the first attempt of run 34976838538 (deploy skipped) and its re-run (deployed). For future storage.rules changes: set the repo variable `STORAGE_XSERVICE_APPROVED=true` (GitHub → Settings → Secrets and variables → Actions → Variables). Until then the ONLY way to ship a storage-rules change is the manual `firebase deploy` above — **`workflow_dispatch` does not work as an escape hatch here**, unlike `deploy-functions.yml`. The `deploy` job's `if: vars.STORAGE_XSERVICE_APPROVED == 'true'` is evaluated for dispatch runs too, so a manual re-run skips the deploy and still reports green. (This doc line claimed the opposite until 2026-07-26; an operator following it in an incident would have believed the rules shipped when nothing had.) The `report-not-deployed` job now fails on any gated run so the skip is legible instead of silent.
+- [x] Spot-check the deployed rule in the Firebase Console (Storage → Rules) contains `isDeletionWriteFrozen`. Automated: each backend release's `Verify active Storage Rules source` step matches the live ruleset to `storage.rules`, which carries it.
 
 ### App Check enforcement rollout — operator-in-loop
 

@@ -15,13 +15,6 @@ export function formatLoadKg(kg: number): string {
   return `${kg % 1 === 0 ? kg.toFixed(0) : kg.toFixed(1)} kg`;
 }
 
-/** Format volume as a compact subtitle string (e.g. "1.5k vol" or "500 kg vol") */
-export function formatVolumeSub(kg: number): string {
-  if (kg <= 0) return "\u2014";
-  if (kg >= 1000) return (kg / 1000).toFixed(1) + "k vol";
-  return Math.round(kg) + " kg vol";
-}
-
 /**
  * Abbreviate a number with a "k" suffix past 1000 (e.g. 1500 -> "1.5k",
  * 500 -> "500"). The single home for the thousands-abbreviation that was
@@ -90,6 +83,15 @@ export function formatWeekdayDayMonth(d: Date): string {
   });
 }
 
+/**
+ * The spaces in a short phrase made non-breaking, so a line that wraps
+ * keeps "180 g", "30 Aug" or "target 2,350" whole. A lone "g" under
+ * "target 180" reads as a second, unexplained figure.
+ */
+export function keepTogether(phrase: string): string {
+  return phrase.replace(/ /g, "\u00A0");
+}
+
 /** Format distance, showing "—" when zero/null */
 export function formatDistance(km: number | null | undefined): string {
   if (!km || km <= 0) return "\u2014";
@@ -114,7 +116,10 @@ export function formatClock(totalSeconds: number): string {
     : mmss;
 }
 
-/** Calculate macro ring percentage (clamped 0–1.3) and done state (±10% of target) */
+/** Macro progress against its target: the share (clamped 0–1.3) and whether
+ *  it is reached (within 10% of the target either way). Named for the macro
+ *  rings it was written for; Home's food card reads `done` for its macro
+ *  bars' "target reached" (DS3 replaced the rings with bars). */
 export function macroRingState(
   value: number,
   target: number

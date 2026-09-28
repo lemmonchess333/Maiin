@@ -6,7 +6,7 @@
  *   - accent: bright brand values (tile backgrounds at 10% alpha,
  *             chart fills, dots). Same in light + dark.
  *   - text: contrast-safe values for text. Bright in dark mode
- *           (high contrast on #1A1A1F); darker variants in light
+ *           (high contrast on the dark card); darker variants in light
  *           mode so labels clear WCAG AA on white.
  *
  * Tests pin:

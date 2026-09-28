@@ -1,11 +1,15 @@
 /**
  * CalorieRing mode-chip — theme-aware contrast.
  *
- * The chip ("KCAL LEFT" / "KCAL EATEN") carries the ring's mode. Its deep
- * brand purple is tuned for the lavender tint over a WHITE card, where it
- * clears AA at 11px. On the DARK card that same deep purple lands at
- * ~2.8:1 — under AA — and it all but disappears over the dark-mode hero
- * photo, whose 10% tint is too sheer to give the text a surface.
+ * The chip ("kcal left" / "kcal eaten") carries the ring's mode. Its deep
+ * orange is tuned for the pale orange backing over a WHITE card, where it
+ * clears AA. On the DARK card that same deep orange lands at ~3.1:1 —
+ * under AA — and it all but disappears over the dark-mode hero photo,
+ * whose 10% tint is too sheer to give the text a surface.
+ *
+ * The ring was brand purple until the owner's Food call of 2026-09-28 and
+ * had the same split for the same reason; the shades moved, the rule did
+ * not.
  *
  * This suite pins the split so a future "simplify the colours" pass can't
  * silently collapse it back to one value: light mode keeps the deep step,
@@ -93,17 +97,17 @@ describe("CalorieRing mode chip — theme-aware colour", () => {
   it("does not reuse the light-mode deep purple in dark mode", () => {
     document.documentElement.classList.add("dark");
     renderRing();
-    // The regression this guards: the chip rendering deep purple on the
+    // The regression this guards: the chip rendering the deep step on the
     // dark card, which fails AA and is invisible over the hero photo.
     expect(chip()).not.toHaveStyle({ color: THEME.calorieRing.deep });
   });
 });
 
 describe("CalorieRing centre number — theme-aware colour", () => {
-  /* Same split as the chip, applied to the number (the light-mode-photo
-     work): brand purple sat at the 3:1 large-text floor against the
-     light wash, which forced the wash to stay heavy. The deep step buys
-     the headroom that let the wash lighten.
+  /* Same split as the chip, applied to the number: the food orange
+     measures 2.8:1 on white, under the large-text floor, and the deep
+     step clears 5.7:1. (The purple ring sat at the same floor against
+     the light-mode photo wash, which is where the split started.)
 
      Asserted on the ZERO ring: AnimatedNumber counts up from 0, so a
      non-zero value isn't in the DOM at assert time — 0 is, immediately. */
@@ -111,10 +115,10 @@ describe("CalorieRing centre number — theme-aware colour", () => {
     return screen.getByText("0").closest("p") as HTMLElement;
   }
 
-  it("uses the BRAND purple in dark mode", () => {
+  it("uses the food orange in dark mode", () => {
     document.documentElement.classList.add("dark");
     renderZeroRing();
-    expect(centreNumberEl()).toHaveStyle({ color: THEME.brand });
+    expect(centreNumberEl()).toHaveStyle({ color: THEME.semantic.nutrition });
   });
 
   it("uses the DEEP ring step in light mode", () => {
@@ -187,10 +191,36 @@ describe("CalorieRing — nothing paints past the viewBox (the clipped-halo regr
   });
 });
 
+describe("CalorieRing — the food orange (owner call, 2026-09-28)", () => {
+  it("draws the ring in the orange, not the brand purple", () => {
+    const { container } = renderRing();
+    const stops = Array.from(container.querySelectorAll("stop")).map((s) =>
+      s.getAttribute("stop-color")
+    );
+    expect(stops).toContain(THEME.semantic.nutrition);
+    expect(stops).not.toContain(THEME.brand);
+  });
+
+  it("the chip's light backing is the orange tint flattened onto white", () => {
+    const [r, g, b] = hexToRgb(THEME.calorieRing.chipBgLight);
+    const [or, og, ob] = hexToRgb(THEME.semantic.nutrition);
+    expect(r).toBe(Math.round(0.9 * 255 + 0.1 * or));
+    expect(g).toBe(Math.round(0.9 * 255 + 0.1 * og));
+    expect(b).toBe(Math.round(0.9 * 255 + 0.1 * ob));
+  });
+
+  it("the deep step clears AA on the chip's light backing", () => {
+    expect(
+      contrast(THEME.calorieRing.deep, THEME.calorieRing.chipBgLight)
+    ).toBeGreaterThanOrEqual(4.5);
+  });
+});
+
 describe("CalorieRing mode chip — contrast maths", () => {
-  // Card surfaces: --card is 0 0% 100% (light) and 240 4% 13% (dark).
+  // Card surfaces: --card is 0 0% 100% (light) and 240 8% 9.8% (dark,
+  // #17171B since DS3).
   const LIGHT_CARD = "#FFFFFF";
-  const DARK_CARD = "#202024";
+  const DARK_CARD = "#17171B";
 
   it("the deep step would FAIL AA on the dark card (why the split exists)", () => {
     expect(contrast(THEME.calorieRing.deep, DARK_CARD)).toBeLessThan(4.5);

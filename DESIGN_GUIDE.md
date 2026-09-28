@@ -47,17 +47,24 @@ If you only remember ten things:
 
 - **Aesthetic:** Calm iOS-inspired grouped surfaces in both themes. Dark is the
   first-run/runtime default; light remains a fully supported user choice.
-- **Dark mode:** Warm true-dark (`#121214`, surfaces `#1A1A1F`), not cold
-  blue-black. Light uses the warm grouped-background/card treatment. Every
-  visual change must be reviewed in both.
+- **Dark mode:** A deep, cool neutral (DS3, 2026-09-27): page `#0E0E11`,
+  cards `#17171B`, raised surfaces `#212127`, text `#F4F4F6`. The page is a
+  plain canvas — the brand-purple glow that used to sit at the top of every
+  signed-in page is retired, so colour belongs to content. Light uses the
+  warm grouped-background/card treatment. Every visual change must be
+  reviewed in both.
+- **One colour per job (DS3):** purple is lifting and the brand, coral is
+  running, orange is food, teal is water, gold is a new best — and nothing
+  else. A colour that means a sport or a domain is not decoration.
 - **Brand colour:** Purple `#7B72E9`. Used **sparingly** — active tab
   indicators, CTAs, progress bars, accents. Never as a full-page background
   (the only purple "fills" are gradient CTA buttons and the auth logo).
 - **Sport-coding:** Lifting = purple `#7B72E9`, Running = coral `#D4637A`.
-  These two colours recur in calendar dots, section labels, icon tints, and
+  These two colours recur in calendar dots, section headings, icon tints, and
   contextual cards.
-- **Logo:** Purple gradient hexagon with an upward chevron cutout + "TROPOS"
-  wordmark, top-left of home.
+- **Logo:** Purple gradient hexagon with an upward chevron cutout — the app
+  icon and the sign-in screens. Home carries no wordmark since DS3: it is
+  titled with the date and "Today", like every other page names itself.
 
 **The "calm" test:** if a screenshot of your change looks like it belongs in a
 crypto trading app or a generic SaaS dashboard, it's wrong. It should look like
@@ -189,17 +196,20 @@ control behaviour the same everywhere. It is **not** a mandate to make every
 surface look alike. A handful of elements are where the product has a face,
 and consistency must yield to them:
 
-| Element               | Keeps                                                                     |
-| --------------------- | ------------------------------------------------------------------------- |
-| Food hero             | Calorie ring with a subtle token-based halo and three compact macro cards |
-| Home performance card | The ring, its warm gradient, the delta chip                               |
-| Meal slot picker      | Filled orange pills (`SegmentedControl` `emphasis="solid"`)               |
-| Sport coding          | Purple lifting / coral running, everywhere they appear                    |
+| Element              | Keeps                                                                     |
+| -------------------- | ------------------------------------------------------------------------- |
+| Food hero            | Calorie ring with a subtle token-based halo and three compact macro cards |
+| Home performance row | The ring in the band's colour with the score in it, the verb, the chip    |
+| Meal slot picker     | Filled orange pills (`SegmentedControl` `emphasis="solid"`)               |
+| Sport coding         | Purple lifting / coral running, everywhere they appear                    |
 
 A 2026-09 cohesion pass flattened the meal pills onto the neutral segmented
 track, and a later release rendered both hero cards through a `compact`
 prop. Between them the food surface lost the only colour it owned and the
-weekly verdict became a row of digits. Both were consistency applied past
+weekly verdict became a row of digits. (DS3 made the performance card the
+closing row of Home's "This week" card and dropped its gradient halo with
+the app's other glows. What it kept is the list above: the verdict is
+still a coloured ring, a verb and a chip, not digits.) Both were consistency applied past
 the point where it helps. Before you unify something, ask whether the thing
 you are unifying IS the identity of its surface; if it is, unify the
 behaviour (roles, keyboard, target size) and leave the treatment alone.
@@ -234,11 +244,11 @@ characters so they render on one line.
 | -------------- | ----- | ---------------------------------------------------------------- |
 | `text-display` | 48px  | Hero stat numbers (e.g. health score)                            |
 | `text-h1`      | ~31px | Page titles ("Program", "Social")                                |
-| `text-h2`      | 25px  | Section headers ("RUNNING", "NUTRITION")                         |
-| `text-h3`      | 20px  | Card titles                                                      |
+| `text-h2`      | 25px  | Large display headings                                           |
+| `text-h3`      | 20px  | Page section headings ("This week", "Running"), hero card titles |
 | `text-body`    | 16px  | Standard text (accessibility baseline — don't go below for body) |
 | `text-small`   | 14px  | Secondary descriptions                                           |
-| `text-micro`   | 12px  | Labels, captions, uppercase tracking headers (floor)             |
+| `text-micro`   | 12px  | Labels and captions, sentence case (floor)                       |
 
 **Onboarding question role (approved first release, 7 September 2026):**
 The question heading uses the existing `text-h1` token with `font-extrabold`,
@@ -264,24 +274,38 @@ burned down. It is not: of 269 sized uses, 113 are `text-sm` and 105 are
 `text-xs`, with none above. It earned its place in the scale by being used
 consistently; the guard now protects the boundary rather than the count.
 
-Section labels are a deliberate style: UPPERCASE, letter-spaced, 12px, at
-exactly two ROLE tiers of `SectionLabel`. The default **caption** tier
-(semibold · tracking-wider · muted) lives inside one card: a stat's name above
-its number, an eyebrow, a pill, a form-field label. The **section** tier
-(bold · tracking-widest · foreground) heads a group of sibling cards or rows
-on a page, tab or sheet. The tiers used to differ by one pixel and nothing
-else, with the page-level tier the smaller one, so a caption inside a tile
-outranked the header above it; nothing sits at 11px now. Pick the tier by
-what the label heads, not by how small it should look, and use the primitive
-rather than hand-rolling the classes.
+**Headings and labels (DS3, 2026-09-27).** Everything is written in
+sentence case; capitals are kept for table column headers. Two primitives,
+picked by role:
+
+- **`SectionHeading`** opens a group of sibling cards or rows. It is a real
+  heading element: `page` size (20px bold, the H3 step) on a page or tab,
+  `compact` (16px bold) inside a sheet, a card or a dense settings form,
+  with an optional `action` (a text link such as "Weekly review") on the
+  same row. It replaced the 12px uppercase, letter-spaced group label,
+  which sat in the same register as a stat's caption one weight heavier —
+  so a page read as a flat list of small shouting labels and a card's own
+  title outranked the heading of its section.
+- **`SectionLabel`** (caption tier) is the small label inside one card: a
+  stat's name above its number, an eyebrow, a pill, a form-field label.
+  12px semibold muted, no letter-spacing. Write it the way it is said
+  ("Total volume"); it renders as written.
+
+The label's legacy `section` tier (uppercase, bold, tracked) survives only
+on two Food surfaces until the Food redesign, and a test keeps it there.
+Nothing sits at 11px. Use the primitives rather than hand-rolling the
+classes.
 
 ---
 
 **Numerals against a target — slash spacing.** The default is the spaced
-slash: `1,790 eaten / 2,200 kcal` on the energy header, `125 / 140 g` on a
-macro tile. Home keeps the existing three macro rings visible, with full
-Protein, Carbs and Fat labels; there is no collapsed P/C/F summary. The
-card has no Details disclosure; keep the current always-visible presentation.
+slash: `125 / 140 g` on a macro, and the target named in words where there
+is room (`1,790 of 2,200 kcal logged` on Home's food card). Home shows the
+three macros always, with full Protein, Carbs and Fat labels and their
+meat, wheat and avocado icons; there is no collapsed P/C/F summary and no
+Details disclosure. DS3 (owner call, 2026-09-27) turned Home's three macro
+rings into thin bars under one calorie ring: three big bright rings were
+the one real problem with the macro colours, which stay as they are.
 Keep values and targets on separate lines where space requires it rather
 than abbreviating the labels. Updated 2026-09-08. The whole-app role map — which treatment each UI role takes,
 and the permitted exceptions — is `docs/cohesion-spec-2026-09.md`.
@@ -311,13 +335,12 @@ Apple Liquid Glass would require a separate iOS navigation renderer.
 
 ## 6. Card patterns
 
-| Pattern                                           | Recipe                                                                                                                                                                             |
-| ------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Standard card**                                 | `bg-card` white, `rounded-xl` (12px), `p-3`–`p-4`, `shadow-card` (very subtle). Or use `.ds-card`.                                                                                 |
-| **Hero card** (Health Score, Water)               | `rounded-2xl` (16px), `p-4`, 48px icon container in a purple-tinted square.                                                                                                        |
-| **Compact tile** (Weight, Steps)                  | `rounded-xl`, `p-3`, `bg-muted`, 2-col grid.                                                                                                                                       |
-| **CTA card** (today's workout/run)                | `rounded-xl`, sport-tinted bg at ~8% opacity, Play pill right-aligned.                                                                                                             |
-| **Sport CTA card** (`LiftCTACard` / `RunCTACard`) | `rounded-xl`, sport-tinted bg ~8%, icon + title + purpose line, right-aligned Start control, ≥44px touch target. Replaced the three-pill quick-action row, which no longer exists. |
+| Pattern                                       | Recipe                                                                                                                                                                       |
+| --------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Standard card**                             | `bg-card` white, `rounded-xl` (12px), `p-3`–`p-4`, `shadow-card` (very subtle). Or use `.ds-card`.                                                                           |
+| **Hero card** (Health Score, Water)           | `rounded-2xl` (16px), `p-4`, 48px icon container in a purple-tinted square.                                                                                                  |
+| **Compact tile** (Weight, Steps)              | `rounded-xl`, `p-3`, `bg-card card-shadow`, 2-col grid (the card surface since DS3; it was `bg-muted`).                                                                      |
+| **Today card** (`LiftCTACard` / `RunCTACard`) | Hero radius, sport wash at 12%, the session as a 25px title, its dose, a full-width Start (`primary` / `sport`); the rest of the card opens the day in Train. See CLAUDE.md. |
 
 - Use `.ds-card` for static grouped surfaces and `.ds-card-interactive` **only**
   on a real `<button>`/`<a>` (never a wrapped `div`) for pressable cards.
@@ -348,6 +371,14 @@ behaviour.
 - **`BottomSheet`** (vaul): the standard editing surface (exercises, weight
   logging). Sheets for editing, dialogs for confirmation.
 - **`ConfirmDialog`** for destructive confirmations.
+- **`ProgressRing`** (`src/components/ui/ProgressRing.tsx`): one ring for
+  one share of a target (0–1), in the colour of what it measures, with its
+  figure inside as children. The track is the neutral groove
+  (`--muted-foreground / 0.22`), never a tint of the ring's own hue. The SVG
+  is decorative: the figure beside or inside it carries the meaning, so say
+  it in text or an `aria-label` on the surrounding control. Home's calorie
+  ring and its Performance row use it. One ring per card; several quantities
+  side by side are bars (DS3's macros), not a row of rings.
 - **`EmptyState`** (`src/components/ui/EmptyState.tsx`): the canonical
   designed empty-state — a stroke-vector **brand hexagon** + one-line
   headline (`text-h3`) + optional one-line sub (`text-small`) + **at most one**
@@ -367,7 +398,7 @@ behaviour.
     empty-state; extend this primitive.
 - **Toasts:** `sonner` — `toast.success()` / `toast.error()`. This is the
   channel for transient feedback.
-- **Icons:** `lucide-react`, imported individually. No other icon set.
+- **Icons:** `lucide-react`, imported individually, with two drawn exceptions. The tab bar has its own set (`src/components/icons/TabIcons.tsx`, DS3): drawn together on one 24 grid with one stroke, each with a filled form for the open tab, because filling a stock outline filled some of them oddly. The avocado macro icon sits beside it. No other icon set.
 - **Class merging:** `cn()` (`clsx` + `tailwind-merge`) for conditional classes.
 
 ---
@@ -377,14 +408,19 @@ behaviour.
 - **Tap feedback:** `scale(0.97)` on `:active`, 150ms `cubic-bezier(0.4,0,0.2,1)`.
   Use `.pressable` or the primitives (which bake it in).
 - **Haptics:** call the `haptic()` utility on button/card taps (Capacitor).
-- **Count-up:** hero numbers animate from 0 on first load (`useCountUp`).
+- **Count-up:** the moments' numbers count up as they appear, through
+  `AnimatedNumber` (or `useCountUp` for a once-a-session count on Home).
+  Under Reduce Motion `AnimatedNumber` is plain text from the first paint.
 - **Entrance:** `ds-fade-up` / `ds-scale-in` with `ds-stagger-*` delays.
 - **Number updates:** `.ds-stat-updated` flash; PRs use `.ds-badge-new-pr`.
 - **Focus ring:** `focus-visible` only (mouse clicks shouldn't draw it) —
   `ring-2 ring-primary/40 ring-offset-2`. The primitives already do this.
 - **Reduced motion:** `prefers-reduced-motion: reduce` is honoured globally
-  (animations.css) _and_ by the primitives. If you add a custom animation,
-  gate it — either via the `useReducedMotion` hook or a CSS media query.
+  for CSS (animations.css) and, through `MotionConfig`, for framer's
+  POSITIONAL values only (x, y, scale, width, height). Opacity, stroke
+  offsets, `pathLength` and count-ups are not covered: if you add one,
+  gate it in the component with the `useReducedMotion` hook, as
+  `ProgressRing` and `AnimatedNumber` do.
 
 ---
 
@@ -419,9 +455,9 @@ behaviour.
 
 - **WCAG AA contrast** for text. This is _why_ `primary-strong`,
   `MACROS_TEXT_LIGHT`, and the darker semantic tokens exist — use them.
-- **Body text ≥ 16px**, micro labels ≥ 12px. `SectionLabel`'s two tiers both
-  sit at 12px (see §4); `text-caption` (11px) is the scale's named floor for
-  dense numerals and units, not for labels.
+- **Body text ≥ 16px**, micro labels ≥ 12px. `SectionLabel` sits at 12px
+  (see §4); `text-caption` (11px) is the scale's named floor for dense
+  numerals and units, not for labels.
 - **Semantic roles:** `Banner` uses `status`/`alert`; respect ARIA. Icon-only
   controls need labels. Inputs/anchors need accessible names.
 - **Keyboard:** focusable, Enter/Escape behave, focus returns to the trigger

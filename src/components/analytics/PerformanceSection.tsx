@@ -1,10 +1,11 @@
 import { useEffect, useRef, Suspense } from "react";
 import { lazyRetry } from "@/lib/lazyRetry";
-import SectionLabel from "@/components/ui/SectionLabel";
+import SectionHeading from "@/components/ui/SectionHeading";
 import { Activity } from "lucide-react";
 import { THEME } from "@/lib/theme";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { usePerformanceWeeks } from "@/hooks/usePerformance";
+import type { DistanceUnit } from "@/lib/distanceUnits";
 import { performanceEmptyCopy } from "@/lib/performanceLine";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary";
@@ -34,10 +35,14 @@ interface PerformanceSectionProps {
    *  saved but before the server has written its performance doc — see
    *  performanceEmptyCopy. Defaults to false, the cold-start reading. */
   hasLoggedSession?: boolean;
+  /** The reader's distance unit, for the running figures. History passes
+   *  its own; `km` stands in only where nothing does. */
+  distanceUnit?: DistanceUnit;
 }
 
 export default function PerformanceSection({
   hasLoggedSession = false,
+  distanceUnit = "km",
 }: PerformanceSectionProps = {}) {
   /* usePerformanceWeeks here only gates loading / empty — PerformanceTab
      fetches its own 12-week window for the gauge, trend, and breakdown. */
@@ -76,13 +81,13 @@ export default function PerformanceSection({
         aria-label="Performance Index"
         className="space-y-2"
       >
-        {/* Matches its four peers on this page: `tier="section"` in a
+        {/* Matches its peers on this page: a section heading in a
             `-strong` utility, placed by the section's own stack rather
             than by margins of its own. The bare brand purple measures
-            3.28:1 as 12px text on the page. */}
-        <SectionLabel tier="section" className="text-lifting-strong">
+            3.28:1 as small text on the page. */}
+        <SectionHeading className="text-lifting-strong">
           Performance
-        </SectionLabel>
+        </SectionHeading>
         <div className="p-4 rounded-2xl bg-card motion-safe:animate-pulse">
           <div className="h-8 w-20 bg-muted rounded" />
         </div>
@@ -102,9 +107,9 @@ export default function PerformanceSection({
         aria-label="Performance Index"
         className="space-y-2"
       >
-        <SectionLabel tier="section" className="text-lifting-strong">
+        <SectionHeading className="text-lifting-strong">
           Performance
-        </SectionLabel>
+        </SectionHeading>
         <div className="rounded-2xl bg-card">
           <EmptyState
             compact
@@ -130,16 +135,16 @@ export default function PerformanceSection({
       aria-label="Performance Index"
       className="space-y-2"
     >
-      <SectionLabel tier="section" className="text-lifting-strong">
+      <SectionHeading className="text-lifting-strong">
         Performance
-      </SectionLabel>
+      </SectionHeading>
       <SectionErrorBoundary sectionName="performance-tab-body">
         <Suspense
           fallback={
             <div className="p-4 rounded-2xl bg-card motion-safe:animate-pulse h-48" />
           }
         >
-          <PerformanceTab />
+          <PerformanceTab distanceUnit={distanceUnit} />
         </Suspense>
       </SectionErrorBoundary>
     </section>

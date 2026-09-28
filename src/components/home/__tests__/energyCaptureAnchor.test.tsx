@@ -55,9 +55,6 @@ vi.mock("framer-motion", () => ({
   AnimatePresence: ({ children }: any) => children,
 }));
 vi.mock("@/lib/haptic", () => ({ haptic: vi.fn() }));
-vi.mock("@/components/home/MacroRing", () => ({
-  default: () => <div data-testid="macro-ring" />,
-}));
 
 import TodayEnergy from "../TodayEnergy";
 
@@ -72,9 +69,7 @@ const SPEC = readFileSync(
 
 /** The anchor regex the spec actually uses — read out, not copied. */
 function anchorPattern(): RegExp {
-  const m = SPEC.match(
-    /page\.getByText\(\/(Target \[1-9\][^/]*?)\/\)\.first\(\)/
-  );
+  const m = SPEC.match(/page\.getByText\(\/(of \[1-9\][^/]*?)\/\)\.first\(\)/);
   if (!m) {
     throw new Error(
       "could not find the energy readiness anchor in " +
@@ -99,7 +94,7 @@ function renderEnergy(finalTarget: number) {
   );
 }
 
-describe("capture spec — Today's nutrition readiness anchor", () => {
+describe("capture spec — Home food card readiness anchor", () => {
   it("extracts the anchor from the spec — the fixture this rests on", () => {
     // Without this, a broken extractor would leave every assertion below
     // vacuously satisfied.
@@ -111,7 +106,7 @@ describe("capture spec — Today's nutrition readiness anchor", () => {
     const rx = anchorPattern();
     expect(
       rx.test(container.textContent ?? ""),
-      `the capture anchor ${rx} does not match a loaded Today's nutrition card. ` +
+      `the capture anchor ${rx} does not match a loaded Home food card. ` +
         `That assertion is HARD and gates four frames — in CI this costs a ` +
         `red capture job twelve minutes in.`
     ).toBe(true);
@@ -152,10 +147,10 @@ describe("capture spec — Today's nutrition readiness anchor", () => {
        output. This file already documented that separator; it did not
        apply the same normalisation to what it was searching FOR. */
     const wanted = new RegExp(
-      `Target ${rendered
+      `of ${rendered
         .replace(/\s+/g, " ")
         .trim()
-        .replace(/[.*+?^${}()|[\]\\]/g, "\\$&")} kcal`
+        .replace(/[.*+?^${}()|[\]\\]/g, "\\$&")} kcal logged`
     );
     const carrier = Array.from(container.querySelectorAll("*")).find((el) =>
       wanted.test((el.textContent ?? "").replace(/\s+/g, " ").trim())
@@ -167,7 +162,7 @@ describe("capture spec — Today's nutrition readiness anchor", () => {
         `separate nodes cannot be located in the capture spec.`
     ).toBeTruthy();
     expect(
-      anchorPattern().test(`Target ${rendered} kcal`),
+      anchorPattern().test(`of ${rendered} kcal logged`),
       `formatCalories(2200) renders "${rendered}" on this runtime, and the ` +
         `capture anchor does not match it. The anchor is written against a ` +
         `comma separator; this runtime groups differently.`

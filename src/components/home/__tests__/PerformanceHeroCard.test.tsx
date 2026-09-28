@@ -85,10 +85,10 @@ describe("PerformanceHeroCard — empty state", () => {
     ).toBeInTheDocument();
   });
 
-  it("renders the hexagon empty state (headline + action), not a numeric PI", () => {
-    // Wave3 F: the empty (non-loading) branch is now the hexagon EmptyState
-    // primitive — a directive headline + a real next step — instead of the
-    // muted ring + dash (which the LOADING branch still uses).
+  it("leads the empty row with its headline, and shows no number", () => {
+    // Wave3 F kept: a directive headline rather than a bare dash. DS3
+    // folds it into the "This week" card as a row, with the muted ring
+    // the loading branch also uses.
     renderCard({
       currentWeek: null,
       previousWeek: null,
@@ -96,7 +96,7 @@ describe("PerformanceHeroCard — empty state", () => {
       loading: false,
     });
     expect(screen.getByText("No sessions logged yet")).toBeInTheDocument();
-    expect(screen.queryByText("—")).toBeNull();
+    expect(screen.queryByText(/^\d+$/)).toBeNull();
   });
 
   /* The perf doc is written by the server (onWorkoutCreated / onRunCreated),
@@ -242,7 +242,9 @@ describe("PerformanceHeroCard — delta chip", () => {
       weeksAvailable: 6,
       loading: false,
     });
-    expect(screen.getByText(/\+10 from last week/i)).toBeInTheDocument();
+    // The chip carries the figure; the sr-only sibling says what it is.
+    expect(screen.getByText("+10")).toBeInTheDocument();
+    expect(screen.getByText(/up 10 from last week/i)).toBeInTheDocument();
   });
 
   it("shows negative delta when current < previous", () => {
@@ -252,7 +254,8 @@ describe("PerformanceHeroCard — delta chip", () => {
       weeksAvailable: 6,
       loading: false,
     });
-    expect(screen.getByText(/-10 from last week/i)).toBeInTheDocument();
+    expect(screen.getByText("-10")).toBeInTheDocument();
+    expect(screen.getByText(/down 10 from last week/i)).toBeInTheDocument();
   });
 
   it("hides delta chip in low-confidence state (lifetimeWeeks < 4)", () => {
@@ -291,10 +294,9 @@ describe("PerformanceHeroCard — deep link (PI4)", () => {
     expect(link?.getAttribute("href")).toBe("/history#performance");
   });
 
-  it("empty-state card's action routes to the workout flow (Wave3 F)", () => {
-    // The empty card no longer wraps the whole surface in a link to
-    // /history#performance (an empty history would just be empty too). Its
-    // single action is the real unlock: start a workout.
+  it("the empty row routes to the workout flow (Wave3 F)", () => {
+    // An empty history would just be empty too, so a user with nothing
+    // logged is sent where the first session starts.
     const { container } = renderCard({
       currentWeek: null,
       previousWeek: null,
@@ -303,7 +305,7 @@ describe("PerformanceHeroCard — deep link (PI4)", () => {
     });
     const link = container.querySelector("a");
     expect(link?.getAttribute("href")).toBe("/program");
-    expect(link?.textContent).toMatch(/start a workout/i);
+    expect(link).toHaveAccessibleName(/no sessions logged yet/i);
   });
 });
 

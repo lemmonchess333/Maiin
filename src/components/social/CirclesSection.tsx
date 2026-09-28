@@ -38,7 +38,7 @@ import { haptic } from "@/lib/haptic";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
 import { BottomSheet } from "@/components/ui/BottomSheet";
-import SectionLabel from "@/components/ui/SectionLabel";
+import SectionHeading from "@/components/ui/SectionHeading";
 import { Spinner } from "@/components/ui/Spinner";
 import { getTimeAgo } from "@/lib/timeAgo";
 import { formatDayMonth } from "@/utils/formatters";
@@ -662,9 +662,7 @@ export default function CirclesSection({
 
   return (
     <div className="space-y-3">
-      <SectionLabel tier="section" as="h2">
-        Circles
-      </SectionLabel>
+      <SectionHeading>Circles</SectionHeading>
 
       {loading && (
         <div
@@ -1274,9 +1272,9 @@ export default function CirclesSection({
                 </div>
 
                 <div className="space-y-1.5">
-                  <SectionLabel tier="section" as="h3">
+                  <SectionHeading size="compact" as="h3">
                     Recent
-                  </SectionLabel>
+                  </SectionHeading>
                   {/* Chosen-focus pulse — a count, never a ranking. */}
                   {focusSetCount > 0 && (
                     <p className="text-xs text-muted-foreground">

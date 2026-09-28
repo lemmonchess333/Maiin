@@ -104,34 +104,45 @@ describe("the page reads top to bottom", () => {
 });
 
 describe("a bodyweight lift's last set is not a load", () => {
-  /* Both row renderings carry their own copy of the `Last:` chain. The
-     prescription line above each already reads `!isBW && ex.weight > 0`,
-     so a bodyweight day hides the engine's stored load — and the chain
-     below it ranked `weight > 0` FIRST and printed that same number.
-     Chin-ups read "3 sets x 13 reps" over "Last: 35 kg x 12". */
-  const chains = () =>
-    [...code.matchAll(/Last:\{" "\}([\s\S]*?)\}\s*<\/p>/g)].map((m) => m[1]);
+  /* Both row renderings, the tappable rows and the drag-to-reorder rows,
+     used to carry their own copy of the `Last:` chain, and the copies
+     drifted. The prescription line already read `!isBW && ex.weight > 0`,
+     so a bodyweight day hid the engine's stored load, while the chain
+     below it ranked `weight > 0` FIRST and printed that same number:
+     chin-ups read "3 sets x 13 reps" over "Last: 35 kg x 12". One copy
+     also said "BW x 12" where the other said "12 reps".
 
-  it("has two copies, which is why the rest of this block exists", () => {
-    expect(chains()).toHaveLength(2);
+     DS3 draws both renderings through one `ExerciseRowSummary`, so the
+     chain exists once and the two cannot disagree. */
+  const summary = strip(
+    readFileSync(
+      resolve(repoRoot, "src/components/program/ExerciseRowSummary.tsx"),
+      "utf8"
+    )
+  );
+  const chains = (src: string) =>
+    [...src.matchAll(/Last:\{" "\}([\s\S]*?)\}\s*<\/p>/g)].map((m) => m[1]);
+
+  it("has one copy, in the shared row summary", () => {
+    expect(chains(summary)).toHaveLength(1);
+    expect(chains(code)).toHaveLength(0);
   });
 
-  it("asks isBW before it asks about weight, in both", () => {
-    for (const chain of chains()) {
-      const bw = chain.indexOf("isBW");
-      const weight = chain.indexOf("lastPerf.weight > 0");
-      expect(bw).toBeGreaterThan(-1);
-      expect(weight).toBeGreaterThan(-1);
-      expect(bw).toBeLessThan(weight);
-    }
+  it("asks isBW before it asks about weight", () => {
+    const [chain] = chains(summary);
+    const bw = chain.indexOf("isBW");
+    const weight = chain.indexOf("lastPerf.weight > 0");
+    expect(bw).toBeGreaterThan(-1);
+    expect(weight).toBeGreaterThan(-1);
+    expect(bw).toBeLessThan(weight);
   });
 
-  it("renders the same way in both, so drag mode is not its own dialect", () => {
-    /* One copy said "BW x 12" and "— x 12"; the other had no bodyweight
-       case at all and said "12 reps". Same card, same data, two
-       vocabularies depending on whether you were dragging. */
-    const [a, b] = chains().map((c) => c.replace(/\s+/g, " ").trim());
-    expect(a).toBe(b);
+  it("is what both renderings draw, so drag mode is not its own dialect", () => {
+    const body = dayBody();
+    expect(body.match(/<ExerciseRowSummary\b/g)).toHaveLength(2);
+    // Anchored: the reorder rendering is in the body, and so is the other.
+    expect(body).toContain("<DndContext");
+    expect(body).toContain("More options for ");
   });
 });
 
