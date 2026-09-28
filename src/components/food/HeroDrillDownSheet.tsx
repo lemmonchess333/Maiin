@@ -255,10 +255,12 @@ export default function HeroDrillDownSheet({
                 className="h-full rounded-full transition-all"
                 style={{
                   width: `${barFillPct(consumedPct, mode, remaining < 0)}%`,
+                  /* The calorie ring's colours: orange, and its deeper
+                     overshoot orange once the day is over its target. */
                   background:
                     remaining < 0
-                      ? THEME.semantic.nutrition
-                      : "hsl(var(--primary))",
+                      ? THEME.calorieRing.deep
+                      : THEME.semantic.nutrition,
                 }}
               />
             </div>

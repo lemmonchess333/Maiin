@@ -13,7 +13,7 @@ import { lazyRetry } from "@/lib/lazyRetry";
 import { useSearchParams } from "react-router-dom";
 import { useDailyLogs } from "@/hooks/useFirestore";
 import { useUid } from "@/lib/auth";
-import { addDays, format } from "date-fns";
+import { addDays, differenceInCalendarDays, format } from "date-fns";
 import { toast } from "@/lib/toast";
 import { motion } from "framer-motion";
 import PageShell from "@/components/ui/PageShell";
@@ -60,6 +60,11 @@ import FoodHeroCard from "@/components/food/FoodHeroCard";
 import HeroDrillDownSheet from "@/components/food/HeroDrillDownSheet";
 import FoodTimeline from "@/components/food/FoodTimeline";
 import FoodDateBar from "@/components/food/FoodDateBar";
+import FoodWeekStrip from "@/components/food/FoodWeekStrip";
+import { SectionErrorBoundary } from "@/components/SectionErrorBoundary";
+import { foodWeek, foodWeekStart } from "@/lib/foodWeek";
+import { parseLocalDate } from "@/lib/dateHelpers";
+import { useDailyTargetsInRange } from "@/hooks/useDailyTargetsInRange";
 import FoodOfflineBanner from "@/components/food/FoodOfflineBanner";
 import EditServingsSheet from "@/components/food/EditServingsSheet";
 import CopyMealsSheet from "@/components/food/CopyMealsSheet";
@@ -367,8 +372,17 @@ export default function Food() {
     }
   );
 
-  const previousDiaryDay = format(addDays(selectedDateObj, -1), "yyyy-MM-dd");
+  /* The read starts the day before the week in view: that covers the week
+     strip's seven days and the day before any day in the week (Copy
+     yesterday), and it stays put while the user moves around one week. */
+  const weekStartKey = foodWeekStart(selectedDate);
+  const dayBeforeWeek = format(
+    addDays(parseLocalDate(weekStartKey), -1),
+    "yyyy-MM-dd"
+  );
   const recentMealsFrom = format(addDays(new Date(), -30), "yyyy-MM-dd");
+  const mealsFrom =
+    dayBeforeWeek < recentMealsFrom ? dayBeforeWeek : recentMealsFrom;
   const {
     meals,
     getMealsForDate,
@@ -379,8 +393,7 @@ export default function Food() {
     error: mealsError,
     refresh: refreshMeals,
   } = useMeals({
-    from:
-      previousDiaryDay < recentMealsFrom ? previousDiaryDay : recentMealsFrom,
+    from: mealsFrom,
     to: todayStr,
   });
 
@@ -500,6 +513,36 @@ export default function Food() {
       sodium,
     };
   }, [rawDailyTotals, pendingDeleteIds, todaysMeals]);
+
+  /* The week strip. Each day's target as it stood is read over the same
+     span as the meals, so the two move together and a week inside the
+     last month never waits on a second read. The extra day covers the
+     read's 24-hour arithmetic across a clock change. */
+  const { targets: dayTargets } = useDailyTargetsInRange(
+    uid,
+    differenceInCalendarDays(new Date(), parseLocalDate(mealsFrom)) + 1
+  );
+  const weekDays = useMemo(
+    () =>
+      foodWeek({
+        selectedKey: selectedDate,
+        todayKey: todayStr,
+        minKey: minDateStr,
+        meals,
+        hiddenMealIds: pendingDeleteIds,
+        snapshots: dayTargets,
+        selectedTarget: dailyTargets.finalTarget,
+      }),
+    [
+      selectedDate,
+      todayStr,
+      minDateStr,
+      meals,
+      pendingDeleteIds,
+      dayTargets,
+      dailyTargets.finalTarget,
+    ]
+  );
 
   const mealSegmentedMeals = useMemo(() => {
     const segments: Record<string, typeof visibleTodaysMeals> = {
@@ -1805,6 +1848,13 @@ export default function Food() {
       )}
       {readError}
 
+      <motion.div variants={pageItemVariant}>
+        {/* Isolated as Home's strip is: a bad day's data costs the strip,
+            not the diary under it. */}
+        <SectionErrorBoundary sectionName="food-week-strip">
+          <FoodWeekStrip days={weekDays} onSelect={setSelectedDate} />
+        </SectionErrorBoundary>
+      </motion.div>
       <motion.div variants={pageItemVariant} key={selectedDate}>
         <FoodHeroCard
           selectedDate={selectedDate}
