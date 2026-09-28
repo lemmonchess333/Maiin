@@ -741,7 +741,7 @@ export class FirestoreFake {
           `(real Firestore rejects this too — seed it or use setDoc({merge:true}))`
       );
     }
-    this.docs.set(ref.path, resolveWrite(prev, data));
+    this.docs.set(ref.path, resolveUpdate(prev, data));
     this.writes.push({ op: "update", path: ref.path, data });
     this.notify();
   }
@@ -878,6 +878,40 @@ function resolveWrite(
     }
   }
   return next;
+}
+
+/**
+ * Apply an `updateDoc` patch. Unlike `setDoc`, where a dot is part of the
+ * field name, `updateDoc` reads a dotted key as a FIELD PATH: `"a.b"` is
+ * field `b` of map `a`, created if missing, with `a`'s other fields left
+ * alone. That is how a client changes one key of a map without rewriting
+ * the rest. Sentinels at a nested path resolve as they do at the top.
+ */
+function resolveUpdate(
+  prev: Record<string, unknown>,
+  patch: Record<string, unknown>
+): Record<string, unknown> {
+  let next = prev;
+  for (const [key, value] of Object.entries(patch)) {
+    next = setAtPath(next, key.split("."), value);
+  }
+  return next;
+}
+
+function setAtPath(
+  data: Record<string, unknown>,
+  [field, ...rest]: string[],
+  value: unknown
+): Record<string, unknown> {
+  if (rest.length === 0) return resolveWrite(data, { [field]: value });
+  const child = data[field];
+  const map =
+    child !== null &&
+    typeof child === "object" &&
+    Object.getPrototypeOf(child) === Object.prototype
+      ? (child as Record<string, unknown>)
+      : {};
+  return { ...data, [field]: setAtPath(map, rest, value) };
 }
 
 /** The process-wide instance the SDK mock delegates to. */
