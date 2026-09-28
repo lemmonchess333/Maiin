@@ -2113,6 +2113,37 @@ coach rows below are superseded — replace them with:**
 - [ ] **Communities feed source.** Feed → source sheet → "My communities": joined-space posts newest-first under space-name eyebrows; empty states are the join prompt (no spaces) or the quiet-week line (spaces joined, nothing posted) — never a blank column. Pull-to-refresh refetches this stream while active.
 - [ ] **Rules deploys landed.** Firebase Console → Firestore Rules contains `match /likes/{likeUid}`, `match /comments/{commentId}` (both read-only), and the `trainingForSpaceId` value gate on the public profile. Three rules deploys shipped today — verify the LAST one is live.
 
+### A removed post leaves every feed (`onActivityDeleted`, 2026-09-28)
+
+Affects: `functions/index.js` (`onActivityDeleted`, new, and
+`onActivityCreated`'s re-read after its fan-out),
+`functions/lib/socialFanout.js` (`removeActivityFromFeeds`),
+`firestore.indexes.json` (a collection-group index on `items.activityId`),
+`src/lib/socialApi.ts` and `src/hooks/useSocialFeed.ts`.
+
+Undo on the finish screen (Soc11) and deleting a shared session removed
+only `activities/{id}`. The copies in `feeds/{uid}/items` stayed, and since
+the activities read rule refuses a post that is gone, one such copy failed
+the whole Following page for the author and every follower. The trigger
+now deletes the copies; the client leaves out a copy whose post it cannot
+read, so the feed loads, and draws nothing for it.
+
+- [ ] **Deployed-source spot-check (do first).** `onActivityDeleted` is in
+      the Console's function list, and `onActivityCreated`'s deployed
+      source contains `removeActivityFromFeeds`.
+- [ ] **The index is built.** Firestore → Indexes → Single field:
+      `items` · `activityId`, collection group, ascending, Enabled. Until
+      it is, the trigger's query fails, it logs `onActivityDeleted.error`,
+      and the copies stay (the client still hides them).
+- [ ] **Undo on a device, with a follower.** Share a session from one
+      account and tap Undo on the finish screen. On a second account that
+      follows it, Following loads and the post is not there, and the
+      `feeds/<follower>/items/<activityId>` document is gone.
+- [ ] **Copies from before this deploy stay.** Posts undone or deleted
+      before the trigger existed left their copies. Nothing draws them,
+      and the unread badge counts one only if it is newer than the last
+      time Social was opened. Delete them by hand if they matter.
+
 ### Global hybrid challenge + hybrid_score sync (SOCIAL S4 Soc8, PR2)
 
 Affects: `functions/lib/challengeDefs.js` (new `global-monthly-*` hybrid definition), `functions/index.js` (`onWorkoutCreated` / `onRunCreated` now sync `hybrid_score`). Deploys via `deploy-functions.yml`. The daily `rolloverChallenges` cron materialises the new challenge doc; the trigger sync feeds it.
