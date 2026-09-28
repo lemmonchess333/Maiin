@@ -37,11 +37,12 @@ import {
 } from "@/components/analytics/trendRows";
 import {
   countChange,
-  percentChange,
+  distanceChange,
   previousRangeLabel,
   rollingRangeLabel,
   summaryBins,
   summaryGranularity,
+  volumeChange,
 } from "@/lib/periodSummary";
 import { useBodyweightTrend } from "@/hooks/useBodyweightTrend";
 import { predictedRaceTimesFromFitness } from "@/lib/runPaces";
@@ -1334,9 +1335,10 @@ export default function History() {
     }
   })();
 
-  /* DS3 period summary — the overview's first card. Sessions bar by bar
-     across the range, and the range before it for the changes. Lifts
-     count by their local date, runs by the day they were recorded, both
+  /* DS3 period summary — the overview's first card. Sessions, kilograms
+     and distance bar by bar across the range, and the range before it for
+     the changes. Lifts count by their local date and their guarded
+     tonnage, runs by the day they were recorded and their stored metres,
      as the page's other totals count them; runs before the window come
      from the lifetime read, which already holds every run, because
      `useRunningStats` reads only the window. */
@@ -1349,11 +1351,13 @@ export default function History() {
     const bins = summaryBins({
       since,
       today: now,
-      liftDates: workouts.filter((w) => w.date >= sinceKey).map((w) => w.date),
-      runDates: runs
+      lifts: workouts
+        .filter((w) => w.date >= sinceKey)
+        .map((w) => ({ date: w.date, volumeKg: workoutTonnageKg(w) })),
+      runs: runs
         .filter((r) => isVolumeEligible(r))
-        .map((r) => runEvidenceDate(r))
-        .filter((d) => d >= sinceKey),
+        .map((r) => ({ date: runEvidenceDate(r), distanceM: r.distance ?? 0 }))
+        .filter((r) => r.date >= sinceKey),
       granularity,
     });
     // A failed or pending read is an unknown, not a range with no runs.
@@ -1369,8 +1373,8 @@ export default function History() {
       granularity,
       bins,
       prevRunCount: previousRuns ? previousRuns.length : null,
-      prevRunKm: previousRuns
-        ? previousRuns.reduce((sum, r) => sum + r.distanceM, 0) / 1000
+      prevRunM: previousRuns
+        ? previousRuns.reduce((sum, r) => sum + r.distanceM, 0)
         : null,
     };
   }, [
@@ -1385,6 +1389,7 @@ export default function History() {
   const summarySessions = liftingData.liftCount + runningTotals.runCount;
   const summaryFigures: SummaryFigure[] = [
     {
+      metric: "sessions",
       value: String(summarySessions),
       unit: summarySessions === 1 ? "session" : "sessions",
       change: countChange(
@@ -1395,20 +1400,26 @@ export default function History() {
       ),
     },
     {
+      metric: "volume",
       value:
         liftingData.liftVolume > 0
           ? formatVolume(liftingData.liftVolume).value
           : "0",
       unit: "kg lifted",
-      change: percentChange(liftingData.liftVolume, liftingData.prevLiftVolume),
+      change: volumeChange(liftingData.liftVolume, liftingData.prevLiftVolume),
     },
     {
+      metric: "distance",
       value:
         runningTotals.runDistance > 0
           ? formatDistance(distanceIn(runningTotals.runDistance * 1000, unit))
           : "0",
       unit: `${distanceUnitLabel(unit)} run`,
-      change: percentChange(runningTotals.runDistance, periodSummary.prevRunKm),
+      change: distanceChange(
+        runningTotals.runDistance * 1000,
+        periodSummary.prevRunM,
+        unit
+      ),
     },
   ];
 
@@ -1741,6 +1752,7 @@ export default function History() {
                         (profile?.daysPerWeek ?? 0) +
                         getWeeklyRunTarget(profile)
                       }
+                      distanceUnit={unit}
                     />
                   </SectionErrorBoundary>
                   <SectionErrorBoundary sectionName="trends">
