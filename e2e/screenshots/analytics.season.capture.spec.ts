@@ -93,12 +93,14 @@ const PAGES: {
   {
     name: "body",
     path: "/Maiin/history?view=body",
-    anchor: (page) => page.getByText(/Trending at/i).first(),
+    // The rate needs a month of weigh-ins.
+    anchor: (page) => page.getByRole("heading", { name: "Your rate" }),
   },
   {
     name: "food",
     path: "/Maiin/history?view=food",
-    anchor: (page) => page.getByText(/Macro distribution/i).first(),
+    // Days against their own targets need the daily target snapshots.
+    anchor: (page) => page.getByRole("heading", { name: "How the days went" }),
   },
 ];
 

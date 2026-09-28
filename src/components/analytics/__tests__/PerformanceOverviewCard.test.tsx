@@ -134,7 +134,7 @@ describe("PerformanceOverviewCard", () => {
   it("says the deload advice once, in its line", () => {
     serve(history(82, "high", true));
     renderCard();
-    expect(screen.getAllByText(/ease this week/i)).toHaveLength(1);
+    expect(screen.getAllByText(/ease off this week/i)).toHaveLength(1);
     expect(screen.queryByText(/consider a deload/i)).toBeNull();
   });
 

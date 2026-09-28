@@ -8,6 +8,10 @@
  *     where there is ADVICE to give — overreach, a recommended deload, a
  *     deload-light week, or a baseline still forming.
  *
+ * The headline names the tier and stops. Each once ran on into a coaching
+ * tail ("keep the cadence", "room to push or hold") that the week's own
+ * figures beneath it say better.
+ *
  * The high, moderate and low bands each carried a sentence ("High
  * training load. Keep nutrition and sleep on point.", "Balanced load. This
  * is the sustainable middle of your range."): restatements of the band in
@@ -68,12 +72,12 @@ export function getPlainLanguageSummary(
   const headline = backingOff
     ? "Backing off — make room for recovery"
     : pi >= 80
-      ? "Strong week — your training is on track"
+      ? "Strong week"
       : pi >= 60
-        ? "Solid week — keep the cadence"
+        ? "Solid week"
         : pi >= 40
-          ? "Moderate load — room to push or hold"
-          : "Light week — focus on recovery or ramp up";
+          ? "Moderate week"
+          : "Light week";
 
   // Exhaustive over the five real bands — no catch-all. Only two carry
   // advice. `deload` says its own thing, because "increase intensity" is

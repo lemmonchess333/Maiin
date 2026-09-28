@@ -46,6 +46,19 @@ import LiftProgressCard from "@/components/analytics/LiftProgressCard";
 import MuscleVolumeCard from "@/components/analytics/MuscleVolumeCard";
 import RunPaceCard from "@/components/analytics/RunPaceCard";
 import FastestKilometresCard from "@/components/analytics/FastestKilometresCard";
+import WeightRateCard from "@/components/analytics/WeightRateCard";
+import FoodDaysCard from "@/components/analytics/FoodDaysCard";
+import { foodDaysReading } from "@/lib/foodDays";
+import { useDailyTargetsInRange } from "@/hooks/useDailyTargetsInRange";
+import {
+  bodyLine,
+  foodLine,
+  goDeeperLines,
+  liftingLine,
+  runningLine,
+} from "@/components/analytics/goDeeperLines";
+import { currentWeightRate } from "@/utils/weightTrend";
+import { attestedWeeklyRateKg } from "@/lib/goalWeightPlan";
 import {
   nutritionRows,
   predictionRow,
@@ -1221,6 +1234,69 @@ export default function History() {
      that charts it. Weight comes from the same trend read as the Body
      page's chart, so the row quotes the figure the chart draws. */
   const bodyweight = useBodyweightTrend();
+
+  /* The Food page's day-by-day reading (`foodDays`): each finished day
+     against the target it had that day, and protein over the trend
+     weight. Hidden-number users get no protein per kg: with the protein
+     figure beside it, it would give the weight away. */
+  const { targets: dayTargets, loading: dayTargetsLoading } =
+    useDailyTargetsInRange(uid, rangeDays);
+  const foodDays = useMemo(
+    () =>
+      foodDaysReading({
+        meals: rangeMeals,
+        targets: dayTargets,
+        sinceKey: localDateString(rollingWindowStart(rangeDays)),
+        todayKey: localDateString(),
+      }),
+    [rangeMeals, dayTargets, rangeDays]
+  );
+  const latestTrendKg =
+    bodyweight.points.length > 0
+      ? bodyweight.points[bodyweight.points.length - 1].trend
+      : null;
+  const proteinPerKg =
+    !profile?.hideWeightNumber &&
+    latestTrendKg !== null &&
+    latestTrendKg > 0 &&
+    nutrition.avgProtein > 0
+      ? nutrition.avgProtein / latestTrendKg
+      : null;
+  /* The card is drawn once all three reads are in. Each fills different
+     rows, so drawn as they arrive, the target rows would push in above
+     the weekend rows and the protein row would land last. */
+  const foodDaysSettled =
+    !rangeMealsLoading && !dayTargetsLoading && !bodyweight.loading;
+
+  /* A live line on each Go deeper tile, from what its page shows. */
+  const goDeeper = useMemo(
+    () =>
+      goDeeperLines({
+        lifting: liftingLine(liftingInsight.progress),
+        running: runningLine({
+          pace: runningInsight.pace.rows,
+          longest: runningInsight.longest,
+          unit,
+        }),
+        body: bodyLine({
+          kgPerWeek: currentWeightRate(bodyweight.points)?.kgPerWeek ?? null,
+          unit: profile?.preferredWeightUnit === "lbs" ? "lbs" : "kg",
+          hideNumber: !!profile?.hideWeightNumber,
+        }),
+        food: foodLine({ daysLogged: nutrition.daysLogged, rangeDays }),
+      }),
+    [
+      liftingInsight.progress,
+      runningInsight.pace.rows,
+      runningInsight.longest,
+      unit,
+      bodyweight.points,
+      profile?.preferredWeightUnit,
+      profile?.hideWeightNumber,
+      nutrition.daysLogged,
+      rangeDays,
+    ]
+  );
   const targetCalories = effectiveTargets.finalTarget ?? 0;
   const targetProtein = effectiveTargets.protein ?? 0;
   const trendRows = useMemo(() => {
@@ -1565,7 +1641,7 @@ export default function History() {
             {/* The way into the four pages. Shown in cold start too: the
                 Body page holds a weight chart that needs no session. */}
             {filter === "analytics" && view === "overview" && !dataLoading && (
-              <AnalyticsGoDeeper onOpen={setView} />
+              <AnalyticsGoDeeper onOpen={setView} lines={goDeeper} />
             )}
 
             {/* On its own page a section renders whatever its data: each
@@ -1812,6 +1888,15 @@ export default function History() {
                 <SectionErrorBoundary sectionName="trend-weight">
                   <TrendWeight />
                 </SectionErrorBoundary>
+                <SectionErrorBoundary sectionName="weight-rate">
+                  <WeightRateCard
+                    points={bodyweight.points}
+                    unit={profile?.preferredWeightUnit === "lbs" ? "lbs" : "kg"}
+                    targetKgPerWeek={attestedWeeklyRateKg(profile)}
+                    hideNumber={!!profile?.hideWeightNumber}
+                    today={new Date()}
+                  />
+                </SectionErrorBoundary>
               </section>
             )}
 
@@ -1904,6 +1989,14 @@ export default function History() {
                         Averages below are based on too few logged days to be
                         reliable.
                       </p>
+                    )}
+                    {foodDaysSettled && (
+                      <SectionErrorBoundary sectionName="food-days">
+                        <FoodDaysCard
+                          reading={foodDays}
+                          proteinPerKg={proteinPerKg}
+                        />
+                      </SectionErrorBoundary>
                     )}
                     {/* Top row: calories + protein. Sparkline + delta both
                   conditionally suppressed when sample is too thin (see
