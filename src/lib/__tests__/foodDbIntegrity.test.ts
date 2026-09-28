@@ -242,3 +242,106 @@ describe("FOOD_DB — portions are scalable where a portion means anything", () 
     expect(ROWS.length - COMPOSITE_SERVINGS.size).toBe(183);
   });
 });
+
+describe("FOOD_DB — a row's numbers are for the serving it names", () => {
+  /* The two checks above could not see the table's worst fault. Until
+     2026-09-28, 36 rows held per-100 g figures under a smaller serving:
+     chicken breast was 165 kcal "per 85g cooked", tofu 144 kcal "per
+     126g", spinach 23 kcal "per 180g cooked". Each row reconciled under
+     Atwater and each scaled, so both checks passed, while every typed
+     portion of those foods came out 8% to 100% wrong.
+
+     A row cannot be checked against itself for this, so it is checked
+     against outside figures: USDA per-100 g energy for foods whose
+     reference value is well established. The row's own serving grams
+     turn its calories into kcal per 100 g, and that must land within 8%
+     of the reference. 8% absorbs honest differences between cuts and
+     preparations and still catches the old 85g labels (+18%). */
+  const REFERENCE_KCAL_PER_100G: Record<string, number> = {
+    "chicken breast": 165, // roasted, meat only
+    "chicken thigh": 209, // roasted, meat only
+    "chicken wing": 203, // roasted, meat only
+    "ground beef": 254, // 80% lean, pan-browned
+    pork: 242, // loin, roasted
+    salmon: 206, // farmed Atlantic, cooked
+    cod: 105, // Atlantic, cooked
+    mackerel: 262, // Atlantic, cooked
+    liver: 175, // beef, pan-fried
+    duck: 337, // roasted, meat and skin
+    crab: 97, // king crab, cooked
+    egg: 155, // hard-boiled
+    tofu: 144, // firm
+    tempeh: 192,
+    "cottage cheese": 98, // 4% fat
+    cheddar: 403,
+    butter: 717,
+    "olive oil": 884,
+    hummus: 166,
+    "ice cream": 207, // vanilla
+    rice: 130, // white, cooked
+    pasta: 158, // cooked
+    oats: 379, // rolled, dry
+    bread: 266, // white
+    potato: 93, // baked, with skin
+    "sweet potato": 86, // raw
+    fries: 312, // fast food
+    chips: 536, // potato crisps, salted
+    banana: 89,
+    apple: 52,
+    avocado: 160,
+    coconut: 354, // fresh meat
+    broccoli: 35, // cooked
+    spinach: 23, // cooked
+    peas: 81,
+    zucchini: 17,
+    corn: 96, // sweet, cooked
+    sardines: 208, // canned in oil, drained
+    almonds: 579,
+    "peanut butter": 588,
+  };
+
+  /** The grams a serving names: leading ("100g cooked") or bracketed
+   *  ("1 medium (150g)"), as `parseServingGrams` reads them. */
+  const servingGrams = (serving: string): number | null => {
+    const m =
+      serving.match(/^(\d+(?:\.\d+)?)g\b/) ??
+      serving.match(/\((\d+(?:\.\d+)?)g\)/);
+    return m ? Number(m[1]) : null;
+  };
+
+  it("every referenced row names grams and matches its reference", () => {
+    const off = Object.entries(REFERENCE_KCAL_PER_100G).flatMap(
+      ([name, reference]) => {
+        const row = ROWS.find((r) => r.name === name);
+        const grams = row ? servingGrams(row.serving) : null;
+        if (!row || grams === null) return [`${name}: no gram serving`];
+        const per100 = (row.calories / grams) * 100;
+        return Math.abs(per100 - reference) / reference > 0.08
+          ? [
+              `${name}: ${row.calories} kcal per "${row.serving}" is ` +
+                `${Math.round(per100)} kcal/100g, reference ${reference}`,
+            ]
+          : [];
+      }
+    );
+    expect(off).toEqual([]);
+  });
+
+  it("no row is denser than fat", () => {
+    /* Pure fat is about 900 kcal per 100 g, so nothing can be more. The
+       crisps row said 274 kcal for a 28 g bag, 979 per 100 g. */
+    const impossible = ROWS.filter((r) => {
+      const grams = servingGrams(r.serving);
+      return grams !== null && (r.calories / grams) * 100 > 900;
+    });
+    expect(impossible.map((r) => `${r.name}: "${r.serving}"`)).toEqual([]);
+  });
+
+  it("and the 36 rows now log what they should", () => {
+    /* End to end through the parser, the way a user meets the table. */
+    expect(parseFoodText("150g chicken breast")[0].calories).toBe(248);
+    expect(parseFoodText("200g tofu")[0].calories).toBe(288);
+    expect(parseFoodText("200g spinach")[0].calories).toBe(46);
+    expect(parseFoodText("crisps")[0].calories).toBe(152);
+  });
+});

@@ -31,8 +31,8 @@ export interface FoodWeekDay {
   isSelectable: boolean;
   /** Calories eaten, from the meals the page has loaded. */
   eaten: number;
-  /** The calorie target the day is measured against; null when none is
-   *  known, and then the day draws no arc. */
+  /** The calorie target the day is measured against; null only when the
+   *  card has none either, and then the day draws no arc. */
   target: number | null;
   /** Share of the target eaten, 0 to 1. Null without a target. */
   progress: number | null;
@@ -78,7 +78,8 @@ export function foodWeek({
   hiddenMealIds: ReadonlySet<string>;
   /** Each day's target as it stood that day (`dailyNutrition`). */
   snapshots: ReadonlyMap<string, DayTarget>;
-  /** The calorie card's own target for the day in view. */
+  /** The calorie card's own target for the day in view, and for any day
+   *  without a snapshot. */
   selectedTarget: number;
 }): FoodWeekDay[] {
   const start = parseLocalDate(foodWeekStart(selectedKey));
@@ -97,16 +98,21 @@ export function foodWeek({
     /* The day in view is measured against the calorie card's target, so
        the strip and the card never disagree about the day on screen. Every
        other day is measured against its target as it stood that day, as
-       the page's other readers of past days are (foodDays). The two are
-       the same number unless the target has moved since: the calorie
-       target is flat across day types, and today's snapshot is written
-       from the card's own hook. A day with neither is measured against
-       nothing rather than a guess. */
+       Analytics' Food page measures past days (foodDays). The two are the
+       same number unless the target has moved since: the calorie target
+       is flat across day types, and today's snapshot is written from the
+       card's own hook.
+
+       A day with no snapshot takes the card's target too. The snapshot is
+       written only when the app is open that day, so a day whose food was
+       logged later has none. Measured against nothing, that day drew an
+       empty ring beside its eaten total, then filled when tapped, because
+       the card measures it against its target. */
     const target = isFuture
       ? null
       : key === selectedKey
         ? usable(selectedTarget)
-        : usable(snapshots.get(key)?.calories);
+        : (usable(snapshots.get(key)?.calories) ?? usable(selectedTarget));
     const eatenSafe = Math.max(0, eaten);
     return {
       key,

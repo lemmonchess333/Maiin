@@ -160,8 +160,26 @@ describe("foodWeek — the target each day is measured against", () => {
     expect(days[0]).toMatchObject({ target: 2200, progress: 0.5 });
   });
 
-  it("measures a day with no target against nothing", () => {
-    const days = week({ meals: [meal("a", "2026-09-29", 1500)] });
+  it("measures a day with no snapshot against the card's target", () => {
+    /* A day whose food was logged later, with the app not opened that day,
+       has no snapshot. It is measured as the card measures it when opened,
+       so its ring does not appear only when tapped. */
+    const days = week({
+      meals: [meal("a", "2026-09-29", 1500)],
+      selectedTarget: 2000,
+    });
+    expect(days[1]).toMatchObject({
+      eaten: 1500,
+      target: 2000,
+      progress: 0.75,
+    });
+  });
+
+  it("measures a day against nothing only when the card has no target", () => {
+    const days = week({
+      meals: [meal("a", "2026-09-29", 1500)],
+      selectedTarget: 0,
+    });
     expect(days[1]).toMatchObject({
       eaten: 1500,
       target: null,
@@ -175,10 +193,11 @@ describe("foodWeek — the target each day is measured against", () => {
     expect(zero[2].target).toBeNull();
     const nan = week({ selectedTarget: Number.NaN });
     expect(nan[2].target).toBeNull();
+    // A zero snapshot is no snapshot: the day falls back to the card.
     const snap = week({
       snapshots: new Map([["2026-09-28", { calories: 0, protein: 0 }]]),
     });
-    expect(snap[0].target).toBeNull();
+    expect(snap[0].target).toBe(2000);
   });
 });
 

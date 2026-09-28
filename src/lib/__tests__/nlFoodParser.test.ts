@@ -131,12 +131,12 @@ describe("parseFoodText", () => {
 
 describe("parseFoodText — mass/volume portion handling (PR O)", () => {
   it("scales macros against serving grams for '200g chicken'", () => {
-    // chicken serving = "85g cooked", 165 cal
-    // 200g / 85g ≈ 2.353x → ~388 cal
+    // chicken serving = "100g cooked", 165 cal: 200g is two servings.
+    // (The row said "85g cooked" over the same 165 cal until 2026-09-28,
+    // and this test accepted the 388 cal that produced.)
     const result = parseFoodText("200g chicken");
     expect(result).toHaveLength(1);
-    expect(result[0].calories).toBeGreaterThan(350);
-    expect(result[0].calories).toBeLessThan(420);
+    expect(result[0].calories).toBe(330);
     expect(result[0].portionLabel).toBe("200g");
   });
 
@@ -178,7 +178,8 @@ describe("parseFoodText — mass/volume portion handling (PR O)", () => {
   it("tolerates whitespace between number and unit: '200 g chicken'", () => {
     const result = parseFoodText("200 g chicken");
     expect(result).toHaveLength(1);
-    expect(result[0].calories).toBeGreaterThan(350);
+    // The same two 100 g servings as "200g chicken", space or none.
+    expect(result[0].calories).toBe(330);
     expect(result[0].portionLabel).toBe("200g");
   });
 
@@ -346,11 +347,13 @@ describe("built-in servings lead with grams or ml", () => {
 
   it("shows the grams first in a suggestion", () => {
     const chicken = getFoodSuggestions("chicken breast")[0];
-    expect(chicken.serving).toBe("85g cooked");
+    expect(chicken.serving).toBe("100g cooked");
   });
 
   it("still scales a weighed portion against the leading grams", () => {
-    // 85g cooked, 165 cal: 170g is exactly two servings.
-    expect(parseFoodText("170g chicken breast")[0].calories).toBe(330);
+    // 100g cooked, 165 cal: 300g is exactly three servings. This pinned
+    // 170g at 330 cal, the product of a row that put 100 g of chicken's
+    // figures under an 85 g label; foodDbIntegrity now checks the rows.
+    expect(parseFoodText("300g chicken breast")[0].calories).toBe(495);
   });
 });
