@@ -741,12 +741,17 @@ export default function FoodAnalyzer({
 
     const { data, errorMessage } = await analyzeFood(base64);
     /* The user may have X-ed out during the round-trip (the escape
-       hatch exists precisely for slow scans). A late outcome must not
-       act on a closed modal: no failure parked for the next session
-       to trip over, no invisible locked beat, no redundant close. A
-       late USABLE result still reaches the page — the hook's own
-       `result` state feeds the result card independently. */
-    if (!cameraOpenRef.current) return;
+       hatch exists precisely for slow scans), which abandons the scan.
+       A late outcome must not act on a closed modal: no failure parked
+       for the next session to trip over, no invisible locked beat, no
+       redundant close. The hook's own result and error are dropped too:
+       a result would open the sheet seconds later over whatever the page
+       is doing, without its photo, logging to whatever day the diary
+       shows by then. */
+    if (!cameraOpenRef.current) {
+      resetAI();
+      return;
+    }
     const usable =
       data && filterIdentifiableAiItems(data.items ?? []).length > 0;
     if (usable) {
@@ -807,11 +812,16 @@ export default function FoodAnalyzer({
 
     try {
       const meal = await fetchOpenFoodFacts(code);
+      /* Closed mid-lookup: the scan was abandoned, as with a photo. */
+      if (!cameraOpenRef.current) return undefined;
       setBarcodeResult(meal);
       setCameraOpen(false);
       toast.success("Barcode found");
       return undefined;
     } catch (e: unknown) {
+      const failure =
+        e instanceof BarcodeNotFoundError ? "not-found" : "unreachable";
+      if (!cameraOpenRef.current) return failure;
       /* TypeError = the fetch itself failed (connection dropped
          mid-lookup) — its message is browser-internal, never copy. */
       const msg =
@@ -824,7 +834,7 @@ export default function FoodAnalyzer({
       /* One id, because the scanner tries an unreachable code again while
          it stays in view, and each try would otherwise add a toast. */
       toast.error(msg, { id: "barcode-lookup" });
-      return e instanceof BarcodeNotFoundError ? "not-found" : "unreachable";
+      return failure;
     } finally {
       setBarcodeLoading(false);
     }
@@ -870,7 +880,10 @@ export default function FoodAnalyzer({
         }
       />
 
-      {showLoading && (
+      {/* While the scanner is open, its own overlay shows the wait. A scan
+          still running once it has closed was abandoned and its outcome
+          is dropped, so the page does not say it is still analysing. */}
+      {showLoading && cameraOpen && (
         <div className="flex items-center justify-center gap-2 py-2 text-sm text-muted-foreground">
           <Spinner
             size="sm"
