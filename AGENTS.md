@@ -29,7 +29,7 @@ before you hand work back.
 - **Hooks:** named export, `use` prefix, camelCase.
 - **Lib functions:** named export, camelCase.
 - **Tests:** colocated in `__tests__/`, `*.test.ts(x)`.
-- **Icons:** `lucide-react`, individual imports only.
+- **Icons:** `lucide-react`, individual imports only, except the drawn set in `src/components/icons/` (the tab bar's icons, the avocado) and `ui/BrandMark.tsx`.
 - **Toasts:** `sonner` (`toast.success()` / `toast.error()`).
 - **Class names:** `cn()` (`clsx` + `tailwind-merge`).
 - `functions/` is plain CommonJS JS (not part of the TS/ESLint config). Every

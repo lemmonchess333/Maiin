@@ -13,11 +13,10 @@ import type { PerformanceWeekDoc } from "@/lib/performanceTypes";
  * that advertises its scale in words could not draw it.
  *
  * The negative margin is the part worth naming: it is a reasonable trick
- * for reclaiming Recharts' generous default gutter, and its siblings are
- * fine without the room — `RunningHistorySection` labels single digits,
- * `VolumeChart` abbreviates ("2.4k") and pays for it with width 35. This
- * chart borrowed the trick from charts whose labels are shorter than its
- * own.
+ * for reclaiming Recharts' generous default gutter, and the charts it was
+ * borrowed from labelled single digits, or abbreviated ("2.4k") and paid
+ * for it with a wider axis. This chart borrowed the trick from charts
+ * whose labels are shorter than its own.
  *
  * It survived every earlier look at this tab because the chart renders
  * nothing without performance docs, and the capture spec signs up a FRESH

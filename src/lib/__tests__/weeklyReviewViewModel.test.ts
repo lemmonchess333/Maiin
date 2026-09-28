@@ -29,7 +29,7 @@ function base(overrides: Partial<WeeklyReviewData> = {}): WeeklyReviewData {
     hideWeightNumber: false,
     established: true,
     weekAhead: { lifts: 4, runs: 3, phaseNote: null },
-    goalProgram: null,
+    goalProfile: null,
     now: new Date("2026-06-28T10:00:00"),
     ...overrides,
   };
@@ -287,6 +287,29 @@ describe("training lanes", () => {
     expect(r?.training?.lifts?.done).toBe(1);
     expect(r?.training?.runs).toBeNull();
   });
+
+  it("carries the week's best moment through, or none", () => {
+    const best = {
+      exerciseId: "bench-press",
+      exerciseName: "Bench Press",
+      weight: 80,
+      reps: 8,
+      date: "2026-06-24",
+      previous: { weight: 77.5, reps: 8, date: "2026-06-03" },
+    };
+    const withBest = buildWeeklyReview(
+      base({
+        workouts: [{ date: "2026-06-24", tonnageKg: 3000 }],
+        prsHit: 1,
+        bestMoment: best,
+      })
+    );
+    expect(withBest?.training?.best).toEqual(best);
+    const without = buildWeeklyReview(
+      base({ workouts: [{ date: "2026-06-24", tonnageKg: 3000 }] })
+    );
+    expect(without?.training?.best).toBeNull();
+  });
 });
 
 describe("nutrition (adherence-neutral)", () => {
@@ -333,7 +356,12 @@ describe("body (trend + projection reuse + hide-the-number)", () => {
     const r = buildWeeklyReview(
       base({
         weighIns: history,
-        goalProgram: { startWeight: 80, goal: "cut" }, // goal 75kg
+        // The user's own goal: 75 kg at half a kilo a week.
+        goalProfile: {
+          goalWeightKg: 75,
+          weeklyRateKg: -0.5,
+          program: { goal: "cut" },
+        },
       })
     );
     expect(r?.body).not.toBeNull();
@@ -348,7 +376,11 @@ describe("body (trend + projection reuse + hide-the-number)", () => {
       base({
         weighIns: history,
         hideWeightNumber: true,
-        goalProgram: { startWeight: 80, goal: "cut" },
+        goalProfile: {
+          goalWeightKg: 75,
+          weeklyRateKg: -0.5,
+          program: { goal: "cut" },
+        },
       })
     );
     expect(r?.body?.hidden).toBe(true);

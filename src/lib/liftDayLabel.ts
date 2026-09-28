@@ -67,3 +67,14 @@ export function liftDayTitle(dayName: string): {
     ? { category, title }
     : { category: null, title: full };
 }
+
+/**
+ * A lift day's name on one line, as the workout screen, the finish screen
+ * and its "Next:" line say it: "Pull · Lat focus" from "Pull — Lat Focus".
+ * The same split as `liftDayTitle`, joined with the middot the app uses
+ * between a thing and its detail. A routine's own name is itself.
+ */
+export function liftDayLine(dayName: string): string {
+  const { category, title } = liftDayTitle(dayName);
+  return category ? `${category} · ${title}` : title;
+}

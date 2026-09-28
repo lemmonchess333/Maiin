@@ -21,13 +21,14 @@ import {
 import { createPortal } from "react-dom";
 import type { ProgramExercise } from "@/features/program/programTypes";
 import { cn } from "@/lib/utils";
+import ExerciseThumb from "@/components/program/ExerciseThumb";
+import { liftDayLine } from "@/lib/liftDayLabel";
 import { haptic } from "@/lib/haptic";
 import {
   Play,
   RotateCcw,
   Check,
   X,
-  Dumbbell,
   Trophy,
   Info,
   TrendingUp,
@@ -36,6 +37,9 @@ import {
   Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import SectionLabel from "@/components/ui/SectionLabel";
+import ExerciseRowSummary from "@/components/program/ExerciseRowSummary";
 import EditSetSheet from "@/components/workout/EditSetSheet";
 import { sessionRecords } from "@/features/program/sessionRecords";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
@@ -100,6 +104,9 @@ import { useScrollEdges } from "@/hooks/useScrollEdges";
 import SessionCompleteScreen from "@/components/workout/SessionCompleteScreen";
 import WorkoutProgress from "@/components/workout/WorkoutProgress";
 import WorkoutRestTimer from "@/components/workout/WorkoutRestTimer";
+import NewBestMoment, {
+  type NewBest,
+} from "@/components/workout/NewBestMoment";
 import { elapsedSecondsSince } from "@/hooks/useElapsedSeconds";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { IconButton } from "@/components/ui/IconButton";
@@ -164,6 +171,10 @@ const TYPE_LABELS: Record<SetType, string> = {
 };
 
 const RPE_OPTIONS = [6, 6.5, 7, 7.5, 8, 8.5, 9, 9.5, 10];
+
+/** How long a new best stays on screen: past the undo window (4 s), so
+ *  the lifter can look up from the bar and still catch it. */
+const NEW_BEST_MOMENT_MS = 6000;
 
 interface SetLog {
   reps: number;
@@ -806,6 +817,26 @@ export default function WorkoutSession({
   } | null>(null);
   const undoTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  /* DS3's new-best moment: a set that beat the lifter's best is said on
+     the spot, in gold, above the bottom bar, for a few seconds. Undoing
+     or correcting that set takes it away with the record it announced;
+     the finish screen still lists every best the session kept. */
+  const [newBest, setNewBest] = useState<NewBest | null>(null);
+  const newBestTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const showNewBest = (moment: NewBest) => {
+    if (newBestTimeoutRef.current) clearTimeout(newBestTimeoutRef.current);
+    setNewBest(moment);
+    newBestTimeoutRef.current = setTimeout(
+      () => setNewBest(null),
+      NEW_BEST_MOMENT_MS
+    );
+  };
+  const dismissNewBest = (setKey: string) => {
+    if (newBest?.setKey !== setKey) return;
+    if (newBestTimeoutRef.current) clearTimeout(newBestTimeoutRef.current);
+    setNewBest(null);
+  };
+
   // The cursor can outrun the list: `currentExIndex` is component state while
   // `day.exercises` is a prop that can shrink under an open session (a
   // re-trimmed express/easier plan, a removed slot, a snapshot from another
@@ -833,6 +864,17 @@ export default function WorkoutSession({
   const completedSetsInExercise = currentSets.filter((s) => s.completed).length;
   const totalSetsCompleted = setLogs.flat().filter((s) => s.completed).length;
   const totalSetsTotal = setLogs.flat().length;
+
+  /* The exercise after this one that still has sets left (DS3 "Up next"):
+     session order from the next exercise, wrapping, so one skipped earlier
+     still comes round. Undefined once only this exercise has sets left. */
+  const upNext = (() => {
+    if (setLogs.length === 0) return undefined;
+    const next = nextIncompleteSet(setLogs, (safeExIndex + 1) % setLogs.length);
+    return next && next.exerciseIndex !== safeExIndex
+      ? day.exercises[next.exerciseIndex]
+      : undefined;
+  })();
 
   /* haptic comes from `@/lib/haptic` which routes through
      Capacitor's Haptics plugin in the iOS/Android shell. The
@@ -1034,6 +1076,12 @@ export default function WorkoutSession({
               ])
             );
             haptic(50);
+            showNewBest({
+              setKey: `${currentExIndex}:${setIdx}`,
+              exerciseId: currentExercise.exerciseId,
+              exerciseName: exName,
+              result: prResult,
+            });
           }
         }
       }
@@ -1167,6 +1215,7 @@ export default function WorkoutSession({
       throw new Error("Your account changed. Reopen your workout to continue.");
     setSetLogs(next);
     refreshRecords(next);
+    dismissNewBest(`${exIdx}:${setIdx}`);
     setLastCompleted(null);
     if (undoTimeoutRef.current) clearTimeout(undoTimeoutRef.current);
     haptic();
@@ -1184,6 +1233,7 @@ export default function WorkoutSession({
     );
     setSetLogs(next);
     refreshRecords(next);
+    dismissNewBest(`${exIdx}:${setIdx}`);
     setCurrentExIndex(exIdx);
     setCurrentSetIndex(setIdx);
     stopRest();
@@ -1192,10 +1242,11 @@ export default function WorkoutSession({
     if (undoTimeoutRef.current) clearTimeout(undoTimeoutRef.current);
   };
 
-  // Cleanup undo timeout
+  // Cleanup the undo and new-best timeouts
   useEffect(() => {
     return () => {
       if (undoTimeoutRef.current) clearTimeout(undoTimeoutRef.current);
+      if (newBestTimeoutRef.current) clearTimeout(newBestTimeoutRef.current);
     };
   }, []);
 
@@ -1511,10 +1562,14 @@ export default function WorkoutSession({
         </div>
       )}
 
-      {/* Top Bar */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-border/50">
-        <div>
-          <p className="text-sm font-semibold text-foreground">{day.dayName}</p>
+      {/* Top Bar — the day named as Train and Home name it (DS3): "Pull ·
+          Lat focus" rather than "Pull — Lat Focus". A routine's own name,
+          with no separator, reads as written. */}
+      <div className="flex items-center justify-between gap-3 px-4 py-2 border-b border-border/50">
+        <div className="min-w-0">
+          <p className="truncate text-base font-bold text-foreground">
+            {liftDayLine(day.dayName)}
+          </p>
           <WorkoutProgress
             key={sessionStartedAt}
             startedAt={sessionStartedAt}
@@ -1522,14 +1577,12 @@ export default function WorkoutSession({
             total={totalSetsTotal}
           />
         </div>
-        <button
-          type="button"
-          onClick={onClose}
-          className="p-2 rounded-lg hover:bg-muted transition-colors"
+        <IconButton
+          variant="ghost"
           aria-label="Close workout"
-        >
-          <X className="size-5 text-muted-foreground" />
-        </button>
+          onClick={onClose}
+          icon={<X className="size-5 text-muted-foreground" />}
+        />
       </div>
 
       {rest && (
@@ -1557,17 +1610,23 @@ export default function WorkoutSession({
         <div
           ref={tabsRef}
           data-no-page-swipe
-          className="flex gap-1.5 px-4 py-3 overflow-x-auto"
+          className="flex gap-2 px-4 py-2 overflow-x-auto"
           style={{ scrollbarWidth: "none" }}
         >
           {day.exercises.map((ex, i) => {
             const setsForEx = setLogs[i] ?? [];
             const done = setsForEx.every((s) => s.completed);
             const active = i === currentExIndex;
+            /* DS3: the session's exercises as their drawings, in order.
+               The current one is ringed, a finished one carries a check,
+               and the full name is the button's name for assistive tech
+               however the label below truncates. */
             return (
               <button
                 type="button"
                 key={i}
+                aria-label={done ? `${ex.name}, done` : ex.name}
+                aria-current={active ? "step" : undefined}
                 onClick={() => {
                   haptic(10);
                   setCurrentExIndex(i);
@@ -1576,23 +1635,35 @@ export default function WorkoutSession({
                   );
                   setCurrentSetIndex(nextIncomplete >= 0 ? nextIncomplete : 0);
                 }}
-                className={cn(
-                  "min-h-11 px-3.5 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors shrink-0",
-                  done
-                    ? "bg-success text-success-foreground font-medium"
-                    : active
-                      ? "bg-primary-strong text-primary-foreground font-bold"
-                      : "bg-muted text-muted-foreground"
-                )}
+                className="flex w-16 shrink-0 flex-col items-center gap-1.5 rounded-xl pb-1 pt-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
               >
-                {done ? (
-                  <span className="flex items-center gap-1">
-                    <Check className="size-3" />
-                    {ex.name}
-                  </span>
-                ) : (
-                  ex.name
-                )}
+                <span
+                  className={cn(
+                    "relative rounded-xl",
+                    active &&
+                      "ring-2 ring-primary ring-offset-2 ring-offset-background"
+                  )}
+                >
+                  <ExerciseThumb
+                    exerciseId={ex.exerciseId}
+                    className={cn(done && !active && "opacity-60")}
+                  />
+                  {done && (
+                    <span className="absolute -bottom-1 -right-1 flex size-5 items-center justify-center rounded-full bg-primary-strong text-primary-foreground ring-2 ring-background">
+                      <Check className="size-3" strokeWidth={3} />
+                    </span>
+                  )}
+                </span>
+                <span
+                  className={cn(
+                    "w-full truncate text-center text-xs",
+                    active
+                      ? "font-bold text-foreground"
+                      : "font-medium text-muted-foreground"
+                  )}
+                >
+                  {ex.name}
+                </span>
               </button>
             );
           })}
@@ -1618,122 +1689,125 @@ export default function WorkoutSession({
         />
       </div>
 
-      {/* Exercise name + set counter — always visible above scroll */}
-      <div className="text-center px-4 pt-2 pb-2 border-b border-border/30">
-        <div className="flex items-center justify-center gap-2 mb-1">
-          <Dumbbell className="size-5 text-lifting" />
-          <h2 className="text-lg font-bold text-foreground">
-            {currentExercise?.name}
-          </h2>
-          {currentExercise?.name && (
-            <IconButton
-              aria-label={`How to do ${currentExercise.name}`}
-              variant="ghost"
-              size="sm"
-              icon={<Info className="size-5 text-muted-foreground" />}
-              onClick={() => {
-                haptic("light");
-                setShowFormGuide(true);
-              }}
-            />
-          )}
-        </div>
-        <p className="text-xs text-muted-foreground">
-          Set {currentSetIndex + 1} of {currentSets.length} ·{" "}
-          {completedSetsInExercise} done
-        </p>
-        {/* Backlog #4 — effort cue as words (operator-approved copy set).
+      {/* Exercise name + set counter — always visible above scroll. DS3:
+          the exercise's drawing beside its name, where a bare dumbbell
+          icon sat. */}
+      <div className="flex items-start gap-3 px-4 pt-2 pb-3 border-b border-border/30">
+        {currentExercise && (
+          <ExerciseThumb exerciseId={currentExercise.exerciseId} size="lg" />
+        )}
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-1">
+            <h2 className="text-h3 font-bold leading-tight tracking-tight text-foreground text-balance">
+              {currentExercise?.name}
+            </h2>
+            {currentExercise?.name && (
+              <IconButton
+                aria-label={`How to do ${currentExercise.name}`}
+                variant="ghost"
+                size="sm"
+                icon={<Info className="size-5 text-muted-foreground" />}
+                onClick={() => {
+                  haptic("light");
+                  setShowFormGuide(true);
+                }}
+              />
+            )}
+          </div>
+          <p className="text-sm text-muted-foreground">
+            Set{" "}
+            <span className="font-mono tabular-nums">
+              {currentSetIndex + 1}
+            </span>{" "}
+            of{" "}
+            <span className="font-mono tabular-nums">{currentSets.length}</span>{" "}
+            ·{" "}
+            <span className="font-mono tabular-nums">
+              {completedSetsInExercise}
+            </span>{" "}
+            done
+          </p>
+          {/* Backlog #4 — effort cue as words (operator-approved copy set).
             Reserve cue expands via Tooltip; push/deload cues are plain
             lines. Guidance lives BEFORE the set, never as a verdict after
             it (voice doc: never shame). */}
-        {(() => {
-          if (!currentExercise) return null;
-          const cue = effortCueFor(currentExercise, {
-            isLastSet: currentSetIndex >= currentSets.length - 1,
-            deloadWeek,
-          });
-          if (!cue) return null;
-          if (cue.tooltip) {
+          {(() => {
+            if (!currentExercise) return null;
+            const cue = effortCueFor(currentExercise, {
+              isLastSet: currentSetIndex >= currentSets.length - 1,
+              deloadWeek,
+            });
+            if (!cue) return null;
+            if (cue.tooltip) {
+              return (
+                <Tooltip content={<p>{cue.tooltip}</p>}>
+                  <button
+                    type="button"
+                    className="min-h-11 -mb-2 text-xs text-muted-foreground underline decoration-dotted underline-offset-2"
+                  >
+                    {cue.text}
+                  </button>
+                </Tooltip>
+              );
+            }
             return (
-              <Tooltip content={<p>{cue.tooltip}</p>}>
-                <button
-                  type="button"
-                  className="min-h-11 -mb-2 text-xs text-muted-foreground underline decoration-dotted underline-offset-2"
-                >
-                  {cue.text}
-                </button>
-              </Tooltip>
+              <p className="mt-1 text-xs text-muted-foreground">{cue.text}</p>
             );
-          }
-          return (
-            <p className="mt-1 text-xs text-muted-foreground">{cue.text}</p>
-          );
-        })()}
+          })()}
+        </div>
       </div>
 
       {/* Main content area */}
       <div className="flex-1 overflow-y-auto px-4 pb-4 space-y-4">
-        {/* Notes input */}
-        <div className="space-y-2">
-          {previousNotes[currentExIndex] && (
-            <div className="text-sm text-muted-foreground">
-              <p className="text-xs">
-                Last note ·{" "}
-                <InlineNumerals>
-                  {formatDayMonthYear(
-                    new Date(`${previousNotes[currentExIndex].date}T12:00:00`)
-                  )}
-                </InlineNumerals>
-              </p>
-              <p className="mt-1 whitespace-pre-wrap break-words">
-                {previousNotes[currentExIndex].text}
-              </p>
-              {!exerciseNotes[currentExIndex]?.trim() && (
-                <Button
-                  variant="ghost"
-                  onClick={() => {
-                    setExerciseNotes((prev) => ({
-                      ...prev,
-                      [currentExIndex]: previousNotes[currentExIndex].text,
-                    }));
-                    notesInputRef.current?.focus();
-                  }}
-                >
-                  Use and edit note
-                </Button>
-              )}
-            </div>
-          )}
-          <input
-            ref={notesInputRef}
-            type="text"
-            placeholder="Notes (e.g. Level 8, 6.0 incline)"
-            aria-label="Exercise notes"
-            value={exerciseNotes[currentExIndex] || ""}
-            onChange={(e) =>
-              setExerciseNotes((prev) => ({
-                ...prev,
-                [currentExIndex]: e.target.value,
-              }))
-            }
-            className="ds-input min-h-11 w-full text-sm"
-          />
-        </div>
+        {/* The last note on this exercise stays above the sets: it is
+            usually a setting to read before lifting ("Level 8, 6.0
+            incline"). Today's note is written under the sets. */}
+        {previousNotes[currentExIndex] && (
+          <div className="text-sm text-muted-foreground">
+            <p className="text-xs">
+              Last note ·{" "}
+              <InlineNumerals>
+                {formatDayMonthYear(
+                  new Date(`${previousNotes[currentExIndex].date}T12:00:00`)
+                )}
+              </InlineNumerals>
+            </p>
+            <p className="mt-1 whitespace-pre-wrap break-words">
+              {previousNotes[currentExIndex].text}
+            </p>
+            {!exerciseNotes[currentExIndex]?.trim() && (
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  setExerciseNotes((prev) => ({
+                    ...prev,
+                    [currentExIndex]: previousNotes[currentExIndex].text,
+                  }));
+                  notesInputRef.current?.focus();
+                }}
+              >
+                Use and edit note
+              </Button>
+            )}
+          </div>
+        )}
 
         {/* D-LIFT-16: with auto-start off, rests are opt-in — offer the
             manual start where the ring appears, once there's a completed
             set to rest from. */}
         {!isResting && !autoRest && currentSets.some((st) => st.completed) && (
-          <button
-            type="button"
-            onClick={() => {
-              haptic("light");
-              startRest(day.exercises[currentExIndex]?.restSeconds);
-            }}
-            className="mx-auto flex items-center gap-1.5 min-h-11 px-4 rounded-xl text-xs font-medium bg-muted text-muted-foreground hover:text-foreground active:scale-95 transition-transform"
-          >
-            <Timer className="size-3.5" /> Start rest timer
-          </button>
+          <div className="flex justify-center">
+            <Button
+              variant="secondary"
+              leftIcon={<Timer className="size-4" aria-hidden="true" />}
+              onClick={() => {
+                haptic("light");
+                startRest(day.exercises[currentExIndex]?.restSeconds);
+              }}
+            >
+              Start rest timer
+            </Button>
+          </div>
         )}
 
         {/* Double-progression nudge — only while this exercise is untouched
@@ -1787,8 +1861,8 @@ export default function WorkoutSession({
             </div>
           )}
 
-        {/* Set logging grid */}
-        <div className="bg-card rounded-2xl">
+        {/* Set logging grid — the screen's one big thing (DS3). */}
+        <Card padded={false} className="overflow-hidden">
           {(() => {
             const prev = currentExercise?.lastPerformance;
             const isBWExercise = currentExercise
@@ -1810,7 +1884,7 @@ export default function WorkoutSession({
 
             return (
               <>
-                <div className="grid grid-cols-12 gap-1 px-3 py-2.5 bg-muted/50 text-caption font-semibold text-muted-foreground uppercase tracking-wider">
+                <div className="grid grid-cols-12 gap-1 px-3 pt-3 pb-1.5 text-micro font-semibold text-muted-foreground uppercase tracking-wider">
                   <div className="col-span-1">Set</div>
                   <div className="col-span-2">Prev</div>
                   <div className="col-span-4 flex items-center gap-1">
@@ -1838,11 +1912,10 @@ export default function WorkoutSession({
                     <div key={setIdx}>
                       <div
                         className={cn(
-                          "grid grid-cols-12 gap-1 items-center px-3 py-2.5 border-t border-border/30",
+                          "grid grid-cols-12 gap-1 items-center px-3 py-2 border-t border-border/30",
                           setIdx === currentSetIndex &&
                             !set.completed &&
-                            "bg-primary/5",
-                          set.completed && "opacity-70"
+                            "bg-primary/10"
                         )}
                       >
                         <div className="col-span-1 flex justify-center relative">
@@ -1867,7 +1940,7 @@ export default function WorkoutSession({
                               }
                             }}
                             disabled={set.completed}
-                            className="size-7 rounded-full flex items-center justify-center text-xs font-bold transition-colors"
+                            className="size-7 rounded-full flex items-center justify-center text-sm font-bold font-mono tabular-nums transition-colors"
                             style={
                               set.type !== "working"
                                 ? {
@@ -1942,6 +2015,12 @@ export default function WorkoutSession({
                             </button>
                           )}
                         </div>
+                        {/* A done set's numbers stay at full strength: they
+                            are the record of the set. The global rule dims
+                            every disabled input to half (the trailing `!`
+                            outranks it, since it sits outside the layers)
+                            and iOS greys disabled text, so both are undone
+                            on these two inputs. */}
                         <div className="col-span-4">
                           <input
                             type="number"
@@ -1963,7 +2042,7 @@ export default function WorkoutSession({
                               )
                             }
                             disabled={set.completed}
-                            className="w-full px-2 py-2.5 min-h-11 rounded-lg bg-muted text-foreground text-sm font-mono tabular-nums text-center placeholder:text-muted-foreground disabled:opacity-50"
+                            className="w-full px-2 py-2 min-h-11 rounded-lg bg-muted text-foreground text-lg font-bold font-mono tabular-nums text-center placeholder:text-muted-foreground disabled:bg-transparent disabled:opacity-100! disabled:[-webkit-text-fill-color:currentColor]"
                           />
                         </div>
                         <div className="col-span-3">
@@ -1982,7 +2061,7 @@ export default function WorkoutSession({
                               )
                             }
                             disabled={set.completed}
-                            className="w-full px-2 py-2.5 min-h-11 rounded-lg bg-muted text-foreground text-sm font-mono tabular-nums text-center disabled:opacity-50"
+                            className="w-full px-2 py-2 min-h-11 rounded-lg bg-muted text-foreground text-lg font-bold font-mono tabular-nums text-center disabled:bg-transparent disabled:opacity-100! disabled:[-webkit-text-fill-color:currentColor]"
                           />
                         </div>
                         <div className="col-span-2 flex justify-center">
@@ -2010,7 +2089,7 @@ export default function WorkoutSession({
                                     result.setKey ===
                                       `${currentExIndex}:${setIdx}`
                                 ) && (
-                                  <span className="font-semibold text-lifting-strong">
+                                  <span className="font-semibold text-achievement-strong">
                                     PR
                                   </span>
                                 )}{" "}
@@ -2079,7 +2158,24 @@ export default function WorkoutSession({
           >
             Add set
           </button>
-        </div>
+        </Card>
+
+        {/* Today's note, under the sets (DS3): an empty field above the
+            table pushed the last set below the fold on a small phone. */}
+        <input
+          ref={notesInputRef}
+          type="text"
+          placeholder="Notes (e.g. Level 8, 6.0 incline)"
+          aria-label="Exercise notes"
+          value={exerciseNotes[currentExIndex] || ""}
+          onChange={(e) =>
+            setExerciseNotes((prev) => ({
+              ...prev,
+              [currentExIndex]: e.target.value,
+            }))
+          }
+          className="ds-input min-h-11 w-full text-sm"
+        />
 
         {/* Set type popover — portal to document.body to escape all parent constraints */}
         {typePopover !== null &&
@@ -2179,19 +2275,27 @@ export default function WorkoutSession({
           )}
         </AnimatePresence>
 
-        {/* RPE toggle */}
-        <button
-          type="button"
-          onClick={() => setShowRPE(!showRPE)}
-          className={cn(
-            "text-xs px-3 py-1.5 rounded-lg transition-colors mx-auto block",
-            showRPE
-              ? "bg-primary/10 text-lifting-strong"
-              : "bg-muted text-muted-foreground"
-          )}
-        >
-          {showRPE ? "Hide RPE" : "Show RPE"}
-        </button>
+        {/* What comes after this exercise (DS3): the next one with sets
+            left, in session order from here, so the lifter can set up for
+            it during the last rest. Nothing when this is the last. */}
+        {upNext && (
+          <Card size="compact" tone="muted" className="space-y-2">
+            <SectionLabel>Up next</SectionLabel>
+            <ExerciseRowSummary exercise={upNext} thumbSize="sm" />
+          </Card>
+        )}
+
+        {/* RPE toggle — through the primitive for its 44px floor; the
+            hand-rolled pill was 28px tall. */}
+        <div className="flex justify-center">
+          <Button
+            variant="ghost"
+            className="text-muted-foreground"
+            onClick={() => setShowRPE(!showRPE)}
+          >
+            {showRPE ? "Hide RPE" : "Show RPE"}
+          </Button>
+        </div>
 
         {/* Prescription hint */}
         {currentExercise && (
@@ -2216,42 +2320,64 @@ export default function WorkoutSession({
         )}
       </div>
 
+      {/* Docked above the bar, not in the scroll: it takes its room from
+          the bottom of the list, so it is whole on screen however long
+          the table is, and nothing above it moves under the thumb that
+          just ticked the set. */}
+      <NewBestMoment
+        moment={newBest}
+        onUndo={
+          newBest &&
+          lastCompleted &&
+          `${lastCompleted.exIdx}:${lastCompleted.setIdx}` === newBest.setKey
+            ? handleUndo
+            : undefined
+        }
+        className="mx-4 mb-3"
+      />
+
       {/* Bottom action bar */}
       <div className="px-4 py-3 border-t border-border/50 bg-background">
         {(() => {
           const allSetsComplete = currentSets.every((s) => s.completed);
           const next = nextIncompleteSet(setLogs, currentExIndex);
 
+          /* DS3: the bar's three states through the Button primitive, in
+             sentence case. Finish is the lifting CTA like the other two:
+             green is for status (a done set's check), not for actions. */
           if (allSetsComplete && !next) {
             return (
-              <button
-                type="button"
+              <Button
+                size="lg"
+                fullWidth
                 onClick={completeSession}
-                className="w-full py-3.5 rounded-xl bg-success text-success-foreground font-semibold flex items-center justify-center gap-2 hover:opacity-90 transition-opacity"
+                leftIcon={<Trophy className="size-4" aria-hidden="true" />}
               >
-                <Trophy className="size-4" /> Finish workout
-              </button>
+                Finish workout
+              </Button>
             );
           }
           if (allSetsComplete) {
             return (
-              <button
-                type="button"
+              <Button
+                size="lg"
+                fullWidth
                 onClick={() => {
                   if (next) {
                     setCurrentExIndex(next.exerciseIndex);
                     setCurrentSetIndex(next.setIndex);
                   }
                 }}
-                className="w-full py-3.5 rounded-xl bg-primary-strong text-primary-foreground font-semibold flex items-center justify-center gap-2 hover:opacity-90 transition-opacity"
+                leftIcon={<Play className="size-4" aria-hidden="true" />}
               >
-                <Play className="size-4" /> Next Exercise →
-              </button>
+                Next exercise
+              </Button>
             );
           }
           return (
-            <button
-              type="button"
+            <Button
+              size="lg"
+              fullWidth
               onClick={() => {
                 stopRest();
                 void completeSet();
@@ -2260,10 +2386,17 @@ export default function WorkoutSession({
                 !currentSets[currentSetIndex] ||
                 currentSets[currentSetIndex]?.completed
               }
-              className="w-full py-3.5 rounded-xl bg-primary-strong text-primary-foreground font-semibold flex items-center justify-center gap-2 hover:opacity-90 transition-opacity disabled:opacity-50"
+              leftIcon={<Check className="size-4" aria-hidden="true" />}
             >
-              <Check className="size-4" /> Complete Set {currentSetIndex + 1}
-            </button>
+              {/* One span, so the Button's gap cannot open between the
+                  words and the number. */}
+              <span>
+                Complete set{" "}
+                <span className="font-mono tabular-nums">
+                  {currentSetIndex + 1}
+                </span>
+              </span>
+            </Button>
           );
         })()}
         {!isResting &&

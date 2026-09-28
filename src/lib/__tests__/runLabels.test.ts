@@ -30,6 +30,7 @@ import {
   nearDistanceLabel,
   elevationLabel,
   storedKmLabel,
+  runTypeTitle,
 } from "../runLabels";
 
 describe("paceLabel", () => {
@@ -390,5 +391,19 @@ describe("storedKmLabel", () => {
     ]) {
       expect(out).toMatch(/^[\d.]+ (km|mi)$/);
     }
+  });
+});
+
+describe("runTypeTitle", () => {
+  it("titles a long run as one, whichever spelling it saved", () => {
+    expect(runTypeTitle("long")).toBe("Long Run");
+    expect(runTypeTitle("longrun")).toBe("Long Run");
+  });
+
+  it("names the other kinds, and falls back to Run", () => {
+    expect(runTypeTitle("guided")).toBe("Guided Run");
+    expect(runTypeTitle("manual")).toBe("Manual Run");
+    expect(runTypeTitle("something-new")).toBe("Run");
+    expect(runTypeTitle(undefined)).toBe("Run");
   });
 });

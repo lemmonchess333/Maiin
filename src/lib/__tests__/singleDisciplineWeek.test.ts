@@ -221,7 +221,9 @@ describe.each(ENGINES)(
         scored.deloadRecommended
       );
       expect(state).toBe("cruising");
-      expect(getLine(state, signals)).toBe("Run volume 340% up");
+      expect(getLine(state, signals)).toBe(
+        "Running distance 340% above your usual week"
+      );
       // The regression this guards, stated as the string it used to be.
       expect(getLine(state, signals)).not.toBe("Holding a steady rhythm");
     });
@@ -249,7 +251,7 @@ describe.each(ENGINES)(
       );
       expect(state).toBe("cruising");
       expect(getLine(state, signals)).toMatch(
-        /^Lifting load \d+% above baseline$/
+        /^Lifting volume \d+% above your usual week$/
       );
     });
 

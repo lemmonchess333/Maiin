@@ -38,7 +38,6 @@ export interface ProgrammeWeekSelectorCell {
   isToday: boolean;
 }
 
-const GREEN = THEME.success;
 /* DS2 muted-text consolidation (owner-decided, 2026-08-22): the skipped
    identity is the theme-aware secondary token, not the old fixed #8E8E93 —
    its bottomLabel text sat at 2.77:1 on the light page. Alpha steps use
@@ -67,6 +66,11 @@ export default function ProgrammeWeekSelector({
   // Sport colour drives the today/selected circle — purple for lifting,
   // coral for running — so the selector reads as belonging to its tab.
   const SPORT = sport === "run" ? THEME.running : THEME.brand;
+  /* A done day is filled with its sport at 30%, the way Home's week strip
+     fills a logged day (DS3), not the success green: the strips read as
+     one control, and green is kept for status that is not a sport. The
+     check takes the foreground, which reads on the tint in both themes. */
+  const DONE_FILL = `hsl(var(--${sport === "run" ? "running" : "lifting"}) / 0.3)`;
 
   return (
     <div
@@ -108,19 +112,22 @@ export default function ProgrammeWeekSelector({
           );
           labelColor = SKIPPED;
         } else if (isToday && isCompleted) {
-          fill = GREEN;
+          fill = DONE_FILL;
           bWidth = 0;
           bColor = "transparent";
-          glow = `0 0 0 4px ${GREEN}1A`;
-          content = <Check className="size-4 text-white" strokeWidth={3} />;
-          // Text takes the AA step; the fill/glow keep the identity green.
-          labelColor = "hsl(var(--success-strong))";
+          glow = `0 0 0 4px ${SPORT}1A`;
+          content = (
+            <Check className="size-4 text-foreground" strokeWidth={3} />
+          );
+          labelColor = "hsl(var(--muted-foreground))";
         } else if (isCompleted) {
-          fill = GREEN;
+          fill = DONE_FILL;
           bWidth = 0;
           bColor = "transparent";
-          content = <Check className="size-4 text-white" strokeWidth={3} />;
-          labelColor = "hsl(var(--success-strong))";
+          content = (
+            <Check className="size-4 text-foreground" strokeWidth={3} />
+          );
+          labelColor = "hsl(var(--muted-foreground))";
         } else if (isToday && isSelected) {
           fill = SPORT;
           bWidth = 0;

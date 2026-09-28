@@ -39,19 +39,9 @@ import InlineNumerals from "@/components/ui/InlineNumerals";
 import SectionLabel from "@/components/ui/SectionLabel";
 import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
 import { formatDayMonth } from "@/utils/formatters";
-import {
-  Dumbbell,
-  Flame,
-  Zap,
-  Footprints,
-  Heart,
-  Warehouse,
-  Check,
-  Award,
-  ChevronRight,
-  ArrowLeft,
-} from "lucide-react";
+import { Heart, Check, ChevronRight, ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
+import ChoiceArt from "@/components/onboarding/ChoiceArt";
 import { toast } from "@/lib/toast";
 import { track as trackLifecycle } from "@/lib/lifecycleAnalytics";
 import { validateDisplayName } from "@/lib/displayName";
@@ -111,31 +101,31 @@ const GOALS = [
     id: "hypertrophy",
     label: goalLabel("hypertrophy"),
     desc: "A lifting plan with muscle-building work.",
-    icon: Dumbbell,
+    art: { kind: "exercise", id: "db-curl" },
   },
   {
     id: "strength",
     label: goalLabel("strength"),
     desc: "A lifting plan focused on building strength.",
-    icon: Zap,
+    art: { kind: "exercise", id: "squat" },
   },
   {
     id: "fat_loss",
     label: goalLabel("fat_loss"),
     desc: "Lifting to support your goal. Set nutrition separately.",
-    icon: Flame,
+    art: { kind: "muscles", category: "Full Body" },
   },
   {
     id: "general",
     label: goalLabel("general"),
     desc: "A balanced starting point for regular training.",
-    icon: Heart,
+    art: { kind: "exercise", id: "push-ups" },
   },
   {
     id: "running",
     label: goalLabel("running"),
     desc: "Free running or a race goal, with optional lifting alongside it.",
-    icon: Footprints,
+    art: { kind: "route", distance: 2 },
   },
 ] as const;
 
@@ -809,14 +799,10 @@ export default function Onboarding() {
                       setRunConfirmed(false);
                     }
                   }}
-                  icon={
-                    <goal.icon
-                      className={cn(
-                        "size-5",
-                        goal.id === "running" && "text-running-strong"
-                      )}
-                    />
-                  }
+                  /* DS3: a drawing of the training each goal leads to,
+                     where a generic icon stood. Running has no drawing of
+                     its own, so it shows a route, in the running coral. */
+                  icon={<ChoiceArt art={goal.art} />}
                   label={goal.label}
                   desc={
                     goalConfirmed && primaryGoal === goal.id
@@ -893,16 +879,19 @@ export default function Onboarding() {
                       id: "new",
                       label: "New to running",
                       desc: "Starting out, or coming back after a long gap.",
+                      distance: 1,
                     },
                     {
                       id: "occasional",
                       label: "Occasional runner",
                       desc: "Usually one or two runs a week.",
+                      distance: 2,
                     },
                     {
                       id: "regular",
                       label: "Regular runner",
                       desc: "Usually three or more runs a week.",
+                      distance: 3,
                     },
                   ] as const
                 ).map((option) => (
@@ -910,7 +899,13 @@ export default function Onboarding() {
                     key={option.id}
                     selected={runConfirmed && runFrequency === option.id}
                     tone="running"
-                    icon={<Footprints className="size-5 text-running-strong" />}
+                    /* A route that grows with the running: one footprint
+                       icon three times over said nothing about which. */
+                    icon={
+                      <ChoiceArt
+                        art={{ kind: "route", distance: option.distance }}
+                      />
+                    }
                     label={option.label}
                     desc={option.desc}
                     onSelect={() => {
@@ -1047,16 +1042,19 @@ export default function Onboarding() {
                       id: "full_gym",
                       label: "Full gym",
                       desc: "Barbells, dumbbells, cables and machines.",
+                      art: "chest-press-machine",
                     },
                     {
                       id: "home_gym",
                       label: "Home gym",
                       desc: "Barbell and dumbbell setup.",
+                      art: "db-bench",
                     },
                     {
                       id: "minimal",
                       label: "Minimal / bodyweight",
                       desc: "Bodyweight and limited equipment.",
+                      art: "bodyweight-squat",
                     },
                   ] as const
                 ).map((option) => (
@@ -1067,7 +1065,11 @@ export default function Onboarding() {
                       setEquipmentConfirmed(true);
                       setEquipment(option.id);
                     }}
-                    icon={<Warehouse className="size-5" />}
+                    /* The kit each setup means, drawn: a machine, dumbbells
+                       on a bench, no equipment at all. */
+                    icon={
+                      <ChoiceArt art={{ kind: "exercise", id: option.art }} />
+                    }
                     label={option.label}
                     desc={option.desc}
                   />
@@ -1081,16 +1083,19 @@ export default function Onboarding() {
                       id: "beginner",
                       label: "New to lifting",
                       desc: "Up to six months of consistent training.",
+                      level: 1,
                     },
                     {
                       id: "intermediate",
                       label: "Some experience",
                       desc: "Six months to two years.",
+                      level: 2,
                     },
                     {
                       id: "advanced",
                       label: "Experienced",
                       desc: "More than two years of consistent training.",
+                      level: 3,
                     },
                   ] as const
                 ).map((option) => (
@@ -1101,7 +1106,9 @@ export default function Onboarding() {
                       setExperienceConfirmed(true);
                       setExperience(option.id);
                     }}
-                    icon={<Award className="size-5" />}
+                    icon={
+                      <ChoiceArt art={{ kind: "level", level: option.level }} />
+                    }
                     label={option.label}
                     desc={option.desc}
                   />

@@ -154,7 +154,48 @@ for (const budget of [null, 30] as const) {
       .nth(warmups)
       .click();
     const endRest = page.getByRole("button", { name: "End rest", exact: true });
+    if (!capturePrefix) {
+      // The rest that follows a working set, when the account rests
+      // automatically. Its seconds tick, so the frame's time can differ
+      // by one between captures.
+      const rest = page.getByRole("group", { name: "Rest timer" });
+      await rest.waitFor({ timeout: 3_000 }).catch(() => {});
+      if (await rest.isVisible()) {
+        for (const dark of [false, true]) {
+          await page.evaluate(
+            (value) => document.documentElement.classList.toggle("dark", value),
+            dark
+          );
+          await settleImages(page);
+          await page.screenshot({
+            path: `screenshots/workout-rest-${dark ? "dark" : "light"}.png`,
+            animations: "disabled",
+          });
+        }
+      }
+    }
     if (await endRest.isVisible()) await endRest.click();
+    if (!capturePrefix) {
+      // The workout screen itself, one working set in: a done row, the
+      // current row and the rows still to come.
+      await expect(
+        page.getByRole("button", {
+          name: `Edit completed set ${warmups + 1}`,
+          exact: true,
+        })
+      ).toBeVisible();
+      for (const dark of [false, true]) {
+        await page.evaluate(
+          (value) => document.documentElement.classList.toggle("dark", value),
+          dark
+        );
+        await settleImages(page);
+        await page.screenshot({
+          path: `screenshots/workout-session-${dark ? "dark" : "light"}.png`,
+          animations: "disabled",
+        });
+      }
+    }
     await page
       .getByRole("button", {
         name: `Edit completed set ${warmups + 1}`,
@@ -203,7 +244,7 @@ for (const budget of [null, 30] as const) {
       page.getByRole("heading", { name: "Review workout", exact: true })
     ).toBeVisible();
     await page
-      .getByRole("button", { name: "Save Workout", exact: true })
+      .getByRole("button", { name: "Save workout", exact: true })
       .click();
     await expect(
       page.getByRole("button", { name: "Done", exact: true })

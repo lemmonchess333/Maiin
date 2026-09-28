@@ -350,6 +350,18 @@ export function inferMovementCategory(
   name: string,
   exerciseId?: string
 ): MovementCategory {
+  return matchMovementCategory(name, exerciseId) ?? FALLBACK;
+}
+
+/**
+ * The same answer, or null when nothing recognised the exercise, rather
+ * than the `core` a caller cannot tell from a real ab exercise. A tally of
+ * what a user trained must not book an unknown custom lift as abs.
+ */
+export function matchMovementCategory(
+  name: string,
+  exerciseId?: string
+): MovementCategory | null {
   // The stored answer wins. Keyword matching is the fallback for custom
   // exercises the catalogue has never seen.
   if (exerciseId) {
@@ -362,7 +374,7 @@ export function inferMovementCategory(
       if (haystack.includes(kw)) return rule.category;
     }
   }
-  return FALLBACK;
+  return null;
 }
 
 /**

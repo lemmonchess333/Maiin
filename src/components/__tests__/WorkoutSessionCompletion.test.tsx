@@ -170,7 +170,7 @@ describe("set completion through row controls", () => {
     expect(log).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole("button", { name: "Mark set complete" }));
     await vi.waitFor(() =>
-      expect(screen.getByRole("button", { name: "Save Workout" })).toBeVisible()
+      expect(screen.getByRole("button", { name: "Save workout" })).toBeVisible()
     );
     expect(log).not.toHaveBeenCalled();
   });
@@ -208,6 +208,161 @@ it("a supported PR appears only on its row and Undo removes it", async () => {
   expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   fireEvent.click(screen.getByRole("button", { name: "Undo last set" }));
   expect(screen.queryByText("PR")).not.toBeInTheDocument();
+});
+
+describe("the new-best moment (DS3)", () => {
+  const seedBest = (bucket: "8rm" | "3rm" = "8rm") => {
+    h.user = { uid: "pr-user" };
+    seedFirestore({
+      "users/pr-user/stats/prMap": {
+        map: {
+          "Test exercise": {
+            "1rm": null,
+            "3rm": null,
+            "5rm": null,
+            "8rm": null,
+            "10rm": null,
+            [bucket]: {
+              weight: 60,
+              reps: bucket === "8rm" ? 8 : 3,
+              date: "2026-07-01",
+            },
+          },
+        },
+        sessionCounts: { "Test exercise": 5 },
+        volumeBest: {},
+      },
+    });
+  };
+  const liftFirstSet = (weight: string) => {
+    fireEvent.change(screen.getByRole("spinbutton", { name: "Set 1 weight" }), {
+      target: { value: weight },
+    });
+    fireEvent.click(
+      screen.getAllByRole("button", { name: "Mark set complete" })[0]
+    );
+  };
+  const spoken = () => screen.queryByText(/^New best on /);
+
+  it("says a set that beat the best on the spot: the lift, the figure, what it beat", async () => {
+    seedBest();
+    await act(async () => {
+      openSession();
+    });
+    liftFirstSet("62.5");
+    const card = screen.getByTestId("new-best-moment");
+    expect(card).toHaveTextContent("Test exercise");
+    expect(card).toHaveTextContent("62.5 kg × 8");
+    expect(card).toHaveTextContent("Was 60 kg × 8, 1 Jul");
+    expect(spoken()).toHaveAttribute("role", "status");
+    expect(spoken()?.textContent).toBe(
+      "New best on Test exercise: 62.5 kg for 8 reps. Previous best 60 kg for 8 reps."
+    );
+  });
+
+  it("stays quiet for a set that did not beat the best", async () => {
+    seedBest();
+    await act(async () => {
+      openSession();
+    });
+    liftFirstSet("57.5");
+    // Anchored: the set really completed, it just set no best.
+    expect(
+      screen.getByRole("button", { name: "Edit completed set 1" })
+    ).toBeInTheDocument();
+    expect(screen.queryByTestId("new-best-moment")).toBeNull();
+    expect(spoken()).toBeNull();
+  });
+
+  it("stays quiet for a first set at a new rep range that is not a best", async () => {
+    // The only record is a heavy triple; 8 reps at 50 kg is the first
+    // 8-rep set, below the best: the finish screen lists it as a first,
+    // not as a new best, and so does not the workout screen.
+    seedBest("3rm");
+    await act(async () => {
+      openSession();
+    });
+    liftFirstSet("50");
+    expect(
+      screen.getByRole("button", { name: "Edit completed set 1" })
+    ).toBeInTheDocument();
+    expect(screen.queryByTestId("new-best-moment")).toBeNull();
+  });
+
+  it("goes when the set is undone, with the record it announced", async () => {
+    seedBest();
+    await act(async () => {
+      openSession();
+    });
+    liftFirstSet("62.5");
+    expect(screen.getByTestId("new-best-moment")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Undo last set" }));
+    expect(spoken()).toBeNull();
+    await vi.waitFor(() =>
+      expect(screen.queryByTestId("new-best-moment")).toBeNull()
+    );
+  });
+
+  it("carries its own Undo, since it covers the bottom of the list", async () => {
+    seedBest();
+    await act(async () => {
+      openSession();
+    });
+    liftFirstSet("62.5");
+    fireEvent.click(screen.getByRole("button", { name: "Undo this set" }));
+    // The set is open again, and the best went with it.
+    expect(
+      screen.getAllByRole("button", { name: "Mark set complete" })
+    ).toHaveLength(3);
+    expect(screen.queryByText("PR")).toBeNull();
+    expect(spoken()).toBeNull();
+  });
+
+  it("goes when that set is corrected, since the figure it named changed", async () => {
+    seedBest();
+    await act(async () => {
+      openSession();
+    });
+    liftFirstSet("62.5");
+    expect(screen.getByTestId("new-best-moment")).toBeInTheDocument();
+    fireEvent.click(
+      screen.getByRole("button", { name: "Edit completed set 1" })
+    );
+    fireEvent.change(screen.getByRole("textbox", { name: "Weight (kg)" }), {
+      target: { value: "57.5" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save changes" }));
+    await vi.waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    expect(spoken()).toBeNull();
+    await vi.waitFor(() =>
+      expect(screen.queryByTestId("new-best-moment")).toBeNull()
+    );
+  });
+
+  it("goes by itself after a few seconds, after the undo window", async () => {
+    seedBest();
+    await act(async () => {
+      openSession();
+    });
+    // Advance only the timeouts, as the correction test below does:
+    // faking animation frames strands Motion's frame loop.
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+    liftFirstSet("62.5");
+    expect(
+      screen.getByRole("button", { name: "Undo this set" })
+    ).toBeInTheDocument();
+    // Past the 4 s undo window, the best is still on screen, without
+    // an Undo that would no longer work.
+    await act(async () => vi.advanceTimersByTime(4100));
+    expect(spoken()).not.toBeNull();
+    expect(screen.queryByRole("button", { name: "Undo this set" })).toBeNull();
+    await act(async () => vi.advanceTimersByTime(2000));
+    vi.useRealTimers();
+    expect(spoken()).toBeNull();
+    await vi.waitFor(() =>
+      expect(screen.queryByTestId("new-best-moment")).toBeNull()
+    );
+  });
 });
 
 it("rebuilds corrected records from full history without dropping an older valid record", async () => {
@@ -250,7 +405,7 @@ it("rebuilds corrected records from full history without dropping an older valid
     fireEvent.click(
       screen.getAllByRole("button", { name: "Mark set complete" })[0]
     );
-  fireEvent.click(await screen.findByRole("button", { name: "Save Workout" }));
+  fireEvent.click(await screen.findByRole("button", { name: "Save workout" }));
   await vi.waitFor(() => expect(readDoc(path)?.invalidated).toBe(false));
   expect(readDoc(path)).toMatchObject({
     revision: 4,
@@ -282,7 +437,7 @@ it("an open session cannot replace records invalidated by a newer correction", a
     fireEvent.click(
       screen.getAllByRole("button", { name: "Mark set complete" })[0]
     );
-  fireEvent.click(await screen.findByRole("button", { name: "Save Workout" }));
+  fireEvent.click(await screen.findByRole("button", { name: "Save workout" }));
   await vi.waitFor(() => expect(readDoc(path)?.revision).toBe(5));
   expect(readDoc(path)).toMatchObject({ invalidated: true, map: {} });
 });
@@ -307,13 +462,13 @@ describe("workout save acknowledgement", () => {
       );
     await vi.waitFor(() =>
       expect(
-        screen.getByRole("button", { name: "Save Workout" })
+        screen.getByRole("button", { name: "Save workout" })
       ).toBeInTheDocument()
     );
     expect(
       screen.getByRole("heading", { name: "Review workout" })
     ).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Save Workout" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save workout" }));
     await vi.waitFor(() => expect(h.error).toHaveBeenCalled());
     expect(
       screen.getByRole("heading", { name: "Review workout" })
@@ -355,10 +510,10 @@ async function finishAndSave(complete = vi.fn().mockResolvedValue(undefined)) {
   }
   await vi.waitFor(() =>
     expect(
-      screen.getByRole("button", { name: "Save Workout" })
+      screen.getByRole("button", { name: "Save workout" })
     ).toBeInTheDocument()
   );
-  fireEvent.click(screen.getByRole("button", { name: "Save Workout" }));
+  fireEvent.click(screen.getByRole("button", { name: "Save workout" }));
 }
 
 it("keeps the recovery draft while queued, then clears it only when synced", async () => {
@@ -628,7 +783,7 @@ describe("completed-set corrections", () => {
     await vi.waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
     expect(log).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole("button", { name: "Finish workout" }));
-    fireEvent.click(screen.getByRole("button", { name: "Save Workout" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save workout" }));
     await vi.waitFor(() => expect(complete).toHaveBeenCalledOnce());
     expect(
       complete.mock.calls[0][1].setLogs[0].map(
@@ -682,6 +837,7 @@ describe("WorkoutSession — rest timer", () => {
   /* The fixture carries `restSeconds: 0` and a null profile, so every rest
      falls back to the 90s default. That makes the default the thing a leak
      would visibly overwrite. */
+  // The time left reads as a clock (DS3): "1:30", not "90 s".
   const restLabel = () =>
     screen.getByRole("group", { name: "Rest timer" }).textContent ?? "";
 
@@ -692,9 +848,9 @@ describe("WorkoutSession — rest timer", () => {
 
   it("+15 s extends the rest in progress", () => {
     startFirstRest();
-    expect(restLabel()).toContain("90");
+    expect(restLabel()).toContain("1:30");
     fireEvent.click(screen.getByLabelText("Add 15 seconds of rest"));
-    expect(restLabel()).toContain("105");
+    expect(restLabel()).toContain("1:45");
   });
 
   it("does NOT carry the extension into the next rest", () => {
@@ -704,12 +860,12 @@ describe("WorkoutSession — rest timer", () => {
        preference. */
     startFirstRest();
     fireEvent.click(screen.getByLabelText("Add 15 seconds of rest"));
-    expect(restLabel()).toContain("105");
+    expect(restLabel()).toContain("1:45");
 
     // End this rest and complete the next set: a fresh rest, fresh target.
     fireEvent.click(screen.getByRole("button", { name: "End rest" }));
     fireEvent.click(screen.getAllByLabelText("Mark set complete")[0]);
-    expect(restLabel()).toContain("90");
+    expect(restLabel()).toContain("1:30");
   });
 
   it("extends repeatedly within one rest — the counterweight", () => {
@@ -718,7 +874,7 @@ describe("WorkoutSession — rest timer", () => {
     startFirstRest();
     fireEvent.click(screen.getByLabelText("Add 15 seconds of rest"));
     fireEvent.click(screen.getByLabelText("Add 15 seconds of rest"));
-    expect(restLabel()).toContain("120");
+    expect(restLabel()).toContain("2:00");
   });
 });
 
@@ -793,7 +949,7 @@ describe("WorkoutSession — timers survive a locked phone", () => {
     });
     expect(screen.getByText(/1\/3 sets · 0:03/)).toBeInTheDocument();
     expect(screen.getByRole("group", { name: "Rest timer" })).toHaveTextContent(
-      "87 s"
+      "1:27"
     );
     expect(h.authReads).not.toHaveBeenCalled();
     expect(h.save).not.toHaveBeenCalled();
@@ -827,7 +983,7 @@ describe("WorkoutSession — timers survive a locked phone", () => {
     });
     expect(screen.getByText(/1\/3 sets · 1:00/)).toBeInTheDocument();
     expect(screen.getByRole("group", { name: "Rest timer" })).toHaveTextContent(
-      "30 s"
+      "0:30"
     );
     hidden.mockRestore();
   });
@@ -872,7 +1028,7 @@ it("Undo followed by finishing early saves only the final completed work", async
   fireEvent.click(
     screen.getByRole("button", { name: "Review completed work" })
   );
-  fireEvent.click(screen.getByRole("button", { name: "Save Workout" }));
+  fireEvent.click(screen.getByRole("button", { name: "Save workout" }));
   await vi.waitFor(() => expect(complete).toHaveBeenCalledOnce());
   expect(
     complete.mock.calls[0][1].setLogs[0].filter(
@@ -967,11 +1123,11 @@ describe("Plate-Club badges are awarded the moment the workout saves", () => {
        neighbours were working around. */
     await vi.waitFor(() =>
       expect(
-        screen.getByRole("button", { name: "Save Workout" })
+        screen.getByRole("button", { name: "Save workout" })
       ).toBeInTheDocument()
     );
     await act(async () => {
-      fireEvent.click(screen.getByRole("button", { name: "Save Workout" }));
+      fireEvent.click(screen.getByRole("button", { name: "Save workout" }));
     });
     await vi.waitFor(() => expect(onCompleteDay).toHaveBeenCalled());
     return onCompleteDay;
@@ -1015,5 +1171,65 @@ describe("Plate-Club badges are awarded the moment the workout saves", () => {
     // ran and chose to award nothing, rather than never running at all.
     await vi.waitFor(() => expect(h.clear).toHaveBeenCalled());
     expect(h.awardEventBadges).not.toHaveBeenCalled();
+  });
+});
+
+/* DS3: the screen names the day as Train does and says what comes next. */
+describe("wayfinding between exercises", () => {
+  function openPullDay() {
+    render(
+      <WorkoutSession
+        day={{
+          dayName: "Pull — Lat Focus",
+          dayType: "upper",
+          completed: false,
+          exercises: [
+            {
+              exerciseId: "pull-ups",
+              name: "Pull-Ups",
+              sets: 1,
+              reps: 8,
+              weight: 0,
+              restSeconds: 0,
+            } as ProgramExercise,
+            {
+              exerciseId: "barbell-row",
+              name: "Barbell Row",
+              sets: 3,
+              reps: 10,
+              weight: 32.5,
+              restSeconds: 0,
+            } as ProgramExercise,
+          ],
+        }}
+        dayIndex={0}
+        onCompleteDay={vi.fn()}
+        onClose={vi.fn()}
+      />
+    );
+  }
+
+  it("names the day as Train and Home do", () => {
+    openPullDay();
+    expect(screen.getByText("Pull · Lat focus")).toBeInTheDocument();
+    expect(screen.queryByText("Pull — Lat Focus")).toBeNull();
+  });
+
+  it("names the next exercise with sets left, and nothing once only this one is", () => {
+    openPullDay();
+    const upNext = () => screen.getByText("Up next").parentElement!;
+    expect(upNext()).toHaveTextContent("Barbell Row");
+    expect(upNext()).toHaveTextContent("3 sets × 10 reps · 32.5 kg");
+
+    fireEvent.click(screen.getByRole("button", { name: "Barbell Row" }));
+    expect(upNext()).toHaveTextContent("Pull-Ups");
+
+    fireEvent.click(screen.getByRole("button", { name: "Pull-Ups" }));
+    fireEvent.click(screen.getByRole("button", { name: "Mark set complete" }));
+    fireEvent.click(screen.getByRole("button", { name: "Barbell Row" }));
+    expect(
+      screen.getByRole("button", { name: "Pull-Ups, done" })
+    ).toBeVisible();
+    expect(screen.queryByText("Up next")).toBeNull();
   });
 });

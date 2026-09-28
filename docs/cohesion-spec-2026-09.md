@@ -1,5 +1,13 @@
 # Visual cohesion specification — 2026-09
 
+> **STATUS 2026-09-27 — superseded in part by DS3.** The redesign locked as
+> DS3 in `.claude/plans/programme-run-followups.md` changed several rows
+> below: page titles are the `text-h1` step, groups open with sentence-case
+> `SectionHeading`s instead of uppercase labels, the primary task card is a
+> 12% sport wash with no halo, and compact tiles sit on the card surface.
+> Where this file and CLAUDE.md or DESIGN_GUIDE.md disagree, those win.
+> The rest of the role map, and the reasoning, still stand.
+
 The map from UI roles to the tokens and primitives that already exist. It
 adds no component and no colour; it names which existing treatment each
 role takes, and where an exception is permitted and why. Written for the

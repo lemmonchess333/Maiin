@@ -43,18 +43,16 @@ describe("PageShell header", () => {
     ).toBeTruthy();
   });
 
-  it("renders leading tile, subtitle and actions in their slots", () => {
+  it("renders subtitle and actions in their slots", () => {
     render(
       <PageShell
         title="Train"
-        leading={<span data-testid="tile" />}
         subtitle="Race prep · Marathon"
         actions={<button type="button">More</button>}
       >
         x
       </PageShell>
     );
-    expect(screen.getByTestId("tile")).toBeInTheDocument();
     expect(screen.getByText("Race prep · Marathon")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "More" })).toBeInTheDocument();
   });
@@ -78,21 +76,10 @@ describe("PageShell header", () => {
     expect(p.className).toMatch(/line-clamp-2/);
   });
 
-  it("tints the header zone from the accent at low alpha", () => {
-    // Train's sport tint: the whole zone answers to the active mode. The
-    // alpha suffix keeps it a wash rather than a filled block.
-    render(
-      <PageShell title="Train" accent="#D4637A">
-        x
-      </PageShell>
-    );
-    const header = screen.getByRole("banner");
-    expect(header.style.backgroundColor).not.toBe("");
-    expect(header.className).toMatch(/rounded-2xl/);
-  });
-
-  it("does not tint or pad the header without an accent", () => {
-    render(<PageShell title="Food">x</PageShell>);
+  it("draws every header the same plain way", () => {
+    // DS3 retired Train's sport-tinted header zone: no page's header is
+    // a tinted, padded block any more.
+    render(<PageShell title="Train">x</PageShell>);
     const header = screen.getByRole("banner");
     expect(header.style.backgroundColor).toBe("");
     expect(header.className).not.toMatch(/rounded-2xl/);

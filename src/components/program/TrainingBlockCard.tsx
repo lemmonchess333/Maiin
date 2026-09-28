@@ -30,7 +30,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { liftWeekLabel } from "@/lib/liftSessionExplainer";
 import { localDateString } from "@/lib/dateHelpers";
 import { useNavigate } from "react-router-dom";
-import { CalendarRange, ChevronRight, Flag } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import { toast } from "@/lib/toast";
 import { haptic } from "@/lib/haptic";
 import { cn } from "@/lib/utils";
@@ -313,11 +313,10 @@ export default function TrainingBlockCard({
             haptic("light");
             setShowCreate(true);
           }}
-          className="w-full min-h-[44px] p-3 rounded-xl bg-muted flex items-center gap-3 text-left active:scale-[0.97] transition-transform"
+          /* DS3: a plain row on the card surface, no tinted icon tile,
+             like the day's exercise list above it. */
+          className="w-full min-h-[44px] p-3 rounded-xl bg-card card-shadow flex items-center gap-3 text-left active:scale-[0.97] transition-transform"
         >
-          <div className="flex size-9 items-center justify-center rounded-xl bg-primary/10 shrink-0">
-            <Flag className="size-4 text-primary" aria-hidden="true" />
-          </div>
           <div className="min-w-0 flex-1">
             <p className="text-sm font-semibold text-foreground">
               Start a training block
@@ -345,11 +344,8 @@ export default function TrainingBlockCard({
             if (finished) void openReview(block);
             else setShowDetail(true);
           }}
-          className="w-full min-h-[44px] p-3 rounded-xl bg-muted flex items-center gap-3 text-left active:scale-[0.97] transition-transform"
+          className="w-full min-h-[44px] p-3 rounded-xl bg-card card-shadow flex items-center gap-3 text-left active:scale-[0.97] transition-transform"
         >
-          <div className="flex size-9 items-center justify-center rounded-xl bg-primary/10 shrink-0">
-            <CalendarRange className="size-4 text-primary" aria-hidden="true" />
-          </div>
           <div className="min-w-0 flex-1">
             <p className="text-sm font-semibold text-foreground">
               <InlineNumerals>

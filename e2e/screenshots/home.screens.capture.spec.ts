@@ -168,14 +168,17 @@ test.describe("app screenshots", () => {
       }
       // History/Analytics hydrates workouts/runs/meals subscriptions + a
       // lazy heat-map chunk after the nav appears; the fixed 1400ms settle
-      // shot a full-page skeleton (2026-07-04 run). Wait for the lifting
-      // heat-map heading (rich-seeded data guarantees it) before shooting.
+      // shot a full-page skeleton (2026-07-04 run). Wait for the overview's
+      // Muscles card to draw its list (rich-seeded data guarantees it, and
+      // it is the last lazy chunk to land) before shooting. The full map's
+      // "Muscle groups trained" heading moved to the Lifting page (DS3).
       // 15s still lost the race on a slow runner (the 3a87dd8 run shot
       // skeletons again) — 40s of the test's 180s budget buys certainty,
       // and a log line makes the silent-miss visible in the CI output.
       if (name === "history") {
         await page
-          .getByText(/Muscle groups trained/i)
+          .getByRole("region", { name: "Muscles trained" })
+          .getByRole("listitem")
           .first()
           .waitFor({ state: "visible", timeout: 40000 })
           .catch(() =>
