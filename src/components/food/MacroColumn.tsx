@@ -24,7 +24,7 @@ interface MacroColumnProps {
   Icon: IconComponent;
   consumed: number;
   target: number;
-  /** Uppercase label e.g. "PROTEIN" */
+  /** The macro's name, as said: "Protein". */
   label: string;
   /** Saturated brand colour for this macro */
   color: string;
@@ -332,7 +332,7 @@ export default function MacroColumn({
         )}
       </div>
 
-      {/* Uppercase macro label — intentionally muted (same tone as the
+      {/* Macro label — intentionally muted (same tone as the
           `X / Yg` ratio line above) so the card's colour identity is
           carried by the icon + big number + progress bar, not duplicated
           four times. The label is a caption, not a headline. */}

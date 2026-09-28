@@ -10,10 +10,10 @@ interface SectionLabelProps {
    *   "caption" — lives inside one card: a stat's name above its number,
    *               an eyebrow, a pill, a form-field label. Default.
    *   "section" — a small group label inside a sheet or list ("Your
-   *               pantry" in the food suggestions). Legacy: a group of
-   *               cards or rows on a page, tab or sheet takes a
-   *               `SectionHeading`, and the Food surfaces still using
-   *               this tier move over in the Food redesign.
+   *               pantry" in the food suggestions, "Macros" in the Food
+   *               details sheet): 12px bold in the foreground colour.
+   *               A group of cards or rows on a page takes a
+   *               `SectionHeading` instead.
    */
   tier?: SectionLabelTier;
   /** Rendered element. Defaults to <p>; pass "h2"/"h3" for a heading,
@@ -29,7 +29,7 @@ interface SectionLabelProps {
 
 const TIER_CLASSES: Record<SectionLabelTier, string> = {
   caption: "text-xs font-semibold text-muted-foreground",
-  section: "uppercase text-xs font-bold tracking-widest text-foreground",
+  section: "text-xs font-bold text-foreground",
 };
 
 /**
@@ -46,7 +46,8 @@ const TIER_CLASSES: Record<SectionLabelTier, string> = {
  * Write the label the way it is said ("Total volume", not "TOTAL
  * VOLUME") — the text renders as written.
  *
- * Section: the legacy uppercase group label (see `tier`). Both 12px —
+ * Section: the small group label (see `tier`), sentence case like the
+ * caption since the Food pass took its capitals off too. Both 12px —
  * the type scale's micro step, so nothing sits below the 12px floor.
  * Spacing and token colour overrides (e.g. sport tints) ride in via
  * `className`; JS theme colours via `style`.

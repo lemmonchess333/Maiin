@@ -7,7 +7,6 @@ import {
   type PanInfo,
 } from "framer-motion";
 import { Trash2, Pencil } from "lucide-react";
-import { THEME } from "@/lib/theme";
 import { haptic } from "@/lib/haptic";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { cn } from "@/lib/utils";
@@ -118,19 +117,6 @@ function formatQuantityLabel(group: FoodRowGroup): string {
   return `${qtyStr} ${pluralUnit}`;
 }
 
-/**
- * Primary macro dot colour based on which macro provides the most calories.
- */
-function dotColorFor(group: FoodRowGroup): string {
-  const proCal = group.totalPro * 4;
-  const carbCal = group.totalCarb * 4;
-  const fatCal = group.totalFat * 9;
-  if (proCal === 0 && carbCal === 0 && fatCal === 0) return THEME.neutral[300];
-  if (proCal >= carbCal && proCal >= fatCal) return THEME.macros.protein;
-  if (carbCal >= proCal && carbCal >= fatCal) return THEME.macros.carbs;
-  return THEME.macros.fat;
-}
-
 export default function FoodRow({
   group,
   isOpen,
@@ -202,18 +188,16 @@ export default function FoodRow({
   };
 
   const quantityLabel = formatQuantityLabel(group);
-  const dot = dotColorFor(group);
 
-  // Shared inner content (macro dot, name, quantity/edited pills, kcal).
+  /* Shared inner content (name, quantity/edited pills, kcal). The row
+     used to open with a dot coloured by whichever macro gave the most
+     calories. Nothing on the page said so, and a purple or orange dot
+     beside a food read as a status nobody could name, so it went in the
+     Food pass. A food's macros are one tap away, in its edit sheet. */
   const rowBody = (
     <>
       <div className="flex-1 min-w-0 mr-2">
         <div className="flex items-center gap-2 min-w-0">
-          <span
-            className="size-2 rounded-full shrink-0"
-            style={{ backgroundColor: dot }}
-            aria-hidden="true"
-          />
           <p className="text-sm text-foreground truncate">{group.foodName}</p>
           {group.count > 1 && (
             <span className="text-xs font-medium px-2 py-0.5 rounded-full shrink-0 bg-muted text-muted-foreground font-mono tabular-nums">
@@ -232,8 +216,7 @@ export default function FoodRow({
           )}
         </div>
         {subLabel && (
-          /* pl-4 tucks the caption under the name (dot 8px + gap 8px). */
-          <p className="text-caption text-muted-foreground truncate pl-4 mt-0.5">
+          <p className="text-caption text-muted-foreground truncate mt-0.5">
             {subLabel}
           </p>
         )}

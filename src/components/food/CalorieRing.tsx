@@ -377,7 +377,7 @@ export default function CalorieRing({
                   over the hero photo. Either way it stays one purple
                   identity. */}
               <span
-                className="mt-1.5 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-caption font-semibold uppercase tracking-wider"
+                className="mt-1.5 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-caption font-semibold"
                 style={{
                   color: chipTextColor,
                   backgroundColor: chipBackground,

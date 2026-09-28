@@ -282,7 +282,7 @@ export default function FoodHeroCard({
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -4 }}
                     transition={{ duration: 0.3 }}
-                    className="text-micro uppercase tracking-wider font-semibold"
+                    className="text-micro font-semibold"
                     style={{
                       color: "hsl(var(--success-strong))",
                     }}
@@ -362,7 +362,7 @@ export default function FoodHeroCard({
           {/* Food6 a2: drill-down affordance. "Details" + chevron at the
           bottom of the calorie card opens the breakdown sheet — the same
           label register as the Home and Analytics disclosures (sentence
-          case, text-xs, muted), not the uppercase section-label one.
+          case, text-xs, muted), not the bold section-label one.
           Distinct tap target so it doesn't conflict with the CalorieRing
           mode-toggle, the Settings link, or any nested buttons. */}
           {onTapDrillDown && (
@@ -404,7 +404,7 @@ export default function FoodHeroCard({
             Icon={Beef}
             consumed={dailyTotals.protein}
             target={dailyTargets.targetInfeasible ? 0 : dailyTargets.protein}
-            label="PROTEIN"
+            label="Protein"
             color={THEME.macros.protein}
             mode={mode}
             onTap={toggleMode}
@@ -418,7 +418,7 @@ export default function FoodHeroCard({
             Icon={Wheat}
             consumed={dailyTotals.carbs}
             target={dailyTargets.targetInfeasible ? 0 : dailyTargets.carbs}
-            label="CARBS"
+            label="Carbs"
             color={THEME.macros.carbs}
             mode={mode}
             onTap={toggleMode}
@@ -432,7 +432,7 @@ export default function FoodHeroCard({
             Icon={Avocado}
             consumed={dailyTotals.fat}
             target={dailyTargets.fat}
-            label="FAT"
+            label="Fat"
             color={THEME.macros.fat}
             mode={mode}
             onTap={toggleMode}

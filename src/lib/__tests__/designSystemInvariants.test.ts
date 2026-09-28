@@ -461,7 +461,7 @@ describe("DS ratchets — surface-level drift", () => {
      `tracking-*` utility. Grandfathered until touched (Diagnostics carries
      8 of them, RunDetail 4, WorkoutDetail 3); `pages/dev/*` is outside
      the scan as usual. */
-  const HAND_ROLLED_LABEL_BASELINE = 34;
+  const HAND_ROLLED_LABEL_BASELINE = 28;
   const LABEL_PRIMITIVE = "src/components/ui/SectionLabel.tsx";
   it("hand-rolled uppercase tracked labels do not increase (use SectionLabel)", () => {
     const { total, byFile } = scan((src, rel) => {
@@ -487,29 +487,29 @@ describe("DS ratchets — surface-level drift", () => {
   it("SectionLabel's caption tier is sentence case, and the section tier stays 12px (positive pin)", () => {
     // DS3 (2026-09-27): capitals are for table column headers. A caption
     // inside a card is written the way it is said, so the tier carries no
-    // `uppercase` and no letter-spacing. The section tier is the legacy
-    // group label (pinned below to the Food surfaces awaiting their
-    // redesign); both stay on the 12px micro step.
+    // `uppercase` and no letter-spacing. The section tier is the Food
+    // page's small group label (pinned below to the two Food surfaces that
+    // use it), sentence case since the Food pass; both stay on the 12px
+    // micro step.
     const src = readFileSync(resolve(repoRoot, LABEL_PRIMITIVE), "utf8");
     expect(src).toMatch(
       /caption: "text-xs font-semibold text-muted-foreground"/
     );
-    expect(src).toMatch(
-      /section: "uppercase text-xs font-bold tracking-widest text-foreground"/
-    );
+    expect(src).toMatch(/section: "text-xs font-bold text-foreground"/);
     expect(src).not.toMatch(/text-caption/);
   });
 
   /* The capital-letter group label is retired (DS3). A group of cards or
      rows opens with a `SectionHeading` — a real heading, 20px on a page,
-     16px in a sheet, card or form. The legacy `tier="section"` label
-     survives only on the Food surfaces, which move over in the Food
-     redesign; nothing else may pick it up. */
+     16px in a sheet, card or form. `tier="section"`, sentence case since
+     the Food pass, stays on two Food surfaces: the Food page keeps its
+     current look (DS3's Food carve-out, which the owner reaffirmed on
+     2026-09-28). Nothing else may pick it up. */
   const SECTION_TIER_ALLOWED = new Set([
     "src/components/food/HeroDrillDownSheet.tsx",
     "src/components/food/FoodSuggestionsDropdown.tsx",
   ]);
-  it("the legacy section-tier label appears only on the Food surfaces awaiting their redesign", () => {
+  it("the section-tier label appears only on the two Food surfaces", () => {
     const { byFile } = scan(
       (src) => (src.match(/tier="section"/g) ?? []).length
     );
