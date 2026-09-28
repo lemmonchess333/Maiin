@@ -153,10 +153,11 @@ function EditServingsSheet({
       fat: Math.round(source.currentTotalFat / div),
     };
   })();
-  /* A zero starts as an empty field showing a "0" placeholder. A field
-     that holds the digit puts the caret on one side of it or the other,
-     so typing 300 into it gives 3000 or 0300. Blank is "unchanged" to
-     parseMacro below, so an untouched zero still saves nothing. */
+  /* A zero starts as an empty field. A field that holds the digit puts
+     the caret on one side of it or the other, so typing 300 into it gives
+     3000 or 0300. Blank is "unchanged" to parseMacro below, so each
+     field's placeholder is its starting value: a cleared field shows the
+     number Save keeps, and an untouched zero still saves nothing. */
   const fieldText = (n: number) => (n === 0 ? "" : String(n));
   const [pickedCal, setPickedCal] = useState<string>(
     fieldText(initialPerServing.cal)
@@ -283,12 +284,14 @@ function EditServingsSheet({
   const numberField = ({
     id,
     value,
+    start,
     setter,
     ariaLabel,
     sizeClass,
   }: {
     id: "edit-meal-cal" | "edit-meal-pro" | "edit-meal-car" | "edit-meal-fat";
     value: string;
+    start: number;
     setter: (v: string) => void;
     ariaLabel: string;
     sizeClass: string;
@@ -300,7 +303,7 @@ function EditServingsSheet({
         type="number"
         inputMode="numeric"
         min={0}
-        placeholder="0"
+        placeholder={String(start)}
         value={value}
         onChange={(e) => setter(e.target.value)}
         disabled={saving}
@@ -419,6 +422,7 @@ function EditServingsSheet({
             {numberField({
               id: "edit-meal-cal",
               value: pickedCal,
+              start: initialPerServing.cal,
               setter: setPickedCal,
               ariaLabel: "Per-serving calories",
               sizeClass: "px-14 py-2 text-2xl font-bold",
@@ -437,22 +441,25 @@ function EditServingsSheet({
                   id: "edit-meal-pro",
                   label: "Protein",
                   value: pickedPro,
+                  start: initialPerServing.pro,
                   setter: setPickedPro,
                 },
                 {
                   id: "edit-meal-car",
                   label: "Carbs",
                   value: pickedCar,
+                  start: initialPerServing.car,
                   setter: setPickedCar,
                 },
                 {
                   id: "edit-meal-fat",
                   label: "Fat",
                   value: pickedFat,
+                  start: initialPerServing.fat,
                   setter: setPickedFat,
                 },
               ] as const
-            ).map(({ id, label, value, setter }) => (
+            ).map(({ id, label, value, start, setter }) => (
               <div key={id} className="flex flex-col items-center gap-1">
                 <label htmlFor={id}>
                   {/* SectionLabel can't render a <label>, so the primitive
@@ -463,6 +470,7 @@ function EditServingsSheet({
                   {numberField({
                     id,
                     value,
+                    start,
                     setter,
                     ariaLabel: `Per-serving ${label.toLowerCase()}`,
                     sizeClass: "px-6 py-2.5 text-base font-semibold",
