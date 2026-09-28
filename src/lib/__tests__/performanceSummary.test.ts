@@ -21,59 +21,49 @@ describe("getPlainLanguageSummary — establishing baseline (cold-start)", () =>
   });
 
   it("defaults to the normal (non-establishing) copy when the flag is omitted", () => {
-    expect(getPlainLanguageSummary(85, "high").headline).toBe(
-      "Strong week — your training is on track"
-    );
+    expect(getPlainLanguageSummary(85, "high").headline).toBe("Strong week");
   });
 });
 
 describe("getPlainLanguageSummary — headline tiers (PI)", () => {
   it("PI 80+ → Strong week", () => {
     expect(getPlainLanguageSummary(85, "moderate").headline).toBe(
-      "Strong week — your training is on track"
+      "Strong week"
     );
   });
 
   it("PI 60-79 → Solid week", () => {
-    expect(getPlainLanguageSummary(65, "moderate").headline).toBe(
-      "Solid week — keep the cadence"
-    );
+    expect(getPlainLanguageSummary(65, "moderate").headline).toBe("Solid week");
   });
 
-  it("PI 40-59 → Moderate load", () => {
+  it("PI 40-59 → Moderate week", () => {
     expect(getPlainLanguageSummary(45, "moderate").headline).toBe(
-      "Moderate load — room to push or hold"
+      "Moderate week"
     );
   });
 
   it("PI < 40 → Light week", () => {
-    expect(getPlainLanguageSummary(25, "moderate").headline).toBe(
-      "Light week — focus on recovery or ramp up"
-    );
+    expect(getPlainLanguageSummary(25, "moderate").headline).toBe("Light week");
   });
 
   it("boundary at PI=80 belongs to Strong tier (>= 80)", () => {
     expect(getPlainLanguageSummary(80, "moderate").headline).toBe(
-      "Strong week — your training is on track"
+      "Strong week"
     );
   });
 
   it("boundary at PI=60 belongs to Solid tier", () => {
-    expect(getPlainLanguageSummary(60, "moderate").headline).toBe(
-      "Solid week — keep the cadence"
-    );
+    expect(getPlainLanguageSummary(60, "moderate").headline).toBe("Solid week");
   });
 
   it("boundary at PI=40 belongs to Moderate tier", () => {
     expect(getPlainLanguageSummary(40, "moderate").headline).toBe(
-      "Moderate load — room to push or hold"
+      "Moderate week"
     );
   });
 
   it("boundary at PI=39 falls into Light tier", () => {
-    expect(getPlainLanguageSummary(39, "moderate").headline).toBe(
-      "Light week — focus on recovery or ramp up"
-    );
+    expect(getPlainLanguageSummary(39, "moderate").headline).toBe("Light week");
   });
 });
 
