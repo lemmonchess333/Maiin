@@ -1,8 +1,6 @@
-import { describe, it, expect, vi, beforeAll, afterAll } from "vitest";
+import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
-import type { ReactNode } from "react";
-import { render } from "@testing-library/react";
 import { formatBinLabel } from "@/lib/chartGranularity";
 
 /**
@@ -101,70 +99,6 @@ describe("east of UTC was never affected — the asymmetry is real", () => {
     );
     expect(preFix("2026-08-03")).toBe("3/8");
     expect(formatBinLabel("2026-08-03", "weekly")).toBe("3/8");
-  });
-});
-
-/* ── The running chart, at the component ───────────────────────────── */
-
-const captured: { formatter?: (v: string) => string } = {};
-
-vi.mock("@/hooks/useDistanceUnit", () => ({
-  useDistanceUnit: () => "km",
-}));
-vi.mock("@/hooks/useRunningStats", () => ({
-  useRunningStats: () => ({
-    granularity: "weekly",
-    binnedData: [
-      { week: "2026-08-03", totalDistance: 12.4, runCount: 3, avgPace: 330 },
-      { week: "2026-08-10", totalDistance: 9.1, runCount: 2, avgPace: 345 },
-    ],
-    runs: [],
-    loading: false,
-  }),
-}));
-vi.mock("recharts", () => {
-  const Pass = ({ children }: { children: ReactNode }) => <div>{children}</div>;
-  const Noop = () => null;
-  return {
-    ResponsiveContainer: Pass,
-    BarChart: Pass,
-    Bar: Noop,
-    XAxis: (props: { tickFormatter?: (v: string) => string }) => {
-      captured.formatter = props.tickFormatter;
-      return null;
-    },
-    YAxis: Noop,
-    CartesianGrid: Noop,
-    /* This mock is WHOLESALE, so every recharts symbol the component
-       imports has to appear here or it renders as `undefined` and the
-       whole suite dies at the JSX call site rather than at the import.
-       Cell and Tooltip arrived with the chart's hover layer and bar
-       emphasis; they are stubs because this file is about the x-axis
-       formatter and nothing else. `bar-emphasis.test.tsx` is the one
-       that reads their props. */
-    Cell: Noop,
-    Tooltip: Noop,
-  };
-});
-
-import RunningHistorySection from "@/components/run/RunningHistorySection";
-
-describe("the running chart's own axis, west of UTC", () => {
-  const original = process.env.TZ;
-  beforeAll(() => {
-    process.env.TZ = WEST;
-  });
-  afterAll(() => {
-    process.env.TZ = original;
-  });
-
-  it("renders its Monday week keys as Mondays", () => {
-    render(<RunningHistorySection rangeDays={90} />);
-    expect(captured.formatter, "XAxis has no tickFormatter").toBeTypeOf(
-      "function"
-    );
-    expect(captured.formatter!("2026-08-03")).toBe("3/8");
-    expect(captured.formatter!("2026-08-10")).toBe("10/8");
   });
 });
 

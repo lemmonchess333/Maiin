@@ -271,3 +271,29 @@ export function formatRaceDistance(distance: string | undefined): string {
   if (distance === "marathon") return "Marathon";
   return distance.toUpperCase();
 }
+
+const RUN_TYPE_TITLES: Record<string, string> = {
+  freerun: "Free Run",
+  easy: "Easy Run",
+  tempo: "Tempo Run",
+  intervals: "Intervals",
+  long: "Long Run",
+  // The other spelling of a long run in use (`paceVerdict` reads both).
+  longrun: "Long Run",
+  guided: "Guided Run",
+  race: "Race",
+  treadmill: "Treadmill",
+  /* 'manual' = "Track without GPS" path. Outdoor user, GPS never
+     locked. Distinguished from treadmill so the detail header reads
+     honestly. */
+  manual: "Manual Run",
+};
+
+/**
+ * A saved run's title on its own page. A run saves `long`
+ * (`ActivityType`); a table keyed only by `longrun` titled every long run
+ * "Run", which Analytics' best efforts now link straight to.
+ */
+export function runTypeTitle(activityType: string | undefined): string {
+  return (activityType && RUN_TYPE_TITLES[activityType]) ?? "Run";
+}

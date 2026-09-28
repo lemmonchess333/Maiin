@@ -28,7 +28,6 @@ import { join } from "node:path";
 const ALLOWED = new Map<string, string[]>([
   ["PRsTab.tsx", ["Trophy"]],
   ["TrainingLoadCard.tsx", ["Activity"]],
-  ["PeriodOverview.tsx", ["UtensilsCrossed"]],
 ]);
 
 const DIR = join(process.cwd(), "src/components/analytics");
@@ -44,7 +43,7 @@ function tsxFiles(dir: string): string[] {
 
 /** Only `color:` INSIDE a `style={{ … }}` expression — the shape that
  *  paints an element. A bare `color: THEME.x` in an object literal is
- *  data: PeriodOverview feeds one to its ring's `stroke` and
+ *  data: the Trends rows hand one to a sparkline's `stroke` and
  *  PerformanceIndexChart feeds one to a legend dot's `backgroundColor`.
  *  Matching those too would make the allow-list a list of everything and
  *  stop meaning anything. */

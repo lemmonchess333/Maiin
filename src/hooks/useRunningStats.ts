@@ -18,11 +18,7 @@ import {
 import { useUid } from "../lib/auth";
 import { isVolumeEligible } from "../lib/runStatsEligibility";
 import { parseLocalDate, rollingWindowStart } from "../lib/dateHelpers";
-import {
-  binKeyForDate,
-  granularityForRange,
-  type ChartGranularity,
-} from "../lib/chartGranularity";
+import { binKeyForDate, type ChartGranularity } from "../lib/chartGranularity";
 import { useLocalDateKey } from "./useLocalDateKey";
 import {
   isRunDateKey,
@@ -68,6 +64,11 @@ export interface RunSummaryItem {
      (pre-#480) don't have the fields. */
   isInvalid?: boolean;
   savedAnyway?: boolean;
+  /** Each whole kilometre's time in seconds, in order, as the run saved
+   *  them (`splits[].time`; a saved run's splits are always kilometres).
+   *  Empty for a run that saved none: treadmill, manual, and runs from
+   *  before splits were kept. Analytics' fastest kilometres read these. */
+  kmSplitSeconds?: number[];
 }
 
 /**
@@ -132,6 +133,30 @@ export function aggregateWeeklyData(runs: RunSummaryItem[]): RunningWeekData[] {
   return aggregateRunBins(runs, "weekly");
 }
 
+/**
+ * One saved split's time, or 0 when it cannot be read as a kilometre. A
+ * kilometre's time in seconds IS its pace per km (`paceSeconds`), so a row
+ * where the two disagree was cut on some other lap and would put a mile
+ * into a "5K".
+ */
+function kmSplitSecondsOf(split: unknown): number {
+  if (!split || typeof split !== "object") return 0;
+  const { time, paceSeconds } = split as {
+    time?: unknown;
+    paceSeconds?: unknown;
+  };
+  if (typeof time !== "number" || !Number.isFinite(time) || time <= 0) return 0;
+  if (
+    typeof paceSeconds === "number" &&
+    Number.isFinite(paceSeconds) &&
+    paceSeconds > 0 &&
+    Math.abs(paceSeconds - time) > 2
+  ) {
+    return 0;
+  }
+  return time;
+}
+
 export function parseRunSummary(
   id: string,
   data: DocumentData
@@ -185,6 +210,9 @@ export function parseRunSummary(
         : null,
     isInvalid: data.isInvalid === true,
     savedAnyway: data.savedAnyway === true,
+    kmSplitSeconds: Array.isArray(data.splits)
+      ? (data.splits as unknown[]).map(kmSplitSecondsOf)
+      : [],
     routePreview:
       data.points?.length > 1
         ? sampleRoute(data.points as RouteCoordinate[], 20).map((p) => ({
@@ -338,17 +366,8 @@ export function useRunningStats(days: number = 30) {
   }, [uid, loadedUid, runs, days, queueVersion, today]);
 
   return {
-    /** Monday weeks, always. History's distance sparkline walks
-     *  `localWeekKey` values, so this output must not follow the window. */
+    /** Monday weeks, always. */
     weeklyData: aggregateWeeklyData(visibleRuns),
-    /** The same aggregation binned FOR the window, which is what a chart
-     *  wants: one bar per day at 1W/1M, per week at 3M, per month beyond.
-     *  Weekly bins over a year are the "~52 unreadable bars" the lifting
-     *  volume chart already moved off (Hist5c pin 7), and the running
-     *  chart would have inherited them the moment it started honouring
-     *  the range. */
-    binnedData: aggregateRunBins(visibleRuns, granularityForRange(days)),
-    granularity: granularityForRange(days),
     runs: visibleRuns,
     loading:
       loading &&

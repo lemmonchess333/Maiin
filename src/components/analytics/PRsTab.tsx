@@ -5,8 +5,10 @@ import { Trophy, ChevronRight, Footprints } from "lucide-react";
 import { THEME } from "@/lib/theme";
 import { EXERCISES } from "@/lib/exercises";
 import { estimate1RMRange, formatOneRepMaxRange } from "@/lib/analytics";
-import PRBadge from "@/components/analytics/PRBadge";
-import PRCard from "@/components/analytics/PRCard";
+import { parseLocalDate } from "@/lib/dateHelpers";
+import { formatDayMonth } from "@/utils/formatters";
+import ExerciseThumb from "@/components/program/ExerciseThumb";
+import PRCard, { NewRecordChip } from "@/components/analytics/PRCard";
 import { samePRSet, runningPRKey, liftPRKey } from "@/lib/prSetIdentity";
 
 /* PR 7b follow-up — collapse the lifetime Lift PRs list to the
@@ -62,6 +64,9 @@ interface LiftPR {
   weight: number;
   reps: number;
   date: string;
+  /** Set in the last week. The running rows always said so; the lift
+   *  rows had the flag hard-wired off. */
+  isNew?: boolean;
 }
 
 interface PRsTabProps {
@@ -82,28 +87,29 @@ function LiftPRRow({ pr }: { pr: LiftPR }) {
      wide band is not a weaker claim than a point estimate — the reader
      anchors on its midpoint either way. */
   const e1rm = estimate1RMRange(pr.weight, pr.reps);
-  const dateLabel = new Date(pr.date + "T12:00:00").toLocaleDateString(
-    "en-GB",
-    { day: "numeric", month: "short" }
-  );
+  const dateLabel = formatDayMonth(parseLocalDate(pr.date));
   const exercise = EXERCISES.find((e) => e.name === pr.name);
   const isBW = exercise?.equipment === "Bodyweight";
   return (
     <Link
       key={pr.name}
       to={`/history/exercise/${encodeURIComponent(pr.name)}`}
-      className="flex items-center justify-between px-4 py-3 active:bg-muted/40 transition-colors"
+      className="flex items-center gap-3 px-4 py-3 active:bg-muted/40 transition-colors"
     >
+      {/* The exercise's drawing, as Train's rows and the finish screen's
+          new bests show it (DS3). A faded orange bolt stood here on every
+          row, whether or not anything was new. */}
+      <ExerciseThumb exerciseId={exercise?.id ?? pr.name} size="sm" />
       <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-1.5">
-          <PRBadge isNew={false} />
-          <p className="text-xs font-medium text-foreground truncate">
-            {pr.name}
-          </p>
-        </div>
-        <p className="text-xs text-muted-foreground mt-0.5">{dateLabel}</p>
+        <p className="text-sm font-semibold text-foreground truncate">
+          {pr.name}
+        </p>
+        <p className="mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground">
+          {pr.isNew && <NewRecordChip />}
+          {dateLabel}
+        </p>
       </div>
-      <div className="text-right flex-shrink-0 ml-3 flex items-center gap-2">
+      <div className="text-right flex-shrink-0 flex items-center gap-2">
         <div>
           <p className="text-sm font-bold font-mono tabular-nums text-lifting-strong">
             {isBW && pr.weight === 0 ? (

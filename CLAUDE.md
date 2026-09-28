@@ -85,7 +85,7 @@ exists — pinned by `claudeMdFreshness.test.ts` in both directions
 | -------------------------------------- | ---------------------------------- | ------------------------------------------------------------------------------ |
 | `Home.tsx`                             | `/`                                | Main dashboard — WeekStrip, hero cards, energy, insights                       |
 | `Food.tsx`                             | `/food`                            | Food/meal logging with camera, NL parsing, barcode (`/log` redirects here)     |
-| `History.tsx`                          | `/history`                         | Workout & run history with analytics charts                                    |
+| `History.tsx`                          | `/history`                         | Analytics: an overview, with Lifting / Running / Body / Food pages (`?view=`)  |
 | `ExerciseHistory.tsx`                  | `/history/exercise/:name`          | Per-exercise progression chart + rep-bucket PR strip                           |
 | `Program.tsx`                          | `/program`                         | Workout program builder & scheduling                                           |
 | `Routine.tsx`                          | `/routine/:routineId`              | Saved-routine workout runner (reuses `WorkoutSession`)                         |
@@ -266,7 +266,7 @@ Helper: `syncChallengeProgress()` — auto-updates challenge participant progres
 - **Lib functions:** Named exports, camelCase filenames
 - **Tests:** Colocated in `__tests__/` directories, `*.test.ts` suffix
 - **Styling:** Tailwind utility classes, `THEME` object from `src/lib/theme.ts` for chart colors
-- **Icons:** lucide-react (import individual icons)
+- **Icons:** lucide-react (import individual icons). The drawn exceptions live in `src/components/icons/`: the tab bar's own set (`TabIcons.tsx`, an outline and a filled form each) and the avocado macro icon; the brand mark is `ui/BrandMark.tsx`
 - **Toasts:** sonner (`toast.success()`, `toast.error()`)
 - **UI patterns:** Drawer (vaul), bottom sheets, pressable cards
 - **Class names:** `clsx()` + `twMerge()` for conditional/merged Tailwind classes
@@ -636,7 +636,7 @@ held to it, so it is now the APP-WIDE standard, not an insights-file local:
 - **Light mode:** The opt-in alternate (selectable in Settings → writes `profile.darkMode = false`). It's a clean, warm, iOS-inspired look (#F2F2F7 grouped background, cards on white — minimal and calm with subtle depth, NOT a dark-glass app rendered light). Default-dark is applied pre-React in `public/init.js` (dark unless an explicit `"false"` is stored) and mirrored by the `profile.darkMode` defaults in `src/lib/auth.tsx`.
 - **Brand colour:** Purple #7B72E9 — used sparingly for accents, active tab indicators, CTAs, progress bars. Never as full backgrounds except gradient CTA buttons.
 - **Sport-coding:** Lifting = purple (#7B72E9), Running = coral (#D4637A). These two colours appear in calendar dots, section headings, icon tints, and contextual cards.
-- **Logo:** Purple gradient hexagon with upward chevron cutout — the app icon and the sign-in screens. Home no longer carries the "TROPOS" wordmark: DS3 titles it with the date and "Today", and the user's initials open Settings.
+- **Logo:** Purple gradient hexagon with upward chevron cutout — the app icon and the sign-in screens. Home no longer carries the "TROPOS" wordmark: DS3 titles it with the date and "Today", and the user's initials open Settings. The mark itself signs Home, small, before the date (`BrandMark`, the app icon's geometry), so "Today" keeps the left edge the cards below it start on.
 
 ### Colour System (src/styles/tokens.css + src/lib/theme.ts)
 
@@ -781,7 +781,7 @@ Constraints these primitives must keep:
 
 - **Tap feedback:** scale(0.97) on active, 150ms cubic-bezier transition
 - **Haptic:** Called on all button/card taps via haptic() utility
-- **Count-up animation:** Hero numbers animate from 0 on first load (useCountUp hook)
+- **Count-up animation:** the moments' numbers count up as they appear: Home's streak and performance score (`useCountUp`, once a session), the Food ring and macros, the workout finish screen's three figures and the weekly recap's first card (`AnimatedNumber`, which is plain text from the first paint under Reduce Motion)
 - **Water card:** Fill-from-bottom gradient animation, wave SVG, bubble particles, ripple on add
 - **Bottom sheet:** Vaul drawer for editing (exercises, weight logging)
 - **Tab navigation:** Horizontal scrolling tabs with active pill indicator
@@ -813,10 +813,18 @@ reduced-motion` always gets the settled static state — no entrance, no
   `success`/`semantic.positive` remain value-aliases (pixel-correct,
   name-only debt, pinned in `colorCanonical.test.ts` alongside the
   warning≠nutrition inequality that IS the D19 contract).
-- **Framer Motion is gated globally; CSS animations are not.**
-  `useReducedMotion` covers every `motion.*` element, but a Tailwind
-  `animate-*` class runs under Reduce Motion unless it carries the
-  `motion-safe:` variant. Every skeleton pulse and ping does;
+- **Framer Motion is gated globally only for POSITION; CSS animations
+  are not gated at all.** `MotionConfig reducedMotion="user"` in
+  `App.tsx` settles positional values (x, y, scale, rotate, width,
+  height) and nothing else: opacity, a stroke offset, `pathLength` and a
+  motion-value count-up all still animate under Reduce Motion. This
+  paragraph said the global gate covered "every `motion.*` element",
+  and Home's two rings drew in for everyone because of it until DS3's
+  polish pass gated `ProgressRing` itself. A non-positional animation
+  asks `useReducedMotion` in its own component (`ProgressRing`,
+  `CalorieRing`, `EmptyState`, `AnimatedNumber` are the patterns). A
+  Tailwind `animate-*` class runs under Reduce Motion unless it carries
+  the `motion-safe:` variant. Every skeleton pulse and ping does;
   `animate-spin` spinners are progress feedback and stay unprefixed
   (`UNGUARDED_ANIMATION_BASELINE = 8` in `designSystemInvariants.test.ts`
   is exactly the spinner set).
@@ -1060,7 +1068,7 @@ or touching a CTA button, route it through `Button` with the variant above.
   owned. `componentReachability` catches a dead COMPONENT; nothing
   catches a dead SENTENCE, which is why this one is worth re-reading
   against `src/pages/Home.tsx` rather than trusting.
-- **Icons:** lucide-react (individual imports only)
+- **Icons:** lucide-react (individual imports only), except the drawn set in `src/components/icons/` (the tab bar's icons, the avocado) and `ui/BrandMark.tsx`
 - **Toasts:** sonner
 - **Charts:** Recharts (bar charts, line charts in History)
 - **Animations:** Framer Motion (AnimatePresence, motion.div, whileTap)

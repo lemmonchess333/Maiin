@@ -77,7 +77,11 @@ describe("TrendWeight — #984 hide the number", function () {
     profileRef.current = {
       preferredWeightUnit: "kg",
       hideWeightNumber: false,
-      program: { startWeight: 85, goal: "cut" },
+      // The user's own goal (Settings → Nutrition), not one derived
+      // from the programme.
+      goalWeightKg: 75,
+      weeklyRateKg: -0.5,
+      program: { goal: "cut" },
     };
     // MemoryRouter: the card now carries the BODY-VAULT-01 vault Link.
     render(
@@ -96,7 +100,11 @@ describe("TrendWeight — #984 hide the number", function () {
     profileRef.current = {
       preferredWeightUnit: "kg",
       hideWeightNumber: true,
-      program: { startWeight: 85, goal: "cut" },
+      // The user's own goal (Settings → Nutrition), not one derived
+      // from the programme.
+      goalWeightKg: 75,
+      weeklyRateKg: -0.5,
+      program: { goal: "cut" },
     };
     const { container } = render(
       <MemoryRouter>
@@ -119,5 +127,60 @@ describe("TrendWeight — #984 hide the number", function () {
     // Projection date framing is preserved (date is motivational, not a
     // body-weight figure) — "At this rate, goal by ...".
     expect(screen.getByText(/At this rate, goal by/i)).toBeInTheDocument();
+  });
+});
+
+describe("TrendWeight — the goal is the user's own", function () {
+  beforeEach(function () {
+    logsRef.current = descendingSeries();
+  });
+
+  it("draws the goal the user set, not the programme's start weight less 5 kg", async function () {
+    profileRef.current = {
+      preferredWeightUnit: "kg",
+      hideWeightNumber: false,
+      goalWeightKg: 78,
+      weeklyRateKg: -0.5,
+      // The old derivation would have invented 85 - 5 = 80.
+      program: { goal: "cut", startWeight: 85 },
+    };
+    render(
+      <MemoryRouter>
+        <TrendWeight />
+      </MemoryRouter>
+    );
+    await waitFor(function () {
+      expect(screen.getByText(/Trending at/i)).toBeInTheDocument();
+    });
+    // The header's distance to goal is measured from the user's 78.
+    // (The chart's own "Goal:" label is SVG that jsdom does not lay out.)
+    const header = screen.getByText(/Trending at/i).textContent ?? "";
+    const trend = Number(/Trending at\s*([\d.]+)/.exec(header)?.[1]);
+    const toGoal = Number(/([\d.]+)\s*kg to goal/.exec(header)?.[1]);
+    expect(Number.isFinite(trend)).toBe(true);
+    expect(toGoal).toBeCloseTo(Math.abs(trend - 78), 1);
+    expect(toGoal).not.toBeCloseTo(Math.abs(trend - 80), 1);
+  });
+
+  it("draws no goal for a maintainer", async function () {
+    profileRef.current = {
+      preferredWeightUnit: "kg",
+      hideWeightNumber: false,
+      // Onboarding's default: the signup weight at a rate of 0.
+      goalWeightKg: 85,
+      weeklyRateKg: 0,
+      program: { goal: "recomp", startWeight: 85 },
+    };
+    render(
+      <MemoryRouter>
+        <TrendWeight />
+      </MemoryRouter>
+    );
+    await waitFor(function () {
+      expect(screen.getByText(/Trending at/i)).toBeInTheDocument();
+    });
+    expect(screen.queryByText(/to goal/)).toBeNull();
+    expect(screen.queryByText(/Goal:/)).toBeNull();
+    expect(screen.queryByText(/At this rate, goal by/i)).toBeNull();
   });
 });

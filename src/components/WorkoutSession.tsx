@@ -104,6 +104,9 @@ import { useScrollEdges } from "@/hooks/useScrollEdges";
 import SessionCompleteScreen from "@/components/workout/SessionCompleteScreen";
 import WorkoutProgress from "@/components/workout/WorkoutProgress";
 import WorkoutRestTimer from "@/components/workout/WorkoutRestTimer";
+import NewBestMoment, {
+  type NewBest,
+} from "@/components/workout/NewBestMoment";
 import { elapsedSecondsSince } from "@/hooks/useElapsedSeconds";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { IconButton } from "@/components/ui/IconButton";
@@ -168,6 +171,10 @@ const TYPE_LABELS: Record<SetType, string> = {
 };
 
 const RPE_OPTIONS = [6, 6.5, 7, 7.5, 8, 8.5, 9, 9.5, 10];
+
+/** How long a new best stays on screen: past the undo window (4 s), so
+ *  the lifter can look up from the bar and still catch it. */
+const NEW_BEST_MOMENT_MS = 6000;
 
 interface SetLog {
   reps: number;
@@ -810,6 +817,26 @@ export default function WorkoutSession({
   } | null>(null);
   const undoTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  /* DS3's new-best moment: a set that beat the lifter's best is said on
+     the spot, in gold, above the bottom bar, for a few seconds. Undoing
+     or correcting that set takes it away with the record it announced;
+     the finish screen still lists every best the session kept. */
+  const [newBest, setNewBest] = useState<NewBest | null>(null);
+  const newBestTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const showNewBest = (moment: NewBest) => {
+    if (newBestTimeoutRef.current) clearTimeout(newBestTimeoutRef.current);
+    setNewBest(moment);
+    newBestTimeoutRef.current = setTimeout(
+      () => setNewBest(null),
+      NEW_BEST_MOMENT_MS
+    );
+  };
+  const dismissNewBest = (setKey: string) => {
+    if (newBest?.setKey !== setKey) return;
+    if (newBestTimeoutRef.current) clearTimeout(newBestTimeoutRef.current);
+    setNewBest(null);
+  };
+
   // The cursor can outrun the list: `currentExIndex` is component state while
   // `day.exercises` is a prop that can shrink under an open session (a
   // re-trimmed express/easier plan, a removed slot, a snapshot from another
@@ -1049,6 +1076,12 @@ export default function WorkoutSession({
               ])
             );
             haptic(50);
+            showNewBest({
+              setKey: `${currentExIndex}:${setIdx}`,
+              exerciseId: currentExercise.exerciseId,
+              exerciseName: exName,
+              result: prResult,
+            });
           }
         }
       }
@@ -1182,6 +1215,7 @@ export default function WorkoutSession({
       throw new Error("Your account changed. Reopen your workout to continue.");
     setSetLogs(next);
     refreshRecords(next);
+    dismissNewBest(`${exIdx}:${setIdx}`);
     setLastCompleted(null);
     if (undoTimeoutRef.current) clearTimeout(undoTimeoutRef.current);
     haptic();
@@ -1199,6 +1233,7 @@ export default function WorkoutSession({
     );
     setSetLogs(next);
     refreshRecords(next);
+    dismissNewBest(`${exIdx}:${setIdx}`);
     setCurrentExIndex(exIdx);
     setCurrentSetIndex(setIdx);
     stopRest();
@@ -1207,10 +1242,11 @@ export default function WorkoutSession({
     if (undoTimeoutRef.current) clearTimeout(undoTimeoutRef.current);
   };
 
-  // Cleanup undo timeout
+  // Cleanup the undo and new-best timeouts
   useEffect(() => {
     return () => {
       if (undoTimeoutRef.current) clearTimeout(undoTimeoutRef.current);
+      if (newBestTimeoutRef.current) clearTimeout(newBestTimeoutRef.current);
     };
   }, []);
 
@@ -2283,6 +2319,22 @@ export default function WorkoutSession({
           </p>
         )}
       </div>
+
+      {/* Docked above the bar, not in the scroll: it takes its room from
+          the bottom of the list, so it is whole on screen however long
+          the table is, and nothing above it moves under the thumb that
+          just ticked the set. */}
+      <NewBestMoment
+        moment={newBest}
+        onUndo={
+          newBest &&
+          lastCompleted &&
+          `${lastCompleted.exIdx}:${lastCompleted.setIdx}` === newBest.setKey
+            ? handleUndo
+            : undefined
+        }
+        className="mx-4 mb-3"
+      />
 
       {/* Bottom action bar */}
       <div className="px-4 py-3 border-t border-border/50 bg-background">

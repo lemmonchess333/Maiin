@@ -77,13 +77,20 @@ export default function SessionCompleteScreen({
   const dayLabel = liftDayLine(dayName);
 
   const minutes = sessionDurationMinutes;
-  const duration =
-    minutes >= 60
-      ? {
-          value: `${Math.floor(minutes / 60)}:${String(minutes % 60).padStart(2, "0")}`,
-          unit: "hours",
-        }
-      : { value: String(minutes), unit: minutes === 1 ? "minute" : "minutes" };
+  /* Each figure is its number plus how to write it, so the finish can
+     count up to it (DS3) and still write every step as the figure is
+     written: "1:05" once past an hour, grouped thousands for weight. */
+  const clock = (m: number) => {
+    const whole = Math.round(m);
+    return whole >= 60
+      ? `${Math.floor(whole / 60)}:${String(whole % 60).padStart(2, "0")}`
+      : String(whole);
+  };
+  const duration = {
+    to: minutes,
+    format: clock,
+    unit: minutes >= 60 ? "hours" : minutes === 1 ? "minute" : "minutes",
+  };
 
   /* Timed exercises contribute no tonnage — a hold's `reps` is a
      DURATION, so weight × reps is not a weight moved. Every writer
@@ -108,7 +115,7 @@ export default function SessionCompleteScreen({
     );
   }, 0);
 
-  const totalVolumeDisplay = Math.round(totalVolume).toLocaleString("en-GB");
+  const grouped = (n: number) => Math.round(n).toLocaleString("en-GB");
 
   /* A bodyweight session lifts no load the app can weigh, and "0 kg
      lifted" over a set of pull-ups reads as nothing done. Its reps are
@@ -125,9 +132,10 @@ export default function SessionCompleteScreen({
   }, 0);
   const work =
     totalVolume > 0 || totalReps === 0
-      ? { value: totalVolumeDisplay, unit: "kg lifted" }
+      ? { to: totalVolume, format: grouped, unit: "kg lifted" }
       : {
-          value: totalReps.toLocaleString("en-GB"),
+          to: totalReps,
+          format: grouped,
           unit: totalReps === 1 ? "rep" : "reps",
         };
 
@@ -246,11 +254,11 @@ export default function SessionCompleteScreen({
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
         >
-          <StatFigure size="lg" value={duration.value} unit={duration.unit} />
-          <StatFigure size="lg" value={work.value} unit={work.unit} />
+          <StatFigure size="lg" count={duration} unit={duration.unit} />
+          <StatFigure size="lg" count={work} unit={work.unit} />
           <StatFigure
             size="lg"
-            value={String(totalSetsCompleted)}
+            count={{ to: totalSetsCompleted, format: grouped }}
             unit={totalSetsCompleted === 1 ? "set" : "sets"}
           />
         </motion.div>
