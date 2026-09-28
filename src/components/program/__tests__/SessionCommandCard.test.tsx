@@ -4,6 +4,7 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, fireEvent, cleanup } from "@testing-library/react";
 import SessionCommandCard from "../SessionCommandCard";
+import MiniMuscleFigure from "@/components/social/MiniMuscleFigure";
 
 afterEach(cleanup);
 
@@ -128,6 +129,24 @@ describe("SessionCommandCard — the picture at the right (DS3)", () => {
     });
     expect(screen.getByTestId("muscles")).toBeInTheDocument();
     expect(container.querySelector("svg.lucide-dumbbell")).toBeNull();
+  });
+
+  it("keeps the figure from screen readers, as it does the tile", () => {
+    // Train's lift card passes the day's muscles, whose own label says
+    // "Muscles trained this session": untrue of a day not yet done. The
+    // title names the day, so the picture beside it adds nothing to hear.
+    const { container } = renderCard({
+      sport: "lift",
+      eyebrow: "Pull · Up next",
+      title: "Lat focus",
+      figure: <MiniMuscleFigure categories={["vertical_pull"]} />,
+    });
+    // Anchored: the figure is drawn, and the card is named by its day.
+    expect(container.querySelector("svg polygon")).not.toBeNull();
+    expect(
+      screen.getByRole("region", { name: "Pull · Up next — Lat focus" })
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("img")).toBeNull();
   });
 });
 

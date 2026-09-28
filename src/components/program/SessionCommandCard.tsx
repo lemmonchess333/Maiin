@@ -54,7 +54,10 @@ interface SessionCommandCardProps {
   primaryActionVariant?: ButtonVariant;
   onManage?: () => void;
   /** A picture of the session, drawn at the right of the title in place
-   *  of the sport icon tile. Lift passes the day's muscles. */
+   *  of the sport icon tile. Lift passes the day's muscles. Hidden from
+   *  screen readers like the tile, since the title names the day: the
+   *  muscle figure's own label speaks of muscles trained, which a day not
+   *  yet done has not been. */
   figure?: ReactNode;
   /** The tile's glyph when there is no figure: a run passes its type's
    *  (`runTemplateIcon`). Defaults to the sport's own icon. */
@@ -99,7 +102,9 @@ export default function SessionCommandCard({
             </h3>
           </div>
           {figure ? (
-            <div className="shrink-0 -my-1">{figure}</div>
+            <div className="shrink-0 -my-1" aria-hidden="true">
+              {figure}
+            </div>
           ) : (
             <div
               className={cn(
