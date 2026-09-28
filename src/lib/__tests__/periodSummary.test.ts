@@ -1,11 +1,12 @@
 import { describe, it, expect } from "vitest";
 import {
   countChange,
-  percentChange,
+  distanceChange,
   previousRangeLabel,
   rollingRangeLabel,
   summaryBins,
   summaryGranularity,
+  volumeChange,
 } from "../periodSummary";
 import { rollingWindowStart } from "../dateHelpers";
 
@@ -14,6 +15,9 @@ import { rollingWindowStart } from "../dateHelpers";
    the same in every zone the CI matrix runs (Auckland's clocks change on
    this very day, which is the point of choosing it). */
 const TODAY = new Date(2026, 8, 27, 12);
+
+const lift = (date: string, volumeKg = 1000) => ({ date, volumeKg });
+const run = (date: string, distanceM = 5000) => ({ date, distanceM });
 
 describe("the range headings", () => {
   const RANGES = ["1W", "1M", "3M", "6M", "1Y"] as const;
@@ -58,11 +62,23 @@ describe("summaryBins", () => {
     const bins = summaryBins({
       since: rollingWindowStart(30, TODAY),
       today: TODAY,
-      liftDates: ["2026-08-29", "2026-09-01", "2026-09-03", "2026-09-26"],
-      runDates: ["2026-09-02", "2026-09-27"],
+      lifts: [
+        lift("2026-08-29"),
+        lift("2026-09-01"),
+        lift("2026-09-03"),
+        lift("2026-09-26"),
+      ],
+      runs: [run("2026-09-02"), run("2026-09-27")],
       granularity: "weekly",
     });
-    expect(bins).toEqual([
+    expect(
+      bins.map(({ key, lifts, runs, current }) => ({
+        key,
+        lifts,
+        runs,
+        current,
+      }))
+    ).toEqual([
       { key: "2026-08-24", lifts: 1, runs: 0, current: false },
       { key: "2026-08-31", lifts: 2, runs: 1, current: false },
       { key: "2026-09-07", lifts: 0, runs: 0, current: false },
@@ -75,8 +91,8 @@ describe("summaryBins", () => {
     const bins = summaryBins({
       since: rollingWindowStart(7, TODAY),
       today: TODAY,
-      liftDates: ["2026-09-22"],
-      runDates: [],
+      lifts: [lift("2026-09-22")],
+      runs: [],
       granularity: "daily",
     });
     expect(bins.map((b) => b.key)).toEqual([
@@ -98,8 +114,8 @@ describe("summaryBins", () => {
     const bins = summaryBins({
       since: rollingWindowStart(365, TODAY),
       today: TODAY,
-      liftDates: ["2025-10-15", "2026-09-02"],
-      runDates: ["2025-10-20"],
+      lifts: [lift("2025-10-15", 800), lift("2026-09-02")],
+      runs: [run("2025-10-20", 12000)],
       granularity: "monthly",
     });
     expect(bins).toHaveLength(13);
@@ -108,23 +124,73 @@ describe("summaryBins", () => {
       key: "2025-10-01",
       lifts: 1,
       runs: 1,
+      volumeKg: 800,
+      distanceM: 12000,
       current: false,
     });
     expect(bins[12]).toMatchObject({ key: "2026-09-01", current: true });
   });
 
-  it("counts every session exactly once", () => {
-    const liftDates = ["2026-09-01", "2026-09-01", "2026-09-15"];
-    const runDates = ["2026-09-02", "2026-09-26", "2026-09-27"];
+  it("counts every session, kilogram and metre exactly once", () => {
+    const lifts = [
+      lift("2026-09-01", 1200),
+      lift("2026-09-01", 900),
+      lift("2026-09-15", 3050),
+    ];
+    const runs = [
+      run("2026-09-02", 5000),
+      run("2026-09-26", 8200),
+      run("2026-09-27", 21100),
+    ];
     const bins = summaryBins({
       since: rollingWindowStart(30, TODAY),
       today: TODAY,
-      liftDates,
-      runDates,
+      lifts,
+      runs,
       granularity: "weekly",
     });
-    expect(bins.reduce((s, b) => s + b.lifts, 0)).toBe(liftDates.length);
-    expect(bins.reduce((s, b) => s + b.runs, 0)).toBe(runDates.length);
+    const sum = (key: "lifts" | "runs" | "volumeKg" | "distanceM") =>
+      bins.reduce((s, b) => s + b[key], 0);
+    expect(sum("lifts")).toBe(lifts.length);
+    expect(sum("runs")).toBe(runs.length);
+    expect(sum("volumeKg")).toBe(5150);
+    expect(sum("distanceM")).toBe(34300);
+  });
+
+  it("puts each session's kilograms and metres in its own week", () => {
+    const bins = summaryBins({
+      since: rollingWindowStart(30, TODAY),
+      today: TODAY,
+      lifts: [lift("2026-09-01", 1200), lift("2026-09-22", 4000)],
+      runs: [run("2026-09-02", 5000), run("2026-09-27", 21100)],
+      granularity: "weekly",
+    });
+    const week = (key: string) => bins.find((b) => b.key === key)!;
+    expect(week("2026-08-31")).toMatchObject({
+      volumeKg: 1200,
+      distanceM: 5000,
+    });
+    expect(week("2026-09-21")).toMatchObject({
+      volumeKg: 4000,
+      distanceM: 21100,
+    });
+    expect(week("2026-09-07")).toMatchObject({ volumeKg: 0, distanceM: 0 });
+  });
+
+  it("treats a missing or broken amount as nothing, not as NaN", () => {
+    const bins = summaryBins({
+      since: rollingWindowStart(7, TODAY),
+      today: TODAY,
+      lifts: [lift("2026-09-22", Number.NaN)],
+      runs: [run("2026-09-22", Number.POSITIVE_INFINITY)],
+      granularity: "daily",
+    });
+    expect(bins[1]).toMatchObject({
+      lifts: 1,
+      runs: 1,
+      volumeKg: 0,
+      distanceM: 0,
+    });
   });
 });
 
@@ -145,19 +211,50 @@ describe("the changes", () => {
   it("says nothing when the range before is unknown", () => {
     // A failed read is not a range with no sessions.
     expect(countChange(3, null)).toBeNull();
-    expect(percentChange(52, null)).toBeNull();
+    expect(volumeChange(52800, null)).toBeNull();
+    expect(distanceChange(52000, null, "km")).toBeNull();
   });
 
-  it("states a change in a total as a percentage", () => {
-    expect(percentChange(52.8, 56.2)).toEqual({
+  it("states a change in kilograms as kilograms, not a percentage", () => {
+    expect(volumeChange(52800, 56200)).toEqual({
       direction: "down",
-      text: "6%",
+      text: "3.4k kg",
     });
-    expect(percentChange(52, 46.8)).toEqual({ direction: "up", text: "11%" });
+    expect(volumeChange(900, 600)).toEqual({ direction: "up", text: "300 kg" });
   });
 
-  it("keeps the shared rules: no base, no change; under 1%, no change", () => {
-    expect(percentChange(52, 0)).toBeNull();
-    expect(percentChange(100.4, 100)).toBeNull();
+  it("moves kilograms in the steps the figure shows", () => {
+    // Past a tonne the figure reads "52.8k", so 40 kg is no visible move.
+    expect(volumeChange(52840, 52800)).toBeNull();
+    expect(volumeChange(52860, 52800)).toEqual({
+      direction: "up",
+      text: "100 kg",
+    });
+    // Under a tonne every kilogram shows.
+    expect(volumeChange(640, 600)).toEqual({ direction: "up", text: "40 kg" });
+  });
+
+  it("states a change in distance in the reader's unit", () => {
+    // 52 km after 11 km: the amount, where a percentage said 373%.
+    expect(distanceChange(52000, 11000, "km")).toEqual({
+      direction: "up",
+      text: "41.0 km",
+    });
+    expect(distanceChange(11000, 52000, "mi")).toEqual({
+      direction: "down",
+      text: "25.5 mi",
+    });
+  });
+
+  it("says nothing for a distance change under the figure's decimal", () => {
+    expect(distanceChange(52030, 52000, "km")).toBeNull();
+  });
+
+  it("counts an amount from an empty range before, as a count does", () => {
+    expect(volumeChange(2200, 0)).toEqual({ direction: "up", text: "2.2k kg" });
+    expect(distanceChange(5000, 0, "km")).toEqual({
+      direction: "up",
+      text: "5.0 km",
+    });
   });
 });

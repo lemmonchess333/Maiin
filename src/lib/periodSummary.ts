@@ -1,7 +1,7 @@
 /**
  * The Analytics overview's period summary (DS3): sessions, volume and
- * distance for the chosen range against the range before it, and the
- * sessions bar by bar.
+ * distance for the chosen range against the range before it, and each of
+ * the three bar by bar.
  *
  * Every range is a ROLLING window ending today (History derives it with
  * `rollingWindowStart`), so the headings name a span of days rather than
@@ -12,7 +12,12 @@
  */
 import { binKeyForDate } from "./chartGranularity";
 import { addLocalDays, parseLocalDate, startOfLocalWeek } from "./dateHelpers";
-import { buildDelta } from "./deltaFormat";
+import {
+  distanceIn,
+  distanceUnitLabel,
+  type DistanceUnit,
+} from "./distanceUnits";
+import { abbreviateK } from "@/utils/formatters";
 
 /** The heading for a range: the window it actually covers. */
 export function rollingRangeLabel(range: string | undefined): string {
@@ -65,8 +70,25 @@ export interface SummaryBin {
   key: string;
   lifts: number;
   runs: number;
+  /** Kilograms lifted in the bin. */
+  volumeKg: number;
+  /** Metres run in the bin. */
+  distanceM: number;
   /** The bin that holds today. */
   current: boolean;
+}
+
+/** A session as the card counts it: its local day and what it moved. */
+export interface SummaryLift {
+  /** Local "YYYY-MM-DD", already inside the window. */
+  date: string;
+  volumeKg: number;
+}
+
+export interface SummaryRun {
+  /** Local "YYYY-MM-DD", already inside the window. */
+  date: string;
+  distanceM: number;
 }
 
 function binStart(d: Date, granularity: SummaryGranularity): Date {
@@ -85,29 +107,45 @@ function nextBin(d: Date, granularity: SummaryGranularity): Date {
 /**
  * Every bin from the window's first day to today, empty ones included —
  * a week without a session is part of the story, not a gap to close up.
- * Dates are local "YYYY-MM-DD" keys already inside the window.
+ * Each bin carries its count, kilograms and metres, so the card can draw
+ * any of the three without a second pass over the sessions.
  */
 export function summaryBins({
   since,
   today,
-  liftDates,
-  runDates,
+  lifts,
+  runs,
   granularity,
 }: {
   since: Date;
   today: Date;
-  liftDates: readonly string[];
-  runDates: readonly string[];
+  lifts: readonly SummaryLift[];
+  runs: readonly SummaryRun[];
   granularity: SummaryGranularity;
 }): SummaryBin[] {
-  const lifts = new Map<string, number>();
-  const runs = new Map<string, number>();
-  const bump = (map: Map<string, number>, date: string) => {
+  const byKey = new Map<
+    string,
+    { lifts: number; runs: number; volumeKg: number; distanceM: number }
+  >();
+  const slot = (date: string) => {
     const key = binKeyForDate(parseLocalDate(date), granularity);
-    map.set(key, (map.get(key) ?? 0) + 1);
+    let entry = byKey.get(key);
+    if (!entry) {
+      entry = { lifts: 0, runs: 0, volumeKg: 0, distanceM: 0 };
+      byKey.set(key, entry);
+    }
+    return entry;
   };
-  for (const date of liftDates) bump(lifts, date);
-  for (const date of runDates) bump(runs, date);
+  for (const lift of lifts) {
+    const entry = slot(lift.date);
+    entry.lifts += 1;
+    entry.volumeKg += Number.isFinite(lift.volumeKg) ? lift.volumeKg : 0;
+  }
+  for (const run of runs) {
+    const entry = slot(run.date);
+    entry.runs += 1;
+    entry.distanceM += Number.isFinite(run.distanceM) ? run.distanceM : 0;
+  }
 
   const currentKey = binKeyForDate(today, granularity);
   const bins: SummaryBin[] = [];
@@ -117,10 +155,13 @@ export function summaryBins({
     cursor = nextBin(cursor, granularity)
   ) {
     const key = binKeyForDate(cursor, granularity);
+    const entry = byKey.get(key);
     bins.push({
       key,
-      lifts: lifts.get(key) ?? 0,
-      runs: runs.get(key) ?? 0,
+      lifts: entry?.lifts ?? 0,
+      runs: entry?.runs ?? 0,
+      volumeKg: entry?.volumeKg ?? 0,
+      distanceM: entry?.distanceM ?? 0,
       current: key === currentKey,
     });
   }
@@ -129,7 +170,8 @@ export function summaryBins({
 
 export interface SummaryChange {
   direction: "up" | "down";
-  /** "2" for a count, "6%" for a total. */
+  /** The amount it moved, in the figure's own terms: "2", "3.4k kg",
+   *  "41.0 km". */
   text: string;
 }
 
@@ -148,16 +190,45 @@ export function countChange(
   return { direction: diff > 0 ? "up" : "down", text: String(Math.abs(diff)) };
 }
 
-/**
- * A change in a TOTAL, as a percentage, through the shared `buildDelta`
- * rules: nothing from a zero base, nothing under 1%.
+/*
+ * The totals change by an AMOUNT, not a percentage. A percentage off a
+ * small base is noise that reads as a machine talking: a month back from
+ * an injury said "373%" over 52 km. "41.0 km" says what moved, needs no
+ * base, and so also works after a range with nothing in it. Each amount
+ * is rounded as its figure is, so a change never claims a move the
+ * figure above it cannot show.
  */
-export function percentChange(
-  current: number,
-  previous: number | null
+
+/** A change in kilograms lifted: "850 kg", "3.4k kg". */
+export function volumeChange(
+  currentKg: number,
+  previousKg: number | null
 ): SummaryChange | null {
-  if (previous === null) return null;
-  const delta = buildDelta(current, previous);
-  if (!delta) return null;
-  return { direction: delta.positive ? "up" : "down", text: delta.value };
+  if (previousKg === null) return null;
+  const diff = currentKg - previousKg;
+  // The figure reads "52.8k" past a tonne, so it moves in 100 kg steps.
+  const step = Math.max(currentKg, previousKg) >= 1000 ? 100 : 1;
+  const amount = Math.round(Math.abs(diff) / step) * step;
+  if (amount === 0) return null;
+  return {
+    direction: diff > 0 ? "up" : "down",
+    text: `${abbreviateK(amount)} kg`,
+  };
+}
+
+/** A change in distance run, in the reader's unit: "41.0 km", "2.3 mi". */
+export function distanceChange(
+  currentM: number,
+  previousM: number | null,
+  unit: DistanceUnit
+): SummaryChange | null {
+  if (previousM === null) return null;
+  const diff = distanceIn(currentM, unit) - distanceIn(previousM, unit);
+  // The figure has one decimal place, so the change does too.
+  const amount = Math.round(Math.abs(diff) * 10) / 10;
+  if (amount === 0) return null;
+  return {
+    direction: diff > 0 ? "up" : "down",
+    text: `${amount.toFixed(1)} ${distanceUnitLabel(unit)}`,
+  };
 }
