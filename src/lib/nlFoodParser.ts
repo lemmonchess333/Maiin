@@ -42,16 +42,10 @@ type Macros = {
 
 /* Common foods with approximate macros per serving (USDA averages). Each
    row's numbers are for the serving it names, because a typed "150g"
-   scales against the grams in that string.
-
-   Until 2026-09-28, 36 rows held per-100 g figures under a smaller
-   serving: every "3 oz cooked (85g)" meat and fish, tofu at 126g,
-   spinach at 180g and more. So "150g chicken breast" logged 291 kcal
-   instead of 248. Logged figures were off by between 8% and 100%: too
-   high for most meat and fish, too low for spinach and courgettes.
-   Those rows now name 100g, or keep their counted serving with the
-   figures scaled to its weight. `foodDbIntegrity.test.ts` checks rows
-   against reference values per 100 g. */
+   scales against the grams in that string: a row whose figures are per
+   100 g names 100g, and a counted serving ("1 medium (150g)") carries the
+   figures for that weight. `foodDbIntegrity.test.ts` checks rows against
+   reference values per 100 g. */
 const FOOD_DB: Record<string, Macros> = {
   // ── Proteins ──
   egg: { calories: 78, protein: 6, carbs: 1, fat: 5, serving: "1 large (50g)" },

@@ -105,8 +105,8 @@ export function foodWeek({
 
        A day with no snapshot takes the card's target too. The snapshot is
        written only when the app is open that day, so a day whose food was
-       logged later has none. Measured against nothing, that day drew an
-       empty ring beside its eaten total, then filled when tapped, because
+       logged later has none. Measured against nothing, it would show an
+       empty ring beside its eaten total and fill only when tapped, since
        the card measures it against its target. */
     const target = isFuture
       ? null
