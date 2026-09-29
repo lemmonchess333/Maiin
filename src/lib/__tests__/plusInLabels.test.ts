@@ -67,7 +67,7 @@ describe("house voice — no literal plus in a label", () => {
     expect(
       offenders,
       `A label opens with a literal "+":\n  ${offenders.join("\n  ")}\n\n` +
-        `Spell the verb — "Add set", "New check-in" — per the house voice's ` +
+        `Spell the verb — "Add set", "Add photos" — per the house voice's ` +
         `button rule. If the affordance is what you want, pass a lucide ` +
         `Plus as the Button primitive's leftIcon instead.`
     ).toEqual([]);

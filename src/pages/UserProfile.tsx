@@ -45,7 +45,6 @@ import { THEME } from "../lib/theme";
 import { sumLifetimeRunTotals } from "../lib/runStatsEligibility";
 import Avatar from "../components/Avatar";
 import ReportModal from "../components/social/ReportModal";
-import ProgressPhotos from "../components/social/ProgressPhotos";
 import { ConfirmDialog } from "../components/ui/ConfirmDialog";
 import { Spinner } from "../components/ui/Spinner";
 import { distanceLabel } from "@/lib/runLabels";
@@ -497,25 +496,6 @@ export default function UserProfile() {
           <Flame size={14} className="text-streak inline" />{" "}
           <strong className="text-foreground">{streak}-day</strong> streak
         </p>
-      )}
-
-      {/* Progress Photos — own-profile only. Moved here from the
-          Social page (used to be a top-level tab) because progress
-          photos are private/personal artefacts that belong with the
-          owner's stats and activity history, not in a public-facing
-          social destination. The component handles upload, encryption,
-          and the compare/empty states internally.
-
-          No heading here. `ProgressPhotos` renders its own "Progress
-          Vault" title, and this wrapper <h3> read "Progress photos" at
-          the same size ~37px above it — one section announcing itself
-          twice, in two registers, disagreeing about its own name. The
-          section's aria-label still names the region for assistive
-          tech. */}
-      {isOwnProfile && (
-        <section aria-label="Progress photos">
-          <ProgressPhotos />
-        </section>
       )}
 
       <h3 className="text-sm font-semibold">Activity</h3>

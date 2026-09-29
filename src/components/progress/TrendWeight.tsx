@@ -1,5 +1,4 @@
 import { Scale } from "lucide-react";
-import { Link } from "react-router-dom";
 import SectionLabel from "@/components/ui/SectionLabel";
 import EmptyState from "@/components/ui/EmptyState";
 import { useAuth } from "@/lib/auth";
@@ -29,7 +28,7 @@ import {
 } from "recharts";
 
 export function TrendWeight() {
-  const { user, profile } = useAuth();
+  const { profile } = useAuth();
   /* One reading per day, invalid weights dropped, then the EMA — shared
      with the Analytics overview's Body weight row, so the row quotes the
      figure this chart draws. */
@@ -383,18 +382,6 @@ export function TrendWeight() {
             for projection
           </p>
         )}
-      {/* BODY-VAULT-01 — private handoff into the Progress Vault on the
-          owner's profile. Plain navigation: carries no number, photo,
-          note or body value, and reads the same with hideWeightNumber. */}
-      {user && (
-        <Link
-          to={`/user/${user.uid}`}
-          className="w-full min-h-[44px] flex items-center justify-between text-sm font-medium text-lifting-strong"
-        >
-          <span>Progress Vault</span>
-          <span aria-hidden="true">›</span>
-        </Link>
-      )}
     </div>
   );
 }

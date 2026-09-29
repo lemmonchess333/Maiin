@@ -524,7 +524,7 @@ export interface PublicProfile {
    * from `photoURL` because:
    *   1. The cleanup path on next upload needs the path to call
    *      `deleteObject(storageRef)` on the prior blob — without
-   *      tracking it, orphans accumulate (the bug ProgressPhotos has).
+   *      tracking it, orphans accumulate.
    *   2. The download URL embeds a token; if we ever rotate tokens
    *      (admin-side), we keep the path as the authoritative pointer.
    * Null when the user has never uploaded a custom photo (empty, or

@@ -166,6 +166,9 @@ const TrendWeight = lazyRetry(() =>
 const CalorieBalanceChart = lazyRetry(
   () => import("@/components/progress/CalorieBalanceChart")
 );
+const ProgressPhotos = lazyRetry(
+  () => import("@/components/progress/ProgressPhotos")
+);
 
 /* Hist5b pin 1 + 3 + 4 — tab consolidation 6→3 after the
    Performance fold (PR 6) + PRs tab introduction (PR 7a).
@@ -1926,6 +1929,14 @@ export default function History() {
                   />
                 </SectionErrorBoundary>
               </section>
+            )}
+
+            {/* Photos show what the weight chart above cannot, so they sit
+                under it. The section carries its own heading. */}
+            {filter === "analytics" && view === "body" && (
+              <SectionErrorBoundary sectionName="progress-photos">
+                <ProgressPhotos />
+              </SectionErrorBoundary>
             )}
 
             {filter === "analytics" && view === "food" && (

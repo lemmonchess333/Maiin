@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
-import { MemoryRouter } from "react-router-dom";
 
 // Recharts' ResponsiveContainer renders nothing at 0x0 in jsdom, and the
 // SVG primitives don't surface their text labels usefully. Mock the chart
@@ -83,12 +82,7 @@ describe("TrendWeight — #984 hide the number", function () {
       weeklyRateKg: -0.5,
       program: { goal: "cut" },
     };
-    // MemoryRouter: the card now carries the BODY-VAULT-01 vault Link.
-    render(
-      <MemoryRouter>
-        <TrendWeight />
-      </MemoryRouter>
-    );
+    render(<TrendWeight />);
     await waitFor(function () {
       expect(screen.getByText(/Trending at/i)).toBeInTheDocument();
     });
@@ -106,11 +100,7 @@ describe("TrendWeight — #984 hide the number", function () {
       weeklyRateKg: -0.5,
       program: { goal: "cut" },
     };
-    const { container } = render(
-      <MemoryRouter>
-        <TrendWeight />
-      </MemoryRouter>
-    );
+    const { container } = render(<TrendWeight />);
 
     await waitFor(function () {
       // Qualitative headline (toward goal, since cut + descending).
@@ -144,11 +134,7 @@ describe("TrendWeight — the goal is the user's own", function () {
       // The old derivation would have invented 85 - 5 = 80.
       program: { goal: "cut", startWeight: 85 },
     };
-    render(
-      <MemoryRouter>
-        <TrendWeight />
-      </MemoryRouter>
-    );
+    render(<TrendWeight />);
     await waitFor(function () {
       expect(screen.getByText(/Trending at/i)).toBeInTheDocument();
     });
@@ -171,11 +157,7 @@ describe("TrendWeight — the goal is the user's own", function () {
       weeklyRateKg: 0,
       program: { goal: "recomp", startWeight: 85 },
     };
-    render(
-      <MemoryRouter>
-        <TrendWeight />
-      </MemoryRouter>
-    );
+    render(<TrendWeight />);
     await waitFor(function () {
       expect(screen.getByText(/Trending at/i)).toBeInTheDocument();
     });
