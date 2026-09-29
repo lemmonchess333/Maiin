@@ -304,6 +304,10 @@ describe("FoodAnalyzer — the result sheet", () => {
     fireEvent.click(screen.getByRole("button", { name: "Log to Breakfast" }));
     expect(await screen.findByRole("button", { name: "Saved" })).toBeTruthy();
     expect(screen.queryByText(/Saved!/)).toBeNull();
+    // Finish the delayed save reset before another test reuses the AI fixture.
+    await waitFor(() =>
+      expect(screen.queryByTestId("scan-result-sheet")).toBeNull()
+    );
   });
 
   it("a barcode result: the product is the title, the brand the caption, and Scan again goes back to Barcode", async () => {

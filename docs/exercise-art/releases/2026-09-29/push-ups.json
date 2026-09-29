@@ -1,0 +1,230 @@
+{
+  "exerciseId": "push-ups",
+  "version": "anatomy-v3-2026-09-29",
+  "width": 1536,
+  "height": 1024,
+  "decision": "approved",
+  "reviewer": "Codex visual and implementation review",
+  "reviewedAt": "2026-09-29T11:01:54.555Z",
+  "reference": {
+    "path": "form-frames/push-ups/1.webp",
+    "sha256": "5639a5655874f8e6378faebe5b928e102fc11cdb42bb72a56c2aa22e5c39dbb6"
+  },
+  "cueSha256": "d50fed8af7ece1d5ce8b648acc9348d7c8d8248a5f468aebd4d8dbca276cef0b",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Canonical bald faceless white-grey anatomy athlete, fine contours, featureless pelvis and white trainers retained across native source master/middle/bottom."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Fixed front three-quarter floor view, native1536x1024. Full head, both hands, torso and toe contacts remain inside the same canvas and scene scale."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Elbows bend back as the chest lowers and extend on return. Native review found continuous wrists and plausible shoulder/elbow alignment, with the trunk and legs moving as a plank without visible hip sag or pike. No calibrated numerical angle claim."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Bodyweight floor exercise with no added equipment. Both hand contacts and shoe toe contacts remain present in all poses."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Only the planted near fingers/lower palm in bottom/hold3/4 were copied from master in rectangle395,830,610,885. Each frame changes8518pixels with zero changes outside. Wrist and moving arm/torso are untouched. Native seam inspection and mobile sequence show no visible boundary or finger jump."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Hands and toes stay planted while the body lowers and presses as one unit. Four fixed-contact scans pass unrounded one-pixel/one-percent bounds after the approved patch. These scans certify contact registration only, not moving anatomy."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Strongest purple remains on chest, lighter lilac on front delts/triceps; pale trunk support where visible. Occlusion changes with lowering, without unrelated leg highlighting."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Six cues of at most seven words match wider-than-shoulder hand setup, aligned lowering, chest-near-floor bottom, control, press and straight-arm reset."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "Manually stepped all six and6-to1 in current ExerciseFormFrames on29September2026. Top/middle/bottom/hold/middle/top reuses4=3,5=2,6=1. No continuous timed-playback claim."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "All six and loop reviewed at390x844 in current light player. Full body and both hands/toes remain visible, cue text legible, documentwidth390 and image1536x1024 verified; no console errors."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "All six and loop reviewed at390x844 in current dark player. Chest/elbow motion, body line and planted contacts remain legible without clipping or visible patch seams."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/push-ups/1.webp",
+      "sha256": "5639a5655874f8e6378faebe5b928e102fc11cdb42bb72a56c2aa22e5c39dbb6",
+      "anchors": {
+        "farFingers": {
+          "x": 65.93150684931507,
+          "y": 770
+        },
+        "nearFingers": {
+          "x": 410.65656565656565,
+          "y": 850
+        },
+        "farToe": {
+          "x": 1164.5118110236222,
+          "y": 710
+        },
+        "nearToe": {
+          "x": 1272.1454545454546,
+          "y": 740
+        }
+      },
+      "invariantDimensions": {
+        "farFingersSpan": 157.08911170738597,
+        "nearFingersSpan": 175.08481365377924,
+        "farToeSpan": 101.31236480055372,
+        "nearToeSpan": 107.33516560958401
+      }
+    },
+    {
+      "path": "form-frames/push-ups/2.webp",
+      "sha256": "2ad3ba54db3edc30d04cc53a59dfac6cf1731f278f7f9321b192bb646ed9c835",
+      "anchors": {
+        "farFingers": {
+          "x": 66.50867052023122,
+          "y": 770
+        },
+        "nearFingers": {
+          "x": 410.22857142857146,
+          "y": 850
+        },
+        "farToe": {
+          "x": 1163.984251968504,
+          "y": 710
+        },
+        "nearToe": {
+          "x": 1271.7080745341616,
+          "y": 740
+        }
+      },
+      "invariantDimensions": {
+        "farFingersSpan": 157.26910725754655,
+        "nearFingersSpan": 174.43809523809517,
+        "farToeSpan": 101.71668261093532,
+        "nearToeSpan": 106.8990683229813
+      }
+    },
+    {
+      "path": "form-frames/push-ups/3.webp",
+      "sha256": "efefd81e30be09ea9f7d44ed3efe281bbc9e8aeb3c466eff39f4e1533db11aee",
+      "anchors": {
+        "farFingers": {
+          "x": 66.50295857988165,
+          "y": 770
+        },
+        "nearFingers": {
+          "x": 410.65656565656565,
+          "y": 850
+        },
+        "farToe": {
+          "x": 1163.7787610619469,
+          "y": 710
+        },
+        "nearToe": {
+          "x": 1271.638888888889,
+          "y": 740
+        }
+      },
+      "invariantDimensions": {
+        "farFingersSpan": 157.28135514560853,
+        "nearFingersSpan": 175.08481365377924,
+        "farToeSpan": 101.85426646098904,
+        "nearToeSpan": 106.74904214559388
+      }
+    },
+    {
+      "path": "form-frames/push-ups/4.webp",
+      "sha256": "efefd81e30be09ea9f7d44ed3efe281bbc9e8aeb3c466eff39f4e1533db11aee",
+      "anchors": {
+        "farFingers": {
+          "x": 66.50295857988165,
+          "y": 770
+        },
+        "nearFingers": {
+          "x": 410.65656565656565,
+          "y": 850
+        },
+        "farToe": {
+          "x": 1163.7787610619469,
+          "y": 710
+        },
+        "nearToe": {
+          "x": 1271.638888888889,
+          "y": 740
+        }
+      },
+      "invariantDimensions": {
+        "farFingersSpan": 157.28135514560853,
+        "nearFingersSpan": 175.08481365377924,
+        "farToeSpan": 101.85426646098904,
+        "nearToeSpan": 106.74904214559388
+      }
+    },
+    {
+      "path": "form-frames/push-ups/5.webp",
+      "sha256": "2ad3ba54db3edc30d04cc53a59dfac6cf1731f278f7f9321b192bb646ed9c835",
+      "anchors": {
+        "farFingers": {
+          "x": 66.50867052023122,
+          "y": 770
+        },
+        "nearFingers": {
+          "x": 410.22857142857146,
+          "y": 850
+        },
+        "farToe": {
+          "x": 1163.984251968504,
+          "y": 710
+        },
+        "nearToe": {
+          "x": 1271.7080745341616,
+          "y": 740
+        }
+      },
+      "invariantDimensions": {
+        "farFingersSpan": 157.26910725754655,
+        "nearFingersSpan": 174.43809523809517,
+        "farToeSpan": 101.71668261093532,
+        "nearToeSpan": 106.8990683229813
+      }
+    },
+    {
+      "path": "form-frames/push-ups/6.webp",
+      "sha256": "5639a5655874f8e6378faebe5b928e102fc11cdb42bb72a56c2aa22e5c39dbb6",
+      "anchors": {
+        "farFingers": {
+          "x": 65.93150684931507,
+          "y": 770
+        },
+        "nearFingers": {
+          "x": 410.65656565656565,
+          "y": 850
+        },
+        "farToe": {
+          "x": 1164.5118110236222,
+          "y": 710
+        },
+        "nearToe": {
+          "x": 1272.1454545454546,
+          "y": 740
+        }
+      },
+      "invariantDimensions": {
+        "farFingersSpan": 157.08911170738597,
+        "nearFingersSpan": 175.08481365377924,
+        "farToeSpan": 101.31236480055372,
+        "nearToeSpan": 107.33516560958401
+      }
+    }
+  ]
+}

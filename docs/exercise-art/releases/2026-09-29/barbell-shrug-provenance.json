@@ -1,0 +1,167 @@
+{
+  "modelPath": "Built-in imagegen only. Frozen original master with newly corrected middle/top, targeted arm-length corrections and top background repair; no deterministic moving-image edits or model fallback.",
+  "canonicalReference": {
+    "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+  },
+  "nativeDimensions": {
+    "width": 1024,
+    "height": 1536
+  },
+  "historicalOwnerRelease": {
+    "path": "docs/exercise-art/releases/2026-09-owner/barbell-shrug.json",
+    "sha256": "90deb6c0848d777347be05359b1952fbd9d902306d5e9d598b83f3a5707342a1",
+    "note": "Preserved unchanged as history; new strict review covers replacement assets/cues."
+  },
+  "originalGeneration": [
+    {
+      "file": "BATCH_GENERATION_LOG.json",
+      "calls": []
+    },
+    {
+      "file": "BATCH_03_GENERATION_LOG.json",
+      "calls": [
+        {
+          "frame": 1,
+          "id": "barbell-shrug",
+          "path": "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/barbell-shrug/1-master.png",
+          "prompt": "Edit the supplied exact canonical athlete/barbell scene into the START master for BARBELL SHRUG. Keep athlete identity, head/torso/limb proportions, body position, feet, white low-top shoes, bar position at thighs, bar length and ONE modest plate each side, camera crop/zoom and black background identical. Change ONLY grip and muscle highlights for the exercise: both hands must use a closed OVERHAND pronated shoulder-width grip, knuckles forward and thumbs wrapped, rather than the supplied underhand curl grip. Arms hang straight with elbows unbent. Shoulders relaxed at neutral, not elevated yet. Remove purple entirely from biceps and chest. Highlight only the visible UPPER TRAPEZIUS fibres running from back of neck to shoulder tops in deep purple; don't colour front neck/SCM or entire deltoids. Forearm gripping muscles light lilac, subtle pale trunk. Keep anatomy contours sharp and muscles the same size. Six-frame plan is neutral / small shrug / middle shrug / top / middle lowering / nearly neutral; show only neutral here. One separate native1024x1536 image, no text, labels or UI.",
+          "refs": [
+            "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/barbell-curl/1-master.png"
+          ]
+        },
+        {
+          "frame": 2,
+          "id": "barbell-shrug",
+          "path": "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/barbell-shrug/2-early.png",
+          "prompt": "Edit this exact BARBELL SHRUG master into frame2 BEGIN SHRUG. Raise the shoulder girdle and BOTH straight hanging arms by a small vertical amount, about15pixels. The rigid bar rises by the same15pixels, with both ends level. Keep elbows unbent, wrists straight, overhand grip width unchanged. Head, jaw, neck centre, torso/ribcage, hips, knees and shoes must stay exactly fixed. Only shoulder elevation/scapular motion, not a curl or upright row; no leaning, rolling or arm shortening. Same bar length/thickness, same one plate each side, same perspective and plate dimensions. Upper trapezius purple unchanged, forearms lilac unchanged, all other anatomy white. Same black canvas and camera, no text. One separate native1024x1536 image.",
+          "refs": [
+            "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/barbell-shrug/1-master.png"
+          ]
+        },
+        {
+          "frame": 4,
+          "id": "barbell-shrug",
+          "path": "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/barbell-shrug/4-top.png",
+          "prompt": "Edit this exact BARBELL SHRUG middle position into the TOP. Elevate both shoulders only a SMALL additional amount, around15–20pixels, keeping the head perfectly stationary and neck neutral. The straight arms carry the rigid bar upward by the SAME amount. Do not bend elbows, pull with biceps, tilt bar, lean torso or lift heels. Shoulders approach ears but do not touch them or deform neck. All head, ribcage, hips, legs and shoe positions and dimensions remain fixed. Same overhand closed grip, identical bar and one plate per side with no size/perspective changes. Upper traps remain deep purple, forearms lilac, no new highlights. One native1024x1536 standalone frame on black, no text.",
+          "refs": [
+            "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/barbell-shrug/2-early.png"
+          ]
+        },
+        {
+          "frame": 2,
+          "id": "barbell-shrug",
+          "path": "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/barbell-shrug/2-local-edit.png",
+          "prompt": "STRICT LOCAL EDIT, not a whole-person pose regeneration. Use the provided barbell-shrug START image. The entire LOWER HALF of this picture from y850 through1535 is LOCKED: copy it unchanged, including hips, knees, calves, ankles, shoes and black margins. Shoe bottoms remain far y1418 and near y1478. The head from y0–215 is also LOCKED. Edit only shoulder region y220–390, and the straight arms/bar region y390–850. Raise the shoulders by about20px, carrying straight arms and the existing rigid bar up20px. Do NOT shift the pelvis, legs or feet up; do NOT shorten the body. Leave the chest/abdominal centre at its original coordinates. This is small shoulder elevation with a neutral neck, elbows straight, identical closed overhand grip and plate sizes. Preserve every other detail and exact image registration. Black background, white anatomical athlete, purple upper trapezius. One separate native1024x1536 image, no text.",
+          "refs": [
+            "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/barbell-shrug/1-master.png"
+          ],
+          "revision": "explicit lower-half lock"
+        }
+      ]
+    }
+  ],
+  "originalSources": [
+    {
+      "path": "docs/exercise-art/pilots/barbell-shrug/1-master.png",
+      "sha256": "f15ee5e946f71387617afe27efffe579006a327c1c87a9e87eb7f94f8da38f12"
+    }
+  ],
+  "generation": [
+    {
+      "file": "middle-arm-correction-prompt.json",
+      "prompt": "Target first image is candidate middle shrug. Second is frozen SETUP MASTER; third identity. Make a precise mechanical correction to FIRST. Its shoes/pelvis/head now match master: keep them and its slightly elevated shoulders unchanged. But bar and hands rose too far, shortening straight arms. Lower the candidate ENTIRE barbell/closed hands by about40 native pixels: bar axis must be y740, rather than candidate y700, on same1024x1536canvas. Setup master axis is y765, so desired middle axis is just25px above setup. Extend both arms naturally from unchanged candidate shoulders to hands at corrected y740; keep elbows straight, original arm lengths and horizontal grips. Keep exactly the master barbell plate sizes, rigidbar length, no grip sliding. Do not lift shoulders further, change torso, move hips/legs/shoes/head, change camera/scale or add any glow. Preserve blackbackground, fine-contour whitegrey faceless anatomical athlete, neutral featureless pelvis, strong purple uppertraps and lilac forearms, white trainers. ONEimage, no text.",
+      "output": "exec-d6416223-440b-4604-8955-faa71e6bdc88.png"
+    },
+    {
+      "file": "middle-from-master-prompt.json",
+      "prompt": "Edit target/reference 1 is the frozen barbell shrug setup master. Reference 2 is identity/style only. Produce ONE full-resolution 1024x1536 intermediate barbell shrug frame, no text. Preserve the master camera, head, pelvis, legs, knees, both shoes and their exact positions, crop, black background, scene scale, anatomy identity and purple trap/lilac forearm hierarchy. Only elevate both shoulder girdles a modest 25 native pixels toward the ears, without rolling or raising the ribcage. Arms stay straight and constant length: elbows, closed hands and the ENTIRE rigid bar with its two modest identical plates travel upward by the same 25 pixels with shoulders. Preserve exact horizontal grip spacing, bar length/thickness, plate dimensions and hand attachments. Do not bend elbows, shorten arms, stretch trunk, lift heels, shift knees/feet, zoom or reframe. The lower body remains exactly the setup master. Smooth featureless neutral pelvis, fine crisp contours. One athlete, one straight barbell, original style.",
+      "output": "exec-9dd099c9-daa4-4514-a6e8-4575ed7c3f39.png"
+    },
+    {
+      "file": "top-arm-correction-prompt.json",
+      "prompt": "Precise local anatomy repair of FIRST image, the existing top shrug candidate. Do NOT generate a new pose. Second image is frozen setup master defining athlete proportions and bar; third canonical style. First image's shoulders are already at correct elevated TOP height: keep head, shoulders, chest, torso, hips, legs and shoes unchanged. Problem: its straight arms have become too short, pulling hands/bar too close to the chest. Restore original full humerus and forearm lengths relative to master, letting BOTH hands and the entire rigid barbell settle slightly LOWER, around one bar-shaft thickness (about20px). Keep shoulder elevation fully intact. The near shoulder-to-grip span should match setup master: approximately500px rather than current480px on the1024x1536canvas. Arms hang straight with soft straight elbows, no bend/curl. Preserve horizontal grip span and identical plate shapes and bar dimensions. Changes are limited to length-corrected straight arms, attached hands and corresponding lower barbell. Everything else visually unchanged. Same highquality fine whitegrey faceless anatomy, featureless neutral pelvis, purple uppertraps and lilac forearms, white trainers on black. One image, no text/no halo.",
+      "output": "exec-af860e06-881e-41cd-ae00-f1b080f03cae.png"
+    },
+    {
+      "file": "top-background-prompt.json",
+      "prompt": "Background-only repair of FIRST image. Remove the unwanted grey/white/purple glow around the athlete and barbell, replacing all empty background with uniform pure black, matching frozen master SECOND image. Keep the FIRST image athlete pose, exact silhouette, elevated shoulders, full arm lengths, hands/grip/barbell height, plates, anatomy shading, muscle tints, trainers and native1024x1536 framing unchanged. Do not redraw body, alter any outlines, lower shoulders, move barbell or add shadows/halo. Third image is identity reference only. One fullresolution image, no text.",
+      "output": "exec-bf319779-ae1f-4dc3-9f0a-4c8a27954ef4.png"
+    },
+    {
+      "file": "top-prompt.json",
+      "prompt": "Create ONE top-position BARBELL SHRUG frame by editing FIRST reference (corrected intermediate). SECOND reference is the frozen exercise setup master; THIRD the canonical identity. Keep first image's exact native1024x1536canvas, framing, head location, pelvis, legs, knees, shoes and floor positions. Only elevate BOTH shoulder girdles another small25pixels toward ears, with chest and torso staying still. Straight arms follow the shoulders without shortening: translate elbows, forearms, closed hands and entire rigid barbell upward together by that same25pixels. Intermediate bar axis is about735; top axis should be about710. Original setup about765. Keep horizontal hand spacing/bar length/plate dimensions exact, one modest identical plate per end. Elbows remain straight, wrists neutral, no shoulder rolling or neck craning. Same whitegrey anatomy, strong purple uppertraps, lilac forearm grip muscles, neutral featureless pelvis and white trainers. Black background no halo, no text, no arrows. Do not scale body, shift feet, bend elbows or turn shrug into a curl.",
+      "output": "exec-4bf83d15-830e-4b06-9193-308cf620f92a.png"
+    }
+  ],
+  "generatedOutputs": [
+    {
+      "file": "middle-arm-corrected.png",
+      "sha256": "95e4911712102041d54e2630f05f5102fd8f7ee771b33a44decf278914afce9e"
+    },
+    {
+      "file": "middle-from-master-candidate.png",
+      "sha256": "9fd591fa9b482a361d2e64012586df9e59b372bdd09bd6e7a499323eae1268a9"
+    },
+    {
+      "file": "top-arm-corrected-halo.png",
+      "sha256": "9abb17b099c55cc69b55608ca82a547ed9cb8f06eb38c9fd89a91f5b9647c815"
+    },
+    {
+      "file": "top-background-corrected.png",
+      "sha256": "c3d3eac7eff339d2f1d2c590c7454b7509685e0cdc1b334d5240d9c6328aacf6"
+    },
+    {
+      "file": "top-candidate.png",
+      "sha256": "1a3dfeeb53280fa48b0ce56f6bbaf3c8baad1c5097dd140db13aaca90b1f48a4"
+    }
+  ],
+  "deterministicRepairs": [],
+  "selectedPngs": [
+    {
+      "frame": 1,
+      "sha256": "f15ee5e946f71387617afe27efffe579006a327c1c87a9e87eb7f94f8da38f12"
+    },
+    {
+      "frame": 2,
+      "sha256": "95e4911712102041d54e2630f05f5102fd8f7ee771b33a44decf278914afce9e"
+    },
+    {
+      "frame": 3,
+      "sha256": "c3d3eac7eff339d2f1d2c590c7454b7509685e0cdc1b334d5240d9c6328aacf6"
+    },
+    {
+      "frame": 4,
+      "sha256": "c3d3eac7eff339d2f1d2c590c7454b7509685e0cdc1b334d5240d9c6328aacf6"
+    },
+    {
+      "frame": 5,
+      "sha256": "95e4911712102041d54e2630f05f5102fd8f7ee771b33a44decf278914afce9e"
+    },
+    {
+      "frame": 6,
+      "sha256": "f15ee5e946f71387617afe27efffe579006a327c1c87a9e87eb7f94f8da38f12"
+    }
+  ],
+  "reuse": {
+    "4": 3,
+    "5": 2,
+    "6": 1
+  },
+  "conversion": "Lossless WebP decoded RGB exactly equals reviewed PNG. No scaling.",
+  "measurementMethod": "Interpolated minimum-RGB150 scanline boundaries on native selected PNGs. Unrounded1px/1percent tests measure fixed contacts only, not moving anatomy or equipment.",
+  "scanlines": {
+    "farShoe": [
+      250,
+      500,
+      1390,
+      150
+    ],
+    "nearShoe": [
+      495,
+      710,
+      1440,
+      150
+    ]
+  }
+}

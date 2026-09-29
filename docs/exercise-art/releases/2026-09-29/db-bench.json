@@ -1,0 +1,230 @@
+{
+  "exerciseId": "db-bench",
+  "version": "anatomy-v3-2026-09-29",
+  "width": 1536,
+  "height": 1024,
+  "decision": "approved",
+  "reviewer": "Codex visual and implementation review",
+  "reviewedAt": "2026-09-29T11:21:00.473Z",
+  "reference": {
+    "path": "form-frames/db-bench/1.webp",
+    "sha256": "5a77b37330ccaf552f8f869a301f8bb8a6353982b60300a1464246499517bb9d"
+  },
+  "cueSha256": "b98f73cb1fb992010267414f1376bde066bbe753061c3c0e946ee1cf62190262",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Canonical bald faceless white-grey athlete, fine contours, featureless pelvis and white trainers retained. Selected original master/middle/bottom required no new generation or deterministic image repair."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Fixed front three-quarter bench view, native1536x1024. Head, both weights, bench supports and planted shoes remain visible at one scene scale."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Native review shows elbows bending beside the torso, forearms upright and wrists aligned above elbows in middle/bottom. Arms extend above chest without weight collision. Head, shoulders and hips stay supported. No calibrated numerical-angle claim."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Flat padded bench retains both support posts/base feet. Paired modest round-ended dumbbells keep straight handles, closed grips and consistent construction through the press. Native inspection assesses moving equipment qualitatively; fixed scans do not prove dumbbell dimensions."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Head/upper back/hips remain on bench; both shoes stay planted. Hands stay closed around dumbbell handles with continuous wrist connections. No patch seams because source poses were copied unchanged."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Both weights lower beside chest and press back above it while the trunk stays supported. Four fixed scans for bench bases and shoes pass one-pixel/one-percent unrounded bounds without repairs."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Strongest purple on chest, lighter lilac front delts/triceps, pale support shading where visible. Legs remain neutral and highlight hierarchy stays consistent."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Six cues of at most seven words describe supported setup, aligned lowering, bottom/control, pressing and complete top reset. They match the exact dumbbell bench press variation."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "Manually stepped all six and6-to1 in current ExerciseFormFrames on29September2026. Top/middle/bottom/hold/middle/top uses4=3,5=2,6=1. No continuous timed-playback claim."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "All six and loop reviewed at390x844 in current light player. Complete athlete/bench/weights visible, all cues legible including wrapped captions, documentwidth390 and native1536x1024 verified; no console errors."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "All six and loop reviewed at390x844 in current dark player. Elbow/weight travel, supports and full reset remain legible without clipping or visible fixed-anchor jumps."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/db-bench/1.webp",
+      "sha256": "5a77b37330ccaf552f8f869a301f8bb8a6353982b60300a1464246499517bb9d",
+      "anchors": {
+        "frontBase": {
+          "x": 335.61538461538464,
+          "y": 900
+        },
+        "rearBase": {
+          "x": 890.8235294117648,
+          "y": 800
+        },
+        "farShoe": {
+          "x": 936.5925925925926,
+          "y": 745
+        },
+        "nearShoe": {
+          "x": 1142.0408163265306,
+          "y": 815
+        }
+      },
+      "invariantDimensions": {
+        "frontBaseSpan": 134.7060439560439,
+        "rearBaseSpan": 99.86877828054298,
+        "farShoeSpan": 141.224715099715,
+        "nearShoeSpan": 191.15236549165115
+      }
+    },
+    {
+      "path": "form-frames/db-bench/2.webp",
+      "sha256": "9084ffcc2c3be0040f77e1cbbfadbb66f6582173cd687f7fa63502d677d27aaf",
+      "anchors": {
+        "frontBase": {
+          "x": 335.4848484848485,
+          "y": 900
+        },
+        "rearBase": {
+          "x": 891.25,
+          "y": 800
+        },
+        "farShoe": {
+          "x": 936.6927083333334,
+          "y": 745
+        },
+        "nearShoe": {
+          "x": 1142,
+          "y": 815
+        }
+      },
+      "invariantDimensions": {
+        "frontBaseSpan": 134.69372294372295,
+        "rearBaseSpan": 99.6730769230769,
+        "farShoeSpan": 141.17327104811,
+        "nearShoeSpan": 191.21686746987962
+      }
+    },
+    {
+      "path": "form-frames/db-bench/3.webp",
+      "sha256": "ef629b472ea52e413a223599a5dfb0ab8911c03a07b1a84a55336593d215f358",
+      "anchors": {
+        "frontBase": {
+          "x": 335.4848484848485,
+          "y": 900
+        },
+        "rearBase": {
+          "x": 891,
+          "y": 800
+        },
+        "farShoe": {
+          "x": 936.6830601092896,
+          "y": 745
+        },
+        "nearShoe": {
+          "x": 1141.7989130434783,
+          "y": 815
+        }
+      },
+      "invariantDimensions": {
+        "frontBaseSpan": 134.27705627705626,
+        "rearBaseSpan": 99.61904761904759,
+        "farShoeSpan": 140.9861706599412,
+        "nearShoeSpan": 191.3856107660456
+      }
+    },
+    {
+      "path": "form-frames/db-bench/4.webp",
+      "sha256": "ef629b472ea52e413a223599a5dfb0ab8911c03a07b1a84a55336593d215f358",
+      "anchors": {
+        "frontBase": {
+          "x": 335.4848484848485,
+          "y": 900
+        },
+        "rearBase": {
+          "x": 891,
+          "y": 800
+        },
+        "farShoe": {
+          "x": 936.6830601092896,
+          "y": 745
+        },
+        "nearShoe": {
+          "x": 1141.7989130434783,
+          "y": 815
+        }
+      },
+      "invariantDimensions": {
+        "frontBaseSpan": 134.27705627705626,
+        "rearBaseSpan": 99.61904761904759,
+        "farShoeSpan": 140.9861706599412,
+        "nearShoeSpan": 191.3856107660456
+      }
+    },
+    {
+      "path": "form-frames/db-bench/5.webp",
+      "sha256": "9084ffcc2c3be0040f77e1cbbfadbb66f6582173cd687f7fa63502d677d27aaf",
+      "anchors": {
+        "frontBase": {
+          "x": 335.4848484848485,
+          "y": 900
+        },
+        "rearBase": {
+          "x": 891.25,
+          "y": 800
+        },
+        "farShoe": {
+          "x": 936.6927083333334,
+          "y": 745
+        },
+        "nearShoe": {
+          "x": 1142,
+          "y": 815
+        }
+      },
+      "invariantDimensions": {
+        "frontBaseSpan": 134.69372294372295,
+        "rearBaseSpan": 99.6730769230769,
+        "farShoeSpan": 141.17327104811,
+        "nearShoeSpan": 191.21686746987962
+      }
+    },
+    {
+      "path": "form-frames/db-bench/6.webp",
+      "sha256": "5a77b37330ccaf552f8f869a301f8bb8a6353982b60300a1464246499517bb9d",
+      "anchors": {
+        "frontBase": {
+          "x": 335.61538461538464,
+          "y": 900
+        },
+        "rearBase": {
+          "x": 890.8235294117648,
+          "y": 800
+        },
+        "farShoe": {
+          "x": 936.5925925925926,
+          "y": 745
+        },
+        "nearShoe": {
+          "x": 1142.0408163265306,
+          "y": 815
+        }
+      },
+      "invariantDimensions": {
+        "frontBaseSpan": 134.7060439560439,
+        "rearBaseSpan": 99.86877828054298,
+        "farShoeSpan": 141.224715099715,
+        "nearShoeSpan": 191.15236549165115
+      }
+    }
+  ]
+}

@@ -1,0 +1,170 @@
+{
+  "exerciseId": "barbell-shrug",
+  "version": "anatomy-v3-2026-09-29",
+  "width": 1024,
+  "height": 1536,
+  "decision": "approved",
+  "reviewer": "Codex visual and implementation review",
+  "reviewedAt": "2026-09-29T11:55:56.621Z",
+  "reference": {
+    "path": "form-frames/barbell-shrug/1.webp",
+    "sha256": "6b0c887d9d7b07db7cb1820faa1e5a22567ac6d3f0aedc46882eefd8107ca554"
+  },
+  "cueSha256": "c645eb0c2967731fb295dfee08e2c2d92515f48a66cb7a1e4b163f02763c9ab9",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Canonical bald faceless white-grey athlete, fine contours, smooth featureless pelvis and white trainers retained. Built-in imagegen corrected intermediate/top from the frozen master; no deterministic anatomy edits."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Fixed front three-quarter view at native1024x1536. Full head, barbell and both shoes remain visible at one scene scale."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Native review checked straight elbows and shoulder-to-grip proportions after targeted arm-length corrections. Shoulders elevate without a curl, torso rocking or neck craning. This is qualitative anatomical review, not calibrated joint-angle measurement."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "One modest plate per bar end, straight rigid shaft and constant overhand grip span remain visually consistent. Moving bar/plates reviewed natively and sequentially; fixed-foot scans do not prove equipment invariance."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Hands remain closed around shaft throughout. Both feet remain planted with no visible jumps; two native shoe scans pass unrounded one-pixel/one-percent bounds."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Bar follows shoulder elevation while arms remain straight. Original poses with rising shoes and candidates with shortened arms were rejected. Final top background repair removed the introduced glow without a visible pose change."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Strongest purple on upper trapezius and lighter lilac forearm grip muscles; chest, shoulders and legs remain neutral. Highlight hierarchy remains stable."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Six cues of at most seven words match setup, elevation, top, hold, controlled lowering and full reset. No shoulder rolling instruction."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "Manually stepped all6 plus6-to1 in current ExerciseFormFrames on29September2026. Selected master/correctedmiddle/correctedtop/top/middle/master. No continuous timed-playback claim."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "All6+loop inspected at390x844 in current light player. Full athlete and bar visible, cues readable, documentwidth390 and native1024x1536 confirmed; no console errors."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "All6+loop inspected at390x844 in current dark player. Shoulder/bar travel and fixed shoes remain legible without clipping or visible reset jump."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/barbell-shrug/1.webp",
+      "sha256": "6b0c887d9d7b07db7cb1820faa1e5a22567ac6d3f0aedc46882eefd8107ca554",
+      "anchors": {
+        "farShoe": {
+          "x": 270.91603053435114,
+          "y": 1390
+        },
+        "nearShoe": {
+          "x": 510.99056603773585,
+          "y": 1440
+        }
+      },
+      "invariantDimensions": {
+        "farShoeSpan": 220.35293498289025,
+        "nearShoeSpan": 170.71469712015886
+      }
+    },
+    {
+      "path": "form-frames/barbell-shrug/2.webp",
+      "sha256": "e823695c168e59319bf51737aeae7ea51c2622003f0a92ec0c2261164570f21a",
+      "anchors": {
+        "farShoe": {
+          "x": 271.1,
+          "y": 1390
+        },
+        "nearShoe": {
+          "x": 510.64444444444445,
+          "y": 1440
+        }
+      },
+      "invariantDimensions": {
+        "farShoeSpan": 220.31975308641972,
+        "nearShoeSpan": 170.9473922902494
+      }
+    },
+    {
+      "path": "form-frames/barbell-shrug/3.webp",
+      "sha256": "859f2a47b6cdfe9915e9711760d9503eebdac3f6e268652ce51bb6649fc4e3c4",
+      "anchors": {
+        "farShoe": {
+          "x": 271.44736842105266,
+          "y": 1390
+        },
+        "nearShoe": {
+          "x": 511.3,
+          "y": 1440
+        }
+      },
+      "invariantDimensions": {
+        "farShoeSpan": 220.15263157894736,
+        "nearShoeSpan": 171.02258064516133
+      }
+    },
+    {
+      "path": "form-frames/barbell-shrug/4.webp",
+      "sha256": "859f2a47b6cdfe9915e9711760d9503eebdac3f6e268652ce51bb6649fc4e3c4",
+      "anchors": {
+        "farShoe": {
+          "x": 271.44736842105266,
+          "y": 1390
+        },
+        "nearShoe": {
+          "x": 511.3,
+          "y": 1440
+        }
+      },
+      "invariantDimensions": {
+        "farShoeSpan": 220.15263157894736,
+        "nearShoeSpan": 171.02258064516133
+      }
+    },
+    {
+      "path": "form-frames/barbell-shrug/5.webp",
+      "sha256": "e823695c168e59319bf51737aeae7ea51c2622003f0a92ec0c2261164570f21a",
+      "anchors": {
+        "farShoe": {
+          "x": 271.1,
+          "y": 1390
+        },
+        "nearShoe": {
+          "x": 510.64444444444445,
+          "y": 1440
+        }
+      },
+      "invariantDimensions": {
+        "farShoeSpan": 220.31975308641972,
+        "nearShoeSpan": 170.9473922902494
+      }
+    },
+    {
+      "path": "form-frames/barbell-shrug/6.webp",
+      "sha256": "6b0c887d9d7b07db7cb1820faa1e5a22567ac6d3f0aedc46882eefd8107ca554",
+      "anchors": {
+        "farShoe": {
+          "x": 270.91603053435114,
+          "y": 1390
+        },
+        "nearShoe": {
+          "x": 510.99056603773585,
+          "y": 1440
+        }
+      },
+      "invariantDimensions": {
+        "farShoeSpan": 220.35293498289025,
+        "nearShoeSpan": 170.71469712015886
+      }
+    }
+  ]
+}

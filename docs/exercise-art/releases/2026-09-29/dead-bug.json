@@ -1,0 +1,170 @@
+{
+  "exerciseId": "dead-bug",
+  "version": "anatomy-v3-2026-09-29",
+  "width": 1536,
+  "height": 1024,
+  "decision": "approved",
+  "reviewer": "Codex visual and implementation review",
+  "reviewedAt": "2026-09-29T14:24:51.083Z",
+  "reference": {
+    "path": "form-frames/dead-bug/3.webp",
+    "sha256": "a4724700049b2233a62439f44366dcc0b312483bd1171a8d93a8bec3963e5f5e"
+  },
+  "cueSha256": "277c9dcf6076c904abe4252eb0709a584f4d77a7733b558c32daf57126c3a8e7",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Bald faceless grey-white fine-contour anatomy, neutral featureless pelvis and white trainers retained across all four distinct poses."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Native1536x1024 fixed side-three-quarter view; full mat, feet and hands stay visible. Original frozen tabletop master retained at frames1,3and6."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Near/far shoulder chains traced at native size. PairA moves foreground arm and background leg; repaired pairB keeps foreground arm upright while background arm reaches overhead and foreground leg extends. Exactly two arms and two legs in each selected frame; duplicate-leg intermediate rejected and repaired with built-in imagegen. Limb proportions visually plausible; no calibrated3D angle claim."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Thin fixed mat retains both edge boundaries at two native scanlines, within unrounded1px/1percent gates. No equipment or deterministic image repairs were needed in final selection."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Lower back and pelvis remain supported through both opposite-pair reaches; no visible gap beneath lumbar contact or lifted hips. Head remains supported. Contact assessed visually, not inferred solely from mat scans."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Opposite arm and leg extend with the other pair held in tabletop/upright; each side returns to neutral before alternating. No same-side pairing, extra limb or supporting-foot load shown."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Strongest purple core/abs/obliques, lighter lilac hip flexors, remaining anatomy neutral. Qualitative hierarchy remains consistent across alternating phases."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Six cues describe neutral setup, fullA, neutral return, fullB, partialB return and neutral reset. These are discrete teaching phases, not equal angular intervals."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "Revised neutral-first sequence manually stepped all six and6to1 in current ExerciseFormFrames on29September2026. Frames1,3and6 are matching tabletop configurations. Both pairs extend then return; B return has an explicit intermediate. No continuous timed-playback claim."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "Revised six-step order and cues reviewed at390x844 in light theme, all six plus loop. Full body and text visible; natural1536x1024/document390 confirmed, no console errors."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "Revised all-six sequence plus loop reviewed at390x844 in dark theme. Starts and ends in tabletop, distinct opposite-pair extensions and partialB return are legible, no clipping or mat movement."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/dead-bug/1.webp",
+      "sha256": "a4724700049b2233a62439f44366dcc0b312483bd1171a8d93a8bec3963e5f5e",
+      "anchors": {
+        "matNearEdge": {
+          "x": 21.133333333333333,
+          "y": 680
+        },
+        "matWideEdge": {
+          "x": 54.17307692307692,
+          "y": 650
+        }
+      },
+      "invariantDimensions": {
+        "matNearEdgeSpan": 1491.5974358974358,
+        "matWideEdgeSpan": 1424.4102564102564
+      }
+    },
+    {
+      "path": "form-frames/dead-bug/2.webp",
+      "sha256": "1704f12c9b5e345a572dcb6dc5a3cc6cd35c05044e57a8d6c5a455b7a3cdf280",
+      "anchors": {
+        "matNearEdge": {
+          "x": 21.066666666666666,
+          "y": 680
+        },
+        "matWideEdge": {
+          "x": 53.25,
+          "y": 650
+        }
+      },
+      "invariantDimensions": {
+        "matNearEdgeSpan": 1491.7666666666667,
+        "matWideEdgeSpan": 1425.7311320754718
+      }
+    },
+    {
+      "path": "form-frames/dead-bug/3.webp",
+      "sha256": "a4724700049b2233a62439f44366dcc0b312483bd1171a8d93a8bec3963e5f5e",
+      "anchors": {
+        "matNearEdge": {
+          "x": 21.133333333333333,
+          "y": 680
+        },
+        "matWideEdge": {
+          "x": 54.17307692307692,
+          "y": 650
+        }
+      },
+      "invariantDimensions": {
+        "matNearEdgeSpan": 1491.5974358974358,
+        "matWideEdgeSpan": 1424.4102564102564
+      }
+    },
+    {
+      "path": "form-frames/dead-bug/4.webp",
+      "sha256": "27eda301137b5f35744d1f21fce0952cde3b02e9dc2667a4dc0d52af0322b2bc",
+      "anchors": {
+        "matNearEdge": {
+          "x": 21.05,
+          "y": 680
+        },
+        "matWideEdge": {
+          "x": 53.69230769230769,
+          "y": 650
+        }
+      },
+      "invariantDimensions": {
+        "matNearEdgeSpan": 1490.8447368421052,
+        "matWideEdgeSpan": 1424.5384615384617
+      }
+    },
+    {
+      "path": "form-frames/dead-bug/5.webp",
+      "sha256": "8a5e919bd71fffe6b69205e985d1751626d235ad55d8ac1160cca3dde169bae9",
+      "anchors": {
+        "matNearEdge": {
+          "x": 21.02469135802469,
+          "y": 680
+        },
+        "matWideEdge": {
+          "x": 53.214285714285715,
+          "y": 650
+        }
+      },
+      "invariantDimensions": {
+        "matNearEdgeSpan": 1491.3324514991182,
+        "matWideEdgeSpan": 1425.475369458128
+      }
+    },
+    {
+      "path": "form-frames/dead-bug/6.webp",
+      "sha256": "a4724700049b2233a62439f44366dcc0b312483bd1171a8d93a8bec3963e5f5e",
+      "anchors": {
+        "matNearEdge": {
+          "x": 21.133333333333333,
+          "y": 680
+        },
+        "matWideEdge": {
+          "x": 54.17307692307692,
+          "y": 650
+        }
+      },
+      "invariantDimensions": {
+        "matNearEdgeSpan": 1491.5974358974358,
+        "matWideEdgeSpan": 1424.4102564102564
+      }
+    }
+  ]
+}

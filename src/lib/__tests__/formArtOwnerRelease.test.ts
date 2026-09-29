@@ -6,14 +6,7 @@ import { getFormBeats } from "../bodyRig";
 import { validateOwnerArtworkRelease } from "../formArtOwnerRelease";
 import { validateArtworkReview } from "../formArtReview";
 
-const ids = [
-  "goblet-squat",
-  "push-ups",
-  "squat",
-  "barbell-curl",
-  "db-bench",
-  "barbell-shrug",
-];
+const ids = ["goblet-squat", "squat", "barbell-curl"];
 const sha = (bytes: string | Buffer) =>
   createHash("sha256").update(bytes).digest("hex");
 function evidence(id: string) {
@@ -54,7 +47,7 @@ describe("owner-authorized artwork activation", () => {
      I/O, and raising it further would be treating the symptom. If this
      starts failing regularly rather than occasionally, the thing to
      look at is suite concurrency, not this number. */
-  it("ships exactly six owner-authorized guides bound to source, delivered assets and cues", () => {
+  it("ships exactly three owner-authorized guides bound to source, delivered assets and cues", () => {
     expect(
       Object.keys(FORM_ARTWORK)
         .filter(
@@ -86,6 +79,15 @@ describe("owner-authorized artwork activation", () => {
       "db-curl",
       "hammer-curl",
       "front-raise",
+      "push-ups",
+      "db-bench",
+      "barbell-shrug",
+      "lateral-raise",
+      "pike-push-up",
+      "toe-touches",
+      "dead-bug",
+      "bicycle-crunch",
+      "glute-bridge",
     ]) {
       expect(getReleasedFormArtwork(id)?.status, id).toBe("approved");
       const { review, expected } = evidence(id);

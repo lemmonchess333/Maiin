@@ -1,0 +1,170 @@
+{
+  "exerciseId": "bicycle-crunch",
+  "version": "anatomy-v3-2026-09-29",
+  "width": 1536,
+  "height": 1024,
+  "decision": "approved",
+  "reviewer": "Codex visual and implementation review",
+  "reviewedAt": "2026-09-29T14:42:00.754Z",
+  "reference": {
+    "path": "form-frames/bicycle-crunch/3.webp",
+    "sha256": "44f1530f3bbbe3aa0054d47736bf39c57fefce16a6a1d530ff10a3a194ab6256"
+  },
+  "cueSha256": "ca1646d587a47b7b8b6acc005cfc57cc737cd0693523aba52677c159b62563ff",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Bald faceless grey-white fine-contour anatomy, neutral featureless pelvis and white trainers across four distinct poses."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Native 1536x1024 side-three-quarter camera. New neutral master restores the original twist-scene floor plane; frames 1, 3 and 6 reuse it exactly. Full body and mat remain in view."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Both leg chains and opposite elbow-knee pairings traced at native size. A bends the near knee and extends the far leg; B bends the far knee and extends the near leg. Return B brings the near knee back while unwinding the torso. Exactly two arms and two legs; proportions visually plausible, not a calibrated 3D measurement."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Approved exact master copy of exposed lower mat strip [0,730,1536,880] in frames 2,4,5. All anatomy ends above y730. Source/master/output hashes and zero-outside-region pixel checks recorded. Native inspection found no obvious seam. Both measured mat boundaries now match the frozen master."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Pelvis and lower trunk stay supported on the mat while shoulders stay lifted. Both feet remain off the floor. Hands support the head throughout; no planted contact region was copied."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Alternating opposite elbow-knee rotation with the other leg extended, followed by return to center. No duplicated leg or floor-supported moving foot. Pedaling return naturally moves both legs."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Strongest purple on obliques with lighter lilac rectus abdominis, matching primary obliques and secondary abs. Limbs remain neutral."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Six cues describe setup, twist A, centered return, twist B, controlled B return and centered reset. They are discrete teaching phases rather than equal motion intervals."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "Manually stepped all six and 6-to-1 in current ExerciseFormFrames on 29 September 2026. Neutral frames 1,3,6 match exactly. Original incorrect return was replaced by built-in imagegen. No continuous timed-playback claim."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "All six and loop reviewed at 390x844 in light theme. Complete figure, mat and cues visible. Natural image 1536x1024, document width390, no console errors."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "All six and loop reviewed at 390x844 in dark theme. Opposite twist pairings and bent-leg return legible, with no clipping or lower-mat movement."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/bicycle-crunch/1.webp",
+      "sha256": "44f1530f3bbbe3aa0054d47736bf39c57fefce16a6a1d530ff10a3a194ab6256",
+      "anchors": {
+        "matNearEdge": {
+          "x": 1113.5,
+          "y": 800
+        },
+        "matWideEdge": {
+          "x": 335,
+          "y": 760
+        }
+      },
+      "invariantDimensions": {
+        "matNearEdgeSpan": 373.3775510204082,
+        "matWideEdgeSpan": 1136.5263157894738
+      }
+    },
+    {
+      "path": "form-frames/bicycle-crunch/2.webp",
+      "sha256": "bb5d22b9faa79574f2ad8407a06d8d2c1deb07750c84d9b0ce0a675d326beaf2",
+      "anchors": {
+        "matNearEdge": {
+          "x": 1113.5,
+          "y": 800
+        },
+        "matWideEdge": {
+          "x": 335,
+          "y": 760
+        }
+      },
+      "invariantDimensions": {
+        "matNearEdgeSpan": 373.3775510204082,
+        "matWideEdgeSpan": 1136.5263157894738
+      }
+    },
+    {
+      "path": "form-frames/bicycle-crunch/3.webp",
+      "sha256": "44f1530f3bbbe3aa0054d47736bf39c57fefce16a6a1d530ff10a3a194ab6256",
+      "anchors": {
+        "matNearEdge": {
+          "x": 1113.5,
+          "y": 800
+        },
+        "matWideEdge": {
+          "x": 335,
+          "y": 760
+        }
+      },
+      "invariantDimensions": {
+        "matNearEdgeSpan": 373.3775510204082,
+        "matWideEdgeSpan": 1136.5263157894738
+      }
+    },
+    {
+      "path": "form-frames/bicycle-crunch/4.webp",
+      "sha256": "27d116ce0c7befd461b6f5a767b47c052f76bd21ca43b9f9caabe99912831d40",
+      "anchors": {
+        "matNearEdge": {
+          "x": 1113.5,
+          "y": 800
+        },
+        "matWideEdge": {
+          "x": 335,
+          "y": 760
+        }
+      },
+      "invariantDimensions": {
+        "matNearEdgeSpan": 373.3775510204082,
+        "matWideEdgeSpan": 1136.5263157894738
+      }
+    },
+    {
+      "path": "form-frames/bicycle-crunch/5.webp",
+      "sha256": "0bf779e8b9b51e7a08c6ee94b74ed168de498748f370e84f42cf7981bf37c259",
+      "anchors": {
+        "matNearEdge": {
+          "x": 1113.5,
+          "y": 800
+        },
+        "matWideEdge": {
+          "x": 335,
+          "y": 760
+        }
+      },
+      "invariantDimensions": {
+        "matNearEdgeSpan": 373.3775510204082,
+        "matWideEdgeSpan": 1136.5263157894738
+      }
+    },
+    {
+      "path": "form-frames/bicycle-crunch/6.webp",
+      "sha256": "44f1530f3bbbe3aa0054d47736bf39c57fefce16a6a1d530ff10a3a194ab6256",
+      "anchors": {
+        "matNearEdge": {
+          "x": 1113.5,
+          "y": 800
+        },
+        "matWideEdge": {
+          "x": 335,
+          "y": 760
+        }
+      },
+      "invariantDimensions": {
+        "matNearEdgeSpan": 373.3775510204082,
+        "matWideEdgeSpan": 1136.5263157894738
+      }
+    }
+  ]
+}

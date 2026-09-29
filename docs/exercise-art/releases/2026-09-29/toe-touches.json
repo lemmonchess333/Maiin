@@ -1,0 +1,230 @@
+{
+  "exerciseId": "toe-touches",
+  "version": "anatomy-v3-2026-09-29",
+  "width": 1536,
+  "height": 1024,
+  "decision": "approved",
+  "reviewer": "Codex visual and implementation review",
+  "reviewedAt": "2026-09-29T14:02:51.491Z",
+  "reference": {
+    "path": "form-frames/toe-touches/1.webp",
+    "sha256": "cfaee4b9b2bccd321f65af5349abb3c14be80c8472e700323a0b130a3dedf793"
+  },
+  "cueSha256": "51e257b7a3e2368a9a973df5dee737232914f9ec524873c3a7bd2cddc5f7a4e2",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Canonical bald faceless white-grey anatomy, fine contours, white trainers and neutral featureless pelvis retained in all three unique poses."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Native1536x1024 fixed three-quarter side composition shows both arms, raised legs, full mat and head without crop or zoom changes."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Native review shows attached limbs and a progressive trunk curl with reaching arms; legs remain nearly vertical with consistent proportions. Posterior pelvic tilt changes the lower hip silhouette, so that contour is not treated as a rigid-width invariant. No calibrated 3D angle claim."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Only a thin fixed mat; exposed lower strip y845to970 copied exactly from master, below all anatomy. Native repaired middle/top inspection found no conspicuous patch seams or body ghosts."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Pelvis stays supported while shoulders lift and return. Two mat scanlines plus held-calf and shoe-pair boundaries satisfy unrounded1px/1percent checks. Mat repair changed zero pixels outside its recorded rectangle."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Shoulders curl off mat and hands reach toward toes without leg swing or a full sit-up; return lowers shoulders to the initial position. No requirement to physically touch toes is claimed."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Strongest purple abs, lighter lilac hip flexors; remaining anatomy neutral. Highlight hierarchy remains stable on return."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Six cues of at most seven words match raised-leg setup, curl, reach, pause, controlled lowering and reset. Exact catalogue bodyweight toe-touches variant."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "Manually stepped all six frames and6to1 in current ExerciseFormFrames on29September2026. Reuse4=3,5=2,6=1 matches pause and return configurations; no continuous timed-playback claim."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "All six plus loop reviewed at390x844 in light theme. Figure, curled shoulder position, held legs and captions visible without clipping; native1536x1024/document390 confirmed and no console errors."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "All six plus loop reviewed at390x844 in dark theme. Reach and reset clearly distinct, mat stable and no visible repair boundary or contact jump."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/toe-touches/1.webp",
+      "sha256": "cfaee4b9b2bccd321f65af5349abb3c14be80c8472e700323a0b130a3dedf793",
+      "anchors": {
+        "shoePair": {
+          "x": 895.408695652174,
+          "y": 80
+        },
+        "heldCalves": {
+          "x": 920.5730337078652,
+          "y": 280
+        },
+        "matNearEdge": {
+          "x": 132.45454545454547,
+          "y": 900
+        },
+        "matWideEdge": {
+          "x": 88.5,
+          "y": 850
+        }
+      },
+      "invariantDimensions": {
+        "shoePairSpan": 137.04096877735628,
+        "heldCalvesSpan": 118.81512418687169,
+        "matNearEdgeSpan": 403.5454545454545,
+        "matWideEdgeSpan": 975.5
+      }
+    },
+    {
+      "path": "form-frames/toe-touches/2.webp",
+      "sha256": "6c4caa9db0caee0081b3c8faffe7d5f3c69c97738e56d187db27fa9f2275a37f",
+      "anchors": {
+        "shoePair": {
+          "x": 895.2828282828283,
+          "y": 80
+        },
+        "heldCalves": {
+          "x": 920.364238410596,
+          "y": 280
+        },
+        "matNearEdge": {
+          "x": 132.45454545454547,
+          "y": 900
+        },
+        "matWideEdge": {
+          "x": 88.5,
+          "y": 850
+        }
+      },
+      "invariantDimensions": {
+        "shoePairSpan": 137.1717171717172,
+        "heldCalvesSpan": 119.21110405515742,
+        "matNearEdgeSpan": 403.5454545454545,
+        "matWideEdgeSpan": 975.5
+      }
+    },
+    {
+      "path": "form-frames/toe-touches/3.webp",
+      "sha256": "85110147bc5b9376b34ed06ff4ac8baf75d260ffd30ed822e591f2870d8eae73",
+      "anchors": {
+        "shoePair": {
+          "x": 895.9043478260869,
+          "y": 80
+        },
+        "heldCalves": {
+          "x": 920.5228758169935,
+          "y": 280
+        },
+        "matNearEdge": {
+          "x": 132.45454545454547,
+          "y": 900
+        },
+        "matWideEdge": {
+          "x": 88.5,
+          "y": 850
+        }
+      },
+      "invariantDimensions": {
+        "shoePairSpan": 137.06708074534163,
+        "heldCalvesSpan": 118.99564270152496,
+        "matNearEdgeSpan": 403.5454545454545,
+        "matWideEdgeSpan": 975.5
+      }
+    },
+    {
+      "path": "form-frames/toe-touches/4.webp",
+      "sha256": "85110147bc5b9376b34ed06ff4ac8baf75d260ffd30ed822e591f2870d8eae73",
+      "anchors": {
+        "shoePair": {
+          "x": 895.9043478260869,
+          "y": 80
+        },
+        "heldCalves": {
+          "x": 920.5228758169935,
+          "y": 280
+        },
+        "matNearEdge": {
+          "x": 132.45454545454547,
+          "y": 900
+        },
+        "matWideEdge": {
+          "x": 88.5,
+          "y": 850
+        }
+      },
+      "invariantDimensions": {
+        "shoePairSpan": 137.06708074534163,
+        "heldCalvesSpan": 118.99564270152496,
+        "matNearEdgeSpan": 403.5454545454545,
+        "matWideEdgeSpan": 975.5
+      }
+    },
+    {
+      "path": "form-frames/toe-touches/5.webp",
+      "sha256": "6c4caa9db0caee0081b3c8faffe7d5f3c69c97738e56d187db27fa9f2275a37f",
+      "anchors": {
+        "shoePair": {
+          "x": 895.2828282828283,
+          "y": 80
+        },
+        "heldCalves": {
+          "x": 920.364238410596,
+          "y": 280
+        },
+        "matNearEdge": {
+          "x": 132.45454545454547,
+          "y": 900
+        },
+        "matWideEdge": {
+          "x": 88.5,
+          "y": 850
+        }
+      },
+      "invariantDimensions": {
+        "shoePairSpan": 137.1717171717172,
+        "heldCalvesSpan": 119.21110405515742,
+        "matNearEdgeSpan": 403.5454545454545,
+        "matWideEdgeSpan": 975.5
+      }
+    },
+    {
+      "path": "form-frames/toe-touches/6.webp",
+      "sha256": "cfaee4b9b2bccd321f65af5349abb3c14be80c8472e700323a0b130a3dedf793",
+      "anchors": {
+        "shoePair": {
+          "x": 895.408695652174,
+          "y": 80
+        },
+        "heldCalves": {
+          "x": 920.5730337078652,
+          "y": 280
+        },
+        "matNearEdge": {
+          "x": 132.45454545454547,
+          "y": 900
+        },
+        "matWideEdge": {
+          "x": 88.5,
+          "y": 850
+        }
+      },
+      "invariantDimensions": {
+        "shoePairSpan": 137.04096877735628,
+        "heldCalvesSpan": 118.81512418687169,
+        "matNearEdgeSpan": 403.5454545454545,
+        "matWideEdgeSpan": 975.5
+      }
+    }
+  ]
+}
