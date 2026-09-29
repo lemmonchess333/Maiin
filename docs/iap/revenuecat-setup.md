@@ -136,6 +136,48 @@ env). **Never** put the webhook/REST secrets in Vite — they're server-only.
 
 ---
 
+## Slice 3 is built — what turning it on now requires
+
+`revenueCatWebhook` and `syncRevenueCatEntitlement` exist (`functions/revenueCat.js`).
+They are inert until the secrets are provisioned and the functions deployed, and
+**`VITE_REVENUECAT_IOS_KEY` must stay unset until they are**: `purchaseProvider`
+routes iOS through RevenueCat the moment that key is present, and a purchase made
+before the backend is live is taken by Apple and granted by nobody.
+
+Order matters:
+
+```bash
+# 1. Provision both server secrets (the deploy fails without them).
+firebase functions:secrets:set REVENUECAT_WEBHOOK_AUTH   # any high-entropy string you choose
+firebase functions:secrets:set REVENUECAT_REST_KEY       # RevenueCat → API keys → secret key
+
+# 2. Deploy the two functions.
+firebase deploy --only functions:revenueCatWebhook,functions:syncRevenueCatEntitlement
+
+# 3. Register the webhook in RevenueCat → Integrations → Webhooks:
+#      URL:            https://us-central1-adaptive-fitness-af8bb.cloudfunctions.net/revenueCatWebhook
+#      Authorization:  the REVENUECAT_WEBHOOK_AUTH value from step 1, verbatim
+#
+# 4. Send a test event from that page. A correct setup answers 200; a wrong
+#    header answers 401. Then check Firestore: revenueCatEvents/{event id}
+#    should hold the event with `result` set.
+
+# 5. ONLY THEN put the public key in the iOS build env.
+```
+
+The webhook resolves entitlement by calling RevenueCat's REST API rather than
+trusting the event body, so `REVENUECAT_REST_KEY` is bound to both functions.
+Dropping it from the webhook leaves a function that authenticates correctly and
+writes nothing — `__tests__/triggerMetadata.test.js` pins both bindings against
+exactly that.
+
+Not done in this slice, and worth knowing: RevenueCat also offers HMAC webhook
+signing (`X-RevenueCat-Webhook-Signature`), which is stronger than the shared
+header ADR-0006 locked. The header is what the ADR chose and what this
+implements; moving to HMAC is a later, self-contained change.
+
+---
+
 ## What I build once you've done the above
 
 - **Slice 2 (#1098):** `@revenuecat/purchases-capacitor` init + `logIn`/`logOut`

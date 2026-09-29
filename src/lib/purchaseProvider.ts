@@ -228,51 +228,40 @@ export async function purchase(
 /**
  * Open the platform-appropriate subscription management surface.
  *
- *   - Web / Android (Stripe): requests a billing-portal session
- *     from the `createStripeBillingPortal` callable Cloud Function
- *     and redirects to it. If the function isn't deployed yet, the
- *     call fails gracefully — the caller can surface the error.
- *   - Native iOS: returns a redirectUrl pointing to the Apple
- *     subscription management page. UIKit's deep-link
- *     itms-apps:// scheme opens the App Store subscriptions sheet
- *     directly; on the web fallback we use the http(s) URL.
+ *   - Native iOS: redirects to Apple's subscription management page,
+ *     which is where an App Store subscription is actually cancelled.
+ *   - Web and Android: no portal to open. See below.
  *
- * Per the spec, this is the Pro-user equivalent of "Restore
- * purchases" — restore is iOS-only and stays iOS-only. Manage works
- * on every platform but routes differently.
+ * Per the spec this is the Pro-user equivalent of "Restore purchases" —
+ * restore is iOS-only and stays iOS-only.
  */
-export async function manageSubscription(uid: string): Promise<PurchaseResult> {
+export async function manageSubscription(
+  // Unused since the web branch stopped calling a billing-portal callable,
+  // and kept so the signature does not churn for a surface the Sub4 launch
+  // gate is about to replace outright.
+  _uid: string
+): Promise<PurchaseResult> {
   if (isNativeIOS()) {
     const url = "https://apps.apple.com/account/subscriptions";
     window.location.href = url;
     return { success: true, redirectUrl: url };
   }
 
-  try {
-    const createPortal = httpsCallable<
-      { uid: string; returnUrl: string },
-      { url: string }
-    >(functions, "createStripeBillingPortal");
-    const returnUrl = `${window.location.origin}${import.meta.env.BASE_URL}settings`;
-    const result = await createPortal({ uid, returnUrl });
-    const url = result.data?.url;
-    if (!url) {
-      return {
-        success: false,
-        error: "Couldn't open billing portal. Try again.",
-      };
-    }
-    window.location.href = url;
-    return { success: true, redirectUrl: url };
-  } catch (err) {
-    return {
-      success: false,
-      error:
-        err instanceof Error
-          ? err.message
-          : "Couldn't open billing portal. Try again.",
-    };
-  }
+  // Web and Android do not reach a billing portal, and that is a locked
+  // decision rather than a gap: Sub4 keeps the Stripe backend dormant and
+  // names `createStripeBillingPortal` as the one piece that "stays
+  // unbuilt", because no web billing is sold. Calling it returned
+  // functions/not-found, which read as a broken button instead of a closed
+  // storefront.
+  //
+  // Nobody is stranded by this: nothing has ever sold a web subscription,
+  // so there is no Stripe customer to manage. When the Sub4 launch gate
+  // lands, this surface becomes the "Get the iOS app" steer and this
+  // branch goes with it.
+  return {
+    success: false,
+    error: "Subscriptions are managed in the Tropos iOS app.",
+  };
 }
 
 /**
