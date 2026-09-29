@@ -229,23 +229,7 @@ export const RELEASED_FORM_PLACARDS = {
       [0.25, "Finish rising", "Finish standing without leaning back."],
     ]
   ),
-  "push-ups": placard(
-    "push-ups",
-    ["pectoralis major"],
-    ["triceps", "anterior deltoids"],
-    [
-      [0, "High plank", "Brace your trunk in a high plank."],
-      [0.25, "Begin lowering", "Bend elbows while keeping your body aligned."],
-      [0.6, "Lower", "Lower your chest between your hands."],
-      [1, "Bottom", "Keep hips aligned; avoid dropping your head."],
-      [0.6, "Press up", "Press the floor away without sagging."],
-      [
-        0.25,
-        "Finish pressing",
-        "Finish pressing while keeping your trunk braced.",
-      ],
-    ]
-  ),
+  "push-ups": placard("push-ups", ["Pectorals"], ["Triceps", "Front Delts", "Core"], [[0,"Set","Place hands slightly wider than your shoulders."],[0.5,"Lower","Bend elbows back, keeping your body aligned."],[1,"Bottom","Bring your chest close to the floor."],[1,"Control","Keep hips and shoulders moving together."],[0.5,"Press","Push the floor away without lifting hips."],[0,"Reset","Finish with arms straight and core braced."]]),
   squat: placard(
     "squat",
     ["quadriceps"],
@@ -272,27 +256,7 @@ export const RELEASED_FORM_PLACARDS = {
       [0.25, "Return", "Return towards straight arms without bouncing."],
     ]
   ),
-  "db-bench": placard(
-    "db-bench",
-    ["pectoralis major"],
-    ["triceps", "anterior deltoids"],
-    [
-      [0, "Top", "Keep feet planted and shoulders supported."],
-      [
-        0.25,
-        "Begin lowering",
-        "Lower both dumbbells with your wrists straight.",
-      ],
-      [0.6, "Lower", "Keep wrists stacked over your elbows."],
-      [1, "Bottom", "Lower beside your chest without bouncing."],
-      [0.6, "Press up", "Press upward without lifting your shoulders."],
-      [
-        0.25,
-        "Finish pressing",
-        "Finish pressing without knocking the dumbbells together.",
-      ],
-    ]
-  ),
+  "db-bench": placard("db-bench", ["Chest"], ["Triceps", "Front Delts"], [[0,"Set","Keep feet planted and shoulders supported."],[0.5,"Lower","Bend elbows, keeping wrists above them."],[1,"Bottom","Lower weights beside your chest with control."],[1,"Control","Keep forearms upright and shoulders supported."],[0.5,"Press","Press upward without letting your wrists bend."],[0,"Reset","Finish above your chest without clashing weights."]]),
   "bodyweight-squat": placard(
     "bodyweight-squat",
     ["Quads"],
