@@ -1,4 +1,5 @@
 import { useId } from "react";
+import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeftRight } from "lucide-react";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
@@ -21,6 +22,14 @@ interface CalorieRingProps {
   glowing?: boolean;
   /** Main ring redraw duration in seconds. Default 1.5. */
   ringDurationMs?: number;
+  /**
+   * "hero" is the Food page's ring. "compact" is the same ring at the size
+   * Home's food card draws it: one ring, two sizes, so the two screens
+   * show the same object (owner call; DS3's STATUS lines). The drawing
+   * scales with the box; the number steps down, and the mode pill keeps
+   * its 11px text so it stays readable.
+   */
+  size?: "hero" | "compact";
 }
 
 // Ring dimensions — restore a larger focal ring so the hero reads as the
@@ -59,7 +68,9 @@ export default function CalorieRing({
   trajectoryLabel,
   glowing = false,
   ringDurationMs = 1500,
+  size = "hero",
 }: CalorieRingProps) {
+  const compact = size === "compact";
   const reduce = useReducedMotion();
   const isDark = useIsDarkMode();
   const id = useId();
@@ -176,7 +187,10 @@ export default function CalorieRing({
       aria-label={
         ariaLabel + ". Tap to toggle between calories left and calories eaten."
       }
-      className="relative size-40 aspect-square mx-auto block focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-full"
+      className={cn(
+        "relative aspect-square block focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-full",
+        compact ? "size-26 shrink-0" : "size-40 mx-auto"
+      )}
       style={{
         // Celebration glow — the ring's own orange.
         filter: glowing ? `drop-shadow(0 0 16px ${COLOR_RING}66)` : undefined,
@@ -353,7 +367,10 @@ export default function CalorieRing({
               className="flex flex-col items-center"
             >
               <p
-                className="text-4xl font-extrabold font-mono tabular-nums leading-none tracking-tight"
+                className={cn(
+                  "font-extrabold font-mono tabular-nums leading-none tracking-tight",
+                  compact ? "text-2xl" : "text-4xl"
+                )}
                 style={{ color: numberColor }}
               >
                 <AnimatedNumber
@@ -377,7 +394,10 @@ export default function CalorieRing({
                   over the hero photo. Either way it stays one orange
                   identity. */}
               <span
-                className="mt-1.5 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-caption font-semibold"
+                className={cn(
+                  "inline-flex items-center gap-1 rounded-full py-0.5 text-caption font-semibold",
+                  compact ? "mt-1 px-1.5" : "mt-1.5 px-2"
+                )}
                 style={{
                   color: chipTextColor,
                   backgroundColor: chipBackground,
@@ -394,7 +414,12 @@ export default function CalorieRing({
             </motion.div>
           </AnimatePresence>
         ) : (
-          <span className="text-4xl font-extrabold text-muted-foreground">
+          <span
+            className={cn(
+              "font-extrabold text-muted-foreground",
+              compact ? "text-2xl" : "text-4xl"
+            )}
+          >
             &mdash;
           </span>
         )}

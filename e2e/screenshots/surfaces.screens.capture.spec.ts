@@ -176,9 +176,10 @@ test.describe(`home + food surfaces (${PHASE})`, () => {
     ).toBeVisible({ timeout: 30_000 });
     /* Then anchor on the DATA, not the heading. The heading renders
        immediately; the card's target arrives from the profile, and until
-       it does the card shows "0 of 0 kcal logged" and the weight tile beside it
-       shows "Tap to log" — a legitimate empty state, not a skeleton, so
-       nothing generic can tell the two apart.
+       it does the ring shows a dash ("N calories consumed, no target
+       set") and the weight tile beside it shows "Tap to log" — a
+       legitimate empty state, not a skeleton, so nothing generic can tell
+       the two apart.
 
        That is what made this frame undiffable: it measured 1191 -> 1190
        -> 1458 -> 1191 -> 1358 across five captures. Settling the document
@@ -192,14 +193,13 @@ test.describe(`home + food surfaces (${PHASE})`, () => {
        is worth failing on, and shooting anyway is how you get a frame
        that lies about what it shows. */
     await expect(
-      // Separator-agnostic. `formatCalories` is `toLocaleString()` with no
-      // locale, so grouping follows the RUNTIME: "2,200" on en-US,
-      // "2.200" on de-DE, "2 200" (U+202F) on fr-FR. A comma-only pattern
-      // is a bet on the CI runner's locale; the class below covers all
-      // three and still refuses a leading zero, which is the actual
-      // signal. Pinned against a real render in
-      // `energyCaptureAnchor.test.tsx`, including this runtime's grouping.
-      page.getByText(/of [1-9][\d.,\s\u00a0\u202f]*kcal logged/).first(),
+      // The calorie ring's accessible name, "1289 of 2350 calories
+      // consumed, …". It is built from raw numbers, so it reads the same
+      // in every locale (no "2,350" / "2.350" / "2 350" to allow for),
+      // and a leading 1-9 after "of" refuses the zero target, which is
+      // the actual signal. Pinned against a real render in
+      // `energyCaptureAnchor.test.tsx`.
+      page.getByRole("button", { name: /of [1-9]\d* calories/ }).first(),
       "the energy card never loaded its target — the frame would capture " +
         "the pre-load state, which is what made this frame swing 267px"
     ).toBeVisible({ timeout: 20_000 });

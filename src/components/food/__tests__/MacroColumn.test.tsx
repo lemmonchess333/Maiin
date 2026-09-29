@@ -358,3 +358,49 @@ describe("MacroColumn — the bar fades only when it is empty", () => {
     }
   });
 });
+
+/**
+ * The compact tile is Home's: the same tile, smaller, on a tinted tile
+ * beside the calorie ring. What changes is size, and the bar track, which
+ * would vanish on the tint in the tile's own muted colour.
+ */
+describe("MacroColumn — compact size", () => {
+  function draw(size?: "tile" | "compact") {
+    const { container } = render(
+      <MacroColumn
+        macroKey="carbs"
+        Icon={Beef}
+        consumed={56}
+        target={220}
+        label="Carbs"
+        color="#EAB308"
+        mode="left"
+        size={size}
+      />
+    );
+    const icon = container.querySelector("svg")!;
+    const number = container.querySelector("p")!;
+    const track = container.querySelector<HTMLElement>("[data-macro-bar]")!;
+    const out = {
+      icon: icon.getAttribute("class") ?? "",
+      number: number.className,
+      track: track.style.background,
+    };
+    cleanup();
+    return out;
+  }
+
+  it("keeps the Food page's tile as the default", () => {
+    const tile = draw();
+    expect(tile.icon).toContain("size-6");
+    expect(tile.number).toContain("text-2xl");
+    expect(tile.track).toContain("var(--muted)");
+  });
+
+  it("draws Home's tile smaller, with a track that shows on the tint", () => {
+    const compact = draw("compact");
+    expect(compact.icon).toContain("size-5");
+    expect(compact.number).toContain("text-xl");
+    expect(compact.track).toContain("var(--muted-foreground)");
+  });
+});

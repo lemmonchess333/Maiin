@@ -1,17 +1,16 @@
 /**
  * Home's food card ("Today's food"), light + dark.
  *
- * This spec previously filmed the card's two states — collapsed summary,
- * then tapped open to the macro rings. There is one state now: calories
- * in a ring against their target, the three macros as bars against
- * theirs, and the log action, none of it behind a disclosure (DS3 turned
- * the three macro rings into bars). So the pair of frames became one pair
- * per theme, and the tap step went with the button it drove.
+ * One state, filmed per theme: the Food page's calorie ring and its three
+ * macro tiles, drawn smaller and side by side, and the log action, none
+ * of it behind a disclosure. The ring and tiles are Food's own components,
+ * so this card and the Food page show the same object.
  *
- * Light AND dark both matter here beyond the usual: the ring and bar
- * tracks are a neutral groove at `--muted-foreground / 0.22`, chosen
- * because a track tinted with the macro's own hue measured 1.06:1
- * against the card for carbs. These frames are where that reads as fixed
+ * Light AND dark both matter here beyond the usual: the tiles sit on the
+ * muted tint, so their bar track is the stronger neutral groove at
+ * `--muted-foreground / 0.22` (a track tinted with the macro's own hue
+ * measured 1.06:1 against the card for carbs, and the Food page's muted
+ * track vanishes on the tint). These frames are where that reads as fixed
  * or does not.
  *
  * Same rig conventions as home.screens.capture.spec.ts (mobile
@@ -91,13 +90,13 @@ test.describe("today's nutrition card", () => {
 
     /* Anchor on the card being LOADED, not merely present. The heading
        renders immediately while the target arrives from the profile, and
-       an unloaded card shows "0 of 0 kcal logged" with every bar empty —
-       a frame that looks like a legitimate empty day rather than a miss.
-       The same anchor surfaces.screens uses, pinned against a real render
-       in `energyCaptureAnchor.test.tsx`, including the runtime's number
-       grouping: `formatCalories` is `toLocaleString()` with no locale. */
+       an unloaded card's ring shows a dash with its tiles counting from
+       nothing — a frame that looks like a legitimate empty day rather
+       than a miss. The same anchor surfaces.screens uses (the ring's
+       accessible name, plain digits in every locale), pinned against a
+       real render in `energyCaptureAnchor.test.tsx`. */
     await page
-      .getByText(/of [1-9][\d.,\s\u00a0\u202f]*kcal logged/)
+      .getByRole("button", { name: /of [1-9]\d* calories/ })
       .first()
       .waitFor({ state: "visible", timeout: 20000 });
     await shootLightDark(page, "nutrition-card");

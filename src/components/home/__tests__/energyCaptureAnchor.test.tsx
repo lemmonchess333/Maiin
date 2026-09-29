@@ -1,59 +1,36 @@
 /**
- * The capture spec's energy-card readiness anchor, pinned against the
- * component that produces the text it matches.
+ * The capture specs' energy-card readiness anchor, pinned against the
+ * component that produces the name it matches.
  *
- * `surfaces.screens.capture.spec.ts` waits for the Today's Energy card to
- * show a NON-ZERO calorie target before shooting `home-energy-default`.
- * That anchor exists because the previous one — the card's heading — is
+ * `surfaces.screens.capture.spec.ts` waits for Home's food card to show a
+ * NON-ZERO calorie target before shooting `home-energy-default`, and
+ * `nutrition-card.screens.capture.spec.ts` waits the same way. That
+ * anchor exists because the previous one — the card's heading — is
  * present immediately, so the shutter could fire while the profile was
  * still loading. The frame measured 1191 → 1190 → 1458 → 1191 → 1358
  * across five captures, which is not diffable.
  *
  * It is a HARD assertion in the spec, and it gates four frames. So a
- * regex that stopped matching would not degrade one frame — it would take
- * `macro-tiles`, `home-day-peek` and both energy frames red, twelve
+ * pattern that stopped matching would not degrade one frame — it would
+ * take `macro-tiles`, `home-day-peek` and both energy frames red, twelve
  * minutes into a capture run. That is the failure this file exists to
  * convert into a two-second one.
  *
- * The specific hazard is real rather than theoretical. The target is
- * rendered through `formatCalories`, which is
- * `Math.round(value).toLocaleString()` — with NO locale argument. The
- * group separator therefore follows the runtime: "2,200" on en-US,
- * "2.200" on de-DE, "2 200" (U+202F) on fr-FR. A regex written against a
- * comma is a bet on the CI runner's locale, and the assertions below
- * measure that bet instead of taking it.
+ * The anchor is the calorie ring's accessible name, "1889 of 2200
+ * calories consumed, …". It is built from raw numbers rather than
+ * `formatCalories` (which follows the runtime's locale: "2,200", "2.200",
+ * "2 200"), so it reads the same wherever CI runs, and the assertions
+ * below hold it to that.
  */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, vi } from "vitest";
-import { render } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
 import { formatCalories } from "@/utils/formatNutrition";
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-vi.mock("framer-motion", () => ({
-  motion: new Proxy(
-    {},
-    {
-      get: (_t: any, prop: string) => (props: any) => {
-        const {
-          initial: _i,
-          animate: _a,
-          exit: _e,
-          transition: _tr,
-          variants: _v,
-          whileTap: _w,
-          layout: _l,
-          ...rest
-        } = props;
-        const Tag = prop === "create" ? "div" : prop;
-        return <Tag {...rest} />;
-      },
-    }
-  ),
-  AnimatePresence: ({ children }: any) => children,
-}));
 vi.mock("@/lib/haptic", () => ({ haptic: vi.fn() }));
 
 import TodayEnergy from "../TodayEnergy";
@@ -62,23 +39,29 @@ const repoRoot = resolve(
   dirname(fileURLToPath(import.meta.url)),
   "../../../.."
 );
-const SPEC = readFileSync(
-  resolve(repoRoot, "e2e/screenshots/surfaces.screens.capture.spec.ts"),
-  "utf8"
-);
+const specs = [
+  "e2e/screenshots/surfaces.screens.capture.spec.ts",
+  "e2e/screenshots/nutrition-card.screens.capture.spec.ts",
+].map((path) => ({
+  path,
+  src: readFileSync(resolve(repoRoot, path), "utf8"),
+}));
 
-/** The anchor regex the spec actually uses — read out, not copied. */
-function anchorPattern(): RegExp {
-  const m = SPEC.match(/page\.getByText\(\/(of \[1-9\][^/]*?)\/\)\.first\(\)/);
+/** The anchor a spec actually uses — read out, not copied. */
+function anchorIn(src: string, path: string): RegExp {
+  const m = src.match(
+    /getByRole\(\s*"button",\s*\{\s*name:\s*\/(of \[1-9\][^/]*?)\/\s*\}\s*\)/
+  );
   if (!m) {
     throw new Error(
-      "could not find the energy readiness anchor in " +
-        "surfaces.screens.capture.spec.ts — if the spec was restructured, " +
-        "retarget this extractor rather than deleting it"
+      `could not find the energy readiness anchor in ${path} — if the ` +
+        "spec was restructured, retarget this extractor rather than " +
+        "deleting it"
     );
   }
-  return new RegExp(m[1].replace(/\\\//g, "/"));
+  return new RegExp(m[1]);
 }
+const anchor = () => anchorIn(specs[0].src, specs[0].path);
 
 function renderEnergy(finalTarget: number) {
   return render(
@@ -94,78 +77,49 @@ function renderEnergy(finalTarget: number) {
   );
 }
 
-describe("capture spec — Home food card readiness anchor", () => {
-  it("extracts the anchor from the spec — the fixture this rests on", () => {
+describe("capture specs — Home food card readiness anchor", () => {
+  it("extracts the anchor from both specs, and they agree", () => {
     // Without this, a broken extractor would leave every assertion below
     // vacuously satisfied.
-    expect(anchorPattern().source).toContain("kcal");
+    const [a, b] = specs.map((s) => anchorIn(s.src, s.path));
+    expect(a.source).toContain("calories");
+    expect(b.source).toBe(a.source);
   });
 
   it("matches a LOADED card", () => {
-    const { container } = renderEnergy(2200);
-    const rx = anchorPattern();
+    renderEnergy(2200);
+    const rx = anchor();
     expect(
-      rx.test(container.textContent ?? ""),
-      `the capture anchor ${rx} does not match a loaded Home food card. ` +
-        `That assertion is HARD and gates four frames — in CI this costs a ` +
-        `red capture job twelve minutes in.`
-    ).toBe(true);
+      screen.queryByRole("button", { name: rx }),
+      `the capture anchor ${rx} names no control on a loaded Home food ` +
+        `card. That assertion is HARD and gates four frames — in CI this ` +
+        `costs a red capture job twelve minutes in.`
+    ).not.toBeNull();
   });
 
   it("does NOT match the pre-load card — which is the whole point", () => {
     /* A target of 0 is what the card shows before the profile arrives.
        If the anchor matched it, the spec would shoot the pre-load state
        and the frame would keep swinging, silently. */
-    const { container } = renderEnergy(0);
-    const rx = anchorPattern();
+    renderEnergy(0);
     expect(
-      rx.test(container.textContent ?? ""),
+      screen.queryByRole("button", { name: anchor() }),
       "the anchor matches a card with a ZERO target, so it does not " +
         "distinguish loaded from loading and cannot stabilise the frame"
-    ).toBe(false);
+    ).toBeNull();
   });
 
-  it("survives the group separator this runtime actually uses", () => {
-    /* `formatCalories` is `toLocaleString()` with no locale, so the
-       separator is the runtime's. This asserts the anchor agrees with
-       whatever THIS runtime produces, rather than assuming a comma — if
-       CI ever runs under a locale that groups with "." or U+202F, this
-       fails here instead of in the capture job. */
-    const rendered = formatCalories(2200);
-    const { container } = renderEnergy(2200);
-    /* Asserted the way PLAYWRIGHT resolves it: some single ELEMENT whose
-       own text matches, not merely the document containing the string.
-       The distinction became real when the label was split so the word
-       sets in the display font and the figure in the numeral one — the
-       anchor now spans a child, and a matcher that only looked at one
-       text node would have gone quiet here and taken four frames red
-       twelve minutes into the capture job instead. */
-    /* Normalise the NEEDLE exactly as the haystack is normalised below.
-       fr-FR groups with U+202F, which `\s+` collapses to a plain space
-       on the element side — so a needle carrying the raw U+202F could
-       never meet it, and the two strings look identical in the failure
-       output. This file already documented that separator; it did not
-       apply the same normalisation to what it was searching FOR. */
-    const wanted = new RegExp(
-      `of ${rendered
-        .replace(/\s+/g, " ")
-        .trim()
-        .replace(/[.*+?^${}()|[\]\\]/g, "\\$&")} kcal logged`
-    );
-    const carrier = Array.from(container.querySelectorAll("*")).find((el) =>
-      wanted.test((el.textContent ?? "").replace(/\s+/g, " ").trim())
-    );
-    expect(
-      carrier,
-      `no element carries "${wanted}". Playwright's getByText resolves ` +
-        `against an element's text, so an anchor that exists only as ` +
-        `separate nodes cannot be located in the capture spec.`
-    ).toBeTruthy();
-    expect(
-      anchorPattern().test(`of ${rendered} kcal logged`),
-      `formatCalories(2200) renders "${rendered}" on this runtime, and the ` +
-        `capture anchor does not match it. The anchor is written against a ` +
-        `comma separator; this runtime groups differently.`
-    ).toBe(true);
+  it("reads the same in every locale: plain digits, whatever the grouping", () => {
+    /* The ring's number is set with the runtime's grouping, but its name
+       is not: the spec's pattern allows no separator, so the name must
+       carry none, in this runtime or any other. */
+    renderEnergy(2200);
+    const ring = screen.getByRole("button", { name: anchor() });
+    expect(ring.getAttribute("aria-label")).toContain("of 2200 calories");
+    // And the figure this runtime draws would not have matched, where it
+    // groups at all: the reason the anchor is the name, not the text.
+    if (formatCalories(2200) !== "2200") {
+      expect(anchor().test(`of ${formatCalories(2200)} calories`)).toBe(false);
+    }
   });
 });

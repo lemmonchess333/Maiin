@@ -8,6 +8,7 @@ import {
 } from "framer-motion";
 import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
 import { haptic } from "@/lib/haptic";
+import { cn } from "@/lib/utils";
 import type { CalorieRingMode } from "./CalorieRing";
 
 export type MacroColumnKey = "protein" | "carbs" | "fat";
@@ -36,6 +37,13 @@ interface MacroColumnProps {
   numberDurationSec?: number;
   /** Progress bar animation duration in seconds */
   barDurationSec?: number;
+  /**
+   * "tile" is the Food page's macro card. "compact" is the same tile at
+   * the size Home's food card draws it, on a tinted tile beside the
+   * calorie ring: a smaller icon and number, the 12px labels unchanged,
+   * and a bar track that shows on the tint.
+   */
+  size?: "tile" | "compact";
 }
 
 const RING_EASE = [0.32, 0.72, 0, 1] as [number, number, number, number];
@@ -51,7 +59,9 @@ export default function MacroColumn({
   onTap = () => {},
   numberDurationSec = 0.6,
   barDurationSec = 0.6,
+  size = "tile",
 }: MacroColumnProps) {
+  const compact = size === "compact";
   const framerReduce = useFramerReducedMotion();
   const reduce = framerReduce === true;
 
@@ -240,7 +250,7 @@ export default function MacroColumn({
         style={{ scale: iconScale }}
       >
         <Icon
-          className="relative size-6"
+          className={cn("relative", compact ? "size-5" : "size-6")}
           style={{ color }}
           strokeWidth={2}
           aria-hidden="true"
@@ -260,13 +270,25 @@ export default function MacroColumn({
          to fix a problem caused by its neighbour is the wrong lever.
          whitespace-nowrap keeps a three-digit value and its unit on one
          line now that the column can be narrower. */}
-      <p className="text-2xl font-extrabold font-mono tabular-nums leading-none tracking-tight mt-2 text-foreground whitespace-nowrap">
+      <p
+        className={cn(
+          "font-extrabold font-mono tabular-nums leading-none tracking-tight text-foreground whitespace-nowrap",
+          compact ? "text-xl mt-1.5" : "text-2xl mt-2"
+        )}
+      >
         <AnimatedNumber
           value={displayValue}
           duration={numberDurationSec}
           ease={RING_EASE}
         />
-        <span className="text-small font-bold text-muted-foreground">g</span>
+        <span
+          className={cn(
+            "font-bold text-muted-foreground",
+            compact ? "text-xs" : "text-small"
+          )}
+        >
+          g
+        </span>
       </p>
 
       {/* Mode-aware label sits below the big number. Always-rendered
@@ -291,9 +313,16 @@ export default function MacroColumn({
           first log drained them. */}
       <div
         data-macro-bar=""
-        className="relative w-full mt-2.5 h-1.5 rounded-full overflow-hidden transition-opacity duration-300"
+        className={cn(
+          "relative w-full h-1.5 rounded-full overflow-hidden transition-opacity duration-300",
+          compact ? "mt-2" : "mt-2.5"
+        )}
         style={{
-          background: "hsl(var(--muted))",
+          /* A compact tile sits on the muted tint, where the muted track
+             would vanish; it takes the stronger groove Home's bars used. */
+          background: compact
+            ? "hsl(var(--muted-foreground) / 0.22)"
+            : "hsl(var(--muted))",
           boxShadow: "inset 0 1px 2px rgb(0 0 0 / 0.06)",
           opacity: barFillPct === 0 ? 0.4 : 1,
         }}
@@ -336,7 +365,9 @@ export default function MacroColumn({
           `X / Yg` ratio line above) so the card's colour identity is
           carried by the icon + big number + progress bar, not duplicated
           four times. The label is a caption, not a headline. */}
-      <SectionLabel className="mt-2">{label}</SectionLabel>
+      <SectionLabel className={compact ? "mt-1.5" : "mt-2"}>
+        {label}
+      </SectionLabel>
     </button>
   );
 }

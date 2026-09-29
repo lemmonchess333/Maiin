@@ -300,12 +300,13 @@ classes.
 
 **Numerals against a target — slash spacing.** The default is the spaced
 slash: `125 / 140 g` on a macro, and the target named in words where there
-is room (`1,790 of 2,200 kcal logged` on Home's food card). Home shows the
-three macros always, with full Protein, Carbs and Fat labels and their
-meat, wheat and avocado icons; there is no collapsed P/C/F summary and no
-Details disclosure. DS3 (owner call, 2026-09-27) turned Home's three macro
-rings into thin bars under one calorie ring: three big bright rings were
-the one real problem with the macro colours, which stay as they are.
+is room. Home's food card draws the Food page's calorie ring and macro
+tiles, smaller and side by side (owner call, 2026-09-29), so the two
+screens show the same object: both count down by default ("1,065 kcal
+left", "86g left") and share one left/eaten switch. Home shows the three
+macros always, with full Protein, Carbs and Fat labels and their meat,
+wheat and avocado icons; there is no collapsed P/C/F summary and no
+Details disclosure.
 Keep values and targets on separate lines where space requires it rather
 than abbreviating the labels. Updated 2026-09-08. The whole-app role map — which treatment each UI role takes,
 and the permitted exceptions — is `docs/cohesion-spec-2026-09.md`.
