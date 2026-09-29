@@ -407,6 +407,16 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
       "a177e100adc921d2741d6e7fcb68ffd67c8f0604105ee78d6c20f6b05f2f4cba",
     sha256: "5b4d852abbd3033f9d785107093ff6d8f9765b00fd2e179844de358f681f809e",
   },
+  "russian-twist": {
+    src: "form-art/russian-twist.webp",
+    width: 480,
+    height: 291,
+    keyed: true,
+    source: "form-frames/russian-twist/4.webp",
+    sourceSha256:
+      "d76a8cb29e043fb367a192c4f1a129c6bcfdf6b595564235cd910bf0322293e9",
+    sha256: "f14c2f0a93d6e57f82ca4535c347a57479599d316229df0b716ff28ce0006c23",
+  },
   "skull-crushers": {
     src: "form-art/skull-crushers.webp",
     width: 480,

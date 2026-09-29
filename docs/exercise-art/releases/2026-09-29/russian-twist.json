@@ -1,0 +1,200 @@
+{
+  "exerciseId": "russian-twist",
+  "version": "anatomy-v3-2026-09-29",
+  "width": 1536,
+  "height": 1024,
+  "decision": "approved",
+  "reviewer": "Codex visual and implementation review",
+  "reviewedAt": "2026-09-29T16:10:57.872Z",
+  "reference": {
+    "path": "form-frames/russian-twist/4.webp",
+    "sha256": "d76a8cb29e043fb367a192c4f1a129c6bcfdf6b595564235cd910bf0322293e9"
+  },
+  "cueSha256": "842410a231d9e215df9b23d67ceea1ca47dee692bffeef05533bb07f0679a982",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Bald faceless grey-white fine-contour anatomy, featureless pelvis and white trainers remain consistent in four distinct poses."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Native1536x1024 fixed front-three-quarter scene. Whole mat, body and feet visible. Center master reused at1,4,6; no image scaling."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Arms remain connected through both shoulder/elbow chains with clasped hands. Long trunk remains reclined across center and both turns. Earlier pilot concern about upright A reassessed against native master: changes in shoulder contour accompany axial rotation, without an obvious sit-up or shortening of the trunk. This is qualitative visual review, not proof of exact3D degrees."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Mat front scan stays within unrounded1px/1percent invariant gates. No hand-held equipment. New far-side pose uses the original center scene reference."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Both shoes and seated pelvis stay planted. Frame2 far-shoe drift1.3748px corrected using approved exact master-copy of lower planted shoe, minimumRGB110 union mask dilated3px bounded[235,735,470,815].14525 pixels changed, zero outside mask and rectangle. Earlier rectangle-only copy rejected for visible mat seam; final native inspection shows no rectangle seam."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Chest and clasped hands turn together toward near and far sides while legs stay fixed. New moderate far turn replaces near-full-back pilot pose. Feet remain planted; hands do not provide body support."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Primary obliques strongest purple; rectus abdominis and hip flexors lighter lilac. Remaining limbs neutral."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Six short cues match centered recline, partial near turn, near turn, center, far turn and centered reset. Bodyweight clasped-hands variant matches the exercise catalogue."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "Manually stepped all six frames and 6-to-1 in the actual ExerciseFormFrames player at 390x844 in light and dark themes on 2026-09-29. Center/midA/fullA/center/moderateB/center; planted feet and stable mat, readable matching cues, no clipping or loop discontinuity."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "All six frames and reset visually reviewed at 390x844 on the light surrounding surface; complete body and mat visible, captions and cues legible."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "All six frames and reset visually reviewed at 390x844 on the dark surrounding surface; complete body and mat visible, captions and cues legible."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/russian-twist/1.webp",
+      "sha256": "d76a8cb29e043fb367a192c4f1a129c6bcfdf6b595564235cd910bf0322293e9",
+      "anchors": {
+        "farShoe": {
+          "x": 257.57851239669424,
+          "y": 760
+        },
+        "nearShoe": {
+          "x": 399.377245508982,
+          "y": 845
+        },
+        "matFront": {
+          "x": 295.04347826086956,
+          "y": 930
+        }
+      },
+      "invariantDimensions": {
+        "farShoeSpan": 205.496959301419,
+        "nearShoeSpan": 211.160254491018,
+        "matFrontSpan": 200.28985507246375
+      }
+    },
+    {
+      "path": "form-frames/russian-twist/2.webp",
+      "sha256": "a6685955f1e4ce9d87960fe027f710801d2ae7780ed6391a0daa5593c61808cf",
+      "anchors": {
+        "farShoe": {
+          "x": 257.57851239669424,
+          "y": 760
+        },
+        "nearShoe": {
+          "x": 398.73737373737373,
+          "y": 845
+        },
+        "matFront": {
+          "x": 294.61538461538464,
+          "y": 930
+        }
+      },
+      "invariantDimensions": {
+        "farShoeSpan": 205.496959301419,
+        "nearShoeSpan": 211.09189455530924,
+        "matFrontSpan": 200.08461538461535
+      }
+    },
+    {
+      "path": "form-frames/russian-twist/3.webp",
+      "sha256": "b9f34369ef6d906db26be6f5cdb46d92575c696e9fca2e96b8657c434624d901",
+      "anchors": {
+        "farShoe": {
+          "x": 256.69565217391306,
+          "y": 760
+        },
+        "nearShoe": {
+          "x": 398.55238095238093,
+          "y": 845
+        },
+        "matFront": {
+          "x": 294.07142857142856,
+          "y": 930
+        }
+      },
+      "invariantDimensions": {
+        "farShoeSpan": 205.49014017581374,
+        "nearShoeSpan": 211.079802955665,
+        "matFrontSpan": 199.0714285714286
+      }
+    },
+    {
+      "path": "form-frames/russian-twist/4.webp",
+      "sha256": "d76a8cb29e043fb367a192c4f1a129c6bcfdf6b595564235cd910bf0322293e9",
+      "anchors": {
+        "farShoe": {
+          "x": 257.57851239669424,
+          "y": 760
+        },
+        "nearShoe": {
+          "x": 399.377245508982,
+          "y": 845
+        },
+        "matFront": {
+          "x": 295.04347826086956,
+          "y": 930
+        }
+      },
+      "invariantDimensions": {
+        "farShoeSpan": 205.496959301419,
+        "nearShoeSpan": 211.160254491018,
+        "matFrontSpan": 200.28985507246375
+      }
+    },
+    {
+      "path": "form-frames/russian-twist/5.webp",
+      "sha256": "703f216ac95def462164694fefdd9e96cb9b0a03e308259b21d0fb1e5640b7fb",
+      "anchors": {
+        "farShoe": {
+          "x": 256.96610169491527,
+          "y": 760
+        },
+        "nearShoe": {
+          "x": 399.1968503937008,
+          "y": 845
+        },
+        "matFront": {
+          "x": 294.6923076923077,
+          "y": 930
+        }
+      },
+      "invariantDimensions": {
+        "farShoeSpan": 205.8043901083634,
+        "nearShoeSpan": 211.287360132615,
+        "matFrontSpan": 200.86324786324786
+      }
+    },
+    {
+      "path": "form-frames/russian-twist/6.webp",
+      "sha256": "d76a8cb29e043fb367a192c4f1a129c6bcfdf6b595564235cd910bf0322293e9",
+      "anchors": {
+        "farShoe": {
+          "x": 257.57851239669424,
+          "y": 760
+        },
+        "nearShoe": {
+          "x": 399.377245508982,
+          "y": 845
+        },
+        "matFront": {
+          "x": 295.04347826086956,
+          "y": 930
+        }
+      },
+      "invariantDimensions": {
+        "farShoeSpan": 205.496959301419,
+        "nearShoeSpan": 211.160254491018,
+        "matFrontSpan": 200.28985507246375
+      }
+    }
+  ]
+}
