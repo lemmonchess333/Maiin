@@ -57,11 +57,12 @@ function renderHero() {
 }
 
 // The three macro tiles render as <button data-macro="…">. Their label
-// (<p>left</p> / <p>eaten</p>) is the per-tile framing we assert on.
+// (<p>left</p> / <p>logged</p>) is the per-tile framing we assert on.
+// The stored mode for the second is "eaten"; the tile says "logged".
 function tileModes(container: HTMLElement): string[] {
   return Array.from(container.querySelectorAll("[data-macro]")).map((btn) => {
     const text = btn.textContent ?? "";
-    if (text.includes("eaten")) return "eaten";
+    if (text.includes("logged")) return "logged";
     if (text.includes("over")) return "over";
     if (text.includes("left")) return "left";
     return "?";
@@ -71,7 +72,7 @@ function tileModes(container: HTMLElement): string[] {
 // The ring is the only button carrying the toggle aria-label.
 function ringButton() {
   return screen.getByRole("button", {
-    name: /toggle between calories left and calories eaten/i,
+    name: /toggle between calories left and calories logged/i,
   });
 }
 
@@ -96,7 +97,7 @@ describe("FoodHeroCard — single shared display mode", () => {
     expect(ringButton().getAttribute("aria-label")).toMatch(/remaining/i);
   });
 
-  it("tapping a macro tile flips the ring AND all three tiles to 'eaten'", () => {
+  it("tapping a macro tile flips the ring AND all three tiles to 'logged'", () => {
     const { container } = renderHero();
 
     const proteinTile = within(container).getByRole("button", {
@@ -105,9 +106,10 @@ describe("FoodHeroCard — single shared display mode", () => {
     fireEvent.click(proteinTile);
 
     // All three tiles flipped together — not just the tapped one.
-    expect(tileModes(container)).toEqual(["eaten", "eaten", "eaten"]);
-    // The ring flipped too.
-    expect(ringButton().getAttribute("aria-label")).toMatch(/eaten/i);
+    expect(tileModes(container)).toEqual(["logged", "logged", "logged"]);
+    // The ring flipped too: its logged view names no remainder. (Its tap
+    // hint names both views, so matching the word alone proves nothing.)
+    expect(ringButton().getAttribute("aria-label")).not.toMatch(/remaining/i);
     // Persisted under the shared key.
     expect(window.localStorage.getItem(MODE_STORAGE_KEY)).toBe("eaten");
   });
@@ -117,7 +119,7 @@ describe("FoodHeroCard — single shared display mode", () => {
 
     fireEvent.click(ringButton());
 
-    expect(tileModes(container)).toEqual(["eaten", "eaten", "eaten"]);
+    expect(tileModes(container)).toEqual(["logged", "logged", "logged"]);
     expect(window.localStorage.getItem(MODE_STORAGE_KEY)).toBe("eaten");
 
     // …and back again — ring + tiles stay in lockstep.
@@ -129,8 +131,8 @@ describe("FoodHeroCard — single shared display mode", () => {
   it("hydrates the shared mode from the persisted calorie-ring key", () => {
     window.localStorage.setItem(MODE_STORAGE_KEY, "eaten");
     const { container } = renderHero();
-    expect(tileModes(container)).toEqual(["eaten", "eaten", "eaten"]);
-    expect(ringButton().getAttribute("aria-label")).toMatch(/eaten/i);
+    expect(tileModes(container)).toEqual(["logged", "logged", "logged"]);
+    expect(ringButton().getAttribute("aria-label")).not.toMatch(/remaining/i);
   });
 });
 

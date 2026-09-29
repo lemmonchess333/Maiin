@@ -176,7 +176,7 @@ test.describe(`home + food surfaces (${PHASE})`, () => {
     ).toBeVisible({ timeout: 30_000 });
     /* Then anchor on the DATA, not the heading. The heading renders
        immediately; the card's target arrives from the profile, and until
-       it does the ring shows a dash ("N calories consumed, no target
+       it does the ring shows a dash ("N calories logged, no target
        set") and the weight tile beside it shows "Tap to log" — a
        legitimate empty state, not a skeleton, so nothing generic can tell
        the two apart.

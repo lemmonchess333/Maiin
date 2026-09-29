@@ -29,7 +29,7 @@ interface MacroColumnProps {
   label: string;
   /** Saturated brand colour for this macro */
   color: string;
-  /** Display mode — "left" shows remaining, "eaten" shows consumed */
+  /** Display mode — "left" shows remaining, "eaten" shows what's logged */
   mode: CalorieRingMode;
   /** Forward-compat tap hook (no-op for phase 1) */
   onTap?: () => void;
@@ -75,7 +75,7 @@ export default function MacroColumn({
   // both signals move in lockstep:
   //   LEFT mode → fill = remaining %   (drains as you log; matches the
   //                                    big number which counts down)
-  //   EATEN mode → fill = consumed %   (grows as you log; matches the
+  //   LOGGED mode → fill = consumed %  (grows as you log; matches the
   //                                    big number which counts up)
   // Over-target in LEFT mode pins to 100% (a full bar reads as
   // "maxed out + over by N" combined with the big number; an empty
@@ -92,8 +92,8 @@ export default function MacroColumn({
   // LEFT mode:
   //   under target → remaining   (e.g. "151g left")
   //   over target  → overshoot   (e.g. "5g over")
-  // EATEN mode:
-  //   either       → consumed    (e.g. "14g eaten" or "170g eaten")
+  // LOGGED mode (the stored mode key is "eaten"):
+  //   either       → consumed    (e.g. "14g logged" or "170g logged")
   const displayValue =
     isLeftMode && hasTarget
       ? isOver
@@ -104,15 +104,16 @@ export default function MacroColumn({
   // LEFT mode:
   //   under target → "left"   (e.g. "151g left")
   //   over target  → "over"   (e.g. "5g over")
-  // EATEN mode:
-  //   either       → "eaten"  (e.g. "14g eaten")
-  // Without a label in eaten mode the big number reads ambiguously
+  // LOGGED mode:
+  //   either       → "logged" (e.g. "14g logged")
+  // Without a label in this mode the big number reads ambiguously
   // (a user who didn't notice the toggle sees "85g" with no qualifier).
-  // Rendering "eaten" makes the mode self-documenting at the cost of
-  // one short word; over-target is signalled by the bar overshoot and
-  // the tertiary "X / Yg" line.
+  // Rendering "logged" makes the mode self-documenting at the cost of
+  // one short word, and says what the number counts: what is in the
+  // diary, as the calorie ring does. Over-target is signalled by the
+  // bar overshoot and the tertiary "X / Yg" line.
   const displayLabel =
-    isLeftMode && hasTarget ? (isOver ? "over" : "left") : "eaten";
+    isLeftMode && hasTarget ? (isOver ? "over" : "left") : "logged";
 
   // Food7 (audit #34 — calm the loudest screen): the macro hue now lives
   // ONLY on the icon + progress bar; the big number renders neutral
@@ -208,9 +209,9 @@ export default function MacroColumn({
          state-independent proof of the halo. Nothing in the unit suite
          covered it, so it only surfaced in the screenshot CI run. */
       aria-label={
-        `Show ${label.toLowerCase()} ${isLeftMode ? "eaten" : "remaining"}` +
+        `Show ${label.toLowerCase()} ${isLeftMode ? "logged" : "remaining"}` +
         (goalReached ? `. ${label} goal reached` : "") +
-        `. ${Math.round(consumed)}g eaten${hasTarget ? ` of ${Math.round(target)}g` : "; no target"}`
+        `. ${Math.round(consumed)}g logged${hasTarget ? ` of ${Math.round(target)}g` : "; no target"}`
       }
       className="min-w-0 flex-1 flex flex-col items-center text-center bg-transparent border-0 p-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-lg"
     >
@@ -306,8 +307,8 @@ export default function MacroColumn({
           causing a layout jump on first log.
 
           Empty means the fill, not the intake: `consumed === 0` is an
-          empty bar only in EATEN mode. In LEFT mode — the default —
-          nothing eaten is a FULL bar, and fading on intake would dim
+          empty bar only in the logged view. In LEFT mode — the default —
+          nothing logged is a FULL bar, and fading on intake would dim
           three full macro-coloured bars to 40% every morning (maroon,
           olive, dark green on the dark card), then brighten them as the
           first log drained them. */}
@@ -318,10 +319,11 @@ export default function MacroColumn({
           compact ? "mt-2" : "mt-2.5"
         )}
         style={{
-          /* A compact tile sits on the muted tint, where the muted track
-             would vanish; it takes the stronger groove Home's bars used. */
+          /* A compact tile sits on Home's card beside the calorie ring,
+             so its track is the ring's grey groove (CalorieRing's
+             COLOR_TRACK): one grey for "not yet" across the card. */
           background: compact
-            ? "hsl(var(--muted-foreground) / 0.22)"
+            ? "hsl(var(--muted-foreground) / 0.2)"
             : "hsl(var(--muted))",
           boxShadow: "inset 0 1px 2px rgb(0 0 0 / 0.06)",
           opacity: barFillPct === 0 ? 0.4 : 1,

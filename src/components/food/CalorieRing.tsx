@@ -1,9 +1,6 @@
-import { useId } from "react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeftRight } from "lucide-react";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
-import { useIsDarkMode } from "@/hooks/useIsDarkMode";
 import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
 import { CALORIE_UNIT } from "@/utils/formatNutrition";
 import { getCalorieRingDisplay } from "@/lib/calorieRingDisplay";
@@ -26,37 +23,37 @@ interface CalorieRingProps {
    * "hero" is the Food page's ring. "compact" is the same ring at the size
    * Home's food card draws it: one ring, two sizes, so the two screens
    * show the same object (owner call; DS3's STATUS lines). The drawing
-   * scales with the box; the number steps down, and the mode pill keeps
-   * its 11px text so it stays readable.
+   * scales with the box; the number steps down, and the label keeps its
+   * 12px text so it stays readable.
    */
   size?: "hero" | "compact";
 }
 
-// Ring dimensions — restore a larger focal ring so the hero reads as the
-// primary surface again on the Food page. Keeps the same 1:16-ish visual
-// stroke ratio and preserves centre typography hierarchy.
+/* Drawn on a 160 box. Nothing may paint past r + stroke / 2 = SIZE / 2:
+   the box clips it flat on all four sides (regression-pinned). */
 const SIZE = 160;
-const RADIUS = 75;
-const STROKE = 10;
+const STROKE = 12;
+const RADIUS = SIZE / 2 - STROKE / 2;
 const CENTER = SIZE / 2;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 
-// Food colours — the ring is the food orange (owner call, 2026-09-28), as
-// Home's food card and the week strip above it are. It was brand purple
-// until then, the one purple thing on a page that is otherwise orange.
-// Both modes (left / eaten) share the same visual identity; the toggle
-// changes the displayed value, not the ring's colour.
-//
-// Over-target does NOT escalate to amber or red. Previously the number and
-// overshoot arc cascaded through warning-orange into deep red, which
-// (a) treated going over as a failure state, and (b) clashed with the
-// macro ring colours. Now the ring and the number keep their colour, and
-// "over" is communicated by the tertiary "kcal over" label + the
-// overshoot arc in a deeper orange.
+/* The quiet ring (owner call; DS3's STATUS lines). One colour does one
+   job: the arc is the food orange and nothing else on the ring is. The
+   number is the text colour, as the macro tiles' numbers are; the track
+   is a plain grey groove; and the label under the number is plain grey
+   text, not a tag. It had an orange number in an orange tag, a gradient
+   arc, a shadowed track and a slow pulsing glow, and read as decoration
+   rather than a reading.
+
+   Over target does NOT escalate to amber or red: the overshoot lap is a
+   deeper orange, so going over reads as a second lap, not a failure, and
+   the label says "over". */
 const COLOR_RING = THEME.semantic.nutrition; // food orange
-const COLOR_RING_LIGHT = THEME.calorieRing.light; // lighter arc gradient stop
-const COLOR_RING_DEEP = THEME.calorieRing.deep; // deeper overshoot arc stop
-const COLOR_TRACK = THEME.calorieRing.track; // orange tint (12%)
+const COLOR_RING_DEEP = THEME.calorieRing.deep; // overshoot lap
+/* A token rather than an orange tint: grey reads as "not yet" on the
+   plain card, on Food's wash, and in both themes, where the tint went
+   muddy brown on the dark card. */
+const COLOR_TRACK = "hsl(var(--muted-foreground) / 0.2)";
 
 const RING_EASE = [0.32, 0.72, 0, 1] as [number, number, number, number];
 
@@ -72,11 +69,6 @@ export default function CalorieRing({
 }: CalorieRingProps) {
   const compact = size === "compact";
   const reduce = useReducedMotion();
-  const isDark = useIsDarkMode();
-  const id = useId();
-  const ringGradientId = `calorie-ring-gradient${id}`;
-  const overflowGradientId = `calorie-overflow-gradient${id}`;
-  const trackFilterId = `calorie-track-inset${id}`;
 
   const hasTarget = target > 0;
   const remaining = hasTarget ? target - consumed : 0;
@@ -86,85 +78,22 @@ export default function CalorieRing({
 
   /* Centre value + label derivation lives in a pure helper so the
      label/value pairing is unit-testable without mounting the
-     component. Pre-F3.1 the inline label expression forced "over"
-     whenever isOver was true regardless of mode, which produced
-     "5700 KCAL OVER" in eaten mode + over target — the value
-     was the consumed amount, not the over amount. The helper now
-     anchors the contract: eaten mode always reads "eaten",
-     left mode reads "over" when the user has gone past target
-     (with the magnitude as the centre number) or "left" otherwise. */
+     component: left mode reads "over" past the target (with the
+     magnitude as the centre number) or "left" otherwise, and the other
+     mode always reads "logged". */
   const { displayValue, labelMode, isOver } = getCalorieRingDisplay({
     consumed,
     target,
     isLeftMode,
   });
 
-  /* Colour stays the same in both modes — the toggle changes the
-     displayed value, not the ring's visual identity. The centre label
-     text is the only mode indicator ("kcal left" vs "kcal eaten").
-
-     Theme split (the chip's #1728 pattern, applied to the number): DARK
-     keeps the food orange on the dark card (6.5:1); LIGHT uses the
-     deeper ring step. The orange measures 2.8:1 on white, under the
-     large-text floor, where the deep step clears 5.7:1 — same family,
-     readable. (The purple ring had the same split, for the same reason
-     against the light-mode photo wash.) */
-  const numberColor = hasTarget
-    ? isDark
-      ? COLOR_RING
-      : COLOR_RING_DEEP
-    : THEME.neutral[300];
-
-  /* Ring track. The 12% orange tint reads as a recessed groove on a flat
-     WHITE card, but it's far too sheer over the dark-mode hero photo —
-     and at 0 progress the track is the ONLY ring geometry drawn (the
-     progress arc has zero length), so a track you can't see means the
-     ring disappears entirely on a day with nothing logged. Dark mode
-     therefore gets a stronger tint so the circle always reads as a
-     shape, empty or not. */
-  const trackColor = isDark ? `${COLOR_RING}52` : COLOR_TRACK;
-
-  /* The SVG halo bed that briefly lived here (2026-07-26, #1753/#1774)
-     is REMOVED — device feedback: it read as a hard black outline in
-     dark mode, and its STROKE+6 width painted past the 160px viewBox
-     (ring outer edge sits EXACTLY at the box edge at r=75 + stroke/2),
-     so the box clipped it flat on all four sides. The wheel's bed is
-     the photo scrim's concentrated ring-bed disc in FoodHeroCard —
-     soft-edged and unclippable. Nothing drawn here may exceed
-     r + strokeWidth/2 = SIZE/2 (regression-pinned). */
-
-  /* Zero is a real value, not a placeholder — it renders at full strength
-     like any other. The centre number used to drop to 0.4 opacity at
-     zero: a soft "nothing yet" cue that was survivable on a plain card
-     but rendered the hero's primary number all but invisible over the
-     dark-mode photo, which is exactly the state a user opens the app in
-     each morning. The de-emphasis was also redundant — an empty progress
-     arc already says "nothing logged" — and it broke the app's
-     consistent-numeric-treatment rule by special-casing one value. */
-
-  /* Mode-chip palette, theme-aware (mirrors the useMacroPalette split).
-     The deep orange below is tuned for the pale orange backing over a
-     WHITE card (5.2:1); on the dark card it lands at ~3.1:1 — under AA
-     for small text — and over the dark-mode hero photo the 10% tint is
-     too sheer to give the text a surface of its own. In dark mode the
-     chip therefore uses the LIGHT ring step (~6.9:1) over a slightly
-     stronger orange backing so it holds up against photography as well
-     as the flat card. */
-  const chipTextColor = isDark ? COLOR_RING_LIGHT : COLOR_RING_DEEP;
-  /* Light backing is OPAQUE (the tint flattened on white): translucent
-     10% tint went sheer over the photo wash and the chip fell under AA
-     on the busiest shot (3.06:1). Same rendered colour on a plain card. */
-  const chipBackground = isDark
-    ? `${COLOR_RING}33`
-    : THEME.calorieRing.chipBgLight;
-
   // Ring fill direction:
   // LEFT mode = drains from full as consumed grows (1 - progress)
-  // EATEN mode = fills from empty as consumed grows (progress)
+  // LOGGED mode = fills from empty as consumed grows (progress)
   const fillRatio = isLeftMode ? 1 - progress : progress;
   const strokeDashoffset = CIRCUMFERENCE * (1 - fillRatio);
 
-  // Overshoot arc (only shown in LEFT mode when over target)
+  // Overshoot lap, in both modes, capped at one extra lap.
   const overshoot = isOver ? consumed - target : 0;
   const overshootRatio =
     isOver && target > 0 ? Math.min(overshoot / target, 1) : 0;
@@ -174,135 +103,47 @@ export default function CalorieRing({
 
   const ariaLabel = hasTarget
     ? isOver
-      ? `${consumed} of ${target} calories consumed, ${Math.abs(remaining)} over target`
+      ? `${consumed} of ${target} calories logged, ${Math.abs(remaining)} over target`
       : isLeftMode
-        ? `${consumed} of ${target} calories consumed, ${remaining} remaining`
-        : `${consumed} of ${target} calories eaten`
-    : `${consumed} calories consumed, no target set`;
+        ? `${consumed} of ${target} calories logged, ${remaining} remaining`
+        : `${consumed} of ${target} calories logged`
+    : `${consumed} calories logged, no target set`;
 
   return (
     <button
       type="button"
       onClick={onToggleMode}
       aria-label={
-        ariaLabel + ". Tap to toggle between calories left and calories eaten."
+        ariaLabel + ". Tap to toggle between calories left and calories logged."
       }
       className={cn(
         "relative aspect-square block focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-full",
         compact ? "size-26 shrink-0" : "size-40 mx-auto"
       )}
       style={{
-        // Celebration glow — the ring's own orange.
+        // Celebration glow — the ring's own orange, for the moment a day's
+        // goals are met. Transient; the ring has no ambient loop.
         filter: glowing ? `drop-shadow(0 0 16px ${COLOR_RING}66)` : undefined,
         transition: "filter 800ms ease-in-out",
       }}
     >
-      {/* Idle breathing pulse — the single ambient loop on the Food hero,
-          so the ring reads as alive at rest instead of a static empty
-          circle. Glow recipe (WKWebView-safe): a STATIC blurred layer whose
-          OPACITY animates — never the blur value. Suppressed under
-          reduced-motion and while the completion glow is celebrating, so
-          the two never stack. */}
-      {!reduce && !glowing && (
-        <motion.div
-          className="absolute inset-3 rounded-full pointer-events-none"
-          style={{
-            background: `radial-gradient(circle, ${COLOR_RING}2E 0%, transparent 70%)`,
-            filter: "blur(8px)",
-          }}
-          initial={{ opacity: 0.28 }}
-          animate={{ opacity: [0.28, 0.5, 0.28] }}
-          transition={{ duration: 3.4, repeat: Infinity, ease: "easeInOut" }}
-          aria-hidden="true"
-        />
-      )}
       <svg viewBox={`0 0 ${SIZE} ${SIZE}`} className="relative size-full">
-        <defs>
-          {/* Apple Activity Rings-style gradient — lighter at the top of the
-              arc (12 o'clock), deeper at the bottom. Uses userSpaceOnUse so
-              the gradient is anchored to the SVG viewport, not to the
-              rotated <g>. The -90° rotation on <g> starts the arc at 12
-              o'clock; this vertical gradient naturally aligns lighter at
-              the arc start and deeper at the arc end. */}
-          <linearGradient
-            id={ringGradientId}
-            x1="0"
-            y1="0"
-            x2="0"
-            y2={SIZE}
-            gradientUnits="userSpaceOnUse"
-          >
-            <stop offset="0%" stopColor={COLOR_RING_LIGHT} />
-            <stop offset="100%" stopColor={COLOR_RING} />
-          </linearGradient>
-          {/* Overshoot gradient — a deeper shade of the same orange
-              so going over target still reads visually without introducing
-              a red "danger" state. The arc layers on top of the main ring
-              and only extends up to 1× target (capped), so it looks like
-              the ring has completed a second lap rather than broken. */}
-          <linearGradient
-            id={overflowGradientId}
-            x1="0%"
-            y1="0%"
-            x2="100%"
-            y2="100%"
-          >
-            <stop offset="0%" stopColor={COLOR_RING} />
-            <stop offset="100%" stopColor={COLOR_RING_DEEP} />
-          </linearGradient>
-          {/* Inset shadow filter for the track circle — makes it read as a
-              recessed groove cut into the white card surface rather than a
-              flat painted shape. Uses feComposite operator="out" to invert
-              the blur into a true inner shadow (regular drop-shadow would
-              make it look like it's floating). */}
-          <filter
-            id={trackFilterId}
-            x="-50%"
-            y="-50%"
-            width="200%"
-            height="200%"
-          >
-            <feGaussianBlur in="SourceAlpha" stdDeviation="1.5" result="blur" />
-            <feOffset in="blur" dx="0" dy="1" result="offsetBlur" />
-            <feComposite
-              in="offsetBlur"
-              in2="SourceAlpha"
-              operator="out"
-              result="innerShadow"
-            />
-            <feFlood floodColor="#000000" floodOpacity="0.08" result="colour" />
-            <feComposite
-              in="colour"
-              in2="innerShadow"
-              operator="in"
-              result="colouredShadow"
-            />
-            <feMerge>
-              <feMergeNode in="SourceGraphic" />
-              <feMergeNode in="colouredShadow" />
-            </feMerge>
-          </filter>
-        </defs>
-
         <g transform={`rotate(-90 ${CENTER} ${CENTER})`}>
-          {/* Track — inset shadow filter makes it read as a recessed groove */}
           <circle
             cx={CENTER}
             cy={CENTER}
             r={RADIUS}
             fill="none"
-            stroke={trackColor}
+            style={{ stroke: COLOR_TRACK }}
             strokeWidth={STROKE}
-            filter={`url(#${trackFilterId})`}
           />
-          {/* Progress */}
           {hasTarget && (
             <motion.circle
               cx={CENTER}
               cy={CENTER}
               r={RADIUS}
               fill="none"
-              stroke={`url(#${ringGradientId})`}
+              stroke={COLOR_RING}
               strokeWidth={STROKE}
               strokeLinecap="round"
               strokeDasharray={CIRCUMFERENCE}
@@ -317,20 +158,16 @@ export default function CalorieRing({
               }}
             />
           )}
-          {/* Overshoot overlap arc — renders in BOTH modes when over target.
-              Previously LEFT-only, which left EATEN-mode users with no
-              visual indication they'd gone over (the ring just sat at
-              100% indistinguishable from "hit your target exactly").
-              Intentional longer flourish (1.5s / 0.6s delay) — runs AFTER
-              the main 600ms log moment completes. Haptic fires via the
-              main ring's onComplete, not at the end of the overshoot. */}
+          {/* Overshoot lap — in BOTH modes when over target, so the
+              logged view does not sit at 100% indistinguishable from
+              "hit the target exactly". Runs after the main ring's draw. */}
           {isOver && (
             <motion.circle
               cx={CENTER}
               cy={CENTER}
               r={RADIUS}
               fill="none"
-              stroke={`url(#${overflowGradientId})`}
+              stroke={COLOR_RING_DEEP}
               strokeWidth={STROKE}
               strokeLinecap="round"
               strokeDasharray={CIRCUMFERENCE}
@@ -366,12 +203,13 @@ export default function CalorieRing({
               transition={{ duration: 0.2 }}
               className="flex flex-col items-center"
             >
+              {/* Zero is a real value, not a placeholder: full strength,
+                  like any other number. */}
               <p
                 className={cn(
-                  "font-extrabold font-mono tabular-nums leading-none tracking-tight",
+                  "font-extrabold font-mono tabular-nums leading-none tracking-tight text-foreground",
                   compact ? "text-2xl" : "text-4xl"
                 )}
-                style={{ color: numberColor }}
               >
                 <AnimatedNumber
                   value={displayValue}
@@ -379,33 +217,18 @@ export default function CalorieRing({
                   ease={RING_EASE}
                 />
               </p>
-              {/* Mode indicator promoted from a faint caption into an
-                  obvious toggle pill: an orange-tinted rounded chip carrying
-                  the active mode word + the swap glyph. The tinted background
-                  + the ⇄ icon read as "tap to switch" at a glance, so the
-                  active framing (LEFT vs EATEN) is legible without parsing
-                  the 10px text. Reuses the ring's own track tint
-                  (`trackColor`) for the chip. In LIGHT mode the text is the
-                  deeper orange (`COLOR_RING_DEEP`, already the
-                  overshoot-arc shade) so it clears WCAG AA (~5.2:1) on the
-                  pale orange backing; DARK mode flips to the lighter ring
-                  step over a stronger backing (see `chipTextColor` above) —
-                  the deep step fails AA on the dark card and vanishes
-                  over the hero photo. Either way it stays one orange
-                  identity. */}
-              <span
+              {/* The label is the only mode indicator ("kcal left",
+                  "kcal logged", "kcal over"), in the tiles' register:
+                  plain text. The whole ring is the tap target, and the
+                  tiles switch the same way. */}
+              <p
                 className={cn(
-                  "inline-flex items-center gap-1 rounded-full py-0.5 text-caption font-semibold",
-                  compact ? "mt-1 px-1.5" : "mt-1.5 px-2"
+                  "text-xs font-medium text-muted-foreground",
+                  compact ? "mt-1" : "mt-1.5"
                 )}
-                style={{
-                  color: chipTextColor,
-                  backgroundColor: chipBackground,
-                }}
               >
                 {CALORIE_UNIT} {labelMode}
-                <ArrowLeftRight className="size-2.5" aria-hidden="true" />
-              </span>
+              </p>
               {trajectoryLabel && (
                 <p className="text-caption mt-1 text-muted-foreground font-mono tabular-nums">
                   {trajectoryLabel}

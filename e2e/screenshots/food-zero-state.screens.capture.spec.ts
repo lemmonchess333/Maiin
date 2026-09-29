@@ -1,14 +1,15 @@
 /**
  * Food hero — ZERO state over the photo.
  *
- * The hardest legibility case: a day with nothing logged, in "eaten"
- * framing. The centre number is 0 and the progress arc has zero length,
+ * The hardest legibility case: a day with nothing logged, in the
+ * logged view. The centre number is 0 and the progress arc has zero length,
  * so the ring TRACK is the only geometry drawn. Both were tuned for a
  * flat card (10% tint track, 0.4-opacity zero) and effectively vanished
  * over the dark-mode hero photo.
  *
  * Seeds the plain e2e user (NOT seed:rich) so today genuinely has no
- * meals, and forces "eaten" mode via the ring's storage key.
+ * meals, and forces the logged view via the ring's storage key (whose
+ * stored value is "eaten").
  */
 import { test, type Page } from "@playwright/test";
 import { signInAsTestUser } from "../helpers/auth";
@@ -36,7 +37,7 @@ test.describe("food zero state", () => {
         document.head.appendChild(style);
       });
       try {
-        // Force the "eaten" framing so the centre value is 0 rather than
+        // Force the logged view so the centre value is 0 rather than
         // the full target — the state the user hits on a fresh morning.
         window.localStorage.setItem("tropos.food.calorieRingMode", "eaten");
       } catch {
@@ -58,7 +59,7 @@ test.describe("food zero state", () => {
     }
   }
 
-  test("zero kcal eaten over the photo — dark", async ({ page }) => {
+  test("zero kcal logged over the photo — dark", async ({ page }) => {
     test.setTimeout(120_000);
     await page.evaluate(() => document.documentElement.classList.add("dark"));
     await page.goto("food");
@@ -74,7 +75,7 @@ test.describe("food zero state", () => {
     });
   });
 
-  test("zero kcal eaten — light", async ({ page }) => {
+  test("zero kcal logged — light", async ({ page }) => {
     test.setTimeout(120_000);
     await page.goto("food");
     await page

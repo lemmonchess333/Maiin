@@ -68,7 +68,7 @@ function reads(key: "protein" | "carbs" | "fat", value: string, word: string) {
 }
 
 beforeEach(function () {
-  /* The left/eaten switch is a module-level store over localStorage.
+  /* The left/logged switch is a module-level store over localStorage.
      Clearing storage alone leaves the store holding the last test's mode
      for the first render, and the ring fades that stale label out while
      the next assertion is looking: reset the store itself, then storage. */
@@ -93,7 +93,7 @@ describe("TodayEnergy — the Food page's ring and tiles", function () {
   it("leads with what is left of the target, inside the ring", function () {
     renderAt(A_DAY);
     expect(ring()).toHaveAccessibleName(
-      /^1450 of 2200 calories consumed, 750 remaining/
+      /^1450 of 2200 calories logged, 750 remaining/
     );
     expect(screen.getByText(groupText(750))).toBeInTheDocument();
     expect(screen.getByText("kcal left")).toBeInTheDocument();
@@ -105,7 +105,16 @@ describe("TodayEnergy — the Food page's ring and tiles", function () {
     reads("carbs", "164", "left");
     reads("fat", "32", "left");
     for (const key of ["protein", "carbs", "fat"] as const) {
-      expect(within(tile(key)).queryByText("eaten")).toBeNull();
+      expect(within(tile(key)).queryByText("logged")).toBeNull();
+    }
+  });
+
+  it("sets the macros on the card itself, with no box of their own", function () {
+    /* The card is already the box; a grey tile per macro inside it was a
+       box in a box (owner call; DS3's STATUS lines). */
+    renderAt(A_DAY);
+    for (const key of ["protein", "carbs", "fat"] as const) {
+      expect(tile(key).parentElement!.className).not.toMatch(/\bbg-|rounded/);
     }
   });
 
@@ -170,24 +179,24 @@ describe("TodayEnergy — the day's shape", function () {
   });
 });
 
-describe("TodayEnergy — one left/eaten switch, shared with Food", function () {
+describe("TodayEnergy — one left/logged switch, shared with Food", function () {
   /* The ring fades its old figure out before the new one mounts
      (AnimatePresence), so its half is awaited; the tiles change at once. */
-  it("switches every figure to eaten when the ring is tapped", async function () {
+  it("switches every figure to logged when the ring is tapped", async function () {
     renderAt(A_DAY);
     fireEvent.click(ring());
-    expect(await screen.findByText("kcal eaten")).toBeInTheDocument();
+    expect(await screen.findByText("kcal logged")).toBeInTheDocument();
     expect(screen.getByText(groupText(1450))).toBeInTheDocument();
-    reads("protein", "80", "eaten");
-    reads("carbs", "56", "eaten");
-    reads("fat", "38", "eaten");
+    reads("protein", "80", "logged");
+    reads("carbs", "56", "logged");
+    reads("fat", "38", "logged");
     expect(hapticMock).toHaveBeenCalled();
   });
 
   it("switches from any tile too, and back again", async function () {
     renderAt(A_DAY);
     fireEvent.click(tile("fat"));
-    expect(await screen.findByText("kcal eaten")).toBeInTheDocument();
+    expect(await screen.findByText("kcal logged")).toBeInTheDocument();
     fireEvent.click(tile("protein"));
     expect(await screen.findByText("kcal left")).toBeInTheDocument();
   });
@@ -197,7 +206,7 @@ describe("TodayEnergy — one left/eaten switch, shared with Food", function () 
     // A tap here is saved where the Food page reads it…
     fireEvent.click(ring());
     expect(localStorage.getItem("tropos.food.calorieRingMode")).toBe("eaten");
-    expect(await screen.findByText("kcal eaten")).toBeInTheDocument();
+    expect(await screen.findByText("kcal logged")).toBeInTheDocument();
     // …and a change made there shows here.
     act(() => setCalorieRingMode("left"));
     expect(await screen.findByText("kcal left")).toBeInTheDocument();
@@ -260,7 +269,7 @@ describe("TodayEnergy — HOME-TARGET-01 truthful targets/copy", () => {
     // Whatever the phase, the card works from the target and never shows
     // a +300/-500 delta.
     renderAt({ ...A_DAY, targets: { ...targets, finalTarget: 1700 } });
-    expect(ring()).toHaveAccessibleName(/^1450 of 1700 calories consumed/);
+    expect(ring()).toHaveAccessibleName(/^1450 of 1700 calories logged/);
     expect(screen.queryByText(/[+−-]\s?\d{3}/)).toBeNull();
   });
 
@@ -349,8 +358,8 @@ describe("TodayEnergy — infeasible target notice", function () {
       targets: infeasible,
     });
     // No goal, so nothing is "left" of one: what was logged, plainly.
-    reads("protein", "80", "eaten");
-    reads("carbs", "56", "eaten");
+    reads("protein", "80", "logged");
+    reads("carbs", "56", "logged");
     // Fat keeps its floor figure.
     reads("fat", "4", "left");
     expect(screen.queryByText(/\/ 0 ?g/)).toBeNull();
@@ -410,7 +419,7 @@ describe("TodayEnergy — loading is not the same as having logged nothing", fun
 
   it("still shows a real zero once loading is done", function () {
     renderAt({ calories: 0, mealsLoading: false });
-    expect(ring()).toHaveAccessibleName(/^0 of 2200 calories consumed/);
+    expect(ring()).toHaveAccessibleName(/^0 of 2200 calories logged/);
     reads("protein", "160", "left");
   });
 });

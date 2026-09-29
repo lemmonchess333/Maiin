@@ -196,12 +196,12 @@ control behaviour the same everywhere. It is **not** a mandate to make every
 surface look alike. A handful of elements are where the product has a face,
 and consistency must yield to them:
 
-| Element              | Keeps                                                                     |
-| -------------------- | ------------------------------------------------------------------------- |
-| Food hero            | Calorie ring with a subtle token-based halo and three compact macro cards |
-| Home performance row | The ring in the band's colour with the score in it, the verb, the chip    |
-| Meal slot picker     | Filled orange pills (`SegmentedControl` `emphasis="solid"`)               |
-| Sport coding         | Purple lifting / coral running, everywhere they appear                    |
+| Element              | Keeps                                                                  |
+| -------------------- | ---------------------------------------------------------------------- |
+| Food hero            | Calorie ring, one orange arc on a grey groove, and three macro cards   |
+| Home performance row | The ring in the band's colour with the score in it, the verb, the chip |
+| Meal slot picker     | Filled orange pills (`SegmentedControl` `emphasis="solid"`)            |
+| Sport coding         | Purple lifting / coral running, everywhere they appear                 |
 
 A 2026-09 cohesion pass flattened the meal pills onto the neutral segmented
 track, and a later release rendered both hero cards through a `compact`
@@ -303,7 +303,7 @@ slash: `125 / 140 g` on a macro, and the target named in words where there
 is room. Home's food card draws the Food page's calorie ring and macro
 tiles, smaller and side by side (owner call, 2026-09-29), so the two
 screens show the same object: both count down by default ("1,065 kcal
-left", "86g left") and share one left/eaten switch. Home shows the three
+left", "86g left") and share one left/logged switch. Home shows the three
 macros always, with full Protein, Carbs and Fat labels and their meat,
 wheat and avocado icons; there is no collapsed P/C/F summary and no
 Details disclosure.

@@ -17,7 +17,7 @@
  * convert into a two-second one.
  *
  * The anchor is the calorie ring's accessible name, "1889 of 2200
- * calories consumed, …". It is built from raw numbers rather than
+ * calories logged, …". It is built from raw numbers rather than
  * `formatCalories` (which follows the runtime's locale: "2,200", "2.200",
  * "2 200"), so it reads the same wherever CI runs, and the assertions
  * below hold it to that.

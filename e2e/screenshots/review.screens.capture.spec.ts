@@ -71,7 +71,7 @@ test.describe("weekly review screenshots", () => {
       /* The settle is the other half of the fix in `shoot` above, and it
          is the half `animations: "disabled"` cannot supply. Freezing
          transitions lands CSS colours on their end state, but
-         `useIsDarkMode` and `MuscleHeatMap` read this class in
+         `useMacroPalette` and `MuscleHeatMap` read this class in
          JAVASCRIPT — they need a React re-render before their colours
          change, and a screenshot taken in the same tick catches the
          previous theme. */

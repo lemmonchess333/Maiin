@@ -136,23 +136,10 @@ export const THEME = {
   // purple thing on it. Named here (Food7) so the Food hero's focal
   // colour isn't a stray hex in CalorieRing.tsx.
   calorieRing: {
-    /* The arc gradient's top stop, and the chip's text in dark mode:
-       6.9:1 on the chip's orange backing over the dark card. */
-    light: "#F2AE7A",
-    /* The overshoot lap, and the number and chip text in light mode. The
-       `--nutrition-strong` light value: 5.7:1 on white, 5.2:1 on the
-       chip. It fails AA on the dark card (3.1:1), which is why dark mode
-       takes the other two. */
+    /* The overshoot orange, a fill only: the ring's second lap past the
+       target, the week strip's over-target lap and the drill-down bar
+       past it. The `--nutrition-strong` light value. */
     deep: "#A64C08",
-    /* The mode chip's LIGHT backing: the 10% orange tint flattened onto
-       white — 0.9*255 + 0.1*(217,136,78) = rgb(251,243,237). Identical
-       rendered colour to the translucent tint on the plain white card,
-       but OPAQUE, so over the hero photo the chip keeps a designed
-       surface instead of going sheer (the #1728 failure mode,
-       light-side). */
-    chipBgLight: "#FBF3ED",
-    /* The light-mode track: the orange at 12%, a groove in the card. */
-    track: "rgba(217, 136, 78, 0.12)",
   },
 
   // Swipe-action colours (FoodRow). Deliberate iOS-HIG system tones —

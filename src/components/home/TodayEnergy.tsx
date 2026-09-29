@@ -26,7 +26,7 @@ type MacroIcon = ComponentType<SVGProps<SVGSVGElement>>;
  *
  * The two screens draw the same two components so the same day reads as
  * the same object on both: the same ring, the same tiles, the same
- * numbers, counting down by default. They share one left/eaten switch
+ * numbers, counting down by default. They share one left/logged switch
  * (`useCalorieRingMode`): tapping the ring or a tile here flips it, and
  * Food opens the way it was left. Drawing a separate set here is how the
  * two came to disagree, one counting the macros up and the other down.
@@ -130,9 +130,10 @@ export default function TodayEnergy({
         </Link>
       </div>
 
-      {/* The ring and the three tiles in one row. While the day's meals
-          are arriving they wait as placeholders of the same size, so the
-          card does not grow when the meals land. */}
+      {/* The ring and the three macros in one row. The macros sit on the
+          card with no box of their own: the card is already the box.
+          While the day's meals are arriving they wait as placeholders of
+          the same size, so the card does not grow when the meals land. */}
       <div className="mt-3 flex items-center gap-2.5">
         {caloriesPending ? (
           <span
@@ -154,10 +155,7 @@ export default function TodayEnergy({
         )}
         <div className="grid min-w-0 flex-1 grid-cols-3 gap-1.5">
           {macros.map((m) => (
-            <div
-              key={m.key}
-              className="flex min-w-0 rounded-xl bg-muted px-1 py-2.5"
-            >
+            <div key={m.key} className="flex min-w-0 px-0.5 py-1">
               {caloriesPending ? (
                 <div
                   role="group"
