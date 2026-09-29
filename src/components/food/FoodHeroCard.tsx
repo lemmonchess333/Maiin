@@ -260,7 +260,11 @@ export default function FoodHeroCard({
             was flat card — it read as two corner smudges, not a gradient.
             Now each spans ~85% of the card with a three-stop falloff, and
             light runs at 85% rather than 70%. Static, token-derived, and
-            the ring and its readable centre stay above it. */}
+            the ring and its readable centre stay above it. The ring is
+            orange as well now, and the purple half stays: the owner
+            compared an orange-only wash, a flat orange tint and a plain
+            card with this one and kept this (DS3's STATUS lines in the
+            plan file). */}
         <div className="relative">
           {/* The ring and the card's three small controls. The controls sit
           in the ring's corners rather than in rows of their own above and
