@@ -182,9 +182,11 @@ baseline that only decreases; raising it needs a written reason in the test.
   h1 class (`text-xl font-extrabold`).
 - eslint.config.js: the hex ban misses object-property literals —
   ui/Dialog.tsx ≈106 carries `bg-[#1A1A1F]` unflagged. Extend the selector
-  to Property literals and template strings. Pin lint at
-  `--max-warnings <current>` as a ratchet (the 99 are WARN on purpose,
-  #1051 — fix real bugs, don't chase zero).
+  to Property literals and template strings. Lint is pinned at
+  `--max-warnings 0` (the 2026-09-29 pass cleared all 87 that were left;
+  a deliberate sync with an outside system carries its reason beside a
+  disable). Fix real bugs first: that pass found eight account-switch
+  leaks while clearing the warnings.
 - New and small: a src/styles class-usage gate (20 dead classes and 9
   keyframes today); the archaeology-marker ratchet (3a); a wholesale
   `vi.mock("firebase/firestore")` ratchet (58 files against 53 on the
