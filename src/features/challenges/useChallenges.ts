@@ -188,6 +188,23 @@ export function soonestEndingChallenge<
   return best;
 }
 
+/** The user's participant doc for each tracked challenge, keyed by
+ *  challenge id: present for the ones they have joined. One read at a
+ *  time, in list order. */
+async function readMyProgress(
+  uid: string,
+  tracked: readonly Challenge[]
+): Promise<Record<string, ChallengeParticipant>> {
+  const prog: Record<string, ChallengeParticipant> = {};
+  for (const ch of tracked) {
+    const snap = await getDoc(
+      doc(db, "challenges", ch.id, "participants", uid)
+    );
+    if (snap.exists()) prog[ch.id] = snap.data() as ChallengeParticipant;
+  }
+  return prog;
+}
+
 export function useChallenges() {
   const uid = useUid();
   const [challenges, setChallenges] = useState<Challenge[]>([]);
@@ -268,17 +285,12 @@ export function useChallenges() {
      and (via the myProgress dep on the boards effect below) the
      leaderboards are one-shot reads that previously only refreshed when
      the challenge list itself changed. */
-  const loadMyProgress = useCallback(async () => {
+  const loadMyProgress = useCallback((): Promise<void> => {
     const tracked = [...challenges, ...endedChallenges];
-    if (!uid || tracked.length === 0) return;
-    const prog: Record<string, ChallengeParticipant> = {};
-    for (const ch of tracked) {
-      const snap = await getDoc(
-        doc(db, "challenges", ch.id, "participants", uid)
-      );
-      if (snap.exists()) prog[ch.id] = snap.data() as ChallengeParticipant;
-    }
-    setMyProgress(prog);
+    if (!uid || tracked.length === 0) return Promise.resolve();
+    // State is set in the continuation, once every read has landed, so
+    // the effect below that starts the reads sets nothing synchronously.
+    return readMyProgress(uid, tracked).then(setMyProgress);
   }, [uid, challenges, endedChallenges]);
 
   useEffect(() => {

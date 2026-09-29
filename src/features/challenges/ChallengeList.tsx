@@ -55,10 +55,21 @@ export function ChallengeList({
     refreshRef.current = refreshProgress;
   }, [refreshRef, refreshProgress]);
 
-  const [weeklyRankings, setWeeklyRankings] = useState<EnrichedEntry[]>([]);
+  /* This week's standings among people you follow, stamped with the
+     account they were built for. Loading and the list are derived from it
+     against the signed-in uid, so another account reads as loading, with
+     no standings, from its first render. That matters beyond the rows:
+     the accountability card below reads the list even while it loads. */
+  const [rankings, setRankings] = useState<{
+    uid: string;
+    entries: EnrichedEntry[];
+  } | null>(null);
+  const settledRankings =
+    rankings !== null && rankings.uid === user?.uid ? rankings : null;
+  const rankingsLoading = settledRankings === null;
+  const weeklyRankings = settledRankings?.entries ?? [];
   // SOC-P1e: not-joined challenges collapse behind a disclosure row.
   const [showAllAvailable, setShowAllAvailable] = useState(false);
-  const [rankingsLoading, setRankingsLoading] = useState(true);
   const [weeklyBusy, setWeeklyBusy] = useState(false);
 
   // Find the weekly warrior challenge
@@ -83,7 +94,6 @@ export function ChallengeList({
   useEffect(() => {
     if (!user) return;
     let cancelled = false;
-    setRankingsLoading(true);
     buildLeaderboard(user.uid, "weekly_workouts")
       .then(async (raw) => {
         if (cancelled) return;
@@ -117,12 +127,19 @@ export function ChallengeList({
           })
         );
         if (!cancelled) {
-          setWeeklyRankings(enriched.filter((e) => e.value > 0));
-          setRankingsLoading(false);
+          setRankings({
+            uid: user.uid,
+            entries: enriched.filter((e) => e.value > 0),
+          });
         }
       })
       .catch(() => {
-        if (!cancelled) setRankingsLoading(false);
+        // Settle so the skeleton gives way. A refetch for the same account
+        // that fails keeps the standings it already had.
+        if (!cancelled)
+          setRankings((prev) =>
+            prev?.uid === user.uid ? prev : { uid: user.uid, entries: [] }
+          );
       });
     return () => {
       cancelled = true;

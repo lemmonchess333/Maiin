@@ -248,10 +248,19 @@ export default function FeedView({
     followingCount < 2;
   const [trajectory, setTrajectory] = useState<PersonalTrajectory | null>(null);
   const [trajectoryLoading, setTrajectoryLoading] = useState(true);
+  /* The read below restarts whenever the slot turns on or the account
+     changes. The loading flag goes back up in that same render (React's
+     "adjust state during render" idiom): raised from the effect, it would
+     first commit a render that paints the previous read as this one. */
+  const trajectoryFor = trajectoryEnabled && uid ? uid : null;
+  const [trajectoryReadFor, setTrajectoryReadFor] = useState(trajectoryFor);
+  if (trajectoryReadFor !== trajectoryFor) {
+    setTrajectoryReadFor(trajectoryFor);
+    if (trajectoryFor !== null) setTrajectoryLoading(true);
+  }
   useEffect(() => {
     if (!trajectoryEnabled || !uid) return;
     let cancelled = false;
-    setTrajectoryLoading(true);
     getPersonalTrajectory(uid)
       .then((d) => {
         if (!cancelled) setTrajectory(d);

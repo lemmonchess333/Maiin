@@ -91,16 +91,23 @@ export default function UserProfile() {
   const [trainingForSpaceId, setTrainingForSpaceId] = useState<string | null>(
     null
   );
-  const [statsLoading, setStatsLoading] = useState(true);
+  /* The (viewer, profile) pair whose reads below have all settled. The
+     stats skeleton is derived from it: the page stays mounted across a
+     /user/:uid change, so another profile shows the skeleton from its
+     very first render, and a slower set of reads for the profile just
+     left can't clear the flag early. */
+  const statsKey = uid ? `${viewerUid ?? ""}:${uid}` : null;
+  const [statsSettledFor, setStatsSettledFor] = useState<string | null>(null);
+  const statsLoading = statsKey === null || statsSettledFor !== statsKey;
 
   useEffect(() => {
-    if (!uid) return;
+    if (!uid || statsKey === null) return;
+    let cancelled = false;
     // Derive own-profile branch inside the effect so it re-evaluates if the
     // signed-in user changes. Matches the isOwnProfile derivation below for
     // render-time gating, but we can't use that binding here — it's declared
     // after this effect.
     const isOwnProfile = viewerUid === uid;
-    setStatsLoading(true);
 
     // NOTE: users/{uid} is doc-level owner-only per firestore.rules:55-56, so
     // this read succeeds only for the viewer's own profile. For cross-user
@@ -308,9 +315,12 @@ export default function UserProfile() {
       badgesPromise,
       ownStatsPromise,
     ]).finally(() => {
-      setStatsLoading(false);
+      if (!cancelled) setStatsSettledFor(statsKey);
     });
-  }, [uid, viewerUid]);
+    return () => {
+      cancelled = true;
+    };
+  }, [uid, viewerUid, statsKey]);
 
   const isOwnProfile = viewerUid === uid;
 

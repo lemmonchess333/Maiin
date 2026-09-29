@@ -22,6 +22,7 @@ import {
    MemoryRouter. */
 import { MemoryRouter } from "react-router-dom";
 import type { CircleSummary } from "@/features/goalSpace/useGoalSpaces";
+import { localWeekKey } from "@/lib/dateHelpers";
 
 const navigateMock = vi.fn();
 vi.mock("react-router-dom", async () => {
@@ -313,5 +314,80 @@ describe("the name suggestion follows the chosen template", () => {
       "Name it (e.g. Spring half marathon)"
     );
     expect(name.getAttribute("placeholder")).not.toMatch(/strength block/);
+  });
+});
+
+/* The featured card's eager detail (the "N of M focusing" pulse, the
+   Set/Change focus label) belongs to one circle. When another circle takes
+   the lead, its card must not carry the previous circle's pulse, including
+   in the commit before the new circle's own read lands. The mocked hook
+   runs at the top of every render, so it sees what the previous commit
+   left in the DOM: that is how the commit in between is observed. */
+describe("featured circle change", () => {
+  it("the next featured circle never shows the previous one's focus pulse", async () => {
+    const thisWeek = localWeekKey();
+    const member = (uid: string) => ({
+      uid,
+      displayName: uid,
+      photoURL: null,
+      role: "member" as const,
+      joinedAt: 1,
+    });
+    const firstDetail = {
+      members: [member("me"), member("friend")],
+      events: [
+        {
+          id: `me_${thisWeek}`,
+          uid: "me",
+          kind: "weekly_check_in" as const,
+          text: null,
+          weekKey: thisWeek,
+          weeklyFocus: "strength" as const,
+          supporterIds: [],
+          createdAt: 1,
+        },
+      ],
+    };
+    // The second circle's read never lands: anything focus-shaped on its
+    // card could only be the first circle's.
+    const loadDetail = vi.fn((spaceId: string) =>
+      spaceId === "c1" ? Promise.resolve(firstDetail) : new Promise(() => {})
+    );
+    let value = hookValue({
+      circles: [circle("c1", "Autumn Strength Crew"), circle("c2", "Second")],
+      loadDetail,
+    });
+    const domAtRender: string[] = [];
+    mockUseGoalSpaces.mockImplementation(() => {
+      domAtRender.push(document.body.textContent ?? "");
+      return value;
+    });
+    const view = render(
+      <MemoryRouter>
+        <CirclesSection uid="me" />
+      </MemoryRouter>
+    );
+    // POSITIVE anchor: the first circle's pulse is showing.
+    expect(await screen.findByText(/focusing this week/)).toBeInTheDocument();
+
+    // The first circle leaves the list; the second takes the lead.
+    value = hookValue({ circles: [circle("c2", "Second")], loadDetail });
+    view.rerender(
+      <MemoryRouter>
+        <CirclesSection uid="me" />
+      </MemoryRouter>
+    );
+    await waitFor(() => expect(loadDetail).toHaveBeenCalledWith("c2"));
+
+    // Every DOM state after the switch committed: the ones later renders
+    // saw, and the one on screen now.
+    const afterSwitch = [
+      ...domAtRender.filter((dom) => !dom.includes("Autumn Strength Crew")),
+      document.body.textContent ?? "",
+    ];
+    expect(afterSwitch.filter((dom) => dom.includes("focusing"))).toEqual([]);
+    expect(
+      screen.getByRole("button", { name: "Set weekly focus" })
+    ).toBeInTheDocument();
   });
 });

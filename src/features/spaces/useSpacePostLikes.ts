@@ -71,6 +71,10 @@ export function useSpacePostLikes(spaceId: string, postIds: string[]) {
     };
   }, [uid, spaceId, postIds]);
 
+  // Read once per render and closed over below: the callback's memo
+  // then depends on the name it sends, not on the whole profile object.
+  const fromName = profile?.displayName || "Someone";
+
   const toggle = useCallback(
     async (postId: string) => {
       if (!uid || busyRef.current.has(postId)) return;
@@ -90,7 +94,7 @@ export function useSpacePostLikes(spaceId: string, postIds: string[]) {
       }));
       try {
         const serverLiked = await toggleSpacePostLike(spaceId, postId, {
-          fromName: profile?.displayName || "Someone",
+          fromName,
         });
         // Reconcile if the server disagrees (e.g. a stale seed).
         if (serverLiked === wasLiked) {
@@ -123,7 +127,7 @@ export function useSpacePostLikes(spaceId: string, postIds: string[]) {
         busyRef.current.delete(postId);
       }
     },
-    [uid, spaceId, liked, profile?.displayName]
+    [uid, spaceId, liked, fromName]
   );
 
   return { liked, deltas, toggle };
