@@ -7,7 +7,6 @@ import { validateOwnerArtworkRelease } from "../formArtOwnerRelease";
 import { validateArtworkReview } from "../formArtReview";
 
 const ids = [
-  "front-raise",
   "goblet-squat",
   "push-ups",
   "squat",
@@ -55,7 +54,7 @@ describe("owner-authorized artwork activation", () => {
      I/O, and raising it further would be treating the symptom. If this
      starts failing regularly rather than occasionally, the thing to
      look at is suite concurrency, not this number. */
-  it("ships exactly seven owner-authorized guides bound to source, delivered assets and cues", () => {
+  it("ships exactly six owner-authorized guides bound to source, delivered assets and cues", () => {
     expect(
       Object.keys(FORM_ARTWORK)
         .filter(
@@ -86,6 +85,7 @@ describe("owner-authorized artwork activation", () => {
       "bodyweight-squat",
       "db-curl",
       "hammer-curl",
+      "front-raise",
     ]) {
       expect(getReleasedFormArtwork(id)?.status, id).toBe("approved");
       const { review, expected } = evidence(id);

@@ -1,0 +1,170 @@
+{
+  "exerciseId": "front-raise",
+  "version": "anatomy-v3-2026-09-29",
+  "width": 1024,
+  "height": 1536,
+  "decision": "approved",
+  "reviewer": "Codex visual and implementation review",
+  "reviewedAt": "2026-09-29T10:48:40.482Z",
+  "reference": {
+    "path": "form-frames/front-raise/1.webp",
+    "sha256": "c724267a05a39a4fd0b936de380bdd3dbc73accda8525d30607646a71a16bc79"
+  },
+  "cueSha256": "c254e7901915afa29707c81b0ea3a271c5baccfe78010c7ac42d020e3f4370e5",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Native source master/middle/top retain the canonical bald faceless white-grey athlete, fine contours, smooth featureless pelvis and white trainers. No new generation or pixel edits were needed for the selected poses."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Fixed front three-quarter view at native 1024x1536. Full head, both weights and planted shoes remain visible; torso, head and floor registration stay visually stable."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Both arms rise forward with softly bent elbows to approximately shoulder level, then lower through the same middle pose. Native inspection shows plausible shoulder flexion, closed grips and continuous wrists. No calibrated numerical joint-angle claim."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Paired modest round-ended dumbbells remain attached to closed hands, with straight handles and matching construction. Native silhouette and mobile sequence review found no visible detached grip or equipment discontinuity; fixed-shoe scans do not certify moving equipment dimensions."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Palms face the thighs at setup and turn toward the floor as the arms rise; both shoes remain planted. No deterministic patches or edits to anatomy or equipment."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Weights follow the arms about the shoulders; the torso stays upright without a visible swinging or shrugging transition. Native fixed-shoe scanline anchors and spans pass unrounded one-pixel/one-percent limits."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Strongest purple marks front delts, lighter lilac upper chest and pale forearm support. Highlight hierarchy remains consistent through raising and lowering; legs stay neutral."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Six cues of at most seven words describe setup, forward raise, shoulder-height top, control, lowering and full reset. They match the exact front-raise catalogue variation and selected poses."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "Manually stepped all six and the 6-to-1 loop in current ExerciseFormFrames on 29 September 2026. Setup/middle/top/hold/middle/setup uses identical return configurations (4=3,5=2,6=1). No continuous timed-playback claim."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "All six and the loop reviewed at 390x844 in the current light player. Full athlete and both weights remain visible, all cues legible, document width390 and native image1024x1536 verified; no console errors."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "All six and the loop reviewed at 390x844 in the current dark player. Grip and shoulder positions remain legible, feet stable, cues readable and complete figure visible without clipping."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/front-raise/1.webp",
+      "sha256": "c724267a05a39a4fd0b936de380bdd3dbc73accda8525d30607646a71a16bc79",
+      "anchors": {
+        "farShoe": {
+          "x": 403.77358490566036,
+          "y": 1350
+        },
+        "nearShoe": {
+          "x": 596.0105263157894,
+          "y": 1430
+        }
+      },
+      "invariantDimensions": {
+        "farShoeSpan": 233.72977079903768,
+        "nearShoeSpan": 208.95051264524955
+      }
+    },
+    {
+      "path": "form-frames/front-raise/2.webp",
+      "sha256": "e9e5348bf4c59df399a419bfddb7a392c239debd0139d2954ec6be0c0811db1e",
+      "anchors": {
+        "farShoe": {
+          "x": 403.09708737864077,
+          "y": 1350
+        },
+        "nearShoe": {
+          "x": 595.3732394366198,
+          "y": 1430
+        }
+      },
+      "invariantDimensions": {
+        "farShoeSpan": 233.60216074166004,
+        "nearShoeSpan": 209.2248914045017
+      }
+    },
+    {
+      "path": "form-frames/front-raise/3.webp",
+      "sha256": "28f58a881393a298de1a4fee78b3728e5933339e2561b2eb13ad06340a88faff",
+      "anchors": {
+        "farShoe": {
+          "x": 402.94520547945206,
+          "y": 1350
+        },
+        "nearShoe": {
+          "x": 595.0948275862069,
+          "y": 1430
+        }
+      },
+      "invariantDimensions": {
+        "farShoeSpan": 233.78396118721457,
+        "nearShoeSpan": 209.9845374931582
+      }
+    },
+    {
+      "path": "form-frames/front-raise/4.webp",
+      "sha256": "28f58a881393a298de1a4fee78b3728e5933339e2561b2eb13ad06340a88faff",
+      "anchors": {
+        "farShoe": {
+          "x": 402.94520547945206,
+          "y": 1350
+        },
+        "nearShoe": {
+          "x": 595.0948275862069,
+          "y": 1430
+        }
+      },
+      "invariantDimensions": {
+        "farShoeSpan": 233.78396118721457,
+        "nearShoeSpan": 209.9845374931582
+      }
+    },
+    {
+      "path": "form-frames/front-raise/5.webp",
+      "sha256": "e9e5348bf4c59df399a419bfddb7a392c239debd0139d2954ec6be0c0811db1e",
+      "anchors": {
+        "farShoe": {
+          "x": 403.09708737864077,
+          "y": 1350
+        },
+        "nearShoe": {
+          "x": 595.3732394366198,
+          "y": 1430
+        }
+      },
+      "invariantDimensions": {
+        "farShoeSpan": 233.60216074166004,
+        "nearShoeSpan": 209.2248914045017
+      }
+    },
+    {
+      "path": "form-frames/front-raise/6.webp",
+      "sha256": "c724267a05a39a4fd0b936de380bdd3dbc73accda8525d30607646a71a16bc79",
+      "anchors": {
+        "farShoe": {
+          "x": 403.77358490566036,
+          "y": 1350
+        },
+        "nearShoe": {
+          "x": 596.0105263157894,
+          "y": 1430
+        }
+      },
+      "invariantDimensions": {
+        "farShoeSpan": 233.72977079903768,
+        "nearShoeSpan": 208.95051264524955
+      }
+    }
+  ]
+}
