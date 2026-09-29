@@ -427,6 +427,16 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
       "99565c667a11afdaf06170564f23d6f71f4be04bd05bbf5de3547f98fe3d7ca4",
     sha256: "b9d0f02faf0f20f0b749814f395699fd73586d9ac16ee06b5c76198bdf78717b",
   },
+  "toe-touches": {
+    src: "form-art/toe-touches.webp",
+    width: 480,
+    height: 310,
+    keyed: true,
+    source: "form-frames/toe-touches/1.webp",
+    sourceSha256:
+      "cfaee4b9b2bccd321f65af5349abb3c14be80c8472e700323a0b130a3dedf793",
+    sha256: "469cc238ac34dbaa628d867ab8c6f2bbfb40881d4e1454f15371fa0889a9c998",
+  },
   "tricep-kickback": {
     src: "form-art/tricep-kickback.webp",
     width: 480,
