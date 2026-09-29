@@ -180,7 +180,7 @@ export const FORM_ARTWORK: Record<string, FormArtwork> = {
     reviewFile: "docs/exercise-art/releases/2026-09-22/weighted-push-ups.json",
   },
   "db-curl": { version: "anatomy-v3-2026-09-29", status: "approved", width: 1024, height: 1536, frames: Array.from({length:6}, (_,i) => `form-frames/db-curl/${i+1}.webp`), reference: "form-frames/db-curl/1.webp", reviewFile: "docs/exercise-art/releases/2026-09-29/db-curl.json" },
-  "hammer-curl": ownerReleased("hammer-curl", 1024, 1536),
+  "hammer-curl": { version: "anatomy-v3-2026-09-29", status: "approved", width: 1024, height: 1536, frames: Array.from({length:6}, (_,i) => `form-frames/hammer-curl/${i+1}.webp`), reference: "form-frames/hammer-curl/1.webp", reviewFile: "docs/exercise-art/releases/2026-09-29/hammer-curl.json" },
   "front-raise": ownerReleased("front-raise", 1024, 1536),
   "goblet-squat": ownerReleased("goblet-squat", 1024, 1536),
   "push-ups": ownerReleased("push-ups", 1536, 1024),

@@ -214,19 +214,7 @@ export const RELEASED_FORM_PLACARDS = {
     ]
   ),
   "db-curl": placard("db-curl", ["Biceps"], ["Forearms"], [[0,"Set","Stand tall with palms facing forward."],[0.5,"Curl","Bend your elbows without swinging your torso."],[1,"Top","Curl toward shoulders, keeping wrists straight."],[1,"Control","Keep upper arms close to your ribs."],[0.5,"Lower","Lower both dumbbells slowly under control."],[0,"Reset","Return near straight without snapping your elbows."]]),
-  "hammer-curl": placard(
-    "hammer-curl",
-    ["biceps", "brachialis"],
-    ["brachioradialis"],
-    [
-      [0, "Start", "Stand tall; keep palms facing inward."],
-      [0.25, "Initiate curl", "Curl without swinging your upper arms."],
-      [0.6, "Mid curl", "Keep wrists straight and elbows beside ribs."],
-      [1, "Top curl", "Finish the curl without lifting your elbows."],
-      [0.6, "Controlled lower", "Lower slowly with your palms facing inward."],
-      [0.25, "Return", "Return towards straight arms without bouncing."],
-    ]
-  ),
+  "hammer-curl": placard("hammer-curl", ["Biceps"], ["Brachioradialis", "Forearms"], [[0,"Set","Stand tall with palms facing inward."],[0.5,"Curl","Bend your elbows without turning your palms."],[1,"Top","Bring weights toward shoulders with wrists aligned."],[1,"Control","Keep upper arms beside your ribs."],[0.5,"Lower","Lower slowly with the same neutral grip."],[0,"Reset","Return near straight without swinging your torso."]]),
   "front-raise": placard(
     "front-raise",
     ["anterior deltoids"],
