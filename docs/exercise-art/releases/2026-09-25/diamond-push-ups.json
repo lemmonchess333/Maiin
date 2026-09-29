@@ -5,7 +5,7 @@
   "height": 1254,
   "decision": "approved",
   "reviewer": "Codex visual and implementation review",
-  "reviewedAt": "2026-09-25T00:48:35.573Z",
+  "reviewedAt": "2026-09-29T09:38:29.2368516Z",
   "reference": {
     "path": "form-frames/diamond-push-ups/1.webp",
     "sha256": "0b793f7680120af796a7fa721f1b09edd0a6b87a155bfe8e3bb697e13586cea2"
@@ -50,11 +50,11 @@
     },
     "mobileLight": {
       "passed": true,
-      "evidence": "All six plus loop visually reviewed in actual390x844 light player; native1254x1254 loaded, scrollWidth390. Diamond hands, full body, highlighted muscles and readable cues remain visible; native inspection supplements fine fingers."
+      "evidence": "All six plus loop visually reviewed in actual390x844 light player; native1254x1254 loaded, scrollWidth390. Diamond hands, full body, highlighted muscles and readable cues remain visible; native inspection supplements fine fingers. Repeated on2026-09-29 against main58762ef using exact released WebPs and current player/theme; all six plus loop pass. Rechecked all six and loop on port5183 after allowing bundled font assets; current Jakarta/Archivo styling and legible cues confirmed."
     },
     "mobileDark": {
       "passed": true,
-      "evidence": "All six plus loop visually reviewed in actual390x844 dark player. Contacts remain stable through descent and return, wrist/fingertip corrections show no visible seams and no image clipping."
+      "evidence": "All six plus loop visually reviewed in actual390x844 dark player. Contacts remain stable through descent and return, wrist/fingertip corrections show no visible seams and no image clipping. Repeated on2026-09-29 against main58762ef with mix-blend-lighten player; black merges into the stage without obscuring anatomy or contacts. Rechecked all six and loop on port5183 after allowing bundled font assets; current Jakarta/Archivo styling and legible cues confirmed."
     }
   },
   "frames": [
