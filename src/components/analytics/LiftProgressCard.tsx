@@ -5,7 +5,7 @@ import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import ExerciseThumb from "@/components/program/ExerciseThumb";
 import Sparkline from "./Sparkline";
-import { NewRecordLabel } from "./PRCard";
+import { NewRecordChip } from "./PRCard";
 import { LIFT_PROGRESS_SHOWN, type LiftProgressRow } from "@/lib/liftProgress";
 import { parseLocalDate } from "@/lib/dateHelpers";
 import { formatDayMonth } from "@/utils/formatters";
@@ -87,11 +87,11 @@ export default function LiftProgressCard({
                 size="sm"
               />
               <div className="min-w-0 flex-1">
-                <p className="flex items-baseline gap-2">
+                <p className="flex items-center gap-2">
                   <span className="truncate text-sm font-semibold text-foreground">
                     {row.name}
                   </span>
-                  {row.newBest && <NewRecordLabel label="New best" />}
+                  {row.newBest && <NewRecordChip label="New best" />}
                 </p>
                 <p
                   className="mt-0.5 text-xs text-muted-foreground"

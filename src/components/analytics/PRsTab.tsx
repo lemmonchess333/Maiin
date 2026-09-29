@@ -8,7 +8,7 @@ import { estimate1RMRange, formatOneRepMaxRange } from "@/lib/analytics";
 import { parseLocalDate } from "@/lib/dateHelpers";
 import { formatDayMonth } from "@/utils/formatters";
 import ExerciseThumb from "@/components/program/ExerciseThumb";
-import PRCard, { NewRecordLabel } from "@/components/analytics/PRCard";
+import PRCard, { NewRecordChip } from "@/components/analytics/PRCard";
 import { samePRSet, runningPRKey, liftPRKey } from "@/lib/prSetIdentity";
 
 /* PR 7b follow-up — collapse the lifetime Lift PRs list to the
@@ -105,7 +105,7 @@ function LiftPRRow({ pr }: { pr: LiftPR }) {
           {pr.name}
         </p>
         <p className="mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground">
-          {pr.isNew && <NewRecordLabel />}
+          {pr.isNew && <NewRecordChip />}
           {dateLabel}
         </p>
       </div>

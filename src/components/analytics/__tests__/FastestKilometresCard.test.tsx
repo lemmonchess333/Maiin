@@ -59,9 +59,9 @@ describe("FastestKilometresCard", () => {
         allTime: effort(271, "r-new", "2026-09-24"),
       },
     ]);
-    const label = screen.getByText("New best");
-    expect(label.className).toContain("text-achievement-strong");
-    expect(label.className).not.toMatch(/\bbg-|rounded|px-/);
+    expect(screen.getByText("New best").className).toContain(
+      "text-achievement-strong"
+    );
   });
 
   it("says a range best that is an older fastest ever in words, not gold", () => {

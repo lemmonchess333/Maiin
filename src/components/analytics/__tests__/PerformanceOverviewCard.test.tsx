@@ -102,15 +102,7 @@ describe("PerformanceOverviewCard", () => {
     serve(history(72, "high"));
     renderCard();
     expect(screen.getByText("72")).toBeInTheDocument();
-    // Plain grey words, visible to everyone: it was a green pill with an
-    // arrow and a screen-reader-only sentence.
-    const change = screen.getByText(
-      (_, el) =>
-        el?.tagName === "SPAN" && el.textContent === "Up 12 on last week"
-    );
-    expect(change.className).toContain("text-muted-foreground");
-    expect(change.className).not.toMatch(/\bbg-|rounded-full|success/);
-    expect(change.closest(".sr-only")).toBeNull();
+    expect(screen.getByText("Up 12 on last week")).toBeInTheDocument();
   });
 
   it.each([

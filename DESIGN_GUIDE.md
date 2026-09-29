@@ -197,12 +197,12 @@ control behaviour the same everywhere. It is **not** a mandate to make every
 surface look alike. A handful of elements are where the product has a face,
 and consistency must yield to them:
 
-| Element              | Keeps                                                                                                   |
-| -------------------- | ------------------------------------------------------------------------------------------------------- |
-| Food hero            | Calorie ring, one orange arc on a grey groove, and three macro cards                                    |
-| Home performance row | The ring in the band's colour with the score in it, the verb, and the change on last week in grey words |
-| Meal slot picker     | Filled orange pills (`SegmentedControl` `emphasis="solid"`)                                             |
-| Sport coding         | Purple lifting / coral running, everywhere they appear                                                  |
+| Element              | Keeps                                                                  |
+| -------------------- | ---------------------------------------------------------------------- |
+| Food hero            | Calorie ring, one orange arc on a grey groove, and three macro cards   |
+| Home performance row | The ring in the band's colour with the score in it, the verb, the chip |
+| Meal slot picker     | Filled orange pills (`SegmentedControl` `emphasis="solid"`)            |
+| Sport coding         | Purple lifting / coral running, everywhere they appear                 |
 
 A 2026-09 cohesion pass flattened the meal pills onto the neutral segmented
 track, and a later release rendered both hero cards through a `compact`
@@ -210,7 +210,7 @@ prop. Between them the food surface lost the only colour it owned and the
 weekly verdict became a row of digits. (DS3 made the performance card the
 closing row of Home's "This week" card and dropped its gradient halo with
 the app's other glows. What it kept is the list above: the verdict is
-still a coloured ring and a verb, not digits.) Both were consistency applied past
+still a coloured ring, a verb and a chip, not digits.) Both were consistency applied past
 the point where it helps. Before you unify something, ask whether the thing
 you are unifying IS the identity of its surface; if it is, unify the
 behaviour (roles, keyboard, target size) and leave the treatment alone.

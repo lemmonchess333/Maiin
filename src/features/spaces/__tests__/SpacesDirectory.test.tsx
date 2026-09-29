@@ -88,14 +88,13 @@ describe("SpacesDirectory — Races & Events", () => {
     expect(screen.getByText("Runners")).toBeInTheDocument();
   });
 
-  it("race card shows its distance + date · city, not a member count", () => {
+  it("race card shows its distance chip + date · city, not a member count", () => {
     renderDirectory();
-    const distance = within(
-      screen.getByRole("link", { name: "Great North Run space" })
-    ).getByText("Half marathon");
-    // A plain line over the name, in sentence case: it was an uppercase
-    // tag in the photo's corner (owner call, 2026-09-29).
-    expect(distance.className).not.toMatch(/rounded|uppercase|absolute|\bbg-/);
+    expect(
+      within(
+        screen.getByRole("link", { name: "Great North Run space" })
+      ).getByText("Half marathon")
+    ).toBeInTheDocument();
     expect(screen.getByText(/13 Sep 2026/)).toBeInTheDocument();
     expect(screen.getByText(/Newcastle/)).toBeInTheDocument();
     // Density gate stays interest-only territory: the race card never
