@@ -5,11 +5,14 @@ import { THEME } from "@/lib/theme";
 /**
  * "New" beside a record set in the last week. Gold, the colour DS3 keeps
  * for new bests and nothing else: it was a white-on-orange "NEW", the
- * food colour, in capitals the rest of the app retired.
+ * food colour, in capitals the rest of the app retired. Gold text, with
+ * no tag behind it (owner call, 2026-09-29): the colour already marks it,
+ * and a tinted pill made the row read as decoration, as the calorie
+ * ring's did.
  */
-export function NewRecordChip({ label = "New" }: { label?: string }) {
+export function NewRecordLabel({ label = "New" }: { label?: string }) {
   return (
-    <span className="inline-flex shrink-0 items-center rounded-full bg-achievement/15 px-1.5 py-0.5 text-xs font-semibold text-achievement-strong">
+    <span className="shrink-0 text-xs font-semibold text-achievement-strong">
       {label}
     </span>
   );
@@ -70,7 +73,7 @@ export default function PRCard({
           const content = (
             <>
               <div className="flex items-center gap-2 min-w-0">
-                {pr.isNew && <NewRecordChip />}
+                {pr.isNew && <NewRecordLabel />}
                 <span className="text-xs text-muted-foreground truncate">
                   {pr.label}
                 </span>

@@ -513,21 +513,11 @@ export default function Upgrade() {
           )}
 
           <div className="space-y-2">
-            <button
-              type="button"
-              onClick={handleContinue}
-              className={cn(
-                "w-full min-h-[52px] rounded-2xl text-white font-bold text-base",
-                "flex items-center justify-center gap-2",
-                "active:scale-[0.98] transition-transform duration-150",
-                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-              )}
-              style={{
-                background: `linear-gradient(135deg, ${THEME.brand}, ${THEME.teal})`,
-              }}
-            >
+            {/* The app's primary button: it was a purple-to-teal gradient,
+                the one decorative gradient left on a button (2026-09-29). */}
+            <Button size="lg" fullWidth onClick={handleContinue}>
               Continue
-            </button>
+            </Button>
             <Button
               variant="ghost"
               fullWidth
@@ -587,20 +577,11 @@ export default function Upgrade() {
           {withTrial ? <TrialTimeline /> : null}
 
           {/* Direct purchase CTA — never opens another modal. */}
-          <button
-            type="button"
+          <Button
+            size="lg"
+            fullWidth
             onClick={handleCheckout}
             disabled={loading}
-            className={cn(
-              "w-full min-h-[52px] rounded-2xl text-white font-bold text-base",
-              "flex items-center justify-center gap-2",
-              "active:scale-[0.98] transition-transform duration-150",
-              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-              "disabled:opacity-60 disabled:cursor-not-allowed"
-            )}
-            style={{
-              background: `linear-gradient(135deg, ${THEME.brand}, ${THEME.teal})`,
-            }}
           >
             {loading ? (
               <>
@@ -614,7 +595,7 @@ export default function Upgrade() {
             ) : (
               <span>{getCheckoutCtaLabel(selectedPlan, withTrial)}</span>
             )}
-          </button>
+          </Button>
 
           <p className="text-xs text-muted-foreground text-center">
             {getRenewalDisclosure(selectedPlan, platform)}

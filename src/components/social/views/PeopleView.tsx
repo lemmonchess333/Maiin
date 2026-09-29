@@ -1,5 +1,5 @@
 import { useSuggestedPeople } from "@/hooks/useSuggestedPeople";
-import SectionLabel from "@/components/ui/SectionLabel";
+import SectionHeading from "@/components/ui/SectionHeading";
 import { useSpacesDirectory } from "@/features/spaces/useSpacesDirectory";
 import { spaceDef } from "@/features/spaces/spaceDefs";
 import { useRestrictedStatus } from "@/hooks/useRestrictedStatus";
@@ -230,7 +230,7 @@ export default function PeopleView({
       still fires immediately — so it's been folded into the
       field instead of competing for visual weight beside it. */}
         <div className="space-y-3">
-          <SectionLabel>Find someone</SectionLabel>
+          <SectionHeading>Find someone</SectionHeading>
           <div className="relative">
             <Search
               className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none"
@@ -361,7 +361,7 @@ export default function PeopleView({
         {/* Suggested People */}
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <SectionLabel>Suggested people</SectionLabel>
+            <SectionHeading>Suggested people</SectionHeading>
             {suggestedPeople.length > 0 && !suggestedLoading && (
               <button
                 type="button"
@@ -446,7 +446,7 @@ export default function PeopleView({
       previous arrangement put it above search which is wrong
       for high-intent users trying to find someone specific. */}
         <div className="space-y-3">
-          <SectionLabel>Bring a friend</SectionLabel>
+          <SectionHeading>Bring a friend</SectionHeading>
           <div
             className="p-3 rounded-2xl border"
             style={{

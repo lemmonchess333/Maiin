@@ -1,4 +1,4 @@
-import { Activity, TrendingDown, TrendingUp } from "lucide-react";
+import { Activity } from "lucide-react";
 import Card from "@/components/ui/Card";
 import EmptyState from "@/components/ui/EmptyState";
 import SectionHeading from "@/components/ui/SectionHeading";
@@ -16,6 +16,7 @@ import { addLocalDays, parseLocalDate } from "@/lib/dateHelpers";
 import { formatDayMonth } from "@/utils/formatters";
 import { haptic } from "@/lib/haptic";
 import { THEME } from "@/lib/theme";
+import PerformanceChange from "./PerformanceChange";
 
 /** How many weekly scores the card's line draws. */
 const WEEKS_SHOWN = 6;
@@ -128,27 +129,9 @@ export default function PerformanceOverviewCard({
           </p>
           <div className="min-w-0 flex-1 space-y-1 pt-0.5">
             {showDelta && (
-              <span
-                className={
-                  "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold font-mono tabular-nums " +
-                  (delta! > 0
-                    ? "bg-success/10 text-success-strong"
-                    : "bg-running/10 text-running-strong")
-                }
-              >
-                {delta! > 0 ? (
-                  <TrendingUp className="size-3" aria-hidden="true" />
-                ) : (
-                  <TrendingDown className="size-3" aria-hidden="true" />
-                )}
-                <span aria-hidden="true">
-                  {delta! > 0 ? "+" : ""}
-                  {delta}
-                </span>
-                <span className="sr-only">
-                  {`${delta! > 0 ? "Up" : "Down"} ${Math.abs(delta!)} on last week`}
-                </span>
-              </span>
+              <p>
+                <PerformanceChange delta={delta!} />
+              </p>
             )}
             <p className="text-sm text-muted-foreground">
               <span className="font-semibold" style={{ color: textHue }}>

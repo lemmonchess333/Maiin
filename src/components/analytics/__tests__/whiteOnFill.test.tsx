@@ -26,23 +26,25 @@ const prs = [
   { label: "Fastest 5K", value: "24:10", date: "18 Aug" },
 ];
 
-describe("the New chip is gold, the colour kept for new bests", () => {
-  it("takes the achievement tokens, with its text on the -strong step", () => {
+describe("the New label is gold, the colour kept for new bests", () => {
+  it("is gold text on the -strong step, with no tag behind it", () => {
     /* DS3: gold means a new best and nothing else. The chip was
        white-on-orange, the FOOD colour, reading "NEW" in capitals the app
        retired; the fill-step rule above held its contrast, and the rule it
        now follows is the colour's meaning. Small text takes the -strong
-       step, as the finish screen's and the workout's gold does. */
+       step, as the finish screen's and the workout's gold does. Since
+       2026-09-29 it is the gold text alone, with no tinted pill (owner
+       call): the colour already marks it. */
     render(<PRCard title="Running PRs" prs={prs} />);
-    const chip = screen.getByText("New");
-    expect(chip).toHaveClass("text-achievement-strong");
-    expect(chip.className).toMatch(/\bbg-achievement\/\d+/);
-    expect(chip.className).not.toMatch(/nutrition|text-white/);
-    expect(chip.getAttribute("style")).toBeNull();
+    const label = screen.getByText("New");
+    expect(label).toHaveClass("text-achievement-strong");
+    expect(label.className).not.toMatch(/\bbg-|rounded|px-/);
+    expect(label.className).not.toMatch(/nutrition|text-white/);
+    expect(label.getAttribute("style")).toBeNull();
   });
 
-  it("renders no chip on a row that is not new", () => {
-    // Anchors the assertion above: if the chip stopped rendering
+  it("renders no label on a row that is not new", () => {
+    // Anchors the assertion above: if the label stopped rendering
     // entirely, `getByText` would throw rather than pass — but a suite
     // that only ever renders `isNew` rows would not notice the flag
     // being ignored in the other direction.

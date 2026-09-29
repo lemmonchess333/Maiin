@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { ChevronRight } from "lucide-react";
 import Card from "@/components/ui/Card";
-import { NewRecordChip } from "./PRCard";
+import { NewRecordLabel } from "./PRCard";
 import type { BestEffortRow, Effort } from "@/lib/runInsights";
 import { finishTimeLabel, paceMinSec } from "@/lib/runLabels";
 import { paceUnitLabel, type DistanceUnit } from "@/lib/distanceUnits";
@@ -71,11 +71,11 @@ export default function FastestKilometresCard({
                 <div className="min-w-0 flex-1">
                   {inRange ? (
                     <>
-                      <p className="flex items-center gap-2">
+                      <p className="flex items-baseline gap-2">
                         <span className="text-base font-bold font-mono tabular-nums text-foreground">
                           {finishTimeLabel(inRange.seconds)}
                         </span>
-                        {isNew && <NewRecordChip label="New best" />}
+                        {isNew && <NewRecordLabel label="New best" />}
                       </p>
                       <p className="text-xs text-muted-foreground">
                         {day(inRange.date)} ·{" "}

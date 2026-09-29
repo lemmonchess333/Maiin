@@ -4,17 +4,6 @@ import { sparklineDomain } from "@/lib/sparklineDomain";
 import { THEME } from "@/lib/theme";
 import SectionLabel from "@/components/ui/SectionLabel";
 
-/**
- * Direction tells us which way is "good" so the delta chip can colour
- * itself goal-aware instead of red-on-decrease / green-on-increase by
- * default. Examples:
- *   "up-good"   — lifting volume, sessions, protein (more is better)
- *   "down-good" — average calories on a cut, weight on a cut
- *   "neutral"   — calories on maintenance, carbs/fat without goal context
- *                 (just shows the change, not a sentiment)
- */
-type Direction = "up-good" | "down-good" | "neutral";
-
 interface StatCardProps {
   label: string;
   value: string;
@@ -37,9 +26,11 @@ interface StatCardProps {
    */
   valueKind?: "number" | "text";
   unit?: string;
+  /** The change on the previous range, in grey whichever way it moved:
+   *  it was green or red by whether the move suited the goal, which
+   *  graded a 1% wobble as a success or a failure (house voice: state
+   *  what the data shows, 2026-09-29). */
   delta?: { value: string; positive: boolean } | null;
-  /** Sentiment direction for the delta chip. Defaults to "up-good". */
-  direction?: Direction;
   /** Optional small line under the delta, e.g. "target 180g". */
   target?: string;
   sparklineData?: number[];
@@ -53,29 +44,12 @@ export default function StatCard({
   valueKind = "number",
   unit,
   delta,
-  direction = "up-good",
   target,
   sparklineData,
   accentColor = THEME.brand,
   onClick,
 }: StatCardProps) {
   const gradientId = `spark-${label.replace(/\s/g, "-")}`;
-
-  // Resolve delta sentiment from the direction prop. "neutral" always
-  // greys the chip; otherwise good/bad maps to emerald/red.
-  const sentiment: "good" | "bad" | "neutral" = !delta
-    ? "neutral"
-    : direction === "neutral"
-      ? "neutral"
-      : delta.positive === (direction === "up-good")
-        ? "good"
-        : "bad";
-  const deltaColor =
-    sentiment === "good"
-      ? "text-success-strong"
-      : sentiment === "bad"
-        ? "text-destructive-strong"
-        : "text-muted-foreground";
 
   const showSparkline = !!sparklineData && sparklineData.length > 2;
   const Container = onClick ? "button" : "div";
@@ -161,9 +135,7 @@ export default function StatCard({
       )}
 
       {delta && (
-        <p
-          className={`text-xs mt-1.5 font-medium flex items-center gap-0.5 ${deltaColor}`}
-        >
+        <p className="text-xs mt-1.5 font-medium flex items-center gap-0.5 text-muted-foreground">
           <span>{delta.positive ? "↑" : "↓"}</span>
           <span>{delta.value} vs last</span>
         </p>

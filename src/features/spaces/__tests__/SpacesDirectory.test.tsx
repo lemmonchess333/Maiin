@@ -77,20 +77,25 @@ describe("SpacesDirectory — Races & Events", () => {
       country: "GB",
       distance: "all",
     });
-    expect(screen.getByText("Races & events")).toBeInTheDocument();
+    // Section headings, as every other page's groups have (DS3): they were
+    // 12px grey labels beside Social's own "Circles" heading.
+    expect(
+      screen.getByRole("heading", { name: "Races & events" })
+    ).toBeInTheDocument();
     expect(screen.getByText("Great North Run")).toBeInTheDocument();
     // Interest row unchanged alongside
-    expect(screen.getByText("Spaces")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Spaces" })).toBeInTheDocument();
     expect(screen.getByText("Runners")).toBeInTheDocument();
   });
 
-  it("race card shows its distance chip + date · city, not a member count", () => {
+  it("race card shows its distance + date · city, not a member count", () => {
     renderDirectory();
-    expect(
-      within(
-        screen.getByRole("link", { name: "Great North Run space" })
-      ).getByText("Half marathon")
-    ).toBeInTheDocument();
+    const distance = within(
+      screen.getByRole("link", { name: "Great North Run space" })
+    ).getByText("Half marathon");
+    // A plain line over the name, in sentence case: it was an uppercase
+    // tag in the photo's corner (owner call, 2026-09-29).
+    expect(distance.className).not.toMatch(/rounded|uppercase|absolute|\bbg-/);
     expect(screen.getByText(/13 Sep 2026/)).toBeInTheDocument();
     expect(screen.getByText(/Newcastle/)).toBeInTheDocument();
     // Density gate stays interest-only territory: the race card never

@@ -46,9 +46,9 @@ import { useProPlanPrices } from "@/hooks/useProPlanPrices";
 import { track } from "@/lib/paywallAnalytics";
 import { isCheckoutTrialEligible } from "@/lib/subscription";
 import { X, Sparkles, Utensils } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { Spinner } from "@/components/ui/Spinner";
+import { Button } from "@/components/ui/Button";
 import { PaywallLegalLinks } from "@/components/paywall/PaywallLegalLinks";
 import PlanPicker from "@/components/paywall/PlanPicker";
 import ProPreview from "@/components/paywall/ProPreview";
@@ -317,21 +317,9 @@ export default function ProModal({ onClose, featureKey, initialPlan }: Props) {
         {/* Sub1a trial transparency — what actually happens, before the ask. */}
         {withTrial ? <TrialTimeline /> : null}
 
-        <button
-          type="button"
-          onClick={handleCheckout}
-          disabled={loading}
-          className={cn(
-            "w-full min-h-[52px] rounded-2xl text-white font-bold text-base",
-            "flex items-center justify-center gap-2",
-            "active:scale-[0.98] transition-transform duration-150",
-            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-            "disabled:opacity-60 disabled:cursor-not-allowed"
-          )}
-          style={{
-            background: `linear-gradient(135deg, ${THEME.brand}, ${THEME.teal})`,
-          }}
-        >
+        {/* The app's primary button: it was a purple-to-teal gradient
+            (2026-09-29), as Upgrade's were. */}
+        <Button size="lg" fullWidth onClick={handleCheckout} disabled={loading}>
           {loading ? (
             <>
               <Spinner size="sm" variant="inverse" label="Starting checkout" />
@@ -340,7 +328,7 @@ export default function ProModal({ onClose, featureKey, initialPlan }: Props) {
           ) : (
             <span>{ctaLabel}</span>
           )}
-        </button>
+        </Button>
 
         <p className="text-caption text-muted-foreground text-center leading-snug">
           {getRenewalDisclosure(selectedPlan, platform)}

@@ -1,11 +1,13 @@
 /**
- * The week-over-week delta chip beside the PI headline.
+ * The week-over-week change under the PI headline: "Up 4 on last week" in
+ * plain grey words (it was a green or coral "+4 pts" pill until
+ * 2026-09-29).
  *
  * Device screenshot, 2026-08-13: a held-level week rendered "+0 pts" in
  * THEME.success — the app's green. Green with a leading "+" is the same
  * register every genuine gain uses, so an unchanged week read as progress.
  * A zero delta is not a gain; the headline already carries the verdict, so
- * the chip says nothing rather than saying nothing positively.
+ * the change says nothing rather than saying nothing positively.
  *
  * Harness mirrors PerformanceTab.loadBand.test.tsx — writer-shaped weekly
  * docs, four of them to clear the `establishing` cold-start gate.
@@ -78,7 +80,13 @@ function renderWeeks(previousPi: number, currentPi: number) {
   );
 }
 
-describe("PI delta chip", () => {
+function changeReading(text: string) {
+  return screen.getByText(
+    (_, el) => el?.tagName === "SPAN" && el.textContent === text
+  );
+}
+
+describe("PI change on last week", () => {
   beforeEach(() => mockUsePerformanceWeeks.mockReset());
 
   it("says nothing when the week held level", () => {
@@ -86,18 +94,26 @@ describe("PI delta chip", () => {
        happen — and it is the ONLY value where the sign carries no
        information, so the chip has nothing to add. */
     renderWeeks(72, 72);
-    expect(screen.queryByText(/\+?0 pts/)).toBeNull();
+    // Anchored on the headline, so the absence is not vacuous.
+    expect(screen.getAllByRole("heading", { level: 3 }).length).toBeGreaterThan(
+      0
+    );
+    expect(screen.queryByText(/on last week/)).toBeNull();
+    expect(screen.queryByText(/pts/)).toBeNull();
   });
 
-  it("still reports a real gain, with the plus", () => {
+  it("still reports a real gain, in words", () => {
     renderWeeks(68, 72);
-    expect(screen.getByText(/\+4 pts/)).toBeInTheDocument();
+    expect(changeReading("Up 4 on last week")).toBeInTheDocument();
   });
 
   it("still reports a real drop", () => {
     /* The negative side matters most — suppressing zero must not
        suppress a decline, which is the signal a user needs to act on. */
     renderWeeks(76, 72);
-    expect(screen.getByText(/-4 pts/)).toBeInTheDocument();
+    const change = changeReading("Down 4 on last week");
+    // Grey, not the running coral it used to borrow.
+    expect(change.className).toContain("text-muted-foreground");
+    expect(change.getAttribute("style")).toBeNull();
   });
 });

@@ -22,6 +22,7 @@ import {
 import { ChevronDown, Dumbbell, Footprints, Info } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import UITooltip from "@/components/ui/Tooltip";
+import PerformanceChange from "./PerformanceChange";
 
 /* Body copy reused at both render sites (gauge headline + summary card)
  * so they stay in sync. PI = 65% load + 25% recovery + 10% adherence
@@ -421,37 +422,19 @@ export default function PerformanceTab({
           backingOff={backingOff}
         />
         <div className="mt-3 text-center space-y-1.5">
-          <div className="flex items-center justify-center gap-2">
-            <h3 className="text-base font-bold" style={{ color: summaryColor }}>
-              {headline}
-            </h3>
-            {/* A ZERO delta is not a gain. It rendered as a green "+0 pts",
-                which reads as progress when the week actually held level —
-                and green is the app's success register everywhere else. An
-                unchanged week says nothing rather than saying nothing
-                positively; the headline already carries the verdict. */}
-            {delta !== null && delta !== 0 && !establishing && (
-              // Text on the -strong steps, tint from the identity — the
-              // same pair PerformanceHeroCard's delta chip uses (DS2).
-              // Supersedes the DS1b "stays inline" note: the concern was a
-              // CLASS swap shifting the hue; the -strong VAR steps keep the
-              // hue and add the AA lightness the identities lack at 12px
-              // (success 2.36:1, coral 3.20:1 on the light card).
-              <span
-                className="text-xs font-semibold px-2 py-0.5 rounded-full shrink-0"
-                style={{
-                  color:
-                    delta >= 0
-                      ? "hsl(var(--success-strong))"
-                      : "hsl(var(--running-strong))",
-                  background: `${delta >= 0 ? THEME.success : THEME.running}18`,
-                }}
-              >
-                {delta >= 0 ? "+" : ""}
-                {delta} pts
-              </span>
-            )}
-          </div>
+          <h3 className="text-base font-bold" style={{ color: summaryColor }}>
+            {headline}
+          </h3>
+          {/* The change on last week, in words, as Home and the overview
+              card say it (`PerformanceChange`). A ZERO delta is not a gain:
+              it rendered as a green "+0 pts", which read as progress when
+              the week held level, so an unchanged week says nothing. It
+              was a green or coral pill until 2026-09-29. */}
+          {delta !== null && delta !== 0 && !establishing && (
+            <p>
+              <PerformanceChange delta={delta} />
+            </p>
+          )}
           <p className="text-sm text-muted-foreground leading-relaxed">
             {body}
           </p>

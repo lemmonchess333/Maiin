@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ChevronRight, TrendingDown, TrendingUp } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import { useCountUp } from "@/hooks/useCountUp";
 import { haptic } from "@/lib/haptic";
 import { track as trackHomeEvent } from "@/lib/homeAnalytics";
@@ -13,19 +13,20 @@ import {
 import { getVerb, getLine, performanceEmptyCopy } from "@/lib/performanceLine";
 import type { PerformanceWeekDoc } from "@/lib/performanceTypes";
 import ProgressRing from "@/components/ui/ProgressRing";
+import PerformanceChange from "@/components/analytics/PerformanceChange";
 import { Skeleton } from "@/components/LoadingSkeleton";
 
 interface PerformanceHeroCardProps {
   /** Most recent week's perf doc, or null when no rollup exists yet. */
   currentWeek: PerformanceWeekDoc | null;
-  /** Prior week, used for the delta chip. Hidden when low-confidence. */
+  /** Prior week, for the change on last week. Hidden when low-confidence. */
   previousWeek: PerformanceWeekDoc | null;
   /** How many performance documents the snapshot has delivered:
    *  `usePerformanceWeeks().docsAvailable`. The documents are written per
    *  compute day, so this counts days rather than weeks, whatever the
    *  name says. It is `isEstablishingBaseline`'s `docsAvailable`, whose
    *  floor of 2 asks whether the engine has written anything yet; below
-   *  it the delta chip stays hidden. */
+   *  it the change stays hidden. */
   weeksAvailable: number;
   /** True until the perf snapshot's initial delivery. */
   loading: boolean;
@@ -52,9 +53,10 @@ function trackTap() {
  *
  * What stayed is what made it the week's verdict rather than a number: the
  * ring in the band's colour with the score inside, the verb, the line that
- * explains it, and the delta chip against last week. What went is the
- * blurred halo and the ring's glow, the colour blobs DS3 retired. The row
- * opens Analytics' performance section.
+ * explains it, and the change on last week. What went is the blurred halo
+ * and the ring's glow, the colour blobs DS3 retired, and the change's
+ * green or coral pill, now plain grey words (`PerformanceChange`). The
+ * row opens Analytics' performance section.
  */
 export default function PerformanceHeroCard({
   currentWeek,
@@ -149,28 +151,13 @@ export default function PerformanceHeroCard({
         </motion.span>
       </ProgressRing>
       <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2">
+        <div className="flex items-baseline gap-2">
           <p className="text-base font-bold text-foreground">Performance</p>
-          {/* Delta chip — hidden when low-confidence (sparse data makes
-              week-over-week noise dominate the signal). */}
+          {/* The change on last week, in words. Hidden while the
+              baseline forms (sparse data makes week-over-week noise
+              dominate) and when the week held level. */}
           {showDelta && (
-            <span
-              className={
-                "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold font-mono tabular-nums " +
-                (delta! > 0
-                  ? "bg-success/10 text-success-strong"
-                  : "bg-running/10 text-running-strong")
-              }
-              aria-hidden="true"
-            >
-              {delta! > 0 ? (
-                <TrendingUp className="size-3" />
-              ) : (
-                <TrendingDown className="size-3" />
-              )}
-              {delta! > 0 ? "+" : ""}
-              {delta}
-            </span>
+            <PerformanceChange delta={delta!} compact aria-hidden="true" />
           )}
         </div>
         <p className="text-sm text-muted-foreground">
@@ -190,7 +177,7 @@ export default function PerformanceHeroCard({
       <span id={`perf-detail-${currentWeek.weekKey}`} className="sr-only">
         {line}
         {showDelta
-          ? `, ${delta! > 0 ? "up" : "down"} ${Math.abs(delta!)} from last week`
+          ? `, ${delta! > 0 ? "up" : "down"} ${Math.abs(delta!)} on last week`
           : ""}
         {lowConfidence ? ", establishing baseline" : ""}
       </span>

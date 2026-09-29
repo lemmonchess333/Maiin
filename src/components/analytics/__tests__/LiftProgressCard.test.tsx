@@ -83,9 +83,10 @@ describe("each lift's line", () => {
     ]);
     expect(screen.getAllByText("New best")).toHaveLength(1);
     const [first] = screen.getAllByRole("listitem");
-    expect(within(first).getByText("New best").className).toContain(
-      "text-achievement-strong"
-    );
+    const label = within(first).getByText("New best");
+    expect(label.className).toContain("text-achievement-strong");
+    // Gold text, not a tinted tag (owner call, 2026-09-29).
+    expect(label.className).not.toMatch(/\bbg-|rounded|px-/);
   });
 
   it("draws a lift's line from four sessions, not fewer", () => {

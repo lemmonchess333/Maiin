@@ -655,14 +655,6 @@ export default function History() {
       minDisplayMs: 600,
     });
 
-  // Goal-aware sentiment for nutrition deltas. On a cut, eating more is
-  // off-plan (red), eating less is on-plan (green). On a lean bulk it
-  // flips. On recomp the sign doesn't carry sentiment, so we mute it.
-  // Protein is special-cased on the call site below — more protein is
-  // generally good for any goal, so it's always "up-good".
-  const goal = profile?.program?.goal;
-  const calorieDirection: "up-good" | "down-good" | "neutral" =
-    goal === "cut" ? "down-good" : goal === "lean bulk" ? "up-good" : "neutral";
   /* The nutrition StatCards' "target N" reference line.
    *
    * This read `profile.macroTargets` — a field written ONCE, by Onboarding,
@@ -2053,7 +2045,6 @@ export default function History() {
                               )
                             : null
                         }
-                        direction={calorieDirection}
                         target={
                           macroTargets?.calories
                             ? `target ${macroTargets.calories.toLocaleString()} ${CALORIE_UNIT}`
@@ -2078,7 +2069,6 @@ export default function History() {
                               )
                             : null
                         }
-                        direction="up-good"
                         target={
                           macroTargets?.protein
                             ? `target ${macroTargets.protein}g`
@@ -2105,7 +2095,6 @@ export default function History() {
                               )
                             : null
                         }
-                        direction={calorieDirection}
                         target={
                           macroTargets?.carbs
                             ? `target ${macroTargets.carbs}g`
@@ -2127,7 +2116,6 @@ export default function History() {
                             ? buildDelta(nutrition.avgFat, nutrition.prevAvgFat)
                             : null
                         }
-                        direction={calorieDirection}
                         target={
                           macroTargets?.fat
                             ? `target ${macroTargets.fat}g`

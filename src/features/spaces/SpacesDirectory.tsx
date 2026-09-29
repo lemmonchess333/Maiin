@@ -41,7 +41,7 @@ import {
   Zap,
   type LucideIcon,
 } from "lucide-react";
-import SectionLabel from "@/components/ui/SectionLabel";
+import SectionHeading from "@/components/ui/SectionHeading";
 import { THEME } from "@/lib/theme";
 import { spaceEditorialImage } from "@/lib/editorialImages";
 import { parseLocalDate } from "@/lib/dateHelpers";
@@ -140,28 +140,6 @@ function SpaceCard({
         />
       )}
 
-      {event && (
-        <span
-          className={`absolute top-2.5 left-2.5 inline-flex items-center px-2 py-0.5 rounded-full text-caption font-semibold uppercase tracking-wider ${
-            photo ? "bg-black/55 text-white backdrop-blur-sm" : ""
-          }`}
-          /* Same chip grammar as Joined. On a photo the pill is the SCRIM
-             register (photo-overlay text is white-over-dark-scrim in both
-             themes — THEME.scrim's rule): the previous white pill carried
-             the accent as ink, which measured 3.19:1 at this size on the
-             fixed white — in BOTH themes, since the pill never changed.
-             On the themed fallback card the tint stays and the ink takes
-             the accent's -strong step. */
-          style={
-            photo
-              ? undefined
-              : { background: `${accent}1F`, color: ACCENT_INK[def.accent] }
-          }
-        >
-          {RACE_DISTANCE_LABELS[event.distance]}
-        </span>
-      )}
-
       {joined && (
         <span
           className={`absolute top-2.5 right-2.5 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-caption font-semibold ${
@@ -179,6 +157,21 @@ function SpaceCard({
       )}
 
       <div className="absolute bottom-3 left-3.5 right-3.5 min-w-0">
+        {/* The distance, as a plain line over the name. It was an
+            uppercase tag in the photo's corner (owner call, 2026-09-29:
+            text in a bubble read as decoration). Here it sits on the
+            photo's scrim with the name and the date, so it stays legible
+            without a backing of its own. */}
+        {event && (
+          <p
+            className={`text-caption font-semibold ${
+              photo ? "text-white/85" : ""
+            }`}
+            style={photo ? undefined : { color: ACCENT_INK[def.accent] }}
+          >
+            {RACE_DISTANCE_LABELS[event.distance]}
+          </p>
+        )}
         <p
           className={`${compact ? "text-sm" : "text-base"} font-bold leading-tight ${event ? "line-clamp-2" : "truncate"} ${
             photo ? "text-white" : "text-foreground"
@@ -228,7 +221,7 @@ function CardRow({
 }) {
   return (
     <div className="space-y-2">
-      {!hideLabel && <SectionLabel>{label}</SectionLabel>}
+      {!hideLabel && <SectionHeading>{label}</SectionHeading>}
       {/* -mx-4/px-4 bleeds the scroller to the screen edge so the
           peeking next card invites the swipe (the Runna affordance).
           data-no-page-swipe: a horizontal swipe to scroll this carousel
@@ -284,7 +277,7 @@ export default function SpacesDirectory({
       )}
       {showRaces && (
         <section className="space-y-2" aria-label="Races & events">
-          <SectionLabel>Races & events</SectionLabel>
+          <SectionHeading>Races & events</SectionHeading>
           <RaceFilters value={filters} onChange={setFilters} />
           {races.length > 0 ? (
             <CardRow

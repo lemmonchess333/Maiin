@@ -234,31 +234,42 @@ describe("PerformanceHeroCard — verb taxonomy (PI1)", () => {
   });
 });
 
-describe("PerformanceHeroCard — delta chip", () => {
-  it("shows positive delta when steady-state with prior week", () => {
+/* The change reads "Up 10": a grey word and a numeral span, so match the
+   element's whole text rather than one text node. */
+function changeReading(text: string) {
+  return screen.getByText(
+    (_, el) => el?.tagName === "SPAN" && el.textContent === text
+  );
+}
+
+describe("PerformanceHeroCard — the change on last week", () => {
+  it("says a rise in words, with the rest for screen readers", () => {
     renderCard({
       currentWeek: makeWeek({ performanceIndex: 65 }),
       previousWeek: makeWeek({ performanceIndex: 55 }),
       weeksAvailable: 6,
       loading: false,
     });
-    // The chip carries the figure; the sr-only sibling says what it is.
-    expect(screen.getByText("+10")).toBeInTheDocument();
-    expect(screen.getByText(/up 10 from last week/i)).toBeInTheDocument();
+    const change = changeReading("Up 10");
+    // Plain grey text: no pill, no green.
+    expect(change.className).toContain("text-muted-foreground");
+    expect(change.className).not.toMatch(/\bbg-|rounded-full|success/);
+    expect(screen.getByText(/up 10 on last week/i)).toBeInTheDocument();
   });
 
-  it("shows negative delta when current < previous", () => {
+  it("says a drop in words, not in the running colour", () => {
     renderCard({
       currentWeek: makeWeek({ performanceIndex: 55 }),
       previousWeek: makeWeek({ performanceIndex: 65 }),
       weeksAvailable: 6,
       loading: false,
     });
-    expect(screen.getByText("-10")).toBeInTheDocument();
-    expect(screen.getByText(/down 10 from last week/i)).toBeInTheDocument();
+    const change = changeReading("Down 10");
+    expect(change.className).not.toMatch(/running|\bbg-/);
+    expect(screen.getByText(/down 10 on last week/i)).toBeInTheDocument();
   });
 
-  it("hides delta chip in low-confidence state (lifetimeWeeks < 4)", () => {
+  it("hides the change in low-confidence state (lifetimeWeeks < 4)", () => {
     renderCard({
       currentWeek: makeWeek({
         performanceIndex: 60,
@@ -268,17 +279,22 @@ describe("PerformanceHeroCard — delta chip", () => {
       weeksAvailable: 2,
       loading: false,
     });
-    expect(screen.queryByText(/from last week/i)).not.toBeInTheDocument();
+    // Anchored on the row itself, so the absences below are not vacuous.
+    expect(screen.getByText("Performance")).toBeInTheDocument();
+    expect(screen.queryByText(/on last week/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/^(Up|Down)/)).not.toBeInTheDocument();
   });
 
-  it("hides delta chip when delta === 0", () => {
+  it("hides the change when the week held level", () => {
     renderCard({
       currentWeek: makeWeek({ performanceIndex: 60 }),
       previousWeek: makeWeek({ performanceIndex: 60 }),
       weeksAvailable: 6,
       loading: false,
     });
-    expect(screen.queryByText(/from last week/i)).not.toBeInTheDocument();
+    expect(screen.getByText("Performance")).toBeInTheDocument();
+    expect(screen.queryByText(/on last week/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/^(Up|Down)/)).not.toBeInTheDocument();
   });
 });
 
