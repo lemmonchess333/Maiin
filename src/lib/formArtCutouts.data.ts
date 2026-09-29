@@ -357,6 +357,16 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
       "7791e3042759ae61f30aff4b97bfbfecce1c412adcee6d8edb493cb400782eae",
     sha256: "db6cc312a0378873892d4c9306ea7791f484844c9fbd04d487d014661da7ae29",
   },
+  "pallof-press": {
+    src: "form-art/pallof-press.webp",
+    width: 480,
+    height: 320,
+    keyed: true,
+    source: "form-frames/pallof-press/1.webp",
+    sourceSha256:
+      "ea4afbacb7fd85cfbadad8694799c7538528b046f34b649532d888fecf2e5553",
+    sha256: "48548cd92ea8dee8c8dce48a588675b3427600a3836f8cb2f43bf113aa5f26fa",
+  },
   "pec-deck": {
     src: "form-art/pec-deck.webp",
     width: 414,

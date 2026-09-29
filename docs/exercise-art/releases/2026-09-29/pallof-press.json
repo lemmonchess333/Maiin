@@ -1,0 +1,618 @@
+{
+  "exerciseId": "pallof-press",
+  "version": "anatomy-v3-2026-09-29",
+  "width": 1536,
+  "height": 1024,
+  "decision": "approved",
+  "reviewer": "Codex native and mobile visual review",
+  "reviewedAt": "2026-09-29T19:57:45.637Z",
+  "reference": {
+    "path": "form-frames/pallof-press/1.webp",
+    "sha256": "ea4afbacb7fd85cfbadad8694799c7538528b046f34b649532d888fecf2e5553",
+    "anchors": {
+      "leftshoeupperLeft": {
+        "x": 923,
+        "y": 880
+      },
+      "leftshoeupperRight": {
+        "x": 981,
+        "y": 880
+      },
+      "rightshoeupperLeft": {
+        "x": 1106,
+        "y": 880
+      },
+      "rightshoeupperRight": {
+        "x": 1200,
+        "y": 880
+      },
+      "leftforefootLeft": {
+        "x": 914,
+        "y": 910
+      },
+      "leftforefootRight": {
+        "x": 1002,
+        "y": 910
+      },
+      "rightforefootLeft": {
+        "x": 1109,
+        "y": 910
+      },
+      "rightforefootRight": {
+        "x": 1237,
+        "y": 910
+      },
+      "leftplantedsoleLeft": {
+        "x": 931,
+        "y": 928
+      },
+      "leftplantedsoleRight": {
+        "x": 1008,
+        "y": 928
+      },
+      "rightplantedsoleLeft": {
+        "x": 1161,
+        "y": 916
+      },
+      "rightplantedsoleRight": {
+        "x": 1224,
+        "y": 916
+      },
+      "machinebaseLeft": {
+        "x": 84,
+        "y": 870
+      },
+      "machinebaseRight": {
+        "x": 448,
+        "y": 870
+      },
+      "restingstackLeft": {
+        "x": 218,
+        "y": 700
+      },
+      "restingstackRight": {
+        "x": 308,
+        "y": 700
+      }
+    },
+    "invariantDimensions": {
+      "leftshoeupperWidth": 59,
+      "rightshoeupperWidth": 95,
+      "leftforefootWidth": 89,
+      "rightforefootWidth": 129,
+      "leftplantedsoleWidth": 78,
+      "rightplantedsoleWidth": 64,
+      "machinebaseWidth": 365,
+      "restingstackWidth": 91
+    }
+  },
+  "cueSha256": "b8134a73ce04e68171fe5f8bea470f2d630b3a8f6861bf7ea839eaa286ba5142",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Canonical bald faceless white-grey athlete with white trainers and smooth featureless pelvis; native and mobile inspection complete."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Fixed frontal three-quarter camera, 1536x1024, machine left and athlete right. Eight named shoe and machine scans stay within one pixel and one percent."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "One athlete with two arms and two legs. Hands move from sternum through bent-elbow midpoint to straight-arm extension while torso and hips resist rotation. Anatomy uses image generation; no code anatomy transformation."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "One fixed chest-height pulley, one D-handle held by both hands, two guide rods, one selected plate and eight fixed resting plates. Rigid master plate, coupler and attachment preserved through the press."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Both hands stay attached to the same handle. Source-masked forefoot and sole restoration retains fixed shoe geometry without copying rectangular floor patches. Native and magnified shoe joins and handle links inspected."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Direct 1:1 cable route. Analytic upper tangent plus pulley wrap gives selected plate lifts144/231px, cable-length residuals-0.018/0.322px. This planar illustration diagnostic is not calibrated biomechanics. Resting plates, frame and pulley remain fixed. Taut cable overlays generated anatomy naturally."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Catalogue primary Core is strongest purple, secondary Obliques lighter lilac. Colour hierarchy remains stable on hold and return; qualitative contribution only."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Six short cues match sternum setup, forward press, full extension without torso rotation, anti-rotation hold, controlled return and reset."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "All six final frames and6to1 reviewed sequentially in actual player. Hold/return/reset reuse3/2/1 for identical joint configurations; loop closes exactly."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "Final files reviewed at390x844 in actual ExerciseFormFrames light mode, all six plus6to1. Athlete/equipment fully visible, cues and controls legible, no clipping."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "Final files reviewed at390x844 in actual ExerciseFormFrames dark mode, all six plus6to1. Anatomy and contribution hierarchy clear, cues and controls legible, no clipping."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/pallof-press/1.webp",
+      "sha256": "ea4afbacb7fd85cfbadad8694799c7538528b046f34b649532d888fecf2e5553",
+      "anchors": {
+        "leftshoeupperLeft": {
+          "x": 923,
+          "y": 880
+        },
+        "leftshoeupperRight": {
+          "x": 981,
+          "y": 880
+        },
+        "rightshoeupperLeft": {
+          "x": 1106,
+          "y": 880
+        },
+        "rightshoeupperRight": {
+          "x": 1200,
+          "y": 880
+        },
+        "leftforefootLeft": {
+          "x": 914,
+          "y": 910
+        },
+        "leftforefootRight": {
+          "x": 1002,
+          "y": 910
+        },
+        "rightforefootLeft": {
+          "x": 1109,
+          "y": 910
+        },
+        "rightforefootRight": {
+          "x": 1237,
+          "y": 910
+        },
+        "leftplantedsoleLeft": {
+          "x": 931,
+          "y": 928
+        },
+        "leftplantedsoleRight": {
+          "x": 1008,
+          "y": 928
+        },
+        "rightplantedsoleLeft": {
+          "x": 1161,
+          "y": 916
+        },
+        "rightplantedsoleRight": {
+          "x": 1224,
+          "y": 916
+        },
+        "machinebaseLeft": {
+          "x": 84,
+          "y": 870
+        },
+        "machinebaseRight": {
+          "x": 448,
+          "y": 870
+        },
+        "restingstackLeft": {
+          "x": 218,
+          "y": 700
+        },
+        "restingstackRight": {
+          "x": 308,
+          "y": 700
+        }
+      },
+      "invariantDimensions": {
+        "leftshoeupperWidth": 59,
+        "rightshoeupperWidth": 95,
+        "leftforefootWidth": 89,
+        "rightforefootWidth": 129,
+        "leftplantedsoleWidth": 78,
+        "rightplantedsoleWidth": 64,
+        "machinebaseWidth": 365,
+        "restingstackWidth": 91
+      }
+    },
+    {
+      "path": "form-frames/pallof-press/2.webp",
+      "sha256": "0f808a7ceead74389672883ca9ac0dab7dbedc660c99f1b2363343650c976c6e",
+      "anchors": {
+        "leftshoeupperLeft": {
+          "x": 923,
+          "y": 880
+        },
+        "leftshoeupperRight": {
+          "x": 981,
+          "y": 880
+        },
+        "rightshoeupperLeft": {
+          "x": 1106,
+          "y": 880
+        },
+        "rightshoeupperRight": {
+          "x": 1200,
+          "y": 880
+        },
+        "leftforefootLeft": {
+          "x": 914,
+          "y": 910
+        },
+        "leftforefootRight": {
+          "x": 1002,
+          "y": 910
+        },
+        "rightforefootLeft": {
+          "x": 1109,
+          "y": 910
+        },
+        "rightforefootRight": {
+          "x": 1237,
+          "y": 910
+        },
+        "leftplantedsoleLeft": {
+          "x": 931,
+          "y": 928
+        },
+        "leftplantedsoleRight": {
+          "x": 1008,
+          "y": 928
+        },
+        "rightplantedsoleLeft": {
+          "x": 1161,
+          "y": 916
+        },
+        "rightplantedsoleRight": {
+          "x": 1224,
+          "y": 916
+        },
+        "machinebaseLeft": {
+          "x": 84,
+          "y": 870
+        },
+        "machinebaseRight": {
+          "x": 448,
+          "y": 870
+        },
+        "restingstackLeft": {
+          "x": 218,
+          "y": 700
+        },
+        "restingstackRight": {
+          "x": 308,
+          "y": 700
+        }
+      },
+      "invariantDimensions": {
+        "leftshoeupperWidth": 59,
+        "rightshoeupperWidth": 95,
+        "leftforefootWidth": 89,
+        "rightforefootWidth": 129,
+        "leftplantedsoleWidth": 78,
+        "rightplantedsoleWidth": 64,
+        "machinebaseWidth": 365,
+        "restingstackWidth": 91
+      }
+    },
+    {
+      "path": "form-frames/pallof-press/3.webp",
+      "sha256": "a457dfaa10ac31bdd1de91c72b1ed0c4af91f00159e80158b870feaad48f597c",
+      "anchors": {
+        "leftshoeupperLeft": {
+          "x": 923,
+          "y": 880
+        },
+        "leftshoeupperRight": {
+          "x": 981,
+          "y": 880
+        },
+        "rightshoeupperLeft": {
+          "x": 1106,
+          "y": 880
+        },
+        "rightshoeupperRight": {
+          "x": 1200,
+          "y": 880
+        },
+        "leftforefootLeft": {
+          "x": 914,
+          "y": 910
+        },
+        "leftforefootRight": {
+          "x": 1002,
+          "y": 910
+        },
+        "rightforefootLeft": {
+          "x": 1109,
+          "y": 910
+        },
+        "rightforefootRight": {
+          "x": 1237,
+          "y": 910
+        },
+        "leftplantedsoleLeft": {
+          "x": 931,
+          "y": 928
+        },
+        "leftplantedsoleRight": {
+          "x": 1008,
+          "y": 928
+        },
+        "rightplantedsoleLeft": {
+          "x": 1161,
+          "y": 916
+        },
+        "rightplantedsoleRight": {
+          "x": 1224,
+          "y": 916
+        },
+        "machinebaseLeft": {
+          "x": 84,
+          "y": 870
+        },
+        "machinebaseRight": {
+          "x": 448,
+          "y": 870
+        },
+        "restingstackLeft": {
+          "x": 218,
+          "y": 700
+        },
+        "restingstackRight": {
+          "x": 308,
+          "y": 700
+        }
+      },
+      "invariantDimensions": {
+        "leftshoeupperWidth": 59,
+        "rightshoeupperWidth": 95,
+        "leftforefootWidth": 89,
+        "rightforefootWidth": 129,
+        "leftplantedsoleWidth": 78,
+        "rightplantedsoleWidth": 64,
+        "machinebaseWidth": 365,
+        "restingstackWidth": 91
+      }
+    },
+    {
+      "path": "form-frames/pallof-press/4.webp",
+      "sha256": "a457dfaa10ac31bdd1de91c72b1ed0c4af91f00159e80158b870feaad48f597c",
+      "anchors": {
+        "leftshoeupperLeft": {
+          "x": 923,
+          "y": 880
+        },
+        "leftshoeupperRight": {
+          "x": 981,
+          "y": 880
+        },
+        "rightshoeupperLeft": {
+          "x": 1106,
+          "y": 880
+        },
+        "rightshoeupperRight": {
+          "x": 1200,
+          "y": 880
+        },
+        "leftforefootLeft": {
+          "x": 914,
+          "y": 910
+        },
+        "leftforefootRight": {
+          "x": 1002,
+          "y": 910
+        },
+        "rightforefootLeft": {
+          "x": 1109,
+          "y": 910
+        },
+        "rightforefootRight": {
+          "x": 1237,
+          "y": 910
+        },
+        "leftplantedsoleLeft": {
+          "x": 931,
+          "y": 928
+        },
+        "leftplantedsoleRight": {
+          "x": 1008,
+          "y": 928
+        },
+        "rightplantedsoleLeft": {
+          "x": 1161,
+          "y": 916
+        },
+        "rightplantedsoleRight": {
+          "x": 1224,
+          "y": 916
+        },
+        "machinebaseLeft": {
+          "x": 84,
+          "y": 870
+        },
+        "machinebaseRight": {
+          "x": 448,
+          "y": 870
+        },
+        "restingstackLeft": {
+          "x": 218,
+          "y": 700
+        },
+        "restingstackRight": {
+          "x": 308,
+          "y": 700
+        }
+      },
+      "invariantDimensions": {
+        "leftshoeupperWidth": 59,
+        "rightshoeupperWidth": 95,
+        "leftforefootWidth": 89,
+        "rightforefootWidth": 129,
+        "leftplantedsoleWidth": 78,
+        "rightplantedsoleWidth": 64,
+        "machinebaseWidth": 365,
+        "restingstackWidth": 91
+      }
+    },
+    {
+      "path": "form-frames/pallof-press/5.webp",
+      "sha256": "0f808a7ceead74389672883ca9ac0dab7dbedc660c99f1b2363343650c976c6e",
+      "anchors": {
+        "leftshoeupperLeft": {
+          "x": 923,
+          "y": 880
+        },
+        "leftshoeupperRight": {
+          "x": 981,
+          "y": 880
+        },
+        "rightshoeupperLeft": {
+          "x": 1106,
+          "y": 880
+        },
+        "rightshoeupperRight": {
+          "x": 1200,
+          "y": 880
+        },
+        "leftforefootLeft": {
+          "x": 914,
+          "y": 910
+        },
+        "leftforefootRight": {
+          "x": 1002,
+          "y": 910
+        },
+        "rightforefootLeft": {
+          "x": 1109,
+          "y": 910
+        },
+        "rightforefootRight": {
+          "x": 1237,
+          "y": 910
+        },
+        "leftplantedsoleLeft": {
+          "x": 931,
+          "y": 928
+        },
+        "leftplantedsoleRight": {
+          "x": 1008,
+          "y": 928
+        },
+        "rightplantedsoleLeft": {
+          "x": 1161,
+          "y": 916
+        },
+        "rightplantedsoleRight": {
+          "x": 1224,
+          "y": 916
+        },
+        "machinebaseLeft": {
+          "x": 84,
+          "y": 870
+        },
+        "machinebaseRight": {
+          "x": 448,
+          "y": 870
+        },
+        "restingstackLeft": {
+          "x": 218,
+          "y": 700
+        },
+        "restingstackRight": {
+          "x": 308,
+          "y": 700
+        }
+      },
+      "invariantDimensions": {
+        "leftshoeupperWidth": 59,
+        "rightshoeupperWidth": 95,
+        "leftforefootWidth": 89,
+        "rightforefootWidth": 129,
+        "leftplantedsoleWidth": 78,
+        "rightplantedsoleWidth": 64,
+        "machinebaseWidth": 365,
+        "restingstackWidth": 91
+      }
+    },
+    {
+      "path": "form-frames/pallof-press/6.webp",
+      "sha256": "ea4afbacb7fd85cfbadad8694799c7538528b046f34b649532d888fecf2e5553",
+      "anchors": {
+        "leftshoeupperLeft": {
+          "x": 923,
+          "y": 880
+        },
+        "leftshoeupperRight": {
+          "x": 981,
+          "y": 880
+        },
+        "rightshoeupperLeft": {
+          "x": 1106,
+          "y": 880
+        },
+        "rightshoeupperRight": {
+          "x": 1200,
+          "y": 880
+        },
+        "leftforefootLeft": {
+          "x": 914,
+          "y": 910
+        },
+        "leftforefootRight": {
+          "x": 1002,
+          "y": 910
+        },
+        "rightforefootLeft": {
+          "x": 1109,
+          "y": 910
+        },
+        "rightforefootRight": {
+          "x": 1237,
+          "y": 910
+        },
+        "leftplantedsoleLeft": {
+          "x": 931,
+          "y": 928
+        },
+        "leftplantedsoleRight": {
+          "x": 1008,
+          "y": 928
+        },
+        "rightplantedsoleLeft": {
+          "x": 1161,
+          "y": 916
+        },
+        "rightplantedsoleRight": {
+          "x": 1224,
+          "y": 916
+        },
+        "machinebaseLeft": {
+          "x": 84,
+          "y": 870
+        },
+        "machinebaseRight": {
+          "x": 448,
+          "y": 870
+        },
+        "restingstackLeft": {
+          "x": 218,
+          "y": 700
+        },
+        "restingstackRight": {
+          "x": 308,
+          "y": 700
+        }
+      },
+      "invariantDimensions": {
+        "leftshoeupperWidth": 59,
+        "rightshoeupperWidth": 95,
+        "leftforefootWidth": 89,
+        "rightforefootWidth": 129,
+        "leftplantedsoleWidth": 78,
+        "rightplantedsoleWidth": 64,
+        "machinebaseWidth": 365,
+        "restingstackWidth": 91
+      }
+    }
+  ]
+}

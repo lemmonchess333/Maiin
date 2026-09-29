@@ -87,6 +87,7 @@ describe("owner-authorized artwork activation", () => {
       "toe-touches",
       "dead-bug",
       "bicycle-crunch",
+      "pallof-press",
       "glute-bridge",
     ]) {
       expect(getReleasedFormArtwork(id)?.status, id).toBe("approved");
