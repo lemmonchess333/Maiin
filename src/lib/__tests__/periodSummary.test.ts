@@ -4,6 +4,8 @@ import {
   distanceChange,
   previousRangeLabel,
   rollingRangeLabel,
+  summaryAxisLabel,
+  summaryBinLabel,
   summaryBins,
   summaryFirstDayKey,
   summaryGranularity,
@@ -57,6 +59,32 @@ describe("summaryGranularity", () => {
     expect(summaryGranularity(90)).toBe("weekly");
     expect(summaryGranularity(180)).toBe("monthly");
     expect(summaryGranularity(365)).toBe("monthly");
+  });
+});
+
+describe("a month from another year", () => {
+  /* Read against the clock's own year: the label compares with it. */
+  const lastYear = new Date().getFullYear() - 1;
+  const may = { key: `${lastYear}-05-01`, current: false };
+  const june = { key: `${lastYear}-06-01`, current: false };
+
+  it("is named with its whole year when read", () => {
+    expect(summaryBinLabel(may, "monthly")).toBe(`May ${lastYear}`);
+  });
+
+  it("carries its year on the axis's first label only", () => {
+    expect(summaryAxisLabel(may, "monthly", true)).toBe(`May ${lastYear}`);
+    expect(summaryAxisLabel(june, "monthly", false)).toBe("Jun");
+  });
+
+  it("leaves weeks and the current month as they are read", () => {
+    const week = { key: `${lastYear}-12-28`, current: false };
+    expect(summaryAxisLabel(week, "weekly", false)).toBe(
+      summaryBinLabel(week, "weekly")
+    );
+    expect(
+      summaryAxisLabel({ key: may.key, current: true }, "monthly", false)
+    ).toBe("This month");
   });
 });
 

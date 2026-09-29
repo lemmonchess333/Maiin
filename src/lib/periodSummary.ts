@@ -10,7 +10,11 @@
  * rings card this replaced (PeriodOverview), which carried the reasoning
  * first.
  */
-import { binKeyForDate, formatBinLabel } from "./chartGranularity";
+import {
+  binKeyForDate,
+  formatBinLabel,
+  formatBinMonth,
+} from "./chartGranularity";
 import { addLocalDays, parseLocalDate, startOfLocalWeek } from "./dateHelpers";
 import {
   distanceIn,
@@ -81,6 +85,23 @@ export function summaryBinLabel(
     return bin.current ? "This week" : formatDayMonth(parseLocalDate(bin.key));
   }
   return bin.current ? "This month" : formatBinLabel(bin.key, "monthly");
+}
+
+/**
+ * A bin's name on the axis under a chart. A month from another year
+ * carries its year on the first label only, which names the year for
+ * the months after it: "Sept 2025", "Jan", "May". A year on every label
+ * would not fit under six months' bars.
+ */
+export function summaryAxisLabel(
+  bin: { key: string; current: boolean },
+  granularity: SummaryGranularity,
+  first: boolean
+): string {
+  if (granularity !== "monthly" || first || bin.current) {
+    return summaryBinLabel(bin, granularity);
+  }
+  return formatBinMonth(bin.key);
 }
 
 export interface SummaryBin {

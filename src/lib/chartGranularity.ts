@@ -59,9 +59,18 @@ export function binKeyForDate(
  *
  *   daily   → "20/3"
  *   weekly  → "20/3"   (week-starting date, same shape as daily)
- *   monthly → "Mar"    (short month name; year suppressed unless
- *                       the bin is in a different year from today)
+ *   monthly → "Mar"    (short month name; the whole year added when
+ *                       the bin is in a different year from today,
+ *                       "Sept 2025": two digits read as a day, and
+ *                       "Sept 25" as the 25th)
  */
+/** A bin key's month, short and without a year: "Sept". */
+export function formatBinMonth(binKey: string): string {
+  const d = new Date(binKey + "T00:00:00Z");
+  if (Number.isNaN(d.getTime())) return "";
+  return d.toLocaleString("en-GB", { month: "short", timeZone: "UTC" });
+}
+
 export function formatBinLabel(
   binKey: string,
   granularity: ChartGranularity
@@ -83,11 +92,8 @@ export function formatBinLabel(
     // year-boundary tests.
     const nowLocalYear = new Date().getFullYear();
     const sameYear = d.getUTCFullYear() === nowLocalYear;
-    const month = d.toLocaleString("en-GB", {
-      month: "short",
-      timeZone: "UTC",
-    });
-    return sameYear ? month : `${month} ${String(d.getUTCFullYear()).slice(2)}`;
+    const month = formatBinMonth(binKey);
+    return sameYear ? month : `${month} ${d.getUTCFullYear()}`;
   }
   return `${d.getUTCDate()}/${d.getUTCMonth() + 1}`;
 }
