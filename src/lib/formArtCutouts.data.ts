@@ -279,13 +279,13 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
   },
   "lateral-raise": {
     src: "form-art/lateral-raise.webp",
-    width: 244,
+    width: 224,
     height: 480,
-    keyed: false,
+    keyed: true,
     source: "form-frames/lateral-raise/1.webp",
     sourceSha256:
-      "722be6fba9baec1b45917d69e91d54d395d5e194eddcf11c7da303b2656e2975",
-    sha256: "5c1b87b7fb0ed747b75b64db81bd2d200877f5c7fa4f9192dd050fe530019ecf",
+      "2fc8466bb1c13bdeb4a8f1aa11fa4e62921e5fc9156bda5488c15d84416f4ea3",
+    sha256: "594722a8afb61456e4b8ddcf7725e954cbde8a169049f28605fd520c5159e70c",
   },
   "lu-raise": {
     src: "form-art/lu-raise.webp",

@@ -361,66 +361,6 @@ const FORM_BEATS: Record<string, FormPlacard> = {
     },
   },
 
-  /* Supplied art, 2026-09-04. The tightest source set so far — foot
-     line within 4px and stance width within 3px across all six, which
-     is what lets registration sit at 84-97% with a single 4px nudge.
-
-     `--anchor base` again, and for the same reason as the overhead
-     press: the dumbbells travel from the thighs to shoulder height, so
-     the grey-equipment mask is the WORST thing in frame to align on.
-     The rule that decides it is not "free weight" but "does the load
-     move" — the skull-crusher bench is furniture and takes the default
-     anchor even though a barbell is in shot. */
-  "lateral-raise": {
-    beats: [
-      {
-        t: 0,
-        label: "Start",
-        cue: "Dumbbells at the thighs, arms straight.",
-        image: "form-frames/lateral-raise/1.webp",
-      },
-      {
-        t: 0.1,
-        label: "Set position",
-        cue: "Slight bend in the elbows, ribs down.",
-        image: "form-frames/lateral-raise/2.webp",
-      },
-      {
-        t: 0.4,
-        label: "Initiate raise",
-        cue: "Lead with the elbows, not the hands.",
-        image: "form-frames/lateral-raise/3.webp",
-      },
-      {
-        t: 0.7,
-        label: "Mid raise",
-        cue: "Keep the elbow angle fixed throughout.",
-        image: "form-frames/lateral-raise/4.webp",
-      },
-      {
-        t: 1,
-        label: "Top position",
-        cue: "Arms level with the shoulders.",
-        image: "form-frames/lateral-raise/5.webp",
-      },
-      {
-        t: 0,
-        label: "Controlled return",
-        cue: "Lower slowly; resist all the way down.",
-        image: "form-frames/lateral-raise/6.webp",
-      },
-    ],
-    /* Read off the art at the top position, where the shading is
-       clearest: the side-delt cap is solid, and the pale wash covers
-       the trap, the FOREARM and the abs — the upper arm is unshaded.
-       Broader than the catalogue, which claims Traps alone. */
-    key: {
-      primary: ["Side deltoids"],
-      secondary: ["Traps", "Forearms", "Core"],
-      secondaryFill: "solid",
-    },
-  },
-
   /* ── Authored ahead of the art (2026-09-03) ──────────────────────
    * Positions only: no `image`, so `getFormBeats` returns null and
    * these play as ordinary reps until their cards arrive. They exist
@@ -481,9 +421,8 @@ const FORM_BEATS: Record<string, FormPlacard> = {
      95.8-98.7%, not one shift applied. The shoes are why — a rigid,
      high-contrast ground contact that never moves (L=540, R=762, sole
      at y=1069-1070 across all six, a 1px spread), which is exactly
-     what `--anchor base` wants. Load moves, so base anchor; see the
-     lateral raise for why the test is "does the load move" and not
-     "is it a free weight".
+     what `--anchor base` wants. The moving load is not a fixed
+     anchor, even for free weights.
 
      The authored cue said "torso about 45 degrees". MEASURED off this
      art it is 27-30 degrees below horizontal — so 45 was wrong on the

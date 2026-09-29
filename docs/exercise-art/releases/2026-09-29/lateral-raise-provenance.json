@@ -1,0 +1,249 @@
+{
+  "modelPath": "Built-in imagegen only; new trainer-wearing master, adjacent poses, arm-length correction and square reframing. No CLI/API/model fallback.",
+  "canonicalReference": {
+    "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+  },
+  "exerciseMaster": {
+    "path": "docs/exercise-art/masters/lateral-raise/1.png",
+    "sha256": "38d5f52f616c6a9c0cc732f0e8e3e1a837112aa0ed212ff6ce5a413392a9f265"
+  },
+  "nativeDimensions": {
+    "width": 1254,
+    "height": 1254
+  },
+  "legacySource": {
+    "commit": "ec06104b3950e91885d4302e2e0cae946039618a",
+    "frames": [
+      {
+        "path": "form-frames/lateral-raise/1.webp",
+        "sha256": "722be6fba9baec1b45917d69e91d54d395d5e194eddcf11c7da303b2656e2975"
+      },
+      {
+        "path": "form-frames/lateral-raise/2.webp",
+        "sha256": "bc5efbe2550fef349f2a5eb4c400683b83f60e718f70dae2298d3ab4c7da765b"
+      },
+      {
+        "path": "form-frames/lateral-raise/3.webp",
+        "sha256": "629724612668ac28e39b1cff5f67ed05a32ac301bb98b8e5c1b9c6546ebd7b34"
+      },
+      {
+        "path": "form-frames/lateral-raise/4.webp",
+        "sha256": "25a3066a829512b06f5cc4949064111d9c28df7e09425cb8de1e7b7571b9421b"
+      },
+      {
+        "path": "form-frames/lateral-raise/5.webp",
+        "sha256": "0d174416428265fe86c6fec2af4b58d1d9aa346c4b863ed45158ec6f3ad0396f"
+      },
+      {
+        "path": "form-frames/lateral-raise/6.webp",
+        "sha256": "a62e9fe6619c4201edb85c8b9ce90cace342d8747b4876a2d02265b2942736f2"
+      }
+    ],
+    "cueBlockSha256": "35b883c7487f236a621fe8d9d9252bec4a4129eaceaa38a5cf08492dbb5d25d3",
+    "note": "Superseded barefoot legacy artwork; historical commit and hashes retained."
+  },
+  "generation": [
+    {
+      "file": "master-prompt.json",
+      "prompt": "Create ONE exercise-master SETUP image for a standing DUMBBELL LATERAL RAISE, using attached canonical athlete identity/style. Square1024x1024 canvas, uniform pure black background, fixed straight-FRONT camera. Full athlete from bald faceless head to both white trainers. Center athlete, about820px tall with head aroundy80 and shoe solesaroundy930, leaving generous empty lateral space so later shoulder-height arm extensions and dumbbells fit this SAME framing. White/lightgrey smooth anatomical illustration with fine crisp dark muscle contours; pelvis smooth neutral featureless, no genital detail or clothing/waistband/seams. Strong purple ONLY lateral deltoid caps; lighter lilac uppertrapezius; very pale forearm/core support. All othermuscles neutral. Stand hip-width, feet planted, torso upright, neck neutral. Hold two identical modest compact round-ended dumbbells beside outer thighs, elbows slightly softly bent and wrists neutral, closed grips, palms facing thighs. Matching rigid short handles and equal weight heads, no oversized load. Arms down for setup, do not raise yet. Same athlete proportions/identity as reference, white trainers mandatory. No text, arrows, labels, grid, border, spotlight, floor shadow or glow. One fullresolution standalone frame.",
+      "output": "exec-cbef19e8-6e67-4e17-8c6b-fd478dca5b94.png"
+    },
+    {
+      "file": "master-reframe-prompt.json",
+      "prompt": "Reframe FIRST candidate as the final lateral-raise SETUP master. Keep same straight-front athlete, down-arm pose, white trainers, paired compact dumbbells and anatomy. Output a WIDE LANDSCAPE1536x1024 image with uniform pureblack empty background. Full athlete centered about850px tall with at least80px blank above/below; leave very wide empty black space on BOTH sides to fit later fully extended arms and weights without changing camera or scale. Do not crop feet or head. Match primary side-deltoid colour to canonical SECOND reference style: saturated BLUE-VIOLET purple around#6336ff, not the candidate's reddish magenta. Uppertraps stay lighter lilac, rest neutral whitegrey fine contours. No new clothing or detail in smooth neutral featureless pelvis. Do not change joints/grips/equipment, add text, glow or floor shadow. ONEsetupimage in generous landscape framing.",
+      "output": "exec-af88ae60-338a-45c0-8bc0-4964616cf57a.png"
+    },
+    {
+      "file": "master-square-prompt.json",
+      "prompt": "Reframe FIRST image ONLY by removing the excess empty black side margins. Make a SQUARE1024x1024 setup master: equivalent to a centered crop of the1536x1024 original, removing256px of pureemptyblack from each side. Keep ALL vertical content and original athlete scale/proportions/pose exactly; do not zoom out or shrink the athlete. Full head and white trainers retained. Athlete should occupy about90percent of square height with original headtoparound30 and shoesbottomaround945. Enough space remains for later raised dumbbells approximately85pxinside eachsquareedge. Second image canonicalidentityreference only. Preserve paired compact dumbbells, blueviolet lateral delts and lighterlilac traps, whitegrey anatomy, neutral featurelesspelvis, pureblackbackground and fine contours. Do not add glow, text, camera tilt, body changes or extra top/bottom margin. This is a clean centered square reframe for mobile readability, NOT a new pose.",
+      "output": "exec-b4130619-7109-40b4-befc-ed5254aa2a87.png"
+    },
+    {
+      "file": "middle-arm-correction-prompt.json",
+      "prompt": "Correct only the arm proportions in FIRST image, the middle lateral-raise candidate. SECOND is frozen exercise master and THIRD canonical athlete identity. The candidate forearms are visibly shortened: restore each forearm's original master length, without changing shoulder or elbow positions. Extend hands and attached dumbbells a small distance along the existing outward/downward forearm directions (roughly half one dumbbell-head diameter). Keep both elbow angles mild and matched, wrists straight, hands tightly gripping identical unchanged dumbbells. Do not raise arms higher, inflate delts, shorten upperarms, shrink equipment or bend wrists. Preserve exact landscape1536x1024 canvas, all fixed head/torso/pelvis/legs/shoes, primary blueviolet delts/lilac traps, anatomicalcontours and blackbackground. The result must look like the SAME original-length arms lifted sideways, not shortenedlimbs. No text, glow, spotlight, shadow, new clothing or pelvisdetail.",
+      "output": "exec-b6703095-a7db-445e-8588-df3f4741f166.png"
+    },
+    {
+      "file": "middle-prompt.json",
+      "prompt": "Edit FIRST image, the frozen landscape lateral-raise setup master, to create ONE middle-lift frame. SECOND is canonical identity/style only. Keep exact1536x1024landscape camera, athlete scale, head, torso, pelvis, legs, shoes, floor, black background and muscle colours. Raise BOTH arms out to the sides halfway, about45degrees from vertical, with mild elbow bend FIXED and wrists neutral. Move only shoulder/arm joints and attached dumbbells naturally. Both arms must retain their original upperarm+forearm lengths, and both weights remain the exact same modest size, roundheads and short handle construction as master. Hands stay closed around handles. Elbows lead, hands slightly below elbows, do not shrug shoulders, lean, flare ribs, bend wrists or rotate palms into a thumbs-down pose. Symmetric controlled bilateral lateral raise at midheight. Primary side delts same blueviolet, traps lighterlilac; remainingwhitegrey anatomical drawing with finecontours, featurelessneutralpelvis and whitetrainers. No text/no glow/no shadows/no zoom. Onefullresolutionframe.",
+      "output": "exec-a1b8cf36-cbc6-4710-9d8c-dd39750d5544.png"
+    },
+    {
+      "file": "square-middle-prompt.json",
+      "prompt": "Reframe FIRST image (middle lateral raise) to match SECOND image (frozen square setup master) EXACTLY in1254x1254square canvas, athlete scale, head/torso/hips/legs/shoes positions and blackbackground. THIRD canonicalidentity only. Remove landscape's empty side margins and use the square master's same wholebody framing. Preserve the middle pose's arm reach, fixed mild elbows, straight wrists, bilateral midlift, closed grips and unchanged compact paired dumbbell dimensions. Arms retain master lengths. No new pose or camera change: this is the matching SQUARE MIDDLE frame. Headtop around30, shoesbottomaround1145 as squaremaster; centeraxisx627. Complete arms and weights visible. Sameblueviolet sidedelts/lilac traps, whitegrey finecontouranatomy, neutralfeaturelesspelvis, whitetrainers. No glow, text, arrows or shadow.",
+      "output": "exec-3f5fdb38-6ea2-4330-9994-21372400112f.png"
+    },
+    {
+      "file": "square-top-prompt.json",
+      "prompt": "Reframe FIRST image (landscape top lateral raise) to match SECOND image (frozen1254x1254square setup master) exactly in canvas, body scale and fixed head/torso/pelvis/leg/shoe positions. THIRD canonicalidentityreference only. Preserve top pose: both upperarms horizontal at shoulderheight, mildfixedelbowbend, hands slightlylower, closedgrips and same compact paired dumbbells. Originalfull armlengths/equipmentdimensions unchanged. Entire athlete and both dumbbells must fit square with blacksideclearance; no landscapeemptyblackmargins, no athlete shrink. Headtoparound30, shoe bottomaround1145, centeraxis627 matchingsecondimage. Keep primaryblueviolet lateral delts/lilactraps/neutralwhitegrey fineanatomy and smooth featurelesspelvis, whitetrainers. Uniformblackbackground, no text/halo/shadow. This is matching SQUARE TOP frame, no newpose.",
+      "output": "exec-054d70fe-0a98-427c-ac0f-610d91333da8.png"
+    },
+    {
+      "file": "top-prompt.json",
+      "prompt": "Edit FIRST image (corrected middle lateral raise) into the TOP pose. SECOND is frozen landscape setup master; THIRD canonical identity. Preserve exact1536x1024landscape framing, scale, head/neck/torso/pelvis/legs/white trainers, floor and blackbackground. Raise both upperarms only until level with shoulders, approximatelyhorizontal, with hands no higher than elbows. Keep a slight FIXED elbow bend, original full arm lengths from references, neutral straight wrists and both closed dumbbell grips. The entire arm chains rotate naturally at shoulders; never shorten forearms or upperarms. Same identical modest compact round-head dumbbells and handle/head sizes, moving with hands; do not enlarge/shrink equipment. Shoulders stay awayfromears without exaggerated shrug, no torsolean/ribsflare. Primary blueviolet lateral-deltoidcaps and lighterlilac traps unchanged, othermuscles neutralwhitegrey finecontours, smoothfeaturelesspelvis. One fullresolutiontopframe; armsandweights completelyvisible within generous side space. No text, arrows, glow, shadow or camera changes.",
+      "output": "exec-6aa83b1d-d59a-4cd7-91dc-74fbbac78230.png"
+    }
+  ],
+  "generatedOutputs": [
+    {
+      "file": "1-master.png",
+      "sha256": "ee0a378b0bd9a2a66f4310b22ad441260c1350f6487bed17096da1996345007c"
+    },
+    {
+      "file": "master-candidate.png",
+      "sha256": "18ebeed388fa4e3692e9508231015c69c0de42cb14204a8f045ff1022d97aec4"
+    },
+    {
+      "file": "middle-arm-corrected.png",
+      "sha256": "55b4876d85e5bb9d1dd20516c2758a04d8d56f801890efc572e6e2ad0577b15a"
+    },
+    {
+      "file": "middle-candidate.png",
+      "sha256": "b247def49522290571aac8f0ad76f901d2f17b802549266974e74ea12308df37"
+    },
+    {
+      "file": "square-master.png",
+      "sha256": "38d5f52f616c6a9c0cc732f0e8e3e1a837112aa0ed212ff6ce5a413392a9f265"
+    },
+    {
+      "file": "square-middle.png",
+      "sha256": "68d793452335f95c45e5b104880ffaad18a5007230ee8120aa50191b3732cf33"
+    },
+    {
+      "file": "square-top.png",
+      "sha256": "a60f0b93875890dd89d9550ed449c3c5573dedac59efa2ef399d5102c46a74ee"
+    },
+    {
+      "file": "top-candidate.png",
+      "sha256": "17d2611a49182427365f578c864f6d0d258b077b9bacc9c2790be6370343f212"
+    }
+  ],
+  "deterministicRepairs": [
+    {
+      "authorization": "Owner approved master-copy of fixed areas. Only lower planted shoes are restored; ankles, moving anatomy and dumbbells are untouched.",
+      "masterSha256": "38d5f52f616c6a9c0cc732f0e8e3e1a837112aa0ed212ff6ce5a413392a9f265",
+      "frames": [
+        {
+          "frame": 2,
+          "rectangles": [
+            [
+              450,
+              1070,
+              590,
+              1160
+            ]
+          ],
+          "sourceSha256": "68d793452335f95c45e5b104880ffaad18a5007230ee8120aa50191b3732cf33",
+          "outputSha256": "ed67f04c7ae9d0ee46f4c77da89af7f87c677ae41d8161a4543dcb5dbf9303ad",
+          "changedPixels": 8324,
+          "changedOutsideRectangles": 0
+        },
+        {
+          "frame": 3,
+          "rectangles": [
+            [
+              450,
+              1070,
+              590,
+              1160
+            ],
+            [
+              665,
+              1070,
+              805,
+              1160
+            ]
+          ],
+          "sourceSha256": "a60f0b93875890dd89d9550ed449c3c5573dedac59efa2ef399d5102c46a74ee",
+          "outputSha256": "c7d2347ababe415984dd8191be4c2f51310b19c84416563b65cf599c1c41904e",
+          "changedPixels": 16531,
+          "changedOutsideRectangles": 0
+        },
+        {
+          "frame": 4,
+          "rectangles": [
+            [
+              450,
+              1070,
+              590,
+              1160
+            ],
+            [
+              665,
+              1070,
+              805,
+              1160
+            ]
+          ],
+          "sourceSha256": "a60f0b93875890dd89d9550ed449c3c5573dedac59efa2ef399d5102c46a74ee",
+          "outputSha256": "c7d2347ababe415984dd8191be4c2f51310b19c84416563b65cf599c1c41904e",
+          "changedPixels": 16531,
+          "changedOutsideRectangles": 0
+        },
+        {
+          "frame": 5,
+          "rectangles": [
+            [
+              450,
+              1070,
+              590,
+              1160
+            ]
+          ],
+          "sourceSha256": "68d793452335f95c45e5b104880ffaad18a5007230ee8120aa50191b3732cf33",
+          "outputSha256": "ed67f04c7ae9d0ee46f4c77da89af7f87c677ae41d8161a4543dcb5dbf9303ad",
+          "changedPixels": 8324,
+          "changedOutsideRectangles": 0
+        }
+      ]
+    }
+  ],
+  "selectedPngs": [
+    {
+      "frame": 1,
+      "sha256": "38d5f52f616c6a9c0cc732f0e8e3e1a837112aa0ed212ff6ce5a413392a9f265"
+    },
+    {
+      "frame": 2,
+      "sha256": "ed67f04c7ae9d0ee46f4c77da89af7f87c677ae41d8161a4543dcb5dbf9303ad"
+    },
+    {
+      "frame": 3,
+      "sha256": "c7d2347ababe415984dd8191be4c2f51310b19c84416563b65cf599c1c41904e"
+    },
+    {
+      "frame": 4,
+      "sha256": "c7d2347ababe415984dd8191be4c2f51310b19c84416563b65cf599c1c41904e"
+    },
+    {
+      "frame": 5,
+      "sha256": "ed67f04c7ae9d0ee46f4c77da89af7f87c677ae41d8161a4543dcb5dbf9303ad"
+    },
+    {
+      "frame": 6,
+      "sha256": "38d5f52f616c6a9c0cc732f0e8e3e1a837112aa0ed212ff6ce5a413392a9f265"
+    }
+  ],
+  "reuse": {
+    "4": 3,
+    "5": 2,
+    "6": 1
+  },
+  "conversion": "Lossless WebP decoded RGB exactly equals reviewed PNG; native1254square, no scaling.",
+  "measurementMethod": "Interpolated minimum-RGB150 scanline boundaries on native selected PNGs. Unrounded1px/1percent tests measure fixed contacts only, not moving anatomy or equipment.",
+  "scanlines": {
+    "leftShoe": [
+      450,
+      585,
+      1120,
+      150
+    ],
+    "rightShoe": [
+      665,
+      800,
+      1120,
+      150
+    ]
+  }
+}
