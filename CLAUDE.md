@@ -378,6 +378,7 @@ These lessons cost a full day to find. Read before changing the deploy pipeline.
 - **Production deploy verification:** the only conclusive proof a function deployed is to view the deployed source in Firebase Console (https://console.cloud.google.com/functions/details/us-central1/<name>/source). CI green is a _necessary but not sufficient_ signal — see the dedup gotcha above. `deploy-functions.yml` now reads back the deployed source of the functions `scripts/verify-deployed-functions-source.py` lists and fails if any differs from the bundle it uploaded; for a function it does not list, spot-check that the deployed source matches main by searching for a recent string (e.g. a new comment from the PR).
 - **1st-gen API lives under `firebase-functions/v1`; `functions.config()` is gone.** As of firebase-functions v7, the bare `require("firebase-functions")` resolves to the **2nd-gen** API, and every export here is **1st-gen** (`runWith().https.onCall/onRequest`, `.pubsub.schedule`, `.firestore.document().onCreate`, `https.HttpsError`, `logger`). They import from `firebase-functions/v1` — keep new 1st-gen functions on that import or they silently become `undefined` triggers. `functions.config()` **throws** in v7 (the Cloud Runtime Config API was shut down 2025-12-31); secrets now come from Secret Manager via `firebase-functions/params` `defineSecret(...)`, listed in each function's `runWith({ secrets: [...] })`, and read at runtime as `process.env.<NAME>`. Provision before deploy with `firebase functions:secrets:set <NAME>` — **a deploy referencing an unprovisioned bound secret fails**, which is the safety gate. Current bound secrets: `STRIPE_SECRET_KEY` (deleteMyAccount, createCheckoutSession, stripeWebhook, all 3 Apple callables), `STRIPE_WEBHOOK_SECRET` (stripeWebhook), `APPLE_KEY_ID/ISSUER_ID/PRIVATE_KEY` + `BILLING_HMAC_SECRET` (+ `BILLING_PREVIOUS_HMAC_SECRET` during rotation only) on `restoreApplePurchases`, `RESEND_API_KEY` (sendPasswordResetLinkCallable — password-reset email delivery), `REVENUECAT_WEBHOOK_AUTH` + `REVENUECAT_REST_KEY` (revenueCatWebhook; the REST key also on syncRevenueCatEntitlement). Non-secret config (`ADMIN_UIDS`, `RESEND_FROM`, `REVENUECAT_SANDBOX_UIDS`) stays a plain env var — no binding needed. `npm run secrets:check` (in `functions/`) prints the authoritative provision list from the source.
 - **A functions deploy needs the whole GCP readiness chain, not just Blaze + a fresh bundle.** The Secret Manager API must be **enabled** AND **propagated** before deploy. Enabling it (`gcloud services enable secretmanager.googleapis.com`) returns _before_ the data plane actually answers, so a deploy that races straight ahead still 403s — the CI fix was two steps: enable the API (`1a529ec`), then **wait for propagation** before `firebase deploy` (`b953eac`). If a functions deploy 403s on secrets right after an org/billing/API change, suspect propagation lag, not config.
+- **A NEW bound secret needs its accessor grant before the first CI deploy that binds it.** firebase-tools reads the secret's own IAM policy and, when the runtime account (`adaptive-fitness-af8bb@appspot.gserviceaccount.com`) is not already a Secret Manager Secret Accessor on it, calls `setIamPolicy`, which the CI deploy account may not do. The whole functions deploy then fails with `Permission 'secretmanager.secrets.setIamPolicy' denied … (or it may not exist)`, and nothing is updated. A project-level role does not satisfy the check, because it reads the secret's own list. Grant it per secret before merging (the steps are in `docs/iap/revenuecat-setup.md` Part C), then re-run Deploy production. Hit on 2026-09-29 by the two RevenueCat secrets (run 36642140725). Older secrets never showed it, having been granted when they were first set up.
 
 ### Account-deletion safety rails
 
@@ -1988,8 +1989,15 @@ that RevenueCat granted (as a lapse does), and the function logs
 `revenueCat.sandbox_refused` with the uid. An unset or empty list grants
 sandbox Pro to nobody. Production purchases are unaffected.
 
-- [ ] **Secrets provisioned, then merge.** `npm run secrets:check` in
-      `functions/` lists both.
+- [x] **Secrets provisioned, then merge.** Both stored and #2496 merged,
+      2026-09-29.
+- [ ] **The functions can read both secrets.** The first deploy failed on
+      the accessor grant (see the Cloud Functions deploy gotchas). Tick this
+      when a Deploy production run on or after #2496 logs a successful
+      create operation for both `revenueCatWebhook` and
+      `syncRevenueCatEntitlement`.
+- [ ] **Webhook answers.** RevenueCat → Integrations → the webhook → Send
+      test event returns 200.
 - [ ] **`REVENUECAT_SANDBOX_UIDS` set on both functions**: your uid and App
       Review's demo account uid, comma-separated. It is a plain env var,
       set the way `ADMIN_UIDS` is (`functions/.env`, no Secret Manager).
@@ -2195,13 +2203,20 @@ the whole Following page for the author and every follower. The trigger
 now deletes the copies; the client leaves out a copy whose post it cannot
 read, so the feed loads, and draws nothing for it.
 
-- [ ] **Deployed-source spot-check (do first).** `onActivityDeleted` is in
+- [x] **Deployed-source spot-check (do first).** `onActivityDeleted` is in
       the Console's function list, and `onActivityCreated`'s deployed
-      source contains `removeActivityFromFeeds`.
-- [ ] **The index is built.** Firestore → Indexes → Single field:
+      source contains `removeActivityFromFeeds`. Closed from the deploy
+      log of run 36610165567 (#2515's merge, 2026-09-29): the bundle
+      carried the `// CI build: 04300f9a…` marker, and the log shows a
+      successful create operation for `onActivityDeleted` and a successful
+      update operation for `onActivityCreated`.
+- [x] **The index is built.** Firestore → Indexes → Single field:
       `items` · `activityId`, collection group, ascending, Enabled. Until
       it is, the trigger's query fails, it logs `onActivityDeleted.error`,
-      and the copies stay (the client still hides them).
+      and the copies stay (the client still hides them). Closed from the
+      same run: the readiness step waited on the `items/fields/activityId`
+      indexes, the collection-group one included, then logged
+      `Verified: all configured indexes READY`.
 - [ ] **Undo on a device, with a follower.** Share a session from one
       account and tap Undo on the finish screen. On a second account that
       follows it, Following loads and the post is not there, and the
@@ -2224,10 +2239,12 @@ Share publicly posting publicly. It is now `shareDefaults` on
 `users/{uid}`, and a device's own answers move to the account once at
 sign-in, the more private answer winning.
 
-- [ ] **Rules first.** A build that writes `shareDefaults` needs the rules
+- [x] **Rules first.** A build that writes `shareDefaults` needs the rules
       that allow it. Deploy production releases rules before Hosting, but a
       TestFlight build made from a branch before the merge sees its saves
       refused (put back, with a toast) and keeps its answers on the device.
+      Released by run 36610165567 (2026-09-29); the live ruleset matched
+      `firestore.rules` by SHA-256.
 - [ ] **One answer on every device.** Set Runs to Never in Settings on the
       web, then finish a run on a phone that had the app open since before:
       nothing is posted, and the finish screen offers its one-off share
