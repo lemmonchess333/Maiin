@@ -264,8 +264,8 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
     keyed: true,
     source: "form-frames/hammer-curl/1.webp",
     sourceSha256:
-      "41b9c15bb2992ba4b64feb074fb1fe1028170d7eb783b96ff5aef2d0f040a753",
-    sha256: "4be1dbf4edf02da0096a799c9db5e78f0663f1d0b75b1ae20f5ea998b19ae94a",
+      "b4040f54ee8a8e4bfd02dd2867e085274386f6691084723d6cfd7aa62b701ebe",
+    sha256: "17e58c8d8529b533bdd5b520c649e5baf621119465676b5bcb4a4add233b3ea8",
   },
   "incline-bench": {
     src: "form-art/incline-bench.webp",

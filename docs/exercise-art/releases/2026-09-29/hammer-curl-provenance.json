@@ -1,0 +1,191 @@
+{
+  "modelPath": "Built-in imagegen unchanged path for top neutral-wrist pose and colour repair. Existing built-in pilot master/equipment-corrected middle retained. Owner-authorized master-copy confined to planted lower shoe; no CLI/API/model fallback.",
+  "canonicalReference": {
+    "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+  },
+  "nativeDimensions": {
+    "width": 1024,
+    "height": 1536
+  },
+  "historicalOwnerRelease": {
+    "path": "docs/exercise-art/releases/2026-09-owner/hammer-curl.json",
+    "sha256": "bd828b806c0910bb2db4be6b8559be512952a722cb6534cc6bbd4bc7f618b7c8",
+    "note": "Preserved unchanged as history; new strict review covers replacement assets/cues."
+  },
+  "originalGeneration": [
+    {
+      "file": "BATCH_GENERATION_LOG.json",
+      "calls": [
+        {
+          "frame": 1,
+          "id": "hammer-curl",
+          "path": "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/hammer-curl/1-master.png",
+          "prompt": "Use case: identity-preserve. Create ONE exercise-library master still for HAMMER CURL frame 1/6 by editing the supplied standing dumbbell curl image.\nKeep the exact athlete, entire head/torso/legs/shoes, original 1024x1536 canvas, camera, all outline coordinates, white-grey anatomy, black background and purple muscle treatment. Do not redesign him or change his scale.\nChange ONLY the grip and attached dumbbells: rotate both forearms/hands into a NEUTRAL hammer grip, palms facing inward toward each other, thumbs forward, straight wrists. Elbows almost straight, both upper arms hanging beside ribs. Place each dumbbell alongside its thigh, leaving both hands visible.\nThe dumbbell handle axes now point front-to-back relative to the athlete, NOT left-to-right like a supinated curl. Keep identical original round dark-grey dumbbell heads, diameter, thickness and handle length. Closed grips with fingers and thumbs around handles, no floating hand.\nKeep biceps strongest purple, brachialis and brachioradialis lilac; subtle trunk stabilisers as original. Do not add highlights elsewhere or enlarge muscles.\nThis establishes one locked scene for six positions: near-straight start, small curl, mid curl, top curl, controlled mid lower, near-bottom return. Do not draw multiple positions. ONE separate crisp native-resolution image, no captions/text/numbers/arrows/UI/grid.",
+          "refs": [
+            "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/db-curl/1-master.png"
+          ]
+        },
+        {
+          "frame": 2,
+          "id": "hammer-curl",
+          "path": "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/hammer-curl/2-early.png",
+          "prompt": "Precise local edit: ONE still, HAMMER CURL frame 2/6, early lift, of this exact image. Preserve original 1024x1536 canvas and the identical athlete.\nChange only BOTH FOREARMS, attached hands and dumbbells. Bend both elbows slightly, about 35 degrees from the almost-straight start. Raise each hand only about 65 pixels; hands remain clearly BELOW their elbow centres and below the waist. Do not raise to the belly button or shoulder yet.\nNeutral hammer grip stays locked: palms face each other, thumbs uppermost along the forearms; no supination. Each dumbbell rotates rigidly with its hand; preserve head diameter, head thickness and handle length. Both closed grips stay attached.\nFixed elbow centres beside ribs; upper arms do not swing. Keep head, shoulders, chest, abdomen, pelvis, entire legs, knees, shoes and background EXACTLY as supplied at their original coordinates. Keep all purple/lilac anatomy highlighting unchanged. No body rescaling, no camera/crop change, no muscle enlargement.\nOne separate sharp high-resolution frame, solid black background, NO text/captions/arrows/borders/collage.",
+          "refs": [
+            "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/hammer-curl/1-master.png"
+          ]
+        },
+        {
+          "frame": 3,
+          "id": "hammer-curl",
+          "path": "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/hammer-curl/3-mid.png",
+          "prompt": "Edit this exact hammer-curl frame to make ONE middle-curl still, frame 3/6. Change only forearms, hands and attached dumbbells.\nBend both elbows to approximately 85 degrees from straight. Upper arms stay vertical beside ribs with the elbow centres fixed. Forearms now project FORWARD almost horizontally; hands near elbow height, in front of the waist. Neutral wrists and hammer grip: palms face each other, thumbs point UP. IMPORTANT: in this mid pose each dumbbell's HANDLE AXIS IS NEAR VERTICAL, so there is one round head ABOVE the fist and one BELOW the fist, like holding a hammer upright. The whole rigid bell rotates naturally with the neutral wrist. Do not keep the two heads horizontally beside the hand like the starting pose. Both hands tightly wrap the middle of their handles, no supinated palms.\nKeep original head, shoulders, torso, hips, legs, shoes, all fixed outline coordinates, camera, 1024x1536 canvas, scale and lighting unchanged. Keep biceps purple, forearm lilac and pale obliques exactly consistent. Preserve original dumbbell head diameter/thickness and total length; do not enlarge the weights when they rise.\nSolid black, crisp anatomical 2D style, no caption, text, arrows, border or additional images.",
+          "refs": [
+            "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/hammer-curl/2-early.png"
+          ]
+        },
+        {
+          "frame": 4,
+          "id": "hammer-curl",
+          "path": "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/hammer-curl/4-top.png",
+          "prompt": "Make ONE top contraction frame 4/6 of this SAME HAMMER CURL by locally editing the supplied mid pose. Curl both forearms further, hands rising toward the front of shoulders, hand centres around y=405-425, elbows remaining beside lower ribs around y=505. Approximately 120 degrees elbow flexion. Upper arms do NOT lift or move forward.\nKeep a true neutral hammer grip, palms inward, wrists straight, thumbs toward shoulder. Rotate each entire rigid dumbbell with its hand: the top head tilts back toward the shoulder as forearm passes horizontal. Preserve EXACT same dumbbell head diameters, thicknesses, exposed handle length, finish and both closed hand contacts. No supinated grip.\nLock the original entire head, neck, shoulders, torso, obliques, pelvis, legs and white shoes at their same coordinates; same 1024x1536 canvas, crop, perspective, body scale, fine 2D contour and shading. Do not inflate the biceps. Same strongest purple biceps, lilac forearms, subtle pale obliques. Solid black. One separate native sharp image, no text, caption, arrows or UI.",
+          "refs": [
+            "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/hammer-curl/3-mid.png"
+          ]
+        },
+        {
+          "frame": 2,
+          "id": "hammer-curl",
+          "path": "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/hammer-curl/2-early-corrected.png",
+          "prompt": "Correct IMAGE 1, the EARLY HAMMER CURL frame. IMAGE 2 shows the SAME equipment in the later horizontal-forearm pose; it is an equipment-rotation reference only. Preserve IMAGE 1's early elbow pose and every head/torso/leg/shoe coordinate.\nChange ONLY hands and dumbbell orientation, not hand-centre location or forearm length. In image1 each forearm slopes forward/down about 45 degrees below horizontal. Keep palms INWARD and wrists straight. Therefore the dumbbell handle axes must slope UP/FORWARD about 45 degrees from horizontal: one round head should be diagonally ABOVE and FORWARD of the fist, the other diagonally BELOW and BEHIND it. They must NOT remain horizontal at equal height like a suitcase carry. Match the same round head shape, thickness and handle length seen in image2, under the changed perspective. Both hands close around the middle of the handles, thumbs around. Both arms synchronous.\nDo NOT change image1's body pose, elbow angle, purple biceps, lilac forearms, pale obliques, 1024x1536 canvas, camera, crop, shoes, black background or lighting. Keep the exact athlete. One sharp separate corrected image. No text or arrows.",
+          "refs": [
+            "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/hammer-curl/2-early.png",
+            "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/hammer-curl/3-mid.png"
+          ],
+          "revision": "equipment rotation"
+        }
+      ]
+    },
+    {
+      "file": "BATCH_03_GENERATION_LOG.json",
+      "calls": [
+        {
+          "frame": 3,
+          "id": "hammer-curl",
+          "path": "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/hammer-curl/3-equipment-v2.png",
+          "prompt": "Precise equipment-only correction. Image1 is the HAMMER CURL MID pose to edit. Image2 is the standing master and supplies the required dumbbell size. Preserve ALL athlete pixels/pose/camera/canvas/hand positions and purple highlights from image1. Its dumbbell end heads became too small relative to image2. Increase the diameter of each of the FOUR round dumbbell heads in image1 to the same physical diameter as the master: approximately130pixels across the long visible axis, rather than the current~110pixels. Keep the existing vertical dumbbell axes and neutral wrist grip, same rigid handles through the hands, heads centred on the same axes. Preserve identical head thickness relative to diameter from the master. Only the dumbbell head geometry changes; do not enlarge hands, move wrists or elbows, alter limb proportions, shift body, or change the pose. Both dumbbells remain identical and each still has exactly two solid round heads. Black background, one separate native1024x1536 image, no text.",
+          "refs": [
+            "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/hammer-curl/3-mid.png",
+            "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/hammer-curl/1-master.png"
+          ],
+          "revision": "dumbbell diameter consistency"
+        }
+      ]
+    }
+  ],
+  "originalSources": [
+    {
+      "path": "docs/exercise-art/pilots/hammer-curl/1-master.png",
+      "sha256": "1ea22590746b7bcde478551a914542b6da33cb9764c4b4a2f597fcd687511f01"
+    },
+    {
+      "path": "docs/exercise-art/pilots/hammer-curl/3-equipment-v2.png",
+      "sha256": "e791733332205ba09dc40fb38d5d585287680de6d18671e9f2d3ef2d11694e97"
+    }
+  ],
+  "generation": [
+    {
+      "prompt": "Use case: precise-object-edit. Image1 is the ONLY edit target: middle hammer curl. Image2 is the frozen exercise master for identity, equipment and fixed geometry. Image3 is the canonical athlete style reference. Create ONE native1024x1536 top-of-hammer-curl frame by bending both elbows farther. Keep both UPPER ARMS and elbow centres beside ribs at exactly their existing positions. Only rotate the forearms and the attached closed hands/dumbbells as rigid assemblies about the elbows. Forearms should rise diagonally toward shoulders; palms always face inward, no supination. The dumbbells must rotate WITH the neutral wrists, not remain upright while the forearms rise. Their handle axes stay approximately perpendicular to each forearm in the visible movement plane; at this top position each shaft angles from lower-left head to upper-right head, roughly40 degrees above horizontal, rather than remaining vertical. Straight wrists, thumb-side ends nearer the shoulders, all fingers close around the same handles. Keep the master's identical modest dumbbell head diameters, head thickness and handle lengths; never shrink the weights. Preserve head, chest, torso, hips, legs, white shoes, fixed foot coordinates, anatomy proportions, camera and crop exactly. Deep purple biceps, lilac forearm support and pale trunk shading unchanged. Pure black background with NO halo or glow. Smooth featureless pelvis. No text, arrows or diagram overlays. This is a local controlled elbow curl, not a new athlete.",
+      "output": "exec-f8b1292a-afe2-4e82-a909-50313b095d3b.png",
+      "finding": "Top equipment/wrist orientation improved; pale oblique stabilizer tint was removed and needs restoration before full review."
+    },
+    {
+      "prompt": "Use case: precise-object-edit. Image1 is the edit target: current top hammer curl. Make a COLOUR-ONLY correction. Restore the pale lilac oblique/trunk stabilizer shading between the ribs and pelvis to match image2, the frozen hammer-curl master. Central abdominal segments stay white-grey, side abdominal/oblique region subtly pale lilac. Keep the exact current top pose, neutral wrists, rotated dumbbells and ALL outlines and dimensions in image1. Do not move, shrink or redraw any equipment, hands, forearms, upper arms, head, torso, hips, legs or shoes. Keep existing purple biceps and lilac forearms exactly. Image3 is canonical style only. Native1024x1536, uniform pure black background, no glow or halo. No text. Only restore the missing pale side-abdominal colour; everything else unchanged.",
+      "output": "exec-58448d50-7988-4943-b0cc-45336464e279.png",
+      "method": "Built-in imagegen unchanged model path"
+    }
+  ],
+  "generatedOutputs": [
+    {
+      "file": "top-neutral-candidate.png",
+      "sha256": "412070347ddd97ab16c6577821067b4488d075fe76041f02d6744b87efb016a4"
+    },
+    {
+      "file": "top-tint-corrected.png",
+      "sha256": "f5b29c69c2f3005a399b87718dfb6bda4529b302f611586df5e501ba9edebe35"
+    }
+  ],
+  "fixedShoeCorrection": {
+    "authorization": "Owner approved master-copy of fixed areas. Only lower planted near shoe restored; no ankle, moving anatomy or dumbbell edits.",
+    "masterSha256": "1ea22590746b7bcde478551a914542b6da33cb9764c4b4a2f597fcd687511f01",
+    "rectangle": [
+      495,
+      1400,
+      725,
+      1505
+    ],
+    "frames": [
+      {
+        "frame": 3,
+        "sourceSha256": "f5b29c69c2f3005a399b87718dfb6bda4529b302f611586df5e501ba9edebe35",
+        "outputSha256": "1f07fae8803e83e41828caf4b716d191cd1e08d5ae03acfdc41fc80630e99f68",
+        "changedPixels": 14708,
+        "changedOutsideRectangle": 0
+      },
+      {
+        "frame": 4,
+        "sourceSha256": "f5b29c69c2f3005a399b87718dfb6bda4529b302f611586df5e501ba9edebe35",
+        "outputSha256": "1f07fae8803e83e41828caf4b716d191cd1e08d5ae03acfdc41fc80630e99f68",
+        "changedPixels": 14708,
+        "changedOutsideRectangle": 0
+      }
+    ]
+  },
+  "selectedPngs": [
+    {
+      "frame": 1,
+      "sha256": "1ea22590746b7bcde478551a914542b6da33cb9764c4b4a2f597fcd687511f01"
+    },
+    {
+      "frame": 2,
+      "sha256": "e791733332205ba09dc40fb38d5d585287680de6d18671e9f2d3ef2d11694e97"
+    },
+    {
+      "frame": 3,
+      "sha256": "1f07fae8803e83e41828caf4b716d191cd1e08d5ae03acfdc41fc80630e99f68"
+    },
+    {
+      "frame": 4,
+      "sha256": "1f07fae8803e83e41828caf4b716d191cd1e08d5ae03acfdc41fc80630e99f68"
+    },
+    {
+      "frame": 5,
+      "sha256": "e791733332205ba09dc40fb38d5d585287680de6d18671e9f2d3ef2d11694e97"
+    },
+    {
+      "frame": 6,
+      "sha256": "1ea22590746b7bcde478551a914542b6da33cb9764c4b4a2f597fcd687511f01"
+    }
+  ],
+  "reuse": {
+    "4": 3,
+    "5": 2,
+    "6": 1
+  },
+  "conversion": "Lossless WebP decoded RGB exactly equals reviewed PNG. No scaling.",
+  "measurementMethod": "Interpolated minimum-RGB150 scanline boundaries on native selected PNGs. Unrounded1px/1percent tests measure fixed contacts only, not moving anatomy or equipment.",
+  "scanlines": {
+    "farShoe": [
+      250,
+      505,
+      1380,
+      150
+    ],
+    "nearShoe": [
+      495,
+      730,
+      1450,
+      150
+    ]
+  }
+}
