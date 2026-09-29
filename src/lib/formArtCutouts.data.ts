@@ -127,6 +127,16 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
       "2bf40fd0c782fd1b316e3dded539f2ab0564592bba09130deec7317c8cfceffc",
     sha256: "b264a3ed2fd2097391f81da147ca2f32144a6cce354a8bd1772d918a69cd587f",
   },
+  "cable-crunch": {
+    src: "form-art/cable-crunch.webp",
+    width: 480,
+    height: 336,
+    keyed: true,
+    source: "form-frames/cable-crunch/1.webp",
+    sourceSha256:
+      "7cc725baf9e06d8a86df1256008dc97557f0984fb4806c1b50714bb962118c7f",
+    sha256: "30c9c8049207090bc2c03785b89df6907b7096088c56b433eeb15de9bc563b55",
+  },
   "chest-press-machine": {
     src: "form-art/chest-press-machine.webp",
     width: 422,

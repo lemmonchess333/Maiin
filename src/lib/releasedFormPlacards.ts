@@ -647,4 +647,17 @@ export const RELEASED_FORM_PLACARDS = {
       [0, "Reset", "Return to plank, then alternate again."],
     ]
   ),
+  "cable-crunch": placard(
+    "cable-crunch",
+    ["Abs"],
+    ["Obliques"],
+    [
+      [0, "Set", "Hold rope at temples; brace your abs."],
+      [0.5, "Curl", "Curl ribs down while keeping hips still."],
+      [1, "Crunch", "Bring ribs toward pelvis; elbows approach knees."],
+      [1, "Hold", "Hold the crunch without pulling your arms."],
+      [0.5, "Return", "Uncurl slowly while keeping hips still."],
+      [0, "Reset", "Return upright with rope at your temples."],
+    ]
+  ),
 };

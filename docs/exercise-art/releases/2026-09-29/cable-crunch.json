@@ -1,0 +1,326 @@
+{
+  "exerciseId": "cable-crunch",
+  "version": "anatomy-v3-2026-09-29",
+  "width": 1536,
+  "height": 1024,
+  "decision": "approved",
+  "reviewer": "Codex native and mobile visual review",
+  "reviewedAt": "2026-09-29T18:10:57.724Z",
+  "reference": {
+    "path": "form-frames/cable-crunch/1.webp",
+    "sha256": "7cc725baf9e06d8a86df1256008dc97557f0984fb4806c1b50714bb962118c7f"
+  },
+  "cueSha256": "1978332ed6790d2b128a923d5f122d51f8a4aef9aee428c5ca4c081365f5ad9c",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Canonical bald faceless white-grey athlete, white trainers and smooth featureless pelvis preserved. Native three-pose inspection and all-six mobile review complete."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Native1536x1024 fixed three-quarter camera. Shoe, planted lower-body, mat and machine-base scan endpoints remain within1px; widths within1percent of setup."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "One athlete with two arms and legs; hands remain beside temples as spine curls and returns. Hips and planted knees stay stable. No deterministic moving-anatomy edits."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Same high fixed pulley, two rope grips, guide rods and base. Nine visible plates: one selected above eight resting plates. The same rigid master selected plate and attachment are reused without scaling."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Both closed hands retain their rope ends beside the head. Knees/shins and shoes remain planted; floor and mat stable. Full-crunch shoe/mat drift repaired from master only in authorized fixed regions."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Taut rope/cable and selected plate rise together. Projected tangent-plus-wrap diagnostic estimates31.65px/52.80px additional path; selected plate rises32px/53px. This is a planar diagnostic using estimated endpoints/pulley geometry, not calibrated real-world mechanics. Native and mobile visual review show continuous connection and plausible1:1 direction/travel."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Catalogue primary Abs strongest purple; secondary Obliques light lilac. Stable qualitative contribution hierarchy, not measured activation."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Six exact cable-crunch cues correspond to setup, spinal curl, full crunch, hold, controlled return and reset. Hands stay at temples; no independent arm pulldown."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "All six reviewed in actual ExerciseFormFrames. Sequence0,.5,1,1,.5,0 uses identical poses for hold/return/reset;6to1 closes exactly. Discrete teaching beats, not continuous motion capture."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "Final corrected six PNGs plus6to1 inspected at390x844 in actual ExerciseFormFrames in light theme. Captions and controls readable, no clipping; full machine and athlete visible."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "Final corrected six PNGs plus6to1 inspected at390x844 in actual ExerciseFormFrames in dark theme. White-grey anatomy/purple contribution areas clear; plate movement readable; no clipping."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/cable-crunch/1.webp",
+      "sha256": "7cc725baf9e06d8a86df1256008dc97557f0984fb4806c1b50714bb962118c7f",
+      "anchors": {
+        "nearShoeLeft": {
+          "x": 256.59859154929575,
+          "y": 800
+        },
+        "nearShoeRight": {
+          "x": 378.3333333333333,
+          "y": 800
+        },
+        "plantedLowerBodyLeft": {
+          "x": 239.70466321243524,
+          "y": 860
+        },
+        "plantedLowerBodyRight": {
+          "x": 690,
+          "y": 860
+        },
+        "matFrontLeft": {
+          "x": 459.2,
+          "y": 940
+        },
+        "matFrontRight": {
+          "x": 848.2,
+          "y": 940
+        },
+        "machineBaseLeft": {
+          "x": 1037.1016949152543,
+          "y": 900
+        },
+        "machineBaseRight": {
+          "x": 1470.6122448979593,
+          "y": 900
+        }
+      },
+      "invariantDimensions": {
+        "nearShoeWidth": 121.73474178403757,
+        "plantedLowerBodyWidth": 450.2953367875648,
+        "matFrontWidth": 389.00000000000006,
+        "machineBaseWidth": 433.510549982705
+      }
+    },
+    {
+      "path": "form-frames/cable-crunch/2.webp",
+      "sha256": "fbefc1089d82930be7a93190fd53c317f80a95915bf955a722908ad00b77628b",
+      "anchors": {
+        "nearShoeLeft": {
+          "x": 256.83561643835617,
+          "y": 800
+        },
+        "nearShoeRight": {
+          "x": 379,
+          "y": 800
+        },
+        "plantedLowerBodyLeft": {
+          "x": 239.91358024691357,
+          "y": 860
+        },
+        "plantedLowerBodyRight": {
+          "x": 689.5966386554621,
+          "y": 860
+        },
+        "matFrontLeft": {
+          "x": 460,
+          "y": 940
+        },
+        "matFrontRight": {
+          "x": 847.6,
+          "y": 940
+        },
+        "machineBaseLeft": {
+          "x": 1037.0983606557377,
+          "y": 900
+        },
+        "machineBaseRight": {
+          "x": 1470.64,
+          "y": 900
+        }
+      },
+      "invariantDimensions": {
+        "nearShoeWidth": 122.16438356164383,
+        "plantedLowerBodyWidth": 449.68305840854856,
+        "matFrontWidth": 387.6,
+        "machineBaseWidth": 433.5416393442624
+      }
+    },
+    {
+      "path": "form-frames/cable-crunch/3.webp",
+      "sha256": "f20e480c5d290db4aba7ea102de3d42b99cd28b28103b89b35c4cf8702f9bfc4",
+      "anchors": {
+        "nearShoeLeft": {
+          "x": 256.59859154929575,
+          "y": 800
+        },
+        "nearShoeRight": {
+          "x": 378.3333333333333,
+          "y": 800
+        },
+        "plantedLowerBodyLeft": {
+          "x": 239.70466321243524,
+          "y": 860
+        },
+        "plantedLowerBodyRight": {
+          "x": 689.675925925926,
+          "y": 860
+        },
+        "matFrontLeft": {
+          "x": 459.2,
+          "y": 940
+        },
+        "matFrontRight": {
+          "x": 848.2,
+          "y": 940
+        },
+        "machineBaseLeft": {
+          "x": 1037.2083333333333,
+          "y": 900
+        },
+        "machineBaseRight": {
+          "x": 1470.6727272727273,
+          "y": 900
+        }
+      },
+      "invariantDimensions": {
+        "nearShoeWidth": 121.73474178403757,
+        "plantedLowerBodyWidth": 449.9712627134908,
+        "matFrontWidth": 389.00000000000006,
+        "machineBaseWidth": 433.4643939393941
+      }
+    },
+    {
+      "path": "form-frames/cable-crunch/4.webp",
+      "sha256": "f20e480c5d290db4aba7ea102de3d42b99cd28b28103b89b35c4cf8702f9bfc4",
+      "anchors": {
+        "nearShoeLeft": {
+          "x": 256.59859154929575,
+          "y": 800
+        },
+        "nearShoeRight": {
+          "x": 378.3333333333333,
+          "y": 800
+        },
+        "plantedLowerBodyLeft": {
+          "x": 239.70466321243524,
+          "y": 860
+        },
+        "plantedLowerBodyRight": {
+          "x": 689.675925925926,
+          "y": 860
+        },
+        "matFrontLeft": {
+          "x": 459.2,
+          "y": 940
+        },
+        "matFrontRight": {
+          "x": 848.2,
+          "y": 940
+        },
+        "machineBaseLeft": {
+          "x": 1037.2083333333333,
+          "y": 900
+        },
+        "machineBaseRight": {
+          "x": 1470.6727272727273,
+          "y": 900
+        }
+      },
+      "invariantDimensions": {
+        "nearShoeWidth": 121.73474178403757,
+        "plantedLowerBodyWidth": 449.9712627134908,
+        "matFrontWidth": 389.00000000000006,
+        "machineBaseWidth": 433.4643939393941
+      }
+    },
+    {
+      "path": "form-frames/cable-crunch/5.webp",
+      "sha256": "fbefc1089d82930be7a93190fd53c317f80a95915bf955a722908ad00b77628b",
+      "anchors": {
+        "nearShoeLeft": {
+          "x": 256.83561643835617,
+          "y": 800
+        },
+        "nearShoeRight": {
+          "x": 379,
+          "y": 800
+        },
+        "plantedLowerBodyLeft": {
+          "x": 239.91358024691357,
+          "y": 860
+        },
+        "plantedLowerBodyRight": {
+          "x": 689.5966386554621,
+          "y": 860
+        },
+        "matFrontLeft": {
+          "x": 460,
+          "y": 940
+        },
+        "matFrontRight": {
+          "x": 847.6,
+          "y": 940
+        },
+        "machineBaseLeft": {
+          "x": 1037.0983606557377,
+          "y": 900
+        },
+        "machineBaseRight": {
+          "x": 1470.64,
+          "y": 900
+        }
+      },
+      "invariantDimensions": {
+        "nearShoeWidth": 122.16438356164383,
+        "plantedLowerBodyWidth": 449.68305840854856,
+        "matFrontWidth": 387.6,
+        "machineBaseWidth": 433.5416393442624
+      }
+    },
+    {
+      "path": "form-frames/cable-crunch/6.webp",
+      "sha256": "7cc725baf9e06d8a86df1256008dc97557f0984fb4806c1b50714bb962118c7f",
+      "anchors": {
+        "nearShoeLeft": {
+          "x": 256.59859154929575,
+          "y": 800
+        },
+        "nearShoeRight": {
+          "x": 378.3333333333333,
+          "y": 800
+        },
+        "plantedLowerBodyLeft": {
+          "x": 239.70466321243524,
+          "y": 860
+        },
+        "plantedLowerBodyRight": {
+          "x": 690,
+          "y": 860
+        },
+        "matFrontLeft": {
+          "x": 459.2,
+          "y": 940
+        },
+        "matFrontRight": {
+          "x": 848.2,
+          "y": 940
+        },
+        "machineBaseLeft": {
+          "x": 1037.1016949152543,
+          "y": 900
+        },
+        "machineBaseRight": {
+          "x": 1470.6122448979593,
+          "y": 900
+        }
+      },
+      "invariantDimensions": {
+        "nearShoeWidth": 121.73474178403757,
+        "plantedLowerBodyWidth": 450.2953367875648,
+        "matFrontWidth": 389.00000000000006,
+        "machineBaseWidth": 433.510549982705
+      }
+    }
+  ]
+}
