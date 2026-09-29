@@ -97,6 +97,16 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
       "a7ec02db586a7f3a54fd801c40e12ab8dff11b386216e033516d40089ec3bc0f",
     sha256: "0a947b06f123aaf03f6489215fc9e38832932df52c671770d717905268ebcc09",
   },
+  "bicycle-crunch": {
+    src: "form-art/bicycle-crunch.webp",
+    width: 480,
+    height: 233,
+    keyed: true,
+    source: "form-frames/bicycle-crunch/3.webp",
+    sourceSha256:
+      "44f1530f3bbbe3aa0054d47736bf39c57fefce16a6a1d530ff10a3a194ab6256",
+    sha256: "0754b36b79cfa413b81c194c38bd79f12e75f01041b3232e1b9aa6b32bd435db",
+  },
   "bodyweight-squat": {
     src: "form-art/bodyweight-squat.webp",
     width: 243,

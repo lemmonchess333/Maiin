@@ -1,6 +1,6 @@
 {
   "tolerance": 0.05,
-  "total": 5946769,
+  "total": 5947178,
   "chunks": {
     "AccordionSection": 1612,
     "accountSecurity": 2340,
@@ -68,7 +68,7 @@
     "ellipsis": 360,
     "EmptyState": 1738,
     "ErrorState": 898,
-    "ExerciseFormContent": 42116,
+    "ExerciseFormContent": 42525,
     "ExerciseHistory": 11316,
     "exerciseMovementCategory": 6150,
     "ExerciseProgressChart": 2243,
