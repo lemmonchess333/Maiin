@@ -97,18 +97,20 @@ store returns "product not found":
 8. **Configure the webhook** (Project → Integrations → Webhooks) pointing at the
    Cloud Function URL slice 3 will create
    (`https://us-central1-adaptive-fitness-af8bb.cloudfunctions.net/revenueCatWebhook`),
-   with the `Authorization` header set to the secret from B7. _(You'll paste the
-   real URL after slice 3 deploys — fine to set this up last.)_
+   with the `Authorization` header set to the secret from B7 (the bare secret or
+   `Bearer <secret>`; the function accepts either). _(You'll paste the real URL
+   after slice 3 deploys — fine to set this up last.)_
 
 ---
 
 ## Part C — where the keys live (so the code slices find them)
 
-| Key                    | Home                            | Name (slices will use)    |
-| ---------------------- | ------------------------------- | ------------------------- |
-| RC public SDK key      | Vite env (web build + native)   | `VITE_REVENUECAT_IOS_KEY` |
-| RC webhook auth secret | Secret Manager (`defineSecret`) | `REVENUECAT_WEBHOOK_AUTH` |
-| RC REST API key        | Secret Manager (`defineSecret`) | `REVENUECAT_REST_KEY`     |
+| Key                    | Home                                     | Name (slices will use)    |
+| ---------------------- | ---------------------------------------- | ------------------------- |
+| RC public SDK key      | Vite env (web build + native)            | `VITE_REVENUECAT_IOS_KEY` |
+| RC webhook auth secret | Secret Manager (`defineSecret`)          | `REVENUECAT_WEBHOOK_AUTH` |
+| RC REST API key        | Secret Manager (`defineSecret`)          | `REVENUECAT_REST_KEY`     |
+| Sandbox Pro allow-list | Plain env var on both functions (no key) | `REVENUECAT_SANDBOX_UIDS` |
 
 Provision the two backend secrets before slice 3 deploys (a deploy that
 references an unprovisioned bound secret **fails** — that's the safety gate):
@@ -120,6 +122,54 @@ firebase functions:secrets:set REVENUECAT_REST_KEY
 
 The public key just goes in the Vite prod env (and the GitHub Actions build
 env). **Never** put the webhook/REST secrets in Vite — they're server-only.
+
+### Sandbox purchases grant Pro only to listed uids
+
+A sandbox purchase (TestFlight, StoreKit testing) costs nothing, and anyone
+with a test build can attach one to any App User ID through the public SDK
+key. So `revenueCatWebhook` and `syncRevenueCatEntitlement` grant Pro for a
+sandbox purchase only when the buyer's Firebase uid is in
+`REVENUECAT_SANDBOX_UIDS`: your own account and App Review's demo login. For
+anyone else the purchase goes through in the store, the user stays free, and
+the function logs `revenueCat.sandbox_refused` with the uid. Unset or empty
+means no sandbox purchase grants Pro to anyone. Production purchases are
+unaffected.
+
+**Put App Review's demo account uid on the list before you submit.** The
+reviewer buys in the sandbox. Without their uid on the list the purchase
+succeeds and Pro never unlocks, which reads to them as a broken purchase.
+
+It is a plain env var, not a secret, set the way `ADMIN_UIDS` is
+(`functions/adminAuth.js`). Find each uid in Firebase Console →
+Authentication → Users, then add the line to `functions/.env` (gitignored,
+so it stays on your machine) and deploy the two functions from an up-to-date
+checkout of `main`:
+
+```bash
+# functions/.env
+REVENUECAT_SANDBOX_UIDS=<your uid>,<App Review demo uid>
+```
+
+```bash
+firebase deploy --only functions:revenueCatWebhook,functions:syncRevenueCatEntitlement \
+  --project adaptive-fitness-af8bb
+```
+
+Both functions read it, so both need it. Two things about how firebase-tools
+treats plain env vars (read from its deploy code, `inferDetailsFromExisting`
+in firebase-tools 15.30.2):
+
+- **CI deploys carry no `functions/.env`.** A deploy without one keeps the
+  variables each function already has, so the list survives later CI
+  deploys. A function that a CI deploy creates for the first time gets none,
+  so set the list after the first deploy that creates these two functions.
+- **A deploy with a `functions/.env` replaces the deployed functions'
+  variables with the file's contents.** Keep every plain variable those
+  functions need in the file.
+
+Adding or removing a uid means deploying the two functions again. Confirm
+the value in the Google Cloud console (Cloud Functions → the function →
+Variables) before relying on it.
 
 ---
 
@@ -133,6 +183,8 @@ env). **Never** put the webhook/REST secrets in Vite — they're server-only.
 - [ ] Transfer behaviour set to "keep with original App User ID" (recorded)
 - [ ] Public SDK key in Vite env; webhook auth secret + REST key in Secret Manager
 - [ ] (after slice 3) Webhook configured with the `Authorization` secret
+- [ ] (after slice 3, before submission) `REVENUECAT_SANDBOX_UIDS` on both
+      functions holds your uid and App Review's demo account uid
 
 ---
 
@@ -141,12 +193,18 @@ env). **Never** put the webhook/REST secrets in Vite — they're server-only.
 - **Slice 2 (#1098):** `@revenuecat/purchases-capacitor` init + `logIn`/`logOut`
   on Firebase auth change (uid = App User ID). Needs only the **public key**, so
   I can scaffold it now and you drop the key in.
-- **Slice 3 (#1099):** the real purchase flow through `purchaseProvider.ts` + the
-  `revenueCatWebhook` function (writes `subscriptionTier`/`subscriptionExpiresAt`)
-  - a sync-on-purchase callable. Needs the **webhook + REST secrets**.
+- **Slice 3 (#1099):** the real purchase flow through `purchaseProvider.ts`
+  (client, #1454), plus the `revenueCatWebhook` function and the
+  `syncRevenueCatEntitlement` callable (server, `functions/revenueCat.js`). Both
+  re-read the subscriber from the REST API and write `subscriptionTier` /
+  `subscriptionExpiresAt`, which also covers the lifecycle events slice 4
+  planned. Needs the **webhook + REST secrets** before it merges; the QA row in
+  CLAUDE.md has the checks.
 - **Slices 4–8:** lifecycle webhooks, restore/manage, the web "Get it on iOS"
   funnel, then the sandbox-device test that retires the hand-rolled Apple path.
 
 > The one thing neither of us can skip: **slices 2–8 can only be truly verified
-> on a real iOS sandbox device** (IAP doesn't run in a simulator). Everything
-> lands mergeable behind the current path; slice 8 is the on-device sign-off.
+> on a real iOS sandbox device** (IAP doesn't run in a simulator), signed in to
+> an account on `REVENUECAT_SANDBOX_UIDS`. On any other account a sandbox
+> purchase leaves the user free by design. Everything lands mergeable behind
+> the current path; slice 8 is the on-device sign-off.

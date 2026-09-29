@@ -97,6 +97,11 @@ exports.verifyApplePurchase = appleIAP.verifyApplePurchase;
 exports.appleIAPWebhook = appleIAP.appleIAPWebhook;
 exports.restoreApplePurchases = appleIAP.restoreApplePurchases;
 
+// RevenueCat (ADR-0006): the entitlement source for in-app purchases.
+const revenueCat = require("./revenueCat");
+exports.revenueCatWebhook = revenueCat.revenueCatWebhook;
+exports.syncRevenueCatEntitlement = revenueCat.syncRevenueCatEntitlement;
+
 // PR Q (audit P0 #1/#2/#3 follow-up): pure helpers live in
 // ./helpers.js so the test runner can import them without booting
 // firebase-admin. The underscore-prefixed names below are kept as

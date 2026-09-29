@@ -118,6 +118,16 @@ const EXPECTED = {
       "STRIPE_SECRET_KEY",
     ],
   },
+  revenueCatWebhook: {
+    kind: "http",
+    maxInstances: 100,
+    secrets: ["REVENUECAT_REST_KEY", "REVENUECAT_WEBHOOK_AUTH"],
+  },
+  syncRevenueCatEntitlement: {
+    kind: "callable",
+    maxInstances: 100,
+    secrets: ["REVENUECAT_REST_KEY"],
+  },
   deleteMyAccount: {
     kind: "callable",
     maxInstances: 100,
