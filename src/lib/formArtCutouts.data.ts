@@ -344,8 +344,8 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
     keyed: true,
     source: "form-frames/push-ups/1.webp",
     sourceSha256:
-      "97400d4b75765abbe20c50baaaaa52f82167ff5de0f84af614f1c72eb14e45aa",
-    sha256: "a4288668a094478700fe6c31f99858894f27931102b09dd38147f35e28d23bbd",
+      "5639a5655874f8e6378faebe5b928e102fc11cdb42bb72a56c2aa22e5c39dbb6",
+    sha256: "3cafc7d77f0a2bd0a005734221616079c020eb63a347f5769c5f0ecb420787c7",
   },
   "reverse-barbell-curl": {
     src: "form-art/reverse-barbell-curl.webp",

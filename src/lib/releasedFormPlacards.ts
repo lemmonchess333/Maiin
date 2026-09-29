@@ -229,23 +229,7 @@ export const RELEASED_FORM_PLACARDS = {
       [0.25, "Finish rising", "Finish standing without leaning back."],
     ]
   ),
-  "push-ups": placard(
-    "push-ups",
-    ["pectoralis major"],
-    ["triceps", "anterior deltoids"],
-    [
-      [0, "High plank", "Brace your trunk in a high plank."],
-      [0.25, "Begin lowering", "Bend elbows while keeping your body aligned."],
-      [0.6, "Lower", "Lower your chest between your hands."],
-      [1, "Bottom", "Keep hips aligned; avoid dropping your head."],
-      [0.6, "Press up", "Press the floor away without sagging."],
-      [
-        0.25,
-        "Finish pressing",
-        "Finish pressing while keeping your trunk braced.",
-      ],
-    ]
-  ),
+  "push-ups": placard("push-ups", ["Pectorals"], ["Triceps", "Front Delts", "Core"], [[0,"Set","Place hands slightly wider than your shoulders."],[0.5,"Lower","Bend elbows back, keeping your body aligned."],[1,"Bottom","Bring your chest close to the floor."],[1,"Control","Keep hips and shoulders moving together."],[0.5,"Press","Push the floor away without lifting hips."],[0,"Reset","Finish with arms straight and core braced."]]),
   squat: placard(
     "squat",
     ["quadriceps"],

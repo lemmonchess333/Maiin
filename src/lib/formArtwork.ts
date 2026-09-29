@@ -183,7 +183,7 @@ export const FORM_ARTWORK: Record<string, FormArtwork> = {
   "hammer-curl": { version: "anatomy-v3-2026-09-29", status: "approved", width: 1024, height: 1536, frames: Array.from({length:6}, (_,i) => `form-frames/hammer-curl/${i+1}.webp`), reference: "form-frames/hammer-curl/1.webp", reviewFile: "docs/exercise-art/releases/2026-09-29/hammer-curl.json" },
   "front-raise": { version: "anatomy-v3-2026-09-29", status: "approved", width: 1024, height: 1536, frames: Array.from({length:6}, (_,i) => `form-frames/front-raise/${i+1}.webp`), reference: "form-frames/front-raise/1.webp", reviewFile: "docs/exercise-art/releases/2026-09-29/front-raise.json" },
   "goblet-squat": ownerReleased("goblet-squat", 1024, 1536),
-  "push-ups": ownerReleased("push-ups", 1536, 1024),
+  "push-ups": { version: "anatomy-v3-2026-09-29", status: "approved", width: 1536, height: 1024, frames: Array.from({length:6}, (_,i) => `form-frames/push-ups/${i+1}.webp`), reference: "form-frames/push-ups/1.webp", reviewFile: "docs/exercise-art/releases/2026-09-29/push-ups.json" },
   squat: ownerReleased("squat", 1024, 1536),
   "barbell-curl": ownerReleased("barbell-curl", 1024, 1536),
   "db-bench": ownerReleased("db-bench", 1536, 1024),

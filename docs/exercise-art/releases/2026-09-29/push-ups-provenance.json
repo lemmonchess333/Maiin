@@ -1,0 +1,164 @@
+{
+  "modelPath": "Existing built-in imagegen pilot master, middle and bottom retained. Owner-authorized master-copy fixes only planted near fingers/lower palm in frames3/4; no moving-anatomy edit or model fallback.",
+  "canonicalReference": {
+    "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+  },
+  "nativeDimensions": {
+    "width": 1536,
+    "height": 1024
+  },
+  "historicalOwnerRelease": {
+    "path": "docs/exercise-art/releases/2026-09-owner/push-ups.json",
+    "sha256": "ebc91d1b2d848f84d44eb368e5d51364d0d02e6ccfb55cb58045d5f819328288",
+    "note": "Preserved unchanged as history; new strict review covers replacement assets/cues."
+  },
+  "originalGeneration": [
+    {
+      "file": "BATCH_GENERATION_LOG.json",
+      "calls": [
+        {
+          "frame": 1,
+          "id": "push-ups",
+          "path": "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/push-ups/1-master.png",
+          "prompt": "Create ONE PUSH-UP exercise-library master, frame 1/6, with the SAME canonical athlete as the supplied character/style reference. Bald faceless muscular anatomical male, white/light-grey body, same proportions and muscle density, fine dark contours, polished flat 2D anatomical shading and same white low-top shoes. Not a photorealistic person.\nPose is the TOP of a standard full push-up: high plank, both palms planted slightly wider than shoulders, fingers spread forward, straight arms without hyperextension, shoulders above wrists. Both legs fully extended, feet roughly hip-width, toes of white shoes planted with heels raised. Head, shoulders, hips and ankles form one straight neutral line. No sagging hips, no raised pike, no knees on floor.\nCamera: fixed near-side three-quarter view, head toward image LEFT and feet toward RIGHT, camera only slightly elevated so both hands, elbows and shoe toe contacts are individually visible. Landscape 1536x1024, entire athlete within 70px margins, occupying most horizontal width. Plain BLACK background and invisible black floor with natural contact, no gym scene, no mat.\nMuscles: chest/pectorals deep purple, triceps and anterior deltoids lighter lilac, abdominal/oblique stabilisers very pale purple. Rest white-grey; do not colour lats or legs strongly. Same canonical purple hierarchy, no anatomy size changes.\nSix states for later edits: top plank; early controlled elbow bend; middle descent; chest just above floor; controlled press through mid; near-top return. Hands and shoe toe contacts remain fixed; body lowers and rises as a straight unit with elbows tracking diagonally back about 30-45 degrees from ribs, not flared sideways. Make ONLY top plank now.\nOne separate full-resolution sharp image. No text, number, caption, arrow, border, grid or UI.",
+          "refs": [
+            "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/hammer-curl/1-master.png"
+          ]
+        },
+        {
+          "frame": 2,
+          "id": "push-ups",
+          "path": "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/push-ups/2-early.png",
+          "prompt": "ONE precise adjacent edit of this PUSH-UP master: frame 2/6, early controlled descent.\nBend both elbows approximately 30 degrees from straight, tracking diagonally backward about 30-45 degrees away from the ribs, not winged sideways. Lower head, shoulders, chest and pelvis together as a rigid straight plank pivoting at the toes. Chest and shoulders descend only about 90 pixels from the supplied top pose; keep this clearly early, not bottom. Neck stays naturally aligned with torso, gaze toward floor, no chin jut.\nFIX BOTH PALMS AND ALL FINGERTIPS to their exact existing canvas coordinates. FIX BOTH SHOE TOE CONTACTS to their existing floor points; shoes may pivot naturally at toes but do not slide or change size. Arms must bend above fixed hands, not lengthen. Preserve original upper/lower arm lengths, head size, torso dimensions and leg length; no sagging hips or bent knees.\nSame 1536x1024 canvas, unchanged camera, crop, scale, black background. Exact canonical white-grey anatomy, deep purple chest, lilac triceps/front delts and pale trunk. No new highlights. One separate crisp high-resolution still, no caption, text, arrow, grid or UI.",
+          "refs": [
+            "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/push-ups/1-master.png"
+          ]
+        },
+        {
+          "frame": 3,
+          "id": "push-ups",
+          "path": "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/push-ups/3-mid.png",
+          "prompt": "Edit this exact PUSH-UP frame into ONE middle-descent still, frame 3/6. Bend both elbows farther to about 70 degrees from straight. Lower shoulders/chest/head together another 100 pixels, pelvis descends proportionally so head-to-ankles stays a straight plank. Chest still clearly above floor; do not reach deepest position yet. Elbows track diagonally back, about 30-45 degrees from ribs, not straight sideways. Wrists beneath elbows, same arm bone lengths.\nLOCK the exact palm outlines, fingertips and both shoe toe-contact points at their current canvas coordinates. No sliding hands, changed hand size, shifted feet or resized shoes. Preserve head size, torso dimensions, muscle volume and entire leg lengths. Knees straight and hips not sagging or piking. Neck in line with torso.\nSame 1536x1024 canvas, camera, zoom, black background, fine dark contour and white-grey canonical anatomical athlete. Purple chest/lilac triceps and anterior delts/pale trunk unchanged. ONE separate crisp high-resolution image, no text/caption/arrows/borders/UI.",
+          "refs": [
+            "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/push-ups/2-early.png"
+          ]
+        },
+        {
+          "frame": 4,
+          "id": "push-ups",
+          "path": "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/push-ups/4-bottom.png",
+          "prompt": "Make ONE PUSH-UP bottom still, frame 4/6, by editing the supplied middle-descent image.\nLower chest another 90-110 pixels toward the floor, elbows bending to about 90-100 degrees. Chest hovers just above the floor plane defined by the fixed palms/toes. Shoulders and pelvis lower as one straight plank, knees remain straight, glutes do not stick up, abdomen does not sag. Keep neutral neck, nose directed toward floor. Elbows point diagonally backward 30-45 degrees from ribs and stay approximately over the wrists in the movement plane; forearms near vertical, not stretched sideways.\nAll PALMS/FINGERTIPS and SHOE TOE CONTACTS stay at exactly the supplied coordinates and retain original dimensions. Do not slide either hand or foot. Original upper/lower arm lengths, torso length, leg lengths, head size, camera/perspective and 1536x1024 crop remain unchanged. Only joints and attached body segments move as required.\nSame crisp white-grey canonical anatomical athlete, deep-purple chest, lilac triceps/front deltoids, pale core, solid black background. One separate native-resolution frame without text/captions/arrows/borders/grid/UI.",
+          "refs": [
+            "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/push-ups/3-mid.png"
+          ]
+        }
+      ]
+    },
+    {
+      "file": "BATCH_03_GENERATION_LOG.json",
+      "calls": []
+    }
+  ],
+  "originalSources": [
+    {
+      "path": "docs/exercise-art/pilots/push-ups/1-master.png",
+      "sha256": "a34c813085bd75c2e8f10d5aef4c77b7f94ac77c33e77cbf212455bd244008ea"
+    },
+    {
+      "path": "docs/exercise-art/pilots/push-ups/3-mid.png",
+      "sha256": "88ff1401b3467f6c27314df496b2877e5428d683c77aa3288fa47db7ad446de6"
+    },
+    {
+      "path": "docs/exercise-art/pilots/push-ups/4-bottom.png",
+      "sha256": "faf7a1ff1349bf458e62a43551377ed226bc3f3ba681d2f6147786de387ab0b9"
+    }
+  ],
+  "generation": [],
+  "generatedOutputs": [],
+  "fixedFingersCorrection": {
+    "authorization": "Owner approved master-copy of fixed areas. Only planted near fingers and lower palm restored; no wrist, moving arm or torso edits.",
+    "masterSha256": "a34c813085bd75c2e8f10d5aef4c77b7f94ac77c33e77cbf212455bd244008ea",
+    "rectangle": [
+      395,
+      830,
+      610,
+      885
+    ],
+    "frames": [
+      {
+        "frame": 3,
+        "sourceSha256": "faf7a1ff1349bf458e62a43551377ed226bc3f3ba681d2f6147786de387ab0b9",
+        "outputSha256": "df6e9cce9a2beee2b30a2abebce462d1bf7b7264266d5e3030094fa4310f7770",
+        "changedPixels": 8518,
+        "changedOutsideRectangle": 0
+      },
+      {
+        "frame": 4,
+        "sourceSha256": "faf7a1ff1349bf458e62a43551377ed226bc3f3ba681d2f6147786de387ab0b9",
+        "outputSha256": "df6e9cce9a2beee2b30a2abebce462d1bf7b7264266d5e3030094fa4310f7770",
+        "changedPixels": 8518,
+        "changedOutsideRectangle": 0
+      }
+    ]
+  },
+  "selectedPngs": [
+    {
+      "frame": 1,
+      "sha256": "a34c813085bd75c2e8f10d5aef4c77b7f94ac77c33e77cbf212455bd244008ea"
+    },
+    {
+      "frame": 2,
+      "sha256": "88ff1401b3467f6c27314df496b2877e5428d683c77aa3288fa47db7ad446de6"
+    },
+    {
+      "frame": 3,
+      "sha256": "df6e9cce9a2beee2b30a2abebce462d1bf7b7264266d5e3030094fa4310f7770"
+    },
+    {
+      "frame": 4,
+      "sha256": "df6e9cce9a2beee2b30a2abebce462d1bf7b7264266d5e3030094fa4310f7770"
+    },
+    {
+      "frame": 5,
+      "sha256": "88ff1401b3467f6c27314df496b2877e5428d683c77aa3288fa47db7ad446de6"
+    },
+    {
+      "frame": 6,
+      "sha256": "a34c813085bd75c2e8f10d5aef4c77b7f94ac77c33e77cbf212455bd244008ea"
+    }
+  ],
+  "reuse": {
+    "4": 3,
+    "5": 2,
+    "6": 1
+  },
+  "conversion": "Lossless WebP decoded RGB exactly equals reviewed PNG. No scaling.",
+  "measurementMethod": "Interpolated minimum-RGB150 scanline boundaries on native selected PNGs. Unrounded1px/1percent tests measure fixed contacts only, not moving anatomy or equipment.",
+  "scanlines": {
+    "farFingers": [
+      55,
+      250,
+      770,
+      150
+    ],
+    "nearFingers": [
+      395,
+      620,
+      850,
+      150
+    ],
+    "farToe": [
+      1150,
+      1280,
+      710,
+      150
+    ],
+    "nearToe": [
+      1260,
+      1420,
+      740,
+      150
+    ]
+  }
+}
