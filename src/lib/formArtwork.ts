@@ -199,7 +199,7 @@ export const FORM_ARTWORK: Record<string, FormArtwork> = {
     reference: "form-frames/bodyweight-squat/1.webp",
     reviewFile: "docs/exercise-art/releases/2026-09-29/bodyweight-squat.json",
   },
-  "barbell-shrug": ownerReleased("barbell-shrug", 1024, 1536),
+  "barbell-shrug": { version: "anatomy-v3-2026-09-29", status: "approved", width: 1024, height: 1536, frames: Array.from({length:6}, (_,i) => `form-frames/barbell-shrug/${i+1}.webp`), reference: "form-frames/barbell-shrug/1.webp", reviewFile: "docs/exercise-art/releases/2026-09-29/barbell-shrug.json" },
   "barbell-row": existing("barbell-row", 1000, 1701),
   "bench-press": existing("bench-press", 1000, 823),
   dips: existing("dips", 1000, 1413),
