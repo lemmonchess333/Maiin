@@ -14,27 +14,25 @@
  * existed — there was no state to show and no control to offer. It is now a
  * four-way picker per type (Ask / Followers / Public / Never) that is always
  * present, so the setting can be found by looking for it. "Ask" is the
- * absence of a stored default, not a fourth stored value — picking it calls
- * `clearShareDefault`, which is exactly what the old "Ask again" button did.
+ * absence of a saved answer, not a fourth value — picking it saves `null`,
+ * which the finish screen on every device reads as "ask".
  *
- * The preference lives in localStorage, not the profile, so it is read once
- * into state and updated locally. Nothing else mutates it while this screen
- * is open.
+ * The answers are saved on the account (`profile.shareDefaults`), so what
+ * this row shows is what every device does. The row renders the profile's
+ * value and holds no copy of its own: `updateShareDefaults` changes the
+ * profile the moment it is called, so a pick shows at once, and moves back
+ * if the save is refused.
  */
-import { useState } from "react";
 import { MessageSquare } from "lucide-react";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { haptic } from "@/lib/haptic";
 import { toast } from "@/lib/toast";
 import { track as trackSettingsEvent } from "@/lib/settingsAnalytics";
-import {
-  getShareDefault,
-  setShareDefault,
-  clearShareDefault,
-  type ShareType,
-} from "@/lib/shareComposer";
+import type { UpdateProfileResult } from "@/lib/auth";
+import { savedShareDefault, type ShareDefaults } from "@/lib/shareDefaults";
+import type { ShareType } from "@/lib/shareComposer";
 
-/** "ask" is the UI name for having no stored default. */
+/** "ask" is the UI name for having no saved answer. */
 type Choice = "ask" | "followers" | "public" | "never";
 
 const TYPES: { type: ShareType; noun: string }[] = [
@@ -72,23 +70,23 @@ function confirmCopy(noun: string, choice: Choice): string {
   }
 }
 
-export default function ShareDefaultsRow({ uid }: { uid: string | null }) {
-  const [choices, setChoices] = useState<Record<ShareType, Choice>>(() => ({
-    run: uid ? ((getShareDefault(uid, "run") ?? "ask") as Choice) : "ask",
-    workout: uid
-      ? ((getShareDefault(uid, "workout") ?? "ask") as Choice)
-      : "ask",
-  }));
-
+export default function ShareDefaultsRow({
+  uid,
+  shareDefaults,
+  updateShareDefaults,
+}: {
+  uid: string | null;
+  /** The account's answers (`profile.shareDefaults`). */
+  shareDefaults: ShareDefaults | null | undefined;
+  updateShareDefaults: (answers: ShareDefaults) => Promise<UpdateProfileResult>;
+}) {
   if (!uid) return null;
 
   const change = (type: ShareType, noun: string, next: Choice) => {
     haptic("light");
-    // "ask" is the absence of a default, so it CLEARS rather than storing a
-    // fourth value — the finish screen asks whenever none is stored.
-    if (next === "ask") clearShareDefault(uid, type);
-    else setShareDefault(uid, type, next);
-    setChoices((prev) => ({ ...prev, [type]: next }));
+    // "ask" is the absence of an answer, so it saves null rather than a
+    // fourth value — the finish screen asks whenever there is none.
+    void updateShareDefaults({ [type]: next === "ask" ? null : next });
     trackSettingsEvent("settings_toggle_changed", {
       toggle: next === "ask" ? "share_default_cleared" : "share_default_set",
       value: next === "ask" ? type : `${type}:${next}`,
@@ -108,25 +106,28 @@ export default function ShareDefaultsRow({ uid }: { uid: string | null }) {
         </div>
       </div>
 
-      {TYPES.map(({ type, noun }) => (
-        <div key={type} className="p-3 rounded-lg bg-card space-y-2">
-          <div>
-            <p className="text-xs font-medium text-foreground">{noun}</p>
-            <p className="text-xs text-muted-foreground">
-              {DESCRIBE[choices[type]]}
-            </p>
+      {TYPES.map(({ type, noun }) => {
+        const choice: Choice = savedShareDefault(shareDefaults, type) ?? "ask";
+        return (
+          <div key={type} className="p-3 rounded-lg bg-card space-y-2">
+            <div>
+              <p className="text-xs font-medium text-foreground">{noun}</p>
+              <p className="text-xs text-muted-foreground">
+                {DESCRIBE[choice]}
+              </p>
+            </div>
+            <SegmentedControl
+              options={OPTIONS}
+              value={choice}
+              onChange={(next) => change(type, noun, next)}
+              ariaLabel={`Default sharing for ${noun.toLowerCase()}`}
+              // Four segments don't fit one 375px row without truncating
+              // "Followers"; wrap degrades to two rows instead of clipping.
+              layout="wrap"
+            />
           </div>
-          <SegmentedControl
-            options={OPTIONS}
-            value={choices[type]}
-            onChange={(next) => change(type, noun, next)}
-            ariaLabel={`Default sharing for ${noun.toLowerCase()}`}
-            // Four segments don't fit one 375px row without truncating
-            // "Followers"; wrap degrades to two rows instead of clipping.
-            layout="wrap"
-          />
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }

@@ -191,6 +191,31 @@ describe("PeriodSummaryCard", () => {
     }
   });
 
+  it("names a month's year once under the chart, on its first label", () => {
+    const y = new Date().getFullYear();
+    const month = (key: string, current = false): SummaryBin => ({
+      key,
+      lifts: 2,
+      runs: 1,
+      volumeKg: 9000,
+      distanceM: 8000,
+      current,
+    });
+    card({
+      granularity: "monthly",
+      bins: [
+        month(`${y - 1}-10-01`),
+        month(`${y - 1}-11-01`),
+        month(`${y - 1}-12-01`),
+        month(`${y}-01-01`, true),
+      ],
+    });
+    const labels = screen.getByText("This month").parentElement!;
+    expect(within(labels).getByText(`Oct ${y - 1}`)).toBeInTheDocument();
+    expect(within(labels).getByText("Nov")).toBeInTheDocument();
+    expect(within(labels).getByText("Dec")).toBeInTheDocument();
+  });
+
   it("names the current bar in the labels under the chart", () => {
     card();
     const labels = screen.getByText("This week").parentElement!;

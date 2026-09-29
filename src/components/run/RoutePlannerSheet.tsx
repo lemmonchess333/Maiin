@@ -126,6 +126,11 @@ export default function RoutePlannerSheet({
         attributionControl: false,
       });
     } catch {
+      // This setState stays in the effect. The outcome belongs to the
+      // external system: MapLibre can only be built on the committed
+      // container, and a WebGL failure throws right here, so no render can
+      // know it first.
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- see above
       setMapUnavailable(true);
       return;
     }
@@ -232,14 +237,22 @@ export default function RoutePlannerSheet({
   // Closing the planner discards the road state. Today's parent
   // (RouteSetupSection) conditionally MOUNTS the sheet, so closing
   // unmounts it and that alone discards in-flight responses — this
-  // effect exists so the invariant survives a future parent that keeps
-  // the sheet mounted across closes.
+  // reset exists so the invariant survives a future parent that keeps
+  // the sheet mounted across closes. The state is cleared while
+  // rendering (React's "adjust state during render" idiom) on every
+  // open/close change: on close, and again on re-open, so a response
+  // that landed between the close and the nonce bump below can't carry
+  // into the next session.
+  const [prevOpen, setPrevOpen] = useState(open);
+  if (prevOpen !== open) {
+    setPrevOpen(open);
+    setRoadRoute(null);
+    setRouting(null);
+  }
+  // A ref can't be written while rendering, so the bump that makes every
+  // in-flight response stale stays an effect.
   useEffect(() => {
-    if (!open) {
-      requestNonce.current += 1;
-      setRoadRoute(null);
-      setRouting(null);
-    }
+    if (!open) requestNonce.current += 1;
   }, [open]);
 
   const undo = () => {

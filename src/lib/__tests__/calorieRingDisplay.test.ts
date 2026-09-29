@@ -50,10 +50,10 @@ describe("getCalorieRingDisplay — left mode", () => {
   });
 });
 
-describe("getCalorieRingDisplay — eaten mode", () => {
-  it('shows consumed with "eaten" label even when over target — the F3.1 bug fix', () => {
+describe("getCalorieRingDisplay — logged view", () => {
+  it('shows consumed with "logged" label even when over target — the F3.1 bug fix', () => {
     /* The spec's second anchor case AND the bug. Target 4033,
-       consumed 5700 → ring shows "5700 KCAL EATEN" not
+       consumed 5700 → ring shows "5700 KCAL LOGGED" not
        "5700 KCAL OVER". Pre-F3.1 the label flipped to "over"
        which read as nonsense (5,700 isn't the over amount). */
     const r = getCalorieRingDisplay({
@@ -62,11 +62,11 @@ describe("getCalorieRingDisplay — eaten mode", () => {
       isLeftMode: false,
     });
     expect(r.displayValue).toBe(5700);
-    expect(r.labelMode).toBe("eaten");
+    expect(r.labelMode).toBe("logged");
     expect(r.isOver).toBe(true);
   });
 
-  it('shows consumed with "eaten" label when under target', () => {
+  it('shows consumed with "logged" label when under target', () => {
     /* The spec's fourth anchor case. */
     const r = getCalorieRingDisplay({
       consumed: 1500,
@@ -74,7 +74,7 @@ describe("getCalorieRingDisplay — eaten mode", () => {
       isLeftMode: false,
     });
     expect(r.displayValue).toBe(1500);
-    expect(r.labelMode).toBe("eaten");
+    expect(r.labelMode).toBe("logged");
     expect(r.isOver).toBe(false);
   });
 

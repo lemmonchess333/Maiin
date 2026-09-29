@@ -198,6 +198,26 @@ interface TrainTogetherPrefill {
   targetDate: string | null;
 }
 
+/** The Train-together prefill a URL carries, or null when there is none —
+ *  including an invalid circleCreate, which ignores the whole hand-off. */
+function parseTrainTogetherParams(
+  params: URLSearchParams
+): TrainTogetherPrefill | null {
+  const rawType = params.get("circleCreate");
+  if (rawType === null) return null;
+  if (!CREATABLE_TEMPLATE_TYPES.has(rawType as GoalSpaceType)) return null;
+  const rawTitle = params.get("circleTitle");
+  const rawDate = params.get("circleDate");
+  return {
+    type: rawType as GoalSpaceType,
+    // Cap to the create input's maxLength.
+    title: (rawTitle ?? "").slice(0, 60),
+    // Malformed date → dropped, the rest of the prefill survives.
+    targetDate:
+      rawDate !== null && /^\d{4}-\d{2}-\d{2}$/.test(rawDate) ? rawDate : null,
+  };
+}
+
 /** SOC-P1e — the circle state CommunityView orders the Together page by. */
 export type CirclesSectionState = "loading" | "none" | "solo" | "live";
 
@@ -277,9 +297,12 @@ export default function CirclesSection({
     null
   );
   /* Consumed-once URL prefill, stashed until circles finish loading —
-     the compatible-vs-create decision needs the real list. */
+     the compatible-vs-create decision needs the real list. Seeded from
+     the URL the section mounts with; a later arrival is read below. */
   const [handoffPrefill, setHandoffPrefill] =
-    useState<TrainTogetherPrefill | null>(null);
+    useState<TrainTogetherPrefill | null>(() =>
+      parseTrainTogetherParams(searchParams)
+    );
   /* "You already have a matching circle" chooser. Carries the prefill
      so "Start a new circle" can still reach the prefilled sheet. */
   const [trainTogether, setTrainTogether] = useState<{
@@ -345,34 +368,47 @@ export default function CirclesSection({
   const featuredId = featured?.space.id ?? null;
   /* Deliberately separate from the detail-sheet's members/events state —
      the sheet keeps its own load flow when opened. One-shot reads only;
-     loadDetail never opens a listener. */
-  const [featuredDetail, setFeaturedDetail] = useState<CircleDetail | null>(
-    null
-  );
+     loadDetail never opens a listener. Stamped with the viewer and the
+     circle it was read for, so a different featured circle (or account)
+     reads as not loaded yet from its first render — never with the
+     previous circle's members and focus. */
+  const featuredKey = featuredId ? `${uid}:${featuredId}` : null;
+  const [featuredRead, setFeaturedRead] = useState<{
+    key: string;
+    detail: CircleDetail;
+  } | null>(null);
+  const featuredDetail =
+    featuredRead !== null && featuredRead.key === featuredKey
+      ? featuredRead.detail
+      : null;
   useEffect(() => {
-    if (!featuredId) {
-      setFeaturedDetail(null);
-      return;
-    }
+    if (!featuredKey || !featuredId) return;
     let cancelled = false;
-    setFeaturedDetail(null);
     void loadDetail(featuredId).then((detail) => {
-      if (!cancelled) setFeaturedDetail(detail);
+      if (!cancelled) setFeaturedRead({ key: featuredKey, detail });
     });
     return () => {
       cancelled = true;
     };
-  }, [featuredId, loadDetail]);
+  }, [featuredKey, featuredId, loadDetail]);
 
   /* PROGRAM-CIRCLE-01 — consume the Train-together params ONCE on
-     arrival: strip them from the URL immediately ({replace:true},
-     same idiom as Social.tsx's legacy ?tab=find effect), validate,
-     and stash the prefill. Acting waits for the circle list below. */
+     arrival. A hand-off that arrives while the section is mounted is read
+     during render, once per query string (React's "adjust state during
+     render" idiom), so the prefill is stashed in the render that first
+     sees the URL. Acting waits for the circle list below. */
+  const query = searchParams.toString();
+  const [queryRead, setQueryRead] = useState(query);
+  if (queryRead !== query) {
+    setQueryRead(query);
+    const prefill = parseTrainTogetherParams(searchParams);
+    if (prefill) setHandoffPrefill(prefill);
+  }
+  /* Stripping them is a navigation, so it stays an effect: straight away
+     ({replace:true}, same idiom as Social.tsx's legacy ?tab=find effect),
+     and for an invalid type too — that hand-off is ignored whole. */
   useEffect(() => {
-    const rawType = searchParams.get("circleCreate");
-    if (rawType === null) return;
-    const rawTitle = searchParams.get("circleTitle");
-    const rawDate = searchParams.get("circleDate");
+    if (searchParams.get("circleCreate") === null) return;
     setSearchParams(
       (params) => {
         const updated = new URLSearchParams(params);
@@ -383,21 +419,10 @@ export default function CirclesSection({
       },
       { replace: true }
     );
-    // Invalid type → ignore the whole hand-off (params already stripped).
-    if (!CREATABLE_TEMPLATE_TYPES.has(rawType as GoalSpaceType)) return;
-    setHandoffPrefill({
-      type: rawType as GoalSpaceType,
-      // Cap to the create input's maxLength.
-      title: (rawTitle ?? "").slice(0, 60),
-      // Malformed date → dropped, the rest of the prefill survives.
-      targetDate:
-        rawDate !== null && /^\d{4}-\d{2}-\d{2}$/.test(rawDate)
-          ? rawDate
-          : null,
-    });
   }, [searchParams, setSearchParams]);
 
-  /* Setter-only (all stable), so safe as an effect dependency. */
+  /* Setter-only (all stable): called while rendering by the hand-off
+     below, and by the chooser's "Start a new circle". */
   const openPrefilledCreate = useCallback((prefill: TrainTogetherPrefill) => {
     setTemplate(prefill.type);
     setTitle(prefill.title);
@@ -408,21 +433,22 @@ export default function CirclesSection({
 
   /* Act once the list has settled: a COMPATIBLE circle (same type,
      active) → chooser; otherwise (including a failed list read) →
-     the prefilled create sheet. */
-  useEffect(() => {
-    if (!handoffPrefill || loading) return;
-    const prefill = handoffPrefill;
+     the prefilled create sheet. Decided while rendering, like the read
+     above, so the sheet opens in the commit the list settles in;
+     clearing the stash in the same pass is what makes it act once. */
+  if (handoffPrefill && !loading) {
     setHandoffPrefill(null);
     const compatible = loadFailed
       ? null
-      : (circles.find((c) => c.space.active && c.space.type === prefill.type) ??
-        null);
+      : (circles.find(
+          (c) => c.space.active && c.space.type === handoffPrefill.type
+        ) ?? null);
     if (compatible) {
-      setTrainTogether({ existing: compatible, prefill });
+      setTrainTogether({ existing: compatible, prefill: handoffPrefill });
     } else {
-      openPrefilledCreate(prefill);
+      openPrefilledCreate(handoffPrefill);
     }
-  }, [handoffPrefill, loading, loadFailed, circles, openPrefilledCreate]);
+  }
 
   // SOCIAL-FOCUS-01 — this LOCAL week's state, derived from the loaded
   // events (one-shot reads; deliberately no listeners). Departed
@@ -587,8 +613,8 @@ export default function CirclesSection({
   //
   // SOCIAL-HOME-01: the submit targets whichever surface opened the
   // sheet (featured card or detail sheet) and refreshes BOTH copies of
-  // that circle's events — the featuredDetail state whenever the
-  // submitted circle IS the featured one, and the detail-sheet state
+  // that circle's events — the featured read whenever the submitted
+  // circle IS the featured one, and the detail-sheet state
   // whenever that surface is open on it — so the card label/pulse and
   // the sheet timeline can never disagree.
   const submitFocus = async (focus: WeeklyFocus | null) => {
@@ -627,8 +653,13 @@ export default function CirclesSection({
       return [created, ...prev];
     };
     if (spaceId === featuredId) {
-      setFeaturedDetail((prev) =>
-        prev ? { ...prev, events: patch(prev.events) } : prev
+      setFeaturedRead((prev) =>
+        prev && prev.key === featuredKey
+          ? {
+              ...prev,
+              detail: { ...prev.detail, events: patch(prev.detail.events) },
+            }
+          : prev
       );
     }
     if (detailOf?.space.id === spaceId) {

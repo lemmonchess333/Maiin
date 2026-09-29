@@ -220,8 +220,7 @@ test("training advice, saved correction and the next session agree", async ({
     await partial.delete();
     await expect(advice).toHaveCount(0);
     const plateauReview = page.getByRole("button", {
-      name: "Review recent lifting progress",
-      exact: true,
+      name: /Review recent lifting progress/,
     });
     const previous = [0, 1, 2].map((i) =>
       root.collection("workouts").doc(`previous-${i}`)

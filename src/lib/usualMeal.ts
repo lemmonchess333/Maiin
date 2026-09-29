@@ -10,11 +10,11 @@ import {
 } from "@/lib/dateHelpers";
 
 /* "Your usual" claims the meal is what this slot has been, lately. The row
-   sits above the composer, and on a 390x844 phone it is what pushes the
-   composer under the tab bar — so a wrong guess costs the page's main input
-   on every day it shows. It shows only when, in the USUAL_WINDOW_DAYS before
-   the day, the meal was logged on at least USUAL_MIN_DAYS days AND on at
-   least USUAL_MIN_SHARE of the days that slot was logged at all.
+   sits under the composer with a one-tap Log, so a wrong guess offers the
+   wrong meal, one tap from being logged, on every day it shows. It shows
+   only when, in the USUAL_WINDOW_DAYS before the day, the meal was logged
+   on at least USUAL_MIN_DAYS days AND on at least USUAL_MIN_SHARE of the
+   days that slot was logged at all.
 
    Days, not entries: oats and a coffee logged separately each morning are
    still every morning. The share is what "usual" means — the one repeat in

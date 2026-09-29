@@ -97,8 +97,9 @@ describe("the usual row's Log is the food orange", () => {
   it("comes after the composer, so the text box and Scan are on screen when the page opens", () => {
     /* Owner call. Above the composer, the usual row put the text box
        under the tab bar for a habitual user on a 390x844 phone and on
-       an SE; companion-food.capture.spec.ts checks the row's Log still
-       clears the tab bar from here. */
+       an SE; companion-food.capture.spec.ts checks, at 375px wide, that
+       the Scan button clears the tab bar and that the row's Log comes
+       after it. */
     const src = readFileSync(join(SRC, "pages/Food.tsx"), "utf8");
     const composer = src.indexOf("<FoodComposerCard");
     const usual = src.indexOf("aria-labelledby={usualHeadingId}");

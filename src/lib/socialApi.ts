@@ -706,10 +706,21 @@ export async function fetchActivitiesByIds(
   await Promise.all(
     chunks.map(async (chunk) => {
       const snaps = await Promise.all(
-        chunk.map((id) => getDoc(doc(db, "activities", id)))
+        chunk.map(async (id) => {
+          try {
+            return await getDoc(doc(db, "activities", id));
+          } catch (err) {
+            // The read rule reads the post's own fields, so a deleted post
+            // is refused rather than answered as missing, and so is one the
+            // viewer can no longer see. Either way it is left out, as a
+            // missing post is, so one feed copy cannot fail the whole page.
+            if (isPermissionDenied(err)) return null;
+            throw err;
+          }
+        })
       );
       snaps.forEach((snap) => {
-        if (snap.exists()) results[snap.id] = { id: snap.id, ...snap.data() };
+        if (snap?.exists()) results[snap.id] = { id: snap.id, ...snap.data() };
       });
     })
   );

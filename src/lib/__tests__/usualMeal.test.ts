@@ -92,11 +92,10 @@ describe("usual meals", () => {
   });
 });
 
-/* "Your usual" sits above the composer, and on a 390x844 phone it is what
-   pushes the composer under the tab bar — so a wrong guess costs the page's
-   main input. It used to be made from ONE earlier log. It now needs a habit:
-   three days in the last fourteen, and at least half the days that slot was
-   logged. */
+/* "Your usual" sits under the composer with a one-tap Log, so a wrong guess
+   offers the wrong meal, one tap from being logged. It used to be made from
+   ONE earlier log. It now needs a habit: three days in the last fourteen,
+   and at least half the days that slot was logged. */
 describe("a usual is a habit, not a repeat", () => {
   it("pins the bar", () => {
     expect(USUAL_WINDOW_DAYS).toBe(14);

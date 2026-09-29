@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useFoodAnalysis } from "@/hooks/useFoodAnalysis";
 import { useCountUp } from "@/hooks/useCountUp";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
@@ -18,6 +18,7 @@ import { toast } from "@/lib/toast";
 import { haptic } from "@/lib/haptic";
 import { isPhotoShareSupported, sharePhotoToLibrary } from "@/lib/sharePhoto";
 import FoodCameraModal, {
+  type BarcodeLookupFailure,
   type PhotoLock,
   type ScanFailureKind,
   type ScanMode,
@@ -89,20 +90,28 @@ type MealResult = {
   brand?: string;
 };
 
+/** The database answered, and has no product with this code. */
+class BarcodeNotFoundError extends Error {}
+const BARCODE_NOT_FOUND = "Barcode not found. Log it manually instead.";
+
 async function fetchOpenFoodFacts(barcode: string): Promise<MealResult> {
   const url =
     `https://world.openfoodfacts.org/api/v2/product/${encodeURIComponent(barcode)}.json` +
     `?fields=product_name,brands,nutriments,serving_size,image_url`;
 
   const res = await fetch(url);
+  /* An unknown code can come back as a 404 as well as with `status: 0`.
+     Either way the database has no such product, which is not a failure
+     to reach it. */
+  if (res.status === 404) throw new BarcodeNotFoundError(BARCODE_NOT_FOUND);
   if (!res.ok) throw new Error("Couldn't look up barcode. Try again.");
   const data = await res.json();
 
   if (!data || data.status !== 1 || !data.product) {
     /* Throw message becomes the toast body when caught at the
-       call site (line 433 toast.error(msg)). Direct the user to
+       call site (onBarcodeDetected). Direct the user to
        the manual fallback rather than a dead-end. */
-    throw new Error("Barcode not found. Log it manually instead.");
+    throw new BarcodeNotFoundError(BARCODE_NOT_FOUND);
   }
 
   // One converter for OFF data, shared with the Food search results —
@@ -185,9 +194,12 @@ export default function FoodAnalyzer({
      by the time the await resolves. Reading the ref answers "is the
      modal still open NOW?" — without it, an X-out during a slow scan
      followed by a late failure would park `scanFailure` on a CLOSED
-     modal, and the next scan session would open onto a stale verdict. */
+     modal, and the next scan session would open onto a stale verdict.
+     A layout effect, so the ref changes in the same commit as the modal:
+     a passive effect runs later, and a barcode read in between would
+     find the scanner on screen but the ref still closed. */
   const cameraOpenRef = useRef(cameraOpen);
-  useEffect(() => {
+  useLayoutEffect(() => {
     cameraOpenRef.current = cameraOpen;
   }, [cameraOpen]);
   /* The scan's completion beat: after a USABLE analysis lands, the
@@ -306,13 +318,15 @@ export default function FoodAnalyzer({
      `activeResult.items`. Missing entries default to {multiplier: 1,
      removed: false} — i.e. the item passes through untouched. The
      state is reset whenever `activeResult` changes (a new analysis
-     comes back) so edits don't bleed between scans. */
+     comes back) so edits don't bleed between scans — during render,
+     so no render of the new result carries the last scan's edits. */
   type ItemEdit = { multiplier: number; removed: boolean };
   const [itemEdits, setItemEdits] = useState<Record<number, ItemEdit>>({});
-
-  useEffect(() => {
+  const [editsFor, setEditsFor] = useState(activeResult);
+  if (editsFor !== activeResult) {
+    setEditsFor(activeResult);
     setItemEdits({});
-  }, [activeResult]);
+  }
 
   /* The per-item editor only renders for multi-item AI / text results.
      - Barcode results are by definition single-item; their existing
@@ -425,11 +439,16 @@ export default function FoodAnalyzer({
   // Hero photo shown at the top of the result card. Prefer the user's own
   // captured photo (AI food scan); fall back to the product image pulled
   // from OpenFoodFacts for barcode results. Null means no hero band.
+  // Memoised so the (large) data URL is built once per capture, not per
+  // render. The image URL is read into a local first: with
+  // `activeResult?.imageUrl` in the dependency list, the React Compiler
+  // inferred all of `activeResult` as the input and could not keep the memo.
+  const resultImageUrl = activeResult?.imageUrl;
   const heroImageSrc = useMemo(() => {
     if (capturedBase64) return `data:image/jpeg;base64,${capturedBase64}`;
-    if (activeResult?.imageUrl) return activeResult.imageUrl;
+    if (resultImageUrl) return resultImageUrl;
     return null;
-  }, [capturedBase64, activeResult?.imageUrl]);
+  }, [capturedBase64, resultImageUrl]);
 
   /* The sheet shows the result once the scanner has closed over it. */
   const sheetOpen = !!activeResult && !cameraOpen;
@@ -732,12 +751,17 @@ export default function FoodAnalyzer({
 
     const { data, errorMessage } = await analyzeFood(base64);
     /* The user may have X-ed out during the round-trip (the escape
-       hatch exists precisely for slow scans). A late outcome must not
-       act on a closed modal: no failure parked for the next session
-       to trip over, no invisible locked beat, no redundant close. A
-       late USABLE result still reaches the page — the hook's own
-       `result` state feeds the result card independently. */
-    if (!cameraOpenRef.current) return;
+       hatch exists precisely for slow scans), which abandons the scan.
+       A late outcome must not act on a closed modal: no failure parked
+       for the next session to trip over, no invisible locked beat, no
+       redundant close. The hook's own result and error are dropped too:
+       a result would open the sheet seconds later over whatever the page
+       is doing, without its photo, logging to whatever day the diary
+       shows by then. */
+    if (!cameraOpenRef.current) {
+      resetAI();
+      return;
+    }
     const usable =
       data && filterIdentifiableAiItems(data.items ?? []).length > 0;
     if (usable) {
@@ -765,7 +789,12 @@ export default function FoodAnalyzer({
     }
   };
 
-  const onBarcodeDetected = async (raw: string) => {
+  /* Resolves to how the lookup failed, which decides whether the scanner
+     tries the same code again, or to undefined once the product is found
+     (which closes the scanner). */
+  const onBarcodeDetected = async (
+    raw: string
+  ): Promise<BarcodeLookupFailure | undefined> => {
     const code = raw.replace(/\s+/g, "");
 
     /* Drop any capture left over from an earlier food scan in this same
@@ -783,7 +812,7 @@ export default function FoodAnalyzer({
       const msg = "You're offline — barcode lookup needs a connection.";
       setBarcodeError(msg);
       toast.error(msg, { id: "barcode-offline" });
-      return;
+      return "unreachable";
     }
 
     setBarcodeLoading(true);
@@ -793,10 +822,16 @@ export default function FoodAnalyzer({
 
     try {
       const meal = await fetchOpenFoodFacts(code);
+      /* Closed mid-lookup: the scan was abandoned, as with a photo. */
+      if (!cameraOpenRef.current) return undefined;
       setBarcodeResult(meal);
       setCameraOpen(false);
       toast.success("Barcode found");
+      return undefined;
     } catch (e: unknown) {
+      const failure =
+        e instanceof BarcodeNotFoundError ? "not-found" : "unreachable";
+      if (!cameraOpenRef.current) return failure;
       /* TypeError = the fetch itself failed (connection dropped
          mid-lookup) — its message is browser-internal, never copy. */
       const msg =
@@ -806,7 +841,10 @@ export default function FoodAnalyzer({
             ? e.message
             : "Barcode lookup failed.";
       setBarcodeError(msg);
-      toast.error(msg);
+      /* One id, because the scanner tries an unreachable code again while
+         it stays in view, and each try would otherwise add a toast. */
+      toast.error(msg, { id: "barcode-lookup" });
+      return failure;
     } finally {
       setBarcodeLoading(false);
     }
@@ -852,7 +890,10 @@ export default function FoodAnalyzer({
         }
       />
 
-      {showLoading && (
+      {/* While the scanner is open, its own overlay shows the wait. A scan
+          still running once it has closed was abandoned and its outcome
+          is dropped, so the page does not say it is still analysing. */}
+      {showLoading && cameraOpen && (
         <div className="flex items-center justify-center gap-2 py-2 text-sm text-muted-foreground">
           <Spinner
             size="sm"
@@ -1097,7 +1138,11 @@ export default function FoodAnalyzer({
                           initial={reducedMotion ? false : { opacity: 0, y: 8 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ duration: 0.25 }}
-                          className="flex items-center justify-between gap-2 py-1"
+                          /* An item row's height, so Restore's tap area
+                             reaches past this row by the 4px the item
+                             controls reach past theirs: the areas meet
+                             between rows and never overlap. */
+                          className="flex min-h-9 items-center justify-between gap-2 py-1"
                         >
                           <p className="text-sm text-muted-foreground line-through truncate flex-1">
                             {item.name}
@@ -1106,7 +1151,9 @@ export default function FoodAnalyzer({
                             type="button"
                             onClick={() => restoreItem(i)}
                             aria-label={`Restore ${item.name}`}
-                            className="flex items-center gap-1 text-xs font-medium text-lifting-strong hover:opacity-80 transition-opacity active:scale-95 shrink-0 relative before:absolute before:-inset-3 before:content-['']"
+                            /* 16px of text, reaching 14px past it each
+                               side: a 44px tap area. */
+                            className="flex items-center gap-1 text-xs font-medium text-lifting-strong hover:opacity-80 transition-opacity active:scale-95 shrink-0 relative before:absolute before:-inset-3.5 before:content-['']"
                           >
                             <RotateCcw className="size-3" />
                             Restore
@@ -1176,7 +1223,12 @@ export default function FoodAnalyzer({
                             type="button"
                             onClick={() => removeItem(i)}
                             aria-label={`Remove ${item.name}`}
-                            className="size-7 relative before:absolute before:-inset-2 before:content-[''] rounded-full flex items-center justify-center text-muted-foreground hover:text-destructive-strong hover:bg-destructive/10 active:scale-90 transition-all shrink-0"
+                            /* ml-2 on top of the row's gap-2: + and this
+                               button each reach 8px past their box, so a
+                               16px gap lets the two reaches meet rather
+                               than overlap, where this one, drawn later,
+                               would take every tap. */
+                            className="ml-2 size-7 relative before:absolute before:-inset-2 before:content-[''] rounded-full flex items-center justify-center text-muted-foreground hover:text-destructive-strong hover:bg-destructive/10 active:scale-90 transition-all shrink-0"
                           >
                             <X className="size-3.5" />
                           </button>

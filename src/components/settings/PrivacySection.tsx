@@ -14,6 +14,7 @@ import AccordionSection from "@/components/AccordionSection";
 import ShareDefaultsRow from "@/components/settings/ShareDefaultsRow";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import type { UserProfile, UpdateProfileResult } from "@/lib/auth";
+import type { ShareDefaults } from "@/lib/shareDefaults";
 import type { PrivacyZone } from "@/lib/privacyZones";
 import type { User } from "firebase/auth";
 
@@ -24,12 +25,14 @@ interface PrivacySectionProps {
    *  current state. */
   profile: Pick<
     UserProfile,
-    "aiAnalysisEnabled" | "hideSharedRouteEnds"
+    "aiAnalysisEnabled" | "hideSharedRouteEnds" | "shareDefaults"
   > | null;
   updateProfile: (
     data: Partial<UserProfile>,
     opts?: { allowProtected?: boolean }
   ) => Promise<UpdateProfileResult>;
+  /** Saves the Sharing row's answers on the account (AuthProvider). */
+  updateShareDefaults: (answers: ShareDefaults) => Promise<UpdateProfileResult>;
   privacyZones: PrivacyZone[];
   addZone: (zone: Omit<PrivacyZone, "id">) => Promise<void>;
   removeZone: (id: string) => Promise<void>;
@@ -44,6 +47,7 @@ export default function PrivacySection({
   user,
   profile,
   updateProfile,
+  updateShareDefaults,
   privacyZones,
   addZone,
   removeZone,
@@ -75,7 +79,11 @@ export default function PrivacySection({
             control for it. Three that wrote profile fields nothing read
             (two auto-post toggles and a "Default visibility" select) each
             saved a value, changed nothing, and contradicted this row. */}
-        <ShareDefaultsRow uid={user?.uid ?? null} />
+        <ShareDefaultsRow
+          uid={user?.uid ?? null}
+          shareDefaults={profile?.shareDefaults}
+          updateShareDefaults={updateShareDefaults}
+        />
 
         {/* F1 AI analysis opt-out. Undefined / true = enabled (default);
           false = user opted out. Toggling off hides the AI CTAs and

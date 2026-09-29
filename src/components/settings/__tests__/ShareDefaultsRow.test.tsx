@@ -14,14 +14,21 @@
  * The tests are about what the user can reach:
  *   - the control EXISTS before any default does (a row that hides itself
  *     until the sheet has run is not a setting), and
- *   - each choice writes the value the finish screen actually reads
- *     (`getShareDefault`, through `finishShareStart`). Asserting
+ *   - each choice saves the value the finish screen actually reads
+ *     (`savedShareDefault`, through `finishShareStart`). Asserting
  *     the selected segment alone would pass against a component that only
  *     updated its own state.
+ *
+ * The answers live on the account, so the row renders what it is given and
+ * saves through `updateShareDefaults`; the harness below stands in for
+ * AuthProvider, which changes the profile the moment it is called. That the
+ * save lands on `users/{uid}` and another device acts on it is pinned
+ * against the real AuthProvider in `shareDefaultsAccount.test.tsx`.
  *
  * Per-type independence matters because the defaults are stored per type —
  * changing runs must leave workouts alone.
  */
+import { useState } from "react";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import {
   render,
@@ -31,13 +38,43 @@ import {
   within,
 } from "@testing-library/react";
 import ShareDefaultsRow from "../ShareDefaultsRow";
-import { setShareDefault, getShareDefault } from "@/lib/shareComposer";
+import {
+  finishShareStart,
+  savedShareDefault,
+  type ShareDefaults,
+} from "@/lib/shareDefaults";
 
 vi.mock("@/lib/toast", () => ({
   toast: { success: vi.fn(), error: vi.fn() },
 }));
 
 const UID = "u1";
+
+/** Every save the row made, in order. */
+let saves: ShareDefaults[] = [];
+
+/** The row wired the way SettingsPrivacy wires it: the profile's answers
+ *  in, a save that changes them at once. */
+function Harness({
+  uid = UID,
+  initial,
+}: {
+  uid?: string | null;
+  initial?: ShareDefaults;
+}) {
+  const [answers, setAnswers] = useState<ShareDefaults | undefined>(initial);
+  return (
+    <ShareDefaultsRow
+      uid={uid}
+      shareDefaults={answers}
+      updateShareDefaults={async (next) => {
+        saves.push(next);
+        setAnswers((prev) => ({ ...prev, ...next }));
+        return { ok: true };
+      }}
+    />
+  );
+}
 
 /** The segmented control for one share type. Scoping by its radiogroup
  *  keeps "the runs control" and "the workouts control" distinguishable —
@@ -64,7 +101,7 @@ function selected(noun: string): string | null {
 }
 
 beforeEach(() => {
-  localStorage.clear();
+  saves = [];
 });
 afterEach(cleanup);
 
@@ -72,7 +109,7 @@ describe("ShareDefaultsRow", () => {
   it("offers the control BEFORE any default exists", () => {
     // The whole point of the row. Pre-2026-08-04 it returned null here, so
     // the setting could only be found after the post-session sheet had run.
-    render(<ShareDefaultsRow uid={UID} />);
+    render(<Harness />);
 
     expect(screen.getByText("Runs")).toBeTruthy();
     expect(screen.getByText("Workouts")).toBeTruthy();
@@ -81,8 +118,9 @@ describe("ShareDefaultsRow", () => {
   });
 
   it("renders nothing when signed out", () => {
-    setShareDefault(UID, "run", "public");
-    const { container } = render(<ShareDefaultsRow uid={null} />);
+    const { container } = render(
+      <Harness uid={null} initial={{ run: "public" }} />
+    );
     expect(container).toBeEmptyDOMElement();
   });
 
@@ -90,9 +128,8 @@ describe("ShareDefaultsRow", () => {
     ["public", "Shared publicly automatically"],
     ["followers", "Shared with your followers automatically"],
     ["never", "Never shared"],
-  ] as const)("reflects and describes a stored %s default", (pref, copy) => {
-    setShareDefault(UID, "workout", pref);
-    render(<ShareDefaultsRow uid={UID} />);
+  ] as const)("reflects and describes a saved %s default", (pref, copy) => {
+    render(<Harness initial={{ workout: pref }} />);
 
     expect(selected("workouts")).toBe(
       pref === "never" ? "Never" : pref === "public" ? "Public" : "Followers"
@@ -101,48 +138,53 @@ describe("ShareDefaultsRow", () => {
     expect(screen.getByText(copy)).toBeTruthy();
   });
 
+  it("shows a cleared answer as Ask", () => {
+    render(<Harness initial={{ run: null, workout: "never" }} />);
+    expect(selected("runs")).toBe("Ask");
+    expect(selected("workouts")).toBe("Never");
+  });
+
   it.each([
     ["Never", "never"],
     ["Public", "public"],
     ["Followers", "followers"],
-  ] as const)("WRITES %s as the value compose() reads", (label, stored) => {
-    render(<ShareDefaultsRow uid={UID} />);
+  ] as const)(
+    "SAVES %s as the value the finish screen reads",
+    (label, stored) => {
+      render(<Harness />);
 
-    pick("workouts", label);
+      pick("workouts", label);
 
-    expect(getShareDefault(UID, "workout")).toBe(stored);
-  });
+      expect(saves).toEqual([{ workout: stored }]);
+      expect(selected("workouts")).toBe(label);
+      expect(
+        finishShareStart(savedShareDefault(saves[0], "workout"), false).kind
+      ).toBe(stored === "never" ? "hold" : "post");
+    }
+  );
 
-  it("CLEARS the stored preference when Ask is picked", () => {
+  it("CLEARS the answer when Ask is picked", () => {
     // "Ask" is the absence of a default, not a fourth stored value — the
-    // finish screen asks only when nothing is stored, so storing "ask"
-    // would silence the question forever.
-    setShareDefault(UID, "run", "public");
-    render(<ShareDefaultsRow uid={UID} />);
+    // finish screen asks only when there is none, so saving "ask" would
+    // silence the question forever.
+    render(<Harness initial={{ run: "public" }} />);
 
     pick("runs", "Ask");
 
-    expect(getShareDefault(UID, "run")).toBeNull();
+    expect(saves).toEqual([{ run: null }]);
+    expect(finishShareStart(savedShareDefault(saves[0], "run"), false)).toEqual(
+      { kind: "ask" }
+    );
     expect(selected("runs")).toBe("Ask");
   });
 
   it("changes ONE type without touching the other", () => {
-    setShareDefault(UID, "run", "public");
-    setShareDefault(UID, "workout", "never");
-    render(<ShareDefaultsRow uid={UID} />);
+    render(<Harness initial={{ run: "public", workout: "never" }} />);
 
     pick("runs", "Ask");
 
-    expect(getShareDefault(UID, "run")).toBeNull();
-    expect(getShareDefault(UID, "workout")).toBe("never");
+    // One key per save: the account's other answer is not rewritten.
+    expect(saves).toEqual([{ run: null }]);
     expect(selected("workouts")).toBe("Never");
-  });
-
-  it("reads the preference for THIS uid only", () => {
-    // Shared-device uid scoping (audit F9): another account's saved
-    // default must not surface here.
-    setShareDefault("someone-else", "run", "public");
-    render(<ShareDefaultsRow uid={UID} />);
-    expect(selected("runs")).toBe("Ask");
   });
 });

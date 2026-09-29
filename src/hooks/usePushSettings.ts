@@ -41,7 +41,6 @@ export function usePushSettings() {
       };
     }
 
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- uid-scoped load reset
     setState({ uid, consent: DEFAULT_PUSH_CONSENT, loading: true });
 
     void getDoc(doc(db, "users", uid, "settings", "push"))

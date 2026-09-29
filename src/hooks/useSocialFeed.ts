@@ -1,4 +1,10 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import {
+  useState,
+  useEffect,
+  useLayoutEffect,
+  useCallback,
+  useRef,
+} from "react";
 import { getFeed, fetchActivitiesByIds, batchGetKudos } from "../lib/socialApi";
 import { useUid } from "../lib/auth";
 import type { DocumentSnapshot } from "firebase/firestore";
@@ -85,20 +91,26 @@ export function useSocialFeed(
   /* SOCIAL-PRIVACY-01 — uid + generation ownership. The feed load is
      async; a resolve captured under account A must never commit after a
      switch to account B (a late `loadFeed` from A, or an in-flight fetch
-     during an account switch on a shared browser). `genRef` bumps on
-     every uid change (render-time, adjust-state idiom); each `loadFeed`
-     captures the current generation and commits only if it still owns
-     it. Complements the HOME-ACCOUNT-01 remount boundary as defence in
-     depth (and prevents a stale-account commit inside a single mount). */
+     during an account switch on a shared browser). The list resets in the
+     render that sees the new uid (adjust-state idiom), and `genRef` bumps
+     with the cursor in the layout effect of that same commit; each
+     `loadFeed` captures the current generation and commits only if it
+     still owns it. Layout, not passive: a passive effect runs after
+     paint, and a response from A landing in between would still own the
+     generation and repopulate the list the reset had just emptied.
+     Complements the HOME-ACCOUNT-01 remount boundary as defence in depth
+     (and prevents a stale-account commit inside a single mount). */
   const genRef = useRef(0);
   const [ownerUid, setOwnerUid] = useState<string | null>(uid);
   if (ownerUid !== uid) {
     setOwnerUid(uid);
-    genRef.current++;
-    lastDocRef.current = undefined;
     setItems([]);
     setHasMore(true);
   }
+  useLayoutEffect(() => {
+    genRef.current++;
+    lastDocRef.current = undefined;
+  }, [uid]);
 
   const loadFeed = useCallback(
     async (refresh = false) => {
@@ -139,6 +151,14 @@ export function useSocialFeed(
               (act?.challengeMilestone as string) || item.challengeMilestone,
           };
         });
+
+        // A copy whose post is gone, or can no longer be read, is not
+        // drawn. Deleting a post removes its copies on the server
+        // (onActivityDeleted), but a copy can outlive the post for a
+        // moment, and copies of posts removed before that trigger existed
+        // stay. Drawn from the copy's summary, it would be a card for a
+        // post that no longer exists, whose kudos and comments cannot land.
+        enriched = enriched.filter((item) => item.activity);
 
         // Filter out blocked users
         if (blockedUsers && blockedUsers.size > 0) {

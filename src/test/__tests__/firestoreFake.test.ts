@@ -124,6 +124,41 @@ describe("writes", () => {
     ).rejects.toThrow(/missing document/);
   });
 
+  it("updateDoc reads a dotted key as a field path; setDoc does not", async () => {
+    seedFirestore({
+      "users/u1": { prefs: { run: "public", workout: "never" } },
+    });
+    await updateDoc(doc(db, "users", "u1"), { "prefs.run": "followers" });
+    // One key of the map changed; its sibling is untouched.
+    expect(readDoc("users/u1")).toEqual({
+      prefs: { run: "followers", workout: "never" },
+    });
+
+    // A missing map is created, and a nested sentinel resolves.
+    await updateDoc(doc(db, "users", "u1"), {
+      "counts.runs": increment(2),
+      "a.b.c": null,
+    });
+    expect(readDoc("users/u1")).toEqual({
+      prefs: { run: "followers", workout: "never" },
+      counts: { runs: 2 },
+      a: { b: { c: null } },
+    });
+
+    // In a batch or a transaction, as through updateDoc.
+    const batch = writeBatch(db);
+    batch.update(doc(db, "users", "u1"), { "prefs.workout": "public" });
+    await batch.commit();
+    expect(readDoc("users/u1")?.prefs).toEqual({
+      run: "followers",
+      workout: "public",
+    });
+
+    // setDoc keeps the dot in the field's name, as the SDK does.
+    await setDoc(doc(db, "c", "d"), { "x.y": 1 });
+    expect(readDoc("c/d")).toEqual({ "x.y": 1 });
+  });
+
   it("addDoc generates an id and stores under the collection", async () => {
     const ref = await addDoc(collection(db, "users", "u1", "meals"), {
       foodName: "Eggs",

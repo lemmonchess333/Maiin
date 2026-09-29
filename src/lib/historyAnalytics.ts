@@ -19,7 +19,11 @@ export type HistoryEvent =
   | "history_tab_selected"
   | "history_range_changed"
   | "history_initial_render_ms"
-  | "history_chart_tap_attempted";
+  | "history_chart_tap_attempted"
+  | "history_progress_photo_added"
+  | "history_progress_photo_deleted"
+  | "history_progress_photos_compared"
+  | "history_progress_photo_shared";
 
 export type HistoryTab =
   | "all"
@@ -39,6 +43,9 @@ export type HistoryRangeType = "pill" | "custom";
 
 /** Hist5f S1 — which chart did the user tap. */
 export type HistoryChart = "volume" | "distance" | "macro" | "pi";
+
+/** A progress photo's pose. */
+export type HistoryPhotoPose = "front" | "side" | "back";
 
 export interface HistoryEventMetadata {
   /** history_tab_selected: which top-level filter tab. */
@@ -68,6 +75,12 @@ export interface HistoryEventMetadata {
    *  calorie-share % for MacroDistribution, PI 0-100 for
    *  PerformanceIndexChart. */
   value?: number;
+  /** history_progress_photo_added / _deleted: the photo's pose. */
+  pose?: HistoryPhotoPose;
+  /** history_progress_photo_shared: one photo, or a before-and-after. */
+  shareKind?: "photo" | "compare";
+  /** history_progress_photo_shared: the share sheet, or a web download. */
+  shareVia?: "share_sheet" | "download";
 }
 
 export function track(

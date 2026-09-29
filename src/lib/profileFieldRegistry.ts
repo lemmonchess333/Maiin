@@ -173,6 +173,11 @@ export const PROFILE_FIELD_REGISTRY: readonly ProfileFieldEntry[] = [
   { field: "runVolume", sanitized: true },
   { field: "runningBaseline", sanitized: true },
   { field: "sex", sanitized: true },
+  // Soc11 share answers, per type ("Share sessions automatically?").
+  // Written by the client (`updateShareDefaults`), one field path per type;
+  // value-gated in firestore.rules (`shareDefaultsValid`) and validated by
+  // the sanitiser on the same vocabulary.
+  { field: "shareDefaults", sanitized: true },
   { field: "stripeCustomerId", sanitized: false, serverGuarded: true },
   { field: "stripeSubscriptionId", sanitized: false, serverGuarded: true },
   { field: "subscriptionExpiresAt", sanitized: false, serverGuarded: true },

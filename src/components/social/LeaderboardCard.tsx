@@ -1,5 +1,5 @@
 import { Footprints, Dumbbell, Zap, ChevronRight } from "lucide-react";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "../../lib/auth";
 import { getDoc, doc } from "firebase/firestore";
 import { db } from "../../lib/firebase";
@@ -18,6 +18,40 @@ interface EnrichedEntry extends LeaderboardEntry {
   photoURL?: string;
 }
 
+/** Load a leaderboard and enrich each UID with displayName + photoURL
+ *  from the PUBLIC profile projection. Pre-W1d this read `users/{uid}`
+ *  directly, which is owner-only — cross-user reads silently failed and
+ *  everyone rendered as "Athlete". Now sources from
+ *  `users/{uid}/public/profile`, which IS cross-user readable. Only
+ *  entries with activity this week are kept. */
+async function loadEntries(
+  uid: string,
+  challenge: ChallengeType
+): Promise<EnrichedEntry[]> {
+  const raw = await buildLeaderboard(uid, challenge);
+  const enriched = await Promise.all(
+    raw.map(async (e) => {
+      try {
+        const snap = await getDoc(doc(db, "users", e.uid, "public", "profile"));
+        const data = snap.data() as
+          | { displayName?: string; photoURL?: string }
+          | undefined;
+        return {
+          ...e,
+          name: data?.displayName || (e.uid === uid ? "You" : "Athlete"),
+          photoURL: data?.photoURL,
+        } as EnrichedEntry;
+      } catch {
+        return {
+          ...e,
+          name: e.uid === uid ? "You" : "Athlete",
+        } as EnrichedEntry;
+      }
+    })
+  );
+  return enriched.filter((e) => e.value > 0);
+}
+
 export default function LeaderboardCard({
   challenge = "weekly_hybrid",
   onViewFull,
@@ -26,8 +60,20 @@ export default function LeaderboardCard({
   onViewFull?: () => void;
 }) {
   const { user, profile } = useAuth();
-  const [entries, setEntries] = useState<EnrichedEntry[]>([]);
-  const [loading, setLoading] = useState(true);
+
+  /* The loaded board, stamped with the account and challenge it was
+     built for. `loading` and `entries` are derived from it, so a
+     different challenge (or account) reads as loading from its first
+     render, never as the previous board. A failed read settles as an
+     empty board. */
+  const boardKey = user ? `${user.uid}:${challenge}` : null;
+  const [board, setBoard] = useState<{
+    key: string;
+    entries: EnrichedEntry[];
+  } | null>(null);
+  const settledBoard = board !== null && board.key === boardKey ? board : null;
+  const loading = settledBoard === null;
+  const entries = settledBoard?.entries ?? [];
 
   /* Name and unit come from `CHALLENGE_LABELS`; only the ICON is local,
      because the full view renders a tab row rather than a sport-coded
@@ -39,54 +85,21 @@ export default function LeaderboardCard({
     weekly_workouts: "dumbbell",
   };
 
-  // Load leaderboard + enrich each UID with displayName + photoURL
-  // from the PUBLIC profile projection. Pre-W1d this read
-  // `users/{uid}` directly, which is owner-only — cross-user reads
-  // silently failed and everyone rendered as "Athlete". Now sources
-  // from `users/{uid}/public/profile` which IS cross-user readable.
-  const load = useCallback(async () => {
-    if (!user) return;
-    setLoading(true);
-    try {
-      const raw = await buildLeaderboard(user.uid, challenge);
-      const enriched = await Promise.all(
-        raw.map(async (e) => {
-          try {
-            const snap = await getDoc(
-              doc(db, "users", e.uid, "public", "profile")
-            );
-            const data = snap.data() as
-              | { displayName?: string; photoURL?: string }
-              | undefined;
-            return {
-              ...e,
-              name:
-                data?.displayName || (e.uid === user.uid ? "You" : "Athlete"),
-              photoURL: data?.photoURL,
-            } as EnrichedEntry;
-          } catch {
-            return {
-              ...e,
-              name: e.uid === user.uid ? "You" : "Athlete",
-            } as EnrichedEntry;
-          }
-        })
-      );
-      setEntries(enriched.filter((e) => e.value > 0));
-    } finally {
-      setLoading(false);
-    }
-  }, [user, challenge]);
-
   useEffect(() => {
+    if (!user || boardKey === null) return;
     let cancelled = false;
-    load().catch(() => {
-      if (cancelled) return;
-    });
+    loadEntries(user.uid, challenge).then(
+      (loaded) => {
+        if (!cancelled) setBoard({ key: boardKey, entries: loaded });
+      },
+      () => {
+        if (!cancelled) setBoard({ key: boardKey, entries: [] });
+      }
+    );
     return () => {
       cancelled = true;
     };
-  }, [load]);
+  }, [user, challenge, boardKey]);
 
   const { title, unit } = CHALLENGE_LABELS[challenge];
   const icon = challengeIcons[challenge];

@@ -6,6 +6,7 @@ import type { ProgramExercise } from "@/features/program/programTypes";
 import ProgramStallReview from "../ProgramStallReview";
 
 vi.mock("@/lib/auth", () => ({ useUidForStorageKey: () => "stall-user" }));
+vi.mock("@/lib/haptic", () => ({ haptic: vi.fn() }));
 vi.mock("@/hooks/useWorkouts", () => ({
   useWorkouts: () => ({
     workouts: Array.from({ length: 3 }, () => ({
@@ -30,9 +31,13 @@ afterEach(cleanup);
 it("requires a deliberate tap and dismisses on Program", () => {
   render(<ProgramStallReview exercises={exercises} />);
   expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
-  fireEvent.click(
-    screen.getByRole("button", { name: "Review recent lifting progress" })
-  );
+  const row = screen.getByRole("button", {
+    name: /review recent lifting progress/i,
+  });
+  // It names the lift and where it has held, and reads as a row to tap.
+  expect(row).toHaveTextContent("Barbell Row has held at 60 kg for 3 sessions");
+  expect(row.querySelector("svg")).not.toBeNull();
+  fireEvent.click(row);
   expect(screen.getByRole("dialog")).toBeInTheDocument();
   fireEvent.click(screen.getByRole("button", { name: "Close review" }));
   expect(screen.queryByRole("dialog")).not.toBeInTheDocument();

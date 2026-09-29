@@ -62,6 +62,8 @@ import {
 import { useEffectiveTargets } from "@/hooks/useEffectiveTargets";
 import { useDismissOnce } from "@/hooks/useDismissOnce";
 import { useCountUp } from "@/hooks/useCountUp";
+import { useLocalDateKey } from "@/hooks/useLocalDateKey";
+import { liftDayLine } from "@/lib/liftDayLabel";
 
 import { StreakFlame } from "@/components/StreakFlame";
 import Avatar from "@/components/Avatar";
@@ -115,7 +117,12 @@ export default function Home() {
     30
   );
   const { workouts, getWorkoutsForDate } = useWorkouts();
-  const { meals, loading: mealsLoading, getDailyTotals } = useMeals();
+  const {
+    meals,
+    loading: mealsLoading,
+    error: mealsError,
+    getDailyTotals,
+  } = useMeals();
 
   const effectiveTargets = useEffectiveTargets();
   const { isPro, isInTrial, trialDaysLeft } = useSubscription();
@@ -199,10 +206,13 @@ export default function Home() {
   //      — treats skipped as startable, ignores date/weekKey.
   //      The resolver enforces date → weekKey → guarded-legacy match
   //      and uses isScheduledRunStartable for the gate.
-  const today = useMemo(function () {
-    return new Date();
-  }, []);
-  const todayKey = localDateString(today);
+  //
+  // The day comes from the shared local date key, which moves at midnight
+  // and when the app returns to the foreground. The header, the week's
+  // counts and tomorrow's session follow it, so an app resumed the next
+  // morning names the new day rather than the one it was opened on.
+  const todayKey = useLocalDateKey();
+  const today = useMemo(() => parseLocalDate(todayKey), [todayKey]);
   const currentWeekKey = localWeekKey(today);
   // PR-J Q3 chunk B3c — single source of truth for derived run-day
   // completion across all of Home's surfaces (WeekStrip dot, DayPeek
@@ -253,16 +263,18 @@ export default function Home() {
         programState,
         claimMap,
       });
-      /* A day counts as logged when either source has a meal: the daily
-         log is written by Food's own logging path, and the loaded meals
-         cover a meal saved elsewhere before its log caught up. */
+      /* A day counts as logged when it has a meal, and the loaded meals
+         are the record of that. The daily log holds the count Food last
+         wrote, and Food writes nothing when a day's last meal is deleted,
+         so the log can go on counting meals that are gone. It stands in
+         only while the meals are loading or could not be read. */
+      const mealsKnown = !mealsLoading && !mealsError;
       const mealsByDate = new Map<string, { meals: number }>();
       for (const day of window) {
         mealsByDate.set(day.dateKey, {
-          meals: Math.max(
-            weeklyDayMap.get(day.dateKey)?.meals ?? 0,
-            getDailyTotals(day.dateKey).mealCount
-          ),
+          meals: mealsKnown
+            ? getDailyTotals(day.dateKey).mealCount
+            : (weeklyDayMap.get(day.dateKey)?.meals ?? 0),
         });
       }
       return summariseWeek({
@@ -281,6 +293,8 @@ export default function Home() {
       unclaimedByDate,
       weeklyDayMap,
       getDailyTotals,
+      mealsLoading,
+      mealsError,
     ]
   );
 
@@ -299,13 +313,33 @@ export default function Home() {
         currentWeekKey,
         claimMap,
       });
-      const liftName = next.lift.workout?.dayName ?? null;
+      // Named as the workout and finish screens say it: "Pull · Lat focus".
+      const liftName = next.lift.workout
+        ? liftDayLine(next.lift.workout.dayName)
+        : null;
       const runDay = next.run.runDay;
+      /* A run day whose week has no runs written yet is named by its type.
+         The plan holds the current week's runs, so on a Sunday, Monday's
+         run is written only when the week rolls over. Once a week's runs
+         are written, a run day with none on it has had its run moved to
+         another date (runs are pinned to dates, ADR-0002), and it names
+         nothing. A run with neither date nor week key belongs to the
+         current week, as the resolver reads it. */
+      const nextWeekKey = localWeekKey(date);
+      const nextWeekWritten = (programState?.runDays ?? []).some(
+        (rd) =>
+          (rd.date
+            ? localWeekKey(parseLocalDate(rd.date))
+            : (rd.weekKey ?? currentWeekKey)) === nextWeekKey
+      );
       const runName = runDay
         ? (RUN_TEMPLATES.find(
             (t) => t.id === (runDay.userOverride ?? runDay.templateId)
           )?.name ?? "Run")
-        : null;
+        : (next.scheduleType === "run" || next.scheduleType === "both") &&
+            !nextWeekWritten
+          ? "Run"
+          : null;
       const label =
         liftName && runName
           ? `${liftName} and ${runName}`
@@ -332,7 +366,6 @@ export default function Home() {
   useEffect(
     function () {
       if (streak > prevStreakRef.current && prevStreakRef.current > 0) {
-        // eslint-disable-next-line react-hooks/set-state-in-effect -- derived from streak change event
         setStreakBounce(true);
         const t = setTimeout(function () {
           setStreakBounce(false);
@@ -496,15 +529,17 @@ export default function Home() {
   // (Trial > FellBehind > Badge > Priming). Badge is suppressed in a
   // fell-behind visit and dropped — not deferred — if it loses.
   //
-  // Trial-expiry eligibility is a pure derivation off the stable `today` memo
-  // (no Date.now() in render → satisfies react-hooks/purity); it replaces the
-  // old set-state-in-effect one-time check.
+  // Trial-expiry eligibility is a pure derivation off `nowMs`, the moment
+  // Home mounted (no Date.now() in render → satisfies react-hooks/purity);
+  // it replaces the old set-state-in-effect one-time check. It compares
+  // instants, so it reads the mount time rather than `today`, which is
+  // the day's midnight.
   const trialExpiredEligible = !!(
     profile &&
     !isInTrial &&
     profile.trialExpiresAt &&
     !profile.trialExpiryPromptShown &&
-    new Date(profile.trialExpiresAt).getTime() < today.getTime()
+    new Date(profile.trialExpiresAt).getTime() < nowMs
   );
   const trialSurface = useSurface({
     id: "trial-expired",

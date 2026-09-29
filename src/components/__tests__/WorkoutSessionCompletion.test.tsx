@@ -363,6 +363,43 @@ describe("the new-best moment (DS3)", () => {
       expect(screen.queryByTestId("new-best-moment")).toBeNull()
     );
   });
+
+  it("finishes with the best from before the workout, however many steps it took", async () => {
+    // Three rising sets in one rep range are three moments, each against
+    // the set before it, which the moment dates "today". The finish sums
+    // up the workout, so its "Was" is the best the lifter came in with:
+    // "Was 65 kg × 8" there reads as the old best and is not.
+    seedBest();
+    await act(async () => {
+      openSession();
+    });
+    const lift = (set: number, weight: string) => {
+      fireEvent.change(
+        screen.getByRole("spinbutton", { name: `Set ${set} weight` }),
+        { target: { value: weight } }
+      );
+      fireEvent.click(
+        screen.getAllByRole("button", { name: "Mark set complete" })[0]
+      );
+    };
+    lift(1, "62.5");
+    lift(2, "65");
+    // The first set's card may still be leaving as the second arrives.
+    expect(
+      screen.getAllByTestId("new-best-moment").map((card) => card.textContent)
+    ).toContainEqual(expect.stringContaining("Was 62.5 kg × 8, today"));
+    // The last set finishes the workout.
+    lift(3, "67.5");
+    await vi.waitFor(() =>
+      expect(screen.getByRole("button", { name: "Save workout" })).toBeVisible()
+    );
+    const bests = screen
+      .getByRole("heading", { name: /New bests/ })
+      .closest("section")!;
+    expect(bests).toHaveTextContent("67.5 kg × 8");
+    expect(bests).toHaveTextContent("Was 60 kg × 8");
+    expect(bests).not.toHaveTextContent("Was 65 kg × 8");
+  });
 });
 
 it("rebuilds corrected records from full history without dropping an older valid record", async () => {
@@ -830,6 +867,34 @@ describe("WorkoutSession — an accidental extra set can be removed", () => {
     fireEvent.click(screen.getByRole("button", { name: "Add set" }));
     fireEvent.click(screen.getAllByTitle("Set type: working")[1]);
     expect(screen.queryByRole("button", { name: /Remove set/i })).toBeNull();
+  });
+});
+
+describe("WorkoutSession — the set-type menu opens beside its button", () => {
+  it("places the menu from the tapped button on the frame that opens it", () => {
+    /* The position came from a ref the button's ref callback filled, which
+       runs after the render that opens the menu, so the menu's first frame
+       drew at the previous position (0, 0 on a first open). */
+    openSession();
+    const trigger = screen.getAllByTitle("Set type: working")[1];
+    vi.spyOn(trigger, "getBoundingClientRect").mockReturnValue({
+      top: 120,
+      bottom: 148,
+      left: 20,
+      right: 48,
+      width: 28,
+      height: 28,
+      x: 20,
+      y: 120,
+      toJSON: () => ({}),
+    });
+    fireEvent.click(trigger);
+    // The menu is the fixed card holding the set types.
+    const menu = screen
+      .getByRole("button", { name: /warm-?up/i })
+      .closest("div.fixed") as HTMLElement;
+    expect(menu.style.left).toBe("56px");
+    expect(menu.style.top).toBe("120px");
   });
 });
 

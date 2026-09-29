@@ -1,0 +1,170 @@
+{
+  "exerciseId": "hammer-curl",
+  "version": "anatomy-v3-2026-09-29",
+  "width": 1024,
+  "height": 1536,
+  "decision": "approved",
+  "reviewer": "Codex visual and implementation review",
+  "reviewedAt": "2026-09-29T10:23:12.222Z",
+  "reference": {
+    "path": "form-frames/hammer-curl/1.webp",
+    "sha256": "b4040f54ee8a8e4bfd02dd2867e085274386f6691084723d6cfd7aa62b701ebe"
+  },
+  "cueSha256": "0c75d4573ea9208139fa4ee3a9bc07b29518ce82404da0a32e813b8e7782381b",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Canonical anatomy-v3 bald faceless white-grey athlete, fine contours, featureless pelvis and white trainers retained. New top derives from the accepted middle with master and canonical references attached."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Fixed front three-quarter view and native1024x1536 canvas, with full head, shoes and both dumbbells visible. Head, torso, hips and floor position remain visually stable."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Bilateral hammer curl keeps palms inward and upper arms beside ribs. New top rotates closed hands and dumbbells with the forearms, reducing the old top's wrist/shaft misalignment. Native and mobile inspection found plausible elbow flexion and continuous neutral wrists; no calibrated3D-angle or pixel-immobile elbow claim."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Paired modest round-ended dumbbells keep rigid straight shafts and matching head construction. The selected middle uses the equipment-corrected source, and the new top rotates the assemblies with the grips instead of leaving shafts vertical. Native and sequential inspection assesses projected shape, not old clipped-ROI dimensions as proof."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Hands remain closed around handles with inward-facing palms. Planted near-shoe lower portion in top/hold3/4 is copied from master in rectangle495,1400,725,1505;14708changedpixels per frame, zero outside. Native seam review passes and moving anatomy/weights were not deterministically edited."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Both forearms raise the attached weights about elbows without torso swing, then reverse through the same poses. Fixed-shoe anchor drift is below0.95px and span change below0.88percent unrounded; those measurements certify only planted-contact stability."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Strongest purple on biceps, lighter lilac on forearm contribution and pale trunk stabilizer shading. Built-in imagegen restored missing top oblique tint; the selected top now maintains the master's hierarchy without colouring chest or legs."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Six cues of at most seven words match inward grip, curling without supination, top with aligned wrists, control, lowering and near-straight reset."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "Manually stepped all six plus6-to1 in the actual current ExerciseFormFrames. Sequence setup/middle/top/hold/middle/setup uses4=3,5=2,6=1 intentionally. No continuous timed-playback claim."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "All six plus loop visually reviewed at390x844 in current light player on2026-09-29. Native1024x1536 images loaded, scrollWidth390, both complete weights and body visible; wrapped cues remain readable and no console errors recorded."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "All six plus loop visually reviewed at390x844 in current dark player on2026-09-29. Grip orientation and weight rotation remain legible, highlights consistent, fixed shoes show no visible seam or jump, and no image clipping occurs."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/hammer-curl/1.webp",
+      "sha256": "b4040f54ee8a8e4bfd02dd2867e085274386f6691084723d6cfd7aa62b701ebe",
+      "anchors": {
+        "farShoe": {
+          "x": 275.796875,
+          "y": 1380
+        },
+        "nearShoe": {
+          "x": 508.1565217391304,
+          "y": 1450
+        }
+      },
+      "invariantDimensions": {
+        "farShoeSpan": 216.58529060509557,
+        "nearShoeSpan": 147.19130434782608
+      }
+    },
+    {
+      "path": "form-frames/hammer-curl/2.webp",
+      "sha256": "45b0d3d5c202baac484a2d8de5a231b8b9de0a8a4bc69a8100ab079f7dac342e",
+      "anchors": {
+        "farShoe": {
+          "x": 274.85496183206106,
+          "y": 1380
+        },
+        "nearShoe": {
+          "x": 508.35114503816794,
+          "y": 1450
+        }
+      },
+      "invariantDimensions": {
+        "farShoeSpan": 217.70137619610796,
+        "nearShoeSpan": 145.90885496183205
+      }
+    },
+    {
+      "path": "form-frames/hammer-curl/3.webp",
+      "sha256": "6c0fd2525c0acd4f2d63bcb64a8b202f01905fda62ce475287bd13de05c48fa4",
+      "anchors": {
+        "farShoe": {
+          "x": 274.9469696969697,
+          "y": 1380
+        },
+        "nearShoe": {
+          "x": 508.1565217391304,
+          "y": 1450
+        }
+      },
+      "invariantDimensions": {
+        "farShoeSpan": 218.1341113841114,
+        "nearShoeSpan": 147.19130434782608
+      }
+    },
+    {
+      "path": "form-frames/hammer-curl/4.webp",
+      "sha256": "6c0fd2525c0acd4f2d63bcb64a8b202f01905fda62ce475287bd13de05c48fa4",
+      "anchors": {
+        "farShoe": {
+          "x": 274.9469696969697,
+          "y": 1380
+        },
+        "nearShoe": {
+          "x": 508.1565217391304,
+          "y": 1450
+        }
+      },
+      "invariantDimensions": {
+        "farShoeSpan": 218.1341113841114,
+        "nearShoeSpan": 147.19130434782608
+      }
+    },
+    {
+      "path": "form-frames/hammer-curl/5.webp",
+      "sha256": "45b0d3d5c202baac484a2d8de5a231b8b9de0a8a4bc69a8100ab079f7dac342e",
+      "anchors": {
+        "farShoe": {
+          "x": 274.85496183206106,
+          "y": 1380
+        },
+        "nearShoe": {
+          "x": 508.35114503816794,
+          "y": 1450
+        }
+      },
+      "invariantDimensions": {
+        "farShoeSpan": 217.70137619610796,
+        "nearShoeSpan": 145.90885496183205
+      }
+    },
+    {
+      "path": "form-frames/hammer-curl/6.webp",
+      "sha256": "b4040f54ee8a8e4bfd02dd2867e085274386f6691084723d6cfd7aa62b701ebe",
+      "anchors": {
+        "farShoe": {
+          "x": 275.796875,
+          "y": 1380
+        },
+        "nearShoe": {
+          "x": 508.1565217391304,
+          "y": 1450
+        }
+      },
+      "invariantDimensions": {
+        "farShoeSpan": 216.58529060509557,
+        "nearShoeSpan": 147.19130434782608
+      }
+    }
+  ]
+}

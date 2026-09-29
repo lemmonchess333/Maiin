@@ -151,7 +151,10 @@ export default function SessionCompleteScreen({
   /* New bests (DS3: gold means a personal best and nothing else). A
      "best" beat the exercise's previous best; a "bucket-first" is the
      first set in a rep range, which the screen reports without the gold
-     because the exercise's best stands. Keys are `${name}:${bucket}`. */
+     because the exercise's best stands. Keys are `${name}:${bucket}`, so
+     the list, and its count, sum the session up: rising sets in one rep
+     range are one new best here, shown against the best the lifter came
+     in with, though each had its own moment against the set before it. */
   const prRows = [...(prResults ?? new Map<string, SetPR>()).entries()].map(
     ([key, result]) => {
       const name = key.slice(0, key.lastIndexOf(":"));
@@ -286,12 +289,12 @@ export default function SessionCompleteScreen({
                     <p className="text-lg font-extrabold font-mono tabular-nums text-achievement-strong">
                       {result.weight} kg × {result.reps}
                     </p>
-                    {result.previousBest && (
+                    {result.bestBeforeSession && (
                       <p className="text-xs text-muted-foreground">
                         Was{" "}
                         <span className="font-mono tabular-nums">
-                          {result.previousBest.weight} kg ×{" "}
-                          {result.previousBest.reps}
+                          {result.bestBeforeSession.weight} kg ×{" "}
+                          {result.bestBeforeSession.reps}
                         </span>
                       </p>
                     )}

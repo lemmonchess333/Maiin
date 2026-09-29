@@ -287,6 +287,14 @@ const EXPECTED = {
     resource:
       "projects/{project}/databases/(default)/documents/activities/{activityId}",
   },
+  onActivityDeleted: {
+    kind: "event",
+    maxInstances: 50,
+    secrets: [],
+    eventType: "providers/cloud.firestore/eventTypes/document.delete",
+    resource:
+      "projects/{project}/databases/(default)/documents/activities/{activityId}",
+  },
   onCommentCreated: {
     kind: "event",
     maxInstances: 50,

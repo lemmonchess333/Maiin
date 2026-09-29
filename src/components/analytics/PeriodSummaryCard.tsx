@@ -6,6 +6,7 @@ import {
   type DistanceUnit,
 } from "@/lib/distanceUnits";
 import {
+  summaryAxisLabel,
   summaryBinLabel,
   type SummaryBin,
   type SummaryChange,
@@ -112,6 +113,9 @@ export default function PeriodSummaryCard({
   /* Label every bar while they fit; past seven, every few, counted back
      from the current bar so it is always named. */
   const every = bins.length <= 7 ? 1 : Math.ceil(bins.length / 4);
+  /* The first label under the chart; a month from another year names
+     its year there. */
+  const firstLabelled = (bins.length - 1) % every;
 
   const describeBin = (b: SummaryBin) => {
     const label = summaryBinLabel(b, granularity);
@@ -329,7 +333,9 @@ export default function PeriodSummaryCard({
                     i === bins.length - 1 && every > 1 && "text-right"
                   )}
                 >
-                  {shown ? summaryBinLabel(b, granularity) : ""}
+                  {shown
+                    ? summaryAxisLabel(b, granularity, i === firstLabelled)
+                    : ""}
                 </span>
               );
             })}

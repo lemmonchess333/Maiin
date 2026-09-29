@@ -183,6 +183,22 @@ describe("Upgrade — plan radiogroup (free user)", () => {
   });
 });
 
+describe("Upgrade — the buttons are the app's primary button", () => {
+  it("Continue and checkout carry no gradient", () => {
+    renderPage();
+    const next = screen.getByRole("button", { name: "Continue" });
+    // Both were purple-to-teal gradients (2026-09-29).
+    expect(next.className).toContain("bg-primary-strong");
+    expect(next.getAttribute("style") ?? "").not.toMatch(/gradient/);
+    fireEvent.click(next);
+    const checkout = screen.getByRole("button", {
+      name: "Start Pro — £34.99/yr",
+    });
+    expect(checkout.className).toContain("bg-primary-strong");
+    expect(checkout.getAttribute("style") ?? "").not.toMatch(/gradient/);
+  });
+});
+
 describe("Upgrade — CTA copy reflects selected plan", () => {
   it("CTA reads 'Start Pro — £34.99/yr' by default (yearly)", () => {
     renderPlans();

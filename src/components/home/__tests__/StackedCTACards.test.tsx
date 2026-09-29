@@ -339,16 +339,122 @@ describe("HOME-ACTION-01 — deep-link + terminal states", function () {
   });
 });
 
+/**
+ * Where a tap on a Today card lands.
+ *
+ * The card-wide preview is a button beneath the content, and the content
+ * lets taps through to it with `pointer-events-none`. jsdom does no hit
+ * testing, so a click dispatched on an element reaches it whatever the
+ * CSS says; `tapTarget` models the rule the card relies on instead. A tap
+ * goes to the nearest element, from the one under the finger up to the
+ * card, that takes pointer events. `pointer-events` is inherited, so an
+ * element takes them unless it or an ancestor says `pointer-events-none`
+ * with no nearer `pointer-events-auto`. When nothing on the way takes the
+ * tap, it reaches the preview, which covers the whole card.
+ */
+describe("Today cards — every part that is not Start opens the day", function () {
+  beforeEach(function () {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date(2026, 8, 27, 12, 0, 0));
+  });
+  afterEach(function () {
+    vi.useRealTimers();
+  });
+
+  function takesPointerEvents(node: Element): boolean {
+    for (let n: Element | null = node; n; n = n.parentElement) {
+      if (n.classList.contains("pointer-events-auto")) return true;
+      if (n.classList.contains("pointer-events-none")) return false;
+    }
+    return true;
+  }
+
+  function tapTarget(under: Element, preview: HTMLElement): Element {
+    const card = preview.parentElement;
+    for (
+      let node: Element | null = under;
+      node && node !== card;
+      node = node.parentElement
+    ) {
+      if (takesPointerEvents(node)) return node;
+    }
+    return preview;
+  }
+
+  const skippedRun = {
+    id: "run-1",
+    dayIndex: 0,
+    templateId: "easy_30",
+    type: "easy",
+    status: "skipped",
+  } as any;
+  const plannedRun = { ...skippedRun, id: "run-2", status: "planned" };
+
+  it("a tap on a finished lift's status opens the day", function () {
+    const navigate = vi.fn();
+    renderCards({
+      todayType: "lift",
+      liftDayIndex: 1,
+      liftStartable: false,
+      liftStatus: "completed",
+      navigate,
+    });
+    const preview = screen.getByRole("button", {
+      name: "Open Push Day in Train",
+    });
+    const status = screen.getByText("Completed");
+    const target = tapTarget(status, preview);
+    expect(target).toBe(preview);
+    // And the space around the status, the rest of the card's foot.
+    expect(tapTarget(status.parentElement!, preview)).toBe(preview);
+    fireEvent.click(target);
+    expect(navigate).toHaveBeenCalledExactlyOnceWith("/program?day=1");
+  });
+
+  it("a tap on a skipped run's status opens the run in Train", function () {
+    const navigate = vi.fn();
+    renderCards({ todayType: "run", navigate, todayRun: skippedRun });
+    const preview = screen.getByRole("button", {
+      name: "Open Easy 30 in Train",
+    });
+    const status = screen.getByText("Skipped");
+    const target = tapTarget(status, preview);
+    expect(target).toBe(preview);
+    expect(tapTarget(status.parentElement!, preview)).toBe(preview);
+    fireEvent.click(target);
+    expect(navigate).toHaveBeenCalledExactlyOnceWith(
+      "/program?tab=run&rday=2026-09-27"
+    );
+  });
+
+  it("Start keeps its own taps, and the space around it opens the day", function () {
+    renderCards({ todayType: "both", liftDayIndex: 2, todayRun: plannedRun });
+    for (const [start, previewName] of [
+      ["Start workout", "Open Push Day in Train"],
+      ["Start run", "Open Easy 30 in Train"],
+    ] as const) {
+      const preview = screen.getByRole("button", { name: previewName });
+      const button = screen.getByRole("button", { name: start });
+      expect(tapTarget(button, preview), start).toBe(button);
+      // The Play mark inside Start is part of Start.
+      const icon = button.querySelector("svg")!;
+      expect(button.contains(tapTarget(icon, preview)), start).toBe(true);
+      expect(tapTarget(button.parentElement!, preview), start).toBe(preview);
+    }
+  });
+});
+
 describe("rest day — tomorrow's session", function () {
   it("names tomorrow's session and opens it", function () {
     const navigate = vi.fn();
+    // The label as Home builds it (Home.dayAndWeek.test.tsx pins that).
     renderCards({
       todayType: "rest",
       navigate,
-      tomorrow: { label: "Pull — Lat Focus", target: "/program?day=3" },
+      tomorrow: { label: "Pull · Lat focus", target: "/program?day=3" },
     });
     expect(screen.getByText(/Tomorrow:/)).toHaveTextContent(
-      "Tomorrow: Pull — Lat Focus."
+      "Tomorrow: Pull · Lat focus."
     );
     fireEvent.click(screen.getByRole("button", { name: "See tomorrow" }));
     expect(navigate).toHaveBeenCalledExactlyOnceWith("/program?day=3");

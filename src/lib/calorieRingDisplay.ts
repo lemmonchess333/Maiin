@@ -3,26 +3,29 @@
  * the user's selected mode and over-target state.
  *
  * Pre-F3.1 the label expression read
- *   `{isOver ? "over" : (isLeftMode ? "left" : "eaten")}`
+ *   `{isOver ? "over" : (isLeftMode ? "left" : <the other word>)}`
  * which forced "over" whenever isOver was true regardless of mode.
- * In eaten mode + over target the ring then rendered the consumed
- * amount with an "over" label — e.g. "5,700 KCAL OVER" when the
- * user had eaten 5,700 against a 4,033 target. The 5,700 was
- * consumed, not over; the actual over amount was 1,667.
+ * In the logged view + over target the ring then rendered the
+ * logged amount with an "over" label — e.g. "5,700 KCAL OVER" when
+ * the user had logged 5,700 against a 4,033 target. The 5,700 was
+ * logged, not over; the actual over amount was 1,667.
  *
  * Correct mapping:
- *   isLeftMode && isOver  → label "over",  value = |remaining|
- *   isLeftMode && !isOver → label "left",  value = remaining
- *   !isLeftMode           → label "eaten", value = consumed
+ *   isLeftMode && isOver  → label "over",   value = |remaining|
+ *   isLeftMode && !isOver → label "left",   value = remaining
+ *   !isLeftMode           → label "logged", value = consumed
  *
- * The component still renders the darker-purple overshoot arc
- * whenever isOver is true (both modes), keeps the persisted ring
- * mode preference untouched, and lets the today-at-a-glance line
- * below surface the over amount in words. The ring shows the
- * lens the user picked; the glance line surfaces the fact.
+ * "logged", not "eaten": the number counts what is in the diary, not
+ * what the person ate, so "0 kcal eaten" before lunch is logged would
+ * be untrue (owner call; DS3's STATUS lines). The persisted MODE key
+ * stays "eaten" — a stored preference, not copy.
+ *
+ * The component still renders the deeper overshoot lap whenever
+ * isOver is true (both modes), and keeps the persisted ring mode
+ * preference untouched. The ring shows the lens the user picked.
  */
 
-export type CalorieRingLabel = "left" | "eaten" | "over";
+export type CalorieRingLabel = "left" | "logged" | "over";
 
 export interface CalorieRingDisplayInput {
   consumed: number;
@@ -53,7 +56,7 @@ export function getCalorieRingDisplay(
     labelMode = isOver ? "over" : "left";
   } else {
     displayValue = consumed;
-    labelMode = "eaten";
+    labelMode = "logged";
   }
 
   return { displayValue, labelMode, isOver };

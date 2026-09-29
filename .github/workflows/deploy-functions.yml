@@ -108,7 +108,7 @@ jobs:
           TITLE="🚨 deploy-functions failing on main — production functions stranded"
           printf -v BODY '%s\n\n%s' \
             "Deploy failed for \`${GITHUB_SHA}\`: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" \
-            "Production stays on the last successful bundle until a deploy goes green. Check the run log for the first \`Error:\` line (an unprovisioned bound secret is the usual culprit — \`cd functions && npm run secrets:check\`), fix, then re-run via workflow_dispatch."
+            "Production stays on the last successful bundle until a deploy goes green. Check the run log for the first \`Error:\` line (an unprovisioned bound secret is the usual culprit — \`cd functions && npm run secrets:check\`), fix, then re-run Deploy production (\`deploy-production.yml\`) via workflow_dispatch."
           existing=$(gh issue list --repo "$GITHUB_REPOSITORY" --state open \
             --search "deploy-functions failing on main in:title" \
             --json number --jq '.[0].number // empty')

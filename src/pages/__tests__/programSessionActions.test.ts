@@ -95,3 +95,25 @@ describe("the defect the Button primitive fixed", () => {
     );
   });
 });
+
+describe("a past week's open day reads as missed", () => {
+  it("asks the day's state with whether its week is past", () => {
+    /* `liftDayStatus` holds the rule and its own tests. This holds that
+       Train passes the history flag, which is what turns "Upcoming" into
+       "Missed" on a day that can no longer come up. */
+    expect(code).toMatch(
+      /liftDayStatus\(selectedWorkout, \{\s*pastWeek: isViewingHistory,/
+    );
+    expect(code).toContain("LIFT_DAY_STATUS_LABEL[status]");
+  });
+
+  it("gives a missed day no time estimate and no Add exercise", () => {
+    // Anchored: the estimate and the button are still on the page.
+    expect(code).toMatch(/~\$\{estimatedMinutes\} min/);
+    expect(code).toContain("Add exercise");
+    expect(code).toMatch(/status === "completed" \|\| missed\s*\?\s*\[\]/);
+    expect(code).toMatch(
+      /\(status === "today" \|\| status === "upcoming"\) && \(\s*<button[\s\S]{0,600}Add exercise/
+    );
+  });
+});

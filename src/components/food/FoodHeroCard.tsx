@@ -260,20 +260,22 @@ export default function FoodHeroCard({
             was flat card — it read as two corner smudges, not a gradient.
             Now each spans ~85% of the card with a three-stop falloff, and
             light runs at 85% rather than 70%. Static, token-derived, and
-            the ring and its readable centre stay above it. */}
+            the ring and its readable centre stay above it. The ring is
+            orange as well now, and the purple half stays: the owner
+            compared an orange-only wash, a flat orange tint and a plain
+            card with this one and kept this (DS3's STATUS lines in the
+            plan file). */}
         <div className="relative">
-          {/* Top row: caption (left) + adjust-targets gear (right).
-          The gear deep-links straight to the focused Nutrition editor
-          (/settings/nutrition — goal weight, calorie targets, macros,
-          activity), so users fix a wrong target in one tap instead of
-          landing on the generic Settings list and hunting for it. This
-          mirrors the Train tabs' "Edit run/lift plan" pattern: each
-          tab's day-to-day surface routes to its OWN plan editor.
-          (Historically this pointed at /settings because the nutrition
-          sub-route didn't exist; it does now.) Subtle muted-foreground
-          colour so it doesn't compete with the ring for attention. */}
-          <div className="mb-4 min-h-[20px] flex items-start justify-between gap-3">
-            <div className="flex-1 min-w-0">
+          {/* The ring and the card's three small controls. The controls sit
+          in the ring's corners rather than in rows of their own above and
+          below it: the week strip above this card took about 80px of the
+          page, and those two rows gave it back, so the composer is on
+          screen when the page opens on a phone (Food6's pin). The ring's
+          round shape leaves each corner free. */}
+          <div className="relative">
+            {/* Top left: the goal-hit caption, for the two seconds after the
+            day's last goal is met. */}
+            <div className="absolute left-0 top-0 max-w-[40%]">
               <AnimatePresence mode="wait">
                 {showCelebrationCaption ? (
                   <motion.p
@@ -292,7 +294,13 @@ export default function FoodHeroCard({
                 ) : null}
               </AnimatePresence>
             </div>
-            <div className="shrink-0 flex items-center">
+            {/* Top right: share on a goal-hit day, and the targets gear.
+            The gear deep-links straight to the focused Nutrition editor
+            (/settings/nutrition: goal weight, calorie targets, macros,
+            activity), so a wrong target is one tap from being fixed, as
+            each Train tab's plan edit goes to its own editor. Muted so it
+            doesn't compete with the ring for attention. */}
+            <div className="absolute -right-2 -top-2 z-10 flex items-center">
               {goalHit && (
                 <button
                   type="button"
@@ -301,7 +309,7 @@ export default function FoodHeroCard({
                     haptic("light");
                     setShareOpen(true);
                   }}
-                  className="-mt-2 size-11 flex items-center justify-center rounded-lg text-nutrition hover:bg-muted/60 active:scale-95 transition-all"
+                  className="size-11 flex items-center justify-center rounded-lg text-nutrition hover:bg-muted/60 active:scale-95 transition-all"
                 >
                   <Share2 className="size-4" aria-hidden="true" />
                 </button>
@@ -310,23 +318,42 @@ export default function FoodHeroCard({
                 to="/settings/nutrition"
                 aria-label="Adjust nutrition targets"
                 onClick={() => haptic("light")}
-                className="-mt-2 -mr-2 size-11 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/60 active:scale-95 transition-all"
+                className="size-11 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/60 active:scale-95 transition-all"
               >
                 <SettingsIcon className="size-4" aria-hidden="true" />
               </Link>
             </div>
-          </div>
 
-          {/* Calorie ring */}
-          <CalorieRing
-            consumed={dailyTotals.calories}
-            target={dailyTargets.finalTarget}
-            mode={mode}
-            onToggleMode={toggleMode}
-            trajectoryLabel={trajectoryLabel}
-            glowing={celebrating}
-            ringDurationMs={LOG_MOMENT_MS}
-          />
+            <CalorieRing
+              consumed={dailyTotals.calories}
+              target={dailyTargets.finalTarget}
+              mode={mode}
+              onToggleMode={toggleMode}
+              trajectoryLabel={trajectoryLabel}
+              glowing={celebrating}
+              ringDurationMs={LOG_MOMENT_MS}
+            />
+
+            {/* Food6 a2: the drill-down, at the bottom right. "Details" and
+            a chevron open the breakdown sheet, in the same register as the
+            Home and Analytics disclosures (sentence case, text-xs, muted).
+            Its own tap target, clear of the ring's mode toggle and the
+            gear. */}
+            {onTapDrillDown && (
+              <button
+                type="button"
+                onClick={() => {
+                  haptic("light");
+                  onTapDrillDown();
+                }}
+                aria-label="View nutrition breakdown"
+                className="absolute -right-2 -bottom-2 z-10 flex items-center gap-1 px-2.5 min-h-[44px] rounded-full text-xs hover:bg-muted/60 active:scale-95 transition-all text-muted-foreground"
+              >
+                <span>Details</span>
+                <ChevronRight aria-hidden="true" className="size-3" />
+              </button>
+            )}
+          </div>
 
           {/* Nutr2 / #981 — adaptive warmup bar, today-only, ambient under the
           ring. Reads from the single source of truth (useEffectiveTargets).
@@ -358,28 +385,6 @@ export default function FoodHeroCard({
             >
               {macroInfeasibilityMessage(dailyTargets.minFeasibleKcal)}
             </p>
-          )}
-          {/* Food6 a2: drill-down affordance. "Details" + chevron at the
-          bottom of the calorie card opens the breakdown sheet — the same
-          label register as the Home and Analytics disclosures (sentence
-          case, text-xs, muted), not the bold section-label one.
-          Distinct tap target so it doesn't conflict with the CalorieRing
-          mode-toggle, the Settings link, or any nested buttons. */}
-          {onTapDrillDown && (
-            <div className="flex justify-center mt-3">
-              <button
-                type="button"
-                onClick={() => {
-                  haptic("light");
-                  onTapDrillDown();
-                }}
-                aria-label="View nutrition breakdown"
-                className={`flex items-center gap-1 px-2.5 min-h-[44px] -my-2 rounded-full text-xs hover:bg-muted/60 active:scale-95 transition-all text-muted-foreground`}
-              >
-                <span>Details</span>
-                <ChevronRight aria-hidden="true" className="size-3" />
-              </button>
-            </div>
           )}
         </div>
       </div>

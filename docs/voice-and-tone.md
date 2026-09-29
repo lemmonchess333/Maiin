@@ -52,7 +52,6 @@ The exceptions, and nothing else:
 | Keeps its capitals                  | Why                                                                           |
 | ----------------------------------- | ----------------------------------------------------------------------------- |
 | **Performance Index**               | A named metric with its own tab, tooltip, `PI` abbreviation and stored field. |
-| **Progress Vault**                  | A named feature.                                                              |
 | **Weekly Review**                   | A named surface with its own route (`/review`).                               |
 | **Tropos Team**                     | The author official space posts are signed with, like an account name.        |
 | **Together**, **Feed**, **Explore** | Tab names. Lowercasing "Open Together" reads as an adverb.                    |

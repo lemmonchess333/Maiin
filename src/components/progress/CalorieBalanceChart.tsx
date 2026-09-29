@@ -151,7 +151,7 @@ export default function CalorieBalanceChart({ meals }: { meals: Meal[] }) {
               exit={{ opacity: 0 }}
               transition={{ duration: fade }}
             >
-              <ResponsiveContainer width="100%" height="100%">
+              <ResponsiveContainer width="100%" height={176}>
                 <BarChart
                   aria-label="Calorie balance: estimated maintenance minus logged food, by day"
                   data={data}

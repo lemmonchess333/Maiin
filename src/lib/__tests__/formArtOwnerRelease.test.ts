@@ -6,18 +6,7 @@ import { getFormBeats } from "../bodyRig";
 import { validateOwnerArtworkRelease } from "../formArtOwnerRelease";
 import { validateArtworkReview } from "../formArtReview";
 
-const ids = [
-  "db-curl",
-  "hammer-curl",
-  "front-raise",
-  "goblet-squat",
-  "push-ups",
-  "squat",
-  "barbell-curl",
-  "db-bench",
-  "bodyweight-squat",
-  "barbell-shrug",
-];
+const ids = ["goblet-squat", "squat", "barbell-curl"];
 const sha = (bytes: string | Buffer) =>
   createHash("sha256").update(bytes).digest("hex");
 function evidence(id: string) {
@@ -58,7 +47,7 @@ describe("owner-authorized artwork activation", () => {
      I/O, and raising it further would be treating the symptom. If this
      starts failing regularly rather than occasionally, the thing to
      look at is suite concurrency, not this number. */
-  it("ships exactly ten complete guides bound to source, delivered assets and cues", () => {
+  it("ships exactly three owner-authorized guides bound to source, delivered assets and cues", () => {
     expect(
       Object.keys(FORM_ARTWORK)
         .filter(
@@ -82,15 +71,28 @@ describe("owner-authorized artwork activation", () => {
     }
   }, 30_000);
   it("keeps incomplete pilots inactive while releasing reviewed exact-ID guides", () => {
-    for (const id of [
-      "lat-pulldown",
-      "deadlift",
-      "incline-db-bench",
-    ])
+    for (const id of ["lat-pulldown", "deadlift", "incline-db-bench"])
       expect(getReleasedFormArtwork(id), id).toBeNull();
-    expect(getReleasedFormArtwork("concentration-curl")?.status).toBe("approved");
-    const { review, expected } = evidence("concentration-curl");
-    expect(validateArtworkReview(review, expected)).toEqual([]);
+    for (const id of [
+      "concentration-curl",
+      "bodyweight-squat",
+      "db-curl",
+      "hammer-curl",
+      "front-raise",
+      "push-ups",
+      "db-bench",
+      "barbell-shrug",
+      "lateral-raise",
+      "pike-push-up",
+      "toe-touches",
+      "dead-bug",
+      "bicycle-crunch",
+      "glute-bridge",
+    ]) {
+      expect(getReleasedFormArtwork(id)?.status, id).toBe("approved");
+      const { review, expected } = evidence(id);
+      expect(validateArtworkReview(review, expected), id).toEqual([]);
+    }
   });
   it("rejects missing permission, erased findings, certified checks and stale release data", () => {
     const { review, expected } = evidence("barbell-shrug");

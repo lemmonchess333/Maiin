@@ -736,17 +736,15 @@ export default function Food() {
     if (offSearchQuery === null) {
       setOffResults([]);
       setOffLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    if (!offSearchQuery) {
       /* Reset the inline empty state when the query clears so a
          stale "No matches" doesn't linger after the user has
          deleted their input. */
       setOffEmpty(false);
-      return;
     }
+  }
+
+  useEffect(() => {
+    if (!offSearchQuery) return;
     // Guard against out-of-order resolution: a newer query or Retry supersedes
     // this run. `cancelled` (set in cleanup) gates every state write, and the
     // AbortController cancels the in-flight fetch so a stale response can't
@@ -1514,17 +1512,10 @@ export default function Food() {
     }
 
     return current;
-    /* timeRelevantHour added explicitly so eslint-react-hooks
-       can verify the dep wiring — even though it derives from
-       selectedDate, an explicit dep makes the freeze contract
-       readable to future maintainers (and to the linter). */
-  }, [
-    meals,
-    getTimeRelevant,
-    selectedDate,
-    timeRelevantHour,
-    pendingRemovalIds,
-  ]);
+    /* The day reaches this list through `timeRelevantHour`, which is
+       keyed on selectedDate: the body never reads the date itself, so
+       listing it too only recomputed an identical list. */
+  }, [meals, getTimeRelevant, timeRelevantHour, pendingRemovalIds]);
 
   const cachedQuickOrder = quickAddOrderCache.get(selectedDate);
   if (!cachedQuickOrder) {
@@ -1742,18 +1733,22 @@ export default function Food() {
      remove through the unchanged handleRemoveFavourite). Cold-start
      accounts whose items are only seeded defaults (no favourites, no
      recent real history) get the section framed as examples — the
-     same distinction the old above/below-composer placement encoded. */
-  const quickAddSection: QuickAddSection | null =
-    inputFocused && !nlInput.trim() && quickMeals.length > 0
-      ? {
-          items: quickMeals,
-          asExamples: !hasStrongQuickAddSuggestions,
-          adding: quickAdding,
-          onAdd: handleQuickMealAdd,
-          onEditPortion: setPortionMeal,
-          onRemove: handleRemoveFavourite,
-        }
-      : null;
+     same distinction the old above/below-composer placement encoded.
+     `showQuickAdd` is kept as its own boolean for the dropdown's
+     visibility: the section carries `handleQuickMealAdd`, which reads
+     `inputRef`, and comparing the section during render reads as a ref
+     access to the React Compiler. */
+  const showQuickAdd = inputFocused && !nlInput.trim() && quickMeals.length > 0;
+  const quickAddSection: QuickAddSection | null = showQuickAdd
+    ? {
+        items: quickMeals,
+        asExamples: !hasStrongQuickAddSuggestions,
+        adding: quickAdding,
+        onAdd: handleQuickMealAdd,
+        onEditPortion: setPortionMeal,
+        onRemove: handleRemoveFavourite,
+      }
+    : null;
 
   // Retry the subscription as well as acknowledging the gesture. A terminated
   // listener otherwise leaves a failed diary read stuck until a full reload.
@@ -1947,8 +1942,9 @@ export default function Food() {
           are on screen when the page opens (owner call). With the usual row
           above it, the text box sat under the tab bar for a habitual user
           on a 390x844 phone and on an SE. The usual row follows as the
-          one-tap repeat; `companion-food.capture.spec.ts` checks its Log
-          still clears the tab bar at 375px wide. */}
+          one-tap repeat; `companion-food.capture.spec.ts` checks, at 375px
+          wide, that the Scan button clears the tab bar and that the usual
+          row's Log comes after it. */}
       <motion.div variants={pageItemVariant}>
         <FoodComposerCard
           /* Photo logging gated for this tier: one line under the field
@@ -1990,7 +1986,7 @@ export default function Food() {
           inputRef={inputRef}
           targetMeal={targetMeal}
           onTargetMeal={handleTargetMeal}
-          showSuggestions={showSuggestions || quickAddSection !== null}
+          showSuggestions={showSuggestions || showQuickAdd}
           suggestions={suggestions}
           offResults={offResults}
           pantryResults={pantrySuggestions}
@@ -2052,10 +2048,13 @@ export default function Food() {
             onClick={() => setPortionMeal(usual)}
             icon={<Pencil className="size-4" />}
           />
+          {/* Logs to the slot the heading names. With no slot selected the
+              heading names the hour's slot, and a meal saved without one
+              is filed by the diary's own hour rule, which differs. */}
           <Button
             variant="nutrition"
             disabled={quickAdding !== null}
-            onClick={() => void handleQuickMealAdd(usual)}
+            onClick={() => void handleQuickMealAdd(usual, usualSlot)}
           >
             Log
           </Button>

@@ -705,3 +705,92 @@ describe("createNotification — block backstop", () => {
     expect(firestore._writes).toHaveLength(1);
   });
 });
+
+/**
+ * removeActivityFromFeeds — the other half of the fan-out. A post that is
+ * deleted (the finish screen's Undo, or deleting the session it came from)
+ * must leave every feed it was copied into: a copy left behind points at a
+ * post nobody can read, and the Following page reads each one.
+ *
+ * Driven through the memory Firestore, which runs the collection-group
+ * query for real, so the assertions are about which documents survive.
+ */
+describe("removeActivityFromFeeds", () => {
+  const { memoryFirestore } = require("./helpers/memoryFirestore.cjs");
+  const copy = (activityId) => ({ activityId, authorId: "alice", type: "run" });
+
+  function seeded(extra = {}) {
+    return memoryFirestore({
+      "activities/act2": { authorId: "alice", visibility: "followers" },
+      "followers/alice/users/bob": {},
+      "feeds/alice/items/act1": copy("act1"),
+      "feeds/bob/items/act1": copy("act1"),
+      // Carol has unfollowed since the post, so re-reading the author's
+      // followers would never find her copy.
+      "feeds/carol/items/act1": copy("act1"),
+      // A copy written under an auto id, before copies were keyed by post.
+      "feeds/dave/items/Xy7autoId": copy("act1"),
+      "feeds/bob/items/act2": copy("act2"),
+      // Same collection group and the same activityId, but not a feed copy.
+      "notifications/alice/items/n1": {
+        type: "kudos",
+        activityId: "act1",
+        fromUserId: "bob",
+      },
+      ...extra,
+    });
+  }
+
+  it("removes every feed copy of the post and nothing else", async () => {
+    const { removeActivityFromFeeds } = require("../lib/socialFanout");
+    const firestore = seeded();
+
+    const result = await removeActivityFromFeeds({
+      firestore,
+      activityId: "act1",
+    });
+
+    expect(result.removed).toBe(4);
+    const left = [...firestore.data.keys()].sort();
+    expect(left).toEqual([
+      "activities/act2",
+      "feeds/bob/items/act2",
+      "followers/alice/users/bob",
+      "notifications/alice/items/n1",
+    ]);
+  });
+
+  it("is safe to run again: a re-delivered trigger finds nothing left", async () => {
+    const { removeActivityFromFeeds } = require("../lib/socialFanout");
+    const firestore = seeded();
+    await removeActivityFromFeeds({ firestore, activityId: "act1" });
+    const after = [...firestore.data.keys()].sort();
+
+    const again = await removeActivityFromFeeds({
+      firestore,
+      activityId: "act1",
+    });
+
+    expect(again.removed).toBe(0);
+    expect([...firestore.data.keys()].sort()).toEqual(after);
+  });
+
+  it("pages through more copies than one query returns", async () => {
+    const { removeActivityFromFeeds } = require("../lib/socialFanout");
+    const many = {};
+    for (let i = 0; i < 650; i += 1) {
+      many[`feeds/f${String(i).padStart(3, "0")}/items/act1`] = copy("act1");
+    }
+    const firestore = seeded(many);
+
+    const result = await removeActivityFromFeeds({
+      firestore,
+      activityId: "act1",
+    });
+
+    expect(result.removed).toBe(654);
+    expect(
+      [...firestore.data.keys()].filter((p) => /^feeds\/[^/]+\/items\//.test(p))
+    ).toEqual(["feeds/bob/items/act2"]);
+  });
+});

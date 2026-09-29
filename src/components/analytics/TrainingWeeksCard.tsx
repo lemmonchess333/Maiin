@@ -1,17 +1,31 @@
-import { useState, type ReactNode } from "react";
+import {
+  useRef,
+  useState,
+  type KeyboardEvent,
+  type PointerEvent,
+  type ReactNode,
+} from "react";
 import Card from "@/components/ui/Card";
 import {
+  summaryAxisLabel,
   summaryBinLabel,
   type SummaryBin,
   type SummaryGranularity,
 } from "@/lib/periodSummary";
 import type { BinReading, TrainingFigure } from "@/lib/trainingWeeks";
 import { T5_BARS_MIN_COUNT } from "@/lib/dataConfidence";
+import { haptic } from "@/lib/haptic";
 import { cn } from "@/lib/utils";
 
 /** Drawing units; the SVG scales to the card's width. */
 const CHART_W = 300;
 const CHART_H = 96;
+
+/** How far a finger moves sideways before a press becomes a slide. A tap
+ *  wobbles a few pixels, and under this it stays a tap on its bar. */
+const SLIDE_START_PX = 6;
+/** A click this soon after a slide ends belongs to the slide. */
+const SLIDE_CLICK_MS = 400;
 
 const SPORT_BAR = {
   lifting: "fill-lifting",
@@ -41,10 +55,16 @@ function binPhrase(bin: SummaryBin, granularity: SummaryGranularity): string {
  * A range of days has no line, since an average day is not how anyone
  * trains.
  *
- * Tap a bar to read it. The one being read is drawn full and the rest
- * stepped back, the emphasis Analytics' bar charts have always used, and
- * it starts on the bin you are in now. Each bar is a button, so the same
- * reading is a Tab and an Enter away.
+ * Tap a bar to read it, or press and slide along the chart. Three months
+ * draw fourteen bars, which leaves each about 23 px to aim at, so the
+ * whole chart takes the touch: the bar under the finger is read out
+ * below the chart, where the finger does not cover it, with a light tick
+ * as each one passes. An up or down swipe still scrolls the page
+ * (`touch-pan-y`). The one being read is drawn full and the rest stepped
+ * back, the emphasis Analytics' bar charts have always used, and it
+ * starts on the bin you are in now. Each bar is a button, for screen
+ * readers, and the bars are one Tab stop: the arrow keys move between
+ * them.
  *
  * Colours come from classes, not `fill="hsl(var(…))"`, for the WKWebView
  * reason `PeriodSummaryCard` gives.
@@ -79,6 +99,17 @@ export default function TrainingWeeksCard({
   onPick?: (bin: SummaryBin) => void;
 }) {
   const [picked, setPicked] = useState<string | null>(null);
+  const targetsRef = useRef<HTMLDivElement>(null);
+  const buttonsRef = useRef<(HTMLButtonElement | null)[]>([]);
+  /** The press in progress: its pointer, where it started, the bar it is
+   *  on, and whether it has become a slide. */
+  const slideRef = useRef<{
+    id: number;
+    x: number;
+    key: string;
+    sliding: boolean;
+  } | null>(null);
+  const slideEndedAtRef = useRef(-Infinity);
   const { amount, describe, countText } = reading;
   const sessions = bins.reduce((n, b) => n + reading.count(b), 0);
   const hasChart = sessions >= T5_BARS_MIN_COUNT;
@@ -101,6 +132,81 @@ export default function TrainingWeeksCard({
   const averageY = showAverage ? CHART_H - (average ?? 0) * scale : 0;
   const averageLabel =
     granularity === "monthly" ? "Monthly average" : "Weekly average";
+  /* The first label under the chart; a month from another year names
+     its year there. */
+  const firstLabelled = (bins.length - 1) % every;
+
+  const pick = (b: SummaryBin) => {
+    setPicked(b.key);
+    onPick?.(b);
+  };
+
+  /** The bar under a point on the chart, or null before layout. */
+  const binAt = (clientX: number): SummaryBin | null => {
+    const el = targetsRef.current;
+    if (!el || bins.length === 0) return null;
+    const { left, width } = el.getBoundingClientRect();
+    if (width <= 0) return null;
+    const i = Math.floor(((clientX - left) / width) * bins.length);
+    return bins[Math.min(bins.length - 1, Math.max(0, i))];
+  };
+
+  const onPointerDown = (e: PointerEvent<HTMLDivElement>) => {
+    if (!e.isPrimary || e.button !== 0 || !selected) return;
+    slideRef.current = {
+      id: e.pointerId,
+      x: e.clientX,
+      key: selected.key,
+      sliding: false,
+    };
+  };
+
+  const onPointerMove = (e: PointerEvent<HTMLDivElement>) => {
+    const slide = slideRef.current;
+    if (!slide || slide.id !== e.pointerId) return;
+    if (!slide.sliding) {
+      if (Math.abs(e.clientX - slide.x) < SLIDE_START_PX) return;
+      slide.sliding = true;
+      // Keep reading the finger after it passes the chart's edge.
+      e.currentTarget.setPointerCapture?.(e.pointerId);
+    }
+    const b = binAt(e.clientX);
+    if (!b || b.key === slide.key) return;
+    slide.key = b.key;
+    setPicked(b.key);
+    haptic("light");
+  };
+
+  /* A slide counts as one pick, told when it ends. A tap is left to the
+     bar's own click, as before. */
+  const endSlide = (e: PointerEvent<HTMLDivElement>) => {
+    const slide = slideRef.current;
+    if (!slide || slide.id !== e.pointerId) return;
+    slideRef.current = null;
+    if (!slide.sliding) return;
+    slideEndedAtRef.current = performance.now();
+    const b = bins.find((x) => x.key === slide.key);
+    if (b) onPick?.(b);
+  };
+
+  const onKeyDown = (e: KeyboardEvent<HTMLButtonElement>, i: number) => {
+    const last = bins.length - 1;
+    const target =
+      e.key === "ArrowRight"
+        ? Math.min(last, i + 1)
+        : e.key === "ArrowLeft"
+          ? Math.max(0, i - 1)
+          : e.key === "Home"
+            ? 0
+            : e.key === "End"
+              ? last
+              : null;
+    if (target === null) return;
+    e.preventDefault();
+    if (target === i) return;
+    pick(bins[target]);
+    buttonsRef.current[target]?.focus();
+  };
 
   return (
     <Card as="section" aria-label={title} className="space-y-4">
@@ -180,21 +286,39 @@ export default function TrainingWeeksCard({
               )}
             </svg>
             {/* One button per bar, laid over it: the whole column is the
-                target, not the sliver of a short week's bar. */}
+                target, not the sliver of a short week's bar. The layer
+                under them follows a slide across the columns, so the
+                swipe between tabs leaves it alone (`data-no-page-swipe`). */}
             <div
-              className="absolute inset-0 grid"
+              ref={targetsRef}
+              data-testid="bar-targets"
+              data-no-page-swipe
+              className="absolute inset-0 grid touch-pan-y select-none"
               style={{ gridTemplateColumns: `repeat(${bins.length}, 1fr)` }}
+              onPointerDown={onPointerDown}
+              onPointerMove={onPointerMove}
+              onPointerUp={endSlide}
+              onPointerCancel={endSlide}
             >
-              {bins.map((b) => (
+              {bins.map((b, i) => (
                 <button
                   key={b.key}
+                  ref={(el) => {
+                    buttonsRef.current[i] = el;
+                  }}
                   type="button"
+                  tabIndex={b.key === selected.key ? 0 : -1}
                   aria-pressed={b.key === selected.key}
                   aria-label={`${binPhrase(b, granularity)}: ${describe(amount(b))}, ${countText(b)}`}
                   onClick={() => {
-                    setPicked(b.key);
-                    onPick?.(b);
+                    if (
+                      performance.now() - slideEndedAtRef.current <
+                      SLIDE_CLICK_MS
+                    )
+                      return;
+                    pick(b);
                   }}
+                  onKeyDown={(e) => onKeyDown(e, i)}
                   className="rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
                 />
               ))}
@@ -216,7 +340,9 @@ export default function TrainingWeeksCard({
                     i === bins.length - 1 && every > 1 && "text-right"
                   )}
                 >
-                  {shown ? summaryBinLabel(b, granularity) : ""}
+                  {shown
+                    ? summaryAxisLabel(b, granularity, i === firstLabelled)
+                    : ""}
                 </span>
               );
             })}

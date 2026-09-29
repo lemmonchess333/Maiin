@@ -123,6 +123,43 @@ describe("usePaceInsightFromRuns — dismissal is UID-scoped", () => {
     const b = renderHook(() => usePaceInsightFromRuns([run()]));
     expect(b.result.current.insight).toEqual(INSIGHT);
   });
+
+  /* The case above switches accounts on a FRESH mount, so nothing A did in
+     memory could reach B. These switch on the SAME mount — a surface that
+     stays up across a sign-in — where a dismissal held in state, or a
+     stored one read once, would otherwise carry over. */
+  const switchToB = () => {
+    authState.user = { uid: "B" };
+    authState.profile = { uid: "B", runFitness: { vdot: 42 } };
+    fbAuth.currentUser = { uid: "B" };
+  };
+
+  it("a dismissal made on this mount does not follow an account switch", () => {
+    const { result, rerender } = renderHook(() =>
+      usePaceInsightFromRuns([run()])
+    );
+    expect(result.current.insight).toEqual(INSIGHT);
+    act(() => result.current.dismiss());
+    expect(result.current.insight).toBeNull();
+
+    switchToB();
+    rerender();
+    expect(result.current.insight).toEqual(INSIGHT);
+  });
+
+  it("the stored dismissal is read for the account now signed in", () => {
+    window.localStorage.setItem("tropos.dismiss.paceInsight:A", "45");
+    const { result, rerender } = renderHook(() =>
+      usePaceInsightFromRuns([run()])
+    );
+    // A dismissed this suggestion on an earlier visit.
+    expect(result.current.insight).toBeNull();
+
+    // B never did: A's stored dismissal must not answer for B.
+    switchToB();
+    rerender();
+    expect(result.current.insight).toEqual(INSIGHT);
+  });
 });
 
 describe("usePaceInsightFromRuns — accept is honest", () => {

@@ -5688,8 +5688,9 @@ exports.onActivityCreated = functions
     // populate follower feeds.
     if (!authorId) return;
     try {
+      const firestore = admin.firestore();
       const fanoutResult = await socialFanout.fanoutActivityToFeeds({
-        firestore: admin.firestore(),
+        firestore,
         activityId,
         authorId,
         activityData: data,
@@ -5700,6 +5701,21 @@ exports.onActivityCreated = functions
         authorId,
         fanned: fanoutResult.fanned,
       });
+      // A post taken back while this ran (the finish screen's Undo comes
+      // seconds after the post) can have had its delete trigger look for
+      // copies before these were written. Read after the writes: either
+      // this sees the post gone and removes them, or the delete lands
+      // later and onActivityDeleted finds them.
+      if (fanoutResult.fanned > 0 && !(await snap.ref.get()).exists) {
+        const { removed } = await socialFanout.removeActivityFromFeeds({
+          firestore,
+          activityId,
+        });
+        functions.logger.info("onActivityCreated.withdrawn_during_fanout", {
+          activityId,
+          removed,
+        });
+      }
     } catch (err) {
       functions.logger.error("onActivityCreated.fanout_error", {
         activityId,
@@ -5707,6 +5723,40 @@ exports.onActivityCreated = functions
         message: err.message,
       });
     }
+  });
+
+/**
+ * Takes a deleted post out of every feed it was copied into: the finish
+ * screen's Undo, deleting the session a post came from, and the account
+ * deletion executor all delete `activities/{id}`, and each copy left behind
+ * points at a post the rules no longer let anyone read.
+ *
+ * No account-deletion guard, unlike onWorkoutDeleted / onRunDeleted: those
+ * write, and could re-create what the executor erased. This only deletes
+ * copies of a post that is already gone, which can only shrink what the
+ * executor has to erase.
+ */
+exports.onActivityDeleted = functions
+  .runWith(TRIGGER_CAP)
+  .firestore.document("activities/{activityId}")
+  .onDelete(async (_snap, context) => {
+    const { activityId } = context.params;
+    try {
+      const { removed } = await socialFanout.removeActivityFromFeeds({
+        firestore: admin.firestore(),
+        activityId,
+      });
+      functions.logger.info("onActivityDeleted.feed_copies_removed", {
+        activityId,
+        removed,
+      });
+    } catch (err) {
+      functions.logger.error("onActivityDeleted.error", {
+        activityId,
+        message: err.message,
+      });
+    }
+    return null;
   });
 
 /**

@@ -192,7 +192,7 @@ test.describe("app screenshots", () => {
       await page.evaluate(() =>
         document.documentElement.classList.remove("dark")
       );
-      // Symmetry with the dark shot below: a JS-read theme (useIsDarkMode,
+      // Symmetry with the dark shot below: a JS-read theme (useMacroPalette,
       // MuscleHeatMap) needs a re-render before its colours change.
       await page.waitForTimeout(400);
       await shoot(page, `${name}-light`);

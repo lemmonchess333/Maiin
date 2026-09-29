@@ -111,36 +111,59 @@ function readLastSeenMs(uid: string | undefined): number {
   return Number.isFinite(ms) ? ms : 0;
 }
 
+/** What one subscription generation answered, keyed `uid:retryNonce`. */
+interface TrayAnswer {
+  key: string | null;
+  items: NotificationItem[];
+  /** NOTIFICATION-TRUST-01: a failed read is a DISTINCT state, not an
+   *  empty tray — the sheet renders "Notifications unavailable" + retry
+   *  instead of "No notifications yet". */
+  error: boolean;
+}
+
+const NO_ITEMS: NotificationItem[] = [];
+
 export function useNotifications() {
   const uid = useUid();
   // Same suppression the feed and the unread badge apply.
   const { blocked } = useBlockedUsers();
-  const [rawItems, setItems] = useState<NotificationItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  // NOTIFICATION-TRUST-01: a failed read is a DISTINCT state, not an
-  // empty tray — the sheet renders "Notifications unavailable" + retry
-  // instead of "No notifications yet".
-  const [error, setError] = useState(false);
-  const [lastSeenMs, setLastSeenMs] = useState<number>(0);
+  const [answer, setAnswer] = useState<TrayAnswer>({
+    key: null,
+    items: NO_ITEMS,
+    error: false,
+  });
   // Bumped on account switch AND on an explicit retry; the snapshot
   // callbacks commit only if they still own the current generation, so a
   // late callback from a torn-down listener can never write.
   const genRef = useRef(0);
   const [retryNonce, setRetryNonce] = useState(0);
 
-  // Last-seen is uid-owned; recompute when the account changes.
-  useEffect(() => {
-    setLastSeenMs(readLastSeenMs(uid ?? undefined));
-  }, [uid]);
+  // Account switch / sign-out / retry → the tray reads as an empty, loading
+  // generation from the render where the key changes, so the previous
+  // account's rows (or the failed read's error) can't linger — and signed
+  // out there are no rows at all.
+  const key = uid ? `${uid}:${retryNonce}` : null;
+  const answered = key !== null && answer.key === key;
+  const rawItems = answered ? answer.items : NO_ITEMS;
+  const error = answered && answer.error;
+  const loading = key !== null && !answered;
+
+  // Last-seen is uid-owned. The stored value is re-read when the account
+  // changes; a `markAllSeen` in this session counts only for the account
+  // that made it (and still clears the badge when storage is unavailable).
+  const storedLastSeenMs = useMemo(
+    () => readLastSeenMs(uid ?? undefined),
+    [uid]
+  );
+  const [seenNow, setSeenNow] = useState<{ uid: string | null; ms: number }>({
+    uid: null,
+    ms: 0,
+  });
+  const lastSeenMs = uid && seenNow.uid === uid ? seenNow.ms : storedLastSeenMs;
 
   useEffect(() => {
-    if (!uid) return;
+    if (!uid || !key) return;
     const myGen = ++genRef.current;
-    // Account switch / retry → expose an empty, loading generation
-    // immediately so the previous account's rows can't linger.
-    setItems([]);
-    setError(false);
-    setLoading(true);
     const q = query(
       collection(db, "notifications", uid, "items"),
       orderBy("createdAt", "desc"),
@@ -174,21 +197,17 @@ export function useNotifications() {
               ts && typeof ts.toDate === "function" ? ts.toDate() : null,
           });
         });
-        setItems(next);
-        setError(false);
-        setLoading(false);
+        setAnswer({ key, items: next, error: false });
       },
       () => {
         if (genRef.current !== myGen) return;
         // Permission/network error → a TRUTHFUL unavailable state, not a
         // silent empty tray. The sheet offers a retry.
-        setItems([]);
-        setError(true);
-        setLoading(false);
+        setAnswer({ key, items: NO_ITEMS, error: true });
       }
     );
     return unsub;
-  }, [uid, retryNonce]);
+  }, [uid, retryNonce, key]);
 
   // An unavailable read has no countable rows — don't surface a stale
   // unread badge over an error.
@@ -221,7 +240,7 @@ export function useNotifications() {
     const now = new Date();
     // Storage unavailable — in-memory state still clears the badge.
     writeString(lastSeenKey(uid), now.toISOString());
-    setLastSeenMs(now.getTime());
+    setSeenNow({ uid, ms: now.getTime() });
   }, [uid]);
 
   /** Re-subscribe after a failed read — bumps the generation, hides the

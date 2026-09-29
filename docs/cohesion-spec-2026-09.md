@@ -264,7 +264,8 @@ are now held by a test rather than by this document.
 **Left alone, on purpose:** the run HUD overlays (`RunResumePrompt`'s
 white-on-scrim eyebrows, the `RouteFollowChip` / `BackToStartChip` /
 `GhostDeltaChip` scrim chips) — §7's fullscreen-HUD exception; the
-`CalorieRing` "kcal left" flip chip (a control); the Login "or" divider;
+`CalorieRing` "kcal left" flip chip (a control; since made plain text, owner
+call 2026-09-29, DS3's STATUS lines); the Login "or" divider;
 `Diagnostics` and `AdminModeration` (operator routes); the dev labs.
 
 ### Batch 3 — evidence and verification

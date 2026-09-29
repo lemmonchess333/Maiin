@@ -15,6 +15,10 @@ import {
   waitFor,
 } from "@testing-library/react";
 
+const h = vi.hoisted(() => ({
+  profile: { displayName: "Sam", uid: "viewer" } as Record<string, unknown>,
+}));
+
 vi.mock("firebase/firestore");
 vi.mock("@/lib/firebase", () => ({ db: {} }));
 vi.mock("@/lib/haptic", () => ({ haptic: vi.fn() }));
@@ -24,7 +28,7 @@ vi.mock("@/lib/toast", () => ({
 vi.mock("@/lib/auth", () => ({
   useAuth: () => ({
     user: { uid: "viewer", emailVerified: true },
-    profile: { displayName: "Sam", uid: "viewer" },
+    profile: h.profile,
   }),
   useUid: () => "viewer",
 }));
@@ -84,8 +88,75 @@ function renderComposer(props: {
   );
 }
 
-beforeEach(() => resetFirestore());
+beforeEach(() => {
+  resetFirestore();
+  h.profile = { displayName: "Sam", uid: "viewer" };
+});
 afterEach(() => cleanup());
+
+/** Types a body, posts, and returns the post document. */
+async function postAndRead(): Promise<Record<string, unknown>> {
+  fireEvent.change(screen.getByLabelText("Post body"), {
+    target: { value: "Morning loop." },
+  });
+  fireEvent.click(screen.getByRole("button", { name: "Post to space" }));
+  await waitFor(() =>
+    expect(
+      allPaths().some((p) => p.startsWith("spaces/womens-running/posts/"))
+    ).toBe(true)
+  );
+  return readDoc(
+    allPaths().find((p) => p.startsWith("spaces/womens-running/posts/"))!
+  )!;
+}
+
+describe("SpacePostComposer — a run's route", () => {
+  /* Twenty points due north, about 280 m apart: the shape the run
+     history's sampled preview has. The first and last are where the run
+     started and finished, which for most runs is the runner's door. */
+  const ROUTE = Array.from({ length: 20 }, (_, i) => ({
+    lat: 51.5 + i * 0.0025,
+    lon: -0.12,
+  }));
+  const ROUTED_RUN: RecentSession = {
+    kind: "run",
+    run: { ...(RUN as { run: object }).run, routePreview: ROUTE },
+  } as RecentSession;
+
+  function routeOf(post: Record<string, unknown>) {
+    return (post.activity as { routePreview?: { lat: number }[] })
+      .routePreview!;
+  }
+
+  it("leaves out the start and the finish, as a shared run in the feed does", async () => {
+    // Space posts can be read by any signed-in account, so the privacy
+    // setting's default (ends hidden) applies here too.
+    renderComposer({ sessions: [ROUTED_RUN], attachLatest: true });
+    const route = routeOf(await postAndRead());
+
+    expect(route.length).toBeGreaterThan(1);
+    expect(route[0].lat).toBeGreaterThan(ROUTE[0].lat);
+    expect(route.at(-1)!.lat).toBeLessThan(ROUTE.at(-1)!.lat);
+  });
+
+  it("hides the ends when the setting is on", async () => {
+    h.profile = { ...h.profile, hideSharedRouteEnds: true };
+    renderComposer({ sessions: [ROUTED_RUN], attachLatest: true });
+    const route = routeOf(await postAndRead());
+
+    expect(route[0].lat).toBeGreaterThan(ROUTE[0].lat);
+    expect(route.at(-1)!.lat).toBeLessThan(ROUTE.at(-1)!.lat);
+  });
+
+  it("keeps the whole route when the runner has turned the setting off", async () => {
+    h.profile = { ...h.profile, hideSharedRouteEnds: false };
+    renderComposer({ sessions: [ROUTED_RUN], attachLatest: true });
+    const route = routeOf(await postAndRead());
+
+    expect(route[0]).toEqual(ROUTE[0]);
+    expect(route.at(-1)).toEqual(ROUTE.at(-1));
+  });
+});
 
 describe("SpacePostComposer — attachLatest", () => {
   it("attaches the newest session, and the post carries it", async () => {

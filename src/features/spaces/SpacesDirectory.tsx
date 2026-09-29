@@ -41,7 +41,7 @@ import {
   Zap,
   type LucideIcon,
 } from "lucide-react";
-import SectionLabel from "@/components/ui/SectionLabel";
+import SectionHeading from "@/components/ui/SectionHeading";
 import { THEME } from "@/lib/theme";
 import { spaceEditorialImage } from "@/lib/editorialImages";
 import { parseLocalDate } from "@/lib/dateHelpers";
@@ -228,7 +228,7 @@ function CardRow({
 }) {
   return (
     <div className="space-y-2">
-      {!hideLabel && <SectionLabel>{label}</SectionLabel>}
+      {!hideLabel && <SectionHeading>{label}</SectionHeading>}
       {/* -mx-4/px-4 bleeds the scroller to the screen edge so the
           peeking next card invites the swipe (the Runna affordance).
           data-no-page-swipe: a horizontal swipe to scroll this carousel
@@ -284,7 +284,7 @@ export default function SpacesDirectory({
       )}
       {showRaces && (
         <section className="space-y-2" aria-label="Races & events">
-          <SectionLabel>Races & events</SectionLabel>
+          <SectionHeading>Races & events</SectionHeading>
           <RaceFilters value={filters} onChange={setFilters} />
           {races.length > 0 ? (
             <CardRow

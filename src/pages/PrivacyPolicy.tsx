@@ -107,7 +107,9 @@ export default function PrivacyPolicy() {
                 If you choose to add progress photos, they are encrypted on your
                 device with AES-GCM before they are uploaded, so they are never
                 stored as plain image files. See section 3 for what that does
-                and does not mean.
+                and does not mean. If you share one, the image is made on your
+                device and goes only where you send it from your phone&apos;s
+                share sheet; Tropos does not post it anywhere.
               </li>
               <li>
                 <strong className="text-foreground">

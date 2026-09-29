@@ -112,4 +112,57 @@ describe("useGoalSpaces — CIRCLE-INDEX-TRUST-01 generation guard", () => {
     });
     expect(result.current.circles.map((c) => c.space.id)).toEqual(["B"]);
   });
+
+  it("an account switch reads as loading from its first render — never the previous account's Circles", async () => {
+    /* The list is stamped with the account it was read for. Every render
+       is recorded, so a list cleared only after the switch COMMITTED
+       (the old effect-time reset) still fails: that commit showed the
+       previous account's Circle titles. */
+    seedFirestore({
+      [`${JOURNEYS}/link1`]: { goalSpaceId: "A" },
+      "goalSpaces/A": { id: "A", ownerId: "me", createdAt: 1 },
+      "users/other/journeys/link1": { goalSpaceId: "B" },
+      "goalSpaces/B": { id: "B", ownerId: "other", createdAt: 2 },
+    });
+    const seen: { uid: string; ids: string[]; loading: boolean }[] = [];
+    const { result, rerender } = renderHook(
+      ({ uid }: { uid: string }) => {
+        const v = useGoalSpaces(uid);
+        seen.push({
+          uid,
+          ids: v.circles.map((c) => c.space.id),
+          loading: v.loading,
+        });
+        return v;
+      },
+      { initialProps: { uid: "me" } }
+    );
+    // POSITIVE anchor: the first account's list is showing.
+    await waitFor(() =>
+      expect(result.current.circles.map((c) => c.space.id)).toEqual(["A"])
+    );
+
+    // Hold the second account's read, so the switch is observed before
+    // anything of its own could land.
+    deferReads();
+    const from = seen.length;
+    rerender({ uid: "other" });
+    await waitFor(() =>
+      expect(pendingReads()).toEqual(["users/other/journeys"])
+    );
+    const underOther = seen.slice(from);
+    expect(underOther.length).toBeGreaterThan(0);
+    for (const render of underOther) {
+      expect(render).toEqual({ uid: "other", ids: [], loading: true });
+    }
+
+    // Then its own list, once its read lands.
+    resumeReads();
+    await act(async () => {
+      expect(releaseRead(0)).toBe(true);
+    });
+    await waitFor(() =>
+      expect(result.current.circles.map((c) => c.space.id)).toEqual(["B"])
+    );
+  });
 });

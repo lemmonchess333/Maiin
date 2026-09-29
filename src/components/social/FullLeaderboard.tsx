@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { ChevronLeft, Zap } from "lucide-react";
 import { THEME } from "@/lib/theme";
 import { useAuth } from "../../lib/auth";
@@ -36,59 +36,71 @@ const TABS = TAB_ORDER.map((key) => ({
   unit: CHALLENGE_LABELS[key].unit,
 }));
 
+/** One board's entries with activity this week, each named from the
+ *  cross-user-readable `users/{uid}/public/profile` — pre-W1d this read
+ *  `users/{uid}` (owner-only), which silently failed for everyone except
+ *  the current user and left them all rendered as "Athlete". */
+async function loadEntries(
+  uid: string,
+  type: ChallengeType
+): Promise<EnrichedEntry[]> {
+  const raw = await buildLeaderboard(uid, type);
+  const enriched = await Promise.all(
+    raw.map(async (e) => {
+      try {
+        const snap = await getDoc(doc(db, "users", e.uid, "public", "profile"));
+        const data = snap.data() as
+          | { displayName?: string; photoURL?: string }
+          | undefined;
+        return {
+          ...e,
+          name: data?.displayName || (e.uid === uid ? "You" : "Athlete"),
+          photoURL: data?.photoURL,
+        } as EnrichedEntry;
+      } catch {
+        return {
+          ...e,
+          name: e.uid === uid ? "You" : "Athlete",
+        } as EnrichedEntry;
+      }
+    })
+  );
+  return enriched.filter((e) => e.value > 0);
+}
+
 export default function FullLeaderboard({ onBack }: { onBack: () => void }) {
   const { user, profile } = useAuth();
   const [activeTab, setActiveTab] = useState<ChallengeType>("weekly_hybrid");
-  const [entries, setEntries] = useState<EnrichedEntry[]>([]);
-  const [loading, setLoading] = useState(true);
 
-  // Source from `users/{uid}/public/profile` (cross-user readable) —
-  // pre-W1d this read `users/{uid}` (owner-only), which silently
-  // failed for everyone except the current user and left them all
-  // rendered as "Athlete".
-  const load = useCallback(async () => {
-    if (!user) return;
-    setLoading(true);
-    try {
-      const raw = await buildLeaderboard(user.uid, activeTab);
-      const enriched = await Promise.all(
-        raw.map(async (e) => {
-          try {
-            const snap = await getDoc(
-              doc(db, "users", e.uid, "public", "profile")
-            );
-            const data = snap.data() as
-              | { displayName?: string; photoURL?: string }
-              | undefined;
-            return {
-              ...e,
-              name:
-                data?.displayName || (e.uid === user.uid ? "You" : "Athlete"),
-              photoURL: data?.photoURL,
-            } as EnrichedEntry;
-          } catch {
-            return {
-              ...e,
-              name: e.uid === user.uid ? "You" : "Athlete",
-            } as EnrichedEntry;
-          }
-        })
-      );
-      setEntries(enriched.filter((e) => e.value > 0));
-    } finally {
-      setLoading(false);
-    }
-  }, [user, activeTab]);
+  /* The loaded board, stamped with the account and tab it was built for.
+     `loading` and `entries` are derived from it, so a tab switch reads as
+     loading from the new tab's first render, and a slower read for a tab
+     already left can't land under the one on screen. A failed read
+     settles as an empty board rather than keeping the previous tab's. */
+  const boardKey = user ? `${user.uid}:${activeTab}` : null;
+  const [board, setBoard] = useState<{
+    key: string;
+    entries: EnrichedEntry[];
+  } | null>(null);
+  const settledBoard = board !== null && board.key === boardKey ? board : null;
+  const loading = settledBoard === null;
+  const entries = settledBoard?.entries ?? [];
 
   useEffect(() => {
+    if (!user || boardKey === null) return;
     let cancelled = false;
-    load().catch(() => {
-      if (cancelled) return;
-    });
+    loadEntries(user.uid, activeTab).then(
+      (loaded) => {
+        if (!cancelled) setBoard({ key: boardKey, entries: loaded });
+      },
+      () => {
+        if (!cancelled) setBoard({ key: boardKey, entries: [] });
+      }
+    );
     return () => {
       cancelled = true;
     };
-  }, [load]);
+  }, [user, activeTab, boardKey]);
 
   const currentUnit = TABS.find((t) => t.key === activeTab)?.unit || "pts";
 

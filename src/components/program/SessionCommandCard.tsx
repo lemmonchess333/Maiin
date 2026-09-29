@@ -54,7 +54,10 @@ interface SessionCommandCardProps {
   primaryActionVariant?: ButtonVariant;
   onManage?: () => void;
   /** A picture of the session, drawn at the right of the title in place
-   *  of the sport icon tile. Lift passes the day's muscles. */
+   *  of the sport icon tile. Lift passes the day's muscles. Hidden from
+   *  screen readers like the tile, since the title names the day: the
+   *  muscle figure's own label speaks of muscles trained, which a day not
+   *  yet done has not been. */
   figure?: ReactNode;
   /** The tile's glyph when there is no figure: a run passes its type's
    *  (`runTemplateIcon`). Defaults to the sport's own icon. */
@@ -92,14 +95,30 @@ export default function SessionCommandCard({
     >
       <div className="relative space-y-4 p-4">
         <div className="flex items-start gap-3">
+          {/* The description and the dose sit under the title, beside the
+              picture: below it, a lift day's figure (taller than two lines
+              of heading) left an empty band between the title and
+              "~57 min". */}
           <div className="flex-1 min-w-0">
             <p className={cn("text-sm font-bold", accentText)}>{eyebrow}</p>
             <h3 className="mt-1 text-h2 font-extrabold leading-tight tracking-tight text-foreground text-balance">
               {title}
             </h3>
+            {description && (
+              <p className="mt-2 text-sm text-muted-foreground">
+                <InlineNumerals>{description}</InlineNumerals>
+              </p>
+            )}
+            {meta.length > 0 && (
+              <div className="mt-2">
+                <MetaLine items={meta} />
+              </div>
+            )}
           </div>
           {figure ? (
-            <div className="shrink-0 -my-1">{figure}</div>
+            <div className="shrink-0 -my-1" aria-hidden="true">
+              {figure}
+            </div>
           ) : (
             <div
               className={cn(
@@ -121,13 +140,6 @@ export default function SessionCommandCard({
             />
           )}
         </div>
-
-        {description && (
-          <p className="text-sm text-muted-foreground">
-            <InlineNumerals>{description}</InlineNumerals>
-          </p>
-        )}
-        {meta.length > 0 && <MetaLine items={meta} />}
 
         {primaryActionLabel && onPrimaryAction && (
           <Button

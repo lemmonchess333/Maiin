@@ -173,7 +173,37 @@ export interface SetPR {
   bucket: RepBucket;
   weight: number;
   reps: number;
+  /** The best this set had to beat, which can be an earlier set of the
+   *  same session. */
   previousBest: ExercisePR | null;
+  /** Session-only: the exercise's best as the session started. The finish
+   *  screen sums the session up against it, since `previousBest` after a
+   *  few rising sets is only the set before. */
+  bestBeforeSession?: ExercisePR | null;
+}
+
+/** The exercise's best set across its rep ranges, by estimated one-rep
+ *  max: the set a new best has to beat. */
+export function exerciseBest(
+  prMap: PRMap,
+  exerciseName: string
+): ExercisePR | null {
+  return Object.values(prMap[exerciseName] ?? {}).reduce<ExercisePR | null>(
+    (best, record) => {
+      if (
+        !record ||
+        !Number.isFinite(record.weight) ||
+        !Number.isFinite(record.reps)
+      )
+        return best;
+      return !best ||
+        epley1RMExact(record.weight, record.reps) >
+          epley1RMExact(best.weight, best.reps)
+        ? record
+        : best;
+    },
+    null
+  );
 }
 
 /** Keep rep-range history independently of whether the set earns recognition. */
@@ -221,21 +251,7 @@ export function checkSetPR(
   if ((sessionCounts[exerciseName] || 0) < minSessions) return null;
   const bucket = getRepBucket(reps);
   const current = prMap[exerciseName]?.[bucket];
-  const previousBest = Object.values(
-    prMap[exerciseName] ?? {}
-  ).reduce<ExercisePR | null>((best, record) => {
-    if (
-      !record ||
-      !Number.isFinite(record.weight) ||
-      !Number.isFinite(record.reps)
-    )
-      return best;
-    return !best ||
-      epley1RMExact(record.weight, record.reps) >
-        epley1RMExact(best.weight, best.reps)
-      ? record
-      : best;
-  }, null);
+  const previousBest = exerciseBest(prMap, exerciseName);
   if (
     previousBest &&
     epley1RMExact(weight, reps) >

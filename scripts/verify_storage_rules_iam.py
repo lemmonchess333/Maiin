@@ -14,6 +14,7 @@ grants a role, and never prints credentials or HTTP error bodies.
 """
 
 import argparse
+import http.client
 import json
 import os
 from pathlib import Path
@@ -40,6 +41,12 @@ GRANT_COMMAND = (
     '  --role="' + ROLE + '"'
 )
 
+# Failures a later run can clear: the request did not complete, or Google
+# was busy or failing. No role or setting change fixes them.
+TRANSIENT = re.compile(r"network-unavailable|http-(408|429|5\d\d)")
+# gcloud gave no token, or Google refused the one it gave.
+CREDENTIALS = ("credentials-unavailable", "missing-credentials", "http-401")
+
 
 class VerificationError(Exception):
     """Messages are fixed, safe diagnostic codes, never remote content."""
@@ -53,7 +60,7 @@ class NoRedirect(urllib.request.HTTPRedirectHandler):
 def _body(error):
     try:
         return error.read(65536) or b""
-    except (OSError, ValueError, AttributeError):
+    except (OSError, ValueError, AttributeError, http.client.HTTPException):
         return b""
 
 
@@ -83,7 +90,9 @@ def make_client(token):
             if error.code == 403 and b"SERVICE_DISABLED" in _body(error):
                 raise VerificationError("api-disabled") from None
             raise VerificationError(f"http-{error.code}") from None
-        except (urllib.error.URLError, TimeoutError):
+        except (OSError, http.client.HTTPException):
+            # No connection, a timeout, or the connection lost while the body
+            # was being read (a reset, or a body cut short).
             raise VerificationError("network-unavailable") from None
         except (ValueError, UnicodeError):
             raise VerificationError("invalid-json") from None
@@ -161,15 +170,26 @@ def report(result, project):
         ]
     else:
         reason = result.get("reason", "unknown")
+        command = None
+        rerun = "If this stopped a release, re-run Deploy production afterwards."
         if reason == "api-disabled":
             fix = "Enable the Cloud Resource Manager API, which serves the policy read"
             command = f"gcloud services enable cloudresourcemanager.googleapis.com --project {project}"
-        else:
+        elif reason == "http-403":
             fix = (
                 "Give the deploy service account read access to IAM policies, for example "
                 "`roles/iam.securityReviewer`"
             )
-            command = None
+        elif TRANSIENT.fullmatch(reason):
+            fix = "This is usually temporary and needs no change. Re-run the check"
+            rerun = "If this stopped a release, re-run Deploy production."
+        elif reason in CREDENTIALS:
+            fix = (
+                "gcloud gave no access token that Google accepts. Check the authentication step "
+                "before this one and the `FIREBASE_SERVICE_ACCOUNT` key it uses"
+            )
+        else:
+            fix = "This is not a missing permission, so look into the reason before changing any role"
         print(
             "::error title=Storage rules permission unconfirmed::Could not read the project's IAM "
             f"policy ({reason}). {fix.replace('`', '')}."
@@ -182,7 +202,7 @@ def report(result, project):
         ]
         if command:
             lines += ["", "```bash", command, "```"]
-        lines += ["", "If this stopped a release, re-run Deploy production afterwards."]
+        lines += ["", rerun]
     for line in lines[3:]:
         print(line)
     summary_path = os.environ.get("GITHUB_STEP_SUMMARY")

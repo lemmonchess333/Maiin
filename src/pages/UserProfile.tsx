@@ -45,7 +45,6 @@ import { THEME } from "../lib/theme";
 import { sumLifetimeRunTotals } from "../lib/runStatsEligibility";
 import Avatar from "../components/Avatar";
 import ReportModal from "../components/social/ReportModal";
-import ProgressPhotos from "../components/social/ProgressPhotos";
 import { ConfirmDialog } from "../components/ui/ConfirmDialog";
 import { Spinner } from "../components/ui/Spinner";
 import { distanceLabel } from "@/lib/runLabels";
@@ -92,16 +91,23 @@ export default function UserProfile() {
   const [trainingForSpaceId, setTrainingForSpaceId] = useState<string | null>(
     null
   );
-  const [statsLoading, setStatsLoading] = useState(true);
+  /* The (viewer, profile) pair whose reads below have all settled. The
+     stats skeleton is derived from it: the page stays mounted across a
+     /user/:uid change, so another profile shows the skeleton from its
+     very first render, and a slower set of reads for the profile just
+     left can't clear the flag early. */
+  const statsKey = uid ? `${viewerUid ?? ""}:${uid}` : null;
+  const [statsSettledFor, setStatsSettledFor] = useState<string | null>(null);
+  const statsLoading = statsKey === null || statsSettledFor !== statsKey;
 
   useEffect(() => {
-    if (!uid) return;
+    if (!uid || statsKey === null) return;
+    let cancelled = false;
     // Derive own-profile branch inside the effect so it re-evaluates if the
     // signed-in user changes. Matches the isOwnProfile derivation below for
     // render-time gating, but we can't use that binding here — it's declared
     // after this effect.
     const isOwnProfile = viewerUid === uid;
-    setStatsLoading(true);
 
     // NOTE: users/{uid} is doc-level owner-only per firestore.rules:55-56, so
     // this read succeeds only for the viewer's own profile. For cross-user
@@ -309,9 +315,12 @@ export default function UserProfile() {
       badgesPromise,
       ownStatsPromise,
     ]).finally(() => {
-      setStatsLoading(false);
+      if (!cancelled) setStatsSettledFor(statsKey);
     });
-  }, [uid, viewerUid]);
+    return () => {
+      cancelled = true;
+    };
+  }, [uid, viewerUid, statsKey]);
 
   const isOwnProfile = viewerUid === uid;
 
@@ -497,25 +506,6 @@ export default function UserProfile() {
           <Flame size={14} className="text-streak inline" />{" "}
           <strong className="text-foreground">{streak}-day</strong> streak
         </p>
-      )}
-
-      {/* Progress Photos — own-profile only. Moved here from the
-          Social page (used to be a top-level tab) because progress
-          photos are private/personal artefacts that belong with the
-          owner's stats and activity history, not in a public-facing
-          social destination. The component handles upload, encryption,
-          and the compare/empty states internally.
-
-          No heading here. `ProgressPhotos` renders its own "Progress
-          Vault" title, and this wrapper <h3> read "Progress photos" at
-          the same size ~37px above it — one section announcing itself
-          twice, in two registers, disagreeing about its own name. The
-          section's aria-label still names the region for assistive
-          tech. */}
-      {isOwnProfile && (
-        <section aria-label="Progress photos">
-          <ProgressPhotos />
-        </section>
       )}
 
       <h3 className="text-sm font-semibold">Activity</h3>

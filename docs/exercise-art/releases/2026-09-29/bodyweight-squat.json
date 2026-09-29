@@ -1,0 +1,170 @@
+{
+  "exerciseId": "bodyweight-squat",
+  "version": "anatomy-v3-2026-09-29",
+  "width": 1024,
+  "height": 1536,
+  "decision": "approved",
+  "reviewer": "Codex visual and implementation review",
+  "reviewedAt": "2026-09-29T09:41:32.639Z",
+  "reference": {
+    "path": "form-frames/bodyweight-squat/1.webp",
+    "sha256": "2c88d297b6b7a8c2d326eea2d98e7e313fc6c1d105fdb9bc3c8eb191cc6fdf00"
+  },
+  "cueSha256": "6d06a0fa98456cbaf48f7efb6703d2ab9c708b9556040bb44de70163fa7563f2",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Canonical anatomy-v3 bald faceless white-grey athlete, fine contours, featureless pelvis and white trainers retained in all selected poses."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Fixed three-quarter view and native 1024x1536 canvas; full outstretched arms, head and shoes remain in frame. No resizing or reframing of selected sources."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Hips and knees flex together to a roughly parallel thigh position, then extend to the original upright pose. Arms remain extended for balance; no obvious joint disconnection or implausible torso collapse. The early pose is a partial descent, not a claimed midpoint angle."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Bodyweight variation has no added equipment; white trainers retain their shape and ground placement."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Lower planted shoe portions in bottom frames 3/4 copied from the master using rectangles [250,1320,505,1415] and [500,1370,735,1460]. Native seam inspection passed; ankle, shin and moving anatomy untouched. Provenance proves zero changed pixels outside the rectangles."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Heels stay planted while hips descend and rise. Minimum-RGB 150 scanlines measure maximum fixed-shoe anchor drift below 0.21px and span drift below 0.20 percent. Fixed-contact measurements do not certify moving joint geometry."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Quads use the strongest violet; glutes and core use lighter lilac. Remaining pale support shading does not compete with the main muscle hierarchy."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Six cues of at most seven words match shoulder-width setup, partial lowering, roughly parallel bottom, knee tracking, whole-foot drive and upright reset."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "Manually stepped all six frames and 6-to-1 loop in actual ExerciseFormFrames on main58762ef on 2026-09-29. Sequence master/early/bottom/hold/early/master deliberately reuses 4=3,5=2,6=1. No continuous timed-playback claim."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "All six plus loop visually reviewed at 390x844 in current light-theme ExerciseFormFrames, native images 1024x1536 and document width390. Full figure, fixed shoes, muscle hierarchy and all cues visible. Preview serves the current Jakarta/Archivo font CSS without font access errors."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "All six plus loop visually reviewed at 390x844 in current dark-theme ExerciseFormFrames with mix-blend-lighten. No visible shoe seams, moving floor contacts, clipping or unreadable cues; the black stage preserves clear figure contours."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/bodyweight-squat/1.webp",
+      "sha256": "2c88d297b6b7a8c2d326eea2d98e7e313fc6c1d105fdb9bc3c8eb191cc6fdf00",
+      "anchors": {
+        "leftShoe": {
+          "x": 268.5603448275862,
+          "y": 1350
+        },
+        "rightShoe": {
+          "x": 523.33,
+          "y": 1400
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeSpan": 220.02238898536342,
+        "rightShoeSpan": 178.62
+      }
+    },
+    {
+      "path": "form-frames/bodyweight-squat/2.webp",
+      "sha256": "73715819ad4e698d64aa57d1f1f5291403f287933834e55681285c0b365531a0",
+      "anchors": {
+        "leftShoe": {
+          "x": 268.6190476190476,
+          "y": 1350
+        },
+        "rightShoe": {
+          "x": 523.1264367816092,
+          "y": 1400
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeSpan": 219.5971685971686,
+        "rightShoeSpan": 178.32238211602862
+      }
+    },
+    {
+      "path": "form-frames/bodyweight-squat/3.webp",
+      "sha256": "396235c93e530b6a669d75f03b70d95481ba0963eae3ea6c9bb97d1a14dc6c5a",
+      "anchors": {
+        "leftShoe": {
+          "x": 268.5603448275862,
+          "y": 1350
+        },
+        "rightShoe": {
+          "x": 523.33,
+          "y": 1400
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeSpan": 220.02238898536342,
+        "rightShoeSpan": 178.62
+      }
+    },
+    {
+      "path": "form-frames/bodyweight-squat/4.webp",
+      "sha256": "396235c93e530b6a669d75f03b70d95481ba0963eae3ea6c9bb97d1a14dc6c5a",
+      "anchors": {
+        "leftShoe": {
+          "x": 268.5603448275862,
+          "y": 1350
+        },
+        "rightShoe": {
+          "x": 523.33,
+          "y": 1400
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeSpan": 220.02238898536342,
+        "rightShoeSpan": 178.62
+      }
+    },
+    {
+      "path": "form-frames/bodyweight-squat/5.webp",
+      "sha256": "73715819ad4e698d64aa57d1f1f5291403f287933834e55681285c0b365531a0",
+      "anchors": {
+        "leftShoe": {
+          "x": 268.6190476190476,
+          "y": 1350
+        },
+        "rightShoe": {
+          "x": 523.1264367816092,
+          "y": 1400
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeSpan": 219.5971685971686,
+        "rightShoeSpan": 178.32238211602862
+      }
+    },
+    {
+      "path": "form-frames/bodyweight-squat/6.webp",
+      "sha256": "2c88d297b6b7a8c2d326eea2d98e7e313fc6c1d105fdb9bc3c8eb191cc6fdf00",
+      "anchors": {
+        "leftShoe": {
+          "x": 268.5603448275862,
+          "y": 1350
+        },
+        "rightShoe": {
+          "x": 523.33,
+          "y": 1400
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeSpan": 220.02238898536342,
+        "rightShoeSpan": 178.62
+      }
+    }
+  ]
+}

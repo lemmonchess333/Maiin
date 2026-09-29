@@ -323,7 +323,13 @@ describe("SessionCompleteScreen — what the session did (DS3)", () => {
     weight: 80,
     reps: 8,
     previousBest: { weight: 77.5, reps: 8, date: "2026-09-20" },
+    bestBeforeSession: { weight: 77.5, reps: 8, date: "2026-09-20" },
   } as unknown as SetPR;
+  const bench = {
+    ...exercise("Bench Press", 3),
+    exerciseId: "bench-press",
+    movementCategory: "horizontal_push",
+  } as ProgramExercise;
 
   function renderWith(
     props: Partial<Parameters<typeof SessionCompleteScreen>[0]>,
@@ -373,11 +379,6 @@ describe("SessionCompleteScreen — what the session did (DS3)", () => {
   });
 
   it("puts a new best in gold, with its drawing and what it beat", () => {
-    const bench = {
-      ...exercise("Bench Press", 3),
-      exerciseId: "bench-press",
-      movementCategory: "horizontal_push",
-    } as ProgramExercise;
     renderWith(
       { prResults: new Map([["Bench Press:8rm", benchBest]]) },
       [[{ reps: 8, weight: 80, completed: true, type: "working" }]],
@@ -391,6 +392,29 @@ describe("SessionCompleteScreen — what the session did (DS3)", () => {
     );
     expect(card).toHaveTextContent("Was 77.5 kg × 8");
     expect(card.querySelector('[data-thumb="drawing"]')).not.toBeNull();
+  });
+
+  it("shows a new best against the best from before the session", () => {
+    // After rising sets in one rep range, the best a set beat is the set
+    // before it. The finish sums the session up, and "Was" there reads as
+    // the best the lifter came in with, so that is the one it shows.
+    const risen = {
+      ...benchBest,
+      weight: 82.5,
+      previousBest: { weight: 80, reps: 8, date: "2026-09-28" },
+      bestBeforeSession: { weight: 75, reps: 8, date: "2026-09-20" },
+    } as SetPR;
+    renderWith(
+      { prResults: new Map([["Bench Press:8rm", risen]]) },
+      [[{ reps: 8, weight: 82.5, completed: true, type: "working" }]],
+      [bench]
+    );
+    const card = screen.getByRole("heading", {
+      name: /New bests/,
+    }).parentElement!;
+    expect(card).toHaveTextContent("82.5 kg × 8");
+    expect(card).toHaveTextContent("Was 75 kg × 8");
+    expect(card).not.toHaveTextContent("Was 80 kg × 8");
   });
 
   it("reports a first set in a rep range without the gold", () => {

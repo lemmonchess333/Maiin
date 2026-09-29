@@ -452,6 +452,29 @@ function useStreaksInternal() {
   const [runsLoaded, setRunsLoaded] = useState(false);
   const [mealsLoaded, setMealsLoaded] = useState(false);
 
+  // Account-switch reset (React "adjust state during render" idiom). Every
+  // stream above belongs to the account it was read for, so any uid change
+  // — sign-out, or A → B with no signed-out render between — drops all of
+  // it in the same render that sees the new uid. From an effect the reset
+  // would land a commit late: that commit would render the previous
+  // account's streak, and with its loaded flags still true the badge and
+  // persist effects would run against A's rows under B's uid. Cleared
+  // here, the flags hold both effects off until the new account's four
+  // streams have landed. The refs are reset in the subscription effect's
+  // signed-out branch: a ref can't be written while rendering.
+  const [streamsUid, setStreamsUid] = useState(uid);
+  if (streamsUid !== uid) {
+    setStreamsUid(uid);
+    setStreakData(DEFAULT_STREAKS);
+    setWorkouts([]);
+    setRuns([]);
+    setMeals([]);
+    setStreaksDocLoaded(false);
+    setWorkoutsLoaded(false);
+    setRunsLoaded(false);
+    setMealsLoaded(false);
+  }
+
   // Reveal only confirmed awards from this account. Intent may be queued
   // before the write resolves, so reloads retain it without announcing a failed save.
   const [confirmedRevealBadges, setConfirmedRevealBadges] = useState<{
@@ -501,16 +524,10 @@ function useStreaksInternal() {
 
   useEffect(() => {
     if (!uid) {
-      // Reset state on sign-out. This branch is cleanup-only — there's no
-      // external system to sync to when the user is gone.
-      setStreakData(DEFAULT_STREAKS);
-      setWorkouts([]);
-      setRuns([]);
-      setMeals([]);
-      setStreaksDocLoaded(false);
-      setWorkoutsLoaded(false);
-      setRunsLoaded(false);
-      setMealsLoaded(false);
+      // Signed out: nothing to subscribe to. The streams were already
+      // dropped during render (the account-switch reset above); the refs
+      // are this effect's to clear, so the next account starts from a
+      // clean baseline.
       lastWrittenStreakRef.current = null;
       hasLoadedRef.current = false;
       seenEarnedRef.current = null;

@@ -44,6 +44,12 @@ const BARCODE_HINT = "Point at a barcode";
  *  motion, like the photo scan's completion beat. */
 const BARCODE_FOUND_HOLD_MS = 250;
 
+/** How long a code whose lookup could not reach the database is passed
+ *  over before it is looked up again. The reader reads a code in view
+ *  about twice a second, so without a pause the failure would repeat on
+ *  every read; after it, the product scans once the connection is back. */
+const BARCODE_RETRY_MS = 3000;
+
 /** Reads the barcode in a picked photo, on the device. A photo in Barcode
  *  mode is never an AI scan: it costs nothing and needs no Pro. Resolves
  *  null when the picture has no readable code. */
@@ -103,11 +109,21 @@ export type ScanFailureKind = "no-food" | "error" | "offline";
  */
 export type PhotoLock = { onUpgrade: () => void };
 
+/**
+ * How a barcode lookup failed: the database answered and has no such
+ * product ("not-found"), or it could not be asked ("unreachable":
+ * offline, no connection, a server error).
+ */
+export type BarcodeLookupFailure = "not-found" | "unreachable";
+
 type Props = {
   open: boolean;
   onClose: () => void;
   onCaptureBase64: (base64: string, mode: CaptureMode) => Promise<void>;
-  onBarcodeDetected: (raw: string) => Promise<void>;
+  /** Looks a read code up. A lookup that finds the product closes the
+   *  scanner; one that fails says how, which decides whether the reader
+   *  tries the same code again. */
+  onBarcodeDetected: (raw: string) => Promise<BarcodeLookupFailure | void>;
   loading: boolean;
   /** The completion beat: analysis has LANDED and the parent is holding
    *  the modal open for a few hundred ms so the scan visibly resolves —
@@ -201,18 +217,27 @@ export default function FoodCameraModal({
   const reducedMotion = useReducedMotion();
   /* Drop the held frame when the modal closes so a later scan can never
      flash the previous meal. (The component stays mounted across
-     open/close — `open` only gates the render.) */
-  useEffect(() => {
+     open/close — `open` only gates the render.) Adjusted during render
+     (React's "adjust state when a prop changes" idiom) rather than in an
+     effect. */
+  const [previewOpen, setPreviewOpen] = useState(open);
+  if (previewOpen !== open) {
+    setPreviewOpen(open);
     if (!open) setPreview(null);
-  }, [open]);
+  }
   const streamRef = useRef<MediaStream | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const stopZXingRef = useRef<null | (() => void)>(null);
-  /* A code whose lookup failed. The reader keeps scanning after a
-     failure, and without this it would read the same code straight
-     back and repeat the failed lookup for as long as it stayed in view. */
-  const lastFailedCodeRef = useRef<string | null>(null);
+  /* A code whose lookup failed, and when it may be looked up again. The
+     reader keeps scanning after a failure, and without this it would read
+     the same code straight back and repeat the failed lookup for as long
+     as it stayed in view. A product the database does not have is passed
+     over until the tab changes or the scanner reopens; a lookup that
+     could not reach the database is retried after BARCODE_RETRY_MS. */
+  const lastFailedCodeRef = useRef<{ code: string; retryAt: number } | null>(
+    null
+  );
   /* Read inside the decoder's callback, which outlives renders. */
   const reducedMotionRef = useRef(reducedMotion);
   useEffect(() => {
@@ -248,6 +273,18 @@ export default function FoodCameraModal({
   /* A code was read: the frame's corners turn orange for a beat before
      the lookup covers the screen, so the scan visibly lands. */
   const [barcodeFound, setBarcodeFound] = useState(false);
+  /* A mode switch drops what the reader last said, so the Label frame
+     never keeps the orange corners of a code found a moment ago and
+     Barcode always opens on "Point at a barcode" — including after a
+     picked photo that finished decoding while another mode was up.
+     Adjusted during render, keyed on the tab, rather than set from the
+     reader's effect. */
+  const [readerTab, setReaderTab] = useState(tab);
+  if (readerTab !== tab) {
+    setReaderTab(tab);
+    setBarcodeHint(BARCODE_HINT);
+    setBarcodeFound(false);
+  }
   /* Bumped to restart the live barcode reader after it was stopped for a
      picked photo that turned out to hold no code. */
   const [barcodeRun, setBarcodeRun] = useState(0);
@@ -369,12 +406,13 @@ export default function FoodCameraModal({
   useEffect(() => {
     if (!open) return;
 
-    // only scan when in barcode tab
+    // only scan when in barcode tab (the hint and the found beat are
+    // reset by the tab switch itself, during render — see `readerTab`)
     if (tab !== "barcode") {
       stopZXingRef.current?.();
       stopZXingRef.current = null;
-      setBarcodeHint(BARCODE_HINT);
-      setBarcodeFound(false);
+      // Coming back to Barcode looks every code up afresh.
+      lastFailedCodeRef.current = null;
       return;
     }
 
@@ -420,7 +458,9 @@ export default function FoodCameraModal({
             if (!result) return;
 
             const text = String(result.getText?.() ?? result.text ?? "").trim();
-            if (!text || text === lastFailedCodeRef.current) return;
+            const failed = lastFailedCodeRef.current;
+            if (!text || (failed?.code === text && Date.now() < failed.retryAt))
+              return;
 
             // stop after first detection
             try {
@@ -438,12 +478,21 @@ export default function FoodCameraModal({
               if (cancelled) return;
             }
 
-            await onBarcodeDetectedRef.current(text);
+            const failure = await onBarcodeDetectedRef.current(text);
             /* A successful lookup closes the scanner, which cancels this
                run. Still here means the lookup failed (the page says why):
-               scan on, past the code that just failed. */
+               scan on, past the code that just failed. A product the
+               database does not have is passed over until the tab changes;
+               any other failure is tried again after a pause, so the code
+               scans once the connection is back. */
             if (cancelled) return;
-            lastFailedCodeRef.current = text;
+            lastFailedCodeRef.current = {
+              code: text,
+              retryAt:
+                failure === "not-found"
+                  ? Infinity
+                  : Date.now() + BARCODE_RETRY_MS,
+            };
             setBarcodeHint(BARCODE_HINT);
             setBarcodeRun((n) => n + 1);
           }
@@ -1007,12 +1056,18 @@ export default function FoodCameraModal({
   );
 
   if (cameraBlocked) {
+    /* In Barcode mode a picked photo is read on the device, which every
+       account may do. In Meal or Label mode it is an AI scan, which a
+       locked account is not offered. */
+    const barcodeUpload = tab === "barcode";
     const deniedCopy =
       cameraState === "denied"
         ? "Camera access was denied. Tropos only uses the camera to scan meals and barcodes. Your photo is sent to Google for analysis and kept only on this device — never on our servers."
-        : photoLock
-          ? "No camera available right now. You can still log your meal by typing it in."
-          : "No camera available right now. You can still log your meal by uploading a photo or typing it in.";
+        : barcodeUpload
+          ? "No camera available right now. You can still log your meal by uploading a photo of its barcode or typing it in."
+          : photoLock
+            ? "No camera available right now. You can still log your meal by typing it in."
+            : "No camera available right now. You can still log your meal by uploading a photo or typing it in.";
     return (
       <div
         ref={focusTrapRef}
@@ -1073,9 +1128,9 @@ export default function FoodCameraModal({
             )}
           </div>
           <div className="w-full max-w-[320px] space-y-2 pt-2">
-            {/* A photo upload is an AI scan, so a locked account is not
-                offered one. */}
-            {!photoLock && (
+            {/* onFileChange routes by mode: a barcode photo to the reader
+                on the device, any other photo to AI analysis. */}
+            {(barcodeUpload || !photoLock) && (
               <button
                 type="button"
                 onClick={() => {
@@ -1085,7 +1140,9 @@ export default function FoodCameraModal({
                 className="w-full h-12 rounded-xl bg-nutrition-fill text-white font-medium text-sm flex items-center justify-center gap-2"
               >
                 <ImageIcon className="size-4" />
-                Upload a photo instead
+                {barcodeUpload
+                  ? "Upload a barcode photo"
+                  : "Upload a photo instead"}
               </button>
             )}
             {onRequestTypedInput && (
@@ -1100,6 +1157,15 @@ export default function FoodCameraModal({
                 <Keyboard className="size-4" />
                 Type it instead
               </button>
+            )}
+            {/* The reader's answer to a barcode photo, such as "No barcode
+                found in that photo". The camera screen shows it above the
+                frame; this screen has none. Mounted while in Barcode mode
+                so a change of text is announced. */}
+            {barcodeUpload && (
+              <p role="status" className="text-sm text-muted-foreground">
+                {barcodeHint === BARCODE_HINT ? "" : barcodeHint}
+              </p>
             )}
           </div>
         </div>

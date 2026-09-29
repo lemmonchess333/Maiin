@@ -23,7 +23,7 @@ import type {
 } from "@/features/program/programTypes";
 import type { ScheduleDay } from "@/lib/scheduleUtils";
 import type { ClaimState } from "@/lib/scheduledRunCompletion";
-import { localDateString, localWeekKey } from "@/lib/dateHelpers";
+import { addLocalDays, localDateString, localWeekKey } from "@/lib/dateHelpers";
 
 const emptyClaimMap: Map<string, ClaimState> = new Map();
 
@@ -715,27 +715,107 @@ describe("WeekStrip — the circle is a statement about the date (DS3)", () => {
   });
 
   it("says missed for a planned day that has passed, planned for today and later", () => {
-    const { container } = render(
-      <WeekStrip
-        dayMap={new Map()}
-        profile={liftWeek()}
-        programState={null}
-        claimMap={emptyClaimMap}
-        selectedDate={null}
-        onDayTap={vi.fn()}
-      />
-    );
-    const states = circleStates(container);
-    const todayIdx = Array.from(
-      container.querySelectorAll("[data-state]")
-    ).indexOf(todayCircle(container));
-    expect(states.slice(0, todayIdx).every((st) => st === "missed")).toBe(true);
-    expect(states.slice(todayIdx).every((st) => st === "planned")).toBe(true);
-    const labels = Array.from(container.querySelectorAll("button")).map(
-      (b) => b.getAttribute("aria-label") ?? ""
-    );
-    for (const label of labels.slice(0, todayIdx))
-      expect(label).toMatch(/missed lift/);
+    /* Pinned to a Wednesday so the week has days behind it. On a Monday
+       the week has no past day, and a check on the past days would check
+       nothing at all. */
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date(2026, 8, 30, 12, 0, 0));
+    try {
+      const { container } = render(
+        <WeekStrip
+          dayMap={new Map()}
+          profile={liftWeek()}
+          programState={null}
+          claimMap={emptyClaimMap}
+          selectedDate={null}
+          onDayTap={vi.fn()}
+        />
+      );
+      const states = circleStates(container);
+      const todayIdx = Array.from(
+        container.querySelectorAll("[data-state]")
+      ).indexOf(todayCircle(container));
+      // Monday and Tuesday have passed.
+      expect(todayIdx).toBe(2);
+      expect(states).toEqual([
+        "missed",
+        "missed",
+        "planned",
+        "planned",
+        "planned",
+        "planned",
+        "planned",
+      ]);
+      const labels = Array.from(container.querySelectorAll("button")).map(
+        (b) => b.getAttribute("aria-label") ?? ""
+      );
+      expect(labels[0]).toMatch(/missed lift/);
+      expect(labels[1]).toMatch(/missed lift/);
+      expect(labels[2]).toMatch(/lift day/);
+      expect(labels[2]).not.toMatch(/missed/);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("does not announce one session as two completed lifts", () => {
+    /* Lifts are split-ordered (ADR-0002), so Monday's workout can be done
+       on Tuesday. Monday's slot is then complete while Monday's circle is
+       bare, and Tuesday's circle fills. The name says what each circle
+       shows: one completed lift, on Tuesday. */
+    const wednesday = new Date(2026, 8, 30, 12, 0, 0);
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(wednesday);
+    try {
+      const tuesday = localDateString(addLocalDays(wednesday, -1));
+      const workout = (dayName: string, completed: boolean) => ({
+        dayName,
+        dayType: "push",
+        exercises: [],
+        completed,
+      });
+      const programState = {
+        ...makeProgramState([]),
+        // Slots by weekday: Monday 0, Tuesday 1, Wednesday 2.
+        workouts: [
+          workout("Push — Chest Focus", true),
+          workout("Pull — Lat Focus", false),
+          workout("Legs — Squat Focus", false),
+        ],
+      } as ProgramState;
+      const { container } = render(
+        <WeekStrip
+          dayMap={new Map()}
+          profile={makeProfile(
+            makeSchedule([
+              "rest",
+              "lift",
+              "lift",
+              "lift",
+              "rest",
+              "rest",
+              "rest",
+            ])
+          )}
+          programState={programState}
+          claimMap={emptyClaimMap}
+          selectedDate={null}
+          onDayTap={vi.fn()}
+          loggedLiftDates={new Set([tuesday])}
+        />
+      );
+      const labels = Array.from(container.querySelectorAll("button")).map(
+        (b) => b.getAttribute("aria-label") ?? ""
+      );
+      const [monday, tue] = circleStates(container);
+      expect(monday).toBe("rest");
+      expect(tue).toBe("lift-done");
+      expect(labels[1]).toMatch(/completed lift/);
+      expect(labels[0]).toMatch(/lift done on another day/);
+      expect(labels.filter((l) => /completed lift/.test(l))).toHaveLength(1);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("leaves a rest day bare", () => {

@@ -159,8 +159,11 @@ export function isEstablishingBaseline(input: {
    * docs" until 2026-08-10. Since PI1a the doc id and `weekKey` field are
    * both the COMPUTE DATE with no Sunday alignment
    * (`functions/performanceEngine.js`: `weekKey: computeKey, //
-   * semantics shifted PI1a`), and two crons write one per day. So
-   * `usePerformanceWeeks(12)` returns the last twelve DAYS.
+   * semantics shifted PI1a`), and two crons write one per day. So a count
+   * of documents is a count of compute days. `usePerformanceWeeks(n)`
+   * reads n weeks of those daily documents and keeps one per week for the
+   * points it returns; what arrives here is its `docsAvailable`, the raw
+   * number of documents it read, not the number of weeks.
    *
    * The threshold stays at 2 because what it usefully guards is "has the
    * engine produced anything at all yet" — doc count is not a clean

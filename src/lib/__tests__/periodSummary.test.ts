@@ -4,7 +4,10 @@ import {
   distanceChange,
   previousRangeLabel,
   rollingRangeLabel,
+  summaryAxisLabel,
+  summaryBinLabel,
   summaryBins,
+  summaryFirstDayKey,
   summaryGranularity,
   usualBinAmount,
   USUAL_BIN_MIN_BINS,
@@ -56,6 +59,32 @@ describe("summaryGranularity", () => {
     expect(summaryGranularity(90)).toBe("weekly");
     expect(summaryGranularity(180)).toBe("monthly");
     expect(summaryGranularity(365)).toBe("monthly");
+  });
+});
+
+describe("a month from another year", () => {
+  /* Read against the clock's own year: the label compares with it. */
+  const lastYear = new Date().getFullYear() - 1;
+  const may = { key: `${lastYear}-05-01`, current: false };
+  const june = { key: `${lastYear}-06-01`, current: false };
+
+  it("is named with its whole year when read", () => {
+    expect(summaryBinLabel(may, "monthly")).toBe(`May ${lastYear}`);
+  });
+
+  it("carries its year on the axis's first label only", () => {
+    expect(summaryAxisLabel(may, "monthly", true)).toBe(`May ${lastYear}`);
+    expect(summaryAxisLabel(june, "monthly", false)).toBe("Jun");
+  });
+
+  it("leaves weeks and the current month as they are read", () => {
+    const week = { key: `${lastYear}-12-28`, current: false };
+    expect(summaryAxisLabel(week, "weekly", false)).toBe(
+      summaryBinLabel(week, "weekly")
+    );
+    expect(
+      summaryAxisLabel({ key: may.key, current: true }, "monthly", false)
+    ).toBe("This month");
   });
 });
 
@@ -179,6 +208,30 @@ describe("summaryBins", () => {
     expect(week("2026-09-07")).toMatchObject({ volumeKg: 0, distanceM: 0 });
   });
 
+  it("fills the first bar with its whole week, days before the window included", () => {
+    /* The first bar is named "24 Aug" and read as "Week of 24 Aug", and
+       the window only starts on Saturday 29 Aug. History hands the bins
+       every session from the first bar's first day, and the bar counts
+       all of them rather than the window's two days. */
+    const since = rollingWindowStart(30, TODAY);
+    const bins = summaryBins({
+      since,
+      today: TODAY,
+      lifts: [lift("2026-08-24", 2000), lift("2026-08-29", 1000)],
+      runs: [run("2026-08-26", 8000)],
+      granularity: "weekly",
+    });
+    expect(summaryFirstDayKey(since, "weekly")).toBe("2026-08-24");
+    expect(bins[0]).toEqual({
+      key: "2026-08-24",
+      lifts: 2,
+      runs: 1,
+      volumeKg: 3000,
+      distanceM: 8000,
+      current: false,
+    });
+  });
+
   it("treats a missing or broken amount as nothing, not as NaN", () => {
     const bins = summaryBins({
       since: rollingWindowStart(7, TODAY),
@@ -193,6 +246,29 @@ describe("summaryBins", () => {
       volumeKg: 0,
       distanceM: 0,
     });
+  });
+});
+
+describe("summaryFirstDayKey", () => {
+  it("starts a week's bars on the Monday of the window's first week", () => {
+    // Monday 21 Sep at 1M: the window opens on Sunday 23 Aug, whose week
+    // is the week of 17 Aug.
+    const monday = new Date(2026, 8, 21, 12);
+    expect(summaryFirstDayKey(rollingWindowStart(30, monday), "weekly")).toBe(
+      "2026-08-17"
+    );
+  });
+
+  it("starts a year's bars on the 1st of the window's first month", () => {
+    expect(summaryFirstDayKey(rollingWindowStart(365, TODAY), "monthly")).toBe(
+      "2025-09-01"
+    );
+  });
+
+  it("starts a week of daily bars on the window's first day", () => {
+    expect(summaryFirstDayKey(rollingWindowStart(7, TODAY), "daily")).toBe(
+      "2026-09-21"
+    );
   });
 });
 

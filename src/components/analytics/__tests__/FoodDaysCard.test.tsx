@@ -15,6 +15,7 @@ const READING: FoodDaysReading = {
   protein: { met: 12, judged: 25 },
   weekendCalories: 2650,
   weekdayCalories: 2080,
+  averageProtein: 150,
 };
 
 const rowText = (label: string) =>
@@ -57,6 +58,7 @@ describe("FoodDaysCard", () => {
       protein: { met: 0, judged: 0 },
       weekendCalories: null,
       weekdayCalories: null,
+      averageProtein: null,
     };
     const { container } = render(
       <FoodDaysCard reading={bare} proteinPerKg={null} />

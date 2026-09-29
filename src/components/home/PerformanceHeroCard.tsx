@@ -20,8 +20,12 @@ interface PerformanceHeroCardProps {
   currentWeek: PerformanceWeekDoc | null;
   /** Prior week, used for the delta chip. Hidden when low-confidence. */
   previousWeek: PerformanceWeekDoc | null;
-  /** Total weeks of performance data the snapshot has delivered.
-   *  Drives the low-confidence gating (delta chip hidden when <2). */
+  /** How many performance documents the snapshot has delivered:
+   *  `usePerformanceWeeks().docsAvailable`. The documents are written per
+   *  compute day, so this counts days rather than weeks, whatever the
+   *  name says. It is `isEstablishingBaseline`'s `docsAvailable`, whose
+   *  floor of 2 asks whether the engine has written anything yet; below
+   *  it the delta chip stays hidden. */
   weeksAvailable: number;
   /** True until the perf snapshot's initial delivery. */
   loading: boolean;

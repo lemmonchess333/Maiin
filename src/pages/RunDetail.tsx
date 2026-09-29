@@ -30,7 +30,12 @@ import ShareCardSheet from "@/components/share/ShareCardSheet";
 import DeleteSessionAction from "@/components/session/DeleteSessionAction";
 import SessionLoadState from "@/components/session/SessionLoadState";
 import { useSessionDoc } from "@/hooks/useSessionDoc";
-import { distanceLabel, distanceValue, paceMinSec } from "@/lib/runLabels";
+import {
+  distanceLabel,
+  distanceValue,
+  noSplitsReason,
+  paceMinSec,
+} from "@/lib/runLabels";
 import {
   distanceUnitLabel,
   elevationUnitLabel,
@@ -125,12 +130,13 @@ export default function RunDetail() {
       ? (run.duration / run.distance) * 1000
       : 0;
 
-  // Splits are per-kilometre segments derived from the GPS trace
+  // Splits are per-lap segments derived from the GPS trace
   // (`calculateSplits` in lib/gps.ts — needs ≥2 points and at least one full
-  // km). A run legitimately has zero in three cases, so instead of a raw "0"
-  // the tile explains the actual reason: no GPS trace at all (treadmill /
-  // "track without GPS" manual runs), a run under 1 km (no km boundary
-  // crossed), or GPS present but no split data recorded.
+  // lap). A run legitimately has zero in three cases, so instead of a raw "0"
+  // the tile explains the actual reason (`noSplitsReason`): no GPS trace at
+  // all (treadmill / "track without GPS" manual runs), a run shorter than
+  // one lap (a kilometre, or a mile for a miles reader), or GPS present but
+  // no split data recorded.
   /* Mile laps are a different CUT of the run, recomputed from the trace —
      see splitsForDisplay for the no-trace fallback. */
   const { splits: displaySplits, lapUnit } = splitsForDisplay(
@@ -154,11 +160,7 @@ export default function RunDetail() {
         elevationGainMeters: run.elevationGain ?? 0,
       })
     : null;
-  const splitsEmptyReason = !hasGpsTrace
-    ? "No GPS route"
-    : run.distance < 1000
-      ? `Under ${distanceUnitLabel(unit) === "mi" ? "a mile" : "1 km"}`
-      : "No splits yet";
+  const splitsEmptyReason = noSplitsReason(hasGpsTrace, run.distance, lapUnit);
 
   const formatTime = (secs: number): string => {
     const h = Math.floor(secs / 3600);

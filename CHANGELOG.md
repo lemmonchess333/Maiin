@@ -163,6 +163,16 @@ follows [Semantic Versioning](https://semver.org/).
   (so the queue flushes) before installing an update. Changes queued by
   the updated app survive future updates normally.
 
+### Fixed
+
+- **Typed food portions log the right amount.** 36 built-in foods held
+  per-100 g figures under a smaller serving, so a typed portion scaled
+  against the wrong weight: "150g chicken breast" logged 291 kcal instead
+  of 248, and spinach and courgettes came out far too low. Most meat and
+  fish, tofu, cottage cheese, peas, ice cream and hummus now name 100 g;
+  counted servings keep their count with figures for that weight; crisps
+  no longer claim 274 kcal for a 28 g bag.
+
 ## [1.2.0] — 2026-06-11
 
 Two feature arcs: **Partner Streaks** (train consistently with a friend) and a

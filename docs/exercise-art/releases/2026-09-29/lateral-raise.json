@@ -1,0 +1,170 @@
+{
+  "exerciseId": "lateral-raise",
+  "version": "anatomy-v3-2026-09-29",
+  "width": 1254,
+  "height": 1254,
+  "decision": "approved",
+  "reviewer": "Codex visual and implementation review",
+  "reviewedAt": "2026-09-29T12:26:28.470Z",
+  "reference": {
+    "path": "form-frames/lateral-raise/1.webp",
+    "sha256": "2fc8466bb1c13bdeb4a8f1aa11fa4e62921e5fc9156bda5488c15d84416f4ea3"
+  },
+  "cueSha256": "4ef434ac5eaf8f4e4b4f22c77b3e2710a1f72e647e56e3aa4415db59a6b2b1ee",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "New master and adjacent poses use canonical bald faceless white-grey anatomy, fine contours, smooth featureless pelvis and white trainers. Legacy barefoot art replaced. Built-in imagegen path retained throughout."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Fixed straight-front camera on native1254x1254 square canvas. Landscape candidate failed mobile legibility and was superseded before approval; full arm spread and both weights fit the square."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Native inspection reviewed shoulder-height top, matched mild elbow bends, attached grips and consistent arm reach after the middle forearm correction. Head and trunk stay upright. Qualitative anatomy review, not calibrated joint-angle proof."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Two compact matching round-ended dumbbells retain short rigid handles and closed hand connections. Construction and apparent dimensions checked across native setup/middle/top and mobile sequence; fixed scans do not measure moving weights."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Planted lower shoes restored from square master only in recorded rectangles. Frames2/5 change8324pixels;3/4 change16531pixels, zero outside recorded rectangles. Native seam review passed; ankles and moving anatomy untouched."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Both weights rise outward until upper arms reach shoulder level, then lower to full setup without torso swing. Fixed-foot scans pass unrounded1px/1percent limits after approved contact repair."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Strongest blue-violet on side deltoids; lighter lilac upper traps. Chest, core, arms and legs otherwise neutral. Key names only the visible highlighted groups."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Six cues of at most seven words match setup, outward raise, top, hold, controlled lowering and complete reset. No numerical mid-angle claim."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "Manually stepped all6 plus6-to1 in current ExerciseFormFrames29Sep2026. Master/middle/top/top/middle/master uses4=3,5=2,6=1. No continuous timed-playback claim."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "All6+loop inspected at390x844 in light player. Square framing renders athlete about300px tall, both weights visible and cues legible. Documentwidth390 and native1254x1254 confirmed, no console errors."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "All6+loop inspected at390x844 in dark player. Shoulder travel and full return remain legible; no clipped weights or visible planted-shoe jumps."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/lateral-raise/1.webp",
+      "sha256": "2fc8466bb1c13bdeb4a8f1aa11fa4e62921e5fc9156bda5488c15d84416f4ea3",
+      "anchors": {
+        "leftShoe": {
+          "x": 470.58479532163744,
+          "y": 1120
+        },
+        "rightShoe": {
+          "x": 696.723076923077,
+          "y": 1120
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeSpan": 84.26886321494794,
+        "rightShoeSpan": 84.44358974358965
+      }
+    },
+    {
+      "path": "form-frames/lateral-raise/2.webp",
+      "sha256": "afc94b97b56d42459267b031d61093cbb909d2fde4efbe9d1c90cbb3ee554d9b",
+      "anchors": {
+        "leftShoe": {
+          "x": 470.58479532163744,
+          "y": 1120
+        },
+        "rightShoe": {
+          "x": 697.5873015873016,
+          "y": 1120
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeSpan": 84.26886321494794,
+        "rightShoeSpan": 84.07446311858075
+      }
+    },
+    {
+      "path": "form-frames/lateral-raise/3.webp",
+      "sha256": "7eedd77e6082e3ecd1268a7eef8068cf8c32c85c50a5c8905ffeac86274c7889",
+      "anchors": {
+        "leftShoe": {
+          "x": 470.58479532163744,
+          "y": 1120
+        },
+        "rightShoe": {
+          "x": 696.723076923077,
+          "y": 1120
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeSpan": 84.26886321494794,
+        "rightShoeSpan": 84.44358974358965
+      }
+    },
+    {
+      "path": "form-frames/lateral-raise/4.webp",
+      "sha256": "7eedd77e6082e3ecd1268a7eef8068cf8c32c85c50a5c8905ffeac86274c7889",
+      "anchors": {
+        "leftShoe": {
+          "x": 470.58479532163744,
+          "y": 1120
+        },
+        "rightShoe": {
+          "x": 696.723076923077,
+          "y": 1120
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeSpan": 84.26886321494794,
+        "rightShoeSpan": 84.44358974358965
+      }
+    },
+    {
+      "path": "form-frames/lateral-raise/5.webp",
+      "sha256": "afc94b97b56d42459267b031d61093cbb909d2fde4efbe9d1c90cbb3ee554d9b",
+      "anchors": {
+        "leftShoe": {
+          "x": 470.58479532163744,
+          "y": 1120
+        },
+        "rightShoe": {
+          "x": 697.5873015873016,
+          "y": 1120
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeSpan": 84.26886321494794,
+        "rightShoeSpan": 84.07446311858075
+      }
+    },
+    {
+      "path": "form-frames/lateral-raise/6.webp",
+      "sha256": "2fc8466bb1c13bdeb4a8f1aa11fa4e62921e5fc9156bda5488c15d84416f4ea3",
+      "anchors": {
+        "leftShoe": {
+          "x": 470.58479532163744,
+          "y": 1120
+        },
+        "rightShoe": {
+          "x": 696.723076923077,
+          "y": 1120
+        }
+      },
+      "invariantDimensions": {
+        "leftShoeSpan": 84.26886321494794,
+        "rightShoeSpan": 84.44358974358965
+      }
+    }
+  ]
+}

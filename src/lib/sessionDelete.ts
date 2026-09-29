@@ -154,15 +154,18 @@ async function writeSharedMarker(
   source: ShareSource,
   activityId: string | null
 ): Promise<void> {
+  // A session still in the offline save queue has no document yet, so an
+  // update would fail. The marker goes into the same queue behind the save,
+  // which lands first. Runs and workouts both save through that queue.
+  const collectionPath = `users/${uid}/${COLLECTION[source.kind]}`;
   if (
-    source.kind === "run" &&
-    pendingDocumentWrites(uid, `users/${uid}/runs`).some(
+    pendingDocumentWrites(uid, collectionPath).some(
       (entry) => entry.id === source.id
     )
   ) {
     queueDurableWrite(
       uid,
-      `users/${uid}/runs`,
+      collectionPath,
       source.id,
       { sharedActivityId: activityId },
       true

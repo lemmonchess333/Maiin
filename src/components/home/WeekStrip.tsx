@@ -75,6 +75,11 @@ function weekDayState(day: StripDay, todayKey: string): WeekDayState {
  * counterpart, announced in place of every signal that has one. It now
  * names the training the circle shows, including a planned session whose
  * day has passed.
+ *
+ * A lift slot completed by a session on another day (lifts are
+ * split-ordered, ADR-0002) leaves this day's circle bare, so the day is
+ * named as done on another day. "Completed lift" belongs to the day whose
+ * circle the session filled, and one session is announced once.
  */
 function trainingLabel(day: StripDay, isPast: boolean): string {
   const hasLift =
@@ -88,9 +93,10 @@ function trainingLabel(day: StripDay, isPast: boolean): string {
       : isPast
         ? "missed run"
         : "run day";
-  const lift =
-    day.liftLogged || day.liftCompleted
-      ? "completed lift"
+  const lift = day.liftLogged
+    ? "completed lift"
+    : day.liftCompleted
+      ? "lift done on another day"
       : day.liftSkipped
         ? "skipped lift"
         : isPast

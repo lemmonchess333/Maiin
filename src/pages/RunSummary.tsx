@@ -442,15 +442,18 @@ export default function RunSummary() {
   // Pull dismissal state from localStorage whenever the saved-run
   // id arrives. The doc id is the natural unique key — different
   // off-plan runs for the same scheduled slot still each get one
-  // prompt-then-quiet cycle.
-  useEffect(() => {
-    if (!savedRunId) return;
+  // prompt-then-quiet cycle. Read while rendering, once per id (React's
+  // "adjust state during render" idiom), so a run already decided never
+  // paints the prompt for a commit before it hides.
+  const [dismissalReadFor, setDismissalReadFor] = useState<string | null>(null);
+  if (savedRunId && dismissalReadFor !== savedRunId) {
+    setDismissalReadFor(savedRunId);
     // Unavailable storage (private mode, blocked) reads as not dismissed:
     // the prompt re-fires per mount and the user can dismiss again. Same
     // end state, just one extra tap in the rare error path.
-    const flag = readString(`tropos:reconcileDismissed:${savedRunId}`);
-    if (flag === "1") setReconciliation("dismissed");
-  }, [savedRunId]);
+    if (readString(`tropos:reconcileDismissed:${savedRunId}`) === "1")
+      setReconciliation("dismissed");
+  }
   const [shareOpen, setShareOpen] = useState(false);
   // CIRCLE-SESSION-01 — explicit summary-only Circle share, offered
   // only after a PLANNED run is saved. The sheet mounts lazily so its
@@ -475,7 +478,6 @@ export default function RunSummary() {
   // The historical run list, reused for BOTH the pace-trend badge and the
   // Pro pace-insight card — one query, two consumers (no extra Firestore read).
   const [paceHistory, setPaceHistory] = useState<PaceInsightRun[]>([]);
-  const [paceHistoryLoading, setPaceHistoryLoading] = useState(true);
   const [notes, setNotes] = useState(receipt?.notes ?? "");
   /* RUN-03: optional one-tap post-run effort signal ("how did it feel vs
      what you expected?"). Structured so the engine can later distinguish
@@ -504,10 +506,23 @@ export default function RunSummary() {
   // or leave the insight loading forever. Depends on user?.uid (not the whole
   // user object) so it doesn't re-query on unrelated identity changes.
   const uid = user?.uid;
+  /* The inputs the history above was last read for; loading is derived
+     from it. The read restarts whenever the uid, the run or its corrected
+     distance changes, and the insight reads as loading from that same
+     render until the read for THESE inputs settles. */
+  const [paceHistoryFor, setPaceHistoryFor] = useState<{
+    uid: string;
+    state: RunData;
+    editedDistanceMeters: number | null;
+  } | null>(null);
+  const paceHistoryLoading =
+    paceHistoryFor === null ||
+    paceHistoryFor.uid !== uid ||
+    paceHistoryFor.state !== state ||
+    paceHistoryFor.editedDistanceMeters !== editedDistanceMeters;
   useEffect(() => {
     if (!uid || !state) return;
     let cancelled = false;
-    setPaceHistoryLoading(true);
     (async () => {
       try {
         const snap = await getDocs(
@@ -563,7 +578,7 @@ export default function RunSummary() {
         logger.error("[RunSummary] pace-history load failed", err);
         setPaceHistory([]);
       } finally {
-        if (!cancelled) setPaceHistoryLoading(false);
+        if (!cancelled) setPaceHistoryFor({ uid, state, editedDistanceMeters });
       }
     })();
     return () => {
@@ -806,12 +821,12 @@ export default function RunSummary() {
     });
   })();
 
-  // Run8 PR3d — context-aware primary stat. Intervals get a
-  // work-set summary ("N × distance @ pace") instead of the raw
-  // session avg pace (which mixes work + rest and reads slow); race
-  // runs lead with elapsed time (the metric runners care about). All
-  // other activity types fall through to the existing 3-col stats
-  // grid where distance / time / pace are equal-weighted.
+  // The context-aware primary stat, a card above the stats card of four.
+  // Intervals get a work-set summary ("N × distance @ pace") instead of
+  // the raw session average pace, which mixes work and rest and reads
+  // slow. A race gets its finishing time, the figure a racer wants under
+  // the distance headline. Every other run has none: the distance
+  // headline and the stats card of four are its read.
   const primaryStat = (() => {
     if (activityType === "intervals") {
       const iv = runConfig?.intervals;
@@ -1556,8 +1571,8 @@ export default function RunSummary() {
                       onClick={() => {
                         setReconciliation("dismissed");
                         // Persist so re-mounts of this same saved run
-                        // don't re-prompt. Same key the on-mount
-                        // useEffect reads above.
+                        // don't re-prompt. Same key the dismissal read
+                        // above uses.
                         // Storage unavailable — the dismissal still
                         // sticks for this mount via React state; it just
                         // won't survive a re-mount. Acceptable degraded
@@ -1599,10 +1614,10 @@ export default function RunSummary() {
               </div>
             )}
 
-          {/* Run8 PR3d — context-aware primary stat. Renders above
-              the standard 3-col grid for intervals + race; everything
-              else falls through and the 3-col grid below is the
-              primary read. */}
+          {/* The context-aware primary stat, for intervals and races
+              only, above the stats card of four. A race's is its time,
+              under the distance headline at the top of the page. Every
+              other run goes from the headline to the stats card. */}
           {primaryStat && (
             <div className="mx-4 mb-3 p-4 rounded-2xl text-center card-shadow bg-running/8">
               <p className="text-3xl font-extrabold font-mono tabular-nums leading-tight text-running">

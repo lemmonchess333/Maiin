@@ -1,0 +1,139 @@
+{
+  "modelPath": "Existing built-in imagegen pilot master, middle and bottom retained after native and mobile review. No new generation, deterministic image repair or model fallback.",
+  "canonicalReference": {
+    "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+  },
+  "nativeDimensions": {
+    "width": 1536,
+    "height": 1024
+  },
+  "historicalOwnerRelease": {
+    "path": "docs/exercise-art/releases/2026-09-owner/db-bench.json",
+    "sha256": "aaf1aebd11af636087b4595e137c1c329a8ff6b21505a3ab5205b86d554611ba",
+    "note": "Preserved unchanged as history; new strict review covers replacement assets/cues."
+  },
+  "originalGeneration": [
+    {
+      "file": "BATCH_GENERATION_LOG.json",
+      "calls": [
+        {
+          "frame": 1,
+          "id": "db-bench",
+          "path": "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/db-bench/1-master.png",
+          "prompt": "Create one separate native high-resolution LANDSCAPE 1536x1024 exercise illustration. Use the EXACT canonical athlete and anatomy/linework/style of the reference, but establish a NEW fixed scene for FLAT DUMBBELL BENCH PRESS. Same bald faceless muscular white/light-grey male, same proportions and fine dark anatomical contours, WHITE LOW-TOP SHOES, pure black background. Camera elevated front-side three-quarter view showing BOTH arms and dumbbells clearly, athlete head LEFT, feet RIGHT. Full sturdy dark grey flat bench, head upper back and buttocks supported; modest natural lower-back arch, both feet flat on floor. Show START/TOP position: both arms extended vertically above mid-chest, elbows soft not hyperextended; two identical restrained dark round-ended dumbbells separated by a small gap, palms facing toward feet (pronated bench-press grip), wrists stacked straight. Both hands closed on handles. Anatomical pectoralis major deepest purple, anterior deltoids and triceps lighter lilac, subtle trunk stabilisers pale. No other highlights. Leave enough margin for elbows to lower to sides of chest in subsequent frames without changing camera. Identical realistic dumbbells, no oversized weights, no numbers. This will be master of six frames: top, early lower, middle lower, bottom with elbows about45 degrees from torso and forearms vertical, middle press, late press. In this image show ONLY top pose. No text/caption/grid/border or extra pose.",
+          "refs": [
+            "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/barbell-curl/1-master.png"
+          ]
+        },
+        {
+          "frame": 2,
+          "id": "db-bench",
+          "path": "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/db-bench/2-early.png",
+          "prompt": "EDIT the exact supplied flat dumbbell bench press master into frame2 EARLY LOWER. Preserve the entire fixed scene: bench every corner and leg, shoes, knees, hips, supported head, neck, torso, shoulder positions, camera zoom crop and lighting. Only articulate the shoulders and elbows for a small initial controlled descent: bend both elbows about30 degrees from straight and lower both dumbbells approximately60px, drifting them slightly outward from each other in their correct chest-press plane. Elbows travel outward and down toward about45degrees from torso, not toward head. Forearms remain vertical with wrists directly above elbows, closed pronated grip, straight wrists. Same two dumbbells exact head diameter and handle length, do not rotate/change shape or gain plates. Preserve same white male anatomical proportions, dark contour style, purple pectorals/lilac triceps and front deltoids. No lower-body movement or bench movement. One separate full-resolution landscape image, no text.",
+          "refs": [
+            "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/db-bench/1-master.png"
+          ]
+        },
+        {
+          "frame": 3,
+          "id": "db-bench",
+          "path": "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/db-bench/3-mid.png",
+          "prompt": "Edit this exact dumbbell bench press frame into MID DESCENT, a small step lower. Scene must stay pixel registered: head, torso, hips, both feet, entire bench and black canvas fixed. Lower both identical dumbbells a further65pixels with elbows bending further and upper arms opening outward/down. Forearms remain upright, wrists directly over elbows, not a curl: shoulder and elbow movement coordinated. Both hands closed, same pronated grip, same dumbbell dimensions. Shoulders remain supported and down, no shrug, head never lifts, feet stay flat. The elbows should now be approaching bench-pad height, still slightly above their bottom position, tucked at about45degrees to trunk instead of flared toward ears. Maintain exact anatomical white male and purple chest/lilac triceps/front-deltoid treatment. Same camera/perspective, no equipment transformation, no caption. Single native full-resolution landscape frame.",
+          "refs": [
+            "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/db-bench/2-early.png"
+          ]
+        },
+        {
+          "frame": 4,
+          "id": "db-bench",
+          "path": "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/db-bench/4-bottom.png",
+          "prompt": "Edit supplied flat dumbbell bench press MID frame into BOTTOM position. Keep scene registration exact: head neck shoulder attachment points torso hips legs shoes and every bench edge unchanged, same camera/crop. Lower each dumbbell another approximately45pixels. Both elbows descend slightly below the top surface of bench pad, with upper arms roughly at torso height, elbows tucked about45degrees from torso. Both forearms still nearly vertical, wrists stacked directly above elbows, hands closed at same grip. This is the bottom of a chest press, NOT fly, not curl: elbows flex about90degrees and dumbbells stay outside sides of chest without touching. No excessive shoulder stretch or lifted shoulders. Preserve limb length, forearm thickness, exact dumbbell head/handle size and grip orientation. Purple chest primary and lilac triceps/front shoulders identical. Same white faceless anatomical male and white shoes on black. One native full-resolution landscape image; no text.",
+          "refs": [
+            "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/db-bench/3-mid.png"
+          ]
+        }
+      ]
+    },
+    {
+      "file": "BATCH_03_GENERATION_LOG.json",
+      "calls": []
+    }
+  ],
+  "originalSources": [
+    {
+      "path": "docs/exercise-art/pilots/db-bench/1-master.png",
+      "sha256": "dec10471eca129c22a7bbc9b9067ecca04247b418ced40d05601807ae1bb9d35"
+    },
+    {
+      "path": "docs/exercise-art/pilots/db-bench/3-mid.png",
+      "sha256": "5a30bf26a8ce8cb388d03a93bab3e9ad58e51f34ae42b4769d3426b9e5b8da2f"
+    },
+    {
+      "path": "docs/exercise-art/pilots/db-bench/4-bottom.png",
+      "sha256": "74f9834b532d5ec83e6bb16efcdea4c4bf9953df2c5e0d95c3ffd5eea5830ce6"
+    }
+  ],
+  "generation": [],
+  "generatedOutputs": [],
+  "deterministicRepairs": [],
+  "selectedPngs": [
+    {
+      "frame": 1,
+      "sha256": "dec10471eca129c22a7bbc9b9067ecca04247b418ced40d05601807ae1bb9d35"
+    },
+    {
+      "frame": 2,
+      "sha256": "5a30bf26a8ce8cb388d03a93bab3e9ad58e51f34ae42b4769d3426b9e5b8da2f"
+    },
+    {
+      "frame": 3,
+      "sha256": "74f9834b532d5ec83e6bb16efcdea4c4bf9953df2c5e0d95c3ffd5eea5830ce6"
+    },
+    {
+      "frame": 4,
+      "sha256": "74f9834b532d5ec83e6bb16efcdea4c4bf9953df2c5e0d95c3ffd5eea5830ce6"
+    },
+    {
+      "frame": 5,
+      "sha256": "5a30bf26a8ce8cb388d03a93bab3e9ad58e51f34ae42b4769d3426b9e5b8da2f"
+    },
+    {
+      "frame": 6,
+      "sha256": "dec10471eca129c22a7bbc9b9067ecca04247b418ced40d05601807ae1bb9d35"
+    }
+  ],
+  "reuse": {
+    "4": 3,
+    "5": 2,
+    "6": 1
+  },
+  "conversion": "Lossless WebP decoded RGB exactly equals reviewed PNG. No scaling.",
+  "measurementMethod": "Interpolated minimum-RGB scanline boundaries on native PNGs: bench bases threshold24, shoes threshold150. Unrounded one-pixel/one-percent checks cover fixed equipment/contacts only, not moving anatomy or dumbbells.",
+  "scanlines": {
+    "frontBase": [
+      245,
+      490,
+      900,
+      24
+    ],
+    "rearBase": [
+      825,
+      1010,
+      800,
+      24
+    ],
+    "farShoe": [
+      925,
+      1090,
+      745,
+      150
+    ],
+    "nearShoe": [
+      1120,
+      1350,
+      815,
+      150
+    ]
+  }
+}

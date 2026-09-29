@@ -23,10 +23,17 @@ function signed(kg: number, unit: WeightUnit, decimals: number): string {
 }
 
 /** How the rate stands against the target, in plain words, or null
- *  without a target to compare with. */
-function comparison(rateKg: number, targetKg: number | null): string | null {
+ *  without a target to compare with. `recent` is whether the rate is the
+ *  last four weeks': one taken across a gap in weighing says nothing about
+ *  now, so it cannot say the weight is holding for now. */
+function comparison(
+  rateKg: number,
+  targetKg: number | null,
+  recent: boolean
+): string | null {
   if (targetKg === null) return null;
-  if (Math.abs(rateKg) < STEADY_RATE_KG) return "Holding steady for now.";
+  if (Math.abs(rateKg) < STEADY_RATE_KG)
+    return recent ? "Holding steady for now." : "Holding steady.";
   if (Math.sign(rateKg) !== Math.sign(targetKg))
     return "Moving the other way from your target.";
   if (Math.abs(rateKg - targetKg) <= STEADY_RATE_KG) return "On your target.";
@@ -78,13 +85,19 @@ export default function WeightRateCard({
           (7 * 86_400_000)
       )
     : 0;
-  const rateSpan =
-    rate && spanWeeks * 7 >= RATE_WINDOW_DAYS
-      ? `last ${Math.round(RATE_WINDOW_DAYS / 7)} weeks`
-      : rate
-        ? `since ${formatDayMonth(parseLocalDate(rate.fromDate))}`
-        : "";
-  const verdict = rate ? comparison(rate.kgPerWeek, targetKgPerWeek) : null;
+  /* The rate starts at the latest weigh-in four or more weeks back, which
+     after a gap in weighing can be months ago. It is "the last 4 weeks"
+     only when it spans about that; otherwise its start is named. */
+  const lastWindow =
+    rate !== null && spanWeeks === Math.round(RATE_WINDOW_DAYS / 7);
+  const rateSpan = lastWindow
+    ? `last ${Math.round(RATE_WINDOW_DAYS / 7)} weeks`
+    : rate
+      ? `since ${formatDayMonth(parseLocalDate(rate.fromDate))}`
+      : "";
+  const verdict = rate
+    ? comparison(rate.kgPerWeek, targetKgPerWeek, lastWindow)
+    : null;
 
   return (
     <Card as="section" aria-label="Your rate" className="space-y-4">

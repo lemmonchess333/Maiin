@@ -10,7 +10,11 @@
  * rings card this replaced (PeriodOverview), which carried the reasoning
  * first.
  */
-import { binKeyForDate, formatBinLabel } from "./chartGranularity";
+import {
+  binKeyForDate,
+  formatBinLabel,
+  formatBinMonth,
+} from "./chartGranularity";
 import { addLocalDays, parseLocalDate, startOfLocalWeek } from "./dateHelpers";
 import {
   distanceIn,
@@ -83,6 +87,23 @@ export function summaryBinLabel(
   return bin.current ? "This month" : formatBinLabel(bin.key, "monthly");
 }
 
+/**
+ * A bin's name on the axis under a chart. A month from another year
+ * carries its year on the first label only, which names the year for
+ * the months after it: "Sept 2025", "Jan", "May". A year on every label
+ * would not fit under six months' bars.
+ */
+export function summaryAxisLabel(
+  bin: { key: string; current: boolean },
+  granularity: SummaryGranularity,
+  first: boolean
+): string {
+  if (granularity !== "monthly" || first || bin.current) {
+    return summaryBinLabel(bin, granularity);
+  }
+  return formatBinMonth(bin.key);
+}
+
 export interface SummaryBin {
   /** The bin's first local day, "YYYY-MM-DD". */
   key: string;
@@ -98,15 +119,30 @@ export interface SummaryBin {
 
 /** A session as the card counts it: its local day and what it moved. */
 export interface SummaryLift {
-  /** Local "YYYY-MM-DD", already inside the window. */
+  /** Local "YYYY-MM-DD", on or after `summaryFirstDayKey`. */
   date: string;
   volumeKg: number;
 }
 
 export interface SummaryRun {
-  /** Local "YYYY-MM-DD", already inside the window. */
+  /** Local "YYYY-MM-DD", on or after `summaryFirstDayKey`. */
   date: string;
   distanceM: number;
+}
+
+/**
+ * The first day the bars hold: the start of the week or month the
+ * window's first day falls in. Each bar is named as a whole week or month
+ * ("17 Aug", "Week of 17 Aug"), and the window rarely starts on a Monday
+ * or a 1st, so the first bar takes its days from before the window as
+ * well. Cut at the window's first day, it would hold as little as one day
+ * under a name that claims seven.
+ */
+export function summaryFirstDayKey(
+  since: Date,
+  granularity: SummaryGranularity
+): string {
+  return binKeyForDate(since, granularity);
 }
 
 function binStart(d: Date, granularity: SummaryGranularity): Date {
@@ -123,10 +159,12 @@ function nextBin(d: Date, granularity: SummaryGranularity): Date {
 }
 
 /**
- * Every bin from the window's first day to today, empty ones included —
- * a week without a session is part of the story, not a gap to close up.
- * Each bin carries its count, kilograms and metres, so the card can draw
- * any of the three without a second pass over the sessions.
+ * Every bin from the one holding the window's first day to today, empty
+ * ones included — a week without a session is part of the story, not a
+ * gap to close up. Each bin carries its count, kilograms and metres, so
+ * the card can draw any of the three without a second pass over the
+ * sessions. Given sessions from `summaryFirstDayKey` on, every bin is the
+ * whole week or month it names.
  */
 export function summaryBins({
   since,
@@ -258,7 +296,7 @@ export const USUAL_BIN_MIN_BINS = 2;
 /**
  * The usual bin: the mean of the range's bins that are over and that the
  * user could have trained all of. The current bin is part-done and would
- * pull it down; the range's first bin is usually cut by the range's start;
+ * pull it down; the range's first bin starts before the range does;
  * a bin that began before the user's first session holds days before they
  * started. Null with fewer than `USUAL_BIN_MIN_BINS` left, rather than an
  * average of one week, or of nothing.

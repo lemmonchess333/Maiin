@@ -155,7 +155,7 @@ describe("MacroColumn — tap contract", () => {
  * user cannot see is the destination.
  *
  * Before this, the button had no `aria-label` at all — its accessible
- * name was the concatenated visible text ("42g eaten 42 / 120g PROTEIN"),
+ * name was the concatenated visible text ("42g logged 42 / 120g PROTEIN"),
  * which announces the state twice and the action never.
  */
 describe("MacroColumn — accessible toggle label", () => {
@@ -177,16 +177,16 @@ describe("MacroColumn — accessible toggle label", () => {
     renderIn("eaten");
     expect(
       screen.getByRole("button", {
-        name: "Show protein remaining. 42g eaten of 120g",
+        name: "Show protein remaining. 42g logged of 120g",
       })
     ).toBeInTheDocument();
   });
 
-  it("in LEFT mode, offers to show what has been eaten", () => {
+  it("in LEFT mode, offers to show what has been logged", () => {
     renderIn("left");
     expect(
       screen.getByRole("button", {
-        name: "Show protein eaten. 42g eaten of 120g",
+        name: "Show protein logged. 42g logged of 120g",
       })
     ).toBeInTheDocument();
   });
@@ -207,7 +207,7 @@ describe("MacroColumn — accessible toggle label", () => {
     );
     expect(
       screen.getByRole("button", {
-        name: "Show carbs remaining. 10g eaten of 200g",
+        name: "Show carbs remaining. 10g logged of 200g",
       })
     ).toBeInTheDocument();
   });
@@ -323,7 +323,7 @@ describe("MacroColumn — the bar fades only when it is empty", () => {
     const bar = renderAt("left", 0);
     expect(
       screen.getByRole("button", {
-        name: "Show protein eaten. 0g eaten of 150g",
+        name: "Show protein logged. 0g logged of 150g",
       })
     ).toBeInTheDocument();
     expect(bar.style.opacity).toBe("1");
@@ -333,7 +333,7 @@ describe("MacroColumn — the bar fades only when it is empty", () => {
     const bar = renderAt("eaten", 0);
     expect(
       screen.getByRole("button", {
-        name: "Show protein remaining. 0g eaten of 150g",
+        name: "Show protein remaining. 0g logged of 150g",
       })
     ).toBeInTheDocument();
     expect(bar.style.opacity).toBe("0.4");
@@ -342,7 +342,7 @@ describe("MacroColumn — the bar fades only when it is empty", () => {
   it("LEFT mode with the target used up fades the now-empty bar", () => {
     const bar = renderAt("left", 150);
     expect(
-      screen.getByRole("button", { name: /150g eaten of 150g$/ })
+      screen.getByRole("button", { name: /150g logged of 150g$/ })
     ).toBeInTheDocument();
     expect(bar.style.opacity).toBe("0.4");
   });
@@ -351,10 +351,56 @@ describe("MacroColumn — the bar fades only when it is empty", () => {
     for (const mode of ["left", "eaten"] as const) {
       const bar = renderAt(mode, 60);
       expect(
-        screen.getByRole("button", { name: /60g eaten of 150g$/ })
+        screen.getByRole("button", { name: /60g logged of 150g$/ })
       ).toBeInTheDocument();
       expect(bar.style.opacity).toBe("1");
       cleanup();
     }
+  });
+});
+
+/**
+ * The compact tile is Home's: the same tile, smaller, on Home's card
+ * beside the calorie ring. What changes is size, and the bar track, which
+ * takes the ring's grey groove so the card has one grey for "not yet".
+ */
+describe("MacroColumn — compact size", () => {
+  function draw(size?: "tile" | "compact") {
+    const { container } = render(
+      <MacroColumn
+        macroKey="carbs"
+        Icon={Beef}
+        consumed={56}
+        target={220}
+        label="Carbs"
+        color="#EAB308"
+        mode="left"
+        size={size}
+      />
+    );
+    const icon = container.querySelector("svg")!;
+    const number = container.querySelector("p")!;
+    const track = container.querySelector<HTMLElement>("[data-macro-bar]")!;
+    const out = {
+      icon: icon.getAttribute("class") ?? "",
+      number: number.className,
+      track: track.style.background,
+    };
+    cleanup();
+    return out;
+  }
+
+  it("keeps the Food page's tile as the default", () => {
+    const tile = draw();
+    expect(tile.icon).toContain("size-6");
+    expect(tile.number).toContain("text-2xl");
+    expect(tile.track).toContain("var(--muted)");
+  });
+
+  it("draws Home's tile smaller, with the ring's grey track", () => {
+    const compact = draw("compact");
+    expect(compact.icon).toContain("size-5");
+    expect(compact.number).toContain("text-xl");
+    expect(compact.track).toContain("var(--muted-foreground)");
   });
 });

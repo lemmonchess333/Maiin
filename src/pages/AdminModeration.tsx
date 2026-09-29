@@ -74,6 +74,16 @@ const REASON_LABEL: Record<Report["reason"], string> = {
   other: "Other",
 };
 
+/** One read of the pending queue through the admin-gated callable. */
+async function readPendingReports(): Promise<Report[]> {
+  const callable = httpsCallable<unknown, { reports: Report[] }>(
+    functions,
+    "listPendingReports"
+  );
+  const result = await callable({});
+  return result.data.reports;
+}
+
 function targetPreview(report: Report): string {
   const t = report.target;
   if (!t) return "(target unavailable)";
@@ -97,27 +107,29 @@ export default function AdminModeration() {
 
   const isAdmin = isAdminUid(uid);
 
-  const fetchReports = useCallback(async () => {
+  // Commits only when the read settles. The mount needs nothing cleared
+  // first: `reports` starts null and `error` empty, which is the loading
+  // state. Refresh clears them itself before calling this.
+  const loadReports = useCallback(
+    () =>
+      readPendingReports().then(setReports, (err: unknown) => {
+        const message =
+          err instanceof Error ? err.message : "Failed to load reports.";
+        setError(message);
+      }),
+    []
+  );
+
+  const refreshReports = () => {
     setError(null);
     setReports(null);
-    try {
-      const callable = httpsCallable<unknown, { reports: Report[] }>(
-        functions,
-        "listPendingReports"
-      );
-      const result = await callable({});
-      setReports(result.data.reports);
-    } catch (err: unknown) {
-      const message =
-        err instanceof Error ? err.message : "Failed to load reports.";
-      setError(message);
-    }
-  }, []);
+    void loadReports();
+  };
 
   useEffect(() => {
     if (!isAdmin) return;
-    void fetchReports();
-  }, [isAdmin, fetchReports]);
+    void loadReports();
+  }, [isAdmin, loadReports]);
 
   /* S4e (PR #722): resolveReport callable gains optional `restrictUser`
      param. Admin queue UI gets a third button (Restrict user) alongside
@@ -185,7 +197,7 @@ export default function AdminModeration() {
         <h1 className="text-xl font-extrabold">Moderation queue</h1>
         <button
           type="button"
-          onClick={() => void fetchReports()}
+          onClick={refreshReports}
           className="text-xs px-3 py-1.5 rounded-lg bg-muted text-foreground font-semibold active:scale-95 transition-transform"
         >
           Refresh

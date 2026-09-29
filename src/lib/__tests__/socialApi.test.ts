@@ -198,6 +198,35 @@ describe("fetchActivitiesByIds", () => {
     const result = await fetchActivitiesByIds(["act1"]);
     expect(Object.keys(result)).toHaveLength(0);
   });
+
+  it("skips a post the rules refuse and keeps the rest of the page", async () => {
+    // The activities read rule reads the post's own fields, so reading a
+    // deleted post (a feed copy the delete trigger has not reached yet) is
+    // refused rather than answered as missing. One refused post must not
+    // take the author's and every follower's Following page down with it.
+    seedFirestore({
+      "activities/act1": { type: "workout" },
+      "activities/act2": { type: "run" },
+    });
+    failNextFirestore("getDoc", {
+      path: "activities/act2",
+      code: "permission-denied",
+    });
+    const result = await fetchActivitiesByIds(["act1", "act2"]);
+    expect(result.act1?.type).toBe("workout");
+    expect(result.act2).toBeUndefined();
+  });
+
+  it("still fails on an error that is not a refusal", async () => {
+    seedFirestore({ "activities/act1": { type: "workout" } });
+    failNextFirestore("getDoc", {
+      path: "activities/act1",
+      code: "unavailable",
+    });
+    await expect(fetchActivitiesByIds(["act1"])).rejects.toMatchObject({
+      code: "unavailable",
+    });
+  });
 });
 
 describe("batchGetKudos", () => {

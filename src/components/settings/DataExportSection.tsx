@@ -38,7 +38,7 @@ export default function DataExportSection({ user }: DataExportSectionProps) {
               else csv = await exportBodyweightCSV(user.uid);
               downloadCSV(csv, `tropos-${key}-${localDateString()}.csv`);
               toast.success(
-                `${key.charAt(0).toUpperCase() + key.slice(1)} exported!`
+                `${key.charAt(0).toUpperCase() + key.slice(1)} exported`
               );
             } catch (err) {
               toast.error("Couldn't export your data. Try again.");

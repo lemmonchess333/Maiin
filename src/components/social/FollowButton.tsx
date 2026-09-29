@@ -39,15 +39,19 @@ export default function FollowButton({
 }: FollowButtonProps) {
   const uid = useUid();
   const [following, setFollowing] = useState(false);
-  const [initialising, setInitialising] = useState(true);
+  /* The pair whose follow check has settled. The button stays in its
+     loading state until the CURRENT pair's has, so the flag is derived
+     below rather than stored: a stored one had to be reset by the effect,
+     and was never raised again when the pair changed. */
+  const [checked, setChecked] = useState<{
+    uid: string;
+    targetUid: string;
+  } | null>(null);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
+    if (!uid || uid === targetUid) return;
     let cancelled = false;
-    if (!uid || uid === targetUid) {
-      setInitialising(false);
-      return;
-    }
     isFollowing(uid, targetUid)
       .then((v) => {
         if (!cancelled) setFollowing(v);
@@ -57,7 +61,7 @@ export default function FollowButton({
           logger.error("[FollowButton] isFollowing check failed", err);
       })
       .finally(() => {
-        if (!cancelled) setInitialising(false);
+        if (!cancelled) setChecked({ uid, targetUid });
       });
     return () => {
       cancelled = true;
@@ -93,6 +97,7 @@ export default function FollowButton({
 
   if (!uid || uid === targetUid) return null;
 
+  const initialising = checked?.uid !== uid || checked.targetUid !== targetUid;
   const showSpinner = initialising || busy;
 
   return (
