@@ -4845,9 +4845,9 @@ describe("form beats — the caption is a claim about the frame", () => {
     }
   });
 
-  it("the released curl retains its distinct controlled return", () => {
+  it("the reviewed curl lowers through its midpoint and returns to setup", () => {
     expect(getAuthoredBeats("db-curl")!.map((beat) => beat.t)).toEqual([
-      0, 0.25, 0.6, 1, 0.6, 0.15,
+      0, 0.5, 1, 1, 0.5, 0,
     ]);
     expect(getFormBeats("db-curl")).toHaveLength(6);
   });

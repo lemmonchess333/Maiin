@@ -15,6 +15,7 @@ const placard = (
 });
 
 export const RELEASED_FORM_PLACARDS = {
+ "diamond-push-ups": placard("diamond-push-ups", ["Triceps"], ["Chest", "Front Delts"], [[0,"Set","Form a diamond beneath your chest; brace."],[0.5,"Lower","Bend your elbows back along your ribs."],[1,"Bottom","Lower your chest close to your hands."],[1,"Control","Keep shoulders, hips and ankles aligned."],[0.5,"Press","Press through your hands with elbows tucked."],[0,"Reset","Finish straightening your arms without sagging."]]),
  "tricep-kickback": placard("tricep-kickback", ["Triceps"], ["Rear Delts", "Core stabilisers"], [[0,"Set","Brace your hand and knee on bench."],[0.5,"Extend","Extend your elbow with upper arm lifted."],[1,"Straighten","Straighten your arm behind your torso."],[1,"Squeeze","Squeeze your triceps; keep your wrist straight."],[0.5,"Return","Bend your elbow slowly, keeping it lifted."],[0,"Reset","Return your elbow to roughly ninety degrees."]]),
  "spider-db-curl": placard("spider-db-curl", ["Biceps"], ["Forearms"], [[0,"Set","Keep your chest against the incline pad."],[0.5,"Curl","Curl upward without moving your upper arms."],[1,"Top","Bring the dumbbells toward your shoulders."],[1,"Hold","Squeeze your biceps with straight wrists."],[0.5,"Lower","Lower slowly while keeping your chest supported."],[0,"Reset","Finish lowering with tension in your biceps."]]),
  "concentration-curl": placard("concentration-curl", ["Biceps"], ["Forearms"], [[0,"Set","Brace your upper arm against inner thigh."],[0.5,"Curl","Curl upward while keeping your elbow braced."],[1,"Top","Squeeze your biceps without moving your torso."],[1,"Hold","Keep your wrist straight at the top."],[0.5,"Lower","Lower slowly with your upper arm braced."],[0,"Reset","Finish lowering before starting the next rep."]]),
@@ -212,19 +213,7 @@ export const RELEASED_FORM_PLACARDS = {
       [0, "Reset at the top", "Finish arms extended; keep the plate stable."],
     ]
   ),
-  "db-curl": placard(
-    "db-curl",
-    ["Biceps"],
-    ["Forearms"],
-    [
-      [0.0, "Set up", "Stand tall, palms forward, elbows by ribs."],
-      [0.25, "Initiate curl", "Bend both elbows; keep your torso still."],
-      [0.6, "Mid curl", "Upper arms still, wrists straight."],
-      [1.0, "Top contraction", "Curl up without lifting your elbows."],
-      [0.6, "Controlled lower", "Lower slowly along the same arc."],
-      [0.15, "Finish return", "Return towards straight arms without bouncing."],
-    ]
-  ),
+  "db-curl": placard("db-curl", ["Biceps"], ["Forearms"], [[0,"Set","Stand tall with palms facing forward."],[0.5,"Curl","Bend your elbows without swinging your torso."],[1,"Top","Curl toward shoulders, keeping wrists straight."],[1,"Control","Keep upper arms close to your ribs."],[0.5,"Lower","Lower both dumbbells slowly under control."],[0,"Reset","Return near straight without snapping your elbows."]]),
   "hammer-curl": placard(
     "hammer-curl",
     ["biceps", "brachialis"],
@@ -330,15 +319,15 @@ export const RELEASED_FORM_PLACARDS = {
   ),
   "bodyweight-squat": placard(
     "bodyweight-squat",
-    ["quadriceps"],
-    ["gluteals"],
+    ["Quads"],
+    ["Glutes", "Core"],
     [
-      [0, "Stand tall", "Stand tall with both arms held forward."],
-      [0.25, "Begin descent", "Bend hips and knees; keep heels grounded."],
-      [0.6, "Lower", "Keep knees following the direction of toes."],
-      [1, "Bottom", "Stay braced with your whole feet planted."],
-      [0.6, "Drive up", "Raise hips and chest together under control."],
-      [0.25, "Finish rising", "Finish standing without leaning back."],
+      [0, "Set", "Stand shoulder-width with arms extended for balance."],
+      [0.3, "Lower", "Bend hips and knees; keep heels planted."],
+      [1, "Bottom", "Lower until your thighs reach roughly parallel."],
+      [1, "Control", "Keep your knees tracking over your toes."],
+      [0.3, "Rise", "Push through your whole feet to rise."],
+      [0, "Reset", "Stand tall without leaning backward."],
     ]
   ),
   "barbell-shrug": placard(

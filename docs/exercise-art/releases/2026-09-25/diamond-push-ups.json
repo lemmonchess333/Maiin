@@ -1,0 +1,170 @@
+{
+  "exerciseId": "diamond-push-ups",
+  "version": "anatomy-v3-2026-09-25",
+  "width": 1254,
+  "height": 1254,
+  "decision": "approved",
+  "reviewer": "Codex visual and implementation review",
+  "reviewedAt": "2026-09-29T09:38:29.2368516Z",
+  "reference": {
+    "path": "form-frames/diamond-push-ups/1.webp",
+    "sha256": "0b793f7680120af796a7fa721f1b09edd0a6b87a155bfe8e3bb697e13586cea2"
+  },
+  "cueSha256": "6446594194f46cab0173e9a9f1740185abb2e8a45ad53a92dfeabf73a1171071",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Canonical anatomy-v3 bald faceless white-grey figure, fine anatomical contours, featureless pelvis and white trainers retained in three reviewed native poses."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Fixed front-side view shows both touching hands and both feet. All selected PNGs verified1254x1254 with no resizing; older pilot prose incorrectly called them1280square. Body rotates downward about floor contacts without camera/crop changes."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Elbows flex back alongside ribs as torso descends in a broadly straight plank; shoulders, hips and ankles remain aligned without obvious sag or pike. Native hand/wrist repair images inspected and no rectangular wrist seams remain. No calibrated3D angle claim."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Bodyweight variation with no added equipment. Both canonical white shoes retain plausible shape through the sequence."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Thumbs and index fingertips retain a closed diamond under the chest; toes remain planted. Candidate master-copy registered stationary hand/forefoot regions, then built-in imagegen repaired wrist joins. Final bottom copy changes only fingertip rectangle170,885,410,950 with zero changes outside; wrists and moving body untouched by that copy."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Body lowers and presses around stable hand/toe contacts. Final minimumRGB150 scanline anchors drift under0.32px and contact spans under0.55percent unrounded. These measurements assess fixed contacts only and do not prove moving joint geometry."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Triceps strongest purple with chest/frontdelts lighter lilac, consistent through return; qualitative contribution hierarchy rather than measured activation."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Six cues of at most seven words match diamond setup, lowering, bottom, controlled reversal, pressing and completed reset. Selected reset reuses true straight-arm setup rather than the older pilot partial-return pose."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "All six and6-to1 loop manually stepped in actual ExerciseFormFrames. Sequence top/middle/bottom/hold/middle/top uses4=3,5=2,6=1 appropriately. No continuous timed-playback claim."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "All six plus loop visually reviewed in actual390x844 light player; native1254x1254 loaded, scrollWidth390. Diamond hands, full body, highlighted muscles and readable cues remain visible; native inspection supplements fine fingers. Repeated on2026-09-29 against main58762ef using exact released WebPs and current player/theme; all six plus loop pass. Rechecked all six and loop on port5183 after allowing bundled font assets; current Jakarta/Archivo styling and legible cues confirmed."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "All six plus loop visually reviewed in actual390x844 dark player. Contacts remain stable through descent and return, wrist/fingertip corrections show no visible seams and no image clipping. Repeated on2026-09-29 against main58762ef with mix-blend-lighten player; black merges into the stage without obscuring anatomy or contacts. Rechecked all six and loop on port5183 after allowing bundled font assets; current Jakarta/Archivo styling and legible cues confirmed."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/diamond-push-ups/1.webp",
+      "sha256": "0b793f7680120af796a7fa721f1b09edd0a6b87a155bfe8e3bb697e13586cea2",
+      "anchors": {
+        "handContact": {
+          "x": 199.4659090909091,
+          "y": 910
+        },
+        "toeContact": {
+          "x": 1008.7261904761905,
+          "y": 825
+        }
+      },
+      "invariantDimensions": {
+        "handContactSpan": 175.08170995670994,
+        "toeContactSpan": 163.2460317460317
+      }
+    },
+    {
+      "path": "form-frames/diamond-push-ups/2.webp",
+      "sha256": "9886fed099d48369d7bd455c45019305e970e4c98d34c1c6e4382ba030425e15",
+      "anchors": {
+        "handContact": {
+          "x": 199.34065934065933,
+          "y": 910
+        },
+        "toeContact": {
+          "x": 1008.6378378378379,
+          "y": 825
+        }
+      },
+      "invariantDimensions": {
+        "handContactSpan": 175.3736263736264,
+        "toeContactSpan": 163.27355456722535
+      }
+    },
+    {
+      "path": "form-frames/diamond-push-ups/3.webp",
+      "sha256": "8b586951a74a17675602fb551abda3718fee3ac2367018dc5ea991f1c436d5c9",
+      "anchors": {
+        "handContact": {
+          "x": 199.4659090909091,
+          "y": 910
+        },
+        "toeContact": {
+          "x": 1009.0373831775701,
+          "y": 825
+        }
+      },
+      "invariantDimensions": {
+        "handContactSpan": 175.08170995670994,
+        "toeContactSpan": 164.1385427483558
+      }
+    },
+    {
+      "path": "form-frames/diamond-push-ups/4.webp",
+      "sha256": "8b586951a74a17675602fb551abda3718fee3ac2367018dc5ea991f1c436d5c9",
+      "anchors": {
+        "handContact": {
+          "x": 199.4659090909091,
+          "y": 910
+        },
+        "toeContact": {
+          "x": 1009.0373831775701,
+          "y": 825
+        }
+      },
+      "invariantDimensions": {
+        "handContactSpan": 175.08170995670994,
+        "toeContactSpan": 164.1385427483558
+      }
+    },
+    {
+      "path": "form-frames/diamond-push-ups/5.webp",
+      "sha256": "9886fed099d48369d7bd455c45019305e970e4c98d34c1c6e4382ba030425e15",
+      "anchors": {
+        "handContact": {
+          "x": 199.34065934065933,
+          "y": 910
+        },
+        "toeContact": {
+          "x": 1008.6378378378379,
+          "y": 825
+        }
+      },
+      "invariantDimensions": {
+        "handContactSpan": 175.3736263736264,
+        "toeContactSpan": 163.27355456722535
+      }
+    },
+    {
+      "path": "form-frames/diamond-push-ups/6.webp",
+      "sha256": "0b793f7680120af796a7fa721f1b09edd0a6b87a155bfe8e3bb697e13586cea2",
+      "anchors": {
+        "handContact": {
+          "x": 199.4659090909091,
+          "y": 910
+        },
+        "toeContact": {
+          "x": 1008.7261904761905,
+          "y": 825
+        }
+      },
+      "invariantDimensions": {
+        "handContactSpan": 175.08170995670994,
+        "toeContactSpan": 163.2460317460317
+      }
+    }
+  ]
+}

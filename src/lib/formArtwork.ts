@@ -41,6 +41,7 @@ const ownerReleased = (
 // Preserve the seven previously shipped sets while replacements are reviewed.
 // These entries do not claim that the art passes the new consistency standard.
 export const FORM_ARTWORK: Record<string, FormArtwork> = {
+  "diamond-push-ups": { version: "anatomy-v3-2026-09-25", status: "approved", width: 1254, height: 1254, frames: Array.from({length:6}, (_,i) => `form-frames/diamond-push-ups/${i+1}.webp`), reference: "form-frames/diamond-push-ups/1.webp", reviewFile: "docs/exercise-art/releases/2026-09-25/diamond-push-ups.json" },
   "tricep-kickback": { version: "anatomy-v3-2026-09-25", status: "approved", width: 1536, height: 1024, frames: Array.from({length:6}, (_,i) => `form-frames/tricep-kickback/${i+1}.webp`), reference: "form-frames/tricep-kickback/1.webp", reviewFile: "docs/exercise-art/releases/2026-09-25/tricep-kickback.json" },
   "spider-db-curl": { version: "anatomy-v3-2026-09-25", status: "approved", width: 1536, height: 1024, frames: Array.from({length:6}, (_,i) => `form-frames/spider-db-curl/${i+1}.webp`), reference: "form-frames/spider-db-curl/1.webp", reviewFile: "docs/exercise-art/releases/2026-09-25/spider-db-curl.json" },
   "concentration-curl": { version: "anatomy-v3-2026-09-25", status: "approved", width: 1024, height: 1536, frames: Array.from({length:6}, (_,i) => `form-frames/concentration-curl/${i+1}.webp`), reference: "form-frames/concentration-curl/1.webp", reviewFile: "docs/exercise-art/releases/2026-09-25/concentration-curl.json" },
@@ -178,7 +179,7 @@ export const FORM_ARTWORK: Record<string, FormArtwork> = {
     reference: "form-frames/weighted-push-ups/1.webp",
     reviewFile: "docs/exercise-art/releases/2026-09-22/weighted-push-ups.json",
   },
-  "db-curl": ownerReleased("db-curl", 1024, 1536),
+  "db-curl": { version: "anatomy-v3-2026-09-29", status: "approved", width: 1024, height: 1536, frames: Array.from({length:6}, (_,i) => `form-frames/db-curl/${i+1}.webp`), reference: "form-frames/db-curl/1.webp", reviewFile: "docs/exercise-art/releases/2026-09-29/db-curl.json" },
   "hammer-curl": ownerReleased("hammer-curl", 1024, 1536),
   "front-raise": ownerReleased("front-raise", 1024, 1536),
   "goblet-squat": ownerReleased("goblet-squat", 1024, 1536),
@@ -186,7 +187,18 @@ export const FORM_ARTWORK: Record<string, FormArtwork> = {
   squat: ownerReleased("squat", 1024, 1536),
   "barbell-curl": ownerReleased("barbell-curl", 1024, 1536),
   "db-bench": ownerReleased("db-bench", 1536, 1024),
-  "bodyweight-squat": ownerReleased("bodyweight-squat", 1024, 1536),
+  "bodyweight-squat": {
+    version: "anatomy-v3-2026-09-29",
+    status: "approved",
+    width: 1024,
+    height: 1536,
+    frames: Array.from(
+      { length: 6 },
+      (_, i) => `form-frames/bodyweight-squat/${i + 1}.webp`
+    ),
+    reference: "form-frames/bodyweight-squat/1.webp",
+    reviewFile: "docs/exercise-art/releases/2026-09-29/bodyweight-squat.json",
+  },
   "barbell-shrug": ownerReleased("barbell-shrug", 1024, 1536),
   "barbell-row": existing("barbell-row", 1000, 1701),
   "bench-press": existing("bench-press", 1000, 823),
