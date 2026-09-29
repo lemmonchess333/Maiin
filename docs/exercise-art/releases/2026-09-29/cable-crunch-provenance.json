@@ -1,0 +1,475 @@
+{
+  "modelPath": "Built-in imagegen only for generation/pose edits; user-authorized exact source copies for fixed areas and rigid selected-plate translation. No CLI/API fallback.",
+  "canonicalReference": {
+    "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+  },
+  "exerciseMaster": {
+    "path": "docs/exercise-art/masters/cable-crunch/1.png",
+    "sha256": "030d7d1d8e567e26ae687eb4a079beedf5bb7e727940ed988fac9ad5dc4121c2"
+  },
+  "generationLedger": [
+    [
+      "c55ccc09-bfe4-4e95-b11d-68102a6d9c0e",
+      "Setup rejected: hands too far forward"
+    ],
+    ["cd18cecb-fff7-419a-9049-fd2cfeffb63f", "Selected temple-grip master"],
+    [
+      "d60a0e38-6fc2-44f7-95dc-01daa250f8f1",
+      "Selected halfway anatomy; plate subsequently repaired"
+    ],
+    [
+      "e437de0d-5c0f-4746-abae-dad62f1bd0be",
+      "Selected full-crunch anatomy; stationary contacts and plate repaired"
+    ],
+    ["15653f45-ff77-4df5-a7a4-fb83b2e8d508", "Rejected plate position"],
+    ["d771d046-80ba-42a8-a08a-200111f63367", "Rejected plate position"]
+  ],
+  "prompts": [
+    {
+      "file": "full-plate-fix-prompt.txt",
+      "prompt": "Precise equipment correction. Image 1 is EDIT TARGET: full-crunch pose. Image2 is frozen setup master, only for original plate shape/dimensions and fixed machine. Image3 is canonical athlete identity. Preserve every athlete/body/rope/outgoing diagonal cable/mat and machine frame pixel. Do NOT alter the pose or the diagonal cable endpoint.\n\nChange ONLY the single selected raised top plate plus its little vertical attachment stem on the RIGHT machine, and the attached vertical cable length. It is currently too high: selected plate top edge near y480. Move that same rigid selected plate DOWN about74pixels, so its top edge is y554 and bottom edge near y578 on the1536x1024canvas. Its x position, width, thickness and perspective remain EXACTLY unchanged. Its stem/attachment moves down with it and the vertical cable extends to the stem. Remove the old high plate/stem cleanly to reveal the unchanged guide rods/background behind it. Leave seven resting plates completely unchanged (their upper edge is y638). Result: selected plate visibly separated from the lower stack by about60pixels, not the current130pixelgap. Do not add or duplicate any plate. This corrects the 1:1 cable travel: selected plate rises only about54pixels from setup.\n\nNo other changes: pure black background, crisp grey-white anatomy and white trainers, purple abs/light lilac obliques, hands at temples, same master camera/framing/lighting. No text, arrows, halo, collage or additional objects. Return the complete native1536x1024 image.\r\n"
+    },
+    {
+      "file": "full-plate-micro-prompt.txt",
+      "prompt": "Image1 EDIT TARGET is full-crunch with a partially corrected weight stack. Image2 is frozen setup master; image3 canonical identity. A very small local equipment adjustment ONLY. The raised single top plate is STILL too high. Lower this existing plate and its attached little stem by approximately THREE QUARTERS OF THE PLATE'S THICKNESS (18pixels) along the rods. Its top edge at x1205 must move from y539 to y557 on this1536x1024canvas. Reduce the empty gap below this plate by18pixels. Do not move the resting stack: its upper edge remains at y638. Keep exactly the same plate width, thickness, perspective, xposition and count. Move the attachment stem down with it and extend the attached vertical cable. Fill the vacated thin strip above with the existing black background and guide rods. This is a local translation of the selected rigid plate, not a redraw of the station.\n\nPreserve EVERYTHING else exactly, including all athlete anatomy, head, hands, arms, knees, hips, mat, diagonal cable from pulley to rope, rope itself, pulley, steel frame and other plates. No new equipment, no labels or text. The selected plate is only about53pixels higher than in setup, matching measured1:1cable payout. Same native1536x1024, crisp clean black-background anatomical illustration.\r\n"
+    },
+    {
+      "file": "full-prompt.txt",
+      "prompt": "Edit target image1 is accepted halfway cable-crunch CANDIDATE. Image2 frozen exercise setup master; image3 canonical identity. Produce ONE full-crunch pose, same1536x1024canvas. Maintain ALL fixed pixels: pelvis/hips (same height and location), thighs, both knees, shins, white shoes, mat, entire machine frame and pulley, rods, seven bottom resting plates. Maintain size and white-grey anatomical identity, pure black background, primary purple abs and secondary lilac obliques, no other highlight. No seams, genital detail, text, glow or extra people.\n\nContinue the abdominal SPINAL CURL from halfway: round/shorten the front of torso, bring ribs close toward pelvis. Shoulder girdle travels down and slightly forward so both elbows approach the knees without passing through thighs. Head follows neck neutrally, head centre roughly x785,y440. Keep BOTH hands closed around their same rope ends immediately beside temples, fixed hand-to-head relation. Elbows stay bent, arms do not pull down independently. Hips must NOT hinge forward or rise. Keep both knees anchored at their exact original positions; don't shrink torso/limbs.\n\nSame black rope, same branch lengths, physically taut and joined at one connector. Connector roughly x925,y345, not a newly lengthened rope. One taut cable from it to same high pulley. For direct1:1 routing, selected single top plate travels UP farther to account for added cable payout (roughly another55pixels relative to halfway, about90pixels total relative to setup). Top plate keeps exact dimensions/count, selector stem moves with it. Seven lower plates remain on base unchanged. Fixed machine silhouette and framing are sacred. No new cables, branches, joints, pulleys or handles. A clean abdominal crunch end position, not a straight-backed bow or arm pull-down.\r\n"
+    },
+    {
+      "file": "master-prompt.txt",
+      "prompt": "Use case: scientific-educational. Create ONE landscape 1536x1024 exercise anatomy illustration, the SETUP master for a kneeling cable crunch. Reference image is athlete identity/style only. Preserve this exact bald faceless white-grey anatomical athlete, fine clean contours, white trainers, smooth featureless pelvic centre without garment seams or genital detail. Strong purple rectus abdominis, lighter lilac obliques ONLY; other muscles white-grey. Flat pure black background, no glow, no halo, no text, arrows, labels, inset or extra people.\n\nA full-body adult athlete kneels on a charcoal rectangular mat, facing RIGHT toward a simple high-pulley cable station at the right of the image. Fixed near-side three-quarter camera, enough frontal view that both separate hands and bent arms are readable. Shins and both knees on mat, hips set slightly back and stationary, torso nearly upright with slight natural flexion, neck neutral. Both hands firmly grip the two ends of a black rope beside the temples, elbows bent pointing down-forward. Rope branches join a metal connector above/in front of the forehead; one taut cable runs diagonally up-right from this connector to a fixed high pulley. Hands stay beside temples, never overhead or at chest. Whole athlete, shoes, mat, pulley and base fit comfortably within the canvas.\n\nMachine is a mechanically clear compact single-pulley direct 1:1 training station: cable goes over the one high fixed pulley, then straight down behind it to a small selectorized stack between two vertical guide rods. Exactly eight equal thin dark steel plates; top ONE selected plate is just slightly lifted with a narrow visible gap above seven resting plates. No extra pulleys, spare cable branches or handles. Machine on RIGHT separate from athlete; uncluttered. The cable is one unbroken taut line from rope connector over pulley to centre of top plate, visibly attached, not intersecting head or body. Full machine stable and rigid. Clean instructional illustration with anatomically plausible knees/hips/arms and readable grip ownership. No theatrical lighting or ground vignette. Maintain reference athlete's proportions and crisp anatomy rather than a photoreal person.\r\n"
+    },
+    {
+      "file": "mid-prompt.txt",
+      "prompt": "Image 1 is frozen cable-crunch master AND edit target. Image 2 is canonical athlete identity only. Generate ONE adjacent MID-CRUNCH pose on exactly the same1536x1024canvas. Keep camera/framing/body proportions/lighting/crisp white-grey anatomy unchanged. Keep purple abs and lilac obliques, smooth featureless pelvic centre. Change ONLY upper trunk/head/arms/rope/cable and selected top plate as physically needed. All pelvis/hips/thighs/knees/shins/shoes/mat pixels stay exactly fixed. Entire machine frame, pulley, rods, seven resting lower plates stay exactly fixed.\n\nKneeling cable crunch: flex and round the SPINE so ribs curl toward pelvis, not a straight-backed hip bow. Keep hips stationary at the original height/location. Lower the ribcage and shoulder girdle forward/down; head follows neutral neck. Both gripping hands ride with temples without changing hand-to-head distance; elbows descend toward knees. Meaningful halfway position, not full crunch. Near head centre approximately x750,y345, elbowtips approximately y540. Preserve separate arms and firm grip on same ropeends. Rope remains same length and branches, drawn taut from both fists to one connector. Rope/cable connector approximately x900,y260; fixed pulley outgoing tangency stays at approximately x1164,y27. Draw one taut cable between those points. As its free length increases about35pixels from the master, move ONLY selected upper plate and its selector stem UP about35pixels along the rods, creating a larger gap. Lower seven plates remain at same y. Machine routing remains simple direct1:1, no added pulleys or loose cable.\n\nNo other changes. No ghost poses, arrows, text, halo or collage. Native landscape fullresolution. This is a trunk curl controlled by abs; arms and hips stay fixed relative to head and floor respectively.\r\n"
+    },
+    {
+      "file": "temple-grip-prompt.txt",
+      "prompt": "Edit target image 1: cable crunch candidate. Image 2: canonical athlete identity. Correct ONLY cable-crunch hand/arm/rope setup: currently both hands are in front of the face as though doing a pull-down. Move each closed gripping hand back so its knuckles are directly beside its corresponding TEMPLE/ear, nearly touching the sides of the head. The near hand must be immediately beside the visible left ear; the far hand belongs at the opposite side of the head, partly occluded naturally. Bend the elbows so they point down and slightly forward. Lengthen the two black rope branches back from their current joining point to those hands, keeping a firm wrapped grip with rubber rope ends below each fist. Keep the rope joining point and outgoing taut cable in the SAME exact place. Keep the face/head silhouette and ALL OTHER PIXELS unchanged: hips, torso, legs, knees, shoes, mat, machine, stack, pulley, lighting, black background, framing, colours. Preserve clean anatomy identity and the abs-primary/lilac-obliques-only highlights. One image, same1536x1024. No text or glow. A kneeling abdominal cable CRUNCH with fixed hands at temples, not arms pulling a rope in front of face.\r\n"
+    }
+  ],
+  "fixedContacts": {
+    "file": "3-full-candidate.png",
+    "target": "3-full-fixed-contacts.png",
+    "masterSha256": "030d7d1d8e567e26ae687eb4a079beedf5bb7e727940ed988fac9ad5dc4121c2",
+    "inputSha256": "4a2757ce428df437e88ab919a8481129eafc9806eaedf7448afc6558d93c5e7f",
+    "outputSha256": "1a85961c10f5ba0fbae1971b031809a609a18c2a56277089495bdc5faa2064b7",
+    "method": "Exact frozen-master copy only within threshold union masks dilated3px inside listed fixed-contact/unobstructed-mat rectangles. User-approved fixed-region method.",
+    "regions": [
+      {
+        "name": "stationary planted shoes",
+        "rect": [210, 730, 465, 880],
+        "threshold": 110
+      },
+      {
+        "name": "unobstructed lower mat",
+        "rect": [0, 900, 1030, 995],
+        "threshold": 15
+      }
+    ],
+    "changedPixels": 54018,
+    "changedOutsideMask": 0,
+    "changedOutsideRectangles": 0
+  },
+  "rigidPlateRepair": {
+    "authorization": "User answered yes to exact translation of cable-crunch rigid moving plate and attachment on29September2026 in this task.",
+    "method": "Exact integer translation of frozen master plate/attachment, no resizing. Old equipment footprints restored from stationary background/guide-rod regions in setup/full. The attached vertical cable remains connected. Athlete pixels unchanged.",
+    "masterSha256": "030d7d1d8e567e26ae687eb4a079beedf5bb7e727940ed988fac9ad5dc4121c2",
+    "stationarySourceSha256": "1a85961c10f5ba0fbae1971b031809a609a18c2a56277089495bdc5faa2064b7",
+    "masterAssemblyRectangles": [
+      [1162, 600, 1303, 638],
+      [1224, 540, 1252, 613]
+    ],
+    "records": [
+      {
+        "input": "2-mid-candidate.png",
+        "output": "2-mid-fixed.png",
+        "shift": -32,
+        "clear": [
+          [1161, 557, 1304, 594],
+          [1224, 491, 1252, 569]
+        ],
+        "inputSha256": "7bb25c15e37cc2483013592c5a939a30c461e07d4e4d7f7bc1494cb872d28b2c",
+        "outputSha256": "2a76ebfa06d1d6550ed7ceea5ae7971b687a5c9971f736580f8ab076416cccb4",
+        "changedPixels": 60296,
+        "changedOutsideMask": 0,
+        "changedAthletePixels": 0
+      },
+      {
+        "input": "3-full-fixed-contacts.png",
+        "output": "3-full-fixed.png",
+        "shift": -53,
+        "clear": [
+          [1161, 473, 1304, 509],
+          [1224, 408, 1252, 484]
+        ],
+        "inputSha256": "1a85961c10f5ba0fbae1971b031809a609a18c2a56277089495bdc5faa2064b7",
+        "outputSha256": "5cae5b6b8555f9a42349244df15de9f8dba9e7bb29b8d5661bbcf5b50c06dd31",
+        "changedPixels": 64372,
+        "changedOutsideMask": 0,
+        "changedAthletePixels": 0
+      }
+    ]
+  },
+  "geometry": {
+    "method": "Unrounded interpolated minimum RGB scan boundaries; 1px endpoint and 1percent width gates. All scans are fixed across the three poses. Separate native anatomy and mobile review required.",
+    "scans": {
+      "nearShoe": [200, 400, 800, 150],
+      "plantedLowerBody": [180, 730, 860, 150],
+      "matFront": [100, 1000, 940, 15],
+      "machineBase": [1020, 1510, 900, 20]
+    },
+    "baseline": {
+      "file": "1-master.png",
+      "sha256": "030d7d1d8e567e26ae687eb4a079beedf5bb7e727940ed988fac9ad5dc4121c2",
+      "width": 1536,
+      "height": 1024,
+      "scans": {
+        "nearShoe": {
+          "left": 256.59859154929575,
+          "right": 378.3333333333333,
+          "width": 121.73474178403757
+        },
+        "plantedLowerBody": {
+          "left": 239.70466321243524,
+          "right": 690,
+          "width": 450.2953367875648
+        },
+        "matFront": {
+          "left": 459.2,
+          "right": 848.2,
+          "width": 389.00000000000006
+        },
+        "machineBase": {
+          "left": 1037.1016949152543,
+          "right": 1470.6122448979593,
+          "width": 433.510549982705
+        }
+      }
+    },
+    "results": [
+      {
+        "file": "2-mid-fixed.png",
+        "sha256": "2a76ebfa06d1d6550ed7ceea5ae7971b687a5c9971f736580f8ab076416cccb4",
+        "width": 1536,
+        "height": 1024,
+        "scans": {
+          "nearShoe": {
+            "left": 256.83561643835617,
+            "right": 379,
+            "width": 122.16438356164383
+          },
+          "plantedLowerBody": {
+            "left": 239.91358024691357,
+            "right": 689.5966386554621,
+            "width": 449.68305840854856
+          },
+          "matFront": {
+            "left": 460,
+            "right": 847.6,
+            "width": 387.6
+          },
+          "machineBase": {
+            "left": 1037.0983606557377,
+            "right": 1470.64,
+            "width": 433.5416393442624
+          }
+        },
+        "deltas": {
+          "nearShoe": {
+            "left": 0.23702488906042163,
+            "right": 0.6666666666666856,
+            "widthFraction": 0.0035293275470076255
+          },
+          "plantedLowerBody": {
+            "left": 0.20891703447833265,
+            "right": -0.40336134453787054,
+            "widthFraction": -0.001359726226312411
+          },
+          "matFront": {
+            "left": 0.8000000000000114,
+            "right": -0.6000000000000227,
+            "widthFraction": -0.003598971722365126
+          },
+          "machineBase": {
+            "left": -0.003334259516577731,
+            "right": 0.027755102040828206,
+            "widthFraction": 0.0000717153516993906
+          }
+        }
+      },
+      {
+        "file": "3-full-fixed.png",
+        "sha256": "5cae5b6b8555f9a42349244df15de9f8dba9e7bb29b8d5661bbcf5b50c06dd31",
+        "width": 1536,
+        "height": 1024,
+        "scans": {
+          "nearShoe": {
+            "left": 256.59859154929575,
+            "right": 378.3333333333333,
+            "width": 121.73474178403757
+          },
+          "plantedLowerBody": {
+            "left": 239.70466321243524,
+            "right": 689.675925925926,
+            "width": 449.9712627134908
+          },
+          "matFront": {
+            "left": 459.2,
+            "right": 848.2,
+            "width": 389.00000000000006
+          },
+          "machineBase": {
+            "left": 1037.2083333333333,
+            "right": 1470.6727272727273,
+            "width": 433.4643939393941
+          }
+        },
+        "deltas": {
+          "nearShoe": {
+            "left": 0,
+            "right": 0,
+            "widthFraction": 0
+          },
+          "plantedLowerBody": {
+            "left": 0,
+            "right": -0.32407407407401934,
+            "widthFraction": -0.0007196922721562789
+          },
+          "matFront": {
+            "left": 0,
+            "right": 0,
+            "widthFraction": 0
+          },
+          "machineBase": {
+            "left": 0.10663841807900099,
+            "right": 0.06048237476807117,
+            "widthFraction": -0.0001064704038062539
+          }
+        }
+      }
+    ]
+  },
+  "physics": {
+    "method": "Native vertical scan x1205 minRGB>22 identifies selected plate. Cable connection points and ideal circular pulley manually estimated; planar projection model is diagnostic, not physical calibration. Compare free tangent plus wrap path to right vertical exit.",
+    "rows": [
+      {
+        "file": "1-master.png",
+        "plateRuns": [
+          [604, 630],
+          [641, 664],
+          [667, 689],
+          [691, 714],
+          [716, 738],
+          [741, 763],
+          [765, 788],
+          [790, 813],
+          [815, 838],
+          [843, 848]
+        ],
+        "cableEndpointEstimate": [883, 102],
+        "pulley": {
+          "centre": [1198, 58],
+          "radius": 45
+        },
+        "idealFreeLength": 314.85869846647086,
+        "idealWrapLength": 83.31933509609347,
+        "pathLength": 398.17803356256434,
+        "plateRise": 0,
+        "pathIncrease": 0,
+        "mismatch": 0
+      },
+      {
+        "file": "2-mid-candidate.png",
+        "plateRuns": [
+          [561, 585],
+          [636, 664],
+          [667, 689],
+          [691, 713],
+          [716, 738],
+          [740, 763],
+          [765, 788],
+          [790, 812],
+          [815, 838],
+          [843, 848]
+        ],
+        "cableEndpointEstimate": [891, 197],
+        "pulley": {
+          "centre": [1198, 58],
+          "radius": 45
+        },
+        "idealFreeLength": 333.98353252817725,
+        "idealWrapLength": 95.84464268921708,
+        "pathLength": 429.82817521739435,
+        "plateRise": 43,
+        "pathIncrease": 31.65014165483001,
+        "mismatch": 11.349858345169991
+      },
+      {
+        "file": "3-full-candidate.png",
+        "plateRuns": [
+          [477, 502],
+          [635, 665],
+          [667, 689],
+          [691, 714],
+          [716, 738],
+          [741, 763],
+          [765, 788],
+          [790, 813],
+          [815, 838],
+          [843, 848]
+        ],
+        "cableEndpointEstimate": [902, 248],
+        "pulley": {
+          "centre": [1198, 58],
+          "radius": 45
+        },
+        "idealFreeLength": 348.8423712796368,
+        "idealWrapLength": 102.13830600323872,
+        "pathLength": 450.9806772828755,
+        "plateRise": 127,
+        "pathIncrease": 52.80264372031115,
+        "mismatch": 74.19735627968885
+      },
+      {
+        "file": "3-full-plate-candidate.png",
+        "plateRuns": [
+          [534, 560],
+          [635, 637],
+          [639, 664],
+          [667, 689],
+          [691, 714],
+          [716, 738],
+          [740, 763],
+          [765, 788],
+          [790, 813],
+          [815, 838],
+          [842, 848]
+        ],
+        "cableEndpointEstimate": [902, 248],
+        "pulley": {
+          "centre": [1198, 58],
+          "radius": 45
+        },
+        "idealFreeLength": 348.8423712796368,
+        "idealWrapLength": 102.13830600323872,
+        "pathLength": 450.9806772828755,
+        "plateRise": 70,
+        "pathIncrease": 52.80264372031115,
+        "mismatch": 17.197356279688847
+      },
+      {
+        "file": "2-mid-fixed.png",
+        "plateRuns": [
+          [572, 598],
+          [636, 664],
+          [667, 689],
+          [691, 713],
+          [716, 738],
+          [740, 763],
+          [765, 788],
+          [790, 812],
+          [815, 838],
+          [843, 848]
+        ],
+        "cableEndpointEstimate": [891, 197],
+        "pulley": {
+          "centre": [1198, 58],
+          "radius": 45
+        },
+        "idealFreeLength": 333.98353252817725,
+        "idealWrapLength": 95.84464268921708,
+        "pathLength": 429.82817521739435,
+        "plateRise": 32,
+        "pathIncrease": 31.65014165483001,
+        "mismatch": 0.3498583451699915
+      },
+      {
+        "file": "3-full-fixed.png",
+        "plateRuns": [
+          [551, 577],
+          [635, 665],
+          [667, 689],
+          [691, 714],
+          [716, 738],
+          [741, 763],
+          [765, 788],
+          [790, 813],
+          [815, 838],
+          [843, 848]
+        ],
+        "cableEndpointEstimate": [902, 248],
+        "pulley": {
+          "centre": [1198, 58],
+          "radius": 45
+        },
+        "idealFreeLength": 348.8423712796368,
+        "idealWrapLength": 102.13830600323872,
+        "pathLength": 450.9806772828755,
+        "plateRise": 53,
+        "pathIncrease": 52.80264372031115,
+        "mismatch": 0.19735627968884728
+      }
+    ]
+  },
+  "repairScripts": [
+    {
+      "file": "fix-contacts.cjs",
+      "source": "const fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypto');\nconst sharp=require('C:/Users/myles/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/sharp');\nconst hash=b=>crypto.createHash('sha256').update(b).digest('hex');\n(async()=>{const masterFile=fs.readFileSync(path.join(__dirname,'1-master.png')),file='3-full-candidate.png',input=fs.readFileSync(path.join(__dirname,file));const {data:master,info}=await sharp(masterFile).removeAlpha().raw().toBuffer({resolveWithObject:true});const raw=await sharp(input).removeAlpha().raw().toBuffer(),out=Buffer.from(raw),mask=new Uint8Array(info.width*info.height);const regions=[{name:'stationary planted shoes',rect:[210,730,465,880],threshold:110},{name:'unobstructed lower mat',rect:[0,900,1030,995],threshold:15}];for(const {rect:[x0,y0,x1,y1],threshold}of regions){for(let y=y0;y<y1;y++)for(let x=x0;x<x1;x++){const p=(y*info.width+x)*3;if(Math.min(...master.subarray(p,p+3))>=threshold||Math.min(...raw.subarray(p,p+3))>=threshold){for(let yy=Math.max(y0,y-3);yy<Math.min(y1,y+4);yy++)for(let xx=Math.max(x0,x-3);xx<Math.min(x1,x+4);xx++)mask[yy*info.width+xx]=1;}}}let changedPixels=0,changedOutsideMask=0;for(let p=0;p<mask.length;p++)if(mask[p]){if(!raw.subarray(p*3,p*3+3).equals(master.subarray(p*3,p*3+3)))changedPixels++;master.copy(out,p*3,p*3,p*3+3);}for(let p=0;p<mask.length;p++)if(!mask[p]&&!raw.subarray(p*3,p*3+3).equals(out.subarray(p*3,p*3+3)))changedOutsideMask++;if(changedOutsideMask)throw Error('Outside mask changed');const target='3-full-fixed-contacts.png';await sharp(out,{raw:{width:info.width,height:info.height,channels:3}}).png().toFile(path.join(__dirname,target));const report={file,target,masterSha256:hash(masterFile),inputSha256:hash(input),outputSha256:hash(fs.readFileSync(path.join(__dirname,target))),method:'Exact frozen-master copy only within threshold union masks dilated3px inside listed fixed-contact/unobstructed-mat rectangles. User-approved fixed-region method.',regions,changedPixels,changedOutsideMask,changedOutsideRectangles:changedOutsideMask};fs.writeFileSync(path.join(__dirname,'fixed-contacts-provenance.json'),JSON.stringify(report,null,2)+'\\n');console.log(report);})();\n\r\n"
+    },
+    {
+      "file": "fix-rigid-plate.cjs",
+      "source": "const fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypto');\nconst sharp=require('C:/Users/myles/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/sharp');\nconst hash=b=>crypto.createHash('sha256').update(b).digest('hex');\n(async()=>{const read=async f=>{const bytes=fs.readFileSync(path.join(__dirname,f));const {data,info}=await sharp(bytes).removeAlpha().raw().toBuffer({resolveWithObject:true});return {bytes,data,info}};const master=await read('1-master.png'),full=await read('3-full-fixed-contacts.png'),w=master.info.width,h=master.info.height;\nconst configs=[{input:'2-mid-candidate.png',output:'2-mid-fixed.png',shift:-32,clear:[[1161,557,1304,594],[1224,491,1252,569]]},{input:'3-full-fixed-contacts.png',output:'3-full-fixed.png',shift:-53,clear:[[1161,473,1304,509],[1224,408,1252,484]]}];\nconst parts=[[1162,600,1303,638],[1224,540,1252,613]],records=[];\nfor(const c of configs){const source=await read(c.input),out=Buffer.from(source.data),changedMask=new Uint8Array(w*h);const put=(x,y,b,sx=x,sy=y)=>{const dst=(y*w+x)*3,src=(sy*w+sx)*3;b.copy(out,dst,src,src+3);changedMask[y*w+x]=1;};\n// Uncovered rods/background: setup has no plate above539; full has none below539.\nfor(const [x0,y0,x1,y1] of c.clear)for(let y=y0;y<y1;y++)for(let x=x0;x<x1;x++)put(x,y,y<539?master.data:full.data);\n// Restore continuous stationary rods and tower to remove patch seams.\nfor(const [x0,y0,x1,y1] of [[1172,140,1200,600],[1270,140,1299,600],[1300,140,1343,880]])for(let y=y0;y<y1;y++)for(let x=x0;x<x1;x++)put(x,y,master.data);\n// Use one rigid master assembly in all poses. Rectangles include narrow fixed rod\n// strips; their original vertical geometry is retained, with no rescaling.\nfor(const [x0,y0,x1,y1]of parts)for(let y=y0;y<y1;y++)for(let x=x0;x<x1;x++)put(x,y+c.shift,master.data,x,y);\nlet changed=0,outside=0,athleteChanges=0;for(let y=0;y<h;y++)for(let x=0;x<w;x++){const i=(y*w+x)*3;if(!out.subarray(i,i+3).equals(source.data.subarray(i,i+3))){changed++;if(!changedMask[y*w+x])outside++;if(x<1100)athleteChanges++;}}\nif(outside||athleteChanges)throw Error('Changed outside equipment region');await sharp(out,{raw:{width:w,height:h,channels:3}}).png().toFile(path.join(__dirname,c.output));records.push({...c,inputSha256:hash(source.bytes),outputSha256:hash(fs.readFileSync(path.join(__dirname,c.output))),changedPixels:changed,changedOutsideMask:outside,changedAthletePixels:athleteChanges});}\nconst report={authorization:'User answered yes to exact translation of cable-crunch rigid moving plate and attachment on29September2026 in this task.',method:'Exact integer translation of frozen master plate/attachment, no resizing. Old equipment footprints restored from stationary background/guide-rod regions in setup/full. The attached vertical cable remains connected. Athlete pixels unchanged.',masterSha256:hash(master.bytes),stationarySourceSha256:hash(full.bytes),masterAssemblyRectangles:parts,records};fs.writeFileSync(path.join(__dirname,'rigid-plate-repair-provenance.json'),JSON.stringify(report,null,2)+'\\n');console.log(report);})();\r\n\r\n"
+    }
+  ],
+  "selectedPngs": [
+    {
+      "frame": 1,
+      "file": "1-master.png",
+      "sha256": "030d7d1d8e567e26ae687eb4a079beedf5bb7e727940ed988fac9ad5dc4121c2"
+    },
+    {
+      "frame": 2,
+      "file": "2-mid-fixed.png",
+      "sha256": "2a76ebfa06d1d6550ed7ceea5ae7971b687a5c9971f736580f8ab076416cccb4"
+    },
+    {
+      "frame": 3,
+      "file": "3-full-fixed.png",
+      "sha256": "5cae5b6b8555f9a42349244df15de9f8dba9e7bb29b8d5661bbcf5b50c06dd31"
+    },
+    {
+      "frame": 4,
+      "file": "3-full-fixed.png",
+      "sha256": "5cae5b6b8555f9a42349244df15de9f8dba9e7bb29b8d5661bbcf5b50c06dd31"
+    },
+    {
+      "frame": 5,
+      "file": "2-mid-fixed.png",
+      "sha256": "2a76ebfa06d1d6550ed7ceea5ae7971b687a5c9971f736580f8ab076416cccb4"
+    },
+    {
+      "frame": 6,
+      "file": "1-master.png",
+      "sha256": "030d7d1d8e567e26ae687eb4a079beedf5bb7e727940ed988fac9ad5dc4121c2"
+    }
+  ],
+  "reuse": {
+    "4": 3,
+    "5": 2,
+    "6": 1
+  },
+  "conversion": "Native1536x1024 losslessWebP; decoded RGB equals reviewed PNG exactly.",
+  "mobileReview": {
+    "component": "ExerciseFormFrames",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "themes": ["dark", "light"],
+    "steps": [1, 2, 3, 4, 5, 6, 1]
+  }
+}
