@@ -203,7 +203,7 @@ export const FORM_ARTWORK: Record<string, FormArtwork> = {
   "barbell-row": existing("barbell-row", 1000, 1701),
   "bench-press": existing("bench-press", 1000, 823),
   dips: existing("dips", 1000, 1413),
-  "lateral-raise": existing("lateral-raise", 1000, 990),
+  "lateral-raise": { version: "anatomy-v3-2026-09-29", status: "approved", width: 1254, height: 1254, frames: Array.from({length:6}, (_,i) => `form-frames/lateral-raise/${i+1}.webp`), reference: "form-frames/lateral-raise/1.webp", reviewFile: "docs/exercise-art/releases/2026-09-29/lateral-raise.json" },
   "overhead-press": existing("overhead-press", 1000, 966),
   "rope-tricep-pushdown": existing("rope-tricep-pushdown", 1000, 1767),
   "skull-crushers": existing("skull-crushers", 1000, 858),

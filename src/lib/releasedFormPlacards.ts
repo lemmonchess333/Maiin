@@ -271,4 +271,5 @@ export const RELEASED_FORM_PLACARDS = {
     ]
   ),
   "barbell-shrug": placard("barbell-shrug", ["upper trapezius"], ["forearm gripping muscles"], [[0,"Set","Stand tall with arms straight."],[0.5,"Lift","Lift shoulders straight toward your ears."],[1,"Top","Keep elbows straight and neck neutral."],[1,"Hold","Hold briefly without rolling your shoulders."],[0.5,"Lower","Lower your shoulders slowly with control."],[0,"Reset","Return shoulders fully, keeping feet planted."]]),
+  "lateral-raise": placard("lateral-raise", ["Side deltoids"], ["Traps"], [[0,"Set","Stand tall with elbows slightly bent."],[0.5,"Raise","Lift outward with steady elbow angles."],[1,"Top","Stop with upper arms at shoulder height."],[1,"Hold","Keep wrists neutral and shoulders relaxed."],[0.5,"Lower","Lower slowly without swinging your torso."],[0,"Reset","Return weights beside your thighs with control."]]),
 };

@@ -82,6 +82,7 @@ describe("owner-authorized artwork activation", () => {
       "push-ups",
       "db-bench",
       "barbell-shrug",
+      "lateral-raise",
     ]) {
       expect(getReleasedFormArtwork(id)?.status, id).toBe("approved");
       const { review, expected } = evidence(id);
