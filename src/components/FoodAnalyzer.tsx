@@ -318,13 +318,15 @@ export default function FoodAnalyzer({
      `activeResult.items`. Missing entries default to {multiplier: 1,
      removed: false} — i.e. the item passes through untouched. The
      state is reset whenever `activeResult` changes (a new analysis
-     comes back) so edits don't bleed between scans. */
+     comes back) so edits don't bleed between scans — during render,
+     so no render of the new result carries the last scan's edits. */
   type ItemEdit = { multiplier: number; removed: boolean };
   const [itemEdits, setItemEdits] = useState<Record<number, ItemEdit>>({});
-
-  useEffect(() => {
+  const [editsFor, setEditsFor] = useState(activeResult);
+  if (editsFor !== activeResult) {
+    setEditsFor(activeResult);
     setItemEdits({});
-  }, [activeResult]);
+  }
 
   /* The per-item editor only renders for multi-item AI / text results.
      - Barcode results are by definition single-item; their existing
@@ -437,11 +439,16 @@ export default function FoodAnalyzer({
   // Hero photo shown at the top of the result card. Prefer the user's own
   // captured photo (AI food scan); fall back to the product image pulled
   // from OpenFoodFacts for barcode results. Null means no hero band.
+  // Memoised so the (large) data URL is built once per capture, not per
+  // render. The image URL is read into a local first: with
+  // `activeResult?.imageUrl` in the dependency list, the React Compiler
+  // inferred all of `activeResult` as the input and could not keep the memo.
+  const resultImageUrl = activeResult?.imageUrl;
   const heroImageSrc = useMemo(() => {
     if (capturedBase64) return `data:image/jpeg;base64,${capturedBase64}`;
-    if (activeResult?.imageUrl) return activeResult.imageUrl;
+    if (resultImageUrl) return resultImageUrl;
     return null;
-  }, [capturedBase64, activeResult?.imageUrl]);
+  }, [capturedBase64, resultImageUrl]);
 
   /* The sheet shows the result once the scanner has closed over it. */
   const sheetOpen = !!activeResult && !cameraOpen;

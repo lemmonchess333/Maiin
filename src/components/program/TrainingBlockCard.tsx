@@ -213,14 +213,22 @@ export default function TrainingBlockCard({
   // Open on the user's CURRENT focus. The old sheet always reset to
   // "strength_foundation", so an idle tap proposed strength to a
   // hypertrophy user — which under Blk2 would actually change their week.
-  useEffect(() => {
+  // The form resets whenever the sheet opens, or the focus changes while it
+  // is open. Adjusted during render rather than in an effect, so no render
+  // of the open sheet carries the last session's choices.
+  const [formFor, setFormFor] = useState({ showCreate, currentFocus });
+  if (
+    formFor.showCreate !== showCreate ||
+    formFor.currentFocus !== currentFocus
+  ) {
+    setFormFor({ showCreate, currentFocus });
     if (showCreate) {
       setFocus(currentFocus);
       setPace("full");
       setShowPace(false);
       setDuration(8);
     }
-  }, [showCreate, currentFocus]);
+  }
 
   // One-shot legacy adoption. Guarded three ways so it can't loop: the
   // ref fires it once per mount, the writer itself no-ops when a live

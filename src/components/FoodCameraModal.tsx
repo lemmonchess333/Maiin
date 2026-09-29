@@ -217,10 +217,14 @@ export default function FoodCameraModal({
   const reducedMotion = useReducedMotion();
   /* Drop the held frame when the modal closes so a later scan can never
      flash the previous meal. (The component stays mounted across
-     open/close — `open` only gates the render.) */
-  useEffect(() => {
+     open/close — `open` only gates the render.) Adjusted during render
+     (React's "adjust state when a prop changes" idiom) rather than in an
+     effect. */
+  const [previewOpen, setPreviewOpen] = useState(open);
+  if (previewOpen !== open) {
+    setPreviewOpen(open);
     if (!open) setPreview(null);
-  }, [open]);
+  }
   const streamRef = useRef<MediaStream | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -269,6 +273,18 @@ export default function FoodCameraModal({
   /* A code was read: the frame's corners turn orange for a beat before
      the lookup covers the screen, so the scan visibly lands. */
   const [barcodeFound, setBarcodeFound] = useState(false);
+  /* A mode switch drops what the reader last said, so the Label frame
+     never keeps the orange corners of a code found a moment ago and
+     Barcode always opens on "Point at a barcode" — including after a
+     picked photo that finished decoding while another mode was up.
+     Adjusted during render, keyed on the tab, rather than set from the
+     reader's effect. */
+  const [readerTab, setReaderTab] = useState(tab);
+  if (readerTab !== tab) {
+    setReaderTab(tab);
+    setBarcodeHint(BARCODE_HINT);
+    setBarcodeFound(false);
+  }
   /* Bumped to restart the live barcode reader after it was stopped for a
      picked photo that turned out to hold no code. */
   const [barcodeRun, setBarcodeRun] = useState(0);
@@ -390,12 +406,11 @@ export default function FoodCameraModal({
   useEffect(() => {
     if (!open) return;
 
-    // only scan when in barcode tab
+    // only scan when in barcode tab (the hint and the found beat are
+    // reset by the tab switch itself, during render — see `readerTab`)
     if (tab !== "barcode") {
       stopZXingRef.current?.();
       stopZXingRef.current = null;
-      setBarcodeHint(BARCODE_HINT);
-      setBarcodeFound(false);
       // Coming back to Barcode looks every code up afresh.
       lastFailedCodeRef.current = null;
       return;

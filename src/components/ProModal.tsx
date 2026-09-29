@@ -29,7 +29,7 @@
  *      one implementation for ProModal and Upgrade.tsx so they
  *      can't diverge on loading / error / auth handling.
  */
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useAuth } from "@/lib/auth";
 import { THEME } from "@/lib/theme";
 import {
@@ -129,6 +129,16 @@ export default function ProModal({ onClose, featureKey, initialPlan }: Props) {
   const [selectedPlan, setSelectedPlan] = useState<PlanId>(
     initialPlan ?? DEFAULT_PLAN
   );
+  // Reset selection if the parent re-renders the modal with a different
+  // initialPlan (defensive — current callsites always remount on open
+  // so the useState initial covers it, but if the component ever
+  // becomes controlled while staying mounted, this keeps it in sync).
+  // Adjusted during render when the prop changes, not in an effect.
+  const [syncedInitialPlan, setSyncedInitialPlan] = useState(initialPlan);
+  if (syncedInitialPlan !== initialPlan) {
+    setSyncedInitialPlan(initialPlan);
+    if (initialPlan) setSelectedPlan(initialPlan);
+  }
   const { loading, error, startCheckout, requiresSignIn } = useProCheckout();
   const { profile } = useAuth();
   // Apple-localized prices on the RC build; hardcoded proPlans fallback
@@ -209,14 +219,6 @@ export default function ProModal({ onClose, featureKey, initialPlan }: Props) {
   const ctaLabel = requiresSignIn
     ? "Sign in to start Pro"
     : getCheckoutCtaLabel(selectedPlan, withTrial);
-
-  // Reset selection if the parent remounts the modal with a different
-  // initialPlan (defensive — current callsites always remount on open
-  // so the useState initial covers it, but if the component ever
-  // becomes controlled while staying mounted, this keeps it in sync).
-  useEffect(() => {
-    if (initialPlan) setSelectedPlan(initialPlan);
-  }, [initialPlan]);
 
   return (
     <BottomSheet

@@ -26,7 +26,7 @@
  * 50 and would 404 on an older session or on a cold deep-link before the
  * snapshot resolves.
  */
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { formatVolume } from "@/utils/formatters";
 import { useParams, useNavigate } from "react-router-dom";
 import { ChevronLeft, Share2, Users, Check, Dumbbell } from "lucide-react";
@@ -105,15 +105,18 @@ function WorkoutDetailContent() {
   const [feedOpen, setFeedOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   /** Set optimistically once a feed post lands so the button flips to its
-   *  "shared" state without a refetch. Seeded from the doc on load. */
-  const [sharedActivityId, setSharedActivityId] = useState<string | null>(null);
-
-  /* Seeded from the loaded doc so the share button can flip optimistically
-     without a refetch. Kept as its own state rather than read straight off
-     `workout` for that reason. */
-  useEffect(() => {
-    if (workout) setSharedActivityId(workout.sharedActivityId ?? null);
-  }, [workout]);
+   *  "shared" state without a refetch. It belongs to the loaded doc it was
+   *  set against: a fresh read (a retry, a correction) supersedes it and the
+   *  doc's own `sharedActivityId` shows again, so no effect has to re-seed
+   *  it. */
+  const [sharedOverride, setSharedOverride] = useState<{
+    doc: Workout & { id: string };
+    id: string;
+  } | null>(null);
+  const sharedActivityId =
+    workout && sharedOverride?.doc === workout
+      ? sharedOverride.id
+      : (workout?.sharedActivityId ?? null);
 
   /* A failed read is no longer reported as a missing workout. The old
      catch dropped the error and fell through to "not found", so a dropped
@@ -354,7 +357,7 @@ function WorkoutDetailContent() {
           uid={user.uid}
           workout={workout}
           title={title}
-          onShared={setSharedActivityId}
+          onShared={(id) => setSharedOverride({ doc: workout, id })}
         />
       )}
     </div>

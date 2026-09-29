@@ -247,13 +247,21 @@ export default function Space() {
    * doesn't re-open it. */
   const [searchParams, setSearchParams] = useSearchParams();
   const composeRequested = searchParams.get("compose") === "1";
+  const composeReady = composeRequested && joined === true;
+  /* The composer opens during render, the moment the request can be
+     honoured; only the URL clean-up, which talks to the router, is an
+     effect. */
+  const [composeWasReady, setComposeWasReady] = useState(false);
+  if (composeReady !== composeWasReady) {
+    setComposeWasReady(composeReady);
+    if (composeReady) setComposer({ open: true, attachLatest: true });
+  }
   useEffect(() => {
-    if (!composeRequested || joined !== true) return;
-    setComposer({ open: true, attachLatest: true });
+    if (!composeReady) return;
     const next = new URLSearchParams(searchParams);
     next.delete("compose");
     setSearchParams(next, { replace: true });
-  }, [composeRequested, joined, searchParams, setSearchParams]);
+  }, [composeReady, searchParams, setSearchParams]);
 
   useEffect(() => {
     if (!def || !spaceId) return;

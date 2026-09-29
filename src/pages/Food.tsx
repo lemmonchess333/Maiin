@@ -736,17 +736,15 @@ export default function Food() {
     if (offSearchQuery === null) {
       setOffResults([]);
       setOffLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    if (!offSearchQuery) {
       /* Reset the inline empty state when the query clears so a
          stale "No matches" doesn't linger after the user has
          deleted their input. */
       setOffEmpty(false);
-      return;
     }
+  }
+
+  useEffect(() => {
+    if (!offSearchQuery) return;
     // Guard against out-of-order resolution: a newer query or Retry supersedes
     // this run. `cancelled` (set in cleanup) gates every state write, and the
     // AbortController cancels the in-flight fetch so a stale response can't
@@ -1735,18 +1733,22 @@ export default function Food() {
      remove through the unchanged handleRemoveFavourite). Cold-start
      accounts whose items are only seeded defaults (no favourites, no
      recent real history) get the section framed as examples — the
-     same distinction the old above/below-composer placement encoded. */
-  const quickAddSection: QuickAddSection | null =
-    inputFocused && !nlInput.trim() && quickMeals.length > 0
-      ? {
-          items: quickMeals,
-          asExamples: !hasStrongQuickAddSuggestions,
-          adding: quickAdding,
-          onAdd: handleQuickMealAdd,
-          onEditPortion: setPortionMeal,
-          onRemove: handleRemoveFavourite,
-        }
-      : null;
+     same distinction the old above/below-composer placement encoded.
+     `showQuickAdd` is kept as its own boolean for the dropdown's
+     visibility: the section carries `handleQuickMealAdd`, which reads
+     `inputRef`, and comparing the section during render reads as a ref
+     access to the React Compiler. */
+  const showQuickAdd = inputFocused && !nlInput.trim() && quickMeals.length > 0;
+  const quickAddSection: QuickAddSection | null = showQuickAdd
+    ? {
+        items: quickMeals,
+        asExamples: !hasStrongQuickAddSuggestions,
+        adding: quickAdding,
+        onAdd: handleQuickMealAdd,
+        onEditPortion: setPortionMeal,
+        onRemove: handleRemoveFavourite,
+      }
+    : null;
 
   // Retry the subscription as well as acknowledging the gesture. A terminated
   // listener otherwise leaves a failed diary read stuck until a full reload.
@@ -1984,7 +1986,7 @@ export default function Food() {
           inputRef={inputRef}
           targetMeal={targetMeal}
           onTargetMeal={handleTargetMeal}
-          showSuggestions={showSuggestions || quickAddSection !== null}
+          showSuggestions={showSuggestions || showQuickAdd}
           suggestions={suggestions}
           offResults={offResults}
           pantryResults={pantrySuggestions}

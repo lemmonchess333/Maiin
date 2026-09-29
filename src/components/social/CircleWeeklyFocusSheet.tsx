@@ -16,7 +16,7 @@
  * first-class action, not a downgraded one.
  */
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { haptic } from "@/lib/haptic";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
@@ -56,10 +56,14 @@ export default function CircleWeeklyFocusSheet({
   const [selected, setSelected] = useState<WeeklyFocus | null>(currentFocus);
 
   // Re-sync the selection whenever the sheet (re)opens — it may be a
-  // different circle, or the focus may have changed since last open.
-  useEffect(() => {
+  // different circle, or the focus may have changed since last open — and
+  // when the focus changes while it is open. Adjusted during render when
+  // either changes, not in an effect.
+  const [syncedFor, setSyncedFor] = useState({ open, currentFocus });
+  if (syncedFor.open !== open || syncedFor.currentFocus !== currentFocus) {
+    setSyncedFor({ open, currentFocus });
     if (open) setSelected(currentFocus);
-  }, [open, currentFocus]);
+  }
 
   const options = orderWeeklyFocus(circleType);
   const unchanged = hasCheckedIn && selected === currentFocus;

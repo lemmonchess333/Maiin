@@ -84,6 +84,35 @@ function sourceFromParam(from: string | null): PaywallSource {
   return "upgrade_page";
 }
 
+type CheckoutBanner = {
+  kind: "success" | "cancelled" | "error";
+  message: string;
+};
+
+/** `?checkout=` → the round-trip banner. Null for anything unrecognised. */
+function checkoutBanner(status: string | null): CheckoutBanner | null {
+  if (status === "success") {
+    return {
+      kind: "success",
+      message:
+        "Payment received. Your Pro access is being activated — this usually takes a few seconds.",
+    };
+  }
+  if (status === "cancelled") {
+    return {
+      kind: "cancelled",
+      message: "Checkout cancelled. No payment was taken.",
+    };
+  }
+  if (status === "error") {
+    return {
+      kind: "error",
+      message: "Something went wrong with checkout. Try again.",
+    };
+  }
+  return null;
+}
+
 export default function Upgrade() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -227,33 +256,20 @@ export default function Upgrade() {
     setManageLoading(false);
   };
 
-  // Visible status banner for checkout round-trip. Persists for the
-  // duration of this render — the effect above strips the URL param
-  // on next paint, but we capture the status here so the banner
-  // renders this paint.
-  const [statusBanner, setStatusBanner] = useState<{
-    kind: "success" | "cancelled" | "error";
-    message: string;
-  } | null>(null);
-  useEffect(() => {
-    if (checkoutStatus === "success") {
-      setStatusBanner({
-        kind: "success",
-        message:
-          "Payment received. Your Pro access is being activated — this usually takes a few seconds.",
-      });
-    } else if (checkoutStatus === "cancelled") {
-      setStatusBanner({
-        kind: "cancelled",
-        message: "Checkout cancelled. No payment was taken.",
-      });
-    } else if (checkoutStatus === "error") {
-      setStatusBanner({
-        kind: "error",
-        message: "Something went wrong with checkout. Try again.",
-      });
-    }
-  }, [checkoutStatus]);
+  // Visible status banner for checkout round-trip. The effect above
+  // strips the URL param after the first render, so the banner is
+  // captured in state: it takes the status on the first render and on
+  // every change to a recognised one (adjusted during render), and it
+  // outlives the param being stripped.
+  const [statusBanner, setStatusBanner] = useState(() =>
+    checkoutBanner(checkoutStatus)
+  );
+  const [bannerStatus, setBannerStatus] = useState(checkoutStatus);
+  if (bannerStatus !== checkoutStatus) {
+    setBannerStatus(checkoutStatus);
+    const banner = checkoutBanner(checkoutStatus);
+    if (banner) setStatusBanner(banner);
+  }
 
   const canBuy = (!isPro || isInTrial) && !crossPlatformPro;
   const leaveLabel = fromOnboarding ? "Continue with Free" : "Not now";
