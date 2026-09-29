@@ -16,7 +16,7 @@ const h = vi.hoisted(() => ({
       ) => Promise<{
         syncStatus: string;
         sync: Promise<string>;
-        share: () => Promise<void>;
+        share: { post: () => Promise<unknown> };
       }>),
   user: { uid: "routine-user", emailVerified: true },
   compose: vi.fn(),
@@ -93,11 +93,10 @@ describe("routine completion receipt", () => {
       const receipt = await h.complete!(-1, session);
       expect(receipt.syncStatus).toBe("synced");
       expect(h.compose).not.toHaveBeenCalled();
-      await receipt.share();
+      await receipt.share.post();
       expect(h.compose).toHaveBeenCalledWith(
         "routine-user",
-        expect.anything(),
-        expect.objectContaining({ forcePrompt: true })
+        expect.objectContaining({ type: "workout", title: "Bench day" })
       );
     });
     expect(

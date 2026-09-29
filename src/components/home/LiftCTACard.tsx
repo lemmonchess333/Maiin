@@ -1,11 +1,35 @@
+import { useMemo } from "react";
+import { Play } from "lucide-react";
 import InlineNumerals from "@/components/ui/InlineNumerals";
-import { THEME } from "@/lib/theme";
-import { motion } from "framer-motion";
-import { Dumbbell } from "lucide-react";
+import { Button } from "@/components/ui/Button";
 import { haptic } from "@/lib/haptic";
 import { track as trackHomeEvent } from "@/lib/homeAnalytics";
 import { cardClasses } from "@/components/ui/cardClasses";
+import { formArtCutoutUrl, getFormArtCutout } from "@/lib/formArtCutouts";
+import { estimateSessionMinutes } from "@/features/program/expressSession";
+import { liftDayTitle } from "@/lib/liftDayLabel";
 
+interface LiftCardExercise {
+  name: string;
+  exerciseId?: string;
+  sets?: number;
+  restSeconds?: number;
+  weight?: number;
+}
+
+/**
+ * Today's lift, as Home's lead card (DS3).
+ *
+ * Two actions, two controls. Start begins the session: it deep-links to
+ * the day with `start=1`, and Train starts it the way its own Start does.
+ * Anywhere else on the card opens the day in Train to look it over first.
+ * A finished or skipped day has no Start; the card says what happened and
+ * still opens the day.
+ *
+ * The drawing is the first exercise in the day that has released art,
+ * cut out of its black backdrop (`formArtCutouts`). A day with none shows
+ * no picture rather than a stand-in.
+ */
 export default function LiftCTACard({
   nextWorkout,
   navigate,
@@ -20,27 +44,25 @@ export default function LiftCTACard({
     skipped?: boolean;
     dayName: string;
     dayType: string;
-    exercises: { name: string }[];
+    exercises: LiftCardExercise[];
   };
   navigate: (p: string) => void;
   muscleGroups?: string;
   /** Legacy cold-start flag; a calendar card always describes the plan. */
   isFirst?: boolean;
   /** HOME-ACTION-01: index into programState.workouts for the exact
-   *  Programme day this CTA represents, so the tap deep-links to that day
+   *  Programme day this card represents, so both actions open that day
    *  (`?day=N`) instead of a bare `/program`. Null → bare `/program`. */
   dayIndex?: number | null;
   /** HOME-ACTION-01: false when the lift slot is already completed/skipped
-   *  (terminal). The pill names its status and the tap opens the day to review
-   *  rather than framing a finished session as launchable. */
+   *  (terminal). The card names its status and offers no Start. */
   isStartable?: boolean;
   status?: "none" | "planned" | "completed" | "skipped";
 }) {
-  // Deep-link to the exact Programme day; both startable and terminal
-  // slots open there (the pill signals which). Bare /program only when
-  // the resolver couldn't map an index.
-  const target =
+  const dayTarget =
     typeof dayIndex === "number" ? `/program?day=${dayIndex}` : "/program";
+  const startTarget =
+    typeof dayIndex === "number" ? `${dayTarget}&start=1` : dayTarget;
   const state =
     status ??
     (nextWorkout.completed
@@ -56,74 +78,123 @@ export default function LiftCTACard({
       : state === "skipped"
         ? "Skipped"
         : "Needs review";
+
+  const count = nextWorkout.exercises.length;
+  const { category, title } = liftDayTitle(nextWorkout.dayName);
+  /* The eyebrow is the day's category ("Pull"), a fact about the plan.
+     A name without one keeps "Planned for today", which is what this
+     surface knows and reads as plan beside Train's cursor rather than
+     contradicting it (ADR-0002: Home resolves a lift by weekday, Train by
+     rotation; liftCardRegister.test.tsx). No week or rotation position:
+     Home shows the session and its dose, and the rest lives in the day's
+     details (owner direction, 2026-09-09). */
+  const eyebrow = category ?? "Planned for today";
+  const minutes = useMemo(() => {
+    const priced = nextWorkout.exercises.filter(
+      (ex): ex is LiftCardExercise & { sets: number } =>
+        typeof ex.sets === "number" && ex.sets > 0
+    );
+    return priced.length === count && count > 0
+      ? estimateSessionMinutes(priced)
+      : null;
+  }, [nextWorkout.exercises, count]);
+  const art = useMemo(() => {
+    for (const ex of nextWorkout.exercises) {
+      const cutout = ex.exerciseId ? getFormArtCutout(ex.exerciseId) : null;
+      if (cutout) return cutout;
+    }
+    return null;
+  }, [nextWorkout.exercises]);
+
   return (
-    <motion.button
-      whileTap={{ scale: 0.97 }}
-      onClick={function () {
-        haptic();
-        trackHomeEvent("home_card_tapped", { card: "today_workout" });
-        navigate(target);
-      }}
-      type="button"
+    <div
       className={cardClasses({
         tone: "tinted",
-        className:
-          "w-full bg-lifting/8 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+        padded: false,
+        className: "relative overflow-hidden bg-lifting/12",
       })}
     >
-      <div className="flex items-center gap-3">
-        <div className="size-10 shrink-0 rounded-lg flex items-center justify-center bg-lifting/9">
-          <Dumbbell className="size-5 text-lifting" aria-hidden="true" />
-        </div>
-        <div className="flex-1 min-w-0">
-          {/* Deliberately NOT the run card's "Today · Run day", though the
-              two cards are otherwise twins. ADR-0002: runs are date-pinned,
-              so naming the day IS the run's identity; lifts are
-              split-ordered, and the session that comes next is the Programme
-              cursor's call, not this weekday's. Home resolves a lift by
-              weekday (liftIndexForDayOfWeek), which is the right thing for a
-              calendar surface to draw and the wrong thing to assert as "the
-              next session" — tapping through to a day the rotation has not
-              reached yet left this card saying "Today" over a session the
-              Programme tab called "Upcoming". "Planned for today" is what
-              this surface actually knows, and it reads as plan-vs-progress
-              beside the cursor rather than as a contradiction. */}
-          <p className="text-xs font-semibold mb-0.5 text-lifting-strong">
-            Planned for today
+      {/* The card-wide preview. It sits beneath the content, which lets
+          taps through, so every part of the card that is not Start opens
+          the day. A button inside a button would be invalid, which is why
+          this is a sibling rather than the card itself. */}
+      <button
+        type="button"
+        onClick={function () {
+          haptic();
+          trackHomeEvent("home_card_tapped", { card: "today_workout" });
+          navigate(dayTarget);
+        }}
+        aria-label={`Open ${nextWorkout.dayName} in Train`}
+        className="absolute inset-0 z-0 rounded-[inherit] motion-safe:active:bg-lifting/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset"
+      />
+      {art && (
+        <img
+          src={formArtCutoutUrl(art)}
+          alt=""
+          aria-hidden="true"
+          draggable={false}
+          decoding="async"
+          className="pointer-events-none absolute right-2 top-3 z-0 h-[136px] w-[42%] object-contain object-right-top"
+        />
+      )}
+      <div
+        className={
+          "pointer-events-none relative z-10 px-5 pt-5 " +
+          (art ? "pr-[46%]" : "")
+        }
+      >
+        <p className="text-sm font-bold text-lifting-strong">
+          <InlineNumerals>{eyebrow}</InlineNumerals>
+        </p>
+        <p className="mt-1 text-h2 font-extrabold leading-tight tracking-tight text-foreground text-balance">
+          <InlineNumerals>{title}</InlineNumerals>
+        </p>
+        <p className="mt-2 text-sm font-medium text-muted-foreground">
+          <InlineNumerals>
+            {`${count} ${count === 1 ? "exercise" : "exercises"}`}
+          </InlineNumerals>
+          {minutes !== null && (
+            <>
+              {" · "}
+              {/* One unit when the line wraps: on a 375px phone the text
+                  column beside the drawing broke "about 43" from "min". */}
+              <span className="whitespace-nowrap">
+                about <span className="font-mono tabular-nums">{minutes}</span>{" "}
+                min
+              </span>
+            </>
+          )}
+        </p>
+        {muscleGroups && (
+          <p className="text-sm font-medium text-muted-foreground">
+            {muscleGroups}
           </p>
-          <p className="text-base font-bold leading-snug text-foreground">
-            <InlineNumerals>{nextWorkout.dayName}</InlineNumerals>
-          </p>
-          <p className="mt-1 text-micro leading-relaxed text-muted-foreground">
-            <InlineNumerals>
-              {`${nextWorkout.exercises.length} ${nextWorkout.exercises.length === 1 ? "exercise" : "exercises"}`}
-            </InlineNumerals>
-            {muscleGroups && <> · {muscleGroups}</>}
-          </p>
-        </div>
-        {state === "planned" ? (
-          <div
-            className="flex min-h-11 shrink-0 items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-bold shadow-sm"
-            style={{
-              background: `linear-gradient(135deg, ${THEME.lifting}, ${THEME.liftingLight})`,
-              color: "white",
-            }}
-          >
-            {/* No leading chevron. A right-pointing arrow BEFORE the word
-                reads as a stray character rather than an affordance —
-                chevrons in this app sit at the far right of a row, never
-                inside a pill. The run card's own pill is bare "View run",
-                so dropping it also puts the matched pair back in step. */}
-            View
-          </div>
-        ) : (
-          // HOME-ACTION-01: a completed/skipped lift is not launchable —
-          // show its actual completion status.
-          <div className="flex min-h-11 shrink-0 items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-bold bg-muted text-muted-foreground">
-            {statusLabel}
-          </div>
         )}
       </div>
-    </motion.button>
+      <div className="relative z-10 px-5 pb-5 pt-4">
+        {state === "planned" ? (
+          <Button
+            variant="primary"
+            size="lg"
+            className="w-full"
+            onClick={function () {
+              haptic();
+              trackHomeEvent("home_card_tapped", { card: "today_workout" });
+              navigate(startTarget);
+            }}
+          >
+            <Play className="size-4 fill-current" aria-hidden="true" />
+            Start workout
+          </Button>
+        ) : (
+          // HOME-ACTION-01: a completed/skipped lift is not launchable —
+          // say what happened. The card behind still opens the day.
+          <p className="pointer-events-none inline-flex min-h-11 items-center rounded-full bg-muted px-4 text-sm font-semibold text-muted-foreground">
+            {statusLabel}
+          </p>
+        )}
+      </div>
+    </div>
   );
 }

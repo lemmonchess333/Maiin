@@ -471,20 +471,25 @@ describe("the range track's fill/groove edge — WCAG 1.4.11", () => {
   );
 
   it("records why --primary-strong is NOT the track fill", () => {
-    // The executable form of the comment above — if a retune ever makes
-    // -strong viable, this fails and the choice can be revisited.
+    // The executable form of the comment above. On the DS2 groove
+    // `-strong` measured 2.87:1 in dark, under the floor. DS3's deeper
+    // groove lifts it to about 3.2:1, but `--primary` still has the
+    // larger margin in dark, the default theme. If that ever flips, this
+    // fails and the choice can be revisited.
     const dark = darkBlock();
-    const ratio = contrast(
+    const groove = hslToRgb(...readHsl(dark, "muted"));
+    const strong = contrast(
       hslToRgb(...readHsl(dark, "primary-strong")),
-      hslToRgb(...readHsl(dark, "muted"))
+      groove
     );
+    const primary = contrast(hslToRgb(...readHsl(dark, "primary")), groove);
     expect(
-      ratio,
-      `--primary-strong now measures ${ratio.toFixed(2)}:1 against the ` +
-        `dark groove. It was rejected as the track fill at 2.87:1; if it ` +
-        `clears 3:1 now, the index.css comment explaining the choice is ` +
-        `stale.`
-    ).toBeLessThan(AA_LARGE);
+      primary,
+      `--primary is ${primary.toFixed(2)}:1 and --primary-strong ` +
+        `${strong.toFixed(2)}:1 against the dark groove. The track uses ` +
+        `--primary because it has the larger margin; if -strong now does, ` +
+        `the index.css comment explaining the choice is stale.`
+    ).toBeGreaterThan(strong);
   });
 });
 

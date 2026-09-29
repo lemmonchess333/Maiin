@@ -104,6 +104,33 @@ describe("useLifetimeRunStats", () => {
     expect(result.current.totalDistanceM).toBe(15000);
   });
 
+  it("dates every run it counts, for the range before a window", async () => {
+    // Analytics compares its range with the one before it; this read is
+    // the only one holding runs from before the window.
+    seedFirestore({
+      "users/u1/runs/a": run(5000, { completedAt: 1_800_000_000_000 }),
+      "users/u1/runs/b": run(3000, { completedAt: 1_700_000_000_000 }),
+      "users/u1/runs/bogus": run(40000, {
+        duration: 8,
+        isInvalid: true,
+        completedAt: 1_800_000_100_000,
+      }),
+    });
+    const { result } = renderHook(() => useLifetimeRunStats());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    expect(
+      [...result.current.dated].sort(
+        (x, y) => x.completedAtMs - y.completedAtMs
+      )
+    ).toEqual([
+      { completedAtMs: 1_700_000_000_000, distanceM: 3000 },
+      { completedAtMs: 1_800_000_000_000, distanceM: 5000 },
+    ]);
+    // The same runs the totals count, no more.
+    expect(result.current.dated).toHaveLength(result.current.runCount);
+  });
+
   it("excludes ineligible runs from BOTH the count and the distance", async () => {
     // A 40km/0:08 misclick would otherwise inflate a lifetime total that a
     // user reads as an achievement.

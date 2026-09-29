@@ -65,6 +65,17 @@ jobs:
       - name: Install Firebase CLI
         run: npm install -g firebase-tools
 
+      # The one-time approval above is an IAM role on the Storage service
+      # agent, and firebase-tools checks or grants it only in an
+      # interactive session. From CI it publishes rules that read
+      # Firestore without the role and still succeeds, while every upload
+      # those rules guard is refused. The first release of the freeze, on
+      # 2026-09-15, went out that way: from CI, with nothing checking the
+      # role. So confirm the role before releasing the rules, and fail
+      # rather than guess when it can't be read.
+      - name: Confirm Storage rules can read Firestore
+        run: python3 scripts/verify_storage_rules_iam.py
+
       - name: Deploy Storage rules
         run: firebase deploy --only storage --project adaptive-fitness-af8bb --force
 

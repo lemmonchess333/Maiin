@@ -271,10 +271,6 @@ const NOT_EQUALITY_MIRROR: Record<string, string> = {
     "(actualTemplateId, date-scoped ANY); client asks 'is this slot complete?' over a " +
     "NORMALISED SavedRunLike via the claim map. Different question, different shape — " +
     "an equality pin would be wrong, and pinning them is what produced the dead port.",
-  "functions/lib/coachPrompts.js":
-    "'mirrors the client SpacePostDoc' is a doc-SHAPE note, not a computable equality " +
-    "(prompt content is server-owned); the space-id membership half is pinned via " +
-    "spaceDefs.test.ts's three-way set equality.",
 };
 
 /* ── Reachability ─────────────────────────────────────────────────── */

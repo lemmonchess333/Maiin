@@ -36,6 +36,14 @@ export default function SortableExerciseRow({
 
   const [offsetX, setOffsetX] = useState(0);
   const [swiping, setSwiping] = useState(false);
+  /* The red Delete panel exists only while the row is off its resting
+     place. At rest the row covers it exactly, but a rounded corner is
+     antialiased, and the red showed through as a hairline down the right
+     edge of every row (the Food log had the same edge, #2469). It hides
+     again once the row has slid all the way home. */
+  const [panelShown, setPanelShown] = useState(false);
+  // The offset the row is heading to, read synchronously by the handlers.
+  const offsetRef = useRef(0);
   const startRef = useRef<{ x: number; y: number } | null>(null);
   const directionLocked = useRef<"horizontal" | "vertical" | null>(null);
 
@@ -61,7 +69,9 @@ export default function SortableExerciseRow({
     if (directionLocked.current !== "horizontal") return;
 
     setSwiping(true);
+    setPanelShown(true);
     const clamped = Math.max(-80, Math.min(0, deltaX));
+    offsetRef.current = clamped;
     setOffsetX(clamped);
   }, []);
 
@@ -69,11 +79,17 @@ export default function SortableExerciseRow({
     startRef.current = null;
     directionLocked.current = null;
     setSwiping(false);
-    setOffsetX((prev) => (prev < -45 ? -80 : 0));
+    const next = offsetRef.current < -45 ? -80 : 0;
+    // A row already home does not animate, so no transition will end to
+    // hide the panel: hide it now.
+    if (next === 0 && offsetRef.current === 0) setPanelShown(false);
+    offsetRef.current = next;
+    setOffsetX(next);
   }, []);
 
   const handleCardClick = useCallback(() => {
     if (offsetX < 0) {
+      offsetRef.current = 0;
       setOffsetX(0);
     }
   }, [offsetX]);
@@ -95,7 +111,7 @@ export default function SortableExerciseRow({
       )}
     >
       {/* Delete panel behind the card */}
-      {onDelete && (
+      {onDelete && panelShown && (
         <button
           type="button"
           onClick={() => {
@@ -123,6 +139,10 @@ export default function SortableExerciseRow({
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
         onClick={handleCardClick}
+        onTransitionEnd={(e) => {
+          if (e.target === e.currentTarget && offsetX === 0 && !swiping)
+            setPanelShown(false);
+        }}
       >
         {/* Drag handle — only shown when showHandle is true */}
         {showHandle && (

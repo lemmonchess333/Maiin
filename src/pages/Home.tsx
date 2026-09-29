@@ -9,9 +9,7 @@ import {
 import { lazyRetry } from "@/lib/lazyRetry";
 import WeightLogSheet from "@/components/home/WeightLogSheet";
 import { lbToKg } from "@/lib/weightUnits";
-import { readString, writeString } from "@/lib/localStore";
 import { useAuth } from "@/lib/auth";
-import { useUidForStorageKey } from "@/lib/auth";
 import { useWorkouts } from "@/hooks/useWorkouts";
 import { assessLiftReturn } from "@/features/program/liftLayoff";
 import { useMeals } from "@/hooks/useMeals";
@@ -36,30 +34,39 @@ import { THEME } from "@/lib/theme";
 import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import PageShell from "@/components/ui/PageShell";
+import BrandMark from "@/components/ui/BrandMark";
 import {
-  Dumbbell,
-  Sparkles,
-  Settings as SettingsIcon,
-  UtensilsCrossed,
-  X,
-  Target,
-} from "lucide-react";
+  AnalyticsTabIcon,
+  FoodTabIcon,
+  TrainTabIcon,
+} from "@/components/icons/TabIcons";
+import { Sparkles, X } from "lucide-react";
 import { useWaterLog } from "@/hooks/useWaterLog";
 import { toast } from "@/lib/toast";
 import { realignResultMessage } from "@/lib/realignCopy";
 import { HomeSkeleton } from "@/components/LoadingSkeleton";
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary";
-import { resolveTrainingDayForDate } from "@/lib/trainingResolver";
+import {
+  resolveTrainingDayForDate,
+  resolveTrainingWindow,
+} from "@/lib/trainingResolver";
+import { summariseWeek } from "@/lib/weekSummary";
 import { useClaimMapForProgram } from "@/hooks/useClaimMapForProgram";
 import { goalReachedOffer } from "@/lib/goalWeightPlan";
 import GoalReachedSheet from "@/components/home/GoalReachedSheet";
-import { localDateString, localWeekKey } from "@/lib/dateHelpers";
+import {
+  localDateString,
+  localWeekKey,
+  parseLocalDate,
+} from "@/lib/dateHelpers";
 import { useEffectiveTargets } from "@/hooks/useEffectiveTargets";
 import { useDismissOnce } from "@/hooks/useDismissOnce";
 import { useCountUp } from "@/hooks/useCountUp";
 
 import { StreakFlame } from "@/components/StreakFlame";
-import SectionLabel from "@/components/ui/SectionLabel";
+import Avatar from "@/components/Avatar";
+import { formatWeekdayDayMonth } from "@/utils/formatters";
+import SectionHeading from "@/components/ui/SectionHeading";
 import WeekStrip from "@/components/home/WeekStrip";
 import DayPeekCard from "@/components/home/DayPeekCard";
 import FellBehindSheet from "@/components/program/FellBehindSheet";
@@ -75,6 +82,8 @@ import WeightStepsTiles from "@/components/home/WeightStepsTiles";
 
 import TodayEnergy from "@/components/home/TodayEnergy";
 import WeeklyReviewEntry from "@/components/home/WeeklyReviewEntry";
+import WeekSummary from "@/components/home/WeekSummary";
+import Card from "@/components/ui/Card";
 import { useSnoozeDismiss } from "@/hooks/useSnoozeDismiss";
 
 import { usePerformanceWeeks } from "@/hooks/usePerformance";
@@ -98,7 +107,6 @@ const DayActionSheet = lazyRetry(
 
 export default function Home() {
   const { user, profile, updateProfile } = useAuth();
-  const storageUid = useUidForStorageKey();
   // home-declutter 6b — uid-scoped monthly snooze for the post-trial
   // upgrade strip (shared-device rule: one account's snooze must not
   // hide the funnel for the next).
@@ -217,6 +225,100 @@ export default function Home() {
   );
 
   const todayType = resolvedToday.scheduleType;
+
+  // What was done, by date: the strip fills a day for a logged lift
+  // session or run, and the week's counts read the same records.
+  const loggedLiftDates = useMemo(
+    () => new Set(workouts.map((w) => w.date)),
+    [workouts]
+  );
+  const extraRunDates = useMemo(
+    () =>
+      new Set(
+        [...unclaimedByDate.entries()]
+          .filter(([, runs]) => runs.length > 0)
+          .map(([date]) => date)
+      ),
+    [unclaimedByDate]
+  );
+
+  // DS3 "This week": the same resolved calendar week the strip draws, so
+  // the counts and the circles cannot disagree about what was planned.
+  const weekCounts = useMemo(
+    function () {
+      const window = resolveTrainingWindow({
+        startDate: parseLocalDate(currentWeekKey),
+        days: 7,
+        profile,
+        programState,
+        claimMap,
+      });
+      /* A day counts as logged when either source has a meal: the daily
+         log is written by Food's own logging path, and the loaded meals
+         cover a meal saved elsewhere before its log caught up. */
+      const mealsByDate = new Map<string, { meals: number }>();
+      for (const day of window) {
+        mealsByDate.set(day.dateKey, {
+          meals: Math.max(
+            weeklyDayMap.get(day.dateKey)?.meals ?? 0,
+            getDailyTotals(day.dateKey).mealCount
+          ),
+        });
+      }
+      return summariseWeek({
+        window,
+        liftDates: workouts.map((w) => w.date),
+        extraRunsByDate: unclaimedByDate,
+        mealsByDate,
+      });
+    },
+    [
+      currentWeekKey,
+      profile,
+      programState,
+      claimMap,
+      workouts,
+      unclaimedByDate,
+      weeklyDayMap,
+      getDailyTotals,
+    ]
+  );
+
+  // Tomorrow's session, named on the rest-day card. Resolved with TODAY's
+  // week key, as the resolver asks of every caller, so a legacy run day
+  // cannot borrow this week's status for next week.
+  const tomorrowSession = useMemo(
+    function () {
+      const date = new Date(today);
+      date.setDate(date.getDate() + 1);
+      const dateKey = localDateString(date);
+      const next = resolveTrainingDayForDate({
+        dateKey,
+        profile,
+        programState,
+        currentWeekKey,
+        claimMap,
+      });
+      const liftName = next.lift.workout?.dayName ?? null;
+      const runDay = next.run.runDay;
+      const runName = runDay
+        ? (RUN_TEMPLATES.find(
+            (t) => t.id === (runDay.userOverride ?? runDay.templateId)
+          )?.name ?? "Run")
+        : null;
+      const label =
+        liftName && runName
+          ? `${liftName} and ${runName}`
+          : (liftName ?? runName);
+      if (!label) return null;
+      const target =
+        liftName && typeof next.lift.index === "number"
+          ? `/program?day=${next.lift.index}`
+          : `/program?tab=run&rday=${dateKey}`;
+      return { label, target };
+    },
+    [today, profile, programState, currentWeekKey, claimMap]
+  );
   // Hybrid loop — cross-discipline "today" guidance (yesterday's training →
   // today's plan + fuel). Null while data loads / nothing to surface.
   // Threads Home's OWN workouts subscription in — the hook previously
@@ -266,20 +368,17 @@ export default function Home() {
     effectiveTargets?.protein ?? null
   );
 
-  // Performance data for the hero card.
-  // Pull up to 4 weeks: currentWeek powers the home card, the prior
-  // week feeds the delta chip, and the count drives the baseline-
-  // establishing copy when <4 weeks of data are available.
+  // Performance data for the hero card: this week's score, and the week
+  // before it for the delta chip. The documents are daily, so "the one
+  // before" is yesterday's rolling week; the hook steps back a whole week
+  // (performanceSeries.ts). The raw document count feeds the
+  // baseline-establishing gate.
   const {
-    weeks: perfWeeks,
     currentWeek: perfWeek,
+    previousWeek: perfPrevWeek,
+    docsAvailable: perfDocsAvailable,
     loading: perfLoading,
-  } = usePerformanceWeeks(4);
-
-  // The Performance hero is the only voice in this position — nothing
-  // else competes for it, so nothing needs suppressing.
-  const perfPrevWeek =
-    perfWeeks.length >= 2 ? perfWeeks[perfWeeks.length - 2] : null;
+  } = usePerformanceWeeks(2);
 
   // Meal history for the energy row's cold-start state. TodayEnergy gets
   // no meal-pattern insight or post-workout nudge — one voice per screen;
@@ -491,16 +590,6 @@ export default function Home() {
     priority: 30,
     eligible: welcomeChecklistVisible,
   });
-  // Discoverability latch: the tiny "Tap a day to see details" hint under
-  // the week strip disappears as soon as the user taps any day once (the
-  // affordance has been used, no need to keep advertising). Persisted to
-  // localStorage so the hint doesn't re-appear on every session — uid-scoped,
-  // because localStorage is per-DEVICE and an unscoped hint is one the second
-  // account on a shared phone never sees.
-  const dayTapSeenKey = `${storageUid}:home-day-tap-seen`;
-  const [showDayTapHint, setShowDayTapHint] = useState<boolean>(
-    () => readString(dayTapSeenKey) !== "1"
-  );
   /* EVERY day in the strip opens its detail card, today included.
      There is no special case for today, and the argument for one — that
      its peek would duplicate the session cards below — does not hold.
@@ -513,17 +602,13 @@ export default function Home() {
      This is also what makes DayPeekCard's `dateKey === todayKey` diary
      link reachable. That branch shipped with the row and, with today
      unreachable, no user could ever hit it. */
-  const handleDayTap = useCallback(
-    function (dk: string) {
-      // Private mode: the hint re-shows next session, minor.
-      writeString(dayTapSeenKey, "1");
-      setShowDayTapHint(false);
-      setPeekDate(function (p) {
-        return p === dk ? null : dk;
-      });
-    },
-    [dayTapSeenKey]
-  );
+  /* DS3 retired the "Tap a day for details" hint with the legend it sat
+     in: the day circles are buttons and read as ones. */
+  const handleDayTap = useCallback(function (dk: string) {
+    setPeekDate(function (p) {
+      return p === dk ? null : dk;
+    });
+  }, []);
   const closePeek = useCallback(function () {
     setPeekDate(null);
   }, []);
@@ -612,12 +697,18 @@ export default function Home() {
 
   return (
     <PageShell
-      brand
-      /* TROPOS wordmark only — the hexagon icon was removed because it is
-         redundant with the iOS Home Screen / PWA launch icon. The icon SVG
-         itself is kept in `public/` and the manifest so the device
-         installer still has it. */
-      title="TROPOS"
+      /* DS3: Home names the day, as every other page names itself. The
+         TROPOS wordmark it replaced is already on the launch icon and the
+         splash; here the date and "Today" say what the page is about.
+         The mark before the date signs the app's first page, small, so
+         "Today" keeps the left edge every card below it starts on. */
+      eyebrow={
+        <span className="inline-flex items-center gap-1.5">
+          <BrandMark />
+          {formatWeekdayDayMonth(today)}
+        </span>
+      }
+      title="Today"
       actions={
         <>
           {/* Streak pill is tappable — deep-links into History → Badges
@@ -654,19 +745,22 @@ export default function Home() {
               display={<motion.span>{streakDisplay}</motion.span>}
             />
           )}
+          {/* Settings opens from the user's own avatar (DS3): the photo when
+              there is one, otherwise the initial on a lifting tint. The
+              accessible name stays "Settings" because that is what it
+              opens. */}
           <Link
             to="/settings"
             aria-label="Settings"
-            style={{
-              // Match StreakFlame's pill surface so the two header
-              // chips read as siblings instead of "filled pill next
-              // to a faded outline icon."
-              boxShadow:
-                "0 1px 3px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04)",
-            }}
-            className="inline-flex items-center justify-center size-11 rounded-full bg-card text-muted-foreground hover:bg-muted active:scale-[0.97] transition-transform duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+            className="inline-flex items-center justify-center size-11 rounded-full motion-safe:active:scale-[0.97] transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
           >
-            <SettingsIcon aria-hidden="true" className="size-5" />
+            <Avatar
+              photoURL={profile.photoURL}
+              displayName={profile.displayName || user?.displayName}
+              size="md"
+              fallbackBg="hsl(var(--lifting) / 0.2)"
+              fallbackColor="hsl(var(--lifting-strong))"
+            />
           </Link>
         </>
       }
@@ -771,27 +865,37 @@ export default function Home() {
           </div>
           <div className="space-y-2">
             {/* Hints map 1:1 to the real bottom-nav tabs (Programme / Food /
-                Analytics). There is no "Log" tab — workouts and runs both
-                start from Programme, meals are logged from Food. */}
+                Analytics), and draw each with that tab's own icon (DS3), so
+                the hint points at the button it names. There is no "Log"
+                tab — workouts and runs both start from Programme, meals are
+                logged from Food. */}
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <Dumbbell className="size-4 text-primary shrink-0" />
+              <TrainTabIcon
+                active={false}
+                className="size-4 text-primary shrink-0"
+              />
               <span>
                 Tap <strong className="text-foreground">Train</strong> to start
                 a workout or run
               </span>
             </div>
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <UtensilsCrossed
-                className="size-4 shrink-0"
+              <span
+                className="inline-flex shrink-0"
                 style={{ color: THEME.semantic.nutrition }}
-              />
+              >
+                <FoodTabIcon active={false} className="size-4" />
+              </span>
               <span>
                 Tap <strong className="text-foreground">Food</strong> to log
                 meals
               </span>
             </div>
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <Target className="size-4 text-primary shrink-0" />
+              <AnalyticsTabIcon
+                active={false}
+                className="size-4 text-primary shrink-0"
+              />
               <span>
                 Check <strong className="text-foreground">Analytics</strong> to
                 view your progress
@@ -804,276 +908,214 @@ export default function Home() {
       {/* Streak count stays in the header. Recovery remains available through
           Food's date picker; native reminders are deferred in POST_LAUNCH.md. */}
 
-      {/* Home2-hierarchy: grouped sections (This week / Performance /
-          Today) replace the prior flat equal-altitude stack — tight
-          within a group (space-y-2, the dense-stack step), airy between
-          (the shell's space-y-4), via SectionLabel headers. */}
-      <div className="space-y-2">
-        <SectionLabel tier="section" className="px-1">
-          This week
-        </SectionLabel>
-        <motion.div
-          ref={weekStripRef}
-          variants={{
-            hidden: { opacity: 0, y: 12 },
-            visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
-          }}
-          className="space-y-3"
-        >
-          {/* WeekStrip + DayPeekCard render raw program/profile/claim data.
-            Isolated in a SectionErrorBoundary like the hero/energy/insight
-            siblings below — a data-shape bug here degrades to a single
-            "couldn't load" card (and still logs via captureError) instead
-            of taking the whole Home page into RouteErrorBoundary. */}
-          <SectionErrorBoundary sectionName="week-strip">
-            <WeekStrip
-              dayMap={weeklyDayMap}
-              profile={profile}
-              programState={programState}
-              claimMap={claimMap}
-              selectedDate={peekDate}
-              onDayTap={handleDayTap}
-            />
-            {/* Cal-A: legend so the day dots are decodable (purple ● =
-                lift, coral ◆ = run). Hidden while a peek is open to keep
-                the expanded card clean. */}
-            {!peekDate && (
-              <div className="flex items-center justify-center gap-3 -mt-1">
-                <span className="inline-flex items-center gap-1 text-caption text-muted-foreground">
-                  <span
-                    className="size-1.5 rounded-full"
-                    style={{ backgroundColor: THEME.lifting }}
-                  />
-                  Lift
-                </span>
-                <span className="inline-flex items-center gap-1 text-caption text-muted-foreground">
-                  <span
-                    className="size-1.5 rotate-45"
-                    style={{ backgroundColor: THEME.running }}
-                  />
-                  Run
-                </span>
-                {/* One-shot tap affordance — latches off after the first
-                    day-tap ever. */}
-                {showDayTapHint && (
-                  <span className="text-caption text-muted-foreground">
-                    · Tap a day for details
-                  </span>
-                )}
-              </div>
+      {/* DS3 Home: the week, then today's session, food, water and weight,
+          then how the week is going. The page title already says "Today",
+          so the week strip and today's cards carry no section heading of
+          their own; "This week" heads the summary at the foot. */}
+      <motion.div
+        ref={weekStripRef}
+        variants={{
+          hidden: { opacity: 0, y: 12 },
+          visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
+        }}
+        className="space-y-3"
+      >
+        {/* WeekStrip + DayPeekCard render raw program/profile/claim data.
+            Isolated in a SectionErrorBoundary so a data-shape bug here
+            degrades to a single "couldn't load" card (and still logs via
+            captureError) instead of taking the whole Home page into
+            RouteErrorBoundary. */}
+        <SectionErrorBoundary sectionName="week-strip">
+          <WeekStrip
+            dayMap={weeklyDayMap}
+            profile={profile}
+            programState={programState}
+            claimMap={claimMap}
+            selectedDate={peekDate}
+            onDayTap={handleDayTap}
+            loggedLiftDates={loggedLiftDates}
+            extraRunDates={extraRunDates}
+          />
+          <AnimatePresence>
+            {peekDate && (
+              <DayPeekCard
+                dateKey={peekDate}
+                profile={profile}
+                programState={programState}
+                claimMap={claimMap}
+                extras={unclaimedByDate.get(peekDate) ?? []}
+                workouts={peekW}
+                dailyTotals={peekT}
+                onClose={function () {
+                  setPeekDate(null);
+                }}
+                onManage={function (dk) {
+                  setManageDate(dk);
+                }}
+              />
             )}
-            <AnimatePresence>
-              {peekDate && (
-                <DayPeekCard
-                  dateKey={peekDate}
-                  profile={profile}
-                  programState={programState}
-                  claimMap={claimMap}
-                  extras={unclaimedByDate.get(peekDate) ?? []}
-                  workouts={peekW}
-                  dailyTotals={peekT}
-                  onClose={function () {
-                    setPeekDate(null);
-                  }}
-                  onManage={function (dk) {
-                    setManageDate(dk);
-                  }}
-                />
-              )}
-            </AnimatePresence>
-          </SectionErrorBoundary>
-        </motion.div>
-      </div>
+          </AnimatePresence>
+        </SectionErrorBoundary>
+      </motion.div>
 
-      {/* Home2-hierarchy: Today group — contextual nudges + energy +
-          quick actions + insight, clustered under one "Today" header. */}
-      <div className="space-y-2">
-        <SectionLabel tier="section" className="px-1">
-          Today
-        </SectionLabel>
-
-        {/* Today's energy promoted above the CTA stack — calorie/macro tracking
-          is the primary daily answer this page has to give, and buried at the
-          bottom of the scroll it was below the fold on first load. Now lives
-          directly under the Health Score card so it's always visible in the
-          first paint. */}
-        {/* home-declutter 4a — sessions FIRST. The page's primary action
-            (today's lift/run) leads the Today group; energy, guidance and
-            vitals follow. */}
-        <motion.div
-          aria-label="Today’s training"
-          variants={{
-            hidden: { opacity: 0, y: 12 },
-            visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
-          }}
-        >
-          {programLoading ? (
-            <div className="h-20 rounded-2xl bg-muted motion-safe:animate-pulse" />
-          ) : (
-            <TrackSectionView section="stacked_cta">
-              <SectionErrorBoundary sectionName="quick-actions">
-                <StackedCTACards
-                  nextWorkout={nextWorkout}
-                  liftPurpose={liftPurpose}
-                  runPurpose={runPresentation.purpose}
-                  runWeekLabel={runPresentation.weekLabel}
-                  liftDayIndex={resolvedToday.lift.index}
-                  liftStartable={resolvedToday.lift.isStartable}
-                  liftStatus={resolvedToday.lift.status}
-                  runCompleted={resolvedToday.run.isCompleted}
-                  todayType={todayType}
-                  navigate={function (p: string) {
-                    closePeek();
-                    navigate(p);
-                  }}
-                  todayRun={todayRun}
-                  muscleGroups={muscleGroups}
-                  firstWorkout={activationFraming.firstWorkout}
-                  firstRun={activationFraming.firstRun}
-                  firstMeal={activationFraming.firstMeal}
-                />
-              </SectionErrorBoundary>
-            </TrackSectionView>
-          )}
-        </motion.div>
-
-        <section aria-label="Today's energy">
-          <motion.div
-            variants={{
-              hidden: { opacity: 0, y: 12 },
-              visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
-            }}
-          >
-            <TrackSectionView section="today_energy">
-              <SectionErrorBoundary sectionName="today-intake">
-                <TodayEnergy
-                  calories={dailyCal}
-                  protein={dailyProt}
-                  carbs={dailyCarbs}
-                  fat={dailyFat}
-                  targets={effectiveTargets}
-                  mealsLoading={mealsLoading}
-                  // Computed by useHomeData against the same protein target
-                  // the rings show (HOME-TARGET-01) — and never passed here
-                  // before, so the nudge it computed rendered nowhere.
-                  postWorkoutNudge={postWorkoutNudge}
-                />
-              </SectionErrorBoundary>
-            </TrackSectionView>
-          </motion.div>
-        </section>
-
-        {/* Vitals pyramid (home-declutter revision, operator call):
-            the energy card sits full-width above; water + weight share
-            the row below — 1-over-2, the design system's compact-tile
-            grid. items-stretch keeps the duo equal-height. */}
-        <motion.div
-          variants={{
-            hidden: { opacity: 0, y: 12 },
-            visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
-          }}
-          className="grid grid-cols-2 gap-2 items-stretch"
-        >
-          <SectionErrorBoundary sectionName="water">
-            <WaterCard
-              compact
-              ml={waterMl}
-              targetMl={waterTargetMl}
-              servingMl={servingMl}
-              syncStatus={waterSyncStatus}
-              onRetry={retryWater}
-              drinks={waterDrinks}
-              onRemoveDrink={removeWaterDrink}
-              onLog={function (deltaMl) {
-                closePeek();
-                return logWater(deltaMl);
-              }}
-            />
-          </SectionErrorBoundary>
-          <SectionErrorBoundary sectionName="weight-steps">
-            <WeightStepsTiles
-              lastWeight={lastWeightInfo?.weight || null}
-              weightUnit={weightUnit}
-              onLogWeight={function () {
-                closePeek();
-                setShowWeightSheet(true);
-              }}
-              lastWeightDate={weightRelativeTime}
-              syncStatus={weightSyncStatus}
-              saveAnnouncement={weightAnnouncement}
-              loading={homeDataLoading}
-              hideNumber={profile?.hideWeightNumber}
-              weightTrend={weightTrend}
-              stepsStatus={stepsData.status}
-              steps={stepsData.steps}
-              onConnectSteps={function () {
-                void stepsData.connect();
-              }}
-            />
-          </SectionErrorBoundary>
-        </motion.div>
-
-        {/* home-declutter 5a — the Next Badge card left Home: badges keep
-            the earn celebration (BadgeEarnedModal) and the History grid. */}
-
-        {/* Rev1 — transient Weekly Review entry. Self-gating (eligibility +
-            viewed state live inside the component); renders null most of
-            the week so Home's density is unchanged outside the window. */}
-        <motion.div
-          variants={{
-            hidden: { opacity: 0, y: 12 },
-            visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
-          }}
-        >
-          <SectionErrorBoundary sectionName="weekly-review-entry">
-            <WeeklyReviewEntry />
-          </SectionErrorBoundary>
-        </motion.div>
-
-        {/* One voice per screen: the InsightStrip used to repeat the load
-            verdict here during high/overreach/deload weeks — exactly when
-            the Performance hero above was already saying it ("Backing off —
-            loads high, ease this week" + "Consider a deload week" on one
-            scroll). The hero carries the verdict; the strip's richer
-            bullets live on in Analytics. */}
-      </div>
-
-      {/* PI1 + PI4: consolidated Performance hero. Replaces the
-          earlier HealthScoreCard (daily 0-100 composite) + the
-          PerformanceCard compact tile. Single ring + verb + line +
-          delta chip driven by the weekly PI doc. Tap →
-          /history#performance per the canonical deep-link target.
-          Sits below today's session and the logging actions, so a daily
-          action is the first thing on the scroll; the full ring, verb and
-          delta chip stay — a compact numbers row does not carry the weekly
-          verdict the same way. Detailed interpretation remains in Analytics. */}
-      <div className="space-y-2">
-        <SectionLabel tier="section" className="px-1">
-          Performance
-        </SectionLabel>
-        <motion.div
-          variants={{
-            hidden: { opacity: 0, y: 12 },
-            visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
-          }}
-        >
-          <TrackSectionView section="hero">
-            <SectionErrorBoundary sectionName="performance-hero">
-              <PerformanceHeroCard
-                currentWeek={perfWeek ?? null}
-                previousWeek={perfPrevWeek}
-                weeksAvailable={perfWeeks.length}
-                loading={perfLoading}
-                /* The perf doc is written by the server, so "no doc" is not
-                   "no session" — this keeps the card from telling someone who
-                   has just logged their first workout that they logged
-                   nothing. */
-                hasLoggedSession={workouts.length > 0 || lifetimeRunCount > 0}
+      {/* home-declutter 4a — sessions FIRST. Today's lift, run or rest is
+          the page's primary action and leads. */}
+      <motion.div
+        aria-label="Today’s training"
+        variants={{
+          hidden: { opacity: 0, y: 12 },
+          visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
+        }}
+      >
+        {programLoading ? (
+          <div className="h-48 rounded-2xl bg-muted motion-safe:animate-pulse" />
+        ) : (
+          <TrackSectionView section="stacked_cta">
+            <SectionErrorBoundary sectionName="quick-actions">
+              <StackedCTACards
+                nextWorkout={nextWorkout}
+                liftPurpose={liftPurpose}
+                runPurpose={runPresentation.purpose}
+                runWeekLabel={runPresentation.weekLabel}
+                liftDayIndex={resolvedToday.lift.index}
+                liftStartable={resolvedToday.lift.isStartable}
+                liftStatus={resolvedToday.lift.status}
+                runCompleted={resolvedToday.run.isCompleted}
+                todayType={todayType}
+                navigate={function (p: string) {
+                  closePeek();
+                  navigate(p);
+                }}
+                todayRun={todayRun}
+                muscleGroups={muscleGroups}
+                firstWorkout={activationFraming.firstWorkout}
+                firstRun={activationFraming.firstRun}
+                firstMeal={activationFraming.firstMeal}
+                tomorrow={tomorrowSession}
               />
             </SectionErrorBoundary>
           </TrackSectionView>
+        )}
+      </motion.div>
+
+      <motion.div
+        variants={{
+          hidden: { opacity: 0, y: 12 },
+          visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
+        }}
+      >
+        <TrackSectionView section="today_energy">
+          <SectionErrorBoundary sectionName="today-intake">
+            <TodayEnergy
+              calories={dailyCal}
+              protein={dailyProt}
+              carbs={dailyCarbs}
+              fat={dailyFat}
+              targets={effectiveTargets}
+              mealsLoading={mealsLoading}
+              // Computed by useHomeData against the same protein target
+              // the macro figures show (HOME-TARGET-01).
+              postWorkoutNudge={postWorkoutNudge}
+            />
+          </SectionErrorBoundary>
+        </TrackSectionView>
+      </motion.div>
+
+      {/* Water and weight share a row; items-stretch keeps the pair
+          equal-height. */}
+      <motion.div
+        variants={{
+          hidden: { opacity: 0, y: 12 },
+          visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
+        }}
+        className="grid grid-cols-2 gap-2 items-stretch"
+      >
+        <SectionErrorBoundary sectionName="water">
+          <WaterCard
+            compact
+            ml={waterMl}
+            targetMl={waterTargetMl}
+            servingMl={servingMl}
+            syncStatus={waterSyncStatus}
+            onRetry={retryWater}
+            drinks={waterDrinks}
+            onRemoveDrink={removeWaterDrink}
+            onLog={function (deltaMl) {
+              closePeek();
+              return logWater(deltaMl);
+            }}
+          />
+        </SectionErrorBoundary>
+        <SectionErrorBoundary sectionName="weight-steps">
+          <WeightStepsTiles
+            lastWeight={lastWeightInfo?.weight || null}
+            weightUnit={weightUnit}
+            onLogWeight={function () {
+              closePeek();
+              setShowWeightSheet(true);
+            }}
+            lastWeightDate={weightRelativeTime}
+            syncStatus={weightSyncStatus}
+            saveAnnouncement={weightAnnouncement}
+            loading={homeDataLoading}
+            hideNumber={profile?.hideWeightNumber}
+            weightTrend={weightTrend}
+            stepsStatus={stepsData.status}
+            steps={stepsData.steps}
+            onConnectSteps={function () {
+              void stepsData.connect();
+            }}
+          />
+        </SectionErrorBoundary>
+      </motion.div>
+
+      {/* This week: the week so far and its Performance Index, with the
+          Weekly Review link on the heading while a review is waiting. The
+          performance row keeps the ring, verdict and delta chip that made
+          it the week's verdict (PI1 + PI4); it opens Analytics. */}
+      <section aria-label="This week" className="space-y-2">
+        <SectionHeading
+          className="px-1"
+          action={
+            <SectionErrorBoundary sectionName="weekly-review-entry">
+              <WeeklyReviewEntry />
+            </SectionErrorBoundary>
+          }
+        >
+          This week
+        </SectionHeading>
+        <motion.div
+          variants={{
+            hidden: { opacity: 0, y: 12 },
+            visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
+          }}
+        >
+          <Card className="space-y-4">
+            <SectionErrorBoundary sectionName="week-summary">
+              <WeekSummary counts={weekCounts} />
+            </SectionErrorBoundary>
+            <div className="border-t border-border pt-3">
+              <TrackSectionView section="hero">
+                <SectionErrorBoundary sectionName="performance-hero">
+                  <PerformanceHeroCard
+                    currentWeek={perfWeek ?? null}
+                    previousWeek={perfPrevWeek}
+                    weeksAvailable={perfDocsAvailable}
+                    loading={perfLoading}
+                    /* The perf doc is written by the server, so "no doc" is
+                       not "no session" — this keeps the row from telling
+                       someone who has just logged their first workout that
+                       they logged nothing. */
+                    hasLoggedSession={
+                      workouts.length > 0 || lifetimeRunCount > 0
+                    }
+                  />
+                </SectionErrorBoundary>
+              </TrackSectionView>
+            </div>
+          </Card>
         </motion.div>
-      </div>
+      </section>
 
       <div className="space-y-2" aria-label="Helpful tips">
         {/* A1 contextual tip: nudge the user to add age + sex if

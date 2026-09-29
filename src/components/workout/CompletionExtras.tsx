@@ -1,22 +1,23 @@
 import { useState } from "react";
-import { Button } from "@/components/ui/Button";
 import { Toggle } from "@/components/ui/Toggle";
 import { useStreakReminder } from "@/hooks/RemindersProvider";
 import { useStreaks } from "@/features/streaks/useStreaks";
 import { BadgeEarnedContent } from "@/features/streaks/BadgeEarnedModal";
 import { toast } from "@/lib/toast";
+import SessionShareRow from "@/components/workout/SessionShareRow";
+import type { SessionShareAction } from "@/lib/sessionPost";
 
-/** Explicit actions on a persisted session; never opens a dialog on mount. */
+/** Actions on a persisted session. Never opens a dialog on mount: sharing
+ *  asks inline, once, and after that posts without one (SessionShareRow). */
 export default function CompletionExtras({
-  onShare,
+  share,
 }: {
-  onShare?: () => Promise<void>;
+  share?: SessionShareAction;
 }) {
   const { prefs, loading, updatePrefs, requestPermission } =
     useStreakReminder();
   const { newBadge, dismissNewBadge } = useStreaks();
   const [pending, setPending] = useState(false);
-  const [sharing, setSharing] = useState(false);
   const changeReminder = async () => {
     if (pending) return;
     setPending(true);
@@ -39,23 +40,12 @@ export default function CompletionExtras({
           inline
         />
       )}
-      {onShare && (
-        <Button
-          variant="ghost"
-          fullWidth
-          loading={sharing}
-          onClick={() => {
-            if (sharing) return;
-            setSharing(true);
-            void onShare()
-              .catch(() =>
-                toast.error("Couldn't share this session. Try again.")
-              )
-              .finally(() => setSharing(false));
-          }}
-        >
-          Share this session
-        </Button>
+      {share && (
+        // Keyed by session: a different session starts from its own state.
+        <SessionShareRow
+          key={`${share.uid}:${share.source.kind}:${share.source.id}`}
+          action={share}
+        />
       )}
       <div className="flex items-center justify-between gap-4 min-h-11">
         <span className="text-sm text-muted-foreground">

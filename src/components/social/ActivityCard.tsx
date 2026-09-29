@@ -304,7 +304,7 @@ function ActivityCard({ feedItem, onShare }: ActivityCardProps) {
               <p className="text-xl font-bold font-mono tabular-nums leading-none text-foreground whitespace-nowrap">
                 {formatDur(activity.duration)}
               </p>
-              <SectionLabel className="mt-0.5">time</SectionLabel>
+              <SectionLabel className="mt-0.5">Time</SectionLabel>
             </div>
           )}
           {(activity.elevationGain || 0) > 0 && (
@@ -330,7 +330,7 @@ function ActivityCard({ feedItem, onShare }: ActivityCardProps) {
               </p>
               <SectionLabel className="mt-0.5 flex items-center gap-1">
                 <Mountain className="size-3 shrink-0" aria-hidden="true" />
-                elev
+                Elevation
               </SectionLabel>
             </div>
           )}
@@ -479,7 +479,9 @@ function ActivityCard({ feedItem, onShare }: ActivityCardProps) {
               <p className="text-xl font-bold font-mono tabular-nums leading-none text-foreground whitespace-nowrap">
                 {activity.exerciseCount}
               </p>
-              <SectionLabel className="mt-0.5">exercises</SectionLabel>
+              <SectionLabel className="mt-0.5">
+                {activity.exerciseCount === 1 ? "exercise" : "exercises"}
+              </SectionLabel>
             </div>
           )}
           {!showPrChip && (prCount ?? 0) > 0 && (
@@ -490,7 +492,9 @@ function ActivityCard({ feedItem, onShare }: ActivityCardProps) {
                   {prCount}
                 </p>
               </div>
-              <SectionLabel className="mt-0.5">PRs</SectionLabel>
+              <SectionLabel className="mt-0.5">
+                {prCount === 1 ? "PR" : "PRs"}
+              </SectionLabel>
             </div>
           )}
           {(activity.duration ?? 0) > 0 && (
@@ -642,7 +646,7 @@ function ActivityCard({ feedItem, onShare }: ActivityCardProps) {
                     <p className="text-xl font-bold font-mono tabular-nums leading-none text-foreground whitespace-nowrap">
                       {formatDur(activity.duration)}
                     </p>
-                    <SectionLabel className="mt-0.5">time</SectionLabel>
+                    <SectionLabel className="mt-0.5">Time</SectionLabel>
                   </div>
                 )}
                 {(activity.elevationGain || 0) > 0 && (
@@ -661,7 +665,7 @@ function ActivityCard({ feedItem, onShare }: ActivityCardProps) {
                         className="size-3 shrink-0"
                         aria-hidden="true"
                       />
-                      elev
+                      Elevation
                     </SectionLabel>
                   </div>
                 )}

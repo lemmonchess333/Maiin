@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { collection, getDocs, limit, orderBy, query } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { logger } from "@/lib/logger";
-import type { SpacePostDoc } from "./spaceTypes";
+import { isMemberFacing, type SpacePostDoc } from "./spaceTypes";
 
 export interface CommunityFeedItem {
   spaceId: string;
@@ -17,8 +17,9 @@ const SPACES_CAP = 6;
 /**
  * SOC-P3a — the "My communities" feed source (Phase 3 of the Runna-model
  * social arc): recent posts from the caller's JOINED spaces, merged
- * newest-first. This is the context stream — the coach's weekly prompt
- * and members' posts reach the Feed tab without visiting each space.
+ * newest-first. This is the context stream — members' posts reach the
+ * Feed tab without visiting each space. The retired weekly coach posts
+ * are dropped (`isMemberFacing`).
  *
  * v1 scope (deliberate): space posts only. Challenge events interleave
  * later if this stream earns it — the critics' sequencing was content
@@ -57,11 +58,13 @@ export function useCommunitiesFeed(enabled: boolean, joinedSpaceIds: string[]) {
                 limit(PER_SPACE_LIMIT)
               )
             );
-            return snap.docs.map((d) => ({
-              spaceId,
-              postId: d.id,
-              post: d.data() as SpacePostDoc,
-            }));
+            return snap.docs
+              .map((d) => ({
+                spaceId,
+                postId: d.id,
+                post: d.data() as SpacePostDoc,
+              }))
+              .filter((item) => isMemberFacing(item.post));
           } catch (err) {
             // One failed space must not blank the stream.
             logger.error(`[CommunitiesFeed] ${spaceId} load failed`, err);

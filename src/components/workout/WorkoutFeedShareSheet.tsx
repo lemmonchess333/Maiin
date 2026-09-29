@@ -1,15 +1,13 @@
 /**
  * Post a SAVED workout to the feed, from `/workout/:id`.
  *
- * Distinct from `ShareComposerSheet`, deliberately. That one is driven by
- * the `shareComposer` singleton, fires once inside a save chain, and is
- * governed by the stored "always" default — it answers "what should happen
- * to sessions from now on?". This one answers "post THIS one", is opened by
- * an explicit tap on a record that already exists, and never touches the
- * default. Routing this through `compose()` would either be short-circuited
- * by the stored default (so the button would do nothing for a user whose
- * default is "never" — precisely the user who needs it) or would rewrite
- * their default as a side effect of sharing one workout.
+ * Distinct from `ShareComposerSheet`, deliberately. That one is the finish
+ * screen's sheet: driven by the `shareComposer` singleton, and carrying a
+ * "Make this my default" box that answers "what should happen to sessions
+ * from now on?". This one answers "post THIS one", is opened by an
+ * explicit tap on a record that already exists, and never touches the
+ * default. Routing this through `compose()` would offer to rewrite the
+ * user's default as a side effect of sharing one old workout.
  *
  * The activity payload mirrors the post-save one in `useProgram` so a post
  * made here renders identically in the feed, including the structured

@@ -1,4 +1,4 @@
-import SectionLabel from "@/components/ui/SectionLabel";
+import SectionHeading from "@/components/ui/SectionHeading";
 import { Suspense, useId, useState } from "react";
 import { lazyRetry } from "@/lib/lazyRetry";
 import { Trash2, Share2, Route } from "lucide-react";
@@ -186,9 +186,9 @@ export default function RouteSetupSection({
 
       {routes.length > 0 && (
         <div>
-          <SectionLabel tier="section" className="mb-1.5 px-1">
+          <SectionHeading size="compact" className="mb-1.5 px-1">
             Saved routes
-          </SectionLabel>
+          </SectionHeading>
           <ul className="space-y-1.5">
             {routes.map((r) => (
               <li

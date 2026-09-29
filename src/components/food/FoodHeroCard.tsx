@@ -215,7 +215,7 @@ export default function FoodHeroCard({
   // number, not a briefing. The day type and its rationale still exist
   // on the targets and still render in the Details sheet, which is
   // where a person who wants the why goes.
-  const celebrationCaptionText = `GOAL HIT ✓`;
+  const celebrationCaptionText = `Goal hit ✓`;
 
   // Trajectory line — suppressed; can be reinstated by importing
   // computeTrajectory from "@/lib/foodTrajectory" and passing its result.
@@ -282,7 +282,7 @@ export default function FoodHeroCard({
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -4 }}
                     transition={{ duration: 0.3 }}
-                    className="text-micro uppercase tracking-wider font-semibold"
+                    className="text-micro font-semibold"
                     style={{
                       color: "hsl(var(--success-strong))",
                     }}
@@ -362,7 +362,7 @@ export default function FoodHeroCard({
           {/* Food6 a2: drill-down affordance. "Details" + chevron at the
           bottom of the calorie card opens the breakdown sheet — the same
           label register as the Home and Analytics disclosures (sentence
-          case, text-xs, muted), not the uppercase section-label one.
+          case, text-xs, muted), not the bold section-label one.
           Distinct tap target so it doesn't conflict with the CalorieRing
           mode-toggle, the Settings link, or any nested buttons. */}
           {onTapDrillDown && (
@@ -396,7 +396,7 @@ export default function FoodHeroCard({
         columns equal by construction, and `min-w-0` on each cell lets a
         long number shrink inside its own tile instead of pushing the
         row wider. gap-2 matches the compact-grid rule in the design
-        system and the sibling PeriodOverview grid. */}
+        system and the Analytics period summary's figures. */}
       <div className="grid grid-cols-3 gap-2 mt-4">
         <Card size="compact" className="min-w-0 flex">
           <MacroColumn
@@ -404,7 +404,7 @@ export default function FoodHeroCard({
             Icon={Beef}
             consumed={dailyTotals.protein}
             target={dailyTargets.targetInfeasible ? 0 : dailyTargets.protein}
-            label="PROTEIN"
+            label="Protein"
             color={THEME.macros.protein}
             mode={mode}
             onTap={toggleMode}
@@ -418,7 +418,7 @@ export default function FoodHeroCard({
             Icon={Wheat}
             consumed={dailyTotals.carbs}
             target={dailyTargets.targetInfeasible ? 0 : dailyTargets.carbs}
-            label="CARBS"
+            label="Carbs"
             color={THEME.macros.carbs}
             mode={mode}
             onTap={toggleMode}
@@ -432,7 +432,7 @@ export default function FoodHeroCard({
             Icon={Avocado}
             consumed={dailyTotals.fat}
             target={dailyTargets.fat}
-            label="FAT"
+            label="Fat"
             color={THEME.macros.fat}
             mode={mode}
             onTap={toggleMode}

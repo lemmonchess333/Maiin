@@ -310,13 +310,16 @@
 .dark {
   color-scheme: dark;
 
-  /* DS2 — richer dark canvas (the primary surface). Card lifted 10→13%
-     vs the 7% bg so layered surfaces SEPARATE (was only ~3% apart →
-     near-flat); pairs with the deeper DS2 card shadow. */
-  --background: 240 4% 7%;
-  --foreground: 240 5% 92%;
-  --card: 240 4% 13%;
-  --card-foreground: 240 5% 92%;
+  /* DS3 (2026-09-27, owner-approved redesign) — a deeper, cooler canvas
+     with calmer cards: page #0E0E11, card #17171B, raised #212127, text
+     #F4F4F6. DS2 had lifted the card to 13% (#202022) to separate it from
+     a 7% page lit by the ambient glow; with the glow retired the page
+     drops to 6%, and a 10% card separates from it on luminance alone
+     without reading as a grey slab. */
+  --background: 240 10% 6%; /* #0E0E11 */
+  --foreground: 240 10% 96%; /* #F4F4F6 */
+  --card: 240 8% 9.8%; /* #17171B */
+  --card-foreground: 240 10% 96%;
   --primary: 244 72% 66%;
   --primary-foreground: 0 0% 98%;
   /* Dark-mode pairing for --primary-strong. Same hue, slightly more
@@ -346,13 +349,14 @@
   --nutrition-strong: 25 65% 58.5%; /* #DA8A50 — worst case 4.50:1 (chip over muted) */
   /* Dark pairing for --destructive-strong — lighter, not darker. */
   --destructive-strong: 0 84% 73%; /* #F48080 — worst case 4.58:1 (20% tint over muted) */
-  --muted: 240 3% 17%;
-  --muted-foreground: 240 4% 64%;
-  --border: 240 3% 18%;
-  --input-fill: 240 3% 14%;
-  --glass-bg: rgba(20, 20, 24, 0.97);
+  /* Raised: a chip, a track, a tile inside a card. */
+  --muted: 240 8% 14.1%; /* #212127 */
+  --muted-foreground: 240 5% 65%; /* #A1A1AA */
+  --border: 240 6% 17%; /* #29292E */
+  --input-fill: 240 7% 12.5%; /* #1E1E22 */
+  --glass-bg: rgba(18, 18, 22, 0.97);
   --glass-border: rgba(255, 255, 255, 0.07);
-  --surface-solid: #1c1c20;
+  --surface-solid: #151519;
   /* The direction the inline literal always assumed — correct here only. */
   --skeleton-shimmer: rgba(255, 255, 255, 0.04);
   /* Fainter sheen on dark glass. */
@@ -493,18 +497,12 @@ body,
 
 body {
   margin: 0;
-  /* The app canvas is a clean neutral grey carrying a single subtle
-     brand glow at the very top (see `.ambient-glow` below). PR #511's
-     earlier attempt at a global ambient layer was REVERTED — it mixed
-     TWO hues (purple + warm) into a muddy haze behind every logged-in
-     page that dulled the data-dense cards/charts. The shipped glow is
-     the deliberate answer to that post-mortem, NOT a repeat of it:
-     ONE hue (brand purple), eased falloff COMPLETE high up so the
-     lower half of every page stays clean neutral canvas, a faint noise
-     overlay against OLED banding, and a dark-primary treatment (light
-     merely brightens tinted-white → canvas). Tuned via the
-     --ambient-glow-* tokens. Auth-shell ambience (.ds-auth-shell) is a
-     separate surface and is unchanged. */
+  /* The app canvas is plain. Two global glows have come and gone: PR
+     #511's two-hue haze (reverted as mud) and the single brand-purple
+     `.ambient-glow` that followed it, retired by DS3 (2026-09-27)
+     because a coloured wash at the top of every page competed with the
+     one thing each screen leads with. Colour belongs to content now.
+     The auth shell (.ds-auth-shell) keeps its own ambience. */
   background: hsl(var(--background));
   color: hsl(var(--foreground));
   font-family:
@@ -534,108 +532,6 @@ body {
 @media (pointer: coarse) {
   body {
     overscroll-behavior-y: contain;
-  }
-}
-
-/* ─── AMBIENT BRAND GLOW ──────────────────────────────────────
-   Single subtle top glow behind the app canvas (the deliberate,
-   post-#511 reintroduction — see the body comment above). ONE hue
-   (brand purple), eased multi-stop falloff complete high up so the
-   lower half of every page stays clean neutral canvas, faint noise
-   against banding. Dark = an emission glow; light = a brighten
-   (tinted-white → canvas). Rendered by `src/components/AmbientGlow.tsx`
-   as a fixed, pointer-events-none layer behind content (the app's
-   Layout root is transparent, so it shows through the gaps between
-   cards while opaque cards paint over it). Route exclusions
-   (run/map surfaces) live in that component.
-
-   Tunable knobs — dial intensity here, not in the component: */
-:root {
-  /* Dark bloom strength. Drives the layered radial alphas below. */
-  --ambient-glow-peak: 0.2;
-  /* Luminous hot-core hue (dark): a LIGHTER, slightly-desaturated violet in
-     the brand-purple family. The lightness ramp (light core → brand body →
-     transparent) is what makes the glow read as emitted LIGHT rather than
-     flat translucent paint — within ONE hue family, so no #511 mud. */
-  --ambient-glow-core: 248 96% 84%;
-  /* Light-mode brighten strength (mix toward white). Raised from 16% —
-     at 16% the top wash was so close to the page grey it read as nothing,
-     which is why light felt flat next to dark's bloom. 26% keeps it a soft,
-     single-hue lavender brighten (calm, not a stain) while actually
-     registering as a branded top glow. */
-  --ambient-glow-light: 26%;
-}
-
-.ambient-glow {
-  position: fixed;
-  inset-inline: 0;
-  top: 0;
-  height: 26vh; /* light: a touch taller so the falloff reads as a soft bloom, still complete above the first card */
-  z-index: -1;
-  pointer-events: none;
-  /* LIGHT — brighten from a top-CENTRE bloom (not a corner), NOT the #511
-     accent-over-grey method. Single hue (brand purple); a 3-stop eased
-     falloff (was 2) so the brighter core fades gradually to clean canvas
-     rather than banding, keeping the lower half neutral. */
-  background: radial-gradient(
-    120% 100% at 50% -6%,
-    color-mix(in oklch, hsl(var(--primary)) var(--ambient-glow-light), white) 0%,
-    color-mix(
-        in oklch,
-        hsl(var(--primary)) calc(var(--ambient-glow-light) * 0.6),
-        white
-      )
-      28%,
-    color-mix(
-        in oklch,
-        hsl(var(--primary)) calc(var(--ambient-glow-light) * 0.22),
-        white
-      )
-      52%,
-    hsl(var(--background)) 80%
-  );
-}
-
-.dark .ambient-glow {
-  height: 48vh; /* dark: room for a soft bloom; falloff complete by ~48vh */
-  /* DARK — a T212-class bloom from top CENTRE: a luminous light-violet hot
-     core (reads as emitted light) over a wide, soft brand-purple ambient
-     halo. Single hue family; eased multi-stop falloff complete well within
-     the layer so the data area stays clean canvas. */
-  background:
-    /* 1) luminous hot core — the "light source" */
-    radial-gradient(
-      58% 42% at 50% -4%,
-      hsl(var(--ambient-glow-core) / calc(var(--ambient-glow-peak) * 1.15)) 0%,
-      hsl(var(--ambient-glow-core) / calc(var(--ambient-glow-peak) * 0.7)) 24%,
-      hsl(var(--primary) / calc(var(--ambient-glow-peak) * 0.45)) 44%,
-      transparent 66%
-    ),
-    /* 2) wide soft ambient bloom — the brand-purple spread */
-    radial-gradient(
-        135% 88% at 50% -10%,
-        hsl(var(--primary) / calc(var(--ambient-glow-peak) * 0.55)) 0%,
-        hsl(var(--primary) / calc(var(--ambient-glow-peak) * 0.26)) 30%,
-        hsl(var(--primary) / calc(var(--ambient-glow-peak) * 0.09)) 50%,
-        transparent 76%
-      );
-}
-
-/* Faint fractal noise (data-URI) breaks up gradient banding on OLED. */
-.ambient-glow__noise {
-  position: absolute;
-  inset: 0;
-  opacity: 0.015;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-}
-.dark .ambient-glow__noise {
-  opacity: 0.025;
-}
-
-/* Accessibility: users who ask for less transparency get no glow. */
-@media (prefers-reduced-transparency: reduce) {
-  .ambient-glow {
-    display: none;
   }
 }
 
@@ -820,13 +716,16 @@ input[type="range"] {
    buys nothing and costs contrast where it matters. Measured against
    `--muted` (the groove) in each theme:
 
-     --primary-strong   light 4.92:1   dark 2.87:1
-     --primary          light 3.61:1   dark 3.36:1
+                        DS2 (2026-08)          DS3 (2026-09-27)
+     --primary-strong   light 4.92  dark 2.87  light 4.91  dark 3.20
+     --primary          light 3.61  dark 3.36  light 3.62  dark 3.75
 
    The fill/groove edge is what tells you where the value sits, so
-   WCAG 1.4.11's 3:1 non-text floor applies to it. `-strong` misses that
-   in dark. Pinned by tokenContrast.test.ts, which measures rather than
-   naming the token. */
+   WCAG 1.4.11's 3:1 non-text floor applies to it. On the DS2 groove
+   `-strong` missed that in dark. DS3's deeper groove lifts it over the
+   floor, but `--primary` still has the larger margin in dark, the
+   default theme, so the choice stands. Pinned by tokenContrast.test.ts,
+   which measures rather than naming the token. */
 input[type="range"]::-webkit-slider-runnable-track {
   height: 6px;
   border-radius: 999px;

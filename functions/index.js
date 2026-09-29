@@ -2597,72 +2597,6 @@ exports.rolloverChallenges = functions
   });
 
 // ══════════════════════════════════════════════
-// SOC-P2a — weekly Coach prompts in Community Spaces
-// ══════════════════════════════════════════════
-//
-// Runna-model seeded liveness: one system-authored question/tip lands in
-// every space each Monday, so no space is an empty room and answering is
-// as easy as replying to a person. Pure selection lives in
-// lib/coachPrompts.js; this shell is I/O only.
-//
-// Idempotency: the doc id is `coach-<weekKey>` (Monday-anchored UTC) —
-// create() is atomic, so a retried run hits ALREADY_EXISTS and skips.
-// authorId "tropos-coach" is not a real uid; firestore.rules bind client
-// creates to auth.uid, so only this Admin-SDK writer can post as the
-// coach. official:true renders the existing Tropos Team badge.
-// SCHEDULED_CAP (maxInstances:1). No secrets.
-
-const coachPrompts = require("./lib/coachPrompts");
-
-exports.weeklyCoachPrompts = functions
-  .runWith(SCHEDULED_CAP)
-  .pubsub.schedule("0 6 * * 1") // Mondays 06:00 UTC — after rollover, before EU mornings
-  .timeZone("Etc/UTC")
-  .onRun(async () => {
-    try {
-      const now = new Date();
-      console.log("weeklyCoachPrompts: starting");
-      let created = 0;
-      let skipped = 0;
-      for (const spaceId of coachPrompts.SPACE_IDS) {
-        const { docId, doc } = coachPrompts.buildCoachPost(spaceId, now);
-        try {
-          await db
-            .collection("spaces")
-            .doc(spaceId)
-            .collection("posts")
-            .doc(docId)
-            .create({
-              ...doc,
-              createdAt: admin.firestore.FieldValue.serverTimestamp(),
-            });
-          created++;
-        } catch (err) {
-          // ALREADY_EXISTS (code 6) = this week's prompt already landed
-          // (retry / overlapping run) — the success case for idempotency.
-          if (err && err.code === 6) {
-            skipped++;
-          } else {
-            console.error(
-              `weeklyCoachPrompts: failed for ${spaceId}:`,
-              err.message
-            );
-          }
-        }
-      }
-      console.log(
-        `weeklyCoachPrompts: done — spaces=${coachPrompts.SPACE_IDS.length}, created=${created}, alreadyExisted=${skipped}`
-      );
-    } catch (err) {
-      console.error("weeklyCoachPrompts: fatal error:", {
-        message: err.message,
-        stack: err.stack,
-      });
-    }
-    return null;
-  });
-
-// ══════════════════════════════════════════════
 // Push #961 — hourly streak-at-risk nudge sender (web)
 // ══════════════════════════════════════════════
 //
@@ -6337,8 +6271,9 @@ exports.toggleKudosCallable = functions
 // one transaction (lib/spacePostEngagement.js), deletion actor-lock,
 // rate-limited. spaceId is validated against the known-space allowlist so
 // junk paths never reach Firestore. SOC-P2g added the space_post_like
-// notification on the add edge (self + the system coach excluded).
+// notification on the add edge (self + the retired coach author excluded).
 const spacePostEngagement = require("./lib/spacePostEngagement");
+const { SPACE_IDS: KNOWN_SPACE_IDS } = require("./lib/spaceIds");
 
 exports.toggleSpacePostLikeCallable = functions
   .runWith(DEFAULT_HTTP_CAP)
@@ -6353,7 +6288,7 @@ exports.toggleSpacePostLikeCallable = functions
     const postId = data && data.postId;
     if (
       typeof spaceId !== "string" ||
-      !coachPrompts.SPACE_IDS.includes(spaceId) ||
+      !KNOWN_SPACE_IDS.includes(spaceId) ||
       typeof postId !== "string" ||
       !postId.trim()
     ) {
@@ -6388,14 +6323,14 @@ exports.toggleSpacePostLikeCallable = functions
         serverTimestamp: admin.firestore.FieldValue.serverTimestamp,
       });
       // SOC-P2g — notify on the ADD edge only (re-tap can't spam), never
-      // self, never the system coach (not a notifiable user).
+      // self, never the retired coach author (not a notifiable user).
       if (result && result.liked) {
         try {
           const postAuthorId = result.postAuthorId;
           if (
             postAuthorId &&
             postAuthorId !== context.auth.uid &&
-            postAuthorId !== coachPrompts.COACH_AUTHOR.authorId
+            postAuthorId !== spacePostEngagement.COACH_AUTHOR_ID
           ) {
             const fromName =
               (data && typeof data.fromName === "string" && data.fromName) ||
@@ -6450,8 +6385,8 @@ exports.toggleSpacePostLikeCallable = functions
 // creates/deletes route through these callables, which flip the comment
 // doc and the server-owned commentCount in one transaction. The add edge
 // notifies the post author (space_post_comment) unless the author is the
-// commenter or the system coach ("tropos-coach" is not a notifiable
-// user). The like callable above gained the matching space_post_like
+// commenter or the retired coach author ("tropos-coach" is not a
+// notifiable user). The like callable above gained the matching space_post_like
 // notification in this slice.
 
 /* Comments are public content and the callable is the only writer, so
@@ -6485,7 +6420,7 @@ exports.addSpacePostCommentCallable = functions
     const { spaceId, postId, text, authorName, authorPhotoURL } = data || {};
     if (
       typeof spaceId !== "string" ||
-      !coachPrompts.SPACE_IDS.includes(spaceId) ||
+      !KNOWN_SPACE_IDS.includes(spaceId) ||
       typeof postId !== "string" ||
       !postId.trim()
     ) {
@@ -6527,7 +6462,7 @@ exports.addSpacePostCommentCallable = functions
         if (
           postAuthorId &&
           postAuthorId !== context.auth.uid &&
-          postAuthorId !== coachPrompts.COACH_AUTHOR.authorId
+          postAuthorId !== spacePostEngagement.COACH_AUTHOR_ID
         ) {
           const fromName =
             (typeof authorName === "string" && authorName) || "Someone";
@@ -6587,7 +6522,7 @@ exports.deleteSpacePostCommentCallable = functions
     const { spaceId, postId, commentId } = data || {};
     if (
       typeof spaceId !== "string" ||
-      !coachPrompts.SPACE_IDS.includes(spaceId) ||
+      !KNOWN_SPACE_IDS.includes(spaceId) ||
       typeof postId !== "string" ||
       !postId.trim() ||
       typeof commentId !== "string" ||

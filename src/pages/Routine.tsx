@@ -18,11 +18,8 @@ import WorkoutSession from "../components/WorkoutSession";
 import { estimateLiftBurn } from "../lib/workoutBurn";
 import { workoutTonnageKg } from "../hooks/useWorkouts";
 import { projectWorkoutSets } from "@/features/program/workoutSetRecord";
-import { compose, enqueueShare, showQueuedToast } from "../lib/shareComposer";
-import { recordSharedActivity } from "../lib/sessionDelete";
-import { postActivity } from "../lib/socialApi";
 import type { ActivityPost } from "../lib/activityPost";
-import { needsEmailVerification } from "../lib/emailVerificationGate";
+import { createSessionShare } from "../lib/sessionPost";
 import { toast } from "@/lib/toast";
 
 /* Synthetic dayIndex used by saved-routine sessions.
@@ -45,9 +42,9 @@ const ROUTINE_DAY_INDEX = -1;
  *     day's draft.
  *   - A custom onCompleteDay handler that writes a workout doc with
  *     `source: "routine"` (instead of "programme") and skips the
- *     program-state mutation completeWorkoutDay does. The post-save
- *     share composer flow mirrors useProgram so the social loop
- *     stays identical.
+ *     program-state mutation completeWorkoutDay does. Sharing goes
+ *     through the same `createSessionShare` as useProgram, so the
+ *     social loop stays identical.
  */
 export default function Routine() {
   const { routineId } = useParams<{ routineId: string }>();
@@ -230,94 +227,51 @@ export default function Routine() {
         throw err;
       }
 
-      // ── POST-SAVE best-effort: sharing must not invalidate a saved workout.
-      let shared = false;
-      const share = async () => {
-        if (shared || auth.currentUser?.uid !== user.uid) return;
-        try {
-          /* Share composer: same flow as useProgram.completeWorkoutDay.
-           Title uses the routine name so the social card identifies
-           the workout the same way the user thinks of it. */
-          const decision = await compose(
-            user.uid,
-            {
-              type: "workout",
-              title: routine.name,
-              meta: [
-                `${synthDay.exercises.length} exercise${synthDay.exercises.length === 1 ? "" : "s"}`,
-                tonnage > 0
-                  ? `${Math.round(tonnage).toLocaleString()} kg volume`
-                  : "",
-                effectiveDurationMin > 0 ? `${effectiveDurationMin} min` : "",
-              ].filter(Boolean),
-            },
-            {
-              needsEmailVerification: needsEmailVerification(user),
-              forcePrompt: true,
-            }
-          );
-          if (decision && auth.currentUser?.uid === user.uid) {
-            const payload: ActivityPost = {
-              authorId: user.uid,
-              authorName: profile?.displayName || "Athlete",
-              ...(profile?.photoURL
-                ? { authorPhotoURL: profile.photoURL }
-                : {}),
-              type: "workout" as const,
-              visibility: decision.visibility,
-              ...(decision.caption ? { caption: decision.caption } : {}),
-              workoutName: routine.name,
-              activityTitle: routine.name,
-              exerciseCount: synthDay.exercises.length,
-              totalVolume: tonnage,
-              duration: effectiveDurationMin * 60,
-              exercises: synthDay.exercises.map((ex) => {
-                const setCount = ex.sets;
-                const targetReps = ex.reps;
-                const targetWeightKg = ex.weight;
-                return {
-                  name: ex.name,
-                  exerciseId: ex.exerciseId,
-                  summary: `${setCount}×${targetReps}×${targetWeightKg} kg`,
-                  setCount,
-                  targetReps,
-                  targetWeightKg,
-                };
-              }),
+      // Sharing happens on the finish screen once the save has landed, the
+      // same way as a programme workout. The title is the routine's name so
+      // the post names the workout the way the user thinks of it.
+      const share = createSessionShare({
+        uid: user.uid,
+        type: "workout",
+        source: { kind: "workout", id: workoutId },
+        preview: () => ({
+          type: "workout",
+          title: routine.name,
+          meta: [
+            `${synthDay.exercises.length} exercise${synthDay.exercises.length === 1 ? "" : "s"}`,
+            tonnage > 0
+              ? `${Math.round(tonnage).toLocaleString()} kg volume`
+              : "",
+            effectiveDurationMin > 0 ? `${effectiveDurationMin} min` : "",
+          ].filter(Boolean),
+        }),
+        payload: (decision): ActivityPost => ({
+          authorId: user.uid,
+          authorName: profile?.displayName || "Athlete",
+          ...(profile?.photoURL ? { authorPhotoURL: profile.photoURL } : {}),
+          type: "workout" as const,
+          visibility: decision.visibility,
+          ...(decision.caption ? { caption: decision.caption } : {}),
+          workoutName: routine.name,
+          activityTitle: routine.name,
+          exerciseCount: synthDay.exercises.length,
+          totalVolume: tonnage,
+          duration: effectiveDurationMin * 60,
+          exercises: synthDay.exercises.map((ex) => {
+            const setCount = ex.sets;
+            const targetReps = ex.reps;
+            const targetWeightKg = ex.weight;
+            return {
+              name: ex.name,
+              exerciseId: ex.exerciseId,
+              summary: `${setCount}×${targetReps}×${targetWeightKg} kg`,
+              setCount,
+              targetReps,
+              targetWeightKg,
             };
-            if (
-              typeof navigator !== "undefined" &&
-              navigator.onLine === false
-            ) {
-              /* #1887 — pre-gate, not a catch: a parked postActivity never
-               throws offline, so the old catch-only branch could not
-               fire. Queue up-front; ShareComposerSheet's drain effect
-               replays it on reconnect. */
-              enqueueShare(user.uid, payload, {
-                kind: "workout",
-                id: workoutId,
-              });
-              shared = true;
-              showQueuedToast();
-            } else {
-              try {
-                const activityId = await postActivity(payload);
-                shared = true;
-                // Dedupe + delete link, via the one shared helper.
-                await recordSharedActivity(
-                  user.uid,
-                  { kind: "workout", id: workoutId },
-                  activityId
-                );
-              } catch (socialErr) {
-                logger.warn("Routine post failed:", socialErr);
-              }
-            }
-          }
-        } catch (err) {
-          logger.warn("[Routine] post-save sharing failed:", err);
-        }
-      };
+          }),
+        }),
+      });
       return {
         workoutId,
         share,

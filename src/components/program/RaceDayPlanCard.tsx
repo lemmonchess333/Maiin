@@ -52,8 +52,7 @@ export default function RaceDayPlanCard({
       <div className="space-y-1">
         <SectionLabel
           as="span"
-          tier="section"
-          className="inline-flex items-center gap-1.5 text-running-strong"
+          className="inline-flex items-center gap-1.5 font-bold text-running-strong"
         >
           <Timer className="size-3.5" aria-hidden="true" />
           Race-day plan

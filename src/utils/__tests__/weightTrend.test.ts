@@ -2,9 +2,18 @@ import { describe, it, expect } from "vitest";
 import {
   calcWeightTrend,
   calculateEMA,
-  deriveGoalWeightKg,
+  userGoalWeightKg,
   projectGoalDate,
+  currentWeightRate,
+  recentWeeklyRate,
+  RATE_WINDOW_DAYS,
+  weeklyWeightAverages,
 } from "../weightTrend";
+import {
+  addLocalDays,
+  localDateString,
+  startOfLocalWeek,
+} from "@/lib/dateHelpers";
 
 describe("calcWeightTrend", () => {
   it("returns null for empty entries", () => {
@@ -196,17 +205,74 @@ describe("calculateEMA", () => {
   });
 });
 
-describe("deriveGoalWeightKg (Rev1 extraction — mirrors TrendWeight)", () => {
-  it("cut → −5kg, lean bulk → +3kg, maintain → startWeight", () => {
-    expect(deriveGoalWeightKg({ startWeight: 80, goal: "cut" })).toBe(75);
-    expect(deriveGoalWeightKg({ startWeight: 80, goal: "lean bulk" })).toBe(83);
-    expect(deriveGoalWeightKg({ startWeight: 80, goal: "maintain" })).toBe(80);
+describe("userGoalWeightKg — the goal the user set, never one derived", () => {
+  it("is the target weight while the user travels toward it", () => {
+    expect(
+      userGoalWeightKg({
+        goalWeightKg: 78,
+        weeklyRateKg: -0.5,
+        program: { goal: "cut" },
+      })
+    ).toBe(78);
+    expect(
+      userGoalWeightKg({
+        goalWeightKg: 84,
+        weeklyRateKg: 0.25,
+        program: { goal: "lean bulk" },
+      })
+    ).toBe(84);
   });
 
-  it("no startWeight → undefined", () => {
-    expect(deriveGoalWeightKg({ goal: "cut" })).toBeUndefined();
-    expect(deriveGoalWeightKg(null)).toBeUndefined();
-    expect(deriveGoalWeightKg(undefined)).toBeUndefined();
+  it("is not the programme's start weight less 5 kg", () => {
+    // What the chart used to invent: 90 - 5 = 85, a goal nobody set.
+    expect(
+      userGoalWeightKg({
+        goalWeightKg: 78,
+        weeklyRateKg: -0.5,
+        program: { goal: "cut", startWeight: 90 } as { goal: string },
+      })
+    ).toBe(78);
+    expect(
+      userGoalWeightKg({
+        program: { goal: "cut", startWeight: 90 } as { goal: string },
+      })
+    ).toBeUndefined();
+  });
+
+  it("is none for maintenance, including onboarding's signup-weight default", () => {
+    // Onboarding stores the signup weight as the target with a rate of 0.
+    expect(
+      userGoalWeightKg({
+        goalWeightKg: 82,
+        weeklyRateKg: 0,
+        program: { goal: "recomp" },
+      })
+    ).toBeUndefined();
+  });
+
+  it("is none when a legacy rate's sign contradicts the phase", () => {
+    // Pre-NUTR-M2 unsigned rate on a cut: the direction cannot be trusted.
+    expect(
+      userGoalWeightKg({
+        goalWeightKg: 78,
+        weeklyRateKg: 0.5,
+        program: { goal: "cut" },
+      })
+    ).toBeUndefined();
+  });
+
+  it("is none without a usable target", () => {
+    for (const goalWeightKg of [undefined, null, 0, -3, Number.NaN]) {
+      expect(
+        userGoalWeightKg({
+          goalWeightKg,
+          weeklyRateKg: -0.5,
+          program: { goal: "cut" },
+        })
+      ).toBeUndefined();
+    }
+    expect(userGoalWeightKg(null)).toBeUndefined();
+    expect(userGoalWeightKg(undefined)).toBeUndefined();
   });
 });
 
@@ -286,5 +352,139 @@ describe("projectGoalDate (Rev1 extraction — same gates as TrendWeight)", () =
         now: NOW,
       })
     ).toBeNull();
+  });
+});
+
+describe("recentWeeklyRate", () => {
+  // Local day keys counted back from a fixed day: no clock reads.
+  const END = new Date(2026, 8, 28);
+  const day = (n: number) => localDateString(addLocalDays(END, -n));
+  const line = (days: number, start: number, perDay: number) =>
+    Array.from({ length: days + 1 }, (_, i) => ({
+      date: day(days - i),
+      trend: start + i * perDay,
+    }));
+
+  it("reads the last four weeks of the trend, in kg a week", () => {
+    const rate = recentWeeklyRate(line(60, 90, -0.05));
+    expect(rate?.kgPerWeek).toBeCloseTo(-0.35);
+    expect(rate?.fromDate).toBe(day(RATE_WINDOW_DAYS));
+    expect(rate?.toDate).toBe(day(0));
+  });
+
+  it("is the recent rate, not the history's average", () => {
+    // Six weeks gaining, then four losing.
+    const gaining = line(70, 80, 0.05).slice(0, 43);
+    const peak = gaining[gaining.length - 1].trend;
+    const losing = Array.from({ length: 28 }, (_, i) => ({
+      date: day(27 - i),
+      trend: peak - (i + 1) * 0.06,
+    }));
+    const rate = recentWeeklyRate([...gaining, ...losing]);
+    expect(rate!.kgPerWeek).toBeLessThan(0);
+  });
+
+  it("uses the whole history when it is shorter than the window", () => {
+    const rate = recentWeeklyRate(line(14, 80, -0.1));
+    expect(rate?.fromDate).toBe(day(14));
+    expect(rate?.kgPerWeek).toBeCloseTo(-0.7);
+  });
+
+  it("has no rate from one day", () => {
+    expect(recentWeeklyRate([{ date: day(0), trend: 80 }])).toBeNull();
+  });
+});
+
+describe("the goal projection reads the recent rate", () => {
+  const END = new Date(2026, 8, 28);
+  const day = (n: number) => localDateString(addLocalDays(END, -n));
+
+  it("projects toward a goal the last month is heading for, after a year going the other way", () => {
+    // 300 days gaining 0.02 kg a day, then 28 days losing 0.05 a day:
+    // the history's average is still up, the trend now is down.
+    const series = [
+      ...Array.from({ length: 300 }, (_, i) => ({
+        date: day(327 - i),
+        trend: 75 + i * 0.02,
+      })),
+      ...Array.from({ length: 28 }, (_, i) => ({
+        date: day(27 - i),
+        trend: 81 - (i + 1) * 0.05,
+      })),
+    ];
+    const p = projectGoalDate({
+      trendSeries: series,
+      goalWeight: 76,
+      hasProjection: true,
+      now: END,
+    });
+    expect(p).not.toBeNull();
+    // 3.6 kg to go at 0.35 kg a week is about ten weeks.
+    expect(p!.weeks).toBeGreaterThanOrEqual(9);
+    expect(p!.weeks).toBeLessThanOrEqual(11);
+  });
+});
+
+describe("weeklyWeightAverages", () => {
+  const TODAY = new Date(2026, 8, 30); // a Wednesday
+  const MONDAY = startOfLocalWeek(TODAY);
+  const on = (weeksBack: number, dayOfWeek: number, actual: number) => ({
+    date: localDateString(addLocalDays(MONDAY, -7 * weeksBack + dayOfWeek)),
+    actual,
+  });
+
+  it("averages each Monday week's weigh-ins, newest first", () => {
+    const weeks = weeklyWeightAverages(
+      [on(1, 0, 82), on(1, 3, 82.4), on(0, 0, 81.9), on(0, 1, 82.1)],
+      { today: TODAY }
+    );
+    expect(weeks.map((w) => w.weekKey)).toEqual([
+      localDateString(MONDAY),
+      localDateString(addLocalDays(MONDAY, -7)),
+    ]);
+    expect(weeks[0]).toMatchObject({ weighIns: 2, current: true });
+    expect(weeks[0].averageKg).toBeCloseTo(82);
+    expect(weeks[0].changeKg).toBeCloseTo(-0.2);
+    expect(weeks[1]).toMatchObject({ weighIns: 2, current: false });
+  });
+
+  it("leaves out an unweighed week, and makes no change across it", () => {
+    const weeks = weeklyWeightAverages([on(3, 2, 84), on(1, 2, 83)], {
+      today: TODAY,
+    });
+    expect(weeks).toHaveLength(2);
+    expect(weeks[0].changeKg).toBeNull();
+  });
+
+  it("keeps the newest weeks when there are more than asked for", () => {
+    const many = Array.from({ length: 9 }, (_, i) => on(i, 1, 80 + i));
+    const weeks = weeklyWeightAverages(many, { today: TODAY, limit: 6 });
+    expect(weeks).toHaveLength(6);
+    expect(weeks[0].averageKg).toBe(80);
+  });
+
+  it("ignores a weigh-in that is not a weight", () => {
+    const weeks = weeklyWeightAverages([on(0, 0, 82), on(0, 1, 0)], {
+      today: TODAY,
+    });
+    expect(weeks[0]).toMatchObject({ weighIns: 1, averageKg: 82 });
+  });
+});
+
+describe("currentWeightRate", () => {
+  const END = new Date(2026, 8, 28);
+  const day = (n: number) => localDateString(addLocalDays(END, -n));
+  const daily = (days: number) =>
+    Array.from({ length: days + 1 }, (_, i) => ({
+      date: day(days - i),
+      trend: 85 - i * 0.05,
+    }));
+
+  it("gives the recent rate once there is a month of weigh-ins", () => {
+    expect(currentWeightRate(daily(40))?.kgPerWeek).toBeCloseTo(-0.35);
+  });
+
+  it("gives none before, where a rate would be a few noisy mornings", () => {
+    expect(currentWeightRate(daily(20))).toBeNull();
   });
 });

@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 
@@ -203,38 +203,62 @@ describe("StackedCTACards", function () {
     it("shows the FirstMealCard instead of RestDayCard on a rest day when firstMeal is set", function () {
       renderCards({ todayType: "rest", firstMeal: true });
       expect(screen.getByText("Log your first meal")).toBeInTheDocument();
-      expect(screen.queryByText("Take it easy")).not.toBeInTheDocument();
+      expect(screen.queryByText("Recover today")).not.toBeInTheDocument();
     });
 
     it("shows the normal RestDayCard on a rest day when firstMeal is not set", function () {
       renderCards({ todayType: "rest", firstMeal: false });
-      expect(screen.getByText("Take it easy")).toBeInTheDocument();
+      expect(screen.getByText("Recover today")).toBeInTheDocument();
       expect(screen.queryByText("Log your first meal")).not.toBeInTheDocument();
     });
   });
 });
 
 describe("HOME-ACTION-01 — deep-link + terminal states", function () {
-  it("lift CTA taps through to the exact Programme day (?day=N)", function () {
+  /* The run card's preview opens today's date in Train's Run tab, so the
+     date is pinned: a run straddling midnight would otherwise compare
+     two different days. Only Date is faked; no timers move. */
+  beforeEach(function () {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date(2026, 8, 27, 12, 0, 0));
+  });
+  afterEach(function () {
+    vi.useRealTimers();
+  });
+
+  it("tapping the lift card opens the exact Programme day (?day=N)", function () {
     const navigate = vi.fn();
     renderCards({ todayType: "lift", liftDayIndex: 2, navigate });
-    fireEvent.click(screen.getByText("Push Day"));
-    expect(navigate).toHaveBeenCalledWith("/program?day=2");
+    fireEvent.click(
+      screen.getByRole("button", { name: "Open Push Day in Train" })
+    );
+    expect(navigate).toHaveBeenCalledExactlyOnceWith("/program?day=2");
   });
 
-  it("the lift pill reads View with no leading chevron", function () {
-    /* A right-pointing arrow BEFORE the word read as a stray character
-       — owner-reported from a device as "it's >". Chevrons in this app
-       sit at the far right of a row, never inside a pill, and the run
-       card's own pill is bare "View run", so the pair is asserted
-       together: whichever one grows an icon, this fails. */
-    renderCards({ todayType: "lift", liftDayIndex: 2, navigate: vi.fn() });
-    const pill = screen.getByText("View");
-    expect(pill.querySelector("svg")).toBeNull();
-    expect(pill.textContent).toBe("View");
+  it("Start workout opens the same day and starts it (&start=1)", function () {
+    const navigate = vi.fn();
+    renderCards({ todayType: "lift", liftDayIndex: 2, navigate });
+    fireEvent.click(screen.getByRole("button", { name: "Start workout" }));
+    expect(navigate).toHaveBeenCalledExactlyOnceWith("/program?day=2&start=1");
   });
 
-  it("a completed lift is labelled Completed and still opens the day", function () {
+  it("the lift card carries no chevron: Start is the action, the card the preview", function () {
+    /* A right-pointing arrow before a pill's word read as a stray
+       character, owner-reported from a device as "it's >". The DS3 card
+       has no pill to hold one: the only icon on it is Start's play mark,
+       which sits inside a full-width labelled button. Whichever card grows
+       a chevron again, this fails. */
+    const { container } = renderCards({
+      todayType: "both",
+      liftDayIndex: 2,
+      navigate: vi.fn(),
+    });
+    expect(container.querySelector(".lucide-chevron-right")).toBeNull();
+    expect(screen.queryByText("View")).toBeNull();
+    expect(screen.queryByText("View run")).toBeNull();
+  });
+
+  it("a completed lift is labelled Completed, offers no Start and still opens the day", function () {
     const navigate = vi.fn();
     renderCards({
       todayType: "lift",
@@ -244,9 +268,11 @@ describe("HOME-ACTION-01 — deep-link + terminal states", function () {
       navigate,
     });
     expect(screen.getByText("Completed")).toBeInTheDocument();
-    expect(screen.queryByText("Start")).toBeNull();
-    fireEvent.click(screen.getByText("Push Day"));
-    expect(navigate).toHaveBeenCalledWith("/program?day=1");
+    expect(screen.queryByRole("button", { name: "Start workout" })).toBeNull();
+    fireEvent.click(
+      screen.getByRole("button", { name: "Open Push Day in Train" })
+    );
+    expect(navigate).toHaveBeenCalledExactlyOnceWith("/program?day=1");
   });
 
   it("a skipped run is labelled Skipped and does not relaunch /run", function () {
@@ -263,9 +289,13 @@ describe("HOME-ACTION-01 — deep-link + terminal states", function () {
       } as any,
     });
     expect(screen.getByText("Skipped")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: /Easy 30/ }));
-    expect(navigate).toHaveBeenCalledWith("/program?tab=run");
-    expect(navigate).not.toHaveBeenCalledWith(expect.stringContaining("/run"));
+    expect(screen.queryByRole("button", { name: "Start run" })).toBeNull();
+    fireEvent.click(
+      screen.getByRole("button", { name: "Open Easy 30 in Train" })
+    );
+    expect(navigate).toHaveBeenCalledExactlyOnceWith(
+      "/program?tab=run&rday=2026-09-27"
+    );
   });
 
   it("a startable run launches /run with the template params", function () {
@@ -281,10 +311,53 @@ describe("HOME-ACTION-01 — deep-link + terminal states", function () {
         status: "planned",
       } as any,
     });
-    expect(screen.getByText("View run")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: /Easy 30/ }));
-    expect(navigate).toHaveBeenCalledWith(
-      expect.stringContaining("/run?template=easy_30")
+    fireEvent.click(screen.getByRole("button", { name: "Start run" }));
+    expect(navigate).toHaveBeenCalledExactlyOnceWith(
+      "/run?template=easy_30&scheduledRunId=run-2"
     );
+  });
+
+  it("tapping a startable run's card previews it in Train instead of starting it", function () {
+    const navigate = vi.fn();
+    renderCards({
+      todayType: "run",
+      navigate,
+      todayRun: {
+        id: "run-2",
+        dayIndex: 3,
+        templateId: "easy_30",
+        type: "easy",
+        status: "planned",
+      } as any,
+    });
+    fireEvent.click(
+      screen.getByRole("button", { name: "Open Easy 30 in Train" })
+    );
+    expect(navigate).toHaveBeenCalledExactlyOnceWith(
+      "/program?tab=run&rday=2026-09-27"
+    );
+  });
+});
+
+describe("rest day — tomorrow's session", function () {
+  it("names tomorrow's session and opens it", function () {
+    const navigate = vi.fn();
+    renderCards({
+      todayType: "rest",
+      navigate,
+      tomorrow: { label: "Pull — Lat Focus", target: "/program?day=3" },
+    });
+    expect(screen.getByText(/Tomorrow:/)).toHaveTextContent(
+      "Tomorrow: Pull — Lat Focus."
+    );
+    fireEvent.click(screen.getByRole("button", { name: "See tomorrow" }));
+    expect(navigate).toHaveBeenCalledExactlyOnceWith("/program?day=3");
+  });
+
+  it("offers nothing to open when tomorrow is rest too", function () {
+    renderCards({ todayType: "rest", tomorrow: null });
+    expect(screen.getByText("Recover today")).toBeInTheDocument();
+    expect(screen.queryByText(/Tomorrow:/)).toBeNull();
+    expect(screen.queryByRole("button")).toBeNull();
   });
 });

@@ -1,15 +1,18 @@
 /**
- * Share composer — imperative API.
+ * Share composer — the saved sharing default, the one-off share sheet, and
+ * the offline share queue.
  *
- * Save flows (workout completion in useProgram, run completion in
- * RunSummary) call `compose(preview)` which returns a Promise<ShareDecision
- * | null>. The promise resolves with the user's choice (visibility +
- * caption) or null if they declined to share.
+ * The saved default ("Share sessions automatically?", per type) is what the
+ * finish screens read: `finishShareStart` turns it into what happens to a
+ * session the moment it is saved — ask once, post without a sheet, or hold.
+ * It is asked for once (`answerShareQuestion`) and edited in Settings →
+ * Privacy.
  *
- * If the user has previously picked "Always do this for {workouts/runs}"
- * the promise short-circuits with the stored preference and the sheet
- * never opens. Stored per-type so workouts and runs can have different
- * defaults.
+ * `compose(preview)` is the one-off path: it always opens the sheet and
+ * resolves with the user's choice (visibility + caption), or null if they
+ * declined. It never applies the saved default. The finish screen does,
+ * so the default has one reader and Settings' "Shared automatically" is
+ * true.
  *
  * Singleton + event-emitter shape (mirrors how `sonner` exposes toast)
  * so the API is callable from non-React code (the workout-save chain is
@@ -21,7 +24,6 @@
  * is mounted once at app root.
  */
 
-import { toast } from "@/lib/toast";
 import {
   readJson,
   readString,
@@ -92,7 +94,9 @@ export function subscribeShareComposer(listener: (s: SheetState) => void) {
 
 // ── Per-type "Always do this" preference ─────────────────────────
 
-type AlwaysPref = ShareVisibility | "never" | null;
+export type AlwaysPref = ShareVisibility | "never" | null;
+
+const SHARE_TYPES: readonly ShareType[] = ["run", "workout"];
 const PREF_KEY_PREFIX = "tropos.share.always";
 
 function prefKey(uid: string, type: ShareType): string {
@@ -121,8 +125,8 @@ function writeAlways(uid: string, type: ShareType, value: AlwaysPref) {
 }
 
 /** Used by Settings (ShareDefaultsRow) to let the user clear their saved
- *  default. Without this the "Always do this" tick is a one-way door —
- *  `compose()` short-circuits from then on and the sheet never reopens. */
+ *  default. Without this the default is a one-way door: once saved, the
+ *  finish screen never asks again. */
 export function clearShareDefault(uid: string, type: ShareType): void {
   writeAlways(uid, type, null);
 }
@@ -149,32 +153,61 @@ export function getShareDefault(uid: string, type: ShareType): AlwaysPref {
   return readAlways(uid, type);
 }
 
+/**
+ * Saves the answer to the finish screen's one question ("Share sessions
+ * automatically?") for every session type that has no default yet, and
+ * returns the types it set. `asking` is always among them: the question
+ * only appears while that type has no default.
+ *
+ * A type that already has one keeps it. The user chose it on purpose, in
+ * Settings or with the share sheet's "Make this my default", and answering
+ * the question after a workout must not overwrite a "never" they picked
+ * for runs.
+ */
+export function answerShareQuestion(
+  uid: string,
+  asking: ShareType,
+  value: ShareVisibility | "never"
+): ShareType[] {
+  const unset = SHARE_TYPES.filter(
+    (type) => type === asking || readAlways(uid, type) === null
+  );
+  for (const type of unset) writeAlways(uid, type, value);
+  return unset;
+}
+
+/** What a finish screen does with a session the moment it is saved. */
+export type FinishShareStart =
+  /** No default yet: ask the one question. */
+  | { kind: "ask" }
+  /** Post it now, with no sheet. */
+  | { kind: "post"; visibility: ShareVisibility }
+  /** Post nothing; offer the one-off share button. */
+  | { kind: "hold"; reason: "never" | "verify" };
+
+export function finishShareStart(
+  pref: AlwaysPref,
+  needsEmailVerification: boolean
+): FinishShareStart {
+  if (pref === null) return { kind: "ask" };
+  if (pref === "never") return { kind: "hold", reason: "never" };
+  // An unverified email/password account cannot post publicly (the rules'
+  // isEmailVerified). A post the rules will refuse must never be attempted
+  // on the strength of a remembered choice: hold it, and let the one-off
+  // sheet, where the verification notice lives, do the posting.
+  if (needsEmailVerification) return { kind: "hold", reason: "verify" };
+  return { kind: "post", visibility: pref };
+}
+
 // ── compose / resolve ────────────────────────────────────────────
 
+/** Opens the share sheet for one session and resolves with the user's
+ *  choice, or null if they declined. It always opens: the saved default is
+ *  applied by the finish screen (`finishShareStart`), never here. */
 export function compose(
   uid: string,
-  preview: ActivityPreview,
-  opts: {
-    /** The account cannot post publicly yet (unverified email/password
-     *  account — `needsEmailVerification`). A stored "always share" default
-     *  is then NOT honoured: the sheet opens instead, because the sheet is
-     *  where the verification notice lives, and a post the rules will refuse
-     *  must never be attempted silently on the strength of a remembered
-     *  choice. "never" still short-circuits — declining needs no email. */
-    needsEmailVerification?: boolean;
-    /** An explicit share row always opens the sheet; saved defaults stay intact. */
-    forcePrompt?: boolean;
-  } = {}
+  preview: ActivityPreview
 ): Promise<ShareDecision | null> {
-  const pref = readAlways(uid, preview.type);
-  if (pref === "never" && !opts.forcePrompt) return Promise.resolve(null);
-  if (
-    (pref === "followers" || pref === "public") &&
-    !opts.needsEmailVerification &&
-    !opts.forcePrompt
-  ) {
-    return Promise.resolve({ visibility: pref, caption: "" });
-  }
   state = { open: true, type: preview.type, preview, uid };
   emit();
   return new Promise((resolve) => {
@@ -248,12 +281,25 @@ function writeQueue(items: PendingShare[]) {
   writeJson(QUEUE_KEY, items);
 }
 
+function isFor(item: PendingShare, uid: string, source: ShareSource): boolean {
+  return (
+    item.uid === uid &&
+    item.source?.kind === source.kind &&
+    item.source.id === source.id
+  );
+}
+
 export function enqueueShare(
   uid: string,
   payload: Record<string, unknown>,
   source?: ShareSource
 ): void {
-  const items = readQueue();
+  // One pending post per session. A save that is retried re-runs its
+  // finish screen, and with sharing automatic that would queue the same
+  // session again and post it twice when the queue drains.
+  const items = source
+    ? readQueue().filter((item) => !isFor(item, uid, source))
+    : readQueue();
   const id = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
   items.push({
     id,
@@ -265,6 +311,16 @@ export function enqueueShare(
   writeQueue(items);
 }
 
+/** Drops a session's pending post (the finish screen's Undo while offline).
+ *  False when there was none, e.g. the queue drained first. */
+export function cancelQueuedShare(uid: string, source: ShareSource): boolean {
+  const items = readQueue();
+  const kept = items.filter((item) => !isFor(item, uid, source));
+  if (kept.length === items.length) return false;
+  writeQueue(kept);
+  return true;
+}
+
 export function getQueueLength(uid?: string): number {
   const items = readQueue();
   return uid ? items.filter((q) => q.uid === uid).length : items.length;
@@ -273,7 +329,11 @@ export function getQueueLength(uid?: string): number {
 /** Replay queued shares for `uid`. Caller supplies the post fn
  *  (typically `postActivity`). Items belonging to other uids are
  *  left in the queue for that user's next sign-in. Items that throw
- *  stay in the queue for the next drain attempt. */
+ *  stay in the queue for the next drain attempt.
+ *
+ *  The queue is re-read around every post, not snapshotted once: an item
+ *  cancelled while the drain is running must not be posted, and one
+ *  queued meanwhile must not be erased by writing the snapshot back. */
 export async function drainQueue(
   uid: string,
   post: (
@@ -281,29 +341,19 @@ export async function drainQueue(
     source?: ShareSource
   ) => Promise<unknown>
 ): Promise<void> {
-  const items = readQueue();
-  if (items.length === 0) return;
-  const remaining: PendingShare[] = [];
-  for (const item of items) {
-    if (item.uid !== uid) {
-      remaining.push(item);
-      continue;
-    }
+  const mine = readQueue().filter((item) => item.uid === uid);
+  if (mine.length === 0) return;
+  const posted = new Set<string>();
+  for (const item of mine) {
+    if (!readQueue().some((q) => q.id === item.id)) continue;
     try {
       await post(item.payload, item.source);
+      posted.add(item.id);
     } catch {
-      remaining.push(item);
+      // stays queued for the next drain
     }
   }
-  writeQueue(remaining);
-}
-
-/** Toast surfaced after enqueueing an offline share. Lives here (not
- *  in ShareComposerSheet) so the sheet file only exports its component
- *  — react-refresh/only-export-components doesn't allow mixed exports. */
-export function showQueuedToast(): void {
-  toast.success("Post queued — will share when you're back online.", {
-    id: "share-queued",
-    duration: 3000,
-  });
+  if (posted.size > 0) {
+    writeQueue(readQueue().filter((item) => !posted.has(item.id)));
+  }
 }

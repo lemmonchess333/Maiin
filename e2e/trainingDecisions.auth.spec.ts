@@ -280,7 +280,7 @@ test("training advice, saved correction and the next session agree", async ({
     }
     // Completing the last set opens the review automatically.
     await page
-      .getByRole("button", { name: "Save Workout", exact: true })
+      .getByRole("button", { name: "Save workout", exact: true })
       .click();
     await expect(
       page.getByRole("button", { name: "Done", exact: true })

@@ -42,6 +42,7 @@ const NAMED = [
   "Performance Index",
   "Progress Vault",
   "Weekly Review",
+  "Tropos Team",
   "Together",
   "Explore",
   "Privacy Policy",
@@ -109,8 +110,9 @@ export function isTitleCase(phrase: string): boolean {
     .map((w) => w.replace(/^[^A-Za-z]+|[^A-Za-z'’]+$/g, ""))
     .filter((w) => /^[A-Za-z][A-Za-z'’]*$/.test(w));
   if (words.length < 2) return false;
-  /* An ALL-CAPS phrase is an uppercase label (a SectionLabel renders these)
-     — a different register, not Title Case. */
+  /* An ALL-CAPS phrase is a label written in capitals (a table column
+     header, the legacy section-tier label) — a different register, not
+     Title Case. */
   if (words.every((w) => w === w.toUpperCase())) return false;
   const unjustified = words.slice(1).filter(
     (w) =>
@@ -173,7 +175,7 @@ describe("user-facing copy is sentence case", () => {
     expect(isTitleCase("Sign out")).toBe(false);
     // One word cannot be Title Case.
     expect(isTitleCase("Settings")).toBe(false);
-    // An uppercase label is its own register — SectionLabel renders these,
+    // An uppercase label is its own register (a table column header),
     // and "DELETE" is a literal the user types.
     expect(isTitleCase("YOUR FIRST LIFT")).toBe(false);
     expect(isTitleCase("Type DELETE")).toBe(false);

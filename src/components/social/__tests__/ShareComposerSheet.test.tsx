@@ -26,6 +26,7 @@ vi.mock("@/hooks/useOnlineStatus", () => ({
 import ShareComposerSheet from "../ShareComposerSheet";
 import {
   compose,
+  finishShareStart,
   getShareDefault,
   resolveCompose,
   type ActivityPreview,
@@ -39,7 +40,7 @@ const WORKOUT: ActivityPreview = {
   meta: ["1h 12m", "12,840kg volume"],
 };
 
-/** Drives a save chain's `compose()` call and lets the sheet react. */
+/** Drives the one-off share's `compose()` call and lets the sheet react. */
 function openSheet() {
   let promise!: Promise<unknown>;
   act(() => {
@@ -108,11 +109,11 @@ describe("ShareComposerSheet", () => {
     );
     await first;
     expect(getShareDefault(UID, "workout")).toBe("followers");
-    await expect(openSheet()).resolves.toEqual({
+    // The finish screen applies it: the next workout posts with no sheet.
+    expect(finishShareStart(getShareDefault(UID, "workout"), false)).toEqual({
+      kind: "post",
       visibility: "followers",
-      caption: "",
     });
-    expect(screen.queryByRole("checkbox")).toBeNull();
     expect(getShareDefault(UID, "run")).toBeNull();
   });
 
@@ -125,7 +126,10 @@ describe("ShareComposerSheet", () => {
     );
     await expect(first).resolves.toBeNull();
     expect(getShareDefault(UID, "workout")).toBe("never");
-    await expect(openSheet()).resolves.toBeNull();
+    expect(finishShareStart(getShareDefault(UID, "workout"), false)).toEqual({
+      kind: "hold",
+      reason: "never",
+    });
   });
 
   it("closing after ticking remember never saves a default", async () => {

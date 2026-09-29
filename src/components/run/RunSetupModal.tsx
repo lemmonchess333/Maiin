@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import SectionLabel from "@/components/ui/SectionLabel";
+import SectionHeading from "@/components/ui/SectionHeading";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { THEME } from "@/lib/theme";
 import { cn } from "@/lib/utils";
@@ -675,9 +676,9 @@ export default function RunSetupModal({
                 (RunConfig, localStorage, Firestore, analytics events
                 all keep `target` as the key) so existing data and
                 callers stay working. */}
-              <SectionLabel tier="section" className="mb-2">
+              <SectionHeading size="compact" className="mb-2">
                 Goal
-              </SectionLabel>
+              </SectionHeading>
               {/* Goal type — shared SegmentedControl (tone=running). Was a
                   hand-rolled pill row that hardcoded the coral hex and used
                   rgba(0,0,0,…) inactive styling (not dark-mode-safe); now the

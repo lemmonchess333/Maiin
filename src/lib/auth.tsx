@@ -301,6 +301,11 @@ export interface UserProfileNutrition {
 
 /** Social and privacy settings */
 export interface UserProfileSocial {
+  /** LEGACY: nothing ever read this. The Settings select that wrote it
+   *  ("Default visibility — Who can see your posts") saved a value and
+   *  changed nothing; who sees a session is the saved share default
+   *  (`ShareDefaultsRow`, applied by the finish screen). Kept typed and
+   *  registered on the same terms as the auto-post trio below. */
   defaultVisibility?: "public" | "followers" | "private";
   /** LEGACY (share composer superseded these, #1416): the composer's saved
    *  "Always do this" default decides auto-posting now — see

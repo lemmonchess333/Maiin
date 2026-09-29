@@ -1,10 +1,10 @@
 import { useMemo } from "react";
-import { Check, Minus } from "lucide-react";
 import { format } from "date-fns";
 import type { UserProfile } from "@/lib/auth";
 import type { ProgramState } from "@/features/program/programTypes";
 import { resolveTrainingWindow } from "@/lib/trainingResolver";
 import type { ClaimState } from "@/lib/scheduledRunCompletion";
+import { cn } from "@/lib/utils";
 import {
   localDateString,
   localWeekKey,
@@ -12,40 +12,103 @@ import {
 } from "@/lib/dateHelpers";
 
 /**
- * What the day's dots say, in words.
+ * What one day of the strip shows (DS3). The circle carries the day's
+ * state on its own; there is no dot row beneath it and no legend to learn.
  *
- * The strip renders a purple dot for a lift day, a coral rhombus for a
- * planned run, a coral check for a completed one, and a faded rhombus for a
- * skipped one — none of which reached the accessible name. The label said
- * "(activity logged)" instead, which came from `dayMap` and is food: the one
- * signal in this component with NO visual counterpart, announced in place of
- * every signal that has one. A screen-reader user heard nothing for a day
- * they had trained, and "activity logged" for a day they had only eaten.
+ *   lift-done / run-done  filled with the sport's colour
+ *   both-done             split between the two
+ *   planned               an outlined circle: something is still to do
+ *   missed                a dashed outline: a planned day that has passed
+ *   rest                  the bare date
+ *
+ * Today adds the purple ring on top of whichever state it is in, so a
+ * finished today still reads as today.
  */
-function trainingLabel(day: {
+export type WeekDayState =
+  | "lift-done"
+  | "run-done"
+  | "both-done"
+  | "planned"
+  | "missed"
+  | "rest";
+
+interface StripDay {
+  key: string;
   sType: string;
+  /** The planned lift slot's status. Lifts are split-ordered (ADR-0002),
+   *  so a slot can be completed by a session on another day. */
   liftCompleted: boolean;
   liftSkipped: boolean;
-  runCompleted: boolean;
+  /** A lift session was logged ON this date. */
+  liftLogged: boolean;
+  /** A run was done on this date: the planned run's derived completion,
+   *  or a logged run that claimed no planned day. */
+  runDone: boolean;
   runSkipped: boolean;
-}): string {
+}
+
+/**
+ * The circle is a statement about the DATE. It fills for what was done
+ * that day: a logged lift session (planned or not) and a completed or
+ * extra run. A planned day with nothing done is planned while ahead and
+ * missed once passed, unless its plan was settled some other way — the
+ * lift slot completed by a session on another day, or either session
+ * skipped — in which case the day is bare, like rest.
+ */
+function weekDayState(day: StripDay, todayKey: string): WeekDayState {
   const hasLift = day.sType === "lift" || day.sType === "both";
   const hasRun = day.sType === "run" || day.sType === "both";
+  if (day.liftLogged && day.runDone) return "both-done";
+  if (day.liftLogged) return "lift-done";
+  if (day.runDone) return "run-done";
+  const liftOpen = hasLift && !day.liftSkipped && !day.liftCompleted;
+  const runOpen = hasRun && !day.runSkipped;
+  if (!liftOpen && !runOpen) return "rest";
+  return day.key < todayKey ? "missed" : "planned";
+}
+
+/**
+ * What the day's circle says, in words.
+ *
+ * The accessible name once said "(activity logged)", which came from
+ * `dayMap` and is food: the one signal in this component with NO visual
+ * counterpart, announced in place of every signal that has one. It now
+ * names the training the circle shows, including a planned session whose
+ * day has passed.
+ */
+function trainingLabel(day: StripDay, isPast: boolean): string {
+  const hasLift =
+    day.sType === "lift" || day.sType === "both" || day.liftLogged;
+  const hasRun = day.sType === "run" || day.sType === "both" || day.runDone;
   if (!hasLift && !hasRun) return "rest day";
-  const run = day.runCompleted
+  const run = day.runDone
     ? "completed run"
     : day.runSkipped
       ? "skipped run"
-      : "run day";
-  const lift = day.liftCompleted
-    ? "completed lift"
-    : day.liftSkipped
-      ? "skipped lift"
-      : "lift day";
+      : isPast
+        ? "missed run"
+        : "run day";
+  const lift =
+    day.liftLogged || day.liftCompleted
+      ? "completed lift"
+      : day.liftSkipped
+        ? "skipped lift"
+        : isPast
+          ? "missed lift"
+          : "lift day";
   if (hasLift && hasRun) return `${lift} and ${run}`;
   if (hasLift) return lift;
   return run;
 }
+
+const STATE_CLASSES: Record<WeekDayState, string> = {
+  "lift-done": "bg-lifting/30 text-foreground",
+  "run-done": "bg-running/30 text-foreground",
+  "both-done": "text-foreground",
+  planned: "border-2 border-foreground/20 text-foreground",
+  missed: "border-2 border-dashed border-foreground/25 text-muted-foreground",
+  rest: "text-muted-foreground",
+};
 
 export default function WeekStrip({
   dayMap,
@@ -54,6 +117,8 @@ export default function WeekStrip({
   claimMap,
   selectedDate,
   onDayTap,
+  loggedLiftDates,
+  extraRunDates,
 }: {
   dayMap: Map<
     string,
@@ -74,6 +139,10 @@ export default function WeekStrip({
   claimMap: Map<string, ClaimState>;
   selectedDate: string | null;
   onDayTap: (dk: string) => void;
+  /** Dates ("yyyy-MM-dd") with a logged lift session. */
+  loggedLiftDates?: ReadonlySet<string>;
+  /** Dates with a logged run that claimed no planned day. */
+  extraRunDates?: ReadonlySet<string>;
 }) {
   const days = useMemo(() => {
     const today = new Date();
@@ -108,52 +177,51 @@ export default function WeekStrip({
     });
     return resolved.map((r) => {
       const data = dayMap.get(r.dateKey);
-      return {
-        date: parseLocalDate(r.dateKey),
+      const day: StripDay = {
         key: r.dateKey,
-        isToday: r.dateKey === todayKey,
-        hasActivity: !!(data && (data.workouts > 0 || data.meals > 0)),
         sType: r.scheduleType,
-        isSelected: r.dateKey === selectedDate,
         liftCompleted: r.lift.status === "completed",
         liftSkipped: r.lift.status === "skipped",
-        runCompleted: r.run.isCompleted,
+        liftLogged: loggedLiftDates?.has(r.dateKey) ?? false,
+        runDone: r.run.isCompleted || (extraRunDates?.has(r.dateKey) ?? false),
         runSkipped: r.run.status === "skipped",
       };
+      return {
+        ...day,
+        date: parseLocalDate(r.dateKey),
+        isToday: r.dateKey === todayKey,
+        isPast: r.dateKey < todayKey,
+        hasActivity: !!(data && (data.workouts > 0 || data.meals > 0)),
+        isSelected: r.dateKey === selectedDate,
+        state: weekDayState(day, todayKey),
+      };
     });
-  }, [dayMap, profile, programState, claimMap, selectedDate]);
+  }, [
+    dayMap,
+    profile,
+    programState,
+    claimMap,
+    selectedDate,
+    loggedLiftDates,
+    extraRunDates,
+  ]);
   return (
-    <div className="flex items-center justify-between px-1">
+    <div className="flex items-center justify-between">
       {days.map(function (day) {
-        /* Every cell is the same size, deliberately. In a `flex-col
-           items-center` cell, a circle taller than its neighbours pushes
-           its own weekday letter up and its indicator dot down, so sizing
-           today differently breaks all three of the strip's baselines on
-           the one day a user looks at most. Today is a colour and a soft
-           halo, never a geometry — the reason iOS week rows stay ruled
-           while still marking today. The Run and Lift selectors
-           (`ProgrammeWeekSelector`) mark today the same way.
+        /* Every circle is the same size, deliberately: a larger today
+           breaks the row's baselines on the one day a user looks at
+           most. Today is a ring, selection a second ring outside it, and
+           the two compose.
 
            Day numbers are numeric displays → font-mono (Archivo) +
            tabular-nums per the design-system invariant. */
-        let cls =
-          "size-10 rounded-full flex items-center justify-center text-sm font-semibold font-mono tabular-nums transition-all relative";
-        /* Fill says SELECTED, halo says TODAY, and they COMPOSE. An
-           if/else here lets selection mask today: pick today — the
-           likeliest day to pick — and its marker disappears, leaving it
-           indistinguishable from any other selected day. The halo is a
-           4px translucent wash with no offset: an opaque offset ring on
-           top of the 2px border drew today as two concentric rings. */
-        if (day.isSelected) {
-          cls += " bg-primary-strong text-primary-foreground";
-        } else if (day.isToday) {
-          cls += " border-2 border-primary text-lifting-strong";
-        } else {
-          cls += " text-muted-foreground border-2 border-border";
-        }
-        if (day.isToday) {
-          cls += " ring-4 ring-primary/10";
-        }
+        const style =
+          day.state === "both-done"
+            ? {
+                background:
+                  "linear-gradient(135deg, hsl(var(--lifting) / 0.3) 50%, hsl(var(--running) / 0.3) 50%)",
+              }
+            : undefined;
         return (
           <button
             type="button"
@@ -161,10 +229,8 @@ export default function WeekStrip({
             onClick={function () {
               onDayTap(day.key);
             }}
-            /* The strip is a 7-way selector whose selection was conveyed by
-               fill colour alone — nothing in the accessible tree said which
-               day was chosen. `aria-pressed` is the state; there is no
-               textual equivalent to add to the label, and adding one would
+            /* The strip is a 7-way selector. `aria-pressed` is the
+               selection state; adding it to the label as well would
                double-announce against it. */
             aria-pressed={day.isSelected}
             aria-current={day.isToday ? "date" : undefined}
@@ -175,56 +241,40 @@ export default function WeekStrip({
               // weekStripCaptureSelector.test.tsx pins the two together.
               format(day.date, "EEEE d MMMM") +
               ", " +
-              trainingLabel(day) +
+              trainingLabel(day, day.isPast) +
               // Kept, but named for what it is: `dayMap` counts meals, and
               // Food.tsx is the only writer of the collection it comes from.
               (day.hasActivity ? " (food logged)" : "") +
               (day.isToday ? " (today)" : "")
             }
-            className="flex flex-col items-center gap-1 active:scale-[0.95] min-w-[44px] min-h-[44px] justify-center"
+            className="flex flex-col items-center gap-1.5 active:scale-[0.95] transition-transform min-w-[44px] min-h-[44px] justify-center"
           >
-            {/* One letter, not two. The row is a fixed frame — these seven
-                letters never move, because the strip is always the calendar
-                week — so position disambiguates the two S's and the two T's
-                exactly as it does on the iOS week row. */}
-            <span className="text-xs text-muted-foreground">
+            {/* One letter, not two. The row is a fixed frame — the strip
+                is always the calendar week — so position disambiguates the
+                two S's and the two T's, as on the iOS week row. */}
+            <span
+              className={cn(
+                "text-xs",
+                day.isToday
+                  ? "font-bold text-foreground"
+                  : "font-medium text-muted-foreground"
+              )}
+            >
               {format(day.date, "EEEEE")}
             </span>
-            <div className={cls}>{day.date.getDate()}</div>
-            <div className="flex h-3 items-center gap-1" aria-hidden="true">
-              {(day.sType === "both" || day.sType === "lift") &&
-                (day.liftCompleted ? (
-                  <Check
-                    className="size-3 text-lifting-strong"
-                    strokeWidth={3}
-                  />
-                ) : day.liftSkipped ? (
-                  <Minus
-                    className="size-3 text-lifting-strong"
-                    strokeWidth={3}
-                  />
-                ) : (
-                  <div className="size-[7px] rounded-full bg-lifting" />
-                ))}
-              {/* Shape communicates status as well as sport colour. */}
-              {(day.sType === "both" || day.sType === "run") &&
-                day.runCompleted && (
-                  <Check
-                    className="size-3 text-running-strong"
-                    strokeWidth={3}
-                  />
-                )}
-              {(day.sType === "both" || day.sType === "run") &&
-                !day.runCompleted &&
-                (day.runSkipped ? (
-                  <Minus
-                    className="size-3 text-running-strong"
-                    strokeWidth={3}
-                  />
-                ) : (
-                  <div className="size-[7px] rotate-45 bg-running" />
-                ))}
-              {day.sType === "rest" && <div className="size-[7px]" />}
+            <div
+              data-state={day.state}
+              data-today={day.isToday || undefined}
+              className={cn(
+                "size-10 rounded-full flex items-center justify-center text-sm font-semibold font-mono tabular-nums transition-colors",
+                STATE_CLASSES[day.state],
+                day.isToday && "border-2 border-primary border-solid",
+                day.isSelected &&
+                  "ring-2 ring-foreground ring-offset-2 ring-offset-background"
+              )}
+              style={style}
+            >
+              {day.date.getDate()}
             </div>
           </button>
         );

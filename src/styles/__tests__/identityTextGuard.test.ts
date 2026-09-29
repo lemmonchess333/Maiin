@@ -83,8 +83,38 @@ const EXPECTED_BARE_USES: Record<(typeof IDENTITY)[number], number> = {
   // 2026-08-11: 53 → 54. The Feather icon on AdjustWeekSheet's "this week
   // is already eased" row — an icon, which the 4.5:1 small-text bar does
   // not apply to; its label beside it is `text-foreground`.
-  running: 47, // Calendar status icons now use the strong colour step.
-  lifting: 19, // Redesign consolidates onboarding option icons.
+  // 2026-09-27: 47 → 45. DS3's Train Run tab: the free-run hero became
+  // the shared session card and the race-goal nudge lost its trophy
+  // tile, taking two tinted-tile icons with them.
+  // 2026-09-27: 45 → 44. The run finish screen's distance tile went: the
+  // distance is its headline now, in the foreground colour.
+  // 2026-09-27: 44 → 45. Analytics' Go deeper tiles: the Running tile's
+  // footprints ICON (3:1 non-text); its words are foreground.
+  // 2026-09-27: 45 → 44. The Analytics summary's three rings went
+  // (PeriodOverview), and the Runs ring's footprints icon with them.
+  // 2026-09-27: 44 → 43. DS3's weekly recap: its week-in-numbers card
+  // marks each number with a coloured rule, not an icon, so the old
+  // page's footprints icon went.
+  running: 43, // Calendar status icons now use the strong colour step.
+  // 2026-09-27: 19 → 18. DS3's Home lift card lost its dumbbell tile:
+  // the exercise drawing is the card's picture now.
+  // 2026-09-27: 18 → 17. The same on the workout screen: the dumbbell
+  // beside the exercise name gave way to its drawing.
+  // 2026-09-27: 17 → 16. The finish screen's volume tile lost its
+  // dumbbell: DS3 sets the three numbers plain, with no icons.
+  // 2026-09-27: 16 → 17. Analytics' Go deeper tiles: the Lifting tile's
+  // dumbbell ICON; its words are foreground.
+  // 2026-09-27: 17 → 16. The Sessions ring's dumbbell went with the
+  // summary's rings.
+  // 2026-09-27: 16 → 15. The weekly recap's dumbbell icon, for the same
+  // reason as its footprints: a coloured rule marks the number now.
+  // 2026-09-27: 15 → 16. The brand mark before Home's date (BrandMark):
+  // a solid hexagon, an ICON (3:1 non-text), in the literal brand purple.
+  lifting: 16, // Redesign consolidates onboarding option icons.
+  // 2026-09-27: 4 → 5. Analytics' Go deeper tiles: the Food tile's apple
+  // ICON; its words are foreground.
+  // 2026-09-27: 5 → 4. The weekly recap's food icon, retired with its
+  // other row icons for the coloured rule.
   nutrition: 4,
   destructive: 0,
   success: 0,
@@ -99,7 +129,10 @@ const EXPECTED_BARE_USES: Record<(typeof IDENTITY)[number], number> = {
   // to 4.82:1. The icon was legitimate under this ratchet (3:1 non-text),
   // so this is a free gain rather than a fix — locked in per the rule
   // that a count may fall freely.
-  achievement: 10, // Companion finish removes the decorative trophy.
+  // 2026-09-27: 10 → 11. The finish screen's New bests rows each end in
+  // a gold Trophy ICON (3:1 non-text); the figure beside it, which is
+  // text, takes `text-achievement-strong`.
+  achievement: 11, // Companion finish removes the decorative trophy.
 };
 
 /**
@@ -123,16 +156,22 @@ const EXPECTED_INLINE_USES = {
   // two thirds of a pixel — so they took the strong steps with the
   // brand-coloured Double beside them.
   "THEME.running": 17,
-  "THEME.lifting": 6,
+  // 2026-09-27: 6 → 5. The Sessions ring's stroke, retired with the
+  // summary's rings (PeriodOverview).
+  "THEME.lifting": 5,
   // The brand, inline. Icon tints (notification glyphs, the ProModal
   // feature tiles, the Home tiles' arrows), legend and ring fills, and
   // TrajectoryCard's 3xl score. The text uses — Home's rest-day eyebrow,
-  // "Connect Health", the Coach badge, "Share your take" — moved to
-  // `text-lifting-strong` / `hsl(var(--lifting-strong))`.
+  // "Connect Health" — moved to `text-lifting-strong` /
+  // `hsl(var(--lifting-strong))`.
   // 41 → 40. The Performance Index chart's five-item band legend went
   // when the bands moved into the plot; its "Moderate" swatch was the
   // one brand fill among them.
-  "THEME.brand": 40,
+  // 2026-09-23: 40 → 39. The weekly coach posts were retired, and their
+  // sparkle tile with them.
+  // 2026-09-27: 39 → 38. DS3's rest-day card tints its leaf with the
+  // `text-lifting-strong` class instead of the inline brand colour.
+  "THEME.brand": 38,
   // 2026-09-18: 21 → 19. Home's "Log food" action and the nudge note
   // above it were the two smallest-text uses and measured 2.77:1; both
   // moved to `text-nutrition-strong`. The rest are icons and fills.
@@ -209,7 +248,14 @@ function bareUses(token: string): string[] {
  * `text-primary-strong` is NOT the redirect. It is the fill under white
  * text, and it measures 3.26:1 as text on the dark card.
  */
-const BRAND = { token: "primary", step: "lifting-strong", bare: 52 } as const;
+// 2026-09-27: 52 → 51. The Weekly Review entry was a card with a
+// calendar icon; DS3 made it a text link on Home's "This week" heading.
+// 2026-09-27: 51 → 49. Train's training-block rows lost their tinted icon
+// tiles (a flag, a calendar), DS3's plain rows.
+// 2026-09-27: 49 → 45. DS3's weekly recap as cards: the old page's
+// weight scale, week-ahead calendar and why-you-train heart tiles went,
+// and the retune sparkle takes the lifting text step.
+const BRAND = { token: "primary", step: "lifting-strong", bare: 45 } as const;
 
 describe("identity colour usage is pinned", () => {
   it("text-primary has the pinned number of bare uses", () => {

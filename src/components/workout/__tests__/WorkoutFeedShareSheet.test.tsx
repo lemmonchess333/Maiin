@@ -3,12 +3,9 @@
  *
  * Two properties matter and neither is visual:
  *
- * 1. It must NOT go through `compose()`. That is the post-save composer's
- *    path and is governed by the stored "always" default — routing this
- *    through it would be short-circuited for a user whose default is
- *    "never", which is exactly the user who needs an explicit per-workout
- *    share, and remembering would rewrite their default as a side effect of
- *    posting one session.
+ * 1. It must NOT go through `compose()`. That is the finish screen's sheet,
+ *    whose "Make this my default" box rewrites the saved default for every
+ *    future session. Posting one saved workout must never offer that.
  *
  * 2. It must write the `sharedActivityId` marker. `postActivity` addDocs a
  *    fresh activity on every call, so without the marker the same workout

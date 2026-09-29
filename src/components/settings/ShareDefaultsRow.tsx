@@ -1,9 +1,10 @@
 /**
  * Share defaults — who sees a session, decided once.
  *
- * `compose()` short-circuits the post-session sheet as soon as a default
- * exists, so this preference is the thing that actually governs whether the
- * app asks. Until 2026-08-04 the sheet was its ONLY writer and this row its
+ * The finish screen reads this preference (SessionShareRow): a saved
+ * audience posts the session automatically, "Never" posts nothing, and no
+ * preference ("Ask") shows the one question that sets it. Until
+ * 2026-08-04 the share sheet was its ONLY writer and this row its
  * only reader, which made the setting reachable in one direction: you could
  * arrive at a default by finishing a session and ticking a box, and Settings
  * could only take it back. A user who wanted "never share my workouts" had
@@ -52,7 +53,7 @@ const OPTIONS: { value: Choice; label: string }[] = [
  *  (public what, when?) — the segment names the option, this names the
  *  behaviour. */
 const DESCRIBE: Record<Choice, string> = {
-  ask: "You'll be asked after each one",
+  ask: "You'll be asked when you next finish one",
   followers: "Shared with your followers automatically",
   public: "Shared publicly automatically",
   never: "Never shared",
@@ -61,7 +62,7 @@ const DESCRIBE: Record<Choice, string> = {
 function confirmCopy(noun: string, choice: Choice): string {
   switch (choice) {
     case "ask":
-      return `You'll be asked after each one`;
+      return `You'll be asked when you next finish one`;
     case "followers":
       return `${noun} now share with your followers`;
     case "public":
@@ -84,7 +85,7 @@ export default function ShareDefaultsRow({ uid }: { uid: string | null }) {
   const change = (type: ShareType, noun: string, next: Choice) => {
     haptic("light");
     // "ask" is the absence of a default, so it CLEARS rather than storing a
-    // fourth value — `compose()` only short-circuits on a stored preference.
+    // fourth value — the finish screen asks whenever none is stored.
     if (next === "ask") clearShareDefault(uid, type);
     else setShareDefault(uid, type, next);
     setChoices((prev) => ({ ...prev, [type]: next }));

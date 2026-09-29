@@ -656,8 +656,8 @@ export default function FeedView({
                       }
                       sub={
                         joinedSpaceIds.length === 0
-                          ? "Spaces you join post here — including the weekly Coach prompt"
-                          : "The Coach posts weekly — check back Monday"
+                          ? "Posts from the spaces you join appear here."
+                          : "When members post in your spaces, their posts appear here."
                       }
                       accent={THEME.brand}
                       action={{ label: "Browse Spaces", onClick: openTogether }}

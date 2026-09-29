@@ -15,8 +15,11 @@
  * the server-written doc through `usePerformanceWeeks`, and production
  * imports exactly two symbols from the client engine — `weekKeyMinusN` and
  * `computeLoadBand`, neither of which scores anything. The scoring pipeline
- * has one non-test caller, `scripts/seed-rich-user.ts`, which manufactures
- * perf docs so the capture rig's Home hero has a number in it.
+ * has two non-test callers, both seeds: `scripts/seed-rich-user.ts`, which
+ * manufactures perf docs so the capture rig's Home hero has a number in
+ * it, and `scripts/seed-season-athlete.ts`, which scores a document a day
+ * from its own sessions so Analytics is filmed against production-shaped
+ * data.
  *
  * That makes the client copy an oracle plus a fixture generator, and it is
  * worth saying plainly, because "which copy do users see?" is the question

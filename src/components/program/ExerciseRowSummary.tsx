@@ -1,0 +1,103 @@
+import { Info } from "lucide-react";
+import { getExerciseById } from "@/lib/exercises";
+import { formatRepTarget } from "@/features/program/templateConversion";
+import type { ProgramExercise } from "@/features/program/programTypes";
+import ExerciseThumb from "./ExerciseThumb";
+
+/**
+ * One exercise on Train's day list: its picture, its name, the
+ * prescription, and the last time it was done (DS3).
+ *
+ * Both of the list's renderings, the tappable rows and the drag-to-reorder
+ * rows, draw through this one component. They used to carry a copy each,
+ * and the copies drifted: one said "BW x 12" for a bodyweight lift's last
+ * set and the other printed the engine's stored load as if it had been
+ * lifted ("Last: 35 kg x 12" under a chin-up).
+ *
+ * A bodyweight lift is asked about first, before any weight, in the
+ * prescription and in the last set alike: its stored load is not a load.
+ */
+export default function ExerciseRowSummary({
+  exercise,
+  lastPerf,
+  showNotes = false,
+  thumbSize = "md",
+}: {
+  exercise: Pick<
+    ProgramExercise,
+    | "exerciseId"
+    | "name"
+    | "sets"
+    | "reps"
+    | "repRangeMax"
+    | "repUnit"
+    | "weight"
+    | "notes"
+  >;
+  /** The best working set from the last session with this exercise. */
+  lastPerf?: { weight: number; reps: number };
+  /** The day's note on the exercise, under the rest. The reorder rows
+   *  leave it out to stay one height while they are dragged. */
+  showNotes?: boolean;
+  thumbSize?: "sm" | "md";
+}) {
+  const isBW = getExerciseById(exercise.exerciseId)?.equipment === "Bodyweight";
+  return (
+    <div className="flex min-w-0 flex-1 items-center gap-3">
+      <ExerciseThumb exerciseId={exercise.exerciseId} size={thumbSize} />
+      <div className="min-w-0 flex-1">
+        <p className="text-base font-semibold text-foreground truncate">
+          {exercise.name}
+        </p>
+        <p className="text-sm text-muted-foreground">
+          <span className="font-mono tabular-nums">{exercise.sets}</span> sets ×{" "}
+          <span className="font-mono tabular-nums">
+            {formatRepTarget(exercise)}
+          </span>{" "}
+          {exercise.repUnit === "seconds" ? "" : "reps"}
+          {!isBW && exercise.weight > 0 ? (
+            <>
+              {" · "}
+              <span className="font-mono tabular-nums">{exercise.weight}</span>
+              {" kg"}
+            </>
+          ) : null}
+        </p>
+        {lastPerf && (
+          <p className="text-xs mt-0.5 text-muted-foreground">
+            Last:{" "}
+            {exercise.repUnit === "seconds" ? (
+              <>
+                <span className="font-mono tabular-nums">{lastPerf.reps}</span>s
+              </>
+            ) : isBW ? (
+              <>
+                BW ×{" "}
+                <span className="font-mono tabular-nums">{lastPerf.reps}</span>
+              </>
+            ) : lastPerf.weight > 0 ? (
+              <>
+                <span className="font-mono tabular-nums">
+                  {lastPerf.weight}
+                </span>{" "}
+                kg ×{" "}
+                <span className="font-mono tabular-nums">{lastPerf.reps}</span>
+              </>
+            ) : (
+              <>
+                — ×{" "}
+                <span className="font-mono tabular-nums">{lastPerf.reps}</span>
+              </>
+            )}
+          </p>
+        )}
+        {showNotes && exercise.notes && (
+          <p className="text-xs mt-1 text-muted-foreground flex items-start gap-1">
+            <Info className="size-3 shrink-0 mt-0.5" aria-hidden="true" />
+            <span>{exercise.notes}</span>
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}

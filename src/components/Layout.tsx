@@ -1,15 +1,14 @@
 import { Outlet, useLocation } from "react-router-dom";
 import BottomNavigation from "@/components/BottomNavigation";
+import { WifiOff, Check, CloudUpload } from "lucide-react";
 import {
-  Home,
-  BarChart3,
-  Dumbbell,
-  Users,
-  WifiOff,
-  Check,
-  Apple,
-  CloudUpload,
-} from "lucide-react";
+  AnalyticsTabIcon,
+  FoodTabIcon,
+  HomeTabIcon,
+  SocialTabIcon,
+  TrainTabIcon,
+  type TabIcon,
+} from "@/components/icons/TabIcons";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { useUnreadCount } from "@/hooks/useUnreadCount";
 import {
@@ -69,12 +68,12 @@ function useQueuedChanges(uid: string | null) {
   return { count, failedWorkouts, failedRuns };
 }
 
-const tabs: { to: string; icon: typeof Home; label: string }[] = [
-  { to: "/", icon: Home, label: "Home" },
-  { to: "/program", icon: Dumbbell, label: "Train" },
-  { to: "/food", icon: Apple, label: "Food" },
-  { to: "/social", icon: Users, label: "Social" },
-  { to: "/history", icon: BarChart3, label: "Analytics" },
+const tabs: { to: string; icon: TabIcon; label: string }[] = [
+  { to: "/", icon: HomeTabIcon, label: "Home" },
+  { to: "/program", icon: TrainTabIcon, label: "Train" },
+  { to: "/food", icon: FoodTabIcon, label: "Food" },
+  { to: "/social", icon: SocialTabIcon, label: "Social" },
+  { to: "/history", icon: AnalyticsTabIcon, label: "Analytics" },
 ];
 
 export default function Layout() {
@@ -177,9 +176,9 @@ export default function Layout() {
     >
       {/* Top safe-area occluder — hides scrolling content under the iOS status bar.
           Uses the shared `.ds-safe-top-occluder` class (translucent
-          background + backdrop-blur) so the ambient background gradient
-          flows continuously through the safe area rather than getting
-          cut by a 95%-opaque flat strip. Mirrors the role of the bottom
+          background + backdrop-blur) so the page flows continuously
+          through the safe area rather than getting cut by a 95%-opaque
+          flat strip. Mirrors the role of the bottom
           nav at the bottom of the screen. */}
       <div
         aria-hidden="true"

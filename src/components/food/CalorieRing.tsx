@@ -32,20 +32,22 @@ const STROKE = 10;
 const CENTER = SIZE / 2;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 
-// Brand colours — ring uses the Tropos purple palette, matching the app's
-// primary colour. Both modes (left / eaten) share the same visual identity;
-// the toggle changes the displayed value, not the ring's colour.
+// Food colours — the ring is the food orange (owner call, 2026-09-28), as
+// Home's food card and the week strip above it are. It was brand purple
+// until then, the one purple thing on a page that is otherwise orange.
+// Both modes (left / eaten) share the same visual identity; the toggle
+// changes the displayed value, not the ring's colour.
 //
 // Over-target does NOT escalate to amber or red. Previously the number and
 // overshoot arc cascaded through warning-orange into deep red, which
 // (a) treated going over as a failure state, and (b) clashed with the
-// macro ring colours (which stayed pink/blue/orange). Now the ring stays
-// purple, the number stays purple, and "over" is communicated by the
-// tertiary "kcal over" label + the overshoot arc in a darker purple shade.
-const COLOR_RING = THEME.brand; // brand purple
+// macro ring colours. Now the ring and the number keep their colour, and
+// "over" is communicated by the tertiary "kcal over" label + the
+// overshoot arc in a deeper orange.
+const COLOR_RING = THEME.semantic.nutrition; // food orange
 const COLOR_RING_LIGHT = THEME.calorieRing.light; // lighter arc gradient stop
 const COLOR_RING_DEEP = THEME.calorieRing.deep; // deeper overshoot arc stop
-const COLOR_TRACK = THEME.iconBg; // brand tint (rgba(123,114,233,0.10))
+const COLOR_TRACK = THEME.calorieRing.track; // orange tint (12%)
 
 const RING_EASE = [0.32, 0.72, 0, 1] as [number, number, number, number];
 
@@ -86,25 +88,23 @@ export default function CalorieRing({
     isLeftMode,
   });
 
-  /* Colour stays purple in both modes — the toggle changes the displayed
-     value, not the ring's visual identity. The centre label text is the
-     only mode indicator ("KCAL LEFT" vs "KCAL EATEN").
+  /* Colour stays the same in both modes — the toggle changes the
+     displayed value, not the ring's visual identity. The centre label
+     text is the only mode indicator ("kcal left" vs "kcal eaten").
 
      Theme split (the chip's #1728 pattern, applied to the number): DARK
-     keeps the brand purple on the dark card; LIGHT uses the deeper ring
-     step. The brand purple measures ~3:1 against the light-mode photo
-     wash — the exact large-text floor, with lunch marginally under —
-     and that floor is what forced the wash to stay heavy. The deep step
-     (~5:1 on white) buys the headroom that lets the wash lighten so the
-     photo reads as food instead of fog. On the plain white card it is
-     simply higher-contrast, same family. */
+     keeps the food orange on the dark card (6.5:1); LIGHT uses the
+     deeper ring step. The orange measures 2.8:1 on white, under the
+     large-text floor, where the deep step clears 5.7:1 — same family,
+     readable. (The purple ring had the same split, for the same reason
+     against the light-mode photo wash.) */
   const numberColor = hasTarget
     ? isDark
       ? COLOR_RING
       : COLOR_RING_DEEP
     : THEME.neutral[300];
 
-  /* Ring track. The 10% brand tint reads as a recessed groove on a flat
+  /* Ring track. The 12% orange tint reads as a recessed groove on a flat
      WHITE card, but it's far too sheer over the dark-mode hero photo —
      and at 0 progress the track is the ONLY ring geometry drawn (the
      progress arc has zero length), so a track you can't see means the
@@ -132,13 +132,13 @@ export default function CalorieRing({
      consistent-numeric-treatment rule by special-casing one value. */
 
   /* Mode-chip palette, theme-aware (mirrors the useMacroPalette split).
-     The deep purple below is tuned for the lavender tint over a WHITE
-     card; on the dark card it lands at ~2.8:1 — under AA for 11px text —
-     and it disappears almost entirely over the dark-mode hero photo,
-     where the 10% tint is too sheer to give the text a surface of its
-     own. In dark mode the chip therefore uses the LIGHT ring step
-     (~7:1 on the dark card) over a slightly stronger purple backing so
-     it holds up against photography as well as the flat card. */
+     The deep orange below is tuned for the pale orange backing over a
+     WHITE card (5.2:1); on the dark card it lands at ~3.1:1 — under AA
+     for small text — and over the dark-mode hero photo the 10% tint is
+     too sheer to give the text a surface of its own. In dark mode the
+     chip therefore uses the LIGHT ring step (~6.9:1) over a slightly
+     stronger orange backing so it holds up against photography as well
+     as the flat card. */
   const chipTextColor = isDark ? COLOR_RING_LIGHT : COLOR_RING_DEEP;
   /* Light backing is OPAQUE (the tint flattened on white): translucent
      10% tint went sheer over the photo wash and the chip fell under AA
@@ -178,8 +178,8 @@ export default function CalorieRing({
       }
       className="relative size-40 aspect-square mx-auto block focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-full"
       style={{
-        // Celebration glow — purple matching the ring itself.
-        filter: glowing ? `drop-shadow(0 0 16px ${THEME.brand}66)` : undefined,
+        // Celebration glow — the ring's own orange.
+        filter: glowing ? `drop-shadow(0 0 16px ${COLOR_RING}66)` : undefined,
         transition: "filter 800ms ease-in-out",
       }}
     >
@@ -221,7 +221,7 @@ export default function CalorieRing({
             <stop offset="0%" stopColor={COLOR_RING_LIGHT} />
             <stop offset="100%" stopColor={COLOR_RING} />
           </linearGradient>
-          {/* Overshoot gradient — a deeper shade of the same brand purple
+          {/* Overshoot gradient — a deeper shade of the same orange
               so going over target still reads visually without introducing
               a red "danger" state. The arc layers on top of the main ring
               and only extends up to 1× target (capped), so it looks like
@@ -363,21 +363,21 @@ export default function CalorieRing({
                 />
               </p>
               {/* Mode indicator promoted from a faint caption into an
-                  obvious toggle pill: a purple-tinted rounded chip carrying
+                  obvious toggle pill: an orange-tinted rounded chip carrying
                   the active mode word + the swap glyph. The tinted background
                   + the ⇄ icon read as "tap to switch" at a glance, so the
                   active framing (LEFT vs EATEN) is legible without parsing
                   the 10px text. Reuses the ring's own track tint
                   (`trackColor`) for the chip. In LIGHT mode the text is the
-                  deeper brand purple (`COLOR_RING_DEEP`, already the
-                  overshoot-arc shade) so it clears WCAG AA (~5.3:1) on the
-                  lavender tint at 10px; DARK mode flips to the lighter ring
+                  deeper orange (`COLOR_RING_DEEP`, already the
+                  overshoot-arc shade) so it clears WCAG AA (~5.2:1) on the
+                  pale orange backing; DARK mode flips to the lighter ring
                   step over a stronger backing (see `chipTextColor` above) —
-                  the deep purple failed AA on the dark card and vanished
-                  over the hero photo. Either way it stays one purple
+                  the deep step fails AA on the dark card and vanishes
+                  over the hero photo. Either way it stays one orange
                   identity. */}
               <span
-                className="mt-1.5 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-caption font-semibold uppercase tracking-wider"
+                className="mt-1.5 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-caption font-semibold"
                 style={{
                   color: chipTextColor,
                   backgroundColor: chipBackground,

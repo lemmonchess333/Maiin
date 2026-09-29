@@ -1,4 +1,4 @@
-import { doc } from "firebase/firestore";
+import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { updateDocGuarded, deleteDocGuarded } from "@/lib/firestoreWrite";
 import {
@@ -125,27 +125,66 @@ export async function recordSharedActivity(
   activityId: string
 ): Promise<void> {
   try {
-    if (
-      source.kind === "run" &&
-      pendingDocumentWrites(uid, `users/${uid}/runs`).some(
-        (entry) => entry.id === source.id
-      )
-    ) {
-      queueDurableWrite(
-        uid,
-        `users/${uid}/runs`,
-        source.id,
-        { sharedActivityId: activityId },
-        true
-      );
-      if (navigator.onLine) void flushQueue(db, uid).catch(() => {});
-      return;
-    }
-    await updateDocGuarded(
-      doc(db, "users", uid, COLLECTION[source.kind], source.id),
-      { sharedActivityId: activityId }
-    );
+    await writeSharedMarker(uid, source, activityId);
   } catch (err) {
     logger.warn("[sessionDelete] shared marker write failed:", err);
   }
+}
+
+/**
+ * Clears the link when the post itself is taken back (the finish screen's
+ * Undo), so `/workout/:id` offers "Share to feed" again rather than
+ * claiming a post that no longer exists. Null, not a deleted field: a run
+ * still waiting in the durable queue carries this as queued JSON, and a
+ * delete sentinel cannot be serialised into it. Every reader treats null
+ * as "not shared".
+ *
+ * Unlike `recordSharedActivity` this throws: an Undo that left the link
+ * behind has not finished, and the caller says so.
+ */
+export async function clearSharedActivity(
+  uid: string,
+  source: ShareSource
+): Promise<void> {
+  await writeSharedMarker(uid, source, null);
+}
+
+async function writeSharedMarker(
+  uid: string,
+  source: ShareSource,
+  activityId: string | null
+): Promise<void> {
+  if (
+    source.kind === "run" &&
+    pendingDocumentWrites(uid, `users/${uid}/runs`).some(
+      (entry) => entry.id === source.id
+    )
+  ) {
+    queueDurableWrite(
+      uid,
+      `users/${uid}/runs`,
+      source.id,
+      { sharedActivityId: activityId },
+      true
+    );
+    if (navigator.onLine) void flushQueue(db, uid).catch(() => {});
+    return;
+  }
+  await updateDocGuarded(
+    doc(db, "users", uid, COLLECTION[source.kind], source.id),
+    { sharedActivityId: activityId }
+  );
+}
+
+/** The post a session links to, read from the session itself: an Undo
+ *  whose queued post drained before the tap only knows the session. */
+export async function readSharedActivityId(
+  uid: string,
+  source: ShareSource
+): Promise<string | null> {
+  const snap = await getDoc(
+    doc(db, "users", uid, COLLECTION[source.kind], source.id)
+  );
+  const id = snap.exists() ? snap.data().sharedActivityId : null;
+  return typeof id === "string" && id.length > 0 ? id : null;
 }
