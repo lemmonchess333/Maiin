@@ -623,7 +623,8 @@ function ProgramInner() {
       // Honour a URL-restored day on mount; otherwise land on today.
       if (isFirstRun && urlDay !== null) return;
       const target = todayIndex >= 0 ? todayIndex : 0;
-      selectDay(target); // eslint-disable-line react-hooks/set-state-in-effect -- intentional: reset selection on week navigation
+      // Reset the selection on week navigation.
+      selectDay(target);
     }
   }, [programState, viewingHistoryIndex, todayIndex, urlDay, selectDay]);
 

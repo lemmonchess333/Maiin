@@ -1514,17 +1514,10 @@ export default function Food() {
     }
 
     return current;
-    /* timeRelevantHour added explicitly so eslint-react-hooks
-       can verify the dep wiring — even though it derives from
-       selectedDate, an explicit dep makes the freeze contract
-       readable to future maintainers (and to the linter). */
-  }, [
-    meals,
-    getTimeRelevant,
-    selectedDate,
-    timeRelevantHour,
-    pendingRemovalIds,
-  ]);
+    /* The day reaches this list through `timeRelevantHour`, which is
+       keyed on selectedDate: the body never reads the date itself, so
+       listing it too only recomputed an identical list. */
+  }, [meals, getTimeRelevant, timeRelevantHour, pendingRemovalIds]);
 
   const cachedQuickOrder = quickAddOrderCache.get(selectedDate);
   if (!cachedQuickOrder) {

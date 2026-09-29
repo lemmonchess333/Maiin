@@ -201,7 +201,6 @@ export function useSurface(config: SurfaceConfig): {
     methods.register(latest.current);
     return () => methods.unregister(id);
     // Re-register on the values that change the decision; `methods` is stable.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [methods, id, priority, eligible, suppressedBy, dropWhenMissed, onDrop]);
 
   if (!methods) {

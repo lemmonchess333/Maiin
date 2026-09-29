@@ -366,7 +366,6 @@ export default function Home() {
   useEffect(
     function () {
       if (streak > prevStreakRef.current && prevStreakRef.current > 0) {
-        // eslint-disable-next-line react-hooks/set-state-in-effect -- derived from streak change event
         setStreakBounce(true);
         const t = setTimeout(function () {
           setStreakBounce(false);
