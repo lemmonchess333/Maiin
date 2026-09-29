@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useAuth } from "@/lib/auth";
 import { readString, scopedKey, writeString } from "@/lib/localStore";
 import { auth } from "@/lib/firebase";
@@ -58,6 +58,15 @@ interface DismissalState {
 const dismissKey = (uid: string) =>
   scopedKey("tropos.dismiss.paceInsight", uid);
 
+/** The stored dismissed VDOT for `uid`, or null when none (or unreadable). */
+function readStoredDismissal(uid: string | null): number | null {
+  if (!uid) return null;
+  const stored = Number(readString(dismissKey(uid)));
+  return Number.isFinite(stored) && stored > 0 ? stored : null;
+}
+
+const NINETY_DAYS_MS = 90 * 24 * 60 * 60 * 1000;
+
 export function usePaceInsightFromRuns(
   runs: PaceInsightRun[],
   opts: { enabled?: boolean; loading?: boolean } = {}
@@ -65,42 +74,36 @@ export function usePaceInsightFromRuns(
   const { enabled = true, loading = false } = opts;
   const { user, profile, updateProfile } = useAuth();
   const { isPro } = useSubscription();
-  const [dismissal, setDismissal] = useState<DismissalState>({
+  const uid = user?.uid ?? null;
+  // The signed-in account's stored dismissal, re-read when the account
+  // changes — never another account's.
+  const storedDismissal = useMemo(() => readStoredDismissal(uid), [uid]);
+  // A dismissal made in this session. It stands for its own account only,
+  // and still suppresses the suggestion when storage refused the write.
+  const [sessionDismissal, setSessionDismissal] = useState<DismissalState>({
     uid: null,
     vdot: null,
   });
+  const dismissedVdot =
+    uid && sessionDismissal.uid === uid
+      ? sessionDismissal.vdot
+      : storedDismissal;
+  // The 90-day evidence window is measured from when this surface mounted.
+  // Both callers are short-lived (the post-run summary, a settings page),
+  // and `usePaceInsight`'s own runs are already clipped to a 90-date window
+  // that rolls at midnight, so a frozen instant can only widen RunSummary's
+  // window by however long that page has been open.
+  const [mountedAtMs] = useState(Date.now);
 
-  useEffect(() => {
-    const uid = user?.uid ?? null;
-    if (!uid) {
-      setDismissal({ uid: null, vdot: null });
-      return;
-    }
-
-    let vdot: number | null = null;
-    // In-memory dismissal remains available when storage is unavailable.
-    const stored = Number(readString(dismissKey(uid)));
-    if (Number.isFinite(stored) && stored > 0) vdot = stored;
-    setDismissal({ uid, vdot });
-  }, [user?.uid]);
-
-  const dismissalReady = Boolean(user && dismissal.uid === user.uid);
   const profileIsCurrent = Boolean(user && profile?.uid === user.uid);
   const runFitness = profile?.runFitness ?? null;
 
   const insight = useMemo<PaceInsight | null>(() => {
-    if (
-      !enabled ||
-      !isPro ||
-      loading ||
-      !dismissalReady ||
-      !profileIsCurrent ||
-      !runFitness
-    ) {
+    if (!enabled || !isPro || loading || !profileIsCurrent || !runFitness) {
       return null;
     }
 
-    const cutoffMs = Date.now() - 90 * 24 * 60 * 60 * 1000;
+    const cutoffMs = mountedAtMs - NINETY_DAYS_MS;
     const eligible = runs
       .filter(
         (run) =>
@@ -118,19 +121,19 @@ export function usePaceInsightFromRuns(
 
     const next = resolvePaceInsight(runFitness, eligible);
     if (!next) return null;
-    return dismissal.vdot !== null &&
-      Math.round(next.suggestedVdot) === Math.round(dismissal.vdot)
+    return dismissedVdot !== null &&
+      Math.round(next.suggestedVdot) === Math.round(dismissedVdot)
       ? null
       : next;
   }, [
     enabled,
     isPro,
     loading,
-    dismissalReady,
     profileIsCurrent,
-    dismissal.vdot,
+    dismissedVdot,
     runFitness,
     runs,
+    mountedAtMs,
   ]);
 
   const accept = useCallback(async (): Promise<PaceInsightAcceptResult> => {
@@ -172,7 +175,7 @@ export function usePaceInsightFromRuns(
 
   const dismiss = useCallback(() => {
     if (!insight || !user) return;
-    setDismissal({ uid: user.uid, vdot: insight.suggestedVdot });
+    setSessionDismissal({ uid: user.uid, vdot: insight.suggestedVdot });
     // In-memory state still suppresses the current suggestion.
     writeString(dismissKey(user.uid), String(insight.suggestedVdot));
   }, [insight, user]);

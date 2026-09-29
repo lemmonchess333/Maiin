@@ -1,4 +1,10 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import {
+  useState,
+  useEffect,
+  useLayoutEffect,
+  useCallback,
+  useRef,
+} from "react";
 import { getDiscoverFeed, batchGetKudos } from "../lib/socialApi";
 import { captureError } from "@/lib/errorReporting";
 import { useUid } from "../lib/auth";
@@ -16,17 +22,22 @@ export function useDiscoverFeed(enabled = true, blockedUsers?: Set<string>) {
   /* SOCIAL-PRIVACY-01 — uid + generation ownership (see useSocialFeed).
      The discover feed is public, but its kudos-status enrichment is
      per-user and a switch mid-fetch must not commit account A's liked
-     state (or items) under account B. `genRef` bumps on uid change;
-     each load commits only if it still owns the current generation. */
+     state (or items) under account B. The list resets in the render that
+     sees the new uid; `genRef` bumps (and the cursor clears) in the
+     layout effect of that same commit, before any response from A can
+     land; each load commits only if it still owns the current
+     generation. */
   const genRef = useRef(0);
   const [ownerUid, setOwnerUid] = useState<string | null>(uid);
   if (ownerUid !== uid) {
     setOwnerUid(uid);
-    genRef.current++;
-    lastDocRef.current = undefined;
     setItems([]);
     setHasMore(true);
   }
+  useLayoutEffect(() => {
+    genRef.current++;
+    lastDocRef.current = undefined;
+  }, [uid]);
 
   const loadFeed = useCallback(
     async (refresh = false) => {

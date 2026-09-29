@@ -8,6 +8,12 @@
  * the repeat offer via the pure `resolveRepeatType` rule: the two most
  * recent volume-eligible runs must share the same DIRECT-launch type.
  * Failure is silent — the picker just renders without the repeat row.
+ *
+ * The answer is stored with the uid it was read for, and only returned
+ * while that uid is signed in. Signed out, or switched to another account
+ * whose read has not landed (or failed), the hook offers nothing — never
+ * the previous account's habit, not even for the render before an effect
+ * could have cleared it.
  */
 import { useEffect, useState } from "react";
 import { collection, getDocs, limit, orderBy, query } from "firebase/firestore";
@@ -16,15 +22,20 @@ import { useUid } from "@/lib/auth";
 import { resolveRepeatType } from "@/components/run/runConfigDefaults";
 import type { ActivityType } from "@/types/run";
 
+interface RepeatAnswer {
+  uid: string | null;
+  type: ActivityType | null;
+}
+
 export function useLastRunType(): ActivityType | null {
   const uid = useUid();
-  const [repeatType, setRepeatType] = useState<ActivityType | null>(null);
+  const [answer, setAnswer] = useState<RepeatAnswer>({
+    uid: null,
+    type: null,
+  });
 
   useEffect(() => {
-    if (!uid) {
-      setRepeatType(null);
-      return;
-    }
+    if (!uid) return;
     let cancelled = false;
     (async () => {
       try {
@@ -36,7 +47,10 @@ export function useLastRunType(): ActivityType | null {
           )
         );
         if (cancelled) return;
-        setRepeatType(resolveRepeatType(snap.docs.map((d) => d.data())));
+        setAnswer({
+          uid,
+          type: resolveRepeatType(snap.docs.map((d) => d.data())),
+        });
       } catch {
         // Silent — the tile picker renders without the repeat row.
       }
@@ -46,5 +60,5 @@ export function useLastRunType(): ActivityType | null {
     };
   }, [uid]);
 
-  return repeatType;
+  return uid !== null && answer.uid === uid ? answer.type : null;
 }

@@ -181,26 +181,39 @@ export interface UseWorkoutsOptions {
 
 const RECENT_WORKOUT_LIMIT = 50;
 
+/** What a listener has delivered, and for which `uid:coverage` it did. */
+interface LoadedWorkouts {
+  key: string | null;
+  workouts: Workout[];
+}
+
+const NO_WORKOUTS: Workout[] = [];
+
 export function useWorkouts(options: UseWorkoutsOptions = {}) {
   const { user, profile } = useAuth();
   const uid = user?.uid;
   const coverage = options.coverage ?? "recent";
-  const [workouts, setWorkouts] = useState<Workout[]>([]);
-  const [loading, setLoading] = useState(true);
+  const key = uid ? `${uid}:${coverage}` : null;
+  const [loaded, setLoaded] = useState<LoadedWorkouts>({
+    key: null,
+    workouts: NO_WORKOUTS,
+  });
+
+  // Never render account A's history while account B's listener is still
+  // establishing, and reset cleanly when coverage changes: a list counts
+  // only while it was delivered for the current `uid:coverage`, so the
+  // switch itself empties the view and puts it back into loading — in the
+  // same render, with no effect needed to clear it first.
+  const delivered = key !== null && loaded.key === key;
+  const workouts = delivered ? loaded.workouts : NO_WORKOUTS;
+  const loading = key !== null && !delivered;
 
   useEffect(() => {
-    if (!uid) {
-      setWorkouts([]);
-      setLoading(false);
-      return;
-    }
+    if (!uid || !key) return;
 
-    // Never render account A's history while account B's listener is still
-    // establishing, and reset cleanly when coverage changes. The captured
-    // `uid` is the only uid these callbacks may act on.
+    // The captured `uid` and `key` are the only ones these callbacks may
+    // act on.
     let active = true;
-    setWorkouts([]);
-    setLoading(true);
 
     const workoutsRef = collection(db, "users", uid, "workouts");
     const q =
@@ -221,8 +234,7 @@ export function useWorkouts(options: UseWorkoutsOptions = {}) {
           .filter(
             (d) => typeof d.date === "string" && Array.isArray(d.exercises)
           );
-        setWorkouts(data);
-        setLoading(false);
+        setLoaded({ key, workouts: data });
         // Activation funnel: fire `workout_completed` once per newly-created
         // workout across all write paths. Only the "recent" listener is the
         // lifecycle event source — a "complete" listener can mount after a
@@ -237,12 +249,16 @@ export function useWorkouts(options: UseWorkoutsOptions = {}) {
         }
       },
       // Surface the failure so the UI exits its skeleton; retain any
-      // previously loaded workouts so a transient rule or network error
-      // doesn't empty the history view.
+      // workouts this listener already delivered so a transient rule or
+      // network error doesn't empty the history view. Another key's list
+      // is never retained.
       (err) => {
         if (!active) return;
         logger.error("[useWorkouts] snapshot subscription failed", err);
-        setLoading(false);
+        setLoaded((current) => ({
+          key,
+          workouts: current.key === key ? current.workouts : NO_WORKOUTS,
+        }));
       }
     );
 
@@ -250,7 +266,7 @@ export function useWorkouts(options: UseWorkoutsOptions = {}) {
       active = false;
       unsubscribe();
     };
-  }, [uid, coverage]);
+  }, [uid, coverage, key]);
 
   const saveWorkout = useCallback(
     async (workout: Omit<Workout, "id" | "createdAt">) => {

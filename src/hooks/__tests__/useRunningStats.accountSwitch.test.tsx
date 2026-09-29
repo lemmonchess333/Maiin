@@ -231,6 +231,27 @@ describe("useRunningStats — account switch", () => {
     expect(result.current.runs).toHaveLength(1);
   });
 
+  it("A's failed read is not B's, and does not survive sign-out", async () => {
+    // `failed` is the error card's switch. A failure belongs to the
+    // account whose read failed: B, still loading, has not failed, and a
+    // signed-out view has nothing to have failed at all.
+    failNextFirestore("onSnapshot", { path: A_RUNS });
+    const { result, rerender } = renderHook(() => useRunningStats(30));
+    await waitFor(() => expect(result.current.failed).toBe(true));
+
+    deferSnapshots();
+    currentUser = { uid: "B" };
+    rerender();
+    await waitFor(() => expect(pendingSnapshots()).toEqual([B_RUNS]));
+    expect(result.current.loading).toBe(true);
+    expect(result.current.failed).toBe(false);
+
+    currentUser = null;
+    rerender();
+    expect(result.current.failed).toBe(false);
+    expect(result.current.loading).toBe(false);
+  });
+
   it("unmount cancels the outstanding resolution (no state update)", async () => {
     deferSnapshots();
     const { result, unmount } = renderHook(() => useRunningStats(30));

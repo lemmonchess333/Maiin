@@ -28,10 +28,12 @@ vi.mock("@/lib/firebase", () => ({ db: {} }));
 import { useNotifications } from "../useNotifications";
 import {
   resetFirestore,
+  seedFirestore,
   failNextFirestore,
   unfiredFailures,
   readLog,
 } from "@/test/firestoreHarness";
+import { Timestamp } from "firebase/firestore";
 
 const NOTIFS = "notifications/me/items";
 const subscribeCount = () =>
@@ -84,5 +86,74 @@ describe("useNotifications — NOTIFICATION-TRUST-01", () => {
     ).toBeTruthy();
     // The old unscoped key is never written.
     expect(window.localStorage.getItem("tropos-notif-last-seen")).toBeNull();
+  });
+});
+
+/* The tray is one account's. On a mount that stays up across a sign-out or
+   an account switch, neither its rows nor its "seen" pointer may carry
+   over. The fake answers a listener synchronously on subscribe, so the
+   switch case records every render: `result.current` shows only the last,
+   and a row that leaked for the one render before the new listener landed
+   would be invisible to it. */
+describe("useNotifications — one account's tray", () => {
+  const kudos = (fromUserId: string, at: Date) => ({
+    type: "kudos",
+    fromUserId,
+    createdAt: Timestamp.fromDate(at),
+  });
+  const aMinuteAgo = () => new Date(Date.now() - 60_000);
+
+  it("a sign-out empties the tray", () => {
+    seedFirestore({
+      "notifications/me/items/n-me": kudos("friend", aMinuteAgo()),
+    });
+    const { result, rerender } = renderHook(() => useNotifications());
+    expect(result.current.items.map((n) => n.id)).toEqual(["n-me"]);
+
+    authUid.current = undefined;
+    rerender();
+    expect(result.current.items).toEqual([]);
+    expect(result.current.unreadCount).toBe(0);
+  });
+
+  it("account B never sees A's rows, not even for one render", () => {
+    seedFirestore({
+      "notifications/me/items/n-me": kudos("friend", aMinuteAgo()),
+      "notifications/other/items/n-other": kudos("friend2", aMinuteAgo()),
+    });
+    const renders: { uid: string | undefined; ids: string[] }[] = [];
+    const { result, rerender } = renderHook(() => {
+      const hook = useNotifications();
+      renders.push({
+        uid: authUid.current,
+        ids: hook.items.map((n) => n.id),
+      });
+      return hook;
+    });
+    expect(result.current.items.map((n) => n.id)).toEqual(["n-me"]);
+
+    authUid.current = "other";
+    rerender();
+    expect(result.current.items.map((n) => n.id)).toEqual(["n-other"]);
+    const underOther = renders.filter((r) => r.uid === "other");
+    expect(underOther.flatMap((r) => r.ids)).not.toContain("n-me");
+  });
+
+  it("markAllSeen clears the badge for its own account only", () => {
+    seedFirestore({
+      "notifications/me/items/n-me": kudos("friend", aMinuteAgo()),
+      "notifications/other/items/n-other": kudos("friend2", aMinuteAgo()),
+    });
+    const { result, rerender } = renderHook(() => useNotifications());
+    expect(result.current.unreadCount).toBe(1);
+    act(() => result.current.markAllSeen());
+    expect(result.current.unreadCount).toBe(0);
+
+    // `other` has never opened the tray: its row is unread, whatever
+    // `me` just marked.
+    authUid.current = "other";
+    rerender();
+    expect(result.current.items.map((n) => n.id)).toEqual(["n-other"]);
+    expect(result.current.unreadCount).toBe(1);
   });
 });
