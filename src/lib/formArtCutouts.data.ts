@@ -247,6 +247,16 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
       "c724267a05a39a4fd0b936de380bdd3dbc73accda8525d30607646a71a16bc79",
     sha256: "0c715bc608d077b8e093920e03091858565cbc7d59d62cde8b2be0cc7eedc1fc",
   },
+  "glute-bridge": {
+    src: "form-art/glute-bridge.webp",
+    width: 480,
+    height: 245,
+    keyed: true,
+    source: "form-frames/glute-bridge/1.webp",
+    sourceSha256:
+      "112bef9306be5708cbe718940077ca5f3e75c313ae42ee708975e10d1edc0c87",
+    sha256: "90eb6cd307a3824ace8dfe44138d7b89318ad1f35843fd3428ce9e194de5b877",
+  },
   "goblet-squat": {
     src: "form-art/goblet-squat.webp",
     width: 177,
