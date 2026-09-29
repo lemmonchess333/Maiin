@@ -126,10 +126,11 @@ export default function RoutePlannerSheet({
         attributionControl: false,
       });
     } catch {
-      // This setState stays in the effect, and react-hooks/set-state-in-
-      // effect warns on it. The outcome belongs to the external system:
-      // MapLibre can only be built on the committed container, and a
-      // WebGL failure throws right here, so no render can know it first.
+      // This setState stays in the effect. The outcome belongs to the
+      // external system: MapLibre can only be built on the committed
+      // container, and a WebGL failure throws right here, so no render can
+      // know it first.
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- see above
       setMapUnavailable(true);
       return;
     }
