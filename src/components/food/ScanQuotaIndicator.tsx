@@ -40,10 +40,24 @@ export default function ScanQuotaIndicator({
   if (remaining === 0) {
     return (
       <div className="flex justify-center">
+        {/* The hit area is 44px even though the line is 11px. This is a
+            real action — it opens the upgrade path — and it had no
+            padding and no height of its own, so the tappable box was the
+            line box: about 13px. DESIGN_GUIDE §10 sets 44 CSS px for
+            "anything interactive" with no exception for a caption that
+            happens to be a button.
+
+            The neighbours rule it out being solved the way
+            `TrainingForChip` does, with a pseudo-element reaching past
+            the visual box: this row sits 6px under the composer input
+            and 8px above the meal-slot SegmentedControl, so an extension
+            would overlap a 44px radiogroup and make a near-boundary tap
+            ambiguous. Growing the box is the honest fix. The line still
+            renders as one centred muted caption; it just has room. */}
         <button
           type="button"
           onClick={onUpgrade}
-          className="text-caption text-muted-foreground font-medium active:opacity-70 transition-opacity"
+          className="inline-flex items-center justify-center min-h-[44px] px-3 text-caption text-muted-foreground font-medium active:opacity-70 transition-opacity"
         >
           Out of scans — upgrade for unlimited · resets {resetStr}
         </button>
