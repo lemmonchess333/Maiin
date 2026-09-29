@@ -634,4 +634,17 @@ export const RELEASED_FORM_PLACARDS = {
       [0, "Reset", "Center your torso; keep both feet planted."],
     ]
   ),
+  "mountain-climbers": placard(
+    "mountain-climbers",
+    ["Core"],
+    ["Shoulders", "Hip flexors", "Quads"],
+    [
+      [0.5, "Drive A", "Draw near knee forward; keep hips level."],
+      [1, "Knee A", "Bring near knee closer without lifting hips."],
+      [0, "Plank", "Extend back to plank before switching legs."],
+      [0.5, "Drive B", "Draw far knee forward; keep shoulders steady."],
+      [1, "Knee B", "Bring far knee closer without rounding back."],
+      [0, "Reset", "Return to plank, then alternate again."],
+    ]
+  ),
 };

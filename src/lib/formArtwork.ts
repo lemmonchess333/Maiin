@@ -53,6 +53,18 @@ export const FORM_ARTWORK: Record<string, FormArtwork> = {
     reference: "form-frames/russian-twist/4.webp",
     reviewFile: "docs/exercise-art/releases/2026-09-29/russian-twist.json",
   },
+  "mountain-climbers": {
+    version: "anatomy-v3-2026-09-29",
+    status: "approved",
+    width: 1536,
+    height: 1024,
+    frames: Array.from(
+      { length: 6 },
+      (_, i) => `form-frames/mountain-climbers/${i + 1}.webp`
+    ),
+    reference: "form-frames/mountain-climbers/3.webp",
+    reviewFile: "docs/exercise-art/releases/2026-09-29/mountain-climbers.json",
+  },
   "bicycle-crunch": {
     version: "anatomy-v3-2026-09-29",
     status: "approved",
