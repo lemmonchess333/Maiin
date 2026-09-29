@@ -1,0 +1,185 @@
+{
+  "modelPath": "Built-in imagegen only; canonical master and adjacent poses. No CLI/API/model fallback.",
+  "canonicalReference": {
+    "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+  },
+  "exerciseMaster": {
+    "path": "docs/exercise-art/masters/russian-twist/1.png",
+    "sha256": "bc90d3b9e4cf6c2ac56e7eafb15b21d10b4aae321c93c20334199dc3cbf26261"
+  },
+  "nativeDimensions": {
+    "width": 1536,
+    "height": 1024
+  },
+  "generation": [
+    "Scientific educational RUSSIAN TWIST bodyweight exercise scene master. Exact adult faceless bald white/lightgrey anatomical mannequin from reference, same fine contours proportions white trainers. Seated on charcoal exercise mat, hips planted, knees bent, FEET FLAT on mat. Torso reclined45degrees with long neutral spine and tall chest. Hands clasped together in front of chest, no weights. Center position facing camera, no twist yet. Camera front three-quarter slight elevation, whole body mat both feet visible, ample side room. Obliques deepest purple, abs and hip flexors light lilac, remainder neutral reference anatomy. Pure black background NO glow/halo/gradient, no clothes text arrows. One1536x1024 native landscape image. Fixed pelvis feet mat camera for subsequent torso rotation.",
+    "Correct only torso inclination in image2 Russian-twist master. Athlete currently too upright. Recline entire torso backward so spine line from hip to shoulder is45degrees above floor, head moves up-right relative hip. Keep long neutral spine chest tall, no rounding. Feet and pelvis remain firmly planted in exact locations, knees same. Hands clasped in front of chest follow reclined torso. Image1 canonical identity. Do not move camera mat legs or redesign character. One1536x1024 image, pure black NO halo.",
+    "Russian twist FIRST side. Image1 canonical identity image2 approved reclined center scene. Keep hips pelvis feet knees mat and camera perfectly stationary; maintain same45degree torso recline and long spine. Rotate shoulders and ribcage toward camera about35degrees, head follows chest. Clasped hands move with chest toward NEAR hip, hovering just outside hip over mat; do not merely swing arms while chest stays center. Same anatomy purple obliques lilac abs, pure black no halo. One1536x1024 image no text.",
+    "Russian twist opposite SECOND side. Image1 canonical identity image2 reclined central scene. Keep pelvis feet knees and mat camera fixed; maintain45degree recline long spine. Rotate shoulders ribcage AWAY from camera35degrees, head follows; less chest and more back/near shoulder visible. Clasped hands move toward FAR hip opposite viewer behind far knee, remain visible above mat. Hands travel with torso rotation, no arm-only swing. Same purple map mannequin identity and dimensions. Pure black backdrop no lighting glow. One1536x1024 no text.",
+    "Russian twist intermediate rotating AWAY only15degrees from central image2. Identity image1 scene image2. Keep45degree recline, pelvis feet knees mat camera unchanged. Torso rotates slightly away so near shoulder moves forward, chest still mostly visible. Clasped hands move modestly toward far hip, at abdomen height. Long neutral spine. Moderate torso rotation, not full back view. Same purple anatomy. No glow/halo background must remain pure black. One1536x1024 image no text.",
+    "Background-only cleanup on image3 EDIT TARGET. Remove ALL grey halo/glow behind mannequin and around mat to uniform pure black #000000 matching image2. Preserve every pose, anatomy, limb, torso, mat position and purple colour of image3 unchanged. Image1 canonical identity, image2 exercise scene master, image3 edit target. One native1536x1024 image no text."
+  ],
+  "sourcePilot": "docs/exercise-art/pilots/parallel-twenty/russian-twist",
+  "sourcePilotReview": {
+    "exerciseId": "russian-twist",
+    "status": "six-frame-candidate-needs-review",
+    "approved": false,
+    "issues": [
+      "Initial upright master rejected and replaced with reclined master.",
+      "Mid prompt requested away rotation but actual image moves toward near side; sequence and cue describe actual pose.",
+      "Side A appears more upright than master; trunk inclination consistency needs review before release.",
+      "Side A/B halos removed with background-only native edits; anatomy contour variation remains.",
+      "Six discrete teaching phases, center legitimately reused; player/mobile playback unverified."
+    ],
+    "frames": [
+      {
+        "frame": 1,
+        "source": "master.png",
+        "sha256": "bc90d3b9e4cf6c2ac56e7eafb15b21d10b4aae321c93c20334199dc3cbf26261",
+        "dimensions": [1536, 1024],
+        "cue": "Sit with feet planted, knees bent and torso reclined."
+      },
+      {
+        "frame": 2,
+        "source": "mid-a.png",
+        "sha256": "cc6435cdbc29c01f8c85db453e5c1f1e95a2d1118d2bcef70c803a58a29488bf",
+        "dimensions": [1536, 1024],
+        "cue": "Begin rotating chest and clasped hands toward the near side."
+      },
+      {
+        "frame": 3,
+        "source": "side-a-clean.png",
+        "sha256": "0316e55c07ba1b1d616cc31b662066e5d24e623b00cd04273392bffc384d5643",
+        "dimensions": [1536, 1024],
+        "cue": "Rotate toward near hip while keeping feet planted."
+      },
+      {
+        "frame": 4,
+        "source": "master.png",
+        "sha256": "bc90d3b9e4cf6c2ac56e7eafb15b21d10b4aae321c93c20334199dc3cbf26261",
+        "dimensions": [1536, 1024],
+        "cue": "Return through center."
+      },
+      {
+        "frame": 5,
+        "source": "side-b-clean.png",
+        "sha256": "f01181dd92bf9d823b2a8fffdafa024b86e09adcace25f591c056e1b34d8f89a",
+        "dimensions": [1536, 1024],
+        "cue": "Rotate chest and hands toward the far side."
+      },
+      {
+        "frame": 6,
+        "source": "master.png",
+        "sha256": "bc90d3b9e4cf6c2ac56e7eafb15b21d10b4aae321c93c20334199dc3cbf26261",
+        "dimensions": [1536, 1024],
+        "cue": "Return to centered recline before repeating."
+      }
+    ],
+    "canonical": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "runtimeVerified": false
+  },
+  "repairPrompts": [
+    {
+      "file": "moderate-side-b-prompt.json",
+      "prompt": "Scientific exercise illustration edit. FIRST image is the Russian twist CENTER MASTER and edit target. Make the next pose a moderate rotation AWAY from the viewer, about 30 degrees around the torso's already-reclined long axis. Preserve the center master's exact backward recline and spinal length; shoulders should not rise into upright sitting. Pelvis, thighs, knees, both planted shoes, exercise mat, camera and framing remain exactly stationary. Only ribcage/shoulders/head rotate together, with clasped hands moving with the chest toward the far hip. Show a side/three-quarter torso with the near shoulder in front and a sliver of chest still visible, NOT a full back view or extreme rotation. Keep hands visible just above the far knee, elbows comfortably bent. Second image is canonical athlete identity only: bald faceless grey-white fine anatomical contours, white trainers, featureless pelvis. Strongest purple obliques; lilac abs and subtle hip flexors, neutral limbs. Pure black backdrop without glow, native1536x1024 landscape, no text or arrows. This is a bodyweight Russian twist, no equipment held.",
+      "referenced_image_paths": [
+        "C:/Users/myles/Documents/Codex/2026-09-22/continue-on-with-making-the-6-2/work/Maiin-bicycle-crunch-release/docs/exercise-art/pilots/parallel-twenty/russian-twist/frames/1.png",
+        "C:/Users/myles/Documents/Codex/2026-09-22/continue-on-with-making-the-6-2/work/Maiin-bicycle-crunch-release/docs/exercise-art/identity/athlete-anatomy-v3.png"
+      ]
+    }
+  ],
+  "generatedOutputs": [
+    {
+      "file": "1-master.png",
+      "sha256": "bc90d3b9e4cf6c2ac56e7eafb15b21d10b4aae321c93c20334199dc3cbf26261"
+    },
+    {
+      "file": "original-side-b.png",
+      "sha256": "f01181dd92bf9d823b2a8fffdafa024b86e09adcace25f591c056e1b34d8f89a"
+    },
+    {
+      "file": "shoe-rectangle-rejected.png",
+      "sha256": "ceacf6964753affd033c8003079685a8792a18315e484218602322f994146b74"
+    },
+    {
+      "file": "side-b-moderate.png",
+      "sha256": "d063d9f9e0e3415aeff68d2b51d555856aff58134eee6da1b61f6e495d1bf581"
+    }
+  ],
+  "repairSteps": [
+    {
+      "generationId": "723b2dd3-e45a-4e7e-995c-ee9d78a2548f",
+      "output": "side-b-moderate.png",
+      "sha256": "d063d9f9e0e3415aeff68d2b51d555856aff58134eee6da1b61f6e495d1bf581",
+      "promptFile": "moderate-side-b-prompt.json",
+      "references": [
+        "1-master.png",
+        "docs/exercise-art/identity/athlete-anatomy-v3.png"
+      ],
+      "assessment": "Moderate far-side turn with chest partly visible, replacing near-full-back pilot pose. Candidate passes native inspection, mobile review pending."
+    }
+  ],
+  "deterministicRepairs": [
+    {
+      "master": "1-master.png",
+      "masterSha256": "bc90d3b9e4cf6c2ac56e7eafb15b21d10b4aae321c93c20334199dc3cbf26261",
+      "method": "Exact master copy inside union of source/master planted lower-shoe silhouettes minimumRGB110 dilated3px, bounded below ankle. No blending or moving anatomy edits. Rectangle-only candidate rejected for visible mat seam.",
+      "frames": [
+        {
+          "frame": 2,
+          "sourceSha256": "cc6435cdbc29c01f8c85db453e5c1f1e95a2d1118d2bcef70c803a58a29488bf",
+          "outputSha256": "13d64372ba942e21186bfcc1456406dec767b88cb9f52b58d58b7c4589b174a6",
+          "rectangles": [[235, 735, 470, 815]],
+          "copyMaskSha256": "9effa307574802e23f6075eac1e73e2032f4751e691f2daec43cc9aec6ff1dd2",
+          "changedPixels": 14525,
+          "changedOutsideCopyMask": 0,
+          "changedOutsideRectangles": 0
+        }
+      ]
+    }
+  ],
+  "selectedPngs": [
+    {
+      "frame": 1,
+      "sha256": "bc90d3b9e4cf6c2ac56e7eafb15b21d10b4aae321c93c20334199dc3cbf26261",
+      "source": "russian-twist-production-review\\1-master.png"
+    },
+    {
+      "frame": 2,
+      "sha256": "13d64372ba942e21186bfcc1456406dec767b88cb9f52b58d58b7c4589b174a6",
+      "source": "Maiin-pike-push-up-release\\docs\\exercise-art\\pilots\\parallel-twenty\\russian-twist\\frames\\2.png"
+    },
+    {
+      "frame": 3,
+      "sha256": "0316e55c07ba1b1d616cc31b662066e5d24e623b00cd04273392bffc384d5643",
+      "source": "Maiin-pike-push-up-release\\docs\\exercise-art\\pilots\\parallel-twenty\\russian-twist\\frames\\3.png"
+    },
+    {
+      "frame": 4,
+      "sha256": "bc90d3b9e4cf6c2ac56e7eafb15b21d10b4aae321c93c20334199dc3cbf26261",
+      "source": "russian-twist-production-review\\1-master.png"
+    },
+    {
+      "frame": 5,
+      "sha256": "d063d9f9e0e3415aeff68d2b51d555856aff58134eee6da1b61f6e495d1bf581",
+      "source": "russian-twist-production-review\\side-b-moderate.png"
+    },
+    {
+      "frame": 6,
+      "sha256": "bc90d3b9e4cf6c2ac56e7eafb15b21d10b4aae321c93c20334199dc3cbf26261",
+      "source": "russian-twist-production-review\\1-master.png"
+    }
+  ],
+  "reuse": {
+    "4": 1,
+    "6": 1
+  },
+  "conversion": "Lossless WebP decoded RGB exactly equals reviewed PNG; native1536x1024, no scaling.",
+  "measurementMethod": "Interpolated native planted-shoe silhouettes at minimum-RGB150 and unobstructed front mat edge at minimum-RGB10; compare to neutral frozen master at frame1.1px/1percent fixed-equipment gates. Anatomy and limb pairing require separate visual review.",
+  "scanlines": {
+    "farShoe": [200, 480, 760, 150],
+    "nearShoe": [380, 670, 845, 150],
+    "matFront": [0, 1536, 930, 10]
+  }
+}
