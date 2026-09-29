@@ -660,4 +660,17 @@ export const RELEASED_FORM_PLACARDS = {
       [0, "Reset", "Return upright with rope at your temples."],
     ]
   ),
+  "cable-woodchopper": placard(
+    "cable-woodchopper",
+    ["Obliques"],
+    ["Core", "Shoulders"],
+    [
+      [0, "Set", "Grip high; soften knees and brace core."],
+      [0.5, "Rotate", "Rotate torso; guide handle across your body."],
+      [1, "Chop", "Finish low across your opposite hip."],
+      [1, "Hold", "Hold briefly with shoulders away from ears."],
+      [0.5, "Return", "Return along the same diagonal path."],
+      [0, "Reset", "Reset high; finish reps before switching sides."],
+    ]
+  ),
 };

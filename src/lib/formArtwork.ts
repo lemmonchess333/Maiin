@@ -77,6 +77,18 @@ export const FORM_ARTWORK: Record<string, FormArtwork> = {
     reference: "form-frames/cable-crunch/1.webp",
     reviewFile: "docs/exercise-art/releases/2026-09-29/cable-crunch.json",
   },
+  "cable-woodchopper": {
+    version: "anatomy-v3-2026-09-29",
+    status: "approved",
+    width: 1536,
+    height: 1024,
+    frames: Array.from(
+      { length: 6 },
+      (_, i) => `form-frames/cable-woodchopper/${i + 1}.webp`
+    ),
+    reference: "form-frames/cable-woodchopper/1.webp",
+    reviewFile: "docs/exercise-art/releases/2026-09-29/cable-woodchopper.json",
+  },
   "bicycle-crunch": {
     version: "anatomy-v3-2026-09-29",
     status: "approved",

@@ -1,0 +1,530 @@
+{
+  "modelPath": "Built-in imagegen for athlete and pose generation; explicitly authorized source-pixel fixed-region repair and rigid moving equipment repair. No CLI/API fallback.",
+  "canonicalReference": {
+    "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+  },
+  "exerciseMaster": {
+    "path": "docs/exercise-art/masters/cable-woodchopper/1.png",
+    "sha256": "1bf2e782246cdaa2505bead972a5d22af8b8a5cf1db16ec39474940884949639"
+  },
+  "selectedGenerationLedger": [
+    [
+      "7d3f7241-5f3f-4ec6-9214-4878a6c3d505",
+      "Selected two-to-one setup, subsequently cable-repaired"
+    ],
+    [
+      "3d0bdad3-9668-4b05-a1aa-a87c02b9efeb",
+      "Selected forward-facing midpoint"
+    ],
+    ["586ceab1-3ec6-43ed-9fa9-5b4e0f796cb4", "Selected full torso rotation"],
+    [
+      "b2f99122-a39f-4d2b-8344-df99b99beca6",
+      "Full ankle-join repair with master and canonical references"
+    ]
+  ],
+  "rejectedMethods": "Direct1:1 stack lacked rail travel. Narrow2:1 layout conflated rods/cables; widened machine and clarified routing. Early midpoint bent arms or overrotated. Foot-only edit shrank shoes; final full-pose ankle repair followed by restricted master forefoot copy succeeded. Mid ankle edit reverted to setup and was rejected.",
+  "prompts": [
+    {
+      "file": "2-mid-prompt.txt",
+      "prompt": "Generate FRAME2 (halfway through the high-to-low standing CABLE WOODCHOPPER) by editing image1, the selected exercise master. Image2 is canonical athlete identity. Keep native1536x1024, fixed camera/framing, exact same bald faceless white-grey athlete with featureless pelvis, purple obliques and lilac abs/deltoids. Machine left, athlete right. This is a torso rotation, not an arm curl or abdominal crunch.\n\nMove joined hands and the same single D-handle diagonally down and toward screen-right from high-left setup to approximately x995,y355, in front of lower chest. Rotate ribcage toward screen-right halfway toward opposite hip; shoulders follow the rotation, arms stay long with softly bent elbows. Maintain upright spine, soft knees, exact planted feet positions and mat. Both hands remain joined around ONE grip, normal fingers, no extra handles. Keep body scale and head height. Fixed feet and mat must be pixel-stable.\n\nThe cable remains taut from fixed top outlet wheel centre359,63 to the handle attachment at approximatelyx940,y337. The machine is2:1: one selected top plate, bracket and movable lower pulley form a single RIGID assembly. The increased outgoing cable length at this midpoint is approximately350px, so raise that entire assembly about175px: selected plate top fromy616 toy441, moving pulley centre fromy540 toy365, same size and width and bracket length. Keep all nine resting plates in their exact original positions (count actual master, never add/remove). Preserve fixed guide rods, base, frame, fixed top pulley. Shorten BOTH internal cable legs equally as moving pulley rises; anchored top end and upper outlet remainfixed. Keep visible continuous cable U under moving wheel, with no crossed or loose lines. Do not change steel guide rods into cable. No text, arrows, glow, diagram or labels. Output one full frame only.\r\n"
+    },
+    {
+      "file": "3-full-prompt.txt",
+      "prompt": "Create FRAME3 full contraction of high-to-low standing cable woodchopper. Image1 is setup master defining fixed athlete identity, framing, feet, mat and exact machine construction. Image2 is adjacent rotated midpoint defining direction. Continue rotation to screen-right and lower SAME single D-handle to just outside screen-right thigh aroundx1135,y570. Both hands remain together, arms long with soft elbows, shoulder blades down. Rotate ribs over stable pelvis, bend knees softly but do not squat or lunge. Keep head height within15px of setup; head and gaze now turn gently toward screen-right to follow the hands. No smile or facial features. Bald white-grey anatomical mannequin, featureless pelvis, saturatedpurple obliques, lilacabsanddeltoids. No coloured chest. Keep all feet, mat, base and camera fixed as image1. No body scaling.\nThe cable is taut from fixed upper pulley centre359,63 to handle connector near1100,550. Image2 mistakenly moved the RESTING STACK: restore all nine resting plates to their exact IMAGE1 positions y655..838. Only the single selected plate and attached movingwheel/bracket rise. Two-to-one cable: selectedplate top approximatelyy315, movingwheelcentre239; preserve same assembly shape/dimensions as image1. Two visible separate thin cable strands go from topanchor and upperfixedwheel to U beneath movingwheel. Steelguide rods andstationaryframe distinctandunchanged. No text, arrows, glow, inset or labels.1536x1024fullimage.\r\n"
+    },
+    {
+      "file": "ankle-join-prompt.txt",
+      "prompt": "Image1 is the full woodchopper pose; image2 frozen exercise master; image3 canonical identity. Image1 feet and equipment have been precisely corrected. Keep the entire image unchanged except the very bottom few centimetres of both shins ABOVE the shoes (roughlyy800..846). Repair the tiny horizontal step at the right ankle where the rotated shin meets the stationary shoe collar at y844. Naturally taper the lowest shin to join the EXISTING shoe collar, preserving natural tibia/ankle anatomy. Do not move, resize, reshape or redraw either shoe: all pixels at and belowy846 should stay exactly as image1. Do not change foot position or shoe scale. Do not change machine, cable, hands, torso rotation, head, mat or camera. This is a small ankle-continuity repair, not a new pose. No text or glow. Full1536x1024image.\r\n"
+    },
+    {
+      "file": "cable-topology-prompt.txt",
+      "prompt": "Fix ONLY thin cable routing inside the machine in this supplied full image. Keep the athlete, anatomy, stance, hands, handle, mat and machine steel frame/rods/plates/wheels unchanged. This machine's two thick steel guide rods are at x241 and333. Moving lower pulley centre282,540 radius25. Fixed upper outlet wheel centre359,63 radius28. These coordinates describe the actual image, not a proposed layout.\nRemove the single incorrect thin vertical line at x296. Instead show ONE continuous cable with this precise visible route: fixed small anchor on underside of top crossbar at x255,y45; thin taut cable descends vertically x255 to the LEFT tangent of lower moving wheel near257,540; it wraps UNDER that wheel (a clear U along the bottom semicircle y565); leaves its RIGHT tangent x307,y540; rises in a very slightly slanted straight line to LEFT tangent of upper fixed wheel at331,y63; wraps OVER upper wheel and exits along the already existing diagonal to the hand-held handle. The two long cable legs above lower wheel are visibly separate and must not cross. They are thin medium-grey lines on black, distinct from thick chrome guides x241/333. Lower moving pulley stays connected by existing bracket to selected plate. No direct cable terminating at a plate. No extra cable line. No labels, arrows, text or inset. Preserve full1536x1024 output and all other image details.\r\n"
+    },
+    {
+      "file": "full-feet-fix-prompt.txt",
+      "prompt": "Image1 is the full woodchopper finish pose to retain. Image2 is the frozen setup master. Correct ONLY the two planted shoes and their ankle joins in image1. Match image2 exact foot position, shoe width, shape, orientation, collar height and ground contact. The full pose's right shoe is displaced about2pixels and both forefeet are too wide about2pixels. Both shoes must remain planted on exactly the same mat positions throughout this rotation. Use image2 shoes exactly, then make natural seamless ankle joins within the lowest few centimetres of shins. Preserve every other moving body part, torso rotation, joinedhands/handle, head, stance, machine, cable, mat, background and camera from image1. Do not move or redraw the equipment. No labels, text, arrows or glow. Full1536x1024 image.\r\n"
+    },
+    {
+      "file": "guide-rods-master-prompt.txt",
+      "prompt": "Edit the supplied cable woodchopper setup image. Preserve the entire athlete, grip, handle, mat, camera and framing. Preserve the mechanically correct two-to-one cable routing: top anchored strand at x238, cable U under movable pulley centred260,574, return strand near277 up to fixed outlet wheel305,63, then outgoing diagonal to handle. Preserve all wheel and selected-plate positions and sizes and every resting plate. Correct only the missing fixed weight-stack guide rods. Render two straight continuous slim bright steel rods at approximately x218 and x296, running vertically from underside of top crossbar y40 down through corresponding guide holes in every plate to base y875. Their upper lengths must be clearly visible against black, distinct from the thinner cable strands x238 and277. Selected plate and bracket can slide vertically along those fixed rods; moving pulley stays attached to the selected plate. Avoid adding any other cable or changing the U routing. These guide rods remain behind plate faces with appropriate occlusion, and behind the top crossbar. No labels, no arrows. Keep exactly1536x1024, complete native image. This is a narrowly targeted mechanical clarity edit, no anatomy redraw.\r\n"
+    },
+    {
+      "file": "master-prompt.txt",
+      "prompt": "Use case scientific-educational. ONE landscape1536x1024 crisp anatomical exercise SETUP illustration for high-to-low standing cable woodchopper. Attached image is CANONICAL ATHLETE IDENTITY reference only: reproduce its bald faceless light-grey/white anatomy, fine clean contours, white trainers and neutral smooth featureless pelvic centre without clothing seams or genital details. Purple strongest on visible obliques; pale lilac rectus abdominis and shoulder deltoids only. Other muscles grey-white. No text, arrows, labels, halo, glow or second person. Flat pure black background.\n\nFixed frontal three-quarter camera. Full adult athlete on RIGHT, body centre around x980. Feet shoulder-width on a subtle plain charcoal floor mat, soft knees, feet planted, torso turned moderately toward LEFT high pulley. Both hands are TOGETHER gripping the SAME single cable D-handle near upper-left shoulder/head height at about x700,y280. Arms extend diagonally left-up, elbows slightly bent, shoulders down. The athlete stands sideways to the machine, ready to rotate torso and bring that same handle down across the body to opposite RIGHT hip later. This is setup only, no movement arrows or extra poses. Anatomically plausible joined two-hand grip, clear body/hip/leg ownership, whole head and shoes within canvas. Broad frontal view enough to see abs and both obliques.\n\nCompact simple cable station on LEFT, visually separate from athlete. ONE high fixed pulley near x270,y80. One unbroken taut cable runs from D-handle connector diagonally up-left to this pulley, passes over it then descends vertically to selected top plate between two straight vertical guide rods. No extra pulley, branched cable or spare handle. Modest selectorized stack near base: one thin selected top plate slightly lifted above eight identical thin resting plates, nine total. Resting stack approximately y760..925; selected plate top near y735. Enough unobstructed vertical rail for later plate travel upwards. Machine top/base/pulley all fully visible with margins; constant grey steel, no bright shine. Cable1:1 routing mechanically readable. Athlete shoes near y930. Keep the athlete large enough for mobile instruction with equipment still fully visible. Clean sharp linework, same proportions as reference, no painterly texture or vignette.\r\n"
+    },
+    {
+      "file": "mid-ankle-join-prompt.txt",
+      "prompt": "Image1 is the midpoint woodchopper pose; image2 frozen exercise master; image3 canonical identity. Image1 feet and equipment have been precisely corrected. Keep the entire image unchanged except the very bottom few centimetres of both shins ABOVE the shoes (roughlyy800..846). Repair the tiny joins at the ankles where the rotated shin meets the stationary shoe collar at y844. Naturally taper the lowest shin to join the EXISTING shoe collar, preserving natural tibia/ankle anatomy. Do not move, resize, reshape or redraw either shoe: all pixels at and belowy846 should stay exactly as image1. Do not change foot position or shoe scale. Do not change machine, cable, hands, torso rotation, head, mat or camera. This is a small ankle-continuity repair, not a new pose. No text or glow. Full1536x1024image.\r\n\r\n"
+    },
+    {
+      "file": "mid-arm-fix-prompt.txt",
+      "prompt": "Correct this midpoint standing cable woodchopper pose. Keep head height, feet, mat, anatomical styling, camera and machine frame fixed. The current handle is too close to the chest and the elbows bend excessively. Put both joined hands further toward the viewer and screen-right at approximatelyx1030,y375, with the SAME one D-handle. Lengthen the arms into a broad extended arc with only gentle elbow bend (approximately150degrees), not the current curled position. Rotate the ribcage and shoulders toward screen-right; sternum faces halfway toward the athlete's left/screen-right. The arms follow torso rotation. Do not just shift wrists. Neck neutral, gaze follows hands slightly, no crunch or forward lean. Keep normal anatomy and correct arm lengths, hands still around one single grip. Cable from top fixed pulley stays taut straight to the handle's attachment.\nFor the2:1machine, selectedplate+bracket+lowerpulley are rigid oneassembly. Put selectedplate top at approximatelyy410, movingpulleycentre at334 (same separation as master). Preserve size and nine resting plates. Two thin cable legs run from fixed top anchor and fixed top outlet to wrap UNDER moving wheel. Steel guide rods fixed. No text, arrows, extra limbs, grip, glow or labels. Full1536x1024.\r\n"
+    },
+    {
+      "file": "mid-front-facing-prompt.txt",
+      "prompt": "Image1 is HIGH-LEFT setup of standing cable woodchop. Image2 is LOW-RIGHT finish. Create the true midpoint halfway BETWEEN these two poses, retaining image1 fixed equipment, feet, mat and camera. The previous attempt swung hands all the way to the right too early. Midpoint hands must be centred horizontally IN FRONT OF THE STERNUM at aboutx980,y330, not beside the right shoulder or off to screen-right. Turn torso to face the viewer squarely at midpoint, shoulders level, arms reaching FORWARD toward viewer and slightly downward, with natural foreshortening and gentle elbow bend. Both hands together around one D-handle, joined grip centredx980,y330. Do not curl hands back into chest: arms reach forward roughly one forearm length in front of chest in depth. Head faces forward at midpoint. Upright trunk, same soft knees and shoulderwidth planted feet. Same bald faceless white-grey anatomical mannequin with purpleobliques and lilacabs/deltoids, featurelesspelvis. Exact wholebody scale and framing.\nCable is straight taut line from fixed top pulley to handle connector in front of centrechest. Restore entire stationary rack and restingweightstack exactly as image1, where resting plates occupy y655..838. Selectedplate+bracket+lowerpulley rise together about200px, preservingassemblyshape and the2:1continuousU cablepath. No changing other weights or rods. No labels, text, arrows or glow. Output one1536x1024fullimage.\r\n"
+    },
+    {
+      "file": "stack-master-fix-prompt.txt",
+      "prompt": "Edit target image1 is woodchopper setup with corrected shoulder-width stance. Image2 canonical athlete. Correct ONLY the weight stack assembly at lower LEFT, for enough physical cable travel in a later high-to-low chop. Keep ALL athlete pixels, grip, outgoing diagonal cable, pulley, fixed upright machine frame/base, rods, floor/mat, perspective and lighting exactly unchanged.\n\nReplace the current overly tall pile by exactly EIGHT resting thin steel plates of identical thickness (about15pixels each), between the same rods, occupying y785 through y913. ONE selected top plate, same width and thickness, hovers just above them with its top edge at y760 and a small visible gap below it. NINE PLATES TOTAL. Move its cable attachment down with it and extend the straight vertical cable down to it. Same simple fixed-pulley1:1routing. Plate widths and horizontal positions unchanged. Selected plate at this lower start position leaves sufficient upward rail travel for the chop. Base stays at its exact original height and resting plates sit above the base. No extra pulleys, no added cables, no number/text labels. Preserve modest dark steel palette and realistic weight-stack geometry, don't enlarge the load. No changes anywhere else. Same complete native1536x1024canvas, no cropping or halo.\r\n"
+    },
+    {
+      "file": "stance-fix-prompt.txt",
+      "prompt": "Image1 EDIT TARGET is the standing cable woodchopper setup candidate. Image2 canonical athlete identity. Make ONE targeted correction: narrow the stance to shoulder-width. Keep pelvis/torso/head/arms/joined hands/handle/diagonal cable/entire machine/mat/camera/framing/highlights exactly as they are. Both feet currently spread too widely. Move the left foot centre from aboutx831 to x878 and the right foot centre from aboutx1148 to x1105, keeping both soles at the same floor y~928. Redraw only the legs below the hips to connect anatomically with modest soft knee flexion, natural vertical shin alignment, and the SAME shoe sizes; do not squeeze or shrink leg anatomy. Feet now roughly230pixels apart, comparable to the shoulder width, instead of315pixels apart. Feet point naturally slightly outward. Preserve smooth featureless pelvis with no seams or genital detail, white-grey line anatomy, white trainers, strongest purple obliques and pale lilac abs/deltoids. Keep identical native1536x1024resolution and pure black background. Do not change any machine plate/cable/hand arrangement. No text or glow.\r\n"
+    },
+    {
+      "file": "two-to-one-master-prompt.txt",
+      "prompt": "Image1 is the woodchopper SETUP edit target. Image2 is canonical athlete identity. Preserve EVERY athlete, handle, outgoing diagonal cable, mat, lighting, camera and framing pixel. Change ONLY the internal cable routing of the LEFT machine to a physically clear standard2:1system. Current direct1:1system lacks enough rail travel for a full chop.\n\nKeep the current top fixed outlet pulley at x305,y63 and the existing stack/plate sizes/count/positions. Add ONE modest movable pulley wheel centred aboutx270,y617, diameter34pixels, with a short rigid bracket connected to the selected top plate near y659. Cable path MUST be exactly: anchored end attached to fixed top crossbar nearx250,y45; one taut vertical strand descends tox250,y617, wraps underneath the movable pulley; a second taut strand rises fromx287,y617 toward the LEFT side of the existing top fixed pulley; cable passes over that fixed wheel and follows the ALREADY EXISTING outgoing diagonal cable to the athlete's D-handle. This forms a visible narrow U around the movable wheel, two long parallel strands above it, not a cable attached directly to the selected plate. Remove/replace the old single central direct cable; no dangling spare lines. The moving pulley bracket and top selected plate form one assembly. Keep the two steel guide rods, outer frame and base unchanged, distinct from the thin cable strands. Grey steel wheels, crisp simple mechanical details, no text, ratio label, arrows, glow or diagram inset. Real plausible cable station rather than an abstract schematic. One complete1536x1024image.\r\n"
+    },
+    {
+      "file": "wider-machine-master-prompt.txt",
+      "prompt": "Edit only the cable machine in the left third of this image. Keep every athlete, handle, outgoing diagonal cable endpoint, mat, background, camera and framing detail unchanged. Replace the crowded existing machine with a wider clearly constructed standard two-to-one cable weight station within x80..445. This change of layout is deliberate: the old render conflates the fixed steel weight guide rods and moving cable strands.\n\nNew machine outer steel frame leftpostx100 and rightpostx405, topcrossbar at y20..40 and base at y910. Weight plates x155..360, top selected single plate at y650..670; ten identical resting plates tightly stacked y692..852. TWO unmistakable thick bright steel guide rods centred x180 and x335, each fixed from topcrossbar y40 to base y880, passing through weight plates. These are stationary rods, fully continuous above and below the stack. In the SPACE BETWEEN rods: one thin dark-grey cable anchored at x238,y44 descends to movable wheel centred260,575 (radius21), wraps underneath, then rises nearx281 to left tangent of fixed outlet wheel centred305,63(radius27). The movable pulley has a short sturdy bracket connecting its axle to selected plate top nearx260,y650. From topfixedwheel the thin cable continues along the existing diagonal line toward the unchanged hand-held handle. All three mechanical elements are separate: left steel guide at180, two thin cable strands at238 and281, right steel guide at335. No added cable segments. Preserve 1536x1024 dimensions. Full image, not a crop or diagram. No text, labels, arrows or glow. Do not change athlete or pose.\r\n"
+    }
+  ],
+  "fixedContacts": {
+    "method": "User-approved exact source copy of stationary shoes and unobstructed mat. Mid copy starts y844; full copy starts y900 preserving the imagegen-repaired ankle and shoe collar. No moving anatomy or equipment repair.",
+    "reports": [
+      {
+        "inputName": "2-mid-front-candidate.png",
+        "outputName": "2-mid-fixed-contacts.png",
+        "rect": [565, 844, 1415, 966],
+        "changedPixels": 76811,
+        "changedOutsideRect": 0,
+        "masterSha256": "b072a94243f5a83456ee371d91618277d8224572bbdfb3219b0aa0d81cecc6d3",
+        "inputSha256": "0f042ec82334c62d9329baeed3af38bfffed2e26f855e11fcb3aefec26eb5439",
+        "outputSha256": "9a768f21db4f02b670b898cd7cf9260890c7dfed155da5c42eb809c4913b95b9"
+      },
+      {
+        "inputName": "3-ankle-joined.png",
+        "outputName": "3-full-fixed-contacts.png",
+        "rect": [565, 900, 1415, 966],
+        "changedPixels": 49566,
+        "changedOutsideRect": 0,
+        "masterSha256": "b072a94243f5a83456ee371d91618277d8224572bbdfb3219b0aa0d81cecc6d3",
+        "inputSha256": "d8eca0c59f71c488f3b08d1a8a21b2e25c309cac7d3862531b8c016c729c8861",
+        "outputSha256": "1926464a0e14505fbd9034156f0e612168bcd08342f96b42d4585ebb7a863d44"
+      }
+    ]
+  },
+  "equipment": {
+    "authorization": "User explicitly approved woodchopper rigid plate/pulley translation and cable reconnection on29September2026.",
+    "method": "Exact master stationary machine restoration and rigid integer assembly translation. Thin internal cable redrawn along planar tangent geometry. Outgoing cable and athlete unchanged. Geometry is a planar diagnostic, not calibrated biomechanics.",
+    "masterSha256": "b072a94243f5a83456ee371d91618277d8224572bbdfb3219b0aa0d81cecc6d3",
+    "records": [
+      {
+        "inputName": "1-two-to-one-master.png",
+        "outputName": "1-equipment-fixed.png",
+        "end": [610, 114],
+        "rise": 0,
+        "geometry": {
+          "y": 540,
+          "length": 1357.8881082257797,
+          "left": [257.0248104458669, 538.8864890053894],
+          "right": [306.9685905457932, 541.2527913459666],
+          "upper": [331.0351785887117, 61.59687369251739]
+        },
+        "baselineLength": 1357.8881082257797,
+        "lengthError": 0,
+        "changedPixels": 21391,
+        "changedOutsideMachine": 0,
+        "changedAthletePixels": 0,
+        "inputSha256": "b072a94243f5a83456ee371d91618277d8224572bbdfb3219b0aa0d81cecc6d3",
+        "outputSha256": "1bf2e782246cdaa2505bead972a5d22af8b8a5cf1db16ec39474940884949639"
+      },
+      {
+        "inputName": "2-mid-fixed-contacts.png",
+        "outputName": "2-equipment-fixed.png",
+        "end": [918, 304],
+        "rise": 179,
+        "geometry": {
+          "y": 361,
+          "length": 1358.0306714927797,
+          "left": [257.0610878112062, 359.2533864652901],
+          "right": [306.9204431025083, 362.99286617078235],
+          "upper": [331.08910372519074, 60.76798988872378]
+        },
+        "baselineLength": 1357.8881082257797,
+        "lengthError": 0.1425632670000141,
+        "changedPixels": 236509,
+        "changedOutsideMachine": 0,
+        "changedAthletePixels": 0,
+        "inputSha256": "9a768f21db4f02b670b898cd7cf9260890c7dfed155da5c42eb809c4913b95b9",
+        "outputSha256": "00ac3ba89216dd71b37bfd3fad14e50e3ae1467c042e7299fcb2108836809de8"
+      },
+      {
+        "inputName": "3-full-fixed-contacts.png",
+        "outputName": "3-equipment-fixed.png",
+        "end": [1125, 514],
+        "rise": 322,
+        "geometry": {
+          "y": 218,
+          "length": 1356.996566652491,
+          "left": [257.2058089848299, 214.7987358897995],
+          "right": [306.71990101316237, 221.7318217936355],
+          "upper": [331.31371086525814, 58.82035959112823]
+        },
+        "baselineLength": 1357.8881082257797,
+        "lengthError": -0.8915415732885776,
+        "changedPixels": 227612,
+        "changedOutsideMachine": 0,
+        "changedAthletePixels": 0,
+        "inputSha256": "1926464a0e14505fbd9034156f0e612168bcd08342f96b42d4585ebb7a863d44",
+        "outputSha256": "df4fee6f7829c01414aefc33f4f5ecf685a34e694d098748eb00d09ec252f559"
+      }
+    ]
+  },
+  "geometry": [
+    {
+      "file": "1-equipment-fixed.png",
+      "sha256": "1bf2e782246cdaa2505bead972a5d22af8b8a5cf1db16ec39474940884949639",
+      "measures": [
+        {
+          "name": "left shoe upper",
+          "y": 880,
+          "left": 856,
+          "right": 921,
+          "width": 66,
+          "leftDelta": 0,
+          "rightDelta": 0,
+          "widthPercent": 0
+        },
+        {
+          "name": "right shoe upper",
+          "y": 880,
+          "left": 1053,
+          "right": 1113,
+          "width": 61,
+          "leftDelta": 0,
+          "rightDelta": 0,
+          "widthPercent": 0
+        },
+        {
+          "name": "left forefoot",
+          "y": 910,
+          "left": 831,
+          "right": 923,
+          "width": 93,
+          "leftDelta": 0,
+          "rightDelta": 0,
+          "widthPercent": 0
+        },
+        {
+          "name": "right forefoot",
+          "y": 910,
+          "left": 1050,
+          "right": 1135,
+          "width": 86,
+          "leftDelta": 0,
+          "rightDelta": 0,
+          "widthPercent": 0
+        },
+        {
+          "name": "left planted sole",
+          "y": 928,
+          "left": 831,
+          "right": 888,
+          "width": 58,
+          "leftDelta": 0,
+          "rightDelta": 0,
+          "widthPercent": 0
+        },
+        {
+          "name": "right planted sole",
+          "y": 928,
+          "left": 1077,
+          "right": 1137,
+          "width": 61,
+          "leftDelta": 0,
+          "rightDelta": 0,
+          "widthPercent": 0
+        },
+        {
+          "name": "mat",
+          "y": 950,
+          "left": 569,
+          "right": 1412,
+          "width": 844,
+          "leftDelta": 0,
+          "rightDelta": 0,
+          "widthPercent": 0
+        },
+        {
+          "name": "machine base",
+          "y": 920,
+          "left": 97,
+          "right": 464,
+          "width": 368,
+          "leftDelta": 0,
+          "rightDelta": 0,
+          "widthPercent": 0
+        },
+        {
+          "name": "resting stack",
+          "y": 700,
+          "left": 209,
+          "right": 364,
+          "width": 156,
+          "leftDelta": 0,
+          "rightDelta": 0,
+          "widthPercent": 0
+        }
+      ]
+    },
+    {
+      "file": "2-equipment-fixed.png",
+      "sha256": "00ac3ba89216dd71b37bfd3fad14e50e3ae1467c042e7299fcb2108836809de8",
+      "measures": [
+        {
+          "name": "left shoe upper",
+          "y": 880,
+          "left": 856,
+          "right": 921,
+          "width": 66,
+          "leftDelta": 0,
+          "rightDelta": 0,
+          "widthPercent": 0
+        },
+        {
+          "name": "right shoe upper",
+          "y": 880,
+          "left": 1053,
+          "right": 1113,
+          "width": 61,
+          "leftDelta": 0,
+          "rightDelta": 0,
+          "widthPercent": 0
+        },
+        {
+          "name": "left forefoot",
+          "y": 910,
+          "left": 831,
+          "right": 923,
+          "width": 93,
+          "leftDelta": 0,
+          "rightDelta": 0,
+          "widthPercent": 0
+        },
+        {
+          "name": "right forefoot",
+          "y": 910,
+          "left": 1050,
+          "right": 1135,
+          "width": 86,
+          "leftDelta": 0,
+          "rightDelta": 0,
+          "widthPercent": 0
+        },
+        {
+          "name": "left planted sole",
+          "y": 928,
+          "left": 831,
+          "right": 888,
+          "width": 58,
+          "leftDelta": 0,
+          "rightDelta": 0,
+          "widthPercent": 0
+        },
+        {
+          "name": "right planted sole",
+          "y": 928,
+          "left": 1077,
+          "right": 1137,
+          "width": 61,
+          "leftDelta": 0,
+          "rightDelta": 0,
+          "widthPercent": 0
+        },
+        {
+          "name": "mat",
+          "y": 950,
+          "left": 569,
+          "right": 1412,
+          "width": 844,
+          "leftDelta": 0,
+          "rightDelta": 0,
+          "widthPercent": 0
+        },
+        {
+          "name": "machine base",
+          "y": 920,
+          "left": 97,
+          "right": 464,
+          "width": 368,
+          "leftDelta": 0,
+          "rightDelta": 0,
+          "widthPercent": 0
+        },
+        {
+          "name": "resting stack",
+          "y": 700,
+          "left": 209,
+          "right": 364,
+          "width": 156,
+          "leftDelta": 0,
+          "rightDelta": 0,
+          "widthPercent": 0
+        }
+      ]
+    },
+    {
+      "file": "3-equipment-fixed.png",
+      "sha256": "df4fee6f7829c01414aefc33f4f5ecf685a34e694d098748eb00d09ec252f559",
+      "measures": [
+        {
+          "name": "left shoe upper",
+          "y": 880,
+          "left": 856,
+          "right": 921,
+          "width": 66,
+          "leftDelta": 0,
+          "rightDelta": 0,
+          "widthPercent": 0
+        },
+        {
+          "name": "right shoe upper",
+          "y": 880,
+          "left": 1053,
+          "right": 1113,
+          "width": 61,
+          "leftDelta": 0,
+          "rightDelta": 0,
+          "widthPercent": 0
+        },
+        {
+          "name": "left forefoot",
+          "y": 910,
+          "left": 831,
+          "right": 923,
+          "width": 93,
+          "leftDelta": 0,
+          "rightDelta": 0,
+          "widthPercent": 0
+        },
+        {
+          "name": "right forefoot",
+          "y": 910,
+          "left": 1050,
+          "right": 1135,
+          "width": 86,
+          "leftDelta": 0,
+          "rightDelta": 0,
+          "widthPercent": 0
+        },
+        {
+          "name": "left planted sole",
+          "y": 928,
+          "left": 831,
+          "right": 888,
+          "width": 58,
+          "leftDelta": 0,
+          "rightDelta": 0,
+          "widthPercent": 0
+        },
+        {
+          "name": "right planted sole",
+          "y": 928,
+          "left": 1077,
+          "right": 1137,
+          "width": 61,
+          "leftDelta": 0,
+          "rightDelta": 0,
+          "widthPercent": 0
+        },
+        {
+          "name": "mat",
+          "y": 950,
+          "left": 569,
+          "right": 1412,
+          "width": 844,
+          "leftDelta": 0,
+          "rightDelta": 0,
+          "widthPercent": 0
+        },
+        {
+          "name": "machine base",
+          "y": 920,
+          "left": 97,
+          "right": 464,
+          "width": 368,
+          "leftDelta": 0,
+          "rightDelta": 0,
+          "widthPercent": 0
+        },
+        {
+          "name": "resting stack",
+          "y": 700,
+          "left": 209,
+          "right": 364,
+          "width": 156,
+          "leftDelta": 0,
+          "rightDelta": 0,
+          "widthPercent": 0
+        }
+      ]
+    }
+  ],
+  "repairScripts": [
+    {
+      "file": "fix-stationary-contacts.cjs",
+      "source": "const fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypto');\nconst sharp=require('C:/Users/myles/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/sharp');\nconst hash=b=>crypto.createHash('sha256').update(b).digest('hex');\n(async()=>{\n const masterFile=fs.readFileSync(path.join(__dirname,'1-two-to-one-master.png'));\n const {data:master,info}=await sharp(masterFile).removeAlpha().raw().toBuffer({resolveWithObject:true});\n const reports=[];\n for(const [inputName,outputName] of [['2-mid-front-candidate.png','2-mid-fixed-contacts.png'],['3-ankle-joined.png','3-full-fixed-contacts.png']]){\n  const input=fs.readFileSync(path.join(__dirname,inputName));\n  const raw=await sharp(input).removeAlpha().raw().toBuffer(),out=Buffer.from(raw);\n  // Previously authorized exact-copy repair of planted shoes and unobstructed mat only.\n  const rect=[565,inputName==='3-ankle-joined.png'?900:844,1415,966];let changed=0,outside=0;\n  for(let y=rect[1];y<rect[3];y++)for(let x=rect[0];x<rect[2];x++){\n   const p=(y*info.width+x)*3;\n   if(!raw.subarray(p,p+3).equals(master.subarray(p,p+3)))changed++;\n   master.copy(out,p,p,p+3);\n  }\n  for(let y=0;y<info.height;y++)for(let x=0;x<info.width;x++){\n   if(x>=rect[0]&&x<rect[2]&&y>=rect[1]&&y<rect[3])continue;\n   const p=(y*info.width+x)*3;if(!raw.subarray(p,p+3).equals(out.subarray(p,p+3)))outside++;\n  }\n  if(outside)throw Error('Outside fixed-contact rectangle changed');\n  await sharp(out,{raw:{width:info.width,height:info.height,channels:3}}).png().toFile(path.join(__dirname,outputName));\n  reports.push({inputName,outputName,rect,changedPixels:changed,changedOutsideRect:outside,masterSha256:hash(masterFile),inputSha256:hash(input),outputSha256:hash(fs.readFileSync(path.join(__dirname,outputName)))});\n }\n fs.writeFileSync(path.join(__dirname,'fixed-contacts-provenance.json'),JSON.stringify({method:'User-approved exact source copy of stationary shoes and unobstructed mat. Mid copy starts y844; full copy starts y900 preserving the imagegen-repaired ankle and shoe collar. No moving anatomy or equipment repair.',reports},null,2)+'\\n');console.log(reports);\n})();\n"
+    },
+    {
+      "file": "fix-equipment.cjs",
+      "source": "const fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypto');\nconst sharp=require('C:/Users/myles/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/sharp');\nconst hash=b=>crypto.createHash('sha256').update(b).digest('hex');\nconst upper={x:359,y:63,r:28},anchor={x:279,y:46},lower={x:282,y:540,r:25};\nfunction geometry(y,end){\n const dx=upper.x-lower.x,dy=upper.y-y,d=Math.hypot(dx,dy),n=Math.atan2(dy,dx)+Math.acos((lower.r+upper.r)/d);\n const ad=Math.hypot(anchor.x-lower.x,anchor.y-y),a=Math.atan2(anchor.y-y,anchor.x-lower.x)-Math.acos(lower.r/ad);\n const ed=Math.hypot(end[0]-upper.x,end[1]-upper.y),e=Math.atan2(end[1]-upper.y,end[0]-upper.x)-Math.acos(upper.r/ed);\n const leftAngle=(a+2*Math.PI)%(2*Math.PI),exit=(e+2*Math.PI)%(2*Math.PI),incoming=n+Math.PI;\n const length=Math.sqrt(ad*ad-lower.r**2)+(leftAngle-n)*lower.r+Math.sqrt(d*d-(lower.r+upper.r)**2)+(exit-incoming)*upper.r+Math.sqrt(ed*ed-upper.r**2);\n return {y,length,left:[lower.x+lower.r*Math.cos(a),y+lower.r*Math.sin(a)],right:[lower.x+lower.r*Math.cos(n),y+lower.r*Math.sin(n)],upper:[upper.x-upper.r*Math.cos(n),upper.y-upper.r*Math.sin(n)]};\n}\n(async()=>{\n const masterFile=fs.readFileSync(path.join(__dirname,'1-two-to-one-master.png'));\n const {data:master,info}=await sharp(masterFile).removeAlpha().raw().toBuffer({resolveWithObject:true});\n const baseline=geometry(540,[610,114]).length,records=[];\n const inputs=[['1-two-to-one-master.png','1-equipment-fixed.png',[610,114]],['2-mid-fixed-contacts.png','2-equipment-fixed.png',[918,304]],['3-full-fixed-contacts.png','3-equipment-fixed.png',[1125,514]]];\n for(const [inputName,outputName,end] of inputs){\n  const input=fs.readFileSync(path.join(__dirname,inputName)),raw=await sharp(input).removeAlpha().raw().toBuffer(),out=Buffer.from(raw);\n  let lo=130,hi=540;for(let i=0;i<60;i++){const m=(lo+hi)/2;if(geometry(m,end).length>baseline)hi=m;else lo=m;}\n  const rise=Math.round(540-(lo+hi)/2),g=geometry(540-rise,end);\n  const copy=(src,x0,y0,x1,y1,dy=0)=>{for(let y=y0;y<y1;y++)for(let x=x0;x<x1;x++){const s=(y*info.width+x)*3,t=((y+dy)*info.width+x)*3;src.copy(out,t,s,s+3);}};\n  // Exact frozen stationary machine; preserve each pose's existing outgoing cable near top outlet.\n  for(let y=0;y<945;y++)for(let x=80;x<475;x++){\n   if(y>34&&y<110&&x>350)continue;\n   const p=(y*info.width+x)*3;master.copy(out,p,p,p+3);\n  }\n  const clear=(x0,y0,x1,y1)=>{for(let y=y0;y<y1;y++)for(let x=x0;x<x1;x++){const p=(y*info.width+x)*3;out[p]=out[p+1]=out[p+2]=0;}};\n  clear(252,54,331,614);clear(247,510,312,616);clear(208,614,364,639);\n  // Guides pass behind moving assembly. Restore clean original source strips where old plate occluded them.\n  copy(master,232,54,250,614);copy(master,325,54,341,614);\n  for(let y=614;y<639;y++)for(let x=208;x<364;x++){const s=(450*info.width+x)*3,t=(y*info.width+x)*3;master.copy(out,t,s,s+3);}\n  clear(252,614,325,639);\n  // Authorized rigid source-pixel assembly translation; no scale or rotation.\n  for(const rect of [[248,513,311,567],[264,566,299,615],[208,614,364,639]])copy(master,...rect,-rise);\n  const svg=`<svg width=\"1536\" height=\"1024\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M279 49 L${g.left.join(' ')} A25 25 0 0 0 ${g.right.join(' ')} L${g.upper.join(' ')}\" fill=\"none\" stroke=\"#787878\" stroke-width=\"2.8\"/><path d=\"M279 49 L${g.left.join(' ')} A25 25 0 0 0 ${g.right.join(' ')} L${g.upper.join(' ')}\" fill=\"none\" stroke=\"#bababa\" stroke-width=\"1\"/></svg>`;\n  const withCable=await sharp(out,{raw:{width:info.width,height:info.height,channels:3}}).composite([{input:Buffer.from(svg)}]).removeAlpha().raw().toBuffer();withCable.copy(out);\n  let changed=0,outside=0,athlete=0;for(let y=0;y<info.height;y++)for(let x=0;x<info.width;x++){const p=(y*info.width+x)*3;if(!raw.subarray(p,p+3).equals(out.subarray(p,p+3))){changed++;if(x<80||x>=475)outside++;if(x>=500)athlete++;}}\n  if(outside||athlete)throw Error('Equipment repair changed outside machine');\n  await sharp(out,{raw:{width:info.width,height:info.height,channels:3}}).png().toFile(path.join(__dirname,outputName));\n  records.push({inputName,outputName,end,rise,geometry:g,baselineLength:baseline,lengthError:g.length-baseline,changedPixels:changed,changedOutsideMachine:outside,changedAthletePixels:athlete,inputSha256:hash(input),outputSha256:hash(fs.readFileSync(path.join(__dirname,outputName)))});\n }\n fs.writeFileSync(path.join(__dirname,'equipment-repair-provenance.json'),JSON.stringify({authorization:'User explicitly approved woodchopper rigid plate/pulley translation and cable reconnection on29September2026.',method:'Exact master stationary machine restoration and rigid integer assembly translation. Thin internal cable redrawn along planar tangent geometry. Outgoing cable and athlete unchanged. Geometry is a planar diagnostic, not calibrated biomechanics.',masterSha256:hash(masterFile),records},null,2)+'\\n');console.log(records);\n})();\n"
+    },
+    {
+      "file": "check-contacts.cjs",
+      "source": "const fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypto');\nconst sharp=require('C:/Users/myles/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/sharp');\n(async()=>{\n const files=['1-equipment-fixed.png','2-equipment-fixed.png','3-equipment-fixed.png'],rows=[];\n const scans=[{name:'left shoe upper',y:880,x0:800,x1:950,t:120},{name:'right shoe upper',y:880,x0:1020,x1:1170,t:120},{name:'left forefoot',y:910,x0:800,x1:950,t:120},{name:'right forefoot',y:910,x0:1020,x1:1170,t:120},{name:'left planted sole',y:928,x0:800,x1:950,t:120},{name:'right planted sole',y:928,x0:1020,x1:1170,t:120},{name:'mat',y:950,x0:500,x1:1450,t:15}];\n scans.push({name:'machine base',y:920,x0:70,x1:475,t:25},{name:'resting stack',y:700,x0:200,x1:365,t:25});\n for(const file of files){const bytes=fs.readFileSync(path.join(__dirname,file));const{data,info}=await sharp(bytes).removeAlpha().raw().toBuffer({resolveWithObject:true});const measures=scans.map(s=>{const xs=[];for(let x=s.x0;x<s.x1;x++){const p=(s.y*info.width+x)*3;if(Math.min(...data.subarray(p,p+3))>s.t)xs.push(x);}return {name:s.name,y:s.y,left:xs[0],right:xs.at(-1),width:xs.at(-1)-xs[0]+1};});rows.push({file,sha256:crypto.createHash('sha256').update(bytes).digest('hex'),measures});}\n for(const row of rows)for(let i=0;i<row.measures.length;i++){const a=row.measures[i],b=rows[0].measures[i];a.leftDelta=a.left-b.left;a.rightDelta=a.right-b.right;a.widthPercent=100*(a.width/b.width-1);}\n fs.writeFileSync(path.join(__dirname,'contact-measurements.json'),JSON.stringify(rows,null,2)+'\\n');console.log(rows.map(r=>({file:r.file,measures:r.measures})));\n})();\n"
+    }
+  ],
+  "selectedPngs": [
+    {
+      "frame": 1,
+      "file": "1-equipment-fixed.png",
+      "sha256": "1bf2e782246cdaa2505bead972a5d22af8b8a5cf1db16ec39474940884949639"
+    },
+    {
+      "frame": 2,
+      "file": "2-equipment-fixed.png",
+      "sha256": "00ac3ba89216dd71b37bfd3fad14e50e3ae1467c042e7299fcb2108836809de8"
+    },
+    {
+      "frame": 3,
+      "file": "3-equipment-fixed.png",
+      "sha256": "df4fee6f7829c01414aefc33f4f5ecf685a34e694d098748eb00d09ec252f559"
+    },
+    {
+      "frame": 4,
+      "file": "3-equipment-fixed.png",
+      "sha256": "df4fee6f7829c01414aefc33f4f5ecf685a34e694d098748eb00d09ec252f559"
+    },
+    {
+      "frame": 5,
+      "file": "2-equipment-fixed.png",
+      "sha256": "00ac3ba89216dd71b37bfd3fad14e50e3ae1467c042e7299fcb2108836809de8"
+    },
+    {
+      "frame": 6,
+      "file": "1-equipment-fixed.png",
+      "sha256": "1bf2e782246cdaa2505bead972a5d22af8b8a5cf1db16ec39474940884949639"
+    }
+  ],
+  "reuse": {
+    "4": 3,
+    "5": 2,
+    "6": 1
+  },
+  "conversion": "Native losslessWebP; decoded RGB exactly equals reviewed PNG.",
+  "mobileReview": {
+    "themes": ["dark", "light"],
+    "component": "ExerciseFormFrames",
+    "observations": "All six corrected poses and closing loop inspected in both themes. Readable cues and controls; no clipping; cable connections intact, selected plate movement plausible, resting stack and contacts stable. Native magnified ankle joins also inspected. Viewport reset and review tab closed.",
+    "complete": true,
+    "steps": [1, 2, 3, 4, 5, 6, 1],
+    "viewport": {
+      "height": 844,
+      "width": 390
+    }
+  }
+}
