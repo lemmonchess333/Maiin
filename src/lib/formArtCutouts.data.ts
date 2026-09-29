@@ -267,6 +267,16 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
       "abd79b7a1788a4902a09f3709538df390a5c8b580761882fb9bb6244707be9f8",
     sha256: "335f739987f1a5ee6b8f513d243f475eaaf794fda16834e248aeef72d0fdfa55",
   },
+  "dragon-flag": {
+    src: "form-art/dragon-flag.webp",
+    width: 480,
+    height: 320,
+    keyed: true,
+    source: "form-frames/dragon-flag/1.webp",
+    sourceSha256:
+      "7c430695b14ac60da17d6463e093fa7ff9cdfc762e69f8b6138438149a92e862",
+    sha256: "7259622797ef1fc736c92ad1153f800b5b549c91eb8a863bfdd97991dfc7bce4",
+  },
   "ez-bar-curl": {
     src: "form-art/ez-bar-curl.webp",
     width: 297,

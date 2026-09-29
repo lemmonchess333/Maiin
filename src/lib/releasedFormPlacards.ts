@@ -686,4 +686,17 @@ export const RELEASED_FORM_PLACARDS = {
       [0, "Reset", "Reset at chest before your next press."],
     ]
   ),
+  "dragon-flag": placard(
+    "dragon-flag",
+    ["Core"],
+    ["Hip Flexors", "Lower Back"],
+    [
+      [0, "Brace", "Grip behind head; brace a straight body."],
+      [0.5, "Lower", "Lower shoulders, hips, and legs together."],
+      [1, "Hover", "Hover above bench without bending your hips."],
+      [1, "Hold", "Keep your body rigid; maintain both grips."],
+      [0.5, "Raise", "Raise your straight body with controlled tension."],
+      [0, "Reset", "Reset high; keep weight off your neck."],
+    ]
+  ),
 };

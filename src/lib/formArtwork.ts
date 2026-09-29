@@ -101,6 +101,18 @@ export const FORM_ARTWORK: Record<string, FormArtwork> = {
     reference: "form-frames/pallof-press/1.webp",
     reviewFile: "docs/exercise-art/releases/2026-09-29/pallof-press.json",
   },
+  "dragon-flag": {
+    version: "anatomy-v3-2026-09-29",
+    status: "approved",
+    width: 1536,
+    height: 1024,
+    frames: Array.from(
+      { length: 6 },
+      (_, i) => `form-frames/dragon-flag/${i + 1}.webp`
+    ),
+    reference: "form-frames/dragon-flag/1.webp",
+    reviewFile: "docs/exercise-art/releases/2026-09-29/dragon-flag.json",
+  },
   "bicycle-crunch": {
     version: "anatomy-v3-2026-09-29",
     status: "approved",

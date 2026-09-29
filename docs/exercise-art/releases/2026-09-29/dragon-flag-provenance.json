@@ -1,0 +1,396 @@
+{
+  "modelPath": "Built-in imagegen for athlete and pose generation; explicitly authorized source-pixel fixed-region repair with stationary patch-edge blending. No CLI/API fallback.",
+  "canonicalReference": {
+    "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+  },
+  "exerciseMaster": {
+    "path": "docs/exercise-art/masters/dragon-flag/1.png",
+    "sha256": "b36831cae3768294b6a9d67d67c732e632a81c4e008f0a7aed39252a0c0b5d3e"
+  },
+  "selectedGenerationLedger": [
+    ["52693247-c9de-4d60-b438-90f9cdb511f4", "Frozen high-position master"],
+    [
+      "6676a175-30df-412d-8fac-68434760d900",
+      "Midpoint after length correction"
+    ],
+    [
+      "3a8e8774-0b93-4dc1-a912-f99961cd8b61",
+      "Low hover after length correction"
+    ]
+  ],
+  "rejectedMethods": "Initial master piked at the hips. Next straight pose lacked high angle; reframed and raised before freezing the master. First midpoint and low pose elongated the athlete and were corrected with imagegen. Initial stationary copy below700 introduced an old elbow sliver; limit moved to715, with grip patch edge blended to avoid a tone seam.",
+  "prompts": [
+    {
+      "file": "2-mid-length-prompt.txt",
+      "prompt": "Image1 is the midpoint dragon-flag candidate EDIT TARGET. Image2 is the frozen high-position master and anatomical size reference; image3 canonical identity reference. The midpoint accidentally elongated the athlete: feet extend too far right, legs too long relative to master. Correct ONLY raised torso/legs length and location to exactly match the master's athlete dimensions while keeping the mid-angle around35degrees. Keep upperback/head/handgrips/bench/camera fixed. Bring both feet significantly LEFT toward x940 and slightly DOWN near y330; currently aroundx1080y250 is too far. Shoulder joint nearx365y580, hip joint nearx590y465, knee joints nearx760y385, ankle joints nearx900y315. Restore master-like thigh/shin lengths and same trainer length; do NOT just shrink the shoes or zoom out the scene. Straight rigid shoulder-hip-knee line, no hip bend, both legs together and straight. Source master image2 is authoritative for limb dimensions; keep target midpoint pose rather than copying high position.\nSame one clinical nonsexual smoothwhitegrey faceless athlete, strongestpurplecore/lightlilacsecondary, blankneutralpelvis, white trainers. No typography/arrows/collage.1536x1024.\r\n"
+    },
+    {
+      "file": "2-mid-prompt.txt",
+      "prompt": "Image1 is the frozen DRAGON FLAG high-position master and edit target. Image2 is canonical athlete identity reference. Create the controlled LOWERING MIDPOINT of this exact exercise: lower the entire rigid trunk and both straight legs together to about35degrees above the horizontal bench, pivoting ONLY around the same upper-back contact. Shoulder-hip-knee-ankle must stay on one straight line with hips extended, no pike, no crunch and no knee bend. Keep body segment lengths, athlete size, camera and entire bench unchanged. Feet move down and to the right; paired ankles roughly near x930 y280, pelvis roughlyx570 y490, shoulders remain nearx350 y620. These coordinates guide the motion but straight body alignment and invariant lengths take priority. Upper back remains supported nearx350 y665, head and neck neutral, both hands keep identical grip on bench left edge. Arms/head/floor/bench/legs of bench stay as master. One athlete only.\nUse same clinical whitegrey faceless anatomy, smooth neutral blank pelvis, white trainers, strongest purple core and lighter lilac hipflexors/lowerback. Preserve qualitative colour hierarchy. Blackstudio/no text/arrows/collage.1536x1024 fullresolution, no crop/zoom.\r\n"
+    },
+    {
+      "file": "3-low-length-prompt.txt",
+      "prompt": "Image1 is the LOW dragon-flag candidate EDIT TARGET. Image2 is the accepted midpoint dimension reference, image3 frozen high master and image4 canonicalidentity. Correct the low pose's accidental body elongation: it is approximately20percent too long versus midpoint. Keep head, shoulders, arms, both handgrips, bench, floor and camera fixed. Keep low body-angle about10degrees, straight hips and knees, floating above bench. Shorten ONLY the overly elongated trunk/legs back to midpoint's actual segment dimensions, including same shoe size. Bring paired ankles fromx1100 towardx960 and complete shoes fromx1200 towardx1050, near y470..550. Hip joint should be nearx590 y580, knees nearx770 y545, ankles nearx950 y500. Do NOT scale whole scene, move the bench, shorten only the shoes, bend knees, tuck hips or return to midpoint angle. The whole straight body should end clearly before the bench's right end, as demanded by consistent athlete size. Preserve natural anatomy from reference2 while rotating to lowhover pose. Smoothclinicalwhitegreyfacelessathlete, purplecore/lilacsecondary, blankneutralpelvis, white trainers.1536x1024, no text/arrows/collage.\r\n"
+    },
+    {
+      "file": "3-low-prompt.txt",
+      "prompt": "Image1 is the dragon-flag MIDPOINT edit target; image2 frozen HIGH master; image3 canonicalidentity. Produce the LOW dragon-flag hover position by lowering the entire straight torso and both straight legs together around the same upper-back contact until the rigid shoulder-hip-knee-ankle line is about10degrees above horizontal. Athlete remains suspended over bench; only upper back and head supported, no lumbar/pelvis/leg contact. Absolutely no hip pike, knee bend, hip sag or sitting. Keep same body segment lengths and shoe size as image1; lower feet DOWN while moving right a little, not stretching legs. Paired ankles should end nearx1040y500 and feet nearx1100y480; shoulders nearx370y620, hips nearx650y575, knees nearx860y535. Exact coordinates are approximate; same athlete proportions and unbroken straight line matter most. Torso and thighs should float clear of bench top at y665, with visible black gap under abdomen/hips. Both hands retain exactgrips behindhead at left end; head, neck, arms, upper-back pivot, bench, floor/camera remain anchored to images1/2. Sameoneclinical whitegreyfacelessmannequin, smoothblankpelvis/no clothingseams/genitaldetails, white trainers. Purplecore strongest, hipflexors/lowerback lilac, no colourdrift.1536x1024, no text/arrows/collage or cropping.\r\n"
+    },
+    {
+      "file": "high-master-prompt.txt",
+      "prompt": "Image1 is the current straight dragon-flag candidate and edit target; image2 is canonical identity. This is not yet a frozen master, so reframe the ENTIRE scene slightly smaller and lower to fit a true high position. Place flat bench top around y825 and upper-back support around x420 y800. Bench feet remain fully visible near bottom, both hands grip its left end behind the head. Preserve athlete proportions and equipment geometry uniformly when reframing.\nLift the straight trunk AND both straight legs together to about75degrees above the bench, almost upright. Shoulder-hip-knee-ankle must form ONE straight rigid line, no bend at hips or knees, no crunch. The shoes should be almost above the upper-back pivot, slightly right, near x650 y90. Hip should be high above shoulder, not hovering near the bench. Body length roughly700px from shoulder to ankles, leaving complete shoes and at least30px top margin. One athlete, no duplicate body. Head and upper back remain supported on bench; neck neutral; both hands gripping left bench edges firmly, arms bent. Reserve right-side blank space for the eventual near-horizontal rigid-body pose.\nClinical nonsexual neutral whitegrey anatomical mannequin, bald faceless head, smooth blank pelvic surface with no clothing seams/genital detail, same white trainers. Core strongest purple; hipflexors and lowerback lighter lilac. Same crisp anatomical illustration and black studio floor/background.1536x1024. No text, arrows, borders, collage or extra objects.\r\n"
+    },
+    {
+      "file": "master-prompt.txt",
+      "prompt": "Use case: scientific-educational exercise illustration. The attached image is ONLY canonical athlete identity/style reference. Create a new DRAGON FLAG exercise master, one nonsexual neutral anatomical mannequin on a flat workout bench. Wide1536x1024 native image, fixed side-three-quarter camera, mostly side view with enough front surface visible to show core. Black studio backdrop, subtle dark floor, crisp white/light-grey anatomical forms, fine dark contours, same white trainers, bald faceless head and smooth featureless pelvic surface without clothing seams or genital details.\nOne complete low flat charcoal padded bench extends from screenleft near x260 to screenright near x1420, supported by two realistic metal legs on the floor. Athlete's head is near left end, upper back supported on bench at about x470 y730. Both hands reach behind head and firmly grip the left bench edges near x340 y710; both arms bent and both grips visible. Neck neutral, head resting naturally with no weight through the neck. The athlete's trunk, hips, knees and ankles form ONE straight rigid line rising upward and slightly right from upper-back pivot, about70degrees above horizontal: shoulder x480 y680, pelvis x590 y400, paired feet aboutx730 y80. Legs together, knees straight, hips extended without tuck or pike. This is the high dragon-flag position, supported on upper back, NOT a seated leg raise and NOT a shoulderstand supported by hands at hips. Full athlete, shoes and bench fully in frame with margin. Reserve space to the right for later straight-body lowering while camera and bench stay fixed.\nCore abdominal wall strongest saturated purple. Hip flexor region and visible lower-back muscle contribution subtle lighter lilac; arms/legs remain whitegrey. Clinical educational neutral rendering, no text, labels, arrows, glow, second person or collage.\r\n"
+    },
+    {
+      "file": "straight-master-prompt.txt",
+      "prompt": "Edit target image1 is the dragon-flag candidate. Image2 is canonical athlete identity reference. Correct ONLY the raised body alignment for a true dragon flag: current image has a large bend at the hips and a mostly horizontal torso, like a leg raise, which is wrong. Raise the chest/torso AND hips together so shoulder-to-hip-to-knee-to-ankle makes ONE straight diagonal plank at about65degrees above the bench. Keep upper-back pivot on bench near x390 y640. Move pelvis upward and LEFT to around x515 y370; place knees near x600 y210 and ankles near x675 y65. Shoulders, pelvis, knees and ankles lie on the same straight line; no abdominal crunch, no hip crease, no pike. Flatten the extended hip angle. Both legs stay together and straight; paired shoes stay fully in frame with margin. If needed keep high pose slightly less steep to fit, but straight shoulder-hip-knee alignment is mandatory.\nKeep bench, legs, floor, camera, hands gripping left end, forearms, elbows and head fixed in their original locations. Upper back carries the support, neck neutral. One clinical whitegrey faceless mannequin, strongest purplecore and lilac hipflexor/lowerback secondary. Smoothblankpelvis without clothingseams/genitaldetail.1536x1024, no text/arrows/collage. Do not retain the original bent torso/hip silhouette.\r\n"
+    }
+  ],
+  "fixedContacts": {
+    "authorization": "Existing explicit fixed-contact master-source copying authorization applies; no anatomy rotation or moving-body transformation.",
+    "method": "Restore exact fixed bench/floor below715 and fixed hand grip below675, with an eight-pixel right and five-pixel top blend confined to the source patch; avoid master upper-arm silhouette at the padding seam. Native wrist/contact joins require visual approval before release.",
+    "masterSha256": "b36831cae3768294b6a9d67d67c732e632a81c4e008f0a7aed39252a0c0b5d3e",
+    "records": [
+      {
+        "inputName": "2-mid-candidate.png",
+        "outputName": "2-fixed-contacts.png",
+        "regions": [
+          [0, 715, 1536, 1024],
+          [100, 675, 180, 715]
+        ],
+        "inputSha256": "a842c6d3e6705bd92eebea26608199262096449c65002be5aa89da6833e38509",
+        "outputSha256": "3a9063c488f38df67555d624f770da076ccfc3e4bd580793b4ed642c761ee064"
+      },
+      {
+        "inputName": "3-low-length-candidate.png",
+        "outputName": "3-fixed-contacts.png",
+        "regions": [
+          [0, 715, 1536, 1024],
+          [100, 675, 180, 715]
+        ],
+        "inputSha256": "0ab86db1d236594f50f46a60f927e3130eccc134fd736c715d6e7d13558e1b73",
+        "outputSha256": "768ea4a9991e11dee140f6bf336c3f0690ca6898ba0c6b49c3ba0ddba80a6111"
+      }
+    ]
+  },
+  "geometry": [
+    {
+      "file": "1-fixed-contacts.png",
+      "sha256": "b36831cae3768294b6a9d67d67c732e632a81c4e008f0a7aed39252a0c0b5d3e",
+      "measures": [
+        {
+          "name": "grip upper",
+          "y": 700,
+          "left": 115,
+          "right": 161,
+          "width": 47,
+          "leftDelta": 0,
+          "rightDelta": 0,
+          "widthPercent": 0
+        },
+        {
+          "name": "grip lower",
+          "y": 725,
+          "left": 122,
+          "right": 154,
+          "width": 33,
+          "leftDelta": 0,
+          "rightDelta": 0,
+          "widthPercent": 0
+        },
+        {
+          "name": "left bench leg",
+          "y": 820,
+          "left": 189,
+          "right": 222,
+          "width": 34,
+          "leftDelta": 0,
+          "rightDelta": 0,
+          "widthPercent": 0
+        },
+        {
+          "name": "right bench leg",
+          "y": 820,
+          "left": 1093,
+          "right": 1127,
+          "width": 35,
+          "leftDelta": 0,
+          "rightDelta": 0,
+          "widthPercent": 0
+        },
+        {
+          "name": "bench pad",
+          "y": 720,
+          "left": 188,
+          "right": 1168,
+          "width": 981,
+          "leftDelta": 0,
+          "rightDelta": 0,
+          "widthPercent": 0
+        },
+        {
+          "name": "left bench foot",
+          "y": 930,
+          "left": 162,
+          "right": 244,
+          "width": 83,
+          "leftDelta": 0,
+          "rightDelta": 0,
+          "widthPercent": 0
+        },
+        {
+          "name": "right bench foot",
+          "y": 930,
+          "left": 1109,
+          "right": 1154,
+          "width": 46,
+          "leftDelta": 0,
+          "rightDelta": 0,
+          "widthPercent": 0
+        }
+      ]
+    },
+    {
+      "file": "2-fixed-contacts.png",
+      "sha256": "3a9063c488f38df67555d624f770da076ccfc3e4bd580793b4ed642c761ee064",
+      "measures": [
+        {
+          "name": "grip upper",
+          "y": 700,
+          "left": 115,
+          "right": 161,
+          "width": 47,
+          "leftDelta": 0,
+          "rightDelta": 0,
+          "widthPercent": 0
+        },
+        {
+          "name": "grip lower",
+          "y": 725,
+          "left": 122,
+          "right": 154,
+          "width": 33,
+          "leftDelta": 0,
+          "rightDelta": 0,
+          "widthPercent": 0
+        },
+        {
+          "name": "left bench leg",
+          "y": 820,
+          "left": 189,
+          "right": 222,
+          "width": 34,
+          "leftDelta": 0,
+          "rightDelta": 0,
+          "widthPercent": 0
+        },
+        {
+          "name": "right bench leg",
+          "y": 820,
+          "left": 1093,
+          "right": 1127,
+          "width": 35,
+          "leftDelta": 0,
+          "rightDelta": 0,
+          "widthPercent": 0
+        },
+        {
+          "name": "bench pad",
+          "y": 720,
+          "left": 188,
+          "right": 1168,
+          "width": 981,
+          "leftDelta": 0,
+          "rightDelta": 0,
+          "widthPercent": 0
+        },
+        {
+          "name": "left bench foot",
+          "y": 930,
+          "left": 162,
+          "right": 244,
+          "width": 83,
+          "leftDelta": 0,
+          "rightDelta": 0,
+          "widthPercent": 0
+        },
+        {
+          "name": "right bench foot",
+          "y": 930,
+          "left": 1109,
+          "right": 1154,
+          "width": 46,
+          "leftDelta": 0,
+          "rightDelta": 0,
+          "widthPercent": 0
+        }
+      ]
+    },
+    {
+      "file": "3-fixed-contacts.png",
+      "sha256": "768ea4a9991e11dee140f6bf336c3f0690ca6898ba0c6b49c3ba0ddba80a6111",
+      "measures": [
+        {
+          "name": "grip upper",
+          "y": 700,
+          "left": 115,
+          "right": 161,
+          "width": 47,
+          "leftDelta": 0,
+          "rightDelta": 0,
+          "widthPercent": 0
+        },
+        {
+          "name": "grip lower",
+          "y": 725,
+          "left": 122,
+          "right": 154,
+          "width": 33,
+          "leftDelta": 0,
+          "rightDelta": 0,
+          "widthPercent": 0
+        },
+        {
+          "name": "left bench leg",
+          "y": 820,
+          "left": 189,
+          "right": 222,
+          "width": 34,
+          "leftDelta": 0,
+          "rightDelta": 0,
+          "widthPercent": 0
+        },
+        {
+          "name": "right bench leg",
+          "y": 820,
+          "left": 1093,
+          "right": 1127,
+          "width": 35,
+          "leftDelta": 0,
+          "rightDelta": 0,
+          "widthPercent": 0
+        },
+        {
+          "name": "bench pad",
+          "y": 720,
+          "left": 188,
+          "right": 1168,
+          "width": 981,
+          "leftDelta": 0,
+          "rightDelta": 0,
+          "widthPercent": 0
+        },
+        {
+          "name": "left bench foot",
+          "y": 930,
+          "left": 162,
+          "right": 244,
+          "width": 83,
+          "leftDelta": 0,
+          "rightDelta": 0,
+          "widthPercent": 0
+        },
+        {
+          "name": "right bench foot",
+          "y": 930,
+          "left": 1109,
+          "right": 1154,
+          "width": 46,
+          "leftDelta": 0,
+          "rightDelta": 0,
+          "widthPercent": 0
+        }
+      ]
+    }
+  ],
+  "repairScripts": [
+    {
+      "file": "fix-stationary-contacts.cjs",
+      "source": "const fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypto');\nconst sharp=require('C:/Users/myles/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/sharp');\nconst hash=b=>crypto.createHash('sha256').update(b).digest('hex');\n(async()=>{const masterBytes=fs.readFileSync(path.join(__dirname,'1-master.png')),master=await sharp(masterBytes).removeAlpha().raw().toBuffer(),records=[];const W=1536,H=1024;\n for(const [inputName,outputName] of [['2-mid-candidate.png','2-fixed-contacts.png'],['3-low-length-candidate.png','3-fixed-contacts.png']]){const input=fs.readFileSync(path.join(__dirname,inputName)),out=await sharp(input).removeAlpha().raw().toBuffer();const regions=[[0,715,W,H],[100,675,180,715]];for(const [x0,y0,x1,y1]of regions)for(let y=y0;y<y1;y++)for(let x=x0;x<x1;x++){const p=(y*W+x)*3;if(y0===675){const alpha=Math.min(1,(180-x)/8,(y-675)/5);for(let c=0;c<3;c++)out[p+c]=Math.round(master[p+c]*alpha+out[p+c]*(1-alpha));}else master.copy(out,p,p,p+3);}await sharp(out,{raw:{width:W,height:H,channels:3}}).png().toFile(path.join(__dirname,outputName));records.push({inputName,outputName,regions,inputSha256:hash(input),outputSha256:hash(fs.readFileSync(path.join(__dirname,outputName)))});await sharp(out,{raw:{width:W,height:H,channels:3}}).extract({left:95,top:640,width:430,height:110}).resize(1290,330).png().toFile(path.join(__dirname,outputName.replace('.png','-join-inspection.png')));}\n fs.copyFileSync(path.join(__dirname,'1-master.png'),path.join(__dirname,'1-fixed-contacts.png'));fs.writeFileSync(path.join(__dirname,'fixed-contacts-provenance.json'),JSON.stringify({authorization:'Existing explicit fixed-contact master-source copying authorization applies; no anatomy rotation or moving-body transformation.',method:'Restore exact fixed bench/floor below715 and fixed hand grip below675, with an eight-pixel right and five-pixel top blend confined to the source patch; avoid master upper-arm silhouette at the padding seam. Native wrist/contact joins require visual approval before release.',masterSha256:hash(masterBytes),records},null,2));})();\n\r\n\r\n\r\n"
+    },
+    {
+      "file": "check-contacts.cjs",
+      "source": "const fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypto');\nconst sharp=require('C:/Users/myles/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/sharp');\n(async()=>{\n const rows=[];\n const scans=[['grip upper',700,100,180,120],['grip lower',725,100,180,120],['left bench leg',820,170,240,50],['right bench leg',820,1080,1150,50],['bench pad',720,180,1200,20],['left bench foot',930,140,245,40],['right bench foot',930,1060,1190,40]];\n for(const file of ['1-fixed-contacts.png','2-fixed-contacts.png','3-fixed-contacts.png']){const bytes=fs.readFileSync(path.join(__dirname,file));const {data,info}=await sharp(bytes).removeAlpha().raw().toBuffer({resolveWithObject:true});const measures=scans.map(([name,y,x0,x1,t])=>{const xs=[];for(let x=x0;x<x1;x++){const p=(y*info.width+x)*3;if(Math.min(...data.subarray(p,p+3))>t)xs.push(x);}return {name,y,left:xs[0],right:xs.at(-1),width:xs.at(-1)-xs[0]+1};});rows.push({file,sha256:crypto.createHash('sha256').update(bytes).digest('hex'),measures});}\n for(const row of rows)for(let i=0;i<row.measures.length;i++){const a=row.measures[i],b=rows[0].measures[i];a.leftDelta=a.left-b.left;a.rightDelta=a.right-b.right;a.widthPercent=100*(a.width/b.width-1);}\n fs.writeFileSync(path.join(__dirname,'contact-measurements.json'),JSON.stringify(rows,null,2));console.log(JSON.stringify(rows,null,2));\n})();\n\r\n"
+    }
+  ],
+  "selectedPngs": [
+    {
+      "frame": 1,
+      "file": "1-fixed-contacts.png",
+      "sha256": "b36831cae3768294b6a9d67d67c732e632a81c4e008f0a7aed39252a0c0b5d3e"
+    },
+    {
+      "frame": 2,
+      "file": "2-fixed-contacts.png",
+      "sha256": "3a9063c488f38df67555d624f770da076ccfc3e4bd580793b4ed642c761ee064"
+    },
+    {
+      "frame": 3,
+      "file": "3-fixed-contacts.png",
+      "sha256": "768ea4a9991e11dee140f6bf336c3f0690ca6898ba0c6b49c3ba0ddba80a6111"
+    },
+    {
+      "frame": 4,
+      "file": "3-fixed-contacts.png",
+      "sha256": "768ea4a9991e11dee140f6bf336c3f0690ca6898ba0c6b49c3ba0ddba80a6111"
+    },
+    {
+      "frame": 5,
+      "file": "2-fixed-contacts.png",
+      "sha256": "3a9063c488f38df67555d624f770da076ccfc3e4bd580793b4ed642c761ee064"
+    },
+    {
+      "frame": 6,
+      "file": "1-fixed-contacts.png",
+      "sha256": "b36831cae3768294b6a9d67d67c732e632a81c4e008f0a7aed39252a0c0b5d3e"
+    }
+  ],
+  "reuse": {
+    "4": 3,
+    "5": 2,
+    "6": 1
+  },
+  "conversion": "Native losslessWebP; decoded RGB exactly equals reviewed PNG.",
+  "mobileReview": {
+    "complete": true,
+    "reviewedAt": "2026-09-29T20:32:18.093Z",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "component": "ExerciseFormFrames",
+    "themes": ["dark", "light"],
+    "sequence": [1, 2, 3, 4, 5, 6, 1],
+    "evidence": "Final shortened low pose and blended stationary grip patch reviewed at native resolution and sequentially in actual mobile player. Entire athlete and bench remain visible, grip and bench stay fixed, no hip pike or knee bend. Captions and cues legible; no clipping. Earlier elongated low candidate rejected during mobile review.",
+    "frames": [
+      {
+        "file": "1-fixed-contacts.png",
+        "sha256": "b36831cae3768294b6a9d67d67c732e632a81c4e008f0a7aed39252a0c0b5d3e"
+      },
+      {
+        "file": "2-fixed-contacts.png",
+        "sha256": "3a9063c488f38df67555d624f770da076ccfc3e4bd580793b4ed642c761ee064"
+      },
+      {
+        "file": "3-fixed-contacts.png",
+        "sha256": "768ea4a9991e11dee140f6bf336c3f0690ca6898ba0c6b49c3ba0ddba80a6111"
+      },
+      {
+        "file": "3-fixed-contacts.png",
+        "sha256": "768ea4a9991e11dee140f6bf336c3f0690ca6898ba0c6b49c3ba0ddba80a6111"
+      },
+      {
+        "file": "2-fixed-contacts.png",
+        "sha256": "3a9063c488f38df67555d624f770da076ccfc3e4bd580793b4ed642c761ee064"
+      },
+      {
+        "file": "1-fixed-contacts.png",
+        "sha256": "b36831cae3768294b6a9d67d67c732e632a81c4e008f0a7aed39252a0c0b5d3e"
+      }
+    ]
+  }
+}
