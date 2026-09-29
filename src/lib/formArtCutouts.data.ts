@@ -127,6 +127,16 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
       "2bf40fd0c782fd1b316e3dded539f2ab0564592bba09130deec7317c8cfceffc",
     sha256: "b264a3ed2fd2097391f81da147ca2f32144a6cce354a8bd1772d918a69cd587f",
   },
+  "cable-woodchopper": {
+    src: "form-art/cable-woodchopper.webp",
+    width: 480,
+    height: 340,
+    keyed: true,
+    source: "form-frames/cable-woodchopper/1.webp",
+    sourceSha256:
+      "afee5565830317710ab999faca850ab492c959f06df2c60d22e146c8fd97d44e",
+    sha256: "1c08ea5c166d58cdf3307193b62ecda473344bb325aacb9f350968c6f2f8755c",
+  },
   "chest-press-machine": {
     src: "form-art/chest-press-machine.webp",
     width: 422,
