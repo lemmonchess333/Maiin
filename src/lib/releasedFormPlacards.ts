@@ -270,33 +270,5 @@ export const RELEASED_FORM_PLACARDS = {
       [0, "Reset", "Stand tall without leaning backward."],
     ]
   ),
-  "barbell-shrug": placard(
-    "barbell-shrug",
-    ["upper trapezius"],
-    ["forearm gripping muscles"],
-    [
-      [0, "Start", "Stand tall with arms straight."],
-      [
-        0.3333333333333333,
-        "Begin shrug",
-        "Lift shoulders without bending elbows.",
-      ],
-      [
-        0.6666666666666666,
-        "Continue lift",
-        "Raise shoulders straight up; avoid rolling.",
-      ],
-      [1, "Top", "Hold briefly with your neck neutral."],
-      [
-        0.6666666666666666,
-        "Lower",
-        "Lower shoulders slowly with straight arms.",
-      ],
-      [
-        0.3333333333333333,
-        "Finish lowering",
-        "Finish lowering without rocking your torso.",
-      ],
-    ]
-  ),
+  "barbell-shrug": placard("barbell-shrug", ["upper trapezius"], ["forearm gripping muscles"], [[0,"Set","Stand tall with arms straight."],[0.5,"Lift","Lift shoulders straight toward your ears."],[1,"Top","Keep elbows straight and neck neutral."],[1,"Hold","Hold briefly without rolling your shoulders."],[0.5,"Lower","Lower your shoulders slowly with control."],[0,"Reset","Return shoulders fully, keeping feet planted."]]),
 };

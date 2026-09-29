@@ -64,8 +64,8 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
     keyed: true,
     source: "form-frames/barbell-shrug/1.webp",
     sourceSha256:
-      "121d011abdc76254d8af96dc68f087427ee409c0ce150c9d0a8c14b9bf47a404",
-    sha256: "9c50399e9c98a328b73bdb06948dc4a6e01aed37b4019d6d8e686c42aee47326",
+      "6b0c887d9d7b07db7cb1820faa1e5a22567ac6d3f0aedc46882eefd8107ca554",
+    sha256: "ba729705dee43819b3ce12c321b91e29abf454433ea125d00b5ce08ce574501d",
   },
   "barbell-upright-row": {
     src: "form-art/barbell-upright-row.webp",
