@@ -131,6 +131,23 @@ describe("SessionCommandCard — the picture at the right (DS3)", () => {
     expect(container.querySelector("svg.lucide-dumbbell")).toBeNull();
   });
 
+  it("sets the description and dose beside the picture, under the title", () => {
+    /* Below the picture, a lift day's figure (taller than two lines of
+       heading) left an empty band between the title and "~57 min". */
+    renderCard({
+      sport: "lift",
+      figure: <span data-testid="muscles" />,
+      meta: ["~57 min"],
+    });
+    const column = screen.getByRole("heading", {
+      name: "Long 15K",
+    }).parentElement!;
+    // MetaLine sets the numeral in its own span, so read the text.
+    expect(column.textContent).toContain("~57 min");
+    expect(column.textContent).toContain("15km steady state");
+    expect(column).not.toContainElement(screen.getByTestId("muscles"));
+  });
+
   it("keeps the figure from screen readers, as it does the tile", () => {
     // Train's lift card passes the day's muscles, whose own label says
     // "Muscles trained this session": untrue of a day not yet done. The
