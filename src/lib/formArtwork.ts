@@ -41,6 +41,7 @@ const ownerReleased = (
 // Preserve the seven previously shipped sets while replacements are reviewed.
 // These entries do not claim that the art passes the new consistency standard.
 export const FORM_ARTWORK: Record<string, FormArtwork> = {
+  "dead-bug": { version: "anatomy-v3-2026-09-29", status: "approved", width: 1536, height: 1024, frames: Array.from({length:6}, (_,i) => `form-frames/dead-bug/${i+1}.webp`), reference: "form-frames/dead-bug/3.webp", reviewFile: "docs/exercise-art/releases/2026-09-29/dead-bug.json" },
   "toe-touches": { version: "anatomy-v3-2026-09-29", status: "approved", width: 1536, height: 1024, frames: Array.from({length:6}, (_,i) => `form-frames/toe-touches/${i+1}.webp`), reference: "form-frames/toe-touches/1.webp", reviewFile: "docs/exercise-art/releases/2026-09-29/toe-touches.json" },
   "pike-push-up": { version: "anatomy-v3-2026-09-29", status: "approved", width: 1536, height: 1024, frames: Array.from({length:6}, (_,i) => `form-frames/pike-push-up/${i+1}.webp`), reference: "form-frames/pike-push-up/1.webp", reviewFile: "docs/exercise-art/releases/2026-09-29/pike-push-up.json" },
   "glute-bridge": { version: "anatomy-v3-2026-09-29", status: "approved", width: 1536, height: 1024, frames: Array.from({length:6}, (_,i) => `form-frames/glute-bridge/${i+1}.webp`), reference: "form-frames/glute-bridge/1.webp", reviewFile: "docs/exercise-art/releases/2026-09-29/glute-bridge.json" },

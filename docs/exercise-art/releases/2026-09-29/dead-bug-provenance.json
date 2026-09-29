@@ -1,0 +1,264 @@
+{
+  "modelPath": "Built-in imagegen only; canonical master and adjacent poses. No CLI/API/model fallback.",
+  "canonicalReference": {
+    "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+  },
+  "exerciseMaster": {
+    "path": "docs/exercise-art/masters/dead-bug/1.png",
+    "sha256": "006de1036cf3e55ad3e8a1cab99444bf2edbab4c12a99735db88c7eef9254ab0"
+  },
+  "nativeDimensions": {
+    "width": 1536,
+    "height": 1024
+  },
+  "generation": [
+    "Scientific educational exercise illustration, DEAD BUG starting position. Use supplied canonical adult faceless anatomical mannequin exact identity proportions outlines and simple white trainers. Mannequin lies face up on thin charcoal exercise mat on pure black background. Camera elevated side three-quarter at 25 degrees above floor looking toward feet from the head-side, so both arms and both legs visible. Head at image-left, feet toward image-right; entire mat and body with generous room for later extended limbs. Both arms straight vertical up toward ceiling with palms facing each other. Both hips and knees bent90 degrees, thighs vertical, shins parallel to floor. Lower back pressed flat against mat; head and shoulders resting. Abdominals and obliques deepest purple, hip flexor region subtle lilac. Anatomical clinical white/light grey body, smooth non-detailed mannequin anatomy, no garments. One native landscape1536x1024 image, no text/arrows/grid. Scene master with fixed mat camera scale head torso pelvis.",
+    "Edit image2 as dead-bug scene MASTER. Preserve pose, identity image1, mat, anatomy and palette exactly. Only reframe camera MUCH WIDER so body occupies middle 60% of width and 65% height on same1536x1024 black canvas. Need large empty left margin beyond head to accommodate fully reaching arm overhead, and large empty right margin beyond feet to accommodate straightened leg. Extend mat accordingly. Head/shoulders/back rest on mat, both arms vertical and both knees90 degrees. Native full-resolution regeneration, not low-quality resize. One image no text.",
+    "Dead bug alternating exercise phase A fully extended. Reference1 canonical identity; reference2 edit target scene master. Preserve exactly camera size mat head shoulders torso pelvis and purple core. Lower NEAR-side arm overhead toward image-left so it becomes nearly parallel mat, hand hovering just above floor beyond head. Simultaneously straighten FAR-side leg toward image-right, heel hovering above mat, knee straight. This is CONTRALATERAL: near arm+far leg. The far arm stays vertical, near leg stays bent90 at hip/knee. All lower back remains flat on mat. Both sides anatomically attached, no extra limbs. Fixed1536x1024 single image, no text.",
+    "Dead bug alternating exercise phase B fully extended. Reference1 canonical identity; reference2 edit target scene master. Preserve exactly camera size mat head shoulders torso pelvis purple core. Lower FAR-side arm overhead toward image-left nearly parallel mat, hand hovering just above floor beyond head. Simultaneously straighten NEAR-side leg toward image-right, heel hovering above mat, knee straight. CONTRALATERAL opposite side: far arm+near leg. The NEAR arm stays straight vertical up, FAR leg remains bent90 at hip/knee. Lower back remains flat. Both sides anatomically attached, no extra limbs. Fixed1536x1024 single image, no text.",
+    "Dead bug FIRST SIDE intermediate. Image1 canonical image2 exact scene. Move only NEAR arm and FAR leg halfway toward extension: near arm tilts overhead left45degrees from vertical, elbow straight; FAR leg extends diagonally right/down with knee partly straightened45degrees, heel still high above mat. FAR arm remains vertical and NEAR leg bent90. CONTRALATERAL near arm/far leg. Head shoulders lowerback hips and mat must not shift. Same camera scale and purple core, solid black,1536x1024 no text.",
+    "Dead bug SECOND SIDE intermediate. Image1 canonical image2 exact scene master. Move only FAR arm and NEAR leg halfway toward extension: FAR arm tilts overhead left45degrees from vertical, elbow straight; NEAR leg extends diagonally right/down with knee partly straightened45degrees, heel still high above mat. NEAR arm remains vertical and FAR leg bent90. CONTRALATERAL far arm/near leg, distinct from opposite side. Head shoulders lowerback hips mat do not shift. Same camera scale purple core. Background EXACT SOLID BLACK with no glow halo gradient lighting.1536x1024 no text.",
+    "DEAD BUG correct opposite intermediate using IMAGE3 as EDIT TARGET (the valid fully extended opposite pair). Image1 canonical identity, image2 center master. In image3 leave VERTICAL ARM unchanged entirely. Raise only the extended arm that is BEHIND head (farther from viewer) about45degrees from floor, so ear stays visibly in front of that arm. Bend/raise the foreground extended leg halfway toward tabletop. Rear leg stays bent90, vertical arm stays same. This retains SAME contralateral pair as image3, just partial reach. DO NOT swap arms, DO NOT put raised reaching arm in front of ear. Keep head pelvis torso mat scale camera. Pure black background remove any halo,1536x1024 no text.",
+    "Background-only cleanup on image3 EDIT TARGET. Remove ALL grey halo/glow behind mannequin and around mat to uniform pure black #000000 matching image2. Preserve every pose, anatomy, limb, torso, mat position and purple colour of image3 unchanged. Image1 canonical identity, image2 exercise scene master, image3 edit target. One native1536x1024 image no text."
+  ],
+  "sourcePilot": "docs/exercise-art/pilots/parallel-twenty/dead-bug",
+  "sourcePilotReview": {
+    "exerciseId": "dead-bug",
+    "status": "six-frame-candidate-needs-review",
+    "approved": false,
+    "issues": [
+      "Half-B initial same-side pairing rejected; targeted edit from full B now preserves far arm/near leg pairing; independent recheck pending.",
+      "Intermediate halos corrected; full A/B pairing independently checked by parent as plausible.",
+      "Discrete six teaching phases; player and mobile playback unverified."
+    ],
+    "frames": [
+      {
+        "frame": 1,
+        "source": "half-a-clean.png",
+        "sha256": "8f674091ebec1672e579b85c03cb6a94c535d520de90ca19a2fa7811accb4d09",
+        "dimensions": [
+          1536,
+          1024
+        ],
+        "cue": "Extend near arm and opposite far leg partway, keeping lower back flat."
+      },
+      {
+        "frame": 2,
+        "source": "extension-a.png",
+        "sha256": "5c640e1a54f9526ea75be2db020360dde77f01dcd6f255b253bb420d0922d360",
+        "dimensions": [
+          1536,
+          1024
+        ],
+        "cue": "Reach opposite limbs fully without arching the back."
+      },
+      {
+        "frame": 3,
+        "source": "master.png",
+        "sha256": "006de1036cf3e55ad3e8a1cab99444bf2edbab4c12a99735db88c7eef9254ab0",
+        "dimensions": [
+          1536,
+          1024
+        ],
+        "cue": "Return both limbs to tabletop."
+      },
+      {
+        "frame": 4,
+        "source": "half-b-corrected.png",
+        "sha256": "16e8b533b08bb7ec79430d5184042c3538ec2416972c88115605e92e4d34f322",
+        "dimensions": [
+          1536,
+          1024
+        ],
+        "cue": "Extend far arm and opposite near leg partway."
+      },
+      {
+        "frame": 5,
+        "source": "extension-b.png",
+        "sha256": "3553cb67ba7175eec1cffeecf0f5b6503ce69bd4d73770aaf68c270c16dcef2b",
+        "dimensions": [
+          1536,
+          1024
+        ],
+        "cue": "Reach the opposite pair fully, without losing back contact."
+      },
+      {
+        "frame": 6,
+        "source": "master.png",
+        "sha256": "006de1036cf3e55ad3e8a1cab99444bf2edbab4c12a99735db88c7eef9254ab0",
+        "dimensions": [
+          1536,
+          1024
+        ],
+        "cue": "Return to tabletop before repeating."
+      }
+    ],
+    "canonical": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "runtimeVerified": false
+  },
+  "repairPrompts": [
+    {
+      "file": "arm-only-prompt.json",
+      "prompt": "Edit ONLY ONE ARM in the FIRST image. Do not move either leg yet. Keep the foreground/near arm exactly vertical and intact, including its hand at x570,y280 and its shoulder at x570,y620. This near arm is a frozen part of the image. Move ONLY the other arm (the background/far arm, with hand originally x670,y270) overhead to LEFT, ending above the mat behind the head. Remove its original upright silhouette at x670. The new overhead arm must connect to the far shoulder behind the head and torso, while the near upright arm remains clearly visible IN FRONT OF the chest at x570. Exactly two arms: the unchanged near arm upright in front; far arm stretched overhead behind head. Both legs stay unchanged in tabletop, and every other figure/mat/background region remains unchanged. SECOND image is canonical identity. Keep original native1536x1024 size, camera, white-grey fine-outline anatomy, featureless pelvis, purple core, pale hip flexors, white trainers. No text. This is a single-shoulder pose-conditioning intermediate, not the final opposite-limb exercise frame.",
+      "reason": "Change method from simultaneous opposite-pair editing to a single shoulder edit, keeping both legs fixed until arm topology is verified."
+    },
+    {
+      "file": "half-b-corrected-prompt.json",
+      "prompt": "Edit FIRST image (correct opposite-pair full extension) to the halfway position of the SAME pair: raise the FAR overhead arm partway toward vertical, stopping diagonally above/behind the head, and bend/raise the NEAR extended leg partway toward tabletop. Keep the upright NEAR arm frozen at x570 and keep the bent FAR leg completely unchanged. Exactly TWO arms/TWO legs. Maintain the far moving arm BEHIND head/torso, and the near moving leg IN FRONT of the far bent thigh. Do not switch sides, duplicate a leg or restore a second tabletop shoe. Lower back, head, pelvis and mat stay fixed; same camera, crop, limb lengths and proportions. SECOND is original exercise master only; THIRD canonical identity.1536x1024 landscape, pureblackbackground, facelesswhitegrey anatomical contours, featurelesspelvis, purplecore, lilachipflexors, whitetrainers. No labels. Halfway opposite-pair B reach only."
+    },
+    {
+      "file": "near-leg-only-prompt.json",
+      "prompt": "Edit FIRST image's NEAR LEG ONLY, completing an opposite-limb dead-bug extension. The far arm already reaches overhead LEFT and the near arm stays vertically upright at x570; KEEP BOTH ARMS EXACTLY AS THEY ARE. Keep the far leg in its existing bent tabletop position. Straighten the NEAR leg (the foreground thigh attached to near hip at x840,y650) by lowering that thigh and extending its knee to reach RIGHT, heel hovering above mat. The extended near leg must pass in FRONT of the still-bent far thigh; near leg fully visible, far leg remains behind. Same hip location, natural unchanged femur/tibia lengths, no extra limbs. Do not change head, back contact, torso, hands, forearms, upright hand x570, far tabletop leg, mat, camera or scale. FIRST is edit target/single-arm-conditioned pose; SECOND frozen master; THIRD canonical identity. Preserve1536x1024 original canvas, pureblack background, greywhite faceless anatomy, smooth featureless pelvis, white trainers, purple core and lilac hip flexors. No labels. Only the near hip and knee articulate; the far arm and near leg now form the opposite pair."
+    },
+    {
+      "file": "opposite-pair-prompt.json",
+      "prompt": "Create the opposite-side dead-bug extension by editing FIRST image, the frozen exercise master. SECOND image is canonical identity. Keep the NEAR arm exactly upright where it already is (the arm over the front/near shoulder, image x570): preserve its complete hand-elbow-shoulder chain unchanged. Extend the FAR arm only overhead toward LEFT, passing BEHIND the head; it must remain visibly attached to the far shoulder. At the same time straighten and lower the NEAR leg (the frontmost thigh) toward RIGHT, hovering above the mat; the FAR leg stays bent in tabletop. This is opposite-arm/opposite-leg pairing. Show exactly two arms and two legs, with correct near/far occlusion; do not reuse the far upright arm at x660 as if it were the near arm. Keep torso, pelvis, lower back, head, mat and camera fixed, with lower back firmly on mat. Leg extends through the hip and knee with unchanged bone lengths; heel hovers, not rests. Reach arm overhead only as far as possible without back arch. Preserve original native1536x1024 landscape dimensions, fullbody/mat margins, neutral faceless grey-white anatomy, white trainers, strongest purple abs/obliques and lilac hip flexors. Smooth featureless pelvis; no text/glow/extra limbs.",
+      "reason": "Old B poses place upright arm at old far-arm screen location despite far arm extending; near-shoulder connection needs clearer geometry."
+    },
+    {
+      "file": "remove-duplicate-leg-prompt.json",
+      "prompt": "Correct the accidental THIRD LEG in FIRST image only. The foreground near leg is already correctly extended to the right, and the far leg is correctly bent in tabletop, BUT an unwanted duplicate bent shin and second shoe remains under the far tabletop shin. Remove that redundant lower bent shin and its lower shoe completely. Keep ONLY the UPPER of the two tabletop shoes (the one at x1110,y370) with its single far shin and single far thigh; delete the overlapping LOWER tabletop shoe at x1100,y420 and its duplicate shin. Final anatomy exactly TWO legs: one bent far leg above, one straight near leg below. Do not add a limb to fill the removed duplicate. Preserve the correct arm pairing: foreground upright arm x570; background arm overhead left. Do not move head, torso, pelvis, existing correct two legs, hands, mat, camera or crop. SECOND master and THIRD canonical are identity references only, not a request to restore both bent legs. Keep1536x1024 canvas, whitegrey fine-outline anatomy, purplecore/lilachipflexors, pureblackbackground. No text."
+    }
+  ],
+  "generatedOutputs": [
+    {
+      "file": "1-master.png",
+      "sha256": "006de1036cf3e55ad3e8a1cab99444bf2edbab4c12a99735db88c7eef9254ab0"
+    },
+    {
+      "file": "extension-b-corrected.png",
+      "sha256": "ee22a6304145427d9a294574e8d3bbcaf4c877bb15ec6fa11f29651a325bc8fe"
+    },
+    {
+      "file": "far-arm-conditioned.png",
+      "sha256": "7f59b5d05aec1da5cbf51ca2f1d5cf36282f192fe9fd3f19d6a28d64c88dad17"
+    },
+    {
+      "file": "half-b-corrected.png",
+      "sha256": "0fef85c40f14f1b10c2b74f1013655249c6f1740018164f997d89e1a8ec99aac"
+    },
+    {
+      "file": "near-leg-duplicate-rejected.png",
+      "sha256": "023a9bb506548e3b49368f9626baccf3082cb8cafa276cd737e6ba0f1e506c13"
+    },
+    {
+      "file": "opposite-pair-rejected.png",
+      "sha256": "aa7077b76cfce2f8733714c4dd7b4c5197e16dbacd63529c3eb12efce46357d7"
+    }
+  ],
+  "deterministicRepairs": [],
+  "selectedPngs": [
+    {
+      "frame": 1,
+      "sha256": "006de1036cf3e55ad3e8a1cab99444bf2edbab4c12a99735db88c7eef9254ab0",
+      "source": "dead-bug-production-review\\1-master.png"
+    },
+    {
+      "frame": 2,
+      "sha256": "5c640e1a54f9526ea75be2db020360dde77f01dcd6f255b253bb420d0922d360",
+      "source": "Maiin-pike-push-up-release\\docs\\exercise-art\\pilots\\parallel-twenty\\dead-bug\\frames\\2.png"
+    },
+    {
+      "frame": 3,
+      "sha256": "006de1036cf3e55ad3e8a1cab99444bf2edbab4c12a99735db88c7eef9254ab0",
+      "source": "dead-bug-production-review\\1-master.png"
+    },
+    {
+      "frame": 4,
+      "sha256": "ee22a6304145427d9a294574e8d3bbcaf4c877bb15ec6fa11f29651a325bc8fe",
+      "source": "dead-bug-production-review\\extension-b-corrected.png"
+    },
+    {
+      "frame": 5,
+      "sha256": "0fef85c40f14f1b10c2b74f1013655249c6f1740018164f997d89e1a8ec99aac",
+      "source": "dead-bug-production-review\\half-b-corrected.png"
+    },
+    {
+      "frame": 6,
+      "sha256": "006de1036cf3e55ad3e8a1cab99444bf2edbab4c12a99735db88c7eef9254ab0",
+      "source": "dead-bug-production-review\\1-master.png"
+    }
+  ],
+  "reuse": {
+    "3": 1,
+    "6": 1
+  },
+  "conversion": "Lossless WebP decoded RGB exactly equals reviewed PNG; native1536x1024, no scaling.",
+  "measurementMethod": "Interpolated minimum-RGB10 native mat edges at two unobstructed end boundaries; compare to neutral frozen master at frame3.1px/1percent fixed-equipment gates. Anatomy and limb pairing require separate visual review.",
+  "scanlines": {
+    "matNearEdge": [
+      0,
+      1536,
+      680,
+      10
+    ],
+    "matWideEdge": [
+      0,
+      1536,
+      650,
+      10
+    ]
+  },
+  "repairSteps": [
+    {
+      "promptFile": "opposite-pair-prompt.json",
+      "output": "opposite-pair-rejected.png",
+      "generatedId": "92c78a84-d4db-4ea0-ab8b-1f00d6b1514f",
+      "assessment": "Rejected: wrong upright shoulder chain",
+      "references": [
+        "1-master.png",
+        "canonical"
+      ],
+      "outputSha256": "aa7077b76cfce2f8733714c4dd7b4c5197e16dbacd63529c3eb12efce46357d7"
+    },
+    {
+      "promptFile": "arm-only-prompt.json",
+      "output": "far-arm-conditioned.png",
+      "generatedId": "3cf18ff6-7c30-4aec-a2f0-b802fcfa9fc6",
+      "assessment": "Conditioning intermediate: far arm only; not an exercise deliverable",
+      "references": [
+        "1-master.png",
+        "canonical"
+      ],
+      "outputSha256": "7f59b5d05aec1da5cbf51ca2f1d5cf36282f192fe9fd3f19d6a28d64c88dad17"
+    },
+    {
+      "promptFile": "near-leg-only-prompt.json",
+      "output": "near-leg-duplicate-rejected.png",
+      "generatedId": "99185a99-095c-452d-bba3-65fea7452fb3",
+      "assessment": "Rejected duplicate bent leg; retained as correction input",
+      "references": [
+        "far-arm-conditioned.png",
+        "1-master.png",
+        "canonical"
+      ],
+      "outputSha256": "023a9bb506548e3b49368f9626baccf3082cb8cafa276cd737e6ba0f1e506c13"
+    },
+    {
+      "promptFile": "remove-duplicate-leg-prompt.json",
+      "output": "extension-b-corrected.png",
+      "generatedId": "13997e14-fa8c-4998-8a47-733ef3156465",
+      "assessment": "Selected frame4 after native and revised mobile review",
+      "references": [
+        "near-leg-duplicate-rejected.png",
+        "1-master.png",
+        "canonical"
+      ],
+      "outputSha256": "ee22a6304145427d9a294574e8d3bbcaf4c877bb15ec6fa11f29651a325bc8fe"
+    },
+    {
+      "promptFile": "half-b-corrected-prompt.json",
+      "output": "half-b-corrected.png",
+      "generatedId": "b5bbf704-41ce-45cd-be95-2715948147b3",
+      "assessment": "Selected frame5 (controlled B return) after native and revised mobile review",
+      "references": [
+        "extension-b-corrected.png",
+        "1-master.png",
+        "canonical"
+      ],
+      "outputSha256": "0fef85c40f14f1b10c2b74f1013655249c6f1740018164f997d89e1a8ec99aac"
+    }
+  ],
+  "sequence": "Tabletop setup, full opposite pairA, tabletop return, full opposite pairB, partialB return, tabletop reset."
+}

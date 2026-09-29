@@ -177,6 +177,16 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
       "8566b8132276a66d97589e7b723667e364c494c7e273b50156c69cc09029d2a9",
     sha256: "9eac4364bffb20d6e981907e4fbc646568efac8b3d097b80c388bbacbb051983",
   },
+  "dead-bug": {
+    src: "form-art/dead-bug.webp",
+    width: 480,
+    height: 179,
+    keyed: true,
+    source: "form-frames/dead-bug/3.webp",
+    sourceSha256:
+      "a4724700049b2233a62439f44366dcc0b312483bd1171a8d93a8bec3963e5f5e",
+    sha256: "a008d93007f511768e47bbc5dc20f3421e0c8082c22822ec4e151cac1a83be20",
+  },
   "decline-bench": {
     src: "form-art/decline-bench.webp",
     width: 480,
