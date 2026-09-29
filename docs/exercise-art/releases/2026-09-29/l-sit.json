@@ -1,0 +1,492 @@
+{
+  "exerciseId": "l-sit",
+  "version": "anatomy-v3-2026-09-29",
+  "width": 1536,
+  "height": 1024,
+  "decision": "approved",
+  "reviewer": "Codex native and mobile visual review",
+  "reviewedAt": "2026-09-29T20:54:25.676Z",
+  "reference": {
+    "path": "form-frames/l-sit/3.webp",
+    "sha256": "192891857f22928679e5c409e0c5f3b1a7d6ee74034ed4f9bc33ab09a8ad7658",
+    "anchors": {
+      "neargripLeft": {
+        "x": 393,
+        "y": 600
+      },
+      "neargripRight": {
+        "x": 443,
+        "y": 600
+      },
+      "nearleftuprightLeft": {
+        "x": 283,
+        "y": 800
+      },
+      "nearleftuprightRight": {
+        "x": 315,
+        "y": 800
+      },
+      "nearrightuprightLeft": {
+        "x": 563,
+        "y": 800
+      },
+      "nearrightuprightRight": {
+        "x": 598,
+        "y": 800
+      },
+      "farrightuprightLeft": {
+        "x": 837,
+        "y": 800
+      },
+      "farrightuprightRight": {
+        "x": 866,
+        "y": 800
+      },
+      "leftrailcapLeft": {
+        "x": 267,
+        "y": 590
+      },
+      "leftrailcapRight": {
+        "x": 299,
+        "y": 590
+      },
+      "headLeft": {
+        "x": 522,
+        "y": 100
+      },
+      "headRight": {
+        "x": 639,
+        "y": 100
+      }
+    },
+    "invariantDimensions": {
+      "neargripWidth": 51,
+      "nearleftuprightWidth": 33,
+      "nearrightuprightWidth": 36,
+      "farrightuprightWidth": 30,
+      "leftrailcapWidth": 33,
+      "headWidth": 118
+    }
+  },
+  "cueSha256": "baf9cbe57eb07363e015b2c30a7860aa49e3c3c569fcd572ee9ce7bc34f58ff6",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Canonical bald faceless white-grey mannequin with white trainers and neutral smooth pelvis; native and mobile review passed."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Fixed side-three-quarter view facing right at1536x1024. Upright torso and both support grips remain fixed; no pan, zoom or mirrored pose."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "One athlete with two straight supporting arms and two straight legs. Legs rise together from controlled low support through midpoint to horizontal, then lower. No knee tuck, hip-supported sitting or extra limbs."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Two rigid parallel support bars, equal rail heights and four grounded feet. Authorized exact master copying restores stationary equipment/floor only, with no athlete transformation."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Both palms support body on rails, with visible near grip throughout and far grip partly occluded by the moving legs. Pelvis has an air gap above bars; shoes remain clear of floor. Six named scans meet<=1px position and<=1percent dimension limits; low-pose head differs1px/.847percent, equipment/grip scans zero."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Torso and arms provide stationary support while straight legs rotate at hips. Horizontal hold has pointed toes and clear pelvic suspension. Low support range stops with feet above floor. First candidate was rejected for unclear pelvis support and upright toes."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Catalogue primary Core strongest purple; secondary Hip Flexors, Triceps and Shoulders lighter lilac. Contribution hierarchy stable through lift, hold and return, without measured activation claims."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Six cues teach straight-arm support, lifting without shrugging, horizontal straight-leg extension and pointed toes, breathing during hold, controlled lowering and low reset."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "All six final frames plus6to1 reviewed sequentially; hold uses the same horizontal pose, lowering reuses midpoint and reset reuses low support. Loop closes exactly."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "Actual ExerciseFormFrames at390x844 light theme: every final frame and6to1 inspected, full athlete and bars visible, cue wrapping legible without clipping."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "Actual ExerciseFormFrames at390x844 dark theme: every final frame and6to1 inspected, stable anchors, clear muscle hierarchy, full apparatus and leg travel visible."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/l-sit/1.webp",
+      "sha256": "edf757863ec6757f0cd653e6b4dcc3999aba9389fcaad6f7b856e9bd130adf02",
+      "anchors": {
+        "neargripLeft": {
+          "x": 393,
+          "y": 600
+        },
+        "neargripRight": {
+          "x": 443,
+          "y": 600
+        },
+        "nearleftuprightLeft": {
+          "x": 283,
+          "y": 800
+        },
+        "nearleftuprightRight": {
+          "x": 315,
+          "y": 800
+        },
+        "nearrightuprightLeft": {
+          "x": 563,
+          "y": 800
+        },
+        "nearrightuprightRight": {
+          "x": 598,
+          "y": 800
+        },
+        "farrightuprightLeft": {
+          "x": 837,
+          "y": 800
+        },
+        "farrightuprightRight": {
+          "x": 866,
+          "y": 800
+        },
+        "leftrailcapLeft": {
+          "x": 267,
+          "y": 590
+        },
+        "leftrailcapRight": {
+          "x": 299,
+          "y": 590
+        },
+        "headLeft": {
+          "x": 521,
+          "y": 100
+        },
+        "headRight": {
+          "x": 639,
+          "y": 100
+        }
+      },
+      "invariantDimensions": {
+        "neargripWidth": 51,
+        "nearleftuprightWidth": 33,
+        "nearrightuprightWidth": 36,
+        "farrightuprightWidth": 30,
+        "leftrailcapWidth": 33,
+        "headWidth": 119
+      }
+    },
+    {
+      "path": "form-frames/l-sit/2.webp",
+      "sha256": "b88f6bd6593807c1b8235003cb039a7f0264b723a015e6d360ecf28fa8d229ae",
+      "anchors": {
+        "neargripLeft": {
+          "x": 393,
+          "y": 600
+        },
+        "neargripRight": {
+          "x": 443,
+          "y": 600
+        },
+        "nearleftuprightLeft": {
+          "x": 283,
+          "y": 800
+        },
+        "nearleftuprightRight": {
+          "x": 315,
+          "y": 800
+        },
+        "nearrightuprightLeft": {
+          "x": 563,
+          "y": 800
+        },
+        "nearrightuprightRight": {
+          "x": 598,
+          "y": 800
+        },
+        "farrightuprightLeft": {
+          "x": 837,
+          "y": 800
+        },
+        "farrightuprightRight": {
+          "x": 866,
+          "y": 800
+        },
+        "leftrailcapLeft": {
+          "x": 267,
+          "y": 590
+        },
+        "leftrailcapRight": {
+          "x": 299,
+          "y": 590
+        },
+        "headLeft": {
+          "x": 522,
+          "y": 100
+        },
+        "headRight": {
+          "x": 639,
+          "y": 100
+        }
+      },
+      "invariantDimensions": {
+        "neargripWidth": 51,
+        "nearleftuprightWidth": 33,
+        "nearrightuprightWidth": 36,
+        "farrightuprightWidth": 30,
+        "leftrailcapWidth": 33,
+        "headWidth": 118
+      }
+    },
+    {
+      "path": "form-frames/l-sit/3.webp",
+      "sha256": "192891857f22928679e5c409e0c5f3b1a7d6ee74034ed4f9bc33ab09a8ad7658",
+      "anchors": {
+        "neargripLeft": {
+          "x": 393,
+          "y": 600
+        },
+        "neargripRight": {
+          "x": 443,
+          "y": 600
+        },
+        "nearleftuprightLeft": {
+          "x": 283,
+          "y": 800
+        },
+        "nearleftuprightRight": {
+          "x": 315,
+          "y": 800
+        },
+        "nearrightuprightLeft": {
+          "x": 563,
+          "y": 800
+        },
+        "nearrightuprightRight": {
+          "x": 598,
+          "y": 800
+        },
+        "farrightuprightLeft": {
+          "x": 837,
+          "y": 800
+        },
+        "farrightuprightRight": {
+          "x": 866,
+          "y": 800
+        },
+        "leftrailcapLeft": {
+          "x": 267,
+          "y": 590
+        },
+        "leftrailcapRight": {
+          "x": 299,
+          "y": 590
+        },
+        "headLeft": {
+          "x": 522,
+          "y": 100
+        },
+        "headRight": {
+          "x": 639,
+          "y": 100
+        }
+      },
+      "invariantDimensions": {
+        "neargripWidth": 51,
+        "nearleftuprightWidth": 33,
+        "nearrightuprightWidth": 36,
+        "farrightuprightWidth": 30,
+        "leftrailcapWidth": 33,
+        "headWidth": 118
+      }
+    },
+    {
+      "path": "form-frames/l-sit/4.webp",
+      "sha256": "192891857f22928679e5c409e0c5f3b1a7d6ee74034ed4f9bc33ab09a8ad7658",
+      "anchors": {
+        "neargripLeft": {
+          "x": 393,
+          "y": 600
+        },
+        "neargripRight": {
+          "x": 443,
+          "y": 600
+        },
+        "nearleftuprightLeft": {
+          "x": 283,
+          "y": 800
+        },
+        "nearleftuprightRight": {
+          "x": 315,
+          "y": 800
+        },
+        "nearrightuprightLeft": {
+          "x": 563,
+          "y": 800
+        },
+        "nearrightuprightRight": {
+          "x": 598,
+          "y": 800
+        },
+        "farrightuprightLeft": {
+          "x": 837,
+          "y": 800
+        },
+        "farrightuprightRight": {
+          "x": 866,
+          "y": 800
+        },
+        "leftrailcapLeft": {
+          "x": 267,
+          "y": 590
+        },
+        "leftrailcapRight": {
+          "x": 299,
+          "y": 590
+        },
+        "headLeft": {
+          "x": 522,
+          "y": 100
+        },
+        "headRight": {
+          "x": 639,
+          "y": 100
+        }
+      },
+      "invariantDimensions": {
+        "neargripWidth": 51,
+        "nearleftuprightWidth": 33,
+        "nearrightuprightWidth": 36,
+        "farrightuprightWidth": 30,
+        "leftrailcapWidth": 33,
+        "headWidth": 118
+      }
+    },
+    {
+      "path": "form-frames/l-sit/5.webp",
+      "sha256": "b88f6bd6593807c1b8235003cb039a7f0264b723a015e6d360ecf28fa8d229ae",
+      "anchors": {
+        "neargripLeft": {
+          "x": 393,
+          "y": 600
+        },
+        "neargripRight": {
+          "x": 443,
+          "y": 600
+        },
+        "nearleftuprightLeft": {
+          "x": 283,
+          "y": 800
+        },
+        "nearleftuprightRight": {
+          "x": 315,
+          "y": 800
+        },
+        "nearrightuprightLeft": {
+          "x": 563,
+          "y": 800
+        },
+        "nearrightuprightRight": {
+          "x": 598,
+          "y": 800
+        },
+        "farrightuprightLeft": {
+          "x": 837,
+          "y": 800
+        },
+        "farrightuprightRight": {
+          "x": 866,
+          "y": 800
+        },
+        "leftrailcapLeft": {
+          "x": 267,
+          "y": 590
+        },
+        "leftrailcapRight": {
+          "x": 299,
+          "y": 590
+        },
+        "headLeft": {
+          "x": 522,
+          "y": 100
+        },
+        "headRight": {
+          "x": 639,
+          "y": 100
+        }
+      },
+      "invariantDimensions": {
+        "neargripWidth": 51,
+        "nearleftuprightWidth": 33,
+        "nearrightuprightWidth": 36,
+        "farrightuprightWidth": 30,
+        "leftrailcapWidth": 33,
+        "headWidth": 118
+      }
+    },
+    {
+      "path": "form-frames/l-sit/6.webp",
+      "sha256": "edf757863ec6757f0cd653e6b4dcc3999aba9389fcaad6f7b856e9bd130adf02",
+      "anchors": {
+        "neargripLeft": {
+          "x": 393,
+          "y": 600
+        },
+        "neargripRight": {
+          "x": 443,
+          "y": 600
+        },
+        "nearleftuprightLeft": {
+          "x": 283,
+          "y": 800
+        },
+        "nearleftuprightRight": {
+          "x": 315,
+          "y": 800
+        },
+        "nearrightuprightLeft": {
+          "x": 563,
+          "y": 800
+        },
+        "nearrightuprightRight": {
+          "x": 598,
+          "y": 800
+        },
+        "farrightuprightLeft": {
+          "x": 837,
+          "y": 800
+        },
+        "farrightuprightRight": {
+          "x": 866,
+          "y": 800
+        },
+        "leftrailcapLeft": {
+          "x": 267,
+          "y": 590
+        },
+        "leftrailcapRight": {
+          "x": 299,
+          "y": 590
+        },
+        "headLeft": {
+          "x": 521,
+          "y": 100
+        },
+        "headRight": {
+          "x": 639,
+          "y": 100
+        }
+      },
+      "invariantDimensions": {
+        "neargripWidth": 51,
+        "nearleftuprightWidth": 33,
+        "nearrightuprightWidth": 36,
+        "farrightuprightWidth": 30,
+        "leftrailcapWidth": 33,
+        "headWidth": 119
+      }
+    }
+  ]
+}

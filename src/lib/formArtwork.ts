@@ -113,6 +113,18 @@ export const FORM_ARTWORK: Record<string, FormArtwork> = {
     reference: "form-frames/dragon-flag/1.webp",
     reviewFile: "docs/exercise-art/releases/2026-09-29/dragon-flag.json",
   },
+  "l-sit": {
+    version: "anatomy-v3-2026-09-29",
+    status: "approved",
+    width: 1536,
+    height: 1024,
+    frames: Array.from(
+      { length: 6 },
+      (_, i) => `form-frames/l-sit/${i + 1}.webp`
+    ),
+    reference: "form-frames/l-sit/3.webp",
+    reviewFile: "docs/exercise-art/releases/2026-09-29/l-sit.json",
+  },
   "bicycle-crunch": {
     version: "anatomy-v3-2026-09-29",
     status: "approved",

@@ -699,4 +699,17 @@ export const RELEASED_FORM_PLACARDS = {
       [0, "Reset", "Reset high; keep weight off your neck."],
     ]
   ),
+  "l-sit": placard(
+    "l-sit",
+    ["Core"],
+    ["Hip Flexors", "Triceps", "Shoulders"],
+    [
+      [0, "Support", "Press down through straight arms; brace core."],
+      [0.5, "Lift", "Raise straight legs without shrugging your shoulders."],
+      [1, "Extend", "Hold legs horizontal; point your toes forward."],
+      [1, "Hold", "Keep arms straight; breathe through the hold."],
+      [0.5, "Lower", "Lower straight legs slowly; keep shoulders down."],
+      [0, "Reset", "Return low while maintaining both hand supports."],
+    ]
+  ),
 };
