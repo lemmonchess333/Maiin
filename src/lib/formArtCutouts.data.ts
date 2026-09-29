@@ -207,6 +207,16 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
       "edc716815c85584cfbe9ec31caee14dd9a1b85a1d079bf60d18c1ad009f638f9",
     sha256: "a0458f04cbc823c6d07c1a6bff7923b349f76fff12bedeb42b5e2acf06edca22",
   },
+  "diamond-push-ups": {
+    src: "form-art/diamond-push-ups.webp",
+    width: 480,
+    height: 339,
+    keyed: true,
+    source: "form-frames/diamond-push-ups/1.webp",
+    sourceSha256:
+      "0b793f7680120af796a7fa721f1b09edd0a6b87a155bfe8e3bb697e13586cea2",
+    sha256: "f495d7b8db1ff33c315d062948b43d7bd001247d1d5e00ff89ca72785d89df27",
+  },
   dips: {
     src: "form-art/dips.webp",
     width: 339,

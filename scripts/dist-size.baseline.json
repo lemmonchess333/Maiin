@@ -1,6 +1,6 @@
 {
   "tolerance": 0.05,
-  "total": 5943055,
+  "total": 5943739,
   "chunks": {
     "AccordionSection": 1612,
     "accountSecurity": 2340,
@@ -68,7 +68,7 @@
     "ellipsis": 360,
     "EmptyState": 1738,
     "ErrorState": 898,
-    "ExerciseFormContent": 40856,
+    "ExerciseFormContent": 41253,
     "ExerciseHistory": 11316,
     "exerciseMovementCategory": 6150,
     "ExerciseProgressChart": 2243,
@@ -89,7 +89,7 @@
     "FoodAnalyzer": 39299,
     "foodPhotoStore": 3887,
     "footprints": 450,
-    "formArtCutouts": 11927,
+    "formArtCutouts": 12214,
     "formArtwork": 8516,
     "formatNutrition": 135,
     "formatters": 1399,
