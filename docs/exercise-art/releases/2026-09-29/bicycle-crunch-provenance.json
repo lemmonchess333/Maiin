@@ -1,0 +1,260 @@
+{
+  "modelPath": "Built-in imagegen only; canonical master and adjacent poses. No CLI/API/model fallback.",
+  "canonicalReference": {
+    "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+  },
+  "exerciseMaster": {
+    "path": "docs/exercise-art/masters/bicycle-crunch/1.png",
+    "sha256": "681c1c2b78e06c0de42f253f8f34d82187beb65e9563297fe85badb27b70c205"
+  },
+  "nativeDimensions": {
+    "width": 1536,
+    "height": 1024
+  },
+  "generation": [
+    "Scientific educational fitness art: BICYCLE CRUNCH scene master starting center position. Exact adult bald faceless anatomical mannequin in canonical reference, white-grey fine anatomical linework, same white trainers. Supine on thin dark mat, head at left feet right; camera elevated three-quarter side high enough to see both elbows and both knees. Both hands lightly behind head, elbows open, shoulders slightly curled up. Both hips/knees90degrees tabletop, no torso twist yet. Obliques deep purple, central abs light lilac. Leave wide margins to extend either leg nearly straight to right later, whole body/mat visible. Neutral non-detailed mannequin anatomy. Solid pure black background no halos. One1536x1024 landscape native image no text arrows panels.",
+    "Bicycle crunch FIRST SIDE contracted phase. Image1 canonical identity; image2 fixed scene edit target. Keep mat pelvis camera scale unchanged. Bring NEAR knee toward chest while straightening FAR leg diagonally right to hover above mat. Rotate ribcage so FAR shoulder and FAR elbow approach NEAR knee (opposite elbow/knee), near elbow opens backward. Hands stay softly behind head without pulling. Shoulders remain curled up, pelvis stable. Exact same muscle palette, native1536x1024 pure black NO glow, full shoes visible. One image no text.",
+    "Bicycle crunch SECOND SIDE contracted phase. Image1 canonical identity; image2 fixed scene edit target. Keep mat pelvis camera scale unchanged. Bring FAR knee toward chest while straightening NEAR leg diagonally right to hover above mat. Rotate ribcage toward FAR knee so NEAR shoulder lifts and NEAR elbow approaches FAR knee (opposite elbow/knee). FAR elbow opens backward away knee. Must visibly twist chest away from camera relative start. Hands stay softly behind head without pulling, shoulders curled up, pelvis stable. Exact same muscle palette, native1536x1024 pure black NO glow, full shoes visible. One image no text.",
+    "Correct image3 to the OPPOSITE bicycle-crunch side; do NOT repeat its bent foreground leg. Image1 identity image2 scene master image3 existing sideA target. Foreground thigh attached to closest hip at bottom-center MUST extend straight diagonally toward image-right, forming frontmost straight leg. Far thigh behind it bends toward chest; far knee visible above hip. Near shoulder rotates UP AND AWAY from camera, near elbow moves forward to approach bent far knee. Chest rotates away so less near pectoral visible, more rear near shoulder. Far elbow opens backward. Head follows ribcage, both hands behind head, no neck pull. Keep pelvis/mat scale camera. One native1536x1024 no text black background.",
+    "Bicycle crunch return transition from image3 toward centered image2, canonical identity image1. Keep same camera mat pelvis. Bend foreground straight leg halfway back so both knees approaching90degrees; far knee moves slightly away chest. Untwist ribcage halfway toward center; near elbow moves away far knee, hands stay behind head. Both shoulder blades remain curled off mat, no neck pulling. Preserve anatomy scale purple map and black background, no halo. One1536x1024 image no text."
+  ],
+  "sourcePilot": "docs/exercise-art/pilots/parallel-twenty/bicycle-crunch",
+  "sourcePilotReview": {
+    "exerciseId": "bicycle-crunch",
+    "status": "six-frame-candidate-needs-review",
+    "approved": false,
+    "issues": [
+      "First opposite-side attempt repeated A and was rejected; targeted correction now clearly extends near leg.",
+      "Six discrete teaching beats with uneven sampling between sides; center is legitimately reused, not a hold.",
+      "Independent still review found opposite pairing plausible; player/mobile playback unverified."
+    ],
+    "frames": [
+      {
+        "frame": 1,
+        "source": "master.png",
+        "sha256": "5d85afbcd8126b9dbcf522018aecab05c2b08be2dd55c69accf230f7e8057afa",
+        "dimensions": [
+          1536,
+          1024
+        ],
+        "cue": "Start with hands behind head, knees bent and shoulders lightly raised."
+      },
+      {
+        "frame": 2,
+        "source": "side-a.png",
+        "sha256": "d762e3cc34183219f47b3000466cd032cff2c74acf1bcd1ef1cc8e87cd4e972f",
+        "dimensions": [
+          1536,
+          1024
+        ],
+        "cue": "Rotate far elbow toward near knee while extending far leg."
+      },
+      {
+        "frame": 3,
+        "source": "master.png",
+        "sha256": "5d85afbcd8126b9dbcf522018aecab05c2b08be2dd55c69accf230f7e8057afa",
+        "dimensions": [
+          1536,
+          1024
+        ],
+        "cue": "Return through center with both knees bent."
+      },
+      {
+        "frame": 4,
+        "source": "side-b.png",
+        "sha256": "11582e20a81c959be2b18660cd9464adb6a0882df735af8530ef2a53be5a09b2",
+        "dimensions": [
+          1536,
+          1024
+        ],
+        "cue": "Rotate near elbow toward far knee while extending near leg."
+      },
+      {
+        "frame": 5,
+        "source": "return-b.png",
+        "sha256": "8fcb5835cb41b4b683bc82676ef65a4d069fa041f6a089578a6e112460aa6768",
+        "dimensions": [
+          1536,
+          1024
+        ],
+        "cue": "Return toward center under control."
+      },
+      {
+        "frame": 6,
+        "source": "master.png",
+        "sha256": "5d85afbcd8126b9dbcf522018aecab05c2b08be2dd55c69accf230f7e8057afa",
+        "dimensions": [
+          1536,
+          1024
+        ],
+        "cue": "Return to centered bent-knee position before repeating."
+      }
+    ],
+    "canonical": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "runtimeVerified": false
+  },
+  "repairPrompts": [
+    {
+      "file": "neutral-registration-prompt.json",
+      "prompt": "Edit FIRST image (bicycle-crunch sideA) into a centered tabletop setup while keeping the FIRST image's mat, pelvis placement, scene scale and camera exactly fixed. Bring both knees above the hips, knees bent around90 and shins parallel to the floor; derotate the ribcage back to center with shoulders slightly curled off mat. Both hands lightly cradle the head, elbows open. Do not pull neck. Preserve the pelvis and lower-back contact height of FIRST image; do not translate the whole body or mat. SECOND image shows the desired neutral pose only but its floor registration differs; do NOT copy its mat position or move the scene to match it. THIRD image canonical athlete identity. Keep FIRST image's native1536x1024 composition, wholemat/fullbody, original limb lengths, greywhite fine-contour faceless anatomy, white trainers, featurelesspelvis. Strongest purple obliques and lilac abs. Pureblackbackground nohalo/text. This becomes the consistent centered master for the existing sideA/sideB poses.",
+      "reason": "Original neutral mat is roughly32px lower than both alternating-side poses; rebuild neutral from sideA while holding its scene registration."
+    },
+    {
+      "file": "return-b-prompt.json",
+      "prompt": "Edit FIRST image (sideB bicycle crunch) halfway back toward SECOND image's centered setup. THIRD image canonical athlete identity. Keep mat, pelvis contact, camera, scene scale, lighting and body proportions fixed. FIRST image's NEAR foreground leg is extended straight right: bend this SAME near knee and draw it halfway toward tabletop, so its knee is still farther right than its hip and its foot still lower/right of the far shoe. FIRST image's FAR background knee is tucked deeply toward chest: ease that knee halfway away from chest toward upright tabletop, WITHOUT extending it outward past tabletop. Keep near leg in foreground, far leg behind, exactly two legs. Simultaneously derotate torso halfway toward center, releasing near elbow away from far knee while both hands support the head without pulling. Shoulders remain lightly curled, low back supported. This is a return from B, NOT a start of A: do not make near knee fully upright while far leg extends outward. Preserve fixed native1536x1024 mat/camera, greywhite faceless fine-outline anatomy, featurelesspelvis, whitetrainers, purpleobliques lilacabs, pureblackbackground, no text."
+    }
+  ],
+  "generatedOutputs": [
+    {
+      "file": "1-master.png",
+      "sha256": "681c1c2b78e06c0de42f253f8f34d82187beb65e9563297fe85badb27b70c205"
+    },
+    {
+      "file": "original-master.png",
+      "sha256": "5d85afbcd8126b9dbcf522018aecab05c2b08be2dd55c69accf230f7e8057afa"
+    },
+    {
+      "file": "return-b-corrected.png",
+      "sha256": "e81c992b6f2e6caa3e69fb25e8a1650e0dc3206d20e4ff14ad0ea4f7f5104a56"
+    },
+    {
+      "file": "return-b-rejected.png",
+      "sha256": "8fcb5835cb41b4b683bc82676ef65a4d069fa041f6a089578a6e112460aa6768"
+    },
+    {
+      "file": "side-a.png",
+      "sha256": "d762e3cc34183219f47b3000466cd032cff2c74acf1bcd1ef1cc8e87cd4e972f"
+    },
+    {
+      "file": "side-b.png",
+      "sha256": "11582e20a81c959be2b18660cd9464adb6a0882df735af8530ef2a53be5a09b2"
+    }
+  ],
+  "deterministicRepairs": [
+    {
+      "master": "1-master.png",
+      "masterSha256": "681c1c2b78e06c0de42f253f8f34d82187beb65e9563297fe85badb27b70c205",
+      "method": "Exact master copy of unobstructed lower mat strip; all anatomy above y730 in each source. No blending or anatomy edits.",
+      "rectangles": [
+        [
+          0,
+          730,
+          1536,
+          880
+        ]
+      ],
+      "frames": [
+        {
+          "frame": 2,
+          "sourceSha256": "d762e3cc34183219f47b3000466cd032cff2c74acf1bcd1ef1cc8e87cd4e972f",
+          "outputSha256": "9fdf8fa8ec58d7d8baff5c430c4a9d502c61c8171bdfb22aaf15a15931c61afe",
+          "changedPixels": 152439,
+          "changedOutsideRectangles": 0
+        },
+        {
+          "frame": 4,
+          "sourceSha256": "11582e20a81c959be2b18660cd9464adb6a0882df735af8530ef2a53be5a09b2",
+          "outputSha256": "d4e029c9e611179e3ac499aab1671a78330ac18512b84b485d40a60c969601df",
+          "changedPixels": 153531,
+          "changedOutsideRectangles": 0
+        },
+        {
+          "frame": 5,
+          "sourceSha256": "e81c992b6f2e6caa3e69fb25e8a1650e0dc3206d20e4ff14ad0ea4f7f5104a56",
+          "outputSha256": "7761f1c3ba0cdccd1af54f9b2ec1b0f5ea45b97d846fd4540762d72a49db6e7b",
+          "changedPixels": 147047,
+          "changedOutsideRectangles": 0
+        }
+      ]
+    }
+  ],
+  "selectedPngs": [
+    {
+      "frame": 1,
+      "sha256": "681c1c2b78e06c0de42f253f8f34d82187beb65e9563297fe85badb27b70c205",
+      "source": "bicycle-crunch-production-review\\1-master.png"
+    },
+    {
+      "frame": 2,
+      "sha256": "9fdf8fa8ec58d7d8baff5c430c4a9d502c61c8171bdfb22aaf15a15931c61afe",
+      "source": "bicycle-crunch-production-review\\side-a.png"
+    },
+    {
+      "frame": 3,
+      "sha256": "681c1c2b78e06c0de42f253f8f34d82187beb65e9563297fe85badb27b70c205",
+      "source": "bicycle-crunch-production-review\\1-master.png"
+    },
+    {
+      "frame": 4,
+      "sha256": "d4e029c9e611179e3ac499aab1671a78330ac18512b84b485d40a60c969601df",
+      "source": "bicycle-crunch-production-review\\side-b.png"
+    },
+    {
+      "frame": 5,
+      "sha256": "7761f1c3ba0cdccd1af54f9b2ec1b0f5ea45b97d846fd4540762d72a49db6e7b",
+      "source": "bicycle-crunch-production-review\\return-b-corrected.png"
+    },
+    {
+      "frame": 6,
+      "sha256": "681c1c2b78e06c0de42f253f8f34d82187beb65e9563297fe85badb27b70c205",
+      "source": "bicycle-crunch-production-review\\1-master.png"
+    }
+  ],
+  "reuse": {
+    "3": 1,
+    "6": 1
+  },
+  "conversion": "Lossless WebP decoded RGB exactly equals reviewed PNG; native1536x1024, no scaling.",
+  "measurementMethod": "Interpolated minimum-RGB10 native mat edges at two unobstructed end boundaries; compare to neutral frozen master at frame3.1px/1percent fixed-equipment gates. Anatomy and limb pairing require separate visual review.",
+  "scanlines": {
+    "matNearEdge": [
+      0,
+      1536,
+      800,
+      10
+    ],
+    "matWideEdge": [
+      0,
+      1536,
+      760,
+      10
+    ]
+  },
+  "repairSteps": [
+    {
+      "generationId": "7b54b551-ecf1-4986-a186-f3afb40748dc",
+      "output": "1-master.png",
+      "sha256": "681c1c2b78e06c0de42f253f8f34d82187beb65e9563297fe85badb27b70c205",
+      "promptFile": "neutral-registration-prompt.json",
+      "references": [
+        "side-a.png",
+        "original-master.png",
+        "canonical athlete identity"
+      ],
+      "assessment": "Rebuild neutral scene registration from side A; freeze as new master."
+    },
+    {
+      "generationId": "c13400a7-514a-4109-bc79-d2e0a0196c49",
+      "output": "return-b-corrected.png",
+      "sha256": "e81c992b6f2e6caa3e69fb25e8a1650e0dc3206d20e4ff14ad0ea4f7f5104a56",
+      "promptFile": "return-b-prompt.json",
+      "references": [
+        "side-b.png",
+        "1-master.png",
+        "canonical athlete identity"
+      ],
+      "assessment": "Return from B with near knee bending and torso unwinding; replaces incorrect old return."
+    }
+  ],
+  "rejectedStudies": [
+    {
+      "file": "original-master.png",
+      "reason": "Original neutral scene is lower than alternating poses."
+    },
+    {
+      "file": "return-b-rejected.png",
+      "reason": "Appears to cross center toward A rather than partially return B."
+    }
+  ]
+}
