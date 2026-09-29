@@ -3,6 +3,7 @@ import { runSessionPresentation } from "@/lib/runSessionExplainer";
 import {
   useState,
   useEffect,
+  useLayoutEffect,
   useEffectEvent,
   useMemo,
   useRef,
@@ -231,7 +232,9 @@ export default function Run() {
   // WITHOUT listing the (per-render-changing) timer object as a dep — otherwise
   // the effect re-runs every second and never lets the 5s stationary timer run.
   const timerRef = useRef(timer);
-  timerRef.current = timer;
+  useLayoutEffect(() => {
+    timerRef.current = timer;
+  });
   const [bgGapBanner, setBgGapBanner] = useState<string | null>(null);
   // Section 7 (docs/run-background-gps.md): the native "While Using only"
   // note. `showBgGrantNote` drives the non-blocking card in the banner
@@ -294,7 +297,7 @@ export default function Run() {
   // banner would flash false-positive at "10s ago" or so). Set to
   // `Date.now() + 5000` on Resume; the gap banner gate below skips
   // rendering while now < this value.
-  const gapBannerSuppressUntilRef = useRef<number>(0);
+  const [gapBannerSuppressUntil, setGapBannerSuppressUntil] = useState(0);
 
   // Coordinate all subsystems on background/foreground transitions.
   //
@@ -443,6 +446,8 @@ export default function Run() {
   // missed-day flow. Resolved by computePlanMetadata into the
   // planned context regardless of today's date.
   const urlScheduledRunId = searchParams.get("scheduledRunId");
+  const runFitness = profile?.runFitness;
+  const raceGoal = profile?.raceGoal;
   const planDecision = useMemo(() => {
     // Freeform users skip the programme branches entirely — the
     // memo still runs (hook order) but returns trivially. This keeps
@@ -466,18 +471,17 @@ export default function Run() {
       urlScheduledRunId,
       // Adaptive Paces: personalize the prescribed pace from the user's
       // fitness benchmark. null (no benchmark) → template defaults.
-      paceTable: prescriptivePaceTableFromFitness(profile?.runFitness ?? null),
+      paceTable: prescriptivePaceTableFromFitness(runFitness ?? null),
       // A2: the user's own goal time turns into training (race-pace long
       // run blocks, goal-pace tempo) — gating lives in the pure helper.
-      raceTarget: profile?.raceGoal?.targetTimeS
+      raceTarget: raceGoal?.targetTimeS
         ? {
-            distance: profile.raceGoal.distance,
-            targetTimeS: profile.raceGoal.targetTimeS,
+            distance: raceGoal.distance,
+            targetTimeS: raceGoal.targetTimeS,
             // Feasibility gate reads the FULL fitness (the verdict's tier,
             // deliberately not the consent-gated prescriptive table) — see
             // the field doc in runPlanMetadata.
-            currentVdot:
-              paceTableFromFitness(profile?.runFitness ?? null)?.vdot ?? null,
+            currentVdot: paceTableFromFitness(runFitness ?? null)?.vdot ?? null,
           }
         : null,
     });
@@ -525,8 +529,9 @@ export default function Run() {
     urlTemplateId,
     urlType,
     urlScheduledRunId,
-    profile?.runFitness,
-    profile?.raceGoal,
+    runFitness,
+    raceGoal,
+    unit,
   ]);
 
   // Phase B3: restore-on-mount. Reads the persisted snapshot exactly
@@ -542,6 +547,9 @@ export default function Run() {
     const uid = profile?.uid;
     if (!uid) return;
     const stored = readStoredRun(uid);
+    // The stored run lives in localStorage, outside React; this reads it
+    // once the uid is known.
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- see above
     if (stored) setResumePrompt(stored);
     // Runs once the uid is available. The 6h cutoff is enforced inside
     // readStoredRun, and we want a snapshot of "what was there when
@@ -720,7 +728,7 @@ export default function Run() {
     // first fix for a few seconds, and the existing gap-banner gate
     // would otherwise display "GPS recovering · last fix Xs ago"
     // using the stale lastFixAt from the restored trail.
-    gapBannerSuppressUntilRef.current = Date.now() + 5000;
+    setGapBannerSuppressUntil(Date.now() + 5000);
     dispatch({ type: "RESUME_SNAPSHOT", phase: resumePrompt.phase });
     setResumePrompt(null);
     // Restart GPS for outdoor runs that were active. Paused runs
@@ -735,16 +743,17 @@ export default function Run() {
     haptic("medium");
   }, [resumePrompt, timer, gps, audioCues, wakeLock]);
 
+  const profileUid = profile?.uid;
   const handleStartNewFromPrompt = useCallback(() => {
-    if (profile?.uid) clearStoredRun(profile.uid);
+    if (profileUid) clearStoredRun(profileUid);
     setResumePrompt(null);
-  }, [profile?.uid]);
+  }, [profileUid]);
 
   const handleDiscardFromPrompt = useCallback(() => {
-    if (profile?.uid) clearStoredRun(profile.uid);
+    if (profileUid) clearStoredRun(profileUid);
     setResumePrompt(null);
     navigate("/");
-  }, [navigate, profile?.uid]);
+  }, [navigate, profileUid]);
 
   // Auto-start without GPS if permission denied or geolocation unavailable
   useEffect(() => {
@@ -848,7 +857,7 @@ export default function Run() {
       audioCues.checkHalfway(gps.distance, targetMeters);
       audioCues.checkFinal500(gps.distance, targetMeters);
     }
-  }, [gps.distance, timer.elapsed, phase, audioCues, runConfig]);
+  }, [gps.distance, gps.points, timer.elapsed, phase, audioCues, runConfig]);
 
   // Live Activity (lock screen / Dynamic Island) — mirrors the HUD stats
   // for outdoor GPS runs. Same rolling-pace source as RunBottomSheet, so
@@ -932,6 +941,9 @@ export default function Run() {
       }
       if (moving && autoPaused) {
         timerRef.current.resume();
+        // Fixes arrive as state; resuming on the one that shows movement
+        // is this effect's job, and it settles in one extra render.
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- see above
         setAutoPaused(false);
       }
     }
@@ -979,7 +991,7 @@ export default function Run() {
     if (!seg) return;
     if (seg.cue) audioCues.speak(seg.cue);
     if (seg.type === "hard" || seg.type === "recovery") haptic("medium");
-  }, [player.state.index, player, sessionSegments, audioCues]);
+  }, [player.state.index, player, sessionSegments, audioCues, cueSeed]);
 
   const finishRun = (distanceOverride?: number) => {
     timer.pause();
@@ -1634,11 +1646,12 @@ export default function Run() {
                the per-second timer.elapsed re-render, so staleness is
                at most ~1s — the banner will appear / refresh on the
                next tick. The dependency on Date.now() is intentional. */
+                // eslint-disable-next-line react-hooks/purity -- see above
                 const now = Date.now();
                 // Phase B3: suppress for 5s after a Resume so the cold-
                 // start GPS window doesn't render a false-positive banner
                 // against the stale lastFixAt of the restored trail.
-                if (now < gapBannerSuppressUntilRef.current) return null;
+                if (now < gapBannerSuppressUntil) return null;
                 const gapSeconds = (now - gps.lastFixAt) / 1000;
                 if (gapSeconds < 8) return null;
                 return (

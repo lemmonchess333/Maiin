@@ -158,7 +158,7 @@ function SpaceCard({
 
       <div className="absolute bottom-3 left-3.5 right-3.5 min-w-0">
         {/* The distance, as a plain line over the name. It was an
-            uppercase tag in the photo's corner (owner call, 2026-09-29:
+            uppercase tag in the photo's corner (owner call:
             text in a bubble read as decoration). Here it sits on the
             photo's scrim with the name and the date, so it stays legible
             without a backing of its own. */}

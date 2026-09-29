@@ -317,8 +317,8 @@ export default function ProModal({ onClose, featureKey, initialPlan }: Props) {
         {/* Sub1a trial transparency — what actually happens, before the ask. */}
         {withTrial ? <TrialTimeline /> : null}
 
-        {/* The app's primary button: it was a purple-to-teal gradient
-            (2026-09-29), as Upgrade's were. */}
+        {/* The app's primary button, as Upgrade's are: it was a
+            purple-to-teal gradient. */}
         <Button size="lg" fullWidth onClick={handleCheckout} disabled={loading}>
           {loading ? (
             <>

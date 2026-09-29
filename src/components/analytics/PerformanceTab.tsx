@@ -429,7 +429,7 @@ export default function PerformanceTab({
               card say it (`PerformanceChange`). A ZERO delta is not a gain:
               it rendered as a green "+0 pts", which read as progress when
               the week held level, so an unchanged week says nothing. It
-              was a green or coral pill until 2026-09-29. */}
+              was a green or coral pill. */}
           {delta !== null && delta !== 0 && !establishing && (
             <p>
               <PerformanceChange delta={delta} />

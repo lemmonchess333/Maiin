@@ -6,7 +6,7 @@ import { THEME } from "@/lib/theme";
  * "New" beside a record set in the last week. Gold, the colour DS3 keeps
  * for new bests and nothing else: it was a white-on-orange "NEW", the
  * food colour, in capitals the rest of the app retired. Gold text, with
- * no tag behind it (owner call, 2026-09-29): the colour already marks it,
+ * no tag behind it (owner call): the colour already marks it,
  * and a tinted pill made the row read as decoration, as the calorie
  * ring's did.
  */

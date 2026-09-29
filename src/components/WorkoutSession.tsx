@@ -342,8 +342,16 @@ export default function WorkoutSession({
   >({});
   const notesInputRef = useRef<HTMLInputElement>(null);
   const completionPendingRef = useRef(initialDraft?.completionPending ?? false);
+  /* The same flag as state, for what the screen draws (the finish screen's
+     Edit): the ref serves the handlers that must see it synchronously. */
+  const [completionPending, setCompletionPending] = useState(
+    initialDraft?.completionPending ?? false
+  );
   const [typePopover, setTypePopover] = useState<number | null>(null);
-  const popoverPosRef = useRef<{ top: number; left: number; bottom: number }>({
+  /* Measured from the tapped button when the popover opens. A ref filled
+     by the button's ref callback reached the popover only after the render
+     that opened it, so its first frame drew at the previous position. */
+  const [popoverPos, setPopoverPos] = useState({
     top: 0,
     left: 0,
     bottom: 0,
@@ -845,9 +853,9 @@ export default function WorkoutSession({
   // as a nameless "Set 1 of 0" and then throws on the first
   // `currentExercise.name` — the 09:16 pair of screenshots on 2026-08-04.
   const safeExIndex = clampExerciseIndex(currentExIndex, day.exercises.length);
-  useEffect(() => {
-    if (safeExIndex !== currentExIndex) setCurrentExIndex(safeExIndex);
-  }, [safeExIndex, currentExIndex]);
+  // Pull the cursor back while rendering (React's adjust-state-in-render
+  // pattern), so no committed frame holds an index past the end.
+  if (safeExIndex !== currentExIndex) setCurrentExIndex(safeExIndex);
 
   const currentExercise = day.exercises[safeExIndex];
 
@@ -1265,6 +1273,7 @@ export default function WorkoutSession({
 
     try {
       completionPendingRef.current = true;
+      setCompletionPending(true);
       const recoveryStored = saveDraft({
         dayIndex,
         dayName: day.dayName,
@@ -1461,6 +1470,7 @@ export default function WorkoutSession({
     stopRest();
     clearDraft();
     completionPendingRef.current = false;
+    setCompletionPending(false);
     setShowResumePrompt(false);
   };
 
@@ -1493,9 +1503,7 @@ export default function WorkoutSession({
           share={shareAction}
           onFinish={handleFinish}
           onEdit={
-            !completionPendingRef.current
-              ? () => setSessionComplete(false)
-              : undefined
+            !completionPending ? () => setSessionComplete(false) : undefined
           }
           onClose={onClose}
         />
@@ -1927,19 +1935,16 @@ export default function WorkoutSession({
                         <div className="col-span-1 flex justify-center relative">
                           <button
                             type="button"
-                            ref={(el) => {
-                              if (typePopover === setIdx && el) {
-                                const r = el.getBoundingClientRect();
-                                popoverPosRef.current = {
+                            onClick={(e) => {
+                              if (!set.completed) {
+                                haptic(10);
+                                const r =
+                                  e.currentTarget.getBoundingClientRect();
+                                setPopoverPos({
                                   top: r.top,
                                   left: r.right + 8,
                                   bottom: r.bottom,
-                                };
-                              }
-                            }}
-                            onClick={() => {
-                              if (!set.completed) {
-                                haptic(10);
+                                });
                                 setTypePopover(
                                   typePopover === setIdx ? null : setIdx
                                 );
@@ -2198,13 +2203,12 @@ export default function WorkoutSession({
                 style={{
                   zIndex: 9991,
                   width: 160,
-                  left: popoverPosRef.current.left,
-                  ...(popoverPosRef.current.bottom > window.innerHeight * 0.6
+                  left: popoverPos.left,
+                  ...(popoverPos.bottom > window.innerHeight * 0.6
                     ? {
-                        bottom:
-                          window.innerHeight - popoverPosRef.current.top + 4,
+                        bottom: window.innerHeight - popoverPos.top + 4,
                       }
-                    : { top: popoverPosRef.current.top }),
+                    : { top: popoverPos.top }),
                 }}
               >
                 {SET_TYPE_ORDER.map((type) => (

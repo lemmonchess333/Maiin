@@ -233,7 +233,7 @@ function ProgramInner() {
   const [editLayoutOpen, setEditLayoutOpen] = useState(false);
   const openEditLayout = useCallback(() => {
     setEditLayoutOpen(true);
-  }, []);
+  }, [setEditLayoutOpen]);
   // PR-3: 2-tab segmented control — Lift | Run. Today / Week shells
   // were retired once Home owned today-glance (via the shared
   // `resolveTrainingDayForDate` path — PR-0c) and DayActionSheet

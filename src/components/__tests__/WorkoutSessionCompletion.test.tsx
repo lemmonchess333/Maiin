@@ -870,6 +870,34 @@ describe("WorkoutSession — an accidental extra set can be removed", () => {
   });
 });
 
+describe("WorkoutSession — the set-type menu opens beside its button", () => {
+  it("places the menu from the tapped button on the frame that opens it", () => {
+    /* The position came from a ref the button's ref callback filled, which
+       runs after the render that opens the menu, so the menu's first frame
+       drew at the previous position (0, 0 on a first open). */
+    openSession();
+    const trigger = screen.getAllByTitle("Set type: working")[1];
+    vi.spyOn(trigger, "getBoundingClientRect").mockReturnValue({
+      top: 120,
+      bottom: 148,
+      left: 20,
+      right: 48,
+      width: 28,
+      height: 28,
+      x: 20,
+      y: 120,
+      toJSON: () => ({}),
+    });
+    fireEvent.click(trigger);
+    // The menu is the fixed card holding the set types.
+    const menu = screen
+      .getByRole("button", { name: /warm-?up/i })
+      .closest("div.fixed") as HTMLElement;
+    expect(menu.style.left).toBe("56px");
+    expect(menu.style.top).toBe("120px");
+  });
+});
+
 describe("WorkoutSession — rest timer", () => {
   /* The fixture carries `restSeconds: 0` and a null profile, so every rest
      falls back to the 90s default. That makes the default the thing a leak

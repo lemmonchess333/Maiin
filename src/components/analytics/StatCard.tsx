@@ -29,7 +29,7 @@ interface StatCardProps {
   /** The change on the previous range, in grey whichever way it moved:
    *  it was green or red by whether the move suited the goal, which
    *  graded a 1% wobble as a success or a failure (house voice: state
-   *  what the data shows, 2026-09-29). */
+   *  what the data shows). */
   delta?: { value: string; positive: boolean } | null;
   /** Optional small line under the delta, e.g. "target 180g". */
   target?: string;

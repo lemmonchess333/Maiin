@@ -11,7 +11,7 @@
  * across the user base, so it gets a real, personal call to action.
  *
  * The lines under the titles state the week's count and nothing more (house
- * voice, 2026-09-29). They closed on pep-talk tails ("one more keeps it
+ * voice). They closed on pep-talk tails ("one more keeps it
  * alive", "keep the streak alive", "Build your consistency"), and the first
  * said "one more" whatever the target was.
  *

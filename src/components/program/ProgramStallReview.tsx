@@ -34,7 +34,7 @@ export default function ProgramStallReview({
   /* A row like "Go easier today" above it, saying which lift has held
      and where. It was a centred ghost button reading only "Review recent
      lifting progress", which looked like a line of text rather than
-     something to tap, and named no lift (2026-09-29). */
+     something to tap, and named no lift. */
   return (
     <div>
       <button

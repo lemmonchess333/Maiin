@@ -2,8 +2,8 @@ import { cn } from "@/lib/utils";
 
 /**
  * The Performance Index's change on last week, in words: "Up 3 on last
- * week". Plain grey text, as the calorie ring's label is (owner call,
- * 2026-09-29; DS3's STATUS lines). It was a green or coral pill with an
+ * week". Plain grey text, as the calorie ring's label is (owner call;
+ * DS3's STATUS lines). It was a green or coral pill with an
  * arrow, which graded the change and spent the running colour on a falling
  * score. The verb beside it already says what kind of week it was.
  *

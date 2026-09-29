@@ -514,7 +514,7 @@ export default function Upgrade() {
 
           <div className="space-y-2">
             {/* The app's primary button: it was a purple-to-teal gradient,
-                the one decorative gradient left on a button (2026-09-29). */}
+                the one decorative gradient left on a button. */}
             <Button size="lg" fullWidth onClick={handleContinue}>
               Continue
             </Button>

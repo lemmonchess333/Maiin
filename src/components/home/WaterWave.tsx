@@ -34,6 +34,15 @@ function buildPath(
   return `${d} L ${PATH_WIDTH} ${HEIGHT} Z`;
 }
 
+/* The shapes the paths are first drawn with: the wave at rest, before the
+   loop's first frame. They are constants, so a re-render (a new fill
+   colour, say) hands React the same `d` it had and React leaves the
+   attribute the loop has since written alone. Rebuilding the current
+   shape from the loop's refs in render reaches the same picture, and
+   reading refs during render is what react-hooks/refs forbids. */
+const BACK_AT_REST = buildPath(0, 0.6, 0.7, 3);
+const FRONT_AT_REST = buildPath(0, 1, 1, 3);
+
 /**
  * Water surface wave. ONE visibility-paused RAF loop drives all three wave
  * paths. Previously this ran one parent `useAnimationFrame` PLUS three
@@ -52,7 +61,6 @@ export default function WaterWave({ fillPercent, splash }: WaterWaveProps) {
   const frontRef = useRef<SVGPathElement>(null);
   const highlightRef = useRef<SVGPathElement>(null);
   const amplitudeRef = useRef(3);
-  const phaseRef = useRef(0);
   const [active, setActive] = useState(() =>
     typeof document === "undefined"
       ? true
@@ -103,7 +111,6 @@ export default function WaterWave({ fillPercent, splash }: WaterWaveProps) {
       if (time - lastUpdate >= 33) {
         lastUpdate = time;
         const phase = time * 0.001;
-        phaseRef.current = phase;
         const amplitude = amplitudeRef.current;
         backRef.current?.setAttribute(
           "d",
@@ -140,7 +147,7 @@ export default function WaterWave({ fillPercent, splash }: WaterWaveProps) {
         style={{ transform: "translateY(-12px)" }}
         aria-hidden="true"
       >
-        <path fill={surfaceColor} d={buildPath(0, 1, 1, 3)} />
+        <path fill={surfaceColor} d={FRONT_AT_REST} />
       </svg>
     );
   }
@@ -162,20 +169,12 @@ export default function WaterWave({ fillPercent, splash }: WaterWaveProps) {
           <stop offset="100%" stopColor="rgba(255,255,255,0)" />
         </linearGradient>
       </defs>
-      <path
-        ref={backRef}
-        fill={backColor}
-        d={buildPath(phaseRef.current, 0.6, 0.7, amplitudeRef.current)}
-      />
-      <path
-        ref={frontRef}
-        fill={surfaceColor}
-        d={buildPath(phaseRef.current, 1, 1, amplitudeRef.current)}
-      />
+      <path ref={backRef} fill={backColor} d={BACK_AT_REST} />
+      <path ref={frontRef} fill={surfaceColor} d={FRONT_AT_REST} />
       <path
         ref={highlightRef}
         fill={`url(#${gradientId})`}
-        d={buildPath(phaseRef.current, 1, 1, amplitudeRef.current)}
+        d={FRONT_AT_REST}
         style={{ clipPath: `inset(0 0 ${HEIGHT - 6}px 0)` }}
       />
     </svg>

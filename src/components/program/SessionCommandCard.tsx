@@ -98,7 +98,7 @@ export default function SessionCommandCard({
           {/* The description and the dose sit under the title, beside the
               picture: below it, a lift day's figure (taller than two lines
               of heading) left an empty band between the title and
-              "~57 min" (2026-09-29). */}
+              "~57 min". */}
           <div className="flex-1 min-w-0">
             <p className={cn("text-sm font-bold", accentText)}>{eyebrow}</p>
             <h3 className="mt-1 text-h2 font-extrabold leading-tight tracking-tight text-foreground text-balance">
