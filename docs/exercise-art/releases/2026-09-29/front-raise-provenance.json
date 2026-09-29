@@ -1,0 +1,137 @@
+{
+  "modelPath": "Existing built-in imagegen pilot master, middle and top retained after native and mobile review. No new generation, deterministic image repair or model fallback.",
+  "canonicalReference": {
+    "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+  },
+  "nativeDimensions": {
+    "width": 1024,
+    "height": 1536
+  },
+  "historicalOwnerRelease": {
+    "path": "docs/exercise-art/releases/2026-09-owner/front-raise.json",
+    "sha256": "f501eddd3f4dcf0a69a898d3504d9fe4589b48380fbb3cab63a71508f01c6d38",
+    "note": "Preserved unchanged as history; new strict review covers replacement assets/cues."
+  },
+  "originalGeneration": [
+    {
+      "file": "BATCH_GENERATION_LOG.json",
+      "calls": [
+        {
+          "frame": 1,
+          "id": "front-raise",
+          "path": "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/front-raise/1-master.png",
+          "prompt": "Use case: scientific-educational; ONE FRONT RAISE exercise master, frame 1/6. Supplied image is the canonical athlete/linework/equipment reference. Match this SAME bald faceless white/light-grey muscular anatomical man, white low-top shoes, fine dark contour, polished 2D shading, body/head/hand proportions and modest round grey dumbbells.\nNew exercise setup: standing bilateral PRONATED dumbbell front raise. Upright torso, hip-width planted stance, neutral knees. Two dumbbells in FRONT of thighs, palms facing thighs, both hands closed around handles, wrists straight. Both elbows slightly bent about 10 degrees and hold that bend throughout later movement.\nCAMERA for this new set: fixed three-quarter SIDE view, athlete facing image LEFT, about 60 degrees turned from front so sagittal forward lift is legible and both arms/grips remain visible. Portrait 1024x1536. Entire head and shoes inside generous 50px vertical margins. Athlete centred around x=650 with extra empty black space to LEFT reserved for the arms to rise forward later; do not centre him too far left. No equipment cropped.\nMuscle hierarchy: anterior/front deltoid portions strongest purple; upper clavicular chest lighter lilac; only faint pale-purple forearm grip/core stabilisers. Biceps, triceps, legs, lats and rear delts white-grey, no unrelated deep-purple highlights. This is FRONT raise, not curl or lateral raise.\nSix intended beats: arms beside/front thighs, early 25-degree forward raise, middle 55-degree raise, shoulder-height 90-degree raise, controlled 55-degree lower, near-bottom 25-degree return. Do not draw multiple poses; make only the near-straight hanging-arm START. Head/torso/feet are fixed anchors for future edits; shoulders articulate naturally but no shrug or torso lean.\nOne crisp native high-resolution image, black background. No text, numbers, captions, arrow, legend, border, grid or UI.",
+          "refs": [
+            "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/hammer-curl/1-master.png"
+          ]
+        },
+        {
+          "frame": 2,
+          "id": "front-raise",
+          "path": "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/front-raise/2-early.png",
+          "prompt": "Create ONE adjacent still by precisely editing this master: bilateral DUMBBELL FRONT RAISE frame 2/6, early raise.\nLift both arms FORWARD toward image LEFT by about 25 degrees from their downward hanging position. Keep the small original elbow bend constant, around 10 degrees; this is shoulder flexion, NOT a biceps curl. Both hands move forward-left and slightly upward in arcs around fixed shoulder joints, remaining below waist height. Pronated grip: knuckles upward/forward and palms toward the floor as arms rise; both wrists straight. Preserve both separate visible hands and the same two dumbbells.\nKeep head/neck, torso, hips, thighs, knees, calves and shoes exactly as image1 at the original canvas coordinates. Body remains upright with no back lean, no shrugged shoulders. Preserve original arm bone lengths and limb thickness, fixed 1024x1536 canvas, perspective, crop, equipment head diameters and handle lengths. Do not enlarge highlighted muscles.\nSame front-deltoid deep purple, upper chest lilac, pale forearm accents, white-grey elsewhere. No new highlights. Same solid black background and crisp 2D anatomical drawing. ONE frame only, no text/caption/arrows/border/grid/UI.",
+          "refs": [
+            "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/front-raise/1-master.png"
+          ]
+        },
+        {
+          "frame": 3,
+          "id": "front-raise",
+          "path": "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/front-raise/3-mid.png",
+          "prompt": "Edit this exact FRONT RAISE early pose into ONE mid-raise still, frame 3/6.\nLift both arms a little further FORWARD toward image LEFT until the upper arms are about 60 degrees forward from vertical, roughly 30 degrees BELOW horizontal. Hands around y=480-500, visibly BELOW shoulder height y=300. Keep each elbow's existing small bend constant; do not curl. Both wrists straight and palms pronated toward floor; same two dumbbells with closed grips, identical diameter/thickness/handle lengths and rigid geometry.\nShoulder centres, head, neck, upright torso, hips, knees, legs and shoe soles remain fixed at their exact original 1024x1536 canvas coordinates. No forward torso lean, no shrug, no zoom/crop/view change, no limb length/size change. Preserve same anterior-deltoid purple, upper-chest lilac and pale forearms, anatomy style and black background.\nThis is an adjacent joint-pose edit, not a new athlete. One separate sharp native-resolution image without captions, text, arrows, borders or UI.",
+          "refs": [
+            "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/front-raise/2-early.png"
+          ]
+        },
+        {
+          "frame": 4,
+          "id": "front-raise",
+          "path": "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/front-raise/4-top.png",
+          "prompt": "ONE local edit for FRONT RAISE frame 4/6, shoulder-height top. Raise both arms FORWARD toward image LEFT from the supplied mid pose until the upper arms are horizontal at SHOULDER HEIGHT, approximately 90 degrees shoulder flexion. Both hands at about y=310-340 on the same 1024x1536 canvas. Do not raise overhead.\nKeep the original small elbow bend around 10 degrees, fixed arm bone lengths, straight wrists, pronated palms downward and both hands closed around the SAME dumbbell handles. Both dumbbells stay identical in head diameter/thickness and handle length, rigid and separated, fully inside the image. This is a forward raise, not sideways.\nKeep entire head, neck, torso, hips, legs, white shoes and soles at their original coordinates. No back lean, shrug, change in body scale, camera, framing or lighting. Preserve the purple anterior deltoids, lilac upper chest and pale forearms with no new highlighting or muscle inflation. Only the shoulder joints and attached arms/equipment change.\nBlack background, crisp polished 2D anatomical illustration. ONE separate high-resolution image. No captions, text, arrow, border, grid or UI.",
+          "refs": [
+            "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/front-raise/3-mid.png"
+          ]
+        }
+      ]
+    },
+    {
+      "file": "BATCH_03_GENERATION_LOG.json",
+      "calls": [
+        {
+          "frame": 2,
+          "id": "front-raise",
+          "path": "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/front-raise/2-early-v2.png",
+          "prompt": "Use case: precise-object-edit. Input1 is the FRONT RAISE starting master and sole edit target. Create one native1024x1536 separate frame, no text. Make a SMALL early bilateral front raise: rotate both almost-straight arms forward only about25degrees from hanging, retaining the same soft elbow angle and pronated closed grips. Near shoulder centre approximately(738,310), near wrist should now be about(585,720); far wrist about(377,685). These are illustrative screen targets, preserve true limb lengths and plausible projection. The weights should remain near upper-thigh/hip level, well below waist and much lower than a halfway raise. Keep head, torso, shoulders, pelvis, legs, shoes and all stationary outlines in exactly the reference positions. Same two dumbbells, same head dimensions and thickness, same handle lengths; wrists straight and grip contact intact. Same canonical faceless white anatomical male, dark fine contours, white shoes, pure black background. Preserve purple anterior deltoids, lilac upper chest and pale forearms exactly, no size or colour drift. Move only arms and dumbbells, do not recreate the whole athlete.",
+          "refs": [
+            "/workspace/scratch/4837f9e4547d/tropos-art-recovery/docs/exercise-art/pilots/front-raise/1-master.png"
+          ]
+        }
+      ]
+    }
+  ],
+  "originalSources": [
+    {
+      "path": "docs/exercise-art/pilots/front-raise/1-master.png",
+      "sha256": "813df8deed18516707dc7925eda17b69cc96a5ac060e42188a758fd600b94c07"
+    },
+    {
+      "path": "docs/exercise-art/pilots/front-raise/3-mid.png",
+      "sha256": "c74e669d1e510f538dca6a5ef586778a08f3b8517abdeeabbeb7e442845dff32"
+    },
+    {
+      "path": "docs/exercise-art/pilots/front-raise/4-top.png",
+      "sha256": "1771951b91a37bbc369f96decc0ad447d0a933646cf032318341c5fef6d1f8be"
+    }
+  ],
+  "generation": [],
+  "generatedOutputs": [],
+  "deterministicRepairs": [],
+  "selectedPngs": [
+    {
+      "frame": 1,
+      "sha256": "813df8deed18516707dc7925eda17b69cc96a5ac060e42188a758fd600b94c07"
+    },
+    {
+      "frame": 2,
+      "sha256": "c74e669d1e510f538dca6a5ef586778a08f3b8517abdeeabbeb7e442845dff32"
+    },
+    {
+      "frame": 3,
+      "sha256": "1771951b91a37bbc369f96decc0ad447d0a933646cf032318341c5fef6d1f8be"
+    },
+    {
+      "frame": 4,
+      "sha256": "1771951b91a37bbc369f96decc0ad447d0a933646cf032318341c5fef6d1f8be"
+    },
+    {
+      "frame": 5,
+      "sha256": "c74e669d1e510f538dca6a5ef586778a08f3b8517abdeeabbeb7e442845dff32"
+    },
+    {
+      "frame": 6,
+      "sha256": "813df8deed18516707dc7925eda17b69cc96a5ac060e42188a758fd600b94c07"
+    }
+  ],
+  "reuse": {
+    "4": 3,
+    "5": 2,
+    "6": 1
+  },
+  "conversion": "Lossless WebP decoded RGB exactly equals reviewed PNG. No scaling.",
+  "measurementMethod": "Interpolated minimum-RGB150 scanline boundaries on native selected PNGs. Unrounded1px/1percent tests measure fixed contacts only, not moving anatomy or equipment.",
+  "scanlines": {
+    "farShoe": [
+      390,
+      650,
+      1350,
+      150
+    ],
+    "nearShoe": [
+      580,
+      830,
+      1430,
+      150
+    ]
+  }
+}
