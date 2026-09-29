@@ -244,8 +244,8 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
     keyed: true,
     source: "form-frames/front-raise/1.webp",
     sourceSha256:
-      "7d1860d321996f975a0dd4cd672c6bc9326ea94da096487622af16c3a2ee981c",
-    sha256: "bf3bc0c7de4812daf087b8ad5d4eb9be95702caa4fb9379ae643ce908980967b",
+      "c724267a05a39a4fd0b936de380bdd3dbc73accda8525d30607646a71a16bc79",
+    sha256: "0c715bc608d077b8e093920e03091858565cbc7d59d62cde8b2be0cc7eedc1fc",
   },
   "goblet-squat": {
     src: "form-art/goblet-squat.webp",

@@ -215,19 +215,7 @@ export const RELEASED_FORM_PLACARDS = {
   ),
   "db-curl": placard("db-curl", ["Biceps"], ["Forearms"], [[0,"Set","Stand tall with palms facing forward."],[0.5,"Curl","Bend your elbows without swinging your torso."],[1,"Top","Curl toward shoulders, keeping wrists straight."],[1,"Control","Keep upper arms close to your ribs."],[0.5,"Lower","Lower both dumbbells slowly under control."],[0,"Reset","Return near straight without snapping your elbows."]]),
   "hammer-curl": placard("hammer-curl", ["Biceps"], ["Brachioradialis", "Forearms"], [[0,"Set","Stand tall with palms facing inward."],[0.5,"Curl","Bend your elbows without turning your palms."],[1,"Top","Bring weights toward shoulders with wrists aligned."],[1,"Control","Keep upper arms beside your ribs."],[0.5,"Lower","Lower slowly with the same neutral grip."],[0,"Reset","Return near straight without swinging your torso."]]),
-  "front-raise": placard(
-    "front-raise",
-    ["anterior deltoids"],
-    ["upper pectorals"],
-    [
-      [0, "Start", "Stand tall with dumbbells before your thighs."],
-      [0.25, "Initiate raise", "Raise both arms forward without swinging."],
-      [0.6, "Continue raise", "Keep the same slight elbow bend."],
-      [1, "Shoulder height", "Stop with your arms at shoulder height."],
-      [0.6, "Controlled lower", "Lower slowly without leaning your torso."],
-      [0.25, "Return", "Return towards your thighs under control."],
-    ]
-  ),
+  "front-raise": placard("front-raise", ["Front Delts"], ["Upper Chest"], [[0,"Set","Stand tall with weights before your thighs."],[0.5,"Raise","Lift forward with a slight elbow bend."],[1,"Top","Stop at shoulder height without shrugging."],[1,"Control","Keep wrists straight and your torso still."],[0.5,"Lower","Lower both weights slowly without swinging."],[0,"Reset","Return weights to the front of thighs."]]),
   "goblet-squat": placard(
     "goblet-squat",
     ["quadriceps"],
