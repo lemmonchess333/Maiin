@@ -1,0 +1,183 @@
+{
+  "modelPath": "Built-in image_gen unchanged path for native middle/bottom wrist repair; owner-authorized deterministic master-copy confined to planted contacts. No CLI/API fallback.",
+  "canonicalReference": {
+    "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+  },
+  "nativeDimensions": {
+    "width": 1254,
+    "height": 1254,
+    "note": "Actual dimensions verified; historical pilot prose said1280 but files are1254. No resizing."
+  },
+  "originalPilotPrompts": {
+    "initialMaster": "Scientific educational exercise illustration DIAMOND PUSH-UP MASTER. Reference exact canonical bald faceless white-grey anatomical adult male identity, neutral smooth featureless pelvis no clothing, white trainers, fine sharp dark contours. Pure black background. Wide horizontal body fits single square1280 image. Low three-quarter SIDE view looking slightly from front of athlete, head toward LEFT shoes toward RIGHT. Full body high plank, straight arms, shoulders hips ankles in straight descending line, hands very close together directly beneath chest with thumbs and index fingers touching to form small DIAMOND clearly visible; both palms flat facing floor. Toes fixed on floor, feet together. Triceps strongest purple, chest/front delts pale lilac, rest neutral. Full head hands feet visible. Camera chosen to show close hand position and elbows; no text arrows floor grid equipment. Top extension starting pose only, reserve space below chest for lowering.",
+    "masterCorrection": "Precise correction of diamond pushup master. Image1 identity, Image2 edit target. Change BOTH hands only: rotate palms inward so LEFT INDEX FINGERTIP touches RIGHT INDEX FINGERTIP and LEFT THUMB TIP touches RIGHT THUMB TIP, forming unmistakable small closed diamond gap between these four fingers. Hands directly under sternum, flat palms floor. Keep wrists close, maintain straight elbows. Also head neutral looking down aligned with spine rather than craned up. Preserve full body proportions/plank, toes, colours, framing, background. No other changes, single square image no text.",
+    "firstMidpointAttempt": "Image1 identity, Image2 exact diamond pushup master edit target. Frame2 EARLY LOWERING: bend elbows slightly ~30degrees, elbows tracking BACK along ribs not out, lower chest/head/hips as one rigid plank toward fixed diamond hands. Keep diamond hands and toe contact locations EXACTLY fixed, head neutral, full straight line shoulders hips ankles. Body pivots about toes; don't slide feet. Same athlete scale, same camera, same purple triceps and lilac chest/front delts. Preserve no underwear anatomical neutral pelvis. Single square identical crop black background no text. Only joints needed for lowering change.",
+    "midpointCleanup": "Image1 identity, Image2 diamond pushup master, Image3 mid-lowering target. Keep pose of Image3 exactly; this is MID DESCENT around90degree elbow bend (not early). Replace all grey/white/magenta fringe/noise OUTSIDE athlete with perfectly uniform pure opaque black. Clean sharp silhouette, no halo and no floor shadow. Preserve hands diamond contact, toe positions, full rigid plank, purple triceps/lilac chest/front delts. Do not move body or change camera/crop. Single1280 square.",
+    "midpointFreshRender": "Produce a FRESH CLEAN RENDER (not background cutout) of the diamond pushup midpoint shown in reference3, referencing athlete1 identity and master2 composition. Black fully opaque background. Entire illustration freshly clean anti-aliased with continuous sharp dark anatomy contours, absolutely no white fringe, edge speckles, halos or transparency. Copy reference3 exact body pose, hands diamond at lower-left, toe contacts at right, scale/camera. Hands thumbs/index tips touch in diamond, elbows tucked, rigid body straight. Purple triceps lilac pecs and front delts. Single full1280 square. Only improve raster quality, no change to form.",
+    "frame2": "Fresh clean render diamond pushup EARLY DESCENT pose2. Ref1 identity; ref2 top master composition; ref3 mid-descent. Create pose HALFWAY between master2 straight arm top and ref3 bent elbow midpoint. Elbows just slightly bent (~25deg flexion), chest height halfway between these references. Keep exact HANDS and TOES anchor pixels from master, diamond fingers closed, elbow tracking backwards along ribs, head neutral. Rigid straight body lowers around toes, no hip sag/pike. Same size athlete camera colours strong purple triceps pale lilac pecs/front delts. Entire image solid opaque black background clean anti-aliased edges no cutout halo/fringe noise.1280 square no text.",
+    "frame4": "Fresh clean render diamond pushup BOTTOM pose4. Ref1 identity; ref2 exact master composition; ref3 nearest midpoint. Lower rigid body further until chest just above diamond hands, about3cm floor clearance, elbows bent and track BACK tight to ribs. Keep both hands same exact diamond shape/contact/pixel location and both toe contacts unchanged. Head neck aligned with spine, body one straight line shoulders hips ankles, hips do NOT sag. Full body same scale camera/crop. Purple triceps strongest lilac chest/front delts constant. Solid black backdrop, clean antialiased edges no cutout fringe. Single1280 square no text."
+  },
+  "originalSources": [
+    {
+      "path": "docs/exercise-art/pilots/parallel-twenty/diamond-push-ups/frames/1.png",
+      "sha256": "817c79c3f761dbe2713b6e39b43eced9c46e40bf50b0344dbf786bf296e79abd"
+    },
+    {
+      "path": "docs/exercise-art/pilots/parallel-twenty/diamond-push-ups/frames/3.png",
+      "sha256": "665411f5e9dc37a06ab3d45b866450b10be77b3f4686b9118a72f18d64f97c89"
+    },
+    {
+      "path": "docs/exercise-art/pilots/parallel-twenty/diamond-push-ups/frames/4.png",
+      "sha256": "5e305bbfaa2f7cd0a6d3421d6248b56448c63da5b2376f6b8d900ff92bbcce09"
+    }
+  ],
+  "registeredContactInputs": {
+    "status": "Candidate patch only, inspect wrist/shoe seams before selecting.",
+    "authorization": "Owner approved master-copy for fixed areas. Only planted hands and forefoot contact portions; no moving torso/upper arms or upper ankles.",
+    "masterSha256": "817c79c3f761dbe2713b6e39b43eced9c46e40bf50b0344dbf786bf296e79abd",
+    "rectangles": [
+      [
+        160,
+        850,
+        430,
+        950
+      ],
+      [
+        995,
+        800,
+        1225,
+        880
+      ]
+    ],
+    "frames": [
+      {
+        "frame": 1,
+        "sourceSha256": "817c79c3f761dbe2713b6e39b43eced9c46e40bf50b0344dbf786bf296e79abd",
+        "outputSha256": "7ff08332fc298bb760b6b340fffc42bbc3042f36c41ea7378e55a0a0de48c21b",
+        "changedPixels": 0,
+        "changedOutsideRectangles": 0
+      },
+      {
+        "frame": 2,
+        "sourceSha256": "5123b4f14c2c469e4705b0e75e3afea84d972f75dbee98072c9059edb868e860",
+        "outputSha256": "afd81813676c4ca33c098ca72a1e73bdd099c31fe436d63bb730b64a85a7a1a1",
+        "changedPixels": 29298,
+        "changedOutsideRectangles": 0
+      },
+      {
+        "frame": 3,
+        "sourceSha256": "665411f5e9dc37a06ab3d45b866450b10be77b3f4686b9118a72f18d64f97c89",
+        "outputSha256": "c9ab29ef24df5a4fcda456415b3c72d38b98fa0fa8bb0336ed270432ad9b89ae",
+        "changedPixels": 29560,
+        "changedOutsideRectangles": 0
+      },
+      {
+        "frame": 4,
+        "sourceSha256": "5e305bbfaa2f7cd0a6d3421d6248b56448c63da5b2376f6b8d900ff92bbcce09",
+        "outputSha256": "1a26faaf3f748e3228ca916804eca247a537f3651379715655e4864f395b6cd2",
+        "changedPixels": 35487,
+        "changedOutsideRectangles": 0
+      },
+      {
+        "frame": 5,
+        "sourceSha256": "665411f5e9dc37a06ab3d45b866450b10be77b3f4686b9118a72f18d64f97c89",
+        "outputSha256": "c9ab29ef24df5a4fcda456415b3c72d38b98fa0fa8bb0336ed270432ad9b89ae",
+        "changedPixels": 29560,
+        "changedOutsideRectangles": 0
+      },
+      {
+        "frame": 6,
+        "sourceSha256": "5123b4f14c2c469e4705b0e75e3afea84d972f75dbee98072c9059edb868e860",
+        "outputSha256": "afd81813676c4ca33c098ca72a1e73bdd099c31fe436d63bb730b64a85a7a1a1",
+        "changedPixels": 29298,
+        "changedOutsideRectangles": 0
+      }
+    ]
+  },
+  "generation": [
+    {
+      "prompt": "Scientific educational precise-object repair. Image1 canonical athlete identity. Image2 high-plank master defines the exact planted hand/toe positions. Image3 EDIT TARGET is MIDDLE diamond push-up with registered planted hands and toes but tiny rectangular seams at wrists. Repair ONLY the two wrist junctions joining bent forearms to existing fixed hands (near x180 y850 and x425 y860). Remove cut edges/black wedges and draw continuous anatomical wrist contours. Keep the middle-lowered body pose exactly; do NOT return to straight-arm top or lower to bottom. Hands diamond shape, fingers/palms, toe contacts and shoes must stay pixel-aligned. Entire head chest elbows hips legs fixed; no scale or camera change. Same1280x1280canvas solid BLACK no glow. Strong purple triceps/light lilac chest and frontdelts unchanged. One native image, no text.",
+      "output": "exec-b9f42a6c-80d9-4199-9377-8d78dd3735f5.png",
+      "review": "Native middle wrist seams repaired; pending contact measurements/sequence review. New proposed six-beat sequence top/middle/bottom/hold/middle/top."
+    },
+    {
+      "prompt": "Scientific educational precise-object repair. Image1 canonical identity. Image2 high-plank master defines exact planted hands/toe contact pixels. Image3 EDIT TARGET is bottom diamond push-up with correctly registered planted hands and toes but visible rectangular seams at BOTH WRISTS. Repair ONLY tiny wrist junctions where forearms meet the fixed hands around x180 y850 and x425 y860. Draw anatomically continuous wrist contours joining existing bottom-pose forearms to existing hand positions; remove straight cut edges and small black wedges. Do not move fingers, diamond shape, palms, toes, chest, elbows, hips, head or other anatomy. Keep bottom pose exact. Preserve all fixed hand and toe contact endpoints, scale and1280square camera. Strong purple triceps and pale lilac pecs/front delts unchanged. Solid pure black background no halo. One complete native image with only local wrist seam repair.",
+      "output": "exec-9f191204-9ab1-4f04-9695-ede300fd47fa.png",
+      "review": "Native wrist seams repaired, bottom retained; candidate pending measurements and sequence review."
+    }
+  ],
+  "generatedOutputs": [
+    {
+      "file": "mid-wrist-repair.png",
+      "sha256": "a0cade1ff650b34bf2b664cde457613c0abda7a11b1a7ee9b25e8b3e51dd695d"
+    },
+    {
+      "file": "bottom-wrist-repair.png",
+      "sha256": "0a59fa5a659be98ef4b6c6c0c967664d6bec1d54df1382f3d8b71763ce2c2c66"
+    }
+  ],
+  "finalFingertipCorrection": {
+    "authorization": "Owner-approved master-copy for planted contacts. Only stationary fingers below knuckles; wrists, forearms, body and shoes unchanged.",
+    "masterSha256": "817c79c3f761dbe2713b6e39b43eced9c46e40bf50b0344dbf786bf296e79abd",
+    "sourceSha256": "0a59fa5a659be98ef4b6c6c0c967664d6bec1d54df1382f3d8b71763ce2c2c66",
+    "outputSha256": "bbb20edc667fe1c55e238390459f32c7183f2e233accfbac205342a6fbb06dac",
+    "rectangle": [
+      170,
+      885,
+      410,
+      950
+    ],
+    "changedPixels": 9839,
+    "changedOutsideRectangle": 0
+  },
+  "selectedPngs": [
+    {
+      "frame": 1,
+      "sha256": "817c79c3f761dbe2713b6e39b43eced9c46e40bf50b0344dbf786bf296e79abd"
+    },
+    {
+      "frame": 2,
+      "sha256": "a0cade1ff650b34bf2b664cde457613c0abda7a11b1a7ee9b25e8b3e51dd695d"
+    },
+    {
+      "frame": 3,
+      "sha256": "bbb20edc667fe1c55e238390459f32c7183f2e233accfbac205342a6fbb06dac"
+    },
+    {
+      "frame": 4,
+      "sha256": "bbb20edc667fe1c55e238390459f32c7183f2e233accfbac205342a6fbb06dac"
+    },
+    {
+      "frame": 5,
+      "sha256": "a0cade1ff650b34bf2b664cde457613c0abda7a11b1a7ee9b25e8b3e51dd695d"
+    },
+    {
+      "frame": 6,
+      "sha256": "817c79c3f761dbe2713b6e39b43eced9c46e40bf50b0344dbf786bf296e79abd"
+    }
+  ],
+  "reuse": {
+    "4": 3,
+    "5": 2,
+    "6": 1
+  },
+  "conversion": "Lossless WebP decoded RGB exactly equals reviewed PNG. No scaling.",
+  "measurementMethod": "Minimum RGB150 scanline boundaries interpolated; fixed contacts only, not moving anatomy proof.",
+  "scanlines": [
+    [
+      "handContact",
+      160,
+      430,
+      910,
+      150
+    ],
+    [
+      "toeContact",
+      995,
+      1225,
+      825,
+      150
+    ]
+  ]
+}
