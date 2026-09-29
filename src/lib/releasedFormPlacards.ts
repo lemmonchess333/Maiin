@@ -213,19 +213,7 @@ export const RELEASED_FORM_PLACARDS = {
       [0, "Reset at the top", "Finish arms extended; keep the plate stable."],
     ]
   ),
-  "db-curl": placard(
-    "db-curl",
-    ["Biceps"],
-    ["Forearms"],
-    [
-      [0.0, "Set up", "Stand tall, palms forward, elbows by ribs."],
-      [0.25, "Initiate curl", "Bend both elbows; keep your torso still."],
-      [0.6, "Mid curl", "Upper arms still, wrists straight."],
-      [1.0, "Top contraction", "Curl up without lifting your elbows."],
-      [0.6, "Controlled lower", "Lower slowly along the same arc."],
-      [0.15, "Finish return", "Return towards straight arms without bouncing."],
-    ]
-  ),
+  "db-curl": placard("db-curl", ["Biceps"], ["Forearms"], [[0,"Set","Stand tall with palms facing forward."],[0.5,"Curl","Bend your elbows without swinging your torso."],[1,"Top","Curl toward shoulders, keeping wrists straight."],[1,"Control","Keep upper arms close to your ribs."],[0.5,"Lower","Lower both dumbbells slowly under control."],[0,"Reset","Return near straight without snapping your elbows."]]),
   "hammer-curl": placard(
     "hammer-curl",
     ["biceps", "brachialis"],
@@ -331,15 +319,15 @@ export const RELEASED_FORM_PLACARDS = {
   ),
   "bodyweight-squat": placard(
     "bodyweight-squat",
-    ["quadriceps"],
-    ["gluteals"],
+    ["Quads"],
+    ["Glutes", "Core"],
     [
-      [0, "Stand tall", "Stand tall with both arms held forward."],
-      [0.25, "Begin descent", "Bend hips and knees; keep heels grounded."],
-      [0.6, "Lower", "Keep knees following the direction of toes."],
-      [1, "Bottom", "Stay braced with your whole feet planted."],
-      [0.6, "Drive up", "Raise hips and chest together under control."],
-      [0.25, "Finish rising", "Finish standing without leaning back."],
+      [0, "Set", "Stand shoulder-width with arms extended for balance."],
+      [0.3, "Lower", "Bend hips and knees; keep heels planted."],
+      [1, "Bottom", "Lower until your thighs reach roughly parallel."],
+      [1, "Control", "Keep your knees tracking over your toes."],
+      [0.3, "Rise", "Push through your whole feet to rise."],
+      [0, "Reset", "Stand tall without leaning backward."],
     ]
   ),
   "barbell-shrug": placard(

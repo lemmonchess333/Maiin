@@ -7,10 +7,12 @@ const scene = curl as FormArtScene;
 describe("six-frame production brief", () => {
   it("uses the exact six authored cues and canonical reference", () => {
     const prompt = buildFormArtPrompt("db-curl", scene);
-    expect(prompt).toContain("FRAME 6 — FINISH RETURN 6/6");
+    expect(prompt).toContain("FRAME 6 — RESET 6/6");
     expect(prompt).toContain("public/form-frames/barbell-row/1.webp");
     expect(prompt).toContain("six separate full-resolution files");
-    expect(prompt).toContain("Upper arms still, wrists straight.");
+    expect(prompt).toContain("Return near straight without snapping your elbows.");
+    expect(prompt).toContain("top: dumbbells approach shoulder height");
+    expect(prompt).toContain("reset: return to the original near-straight setup");
   });
   it("rejects draft scenes, wrong variants and incomplete state ladders", () => {
     expect(() =>
