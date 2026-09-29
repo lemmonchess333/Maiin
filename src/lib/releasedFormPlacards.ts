@@ -673,4 +673,17 @@ export const RELEASED_FORM_PLACARDS = {
       [0, "Reset", "Reset high; finish reps before switching sides."],
     ]
   ),
+  "pallof-press": placard(
+    "pallof-press",
+    ["Core"],
+    ["Obliques"],
+    [
+      [0, "Set", "Hold handle at chest; brace your core."],
+      [0.5, "Press", "Press forward without turning shoulders or hips."],
+      [1, "Extend", "Extend arms while keeping your torso still."],
+      [1, "Hold", "Hold steady against the sideways cable pull."],
+      [0.5, "Return", "Bend elbows; return slowly toward your chest."],
+      [0, "Reset", "Reset at chest before your next press."],
+    ]
+  ),
 };
