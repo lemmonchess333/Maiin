@@ -1,0 +1,170 @@
+{
+  "exerciseId": "db-curl",
+  "version": "anatomy-v3-2026-09-29",
+  "width": 1024,
+  "height": 1536,
+  "decision": "approved",
+  "reviewer": "Codex visual and implementation review",
+  "reviewedAt": "2026-09-29T10:03:38.903Z",
+  "reference": {
+    "path": "form-frames/db-curl/1.webp",
+    "sha256": "2fb3df52bdf690fe3873c6cb50022987089c9545b058322fff5737b70af4677c"
+  },
+  "cueSha256": "ab5a5f8b81fa9b7547717051a65ab03238cba3fc83b4fd3e3acd42ea11108854",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Canonical anatomy-v3 bald faceless white-grey figure, fine contours, smooth featureless pelvis and white trainers retained. Original purple/lilac hierarchy is consistent in the selected colour-corrected top."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Fixed front three-quarter camera, native1024x1536 frames and unchanged scene scale. Head, torso, hips and both feet stay registered while the arms curl."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Bilateral supinated curl bends the elbows with upper arms held beside ribs and no hip swing. Forearms foreshorten in the intermediate view and lengthen toward vertical at top; wrists remain continuous with closed grips. Native and mobile review found no obvious joint disconnection; no calibrated3D-angle claim."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Two matching modest round-ended dumbbells keep the same paired head/handle construction, with both grips attached throughout. Native and sequential visual review shows plausible projection as the arms move, no added plates or obvious resizing. Historical clipped-ROI diagnostics are not treated as invariant dimension proof."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Both palms stay supinated and fingers wrap the handles. A master-copy repairs only the lower planted far shoe in top/hold frames3/4, rectangle250,1340,500,1430; provenance proves zero changes outside. Native seam inspection passes, and moving anatomy/weights remain untouched."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Elbow flexion lifts both weights toward the shoulders; the reverse follows the same poses without torso swing. Fixed-shoe scanlines show anchor drift below0.46px and span change below0.52percent; these measure planted contacts only, not moving equipment or joint geometry."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Biceps use strongest purple, forearms lighter lilac and trunk support pale lilac. Top naturally occludes some biceps behind forearms/weights without recolouring them. No activation percentages implied."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Six cues of at most seven words match supinated setup, curling, top, control, lowering and near-straight reset. The reset uses the true initial pose instead of the older partial-return source."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "Manually stepped all six and6-to1 in actual current ExerciseFormFrames. Sequence setup/middle/top/hold/middle/setup deliberately reuses4=3,5=2,6=1. No continuous timed-playback claim."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "All six plus loop reviewed at390x844 in the current light player on2026-09-29. Native1024x1536 loads, document width390, complete figure/weights and all cues visible, no clipping or unexpected console errors."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "All six plus loop reviewed at390x844 in the current dark player on2026-09-29. Supinated grip, elbows, muscle hierarchy and dumbbell silhouettes remain understandable; repaired far shoe has no visible seam or shift. Fine contact anatomy also inspected at native size."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/db-curl/1.webp",
+      "sha256": "2fb3df52bdf690fe3873c6cb50022987089c9545b058322fff5737b70af4677c",
+      "anchors": {
+        "farShoe": {
+          "x": 276.5,
+          "y": 1380
+        },
+        "nearShoe": {
+          "x": 508.3333333333333,
+          "y": 1450
+        }
+      },
+      "invariantDimensions": {
+        "farShoeSpan": 215.56015037593983,
+        "nearShoeSpan": 147.77304964539013
+      }
+    },
+    {
+      "path": "form-frames/db-curl/2.webp",
+      "sha256": "96837ddd70d20e67152bb0acaba719ee4146b7d1b5ed580806eebcf73838c8fb",
+      "anchors": {
+        "farShoe": {
+          "x": 276.0408163265306,
+          "y": 1380
+        },
+        "nearShoe": {
+          "x": 508.5031847133758,
+          "y": 1450
+        }
+      },
+      "invariantDimensions": {
+        "farShoeSpan": 216.08594423684968,
+        "nearShoeSpan": 148.53681528662418
+      }
+    },
+    {
+      "path": "form-frames/db-curl/3.webp",
+      "sha256": "2241e441245723b78da196ed5fa2f9a98c9181e2d61bd6fd4cd17124341b399a",
+      "anchors": {
+        "farShoe": {
+          "x": 276.5,
+          "y": 1380
+        },
+        "nearShoe": {
+          "x": 508.38129496402877,
+          "y": 1450
+        }
+      },
+      "invariantDimensions": {
+        "farShoeSpan": 215.56015037593983,
+        "nearShoeSpan": 148.30620503597123
+      }
+    },
+    {
+      "path": "form-frames/db-curl/4.webp",
+      "sha256": "2241e441245723b78da196ed5fa2f9a98c9181e2d61bd6fd4cd17124341b399a",
+      "anchors": {
+        "farShoe": {
+          "x": 276.5,
+          "y": 1380
+        },
+        "nearShoe": {
+          "x": 508.38129496402877,
+          "y": 1450
+        }
+      },
+      "invariantDimensions": {
+        "farShoeSpan": 215.56015037593983,
+        "nearShoeSpan": 148.30620503597123
+      }
+    },
+    {
+      "path": "form-frames/db-curl/5.webp",
+      "sha256": "96837ddd70d20e67152bb0acaba719ee4146b7d1b5ed580806eebcf73838c8fb",
+      "anchors": {
+        "farShoe": {
+          "x": 276.0408163265306,
+          "y": 1380
+        },
+        "nearShoe": {
+          "x": 508.5031847133758,
+          "y": 1450
+        }
+      },
+      "invariantDimensions": {
+        "farShoeSpan": 216.08594423684968,
+        "nearShoeSpan": 148.53681528662418
+      }
+    },
+    {
+      "path": "form-frames/db-curl/6.webp",
+      "sha256": "2fb3df52bdf690fe3873c6cb50022987089c9545b058322fff5737b70af4677c",
+      "anchors": {
+        "farShoe": {
+          "x": 276.5,
+          "y": 1380
+        },
+        "nearShoe": {
+          "x": 508.3333333333333,
+          "y": 1450
+        }
+      },
+      "invariantDimensions": {
+        "farShoeSpan": 215.56015037593983,
+        "nearShoeSpan": 147.77304964539013
+      }
+    }
+  ]
+}

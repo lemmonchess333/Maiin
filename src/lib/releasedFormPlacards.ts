@@ -212,19 +212,7 @@ export const RELEASED_FORM_PLACARDS = {
       [0, "Reset at the top", "Finish arms extended; keep the plate stable."],
     ]
   ),
-  "db-curl": placard(
-    "db-curl",
-    ["Biceps"],
-    ["Forearms"],
-    [
-      [0.0, "Set up", "Stand tall, palms forward, elbows by ribs."],
-      [0.25, "Initiate curl", "Bend both elbows; keep your torso still."],
-      [0.6, "Mid curl", "Upper arms still, wrists straight."],
-      [1.0, "Top contraction", "Curl up without lifting your elbows."],
-      [0.6, "Controlled lower", "Lower slowly along the same arc."],
-      [0.15, "Finish return", "Return towards straight arms without bouncing."],
-    ]
-  ),
+  "db-curl": placard("db-curl", ["Biceps"], ["Forearms"], [[0,"Set","Stand tall with palms facing forward."],[0.5,"Curl","Bend your elbows without swinging your torso."],[1,"Top","Curl toward shoulders, keeping wrists straight."],[1,"Control","Keep upper arms close to your ribs."],[0.5,"Lower","Lower both dumbbells slowly under control."],[0,"Reset","Return near straight without snapping your elbows."]]),
   "hammer-curl": placard(
     "hammer-curl",
     ["biceps", "brachialis"],

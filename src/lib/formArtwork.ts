@@ -178,7 +178,7 @@ export const FORM_ARTWORK: Record<string, FormArtwork> = {
     reference: "form-frames/weighted-push-ups/1.webp",
     reviewFile: "docs/exercise-art/releases/2026-09-22/weighted-push-ups.json",
   },
-  "db-curl": ownerReleased("db-curl", 1024, 1536),
+  "db-curl": { version: "anatomy-v3-2026-09-29", status: "approved", width: 1024, height: 1536, frames: Array.from({length:6}, (_,i) => `form-frames/db-curl/${i+1}.webp`), reference: "form-frames/db-curl/1.webp", reviewFile: "docs/exercise-art/releases/2026-09-29/db-curl.json" },
   "hammer-curl": ownerReleased("hammer-curl", 1024, 1536),
   "front-raise": ownerReleased("front-raise", 1024, 1536),
   "goblet-squat": ownerReleased("goblet-squat", 1024, 1536),
