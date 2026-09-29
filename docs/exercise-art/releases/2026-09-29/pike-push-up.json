@@ -1,0 +1,230 @@
+{
+  "exerciseId": "pike-push-up",
+  "version": "anatomy-v3-2026-09-29",
+  "width": 1536,
+  "height": 1024,
+  "decision": "approved",
+  "reviewer": "Codex visual and implementation review",
+  "reviewedAt": "2026-09-29T13:29:19.675Z",
+  "reference": {
+    "path": "form-frames/pike-push-up/1.webp",
+    "sha256": "70aed55136f54a96e8ba3c000361c13104b984c5d68b379158ad59d00a823a26"
+  },
+  "cueSha256": "1f5f8f69cf472dc8cd70e02560d13a6a9028300790ac17741b155111007fc815",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Canonical bald faceless white-grey anatomy, fine contours, white trainers and featureless pelvis retained in setup, intermediate and corrected bottom."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Native1536x1024 fixed three-quarter side camera and mat retain both palms, forefoot contacts and full high-pike body throughout."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Native qualitative review confirms attached limbs and progressive elbow flexion with hips remaining above shoulders. Built-in bottom correction tucks chin and brings crown closest to mat; no head weight-bearing. No calibrated 3D joint-angle claim."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Only fixed thin mat. Exposed lower edge repaired from master; earlier rectangular tone patches were rejected and built-in seam repair followed by narrow silhouette copying removed visible seams."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Far planted hand restored with union silhouette mask plus3px edge margin; top lower mat strip copied from master. Final scanlines for both palms, forefoot region and mat satisfy unrounded1px/1percent gates. Zero changes outside final recorded copy masks."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "High pike retained while elbows flex and extend; planted hands and toes remain stable, crown hovers above mat and return reaches straight arms. All moving anatomy and seam reconstruction used built-in imagegen."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Strongest blue-violet deltoids, lighter lilac triceps and upper chest; remaining anatomy neutral. No colour reversal on return."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Six cues of at most seven words describe high-pike setup, controlled lowering, crown approaching mat, non-weight-bearing pause, press and complete reset."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "Manually stepped all six and6-to1 in current ExerciseFormFrames. Reuse4=3,5=2,6=1 matches identical pause and return configurations. No continuous timed-playback claim."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "All six plus loop reviewed at390x844 in light theme, full figure/mat and cues visible without clipping; native1536x1024 and documentwidth390 confirmed, no console errors."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "All six plus loop reviewed at390x844 in dark theme. Elbow motion and high-hip shape remain legible, corrected crown approach visible, no apparent contact jumps or rectangular repair patches."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/pike-push-up/1.webp",
+      "sha256": "70aed55136f54a96e8ba3c000361c13104b984c5d68b379158ad59d00a823a26",
+      "anchors": {
+        "nearPalm": {
+          "x": 338.8857142857143,
+          "y": 880
+        },
+        "farPalm": {
+          "x": 217.88235294117646,
+          "y": 810
+        },
+        "toePair": {
+          "x": 1084.6347826086956,
+          "y": 790
+        },
+        "matEdge": {
+          "x": 184.04,
+          "y": 940
+        }
+      },
+      "invariantDimensions": {
+        "nearPalmSpan": 172.21737849779083,
+        "farPalmSpan": 143.2651880424301,
+        "toePairSpan": 177.13444816053516,
+        "matEdgeSpan": 240.29333333333332
+      }
+    },
+    {
+      "path": "form-frames/pike-push-up/2.webp",
+      "sha256": "a3e429c38732573c92fbde61c89e24af94f309f09f4f847e5206597ce5787449",
+      "anchors": {
+        "nearPalm": {
+          "x": 338.1011235955056,
+          "y": 880
+        },
+        "farPalm": {
+          "x": 217.88235294117646,
+          "y": 810
+        },
+        "toePair": {
+          "x": 1084.4833333333333,
+          "y": 790
+        },
+        "matEdge": {
+          "x": 183.44117647058823,
+          "y": 940
+        }
+      },
+      "invariantDimensions": {
+        "nearPalmSpan": 173.19738386718097,
+        "farPalmSpan": 143.2651880424301,
+        "toePairSpan": 175.63131634819524,
+        "matEdgeSpan": 240.05882352941177
+      }
+    },
+    {
+      "path": "form-frames/pike-push-up/3.webp",
+      "sha256": "0682ba1794ba14114263ba2086cda058802cf958ac69655c97a6ba419331211b",
+      "anchors": {
+        "nearPalm": {
+          "x": 338.36082474226805,
+          "y": 880
+        },
+        "farPalm": {
+          "x": 217.88235294117646,
+          "y": 810
+        },
+        "toePair": {
+          "x": 1084.9195402298851,
+          "y": 790
+        },
+        "matEdge": {
+          "x": 184.04,
+          "y": 940
+        }
+      },
+      "invariantDimensions": {
+        "nearPalmSpan": 173.91824502517386,
+        "farPalmSpan": 143.2651880424301,
+        "toePairSpan": 177.35545977011498,
+        "matEdgeSpan": 240.29333333333332
+      }
+    },
+    {
+      "path": "form-frames/pike-push-up/4.webp",
+      "sha256": "0682ba1794ba14114263ba2086cda058802cf958ac69655c97a6ba419331211b",
+      "anchors": {
+        "nearPalm": {
+          "x": 338.36082474226805,
+          "y": 880
+        },
+        "farPalm": {
+          "x": 217.88235294117646,
+          "y": 810
+        },
+        "toePair": {
+          "x": 1084.9195402298851,
+          "y": 790
+        },
+        "matEdge": {
+          "x": 184.04,
+          "y": 940
+        }
+      },
+      "invariantDimensions": {
+        "nearPalmSpan": 173.91824502517386,
+        "farPalmSpan": 143.2651880424301,
+        "toePairSpan": 177.35545977011498,
+        "matEdgeSpan": 240.29333333333332
+      }
+    },
+    {
+      "path": "form-frames/pike-push-up/5.webp",
+      "sha256": "a3e429c38732573c92fbde61c89e24af94f309f09f4f847e5206597ce5787449",
+      "anchors": {
+        "nearPalm": {
+          "x": 338.1011235955056,
+          "y": 880
+        },
+        "farPalm": {
+          "x": 217.88235294117646,
+          "y": 810
+        },
+        "toePair": {
+          "x": 1084.4833333333333,
+          "y": 790
+        },
+        "matEdge": {
+          "x": 183.44117647058823,
+          "y": 940
+        }
+      },
+      "invariantDimensions": {
+        "nearPalmSpan": 173.19738386718097,
+        "farPalmSpan": 143.2651880424301,
+        "toePairSpan": 175.63131634819524,
+        "matEdgeSpan": 240.05882352941177
+      }
+    },
+    {
+      "path": "form-frames/pike-push-up/6.webp",
+      "sha256": "70aed55136f54a96e8ba3c000361c13104b984c5d68b379158ad59d00a823a26",
+      "anchors": {
+        "nearPalm": {
+          "x": 338.8857142857143,
+          "y": 880
+        },
+        "farPalm": {
+          "x": 217.88235294117646,
+          "y": 810
+        },
+        "toePair": {
+          "x": 1084.6347826086956,
+          "y": 790
+        },
+        "matEdge": {
+          "x": 184.04,
+          "y": 940
+        }
+      },
+      "invariantDimensions": {
+        "nearPalmSpan": 172.21737849779083,
+        "farPalmSpan": 143.2651880424301,
+        "toePairSpan": 177.13444816053516,
+        "matEdgeSpan": 240.29333333333332
+      }
+    }
+  ]
+}
