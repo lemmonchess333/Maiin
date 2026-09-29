@@ -1,0 +1,328 @@
+{
+  "modelPath": "Built-in imagegen only; canonical master and adjacent poses. No CLI/API/model fallback.",
+  "canonicalReference": {
+    "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+  },
+  "exerciseMaster": {
+    "path": "docs/exercise-art/masters/pike-push-up/1.png",
+    "sha256": "1e5d74b58ef3b701a320a0abe42ca6bf13ba8d1be9a6e0235a55ae01c460901a"
+  },
+  "nativeDimensions": {
+    "width": 1536,
+    "height": 1024
+  },
+  "generation": [
+    {
+      "file": "bottom-head-correction-prompt.json",
+      "prompt": "Edit FIRST pike-pushup bottom image only at HEAD AND NECK. SECOND frozenexercise master reference for identity/camera/scale; THIRD canonicalathleteidentity. Current bottom wrongly brings chin towardfloor while crown stayshigh. Correct with a gentle chin tuck: turn the featureless face BACK toward the feet on the RIGHT, bringing chin towardsternum and crown DOWN to hover justabove the mat infrontofhands. Crown should be lowest headpoint, not chin. Keep neck naturally aligned with descending upperback, do not elongate neck, rotate torso or hyperflex. Keep both shoulders, arms/elbows, palms/fingers, highhips, legs, feet, matcorners and canvas EXACTLY as FIRST. Preserve headsize, facelesswhite anatomy and finecontours, bluevioletdelts/lilactricepsupperchest, blackbackground. No headweightbearing/contact, no newlimbs, no glow/text. One controlledbottomposition atnative1536x1024.",
+      "output": "exec-a8028bb6-2651-4f54-b8f4-709c8dd24a83.png"
+    },
+    {
+      "file": "bottom-prompt.json",
+      "prompt": "Edit FIRST image pikepushup half-lower into BOTTOM. SECOND frozen setupmaster anchors camera/body scale/palms/toecontacts/mat; THIRD canonicalidentity. Bend elbows more to roughly90degrees, lower crown to hover justabove mat slightlyinfrontofhands LEFT ofhandline. Headneutral with upperback, no twistingneck or restingface. Hips remain stronglypikedHIGH, wellabove shoulders; bendknees slightlyifnecessary to keep forefootcontacts without shrinkinglegs or flatteningtorso intoordinarypushup. Preserve original upperarmandforearmlengths, wristconnections, bothpalms/fingers and toes stayexactlyfixed. Elbows trackbacktowardfeet, not straightout. No change matcorners/camera/scale/canvas1536x1024. Samebluevioletdelts/lilactricepsupperchest, greywhitefineanatomy, smoothfeaturelesspelvis, whitetrainers. No text/glow, noextra limbs. Crownclose tofloor but noimpact/contact; stop at controlledbottom.",
+      "output": "exec-38535469-8d8e-4ecb-b198-7c3cb7bbe2e3.png"
+    },
+    {
+      "file": "bottom-seam-correction-prompt.json",
+      "prompt": "Edit FIRST image only to remove visible compositing seams. It is the correct crown-down bottompike pose; keep it. SECOND originalexercise master reference for identity, exact plantedpalms and matappearance; THIRD canonicalathlete. At left plantedhand there is an obvious rectangular darker patch in the grey mat, and across lower white shoes there is a horizontal cutline. Seamlessly reconstruct only these local mat/white-shoe surfaces, maintaining the current contactboundaries and original finger/toetip positions. Do NOT change anatomy, headangle, hips, elbowangles, matoutline, camera or scale. Preserve all fingers, trainer soleedges and hands attachedtoforearms; blend mattexture naturally with restofsurface without rectangularborders. Currentpose/crownhover and highhips must stayunchanged. Native1536x1024, solidblackbackground, no text/glow. Repair seams, not pose.",
+      "output": "exec-f1222347-a5a7-4252-85bb-1b8a47b9be34.png"
+    },
+    {
+      "file": "master-prompt.json",
+      "prompt": "Create ONE full-resolution anatomy master for PIKE PUSH-UP at straight-arm SETUP, not normalpushup. Canonical reference supplies athlete identity/style only. Bald faceless white/lightgrey anatomical figure, fine sharp contours, smooth neutral featurelesspelvis without genitaldetail/slit/garmentseams, WHITE TRAINERS. Fullbody on thin plain darkgrey mat against solidblackbackground. Sideview with subtlethreequarterangle revealing both hands and toecontacts, hands onLEFT feetRIGHT. Handsflat shoulderwidth, fingersspread forward, armsstraight; hipsVERYHIGH in invertedV, feetwalkedclose so upper torso is steep and nearlyvertical overhands, headneutral lookingtowardfeet betweenarms. Knees softlybent ifneeded to maintain highpike; heels naturallyofffloor, toes/forefeet planted, legs supporting highhips. Clear triangle geometry shouldershighabovehands, no ordinaryhorizontalplank. Strongbluevioletdeltoids, lighterlilactriceps/upperchest, othermusclesneutral. Landscape1536x1024 with bodyfillingcentralframe and marginaroundhands/feet/highhips. Realisticconsistent bone lengths, distincttwoarms/twolegs, no extra limbs, no text/arrows/glow. This is straight-armsetup, no elbowbend or headonfloor.",
+      "output": "exec-c6cc9adc-57ff-4b4d-9f41-aeffacee3638.png"
+    },
+    {
+      "file": "middle-prompt.json",
+      "prompt": "Edit FIRST pike-pushup setupmaster into HALF LOWER position. SECOND canonical identityreference. Keep1536x1024canvas,camera,matcorners,body scale, EXACT bothpalms/fingers and toe/forefoot contactpositions. Bend both elbows to about45degrees of flexion, lowering head/shoulders halfway towardmat. Crown travels down and slightlyinfrontofhands towardLEFT. Hips stayhigh in pike, neverhorizontalplank; allow smallnaturalhipmotion and knee bend to preserve allbone lengths with fixedtoecontacts. Keep shoulders overhands with forearmsclosetovertical, elbows angleback towardfeet ratherthanflareout. Headneutral inlineupperback, no neckcrank or facepress. Maintain anatomicallyconsistent arms/legs, closedcontact palms, identicaltrainers and mat. Bluevioletdelts/lilactricepsandupperchest, neutralfeaturelesspelvis, no newhighlight. No text/glow/extra limbs. Clearly intermediate elbowbend, notfullbottom.",
+      "output": "exec-a2bc8ed4-f01b-40a5-a6e2-f0e3c6375235.png"
+    }
+  ],
+  "generatedOutputs": [
+    {
+      "file": "1-master.png",
+      "sha256": "1e5d74b58ef3b701a320a0abe42ca6bf13ba8d1be9a6e0235a55ae01c460901a"
+    },
+    {
+      "file": "bottom-candidate.png",
+      "sha256": "1c72591f7fc942120a033553d958209cdd6dc64c9f19a9f4bd8837b963e51e3b"
+    },
+    {
+      "file": "bottom-head-corrected.png",
+      "sha256": "da4ce75f2165386e49e59a9a9b5fa863a4933044586c8257503566dd374e96d8"
+    },
+    {
+      "file": "bottom-patched-seams-rejected.png",
+      "sha256": "cb920fea8aac25a85bf4c5af46f28bb6b1db0f3e7c5807c07764e626f10c8444"
+    },
+    {
+      "file": "bottom-seam-corrected.png",
+      "sha256": "6fb23d914b264f1edd38f6fc9aa0f7d1ef1ee5682ca3714aad752758393d392d"
+    },
+    {
+      "file": "middle-candidate.png",
+      "sha256": "941b76fe2dae83c7dbdd855fd1954b2a86a7871a23985d9aaf7b467e0678f6c5"
+    }
+  ],
+  "intermediateRepairs": [
+    {
+      "status": "Rejected standalone for visible seams; preserved as input history for built-in seam repair",
+      "authorization": "Owner approved master-copy of fixed areas. Rectangles restore planted palms/fingers, low forefoot contacts and the unobstructed lower mat edge. Head, elbows, hips and moving legs remain untouched.",
+      "masterSha256": "1e5d74b58ef3b701a320a0abe42ca6bf13ba8d1be9a6e0235a55ae01c460901a",
+      "frames": [
+        {
+          "frame": 2,
+          "rectangles": [
+            [
+              180,
+              790,
+              365,
+              845
+            ]
+          ],
+          "sourceSha256": "941b76fe2dae83c7dbdd855fd1954b2a86a7871a23985d9aaf7b467e0678f6c5",
+          "outputSha256": "9552a21f705332e83466dfb7ff52e97fc3bd955567a24e3d1a3bd520d0cf2854",
+          "changedPixels": 9939,
+          "changedOutsideRectangles": 0
+        },
+        {
+          "frame": 3,
+          "rectangles": [
+            [
+              180,
+              790,
+              365,
+              845
+            ],
+            [
+              320,
+              865,
+              520,
+              920
+            ],
+            [
+              1060,
+              765,
+              1290,
+              835
+            ],
+            [
+              0,
+              925,
+              1536,
+              980
+            ]
+          ],
+          "sourceSha256": "da4ce75f2165386e49e59a9a9b5fa863a4933044586c8257503566dd374e96d8",
+          "outputSha256": "cb920fea8aac25a85bf4c5af46f28bb6b1db0f3e7c5807c07764e626f10c8444",
+          "changedPixels": 77910,
+          "changedOutsideRectangles": 0
+        },
+        {
+          "frame": 4,
+          "rectangles": [
+            [
+              180,
+              790,
+              365,
+              845
+            ],
+            [
+              320,
+              865,
+              520,
+              920
+            ],
+            [
+              1060,
+              765,
+              1290,
+              835
+            ],
+            [
+              0,
+              925,
+              1536,
+              980
+            ]
+          ],
+          "sourceSha256": "da4ce75f2165386e49e59a9a9b5fa863a4933044586c8257503566dd374e96d8",
+          "outputSha256": "cb920fea8aac25a85bf4c5af46f28bb6b1db0f3e7c5807c07764e626f10c8444",
+          "changedPixels": 77910,
+          "changedOutsideRectangles": 0
+        },
+        {
+          "frame": 5,
+          "rectangles": [
+            [
+              180,
+              790,
+              365,
+              845
+            ]
+          ],
+          "sourceSha256": "941b76fe2dae83c7dbdd855fd1954b2a86a7871a23985d9aaf7b467e0678f6c5",
+          "outputSha256": "9552a21f705332e83466dfb7ff52e97fc3bd955567a24e3d1a3bd520d0cf2854",
+          "changedPixels": 9939,
+          "changedOutsideRectangles": 0
+        }
+      ]
+    }
+  ],
+  "deterministicRepairs": [
+    {
+      "authorization": "Approved fixed-area master-copy only. Far planted hand uses union of current/master white silhouettes (minimum RGB above110), dilated3px inside recorded rectangle. Every selected pixel is copied unchanged from master; no blending or moving anatomy edits. Top frames also restore unobstructed lower mat strip.",
+      "masterSha256": "1e5d74b58ef3b701a320a0abe42ca6bf13ba8d1be9a6e0235a55ae01c460901a",
+      "frames": [
+        {
+          "frame": 2,
+          "source": "middle-candidate.png",
+          "sourceSha256": "941b76fe2dae83c7dbdd855fd1954b2a86a7871a23985d9aaf7b467e0678f6c5",
+          "outputSha256": "455f9b9783af31725d0422566aad200ae960d3e592e32e62a10026ee58004137",
+          "rectangles": [
+            [
+              180,
+              790,
+              365,
+              845
+            ]
+          ],
+          "copyMaskSha256": "c2258e9fc159c388c6aed5ad98ac5f31a85718a89eba519beab9f705fe6dd0a9",
+          "copiedPixels": 5142,
+          "changedPixels": 5092,
+          "changedOutsideCopyMask": 0,
+          "changedOutsideRectangles": 0
+        },
+        {
+          "frame": 3,
+          "source": "bottom-seam-corrected.png",
+          "sourceSha256": "6fb23d914b264f1edd38f6fc9aa0f7d1ef1ee5682ca3714aad752758393d392d",
+          "outputSha256": "c1f1b0bbeebf2e6cf5874aae1e2d9af3ff83866577d7861893ee9986d2808449",
+          "rectangles": [
+            [
+              180,
+              790,
+              365,
+              845
+            ],
+            [
+              0,
+              925,
+              1536,
+              980
+            ]
+          ],
+          "copyMaskSha256": "1b0b0eb1cb72bdbfd5459ac5b373b116bf60b70760842402da8376d19df60667",
+          "copiedPixels": 89628,
+          "changedPixels": 53011,
+          "changedOutsideCopyMask": 0,
+          "changedOutsideRectangles": 0
+        },
+        {
+          "frame": 4,
+          "source": "bottom-seam-corrected.png",
+          "sourceSha256": "6fb23d914b264f1edd38f6fc9aa0f7d1ef1ee5682ca3714aad752758393d392d",
+          "outputSha256": "c1f1b0bbeebf2e6cf5874aae1e2d9af3ff83866577d7861893ee9986d2808449",
+          "rectangles": [
+            [
+              180,
+              790,
+              365,
+              845
+            ],
+            [
+              0,
+              925,
+              1536,
+              980
+            ]
+          ],
+          "copyMaskSha256": "1b0b0eb1cb72bdbfd5459ac5b373b116bf60b70760842402da8376d19df60667",
+          "copiedPixels": 89628,
+          "changedPixels": 53011,
+          "changedOutsideCopyMask": 0,
+          "changedOutsideRectangles": 0
+        },
+        {
+          "frame": 5,
+          "source": "middle-candidate.png",
+          "sourceSha256": "941b76fe2dae83c7dbdd855fd1954b2a86a7871a23985d9aaf7b467e0678f6c5",
+          "outputSha256": "455f9b9783af31725d0422566aad200ae960d3e592e32e62a10026ee58004137",
+          "rectangles": [
+            [
+              180,
+              790,
+              365,
+              845
+            ]
+          ],
+          "copyMaskSha256": "c2258e9fc159c388c6aed5ad98ac5f31a85718a89eba519beab9f705fe6dd0a9",
+          "copiedPixels": 5142,
+          "changedPixels": 5092,
+          "changedOutsideCopyMask": 0,
+          "changedOutsideRectangles": 0
+        }
+      ]
+    }
+  ],
+  "selectedPngs": [
+    {
+      "frame": 1,
+      "sha256": "1e5d74b58ef3b701a320a0abe42ca6bf13ba8d1be9a6e0235a55ae01c460901a"
+    },
+    {
+      "frame": 2,
+      "sha256": "455f9b9783af31725d0422566aad200ae960d3e592e32e62a10026ee58004137"
+    },
+    {
+      "frame": 3,
+      "sha256": "c1f1b0bbeebf2e6cf5874aae1e2d9af3ff83866577d7861893ee9986d2808449"
+    },
+    {
+      "frame": 4,
+      "sha256": "c1f1b0bbeebf2e6cf5874aae1e2d9af3ff83866577d7861893ee9986d2808449"
+    },
+    {
+      "frame": 5,
+      "sha256": "455f9b9783af31725d0422566aad200ae960d3e592e32e62a10026ee58004137"
+    },
+    {
+      "frame": 6,
+      "sha256": "1e5d74b58ef3b701a320a0abe42ca6bf13ba8d1be9a6e0235a55ae01c460901a"
+    }
+  ],
+  "reuse": {
+    "4": 3,
+    "5": 2,
+    "6": 1
+  },
+  "conversion": "Lossless WebP decoded RGB exactly equals reviewed PNG; native1536x1024, no scaling.",
+  "measurementMethod": "Interpolated minimum-RGB150 scanline boundaries on native selected PNGs. Unrounded1px/1percent tests measure fixed contacts only, not moving anatomy or equipment.",
+  "scanlines": {
+    "nearPalm": [
+      300,
+      550,
+      880,
+      150
+    ],
+    "farPalm": [
+      170,
+      390,
+      810,
+      150
+    ],
+    "toePair": [
+      1030,
+      1380,
+      790,
+      150
+    ],
+    "matEdge": [
+      100,
+      800,
+      940,
+      30
+    ]
+  }
+}

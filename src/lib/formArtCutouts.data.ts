@@ -347,6 +347,16 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
       "d831f34f8cb92b1d1a6de8b08ea2d8d3aa5273476eafeecbecc7e8fb0afb7b59",
     sha256: "dbbec23e6cc9e8a10b3e730e41c704a221af15eb3511c814c5b28defd827bc76",
   },
+  "pike-push-up": {
+    src: "form-art/pike-push-up.webp",
+    width: 480,
+    height: 319,
+    keyed: true,
+    source: "form-frames/pike-push-up/1.webp",
+    sourceSha256:
+      "70aed55136f54a96e8ba3c000361c13104b984c5d68b379158ad59d00a823a26",
+    sha256: "f7f5a025471cdd0c125376f9ec2d937183976f02a6c1514ecec4be33c7a9f5d3",
+  },
   "push-ups": {
     src: "form-art/push-ups.webp",
     width: 480,
