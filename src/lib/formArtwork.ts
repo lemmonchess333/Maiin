@@ -186,7 +186,7 @@ export const FORM_ARTWORK: Record<string, FormArtwork> = {
   "push-ups": { version: "anatomy-v3-2026-09-29", status: "approved", width: 1536, height: 1024, frames: Array.from({length:6}, (_,i) => `form-frames/push-ups/${i+1}.webp`), reference: "form-frames/push-ups/1.webp", reviewFile: "docs/exercise-art/releases/2026-09-29/push-ups.json" },
   squat: ownerReleased("squat", 1024, 1536),
   "barbell-curl": ownerReleased("barbell-curl", 1024, 1536),
-  "db-bench": ownerReleased("db-bench", 1536, 1024),
+  "db-bench": { version: "anatomy-v3-2026-09-29", status: "approved", width: 1536, height: 1024, frames: Array.from({length:6}, (_,i) => `form-frames/db-bench/${i+1}.webp`), reference: "form-frames/db-bench/1.webp", reviewFile: "docs/exercise-art/releases/2026-09-29/db-bench.json" },
   "bodyweight-squat": {
     version: "anatomy-v3-2026-09-29",
     status: "approved",

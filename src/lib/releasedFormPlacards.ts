@@ -256,27 +256,7 @@ export const RELEASED_FORM_PLACARDS = {
       [0.25, "Return", "Return towards straight arms without bouncing."],
     ]
   ),
-  "db-bench": placard(
-    "db-bench",
-    ["pectoralis major"],
-    ["triceps", "anterior deltoids"],
-    [
-      [0, "Top", "Keep feet planted and shoulders supported."],
-      [
-        0.25,
-        "Begin lowering",
-        "Lower both dumbbells with your wrists straight.",
-      ],
-      [0.6, "Lower", "Keep wrists stacked over your elbows."],
-      [1, "Bottom", "Lower beside your chest without bouncing."],
-      [0.6, "Press up", "Press upward without lifting your shoulders."],
-      [
-        0.25,
-        "Finish pressing",
-        "Finish pressing without knocking the dumbbells together.",
-      ],
-    ]
-  ),
+  "db-bench": placard("db-bench", ["Chest"], ["Triceps", "Front Delts"], [[0,"Set","Keep feet planted and shoulders supported."],[0.5,"Lower","Bend elbows, keeping wrists above them."],[1,"Bottom","Lower weights beside your chest with control."],[1,"Control","Keep forearms upright and shoulders supported."],[0.5,"Press","Press upward without letting your wrists bend."],[0,"Reset","Finish above your chest without clashing weights."]]),
   "bodyweight-squat": placard(
     "bodyweight-squat",
     ["Quads"],

@@ -154,8 +154,8 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
     keyed: true,
     source: "form-frames/db-bench/1.webp",
     sourceSha256:
-      "2d0960ef1036edcdd7ccd6e95c958001ceab4892fcaae58d575161c5537219af",
-    sha256: "d74bd94370d7d04a7f97cedfc6afe8739a706d8423201307687ad751055abb41",
+      "5a77b37330ccaf552f8f869a301f8bb8a6353982b60300a1464246499517bb9d",
+    sha256: "cb0cd7a14d4a4087f0336387053bb5a4758a5dba1baf64f82b6ec47f580db6b8",
   },
   "db-curl": {
     src: "form-art/db-curl.webp",
