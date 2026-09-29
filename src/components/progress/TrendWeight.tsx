@@ -199,7 +199,7 @@ export function TrendWeight() {
       </div>
 
       <div className="h-48">
-        <ResponsiveContainer width="100%" height="100%">
+        <ResponsiveContainer width="100%" height={192}>
           <ComposedChart
             /* Static, and deliberately carries no figure: the
                hide-the-number mode suppresses every weight VALUE on this

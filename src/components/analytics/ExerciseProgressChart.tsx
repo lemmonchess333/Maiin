@@ -93,7 +93,7 @@ export default function ExerciseProgressChart({ data, accent }: Props) {
 
   return (
     <div className="h-44" role="img" aria-label={ariaLabel}>
-      <ResponsiveContainer width="100%" height="100%">
+      <ResponsiveContainer width="100%" height={176}>
         {/* `accessibilityLayer={false}`, because the wrapper above has
             already done this properly: it declares the graphic atomic
             with `role="img"` and gives it the full text alternative —

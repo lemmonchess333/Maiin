@@ -99,7 +99,7 @@ export default function StatCard({
           className="w-full h-5 mt-2 -mx-1"
           style={{ pointerEvents: "none" }}
         >
-          <ResponsiveContainer width="100%" height="100%">
+          <ResponsiveContainer width="100%" height={20}>
             <AreaChart
               data={sparklineData!.map((v, i) => ({ v, i }))}
               margin={{ top: 1, right: 0, bottom: 0, left: 0 }}
