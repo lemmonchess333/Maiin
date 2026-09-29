@@ -104,8 +104,8 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
     keyed: true,
     source: "form-frames/bodyweight-squat/1.webp",
     sourceSha256:
-      "53ca322fbace41caa6225228b2bad186bd0a5a71bd1f2ab2f0bcac9190d11fc0",
-    sha256: "c36ed913a0e23665cdc17f89986174968b2b8ebdfe9fe3b542e2afaf272466f8",
+      "2c88d297b6b7a8c2d326eea2d98e7e313fc6c1d105fdb9bc3c8eb191cc6fdf00",
+    sha256: "62ca3976d9beff700eef308f8a74185ca9925b91c7b46fbbf21788e72acdb9be",
   },
   "cable-crossover": {
     src: "form-art/cable-crossover.webp",

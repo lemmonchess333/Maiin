@@ -330,15 +330,15 @@ export const RELEASED_FORM_PLACARDS = {
   ),
   "bodyweight-squat": placard(
     "bodyweight-squat",
-    ["quadriceps"],
-    ["gluteals"],
+    ["Quads"],
+    ["Glutes", "Core"],
     [
-      [0, "Stand tall", "Stand tall with both arms held forward."],
-      [0.25, "Begin descent", "Bend hips and knees; keep heels grounded."],
-      [0.6, "Lower", "Keep knees following the direction of toes."],
-      [1, "Bottom", "Stay braced with your whole feet planted."],
-      [0.6, "Drive up", "Raise hips and chest together under control."],
-      [0.25, "Finish rising", "Finish standing without leaning back."],
+      [0, "Set", "Stand shoulder-width with arms extended for balance."],
+      [0.3, "Lower", "Bend hips and knees; keep heels planted."],
+      [1, "Bottom", "Lower until your thighs reach roughly parallel."],
+      [1, "Control", "Keep your knees tracking over your toes."],
+      [0.3, "Rise", "Push through your whole feet to rise."],
+      [0, "Reset", "Stand tall without leaning backward."],
     ]
   ),
   "barbell-shrug": placard(
