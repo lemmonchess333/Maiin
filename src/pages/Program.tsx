@@ -9,6 +9,10 @@ import { useState, useMemo, useRef, useEffect, useCallback } from "react";
 import type { ReactNode } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { focusLabel } from "@/features/program/trainingBlock";
+import {
+  LIFT_DAY_STATUS_LABEL,
+  liftDayStatus,
+} from "@/features/program/liftDayStatus";
 import { useProgram } from "@/features/program/useProgram";
 import { useStreaks } from "@/features/streaks/useStreaks";
 import { useAuth } from "@/lib/auth";
@@ -229,7 +233,7 @@ function ProgramInner() {
   const [editLayoutOpen, setEditLayoutOpen] = useState(false);
   const openEditLayout = useCallback(() => {
     setEditLayoutOpen(true);
-  }, []);
+  }, [setEditLayoutOpen]);
   // PR-3: 2-tab segmented control — Lift | Run. Today / Week shells
   // were retired once Home owned today-glance (via the shared
   // `resolveTrainingDayForDate` path — PR-0c) and DayActionSheet
@@ -619,7 +623,8 @@ function ProgramInner() {
       // Honour a URL-restored day on mount; otherwise land on today.
       if (isFirstRun && urlDay !== null) return;
       const target = todayIndex >= 0 ? todayIndex : 0;
-      selectDay(target); // eslint-disable-line react-hooks/set-state-in-effect -- intentional: reset selection on week navigation
+      // Reset the selection on week navigation.
+      selectDay(target);
     }
   }, [programState, viewingHistoryIndex, todayIndex, urlDay, selectDay]);
 
@@ -726,15 +731,13 @@ function ProgramInner() {
     selectedWorkout?.completedWorkoutId ??
     (legacySavedMatches.length === 1 ? legacySavedMatches[0].id : null);
 
-  // Day status
-  type DayStatus = "today" | "completed" | "skipped" | "upcoming";
-  const status: DayStatus = selectedWorkout?.completed
-    ? "completed"
-    : selectedWorkout?.skipped
-      ? "skipped"
-      : isSelectedToday
-        ? "today"
-        : "upcoming";
+  // Day status. A past week's day left open was missed: it takes no time
+  // estimate and no note about starting it, since it cannot come up again.
+  const status = liftDayStatus(selectedWorkout, {
+    pastWeek: isViewingHistory,
+    cursor: isSelectedToday,
+  });
+  const missed = status === "missed";
 
   // Lift selector cells — SPLIT-ORDERED (ADR-0002): the circle shows the
   // session number (Day 1..N), not a calendar date, and the rotation cursor
@@ -779,14 +782,7 @@ function ProgramInner() {
      Home. The picture is the muscles the day works; the rows below carry
      each exercise's drawing. */
   const sessionTitle = liftDayTitle(selectedWorkout?.dayName ?? "");
-  const sessionStatusLabel =
-    status === "completed"
-      ? "Completed"
-      : status === "skipped"
-        ? "Skipped"
-        : status === "today"
-          ? "Up next"
-          : "Upcoming";
+  const sessionStatusLabel = LIFT_DAY_STATUS_LABEL[status];
   const sessionMuscleCategories = (selectedWorkout?.exercises ?? []).map(
     (ex) => ex.movementCategory
   );
@@ -1268,7 +1264,7 @@ function ProgramInner() {
                           ) : undefined
                         }
                         meta={
-                          status === "completed"
+                          status === "completed" || missed
                             ? []
                             : [`~${estimatedMinutes} min`]
                         }
@@ -1327,7 +1323,7 @@ function ProgramInner() {
                         }
                       />
 
-                      {usualPlan && !selectedWorkout.completed && (
+                      {usualPlan && !selectedWorkout.completed && !missed && (
                         <p className="px-3 text-xs text-muted-foreground leading-relaxed">
                           Start uses your usual session time.{" "}
                           {usualPlan.trim.droppedExercises.length > 0 ||
@@ -1518,8 +1514,8 @@ function ProgramInner() {
                           </div>
                         )}
 
-                        {/* ── + Add exercise (not on completed/skipped) ── */}
-                        {status !== "completed" && status !== "skipped" && (
+                        {/* ── + Add exercise (only on a day still to do) ── */}
+                        {(status === "today" || status === "upcoming") && (
                           <button
                             type="button"
                             onClick={() => {

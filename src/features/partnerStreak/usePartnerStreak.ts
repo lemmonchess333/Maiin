@@ -40,21 +40,30 @@ export function usePartnerStreak(partnerUid?: string): UsePartnerStreak {
   const uid = useUid();
   const me = uid;
   const isSelf = !!me && me === partnerUid;
+  // The pair this hook resolves, or null when it is inert.
+  const pairKey = me && partnerUid && !isSelf ? `${me}__${partnerUid}` : null;
 
-  const [loading, setLoading] = useState(true);
-  const [mutualFollow, setMutualFollow] = useState(false);
-  const [bond, setBond] = useState<PartnerBond | null>(null);
+  /* The eligibility read's answer, stamped with the pair it was read for.
+     `loading`, `mutualFollow` and `bond` are derived from it against the
+     CURRENT pair: a new profile reads as loading, with no bond, from the
+     first render that names it, and a failed read for it settles on its
+     own "not eligible" — never on the previous profile's answer. */
+  const [resolved, setResolved] = useState<{
+    pairKey: string;
+    mutualFollow: boolean;
+    bond: PartnerBond | null;
+  } | null>(null);
   const [busy, setBusy] = useState(false);
 
+  const current =
+    resolved !== null && resolved.pairKey === pairKey ? resolved : null;
+  const loading = pairKey !== null && current === null;
+  const mutualFollow = current?.mutualFollow ?? false;
+  const bond = current?.bond ?? null;
+
   useEffect(() => {
+    if (!pairKey || !me || !partnerUid) return;
     let cancelled = false;
-    if (!me || !partnerUid || isSelf) {
-      setLoading(false);
-      setMutualFollow(false);
-      setBond(null);
-      return;
-    }
-    setLoading(true);
     Promise.all([
       isFollowing(me, partnerUid),
       isFollowing(partnerUid, me),
@@ -62,20 +71,23 @@ export function usePartnerStreak(partnerUid?: string): UsePartnerStreak {
     ])
       .then(([iFollow, theyFollow, existing]) => {
         if (cancelled) return;
-        setMutualFollow(iFollow && theyFollow);
-        setBond(existing);
+        setResolved({
+          pairKey,
+          mutualFollow: iFollow && theyFollow,
+          bond: existing,
+        });
       })
       .catch((err) => {
-        if (!cancelled)
-          logger.error("[usePartnerStreak] eligibility load failed", err);
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
+        if (cancelled) return;
+        logger.error("[usePartnerStreak] eligibility load failed", err);
+        // Settle as not eligible so the card leaves its loading state and
+        // renders nothing, rather than waiting on a read that failed.
+        setResolved({ pairKey, mutualFollow: false, bond: null });
       });
     return () => {
       cancelled = true;
     };
-  }, [me, partnerUid, isSelf]);
+  }, [pairKey, me, partnerUid]);
 
   const start = useCallback(async () => {
     if (!me || !partnerUid || busy) return;
@@ -86,22 +98,28 @@ export function usePartnerStreak(partnerUid?: string): UsePartnerStreak {
       // doc carries the server `createdAt` and the canonical id, and
       // an idempotent create may have returned a pre-existing bond.
       const fresh = await getBond(me, partnerUid);
-      setBond(fresh);
+      // Only into the pair it was started for: a profile opened while
+      // the write was in flight keeps its own answer.
+      setResolved((prev) =>
+        prev && prev.pairKey === pairKey ? { ...prev, bond: fresh } : prev
+      );
     } finally {
       setBusy(false);
     }
-  }, [me, partnerUid, busy]);
+  }, [me, partnerUid, busy, pairKey]);
 
   const end = useCallback(async () => {
     if (!bond || busy) return;
     setBusy(true);
     try {
       await dissolveBond(bond.id);
-      setBond(null);
+      setResolved((prev) =>
+        prev && prev.pairKey === pairKey ? { ...prev, bond: null } : prev
+      );
     } finally {
       setBusy(false);
     }
-  }, [bond, busy]);
+  }, [bond, busy, pairKey]);
 
   return { loading, mutualFollow, bond, busy, start, end };
 }

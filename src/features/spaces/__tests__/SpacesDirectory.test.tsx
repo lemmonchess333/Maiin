@@ -77,10 +77,14 @@ describe("SpacesDirectory — Races & Events", () => {
       country: "GB",
       distance: "all",
     });
-    expect(screen.getByText("Races & events")).toBeInTheDocument();
+    // Section headings, as every other page's groups have (DS3): they were
+    // 12px grey labels beside Social's own "Circles" heading.
+    expect(
+      screen.getByRole("heading", { name: "Races & events" })
+    ).toBeInTheDocument();
     expect(screen.getByText("Great North Run")).toBeInTheDocument();
     // Interest row unchanged alongside
-    expect(screen.getByText("Spaces")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Spaces" })).toBeInTheDocument();
     expect(screen.getByText("Runners")).toBeInTheDocument();
   });
 

@@ -197,6 +197,14 @@ interface UseClaimMapResult {
   loading: boolean;
 }
 
+/** What the runs listener has delivered, and whose runs they are. */
+interface LoadedSavedRuns {
+  uid: string | null;
+  runs: SavedRunDoc[];
+}
+
+const NO_SAVED_RUNS: SavedRunDoc[] = [];
+
 /**
  * @param dateAnchor optional override for "today" (test fixtures,
  *   future midnight-rollover effect). Defaults to the local date.
@@ -206,18 +214,23 @@ export function useClaimMapForProgram(
   dateAnchor?: string
 ): UseClaimMapResult {
   const uid = useUid();
-  const [savedRuns, setSavedRuns] = useState<SavedRunDoc[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loaded, setLoaded] = useState<LoadedSavedRuns>({
+    uid: null,
+    runs: NO_SAVED_RUNS,
+  });
+  // Runs count only for the account they were delivered for. Signed out,
+  // or switched to an account whose listener has not answered yet, there
+  // are none — so another account's runs can never claim this plan's
+  // slots, not even for the render before the new listener lands.
+  const delivered = uid !== null && loaded.uid === uid;
+  const savedRuns = delivered ? loaded.runs : NO_SAVED_RUNS;
+  const loading = uid !== null && !delivered;
 
   const today = dateAnchor ?? localDateString(new Date());
 
   useEffect(
     function () {
-      if (!uid) {
-        setSavedRuns([]);
-        setLoading(false);
-        return;
-      }
+      if (!uid) return;
       const runsRef = collection(db, "users", uid, "runs");
       const q = query(runsRef, orderBy("createdAt", "desc"));
       const unsub = onSnapshot(
@@ -260,11 +273,14 @@ export function useClaimMapForProgram(
               type: typeof data.type === "string" ? data.type : undefined,
             };
           });
-          setSavedRuns(rows);
-          setLoading(false);
+          setLoaded({ uid, runs: rows });
         },
         () => {
-          setLoading(false);
+          // Settle out of loading, keeping whatever this account's listener
+          // already delivered; never another account's rows.
+          setLoaded((current) =>
+            current.uid === uid ? current : { uid, runs: NO_SAVED_RUNS }
+          );
         }
       );
       return unsub;

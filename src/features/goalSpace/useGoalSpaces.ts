@@ -69,14 +69,59 @@ function fns() {
   return getFunctions();
 }
 
+/** One read of the account's Circle index: its journey links, then each
+ *  linked space, newest first. Only the journeys read can fail the list —
+ *  a space removed since its link was written (or one the rules now deny)
+ *  is skipped. */
+async function readCircleIndex(uid: string): Promise<CircleSummary[]> {
+  const links = await getDocs(collection(db, "users", uid, "journeys"));
+  const spaceIds = links.docs
+    .map((d) => d.data()?.goalSpaceId)
+    .filter((id): id is string => typeof id === "string");
+  const spaces = await Promise.all(
+    spaceIds.map(async (id) => {
+      try {
+        const snap = await getDoc(doc(db, "goalSpaces", id));
+        if (!snap.exists()) return null;
+        const data = snap.data();
+        const space = parseGoalSpace(data);
+        if (!space) return null;
+        return {
+          space,
+          inviteCode:
+            space.ownerId === uid && typeof data.inviteCode === "string"
+              ? data.inviteCode
+              : null,
+        } satisfies CircleSummary;
+      } catch {
+        // Removed since the link was written (or rules denied) —
+        // skip rather than break the whole list.
+        return null;
+      }
+    })
+  );
+  return spaces
+    .filter((s): s is CircleSummary => s !== null)
+    .sort((a, b) => b.space.createdAt - a.space.createdAt);
+}
+
 export function useGoalSpaces(uid: string | undefined) {
-  // null = loading
-  const [circles, setCircles] = useState<CircleSummary[] | null>(null);
-  // SOCIAL-HOME-01: a failed list read must be distinguishable from a
-  // genuinely empty Circle list — the Together surface renders a retry
-  // affordance for the former and the cold-start selector for the
-  // latter. Cleared on any successful reload.
-  const [loadFailed, setLoadFailed] = useState(false);
+  /* The Circle list, stamped with the account it was read for; null until
+     a read settles. `loading`, `circles` and `loadFailed` are derived from
+     it against the CURRENT uid, so an account switch reads as loading in
+     the very render that carries the new uid — cleared from an effect,
+     the list would first commit a render with the previous account's
+     Circles.
+     SOCIAL-HOME-01: `failed` keeps a failed list read distinguishable
+     from a genuinely empty Circle list — the Together surface renders a
+     retry affordance for the former and the cold-start selector for the
+     latter. Cleared on any successful reload. */
+  const [listing, setListing] = useState<{
+    uid: string;
+    circles: CircleSummary[];
+    failed: boolean;
+  } | null>(null);
+  const current = uid !== undefined && listing?.uid === uid ? listing : null;
 
   // CIRCLE-INDEX-TRUST-01: request-generation guard. Every reload bumps
   // the counter and captures its own generation; a completion only
@@ -84,59 +129,29 @@ export function useGoalSpaces(uid: string | undefined) {
   // account-switch and overlapping-refresh races — a late account-A read
   // (or a superseded refresh) can no longer overwrite newer state, so
   // account A's Circle titles can't flash while account B resolves. The
-  // effect below also clears to loading on a uid change; the two
+  // uid stamp above hides a list read for any other account; the two
   // together give the "own the index by uid + generation" property.
   const genRef = useRef(0);
 
-  const reload = useCallback(async () => {
-    if (!uid) return;
+  const reload = useCallback((): Promise<void> => {
+    if (!uid) return Promise.resolve();
     const myGen = ++genRef.current;
     const isCurrent = () => genRef.current === myGen;
-    try {
-      const links = await getDocs(collection(db, "users", uid, "journeys"));
-      const spaceIds = links.docs
-        .map((d) => d.data()?.goalSpaceId)
-        .filter((id): id is string => typeof id === "string");
-      const spaces = await Promise.all(
-        spaceIds.map(async (id) => {
-          try {
-            const snap = await getDoc(doc(db, "goalSpaces", id));
-            if (!snap.exists()) return null;
-            const data = snap.data();
-            const space = parseGoalSpace(data);
-            if (!space) return null;
-            return {
-              space,
-              inviteCode:
-                space.ownerId === uid && typeof data.inviteCode === "string"
-                  ? data.inviteCode
-                  : null,
-            } satisfies CircleSummary;
-          } catch {
-            // Removed since the link was written (or rules denied) —
-            // skip rather than break the whole list.
-            return null;
-          }
-        })
-      );
-      // Superseded by a newer reload / account switch — drop this result.
-      if (!isCurrent()) return;
-      setCircles(
-        spaces
-          .filter((s): s is CircleSummary => s !== null)
-          .sort((a, b) => b.space.createdAt - a.space.createdAt)
-      );
-      setLoadFailed(false);
-    } catch (err) {
-      if (!isCurrent()) return;
-      logger.error("goalSpaces: list failed", err);
-      setCircles([]);
-      setLoadFailed(true);
-    }
+    return readCircleIndex(uid).then(
+      (circles) => {
+        // Superseded by a newer reload / account switch — drop this result.
+        if (!isCurrent()) return;
+        setListing({ uid, circles, failed: false });
+      },
+      (err: unknown) => {
+        if (!isCurrent()) return;
+        logger.error("goalSpaces: list failed", err);
+        setListing({ uid, circles: [], failed: true });
+      }
+    );
   }, [uid]);
 
   useEffect(() => {
-    setCircles(null);
     void reload();
   }, [reload]);
 
@@ -352,9 +367,9 @@ export function useGoalSpaces(uid: string | undefined) {
   );
 
   return {
-    loading: uid !== undefined && circles === null,
-    circles: circles ?? [],
-    loadFailed,
+    loading: uid !== undefined && current === null,
+    circles: current?.circles ?? [],
+    loadFailed: current?.failed ?? false,
     reload,
     createCircle,
     joinCircle,

@@ -1,3 +1,4 @@
+const { FieldPath } = require("firebase-admin/firestore");
 const { transactionAccountsLive } = require("./deletionTransactionGuard");
 /**
  * 2026-05-26 audit PR 3 — server-side feed fan-out + notification
@@ -184,6 +185,53 @@ async function fanoutActivityToFeeds({
   return { fanned };
 }
 
+/** A feed copy's path. The `items` collection group also holds
+ *  notifications and comments, and a kudos or comment notification carries
+ *  the activityId of the post it is about; those are not copies. */
+const FEED_COPY_PATH = /^feeds\/[^/]+\/items\/[^/]+$/;
+const REMOVE_PAGE_SIZE = 300;
+
+/**
+ * Delete every feed copy of an activity. Called from the
+ * `onActivityDeleted` trigger, and from `onActivityCreated` when the post
+ * was deleted while it was being fanned out.
+ *
+ * The copies are found by their own `activityId` field (a collection-group
+ * query, indexed in firestore.indexes.json) rather than by re-reading the
+ * author's followers: someone who has unfollowed since still holds a copy,
+ * and copies written under auto ids are not at `{activityId}`.
+ *
+ * Deleting is idempotent, so a re-delivered or concurrent trigger is safe:
+ * a second run finds nothing left to delete.
+ *
+ * Returns: { removed: number } — count of feed copies deleted.
+ */
+async function removeActivityFromFeeds({ firestore, activityId }) {
+  if (!firestore || !activityId) {
+    throw new Error("removeActivityFromFeeds: firestore, activityId required");
+  }
+  const query = firestore
+    .collectionGroup("items")
+    .where("activityId", "==", activityId)
+    .orderBy(FieldPath.documentId())
+    .limit(REMOVE_PAGE_SIZE);
+  let removed = 0;
+  let cursor = null;
+  for (;;) {
+    const page = await (cursor ? query.startAfter(cursor) : query).get();
+    const copies = page.docs.filter((d) => FEED_COPY_PATH.test(d.ref.path));
+    if (copies.length > 0) {
+      const batch = firestore.batch();
+      for (const d of copies) batch.delete(d.ref);
+      await batch.commit();
+      removed += copies.length;
+    }
+    if (page.docs.length < REMOVE_PAGE_SIZE) return { removed };
+    // Paged by path, so a page of non-copies cannot be read again forever.
+    cursor = page.docs[page.docs.length - 1].ref;
+  }
+}
+
 const VALID_NOTIFICATION_TYPES = [
   "kudos",
   "comment",
@@ -331,6 +379,7 @@ async function createNotification({
 
 module.exports = {
   fanoutActivityToFeeds,
+  removeActivityFromFeeds,
   createNotification,
   VALID_NOTIFICATION_TYPES,
 };

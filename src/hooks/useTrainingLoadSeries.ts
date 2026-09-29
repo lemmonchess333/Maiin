@@ -34,28 +34,41 @@ import {
  *
  * Failures degrade to an empty series (error logged) so Analytics renders
  * the card's empty state rather than crashing the page.
+ *
+ * A series is stored with the uid and window it was computed for, and
+ * `points` / `loading` are read off that during render: another account's
+ * series is never returned (signed out, or switched and still loading), and
+ * the hook is loading until a series for the current uid AND window lands.
+ * A same-account window change keeps the previous points until then, as
+ * the card shows its skeleton while loading anyway.
  */
 const WARMUP_DAYS = 60;
 const QUALITY_TYPES = new Set(["tempo", "intervals", "race"]);
+
+interface LoadedSeries {
+  uid: string | null;
+  displayDays: number | null;
+  points: LoadPoint[];
+}
+
+const NO_POINTS: LoadPoint[] = [];
 
 export function useTrainingLoadSeries(displayDays: number): {
   points: LoadPoint[];
   loading: boolean;
 } {
   const uid = useUid();
-  const [points, setPoints] = useState<LoadPoint[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loaded, setLoaded] = useState<LoadedSeries>({
+    uid: null,
+    displayDays: null,
+    points: NO_POINTS,
+  });
 
   useEffect(() => {
-    if (!uid) {
-      setPoints([]);
-      setLoading(false);
-      return;
-    }
+    if (!uid) return;
     let cancelled = false;
 
     const load = async () => {
-      setLoading(true);
       try {
         const fetchDays = displayDays + WARMUP_DAYS;
         const since = new Date();
@@ -117,17 +130,17 @@ export function useTrainingLoadSeries(displayDays: number): {
         });
 
         if (cancelled) return;
-        setPoints(
-          loadCurve(sessions, {
+        setLoaded({
+          uid,
+          displayDays,
+          points: loadCurve(sessions, {
             endDateKey: localDateString(new Date()),
             days: displayDays,
-          })
-        );
+          }),
+        });
       } catch (e) {
         logger.error("[useTrainingLoadSeries] load failed", e);
-        if (!cancelled) setPoints([]);
-      } finally {
-        if (!cancelled) setLoading(false);
+        if (!cancelled) setLoaded({ uid, displayDays, points: NO_POINTS });
       }
     };
 
@@ -137,5 +150,9 @@ export function useTrainingLoadSeries(displayDays: number): {
     };
   }, [uid, displayDays]);
 
-  return { points, loading };
+  const ownSeries = uid !== null && loaded.uid === uid;
+  return {
+    points: ownSeries ? loaded.points : NO_POINTS,
+    loading: uid !== null && !(ownSeries && loaded.displayDays === displayDays),
+  };
 }

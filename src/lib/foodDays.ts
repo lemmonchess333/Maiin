@@ -44,6 +44,10 @@ export interface FoodDaysReading {
    *  enough of each to compare. */
   weekendCalories: number | null;
   weekdayCalories: number | null;
+  /** Average protein a day over the finished logged days, or null before
+   *  there is one. The protein per kilogram row reads it, so it counts the
+   *  same days as the rows beside it. */
+  averageProtein: number | null;
 }
 
 function isWeekend(date: string): boolean {
@@ -76,9 +80,11 @@ export function foodDaysReading({
   const protein = { met: 0, judged: 0 };
   const weekend: number[] = [];
   const weekday: number[] = [];
+  const dayProtein: number[] = [];
   for (const [date, day] of totals) {
     // A day logged as nothing is a day not logged.
     if (day.calories <= 0) continue;
+    dayProtein.push(day.protein);
     const target = targets.get(date);
     if (target && target.calories > 0) {
       calories.judged += 1;
@@ -105,5 +111,8 @@ export function foodDaysReading({
     protein,
     weekendCalories: comparable ? mean(weekend) : null,
     weekdayCalories: comparable ? mean(weekday) : null,
+    averageProtein: dayProtein.length
+      ? dayProtein.reduce((a, b) => a + b, 0) / dayProtein.length
+      : null,
   };
 }

@@ -83,7 +83,7 @@ export default function MacroDistribution({
             tab-stop inside an aria-hidden subtree — that's the
             axe-core aria-hidden-focus violation. */}
         <div className="size-24 shrink-0 relative" aria-hidden="true">
-          <ResponsiveContainer width="100%" height="100%">
+          <ResponsiveContainer width="100%" height={96}>
             {/* `accessibilityLayer={false}`, and the `rootTabIndex` below
                 is no longer what does the work. Recharts 3 defaults
                 `accessibilityLayer` to TRUE, which puts `tabIndex="0"` on

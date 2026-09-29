@@ -26,13 +26,13 @@ import { logger } from "@/lib/logger";
 import { postActivity } from "@/lib/socialApi";
 import type { ActivityPost } from "@/lib/activityPost";
 import {
-  cancelQueuedShare,
   compose,
   enqueueShare,
   type ActivityPreview,
   type ShareDecision,
   type ShareType,
   type ShareVisibility,
+  withdrawQueuedShare,
 } from "@/lib/shareComposer";
 import {
   clearSharedActivity,
@@ -162,20 +162,28 @@ async function publish(
 
 /**
  * Takes a session's post back: deletes it (or drops it from the offline
- * queue) and clears the session's link to it. Throws if it could not, and
- * the finish screen then keeps showing the post.
+ * queue) and clears the session's link to it. Resolves with what it did,
+ * for the finish screen to say: "removed" when there was a post to delete,
+ * "cancelled" when it had not been sent. Throws if it could not, and the
+ * finish screen then keeps showing the post.
  */
 export async function withdrawSessionPost(
   action: Pick<SessionShareAction, "uid" | "source">,
   outcome: LiveShareOutcome
-): Promise<void> {
+): Promise<"removed" | "cancelled"> {
   const { uid, source } = action;
   let activityId: string | null =
     outcome.status === "posted" ? outcome.activityId : null;
-  if (outcome.status === "queued" && !cancelQueuedShare(uid, source)) {
-    // Not in the queue any more: it drained while this screen was open,
-    // and the drain recorded the post's id on the session.
-    activityId = await readSharedActivityId(uid, source);
+  if (outcome.status === "queued") {
+    // A queued post the drain is sending is waited for rather than
+    // cancelled, and one it has sent comes back with the id it posted.
+    const queued = await withdrawQueuedShare(uid, source);
+    if (queued.status === "posted") activityId = queued.activityId;
+    else if (queued.status === "unknown") {
+      // Sent by a drain this app session did not run, such as another
+      // tab's: the session's link names the post.
+      activityId = await readSharedActivityId(uid, source);
+    }
   }
   if (activityId) {
     const writes = Promise.all([
@@ -194,4 +202,5 @@ export async function withdrawSessionPost(
     }
   }
   live.delete(keyOf(uid, source));
+  return activityId ? "removed" : "cancelled";
 }

@@ -1,0 +1,206 @@
+/**
+ * RunSummary state that belongs to one saved run, opened on its receipt.
+ *
+ * 1. The off-plan prompt's dismissal is stored per saved run. It is read
+ *    while rendering, once per run id, so a run already decided never
+ *    paints the prompt; the read used to be an effect, which let the
+ *    first commit show the prompt and then hid it.
+ * 2. The pace insight's loading flag is derived from the inputs the
+ *    history was read for (account, run, corrected distance). When they
+ *    change, the insight reads as loading from that render until the new
+ *    read settles; the flag used to go up one commit late.
+ *
+ * The mocked `useProgram` runs at the top of every render, so it records
+ * what the previous commit left in the DOM — that is how a commit that
+ * showed something for one frame is caught. Firestore runs on the one
+ * fake (ADR-0009); the page's heavy children are stubbed.
+ */
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
+import { Link, MemoryRouter, Route, Routes } from "react-router-dom";
+
+vi.mock("firebase/firestore");
+vi.mock("@/lib/firebase", () => ({ db: {}, auth: {} }));
+
+const h = vi.hoisted(() => ({
+  auth: { user: { uid: "runner" }, profile: { displayName: "Runner" } },
+  domAtRender: [] as string[],
+  paceLoading: [] as boolean[],
+}));
+vi.mock("@/lib/auth", () => ({
+  useAuth: () => h.auth,
+  useUid: () => h.auth.user.uid,
+  useUidForStorageKey: () => h.auth.user.uid,
+}));
+vi.mock("@/features/program/useProgram", () => ({
+  useProgram: () => {
+    h.domAtRender.push(document.body.textContent ?? "");
+    return {
+      markManualComplete: vi.fn(),
+      skipRunDay: vi.fn(),
+      programState: { runDays: [{ id: "rd-1", status: "planned" }] },
+    };
+  },
+}));
+vi.mock("@/hooks/usePaceInsight", () => ({
+  usePaceInsightFromRuns: (_runs: unknown, opts: { loading?: boolean }) => {
+    h.paceLoading.push(opts.loading ?? false);
+    return { insight: null, accept: vi.fn(), dismiss: vi.fn() };
+  },
+}));
+vi.mock("@/hooks/useDistanceUnit", () => ({
+  useDistanceUnit: () => "km" as const,
+}));
+vi.mock("@/hooks/usePrivacyZones", () => ({
+  usePrivacyZones: () => ({ zones: [], loading: false, error: null }),
+}));
+vi.mock("@/hooks/useOnlineStatus", () => ({
+  useOnlineStatus: () => ({ isOnline: true }),
+}));
+vi.mock("@/hooks/useShoes", () => ({
+  useShoes: () => ({ updateMileage: vi.fn(), defaultShoe: null }),
+}));
+vi.mock("@/hooks/useRunningStats", () => ({
+  useRunningStats: () => ({ runs: [] }),
+}));
+vi.mock("@/lib/lifecycleAnalytics", () => ({ track: vi.fn() }));
+vi.mock("@/components/run/RunMapLazy", () => ({ default: () => null }));
+vi.mock("@/components/analytics/SplitsBarChart", () => ({
+  default: () => null,
+}));
+vi.mock("@/components/analytics/ElevationProfile", () => ({
+  default: () => null,
+}));
+vi.mock("@/components/share/ShareCardSheet", () => ({
+  default: () => null,
+  ShareCardSheet: () => null,
+}));
+vi.mock("@/components/social/CircleShareSheet", () => ({
+  default: () => null,
+}));
+vi.mock("@/components/workout/CompletionExtras", () => ({
+  default: () => null,
+}));
+vi.mock("@/components/run/PaceInsightCard", () => ({ default: () => null }));
+vi.mock("@/components/WeekPulseCard", () => ({ default: () => null }));
+vi.mock("@/components/social/SavedRunKudos", () => ({ default: () => null }));
+
+import RunSummary from "../RunSummary";
+import { writeString } from "@/lib/localStore";
+import {
+  deferReads,
+  releaseAllReads,
+  resetFirestore,
+  resumeReads,
+} from "@/test/firestoreHarness";
+
+/** A valid outdoor run, already saved (the receipt), that didn't match
+ *  today's planned tempo — the shape that raises the off-plan prompt. */
+function savedRun(notes = "") {
+  return {
+    savedRun: {
+      uid: "runner",
+      id: "run-1",
+      notes,
+      relativeEffort: null,
+    },
+    points: [],
+    distance: 5000,
+    elapsed: 1500,
+    splits: [],
+    elevationGain: 0,
+    runConfig: {
+      activityType: "freerun",
+      planMetadata: {
+        planMode: "structured",
+        planSource: "today_plan",
+        plannedRunDayIndex: 2,
+        plannedTemplateId: "tempo_run",
+        plannedTemplateType: "tempo",
+        actualTemplateId: null,
+        matchedPlanExact: false,
+        matchedPlanType: false,
+        offPlan: true,
+        planWeekIndex: null,
+        planTotalWeeks: null,
+        scheduledRunId: "rd-1",
+      },
+    },
+  };
+}
+
+function renderSummary() {
+  return render(
+    <MemoryRouter
+      initialEntries={[{ pathname: "/run-summary", state: savedRun() }]}
+    >
+      <Routes>
+        <Route path="/run-summary" element={<RunSummary />} />
+      </Routes>
+      {/* A same-run receipt with edited notes — what RunSummary's own
+          notes update replaces the location state with. */}
+      <Link to="/run-summary" state={savedRun("Felt strong")}>
+        Replace receipt
+      </Link>
+    </MemoryRouter>
+  );
+}
+
+beforeEach(() => {
+  resetFirestore();
+  localStorage.clear();
+  h.domAtRender.length = 0;
+  h.paceLoading.length = 0;
+});
+afterEach(() => {
+  resumeReads();
+  releaseAllReads();
+  cleanup();
+});
+
+describe("RunSummary — the off-plan prompt's stored dismissal", () => {
+  it("an undecided run shows the prompt (the fixture reaches it)", async () => {
+    renderSummary();
+    expect(await screen.findByText("Off-plan save")).toBeInTheDocument();
+  });
+
+  it("a run already dismissed never paints the prompt, not even for one commit", async () => {
+    writeString("tropos:reconcileDismissed:run-1", "1");
+    renderSummary();
+    // POSITIVE anchor: the saved summary is on screen.
+    expect(await screen.findByText("Run saved")).toBeInTheDocument();
+
+    expect(screen.queryByText("Off-plan save")).toBeNull();
+    expect(
+      h.domAtRender.filter((dom) => dom.includes("Off-plan save"))
+    ).toEqual([]);
+  });
+});
+
+describe("RunSummary — pace history loading follows its inputs", () => {
+  it("reads as loading from the render the run changes until the new read settles", async () => {
+    renderSummary();
+    // POSITIVE anchor: the first history read settled.
+    await waitFor(() => expect(h.paceLoading.at(-1)).toBe(false));
+
+    // Hold the next read, then replace the receipt.
+    deferReads();
+    const from = h.paceLoading.length;
+    fireEvent.click(screen.getByRole("link", { name: "Replace receipt" }));
+
+    const afterChange = h.paceLoading.slice(from);
+    expect(afterChange.length).toBeGreaterThan(0);
+    expect(afterChange.every((loading) => loading)).toBe(true);
+
+    // Then settled again, once the new read lands.
+    resumeReads();
+    releaseAllReads();
+    await waitFor(() => expect(h.paceLoading.at(-1)).toBe(false));
+  });
+});

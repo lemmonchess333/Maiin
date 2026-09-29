@@ -295,16 +295,32 @@ describe("account switching", () => {
       "users/B/workouts/b1": session("2026-07-02"),
     });
     mockUser = { uid: "A" };
-    const { result, rerender } = renderHook(() => useWorkouts());
+    // Every render's workouts, stamped with the account it rendered for.
+    // `result.current` only shows the LAST render, and the fake answers
+    // B's listener synchronously — so a list that leaked for the one
+    // render before B's listener lands is invisible to it.
+    const renders: { uid: string | undefined; ids: string[] }[] = [];
+    const { result, rerender } = renderHook(() => {
+      const hook = useWorkouts();
+      renders.push({
+        uid: mockUser?.uid,
+        ids: hook.workouts.map((w) => w.id),
+      });
+      return hook;
+    });
     await waitFor(() => expect(result.current.workouts).toHaveLength(1));
     expect(result.current.workouts[0].id).toBe("a1");
 
     mockUser = { uid: "B" };
     rerender();
 
-    // B must never transiently see a1 — the effect clears before resubscribing.
+    // B must never transiently see a1 — a list counts only for the
+    // account it was delivered to, from the first render under B.
     await waitFor(() => expect(result.current.workouts).toHaveLength(1));
     expect(result.current.workouts[0].id).toBe("b1");
+    const underB = renders.filter((r) => r.uid === "B");
+    expect(underB.flatMap((r) => r.ids)).toContain("b1");
+    expect(underB.flatMap((r) => r.ids)).not.toContain("a1");
   });
 
   it("clears on sign-out", async () => {

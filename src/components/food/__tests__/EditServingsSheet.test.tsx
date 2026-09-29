@@ -611,6 +611,56 @@ describe("EditServingsSheet", function () {
     });
   });
 
+  it("shows a cleared field's starting value, which is what Save keeps", function () {
+    /* Blank means "keep the starting value", so a cleared field has to
+       show that value. A "0" placeholder on every field made clearing
+       15 g of fat look like zero while Save kept 15 g, and a cleared
+       calorie field read 0 over a preview still saying 450. */
+    const onSave = vi.fn();
+    renderSheet({
+      onSave,
+      source: {
+        foodName: "Chicken wrap",
+        currentCount: 1,
+        currentTotalCalories: 450,
+        currentTotalProtein: 30,
+        currentTotalCarbs: 40,
+        currentTotalFat: 15,
+        currentMeal: "lunch",
+      },
+    });
+    // What a field shows: its value, or its placeholder when blank.
+    const shown = (label: string) => {
+      const input = screen.getByLabelText(label) as HTMLInputElement;
+      return input.value || input.placeholder;
+    };
+    for (const [label, start] of [
+      ["Per-serving calories", "450"],
+      ["Per-serving protein", "30"],
+      ["Per-serving carbs", "40"],
+      ["Per-serving fat", "15"],
+    ]) {
+      fireEvent.change(screen.getByLabelText(label), {
+        target: { value: "" },
+      });
+      expect(shown(label), label).toBe(start);
+    }
+    expect(
+      screen.getByText(new RegExp(`~ 450 ${CALORIE_UNIT}`))
+    ).toBeInTheDocument();
+    // Nothing changed, so there is nothing to save.
+    expect(screen.getByRole("button", { name: "Save" })).toBeDisabled();
+    // With another edit, the cleared fields keep their values.
+    fireEvent.click(screen.getByRole("radio", { name: "Dinner" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+    expect(onSave).toHaveBeenCalledWith({
+      targetCount: 1,
+      targetMeal: "dinner",
+      targetName: null,
+      targetMacros: null,
+    });
+  });
+
   it("saves no macros for an untouched zero", function () {
     const onSave = vi.fn();
     renderSheet({

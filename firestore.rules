@@ -221,6 +221,42 @@ service cloud.firestore {
         || raceGoalValid();
     }
 
+    /* shareDefaults value gate — who sees a finished session, per type:
+       the answer to "Share sessions automatically?", which the finish
+       screen acts on without asking again. The client writes one field
+       path per type (`shareDefaults.run`), so on update this reads the
+       whole map as it will be. Only the two session types; each is one of
+       the three answers, or null for "Ask" (the next finish asks). A
+       whole-field null means no answer for either type. Same vocabulary as
+       profileSanitizer.js and `ShareDefaults` in src/lib/shareDefaults.ts.
+       Gated only when the field changes, like raceGoal above, so a bad
+       stored map cannot lock a user out of unrelated settings. */
+    function shareDefaultsValid() {
+      let d = request.resource.data.shareDefaults;
+      return !('shareDefaults' in request.resource.data)
+        || d == null
+        || (
+          d is map
+          && d.keys().hasOnly(['run', 'workout'])
+          && (
+            !('run' in d)
+            || d.run == null
+            || d.run in ['followers', 'public', 'never']
+          )
+          && (
+            !('workout' in d)
+            || d.workout == null
+            || d.workout in ['followers', 'public', 'never']
+          )
+        );
+    }
+
+    function shareDefaultsUnchangedOrValid() {
+      return !request.resource.data.diff(resource.data).affectedKeys()
+          .hasAny(['shareDefaults'])
+        || shareDefaultsValid();
+    }
+
     function subscriptionFieldsUnchanged() {
       let protectedFields = [
         'subscriptionTier', 'stripeCustomerId', 'stripeSubscriptionId', 'trialExpiresAt',
@@ -245,6 +281,9 @@ service cloud.firestore {
         'targetFat', 'goal', 'autoRestTimer', 'defaultRestSeconds',
         'defaultVisibility', 'autoPostRuns', 'autoPostWorkouts', 'audioCues',
         'hideSharedRouteEnds',
+        // Soc11 share answers, per type. Value-gated by shareDefaultsValid()
+        // above; also in profileSanitizer.js.
+        'shareDefaults',
         // #984 "Hide the number" anti-anxiety toggle — written client-side via
         // updateProfile (Settings → toggleHideWeightNumber) AND set by the
         // onboarding CF (in profileSanitizer). It was in the sanitiser + the
@@ -338,12 +377,14 @@ service cloud.firestore {
         && request.resource.data.keys().hasOnly(allowedUserFields())
         && request.resource.data.subscriptionTier == 'free'
         && billingFieldsUnsetOnCreate()
-        && raceGoalValid();
+        && raceGoalValid()
+        && shareDefaultsValid();
       allow update: if isOwner(uid)
         && !isWriteFrozen(uid)
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(allowedUserFields())
         && subscriptionFieldsUnchanged()
-        && raceGoalUnchangedOrValid();
+        && raceGoalUnchangedOrValid()
+        && shareDefaultsUnchangedOrValid();
       // Freeze delete too: the deletion executor uses the Admin SDK (which
       // bypasses rules), so a client-side self-delete during the freeze /
       // tombstone window is never the executor and should be blocked.

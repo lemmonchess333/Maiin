@@ -1,12 +1,13 @@
 """Offline regressions for the Storage rules cross-service IAM check. No cloud calls."""
 
 import contextlib
+import http.client
 import io
 import json
 from pathlib import Path
 import tempfile
 import unittest
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 import urllib.error
 
 import verify_storage_rules_iam as check
@@ -146,6 +147,18 @@ class ClientTest(unittest.TestCase):
                 with self.assertRaisesRegex(check.VerificationError, f"^{reason}$"):
                     check.make_client("t")(f"projects/{PROJECT}")
 
+    def test_an_error_body_that_cannot_be_read_leaves_the_status(self):
+        for failure in [ConnectionResetError(104, "Connection reset by peer"),
+                        http.client.IncompleteRead(b'{"error', 40)]:
+            with self.subTest(failure=type(failure).__name__), patch.object(
+                check.urllib.request, "build_opener"
+            ) as build:
+                build.return_value.open.side_effect = urllib.error.HTTPError(
+                    check.API, 403, "Forbidden", {}, Mock(**{"read.side_effect": failure})
+                )
+                with self.assertRaisesRegex(check.VerificationError, "^http-403$"):
+                    check.make_client("t")(f"projects/{PROJECT}")
+
     def test_project_read_is_a_get(self):
         with patch.object(check.urllib.request, "build_opener") as build:
             build.return_value.open.return_value.__enter__.return_value = io.BytesIO(
@@ -180,12 +193,17 @@ class ReadRulesTest(unittest.TestCase):
 
 
 class CliTest(unittest.TestCase):
-    def run_main(self, result, source=CROSS_SERVICE_RULES):
+    def run_main(self, result=None, source=CROSS_SERVICE_RULES, error=None):
+        """main() with the IAM check stubbed: it returns `result`, or raises `error`."""
+        with patch.object(check, "check_cross_service_iam", return_value=result, side_effect=error):
+            return self.run_cli(source)
+
+    def run_cli(self, source=CROSS_SERVICE_RULES, token="secret-token"):
         with tempfile.TemporaryDirectory() as directory:
             summary = Path(directory) / "summary.md"
             with patch.object(check, "read_storage_rules", return_value=source), patch.object(
-                check.subprocess, "check_output", return_value="secret-token"
-            ) as gcloud, patch.object(check, "check_cross_service_iam", return_value=result), patch.dict(
+                check.subprocess, "check_output", return_value=token
+            ) as gcloud, patch.dict(
                 check.os.environ, {"GITHUB_STEP_SUMMARY": str(summary)}
             ), contextlib.redirect_stdout(io.StringIO()) as output:
                 code = check.main([])
@@ -195,12 +213,71 @@ class CliTest(unittest.TestCase):
         for result, expected in [
             ({"status": "granted", "member": "m"}, 0),
             ({"status": "missing", "member": "m"}, 1),
-            ({"status": "unverified", "reason": "http-403"}, 1),
         ]:
             with self.subTest(status=result["status"]):
                 code, output, _, _ = self.run_main(result)
                 self.assertEqual(code, expected)
                 self.assertNotIn("secret-token", output)
+
+    def test_a_check_that_cannot_finish_fails_closed(self):
+        # check_cross_service_iam never returns "unverified". Every way it can
+        # fail is a raised VerificationError, and main() must turn each one
+        # into a failure, so these raise rather than return a result.
+        for reason in ["http-403", "api-disabled", "network-unavailable", "http-503",
+                       "unexpected-project", "invalid-json", "invalid-policy"]:
+            with self.subTest(reason=reason):
+                code, output, summary, _ = self.run_main(error=check.VerificationError(reason))
+                self.assertEqual(code, 1)
+                self.assertIn(json.dumps({"reason": reason, "status": "unverified"}), output)
+                self.assertIn(f"`{reason}`", summary)
+                self.assertNotIn("secret-token", output + summary)
+
+    def test_only_a_403_asks_for_the_iam_read_role(self):
+        # Every other reason has a cause a read role cannot fix.
+        for reason in ["network-unavailable", "http-401", "http-429", "http-500", "http-503",
+                       "unexpected-project", "invalid-json", "unexpected-redirect"]:
+            with self.subTest(reason=reason):
+                code, output, summary, _ = self.run_main(error=check.VerificationError(reason))
+                self.assertEqual(code, 1)
+                self.assertNotIn("securityReviewer", output + summary)
+
+    def test_transient_failures_say_to_re_run(self):
+        for reason in ["network-unavailable", "http-408", "http-429", "http-500", "http-503"]:
+            with self.subTest(reason=reason):
+                code, output, summary, _ = self.run_main(error=check.VerificationError(reason))
+                self.assertEqual(code, 1)
+                self.assertIn("usually temporary", output)
+                self.assertIn("usually temporary", summary)
+        for reason in ["http-403", "unexpected-project", "invalid-json"]:
+            with self.subTest(reason=reason):
+                _, _, summary, _ = self.run_main(error=check.VerificationError(reason))
+                self.assertNotIn("usually temporary", summary)
+
+    def test_a_missing_or_rejected_token_points_at_the_credentials(self):
+        for label, run in [
+            ("gcloud printed no token", lambda: self.run_cli(token="\n")),
+            ("http-401", lambda: self.run_main(error=check.VerificationError("http-401"))),
+        ]:
+            with self.subTest(label):
+                code, _, summary, _ = run()
+                self.assertEqual(code, 1)
+                self.assertIn("FIREBASE_SERVICE_ACCOUNT", summary)
+                self.assertNotIn("securityReviewer", summary)
+
+    def test_a_connection_lost_mid_response_is_a_network_failure(self):
+        # The real client this time: the connection fails while the response
+        # body is read, after the request went out.
+        for failure in [ConnectionResetError(104, "Connection reset by peer"),
+                        http.client.IncompleteRead(b'{"projectId', 40)]:
+            with self.subTest(failure=type(failure).__name__), patch.object(
+                check.urllib.request, "build_opener"
+            ) as build:
+                build.return_value.open.return_value.__enter__.return_value.read.side_effect = failure
+                code, output, summary, _ = self.run_cli()
+                self.assertEqual(code, 1)
+                self.assertIn(json.dumps({"reason": "network-unavailable", "status": "unverified"}), output)
+                self.assertIn("usually temporary", summary)
+                self.assertNotIn("securityReviewer", summary)
 
     def test_missing_names_the_role_and_the_grant_command(self):
         code, output, summary, _ = self.run_main({"status": "missing", "member": AGENT})
@@ -210,15 +287,15 @@ class CliTest(unittest.TestCase):
                      "gcp-sa-firebasestorage.iam.gserviceaccount.com"]:
             self.assertIn(text, summary)
 
-    def test_unverified_is_a_failure_that_names_the_reason_and_the_read_role(self):
-        code, output, summary, _ = self.run_main({"status": "unverified", "reason": "http-403"})
+    def test_a_403_is_a_failure_that_names_the_reason_and_the_read_role(self):
+        code, output, summary, _ = self.run_main(error=check.VerificationError("http-403"))
         self.assertEqual(code, 1)
         self.assertIn("::error title=Storage rules permission unconfirmed::", output)
         self.assertIn("http-403", summary)
         self.assertIn("roles/iam.securityReviewer", summary)
 
     def test_a_disabled_api_gets_the_command_that_enables_it(self):
-        code, output, summary, _ = self.run_main({"status": "unverified", "reason": "api-disabled"})
+        code, output, summary, _ = self.run_main(error=check.VerificationError("api-disabled"))
         self.assertEqual(code, 1)
         self.assertIn("Cloud Resource Manager API", output)
         self.assertIn(
@@ -242,6 +319,8 @@ class CliTest(unittest.TestCase):
         ) as output, contextlib.redirect_stderr(io.StringIO()) as errors:
             self.assertEqual(check.main([]), 1)
         self.assertIn('"reason": "credentials-unavailable"', output.getvalue())
+        self.assertIn("FIREBASE_SERVICE_ACCOUNT", output.getvalue())
+        self.assertNotIn("securityReviewer", output.getvalue())
         self.assertNotIn("secret", output.getvalue() + errors.getvalue())
 
     def test_bad_local_config_fails_before_any_credentials(self):

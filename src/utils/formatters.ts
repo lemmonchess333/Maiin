@@ -115,15 +115,3 @@ export function formatClock(totalSeconds: number): string {
     ? `${h}:${String(m).padStart(2, "0")}:${String(sec).padStart(2, "0")}`
     : mmss;
 }
-
-/** Macro progress against its target: the share (clamped 0–1.3) and whether
- *  it is reached (within 10% of the target either way). Named for the macro
- *  rings it was written for; Home's food card reads `done` for its macro
- *  bars' "target reached" (DS3 replaced the rings with bars). */
-export function macroRingState(
-  value: number,
-  target: number
-): { pct: number; done: boolean } {
-  const pct = Math.min(value / Math.max(target, 1), 1.3);
-  return { pct, done: pct >= 0.9 && pct <= 1.1 };
-}

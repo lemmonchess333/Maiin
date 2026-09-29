@@ -35,6 +35,7 @@ import VerifyEmailNotice from "@/components/social/VerifyEmailNotice";
 import type { SpacePostActivitySnapshot } from "./spaceTypes";
 import type { RecentSession } from "./useRecentSessions";
 import { distanceLabel } from "@/lib/runLabels";
+import { clipRouteEnds, DEFAULT_CLIP_METERS } from "@/lib/shareCard/polyline";
 import type { DistanceUnit } from "@/lib/distanceUnits";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 
@@ -50,17 +51,27 @@ function downsample<T>(points: T[], max: number): T[] {
   return Array.from({ length: max }, (_, i) => points[Math.round(i * step)]);
 }
 
-function toSnapshot(a: RecentSession): SpacePostActivitySnapshot {
+function toSnapshot(
+  a: RecentSession,
+  keepRouteEnds: boolean
+): SpacePostActivitySnapshot {
   if (a.kind === "run") {
     const r = a.run;
+    // Any signed-in account can read a space post, so the route's ends are
+    // trimmed exactly as a run shared to the feed trims them: the privacy
+    // setting promises that the start and finish of a shared run are hidden.
+    const route =
+      r.routePreview && !keepRouteEnds
+        ? clipRouteEnds(r.routePreview, DEFAULT_CLIP_METERS)
+        : r.routePreview;
     return {
       type: "run",
       distance: r.distance,
       avgPace: r.avgPace,
       duration: r.duration,
       elevationGain: r.elevationGain,
-      ...(r.routePreview && r.routePreview.length > 1
-        ? { routePreview: downsample(r.routePreview, ROUTE_POINTS_MAX) }
+      ...(route && route.length > 1
+        ? { routePreview: downsample(route, ROUTE_POINTS_MAX) }
         : {}),
     };
   }
@@ -188,7 +199,14 @@ export default function SpacePostComposer({
       ...(profile?.photoURL ? { authorPhotoURL: profile.photoURL } : {}),
       ...(title.trim() ? { title: title.trim() } : {}),
       body: body.trim(),
-      ...(attached ? { activity: toSnapshot(attached) } : {}),
+      ...(attached
+        ? {
+            activity: toSnapshot(
+              attached,
+              profile?.hideSharedRouteEnds === false
+            ),
+          }
+        : {}),
       ...(photoUrl ? { photoUrl } : {}),
       likeCount: 0,
       commentCount: 0,

@@ -353,6 +353,91 @@ describe("useClaimMap", () => {
     expect(r2.current.today).toBe("2026-06-01");
   });
 });
+
+/**
+ * Saved runs are one account's evidence. On a mount that stays up across a
+ * sign-out or a switch, another account's runs must not claim this plan's
+ * slots — not even in the render before the new account's listener lands.
+ * The fake answers a listener synchronously on subscribe, so the switch
+ * case records every render: `result.current` alone only shows the last.
+ */
+describe("useClaimMap - account ownership", () => {
+  beforeEach(() => {
+    resetFirestore();
+    currentUser = mockUser;
+    mockProgramState = {
+      runDays: [
+        {
+          id: "rd-1",
+          date: "2026-05-26",
+          dayIndex: 2,
+          templateId: "easy-5k",
+          type: "easy",
+          status: "planned",
+        },
+      ],
+      manualCompletions: {},
+    };
+    seedFirestore({
+      "users/u1/runs/saved-1": {
+        date: "2026-05-26",
+        distance: 5000,
+        avgPace: 330,
+        templateId: "easy-5k",
+        createdAt: Timestamp.fromMillis(1716700000_000),
+      },
+    });
+  });
+
+  it("drops the previous account's runs on sign-out", () => {
+    const { result, rerender } = renderHook(() => useClaimMap("2026-05-26"));
+    expect(result.current.claimMap.get("rd-1")?.claimedSavedRunId).toBe(
+      "saved-1"
+    );
+
+    currentUser = null;
+    rerender();
+    expect(
+      result.current.claimMap.get("rd-1")?.claimedSavedRunId
+    ).toBeUndefined();
+    expect(result.current.unclaimedByDate.size).toBe(0);
+    expect(result.current.loading).toBe(false);
+  });
+
+  it("never lets account A's runs claim a slot for account B", () => {
+    seedFirestore({
+      // B's own run, on a date no slot can claim, so B's arrival is
+      // visible as an extra.
+      "users/u2/runs/b-run": {
+        date: "2026-05-20",
+        distance: 8000,
+        avgPace: 300,
+        createdAt: Timestamp.fromMillis(1716200000_000),
+      },
+    });
+    const renders: { uid: string | undefined; claimed?: string }[] = [];
+    const { result, rerender } = renderHook(() => {
+      const hook = useClaimMap("2026-05-26");
+      renders.push({
+        uid: currentUser?.uid,
+        claimed: hook.claimMap.get("rd-1")?.claimedSavedRunId,
+      });
+      return hook;
+    });
+    expect(result.current.claimMap.get("rd-1")?.claimedSavedRunId).toBe(
+      "saved-1"
+    );
+
+    currentUser = { uid: "u2" };
+    rerender();
+    expect(result.current.unclaimedByDate.get("2026-05-20")?.[0].id).toBe(
+      "b-run"
+    );
+    const underB = renders.filter((r) => r.uid === "u2");
+    expect(underB.length).toBeGreaterThan(0);
+    expect(underB.map((r) => r.claimed)).not.toContain("saved-1");
+  });
+});
 /**
  * The 70% distance gate (PR-J-Q1 pin P2).
  *

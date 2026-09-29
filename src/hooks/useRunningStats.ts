@@ -225,6 +225,30 @@ export function parseRunSummary(
 }
 
 /**
+ * What the live query last answered: the rows, whose they are, which query
+ * answered, and how. Everything the hook reports is read off this during
+ * render, so nothing has to be reset in an effect before a new query starts.
+ */
+interface LoadedRuns {
+  runs: RunSummaryItem[];
+  uid: string | null;
+  queryKey: string | null;
+  /** See the listener error callback below — a failed read used to be
+   *  indistinguishable from an empty one. */
+  failed: boolean;
+  /** Server-confirmed, with no pending local writes. */
+  authoritative: boolean;
+}
+
+const NOTHING_LOADED: LoadedRuns = {
+  runs: [],
+  uid: null,
+  queryKey: null,
+  failed: false,
+  authoritative: false,
+};
+
+/**
  * `days` is a rolling window of exactly that many dates, ENDING TODAY —
  * so `useRunningStats(7)` covers today and the six days before it.
  *
@@ -241,45 +265,32 @@ export function useRunningStats(days: number = 30) {
     queuedWritesVersion,
     queuedWritesVersion
   );
-  const [{ runs, uid: loadedUid, queryKey: loadedQuery }, setLoaded] =
-    useState<{
-      runs: RunSummaryItem[];
-      uid: string | null;
-      queryKey: string | null;
-    }>({ runs: [], uid: null, queryKey: null });
-  const [loading, setLoading] = useState(true);
-  /** See the listener error callback below — a failed read used to be
-   *  indistinguishable from an empty one. */
-  const [failed, setFailed] = useState(false);
-  const [authoritative, setAuthoritative] = useState(false);
+  const [loaded, setLoaded] = useState<LoadedRuns>(NOTHING_LOADED);
+  const { runs, uid: loadedUid, queryKey: loadedQuery } = loaded;
   // Hist4: refresh trigger for pull-to-refresh. Incrementing the
   // tick forces the load effect below to re-run via the dep array.
   // Public surface is the `refresh()` callback below.
   const [refreshTick, setRefreshTick] = useState(0);
   const queryKey = `${uid ?? ""}:${days}:${today}:${refreshTick}`;
 
+  /* An answer counts only for the account it was read for. After a
+     sign-out (a shared-device sign-out → sign-in, or a transient null-user
+     window) or a switch to account B, the rows, `failed` and
+     `authoritative` belong to the previous account, so they read as empty
+     / false from the render where the uid changes — before any effect
+     runs — until B's own query answers (the uid-scoping class hardened in
+     PR #820). `loading` is true until the CURRENT query (account, window,
+     day, refresh) has answered; a same-uid pull-to-refresh, day rollover
+     or window change keeps the current rows visible meanwhile. */
+  const ownAnswer = !!uid && loadedUid === uid;
+  const loading = !!uid && loadedQuery !== queryKey;
+  const failed = ownAnswer && loaded.failed;
+  const authoritative = ownAnswer && loaded.authoritative;
+
   useEffect(() => {
-    if (!uid) {
-      // Clear the previous account's data on sign-out — not just `loading`.
-      // If the component stays mounted across an account switch (shared-device
-      // sign-out → sign-in, or a transient null-user window), leaving `runs` /
-      // `weeklyData` populated leaks account A's runs into account B's view
-      // until B's load completes (the uid-scoping class hardened in PR #820).
-      setLoaded({ runs: [], uid: null, queryKey: null });
-      setLoading(false);
-      setFailed(false);
-      setAuthoritative(false);
-      return;
-    }
+    if (!uid) return;
 
     let cancelled = false;
-    // A→B: clear A's rows immediately so they can't show under B. A same-uid
-    // pull-to-refresh keeps the current rows visible while loading.
-    setLoaded((current) =>
-      current.uid === uid ? current : { runs: [], uid: null, queryKey: null }
-    );
-    setLoading(true);
-    setAuthoritative(false);
 
     const since = rollingWindowStart(days, parseLocalDate(today));
 
@@ -298,12 +309,14 @@ export function useRunningStats(days: number = 30) {
           .filter((run): run is RunSummaryItem => run !== null);
 
         if (cancelled) return;
-        setLoaded({ runs: runList, uid, queryKey });
-        setFailed(false);
-        setAuthoritative(
-          !snap.metadata?.fromCache && !snap.metadata?.hasPendingWrites
-        );
-        setLoading(false);
+        setLoaded({
+          runs: runList,
+          uid,
+          queryKey,
+          failed: false,
+          authoritative:
+            !snap.metadata?.fromCache && !snap.metadata?.hasPendingWrites,
+        });
       },
       (error) => {
         // A failed read must settle to a retryable state, not load forever
@@ -315,11 +328,16 @@ export function useRunningStats(days: number = 30) {
         // The failure was therefore doubly invisible: no error surface,
         // and the surface that WOULD have shown one deleted itself.
         // `failed` lets the caller tell the two apart.
+        //
+        // Same-uid rows already shown stay; another account's never do.
         if (cancelled) return;
-        setLoaded((current) => ({ ...current, uid, queryKey }));
-        setFailed(true);
-        setAuthoritative(false);
-        setLoading(false);
+        setLoaded((current) => ({
+          runs: current.uid === uid ? current.runs : [],
+          uid,
+          queryKey,
+          failed: true,
+          authoritative: false,
+        }));
         logger.error("[useRunningStats] Failed to load runs", error);
       }
     );

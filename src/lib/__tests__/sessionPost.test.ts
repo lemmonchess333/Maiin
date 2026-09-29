@@ -16,6 +16,11 @@ import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 
 vi.mock("firebase/firestore");
 const h = vi.hoisted(() => ({ failNext: null as Error | null }));
+// Signed in, so the offline save queue flushes for this account.
+vi.mock("@/lib/firebase", () => ({
+  db: {},
+  auth: { currentUser: { uid: "u1" } },
+}));
 vi.mock("@/lib/socialApi", async () => {
   const { collection } = await import("firebase/firestore");
   const { db } = await import("@/lib/firebase");
@@ -41,12 +46,20 @@ import {
   deferWrites,
   pendingWrites,
   releaseAllWrites,
+  releaseWrite,
+  resumeWrites,
+  failNextFirestore,
+  unfiredFailures,
 } from "@/test/firestoreHarness";
+import { db } from "@/lib/firebase";
 import { postActivity } from "@/lib/socialApi";
 import type { ActivityPost } from "@/lib/activityPost";
+import { flushQueue, queueWorkoutCompletion } from "@/lib/offlineQueue";
+import { recordSharedActivity, type ShareSource } from "@/lib/sessionDelete";
 import {
   getQueueLength,
   cancelQueuedShare,
+  drainQueue,
   resolveCompose,
   subscribeShareComposer,
   type ShareDecision,
@@ -87,6 +100,17 @@ function setOnline(value: boolean) {
   vi.spyOn(navigator, "onLine", "get").mockReturnValue(value);
 }
 
+/** What the app's drain does with each queued post (ShareComposerSheet):
+ *  post it, link it to its session, and pass the post's id back. */
+async function drainPost(
+  payload: Record<string, unknown>,
+  source?: ShareSource
+): Promise<string> {
+  const activityId = await postActivity(payload as unknown as ActivityPost);
+  if (source) await recordSharedActivity(UID, source, activityId);
+  return activityId;
+}
+
 beforeEach(() => {
   resetFirestore();
   localStorage.clear();
@@ -124,7 +148,7 @@ describe("posting a session", () => {
 
   it("without a decision, opens the sheet and posts what the user picks", async () => {
     const pending = workoutShare().post();
-    resolveCompose({ visibility: "public", caption: "Felt good" }, false);
+    resolveCompose({ visibility: "public", caption: "Felt good" });
     const outcome = await pending;
     expect(outcome).toMatchObject({ status: "posted", visibility: "public" });
     expect(postActivity).toHaveBeenCalledWith(
@@ -134,7 +158,7 @@ describe("posting a session", () => {
 
   it("declining in the sheet posts nothing", async () => {
     const pending = workoutShare().post();
-    resolveCompose(null, false);
+    resolveCompose(null);
     await expect(pending).resolves.toEqual({ status: "declined" });
     expect(activityPaths()).toEqual([]);
   });
@@ -208,7 +232,7 @@ describe("Undo", () => {
     const share = workoutShare();
     const outcome = await share.post({ visibility: "followers", caption: "" });
     if (outcome.status !== "posted") throw new Error("expected a post");
-    await withdrawSessionPost(share, outcome);
+    await expect(withdrawSessionPost(share, outcome)).resolves.toBe("removed");
     expect(activityPaths()).toEqual([]);
     expect(
       readDoc(`users/${UID}/workouts/${workoutId}`)?.sharedActivityId
@@ -224,9 +248,61 @@ describe("Undo", () => {
     const share = workoutShare();
     const outcome = await share.post({ visibility: "followers", caption: "" });
     if (outcome.status !== "queued") throw new Error("expected a queue");
-    await withdrawSessionPost(share, outcome);
+    await expect(withdrawSessionPost(share, outcome)).resolves.toBe(
+      "cancelled"
+    );
     expect(getQueueLength(UID)).toBe(0);
     expect(liveSessionPost(share)).toBeUndefined();
+  });
+
+  it("a queued post already on its way is taken back once it lands, not reported cancelled", async () => {
+    setOnline(false);
+    const share = workoutShare();
+    const outcome = await share.post({ visibility: "followers", caption: "" });
+    if (outcome.status !== "queued") throw new Error("expected a queue");
+    // Back online: the drain sends the post, and the user taps Undo while
+    // the request is still on its way.
+    setOnline(true);
+    deferWrites();
+    const draining = drainQueue(UID, drainPost);
+    await vi.waitFor(() => expect(pendingWrites()).toHaveLength(1));
+    resumeWrites();
+    let settled = false;
+    const undo = withdrawSessionPost(share, outcome).then((result) => {
+      settled = true;
+      return result;
+    });
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    // It cannot be finished before the post it has to take back exists.
+    expect(settled).toBe(false);
+
+    expect(releaseWrite()).toBe(true);
+    await draining;
+    await expect(undo).resolves.toBe("removed");
+    expect(activityPaths()).toEqual([]);
+    expect(
+      readDoc(`users/${UID}/workouts/${workoutId}`)?.sharedActivityId
+    ).toBeNull();
+  });
+
+  it("takes back a post the drain sent by the id the drain passed back, even when its link was lost", async () => {
+    setOnline(false);
+    const share = workoutShare();
+    const outcome = await share.post({ visibility: "followers", caption: "" });
+    if (outcome.status !== "queued") throw new Error("expected a queue");
+    setOnline(true);
+    // The post lands; writing its link onto the session does not.
+    failNextFirestore("updateDoc", {
+      path: `users/${UID}/workouts/${workoutId}`,
+      code: "unavailable",
+    });
+    await drainQueue(UID, drainPost);
+    expect(unfiredFailures()).toEqual([]);
+    expect(activityPaths()).toHaveLength(1);
+
+    const result = await withdrawSessionPost(share, outcome);
+    expect(activityPaths()).toEqual([]);
+    expect(result).toBe("removed");
   });
 
   it("finds a queued post that drained while the screen was open, by the session's link", async () => {
@@ -262,6 +338,28 @@ describe("Undo", () => {
     releaseAllWrites();
     await Promise.resolve();
     expect(activityPaths()).toEqual([]);
+  });
+});
+
+describe("a workout shared before its save lands", () => {
+  it("links the post to the workout once the save lands", async () => {
+    // Finished offline: the workout waits in the save queue. The
+    // connection is back when the finish screen posts it, before the queue
+    // has landed the workout, so the session document does not exist yet.
+    const id = `w-queued-${++sessionN}`;
+    setOnline(false);
+    void queueWorkoutCompletion(db, UID, id, { date: "x", exercises: [] });
+    setOnline(true);
+    const share = workoutShare(id);
+    const outcome = await share.post({ visibility: "followers", caption: "" });
+    if (outcome.status !== "posted") throw new Error("expected a post");
+
+    await flushQueue(db, UID);
+    // The link is what lets deleting the workout delete its post, and what
+    // `/workout/:id` reads to show the workout as shared.
+    expect(readDoc(`users/${UID}/workouts/${id}`)).toMatchObject({
+      sharedActivityId: outcome.activityId,
+    });
   });
 });
 

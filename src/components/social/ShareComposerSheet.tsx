@@ -20,6 +20,7 @@ import {
   type ShareVisibility,
   type ActivityPreview,
 } from "@/lib/shareComposer";
+import type { ShareDefault } from "@/lib/shareDefaults";
 
 const TITLE: Record<ShareType, string> = {
   workout: "Share this workout?",
@@ -53,12 +54,13 @@ export default function ShareComposerSheet() {
     open: false as boolean,
     type: null as ShareType | null,
     preview: null as ActivityPreview | null,
+    uid: null as string | null,
   });
   const [caption, setCaption] = useState("");
   const [remember, setRemember] = useState(false);
   const { isOnline } = useOnlineStatus();
   const uid = useUid();
-  const { user } = useAuth();
+  const { user, updateShareDefaults } = useAuth();
   const gate = useEmailVerificationGate(user);
 
   // Subscribe to singleton state changes.
@@ -95,6 +97,9 @@ export default function ShareComposerSheet() {
           if (source) {
             await recordSharedActivity(uid, source, activityId);
           }
+          // Passed back so an Undo can delete this post by its id, without
+          // depending on the link above having been written.
+          return activityId;
         });
         if (cancelled) return;
       } catch {
@@ -116,6 +121,12 @@ export default function ShareComposerSheet() {
   // the user a confusing "my post became invisible" surprise.
   const captionIsProfane = containsProfanity(caption);
 
+  /* "Make this my default": saved on the account, for this type only, and
+     only while the account that opened the sheet is the one signed in. */
+  const rememberAs = (answer: ShareDefault) => {
+    if (!remember || !state.type || !state.uid || state.uid !== uid) return;
+    void updateShareDefaults({ [state.type]: answer });
+  };
   const choose = (visibility: ShareVisibility) => {
     // The buttons are disabled while gated; this keeps a stale click or a
     // keyboard activation from resolving a post the rules will refuse.
@@ -125,18 +136,20 @@ export default function ShareComposerSheet() {
       return;
     }
     haptic("light");
-    resolveCompose({ visibility, caption: caption.trim() }, remember);
+    rememberAs(visibility);
+    resolveCompose({ visibility, caption: caption.trim() });
   };
   const skip = () => {
     haptic("light");
-    resolveCompose(null, remember);
+    rememberAs("never");
+    resolveCompose(null);
   };
   const dismiss = (open: boolean) => {
     if (!open && state.open) {
       // Closing is not an explicit decision about future sessions, even
       // if the user ticked remember before changing their mind.
       haptic("light");
-      resolveCompose(null, false);
+      resolveCompose(null);
     }
   };
 

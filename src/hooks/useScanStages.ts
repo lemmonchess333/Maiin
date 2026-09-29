@@ -27,9 +27,16 @@ export function useScanStages(
   stages: readonly string[]
 ): string {
   const [index, setIndex] = useState(0);
+  /* A new analysis (or a new set of lines) starts from the first line.
+     Reset during render when either input changes, so the first frame of
+     a new scan never shows where the previous one stopped. */
+  const [runFor, setRunFor] = useState({ active, stages });
+  if (runFor.active !== active || runFor.stages !== stages) {
+    setRunFor({ active, stages });
+    if (active) setIndex(0);
+  }
   useEffect(() => {
     if (!active) return;
-    setIndex(0);
     const id = setInterval(
       () => setIndex((i) => Math.min(i + 1, stages.length - 1)),
       SCAN_STAGE_MS

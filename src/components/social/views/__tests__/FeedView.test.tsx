@@ -96,13 +96,15 @@ function trajectory(thisWeekScore: number, lastWeekScore = 230) {
   };
 }
 
-function setup(overrides: Partial<React.ComponentProps<typeof FeedView>> = {}) {
+type FeedViewProps = Partial<React.ComponentProps<typeof FeedView>>;
+
+function setup(overrides: FeedViewProps = {}) {
   const selectFeedSubTab = vi.fn();
   const openTogether = vi.fn();
   const refreshRef = {
     current: null,
   } as MutableRefObject<(() => Promise<void>) | null>;
-  render(
+  const element = (more: FeedViewProps = {}) => (
     <MemoryRouter>
       <FeedView
         active
@@ -120,10 +122,14 @@ function setup(overrides: Partial<React.ComponentProps<typeof FeedView>> = {}) {
         refreshRef={refreshRef}
         onOverlayChange={vi.fn()}
         {...overrides}
+        {...more}
       />
     </MemoryRouter>
   );
-  return { selectFeedSubTab, openTogether };
+  const view = render(element());
+  /** Re-render with the same props plus `more`. */
+  const rerender = (more: FeedViewProps) => view.rerender(element(more));
+  return { selectFeedSubTab, openTogether, rerender };
 }
 
 describe("FeedView — compact source menu", () => {
@@ -210,6 +216,27 @@ describe("FeedView — honest Your-week slot (SOC-P1c)", () => {
   it("leaderboard-tier users (>=2 follows) never fetch trajectory", () => {
     setup({ feedSubTab: "following", followingCount: 3 });
     expect(mockGetPersonalTrajectory).not.toHaveBeenCalled();
+  });
+
+  it("a returning slot reads as loading until its new read lands — never as the last read", async () => {
+    /* The slot re-reads every time it turns back on. Until that read
+       lands, the previous answer must not decide the slot: here it said
+       "open week", and the opener would come straight back on data the
+       new read has not confirmed. */
+    mockGetPersonalTrajectory
+      .mockResolvedValueOnce(trajectory(0))
+      .mockReturnValueOnce(new Promise(() => {}));
+    const { rerender } = setup(thinGraph);
+    // POSITIVE anchor: the first read settled an open week.
+    expect(
+      await screen.findByText(/pts to beat from last week/i)
+    ).toBeInTheDocument();
+
+    rerender({ active: false });
+    rerender({ active: true });
+
+    expect(mockGetPersonalTrajectory).toHaveBeenCalledTimes(2);
+    expect(screen.queryByText(/pts to beat from last week/i)).toBeNull();
   });
 });
 

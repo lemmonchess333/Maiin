@@ -40,7 +40,6 @@ const SRC = resolve(ROOT, "src");
  */
 const NAMED = [
   "Performance Index",
-  "Progress Vault",
   "Weekly Review",
   "Tropos Team",
   "Together",

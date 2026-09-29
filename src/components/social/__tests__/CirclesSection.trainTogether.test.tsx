@@ -21,7 +21,7 @@ import {
   waitFor,
   within,
 } from "@testing-library/react";
-import { MemoryRouter, useLocation } from "react-router-dom";
+import { Link, MemoryRouter, useLocation } from "react-router-dom";
 import type { CircleSummary } from "@/features/goalSpace/useGoalSpaces";
 
 /* Keep the REAL router (MemoryRouter + useSearchParams drive the
@@ -307,6 +307,32 @@ describe("Train together hand-off (PROGRAM-CIRCLE-01)", () => {
     expect(
       await screen.findByText("You already have a matching circle.")
     ).toBeInTheDocument();
+  });
+
+  it("a hand-off that arrives while the section is already mounted still opens the prefilled sheet", async () => {
+    /* Every case above MOUNTS on the hand-off URL. This one navigates to
+       it with the section already on screen, which is the path the
+       mount-time read cannot see. (Link navigates through the router's
+       own navigate; only the exported useNavigate is mocked here.) */
+    mockUseGoalSpaces.mockReturnValue(hookValue());
+    render(
+      <MemoryRouter initialEntries={["/social"]}>
+        <CirclesSection uid="me" />
+        <LocationProbe />
+        <Link to="/social?circleCreate=race&circleTitle=Marathon%20training">
+          Train together
+        </Link>
+      </MemoryRouter>
+    );
+    expect(screen.queryByLabelText(/circle name/i)).toBeNull();
+
+    fireEvent.click(screen.getByRole("link", { name: "Train together" }));
+
+    const input = (await screen.findByLabelText(
+      /circle name/i
+    )) as HTMLInputElement;
+    expect(input.value).toBe("Marathon training");
+    await expectParamsStripped();
   });
 
   it("failed list read → prefilled create sheet, never the chooser", async () => {

@@ -84,6 +84,35 @@ function sourceFromParam(from: string | null): PaywallSource {
   return "upgrade_page";
 }
 
+type CheckoutBanner = {
+  kind: "success" | "cancelled" | "error";
+  message: string;
+};
+
+/** `?checkout=` → the round-trip banner. Null for anything unrecognised. */
+function checkoutBanner(status: string | null): CheckoutBanner | null {
+  if (status === "success") {
+    return {
+      kind: "success",
+      message:
+        "Payment received. Your Pro access is being activated — this usually takes a few seconds.",
+    };
+  }
+  if (status === "cancelled") {
+    return {
+      kind: "cancelled",
+      message: "Checkout cancelled. No payment was taken.",
+    };
+  }
+  if (status === "error") {
+    return {
+      kind: "error",
+      message: "Something went wrong with checkout. Try again.",
+    };
+  }
+  return null;
+}
+
 export default function Upgrade() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -227,33 +256,20 @@ export default function Upgrade() {
     setManageLoading(false);
   };
 
-  // Visible status banner for checkout round-trip. Persists for the
-  // duration of this render — the effect above strips the URL param
-  // on next paint, but we capture the status here so the banner
-  // renders this paint.
-  const [statusBanner, setStatusBanner] = useState<{
-    kind: "success" | "cancelled" | "error";
-    message: string;
-  } | null>(null);
-  useEffect(() => {
-    if (checkoutStatus === "success") {
-      setStatusBanner({
-        kind: "success",
-        message:
-          "Payment received. Your Pro access is being activated — this usually takes a few seconds.",
-      });
-    } else if (checkoutStatus === "cancelled") {
-      setStatusBanner({
-        kind: "cancelled",
-        message: "Checkout cancelled. No payment was taken.",
-      });
-    } else if (checkoutStatus === "error") {
-      setStatusBanner({
-        kind: "error",
-        message: "Something went wrong with checkout. Try again.",
-      });
-    }
-  }, [checkoutStatus]);
+  // Visible status banner for checkout round-trip. The effect above
+  // strips the URL param after the first render, so the banner is
+  // captured in state: it takes the status on the first render and on
+  // every change to a recognised one (adjusted during render), and it
+  // outlives the param being stripped.
+  const [statusBanner, setStatusBanner] = useState(() =>
+    checkoutBanner(checkoutStatus)
+  );
+  const [bannerStatus, setBannerStatus] = useState(checkoutStatus);
+  if (bannerStatus !== checkoutStatus) {
+    setBannerStatus(checkoutStatus);
+    const banner = checkoutBanner(checkoutStatus);
+    if (banner) setStatusBanner(banner);
+  }
 
   const canBuy = (!isPro || isInTrial) && !crossPlatformPro;
   const leaveLabel = fromOnboarding ? "Continue with Free" : "Not now";
@@ -513,21 +529,11 @@ export default function Upgrade() {
           )}
 
           <div className="space-y-2">
-            <button
-              type="button"
-              onClick={handleContinue}
-              className={cn(
-                "w-full min-h-[52px] rounded-2xl text-white font-bold text-base",
-                "flex items-center justify-center gap-2",
-                "active:scale-[0.98] transition-transform duration-150",
-                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-              )}
-              style={{
-                background: `linear-gradient(135deg, ${THEME.brand}, ${THEME.teal})`,
-              }}
-            >
+            {/* The app's primary button: it was a purple-to-teal gradient,
+                the one decorative gradient left on a button. */}
+            <Button size="lg" fullWidth onClick={handleContinue}>
               Continue
-            </button>
+            </Button>
             <Button
               variant="ghost"
               fullWidth
@@ -587,20 +593,11 @@ export default function Upgrade() {
           {withTrial ? <TrialTimeline /> : null}
 
           {/* Direct purchase CTA — never opens another modal. */}
-          <button
-            type="button"
+          <Button
+            size="lg"
+            fullWidth
             onClick={handleCheckout}
             disabled={loading}
-            className={cn(
-              "w-full min-h-[52px] rounded-2xl text-white font-bold text-base",
-              "flex items-center justify-center gap-2",
-              "active:scale-[0.98] transition-transform duration-150",
-              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-              "disabled:opacity-60 disabled:cursor-not-allowed"
-            )}
-            style={{
-              background: `linear-gradient(135deg, ${THEME.brand}, ${THEME.teal})`,
-            }}
           >
             {loading ? (
               <>
@@ -614,7 +611,7 @@ export default function Upgrade() {
             ) : (
               <span>{getCheckoutCtaLabel(selectedPlan, withTrial)}</span>
             )}
-          </button>
+          </Button>
 
           <p className="text-xs text-muted-foreground text-center">
             {getRenewalDisclosure(selectedPlan, platform)}

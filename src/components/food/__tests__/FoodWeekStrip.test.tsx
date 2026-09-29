@@ -106,6 +106,7 @@ describe("FoodWeekStrip", () => {
       <FoodWeekStrip
         days={days({
           meals: [{ id: "a", date: "2026-09-29", totalCalories: 1500 }],
+          selectedTarget: 0,
         })}
         onSelect={() => {}}
       />

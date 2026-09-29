@@ -96,12 +96,12 @@ function YourWeek({
   review,
   next,
   nextLabel,
-  onOpenVault,
+  onOpenPhotos,
 }: {
   review: Review;
   next: () => void;
   nextLabel: string;
-  onOpenVault: (() => void) | null;
+  onOpenPhotos: (() => void) | null;
 }) {
   const unit = useDistanceUnit();
   const { training, nutrition, body, headline } = review;
@@ -217,16 +217,15 @@ function YourWeek({
                 </span>
               </p>
             )}
-            {/* BODY-VAULT-01 — private handoff into the Progress Vault on
-                the owner's profile. Plain navigation: carries no number,
-                photo, note or body value. */}
-            {onOpenVault && (
+            {/* Into the progress photos on Analytics' Body page. Plain
+                navigation: carries no number, photo or body value. */}
+            {onOpenPhotos && (
               <button
                 type="button"
-                onClick={onOpenVault}
+                onClick={onOpenPhotos}
                 className="mt-1 inline-flex min-h-11 items-center text-sm font-semibold text-lifting-strong"
               >
-                Progress Vault
+                Progress photos
               </button>
             )}
           </StatRow>
@@ -294,7 +293,7 @@ function BestMoment({
   next,
 }: {
   best: WeekBest;
-  /** Every new best the week fired, this one included. */
+  /** The week's new bests, one per exercise and rep range, this one included. */
   count: number;
   next: () => void;
 }) {
@@ -541,7 +540,7 @@ export default function WeeklyReview() {
               review={review}
               next={next}
               nextLabel={best ? "Your best moment" : "The week ahead"}
-              onOpenVault={user ? () => navigate(`/user/${user.uid}`) : null}
+              onOpenPhotos={user ? () => navigate("/history?view=body") : null}
             />
           ),
         },

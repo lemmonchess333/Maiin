@@ -8,6 +8,7 @@ import {
 } from "framer-motion";
 import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
 import { haptic } from "@/lib/haptic";
+import { cn } from "@/lib/utils";
 import type { CalorieRingMode } from "./CalorieRing";
 
 export type MacroColumnKey = "protein" | "carbs" | "fat";
@@ -28,7 +29,7 @@ interface MacroColumnProps {
   label: string;
   /** Saturated brand colour for this macro */
   color: string;
-  /** Display mode — "left" shows remaining, "eaten" shows consumed */
+  /** Display mode — "left" shows remaining, "eaten" shows what's logged */
   mode: CalorieRingMode;
   /** Forward-compat tap hook (no-op for phase 1) */
   onTap?: () => void;
@@ -36,6 +37,13 @@ interface MacroColumnProps {
   numberDurationSec?: number;
   /** Progress bar animation duration in seconds */
   barDurationSec?: number;
+  /**
+   * "tile" is the Food page's macro card. "compact" is the same tile at
+   * the size Home's food card draws it, on a tinted tile beside the
+   * calorie ring: a smaller icon and number, the 12px labels unchanged,
+   * and a bar track that shows on the tint.
+   */
+  size?: "tile" | "compact";
 }
 
 const RING_EASE = [0.32, 0.72, 0, 1] as [number, number, number, number];
@@ -51,7 +59,9 @@ export default function MacroColumn({
   onTap = () => {},
   numberDurationSec = 0.6,
   barDurationSec = 0.6,
+  size = "tile",
 }: MacroColumnProps) {
+  const compact = size === "compact";
   const framerReduce = useFramerReducedMotion();
   const reduce = framerReduce === true;
 
@@ -65,7 +75,7 @@ export default function MacroColumn({
   // both signals move in lockstep:
   //   LEFT mode → fill = remaining %   (drains as you log; matches the
   //                                    big number which counts down)
-  //   EATEN mode → fill = consumed %   (grows as you log; matches the
+  //   LOGGED mode → fill = consumed %  (grows as you log; matches the
   //                                    big number which counts up)
   // Over-target in LEFT mode pins to 100% (a full bar reads as
   // "maxed out + over by N" combined with the big number; an empty
@@ -82,8 +92,8 @@ export default function MacroColumn({
   // LEFT mode:
   //   under target → remaining   (e.g. "151g left")
   //   over target  → overshoot   (e.g. "5g over")
-  // EATEN mode:
-  //   either       → consumed    (e.g. "14g eaten" or "170g eaten")
+  // LOGGED mode (the stored mode key is "eaten"):
+  //   either       → consumed    (e.g. "14g logged" or "170g logged")
   const displayValue =
     isLeftMode && hasTarget
       ? isOver
@@ -94,15 +104,16 @@ export default function MacroColumn({
   // LEFT mode:
   //   under target → "left"   (e.g. "151g left")
   //   over target  → "over"   (e.g. "5g over")
-  // EATEN mode:
-  //   either       → "eaten"  (e.g. "14g eaten")
-  // Without a label in eaten mode the big number reads ambiguously
+  // LOGGED mode:
+  //   either       → "logged" (e.g. "14g logged")
+  // Without a label in this mode the big number reads ambiguously
   // (a user who didn't notice the toggle sees "85g" with no qualifier).
-  // Rendering "eaten" makes the mode self-documenting at the cost of
-  // one short word; over-target is signalled by the bar overshoot and
-  // the tertiary "X / Yg" line.
+  // Rendering "logged" makes the mode self-documenting at the cost of
+  // one short word, and says what the number counts: what is in the
+  // diary, as the calorie ring does. Over-target is signalled by the
+  // bar overshoot and the tertiary "X / Yg" line.
   const displayLabel =
-    isLeftMode && hasTarget ? (isOver ? "over" : "left") : "eaten";
+    isLeftMode && hasTarget ? (isOver ? "over" : "left") : "logged";
 
   // Food7 (audit #34 — calm the loudest screen): the macro hue now lives
   // ONLY on the icon + progress bar; the big number renders neutral
@@ -198,9 +209,9 @@ export default function MacroColumn({
          state-independent proof of the halo. Nothing in the unit suite
          covered it, so it only surfaced in the screenshot CI run. */
       aria-label={
-        `Show ${label.toLowerCase()} ${isLeftMode ? "eaten" : "remaining"}` +
+        `Show ${label.toLowerCase()} ${isLeftMode ? "logged" : "remaining"}` +
         (goalReached ? `. ${label} goal reached` : "") +
-        `. ${Math.round(consumed)}g eaten${hasTarget ? ` of ${Math.round(target)}g` : "; no target"}`
+        `. ${Math.round(consumed)}g logged${hasTarget ? ` of ${Math.round(target)}g` : "; no target"}`
       }
       className="min-w-0 flex-1 flex flex-col items-center text-center bg-transparent border-0 p-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded-lg"
     >
@@ -240,7 +251,7 @@ export default function MacroColumn({
         style={{ scale: iconScale }}
       >
         <Icon
-          className="relative size-6"
+          className={cn("relative", compact ? "size-5" : "size-6")}
           style={{ color }}
           strokeWidth={2}
           aria-hidden="true"
@@ -260,13 +271,25 @@ export default function MacroColumn({
          to fix a problem caused by its neighbour is the wrong lever.
          whitespace-nowrap keeps a three-digit value and its unit on one
          line now that the column can be narrower. */}
-      <p className="text-2xl font-extrabold font-mono tabular-nums leading-none tracking-tight mt-2 text-foreground whitespace-nowrap">
+      <p
+        className={cn(
+          "font-extrabold font-mono tabular-nums leading-none tracking-tight text-foreground whitespace-nowrap",
+          compact ? "text-xl mt-1.5" : "text-2xl mt-2"
+        )}
+      >
         <AnimatedNumber
           value={displayValue}
           duration={numberDurationSec}
           ease={RING_EASE}
         />
-        <span className="text-small font-bold text-muted-foreground">g</span>
+        <span
+          className={cn(
+            "font-bold text-muted-foreground",
+            compact ? "text-xs" : "text-small"
+          )}
+        >
+          g
+        </span>
       </p>
 
       {/* Mode-aware label sits below the big number. Always-rendered
@@ -284,16 +307,24 @@ export default function MacroColumn({
           causing a layout jump on first log.
 
           Empty means the fill, not the intake: `consumed === 0` is an
-          empty bar only in EATEN mode. In LEFT mode — the default —
-          nothing eaten is a FULL bar, and fading on intake would dim
+          empty bar only in the logged view. In LEFT mode — the default —
+          nothing logged is a FULL bar, and fading on intake would dim
           three full macro-coloured bars to 40% every morning (maroon,
           olive, dark green on the dark card), then brighten them as the
           first log drained them. */}
       <div
         data-macro-bar=""
-        className="relative w-full mt-2.5 h-1.5 rounded-full overflow-hidden transition-opacity duration-300"
+        className={cn(
+          "relative w-full h-1.5 rounded-full overflow-hidden transition-opacity duration-300",
+          compact ? "mt-2" : "mt-2.5"
+        )}
         style={{
-          background: "hsl(var(--muted))",
+          /* A compact tile sits on Home's card beside the calorie ring,
+             so its track is the ring's grey groove (CalorieRing's
+             COLOR_TRACK): one grey for "not yet" across the card. */
+          background: compact
+            ? "hsl(var(--muted-foreground) / 0.2)"
+            : "hsl(var(--muted))",
           boxShadow: "inset 0 1px 2px rgb(0 0 0 / 0.06)",
           opacity: barFillPct === 0 ? 0.4 : 1,
         }}
@@ -336,7 +367,9 @@ export default function MacroColumn({
           `X / Yg` ratio line above) so the card's colour identity is
           carried by the icon + big number + progress bar, not duplicated
           four times. The label is a caption, not a headline. */}
-      <SectionLabel className="mt-2">{label}</SectionLabel>
+      <SectionLabel className={compact ? "mt-1.5" : "mt-2"}>
+        {label}
+      </SectionLabel>
     </button>
   );
 }

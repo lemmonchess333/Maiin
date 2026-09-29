@@ -126,12 +126,14 @@ export default function RunCTACard({
           />
         </div>
       </div>
-      <div className="relative z-10 px-5 pb-5 pt-4">
+      {/* Taps pass through the action row to the preview; only Start takes
+          its own (see LiftCTACard). */}
+      <div className="pointer-events-none relative z-10 px-5 pb-5 pt-4">
         {startable ? (
           <Button
             variant="sport"
             size="lg"
-            className="w-full"
+            className="pointer-events-auto w-full"
             onClick={function () {
               haptic();
               trackHomeEvent("home_card_tapped", { card: "today_run" });

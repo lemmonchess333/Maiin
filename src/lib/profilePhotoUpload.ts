@@ -6,10 +6,9 @@
  *   1. **Single-blob policy.** We track the user's currently-active
  *      photo storage path on the public profile (`photoStoragePath`).
  *      Every new upload deletes the prior path BEFORE writing the new
- *      blob. ProgressPhotos accumulates orphans because it never
- *      deletes; profile photos must not repeat that mistake — every
- *      orphaned blob is a privacy leak (token-embedded URL stays
- *      valid forever, even after the user "changes" their photo).
+ *      blob. Every orphaned blob is a privacy leak (its token-embedded
+ *      URL stays valid forever, even after the user "changes" their
+ *      photo).
  *
  *   2. **Cache-bust on every upload.** Browsers cache by URL. The
  *      Firebase download URL contains the access token and the file's

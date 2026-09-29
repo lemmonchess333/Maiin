@@ -203,6 +203,18 @@ const PROFILE_FIELD_VALIDATORS = Object.freeze({
   enableRolloverCalories: cleanBoolean,
   // Shared-run route privacy (opt-out; default-on enforced client-side).
   hideSharedRouteEnds: cleanBoolean,
+  // Soc11: who sees a finished session, per type — the answer to "Share
+  // sessions automatically?". Only the two session types, each one of the
+  // three answers or null ("Ask": the next finish asks). An absent type
+  // stays absent. Same vocabulary as firestore.rules' shareDefaultsValid()
+  // and `ShareDefaults` in src/lib/shareDefaults.ts. A whole-field null
+  // (no answer for either type) is kept, as the rules allow it.
+  shareDefaults: (v) => {
+    if (v === null) return null;
+    const cleanAnswer = (d) =>
+      d === null ? null : cleanEnum(d, ["followers", "public", "never"]);
+    return cleanObject(v, { run: cleanAnswer, workout: cleanAnswer });
+  },
 
   // Streak summary
   currentStreak: (v) => cleanNumber(v, { min: 0, max: 100000, integer: true }),

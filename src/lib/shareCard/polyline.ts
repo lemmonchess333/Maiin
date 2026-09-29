@@ -126,10 +126,10 @@ export function simplifyRoute(
  * collapsing to nothing — the caller's privacy toggle can still choose
  * not to clip, but we never produce an empty path from a real run.
  */
-export function clipRouteEnds(
-  points: GPSPoint[],
+export function clipRouteEnds<T extends Pick<GPSPoint, "lat" | "lon">>(
+  points: T[],
   trimMeters: number = DEFAULT_CLIP_METERS
-): GPSPoint[] {
+): T[] {
   if (points.length < 3 || trimMeters <= 0) return points.slice();
 
   // Proportional cap: never let the trim consume more than 10% of the

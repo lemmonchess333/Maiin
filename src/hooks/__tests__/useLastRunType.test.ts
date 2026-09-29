@@ -163,3 +163,45 @@ describe("useLastRunType", () => {
     await waitFor(() => expect(result.current).toBeNull());
   });
 });
+
+/* The offer is a claim about ONE account's history, so it must not outlive
+   the account on a mount that stays up across a sign-out or a switch. Each
+   case anchors on the first account's offer actually landing before it
+   asserts the absence, so neither can pass from the initial null. */
+describe("useLastRunType — account ownership", () => {
+  it("withdraws the offer on sign-out", async () => {
+    seedFirestore({
+      "users/u1/runs/r2": run(200, "tempo"),
+      "users/u1/runs/r1": run(100, "tempo"),
+    });
+    const { result, rerender } = renderHook(() => useLastRunType());
+    await waitFor(() => expect(result.current).toBe("tempo"));
+
+    mockUser = null;
+    rerender();
+    expect(result.current).toBeNull();
+  });
+
+  it("never offers account A's habit to account B while B's read is in flight", async () => {
+    seedFirestore({
+      "users/u1/runs/r2": run(200, "tempo"),
+      "users/u1/runs/r1": run(100, "tempo"),
+      "users/u2/runs/r2": run(200, "long"),
+      "users/u2/runs/r1": run(100, "long"),
+    });
+    const { result, rerender } = renderHook(() => useLastRunType());
+    await waitFor(() => expect(result.current).toBe("tempo"));
+
+    deferReads();
+    mockUser = { uid: "u2" };
+    rerender();
+    await waitFor(() => expect(pendingReads()).toEqual(["users/u2/runs"]));
+    // B's read has not landed: nothing is offered, least of all A's tempo.
+    expect(result.current).toBeNull();
+
+    await act(async () => {
+      expect(releaseRead()).toBe(true);
+    });
+    expect(result.current).toBe("long");
+  });
+});

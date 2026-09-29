@@ -63,6 +63,20 @@ describe("History nutrition targets", () => {
   });
 });
 
+describe("How the days went", () => {
+  it("takes protein per kg from finished days, as the card's heading says", () => {
+    /* The card says "Before today", and every other row counts finished
+       days (`foodDaysReading`). `nutrition.avgProtein` is the range's
+       average with today in it, so the row moved through the day. */
+    const proteinPerKg = history.slice(
+      history.indexOf("const proteinPerKg ="),
+      history.indexOf("const foodDaysSettled")
+    );
+    expect(proteinPerKg).not.toMatch(/nutrition\.avgProtein/);
+    expect(proteinPerKg).toMatch(/foodDays\.averageProtein/);
+  });
+});
+
 describe("nothing writes the frozen snapshot any more", () => {
   it("Onboarding no longer persists macroTargets", () => {
     // Its only writer. Left in place it would keep minting the stale field

@@ -1,7 +1,12 @@
 import { describe, it, expect } from "vitest";
 import { render, screen, within } from "@testing-library/react";
 import WeightRateCard from "../WeightRateCard";
-import { addLocalDays, localDateString } from "@/lib/dateHelpers";
+import {
+  addLocalDays,
+  localDateString,
+  parseLocalDate,
+} from "@/lib/dateHelpers";
+import { formatDayMonth } from "@/utils/formatters";
 
 /**
  * The Body page's rate (DS3): kilograms a week now, against the user's
@@ -74,6 +79,52 @@ describe("the rate", () => {
     // −0.35 kg a week is −0.77 lb.
     expect(screen.getByText("−0.77")).toBeInTheDocument();
     expect(screen.getByText("lbs a week, last 4 weeks")).toBeInTheDocument();
+  });
+
+  describe("after a gap in weighing", () => {
+    /* The rate runs from the latest weigh-in four or more weeks back, so
+       after a gap it can reach back months. Daily weigh-ins until ten
+       weeks ago and one today give a rate over those ten weeks, which the
+       card called "last 4 weeks", with "Holding steady for now." under
+       it. */
+    const lastBeforeGap = day(70);
+    const gapped = [
+      ...Array.from({ length: 31 }, (_, i) => ({
+        date: day(100 - i),
+        actual: 80,
+        trend: 80,
+      })),
+      { date: day(0), actual: 79.8, trend: 79.8 },
+    ];
+
+    it("names the span the rate is taken over", () => {
+      renderCard({ points: gapped, targetKgPerWeek: -0.4 });
+      expect(screen.getByText("−0.02")).toBeInTheDocument();
+      expect(
+        screen.getByText(
+          `kg a week, since ${formatDayMonth(parseLocalDate(lastBeforeGap))}`
+        )
+      ).toBeInTheDocument();
+      expect(screen.queryByText(/last 4 weeks/)).toBeNull();
+    });
+
+    it("does not say the weight is holding steady now", () => {
+      // The rate covers the ten weeks, not the present.
+      renderCard({ points: gapped, targetKgPerWeek: -0.4 });
+      expect(screen.getByText("Holding steady.")).toBeInTheDocument();
+      expect(screen.queryByText(/for now/)).toBeNull();
+    });
+
+    it("still says last 4 weeks for someone who weighs in every ten days", () => {
+      // The latest weigh-in on or before four weeks ago is 30 days back.
+      const everyTen = [90, 80, 70, 60, 50, 40, 30, 20, 10, 0].map((n) => ({
+        date: day(n),
+        actual: 86 - (90 - n) * 0.05,
+        trend: 86 - (90 - n) * 0.05,
+      }));
+      renderCard({ points: everyTen });
+      expect(screen.getByText("kg a week, last 4 weeks")).toBeInTheDocument();
+    });
   });
 
   it("has no rate before a month of weigh-ins, but keeps the averages", () => {

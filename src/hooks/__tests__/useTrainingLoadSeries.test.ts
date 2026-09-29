@@ -20,7 +20,7 @@
  * state instead of crashing the page — also pinned here.
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { renderHook, waitFor } from "@testing-library/react";
+import { renderHook, waitFor, act } from "@testing-library/react";
 
 vi.mock("firebase/firestore");
 vi.mock("@/lib/firebase", () => ({ db: {}, functions: {} }));
@@ -39,6 +39,9 @@ import {
   seedFirestore,
   resetFirestore,
   failNextFirestore,
+  deferReads,
+  pendingReads,
+  releaseAllReads,
 } from "@/test/firestoreHarness";
 import { Timestamp } from "firebase/firestore";
 
@@ -175,5 +178,55 @@ describe("useTrainingLoadSeries", () => {
     const { result } = renderHook(() => useTrainingLoadSeries(30));
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(result.current.points).toEqual([]);
+  });
+});
+
+/* The curve is one account's training. A mount that stays up across a
+   sign-out or an account switch must drop it in the render where the uid
+   changes — not after an effect, and not once the next account's reads
+   land. Each case first waits for the first account's curve to carry real
+   load, so the absence it then asserts cannot be the initial empty state. */
+describe("useTrainingLoadSeries — account ownership", () => {
+  it("drops the series on sign-out", async () => {
+    seedFirestore({ "users/u1/runs/r1": run(2) });
+    const { result, rerender } = renderHook(() => useTrainingLoadSeries(30));
+    await waitFor(() =>
+      expect(result.current.points.at(-1)?.fatigue ?? 0).toBeGreaterThan(0)
+    );
+
+    mockUser = null;
+    rerender();
+    expect(result.current.points).toEqual([]);
+    expect(result.current.loading).toBe(false);
+  });
+
+  it("never returns account A's series to account B while B's reads are in flight", async () => {
+    seedFirestore({
+      "users/u1/runs/r1": run(2),
+      "users/u2/workouts/w1": workout(1),
+    });
+    const { result, rerender } = renderHook(() => useTrainingLoadSeries(30));
+    await waitFor(() =>
+      expect(result.current.points.at(-1)?.fatigue ?? 0).toBeGreaterThan(0)
+    );
+
+    deferReads();
+    mockUser = { uid: "u2" };
+    rerender();
+    await waitFor(() =>
+      expect([...pendingReads()].sort()).toEqual([
+        "users/u2/runs",
+        "users/u2/workouts",
+      ])
+    );
+    expect(result.current.points).toEqual([]);
+    expect(result.current.loading).toBe(true);
+
+    await act(async () => {
+      releaseAllReads();
+    });
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.points).toHaveLength(30);
+    expect(result.current.points.at(-1)?.fatigue ?? 0).toBeGreaterThan(0);
   });
 });

@@ -132,4 +132,30 @@ describe("weekly challenge membership", () => {
     await screen.findByRole("button", { name: "Join weekly challenge" });
     expect(readDoc(PATH)).toBeUndefined();
   });
+
+  it("reads an existing membership on mount: the card offers Leave, not Join", async () => {
+    /* Every case above starts unjoined, which is also what an unread
+       progress map looks like — so none of them shows the mount-time
+       progress read landing. This one does. */
+    seedFirestore({
+      [PATH]: {
+        currentValue: 1,
+        tierAchieved: null,
+        joinedAt: Timestamp.fromDate(new Date("2026-09-08T09:00:00Z")),
+        displayName: "Test member",
+      },
+    });
+    render(
+      <MemoryRouter>
+        <ChallengeList />
+      </MemoryRouter>
+    );
+    await flushSnapshots();
+    expect(
+      await screen.findByRole("button", { name: "Leave weekly challenge" })
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Join weekly challenge" })
+    ).toBeNull();
+  });
 });

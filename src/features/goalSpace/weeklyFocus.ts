@@ -18,7 +18,7 @@ export const WEEKLY_FOCUS_LABELS: Record<WeeklyFocus, string> = {
   strength: "Lift with intention",
   running: "Follow my run plan",
   nutrition: "Keep food logging steady",
-  progress: "Make one private progress check-in",
+  progress: "Take one set of private progress photos",
   recovery: "Protect recovery",
   balanced: "Keep the week balanced",
 };

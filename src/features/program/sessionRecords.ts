@@ -1,6 +1,7 @@
 import { validateSet } from "@/lib/setValidation";
 import {
   checkSetPR,
+  exerciseBest,
   getRepBucket,
   recordSetBest,
   nextVolumeBest,
@@ -47,6 +48,7 @@ export function sessionRecords(
         results.set(`${ex.name}:${result.bucket}`, {
           ...result,
           setKey: `${exIdx}:${setIdx}`,
+          bestBeforeSession: exerciseBest(baseline, ex.name),
         });
       map = recordSetBest(map, ex.name, {
         weight: set.weight,

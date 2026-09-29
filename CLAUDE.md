@@ -358,7 +358,7 @@ already made for this repo.
 
 ## CI/CD
 
-- **deploy-production.yml ("Deploy production") is the one entry point for the web and backend deploys.** It runs on every push to `main` and on a manual `workflow_dispatch`, one release at a time (the `production-release` concurrency group queues a new release behind the running one rather than cancelling it). The five workflows below are `workflow_call` only, so none of them can be run on its own — to redeploy anything, re-run Deploy production. Its `changes` job diffs against the last SUCCESSFUL release, not the previous push, and runs the backend chain only when something under `functions/`, `firestore.rules`, `firestore.indexes.json`, `storage.rules`, `firebase.json`, `scripts/verify-*` or `.github/workflows/deploy*` changed; a manual dispatch always runs it. Order: Firestore → Storage → Functions, then Hosting and Pages once all three succeed (or straight away when the backend was skipped).
+- **deploy-production.yml ("Deploy production") is the one entry point for the web and backend deploys.** It runs on every push to `main` and on a manual `workflow_dispatch`, one release at a time (the `production-release` concurrency group queues a new release behind the running one rather than cancelling it). The five workflows below are `workflow_call` only, so none of them can be run on its own — to redeploy anything, re-run Deploy production. Its `changes` job diffs against the last SUCCESSFUL release, not the previous push, and runs the backend chain only when something under `functions/`, `firestore.rules`, `firestore.indexes.json`, `storage.rules`, `firebase.json`, `scripts/verify-*`, `scripts/verify_*` or `.github/workflows/deploy*` changed; a manual dispatch always runs it. Order: Firestore → Storage → Functions, then Hosting and Pages once all three succeed (or straight away when the backend was skipped).
 - **deploy-firestore.yml:** Firestore rules (read back after deploying), then indexes.
 - **deploy-storage.yml:** Storage rules, gated behind the `STORAGE_XSERVICE_APPROVED` repo variable (set since 2026-09-15). Before releasing rules that read Firestore it confirms the Storage service agent holds the role they need (`scripts/verify_storage_rules_iam.py`), and fails the release if the role is missing or unreadable — firebase-tools grants it only interactively, never from CI. The packet-11 QA row has the one-time grant.
 - **deploy-functions.yml:** Cloud Functions — injects the per-commit bundle marker, runs `firebase deploy --only functions --force` (so a removed export is deleted, not refused), then reads the deployed source back (`scripts/verify-deployed-functions-source.py`). A failure files or updates one rolling "deploy-functions failing on main" issue.
@@ -635,9 +635,9 @@ held to it, so it is now the APP-WIDE standard, not an insights-file local:
 ### Visual Identity
 
 - **Aesthetic:** Dark is the DEFAULT theme — a deep, cool neutral: page #0E0E11, cards #17171B, raised #212127, text #F4F4F6 (DS3, 2026-09-27; it was #121214 / #1A1A1F under DS2). It is what new users and the signed-out/Login state see. There is no ambient glow: DS3 retired the brand-purple wash that sat at the top of every signed-in page (`AmbientGlow`), so colour belongs to content.
-- **DS3 redesign (owner-approved 2026-09-27, lock row DS3 in the plan file):** one colour per job, one big thing per screen, drawings where they help. It ships screen by screen — foundations, Home, Train and the workout, Running, Analytics, moments and polish — and the Food page had its own pass. The owner kept Food's layout and its one timeline (Food8) on 2026-09-28, and chose two changes from the mockups: a week strip above the calorie card (`FoodWeekStrip`, Home's strip with each day a ring of calories eaten against that day's target), and the calorie ring, its number and its pill in the food orange instead of purple. Read the DS3 row before re-deciding any of it.
+- **DS3 redesign (owner-approved 2026-09-27, lock row DS3 in the plan file):** one colour per job, one big thing per screen, drawings where they help. It ships screen by screen — foundations, Home, Train and the workout, Running, Analytics, moments and polish — and the Food page had its own pass. The owner kept Food's layout and its one timeline (Food8) on 2026-09-28, and chose two changes from the mockups: a week strip above the calorie card (`FoodWeekStrip`, Home's strip with each day a ring of calories eaten against that day's target), and the calorie ring in the food orange instead of purple. On 2026-09-29 Home's food card took the Food page's own ring and macro tiles, smaller and side by side (`size="compact"` on `CalorieRing` and `MacroColumn`), with the one left/logged switch shared: the two screens draw the same object, so change it in one place. The same day the ring went quiet: its number is the text colour, "kcal left" / "kcal logged" is plain grey text under it (no tag, no swap arrow), and the arc is one solid orange on a grey groove with no gradient, track shadow or pulsing glow; Home's macros sit on the card with no box of their own. The second view says "logged", not "eaten": the number counts what is in the diary, not what the person ate. The stored mode key is still `"eaten"`. Read the DS3 row before re-deciding any of it.
 - **Light mode:** The opt-in alternate (selectable in Settings → writes `profile.darkMode = false`). It's a clean, warm, iOS-inspired look (#F2F2F7 grouped background, cards on white — minimal and calm with subtle depth, NOT a dark-glass app rendered light). Default-dark is applied pre-React in `public/init.js` (dark unless an explicit `"false"` is stored) and mirrored by the `profile.darkMode` defaults in `src/lib/auth.tsx`.
-- **Brand colour:** Purple #7B72E9 — used sparingly for accents, active tab indicators, CTAs, progress bars. Never as full backgrounds except gradient CTA buttons.
+- **Brand colour:** Purple #7B72E9 — used sparingly for accents, active tab indicators, CTAs, progress bars. Never as a full background: its only fills are the primary button and the auth logo, and no button carries a gradient (the paywall's purple-to-teal ones went in the plain-text cleanup).
 - **Sport-coding:** Lifting = purple (#7B72E9), Running = coral (#D4637A). These two colours appear in calendar dots, section headings, icon tints, and contextual cards.
 - **Logo:** Purple gradient hexagon with upward chevron cutout — the app icon and the sign-in screens. Home no longer carries the "TROPOS" wordmark: DS3 titles it with the date and "Today", and the user's initials open Settings. The mark itself signs Home, small, before the date (`BrandMark`, the app icon's geometry), so "Today" keeps the left edge the cards below it start on.
 
@@ -784,7 +784,7 @@ Constraints these primitives must keep:
 
 - **Tap feedback:** scale(0.97) on active, 150ms cubic-bezier transition
 - **Haptic:** Called on all button/card taps via haptic() utility
-- **Count-up animation:** the moments' numbers count up as they appear: Home's streak and performance score (`useCountUp`, once a session), the Food ring and macros, the workout finish screen's three figures and the weekly recap's first card (`AnimatedNumber`, which is plain text from the first paint under Reduce Motion)
+- **Count-up animation:** the moments' numbers count up as they appear: Home's streak and performance score (`useCountUp`, once a session), the Food ring and macros (on Food and on Home's food card, which draws the same ring and tiles), the workout finish screen's three figures and the weekly recap's first card (`AnimatedNumber`, which is plain text from the first paint under Reduce Motion)
 - **Water card:** Fill-from-bottom gradient animation, wave SVG, bubble particles, ripple on add
 - **Bottom sheet:** Vaul drawer for editing (exercises, weight logging)
 - **Tab navigation:** Horizontal scrolling tabs with active pill indicator
@@ -2113,6 +2113,62 @@ coach rows below are superseded — replace them with:**
 - [ ] **Communities feed source.** Feed → source sheet → "My communities": joined-space posts newest-first under space-name eyebrows; empty states are the join prompt (no spaces) or the quiet-week line (spaces joined, nothing posted) — never a blank column. Pull-to-refresh refetches this stream while active.
 - [ ] **Rules deploys landed.** Firebase Console → Firestore Rules contains `match /likes/{likeUid}`, `match /comments/{commentId}` (both read-only), and the `trainingForSpaceId` value gate on the public profile. Three rules deploys shipped today — verify the LAST one is live.
 
+### A removed post leaves every feed (`onActivityDeleted`, 2026-09-28)
+
+Affects: `functions/index.js` (`onActivityDeleted`, new, and
+`onActivityCreated`'s re-read after its fan-out),
+`functions/lib/socialFanout.js` (`removeActivityFromFeeds`),
+`firestore.indexes.json` (a collection-group index on `items.activityId`),
+`src/lib/socialApi.ts` and `src/hooks/useSocialFeed.ts`.
+
+Undo on the finish screen (Soc11) and deleting a shared session removed
+only `activities/{id}`. The copies in `feeds/{uid}/items` stayed, and since
+the activities read rule refuses a post that is gone, one such copy failed
+the whole Following page for the author and every follower. The trigger
+now deletes the copies; the client leaves out a copy whose post it cannot
+read, so the feed loads, and draws nothing for it.
+
+- [ ] **Deployed-source spot-check (do first).** `onActivityDeleted` is in
+      the Console's function list, and `onActivityCreated`'s deployed
+      source contains `removeActivityFromFeeds`.
+- [ ] **The index is built.** Firestore → Indexes → Single field:
+      `items` · `activityId`, collection group, ascending, Enabled. Until
+      it is, the trigger's query fails, it logs `onActivityDeleted.error`,
+      and the copies stay (the client still hides them).
+- [ ] **Undo on a device, with a follower.** Share a session from one
+      account and tap Undo on the finish screen. On a second account that
+      follows it, Following loads and the post is not there, and the
+      `feeds/<follower>/items/<activityId>` document is gone.
+- [ ] **Copies from before this deploy stay.** Posts undone or deleted
+      before the trigger existed left their copies. Nothing draws them,
+      and the unread badge counts one only if it is newer than the last
+      time Social was opened. Delete them by hand if they matter.
+
+### The share answer lives on the account (Soc11, 2026-09-28)
+
+Affects: `src/lib/shareDefaults.ts` (new), `src/lib/auth.tsx`
+(`updateShareDefaults`, and the move of a device's own answers),
+`SessionShareRow`, `ShareDefaultsRow`, `ShareComposerSheet`,
+`firestore.rules` (`shareDefaultsValid`), `functions/profileSanitizer.js`.
+
+The answer to "Share sessions automatically?" was kept in each device's
+local storage, so Never set on the web left a phone that had answered
+Share publicly posting publicly. It is now `shareDefaults` on
+`users/{uid}`, and a device's own answers move to the account once at
+sign-in, the more private answer winning.
+
+- [ ] **Rules first.** A build that writes `shareDefaults` needs the rules
+      that allow it. Deploy production releases rules before Hosting, but a
+      TestFlight build made from a branch before the merge sees its saves
+      refused (put back, with a toast) and keeps its answers on the device.
+- [ ] **One answer on every device.** Set Runs to Never in Settings on the
+      web, then finish a run on a phone that had the app open since before:
+      nothing is posted, and the finish screen offers its one-off share
+      button instead.
+- [ ] **A phone's old answer moves.** On a phone that answered on an older
+      build, open the app online after updating: Settings on the web shows
+      that answer, or the account's own where it was more private.
+
 ### Global hybrid challenge + hybrid_score sync (SOCIAL S4 Soc8, PR2)
 
 Affects: `functions/lib/challengeDefs.js` (new `global-monthly-*` hybrid definition), `functions/index.js` (`onWorkoutCreated` / `onRunCreated` now sync `hybrid_score`). Deploys via `deploy-functions.yml`. The daily `rolloverChallenges` cron materialises the new challenge doc; the trigger sync feeds it.
@@ -2215,10 +2271,13 @@ or how the role was granted. Every backend release repeats the check.
       service agent lacks the role, or if the deploy identity cannot read
       the project's IAM policy. Unconfirmed counts as a failure, as it
       does for the source read-back. When the policy can't be read, the
-      job summary says why and gives the fix: read access to IAM policies
-      for the deploy service account (for example
-      `roles/iam.securityReviewer`), or enabling the Cloud Resource
-      Manager API. Until the role is in place, every backend release
+      job summary says why and what to do, and names a role only when
+      Google answered 403: read access to IAM policies for the deploy
+      service account (for example `roles/iam.securityReviewer`). It gives
+      the command that enables the Cloud Resource Manager API when that is
+      off, says to re-run after a network failure or a busy or failing
+      Google API, and points at the deploy credentials when the token is
+      missing or rejected. Until the role is in place, every backend release
       stops at this step, and Hosting and Pages wait with it. To confirm
       a grant without waiting for a release, run Actions → Verify Active
       Production Rules, which runs the same check. Where it runs is
@@ -2233,7 +2292,7 @@ Rollout sequence (operator, not agent) — do these in order, ideally after pack
 
 - [ ] ~~**Grant cross-service access.** Run `firebase deploy --only storage --project adaptive-fitness-af8bb` **from a project-owner machine** and approve the Firebase prompt that lets Storage Rules read Firestore. (This first deploy is intentionally a human action — do not try to route the approval through the CI service account.)~~ Superseded by the STATUS above: CI released the rules first, so this command no longer prompts.
 - [ ] **Verify the freeze on a NON-production project first:** seed an `accountDeletionRequests/<uid>` doc with `status: "running"` (or a `deletedAccounts/<uid>` tombstone) and confirm an owner upload/delete to `progress-photos/<uid>/…` is denied, while reads still succeed and a user with no deletion record can still upload.
-- [x] **(Optional) re-enable CI auto-deploy** — set 2026-09-15, between the first attempt of run 34976838538 (deploy skipped) and its re-run (deployed). For future storage.rules changes: set the repo variable `STORAGE_XSERVICE_APPROVED=true` (GitHub → Settings → Secrets and variables → Actions → Variables). Until then the ONLY way to ship a storage-rules change is the manual `firebase deploy` above — **`workflow_dispatch` does not work as an escape hatch here**, unlike `deploy-functions.yml`. The `deploy` job's `if: vars.STORAGE_XSERVICE_APPROVED == 'true'` is evaluated for dispatch runs too, so a manual re-run skips the deploy and still reports green. (This doc line claimed the opposite until 2026-07-26; an operator following it in an incident would have believed the rules shipped when nothing had.) The `report-not-deployed` job now fails on any gated run so the skip is legible instead of silent.
+- [x] **(Optional) re-enable CI auto-deploy** — set 2026-09-15, between the first attempt of run 34976838538 (deploy skipped) and its re-run (deployed). For future storage.rules changes: set the repo variable `STORAGE_XSERVICE_APPROVED=true` (GitHub → Settings → Secrets and variables → Actions → Variables). Until then the ONLY way to ship a storage-rules change is the manual `firebase deploy` above — **re-running Deploy production (`workflow_dispatch`) does not work as an escape hatch here**, unlike for functions. The `deploy` job's `if: vars.STORAGE_XSERVICE_APPROVED == 'true'` is evaluated for dispatch runs too, so a manual re-run skips the deploy and still reports green. (This doc line claimed the opposite until 2026-07-26; an operator following it in an incident would have believed the rules shipped when nothing had.) The `report-not-deployed` job now fails on any gated run so the skip is legible instead of silent.
 - [x] Spot-check the deployed rule in the Firebase Console (Storage → Rules) contains `isDeletionWriteFrozen`. Automated: each backend release's `Verify active Storage Rules source` step matches the live ruleset to `storage.rules`, which carries it.
 
 ### App Check enforcement rollout — operator-in-loop

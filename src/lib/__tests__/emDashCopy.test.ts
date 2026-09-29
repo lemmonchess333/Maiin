@@ -40,8 +40,7 @@ import { globSync } from "tinyglobby";
  * two facts of equal weight took the middot the app already uses
  * ("Calorie deficit · lose fat, keep muscle"), and a statement followed
  * by a second statement took a full stop. A genuine parenthetical aside
- * — ProgressPhotos' paired dashes are the clearest example — was left
- * exactly as it was, because that is what the character is for.
+ * was left exactly as it was, because that is what the character is for.
  */
 const EM_DASH_COPY_BASELINE = 174;
 /** ExerciseHistory, 8, and every one of them the bare "—" placeholder

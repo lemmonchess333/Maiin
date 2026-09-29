@@ -3,7 +3,11 @@
  * Daily 1W/1M; weekly 3M; monthly 6M/1Y.
  */
 import { describe, it, expect, afterEach, vi } from "vitest";
-import { binKeyForDate, formatBinLabel } from "../chartGranularity";
+import {
+  binKeyForDate,
+  formatBinLabel,
+  formatBinMonth,
+} from "../chartGranularity";
 import { parseLocalDate } from "../dateHelpers";
 
 describe("binKeyForDate", () => {
@@ -162,12 +166,18 @@ describe("formatBinLabel", () => {
     expect(label).toBe("May");
   });
 
-  it("monthly label appends 2-digit year when not current year", () => {
-    /* A bin from 2024 should show "May 24" if current year is not 2024. */
+  it("monthly label appends the whole year when not current year", () => {
+    /* Two digits read as a day: "May 24" is the 24th of May. */
     const currentYear = new Date().getFullYear();
     const pastYear = currentYear - 2;
     const label = formatBinLabel(`${pastYear}-05-01`, "monthly");
-    expect(label).toBe(`May ${String(pastYear).slice(2)}`);
+    expect(label).toBe(`May ${pastYear}`);
+  });
+
+  it("formatBinMonth is the month alone, whatever the year", () => {
+    const pastYear = new Date().getFullYear() - 1;
+    expect(formatBinMonth(`${pastYear}-05-01`)).toBe("May");
+    expect(formatBinMonth("not-a-key")).toBe("");
   });
 });
 
@@ -188,10 +198,10 @@ describe("formatBinLabel", () => {
  * hours before it west of UTC.
  *
  * Both directions print a wrong label rather than a merely odd one. East
- * of UTC on New Year's morning, THIS January reads "Jan 27" while LAST
+ * of UTC on New Year's morning, THIS January reads "Jan 2027" while LAST
  * January reads bare "Jan" — the suppression lands on exactly the bin it
  * exists to disambiguate. West of UTC on New Year's Eve, the December
- * the user is standing in reads "Dec 26".
+ * the user is standing in reads "Dec 2026".
  *
  * The suite could not have caught this: both tests above computed their
  * expected year with `new Date().getUTCFullYear()`, the same idiom as the
@@ -212,7 +222,7 @@ describe("formatBinLabel — year boundary away from UTC", () => {
     vi.setSystemTime(new Date("2026-12-31T10:30:00Z"));
 
     expect(formatBinLabel("2027-01-01", "monthly")).toBe("Jan");
-    expect(formatBinLabel("2026-01-01", "monthly")).toBe("Jan 26");
+    expect(formatBinLabel("2026-01-01", "monthly")).toBe("Jan 2026");
   });
 
   it("west of UTC, the local old year is still the current year", () => {
@@ -222,6 +232,6 @@ describe("formatBinLabel — year boundary away from UTC", () => {
     vi.setSystemTime(new Date("2027-01-01T07:00:00Z"));
 
     expect(formatBinLabel("2026-12-01", "monthly")).toBe("Dec");
-    expect(formatBinLabel("2025-12-01", "monthly")).toBe("Dec 25");
+    expect(formatBinLabel("2025-12-01", "monthly")).toBe("Dec 2025");
   });
 });

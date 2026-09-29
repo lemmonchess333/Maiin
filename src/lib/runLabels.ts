@@ -256,6 +256,22 @@ export function elevationLabel(
 }
 
 /**
+ * Why a run with no splits has none: no route to cut, not one whole lap in
+ * the unit the laps are cut in, or a route with no split data.
+ * `splitsForDisplay` says which unit that is.
+ */
+export function noSplitsReason(
+  hasRoute: boolean,
+  distanceM: number,
+  lapUnit: DistanceUnit
+): string {
+  if (!hasRoute) return "No GPS route";
+  const lapM = lapUnit === "mi" ? METRES_PER_MILE : 1000;
+  if (distanceM < lapM) return lapUnit === "mi" ? "Under a mile" : "Under 1 km";
+  return "No splits yet";
+}
+
+/**
  * Format the raceGoal.distance enum (`'5k'` / `'10k'` / `'half'`
  * / `'marathon'`) as a presentable label for the race-prep
  * context strip + race-progress card.

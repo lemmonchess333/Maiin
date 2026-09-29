@@ -34,9 +34,9 @@ import { dirname, resolve, join } from "node:path";
  * were direct, which is the shape this exists for.
  *
  * Mocks built with `importOriginal` are exempt and stay that way: they
- * spread the real module, so they cannot be missing a symbol. That is the
- * pattern `runningSectionRange` uses, and the reason it survived a change
- * that broke its sibling.
+ * spread the real module, so they cannot be missing a symbol. That is why
+ * the failure message below offers one as the fix that cannot go short
+ * again.
  */
 
 const ROOT = process.cwd();
@@ -79,8 +79,8 @@ function mockedSymbols(src: string): string[] {
   }
   if (end === -1) return [];
   /* Comments come out BEFORE the split. These factories annotate their
-     keys — the `chartAxisLocalDrift` mock explains why Cell and Tooltip
-     are stubs right above them — and a block comment sitting in front of
+     keys — the `TrainingLoadAxis` mock explains why Line and Tooltip are
+     stubs right above them — and a block comment sitting in front of
      a key makes the segment start with `/`, so the key regex misses and
      the symbol reads as absent. That is how this guard's first run
      reported a missing `Cell` that was there all along: a checker whose

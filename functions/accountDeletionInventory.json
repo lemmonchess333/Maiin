@@ -802,7 +802,7 @@
       "strategy": "deleteStoragePrefix",
       "lockNeeded": "system-writer",
       "hasNestedSubcollections": false,
-      "storageAuditNote": "Audited src/components/social/ProgressPhotos.tsx:175,179 \u2014 only progress-photos/{uid}/{ts}.{webp,enc} uploads. No alternate paths.",
+      "storageAuditNote": "Audited src/lib/progressPhotos.ts (uploadProgressPhoto) \u2014 only progress-photos/{uid}/{uuid}.enc uploads; older photos are {ts}.{webp,enc}. No alternate paths.",
       "storageInventoryAuditNote": "Comprehensive Storage audit across src/: ZERO Food/AI/share/export/route/map storage paths exist. FoodAnalyzer sends images transiently via fetch \u2014 no Storage upload. ShareCard renders via html-to-image client-side \u2014 no upload. No GPX export storage. The two photo prefixes are the complete Storage inventory.",
       "reason": "Progress photo blobs (encrypted webp). Storage rules write-freeze via custom auth claim",
       "testCoverageKey": "smoke::storage::progressPhotos",

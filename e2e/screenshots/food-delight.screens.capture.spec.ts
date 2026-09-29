@@ -60,7 +60,7 @@ test.describe("food delight", () => {
       );
       await expect(
         page.getByRole("button", {
-          name: /toggle between calories left and calories eaten/i,
+          name: /toggle between calories left and calories logged/i,
         })
       ).toBeVisible();
       await page.evaluate(() => document.fonts.ready);

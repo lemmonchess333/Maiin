@@ -19,6 +19,12 @@
  * - held: "Don't share", or an account that must verify its email before
  *   posting publicly. The one-off share button opens the sheet;
  * - failed: the same button, with a line saying so.
+ *
+ * The answer is saved on the account (`profile.shareDefaults`), and another
+ * device can change it while this one keeps the app open. So the row reads
+ * the account's answer (`refreshProfile`) before acting on it, and shows
+ * nothing until it has. Offline there is nothing fresher to read, and it
+ * acts on the answer this device holds.
  */
 import { useEffect, useId, useState } from "react";
 import { Check, Clock, EyeOff, Globe, Users } from "lucide-react";
@@ -33,10 +39,11 @@ import { toast } from "@/lib/toast";
 import {
   answerShareQuestion,
   finishShareStart,
-  getShareDefault,
-  type ShareType,
-  type ShareVisibility,
-} from "@/lib/shareComposer";
+  savedShareDefault,
+  type ShareDefault,
+  type ShareDefaults,
+} from "@/lib/shareDefaults";
+import type { ShareType, ShareVisibility } from "@/lib/shareComposer";
 import {
   liveSessionPost,
   withdrawSessionPost,
@@ -73,12 +80,13 @@ const NOUN: Record<ShareType, string> = {
 
 function initialState(
   action: SessionShareAction,
+  saved: ShareDefaults | null | undefined,
   needsEmailVerification: boolean
 ): RowState {
   const live = liveSessionPost(action);
   if (live) return { kind: "live", outcome: live };
   const start = finishShareStart(
-    getShareDefault(action.uid, action.type),
+    savedShareDefault(saved, action.type),
     needsEmailVerification
   );
   if (start.kind === "ask") return { kind: "ask" };
@@ -105,16 +113,49 @@ function statusText(state: RowState): string {
   }
 }
 
+function isOffline(): boolean {
+  return typeof navigator !== "undefined" && navigator.onLine === false;
+}
+
 export default function SessionShareRow({
   action,
 }: {
   action: SessionShareAction;
 }) {
-  const { user } = useAuth();
+  const { refreshProfile } = useAuth();
+  // Nothing to read first when the post already exists, or offline.
+  const [checked, setChecked] = useState(
+    () => liveSessionPost(action) !== undefined || isOffline()
+  );
+  useEffect(() => {
+    if (checked) return;
+    let current = true;
+    refreshProfile()
+      .catch((err: unknown) =>
+        logger.warn("[SessionShareRow] couldn't read the saved answer:", err)
+      )
+      .finally(() => {
+        if (current) setChecked(true);
+      });
+    return () => {
+      current = false;
+    };
+  }, [checked, refreshProfile]);
+  return checked ? <ShareRow action={action} /> : null;
+}
+
+function ShareRow({ action }: { action: SessionShareAction }) {
+  const { user, profile, updateShareDefaults } = useAuth();
   const gate = useEmailVerificationGate(user);
   const headingId = useId();
+  // The signed-in account's answers. A session another account is signed
+  // in over has none here: it is held, and nothing is saved for it.
+  const mine = profile?.uid === action.uid;
+  const saved = mine ? profile.shareDefaults : undefined;
   const [state, setState] = useState<RowState>(() =>
-    initialState(action, gate.needsVerification)
+    mine || liveSessionPost(action)
+      ? initialState(action, saved, gate.needsVerification)
+      : { kind: "held" }
   );
 
   const postingVisibility = state.kind === "posting" ? state.visibility : null;
@@ -143,9 +184,10 @@ export default function SessionShareRow({
     };
   }, [action, postingVisibility]);
 
-  const answer = (value: ShareVisibility | "never") => {
+  const answer = (value: ShareDefault) => {
     haptic("light");
-    answerShareQuestion(action.uid, action.type, value);
+    // Saved on the account, and shown at once; a refused save says so.
+    void updateShareDefaults(answerShareQuestion(saved, action.type, value));
     if (value === "never") setState({ kind: "held" });
     else if (gate.needsVerification) setState({ kind: "held", note: "verify" });
     else setState({ kind: "posting", visibility: value });
@@ -157,11 +199,10 @@ export default function SessionShareRow({
     const { outcome } = state;
     setState({ kind: "live", outcome, undoing: true });
     try {
-      await withdrawSessionPost(action, outcome);
-      setState({
-        kind: "held",
-        note: outcome.status === "posted" ? "removed" : "cancelled",
-      });
+      // What was done, not what the outcome was: a post queued offline can
+      // have gone out by the time Undo is tapped, and then it was removed.
+      const note = await withdrawSessionPost(action, outcome);
+      setState({ kind: "held", note });
     } catch (err) {
       logger.warn("[SessionShareRow] undo failed:", err);
       toast.error("Couldn't remove the post. Try again.");
@@ -190,7 +231,7 @@ export default function SessionShareRow({
 
   const other: ShareType = action.type === "run" ? "workout" : "run";
   const appliesTo =
-    getShareDefault(action.uid, other) === null
+    savedShareDefault(saved, other) === null
       ? "every run and workout"
       : `every ${NOUN[action.type]}`;
 

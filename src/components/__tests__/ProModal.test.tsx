@@ -145,6 +145,14 @@ describe("ProModal — plan radiogroup", () => {
     expect(screen.getByText("Start Pro — £3.99/mo")).toBeTruthy();
   });
 
+  it("draws checkout as the app's primary button, not a gradient", () => {
+    renderModal({ onClose: () => {} });
+    const cta = screen.getByRole("button", { name: "Start Pro — £34.99/yr" });
+    // It was a purple-to-teal gradient (2026-09-29).
+    expect(cta.className).toContain("bg-primary-strong");
+    expect(cta.getAttribute("style") ?? "").not.toMatch(/gradient/);
+  });
+
   it("disclosure copy updates to reflect the billing frequency", () => {
     renderModal({ onClose: () => {} });
     expect(screen.getByText(/Renews annually/)).toBeTruthy();

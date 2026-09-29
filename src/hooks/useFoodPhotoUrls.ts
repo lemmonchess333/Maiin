@@ -15,9 +15,9 @@
  *    read. Without that, every text row would pay a failed bridge call.
  *
  *  - It does not hand back object URLs. `foodPhotoStore` returns data URLs
- *    precisely so there is no revoke lifecycle to get wrong; the one
- *    revoke precedent in this repo (`ProgressPhotos.tsx`) closes over a
- *    stale map and revokes nothing, which is the bug we are not copying.
+ *    precisely so there is no revoke lifecycle to get wrong: an object URL
+ *    lives until it is revoked, and a cleanup that closes over a stale map
+ *    revokes nothing.
  *
  * Results are memoised per uid for the session. A photo is written once
  * and never rewritten, so a cached data URL cannot go stale — only

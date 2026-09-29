@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useUid } from "@/lib/auth";
 import { getSuggestedPeople, type SuggestedPerson } from "@/lib/socialApi";
 import { logger } from "@/lib/logger";
@@ -15,7 +15,32 @@ import { logger } from "@/lib/logger";
  * Re-fetches when the user identity changes. Consumers that
  * need fresh data (e.g. after following someone and wanting them gone
  * from the list) can call the returned `refresh()`.
+ *
+ * Each list is stored with the request it answered (account, block list,
+ * joined spaces, refresh count). `loading` is true while the current
+ * request has no answer, and a list is only returned to the account it
+ * was fetched for — after a switch the tab shows nothing until the new
+ * account's list lands. A same-account refetch keeps the current list
+ * visible while it loads, and an answer to a superseded request is
+ * dropped.
  */
+interface Suggestions {
+  uid: string | null;
+  blockedUsers: Set<string> | undefined;
+  joinedSpaceIds: string[] | undefined;
+  refreshKey: number;
+  people: SuggestedPerson[];
+}
+
+const NO_PEOPLE: SuggestedPerson[] = [];
+const NO_SUGGESTIONS: Suggestions = {
+  uid: null,
+  blockedUsers: undefined,
+  joinedSpaceIds: undefined,
+  refreshKey: -1,
+  people: NO_PEOPLE,
+};
+
 export function useSuggestedPeople(
   active: boolean,
   blockedUsers?: Set<string>,
@@ -24,46 +49,61 @@ export function useSuggestedPeople(
   joinedSpaceIds?: string[]
 ) {
   const uid = useUid();
-  const [people, setPeople] = useState<SuggestedPerson[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [suggestions, setSuggestions] = useState<Suggestions>(NO_SUGGESTIONS);
   const [refreshKey, setRefreshKey] = useState(0);
 
-  const load = useCallback(async () => {
-    if (!uid) return;
-    setLoading(true);
-    try {
-      const list = await getSuggestedPeople(uid, {
-        limitCount: 10,
-        blockedUsers,
-        joinedSpaceIds,
-      });
-      setPeople(list);
-    } catch (err) {
-      logger.error("[useSuggestedPeople] fetch failed", err);
-      setPeople([]);
-    } finally {
-      setLoading(false);
-    }
-    // `blockedUsers` is a Set — reference-identity stable across renders
-    // when coming from `useBlockedUsers`, safe to depend on directly.
-    // joinedSpaceIds arrives as a memoised array from the caller.
-  }, [uid, blockedUsers, joinedSpaceIds]);
+  const ownList = uid !== null && suggestions.uid === uid;
+  const answered =
+    ownList &&
+    suggestions.blockedUsers === blockedUsers &&
+    suggestions.joinedSpaceIds === joinedSpaceIds &&
+    suggestions.refreshKey === refreshKey;
+  const people = ownList ? suggestions.people : NO_PEOPLE;
+  const loading = active && uid !== null && !answered;
 
   useEffect(() => {
     // When the hook goes inactive, drop the cached list so the UI
     // doesn't flash stale suggestions if the user reopens the tab
     // later with a different follow state.
     if (!active) {
-      return () => setPeople([]);
+      return () => setSuggestions(NO_SUGGESTIONS);
     }
+    if (!uid) return;
     let cancelled = false;
-    load().catch(() => {
-      if (cancelled) return;
-    });
+    // `blockedUsers` is a Set — reference-identity stable across renders
+    // when coming from `useBlockedUsers`, safe to depend on directly.
+    // joinedSpaceIds arrives as a memoised array from the caller.
+    getSuggestedPeople(uid, {
+      limitCount: 10,
+      blockedUsers,
+      joinedSpaceIds,
+    }).then(
+      (list) => {
+        if (cancelled) return;
+        setSuggestions({
+          uid,
+          blockedUsers,
+          joinedSpaceIds,
+          refreshKey,
+          people: list,
+        });
+      },
+      (err) => {
+        logger.error("[useSuggestedPeople] fetch failed", err);
+        if (cancelled) return;
+        setSuggestions({
+          uid,
+          blockedUsers,
+          joinedSpaceIds,
+          refreshKey,
+          people: NO_PEOPLE,
+        });
+      }
+    );
     return () => {
       cancelled = true;
     };
-  }, [active, load, refreshKey]);
+  }, [active, uid, blockedUsers, joinedSpaceIds, refreshKey]);
 
   return {
     people,
@@ -77,6 +117,9 @@ export function useSuggestedPeople(
      * sitting in the suggestion list stale until the next refresh.
      */
     remove: (uid: string) =>
-      setPeople((prev) => prev.filter((p) => p.uid !== uid)),
+      setSuggestions((prev) => ({
+        ...prev,
+        people: prev.people.filter((p) => p.uid !== uid),
+      })),
   };
 }

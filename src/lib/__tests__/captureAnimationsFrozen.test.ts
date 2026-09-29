@@ -93,7 +93,7 @@ describe("capture specs — frozen animations", () => {
  *
  * `animations: "disabled"` lands CSS colours on their end state, which is
  * what fixed the frame that lied. It cannot fix the JavaScript half:
- * `useIsDarkMode` and `MuscleHeatMap` read
+ * `useMacroPalette` and `MuscleHeatMap` read
  * `document.documentElement.classList.contains("dark")` in JS, so a
  * `page.evaluate` toggle needs a React re-render before their colours
  * change. A screenshot in the same tick catches the previous theme — and
@@ -148,7 +148,7 @@ describe("capture specs — theme toggles settle before the shot", () => {
       offenders,
       `A screenshot taken in the same tick as a theme toggle can capture ` +
         `the PREVIOUS theme wherever the colour is read in JavaScript ` +
-        `(useIsDarkMode, MuscleHeatMap) rather than in CSS. Add a settle ` +
+        `(useMacroPalette, MuscleHeatMap) rather than in CSS. Add a settle ` +
         `between them — 57 toggles in these specs already do.`
     ).toEqual([]);
   });

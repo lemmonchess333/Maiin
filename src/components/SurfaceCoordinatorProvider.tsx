@@ -190,18 +190,24 @@ export function useSurface(config: SurfaceConfig): {
   const { id, priority, eligible, suppressedBy, dropWhenMissed, onDrop } =
     config;
 
-  // Keep the latest config (onDrop/suppressedBy may close over fresh values)
-  // in a ref so re-registering on the decision-relevant deps still hands the
-  // coordinator current side-effects.
-  const latest = useRef(config);
-  latest.current = config;
-
+  // Register the config's own fields rather than the config object: the
+  // caller builds a fresh object every render, but these six are all a
+  // SurfaceConfig holds, so re-registering whenever one of them changes
+  // still hands the coordinator current values (onDrop/suppressedBy may
+  // close over fresh ones). This replaced a "latest config" ref written
+  // during render, which the effect read at registration time.
   useEffect(() => {
     if (!methods) return;
-    methods.register(latest.current);
+    methods.register({
+      id,
+      priority,
+      eligible,
+      suppressedBy,
+      dropWhenMissed,
+      onDrop,
+    });
     return () => methods.unregister(id);
     // Re-register on the values that change the decision; `methods` is stable.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [methods, id, priority, eligible, suppressedBy, dropWhenMissed, onDrop]);
 
   if (!methods) {

@@ -229,3 +229,97 @@ describe("weekNewBests — the recap's Best moment", () => {
     ).toEqual({ count: 0, best: null });
   });
 });
+
+describe("weekNewBests — one new best per exercise and rep range", () => {
+  /* The recap is a week-level claim, so a best the same week went on to
+     beat is not the week's best, and beating it twice is one new best,
+     not two. Measured against the running record, Monday's 102.5 (+2.5%
+     on 100) outranked Thursday's 105 (+2.4% on 102.5), and the card read
+     "New best Bench 102.5 kg × 5 … And 1 more new best this week" for a
+     week whose bench best was 105. The finish screen already keys its
+     bests by exercise and rep range; the recap now counts the same way. */
+  const bench = (date: string, ...weights: number[]) => ({
+    date,
+    exercises: [
+      {
+        exerciseName: "Bench",
+        sets: weights.map((weightKg) => ({ weightKg, reps: 5 })),
+      },
+    ],
+  });
+  const beforeTheWeek = { weight: 100, reps: 5, date: "2026-07-01" };
+
+  it("names the later, bigger best, against the best before the week", () => {
+    expect(
+      weekNewBests(baseline("Bench", 100, 5), [
+        bench("2026-08-10", 102.5),
+        bench("2026-08-13", 105),
+      ])
+    ).toEqual({
+      count: 1,
+      best: {
+        exerciseId: null,
+        exerciseName: "Bench",
+        weight: 105,
+        reps: 5,
+        date: "2026-08-13",
+        previous: beforeTheWeek,
+      },
+    });
+  });
+
+  it("counts one session's climbing sets as one new best, the top one", () => {
+    expect(
+      weekNewBests(baseline("Bench", 100, 5), [
+        bench("2026-08-10", 102.5, 105, 107.5),
+      ])
+    ).toEqual({
+      count: 1,
+      best: {
+        exerciseId: null,
+        exerciseName: "Bench",
+        weight: 107.5,
+        reps: 5,
+        date: "2026-08-10",
+        previous: beforeTheWeek,
+      },
+    });
+  });
+
+  it("counts a best in another rep range as another new best", () => {
+    // 115 × 3 (≈126.5) beat Monday's 105 × 5 (≈122.5), so Thursday's
+    // session fired a best of its own, in the 3-rep range.
+    const { count, best } = weekNewBests(baseline("Bench", 100, 5), [
+      bench("2026-08-10", 105),
+      {
+        date: "2026-08-13",
+        exercises: [
+          { exerciseName: "Bench", sets: [{ weightKg: 115, reps: 3 }] },
+        ],
+      },
+    ]);
+    expect(count).toBe(2);
+    expect(best).toMatchObject({
+      weight: 115,
+      reps: 3,
+      previous: beforeTheWeek,
+    });
+  });
+
+  it("still judges each set as its session did, so a set the week had beaten fires nothing", () => {
+    // 110 × 3 (≈121) clears the best from before the week (≈116.7) but
+    // not Monday's 105 × 5 (≈122.5), so Thursday's session celebrated
+    // nothing and the recap must not either.
+    expect(
+      weekNewBests(baseline("Bench", 100, 5), [
+        bench("2026-08-10", 105),
+        {
+          date: "2026-08-13",
+          exercises: [
+            { exerciseName: "Bench", sets: [{ weightKg: 110, reps: 3 }] },
+          ],
+        },
+      ])
+    ).toMatchObject({ count: 1, best: { weight: 105, reps: 5 } });
+  });
+});

@@ -44,6 +44,15 @@ import {
 import { clearStoredRun } from "@/lib/runResumeStorage";
 import { clearWorkoutDraft } from "@/hooks/useWorkoutDraft";
 import { stripUndefined } from "@/lib/firestoreGuards";
+import {
+  forgetDeviceShareDefaults,
+  readDeviceShareDefaults,
+  restoreDeviceShareDefaults,
+  shareDefaultsToMove,
+  withDeviceShareDefaults,
+  type ShareDefaults,
+} from "@/lib/shareDefaults";
+import type { ShareType } from "@/lib/shareComposer";
 import { auth } from "./firebaseApp";
 import { logger } from "./logger";
 import type { Goal } from "./types";
@@ -307,14 +316,24 @@ export interface UserProfileSocial {
    *  (`ShareDefaultsRow`, applied by the finish screen). Kept typed and
    *  registered on the same terms as the auto-post trio below. */
   defaultVisibility?: "public" | "followers" | "private";
-  /** LEGACY (share composer superseded these, #1416): the composer's saved
-   *  "Always do this" default decides auto-posting now — see
-   *  `src/lib/shareComposer.ts`. Nothing has READ these three since; the
-   *  Settings switches that wrote `autoPostRuns` / `autoPostWorkouts`
-   *  persisted a value that changed nothing and contradicted the composer
-   *  whenever the two disagreed, so they were replaced by
-   *  `ShareDefaultsRow` (which edits the preference that actually runs).
-   *  `autoPostBadges` never had a writer at all.
+  /** Who sees a finished session, per type: the answer to the finish
+   *  screen's "Share sessions automatically?", changed in Settings →
+   *  Privacy (`ShareDefaultsRow`). On the account so one answer applies on
+   *  every device. A type that is absent was never answered and `null` was
+   *  cleared ("Ask"); neither posts anything on its own. Written by
+   *  AuthProvider only (`updateShareDefaults`, and the move of a device's
+   *  own answers), one type at a time — never through `updateProfile`,
+   *  whose local merge is shallow and would drop the other type. A profile
+   *  loaded before this device's own answers have moved to the account
+   *  carries them already (`withDeviceShareDefaults`). */
+  shareDefaults?: ShareDefaults | null;
+  /** LEGACY (share composer superseded these, #1416): the saved share
+   *  default decides auto-posting now — `shareDefaults` above. Nothing has
+   *  READ these three since; the Settings switches that wrote
+   *  `autoPostRuns` / `autoPostWorkouts` persisted a value that changed
+   *  nothing and contradicted the composer whenever the two disagreed, so
+   *  they were replaced by `ShareDefaultsRow` (which edits the preference
+   *  that actually runs). `autoPostBadges` never had a writer at all.
    *
    *  Kept typed + registered on the same terms as `crewId` below: existing
    *  docs carry them, and a future registry sweep can drop the whole group
@@ -505,7 +524,7 @@ export interface PublicProfile {
    * from `photoURL` because:
    *   1. The cleanup path on next upload needs the path to call
    *      `deleteObject(storageRef)` on the prior blob — without
-   *      tracking it, orphans accumulate (the bug ProgressPhotos has).
+   *      tracking it, orphans accumulate.
    *   2. The download URL embeds a token; if we ever rotate tokens
    *      (admin-side), we keep the path as the authoritative pointer.
    * Null when the user has never uploaded a custom photo (empty, or
@@ -638,6 +657,13 @@ function hydrateProfile(
       (data.adaptiveCapState as UserProfile["adaptiveCapState"]) ?? null,
     runFitness: (data.runFitness as UserProfile["runFitness"]) ?? null,
     maxHeartRate: (data.maxHeartRate as number | undefined) ?? null,
+    // This device's answers that have not moved to the account yet apply
+    // on the same terms as the move, so waiting never makes one less
+    // private.
+    shareDefaults: withDeviceShareDefaults(
+      uid,
+      data.shareDefaults as ShareDefaults | null | undefined
+    ),
     program: {
       goal:
         ((data.program as Record<string, unknown>)
@@ -651,6 +677,50 @@ function hydrateProfile(
         "base",
     },
   } as UserProfile;
+}
+
+/** Share answers as field paths, one per type (`shareDefaults.run`), so a
+ *  write touches only the types it names. */
+function shareDefaultFields(
+  answers: ShareDefaults
+): Record<string, ShareDefaults[ShareType]> {
+  const fields: Record<string, ShareDefaults[ShareType]> = {};
+  for (const type of ["run", "workout"] as const) {
+    const answer = answers[type];
+    if (answer !== undefined) fields[`shareDefaults.${type}`] = answer;
+  }
+  return fields;
+}
+
+/**
+ * Moves this device's answers to "Share sessions automatically?" to the
+ * account, then removes them from the device, so the profile alone
+ * decides. Inside a transaction: the account's answers are read as they
+ * are now, not as this device last loaded them, so a device never replaces
+ * an answer more private than its own (`shareDefaultsToMove`). The device's
+ * answers are read inside it too, so one the user replaced while the move
+ * was under way is not moved. Online only: offline they stay on the device,
+ * applied to the profile it loads, until a later session moves them.
+ */
+async function moveDeviceShareDefaults(uid: string): Promise<void> {
+  if (Object.keys(readDeviceShareDefaults(uid)).length === 0) return;
+  if (typeof navigator !== "undefined" && navigator.onLine === false) return;
+  const { doc, runTransaction, db } = await firestore();
+  const ref = doc(db, "users", uid);
+  const moved = await runTransaction(db, async (tx) => {
+    const snap = await tx.get(ref);
+    if (!snap.exists()) return [];
+    const device = readDeviceShareDefaults(uid);
+    const answers = shareDefaultsToMove(
+      snap.data().shareDefaults as ShareDefaults | null | undefined,
+      device
+    );
+    if (Object.keys(answers).length > 0) {
+      tx.update(ref, shareDefaultFields(answers));
+    }
+    return Object.keys(device) as ShareType[];
+  });
+  forgetDeviceShareDefaults(uid, moved);
 }
 
 /* ================================
@@ -694,6 +764,16 @@ interface AuthContextType {
     data: Partial<UserProfile>,
     options?: { allowProtected?: boolean; throwOnError?: boolean }
   ) => Promise<UpdateProfileResult>;
+  /**
+   * Save answers to "Share sessions automatically?" on the account
+   * (`profile.shareDefaults`), per type, `null` clearing one. The profile
+   * shows them at once: offline the write waits for the connection, and a
+   * session finished meanwhile must not be posted on the answer being
+   * replaced. Each type is its own field path, so saving one never rewrites
+   * the other with a value this device may hold from before another device
+   * changed it. Reverts, and says so, if the write is refused.
+   */
+  updateShareDefaults: (answers: ShareDefaults) => Promise<UpdateProfileResult>;
   /**
    * Re-fetch the user's Firestore profile and update local state.
    * For mutations that go directly to Firestore (e.g. profile-photo
@@ -908,6 +988,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                   logger.warn("[AuthProvider] email reconcile failed", err)
                 );
               }
+              // Share answers this device saved before they were kept on
+              // the account. Fire-and-forget; a failed move leaves them on
+              // the device, still applied, for the next session to retry.
+              moveDeviceShareDefaults(firebaseUser.uid).catch((err) =>
+                logger.warn("[AuthProvider] share defaults move failed", err)
+              );
             }
           } else {
             setProfile(null);
@@ -1300,6 +1386,75 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [user]
   );
 
+  const updateShareDefaults = useCallback(
+    async (answers: ShareDefaults): Promise<UpdateProfileResult> => {
+      if (!user) return { ok: false, error: new Error("not-authenticated") };
+      const writeUid = user.uid;
+      if (
+        auth.currentUser?.uid !== writeUid ||
+        activeUidRef.current !== writeUid
+      ) {
+        return { ok: false, error: new Error("stale-auth-context") };
+      }
+      const fields = shareDefaultFields(answers);
+      const types = (["run", "workout"] as const).filter(
+        (type) => answers[type] !== undefined
+      );
+      if (types.length === 0) return { ok: true };
+      const before =
+        profile?.uid === writeUid ? profile.shareDefaults : undefined;
+
+      // Shown before the write settles, and synchronously with dropping
+      // this device's own answers for these types: an answer given now
+      // replaces them.
+      setProfile((prev) => {
+        if (!prev || prev.uid !== writeUid) return prev;
+        const kept =
+          prev.shareDefaults && typeof prev.shareDefaults === "object"
+            ? prev.shareDefaults
+            : {};
+        const next: ShareDefaults = { ...kept };
+        for (const type of types) next[type] = answers[type];
+        return { ...prev, shareDefaults: next };
+      });
+      const replaced = forgetDeviceShareDefaults(writeUid, types);
+
+      try {
+        const { doc, updateDocGuarded, db } = await firestore();
+        await updateDocGuarded(doc(db, "users", writeUid), fields);
+        return { ok: true };
+      } catch (err) {
+        restoreDeviceShareDefaults(writeUid, replaced);
+        if (
+          auth.currentUser?.uid !== writeUid ||
+          activeUidRef.current !== writeUid
+        ) {
+          return { ok: false, error: err };
+        }
+        // Back to what was there, for each type nothing has changed since.
+        setProfile((prev) => {
+          if (!prev || prev.uid !== writeUid) return prev;
+          const next: ShareDefaults = { ...prev.shareDefaults };
+          let reverted = false;
+          for (const type of types) {
+            if (next[type] !== answers[type]) continue;
+            const was = before?.[type];
+            if (was === undefined) delete next[type];
+            else next[type] = was;
+            reverted = true;
+          }
+          return reverted ? { ...prev, shareDefaults: next } : prev;
+        });
+        logger.error("[auth] updateShareDefaults failed", err);
+        toast.error("Couldn't save your settings. Try again.", {
+          id: "update-profile-error",
+        });
+        return { ok: false, error: err };
+      }
+    },
+    [user, profile]
+  );
+
   const refreshProfile = useCallback(async () => {
     const currentUser = auth.currentUser;
     if (!currentUser) return;
@@ -1340,6 +1495,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       fetchSignInMethods,
       signOut: signOutUser,
       updateProfile,
+      updateShareDefaults,
       refreshProfile,
     }),
     [
@@ -1354,6 +1510,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       fetchSignInMethods,
       signOutUser,
       updateProfile,
+      updateShareDefaults,
       refreshProfile,
     ]
   );

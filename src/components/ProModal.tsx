@@ -29,7 +29,7 @@
  *      one implementation for ProModal and Upgrade.tsx so they
  *      can't diverge on loading / error / auth handling.
  */
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useAuth } from "@/lib/auth";
 import { THEME } from "@/lib/theme";
 import {
@@ -46,9 +46,9 @@ import { useProPlanPrices } from "@/hooks/useProPlanPrices";
 import { track } from "@/lib/paywallAnalytics";
 import { isCheckoutTrialEligible } from "@/lib/subscription";
 import { X, Sparkles, Utensils } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { Spinner } from "@/components/ui/Spinner";
+import { Button } from "@/components/ui/Button";
 import { PaywallLegalLinks } from "@/components/paywall/PaywallLegalLinks";
 import PlanPicker from "@/components/paywall/PlanPicker";
 import ProPreview from "@/components/paywall/ProPreview";
@@ -129,6 +129,16 @@ export default function ProModal({ onClose, featureKey, initialPlan }: Props) {
   const [selectedPlan, setSelectedPlan] = useState<PlanId>(
     initialPlan ?? DEFAULT_PLAN
   );
+  // Reset selection if the parent re-renders the modal with a different
+  // initialPlan (defensive — current callsites always remount on open
+  // so the useState initial covers it, but if the component ever
+  // becomes controlled while staying mounted, this keeps it in sync).
+  // Adjusted during render when the prop changes, not in an effect.
+  const [syncedInitialPlan, setSyncedInitialPlan] = useState(initialPlan);
+  if (syncedInitialPlan !== initialPlan) {
+    setSyncedInitialPlan(initialPlan);
+    if (initialPlan) setSelectedPlan(initialPlan);
+  }
   const { loading, error, startCheckout, requiresSignIn } = useProCheckout();
   const { profile } = useAuth();
   // Apple-localized prices on the RC build; hardcoded proPlans fallback
@@ -209,14 +219,6 @@ export default function ProModal({ onClose, featureKey, initialPlan }: Props) {
   const ctaLabel = requiresSignIn
     ? "Sign in to start Pro"
     : getCheckoutCtaLabel(selectedPlan, withTrial);
-
-  // Reset selection if the parent remounts the modal with a different
-  // initialPlan (defensive — current callsites always remount on open
-  // so the useState initial covers it, but if the component ever
-  // becomes controlled while staying mounted, this keeps it in sync).
-  useEffect(() => {
-    if (initialPlan) setSelectedPlan(initialPlan);
-  }, [initialPlan]);
 
   return (
     <BottomSheet
@@ -317,21 +319,9 @@ export default function ProModal({ onClose, featureKey, initialPlan }: Props) {
         {/* Sub1a trial transparency — what actually happens, before the ask. */}
         {withTrial ? <TrialTimeline /> : null}
 
-        <button
-          type="button"
-          onClick={handleCheckout}
-          disabled={loading}
-          className={cn(
-            "w-full min-h-[52px] rounded-2xl text-white font-bold text-base",
-            "flex items-center justify-center gap-2",
-            "active:scale-[0.98] transition-transform duration-150",
-            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-            "disabled:opacity-60 disabled:cursor-not-allowed"
-          )}
-          style={{
-            background: `linear-gradient(135deg, ${THEME.brand}, ${THEME.teal})`,
-          }}
-        >
+        {/* The app's primary button, as Upgrade's are: it was a
+            purple-to-teal gradient. */}
+        <Button size="lg" fullWidth onClick={handleCheckout} disabled={loading}>
           {loading ? (
             <>
               <Spinner size="sm" variant="inverse" label="Starting checkout" />
@@ -340,7 +330,7 @@ export default function ProModal({ onClose, featureKey, initialPlan }: Props) {
           ) : (
             <span>{ctaLabel}</span>
           )}
-        </button>
+        </Button>
 
         <p className="text-caption text-muted-foreground text-center leading-snug">
           {getRenewalDisclosure(selectedPlan, platform)}

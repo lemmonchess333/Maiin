@@ -100,8 +100,6 @@ vi.mock("@/hooks/useFoodFavourites", () => ({
 }));
 
 import FoodAnalyzer from "../FoodAnalyzer";
-import { mealSlotFor } from "@/lib/mealSlots";
-import { MEAL_LABELS } from "../food/mealConstants";
 
 const MEAL = {
   foodName: "Lunch Plate",
@@ -183,6 +181,7 @@ afterEach(() => {
   cleanup();
   vi.clearAllMocks();
   vi.unstubAllGlobals();
+  vi.useRealTimers();
 });
 
 describe("FoodAnalyzer — the result sheet", () => {
@@ -207,13 +206,26 @@ describe("FoodAnalyzer — the result sheet", () => {
     expect(log).toHaveClass("bg-nutrition-fill");
   });
 
-  it("with no meal targeted, names the slot the diary files it under", async () => {
-    await scan(null);
-    const slot = mealSlotFor({ createdAt: { toDate: () => new Date() } });
-    expect(
-      screen.getByRole("button", { name: `Log to ${MEAL_LABELS[slot]}` })
-    ).toBeTruthy();
-  });
+  it.each([
+    { time: "09:00", hour: 9, minute: 0, label: "Breakfast" },
+    // Mid-afternoon the hour suggests snack time, but the diary files an
+    // untargeted meal under Lunch until 17:00.
+    { time: "15:30", hour: 15, minute: 30, label: "Lunch" },
+  ])(
+    "with no meal targeted at $time, names the slot the diary files it under",
+    async ({ hour, minute, label }) => {
+      /* Only Date is faked, so waitFor keeps its timers, and the day
+         comes from the clock, so the pin cannot expire. */
+      vi.useFakeTimers({ toFake: ["Date"] });
+      const at = new Date();
+      at.setHours(hour, minute, 0, 0);
+      vi.setSystemTime(at);
+      await scan(null);
+      expect(
+        screen.getByRole("button", { name: `Log to ${label}` })
+      ).toBeTruthy();
+    }
+  );
 
   it("gives each item's name the row: portion and calories sit under it", async () => {
     await scan();
@@ -221,6 +233,38 @@ describe("FoodAnalyzer — the result sheet", () => {
     expect(rows).toHaveLength(5);
     expect(rows[0]).toHaveTextContent("Grilled chicken breast");
     expect(rows[0]).toHaveTextContent("150 g · 248 kcal");
+  });
+
+  it("gives each item control its own 44px tap area", async () => {
+    /* jsdom has no layout, so this pins the classes and the sums.
+       + and Remove are 28px (size-7) and reach 8px past their box
+       (before:-inset-2), 44px in all. With only the row's 8px gap
+       between them, both reached across the whole gap, and Remove,
+       drawn later, took every tap in it. Remove's own 8px margin makes
+       the gap 16px, so the two reaches meet in the middle. */
+    await scan();
+    const [row] = screen.getAllByTestId("scan-result-item");
+    expect(row).toHaveClass("gap-2");
+    const plus = within(row).getByRole("button", {
+      name: "Increase Grilled chicken breast portion",
+    });
+    const remove = within(row).getByRole("button", {
+      name: "Remove Grilled chicken breast",
+    });
+    for (const control of [plus, remove]) {
+      expect(control).toHaveClass("size-7", "before:-inset-2");
+    }
+    expect(remove).toHaveClass("ml-2");
+
+    /* Restore is a 16px line of text. A 14px reach each side makes 44px.
+       Its row is 36px, as an item row is, so like theirs the reach ends
+       4px past the row, where the next row's controls' reach begins. */
+    fireEvent.click(remove);
+    const restore = screen.getByRole("button", {
+      name: "Restore Grilled chicken breast",
+    });
+    expect(restore).toHaveClass("text-xs", "before:-inset-3.5");
+    expect(restore.parentElement).toHaveClass("min-h-9");
   });
 
   it("follows the edits: removing an item renames the log", async () => {

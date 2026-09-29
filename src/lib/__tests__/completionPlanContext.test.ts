@@ -55,7 +55,7 @@ describe("liftCompletionContext", () => {
       "2026-09-27"
     );
     expect(context.next).toBe(
-      "All planned lifts complete — review your week on Program"
+      "All planned lifts complete — review your week on Train"
     );
   });
 });

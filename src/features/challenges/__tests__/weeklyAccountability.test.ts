@@ -43,14 +43,14 @@ describe("getWeeklyAccountability", () => {
     expect(many.title).toBe("3 people you follow trained this week");
   });
 
-  it("State C′ — on the board, short of target: nudge one more", () => {
+  it("State C′ — on the board, short of target: the count, plainly", () => {
     const c = getWeeklyAccountability({
       myWeeklyCount: 1,
       othersTrained: 5,
       target: 2,
     });
     expect(c.title).toBe("You're on the board");
-    expect(c.sub).toBe("1 of 2 sessions this week — one more keeps it alive.");
+    expect(c.sub).toBe("1 of 2 sessions this week.");
     expect(c.ctaLabel).toBe("Do today's session");
     expect(c.goalMet).toBe(false);
   });
@@ -65,6 +65,39 @@ describe("getWeeklyAccountability", () => {
     expect(c.ctaLabel).toBe("View progress");
     expect(c.ctaTo).toBe("/history");
     expect(c.goalMet).toBe(true);
+  });
+
+  it("C′ never says 'one more' when more than one is needed", () => {
+    const c = getWeeklyAccountability({
+      myWeeklyCount: 1,
+      othersTrained: 0,
+      target: 4,
+    });
+    expect(c.sub).toBe("1 of 4 sessions this week.");
+  });
+
+  it("no line closes on a pep-talk tail (house voice)", () => {
+    const states = [
+      { myWeeklyCount: 0, othersTrained: 0, target: 2 },
+      { myWeeklyCount: 0, othersTrained: 2, target: 2 },
+      { myWeeklyCount: 1, othersTrained: 2, target: 2 },
+      { myWeeklyCount: 3, othersTrained: 0, target: 2 },
+    ];
+    for (const input of states) {
+      const { title, sub } = getWeeklyAccountability(input);
+      expect(`${title} ${sub}`).not.toMatch(/alive|consistency|strong week|!/i);
+    }
+  });
+
+  it("goal met says the count, singular when it is one", () => {
+    expect(
+      getWeeklyAccountability({ myWeeklyCount: 1, othersTrained: 0, target: 1 })
+        .sub
+    ).toBe("1 session this week.");
+    expect(
+      getWeeklyAccountability({ myWeeklyCount: 3, othersTrained: 0, target: 2 })
+        .sub
+    ).toBe("3 sessions this week.");
   });
 
   it("my own progress takes precedence over others' (C beats B)", () => {

@@ -1180,6 +1180,9 @@ export function useProgram() {
       `[auto-rollover] advanced ${iterations} week${iterations > 1 ? "s" : ""} (from ${runDayWeekKey} to ${rolling.runDays?.[0]?.weekKey ?? "?"})`
     );
 
+    // saveProgram sets state only after its awaited write, never
+    // synchronously: the rule counts any call that reaches a setter.
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- see above
     saveProgram(rolling)
       .then(() => {
         toast.success(
@@ -1285,6 +1288,8 @@ export function useProgram() {
       `[auto-rollover:lift] advanced ${iterations} week${iterations > 1 ? "s" : ""} (from ${anchor} to ${rolling.liftWeekKey ?? "?"})`
     );
 
+    // As the run rollover above: saveProgram sets state after its await.
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- see above
     saveProgram(rolling)
       .then(() => {
         toast.success(

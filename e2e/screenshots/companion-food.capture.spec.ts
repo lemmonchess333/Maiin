@@ -128,10 +128,17 @@ test("usual meals are visible and offline adds can be undone", async ({
   // The composer leads (owner call): its Scan button clears the tab bar
   // when the page opens, and the usual row follows it, a scroll away on
   // a phone this size.
+  //
+  // The bound is an iPhone 13 mini's, not this viewport's: 812pt, less
+  // the 50pt status bar inset, the 34pt home bar and the 72pt tab bar,
+  // leaves 656pt, and the page's own layout does not change with the
+  // screen's height. Chromium has no insets, so the tab bar here sits
+  // lower than on a phone. The week strip took the Scan button past it
+  // once (Food6's pin); the calorie card was trimmed to bring it back.
   const scan = page.getByRole("button", { name: "Scan a meal" });
   await expect(scan).toBeVisible();
   const scanBox = (await scan.boundingBox())!;
-  expect(scanBox.y + scanBox.height).toBeLessThan(760);
+  expect(scanBox.y + scanBox.height).toBeLessThanOrEqual(656);
   // The text box and the camera button are one row: same top, same
   // height. Sized by rows={1}, the box is 50px and the 56px button
   // hangs 6px below it (measured on an iPhone).

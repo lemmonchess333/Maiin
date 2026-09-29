@@ -26,7 +26,7 @@
  * Both mounts matter — the A6 eased-week marker used to be a caller's job
  * and the Settings one never did it, which is why this sheet now owns it.
  */
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { ArrowRight, CalendarClock, Feather } from "lucide-react";
 import BottomSheet from "@/components/ui/BottomSheet";
 import Button from "@/components/ui/Button";
@@ -129,6 +129,36 @@ const INTENTS: Array<{ id: Intent; label: string; hint: string }> = [
   // sheet's own dismissal IS the "keep as is" path.
 ];
 
+/** What the sheet was told about the week, as last applied to the step. */
+interface StepInputs {
+  open: boolean;
+  easedThisWeek: boolean;
+  initialIntent: Intent | undefined;
+  swaps: EasySwap[];
+}
+
+/**
+ * The step once the sheet's inputs have been applied to it.
+ *
+ * Run14: opened from the ease-week nudge → jump past the chooser to the
+ * easier-week preview. Only the easier intents skip the chooser; a realign
+ * ("crowded") still deserves its own preview step, so it isn't pre-jumped
+ * here (the nudge never sends it). A week that is already eased has no ease
+ * left to preview, so an open preview falls back to the chooser, where the
+ * Undo row is.
+ */
+function applyStepInputs(current: Step, inputs: StepInputs): Step {
+  const { open, easedThisWeek, initialIntent, swaps } = inputs;
+  if (!open) return current;
+  if (easedThisWeek) {
+    return current.kind === "preview-easier" ? { kind: "intent" } : current;
+  }
+  if (initialIntent === "easier" || initialIntent === "not_100") {
+    return { kind: "preview-easier", intent: initialIntent, swaps };
+  }
+  return current;
+}
+
 export default function AdjustWeekSheet({
   open,
   onClose,
@@ -141,35 +171,43 @@ export default function AdjustWeekSheet({
   initialIntent,
   uid,
 }: AdjustWeekSheetProps) {
-  const [step, setStep] = useState<Step>({ kind: "intent" });
-  const [applying, setApplying] = useState(false);
-  const [undoing, setUndoing] = useState(false);
-  // Toast callbacks outlive the render that created them. A shared ref also
-  // blocks repeated Undo taps through those older callbacks.
-  const pendingRef = useRef(false);
-  const busy = applying || undoing;
-
   const todayKey = localDateString();
   const swaps = useMemo(
     () => planEasierWeek(runDays, todayKey),
     [runDays, todayKey]
   );
 
-  // Run14: opened from the ease-week nudge → jump past the chooser to the
-  // easier-week preview. Only the easier intents skip the chooser; a
-  // realign ("crowded") still deserves its own preview step, so it isn't
-  // pre-jumped here (the nudge never sends it).
-  useEffect(() => {
-    if (open && easedThisWeek) {
-      setStep((current) =>
-        current.kind === "preview-easier" ? { kind: "intent" } : current
-      );
-      return;
-    }
-    if (open && (initialIntent === "easier" || initialIntent === "not_100")) {
-      setStep({ kind: "preview-easier", intent: initialIntent, swaps });
-    }
-  }, [open, initialIntent, swaps, easedThisWeek]);
+  // The inputs are applied on mount and again whenever one of them changes
+  // (see applyStepInputs). Adjusted during render, not in an effect, so the
+  // step is right on the frame that opens the sheet.
+  const [step, setStep] = useState<Step>(() =>
+    applyStepInputs(
+      { kind: "intent" },
+      { open, easedThisWeek, initialIntent, swaps }
+    )
+  );
+  const [stepInputs, setStepInputs] = useState<StepInputs>({
+    open,
+    easedThisWeek,
+    initialIntent,
+    swaps,
+  });
+  if (
+    stepInputs.open !== open ||
+    stepInputs.easedThisWeek !== easedThisWeek ||
+    stepInputs.initialIntent !== initialIntent ||
+    stepInputs.swaps !== swaps
+  ) {
+    const inputs = { open, easedThisWeek, initialIntent, swaps };
+    setStepInputs(inputs);
+    setStep((current) => applyStepInputs(current, inputs));
+  }
+  const [applying, setApplying] = useState(false);
+  const [undoing, setUndoing] = useState(false);
+  // Toast callbacks outlive the render that created them. A shared ref also
+  // blocks repeated Undo taps through those older callbacks.
+  const pendingRef = useRef(false);
+  const busy = applying || undoing;
 
   const close = (cancelled: boolean) => {
     if (cancelled && pendingRef.current) return;

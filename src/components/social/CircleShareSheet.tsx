@@ -18,7 +18,7 @@
  * screens themselves.
  */
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Users } from "lucide-react";
 import { toast } from "@/lib/toast";
@@ -50,12 +50,14 @@ export default function CircleShareSheet({
 
   // Preselect the first ACTIVE circle once the list resolves (same
   // preference order as the featured-circle pick on Social), falling
-  // back to the first. Never overrides an explicit selection.
-  useEffect(() => {
-    if (loading || selectedId !== null) return;
+  // back to the first. Never overrides an explicit selection, and once
+  // made it stays put: a later change to the list never moves the circle
+  // the user is looking at. Set during render, so the list's first frame
+  // already shows it checked.
+  if (!loading && selectedId === null) {
     const preferred = circles.find((c) => c.space.active) ?? circles[0];
     if (preferred) setSelectedId(preferred.space.id);
-  }, [loading, circles, selectedId]);
+  }
 
   const share = async () => {
     if (!selectedId || busy) return;

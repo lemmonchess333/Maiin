@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useState } from "react";
 import type { CalorieRingMode } from "./CalorieRing";
 import { barFillPct, barLabelPct } from "@/lib/calorieRingFill";
 import { useCalorieRingMode } from "@/hooks/useCalorieRingMode";
@@ -209,17 +209,18 @@ export default function HeroDrillDownSheet({
   const [macroPaywallQueued, setMacroPaywallQueued] = useState(false);
   const fuel = dailyTargets.trainingFuel;
 
-  // React batches the CTA click, so setting showMacroPaywall in the same
-  // handler doesn't prove the BottomSheet focus trap has released. Queue it
-  // and only mount ProModal once the controlled `open` prop is observed false
-  // — avoiding nested focus traps. If the parent never closes the sheet, the
-  // paywall stays queued rather than stacking.
-  useEffect(() => {
-    if (!open && macroPaywallQueued) {
-      setMacroPaywallQueued(false);
-      setShowMacroPaywall(true);
-    }
-  }, [open, macroPaywallQueued]);
+  // The CTA only asks the parent to close the sheet, so it queues the
+  // paywall, and ProModal mounts once the controlled `open` prop is observed
+  // false. If the parent never closes the sheet, the paywall stays queued
+  // rather than stacking. Resolved during render rather than in an effect,
+  // so ProModal mounts in the commit that closes the sheet. That still
+  // avoids nested focus traps: the sheet stops trapping in that commit
+  // (Radix's `trapped` follows `open`), and ProModal's portal and focus
+  // scope only engage its own trap in the commits after it mounts.
+  if (!open && macroPaywallQueued) {
+    setMacroPaywallQueued(false);
+    setShowMacroPaywall(true);
+  }
 
   const dateLabel = isToday
     ? "Today"

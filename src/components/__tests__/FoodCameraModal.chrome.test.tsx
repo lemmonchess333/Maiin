@@ -12,7 +12,9 @@
  *    to AI food analysis like the other tabs, spending a scan to come back
  *    "No food detected".
  *  - A found code turns the corners orange before the lookup, and after a
- *    failed lookup the reader scans on, past the code that failed.
+ *    failed lookup the reader scans on, past the code that failed: until
+ *    the tab changes when the database does not have the product, and for
+ *    a few seconds when the lookup could not reach the database.
  *
  * The camera stays PENDING (jsdom has no video). The barcode reader is a
  * probe: the live decoder hands its callback to the test, and the photo
@@ -205,6 +207,74 @@ describe("FoodCameraModal — the live barcode reader", () => {
       z.liveCallbacks[1]({ getText: () => "222" }, null);
     });
     expect(props.onBarcodeDetected).toHaveBeenLastCalledWith("222");
+  });
+
+  it("tries a code again once a lookup that could not reach the database has had a pause", async () => {
+    /* Offline, or the connection dropped: the product exists, the
+       lookup just could not ask. Remembering the code for good meant
+       that once the connection was back, pointing at the same product
+       did nothing. Straight away it is still passed over, so a failure
+       does not repeat on every read. */
+    const props = {
+      ...baseProps(),
+      onBarcodeDetected: vi.fn().mockResolvedValue("unreachable"),
+    };
+    const now = vi.spyOn(Date, "now").mockReturnValue(1_000_000);
+    try {
+      render(<FoodCameraModal {...props} />);
+      fireEvent.click(tab("Barcode"));
+      await waitFor(() => expect(z.liveCallbacks).toHaveLength(1));
+      await act(async () => {
+        z.liveCallbacks[0]({ getText: () => "111" }, null);
+      });
+      await waitFor(() => expect(z.liveCallbacks).toHaveLength(2));
+      await act(async () => {
+        z.liveCallbacks[1]({ getText: () => "111" }, null);
+      });
+      expect(props.onBarcodeDetected).toHaveBeenCalledTimes(1);
+
+      now.mockReturnValue(1_000_000 + 10_000);
+      await act(async () => {
+        z.liveCallbacks[1]({ getText: () => "111" }, null);
+      });
+      expect(props.onBarcodeDetected).toHaveBeenCalledTimes(2);
+    } finally {
+      now.mockRestore();
+    }
+  });
+
+  it("passes over a product the database does not have, until the tab changes", async () => {
+    const props = {
+      ...baseProps(),
+      onBarcodeDetected: vi.fn().mockResolvedValue("not-found"),
+    };
+    const now = vi.spyOn(Date, "now").mockReturnValue(1_000_000);
+    try {
+      render(<FoodCameraModal {...props} />);
+      fireEvent.click(tab("Barcode"));
+      await waitFor(() => expect(z.liveCallbacks).toHaveLength(1));
+      await act(async () => {
+        z.liveCallbacks[0]({ getText: () => "111" }, null);
+      });
+      await waitFor(() => expect(z.liveCallbacks).toHaveLength(2));
+      // Asking again gives the same answer, however long it has been.
+      now.mockReturnValue(1_000_000 + 600_000);
+      await act(async () => {
+        z.liveCallbacks[1]({ getText: () => "111" }, null);
+      });
+      expect(props.onBarcodeDetected).toHaveBeenCalledTimes(1);
+
+      // Leaving Barcode and coming back looks every code up afresh.
+      fireEvent.click(tab("Meal"));
+      fireEvent.click(tab("Barcode"));
+      await waitFor(() => expect(z.liveCallbacks).toHaveLength(3));
+      await act(async () => {
+        z.liveCallbacks[2]({ getText: () => "111" }, null);
+      });
+      expect(props.onBarcodeDetected).toHaveBeenCalledTimes(2);
+    } finally {
+      now.mockRestore();
+    }
   });
 
   it("holds the orange corners while the lookup runs", async () => {

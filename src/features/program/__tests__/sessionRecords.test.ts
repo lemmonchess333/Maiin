@@ -48,6 +48,24 @@ describe("session record corrections", () => {
     expect(after.fired.get("Bench Press")).toEqual(["8rm"]);
   });
 
+  it("carries the best from before the session beside the set before it", () => {
+    const after = rebuild([set(62.5), set(65), set(67.5)]);
+    const best = after.results.get("Bench Press:8rm");
+    expect(best).toMatchObject({ kind: "best", weight: 67.5, setKey: "0:2" });
+    // What the set had to beat: the one before it, earlier this session.
+    expect(best?.previousBest).toEqual({
+      weight: 65,
+      reps: 8,
+      date: "2026-09-09",
+    });
+    // What the finish screen sums the session up against.
+    expect(best?.bestBeforeSession).toEqual({
+      weight: 60,
+      reps: 8,
+      date: "2026-09-01",
+    });
+  });
+
   it("excludes undone, warm-up, invalid, suspicious and timed sets", () => {
     const after = rebuild([
       set(65, { completed: false }),

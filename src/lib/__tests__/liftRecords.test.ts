@@ -136,6 +136,55 @@ describe("bestSetPerExercise", () => {
     ]);
   });
 
+  describe("a window's best is new only when it is the all-time record", () => {
+    /* New is drawn in gold, and gold means a personal best and nothing
+       else. The best bench of the last 30 days can be a set from this
+       week that an older one still beats; "Recent bests" then showed it
+       with a gold New beside a Lift PRs card holding 100 kg × 5. */
+    const WINDOW = "2026-08-29";
+    const bench = (date: string, weightKg: number) =>
+      session(date, [
+        { exerciseName: "Bench Press", sets: [{ weightKg, reps: 5 }] },
+      ]);
+
+    it("is not new under an older, heavier set", () => {
+      const records = bestSetPerExercise(
+        [
+          bench("2026-07-01", 100),
+          bench("2026-09-05", 90),
+          bench("2026-09-25", 95),
+        ],
+        { sinceKey: WINDOW, newSinceKey: NEW_SINCE }
+      );
+      expect(records).toEqual([
+        {
+          name: "Bench Press",
+          weight: 95,
+          reps: 5,
+          date: "2026-09-25",
+          isNew: false,
+        },
+      ]);
+    });
+
+    it("is not new when it only matches the older best", () => {
+      // The record was set in July; this week equalled it.
+      const [record] = bestSetPerExercise(
+        [bench("2026-07-01", 100), bench("2026-09-25", 100)],
+        { sinceKey: WINDOW, newSinceKey: NEW_SINCE }
+      );
+      expect(record).toMatchObject({ date: "2026-09-25", isNew: false });
+    });
+
+    it("is new when it beats everything before it", () => {
+      const [record] = bestSetPerExercise(
+        [bench("2026-07-01", 100), bench("2026-09-25", 105)],
+        { sinceKey: WINDOW, newSinceKey: NEW_SINCE }
+      );
+      expect(record).toMatchObject({ weight: 105, isNew: true });
+    });
+  });
+
   it("limits a window's records to its sessions", () => {
     const records = bestSetPerExercise(
       [
