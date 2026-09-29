@@ -1,0 +1,215 @@
+{
+  "modelPath": "Built-in imagegen only; canonical master and adjacent poses. No CLI/API/model fallback.",
+  "canonicalReference": {
+    "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+  },
+  "exerciseMaster": {
+    "path": "docs/exercise-art/masters/glute-bridge/1.png",
+    "sha256": "30f0a73804352bd0888062490329934d878ced6406c0fc946921c6081b8a82bc"
+  },
+  "nativeDimensions": {
+    "width": 1536,
+    "height": 1024
+  },
+  "generation": [
+    {
+      "file": "master-prompt.json",
+      "prompt": "Create ONE full-resolution anatomy exercise master for BODYWEIGHT GLUTE BRIDGE at the SETUP position. Referenceimage supplies canonicalathlete identity/style, not pose. Baldfaceless white/lightgrey anatomical mannequin with finecleancontours, smooth neutral featurelesspelvis without genitaldetail/slit/waistband/seams, WHITE TRAINERS. Lie supine on a thin plain darkgrey exercise mat, head on LEFT, feet on RIGHT, knees bent about90degrees, feetflat hipwidth. Back,pelvis,head andshoulders restonmat, armsstraight bysides palmsdown without obscuring nearhip. Fixed almostsidecamera, slightlyelevated and10degreesoffside to show both feet and both knees. Fullbody fills centralwidth of landscape1536x1024, clear knee/hip/shoulder geometry, roomabove pelvis forlaterbridge without reframing. Strongblueviolet gluteal musculature on nearouterhip/buttock, lighterlilac hamstrings, verysubtlecore support; othermuscles neutralwhitegrey. Solidblackbackground, sharp anatomy, no text/arrows/labels/glow. No dumbbells/bars/bench. Keep modest realistic proportions and preciseground contact; no raisedhip yet, this is full loweredsetup.",
+      "output": "exec-0977fe85-5984-4c35-87a5-9c26029b2a2b.png"
+    },
+    {
+      "file": "middle-prompt.json",
+      "prompt": "Edit FIRST image glute-bridge setup master into HALF LIFT. SECOND canonicalathleteidentity reference. Keep exact1536x1024canvas,camera,matgeometry,head,shouldercontacts,palms and white trainers/feet positions. Lift only pelvis/lowerback from mat about100pixels, halfway toward straight shoulder-hip-knee line. Both knees naturally travel slightlyforward as hipangle opens; preserve bone lengths and footposition. Head/upperback/shoulders remain restingonmat, no neckbend or pushingup with head. Arms/palms staybysides flat originalplaces; pelvis rises awayfromneararm, no armstretch. Both feet remain fullyflat and hipwidth. Preserve nearhipbluevioletglutes/hamstringslilac and finesharpwhitegrey anatomy, smoothneutralpelvis, no newmusclehighlight. Do not arch lumbarspine; ribspulleddown. Blackbackground, same matcorners, no scale/camerachange,text,glow. ONE half-raisedpose, not fulltop.",
+      "output": "exec-e2eec49a-713e-4346-a6c3-c8c1a68abc08.png"
+    },
+    {
+      "file": "top-prompt.json",
+      "prompt": "Edit FIRST image half-lift glute bridge into full TOP position. SECOND frozenexercise master anchors exactmat,camera,head,shoulders,palms,feet; THIRD canonicalathleteidentity. Raise pelvis another100pixels until shoulders, hips and knees make one straight diagonal bodyline. Keep ribsdown and neutralspine, no lumbararch or pushingneck intoextension. Both knees stayoverfeet with shinsnearvertical, samefemur/shinlengths. Feetfullyflat at exactlyoriginalshoepositions; head/upperback/shoulders and palms remainonmat, same matcorners. Only pelvis/torso angle and thighs change naturally. Do not move camera/scale/head/arms/feet. Preserve samebluevioletglutes, lilachamstrings, neutralwhitegreyrestofbody and featurelesspelvis, whitetrainers. Blackbackground,1536x1024canvas, no text/glow/collage. Singlefullbridge top, not exaggeratedbackbend.",
+      "output": "exec-6073ee94-984a-4288-a811-acb504acae1c.png"
+    }
+  ],
+  "generatedOutputs": [
+    {
+      "file": "1-master.png",
+      "sha256": "30f0a73804352bd0888062490329934d878ced6406c0fc946921c6081b8a82bc"
+    },
+    {
+      "file": "middle-candidate.png",
+      "sha256": "b443844adb55c3cc4e12ae00588b70620cf559fed999720cb6e8c6f0e486763b"
+    },
+    {
+      "file": "top-candidate.png",
+      "sha256": "49f276f9c7f7a2a6b2967a84374cc66685ae981e36af48aae916f3ded682535a"
+    }
+  ],
+  "deterministicRepairs": [
+    {
+      "authorization": "Owner approved master-copy of fixed areas. Only the lower planted far-shoe region is restored; the rectangle includes a small overlapping planted near-shoe area. Ankles and moving anatomy remain untouched.",
+      "masterSha256": "30f0a73804352bd0888062490329934d878ced6406c0fc946921c6081b8a82bc",
+      "frames": [
+        {
+          "frame": 2,
+          "rectangles": [
+            [
+              1220,
+              607,
+              1480,
+              690
+            ]
+          ],
+          "sourceSha256": "b443844adb55c3cc4e12ae00588b70620cf559fed999720cb6e8c6f0e486763b",
+          "outputSha256": "f1c7a4fcf93fd850a961c83ea6d4acc6140261121882e18d86562d17d35172e7",
+          "changedPixels": 19744,
+          "changedOutsideRectangles": 0
+        },
+        {
+          "frame": 3,
+          "rectangles": [
+            [
+              1220,
+              607,
+              1480,
+              690
+            ]
+          ],
+          "sourceSha256": "49f276f9c7f7a2a6b2967a84374cc66685ae981e36af48aae916f3ded682535a",
+          "outputSha256": "b62fe0210d2d29fa29a046a219d02b8278476a2a62cbb126041d4f17574a8181",
+          "changedPixels": 20228,
+          "changedOutsideRectangles": 0
+        },
+        {
+          "frame": 4,
+          "rectangles": [
+            [
+              1220,
+              607,
+              1480,
+              690
+            ]
+          ],
+          "sourceSha256": "49f276f9c7f7a2a6b2967a84374cc66685ae981e36af48aae916f3ded682535a",
+          "outputSha256": "b62fe0210d2d29fa29a046a219d02b8278476a2a62cbb126041d4f17574a8181",
+          "changedPixels": 20228,
+          "changedOutsideRectangles": 0
+        },
+        {
+          "frame": 5,
+          "rectangles": [
+            [
+              1220,
+              607,
+              1480,
+              690
+            ]
+          ],
+          "sourceSha256": "b443844adb55c3cc4e12ae00588b70620cf559fed999720cb6e8c6f0e486763b",
+          "outputSha256": "f1c7a4fcf93fd850a961c83ea6d4acc6140261121882e18d86562d17d35172e7",
+          "changedPixels": 19744,
+          "changedOutsideRectangles": 0
+        }
+      ]
+    },
+    {
+      "authorization": "Owner approved master-copy of fixed areas. Only the unobstructed lower mat strip is restored. All anatomy and footwear lie above this rectangle and remain untouched.",
+      "masterSha256": "30f0a73804352bd0888062490329934d878ced6406c0fc946921c6081b8a82bc",
+      "frames": [
+        {
+          "frame": 3,
+          "rectangles": [
+            [
+              0,
+              790,
+              1536,
+              900
+            ]
+          ],
+          "sourceSha256": "b62fe0210d2d29fa29a046a219d02b8278476a2a62cbb126041d4f17574a8181",
+          "outputSha256": "a851e44bb1225f6b19a61558b176b7171bf64b6fb7d0a84ea2e88077f4190fcc",
+          "changedPixels": 98397,
+          "changedOutsideRectangles": 0
+        },
+        {
+          "frame": 4,
+          "rectangles": [
+            [
+              0,
+              790,
+              1536,
+              900
+            ]
+          ],
+          "sourceSha256": "b62fe0210d2d29fa29a046a219d02b8278476a2a62cbb126041d4f17574a8181",
+          "outputSha256": "a851e44bb1225f6b19a61558b176b7171bf64b6fb7d0a84ea2e88077f4190fcc",
+          "changedPixels": 98397,
+          "changedOutsideRectangles": 0
+        }
+      ]
+    }
+  ],
+  "selectedPngs": [
+    {
+      "frame": 1,
+      "sha256": "30f0a73804352bd0888062490329934d878ced6406c0fc946921c6081b8a82bc"
+    },
+    {
+      "frame": 2,
+      "sha256": "f1c7a4fcf93fd850a961c83ea6d4acc6140261121882e18d86562d17d35172e7"
+    },
+    {
+      "frame": 3,
+      "sha256": "a851e44bb1225f6b19a61558b176b7171bf64b6fb7d0a84ea2e88077f4190fcc"
+    },
+    {
+      "frame": 4,
+      "sha256": "a851e44bb1225f6b19a61558b176b7171bf64b6fb7d0a84ea2e88077f4190fcc"
+    },
+    {
+      "frame": 5,
+      "sha256": "f1c7a4fcf93fd850a961c83ea6d4acc6140261121882e18d86562d17d35172e7"
+    },
+    {
+      "frame": 6,
+      "sha256": "30f0a73804352bd0888062490329934d878ced6406c0fc946921c6081b8a82bc"
+    }
+  ],
+  "reuse": {
+    "4": 3,
+    "5": 2,
+    "6": 1
+  },
+  "conversion": "Lossless WebP decoded RGB exactly equals reviewed PNG; native1536x1024, no scaling.",
+  "measurementMethod": "Interpolated minimum-RGB150 scanline boundaries on native selected PNGs. Unrounded1px/1percent tests measure fixed contacts only, not moving anatomy or equipment.",
+  "scanlines": {
+    "nearShoe": [
+      1050,
+      1410,
+      740,
+      150
+    ],
+    "farShoe": [
+      1225,
+      1500,
+      620,
+      150
+    ],
+    "nearPalm": [
+      650,
+      950,
+      740,
+      150
+    ],
+    "head": [
+      30,
+      320,
+      500,
+      150
+    ],
+    "matEdge": [
+      900,
+      1536,
+      850,
+      30
+    ]
+  }
+}

@@ -1,0 +1,260 @@
+{
+  "exerciseId": "glute-bridge",
+  "version": "anatomy-v3-2026-09-29",
+  "width": 1536,
+  "height": 1024,
+  "decision": "approved",
+  "reviewer": "Codex visual and implementation review",
+  "reviewedAt": "2026-09-29T13:06:51.274Z",
+  "reference": {
+    "path": "form-frames/glute-bridge/1.webp",
+    "sha256": "112bef9306be5708cbe718940077ca5f3e75c313ae42ee708975e10d1edc0c87"
+  },
+  "cueSha256": "90e864a5555d6e29ec993a3b96e6ad299f515714a14892a5a2bc2bdd71b56ca6",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Canonical bald faceless white-grey athlete, fine contours, white trainers and smooth featureless pelvis inspected at native size across setup, lift and top."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Native 1536x1024 fixed slightly elevated side view keeps both feet, shoulders and hip travel visible. No camera or scale jump in reviewed sequence."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Qualitative native and mobile review of continuous hip extension, attached limbs and consistent proportions. Top shoulder-hip-knee line is straight without exaggerated lumbar arch; no calibrated 3D bone-length claim."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Only a thin fixed mat; exposed lower edge restored from master in frames3/4 with recorded provenance. No moving load or machine."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Near shoe, far shoe, near palm and head scanline anchors satisfy unrounded 1px/1percent gates. Lower planted far-shoe region restored in frames2/3/4/5; zero changes outside recorded rectangle. Head, shoulder and palm contacts reviewed visually."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Pelvis rises while feet and upper-back contacts stay planted; ribs remain controlled. Lowering returns completely to the mat. Moving hips and legs were edited only by built-in imagegen."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Strongest blue-violet on glutes, lighter lilac hamstrings and subtle core support. Rest of body remains neutral; hierarchy retained through return."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Six short cues match lowered setup, partial lift, full bridge, hold, lowering and complete reset. Cues inspected beneath actual mobile player."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "Manually stepped all six frames and6-to1 in current ExerciseFormFrames. Reuse4=3,5=2,6=1 produces a complete repetition; no continuous timed-playback claim."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "All six frames plus loop reviewed at390x844 in light theme. Full body, mat and hip travel legible; cues wrap without clipping. Native1536x1024 image and documentwidth390 confirmed; no console errors."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "All six frames plus loop reviewed at390x844 in dark theme. Fixed contacts remain stable and purple glute shading clearly distinguishes the moving hip from the mat."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/glute-bridge/1.webp",
+      "sha256": "112bef9306be5708cbe718940077ca5f3e75c313ae42ee708975e10d1edc0c87",
+      "anchors": {
+        "nearShoe": {
+          "x": 1102.3272727272727,
+          "y": 740
+        },
+        "farShoe": {
+          "x": 1227.139240506329,
+          "y": 620
+        },
+        "nearPalm": {
+          "x": 734.4027777777778,
+          "y": 740
+        },
+        "head": {
+          "x": 69.24264705882354,
+          "y": 500
+        },
+        "matEdge": {
+          "x": 1235.857142857143,
+          "y": 850
+        }
+      },
+      "invariantDimensions": {
+        "nearShoeSpan": 276.69341692789976,
+        "farShoeSpan": 187.11607864260714,
+        "nearPalmSpan": 172.0226365868631,
+        "headSpan": 215.22637948984902,
+        "matEdgeSpan": 163.406015037594
+      }
+    },
+    {
+      "path": "form-frames/glute-bridge/2.webp",
+      "sha256": "1f449e51b91c5947a9459ee3fdf8d71467cdbafcb54551ee6c4e42c53d7adc9e",
+      "anchors": {
+        "nearShoe": {
+          "x": 1102.0843373493976,
+          "y": 740
+        },
+        "farShoe": {
+          "x": 1227.139240506329,
+          "y": 620
+        },
+        "nearPalm": {
+          "x": 733.9655172413793,
+          "y": 740
+        },
+        "head": {
+          "x": 68.66666666666667,
+          "y": 500
+        },
+        "matEdge": {
+          "x": 1235.4285714285713,
+          "y": 850
+        }
+      },
+      "invariantDimensions": {
+        "nearShoeSpan": 276.3477614160345,
+        "farShoeSpan": 187.11607864260714,
+        "nearPalmSpan": 171.67084639498432,
+        "headSpan": 214.8095238095238,
+        "matEdgeSpan": 163.28571428571445
+      }
+    },
+    {
+      "path": "form-frames/glute-bridge/3.webp",
+      "sha256": "86c8df247d09a970d809aaa2b8e5e6fc093afb599e6b949c15cbf6547b63dd71",
+      "anchors": {
+        "nearShoe": {
+          "x": 1101.9930555555557,
+          "y": 740
+        },
+        "farShoe": {
+          "x": 1227.139240506329,
+          "y": 620
+        },
+        "nearPalm": {
+          "x": 733.6363636363636,
+          "y": 740
+        },
+        "head": {
+          "x": 68.4093567251462,
+          "y": 500
+        },
+        "matEdge": {
+          "x": 1235.857142857143,
+          "y": 850
+        }
+      },
+      "invariantDimensions": {
+        "nearShoeSpan": 277.0330882352939,
+        "farShoeSpan": 187.11607864260714,
+        "nearPalmSpan": 171.96951871657757,
+        "headSpan": 214.84821903242954,
+        "matEdgeSpan": 163.406015037594
+      }
+    },
+    {
+      "path": "form-frames/glute-bridge/4.webp",
+      "sha256": "86c8df247d09a970d809aaa2b8e5e6fc093afb599e6b949c15cbf6547b63dd71",
+      "anchors": {
+        "nearShoe": {
+          "x": 1101.9930555555557,
+          "y": 740
+        },
+        "farShoe": {
+          "x": 1227.139240506329,
+          "y": 620
+        },
+        "nearPalm": {
+          "x": 733.6363636363636,
+          "y": 740
+        },
+        "head": {
+          "x": 68.4093567251462,
+          "y": 500
+        },
+        "matEdge": {
+          "x": 1235.857142857143,
+          "y": 850
+        }
+      },
+      "invariantDimensions": {
+        "nearShoeSpan": 277.0330882352939,
+        "farShoeSpan": 187.11607864260714,
+        "nearPalmSpan": 171.96951871657757,
+        "headSpan": 214.84821903242954,
+        "matEdgeSpan": 163.406015037594
+      }
+    },
+    {
+      "path": "form-frames/glute-bridge/5.webp",
+      "sha256": "1f449e51b91c5947a9459ee3fdf8d71467cdbafcb54551ee6c4e42c53d7adc9e",
+      "anchors": {
+        "nearShoe": {
+          "x": 1102.0843373493976,
+          "y": 740
+        },
+        "farShoe": {
+          "x": 1227.139240506329,
+          "y": 620
+        },
+        "nearPalm": {
+          "x": 733.9655172413793,
+          "y": 740
+        },
+        "head": {
+          "x": 68.66666666666667,
+          "y": 500
+        },
+        "matEdge": {
+          "x": 1235.4285714285713,
+          "y": 850
+        }
+      },
+      "invariantDimensions": {
+        "nearShoeSpan": 276.3477614160345,
+        "farShoeSpan": 187.11607864260714,
+        "nearPalmSpan": 171.67084639498432,
+        "headSpan": 214.8095238095238,
+        "matEdgeSpan": 163.28571428571445
+      }
+    },
+    {
+      "path": "form-frames/glute-bridge/6.webp",
+      "sha256": "112bef9306be5708cbe718940077ca5f3e75c313ae42ee708975e10d1edc0c87",
+      "anchors": {
+        "nearShoe": {
+          "x": 1102.3272727272727,
+          "y": 740
+        },
+        "farShoe": {
+          "x": 1227.139240506329,
+          "y": 620
+        },
+        "nearPalm": {
+          "x": 734.4027777777778,
+          "y": 740
+        },
+        "head": {
+          "x": 69.24264705882354,
+          "y": 500
+        },
+        "matEdge": {
+          "x": 1235.857142857143,
+          "y": 850
+        }
+      },
+      "invariantDimensions": {
+        "nearShoeSpan": 276.69341692789976,
+        "farShoeSpan": 187.11607864260714,
+        "nearPalmSpan": 172.0226365868631,
+        "headSpan": 215.22637948984902,
+        "matEdgeSpan": 163.406015037594
+      }
+    }
+  ]
+}
