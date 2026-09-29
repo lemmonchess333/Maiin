@@ -1,0 +1,272 @@
+{
+  "exerciseId": "mountain-climbers",
+  "version": "anatomy-v3-2026-09-29",
+  "width": 1536,
+  "height": 1024,
+  "decision": "approved",
+  "reviewer": "Codex native and mobile visual review",
+  "reviewedAt": "2026-09-29T16:59:41.854Z",
+  "reference": {
+    "path": "form-frames/mountain-climbers/3.webp",
+    "sha256": "883c26911e09a73abc4ba730c48ed098785e34b6deb90f0bee6294fd0afa647c"
+  },
+  "cueSha256": "fe4af8bfefde1a340354b4b249c655165945a64c46e3db6c2254a8aa2c6a9d15",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Canonical bald faceless white-grey anatomy athlete, fine outlines, featureless pelvis and white trainers across five unique native poses. No garments or extra people."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Fixed 1536x1024 side-three-quarter scene with full mat and body visible. Rebuilt master used at frames3/6; alternative glowing and front-oblique masters excluded."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Both arm and leg chains traced in native outputs. Near-side drive uses a two-stage generated support layer plus added foreground bent leg; final frames have two complete legs. Deeper near pose pelvis repaired with built-in imagegen before fixed-contact repairs. Hips remain approximately level, without a large pike; visual assessment does not assert calibrated three-dimensional angles."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Single fixed floor mat. Unrounded hand and mat scan endpoints remain within1px and widths within1percent. Approved exact master copy repairs unobstructed lower mat only in near-full frame; no moving anatomy copied."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Near drives preserve rear-left planted foot; far drives preserve foreground-right planted foot. Both palms remain planted throughout. Near-side shoe union-mask repair uses exact master pixels inside [960,585,1125,695]; near-full far palm and lower mat restored separately. Provenance verifies zero changes outside masks/rectangles. Final native inspection found no conspicuous rectangular seam."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Alternating unilateral knee drives from a high plank, with opposite leg extended and airborne driving foot. Former support-foot ownership swap corrected. Frame3/6 straight-leg return restores both original contacts."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Core primary muscles purple; shoulders, hip flexors and quads lilac. Limbs otherwise neutral. Muscle coloring remains qualitative and stable across return poses."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Six cues match partial near drive, deeper near drive, plank, partial far drive, deeper far drive, reset. Far-side intermediate-to-peak displacement is modest under perspective, with additional knee flexion visible; no exaggerated equal-angle or equal-time claim."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "Manually stepped all six frames and6-to-1 in actual ExerciseFormFrames on2026-09-29. Correct alternating leg identity and stationary support contacts remained readable. These are discrete teaching beats, not a validated continuous motion interpolation."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "All six and6-to-1 visually reviewed at390x844 in light surrounding theme; full body/mat, labels and cues visible without clipping. Near and far driving legs distinguishable."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "All six and6-to-1 visually reviewed at390x844 in dark surrounding theme; full body/mat and captions legible. Initial viewport-resize screenshot was transient; frame1 rechecked at end of loop at correct size."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/mountain-climbers/1.webp",
+      "sha256": "81a9191f70bd3ad64fc2041ed26b844ab9e8ab79b2edd61fe10f4e0ebe096acb",
+      "anchors": {
+        "farHandLeft": {
+          "x": 141.53293413173654,
+          "y": 740
+        },
+        "farHandRight": {
+          "x": 291.6666666666667,
+          "y": 740
+        },
+        "nearHandLeft": {
+          "x": 396.84,
+          "y": 810
+        },
+        "nearHandRight": {
+          "x": 555.1846153846154,
+          "y": 810
+        },
+        "matFrontLeft": {
+          "x": 287.8235294117647,
+          "y": 885
+        },
+        "matFrontRight": {
+          "x": 482,
+          "y": 885
+        }
+      },
+      "invariantDimensions": {
+        "farHandWidth": 150.13373253493015,
+        "nearHandWidth": 158.34461538461545,
+        "matFrontWidth": 194.1764705882353
+      }
+    },
+    {
+      "path": "form-frames/mountain-climbers/2.webp",
+      "sha256": "d38c3e01ed6614169db00d937178428e5ae8dc24d265707db5f79f85fde99009",
+      "anchors": {
+        "farHandLeft": {
+          "x": 141.8314606741573,
+          "y": 740
+        },
+        "farHandRight": {
+          "x": 292.11678832116786,
+          "y": 740
+        },
+        "nearHandLeft": {
+          "x": 396.640625,
+          "y": 810
+        },
+        "nearHandRight": {
+          "x": 555.3360655737705,
+          "y": 810
+        },
+        "matFrontLeft": {
+          "x": 287.42857142857144,
+          "y": 885
+        },
+        "matFrontRight": {
+          "x": 482.75,
+          "y": 885
+        }
+      },
+      "invariantDimensions": {
+        "farHandWidth": 150.28532764701055,
+        "nearHandWidth": 158.6954405737705,
+        "matFrontWidth": 195.32142857142856
+      }
+    },
+    {
+      "path": "form-frames/mountain-climbers/3.webp",
+      "sha256": "883c26911e09a73abc4ba730c48ed098785e34b6deb90f0bee6294fd0afa647c",
+      "anchors": {
+        "farHandLeft": {
+          "x": 141.8314606741573,
+          "y": 740
+        },
+        "farHandRight": {
+          "x": 292.11678832116786,
+          "y": 740
+        },
+        "nearHandLeft": {
+          "x": 397.5739644970414,
+          "y": 810
+        },
+        "nearHandRight": {
+          "x": 555.3170731707318,
+          "y": 810
+        },
+        "matFrontLeft": {
+          "x": 287.42857142857144,
+          "y": 885
+        },
+        "matFrontRight": {
+          "x": 482.75,
+          "y": 885
+        }
+      },
+      "invariantDimensions": {
+        "farHandWidth": 150.28532764701055,
+        "nearHandWidth": 157.74310867369036,
+        "matFrontWidth": 195.32142857142856
+      }
+    },
+    {
+      "path": "form-frames/mountain-climbers/4.webp",
+      "sha256": "5f78c2d3bfb5c1362b2435f1bdcf1337c120821d79063117d8af65ad81edca86",
+      "anchors": {
+        "farHandLeft": {
+          "x": 141.32394366197184,
+          "y": 740
+        },
+        "farHandRight": {
+          "x": 291.37179487179486,
+          "y": 740
+        },
+        "nearHandLeft": {
+          "x": 397.00970873786406,
+          "y": 810
+        },
+        "nearHandRight": {
+          "x": 555.0697674418604,
+          "y": 810
+        },
+        "matFrontLeft": {
+          "x": 287.5217391304348,
+          "y": 885
+        },
+        "matFrontRight": {
+          "x": 481.8333333333333,
+          "y": 885
+        }
+      },
+      "invariantDimensions": {
+        "farHandWidth": 150.04785120982302,
+        "nearHandWidth": 158.0600587039964,
+        "matFrontWidth": 194.3115942028985
+      }
+    },
+    {
+      "path": "form-frames/mountain-climbers/5.webp",
+      "sha256": "6ed07ebce5240b7bf6de74d9484f56b368c10f9833436aead40d799be9af9290",
+      "anchors": {
+        "farHandLeft": {
+          "x": 141.5487804878049,
+          "y": 740
+        },
+        "farHandRight": {
+          "x": 291.41379310344826,
+          "y": 740
+        },
+        "nearHandLeft": {
+          "x": 397.06796116504853,
+          "y": 810
+        },
+        "nearHandRight": {
+          "x": 555.2459016393443,
+          "y": 810
+        },
+        "matFrontLeft": {
+          "x": 287.38461538461536,
+          "y": 885
+        },
+        "matFrontRight": {
+          "x": 483,
+          "y": 885
+        }
+      },
+      "invariantDimensions": {
+        "farHandWidth": 149.86501261564337,
+        "nearHandWidth": 158.17794047429578,
+        "matFrontWidth": 195.61538461538464
+      }
+    },
+    {
+      "path": "form-frames/mountain-climbers/6.webp",
+      "sha256": "883c26911e09a73abc4ba730c48ed098785e34b6deb90f0bee6294fd0afa647c",
+      "anchors": {
+        "farHandLeft": {
+          "x": 141.8314606741573,
+          "y": 740
+        },
+        "farHandRight": {
+          "x": 292.11678832116786,
+          "y": 740
+        },
+        "nearHandLeft": {
+          "x": 397.5739644970414,
+          "y": 810
+        },
+        "nearHandRight": {
+          "x": 555.3170731707318,
+          "y": 810
+        },
+        "matFrontLeft": {
+          "x": 287.42857142857144,
+          "y": 885
+        },
+        "matFrontRight": {
+          "x": 482.75,
+          "y": 885
+        }
+      },
+      "invariantDimensions": {
+        "farHandWidth": 150.28532764701055,
+        "nearHandWidth": 157.74310867369036,
+        "matFrontWidth": 195.32142857142856
+      }
+    }
+  ]
+}

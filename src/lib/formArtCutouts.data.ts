@@ -347,6 +347,16 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
       "7961d3f929b80a28138331d0db65d2cdf67f4289e0306ced4942b4e859564c61",
     sha256: "b3775480a78cc4655961983ca497f8189d7a80f781443933c3e0c00cd127daaa",
   },
+  "mountain-climbers": {
+    src: "form-art/mountain-climbers.webp",
+    width: 480,
+    height: 292,
+    keyed: true,
+    source: "form-frames/mountain-climbers/3.webp",
+    sourceSha256:
+      "883c26911e09a73abc4ba730c48ed098785e34b6deb90f0bee6294fd0afa647c",
+    sha256: "508dc646f5dce35a3daae73029a5b4175479b8a744733d2a06bf79fd60a33909",
+  },
   "overhead-press": {
     src: "form-art/overhead-press.webp",
     width: 480,

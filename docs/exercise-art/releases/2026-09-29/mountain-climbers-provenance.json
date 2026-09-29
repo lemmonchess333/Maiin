@@ -1,0 +1,316 @@
+{
+  "modelPath": "Built-in imagegen only; no CLI/API/model fallback.",
+  "canonicalReference": {
+    "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+  },
+  "exerciseMaster": {
+    "path": "docs/exercise-art/masters/mountain-climbers/1.png",
+    "sha256": "5c712b8121262e458ba536262b1783c92d707d0a7816abdccf85d7ba5bea0188"
+  },
+  "nativeDimensions": {
+    "width": 1536,
+    "height": 1024
+  },
+  "prompts": [
+    {
+      "file": "add-near-leg-prompt.txt",
+      "prompt": "undefined\n"
+    },
+    {
+      "file": "black-background-prompt.txt",
+      "prompt": "undefined\n"
+    },
+    {
+      "file": "far-full-prompt.txt",
+      "prompt": "undefined\n"
+    },
+    {
+      "file": "far-half-prompt.txt",
+      "prompt": "Use case: precise-object-edit. Image1 EDIT TARGET and frozen mountain-climber exercise master. Image2 canonical identity. Make the FAR-LEG HALF KNEE DRIVE: leave the large foreground/right leg straight exactly as master, ending in the RIGHTMOST planted white shoe aroundx1260,y675. Move only the FAR leg whose shoe is the smaller rear/LEFT shoe aroundx1030,y630: lift that rear shoe off the mat, bend that far knee forward beneath the abdomen on the FAR SIDE, partly visible in the gap behind the foreground arm and beneath the torso. Knee at a moderate halfway drive, not fully toward chest yet. The far shin folds backward with its shoe airborne. Remove the rear-left floor shoe because it is now airborne. Exactlytwolegs: one far bent leg, one foreground straight supporting leg. Keep foreground hip/glute outline, pelvis height, torso, head, shoulders, both arms and hands, near foot contact, mat, camera and native1536x1024 canvas unchanged. Keep anatomy fine-contoured white-grey, corepurple, shoulders/hipflexors/quads lightlilac, neutral featureless pelvis, white trainers. Entire mat and body visible, black background with NO glow, no text. Do not bend the foreground leg or slide the supporting foot.\n"
+    },
+    {
+      "file": "front-oblique-master-prompt.txt",
+      "prompt": "undefined\n"
+    },
+    {
+      "file": "master-prompt.txt",
+      "prompt": "Use case: scientific-educational. Create ONE separate native 1536x1024 exercise illustration: a new high-plank MASTER for a six-frame mountain-climber guide. Input1 is the canonical athlete identity; input2 is the previous exercise master, a style reference only. Change the camera and foot spacing to make both leg chains and their separate floor contacts unambiguous. Show the same one bald faceless light-grey/white anatomy athlete, fine crisp dark anatomical contours, white trainers, smooth neutral featureless pelvic center without genital detail/waistbands/garment seams. Full body head at left, feet right, on one simple dark grey rectangular mat against black. Slightly elevated front-side three-quarter view, enough front view to see both arms and both legs. Hands shoulder width flat beneath shoulders, arms straight, hips level, straight shoulder-hip-ankle line, neck neutral. Feet approximately hip-width apart, toes planted, heels raised; both shoes fully visible with clearly separated nonoverlapping silhouettes and distinct toe contacts. Avoid superimposing legs: keep the far leg visible from hip through knee to its own ankle and shoe. Center entire body and entire mat with margins. Strong purple abdominals/obliques, light lilac shoulders, hip flexors and quads, other muscles neutral. Precise clean anatomy illustration matching canonical identity. No text, no labels, no arrows, no grid, no extra people. This is the static starting plank, both knees fully extended; do not show a knee drive yet.\n"
+    },
+    {
+      "file": "near-full-prompt.txt",
+      "prompt": "Use case: precise-object-edit. Image1 EDIT TARGET is the accepted partial near-knee mountain-climber pose. Image2 frozen exercise master; image3 canonical identity. Change only the already BENT FOREGROUND LEG to a deeper near knee drive: move that knee further toward the chest by about60-75pixels to the left and slightly upward, maintaining natural thigh length with hip flexion; heel remains tucked back, its white shoe remains airborne. This is the NEXT adjacent movement beat, not a new pose/camera. The far support leg stays fully extended exactly as image1 and MUST end in the same rear-left shoe centeredx1030,y635 with contactx1010,y677. Keep that planted foot and its entire shin untouched, and keep both hands/arms, head, shoulders, torso, pelvis height, mat edges, camera, pure black backdrop and canvas1536x1024 fixed. Do not rotate hips, pike up, twist the knee outward, duplicate legs or restore a foreground/rightmost planted shoe. Two arms/twolegs only. Core strongestpurple, bent thigh lightlilac, crisp anatomy finecontours; smooth neutral pelvis, white trainers. No text/glow.\n"
+    },
+    {
+      "file": "near-half-prompt.txt",
+      "prompt": "undefined\n"
+    },
+    {
+      "file": "near-half-shoe-repair-prompt.txt",
+      "prompt": "undefined\n"
+    },
+    {
+      "file": "pelvis-repair-prompt.txt",
+      "prompt": "undefined\n"
+    },
+    {
+      "file": "support-layer-prompt.txt",
+      "prompt": "Use case: precise-object-edit. This is a TEMPORARY technical anatomy-layer illustration, not final artwork. Image1 is edit target, mountain-climber master. Image2 is canonical identity. REMOVE ONLY the foreground leg, from its near hip through foreground thigh, knee, shin and the RIGHTMOST shoe centered around1260,680. Fill the newly exposed background with pure black and the newly exposed mat with its unchanged darkgrey texture. Leave a smooth clean mannequin hip, no wound/cross-section or injury. CRITICAL: keep the FAR LEG that ends at the LEFT/REAR white shoe centered approximately1030,630; preserve that existing rear shoe silhouette and contact at x1010,y677 EXACTLY. After this temporary edit, only ONE straight support leg and ONE rear shoe remain, at the rear-left contact. The foreground/rightmost foot location must be empty mat. Preserve head, both arms, both hands, trunk, hips, colors, mat perimeter, camera, canvas1536x1024. No text, no glow. This intermediate will next receive a bent foreground leg; do not add or bend a leg in this step.\n"
+    }
+  ],
+  "generationLedger": [
+    {
+      "file": "master-halo-candidate.png",
+      "output": "exec-de5b5703-64d1-4737-8aa7-fa24ddf9582c",
+      "decision": "Rejected halo; background repair follows"
+    },
+    {
+      "file": "1-master.png",
+      "output": "exec-7c7315ab-d438-4eb6-8f8b-4aa6bce084aa",
+      "decision": "Selected frozen master"
+    },
+    {
+      "file": "support-layer.png",
+      "output": "exec-7cfd29c9-071d-40ea-a382-36602a4dee06",
+      "decision": "Intermediate only, incomplete anatomy never released"
+    },
+    {
+      "file": "near-half.png",
+      "output": "exec-ae2e3128-35c2-4396-8446-6d7df7b99315",
+      "decision": "Selected after fixed-shoe repair"
+    },
+    {
+      "file": "near-full-candidate.png",
+      "output": "exec-1f0e0f44-af77-47b3-b508-f8a1625005d6",
+      "decision": "Rejected pelvis rise; pose repair follows"
+    },
+    {
+      "file": "near-full-level-pelvis.png",
+      "output": "exec-b1622d93-2112-45e6-8e61-8c188ba56ee4",
+      "decision": "Selected after fixed-shoe/palm/mat repair"
+    },
+    {
+      "file": "far-half.png",
+      "output": "exec-942ba095-d57e-4651-9946-be73b5206ebe",
+      "decision": "Selected unchanged"
+    },
+    {
+      "file": "far-full.png",
+      "output": "exec-10c0d2d1-b5ef-417e-bef3-22a819ef3abb",
+      "decision": "Selected unchanged"
+    }
+  ],
+  "generatedOutputs": [
+    {
+      "file": "1-master.png",
+      "sha256": "5c712b8121262e458ba536262b1783c92d707d0a7816abdccf85d7ba5bea0188"
+    },
+    {
+      "file": "far-full.png",
+      "sha256": "817d18a74bf40c70dbd2727de387873ff3e2f75b80a2a5afa2562ad800996cc2"
+    },
+    {
+      "file": "far-half.png",
+      "sha256": "808b3c89ef2d436691473d8cc63ae9ae6b817cac708389596302d8429b7253bf"
+    },
+    {
+      "file": "front-oblique-halo-candidate.png",
+      "sha256": "a509fc67e7c7f45902a1dea805ad86bde48b53d84be6c4e3d634bb3873aff8e1"
+    },
+    {
+      "file": "master-halo-candidate.png",
+      "sha256": "e12cceffad9ef6b296452c50e6905e81eff5e3a35493ef58dcb49159c611792a"
+    },
+    {
+      "file": "near-full-candidate.png",
+      "sha256": "e987c6758332ae5415b1b5410aac37c0c02c818e4e46e0b826881574f9f4bbaa"
+    },
+    {
+      "file": "near-full-fixed.png",
+      "sha256": "49e39bb75062b2a70cb190771da65945d10facb91c32f57c88953fabfe7ffdd2"
+    },
+    {
+      "file": "near-full-level-pelvis-fixed-shoe.png",
+      "sha256": "463e0cfe47b383694c1cde99cbbabddbd9c6126f5fc5f67ba541ad5ac1c24c76"
+    },
+    {
+      "file": "near-full-level-pelvis.png",
+      "sha256": "fe8a26b798ad21524d87ce001250d9d22fd792150682ce4c3e84f7b3c89e9d2b"
+    },
+    {
+      "file": "near-half-fixed-shoe.png",
+      "sha256": "9ae7e5a6e26bbfa4fc4b381747b9256ed9d8a07c1d23498fc4f28130a0a1bbf2"
+    },
+    {
+      "file": "near-half-shoe-edit.png",
+      "sha256": "5e6019522e08e258598affc8c7477bb45ad222938656118db2059f9fc72d9463"
+    },
+    {
+      "file": "near-half.png",
+      "sha256": "6bccc0dfc0657fb337ec2e484096d32dd16e27fc04bed6d02b6f04f1bef72f39"
+    },
+    {
+      "file": "rejected-near-support-switch.png",
+      "sha256": "94d90f9bc5025eccd4b625efbafdd80b7c69a431790407231acba71edc6ffa2a"
+    },
+    {
+      "file": "support-layer.png",
+      "sha256": "f311cffc4d3cf1af8812cd914855f44e7b7514ee45f846f9ee9179df9789ca5e"
+    }
+  ],
+  "fixedShoeRepair": {
+    "authorization": "Prior user response: Use this method for fixed areas; question explicitly covered remaining exercise sets, stationary equipment and planted contacts.",
+    "method": "Exact frozen-master RGB copy inside union-white shoe silhouette, dilated 3px and bounded to fixed planted shoe. No rescaling or moving anatomy edits.",
+    "masterSha256": "5c712b8121262e458ba536262b1783c92d707d0a7816abdccf85d7ba5bea0188",
+    "rect": [960, 585, 1125, 695],
+    "threshold": 110,
+    "dilate": 3,
+    "frames": [
+      {
+        "file": "near-half.png",
+        "target": "near-half-fixed-shoe.png",
+        "inputSha256": "6bccc0dfc0657fb337ec2e484096d32dd16e27fc04bed6d02b6f04f1bef72f39",
+        "outputSha256": "9ae7e5a6e26bbfa4fc4b381747b9256ed9d8a07c1d23498fc4f28130a0a1bbf2",
+        "changedPixels": 9328,
+        "changedOutsideMask": 0,
+        "changedOutsideRectangles": 0
+      },
+      {
+        "file": "near-full-level-pelvis.png",
+        "target": "near-full-level-pelvis-fixed-shoe.png",
+        "inputSha256": "fe8a26b798ad21524d87ce001250d9d22fd792150682ce4c3e84f7b3c89e9d2b",
+        "outputSha256": "463e0cfe47b383694c1cde99cbbabddbd9c6126f5fc5f67ba541ad5ac1c24c76",
+        "changedPixels": 9373,
+        "changedOutsideMask": 0,
+        "changedOutsideRectangles": 0
+      }
+    ]
+  },
+  "fixedPalmMatRepair": {
+    "file": "near-full-level-pelvis-fixed-shoe.png",
+    "target": "near-full-fixed.png",
+    "masterSha256": "5c712b8121262e458ba536262b1783c92d707d0a7816abdccf85d7ba5bea0188",
+    "inputSha256": "463e0cfe47b383694c1cde99cbbabddbd9c6126f5fc5f67ba541ad5ac1c24c76",
+    "outputSha256": "49e39bb75062b2a70cb190771da65945d10facb91c32f57c88953fabfe7ffdd2",
+    "method": "Exact frozen-master copy only within threshold union masks dilated3px inside listed fixed-contact/unobstructed-mat rectangles. User-approved fixed-region method.",
+    "regions": [
+      {
+        "name": "planted far palm",
+        "rect": [120, 710, 345, 785],
+        "threshold": 110
+      },
+      {
+        "name": "unobstructed lower mat",
+        "rect": [0, 850, 1536, 935],
+        "threshold": 15
+      }
+    ],
+    "changedPixels": 21837,
+    "changedOutsideMask": 0,
+    "changedOutsideRectangles": 0
+  },
+  "repairScripts": [
+    {
+      "file": "fix-shoe.cjs",
+      "source": "const fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypto');\nconst sharp=require('C:/Users/myles/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/sharp');\nconst hash=b=>crypto.createHash('sha256').update(b).digest('hex');\n(async()=>{const source=fs.readFileSync(path.join(__dirname,'1-master.png'));const {data:master,info}=await sharp(source).removeAlpha().raw().toBuffer({resolveWithObject:true});const rect=[960,585,1125,695],threshold=110,dilate=3,frames=[];for(const file of process.argv.slice(2)){const input=fs.readFileSync(path.join(__dirname,file)),raw=await sharp(input).removeAlpha().raw().toBuffer();if(raw.length!==master.length)throw Error('Dimensions differ');const out=Buffer.from(raw),mask=new Uint8Array(info.width*info.height);const [x0,y0,x1,y1]=rect;for(let y=y0;y<y1;y++)for(let x=x0;x<x1;x++){const p=(y*info.width+x)*3;if(Math.min(...master.subarray(p,p+3))>=threshold||Math.min(...raw.subarray(p,p+3))>=threshold){for(let yy=Math.max(y0,y-dilate);yy<Math.min(y1,y+dilate+1);yy++)for(let xx=Math.max(x0,x-dilate);xx<Math.min(x1,x+dilate+1);xx++)mask[yy*info.width+xx]=1;}}let changed=0,outside=0;for(let p=0;p<mask.length;p++){if(mask[p]){if(!raw.subarray(p*3,p*3+3).equals(master.subarray(p*3,p*3+3)))changed++;master.copy(out,p*3,p*3,p*3+3);}}for(let p=0;p<mask.length;p++)if(!mask[p]&&!out.subarray(p*3,p*3+3).equals(raw.subarray(p*3,p*3+3)))outside++;if(outside)throw Error('Changed outside mask');const target=file.replace('.png','-fixed-shoe.png');await sharp(out,{raw:{width:info.width,height:info.height,channels:3}}).png().toFile(path.join(__dirname,target));frames.push({file,target,inputSha256:hash(input),outputSha256:hash(fs.readFileSync(path.join(__dirname,target))),changedPixels:changed,changedOutsideMask:outside,changedOutsideRectangles:outside});}const record={authorization:'Prior user response: Use this method for fixed areas; question explicitly covered remaining exercise sets, stationary equipment and planted contacts.',method:'Exact frozen-master RGB copy inside union-white shoe silhouette, dilated 3px and bounded to fixed planted shoe. No rescaling or moving anatomy edits.',masterSha256:hash(source),rect,threshold,dilate,frames};fs.writeFileSync(path.join(__dirname,'fixed-shoe-provenance.json'),JSON.stringify(record,null,2)+'\\n');console.log(JSON.stringify(record,null,2));})();\n"
+    },
+    {
+      "file": "fix-near-full-static.cjs",
+      "source": "const fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypto');\nconst sharp=require('C:/Users/myles/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/sharp');\nconst hash=b=>crypto.createHash('sha256').update(b).digest('hex');\n(async()=>{const masterFile=fs.readFileSync(path.join(__dirname,'1-master.png')),file='near-full-level-pelvis-fixed-shoe.png',input=fs.readFileSync(path.join(__dirname,file));const {data:master,info}=await sharp(masterFile).removeAlpha().raw().toBuffer({resolveWithObject:true});const raw=await sharp(input).removeAlpha().raw().toBuffer(),out=Buffer.from(raw),mask=new Uint8Array(info.width*info.height);const regions=[{name:'planted far palm',rect:[120,710,345,785],threshold:110},{name:'unobstructed lower mat',rect:[0,850,1536,935],threshold:15}];for(const {rect:[x0,y0,x1,y1],threshold}of regions){for(let y=y0;y<y1;y++)for(let x=x0;x<x1;x++){const p=(y*info.width+x)*3;if(Math.min(...master.subarray(p,p+3))>=threshold||Math.min(...raw.subarray(p,p+3))>=threshold){for(let yy=Math.max(y0,y-3);yy<Math.min(y1,y+4);yy++)for(let xx=Math.max(x0,x-3);xx<Math.min(x1,x+4);xx++)mask[yy*info.width+xx]=1;}}}let changedPixels=0,changedOutsideMask=0;for(let p=0;p<mask.length;p++)if(mask[p]){if(!raw.subarray(p*3,p*3+3).equals(master.subarray(p*3,p*3+3)))changedPixels++;master.copy(out,p*3,p*3,p*3+3);}for(let p=0;p<mask.length;p++)if(!mask[p]&&!raw.subarray(p*3,p*3+3).equals(out.subarray(p*3,p*3+3)))changedOutsideMask++;if(changedOutsideMask)throw Error('Outside mask changed');const target='near-full-fixed.png';await sharp(out,{raw:{width:info.width,height:info.height,channels:3}}).png().toFile(path.join(__dirname,target));const report={file,target,masterSha256:hash(masterFile),inputSha256:hash(input),outputSha256:hash(fs.readFileSync(path.join(__dirname,target))),method:'Exact frozen-master copy only within threshold union masks dilated3px inside listed fixed-contact/unobstructed-mat rectangles. User-approved fixed-region method.',regions,changedPixels,changedOutsideMask,changedOutsideRectangles:changedOutsideMask};fs.writeFileSync(path.join(__dirname,'fixed-hand-mat-provenance.json'),JSON.stringify(report,null,2)+'\\n');console.log(report);})();\n"
+    }
+  ],
+  "selectedPngs": [
+    {
+      "frame": 1,
+      "sha256": "9ae7e5a6e26bbfa4fc4b381747b9256ed9d8a07c1d23498fc4f28130a0a1bbf2",
+      "source": "near-half-fixed-shoe.png",
+      "supportContact": {
+        "name": "farShoe",
+        "left": 982.7745664739884,
+        "right": 1067.8591549295775,
+        "width": 85.08458845558903
+      }
+    },
+    {
+      "frame": 2,
+      "sha256": "49e39bb75062b2a70cb190771da65945d10facb91c32f57c88953fabfe7ffdd2",
+      "source": "near-full-fixed.png",
+      "supportContact": {
+        "name": "farShoe",
+        "left": 982.7745664739884,
+        "right": 1067.8591549295775,
+        "width": 85.08458845558903
+      }
+    },
+    {
+      "frame": 3,
+      "sha256": "5c712b8121262e458ba536262b1783c92d707d0a7816abdccf85d7ba5bea0188",
+      "source": "1-master.png",
+      "supportContact": {
+        "name": "both",
+        "nearShoe": {
+          "left": 1209.8666666666666,
+          "right": 1309.311475409836,
+          "width": 99.44480874316946
+        },
+        "farShoe": {
+          "left": 982.7745664739884,
+          "right": 1067.8591549295775,
+          "width": 85.08458845558903
+        }
+      }
+    },
+    {
+      "frame": 4,
+      "sha256": "808b3c89ef2d436691473d8cc63ae9ae6b817cac708389596302d8429b7253bf",
+      "source": "far-half.png",
+      "supportContact": {
+        "name": "nearShoe",
+        "left": 1209.8841463414635,
+        "right": 1308.6979865771812,
+        "width": 98.81384023571763
+      }
+    },
+    {
+      "frame": 5,
+      "sha256": "817d18a74bf40c70dbd2727de387873ff3e2f75b80a2a5afa2562ad800996cc2",
+      "source": "far-full.png",
+      "supportContact": {
+        "name": "nearShoe",
+        "left": 1209.8614457831325,
+        "right": 1308.4891304347825,
+        "width": 98.62768465165004
+      }
+    },
+    {
+      "frame": 6,
+      "sha256": "5c712b8121262e458ba536262b1783c92d707d0a7816abdccf85d7ba5bea0188",
+      "source": "1-master.png",
+      "supportContact": {
+        "name": "both",
+        "nearShoe": {
+          "left": 1209.8666666666666,
+          "right": 1309.311475409836,
+          "width": 99.44480874316946
+        },
+        "farShoe": {
+          "left": 982.7745664739884,
+          "right": 1067.8591549295775,
+          "width": 85.08458845558903
+        }
+      }
+    }
+  ],
+  "reuse": {
+    "6": 3
+  },
+  "measurementMethod": "Unrounded interpolated minimum RGB scan boundaries; 1px endpoint and 1percent width gates. Far shoe applicable only to near-side drives. Separate native anatomy and mobile review required.",
+  "scanlines": {
+    "nearShoe": [1190, 1350, 690, 150],
+    "farShoe": [960, 1100, 655, 150],
+    "farHand": [120, 340, 740, 150],
+    "nearHand": [375, 610, 810, 150],
+    "matFront": [120, 800, 885, 15]
+  },
+  "conversion": "Lossless WebP decoded RGB exactly equals reviewed native PNG; no scaling."
+}
