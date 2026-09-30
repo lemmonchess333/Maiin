@@ -2,7 +2,7 @@
  * ScanDemo's motion rules, read off what each animated layer is actually
  * handed rather than off the source text.
  *
- * - One clock: every layer loops on the same 8-second LOOP, so the
+ * - One clock: every layer loops on the same 12-second LOOP, so the
  *   surface has one ambient loop and the beats stay in step.
  * - Only opacity and transform animate (the WKWebView-safe recipe).
  * - Opacity runs linear. The browser runs opacity animations natively,
@@ -73,6 +73,12 @@ vi.mock("@/hooks/useReducedMotion", () => ({
   useReducedMotion: vi.fn(() => false),
 }));
 
+/* The Food page inside the phone draws the app's own ring and macro
+   tiles, which carry their own one-off motion for a real log. These
+   rules are about the demo's loop, so they are left out. */
+vi.mock("@/components/food/CalorieRing", () => ({ default: () => null }));
+vi.mock("@/components/food/MacroColumn", () => ({ default: () => null }));
+
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import ScanDemo from "../ScanDemo";
 
@@ -92,17 +98,18 @@ afterEach(cleanup);
 describe("ScanDemo motion", () => {
   it("animates its layers when motion is allowed", () => {
     render(<ScanDemo />);
-    // The photo's drift, both reticles, the hint, the shutter and its
-    // press, the flash, the veil, the laser, three stage lines, the sheet.
-    expect(recorded.length).toBeGreaterThanOrEqual(12);
+    // The phone, the camera's pan, shutter, flash, reading overlay, laser
+    // and stage lines, the sheet with its tap and Saved, the page's
+    // scroll, and each thing the meal changes on the page.
+    expect(recorded.length).toBeGreaterThanOrEqual(20);
   });
 
-  it("runs every layer on one clock: the same 8-second infinite loop", () => {
+  it("runs every layer on one clock: the same 12-second infinite loop", () => {
     render(<ScanDemo />);
     for (const r of recorded) {
       for (const key of Object.keys(r.animate)) {
         const t = transitionFor(r, key);
-        expect(t.duration, key).toBe(8);
+        expect(t.duration, key).toBe(12);
         expect(t.repeat, key).toBe(Infinity);
       }
     }

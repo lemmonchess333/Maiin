@@ -90,7 +90,7 @@ describe("ProPreview", () => {
 });
 
 describe("ProPreview — the scan, happening", () => {
-  it("plays the scan when motion is allowed: aiming, reading, the result", () => {
+  it("plays the whole log when motion is allowed: aiming, reading, the result, the diary", () => {
     const { container } = render(
       <ProPreview variant="single" frames={["scan"]} />
     );
@@ -99,12 +99,15 @@ describe("ProPreview — the scan, happening", () => {
     expect(beats("aim")).toBeGreaterThanOrEqual(1);
     expect(beats("reading")).toBeGreaterThanOrEqual(1);
     expect(beats("result")).toBe(1);
+    // After Log, the meal is a row in the day's food log.
+    expect(beats("logged")).toBe(1);
     // The scanner's own words, so the demo reads as the product.
     expect(
       screen.getByText("Fit the whole plate in the frame")
     ).toBeInTheDocument();
     expect(screen.getByText("Reading your plate…")).toBeInTheDocument();
     expect(screen.getByText("Counting the macros…")).toBeInTheDocument();
+    expect(screen.getByText("Food log · 4 items")).toBeInTheDocument();
   });
 
   it("scans a real photo, not a blank slot", () => {
