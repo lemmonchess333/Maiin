@@ -55,9 +55,17 @@ describe("ProPreview", () => {
 
   it("numerals in the frames take the numeral font with tabular figures", () => {
     const { container } = render(<ProPreview />);
-    for (const text of ["540", "2,336", "38g"]) {
-      const el = Array.from(container.querySelectorAll("p, span")).find((n) =>
-        n.textContent?.trim().startsWith(text)
+    // The element whose OWN text is the number: a parent that only wraps
+    // it (the calorie line wraps the number and its unit) is not it.
+    const ownText = (n: Element) =>
+      Array.from(n.childNodes)
+        .filter((c) => c.nodeType === Node.TEXT_NODE)
+        .map((c) => c.textContent ?? "")
+        .join("")
+        .trim();
+    for (const text of ["720", "2,336", "95"]) {
+      const el = Array.from(container.querySelectorAll("p, span")).find(
+        (n) => ownText(n) === text
       );
       expect(el, text).toBeDefined();
       expect(el!.className).toContain("font-mono");
@@ -82,43 +90,65 @@ describe("ProPreview", () => {
 });
 
 describe("ProPreview — the scan, happening", () => {
-  it("plays three beats when motion is allowed: the photo, Pro reading it, the result", () => {
+  it("plays the whole log when motion is allowed: aiming, reading, the result, the diary", () => {
     const { container } = render(
       <ProPreview variant="single" frames={["scan"]} />
     );
     const beats = (name: string) =>
       container.querySelectorAll(`[data-beat="${name}"]`).length;
-    expect(beats("photo")).toBe(1);
+    expect(beats("aim")).toBeGreaterThanOrEqual(1);
     expect(beats("reading")).toBeGreaterThanOrEqual(1);
-    expect(beats("result")).toBeGreaterThanOrEqual(1);
-    expect(screen.getByText("Reading…")).toBeInTheDocument();
+    expect(beats("result")).toBe(1);
+    // After Log, the meal is a row in the day's food log.
+    expect(beats("logged")).toBe(1);
+    // The scanner's own words, so the demo reads as the product.
+    expect(
+      screen.getByText("Fit the whole plate in the frame")
+    ).toBeInTheDocument();
+    expect(screen.getByText("Reading your plate…")).toBeInTheDocument();
+    expect(screen.getByText("Counting the macros…")).toBeInTheDocument();
+    expect(screen.getByText("Food log · 4 items")).toBeInTheDocument();
   });
 
-  it("under reduced motion, renders the settled result and nothing that reads", () => {
+  it("draws the app's screens without adding a heading to the page it sits on", () => {
+    // The Upgrade page and the Pro popup own their one h1, and the
+    // authenticated a11y e2e counts every h1 in the document, hidden or not.
+    for (const reduce of [false, true]) {
+      vi.mocked(useReducedMotion).mockReturnValue(reduce);
+      const { container, unmount } = render(
+        <ProPreview variant="single" frames={["scan"]} />
+      );
+      expect(
+        container.querySelectorAll("h1, h2, h3, h4, h5, h6"),
+        reduce ? "reduced motion" : "motion"
+      ).toHaveLength(0);
+      unmount();
+    }
+  });
+
+  it("scans a real photo, not a blank slot", () => {
+    const { container } = render(
+      <ProPreview variant="single" frames={["scan"]} />
+    );
+    const img = container.querySelector("img");
+    expect(img?.getAttribute("src")).toMatch(/rigatoni/);
+  });
+
+  it("under reduced motion, renders the settled result and nothing that aims or reads", () => {
     vi.mocked(useReducedMotion).mockReturnValue(true);
     const { container } = render(
       <ProPreview variant="single" frames={["scan"]} />
     );
     expect(container.querySelectorAll("[data-beat]")).toHaveLength(0);
-    expect(screen.queryByText("Reading…")).toBeNull();
-    expect(screen.getByText("Read")).toBeInTheDocument();
-    expect(screen.getByText("38g")).toBeInTheDocument();
+    expect(screen.queryByText("Reading your plate…")).toBeNull();
+    expect(screen.queryByText("Fit the whole plate in the frame")).toBeNull();
+    expect(screen.getByText("720")).toBeInTheDocument();
+    expect(screen.getByText("Log to Dinner")).toBeInTheDocument();
   });
 
-  it("keeps the glow recipe: one clock on the surface, and only opacity or transform ever animates", () => {
+  it("the preview file itself never animates: the scan's loop lives in ScanDemo", () => {
     const src = readFileSync(resolve(__dirname, "../ProPreview.tsx"), "utf8");
-    // One ambient loop per surface: every layer shares LOOP, so the
-    // literal appears once — the target frame never animates.
-    expect(src.match(/repeat: Infinity/g)).toHaveLength(1);
-    // Animating a filter, a size or a colour stutters in WKWebView; the
-    // recipe is a static layer whose opacity / transform moves.
-    for (const block of src.match(/animate=\{[\s\S]*?\}\s*$/gm) ?? []) {
-      expect(block).not.toMatch(
-        /filter|blur|width|height|background|scale|color/
-      );
-    }
-    expect(src).not.toMatch(
-      /animate=\{[^}]*(filter|blur|width|height|background)/
-    );
+    expect(src).not.toMatch(/repeat: Infinity/);
+    expect(src).not.toMatch(/animate=/);
   });
 });

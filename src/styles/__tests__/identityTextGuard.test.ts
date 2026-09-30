@@ -171,7 +171,7 @@ const EXPECTED_INLINE_USES = {
   // sparkle tile with them.
   // 2026-09-27: 39 → 38. DS3's rest-day card tints its leaf with the
   // `text-lifting-strong` class instead of the inline brand colour.
-  "THEME.brand": 38,
+  "THEME.brand": 37,
   // 2026-09-18: 21 → 19. Home's "Log food" action and the nudge note
   // above it were the two smallest-text uses and measured 2.77:1; both
   // moved to `text-nutrition-strong`. The rest are icons and fills.
