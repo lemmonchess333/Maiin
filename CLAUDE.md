@@ -1812,6 +1812,20 @@ the ratchet, the suite or lint out of `unit` and the gate is gone with
 nothing else to say so. It deliberately does not pin the ruleset, which
 no test here can read.
 
+### The client SDK's `@grpc/grpc-js` is overridden to 1.14.5
+
+Root `package.json` carries one `overrides` entry. `@firebase/firestore`
+pins `@grpc/grpc-js` to `~1.9.0`, and no 1.9.x release fixes
+GHSA-m9gg-hp2v-232j or GHSA-f596-whhp-79r4 (both fixed in 1.14.5). When
+they were published, the `audit` job went red on every branch. grpc-js
+runs only in the SDK's Node build, which here means the rules tests; the
+web bundle talks to Firestore over WebChannel and ships none of it. The
+override passed both rules suites and the functions suite.
+
+- [ ] Remove the override once `@firebase/firestore` depends on a fixed
+      grpc-js. Without it, `npm ls @grpc/grpc-js` shows what the SDK
+      resolves.
+
 ### Race-day completion predicate (PR #1775)
 
 Affects: `functions/lib/raceDayCompletion.js`, new `functions/lib/raceTemplateIds.js` — both reached from `dailyRaceReconciliationSweep` and `onRunCreated`. Merged 2026-07-26 from a web session that cannot view the deployed source.
