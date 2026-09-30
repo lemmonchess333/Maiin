@@ -4,6 +4,7 @@ import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
 import { setDocGuarded } from "@/lib/firestoreWrite";
 import { logger } from "@/lib/logger";
+import { toast } from "@/lib/toast";
 import {
   isHealthAvailable,
   requestStepsReadPermission,
@@ -15,7 +16,9 @@ import {
  * (iOS half of POST_LAUNCH.md "Steps tile → HealthKit / Health Connect
  * wiring").
  *
- *  - `unavailable` — web, or a device without Health. The tile hides.
+ *  - `unavailable` — web, or a device without Health. On a device the tile
+ *                    hides; the web shows it in its Connect state as a
+ *                    picture (it can never connect there).
  *  - `unprompted`  — native + Health available + not yet connected. The tile
  *                    shows the "Connect Health" affordance; the priming modal
  *                    may fire (once ever, per `primingShown`).
@@ -133,8 +136,17 @@ export function useSteps(): UseStepsResult {
       // If the user already tapped connect/dismiss during the load, don't
       // clobber their write with the hydrated (older) flags.
       if (!flagsDirtyRef.current) setFlags(loaded);
-      if ((flagsDirtyRef.current ? flagsRef.current : loaded).connected)
+      if ((flagsDirtyRef.current ? flagsRef.current : loaded).connected) {
+        // Apple Health's permission belongs to this install of the app,
+        // but `connected` is saved on the account. On a new phone, or
+        // after a reinstall, the account says connected while iOS has
+        // never asked, and every read comes back empty. Asking again
+        // shows Apple's sheet only when this install hasn't answered;
+        // otherwise it returns at once.
+        await requestStepsReadPermission();
+        if (!alive) return;
         await fetchSteps();
+      }
     })();
     return () => {
       alive = false;
@@ -158,7 +170,16 @@ export function useSteps(): UseStepsResult {
   const connect = useCallback(async () => {
     // iOS never reports a denied READ scope, so this resolves "granted" on a
     // completed request; the connected-but-zero case becomes `ambiguous`.
-    await requestStepsReadPermission();
+    const result = await requestStepsReadPermission();
+    if (result !== "granted") {
+      // The request itself failed (no Health permission in the build, or
+      // not the phone), so nothing is connected. Saving connected here
+      // would leave the tile at 0 with no way back to Connect. Close the
+      // prompt, keep Connect on the tile.
+      await persist({ primingShown: true });
+      toast.error("Couldn't connect Apple Health");
+      return;
+    }
     await persist({ connected: true, primingShown: true });
     await fetchSteps();
   }, [persist, fetchSteps]);
