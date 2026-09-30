@@ -1,7 +1,6 @@
 import { useLayoutEffect, useRef, type ReactNode } from "react";
 import { motion, type Easing, type Transition } from "framer-motion";
 import {
-  BatteryFull,
   Beef,
   CalendarDays,
   Camera,
@@ -14,9 +13,7 @@ import {
   Plus,
   RefreshCw,
   Settings as SettingsIcon,
-  Signal,
   Wheat,
-  Wifi,
   X,
 } from "lucide-react";
 import { THEME } from "@/lib/theme";
@@ -96,6 +93,17 @@ const SCREEN_H = 844;
 const BEZEL = 12;
 const PHONE_W = SCREEN_W + 2 * BEZEL;
 const PHONE_H = SCREEN_H + 2 * BEZEL;
+/** The side buttons as they sit on a current iPhone Pro, in the phone's
+ *  pixels: the Action button over volume up and down on the left; the
+ *  side button on the right, and below it the Camera Control, near
+ *  flush with the frame. */
+const SIDE_BUTTONS = [
+  { side: "left", top: 170, height: 44, flush: false },
+  { side: "left", top: 252, height: 60, flush: false },
+  { side: "left", top: 330, height: 60, flush: false },
+  { side: "right", top: 262, height: 100, flush: false },
+  { side: "right", top: 522, height: 92, flush: true },
+] as const;
 /** The stage: the phone is 58% of its width, and it is 5:6. */
 const STAGE_W = 714;
 const STAGE_H = 857;
@@ -215,21 +223,95 @@ function until(s: number, fade = 0.2): Track {
 
 /* ── Pieces ──────────────────────────────────────────────────────────── */
 
+/** The status bar's type: the system face, as iOS draws it (San
+ *  Francisco on an Apple device), falling back to the app's own. */
+const SYSTEM_FONT = "-apple-system, BlinkMacSystemFont, var(--font-display)";
+
+/** iOS's status bar on a Dynamic Island iPhone: the time centred in the
+ *  space left of the island, the signal, Wi-Fi and battery glyphs
+ *  centred in the space right of it, both level with the island's
+ *  middle. */
 function StatusBar({ className }: { className?: string }) {
   return (
     <div
       className={cn(
-        "absolute inset-x-0 top-0 z-10 flex h-[54px] items-center justify-between px-8 pt-1.5",
+        "absolute inset-x-0 top-[11px] flex h-9 items-center justify-between",
         className
       )}
+      style={{ fontFamily: SYSTEM_FONT }}
     >
-      <span className="text-base font-semibold">7:42</span>
-      <span className="flex items-center gap-1.5">
-        <Signal className="size-[18px]" strokeWidth={2.5} />
-        <Wifi className="size-[18px]" strokeWidth={2.5} />
-        <BatteryFull className="size-6" strokeWidth={1.75} />
+      <span className="flex w-[130px] justify-center text-base font-semibold tracking-tight">
+        7:42
+      </span>
+      <span className="flex w-[130px] items-center justify-center gap-[5px]">
+        <SignalGlyph />
+        <WifiGlyph />
+        <BatteryGlyph />
       </span>
     </div>
+  );
+}
+
+/** Four solid bars, rising left to right: full signal. */
+function SignalGlyph() {
+  return (
+    <svg viewBox="0 0 17 11" className="h-[11px] w-[17px]" fill="currentColor">
+      <rect x="0" y="7" width="3" height="4" rx="1" />
+      <rect x="4.67" y="4.67" width="3" height="6.33" rx="1" />
+      <rect x="9.33" y="2.33" width="3" height="8.67" rx="1" />
+      <rect x="14" y="0" width="3" height="11" rx="1" />
+    </svg>
+  );
+}
+
+/** The Wi-Fi fan: a quarter circle opening upwards, cut into a point
+ *  and two bands. */
+function WifiGlyph() {
+  return (
+    <svg
+      viewBox="0 0 16 12"
+      className="h-3 w-4"
+      fill="none"
+      stroke="currentColor"
+      strokeLinecap="round"
+      strokeWidth={2.2}
+    >
+      <path d="M1.5 4.7A9.2 9.2 0 0 1 14.5 4.7" />
+      <path d="M3.83 7.03A5.9 5.9 0 0 1 12.17 7.03" />
+      <path
+        d="M8 11.2 5.67 8.87A3.3 3.3 0 0 1 10.33 8.87Z"
+        fill="currentColor"
+        strokeLinejoin="round"
+        strokeWidth={0.8}
+      />
+    </svg>
+  );
+}
+
+/** The battery as a bar: the charge solid, the rest of the body faint,
+ *  and the terminal on the right. Four-fifths charged. */
+function BatteryGlyph() {
+  return (
+    <svg viewBox="0 0 27 13" className="h-[13px] w-[27px]" fill="currentColor">
+      <rect width="24" height="13" rx="4" fillOpacity={0.35} />
+      <path d="M4 0h15.2v13H4a4 4 0 0 1-4-4V4a4 4 0 0 1 4-4Z" />
+      <path
+        d="M25 4.25h.5A1.5 1.5 0 0 1 27 5.75v1.5a1.5 1.5 0 0 1-1.5 1.5H25Z"
+        fillOpacity={0.4}
+      />
+    </svg>
+  );
+}
+
+/** The home indicator iOS draws at the foot of the screen. */
+function HomeIndicator({ className }: { className?: string }) {
+  return (
+    <span
+      className={cn(
+        "absolute bottom-2 left-1/2 h-[5px] w-[134px] -translate-x-1/2 rounded-full",
+        className
+      )}
+    />
   );
 }
 
@@ -312,7 +394,8 @@ function CameraScreen() {
         transition={{ ...LOOP, ease: "easeInOut", times: pan }}
       />
 
-      <StatusBar className="text-white" />
+      <StatusBar className="z-10 text-white" />
+      <HomeIndicator className="z-10 bg-stage-foreground" />
       <span className="absolute left-4 top-[58px] flex size-11 items-center justify-center rounded-full bg-black/50">
         <X className="size-5" />
       </span>
@@ -1010,10 +1093,9 @@ function FoodScreen({ live }: { live: boolean }) {
         </div>
       </motion.div>
 
-      {/* Fixed chrome: the status bar over a strip of page colour, and
+      {/* Fixed chrome: a strip of page colour under the status bar, and
           the floating tab bar. */}
       <div className="absolute inset-x-0 top-0 h-[54px] bg-background" />
-      <StatusBar className="text-foreground" />
       <div className="absolute inset-x-3 bottom-[34px]">
         <div
           className="flex items-stretch rounded-full border border-border/60 p-1 card-shadow"
@@ -1143,20 +1225,46 @@ export default function ScanDemo() {
             live ? { ...LOOP, ease: phoneEase, times: phoneTimes } : undefined
           }
         >
-          {/* The phone: a black body, its side buttons, the screen. */}
-          <span className="absolute -left-[3px] top-[150px] h-8 w-[3px] rounded-l-sm bg-black" />
-          <span className="absolute -left-[3px] top-[200px] h-14 w-[3px] rounded-l-sm bg-black" />
-          <span className="absolute -left-[3px] top-[268px] h-14 w-[3px] rounded-l-sm bg-black" />
-          <span className="absolute -right-[3px] top-[220px] h-20 w-[3px] rounded-r-sm bg-black" />
-          <div className="absolute inset-0 rounded-[62px] bg-black shadow-2xl ring-1 ring-white/15" />
+          {/* The phone, a current iPhone Pro from the front: its buttons,
+              the metal band, the black border of the glass, the screen. */}
+          {SIDE_BUTTONS.map(({ side, top, height, flush }) => (
+            <span
+              key={top}
+              className={cn(
+                "absolute w-[4px] overflow-hidden bg-black",
+                side === "left"
+                  ? "-left-[3px] rounded-l-[2px]"
+                  : "-right-[3px] rounded-r-[2px]",
+                flush && "-right-[2px] w-[3px]"
+              )}
+              style={{ top, height }}
+            >
+              <span
+                className={cn(
+                  "absolute inset-0 ring-1 ring-inset ring-white/20",
+                  flush ? "bg-stage-muted/20" : "bg-stage-muted/40"
+                )}
+              />
+            </span>
+          ))}
+          {/* Graphite, the same in both themes: the metal is a tint of
+              the stage's grey over black, so it stays opaque. */}
+          <div className="absolute inset-0 overflow-hidden rounded-[72px] bg-black shadow-2xl">
+            <span className="absolute inset-0 rounded-[72px] bg-stage-muted/40 ring-1 ring-inset ring-white/20" />
+          </div>
+          <div className="absolute inset-[3px] rounded-[69px] bg-black" />
           <div
-            className="absolute isolate overflow-hidden rounded-[50px] bg-background"
+            className="absolute isolate overflow-hidden rounded-[60px] bg-background"
             style={{ inset: BEZEL, transform: "translateZ(0)" }}
           >
             <FoodScreen live={live} />
             <ResultSheet live={live} />
+            {/* iOS draws its status bar and home indicator over the app,
+                so neither dims with the page under the sheet. */}
+            <StatusBar className="z-[25] text-foreground" />
+            <HomeIndicator className="z-[25] bg-foreground" />
             {live && <CameraScreen />}
-            <span className="absolute left-1/2 top-[11px] z-40 h-[35px] w-[122px] -translate-x-1/2 rounded-full bg-black" />
+            <span className="absolute left-1/2 top-[11px] z-40 h-9 w-[84px] -translate-x-1/2 rounded-full bg-black" />
           </div>
         </motion.div>
       </div>
