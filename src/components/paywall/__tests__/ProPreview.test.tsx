@@ -110,6 +110,22 @@ describe("ProPreview — the scan, happening", () => {
     expect(screen.getByText("Food log · 4 items")).toBeInTheDocument();
   });
 
+  it("draws the app's screens without adding a heading to the page it sits on", () => {
+    // The Upgrade page and the Pro popup own their one h1, and the
+    // authenticated a11y e2e counts every h1 in the document, hidden or not.
+    for (const reduce of [false, true]) {
+      vi.mocked(useReducedMotion).mockReturnValue(reduce);
+      const { container, unmount } = render(
+        <ProPreview variant="single" frames={["scan"]} />
+      );
+      expect(
+        container.querySelectorAll("h1, h2, h3, h4, h5, h6"),
+        reduce ? "reduced motion" : "motion"
+      ).toHaveLength(0);
+      unmount();
+    }
+  });
+
   it("scans a real photo, not a blank slot", () => {
     const { container } = render(
       <ProPreview variant="single" frames={["scan"]} />

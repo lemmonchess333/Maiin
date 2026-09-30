@@ -855,9 +855,11 @@ function FoodScreen({ live }: { live: boolean }) {
         }
       >
         <div className="flex items-start justify-between gap-3 py-1">
-          <h1 className="text-h1 font-extrabold leading-tight tracking-tight">
+          {/* The page title's look, not a heading: this is a picture, and
+              the page it sits on has its own h1. */}
+          <p className="text-h1 font-extrabold leading-tight tracking-tight">
             Food
-          </h1>
+          </p>
           <span className="inline-flex items-center rounded-full bg-card card-shadow">
             <span className="flex size-11 items-center justify-center">
               <ChevronLeft className="size-4" />
