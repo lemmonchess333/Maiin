@@ -29,6 +29,16 @@
 #   upload), and it never registered the Google sign-in URL scheme (the
 #   GoogleSignIn SDK raises without it). The first run is still a bring-up.
 #
+#   Four more, found the same way when the owner, who has no Mac, set out to
+#   run it (2026-09-30): it ran on macos-14, a deprecated image; the project
+#   signs automatically, which on a runner with no Apple account looks for a
+#   development profile that will never exist; the export options named no
+#   profile for the manual export; and the app declared none of the
+#   entitlements Sign in with Apple and HealthKit need, so both would have
+#   failed on the phone. Signing now switches the App target alone to the
+#   imported App Store profile, and the profile is checked against the
+#   certificate, the team and the app's entitlements before the archive.
+#
 # Canonical pattern: import a distribution cert + provisioning profile into
 # an ephemeral keychain, archive with xcodebuild, export an .ipa, upload
 # with an App Store Connect API key. See docs/ios-release.md for the full
@@ -51,8 +61,13 @@ concurrency:
 
 jobs:
   testflight:
-    runs-on: macos-14
-    timeout-minutes: 40
+    # macos-14 is deprecated (actions/runner-images#13518). macos-26 carries
+    # the current Xcode as its default, which is what App Store Connect
+    # accepts uploads from; the Archive step prints the version it used.
+    runs-on: macos-26
+    # The first archive resolves every Swift package from scratch, and the
+    # Firebase SDK alone is large.
+    timeout-minutes: 60
     env:
       # ── App identity (match capacitor.config.ts appId) ──────────────
       # Non-secret only. SIGNING secrets stay scoped to the individual
@@ -72,6 +87,38 @@ jobs:
 
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      # Every secret this run needs, checked together before `npm ci` and a
+      # 20-minute archive, so a missing one is named in the first minute and
+      # all of them at once. This step runs no package code.
+      - name: Check the signing secrets are set
+        env:
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          IOS_DIST_CERT_P12_BASE64: ${{ secrets.IOS_DIST_CERT_P12_BASE64 }}
+          IOS_DIST_CERT_PASSWORD: ${{ secrets.IOS_DIST_CERT_PASSWORD }}
+          IOS_PROVISIONING_PROFILE_BASE64: ${{ secrets.IOS_PROVISIONING_PROFILE_BASE64 }}
+          ASC_API_KEY_ID: ${{ secrets.ASC_API_KEY_ID }}
+          ASC_API_ISSUER_ID: ${{ secrets.ASC_API_ISSUER_ID }}
+          ASC_API_KEY_P8_BASE64: ${{ secrets.ASC_API_KEY_P8_BASE64 }}
+          IOS_GOOGLE_SERVICE_INFO_PLIST_BASE64: ${{ secrets.IOS_GOOGLE_SERVICE_INFO_PLIST_BASE64 }}
+        run: |
+          set -euo pipefail
+          missing=""
+          for name in APPLE_TEAM_ID IOS_DIST_CERT_P12_BASE64 IOS_DIST_CERT_PASSWORD \
+            IOS_PROVISIONING_PROFILE_BASE64 ASC_API_KEY_ID ASC_API_ISSUER_ID \
+            ASC_API_KEY_P8_BASE64 IOS_GOOGLE_SERVICE_INFO_PLIST_BASE64; do
+            if [ -z "${!name}" ]; then missing="$missing $name"; fi
+          done
+          if [ -n "$missing" ]; then
+            echo "::error::Missing repository secrets:$missing. docs/ios-release.md says how to make each one, without a Mac."
+            exit 1
+          fi
+          # Every step strips whitespace from these, so a secret pasted with a
+          # trailing newline still works.
+          if ! [[ "$(printf '%s' "$APPLE_TEAM_ID" | tr -d '[:space:]')" =~ ^[A-Z0-9]{10}$ ]]; then
+            echo "::error::APPLE_TEAM_ID should be the 10-character Team ID from Apple Developer → Membership details, with nothing around it."
+            exit 1
+          fi
 
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
@@ -100,7 +147,7 @@ jobs:
             exit 1
           fi
           PLIST=ios/App/App/GoogleService-Info.plist
-          echo "$IOS_GOOGLE_SERVICE_INFO_PLIST_BASE64" | base64 --decode > "$PLIST"
+          printf '%s' "$IOS_GOOGLE_SERVICE_INFO_PLIST_BASE64" | tr -d '[:space:]' | base64 --decode > "$PLIST"
           plutil -lint "$PLIST"
           PLIST_BUNDLE_ID=$(/usr/libexec/PlistBuddy -c "Print :BUNDLE_ID" "$PLIST")
           if [ "$PLIST_BUNDLE_ID" != "$BUNDLE_ID" ]; then
@@ -199,32 +246,142 @@ jobs:
             exit 1
           fi
 
+      # The owner has no Mac, so the certificate comes from a CSR made with
+      # openssl and the profile from Apple's website (docs/ios-release.md).
+      # Either can be wrong in a way that only shows 20 minutes into the
+      # archive, so both are checked here first. The profile is checked
+      # against the team, the bundle id, the distribution type, its expiry
+      # and every entitlement the app declares. The certificate is checked
+      # against the profile it has to match.
       - name: Import signing certificate + provisioning profile
         env:
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           IOS_DIST_CERT_P12_BASE64: ${{ secrets.IOS_DIST_CERT_P12_BASE64 }}
           IOS_DIST_CERT_PASSWORD: ${{ secrets.IOS_DIST_CERT_PASSWORD }}
           IOS_PROVISIONING_PROFILE_BASE64: ${{ secrets.IOS_PROVISIONING_PROFILE_BASE64 }}
-          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
         run: |
           set -euo pipefail
           KEYCHAIN="$RUNNER_TEMP/app-signing.keychain-db"
           CERT_PATH="$RUNNER_TEMP/dist-cert.p12"
           PROFILE_PATH="$RUNNER_TEMP/profile.mobileprovision"
+          export PROFILE_PLIST="$RUNNER_TEMP/profile.plist"
+          export FACTS="$RUNNER_TEMP/profile-facts"
+          # The keychain lives for this job only, so its password is made
+          # here rather than kept as a secret.
+          KEYCHAIN_PASSWORD=$(openssl rand -base64 24)
+          export APPLE_TEAM_ID=$(printf '%s' "$APPLE_TEAM_ID" | tr -d '[:space:]')
+          IOS_DIST_CERT_PASSWORD=$(printf '%s' "$IOS_DIST_CERT_PASSWORD" | tr -d '\r\n')
 
-          echo "$IOS_DIST_CERT_P12_BASE64" | base64 --decode > "$CERT_PATH"
-          echo "$IOS_PROVISIONING_PROFILE_BASE64" | base64 --decode > "$PROFILE_PATH"
+          printf '%s' "$IOS_DIST_CERT_P12_BASE64" | tr -d '[:space:]' | base64 --decode > "$CERT_PATH"
+          printf '%s' "$IOS_PROVISIONING_PROFILE_BASE64" | tr -d '[:space:]' | base64 --decode > "$PROFILE_PATH"
+          if ! security cms -D -i "$PROFILE_PATH" > "$PROFILE_PLIST"; then
+            echo "::error::IOS_PROVISIONING_PROFILE_BASE64 does not decode to a provisioning profile. It should be the base64 of the .mobileprovision file."
+            exit 1
+          fi
+
+          python3 - <<'PY'
+          import datetime, hashlib, os, plistlib, sys
+
+          with open(os.environ["PROFILE_PLIST"], "rb") as f:
+              profile = plistlib.load(f)
+          with open("ios/App/App/App.entitlements", "rb") as f:
+              wanted = plistlib.load(f)
+          team, bundle = os.environ["APPLE_TEAM_ID"], os.environ["BUNDLE_ID"]
+          have = profile.get("Entitlements", {})
+          problems = []
+          app_id = have.get("application-identifier", "")
+          if not app_id.endswith("." + bundle):
+              problems.append(f"it is for {app_id}, not {bundle}")
+          if team not in profile.get("TeamIdentifier", []):
+              problems.append(f"it belongs to team {profile.get('TeamIdentifier')}, not APPLE_TEAM_ID {team}")
+          if "ProvisionedDevices" in profile or have.get("get-task-allow"):
+              problems.append("it is a development or ad hoc profile, and this needs an App Store Connect distribution profile")
+          now = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
+          if profile["ExpirationDate"] < now:
+              problems.append(f"it expired on {profile['ExpirationDate']:%Y-%m-%d}")
+          missing = sorted(key for key in wanted if key not in have)
+          if missing:
+              problems.append(
+                  "it lacks " + ", ".join(missing)
+                  + ". Turn the matching capabilities on for the App ID, then make the profile again"
+              )
+          for problem in problems:
+              print(f"::error::The provisioning profile is wrong: {problem}.")
+          if problems:
+              sys.exit(1)
+          print(f"Profile {profile['Name']} ({profile['UUID']}), expires {profile['ExpirationDate']:%Y-%m-%d}")
+          with open(os.environ["FACTS"], "w") as out:
+              out.write(profile["UUID"] + "\n")
+              for der in profile.get("DeveloperCertificates", []):
+                  out.write(hashlib.sha1(der).hexdigest().upper() + "\n")
+          PY
+          PROFILE_UUID=$(head -1 "$FACTS")
 
           security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
           security set-keychain-settings -lut 21600 "$KEYCHAIN"
           security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          # Apple's intermediate, so the chain still validates if the image
+          # ever stops carrying it.
+          if curl -fsSL --retry 3 -o "$RUNNER_TEMP/AppleWWDRCAG3.cer" \
+            https://www.apple.com/certificateauthority/AppleWWDRCAG3.cer; then
+            security import "$RUNNER_TEMP/AppleWWDRCAG3.cer" -k "$KEYCHAIN" -A || true
+          fi
           security import "$CERT_PATH" -P "$IOS_DIST_CERT_PASSWORD" \
             -A -t cert -f pkcs12 -k "$KEYCHAIN"
           security list-keychain -d user -s "$KEYCHAIN" login.keychain-db
           security set-key-partition-list -S apple-tool:,apple: \
             -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN" >/dev/null
 
-          mkdir -p "$HOME/Library/MobileDevice/Provisioning Profiles"
-          cp "$PROFILE_PATH" "$HOME/Library/MobileDevice/Provisioning Profiles/"
+          IDENTITIES=$(security find-identity -v -p codesigning "$KEYCHAIN")
+          echo "$IDENTITIES"
+          CERT_SHA1=$(echo "$IDENTITIES" | awk '/"(Apple|iPhone) Distribution/ {print $2; exit}')
+          if [ -z "$CERT_SHA1" ]; then
+            echo "::error::IOS_DIST_CERT_P12_BASE64 holds no valid Apple Distribution identity. The certificate must be an Apple Distribution certificate made from the private key that went into the .p12."
+            exit 1
+          fi
+          if ! tail -n +2 "$FACTS" | grep -qx "$CERT_SHA1"; then
+            echo "::error::The provisioning profile was made for a different certificate. Edit the profile on Apple's site, tick the certificate in this .p12, download it again and update IOS_PROVISIONING_PROFILE_BASE64."
+            exit 1
+          fi
+
+          # Xcode 16 moved where it reads profiles from, so install in both.
+          for dir in "$HOME/Library/MobileDevice/Provisioning Profiles" \
+            "$HOME/Library/Developer/Xcode/UserData/Provisioning Profiles"; do
+            mkdir -p "$dir"
+            cp "$PROFILE_PATH" "$dir/$PROFILE_UUID.mobileprovision"
+          done
+          echo "PROFILE_UUID=$PROFILE_UUID" >> "$GITHUB_ENV"
+
+      # The project as committed signs automatically. On a runner with no
+      # Apple account that looks for a development profile that will never
+      # exist, and the archive fails. Switch the App target alone to the
+      # profile imported above. Passing PROVISIONING_PROFILE_SPECIFIER to
+      # xcodebuild instead would set it on every Swift package target too,
+      # and xcodebuild refuses a profile on a package target.
+      - name: Sign the App target with the App Store profile
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import os, sys
+
+          path = "ios/App/App.xcodeproj/project.pbxproj"
+          with open(path) as f:
+              src = f.read()
+          automatic = "CODE_SIGN_STYLE = Automatic;"
+          found = src.count(automatic)
+          if found != 2:
+              print(f"::error::Expected the App target's Debug and Release settings to sign automatically (two '{automatic}'), found {found}. The project's signing settings changed, so update this step.")
+              sys.exit(1)
+          manual = (
+              "CODE_SIGN_STYLE = Manual;\n"
+              '\t\t\t\tCODE_SIGN_IDENTITY = "Apple Distribution";\n'
+              '\t\t\t\tPROVISIONING_PROFILE_SPECIFIER = "' + os.environ["PROFILE_UUID"] + '";'
+          )
+          with open(path, "w") as f:
+              f.write(src.replace(automatic, manual))
+          PY
+          grep -n -E 'CODE_SIGN_STYLE|CODE_SIGN_IDENTITY|PROVISIONING_PROFILE_SPECIFIER' \
+            ios/App/App.xcodeproj/project.pbxproj
 
       # `-project`, not `-workspace`: there is no ios/App/App.xcworkspace. The
       # project consumes Capacitor and every plugin through the local Swift
@@ -243,38 +400,57 @@ jobs:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
           set -euo pipefail
+          APPLE_TEAM_ID=$(printf '%s' "$APPLE_TEAM_ID" | tr -d '[:space:]')
           xcodebuild -version
           xcodebuild -list -project ios/App/App.xcodeproj
           APP_VERSION=$(node -p "require('./package.json').version")
           echo "Archiving $APP_VERSION ($GITHUB_RUN_NUMBER)"
+          # The two -skip flags stop xcodebuild refusing a package's plugin
+          # or macro for want of a person to approve it, which on a CI runner
+          # never comes.
           xcodebuild -project ios/App/App.xcodeproj \
             -scheme "$SCHEME" \
             -configuration Release \
             -archivePath "$RUNNER_TEMP/App.xcarchive" \
             -destination "generic/platform=iOS" \
+            -skipPackagePluginValidation \
+            -skipMacroValidation \
             DEVELOPMENT_TEAM="$APPLE_TEAM_ID" \
             MARKETING_VERSION="$APP_VERSION" \
             CURRENT_PROJECT_VERSION="$GITHUB_RUN_NUMBER" \
             clean archive
 
+      # A manual export has to be told which profile signs which bundle id;
+      # without the mapping it stops at "no profiles for com.tropos.app".
+      # The build number comes from the Archive step, so Xcode is told not
+      # to manage it, which it would otherwise try to do by contacting App
+      # Store Connect with credentials this step does not have.
       - name: Export .ipa
         env:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
           set -euo pipefail
+          APPLE_TEAM_ID=$(printf '%s' "$APPLE_TEAM_ID" | tr -d '[:space:]')
           cat > "$RUNNER_TEMP/ExportOptions.plist" <<PLIST
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
           <plist version="1.0">
           <dict>
-            <key>method</key><string>app-store</string>
+            <key>method</key><string>app-store-connect</string>
             <key>teamID</key><string>${APPLE_TEAM_ID}</string>
             <key>signingStyle</key><string>manual</string>
+            <key>signingCertificate</key><string>Apple Distribution</string>
+            <key>provisioningProfiles</key>
+            <dict>
+              <key>${BUNDLE_ID}</key><string>${PROFILE_UUID}</string>
+            </dict>
+            <key>manageAppVersionAndBuildNumber</key><false/>
             <key>uploadSymbols</key><true/>
             <key>destination</key><string>export</string>
           </dict>
           </plist>
           PLIST
+          plutil -lint "$RUNNER_TEMP/ExportOptions.plist"
           xcodebuild -exportArchive \
             -archivePath "$RUNNER_TEMP/App.xcarchive" \
             -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" \
@@ -287,10 +463,20 @@ jobs:
           ASC_API_KEY_P8_BASE64: ${{ secrets.ASC_API_KEY_P8_BASE64 }}
         run: |
           set -euo pipefail
+          ASC_API_KEY_ID=$(printf '%s' "$ASC_API_KEY_ID" | tr -d '[:space:]')
+          ASC_API_ISSUER_ID=$(printf '%s' "$ASC_API_ISSUER_ID" | tr -d '[:space:]')
           mkdir -p "$HOME/.appstoreconnect/private_keys"
-          echo "$ASC_API_KEY_P8_BASE64" | base64 --decode \
+          printf '%s' "$ASC_API_KEY_P8_BASE64" | tr -d '[:space:]' | base64 --decode \
             > "$HOME/.appstoreconnect/private_keys/AuthKey_${ASC_API_KEY_ID}.p8"
           IPA=$(ls "$RUNNER_TEMP"/export/*.ipa | head -1)
           xcrun altool --upload-app -f "$IPA" -t ios \
             --apiKey "$ASC_API_KEY_ID" \
             --apiIssuer "$ASC_API_ISSUER_ID"
+
+      # The runner is thrown away after the job, but the signing key should
+      # not outlive the steps that needed it.
+      - name: Remove the signing keychain and key files
+        if: always()
+        run: |
+          security delete-keychain "$RUNNER_TEMP/app-signing.keychain-db" 2>/dev/null || true
+          rm -f "$RUNNER_TEMP/dist-cert.p12" "$HOME/.appstoreconnect/private_keys/"AuthKey_*.p8

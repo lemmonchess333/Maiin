@@ -19,6 +19,12 @@
  * What this cannot tell you: whether the archive succeeds. The first run
  * of the workflow is still a bring-up; these keep it from failing for a
  * reason a reader could have seen.
+ *
+ * A second read (2026-09-30), when the owner, who has no Mac, set out to
+ * run it, found four more: a deprecated runner image; automatic signing,
+ * which on a runner with no Apple account looks for a development profile
+ * that will never exist; an export with no profile mapping; and none of the
+ * entitlements the Sign in with Apple and HealthKit plugins need.
  */
 import { describe, it, expect } from "vitest";
 import { existsSync, readFileSync } from "node:fs";
@@ -33,11 +39,25 @@ const pbxproj = read("ios/App/App.xcodeproj/project.pbxproj");
 const workflow = read(".github/workflows/deploy-ios.yml");
 const infoPlist = read("ios/App/App/Info.plist");
 const iosIgnore = read("ios/.gitignore");
+const entitlements = read("ios/App/App/App.entitlements");
 const pkg = JSON.parse(read("package.json")) as {
   dependencies: Record<string, string>;
 };
 
 const OBJECT_ID = /[0-9A-F]{24}/;
+
+/** The body of one workflow step, from its `- name:` line to the next. */
+function workflowStep(name: string): string {
+  const start = workflow.indexOf(`- name: ${name}`);
+  if (start < 0) throw new Error(`no step named "${name}" in deploy-ios.yml`);
+  const next = workflow.indexOf("- name:", start + 1);
+  return workflow.slice(start, next < 0 ? undefined : next);
+}
+
+/** Top-level keys of a plist dict, in the order they appear. */
+function plistKeys(xml: string): string[] {
+  return [...xml.matchAll(/<key>([^<]+)<\/key>/g)].map((m) => m[1]);
+}
 
 /** Paths the App target's Resources phase copies into the bundle. */
 function bundledResourcePaths(): string[] {
@@ -172,5 +192,89 @@ describe("iOS project wiring — what the TestFlight workflow would build", () =
     expect(infoPlist).toMatch(
       /<key>ITSAppUsesNonExemptEncryption<\/key>\s*<false\/>/
     );
+  });
+
+  it("builds on a macOS image that is not deprecated", () => {
+    // macos-14 is deprecated (actions/runner-images#13518), and its default
+    // Xcode is older than App Store Connect accepts uploads from. macos-26
+    // carries the current Xcode as its default.
+    expect(workflow.match(/^\s*runs-on:\s*(\S+)/m)?.[1]).toBe("macos-26");
+  });
+
+  it("signs the App target with the imported profile, never from the xcodebuild command line", () => {
+    // The committed project signs automatically. On a runner with no Apple
+    // account that looks for a development profile that never exists, so
+    // the workflow switches the App target to manual signing first, and its
+    // step expects exactly these two settings to switch.
+    expect(pbxproj.match(/CODE_SIGN_STYLE = Automatic;/g)?.length).toBe(2);
+    const sign = workflow.indexOf(
+      "name: Sign the App target with the App Store profile"
+    );
+    expect(sign).toBeGreaterThan(-1);
+    expect(workflow.indexOf("name: Archive")).toBeGreaterThan(sign);
+    // Passed to xcodebuild, a profile setting reaches every Swift package
+    // target too, and xcodebuild refuses a profile on a package target.
+    expect(workflowStep("Archive")).not.toMatch(
+      /PROVISIONING_PROFILE|CODE_SIGN_STYLE|CODE_SIGN_IDENTITY/
+    );
+  });
+
+  it("tells the manual export which profile signs the app", () => {
+    // Without the mapping a manual export stops at "no profiles for
+    // com.tropos.app", after the archive has already taken its 20 minutes.
+    const exportStep = workflowStep("Export .ipa");
+    expect(exportStep).toMatch(
+      /<key>signingStyle<\/key><string>manual<\/string>/
+    );
+    expect(exportStep).toMatch(
+      /<key>provisioningProfiles<\/key>\s*<dict>\s*<key>\$\{BUNDLE_ID\}<\/key><string>\$\{PROFILE_UUID\}<\/string>/
+    );
+    expect(
+      workflowStep("Import signing certificate + provisioning profile")
+    ).toMatch(/echo "PROFILE_UUID=\$PROFILE_UUID" >> "\$GITHUB_ENV"/);
+  });
+
+  it("declares the entitlement each native plugin needs, and only while it is used", () => {
+    const keys = plistKeys(entitlements);
+    // Anchor: a parse that found nothing would make the checks below vacuous.
+    expect(keys).toContain(
+      "com.apple.developer.devicecheck.appattest-environment"
+    );
+    // FirebaseAuthentication.signInWithApple() fails on the phone without it.
+    const nativeAppleSignIn =
+      "@capacitor-firebase/authentication" in pkg.dependencies &&
+      read("src/lib/nativeAuth.ts").includes("signInWithApple(");
+    expect(keys.includes("com.apple.developer.applesignin")).toBe(
+      nativeAppleSignIn
+    );
+    // HKHealthStore refuses an app that does not carry the entitlement.
+    expect(keys.includes("com.apple.developer.healthkit")).toBe(
+      "capacitor-health" in pkg.dependencies
+    );
+    // The native App Check provider attests with App Attest.
+    expect(
+      keys.includes("com.apple.developer.devicecheck.appattest-environment")
+    ).toBe("@capacitor-firebase/app-check" in pkg.dependencies);
+  });
+
+  it("names in the guide every secret the run checks for, and checks every secret it reads", () => {
+    const preflight = workflowStep("Check the signing secrets are set");
+    const checked = [
+      ...preflight.matchAll(/^\s+([A-Z0-9_]+): \$\{\{ secrets\.\1 \}\}/gm),
+    ].map((m) => m[1]);
+    expect(checked.length).toBe(8);
+    // The VITE_* client config has its own check (scripts/check-web-env.mjs).
+    const read_ = new Set(
+      [...workflow.matchAll(/secrets\.([A-Z0-9_]+)/g)]
+        .map((m) => m[1])
+        .filter((name) => !name.startsWith("VITE_"))
+    );
+    expect([...read_].sort()).toEqual([...checked].sort());
+    const guide = read("docs/ios-release.md");
+    for (const name of checked) expect(guide).toContain(`\`${name}\``);
+    // The keychain's password is made in the job, so nobody should be sent
+    // to create a secret for it.
+    expect(guide).not.toContain("KEYCHAIN_PASSWORD");
+    expect(workflow).not.toContain("secrets.KEYCHAIN_PASSWORD");
   });
 });
