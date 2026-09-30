@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 
 vi.mock("@/lib/haptic", function () {
   return { haptic: vi.fn() };
@@ -10,8 +10,9 @@ vi.mock("@/lib/homeAnalytics", function () {
   return { track: vi.fn() };
 });
 
-// Steps tile is native-only now; default the platform guard to web (false)
-// and flip it true per-test for the native rendering paths.
+// The Steps tile is a control only on the phone; the web shows it as a
+// picture. Default the platform guard to web (false) and flip it true
+// per-test for the native paths.
 vi.mock("@/lib/platform", function () {
   return {
     isNativePlatform: vi.fn(function () {
@@ -98,7 +99,38 @@ describe("WeightStepsTiles", function () {
     setNative(false);
   });
 
-  it("web (non-native): Steps tile hidden even with data", function () {
+  it("web: shows the iPhone's Connect Health tile as a picture, not a control", function () {
+    // Owner call 2026-09-30 (ADR-0007 Q5): a browser can't read Apple
+    // Health, but the web preview shows the tile in the state a new
+    // iPhone user sees. Home on the web passes status "unavailable".
+    setNative(false);
+    const onConnectSteps = vi.fn();
+    render(
+      <WeightStepsTiles
+        lastWeight="75.4"
+        weightUnit="kg"
+        onLogWeight={vi.fn()}
+        lastWeightDate="Logged today"
+        stepsStatus="unavailable"
+        onConnectSteps={onConnectSteps}
+      />
+    );
+    expect(screen.getByText("Steps")).toBeInTheDocument();
+    expect(screen.getByText("Connect Health")).toBeInTheDocument();
+    // Nothing to connect on the web, so the only control is Weight's.
+    expect(screen.getAllByRole("button")).toHaveLength(1);
+    expect(
+      screen.queryByRole("button", { name: /steps/i })
+    ).not.toBeInTheDocument();
+    // A screen reader hears where connecting happens.
+    expect(
+      screen.getByText(/in the Tropos iPhone app/i).parentElement
+    ).toHaveTextContent("Connect Health in the Tropos iPhone app");
+    fireEvent.click(screen.getByText("Connect Health"));
+    expect(onConnectSteps).not.toHaveBeenCalled();
+  });
+
+  it("web: the tile shows with no steps wiring at all", function () {
     setNative(false);
     render(
       <WeightStepsTiles
@@ -106,19 +138,9 @@ describe("WeightStepsTiles", function () {
         weightUnit="kg"
         onLogWeight={vi.fn()}
         lastWeightDate="Logged today"
-        stepsStatus="connected"
-        steps={842}
       />
     );
-    // No steps affordance anywhere on web.
-    expect(
-      screen.queryByRole("button", { name: /steps today/i })
-    ).not.toBeInTheDocument();
-    expect(screen.queryByText("Connect Health")).not.toBeInTheDocument();
-    // home-declutter: the duo stacks vertically in the right column, so
-    // the wrapper is grid-cols-1 in every state — tile presence, not
-    // column count, is the contract now.
-    expect(screen.queryByText("Steps")).not.toBeInTheDocument();
+    expect(screen.getByText("Connect Health")).toBeInTheDocument();
   });
 
   it("native + unavailable: Steps tile hidden", function () {
@@ -154,6 +176,9 @@ describe("WeightStepsTiles", function () {
     });
     expect(tile).toBeInTheDocument();
     expect(screen.getByText("Connect Health")).toBeInTheDocument();
+    // The web's screen-reader note is not on the phone, where the tile
+    // connects right here.
+    expect(screen.queryByText(/in the Tropos iPhone app/i)).toBeNull();
     tile.click();
     expect(onConnectSteps).toHaveBeenCalledTimes(1);
   });
@@ -161,7 +186,7 @@ describe("WeightStepsTiles", function () {
   it("native + connected: renders today's step count (no Connect), tap does NOT connect", function () {
     setNative(true);
     const onConnectSteps = vi.fn();
-    render(
+    const { container } = render(
       <WeightStepsTiles
         lastWeight="75.4"
         weightUnit="kg"
@@ -178,6 +203,13 @@ describe("WeightStepsTiles", function () {
     const tile = screen.getByRole("button", { name: /842 steps today/i });
     tile.click();
     expect(onConnectSteps).not.toHaveBeenCalled();
+    // Steps are a reading like weight, so the footprints take the scale's
+    // colour; green means a good result (DS3, one colour per job).
+    const footprints =
+      container.querySelector<SVGElement>(".lucide-footprints");
+    const scale = container.querySelector<SVGElement>(".lucide-scale");
+    expect(footprints?.style.color).toBeTruthy();
+    expect(footprints?.style.color).toBe(scale?.style.color);
   });
 
   it("native + ambiguous (connected, zero data): renders 0, no error state", function () {
@@ -217,10 +249,10 @@ describe("WeightStepsTiles", function () {
   });
 
   it("native with no steps wiring: no placeholder, Weight still renders", function () {
-    // The pre-HealthKit placeholder ("Connect Health" with a dead CTA on a
-    // caller that wired nothing) is gone by design: stepsStatus defaults to
-    // "unavailable", so an unwired caller never ships a dead affordance —
-    // the tile appears only once useSteps reports Health as present.
+    // On the phone the Connect tile is a real control, so it must never
+    // show where nothing can connect: stepsStatus defaults to
+    // "unavailable", and the tile appears only once useSteps reports
+    // Health as present. (The web's picture of it is the other case.)
     vi.mocked(isNativePlatform).mockReturnValue(true);
     render(
       <WeightStepsTiles

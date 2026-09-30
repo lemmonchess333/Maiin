@@ -35,6 +35,11 @@ vi.mock("@/lib/logger", () => ({
   logger: { error: vi.fn(), log: vi.fn(), warn: vi.fn() },
 }));
 
+const toastError = vi.fn();
+vi.mock("@/lib/toast", () => ({
+  toast: { error: (...args: unknown[]) => toastError(...args) },
+}));
+
 import { useSteps } from "../useSteps";
 import { seedFirestore, resetFirestore } from "@/test/firestoreHarness";
 
@@ -71,6 +76,34 @@ describe("useSteps status", () => {
     expect(result.current.steps).toBe(5000);
   });
 
+  it("a connected account asks iOS again before reading (new phone or reinstall)", async () => {
+    // Apple Health's permission belongs to the install; `connected` lives
+    // on the account. Without the re-ask, a reinstall reads nothing forever
+    // and the tile never offers Connect again. iOS shows no sheet when this
+    // install has already answered, so the ask is free in the usual case.
+    isHealthAvailable.mockResolvedValue(true);
+    seedFirestore({ [FLAG_DOC]: { connected: true, primingShown: true } });
+    getTodayStepTotal.mockResolvedValue(5000);
+    const { result } = renderHook(() => useSteps());
+    await waitFor(() => expect(result.current.status).toBe("connected"));
+    expect(requestStepsReadPermission).toHaveBeenCalledTimes(1);
+    expect(requestStepsReadPermission.mock.invocationCallOrder[0]).toBeLessThan(
+      getTodayStepTotal.mock.invocationCallOrder[0]
+    );
+    // A re-ask is not a new connection: nothing is written.
+    expect(setDocGuarded).not.toHaveBeenCalled();
+  });
+
+  it("an unconnected account is never asked on load", async () => {
+    isHealthAvailable.mockResolvedValue(true);
+    seedFirestore({ [FLAG_DOC]: { connected: false, primingShown: true } });
+    const { result } = renderHook(() => useSteps());
+    await waitFor(() => expect(result.current.primingShown).toBe(true));
+    expect(result.current.status).toBe("unprompted");
+    expect(requestStepsReadPermission).not.toHaveBeenCalled();
+    expect(getTodayStepTotal).not.toHaveBeenCalled();
+  });
+
   it("connected + zero data is 'ambiguous' (the iOS read-denial quirk)", async () => {
     isHealthAvailable.mockResolvedValue(true);
     seedFirestore({ [FLAG_DOC]: { connected: true, primingShown: true } });
@@ -100,6 +133,32 @@ describe("useSteps connect / priming persistence", () => {
     );
     expect(result.current.status).toBe("connected");
     expect(result.current.steps).toBe(4200);
+    expect(toastError).not.toHaveBeenCalled();
+  });
+
+  it("a failed request connects nothing: the prompt closes, Connect stays, and it says so", async () => {
+    // requestStepsReadPermission reports "denied" only when the request
+    // itself threw (a build without the Health permission) or off the
+    // phone. Saving connected:true there is how the tile stuck at 0.
+    isHealthAvailable.mockResolvedValue(true);
+    requestStepsReadPermission.mockResolvedValue("denied");
+    const { result } = renderHook(() => useSteps());
+    await waitFor(() => expect(result.current.status).toBe("unprompted"));
+
+    await act(async () => {
+      await result.current.connect();
+    });
+
+    expect(setDocGuarded).toHaveBeenCalledTimes(1);
+    expect(setDocGuarded).toHaveBeenCalledWith(
+      expect.anything(),
+      { connected: false, primingShown: true },
+      { merge: true }
+    );
+    expect(result.current.status).toBe("unprompted");
+    expect(result.current.primingShown).toBe(true);
+    expect(getTodayStepTotal).not.toHaveBeenCalled();
+    expect(toastError).toHaveBeenCalledWith("Couldn't connect Apple Health");
   });
 
   it("dismissPriming() persists primingShown without connecting", async () => {

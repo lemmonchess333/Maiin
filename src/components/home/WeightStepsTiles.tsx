@@ -43,8 +43,9 @@ export default function WeightStepsTiles({
   /* Trend direction derived from logged weight history. null = we
      have a weight but not enough history to call a direction. */
   weightTrend?: WeightTrendDirection;
-  /* HealthKit steps (native only). Defaults keep the tile hidden for any
-     caller that doesn't wire steps (web, isolated renders). */
+  /* HealthKit steps. On the native shell the default ("unavailable")
+     keeps the tile hidden for a caller that doesn't wire steps; on the
+     web the tile shows its Connect state whatever the status. */
   stepsStatus?: StepsStatus;
   steps?: number | null;
   onConnectSteps?: () => void;
@@ -90,21 +91,77 @@ export default function WeightStepsTiles({
       : hidden
         ? `Weight ${trendPhrase?.toLowerCase()}, last logged ${lastWeightDate}. Tap to log weight.`
         : `Weight ${lastWeight} ${weightUnitDisplay}, last logged ${lastWeightDate}. Tap to log weight.`;
-  // The Steps tile renders only on the native shell (steps are impossible
-  // on web) AND when Health is actually available: `stepsStatus ===
-  // "unavailable"` keeps it hidden so a dead affordance never ships. See
-  // POST_LAUNCH.md "Steps tile → HealthKit / Health Connect wiring".
-  const stepsTileEnabled = isNativePlatform() && stepsStatus !== "unavailable";
+  // Steps (ADR-0007 Q5, and the owner's call). A browser can't read
+  // Apple Health, but the web still shows the tile, in the state a new
+  // iPhone user sees ("Connect Health"), so the web preview has the
+  // phone's layout. There it is a picture, not a control: a plain element
+  // that connects nothing. On the phone the tile hides only when the
+  // device has no Health at all. See POST_LAUNCH.md "Steps tile".
+  const native = isNativePlatform();
+  const stepsTileEnabled = !native || stepsStatus !== "unavailable";
 
   // Connected / ambiguous both render the number (ambiguous = connected but
-  // zero/no-data, an iOS read-permission quirk we don't error on). Only
-  // `unprompted` shows the Connect affordance.
+  // zero/no-data, an iOS read-permission quirk we don't error on). Every
+  // other state shows Connect: `unprompted` on the phone, and the web.
   const stepsConnected =
     stepsStatus === "connected" || stepsStatus === "ambiguous";
   const stepsValue = steps ?? 0;
   const stepsAriaLabel = stepsConnected
     ? `${stepsValue.toLocaleString()} steps today.`
     : "Steps not yet connected. Connect Apple Health to track steps.";
+
+  const stepsBody = (
+    <>
+      <div className="flex items-center gap-2 mb-1.5">
+        <div
+          className="size-8 rounded-lg flex items-center justify-center flex-shrink-0"
+          style={{ backgroundColor: THEME.iconBg }}
+        >
+          {/* The weight tile's colour: steps are a reading like weight,
+              and green means a good result (DS3, one colour per job). */}
+          <Footprints
+            className="size-3.5"
+            style={{ color: THEME.semantic.activity }}
+            aria-hidden="true"
+          />
+        </div>
+        <SectionLabel>Steps</SectionLabel>
+      </div>
+      {stepsConnected ? (
+        <>
+          <div className="flex flex-wrap items-baseline gap-x-1 gap-y-1">
+            {/* Same tier as the weight figure directly above it: peer
+                tiles stacked in one column, so the same size and weight
+                (DESIGN_GUIDE: never mix 700 and 800 in one tier). Only
+                the phone shows this state; the web shows Connect. */}
+            <p className="text-2xl font-extrabold leading-none text-foreground font-mono tabular-nums">
+              {stepsValue.toLocaleString()}
+            </p>
+          </div>
+          <p
+            className="text-micro mt-1"
+            style={{ color: "hsl(var(--muted-foreground))" }}
+          >
+            today
+          </p>
+        </>
+      ) : (
+        <div className="flex items-center gap-1.5">
+          <span className="text-xs font-medium text-lifting-strong">
+            Connect Health
+            {!native && (
+              <span className="sr-only"> in the Tropos iPhone app</span>
+            )}
+          </span>
+          <ArrowRight
+            className="size-3"
+            style={{ color: THEME.brand }}
+            aria-hidden="true"
+          />
+        </div>
+      )}
+    </>
+  );
 
   return (
     /* home-declutter pyramid: this component lives in the RIGHT column
@@ -190,69 +247,25 @@ export default function WeightStepsTiles({
           {syncStatus ?? saveAnnouncement}
         </span>
       </button>
-      {stepsTileEnabled && (
-        <button
-          type="button"
-          onClick={function () {
-            haptic();
-            trackHomeEvent("home_card_tapped", { card: "steps" });
-            // Only the unprompted tile drives a connect; a connected tile
-            // tap is ambient (foreground refresh already keeps it current).
-            if (!stepsConnected) onConnectSteps?.();
-          }}
-          aria-label={stepsAriaLabel}
-          className="p-3 rounded-xl text-left motion-safe:active:scale-[0.97] bg-card card-shadow group"
-        >
-          <div className="flex items-center gap-2 mb-1.5">
-            <div
-              className="size-8 rounded-lg flex items-center justify-center flex-shrink-0"
-              style={{ backgroundColor: THEME.iconBg }}
-            >
-              <Footprints
-                className="size-3.5"
-                style={{ color: THEME.semantic.positive }}
-                aria-hidden="true"
-              />
-            </div>
-            <SectionLabel>Steps</SectionLabel>
-          </div>
-          {stepsConnected ? (
-            <>
-              <div className="flex flex-wrap items-baseline gap-x-1 gap-y-1">
-                {/* Same tier as the weight figure directly above it.
-                    These two are peer tiles stacked in one column, and
-                    they had drifted apart — steps at text-xl / 700 under
-                    weight at text-2xl / 800 — which reads as steps being
-                    the lesser stat rather than the equal one it is, and
-                    breaches DESIGN_GUIDE's "never mix 700 and 800 in the
-                    same visual tier". Invisible on web by construction:
-                    the steps tile is gated on isNativePlatform(), so no
-                    capture frame has ever contained it. */}
-                <p className="text-2xl font-extrabold leading-none text-foreground font-mono tabular-nums">
-                  {stepsValue.toLocaleString()}
-                </p>
-              </div>
-              <p
-                className="text-micro mt-1"
-                style={{ color: "hsl(var(--muted-foreground))" }}
-              >
-                today
-              </p>
-            </>
-          ) : (
-            <div className="flex items-center gap-1.5">
-              <span className="text-xs font-medium text-lifting-strong">
-                Connect Health
-              </span>
-              <ArrowRight
-                className="size-3"
-                style={{ color: THEME.brand }}
-                aria-hidden="true"
-              />
-            </div>
-          )}
-        </button>
-      )}
+      {stepsTileEnabled &&
+        (native ? (
+          <button
+            type="button"
+            onClick={function () {
+              haptic();
+              trackHomeEvent("home_card_tapped", { card: "steps" });
+              // Only the unprompted tile connects; a connected tile tap is
+              // ambient (foreground refresh already keeps it current).
+              if (stepsStatus === "unprompted") onConnectSteps?.();
+            }}
+            aria-label={stepsAriaLabel}
+            className="p-3 rounded-xl text-left motion-safe:active:scale-[0.97] bg-card card-shadow focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          >
+            {stepsBody}
+          </button>
+        ) : (
+          <div className="p-3 rounded-xl bg-card card-shadow">{stepsBody}</div>
+        ))}
     </div>
   );
 }
