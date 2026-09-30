@@ -120,6 +120,25 @@ firebase functions:secrets:set REVENUECAT_WEBHOOK_AUTH
 firebase functions:secrets:set REVENUECAT_REST_KEY
 ```
 
+Then let the functions read each new secret. A deploy grants the functions'
+account access to a secret it binds, but the CI deploy account isn't allowed
+to grant it, so the first CI deploy after a new secret fails with
+`Permission 'secretmanager.secrets.setIamPolicy' denied`. Grant it yourself
+once per new secret, before that deploy: Google Cloud console → Secret
+Manager → the secret → Permissions → Grant access → principal
+`adaptive-fitness-af8bb@appspot.gserviceaccount.com`, role **Secret Manager
+Secret Accessor**. Or from a terminal:
+
+```bash
+gcloud secrets add-iam-policy-binding REVENUECAT_REST_KEY \
+  --member=serviceAccount:adaptive-fitness-af8bb@appspot.gserviceaccount.com \
+  --role=roles/secretmanager.secretAccessor --project adaptive-fitness-af8bb
+```
+
+The deploy checks only the secret's own permission list, so a project-wide
+role does not count. Found on the first deploy of these two secrets
+(2026-09-29).
+
 The public key just goes in the Vite prod env (and the GitHub Actions build
 env). **Never** put the webhook/REST secrets in Vite — they're server-only.
 
