@@ -139,6 +139,12 @@ The deploy checks only the secret's own permission list, so a project-wide
 role does not count. Found on the first deploy of these two secrets
 (2026-09-29).
 
+Check the result on each secret's **Permissions** tab, not by the console's
+notice. "No change – principal already exists on the policy" can still be
+showing from the secret you did before: on the second attempt the REST key
+was granted and the webhook secret was not, though the notice had appeared
+on the webhook secret's page.
+
 The public key just goes in the Vite prod env (and the GitHub Actions build
 env). **Never** put the webhook/REST secrets in Vite — they're server-only.
 
