@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, type ReactNode } from "react";
+import { useId, useLayoutEffect, useRef, type ReactNode } from "react";
 import { motion, type Easing, type Transition } from "framer-motion";
 import {
   Beef,
@@ -288,13 +288,35 @@ function WifiGlyph() {
   );
 }
 
-/** The battery as a bar: the charge solid, the rest of the body faint,
- *  and the terminal on the right. Four-fifths charged. */
+/** The battery with its percentage inside, as iOS shows it when the
+ *  percentage is on: the charge solid, the rest of the body faint, the
+ *  number cut out of both, and the terminal on the right. */
+const BATTERY_PERCENT = 80;
 function BatteryGlyph() {
+  const cutout = `battery-${useId().replace(/[^\w-]/g, "")}`;
   return (
     <svg viewBox="0 0 27 13" className="h-[13px] w-[27px]" fill="currentColor">
-      <rect width="24" height="13" rx="4" fillOpacity={0.35} />
-      <path d="M4 0h15.2v13H4a4 4 0 0 1-4-4V4a4 4 0 0 1 4-4Z" />
+      <mask id={cutout}>
+        <rect width="24" height="13" fill="white" />
+        <text
+          x="12"
+          y="10.1"
+          fill="black"
+          fontSize="10.5"
+          fontWeight={700}
+          letterSpacing="-0.3"
+          textAnchor="middle"
+          style={{ fontFamily: SYSTEM_FONT }}
+        >
+          {BATTERY_PERCENT}
+        </text>
+      </mask>
+      <g mask={`url(#${cutout})`}>
+        <rect width="24" height="13" rx="4" fillOpacity={0.35} />
+        <path
+          d={`M4 0h${(24 * BATTERY_PERCENT) / 100 - 4}v13H4a4 4 0 0 1-4-4V4a4 4 0 0 1 4-4Z`}
+        />
+      </g>
       <path
         d="M25 4.25h.5A1.5 1.5 0 0 1 27 5.75v1.5a1.5 1.5 0 0 1-1.5 1.5H25Z"
         fillOpacity={0.4}
