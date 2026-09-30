@@ -207,7 +207,7 @@ Variables) before relying on it.
 - [ ] Entitlement `pro` + an Offering mapping both products as packages
 - [ ] Transfer behaviour set to "keep with original App User ID" (recorded)
 - [ ] Public SDK key in Vite env; webhook auth secret + REST key in Secret Manager
-- [ ] (after slice 3) Webhook configured with the `Authorization` secret
+- [x] (after slice 3) Webhook configured with the `Authorization` secret
 - [ ] (after slice 3, before submission) `REVENUECAT_SANDBOX_UIDS` on both
       functions holds your uid and App Review's demo account uid
 

@@ -1991,13 +1991,15 @@ sandbox Pro to nobody. Production purchases are unaffected.
 
 - [x] **Secrets provisioned, then merge.** Both stored and #2496 merged,
       2026-09-29.
-- [ ] **The functions can read both secrets.** The first deploy failed on
+- [x] **The functions can read both secrets.** The first deploy failed on
       the accessor grant (see the Cloud Functions deploy gotchas). Tick this
       when a Deploy production run on or after #2496 logs a successful
       create operation for both `revenueCatWebhook` and
-      `syncRevenueCatEntitlement`.
-- [ ] **Webhook answers.** RevenueCat → Integrations → the webhook → Send
-      test event returns 200.
+      `syncRevenueCatEntitlement`. Done 2026-09-30, once the owner granted
+      the role on `REVENUECAT_WEBHOOK_AUTH`: run 36695765626 (the #2539
+      merge) created both.
+- [x] **Webhook answers.** RevenueCat → Integrations → the webhook → Send
+      test event returns 200. It did on 2026-09-30.
 - [ ] **`REVENUECAT_SANDBOX_UIDS` set on both functions**: your uid and App
       Review's demo account uid, comma-separated. It is a plain env var,
       set the way `ADMIN_UIDS` is (`functions/.env`, no Secret Manager).
@@ -2006,12 +2008,13 @@ sandbox Pro to nobody. Production purchases are unaffected.
       function already has but gives a newly created function nothing, so
       set it after the first deploy creates these two functions and confirm
       it in the Cloud console. Steps: `docs/iap/revenuecat-setup.md` Part C.
-- [ ] **Webhook configured** in RevenueCat → Integrations → Webhooks: URL
+- [x] **Webhook configured** in RevenueCat → Integrations → Webhooks: URL
       `https://us-central1-adaptive-fitness-af8bb.cloudfunctions.net/revenueCatWebhook`,
       Authorization header = the secret, bare or as `Bearer <secret>`. The
-      dashboard's test event gets a 200.
-- [ ] **Deploy verification.** The functions deploy log reports a
-      successful create operation for both functions.
+      dashboard's test event gets a 200. Configured for both production
+      and sandbox, all apps and all events; 200 on 2026-09-30.
+- [x] **Deploy verification.** The functions deploy log reports a
+      successful create operation for both functions. Run 36695765626.
 - [ ] **Sandbox purchase on a listed account.** `users/{uid}` shows
       `subscriptionTier: "pro"`, `subscriptionSource: "ios_iap"`, a future
       `subscriptionExpiresAt` and a `revenueCat` map, and an AI scan works
