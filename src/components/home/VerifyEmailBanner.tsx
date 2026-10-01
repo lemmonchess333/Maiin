@@ -1,11 +1,11 @@
 /**
  * Home's ask to verify an email account's address.
  *
- * Email sign-ups verify after the plan, not before it (owner, 2026-10-01):
- * the link goes out at sign-up, onboarding does not wait for it, and posts
- * and comments open once it is used (firestore.rules and the comment
- * callables check the claim; the compose sheets say so with
- * VerifyEmailNotice). This is the one place that asks without being asked.
+ * Email sign-ups verify after the plan, not before it: the link goes out
+ * at sign-up, onboarding does not wait for it, and posts and comments open
+ * once it is used (firestore.rules and the comment callables check the
+ * claim; the compose sheets say so with VerifyEmailNotice). This is the one
+ * place that asks without being asked.
  *
  * Shown only while the account needs it. It goes when the app sees the
  * address verified, which the App-level gate rechecks on every return to
@@ -83,7 +83,7 @@ export default function VerifyEmailBanner() {
             to="/settings/account"
             className="underline underline-offset-2 text-foreground"
           >
-            Change it in Account
+            Change your email
           </Link>
           .
         </>

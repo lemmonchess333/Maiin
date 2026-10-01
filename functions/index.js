@@ -669,11 +669,11 @@ exports.completeOnboarding = functions
       uid
     );
 
-    // No verified-email check here (owner, 2026-10-01): email accounts set
-    // up their plan first and verify after. What a verified address
-    // protects is public content, and that keeps its own checks
-    // (firestore.rules isEmailVerified() on activities and space posts, and
-    // assertCallerEmailVerified in the comment callables).
+    // No verified-email check here: email accounts set up their plan first
+    // and verify after. What a verified address protects is public content,
+    // and that keeps its own checks (firestore.rules isEmailVerified() on
+    // activities and space posts, and assertCallerEmailVerified in the
+    // comment callables).
 
     // Rate limit: 5 onboarding attempts per 10 minutes
     const limited = await isRateLimited(uid, "onboarding", 5, 600_000);

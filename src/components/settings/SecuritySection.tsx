@@ -196,8 +196,8 @@ export default function SecuritySection({
           <div className="rounded-xl bg-card p-3 space-y-2">
             <p className="text-sm text-muted-foreground">
               Verify your email to post or comment. You can keep logging
-              workouts and meals, and manage or delete your account, while it
-              isn't verified.
+              workouts and meals, and manage or delete your account while
+              unverified.
             </p>
             <div className="flex gap-2">
               <Button

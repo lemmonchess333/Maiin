@@ -342,9 +342,9 @@ function AppRoutes() {
   const { user, profile, loading } = useAuth();
   const uid = user?.uid ?? null;
   const deletion = useAccountDeletionStatus(user?.uid);
-  /* Email accounts verify after the plan, not before it (owner,
-     2026-10-01): onboarding opens straight after sign-up, the link is
-     already in the inbox, and Home asks. Posts and comments still need the
+  /* Email accounts verify after the plan, not before it: onboarding opens
+     straight after sign-up, the link is already in the inbox, and Home
+     asks. Posts and comments still need the
      verified claim (firestore.rules, the comment callables). Rechecking on
      every return to the app is what lets a tap on the link in Mail land
      without the person doing anything else. */

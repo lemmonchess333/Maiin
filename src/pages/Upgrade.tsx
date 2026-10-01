@@ -488,9 +488,9 @@ export default function Upgrade() {
               className="text-h1 font-extrabold text-foreground leading-tight text-balance"
             >
               {/* Straight after Start my plan the page answers what the
-                  person just did before it offers anything (owner,
-                  2026-10-01): a runner who never mentioned food would
-                  otherwise land on a heading about meal photos. */}
+                  person just did before it offers anything: a runner who
+                  never mentioned food would otherwise land on a heading
+                  about meal photos. */}
               {fromOnboarding
                 ? "Your plan is ready"
                 : "Log a meal from a photo"}

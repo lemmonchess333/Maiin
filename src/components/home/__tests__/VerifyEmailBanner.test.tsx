@@ -65,7 +65,7 @@ describe("VerifyEmailBanner", () => {
     expect(banner).toHaveTextContent("Verify your email to post and comment");
     expect(banner).toHaveTextContent("new@example.com");
     expect(
-      screen.getByRole("link", { name: "Change it in Account" })
+      screen.getByRole("link", { name: "Change your email" })
     ).toHaveAttribute("href", "/settings/account");
     expect(screen.getByRole("button", { name: "Resend link" })).toBeVisible();
     expect(screen.getByRole("button", { name: "I've verified" })).toBeVisible();

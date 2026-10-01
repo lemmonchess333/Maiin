@@ -5,11 +5,11 @@
  *
  * `functions/profileSanitizer.js` drops a `heightCm` or `weightKg` outside
  * them, and `completeOnboarding` then refuses the save as a missing field.
- * Onboarding used to accept 100–250 cm, so a height of 110 or 240 cm passed
- * every check on the phone and failed with "Check your connection", which
- * no connection could fix. Onboarding and Settings validate against these
- * so a value the app takes is one the server keeps; the sanitizer side is
- * pinned by `bodyMetrics.cross.test.ts`.
+ * A wider range on the phone lets an answer pass every check there and then
+ * fail the save as "Check your connection", which no connection can fix.
+ * Onboarding and Settings validate against these so a value the app takes
+ * is one the server keeps; the sanitizer side is pinned by
+ * `bodyMetrics.cross.test.ts`.
  */
 export const HEIGHT_CM = { min: 120, max: 230 } as const;
 export const WEIGHT_KG = { min: 30, max: 300 } as const;
