@@ -1,12 +1,17 @@
 /**
  * Render the iOS launch image from the canonical brand mark.
  *
+ * The launch image is the mark's hexagon alone, without its chevron: the
+ * app's launch animation (src/components/LaunchSplash.tsx) starts from
+ * this exact frame and raises the chevron into the hexagon, so the native
+ * image hands over to the web layer without a jump.
+ *
  * Two things are DERIVED here rather than re-typed, because both had
  * already drifted once:
  *
- *   1. The mark geometry is read out of `src/assets/brand/app-icon.svg`,
- *      which that file's own header declares the single source of truth
- *      for icon + brand derivations.
+ *   1. The hexagon is read out of `src/assets/brand/app-icon.svg` by its
+ *      id (`scripts/art/brand-mark.mjs`), the file every icon is rendered
+ *      from.
  *   2. The ground colour is read out of the `.dark { --background }`
  *      token in `src/index.css`. The launch image's whole job is to hand
  *      over to the app's first real frame with nothing to flash through,
@@ -21,9 +26,10 @@
  * MARK_SHARE is set against the DEVICE CROP, not the square. The
  * storyboard image view is `scaleAspectFill`, so a 2732 square on a
  * 1179x2556 phone is scaled 0.9356 and centre-cropped to the middle
- * ~46% of its width; the painted hexagon is 50.8% of its own box. At
- * 0.22 that lands the hexagon at ~24% of phone screen width and ~16% of
- * an 11" iPad's — the usual launch-mark register on both.
+ * ~46% of its width; the hexagon is 53.8% of its own box. At 0.22 that
+ * lands the hexagon at ~26% of phone screen width and ~17% of an 11"
+ * iPad's — the usual launch-mark register on both. LAUNCH_MARK_SHARE in
+ * src/lib/brandMark.ts is the same arithmetic for the web layer.
  *
  *   node scripts/art/gen-splash.mjs
  */
@@ -31,6 +37,7 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import sharp from "sharp";
+import { readMark } from "./brand-mark.mjs";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const SIZE = 2732;
@@ -75,32 +82,15 @@ if (!bgToken)
   throw new Error("src/index.css: could not read .dark --background");
 const GROUND = hslTokenToHex(bgToken);
 
-const icon = readFileSync(
-  resolve(root, "src/assets/brand/app-icon.svg"),
-  "utf8"
-);
-const hex = /<polygon points="([^"]+)"/.exec(icon)?.[1];
-const chevron = /<polyline points="([^"]+)"/.exec(icon)?.[1];
-const strokeWidth = /stroke-width="(\d+)"/.exec(icon)?.[1];
-if (!hex || !chevron || !strokeWidth) {
-  throw new Error("brand/app-icon.svg: could not read the mark geometry");
-}
+const { hexagon, corner } = readMark(root);
 
 const mark = Math.round(SIZE * MARK_SHARE);
-/* Same construction as the icon: a solid hexagon with the chevron cut out
-   of it, so the chevron shows the ground through the mark exactly as it
-   shows the purple field through the icon. */
+/* The hexagon alone, rounded the way the icon rounds it: a round-joined
+   stroke of its own colour around the corner-inset polygon. */
 const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${SIZE}" height="${SIZE}" viewBox="0 0 ${SIZE} ${SIZE}">
-  <defs>
-    <mask id="cut" maskUnits="userSpaceOnUse" x="0" y="0" width="1024" height="1024">
-      <rect width="1024" height="1024" fill="black"/>
-      <polygon points="${hex}" fill="white"/>
-      <polyline points="${chevron}" fill="none" stroke="black" stroke-width="${strokeWidth}" stroke-linejoin="round" stroke-linecap="round"/>
-    </mask>
-  </defs>
   <rect width="${SIZE}" height="${SIZE}" fill="${GROUND}"/>
   <g transform="translate(${(SIZE - mark) / 2}, ${(SIZE - mark) / 2}) scale(${mark / 1024})">
-    <rect width="1024" height="1024" fill="#7B72E9" mask="url(#cut)"/>
+    <polygon points="${hexagon}" fill="#7B72E9" stroke="#7B72E9" stroke-width="${corner}" stroke-linejoin="round"/>
   </g>
 </svg>`;
 

@@ -156,6 +156,28 @@
       class="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:px-4 focus:py-2 focus:bg-primary focus:text-white focus:rounded-lg focus:text-sm"
       >Skip to main content</a
     >
+    <!-- The launch overlay's first frame: the iOS launch image's hexagon,
+         at its size and place (.launch-splash in
+         src/styles/components.css). It shows only once public/init.js has
+         marked the document `booting`; LaunchSplash takes it over. The
+         geometry is src/lib/brandMark.ts's, pinned by
+         src/lib/__tests__/launchSplash.test.ts. -->
+    <div id="boot-splash" class="launch-splash" aria-hidden="true">
+      <div class="launch-splash-ground"></div>
+      <svg
+        class="launch-splash-mark"
+        viewBox="236.6 200.2 550.8 623.6"
+        focusable="false"
+      >
+        <polygon
+          points="512,240.2 747.4,376.1 747.4,647.9 512,783.8 276.6,647.9 276.6,376.1"
+          fill="currentColor"
+          stroke="currentColor"
+          stroke-width="80"
+          stroke-linejoin="round"
+        />
+      </svg>
+    </div>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

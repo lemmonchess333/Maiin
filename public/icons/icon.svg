@@ -1,13 +1,9 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024" role="img" aria-label="Tropos">
-
-  <defs>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024" role="img" aria-label="Tropos"><defs><linearGradient id="field" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8F87F3"/><stop offset="1" stop-color="#6A61DD"/></linearGradient></defs>
+  <rect width="1024" height="1024" rx="224" fill="url(#field)"/><defs>
     <mask id="cut" maskUnits="userSpaceOnUse" x="0" y="0" width="1024" height="1024">
       <rect width="1024" height="1024" fill="black"/>
-      <polygon points="512,212 772,362 772,662 512,812 252,662 252,362" fill="white"/>
-      <polyline points="356,600 512,400 668,600" fill="none" stroke="black" stroke-width="86" stroke-linejoin="round" stroke-linecap="round"/>
+      <polygon points="512,240.2 747.4,376.1 747.4,647.9 512,783.8 276.6,647.9 276.6,376.1" fill="white" stroke="white" stroke-width="80" stroke-linejoin="round"/>
+      <polyline points="342,604 512,410 682,604" fill="none" stroke="black" stroke-width="100" stroke-linejoin="round" stroke-linecap="round"/>
     </mask>
   </defs>
-  <rect width="1024" height="1024" rx="224" fill="#7B72E9"/>
-  <rect width="1024" height="1024" rx="224" fill="#FFFFFF" mask="url(#cut)"/>
-</svg>
+  <rect width="1024" height="1024" fill="#FFFFFF" mask="url(#cut)"/></svg>

@@ -87,6 +87,19 @@ describe("cold-start chrome agrees with the dark canvas", () => {
     expect(hslTokenToHex("0 0% 0%")).toBe("#000000");
   });
 
+  it("the launch overlay stays on that canvas in both themes", () => {
+    // The web half of the launch (index.html's #boot-splash, then
+    // LaunchSplash) paints its ground from --launch, which must not follow
+    // the theme: the launch image is dark for everyone, and the theme can
+    // change under the overlay while the app loads.
+    const rootBlock = /:root\s*\{([\s\S]*?)\n\}/.exec(css)?.[1];
+    for (const block of [rootBlock, darkBlock]) {
+      const token = /--launch:\s*([^;]+);/.exec(block ?? "")?.[1];
+      expect(token).toBeTruthy();
+      expect(hslTokenToHex(token!)).toBe(ground());
+    }
+  });
+
   it("the PWA manifest installs and splashes on the canvas", () => {
     const manifest = JSON.parse(read("public/manifest.json")) as {
       background_color: string;
@@ -155,9 +168,9 @@ describe("cold-start chrome agrees with the dark canvas", () => {
       )
     );
     // The hexagon's widest row runs through the vertical centre. The
-    // chevron is cut out of that row too, so the run is split into two
-    // lobes — scanning inwards from both edges still finds the shape's
-    // true extents.
+    // launch image draws the hexagon alone (the launch animation adds the
+    // chevron), but scanning inwards from both edges would still find the
+    // shape's true extents if a cut split the row.
     const row = png.height >> 1;
     const at = (x: number) => {
       const i = (png.width * row + x) << 2;
@@ -180,10 +193,10 @@ describe("cold-start chrome agrees with the dark canvas", () => {
     expect(r).toBeGreaterThan(g);
 
     // The mark has to sit in a size band, not at an exact width. The
-    // hexagon is 520/1024 of its box, so the 22% box paints ~11.2% of the
-    // square; the band below spans roughly a 0.20-0.245 box. Too small and
-    // the phone crop leaves a speck; too large and it loses its padding
-    // (the first draft of this asset was 0.26, which fails this).
+    // hexagon is 550.8/1024 of its box, so the 22% box paints ~11.8% of
+    // the square; the band below spans roughly a 0.19-0.23 box. Too small
+    // and the phone crop leaves a speck; too large and it loses its
+    // padding (the first draft of this asset was 0.26, which fails this).
     const share = (right - left) / png.width;
     expect(share).toBeGreaterThan(0.1);
     expect(share).toBeLessThan(0.125);

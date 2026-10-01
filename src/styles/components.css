@@ -8,6 +8,9 @@
      .ds-auth-shell        Full-page login/signup shell only.
      .ds-auth-card         Login/signup elevated card surface only.
      .ds-auth-logo         Auth-only brand mark container.
+     .launch-splash        The launch overlay (index.html's #boot-splash
+                           and LaunchSplash): the iOS launch image's
+                           hexagon, at its size and place.
      .ds-safe-top-occluder Fixed iOS safe-area cover for app shell only.
 
    These exist to keep app-shell, auth, and feature cards on a
@@ -371,6 +374,49 @@ select.ds-input:focus {
     hsl(var(--primary-strong)) 100%
   );
   box-shadow: var(--ds-shadow-purple-glow);
+}
+
+/* The launch overlay. index.html paints #boot-splash with these classes
+   while the bundle loads, but only once public/init.js has marked the
+   document `booting` (never under automation, never without JS, so the
+   <noscript> message stays visible); LaunchSplash then takes it over.
+   The mark's height is LAUNCH_MARK_SHARE (src/lib/brandMark.ts) of the
+   screen's longer side: the size the native launch image draws it at. */
+#boot-splash {
+  display: none;
+}
+html.booting #boot-splash {
+  display: grid;
+}
+.launch-splash {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+/* The ground behind the mark, its own layer so it can fade while the
+   mark stays solid on its way into Home's header. The launch colour in
+   both themes, as the native launch image is: the theme can change while
+   the app loads (a light-mode user's page turns light once the profile
+   arrives), and the overlay hides that rather than flashing with it. */
+.launch-splash-ground {
+  position: absolute;
+  inset: 0;
+  background: hsl(var(--launch));
+}
+.launch-splash-mark {
+  position: relative;
+  display: block;
+  height: calc(max(100vw, 100vh) * 0.134);
+  width: auto;
+  color: hsl(var(--lifting));
+}
+/* While the launch mark flies into Home's header, the header's own mark
+   waits under it, so the page never shows two. */
+html.launching [data-brand-mark] {
+  opacity: 0;
 }
 
 /* Reduced-motion safety net for the shared primitives. The

@@ -1,15 +1,17 @@
 import { cn } from "@/lib/utils";
-
-/* The app icon's own geometry (src/assets/brand/app-icon.svg), in its
-   1024 space: the viewBox is the hexagon's box, so the mark fills the
-   element with no inset to guess at. */
-const HEXAGON = "512,212 772,362 772,662 512,812 252,662 252,362";
-const CHEVRON = "356,600 512,400 668,600";
+import {
+  MARK_CHEVRON,
+  MARK_CHEVRON_WIDTH,
+  MARK_CORNER,
+  MARK_HEXAGON,
+  MARK_VIEWBOX,
+} from "@/lib/brandMark";
 
 /**
- * The Tropos mark: the solid hexagon with the chevron cut out of it, as
- * on the app icon and the splash. DS3 puts it in Home's header, where it
- * signs the page; circles carry the data, the hexagon signs the name.
+ * The Tropos mark: the rounded hexagon with the chevron cut out of it, as
+ * on the app icon. DS3 puts it in Home's header, where it signs the page;
+ * circles carry the data, the hexagon signs the name. The launch animation
+ * ends by setting its mark down on this one.
  *
  * The chevron is drawn in the page's own colour rather than masked out,
  * which needs no document-unique id and reads identically on the page,
@@ -19,23 +21,29 @@ const CHEVRON = "356,600 512,400 668,600";
  * would vanish on the platform that matters (see WaterContainerIcon).
  * It is decorative: the page title says where you are.
  *
- * Sized by height; the width follows the hexagon's 520 by 600 box.
+ * Sized by height; the width follows the hexagon's box.
  */
 export default function BrandMark({ className }: { className?: string }) {
   return (
     <svg
-      viewBox="252 212 520 600"
+      viewBox={MARK_VIEWBOX}
       aria-hidden="true"
       focusable="false"
       data-brand-mark=""
       className={cn("h-4 w-auto shrink-0 text-lifting", className)}
     >
-      <polygon points={HEXAGON} fill="currentColor" />
+      <polygon
+        points={MARK_HEXAGON}
+        fill="currentColor"
+        stroke="currentColor"
+        strokeWidth={MARK_CORNER}
+        strokeLinejoin="round"
+      />
       <polyline
-        points={CHEVRON}
+        points={MARK_CHEVRON}
         fill="none"
         className="stroke-background"
-        strokeWidth={86}
+        strokeWidth={MARK_CHEVRON_WIDTH}
         strokeLinejoin="round"
         strokeLinecap="round"
       />

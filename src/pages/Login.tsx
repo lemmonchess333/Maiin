@@ -7,7 +7,8 @@ import {
   providerHint,
   duplicateEmailHint,
 } from "@/lib/authErrors";
-import { AlertCircle, Dumbbell, Mail, Lock, Eye, EyeOff } from "lucide-react";
+import { AlertCircle, Mail, Lock, Eye, EyeOff } from "lucide-react";
+import appIconUrl from "@/assets/brand/app-icon.svg";
 import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
 
@@ -176,11 +177,13 @@ export default function Login() {
   return (
     <div className="ds-auth-shell">
       <div className="ds-auth-card ds-page-stack">
-        {/* Logo */}
+        {/* Logo: the app icon itself, as on the home screen. */}
         <div className="text-center space-y-3">
-          <div className="ds-auth-logo mx-auto">
-            <Dumbbell className="size-8" />
-          </div>
+          <img
+            src={appIconUrl}
+            alt=""
+            className="ds-auth-logo mx-auto overflow-hidden"
+          />
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.28em] text-lifting-strong">
               Tropos
