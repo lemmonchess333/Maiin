@@ -5,11 +5,11 @@ import { emulatorActive, EXPECTED_AUTH_HOST } from "./emulator";
  * local emulator.
  *
  * Email sign-ups go straight to onboarding: verification comes after the
- * plan (owner, 2026-10-01), so this first proves there is no wall. It then
- * finds the link the app sent at sign-up (Firebase's own mail when the
- * Functions emulator is not running), applies it, and has the app notice it
- * as a return from Mail does: the App-level gate rechecks on focus, reloads
- * the user and refreshes the token. Specs that post publicly need that
+ * plan, so this first proves there is no wall. It then finds the link the
+ * app sent at sign-up (Firebase's own mail when the Functions emulator is
+ * not running), applies it, and has the app notice it as a return from Mail
+ * does: the App-level gate rechecks on focus, reloads the user and
+ * refreshes the token. Specs that post publicly need that
  * fresh token, so this waits for the refresh rather than for anything on
  * screen, which shows nothing while onboarding is open.
  */
