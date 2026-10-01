@@ -78,6 +78,29 @@ hexagon option that holds the brand mark down to 29px (A's stroke muddies, C
 drops the hexagon, D is the off-brand placeholder). Wire from the canonical
 `src/assets/brand/hexagon-chevron.svg` in rollout.
 
+## Decision 4 — the mark refined (owner, 2026-10-01)
+
+Three directions were mocked as the mark, the app icon in iOS's default,
+dark and tinted modes, a home screen, and a launch animation each: A kept
+candidate B's idea and refined it, B split the hexagon along the chevron so
+its top could lift, and C coloured that split coral over purple on a dark
+icon. **The owner chose A.**
+
+What A changes from candidate B:
+
+- The hexagon's corners are rounded (radius 40 in the 1024 icon), so it
+  reads as part of an app whose cards and buttons are all rounded.
+- The hexagon is larger (circumradius 318, from 300) and the chevron
+  heavier (stroke 100, from 86), so the mark holds at Settings size.
+- The icon's field is a purple that lightens toward the top
+  (#8F87F3 to #6A61DD around the brand #7B72E9), as iOS icons usually are.
+- The icon has dark and tinted versions for iOS's home-screen modes.
+- The launch image is the hexagon alone, and the app's launch animation
+  raises the chevron into it before setting the mark down in Home's header.
+
+B and C read as a stack of layers more than as a lift, and C would have put
+two colours into every use of the mark.
+
 ## Principle this settles
 
 **Circles carry Tropos's data; the hexagon signs its name** (icon + empty

@@ -20,6 +20,7 @@ import { SurfaceCoordinatorProvider } from "@/components/SurfaceCoordinatorProvi
 import { BackDismissProvider } from "@/lib/BackDismissProvider";
 import { EducationLaneProvider } from "@/components/EducationLaneProvider";
 import { Spinner } from "@/components/ui/Spinner";
+import LaunchSplash from "@/components/LaunchSplash";
 import { PageContentSkeleton } from "@/components/LoadingSkeleton";
 import { captureError } from "@/lib/errorReporting";
 /* Chunk-error-recovering lazy wrapper. Extracted to src/lib/lazyRetry
@@ -901,6 +902,7 @@ function App() {
                     <OneTimeMaintenance />
                   </Suspense>
                   <RevenueCatIdentity />
+                  <LaunchSplash />
                   <AppRoutes />
                 </BackDismissProvider>
               </NotificationBubbleProvider>

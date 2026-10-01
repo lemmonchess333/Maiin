@@ -1,5 +1,5 @@
 /**
- * The brand mark (DS3): the app icon's solid hexagon with its chevron
+ * The brand mark (DS3): the app icon's rounded hexagon with its chevron
  * cut out, small enough for Home's date line. Decorative, in the brand
  * purple, and the chevron in the page's own colour so it reads as a cut.
  */
@@ -25,12 +25,24 @@ describe("BrandMark", () => {
       "utf8"
     );
     const { container } = render(<BrandMark />);
-    const hexagon = container.querySelector("polygon")!.getAttribute("points");
-    const chevron = container.querySelector("polyline")!.getAttribute("points");
-    expect(icon).toContain(`points="${hexagon}"`);
-    expect(icon).toContain(`points="${chevron}"`);
-    expect(icon).toContain(
-      `stroke-width="${container.querySelector("polyline")!.getAttribute("stroke-width")}"`
+    const hexagon = container.querySelector("polygon")!;
+    const chevron = container.querySelector("polyline")!;
+    // The icon declares each shape by id; the generators read them so.
+    const declared = (id: string) =>
+      new RegExp(`<(?:polygon|polyline) id="${id}"([^>]*)>`).exec(icon)?.[1];
+    expect(declared("hexagon")).toContain(
+      `points="${hexagon.getAttribute("points")}"`
+    );
+    // The corners are rounded by the hexagon's own round-joined stroke.
+    expect(declared("hexagon")).toContain(
+      `stroke-width="${hexagon.getAttribute("stroke-width")}"`
+    );
+    expect(hexagon).toHaveAttribute("stroke-linejoin", "round");
+    expect(declared("chevron")).toContain(
+      `points="${chevron.getAttribute("points")}"`
+    );
+    expect(declared("chevron")).toContain(
+      `stroke-width="${chevron.getAttribute("stroke-width")}"`
     );
   });
 
@@ -39,6 +51,10 @@ describe("BrandMark", () => {
     expect(container.querySelector("svg")).toHaveClass("text-lifting");
     expect(container.querySelector("polygon")).toHaveAttribute(
       "fill",
+      "currentColor"
+    );
+    expect(container.querySelector("polygon")).toHaveAttribute(
+      "stroke",
       "currentColor"
     );
     // A class, never a var() in the stroke attribute: WKWebView does not

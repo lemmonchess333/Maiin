@@ -640,7 +640,8 @@ held to it, so it is now the APP-WIDE standard, not an insights-file local:
 - **Light mode:** The opt-in alternate (selectable in Settings → writes `profile.darkMode = false`). It's a clean, warm, iOS-inspired look (#F2F2F7 grouped background, cards on white — minimal and calm with subtle depth, NOT a dark-glass app rendered light). Default-dark is applied pre-React in `public/init.js` (dark unless an explicit `"false"` is stored) and mirrored by the `profile.darkMode` defaults in `src/lib/auth.tsx`.
 - **Brand colour:** Purple #7B72E9 — used sparingly for accents, active tab indicators, CTAs, progress bars. Never as a full background: its only fills are the primary button and the auth logo, and no button carries a gradient (the paywall's purple-to-teal ones went in the plain-text cleanup).
 - **Sport-coding:** Lifting = purple (#7B72E9), Running = coral (#D4637A). These two colours appear in calendar dots, section headings, icon tints, and contextual cards.
-- **Logo:** Purple gradient hexagon with upward chevron cutout — the app icon and the sign-in screens. Home no longer carries the "TROPOS" wordmark: DS3 titles it with the date and "Today", and the user's initials open Settings. The mark itself signs Home, small, before the date (`BrandMark`, the app icon's geometry), so "Today" keeps the left edge the cards below it start on.
+- **Logo:** a hexagon with rounded corners and an upward chevron cut out of it, white on a purple field that lightens toward the top on the app icon, and brand purple in the app. The owner chose this refinement of the bake-off mark on 2026-10-01 (`docs/visual-audit/bakeoff/DECISION.md`, decision 4). It is the app icon (with dark and tinted versions for iOS's home-screen modes), the sign-in screen's logo (the icon itself), and the launch image (the hexagon alone). Home no longer carries the "TROPOS" wordmark: DS3 titles it with the date and "Today", and the user's initials open Settings. The mark itself signs Home, small, before the date (`BrandMark`), so "Today" keeps the left edge the cards below it start on. The geometry lives in `src/lib/brandMark.ts` and `src/assets/brand/app-icon.svg`, held together by `BrandMark.test.tsx`; after changing it, run `node scripts/art/gen-app-icon.mjs` (every app and web icon) and `node scripts/art/gen-splash.mjs` (the launch image).
+- **Launch animation:** `LaunchSplash` takes over from the launch image (index.html paints the same hexagon, `#boot-splash`, until the bundle runs). The chevron rises into the hexagon, cut out so it shows whatever is behind it; once the app is ready (on Home, once Home's header mark has drawn) the mark shrinks into Home's header mark as the page shows, or the overlay fades anywhere but Home. Reduce Motion gets the whole mark and a fade. Its ground is the launch colour in both themes (`--launch`, the dark page), as the launch image is, so a light-mode user's page turns light only as it is revealed, never under the logo. It never shows under automation (`navigator.webdriver`), so specs and captures see the app as before. The four copies of the first frame (launch PNG, index.html, the overlay's CSS size, `brandMark.ts`) are pinned together by `launchSplash.test.ts`.
 
 ### Colour System (src/styles/tokens.css + src/lib/theme.ts)
 
@@ -651,7 +652,7 @@ held to it, so it is now the APP-WIDE standard, not an insights-file local:
 - Success green: #4DB872 / #22b558
 - Icon backgrounds: rgba(123, 114, 233, 0.10) — subtle purple tint
 - Card backgrounds: white (light) / #17171B (dark)
-- Page background: `240 6% 93%` ≈ #ECECEE (light) / #0E0E11 (dark). The dark page is also the cold-start colour (splash, manifest, theme-color), derived from the token and pinned by `coldStartChrome.test.ts`: move the token, re-run `node scripts/art/gen-splash.mjs`, and update the three hex copies it names
+- Page background: `240 6% 93%` ≈ #ECECEE (light) / #0E0E11 (dark). The dark page is also the cold-start colour (splash, manifest, theme-color, and the launch overlay's `--launch` in both themes), derived from the token and pinned by `coldStartChrome.test.ts`: move the token, re-run `node scripts/art/gen-splash.mjs`, and update the three hex copies and the `--launch` token it names
 - Raised surface (`--muted`: chips, tracks, tiles inside a card): #212127 (dark)
 - New bests: gold, the `--achievement` family (`text-achievement-strong` for small text). Gold means a personal best and nothing else
 - Text muted: the theme-aware `--muted-foreground` token (light `240 3.8% 43%`, dark `240 5% 65%` ≈ #A1A1AA) — tuned to clear 4.5:1 on card, muted AND page background in both themes. The old fixed #8E8E93 was deleted in the DS2 consolidation (2026-08-22, owner-decided): one grey serving both themes measured 2.53–3.26:1 across the light surfaces it rendered on. No fractional `text-muted-foreground/<n>` anywhere — de-emphasis is the type scale's job (banned + pinned in `tokenContrast.test.ts`). In JS/style contexts use `"hsl(var(--muted-foreground))"`.
@@ -1121,6 +1122,32 @@ or touching a CTA button, route it through `Button` with the variant above.
 ## Pre-launch QA backlog
 
 Manual checks deferred from work that already shipped to a feature branch. Burn down before launch — automated tests + tsc + lint cover the basics, but these need eyes on a real device or production-like environment.
+
+### The new logo, icon and launch animation (2026-10-01)
+
+Affects: `src/assets/brand/app-icon.svg`, the iOS AppIcon set (default,
+dark, tinted), the launch image, `public/icons/*`, `index.html`
+(`#boot-splash`), `public/init.js`, `src/components/LaunchSplash.tsx`,
+`src/pages/Login.tsx`.
+
+The geometry and the four copies of the launch frame are pinned by tests;
+what they cannot see is a phone.
+
+- [ ] **The icon on the home screen**, in default, dark and tinted modes
+      (long-press the home screen → Edit → Customize). The dark and tinted
+      versions are new entries in `AppIcon.appiconset/Contents.json`.
+- [ ] **The handover from the launch image.** Cold-start the app: the
+      purple hexagon should not move or resize when the web layer takes
+      over, then the chevron rises into it. A jump means the web view's
+      `100vh` is not the launch image's screen height (the overlay sizes
+      by `max(100vw, 100vh)`), which `contentInset: "automatic"` could do.
+- [ ] **The landing.** On Home, the mark shrinks onto the small mark
+      before the date and the page shows; there should be one mark at
+      the end, never two.
+- [ ] **Reduce Motion on the phone:** the whole mark, then a fade.
+- [ ] **Light mode** (Settings → Units & appearance): the launch stays
+      dark and Home is light as it shows, with no flash of either in
+      between.
 
 ### The Privacy Policy's claim about Google's retention (F3d pin 2)
 
