@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useUid } from "@/lib/auth";
 import { getSuggestedPeople, type SuggestedPerson } from "@/lib/socialApi";
 import { logger } from "@/lib/logger";
+import { noteFollowState } from "@/hooks/useFollowState";
 
 /**
  * Fetch a list of people to suggest the user follow. Runs lazily —
@@ -27,7 +28,9 @@ import { logger } from "@/lib/logger";
 interface Suggestions {
   uid: string | null;
   blockedUsers: Set<string> | undefined;
-  joinedSpaceIds: string[] | undefined;
+  /** The joined space ids the list was fetched for, joined into one
+   *  string: callers rebuild the array, so it is compared by value. */
+  joinedKey: string | null;
   refreshKey: number;
   people: SuggestedPerson[];
 }
@@ -36,7 +39,7 @@ const NO_PEOPLE: SuggestedPerson[] = [];
 const NO_SUGGESTIONS: Suggestions = {
   uid: null,
   blockedUsers: undefined,
-  joinedSpaceIds: undefined,
+  joinedKey: null,
   refreshKey: -1,
   people: NO_PEOPLE,
 };
@@ -51,12 +54,17 @@ export function useSuggestedPeople(
   const uid = useUid();
   const [suggestions, setSuggestions] = useState<Suggestions>(NO_SUGGESTIONS);
   const [refreshKey, setRefreshKey] = useState(0);
+  // Compared by value. Callers derive this array from other state, and
+  // when one rebuilt it every render the list was never "answered": each
+  // answer re-rendered, the new array started another fetch, and People
+  // re-read the database in a loop for as long as it was open.
+  const joinedKey = (joinedSpaceIds ?? []).join(",");
 
   const ownList = uid !== null && suggestions.uid === uid;
   const answered =
     ownList &&
     suggestions.blockedUsers === blockedUsers &&
-    suggestions.joinedSpaceIds === joinedSpaceIds &&
+    suggestions.joinedKey === joinedKey &&
     suggestions.refreshKey === refreshKey;
   const people = ownList ? suggestions.people : NO_PEOPLE;
   const loading = active && uid !== null && !answered;
@@ -72,18 +80,20 @@ export function useSuggestedPeople(
     let cancelled = false;
     // `blockedUsers` is a Set — reference-identity stable across renders
     // when coming from `useBlockedUsers`, safe to depend on directly.
-    // joinedSpaceIds arrives as a memoised array from the caller.
     getSuggestedPeople(uid, {
       limitCount: 10,
       blockedUsers,
-      joinedSpaceIds,
+      joinedSpaceIds: joinedKey ? joinedKey.split(",") : [],
     }).then(
       (list) => {
         if (cancelled) return;
+        // Everyone suggested is someone not followed yet, so their
+        // Follow buttons needn't each ask.
+        for (const p of list) noteFollowState(uid, p.uid, false);
         setSuggestions({
           uid,
           blockedUsers,
-          joinedSpaceIds,
+          joinedKey,
           refreshKey,
           people: list,
         });
@@ -94,7 +104,7 @@ export function useSuggestedPeople(
         setSuggestions({
           uid,
           blockedUsers,
-          joinedSpaceIds,
+          joinedKey,
           refreshKey,
           people: NO_PEOPLE,
         });
@@ -103,7 +113,7 @@ export function useSuggestedPeople(
     return () => {
       cancelled = true;
     };
-  }, [active, uid, blockedUsers, joinedSpaceIds, refreshKey]);
+  }, [active, uid, blockedUsers, joinedKey, refreshKey]);
 
   return {
     people,

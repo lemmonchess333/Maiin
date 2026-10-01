@@ -28,7 +28,11 @@ export type SocialEvent =
   | "share_card_opened"
   /** SOCIAL S1: a share card was exported (shared or downloaded) — the
    *  funnel's conversion event for the >10% share-rate benchmark. */
-  | "share_card_exported";
+  | "share_card_exported"
+  /** A follow from the feed: a post's Follow link, or the People to
+   *  follow row. People search and profiles are not counted
+   *  here; this measures whether following from content gets used. */
+  | "social_follow";
 
 /* SOCIAL-HOME-01: "together" + "feed" are the live tabs; "find"
    remains as a legacy value so historical events stay queryable
@@ -64,6 +68,8 @@ export interface SocialEventMetadata {
   /** share_card_exported (S2): where the card went — a direct Instagram
    *  Stories handoff, or the generic OS share sheet (incl. download). */
   destination?: "instagram" | "sheet";
+  /** social_follow: where in the feed the follow came from. */
+  followSource?: "post" | "people_row";
 }
 
 export function track(

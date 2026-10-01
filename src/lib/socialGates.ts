@@ -42,8 +42,9 @@ export function shouldShowFollowingFeed(activeFollowCount: number): boolean {
 
 /** SOC-P1b: the following ACTIVITY list renders from the FIRST follow.
  *  The old ≥3 hard gate hid real activity a user's first follows had
- *  already produced. 0 follows never reaches this predicate in practice
- *  (SoloFirstFeed owns that branch), but it answers honestly anyway. */
+ *  already produced. At 0 follows it answers false, and Following shows
+ *  its "You don't follow anyone yet" state (the solo-first stack that
+ *  owned that branch is retired). */
 export function shouldRenderFollowingList(activeFollowCount: number): boolean {
   return activeFollowCount > 0;
 }
@@ -95,4 +96,12 @@ export function shouldShowChallengePercentile(
  * notes that 0 follows never reaches it "in practice (SoloFirstFeed owns
  * that branch)". So at ≥1 follow the user has their own following
  * activity plus a named next step; curation would replace both.
+ */
+
+/*
+ * Since the owner's Social pass the solo-first layout is retired. Zero
+ * follows no longer swaps the feed for prompts: a new person lands on
+ * Explore and sees what people share publicly, under one line on how
+ * Following fills, and Following says nobody is followed yet. The note
+ * above is history; nothing here gates a layout any more.
  */

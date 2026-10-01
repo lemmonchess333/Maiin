@@ -155,10 +155,13 @@ const EXPECTED_INLINE_USES = {
   // Lift numerals are 18px bold — under the 18.66px large-text line by
   // two thirds of a pixel — so they took the strong steps with the
   // brand-coloured Double beside them.
-  "THEME.running": 17,
+  // 2026-10-01: 17 → 15. The Social pass retired the feed's recap card
+  // (its run figure) and the solo feed's share card.
+  "THEME.running": 15,
   // 2026-09-27: 6 → 5. The Sessions ring's stroke, retired with the
   // summary's rings (PeriodOverview).
-  "THEME.lifting": 5,
+  // 2026-10-01: 5 → 4. The same recap card's volume figure.
+  "THEME.lifting": 4,
   // The brand, inline. Icon tints (notification glyphs, the ProModal
   // feature tiles, the Home tiles' arrows), legend and ring fills, and
   // TrajectoryCard's 3xl score. The text uses — Home's rest-day eyebrow,
@@ -171,7 +174,12 @@ const EXPECTED_INLINE_USES = {
   // sparkle tile with them.
   // 2026-09-27: 39 → 38. DS3's rest-day card tints its leaf with the
   // `text-lifting-strong` class instead of the inline brand colour.
-  "THEME.brand": 37,
+  // 2026-10-01: 37 → 33. The Social pass: the feed's follow-progress
+  // and empty-Following row icons, the profile's empty-state tile (now
+  // the EmptyState primitive) and the solo feed's.
+  // 2026-10-01: 33 → 32. The notifications sheet's empty state moved to
+  // the EmptyState primitive too.
+  "THEME.brand": 32,
   // 2026-09-18: 21 → 19. Home's "Log food" action and the nudge note
   // above it were the two smallest-text uses and measured 2.77:1; both
   // moved to `text-nutrition-strong`. The rest are icons and fills.
@@ -255,7 +263,8 @@ function bareUses(token: string): string[] {
 // 2026-09-27: 49 → 45. DS3's weekly recap as cards: the old page's
 // weight scale, week-ahead calendar and why-you-train heart tiles went,
 // and the retune sparkle takes the lifting text step.
-const BRAND = { token: "primary", step: "lifting-strong", bare: 45 } as const;
+// 2026-10-01: 45 → 44. The solo feed's share card dumbbell, retired.
+const BRAND = { token: "primary", step: "lifting-strong", bare: 44 } as const;
 
 describe("identity colour usage is pinned", () => {
   it("text-primary has the pinned number of bare uses", () => {

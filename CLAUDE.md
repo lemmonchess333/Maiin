@@ -96,7 +96,7 @@ exists — pinned by `claudeMdFreshness.test.ts` in both directions
 | `WeeklyReview.tsx`                     | `/review`                          | Sunday recap — passive narration of the week (Rev1)                            |
 | `Social.tsx`                           | `/social`                          | Social feed, Circles/Spaces, leaderboards                                      |
 | `Space.tsx`                            | `/space/:spaceId`                  | Community Space — hero, join/leave, post list + composer                       |
-| `UserProfile.tsx`                      | `/user/:uid`                       | User profile viewing                                                           |
+| `UserProfile.tsx`                      | `/user/:uid`                       | A person's profile: this week's shared sessions, badges, their posts           |
 | `Upgrade.tsx`                          | `/upgrade`                         | Pro pricing + purchase page                                                    |
 | `SettingsIndex.tsx`                    | `/settings`                        | Settings section list — iOS nested-page IA (`/settings/legacy` redirects here) |
 | `settings/SettingsProfile.tsx`         | `/settings/profile`                | Profile section                                                                |
@@ -209,7 +209,7 @@ run-surface feature modules.
 `useGPS`, `useRunTimer`, `useRunningStats`, `useSessionPlayer`, `usePrivacyZones`, `useAudioCues`, `useWakeLock`
 
 **Social:**
-`useSocialFeed`, `useDiscoverFeed`, `useUnreadCount`, `useBlockedUsers`
+`useSocialFeed`, `useDiscoverFeed`, `useUnreadCount`, `useBlockedUsers`, `useFollowState` (one follow record shared by every Follow control), `useUserProfileData`
 
 **Performance & Analytics:**
 `usePerformance`
@@ -2308,12 +2308,56 @@ Affects: `functions/lib/challengeDefs.js` (new `global-monthly-*` hybrid definit
 
 ### Solo-first Social feed (SOCIAL S4 Soc8, PR3)
 
+**STATUS 2026-10-01 — retired by the owner (the Social pass below).**
+`SoloFirstFeed` and `PartnerStreakHero` are deleted: a new person sees
+Explore's posts. `solo-feed.screens.capture.spec.ts` became
+`new-user-feed.screens.capture.spec.ts`. The rows below are history.
+
 Affects: `src/pages/Social.tsx` (renders `SoloFirstFeed` for cold-start users), new `src/components/social/SoloFirstFeed.tsx` + `src/features/partnerStreak/PartnerStreakHero.tsx`. The state 100% of launch users see — must look DESIGNED, not gated.
 
 - [x] **Light + dark capture of the solo state.** Re-read 2026-08-08 against the current surface and filmed (`solo-feed.screens.capture.spec.ts`, fresh signup-form account = 0 follows): the CURRENT stack is PartnerStreak hero → challenge slot → Spaces-for-you rail → Share-your-training → spaces empty-state hexagon (the original row's "Crews unlock…" row died with crews, #1700). Asserted before shooting: no "Your feed is empty" copy, and the cold-start Share card shows NO create button. Both frames eyeballed.
 - [x] **Challenge slot before rollover.** Covered by the same capture, structurally: the rig's emulator has no challenge docs at all (no rollover cron runs there), and the slot collapses cleanly — no broken/empty card between the hero and the share card, both frames.
 - [x] **Sub-tab default interaction.** Automated in the same spec's second test: switching the feed source to Following keeps the solo stack leading (the 0-follow gate outranks the source selection) and never shows "Your feed is empty".
 - [x] **Share cold-start vs preloaded.** Both halves automated: the cold-start assertion above, and the preloaded half via a REST-seeded workout — after reload the card offers "Create a share card" and the composer opens preloaded (filmed: 3×8×60 kg renders as 1.4t total volume). The stat labels are invariant uppercase by design ("1 EXERCISES" is the stat-label convention, not a plural bug).
+
+### The Social pass (owner, 2026-10-01)
+
+Affects: `FeedView.tsx`, `Social.tsx`, `UserProfile.tsx`,
+`useUserProfileData`, `useFollowState`, `FollowButton`, `InlineFollow`,
+`PeopleToFollowRow`, `SpacesDirectory` + `RaceFilterChips`,
+`CirclesSection`, `WeeklyReview.tsx`, `useSpacesDirectory`,
+`useSuggestedPeople`, `CommentSheet`, `NotificationsSheet`.
+
+The feed opens on posts (the recap card, Spaces row and points card left
+the top: "Share your week" is on the weekly recap's first card, Spaces
+lead Together, the points card sits under the third post). Someone who
+follows nobody sees Explore's posts under one line, not the solo-first
+stack. Posts from people you don't follow carry Follow, and a People to
+follow row sits after the second post while you follow fewer than three.
+Profiles show this week's shared sessions, badge art and the feed's own
+cards. Together filters races with chips, and Circles is one short card
+whose goal choices open from Start a circle. Two bugs went with it:
+"Suggested people" re-read the database in a loop for as long as People
+was open (since #2311, 2026-09-14), and a profile with no document spun
+forever. A third surfaced on the way: the profile asked for public and
+followers-only posts in one query, which the rules refuse for a
+non-follower, so every profile opened from Explore said it had nothing
+shared (pinned by the "profile:" cases in `firestore.rules.test.ts`).
+
+- [ ] **People on a phone:** open it and watch "Suggested people" finish
+      loading. It never did in production after 14 September.
+- [ ] **A profile you don't follow** shows its public sessions; follow
+      them and reopen it: followers-only sessions appear too.
+- [ ] **Follow from a post** on Explore: the link turns to "Following",
+      the line over the feed counts the follow, and the person's other
+      posts lose their Follow link at the same moment.
+- [ ] **Race chips:** the country sheet, the distance chips, and "Clear
+      filters" from no matches.
+- [ ] **Share your week** from the recap's first card exports a card with
+      last week's numbers.
+- [ ] **Comments with no signal:** open a post's comments in airplane
+      mode. It says "Couldn't load comments" with Try again, never "No
+      comments yet" (which it also used to show while comments loaded).
 
 ### Backlog audit 2026-08-02 — what a skeptical pass found
 

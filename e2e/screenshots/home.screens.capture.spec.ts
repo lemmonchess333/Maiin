@@ -144,10 +144,11 @@ test.describe("app screenshots", () => {
       if (name === "social") {
         // Post-LOAD content only — the "CIRCLES" section label renders
         // during the loading skeleton, so gate on the resolved states:
-        // the cold-start selector (no circles), a featured card's
-        // focus button (has circles), or the retry block.
+        // the no-circle card (its goal choices open from Start a
+        // circle since 2026-10-01), a featured card's focus button
+        // (has circles), or the retry block.
         await page
-          .getByText(/What support would help\?|weekly focus|Couldn't load/i)
+          .getByText(/Train with a few friends|weekly focus|Couldn't load/i)
           .first()
           .waitFor({ state: "visible", timeout: 15000 })
           .catch(() => {
