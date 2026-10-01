@@ -1,7 +1,7 @@
 /**
  * SettingsData — "Your data" (Set1's Data & Storage section).
  *
- * The exports used to sit on the Account page between "Change email" and
+ * The exports sat on the Account page between "Change email" and
  * "Sign out", and Recently deleted meals had its own row at the foot of the
  * Settings list. Set1 placed both in Data & Storage, and Home2/Food6 put
  * the deleted-meals archive there too, so this page is where they meet.

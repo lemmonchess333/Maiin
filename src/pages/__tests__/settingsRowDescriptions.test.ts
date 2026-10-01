@@ -46,9 +46,11 @@ describe("Settings row descriptions", () => {
   it("reads the whole catalogue — the fixture this rests on", () => {
     // Without a floor here, a regex that stopped matching would leave the
     // assertion below passing over an empty list.
+    // Twelve rows since the Settings pass: Profile became the card at the
+    // top of the list, and Lift plan and Run plan open from Programme.
     const all = descriptions();
-    expect(all.length).toBeGreaterThanOrEqual(13);
-    expect(all).toContain("Name, photo, body metrics");
+    expect(all.length).toBeGreaterThanOrEqual(12);
+    expect(all).toContain("Export, recently deleted");
   });
 
   it("every one fits on a single line", () => {

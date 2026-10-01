@@ -9,7 +9,7 @@
  * fields with the plan re-deriving — none re-run onboarding, none use a
  * separate wizard, none gate basic plan-editing behind a paywall.
  *
- * Two views (`variant`), one editor (owner, 2026-10-01):
+ * Two views (`variant`), one editor (the owner's call, Settings pass):
  *   - "lift" — Settings → Lift plan, and Train's links: the lifting
  *     editor.
  *   - "overview" — Settings → Programme: the saved setup, where each part
@@ -135,7 +135,7 @@ interface ProgrammeSettingsProps {
    *     toggles. Its nutrition and run DRAFT state still initialises from
    *     the profile and is threaded unchanged through the save, so a lift
    *     edit preserves the nutrition phase and the run plan untouched.
-   *   - "overview": the Programme page (owner, 2026-10-01). The saved
+   *   - "overview": the Programme page (the Settings pass). The saved
    *     setup, then where each part is set — Lift plan, Run plan,
    *     Nutrition phase, Weekly layout — and the whole-programme reset.
    *     It edits nothing itself. It replaced a "full" view that repeated

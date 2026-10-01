@@ -5,7 +5,7 @@
  * the lift and run fields each got a focused editor (/settings/lift-plan,
  * /settings/run-plan) while this page went on rendering every lifting field
  * as well, so one setting could be changed from two pages. Since the
- * Settings pass (owner, 2026-10-01) it renders `ProgrammeSettings`'
+ * Settings pass it renders `ProgrammeSettings`'
  * overview: the saved setup, where each part is set, and the
  * whole-programme reset. The Programme page ⋯ menu deep-links here.
  *

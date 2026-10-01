@@ -83,7 +83,7 @@ export default function ProfileInfoSection({
     if (weight.trim() === shown) return;
     const value = parseNumber(weight);
     const kg = weightUnit === "lbs" ? lbToKg(value) : value;
-    // A cleared field used to blur as Number("") = 0, and 0 splits the
+    // A cleared field blurs as Number("") = 0, and 0 splits the
     // pipeline downstream: calculateTDEE stores a 0g protein target while
     // getAdjustedTargets silently rebases to 70kg — two consumers
     // disagreeing about the same field. Reject out-of-range instead of

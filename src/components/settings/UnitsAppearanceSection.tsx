@@ -74,7 +74,7 @@ export default function UnitsAppearanceSection({
           <SettingsRow
             icon={Footprints}
             label="Distance & pace"
-            description="Runs, splits and spoken cues"
+            description="Runs, splits, elevation and spoken cues"
             trailing={
               <SegmentedControl
                 className={CONTROL}

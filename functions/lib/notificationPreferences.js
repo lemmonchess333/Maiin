@@ -1,6 +1,6 @@
 /**
  * Which activity notifications a person gets: the switches under Settings →
- * Notifications → Activity (S3, built 2026-10-01).
+ * Notifications → Activity (S3).
  *
  * S3 locked one switch per kind, calm by default: props and comments on,
  * new followers off, and no prompt nudging anyone to turn more on. Crews,

@@ -12,7 +12,7 @@
  *
  * The lifting fields live in ONE view ("lift": Settings → Lift plan). The
  * Programme page ("overview") shows the setup, opens each part's own page
- * and holds the reset; it edits nothing (owner, 2026-10-01).
+ * and holds the reset; it edits nothing (the owner's call, Settings pass).
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import {
