@@ -1,4 +1,5 @@
 import { verifySignupEmail } from "../helpers/verifySignupEmail";
+import { openSignUpForm } from "../helpers/auth";
 /**
  * Onboarding capture — the first-run flow, filmed step by step.
  *
@@ -91,9 +92,7 @@ test.describe("onboarding screenshots", () => {
     const email = `e2e-onboarding-${Date.now()}@tropos.test`;
     await page.goto("/");
     await page.waitForLoadState("networkidle");
-    await page
-      .getByRole("button", { name: /sign up/i })
-      .click({ timeout: 20_000 });
+    await openSignUpForm(page);
     await page.fill("#login-email", email);
     await page.fill("#login-password", "test-password-123");
     await page

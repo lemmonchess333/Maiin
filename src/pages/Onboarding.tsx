@@ -10,6 +10,7 @@ import { resolveGoalWeightPlan } from "@/lib/goalWeightPlan";
 import { logger } from "@/lib/logger";
 import Button from "@/components/ui/Button";
 import SegmentedControl from "@/components/ui/SegmentedControl";
+import { IconButton } from "@/components/ui/IconButton";
 import RangeInput from "@/components/ui/RangeInput";
 import OptionCard from "@/components/onboarding/OptionCard";
 import BodyInputs from "@/components/onboarding/BodyInputs";
@@ -39,9 +40,10 @@ import InlineNumerals from "@/components/ui/InlineNumerals";
 import SectionLabel from "@/components/ui/SectionLabel";
 import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
 import { formatDayMonth } from "@/utils/formatters";
-import { Heart, Check, ChevronRight, ArrowLeft } from "lucide-react";
+import { Check, ChevronRight, ArrowLeft, UserRound } from "lucide-react";
 import { cn } from "@/lib/utils";
 import ChoiceArt from "@/components/onboarding/ChoiceArt";
+import ExerciseThumb from "@/components/program/ExerciseThumb";
 import { toast } from "@/lib/toast";
 import { track as trackLifecycle } from "@/lib/lifecycleAnalytics";
 import { validateDisplayName } from "@/lib/displayName";
@@ -93,7 +95,7 @@ const STEP_META = [
   ["Review your plan", "Check your answers before creating your plan."],
   [
     "Your plan",
-    "Here’s the plan your answers generate. Edit anything before you start.",
+    "Your first week, built from your answers. Change anything before you start.",
   ],
 ];
 const GOALS = [
@@ -320,15 +322,30 @@ export default function Onboarding() {
   }, [step, trainingActivity]);
   const activityLevel: ActivityLevel =
     daysPerWeek >= 6 ? "very_active" : daysPerWeek >= 4 ? "moderate" : "light";
+  /* Goal weight (optional): the target weight owns the nutrition direction
+     (goalWeightPlan's locked MacroFactor model), so an empty box holds the
+     current weight, as before. Typed in the person's weight unit. */
+  const [goalWeightText, setGoalWeightText] = useState("");
+  const [paceKgPerWeek, setPaceKgPerWeek] = useState<0.25 | 0.5 | 0.75>(0.5);
+  const goalWeightKgInput = useMemo(() => {
+    const n = Number.parseFloat(goalWeightText.replace(",", "."));
+    if (!Number.isFinite(n)) return null;
+    const kg = weightUnit === "lbs" ? n / 2.20462 : n;
+    return kg >= 30 && kg <= 300 ? kg : null;
+  }, [goalWeightText, weightUnit]);
   const goalPlan = useMemo(
     () =>
       resolveGoalWeightPlan({
         currentKg: weightKg,
-        targetKg: weightKg,
-        rateKgPerWeek: 0,
+        targetKg: goalWeightKgInput ?? weightKg,
+        rateKgPerWeek: paceKgPerWeek,
       }),
-    [weightKg]
+    [weightKg, goalWeightKgInput, paceKgPerWeek]
   );
+  const paceLabel = (kg: number) =>
+    weightUnit === "lbs"
+      ? `${Math.round(kg * 2.20462 * 2) / 2} lb`
+      : `${kg} kg`;
   const tdee = useMemo(
     () =>
       calculateTDEE(
@@ -495,8 +512,8 @@ export default function Onboarding() {
         // recomp (zero offset). This is the same maintenance result the
         // goalPlan above resolves to; a stale non-current default would have
         // written an unintended cut/bulk. Editable later via Settings.
-        goalWeightKg: weightKg,
-        weeklyRateKg: 0,
+        goalWeightKg: goalWeightKgInput ?? weightKg,
+        weeklyRateKg: goalPlan.effectiveRateKgPerWeek,
         preferredHeightUnit: heightUnit,
         preferredWeightUnit: weightUnit,
         primaryGoal,
@@ -726,13 +743,11 @@ export default function Onboarding() {
     >
       <header className="shrink-0 py-3 space-y-3">
         <div className="flex justify-between items-center text-sm">
-          <Button
-            variant="ghost"
+          <IconButton
             aria-label="Account settings"
             onClick={() => navigate("/settings/account")}
-          >
-            Account
-          </Button>
+            icon={<UserRound aria-hidden="true" />}
+          />
           <span className="text-muted-foreground">
             {chapters[chapter]} ·{" "}
             <span className="font-mono tabular-nums">
@@ -813,7 +828,7 @@ export default function Onboarding() {
               ))}
               <p className="text-sm text-muted-foreground" aria-live="polite">
                 {goalConfirmed
-                  ? "This changes your training emphasis. Nutrition starts at maintenance; you can set a weight goal later."
+                  ? "This sets your training focus. You can add a goal weight when you get to About you."
                   : "Choose one to continue. You can revisit it before creating your plan."}
               </p>
             </div>
@@ -861,13 +876,15 @@ export default function Onboarding() {
                   ? "Choose lift sessions per week. The draft below updates with your plan."
                   : "No lifts will be scheduled. Next, choose free running or prepare for a race."}
               </p>
-              <WeekPreview
-                schedule={plan.weekSchedule}
-                workouts={plan.programState.workouts}
-                runDays={plan.programState.runDays}
-                draft
-                freeRunning={freeRunning}
-              />
+              {hasLifting && (
+                <WeekPreview
+                  schedule={plan.weekSchedule}
+                  workouts={plan.programState.workouts}
+                  runDays={plan.programState.runDays}
+                  draft
+                  freeRunning={freeRunning}
+                />
+              )}
             </div>
           )}
           {step === 3 && (
@@ -1155,7 +1172,6 @@ export default function Onboarding() {
                   key={option.id}
                   selected={injuries.includes(option.id)}
                   label={option.label}
-                  icon={<Heart className="size-5" />}
                   onSelect={() =>
                     setInjuries((previous) =>
                       option.id === "none"
@@ -1249,6 +1265,61 @@ export default function Onboarding() {
                   estimates you can adjust in Settings.
                 </p>
               </details>
+              <div className="space-y-3">
+                <label
+                  htmlFor="onboarding-goal-weight"
+                  className="block text-base font-semibold"
+                >
+                  Goal weight{" "}
+                  <span className="text-sm font-normal text-muted-foreground">
+                    (optional)
+                  </span>
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    id="onboarding-goal-weight"
+                    inputMode="decimal"
+                    className="ds-input w-32 min-h-11 font-mono tabular-nums"
+                    value={goalWeightText}
+                    placeholder={formatWeightInUnit(weightKg, weightUnit)}
+                    onChange={(event) => setGoalWeightText(event.target.value)}
+                  />
+                  <span className="text-sm text-muted-foreground">
+                    {weightUnit === "lbs" ? "lb" : "kg"}
+                  </span>
+                </div>
+                {goalPlan.direction === "maintain" ? (
+                  <p className="text-sm text-muted-foreground">
+                    {primaryGoal === "fat_loss"
+                      ? "To lose fat, enter the weight you’re aiming for. Empty holds your current weight."
+                      : "Leave it empty to hold your current weight."}
+                  </p>
+                ) : (
+                  <SegmentedControl<0.25 | 0.5 | 0.75>
+                    ariaLabel="Weekly pace"
+                    value={paceKgPerWeek}
+                    options={([0.25, 0.5, 0.75] as const).map((kg) => ({
+                      value: kg,
+                      label: (
+                        <span className="font-mono tabular-nums">
+                          {paceLabel(kg)}
+                        </span>
+                      ),
+                    }))}
+                    onChange={setPaceKgPerWeek}
+                    tone="lifting"
+                  />
+                )}
+                {goalPlan.direction !== "maintain" && (
+                  <p className="text-sm text-muted-foreground">
+                    {goalPlan.direction === "lose" ? "Lose" : "Gain"} about{" "}
+                    {paceLabel(paceKgPerWeek)} a week.
+                    {goalPlan.direction === "lose" &&
+                      paceKgPerWeek === 0.5 &&
+                      " Most people manage this pace."}
+                  </p>
+                )}
+              </div>
             </div>
           )}
           {step === 7 && (
@@ -1292,27 +1363,35 @@ export default function Onboarding() {
                   </InlineNumerals>
                 </p>
                 {!runningFirst && firstWorkout && (
-                  <div className="flex flex-wrap gap-2 text-sm">
+                  <ul className="space-y-2">
                     {firstWorkout.exercises.slice(0, 3).map((exercise) => (
-                      <span
-                        key={exercise.name}
-                        className="rounded-lg bg-muted px-3 py-2"
+                      <li
+                        key={exercise.instanceId ?? exercise.name}
+                        className="flex items-center gap-3"
                       >
-                        {exercise.name}
-                      </span>
+                        <ExerciseThumb
+                          exerciseId={exercise.exerciseId}
+                          size="sm"
+                        />
+                        <span className="text-sm font-medium">
+                          {exercise.name}
+                        </span>
+                      </li>
                     ))}
-                  </div>
+                    {firstWorkout.exercises.length > 3 && (
+                      <li className="text-sm text-muted-foreground pl-[3.25rem]">
+                        <InlineNumerals>
+                          {`and ${firstWorkout.exercises.length - 3} more`}
+                        </InlineNumerals>
+                      </li>
+                    )}
+                  </ul>
                 )}
                 {runningFirst && firstRunTemplate && (
                   <p className="text-sm text-muted-foreground">
                     {firstRunTemplate.description}
                   </p>
                 )}
-                <p className="text-sm text-muted-foreground">
-                  {runningFirst
-                    ? "Create your plan to open your runs in Train."
-                    : "Create your plan to open the full session in Train."}
-                </p>
               </section>
               <WeekPreview
                 schedule={plan.weekSchedule}
@@ -1328,100 +1407,20 @@ export default function Onboarding() {
                     change them in Run plan settings.
                   </p>
                 )}
-              <div className="rounded-2xl bg-card card-shadow divide-y divide-border px-4">
-                {[
-                  {
-                    label: "Training focus",
-                    value: goalConfirmed
-                      ? goalLabel(primaryGoal)
-                      : "Choose your goal",
-                    target: 0,
-                  },
-                  {
-                    label: "Lift sessions",
-                    value: hasLifting
-                      ? `${daysPerWeek} per week`
-                      : "No lifting planned",
-                    target: 1,
-                  },
-                  {
-                    label: "Running",
-                    value: runSummary,
-                    target: trainingActivity === "lifting" ? 1 : 3,
-                  },
-                  {
-                    label: "Setup",
-                    value: `${equipmentLabel(equipment)} · ${experienceLabel(experience)}`,
-                    target: 2,
-                  },
-                  {
-                    label: "Limitations",
-                    value: injuries.length
-                      ? injuries
-                          .map((id) =>
-                            id === "none" ? "None" : id.replaceAll("_", " ")
-                          )
-                          .join(", ")
-                      : "Choose limitations or None",
-                    target: 4,
-                  },
-                  {
-                    label: "About you",
-                    value: `${weightDisplayUnit === "st" ? formatStonePounds(weightKg) : `${formatWeightInUnit(weightKg, weightUnit)} ${weightUnit === "lbs" ? "lb" : "kg"}`} · ${Number(heightCm.toFixed(1))} cm · age ${ageRange}`,
-                    target: 5,
-                  },
-                ]
-                  .filter(
-                    (row) =>
-                      hasLifting || (row.target !== 2 && row.target !== 4)
-                  )
-                  .map((row) => (
-                    <div
-                      key={row.label}
-                      className="flex items-center gap-3 py-3"
-                    >
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm text-muted-foreground">
-                          {row.label}
-                        </p>
-                        <p className="text-sm font-semibold">{row.value}</p>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        onClick={() => edit(row.target)}
-                        aria-label={`Edit ${row.label.toLowerCase()}`}
-                      >
-                        Edit
-                      </Button>
-                    </div>
-                  ))}
-              </div>
+
               {validBody && (
-                <details className="rounded-2xl bg-card card-shadow p-4 space-y-3">
-                  <summary className="min-h-11 py-3 cursor-pointer text-base font-semibold">
-                    Starting nutrition
-                  </summary>
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="text-sm text-muted-foreground">
-                      Based on your starting details
-                    </p>
-                    <Button
-                      variant="ghost"
-                      onClick={() => edit(5)}
-                      aria-label="Edit nutrition inputs"
-                    >
-                      Edit inputs
-                    </Button>
-                  </div>
-                  <p className="text-2xl font-mono tabular-nums font-bold">
+                <section
+                  className="rounded-2xl bg-card card-shadow p-5 space-y-2"
+                  aria-label="Your daily target"
+                >
+                  <SectionLabel className="text-nutrition-strong">
+                    Your daily target
+                  </SectionLabel>
+                  <p className="text-3xl font-mono tabular-nums font-extrabold">
                     {Math.round(tdee.targetCalories).toLocaleString()}{" "}
-                    <span className="text-sm font-sans font-normal text-muted-foreground">
-                      kcal / day
+                    <span className="text-base font-sans font-semibold text-muted-foreground">
+                      kcal
                     </span>
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    Maintenance to begin with. Set a weight goal when you’re
-                    ready in Settings → Nutrition.
                   </p>
                   <p className="text-sm text-muted-foreground">
                     <span className="font-mono tabular-nums">
@@ -1435,8 +1434,86 @@ export default function Onboarding() {
                     <span className="font-mono tabular-nums">{tdee.fat} g</span>{" "}
                     fat
                   </p>
-                </details>
+                  <p className="text-sm text-muted-foreground">
+                    {goalPlan.direction === "maintain"
+                      ? "Enough to hold your weight while you start. Set a goal weight any time in Settings → Nutrition."
+                      : `To ${goalPlan.direction === "lose" ? "lose" : "gain"} about ${paceLabel(paceKgPerWeek)} a week.`}
+                  </p>
+                </section>
               )}
+              <details className="rounded-2xl bg-card card-shadow px-4">
+                <summary className="min-h-11 py-3 cursor-pointer text-base font-semibold">
+                  Your answers
+                </summary>
+                <div className="divide-y divide-border">
+                  {[
+                    {
+                      label: "Training focus",
+                      value: goalConfirmed
+                        ? goalLabel(primaryGoal)
+                        : "Choose your goal",
+                      target: 0,
+                    },
+                    {
+                      label: "Lift sessions",
+                      value: hasLifting
+                        ? `${daysPerWeek} per week`
+                        : "No lifting planned",
+                      target: 1,
+                    },
+                    {
+                      label: "Running",
+                      value: runSummary,
+                      target: trainingActivity === "lifting" ? 1 : 3,
+                    },
+                    {
+                      label: "Setup",
+                      value: `${equipmentLabel(equipment)} · ${experienceLabel(experience)}`,
+                      target: 2,
+                    },
+                    {
+                      label: "Limitations",
+                      value: injuries.length
+                        ? injuries
+                            .map((id) =>
+                              id === "none" ? "None" : id.replaceAll("_", " ")
+                            )
+                            .join(", ")
+                        : "Choose limitations or None",
+                      target: 4,
+                    },
+                    {
+                      label: "About you",
+                      value: `${weightDisplayUnit === "st" ? formatStonePounds(weightKg) : `${formatWeightInUnit(weightKg, weightUnit)} ${weightUnit === "lbs" ? "lb" : "kg"}`} · ${Number(heightCm.toFixed(1))} cm · age ${ageRange}`,
+                      target: 5,
+                    },
+                  ]
+                    .filter(
+                      (row) =>
+                        hasLifting || (row.target !== 2 && row.target !== 4)
+                    )
+                    .map((row) => (
+                      <div
+                        key={row.label}
+                        className="flex items-center gap-3 py-3"
+                      >
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm text-muted-foreground">
+                            {row.label}
+                          </p>
+                          <p className="text-sm font-semibold">{row.value}</p>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          onClick={() => edit(row.target)}
+                          aria-label={`Edit ${row.label.toLowerCase()}`}
+                        >
+                          Edit
+                        </Button>
+                      </div>
+                    ))}
+                </div>
+              </details>
               <div className="space-y-2">
                 <label
                   htmlFor="onboarding-name"
@@ -1516,7 +1593,7 @@ export default function Onboarding() {
               : step === 7
                 ? saveError
                   ? "Try creating my plan again"
-                  : "Create my plan"
+                  : "Start my plan"
                 : returnToReview
                   ? "Back to review"
                   : "Continue"}

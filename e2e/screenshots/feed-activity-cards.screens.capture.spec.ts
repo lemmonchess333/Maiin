@@ -1,4 +1,5 @@
 import { verifySignupEmail } from "../helpers/verifySignupEmail";
+import { openSignUpForm } from "../helpers/auth";
 /**
  * Feed activity cards, light + dark — the surface the 2026-08-21 numeric
  * hierarchy pass changed and NOTHING could look at.
@@ -237,9 +238,7 @@ test.describe("feed activity card screenshots", () => {
     const email = `feedcard-${stamp}@tropos.test`;
     await page.goto("/");
     await page.waitForLoadState("networkidle");
-    await page
-      .getByRole("button", { name: /sign up/i })
-      .click({ timeout: 20_000 });
+    await openSignUpForm(page);
     await page.fill("#login-email", email);
     await page.fill("#login-password", "test-password-123");
     await page

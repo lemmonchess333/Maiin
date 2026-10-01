@@ -1,4 +1,5 @@
 import { verifySignupEmail } from "./helpers/verifySignupEmail";
+import { openSignUpForm } from "./helpers/auth";
 /**
  * Coachmark first-use contract (pre-launch QA backlog, tooltip-primitive
  * section) — the dismissal matrix that was parked as a manual device
@@ -126,9 +127,7 @@ async function openPeopleAsFreshUser(page: Page): Promise<string> {
   const email = `coachmark-${Date.now()}-${Math.floor(Math.random() * 1e6)}@tropos.test`;
   await page.goto("/");
   await page.waitForLoadState("networkidle");
-  await page
-    .getByRole("button", { name: /sign up/i })
-    .click({ timeout: 20_000 });
+  await openSignUpForm(page);
   await page.fill("#login-email", email);
   await page.fill("#login-password", "test-password-123");
   await page

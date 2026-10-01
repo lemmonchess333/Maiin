@@ -131,7 +131,7 @@ describe("onboarding chapters and commit", () => {
           resolve = done;
         })
     );
-    const commit = screen.getByRole("button", { name: "Create my plan" });
+    const commit = screen.getByRole("button", { name: "Start my plan" });
     fireEvent.click(commit);
     fireEvent.click(commit);
     expect(complete).toHaveBeenCalledTimes(1);
@@ -155,7 +155,7 @@ describe("onboarding chapters and commit", () => {
     saveOnboardingDraft("setup-test", draft);
     complete.mockRejectedValue({ code: "functions/permission-denied" });
     open();
-    fireEvent.click(screen.getByRole("button", { name: "Create my plan" }));
+    fireEvent.click(screen.getByRole("button", { name: "Start my plan" }));
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "We couldn’t save your plan"
     );
@@ -173,7 +173,7 @@ describe("onboarding chapters and commit", () => {
     });
     open();
     expect(
-      screen.getByRole("button", { name: "Create my plan" })
+      screen.getByRole("button", { name: "Start my plan" })
     ).toBeDisabled();
     fireEvent.click(screen.getByRole("button", { name: "Edit running" }));
     expect(screen.getByLabelText(/Race target date/)).toHaveAttribute(
@@ -235,7 +235,7 @@ describe("activity-relevant setup", () => {
       within(openWeek).getByRole("button", { name: "Mon: open day" })
     );
     expect(openWeek).toHaveTextContent("Mon · Run when it suits you.");
-    fireEvent.click(screen.getByRole("button", { name: "Create my plan" }));
+    fireEvent.click(screen.getByRole("button", { name: "Start my plan" }));
     await waitFor(() => expect(refresh).toHaveBeenCalledTimes(1));
     const payload = complete.mock.calls[0][0];
     expect(payload.programState.workouts).toEqual([]);
@@ -284,7 +284,7 @@ describe("activity-relevant setup", () => {
     expect(
       screen.getByRole("region", { name: "First run preview" })
     ).toHaveTextContent("Free running");
-    fireEvent.click(screen.getByRole("button", { name: "Create my plan" }));
+    fireEvent.click(screen.getByRole("button", { name: "Start my plan" }));
     await waitFor(() => expect(refresh).toHaveBeenCalledTimes(1));
     expect(complete.mock.calls[0][0].programState.workouts).toHaveLength(3);
     await waitFor(() =>
@@ -393,9 +393,7 @@ describe("answers the user has not given", () => {
     // back through it — so "got past that step" counts as answered.
     saveOnboardingDraft("setup-test", { ...draft, step: 7 });
     open();
-    expect(
-      screen.getByRole("button", { name: "Create my plan" })
-    ).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Start my plan" })).toBeEnabled();
   });
 });
 

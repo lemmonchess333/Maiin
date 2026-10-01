@@ -1,4 +1,5 @@
 import { verifySignupEmail } from "../helpers/verifySignupEmail";
+import { openSignUpForm } from "../helpers/auth";
 /**
  * Form-demo capture — the figures themselves, on the real surface.
  *
@@ -284,9 +285,7 @@ test.describe("form demo screenshots", () => {
     const email = `formdemo-${Date.now()}-${Math.floor(Math.random() * 1e6)}@tropos.test`;
     await page.goto("/");
     await page.waitForLoadState("networkidle");
-    await page
-      .getByRole("button", { name: /sign up/i })
-      .click({ timeout: 20_000 });
+    await openSignUpForm(page);
     await page.fill("#login-email", email);
     await page.fill("#login-password", "test-password-123");
     await page

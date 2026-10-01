@@ -115,6 +115,17 @@ const run = async () => {
   console.log("Signing in…");
   await page.goto(BASE);
   await settle(page);
+  // A first visit opens on the welcome screen, whose "I have an account"
+  // leads to the form.
+  const haveAccount = page.getByRole("button", {
+    name: "I have an account",
+    exact: true,
+  });
+  await haveAccount
+    .or(page.locator("#login-email"))
+    .first()
+    .waitFor({ state: "visible" });
+  if (await haveAccount.isVisible()) await haveAccount.click();
   await page.locator("#login-email").waitFor({ state: "visible" });
   await page.fill("#login-email", CREDS.email);
   await page.fill("#login-password", CREDS.password);
