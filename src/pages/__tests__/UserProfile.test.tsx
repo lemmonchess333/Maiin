@@ -73,7 +73,7 @@ import {
   unfiredFailures,
 } from "@/test/firestoreHarness";
 import { startOfLocalWeek } from "@/lib/dateHelpers";
-import { group } from "@/test/localeGrouping";
+import { groupText } from "@/test/localeGrouping";
 
 /** A minute into this week, and a day before it: derived from the clock
  *  so the unit-future and timezone runs see the same split. */
@@ -154,7 +154,7 @@ describe("someone else's profile", () => {
     expect(screen.getByText("2")).toBeInTheDocument();
     expect(screen.getByText("5.0")).toBeInTheDocument();
     expect(screen.getByText("km run")).toBeInTheDocument();
-    expect(screen.getByText(group(6420))).toBeInTheDocument();
+    expect(screen.getByText(groupText(6420))).toBeInTheDocument();
     expect(screen.getByText("kg lifted")).toBeInTheDocument();
     expect(screen.getByText(/-day streak/)).toHaveTextContent("4-day streak");
     // Last week's run is listed but not counted.
