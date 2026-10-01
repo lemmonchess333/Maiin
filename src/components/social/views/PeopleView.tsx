@@ -69,6 +69,9 @@ export default function PeopleView({
     refresh: refreshSuggestions,
     remove: removeSuggestion,
   } = useSuggestedPeople(active && blockedReady, blockedUsers, joinedSpaceIds);
+  // The fetch waits for the block list, so until that lands the list is
+  // still loading: "No suggestions yet" would be a false empty state.
+  const suggestionsPending = suggestedLoading || !blockedReady;
 
   /* S4e-MVP — restricted-user gate on the Find tab. Hook subscribes
      to the user's own `globalRestrictedUids/{uid}` doc; doc existence
@@ -362,7 +365,7 @@ export default function PeopleView({
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <SectionHeading>Suggested people</SectionHeading>
-            {suggestedPeople.length > 0 && !suggestedLoading && (
+            {suggestedPeople.length > 0 && !suggestionsPending && (
               <button
                 type="button"
                 onClick={refreshSuggestions}
@@ -373,7 +376,7 @@ export default function PeopleView({
               </button>
             )}
           </div>
-          {suggestedLoading && suggestedPeople.length === 0 ? (
+          {suggestionsPending && suggestedPeople.length === 0 ? (
             <div className="p-4 rounded-xl bg-card border border-border/50 flex items-center justify-center">
               <Spinner
                 size="sm"
