@@ -74,14 +74,24 @@ export default function SettingsLiftPlan() {
 
   if (!profile) {
     // Brief auth-resolution window; route guards keep signed-out users out.
-    return <SettingsSection title="Lift plan" />;
+    return (
+      <SettingsSection
+        title="Lift plan"
+        backTo="/settings/training"
+        backLabel="Programme"
+      />
+    );
   }
 
   return (
     <>
+      {/* Under Programme, which opens it, so back goes there: Lift plan
+          is not a row on the Settings list. */}
       <SettingsSection
         title="Lift plan"
         subtitle="Focus, experience, lift days, equipment, injuries"
+        backTo="/settings/training"
+        backLabel="Programme"
       >
         {prefillGoal && (
           <p className="mb-3 px-3 py-2.5 rounded-xl bg-primary/10 text-xs text-foreground">
