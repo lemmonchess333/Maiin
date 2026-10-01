@@ -630,9 +630,11 @@ test.describe("offline-queue uid isolation across an account switch", () => {
     // sign-out lands — so no flush can fire under A on the way out.
     await page.getByRole("link", { name: /^Home/ }).click();
     await clickPastCelebration(page, page.getByLabel("Settings"));
+    // The Settings list's Account row, by its description. Pinned against
+    // the real list by settingsAccountRowSelector.test.tsx.
     await clickPastCelebration(
       page,
-      page.getByRole("button", { name: /sign out, delete account/i })
+      page.getByRole("button", { name: /email, password, sign out/i })
     );
     await signOutViaUI(page);
 
