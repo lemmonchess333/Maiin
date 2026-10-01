@@ -2384,15 +2384,22 @@ sender at all ("follow" was an allowed type nothing wrote), so
 switch on. Profile shows weight and height in the chosen units; it showed
 kg and cm whatever was chosen.
 
-- [ ] **Rules before the client.** The switches write
+- [x] **Rules before the client.** The switches write
       `notificationPreferences`, which the rules must allow. Deploy
       production releases rules before Hosting, but a TestFlight build made
       from the branch before the merge is refused on every switch ("Couldn't
-      save your settings").
-- [ ] **Deploy verification.** The functions deploy log shows a successful
+      save your settings"). Released by run 36916879108 (2026-10-01): the
+      live ruleset matched `firestore.rules` by SHA-256 at 19:49 UTC, nine
+      minutes before Hosting deployed.
+- [x] **Deploy verification.** The functions deploy log shows a successful
       create operation for `onFollowerCreated`. The gate itself lives in
       `lib/socialFanout.js`, so the callables and triggers that send
-      notifications show update operations in the same run.
+      notifications show update operations in the same run. Closed from the
+      deploy log of run 36916879108 (#2550's merge): the bundle carried the
+      `// CI build: af48ad95…` marker, the log shows a successful create
+      operation for `onFollowerCreated`, and successful update operations for
+      the senders (`toggleKudosCallable`, `addCommentCallable`, the two
+      space-post callables, `onGoalSpaceEventCreated`).
 - [ ] **A switch stops its kind.** With two accounts: A turns Props off and
       B gives one of A's posts props; nothing new under A's bell. A turns it
       back on and B gives props on another post; it arrives.
