@@ -2,6 +2,7 @@ import { useState, memo } from "react";
 import { formatClock } from "@/utils/formatters";
 import SectionLabel from "@/components/ui/SectionLabel";
 import { Link } from "react-router-dom";
+import InlineFollow from "@/components/social/InlineFollow";
 import { useAuth } from "../../lib/auth";
 import { giveHighFive, getKudosList, blockUser } from "../../lib/socialApi";
 import { useBlockedUsers } from "../../hooks/useBlockedUsers";
@@ -61,9 +62,12 @@ const LIFT_CHIPS = ["Great lift", "Solid session", "Strong work"];
 interface ActivityCardProps {
   feedItem: FeedItem;
   onShare?: (item: FeedItem) => void;
+  /** Offer Follow beside the author when the viewer doesn't follow them
+   *  (Explore). Never on your own post. */
+  followAuthor?: boolean;
 }
 
-function ActivityCard({ feedItem, onShare }: ActivityCardProps) {
+function ActivityCard({ feedItem, onShare, followAuthor }: ActivityCardProps) {
   const { user, profile } = useAuth();
   /* The VIEWER's unit, not the poster's — a feed reads in the units of
      whoever is reading it, which is what every social running app does. */
@@ -89,6 +93,8 @@ function ActivityCard({ feedItem, onShare }: ActivityCardProps) {
     targetWeightKg: number;
   } | null>(null);
   const activity = feedItem.activity;
+  const showFollow =
+    !!followAuthor && !!feedItem.authorId && feedItem.authorId !== user?.uid;
 
   /* "Save as routine" gate.
      - Only workout activities (runs aren't routines).
@@ -539,6 +545,12 @@ function ActivityCard({ feedItem, onShare }: ActivityCardProps) {
                   <p className="text-small text-muted-foreground">{timeAgo}</p>
                 </div>
               </Link>
+              {showFollow && (
+                <InlineFollow
+                  targetUid={feedItem.authorId}
+                  targetName={feedItem.authorName}
+                />
+              )}
               {renderMenuButton()}
             </div>
             {activityTitle && (
@@ -586,6 +598,12 @@ function ActivityCard({ feedItem, onShare }: ActivityCardProps) {
                   </div>
                 </div>
               </Link>
+              {showFollow && (
+                <InlineFollow
+                  targetUid={feedItem.authorId}
+                  targetName={feedItem.authorName}
+                />
+              )}
               {renderMenuButton()}
             </div>
 

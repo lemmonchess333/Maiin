@@ -1,7 +1,7 @@
 import { useSuggestedPeople } from "@/hooks/useSuggestedPeople";
 import SectionHeading from "@/components/ui/SectionHeading";
 import { useSpacesDirectory } from "@/features/spaces/useSpacesDirectory";
-import { spaceDef } from "@/features/spaces/spaceDefs";
+import { suggestionReason } from "@/components/social/suggestionReason";
 import { useRestrictedStatus } from "@/hooks/useRestrictedStatus";
 import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
@@ -55,8 +55,8 @@ export default function PeopleView({
   // can't appear as a suggestion in the load window.
   /* SOC-P2e — joined spaces feed the shared-space suggestion source.
      The directory hook reads member counts once per overlay open
-     (bounded, tap-gated surface); ids memoised so the suggestion
-     effect doesn't re-fire per render. */
+     (bounded, tap-gated surface). The suggestion hook compares these
+     ids by value, so a rebuilt array does not start another fetch. */
   const { entries: spaceEntries } = useSpacesDirectory(true);
   const joinedSpaceIds = useMemo(
     () => spaceEntries.filter((e) => e.joined).map((e) => e.def.id),
@@ -421,9 +421,7 @@ export default function PeopleView({
                       <PartnerReadyBadge uid={p.uid} />
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      {p.reason === "shared_space" && p.sharedSpaceId
-                        ? `Also in ${spaceDef(p.sharedSpaceId)?.name ?? "a space you joined"}`
-                        : "Recent post"}
+                      {suggestionReason(p)}
                     </p>
                   </div>
                   <FollowButton

@@ -7,19 +7,20 @@
  * designed fallback band (accent gradient + ghosted icon — the same
  * grammar as the challenge hero).
  *
- * Races & Events (races plan PR2): the FULL directory adds a second
- * row of race-kind spaces — RACE chip, race date + city under the
- * name (Runna's card anatomy), soonest first, past dates hidden
- * (Q2: derived from dateKey, never operated). The compact Feed row
- * stays interest-only (Q6 — the calm-feed doctrine).
+ * Races & Events (races plan PR2): a second row of race-kind spaces —
+ * RACE chip, race date + city under the name (Runna's card anatomy),
+ * soonest first, past dates hidden (Q2: derived from dateKey, never
+ * operated), filtered by a row of chips (two selects before the Social
+ * pass). The Feed's compact "Spaces for you" row went in the same pass:
+ * Together already leads with this directory.
  *
  * Density gate (Spc1c): member counts below
  * SPACE_MEMBER_COUNT_MIN_VISIBLE render as a "New space" chip, never a
- * shame-count. Native select filters; no animation loops (WKWebView).
+ * shame-count. No animation loops (WKWebView).
  */
 import { useState } from "react";
 import EmptyState from "@/components/ui/EmptyState";
-import RaceFilters from "./RaceFilters";
+import RaceFilterChips from "./RaceFilterChips";
 import {
   ALL_RACE_FILTERS,
   UK_RACE_FILTERS,
@@ -80,13 +81,7 @@ const ACCENT_INK: Record<SpaceDef["accent"], string> = {
   brand: "hsl(var(--primary-strong))",
 };
 
-function SpaceCard({
-  entry,
-  compact = false,
-}: {
-  entry: SpaceDirectoryEntry;
-  compact?: boolean;
-}) {
+function SpaceCard({ entry }: { entry: SpaceDirectoryEntry }) {
   const { def, memberCount, joined } = entry;
   const photo = spaceEditorialImage(def.id);
   const accent = ACCENT_HEX[def.accent];
@@ -98,9 +93,7 @@ function SpaceCard({
   return (
     <Link
       to={`/space/${def.id}`}
-      className={`relative shrink-0 snap-start rounded-2xl overflow-hidden card-shadow active:scale-[0.98] transition-transform ${
-        compact ? "w-[176px] h-[112px]" : "w-[236px] h-[148px]"
-      }`}
+      className="relative shrink-0 snap-start rounded-2xl overflow-hidden card-shadow active:scale-[0.98] transition-transform w-[236px] h-[148px]"
       style={
         photo
           ? undefined
@@ -180,7 +173,7 @@ function SpaceCard({
 
       <div className="absolute bottom-3 left-3.5 right-3.5 min-w-0">
         <p
-          className={`${compact ? "text-sm" : "text-base"} font-bold leading-tight ${event ? "line-clamp-2" : "truncate"} ${
+          className={`text-base font-bold leading-tight ${event ? "line-clamp-2" : "truncate"} ${
             photo ? "text-white" : "text-foreground"
           }`}
         >
@@ -219,12 +212,10 @@ function CardRow({
   hideLabel = false,
   label,
   entries,
-  compact,
 }: {
   hideLabel?: boolean;
   label: string;
   entries: SpaceDirectoryEntry[];
-  compact: boolean;
 }) {
   return (
     <div className="space-y-2">
@@ -247,7 +238,7 @@ function CardRow({
       >
         {entries.map((entry) => (
           <div role="listitem" key={entry.def.id} className="contents">
-            <SpaceCard entry={entry} compact={compact} />
+            <SpaceCard entry={entry} />
           </div>
         ))}
       </div>
@@ -255,44 +246,23 @@ function CardRow({
   );
 }
 
-export default function SpacesDirectory({
-  compact = false,
-  excludeJoined = false,
-  title = "Spaces",
-}: {
-  /** Feed-row variant (Spc1g): smaller cards, same grammar. */
-  compact?: boolean;
-  /** Suggested mode — hide spaces the user already joined; the whole
-   *  row collapses when nothing is left to suggest. */
-  excludeJoined?: boolean;
-  title?: string;
-}) {
-  /* Q6 lock: race rows exist ONLY in the full directory — the compact
-     Feed row never requests them (and never pays their reads). */
+export default function SpacesDirectory() {
   const [filters, setFilters] = useState(UK_RACE_FILTERS);
-  const { entries, upcomingRaces } = useSpacesDirectory(!compact, filters);
-  const shown = excludeJoined ? entries.filter((e) => !e.joined) : entries;
-  const interest = shown.filter((e) => e.def.kind !== "race");
-  const races = shown.filter((e) => e.def.kind === "race");
-  const showRaces = !compact && upcomingRaces.length > 0;
-  if (shown.length === 0 && !showRaces) return null;
+  const { entries, upcomingRaces } = useSpacesDirectory(true, filters);
+  const interest = entries.filter((e) => e.def.kind !== "race");
+  const races = entries.filter((e) => e.def.kind === "race");
+  const showRaces = upcomingRaces.length > 0;
+  if (entries.length === 0 && !showRaces) return null;
 
   return (
     <div className="space-y-4">
-      {interest.length > 0 && (
-        <CardRow label={title} entries={interest} compact={compact} />
-      )}
+      {interest.length > 0 && <CardRow label="Spaces" entries={interest} />}
       {showRaces && (
         <section className="space-y-2" aria-label="Races & events">
           <SectionHeading>Races & events</SectionHeading>
-          <RaceFilters value={filters} onChange={setFilters} />
+          <RaceFilterChips value={filters} onChange={setFilters} />
           {races.length > 0 ? (
-            <CardRow
-              label="Upcoming races"
-              entries={races}
-              compact={false}
-              hideLabel
-            />
+            <CardRow label="Upcoming races" entries={races} hideLabel />
           ) : (
             <EmptyState
               compact

@@ -89,9 +89,10 @@ function countMarkers() {
 /** 790 at the 2026-09-05 survey, 766 after the first move-out pass (socialApi,
  *  Home, analytics, weather, bodySideData), 743 once the unused compact
  *  branches of FoodHeroCard and PerformanceHeroCard went, 733 after the
- *  lint pass rewrote the effects it touched. Lower it when you move
+ *  lint pass rewrote the effects it touched, 730 once the Social pass
+ *  deleted the solo-first feed's cards. Lower it when you move
  *  narrative out; never raise it without the reason written here. */
-const MARKER_BASELINE = 733;
+const MARKER_BASELINE = 730;
 
 describe("archaeology markers in non-test comments (ratchet)", () => {
   const { files, total, byFile, byKind } = countMarkers();

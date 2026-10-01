@@ -25,6 +25,7 @@ import {
   seedFirestore,
   flushSnapshots,
 } from "@/test/firestoreHarness";
+import { __resetFollowStatesForTests } from "@/hooks/useFollowState";
 vi.mock("@/hooks/useHiddenActivities", () => ({
   useHiddenActivities: () => ({ hidden: new Set() }),
 }));
@@ -51,20 +52,18 @@ vi.mock("@/components/social/views/FeedView", () => ({
   default: ({
     active,
     followingCount,
-    showSoloFeed,
     feedSubTab,
     selectFeedSubTab,
   }: {
     active: boolean;
     followingCount: number;
-    showSoloFeed: boolean;
     feedSubTab: string;
     selectFeedSubTab: (source: FeedSubTab) => void;
   }) =>
     active ? (
       <>
         <output data-testid="feed-state">
-          {followingCount}:{String(showSoloFeed)}:{feedSubTab}
+          {followingCount}:{feedSubTab}
         </output>
         <button onClick={() => selectFeedSubTab("explore")}>
           Choose Explore
@@ -80,7 +79,11 @@ vi.mock("@/components/social/views/PeopleView", async () => {
 vi.mock("@/lib/socialAnalytics", () => ({ track: vi.fn() }));
 vi.mock("@/lib/haptic", () => ({ haptic: vi.fn() }));
 afterEach(cleanup);
-beforeEach(resetFirestore);
+beforeEach(() => {
+  resetFirestore();
+  // FollowButton's follow state is a session cache; each test is a session.
+  __resetFollowStatesForTests();
+});
 
 it("updates the Social shell after following and unfollowing the first person", async () => {
   render(
@@ -89,7 +92,7 @@ it("updates the Social shell after following and unfollowing the first person", 
     </MemoryRouter>
   );
   await waitFor(() =>
-    expect(screen.getByTestId("feed-state")).toHaveTextContent("0:true")
+    expect(screen.getByTestId("feed-state")).toHaveTextContent("0:")
   );
   fireEvent.click(screen.getByRole("button", { name: "Find people" }));
   await waitFor(() =>
@@ -99,15 +102,13 @@ it("updates the Social shell after following and unfollowing the first person", 
   await screen.findByRole("button", { name: "Unfollow user" });
   expect(readDoc("following/audit/users/friend")).toBeDefined();
   fireEvent.click(screen.getByRole("button", { name: "Close people search" }));
-  expect(screen.getByTestId("feed-state")).toHaveTextContent(
-    "1:false:following"
-  );
+  expect(screen.getByTestId("feed-state")).toHaveTextContent("1:following");
   fireEvent.click(screen.getByRole("button", { name: "Find people" }));
   fireEvent.click(await screen.findByRole("button", { name: "Unfollow user" }));
   await screen.findByRole("button", { name: "Follow user" });
   fireEvent.click(screen.getByRole("button", { name: "Close people search" }));
   await waitFor(() =>
-    expect(screen.getByTestId("feed-state")).toHaveTextContent("0:true:explore")
+    expect(screen.getByTestId("feed-state")).toHaveTextContent("0:explore")
   );
 });
 
@@ -120,15 +121,11 @@ it.each(["following", "communities", "explore"])(
       </MemoryRouter>
     );
     await waitFor(() =>
-      expect(screen.getByTestId("feed-state")).toHaveTextContent(
-        `0:true:${source}`
-      )
+      expect(screen.getByTestId("feed-state")).toHaveTextContent(`0:${source}`)
     );
     seedFirestore({ "following/audit/users/friend": { followedAt: 1 } });
     await flushSnapshots();
-    expect(screen.getByTestId("feed-state")).toHaveTextContent(
-      `1:false:${source}`
-    );
+    expect(screen.getByTestId("feed-state")).toHaveTextContent(`1:${source}`);
   }
 );
 
@@ -139,10 +136,10 @@ it("keeps a chosen default source after the first follow arrives", async () => {
     </MemoryRouter>
   );
   await waitFor(() =>
-    expect(screen.getByTestId("feed-state")).toHaveTextContent("0:true:explore")
+    expect(screen.getByTestId("feed-state")).toHaveTextContent("0:explore")
   );
   fireEvent.click(screen.getByRole("button", { name: "Choose Explore" }));
   seedFirestore({ "following/audit/users/friend": { followedAt: 1 } });
   await flushSnapshots();
-  expect(screen.getByTestId("feed-state")).toHaveTextContent("1:false:explore");
+  expect(screen.getByTestId("feed-state")).toHaveTextContent("1:explore");
 });

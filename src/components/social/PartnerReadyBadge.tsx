@@ -8,9 +8,9 @@ import { THEME } from "@/lib/theme";
  * SOC-P2d — the partner-streak discovery chip.
  *
  * The feature's surfaces were UserProfile (mutual follows only) and the
- * 0-follow SoloFirstFeed hero — an ESTABLISHED user with mutual follows
- * but no bond never encountered partner streaks at all (the code-map
- * gap). This chip closes it at the discovery surface: on People rows
+ * 0-follow solo-first feed's hero (since retired) — an ESTABLISHED
+ * user with mutual follows but no bond never encountered partner streaks
+ * at all (the code-map gap). This chip closes it at the discovery surface: on People rows
  * where the relationship is MUTUAL and no bond exists yet, a quiet
  * coral flame reads "Streak ready" — the row already links to the
  * profile, where PartnerStreakCard carries the actual Start action.

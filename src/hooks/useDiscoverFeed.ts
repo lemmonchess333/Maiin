@@ -9,7 +9,8 @@ import { getDiscoverFeed, batchGetKudos } from "../lib/socialApi";
 import { captureError } from "@/lib/errorReporting";
 import { useUid } from "../lib/auth";
 import type { DocumentSnapshot } from "firebase/firestore";
-import type { FeedItem, ActivityData } from "./useSocialFeed";
+import type { FeedItem } from "./useSocialFeed";
+import { activityToFeedItem } from "@/lib/activityFeedItem";
 
 export function useDiscoverFeed(enabled = true, blockedUsers?: Set<string>) {
   const uid = useUid();
@@ -52,53 +53,16 @@ export function useDiscoverFeed(enabled = true, blockedUsers?: Set<string>) {
           refresh ? undefined : lastDocRef.current
         );
         if (!isCurrent()) return;
-        const rawItems = result.items as {
-          id: string;
-          authorId?: string;
-          authorName?: string;
-          authorPhotoURL?: string;
-          type?: string;
-          summary?: string;
-          createdAt?: unknown;
-          kudosCount?: number;
-          prHit?: boolean;
-          prExercise?: string;
-          prWeight?: number;
-          badgeEarned?: string;
-          challengeMilestone?: string;
-        }[];
+        const rawItems = result.items as ({ id: string } & Record<
+          string,
+          unknown
+        >)[];
 
-        // Convert activity docs to FeedItem shape
-        let feedItems: FeedItem[] = rawItems.map((item) => ({
-          id: item.id,
-          activityId: item.id,
-          authorId: item.authorId || "",
-          authorName: item.authorName || "",
-          ...(item.authorPhotoURL
-            ? { authorPhotoURL: item.authorPhotoURL }
-            : {}),
-          type: (item.type || "workout") as "run" | "workout",
-          summary: item.summary || "",
-          createdAt: item.createdAt,
-          activity: {
-            authorId: item.authorId,
-            authorName: item.authorName,
-            type: item.type,
-            kudosCount: item.kudosCount,
-            prHit: item.prHit,
-            prExercise: item.prExercise,
-            prWeight: item.prWeight,
-            badgeEarned: item.badgeEarned,
-            challengeMilestone: item.challengeMilestone,
-            ...item,
-          } as ActivityData,
-          kudosCount: item.kudosCount || 0,
-          prHit: item.prHit,
-          prExercise: item.prExercise,
-          prWeight: item.prWeight,
-          badgeEarned: item.badgeEarned,
-          challengeMilestone: item.challengeMilestone,
-        }));
+        // Convert activity docs to FeedItem shape (shared with the
+        // profile page, so a profile's sessions are the feed's cards).
+        let feedItems: FeedItem[] = rawItems.map((item) =>
+          activityToFeedItem(item.id, item)
+        );
 
         // Batch get kudos status for current user — immutable map (#22)
         if (uid) {

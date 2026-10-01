@@ -34,6 +34,11 @@ import {
   deleteDoc,
   serverTimestamp,
   writeBatch,
+  query,
+  where,
+  orderBy,
+  limit,
+  type Firestore,
 } from "firebase/firestore";
 import { CAPTION_MAX } from "./src/lib/activityPost";
 
@@ -1707,6 +1712,53 @@ suite("firestore.rules — /activities visibility-aware reads (audit #1)", () =>
     await seed({ activityId: "fol-3", visibility: "followers" });
     const ownerDb = env.authenticatedContext(OWNER_UID).firestore();
     await assertSucceeds(getDoc(doc(ownerDb, "activities", "fol-3")));
+  });
+
+  /* A profile lists its person's posts with a query, and rules are not
+     filters: a query is refused whole unless every post it could return
+     is readable. Asking for public AND followers-only posts at once is
+     therefore refused for anyone who does not follow them, which is the
+     usual reason to open a profile (from Explore, deciding whether to
+     follow). The profile page asked exactly that, and every profile a
+     non-follower opened said "No public activities yet". It now asks
+     for public posts on their own, and for followers-only posts in a
+     second query that only a follower's succeeds. */
+  function postsBy(db: Firestore, visibility: string | string[]) {
+    return getDocs(
+      query(
+        collection(db, "activities"),
+        where("authorId", "==", OWNER_UID),
+        Array.isArray(visibility)
+          ? where("visibility", "in", visibility)
+          : where("visibility", "==", visibility),
+        orderBy("createdAt", "desc"),
+        limit(20)
+      )
+    );
+  }
+
+  it("profile: a non-follower may list a person's public posts", async () => {
+    await seed({ activityId: "pub-q", visibility: "public" });
+    const strangerDb = env.authenticatedContext(STRANGER_UID).firestore();
+    await assertSucceeds(postsBy(strangerDb, "public"));
+  });
+
+  it("profile: a non-follower asking for public and followers-only posts together is refused", async () => {
+    await seed({ activityId: "pub-q2", visibility: "public" });
+    const strangerDb = env.authenticatedContext(STRANGER_UID).firestore();
+    await assertFails(postsBy(strangerDb, ["public", "followers"]));
+    await assertFails(postsBy(strangerDb, "followers"));
+  });
+
+  it("profile: a follower may list followers-only posts", async () => {
+    await seed({
+      activityId: "fol-q",
+      visibility: "followers",
+      follower: FOLLOWER_UID,
+    });
+    const followerDb = env.authenticatedContext(FOLLOWER_UID).firestore();
+    await assertSucceeds(postsBy(followerDb, "followers"));
+    await assertSucceeds(postsBy(followerDb, ["public", "followers"]));
   });
 });
 

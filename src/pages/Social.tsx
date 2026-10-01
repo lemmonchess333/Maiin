@@ -146,31 +146,10 @@ export default function Social() {
   // coachmark.
   const isNewUser = followingCount === 0;
 
-  // SOCIAL S4 — the solo-first curated stack IS the Feed tab for a
-  // cold-start user (0 follows ⇒ 0 partners, since a bond needs mutual
-  // follow). Covers Explore and Following; My communities is independent
-  // because a user can join spaces without following anybody.
-  //
-  // It REPLACES rather than precedes: FeedView suppresses the activity
-  // list, the weekly recap, the Spaces row and the trajectory slot while
-  // this is true. (The comment here claimed it "renders above" until
-  // 2026-07-26 — worth knowing before widening the gate, because
-  // widening it hides real content rather than adding to it.)
-  //
-  // Soc8 planned to refine this to `isSoloUser` (no partner bonds, no
-  // activated crew). That is deliberately NOT done, and the predicate is
-  // deleted — see the note in socialGates.ts. Short version: crews
-  // retired, leaving `partnerCount === 0`, which is true for most
-  // established users forever; combined with the replace semantics above
-  // it would blank the whole feed — Explore included — for anyone who
-  // never formed a bond. Zero follows is the cold-start signal, and
-  // SOC-P1b independently drew the boundary in the same place: the
-  // following LIST now renders from the first follow
-  // (`shouldRenderFollowingList`), with a "Following N of 3" progress row
-  // below the threshold. So at ≥1 follow the user already has their own
-  // following activity plus a named next step — both of which the curated
-  // stack would replace, not supplement.
-  const showSoloFeed = isNewUser;
+  // Zero follows no longer swaps the feed for a stack of prompts. The
+  // solo-first layout (Soc8) was retired on 2026-10-01: a new person
+  // lands on Explore (the default above) and sees what people share
+  // publicly, with one line on how Following fills.
 
   // The activity list renders from the first follow. At three follows the
   // progress prompt gives way to the standard empty-state treatment.
@@ -310,7 +289,6 @@ export default function Social() {
         selectFeedSubTab={selectFeedSubTab}
         followingCount={followingCount}
         followingFeedUnlocked={followingFeedUnlocked}
-        showSoloFeed={showSoloFeed}
         blockedUsers={blockedUsers}
         blockedReady={blockedReady}
         hiddenActivityIds={hiddenActivityIds}

@@ -7,15 +7,24 @@ import {
 import { useDiscoverFeed } from "@/hooks/useDiscoverFeed";
 import { useFeedSubTabFreshness } from "@/hooks/useFeedSubTabFreshness";
 import { useUid } from "@/lib/auth";
-import { useEffect, useMemo, useRef, useState, Suspense } from "react";
+import {
+  Fragment,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  Suspense,
+} from "react";
 import type { MutableRefObject } from "react";
-import SpacesDirectory from "@/features/spaces/SpacesDirectory";
 import SpacePostCard from "@/features/spaces/SpacePostCard";
 import { useCommunitiesFeed } from "@/features/spaces/useCommunitiesFeed";
 import { useSpacesDirectory } from "@/features/spaces/useSpacesDirectory";
 import { spaceDef } from "@/features/spaces/spaceDefs";
 import { Link } from "react-router-dom";
 import ActivityCard from "@/components/social/ActivityCard";
+import PeopleToFollowRow from "@/components/social/PeopleToFollowRow";
+import { useSuggestedPeople } from "@/hooks/useSuggestedPeople";
+import { useRestrictedStatus } from "@/hooks/useRestrictedStatus";
 import LeaderboardCard from "@/components/social/LeaderboardCard";
 import TrajectoryCard from "@/components/social/TrajectoryCard";
 import { ActivityCardSkeleton } from "@/components/LoadingSkeleton";
@@ -31,15 +40,11 @@ const FullLeaderboard = lazyRetry(
 import { Users, Globe, ChevronDown } from "lucide-react";
 import { Spinner } from "@/components/ui/Spinner";
 import { BottomSheet } from "@/components/ui/BottomSheet";
-import SoloFirstFeed from "@/components/social/SoloFirstFeed";
-import WeeklyRecapCard from "@/components/social/WeeklyRecapCard";
-import WeekOpenerCard from "@/components/social/WeekOpenerCard";
-import { useNavigate } from "react-router-dom";
 import {
   getPersonalTrajectory,
   type PersonalTrajectory,
 } from "@/lib/personalTrajectory";
-import { SOCIAL_GATES, shouldRenderFollowingList } from "@/lib/socialGates";
+import { shouldRenderFollowingList } from "@/lib/socialGates";
 import { THEME } from "@/lib/theme";
 import { cn } from "@/lib/utils";
 import { EmptyState as HexEmptyState } from "@/components/ui/EmptyState";
@@ -58,7 +63,6 @@ export interface FeedViewProps {
   selectFeedSubTab: (next: FeedSubTab) => void;
   followingCount: number | null;
   followingFeedUnlocked: boolean;
-  showSoloFeed: boolean;
   blockedUsers: Set<string>;
   /** SOCIAL-PRIVACY-01: true once the block list has loaded. Feed reads
    *  are deferred until this is true so blocked content can't flash. */
@@ -87,7 +91,6 @@ export default function FeedView({
   selectFeedSubTab,
   followingCount,
   followingFeedUnlocked,
-  showSoloFeed,
   blockedUsers,
   blockedReady,
   hiddenActivityIds,
@@ -232,19 +235,17 @@ export default function FeedView({
     );
   };
 
-  /* SOC-P1c — the Your-week slot's data. FeedView owns the
+  /* SOC-P1c — the points card's data. FeedView owns the
      getPersonalTrajectory fetch (lifted out of TrajectoryCard — same
-     one-shot bounded read, fired under exactly the conditions the
-     trajectory card used to render: following sub-tab, thin graph) so a
-     zero-session week can collapse the recap + trajectory pair into one
-     compact WeekOpenerCard instead of stacking a dead "Build recap"
-     button on a 0-pts grid. */
-  const navigate = useNavigate();
+     one-shot bounded read), fired under exactly the conditions the card
+     renders: Following, with one follow (at two, the friends'
+     leaderboard takes the slot; at none, Following is its empty state).
+     The card sits under the third post, not above the feed. */
   const trajectoryEnabled =
     active &&
     feedSubTab === "following" &&
-    !showSoloFeed &&
     followingCount !== null &&
+    followingCount >= 1 &&
     followingCount < 2;
   const [trajectory, setTrajectory] = useState<PersonalTrajectory | null>(null);
   const [trajectoryLoading, setTrajectoryLoading] = useState(true);
@@ -303,15 +304,60 @@ export default function FeedView({
   // The old ≥3-follow hard gate hid real activity from a user's first
   // two follows: they followed someone, that person trained, and the
   // feed still read "Follow 3+ to unlock" — a locked door in front of
-  // content that already existed. Below 3 follows the list is sparse,
-  // so the trajectory slot above keeps the surface weighted and the
-  // progress row (below) frames the graph-building step honestly.
-  // 0 follows still routes to SoloFirstFeed (Soc8 lock, unchanged).
+  // content that already existed.
+  // Explore renders for everyone, from day one: the solo-first stack
+  // that replaced it for anyone following nobody (Soc8) was retired by
+  // the owner on 2026-10-01, so a new person sees real sessions, not
+  // four prompts. Following with no follows is its own empty state.
   const showActivityList =
-    !showSoloFeed &&
-    (feedSubTab === "explore" ||
-      (feedSubTab === "following" &&
-        shouldRenderFollowingList(followingCount ?? 0)));
+    feedSubTab === "explore" ||
+    (feedSubTab === "following" &&
+      shouldRenderFollowingList(followingCount ?? 0));
+
+  /* Where the cards that used to sit above the feed go now: the
+     Following points card under the third post (or the last, on a
+     shorter list, or under the empty state when there are none).
+     Posts come first, as on Strava. */
+  const pointsActive =
+    feedSubTab === "following" &&
+    followingCount !== null &&
+    followingCount >= 1;
+  const pointsSlot = pointsActive ? Math.min(3, activeFeed.items.length) : 0;
+
+  /* People to follow, after the second post (or the last, on a shorter
+     list, or under the empty state), while the graph is thin: under three follows, the same span
+     the follow line above the feed covers. Suggestions cost a bounded
+     read, so they stop once someone follows three people. A restricted
+     account can't follow, so it sees neither this nor the Follow links. */
+  const { isRestricted } = useRestrictedStatus(uid ?? undefined);
+  const peopleRowActive =
+    active &&
+    showActivityList &&
+    blockedReady &&
+    !isRestricted &&
+    followingCount !== null &&
+    !followingFeedUnlocked;
+  const suggestions = useSuggestedPeople(
+    peopleRowActive,
+    blockedUsers,
+    joinedSpaceIds
+  );
+  const peopleSlot = peopleRowActive ? Math.min(2, activeFeed.items.length) : 0;
+
+  /* The points card. With two or more follows it is the friends'
+     leaderboard; with one, your own week against last week, unless the
+     week has nothing in it yet (a card of zeros says nothing).
+     `followingCount === null` is still loading: render nothing rather
+     than the wrong card. */
+  const pointsCard =
+    followingCount === null ? null : followingCount >= 2 ? (
+      <LeaderboardCard
+        challenge="weekly_hybrid"
+        onViewFull={openFullLeaderboard}
+      />
+    ) : weekOpen ? null : (
+      <TrajectoryCard data={trajectory} loading={trajectoryLoading} />
+    );
 
   // Infinite scroll sentinel — stable ref for loadMore (#21)
   const sentinelRef = useRef<HTMLDivElement>(null);
@@ -366,7 +412,33 @@ export default function FeedView({
                 the current source and opens a two-option sheet. The
                 Soc5b freshness dot rides on the chip when the OTHER
                 source has new content, and on each sheet option. */}
-            <div className="flex justify-end">
+            <div className="flex items-center justify-between gap-3">
+              {/* While you follow fewer than three people, one line says
+                  how many, with the way to more. It replaced a whole
+                  card under the points card ("Following 1 of 3 — your
+                  feed fills as you follow more"). */}
+              {feedSubTab !== "communities" &&
+              followingCount !== null &&
+              followingCount > 0 &&
+              !followingFeedUnlocked ? (
+                <p className="min-w-0 text-small text-muted-foreground">
+                  You follow{" "}
+                  <span className="font-mono tabular-nums font-semibold text-foreground">
+                    {followingCount}
+                  </span>{" "}
+                  {followingCount === 1 ? "person" : "people"}
+                  <span aria-hidden="true"> · </span>
+                  <button
+                    type="button"
+                    onClick={openPeople}
+                    className="inline-flex min-h-[44px] items-center font-semibold text-lifting-strong hover:text-lifting-strong/80 transition-colors"
+                  >
+                    Find people
+                  </button>
+                </p>
+              ) : (
+                <span aria-hidden="true" />
+              )}
               <button
                 type="button"
                 onClick={() => setSourceMenuOpen(true)}
@@ -475,105 +547,25 @@ export default function FeedView({
               </div>
             </BottomSheet>
 
-            {showSoloFeed && feedSubTab !== "communities" && (
-              <SoloFirstFeed
-                onFindPeople={openPeople}
-                onOpenTogether={openTogether}
+            {/* Someone following nobody lands on Explore. One line says
+                what it is and how Following fills; the posts follow. */}
+            {feedSubTab === "explore" && followingCount === 0 && (
+              <p className="mb-3 text-small text-muted-foreground">
+                Sessions people shared publicly. Follow anyone to see theirs
+                under Following.
+              </p>
+            )}
+
+            {/* Following, with nobody followed yet: say so, and where to
+                find people. (Explore is one tap away on the chip.) */}
+            {feedSubTab === "following" && followingCount === 0 && (
+              <HexEmptyState
+                icon={Users}
+                headline="You don't follow anyone yet"
+                sub="Follow people to see their sessions here."
+                accent={THEME.brand}
+                action={{ label: "Find people", onClick: openPeople }}
               />
-            )}
-
-            {/* Weekly recap share entry — established users only
-                (SoloFirstFeed carries its own share card for the
-                cold-start stack). SOC-P1c: on a zero-session week the
-                "Build recap" button is a dead control (nothing to
-                build), so the slot renders WeekOpenerCard instead —
-                one compact line merging recap + trajectory: the week
-                is open, the number to beat, and the action (train).
-                Both full cards return the moment a session exists. */}
-            {!showSoloFeed &&
-              (weekOpen ? (
-                <WeekOpenerCard
-                  lastWeekScore={trajectory?.lastWeek.score ?? 0}
-                  onStartTraining={() => navigate("/program")}
-                />
-              ) : (
-                <WeeklyRecapCard />
-              ))}
-
-            {/* Spc1g — Suggested Spaces reach people who never
-                open the Community tab. Compact cards, joined
-                spaces filtered out; collapses entirely once the
-                user has joined everything. */}
-            {!showSoloFeed && (
-              <div className="mt-4">
-                <SpacesDirectory compact excludeJoined title="Spaces for you" />
-              </div>
-            )}
-
-            {feedSubTab === "following" && !showSoloFeed && (
-              <div className="mt-4 space-y-3">
-                {/*
-                If the user has <2 follows, a real leaderboard would just
-                show them (and maybe one other person) — reads as "app is
-                empty". Replace the slot with a trajectory card that
-                reframes the space around personal progression: week-over-
-                week hybrid score. Keeps the slot useful until the user
-                builds a social graph. `followingCount === null` = still
-                loading → render nothing so we don't flash the wrong card.
-              */}
-                {followingCount !== null &&
-                  (followingCount >= 2 ? (
-                    <LeaderboardCard
-                      challenge="weekly_hybrid"
-                      onViewFull={openFullLeaderboard}
-                    />
-                  ) : weekOpen ? null : (
-                    /* SOC-P1c: on an open (zero-session) week the
-                       WeekOpenerCard at the top of the feed already
-                       covers this slot — rendering the 0-pts grid too
-                       would put the wall of zeros right back. */
-                    <TrajectoryCard
-                      data={trajectory}
-                      loading={trajectoryLoading}
-                    />
-                  ))}
-                {/* Trajectory pairing: when the slot is the solo
-                  trajectory card (thin social graph), follow it with
-                  a low-key social next-step so the surface points
-                  somewhere instead of dead-ending on personal stats.
-                  One row, text-link CTA — same compact pattern as
-                  the empty-feed prompt below. */}
-                {followingCount !== null && !followingFeedUnlocked && (
-                  <div className="flex items-center justify-between gap-3 p-3 rounded-xl bg-card border border-border/40">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div
-                        className="size-8 rounded-lg flex items-center justify-center shrink-0"
-                        style={{ background: `${THEME.brand}14` }}
-                      >
-                        <Users size={16} style={{ color: THEME.brand }} />
-                      </div>
-                      <p className="text-small text-muted-foreground leading-snug">
-                        {/* SOC-P1b: progress framing, not a locked door —
-                            the feed already renders below the threshold;
-                            this row just names the graph-building step. */}
-                        Following{" "}
-                        <span className="font-mono tabular-nums">
-                          {followingCount ?? 0} of{" "}
-                          {SOCIAL_GATES.FOLLOWING_FEED_MIN_FOLLOWS}
-                        </span>{" "}
-                        — your feed fills as you follow more
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={openPeople}
-                      className="text-xs font-medium text-lifting-strong hover:text-lifting-strong/80 transition-colors shrink-0"
-                    >
-                      Find people
-                    </button>
-                  </div>
-                )}
-              </div>
             )}
 
             {pullRefreshing && (
@@ -704,18 +696,32 @@ export default function FeedView({
 
             {showActivityList && (
               <div className="space-y-3">
-                {activeFeed.items.map((item) => (
-                  <ActivityCard
-                    key={item.id}
-                    feedItem={item}
-                    /* SOC-P1d: the card's share affordance was orphaned —
-                       ActivityCard supported onShare but no feed surface
-                       ever passed it, so Share2 never rendered where
-                       finished sessions are displayed. Own cards only:
-                       sharing someone ELSE's session raises consent
-                       questions this deliberately doesn't open. */
-                    onShare={item.authorId === uid ? openShareCard : undefined}
-                  />
+                {activeFeed.items.map((item, i) => (
+                  <Fragment key={item.id}>
+                    <ActivityCard
+                      feedItem={item}
+                      /* SOC-P1d: the card's share affordance was orphaned —
+                         ActivityCard supported onShare but no feed surface
+                         ever passed it, so Share2 never rendered where
+                         finished sessions are displayed. Own cards only:
+                         sharing someone ELSE's session raises consent
+                         questions this deliberately doesn't open. */
+                      onShare={
+                        item.authorId === uid ? openShareCard : undefined
+                      }
+                      /* Explore is where people you don't follow post;
+                         Following is, by definition, people you do. */
+                      followAuthor={feedSubTab === "explore" && !isRestricted}
+                    />
+                    {i + 1 === peopleSlot && (
+                      <PeopleToFollowRow
+                        people={suggestions.people}
+                        onFollowed={suggestions.remove}
+                        onSeeAll={openPeople}
+                      />
+                    )}
+                    {i + 1 === pointsSlot && pointsCard}
+                  </Fragment>
                 ))}
               </div>
             )}
@@ -774,11 +780,6 @@ export default function FeedView({
             {!activeFeed.loading &&
               activeFeed.items.length === 0 &&
               showActivityList &&
-              // SOC-P1b: below the follow threshold the progress row above
-              // already frames the empty list AND carries the Find-people
-              // CTA — rendering the empty state too would stack two
-              // near-identical rows. It returns once the graph is built.
-              !(feedSubTab === "following" && !followingFeedUnlocked) &&
               !(feedSubTab === "explore" && exploreFeed.error) && (
                 <div className="mt-6" aria-live="polite">
                   {feedSubTab === "explore" ? (
@@ -805,40 +806,43 @@ export default function FeedView({
                       }}
                     />
                   ) : (
-                    /* Inline prompt — sits as a supporting element under
-                   TrajectoryCard. Was previously a full centered empty
-                   state with a primary-purple "Find people to follow"
-                   button which competed visually with the trajectory
-                   card above it (two heroes stacked). Compressed to
-                   one row with a text-link CTA so the trajectory card
-                   stays the hero of the surface. Same compact pattern
-                   as ChallengeList's empty state on Together. */
-                    <div className="flex items-center justify-between gap-3 p-3.5 rounded-xl bg-card border border-border/40">
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div
-                          className="size-8 rounded-lg flex items-center justify-center shrink-0"
-                          style={{ background: `${THEME.brand}14` }}
-                        >
-                          <Users size={16} style={{ color: THEME.brand }} />
-                        </div>
-                        {/* Following empty-state copy — surfaces both
-                        growth paths (1:1 follow OR space membership)
-                        rather than only following. (Was "join crews"
-                        until the crews retirement, 2026-07-20.) */}
-                        <p className="text-small text-muted-foreground leading-snug">
-                          Your feed is empty · Follow people or join a space to
-                          see their activities
-                        </p>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={openPeople}
-                        className="text-xs font-medium text-lifting-strong hover:text-lifting-strong/80 transition-colors shrink-0"
-                      >
-                        Find people
-                      </button>
-                    </div>
+                    /* Following, with people followed but nothing from
+                       them yet. Below three follows the line above the
+                       feed already carries Find people, so this doesn't
+                       repeat it. */
+                    <HexEmptyState
+                      compact
+                      icon={Users}
+                      headline="Nothing from people you follow yet"
+                      sub="When they share a session, it shows here."
+                      accent={THEME.brand}
+                      action={
+                        followingFeedUnlocked
+                          ? { label: "Find people", onClick: openPeople }
+                          : undefined
+                      }
+                    />
                   )}
+                </div>
+              )}
+
+            {/* With no posts to sit between, the row and the points card
+                follow the empty state rather than leaving the feed. */}
+            {!activeFeed.loading &&
+              activeFeed.items.length === 0 &&
+              showActivityList &&
+              !(feedSubTab === "explore" && exploreFeed.error) &&
+              ((peopleRowActive && suggestions.people.length > 0) ||
+                (pointsActive && pointsCard)) && (
+                <div className="mt-4 space-y-3">
+                  {peopleRowActive && (
+                    <PeopleToFollowRow
+                      people={suggestions.people}
+                      onFollowed={suggestions.remove}
+                      onSeeAll={openPeople}
+                    />
+                  )}
+                  {pointsActive && pointsCard}
                 </div>
               )}
           </div>

@@ -128,6 +128,39 @@ describe("useSuggestedPeople", () => {
     expect(uids(result.current.people)).toEqual(["p2"]);
   });
 
+  it("a rebuilt list of the same joined spaces is the same request", async () => {
+    // People derives these ids from the directory, which handed it a new
+    // array on every render. Compared by reference, every answer looked
+    // stale, re-rendered, and started another fetch: a read loop for as
+    // long as People was open, with the spinner never stopping.
+    const { result, rerender } = renderHook(
+      ({ joined }) => useSuggestedPeople(true, BLOCKED, joined),
+      { initialProps: { joined: ["runners"] } }
+    );
+    await answer(0, [person("p1")]);
+    expect(result.current.loading).toBe(false);
+
+    rerender({ joined: ["runners"] });
+    expect(H.calls).toHaveLength(1);
+    expect(result.current.loading).toBe(false);
+    expect(uids(result.current.people)).toEqual(["p1"]);
+  });
+
+  it("joining another space asks again", async () => {
+    const { result, rerender } = renderHook(
+      ({ joined }) => useSuggestedPeople(true, BLOCKED, joined),
+      { initialProps: { joined: ["runners"] } }
+    );
+    await answer(0, [person("p1")]);
+
+    rerender({ joined: ["runners", "lifters"] });
+    expect(H.calls).toHaveLength(2);
+    expect(result.current.loading).toBe(true);
+    await answer(1, [person("p2")]);
+    expect(uids(result.current.people)).toEqual(["p2"]);
+    expect(result.current.loading).toBe(false);
+  });
+
   it("remove drops a person at once", async () => {
     const { result } = renderHook(() =>
       useSuggestedPeople(true, BLOCKED, JOINED)

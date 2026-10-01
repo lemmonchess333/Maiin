@@ -81,7 +81,7 @@ C. Selected meal pill → nutrition identity orange — `fixes/C-*`
 
 ### 08 Social — `screens/dark/08-social-top.png`
 
-1. ~~**Empty states are the page**: "Join a crew or follow people…" is a text-only box; the one designed element (Invite a training partner card) is good.~~ — **fixed**: the cold-start Social tab renders the curated `SoloFirstFeed` stack (`src/components/social/SoloFirstFeed.tsx`) rather than a sentence in a box. Note the crews row named here no longer exists — crews were removed, and the stack is PartnerStreak hero → challenge slot → Spaces rail → share-your-training.
+1. ~~**Empty states are the page**: "Join a crew or follow people…" is a text-only box; the one designed element (Invite a training partner card) is good.~~ — **fixed**: the cold-start Social tab rendered the curated `SoloFirstFeed` stack rather than a sentence in a box (retired 2026-10-01: a new person now sees Explore's posts under one line, `FeedView.tsx`). Note the crews row named here no longer exists — crews were removed, and the stack is PartnerStreak hero → challenge slot → Spaces rail → share-your-training.
 2. Hue: disciplined (purple + neutrals).
 3. Dark parity: good.
 

@@ -2,8 +2,10 @@
  * SOCIAL-HOME-01 Stage C — CirclesSection Together-surface contract:
  * (a) a failed list read renders the retry block (Retry → reload),
  *     never the cold-start selector; (b) a genuinely-empty list
- *     renders the five-option goal selector, with "Private progress"
- *     routing to /review and never creating a circle; (c) the first
+ *     renders one short card, whose Start a circle opens the
+ *     five-option goal selector (2026-10-01; it was the card), with
+ *     "Private progress" routing to /review and never creating a
+ *     circle; (c) the first
  *     ACTIVE circle leads as the featured hero card (title tap-target
  *     + weekly-focus action) fed by exactly ONE eager loadDetail,
  *     while the remaining circles keep their summary-row rendering.
@@ -90,6 +92,11 @@ beforeEach(() => {
 
 afterEach(() => cleanup());
 
+/** The goal choices open from the empty state's Start a circle. */
+function openChooser() {
+  fireEvent.click(screen.getByRole("button", { name: "Start a circle" }));
+}
+
 describe("CirclesSection (SOCIAL-HOME-01 Together surface)", () => {
   it("renders the retry block when the list read failed, and Retry calls reload", () => {
     const value = hookValue({ loadFailed: true });
@@ -108,7 +115,7 @@ describe("CirclesSection (SOCIAL-HOME-01 Together surface)", () => {
     expect(value.reload).toHaveBeenCalledTimes(1);
   });
 
-  it("empty + ok renders the five-option cold-start selector", () => {
+  it("empty + ok renders one short card, and Start opens the five-option selector", () => {
     mockUseGoalSpaces.mockReturnValue(hookValue());
     render(
       <MemoryRouter>
@@ -116,6 +123,15 @@ describe("CirclesSection (SOCIAL-HOME-01 Together surface)", () => {
       </MemoryRouter>
     );
 
+    expect(screen.getByText("Train with a few friends")).toBeInTheDocument();
+    // Invited users aren't funneled into creating.
+    expect(
+      screen.getByRole("button", { name: "Join with code" })
+    ).toBeInTheDocument();
+    // The choices wait behind Start, not on the tab.
+    expect(screen.queryByText("What support would help?")).toBeNull();
+    expect(screen.queryByText("Strength Block")).toBeNull();
+    openChooser();
     expect(screen.getByText("What support would help?")).toBeInTheDocument();
     /* The first three are the LOCK-PINNED `LAUNCH_TEMPLATES` labels
        (GsPb1), written out rather than derived so this pins the copy a
@@ -135,10 +151,6 @@ describe("CirclesSection (SOCIAL-HOME-01 Together surface)", () => {
     ]) {
       expect(screen.getByText(label)).toBeInTheDocument();
     }
-    // Invited users aren't funneled into creating.
-    expect(
-      screen.getByRole("button", { name: "Join with code" })
-    ).toBeInTheDocument();
   });
 
   it("the goal you pick is the goal the sheet confirms — same string, both ends", async () => {
@@ -167,6 +179,7 @@ describe("CirclesSection (SOCIAL-HOME-01 Together surface)", () => {
         </MemoryRouter>
       );
 
+      openChooser();
       const option = screen.getByText(type);
       const offered = option.textContent ?? "";
       expect(offered).toBeTruthy();
@@ -204,6 +217,7 @@ describe("CirclesSection (SOCIAL-HOME-01 Together surface)", () => {
       </MemoryRouter>
     );
 
+    openChooser();
     fireEvent.click(screen.getByText("Private progress"));
     expect(navigateMock).toHaveBeenCalledWith("/review");
     expect(value.createCircle).not.toHaveBeenCalled();
@@ -217,6 +231,7 @@ describe("CirclesSection (SOCIAL-HOME-01 Together surface)", () => {
       </MemoryRouter>
     );
 
+    openChooser();
     fireEvent.click(screen.getByText("Hybrid"));
     // Cal-fix: the goal is already chosen, so the sheet opens straight to
     // naming with a compact chosen-goal header — NOT the full re-pick list.
@@ -299,6 +314,7 @@ describe("the name suggestion follows the chosen template", () => {
         <CirclesSection uid="me" />
       </MemoryRouter>
     );
+    openChooser();
     fireEvent.click(screen.getByRole("button", { name: /Strength Block/ }));
     const name = await screen.findByLabelText("Circle name");
     expect(name).toHaveAttribute(

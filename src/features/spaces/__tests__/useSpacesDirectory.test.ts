@@ -73,6 +73,20 @@ describe("directory membership reads", () => {
       ).toBe(true)
     );
   });
+  it("hands back the same list until something changes", async () => {
+    // Callers key effects on this list. A new array every render made
+    // People's suggestions refetch every render, which never stopped.
+    seedFirestore({ "spaces/runners/members/a": { uid: "a" } });
+    const { result, rerender } = renderHook(() => useSpacesDirectory(true));
+    await waitFor(() =>
+      expect(
+        result.current.entries.find((e) => e.def.id === "runners")?.joined
+      ).toBe(true)
+    );
+    const settled = result.current.entries;
+    rerender();
+    expect(result.current.entries).toBe(settled);
+  });
   it("late account-A reads cannot mark account B as joined", async () => {
     seedFirestore({ "spaces/boston-marathon/members/a": { uid: "a" } });
     deferReads();

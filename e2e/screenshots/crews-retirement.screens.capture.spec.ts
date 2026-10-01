@@ -2,9 +2,8 @@
  * Crews-retirement capture — the Together tab after the legacy crew
  * sections were removed (docs/proposals/crews-retirement.md). Proof
  * the tab reads as designed with its three remaining blocks: Circles
- * lead → Spaces directory → Challenges. Also captures the Feed tab's
- * solo state, whose gym-promise row now points at future location-kind
- * Spaces instead of crews.
+ * lead → Spaces directory → Challenges. (It also filmed the Feed tab's
+ * solo state until that state was retired on 2026-10-01.)
  *
  * Signs in as the circles-capture user (seed-circles-capture.ts) so
  * the Circles block renders its featured card rather than cold-start.
@@ -89,25 +88,5 @@ test.describe("crews retirement screenshots", () => {
       );
     await page.waitForTimeout(1200);
     await shootLightDark(page, "crews-retirement-together");
-  });
-
-  test("Feed tab — solo state with the gym-space promise row", async ({
-    page,
-  }) => {
-    test.setTimeout(120_000);
-    await page.goto("social?tab=feed");
-    await page
-      .getByRole("navigation", { name: /main navigation/i })
-      .waitFor({ state: "visible", timeout: 20000 });
-    await page
-      .getByText("Your gym's space is coming")
-      .waitFor({ state: "visible", timeout: 15000 })
-      .catch(() =>
-        console.log(
-          "[capture] gym-space row not visible (user may have follows) — capturing as-is"
-        )
-      );
-    await page.waitForTimeout(1000);
-    await shootLightDark(page, "crews-retirement-feed-solo");
   });
 });

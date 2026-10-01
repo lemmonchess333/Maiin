@@ -103,7 +103,7 @@ describe("workoutTonnageKg", () => {
   /* The guards are the whole reason this helper exists, and until now only
      its happy path was pinned — so a share card re-deriving the loop inline
      looked equivalent. Two did: WorkoutFeedShareSheet called the helper,
-     SoloFirstFeed hand-rolled `set.reps * set.weightKg` over
+     SoloFirstFeed (since deleted) hand-rolled `set.reps * set.weightKg` over
      `latest.exercises`. Same numbers on clean data, and on a legacy doc the
      hand-rolled one printed "NaN kg" or threw. */
   it("tolerates a set with a missing weight or reps instead of going NaN", () => {

@@ -12,9 +12,9 @@ import { Spinner } from "@/components/ui/Spinner";
  * friends for a meaningful leaderboard.
  *
  * SOC-P1c: presentational — FeedView owns the getPersonalTrajectory
- * fetch (same one-shot read, just lifted) so the zero-week state can
- * collapse the whole Your-week slot into WeekOpenerCard BEFORE this
- * card's 0-pts grid ever mounts.
+ * fetch (same one-shot read, just lifted), so an empty week renders no
+ * card at all rather than this one's 0-pts grid. It sits under the
+ * third post, not above the feed.
  *
  * Keeps the same outer shape (p-4 rounded-2xl card with a header
  * row featuring Zap + title + "This week" pill) as LeaderboardCard

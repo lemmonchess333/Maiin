@@ -1,11 +1,18 @@
 /**
  * Races & Events directory section (races plan PR2) — pins the
- * kind-split composition: interest carousel + a Races & Events row in
- * the full directory, race-card anatomy (RACE chip, date + city), and
- * the Q6 gate (compact Feed row never requests races).
+ * kind-split composition: interest carousel + a Races & Events row,
+ * race-card anatomy (RACE chip, date + city), and the race filter chips
+ * (2026-10-01; two selects before). The Feed's compact row, and the Q6
+ * gate that kept races out of it, went the same day with the row.
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent, within } from "@testing-library/react";
+import {
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { filterRaceDefs, type RaceBrowseFilters } from "../raceBrowse";
 import { spaceDef } from "../spaceDefs";
@@ -15,6 +22,26 @@ const mockUseSpacesDirectory = vi.fn();
 vi.mock("../useSpacesDirectory", () => ({
   useSpacesDirectory: (includeRaces: boolean, filters: RaceBrowseFilters) =>
     mockUseSpacesDirectory(includeRaces, filters),
+}));
+
+/* The real sheet animates out, and jsdom never ends the animation, so a
+   closed sheet would keep the page hidden. Open or not is all this
+   suite needs. */
+vi.mock("@/components/ui/BottomSheet", () => ({
+  BottomSheet: ({
+    open,
+    title,
+    children,
+  }: {
+    open: boolean;
+    title: string;
+    children: React.ReactNode;
+  }) =>
+    open ? (
+      <div role="dialog" aria-label={title}>
+        {children}
+      </div>
+    ) : null,
 }));
 
 import SpacesDirectory from "../SpacesDirectory";
@@ -113,20 +140,6 @@ describe("SpacesDirectory — Races & Events", () => {
     }
   });
 
-  it("compact row never requests races (Q6 calm-feed lock)", () => {
-    mockUseSpacesDirectory.mockReturnValue({
-      entries: [INTEREST],
-      upcomingRaces: [],
-      refresh: vi.fn(),
-    });
-    renderDirectory({ compact: true, title: "Spaces for you" });
-    expect(mockUseSpacesDirectory).toHaveBeenCalledWith(false, {
-      country: "GB",
-      distance: "all",
-    });
-    expect(screen.queryByText("Races & events")).not.toBeInTheDocument();
-  });
-
   it("races row collapses when no upcoming races are in the entries", () => {
     mockUseSpacesDirectory.mockReturnValue({
       entries: [INTEREST],
@@ -139,7 +152,7 @@ describe("SpacesDirectory — Races & Events", () => {
   });
 });
 
-it("keeps filters visible through no matches and recovers across countries", () => {
+it("keeps filters visible through no matches and recovers across countries", async () => {
   const berlin = spaceDef("berlin-marathon")!;
   mockUseSpacesDirectory.mockImplementation((_include, filters) => ({
     entries: [
@@ -157,14 +170,31 @@ it("keeps filters visible through no matches and recovers across countries", () 
   expect(
     screen.queryByRole("link", { name: "Berlin Marathon space" })
   ).not.toBeInTheDocument();
-  fireEvent.change(screen.getByLabelText("Country"), {
-    target: { value: "DE" },
-  });
-  fireEvent.change(screen.getByLabelText("Distance"), {
-    target: { value: "half" },
-  });
+  // The country chip names the default and opens its sheet.
+  fireEvent.click(
+    screen.getByRole("button", { name: "Country: United Kingdom" })
+  );
+  fireEvent.click(
+    within(screen.getByRole("radiogroup", { name: "Country" })).getByRole(
+      "radio",
+      { name: /Germany/ }
+    )
+  );
+  // The sheet closes on the pick.
+  await waitFor(() =>
+    expect(screen.queryByRole("dialog", { name: "Country" })).toBeNull()
+  );
+  // Distances pick in place.
+  const distance = screen.getByRole("radiogroup", { name: "Distance" });
+  fireEvent.click(within(distance).getByRole("radio", { name: "Half" }));
+  expect(within(distance).getByRole("radio", { name: "Half" })).toHaveAttribute(
+    "aria-checked",
+    "true"
+  );
   expect(screen.getByText("No matching races")).toBeInTheDocument();
-  expect(screen.getByLabelText("Country")).toHaveValue("DE");
+  expect(
+    screen.getByRole("button", { name: "Country: Germany" })
+  ).toBeInTheDocument();
   expect(
     screen.getByRole("link", { name: "Runners space" })
   ).toBeInTheDocument();

@@ -8,8 +8,9 @@
  * per mounted hook and user so changing a filter does not reload interest
  * counts. `refresh()` invalidates that cache after a join/leave.
  *
- * `includeRaces`: only the full Together directory lists race Spaces.
- * The compact Feed stays interest-only and never pays for race reads.
+ * `includeRaces`: the Together directory lists race Spaces. The Feed and
+ * People pass it too, for the joined ids only: a race Space you joined
+ * counts for My communities and for "Also in" suggestions.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -119,14 +120,21 @@ export function useSpacesDirectory(
 
   // Always derive from the current filter; old requests cannot flash stale rows
   // or expose a previous account's Joined flags during an identity change.
-  const entries: SpaceDirectoryEntry[] = defs.map((def) => ({
-    def,
-    memberCount: null,
-    joined: false,
-    ...(loaded.uid === uid && loaded.nonce === nonce
-      ? loaded.values[def.id]
-      : undefined),
-  }));
+  // Memoised: callers key effects on this list (People's suggestions take
+  // the joined ids from it), and a new array every render re-ran those
+  // effects every render, a fetch loop for as long as People was open.
+  const entries = useMemo<SpaceDirectoryEntry[]>(
+    () =>
+      defs.map((def) => ({
+        def,
+        memberCount: null,
+        joined: false,
+        ...(loaded.uid === uid && loaded.nonce === nonce
+          ? loaded.values[def.id]
+          : undefined),
+      })),
+    [defs, loaded, uid, nonce]
+  );
   const refresh = useCallback(() => setNonce((n) => n + 1), []);
   return { entries, upcomingRaces, refresh };
 }
