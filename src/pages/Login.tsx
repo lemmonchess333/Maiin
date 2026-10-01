@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { readString, remove } from "@/lib/localStore";
 import { hasSignedInOnThisDevice, useAuth } from "@/lib/auth";
@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
 import ChoiceArt from "@/components/onboarding/ChoiceArt";
 import { FoodTabIcon } from "@/components/icons/TabIcons";
+import { track as trackLifecycle } from "@/lib/lifecycleAnalytics";
 
 // Pre-recovery this page tracked a single `loading: boolean` shared
 // across the email submit, the Apple button, and the Google button.
@@ -40,6 +41,18 @@ export default function Login() {
     hasSignedInOnThisDevice() ? "signIn" : "welcome"
   );
   const isSignUp = view === "signUp";
+  // The first rungs of the funnel: who sees the welcome screen, and who
+  // goes on to a form (lifecycleAnalytics' header has the order).
+  useEffect(() => {
+    trackLifecycle("auth_screen_viewed", {
+      screen:
+        view === "signIn"
+          ? "sign_in"
+          : view === "signUp"
+            ? "sign_up"
+            : "welcome",
+    });
+  }, [view]);
   const setIsSignUp = (next: boolean) => setView(next ? "signUp" : "signIn");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

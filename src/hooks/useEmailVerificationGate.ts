@@ -16,6 +16,15 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { User } from "firebase/auth";
 import { needsEmailVerification } from "@/lib/emailVerificationGate";
+import { track as trackLifecycle } from "@/lib/lifecycleAnalytics";
+
+/* The account this session has seen needing verification, shared by every
+   gate: whichever one then confirms the address reports `email_verified`,
+   once. The App-level check on returning from Mail, Home's "I've verified"
+   and Settings' all count. Someone who confirms while the app is closed
+   opens it already verified, which looks the same as an account that never
+   needed it, so the count is a floor. */
+let awaitingVerification: string | null = null;
 
 export function useEmailVerificationGate(
   user: User | null | undefined,
@@ -52,8 +61,17 @@ export function useEmailVerificationGate(
       );
     }
     setCheck({ user, verified: user.emailVerified });
+    if (user.emailVerified && awaitingVerification === user.uid) {
+      awaitingVerification = null;
+      trackLifecycle("email_verified", { method: "email" });
+    }
     return user.emailVerified;
   }, [user]);
+
+  const uid = user?.uid;
+  useEffect(() => {
+    if (needsVerification && uid) awaitingVerification = uid;
+  }, [needsVerification, uid]);
 
   useEffect(() => {
     if (!checkOnResume || !needsVerification) return;

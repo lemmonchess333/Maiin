@@ -119,7 +119,7 @@ exists — pinned by `claudeMdFreshness.test.ts` in both directions
 | `Diagnostics.tsx`                      | `/diagnostics`                     | Operator diagnostics (push, SW update, App Check state) — hidden, unlinked     |
 | `dev/*.tsx`                            | `/dev/*`                           | Developer labs (brand bake-off, form-motion lab) — not product surfaces        |
 | `Onboarding.tsx`                       | `*` (fallback)                     | Multi-step setup flow (shown when onboarding incomplete)                       |
-| `Login.tsx`                            | `*` (fallback)                     | Authentication (Email, Google, Apple) (shown when unauthenticated)             |
+| `Login.tsx`                            | `*` (fallback)                     | Welcome screen on first visit, then sign-up or sign-in (Email, Google, Apple)  |
 | `PrivacyPolicy.tsx`                    | `/privacy`                         | Legal — reachable signed-out                                                   |
 | `TermsOfService.tsx`                   | `/terms`                           | Legal — reachable signed-out                                                   |
 | `Support.tsx`                          | `/support`                         | Public support page (App Store Support URL) — reachable signed-out             |
@@ -255,7 +255,7 @@ Helper: `syncChallengeProgress()` — auto-updates challenge participant progres
 
 - **Firestore collections:** `users/{uid}`, `users/{uid}/meals`, `users/{uid}/workouts`, `users/{uid}/runs`, `users/{uid}/programState`, `users/{uid}/public/profile` (cross-user projection; incl. the opt-in `trainingForSpaceId` race identity), `activities` (public), `goalSpaces`, `challenges`, `challenges/{id}/participants`, `spaces/{id}/members`, `spaces/{id}/posts` (+ `posts/{id}/likes` and `posts/{id}/comments` — both SERVER-written via callables; clients read only)
 - **Auth:** Firebase Auth (Email, Google, Apple Sign-In)
-- **New password signups verify before onboarding.** The signup verification screen sends immediately, supports resend/address correction, and reloads Auth plus refreshes the token on returning from Mail. `completeOnboarding` enforces the verified claim for password sign-in. Existing completed accounts keep private access; the social gate below remains.
+- **Email sign-ups verify after the plan, not before it** (owner, 2026-10-01, reversing the 2026-09-15 wall). Sign-up sends the link (`signUp` in `auth.tsx`) and goes straight to onboarding, and `completeOnboarding` no longer asks for the claim. Home asks (`VerifyEmailBanner`, with Resend and a way to change a wrong address) until the app sees the address verified. The App-level gate rechecks on every return to the app, reloading Auth and refreshing the token, so tapping the link in Mail is enough. The social gate below is unchanged.
 - **Public writes need a verified email.** The `email_verified` token claim gates `activities` and `spaces/{id}/posts` creates in `firestore.rules` (`isEmailVerified()`) and comments in the two comment callables (`assertCallerEmailVerified`). Private logging under `users/{uid}/*` and every non-content interaction stay open to unverified accounts; OAuth accounts carry the claim already. The e2e rig marks its signup-form accounts verified through the Auth emulator REST API (seed scripts create users verified).
 - **Activity notifications follow the recipient's switches.** `notificationPreferences` on `users/{uid}` (S3: props, comments, circles and spaces on; new followers off) is read by `createNotification`, the one writer of `notifications/{uid}/items`, which writes nothing for a kind that is off. The client's copy (`src/lib/notificationPreferences.ts`) and the rules' value gate are pinned to the server's (`functions/lib/notificationPreferences.js`) by `notificationPreferences.cross.test.ts`. A new notification type has to be given a switch, or none on purpose, in that file.
 - **User profile:** Defined in `src/lib/auth.tsx` as `UserProfile` interface
@@ -2410,6 +2410,44 @@ kg and cm whatever was chosen.
 - [ ] **Pounds and feet on Profile.** With lb and ft chosen, Profile shows
       the weight in pounds and the height in feet and inches. Change both
       and check the calorie target moves as it does for a kg edit.
+
+### The onboarding pass (owner, 2026-10-01)
+
+Affects: `Login.tsx` (a welcome screen on a first visit), `Onboarding.tsx`
+(the plan in the open, an optional goal weight, the start weight kept),
+`BodyInputs`, `bodyMetrics.ts`, `Home.tsx` with `StackedCTACards` (the first
+workout on a rest day, a run for a free runner), `VerifyEmailBanner` (new),
+`App.tsx` (no verify wall), `auth.tsx` (the link sent at sign-up), `Upgrade.tsx`
+("Your plan is ready" after onboarding), `SettingsAccount`,
+`lifecycleAnalytics` (`auth_screen_viewed`, `email_verified`,
+`onboarding_abandoned`), and on the server `completeOnboarding` (no verified-
+email check) and `profileSanitizer.js` (keeps "unspecified").
+
+Five bugs went with it. Google and Apple photos were erased from the public
+profile by onboarding's last write. Heights of 100-119 and 231-250 cm passed
+on the phone and failed the save as "Check your connection". "Prefer not to
+say" was dropped by the server. The review showed cm to a feet-and-inches
+user. The plan's start weight was overwritten.
+
+- [ ] **Functions before the client.** `completeOnboarding` must drop its
+      verified-email check before a build without the verify screen reaches
+      anyone, or an unverified email account cannot finish setup. Deploy
+      production releases Functions before Hosting; a TestFlight build made
+      from the branch before the merge is the case to avoid.
+- [ ] **Deploy verification.** The functions deploy log shows a successful
+      update operation for `completeOnboarding`.
+- [ ] **An email sign-up on a phone:** no wall before the questions, the
+      link arrives during onboarding, and after tapping it in Mail and
+      coming back, Home's "Verify your email" notice has gone.
+- [ ] **The first screen:** a fresh install opens on the welcome screen;
+      after signing out, the same phone opens on Sign in.
+- [ ] **A Google sign-up's photo** is still on their profile, seen from a
+      second account, after onboarding.
+- [ ] **Lose fat with a goal weight:** the plan's target is below
+      maintenance, and Settings → Nutrition shows the goal and pace.
+- [ ] **The funnel in GA4 DebugView:** `auth_screen_viewed` for the welcome
+      screen and each form, `email_verified` after tapping the link, and
+      `onboarding_abandoned` after signing out of an unfinished setup.
 
 ### Backlog audit 2026-08-02 — what a skeptical pass found
 

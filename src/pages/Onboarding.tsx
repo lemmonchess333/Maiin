@@ -7,6 +7,7 @@ import { httpsCallable } from "firebase/functions";
 import { db, functions } from "@/lib/firebase";
 import { calculateTDEE, type ActivityLevel } from "@/lib/tdee";
 import { resolveGoalWeightPlan } from "@/lib/goalWeightPlan";
+import { HEIGHT_CM, WEIGHT_KG, formatHeight } from "@/lib/bodyMetrics";
 import { logger } from "@/lib/logger";
 import Button from "@/components/ui/Button";
 import SegmentedControl from "@/components/ui/SegmentedControl";
@@ -27,6 +28,7 @@ import {
   loadOnboardingDraft,
   saveOnboardingDraft,
   clearOnboardingDraft,
+  ONBOARDING_STEP_IDS,
   DRAFT_AGE_RANGES,
   type OnboardingDraft,
   type OnboardingActivity,
@@ -49,17 +51,7 @@ import { track as trackLifecycle } from "@/lib/lifecycleAnalytics";
 import { validateDisplayName } from "@/lib/displayName";
 import { formatWeightInUnit, formatStonePounds } from "@/lib/weightUnits";
 
-// Stable stored step IDs survive the chapter redesign; old preview (6) merges into review (7).
-const STEP_IDS = [
-  "goal",
-  "days",
-  "equipment",
-  "run",
-  "injuries",
-  "about",
-  "preview",
-  "confirm",
-];
+const STEP_IDS = ONBOARDING_STEP_IDS;
 const CHAPTERS = ["Your aim", "Your week", "Your setup", "About you", "Start"];
 const CHAPTER_FOR_STEP = [0, 1, 2, 1, 2, 3, 4, 4];
 const AGE_MIDPOINTS = {
@@ -439,10 +431,10 @@ export default function Onboarding() {
     bodyAnswered &&
     ageRange !== "under-16" &&
     metricsValid &&
-    weightKg >= 30 &&
-    weightKg <= 300 &&
-    heightCm >= 100 &&
-    heightCm <= 250;
+    weightKg >= WEIGHT_KG.min &&
+    weightKg <= WEIGHT_KG.max &&
+    heightCm >= HEIGHT_CM.min &&
+    heightCm <= HEIGHT_CM.max;
   const canAdvance = [
     goalConfirmed,
     true,
@@ -571,7 +563,15 @@ export default function Onboarding() {
       // plan-shape fields. plan.profileUpdates.weeklyRunsTarget
       // and weeklyRunDaysTarget overwrite the locally-derived
       // counts above so the values match the actual generated plan.
-      Object.assign(profileData, plan.profileUpdates);
+      // planBuilder's `program` carries only the nutrition phase (`goal`),
+      // so it is merged into the map above rather than assigned over it:
+      // a shallow assign dropped startWeight and currentPhase.
+      const { program: planProgram, ...planShape } = plan.profileUpdates;
+      Object.assign(profileData, planShape);
+      profileData.program = {
+        ...(profileData.program as Record<string, unknown>),
+        ...planProgram,
+      };
 
       // Call Cloud Function — uses Admin SDK, bypasses Firestore security rules.
       // Retry once on "internal" error: the function has no minInstances, so the
@@ -650,7 +650,9 @@ export default function Onboarding() {
             uid: user.uid,
             displayName:
               (profileData.displayName as string | undefined) || null,
-            photoURL: (profileData.photoURL as string | undefined) || null,
+            // No photoURL: sign-up already wrote the Google or Apple photo
+            // here (writeNewProfileDocs), and onboarding has none of its
+            // own. Writing null erased it from everyone else's view.
             athleteType:
               (profileData.athleteType as string | undefined) ?? "Lifter",
             currentStreak: 0,
@@ -701,7 +703,11 @@ export default function Onboarding() {
           ? "Please sign in again to finish setting up your account. Your answers are saved on this device."
           : code === "resource-exhausted"
             ? "Please wait a moment, then try creating your plan again. Your answers are saved."
-            : "We couldn’t save your plan. Check your connection and try again. Your answers are saved."
+            : code === "invalid-argument"
+              ? // The server refused an answer, so a retry on a better
+                // connection would fail the same way.
+                "We couldn’t save your plan: one of your answers wasn’t accepted. Check your answers and try again."
+              : "We couldn’t save your plan. Check your connection and try again. Your answers are saved."
       );
     } finally {
       pending.current = false;
@@ -1484,7 +1490,7 @@ export default function Onboarding() {
                     },
                     {
                       label: "About you",
-                      value: `${weightDisplayUnit === "st" ? formatStonePounds(weightKg) : `${formatWeightInUnit(weightKg, weightUnit)} ${weightUnit === "lbs" ? "lb" : "kg"}`} · ${Number(heightCm.toFixed(1))} cm · age ${ageRange}`,
+                      value: `${weightDisplayUnit === "st" ? formatStonePounds(weightKg) : `${formatWeightInUnit(weightKg, weightUnit)} ${weightUnit === "lbs" ? "lb" : "kg"}`} · ${formatHeight(heightCm, heightUnit)} · age ${ageRange}`,
                       target: 5,
                     },
                   ]

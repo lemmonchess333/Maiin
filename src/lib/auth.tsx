@@ -1106,7 +1106,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (auth.currentUser?.uid !== uid) return;
       setProfile(newProfile);
       trackLifecycle("signup_completed", { method: "email" });
-      // The signup verification screen owns delivery, retry and error feedback.
+      // The verification link goes out now, so it is waiting in the inbox
+      // by the time the plan is made; onboarding no longer stops for it.
+      // A failed send is not the sign-up's failure: Home's verify notice
+      // and Settings → Account both offer Resend.
+      void import("@/lib/accountSecurity")
+        .then(({ sendInitialVerificationEmail }) =>
+          sendInitialVerificationEmail(uid)
+        )
+        .catch((err) => logger.warn("Signup verification email not sent", err));
     },
     [revokeOutgoingAccountDeviceState]
   );

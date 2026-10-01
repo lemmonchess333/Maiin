@@ -167,7 +167,12 @@ const PROFILE_FIELD_VALIDATORS = Object.freeze({
   athleteType: (v) => cleanString(v, 30),
 
   // Demographics
-  gender: (v) => cleanEnum(v, ["male", "female", "other", "prefer_not_say"]),
+  // "unspecified" is what the app writes for "Prefer not to say" (onboarding,
+  // Settings, the UserProfile type). Without it here, completeOnboarding
+  // dropped the answer. "other" and "prefer_not_say" stay for any document
+  // written with them.
+  gender: (v) =>
+    cleanEnum(v, ["male", "female", "unspecified", "other", "prefer_not_say"]),
   ageRange: (v) => cleanString(v, 20),
   age: (v) => cleanNumber(v, { min: 16, max: 120, integer: true }),
   sex: (v) => cleanEnum(v, ["male", "female"]),

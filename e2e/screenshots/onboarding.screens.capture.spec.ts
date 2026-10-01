@@ -92,6 +92,13 @@ test.describe("onboarding screenshots", () => {
     const email = `e2e-onboarding-${Date.now()}@tropos.test`;
     await page.goto("/");
     await page.waitForLoadState("networkidle");
+    // A first visit opens on the welcome screen, not on "Welcome back".
+    await expect(
+      page.getByRole("heading", {
+        name: "Your training and food, planned together",
+      })
+    ).toBeVisible({ timeout: 20_000 });
+    await shootBoth(page, "onboarding-0-welcome");
     await openSignUpForm(page);
     await page.fill("#login-email", email);
     await page.fill("#login-password", "test-password-123");

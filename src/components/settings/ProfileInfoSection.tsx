@@ -5,6 +5,7 @@ import { haptic } from "@/lib/haptic";
 import type { UserProfile, UpdateProfileResult } from "@/lib/auth";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { kgToLb, lbToKg } from "@/lib/weightUnits";
+import { HEIGHT_CM } from "@/lib/bodyMetrics";
 
 type Gender = "male" | "female" | "unspecified";
 type AgeRange = "16-24" | "25-34" | "35-44" | "45-54" | "55+";
@@ -96,8 +97,9 @@ export default function ProfileInfoSection({
     if (!result.ok) setWeight(shown);
   }
 
-  /** The bounds match profileSanitizer.js's heightCm range, so the client
-   *  and the Cloud-Function write path agree on what's plausible. */
+  /** The bounds are profileSanitizer.js's heightCm range (bodyMetrics),
+   *  so the client and the Cloud-Function write path agree on what's
+   *  plausible. */
   async function commitHeight(cm: number, unchanged: boolean) {
     const restore = () => {
       setHeightCmText(String(Number(savedCm.toFixed(1))));
@@ -105,7 +107,7 @@ export default function ProfileInfoSection({
       setInches(String(feetInches(savedCm).inches));
     };
     if (unchanged) return;
-    if (!Number.isFinite(cm) || cm < 120 || cm > 230) {
+    if (!Number.isFinite(cm) || cm < HEIGHT_CM.min || cm > HEIGHT_CM.max) {
       restore();
       return;
     }

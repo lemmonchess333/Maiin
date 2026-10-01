@@ -76,6 +76,7 @@ import LiftReturnSheet from "@/components/program/LiftReturnSheet";
 import { useSurface } from "@/components/SurfaceCoordinatorProvider";
 import { useEducationCard } from "@/components/EducationLaneProvider";
 import StackedCTACards from "@/components/home/StackedCTACards";
+import VerifyEmailBanner from "@/components/home/VerifyEmailBanner";
 import StepsPrimingModal from "@/components/home/StepsPrimingModal";
 import { useSteps } from "@/hooks/useSteps";
 import PerformanceHeroCard from "@/components/home/PerformanceHeroCard";
@@ -1057,6 +1058,12 @@ export default function Home() {
           </TrackSectionView>
         )}
       </motion.div>
+
+      {/* Email accounts verify after the plan; this asks, under today's
+          session rather than above it. Renders nothing once verified. */}
+      <SectionErrorBoundary sectionName="verify-email">
+        <VerifyEmailBanner />
+      </SectionErrorBoundary>
 
       <motion.div
         variants={{

@@ -116,7 +116,7 @@ suite("account deletion against Firestore", () => {
     );
   }, 120000);
 
-  it("enforces email verification at the actual onboarding callable", async () => {
+  it("lets an unverified email account set up its plan; verification comes after", async () => {
     const context = (provider, verified) => ({
       auth: {
         uid,
@@ -126,30 +126,42 @@ suite("account deletion against Firestore", () => {
         },
       },
     });
-    await expect(
-      completeOnboarding.run({}, context("password", false))
-    ).rejects.toMatchObject({
-      code: "failed-precondition",
-      details: { reason: "email-unverified" },
-    });
-    // These reach the normal payload validator, proving the email gate passed.
-    await expect(
-      completeOnboarding.run({}, context("password", true))
-    ).rejects.toMatchObject({ code: "invalid-argument" });
-    await expect(
-      completeOnboarding.run({}, context("apple.com", true))
-    ).rejects.toMatchObject({ code: "invalid-argument" });
+    // Each reaches the payload validator: an unverified password account is
+    // refused for what it sent, not for its address (owner, 2026-10-01).
+    for (const [provider, verified] of [
+      ["password", false],
+      ["password", true],
+      ["apple.com", true],
+    ]) {
+      await expect(
+        completeOnboarding.run({}, context(provider, verified))
+      ).rejects.toMatchObject({ code: "invalid-argument" });
+    }
     expect((await db.doc(`users/${uid}`).get()).exists).toBe(false);
   });
 
   it("cannot let completed or review-held requests fill the retry page", async () => {
     const { resumeDeletions } = require("../../lib/accountDeletionRetry");
     const batch = db.batch();
-    for (let n = 0; n < 15; n++) batch.set(db.doc(`accountDeletionRequests/old-${n}`), { resumeVersion: 2, status: n % 2 ? "completed" : "operator_review", nextAttemptAt: new Date(now - 10000) });
-    batch.set(db.doc(`accountDeletionRequests/${uid}`), { resumeVersion: 2, status: "failed_cleanup", nextAttemptAt: new Date(now - 1000) });
+    for (let n = 0; n < 15; n++)
+      batch.set(db.doc(`accountDeletionRequests/old-${n}`), {
+        resumeVersion: 2,
+        status: n % 2 ? "completed" : "operator_review",
+        nextAttemptAt: new Date(now - 10000),
+      });
+    batch.set(db.doc(`accountDeletionRequests/${uid}`), {
+      resumeVersion: 2,
+      status: "failed_cleanup",
+      nextAttemptAt: new Date(now - 1000),
+    });
     await batch.commit();
     const execute = vi.fn().mockResolvedValue(undefined);
-    await resumeDeletions({ firestore: db, deleteAccount: execute, logger, now });
+    await resumeDeletions({
+      firestore: db,
+      deleteAccount: execute,
+      logger,
+      now,
+    });
     expect(execute).toHaveBeenCalledOnce();
     expect(execute).toHaveBeenCalledWith(expect.objectContaining({ uid }));
   });
