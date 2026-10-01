@@ -16,8 +16,6 @@ export default function SettingsProfile() {
   const navigate = useNavigate();
   const { user, profile, updateProfile } = useAuth();
   const [name, setName] = useState(profile?.displayName ?? "");
-  const [weightKg, setWeightKg] = useState(profile?.weightKg ?? 70);
-  const [heightCm, setHeightCm] = useState(profile?.heightCm ?? 170);
 
   if (!profile) return <SettingsSection title="Profile" />;
 
@@ -40,10 +38,6 @@ export default function SettingsProfile() {
         profile={profile}
         name={name}
         setName={setName}
-        weightKg={weightKg}
-        setWeightKg={setWeightKg}
-        heightCm={heightCm}
-        setHeightCm={setHeightCm}
         updateProfile={updateProfile}
       />
       {user && (

@@ -706,6 +706,167 @@ describe("createNotification — block backstop", () => {
   });
 });
 
+describe("createNotification — the recipient's switches", () => {
+  /* Settings → Notifications → Activity (S3). A kind that is off is not
+     written at all; the defaults (props, comments, circles and spaces on,
+     new followers off) decide for anyone who never touched a switch. Each
+     refusal below has a delivery beside it, so a gate that skipped
+     everything could not pass. */
+  const serverTimestamp = () => "TS";
+
+  async function send(type, { prefs, profile, read } = {}) {
+    const initial = {};
+    if (profile !== undefined) initial["users/recipient"] = profile;
+    else if (prefs !== undefined) {
+      initial["users/recipient"] = { notificationPreferences: prefs };
+    }
+    const firestore = makeFirestoreStub({ initial });
+    if (read) {
+      const original = firestore.collection.bind(firestore);
+      firestore.collection = (name) => {
+        const col = original(name);
+        if (name !== "users") return col;
+        return { ...col, doc: (id) => ({ ...col.doc(id), get: read }) };
+      };
+    }
+    const { createNotification } = require("../lib/socialFanout");
+    const res = await createNotification({
+      firestore,
+      fromUid: "sender",
+      toUid: "recipient",
+      data: { type, fromName: "Sam" },
+      serverTimestamp,
+    });
+    return { res, writes: firestore._writes };
+  }
+
+  it("sends props, comments, circles and spaces to someone who never chose", async () => {
+    for (const type of [
+      "kudos",
+      "comment",
+      "circle_milestone",
+      "space_post_like",
+    ]) {
+      const { res, writes } = await send(type);
+      expect(res.muted, type).toBeUndefined();
+      expect(writes, type).toHaveLength(1);
+    }
+  });
+
+  it("does not send a new follower unless they turned it on", async () => {
+    const off = await send("follow");
+    expect(off.res).toEqual({ skipped: true, muted: true });
+    expect(off.writes).toHaveLength(0);
+
+    const on = await send("follow", { prefs: { follows: true } });
+    expect(on.res.notificationId).toBeTruthy();
+    expect(on.writes).toHaveLength(1);
+    expect(on.writes[0].data.type).toBe("follow");
+  });
+
+  it("skips each kind whose switch is off, and only that kind", async () => {
+    const cases = [
+      ["kudos", "kudos"],
+      ["comment", "comments"],
+      ["circle_focus_backed", "circles"],
+      ["circle_needs_support", "circles"],
+      ["circle_joined", "circles"],
+      ["circle_routine_shared", "circles"],
+      ["space_post_like", "spaces"],
+      ["space_post_comment", "spaces"],
+    ];
+    for (const [type, category] of cases) {
+      const muted = await send(type, { prefs: { [category]: false } });
+      expect(muted.res, type).toEqual({ skipped: true, muted: true });
+      expect(muted.writes, type).toHaveLength(0);
+
+      // Every other switch off, this one on: still sent.
+      const others = {
+        kudos: false,
+        comments: false,
+        follows: false,
+        circles: false,
+        spaces: false,
+        [category]: true,
+      };
+      const sent = await send(type, { prefs: others });
+      expect(sent.writes, type).toHaveLength(1);
+    }
+  });
+
+  it("falls back to the defaults for a value that is not a boolean", async () => {
+    for (const prefs of ["off", ["kudos"], { kudos: "false" }, { kudos: 0 }]) {
+      const kudos = await send("kudos", { prefs });
+      expect(kudos.writes, JSON.stringify(prefs)).toHaveLength(1);
+    }
+    const follow = await send("follow", { prefs: { follows: "true" } });
+    expect(follow.writes).toHaveLength(0);
+  });
+
+  it("uses the defaults when the profile cannot be read", async () => {
+    const read = vi.fn(async () => {
+      throw new Error("unavailable");
+    });
+    const kudos = await send("kudos", { read });
+    expect(read).toHaveBeenCalled();
+    expect(kudos.writes).toHaveLength(1);
+    const follow = await send("follow", { read });
+    expect(follow.writes).toHaveLength(0);
+  });
+
+  it("always sends a type with no switch, without reading the profile", async () => {
+    const read = vi.fn(async () => {
+      throw new Error("should not be read");
+    });
+    const { res, writes } = await send("challenge_milestone", { read });
+    expect(read).not.toHaveBeenCalled();
+    expect(res.notificationId).toBeTruthy();
+    expect(writes).toHaveLength(1);
+  });
+});
+
+describe("notificationPreferences — the switch table", () => {
+  const {
+    NOTIFICATION_CATEGORIES,
+    NOTIFICATION_DEFAULTS,
+    CATEGORY_BY_TYPE,
+  } = require("../lib/notificationPreferences");
+  const { VALID_NOTIFICATION_TYPES } = require("../lib/socialFanout");
+
+  it("gives every notification type a switch, or none on purpose", () => {
+    /* A new type in VALID_NOTIFICATION_TYPES fails here until it is given
+       a switch (or null) — otherwise it would be sent to people who turned
+       its kind off. */
+    expect(Object.keys(CATEGORY_BY_TYPE).sort()).toEqual(
+      [...VALID_NOTIFICATION_TYPES].sort()
+    );
+    for (const [type, category] of Object.entries(CATEGORY_BY_TYPE)) {
+      if (category === null) continue;
+      expect(NOTIFICATION_CATEGORIES, type).toContain(category);
+    }
+  });
+
+  it("every switch controls at least one type, and has a default", () => {
+    const used = new Set(Object.values(CATEGORY_BY_TYPE));
+    for (const category of NOTIFICATION_CATEGORIES) {
+      expect(used.has(category), category).toBe(true);
+    }
+    expect(Object.keys(NOTIFICATION_DEFAULTS).sort()).toEqual(
+      [...NOTIFICATION_CATEGORIES].sort()
+    );
+  });
+
+  it("S3's defaults: props and comments on, new followers off", () => {
+    expect(NOTIFICATION_DEFAULTS).toEqual({
+      kudos: true,
+      comments: true,
+      follows: false,
+      circles: true,
+      spaces: true,
+    });
+  });
+});
+
 /**
  * removeActivityFromFeeds — the other half of the fan-out. A post that is
  * deleted (the finish screen's Undo, or deleting the session it came from)

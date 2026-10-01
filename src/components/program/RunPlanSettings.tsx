@@ -840,7 +840,7 @@ export default function RunPlanSettings({
         </div>
       )}
 
-      {/* ── Full programme settings escape hatch ─────────────────────── */}
+      {/* ── The way back to the Programme page ───────────────────────── */}
       <button
         type="button"
         onClick={() => {
@@ -858,11 +858,9 @@ export default function RunPlanSettings({
           <SlidersHorizontal className="size-4 text-muted-foreground" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium text-foreground">
-            Full programme settings
-          </p>
+          <p className="text-sm font-medium text-foreground">Programme</p>
           <p className="mt-0.5 text-xs text-muted-foreground">
-            Goal, nutrition, lifting, equipment, injuries
+            Your setup, lift plan, reset
           </p>
         </div>
         <ChevronRight

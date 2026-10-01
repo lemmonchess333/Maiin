@@ -7329,6 +7329,53 @@ exports.onGoalSpaceEventCreated = functions
     return null;
   });
 
+/**
+ * onFollowerCreated — "X started following you", for the people who turn
+ * New followers on in Settings → Notifications (S3: off by default, so
+ * createNotification skips everyone else before writing anything).
+ *
+ * The follower writes `followers/{uid}/users/{followerUid}` themselves
+ * (socialApi.followUser), so this trigger is the only place the server sees
+ * a follow. Before it, "follow" was an allowed notification type nothing
+ * sent. The id is fixed per follower, so a re-delivery, or the same person
+ * following again after unfollowing, rewrites one row instead of adding
+ * another. createNotification also holds the block check and skips an
+ * account that is being deleted.
+ */
+exports.onFollowerCreated = functions
+  .runWith(TRIGGER_CAP)
+  .firestore.document("followers/{uid}/users/{followerUid}")
+  .onCreate(async (snap, context) => {
+    const { uid, followerUid } = context.params;
+    if (!uid || !followerUid || uid === followerUid) return null;
+    try {
+      const profileSnap = await db
+        .doc(`users/${followerUid}/public/profile`)
+        .get();
+      const fromName =
+        (profileSnap.exists && profileSnap.data().displayName) || "Someone";
+      await socialFanout.createNotification({
+        firestore: admin.firestore(),
+        fromUid: followerUid,
+        toUid: uid,
+        data: {
+          type: "follow",
+          fromName,
+          message: `${fromName} started following you`,
+        },
+        serverTimestamp: admin.firestore.FieldValue.serverTimestamp,
+        notificationId: `follow_${followerUid}`,
+      });
+    } catch (err) {
+      functions.logger.warn("onFollowerCreated.notification_failed", {
+        uid,
+        followerUid,
+        message: err && err.message,
+      });
+    }
+    return null;
+  });
+
 // ══════════════════════════════════════════════
 // ROAD-AWARE ROUTE PLANNING (Run11 — Mapbox supersession 2026-07-17)
 // ══════════════════════════════════════════════

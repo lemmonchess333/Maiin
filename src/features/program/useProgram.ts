@@ -2393,7 +2393,7 @@ export function useProgram() {
       // so a returning lifter's numbers cannot go backwards while they find
       // their feet and a miss cannot be read as a stall. Deliberately NOT
       // done by flipping `settings.autoProgression` — that is a switch the
-      // user owns in Programme settings, and a block must not silently move
+      // user owns in Lift plan settings, and a block must not silently move
       // someone's setting. Unlike the autoProgression:false branch below,
       // this one still APPENDS to performanceHistory: the sessions happened
       // and the user should see them.

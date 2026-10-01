@@ -1,38 +1,42 @@
 /**
- * Pgm4 — Unified Programme Settings editor.
+ * Pgm4 — the programme's settings, in two views.
  *
- * The single, FREE, scrollable destination for editing an existing
- * programme. Replaces three overlapping surfaces:
- *   - the onboarding-RETAKE (the "50%-cut-off onboarding"),
- *   - the 6-step Pro-gated ConfigurePlanModal wizard, and
- *   - the lighter ProgramSettingsPanel bottom-sheet.
- *
+ * Pgm4 made this the single, FREE destination for editing an existing
+ * programme, replacing the onboarding-RETAKE, the 6-step Pro-gated
+ * ConfigurePlanModal wizard and the ProgramSettingsPanel sheet.
  * Reference-app audit (Pgm4 lock): Fitbod / Hevy / MacroFactor / Garmin /
  * Nike Run Club / Strava all edit goals/plan/equipment via grouped SETTINGS
  * fields with the plan re-deriving — none re-run onboarding, none use a
- * separate wizard, none gate basic plan-editing behind a paywall. This
- * screen matches that pattern.
+ * separate wizard, none gate basic plan-editing behind a paywall.
  *
- * Save model:
+ * Two views (`variant`), one editor (owner, 2026-10-01):
+ *   - "lift" — Settings → Lift plan, and Train's links: the lifting
+ *     editor.
+ *   - "overview" — Settings → Programme: the saved setup, where each part
+ *     is set, and the reset. It edits nothing itself. Before, Programme
+ *     repeated every lifting field, so one setting could be changed from
+ *     two pages.
+ *
+ * Save model (the lift editor):
  *   - The two engine toggles (auto-progression, microloading) live-save via
  *     `updateSettings` — no rebuild.
- *   - Every plan-shaping field (focus, nutrition phase, experience, lift
- *     days, split, equipment, injuries, run mode/days, race goal) is a DRAFT.
- *     A single "Save changes" action runs `buildPlan` then the `configurePlan`
- *     CF with `preserveHistory: true` (week number / weekHistory / fatigue
- *     survive — only the lift workouts + run plan regenerate), gated behind a
- *     single confirmation. This is the ConfigurePlanModal save path, now with
- *     equipment + injuries sourced from the form instead of threaded
- *     read-only — the capability gap the retake was poorly serving.
- *   - "Reset programme" calls the destructive `regenerateProgram` (Week 1 +
- *     cleared weekHistory), behind its own confirmation.
+ *   - Every plan-shaping field (focus, experience, lift days, equipment,
+ *     injuries) is a DRAFT. A single "Save changes" action runs `buildPlan`
+ *     then the `configurePlan` CF with `preserveHistory: true` (week number
+ *     / weekHistory / fatigue survive — only the lift workouts + run plan
+ *     regenerate), gated behind a single confirmation. The nutrition phase
+ *     and the run plan are threaded through unchanged; Nutrition and Run
+ *     plan own them.
+ *   - "Reset programme" (the overview) calls the destructive
+ *     `regenerateProgram` (Week 1 + cleared weekHistory), behind its own
+ *     confirmation.
  *
  * NOT here (Pgm4 lock): identity edits (name/gender/age/body metrics/units)
  * stay in Settings → Profile / Units. The day-by-day weekly layout stays in
- * ScheduleLayoutSheet — this screen links to it.
+ * ScheduleLayoutSheet — both views link to it.
  */
 import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Target,
@@ -48,7 +52,9 @@ import {
   BicepsFlexed,
   Flame,
   Heart,
-  ChevronRight,
+  Layers,
+  Route,
+  CalendarDays,
 } from "lucide-react";
 import { toast } from "@/lib/toast";
 import { httpsCallable } from "firebase/functions";
@@ -84,6 +90,7 @@ import { localDateString } from "@/lib/dateHelpers";
 import ProgrammeSettingsGroup from "./ProgrammeSettingsGroup";
 import CurrentProgrammeSummary from "./CurrentProgrammeSummary";
 import PendingChangesSummary from "./PendingChangesSummary";
+import { SettingsGroup, SettingsRow } from "@/components/settings/SettingsList";
 import type {
   PrimaryGoal,
   Goal,
@@ -122,19 +129,20 @@ interface ProgrammeSettingsProps {
   /** Optional hook so the host can refresh after a save. */
   onSaved?: () => void;
   /**
-   * Which slice of the programme this instance edits (Section-Split, 2026-07).
-   *   - "full" (default): the whole programme — goal, nutrition, experience,
-   *     lifting, running, equipment, injuries, engine toggles, reset. This is
-   *     the Settings → "Edit programme" destination (onboarding parity).
-   *   - "lift": ONLY the lifting-shaping controls — training focus, experience,
-   *     lift days + split, equipment, injuries, engine toggles. The nutrition
-   *     block, the Running block and the whole-programme reset are hidden.
-   *     Their DRAFT state still initialises from the profile and is threaded
-   *     unchanged through the save, so committing a lift edit preserves the
-   *     user's nutrition phase and run plan untouched. Running has its own
-   *     focused editor (RunPlanSettings) — this is its lifting counterpart.
+   * Which view of the programme this instance renders.
+   *   - "lift" (default): the lifting editor — training focus, experience,
+   *     lift days + split, weekly layout, equipment, injuries, engine
+   *     toggles. Its nutrition and run DRAFT state still initialises from
+   *     the profile and is threaded unchanged through the save, so a lift
+   *     edit preserves the nutrition phase and the run plan untouched.
+   *   - "overview": the Programme page (owner, 2026-10-01). The saved
+   *     setup, then where each part is set — Lift plan, Run plan,
+   *     Nutrition phase, Weekly layout — and the whole-programme reset.
+   *     It edits nothing itself. It replaced a "full" view that repeated
+   *     every lifting field, so the same setting could be changed from
+   *     two pages.
    */
-  variant?: "full" | "lift";
+  variant?: "overview" | "lift";
   /**
    * Blk1 (5): initialises the training-focus DRAFT (mount only) so the
    * block-creation hand-off lands on a prefilled form. The saved profile
@@ -407,11 +415,11 @@ export default function ProgrammeSettings({
   refreshProfile,
   onOpenWeeklyLayout,
   onSaved,
-  variant = "full",
+  variant = "lift",
   prefillGoal,
   activeBlockFocus,
 }: ProgrammeSettingsProps) {
-  const liftOnly = variant === "lift";
+  const navigate = useNavigate();
   // ── Persisted values (also the dirty-check baseline) ──────────────
   const saved = useMemo(
     () => ({
@@ -725,14 +733,206 @@ export default function ProgrammeSettings({
     toast.success("Programme reset");
   }
 
+  /* ── Confirmation modal (rebuild on Lift plan, reset on the overview) ── */
+  const confirmModal = (
+    <AnimatePresence>
+      {(confirmRebuild || confirmReset) && (
+        <>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => {
+              setConfirmRebuild(false);
+              setConfirmReset(false);
+            }}
+            className="fixed inset-0 bg-black/60 z-[60]"
+          />
+          <motion.div
+            role="alertdialog"
+            aria-modal="true"
+            initial={{ opacity: 0, scale: 0.96 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.96 }}
+            transition={{ duration: 0.15 }}
+            className="fixed inset-x-4 top-1/2 -translate-y-1/2 z-[61] bg-card rounded-2xl p-4 space-y-3 max-w-sm mx-auto shadow-xl"
+          >
+            <div className="flex items-start gap-3">
+              <div
+                className="size-9 rounded-xl flex items-center justify-center shrink-0"
+                style={{ backgroundColor: `${THEME.amber}1F` }}
+              >
+                <AlertTriangle
+                  className="size-4"
+                  style={{ color: THEME.amber }}
+                />
+              </div>
+              <div className="min-w-0">
+                <h3 className="text-sm font-semibold text-foreground">
+                  {confirmReset ? "Reset programme?" : "Save changes?"}
+                </h3>
+                <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                  {confirmReset
+                    ? "This rebuilds your programme from scratch with your current settings. You start again at Week 1 and past week summaries clear. Your logged workouts and runs stay in History."
+                    : focusChangedSameFrequency
+                      ? `New focus: ${labelFor(FOCUS_OPTIONS, primaryGoal)}. Update your sessions to re-aim working sets at ${focusRepSummary(primaryGoal)} reps — weights adjust down where a target rises, and your exercises, sets, history and week number stay. Or keep your current sessions and change the focus only.`
+                      : programmePreservationNote({
+                          liftDaysChanged,
+                          weekNumber: programState?.weekNumber,
+                        })}
+                </p>
+              </div>
+            </div>
+
+            {/* What's changing — recap of the touched fields (rebuild only). */}
+            {!confirmReset && changes.length > 0 && (
+              <div className="rounded-xl bg-muted/60 px-3 py-2.5">
+                <BaseSectionLabel className="mb-1.5 text-foreground">
+                  Changes
+                </BaseSectionLabel>
+                <ul className="space-y-1 max-h-44 overflow-y-auto">
+                  {changes.map((c) => (
+                    <li
+                      key={c.label}
+                      className="flex items-baseline justify-between gap-2 text-xs"
+                    >
+                      <span className="text-muted-foreground shrink-0">
+                        {c.label}
+                      </span>
+                      <span className="min-w-0 text-right font-medium text-foreground">
+                        <span className="text-muted-foreground">{c.from}</span>
+                        <span className="mx-1 text-muted-foreground">→</span>
+                        {c.to}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {!confirmReset && focusChangedSameFrequency ? (
+              /* LIFT-EV-06: the keep-or-represcribe choice. Two explicit
+                 saves — neither outcome is the silent default. */
+              <div className="space-y-2 pt-1">
+                <Button fullWidth onClick={() => void applyRebuild(true)}>
+                  Save and update sessions
+                </Button>
+                <Button
+                  variant="secondary"
+                  fullWidth
+                  onClick={() => void applyRebuild(false)}
+                >
+                  Save, keep current sessions
+                </Button>
+                <Button
+                  variant="ghost"
+                  fullWidth
+                  onClick={() => {
+                    setConfirmRebuild(false);
+                    setConfirmReset(false);
+                  }}
+                >
+                  Cancel
+                </Button>
+              </div>
+            ) : (
+              <div className="flex gap-2 pt-1">
+                <Button
+                  variant="secondary"
+                  className="flex-1"
+                  onClick={() => {
+                    setConfirmRebuild(false);
+                    setConfirmReset(false);
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant={confirmReset ? "destructive" : "primary"}
+                  className="flex-1"
+                  onClick={
+                    confirmReset ? applyReset : () => void applyRebuild(false)
+                  }
+                >
+                  {confirmReset ? "Reset" : "Save"}
+                </Button>
+              </div>
+            )}
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
+  );
+
+  if (variant === "overview") {
+    const runLabel =
+      saved.runMode === "race_prep"
+        ? `Race prep · ${RACE_DISTANCE_LABELS[saved.raceDistance] ?? saved.raceDistance}`
+        : "Freeform running";
+    const layout: [number, string][] = [
+      [weekLiftDays, "lift"],
+      [weekRunDays, "run"],
+      [weekDoubleDays, "double"],
+      [weekRestDays, "rest"],
+    ];
+    const layoutValue = layout
+      .filter(([n], i) => i === 0 || n > 0)
+      .map(([n, word], i) => (
+        <span key={word}>
+          {i > 0 && " · "}
+          <span className="font-mono tabular-nums">{n}</span> {word}
+        </span>
+      ));
+    return (
+      <div className="space-y-4">
+        <CurrentProgrammeSummary lines={currentSetupLines} />
+        <SettingsGroup>
+          <SettingsRow
+            icon={Layers}
+            iconClassName="text-lifting"
+            label="Lift plan"
+            description="Goal, days, equipment, injuries"
+            onClick={() => navigate("/settings/lift-plan")}
+          />
+          <SettingsRow
+            icon={Route}
+            iconClassName="text-running"
+            label="Run plan"
+            description={runLabel}
+            onClick={() => navigate("/settings/run-plan")}
+          />
+          {/* Derived from goal weight against current weight; set in
+              Nutrition, never here (goalWeightPlan). */}
+          <SettingsRow
+            icon={Apple}
+            iconClassName="text-nutrition"
+            label="Nutrition phase"
+            description="Set by your goal weight"
+            value={labelFor(NUTRITION_OPTIONS, saved.nutritionPhase)}
+            onClick={() => navigate("/settings/nutrition")}
+          />
+          <SettingsRow
+            icon={CalendarDays}
+            label="Weekly layout"
+            value={layoutValue}
+            onClick={onOpenWeeklyLayout}
+          />
+        </SettingsGroup>
+        <div className="pt-4">
+          <SettingsGroup footer="Rebuilds your programme from Week 1. Past week summaries clear; logged workouts and runs stay in History.">
+            <SettingsRow
+              tone="destructive"
+              label="Reset programme"
+              onClick={() => setConfirmReset(true)}
+            />
+          </SettingsGroup>
+        </div>
+        {confirmModal}
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6 pb-6">
-      {/* ── Current setup anchor (read-only summary of the saved plan) ──
-          Hidden in the lift-only view: it summarises nutrition + running
-          too, which would reintroduce the "everything" feel this focused
-          screen exists to avoid. */}
-      {!liftOnly && <CurrentProgrammeSummary lines={currentSetupLines} />}
-
       {/* ── Group 1: Goal — "What are we optimizing for?" ── */}
       <ProgrammeSettingsGroup
         title="Goal"
@@ -774,38 +974,6 @@ export default function ProgrammeSettings({
             </div>
           )}
         </div>
-
-        {/* Nutrition phase — READ-ONLY derived display. Direction is owned
-            by goal weight vs current (the locked goalWeightPlan model), set
-            in /settings/nutrition. Showing it here as a picker let it drift
-            from goal weight; now it's a calm summary that links out to the
-            one place that sets it. Hidden in the lift-only view. */}
-        {!liftOnly && (
-          <div>
-            <GroupHeading>Nutrition phase</GroupHeading>
-            <Link
-              to="/settings/nutrition"
-              className="flex items-center gap-3 rounded-2xl border border-border/70 bg-card px-3.5 py-3 shadow-sm transition-all active:scale-[0.98]"
-            >
-              <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-muted/50">
-                <Apple size={18} style={{ color: THEME.semantic.nutrition }} />
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="block text-body font-bold leading-tight">
-                  {NUTRITION_OPTIONS.find((o) => o.id === nutritionPhase)
-                    ?.label ?? "Recomp"}
-                </span>
-                <span className="mt-0.5 block text-xs leading-snug text-muted-foreground">
-                  Set by your goal weight — tap to adjust in Nutrition
-                </span>
-              </span>
-              <ChevronRight
-                className="size-4 shrink-0 text-muted-foreground"
-                aria-hidden="true"
-              />
-            </Link>
-          </div>
-        )}
 
         <div>
           <GroupHeading>Experience</GroupHeading>
@@ -871,44 +1039,6 @@ export default function ProgrammeSettings({
             </p>
           </div>
         </div>
-
-        {/* ── Running — READ-ONLY summary (D14 dedupe). Run-plan fields
-            (mode, race goal, run days, Pgm6 tuning) are edited in ONE
-            place: the focused /settings/run-plan editor, whose run-only
-            writers never trigger this editor's full-programme rebuild.
-            Editing them here too gave the same fields two different save
-            models (rebuild vs run-only patch) — the same two-editors-
-            drift failure the Nutrition phase card above solved the same
-            way. Hidden in the lift-only view. */}
-        {!liftOnly && (
-          <div>
-            <GroupHeading>Running</GroupHeading>
-            <Link
-              to="/settings/run-plan"
-              className="flex items-center gap-3 rounded-2xl border border-border/70 bg-card px-3.5 py-3 shadow-sm transition-all active:scale-[0.98]"
-            >
-              <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-muted/50">
-                <Footprints size={18} className="text-running" />
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="block text-body font-bold leading-tight">
-                  {saved.runMode === "race_prep"
-                    ? `Race prep · ${RACE_DISTANCE_LABELS[saved.raceDistance] ?? saved.raceDistance}`
-                    : "Freeform running"}
-                </span>
-                <span className="mt-0.5 block text-xs leading-snug text-muted-foreground">
-                  {saved.runMode === "race_prep"
-                    ? `${saved.weeklyRunDays} run ${saved.weeklyRunDays === 1 ? "day" : "days"}/week · tap to edit in Run plan`
-                    : "Run whenever you like · tap to set a race goal"}
-                </span>
-              </span>
-              <ChevronRight
-                className="size-4 shrink-0 text-muted-foreground"
-                aria-hidden="true"
-              />
-            </Link>
-          </div>
-        )}
 
         {/* P2: weekly-layout preview — counts derived from the draft lift/run
           days; opens the existing day-by-day editor (ScheduleLayoutSheet). */}
@@ -1043,25 +1173,6 @@ export default function ProgrammeSettings({
         </div>
       </ProgrammeSettingsGroup>
 
-      {/* ── Group 5: Danger zone (destructive reset, separated from tuning) ──
-          Whole-programme reset — hidden in the lift-only view (it resets
-          running + nutrition too, so it belongs to the full editor). */}
-      {!liftOnly && (
-        <ProgrammeSettingsGroup
-          title="Danger zone"
-          tone="danger"
-          subtitle="Resetting rebuilds your programme from scratch. You'll start at Week 1, and past week summaries clear. Logged workouts and runs stay in History."
-        >
-          <Button
-            variant="destructive-tinted"
-            fullWidth
-            onClick={() => setConfirmReset(true)}
-          >
-            Reset programme
-          </Button>
-        </ProgrammeSettingsGroup>
-      )}
-
       {/* ── Sticky save bar ── */}
       {(dirty || saving) && (
         <div
@@ -1088,134 +1199,7 @@ export default function ProgrammeSettings({
         </div>
       )}
 
-      {/* ── Confirmation modals ── */}
-      <AnimatePresence>
-        {(confirmRebuild || confirmReset) && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => {
-                setConfirmRebuild(false);
-                setConfirmReset(false);
-              }}
-              className="fixed inset-0 bg-black/60 z-[60]"
-            />
-            <motion.div
-              role="alertdialog"
-              aria-modal="true"
-              initial={{ opacity: 0, scale: 0.96 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.96 }}
-              transition={{ duration: 0.15 }}
-              className="fixed inset-x-4 top-1/2 -translate-y-1/2 z-[61] bg-card rounded-2xl p-4 space-y-3 max-w-sm mx-auto shadow-xl"
-            >
-              <div className="flex items-start gap-3">
-                <div
-                  className="size-9 rounded-xl flex items-center justify-center shrink-0"
-                  style={{ backgroundColor: `${THEME.amber}1F` }}
-                >
-                  <AlertTriangle
-                    className="size-4"
-                    style={{ color: THEME.amber }}
-                  />
-                </div>
-                <div className="min-w-0">
-                  <h3 className="text-sm font-semibold text-foreground">
-                    {confirmReset ? "Reset programme?" : "Save changes?"}
-                  </h3>
-                  <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-                    {confirmReset
-                      ? "We'll rebuild your programme from scratch with your current settings. You'll start fresh at Week 1, and past week summaries clear. Your logged workouts and runs stay in History."
-                      : focusChangedSameFrequency
-                        ? `New focus: ${labelFor(FOCUS_OPTIONS, primaryGoal)}. Update your sessions to re-aim working sets at ${focusRepSummary(primaryGoal)} reps — weights adjust down where a target rises, and your exercises, sets, history and week number stay. Or keep your current sessions and change the focus only.`
-                        : programmePreservationNote({
-                            liftDaysChanged,
-                            weekNumber: programState?.weekNumber,
-                          })}
-                  </p>
-                </div>
-              </div>
-
-              {/* What's changing — recap of the touched fields (rebuild only). */}
-              {!confirmReset && changes.length > 0 && (
-                <div className="rounded-xl bg-muted/60 px-3 py-2.5">
-                  <BaseSectionLabel className="mb-1.5 text-foreground">
-                    Changes
-                  </BaseSectionLabel>
-                  <ul className="space-y-1 max-h-44 overflow-y-auto">
-                    {changes.map((c) => (
-                      <li
-                        key={c.label}
-                        className="flex items-baseline justify-between gap-2 text-xs"
-                      >
-                        <span className="text-muted-foreground shrink-0">
-                          {c.label}
-                        </span>
-                        <span className="min-w-0 text-right font-medium text-foreground">
-                          <span className="text-muted-foreground">
-                            {c.from}
-                          </span>
-                          <span className="mx-1 text-muted-foreground">→</span>
-                          {c.to}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-              {!confirmReset && focusChangedSameFrequency ? (
-                /* LIFT-EV-06: the keep-or-represcribe choice. Two explicit
-                   saves — neither outcome is the silent default. */
-                <div className="space-y-2 pt-1">
-                  <Button fullWidth onClick={() => void applyRebuild(true)}>
-                    Save and update sessions
-                  </Button>
-                  <Button
-                    variant="secondary"
-                    fullWidth
-                    onClick={() => void applyRebuild(false)}
-                  >
-                    Save, keep current sessions
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    fullWidth
-                    onClick={() => {
-                      setConfirmRebuild(false);
-                      setConfirmReset(false);
-                    }}
-                  >
-                    Cancel
-                  </Button>
-                </div>
-              ) : (
-                <div className="flex gap-2 pt-1">
-                  <Button
-                    variant="secondary"
-                    className="flex-1"
-                    onClick={() => {
-                      setConfirmRebuild(false);
-                      setConfirmReset(false);
-                    }}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    className="flex-1"
-                    onClick={
-                      confirmReset ? applyReset : () => void applyRebuild(false)
-                    }
-                  >
-                    {confirmReset ? "Reset" : "Save"}
-                  </Button>
-                </div>
-              )}
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
+      {confirmModal}
     </div>
   );
 }

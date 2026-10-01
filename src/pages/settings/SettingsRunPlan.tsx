@@ -4,9 +4,9 @@
  * The focused destination for the run-tab's "Edit run plan" / race-cockpit
  * "Edit" / "Set a race goal" entries. Renders RunPlanSettings (running only —
  * mode, race goal + runway, run days) so editing the run plan no longer drops
- * the user into the full onboarding-style ProgrammeSettings editor. The full
- * editor stays reachable via the in-page "Full programme settings" link and
- * from Settings.
+ * the user into the full onboarding-style ProgrammeSettings editor. The
+ * Programme page (the setup and the reset) stays one tap away through the
+ * in-page "Programme" row.
  *
  * Run13 (RUN-02): also hosts the second entry to the proactive
  * Adjust-this-week sheet — race-prep users with a live (non-recovery,

@@ -7,7 +7,9 @@
  * dedicated sub-page through `SettingsSection`.
  *
  * Grouped because Set1 grouped it: fifteen identical rows in one card was
- * drift, and it read as a list to search rather than a place to look.
+ * drift, and it read as a list to search rather than a place to look. Lift
+ * plan and Run plan are not rows here: Programme opens on where each part
+ * is set, and Train opens each editor directly.
  * Recently deleted meals and the exports moved into one "Your data" page,
  * the Data & Storage section Set1 and Home2/Food6 put them in.
  */
@@ -16,8 +18,6 @@ import { motion } from "framer-motion";
 import {
   ChevronRight,
   Target,
-  Layers,
-  Route,
   Apple,
   Dumbbell,
   Palette,
@@ -70,25 +70,9 @@ const GROUPS: SectionGroup[] = [
       {
         slug: "training",
         label: "Programme",
-        description: "Goal, nutrition phase, reset",
+        description: "Lift plan, run plan, reset",
         icon: Target,
         tint: "text-lifting",
-        migrated: true,
-      },
-      {
-        slug: "lift-plan",
-        label: "Lift plan",
-        description: "Focus, lift days, equipment",
-        icon: Layers,
-        tint: "text-lifting",
-        migrated: true,
-      },
-      {
-        slug: "run-plan",
-        label: "Run plan",
-        description: "Race goal, run days, zones",
-        icon: Route,
-        tint: "text-running",
         migrated: true,
       },
       {
@@ -121,7 +105,7 @@ const GROUPS: SectionGroup[] = [
       {
         slug: "notifications",
         label: "Notifications",
-        description: "Reminders and push",
+        description: "Reminders, push, activity",
         icon: Bell,
         migrated: true,
       },
@@ -189,11 +173,16 @@ export default function SettingsIndex() {
   const { isInTrial, trialDaysLeft, tier } = useSubscription();
 
   const plan =
-    tier === "pro"
-      ? "Pro"
-      : isInTrial
-        ? `Trial · ${trialDaysLeft} ${trialDaysLeft === 1 ? "day" : "days"} left`
-        : "Free";
+    tier === "pro" ? (
+      "Pro"
+    ) : isInTrial ? (
+      <>
+        Trial · <span className="font-mono tabular-nums">{trialDaysLeft}</span>{" "}
+        {trialDaysLeft === 1 ? "day" : "days"} left
+      </>
+    ) : (
+      "Free"
+    );
 
   return (
     <PageShell title="Settings" banner={<SettingsOfflineBanner />}>

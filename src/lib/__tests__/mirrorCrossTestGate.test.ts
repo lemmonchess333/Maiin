@@ -145,6 +145,10 @@ const PINNED: Record<string, string> = {
   // env vars, so the test drives both from one string and compares the
   // parse + membership semantics that were hand-written twice.
   "functions/adminAuth.js": "src/lib/__tests__/adminAuthMirror.cross.test.ts",
+  // Activity notification switches (S3). The server decides what is sent;
+  // the client's copy decides what Settings shows each switch as. Both run.
+  "functions/lib/notificationPreferences.js":
+    "src/lib/__tests__/notificationPreferences.cross.test.ts",
   "functions/lib/validatePlanPayload.js":
     "src/features/program/__tests__/validatePlanPayload.cross.test.ts",
   "functions/lib/challengeTiers.js":
