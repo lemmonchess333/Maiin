@@ -110,6 +110,8 @@ export default function SettingsRecentlyDeleted() {
     <SettingsSection
       title="Recently deleted meals"
       subtitle="Restore meals you deleted in the last 24 hours."
+      backTo="/settings/data"
+      backLabel="Your data"
     >
       {loading && sorted.length === 0 ? (
         <p className="text-sm text-muted-foreground">Loading…</p>

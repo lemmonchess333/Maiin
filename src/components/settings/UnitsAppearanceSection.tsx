@@ -1,13 +1,8 @@
-import {
-  Palette,
-  Weight,
-  Ruler,
-  Moon,
-  Sun,
-  EyeOff,
-  Footprints,
-} from "lucide-react";
+import { Palette, Weight, Ruler, Moon, EyeOff, Footprints } from "lucide-react";
 import AccordionSection from "@/components/AccordionSection";
+import { SegmentedControl } from "@/components/ui/SegmentedControl";
+import { Toggle } from "@/components/ui/Toggle";
+import { SettingsGroup, SettingsRow } from "@/components/settings/SettingsList";
 import { track as trackSettingsEvent } from "@/lib/settingsAnalytics";
 import { haptic } from "@/lib/haptic";
 import type { UserProfile } from "@/lib/auth";
@@ -26,6 +21,11 @@ interface UnitsAppearanceSectionProps {
   inline?: boolean;
 }
 
+/* Every choice here is one of two, so each is a two-way switch that shows
+   both options. They were rows whose value in capitals ("KG", "OFF")
+   flipped when the row was tapped, with nothing to say it would. */
+const CONTROL = "w-[124px] shrink-0";
+
 export default function UnitsAppearanceSection({
   profile,
   toggleUnit,
@@ -33,154 +33,150 @@ export default function UnitsAppearanceSection({
   toggleHideWeightNumber,
   inline = false,
 }: UnitsAppearanceSectionProps) {
+  const theme = profile.darkMode ? "dark" : "light";
   return (
     <AccordionSection
       inline={inline}
       icon={<Palette className="size-5 text-primary" />}
       title="Units & appearance"
-      subtitle="Weight, distance, height, dark mode"
+      subtitle="Weight, distance, height, theme"
     >
-      <div className="space-y-2">
-        <button
-          type="button"
-          onClick={() => {
-            haptic("light");
-            // The current value flips on the next render; we capture
-            // the value BEFORE the flip so the telemetry reads as
-            // "user picked this state" rather than "user was on this
-            // state". toggleUnit() handles the actual flip + persist.
-            const next = profile.preferredWeightUnit === "kg" ? "lbs" : "kg";
-            trackSettingsEvent("settings_toggle_changed", {
-              toggle: "weight_unit",
-              value: next,
-            });
-            toggleUnit("preferredWeightUnit", profile.preferredWeightUnit);
-          }}
-          className="w-full flex items-center justify-between p-4 rounded-xl bg-card border border-border/60 hover:bg-muted/40 active:scale-[0.97] transition-all"
-        >
-          <div className="flex items-center gap-3">
-            <Weight className="size-5" />
-            <div className="text-left">
-              <span>Body weight unit</span>
-              <p className="text-xs text-muted-foreground">
-                Weigh-ins, goal weight and weekly pace. Lifting loads use kg.
-              </p>
-            </div>
-          </div>
-          <span className="font-medium">
-            {profile.preferredWeightUnit.toUpperCase()}
-          </span>
-        </button>
+      <div className="space-y-4">
+        <SettingsGroup title="Units" footer="Lifting loads are always in kg.">
+          <SettingsRow
+            icon={Weight}
+            label="Body weight"
+            description="Weigh-ins and goal weight"
+            trailing={
+              <SegmentedControl
+                className={CONTROL}
+                ariaLabel="Body weight unit"
+                options={[
+                  { value: "kg", label: "kg" },
+                  { value: "lbs", label: "lb" },
+                ]}
+                value={profile.preferredWeightUnit}
+                onChange={(next) => {
+                  if (next === profile.preferredWeightUnit) return;
+                  haptic("light");
+                  trackSettingsEvent("settings_toggle_changed", {
+                    toggle: "weight_unit",
+                    value: next,
+                  });
+                  toggleUnit(
+                    "preferredWeightUnit",
+                    profile.preferredWeightUnit
+                  );
+                }}
+              />
+            }
+          />
+          <SettingsRow
+            icon={Footprints}
+            label="Distance & pace"
+            description="Runs, splits and spoken cues"
+            trailing={
+              <SegmentedControl
+                className={CONTROL}
+                ariaLabel="Distance unit"
+                options={[
+                  { value: "km", label: "km" },
+                  { value: "mi", label: "mi" },
+                ]}
+                value={profile.preferredDistanceUnit}
+                onChange={(next) => {
+                  if (next === profile.preferredDistanceUnit) return;
+                  haptic("light");
+                  trackSettingsEvent("settings_toggle_changed", {
+                    toggle: "run_distance_unit",
+                    value: next,
+                  });
+                  toggleUnit(
+                    "preferredDistanceUnit",
+                    profile.preferredDistanceUnit
+                  );
+                }}
+              />
+            }
+          />
+          <SettingsRow
+            icon={Ruler}
+            label="Height"
+            trailing={
+              <SegmentedControl
+                className={CONTROL}
+                ariaLabel="Height unit"
+                options={[
+                  { value: "cm", label: "cm" },
+                  { value: "ft", label: "ft" },
+                ]}
+                value={profile.preferredHeightUnit}
+                onChange={(next) => {
+                  if (next === profile.preferredHeightUnit) return;
+                  haptic("light");
+                  trackSettingsEvent("settings_toggle_changed", {
+                    toggle: "height_unit",
+                    value: next,
+                  });
+                  toggleUnit(
+                    "preferredHeightUnit",
+                    profile.preferredHeightUnit
+                  );
+                }}
+              />
+            }
+          />
+        </SettingsGroup>
 
-        <button
-          type="button"
-          onClick={() => {
-            haptic("light");
-            const next = profile.preferredDistanceUnit === "km" ? "mi" : "km";
-            trackSettingsEvent("settings_toggle_changed", {
-              toggle: "run_distance_unit",
-              value: next,
-            });
-            toggleUnit("preferredDistanceUnit", profile.preferredDistanceUnit);
-          }}
-          className="w-full flex items-center justify-between p-4 rounded-xl bg-card border border-border/60 hover:bg-muted/40 active:scale-[0.97] transition-all"
-        >
-          <div className="flex items-center gap-3">
-            <Footprints className="size-5" />
-            <div className="text-left">
-              <span>Distance & pace</span>
-              <p className="text-xs text-muted-foreground">
-                Runs, splits, elevation and spoken cues
-              </p>
-            </div>
-          </div>
-          <span className="font-medium">
-            {profile.preferredDistanceUnit === "mi" ? "MILES" : "KM"}
-          </span>
-        </button>
-
-        {/* #984 "Hide the number" anti-anxiety mode. Hides the raw
-            body-weight figure app-wide (home tile + Progress trend
-            chart) and shows direction/trend + goal progress instead.
-            OFF by default — calm framing for users who don't want to
-            fixate on a daily figure. */}
-        <button
-          type="button"
-          onClick={() => {
-            haptic("light");
-            // Capture the value BEFORE the flip so telemetry reads as
-            // "user picked this state". toggleHideWeightNumber()
-            // handles the actual flip + persist.
-            trackSettingsEvent("settings_toggle_changed", {
-              toggle: "hide_weight_number",
-              value: profile.hideWeightNumber ? "off" : "on",
-            });
-            toggleHideWeightNumber();
-          }}
-          className="w-full flex items-center justify-between p-4 rounded-xl bg-card border border-border/60 hover:bg-muted/40 active:scale-[0.97] transition-all"
-        >
-          <div className="flex items-center gap-3">
-            <EyeOff className="size-5" />
-            <div className="text-left">
-              <span>Hide weight number</span>
-              <p className="text-xs text-muted-foreground">
-                Show your trend, not the figure
-              </p>
-            </div>
-          </div>
-          <span className="font-medium">
-            {profile.hideWeightNumber ? "ON" : "OFF"}
-          </span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => {
-            haptic("light");
-            const next = profile.preferredHeightUnit === "cm" ? "ft" : "cm";
-            /* Reported itself as "distance_unit" from the day it was
-               written — height is not a distance, and that name now
-               belongs to one, so the two would have been indistinguishable
-               in the same telemetry stream. */
-            trackSettingsEvent("settings_toggle_changed", {
-              toggle: "height_unit",
-              value: next,
-            });
-            toggleUnit("preferredHeightUnit", profile.preferredHeightUnit);
-          }}
-          className="w-full flex items-center justify-between p-4 rounded-xl bg-card border border-border/60 hover:bg-muted/40 active:scale-[0.97] transition-all"
-        >
-          <div className="flex items-center gap-3">
-            <Ruler className="size-5" />
-            <span>Height unit</span>
-          </div>
-          <span className="font-medium">
-            {profile.preferredHeightUnit.toUpperCase()}
-          </span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => {
-            haptic("light");
-            trackSettingsEvent("settings_toggle_changed", {
-              toggle: "theme",
-              value: profile.darkMode ? "light" : "dark",
-            });
-            toggleDark();
-          }}
-          className="w-full flex items-center justify-between p-4 rounded-xl bg-card border border-border/60 hover:bg-muted/40 active:scale-[0.97] transition-all"
-        >
-          <div className="flex items-center gap-3">
-            {profile.darkMode ? (
-              <Moon className="size-5" />
-            ) : (
-              <Sun className="size-5" />
-            )}
-            <span>Dark mode</span>
-          </div>
-          <span className="font-medium">{profile.darkMode ? "ON" : "OFF"}</span>
-        </button>
+        <SettingsGroup title="Appearance">
+          <SettingsRow
+            icon={Moon}
+            label="Theme"
+            trailing={
+              <SegmentedControl
+                className={CONTROL}
+                ariaLabel="Theme"
+                options={[
+                  { value: "dark", label: "Dark" },
+                  { value: "light", label: "Light" },
+                ]}
+                value={theme}
+                onChange={(next) => {
+                  if (next === theme) return;
+                  haptic("light");
+                  trackSettingsEvent("settings_toggle_changed", {
+                    toggle: "theme",
+                    value: next,
+                  });
+                  toggleDark();
+                }}
+              />
+            }
+          />
+          {/* #984 "Hide the number" anti-anxiety mode. Hides the raw
+              body-weight figure app-wide (home tile + Progress trend
+              chart) and shows direction/trend + goal progress instead.
+              OFF by default. */}
+          <SettingsRow
+            icon={EyeOff}
+            label="Hide weight number"
+            description="Show your trend, not the figure"
+            trailing={
+              <Toggle
+                label="Hide weight number"
+                checked={!!profile.hideWeightNumber}
+                onChange={() => {
+                  haptic("light");
+                  trackSettingsEvent("settings_toggle_changed", {
+                    toggle: "hide_weight_number",
+                    value: profile.hideWeightNumber ? "off" : "on",
+                  });
+                  toggleHideWeightNumber();
+                }}
+              />
+            }
+          />
+        </SettingsGroup>
       </div>
     </AccordionSection>
   );

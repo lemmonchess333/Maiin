@@ -95,7 +95,7 @@ export default function ShareDefaultsRow({
   };
 
   return (
-    <div className="p-4 rounded-lg bg-muted space-y-3">
+    <div className="p-4 rounded-2xl bg-card space-y-4">
       <div className="flex items-center gap-2">
         <MessageSquare className="size-4 text-primary" />
         <div>
@@ -109,7 +109,7 @@ export default function ShareDefaultsRow({
       {TYPES.map(({ type, noun }) => {
         const choice: Choice = savedShareDefault(shareDefaults, type) ?? "ask";
         return (
-          <div key={type} className="p-3 rounded-lg bg-card space-y-2">
+          <div key={type} className="space-y-2">
             <div>
               <p className="text-xs font-medium text-foreground">{noun}</p>
               <p className="text-xs text-muted-foreground">
@@ -121,9 +121,10 @@ export default function ShareDefaultsRow({
               value={choice}
               onChange={(next) => change(type, noun, next)}
               ariaLabel={`Default sharing for ${noun.toLowerCase()}`}
-              // Four segments don't fit one 375px row without truncating
-              // "Followers"; wrap degrades to two rows instead of clipping.
-              layout="wrap"
+              // One row of four. They wrapped ("Never" alone on a second
+              // line) while each type sat in a box of its own inside this
+              // card; without the inner box the row is 24px wider and the
+              // four fit at 375px.
             />
           </div>
         );

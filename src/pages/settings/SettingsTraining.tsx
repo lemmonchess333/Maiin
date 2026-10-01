@@ -39,14 +39,14 @@ export default function SettingsTraining() {
   if (!profile) {
     // Defensive: route guards keep unauthenticated users out of
     // /settings/*; this is the brief auth-resolution window.
-    return <SettingsSection title="Programme settings" />;
+    return <SettingsSection title="Programme" />;
   }
 
   return (
     <>
       <SettingsSection
-        title="Programme settings"
-        subtitle="Goal, nutrition, lifting, running, equipment, injuries"
+        title="Programme"
+        subtitle="Goal, lifting, running, equipment, injuries"
         section="training"
       >
         <ProgrammeSettings

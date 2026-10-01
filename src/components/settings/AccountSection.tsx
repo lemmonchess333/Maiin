@@ -2,9 +2,8 @@ import { useAccountDeletionStatus } from "@/hooks/useAccountDeletionStatus";
 import { useEffect, useReducer, useRef, useState } from "react";
 import { haptic } from "@/lib/haptic";
 import { writeString } from "@/lib/localStore";
-import { Download, LogOut, Trash2 } from "lucide-react";
-import DataExportSection from "./DataExportSection";
-import TrackSettingsSectionView from "./TrackSettingsSectionView";
+import { LogOut } from "lucide-react";
+import { SettingsGroup, SettingsRow } from "./SettingsList";
 import { toast } from "@/lib/toast";
 import { logger } from "@/lib/logger";
 import { deleteAccount } from "@/lib/accountDeletionClient";
@@ -383,69 +382,48 @@ function AccountSectionContent({
     <>
       <AccordionSection
         inline={inline}
-        icon={<Download className="size-5 text-primary" />}
-        title="Data & account"
-        subtitle="Export, sign out, delete account"
+        icon={<LogOut className="size-5 text-primary" />}
+        title="Sign out or delete"
+        subtitle="Sign out, delete account"
       >
-        {/*
-          The extracted component, not a second inline copy.
+        {/* The exports moved to the Your data page (/settings/data), the
+            Data & Storage section Set1 placed them in. */}
+        <SettingsGroup>
+          <SettingsRow
+            icon={LogOut}
+            label="Sign out"
+            chevron={false}
+            disabled={busy}
+            onClick={() => void safeSignOut()}
+          />
+        </SettingsGroup>
 
-          This block used to be ~40 lines of export buttons duplicated
-          verbatim in DataExportSection — which is why that component read
-          as an orphan: it was the EXTRACTED version, never adopted, while
-          the copy that shipped stayed here. #1923 mistook it for an
-          unwired feature and rendered it on the page as well, so the
-          Account screen showed six export rows. Caught by a screenshot,
-          not by a test: both copies work perfectly in isolation.
-
-          Pointing at the component keeps one implementation and gives it
-          the tests DataExportSection.test.tsx already has (uid binding,
-          per-button routing, failure toast, signed-out no-op) — none of
-          which covered this copy while it was the live one.
-        */}
-        <TrackSettingsSectionView section="data_storage">
-          <DataExportSection user={user} />
-        </TrackSettingsSectionView>
-
-        {/* Sign out is `outline`, Delete account is `destructive` — the
-            way round the actions actually rank. It was the reverse: Sign
-            Out wore a filled `bg-destructive` at 16px/46px and shouted
-            louder than anything else on the page, while the irreversible
-            one sat underneath it as a 42px outline a type step smaller —
-            below the 44px floor as well as below its neighbour. Signing
-            out is reversible in one tap; deleting an account is not.
-
-            Both now route through the `Button` primitive, which is where
-            the 44px floor, the focus ring and the 0.97 press live. */}
-        <Button
-          variant="outline"
-          fullWidth
-          disabled={busy}
-          onClick={safeSignOut}
-        >
-          <LogOut className="size-4" /> Sign out
-        </Button>
-
-        {/* Account Deletion (App Store Guideline 5.1.1(v)) */}
-        <Button
-          variant="destructive"
-          fullWidth
-          disabled={busy || accountDeleted}
-          onClick={() => {
-            haptic("error");
-            // P0b: route through the Apple-cancel warning when the
-            // user has an IAP-originated subscription. Apple's API
-            // doesn't expose admin cancellation; we must hand them
-            // off to the App Store before purge.
-            if (hasAppleSubscription) {
-              setShowAppleWarning(true);
-            } else {
-              openDeletion();
-            }
-          }}
-        >
-          <Trash2 className="size-4" /> Delete account
-        </Button>
+        {/* Set1: account deletion sits at the very bottom, muted-red text
+            only, with no chevron or description and a bigger gap above.
+            It had become a filled red button, the boldest thing on the
+            page; the confirm steps behind it are unchanged. (Account
+            Deletion: App Store Guideline 5.1.1(v).) */}
+        <div className="pt-6">
+          <SettingsGroup>
+            <SettingsRow
+              tone="destructive"
+              label="Delete account"
+              disabled={busy || accountDeleted}
+              onClick={() => {
+                haptic("error");
+                // P0b: route through the Apple-cancel warning when the
+                // user has an IAP-originated subscription. Apple's API
+                // doesn't expose admin cancellation; we must hand them
+                // off to the App Store before purge.
+                if (hasAppleSubscription) {
+                  setShowAppleWarning(true);
+                } else {
+                  openDeletion();
+                }
+              }}
+            />
+          </SettingsGroup>
+        </div>
       </AccordionSection>
 
       {/* P0b — Apple-subscription pre-deletion warning. Surfaces

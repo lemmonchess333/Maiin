@@ -2,6 +2,7 @@ import { useState } from "react";
 import { KeyRound, CheckCircle2, MailWarning } from "lucide-react";
 import type { User } from "firebase/auth";
 import AccordionSection from "@/components/AccordionSection";
+import { SettingsGroup, SettingsRow } from "./SettingsList";
 import { Dialog } from "@/components/ui/Dialog";
 import { Button } from "@/components/ui/Button";
 import { toast } from "@/lib/toast";
@@ -157,78 +158,75 @@ export default function SecuritySection({
         title="Sign-in & security"
         subtitle="Email, password"
       >
-        {/* Email + verification status */}
-        {user.email && (
-          <div className="rounded-xl bg-card border border-border p-3 space-y-2">
-            <div className="flex items-center justify-between gap-2">
-              <div className="min-w-0">
-                <p className="text-xs text-muted-foreground">Email</p>
-                <p className="text-sm text-foreground truncate">{user.email}</p>
-              </div>
-              {emailVerified ? (
-                <span className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-success-strong">
-                  <CheckCircle2 className="size-3.5" aria-hidden="true" />
-                  Verified
-                </span>
-              ) : (
-                <span className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-muted-foreground">
-                  <MailWarning className="size-3.5" aria-hidden="true" />
-                  Not verified
-                </span>
-              )}
+        {/* One group, the rows Set1 lists under Account & Security: the
+            address with its verification state, then the two changes. */}
+        <SettingsGroup title="Sign-in">
+          {user.email && (
+            <SettingsRow
+              label="Email"
+              description={user.email}
+              trailing={
+                emailVerified ? (
+                  <span className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-success-strong">
+                    <CheckCircle2 className="size-3.5" aria-hidden="true" />
+                    Verified
+                  </span>
+                ) : (
+                  <span className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-muted-foreground">
+                    <MailWarning className="size-3.5" aria-hidden="true" />
+                    Not verified
+                  </span>
+                )
+              }
+            />
+          )}
+          {hasPassword && (
+            <>
+              <SettingsRow
+                label="Change password"
+                onClick={() => setDialog("password")}
+              />
+              <SettingsRow
+                label="Change email"
+                onClick={() => setDialog("email")}
+              />
+            </>
+          )}
+        </SettingsGroup>
+
+        {user.email && !emailVerified && (
+          <div className="rounded-xl bg-card p-3 space-y-2">
+            <p className="text-sm text-muted-foreground">
+              {duringSetup
+                ? "Verify your email to finish setting up Tropos. You can still manage or delete your account here."
+                : "Verify your email to post or comment. You can keep logging workouts and meals, and manage or delete your account while unverified."}
+            </p>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                className="flex-1"
+                loading={sendingVerify}
+                onClick={handleResendVerification}
+              >
+                Resend email
+              </Button>
+              <Button
+                variant="ghost"
+                className="flex-1"
+                loading={checkingVerify}
+                onClick={handleVerifiedRefresh}
+              >
+                I've verified
+              </Button>
             </div>
-            {!emailVerified && (
-              <>
-                <p className="text-sm text-muted-foreground">
-                  {duringSetup
-                    ? "Verify your email to finish setting up Tropos. You can still manage or delete your account here."
-                    : "Verify your email to post or comment. You can keep logging workouts and meals, and manage or delete your account while unverified."}
-                </p>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    className="flex-1"
-                    loading={sendingVerify}
-                    onClick={handleResendVerification}
-                  >
-                    Resend email
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    className="flex-1"
-                    loading={checkingVerify}
-                    onClick={handleVerifiedRefresh}
-                  >
-                    I've verified
-                  </Button>
-                </div>
-              </>
-            )}
           </div>
         )}
 
-        {hasPassword ? (
-          <div className="space-y-2">
-            <button
-              type="button"
-              onClick={() => setDialog("password")}
-              className="w-full p-3 rounded-xl bg-card border border-border text-sm text-left hover:bg-muted transition-colors"
-            >
-              Change password
-            </button>
-            <button
-              type="button"
-              onClick={() => setDialog("email")}
-              className="w-full p-3 rounded-xl bg-card border border-border text-sm text-left hover:bg-muted transition-colors"
-            >
-              Change email
-            </button>
-          </div>
-        ) : (
+        {!hasPassword && (
           <p className="text-xs text-muted-foreground leading-relaxed px-1">
             You sign in with {provider ?? "an external provider"}. To add a
-            password, use "Forgot password" on the sign-in screen — we'll email
-            you a set-password link.
+            password, use "Forgot password" on the sign-in screen and a
+            set-password link arrives by email.
           </p>
         )}
       </AccordionSection>

@@ -57,7 +57,7 @@ export default function SettingsUnitsAppearance() {
   return (
     <SettingsSection
       title="Units & appearance"
-      subtitle="Weight, distance, height, dark mode"
+      subtitle="Weight, distance, height, theme"
       section="units_appearance"
     >
       <UnitsAppearanceSection

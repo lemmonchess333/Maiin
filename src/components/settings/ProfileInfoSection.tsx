@@ -61,20 +61,25 @@ export default function ProfileInfoSection({
       subtitle="Name, weight, height"
       defaultOpen
     >
-      <input
-        type="text"
-        aria-label="Display name"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        onBlur={async () => {
-          const prev = profile.displayName ?? "";
-          if (name === prev) return;
-          const result = await updateProfile({ displayName: name });
-          if (!result.ok) setName(prev);
-        }}
-        placeholder="Display name"
-        className="w-full min-h-11 px-4 rounded-lg bg-muted border border-border/50 text-foreground text-sm placeholder:text-muted-foreground"
-      />
+      <div>
+        <label htmlFor="profile-name" className="text-xs text-muted-foreground">
+          Name
+        </label>
+        <input
+          id="profile-name"
+          type="text"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          onBlur={async () => {
+            const prev = profile.displayName ?? "";
+            if (name === prev) return;
+            const result = await updateProfile({ displayName: name });
+            if (!result.ok) setName(prev);
+          }}
+          placeholder="Your name"
+          className="w-full mt-1 min-h-11 px-4 rounded-lg bg-muted border border-border/50 text-foreground text-sm placeholder:text-muted-foreground"
+        />
+      </div>
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label
@@ -111,7 +116,8 @@ export default function ProfileInfoSection({
             className="w-full mt-1 min-h-11 px-4 rounded-lg bg-muted border border-border/50 text-foreground text-sm"
           />
           <p className="text-xs text-muted-foreground mt-1">
-            For TDEE calc. Log daily weight from Home.
+            Sets your calorie target. Log your weight on Home to keep it
+            current.
           </p>
         </div>
         <div>
