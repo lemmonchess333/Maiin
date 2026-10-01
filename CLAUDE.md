@@ -2326,7 +2326,7 @@ Affects: `FeedView.tsx`, `Social.tsx`, `UserProfile.tsx`,
 `useUserProfileData`, `useFollowState`, `FollowButton`, `InlineFollow`,
 `PeopleToFollowRow`, `SpacesDirectory` + `RaceFilterChips`,
 `CirclesSection`, `WeeklyReview.tsx`, `useSpacesDirectory`,
-`useSuggestedPeople`.
+`useSuggestedPeople`, `CommentSheet`, `NotificationsSheet`.
 
 The feed opens on posts (the recap card, Spaces row and points card left
 the top: "Share your week" is on the weekly recap's first card, Spaces
@@ -2355,6 +2355,9 @@ shared (pinned by the "profile:" cases in `firestore.rules.test.ts`).
       filters" from no matches.
 - [ ] **Share your week** from the recap's first card exports a card with
       last week's numbers.
+- [ ] **Comments with no signal:** open a post's comments in airplane
+      mode. It says "Couldn't load comments" with Try again, never "No
+      comments yet" (which it also used to show while comments loaded).
 
 ### Backlog audit 2026-08-02 — what a skeptical pass found
 

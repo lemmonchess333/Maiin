@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { Spinner } from "@/components/ui/Spinner";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { THEME } from "@/lib/theme";
 import { haptic } from "@/lib/haptic";
 import { getTimeAgo } from "@/lib/timeAgo";
@@ -115,46 +116,25 @@ export default function NotificationsSheet({
             <Spinner />
           </div>
         ) : error ? (
-          <div className="flex flex-col items-center text-center py-10 px-6">
-            <div
-              className="size-12 rounded-2xl flex items-center justify-center mb-3"
-              style={{ backgroundColor: THEME.warning + "14" }}
-            >
-              <Bell className="size-6" style={{ color: THEME.warning }} />
-            </div>
-            <p className="text-sm font-semibold text-foreground">
-              Notifications unavailable
-            </p>
-            <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-              We couldn&apos;t load your notifications. Check your connection
-              and try again.
-            </p>
-            {onRetry && (
-              <button
-                type="button"
-                onClick={onRetry}
-                className="mt-4 min-h-[44px] px-5 rounded-xl text-sm font-semibold bg-muted text-foreground active:scale-[0.97] transition-transform"
-              >
-                Try again
-              </button>
-            )}
-          </div>
+          <EmptyState
+            compact
+            icon={Bell}
+            accent={THEME.warning}
+            headline="Notifications unavailable"
+            sub="We couldn't load your notifications. Check your connection and try again."
+            action={
+              onRetry
+                ? { label: "Try again", onClick: onRetry, variant: "secondary" }
+                : undefined
+            }
+          />
         ) : items.length === 0 ? (
-          <div className="flex flex-col items-center text-center py-10 px-6">
-            <div
-              className="size-12 rounded-2xl flex items-center justify-center mb-3"
-              style={{ backgroundColor: THEME.brand + "14" }}
-            >
-              <Bell className="size-6" style={{ color: THEME.brand }} />
-            </div>
-            <p className="text-sm font-semibold text-foreground">
-              No notifications yet
-            </p>
-            <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-              Kudos, comments and new followers on your activities will show up
-              here.
-            </p>
-          </div>
+          <EmptyState
+            compact
+            icon={Bell}
+            headline="No notifications yet"
+            sub="Kudos, comments and new followers on your activities show up here."
+          />
         ) : (
           <ul className="divide-y divide-border/40">
             {items.map((n) => {

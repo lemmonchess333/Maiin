@@ -72,7 +72,8 @@ export function useSpacesDirectory(
     uid: typeof uid;
     nonce: number;
     values: Record<string, Membership>;
-  }>({ uid, nonce, values: {} });
+    done: boolean;
+  }>({ uid, nonce, values: {}, done: false });
 
   useEffect(() => {
     if (cache.current.uid !== uid || cache.current.nonce !== nonce) {
@@ -111,7 +112,12 @@ export function useSpacesDirectory(
         })
       );
       if (!cancelled)
-        setLoaded({ uid, nonce, values: Object.fromEntries(values) });
+        setLoaded({
+          uid,
+          nonce,
+          values: Object.fromEntries(values),
+          done: true,
+        });
     })();
     return () => {
       cancelled = true;
@@ -136,5 +142,8 @@ export function useSpacesDirectory(
     [defs, loaded, uid, nonce]
   );
   const refresh = useCallback(() => setNonce((n) => n + 1), []);
-  return { entries, upcomingRaces, refresh };
+  /** True once this account's membership reads have answered, so the
+   *  `joined` flags are known rather than defaulted to false. */
+  const ready = loaded.done && loaded.uid === uid && loaded.nonce === nonce;
+  return { entries, upcomingRaces, refresh, ready };
 }

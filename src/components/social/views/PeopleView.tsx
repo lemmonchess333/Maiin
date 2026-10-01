@@ -56,8 +56,12 @@ export default function PeopleView({
   /* SOC-P2e — joined spaces feed the shared-space suggestion source.
      The directory hook reads member counts once per overlay open
      (bounded, tap-gated surface). The suggestion hook compares these
-     ids by value, so a rebuilt array does not start another fetch. */
-  const { entries: spaceEntries } = useSpacesDirectory(true);
+     ids by value, so a rebuilt array does not start another fetch, and
+     it waits for the directory: asked before the joined spaces were
+     known, it read once without them and again with them, and the list
+     reshuffled under a thumb about to tap Follow. */
+  const { entries: spaceEntries, ready: spacesReady } =
+    useSpacesDirectory(true);
   const joinedSpaceIds = useMemo(
     () => spaceEntries.filter((e) => e.joined).map((e) => e.def.id),
     [spaceEntries]
@@ -68,10 +72,15 @@ export default function PeopleView({
     loading: suggestedLoading,
     refresh: refreshSuggestions,
     remove: removeSuggestion,
-  } = useSuggestedPeople(active && blockedReady, blockedUsers, joinedSpaceIds);
-  // The fetch waits for the block list, so until that lands the list is
-  // still loading: "No suggestions yet" would be a false empty state.
-  const suggestionsPending = suggestedLoading || !blockedReady;
+  } = useSuggestedPeople(
+    active && blockedReady && spacesReady,
+    blockedUsers,
+    joinedSpaceIds
+  );
+  // The fetch waits for the block list and the spaces, so until both
+  // land the list is still loading: "No suggestions yet" would be a
+  // false empty state.
+  const suggestionsPending = suggestedLoading || !blockedReady || !spacesReady;
 
   /* S4e-MVP — restricted-user gate on the Find tab. Hook subscribes
      to the user's own `globalRestrictedUids/{uid}` doc; doc existence

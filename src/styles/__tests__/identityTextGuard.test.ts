@@ -177,7 +177,9 @@ const EXPECTED_INLINE_USES = {
   // 2026-10-01: 37 → 33. The Social pass: the feed's follow-progress
   // and empty-Following row icons, the profile's empty-state tile (now
   // the EmptyState primitive) and the solo feed's.
-  "THEME.brand": 33,
+  // 2026-10-01: 33 → 32. The notifications sheet's empty state moved to
+  // the EmptyState primitive too.
+  "THEME.brand": 32,
   // 2026-09-18: 21 → 19. Home's "Log food" action and the nudge note
   // above it were the two smallest-text uses and measured 2.77:1; both
   // moved to `text-nutrition-strong`. The rest are icons and fills.

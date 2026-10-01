@@ -11,6 +11,7 @@ const H = vi.hoisted(() => ({
   people: [] as { uid: string; displayName: string; reason: string }[],
   loading: false,
   activeArgs: [] as boolean[],
+  spacesReady: true,
 }));
 vi.mock("@/hooks/useSuggestedPeople", () => ({
   useSuggestedPeople: (active: boolean) => {
@@ -28,6 +29,7 @@ vi.mock("@/features/spaces/useSpacesDirectory", () => ({
     entries: [],
     upcomingRaces: [],
     refresh: vi.fn(),
+    ready: H.spacesReady,
   }),
 }));
 vi.mock("@/hooks/useRestrictedStatus", () => ({
@@ -48,6 +50,7 @@ beforeEach(() => {
   H.people = [];
   H.loading = false;
   H.activeArgs = [];
+  H.spacesReady = true;
 });
 
 function renderPeople(blockedReady: boolean) {
@@ -90,4 +93,14 @@ it("lists suggestions with their reason once they arrive", () => {
   expect(
     screen.getByRole("button", { name: "Refresh suggestions" })
   ).toBeInTheDocument();
+});
+
+it("waits for the joined spaces too, so the list is asked for once", () => {
+  // Asked before the directory answered, the list was read without the
+  // shared-space people and again with them, and reshuffled on screen.
+  H.spacesReady = false;
+  renderPeople(true);
+  expect(H.activeArgs.every((a) => a === false)).toBe(true);
+  expect(screen.getByLabelText("Loading suggested people")).toBeInTheDocument();
+  expect(screen.queryByText("No suggestions yet")).toBeNull();
 });

@@ -57,6 +57,7 @@ vi.mock("@/features/spaces/useSpacesDirectory", () => ({
       { def: { id: "lifters" }, joined: false, memberCount: 2 },
     ],
     refresh: vi.fn(),
+    ready: true,
   }),
 }));
 vi.mock("@/features/spaces/useCommunitiesFeed", () => ({

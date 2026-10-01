@@ -46,15 +46,15 @@ beforeEach(() => {
   fetches.length = 0;
 });
 
-it("asks once before the directory answers and once after, then stops", async () => {
+it("asks once, after the directory answers, then stops", async () => {
   seedFirestore({ "spaces/runners/members/a": { uid: "a" } });
   const { result } = renderHook(() => {
-    const { entries } = useSpacesDirectory(true);
+    const { entries, ready } = useSpacesDirectory(true);
     const joined = useMemo(
       () => entries.filter((e) => e.joined).map((e) => e.def.id),
       [entries]
     );
-    return useSuggestedPeople(true, BLOCKED, joined);
+    return useSuggestedPeople(ready, BLOCKED, joined);
   });
 
   await waitFor(() => {
@@ -62,6 +62,8 @@ it("asks once before the directory answers and once after, then stops", async ()
     expect(result.current.loading).toBe(false);
   });
   await act(() => new Promise((resolve) => setTimeout(resolve, 50)));
-  expect(fetches).toEqual([[], ["runners"]]);
+  // One read, with the joined space: asked before the directory answered
+  // it read once without it and again with it, and the list reshuffled.
+  expect(fetches).toEqual([["runners"]]);
   expect(result.current.loading).toBe(false);
 });

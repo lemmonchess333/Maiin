@@ -128,7 +128,8 @@ export default function FeedView({
      source. The directory hook resolves joined ids (bounded reads,
      only meaningful once the user opens the Feed tab); the feed hook
      fires only while this sub-tab is active. */
-  const { entries: spaceEntries } = useSpacesDirectory(true);
+  const { entries: spaceEntries, ready: spacesReady } =
+    useSpacesDirectory(true);
   const joinedSpaceIds = useMemo(
     () => spaceEntries.filter((e) => e.joined).map((e) => e.def.id),
     [spaceEntries]
@@ -334,6 +335,7 @@ export default function FeedView({
     active &&
     showActivityList &&
     blockedReady &&
+    spacesReady &&
     !isRestricted &&
     followingCount !== null &&
     !followingFeedUnlocked;
