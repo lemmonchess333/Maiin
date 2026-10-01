@@ -332,11 +332,13 @@ describe("complete account erasure", () => {
         },
         serverTimestamp: () => now,
       });
+      // A kind that is on by default, so the deletion guard is what stops
+      // it: "follow" is off until switched on, and would be skipped first.
       const result = await createNotification({
         firestore,
         fromUid: "alice",
         toUid: "bob",
-        data: { type: "follow", fromName: "Alice" },
+        data: { type: "comment", fromName: "Alice" },
         notificationId: "late",
         serverTimestamp: () => now,
       });

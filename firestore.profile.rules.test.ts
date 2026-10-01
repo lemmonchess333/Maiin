@@ -670,3 +670,106 @@ suite("users/{uid} — shareDefaults value gate", () => {
     );
   });
 });
+
+/**
+ * `notificationPreferences` value gate (S3).
+ *
+ * The switches under Settings → Notifications → Activity. The server reads
+ * this map in createNotification and writes nothing for a kind that is off,
+ * so a value it cannot read as a boolean would quietly fall back to the
+ * default. Only the five switches, each a boolean. Each rejection is paired
+ * with the nearest accepted shape, so a gate that refused everything could
+ * not pass.
+ */
+suite("users/{uid} — notificationPreferences value gate", () => {
+  const UID = "np1";
+  const ALL_ON = {
+    kudos: true,
+    comments: true,
+    follows: true,
+    circles: true,
+    spaces: true,
+  };
+
+  async function write(patch: Record<string, unknown>) {
+    await seedProfile(UID);
+    const db = env.authenticatedContext(UID).firestore();
+    return setDoc(doc(db, `users/${UID}`), patch, { merge: true });
+  }
+
+  it("accepts the whole map the app writes, any mix of on and off, and null", async () => {
+    await assertSucceeds(write({ notificationPreferences: ALL_ON }));
+    await assertSucceeds(
+      write({
+        notificationPreferences: { ...ALL_ON, follows: false, kudos: false },
+      })
+    );
+    await assertSucceeds(write({ notificationPreferences: { follows: true } }));
+    await assertSucceeds(write({ notificationPreferences: {} }));
+    await assertSucceeds(write({ notificationPreferences: null }));
+  });
+
+  it("refuses a value that is not a boolean", async () => {
+    for (const bad of ["true", "on", 1, 0, null, {}, [true]]) {
+      await assertFails(
+        write({ notificationPreferences: { ...ALL_ON, follows: bad } })
+      );
+    }
+  });
+
+  it("refuses any key but the five switches", async () => {
+    await assertFails(
+      write({ notificationPreferences: { ...ALL_ON, crewJoin: true } })
+    );
+    await assertFails(write({ notificationPreferences: { mentions: false } }));
+  });
+
+  it("refuses a value that is not a map", async () => {
+    for (const bad of [true, "all", 1, ["kudos"]]) {
+      await assertFails(write({ notificationPreferences: bad }));
+    }
+  });
+
+  it("does not block unrelated writes for a user whose stored map is bad", async () => {
+    await seedProfile(UID);
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(
+        doc(ctx.firestore(), `users/${UID}`),
+        { notificationPreferences: { follows: "yes" } },
+        { merge: true }
+      );
+    });
+    const db = env.authenticatedContext(UID).firestore();
+    await assertSucceeds(
+      setDoc(doc(db, `users/${UID}`), { darkMode: false }, { merge: true })
+    );
+    // ...but the map itself only changes into a valid one.
+    await assertFails(
+      updateDoc(doc(db, `users/${UID}`), {
+        notificationPreferences: { follows: "no" },
+      })
+    );
+    await assertSucceeds(
+      updateDoc(doc(db, `users/${UID}`), {
+        notificationPreferences: ALL_ON,
+      })
+    );
+  });
+
+  it("gates create as well as update", async () => {
+    const db = env.authenticatedContext("np2").firestore();
+    await assertFails(
+      setDoc(doc(db, "users/np2"), {
+        ...signupProfile("np2"),
+        notificationPreferences: { kudos: "off" },
+      })
+    );
+    const ok = env.authenticatedContext("np3").firestore();
+    await assertSucceeds(
+      setDoc(doc(ok, "users/np3"), {
+        ...signupProfile("np3"),
+        notificationPreferences: { kudos: false },
+      })
+    );
+  });
+});

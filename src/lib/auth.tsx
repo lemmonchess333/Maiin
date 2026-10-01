@@ -53,6 +53,7 @@ import {
   type ShareDefaults,
 } from "@/lib/shareDefaults";
 import type { ShareType } from "@/lib/shareComposer";
+import type { NotificationPreferences } from "@/lib/notificationPreferences";
 import { auth } from "./firebaseApp";
 import { logger } from "./logger";
 import type { Goal } from "./types";
@@ -327,6 +328,11 @@ export interface UserProfileSocial {
    *  loaded before this device's own answers have moved to the account
    *  carries them already (`withDeviceShareDefaults`). */
   shareDefaults?: ShareDefaults | null;
+  /** Which activity notifications are sent (S3): Settings → Notifications
+   *  → Activity. A switch never touched is absent and its default applies
+   *  (`notificationEnabled`); the server reads the same map in
+   *  createNotification and writes nothing for a kind that is off. */
+  notificationPreferences?: NotificationPreferences | null;
   /** LEGACY (share composer superseded these, #1416): the saved share
    *  default decides auto-posting now — `shareDefaults` above. Nothing has
    *  READ these three since; the Settings switches that wrote

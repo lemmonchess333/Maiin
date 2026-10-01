@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { Download } from "lucide-react";
+import { SettingsGroup, SettingsRow } from "./SettingsList";
 import { toast } from "@/lib/toast";
 import {
   exportWorkoutsCSV,
@@ -18,15 +20,21 @@ export default function DataExportSection({ user }: DataExportSectionProps) {
   const [exporting, setExporting] = useState<string | null>(null);
 
   return (
-    <div className="space-y-2">
+    <SettingsGroup
+      title="Export"
+      footer="Each export saves a CSV file you can open in a spreadsheet."
+    >
       {[
-        { label: "Export workouts (CSV)", key: "workouts" },
-        { label: "Export meals (CSV)", key: "meals" },
-        { label: "Export bodyweight (CSV)", key: "bodyweight" },
+        { label: "Export workouts", key: "workouts" },
+        { label: "Export meals", key: "meals" },
+        { label: "Export bodyweight", key: "bodyweight" },
       ].map(({ label, key }) => (
-        <button
-          type="button"
+        <SettingsRow
           key={key}
+          icon={Download}
+          label={label}
+          value={exporting === key ? "Exporting…" : undefined}
+          chevron={false}
           disabled={exporting !== null}
           onClick={async () => {
             if (!user) return;
@@ -46,11 +54,8 @@ export default function DataExportSection({ user }: DataExportSectionProps) {
             }
             setExporting(null);
           }}
-          className="w-full p-3 rounded-xl bg-card border border-border text-sm text-left hover:bg-muted transition-colors disabled:opacity-50"
-        >
-          {exporting === key ? "Exporting..." : label}
-        </button>
+        />
       ))}
-    </div>
+    </SettingsGroup>
   );
 }

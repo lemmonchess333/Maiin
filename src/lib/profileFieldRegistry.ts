@@ -154,6 +154,11 @@ export const PROFILE_FIELD_REGISTRY: readonly ProfileFieldEntry[] = [
   { field: "macroTargets", sanitized: true },
   { field: "maxHeartRate", sanitized: true },
   { field: "nonRaceGoal", sanitized: true },
+  // S3 activity notification switches (Settings → Notifications). Written
+  // only by the Settings page through updateProfile; value-gated in
+  // firestore.rules (`notificationPreferencesValid`) and read by the server
+  // in createNotification.
+  { field: "notificationPreferences", sanitized: false },
   { field: "onboardingComplete", sanitized: false },
   { field: "photoURL", sanitized: true },
   { field: "preferredDistanceUnit", sanitized: true },

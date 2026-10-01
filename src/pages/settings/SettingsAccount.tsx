@@ -16,7 +16,7 @@ export default function SettingsAccount({
   return (
     <SettingsSection
       title="Account"
-      subtitle="Sign-in, data export, delete account"
+      subtitle="Email, password, sign out"
       section="account"
       backTo={duringSetup ? "/" : undefined}
       backLabel={duringSetup ? "Setup" : undefined}

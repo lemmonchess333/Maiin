@@ -1,26 +1,23 @@
 /**
  * SettingsIndex — top-level Settings page (Set1.1).
  *
- * iOS-style nested-page IA. Renders the section list with
- * chevron-right affordances. Each section tap routes to a dedicated
- * sub-page. (Migration complete: /settings/legacy now redirects here.)
+ * iOS-style nested-page IA: the top page only navigates. You sit at the
+ * top (photo, name, email; the photo changes in place, the rest opens your
+ * profile), then the sections in three groups. Each row routes to a
+ * dedicated sub-page through `SettingsSection`.
  *
- * Set1's locked decision: 14+ sub-areas don't fit a flat scrolling
- * list. Nested pages keep each surface focused and let new arcs
- * (S3/S4/S5/A2-A4/P1c/Sub1-2) slot in by adding new section pages
- * without touching the index layout.
- *
- * Migration history: sections moved to nested routes one arc at a
- * time; every row is now migrated and the legacy flat page is retired.
+ * Grouped because Set1 grouped it: fifteen identical rows in one card was
+ * drift, and it read as a list to search rather than a place to look. Lift
+ * plan and Run plan are not rows here: Programme opens on where each part
+ * is set, and Train opens each editor directly.
+ * Recently deleted meals and the exports moved into one "Your data" page,
+ * the Data & Storage section Set1 and Home2/Food6 put them in.
  */
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   ChevronRight,
-  User,
   Target,
-  Layers,
-  Route,
   Apple,
   Dumbbell,
   Palette,
@@ -31,13 +28,16 @@ import {
   Crown,
   HelpCircle,
   Settings as Cog,
-  Trash2,
+  Database,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useSubscription } from "@/lib/subscription";
+import PageShell from "@/components/ui/PageShell";
+import { pageItemVariant } from "@/components/ui/pageMotion";
 import SettingsAvatar from "@/components/settings/SettingsAvatar";
 import SettingsOfflineBanner from "@/components/settings/SettingsOfflineBanner";
+import { SettingsGroup, SettingsRow } from "@/components/settings/SettingsList";
 import { haptic } from "@/lib/haptic";
 
 declare const __APP_VERSION__: string;
@@ -48,127 +48,122 @@ interface SectionRow {
   label: string;
   description: string;
   icon: LucideIcon;
+  /** Icon colour for a row that belongs to a sport or to food. */
+  tint?: string;
   /** Historical migration flag — every section is now migrated
    *  (all true). Kept so any future un-nested section is forced to
    *  make an explicit routing decision rather than silently 404ing. */
   migrated: boolean;
 }
 
-/** Section catalogue. Order matches the iOS Settings convention
- *  (identity → preferences → app → support → account at bottom). */
-const SECTIONS: SectionRow[] = [
+interface SectionGroup {
+  title: string;
+  rows: SectionRow[];
+}
+
+/** Section catalogue, grouped: what you train and eat, how the app
+ *  behaves, then the account. Profile is the card above the groups. */
+const GROUPS: SectionGroup[] = [
   {
-    slug: "profile",
-    label: "Profile",
-    description: "Name, photo, body metrics",
-    icon: User,
-    migrated: true,
+    title: "Your plan",
+    rows: [
+      {
+        slug: "training",
+        label: "Programme",
+        description: "Lift plan, run plan, reset",
+        icon: Target,
+        tint: "text-lifting",
+        migrated: true,
+      },
+      {
+        slug: "nutrition",
+        label: "Nutrition",
+        description: "Calorie target, goal weight",
+        icon: Apple,
+        tint: "text-nutrition",
+        migrated: true,
+      },
+      {
+        slug: "workout-prefs",
+        label: "Workouts",
+        description: "Rest timer, audio cues",
+        icon: Dumbbell,
+        migrated: true,
+      },
+      {
+        slug: "shoes",
+        label: "Shoes",
+        description: "Mileage per pair",
+        icon: Footprints,
+        migrated: true,
+      },
+    ],
   },
   {
-    slug: "training",
-    label: "Training",
-    description: "Programme, goals, weekly layout",
-    icon: Target,
-    migrated: true,
+    title: "App",
+    rows: [
+      {
+        slug: "notifications",
+        label: "Notifications",
+        description: "Reminders, push, activity",
+        icon: Bell,
+        migrated: true,
+      },
+      {
+        slug: "units-appearance",
+        label: "Units & appearance",
+        description: "kg or lb, km or mi, theme",
+        icon: Palette,
+        migrated: true,
+      },
+      {
+        slug: "privacy",
+        label: "Social & privacy",
+        description: "Sharing, route privacy, blocks",
+        icon: Lock,
+        migrated: true,
+      },
+      {
+        slug: "health",
+        label: "Apple Health",
+        description: "Daily step count on Home",
+        icon: HeartPulse,
+        migrated: true,
+      },
+    ],
   },
   {
-    slug: "lift-plan",
-    label: "Lift plan",
-    description: "Focus, lift days, equipment",
-    icon: Layers,
-    migrated: true,
-  },
-  {
-    slug: "run-plan",
-    label: "Run plan",
-    description: "Race goal, run days, zones",
-    icon: Route,
-    migrated: true,
-  },
-  {
-    slug: "nutrition",
-    label: "Nutrition",
-    description: "Calorie targets, activity level",
-    icon: Apple,
-    migrated: true,
-  },
-  {
-    slug: "workout-prefs",
-    label: "Workout preferences",
-    description: "Rest timer, audio cues",
-    icon: Dumbbell,
-    migrated: true,
-  },
-  {
-    slug: "units-appearance",
-    label: "Units & appearance",
-    description: "Weight, height units, dark mode",
-    icon: Palette,
-    migrated: true,
-  },
-  {
-    slug: "privacy",
-    label: "Social & privacy",
-    description: "Visibility, auto-post, GPS zones",
-    icon: Lock,
-    migrated: true,
-  },
-  {
-    slug: "shoes",
-    label: "My shoes",
-    description: "Track mileage per pair",
-    icon: Footprints,
-    migrated: true,
-  },
-  {
-    slug: "notifications",
-    label: "Notifications",
-    description: "Meal, workout, streak reminders",
-    icon: Bell,
-    migrated: true,
-  },
-  {
-    slug: "health",
-    label: "Apple Health",
-    description: "Daily step count on Home",
-    icon: HeartPulse,
-    migrated: true,
-  },
-  {
-    slug: "subscription",
-    label: "Subscription",
-    description: "Plan, billing, restore",
-    icon: Crown,
-    migrated: true,
-  },
-  {
-    slug: "support-legal",
-    label: "Support & legal",
-    description: "Help, privacy policy, terms",
-    icon: HelpCircle,
-    migrated: true,
-  },
-  {
-    slug: "account",
-    label: "Account",
-    description: "Sign out, delete account",
-    icon: Cog,
-    migrated: true,
-  },
-  // F5c — soft-delete archive. Sits under Account/Data semantically;
-  // surfaces as its own index row so it's discoverable without
-  // drilling through the Account page.
-  {
-    slug: "recently-deleted-meals",
-    label: "Recently deleted meals",
-    /* Short phrase, like every other row. The full sentence this
-       replaced was the ONLY description in the catalogue long enough to
-       truncate — "…in the last 24 hou…" in the settings capture — and it
-       was also the only one written as a sentence rather than a label.
-       The title already says what is being restored. */
-    description: "Restore within 24 hours",
-    icon: Trash2,
-    migrated: true,
+    title: "Account",
+    rows: [
+      {
+        slug: "subscription",
+        label: "Subscription",
+        description: "Plan, billing, restore",
+        icon: Crown,
+        migrated: true,
+      },
+      {
+        slug: "account",
+        label: "Account",
+        description: "Email, password, sign out",
+        icon: Cog,
+        migrated: true,
+      },
+      {
+        slug: "data",
+        label: "Your data",
+        description: "Export, recently deleted",
+        icon: Database,
+        migrated: true,
+      },
+      {
+        slug: "support-legal",
+        label: "Help & legal",
+        description: "Support, privacy, terms",
+        icon: HelpCircle,
+        migrated: true,
+      },
+    ],
   },
 ];
 
@@ -177,122 +172,72 @@ export default function SettingsIndex() {
   const { user, profile } = useAuth();
   const { isInTrial, trialDaysLeft, tier } = useSubscription();
 
+  const plan =
+    tier === "pro" ? (
+      "Pro"
+    ) : isInTrial ? (
+      <>
+        Trial · <span className="font-mono tabular-nums">{trialDaysLeft}</span>{" "}
+        {trialDaysLeft === 1 ? "day" : "days"} left
+      </>
+    ) : (
+      "Free"
+    );
+
   return (
-    <motion.div
-      className="space-y-4 pb-8"
-      initial="hidden"
-      animate="visible"
-      variants={{
-        hidden: {},
-        visible: { transition: { staggerChildren: 0.04 } },
-      }}
-    >
-      <SettingsOfflineBanner />
-      <motion.header
-        variants={{
-          hidden: { opacity: 0, y: 6 },
-          visible: { opacity: 1, y: 0 },
-        }}
+    <PageShell title="Settings" banner={<SettingsOfflineBanner />}>
+      {/* You. The photo is its own button (it opens the photo sheet);
+          the rest of the card is a sibling button that opens Profile —
+          a button cannot sit inside a button. */}
+      <motion.div
+        variants={pageItemVariant}
+        className="rounded-xl bg-card flex items-center gap-3 pl-3"
       >
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            {profile ? <SettingsAvatar profile={profile} /> : null}
-            <div>
-              <h1 className="text-xl font-extrabold text-foreground">
-                Settings
-              </h1>
-              <p className="text-sm text-muted-foreground">
-                Customise your experience
-              </p>
-            </div>
-          </div>
-          {user && (
-            <button
-              type="button"
-              onClick={() => {
-                haptic();
-                navigate(`/user/${user.uid}`);
-              }}
-              className="px-3 min-h-[44px] inline-flex items-center rounded-lg text-xs font-medium bg-muted text-foreground hover:bg-muted/80 transition-colors"
-            >
-              View profile
-            </button>
-          )}
-        </div>
-      </motion.header>
-
-      {tier === "pro" || isInTrial ? (
-        <motion.div
-          variants={{
-            hidden: { opacity: 0, y: 6 },
-            visible: { opacity: 1, y: 0 },
+        {profile ? <SettingsAvatar profile={profile} /> : null}
+        <button
+          type="button"
+          onClick={() => {
+            haptic();
+            navigate("/settings/profile");
           }}
-          className="rounded-xl bg-card border border-primary/20 p-3 flex items-center gap-3"
+          className="flex-1 min-w-0 min-h-[80px] pr-4 py-3 flex items-center gap-3 text-left rounded-r-xl hover:bg-muted/30 motion-safe:transition-colors"
         >
-          <div className="size-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-            <Crown className="size-4 text-primary" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-foreground">
-              {isInTrial
-                ? `Pro trial — ${trialDaysLeft} day${trialDaysLeft === 1 ? "" : "s"} left`
-                : "Pro"}
-            </p>
-            <p className="text-xs text-muted-foreground">
-              All features unlocked
-            </p>
-          </div>
+          <span className="flex-1 min-w-0">
+            <span className="block text-body font-bold text-foreground truncate">
+              {profile?.displayName || "Your profile"}
+            </span>
+            <span className="block text-xs text-muted-foreground truncate">
+              {user?.email ?? "Name, photo, body metrics"}
+            </span>
+          </span>
+          <ChevronRight
+            className="size-4 text-muted-foreground shrink-0"
+            aria-hidden="true"
+          />
+        </button>
+      </motion.div>
+
+      {GROUPS.map((group) => (
+        <motion.div key={group.title} variants={pageItemVariant}>
+          <SettingsGroup title={group.title}>
+            {group.rows.map((row) => (
+              <SettingsRow
+                key={row.slug}
+                label={row.label}
+                description={row.description}
+                icon={row.icon}
+                iconClassName={row.tint}
+                value={row.slug === "subscription" ? plan : undefined}
+                onClick={() => navigate(`/settings/${row.slug}`)}
+              />
+            ))}
+          </SettingsGroup>
         </motion.div>
-      ) : null}
+      ))}
 
-      {/* Section list. Each row = nested-page navigation. The chevron
-          on the right is the iOS Settings affordance for "tap to drill
-          into this section." */}
-      <motion.ul
-        variants={{ hidden: { opacity: 0 }, visible: { opacity: 1 } }}
-        aria-label="Settings sections"
-        className="rounded-xl bg-card overflow-hidden divide-y divide-border/40"
-      >
-        {SECTIONS.map((section) => {
-          const Icon = section.icon;
-          // Every section is migrated (Set1.2 complete) — the old
-          // /settings/legacy#slug fallback is retired; the route now
-          // redirects to this index.
-          const href = `/settings/${section.slug}`;
-          return (
-            <li key={section.slug}>
-              <button
-                type="button"
-                onClick={() => {
-                  haptic();
-                  navigate(href);
-                }}
-                className="w-full px-4 py-3 min-h-[56px] flex items-center gap-3 text-left motion-safe:transition-colors motion-safe:active:scale-[0.99] hover:bg-muted/30"
-              >
-                <div className="size-8 rounded-lg bg-muted flex items-center justify-center shrink-0">
-                  <Icon className="size-4 text-muted-foreground" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-foreground">
-                    {section.label}
-                  </p>
-                  <p className="text-xs text-muted-foreground truncate">
-                    {section.description}
-                  </p>
-                </div>
-                <ChevronRight
-                  className="size-4 text-muted-foreground shrink-0"
-                  aria-hidden="true"
-                />
-              </button>
-            </li>
-          );
-        })}
-      </motion.ul>
-
-      <p className="text-center text-xs text-muted-foreground pt-2">
-        Tropos v{__APP_VERSION__}
+      <p className="text-center text-xs text-muted-foreground pt-2 pb-8">
+        Tropos {__APP_VERSION__}
       </p>
-    </motion.div>
+    </PageShell>
   );
 }

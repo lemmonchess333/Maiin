@@ -1232,7 +1232,7 @@ export default function Home() {
             (profile.experience ?? "intermediate") === "intermediate"
           }
           ctaLabel="Set experience"
-          ctaHref="/settings/training"
+          ctaHref="/settings/lift-plan"
         />
 
         {/* Progressive profiling: race-goal invitation. Fast-start runners default

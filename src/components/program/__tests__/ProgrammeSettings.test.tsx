@@ -1,5 +1,5 @@
 /**
- * Pgm4: ProgrammeSettings — unified, free programme editor.
+ * Pgm4: ProgrammeSettings — the free programme editor, in two views.
  *
  * Pins the contract that replaced the onboarding-retake + the 6-step
  * ConfigurePlanModal wizard + the ProgramSettingsPanel sheet:
@@ -9,10 +9,20 @@
  *   2. The engine toggles live-save via updateSettings (no rebuild).
  *   3. Reset calls regenerateProgram.
  *   4. The save action is gated until a field actually changes.
+ *
+ * The lifting fields live in ONE view ("lift": Settings → Lift plan). The
+ * Programme page ("overview") shows the setup, opens each part's own page
+ * and holds the reset; it edits nothing (the owner's call, Settings pass).
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, cleanup, fireEvent } from "@testing-library/react";
-import { MemoryRouter } from "react-router-dom";
+import {
+  render,
+  screen,
+  cleanup,
+  fireEvent,
+  within,
+} from "@testing-library/react";
+import { MemoryRouter, useLocation } from "react-router-dom";
 import ProgrammeSettings from "../ProgrammeSettings";
 import type { UserProfile } from "@/lib/auth";
 import type { ProgramState } from "@/features/program/programTypes";
@@ -53,9 +63,14 @@ const programState = {
   settings: { autoProgression: true, microloading: true },
 } as ProgramState;
 
+/** Where the page sent the user. */
+function LocationProbe() {
+  return <div data-testid="location">{useLocation().pathname}</div>;
+}
+
 function setup(
   profileOverrides: Partial<UserProfile> = {},
-  variant: "full" | "lift" = "full",
+  variant: "overview" | "lift" = "lift",
   stateOverride?: ProgramState
 ) {
   const updateSettings = vi.fn();
@@ -73,6 +88,7 @@ function setup(
         refreshProfile={refreshProfile}
         onOpenWeeklyLayout={onOpenWeeklyLayout}
       />
+      <LocationProbe />
     </MemoryRouter>
   );
   return {
@@ -104,24 +120,11 @@ describe("ProgrammeSettings — lift variant (Section-Split)", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("full variant still shows nutrition + running (unchanged)", () => {
-    setup({}, "full");
-    expect(screen.getByText("Nutrition phase")).toBeInTheDocument();
-    expect(screen.getByText("Running")).toBeInTheDocument();
-  });
-
-  it("D14: Running is a read-only summary linking to /settings/run-plan — no editable run controls", () => {
-    setup(
-      {
-        runMode: "race_prep",
-        raceGoal: { distance: "10k", targetDate: "2027-01-01" },
-      },
-      "full"
-    );
-    // Summary card links out to the focused editor…
-    const link = screen.getByRole("link", { name: /race prep/i });
-    expect(link).toHaveAttribute("href", "/settings/run-plan");
-    // …and NONE of the old editable run controls render here.
+  it("D14: no run controls in the lift editor — the run plan has its own page", () => {
+    setup({
+      runMode: "race_prep",
+      raceGoal: { distance: "10k", targetDate: "2027-01-01" },
+    });
     expect(
       screen.queryByLabelText(/run days per week/i)
     ).not.toBeInTheDocument();
@@ -139,7 +142,7 @@ describe("ProgrammeSettings — lift variant (Section-Split)", () => {
         runVolume: "lighter",
         runDifficulty: "harder",
       },
-      "full"
+      "lift"
     );
     fireEvent.click(screen.getByText("Get stronger"));
     fireEvent.click(screen.getByRole("button", { name: /save changes/i }));
@@ -206,17 +209,6 @@ describe("ProgrammeSettings — rebuild path", () => {
     expect(payload.profileUpdates.injuries).toEqual(["knee"]);
   });
 
-  it("nutrition phase is READ-ONLY here — a derived link to /settings/nutrition, not a picker", () => {
-    setup(); // baseline program.goal = "recomp"
-    // The current phase shows as a summary…
-    expect(screen.getByText("Recomp")).toBeInTheDocument();
-    // …that links to the one place direction is set (goal weight owns it).
-    const link = screen.getByRole("link", { name: /recomp/i });
-    expect(link).toHaveAttribute("href", "/settings/nutrition");
-    // The old direct-pick options are gone — no clickable "Cutting".
-    expect(screen.queryByText("Cutting")).not.toBeInTheDocument();
-  });
-
   it("changing another field preserves the derived nutrition phase unchanged", async () => {
     setup(); // program.goal = "recomp"
     fireEvent.click(screen.getByText("Get stronger"));
@@ -241,10 +233,76 @@ describe("ProgrammeSettings — toggles live-save without rebuild", () => {
   });
 });
 
-describe("ProgrammeSettings — reset", () => {
+describe("ProgrammeSettings — overview (the Programme page)", () => {
+  it("shows the setup and where each part is set, and edits nothing itself", () => {
+    setup({}, "overview");
+    expect(screen.getByText("Current setup")).toBeInTheDocument();
+    for (const name of [
+      /lift plan/i,
+      /run plan/i,
+      /nutrition phase/i,
+      /weekly layout/i,
+    ]) {
+      expect(screen.getByRole("button", { name })).toBeInTheDocument();
+    }
+    // None of the lift editor's fields, and nothing to save.
+    expect(screen.queryByText("Training focus")).not.toBeInTheDocument();
+    expect(screen.queryByText("Equipment access")).not.toBeInTheDocument();
+    expect(screen.queryByText("Get stronger")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("switch", { name: /auto progression/i })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /save changes/i })
+    ).not.toBeInTheDocument();
+  });
+
+  it("opens Lift plan and Run plan on their own pages", () => {
+    setup(
+      {
+        runMode: "race_prep",
+        raceGoal: { distance: "10k", targetDate: "2027-01-01" },
+      },
+      "overview"
+    );
+    const run = screen.getByRole("button", { name: /run plan/i });
+    expect(run).toHaveTextContent("Race prep · 10K");
+    fireEvent.click(run);
+    expect(screen.getByTestId("location")).toHaveTextContent(
+      "/settings/run-plan"
+    );
+    fireEvent.click(screen.getByRole("button", { name: /lift plan/i }));
+    expect(screen.getByTestId("location")).toHaveTextContent(
+      "/settings/lift-plan"
+    );
+  });
+
+  it("nutrition phase is READ-ONLY here — it opens Nutrition, where goal weight sets it", () => {
+    setup({}, "overview"); // program.goal = "recomp"
+    const row = screen.getByRole("button", { name: /nutrition phase/i });
+    expect(row).toHaveTextContent("Recomp");
+    // The old direct-pick options are gone — no clickable "Cutting".
+    expect(screen.queryByText("Cutting")).not.toBeInTheDocument();
+    fireEvent.click(row);
+    expect(screen.getByTestId("location")).toHaveTextContent(
+      "/settings/nutrition"
+    );
+  });
+
+  it("opens the weekly layout editor", () => {
+    const { onOpenWeeklyLayout } = setup({}, "overview");
+    fireEvent.click(screen.getByRole("button", { name: /weekly layout/i }));
+    expect(onOpenWeeklyLayout).toHaveBeenCalledTimes(1);
+  });
+
   it("Reset → confirm → regenerateProgram", () => {
-    const { regenerateProgram } = setup();
+    const { regenerateProgram } = setup({}, "overview");
     fireEvent.click(screen.getByRole("button", { name: /reset programme/i }));
+    expect(
+      within(screen.getByRole("alertdialog")).getByText(
+        /logged workouts and runs stay in history/i
+      )
+    ).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /^reset$/i }));
     expect(regenerateProgram).toHaveBeenCalledTimes(1);
   });
@@ -375,7 +433,7 @@ describe("ProgrammeSettings — keep-or-represcribe on a same-frequency goal cha
   } as unknown as ProgramState;
 
   it("offers the choice with honest consequence copy, no silent default", () => {
-    setup({}, "full", liftState);
+    setup({}, "lift", liftState);
     fireEvent.click(screen.getByText("Get stronger"));
     fireEvent.click(screen.getByRole("button", { name: /save changes/i }));
     // Both explicit saves, plus cancel — the single "Save" is gone.
@@ -393,7 +451,7 @@ describe("ProgrammeSettings — keep-or-represcribe on a same-frequency goal cha
   it("'update sessions' sends the represcribed workouts through configurePlan", async () => {
     const { represcribeWorkouts } =
       await import("@/features/program/represcribe");
-    setup({}, "full", liftState);
+    setup({}, "lift", liftState);
     fireEvent.click(screen.getByText("Get stronger"));
     fireEvent.click(screen.getByRole("button", { name: /save changes/i }));
     fireEvent.click(
@@ -412,7 +470,7 @@ describe("ProgrammeSettings — keep-or-represcribe on a same-frequency goal cha
   });
 
   it("'keep current sessions' sends the workouts verbatim", async () => {
-    setup({}, "full", liftState);
+    setup({}, "lift", liftState);
     fireEvent.click(screen.getByText("Get stronger"));
     fireEvent.click(screen.getByRole("button", { name: /save changes/i }));
     fireEvent.click(
@@ -428,7 +486,7 @@ describe("ProgrammeSettings — keep-or-represcribe on a same-frequency goal cha
   });
 
   it("no choice when lift days change too — the rebuild arm owns that", () => {
-    setup({}, "full", liftState);
+    setup({}, "lift", liftState);
     fireEvent.click(screen.getByText("Get stronger"));
     fireEvent.click(screen.getByRole("radio", { name: "5" }));
     fireEvent.click(screen.getByRole("button", { name: /save changes/i }));

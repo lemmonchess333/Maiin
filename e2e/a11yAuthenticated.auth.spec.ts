@@ -9,8 +9,8 @@
  * had used it for this.
  *
  * So every authenticated surface — Home, Food, Train, Social, Analytics,
- * and eight Settings pages — has been running these rules on trust. This
- * sweeps sixteen routes through them.
+ * and the Settings pages — has been running these rules on trust. This
+ * sweeps the routes in ROUTES through them.
  *
  * ONE RULE IS DELIBERATELY WEAKER HERE, and the reason is the finding.
  * The login test bans `[role="button"]:not(button)` outright. Run that
@@ -61,9 +61,11 @@ const ROUTES = [
   "settings/nutrition",
   "settings/training",
   "settings/run-plan",
+  "settings/notifications",
   "settings/privacy",
   "settings/units-appearance",
   "settings/subscription",
+  "settings/data",
 ] as const;
 
 interface Offence {
@@ -77,7 +79,7 @@ test.describe("authenticated a11y invariants", () => {
     !emulatorActive,
     "needs the Firebase emulator (auth-emulator project)"
   );
-  // Sixteen route loads at ~1.5s of settle each, plus sign-in.
+  // Each route settles for ~1.5s, plus sign-in.
   test.setTimeout(180_000);
 
   test("every authenticated route holds the login page's invariants", async ({
@@ -179,7 +181,7 @@ test.describe("authenticated a11y invariants", () => {
   test("the checks would fire on the shapes they look for", async ({
     page,
   }) => {
-    /* Positive control. Sixteen routes reporting nothing is the same
+    /* Positive control. Every route reporting nothing is the same
        output a broken selector produces, which is the failure this file
        exists to prevent — so prove the probe catches each shape first. */
     await page.goto("./");

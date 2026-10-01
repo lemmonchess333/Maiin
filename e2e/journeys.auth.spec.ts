@@ -108,9 +108,8 @@ test.describe("core user journeys", () => {
   }) => {
     // D14 dedupe: race-goal configuration lives in the focused run-plan
     // editor (/settings/run-plan → RunPlanSettings), the ONE run-plan
-    // surface. ProgrammeSettings (/settings/training) now renders a
-    // read-only Running summary that links here, so this journey drives
-    // the canonical editor directly.
+    // surface. The Programme page (/settings/training) opens it from its
+    // Run plan row, so this journey drives the canonical editor directly.
     await page.goto("settings/run-plan");
     await expect(page.getByRole("heading", { name: "Run plan" })).toBeVisible({
       timeout: 15_000,

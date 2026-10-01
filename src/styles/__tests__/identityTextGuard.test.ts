@@ -110,12 +110,18 @@ const EXPECTED_BARE_USES: Record<(typeof IDENTITY)[number], number> = {
   // reason as its footprints: a coloured rule marks the number now.
   // 2026-09-27: 15 → 16. The brand mark before Home's date (BrandMark):
   // a solid hexagon, an ICON (3:1 non-text), in the literal brand purple.
-  lifting: 16, // Redesign consolidates onboarding option icons.
+  // 2026-10-01: 16 → 18. The Settings pass: the Programme row's icon on
+  // the Settings list and the Lift plan row's on the Programme page, both
+  // ICONS; their words are foreground.
+  lifting: 18, // Redesign consolidates onboarding option icons.
   // 2026-09-27: 4 → 5. Analytics' Go deeper tiles: the Food tile's apple
   // ICON; its words are foreground.
   // 2026-09-27: 5 → 4. The weekly recap's food icon, retired with its
   // other row icons for the coloured rule.
-  nutrition: 4,
+  // 2026-10-01: 4 → 6. The Settings pass: the Nutrition row's icon on the
+  // Settings list and the Nutrition phase row's on the Programme page,
+  // both ICONS; their words are foreground.
+  nutrition: 6,
   destructive: 0,
   success: 0,
   warning: 0,
@@ -185,7 +191,9 @@ const EXPECTED_INLINE_USES = {
   // moved to `text-nutrition-strong`. The rest are icons and fills.
   // 2026-09-20: 19 → 18. FoodProStrip (an icon tint on its camera tile)
   // was retired for the one-line FoodProHint, which paints no identity.
-  "THEME.semantic.nutrition": 18,
+  // 2026-10-01: 18 → 17. The Programme page's read-only nutrition card
+  // (its apple) went with the Settings pass; the phase is a row now.
+  "THEME.semantic.nutrition": 17,
 } as const;
 
 type InlineToken = keyof typeof EXPECTED_INLINE_USES;
@@ -264,7 +272,10 @@ function bareUses(token: string): string[] {
 // weight scale, week-ahead calendar and why-you-train heart tiles went,
 // and the retune sparkle takes the lifting text step.
 // 2026-10-01: 45 → 44. The solo feed's share card dumbbell, retired.
-const BRAND = { token: "primary", step: "lifting-strong", bare: 44 } as const;
+// 2026-10-01: 44 → 43. The Settings pass: the exports' section icon and
+// the Settings list's subscription crown went, and Account's sign-out
+// section took one icon.
+const BRAND = { token: "primary", step: "lifting-strong", bare: 43 } as const;
 
 describe("identity colour usage is pinned", () => {
   it("text-primary has the pinned number of bare uses", () => {

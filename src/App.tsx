@@ -136,6 +136,7 @@ const SettingsAccount = lazyRetry(
 const SettingsRecentlyDeleted = lazyRetry(
   () => import("@/pages/settings/SettingsRecentlyDeleted")
 );
+const SettingsData = lazyRetry(() => import("@/pages/settings/SettingsData"));
 const Upgrade = lazyRetry(() => import("@/pages/Upgrade"));
 const Program = lazyRetry(() => import("@/pages/Program"));
 const Run = lazyRetry(() => import("@/pages/Run"));
@@ -705,6 +706,14 @@ function AppRoutes() {
                         element={
                           <RouteErrorBoundary>
                             <SettingsRecentlyDeleted />
+                          </RouteErrorBoundary>
+                        }
+                      />
+                      <Route
+                        path="/settings/data"
+                        element={
+                          <RouteErrorBoundary>
+                            <SettingsData />
                           </RouteErrorBoundary>
                         }
                       />

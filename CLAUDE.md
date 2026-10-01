@@ -99,17 +99,18 @@ exists — pinned by `claudeMdFreshness.test.ts` in both directions
 | `UserProfile.tsx`                      | `/user/:uid`                       | A person's profile: this week's shared sessions, badges, their posts           |
 | `Upgrade.tsx`                          | `/upgrade`                         | Pro pricing + purchase page                                                    |
 | `SettingsIndex.tsx`                    | `/settings`                        | Settings section list — iOS nested-page IA (`/settings/legacy` redirects here) |
-| `settings/SettingsProfile.tsx`         | `/settings/profile`                | Profile section                                                                |
+| `settings/SettingsProfile.tsx`         | `/settings/profile`                | Profile — photo, name, body metrics in the chosen units                        |
 | `settings/SettingsAccount.tsx`         | `/settings/account`                | Account — email, password, sign-out, account deletion                          |
-| `settings/SettingsTraining.tsx`        | `/settings/training`               | Programme settings (canonical, Set1.1 / Pgm4)                                  |
+| `settings/SettingsTraining.tsx`        | `/settings/training`               | Programme — the setup, where each part is set, reset (Pgm4)                    |
 | `settings/SettingsLiftPlan.tsx`        | `/settings/lift-plan`              | Dedicated lift-plan editor                                                     |
 | `settings/SettingsRunPlan.tsx`         | `/settings/run-plan`               | Dedicated run-plan editor (the Programme Run surface deep-links here)          |
 | `settings/SettingsWorkoutPrefs.tsx`    | `/settings/workout-prefs`          | Workout preferences                                                            |
 | `settings/SettingsNutrition.tsx`       | `/settings/nutrition`              | Nutrition section — targets, adaptive TDEE                                     |
+| `settings/SettingsData.tsx`            | `/settings/data`                   | Your data — exports, and the way into recently deleted meals                   |
 | `settings/SettingsRecentlyDeleted.tsx` | `/settings/recently-deleted-meals` | Soft-deleted meals archive (24 h window, F5c)                                  |
 | `settings/SettingsHealth.tsx`          | `/settings/health`                 | HealthKit steps — discovery and reconnection (ADR-0007)                        |
 | `settings/SettingsShoes.tsx`           | `/settings/shoes`                  | Running shoes                                                                  |
-| `settings/SettingsNotifications.tsx`   | `/settings/notifications`          | Push and reminder preferences                                                  |
+| `settings/SettingsNotifications.tsx`   | `/settings/notifications`          | Reminders, push, and a switch per activity notification (S3)                   |
 | `settings/SettingsPrivacy.tsx`         | `/settings/privacy`                | Privacy — visibility, blocked users, privacy zones                             |
 | `settings/SettingsUnitsAppearance.tsx` | `/settings/units-appearance`       | Units and theme                                                                |
 | `settings/SettingsSubscription.tsx`    | `/settings/subscription`           | Subscription status and management                                             |
@@ -256,6 +257,7 @@ Helper: `syncChallengeProgress()` — auto-updates challenge participant progres
 - **Auth:** Firebase Auth (Email, Google, Apple Sign-In)
 - **New password signups verify before onboarding.** The signup verification screen sends immediately, supports resend/address correction, and reloads Auth plus refreshes the token on returning from Mail. `completeOnboarding` enforces the verified claim for password sign-in. Existing completed accounts keep private access; the social gate below remains.
 - **Public writes need a verified email.** The `email_verified` token claim gates `activities` and `spaces/{id}/posts` creates in `firestore.rules` (`isEmailVerified()`) and comments in the two comment callables (`assertCallerEmailVerified`). Private logging under `users/{uid}/*` and every non-content interaction stay open to unverified accounts; OAuth accounts carry the claim already. The e2e rig marks its signup-form accounts verified through the Auth emulator REST API (seed scripts create users verified).
+- **Activity notifications follow the recipient's switches.** `notificationPreferences` on `users/{uid}` (S3: props, comments, circles and spaces on; new followers off) is read by `createNotification`, the one writer of `notifications/{uid}/items`, which writes nothing for a kind that is off. The client's copy (`src/lib/notificationPreferences.ts`) and the rules' value gate are pinned to the server's (`functions/lib/notificationPreferences.js`) by `notificationPreferences.cross.test.ts`. A new notification type has to be given a switch, or none on purpose, in that file.
 - **User profile:** Defined in `src/lib/auth.tsx` as `UserProfile` interface
 - **Feed items:** Defined in `src/hooks/useSocialFeed.ts` as `FeedItem` / `ActivityData`
 
@@ -2358,6 +2360,49 @@ shared (pinned by the "profile:" cases in `firestore.rules.test.ts`).
 - [ ] **Comments with no signal:** open a post's comments in airplane
       mode. It says "Couldn't load comments" with Try again, never "No
       comments yet" (which it also used to show while comments loaded).
+
+### The Settings pass (owner, 2026-10-01)
+
+Affects: `SettingsIndex.tsx`, `settings/SettingsList.tsx` (new),
+`settings/SettingsData.tsx` (new, `/settings/data`),
+`UnitsAppearanceSection`, `AccountSection`, `SecuritySection`,
+`DataExportSection`, `ShareDefaultsRow`, `SettingsProfile` +
+`ProfileInfoSection`, `ProgrammeSettings` (`variant="overview"`),
+`ActivityNotificationsGroup` (new), `functions/lib/notificationPreferences.js`
+(new), `createNotification`, `onFollowerCreated` (new), `firestore.rules`
+(`notificationPreferencesValid`).
+
+The list is three groups under your photo. Programme is a short page (the
+setup, where each part is set, the reset), and Lift plan and Run plan left
+the list: Programme and Train open them. Exports and recently deleted meals
+moved to Your data, and Delete account is red text at the foot of Account,
+as Set1 locked it. Notifications gained the switch per kind S3 locked in
+June: props, comments, circles and spaces on, new followers off. The server
+reads them, so a kind that is off is never written. New followers had no
+sender at all ("follow" was an allowed type nothing wrote), so
+`onFollowerCreated` is new, and it writes only for someone who turned the
+switch on. Profile shows weight and height in the chosen units; it showed
+kg and cm whatever was chosen.
+
+- [ ] **Rules before the client.** The switches write
+      `notificationPreferences`, which the rules must allow. Deploy
+      production releases rules before Hosting, but a TestFlight build made
+      from the branch before the merge is refused on every switch ("Couldn't
+      save your settings").
+- [ ] **Deploy verification.** The functions deploy log shows a successful
+      create operation for `onFollowerCreated`. The gate itself lives in
+      `lib/socialFanout.js`, so the callables and triggers that send
+      notifications show update operations in the same run.
+- [ ] **A switch stops its kind.** With two accounts: A turns Props off and
+      B gives one of A's posts props; nothing new under A's bell. A turns it
+      back on and B gives props on another post; it arrives.
+- [ ] **New followers.** A turns New followers on and B follows A: "B
+      started following you" under A's bell, in one row however often B
+      unfollows and follows again. With the switch off (the default),
+      nothing.
+- [ ] **Pounds and feet on Profile.** With lb and ft chosen, Profile shows
+      the weight in pounds and the height in feet and inches. Change both
+      and check the calorie target moves as it does for a kg edit.
 
 ### Backlog audit 2026-08-02 — what a skeptical pass found
 

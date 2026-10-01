@@ -71,7 +71,11 @@ export type SettingsToggle =
   | "push_notifications"
   | "push_streak"
   | "push_recap"
-  | "push_badge";
+  | "push_badge"
+  /** One of the activity notification switches (S3). Sends
+   *  `"{category}:{on|off}"` (e.g. `"follows:on"`), like
+   *  `share_default_set` pairs its value with the type it applies to. */
+  | "activity_notification";
 
 export interface SettingsEventMetadata {
   /** settings_section_viewed: which accordion section the user
