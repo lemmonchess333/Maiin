@@ -270,7 +270,10 @@ const SCHEDULED_CAP = { maxInstances: 1, timeoutSeconds: 540 };
 // 2026-05-26 audit PR 4 (finding #10) — Vertex AI response redactor.
 // Logs structural metadata only; never the actual user-facing text /
 // inputs. See functions/lib/vertexLogRedaction.js for the contract.
-const { redactVertexResponse } = require("./lib/vertexLogRedaction");
+const {
+  redactVertexResponse,
+  vertexUsage,
+} = require("./lib/vertexLogRedaction");
 
 // ══════════════════════════════════════════════
 // ACCOUNT DELETION — server-side, auth-user last
@@ -1379,6 +1382,7 @@ exports.analyzeFood = functions
           res.status(500).json({ error: "AI service error" });
           return;
         }
+        functions.logger.info("analyzeFood.usage", vertexUsage(data));
 
         let responseText = "";
         if (
@@ -1562,6 +1566,7 @@ exports.analyzeFoodText = functions
           res.status(500).json({ error: "AI service error" });
           return;
         }
+        functions.logger.info("analyzeFoodText.usage", vertexUsage(data));
 
         let responseText = "";
         if (

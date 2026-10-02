@@ -7,7 +7,38 @@ import { describe, it, expect } from "vitest";
 import { createRequire } from "node:module";
 
 const require = createRequire(import.meta.url);
-const { redactVertexResponse } = require("../lib/vertexLogRedaction");
+const {
+  redactVertexResponse,
+  vertexUsage,
+} = require("../lib/vertexLogRedaction");
+
+describe("vertexUsage", () => {
+  it("reads the three token counts and nothing else", () => {
+    const usage = vertexUsage({
+      usageMetadata: {
+        promptTokenCount: 812,
+        candidatesTokenCount: 240,
+        totalTokenCount: 1052,
+      },
+      candidates: [{ content: { parts: [{ text: "Chicken salad" }] } }],
+    });
+    expect(usage).toEqual({
+      promptTokens: 812,
+      outputTokens: 240,
+      totalTokens: 1052,
+    });
+    expect(JSON.stringify(usage)).not.toContain("Chicken");
+  });
+
+  it("returns nulls when the response carries no usage", () => {
+    const none = { promptTokens: null, outputTokens: null, totalTokens: null };
+    expect(vertexUsage({})).toEqual(none);
+    expect(vertexUsage(null)).toEqual(none);
+    expect(vertexUsage({ usageMetadata: { promptTokenCount: "812" } })).toEqual(
+      none
+    );
+  });
+});
 
 describe("redactVertexResponse", () => {
   it("returns hasData=false for null/undefined/non-object input", () => {
