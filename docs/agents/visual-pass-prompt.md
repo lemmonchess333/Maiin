@@ -42,8 +42,7 @@ METHOD — non-negotiable:
   re-deciding anything; check docs/design-backlog.md and
   docs/visual-audit/ for prior findings and their status.
 - Mutation-check every new test guard. Verify with the tool that actually
-  runs the code (tsc -b does NOT cover e2e; `cmd | tail; echo $?` reports
-  tail's exit code).
+  runs the code (`cmd | tail; echo $?` reports tail's exit code).
 
 DECISION AUTHORITY: visual-design decisions are delegated — decide and
 ship rather than stalling on "needs a decision" piles. Standing calls
@@ -96,8 +95,8 @@ each with both options measured, never "someone should decide".
 - **"Contrast beats palette purity" as a standing call** — ~100 fixes sat
   blocked for hours on exactly this question. Pre-answering it in the
   prompt is the single highest-leverage sentence.
-- **"tsc -b does not cover e2e" / exit-code note** — both burned this
-  session: hours of "types verified" that verified nothing.
+- **The exit-code note** — it burned this session: hours of "types
+  verified" that verified nothing.
 - **"At most the genuinely open questions, both options measured"** — the
   session's "needs a decision" pile shrank every time someone measured both
   branches; two of seven items dissolved entirely on measurement.
