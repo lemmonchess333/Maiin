@@ -80,19 +80,18 @@ Expected output: `[seed-e2e-user] Created user: <uid>` then
 `Profile written for <uid>`. If it says "user already exists" that's
 fine — the script is idempotent.
 
-Then seed the default crews so `/social` → Crews renders real data
-instead of an empty list (issue #846 — the client no longer seeds
-these; the Admin SDK does):
+Then run the rest of the seed chain `emulator-tests.yml` runs before the
+capture specs, with the same environment, so Food, Train, Social and
+Analytics render real data rather than a cold start:
 
 ```bash
-GCLOUD_PROJECT=demo-tropos \
-  FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 \
-  npm run seed:default-crews
+for s in seed:rich seed:circles seed:experience seed:fellbehind seed:liftreturn seed:season; do
+  E2E_AUTH_EMULATOR=1 GCLOUD_PROJECT=demo-tropos \
+    FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099 \
+    FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 \
+    npm run "$s"
+done
 ```
-
-Expected output: four `Created: <name>` lines. Idempotent — a re-run
-prints `Skip (exists)` for each. (No `--prod` flag needed: the
-emulator host is set, so the production guard is satisfied.)
 
 ### 3. Build the preview bundle
 
@@ -203,7 +202,7 @@ any specific PR — note them in findings, don't FAIL for them:
 | Food / scanner / favourites                         | `/food` composer focus, suggestions dropdown, scan button           |
 | Program / Run scheduler / DayActionSheet            | `/program` Day peek → Manage CTA                                    |
 | Settings sections                                   | `/settings/*` route per section                                     |
-| Social / feed / crews                               | `/social` and sub-tabs                                              |
+| Social / feed / circles / spaces                    | `/social` and sub-tabs                                              |
 
 ## When to file a `verifier-*` upgrade
 
