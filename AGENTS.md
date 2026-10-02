@@ -17,11 +17,11 @@ npm run build        # tsc check + production build  — must pass before submit
 npm run lint         # ESLint (TS/TSX only; functions/ is excluded)
 npm run test         # Vitest unit tests
 npm run test:e2e     # Playwright E2E
-npm run verify       # lint + build + test in one shot — the pre-handback gate
+npm run verify       # lint, form-art checks, build, unit tests — the pre-handback gate
 ```
 
-Run `npm run verify` (= `npm run lint && npm run build && npm run test`)
-before you hand work back.
+Run `npm run verify` (lint, the two form-art checks, build, then the unit
+tests — `package.json` has the exact chain) before you hand work back.
 
 ## Repo conventions
 
@@ -49,12 +49,11 @@ non-negotiables, inline so you can't miss them:
    Sans.** Two fonts, no third — ever.
 4. **44px minimum touch target** (iOS shell).
 5. **Use the primitives** (`Button`, `IconButton`, `Banner`, `BottomSheet`,
-   `Dialog`, `.ds-card`, `.ds-input`) — don't hand-roll a button from a `div`.
+   `Dialog`, `Card`, `.ds-input`) — don't hand-roll a button from a `div`.
 6. **Colours come from tokens, never hardcoded hex** — Tailwind classes
-   (`bg-primary`, `text-muted-foreground`, `bg-primary-strong` for filled CTAs)
-   or the `THEME` object from `@/lib/theme` (e.g. `THEME.running` for coral,
-   which has no HSL token yet). Tints use the hex-alpha suffix pattern
-   (`${THEME.running}0F` = 6%).
+   (`bg-primary`, `text-muted-foreground`, `bg-primary-strong` for filled CTAs,
+   `text-running` and a `bg-running/12` wash for coral), or the `THEME` object
+   from `@/lib/theme` where a class can't reach (charts, SVG).
 7. **Light AND dark mode must both work.** Verify both.
 8. **WCAG AA contrast** + **reduced-motion** respected.
 9. **Calm over flashy, breathing room over density.** When in doubt, do less.

@@ -2,7 +2,7 @@
 
 The money/data-critical Cloud Functions are **already instrumented** — each emits
 a greppable success/failure line (audited 2026-06-12). This runbook turns the
-scattered `CLAUDE.md` "pre-launch QA backlog" items into a one-stop checklist:
+scattered pre-launch QA backlog items (`docs/qa/pre-launch-backlog.md`) into a one-stop checklist:
 for each function, the **Cloud Logging filter**, the **expected log line**, and
 the **Firestore doc** to spot-check. Run a query in
 [Cloud Logging](https://console.cloud.google.com/logs) (project

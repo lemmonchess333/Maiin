@@ -141,5 +141,5 @@ Recorded because they generalise beyond nutrition.
 #1961 touched `functions/`. The deploy ran and its log names
 `weeklyPerformanceRollup` and `dailyPerformanceRefresh` as updated, but per
 the standing dedup gotcha the conclusive proof is the deployed source. The
-row in `CLAUDE.md` ("Adherence scored against the learned calorie target")
+row in `docs/qa/pre-launch-backlog.md` ("Adherence scored against the learned calorie target")
 carries the Console spot-check and the two production checks.

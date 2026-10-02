@@ -36,4 +36,19 @@ function redactVertexResponse(data, opts = {}) {
   };
 }
 
-module.exports = { redactVertexResponse };
+/**
+ * Token counts from a Vertex AI response, for one cost line per call:
+ * numbers only, never the prompt, the image or the reply. Without them
+ * nothing shows what each AI endpoint costs.
+ */
+function vertexUsage(data) {
+  const usage = data && typeof data === "object" ? data.usageMetadata : null;
+  const count = (v) => (typeof v === "number" ? v : null);
+  return {
+    promptTokens: count(usage && usage.promptTokenCount),
+    outputTokens: count(usage && usage.candidatesTokenCount),
+    totalTokens: count(usage && usage.totalTokenCount),
+  };
+}
+
+module.exports = { redactVertexResponse, vertexUsage };

@@ -80,24 +80,23 @@ Expected output: `[seed-e2e-user] Created user: <uid>` then
 `Profile written for <uid>`. If it says "user already exists" that's
 fine — the script is idempotent.
 
-Then seed the default crews so `/social` → Crews renders real data
-instead of an empty list (issue #846 — the client no longer seeds
-these; the Admin SDK does):
+Then run the rest of the seed chain `emulator-tests.yml` runs before the
+capture specs, with the same environment, so Food, Train, Social and
+Analytics render real data rather than a cold start:
 
 ```bash
-GCLOUD_PROJECT=demo-tropos \
-  FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 \
-  npm run seed:default-crews
+for s in seed:rich seed:circles seed:experience seed:fellbehind seed:liftreturn seed:season; do
+  E2E_AUTH_EMULATOR=1 GCLOUD_PROJECT=demo-tropos \
+    FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099 \
+    FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 \
+    npm run "$s"
+done
 ```
-
-Expected output: four `Created: <name>` lines. Idempotent — a re-run
-prints `Skip (exists)` for each. (No `--prod` flag needed: the
-emulator host is set, so the production guard is satisfied.)
 
 ### 3. Build the preview bundle
 
 The `VITE_USE_EMULATORS=true` flag triggers `connectAuthEmulator()` +
-`connectFirestoreEmulator()` calls in `src/lib/firebase.ts:69`. The
+`connectFirestoreEmulator()` calls in `src/lib/firebase.ts`. The
 other `VITE_FIREBASE_*` vars can be dummy strings — only the
 project ID needs to match the emulator.
 
@@ -133,8 +132,10 @@ MUST:
 - Use `waitUntil: "domcontentloaded"` not `"networkidle"` — Firebase
   SDK keeps the network busy with background calls that have no
   emulator route
-- Use `#login-email` / `#login-password` / `button[type="submit"]`
-  selectors (matches `e2e/helpers/auth.ts`)
+- Reach the sign-in form the way `openSignInForm` in `e2e/helpers/auth.ts`
+  does: a browser that has never signed in opens on the welcome screen, so
+  tap "I have an account" first. Then use the `#login-email` /
+  `#login-password` / `button[type="submit"]` selectors
 - Wait for `<nav>` first child visible as the sign-in success signal
   (bottom-nav only renders inside authenticated Layout)
 - Capture console errors via `page.on("pageerror", ...)` and
@@ -178,19 +179,11 @@ These come from the container, not the diff under review:
 - `MetadataLookupWarning` / `DEP0040 (punycode)` in seed-script
   output — Node.js deprecations + GCP metadata fallback
 
-## Known pre-existing bugs surfaced
+## If `/program` fails to load for the seeded user
 
-These reproduce against the seeded user but aren't introduced by
-any specific PR — note them in findings, don't FAIL for them:
-
-- **`useProgram` setDoc with `undefined primaryGoal` — FIXED (2026-06).**
-  This used to surface as "Failed to load programme" on `/program` for
-  the seeded user (no `primaryGoal` → `setDoc({ primaryGoal: undefined })`
-  rejected by Firestore). The `setDocGuarded` migration (which strips
-  `undefined` recursively) closed it: `/program` now creates the initial
-  program and renders the cockpit cleanly for a fresh seeded user. Kept
-  here as a record — if it ever recurs, suspect a raw `setDoc`/`addDoc`
-  bypassing the guarded wrappers.
+Suspect a raw `setDoc`/`addDoc` that bypasses the guarded wrappers in
+`src/lib/firestoreWrite.ts`: Firestore rejects a write carrying an
+`undefined` field, and the wrappers strip them.
 
 ## What to verify per common change type
 
@@ -203,7 +196,7 @@ any specific PR — note them in findings, don't FAIL for them:
 | Food / scanner / favourites                         | `/food` composer focus, suggestions dropdown, scan button           |
 | Program / Run scheduler / DayActionSheet            | `/program` Day peek → Manage CTA                                    |
 | Settings sections                                   | `/settings/*` route per section                                     |
-| Social / feed / crews                               | `/social` and sub-tabs                                              |
+| Social / feed / circles / spaces                    | `/social` and sub-tabs                                              |
 
 ## When to file a `verifier-*` upgrade
 

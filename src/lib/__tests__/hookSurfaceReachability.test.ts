@@ -81,7 +81,7 @@ function stripInert(src: string): string {
  * how a gate turns into a rubber stamp. Format `path:property`.
  */
 const PINNED_HOOK_PROPERTIES = [
-  // Documented in CLAUDE.md as a pinned orphan: the offline-queue row calls
+  // Documented as a pinned orphan in docs/qa/pre-launch-backlog.md: the offline-queue row calls
   // it out by name ("`useWorkouts.saveWorkout` is a pinned orphan") while
   // explaining that no WORKOUT surface routes through the offline queue.
   // Deliberate, and not mine to reverse.

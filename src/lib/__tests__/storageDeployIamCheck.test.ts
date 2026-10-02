@@ -9,7 +9,7 @@
  * releases the rules without it and still reports success, while every
  * upload they guard is refused. The first release of the freeze
  * (2026-09-15) went out exactly that way, from CI with nothing checking
- * the role (CLAUDE.md, the packet-11 QA row).
+ * the role (docs/qa/pre-launch-backlog.md, the packet-11 row).
  *
  * `scripts/verify_storage_rules_iam.py` is the check, and
  * `scripts/test_verify_storage_rules_iam.py` tests what it decides. This

@@ -113,7 +113,7 @@ describe("Tooltip", () => {
        under jsdom where pointer-event simulation is fragile. */
   });
 
-  /* QA backlog automations (CLAUDE.md "Pre-launch QA backlog") —
+  /* QA backlog automations (docs/qa/pre-launch-backlog.md) —
      covers what's tractable in jsdom. Visual checks (light/dark,
      iOS Safari rubber-band) stay manual. */
 

@@ -27,8 +27,8 @@ HOLD IT AGAINST:
   measured against the surface the element ACTUALLY renders on
   (BottomSheet bodies paint --background, not --card).
 - Consistency: one treatment per element kind — dates (en-GB), units
-  (spaced: "60 kg"), uppercase labels (SectionLabel), page titles
-  (text-xl).
+  (spaced: "60 kg"), sentence-case labels (SectionLabel), page titles
+  (PageShell's text-h1).
 
 METHOD — non-negotiable:
 - Evidence is the capture channel (push to claude/screenshot-app, read the
@@ -42,8 +42,7 @@ METHOD — non-negotiable:
   re-deciding anything; check docs/design-backlog.md and
   docs/visual-audit/ for prior findings and their status.
 - Mutation-check every new test guard. Verify with the tool that actually
-  runs the code (tsc -b does NOT cover e2e; `cmd | tail; echo $?` reports
-  tail's exit code).
+  runs the code (`cmd | tail; echo $?` reports tail's exit code).
 
 DECISION AUTHORITY: visual-design decisions are delegated — decide and
 ship rather than stalling on "needs a decision" piles. Standing calls
@@ -59,8 +58,8 @@ must change one):
   keep fixed hexes; TEXT and state-bearing UI parts take the theme-aware
   AA step (-strong tokens, --teal). Where one value feeds both, split it
   (the CardColour hue/textHue pattern).
-- Page titles are text-xl. Uppercase micro-labels go through
-  SectionLabel. Units are spaced. Dates are en-GB.
+- Page titles come from PageShell (text-h1). Labels are sentence case
+  and go through SectionLabel. Units are spaced. Dates are en-GB.
 - Record each new decision where the next agent will hit it: the audit
   doc's STATUS trail, CLAUDE.md if it changes a documented claim, and a
   plan-file lock row for anything architectural.
@@ -96,8 +95,8 @@ each with both options measured, never "someone should decide".
 - **"Contrast beats palette purity" as a standing call** — ~100 fixes sat
   blocked for hours on exactly this question. Pre-answering it in the
   prompt is the single highest-leverage sentence.
-- **"tsc -b does not cover e2e" / exit-code note** — both burned this
-  session: hours of "types verified" that verified nothing.
+- **The exit-code note** — it burned this session: hours of "types
+  verified" that verified nothing.
 - **"At most the genuinely open questions, both options measured"** — the
   session's "needs a decision" pile shrank every time someone measured both
   branches; two of seven items dissolved entirely on measurement.
