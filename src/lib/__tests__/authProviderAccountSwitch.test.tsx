@@ -28,12 +28,15 @@
  * note on `rejectRead` in firestoreFake.ts.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { useEffect } from "react";
 import { render, screen, act, cleanup, waitFor } from "@testing-library/react";
 
 // Hoisted shared state (vi.mock factories are hoisted above module init).
 const H = vi.hoisted(() => ({
   mockAuth: { currentUser: null as { uid: string } | null },
   authCb: null as ((u: { uid: string } | null) => void) | null,
+  signUp: null as null | ((email: string, password: string) => Promise<void>),
+  sendInitial: vi.fn(async (_uid: string) => {}),
 }));
 const mockAuth = H.mockAuth;
 
@@ -93,7 +96,10 @@ vi.mock("@/lib/firestoreWrite", () => ({
   updateDocGuarded: vi.fn().mockResolvedValue(undefined),
 }));
 vi.mock("@/lib/lifecycleAnalytics", () => ({ track: vi.fn() }));
-vi.mock("@/lib/accountSecurity", () => ({ sendVerificationEmail: vi.fn() }));
+vi.mock("@/lib/accountSecurity", () => ({
+  sendVerificationEmail: vi.fn(),
+  sendInitialVerificationEmail: H.sendInitial,
+}));
 vi.mock("@/lib/captureTimezone", () => ({
   getDeviceTimezone: () => "UTC",
   shouldUpdateTimezone: () => false,
@@ -110,7 +116,12 @@ import {
 } from "@/test/firestoreHarness";
 
 function Probe() {
-  const { user, profile, loading } = useAuth();
+  const auth = useAuth();
+  // Hand the sign-up action to the test that drives it.
+  useEffect(() => {
+    H.signUp = auth.signUp;
+  }, [auth.signUp]);
+  const { user, profile, loading } = auth;
   return (
     <div
       data-testid="s"
@@ -234,5 +245,21 @@ describe("AuthProvider — account switch isolation", () => {
     await emit("A");
     expect(state().p).toBe("A");
     expect(state().loading).toBe("false");
+  });
+});
+
+describe("AuthProvider — email sign-up", () => {
+  it("sends the verification link at sign-up, so onboarding need not wait for it", async () => {
+    const { createUserWithEmailAndPassword } = await import("firebase/auth");
+    vi.mocked(createUserWithEmailAndPassword).mockImplementationOnce(
+      async () => {
+        mockAuth.currentUser = { uid: "N" };
+        return { user: { uid: "N", email: "n@example.com" } } as never;
+      }
+    );
+    await act(async () => {
+      await H.signUp!("n@example.com", "secret-123");
+    });
+    await waitFor(() => expect(H.sendInitial).toHaveBeenCalledWith("N"));
   });
 });

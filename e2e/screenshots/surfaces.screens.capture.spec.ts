@@ -1,4 +1,5 @@
 import { verifySignupEmail } from "../helpers/verifySignupEmail";
+import { openSignUpForm } from "../helpers/auth";
 /**
  * Three surfaces the operator flagged from device screenshots, filmed
  * before/after so the visual change is evidenced rather than asserted
@@ -135,9 +136,7 @@ test.describe(`home + food surfaces (${PHASE})`, () => {
     const email = `surfaces-${Date.now()}-${Math.floor(Math.random() * 1e6)}@tropos.test`;
     await page.goto("/");
     await page.waitForLoadState("networkidle");
-    await page
-      .getByRole("button", { name: /sign up/i })
-      .click({ timeout: 20_000 });
+    await openSignUpForm(page);
     await page.fill("#login-email", email);
     await page.fill("#login-password", "test-password-123");
     await page

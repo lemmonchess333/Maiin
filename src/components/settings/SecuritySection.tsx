@@ -19,7 +19,6 @@ import {
 interface SecuritySectionProps {
   user: User | null;
   inline?: boolean;
-  duringSetup?: boolean;
 }
 
 const INPUT_CLASS =
@@ -46,7 +45,6 @@ function oauthLabel(user: User): string | null {
 export default function SecuritySection({
   user,
   inline,
-  duringSetup = false,
 }: SecuritySectionProps) {
   const [dialog, setDialog] = useState<null | "password" | "email">(null);
   const [currentPassword, setCurrentPassword] = useState("");
@@ -197,9 +195,9 @@ export default function SecuritySection({
         {user.email && !emailVerified && (
           <div className="rounded-xl bg-card p-3 space-y-2">
             <p className="text-sm text-muted-foreground">
-              {duringSetup
-                ? "Verify your email to finish setting up Tropos. You can still manage or delete your account here."
-                : "Verify your email to post or comment. You can keep logging workouts and meals, and manage or delete your account while unverified."}
+              Verify your email to post or comment. You can keep logging
+              workouts and meals, and manage or delete your account while
+              unverified.
             </p>
             <div className="flex gap-2">
               <Button

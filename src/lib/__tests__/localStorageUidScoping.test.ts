@@ -49,6 +49,8 @@ const DEVICE_SCOPED: Record<string, string> = {
   "bk-font-combo": "dev-only font bake-off switch (src/dev)",
   "tropos.account_deleted":
     "written precisely when there is no longer an account to scope to",
+  "tropos.signed_in_before":
+    "whether ANY account has signed in on this phone: the signed-out screen reads it to choose the welcome screen or Sign in, and there is no account to scope it to there",
   "tropos.food.calorieRingMode":
     "FoodHeroCard display preference (left vs eaten) — a device choice, not a fact about an account",
   "tropos.food.proHintDismissed":

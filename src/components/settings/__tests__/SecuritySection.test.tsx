@@ -16,7 +16,9 @@ vi.mock("@/lib/toast", () => ({
   toast: { success: h.success, error: h.error },
 }));
 vi.mock("@/lib/logger", () => ({ logger: { error: vi.fn() } }));
+vi.mock("@/lib/lifecycleAnalytics", () => ({ track: vi.fn() }));
 import SecuritySection from "../SecuritySection";
+import { track } from "@/lib/lifecycleAnalytics";
 function makeUser() {
   const user = {
     uid: "u1",
@@ -48,6 +50,8 @@ describe("account verification", () => {
     await screen.findByText("Verified", { exact: true });
     expect(user.getIdToken).toHaveBeenCalledWith(true);
     expect(h.success).toHaveBeenCalledWith("Email verified");
+    // Settings' check is one of those that report the funnel event.
+    expect(track).toHaveBeenCalledWith("email_verified", { method: "email" });
   });
   it("keeps a retry action when the refreshed token cannot be obtained", async () => {
     const user = makeUser();

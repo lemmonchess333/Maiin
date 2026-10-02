@@ -76,6 +76,7 @@ import LiftReturnSheet from "@/components/program/LiftReturnSheet";
 import { useSurface } from "@/components/SurfaceCoordinatorProvider";
 import { useEducationCard } from "@/components/EducationLaneProvider";
 import StackedCTACards from "@/components/home/StackedCTACards";
+import VerifyEmailBanner from "@/components/home/VerifyEmailBanner";
 import StepsPrimingModal from "@/components/home/StepsPrimingModal";
 import { useSteps } from "@/hooks/useSteps";
 import PerformanceHeroCard from "@/components/home/PerformanceHeroCard";
@@ -682,6 +683,25 @@ export default function Home() {
   // returns null when today isn't a lift/both day or the schedule
   // has drifted past workouts[].length.
   const nextWorkout = resolvedToday.lift.workout;
+  /* A new person's first workout is ready any day (lifts follow the
+     rotation, ADR-0002), so on a rest day ask the lift-day question. */
+  const brandNewLifter =
+    todayType === "rest" &&
+    getActivationFraming({
+      createdAtMs,
+      nowMs,
+      todayType: "lift",
+      workoutCount: workouts.length,
+      runCount: 1,
+      mealCount: 1,
+    }).firstWorkout;
+  const restDayFirstWorkoutIndex = brandNewLifter
+    ? (programState?.workouts?.findIndex((w) => !w.completed) ?? -1)
+    : -1;
+  const restDayFirstWorkout =
+    restDayFirstWorkoutIndex >= 0
+      ? (programState?.workouts?.[restDayFirstWorkoutIndex] ?? null)
+      : null;
   const liftPurpose = liftSessionExplainer(
     programState,
     localDateString(),
@@ -1027,11 +1047,23 @@ export default function Home() {
                 firstRun={activationFraming.firstRun}
                 firstMeal={activationFraming.firstMeal}
                 tomorrow={tomorrowSession}
+                restDayFirstWorkout={restDayFirstWorkout}
+                restDayFirstWorkoutIndex={restDayFirstWorkoutIndex}
+                freeRunner={
+                  profile?.runMode === "freeform" &&
+                  profile?.athleteType === "Runner"
+                }
               />
             </SectionErrorBoundary>
           </TrackSectionView>
         )}
       </motion.div>
+
+      {/* Email accounts verify after the plan; this asks, under today's
+          session rather than above it. Renders nothing once verified. */}
+      <SectionErrorBoundary sectionName="verify-email">
+        <VerifyEmailBanner />
+      </SectionErrorBoundary>
 
       <motion.div
         variants={{

@@ -15,6 +15,7 @@ import {
   type OnboardingDraft,
 } from "@/lib/onboardingDraft";
 import * as planning from "@/lib/onboardingPlan";
+import { setDocGuarded } from "@/lib/firestoreWrite";
 const { complete, refresh } = vi.hoisted(() => ({
   complete: vi.fn(),
   refresh: vi.fn().mockResolvedValue(undefined),
@@ -131,7 +132,7 @@ describe("onboarding chapters and commit", () => {
           resolve = done;
         })
     );
-    const commit = screen.getByRole("button", { name: "Create my plan" });
+    const commit = screen.getByRole("button", { name: "Start my plan" });
     fireEvent.click(commit);
     fireEvent.click(commit);
     expect(complete).toHaveBeenCalledTimes(1);
@@ -141,8 +142,25 @@ describe("onboarding chapters and commit", () => {
     expect(payload.profileData.weeklyRunDaysTarget).toBe(0);
     expect(payload.profileData.goalWeightKg).toBe(81.5);
     expect(payload.profileData.weeklyRateKg).toBe(0);
+    // The plan's `program` is merged in, not assigned over the map: the
+    // start weight and phase set beside the nutrition phase survive.
+    expect(payload.profileData.program).toEqual({
+      goal: preview.profileUpdates.program.goal,
+      startWeight: 81.5,
+      currentPhase: "base",
+    });
     resolve({ data: {} });
     await waitFor(() => expect(refresh).toHaveBeenCalledTimes(1));
+    // The public profile seed leaves the photo alone: sign-up wrote the
+    // Google or Apple photo there, and a null erased it.
+    await waitFor(() => expect(setDocGuarded).toHaveBeenCalledTimes(1));
+    const [, seed, options] = vi.mocked(setDocGuarded).mock.calls[0];
+    expect(seed).toMatchObject({
+      uid: "setup-test",
+      displayName: "Test athlete",
+    });
+    expect(seed).not.toHaveProperty("photoURL");
+    expect(options).toEqual({ merge: true });
     expect(loadOnboardingDraft("setup-test", 7)).toBeNull();
     await waitFor(() =>
       expect(screen.getByLabelText("Current route")).toHaveTextContent(
@@ -155,7 +173,7 @@ describe("onboarding chapters and commit", () => {
     saveOnboardingDraft("setup-test", draft);
     complete.mockRejectedValue({ code: "functions/permission-denied" });
     open();
-    fireEvent.click(screen.getByRole("button", { name: "Create my plan" }));
+    fireEvent.click(screen.getByRole("button", { name: "Start my plan" }));
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "We couldn’t save your plan"
     );
@@ -165,6 +183,15 @@ describe("onboarding chapters and commit", () => {
     expect(loadOnboardingDraft("setup-test", 7)?.weightKg).toBe(81.5);
     expect(refresh).not.toHaveBeenCalled();
   });
+  it("does not blame the connection when the server refuses an answer", async () => {
+    saveOnboardingDraft("setup-test", draft);
+    complete.mockRejectedValue({ code: "functions/invalid-argument" });
+    open();
+    fireEvent.click(screen.getByRole("button", { name: "Start my plan" }));
+    const alert = await screen.findByRole("alert");
+    expect(alert).toHaveTextContent("one of your answers wasn’t accepted");
+    expect(alert).not.toHaveTextContent("connection");
+  });
   it("does not allow a typed past race date to be committed", () => {
     saveOnboardingDraft("setup-test", {
       ...draft,
@@ -173,13 +200,24 @@ describe("onboarding chapters and commit", () => {
     });
     open();
     expect(
-      screen.getByRole("button", { name: "Create my plan" })
+      screen.getByRole("button", { name: "Start my plan" })
     ).toBeDisabled();
     fireEvent.click(screen.getByRole("button", { name: "Edit running" }));
     expect(screen.getByLabelText(/Race target date/)).toHaveAttribute(
       "aria-invalid",
       "true"
     );
+  });
+});
+
+describe("the review in the person's own units", () => {
+  it("shows a height entered in feet and inches in feet and inches", () => {
+    saveOnboardingDraft("setup-test", { ...draft, heightUnit: "ft" });
+    open();
+    expect(
+      screen.getByText("81.5 kg · 5 ft 9 in · age 25-34")
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/175 cm/)).toBeNull();
   });
 });
 
@@ -235,7 +273,7 @@ describe("activity-relevant setup", () => {
       within(openWeek).getByRole("button", { name: "Mon: open day" })
     );
     expect(openWeek).toHaveTextContent("Mon · Run when it suits you.");
-    fireEvent.click(screen.getByRole("button", { name: "Create my plan" }));
+    fireEvent.click(screen.getByRole("button", { name: "Start my plan" }));
     await waitFor(() => expect(refresh).toHaveBeenCalledTimes(1));
     const payload = complete.mock.calls[0][0];
     expect(payload.programState.workouts).toEqual([]);
@@ -284,7 +322,7 @@ describe("activity-relevant setup", () => {
     expect(
       screen.getByRole("region", { name: "First run preview" })
     ).toHaveTextContent("Free running");
-    fireEvent.click(screen.getByRole("button", { name: "Create my plan" }));
+    fireEvent.click(screen.getByRole("button", { name: "Start my plan" }));
     await waitFor(() => expect(refresh).toHaveBeenCalledTimes(1));
     expect(complete.mock.calls[0][0].programState.workouts).toHaveLength(3);
     await waitFor(() =>
@@ -393,9 +431,7 @@ describe("answers the user has not given", () => {
     // back through it — so "got past that step" counts as answered.
     saveOnboardingDraft("setup-test", { ...draft, step: 7 });
     open();
-    expect(
-      screen.getByRole("button", { name: "Create my plan" })
-    ).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Start my plan" })).toBeEnabled();
   });
 });
 

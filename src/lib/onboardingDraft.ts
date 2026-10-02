@@ -48,6 +48,20 @@ import {
 // looking like a validation failure, which is what this module's contract
 // says a schema change should do.
 export const DRAFT_VERSION = 2;
+
+/** Stable stored step IDs, by the draft's step number: they survive the
+ *  chapter redesign (the old preview, 6, merges into the review, 7), and
+ *  the onboarding analytics report a step by them. */
+export const ONBOARDING_STEP_IDS = [
+  "goal",
+  "days",
+  "equipment",
+  "run",
+  "injuries",
+  "about",
+  "preview",
+  "confirm",
+] as const;
 export const DRAFT_TTL_MS = 14 * 24 * 60 * 60 * 1000;
 
 const keyFor = (uid: string) => `tropos.onboarding.draft.${uid}`;
@@ -62,7 +76,7 @@ export const DRAFT_EXPERIENCE = [
   "intermediate",
   "advanced",
 ] as const;
-const DRAFT_GENDERS = ["male", "female", "unspecified"] as const;
+export const DRAFT_GENDERS = ["male", "female", "unspecified"] as const;
 export const DRAFT_AGE_RANGES = [
   "under-16",
   "16-24",

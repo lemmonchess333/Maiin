@@ -25,6 +25,7 @@ export default function RunCTACard({
   todayRun,
   navigate,
   isFirst = false,
+  eyebrowLabel,
   completed,
 }: {
   todayRun: ScheduledRunDay | null;
@@ -33,6 +34,9 @@ export default function RunCTACard({
   navigate: (p: string) => void;
   /** #972 cold-start framing: frame this as the user's first run. */
   isFirst?: boolean;
+  /** Replaces the label above the title, for a run that is not today's
+   *  planned session (free running plans none). */
+  eyebrowLabel?: string;
   completed?: boolean;
 }) {
   const tmpl = todayRun
@@ -79,7 +83,8 @@ export default function RunCTACard({
   /* No plan position ("Base · week 3 of 16") and no rationale: Home
      shows the session and its dose, and both live in the day's details
      (owner direction, 2026-09-09; pinned in SessionPurpose.test.tsx). */
-  const eyebrow = isFirst ? "Your first run" : "Today · Run day";
+  const eyebrow =
+    eyebrowLabel ?? (isFirst ? "Your first run" : "Today · Run day");
 
   return (
     <div

@@ -2,6 +2,8 @@ import { describe, it, expect, vi } from "vitest";
 import { renderHook, act, waitFor } from "@testing-library/react";
 import type { User } from "firebase/auth";
 import { useEmailVerificationGate } from "../useEmailVerificationGate";
+import { track } from "@/lib/lifecycleAnalytics";
+vi.mock("@/lib/lifecycleAnalytics", () => ({ track: vi.fn() }));
 const native = vi.hoisted(() => ({
   callback: null as null | ((state: { isActive: boolean }) => void),
   remove: vi.fn(),
@@ -25,9 +27,13 @@ vi.mock("@capacitor/app", () => ({
 // invisible to the SDK) and then force a token refresh, because Firestore
 // reuses the cached token — without the refresh the rules keep reading
 // email_verified:false for up to an hour after the link was tapped.
-function fakeUser(opts: { verifiedAfterReload: boolean }) {
+// Each account gets its own uid: the gates share which account they have
+// seen needing verification, and one test's account must not be another's.
+let accounts = 0;
+function fakeUser(opts: { verifiedAfterReload: boolean; verified?: boolean }) {
   const user = {
-    emailVerified: false,
+    uid: `account-${++accounts}`,
+    emailVerified: opts.verified ?? false,
     providerData: [{ providerId: "password" }],
     reload: vi.fn(async () => {
       user.emailVerified = opts.verifiedAfterReload;
@@ -151,5 +157,90 @@ describe("failed and stale verification checks", () => {
       await expect(pending).rejects.toThrow("Account changed");
     });
     expect(result.current.needsVerification).toBe(true);
+  });
+});
+
+describe("email_verified", () => {
+  const verifiedEvents = () =>
+    vi.mocked(track).mock.calls.filter(([e]) => e === "email_verified");
+
+  it("is reported once, by the check that confirms the address", async () => {
+    vi.mocked(track).mockClear();
+    const user = fakeUser({ verifiedAfterReload: true });
+    const { result } = renderHook(() => useEmailVerificationGate(user));
+    expect(verifiedEvents()).toHaveLength(0);
+    await act(async () => {
+      await result.current.recheck();
+    });
+    expect(verifiedEvents()).toEqual([["email_verified", { method: "email" }]]);
+    // Checking again says nothing more.
+    await act(async () => {
+      await result.current.recheck();
+    });
+    expect(verifiedEvents()).toHaveLength(1);
+  });
+
+  it("is reported once between the gates that share an account", async () => {
+    vi.mocked(track).mockClear();
+    const user = fakeUser({ verifiedAfterReload: true });
+    // The App-level gate and, say, Home's notice.
+    const app = renderHook(() => useEmailVerificationGate(user));
+    const home = renderHook(() => useEmailVerificationGate(user));
+    await act(async () => {
+      await Promise.all([
+        app.result.current.recheck(),
+        home.result.current.recheck(),
+      ]);
+    });
+    expect(app.result.current.needsVerification).toBe(false);
+    expect(verifiedEvents()).toHaveLength(1);
+  });
+
+  it("waits for the token: a failed refresh reports nothing until a check succeeds", async () => {
+    vi.mocked(track).mockClear();
+    const user = fakeUser({ verifiedAfterReload: true });
+    user.getIdToken.mockRejectedValueOnce(new Error("offline"));
+    const { result } = renderHook(() => useEmailVerificationGate(user));
+    await act(async () => {
+      await expect(result.current.recheck()).rejects.toThrow("offline");
+    });
+    expect(verifiedEvents()).toHaveLength(0);
+    await act(async () => {
+      await expect(result.current.recheck()).resolves.toBe(true);
+    });
+    expect(verifiedEvents()).toHaveLength(1);
+  });
+
+  it("says nothing for an account that never needed it", async () => {
+    vi.mocked(track).mockClear();
+    const verified = fakeUser({ verifiedAfterReload: true, verified: true });
+    const { result } = renderHook(() => useEmailVerificationGate(verified));
+    expect(result.current.needsVerification).toBe(false);
+    await act(async () => {
+      await expect(result.current.recheck()).resolves.toBe(true);
+    });
+    expect(verifiedEvents()).toHaveLength(0);
+    // Anchor: an account that did need it is reported.
+    const pending = fakeUser({ verifiedAfterReload: true });
+    const second = renderHook(() => useEmailVerificationGate(pending));
+    await act(async () => {
+      await second.result.current.recheck();
+    });
+    expect(verifiedEvents()).toHaveLength(1);
+  });
+
+  it("says nothing when a different account confirms", async () => {
+    vi.mocked(track).mockClear();
+    // An unverified account was seen on this device, then another
+    // (verified) account signed in and checked.
+    renderHook(() =>
+      useEmailVerificationGate(fakeUser({ verifiedAfterReload: false }))
+    );
+    const other = fakeUser({ verifiedAfterReload: true, verified: true });
+    const { result } = renderHook(() => useEmailVerificationGate(other));
+    await act(async () => {
+      await expect(result.current.recheck()).resolves.toBe(true);
+    });
+    expect(verifiedEvents()).toHaveLength(0);
   });
 });

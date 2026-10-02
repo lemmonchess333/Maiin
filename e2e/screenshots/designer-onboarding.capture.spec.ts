@@ -1,7 +1,7 @@
 import { verifySignupEmail } from "../helpers/verifySignupEmail";
 import { test, expect, type Page } from "@playwright/test";
 import { emulatorActive } from "../helpers/emulator";
-import { signInAsTestUser } from "../helpers/auth";
+import { openSignUpForm, signInAsTestUser } from "../helpers/auth";
 import { settleImages } from "../helpers/settleImages";
 import { suppressCoachmarks } from "../helpers/suppressCoachmarks";
 
@@ -61,7 +61,7 @@ test("free running, typed metrics, editable review and recoverable commit", asyn
 }) => {
   test.setTimeout(120_000);
   await page.goto("/");
-  await page.getByRole("button", { name: /sign up/i }).click();
+  await openSignUpForm(page);
   const email = `designer-${Date.now()}@tropos.test`;
   await page.fill("#login-email", email);
   await page.fill("#login-password", "test-password-123");
@@ -111,6 +111,9 @@ test("free running, typed metrics, editable review and recoverable commit", asyn
     .fill("175");
   await page.getByRole("radio", { name: /^25/ }).click();
   await next();
+  // The review leads with the plan; the answers fold away under one line.
+  const answers = page.locator("summary", { hasText: "Your answers" });
+  await answers.click();
   await expect(
     page.getByText("Free running · no scheduled runs")
   ).toBeVisible();
@@ -124,6 +127,7 @@ test("free running, typed metrics, editable review and recoverable commit", asyn
     .click();
   await page.getByLabel("Your public display name").fill("My training name");
   await page.reload();
+  await answers.click();
   await expect(page.getByText("3 per week")).toBeVisible();
   await expect(page.getByLabel("Your public display name")).toHaveValue(
     "My training name"
@@ -143,7 +147,7 @@ test("free running, typed metrics, editable review and recoverable commit", asyn
     });
   });
   await page
-    .getByRole("button", { name: "Create my plan", exact: true })
+    .getByRole("button", { name: "Start my plan", exact: true })
     .click();
   await expect(page.getByText(/We couldn’t save your plan/)).toBeVisible();
   await expect(

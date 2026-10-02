@@ -129,7 +129,6 @@ const SettingsSubscription = lazyRetry(
 const SettingsSupportLegal = lazyRetry(
   () => import("@/pages/settings/SettingsSupportLegal")
 );
-const VerifySignupEmail = lazyRetry(() => import("@/pages/VerifySignupEmail"));
 const SettingsAccount = lazyRetry(
   () => import("@/pages/settings/SettingsAccount")
 );
@@ -343,10 +342,13 @@ function AppRoutes() {
   const { user, profile, loading } = useAuth();
   const uid = user?.uid ?? null;
   const deletion = useAccountDeletionStatus(user?.uid);
-  const verification = useEmailVerificationGate(
-    user,
-    !profile?.onboardingComplete
-  );
+  /* Email accounts verify after the plan, not before it: onboarding opens
+     straight after sign-up, the link is already in the inbox, and Home
+     asks. Posts and comments still need the
+     verified claim (firestore.rules, the comment callables). Rechecking on
+     every return to the app is what lets a tap on the link in Mail land
+     without the person doing anything else. */
+  useEmailVerificationGate(user, true);
   // Packet 17 — non-prompting FCM token refresh on sign-in + foreground.
   usePushTokenRefresh();
 
@@ -475,20 +477,7 @@ function AppRoutes() {
               </RouteErrorBoundary>
             }
           />
-          <Route
-            path="*"
-            element={
-              verification.needsVerification ? (
-                <VerifySignupEmail
-                  key={user.uid}
-                  user={user}
-                  recheck={verification.recheck}
-                />
-              ) : (
-                <Onboarding />
-              )
-            }
-          />
+          <Route path="*" element={<Onboarding />} />
         </Routes>
       </Suspense>
     );

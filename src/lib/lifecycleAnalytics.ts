@@ -18,15 +18,28 @@
  * pre-traffic would be rewritten before it's usable. Adopt Firebase A/B
  * Testing — which rides on this same Analytics — when traffic warrants it.
  *
- * Currently wired: `signup_completed` (auth.tsx, all three providers),
- * `onboarding_completed` (Onboarding.tsx). The remaining events are
- * declared for schema stability and wired as their call sites are
- * instrumented. Paywall conversion already lives in `paywallAnalytics`.
+ * Currently wired: `auth_screen_viewed` (Login.tsx: the welcome screen and
+ * the two forms), `signup_completed` (auth.tsx, all three providers), the
+ * `onboarding_step_*` pair and `onboarding_completed` (Onboarding.tsx),
+ * `onboarding_abandoned` (signing out of an unfinished setup), and
+ * `email_verified` (the app seeing an email account's address confirmed).
+ * The remaining events are declared for schema stability and wired as their
+ * call sites are instrumented. Paywall conversion already lives in
+ * `paywallAnalytics`.
+ *
+ * Read the start of the funnel in that order: auth_screen_viewed (welcome)
+ * → auth_screen_viewed (sign_up) → signup_completed → the onboarding steps
+ * → onboarding_completed. Someone who closes the app part-way shows as the
+ * step they reached and nothing after it: a phone does not say an app was
+ * closed for good rather than paused, so `onboarding_abandoned` is sent
+ * only for the exit the app can see, signing out of setup (A1b pin 4).
  */
 import { emit } from "./analyticsClient";
 
 export type LifecycleEvent =
+  | "auth_screen_viewed"
   | "signup_completed"
+  | "email_verified"
   | "onboarding_step_viewed"
   | "onboarding_step_completed"
   | "onboarding_completed"
@@ -81,9 +94,12 @@ export type ReturnChoice =
   | "acknowledge";
 
 export interface LifecycleEventMetadata {
+  /** auth_screen_viewed: which signed-out screen was shown. */
+  screen?: "welcome" | "sign_in" | "sign_up";
   /** signup_completed: which auth provider created the account. */
   method?: SignupMethod;
-  /** onboarding_step_*: stable step identifier (non-PII). */
+  /** onboarding_step_* and onboarding_abandoned: stable step identifier
+   *  (non-PII), from ONBOARDING_STEP_IDS. */
   step?: string;
   /** onboarding_step_*: zero-based step position. */
   stepIndex?: number;

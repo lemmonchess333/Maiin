@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import SegmentedControl from "@/components/ui/SegmentedControl";
 import WeightScaleDial from "@/components/home/WeightScaleDial";
+import { HEIGHT_CM, WEIGHT_KG, heightRangeInFeet } from "@/lib/bodyMetrics";
 import {
   kgToLb,
   lbToKg,
@@ -100,8 +101,8 @@ export default function BodyInputs({
           : main;
     const valid =
       Number.isFinite(kg) &&
-      kg >= 30 &&
-      kg <= 300 &&
+      kg >= WEIGHT_KG.min &&
+      kg <= WEIGHT_KG.max &&
       (weightUnit !== "st" ||
         (Number.isInteger(main) && remaining >= 0 && remaining < 14));
     setWeightValid(valid);
@@ -116,8 +117,8 @@ export default function BodyInputs({
     const cm = heightUnit === "cm" ? main : (main * 12 + remaining) * 2.54;
     const valid =
       Number.isFinite(cm) &&
-      cm >= 100 &&
-      cm <= 250 &&
+      cm >= HEIGHT_CM.min &&
+      cm <= HEIGHT_CM.max &&
       (heightUnit !== "ft" ||
         (Number.isInteger(main) && remaining >= 0 && remaining < 12));
     setHeightValid(valid);
@@ -192,15 +193,16 @@ export default function BodyInputs({
         </div>
         {!weightValid && (
           <p role="alert" className="text-sm text-destructive-strong">
-            Enter 30–300 kg, or the equivalent in pounds.
+            Enter {WEIGHT_KG.min}–{WEIGHT_KG.max} kg, or the equivalent in
+            pounds.
           </p>
         )}
         <WeightScaleDial
           key={weightUnit}
           unit={weightUnit === "lbs" ? "lb" : weightUnit}
           value={weightUnit === "kg" ? weightKg : kgToLb(weightKg)}
-          minimum={weightUnit === "kg" ? 30 : kgToLb(30)}
-          maximum={weightUnit === "kg" ? 300 : kgToLb(300)}
+          minimum={weightUnit === "kg" ? WEIGHT_KG.min : kgToLb(WEIGHT_KG.min)}
+          maximum={weightUnit === "kg" ? WEIGHT_KG.max : kgToLb(WEIGHT_KG.max)}
           onChange={(value) => {
             const kg = weightUnit === "kg" ? value : lbToKg(value);
             onWeight(kg);
@@ -271,7 +273,7 @@ export default function BodyInputs({
         </div>
         {!heightValid && (
           <p role="alert" className="text-sm text-destructive-strong">
-            Enter 100–250 cm, or the equivalent in feet and inches.
+            Enter {HEIGHT_CM.min}–{HEIGHT_CM.max} cm ({heightRangeInFeet()}).
           </p>
         )}
       </section>

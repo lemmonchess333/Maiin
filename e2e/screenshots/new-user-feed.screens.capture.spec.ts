@@ -1,4 +1,5 @@
 import { verifySignupEmail } from "../helpers/verifySignupEmail";
+import { openSignUpForm } from "../helpers/auth";
 /**
  * A new person's Social feed, light + dark: the state every launch user
  * sees first, filmed as a genuinely fresh account.
@@ -111,9 +112,7 @@ test.describe("new person's feed screenshots", () => {
     const email = `${prefix}-${Date.now()}-${Math.floor(Math.random() * 1e6)}@tropos.test`;
     await page.goto("/");
     await page.waitForLoadState("networkidle");
-    await page
-      .getByRole("button", { name: /sign up/i })
-      .click({ timeout: 20_000 });
+    await openSignUpForm(page);
     await page.fill("#login-email", email);
     await page.fill("#login-password", "test-password-123");
     await page

@@ -32,7 +32,7 @@ import {
   getAppleCredentialNative,
 } from "@/lib/nativeAuth";
 import { setErrorReportingUid } from "./errorReporting";
-import { remove, writeString } from "@/lib/localStore";
+import { readString, remove, writeString } from "@/lib/localStore";
 import type { FieldValue, Timestamp } from "firebase/firestore";
 import { getDeviceTimezone, shouldUpdateTimezone } from "@/lib/captureTimezone";
 import {
@@ -58,6 +58,18 @@ import { auth } from "./firebaseApp";
 import { logger } from "./logger";
 import type { Goal } from "./types";
 import type { PreferredSplit } from "@/features/program/programTypes";
+
+/** Set once any account signs in on this device; the signed-out screen
+ *  reads it to tell a returning person from a new one. Device-level, not
+ *  per account, and never cleared by signing out. */
+const SIGNED_IN_BEFORE_KEY = "tropos.signed_in_before";
+
+/** Whether any account has signed in on this device: Login opens on Sign
+ *  in when one has, and on its welcome screen when none has. */
+// eslint-disable-next-line react-refresh/only-export-components
+export function hasSignedInOnThisDevice(): boolean {
+  return readString(SIGNED_IN_BEFORE_KEY) === "1";
+}
 
 /* ================================
    FIRESTORE, ON FIRST USE
@@ -898,6 +910,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       activeUidRef.current = uid;
       setUser(firebaseUser);
+      // This device has had an account: the signed-out screen greets the
+      // person as returning, not as new (Login's welcome screen).
+      if (firebaseUser) writeString(SIGNED_IN_BEFORE_KEY, "1");
       // Track the current UID on errorReporting so the Firestore sink
       // writes critical errors under the correct user doc. Null clears it
       // on sign-out so orphaned errors don't leak to a stale UID.
@@ -1091,7 +1106,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (auth.currentUser?.uid !== uid) return;
       setProfile(newProfile);
       trackLifecycle("signup_completed", { method: "email" });
-      // The signup verification screen owns delivery, retry and error feedback.
+      // The verification link goes out now, so it is waiting in the inbox
+      // by the time the plan is made; onboarding no longer stops for it.
+      // A failed send is not the sign-up's failure: Home's verify notice
+      // and Settings → Account both offer Resend.
+      void import("@/lib/accountSecurity")
+        .then(({ sendInitialVerificationEmail }) =>
+          sendInitialVerificationEmail(uid)
+        )
+        .catch((err) => logger.warn("Signup verification email not sent", err));
     },
     [revokeOutgoingAccountDeviceState]
   );

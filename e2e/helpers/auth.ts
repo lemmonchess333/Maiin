@@ -35,6 +35,37 @@ export const TEST_USER = {
 };
 
 /**
+ * A browser that has never signed in opens on the welcome screen, where
+ * "Get started" leads to the sign-up form. One that has signed in before
+ * opens on the sign-in form, whose "Sign up" switches to it. Either way this
+ * returns with the sign-up form showing.
+ */
+export async function openSignUpForm(page: Page): Promise<void> {
+  const getStarted = page.getByRole("button", {
+    name: "Get started",
+    exact: true,
+  });
+  const signUp = page.getByRole("button", { name: /sign up/i });
+  await expect(getStarted.or(signUp)).toBeVisible({ timeout: 20_000 });
+  await ((await getStarted.isVisible()) ? getStarted : signUp).click();
+  await page
+    .locator("#login-email")
+    .waitFor({ state: "visible", timeout: 20_000 });
+}
+
+/** The sign-in form, by "I have an account" from the welcome screen. */
+export async function openSignInForm(page: Page): Promise<void> {
+  const haveAccount = page.getByRole("button", {
+    name: "I have an account",
+    exact: true,
+  });
+  const email = page.locator("#login-email");
+  await expect(haveAccount.or(email)).toBeVisible({ timeout: 20_000 });
+  if (await haveAccount.isVisible()) await haveAccount.click();
+  await email.waitFor({ state: "visible", timeout: 20_000 });
+}
+
+/**
  * Signs in via the real Login form. Times out after 15s waiting for
  * the auth redirect to /. If the form rejects (wrong creds, network
  * error), the redirect never happens and the test fails clearly
@@ -62,9 +93,7 @@ export async function signInAsTestUser(
   await page.goto("/");
   await page.waitForLoadState("networkidle");
   try {
-    await page
-      .locator("#login-email")
-      .waitFor({ state: "visible", timeout: 20_000 });
+    await openSignInForm(page);
   } catch (err) {
     // Dump page content + console history so the next CI failure
     // shows what's actually rendered. Without this we just see
