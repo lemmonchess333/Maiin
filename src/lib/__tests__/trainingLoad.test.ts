@@ -211,6 +211,24 @@ describe("B1 — evaluateLoadGuardrails", () => {
     expect(quiet.advisory).toBeNull();
   });
 
+  it("days before the first session are not a base", () => {
+    // A new account: the chart's range runs back over empty weeks, then a
+    // first week of training. Before, those zeros passed the 28-day check
+    // and read as a ~300% ramp.
+    const g = evaluateLoadGuardrails(
+      pointsFrom([...Array(30).fill(0), 60, 0, 30, 0, 60, 0, 60])
+    );
+    expect(g.acwr).toBeNull();
+    expect(g.advisory?.kind).not.toBe("ramp_spike");
+  });
+
+  it("zeros after the first session still count: a ramp back is real", () => {
+    const g = evaluateLoadGuardrails(
+      pointsFrom([30, ...Array(27).fill(0), 60, 60, 55, 60, 65, 60, 60])
+    );
+    expect(g.advisory?.kind).toBe("ramp_spike");
+  });
+
   it("seven identical training days fire the monotony advisory (capped, not NaN)", () => {
     const g = evaluateLoadGuardrails(pointsFrom(Array(28).fill(60)));
     expect(g.acwr).toBeCloseTo(1.0, 1);

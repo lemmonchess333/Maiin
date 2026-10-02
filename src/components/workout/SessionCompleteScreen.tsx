@@ -89,7 +89,9 @@ export default function SessionCompleteScreen({
   const duration = {
     to: minutes,
     format: clock,
-    unit: minutes >= 60 ? "hours" : minutes === 1 ? "minute" : "minutes",
+    // "1:00" is an hour and no minutes; under it, "hours" read as one
+    // figure in hours ("1:00 hours").
+    unit: minutes >= 60 ? "hr:min" : minutes === 1 ? "minute" : "minutes",
   };
 
   /* Timed exercises contribute no tonnage — a hold's `reps` is a

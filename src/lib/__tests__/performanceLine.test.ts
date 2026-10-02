@@ -3,6 +3,7 @@ import {
   getVerb,
   getVerbState,
   getLine,
+  getEstablishingLine,
   VERB_LABEL,
   EMPTY_STATE_LINE,
   performanceEmptyCopy,
@@ -258,5 +259,29 @@ describe("performanceEmptyCopy", () => {
     expect(pending.headline).not.toBe(cold.headline);
     expect(pending.sub).not.toBe(cold.sub);
     expect(pending.showAction).not.toBe(cold.showAction);
+  });
+});
+
+describe("getEstablishingLine — while the baseline forms", () => {
+  it("never compares a new account with a usual week it doesn't have", () => {
+    expect(getEstablishingLine({ ...ZERO_SIGNALS, lifetimeWeeks: 1 })).toBe(
+      "Establishing your week"
+    );
+    expect(getEstablishingLine({ ...ZERO_SIGNALS, lifetimeWeeks: 2 })).toBe(
+      "Settling in"
+    );
+    // A strong week that getLine would call "97% above your usual week".
+    const ahead = {
+      ...ZERO_SIGNALS,
+      lifetimeWeeks: 1,
+      liftAheadOfBaseline: 0.97,
+    };
+    expect(getEstablishingLine(ahead)).not.toMatch(/usual/);
+  });
+
+  it("asks for a session after more than a week off", () => {
+    expect(
+      getEstablishingLine({ ...ZERO_SIGNALS, daysSinceLastTraining: 9 })
+    ).toBe("Re-engaging — log a session to refresh");
   });
 });

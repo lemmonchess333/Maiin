@@ -1102,12 +1102,14 @@ export function useProgram() {
       const nextLiftWeekKey = localWeekKey(
         addLocalDays(parseLocalDate(currentRunWeekKey), 7)
       );
-      const advanced = advanceWeek(
-        rolling,
-        profile.experience,
-        recovery,
-        nextLiftWeekKey
-      );
+      // A lift anchor already at or past that week (a Thursday-to-Sunday
+      // start's long first week, or a manual "next week") holds the lift
+      // side still; the runs, which are date-pinned (ADR-0002), roll on.
+      const liftsAhead =
+        !!rolling.liftWeekKey && rolling.liftWeekKey >= nextLiftWeekKey;
+      const advanced = liftsAhead
+        ? { ...rolling }
+        : advanceWeek(rolling, profile.experience, recovery, nextLiftWeekKey);
 
       // Advance run side. Compute the next week's start key. Take
       // one week step from the current runDay week key.

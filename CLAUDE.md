@@ -1068,7 +1068,9 @@ or touching a CTA button, route it through `Button` with the variant above.
 - **Pages:** src/pages/ — route-level, lazy-loaded
 - **Home screen built from:** WeekStrip → DayPeekCard → StackedCTACards
   (LiftCTACard / RunCTACard / RestDayCard — Start on the card, no pills) →
-  TodayEnergy → WaterCard → WeightStepsTiles → the "This week" card:
+  FirstWeekCard (a new account's first seven days) → NewBadgeRow (a
+  waiting badge, opened on tap; badges never open over Home by
+  themselves) → TodayEnergy → WaterCard → WeightStepsTiles → the "This week" card:
   WeeklyReviewEntry (a link on its heading while a review waits) →
   WeekSummary → PerformanceHeroCard (a row since DS3, 2026-09-27).
   Performance sits LAST by owner decision: the first thing on the scroll

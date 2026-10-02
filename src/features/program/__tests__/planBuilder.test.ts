@@ -13,6 +13,7 @@ import {
   buildPlan,
   validatePlanOutput,
   type PlanBuilderInput,
+  firstLiftWeekKey,
 } from "../planBuilder";
 import {
   CURRENT_PROGRAM_SCHEMA_VERSION,
@@ -733,5 +734,32 @@ describe("buildPlan · structure-preserving regeneration (Pgm5 Q2)", () => {
     expect(edited.programState.workouts[0].exercises).toHaveLength(
       customized.workouts[0].exercises.length
     );
+  });
+});
+
+describe("firstLiftWeekKey — the week a fresh plan's rollover counts from", () => {
+  // Week of Monday 28 September 2026.
+  it("is this week for a Monday-to-Wednesday start", () => {
+    for (const d of ["2026-09-28", "2026-09-29", "2026-09-30"]) {
+      expect(firstLiftWeekKey({ currentDate: d })).toBe("2026-09-28");
+    }
+  });
+
+  it("is next week for a Thursday-to-Sunday start, so week 1 runs to the next Sunday", () => {
+    for (const d of ["2026-10-01", "2026-10-02", "2026-10-03", "2026-10-04"]) {
+      expect(firstLiftWeekKey({ currentDate: d })).toBe("2026-10-05");
+    }
+  });
+
+  it("keeps an anchor already ahead through a settings save, and only that", () => {
+    const save = (liftWeekKey: string) =>
+      firstLiftWeekKey({
+        currentDate: "2026-10-03",
+        preserveHistory: true,
+        existingState: { liftWeekKey },
+      });
+    expect(save("2026-10-05")).toBe("2026-10-05");
+    expect(save("2026-09-28")).toBe("2026-09-28");
+    expect(save("2026-09-21")).toBe("2026-09-28");
   });
 });

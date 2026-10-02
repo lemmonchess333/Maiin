@@ -171,3 +171,52 @@ describe("useWeekPulse", () => {
     expect(result.current).toBeNull();
   });
 });
+
+describe("useWeekPulse — the run a finish screen is showing", () => {
+  it("counts the run before it is saved", async () => {
+    mockProfile = { weekSchedule: LIFT_SCHEDULE };
+    const run = {
+      id: null,
+      date: IN_WEEK,
+      distanceMeters: 4000,
+      eligible: true,
+    };
+    const { result } = renderHook(() => useWeekPulse(0, run));
+    await waitFor(() => expect(result.current).not.toBeNull());
+    expect(result.current?.runs).toMatchObject({ count: 1, km: 4 });
+  });
+
+  it("counts it once when the read already holds it", async () => {
+    seedFirestore({
+      "users/u1/runs/r1": { date: IN_WEEK, distance: 4000, duration: 1400 },
+    });
+    const run = {
+      id: "r1",
+      date: IN_WEEK,
+      distanceMeters: 4000,
+      eligible: true,
+    };
+    const { result } = renderHook(() => useWeekPulse(0, run));
+    await waitFor(() => expect(result.current).not.toBeNull());
+    expect(result.current?.runs).toMatchObject({ count: 1, km: 4 });
+  });
+});
+
+describe("useWeekPulse — the week the account began", () => {
+  it("plans only the lift days from the start day", async () => {
+    // Joined Wednesday 15 July: Monday's lift is before it, Wednesday's
+    // and Friday's are not.
+    mockProfile = {
+      weekSchedule: [
+        { day: 1, type: "lift" },
+        { day: 3, type: "lift" },
+        { day: 5, type: "lift" },
+      ],
+      createdAt: { toMillis: () => NOW.getTime() },
+    };
+    seedFirestore({ "users/u1/workouts/in": { date: IN_WEEK, exercises: [] } });
+    const { result } = renderHook(() => useWeekPulse());
+    await waitFor(() => expect(result.current).not.toBeNull());
+    expect(result.current?.lifts).toMatchObject({ planned: 2 });
+  });
+});

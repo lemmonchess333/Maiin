@@ -69,6 +69,7 @@ function distancePhrase(metres: number, unit: DistanceUnit): string {
 export default function PeriodSummaryCard({
   title,
   comparedWith,
+  sinceLabel,
   figures,
   bins,
   granularity,
@@ -76,8 +77,14 @@ export default function PeriodSummaryCard({
   distanceUnit,
 }: {
   title: string;
-  /** "the 30 days before" — what each change is measured against. */
-  comparedWith: string;
+  /**
+   * "the 30 days before": what each change is measured against. Null for
+   * an account younger than the range, whose range before it has nothing
+   * in it to compare with; the subtitle then says when it began.
+   */
+  comparedWith: string | null;
+  /** "Since you joined on 2 October", for an account younger than the range. */
+  sinceLabel?: string;
   figures: readonly SummaryFigure[];
   bins: readonly SummaryBin[];
   granularity: SummaryGranularity;
@@ -173,7 +180,7 @@ export default function PeriodSummaryCard({
       <div>
         <h2 className="text-h3 font-bold text-foreground">{title}</h2>
         <p className="text-sm text-muted-foreground">
-          Compared with {comparedWith}
+          {comparedWith ? `Compared with ${comparedWith}` : sinceLabel}
         </p>
       </div>
 
@@ -212,7 +219,7 @@ export default function PeriodSummaryCard({
               <span className="block text-sm text-muted-foreground truncate">
                 {f.unit}
               </span>
-              {f.change && (
+              {f.change && comparedWith && (
                 <span
                   className={cn(
                     "block text-xs font-semibold",

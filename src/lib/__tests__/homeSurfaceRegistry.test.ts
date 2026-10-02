@@ -80,18 +80,12 @@ describe("Home's tier-4 surface registry", () => {
   it("parses a plausible number of registrations (guards a broken scan)", () => {
     // Without this, a parser change that found nothing would make every
     // assertion below vacuously true.
-    expect(regs.length).toBeGreaterThanOrEqual(5);
+    expect(regs.length).toBeGreaterThanOrEqual(4);
   });
 
   it("registers the surfaces the coordinator arbitrates", () => {
     expect(regs.map((r) => r.id).sort()).toEqual(
-      [
-        "badge",
-        "fell-behind",
-        "goal-reached",
-        "lift-return",
-        "trial-expired",
-      ].sort()
+      ["fell-behind", "goal-reached", "lift-return", "trial-expired"].sort()
     );
   });
 
@@ -106,7 +100,6 @@ describe("Home's tier-4 surface registry", () => {
     const byId = Object.fromEntries(regs.map((r) => [r.id, r.priority]));
     expect(byId["trial-expired"]).toBeGreaterThan(byId["fell-behind"]);
     expect(byId["fell-behind"]).toBeGreaterThan(byId["lift-return"]);
-    expect(byId["lift-return"]).toBeGreaterThan(byId["badge"]);
   });
 
   it("never lets one absence produce two welcome-backs in a visit", () => {
@@ -117,11 +110,13 @@ describe("Home's tier-4 surface registry", () => {
     expect(liftReturn.suppressedBy).toContain("fell-behind");
   });
 
-  it("keeps a celebration from landing in a reprimand's visit", () => {
-    // The pre-existing emotional-sequencing rule, pinned here too so a
-    // reshuffle of this block cannot quietly drop it.
-    const badge = regs.find((r) => r.id === "badge")!;
-    expect(badge.suppressedBy).toContain("fell-behind");
+  it("never opens a badge over Home on its own", () => {
+    // Owner, 2026-10-02: a waiting badge is a row on Home that opens it
+    // when tapped (NewBadgeRow). It used to be a surface here, opening by
+    // itself; a new account met four of them over Home in four days. Its
+    // old rule (no celebration in a fell-behind visit) has nothing to
+    // guard once nothing opens unasked.
+    expect(regs.map((r) => r.id)).not.toContain("badge");
   });
 });
 

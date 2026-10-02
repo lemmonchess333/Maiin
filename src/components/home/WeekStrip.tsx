@@ -5,6 +5,7 @@ import type { ProgramState } from "@/features/program/programTypes";
 import { resolveTrainingWindow } from "@/lib/trainingResolver";
 import type { ClaimState } from "@/lib/scheduledRunCompletion";
 import { cn } from "@/lib/utils";
+import { beforeStart } from "@/lib/startDay";
 import {
   localDateString,
   localWeekKey,
@@ -20,6 +21,8 @@ import {
  *   planned               an outlined circle: something is still to do
  *   missed                a dashed outline: a planned day that has passed
  *   rest                  the bare date
+ *   before                the bare date, for a day before the account
+ *                         began: a plan made on Friday did not miss Monday
  *
  * Today adds the purple ring on top of whichever state it is in, so a
  * finished today still reads as today.
@@ -30,7 +33,8 @@ export type WeekDayState =
   | "both-done"
   | "planned"
   | "missed"
-  | "rest";
+  | "rest"
+  | "before";
 
 interface StripDay {
   key: string;
@@ -55,12 +59,17 @@ interface StripDay {
  * lift slot completed by a session on another day, or either session
  * skipped — in which case the day is bare, like rest.
  */
-function weekDayState(day: StripDay, todayKey: string): WeekDayState {
+function weekDayState(
+  day: StripDay,
+  todayKey: string,
+  startKey: string | null
+): WeekDayState {
   const hasLift = day.sType === "lift" || day.sType === "both";
   const hasRun = day.sType === "run" || day.sType === "both";
   if (day.liftLogged && day.runDone) return "both-done";
   if (day.liftLogged) return "lift-done";
   if (day.runDone) return "run-done";
+  if (beforeStart(day.key, startKey)) return "before";
   const liftOpen = hasLift && !day.liftSkipped && !day.liftCompleted;
   const runOpen = hasRun && !day.runSkipped;
   if (!liftOpen && !runOpen) return "rest";
@@ -81,7 +90,13 @@ function weekDayState(day: StripDay, todayKey: string): WeekDayState {
  * named as done on another day. "Completed lift" belongs to the day whose
  * circle the session filled, and one session is announced once.
  */
-function trainingLabel(day: StripDay, isPast: boolean): string {
+function trainingLabel(
+  day: StripDay,
+  isPast: boolean,
+  startKey: string | null
+): string {
+  if (!day.liftLogged && !day.runDone && beforeStart(day.key, startKey))
+    return "before you started";
   const hasLift =
     day.sType === "lift" || day.sType === "both" || day.liftLogged;
   const hasRun = day.sType === "run" || day.sType === "both" || day.runDone;
@@ -114,6 +129,7 @@ const STATE_CLASSES: Record<WeekDayState, string> = {
   planned: "border-2 border-foreground/20 text-foreground",
   missed: "border-2 border-dashed border-foreground/25 text-muted-foreground",
   rest: "text-muted-foreground",
+  before: "text-muted-foreground",
 };
 
 export default function WeekStrip({
@@ -125,6 +141,7 @@ export default function WeekStrip({
   onDayTap,
   loggedLiftDates,
   extraRunDates,
+  startKey = null,
 }: {
   dayMap: Map<
     string,
@@ -149,6 +166,8 @@ export default function WeekStrip({
   loggedLiftDates?: ReadonlySet<string>;
   /** Dates with a logged run that claimed no planned day. */
   extraRunDates?: ReadonlySet<string>;
+  /** The day the account began (startDay.ts); earlier days plan nothing. */
+  startKey?: string | null;
 }) {
   const days = useMemo(() => {
     const today = new Date();
@@ -199,7 +218,7 @@ export default function WeekStrip({
         isPast: r.dateKey < todayKey,
         hasActivity: !!(data && (data.workouts > 0 || data.meals > 0)),
         isSelected: r.dateKey === selectedDate,
-        state: weekDayState(day, todayKey),
+        state: weekDayState(day, todayKey, startKey),
       };
     });
   }, [
@@ -210,6 +229,7 @@ export default function WeekStrip({
     selectedDate,
     loggedLiftDates,
     extraRunDates,
+    startKey,
   ]);
   return (
     <div className="flex items-center justify-between">
@@ -247,7 +267,7 @@ export default function WeekStrip({
               // weekStripCaptureSelector.test.tsx pins the two together.
               format(day.date, "EEEE d MMMM") +
               ", " +
-              trainingLabel(day, day.isPast) +
+              trainingLabel(day, day.isPast, startKey) +
               // Kept, but named for what it is: `dayMap` counts meals, and
               // Food.tsx is the only writer of the collection it comes from.
               (day.hasActivity ? " (food logged)" : "") +

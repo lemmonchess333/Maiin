@@ -19,6 +19,7 @@ import { focusLabel } from "@/features/program/trainingBlock";
 import type { PrimaryGoal } from "@/features/program/programTypes";
 import { useLifetimeRunStats } from "@/hooks/useLifetimeRunStats";
 import { useAuth, useUid } from "@/lib/auth";
+import { daysSinceStart, startDayKey } from "@/lib/startDay";
 import { useEffectiveTargets } from "@/hooks/useEffectiveTargets";
 import { THEME } from "@/lib/theme";
 import { adherenceTone } from "@/lib/adherenceTone";
@@ -577,6 +578,19 @@ export default function History() {
   const lifetimeRuns = useLifetimeRunStats();
   const lifetimeMeals = useLifetimeMealStats();
   const { profile } = useAuth();
+  /* An account younger than the range has nothing in the range before
+     it: no "↑5 sessions on the 30 days before", and food counted out of
+     the days it has existed, not out of 30 (startDay.ts). */
+  const { startKey, joinedInRange, foodRangeDays } = useMemo(() => {
+    const start = startDayKey(profile?.createdAt);
+    const days = daysSinceStart(start, localDateString());
+    const younger = days !== null && days < rangeDays;
+    return {
+      startKey: start,
+      joinedInRange: younger,
+      foodRangeDays: younger && days ? days : rangeDays,
+    };
+  }, [profile?.createdAt, rangeDays]);
   const unit = useDistanceUnit();
   /**
    * The cross-cutting gate. Only the surfaces that genuinely SPAN all
@@ -1306,18 +1320,21 @@ export default function History() {
           unit: profile?.preferredWeightUnit === "lbs" ? "lbs" : "kg",
           hideNumber: !!profile?.hideWeightNumber,
         }),
-        food: foodLine({ daysLogged: nutrition.daysLogged, rangeDays }),
+        food: foodLine({
+          daysLogged: nutrition.daysLogged,
+          rangeDays: foodRangeDays,
+        }),
       }),
     [
       liftingInsight.progress,
       runningInsight.pace.rows,
       runningInsight.longest,
+      foodRangeDays,
       unit,
       bodyweight.points,
       profile?.preferredWeightUnit,
       profile?.hideWeightNumber,
       nutrition.daysLogged,
-      rangeDays,
     ]
   );
   const targetCalories = effectiveTargets.finalTarget ?? 0;
@@ -1632,7 +1649,14 @@ export default function History() {
                   <SectionErrorBoundary sectionName="period-summary">
                     <PeriodSummaryCard
                       title={rollingRangeLabel(timeRange)}
-                      comparedWith={previousRangeLabel(timeRange)}
+                      comparedWith={
+                        joinedInRange ? null : previousRangeLabel(timeRange)
+                      }
+                      sinceLabel={
+                        startKey
+                          ? `Since you joined on ${formatDayMonth(parseLocalDate(startKey))}`
+                          : undefined
+                      }
                       figures={summaryFigures}
                       bins={periodSummary.bins}
                       granularity={periodSummary.granularity}

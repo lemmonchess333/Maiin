@@ -61,7 +61,12 @@ import {
   CURRENT_WEEKSCHEDULE_VERSION,
 } from "./programTypes";
 import { planWeekSchedule, type ScheduleDay } from "@/lib/scheduleUtils";
-import { localWeekKey, parseLocalDate } from "@/lib/dateHelpers";
+import {
+  addLocalDays,
+  localWeekKey,
+  parseLocalDate,
+  weekPosition,
+} from "@/lib/dateHelpers";
 import {
   generateProgram,
   expectedDayCount,
@@ -632,7 +637,8 @@ export function buildPlan(input: PlanBuilderInput): PlanBuilderOutput {
     // silently disable the automatic week rollover for the exact user it was
     // built for. Derived from `input.currentDate` rather than the clock so
     // `buildPlan` stays a pure function of its input.
-    liftWeekKey: localWeekKey(parseLocalDate(input.currentDate)),
+    // A start late in the week is anchored on next week (firstLiftWeekKey).
+    liftWeekKey: firstLiftWeekKey(input),
     ...(carriedBlock ? { trainingBlock: carriedBlock } : {}),
     ...(input.preserveHistory &&
     input.raceGoal &&
@@ -650,4 +656,35 @@ export function buildPlan(input: PlanBuilderInput): PlanBuilderOutput {
 
   validatePlanOutput(output);
   return output;
+}
+
+/**
+ * The week the lift rollover counts the plan's current week as. The
+ * rollover moves on when this week has passed.
+ *
+ * A fresh plan built Thursday to Sunday is anchored on the NEXT week, so
+ * its week 1 runs on to the following Sunday (an owner call). Rolled
+ * on the first Monday, a Friday sign-up's week 1 had three days in it,
+ * and its later workouts were dropped before a training day came round.
+ * Monday to Wednesday still leaves most of a week.
+ *
+ * Rebuilding an existing plan (a settings save) keeps an anchor that is
+ * already ahead, as that long first week and the manual "next week" both
+ * write one, instead of pulling it back to this week.
+ */
+export function firstLiftWeekKey(input: {
+  currentDate: string;
+  preserveHistory?: boolean;
+  existingState?: { liftWeekKey?: string };
+}): string {
+  const today = parseLocalDate(input.currentDate);
+  const thisWeek = localWeekKey(today);
+  if (input.preserveHistory && input.existingState) {
+    const kept = input.existingState.liftWeekKey;
+    return kept && kept > thisWeek ? kept : thisWeek;
+  }
+  // weekPosition: 0 Monday … 6 Sunday; Thursday is 3.
+  return weekPosition(today.getDay()) >= 3
+    ? localWeekKey(addLocalDays(today, 7))
+    : thisWeek;
 }

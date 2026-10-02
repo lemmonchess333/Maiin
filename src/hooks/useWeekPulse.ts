@@ -14,7 +14,7 @@
  * only one the user ever saw ("0 of 6 lifts" straight after finishing one).
  * There is no refetch path to lean on — hence an explicit argument.
  */
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   collection,
   doc,
@@ -26,21 +26,50 @@ import {
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
 import { useStreaks } from "@/features/streaks/useStreaks";
-import { localWeekKey } from "@/lib/dateHelpers";
+import { localDateString, localWeekKey } from "@/lib/dateHelpers";
+import { scheduledDaysSinceStart, startDayKey } from "@/lib/startDay";
 import {
   buildWeekPulse,
   weekBounds,
   inWeek,
+  type ReviewRun,
   type WeekPulse,
 } from "@/lib/weeklyReviewViewModel";
 import { isVolumeEligible } from "@/lib/runStatsEligibility";
 import { resolveRunPlanSurface } from "@/lib/runProgrammeViewModel";
 import { logger } from "@/lib/logger";
 
-export function useWeekPulse(pendingLifts = 0): WeekPulse | null {
+/** The run a run's finish screen is showing, saved or not yet. */
+export interface PendingRun extends Omit<ReviewRun, "date"> {
+  /** Its document id once known; a fetched run with this id is the same run. */
+  id: string | null;
+  /** Its local date; null for one with no trace, counted as today's. */
+  date: string | null;
+}
+
+interface WeekFetch {
+  weekKey: string;
+  /** The day the week was read, for a pending run with no date. */
+  todayKey: string;
+  workouts: { date: string }[];
+  runs: (ReviewRun & { id: string })[];
+  plannedLifts: number | null;
+  plannedRuns: number | null;
+}
+
+export function useWeekPulse(
+  pendingLifts = 0,
+  /**
+   * The run screen's own run. The card loads when the screen opens, which
+   * is before Save, so the run was never in the read and the week line
+   * left out the run just finished. It is counted here unless the read
+   * already holds it.
+   */
+  pendingRun: PendingRun | null = null
+): WeekPulse | null {
   const { user, profile } = useAuth();
   const { currentStreak } = useStreaks();
-  const [pulse, setPulse] = useState<WeekPulse | null>(null);
+  const [week, setWeek] = useState<WeekFetch | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -72,9 +101,15 @@ export function useWeekPulse(pendingLifts = 0): WeekPulse | null {
           .map((d) => d.data() as { date?: unknown })
           .filter((w): w is { date: string } => typeof w.date === "string");
         const runs = runsSnap.docs
-          .map((d) => d.data() as Record<string, unknown>)
+          .map(
+            (d) =>
+              ({ ...d.data(), id: d.id }) as Record<string, unknown> & {
+                id: string;
+              }
+          )
           .filter((r) => typeof r.date === "string")
           .map((r) => ({
+            id: r.id,
             date: r.date as string,
             distanceMeters: typeof r.distance === "number" ? r.distance : 0,
             eligible: isVolumeEligible(
@@ -83,11 +118,15 @@ export function useWeekPulse(pendingLifts = 0): WeekPulse | null {
           }));
 
         const schedule = Array.isArray(profile?.weekSchedule)
-          ? (profile.weekSchedule as { type?: string }[])
+          ? (profile.weekSchedule as { day?: number; type?: string }[])
           : [];
-        const liftDays = schedule.filter(
-          (s) => s.type === "lift" || s.type === "both"
-        ).length;
+        // In the week the account began, only the days since (startDay.ts).
+        const liftDays = scheduledDaysSinceStart(
+          schedule,
+          ["lift", "both"],
+          weekKey,
+          startDayKey(profile?.createdAt)
+        );
 
         // Planned runs only when a race plan exists (Run9a: freeform →
         // done-only framing — same rule as the review).
@@ -108,17 +147,14 @@ export function useWeekPulse(pendingLifts = 0): WeekPulse | null {
               ).length
             : null;
 
-        setPulse(
-          buildWeekPulse({
-            weekKey,
-            workouts,
-            runs,
-            plannedLifts: liftDays > 0 ? liftDays : null,
-            plannedRuns,
-            streak: currentStreak,
-            pendingLifts,
-          })
-        );
+        setWeek({
+          weekKey,
+          todayKey: localDateString(),
+          workouts,
+          runs,
+          plannedLifts: liftDays > 0 ? liftDays : null,
+          plannedRuns,
+        });
       } catch (err) {
         logger.warn("[useWeekPulse] fetch failed", err);
         // Leave null — the card just doesn't render.
@@ -128,10 +164,47 @@ export function useWeekPulse(pendingLifts = 0): WeekPulse | null {
       cancelled = true;
     };
     // Snapshot on mount; streak/profile churn shouldn't refetch mid-screen.
-    // `pendingLifts` is a render-time addend rather than a fetch input, so it
-    // deliberately does not retrigger the query.
+    // The pending session and run are render-time addends, not fetch inputs.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.uid, pendingLifts]);
+  }, [user?.uid]);
 
-  return pulse;
+  const hasPending = pendingRun !== null;
+  const pendingId = pendingRun?.id ?? null;
+  const pendingDate = pendingRun?.date ?? null;
+  const pendingMeters = pendingRun?.distanceMeters ?? 0;
+  const pendingEligible = pendingRun?.eligible ?? false;
+  return useMemo(() => {
+    if (!week) return null;
+    const alreadyRead =
+      pendingId !== null && week.runs.some((r) => r.id === pendingId);
+    const runs =
+      hasPending && !alreadyRead
+        ? [
+            ...week.runs,
+            {
+              date: pendingDate ?? week.todayKey,
+              distanceMeters: pendingMeters,
+              eligible: pendingEligible,
+            },
+          ]
+        : week.runs;
+    return buildWeekPulse({
+      weekKey: week.weekKey,
+      workouts: week.workouts,
+      runs,
+      plannedLifts: week.plannedLifts,
+      plannedRuns: week.plannedRuns,
+      streak: currentStreak,
+      pendingLifts,
+    });
+  }, [
+    week,
+    hasPending,
+    pendingId,
+    pendingDate,
+    pendingMeters,
+    pendingEligible,
+    currentStreak,
+    pendingLifts,
+  ]);
 }

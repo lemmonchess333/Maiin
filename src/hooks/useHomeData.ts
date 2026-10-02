@@ -65,6 +65,8 @@ interface HomeDataState {
      on. null when we can't call a direction (profile-fallback / one
      log). */
   weightTrend: WeightTrendDirection;
+  /** The days with a logged weight, newest first (at most 30). */
+  weighInDates: string[];
   loading: boolean;
   error: string | null;
 }
@@ -103,6 +105,7 @@ export function useHomeData(
     lastRunAtMs: null,
     lastWeightInfo: null,
     weightTrend: null,
+    weighInDates: [],
     loading: true,
     error: null,
   });
@@ -200,6 +203,7 @@ export function useHomeData(
           let lastRunAtMs: number | null = null;
           let weightInfo: WeightInfo | null = null;
           let weightTrend: WeightTrendDirection = null;
+          let weighInDates: string[] = [];
 
           // Meals — routed through the shared sumMealTotals util so this
           // path can't drift from useMeals.getDailyTotals on Food. Both call
@@ -287,6 +291,7 @@ export function useHomeData(
                   { rawRows: snap.docs.length, uniqueDays: entries.length }
                 );
               }
+              weighInDates = entries.map((e) => e.date);
               if (entries.length > 0) {
                 const sorted = [...entries].sort(function (a, b) {
                   return a.date.localeCompare(b.date);
@@ -340,6 +345,7 @@ export function useHomeData(
             lastRunAtMs,
             lastWeightInfo: weightInfo,
             weightTrend,
+            weighInDates,
             loading: false,
             error: errors.length > 0 ? errors.join("; ") : null,
           });
@@ -479,6 +485,9 @@ export function useHomeData(
           : "Weight saved"
         : "",
     weightTrend: state.weightTrend,
+    // Days weighed, with this device's queued weigh-ins counted at once.
+    weighInCount: new Set([...state.weighInDates, ...pendingByDate.keys()])
+      .size,
     postWorkoutNudge,
     loading: state.loading,
     error: state.error,

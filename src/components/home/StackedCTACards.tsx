@@ -163,18 +163,22 @@ export default function StackedCTACards({
           {/* #972: on a rest day a new user has no workout to frame, so
               drive the first meal instead (per-domain: gated on meals === 0
               within the window). */}
-          {freeRunner ? (
-            <RunCTACard
-              todayRun={null}
-              navigate={navigate}
-              eyebrowLabel="Run when it suits you"
-            />
-          ) : restDayFirstWorkout ? (
+          {/* The first workout still leads for someone who also lifts;
+              after it, a free runner's day without a lift offers a run.
+              Free running has no planned days, so "Rest day" was wrong for
+              anyone who runs freely, a lifter who also runs included. */}
+          {restDayFirstWorkout ? (
             <LiftCTACard
               nextWorkout={restDayFirstWorkout}
               navigate={navigate}
               dayIndex={restDayFirstWorkoutIndex}
               eyebrowLabel="Your first workout"
+            />
+          ) : freeRunner ? (
+            <RunCTACard
+              todayRun={null}
+              navigate={navigate}
+              eyebrowLabel="Run when it suits you"
             />
           ) : firstMeal ? (
             <FirstMealCard navigate={navigate} />

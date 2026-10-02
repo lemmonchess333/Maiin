@@ -1598,6 +1598,81 @@ describe("PR-G — auto-rollover on calendar-week change", () => {
     );
   });
 
+  describe("a lift anchor already at the week being rolled into", () => {
+    // A Thursday-to-Sunday start anchors the lifts on the next week, so its
+    // week 1 runs on to the following Sunday. The run side rolls each
+    // Monday on its own dates; the lift side must not roll with it.
+    const lastWeek = localWeekKey(addLocalDays(new Date(), -7));
+    function hybrid(liftWeekKey: string) {
+      mockProfile = raceProfile("2099-09-15", { weeklyRunDaysTarget: 2 });
+      seedProgram({
+        goal: "recomp",
+        currentPhase: "progression",
+        weekNumber: 1,
+        splitType: "full_body",
+        workouts: [
+          { dayName: "A", dayType: "full", exercises: [], completed: true },
+          { dayName: "B", dayType: "full", exercises: [], completed: false },
+        ],
+        fatigueScore: 0,
+        updatedAt: Date.now(),
+        settings: { autoProgression: true, microloading: true },
+        weekHistory: [],
+        programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
+        liftWeekKey,
+        runDays: [
+          {
+            id: "last_week_run",
+            dayIndex: 1,
+            date: lastWeek,
+            weekKey: lastWeek,
+            templateId: "easy_30",
+            type: "easy",
+            status: "planned",
+            completed: false,
+          } as ScheduledRunDay,
+        ],
+        runPlan: {
+          mode: "race_prep",
+          raceGoal: { distance: "10k", targetDate: "2099-09-15" },
+        },
+      } as ProgramState);
+    }
+    async function rolled(): Promise<ProgramState> {
+      const { result } = mountProgram();
+      await waitFor(() => expect(result.current.loading).toBe(false), {
+        timeout: 2000,
+      });
+      let write: ProgramState | undefined;
+      await waitFor(
+        () => {
+          write = setDocCalls()[setDocCalls().length - 1]?.data as
+            | ProgramState
+            | undefined;
+          expect(write?.runDays?.[0]?.weekKey).toBe(localWeekKey());
+        },
+        { timeout: 2000 }
+      );
+      return write!;
+    }
+
+    it("rolls the runs and holds the lifts", async () => {
+      hybrid(localWeekKey());
+      const write = await rolled();
+      expect(write.weekNumber).toBe(1);
+      expect(write.workouts[0].completed).toBe(true);
+      expect(write.workouts[1].completed).toBe(false);
+      expect(write.liftWeekKey).toBe(localWeekKey());
+    });
+
+    it("rolls both when the lift anchor is behind", async () => {
+      hybrid(lastWeek);
+      const write = await rolled();
+      expect(write.weekNumber).toBe(2);
+      expect(write.workouts[0].completed).toBe(false);
+    });
+  });
+
   it("does not roll forward when runDays weekKey matches today's week", async () => {
     const thisSunday = (() => {
       const d = new Date();

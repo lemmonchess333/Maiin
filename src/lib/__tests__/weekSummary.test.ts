@@ -87,3 +87,31 @@ describe("summariseWeek", () => {
     expect(counts.foodDays).toBe(2);
   });
 });
+
+describe("summariseWeek — the week the account began", () => {
+  it("plans and counts only the days from the start day", () => {
+    // Joined on the Friday (25th) of a Monday 21st week.
+    const counts = summariseWeek({
+      window: week(["lift", "lift", "lift", "rest", "lift", "run", "rest"]),
+      liftDates: [],
+      extraRunsByDate: NONE,
+      mealsByDate: NO_MEALS,
+      startKey: "2026-09-25",
+    });
+    expect(counts.lifts.planned).toBe(1);
+    expect(counts.runs.planned).toBe(1);
+    expect(counts.foodDayTotal).toBe(3);
+  });
+
+  it("is the whole week without a start day, or after the first week", () => {
+    const counts = summariseWeek({
+      window: week(["lift", "lift", "lift", "rest", "lift", "run", "rest"]),
+      liftDates: [],
+      extraRunsByDate: NONE,
+      mealsByDate: NO_MEALS,
+      startKey: "2026-09-01",
+    });
+    expect(counts.lifts.planned).toBe(4);
+    expect(counts.foodDayTotal).toBe(7);
+  });
+});
