@@ -17,6 +17,16 @@ export interface FormArtCutout {
 }
 
 export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
+  "clean-and-press": {
+    src: "form-art/clean-and-press.webp",
+    width: 480,
+    height: 422,
+    keyed: true,
+    source: "form-frames/clean-and-press/1.webp",
+    sourceSha256:
+      "3c8f74e4e64f3758faeed32fe539fdb2afcf27166a6fc038712843a25e08e093",
+    sha256: "afc9212ee093ad435cf415fa70b75eabf51a03d8f7be5f89004239171753372f",
+  },
   "arnold-press": {
     src: "form-art/arnold-press.webp",
     width: 281,

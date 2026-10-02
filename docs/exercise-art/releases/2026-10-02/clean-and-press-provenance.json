@@ -1,0 +1,217 @@
+{
+  "exerciseId": "clean-and-press",
+  "nativeSize": [
+    1536,
+    1024
+  ],
+  "source": "Built-in image generation; reference-chain poses and background-only floor edits.",
+  "floorEditGenerationIds": [
+    "0e34fc12-79ae-4ed6-a9b8-3fe45397a319",
+    "56ec3729-4c88-4413-a8c8-25abcfafe117",
+    "dd694efd-de5b-4390-a421-06fe59652cc5",
+    "d5fcb375-08ab-4de5-8ed4-d6216f41fe34",
+    "5e86fe07-84f7-4a6e-8ce2-a315af5b7a3b"
+  ],
+  "floorEdit": "Remove grey textured reflective floor, retaining black background and subtle contact shadows; preserve body and equipment.",
+  "fixedContactRepair": {
+    "reference": "2-pull-clean-background.png",
+    "regions": [
+      {
+        "left": 660,
+        "top": 882,
+        "width": 109,
+        "height": 33
+      },
+      {
+        "left": 769,
+        "top": 872,
+        "width": 127,
+        "height": 34
+      }
+    ],
+    "report": [
+      {
+        "name": "1-floor",
+        "changedPixels": 6810,
+        "changedOutsideContactRegions": 0
+      },
+      {
+        "name": "2-pull",
+        "changedPixels": 0,
+        "changedOutsideContactRegions": 0
+      },
+      {
+        "name": "3-rack",
+        "changedPixels": 7561,
+        "changedOutsideContactRegions": 0
+      },
+      {
+        "name": "4-dip",
+        "changedPixels": 7463,
+        "changedOutsideContactRegions": 0
+      },
+      {
+        "name": "5-overhead",
+        "changedPixels": 7564,
+        "changedOutsideContactRegions": 0
+      }
+    ]
+  },
+  "measurements": [
+    {
+      "frame": 1,
+      "anchors": {
+        "nearSoleLeft": {
+          "x": 666,
+          "y": 899
+        },
+        "nearSoleRight": {
+          "x": 762,
+          "y": 899
+        },
+        "farSoleLeft": {
+          "x": 785,
+          "y": 891
+        },
+        "farSoleRight": {
+          "x": 889,
+          "y": 891
+        }
+      },
+      "invariantDimensions": {
+        "nearSoleWidth": 97,
+        "farSoleWidth": 105
+      }
+    },
+    {
+      "frame": 2,
+      "anchors": {
+        "nearSoleLeft": {
+          "x": 666,
+          "y": 899
+        },
+        "nearSoleRight": {
+          "x": 762,
+          "y": 899
+        },
+        "farSoleLeft": {
+          "x": 785,
+          "y": 891
+        },
+        "farSoleRight": {
+          "x": 889,
+          "y": 891
+        }
+      },
+      "invariantDimensions": {
+        "nearSoleWidth": 97,
+        "farSoleWidth": 105
+      }
+    },
+    {
+      "frame": 3,
+      "anchors": {
+        "nearSoleLeft": {
+          "x": 666,
+          "y": 899
+        },
+        "nearSoleRight": {
+          "x": 762,
+          "y": 899
+        },
+        "farSoleLeft": {
+          "x": 785,
+          "y": 891
+        },
+        "farSoleRight": {
+          "x": 889,
+          "y": 891
+        }
+      },
+      "invariantDimensions": {
+        "nearSoleWidth": 97,
+        "farSoleWidth": 105
+      }
+    },
+    {
+      "frame": 4,
+      "anchors": {
+        "nearSoleLeft": {
+          "x": 666,
+          "y": 899
+        },
+        "nearSoleRight": {
+          "x": 762,
+          "y": 899
+        },
+        "farSoleLeft": {
+          "x": 785,
+          "y": 891
+        },
+        "farSoleRight": {
+          "x": 889,
+          "y": 891
+        }
+      },
+      "invariantDimensions": {
+        "nearSoleWidth": 97,
+        "farSoleWidth": 105
+      }
+    },
+    {
+      "frame": 5,
+      "anchors": {
+        "nearSoleLeft": {
+          "x": 666,
+          "y": 899
+        },
+        "nearSoleRight": {
+          "x": 762,
+          "y": 899
+        },
+        "farSoleLeft": {
+          "x": 785,
+          "y": 891
+        },
+        "farSoleRight": {
+          "x": 889,
+          "y": 891
+        }
+      },
+      "invariantDimensions": {
+        "nearSoleWidth": 97,
+        "farSoleWidth": 105
+      }
+    },
+    {
+      "frame": 6,
+      "anchors": {
+        "nearSoleLeft": {
+          "x": 666,
+          "y": 899
+        },
+        "nearSoleRight": {
+          "x": 762,
+          "y": 899
+        },
+        "farSoleLeft": {
+          "x": 785,
+          "y": 891
+        },
+        "farSoleRight": {
+          "x": 889,
+          "y": 891
+        }
+      },
+      "invariantDimensions": {
+        "nearSoleWidth": 97,
+        "farSoleWidth": 105
+      }
+    }
+  ],
+  "conversion": "Native 1536x1024 PNG to lossless WebP, no crop or resizing; frame 6 reuses rack frame 3.",
+  "master": {
+    "path": "docs/exercise-art/masters/clean-and-press/1.png",
+    "sha256": "79a881e5fb0ce6c4dafa5ed6cd5649369a66ad40bd758570ed3c2cb26c2089be"
+  }
+}
