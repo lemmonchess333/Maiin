@@ -96,7 +96,7 @@ done
 ### 3. Build the preview bundle
 
 The `VITE_USE_EMULATORS=true` flag triggers `connectAuthEmulator()` +
-`connectFirestoreEmulator()` calls in `src/lib/firebase.ts:69`. The
+`connectFirestoreEmulator()` calls in `src/lib/firebase.ts`. The
 other `VITE_FIREBASE_*` vars can be dummy strings — only the
 project ID needs to match the emulator.
 
