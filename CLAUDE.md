@@ -185,7 +185,7 @@ run-surface feature modules.
 
 ### streaks/
 
-- `useStreaks.ts` — Streak calculation & management
+- `useStreaks.tsx` — Streak calculation & management
 - `badges.ts` — Badge earning logic
 - `BadgeGrid.tsx` / `BadgeEarnedModal.tsx` — Badge display & celebration UI
 - `__tests__/badges.test.ts`
