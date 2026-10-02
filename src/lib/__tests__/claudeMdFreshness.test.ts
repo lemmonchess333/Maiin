@@ -28,18 +28,13 @@ const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
 const claudeMd = readFileSync(resolve(repoRoot, "CLAUDE.md"), "utf8");
 
 describe("CLAUDE.md — the Home composition sentence", () => {
-  /* The document says this line "has now rotted twice": it named
-     `HybridBalanceCard` until that was caught rendering nowhere, and the
-     replacement then named `TodayGuidanceCard` (also gone) and credited
-     StackedCTACards with pills and tiles it has never owned. It also says
-     `componentReachability` catches a dead COMPONENT and nothing catches
-     a dead SENTENCE — which is true, and is what this closes.
-
-     Checked before writing: the sentence is currently ACCURATE. This is
-     not a repair, it is the catch the document asked for. Pinning ORDER
-     as well as membership is the point — two of the three rots were a
-     component that had moved or gone, and a set-equality check would
-     have passed through the second one. */
+  /* The sentence twice named components Home no longer rendered
+     (`HybridBalanceCard`, then `TodayGuidanceCard`) before this pinned
+     it. `componentReachability` catches a dead COMPONENT; this catches a
+     dead name in the sentence. Pinning ORDER as well as membership is the
+     point — two of the three rots were a component that had moved or
+     gone, and a set-equality check would have passed through the second
+     one. It does not notice a section missing from the sentence. */
   const ORDER = [
     "WeekStrip",
     "DayPeekCard",
@@ -96,12 +91,9 @@ describe("CLAUDE.md — the Home composition sentence", () => {
   });
 
   /* Deliberately NOT asserted: that CLAUDE.md never mentions
-     `HybridBalanceCard` or `TodayGuidanceCard`. It mentions both, on
-     purpose — the paragraph recounting how this line rotted twice names
-     them as history, and that history is the whole reason the sentence
-     is worth pinning. A "never mentions" rule would read a correct
-     document as a failure and pressure someone into deleting the
-     explanation to get CI green. Drafted it, ran it, deleted it. */
+     `HybridBalanceCard` or `TodayGuidanceCard`. A note naming a retired
+     component as history is not a claim that it renders, and a "never
+     mentions" rule would read such a note as a failure. */
 });
 
 describe("CLAUDE.md — Cloud Functions section", () => {

@@ -1063,18 +1063,15 @@ or touching a CTA button, route it through `Button` with the variant above.
   (LiftCTACard / RunCTACard / RestDayCard — Start on the card, no pills) →
   FirstWeekCard (a new account's first seven days) → NewBadgeRow (a
   waiting badge, opened on tap; badges never open over Home by
-  themselves) → TodayEnergy → WaterCard → WeightStepsTiles → the "This week" card:
+  themselves) → VerifyEmailBanner (until the address is verified) →
+  TodayEnergy → WaterCard → WeightStepsTiles → the "This week" card:
   WeeklyReviewEntry (a link on its heading while a review waits) →
   WeekSummary → PerformanceHeroCard (a row since DS3, 2026-09-27).
   Performance sits LAST by owner decision: the first thing on the scroll
   should be something to do today, not a verdict on the week just gone.
-  This line has now rotted twice. It named `HybridBalanceCard` until it
-  was caught rendering nowhere, and the replacement text then named
-  `TodayGuidanceCard` (also gone) and credited StackedCTACards with
-  action pills and the health/water/weight/steps tiles it has never
-  owned. `componentReachability` catches a dead COMPONENT; nothing
-  catches a dead SENTENCE, which is why this one is worth re-reading
-  against `src/pages/Home.tsx` rather than trusting.
+  `claudeMdFreshness.test.ts` fails when a name here stops rendering or
+  falls out of order; nothing notices a section missing from the line, so
+  re-read it against `src/pages/Home.tsx` when you add one to Home.
 - **Icons:** lucide-react (individual imports only), except the drawn set in `src/components/icons/` (the tab bar's icons, the avocado) and `ui/BrandMark.tsx`
 - **Toasts:** sonner
 - **Charts:** Recharts (bar charts, line charts in History)
