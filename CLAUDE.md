@@ -1568,14 +1568,10 @@ Distribution decision: Tropos ships **App Store now + Google Play later; no web 
 - [ ] **Launch gate:** add the web App-Store steer — signed-in web visitors on `/upgrade` (and the ProModal paywall) see "Get the iOS app" instead of Stripe checkout tiles. One component change, NOT a backend migration. Deliberately not built pre-launch: the web build is the active dev/preview surface and the operator still exercises the checkout/trial flows there.
 - [ ] At that point also confirm no other web surface deep-links into Stripe checkout (`useProCheckout` call sites).
 
-### Food photo persistence (`claude/ultrathink-improvement-fljctw`)
+### Legacy meal photos in Storage (uploaded before Food9)
 
-Affects: `src/lib/foodPhotoUpload.ts`, `src/components/FoodAnalyzer.tsx` (post-save background upload), `storage.rules` (`food-photos/{uid}/` block), `functions/accountDeletion.js` (prefix sweep).
+Affects: `storage.rules` (`food-photos/{uid}/` block), `functions/accountDeletion.js` (prefix sweep). New meal photos stay on the device ("Meal photos moved to the device (Food9)" above); these checks cover the photos uploaded before that. The agent sandbox runs the Storage emulator (`npm run test:rules:storage`).
 
-**The agent sandbox DOES run the Storage emulator** — `npm run test:rules:storage` passes here (29 tests, firestore+storage emulators, Java 21 present). This row claimed the opposite until 2026-07-26, and that false constraint was doing real work: it justified leaving the whole path manual. What is actually unverifiable in-sandbox is narrower — `toUploadBlob`'s `<img>`+canvas downscale needs a real browser (jsdom has no `canvas`, and the module isn't reachable from the built preview bundle a Playwright spec loads), so the **≤1280px resize** is the only genuinely device-level claim. The rules half is already automated in `storage.rules.test.ts` ("food-photos/{uid} — owner-only").
-
-- [ ] Real AI food scan on device: save the meal, confirm the photo card pops into the diary timeline within a few seconds (background upload + onSnapshot merge), and the Storage console shows `food-photos/<uid>/<ts>.jpg` at ≤1280px. (The ≤1280px downscale is the part no automated suite covers.)
-- [ ] Offline scan: save while airplane-moded — meal must save as a text row with NO error surfaced; photo is silently skipped (never re-tried).
 - [x] Signed-out and cross-uid reads of a food-photos path are denied — covered by `storage.rules.test.ts` against the emulator. Note the rules block itself IS deployed: the ungated `a990d4bb` run (2026-07-12) shipped it. The later account-deletion write freeze (`779ca7ba`) was held back by the packet-11 gate until 2026-09-15; that row has the permission it still needs confirmed.
 - [ ] Account deletion (test account): confirm the executor logs the `food-photos/<uid>/` prefix sweep alongside progress/profile photos.
 
