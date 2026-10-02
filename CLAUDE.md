@@ -221,7 +221,7 @@ run-surface feature modules.
 `useCoachMarks`, `useCountUp`, `useReducedMotion`, `useFocusTrap`, `useOnlineStatus`
 
 **Payments:**
-`useStripeCheckout`
+`useProCheckout`
 
 ## Cloud Functions (functions/)
 
