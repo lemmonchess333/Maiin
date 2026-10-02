@@ -21,7 +21,7 @@ npm run test:e2e:ui  # Playwright E2E tests (interactive UI)
 - **Charts:** Recharts 3
 - **Maps:** MapLibre GL 6
 - **Animation:** Framer Motion 12
-- **PWA:** vite-plugin-pwa + Workbox
+- **PWA:** a hand-written service worker, `public/sw.js`, registered by `src/lib/register-sw.ts`
 - **Native:** Capacitor (iOS/Android)
 - **Payments:** RevenueCat (`@revenuecat/purchases-capacitor`) for native IAP (ADR-0006); Stripe Checkout is server-side only and dormant (Sub4) — the client loads no Stripe SDK
 - **Drag & Drop:** @dnd-kit (sortable exercise lists)
