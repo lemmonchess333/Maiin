@@ -827,10 +827,7 @@ reduced-motion` always gets the settled static state — no entrance, no
   are not gated at all.** `MotionConfig reducedMotion="user"` in
   `App.tsx` settles positional values (x, y, scale, rotate, width,
   height) and nothing else: opacity, a stroke offset, `pathLength` and a
-  motion-value count-up all still animate under Reduce Motion. This
-  paragraph said the global gate covered "every `motion.*` element",
-  and Home's two rings drew in for everyone because of it until DS3's
-  polish pass gated `ProgressRing` itself. A non-positional animation
+  motion-value count-up all still animate under Reduce Motion. A non-positional animation
   asks `useReducedMotion` in its own component (`ProgressRing`,
   `CalorieRing`, `EmptyState`, `AnimatedNumber` are the patterns). A
   Tailwind `animate-*` class runs under Reduce Motion unless it carries
