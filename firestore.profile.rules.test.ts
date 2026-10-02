@@ -426,6 +426,8 @@ suite("users/{uid} — raceGoal value gate", () => {
   });
 
   it("accepts every catalogue race binding, including international marathons", async () => {
+    // One write per catalogue race, so this test grows with the catalogue. It
+    // ran past the default 5 s timeout on a slow CI runner.
     for (const race of raceSpaceDefs()) {
       await assertSucceeds(
         write({
@@ -438,7 +440,7 @@ suite("users/{uid} — raceGoal value gate", () => {
         })
       );
     }
-  });
+  }, 60_000);
 
   it("accepts null — the explicit clear on a freeform switch", async () => {
     // Run9 3a-ii: `null` is how a recovery exit drops a finished race. A gate
