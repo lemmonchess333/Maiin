@@ -4,6 +4,7 @@ import { resolve, sep } from "node:path";
 import { EXERCISES } from "../src/lib/exercises";
 import manifest from "../docs/exercise-art/BATCH_REVIEW_MANIFEST.json";
 import recovered from "../docs/exercise-art/RECOVERED_DRAFTS.json";
+import continuation from "../docs/exercise-art/pilots/continuation-20261002/MANIFEST.json";
 
 // Integrity only. This command never grants visual or technique approval.
 const errors: string[] = [];
@@ -12,10 +13,11 @@ const unique = new Set<string>();
 const root = resolve("docs/exercise-art/pilots");
 let count = 0;
 let bytes = 0;
-for (const current of [manifest, recovered]) {
+for (const current of [manifest, recovered, continuation]) {
   let selected = 0;
   for (const set of current.completeDraftSets) {
-    if (ids.has(set.exerciseId)) errors.push(`${set.exerciseId}: duplicate set`);
+    if (ids.has(set.exerciseId))
+      errors.push(`${set.exerciseId}: duplicate set`);
     ids.add(set.exerciseId);
     if (!EXERCISES.some((exercise) => exercise.id === set.exerciseId))
       errors.push(`${set.exerciseId}: unknown exercise`);
@@ -27,13 +29,19 @@ for (const current of [manifest, recovered]) {
         const path = resolve(frame.path);
         if (!path.startsWith(root + sep) || !path.endsWith(".png"))
           throw new Error("Expected native PNG beneath pilot directory");
-        if (paths.has(path)) throw new Error("Each slot needs a separate file path");
+        if (paths.has(path))
+          throw new Error("Each slot needs a separate file path");
         paths.add(path);
-        if (frame.frame !== index + 1 || !frame.caption.endsWith(` ${index + 1}/6`))
+        if (
+          frame.frame !== index + 1 ||
+          !frame.caption.endsWith(` ${index + 1}/6`)
+        )
           throw new Error("Frame number/caption order mismatch");
         if (
-          !frame.cue.trim() || !Number.isFinite(frame.progress) ||
-          frame.progress < 0 || frame.progress > 1
+          !frame.cue.trim() ||
+          !Number.isFinite(frame.progress) ||
+          frame.progress < 0 ||
+          frame.progress > 1
         )
           throw new Error("Cue and valid progress required");
         const data = readFileSync(path);
@@ -46,14 +54,21 @@ for (const current of [manifest, recovered]) {
         )
           throw new Error("Invalid PNG header");
         const dimensions = [data.readUInt32BE(16), data.readUInt32BE(20)];
-        if (dimensions.some((value, axis) =>
-          value !== frame.dimensions[axis] ||
-          value !== set.frames[0].dimensions[axis]
-        ))
+        if (
+          dimensions.some(
+            (value, axis) =>
+              value !== frame.dimensions[axis] ||
+              value !== set.frames[0].dimensions[axis]
+          )
+        )
           throw new Error("Canvas dimensions differ");
         if (frame.reusedFrom != null) {
           const original = set.frames[frame.reusedFrom - 1];
-          if (!original || frame.reusedFrom >= frame.frame || original.sha256 !== hash)
+          if (
+            !original ||
+            frame.reusedFrom >= frame.frame ||
+            original.sha256 !== hash
+          )
             throw new Error("Return-pose reuse does not match source");
         }
         unique.add(hash);
@@ -67,11 +82,26 @@ for (const current of [manifest, recovered]) {
   }
   if (selected !== current.selectedFrameCount)
     errors.push(`${current.batch}: selected-frame count differs from manifest`);
-  if (current.releaseApproved !== false || current.productionAssetsChanged !== false)
-    errors.push(`${current.batch}: draft manifest must not claim production release`);
+  if (
+    current.releaseApproved !== false ||
+    current.productionAssetsChanged !== false
+  )
+    errors.push(
+      `${current.batch}: draft manifest must not claim production release`
+    );
 }
-console.log(JSON.stringify({
-  draftSets: ids.size, selectedFrames: count, uniquePoses: unique.size,
-  nativeBytes: bytes, releaseApproved: false, errors,
-}, null, 2));
+console.log(
+  JSON.stringify(
+    {
+      draftSets: ids.size,
+      selectedFrames: count,
+      uniquePoses: unique.size,
+      nativeBytes: bytes,
+      releaseApproved: false,
+      errors,
+    },
+    null,
+    2
+  )
+);
 if (errors.length) process.exitCode = 1;

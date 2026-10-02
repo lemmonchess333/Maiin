@@ -10,7 +10,7 @@ detail, central slit, underwear outline, waistband or garment seams.
 Derive one exercise master from this global athlete. Save it at
 `masters/<exact-exercise-id>/1.png`, and attach BOTH images to every frame edit.
 An adjacent pose is supplemental. The one-person rule remains unchanged.
-`identity/MASTER_REGISTRY.json` records candidate status; the four shorts masters
+Exercise-local plans and provenance records record candidate status; the older shorts masters
 are superseded and must not seed new frames. Historical artwork remains available
 pending identity/mechanics review; no blanket regeneration approval is implied by
 an automated integrity check.

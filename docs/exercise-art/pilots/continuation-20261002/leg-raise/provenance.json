@@ -1,0 +1,44 @@
+{
+  "tool": "image_gen.imagegen",
+  "generatedAt": "2026-10-02",
+  "canonical": {
+    "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+  },
+  "master": {
+    "path": "docs/exercise-art/masters/leg-raise/1.png",
+    "sha256": "da1d8e73b06d96aad0028cf229ac36a79867e09bedca74ea422a73ad7e233a01"
+  },
+  "plan": {
+    "path": "docs/exercise-art/pilots/continuation-20261002/leg-raise/plan.json",
+    "sha256": "d3bbe8f47bdca00a8032665b10aa8c5da36dfb49222cbad039bddaa234d077d1"
+  },
+  "images": [
+    {
+      "path": "docs/exercise-art/pilots/continuation-20261002/leg-raise/1.png",
+      "sha256": "da1d8e73b06d96aad0028cf229ac36a79867e09bedca74ea422a73ad7e233a01"
+    },
+    {
+      "path": "docs/exercise-art/pilots/continuation-20261002/leg-raise/2.png",
+      "sha256": "41058c4e8a5cfeb43799dfb61f59e7535e1d3805c5d9c4c39678619e862ebbff"
+    },
+    {
+      "path": "docs/exercise-art/pilots/continuation-20261002/leg-raise/3.png",
+      "sha256": "eb791fb2b1e70c14a7a55dc193fc596670deced2c11ac799b2274a37fea27794"
+    },
+    {
+      "path": "docs/exercise-art/pilots/continuation-20261002/leg-raise/4.png",
+      "sha256": "eb791fb2b1e70c14a7a55dc193fc596670deced2c11ac799b2274a37fea27794"
+    },
+    {
+      "path": "docs/exercise-art/pilots/continuation-20261002/leg-raise/5.png",
+      "sha256": "41058c4e8a5cfeb43799dfb61f59e7535e1d3805c5d9c4c39678619e862ebbff"
+    },
+    {
+      "path": "docs/exercise-art/pilots/continuation-20261002/leg-raise/6.png",
+      "sha256": "da1d8e73b06d96aad0028cf229ac36a79867e09bedca74ea422a73ad7e233a01"
+    }
+  ],
+  "productionAssetsChanged": false,
+  "releaseApproved": false
+}

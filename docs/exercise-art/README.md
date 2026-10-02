@@ -1,5 +1,24 @@
 # Exercise artwork migration
 
+## Current checkpoint — 2 October 2026
+
+The live registry now contains **56 released sets**: 47 with recorded approval,
+3 owner-released with findings, and 6 historical sets needing review. The
+current integrity audit reports no errors and 165,641,054 delivered bytes.
+`inventory.json` has been regenerated from `scripts/audit-form-art.ts --json`;
+85 of the 141 in-scope exercises still have no released artwork. This count
+includes exercises with existing drafts and is not a count of untouched work.
+
+The [October continuation](pilots/continuation-20261002/README.md) adds a
+six-frame Hanging Leg Raise draft using the canonical athlete, fixed-grip
+measurements and mobile player evidence. Side Plank has a corrected setup
+master but its raised candidates fail contact registration and remain
+incomplete. Neither set is activated in production. The new complete draft is
+included in `check:form-drafts` and the account-free review fixture.
+
+The sections below record the original September migration checkpoint and
+its release controls; their old coverage/byte totals are historical.
+
 Recovered on 7 September 2026 from current main `ea6e786`. The earlier local
 checkout and unpushed work were removed during workspace maintenance; this
 branch rebuilds that work on top of the newer app fixes.

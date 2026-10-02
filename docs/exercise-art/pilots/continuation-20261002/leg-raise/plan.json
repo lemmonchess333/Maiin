@@ -1,0 +1,76 @@
+{
+  "exerciseId": "leg-raise",
+  "name": "Hanging Leg Raise",
+  "status": "six-frame-draft-reviewed-in-player",
+  "variation": "Straight-leg hanging raise from a fixed pull-up bar; no swing, bent-knee substitution, or back kick.",
+  "canonicalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+  "canvas": [1024, 1536],
+  "camera": "Fixed side three-quarter, athlete facing left, both closed overhand grips visible; space left for horizontal legs.",
+  "anchors": [
+    "pull-up bar and supports",
+    "both hand contacts",
+    "camera and canvas"
+  ],
+  "invariants": [
+    "straight arm lengths",
+    "bar width and grip spacing",
+    "head and body proportions",
+    "shoe dimensions",
+    "muscle hierarchy"
+  ],
+  "muscles": {
+    "primary": ["rectus abdominis"],
+    "secondary": ["hip flexors"],
+    "stabilisers": ["obliques", "shoulder girdle", "forearms"],
+    "note": "Purple is a qualitative teaching hierarchy, not a measured activation map. Deep hip flexors are not drawn through the skin."
+  },
+  "source": "src/lib/exercises.ts: leg-raise instructions and tip",
+  "frames": [
+    {
+      "frame": 1,
+      "label": "Hang and brace",
+      "cue": "Hang with straight arms and brace to stop any swing.",
+      "t": 0,
+      "state": "Legs together below hips, shoulders controlled, full closed overhand grips."
+    },
+    {
+      "frame": 2,
+      "label": "Begin raise",
+      "cue": "Lift both straight legs forward slowly without kicking.",
+      "t": 0.5,
+      "state": "Both straight legs partially raised between vertical and horizontal; generated pose is not a measured 45-degree position."
+    },
+    {
+      "frame": 3,
+      "label": "Reach parallel",
+      "cue": "Raise your legs to hip height while keeping your torso steady.",
+      "t": 1,
+      "state": "Both legs approximately horizontal, knees extended without forced lockout; no backward lean or swing."
+    },
+    {
+      "frame": 4,
+      "label": "Hold control",
+      "cue": "Pause briefly with your abs braced and no swinging.",
+      "t": 1,
+      "state": "Same peak configuration as frame 3; intentional hold.",
+      "reusedFrom": 3
+    },
+    {
+      "frame": 5,
+      "label": "Lower slowly",
+      "cue": "Lower both legs together under control.",
+      "t": 0.5,
+      "state": "Same middle configuration as frame 2 on the controlled descent.",
+      "reusedFrom": 2
+    },
+    {
+      "frame": 6,
+      "label": "Return to hang",
+      "cue": "Finish below your hips without kicking your legs behind you.",
+      "t": 0,
+      "state": "Same still hang as frame 1; loop boundary stationary.",
+      "reusedFrom": 1
+    }
+  ],
+  "releaseApproved": false
+}

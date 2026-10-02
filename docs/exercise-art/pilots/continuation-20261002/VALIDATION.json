@@ -1,0 +1,59 @@
+{
+  "baseCommit": "5fe0da9dc9f69fb54e6101754a8bc4c939053df2",
+  "validatedAt": "2026-10-02T23:32:01.470Z",
+  "verify": {
+    "command": "VITEST_MAX_WORKERS=4 npm run verify",
+    "exitCode": 0,
+    "lint": "passed",
+    "formArt": "passed",
+    "formDrafts": "passed",
+    "build": "passed",
+    "unitTests": {
+      "filesPassed": 977,
+      "filesSkipped": 8,
+      "testsPassed": 10864,
+      "testsSkipped": 367,
+      "failed": 0,
+      "durationSeconds": 262.39
+    }
+  },
+  "browser": {
+    "command": "npx playwright test --config playwright.form-art.config.ts",
+    "passed": 18,
+    "skipped": 0,
+    "failed": 0,
+    "evidence": "evidence/playback.json"
+  },
+  "provenance": {
+    "allHashesMatched": true,
+    "allPngsDecoded": true
+  },
+  "draftIntegrity": {
+    "selectedSets": 16,
+    "selectedFrames": 96,
+    "uniquePoses": 62,
+    "nativeBytes": 93191935,
+    "errors": []
+  },
+  "batch": {
+    "completeDraftSets": 1,
+    "selectedFrames": 6,
+    "uniquePoses": 3,
+    "incompletePilots": ["side-plank"],
+    "productionAssetsChanged": false,
+    "releaseApproved": false
+  },
+  "inputHashes": {
+    "manifest": "54c229e6ffd87661ee1e4d6a4c50411ab1a6219b3a9fc8921e2ddf2dcdde6b8a",
+    "hangingLegRaisePlan": "d3bbe8f47bdca00a8032665b10aa8c5da36dfb49222cbad039bddaa234d077d1",
+    "sidePlankPlan": "56ad4789f626997be8172cca2a452d991c64ec385b55cdccdc00c1de1fcfc83a"
+  },
+  "resolvedValidationIssues": [
+    "Restricted sandbox denied a baseline test Node subprocess with EPERM; full verification passed with normal subprocess access and the repository network guard retained.",
+    "Updated a recovered-drafts test that hard-coded the old two-manifest list after adding the continuation manifest."
+  ],
+  "notes": [
+    "Unit-suite skip count is reported separately from passing tests.",
+    "Code, integrity and playback checks do not approve the rejected Side Plank candidates or activate production artwork."
+  ]
+}

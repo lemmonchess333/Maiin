@@ -1,0 +1,111 @@
+{
+  "schemaVersion": 1,
+  "batch": "continuation-20261002",
+  "releaseApproved": false,
+  "productionAssetsChanged": false,
+  "selectedFrameCount": 6,
+  "completeDraftSets": [
+    {
+      "exerciseId": "leg-raise",
+      "status": "draft-awaiting-review",
+      "camera": "Fixed side three-quarter, athlete facing left, both closed overhand grips visible; space left for horizontal legs.",
+      "anchors": [
+        "pull-up bar and supports",
+        "both hand contacts",
+        "camera and canvas"
+      ],
+      "equipment": "One rigid fixed pull-up bar, two closed overhand grips.",
+      "muscles": {
+        "primary": ["rectus abdominis"],
+        "secondary": ["hip flexors"],
+        "stabilisers": ["obliques", "shoulder girdle", "forearms"],
+        "note": "Purple is a qualitative teaching hierarchy, not a measured activation map. Deep hip flexors are not drawn through the skin."
+      },
+      "reviewFindings": [
+        "Three native generated poses. Frame 4 holds 3, frame 5 returns through 2, and frame 6 returns to 1; six separate files, no claim of six unique poses.",
+        "The middle pose rises farther than requested. Its cue describes a partial raise, not a measured joint angle.",
+        "Native still review: both grips maintained, straight legs rise toward hip height, no visible upper-body swing, and stable purple abs/pale oblique hierarchy.",
+        "Four fixed grip/bar-joint patches have zero best-fit integer translation across the three unique poses. Shading changes remain; this is not proof of every anatomical dimension.",
+        "Actual player at 393x852 passed all six frame loads, both themes, 6-to-1 loop, cue agreement, 44px controls, no horizontal overflow and reduced-motion stepping. The three unique displayed poses in both themes were inspected.",
+        "Kept as a draft: delivery WebPs, card cutout, production cue/registry entries and final delivered-asset release evidence have not been created."
+      ],
+      "frames": [
+        {
+          "frame": 1,
+          "path": "docs/exercise-art/pilots/continuation-20261002/leg-raise/1.png",
+          "caption": "HANG AND BRACE 1/6",
+          "cue": "Hang with straight arms and brace to stop any swing.",
+          "progress": 0,
+          "dimensions": [1024, 1536],
+          "bytes": 927275,
+          "sha256": "da1d8e73b06d96aad0028cf229ac36a79867e09bedca74ea422a73ad7e233a01",
+          "reusedFrom": null
+        },
+        {
+          "frame": 2,
+          "path": "docs/exercise-art/pilots/continuation-20261002/leg-raise/2.png",
+          "caption": "BEGIN RAISE 2/6",
+          "cue": "Lift both straight legs forward slowly without kicking.",
+          "progress": 0.5,
+          "dimensions": [1024, 1536],
+          "bytes": 1120723,
+          "sha256": "41058c4e8a5cfeb43799dfb61f59e7535e1d3805c5d9c4c39678619e862ebbff",
+          "reusedFrom": null
+        },
+        {
+          "frame": 3,
+          "path": "docs/exercise-art/pilots/continuation-20261002/leg-raise/3.png",
+          "caption": "REACH PARALLEL 3/6",
+          "cue": "Raise your legs to hip height while keeping your torso steady.",
+          "progress": 1,
+          "dimensions": [1024, 1536],
+          "bytes": 961472,
+          "sha256": "eb791fb2b1e70c14a7a55dc193fc596670deced2c11ac799b2274a37fea27794",
+          "reusedFrom": null
+        },
+        {
+          "frame": 4,
+          "path": "docs/exercise-art/pilots/continuation-20261002/leg-raise/4.png",
+          "caption": "HOLD CONTROL 4/6",
+          "cue": "Pause briefly with your abs braced and no swinging.",
+          "progress": 1,
+          "dimensions": [1024, 1536],
+          "bytes": 961472,
+          "sha256": "eb791fb2b1e70c14a7a55dc193fc596670deced2c11ac799b2274a37fea27794",
+          "reusedFrom": 3
+        },
+        {
+          "frame": 5,
+          "path": "docs/exercise-art/pilots/continuation-20261002/leg-raise/5.png",
+          "caption": "LOWER SLOWLY 5/6",
+          "cue": "Lower both legs together under control.",
+          "progress": 0.5,
+          "dimensions": [1024, 1536],
+          "bytes": 1120723,
+          "sha256": "41058c4e8a5cfeb43799dfb61f59e7535e1d3805c5d9c4c39678619e862ebbff",
+          "reusedFrom": 2
+        },
+        {
+          "frame": 6,
+          "path": "docs/exercise-art/pilots/continuation-20261002/leg-raise/6.png",
+          "caption": "RETURN TO HANG 6/6",
+          "cue": "Finish below your hips without kicking your legs behind you.",
+          "progress": 0,
+          "dimensions": [1024, 1536],
+          "bytes": 927275,
+          "sha256": "da1d8e73b06d96aad0028cf229ac36a79867e09bedca74ea422a73ad7e233a01",
+          "reusedFrom": 1
+        }
+      ]
+    }
+  ],
+  "incompletePilots": [
+    {
+      "exerciseId": "side-plank",
+      "status": "incomplete-contact-repair-required",
+      "selectedFrameCount": 1,
+      "reason": "Raised pose moves the supporting forearm and lower shoe. Targeted reference edit did not restore contacts. Do not fill the remaining frame slots or release.",
+      "nextStep": "Re-establish a registered support/foot construction before additional poses; retain the corrected setup master."
+    }
+  ]
+}
