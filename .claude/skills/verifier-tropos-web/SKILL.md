@@ -179,19 +179,11 @@ These come from the container, not the diff under review:
 - `MetadataLookupWarning` / `DEP0040 (punycode)` in seed-script
   output — Node.js deprecations + GCP metadata fallback
 
-## Known pre-existing bugs surfaced
+## If `/program` fails to load for the seeded user
 
-These reproduce against the seeded user but aren't introduced by
-any specific PR — note them in findings, don't FAIL for them:
-
-- **`useProgram` setDoc with `undefined primaryGoal` — FIXED (2026-06).**
-  This used to surface as "Failed to load programme" on `/program` for
-  the seeded user (no `primaryGoal` → `setDoc({ primaryGoal: undefined })`
-  rejected by Firestore). The `setDocGuarded` migration (which strips
-  `undefined` recursively) closed it: `/program` now creates the initial
-  program and renders the cockpit cleanly for a fresh seeded user. Kept
-  here as a record — if it ever recurs, suspect a raw `setDoc`/`addDoc`
-  bypassing the guarded wrappers.
+Suspect a raw `setDoc`/`addDoc` that bypasses the guarded wrappers in
+`src/lib/firestoreWrite.ts`: Firestore rejects a write carrying an
+`undefined` field, and the wrappers strip them.
 
 ## What to verify per common change type
 
