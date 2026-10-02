@@ -59,8 +59,8 @@ src/
 ├── utils/              # Helpers (calorie balance, formatters, weight trend)
 │   └── __tests__/      # Unit tests for utils/
 └── App.tsx             # Router + error boundary + lazy loading
-functions/              # Firebase Cloud Functions (plain JS, Node 20)
-e2e/                    # Playwright E2E tests (smoke, navigation, a11y, PWA)
+functions/              # Firebase Cloud Functions (plain JS, CommonJS)
+e2e/                    # Playwright specs; screenshot capture specs in e2e/screenshots/
 ```
 
 ## Architecture Notes
