@@ -2644,7 +2644,7 @@ to trigger:
 - `/effort ultracode` — `xhigh` reasoning **plus** auto-workflow: Claude
   plans a workflow for every substantive task (often several in a row:
   understand → change → verify). Lasts the session; reset with
-  `/effort high`. Only on models that support `xhigh` (Opus 4.8 does).
+  `/effort high`. Only on models that support `xhigh`.
 - The word **`workflow`** anywhere in a prompt — runs that one task as a
   workflow without changing session effort (`alt+w` to un-trigger).
 - `/deep-research <question>` — the bundled cross-checked research
