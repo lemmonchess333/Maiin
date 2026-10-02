@@ -467,3 +467,26 @@ describe("rest day — tomorrow's session", function () {
     expect(screen.queryByRole("button")).toBeNull();
   });
 });
+
+describe("rest day — someone who runs freely", function () {
+  it("offers a run instead of a rest day", function () {
+    renderCards({ todayType: "rest", freeRunner: true });
+    expect(screen.getByText("Run when it suits you")).toBeInTheDocument();
+    expect(screen.queryByText(/Recover today/)).toBeNull();
+  });
+
+  it("still leads with the first workout while it is undone", function () {
+    renderCards({
+      todayType: "rest",
+      freeRunner: true,
+      restDayFirstWorkout: {
+        dayName: "Full Body A",
+        dayType: "full",
+        exercises: [{ name: "Squat" }],
+      } as any,
+      restDayFirstWorkoutIndex: 0,
+    });
+    expect(screen.getByText("Your first workout")).toBeInTheDocument();
+    expect(screen.queryByText("Run when it suits you")).toBeNull();
+  });
+});

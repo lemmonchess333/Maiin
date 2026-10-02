@@ -30,17 +30,14 @@ function makeProfile(overrides: Partial<UserProfile> = {}): UserProfile {
 
 function renderSection(profile: UserProfile) {
   const updateProfile = vi.fn(
-    async () => ({ ok: true }) as UpdateProfileResult
+    async (_patch: Partial<UserProfile>) =>
+      ({ ok: true }) as UpdateProfileResult
   );
   render(
     <ProfileInfoSection
       profile={profile}
       name={profile.displayName ?? ""}
       setName={vi.fn()}
-      weightKg={75}
-      setWeightKg={vi.fn()}
-      heightCm={175}
-      setHeightCm={vi.fn()}
       updateProfile={updateProfile}
       inline
     />
@@ -132,66 +129,140 @@ describe("ProfileInfoSection — cleared-field guards on weight/height blur", ()
   // WRITTEN: firestore.rules bounds field names, not values, so the
   // profile carried weightKg: 0 and the nutrition pipeline split —
   // calculateTDEE stored a 0g protein target while getAdjustedTargets
-  // silently rebased to 70kg. The blur now rejects out-of-range values
+  // silently rebases to 70kg. The blur now rejects out-of-range values
   // and restores the previous one instead of persisting garbage.
-  function renderWithValues(weightKg: number, heightCm: number) {
-    const updateProfile = vi.fn(
-      async () => ({ ok: true }) as UpdateProfileResult
-    );
-    const setWeightKg = vi.fn();
-    const setHeightCm = vi.fn();
-    const profile = makeProfile();
-    render(
-      <ProfileInfoSection
-        profile={profile}
-        name="Test"
-        setName={vi.fn()}
-        weightKg={weightKg}
-        setWeightKg={setWeightKg}
-        heightCm={heightCm}
-        setHeightCm={setHeightCm}
-        updateProfile={updateProfile}
-        inline
-      />
-    );
-    return { updateProfile, setWeightKg, setHeightCm };
+  function type(label: RegExp | string, value: string) {
+    const input = screen.getByLabelText(label) as HTMLInputElement;
+    fireEvent.change(input, { target: { value } });
+    fireEvent.blur(input);
+    return input;
   }
 
   it("rejects a cleared (0) weight: no write, value restored", async () => {
-    const { updateProfile, setWeightKg } = renderWithValues(0, 175);
-    fireEvent.blur(screen.getByLabelText(/weight/i));
+    const { updateProfile } = renderSection(makeProfile());
+    const input = type(/weight/i, "0");
     await Promise.resolve();
     expect(updateProfile).not.toHaveBeenCalled();
-    expect(setWeightKg).toHaveBeenCalledWith(75); // profile.weightKg
+    expect(input.value).toBe("75"); // profile.weightKg
   });
 
   it("rejects an implausible weight (>350), restores previous", async () => {
-    const { updateProfile, setWeightKg } = renderWithValues(999, 175);
-    fireEvent.blur(screen.getByLabelText(/weight/i));
+    const { updateProfile } = renderSection(makeProfile());
+    const input = type(/weight/i, "999");
     await Promise.resolve();
     expect(updateProfile).not.toHaveBeenCalled();
-    expect(setWeightKg).toHaveBeenCalledWith(75);
+    expect(input.value).toBe("75");
   });
 
   it("still writes a plausible changed weight", async () => {
-    const { updateProfile } = renderWithValues(82, 175);
-    fireEvent.blur(screen.getByLabelText(/weight/i));
+    const { updateProfile } = renderSection(makeProfile());
+    type(/weight/i, "82");
     await Promise.resolve();
     expect(updateProfile).toHaveBeenCalledWith({ weightKg: 82 });
   });
 
   it("rejects a cleared (0) height: no write, value restored", async () => {
-    const { updateProfile, setHeightCm } = renderWithValues(75, 0);
-    fireEvent.blur(screen.getByLabelText(/height/i));
+    const { updateProfile } = renderSection(makeProfile());
+    const input = type(/height/i, "0");
     await Promise.resolve();
     expect(updateProfile).not.toHaveBeenCalled();
-    expect(setHeightCm).toHaveBeenCalledWith(175); // profile.heightCm
+    expect(input.value).toBe("175"); // profile.heightCm
   });
 
   it("still writes a plausible changed height", async () => {
-    const { updateProfile } = renderWithValues(75, 180);
-    fireEvent.blur(screen.getByLabelText(/height/i));
+    const { updateProfile } = renderSection(makeProfile());
+    type(/height/i, "180");
     await Promise.resolve();
     expect(updateProfile).toHaveBeenCalledWith({ heightCm: 180 });
+  });
+
+  it("writes nothing when a field is left as it was", async () => {
+    const { updateProfile } = renderSection(makeProfile());
+    fireEvent.blur(screen.getByLabelText(/weight/i));
+    fireEvent.blur(screen.getByLabelText(/height/i));
+    await Promise.resolve();
+    expect(updateProfile).not.toHaveBeenCalled();
+  });
+});
+
+/**
+ * Body metrics are stored in kg and cm and shown in the unit chosen under
+ * Units & appearance. These fields showed kg and cm whatever was chosen, so
+ * someone who weighs themselves in pounds read a number they did not know.
+ */
+describe("ProfileInfoSection — weight and height in the chosen units", () => {
+  it("shows pounds, and saves what is typed in pounds as kg", async () => {
+    const { updateProfile } = renderSection(
+      makeProfile({ preferredWeightUnit: "lbs", weightKg: 75 })
+    );
+    const input = screen.getByLabelText("Weight (lb)") as HTMLInputElement;
+    expect(input.value).toBe("165.3");
+    fireEvent.change(input, { target: { value: "160" } });
+    fireEvent.blur(input);
+    await Promise.resolve();
+    expect(updateProfile.mock.calls[0][0].weightKg).toBeCloseTo(72.57, 2);
+  });
+
+  it("does not write back a rounded conversion when pounds are left alone", async () => {
+    // 75 kg shows as 165.3 lb; reading that back would store 74.98 kg.
+    const { updateProfile } = renderSection(
+      makeProfile({ preferredWeightUnit: "lbs", weightKg: 75 })
+    );
+    fireEvent.blur(screen.getByLabelText("Weight (lb)"));
+    await Promise.resolve();
+    expect(updateProfile).not.toHaveBeenCalled();
+  });
+
+  it("applies the kg range to a weight typed in pounds", async () => {
+    const { updateProfile } = renderSection(
+      makeProfile({ preferredWeightUnit: "lbs", weightKg: 75 })
+    );
+    const input = screen.getByLabelText("Weight (lb)") as HTMLInputElement;
+    // 30 lb is 13.6 kg, under the 20 kg floor.
+    fireEvent.change(input, { target: { value: "30" } });
+    fireEvent.blur(input);
+    await Promise.resolve();
+    expect(updateProfile).not.toHaveBeenCalled();
+    expect(input.value).toBe("165.3");
+  });
+
+  it("shows feet and inches, and saves them as cm", async () => {
+    const { updateProfile } = renderSection(
+      makeProfile({ preferredHeightUnit: "ft", heightCm: 175 })
+    );
+    const feet = screen.getByLabelText("Height, feet") as HTMLInputElement;
+    const inches = screen.getByLabelText("Height, inches") as HTMLInputElement;
+    expect([feet.value, inches.value]).toEqual(["5", "9"]);
+
+    fireEvent.change(feet, { target: { value: "6" } });
+    fireEvent.change(inches, { target: { value: "0" } });
+    fireEvent.blur(inches);
+    await Promise.resolve();
+    expect(updateProfile).toHaveBeenCalledWith({ heightCm: 182.9 });
+  });
+
+  it("waits until focus leaves both boxes before saving a height", async () => {
+    const { updateProfile } = renderSection(
+      makeProfile({ preferredHeightUnit: "ft", heightCm: 175 })
+    );
+    const feet = screen.getByLabelText("Height, feet");
+    const inches = screen.getByLabelText("Height, inches");
+    fireEvent.change(feet, { target: { value: "6" } });
+    // Tabbing from feet to inches is still editing one height.
+    fireEvent.blur(feet, { relatedTarget: inches });
+    await Promise.resolve();
+    expect(updateProfile).not.toHaveBeenCalled();
+  });
+
+  it("refuses inches of 12 or more, and puts the height back", async () => {
+    const { updateProfile } = renderSection(
+      makeProfile({ preferredHeightUnit: "ft", heightCm: 175 })
+    );
+    const inches = screen.getByLabelText("Height, inches") as HTMLInputElement;
+    fireEvent.change(inches, { target: { value: "14" } });
+    fireEvent.blur(inches);
+    await Promise.resolve();
+    expect(updateProfile).not.toHaveBeenCalled();
+    expect(inches.value).toBe("9");
   });
 });

@@ -257,6 +257,35 @@ service cloud.firestore {
         || shareDefaultsValid();
     }
 
+    /* notificationPreferences value gate — the switches under Settings →
+       Notifications → Activity (S3). createNotification reads this map and
+       writes nothing for a kind that is off. Only the five switches, each
+       a boolean; a whole-field null means none chosen (the defaults
+       apply). Same keys as functions/lib/notificationPreferences.js and
+       src/lib/notificationPreferences.ts (pinned by
+       notificationPreferences.cross.test.ts). Gated only when the field
+       changes, like shareDefaults above. */
+    function notificationPreferencesValid() {
+      let p = request.resource.data.notificationPreferences;
+      return !('notificationPreferences' in request.resource.data)
+        || p == null
+        || (
+          p is map
+          && p.keys().hasOnly(['kudos', 'comments', 'follows', 'circles', 'spaces'])
+          && (!('kudos' in p) || p.kudos is bool)
+          && (!('comments' in p) || p.comments is bool)
+          && (!('follows' in p) || p.follows is bool)
+          && (!('circles' in p) || p.circles is bool)
+          && (!('spaces' in p) || p.spaces is bool)
+        );
+    }
+
+    function notificationPreferencesUnchangedOrValid() {
+      return !request.resource.data.diff(resource.data).affectedKeys()
+          .hasAny(['notificationPreferences'])
+        || notificationPreferencesValid();
+    }
+
     function subscriptionFieldsUnchanged() {
       let protectedFields = [
         'subscriptionTier', 'stripeCustomerId', 'stripeSubscriptionId', 'trialExpiresAt',
@@ -284,6 +313,9 @@ service cloud.firestore {
         // Soc11 share answers, per type. Value-gated by shareDefaultsValid()
         // above; also in profileSanitizer.js.
         'shareDefaults',
+        // S3 activity notification switches. Value-gated by
+        // notificationPreferencesValid() above.
+        'notificationPreferences',
         // #984 "Hide the number" anti-anxiety toggle — written client-side via
         // updateProfile (Settings → toggleHideWeightNumber) AND set by the
         // onboarding CF (in profileSanitizer). It was in the sanitiser + the
@@ -378,13 +410,15 @@ service cloud.firestore {
         && request.resource.data.subscriptionTier == 'free'
         && billingFieldsUnsetOnCreate()
         && raceGoalValid()
-        && shareDefaultsValid();
+        && shareDefaultsValid()
+        && notificationPreferencesValid();
       allow update: if isOwner(uid)
         && !isWriteFrozen(uid)
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(allowedUserFields())
         && subscriptionFieldsUnchanged()
         && raceGoalUnchangedOrValid()
-        && shareDefaultsUnchangedOrValid();
+        && shareDefaultsUnchangedOrValid()
+        && notificationPreferencesUnchangedOrValid();
       // Freeze delete too: the deletion executor uses the Admin SDK (which
       // bypasses rules), so a client-side self-delete during the freeze /
       // tombstone window is never the executor and should be blocked.

@@ -1,19 +1,24 @@
-import { expect, type Page } from "@playwright/test";
+import { expect, type Page, type Response } from "@playwright/test";
 import { emulatorActive, EXPECTED_AUTH_HOST } from "./emulator";
 
-/** Complete the email the app actually sent, using only the local emulator.
- * Fresh-account fixtures must pass the same verification gate as new users.
- * This also exercises Firebase-mail fallback when Functions is not running.
+/** Verify a fresh account's email the way a person does, using only the
+ * local emulator.
+ *
+ * Email sign-ups go straight to onboarding: verification comes after the
+ * plan, so this first proves there is no wall. It then finds the link the
+ * app sent at sign-up (Firebase's own mail when the Functions emulator is
+ * not running), applies it, and has the app notice it as a return from Mail
+ * does: the App-level gate rechecks on focus, reloads the user and
+ * refreshes the token. Specs that post publicly need that
+ * fresh token, so this waits for the refresh rather than for anything on
+ * screen, which shows nothing while onboarding is open.
  */
 export async function verifySignupEmail(page: Page, email: string) {
   if (!emulatorActive)
     throw new Error("Signup verification requires local emulators");
-  await expect(
-    page.getByRole("heading", { name: "Verify your email", exact: true })
-  ).toBeVisible();
-  await expect(
-    page.getByRole("button", { name: /build muscle/i })
-  ).not.toBeVisible();
+  await expect(page.getByRole("button", { name: /build muscle/i })).toBeVisible(
+    { timeout: 20_000 }
+  );
 
   let code = "";
   await expect
@@ -38,7 +43,7 @@ export async function verifySignupEmail(page: Page, email: string) {
       },
       {
         timeout: 20_000,
-        message: "App must send the signup verification email",
+        message: "App must send the verification email at sign-up",
       }
     )
     .not.toBe("");
@@ -48,10 +53,32 @@ export async function verifySignupEmail(page: Page, email: string) {
     { data: { oobCode: code } }
   );
   expect(response.ok(), "Verification link must be accepted").toBe(true);
-  await page
-    .getByRole("button", { name: "I've verified my email", exact: true })
-    .click();
-  await expect(page.getByRole("button", { name: /build muscle/i })).toBeVisible(
-    { timeout: 20_000 }
-  );
+
+  // A return to the app is a focus event. Repeat it until the token is
+  // refreshed: one dispatched while the gate's first check is still in
+  // flight is ignored, by design.
+  let refreshed = false;
+  const onResponse = (r: Response) => {
+    if (r.url().includes("securetoken.googleapis.com/v1/token") && r.ok())
+      refreshed = true;
+  };
+  page.on("response", onResponse);
+  try {
+    await expect
+      .poll(
+        async () => {
+          if (!refreshed)
+            await page.evaluate(() => window.dispatchEvent(new Event("focus")));
+          return refreshed;
+        },
+        {
+          timeout: 20_000,
+          intervals: [250, 500, 1000, 2000],
+          message: "App must refresh its token once the email is verified",
+        }
+      )
+      .toBe(true);
+  } finally {
+    page.off("response", onResponse);
+  }
 }

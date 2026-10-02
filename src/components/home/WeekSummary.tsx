@@ -39,7 +39,7 @@ export default function WeekSummary({ counts }: { counts: WeekSummaryCounts }) {
     key: "food",
     label: "Food logged",
     done: counts.foodDays,
-    of: 7,
+    of: counts.foodDayTotal,
     unit: "days",
     fill: "hsl(var(--nutrition))",
   });

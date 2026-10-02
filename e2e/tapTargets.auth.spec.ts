@@ -70,6 +70,7 @@ const ROUTES = [
   "settings/privacy",
   "settings/units-appearance",
   "settings/subscription",
+  "settings/data",
 ] as const;
 
 test.describe("form controls clear the touch floor", () => {

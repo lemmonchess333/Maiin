@@ -293,7 +293,9 @@ contains all three required keys with the exact strings below:
 - Category: Health & Fitness
 - Reviewer notes mentioning:
   - AI food analysis disclaimer
-  - IAP sandbox demo account
+  - IAP sandbox demo account. Its Firebase uid must be in
+    `REVENUECAT_SANDBOX_UIDS` before you submit, or the reviewer's test
+    purchase will not unlock Pro (`docs/iap/revenuecat-setup.md` Part C)
   - Any crew / social content moderation flow
 
 ---

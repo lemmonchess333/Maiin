@@ -164,7 +164,7 @@ export function represcribeWorkouts(
  * Whether an easing block is holding progression this week.
  *
  * Deliberately NOT implemented by flipping `programState.settings
- * .autoProgression`: that is a switch the user owns in Programme settings,
+ * .autoProgression`: that is a switch the user owns in Lift plan settings,
  * and a block must not silently move someone's setting. Block-scoped and
  * self-expiring — week 3 resumes normal progression with nothing to clear.
  */

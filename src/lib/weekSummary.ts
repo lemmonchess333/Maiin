@@ -1,3 +1,5 @@
+import { beforeStart } from "@/lib/startDay";
+
 /**
  * The week so far, in three counts: lifts, runs and days with food logged.
  *
@@ -9,7 +11,11 @@
  *          (a session on an unplanned day still counts: it happened)
  *   runs   planned runs completed, plus logged runs that matched no
  *          planned day, against the run days planned
- *   food   days this week with at least one meal logged, out of 7
+ *   food   days this week with at least one meal logged, out of the
+ *          week's days since the account began (7 after the first week)
+ *
+ * Days before the account began are not counted: a week someone joined on
+ * a Friday plans the Friday onward (startDay.ts).
  */
 export interface WeekCount {
   done: number;
@@ -20,6 +26,9 @@ export interface WeekSummaryCounts {
   lifts: WeekCount;
   runs: WeekCount;
   foodDays: number;
+  /** The days food could have been logged on: 7, or fewer in the week
+   *  the account began. */
+  foodDayTotal: number;
 }
 
 interface WindowDay {
@@ -33,6 +42,7 @@ export function summariseWeek({
   liftDates,
   extraRunsByDate,
   mealsByDate,
+  startKey = null,
 }: {
   /** The seven resolved days of the calendar week. */
   window: readonly WindowDay[];
@@ -42,16 +52,21 @@ export function summariseWeek({
   extraRunsByDate: ReadonlyMap<string, readonly unknown[]>;
   /** Meals logged per date. */
   mealsByDate: ReadonlyMap<string, { meals: number }>;
+  /** The day the account began; earlier days plan nothing. */
+  startKey?: string | null;
 }): WeekSummaryCounts {
   const days = new Set(window.map((d) => d.dateKey));
   let liftPlanned = 0;
   let runPlanned = 0;
   let runDone = 0;
   let foodDays = 0;
+  let foodDayTotal = 0;
   for (const day of window) {
-    if (day.scheduleType === "lift" || day.scheduleType === "both")
+    const begun = !beforeStart(day.dateKey, startKey);
+    if (begun) foodDayTotal++;
+    if (begun && (day.scheduleType === "lift" || day.scheduleType === "both"))
       liftPlanned++;
-    if (day.scheduleType === "run" || day.scheduleType === "both") {
+    if (begun && (day.scheduleType === "run" || day.scheduleType === "both")) {
       runPlanned++;
       if (day.run.isCompleted) runDone++;
     }
@@ -63,5 +78,6 @@ export function summariseWeek({
     lifts: { done: liftDone, planned: liftPlanned },
     runs: { done: runDone, planned: runPlanned },
     foodDays,
+    foodDayTotal,
   };
 }

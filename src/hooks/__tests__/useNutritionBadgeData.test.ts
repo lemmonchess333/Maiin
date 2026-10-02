@@ -77,11 +77,17 @@ describe("macro targets", () => {
     });
   });
 
-  it("falls back to the document id when `date` is missing", async () => {
-    // The id IS the date; a doc written without the field must still key
-    // correctly or that day drops out of the streak window.
+  it("falls back to the document id when `date` is not a date string", async () => {
+    // The id IS the date; a doc whose field is unusable must still key
+    // correctly or that day drops out of the streak window. (A doc with no
+    // `date` at all is never read: the query is ordered by `date`, and
+    // Firestore leaves out documents without the field. The snapshot
+    // writer always writes one.)
     seedFirestore({
-      "users/u1/dailyNutrition/2026-07-13": { targetCalories: 2000 },
+      "users/u1/dailyNutrition/2026-07-13": {
+        date: null,
+        targetCalories: 2000,
+      },
     });
     const { result } = renderHook(() => useNutritionBadgeData());
     await waitFor(() => expect(result.current.loaded).toBe(true));

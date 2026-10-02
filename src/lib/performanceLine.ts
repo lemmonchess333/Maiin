@@ -88,6 +88,24 @@ const liftingAbove = (s: PerformanceSignals) =>
 const runningAbove = (s: PerformanceSignals) =>
   `Running distance ${Math.round(s.runAheadOfBaseline * 100)}% above your usual week`;
 
+/**
+ * The supporting line while the baseline is still forming
+ * (`isEstablishingBaseline`): PI1's low-confidence state, "full ring + PI +
+ * verb, but supporting line uses sparse-data variants". Every data-aware
+ * line in `getLine` compares the week with "your usual week", the average
+ * of the weeks before it, and a new account has none, so "Fewer sessions
+ * than usual" on day three and "97% above your usual week" on day seven
+ * compared a first week with nothing. The Performance page already says
+ * "Early read" here; Home and the overview now say the same thing.
+ */
+export function getEstablishingLine(signals: PerformanceSignals): string {
+  if (signals.daysSinceLastTraining > 7)
+    return "Re-engaging — log a session to refresh";
+  return (signals.lifetimeWeeks ?? 0) <= 1
+    ? "Establishing your week"
+    : "Settling in";
+}
+
 export function getLine(state: VerbState, signals: PerformanceSignals): string {
   switch (state) {
     case "backing-off":

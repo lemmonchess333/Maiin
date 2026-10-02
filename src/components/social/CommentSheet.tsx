@@ -20,6 +20,7 @@ import { toast } from "@/lib/toast";
 import { logger } from "../../lib/logger";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { Spinner } from "@/components/ui/Spinner";
 import { describeRejection } from "@/lib/callableErrors";
 import { useEmailVerificationGate } from "@/hooks/useEmailVerificationGate";
 import VerifyEmailNotice from "./VerifyEmailNotice";
@@ -68,6 +69,15 @@ export default function CommentSheet({
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const lastDocRef = useRef<DocumentSnapshot | undefined>(undefined);
   const inputRef = useRef<HTMLInputElement>(null);
+  /* Which read the list answers. Until the current one settles an empty
+     list means "not loaded yet", not "no comments": the sheet said "No
+     comments yet" under "Comments (3)" while it loaded, and kept saying
+     it when the read failed. */
+  const [attempt, setAttempt] = useState(0);
+  const loadKey = `${activityId}#${attempt}`;
+  const [settled, setSettled] = useState<{ key: string; failed: boolean }>();
+  const loading = settled?.key !== loadKey;
+  const failed = !loading && settled.failed;
 
   useEffect(() => {
     if (!open) return;
@@ -78,6 +88,7 @@ export default function CommentSheet({
         setComments(result.comments as Comment[]);
         lastDocRef.current = result.lastDoc;
         setHasMore(result.hasMore);
+        setSettled({ key: loadKey, failed: false });
       })
       .catch((err) => {
         if (cancelled) return;
@@ -92,11 +103,12 @@ export default function CommentSheet({
         } else {
           logger.error("[CommentSheet] load failed", err);
         }
+        setSettled({ key: loadKey, failed: true });
       });
     return () => {
       cancelled = true;
     };
-  }, [activityId, open, onOpenChange]);
+  }, [activityId, open, onOpenChange, loadKey]);
 
   // Focus input when sheet opens
   useEffect(() => {
@@ -234,16 +246,36 @@ export default function CommentSheet({
       >
         {/* Comment list */}
         <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
-          {comments.length === 0 && (
-            <div className="text-center py-8 space-y-1.5">
-              <p className="text-sm font-medium text-foreground">
-                No comments yet
-              </p>
-              <p className="text-xs text-muted-foreground">
-                Be the first to leave a comment
-              </p>
-            </div>
-          )}
+          {comments.length === 0 &&
+            (loading ? (
+              <div className="flex justify-center py-8">
+                <Spinner size="sm" variant="muted" label="Loading comments" />
+              </div>
+            ) : failed ? (
+              <div className="text-center py-8 space-y-2" role="alert">
+                <p className="text-sm font-medium text-foreground">
+                  Couldn't load comments
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Check your connection and try again.
+                </p>
+                <Button
+                  variant="secondary"
+                  onClick={() => setAttempt((n) => n + 1)}
+                >
+                  Try again
+                </Button>
+              </div>
+            ) : (
+              <div className="text-center py-8 space-y-1.5">
+                <p className="text-sm font-medium text-foreground">
+                  No comments yet
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Be the first to leave a comment
+                </p>
+              </div>
+            ))}
 
           <AnimatePresence>
             {comments.map((c) => {

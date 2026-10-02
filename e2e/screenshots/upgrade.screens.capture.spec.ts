@@ -72,8 +72,10 @@ test.describe("pro offer page screenshots", () => {
     // Relative (no leading slash) — a leading '/' escapes the /Maiin/
     // baseURL and lands on the server's base-path error page.
     await page.goto("upgrade?from=onboarding");
+    // From onboarding the offer is headed by the plan just made; other
+    // ways in read "Log a meal from a photo".
     await page
-      .getByRole("heading", { name: /log a meal from a photo/i })
+      .getByRole("heading", { name: /your plan is ready/i })
       .waitFor({ timeout: 15_000 });
     await shootLightDark(page, "upgrade-offer");
 

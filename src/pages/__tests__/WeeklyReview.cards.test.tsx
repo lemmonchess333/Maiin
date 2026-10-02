@@ -47,6 +47,13 @@ vi.mock("@/hooks/useDismissOnce", () => ({
   useDismissOnce: () => ({ dismiss: vi.fn(), dismissed: false }),
 }));
 
+/* The share sheet renders the card off-screen to export it; here it only
+   needs to show what it was handed. */
+vi.mock("@/components/share/ShareCardSheet", () => ({
+  default: ({ open, data }: { open: boolean; data: unknown }) =>
+    open ? <pre data-testid="share-sheet">{JSON.stringify(data)}</pre> : null,
+}));
+
 import WeeklyReview from "../WeeklyReview";
 
 const BEST = {
@@ -277,5 +284,35 @@ describe("WeeklyReview — the recap as cards", () => {
     renderRecap();
     fireEvent.click(screen.getByRole("button", { name: "Close" }));
     expect(screen.getByText("Home page")).toBeInTheDocument();
+  });
+});
+
+describe("WeeklyReview — sharing the week", () => {
+  /* "Share your week" lived at the top of the Social feed as a "Build
+     recap" card until 2026-10-01, where it pushed every post down. It
+     moved here, onto the week it describes. */
+  it("shares the week it reviews, in its own numbers", () => {
+    mockProfile = { displayName: "Sam" };
+    mockReview = normal();
+    renderRecap();
+    fireEvent.click(screen.getByRole("button", { name: "Share your week" }));
+    expect(
+      JSON.parse(screen.getByTestId("share-sheet").textContent ?? "{}")
+    ).toEqual({
+      template: "recap",
+      handle: "Sam",
+      date: "29 Jun – 5 Jul",
+      sessionsCount: 4,
+      distanceKm: 11,
+      totalVolumeKg: 13280,
+    });
+  });
+
+  it("offers nothing to share for a quiet week", () => {
+    mockReview = normal({ kind: "quiet", training: null });
+    renderRecap();
+    expect(
+      screen.queryByRole("button", { name: "Share your week" })
+    ).toBeNull();
   });
 });

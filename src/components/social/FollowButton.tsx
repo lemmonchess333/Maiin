@@ -1,9 +1,8 @@
-import { useState, useEffect } from "react";
 import { useUid } from "../../lib/auth";
-import { isFollowing, followUser, unfollowUser } from "../../lib/socialApi";
-import { logger } from "../../lib/logger";
+import { useFollowState } from "@/hooks/useFollowState";
 import { haptic } from "../../lib/haptic";
 import { Spinner } from "@/components/ui/Spinner";
+import { cn } from "@/lib/utils";
 
 interface FollowButtonProps {
   targetUid: string;
@@ -22,6 +21,9 @@ interface FollowButtonProps {
    * permanently, not a transient busy state.
    */
   disabled?: boolean;
+  /** Width override. The fixed width suits a list row; a profile's
+   *  action row stretches it (`flex-1`). */
+  className?: string;
 }
 
 /**
@@ -36,37 +38,15 @@ export default function FollowButton({
   targetUid,
   onFollowChange,
   disabled,
+  className,
 }: FollowButtonProps) {
   const uid = useUid();
-  const [following, setFollowing] = useState(false);
-  /* The pair whose follow check has settled. The button stays in its
-     loading state until the CURRENT pair's has, so the flag is derived
-     below rather than stored: a stored one had to be reset by the effect,
-     and was never raised again when the pair changed. */
-  const [checked, setChecked] = useState<{
-    uid: string;
-    targetUid: string;
-  } | null>(null);
-  const [busy, setBusy] = useState(false);
-
-  useEffect(() => {
-    if (!uid || uid === targetUid) return;
-    let cancelled = false;
-    isFollowing(uid, targetUid)
-      .then((v) => {
-        if (!cancelled) setFollowing(v);
-      })
-      .catch((err) => {
-        if (!cancelled)
-          logger.error("[FollowButton] isFollowing check failed", err);
-      })
-      .finally(() => {
-        if (!cancelled) setChecked({ uid, targetUid });
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [uid, targetUid]);
+  /* Shared with every other control that shows this person (a post's
+     Follow link, the People to follow row): one read a session, and a
+     follow from any of them shows here at once. */
+  const { following: known, settled, busy, toggle } = useFollowState(targetUid);
+  // A failed check reads as not following, as it always has here.
+  const following = known ?? false;
 
   const handleToggle = async () => {
     if (!uid || busy || disabled) return;
@@ -74,31 +54,18 @@ export default function FollowButton({
     // Tactile confirmation on the commit — follow is stronger haptic
     // (meaningful new relationship), unfollow is lighter (undo action).
     haptic(nextFollowing ? "medium" : "light");
-    // Optimistic flip — snap the UI to the target state, reconcile
-    // after the server write resolves.
-    setFollowing(nextFollowing);
-    setBusy(true);
-    try {
-      if (nextFollowing) {
-        await followUser(uid, targetUid);
-      } else {
-        await unfollowUser(uid, targetUid);
-      }
+    // Optimistic: the shared state flips at once and is put back if the
+    // write fails.
+    if (await toggle(nextFollowing)) {
       onFollowChange?.(nextFollowing);
-    } catch (err) {
-      // Revert on failure.
-      logger.error("[FollowButton] toggle failed", err);
-      setFollowing(!nextFollowing);
+    } else {
       haptic("error");
-    } finally {
-      setBusy(false);
     }
   };
 
   if (!uid || uid === targetUid) return null;
 
-  const initialising = checked?.uid !== uid || checked.targetUid !== targetUid;
-  const showSpinner = initialising || busy;
+  const showSpinner = !settled || busy;
 
   return (
     <button
@@ -113,11 +80,13 @@ export default function FollowButton({
             : "Follow user"
       }
       aria-busy={showSpinner}
-      className={`inline-flex items-center justify-center h-11 w-24 rounded-lg text-xs font-medium transition-colors disabled:opacity-50 ${
+      className={cn(
+        "inline-flex items-center justify-center h-11 w-24 rounded-lg text-xs font-medium transition-colors disabled:opacity-50",
         following
           ? "bg-muted text-muted-foreground border border-border"
-          : "bg-primary-strong text-white"
-      }`}
+          : "bg-primary-strong text-white",
+        className
+      )}
     >
       {showSpinner ? (
         // The button itself sets the foreground colour (white for

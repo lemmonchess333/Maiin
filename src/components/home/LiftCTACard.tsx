@@ -37,6 +37,7 @@ export default function LiftCTACard({
   dayIndex = null,
   isStartable = true,
   status,
+  eyebrowLabel,
 }: {
   purpose?: string | null;
   nextWorkout: {
@@ -58,6 +59,9 @@ export default function LiftCTACard({
    *  (terminal). The card names its status and offers no Start. */
   isStartable?: boolean;
   status?: "none" | "planned" | "completed" | "skipped";
+  /** Replaces the day's category above the title, for a card that is not
+   *  today's planned session (a new person's first workout on a rest day). */
+  eyebrowLabel?: string;
 }) {
   const dayTarget =
     typeof dayIndex === "number" ? `/program?day=${dayIndex}` : "/program";
@@ -88,7 +92,7 @@ export default function LiftCTACard({
      rotation; liftCardRegister.test.tsx). No week or rotation position:
      Home shows the session and its dose, and the rest lives in the day's
      details (owner direction, 2026-09-09). */
-  const eyebrow = category ?? "Planned for today";
+  const eyebrow = eyebrowLabel ?? category ?? "Planned for today";
   const minutes = useMemo(() => {
     const priced = nextWorkout.exercises.filter(
       (ex): ex is LiftCardExercise & { sets: number } =>

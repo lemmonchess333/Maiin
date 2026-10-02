@@ -1,4 +1,5 @@
 import { verifySignupEmail } from "./helpers/verifySignupEmail";
+import { openSignUpForm } from "./helpers/auth";
 /**
  * PR #820 — offline-queue uid isolation, end-to-end on the real app
  * (the two-account "device test" row in the pre-launch QA backlog).
@@ -249,9 +250,7 @@ async function mintOnboardedAccount(
 ): Promise<string> {
   await page.goto("/");
   await page.waitForLoadState("networkidle");
-  await page
-    .getByRole("button", { name: /sign up/i })
-    .click({ timeout: 20_000 });
+  await openSignUpForm(page);
   await page.fill("#login-email", email);
   await page.fill("#login-password", PASSWORD);
   await page
@@ -630,9 +629,11 @@ test.describe("offline-queue uid isolation across an account switch", () => {
     // sign-out lands — so no flush can fire under A on the way out.
     await page.getByRole("link", { name: /^Home/ }).click();
     await clickPastCelebration(page, page.getByLabel("Settings"));
+    // The Settings list's Account row, by its description. Pinned against
+    // the real list by settingsAccountRowSelector.test.tsx.
     await clickPastCelebration(
       page,
-      page.getByRole("button", { name: /sign out, delete account/i })
+      page.getByRole("button", { name: /email, password, sign out/i })
     );
     await signOutViaUI(page);
 

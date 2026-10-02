@@ -513,3 +513,42 @@ describe("buildWeekPulse (Rev1 PR2)", () => {
     expect(p?.streak).toBeNull();
   });
 });
+
+describe("the week the account began", () => {
+  const perf = { pi: 63, loadBand: "moderate", deloadRecommended: false };
+
+  it("is reviewed from the start day, with a first-score verdict", () => {
+    // Joined on the Thursday of the Sun..Sat week.
+    const r = buildWeeklyReview(
+      base({
+        startKey: "2026-06-25",
+        workouts: [{ date: "2026-06-25", tonnageKg: 5000 }],
+        perf,
+      })
+    );
+    expect(r?.firstDays).toEqual({ start: "2026-06-25", count: 3 });
+    expect(r?.headline?.verdict).toBe(
+      "Your first score. It settles over the next few weeks."
+    );
+  });
+
+  it("is an ordinary week when the account began on its first day or before", () => {
+    for (const startKey of ["2026-06-21", "2026-06-01", null]) {
+      const r = buildWeeklyReview(
+        base({
+          startKey,
+          workouts: [{ date: "2026-06-22", tonnageKg: 5000 }],
+          perf,
+        })
+      );
+      expect(r?.firstDays).toBeNull();
+      expect(r?.headline?.verdict).toBe(
+        verdictFor({
+          delta: null,
+          loadBand: "moderate",
+          deloadRecommended: false,
+        })
+      );
+    }
+  });
+});

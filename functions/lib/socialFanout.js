@@ -1,5 +1,6 @@
 const { FieldPath } = require("firebase-admin/firestore");
 const { transactionAccountsLive } = require("./deletionTransactionGuard");
+const { categoryFor, wantsNotification } = require("./notificationPreferences");
 /**
  * 2026-05-26 audit PR 3 — server-side feed fan-out + notification
  * creation. Closes findings #3 (feed spam), #6 (notification spam),
@@ -293,6 +294,27 @@ function sanitiseNotificationData(data) {
 }
 
 /**
+ * Whether the recipient has this kind of notification switched on
+ * (Settings → Notifications → Activity; notificationPreferences.js).
+ *
+ * A type with no switch needs no read. When the profile cannot be read,
+ * the defaults decide rather than either extreme: refusing everything would
+ * drop the notifications people want on a passing error, and a muted kind
+ * arriving once is the smaller mistake.
+ */
+async function recipientWants(firestore, toUid, type) {
+  if (categoryFor(type) === null) return true;
+  let prefs = null;
+  try {
+    const snap = await firestore.collection("users").doc(toUid).get();
+    prefs = snap.exists ? (snap.data() || {}).notificationPreferences : null;
+  } catch {
+    prefs = null;
+  }
+  return wantsNotification(prefs, type);
+}
+
+/**
  * Write a notification doc into the recipient's
  * `notifications/{toUid}/items/` collection. Server-controlled:
  *   - `fromUserId` is forced to `fromUid` (the authed caller), not
@@ -306,6 +328,7 @@ function sanitiseNotificationData(data) {
  *   - `type` must be one of the closed union.
  *   - String fields are length-capped.
  *   - Self-notification is a silent no-op.
+ *   - A kind the recipient switched off is not written (`muted`).
  *
  * Caller is responsible for rate limiting (kudos/comment CFs already
  * apply per-uid limits via `isRateLimited`).
@@ -348,6 +371,14 @@ async function createNotification({
     throw new Error(
       `createNotification: type must be one of ${VALID_NOTIFICATION_TYPES.join(", ")}`,
     );
+  }
+
+  /* The recipient's switch for this kind. Skipped, not written and hidden:
+     the tray shows what is stored, and Settings says an "off" kind is not
+     sent. Like the block check, a silent skip: the like or the comment
+     still happened. */
+  if (!(await recipientWants(firestore, toUid, data.type))) {
+    return { skipped: true, muted: true };
   }
 
   const items = firestore

@@ -834,3 +834,40 @@ describe("WeekStrip — the circle is a statement about the date (DS3)", () => {
     expect(new Set(circleStates(container))).toEqual(new Set(["rest"]));
   });
 });
+
+describe("WeekStrip — days before the account began", () => {
+  // A start day on this week's Sunday puts Monday to Saturday before it,
+  // whatever day the suite runs on.
+  const sunday = localDateString(
+    addLocalDays(new Date(`${localWeekKey()}T12:00:00`), 6)
+  );
+
+  function renderLiftWeek(startKey?: string | null) {
+    const profile = makeProfile(makeSchedule(Array(7).fill("lift")));
+    return render(
+      <WeekStrip
+        dayMap={new Map()}
+        profile={profile}
+        programState={makeProgramState([])}
+        claimMap={emptyClaimMap}
+        selectedDate={null}
+        onDayTap={vi.fn()}
+        startKey={startKey}
+      />
+    );
+  }
+
+  it("draws them plain, not missed, and says so", () => {
+    const { container } = renderLiftWeek(sunday);
+    const states = circleStates(container);
+    expect(states.slice(0, 6)).toEqual(Array(6).fill("before"));
+    expect(states[6]).not.toBe("before");
+    const monday = container.querySelectorAll("button")[0];
+    expect(monday.getAttribute("aria-label")).toMatch(/before you started/);
+  });
+
+  it("changes nothing without a known start day", () => {
+    const { container } = renderLiftWeek(null);
+    expect(circleStates(container)).not.toContain("before");
+  });
+});

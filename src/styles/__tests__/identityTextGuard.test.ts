@@ -110,12 +110,18 @@ const EXPECTED_BARE_USES: Record<(typeof IDENTITY)[number], number> = {
   // reason as its footprints: a coloured rule marks the number now.
   // 2026-09-27: 15 → 16. The brand mark before Home's date (BrandMark):
   // a solid hexagon, an ICON (3:1 non-text), in the literal brand purple.
-  lifting: 16, // Redesign consolidates onboarding option icons.
+  // 2026-10-01: 16 → 18. The Settings pass: the Programme row's icon on
+  // the Settings list and the Lift plan row's on the Programme page, both
+  // ICONS; their words are foreground.
+  lifting: 18, // Redesign consolidates onboarding option icons.
   // 2026-09-27: 4 → 5. Analytics' Go deeper tiles: the Food tile's apple
   // ICON; its words are foreground.
   // 2026-09-27: 5 → 4. The weekly recap's food icon, retired with its
   // other row icons for the coloured rule.
-  nutrition: 4,
+  // 2026-10-01: 4 → 6. The Settings pass: the Nutrition row's icon on the
+  // Settings list and the Nutrition phase row's on the Programme page,
+  // both ICONS; their words are foreground.
+  nutrition: 6,
   destructive: 0,
   success: 0,
   warning: 0,
@@ -155,10 +161,13 @@ const EXPECTED_INLINE_USES = {
   // Lift numerals are 18px bold — under the 18.66px large-text line by
   // two thirds of a pixel — so they took the strong steps with the
   // brand-coloured Double beside them.
-  "THEME.running": 17,
+  // 2026-10-01: 17 → 15. The Social pass retired the feed's recap card
+  // (its run figure) and the solo feed's share card.
+  "THEME.running": 15,
   // 2026-09-27: 6 → 5. The Sessions ring's stroke, retired with the
   // summary's rings (PeriodOverview).
-  "THEME.lifting": 5,
+  // 2026-10-01: 5 → 4. The same recap card's volume figure.
+  "THEME.lifting": 4,
   // The brand, inline. Icon tints (notification glyphs, the ProModal
   // feature tiles, the Home tiles' arrows), legend and ring fills, and
   // TrajectoryCard's 3xl score. The text uses — Home's rest-day eyebrow,
@@ -171,13 +180,22 @@ const EXPECTED_INLINE_USES = {
   // sparkle tile with them.
   // 2026-09-27: 39 → 38. DS3's rest-day card tints its leaf with the
   // `text-lifting-strong` class instead of the inline brand colour.
-  "THEME.brand": 38,
+  // 2026-10-01: 37 → 33. The Social pass: the feed's follow-progress
+  // and empty-Following row icons, the profile's empty-state tile (now
+  // the EmptyState primitive) and the solo feed's.
+  // 2026-10-01: 33 → 32. The notifications sheet's empty state moved to
+  // the EmptyState primitive too.
+  "THEME.brand": 32,
   // 2026-09-18: 21 → 19. Home's "Log food" action and the nudge note
   // above it were the two smallest-text uses and measured 2.77:1; both
   // moved to `text-nutrition-strong`. The rest are icons and fills.
   // 2026-09-20: 19 → 18. FoodProStrip (an icon tint on its camera tile)
   // was retired for the one-line FoodProHint, which paints no identity.
-  "THEME.semantic.nutrition": 18,
+  // 2026-10-01: 18 → 17. The Programme page's read-only nutrition card
+  // (its apple) went with the Settings pass; the phase is a row now.
+  // 17 → 16 with the first-week pass: Home's welcome card (its Food tab
+  // icon in the food orange) became the first-week card.
+  "THEME.semantic.nutrition": 16,
 } as const;
 
 type InlineToken = keyof typeof EXPECTED_INLINE_USES;
@@ -255,7 +273,13 @@ function bareUses(token: string): string[] {
 // 2026-09-27: 49 → 45. DS3's weekly recap as cards: the old page's
 // weight scale, week-ahead calendar and why-you-train heart tiles went,
 // and the retune sparkle takes the lifting text step.
-const BRAND = { token: "primary", step: "lifting-strong", bare: 45 } as const;
+// 2026-10-01: 45 → 44. The solo feed's share card dumbbell, retired.
+// 2026-10-01: 44 → 43. The Settings pass: the exports' section icon and
+// the Settings list's subscription crown went, and Account's sign-out
+// section took one icon.
+// 43 → 41 with the first-week pass: the welcome card's two tab icons
+// (Train, Analytics) in text-primary went with it.
+const BRAND = { token: "primary", step: "lifting-strong", bare: 41 } as const;
 
 describe("identity colour usage is pinned", () => {
   it("text-primary has the pinned number of bare uses", () => {

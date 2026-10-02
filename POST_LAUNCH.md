@@ -62,15 +62,27 @@ refinement.
 
 ### Steps tile → HealthKit / Health Connect wiring
 
-**Status:** iOS ✅ SHIPPED (needs on-device verification — see the device
-checklist in the PR). Android / Health Connect is the remaining follow-up.
+**Status:** iOS ✅ SHIPPED, never yet run on a device (see the device
+checklist below). Android / Health Connect is the remaining follow-up.
+
+**STATUS 2026-09-30 — it could not have worked on a phone until #2541.**
+`ios/App/App/App.entitlements` had no `com.apple.developer.healthkit`, so
+every permission request failed, and `connect()` saved `connected: true`
+anyway: the tile would have read 0 for good, with no way back to Connect.
+#2541 adds the entitlement; `connect()` now saves `connected` only when the
+request completes, and a connected account asks iOS again on load, because
+Apple Health's permission belongs to the install while `connected` lives on
+the account (a new phone or a reinstall otherwise reads nothing forever).
 
 **iOS (shipped):** the Home Steps tile shows the real daily step count from
 Apple Health via the `capacitor-health` plugin (peer `@capacitor/core >=8`).
-The tile is always on (the `STEPS_TILE_ENABLED` flag was removed once HealthKit shipped); it renders only on the native shell AND
-when Health is available (`stepsStatus !== "unavailable"`), so web still shows
-a single full-width Weight tile with no dead affordance. Three discovery
-surfaces ship together:
+The tile is always on (the `STEPS_TILE_ENABLED` flag was removed once
+HealthKit shipped). On the native shell it hides only when Health is
+unavailable (`stepsStatus === "unavailable"`). On the web it shows the state
+a new iPhone user sees, "Connect Health", as a picture rather than a control
+(owner call 2026-09-30, and ADR-0007 Q5's web-visible seam): a browser can
+never connect, so tapping it does nothing. Three discovery surfaces ship
+together:
 
 - **Bridge** `src/lib/healthKit.ts` — `isHealthAvailable`,
   `requestStepsReadPermission` (`READ_STEPS` only), `getTodayStepTotal`
@@ -96,6 +108,20 @@ surfaces ship together:
 was granted or denied; a denied read just returns zero samples. We treat a
 completed request as granted and surface connected-but-zero as _ambiguous_,
 never an invented "denied".
+
+**Device checklist (first TestFlight build with #2541):**
+
+- [ ] Home's first open asks once ("Count your steps"); Connect brings up
+      Apple's Health sheet, and the tile then shows today's count, close to
+      the Health app's Steps for today.
+- [ ] Not now closes the prompt for good; the tile's Connect Health still
+      brings up Apple's sheet.
+- [ ] Walk, reopen the app: the count moves (foreground refresh).
+- [ ] Turn Tropos's steps access off in Settings → Health → Data Access &
+      Devices: the tile reads 0, and Settings → Apple Health shows the
+      "No steps yet" hint.
+- [ ] Delete and reinstall the app: on Home's first open the count comes
+      back. If iOS forgot the permission, its sheet appears first.
 
 **Remaining follow-up — Android / Health Connect (needs Android Studio):**
 `capacitor-health` also backs Health Connect. Add the `READ_STEPS` Health

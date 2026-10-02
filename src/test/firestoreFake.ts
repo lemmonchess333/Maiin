@@ -680,6 +680,15 @@ export class FirestoreFake {
     }
 
     const orderBys = ref.constraints.filter((c) => c.kind === "orderBy");
+    // Firestore leaves out every document that lacks a field the query is
+    // ordered by. Saved runs have no `createdAt`, and the query that ordered
+    // them by it read nothing in production while this fake returned them
+    // all, so the claim map's tests passed against a listener that was empty.
+    for (const ob of orderBys) {
+      rows = rows.filter(
+        (r) => fieldValue(r, ob.field as string) !== undefined
+      );
+    }
     for (const ob of [...orderBys].reverse()) {
       rows.sort((a, b) => {
         const av = fieldValue(a, ob.field as string);

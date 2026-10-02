@@ -129,7 +129,7 @@ function seedRunHistory(uid: string, daysAgo: number, count = 10): void {
       date,
       distance: 9000,
       duration: 3000,
-      createdAt: `${date}T09:00:00.000Z`,
+      completedAt: `${date}T09:00:00.000Z`,
     };
   }
   seedFirestore(tree);

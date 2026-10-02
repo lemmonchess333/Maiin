@@ -23,6 +23,18 @@
   if (d !== "false") {
     document.documentElement.classList.add("dark");
   }
+  // The launch overlay's first frame (#boot-splash in index.html) shows
+  // while the bundle loads. Not when a test drives the browser, where it
+  // would only sit over the first frames every spec waits through
+  // (LaunchSplash asks the same question). LaunchSplash takes the frame
+  // over; if the app never mounts, it comes down after 12 s so whatever
+  // did render can be seen.
+  if (!navigator.webdriver) {
+    document.documentElement.classList.add("booting");
+    setTimeout(function () {
+      document.documentElement.classList.remove("booting");
+    }, 12000);
+  }
   // GitHub Pages SPA redirect: restore route from query string set by 404.html
   (function (l) {
     if (l.search[1] === "/") {

@@ -20,10 +20,10 @@ export default function SettingsSubscription() {
 
   const statusLabel =
     tier === "pro"
-      ? "Pro — Full access"
+      ? "All Pro features"
       : isInTrial
         ? `Pro trial — ${trialDaysLeft} day${trialDaysLeft !== 1 ? "s" : ""} left`
-        : "Free — Upgrade for full access";
+        : "See what Pro adds";
 
   return (
     <SettingsSection

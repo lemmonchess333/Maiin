@@ -140,7 +140,8 @@ describe("post-create invite hand-off", () => {
       </MemoryRouter>
     );
 
-    // Cold-start selector → Strength Block preselects the create sheet.
+    // Start a circle → Strength Block preselects the create sheet.
+    fireEvent.click(screen.getByRole("button", { name: "Start a circle" }));
     fireEvent.click(screen.getByRole("button", { name: /strength block/i }));
     fireEvent.change(screen.getByLabelText(/circle name/i), {
       target: { value: "Autumn block" },
@@ -186,6 +187,7 @@ describe("post-create invite hand-off", () => {
         <CirclesSection uid="me" />
       </MemoryRouter>
     );
+    fireEvent.click(screen.getByRole("button", { name: "Start a circle" }));
     fireEvent.click(screen.getByRole("button", { name: /strength block/i }));
     fireEvent.change(screen.getByLabelText(/circle name/i), {
       target: { value: "Autumn block" },

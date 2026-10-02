@@ -20,6 +20,7 @@ import { SurfaceCoordinatorProvider } from "@/components/SurfaceCoordinatorProvi
 import { BackDismissProvider } from "@/lib/BackDismissProvider";
 import { EducationLaneProvider } from "@/components/EducationLaneProvider";
 import { Spinner } from "@/components/ui/Spinner";
+import LaunchSplash from "@/components/LaunchSplash";
 import { PageContentSkeleton } from "@/components/LoadingSkeleton";
 import { captureError } from "@/lib/errorReporting";
 /* Chunk-error-recovering lazy wrapper. Extracted to src/lib/lazyRetry
@@ -128,13 +129,13 @@ const SettingsSubscription = lazyRetry(
 const SettingsSupportLegal = lazyRetry(
   () => import("@/pages/settings/SettingsSupportLegal")
 );
-const VerifySignupEmail = lazyRetry(() => import("@/pages/VerifySignupEmail"));
 const SettingsAccount = lazyRetry(
   () => import("@/pages/settings/SettingsAccount")
 );
 const SettingsRecentlyDeleted = lazyRetry(
   () => import("@/pages/settings/SettingsRecentlyDeleted")
 );
+const SettingsData = lazyRetry(() => import("@/pages/settings/SettingsData"));
 const Upgrade = lazyRetry(() => import("@/pages/Upgrade"));
 const Program = lazyRetry(() => import("@/pages/Program"));
 const Run = lazyRetry(() => import("@/pages/Run"));
@@ -341,10 +342,13 @@ function AppRoutes() {
   const { user, profile, loading } = useAuth();
   const uid = user?.uid ?? null;
   const deletion = useAccountDeletionStatus(user?.uid);
-  const verification = useEmailVerificationGate(
-    user,
-    !profile?.onboardingComplete
-  );
+  /* Email accounts verify after the plan, not before it: onboarding opens
+     straight after sign-up, the link is already in the inbox, and Home
+     asks. Posts and comments still need the
+     verified claim (firestore.rules, the comment callables). Rechecking on
+     every return to the app is what lets a tap on the link in Mail land
+     without the person doing anything else. */
+  useEmailVerificationGate(user, true);
   // Packet 17 — non-prompting FCM token refresh on sign-in + foreground.
   usePushTokenRefresh();
 
@@ -473,20 +477,7 @@ function AppRoutes() {
               </RouteErrorBoundary>
             }
           />
-          <Route
-            path="*"
-            element={
-              verification.needsVerification ? (
-                <VerifySignupEmail
-                  key={user.uid}
-                  user={user}
-                  recheck={verification.recheck}
-                />
-              ) : (
-                <Onboarding />
-              )
-            }
-          />
+          <Route path="*" element={<Onboarding />} />
         </Routes>
       </Suspense>
     );
@@ -708,6 +699,14 @@ function AppRoutes() {
                         }
                       />
                       <Route
+                        path="/settings/data"
+                        element={
+                          <RouteErrorBoundary>
+                            <SettingsData />
+                          </RouteErrorBoundary>
+                        }
+                      />
+                      <Route
                         path="/upgrade"
                         element={
                           <RouteErrorBoundary>
@@ -901,6 +900,7 @@ function App() {
                     <OneTimeMaintenance />
                   </Suspense>
                   <RevenueCatIdentity />
+                  <LaunchSplash />
                   <AppRoutes />
                 </BackDismissProvider>
               </NotificationBubbleProvider>

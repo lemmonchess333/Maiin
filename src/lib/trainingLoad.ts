@@ -189,7 +189,15 @@ export interface LoadGuardrails {
   advisory: { kind: "ramp_spike" | "high_monotony"; line: string } | null;
 }
 
-export function evaluateLoadGuardrails(points: LoadPoint[]): LoadGuardrails {
+export function evaluateLoadGuardrails(allPoints: LoadPoint[]): LoadGuardrails {
+  /* History starts at the first day with load. The series the chart hands
+     in runs back across its whole range, days before the account existed
+     included, so a new account's first week passed the 28-day length check
+     on empty days and read as a ~300% ramp on its "4-week base". Leading
+     zeros are not history. Zeros after the first session are: a ramp back
+     after a layoff is real. */
+  const first = allPoints.findIndex((p) => p.load > 0);
+  const points = first < 0 ? [] : allPoints.slice(first);
   const week = points.slice(-ACWR_ACUTE_DAYS);
   const weekLoads = week.map((p) => p.load);
   const weekLoad = weekLoads.reduce((a, b) => a + b, 0);

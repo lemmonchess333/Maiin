@@ -10,7 +10,12 @@ import {
   resolveDeloadRecommended,
   isEstablishingBaseline,
 } from "@/lib/performanceDocFields";
-import { getVerb, getLine, performanceEmptyCopy } from "@/lib/performanceLine";
+import {
+  getVerb,
+  getLine,
+  getEstablishingLine,
+  performanceEmptyCopy,
+} from "@/lib/performanceLine";
 import { getCardColour } from "@/lib/performanceColour";
 import { addLocalDays, parseLocalDate } from "@/lib/dateHelpers";
 import { formatDayMonth } from "@/utils/formatters";
@@ -93,12 +98,14 @@ export default function PerformanceOverviewCard({
   const loadBand = resolveLoadBand(currentWeek);
   const deloadRecommended = resolveDeloadRecommended(currentWeek);
   const verb = getVerb(loadBand, deloadRecommended);
-  const line = getLine(verb.state, currentWeek.signals);
   const { hue, textHue } = getCardColour(pi, loadBand, deloadRecommended);
   const establishing = isEstablishingBaseline({
     docsAvailable,
     lifetimeWeeks: currentWeek.signals?.lifetimeWeeks,
   });
+  const line = establishing
+    ? getEstablishingLine(currentWeek.signals)
+    : getLine(verb.state, currentWeek.signals);
   // The week directly before, never an older one standing in for it.
   const delta = previousWeek
     ? Math.round(

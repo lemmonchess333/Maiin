@@ -1,15 +1,19 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { readString, remove } from "@/lib/localStore";
-import { useAuth } from "@/lib/auth";
+import { hasSignedInOnThisDevice, useAuth } from "@/lib/auth";
 import {
   friendlyAuthError,
   providerHint,
   duplicateEmailHint,
 } from "@/lib/authErrors";
-import { AlertCircle, Dumbbell, Mail, Lock, Eye, EyeOff } from "lucide-react";
+import { AlertCircle, Mail, Lock, Eye, EyeOff } from "lucide-react";
+import appIconUrl from "@/assets/brand/app-icon.svg";
 import { Button } from "@/components/ui/Button";
 import { IconButton } from "@/components/ui/IconButton";
+import ChoiceArt from "@/components/onboarding/ChoiceArt";
+import { FoodTabIcon } from "@/components/icons/TabIcons";
+import { track as trackLifecycle } from "@/lib/lifecycleAnalytics";
 
 // Pre-recovery this page tracked a single `loading: boolean` shared
 // across the email submit, the Apple button, and the Google button.
@@ -20,6 +24,10 @@ import { IconButton } from "@/components/ui/IconButton";
 // and the others stay disabled.
 type LoadingAction = "email" | "google" | "apple" | "reset" | null;
 
+/** A first visit opens on the welcome screen; a device that has had an
+ *  account opens on sign-in, as "Welcome back" is only true there. */
+type View = "welcome" | "signIn" | "signUp";
+
 export default function Login() {
   const {
     signIn,
@@ -29,7 +37,23 @@ export default function Login() {
     resetPassword,
     fetchSignInMethods,
   } = useAuth();
-  const [isSignUp, setIsSignUp] = useState(false);
+  const [view, setView] = useState<View>(() =>
+    hasSignedInOnThisDevice() ? "signIn" : "welcome"
+  );
+  const isSignUp = view === "signUp";
+  // The first rungs of the funnel: who sees the welcome screen, and who
+  // goes on to a form (lifecycleAnalytics' header has the order).
+  useEffect(() => {
+    trackLifecycle("auth_screen_viewed", {
+      screen:
+        view === "signIn"
+          ? "sign_in"
+          : view === "signUp"
+            ? "sign_up"
+            : "welcome",
+    });
+  }, [view]);
+  const setIsSignUp = (next: boolean) => setView(next ? "signUp" : "signIn");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -173,14 +197,108 @@ export default function Login() {
     }
   };
 
+  if (view === "welcome") {
+    return (
+      <div className="ds-auth-shell">
+        <div className="ds-auth-card ds-page-stack">
+          <div className="text-center space-y-3">
+            <img
+              src={appIconUrl}
+              alt=""
+              className="ds-auth-logo mx-auto overflow-hidden"
+            />
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.28em] text-lifting-strong">
+                Tropos
+              </p>
+              <h1 className="text-h2 font-extrabold text-foreground mt-1 text-balance">
+                Your training and food, planned together
+              </h1>
+              <p className="text-sm text-muted-foreground mt-1">
+                Answer a few questions and get a week of training and a daily
+                calorie target that fit you.
+              </p>
+            </div>
+          </div>
+          <ul className="space-y-2" aria-label="What Tropos plans">
+            <li className="flex items-center gap-3 rounded-xl bg-muted/60 p-3">
+              <ChoiceArt art={{ kind: "exercise", id: "db-curl" }} />
+              <div>
+                <p className="text-sm font-semibold text-foreground">Lifting</p>
+                <p className="text-xs text-muted-foreground">
+                  Sessions for your days, gym and experience
+                </p>
+              </div>
+            </li>
+            <li className="flex items-center gap-3 rounded-xl bg-muted/60 p-3">
+              <span className="text-running-strong">
+                <ChoiceArt art={{ kind: "route", distance: 3 }} />
+              </span>
+              <div>
+                <p className="text-sm font-semibold text-foreground">Running</p>
+                <p className="text-xs text-muted-foreground">
+                  Run when you like, or train for a race
+                </p>
+              </div>
+            </li>
+            <li className="flex items-center gap-3 rounded-xl bg-muted/60 p-3">
+              <span
+                aria-hidden="true"
+                className="size-12 shrink-0 rounded-xl bg-muted flex items-center justify-center text-nutrition-strong"
+              >
+                <FoodTabIcon active={false} className="size-7" />
+              </span>
+              <div>
+                <p className="text-sm font-semibold text-foreground">Food</p>
+                <p className="text-xs text-muted-foreground">
+                  A calorie target worked out from your numbers
+                </p>
+              </div>
+            </li>
+          </ul>
+          <div className="space-y-2">
+            <Button fullWidth size="md" onClick={() => setView("signUp")}>
+              Get started
+            </Button>
+            <Button
+              fullWidth
+              size="md"
+              variant="ghost"
+              onClick={() => setView("signIn")}
+            >
+              I have an account
+            </Button>
+          </div>
+          <div className="flex items-center justify-center gap-3 text-xs text-muted-foreground">
+            <Link
+              to="/privacy"
+              className="inline-flex items-center min-h-[44px] px-1 hover:text-foreground transition-colors"
+            >
+              Privacy Policy
+            </Link>
+            <span aria-hidden="true">·</span>
+            <Link
+              to="/terms"
+              className="inline-flex items-center min-h-[44px] px-1 hover:text-foreground transition-colors"
+            >
+              Terms of Service
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="ds-auth-shell">
       <div className="ds-auth-card ds-page-stack">
-        {/* Logo */}
+        {/* Logo: the app icon itself, as on the home screen. */}
         <div className="text-center space-y-3">
-          <div className="ds-auth-logo mx-auto">
-            <Dumbbell className="size-8" />
-          </div>
+          <img
+            src={appIconUrl}
+            alt=""
+            className="ds-auth-logo mx-auto overflow-hidden"
+          />
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.28em] text-lifting-strong">
               Tropos

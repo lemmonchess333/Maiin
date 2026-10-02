@@ -1,6 +1,6 @@
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
-import { Sparkles, Trophy } from "lucide-react";
+import { Share2, Sparkles, Trophy } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { storedKmLabel } from "@/lib/runLabels";
 import { distanceUnitLabel } from "@/lib/distanceUnits";
@@ -19,6 +19,8 @@ import { categoryFigureUri } from "@/lib/muscleFigureSvg";
 import { getExerciseById } from "@/lib/exercises";
 import SectionHeading from "@/components/ui/SectionHeading";
 import { Button } from "@/components/ui/Button";
+import { IconButton } from "@/components/ui/IconButton";
+import ShareCardSheet from "@/components/share/ShareCardSheet";
 import { Spinner } from "@/components/ui/Spinner";
 import MomentumCheckinCard from "@/components/review/MomentumCheckinCard";
 import RecapStory, { type RecapSlide } from "@/components/review/RecapStory";
@@ -97,17 +99,41 @@ function YourWeek({
   next,
   nextLabel,
   onOpenPhotos,
+  onShare,
 }: {
   review: Review;
   next: () => void;
   nextLabel: string;
   onOpenPhotos: (() => void) | null;
+  /** Share the week as a card. Null when there is no training to show. */
+  onShare: (() => void) | null;
 }) {
   const unit = useDistanceUnit();
-  const { training, nutrition, body, headline } = review;
+  const { training, nutrition, body, headline, firstDays } = review;
   return (
     <div className="flex flex-1 flex-col">
-      <h2 className="text-h1 font-extrabold text-foreground">Your week</h2>
+      <div className="flex items-start justify-between gap-3">
+        {/* The week the account began is reviewed from that day: "Your
+            first 3 days", and food out of those days, not seven. */}
+        <h2 className="text-h1 font-extrabold text-foreground">
+          {firstDays
+            ? firstDays.count === 1
+              ? "Your first day"
+              : `Your first ${firstDays.count} days`
+            : "Your week"}
+        </h2>
+        {/* The week as a share card. It was the "Build recap" card at the
+            top of the Social feed, which pushed every post down; the
+            recap is where a finished week is looked at. */}
+        {onShare && (
+          <IconButton
+            aria-label="Share your week"
+            icon={<Share2 />}
+            variant="ghost"
+            onClick={onShare}
+          />
+        )}
+      </div>
       <div className="mt-6 space-y-6">
         {training && (training.lifts || training.runs) && (
           <StatRow
@@ -161,7 +187,7 @@ function YourWeek({
         {nutrition && (
           <StatRow
             rule="bg-nutrition"
-            value={`${nutrition.daysLogged} of 7`}
+            value={`${nutrition.daysLogged} of ${firstDays?.count ?? 7}`}
             caption={`${plural(nutrition.daysLogged, "day", "days")} with food logged`}
           >
             <p className="text-sm text-muted-foreground">
@@ -431,6 +457,7 @@ export default function WeeklyReview() {
   const navigate = useNavigate();
   const { user, profile } = useAuth();
   const { loading, review, weekKey } = useWeeklyReview();
+  const [shareOpen, setShareOpen] = useState(false);
 
   // D16 — the personal "why", resurfaced. Empty/whitespace = no why set.
   const trainingWhy = profile?.trainingWhy?.trim() || undefined;
@@ -451,7 +478,9 @@ export default function WeeklyReview() {
   };
 
   const eyebrow = review
-    ? `Last week · ${formatWeekRange(review.range.start, review.range.end)}`
+    ? review.firstDays
+      ? `Since you joined · ${formatWeekRange(review.firstDays.start, review.range.end)}`
+      : `Last week · ${formatWeekRange(review.range.start, review.range.end)}`
     : "Last week";
 
   let slides: RecapSlide[];
@@ -541,6 +570,12 @@ export default function WeeklyReview() {
               next={next}
               nextLabel={best ? "Your best moment" : "The week ahead"}
               onOpenPhotos={user ? () => navigate("/history?view=body") : null}
+              onShare={
+                review.training &&
+                (review.training.lifts || review.training.runs)
+                  ? () => setShareOpen(true)
+                  : null
+              }
             />
           ),
         },
@@ -564,5 +599,25 @@ export default function WeeklyReview() {
     }
   }
 
-  return <RecapStory eyebrow={eyebrow} slides={slides} onClose={close} />;
+  const training = review?.kind === "normal" ? review.training : null;
+  return (
+    <>
+      <RecapStory eyebrow={eyebrow} slides={slides} onClose={close} />
+      {review && training && (
+        <ShareCardSheet
+          open={shareOpen}
+          onOpenChange={setShareOpen}
+          data={{
+            template: "recap",
+            handle: profile?.displayName || "Athlete",
+            date: formatWeekRange(review.range.start, review.range.end),
+            sessionsCount:
+              (training.lifts?.done ?? 0) + (training.runs?.count ?? 0),
+            distanceKm: training.runs?.km ?? 0,
+            totalVolumeKg: training.lifts?.tonnageKg ?? 0,
+          }}
+        />
+      )}
+    </>
+  );
 }

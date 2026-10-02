@@ -645,7 +645,9 @@ export async function getSuggestedPeople(
         if (candidates.has(author)) continue;
         candidates.set(author, {
           uid: author,
-          displayName: "Athlete",
+          // The post's own author name until the public profile below
+          // (if any) answers; "Athlete" only when the post has none.
+          displayName: (d.data().authorName as string | undefined) || "Athlete",
           reason: "recent_post",
         });
         if (candidates.size >= limitCount) break;

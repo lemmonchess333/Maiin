@@ -13,7 +13,8 @@ export default function OptionCard({
 }: {
   selected: boolean;
   onSelect: () => void;
-  icon: React.ReactNode;
+  /** Omitted where no picture helps (the limitations step). */
+  icon?: React.ReactNode;
   label: string;
   desc?: string;
   disabled?: boolean;
@@ -35,15 +36,17 @@ export default function OptionCard({
           : "bg-card"
       )}
     >
-      <span
-        className={cn(
-          "shrink-0",
-          tone === "running" ? "text-running-strong" : "text-lifting-strong"
-        )}
-        aria-hidden="true"
-      >
-        {icon}
-      </span>
+      {icon && (
+        <span
+          className={cn(
+            "shrink-0",
+            tone === "running" ? "text-running-strong" : "text-lifting-strong"
+          )}
+          aria-hidden="true"
+        >
+          {icon}
+        </span>
+      )}
       <span className="flex-1 min-w-0">
         <span className="block text-base font-semibold">{label}</span>
         {desc && (

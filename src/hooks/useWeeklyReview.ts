@@ -49,6 +49,7 @@ import { fetchBodyweightLogs } from "@/lib/api";
 import { resolveRunPlanSurface } from "@/lib/runProgrammeViewModel";
 import { isActiveMealDoc } from "@/lib/mealTotals";
 import { logger } from "@/lib/logger";
+import { scheduledDaysSinceStart, startDayKey } from "@/lib/startDay";
 import {
   resolveDeloadRecommended,
   resolveLoadBand,
@@ -496,8 +497,17 @@ export function useWeeklyReview(): UseWeeklyReviewResult {
           programState as Parameters<typeof resolveRunPlanSurface>[1]
         );
         const schedule = Array.isArray(profile?.weekSchedule)
-          ? (profile.weekSchedule as { type?: string }[])
+          ? (profile.weekSchedule as { day?: number; type?: string }[])
           : [];
+        // The week the account began counts from the day it began
+        // (startDay.ts): a Friday sign-up planned no Monday lift.
+        const startKey = startDayKey(profile?.createdAt);
+        const liftDaysReviewed = scheduledDaysSinceStart(
+          schedule,
+          ["lift", "both"],
+          weekKey,
+          startKey
+        );
         const liftDays = schedule.filter(
           (s) => s.type === "lift" || s.type === "both"
         ).length;
@@ -553,8 +563,9 @@ export function useWeeklyReview(): UseWeeklyReviewResult {
           })(),
           perf,
           prevPi,
-          plannedLifts: liftDays > 0 ? liftDays : null,
+          plannedLifts: liftDaysReviewed > 0 ? liftDaysReviewed : null,
           plannedRuns,
+          startKey,
           /* Resolved through the SAME precedence the PI's adherence
              scoring uses (adaptiveTarget's snapshot resolver, the pinned
              client copy of calorieTargetResolution.js) — not raw

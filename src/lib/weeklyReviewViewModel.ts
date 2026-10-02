@@ -132,6 +132,9 @@ export interface WeeklyReviewData {
   plannedLifts: number | null;
   /** Planned eligible-run count for the reviewed week; null when freeform. */
   plannedRuns: number | null;
+  /** The day the account began ("yyyy-MM-dd"): a week it began inside
+   *  is reviewed from that day (startDay.ts). */
+  startKey?: string | null;
   calorieTarget: number | null;
   adaptiveRetunedInWeek: boolean;
   hideWeightNumber: boolean;
@@ -158,6 +161,9 @@ export interface WeeklyReview {
   weekKey: string;
   /** Local-date bounds for the header range label. */
   range: { start: string; end: string };
+  /** The week the account began in, reviewed from that day: its first
+   *  day and how many days it had. Null for any later week. */
+  firstDays: { start: string; count: number } | null;
   headline: {
     pi: number;
     /** Display delta — null when prior week has no PI OR suppressed (deload drop). */
@@ -314,6 +320,18 @@ export function verdictFor(args: {
 export function buildWeeklyReview(data: WeeklyReviewData): WeeklyReview | null {
   const { weekKey } = data;
   const range = weekBounds(weekKey);
+  const firstDays =
+    data.startKey && data.startKey > range.start && data.startKey <= range.end
+      ? {
+          start: data.startKey,
+          count:
+            Math.round(
+              (parseLocalDate(range.end).getTime() -
+                parseLocalDate(data.startKey).getTime()) /
+                86_400_000
+            ) + 1,
+        }
+      : null;
 
   // Defensive re-filter to the week (the data layer already scopes,
   // but the rules below must hold regardless of caller discipline).
@@ -336,6 +354,7 @@ export function buildWeeklyReview(data: WeeklyReviewData): WeeklyReview | null {
       kind: "quiet",
       weekKey,
       range,
+      firstDays,
       headline: null,
       training: null,
       nutrition: null,
@@ -359,11 +378,14 @@ export function buildWeeklyReview(data: WeeklyReviewData): WeeklyReview | null {
       pi: Math.round(data.perf.pi),
       delta,
       deload,
-      verdict: verdictFor({
-        delta: rawDelta,
-        loadBand: data.perf.loadBand,
-        deloadRecommended: data.perf.deloadRecommended,
-      }),
+      // A first week has nothing before it to be steady against.
+      verdict: firstDays
+        ? "Your first score. It settles over the next few weeks."
+        : verdictFor({
+            delta: rawDelta,
+            loadBand: data.perf.loadBand,
+            deloadRecommended: data.perf.deloadRecommended,
+          }),
     };
   }
 
@@ -458,6 +480,7 @@ export function buildWeeklyReview(data: WeeklyReviewData): WeeklyReview | null {
     kind: "normal",
     weekKey,
     range,
+    firstDays,
     headline,
     training,
     nutrition,

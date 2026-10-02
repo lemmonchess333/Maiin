@@ -56,7 +56,9 @@ export default function StepsPrimingModal({
           className="flex-1"
           loading={connecting}
         >
-          Connect Apple Health
+          {/* "Connect Apple Health" wrapped onto two lines in a half-width
+              button at phone width; the description already names it. */}
+          Connect
         </Button>
       </div>
     </Dialog>

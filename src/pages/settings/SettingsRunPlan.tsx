@@ -4,9 +4,9 @@
  * The focused destination for the run-tab's "Edit run plan" / race-cockpit
  * "Edit" / "Set a race goal" entries. Renders RunPlanSettings (running only —
  * mode, race goal + runway, run days) so editing the run plan no longer drops
- * the user into the full onboarding-style ProgrammeSettings editor. The full
- * editor stays reachable via the in-page "Full programme settings" link and
- * from Settings.
+ * the user into the full onboarding-style ProgrammeSettings editor. The
+ * Programme page (the setup and the reset) stays one tap away through the
+ * in-page "Programme" row.
  *
  * Run13 (RUN-02): also hosts the second entry to the proactive
  * Adjust-this-week sheet — race-prep users with a live (non-recovery,
@@ -39,7 +39,13 @@ export default function SettingsRunPlan() {
 
   if (!profile) {
     // Brief auth-resolution window; route guards keep signed-out users out.
-    return <SettingsSection title="Run plan" />;
+    return (
+      <SettingsSection
+        title="Run plan"
+        backTo="/settings/training"
+        backLabel="Programme"
+      />
+    );
   }
 
   // Run13 gating — mirror the cockpit entry: race-prep with a live plan only
@@ -78,9 +84,13 @@ export default function SettingsRunPlan() {
     !raceElapsed;
 
   return (
+    // Under Programme, which opens it, so back goes there: Run plan is not
+    // a row on the Settings list.
     <SettingsSection
       title="Run plan"
       subtitle="Mode, race goal, run days, fitness and heart-rate zones"
+      backTo="/settings/training"
+      backLabel="Programme"
     >
       {canAdjust && (
         <button

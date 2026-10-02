@@ -357,3 +357,12 @@ describe("the figures switch the bars", () => {
     expect(option(/kg lifted/)).toHaveAttribute("aria-checked", "true");
   });
 });
+
+describe("an account younger than the range", () => {
+  it("says when it began and shows no change on a range it didn't exist in", () => {
+    card({ comparedWith: null, sinceLabel: "Since you joined on 2 Oct" });
+    expect(screen.getByText("Since you joined on 2 Oct")).toBeInTheDocument();
+    expect(screen.queryByText(/Compared with/)).toBeNull();
+    expect(screen.queryByText("↑", { exact: false })).toBeNull();
+  });
+});

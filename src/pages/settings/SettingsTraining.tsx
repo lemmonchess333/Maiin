@@ -1,11 +1,13 @@
 /**
- * SettingsTraining — the canonical Programme Settings page (Set1.1 / Pgm4).
+ * SettingsTraining — the Programme page (Set1.1 / Pgm4).
  *
- * Pgm4 made this the single, free destination for ALL programme editing.
- * It renders the unified `ProgrammeSettings` editor (which replaced the
- * onboarding-retake, the 6-step ConfigurePlanModal wizard and the
- * ProgramSettingsPanel sheet). The Programme page ⋯ menu and
- * ProgrammeRunSection's "Change plan ›" both deeplink here.
+ * Pgm4 made this the single, free destination for programme editing, then
+ * the lift and run fields each got a focused editor (/settings/lift-plan,
+ * /settings/run-plan) while this page went on rendering every lifting field
+ * as well, so one setting could be changed from two pages. Since the
+ * Settings pass it renders `ProgrammeSettings`'
+ * overview: the saved setup, where each part is set, and the
+ * whole-programme reset. The Programme page ⋯ menu deep-links here.
  *
  * Composition:
  *   - `useAuth` for profile (+ updateProfile, needed by ScheduleLayoutSheet)
@@ -39,17 +41,18 @@ export default function SettingsTraining() {
   if (!profile) {
     // Defensive: route guards keep unauthenticated users out of
     // /settings/*; this is the brief auth-resolution window.
-    return <SettingsSection title="Programme settings" />;
+    return <SettingsSection title="Programme" />;
   }
 
   return (
     <>
       <SettingsSection
-        title="Programme settings"
-        subtitle="Goal, nutrition, lifting, running, equipment, injuries"
+        title="Programme"
+        subtitle="Your setup, and where each part is set"
         section="training"
       >
         <ProgrammeSettings
+          variant="overview"
           profile={profile}
           programState={programState}
           recentLayoff={recentLayoff}

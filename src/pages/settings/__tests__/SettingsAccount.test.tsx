@@ -16,6 +16,11 @@
  * So the assertion here is about the composed page: how many of a thing
  * the user actually ends up looking at. That is the only level at which
  * "rendered twice" is even expressible.
+ *
+ * Since the Settings pass the exports live on Your data (/settings/data),
+ * with recently deleted meals: Set1 put both in Data & Storage. So the
+ * count is pinned there, and Account is pinned to carry none, beside the
+ * two rows it does carry.
  */
 import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
@@ -47,50 +52,48 @@ vi.mock("@/lib/toast", () => ({
 }));
 
 import SettingsAccount from "../SettingsAccount";
+import SettingsData from "../SettingsData";
 
-function renderPage() {
+function renderPage(page: "account" | "data" = "account") {
   render(
     <MemoryRouter>
-      <SettingsAccount />
+      {page === "account" ? <SettingsAccount /> : <SettingsData />}
     </MemoryRouter>
   );
 }
 
-describe("SettingsAccount composition", () => {
+const EXPORTS = [/^export workouts/i, /^export meals/i, /^export bodyweight/i];
+
+describe("SettingsData composition", () => {
   it("renders each export exactly ONCE", () => {
     // The regression. Six rows shipped; three is correct.
-    renderPage();
-    for (const label of [
-      /export workouts \(csv\)/i,
-      /export meals \(csv\)/i,
-      /export bodyweight \(csv\)/i,
-    ]) {
+    renderPage("data");
+    for (const label of EXPORTS) {
       expect(screen.getAllByRole("button", { name: label })).toHaveLength(1);
     }
   });
 
-  it("still offers export at all", () => {
+  it("still offers export at all, and the way into deleted meals", () => {
     // The control. Without it, "exactly once" is satisfied by a page that
     // dropped export entirely — which is the other way to get this wrong,
     // and the one that silently removes a user right.
-    renderPage();
+    renderPage("data");
+    expect(screen.getAllByRole("button", { name: /^export /i })).toHaveLength(
+      3
+    );
     expect(
-      screen.getAllByRole("button", { name: /export .*\(csv\)/i })
-    ).toHaveLength(3);
+      screen.getByRole("button", { name: /recently deleted meals/i })
+    ).toBeInTheDocument();
   });
+});
 
-  /*
-   * Deliberately NOT asserting that export appears before Delete Account.
-   *
-   * It reads like a natural third test — you want to take your data with
-   * you BEFORE deleting the account — but export now lives inside
-   * AccountSection's own block rather than at this page's level, so the
-   * ordering is that component's business and not this page's
-   * composition. Written as a DOM-index comparison it also failed on
-   * first run, which means the ordering I would have been pinning is not
-   * the one I had in my head. Asserting it anyway would pin a guess, and
-   * the visual order is what actually matters here — that is a
-   * screenshot's job, and a screenshot is what caught the bug this file
-   * exists for.
-   */
+describe("SettingsAccount composition", () => {
+  it("signs out and deletes, once each, and exports nothing", () => {
+    renderPage("account");
+    expect(screen.getAllByRole("button", { name: "Sign out" })).toHaveLength(1);
+    expect(
+      screen.getAllByRole("button", { name: "Delete account" })
+    ).toHaveLength(1);
+    expect(screen.queryAllByRole("button", { name: /^export /i })).toEqual([]);
+  });
 });

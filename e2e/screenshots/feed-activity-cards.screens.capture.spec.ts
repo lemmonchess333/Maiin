@@ -1,4 +1,5 @@
 import { verifySignupEmail } from "../helpers/verifySignupEmail";
+import { openSignUpForm } from "../helpers/auth";
 /**
  * Feed activity cards, light + dark — the surface the 2026-08-21 numeric
  * hierarchy pass changed and NOTHING could look at.
@@ -12,7 +13,7 @@ import { verifySignupEmail } from "../helpers/verifySignupEmail";
  *
  * Fixture: a fresh signup-form account, then two PUBLIC activity docs
  * seeded through the emulator's rules-free REST surface (the
- * solo-feed / coachmark pattern) and read back through the Explore
+ * new-user-feed / coachmark pattern) and read back through the Explore
  * source, which queries `activities` on `visibility == "public"`.
  * `useDiscoverFeed` spreads the flat doc into `activity` (`...item`), so
  * the seed shape is the doc shape — no nesting.
@@ -99,11 +100,11 @@ async function seedActivity(id: string, fields: FsValue): Promise<void> {
 }
 
 /**
- * ONE follow edge. Without it the account is `isNewUser`, and
- * `showSoloFeed = isNewUser` in Social.tsx routes every feed SOURCE —
- * Explore included — to the curated solo stack, so no activity card can
- * render at any source. The first run of this spec failed exactly here:
- * the seed was fine and the account was simply never eligible to see it.
+ * ONE follow edge. Until 2026-10-01 an account following nobody saw the
+ * curated solo stack IN PLACE of every feed source, Explore included, so
+ * no activity card could render; the first run of this spec failed
+ * exactly there. The stack is retired, but the edge stays: it keeps the
+ * fixture an established account, which is what this frame documents.
  * `followUser` writes both sides, so the fixture does too.
  */
 async function seedFollow(uid: string, targetUid: string): Promise<void> {
@@ -237,9 +238,7 @@ test.describe("feed activity card screenshots", () => {
     const email = `feedcard-${stamp}@tropos.test`;
     await page.goto("/");
     await page.waitForLoadState("networkidle");
-    await page
-      .getByRole("button", { name: /sign up/i })
-      .click({ timeout: 20_000 });
+    await openSignUpForm(page);
     await page.fill("#login-email", email);
     await page.fill("#login-password", "test-password-123");
     await page

@@ -487,11 +487,17 @@ export default function Upgrade() {
               id="pro-offer-heading"
               className="text-h1 font-extrabold text-foreground leading-tight text-balance"
             >
-              Log a meal from a photo
+              {/* Straight after Start my plan the page answers what the
+                  person just did before it offers anything: a runner who
+                  never mentioned food would otherwise land on a heading
+                  about meal photos. */}
+              {fromOnboarding
+                ? "Your plan is ready"
+                : "Log a meal from a photo"}
             </h1>
             <p className="text-sm text-muted-foreground max-w-[340px] mx-auto leading-relaxed">
               {fromOnboarding
-                ? "Your plan is ready. Pro logs the meals around it, and keeps your calorie target honest as your weight moves."
+                ? "Pro logs your meals from a photo, and keeps your calorie target honest as your weight moves."
                 : "Pro reads the plate and fills in the macros, then keeps your calorie target honest as your weight moves."}
             </p>
           </div>

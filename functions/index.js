@@ -97,6 +97,11 @@ exports.verifyApplePurchase = appleIAP.verifyApplePurchase;
 exports.appleIAPWebhook = appleIAP.appleIAPWebhook;
 exports.restoreApplePurchases = appleIAP.restoreApplePurchases;
 
+// RevenueCat (ADR-0006): the entitlement source for in-app purchases.
+const revenueCat = require("./revenueCat");
+exports.revenueCatWebhook = revenueCat.revenueCatWebhook;
+exports.syncRevenueCatEntitlement = revenueCat.syncRevenueCatEntitlement;
+
 // PR Q (audit P0 #1/#2/#3 follow-up): pure helpers live in
 // ./helpers.js so the test runner can import them without booting
 // firebase-admin. The underscore-prefixed names below are kept as
@@ -664,16 +669,11 @@ exports.completeOnboarding = functions
       uid
     );
 
-    if (
-      context.auth.token?.firebase?.sign_in_provider === "password" &&
-      context.auth.token.email_verified !== true
-    ) {
-      throw new functions.https.HttpsError(
-        "failed-precondition",
-        "Verify your email before completing setup.",
-        { reason: "email-unverified" }
-      );
-    }
+    // No verified-email check here: email accounts set up their plan first
+    // and verify after. What a verified address protects is public content,
+    // and that keeps its own checks (firestore.rules isEmailVerified() on
+    // activities and space posts, and assertCallerEmailVerified in the
+    // comment callables).
 
     // Rate limit: 5 onboarding attempts per 10 minutes
     const limited = await isRateLimited(uid, "onboarding", 5, 600_000);
@@ -7318,6 +7318,53 @@ exports.onGoalSpaceEventCreated = functions
       functions.logger.warn("onGoalSpaceEventCreated.fanout_failed", {
         spaceId,
         eventId,
+        message: err && err.message,
+      });
+    }
+    return null;
+  });
+
+/**
+ * onFollowerCreated — "X started following you", for the people who turn
+ * New followers on in Settings → Notifications (S3: off by default, so
+ * createNotification skips everyone else before writing anything).
+ *
+ * The follower writes `followers/{uid}/users/{followerUid}` themselves
+ * (socialApi.followUser), so this trigger is the only place the server sees
+ * a follow. Before it, "follow" was an allowed notification type nothing
+ * sent. The id is fixed per follower, so a re-delivery, or the same person
+ * following again after unfollowing, rewrites one row instead of adding
+ * another. createNotification also holds the block check and skips an
+ * account that is being deleted.
+ */
+exports.onFollowerCreated = functions
+  .runWith(TRIGGER_CAP)
+  .firestore.document("followers/{uid}/users/{followerUid}")
+  .onCreate(async (snap, context) => {
+    const { uid, followerUid } = context.params;
+    if (!uid || !followerUid || uid === followerUid) return null;
+    try {
+      const profileSnap = await db
+        .doc(`users/${followerUid}/public/profile`)
+        .get();
+      const fromName =
+        (profileSnap.exists && profileSnap.data().displayName) || "Someone";
+      await socialFanout.createNotification({
+        firestore: admin.firestore(),
+        fromUid: followerUid,
+        toUid: uid,
+        data: {
+          type: "follow",
+          fromName,
+          message: `${fromName} started following you`,
+        },
+        serverTimestamp: admin.firestore.FieldValue.serverTimestamp,
+        notificationId: `follow_${followerUid}`,
+      });
+    } catch (err) {
+      functions.logger.warn("onFollowerCreated.notification_failed", {
+        uid,
+        followerUid,
         message: err && err.message,
       });
     }

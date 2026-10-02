@@ -1,346 +1,109 @@
-import { useState, useEffect } from "react";
+import { useMemo, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import {
-  doc,
-  getDoc,
-  collection,
-  getDocs,
-  query,
-  where,
-  orderBy,
-  limit,
-} from "firebase/firestore";
-import { db } from "../lib/firebase";
-import {
-  getFollowerCount,
-  getFollowingCount,
-  blockUser,
-} from "../lib/socialApi";
+import { blockUser } from "../lib/socialApi";
 import { useUid } from "../lib/auth";
 import FollowButton from "../components/social/FollowButton";
 import TrainingForChip from "@/features/spaces/TrainingForChip";
 import PartnerStreakCard from "../features/partnerStreak/PartnerStreakCard";
 import ActivityCard from "../components/social/ActivityCard";
-import type { FeedItem } from "../hooks/useSocialFeed";
-import { Skeleton } from "../components/LoadingSkeleton";
+import { ActivityCardSkeleton, Skeleton } from "../components/LoadingSkeleton";
 import { Button } from "../components/ui/Button";
+import { buttonClasses } from "../components/ui/buttonClasses";
 import { IconButton } from "../components/ui/IconButton";
-import { logger } from "../lib/logger";
-import {
-  TIER_COLORS,
-  BADGE_DEFINITIONS,
-  type EarnedBadge,
-} from "../features/streaks/badges";
+import Card from "../components/ui/Card";
+import SectionHeading from "../components/ui/SectionHeading";
+import SectionLabel from "../components/ui/SectionLabel";
+import StatFigure from "../components/ui/StatFigure";
+import { EmptyState } from "../components/ui/EmptyState";
+import { BADGE_ART, BADGE_ICONS } from "../features/streaks/badges";
+import { BadgeHex } from "../features/streaks/BadgeHex";
 import {
   Flame,
   MoreHorizontal,
   Ban,
   Flag,
   ChevronLeft,
-  Dumbbell,
+  Trophy,
+  UserX,
+  Users,
+  WifiOff,
 } from "lucide-react";
 import { toast } from "@/lib/toast";
-import { motion } from "framer-motion";
-import { THEME } from "../lib/theme";
-import { sumLifetimeRunTotals } from "../lib/runStatsEligibility";
 import Avatar from "../components/Avatar";
 import ReportModal from "../components/social/ReportModal";
 import { ConfirmDialog } from "../components/ui/ConfirmDialog";
 import { Spinner } from "../components/ui/Spinner";
-import { distanceLabel } from "@/lib/runLabels";
+import { distanceValue } from "@/lib/runLabels";
+import { distanceUnitLabel } from "@/lib/distanceUnits";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
+import { useUserProfileData } from "@/hooks/useUserProfileData";
+import { profileWeek } from "@/lib/profileWeek";
 
+/**
+ * /user/:uid — a person's profile.
+ *
+ * Keyed by the (viewer, profile) pair: one profile's session card links to
+ * another person, and with the page left mounted across that change the
+ * last profile's name and numbers showed while the next one loaded.
+ */
 export default function UserProfile() {
   const { uid } = useParams<{ uid: string }>();
-  // `uid` is the profile being VIEWED (route param); `viewerUid` is the
-  // signed-in reader. Most of this page compares the two.
   const viewerUid = useUid();
+  if (!uid) return null;
+  return (
+    <ProfilePage
+      key={`${viewerUid ?? ""}:${uid}`}
+      uid={uid}
+      viewerUid={viewerUid}
+    />
+  );
+}
+
+function plural(n: number, one: string, many: string) {
+  return n === 1 ? one : many;
+}
+
+function ProfilePage({
+  uid,
+  viewerUid,
+}: {
+  uid: string;
+  viewerUid: string | null;
+}) {
   const unit = useDistanceUnit();
   const navigate = useNavigate();
-  const [profile, setProfile] = useState<{
-    uid: string;
-    displayName?: string;
-    avatarUrl?: string;
-    email?: string;
-  } | null>(null);
-  const [followers, setFollowers] = useState(0);
-  const [followingCount, setFollowingCount] = useState(0);
+  const isOwnProfile = viewerUid === uid;
+  const {
+    status,
+    identity,
+    streak,
+    trainingForSpaceId,
+    followers,
+    followingCount,
+    badges,
+    posts,
+    postsLoading,
+    retry,
+    adjustFollowers,
+  } = useUserProfileData(uid, viewerUid);
+  const week = useMemo(() => profileWeek(posts), [posts]);
   const [showMenu, setShowMenu] = useState(false);
   const [showReport, setShowReport] = useState(false);
   const [showBlockConfirm, setShowBlockConfirm] = useState(false);
-  const [activities, setActivities] = useState<
-    {
-      id: string;
-      distance?: number;
-      authorId?: string;
-      authorName?: string;
-      type?: string;
-      avgPace?: string | number;
-      exerciseCount?: number;
-      prsHit?: number;
-      createdAt?: unknown;
-      [key: string]: unknown;
-    }[]
-  >([]);
-  const [stats, setStats] = useState<{
-    totalDistanceM: number;
-    totalSessions: number;
-  } | null>(null);
-  const [badges, setBadges] = useState<EarnedBadge[]>([]);
-  const [streak, setStreak] = useState<number>(0);
-  const [trainingForSpaceId, setTrainingForSpaceId] = useState<string | null>(
-    null
+
+  const back = (
+    <Button
+      onClick={() => navigate(-1)}
+      variant="ghost"
+      size="sm"
+      leftIcon={<ChevronLeft className="size-4" />}
+      className="-ml-2 text-muted-foreground hover:text-foreground"
+    >
+      Back
+    </Button>
   );
-  /* The (viewer, profile) pair whose reads below have all settled. The
-     stats skeleton is derived from it: the page stays mounted across a
-     /user/:uid change, so another profile shows the skeleton from its
-     very first render, and a slower set of reads for the profile just
-     left can't clear the flag early. */
-  const statsKey = uid ? `${viewerUid ?? ""}:${uid}` : null;
-  const [statsSettledFor, setStatsSettledFor] = useState<string | null>(null);
-  const statsLoading = statsKey === null || statsSettledFor !== statsKey;
 
-  useEffect(() => {
-    if (!uid || statsKey === null) return;
-    let cancelled = false;
-    // Derive own-profile branch inside the effect so it re-evaluates if the
-    // signed-in user changes. Matches the isOwnProfile derivation below for
-    // render-time gating, but we can't use that binding here — it's declared
-    // after this effect.
-    const isOwnProfile = viewerUid === uid;
-
-    // NOTE: users/{uid} is doc-level owner-only per firestore.rules:55-56, so
-    // this read succeeds only for the viewer's own profile. For cross-user
-    // views the promise rejects with permission-denied. Pre-existing bug —
-    // the full fix is moving every cross-user field to users/{uid}/public/profile
-    // and dropping this read entirely. Sprint 5 patch: at least LOG the
-    // rejection at warn level (was a silent .catch(() => {})) so operators
-    // can correlate "cross-user profile renders incomplete" reports against
-    // permission-denied frequency in production. Until the full fix lands,
-    // the public-doc read carries the cross-user-visible fields and the UI
-    // degrades gracefully — only owner-only fields are missing in the
-    // cross-user view.
-    const profilePromise = getDoc(doc(db, "users", uid))
-      .then((snap) => {
-        if (snap.exists()) {
-          const data = snap.data();
-          /* Translate the canonical Firestore field name `photoURL` to
-           the local state field `avatarUrl`. Without this map step,
-           own-profile reads spread `photoURL` into state but never
-           populate `avatarUrl`, so the Avatar at line ~174 falls
-           back to the initial letter even when the user has a real
-           photo set. The cross-user fallback path below already does
-           this mapping correctly; this brings own-profile in line. */
-          setProfile({
-            uid: snap.id,
-            ...data,
-            avatarUrl:
-              (data.photoURL as string | null | undefined) ?? undefined,
-          });
-        }
-      })
-      .catch((err: { code?: string }) => {
-        if (!isOwnProfile && err?.code === "permission-denied") {
-          // Expected for cross-user views until the full fix lands.
-          // Logged at warn so we can size the problem operationally.
-          logger.warn(
-            `UserProfile: cross-user users/{uid} read denied (expected pre-fix). uid=${uid}`
-          );
-        } else {
-          logger.error(`UserProfile: users/${uid} read failed:`, err);
-        }
-      });
-    getFollowerCount(uid).then(setFollowers);
-    getFollowingCount(uid).then(setFollowingCount);
-
-    const q = query(
-      collection(db, "activities"),
-      where("authorId", "==", uid),
-      where("visibility", "in", ["public", "followers"]),
-      orderBy("createdAt", "desc"),
-      limit(10)
-    );
-    const activitiesPromise = getDocs(q).then((snap) => {
-      const acts = snap.docs.map(
-        (d) =>
-          ({ id: d.id, ...d.data() }) as {
-            id: string;
-            distance?: number;
-            authorId?: string;
-            authorName?: string;
-            type?: string;
-            avgPace?: string | number;
-            exerciseCount?: number;
-            prsHit?: number;
-            createdAt?: unknown;
-            [key: string]: unknown;
-          }
-      );
-      setActivities(acts);
-
-      // Cross-user profiles show the public/followers activity projection
-      // (privacy-correct — you can only read others' shared activity). Own
-      // profile totals come from the viewer's own runs/workouts subcollections
-      // instead (see ownStatsPromise) so YOUR profile reflects YOUR true
-      // lifetime totals — including private/unshared sessions, and uncapped
-      // (this activities query is limit(10), so summing it would undercount).
-      if (!isOwnProfile) {
-        let totalDistanceM = 0;
-        let totalSessions = 0;
-        acts.forEach((a) => {
-          totalSessions++;
-          if (a.distance) totalDistanceM += a.distance;
-        });
-        setStats({ totalDistanceM, totalSessions });
-      }
-    });
-
-    // Cross-user-readable streak + display fields + badgeSummary from the
-    // public projection. Populated by Onboarding, createDefaultProfile,
-    // updateProfile, the streak mirror-write in useStreaks, and awardBadge.
-    // Legacy users pre-backfill may not have this doc or may lack
-    // badgeSummary — default to zero/empty silently in that case.
-    const publicProfilePromise = getDoc(
-      doc(db, "users", uid, "public", "profile")
-    )
-      .then((snap) => {
-        if (!snap.exists()) return;
-        const data = snap.data();
-        setStreak((data.currentStreak as number) ?? 0);
-        // SOC-P2f — self-declared race identity; the chip component
-        // validates kind + upcoming date, so a stale value renders nothing.
-        setTrainingForSpaceId(
-          typeof data.trainingForSpaceId === "string"
-            ? data.trainingForSpaceId
-            : null
-        );
-        // Backfill the local `profile` state with the cross-user-safe fields
-        // when the main user-doc read above failed (cross-user case).
-        setProfile(
-          (prev) =>
-            prev ?? {
-              uid,
-              displayName: (data.displayName as string | null) ?? undefined,
-              avatarUrl: (data.photoURL as string | null) ?? undefined,
-            }
-        );
-
-        // Cross-user badges reconstruct from the badgeSummary projection. Own
-        // profile still goes through streaks/data (see badgesPromise below)
-        // so the badge timestamps are the live values, not the summary mirror.
-        if (!isOwnProfile) {
-          const summary = data.badgeSummary as
-            | { earnedMap?: Record<string, string> }
-            | undefined;
-          const earnedMap = summary?.earnedMap ?? {};
-          const earned: EarnedBadge[] = [];
-          for (const [id, earnedAt] of Object.entries(earnedMap)) {
-            const def = BADGE_DEFINITIONS.find((b) => b.id === id);
-            if (!def) {
-              // Schema drift: the public summary references a badge id the
-              // client catalog doesn't know. Log once per id, skip silently.
-              console.warn(
-                `[UserProfile] unknown badge id in badgeSummary: ${id}`
-              );
-              continue;
-            }
-            earned.push({ ...def, earnedAt });
-          }
-          earned.sort((a, b) =>
-            (b.earnedAt ?? "").localeCompare(a.earnedAt ?? "")
-          );
-          setBadges(earned.slice(0, 3));
-        }
-      })
-      .catch(() => {});
-
-    // Own-profile badges still read from streaks/data (owner-only rule). For
-    // cross-user views the badgeSummary path above has already populated
-    // `badges` state — this fetch is skipped to avoid a pointless
-    // permission-denied round-trip.
-    const badgesPromise = isOwnProfile
-      ? getDoc(doc(db, "users", uid, "streaks", "data"))
-          .then((snap) => {
-            if (snap.exists()) {
-              const data = snap.data();
-              const earnedMap: Record<string, string> = data.badges ?? {};
-              const earned: EarnedBadge[] = BADGE_DEFINITIONS.filter(
-                (b) => earnedMap[b.id]
-              )
-                .map((b) => ({ ...b, earnedAt: earnedMap[b.id] }))
-                .sort((a, b) =>
-                  (b.earnedAt ?? "").localeCompare(a.earnedAt ?? "")
-                )
-                .slice(0, 3);
-              setBadges(earned);
-            }
-          })
-          .catch(() => {})
-      : Promise.resolve();
-
-    // Own-profile lifetime totals — read from the viewer's OWN runs + workouts
-    // subcollections (owner-only per firestore.rules), so the profile reflects
-    // true totals regardless of share/visibility rather than the public
-    // activities projection (which is public/followers-only AND limit(10), so
-    // a private-only logger saw 0 km / 0 sessions on their own profile).
-    // Mirrors useLifetimeRunStats' read-all-and-sum pattern; cross-user views
-    // can't read these subcollections (rules deny) and keep the public stats.
-    const ownStatsPromise = isOwnProfile
-      ? Promise.all([
-          getDocs(collection(db, "users", uid, "runs")),
-          getDocs(collection(db, "users", uid, "workouts")),
-        ])
-          .then(([runSnap, woSnap]) => {
-            // Through the shared summer, so this can't drift from History's
-            // "Lifetime totals" again — it used to sum every run doc
-            // ungated, which counted invalid / saved-anyway runs the other
-            // surface excludes.
-            const { runCount, totalDistanceM } = sumLifetimeRunTotals(
-              runSnap.docs.map((d) => d.data())
-            );
-            setStats({
-              totalDistanceM,
-              totalSessions: runCount + woSnap.size,
-            });
-          })
-          .catch((err) => {
-            logger.warn("UserProfile: own lifetime stats read failed:", err);
-          })
-      : Promise.resolve();
-
-    Promise.all([
-      profilePromise,
-      activitiesPromise,
-      publicProfilePromise,
-      badgesPromise,
-      ownStatsPromise,
-    ]).finally(() => {
-      if (!cancelled) setStatsSettledFor(statsKey);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [uid, viewerUid, statsKey]);
-
-  const isOwnProfile = viewerUid === uid;
-
-  const handleBlock = async () => {
-    if (!viewerUid || !uid || !profile) return;
-    try {
-      await blockUser(viewerUid, uid);
-      toast.success(`Blocked ${profile.displayName || "user"}`);
-      navigate(-1);
-    } catch {
-      toast.error("Couldn't block user. Try again.");
-    }
-  };
-
-  const itemVariant = {
-    hidden: { opacity: 0, y: 12 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
-  };
-
-  if (!profile) {
+  if (status === "loading") {
     return (
       <div className="p-6 flex items-center justify-center">
         <Spinner size="md" variant="muted" label="Loading profile" />
@@ -348,234 +111,245 @@ export default function UserProfile() {
     );
   }
 
-  return (
-    <motion.div
-      className="space-y-4"
-      initial="hidden"
-      animate="visible"
-      variants={{
-        hidden: {},
-        visible: { transition: { staggerChildren: 0.06 } },
-      }}
-    >
-      {/* Back header */}
-      <motion.div variants={itemVariant}>
-        <Button
-          onClick={() => navigate(-1)}
-          variant="ghost"
-          size="sm"
-          leftIcon={<ChevronLeft className="size-4" />}
-          className="-ml-2 text-muted-foreground hover:text-foreground"
-        >
-          Back
-        </Button>
-      </motion.div>
+  /* A profile with nothing behind it used to spin forever: the page
+     waited for a profile document that was never coming. A failed read
+     is not the same thing, so it offers a retry rather than saying the
+     profile is gone. */
+  if (status === "missing" || status === "error" || !identity) {
+    return (
+      <div className="space-y-4">
+        {back}
+        {status === "error" ? (
+          <EmptyState
+            icon={WifiOff}
+            headline="Couldn't load this profile"
+            sub="Check your connection and try again."
+            action={{ label: "Try again", onClick: retry }}
+          />
+        ) : (
+          <EmptyState
+            icon={UserX}
+            headline="This profile isn't available"
+            sub="The account may have been deleted, or the link is out of date."
+            action={{
+              label: "Go back",
+              onClick: () => navigate(-1),
+              variant: "secondary",
+            }}
+          />
+        )}
+      </div>
+    );
+  }
 
-      <motion.div variants={itemVariant} className="flex items-center gap-4">
+  const name = identity.displayName;
+
+  const handleBlock = async () => {
+    if (!viewerUid) return;
+    try {
+      await blockUser(viewerUid, uid);
+      toast.success(`Blocked ${name}`);
+      navigate(-1);
+    } catch {
+      toast.error("Couldn't block user. Try again.");
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      {back}
+
+      <div className="flex items-center gap-4">
         <Avatar
-          photoURL={profile.avatarUrl}
-          displayName={profile.displayName || "?"}
+          photoURL={identity.photoURL}
+          displayName={name}
           size="xl"
           className="size-16 text-2xl"
         />
-        <div className="flex-1">
-          <h1 className="text-xl font-extrabold">{profile.displayName}</h1>
-          <div className="flex gap-4 text-xs text-muted-foreground mt-1">
-            <span>
-              <strong className="text-foreground">{followers}</strong> followers
-            </span>
-            <span>
-              <strong className="text-foreground">{followingCount}</strong>{" "}
+        <div className="min-w-0 flex-1">
+          <h1 className="text-h2 font-extrabold leading-tight tracking-tight truncate">
+            {name}
+          </h1>
+          {followers === null || followingCount === null ? (
+            <Skeleton className="mt-1.5 h-4 w-36 rounded" />
+          ) : (
+            <p className="mt-1 text-small text-muted-foreground">
+              <span className="font-mono tabular-nums font-semibold text-foreground">
+                {followers}
+              </span>{" "}
+              {plural(followers, "follower", "followers")}
+              <span aria-hidden="true"> · </span>
+              <span className="font-mono tabular-nums font-semibold text-foreground">
+                {followingCount}
+              </span>{" "}
               following
-            </span>
-          </div>
+            </p>
+          )}
           {trainingForSpaceId && (
             <div className="mt-2">
               <TrainingForChip spaceId={trainingForSpaceId} />
             </div>
           )}
         </div>
-        <div className="flex items-center gap-2">
-          {uid && <FollowButton targetUid={uid} />}
-          {!isOwnProfile && uid && (
-            <div className="relative">
-              <IconButton
-                aria-label="More options"
-                onClick={() => setShowMenu(!showMenu)}
-                icon={<MoreHorizontal />}
-                className="bg-muted hover:bg-muted/80 text-muted-foreground"
-              />
-              {showMenu && (
-                <>
-                  <div
-                    className="fixed inset-0 z-10"
-                    role="button"
-                    tabIndex={0}
-                    aria-label="Close menu"
-                    onClick={() => setShowMenu(false)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ")
-                        setShowMenu(false);
-                    }}
-                  />
-                  <div className="absolute right-0 top-full mt-1 z-20 w-44 bg-card rounded-xl border border-border/50 shadow-xl overflow-hidden">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setShowMenu(false);
-                        setShowReport(true);
-                      }}
-                      className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-foreground hover:bg-muted transition-colors"
-                    >
-                      <Flag className="size-4" />
-                      Report user
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setShowMenu(false);
-                        setShowBlockConfirm(true);
-                      }}
-                      className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-destructive-strong hover:bg-destructive/10 transition-colors"
-                    >
-                      <Ban className="size-4" />
-                      Block user
-                    </button>
-                  </div>
-                </>
-              )}
-            </div>
-          )}
+      </div>
+
+      {isOwnProfile ? (
+        <div className="space-y-2">
+          <p className="text-small text-muted-foreground">
+            This is how your profile looks to other people.
+          </p>
+          <Link
+            to="/settings/profile"
+            className={buttonClasses({ variant: "secondary", fullWidth: true })}
+          >
+            Edit profile
+          </Link>
         </div>
-      </motion.div>
+      ) : (
+        <div className="flex items-center gap-2">
+          <FollowButton
+            targetUid={uid}
+            className="flex-1 text-sm"
+            onFollowChange={(following) => adjustFollowers(following ? 1 : -1)}
+          />
+          <div className="relative">
+            <IconButton
+              aria-label="More options"
+              onClick={() => setShowMenu(!showMenu)}
+              icon={<MoreHorizontal />}
+              className="bg-muted hover:bg-muted/80 text-muted-foreground"
+            />
+            {showMenu && (
+              <>
+                <div
+                  className="fixed inset-0 z-10"
+                  role="button"
+                  tabIndex={0}
+                  aria-label="Close menu"
+                  onClick={() => setShowMenu(false)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") setShowMenu(false);
+                  }}
+                />
+                <div className="absolute right-0 top-full mt-1 z-20 w-44 bg-card rounded-xl border border-border/50 shadow-xl overflow-hidden">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowMenu(false);
+                      setShowReport(true);
+                    }}
+                    className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-foreground hover:bg-muted transition-colors"
+                  >
+                    <Flag className="size-4" />
+                    Report user
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowMenu(false);
+                      setShowBlockConfirm(true);
+                    }}
+                    className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-destructive-strong hover:bg-destructive/10 transition-colors"
+                  >
+                    <Ban className="size-4" />
+                    Block user
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Partner-streak entry (SOCIAL S3) — renders only for another
           user you mutually follow; null otherwise. */}
-      {!isOwnProfile && uid && (
-        <motion.div variants={itemVariant}>
-          <PartnerStreakCard
-            partnerUid={uid}
-            partnerName={profile.displayName || "them"}
-          />
-        </motion.div>
+      {!isOwnProfile && (
+        <PartnerStreakCard partnerUid={uid} partnerName={name} />
       )}
 
-      {/* Stat pills */}
-      <div className="flex gap-2">
-        {statsLoading ? (
-          <>
-            <Skeleton className="h-8 flex-1 rounded-lg" />
-            <Skeleton className="h-8 flex-1 rounded-lg" />
-          </>
-        ) : (
-          stats && (
-            <>
-              <span className="flex-1 text-center py-1.5 rounded-xl bg-card text-xs font-medium text-foreground font-mono tabular-nums shadow-sm">
-                {distanceLabel(stats.totalDistanceM, unit)}
+      {/* This week, from what they shared: all a profile can read, and
+          the label says so. Replaced two lifetime-looking pills that
+          summed the last ten shared posts. */}
+      <Card>
+        <div className="flex items-center justify-between gap-3">
+          <SectionLabel>Shared this week</SectionLabel>
+          {streak > 0 && (
+            <p className="flex items-center gap-1 text-xs font-semibold text-foreground">
+              <Flame size={14} className="text-streak" aria-hidden="true" />
+              <span>
+                <span className="font-mono tabular-nums">{streak}</span>-day
+                streak
               </span>
-              <span className="flex-1 text-center py-1.5 rounded-xl bg-card text-xs font-medium text-foreground font-mono tabular-nums shadow-sm">
-                {stats.totalSessions} sessions
-              </span>
-            </>
-          )
-        )}
-      </div>
-
-      {/* Badge showcase */}
-      {badges.length > 0 && (
-        <div className="flex gap-2">
-          {badges.map((badge) => (
-            <div
-              key={badge.id}
-              className="flex items-center justify-center size-10 rounded-lg text-lg"
-              style={{
-                border: `2px solid ${TIER_COLORS[badge.tier]}`,
-                background: `${TIER_COLORS[badge.tier]}15`,
-              }}
-              title={`${badge.name} — ${badge.description}`}
-            >
-              {badge.icon}
-            </div>
-          ))}
+            </p>
+          )}
         </div>
+        {postsLoading ? (
+          <Skeleton className="mt-3 h-12 w-full rounded-lg" />
+        ) : week.sessions > 0 ? (
+          <div className="mt-3 grid grid-cols-3 divide-x divide-border">
+            <StatFigure
+              value={String(week.sessions)}
+              unit={plural(week.sessions, "session", "sessions")}
+            />
+            <StatFigure
+              value={distanceValue(week.distanceM, unit, 1)}
+              unit={`${distanceUnitLabel(unit)} run`}
+            />
+            <StatFigure
+              value={Math.round(week.volumeKg).toLocaleString()}
+              unit="kg lifted"
+            />
+          </div>
+        ) : (
+          <p className="mt-2 text-small text-muted-foreground">Nothing yet.</p>
+        )}
+      </Card>
+
+      {badges.length > 0 && (
+        <ul className="grid grid-cols-4 gap-2" aria-label="Recent badges">
+          {badges.map((badge) => (
+            <li key={badge.id} className="flex flex-col items-center gap-1">
+              <BadgeHex
+                Icon={BADGE_ICONS[badge.lucideIcon] ?? Trophy}
+                tier={badge.tier}
+                earned
+                size={56}
+                imageSrc={BADGE_ART[badge.id]}
+              />
+              <span className="text-xs text-muted-foreground text-center leading-tight">
+                {badge.name}
+              </span>
+            </li>
+          ))}
+        </ul>
       )}
 
-      {/* Current streak */}
-      {streak > 0 && (
-        <p className="text-xs text-muted-foreground">
-          <Flame size={14} className="text-streak inline" />{" "}
-          <strong className="text-foreground">{streak}-day</strong> streak
-        </p>
-      )}
-
-      <h3 className="text-sm font-semibold">Activity</h3>
-      <div className="space-y-3">
-        {activities.map((a) => (
-          <ActivityCard
-            key={a.id}
-            feedItem={
-              {
-                id: a.id,
-                activityId: a.id,
-                authorId: a.authorId,
-                authorName: a.authorName,
-                type: a.type,
-                summary:
-                  a.type === "run"
-                    ? `${distanceLabel(a.distance || 0, unit)} · ${a.avgPace || ""}`
-                    : `${a.exerciseCount || 0} exercises · ${a.prsHit || 0} PRs`,
-                createdAt: a.createdAt,
-              } as FeedItem
-            }
+      <section className="space-y-2" aria-labelledby="profile-sessions">
+        <SectionHeading id="profile-sessions">Recent sessions</SectionHeading>
+        {postsLoading ? (
+          <>
+            <ActivityCardSkeleton />
+            <ActivityCardSkeleton stagger={1} />
+          </>
+        ) : posts.length > 0 ? (
+          posts.map((item) => <ActivityCard key={item.id} feedItem={item} />)
+        ) : isOwnProfile ? (
+          <EmptyState
+            icon={Users}
+            headline="Nothing shared yet"
+            sub="Sessions you share show here and in your followers' feeds."
+            action={{ label: "Start a workout", href: "/program" }}
           />
-        ))}
-        {activities.length === 0 && isOwnProfile && !statsLoading && (
-          <div className="text-center py-10 px-6 space-y-3">
-            <p className="text-sm font-medium text-foreground">
-              Your profile is looking quiet
-            </p>
-            <p className="text-xs text-muted-foreground max-w-[260px] mx-auto">
-              Complete a workout or run to share your first activity. Turn on
-              auto-posting in Settings to share automatically.
-            </p>
-            <div className="flex justify-center gap-3 pt-1">
-              <Link
-                to="/program"
-                className="px-4 py-2 rounded-xl bg-primary-strong text-primary-foreground text-xs font-semibold"
-              >
-                Log a workout
-              </Link>
-              <Link
-                to="/settings"
-                className="px-4 py-2 rounded-xl bg-muted text-foreground text-xs font-semibold"
-              >
-                Settings
-              </Link>
-            </div>
-          </div>
+        ) : (
+          <EmptyState
+            icon={Users}
+            headline="No shared sessions yet"
+            sub={`When ${name} shares a workout or run, it shows here.`}
+          />
         )}
-        {activities.length === 0 && !isOwnProfile && !statsLoading && (
-          <div className="text-center py-10 px-6 space-y-3">
-            <div
-              className="size-12 rounded-2xl flex items-center justify-center mx-auto"
-              style={{
-                background: `${THEME.brand}15`,
-                border: `1px solid ${THEME.brand}25`,
-              }}
-            >
-              <Dumbbell size={24} style={{ color: THEME.brand }} />
-            </div>
-            <p className="text-sm font-medium text-foreground">
-              No public activities yet
-            </p>
-            <p className="text-xs text-muted-foreground">
-              When they share a workout or run, it'll appear here
-            </p>
-          </div>
-        )}
-      </div>
+      </section>
 
-      {showReport && uid && (
+      {showReport && (
         <ReportModal
           targetType="user"
           targetId={uid}
@@ -586,7 +360,7 @@ export default function UserProfile() {
 
       <ConfirmDialog
         open={showBlockConfirm}
-        title={`Block ${profile.displayName || "this user"}?`}
+        title={`Block ${name}?`}
         description="They won't be able to see your activity and you won't see theirs."
         confirmLabel="Block"
         destructive
@@ -596,6 +370,6 @@ export default function UserProfile() {
         }}
         onCancel={() => setShowBlockConfirm(false)}
       />
-    </motion.div>
+    </div>
   );
 }

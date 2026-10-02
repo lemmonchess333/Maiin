@@ -108,7 +108,7 @@ const HYBRID_TEMPLATE: {
 } = {
   type: "hybrid",
   label: "Hybrid",
-  description: "Lifting + running together — one shared push.",
+  description: "Lifting and running together, one shared push.",
   namePlaceholder: "e.g. Winter hybrid push",
 };
 
@@ -278,6 +278,8 @@ export default function CirclesSection({
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [showCreate, setShowCreate] = useState(false);
+  /* The goal chooser behind "Start a circle" when there is no circle. */
+  const [chooserOpen, setChooserOpen] = useState(false);
   const [showJoin, setShowJoin] = useState(false);
   const [detailOf, setDetailOf] = useState<CircleSummary | null>(null);
   const [members, setMembers] = useState<GoalSpaceMember[] | null>(null);
@@ -721,68 +723,49 @@ export default function CirclesSection({
         </div>
       )}
 
-      {/* SOCIAL-HOME-01 — cold-start goal selector. Genuinely-empty
-          only (!loadFailed). Four options preselect a create-sheet
-          template; "Private progress" routes to the private Momentum
-          check-in page and never creates a circle. "Join with code"
-          stays below so invited users aren't funneled into creating. */}
+      {/* With no circle yet: one short card (the Social pass). The goal
+          choices (SOCIAL-HOME-01's cold-start selector) open from Start
+          a circle, in the sheet below, rather than filling the tab as a
+          list before anyone has decided to start one. Genuinely-empty
+          only (!loadFailed). "Join with code" sits beside Start so an
+          invited user isn't funneled into creating. */}
       {!loading && !loadFailed && circles.length === 0 && (
         <div className="rounded-2xl bg-card p-4 space-y-3">
-          <div>
-            <p className="text-sm font-semibold text-foreground">
-              What support would help?
-            </p>
-            <p className="text-xs text-muted-foreground mt-1">
-              Circles are small, invite-only groups around one shared goal —
-              numbers and photos stay private.
-            </p>
+          <div className="flex items-start gap-3">
+            <div className="size-9 shrink-0 rounded-xl bg-primary/10 flex items-center justify-center">
+              <Users className="size-4 text-primary-strong" aria-hidden />
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-foreground">
+                Train with a few friends
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                A small, invite-only group around one goal. Numbers and photos
+                stay private.
+              </p>
+            </div>
           </div>
-          <div className="space-y-2">
-            {COLD_START_OPTIONS.map((t) => (
-              <button
-                key={t.type}
-                type="button"
-                onClick={() => {
-                  haptic("light");
-                  setTemplate(t.type);
-                  setGoalPrechosen(true); // goal chosen here — skip the re-pick
-                  setShowCreate(true);
-                }}
-                className="w-full min-h-[44px] p-3 rounded-xl text-left bg-muted transition-colors active:scale-[0.97]"
-              >
-                <p className="text-sm font-semibold text-foreground">
-                  {t.label}
-                </p>
-                <p className="text-xs text-muted-foreground">{t.description}</p>
-              </button>
-            ))}
-            <button
-              type="button"
+          <div className="flex gap-2">
+            <Button
+              className="flex-1"
               onClick={() => {
                 haptic("light");
-                navigate("/review");
+                setChooserOpen(true);
               }}
-              className="w-full min-h-[44px] p-3 rounded-xl text-left bg-muted transition-colors active:scale-[0.97]"
             >
-              <p className="text-sm font-semibold text-foreground">
-                Private progress
-              </p>
-              <p className="text-xs text-muted-foreground">
-                Private — just for you, never shared.
-              </p>
-            </button>
+              Start a circle
+            </Button>
+            <Button
+              variant="secondary"
+              className="flex-1"
+              onClick={() => {
+                haptic("light");
+                setShowJoin(true);
+              }}
+            >
+              Join with code
+            </Button>
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="w-full"
-            onClick={() => {
-              haptic("light");
-              setShowJoin(true);
-            }}
-          >
-            Join with code
-          </Button>
         </div>
       )}
 
@@ -1007,6 +990,53 @@ export default function CirclesSection({
           </Button>
         </div>
       )}
+
+      {/* ── Goal chooser (SOCIAL-HOME-01's cold-start selector) ──
+          Four options preselect a create-sheet template and hand off to
+          it with the goal confirmed; "Private progress" routes to the
+          private Momentum check-in page and never creates a circle. */}
+      <BottomSheet
+        open={chooserOpen}
+        onOpenChange={setChooserOpen}
+        title="What support would help?"
+        description="Circles are small, invite-only groups around one shared goal — numbers and photos stay private."
+      >
+        <div className="px-4 space-y-2 pb-2">
+          {COLD_START_OPTIONS.map((t) => (
+            <button
+              key={t.type}
+              type="button"
+              onClick={() => {
+                haptic("light");
+                setChooserOpen(false);
+                setTemplate(t.type);
+                setGoalPrechosen(true); // goal chosen here — skip the re-pick
+                setShowCreate(true);
+              }}
+              className="w-full min-h-[44px] p-3 rounded-xl text-left bg-muted transition-colors active:scale-[0.97]"
+            >
+              <p className="text-sm font-semibold text-foreground">{t.label}</p>
+              <p className="text-xs text-muted-foreground">{t.description}</p>
+            </button>
+          ))}
+          <button
+            type="button"
+            onClick={() => {
+              haptic("light");
+              setChooserOpen(false);
+              navigate("/review");
+            }}
+            className="w-full min-h-[44px] p-3 rounded-xl text-left bg-muted transition-colors active:scale-[0.97]"
+          >
+            <p className="text-sm font-semibold text-foreground">
+              Private progress
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Private — just for you, never shared.
+            </p>
+          </button>
+        </div>
+      </BottomSheet>
 
       {/* ── Create sheet ── */}
       <BottomSheet

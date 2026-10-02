@@ -96,20 +96,21 @@ exists — pinned by `claudeMdFreshness.test.ts` in both directions
 | `WeeklyReview.tsx`                     | `/review`                          | Sunday recap — passive narration of the week (Rev1)                            |
 | `Social.tsx`                           | `/social`                          | Social feed, Circles/Spaces, leaderboards                                      |
 | `Space.tsx`                            | `/space/:spaceId`                  | Community Space — hero, join/leave, post list + composer                       |
-| `UserProfile.tsx`                      | `/user/:uid`                       | User profile viewing                                                           |
+| `UserProfile.tsx`                      | `/user/:uid`                       | A person's profile: this week's shared sessions, badges, their posts           |
 | `Upgrade.tsx`                          | `/upgrade`                         | Pro pricing + purchase page                                                    |
 | `SettingsIndex.tsx`                    | `/settings`                        | Settings section list — iOS nested-page IA (`/settings/legacy` redirects here) |
-| `settings/SettingsProfile.tsx`         | `/settings/profile`                | Profile section                                                                |
+| `settings/SettingsProfile.tsx`         | `/settings/profile`                | Profile — photo, name, body metrics in the chosen units                        |
 | `settings/SettingsAccount.tsx`         | `/settings/account`                | Account — email, password, sign-out, account deletion                          |
-| `settings/SettingsTraining.tsx`        | `/settings/training`               | Programme settings (canonical, Set1.1 / Pgm4)                                  |
+| `settings/SettingsTraining.tsx`        | `/settings/training`               | Programme — the setup, where each part is set, reset (Pgm4)                    |
 | `settings/SettingsLiftPlan.tsx`        | `/settings/lift-plan`              | Dedicated lift-plan editor                                                     |
 | `settings/SettingsRunPlan.tsx`         | `/settings/run-plan`               | Dedicated run-plan editor (the Programme Run surface deep-links here)          |
 | `settings/SettingsWorkoutPrefs.tsx`    | `/settings/workout-prefs`          | Workout preferences                                                            |
 | `settings/SettingsNutrition.tsx`       | `/settings/nutrition`              | Nutrition section — targets, adaptive TDEE                                     |
+| `settings/SettingsData.tsx`            | `/settings/data`                   | Your data — exports, and the way into recently deleted meals                   |
 | `settings/SettingsRecentlyDeleted.tsx` | `/settings/recently-deleted-meals` | Soft-deleted meals archive (24 h window, F5c)                                  |
 | `settings/SettingsHealth.tsx`          | `/settings/health`                 | HealthKit steps — discovery and reconnection (ADR-0007)                        |
 | `settings/SettingsShoes.tsx`           | `/settings/shoes`                  | Running shoes                                                                  |
-| `settings/SettingsNotifications.tsx`   | `/settings/notifications`          | Push and reminder preferences                                                  |
+| `settings/SettingsNotifications.tsx`   | `/settings/notifications`          | Reminders, push, and a switch per activity notification (S3)                   |
 | `settings/SettingsPrivacy.tsx`         | `/settings/privacy`                | Privacy — visibility, blocked users, privacy zones                             |
 | `settings/SettingsUnitsAppearance.tsx` | `/settings/units-appearance`       | Units and theme                                                                |
 | `settings/SettingsSubscription.tsx`    | `/settings/subscription`           | Subscription status and management                                             |
@@ -118,7 +119,7 @@ exists — pinned by `claudeMdFreshness.test.ts` in both directions
 | `Diagnostics.tsx`                      | `/diagnostics`                     | Operator diagnostics (push, SW update, App Check state) — hidden, unlinked     |
 | `dev/*.tsx`                            | `/dev/*`                           | Developer labs (brand bake-off, form-motion lab) — not product surfaces        |
 | `Onboarding.tsx`                       | `*` (fallback)                     | Multi-step setup flow (shown when onboarding incomplete)                       |
-| `Login.tsx`                            | `*` (fallback)                     | Authentication (Email, Google, Apple) (shown when unauthenticated)             |
+| `Login.tsx`                            | `*` (fallback)                     | Welcome screen on first visit, then sign-up or sign-in (Email, Google, Apple)  |
 | `PrivacyPolicy.tsx`                    | `/privacy`                         | Legal — reachable signed-out                                                   |
 | `TermsOfService.tsx`                   | `/terms`                           | Legal — reachable signed-out                                                   |
 | `Support.tsx`                          | `/support`                         | Public support page (App Store Support URL) — reachable signed-out             |
@@ -209,7 +210,7 @@ run-surface feature modules.
 `useGPS`, `useRunTimer`, `useRunningStats`, `useSessionPlayer`, `usePrivacyZones`, `useAudioCues`, `useWakeLock`
 
 **Social:**
-`useSocialFeed`, `useDiscoverFeed`, `useUnreadCount`, `useBlockedUsers`
+`useSocialFeed`, `useDiscoverFeed`, `useUnreadCount`, `useBlockedUsers`, `useFollowState` (one follow record shared by every Follow control), `useUserProfileData`
 
 **Performance & Analytics:**
 `usePerformance`
@@ -254,8 +255,9 @@ Helper: `syncChallengeProgress()` — auto-updates challenge participant progres
 
 - **Firestore collections:** `users/{uid}`, `users/{uid}/meals`, `users/{uid}/workouts`, `users/{uid}/runs`, `users/{uid}/programState`, `users/{uid}/public/profile` (cross-user projection; incl. the opt-in `trainingForSpaceId` race identity), `activities` (public), `goalSpaces`, `challenges`, `challenges/{id}/participants`, `spaces/{id}/members`, `spaces/{id}/posts` (+ `posts/{id}/likes` and `posts/{id}/comments` — both SERVER-written via callables; clients read only)
 - **Auth:** Firebase Auth (Email, Google, Apple Sign-In)
-- **New password signups verify before onboarding.** The signup verification screen sends immediately, supports resend/address correction, and reloads Auth plus refreshes the token on returning from Mail. `completeOnboarding` enforces the verified claim for password sign-in. Existing completed accounts keep private access; the social gate below remains.
+- **Email sign-ups verify after the plan, not before it** (owner, 2026-10-01, reversing the 2026-09-15 wall). Sign-up sends the link (`signUp` in `auth.tsx`) and goes straight to onboarding, and `completeOnboarding` no longer asks for the claim. Home asks (`VerifyEmailBanner`, with Resend and a way to change a wrong address) until the app sees the address verified. The App-level gate rechecks on every return to the app, reloading Auth and refreshing the token, so tapping the link in Mail is enough. The social gate below is unchanged.
 - **Public writes need a verified email.** The `email_verified` token claim gates `activities` and `spaces/{id}/posts` creates in `firestore.rules` (`isEmailVerified()`) and comments in the two comment callables (`assertCallerEmailVerified`). Private logging under `users/{uid}/*` and every non-content interaction stay open to unverified accounts; OAuth accounts carry the claim already. The e2e rig marks its signup-form accounts verified through the Auth emulator REST API (seed scripts create users verified).
+- **Activity notifications follow the recipient's switches.** `notificationPreferences` on `users/{uid}` (S3: props, comments, circles and spaces on; new followers off) is read by `createNotification`, the one writer of `notifications/{uid}/items`, which writes nothing for a kind that is off. The client's copy (`src/lib/notificationPreferences.ts`) and the rules' value gate are pinned to the server's (`functions/lib/notificationPreferences.js`) by `notificationPreferences.cross.test.ts`. A new notification type has to be given a switch, or none on purpose, in that file.
 - **User profile:** Defined in `src/lib/auth.tsx` as `UserProfile` interface
 - **Feed items:** Defined in `src/hooks/useSocialFeed.ts` as `FeedItem` / `ActivityData`
 
@@ -295,6 +297,11 @@ Helper: `syncChallengeProgress()` — auto-updates challenge participant progres
 - Colocated in `__tests__/` beside the code: `src/lib/`, `src/hooks/`, `src/utils/`,
   and each `src/features/*` module. Hook tests drive Firestore through the one
   fake (ADR-0009) — `vi.mock("firebase/firestore")` bare, then `seedFirestore`.
+  Seed documents with the fields the app really writes: the fake leaves out
+  a document that lacks a field the query is ordered by, as Firestore does.
+  It used to return them, and the runs query ordered by `createdAt`, which no
+  saved run has, read nothing in production from May to October 2026 with
+  its tests green.
 - Deliberately NOT counted here. Every file count this document used to carry
   had drifted by 3–7× (87 components → 319, 31 hooks → 75, 46 lib modules →
   198). A number nothing checks is a claim that rots; prefer describing the
@@ -376,8 +383,9 @@ These lessons cost a full day to find. Read before changing the deploy pipeline.
 - **Blaze plan is required for any Cloud Functions deploy.** Scheduled functions (Pub/Sub), Apple/Stripe webhook secrets, and the build-step machinery all live behind Blaze. If billing is detached (card expiry, manual unlink, etc.), every functions/-touching PR fails with `Extensions require the Blaze plan` — which is misleading; Tropos has no extensions, the error is firebase-tools' generic guard for any Blaze-only feature.
 - **`maxInstances` is mandatory on every HTTP and Firestore-trigger function.** Cloud Functions v1 has NO default cap; a runaway client / DDoS / accidental call-in-render loop can spin up thousands of containers and rack up hundreds of pounds in hours. `functions/index.js` declares three tiers (`DEFAULT_HTTP_CAP = 100`, `ADMIN_HTTP_CAP = 10`, `TRIGGER_CAP = 50`) and uses `functions.runWith({...})` on each export. Don't add a new HTTP/trigger function without one of those caps.
 - **Production deploy verification:** the only conclusive proof a function deployed is to view the deployed source in Firebase Console (https://console.cloud.google.com/functions/details/us-central1/<name>/source). CI green is a _necessary but not sufficient_ signal — see the dedup gotcha above. `deploy-functions.yml` now reads back the deployed source of the functions `scripts/verify-deployed-functions-source.py` lists and fails if any differs from the bundle it uploaded; for a function it does not list, spot-check that the deployed source matches main by searching for a recent string (e.g. a new comment from the PR).
-- **1st-gen API lives under `firebase-functions/v1`; `functions.config()` is gone.** As of firebase-functions v7, the bare `require("firebase-functions")` resolves to the **2nd-gen** API, and every export here is **1st-gen** (`runWith().https.onCall/onRequest`, `.pubsub.schedule`, `.firestore.document().onCreate`, `https.HttpsError`, `logger`). They import from `firebase-functions/v1` — keep new 1st-gen functions on that import or they silently become `undefined` triggers. `functions.config()` **throws** in v7 (the Cloud Runtime Config API was shut down 2025-12-31); secrets now come from Secret Manager via `firebase-functions/params` `defineSecret(...)`, listed in each function's `runWith({ secrets: [...] })`, and read at runtime as `process.env.<NAME>`. Provision before deploy with `firebase functions:secrets:set <NAME>` — **a deploy referencing an unprovisioned bound secret fails**, which is the safety gate. Current bound secrets: `STRIPE_SECRET_KEY` (deleteMyAccount, createCheckoutSession, stripeWebhook, all 3 Apple callables), `STRIPE_WEBHOOK_SECRET` (stripeWebhook), `APPLE_KEY_ID/ISSUER_ID/PRIVATE_KEY` + `BILLING_HMAC_SECRET` (+ `BILLING_PREVIOUS_HMAC_SECRET` during rotation only) on `restoreApplePurchases`, `RESEND_API_KEY` (sendPasswordResetLinkCallable — password-reset email delivery). Non-secret config (`ADMIN_UIDS`, `RESEND_FROM`) stays a plain env var — no binding needed. `npm run secrets:check` (in `functions/`) prints the authoritative provision list from the source.
+- **1st-gen API lives under `firebase-functions/v1`; `functions.config()` is gone.** As of firebase-functions v7, the bare `require("firebase-functions")` resolves to the **2nd-gen** API, and every export here is **1st-gen** (`runWith().https.onCall/onRequest`, `.pubsub.schedule`, `.firestore.document().onCreate`, `https.HttpsError`, `logger`). They import from `firebase-functions/v1` — keep new 1st-gen functions on that import or they silently become `undefined` triggers. `functions.config()` **throws** in v7 (the Cloud Runtime Config API was shut down 2025-12-31); secrets now come from Secret Manager via `firebase-functions/params` `defineSecret(...)`, listed in each function's `runWith({ secrets: [...] })`, and read at runtime as `process.env.<NAME>`. Provision before deploy with `firebase functions:secrets:set <NAME>` — **a deploy referencing an unprovisioned bound secret fails**, which is the safety gate. Current bound secrets: `STRIPE_SECRET_KEY` (deleteMyAccount, createCheckoutSession, stripeWebhook, all 3 Apple callables), `STRIPE_WEBHOOK_SECRET` (stripeWebhook), `APPLE_KEY_ID/ISSUER_ID/PRIVATE_KEY` + `BILLING_HMAC_SECRET` (+ `BILLING_PREVIOUS_HMAC_SECRET` during rotation only) on `restoreApplePurchases`, `RESEND_API_KEY` (sendPasswordResetLinkCallable — password-reset email delivery), `REVENUECAT_WEBHOOK_AUTH` + `REVENUECAT_REST_KEY` (revenueCatWebhook; the REST key also on syncRevenueCatEntitlement). Non-secret config (`ADMIN_UIDS`, `RESEND_FROM`, `REVENUECAT_SANDBOX_UIDS`) stays a plain env var — no binding needed. `npm run secrets:check` (in `functions/`) prints the authoritative provision list from the source.
 - **A functions deploy needs the whole GCP readiness chain, not just Blaze + a fresh bundle.** The Secret Manager API must be **enabled** AND **propagated** before deploy. Enabling it (`gcloud services enable secretmanager.googleapis.com`) returns _before_ the data plane actually answers, so a deploy that races straight ahead still 403s — the CI fix was two steps: enable the API (`1a529ec`), then **wait for propagation** before `firebase deploy` (`b953eac`). If a functions deploy 403s on secrets right after an org/billing/API change, suspect propagation lag, not config.
+- **A NEW bound secret needs its accessor grant before the first CI deploy that binds it.** firebase-tools reads the secret's own IAM policy and, when the runtime account (`adaptive-fitness-af8bb@appspot.gserviceaccount.com`) is not already a Secret Manager Secret Accessor on it, calls `setIamPolicy`, which the CI deploy account may not do. The whole functions deploy then fails with `Permission 'secretmanager.secrets.setIamPolicy' denied … (or it may not exist)`, and nothing is updated. A project-level role does not satisfy the check, because it reads the secret's own list. Grant it per secret before merging (the steps are in `docs/iap/revenuecat-setup.md` Part C), then re-run Deploy production. Hit on 2026-09-29 by the two RevenueCat secrets (run 36642140725). Older secrets never showed it, having been granted when they were first set up. The log's `✔ secretmanager: Granted roles/secretmanager.secretAccessor …` line prints whether or not anything was granted (firebase-tools 15.32.0 logs it after the check, grant or no grant), so it is not evidence that CI granted anything. The second attempt (run 36648725929) printed it for `REVENUECAT_REST_KEY`, which the owner had already granted, and then failed on `REVENUECAT_WEBHOOK_AUTH`.
 
 ### Account-deletion safety rails
 
@@ -639,7 +647,8 @@ held to it, so it is now the APP-WIDE standard, not an insights-file local:
 - **Light mode:** The opt-in alternate (selectable in Settings → writes `profile.darkMode = false`). It's a clean, warm, iOS-inspired look (#F2F2F7 grouped background, cards on white — minimal and calm with subtle depth, NOT a dark-glass app rendered light). Default-dark is applied pre-React in `public/init.js` (dark unless an explicit `"false"` is stored) and mirrored by the `profile.darkMode` defaults in `src/lib/auth.tsx`.
 - **Brand colour:** Purple #7B72E9 — used sparingly for accents, active tab indicators, CTAs, progress bars. Never as a full background: its only fills are the primary button and the auth logo, and no button carries a gradient (the paywall's purple-to-teal ones went in the plain-text cleanup).
 - **Sport-coding:** Lifting = purple (#7B72E9), Running = coral (#D4637A). These two colours appear in calendar dots, section headings, icon tints, and contextual cards.
-- **Logo:** Purple gradient hexagon with upward chevron cutout — the app icon and the sign-in screens. Home no longer carries the "TROPOS" wordmark: DS3 titles it with the date and "Today", and the user's initials open Settings. The mark itself signs Home, small, before the date (`BrandMark`, the app icon's geometry), so "Today" keeps the left edge the cards below it start on.
+- **Logo:** a hexagon with rounded corners and an upward chevron cut out of it, white on a purple field that lightens toward the top on the app icon, and brand purple in the app. The owner chose this refinement of the bake-off mark on 2026-10-01 (`docs/visual-audit/bakeoff/DECISION.md`, decision 4). It is the app icon (with dark and tinted versions for iOS's home-screen modes), the sign-in screen's logo (the icon itself), and the launch image (the hexagon alone). Home no longer carries the "TROPOS" wordmark: DS3 titles it with the date and "Today", and the user's initials open Settings. The mark itself signs Home, small, before the date (`BrandMark`), so "Today" keeps the left edge the cards below it start on. The geometry lives in `src/lib/brandMark.ts` and `src/assets/brand/app-icon.svg`, held together by `BrandMark.test.tsx`; after changing it, run `node scripts/art/gen-app-icon.mjs` (every app and web icon) and `node scripts/art/gen-splash.mjs` (the launch image).
+- **Launch animation:** `LaunchSplash` takes over from the launch image (index.html paints the same hexagon, `#boot-splash`, until the bundle runs). The chevron rises into the hexagon, cut out so it shows whatever is behind it; once the app is ready (on Home, once Home's header mark has drawn) the mark shrinks into Home's header mark as the page shows, or the overlay fades anywhere but Home. Reduce Motion gets the whole mark and a fade. Its ground is the launch colour in both themes (`--launch`, the dark page), as the launch image is, so a light-mode user's page turns light only as it is revealed, never under the logo. It never shows under automation (`navigator.webdriver`), so specs and captures see the app as before. The four copies of the first frame (launch PNG, index.html, the overlay's CSS size, `brandMark.ts`) are pinned together by `launchSplash.test.ts`.
 
 ### Colour System (src/styles/tokens.css + src/lib/theme.ts)
 
@@ -650,7 +659,7 @@ held to it, so it is now the APP-WIDE standard, not an insights-file local:
 - Success green: #4DB872 / #22b558
 - Icon backgrounds: rgba(123, 114, 233, 0.10) — subtle purple tint
 - Card backgrounds: white (light) / #17171B (dark)
-- Page background: `240 6% 93%` ≈ #ECECEE (light) / #0E0E11 (dark). The dark page is also the cold-start colour (splash, manifest, theme-color), derived from the token and pinned by `coldStartChrome.test.ts`: move the token, re-run `node scripts/art/gen-splash.mjs`, and update the three hex copies it names
+- Page background: `240 6% 93%` ≈ #ECECEE (light) / #0E0E11 (dark). The dark page is also the cold-start colour (splash, manifest, theme-color, and the launch overlay's `--launch` in both themes), derived from the token and pinned by `coldStartChrome.test.ts`: move the token, re-run `node scripts/art/gen-splash.mjs`, and update the three hex copies and the `--launch` token it names
 - Raised surface (`--muted`: chips, tracks, tiles inside a card): #212127 (dark)
 - New bests: gold, the `--achievement` family (`text-achievement-strong` for small text). Gold means a personal best and nothing else
 - Text muted: the theme-aware `--muted-foreground` token (light `240 3.8% 43%`, dark `240 5% 65%` ≈ #A1A1AA) — tuned to clear 4.5:1 on card, muted AND page background in both themes. The old fixed #8E8E93 was deleted in the DS2 consolidation (2026-08-22, owner-decided): one grey serving both themes measured 2.53–3.26:1 across the light surfaces it rendered on. No fractional `text-muted-foreground/<n>` anywhere — de-emphasis is the type scale's job (banned + pinned in `tokenContrast.test.ts`). In JS/style contexts use `"hsl(var(--muted-foreground))"`.
@@ -1059,7 +1068,9 @@ or touching a CTA button, route it through `Button` with the variant above.
 - **Pages:** src/pages/ — route-level, lazy-loaded
 - **Home screen built from:** WeekStrip → DayPeekCard → StackedCTACards
   (LiftCTACard / RunCTACard / RestDayCard — Start on the card, no pills) →
-  TodayEnergy → WaterCard → WeightStepsTiles → the "This week" card:
+  FirstWeekCard (a new account's first seven days) → NewBadgeRow (a
+  waiting badge, opened on tap; badges never open over Home by
+  themselves) → TodayEnergy → WaterCard → WeightStepsTiles → the "This week" card:
   WeeklyReviewEntry (a link on its heading while a review waits) →
   WeekSummary → PerformanceHeroCard (a row since DS3, 2026-09-27).
   Performance sits LAST by owner decision: the first thing on the scroll
@@ -1120,6 +1131,32 @@ or touching a CTA button, route it through `Button` with the variant above.
 ## Pre-launch QA backlog
 
 Manual checks deferred from work that already shipped to a feature branch. Burn down before launch — automated tests + tsc + lint cover the basics, but these need eyes on a real device or production-like environment.
+
+### The new logo, icon and launch animation (2026-10-01)
+
+Affects: `src/assets/brand/app-icon.svg`, the iOS AppIcon set (default,
+dark, tinted), the launch image, `public/icons/*`, `index.html`
+(`#boot-splash`), `public/init.js`, `src/components/LaunchSplash.tsx`,
+`src/pages/Login.tsx`.
+
+The geometry and the four copies of the launch frame are pinned by tests;
+what they cannot see is a phone.
+
+- [ ] **The icon on the home screen**, in default, dark and tinted modes
+      (long-press the home screen → Edit → Customize). The dark and tinted
+      versions are new entries in `AppIcon.appiconset/Contents.json`.
+- [ ] **The handover from the launch image.** Cold-start the app: the
+      purple hexagon should not move or resize when the web layer takes
+      over, then the chevron rises into it. A jump means the web view's
+      `100vh` is not the launch image's screen height (the overlay sizes
+      by `max(100vw, 100vh)`), which `contentInset: "automatic"` could do.
+- [ ] **The landing.** On Home, the mark shrinks onto the small mark
+      before the date and the page shows; there should be one mark at
+      the end, never two.
+- [ ] **Reduce Motion on the phone:** the whole mark, then a fade.
+- [ ] **Light mode** (Settings → Units & appearance): the launch stays
+      dark and Home is light as it shows, with no flash of either in
+      between.
 
 ### The Privacy Policy's claim about Google's retention (F3d pin 2)
 
@@ -1811,6 +1848,20 @@ the ratchet, the suite or lint out of `unit` and the gate is gone with
 nothing else to say so. It deliberately does not pin the ruleset, which
 no test here can read.
 
+### The client SDK's `@grpc/grpc-js` is overridden to 1.14.5
+
+Root `package.json` carries one `overrides` entry. `@firebase/firestore`
+pins `@grpc/grpc-js` to `~1.9.0`, and no 1.9.x release fixes
+GHSA-m9gg-hp2v-232j or GHSA-f596-whhp-79r4 (both fixed in 1.14.5). When
+they were published, the `audit` job went red on every branch. grpc-js
+runs only in the SDK's Node build, which here means the rules tests; the
+web bundle talks to Firestore over WebChannel and ships none of it. The
+override passed both rules suites and the functions suite.
+
+- [ ] Remove the override once `@firebase/firestore` depends on a fixed
+      grpc-js. Without it, `npm ls @grpc/grpc-js` shows what the SDK
+      resolves.
+
 ### Race-day completion predicate (PR #1775)
 
 Affects: `functions/lib/raceDayCompletion.js`, new `functions/lib/raceTemplateIds.js` — both reached from `dailyRaceReconciliationSweep` and `onRunCreated`. Merged 2026-07-26 from a web session that cannot view the deployed source.
@@ -1952,6 +2003,83 @@ Affects: `src/lib/offlineQueue.ts`, `src/lib/shareComposer.ts`.
       versioned entry (and the App Store "What's New") at release time. The
       behaviour itself is intended and pinned by `offlineQueue.test.ts`
       ("drops legacy items missing a uid field").
+
+### RevenueCat server side — webhook and sync-on-purchase (IAP slice 3 backend)
+
+Affects: `functions/revenueCat.js` (`revenueCatWebhook`,
+`syncRevenueCatEntitlement`), `functions/lib/revenueCatEntitlement.js`. The
+client half shipped in #1454 and called a webhook and a callable that did
+not exist. It stays a no-op until the RevenueCat key is set, so nobody was
+charged against the missing server.
+
+**Merge only after both secrets exist.** A deploy that binds an
+unprovisioned secret fails, and it fails the whole functions deploy, not
+just these two:
+
+```bash
+firebase functions:secrets:set REVENUECAT_WEBHOOK_AUTH
+firebase functions:secrets:set REVENUECAT_REST_KEY
+```
+
+How it decides: every webhook event and every sync re-reads the subscriber
+from RevenueCat's REST API (`GET /v1/subscribers/{uid}`) and writes what it
+says; the event body grants nothing. An older snapshot never overwrites a
+newer one (`revenueCat.syncedAtMs`). A lapsed entitlement takes away only
+Pro that RevenueCat granted: Pro from Stripe, the legacy Apple path, a
+lifetime purchase or a hand grant is left alone. Billing grace keeps Pro
+until the grace period ends.
+
+**Sandbox purchases grant Pro only to the uids in `REVENUECAT_SANDBOX_UIDS`**
+(the owner's account and App Review's demo login). A sandbox purchase
+(TestFlight, StoreKit testing) costs nothing, and anyone with a test build
+can attach one to any App User ID, so the legacy Apple path refuses them in
+production and this one lists who may use them. For anyone else a sandbox
+purchase counts as no entitlement: it grants nothing, it takes away only Pro
+that RevenueCat granted (as a lapse does), and the function logs
+`revenueCat.sandbox_refused` with the uid. An unset or empty list grants
+sandbox Pro to nobody. Production purchases are unaffected.
+
+- [x] **Secrets provisioned, then merge.** Both stored and #2496 merged,
+      2026-09-29.
+- [x] **The functions can read both secrets.** The first deploy failed on
+      the accessor grant (see the Cloud Functions deploy gotchas). Tick this
+      when a Deploy production run on or after #2496 logs a successful
+      create operation for both `revenueCatWebhook` and
+      `syncRevenueCatEntitlement`. Done 2026-09-30, once the owner granted
+      the role on `REVENUECAT_WEBHOOK_AUTH`: run 36695765626 (the #2539
+      merge) created both.
+- [x] **Webhook answers.** RevenueCat → Integrations → the webhook → Send
+      test event returns 200. It did on 2026-09-30.
+- [ ] **`REVENUECAT_SANDBOX_UIDS` set on both functions**: your uid and App
+      Review's demo account uid, comma-separated. It is a plain env var,
+      set the way `ADMIN_UIDS` is (`functions/.env`, no Secret Manager).
+      **App Review's demo uid must be on it before submission**, or the
+      reviewer's test purchase will not unlock Pro. A CI deploy keeps what a
+      function already has but gives a newly created function nothing, so
+      set it after the first deploy creates these two functions and confirm
+      it in the Cloud console. Steps: `docs/iap/revenuecat-setup.md` Part C.
+- [x] **Webhook configured** in RevenueCat → Integrations → Webhooks: URL
+      `https://us-central1-adaptive-fitness-af8bb.cloudfunctions.net/revenueCatWebhook`,
+      Authorization header = the secret, bare or as `Bearer <secret>`. The
+      dashboard's test event gets a 200. Configured for both production
+      and sandbox, all apps and all events; 200 on 2026-09-30.
+- [x] **Deploy verification.** The functions deploy log reports a
+      successful create operation for both functions. Run 36695765626.
+- [ ] **Sandbox purchase on a listed account.** `users/{uid}` shows
+      `subscriptionTier: "pro"`, `subscriptionSource: "ios_iap"`, a future
+      `subscriptionExpiresAt` and a `revenueCat` map, and an AI scan works
+      as soon as the purchase sheet closes.
+- [ ] **Sandbox purchase on an account not on the list.** The purchase
+      sheet completes but the user stays free: `revenueCat.entitlementActive`
+      is `false`, and the function log has `revenueCat.sandbox_refused` with
+      that uid.
+- [ ] **Sandbox expiry.** On the listed account, let the sandbox
+      subscription lapse (a sandbox month is a few minutes): the user reads
+      as free again.
+- [ ] **Not built, decide later.** Account deletion leaves the RevenueCat
+      subscriber record (purchase history keyed by the uid) in place, and a
+      RevenueCat promotional grant does not grant Pro. Comps are written in
+      Firestore directly.
 
 ### Apple subscription uniqueness binding (PR #822)
 
@@ -2128,13 +2256,20 @@ the whole Following page for the author and every follower. The trigger
 now deletes the copies; the client leaves out a copy whose post it cannot
 read, so the feed loads, and draws nothing for it.
 
-- [ ] **Deployed-source spot-check (do first).** `onActivityDeleted` is in
+- [x] **Deployed-source spot-check (do first).** `onActivityDeleted` is in
       the Console's function list, and `onActivityCreated`'s deployed
-      source contains `removeActivityFromFeeds`.
-- [ ] **The index is built.** Firestore → Indexes → Single field:
+      source contains `removeActivityFromFeeds`. Closed from the deploy
+      log of run 36610165567 (#2515's merge, 2026-09-29): the bundle
+      carried the `// CI build: 04300f9a…` marker, and the log shows a
+      successful create operation for `onActivityDeleted` and a successful
+      update operation for `onActivityCreated`.
+- [x] **The index is built.** Firestore → Indexes → Single field:
       `items` · `activityId`, collection group, ascending, Enabled. Until
       it is, the trigger's query fails, it logs `onActivityDeleted.error`,
-      and the copies stay (the client still hides them).
+      and the copies stay (the client still hides them). Closed from the
+      same run: the readiness step waited on the `items/fields/activityId`
+      indexes, the collection-group one included, then logged
+      `Verified: all configured indexes READY`.
 - [ ] **Undo on a device, with a follower.** Share a session from one
       account and tap Undo on the finish screen. On a second account that
       follows it, Following loads and the post is not there, and the
@@ -2157,10 +2292,12 @@ Share publicly posting publicly. It is now `shareDefaults` on
 `users/{uid}`, and a device's own answers move to the account once at
 sign-in, the more private answer winning.
 
-- [ ] **Rules first.** A build that writes `shareDefaults` needs the rules
+- [x] **Rules first.** A build that writes `shareDefaults` needs the rules
       that allow it. Deploy production releases rules before Hosting, but a
       TestFlight build made from a branch before the merge sees its saves
       refused (put back, with a toast) and keeps its answers on the device.
+      Released by run 36610165567 (2026-09-29); the live ruleset matched
+      `firestore.rules` by SHA-256.
 - [ ] **One answer on every device.** Set Runs to Never in Settings on the
       web, then finish a run on a phone that had the app open since before:
       nothing is posted, and the finish screen offers its one-off share
@@ -2180,12 +2317,144 @@ Affects: `functions/lib/challengeDefs.js` (new `global-monthly-*` hybrid definit
 
 ### Solo-first Social feed (SOCIAL S4 Soc8, PR3)
 
+**STATUS 2026-10-01 — retired by the owner (the Social pass below).**
+`SoloFirstFeed` and `PartnerStreakHero` are deleted: a new person sees
+Explore's posts. `solo-feed.screens.capture.spec.ts` became
+`new-user-feed.screens.capture.spec.ts`. The rows below are history.
+
 Affects: `src/pages/Social.tsx` (renders `SoloFirstFeed` for cold-start users), new `src/components/social/SoloFirstFeed.tsx` + `src/features/partnerStreak/PartnerStreakHero.tsx`. The state 100% of launch users see — must look DESIGNED, not gated.
 
 - [x] **Light + dark capture of the solo state.** Re-read 2026-08-08 against the current surface and filmed (`solo-feed.screens.capture.spec.ts`, fresh signup-form account = 0 follows): the CURRENT stack is PartnerStreak hero → challenge slot → Spaces-for-you rail → Share-your-training → spaces empty-state hexagon (the original row's "Crews unlock…" row died with crews, #1700). Asserted before shooting: no "Your feed is empty" copy, and the cold-start Share card shows NO create button. Both frames eyeballed.
 - [x] **Challenge slot before rollover.** Covered by the same capture, structurally: the rig's emulator has no challenge docs at all (no rollover cron runs there), and the slot collapses cleanly — no broken/empty card between the hero and the share card, both frames.
 - [x] **Sub-tab default interaction.** Automated in the same spec's second test: switching the feed source to Following keeps the solo stack leading (the 0-follow gate outranks the source selection) and never shows "Your feed is empty".
 - [x] **Share cold-start vs preloaded.** Both halves automated: the cold-start assertion above, and the preloaded half via a REST-seeded workout — after reload the card offers "Create a share card" and the composer opens preloaded (filmed: 3×8×60 kg renders as 1.4t total volume). The stat labels are invariant uppercase by design ("1 EXERCISES" is the stat-label convention, not a plural bug).
+
+### The Social pass (owner, 2026-10-01)
+
+Affects: `FeedView.tsx`, `Social.tsx`, `UserProfile.tsx`,
+`useUserProfileData`, `useFollowState`, `FollowButton`, `InlineFollow`,
+`PeopleToFollowRow`, `SpacesDirectory` + `RaceFilterChips`,
+`CirclesSection`, `WeeklyReview.tsx`, `useSpacesDirectory`,
+`useSuggestedPeople`, `CommentSheet`, `NotificationsSheet`.
+
+The feed opens on posts (the recap card, Spaces row and points card left
+the top: "Share your week" is on the weekly recap's first card, Spaces
+lead Together, the points card sits under the third post). Someone who
+follows nobody sees Explore's posts under one line, not the solo-first
+stack. Posts from people you don't follow carry Follow, and a People to
+follow row sits after the second post while you follow fewer than three.
+Profiles show this week's shared sessions, badge art and the feed's own
+cards. Together filters races with chips, and Circles is one short card
+whose goal choices open from Start a circle. Two bugs went with it:
+"Suggested people" re-read the database in a loop for as long as People
+was open (since #2311, 2026-09-14), and a profile with no document spun
+forever. A third surfaced on the way: the profile asked for public and
+followers-only posts in one query, which the rules refuse for a
+non-follower, so every profile opened from Explore said it had nothing
+shared (pinned by the "profile:" cases in `firestore.rules.test.ts`).
+
+- [ ] **People on a phone:** open it and watch "Suggested people" finish
+      loading. It never did in production after 14 September.
+- [ ] **A profile you don't follow** shows its public sessions; follow
+      them and reopen it: followers-only sessions appear too.
+- [ ] **Follow from a post** on Explore: the link turns to "Following",
+      the line over the feed counts the follow, and the person's other
+      posts lose their Follow link at the same moment.
+- [ ] **Race chips:** the country sheet, the distance chips, and "Clear
+      filters" from no matches.
+- [ ] **Share your week** from the recap's first card exports a card with
+      last week's numbers.
+- [ ] **Comments with no signal:** open a post's comments in airplane
+      mode. It says "Couldn't load comments" with Try again, never "No
+      comments yet" (which it also used to show while comments loaded).
+
+### The Settings pass (owner, 2026-10-01)
+
+Affects: `SettingsIndex.tsx`, `settings/SettingsList.tsx` (new),
+`settings/SettingsData.tsx` (new, `/settings/data`),
+`UnitsAppearanceSection`, `AccountSection`, `SecuritySection`,
+`DataExportSection`, `ShareDefaultsRow`, `SettingsProfile` +
+`ProfileInfoSection`, `ProgrammeSettings` (`variant="overview"`),
+`ActivityNotificationsGroup` (new), `functions/lib/notificationPreferences.js`
+(new), `createNotification`, `onFollowerCreated` (new), `firestore.rules`
+(`notificationPreferencesValid`).
+
+The list is three groups under your photo. Programme is a short page (the
+setup, where each part is set, the reset), and Lift plan and Run plan left
+the list: Programme and Train open them. Exports and recently deleted meals
+moved to Your data, and Delete account is red text at the foot of Account,
+as Set1 locked it. Notifications gained the switch per kind S3 locked in
+June: props, comments, circles and spaces on, new followers off. The server
+reads them, so a kind that is off is never written. New followers had no
+sender at all ("follow" was an allowed type nothing wrote), so
+`onFollowerCreated` is new, and it writes only for someone who turned the
+switch on. Profile shows weight and height in the chosen units; it showed
+kg and cm whatever was chosen.
+
+- [x] **Rules before the client.** The switches write
+      `notificationPreferences`, which the rules must allow. Deploy
+      production releases rules before Hosting, but a TestFlight build made
+      from the branch before the merge is refused on every switch ("Couldn't
+      save your settings"). Released by run 36916879108 (2026-10-01): the
+      live ruleset matched `firestore.rules` by SHA-256 at 19:49 UTC, nine
+      minutes before Hosting deployed.
+- [x] **Deploy verification.** The functions deploy log shows a successful
+      create operation for `onFollowerCreated`. The gate itself lives in
+      `lib/socialFanout.js`, so the callables and triggers that send
+      notifications show update operations in the same run. Closed from the
+      deploy log of run 36916879108 (#2550's merge): the bundle carried the
+      `// CI build: af48ad95…` marker, the log shows a successful create
+      operation for `onFollowerCreated`, and successful update operations for
+      the senders (`toggleKudosCallable`, `addCommentCallable`, the two
+      space-post callables, `onGoalSpaceEventCreated`).
+- [ ] **A switch stops its kind.** With two accounts: A turns Props off and
+      B gives one of A's posts props; nothing new under A's bell. A turns it
+      back on and B gives props on another post; it arrives.
+- [ ] **New followers.** A turns New followers on and B follows A: "B
+      started following you" under A's bell, in one row however often B
+      unfollows and follows again. With the switch off (the default),
+      nothing.
+- [ ] **Pounds and feet on Profile.** With lb and ft chosen, Profile shows
+      the weight in pounds and the height in feet and inches. Change both
+      and check the calorie target moves as it does for a kg edit.
+
+### The onboarding pass (owner, 2026-10-01)
+
+Affects: `Login.tsx` (a welcome screen on a first visit), `Onboarding.tsx`
+(the plan in the open, an optional goal weight, the start weight kept),
+`BodyInputs`, `bodyMetrics.ts`, `Home.tsx` with `StackedCTACards` (the first
+workout on a rest day, a run for a free runner), `VerifyEmailBanner` (new),
+`App.tsx` (no verify wall), `auth.tsx` (the link sent at sign-up), `Upgrade.tsx`
+("Your plan is ready" after onboarding), `SettingsAccount`,
+`lifecycleAnalytics` (`auth_screen_viewed`, `email_verified`,
+`onboarding_abandoned`), and on the server `completeOnboarding` (no verified-
+email check) and `profileSanitizer.js` (keeps "unspecified").
+
+Five bugs went with it. Google and Apple photos were erased from the public
+profile by onboarding's last write. Heights of 100-119 and 231-250 cm passed
+on the phone and failed the save as "Check your connection". "Prefer not to
+say" was dropped by the server. The review showed cm to a feet-and-inches
+user. The plan's start weight was overwritten.
+
+- [ ] **Functions before the client.** `completeOnboarding` must drop its
+      verified-email check before a build without the verify screen reaches
+      anyone, or an unverified email account cannot finish setup. Deploy
+      production releases Functions before Hosting; a TestFlight build made
+      from the branch before the merge is the case to avoid.
+- [ ] **Deploy verification.** The functions deploy log shows a successful
+      update operation for `completeOnboarding`.
+- [ ] **An email sign-up on a phone:** no wall before the questions, the
+      link arrives during onboarding, and after tapping it in Mail and
+      coming back, Home's "Verify your email" notice has gone.
+- [ ] **The first screen:** a fresh install opens on the welcome screen;
+      after signing out, the same phone opens on Sign in.
+- [ ] **A Google sign-up's photo** is still on their profile, seen from a
+      second account, after onboarding.
+- [ ] **Lose fat with a goal weight:** the plan's target is below
+      maintenance, and Settings → Nutrition shows the goal and pace.
+- [ ] **The funnel in GA4 DebugView:** `auth_screen_viewed` for the welcome
+      screen and each form, `email_verified` after tapping the link, and
+      `onboarding_abandoned` after signing out of an unfinished setup.
 
 ### Backlog audit 2026-08-02 — what a skeptical pass found
 

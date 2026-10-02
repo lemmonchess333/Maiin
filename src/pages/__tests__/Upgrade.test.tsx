@@ -370,9 +370,17 @@ describe("Upgrade — the offer beat (what the page opens on)", () => {
     ).toBeInTheDocument();
   });
 
-  it("from onboarding, the offer acknowledges the plan just made", () => {
+  it("from onboarding, the offer is headed by the plan just made", () => {
     renderPage("/upgrade?from=onboarding");
-    expect(screen.getByText(/^Your plan is ready\./)).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Your plan is ready" })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/^Pro logs your meals from a photo/)
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("heading", { name: "Log a meal from a photo" })
+    ).toBeNull();
     expect(screen.queryByText(/^Pro reads the plate/)).toBeNull();
   });
 

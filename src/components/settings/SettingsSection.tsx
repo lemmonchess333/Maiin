@@ -81,13 +81,13 @@ export default function SettingsSection({
       </button>
 
       <header className="space-y-1">
-        {/* text-xl, not text-h2 (DS2, 2026-08-22). Every other page title
-            in the app — the Settings index these pages drill down FROM
-            included — is text-xl (20px), so the 15 nested pages rendered
-            their titles a full tier LARGER than their parent. CLAUDE.md's
-            31px H1 row was aspirational and used by nothing; the de facto
-            tier is the standard. */}
-        <h1 className="text-xl font-extrabold text-foreground">{title}</h1>
+        {/* The H1 token, as PageShell sets it for every other page title
+            (DS3) and for the Settings list these pages open from. It was
+            text-xl from DS2, when every page title was; once PageShell
+            moved them to text-h1 these were left a tier smaller. */}
+        <h1 className="text-h1 leading-tight tracking-tight font-extrabold text-foreground">
+          {title}
+        </h1>
         {subtitle ? (
           <p className="text-sm text-muted-foreground">{subtitle}</p>
         ) : null}
@@ -96,7 +96,9 @@ export default function SettingsSection({
       <div className="space-y-4">
         {section ? (
           <TrackSettingsSectionView section={section}>
-            {children}
+            {/* The tracker's own div would otherwise swallow the gap
+                between this page's groups. */}
+            <div className="space-y-4">{children}</div>
           </TrackSettingsSectionView>
         ) : (
           children
