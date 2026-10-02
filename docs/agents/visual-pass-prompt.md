@@ -27,8 +27,8 @@ HOLD IT AGAINST:
   measured against the surface the element ACTUALLY renders on
   (BottomSheet bodies paint --background, not --card).
 - Consistency: one treatment per element kind — dates (en-GB), units
-  (spaced: "60 kg"), uppercase labels (SectionLabel), page titles
-  (text-xl).
+  (spaced: "60 kg"), sentence-case labels (SectionLabel), page titles
+  (PageShell's text-h1).
 
 METHOD — non-negotiable:
 - Evidence is the capture channel (push to claude/screenshot-app, read the
@@ -59,8 +59,8 @@ must change one):
   keep fixed hexes; TEXT and state-bearing UI parts take the theme-aware
   AA step (-strong tokens, --teal). Where one value feeds both, split it
   (the CardColour hue/textHue pattern).
-- Page titles are text-xl. Uppercase micro-labels go through
-  SectionLabel. Units are spaced. Dates are en-GB.
+- Page titles come from PageShell (text-h1). Labels are sentence case
+  and go through SectionLabel. Units are spaced. Dates are en-GB.
 - Record each new decision where the next agent will hit it: the audit
   doc's STATUS trail, CLAUDE.md if it changes a documented claim, and a
   plan-file lock row for anything architectural.
