@@ -541,3 +541,35 @@ describe("Home — the rest-day card names tomorrow", () => {
     expect(restCardLine()).toContain("Tomorrow: Pull · Lat focus.");
   });
 });
+
+describe("Home — a new account's first days", () => {
+  it("offers the programme's next workout, not the weekday's", () => {
+    // Wednesday is the third lift day of the week, but nothing is done
+    // yet: Train starts at the first workout, and so does Home.
+    pinClock(WEDNESDAY);
+    h.profile = profileWith({ 1: "lift", 2: "lift", 3: "lift" });
+    h.programState = programStateWith({
+      workouts: [
+        workoutDay("Push — Chest Focus"),
+        workoutDay("Pull — Lat Focus"),
+        workoutDay("Legs — Quad Focus"),
+      ],
+    });
+    renderHome();
+    const card = document.querySelector('[aria-label="Today’s training"]');
+    expect(card?.textContent).toMatch(/Chest/);
+    expect(card?.textContent).not.toMatch(/Quad/);
+  });
+
+  it("counts the week from the day the account began", () => {
+    // Joined on the Wednesday: Monday and Tuesday planned nothing.
+    pinClock(WEDNESDAY);
+    h.profile = {
+      ...profileWith({ 1: "lift", 2: "lift", 3: "lift" }),
+      createdAt: { toMillis: () => WEDNESDAY.getTime() },
+    };
+    renderHome();
+    expect(column("Lifts")).toBe("Lifts: 0 of 1");
+    expect(column("Food logged")).toBe("Food logged: 0 of 5 days");
+  });
+});

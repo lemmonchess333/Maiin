@@ -108,8 +108,9 @@ test.describe("Home's Today card", () => {
         email: user.email,
         darkMode: true,
         weekScheduleVersion: 1,
-        // Lifts on Monday (day 1) and Wednesday (day 3), rest otherwise:
-        // Wednesday is the week's second lift day, so Home shows session 2.
+        // Lifts on Monday (day 1) and Wednesday (day 3), rest otherwise.
+        // Wednesday is the week's second lift day, but Session 1 is still
+        // open, so Home shows Session 1, as Train does (ADR-0002).
         weekSchedule: Array.from({ length: 7 }, (_, day) => ({
           day,
           type: day === 1 || day === 3 ? "lift" : "rest",
@@ -124,34 +125,34 @@ test.describe("Home's Today card", () => {
       });
 
       const training = page.getByLabel("Today’s training", { exact: true });
-      await expect(training).toContainText("Session 2", { timeout: 20_000 });
+      await expect(training).toContainText("Session 1", { timeout: 20_000 });
 
       // The card is the preview: it opens the day and starts nothing.
       await training
-        .getByRole("button", { name: "Open Session 2 in Train" })
+        .getByRole("button", { name: "Open Session 1 in Train" })
         .click();
-      await expect(page).toHaveURL(/\/program\?day=1$/);
+      await expect(page).toHaveURL(/\/program\?day=0$/);
       await expect(
-        page.getByRole("heading", { name: "Session 2", exact: true })
+        page.getByRole("heading", { name: "Session 1", exact: true })
       ).toBeVisible({ timeout: 15_000 });
       await expect(page.getByLabel("Close workout")).toHaveCount(0);
 
-      // Start begins that same day, off the rotation's cursor.
+      // Start begins that same day.
       await page.goBack();
       await training.getByRole("button", { name: "Start workout" }).click();
       const close = page.getByLabel("Close workout");
       await expect(close).toBeVisible({ timeout: 15_000 });
       // The session header names its day beside the close control. Train's
-      // own page for day 2 sits underneath, so a bare "Squat" anywhere on
+      // own page for day 1 sits underneath, so a bare "Bench Press" anywhere on
       // screen would pass whichever day the session had opened.
-      await expect(close.locator("..")).toContainText("Session 2");
+      await expect(close.locator("..")).toContainText("Session 1");
       // The link is consumed, so a refresh or Back lands on the day.
-      await expect(page).toHaveURL(/\/program\?day=1$/);
+      await expect(page).toHaveURL(/\/program\?day=0$/);
 
       await close.click();
       await page.reload();
       await expect(
-        page.getByRole("heading", { name: "Session 2", exact: true })
+        page.getByRole("heading", { name: "Session 1", exact: true })
       ).toBeVisible({ timeout: 15_000 });
       await expect(page.getByLabel("Close workout")).toHaveCount(0);
     } finally {

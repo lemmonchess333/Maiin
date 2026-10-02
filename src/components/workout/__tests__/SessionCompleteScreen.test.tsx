@@ -363,7 +363,8 @@ describe("SessionCompleteScreen — what the session did (DS3)", () => {
   it("writes an hour or more as hours and minutes", () => {
     renderWith({ sessionDurationMinutes: 65 });
     expect(screen.getByText("1:05")).toBeInTheDocument();
-    expect(screen.getByText("hours")).toBeInTheDocument();
+    expect(screen.getByText("hr:min")).toBeInTheDocument();
+    expect(screen.queryByText("hours")).toBeNull();
   });
 
   it("gives a bodyweight session its reps rather than 0 kg lifted", () => {

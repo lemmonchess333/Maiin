@@ -19,14 +19,14 @@ The canonical pile-up — a lapsed Pro-trial user returning on a Monday:
 - A comeback badge was earned → **BadgeEarnedModal** (paints on top)
 - 2-day streak, never primed → **StreakReminderPrimingModal** (global)
 
-Four blocking surfaces, four *different* persistence stores (Firestore profile
+Four blocking surfaces, four _different_ persistence stores (Firestore profile
 flag, Firestore `programState`, in-memory, Firestore prefs), zero shared gate —
 and an emotional whiplash of a celebration stacked on a reprimand.
 
 ### Root cause
 
 1. **N independent decision-makers** — every feature self-triggers.
-2. **N independent stores** — nothing can ask "has *anything* shown this visit?"
+2. **N independent stores** — nothing can ask "has _anything_ shown this visit?"
 3. **z-index ≠ scheduling** — layering stacks; it does not choose.
 
 ## Tier taxonomy (classification for every current surface)
@@ -34,30 +34,30 @@ and an emotional whiplash of a celebration stacked on a reprimand.
 Match the surface to the message. Clutter happens when state/education are shown
 as popups and when everything pops independently.
 
-| Tier | Meaning | Rule | Examples |
-|------|---------|------|----------|
-| **1 — Ambient/inline** | persistent state that is *part of the page* | never a popup | streak-at-risk line, post-workout protein nudge (`TodayEnergy`), day-tap hint, adaptive-TDEE warmup (#981), `InsightStrip` |
-| **2 — Toast** | transient confirmation | auto-dismiss; **never** for anything requiring action | sonner "Meal logged", save/error toasts |
-| **3 — Inline education card** | calm one-time teaching, in the scroll | **≤1 visible at a time**; dismisses forever | `ContextualTipBanner`, `useCoachMarks` explainers |
-| **4 — Blocking modal/sheet** | a genuine decision | **≤1 per app-open**, priority-ordered; rest defer/drop; routed through the coordinator | `TrialExpiredModal`, `FellBehindSheet`, `BadgeEarnedModal`, `StreakReminderPrimingModal` |
+| Tier                          | Meaning                                     | Rule                                                                                   | Examples                                                                                                                   |
+| ----------------------------- | ------------------------------------------- | -------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| **1 — Ambient/inline**        | persistent state that is _part of the page_ | never a popup                                                                          | streak-at-risk line, post-workout protein nudge (`TodayEnergy`), day-tap hint, adaptive-TDEE warmup (#981), `InsightStrip` |
+| **2 — Toast**                 | transient confirmation                      | auto-dismiss; **never** for anything requiring action                                  | sonner "Meal logged", save/error toasts                                                                                    |
+| **3 — Inline education card** | calm one-time teaching, in the scroll       | **≤1 visible at a time**; dismisses forever                                            | `ContextualTipBanner`, `useCoachMarks` explainers                                                                          |
+| **4 — Blocking modal/sheet**  | a genuine decision                          | **≤1 per app-open**, priority-ordered; rest defer/drop; routed through the coordinator | `TrialExpiredModal`, `FellBehindSheet`, `BadgeEarnedModal`, `StreakReminderPrimingModal`                                   |
 
 ### Per-surface classification (audit result)
 
-| Surface | Mounted | Today's trigger | Tier | Action |
-|---------|---------|-----------------|------|--------|
-| TrialExpiredModal | Home | `useEffect`, `expiresAt<now` | 4 | route through coordinator (priority 40) |
-| FellBehindSheet | Home | `programState.pendingFellBehindPrompt` | 4 | coordinator (30) |
-| BadgeEarnedModal | Home | `newBadge` from `useStreaks` | 4* | coordinator (20), `suppressedBy: [fell-behind]`, `dropWhenMissed` |
-| StreakReminderPrimingModal | **App (global)** | `visibilitychange`, streak≥2 | 4 | coordinator (10); becomes Home-scoped via the provider |
-| ProModal | Home/Food | **click only** | — | not in the auto-pile; shares the modal layer |
-| ContextualTipBanner | Home | inline, versioned localStorage | 3 | keep inline; enforce ≤1 education card |
-| InsightStrip | Home | inline | 1/3 | keep inline |
-| Coachmarks | Home/Food | first-run overlay | 3 | gate behind "no tier-4 active" |
-| Day-tap hint | Home | until first tap | 1 | keep ambient |
-| Streak-at-risk / protein nudge | Home | inline | 1 | keep ambient |
-| Toasts | global | imperative | 2 | unchanged |
+| Surface                        | Mounted          | Today's trigger                        | Tier | Action                                                            |
+| ------------------------------ | ---------------- | -------------------------------------- | ---- | ----------------------------------------------------------------- |
+| TrialExpiredModal              | Home             | `useEffect`, `expiresAt<now`           | 4    | route through coordinator (priority 40)                           |
+| FellBehindSheet                | Home             | `programState.pendingFellBehindPrompt` | 4    | coordinator (30)                                                  |
+| BadgeEarnedModal               | Home             | `newBadge` from `useStreaks`           | 4\*  | coordinator (20), `suppressedBy: [fell-behind]`, `dropWhenMissed` |
+| StreakReminderPrimingModal     | **App (global)** | `visibilitychange`, streak≥2           | 4    | coordinator (10); becomes Home-scoped via the provider            |
+| ProModal                       | Home/Food        | **click only**                         | —    | not in the auto-pile; shares the modal layer                      |
+| ContextualTipBanner            | Home             | inline, versioned localStorage         | 3    | keep inline; enforce ≤1 education card                            |
+| InsightStrip                   | Home             | inline                                 | 1/3  | keep inline                                                       |
+| Coachmarks                     | Home/Food        | first-run overlay                      | 3    | gate behind "no tier-4 active"                                    |
+| Day-tap hint                   | Home             | until first tap                        | 1    | keep ambient                                                      |
+| Streak-at-risk / protein nudge | Home             | inline                                 | 1    | keep ambient                                                      |
+| Toasts                         | global           | imperative                             | 2    | unchanged                                                         |
 
-\* Badge is a *celebration*: it stays a blocking moment but never co-shows with
+\* Badge is a _celebration_: it stays a blocking moment but never co-shows with
 a reprimand, and a missed one is dropped rather than deferred a session late.
 
 ## Decision
@@ -106,5 +106,21 @@ Locked policy (#995 design pass, 2026-06-03):
 - uid-scope any session/localStorage coordinator state (shared-device switch).
 - Route new persisted flags through `firestoreWrite.ts`; allow-list new profile
   fields in `functions/profileSanitizer.js`.
-- Design for the user base: the worst-case pile is a *returning-user* state —
+- Design for the user base: the worst-case pile is a _returning-user_ state —
   among the most-seen states across 1000 users, not an edge case.
+
+## Amendment 2026-10-02 — the badge leaves tier 4
+
+Owner call from the first-week pass. A waiting badge no longer opens over
+Home on its own: Home shows it as one row, "New badge · <name>"
+(`NewBadgeRow`), and the reveal opens when that row is tapped. A badge a
+session earns still opens inline on that session's finish screen
+(`CompletionExtras`), as before. Filmed on a new account, badges opened
+over Home four times in the first four days, each needing a seal tap and
+then Nice before the day's session could be seen.
+
+So `BadgeEarnedModal` is no longer a coordinator surface, and the
+priority line above reads Trial (40) > FellBehind (30) > LiftReturn (28) >
+GoalReached (25) for Home. The Badge-under-FellBehind suppression has
+nothing left to guard: nothing about a badge opens unasked.
+`homeSurfaceRegistry.test.ts` pins that Home registers no `badge` surface.

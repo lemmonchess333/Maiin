@@ -193,7 +193,9 @@ const EXPECTED_INLINE_USES = {
   // was retired for the one-line FoodProHint, which paints no identity.
   // 2026-10-01: 18 → 17. The Programme page's read-only nutrition card
   // (its apple) went with the Settings pass; the phase is a row now.
-  "THEME.semantic.nutrition": 17,
+  // 17 → 16 with the first-week pass: Home's welcome card (its Food tab
+  // icon in the food orange) became the first-week card.
+  "THEME.semantic.nutrition": 16,
 } as const;
 
 type InlineToken = keyof typeof EXPECTED_INLINE_USES;
@@ -275,7 +277,9 @@ function bareUses(token: string): string[] {
 // 2026-10-01: 44 → 43. The Settings pass: the exports' section icon and
 // the Settings list's subscription crown went, and Account's sign-out
 // section took one icon.
-const BRAND = { token: "primary", step: "lifting-strong", bare: 43 } as const;
+// 43 → 41 with the first-week pass: the welcome card's two tab icons
+// (Train, Analytics) in text-primary went with it.
+const BRAND = { token: "primary", step: "lifting-strong", bare: 41 } as const;
 
 describe("identity colour usage is pinned", () => {
   it("text-primary has the pinned number of bare uses", () => {

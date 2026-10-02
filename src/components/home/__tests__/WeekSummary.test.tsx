@@ -11,6 +11,7 @@ function counts(
     lifts: { done: lifts[0], planned: lifts[1] },
     runs: { done: runs[0], planned: runs[1] },
     foodDays,
+    foodDayTotal: 7,
   };
 }
 
@@ -55,5 +56,23 @@ describe("WeekSummary", () => {
       ...container.querySelectorAll<HTMLElement>("[role=group] > div > div"),
     ].map((el) => el.style.width);
     expect(fills).toEqual(["100%", "25%", "100%"]);
+  });
+});
+
+describe("WeekSummary in the week the account began", () => {
+  it("counts food against the days since joining", () => {
+    render(
+      <WeekSummary
+        counts={{
+          lifts: { done: 1, planned: 1 },
+          runs: { done: 0, planned: 0 },
+          foodDays: 3,
+          foodDayTotal: 3,
+        }}
+      />
+    );
+    expect(
+      screen.getByRole("group", { name: "Food logged: 3 of 3 days" })
+    ).toBeInTheDocument();
   });
 });

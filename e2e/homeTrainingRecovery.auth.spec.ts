@@ -104,10 +104,15 @@ test.describe("Home training recovery", () => {
         await page.addStyleTag({
           content: ".firebase-emulator-warning { display: none !important; }",
         });
+        // Saturday's slot is past the six workouts. Home offers the
+        // programme's next unfinished one, as Train does (first-week pass,
+        // ADR-0002), rather than a "Check your lifting plan" notice.
         const training = page.getByLabel("Today’s training", { exact: true });
-        const open = training.getByRole("button", { name: "Open programme" });
+        const open = training.getByRole("button", {
+          name: `Open ${workouts[2].dayName} in Train`,
+        });
         await expect(open).toBeVisible();
-        await expect(training).toContainText("Check your lifting plan");
+        await expect(training).not.toContainText("Check your lifting plan");
         await expect(training).not.toContainText("Rest day");
         expect((await open.boundingBox())!.height).toBeGreaterThanOrEqual(44);
         await settleImages(page);

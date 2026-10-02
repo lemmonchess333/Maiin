@@ -1,6 +1,6 @@
 import SectionLabel from "@/components/ui/SectionLabel";
 import { Dumbbell, Footprints, Flame } from "lucide-react";
-import { useWeekPulse } from "@/hooks/useWeekPulse";
+import { useWeekPulse, type PendingRun } from "@/hooks/useWeekPulse";
 import { storedKmLabel } from "@/lib/runLabels";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 import { THEME } from "@/lib/theme";
@@ -16,10 +16,13 @@ import { THEME } from "@/lib/theme";
 export default function WeekPulseCard({
   /** Finished-but-unsaved sessions to count into this week (see useWeekPulse). */
   pendingLifts = 0,
+  /** The run a run's finish screen is showing (see useWeekPulse). */
+  pendingRun = null,
 }: {
   pendingLifts?: number;
+  pendingRun?: PendingRun | null;
 } = {}) {
-  const pulse = useWeekPulse(pendingLifts);
+  const pulse = useWeekPulse(pendingLifts, pendingRun);
   // Before the early return — a hook cannot sit behind one.
   const unit = useDistanceUnit();
   if (!pulse) return null;

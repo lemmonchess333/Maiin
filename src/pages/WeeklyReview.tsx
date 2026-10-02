@@ -109,11 +109,19 @@ function YourWeek({
   onShare: (() => void) | null;
 }) {
   const unit = useDistanceUnit();
-  const { training, nutrition, body, headline } = review;
+  const { training, nutrition, body, headline, firstDays } = review;
   return (
     <div className="flex flex-1 flex-col">
       <div className="flex items-start justify-between gap-3">
-        <h2 className="text-h1 font-extrabold text-foreground">Your week</h2>
+        {/* The week the account began is reviewed from that day: "Your
+            first 3 days", and food out of those days, not seven. */}
+        <h2 className="text-h1 font-extrabold text-foreground">
+          {firstDays
+            ? firstDays.count === 1
+              ? "Your first day"
+              : `Your first ${firstDays.count} days`
+            : "Your week"}
+        </h2>
         {/* The week as a share card. It was the "Build recap" card at the
             top of the Social feed, which pushed every post down; the
             recap is where a finished week is looked at. */}
@@ -179,7 +187,7 @@ function YourWeek({
         {nutrition && (
           <StatRow
             rule="bg-nutrition"
-            value={`${nutrition.daysLogged} of 7`}
+            value={`${nutrition.daysLogged} of ${firstDays?.count ?? 7}`}
             caption={`${plural(nutrition.daysLogged, "day", "days")} with food logged`}
           >
             <p className="text-sm text-muted-foreground">
@@ -470,7 +478,9 @@ export default function WeeklyReview() {
   };
 
   const eyebrow = review
-    ? `Last week · ${formatWeekRange(review.range.start, review.range.end)}`
+    ? review.firstDays
+      ? `Since you joined · ${formatWeekRange(review.firstDays.start, review.range.end)}`
+      : `Last week · ${formatWeekRange(review.range.start, review.range.end)}`
     : "Last week";
 
   let slides: RecapSlide[];

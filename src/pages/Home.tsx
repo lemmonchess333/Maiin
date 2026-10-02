@@ -18,8 +18,10 @@ import { useLifetimeRunStats } from "@/hooks/useLifetimeRunStats";
 import {
   getActivationFraming,
   isWithinActivationWindow,
-  shouldShowWelcomeChecklist,
 } from "@/lib/activationFraming";
+import { firstWeek } from "@/lib/firstWeek";
+import FirstWeekCard from "@/components/home/FirstWeekCard";
+import NewBadgeRow from "@/components/home/NewBadgeRow";
 
 import { useSubscription } from "@/lib/subscription";
 import { useHomeProgram } from "@/features/program/useHomeProgram";
@@ -30,16 +32,10 @@ import { getExerciseById } from "@/lib/exercises";
 import { useWeeklyDayMap } from "@/hooks/useFirestore";
 import { BadgeEarnedModal } from "@/features/streaks/BadgeEarnedModal";
 import { useStreaks } from "@/features/streaks/useStreaks";
-import { THEME } from "@/lib/theme";
 import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import PageShell from "@/components/ui/PageShell";
 import BrandMark from "@/components/ui/BrandMark";
-import {
-  AnalyticsTabIcon,
-  FoodTabIcon,
-  TrainTabIcon,
-} from "@/components/icons/TabIcons";
 import { Sparkles, X } from "lucide-react";
 import { useWaterLog } from "@/hooks/useWaterLog";
 import { toast } from "@/lib/toast";
@@ -51,6 +47,9 @@ import {
   resolveTrainingWindow,
 } from "@/lib/trainingResolver";
 import { summariseWeek } from "@/lib/weekSummary";
+import { nextLiftAfter, resolveHomeLift } from "@/lib/homeLift";
+import { startDayKey } from "@/lib/startDay";
+import { loggedAgo } from "@/lib/loggedAgo";
 import { useClaimMapForProgram } from "@/hooks/useClaimMapForProgram";
 import { goalReachedOffer } from "@/lib/goalWeightPlan";
 import GoalReachedSheet from "@/components/home/GoalReachedSheet";
@@ -117,7 +116,11 @@ export default function Home() {
     `tropos-pro-strip-snooze:${user?.uid ?? "anon"}`,
     30
   );
-  const { workouts, getWorkoutsForDate } = useWorkouts();
+  const {
+    workouts,
+    getWorkoutsForDate,
+    loading: workoutsLoading,
+  } = useWorkouts();
   const {
     meals,
     loading: mealsLoading,
@@ -189,9 +192,10 @@ export default function Home() {
   // HealthKit steps (native iOS only; web resolves to status "unavailable"
   // so the tile hides and the priming modal never opens). See POST_LAUNCH.md.
   const stepsData = useSteps();
-  // Welcome checklist dismissal — persisted once-ever (audit #7). Visibility
-  // is data-derived below via shouldShowWelcomeChecklist; this is only the
-  // explicit "I tapped the X" signal.
+  // First-week card dismissal — persisted once-ever (audit #7). It keeps the
+  // welcome checklist's key, so anyone who closed that card is not shown
+  // this one. Visibility is data-derived below (firstWeek.ts); this is only
+  // the explicit "I tapped the X" signal.
   const { dismissed: welcomeDismissed, dismiss: dismissCoachMarks } =
     useDismissOnce("tropos-welcome-checklist-dismissed");
 
@@ -200,9 +204,9 @@ export default function Home() {
   //   1. `runTarget = ... ?? 2` — phantom runs for freeform users.
   //      The resolver internally uses getWeeklyRunTarget which
   //      defaults to 0.
-  //   2. `nextWorkout = workouts.find(d => !d.completed)` — the
-  //      next-incomplete lift, not today's scheduled lift.
-  //      The resolver uses liftIndexForDayOfWeek to map dow → lift idx.
+  //   2. Which lift. The resolver maps the weekday to a workout, and that
+  //      still decides whether today is a lifting day; the workout itself
+  //      is the programme's next, as on Train (homeLift.ts, ADR-0002).
   //   3. `todayRun = runDays.find(r => dayIndex === todayDow && !completed)`
   //      — treats skipped as startable, ignores date/weekKey.
   //      The resolver enforces date → weekKey → guarded-legacy match
@@ -236,6 +240,19 @@ export default function Home() {
   );
 
   const todayType = resolvedToday.scheduleType;
+  // The workout today's card offers: the programme's next, the one Train
+  // starts, on a day the week schedules a lift (homeLift.ts, ADR-0002).
+  const homeLift = useMemo(
+    () =>
+      resolveHomeLift({
+        scheduled: resolvedToday.lift,
+        workouts: programState?.workouts,
+        sessionsToday: new Set(
+          workouts.filter((w) => w.date === todayKey).map((w) => w.id)
+        ),
+      }),
+    [resolvedToday.lift, programState?.workouts, workouts, todayKey]
+  );
 
   // What was done, by date: the strip fills a day for a logged lift
   // session or run, and the week's counts read the same records.
@@ -251,6 +268,13 @@ export default function Home() {
           .map(([date]) => date)
       ),
     [unclaimedByDate]
+  );
+
+  // The day the account began: the days before it plan nothing, on the
+  // strip and in the week's counts (startDay.ts).
+  const startKey = useMemo(
+    () => startDayKey(profile?.createdAt),
+    [profile?.createdAt]
   );
 
   // DS3 "This week": the same resolved calendar week the strip draws, so
@@ -283,9 +307,11 @@ export default function Home() {
         liftDates: workouts.map((w) => w.date),
         extraRunsByDate: unclaimedByDate,
         mealsByDate,
+        startKey,
       });
     },
     [
+      startKey,
       currentWeekKey,
       profile,
       programState,
@@ -314,9 +340,17 @@ export default function Home() {
         currentWeekKey,
         claimMap,
       });
+      // A lift day names the workout that will be next by then, in the
+      // programme's order, as today's card does.
+      const tomorrowLift = next.lift.workout
+        ? (nextLiftAfter(homeLift, programState?.workouts) ?? {
+            index: next.lift.index,
+            workout: next.lift.workout,
+          })
+        : null;
       // Named as the workout and finish screens say it: "Pull · Lat focus".
-      const liftName = next.lift.workout
-        ? liftDayLine(next.lift.workout.dayName)
+      const liftName = tomorrowLift
+        ? liftDayLine(tomorrowLift.workout.dayName)
         : null;
       const runDay = next.run.runDay;
       /* A run day whose week has no runs written yet is named by its type.
@@ -347,12 +381,12 @@ export default function Home() {
           : (liftName ?? runName);
       if (!label) return null;
       const target =
-        liftName && typeof next.lift.index === "number"
-          ? `/program?day=${next.lift.index}`
+        liftName && typeof tomorrowLift?.index === "number"
+          ? `/program?day=${tomorrowLift.index}`
           : `/program?tab=run&rday=${dateKey}`;
       return { label, target };
     },
-    [today, profile, programState, currentWeekKey, claimMap]
+    [today, profile, programState, currentWeekKey, claimMap, homeLift]
   );
   // Hybrid loop — cross-discipline "today" guidance (yesterday's training →
   // today's plan + fuel). Null while data loads / nothing to surface.
@@ -390,6 +424,7 @@ export default function Home() {
     weightTrend,
     weightSyncStatus,
     weightAnnouncement,
+    weighInCount,
     postWorkoutNudge,
     loading: homeDataLoading,
   } = useHomeData(
@@ -483,17 +518,9 @@ export default function Home() {
     function () {
       if (!lastWeightInfo) return "Tap to log";
       if (!lastWeightInfo.rawDate) return "From profile";
-      const now = new Date();
-      const logged = new Date(lastWeightInfo.rawDate + "T12:00:00");
-      const diffMs = now.getTime() - logged.getTime();
-      const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-      if (days <= 0) return "Logged today";
-      if (days === 1) return "Logged yesterday";
-      if (days < 7) return "Logged " + days + "d ago";
-      if (days < 28) return "Logged " + Math.floor(days / 7) + "w ago";
-      return "Logged " + Math.floor(days / 30) + "mo ago";
+      return loggedAgo(lastWeightInfo.rawDate, todayKey);
     },
-    [lastWeightInfo]
+    [lastWeightInfo, todayKey]
   );
 
   const [peekDate, setPeekDate] = useState<string | null>(null);
@@ -552,12 +579,10 @@ export default function Home() {
     priority: 30,
     eligible: fellBehindOpen,
   });
-  const badgeSurface = useSurface({
-    id: "badge",
-    priority: 20,
-    eligible: !!newBadge,
-    suppressedBy: ["fell-behind"],
-  });
+  /* A waiting badge is a row on Home that opens it when tapped
+     (NewBadgeRow, ADR-0004's amendment); it no longer opens over Home on its
+     own, so it is not one of the surfaces the coordinator arbitrates. */
+  const [badgeOpen, setBadgeOpen] = useState(false);
 
   /**
    * The lifter's return. Measured from logged sessions rather than from the
@@ -604,27 +629,50 @@ export default function Home() {
     suppressedBy: ["fell-behind", "trial-expired"],
   });
 
-  // #995 tier-3 education lane (≤1 inline card at a time). The first-run
-  // welcome coachmark wins over the two explainer banners (priorities set at
-  // their call sites: body-metrics 20 > expenditure 10).
-  // Data-derived visibility: only a genuine cold-start account (within the
-  // activation window, < 3 workouts, activation loop not yet complete, not
-  // dismissed) sees the welcome checklist — never a rich/returning account
-  // that merely never tapped the X (audit #7).
-  const welcomeChecklistVisible = shouldShowWelcomeChecklist({
-    createdAtMs,
-    nowMs,
-    workoutCount: workouts.length,
-    // Mirror the activation-framing read: treat in-flight runs as "has runs"
-    // so the card doesn't briefly show before the lifetime count resolves.
-    runCount: runStatsLoading ? 1 : lifetimeRunCount,
-    mealCount: totalLifetimeMeals,
-    dismissed: welcomeDismissed,
-  });
+  // #995 tier-3 education lane (≤1 inline card at a time). The first-week
+  // card wins over the two explainer banners (priorities set at their call
+  // sites: body-metrics 20 > expenditure 10).
+  // Data-derived visibility: a new account's first seven days, until each
+  // item is done or the card is closed (firstWeek.ts). It waits for every
+  // count it ticks from, so no row ticks and then unticks as they load.
+  const countsLoaded =
+    !workoutsLoading && !mealsLoading && !runStatsLoading && !homeDataLoading;
+  const firstWeekState = useMemo(
+    () =>
+      countsLoaded
+        ? firstWeek({
+            startKey,
+            todayKey,
+            lifts: (programState?.workouts?.length ?? 0) > 0,
+            runs:
+              profile?.athleteType === "Runner" ||
+              profile?.athleteType === "Hybrid" ||
+              profile?.runMode === "race_prep",
+            workoutCount: workouts.length,
+            runCount: lifetimeRunCount,
+            mealCount: totalLifetimeMeals,
+            weighInCount,
+            dismissed: welcomeDismissed,
+          })
+        : null,
+    [
+      countsLoaded,
+      startKey,
+      todayKey,
+      programState?.workouts?.length,
+      profile?.athleteType,
+      profile?.runMode,
+      workouts.length,
+      lifetimeRunCount,
+      totalLifetimeMeals,
+      weighInCount,
+      welcomeDismissed,
+    ]
+  );
   const welcomeCard = useEducationCard({
     id: "welcome-coachmark",
     priority: 30,
-    eligible: welcomeChecklistVisible,
+    eligible: firstWeekState !== null,
   });
   /* EVERY day in the strip opens its detail card, today included.
      There is no special case for today, and the argument for one — that
@@ -679,10 +727,10 @@ export default function Home() {
     },
     [peekDate, getDailyTotals]
   );
-  // PR-0c: today's scheduled lift, not next-incomplete. Resolver
-  // returns null when today isn't a lift/both day or the schedule
-  // has drifted past workouts[].length.
-  const nextWorkout = resolvedToday.lift.workout;
+  // Today's lift: the programme's next workout on a lifting day, or the
+  // one finished today. Null when today isn't a lift/both day or the
+  // schedule has drifted past workouts[].length.
+  const nextWorkout = homeLift.workout;
   /* A new person's first workout is ready any day (lifts follow the
      rotation, ADR-0002), so on a rest day ask the lift-day question. */
   const brandNewLifter =
@@ -895,71 +943,6 @@ export default function Home() {
         </div>
       )}
 
-      {/* First-time coach marks — routed through the education lane so it
-          doesn't stack with the explainer banners (#995). */}
-      {welcomeCard.visible && (
-        <motion.div
-          variants={{
-            hidden: { opacity: 0, y: 8 },
-            visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
-          }}
-          className="p-4 rounded-2xl bg-card border border-primary/20 space-y-3"
-        >
-          <div className="flex items-center justify-between">
-            <p className="text-sm font-bold text-foreground">
-              Welcome to Tropos
-            </p>
-            <button
-              type="button"
-              onClick={dismissCoachMarks}
-              aria-label="Dismiss welcome message"
-              className="size-11 -m-2 flex items-center justify-center rounded-lg hover:bg-muted active:scale-[0.97] transition-transform"
-            >
-              <X className="size-3.5 text-muted-foreground" />
-            </button>
-          </div>
-          <div className="space-y-2">
-            {/* Hints map 1:1 to the real bottom-nav tabs (Programme / Food /
-                Analytics), and draw each with that tab's own icon (DS3), so
-                the hint points at the button it names. There is no "Log"
-                tab — workouts and runs both start from Programme, meals are
-                logged from Food. */}
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <TrainTabIcon
-                active={false}
-                className="size-4 text-primary shrink-0"
-              />
-              <span>
-                Tap <strong className="text-foreground">Train</strong> to start
-                a workout or run
-              </span>
-            </div>
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <span
-                className="inline-flex shrink-0"
-                style={{ color: THEME.semantic.nutrition }}
-              >
-                <FoodTabIcon active={false} className="size-4" />
-              </span>
-              <span>
-                Tap <strong className="text-foreground">Food</strong> to log
-                meals
-              </span>
-            </div>
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <AnalyticsTabIcon
-                active={false}
-                className="size-4 text-primary shrink-0"
-              />
-              <span>
-                Check <strong className="text-foreground">Analytics</strong> to
-                view your progress
-              </span>
-            </div>
-          </div>
-        </motion.div>
-      )}
-
       {/* Streak count stays in the header. Recovery remains available through
           Food's date picker; native reminders are deferred in POST_LAUNCH.md. */}
 
@@ -990,6 +973,7 @@ export default function Home() {
             onDayTap={handleDayTap}
             loggedLiftDates={loggedLiftDates}
             extraRunDates={extraRunDates}
+            startKey={startKey}
           />
           <AnimatePresence>
             {peekDate && (
@@ -1032,9 +1016,9 @@ export default function Home() {
                 liftPurpose={liftPurpose}
                 runPurpose={runPresentation.purpose}
                 runWeekLabel={runPresentation.weekLabel}
-                liftDayIndex={resolvedToday.lift.index}
-                liftStartable={resolvedToday.lift.isStartable}
-                liftStatus={resolvedToday.lift.status}
+                liftDayIndex={homeLift.index}
+                liftStartable={homeLift.isStartable}
+                liftStatus={homeLift.status}
                 runCompleted={resolvedToday.run.isCompleted}
                 todayType={todayType}
                 navigate={function (p: string) {
@@ -1051,13 +1035,33 @@ export default function Home() {
                 restDayFirstWorkoutIndex={restDayFirstWorkoutIndex}
                 freeRunner={
                   profile?.runMode === "freeform" &&
-                  profile?.athleteType === "Runner"
+                  (profile?.athleteType === "Runner" ||
+                    profile?.athleteType === "Hybrid")
                 }
               />
             </SectionErrorBoundary>
           </TrackSectionView>
         )}
       </motion.div>
+
+      {/* A new account's first seven days, under today's session: the
+          session is the day's action, this is what the week is for.
+          Routed through the education lane so it doesn't stack with the
+          explainer banners (#995). */}
+      {welcomeCard.visible && firstWeekState && (
+        <motion.div
+          variants={{
+            hidden: { opacity: 0, y: 8 },
+            visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
+          }}
+        >
+          <FirstWeekCard week={firstWeekState} onDismiss={dismissCoachMarks} />
+        </motion.div>
+      )}
+
+      {newBadge && !badgeOpen && (
+        <NewBadgeRow name={newBadge.name} onOpen={() => setBadgeOpen(true)} />
+      )}
 
       {/* Email accounts verify after the plan; this asks, under today's
           session rather than above it. Renders nothing once verified. */}
@@ -1411,10 +1415,10 @@ export default function Home() {
       )}
 
       <BadgeEarnedModal
-        badge={badgeSurface.active ? newBadge : null}
+        badge={badgeOpen ? newBadge : null}
         onDismiss={() => {
           dismissNewBadge();
-          badgeSurface.dismiss();
+          setBadgeOpen(false);
         }}
       />
 

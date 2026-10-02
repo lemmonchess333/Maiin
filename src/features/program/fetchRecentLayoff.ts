@@ -13,7 +13,7 @@
  * WHY THE CAP IS SAFE. Only the most recent ELIGIBLE run matters, and
  * ineligible runs are rare (an invalid GPS trace, a sub-threshold entry). The
  * window has to clear that handful, not the whole history — so a small cap
- * over `createdAt desc` finds it. In the degenerate case where every one of
+ * over `completedAt desc` finds it. In the degenerate case where every one of
  * the newest runs is ineligible, this under-reports the layoff (reports
  * shorter than it is), which fails toward the CURRENT behaviour rather than
  * toward an unearned re-entry plan.
@@ -50,9 +50,9 @@ export async function fetchRecentLayoff(
     const snap = await getDocs(
       query(
         collection(db, "users", uid, "runs"),
-        // `createdAt` is the field `useClaimMap` orders by, so this rides an
-        // index that already exists rather than requiring a new one.
-        orderBy("createdAt", "desc"),
+        // `completedAt`, the field `useClaimMap` orders by: every saved run
+        // has it, and none has a `createdAt`, so ordering by that read none.
+        orderBy("completedAt", "desc"),
         limit(RECENT_RUN_SCAN_LIMIT)
       )
     );

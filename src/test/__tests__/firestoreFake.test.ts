@@ -96,6 +96,28 @@ describe("reads", () => {
     expect(snap.docs.map((d) => d.id)).toEqual(["c"]);
   });
 
+  it("orderBy leaves out documents that lack the field, as Firestore does", async () => {
+    // A null value is still a value (it sorts first); a missing field is not.
+    // The claim map's runs query ordered by a field no saved run has, read
+    // nothing in production, and passed here while the fake returned them.
+    seedFirestore({
+      "users/u1/runs/has": { completedAt: 2, createdAt: 1 },
+      "users/u1/runs/none": { completedAt: 3 },
+      "users/u1/runs/nil": { completedAt: 1, createdAt: null },
+    });
+    const byCreated = await getDocs(
+      query(collection(db, "users", "u1", "runs"), orderBy("createdAt"))
+    );
+    expect(byCreated.docs.map((d) => d.id)).toEqual(["nil", "has"]);
+    const byCompleted = await getDocs(
+      query(
+        collection(db, "users", "u1", "runs"),
+        orderBy("completedAt", "desc")
+      )
+    );
+    expect(byCompleted.docs.map((d) => d.id)).toEqual(["none", "has", "nil"]);
+  });
+
   it("supports array-contains and in", async () => {
     seedFirestore({
       "bonds/b1": { members: ["u1", "u2"] },

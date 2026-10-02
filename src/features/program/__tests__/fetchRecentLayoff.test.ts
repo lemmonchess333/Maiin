@@ -15,6 +15,7 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 vi.mock("firebase/firestore");
 vi.mock("@/lib/firebase", () => ({ db: {} }));
 
+import { Timestamp } from "firebase/firestore";
 import {
   seedFirestore,
   resetFirestore,
@@ -41,7 +42,7 @@ function seedRuns(lastDate: string, count: number, every = 3): void {
       date,
       distance: 8000,
       duration: 2700,
-      createdAt: `${date}T09:00:00.000Z`,
+      completedAt: Timestamp.fromDate(new Date(`${date}T09:00:00.000Z`)),
     };
   }
   seedFirestore(tree);
@@ -106,12 +107,21 @@ describe("every failure mode lands on none", () => {
     // Firestore hands back whatever is stored. A doc with a numeric `date` or
     // a string `distance` must be skipped, not crash the caller.
     seedFirestore({
-      [`users/${UID}/runs/bad1`]: { date: 20260803, distance: "8k" },
-      [`users/${UID}/runs/bad2`]: { date: null, duration: {} },
+      [`users/${UID}/runs/bad1`]: {
+        date: 20260803,
+        distance: "8k",
+        completedAt: Timestamp.fromDate(new Date("2026-08-03T09:00:00Z")),
+      },
+      [`users/${UID}/runs/bad2`]: {
+        date: null,
+        duration: {},
+        completedAt: Timestamp.fromDate(new Date("2026-08-02T09:00:00Z")),
+      },
       [`users/${UID}/runs/ok`]: {
         date: "2026-05-23",
         distance: 8000,
         duration: 2700,
+        completedAt: Timestamp.fromDate(new Date("2026-05-23T09:00:00Z")),
       },
     });
     await expect(fetchRecentLayoff(UID, "2026-08-04")).resolves.toBe(

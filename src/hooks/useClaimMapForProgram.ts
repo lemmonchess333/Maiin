@@ -232,13 +232,20 @@ export function useClaimMapForProgram(
     function () {
       if (!uid) return;
       const runsRef = collection(db, "users", uid, "runs");
-      const q = query(runsRef, orderBy("createdAt", "desc"));
+      /* Ordered by `completedAt`, which every saved run carries. Runs have
+         never had a `createdAt` (RunSummary does not write one), and a
+         query ordered by a field leaves out every document without it, so
+         this listener read nothing in production: no planned run was ever
+         claimed, and no run reached Home's week. */
+      const q = query(runsRef, orderBy("completedAt", "desc"));
       const unsub = onSnapshot(
         q,
         (snap) => {
           const rows: SavedRunDoc[] = snap.docs.map(function (d) {
             const data = d.data() as Record<string, unknown>;
-            const ca = data.createdAt;
+            // When the run was saved: a legacy `createdAt` where one exists,
+            // else `completedAt`. It orders claims and keys the fingerprint.
+            const ca = data.createdAt ?? data.completedAt;
             return {
               id: d.id,
               date: typeof data.date === "string" ? data.date : undefined,

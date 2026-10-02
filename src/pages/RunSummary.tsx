@@ -1664,12 +1664,27 @@ export default function RunSummary() {
             </p>
           )}
 
-          {/* Rev1 PR2 — what this run did to your week (fetches after the
-              run doc is saved, so it includes this run). Null while
-              loading; no jank. */}
+          {/* Rev1 PR2 — what this run did to your week. The card reads the
+              week when this screen opens, which is before Save, so it is
+              handed this run to count; once saved, the id keeps it from
+              being counted twice. Null while loading; no jank. */}
           <div className="px-4 mb-4">
             <Suspense fallback={null}>
-              <WeekPulseCard />
+              <WeekPulseCard
+                pendingRun={{
+                  id: savedRunId,
+                  // A run with no trace (entered by hand) is today's.
+                  date: points[0]
+                    ? localDateString(new Date(points[0].timestamp))
+                    : null,
+                  distanceMeters: distance,
+                  eligible: isVolumeEligible({
+                    distance,
+                    duration: elapsed,
+                    isInvalid,
+                  }),
+                }}
+              />
             </Suspense>
           </div>
 

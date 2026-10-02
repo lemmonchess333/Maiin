@@ -10,7 +10,12 @@ import {
   resolveDeloadRecommended,
   isEstablishingBaseline,
 } from "@/lib/performanceDocFields";
-import { getVerb, getLine, performanceEmptyCopy } from "@/lib/performanceLine";
+import {
+  getVerb,
+  getLine,
+  getEstablishingLine,
+  performanceEmptyCopy,
+} from "@/lib/performanceLine";
 import type { PerformanceWeekDoc } from "@/lib/performanceTypes";
 import ProgressRing from "@/components/ui/ProgressRing";
 import { Skeleton } from "@/components/LoadingSkeleton";
@@ -114,11 +119,13 @@ export default function PerformanceHeroCard({
   const deloadRecommended = resolveDeloadRecommended(currentWeek);
   const verb = getVerb(loadBand, deloadRecommended);
   const { hue, textHue } = getCardColour(pi, loadBand, deloadRecommended);
-  const line = getLine(verb.state, currentWeek.signals);
   const lowConfidence = isEstablishingBaseline({
     docsAvailable: weeksAvailable,
     lifetimeWeeks: currentWeek.signals?.lifetimeWeeks,
   });
+  const line = lowConfidence
+    ? getEstablishingLine(currentWeek.signals)
+    : getLine(verb.state, currentWeek.signals);
   const delta = previousWeek
     ? Math.round(
         (currentWeek.performanceIndex ?? 0) -

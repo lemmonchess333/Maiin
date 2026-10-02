@@ -297,6 +297,11 @@ Helper: `syncChallengeProgress()` — auto-updates challenge participant progres
 - Colocated in `__tests__/` beside the code: `src/lib/`, `src/hooks/`, `src/utils/`,
   and each `src/features/*` module. Hook tests drive Firestore through the one
   fake (ADR-0009) — `vi.mock("firebase/firestore")` bare, then `seedFirestore`.
+  Seed documents with the fields the app really writes: the fake leaves out
+  a document that lacks a field the query is ordered by, as Firestore does.
+  It used to return them, and the runs query ordered by `createdAt`, which no
+  saved run has, read nothing in production from May to October 2026 with
+  its tests green.
 - Deliberately NOT counted here. Every file count this document used to carry
   had drifted by 3–7× (87 components → 319, 31 hooks → 75, 46 lib modules →
   198). A number nothing checks is a claim that rots; prefer describing the
@@ -1063,7 +1068,9 @@ or touching a CTA button, route it through `Button` with the variant above.
 - **Pages:** src/pages/ — route-level, lazy-loaded
 - **Home screen built from:** WeekStrip → DayPeekCard → StackedCTACards
   (LiftCTACard / RunCTACard / RestDayCard — Start on the card, no pills) →
-  TodayEnergy → WaterCard → WeightStepsTiles → the "This week" card:
+  FirstWeekCard (a new account's first seven days) → NewBadgeRow (a
+  waiting badge, opened on tap; badges never open over Home by
+  themselves) → TodayEnergy → WaterCard → WeightStepsTiles → the "This week" card:
   WeeklyReviewEntry (a link on its heading while a review waits) →
   WeekSummary → PerformanceHeroCard (a row since DS3, 2026-09-27).
   Performance sits LAST by owner decision: the first thing on the scroll
