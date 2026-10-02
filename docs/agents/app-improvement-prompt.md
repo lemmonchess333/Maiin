@@ -178,8 +178,8 @@ PR SHAPE
 - Fill the PR template honestly — the schema-migration checkbox is real
   (programTypes.ts CURRENT_*_VERSION and migrations.ts).
 - Each PR body states baseline → after for every ratchet it touches.
-- The repo's Stop hook records standing approval: push, open the PR, watch
-  CI, squash-merge when green, unsubscribe. Follow it.
+- Push, open a draft PR and get its CI green. Merging waits for the
+  owner's go.
 
 DONE MEANS
 - Every finding the survey turned up shipped, or declined in a PR with the
