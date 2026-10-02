@@ -19,7 +19,7 @@ npm run test:e2e:ui  # Playwright E2E tests (interactive UI)
 - **Routing:** React Router v7
 - **Backend:** Firebase 12 (Auth, Firestore, Cloud Functions, Storage)
 - **Charts:** Recharts 3
-- **Maps:** MapLibre GL 5
+- **Maps:** MapLibre GL 6
 - **Animation:** Framer Motion 12
 - **PWA:** vite-plugin-pwa + Workbox
 - **Native:** Capacitor (iOS/Android)
