@@ -27,10 +27,14 @@
  * `pumpSnapshot()`d fabricated docs straight into it, so the suite fed
  * the hook rather than the hook reading a store. Runs are now real
  * documents under `users/u1/runs`, delivered by the fake's own
- * subscription — which means the `orderBy("createdAt", "desc")` in the
- * query is exercised rather than bypassed, and "no user ⇒ no
- * subscription" can be asserted against the read log instead of against
- * the stub's own array.
+ * subscription — which means the query's `orderBy("completedAt", "desc")`
+ * is exercised rather than bypassed, and "no user ⇒ no subscription" can
+ * be asserted against the read log instead of against the stub's own
+ * array. The fake leaves out a document that lacks the ordered field, as
+ * Firestore does, so these fixtures carry `completedAt` and no `createdAt`:
+ * the fields RunSummary writes. This header once named `createdAt`, which
+ * no saved run has ever carried, and the suite passed because the fake
+ * returned documents the real query left out.
  */
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
@@ -278,7 +282,7 @@ describe("useClaimMap", () => {
             distance: 5000,
             avgPace: 330,
             templateId: "easy-5k",
-            createdAt: Timestamp.fromMillis(1716700000_000),
+            completedAt: Timestamp.fromMillis(1716700000_000),
           },
         },
       ]);
@@ -304,7 +308,7 @@ describe("useClaimMap", () => {
             distance: 8000,
             avgPace: 300,
             templateId: "freerun",
-            createdAt: Timestamp.fromMillis(1716700000_000),
+            completedAt: Timestamp.fromMillis(1716700000_000),
           },
         },
       ]);
@@ -315,6 +319,38 @@ describe("useClaimMap", () => {
     expect(extras).toHaveLength(1);
     expect(extras?.[0].id).toBe("extra-1");
     expect(result.current.claimMap.size).toBe(0);
+  });
+
+  it("reads a run saved the way RunSummary saves it: completedAt, no createdAt", async () => {
+    // The listener ordered by `createdAt`, which no saved run carries, so in
+    // production it read nothing: no planned run was ever claimed and no run
+    // reached Home's week. These are the fields a saved run has.
+    mockProgramState = { runDays: [], manualCompletions: {} };
+
+    const { result } = renderHook(() => useClaimMap("2026-10-03"));
+    await act(async () => {
+      seedRuns([
+        {
+          id: "saved-from-summary",
+          data: {
+            date: "2026-10-03",
+            distance: 5000,
+            duration: 1860,
+            avgPace: 372,
+            activityType: "easy",
+            startedAt: Timestamp.fromMillis(1790932500_000),
+            completedAt: Timestamp.fromMillis(1790934400_000),
+            _offlineCreatedAt: 1790934400_000,
+            planMode: "freeform",
+          },
+        },
+      ]);
+      await flushSnapshots();
+    });
+
+    expect(
+      result.current.unclaimedByDate.get("2026-10-03")?.map((r) => r.id)
+    ).toEqual(["saved-from-summary"]);
   });
 
   it("propagates manualCompletions into the claim map without a saved-run match", async () => {
@@ -384,7 +420,7 @@ describe("useClaimMap - account ownership", () => {
         distance: 5000,
         avgPace: 330,
         templateId: "easy-5k",
-        createdAt: Timestamp.fromMillis(1716700000_000),
+        completedAt: Timestamp.fromMillis(1716700000_000),
       },
     });
   });
@@ -412,7 +448,7 @@ describe("useClaimMap - account ownership", () => {
         date: "2026-05-20",
         distance: 8000,
         avgPace: 300,
-        createdAt: Timestamp.fromMillis(1716200000_000),
+        completedAt: Timestamp.fromMillis(1716200000_000),
       },
     });
     const renders: { uid: string | undefined; claimed?: string }[] = [];
@@ -485,7 +521,7 @@ describe("useClaimMap - distance threshold", () => {
             date: "2026-05-26",
             distance,
             avgPace: 330,
-            createdAt: Timestamp.fromMillis(1716700000_000),
+            completedAt: Timestamp.fromMillis(1716700000_000),
           },
         },
       ]);
@@ -560,7 +596,7 @@ describe("useClaimMap - quality bucket honours userOverride", () => {
             date: "2026-05-26",
             distance: 6000,
             avgPace,
-            createdAt: Timestamp.fromMillis(1716700000_000),
+            completedAt: Timestamp.fromMillis(1716700000_000),
           },
         },
       ]);

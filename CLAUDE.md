@@ -297,6 +297,11 @@ Helper: `syncChallengeProgress()` — auto-updates challenge participant progres
 - Colocated in `__tests__/` beside the code: `src/lib/`, `src/hooks/`, `src/utils/`,
   and each `src/features/*` module. Hook tests drive Firestore through the one
   fake (ADR-0009) — `vi.mock("firebase/firestore")` bare, then `seedFirestore`.
+  Seed documents with the fields the app really writes: the fake leaves out
+  a document that lacks a field the query is ordered by, as Firestore does.
+  It used to return them, and the runs query ordered by `createdAt`, which no
+  saved run has, read nothing in production from May to October 2026 with
+  its tests green.
 - Deliberately NOT counted here. Every file count this document used to carry
   had drifted by 3–7× (87 components → 319, 31 hooks → 75, 46 lib modules →
   198). A number nothing checks is a claim that rots; prefer describing the
