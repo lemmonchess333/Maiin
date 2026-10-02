@@ -61,8 +61,6 @@ STANDING RULES — do not re-litigate, do not work around:
   at-least-once and concurrent; never mix local-date and UTC;
   onAuthStateChanged fires several times; the tested copy does not prove
   the running copy (mirror parity pins the functions/ copy). All CLAUDE.md.
-- The `/baseline-ui` skill is generic: its stack rules (Radix/Base UI and
-  the rest) are not this stack's. Use it only as a slop-review lens.
 - graphify: no graph exists unless graphify-out/graph.json does. Do not
   create one, and ignore its hook nudge on verification work.
 - Comments are not a tax to be minimised: keep every comment that states an
@@ -240,8 +238,6 @@ reducedMotion="user">` all along, but it settles position only: opacity,
   stroke and count-up animations ask `useReducedMotion` themselves, and CSS
   animations need `motion-safe:`. Without this line the agent adds gates to
   transform animations that the global one already covers.
-- **The `/baseline-ui` fence** — that skill is third-party and mandates
-  Radix/Base UI; applying it literally rewrites the locked stack.
 - **The Sub4 nuance** — the lock says keep the Stripe backend dormant. Read
   naively it blocks removing a dead client package; read the other way, a
   "remove dead deps" sweep tears down the backend. Both misreadings are
