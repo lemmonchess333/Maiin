@@ -1,6 +1,6 @@
 # Tropos — Domain Context
 
-Domain vocabulary as it solidifies, plus the reference-app patterns we've researched. Skills like `improve-codebase-architecture`, `diagnose`, `tdd`, and `grill-me` read this to use the project's actual terms and to inform decisions with what dominant apps already do.
+Domain vocabulary as it solidifies, plus the reference-app patterns we've researched. Skills like `improve-codebase-architecture`, `diagnosing-bugs`, `tdd`, and `grill-with-docs` read this (they call it `GLOSSARY.md`) to use the project's actual terms and to inform decisions with what dominant apps already do.
 
 Update when a /grill-me session crystallises new vocabulary, when we adopt or reject a reference-app pattern with explicit reasoning, or when a competitor changes a relevant behaviour.
 
