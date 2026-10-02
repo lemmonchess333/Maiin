@@ -588,22 +588,17 @@ legacy-only — pre-Food9 documents keep rendering, nothing writes it.
 
 ## gstack
 
-Use the `/browse` skill from gstack for **all web browsing**. Never use `mcp__claude-in-chrome__*` tools.
+gstack is a git submodule (`.claude/skills/gstack`), so its skills exist only
+where it has been checked out and set up. Cloud sessions don't check it out:
+there the folder is empty and none of its skills exist.
 
-### Available Skills
-
-- `/plan-ceo-review` — CEO-level plan review
-- `/plan-eng-review` — Engineering plan review
-- `/plan-design-review` — Design plan review
-- `/review` — Code review
-- `/ship` — Ship changes
-- `/browse` — Web browsing (use this instead of MCP browser tools)
-- `/qa` — QA testing
-- `/qa-only` — QA testing only
-- `/qa-design-review` — QA design review
-- `/setup-browser-cookies` — Set up browser cookies
-- `/retro` — Retrospective
-- `/document-release` — Document a release
+- **When gstack is installed,** use its `/browse` skill for web browsing. It
+  also adds `/plan-ceo-review`, `/plan-eng-review`, `/plan-design-review`,
+  `/review`, `/ship`, `/qa`, `/qa-only`, `/qa-design-review`,
+  `/setup-browser-cookies`, `/retro` and `/document-release`.
+- **When it isn't,** drive the pre-installed Chromium with Playwright. The
+  capture rig under "Design-review capture channel" is the worked example.
+- Never use `mcp__claude-in-chrome__*` tools.
 
 ## House voice — how Tropos talks (app-wide, 2026-08-22)
 
