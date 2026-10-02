@@ -359,7 +359,7 @@ already made for this repo.
 ### E2E Tests (Playwright)
 
 - Config: `playwright.config.ts`
-- Test files in `e2e/`: `smoke.spec.ts`, `navigation.spec.ts`, `accessibility.spec.ts`, `pwa.spec.ts`
+- Specs in `e2e/`: `*.spec.ts` run signed out on the `chromium` and `mobile` projects; `*.auth.spec.ts` and `*.capture.spec.ts` run on `auth-emulator` against the emulator rig
 - Run: `npm run test:e2e` or `npm run test:e2e:ui` (interactive)
 
 ## CI/CD
