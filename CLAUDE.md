@@ -859,10 +859,8 @@ rig is at fault. Frames written there are thrown away with the runner;
 committing them to the `app-screenshots` branch is still the workflow
 below.
 
-**The agent sandbox CAN run the whole capture rig — this sentence said
-otherwise until 2026-09-14 and was wrong the way the Storage-emulator row
-was wrong: a false constraint doing real work, sending every agent to CI
-for a loop that runs here in minutes.** The chain is exactly
+**The agent sandbox can run the whole capture rig, in minutes — no need
+to send a capture loop to CI.** The chain is exactly
 `emulator-tests.yml`'s: build with the emulator env
 (`VITE_USE_EMULATORS=true … npm run build:e2e`), then
 `firebase emulators:exec --only auth,firestore --project demo-tropos`
