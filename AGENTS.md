@@ -51,10 +51,9 @@ non-negotiables, inline so you can't miss them:
 5. **Use the primitives** (`Button`, `IconButton`, `Banner`, `BottomSheet`,
    `Dialog`, `Card`, `.ds-input`) — don't hand-roll a button from a `div`.
 6. **Colours come from tokens, never hardcoded hex** — Tailwind classes
-   (`bg-primary`, `text-muted-foreground`, `bg-primary-strong` for filled CTAs)
-   or the `THEME` object from `@/lib/theme` (e.g. `THEME.running` for coral,
-   which has no HSL token yet). Tints use the hex-alpha suffix pattern
-   (`${THEME.running}0F` = 6%).
+   (`bg-primary`, `text-muted-foreground`, `bg-primary-strong` for filled CTAs,
+   `text-running` and a `bg-running/12` wash for coral), or the `THEME` object
+   from `@/lib/theme` where a class can't reach (charts, SVG).
 7. **Light AND dark mode must both work.** Verify both.
 8. **WCAG AA contrast** + **reduced-motion** respected.
 9. **Calm over flashy, breathing room over density.** When in doubt, do less.
