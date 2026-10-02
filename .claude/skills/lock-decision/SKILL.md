@@ -1,12 +1,10 @@
 ---
 name: lock-decision
 description: >
-  Append a locked Q&A decision to .claude/plans/programme-run-followups.md,
-  then commit + push to the current branch. Use when the user agrees to lock
-  a decision (says "lock it", "lock as-is", "go for it" after a stress-test,
-  or otherwise approves the locked answer). Replaces the 4-step manual
-  ritual of editing the plan file, drafting a commit message, committing,
-  and pushing.
+  Append a locked decision to .claude/plans/programme-run-followups.md on its
+  own claude/lock-<id> branch cut from main, push it, and open a draft PR.
+  Use when the user agrees to lock a decision (says "lock it", "lock as-is",
+  "go for it" after a stress-test, or otherwise approves the locked answer).
 ---
 
 # Lock Decision
@@ -38,7 +36,21 @@ If any of these are unclear, ask the user before running.
 
 ## Steps
 
-### 1. Append the row to the plan file
+### 1. Branch from main
+
+A lock goes on its own branch, cut from main, never on the branch you are
+working on (CLAUDE.md, "Plan-file lock discipline"):
+
+```bash
+git fetch origin main
+git checkout -b claude/lock-<id> origin/main
+```
+
+`<id>` is the decision ID in lower case (`claude/lock-set2`). Commit or stash
+work in progress first. If your session is limited to a designated branch,
+ask the user before creating this one.
+
+### 2. Append the row to the plan file
 
 The plan file is `.claude/plans/programme-run-followups.md`. Each decision is
 one table row:
@@ -56,7 +68,7 @@ after the last row in the file, where the recent locks (`Soc12`, `Set2`,
 `FW1`) are. Use the full preceding row as the Edit anchor so the Edit
 doesn't collide.
 
-### 2. Commit
+### 3. Commit
 
 Use a HEREDOC commit message in this shape:
 
@@ -84,35 +96,48 @@ Stage only the plan file:
 git add .claude/plans/programme-run-followups.md
 ```
 
-### 3. Push
-
-After commit, push to the current branch with `-u` flag:
+### 4. Push and open a draft PR
 
 ```bash
-git push -u origin <current-branch>
+git push -u origin claude/lock-<id>
 ```
 
 If push fails due to network, retry up to 4 times with exponential backoff
 (2s, 4s, 8s, 16s). Do NOT use `--force` or `--no-verify`.
 
-### 4. Report back
+Open a draft PR from `claude/lock-<id>` into `main` (`gh pr create --draft`,
+or the GitHub MCP tools in a cloud session), titled with the commit subject,
+its body saying what was decided and which PR implements it. Then stop: the
+owner merges it. Switch back to the branch you were working on.
 
-After successful push, give the user a one-line confirmation including:
+### 5. Report back
 
-- The commit SHA (first 7 chars)
+Once the PR is open, give the user a one-line confirmation including:
+
+- The PR link
 - The locked answer in shorthand (e.g. "Set2 locked: B on both calls")
 - One sentence on the next undecided question if relevant
 
 Example:
 
-> Pushed `a1b2c3d`. Set2 locked: a grouped Settings list, Programme as a
+> Opened #2551 (draft). Set2 locked: a grouped Settings list, Programme as a
 > short page, and a switch per notification type.
+
+### After it merges
+
+Main squash-merges, so the lock commit itself never becomes an ancestor of
+`origin/main`. Check for the row instead; this prints 1 once it has landed:
+
+```bash
+git fetch origin main
+git show origin/main:.claude/plans/programme-run-followups.md | grep -cE '^\| *<ID> *\|'
+```
 
 ## Anti-patterns
 
 - Do NOT lock if the user hasn't explicitly agreed
-- Do NOT skip the push step — half-committed decisions are worse than none
+- Do NOT commit a lock on a branch named for other work
+- Do NOT skip the push or the PR — a lock that isn't on main is invisible to the next agent
+- Do NOT merge the PR yourself — the owner merges it
 - Do NOT amend a previous commit — always create a new one
 - Do NOT add files beyond the plan file to the commit
-- Do NOT change branches
-- Do NOT create a PR (separate explicit user request)
