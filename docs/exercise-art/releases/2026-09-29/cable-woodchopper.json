@@ -1,0 +1,681 @@
+{
+  "exerciseId": "cable-woodchopper",
+  "version": "anatomy-v3-2026-09-29",
+  "width": 1536,
+  "height": 1024,
+  "decision": "approved",
+  "reviewer": "Codex native and mobile visual review",
+  "reviewedAt": "2026-09-29T19:11:27.105Z",
+  "reference": {
+    "path": "form-frames/cable-woodchopper/1.webp",
+    "sha256": "afee5565830317710ab999faca850ab492c959f06df2c60d22e146c8fd97d44e",
+    "anchors": {
+      "leftshoeupperLeft": {
+        "x": 856,
+        "y": 880
+      },
+      "leftshoeupperRight": {
+        "x": 921,
+        "y": 880
+      },
+      "rightshoeupperLeft": {
+        "x": 1053,
+        "y": 880
+      },
+      "rightshoeupperRight": {
+        "x": 1113,
+        "y": 880
+      },
+      "leftforefootLeft": {
+        "x": 831,
+        "y": 910
+      },
+      "leftforefootRight": {
+        "x": 923,
+        "y": 910
+      },
+      "rightforefootLeft": {
+        "x": 1050,
+        "y": 910
+      },
+      "rightforefootRight": {
+        "x": 1135,
+        "y": 910
+      },
+      "leftplantedsoleLeft": {
+        "x": 831,
+        "y": 928
+      },
+      "leftplantedsoleRight": {
+        "x": 888,
+        "y": 928
+      },
+      "rightplantedsoleLeft": {
+        "x": 1077,
+        "y": 928
+      },
+      "rightplantedsoleRight": {
+        "x": 1137,
+        "y": 928
+      },
+      "matLeft": {
+        "x": 569,
+        "y": 950
+      },
+      "matRight": {
+        "x": 1412,
+        "y": 950
+      },
+      "machinebaseLeft": {
+        "x": 97,
+        "y": 920
+      },
+      "machinebaseRight": {
+        "x": 464,
+        "y": 920
+      },
+      "restingstackLeft": {
+        "x": 209,
+        "y": 700
+      },
+      "restingstackRight": {
+        "x": 364,
+        "y": 700
+      }
+    },
+    "invariantDimensions": {
+      "leftshoeupperWidth": 66,
+      "rightshoeupperWidth": 61,
+      "leftforefootWidth": 93,
+      "rightforefootWidth": 86,
+      "leftplantedsoleWidth": 58,
+      "rightplantedsoleWidth": 61,
+      "matWidth": 844,
+      "machinebaseWidth": 368,
+      "restingstackWidth": 156
+    }
+  },
+  "cueSha256": "69be85b5554feacc3f204462507d443202237a8a6f1aee9841efa3e302b751d3",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Canonical bald faceless white-grey athlete, white trainers and smooth featureless pelvis. Native pose and all-six mobile inspection complete."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Native1536x1024 fixed frontal three-quarter scene, machine left and athlete right. Measured shoe, mat, base and resting-stack anchors match across the three unique poses."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "One athlete, two arms and two legs. Torso rotates from high-left through forward midpoint to low-right finish; arms remain long with natural foreshortening at midpoint. Full-pose ankle join repaired with imagegen, not code."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Fixed cable station with one D-handle held by both hands. One selected plate and its attached movable pulley translate rigidly; nine unselected plates stay on base. Fixed steel guide rods remain distinct from cable strands."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Both hands stay on one handle. Shoes remain planted on same mat; native upper-shoe, forefoot and sole scans match the master. Authorized stationary source copies preserve shoes/mat; full ankle joins inspected at native and magnified resolution."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Continuous two-to-one cable routing from top anchor under movable pulley and over fixed outlet pulley. A planar tangent-plus-wrap model gives selected-assembly lifts179px/322px with total cable-length residuals0.14px/-0.89px. This estimated projection is a diagnostic, not calibrated biomechanics. Resting plates do not move."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Catalogue primary Obliques saturated purple; secondary Core and Shoulders lilac. Qualitative hierarchy remains stable through return; no measured activation claim."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Six short cues teach high grip, torso rotation, diagonal low finish, hold, controlled return and reset before switching sides. No low-to-high chop or Pallof press substitution."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "Actual player reviewed1,2,3,4,5,6,1. Matching hold/return/reset poses reuse3/2/1. Return closes exactly; these are discrete teaching beats."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "All six final frames and6to1 visually inspected in actual ExerciseFormFrames at390x844 in light mode. Captions and controls readable, full athlete and machine visible, no clipping."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "All six final frames and6to1 visually inspected in actual ExerciseFormFrames at390x844 in dark mode. Anatomy and purple/lilac contribution hierarchy clear; no clipping."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/cable-woodchopper/1.webp",
+      "sha256": "afee5565830317710ab999faca850ab492c959f06df2c60d22e146c8fd97d44e",
+      "anchors": {
+        "leftshoeupperLeft": {
+          "x": 856,
+          "y": 880
+        },
+        "leftshoeupperRight": {
+          "x": 921,
+          "y": 880
+        },
+        "rightshoeupperLeft": {
+          "x": 1053,
+          "y": 880
+        },
+        "rightshoeupperRight": {
+          "x": 1113,
+          "y": 880
+        },
+        "leftforefootLeft": {
+          "x": 831,
+          "y": 910
+        },
+        "leftforefootRight": {
+          "x": 923,
+          "y": 910
+        },
+        "rightforefootLeft": {
+          "x": 1050,
+          "y": 910
+        },
+        "rightforefootRight": {
+          "x": 1135,
+          "y": 910
+        },
+        "leftplantedsoleLeft": {
+          "x": 831,
+          "y": 928
+        },
+        "leftplantedsoleRight": {
+          "x": 888,
+          "y": 928
+        },
+        "rightplantedsoleLeft": {
+          "x": 1077,
+          "y": 928
+        },
+        "rightplantedsoleRight": {
+          "x": 1137,
+          "y": 928
+        },
+        "matLeft": {
+          "x": 569,
+          "y": 950
+        },
+        "matRight": {
+          "x": 1412,
+          "y": 950
+        },
+        "machinebaseLeft": {
+          "x": 97,
+          "y": 920
+        },
+        "machinebaseRight": {
+          "x": 464,
+          "y": 920
+        },
+        "restingstackLeft": {
+          "x": 209,
+          "y": 700
+        },
+        "restingstackRight": {
+          "x": 364,
+          "y": 700
+        }
+      },
+      "invariantDimensions": {
+        "leftshoeupperWidth": 66,
+        "rightshoeupperWidth": 61,
+        "leftforefootWidth": 93,
+        "rightforefootWidth": 86,
+        "leftplantedsoleWidth": 58,
+        "rightplantedsoleWidth": 61,
+        "matWidth": 844,
+        "machinebaseWidth": 368,
+        "restingstackWidth": 156
+      }
+    },
+    {
+      "path": "form-frames/cable-woodchopper/2.webp",
+      "sha256": "5012c35e36c7601171001e40347a5e8724453468b3b6b7024171ec87cbe195bc",
+      "anchors": {
+        "leftshoeupperLeft": {
+          "x": 856,
+          "y": 880
+        },
+        "leftshoeupperRight": {
+          "x": 921,
+          "y": 880
+        },
+        "rightshoeupperLeft": {
+          "x": 1053,
+          "y": 880
+        },
+        "rightshoeupperRight": {
+          "x": 1113,
+          "y": 880
+        },
+        "leftforefootLeft": {
+          "x": 831,
+          "y": 910
+        },
+        "leftforefootRight": {
+          "x": 923,
+          "y": 910
+        },
+        "rightforefootLeft": {
+          "x": 1050,
+          "y": 910
+        },
+        "rightforefootRight": {
+          "x": 1135,
+          "y": 910
+        },
+        "leftplantedsoleLeft": {
+          "x": 831,
+          "y": 928
+        },
+        "leftplantedsoleRight": {
+          "x": 888,
+          "y": 928
+        },
+        "rightplantedsoleLeft": {
+          "x": 1077,
+          "y": 928
+        },
+        "rightplantedsoleRight": {
+          "x": 1137,
+          "y": 928
+        },
+        "matLeft": {
+          "x": 569,
+          "y": 950
+        },
+        "matRight": {
+          "x": 1412,
+          "y": 950
+        },
+        "machinebaseLeft": {
+          "x": 97,
+          "y": 920
+        },
+        "machinebaseRight": {
+          "x": 464,
+          "y": 920
+        },
+        "restingstackLeft": {
+          "x": 209,
+          "y": 700
+        },
+        "restingstackRight": {
+          "x": 364,
+          "y": 700
+        }
+      },
+      "invariantDimensions": {
+        "leftshoeupperWidth": 66,
+        "rightshoeupperWidth": 61,
+        "leftforefootWidth": 93,
+        "rightforefootWidth": 86,
+        "leftplantedsoleWidth": 58,
+        "rightplantedsoleWidth": 61,
+        "matWidth": 844,
+        "machinebaseWidth": 368,
+        "restingstackWidth": 156
+      }
+    },
+    {
+      "path": "form-frames/cable-woodchopper/3.webp",
+      "sha256": "909ee7d826bab720928a9b66c676a41bccc01403a3a2123cde1b91b8624648d9",
+      "anchors": {
+        "leftshoeupperLeft": {
+          "x": 856,
+          "y": 880
+        },
+        "leftshoeupperRight": {
+          "x": 921,
+          "y": 880
+        },
+        "rightshoeupperLeft": {
+          "x": 1053,
+          "y": 880
+        },
+        "rightshoeupperRight": {
+          "x": 1113,
+          "y": 880
+        },
+        "leftforefootLeft": {
+          "x": 831,
+          "y": 910
+        },
+        "leftforefootRight": {
+          "x": 923,
+          "y": 910
+        },
+        "rightforefootLeft": {
+          "x": 1050,
+          "y": 910
+        },
+        "rightforefootRight": {
+          "x": 1135,
+          "y": 910
+        },
+        "leftplantedsoleLeft": {
+          "x": 831,
+          "y": 928
+        },
+        "leftplantedsoleRight": {
+          "x": 888,
+          "y": 928
+        },
+        "rightplantedsoleLeft": {
+          "x": 1077,
+          "y": 928
+        },
+        "rightplantedsoleRight": {
+          "x": 1137,
+          "y": 928
+        },
+        "matLeft": {
+          "x": 569,
+          "y": 950
+        },
+        "matRight": {
+          "x": 1412,
+          "y": 950
+        },
+        "machinebaseLeft": {
+          "x": 97,
+          "y": 920
+        },
+        "machinebaseRight": {
+          "x": 464,
+          "y": 920
+        },
+        "restingstackLeft": {
+          "x": 209,
+          "y": 700
+        },
+        "restingstackRight": {
+          "x": 364,
+          "y": 700
+        }
+      },
+      "invariantDimensions": {
+        "leftshoeupperWidth": 66,
+        "rightshoeupperWidth": 61,
+        "leftforefootWidth": 93,
+        "rightforefootWidth": 86,
+        "leftplantedsoleWidth": 58,
+        "rightplantedsoleWidth": 61,
+        "matWidth": 844,
+        "machinebaseWidth": 368,
+        "restingstackWidth": 156
+      }
+    },
+    {
+      "path": "form-frames/cable-woodchopper/4.webp",
+      "sha256": "909ee7d826bab720928a9b66c676a41bccc01403a3a2123cde1b91b8624648d9",
+      "anchors": {
+        "leftshoeupperLeft": {
+          "x": 856,
+          "y": 880
+        },
+        "leftshoeupperRight": {
+          "x": 921,
+          "y": 880
+        },
+        "rightshoeupperLeft": {
+          "x": 1053,
+          "y": 880
+        },
+        "rightshoeupperRight": {
+          "x": 1113,
+          "y": 880
+        },
+        "leftforefootLeft": {
+          "x": 831,
+          "y": 910
+        },
+        "leftforefootRight": {
+          "x": 923,
+          "y": 910
+        },
+        "rightforefootLeft": {
+          "x": 1050,
+          "y": 910
+        },
+        "rightforefootRight": {
+          "x": 1135,
+          "y": 910
+        },
+        "leftplantedsoleLeft": {
+          "x": 831,
+          "y": 928
+        },
+        "leftplantedsoleRight": {
+          "x": 888,
+          "y": 928
+        },
+        "rightplantedsoleLeft": {
+          "x": 1077,
+          "y": 928
+        },
+        "rightplantedsoleRight": {
+          "x": 1137,
+          "y": 928
+        },
+        "matLeft": {
+          "x": 569,
+          "y": 950
+        },
+        "matRight": {
+          "x": 1412,
+          "y": 950
+        },
+        "machinebaseLeft": {
+          "x": 97,
+          "y": 920
+        },
+        "machinebaseRight": {
+          "x": 464,
+          "y": 920
+        },
+        "restingstackLeft": {
+          "x": 209,
+          "y": 700
+        },
+        "restingstackRight": {
+          "x": 364,
+          "y": 700
+        }
+      },
+      "invariantDimensions": {
+        "leftshoeupperWidth": 66,
+        "rightshoeupperWidth": 61,
+        "leftforefootWidth": 93,
+        "rightforefootWidth": 86,
+        "leftplantedsoleWidth": 58,
+        "rightplantedsoleWidth": 61,
+        "matWidth": 844,
+        "machinebaseWidth": 368,
+        "restingstackWidth": 156
+      }
+    },
+    {
+      "path": "form-frames/cable-woodchopper/5.webp",
+      "sha256": "5012c35e36c7601171001e40347a5e8724453468b3b6b7024171ec87cbe195bc",
+      "anchors": {
+        "leftshoeupperLeft": {
+          "x": 856,
+          "y": 880
+        },
+        "leftshoeupperRight": {
+          "x": 921,
+          "y": 880
+        },
+        "rightshoeupperLeft": {
+          "x": 1053,
+          "y": 880
+        },
+        "rightshoeupperRight": {
+          "x": 1113,
+          "y": 880
+        },
+        "leftforefootLeft": {
+          "x": 831,
+          "y": 910
+        },
+        "leftforefootRight": {
+          "x": 923,
+          "y": 910
+        },
+        "rightforefootLeft": {
+          "x": 1050,
+          "y": 910
+        },
+        "rightforefootRight": {
+          "x": 1135,
+          "y": 910
+        },
+        "leftplantedsoleLeft": {
+          "x": 831,
+          "y": 928
+        },
+        "leftplantedsoleRight": {
+          "x": 888,
+          "y": 928
+        },
+        "rightplantedsoleLeft": {
+          "x": 1077,
+          "y": 928
+        },
+        "rightplantedsoleRight": {
+          "x": 1137,
+          "y": 928
+        },
+        "matLeft": {
+          "x": 569,
+          "y": 950
+        },
+        "matRight": {
+          "x": 1412,
+          "y": 950
+        },
+        "machinebaseLeft": {
+          "x": 97,
+          "y": 920
+        },
+        "machinebaseRight": {
+          "x": 464,
+          "y": 920
+        },
+        "restingstackLeft": {
+          "x": 209,
+          "y": 700
+        },
+        "restingstackRight": {
+          "x": 364,
+          "y": 700
+        }
+      },
+      "invariantDimensions": {
+        "leftshoeupperWidth": 66,
+        "rightshoeupperWidth": 61,
+        "leftforefootWidth": 93,
+        "rightforefootWidth": 86,
+        "leftplantedsoleWidth": 58,
+        "rightplantedsoleWidth": 61,
+        "matWidth": 844,
+        "machinebaseWidth": 368,
+        "restingstackWidth": 156
+      }
+    },
+    {
+      "path": "form-frames/cable-woodchopper/6.webp",
+      "sha256": "afee5565830317710ab999faca850ab492c959f06df2c60d22e146c8fd97d44e",
+      "anchors": {
+        "leftshoeupperLeft": {
+          "x": 856,
+          "y": 880
+        },
+        "leftshoeupperRight": {
+          "x": 921,
+          "y": 880
+        },
+        "rightshoeupperLeft": {
+          "x": 1053,
+          "y": 880
+        },
+        "rightshoeupperRight": {
+          "x": 1113,
+          "y": 880
+        },
+        "leftforefootLeft": {
+          "x": 831,
+          "y": 910
+        },
+        "leftforefootRight": {
+          "x": 923,
+          "y": 910
+        },
+        "rightforefootLeft": {
+          "x": 1050,
+          "y": 910
+        },
+        "rightforefootRight": {
+          "x": 1135,
+          "y": 910
+        },
+        "leftplantedsoleLeft": {
+          "x": 831,
+          "y": 928
+        },
+        "leftplantedsoleRight": {
+          "x": 888,
+          "y": 928
+        },
+        "rightplantedsoleLeft": {
+          "x": 1077,
+          "y": 928
+        },
+        "rightplantedsoleRight": {
+          "x": 1137,
+          "y": 928
+        },
+        "matLeft": {
+          "x": 569,
+          "y": 950
+        },
+        "matRight": {
+          "x": 1412,
+          "y": 950
+        },
+        "machinebaseLeft": {
+          "x": 97,
+          "y": 920
+        },
+        "machinebaseRight": {
+          "x": 464,
+          "y": 920
+        },
+        "restingstackLeft": {
+          "x": 209,
+          "y": 700
+        },
+        "restingstackRight": {
+          "x": 364,
+          "y": 700
+        }
+      },
+      "invariantDimensions": {
+        "leftshoeupperWidth": 66,
+        "rightshoeupperWidth": 61,
+        "leftforefootWidth": 93,
+        "rightforefootWidth": 86,
+        "leftplantedsoleWidth": 58,
+        "rightplantedsoleWidth": 61,
+        "matWidth": 844,
+        "machinebaseWidth": 368,
+        "restingstackWidth": 156
+      }
+    }
+  ]
+}

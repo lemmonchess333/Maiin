@@ -1,0 +1,443 @@
+{
+  "modelPath": "Built-in imagegen for athlete and pose generation; explicitly authorized source-pixel fixed-region repair and rigid moving equipment repair. No CLI/API fallback.",
+  "canonicalReference": {
+    "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+  },
+  "exerciseMaster": {
+    "path": "docs/exercise-art/masters/pallof-press/1.png",
+    "sha256": "57a6d7e5999c698a0a14a885502f70931821f4eda18a05bfa2297f2c72b53533"
+  },
+  "selectedGenerationLedger": [
+    [
+      "e757426c-e62a-4cfb-8a2d-c9f199f0ccc8",
+      "Frozen single-pulley setup master"
+    ],
+    ["bb2683a7-cd72-4acb-bebb-f27be7d26fcb", "Midpoint anatomy"],
+    [
+      "8f8057bb-cd65-472d-afa5-57e5e5dfca08",
+      "Full extension with lowered hands"
+    ],
+    ["87987dff-4d2d-4c2a-9e00-8935567c55e5", "Midpoint clean-cable anatomy"],
+    ["fe4c6644-107f-4add-95e4-766ddaf11536", "Full clean-cable anatomy"]
+  ],
+  "rejectedMethods": "Initial master cropped the machine; compact master corrected outlet tangent. Generated adjacent equipment changed pulley position, selected travel and resting count. Clean-cable anatomy was generated before explicitly authorized rigid equipment reconstruction. Final fixed shoe copies corrected measured width drift.",
+  "prompts": [
+    {
+      "file": "2-mid-clinical-prompt.txt",
+      "prompt": "Educational fitness instruction diagram of an inanimate white plastic anatomical mannequin. This is a clinical, nonsexual exercise demonstration, with a smooth blank pelvis and no genital anatomy or realistic human skin. Preserve the supplied neutral statue identity. Create FRAME2 halfway through a standing PALLOF PRESS using image1 as the frozen exercise master and image2 canonical athlete identity. Keep camera, canvas1536x1024, body scale, head, torso, hips, legs, feet, mat, machineframe andpulley EXACTLY fixed. This is antirotation: chest and pelvis do not turn at all. Preserve purplecore/lilacobliques; arms/chest/legswhitegrey.\nMove ONLY the arms/forearms/hands and physically necessary cable/selectedplate. Press the SAME handle straight forward from sternum, halfway to full extension toward screen-right. Joinedhands centredabout1200,y290 (setup1105,y290); elbows move from flexed to moderately bent, staying in line with chest. Maintain both hands ononeDhandle, wristsstraight. No independentarmcurl, sidewayswoodchop, trunklean orshoulderrotation. Hands remain atsternumheight.\nFixedsinglepulleycentre277,304 radius28. Outgoingcable remainsstraighttautfromTOPtangent near277,276 tohandleconnection near1140,286. This increasesfreecablelengthbyabout120px: lift ONLY selectedtopplate anditscoupler byabout120px fromtopedge604 to484. All EIGHT restingplates atoriginalpositions626..800 stay onbase. Platewidth/thickness unchanged, guidesfixed; verticalcablesegmentfromselectedcoupler toLEFTpulleytangentshortensby sameamount. Do not lift restingstack or movefixedpulley. Exact sourcecontactregionspreferunchanged. Onefullframe, no text/arrows/glow.\r\n\r\n"
+    },
+    {
+      "file": "2-mid-prompt.txt",
+      "prompt": "Create FRAME2 halfway through a standing PALLOF PRESS using image1 as the frozen exercise master and image2 canonical athlete identity. Keep camera, canvas1536x1024, body scale, head, torso, hips, legs, feet, mat, machineframe andpulley EXACTLY fixed. This is antirotation: chest and pelvis do not turn at all. Preserve purplecore/lilacobliques; arms/chest/legswhitegrey.\nMove ONLY the arms/forearms/hands and physically necessary cable/selectedplate. Press the SAME handle straight forward from sternum, halfway to full extension toward screen-right. Joinedhands centredabout1200,y290 (setup1105,y290); elbows move from flexed to moderately bent, staying in line with chest. Maintain both hands ononeDhandle, wristsstraight. No independentarmcurl, sidewayswoodchop, trunklean orshoulderrotation. Hands remain atsternumheight.\nFixedsinglepulleycentre277,304 radius28. Outgoingcable remainsstraighttautfromTOPtangent near277,276 tohandleconnection near1140,286. This increasesfreecablelengthbyabout120px: lift ONLY selectedtopplate anditscoupler byabout120px fromtopedge604 to484. All EIGHT restingplates atoriginalpositions626..800 stay onbase. Platewidth/thickness unchanged, guidesfixed; verticalcablesegmentfromselectedcoupler toLEFTpulleytangentshortensby sameamount. Do not lift restingstack or movefixedpulley. Exact sourcecontactregionspreferunchanged. Onefullframe, no text/arrows/glow.\r\n"
+    },
+    {
+      "file": "3-full-prompt.txt",
+      "prompt": "Educational nonsexual exercise diagram of a smooth white plastic anatomical mannequin, blank featureless pelvis and no genital anatomy or realistic human skin. Image1 is frozenPallofpresssetup master; image2 canonicalidentity; image3 adjacentmidpoint. Create FRAME3 complete forward press. Keephead/torso/pelvis/legs/feet/camera/mat EXACTLY in setup orientation. Do not twist or lean. Extend both elbows fully but softly, pressing the SAME D-handle straight forward at chestheight toward screen-right. Hands together aroundonegrip centredabout1340,y290. Keep shoulders down and wristsstraight, arms naturally connectedwithcorrectlength. Do not exaggerate reach or stretchbody; no shoulder shrug. Corepurple, obliqueslilac, limbswhitegrey unchanged. Fullhands must remain comfortablyinsideframe.\nMachine fixedsinglepulleycentre277,304 radius28, cableexitTOPnear277276. Outgoingcabletauttohandleconnection. ONLY selectedplate+coupler lift; eightrestingplates remainexactlyat originalMASTERpositions626..800 (midpointincorrectlyaddedanotherrestingplate: copy original8). Estimatedfreecableincrease~225px meansselectedplate top~379, couplertop~359; keepselectedassembly BELOW fixedwheelwithvisibleclearance. No plate resizing, extraweights, movementoffixedpulley, or danglingcable. Frame1536x1024, no text/arrows/glow.\r\n"
+    },
+    {
+      "file": "compact-machine-prompt.txt",
+      "prompt": "Edit image1 Pallof press SETUP, retaining the athlete exactly: both hands at sternum, elbows bent, aligned unrotated hips/shoulders, feetshoulderwidth, same anatomicalidentity/colours/camera. Image2 is canonicalidentity reference. Replace ONLY the oversized cropped left machine with a compact fully visible direct1:1 single-pulley cableweightstation. Current extra top pulley, cropped high beam and enormous stack must be removed, not retained.\nNew station fits wholly inside left area x80..520,y240..940 with generous black margin all around. Steel verticalposts and base, two chrome guide rods, and a modest crossbar at chest level. ONE fixed outlet pulley centred approximately330,315(radius25), mounted on this crossbar. Cable from ONE selected top weightplate centred305,y640 runs verticallyupx305 to LEFT tangent of that fixedwheel, wraps OVER it, and exitsRIGHT at approximatelyy290 to the athlete's EXISTING joinedhands/handle. One continuous thin cable, visiblyattached, no second pulley or intermediate routing. Below selectedplate are EIGHT identical restingplates betweeny680and860, clear gap above them; two steelguiderods distinct from cable. A short modestweightstack, not fourteen plates. Selectedplate can rise about250px without reaching the wheel. Complete machinebase insidecanvas, no frame cut off bytop orleftborder. Keep every athlete and handle detail, floor/mat, lighting and camera unchanged. One full1536x1024image, no text, labels, arrows or glow.\r\n"
+    },
+    {
+      "file": "fixed-wheel-alignment-prompt.txt",
+      "prompt": "Image1 is the fully extended Pallof press pose to preserve. Image2 is its frozen setup/master and image3 canonicalclinicalmannequinidentity. This is a nonsexual educational exercise diagram of a neutral white plastic anatomical model, with smoothblankpelvis.\nCorrect ONLY the MACHINE WHEEL ALIGNMENT AND CABLE in image1. Do not change any athlete pose, handheight, grip, foot, floor or framing. In image1 the fixed wheel axle incorrectly sits ABOVE the centreline of its horizontal metal mounting bar. Move that wheel slightly DOWN so its axle is precisely centred vertically on the MIDDLE of that bar, matching image2. In nativecoordinates wheelcentre should be277,304, about12pixelslower than currentimage1. Keep the horizontal bracket exactly still. Keep wheelradius28 and wheelshape identical. The cable now starts at the wheel TOP TANGENT approximately277,276 and runs in ONE straight tautline to the EXISTING handleconnector near1200,304. Replace the old higher slopingcable entirely, including its segment in front of the athlete's arms; no doubleline, gap or greystripe. Keep vertical incomingcable connected from selectedplatecoupler to LEFTtangent ofwheel. No othermachine movement or extra plates. Preserve full1536x1024. No text/arrows/glow.\r\n"
+    },
+    {
+      "file": "full-clean-cable-prompt.txt",
+      "prompt": "Educational nonsexual exercise illustration of a neutral smooth white plastic anatomical mannequin. Image1 is the FULLY EXTENDED Pallof press pose and is the edit target. Image2 is only canonicalidentity reference; image3 is only frozen exercise setup reference. Preserve image1 pose exactly: joinedhands forward with fully straight elbows, torso/hips/legs unmoved, camera/framing unchanged. Do NOT copy the bent-at-chest setup pose or bend the elbows.\nTemporarily REMOVE ONLY the outgoing cable line that runs from the machine wheel across the picture in front of the athlete's arms to the handle. Remove the cable-end stopper and small linking carabiner immediately left of the D-handle, but KEEP the entire same D-handle and both hands gripping it. Where the thin cable occludes the white forearms/chest, reconstruct the underlying anatomy naturally and seamlessly from adjacent contours, without changing pose or muscle shapes. This produces a clean pose plate for later equipment compositing; leave no grey line, stripe, cord or shadow on the arms. Leave the machine, wheel, vertical cable and weights unchanged for now, as well as everything else. Clinicalwhitegrey identity, purplecore/lilacobliques, smoothblankpelvis, no genitaldetail. Full1536x1024, no text/arrows/glow.\r\n\r\n"
+    },
+    {
+      "file": "full-height-fix-prompt.txt",
+      "prompt": "Educational nonsexual anatomical mannequin exercise diagram. Image1 is the FULLY EXTENDED Pallof press pose to edit. Preserve straight elbows and the completed press; do NOT revert to the bent-arm setup shown in image2. Image2 is only the frozen machine/body reference. Image3 is canonicalidentity.\nImage1 erroneously raised hands and the fixed pulley. Correct the press line: lower the joinedhands and handle about28pixels to centrey290 while keeping both elbows straight, shoulders fixed and down, torso/pelvis/head/legs exactly still. This means a small downward arm angle from fixed shoulderjoints, not translating the shoulder girdle. Hands stay around the same single D-handle. Normal armlengths, no twist or lean. The master fixed pulley must be centredx277,y304 withtopedgey276; its bracket stays atoriginalmasterheight. Restorethat exactfixedwheel/bracketposition. One straighttautoutgoing cablefromtop tangent near277276 tohandleconnector near1265285. Remove the erroneous oldhigher horizontalcableline; no duplicatecable or greystripe acrossforearms. Keep the existing8restingplates frommaster at626..800. Selectedplate andcoupler only should be nearplate top365, preservinggapbelowfixedwheel. Everythingelse same. Smoothblankpelvis, no genitaldetail, whiteplasticclinicalstyle. Full1536x1024, no text/glow/arrows.\r\n"
+    },
+    {
+      "file": "master-prompt.txt",
+      "prompt": "Create a new canonical exercise-master image for the standing PALLOF PRESS, using supplied anatomical athlete as identity reference. One full1536x1024 landscape image, near-black background, crisp detailed white/light-grey anatomical mannequin, bald faceless head, neutral featureless pelvis without clothing or genital detail, normal hands and feet, white trainers. Strong purple ABS/CORE, lighter lilac OBLIQUES; all arms/chest/legs whitegrey. No glow, text, labels, arrows or borders.\nAthlete on right side of canvas, whole bodyheadtofeetvisible. Fixed front-side three-quarter camera: athlete faces toward screen-right at about45degrees to viewer, so both shoulders/hips and both hands are visible and future forward arm extension can be seen clearly. Stand sideways to cable machine on left; feet shoulder-width, softknees, tall neutral spine, ribs stacked over pelvis, shoulders and hips aligned. SETUP: elbows bent, both hands clasp ONE D-handle directly at sternum/chest height aroundx1000,y350. Hands close to chest, elbows tucked. This is ANTIROTATION: no twist, no crunch, no squat. Feet planted on modest dark mat. Leave room in front towardrightedge for a later straight press.\nCable station onleft: simple realistic rigid steel frame, fixed upper pulley centred305,60(radius25), two bright vertical weightguide rods at250and330, modestselectedplate atx210..355,y675, eight identical restingplates belowy705..865 abovebasey900. One thin cable attaches to selectedplatecentre280,675, runs verticallyupx280 to lefttangent of upperfixedpulley, overtop of wheel then down-right to a SECOND FIXED outletpulley centred440,330(radius20) on a sturdy adjustable chestheight bracket attachedtoframe. Cable wraps under that outletwheel and exits horizontallyright at approximatelyy350 to the SAME D-handle in joinedhands. Both pulleys are FIXED; direct1:1stacklift when handle extends. Guide rods are thick steel, cablethin grey, visibly distinct. All connections continuous and taut. No dangling extra strands or hugeweightload. Keep complete machinebase and feet onsamefloorplane. One setup image only.\r\n"
+    },
+    {
+      "file": "mid-clean-cable-prompt.txt",
+      "prompt": "Educational nonsexual exercise illustration of a neutral smooth white plastic anatomical mannequin. Image1 is the MIDPOINT Pallof press pose and is the edit target. Image2 is only canonicalidentity reference; image3 is only frozen exercise setup reference. Preserve image1 pose exactly: joinedhands forward with moderately bent elbows, torso/hips/legs unmoved, camera/framing unchanged. Do NOT copy the bent-at-chest setup pose.\nTemporarily REMOVE ONLY the outgoing cable line that runs from the machine wheel across the picture in front of the athlete's arms to the handle. Remove the cable-end stopper and small linking carabiner immediately left of the D-handle, but KEEP the entire same D-handle and both hands gripping it. Where the thin cable occludes the white forearms/chest, reconstruct the underlying anatomy naturally and seamlessly from adjacent contours, without changing pose or muscle shapes. This produces a clean pose plate for later equipment compositing; leave no grey line, stripe, cord or shadow on the arms. Leave the machine, wheel, vertical cable and weights unchanged for now, as well as everything else. Clinicalwhitegrey identity, purplecore/lilacobliques, smoothblankpelvis, no genitaldetail. Full1536x1024, no text/arrows/glow.\r\n"
+    },
+    {
+      "file": "pulley-tangent-prompt.txt",
+      "prompt": "Correct only the small fixed pulley and its mounting bracket on the left machine in image1. Image2 is the canonical athlete reference; preserve all athlete and floor pixels exactly. The existing horizontal cable runs at abouty278 but incorrectly exits through the visible wheel's axle height. It must leave the TOP TANGENT of a pulley.\nKeep the outgoing horizontal cable fromx305,y278 to the hand-held handle unchanged. Move the fixed wheel DOWN about28pixels: new axlecentre approximatelyx276,y306, same27pixelradius and samewheelappearance. Its TOP edge is thenaty279 and meets the horizontal cable tangentially. Extend that outgoing line LEFT to the top tangent atx276,y279. Run the vertical incoming cable fromselectedplateattachmentx250,y592 UPto the wheel's LEFT tangentx250,y306; wrap it visibly OVER upper-leftquarter of wheel to join outgoing top tangent. Move the mounting bracket down with wheel so it supports axle. This is one FIXED pulley, not a movingpulley attachedtoweights. Preserve guide rods, nine totalplatecount, stackposition, fullframe, base andeveryotherdetail. Continuous thin cable and brightsteel rods distinct. No text, arrows or labels. Full1536x1024 image.\r\n"
+    }
+  ],
+  "fixedContacts": {
+    "method": "Equipment repair script includes authorized master shoe source masks at far forefoot y875..924 and near forefoot/sole y900..943; only pixels above65 luminance in master or pose copied. No ankle or moving anatomy transformation."
+  },
+  "equipment": {
+    "authorization": "User approved code-based weights, attachments and measured cable paths for Pallof and all remaining sets.",
+    "method": "Frozen machine and resting plates restored; selected plate and coupler translated rigidly. Equipment-only master connector mask translated, leaving carabiner hole transparent. Analytic free-cable tangent overlays generated anatomy naturally. No anatomy redrawn or transformed. Shoe forefoot and sole source copies use existing fixed-contact authorization.",
+    "masterSha256": "57a6d7e5999c698a0a14a885502f70931821f4eda18a05bfa2297f2c72b53533",
+    "records": [
+      {
+        "inputName": "2-mid-clean-cable.png",
+        "outputName": "2-equipment-fixed.png",
+        "attachmentTranslation": [144, 0],
+        "rise": 144,
+        "tangent": [277.4332807732922, 274.0031290336559],
+        "cableLengthError": -0.018169012509247295,
+        "inputSha256": "9db2222c4f275cb078a368632969a566f8fce59d3f86e9e9b93f57ea642bd187",
+        "outputSha256": "8014249533e2e09604e86f19c1a8b766639cb563ae6da9152c8820e7372f8007"
+      },
+      {
+        "inputName": "3-full-clean-cable.png",
+        "outputName": "3-equipment-fixed.png",
+        "attachmentTranslation": [231, 16],
+        "rise": 231,
+        "tangent": [277.9150630913331, 274.013958921877],
+        "cableLengthError": 0.3222356736439451,
+        "inputSha256": "a27d8259e2930801311ac273ae48cc2a429c3e438e675e5062b05fae4d34e18b",
+        "outputSha256": "3e6678765af1cc2a91ddeb5996fd512d8d7d37f9d369f1e741b6d0e22668ecfa"
+      }
+    ]
+  },
+  "geometry": [
+    {
+      "file": "1-equipment-fixed.png",
+      "sha256": "57a6d7e5999c698a0a14a885502f70931821f4eda18a05bfa2297f2c72b53533",
+      "measures": [
+        {
+          "name": "left shoe upper",
+          "y": 880,
+          "left": 923,
+          "right": 981,
+          "width": 59,
+          "leftDelta": 0,
+          "rightDelta": 0,
+          "widthPercent": 0
+        },
+        {
+          "name": "right shoe upper",
+          "y": 880,
+          "left": 1106,
+          "right": 1200,
+          "width": 95,
+          "leftDelta": 0,
+          "rightDelta": 0,
+          "widthPercent": 0
+        },
+        {
+          "name": "left forefoot",
+          "y": 910,
+          "left": 914,
+          "right": 1002,
+          "width": 89,
+          "leftDelta": 0,
+          "rightDelta": 0,
+          "widthPercent": 0
+        },
+        {
+          "name": "right forefoot",
+          "y": 910,
+          "left": 1109,
+          "right": 1237,
+          "width": 129,
+          "leftDelta": 0,
+          "rightDelta": 0,
+          "widthPercent": 0
+        },
+        {
+          "name": "left planted sole",
+          "y": 928,
+          "left": 931,
+          "right": 1008,
+          "width": 78,
+          "leftDelta": 0,
+          "rightDelta": 0,
+          "widthPercent": 0
+        },
+        {
+          "name": "right planted sole",
+          "y": 916,
+          "left": 1161,
+          "right": 1224,
+          "width": 64,
+          "leftDelta": 0,
+          "rightDelta": 0,
+          "widthPercent": 0
+        },
+        {
+          "name": "machine base",
+          "y": 870,
+          "left": 84,
+          "right": 448,
+          "width": 365,
+          "leftDelta": 0,
+          "rightDelta": 0,
+          "widthPercent": 0
+        },
+        {
+          "name": "resting stack",
+          "y": 700,
+          "left": 218,
+          "right": 308,
+          "width": 91,
+          "leftDelta": 0,
+          "rightDelta": 0,
+          "widthPercent": 0
+        }
+      ]
+    },
+    {
+      "file": "2-equipment-fixed.png",
+      "sha256": "8014249533e2e09604e86f19c1a8b766639cb563ae6da9152c8820e7372f8007",
+      "measures": [
+        {
+          "name": "left shoe upper",
+          "y": 880,
+          "left": 923,
+          "right": 981,
+          "width": 59,
+          "leftDelta": 0,
+          "rightDelta": 0,
+          "widthPercent": 0
+        },
+        {
+          "name": "right shoe upper",
+          "y": 880,
+          "left": 1106,
+          "right": 1200,
+          "width": 95,
+          "leftDelta": 0,
+          "rightDelta": 0,
+          "widthPercent": 0
+        },
+        {
+          "name": "left forefoot",
+          "y": 910,
+          "left": 914,
+          "right": 1002,
+          "width": 89,
+          "leftDelta": 0,
+          "rightDelta": 0,
+          "widthPercent": 0
+        },
+        {
+          "name": "right forefoot",
+          "y": 910,
+          "left": 1109,
+          "right": 1237,
+          "width": 129,
+          "leftDelta": 0,
+          "rightDelta": 0,
+          "widthPercent": 0
+        },
+        {
+          "name": "left planted sole",
+          "y": 928,
+          "left": 931,
+          "right": 1008,
+          "width": 78,
+          "leftDelta": 0,
+          "rightDelta": 0,
+          "widthPercent": 0
+        },
+        {
+          "name": "right planted sole",
+          "y": 916,
+          "left": 1161,
+          "right": 1224,
+          "width": 64,
+          "leftDelta": 0,
+          "rightDelta": 0,
+          "widthPercent": 0
+        },
+        {
+          "name": "machine base",
+          "y": 870,
+          "left": 84,
+          "right": 448,
+          "width": 365,
+          "leftDelta": 0,
+          "rightDelta": 0,
+          "widthPercent": 0
+        },
+        {
+          "name": "resting stack",
+          "y": 700,
+          "left": 218,
+          "right": 308,
+          "width": 91,
+          "leftDelta": 0,
+          "rightDelta": 0,
+          "widthPercent": 0
+        }
+      ]
+    },
+    {
+      "file": "3-equipment-fixed.png",
+      "sha256": "3e6678765af1cc2a91ddeb5996fd512d8d7d37f9d369f1e741b6d0e22668ecfa",
+      "measures": [
+        {
+          "name": "left shoe upper",
+          "y": 880,
+          "left": 923,
+          "right": 981,
+          "width": 59,
+          "leftDelta": 0,
+          "rightDelta": 0,
+          "widthPercent": 0
+        },
+        {
+          "name": "right shoe upper",
+          "y": 880,
+          "left": 1106,
+          "right": 1200,
+          "width": 95,
+          "leftDelta": 0,
+          "rightDelta": 0,
+          "widthPercent": 0
+        },
+        {
+          "name": "left forefoot",
+          "y": 910,
+          "left": 914,
+          "right": 1002,
+          "width": 89,
+          "leftDelta": 0,
+          "rightDelta": 0,
+          "widthPercent": 0
+        },
+        {
+          "name": "right forefoot",
+          "y": 910,
+          "left": 1109,
+          "right": 1237,
+          "width": 129,
+          "leftDelta": 0,
+          "rightDelta": 0,
+          "widthPercent": 0
+        },
+        {
+          "name": "left planted sole",
+          "y": 928,
+          "left": 931,
+          "right": 1008,
+          "width": 78,
+          "leftDelta": 0,
+          "rightDelta": 0,
+          "widthPercent": 0
+        },
+        {
+          "name": "right planted sole",
+          "y": 916,
+          "left": 1161,
+          "right": 1224,
+          "width": 64,
+          "leftDelta": 0,
+          "rightDelta": 0,
+          "widthPercent": 0
+        },
+        {
+          "name": "machine base",
+          "y": 870,
+          "left": 84,
+          "right": 448,
+          "width": 365,
+          "leftDelta": 0,
+          "rightDelta": 0,
+          "widthPercent": 0
+        },
+        {
+          "name": "resting stack",
+          "y": 700,
+          "left": 218,
+          "right": 308,
+          "width": 91,
+          "leftDelta": 0,
+          "rightDelta": 0,
+          "widthPercent": 0
+        }
+      ]
+    }
+  ],
+  "repairScripts": [
+    {
+      "file": "fix-equipment.cjs",
+      "source": "const fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypto');\nconst sharp=require('C:/Users/myles/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/sharp');\nconst hash=b=>crypto.createHash('sha256').update(b).digest('hex');\nconst W=1536,H=1024,C={x:277,y:304,r:30};\nfunction geometry(end){const dx=end[0]-C.x,dy=end[1]-C.y,d=Math.hypot(dx,dy),a=Math.atan2(dy,dx)-Math.acos(C.r/d);return {tangent:[C.x+C.r*Math.cos(a),C.y+C.r*Math.sin(a)],length:Math.sqrt(d*d-C.r*C.r)+(a+Math.PI)*C.r};}\n(async()=>{\n const masterFile=fs.readFileSync(path.join(__dirname,'1-master.png')),master=await sharp(masterFile).removeAlpha().raw().toBuffer(),records=[];\n const base=geometry([964,286]);\n // Equipment-only source mask; open carabiner hole retains the new pose beneath it.\n const mask=Buffer.from('<svg width=\"1536\" height=\"1024\" xmlns=\"http://www.w3.org/2000/svg\"><path fill=\"white\" fill-rule=\"evenodd\" d=\"M964 282 L969 281 L997 283 L1000 285 L1009 285 L1014 283 L1034 283 L1039 286 L1046 285 L1058 287 L1060 296 L1056 302 L1044 301 L1040 299 L1035 300 L1015 299 L1009 295 L969 293 L964 291 Z M1016 287 L1033 288 L1034 294 L1016 294 Z\"/></svg>');\n const masked=await sharp(masterFile).ensureAlpha().composite([{input:mask,blend:'dest-in'}]).png().toBuffer();\n const attachmentRaw=await sharp(masked).extract({left:964,top:280,width:97,height:24}).raw().toBuffer();\n for(let p=0;p<attachmentRaw.length;p+=4)if(attachmentRaw[p+2]-attachmentRaw[p+1]>12){const grey=Math.round((attachmentRaw[p]+attachmentRaw[p+1]+attachmentRaw[p+2])/3);attachmentRaw[p]=attachmentRaw[p+1]=attachmentRaw[p+2]=grey;};\n const attachment=await sharp(attachmentRaw,{raw:{width:97,height:24,channels:4}}).png().toBuffer();\n for(const [inputName,outputName,dx,dy] of [['2-mid-clean-cable.png','2-equipment-fixed.png',144,0],['3-full-clean-cable.png','3-equipment-fixed.png',231,16]]){\n  const input=fs.readFileSync(path.join(__dirname,inputName)),out=await sharp(input).removeAlpha().raw().toBuffer();\n  const copy=(x0,y0,x1,y1,shiftY=0)=>{for(let y=y0;y<y1;y++)for(let x=x0;x<x1;x++){const s=(y*W+x)*3,t=((y+shiftY)*W+x)*3;master.copy(out,t,s,s+3);}};\n  copy(55,125,485,925);\n  // Feather only the floor's rectangular copy boundary, well outside anatomy and machine solids.\n  const original=await sharp(input).removeAlpha().raw().toBuffer();\n  for(let y=895;y<925;y++)for(let x=55;x<485;x++){const alpha=Math.min(1,(925-y)/20,(x-55)/12,(485-x)/12);for(let c=0;c<3;c++){const p=(y*W+x)*3+c;out[p]=Math.round(out[p]*alpha+original[p]*(1-alpha));}}\n  // Clear former plate and coupler with a clean horizontal source strip, preserving both guide rods.\n  for(let y=580;y<628;y++)for(let x=190;x<311;x++){const s=(450*W+x)*3,t=(y*W+x)*3;master.copy(out,t,s,s+3);}\n  // Remove the original free cable from the copied machine, retaining its vertical post.\n  for(let y=272;y<283;y++)for(let x=309;x<485;x++){const s=(260*W+x)*3,t=(y*W+x)*3;master.copy(out,t,s,s+3);}\n  const end=[964+dx,286+dy],g=geometry(end),rise=Math.round(g.length-base.length);\n  // Remove the obsolete hanging cable below the raised coupler; neither guide rod is touched.\n  for(let y=335;y<628;y++)for(let x=244;x<258;x++){const s=(450*W+275)*3,t=(y*W+x)*3;master.copy(out,t,s,s+3);}\n  copy(190,603,311,628,-rise);copy(239,580,270,605,-rise);\n  // Authorized fixed-contact source copies, restricted to shoe fronts and soles.\n  for(const [x0,y0,x1,y1] of [[1080,875,1270,925],[890,900,1030,944]])for(let y=y0;y<y1;y++)for(let x=x0;x<x1;x++){const p=(y*W+x)*3;if(Math.max(...master.subarray(p,p+3),...original.subarray(p,p+3))>65)master.copy(out,p,p,p+3);}\n  const svg=Buffer.from(`<svg width=\"1536\" height=\"1024\" xmlns=\"http://www.w3.org/2000/svg\"><path d=\"M247 304 L247 ${583-rise} M${g.tangent.join(' ')} L${end.join(' ')}\" fill=\"none\" stroke=\"#777\" stroke-width=\"3.5\"/><path d=\"M247 304 L247 ${583-rise} M${g.tangent.join(' ')} L${end.join(' ')}\" fill=\"none\" stroke=\"#c7c7c7\" stroke-width=\"1.2\"/></svg>`);\n  await sharp(out,{raw:{width:W,height:H,channels:3}}).composite([{input:svg},{input:attachment,left:964+dx,top:280+dy}]).png().toFile(path.join(__dirname,outputName));\n  records.push({inputName,outputName,attachmentTranslation:[dx,dy],rise,tangent:g.tangent,cableLengthError:g.length-base.length-rise,inputSha256:hash(input),outputSha256:hash(fs.readFileSync(path.join(__dirname,outputName)))});\n }\n fs.copyFileSync(path.join(__dirname,'1-master.png'),path.join(__dirname,'1-equipment-fixed.png'));\n fs.writeFileSync(path.join(__dirname,'equipment-repair-provenance.json'),JSON.stringify({authorization:'User approved code-based weights, attachments and measured cable paths for Pallof and all remaining sets.',method:'Frozen machine and resting plates restored; selected plate and coupler translated rigidly. Equipment-only master connector mask translated, leaving carabiner hole transparent. Analytic free-cable tangent overlays generated anatomy naturally. No anatomy redrawn or transformed. Shoe forefoot and sole source copies use existing fixed-contact authorization.',masterSha256:hash(masterFile),records},null,2));console.log(records);\n})();\n\r\n\r\n\r\n\r\n\r\n"
+    },
+    {
+      "file": "check-contacts.cjs",
+      "source": "const fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypto');\nconst sharp=require('C:/Users/myles/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/sharp');\n(async()=>{\n const files=['1-equipment-fixed.png','2-equipment-fixed.png','3-equipment-fixed.png'],rows=[];\n const scans=[{name:'left shoe upper',y:880,x0:890,x1:1030,t:120},{name:'right shoe upper',y:880,x0:1090,x1:1260,t:120},{name:'left forefoot',y:910,x0:890,x1:1030,t:120},{name:'right forefoot',y:910,x0:1090,x1:1260,t:120},{name:'left planted sole',y:928,x0:890,x1:1030,t:120},{name:'right planted sole',y:916,x0:1090,x1:1260,t:120}];\n scans.push({name:'machine base',y:870,x0:60,x1:485,t:70},{name:'resting stack',y:700,x0:190,x1:320,t:25});\n for(const file of files){const bytes=fs.readFileSync(path.join(__dirname,file));const{data,info}=await sharp(bytes).removeAlpha().raw().toBuffer({resolveWithObject:true});const measures=scans.map(s=>{const xs=[];for(let x=s.x0;x<s.x1;x++){const p=(s.y*info.width+x)*3;if(Math.min(...data.subarray(p,p+3))>s.t)xs.push(x);}return {name:s.name,y:s.y,left:xs[0],right:xs.at(-1),width:xs.at(-1)-xs[0]+1};});rows.push({file,sha256:crypto.createHash('sha256').update(bytes).digest('hex'),measures});}\n for(const row of rows)for(let i=0;i<row.measures.length;i++){const a=row.measures[i],b=rows[0].measures[i];a.leftDelta=a.left-b.left;a.rightDelta=a.right-b.right;a.widthPercent=100*(a.width/b.width-1);}\n fs.writeFileSync(path.join(__dirname,'contact-measurements.json'),JSON.stringify(rows,null,2)+'\\n');console.log(rows.map(r=>({file:r.file,measures:r.measures})));\n})();\n\r\n\r\n"
+    }
+  ],
+  "selectedPngs": [
+    {
+      "frame": 1,
+      "file": "1-equipment-fixed.png",
+      "sha256": "57a6d7e5999c698a0a14a885502f70931821f4eda18a05bfa2297f2c72b53533"
+    },
+    {
+      "frame": 2,
+      "file": "2-equipment-fixed.png",
+      "sha256": "8014249533e2e09604e86f19c1a8b766639cb563ae6da9152c8820e7372f8007"
+    },
+    {
+      "frame": 3,
+      "file": "3-equipment-fixed.png",
+      "sha256": "3e6678765af1cc2a91ddeb5996fd512d8d7d37f9d369f1e741b6d0e22668ecfa"
+    },
+    {
+      "frame": 4,
+      "file": "3-equipment-fixed.png",
+      "sha256": "3e6678765af1cc2a91ddeb5996fd512d8d7d37f9d369f1e741b6d0e22668ecfa"
+    },
+    {
+      "frame": 5,
+      "file": "2-equipment-fixed.png",
+      "sha256": "8014249533e2e09604e86f19c1a8b766639cb563ae6da9152c8820e7372f8007"
+    },
+    {
+      "frame": 6,
+      "file": "1-equipment-fixed.png",
+      "sha256": "57a6d7e5999c698a0a14a885502f70931821f4eda18a05bfa2297f2c72b53533"
+    }
+  ],
+  "reuse": {
+    "4": 3,
+    "5": 2,
+    "6": 1
+  },
+  "conversion": "Native losslessWebP; decoded RGB exactly equals reviewed PNG.",
+  "mobileReview": {
+    "complete": true,
+    "reviewedAt": "2026-09-29T19:57:35.573Z",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "component": "ExerciseFormFrames",
+    "themes": ["dark", "light"],
+    "sequence": [1, 2, 3, 4, 5, 6, 1],
+    "evidence": "Final corrected files reviewed sequentially in actual player, all six and loop in both themes. Full machine and athlete visible, readable cues and controls, stable planted feet, no clipping. Review repeated after final shoe repair.",
+    "frames": [
+      {
+        "file": "1-equipment-fixed.png",
+        "sha256": "57a6d7e5999c698a0a14a885502f70931821f4eda18a05bfa2297f2c72b53533"
+      },
+      {
+        "file": "2-equipment-fixed.png",
+        "sha256": "8014249533e2e09604e86f19c1a8b766639cb563ae6da9152c8820e7372f8007"
+      },
+      {
+        "file": "3-equipment-fixed.png",
+        "sha256": "3e6678765af1cc2a91ddeb5996fd512d8d7d37f9d369f1e741b6d0e22668ecfa"
+      },
+      {
+        "file": "3-equipment-fixed.png",
+        "sha256": "3e6678765af1cc2a91ddeb5996fd512d8d7d37f9d369f1e741b6d0e22668ecfa"
+      },
+      {
+        "file": "2-equipment-fixed.png",
+        "sha256": "8014249533e2e09604e86f19c1a8b766639cb563ae6da9152c8820e7372f8007"
+      },
+      {
+        "file": "1-equipment-fixed.png",
+        "sha256": "57a6d7e5999c698a0a14a885502f70931821f4eda18a05bfa2297f2c72b53533"
+      }
+    ]
+  }
+}

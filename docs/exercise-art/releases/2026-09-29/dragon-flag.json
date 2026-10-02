@@ -1,0 +1,555 @@
+{
+  "exerciseId": "dragon-flag",
+  "version": "anatomy-v3-2026-09-29",
+  "width": 1536,
+  "height": 1024,
+  "decision": "approved",
+  "reviewer": "Codex native and mobile visual review",
+  "reviewedAt": "2026-09-29T20:35:11.543Z",
+  "reference": {
+    "path": "form-frames/dragon-flag/1.webp",
+    "sha256": "7c430695b14ac60da17d6463e093fa7ff9cdfc762e69f8b6138438149a92e862",
+    "anchors": {
+      "gripupperLeft": {
+        "x": 115,
+        "y": 700
+      },
+      "gripupperRight": {
+        "x": 161,
+        "y": 700
+      },
+      "griplowerLeft": {
+        "x": 122,
+        "y": 725
+      },
+      "griplowerRight": {
+        "x": 154,
+        "y": 725
+      },
+      "leftbenchlegLeft": {
+        "x": 189,
+        "y": 820
+      },
+      "leftbenchlegRight": {
+        "x": 222,
+        "y": 820
+      },
+      "rightbenchlegLeft": {
+        "x": 1093,
+        "y": 820
+      },
+      "rightbenchlegRight": {
+        "x": 1127,
+        "y": 820
+      },
+      "benchpadLeft": {
+        "x": 188,
+        "y": 720
+      },
+      "benchpadRight": {
+        "x": 1168,
+        "y": 720
+      },
+      "leftbenchfootLeft": {
+        "x": 162,
+        "y": 930
+      },
+      "leftbenchfootRight": {
+        "x": 244,
+        "y": 930
+      },
+      "rightbenchfootLeft": {
+        "x": 1109,
+        "y": 930
+      },
+      "rightbenchfootRight": {
+        "x": 1154,
+        "y": 930
+      }
+    },
+    "invariantDimensions": {
+      "gripupperWidth": 47,
+      "griplowerWidth": 33,
+      "leftbenchlegWidth": 34,
+      "rightbenchlegWidth": 35,
+      "benchpadWidth": 981,
+      "leftbenchfootWidth": 83,
+      "rightbenchfootWidth": 46
+    }
+  },
+  "cueSha256": "87090bd0f8f509f309e915cbe01766ead43830bc1fa2abf2ec42228ff729be62",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Canonical bald faceless white-grey athlete, white trainers and smooth featureless pelvis; native and mobile review complete."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Fixed side-three-quarter camera, 1536x1024 canvas, head left and feet right. Bench and floor retain the master geometry. Seven named fixed grip and bench scans have zero deltas."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "One athlete with two arms and two straight legs. High brace lowers through midpoint to low hover as a straight body without a hip pike or knee bend. Elongated intermediate and low candidates were rejected; selected length corrections use imagegen, never code anatomy rotation or scaling."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "One stable flat padded bench with the same two support legs and feet. Both hands grip behind the head throughout; no added weights or moving apparatus."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Upper back remains supported at the left bench end while hands retain their grip. Authorized source copying restores bench/floor below y715 and fixed hand contact. Patch-edge blending is confined to the source patch. Native enlarged wrist joins inspected without the earlier copied elbow sliver."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Body lowers as a controlled plank with abdomen, pelvis and legs clear of the bench, then returns along the same path. Head is neutral and hands brace behind it; no pelvis support or seated leg-raise substitution."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Catalogue primary Core strongest purple; secondary Hip Flexors and visible Lower Back lighter lilac. Hierarchy remains stable through hold and return; no measured activation claim."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Six short cues teach bracing with the behind-head grip, lowering as one body, hovering without hip bend, holding rigid, raising under control and resetting high without neck loading."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "All six final frames and6to1 inspected sequentially. Identical hold/raise/reset configurations reuse3/2/1; reset closes exactly to high brace."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "Final corrected files inspected at390x844 in actual ExerciseFormFrames light mode, all six plus6to1. Full athlete and bench visible, captions/cues/controls legible, no clipping."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "Final corrected files inspected at390x844 in actual ExerciseFormFrames dark mode, all six plus6to1. Muscle hierarchy clear, full scene visible and loop stable."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/dragon-flag/1.webp",
+      "sha256": "7c430695b14ac60da17d6463e093fa7ff9cdfc762e69f8b6138438149a92e862",
+      "anchors": {
+        "gripupperLeft": {
+          "x": 115,
+          "y": 700
+        },
+        "gripupperRight": {
+          "x": 161,
+          "y": 700
+        },
+        "griplowerLeft": {
+          "x": 122,
+          "y": 725
+        },
+        "griplowerRight": {
+          "x": 154,
+          "y": 725
+        },
+        "leftbenchlegLeft": {
+          "x": 189,
+          "y": 820
+        },
+        "leftbenchlegRight": {
+          "x": 222,
+          "y": 820
+        },
+        "rightbenchlegLeft": {
+          "x": 1093,
+          "y": 820
+        },
+        "rightbenchlegRight": {
+          "x": 1127,
+          "y": 820
+        },
+        "benchpadLeft": {
+          "x": 188,
+          "y": 720
+        },
+        "benchpadRight": {
+          "x": 1168,
+          "y": 720
+        },
+        "leftbenchfootLeft": {
+          "x": 162,
+          "y": 930
+        },
+        "leftbenchfootRight": {
+          "x": 244,
+          "y": 930
+        },
+        "rightbenchfootLeft": {
+          "x": 1109,
+          "y": 930
+        },
+        "rightbenchfootRight": {
+          "x": 1154,
+          "y": 930
+        }
+      },
+      "invariantDimensions": {
+        "gripupperWidth": 47,
+        "griplowerWidth": 33,
+        "leftbenchlegWidth": 34,
+        "rightbenchlegWidth": 35,
+        "benchpadWidth": 981,
+        "leftbenchfootWidth": 83,
+        "rightbenchfootWidth": 46
+      }
+    },
+    {
+      "path": "form-frames/dragon-flag/2.webp",
+      "sha256": "fb21099092fc60285e8a0b9e32d5625dc26930d2bfe7780f0c73962fbc15622b",
+      "anchors": {
+        "gripupperLeft": {
+          "x": 115,
+          "y": 700
+        },
+        "gripupperRight": {
+          "x": 161,
+          "y": 700
+        },
+        "griplowerLeft": {
+          "x": 122,
+          "y": 725
+        },
+        "griplowerRight": {
+          "x": 154,
+          "y": 725
+        },
+        "leftbenchlegLeft": {
+          "x": 189,
+          "y": 820
+        },
+        "leftbenchlegRight": {
+          "x": 222,
+          "y": 820
+        },
+        "rightbenchlegLeft": {
+          "x": 1093,
+          "y": 820
+        },
+        "rightbenchlegRight": {
+          "x": 1127,
+          "y": 820
+        },
+        "benchpadLeft": {
+          "x": 188,
+          "y": 720
+        },
+        "benchpadRight": {
+          "x": 1168,
+          "y": 720
+        },
+        "leftbenchfootLeft": {
+          "x": 162,
+          "y": 930
+        },
+        "leftbenchfootRight": {
+          "x": 244,
+          "y": 930
+        },
+        "rightbenchfootLeft": {
+          "x": 1109,
+          "y": 930
+        },
+        "rightbenchfootRight": {
+          "x": 1154,
+          "y": 930
+        }
+      },
+      "invariantDimensions": {
+        "gripupperWidth": 47,
+        "griplowerWidth": 33,
+        "leftbenchlegWidth": 34,
+        "rightbenchlegWidth": 35,
+        "benchpadWidth": 981,
+        "leftbenchfootWidth": 83,
+        "rightbenchfootWidth": 46
+      }
+    },
+    {
+      "path": "form-frames/dragon-flag/3.webp",
+      "sha256": "73fb32a91d655df8a36a9525be7e48ce506b71a95df85b7ccb94b9567e61c0fc",
+      "anchors": {
+        "gripupperLeft": {
+          "x": 115,
+          "y": 700
+        },
+        "gripupperRight": {
+          "x": 161,
+          "y": 700
+        },
+        "griplowerLeft": {
+          "x": 122,
+          "y": 725
+        },
+        "griplowerRight": {
+          "x": 154,
+          "y": 725
+        },
+        "leftbenchlegLeft": {
+          "x": 189,
+          "y": 820
+        },
+        "leftbenchlegRight": {
+          "x": 222,
+          "y": 820
+        },
+        "rightbenchlegLeft": {
+          "x": 1093,
+          "y": 820
+        },
+        "rightbenchlegRight": {
+          "x": 1127,
+          "y": 820
+        },
+        "benchpadLeft": {
+          "x": 188,
+          "y": 720
+        },
+        "benchpadRight": {
+          "x": 1168,
+          "y": 720
+        },
+        "leftbenchfootLeft": {
+          "x": 162,
+          "y": 930
+        },
+        "leftbenchfootRight": {
+          "x": 244,
+          "y": 930
+        },
+        "rightbenchfootLeft": {
+          "x": 1109,
+          "y": 930
+        },
+        "rightbenchfootRight": {
+          "x": 1154,
+          "y": 930
+        }
+      },
+      "invariantDimensions": {
+        "gripupperWidth": 47,
+        "griplowerWidth": 33,
+        "leftbenchlegWidth": 34,
+        "rightbenchlegWidth": 35,
+        "benchpadWidth": 981,
+        "leftbenchfootWidth": 83,
+        "rightbenchfootWidth": 46
+      }
+    },
+    {
+      "path": "form-frames/dragon-flag/4.webp",
+      "sha256": "73fb32a91d655df8a36a9525be7e48ce506b71a95df85b7ccb94b9567e61c0fc",
+      "anchors": {
+        "gripupperLeft": {
+          "x": 115,
+          "y": 700
+        },
+        "gripupperRight": {
+          "x": 161,
+          "y": 700
+        },
+        "griplowerLeft": {
+          "x": 122,
+          "y": 725
+        },
+        "griplowerRight": {
+          "x": 154,
+          "y": 725
+        },
+        "leftbenchlegLeft": {
+          "x": 189,
+          "y": 820
+        },
+        "leftbenchlegRight": {
+          "x": 222,
+          "y": 820
+        },
+        "rightbenchlegLeft": {
+          "x": 1093,
+          "y": 820
+        },
+        "rightbenchlegRight": {
+          "x": 1127,
+          "y": 820
+        },
+        "benchpadLeft": {
+          "x": 188,
+          "y": 720
+        },
+        "benchpadRight": {
+          "x": 1168,
+          "y": 720
+        },
+        "leftbenchfootLeft": {
+          "x": 162,
+          "y": 930
+        },
+        "leftbenchfootRight": {
+          "x": 244,
+          "y": 930
+        },
+        "rightbenchfootLeft": {
+          "x": 1109,
+          "y": 930
+        },
+        "rightbenchfootRight": {
+          "x": 1154,
+          "y": 930
+        }
+      },
+      "invariantDimensions": {
+        "gripupperWidth": 47,
+        "griplowerWidth": 33,
+        "leftbenchlegWidth": 34,
+        "rightbenchlegWidth": 35,
+        "benchpadWidth": 981,
+        "leftbenchfootWidth": 83,
+        "rightbenchfootWidth": 46
+      }
+    },
+    {
+      "path": "form-frames/dragon-flag/5.webp",
+      "sha256": "fb21099092fc60285e8a0b9e32d5625dc26930d2bfe7780f0c73962fbc15622b",
+      "anchors": {
+        "gripupperLeft": {
+          "x": 115,
+          "y": 700
+        },
+        "gripupperRight": {
+          "x": 161,
+          "y": 700
+        },
+        "griplowerLeft": {
+          "x": 122,
+          "y": 725
+        },
+        "griplowerRight": {
+          "x": 154,
+          "y": 725
+        },
+        "leftbenchlegLeft": {
+          "x": 189,
+          "y": 820
+        },
+        "leftbenchlegRight": {
+          "x": 222,
+          "y": 820
+        },
+        "rightbenchlegLeft": {
+          "x": 1093,
+          "y": 820
+        },
+        "rightbenchlegRight": {
+          "x": 1127,
+          "y": 820
+        },
+        "benchpadLeft": {
+          "x": 188,
+          "y": 720
+        },
+        "benchpadRight": {
+          "x": 1168,
+          "y": 720
+        },
+        "leftbenchfootLeft": {
+          "x": 162,
+          "y": 930
+        },
+        "leftbenchfootRight": {
+          "x": 244,
+          "y": 930
+        },
+        "rightbenchfootLeft": {
+          "x": 1109,
+          "y": 930
+        },
+        "rightbenchfootRight": {
+          "x": 1154,
+          "y": 930
+        }
+      },
+      "invariantDimensions": {
+        "gripupperWidth": 47,
+        "griplowerWidth": 33,
+        "leftbenchlegWidth": 34,
+        "rightbenchlegWidth": 35,
+        "benchpadWidth": 981,
+        "leftbenchfootWidth": 83,
+        "rightbenchfootWidth": 46
+      }
+    },
+    {
+      "path": "form-frames/dragon-flag/6.webp",
+      "sha256": "7c430695b14ac60da17d6463e093fa7ff9cdfc762e69f8b6138438149a92e862",
+      "anchors": {
+        "gripupperLeft": {
+          "x": 115,
+          "y": 700
+        },
+        "gripupperRight": {
+          "x": 161,
+          "y": 700
+        },
+        "griplowerLeft": {
+          "x": 122,
+          "y": 725
+        },
+        "griplowerRight": {
+          "x": 154,
+          "y": 725
+        },
+        "leftbenchlegLeft": {
+          "x": 189,
+          "y": 820
+        },
+        "leftbenchlegRight": {
+          "x": 222,
+          "y": 820
+        },
+        "rightbenchlegLeft": {
+          "x": 1093,
+          "y": 820
+        },
+        "rightbenchlegRight": {
+          "x": 1127,
+          "y": 820
+        },
+        "benchpadLeft": {
+          "x": 188,
+          "y": 720
+        },
+        "benchpadRight": {
+          "x": 1168,
+          "y": 720
+        },
+        "leftbenchfootLeft": {
+          "x": 162,
+          "y": 930
+        },
+        "leftbenchfootRight": {
+          "x": 244,
+          "y": 930
+        },
+        "rightbenchfootLeft": {
+          "x": 1109,
+          "y": 930
+        },
+        "rightbenchfootRight": {
+          "x": 1154,
+          "y": 930
+        }
+      },
+      "invariantDimensions": {
+        "gripupperWidth": 47,
+        "griplowerWidth": 33,
+        "leftbenchlegWidth": 34,
+        "rightbenchlegWidth": 35,
+        "benchpadWidth": 981,
+        "leftbenchfootWidth": 83,
+        "rightbenchfootWidth": 46
+      }
+    }
+  ]
+}

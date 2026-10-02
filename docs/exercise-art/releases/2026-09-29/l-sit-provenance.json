@@ -1,0 +1,356 @@
+{
+  "modelPath": "Built-in imagegen for athlete and pose generation; explicitly authorized exact master-source stationary equipment/floor repair. No CLI/API fallback.",
+  "canonicalReference": {
+    "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+  },
+  "exerciseMaster": {
+    "path": "docs/exercise-art/masters/l-sit/1.png",
+    "sha256": "f64d7b1c384d3a43aba071ca1e1043327de50499e2ad42ec68b07fe68e9cf5fd"
+  },
+  "selectedGenerationLedger": [
+    [
+      "cc7bbc3f-2571-4d5f-8193-6d9957b236c1",
+      "Frozen horizontal master after support/toe correction"
+    ],
+    ["68f920aa-3175-4f94-abc2-d364d8569ce2", "Midpoint"],
+    ["c28731f4-c58e-42c0-859a-816f9bf8dbae", "Low support"]
+  ],
+  "rejectedMethods": "First candidate7aadb6c3 had unclear pelvis-to-rail gap and upright toes. Imagegen corrected suspension and pointed toes before freezing the master. Small stationary equipment edge drift was repaired using explicitly authorized master source copying.",
+  "prompts": [
+    {
+      "file": "1-low-prompt.txt",
+      "prompt": "Edit adjacent midpoint image3 using frozen master image2 and canonical identity image1. Lower both straight legs another17degrees, to35degrees below horizontal total, creating the low support setup/return. Knees stay straight, ankles stay pointed along legs, identical segment/shoe dimensions. Preserve exact upright torso/head/shoulders, both straight arms, same palm grips and all parallel bars/floor. Pelvis remains suspended. Feet travel down and slightlyleft on the hip-centred arc, ending above floor, no contact. Maintain purple Core, secondary lilac hipflexors/triceps/shoulders. Native1536x1024 same camera/scale, no text or extra anatomy. Do not bend knees or sit on apparatus.\r\n"
+    },
+    {
+      "file": "2-mid-prompt.txt",
+      "prompt": "Edit frozen L-sit master image2 with canonical identity image1. Change only hip flexion: lower both straight legs together about18degrees below horizontal for midpoint. Preserve exact camera, athlete body size, upright torso, head, shoulders, both straight arms, both hand grips, all parallel bars and floor. Rotate actual hip joints naturally through image generation, with both knees straight and white-shoe toes pointing along the legs. Pelvis remains suspended with the same clear gap, and both hands stay fixed on top of rails. Keep the same purple/lilac muscle contribution hierarchy and neutral smooth mannequin style. Native1536x1024, no zoom/crop/text. Feet move downward/right along the hip-centred arc while their shape/size stay constant. Do not shift any equipment or redraw a seated posture.\r\n"
+    },
+    {
+      "file": "master-contact-fix-prompt.txt",
+      "prompt": "Correct the attached L-sit candidate into the frozen master. Canonical reference is identity/style only, candidate is edit target. Preserve the full apparatus design and camera direction, but reframe whole scene slightly smaller for headroom before freezing. Athlete must be clearly suspended on straight arms with shoulders pressed down, NOT sitting on a rail: show at least30px black air gap below pelvis and above both support rails. Both palms rest on top of their own rail and fingers wrap around; far hand must be connected to the far forearm, not emerge from a thigh. Keep two straight legs horizontal, knees fully extended. Point toes forward to the RIGHT with ankles plantarflexed rather than toes upright. Maintain canonical white trainers and purple Core/lilac hip flexor triceps shoulder hierarchy. Native1536x1024, black background, one athlete, no text. Preserve smooth neutral mannequin anatomy.\r\n"
+    },
+    {
+      "file": "master-prompt.txt",
+      "prompt": "Use case: scientific-educational exercise illustration. Create one1536x1024 image of L-SIT on parallel support bars. Canonical reference supplies mannequin identity, anatomical illustration style and white trainers. One bald faceless neutral white/light-grey anatomical training mannequin, with fine dark contours, smooth featureless pelvic surface. Black studio backdrop, subtle dark floor. Fixed side-three-quarter view, mostly side with the chest/front abdominal wall visible; mannequin faces RIGHT. Two compact parallel charcoal dip-support bars at equal height, each a horizontal rail supported on two rigid uprights and stable floor feet. Athlete supported between rails by two straight arms, each palm gripping a different rail at hip height; shoulders depressed, torso upright, no shrug. Shoulders aroundx520y300, pelvisx540y600, palmsabouty610; visible support rails run fromx350to750at620, feet onfloory950. Both straight legs extend forward to RIGHT horizontally from hips, feet aboutx1080y600, toes pointed through white trainers. Knees straight, both legs together, no seated support under pelvis. Both hands visibly attached, body fully suspended through palms. Full athlete and complete apparatus visible with margin, reserve space BELOW legs for later lowering, fixed perspective and scale. Primary abdominal Core rich purple; hip flexors, triceps and deltoids lighter lilac. Remaining body white-grey. Crisp clinical 3D anatomical education, no clothing seams or accessories. No text, arrows, labels, borders, collage or additional person.\r\n"
+    }
+  ],
+  "fixedContacts": {
+    "method": "Authorized exact source-copy of stationary equipment and floor regions. No athlete pixels transformed.",
+    "masterSha256": "f64d7b1c384d3a43aba071ca1e1043327de50499e2ad42ec68b07fe68e9cf5fd",
+    "regions": [
+      {
+        "left": 100,
+        "top": 640,
+        "width": 550,
+        "height": 384
+      },
+      {
+        "left": 250,
+        "top": 565,
+        "width": 120,
+        "height": 75
+      },
+      {
+        "left": 800,
+        "top": 800,
+        "width": 150,
+        "height": 224
+      },
+      {
+        "left": 650,
+        "top": 850,
+        "width": 886,
+        "height": 174
+      }
+    ],
+    "ledger": [
+      {
+        "input": "1-low-candidate.png",
+        "output": "1-fixed-contacts.png",
+        "inputSha256": "cbfd10d44620452826439700ce6afb3961db5f1033b00c8da73f02e346120eda",
+        "outputSha256": "c6556f62d2c82e67ea595428f20e559342c7e8930bbd6e42619886b19fe26833"
+      },
+      {
+        "input": "2-mid-candidate.png",
+        "output": "2-fixed-contacts.png",
+        "inputSha256": "9b339bde4f7e8832926a17d3c59adc0f2063b1197e0639c9b0fdaf694a505ae4",
+        "outputSha256": "73879c618eb79a64a2999ea18763cabac176137d91cc681dd7618f3571a54933"
+      }
+    ]
+  },
+  "geometry": [
+    {
+      "file": "3-fixed-contacts.png",
+      "sha256": "f64d7b1c384d3a43aba071ca1e1043327de50499e2ad42ec68b07fe68e9cf5fd",
+      "measures": [
+        {
+          "name": "near grip",
+          "y": 600,
+          "left": 393,
+          "right": 443,
+          "width": 51,
+          "leftDelta": 0,
+          "rightDelta": 0,
+          "widthPercent": 0
+        },
+        {
+          "name": "near left upright",
+          "y": 800,
+          "left": 283,
+          "right": 315,
+          "width": 33,
+          "leftDelta": 0,
+          "rightDelta": 0,
+          "widthPercent": 0
+        },
+        {
+          "name": "near right upright",
+          "y": 800,
+          "left": 563,
+          "right": 598,
+          "width": 36,
+          "leftDelta": 0,
+          "rightDelta": 0,
+          "widthPercent": 0
+        },
+        {
+          "name": "far right upright",
+          "y": 800,
+          "left": 837,
+          "right": 866,
+          "width": 30,
+          "leftDelta": 0,
+          "rightDelta": 0,
+          "widthPercent": 0
+        },
+        {
+          "name": "left rail cap",
+          "y": 590,
+          "left": 267,
+          "right": 299,
+          "width": 33,
+          "leftDelta": 0,
+          "rightDelta": 0,
+          "widthPercent": 0
+        },
+        {
+          "name": "head",
+          "y": 100,
+          "left": 522,
+          "right": 639,
+          "width": 118,
+          "leftDelta": 0,
+          "rightDelta": 0,
+          "widthPercent": 0
+        }
+      ]
+    },
+    {
+      "file": "2-fixed-contacts.png",
+      "sha256": "73879c618eb79a64a2999ea18763cabac176137d91cc681dd7618f3571a54933",
+      "measures": [
+        {
+          "name": "near grip",
+          "y": 600,
+          "left": 393,
+          "right": 443,
+          "width": 51,
+          "leftDelta": 0,
+          "rightDelta": 0,
+          "widthPercent": 0
+        },
+        {
+          "name": "near left upright",
+          "y": 800,
+          "left": 283,
+          "right": 315,
+          "width": 33,
+          "leftDelta": 0,
+          "rightDelta": 0,
+          "widthPercent": 0
+        },
+        {
+          "name": "near right upright",
+          "y": 800,
+          "left": 563,
+          "right": 598,
+          "width": 36,
+          "leftDelta": 0,
+          "rightDelta": 0,
+          "widthPercent": 0
+        },
+        {
+          "name": "far right upright",
+          "y": 800,
+          "left": 837,
+          "right": 866,
+          "width": 30,
+          "leftDelta": 0,
+          "rightDelta": 0,
+          "widthPercent": 0
+        },
+        {
+          "name": "left rail cap",
+          "y": 590,
+          "left": 267,
+          "right": 299,
+          "width": 33,
+          "leftDelta": 0,
+          "rightDelta": 0,
+          "widthPercent": 0
+        },
+        {
+          "name": "head",
+          "y": 100,
+          "left": 522,
+          "right": 639,
+          "width": 118,
+          "leftDelta": 0,
+          "rightDelta": 0,
+          "widthPercent": 0
+        }
+      ]
+    },
+    {
+      "file": "1-fixed-contacts.png",
+      "sha256": "c6556f62d2c82e67ea595428f20e559342c7e8930bbd6e42619886b19fe26833",
+      "measures": [
+        {
+          "name": "near grip",
+          "y": 600,
+          "left": 393,
+          "right": 443,
+          "width": 51,
+          "leftDelta": 0,
+          "rightDelta": 0,
+          "widthPercent": 0
+        },
+        {
+          "name": "near left upright",
+          "y": 800,
+          "left": 283,
+          "right": 315,
+          "width": 33,
+          "leftDelta": 0,
+          "rightDelta": 0,
+          "widthPercent": 0
+        },
+        {
+          "name": "near right upright",
+          "y": 800,
+          "left": 563,
+          "right": 598,
+          "width": 36,
+          "leftDelta": 0,
+          "rightDelta": 0,
+          "widthPercent": 0
+        },
+        {
+          "name": "far right upright",
+          "y": 800,
+          "left": 837,
+          "right": 866,
+          "width": 30,
+          "leftDelta": 0,
+          "rightDelta": 0,
+          "widthPercent": 0
+        },
+        {
+          "name": "left rail cap",
+          "y": 590,
+          "left": 267,
+          "right": 299,
+          "width": 33,
+          "leftDelta": 0,
+          "rightDelta": 0,
+          "widthPercent": 0
+        },
+        {
+          "name": "head",
+          "y": 100,
+          "left": 521,
+          "right": 639,
+          "width": 119,
+          "leftDelta": -1,
+          "rightDelta": 0,
+          "widthPercent": 0.8474576271186418
+        }
+      ]
+    }
+  ],
+  "repairScripts": [
+    {
+      "file": "fix-stationary-contacts.cjs",
+      "source": "const fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypto');\nconst sharp=require('C:/Users/myles/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/sharp');\nconst hash=b=>crypto.createHash('sha256').update(b).digest('hex');\n(async()=>{const master=fs.readFileSync(path.join(__dirname,'1-master.png'));const regions=[{left:100,top:640,width:550,height:384},{left:250,top:565,width:120,height:75},{left:800,top:800,width:150,height:224},{left:650,top:850,width:886,height:174}];const patches=await Promise.all(regions.map(async r=>({input:await sharp(master).extract(r).png().toBuffer(),left:r.left,top:r.top})));const ledger=[];for(const [input,output] of [['1-low-candidate.png','1-fixed-contacts.png'],['2-mid-candidate.png','2-fixed-contacts.png']]){const src=fs.readFileSync(path.join(__dirname,input));const out=await sharp(src).composite(patches).png().toBuffer();fs.writeFileSync(path.join(__dirname,output),out);ledger.push({input,output,inputSha256:hash(src),outputSha256:hash(out)});}fs.copyFileSync(path.join(__dirname,'1-master.png'),path.join(__dirname,'3-fixed-contacts.png'));fs.writeFileSync(path.join(__dirname,'fixed-contacts-provenance.json'),JSON.stringify({method:'Authorized exact source-copy of stationary equipment and floor regions. No athlete pixels transformed.',masterSha256:hash(master),regions,ledger},null,2));})();\r\n"
+    },
+    {
+      "file": "check-contacts.cjs",
+      "source": "const fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypto');\nconst sharp=require('C:/Users/myles/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/sharp');\n(async()=>{\n const rows=[];\n const scans=[['near grip',600,380,480,120],['near left upright',800,260,330,50],['near right upright',800,550,610,50],['far right upright',800,820,880,50],['left rail cap',590,255,300,50],['head',100,490,655,120]];\n for(const file of ['3-fixed-contacts.png','2-fixed-contacts.png','1-fixed-contacts.png']){const bytes=fs.readFileSync(path.join(__dirname,file));const {data,info}=await sharp(bytes).removeAlpha().raw().toBuffer({resolveWithObject:true});const measures=scans.map(([name,y,x0,x1,t])=>{const xs=[];for(let x=x0;x<x1;x++){const p=(y*info.width+x)*3;if(Math.min(...data.subarray(p,p+3))>t)xs.push(x);}return {name,y,left:xs[0],right:xs.at(-1),width:xs.at(-1)-xs[0]+1};});rows.push({file,sha256:crypto.createHash('sha256').update(bytes).digest('hex'),measures});}\n for(const row of rows)for(let i=0;i<row.measures.length;i++){const a=row.measures[i],b=rows[0].measures[i];a.leftDelta=a.left-b.left;a.rightDelta=a.right-b.right;a.widthPercent=100*(a.width/b.width-1);}\n fs.writeFileSync(path.join(__dirname,'contact-measurements.json'),JSON.stringify(rows,null,2));console.log(JSON.stringify(rows,null,2));\n})();\n\r\n\r\n\r\n"
+    }
+  ],
+  "selectedPngs": [
+    {
+      "frame": 1,
+      "file": "1-fixed-contacts.png",
+      "sha256": "c6556f62d2c82e67ea595428f20e559342c7e8930bbd6e42619886b19fe26833"
+    },
+    {
+      "frame": 2,
+      "file": "2-fixed-contacts.png",
+      "sha256": "73879c618eb79a64a2999ea18763cabac176137d91cc681dd7618f3571a54933"
+    },
+    {
+      "frame": 3,
+      "file": "3-fixed-contacts.png",
+      "sha256": "f64d7b1c384d3a43aba071ca1e1043327de50499e2ad42ec68b07fe68e9cf5fd"
+    },
+    {
+      "frame": 4,
+      "file": "3-fixed-contacts.png",
+      "sha256": "f64d7b1c384d3a43aba071ca1e1043327de50499e2ad42ec68b07fe68e9cf5fd"
+    },
+    {
+      "frame": 5,
+      "file": "2-fixed-contacts.png",
+      "sha256": "73879c618eb79a64a2999ea18763cabac176137d91cc681dd7618f3571a54933"
+    },
+    {
+      "frame": 6,
+      "file": "1-fixed-contacts.png",
+      "sha256": "c6556f62d2c82e67ea595428f20e559342c7e8930bbd6e42619886b19fe26833"
+    }
+  ],
+  "reuse": {
+    "4": 3,
+    "5": 2,
+    "6": 1
+  },
+  "conversion": "Native losslessWebP; decoded RGB exactly equals reviewed PNG.",
+  "mobileReview": {
+    "complete": true,
+    "reviewedAt": "2026-09-29T20:50:26.141Z",
+    "component": "ExerciseFormFrames",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "themes": ["dark", "light"],
+    "sequence": [1, 2, 3, 4, 5, 6, 1],
+    "files": [
+      {
+        "file": "1-fixed-contacts.png",
+        "sha256": "c6556f62d2c82e67ea595428f20e559342c7e8930bbd6e42619886b19fe26833"
+      },
+      {
+        "file": "2-fixed-contacts.png",
+        "sha256": "73879c618eb79a64a2999ea18763cabac176137d91cc681dd7618f3571a54933"
+      },
+      {
+        "file": "3-fixed-contacts.png",
+        "sha256": "f64d7b1c384d3a43aba071ca1e1043327de50499e2ad42ec68b07fe68e9cf5fd"
+      }
+    ],
+    "evidence": "Every final frame and6to1 visually inspected in both themes. Full apparatus and athlete remain visible; primary/secondary hierarchy stable; all cues and controls readable, wrapped cues unclipped. Native final files inspected before mobile. Torso/grips stationary; straight-leg raise reaches horizontal suspension with pointed toes and returns under control."
+  }
+}

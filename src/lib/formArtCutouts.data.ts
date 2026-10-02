@@ -127,6 +127,26 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
       "2bf40fd0c782fd1b316e3dded539f2ab0564592bba09130deec7317c8cfceffc",
     sha256: "b264a3ed2fd2097391f81da147ca2f32144a6cce354a8bd1772d918a69cd587f",
   },
+  "cable-crunch": {
+    src: "form-art/cable-crunch.webp",
+    width: 480,
+    height: 336,
+    keyed: true,
+    source: "form-frames/cable-crunch/1.webp",
+    sourceSha256:
+      "7cc725baf9e06d8a86df1256008dc97557f0984fb4806c1b50714bb962118c7f",
+    sha256: "30c9c8049207090bc2c03785b89df6907b7096088c56b433eeb15de9bc563b55",
+  },
+  "cable-woodchopper": {
+    src: "form-art/cable-woodchopper.webp",
+    width: 480,
+    height: 340,
+    keyed: true,
+    source: "form-frames/cable-woodchopper/1.webp",
+    sourceSha256:
+      "afee5565830317710ab999faca850ab492c959f06df2c60d22e146c8fd97d44e",
+    sha256: "1c08ea5c166d58cdf3307193b62ecda473344bb325aacb9f350968c6f2f8755c",
+  },
   "chest-press-machine": {
     src: "form-art/chest-press-machine.webp",
     width: 422,
@@ -247,6 +267,16 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
       "abd79b7a1788a4902a09f3709538df390a5c8b580761882fb9bb6244707be9f8",
     sha256: "335f739987f1a5ee6b8f513d243f475eaaf794fda16834e248aeef72d0fdfa55",
   },
+  "dragon-flag": {
+    src: "form-art/dragon-flag.webp",
+    width: 480,
+    height: 320,
+    keyed: true,
+    source: "form-frames/dragon-flag/1.webp",
+    sourceSha256:
+      "7c430695b14ac60da17d6463e093fa7ff9cdfc762e69f8b6138438149a92e862",
+    sha256: "7259622797ef1fc736c92ad1153f800b5b549c91eb8a863bfdd97991dfc7bce4",
+  },
   "ez-bar-curl": {
     src: "form-art/ez-bar-curl.webp",
     width: 297,
@@ -307,6 +337,16 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
       "bba515ce1ec06953de041e2d2ee71f41c1dbabe8321c4140c37b4e89556d9cb3",
     sha256: "dfbee104ef125836012cf0e3d4aa0fb078d30c875d914f940e69a6433f19f1ee",
   },
+  "l-sit": {
+    src: "form-art/l-sit.webp",
+    width: 480,
+    height: 320,
+    keyed: true,
+    source: "form-frames/l-sit/3.webp",
+    sourceSha256:
+      "192891857f22928679e5c409e0c5f3b1a7d6ee74034ed4f9bc33ab09a8ad7658",
+    sha256: "30467c90d658f42adf21b958a3a517c70119c94004c6422d0597e144fbb0bb6b",
+  },
   "lateral-raise": {
     src: "form-art/lateral-raise.webp",
     width: 224,
@@ -347,6 +387,16 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
       "7961d3f929b80a28138331d0db65d2cdf67f4289e0306ced4942b4e859564c61",
     sha256: "b3775480a78cc4655961983ca497f8189d7a80f781443933c3e0c00cd127daaa",
   },
+  "mountain-climbers": {
+    src: "form-art/mountain-climbers.webp",
+    width: 480,
+    height: 292,
+    keyed: true,
+    source: "form-frames/mountain-climbers/3.webp",
+    sourceSha256:
+      "883c26911e09a73abc4ba730c48ed098785e34b6deb90f0bee6294fd0afa647c",
+    sha256: "508dc646f5dce35a3daae73029a5b4175479b8a744733d2a06bf79fd60a33909",
+  },
   "overhead-press": {
     src: "form-art/overhead-press.webp",
     width: 480,
@@ -356,6 +406,16 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
     sourceSha256:
       "7791e3042759ae61f30aff4b97bfbfecce1c412adcee6d8edb493cb400782eae",
     sha256: "db6cc312a0378873892d4c9306ea7791f484844c9fbd04d487d014661da7ae29",
+  },
+  "pallof-press": {
+    src: "form-art/pallof-press.webp",
+    width: 480,
+    height: 320,
+    keyed: true,
+    source: "form-frames/pallof-press/1.webp",
+    sourceSha256:
+      "ea4afbacb7fd85cfbadad8694799c7538528b046f34b649532d888fecf2e5553",
+    sha256: "48548cd92ea8dee8c8dce48a588675b3427600a3836f8cb2f43bf113aa5f26fa",
   },
   "pec-deck": {
     src: "form-art/pec-deck.webp",

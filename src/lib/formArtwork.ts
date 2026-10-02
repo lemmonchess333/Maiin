@@ -53,6 +53,78 @@ export const FORM_ARTWORK: Record<string, FormArtwork> = {
     reference: "form-frames/russian-twist/4.webp",
     reviewFile: "docs/exercise-art/releases/2026-09-29/russian-twist.json",
   },
+  "mountain-climbers": {
+    version: "anatomy-v3-2026-09-29",
+    status: "approved",
+    width: 1536,
+    height: 1024,
+    frames: Array.from(
+      { length: 6 },
+      (_, i) => `form-frames/mountain-climbers/${i + 1}.webp`
+    ),
+    reference: "form-frames/mountain-climbers/3.webp",
+    reviewFile: "docs/exercise-art/releases/2026-09-29/mountain-climbers.json",
+  },
+  "cable-crunch": {
+    version: "anatomy-v3-2026-09-29",
+    status: "approved",
+    width: 1536,
+    height: 1024,
+    frames: Array.from(
+      { length: 6 },
+      (_, i) => `form-frames/cable-crunch/${i + 1}.webp`
+    ),
+    reference: "form-frames/cable-crunch/1.webp",
+    reviewFile: "docs/exercise-art/releases/2026-09-29/cable-crunch.json",
+  },
+  "cable-woodchopper": {
+    version: "anatomy-v3-2026-09-29",
+    status: "approved",
+    width: 1536,
+    height: 1024,
+    frames: Array.from(
+      { length: 6 },
+      (_, i) => `form-frames/cable-woodchopper/${i + 1}.webp`
+    ),
+    reference: "form-frames/cable-woodchopper/1.webp",
+    reviewFile: "docs/exercise-art/releases/2026-09-29/cable-woodchopper.json",
+  },
+  "pallof-press": {
+    version: "anatomy-v3-2026-09-29",
+    status: "approved",
+    width: 1536,
+    height: 1024,
+    frames: Array.from(
+      { length: 6 },
+      (_, i) => `form-frames/pallof-press/${i + 1}.webp`
+    ),
+    reference: "form-frames/pallof-press/1.webp",
+    reviewFile: "docs/exercise-art/releases/2026-09-29/pallof-press.json",
+  },
+  "dragon-flag": {
+    version: "anatomy-v3-2026-09-29",
+    status: "approved",
+    width: 1536,
+    height: 1024,
+    frames: Array.from(
+      { length: 6 },
+      (_, i) => `form-frames/dragon-flag/${i + 1}.webp`
+    ),
+    reference: "form-frames/dragon-flag/1.webp",
+    reviewFile: "docs/exercise-art/releases/2026-09-29/dragon-flag.json",
+  },
+  "l-sit": {
+    version: "anatomy-v3-2026-09-29",
+    status: "approved",
+    width: 1536,
+    height: 1024,
+    frames: Array.from(
+      { length: 6 },
+      (_, i) => `form-frames/l-sit/${i + 1}.webp`
+    ),
+    reference: "form-frames/l-sit/3.webp",
+    reviewFile: "docs/exercise-art/releases/2026-09-29/l-sit.json",
+  },
   "bicycle-crunch": {
     version: "anatomy-v3-2026-09-29",
     status: "approved",

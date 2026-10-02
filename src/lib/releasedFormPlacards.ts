@@ -634,4 +634,82 @@ export const RELEASED_FORM_PLACARDS = {
       [0, "Reset", "Center your torso; keep both feet planted."],
     ]
   ),
+  "mountain-climbers": placard(
+    "mountain-climbers",
+    ["Core"],
+    ["Shoulders", "Hip flexors", "Quads"],
+    [
+      [0.5, "Drive A", "Draw near knee forward; keep hips level."],
+      [1, "Knee A", "Bring near knee closer without lifting hips."],
+      [0, "Plank", "Extend back to plank before switching legs."],
+      [0.5, "Drive B", "Draw far knee forward; keep shoulders steady."],
+      [1, "Knee B", "Bring far knee closer without rounding back."],
+      [0, "Reset", "Return to plank, then alternate again."],
+    ]
+  ),
+  "cable-crunch": placard(
+    "cable-crunch",
+    ["Abs"],
+    ["Obliques"],
+    [
+      [0, "Set", "Hold rope at temples; brace your abs."],
+      [0.5, "Curl", "Curl ribs down while keeping hips still."],
+      [1, "Crunch", "Bring ribs toward pelvis; elbows approach knees."],
+      [1, "Hold", "Hold the crunch without pulling your arms."],
+      [0.5, "Return", "Uncurl slowly while keeping hips still."],
+      [0, "Reset", "Return upright with rope at your temples."],
+    ]
+  ),
+  "cable-woodchopper": placard(
+    "cable-woodchopper",
+    ["Obliques"],
+    ["Core", "Shoulders"],
+    [
+      [0, "Set", "Grip high; soften knees and brace core."],
+      [0.5, "Rotate", "Rotate torso; guide handle across your body."],
+      [1, "Chop", "Finish low across your opposite hip."],
+      [1, "Hold", "Hold briefly with shoulders away from ears."],
+      [0.5, "Return", "Return along the same diagonal path."],
+      [0, "Reset", "Reset high; finish reps before switching sides."],
+    ]
+  ),
+  "pallof-press": placard(
+    "pallof-press",
+    ["Core"],
+    ["Obliques"],
+    [
+      [0, "Set", "Hold handle at chest; brace your core."],
+      [0.5, "Press", "Press forward without turning shoulders or hips."],
+      [1, "Extend", "Extend arms while keeping your torso still."],
+      [1, "Hold", "Hold steady against the sideways cable pull."],
+      [0.5, "Return", "Bend elbows; return slowly toward your chest."],
+      [0, "Reset", "Reset at chest before your next press."],
+    ]
+  ),
+  "dragon-flag": placard(
+    "dragon-flag",
+    ["Core"],
+    ["Hip Flexors", "Lower Back"],
+    [
+      [0, "Brace", "Grip behind head; brace a straight body."],
+      [0.5, "Lower", "Lower shoulders, hips, and legs together."],
+      [1, "Hover", "Hover above bench without bending your hips."],
+      [1, "Hold", "Keep your body rigid; maintain both grips."],
+      [0.5, "Raise", "Raise your straight body with controlled tension."],
+      [0, "Reset", "Reset high; keep weight off your neck."],
+    ]
+  ),
+  "l-sit": placard(
+    "l-sit",
+    ["Core"],
+    ["Hip Flexors", "Triceps", "Shoulders"],
+    [
+      [0, "Support", "Press down through straight arms; brace core."],
+      [0.5, "Lift", "Raise straight legs without shrugging your shoulders."],
+      [1, "Extend", "Hold legs horizontal; point your toes forward."],
+      [1, "Hold", "Keep arms straight; breathe through the hold."],
+      [0.5, "Lower", "Lower straight legs slowly; keep shoulders down."],
+      [0, "Reset", "Return low while maintaining both hand supports."],
+    ]
+  ),
 };

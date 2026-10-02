@@ -4829,6 +4829,20 @@ describe("form beats — the caption is a claim about the frame", () => {
       const beats = getAuthoredBeats(id)!;
       const first = beats[0].t;
       const last = beats[beats.length - 1].t;
+      if (id === "mountain-climbers") {
+        // Each leg returns to plank before the opposite leg starts. The
+        // scalar knee-drive amount reverses at that deliberate reset.
+        expect(beats.map((beat) => beat.t)).toEqual([0.5, 1, 0, 0.5, 1, 0]);
+        expect(beats.map((beat) => beat.label)).toEqual([
+          "Drive A",
+          "Knee A",
+          "Plank",
+          "Drive B",
+          "Knee B",
+          "Reset",
+        ]);
+        continue;
+      }
       if (last === first) continue;
       const previous = beats[beats.length - 2].t;
       expect(
