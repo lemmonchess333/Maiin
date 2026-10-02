@@ -28,11 +28,11 @@ or hasn't agreed to a specific answer.
 
 Before invoking, you should already have in conversation:
 
-1. **Question number** — e.g. `17`
-2. **Question title** — short noun phrase, e.g. `Watch app data freshness & background refresh`
-3. **Locked answer body** — the full structured answer (Q17a → X / Q17b → Y / impact notes)
-4. **Commit subject** — short imperative, e.g. `lock Q17 Watch data freshness & refresh behaviour`
-5. **Commit body** — 3-8 short paragraphs explaining the decision and its impact on sequenced PRs / shared packages
+1. **Decision ID** — the area prefix and the next number in that area, e.g. `Soc12`, `Set2`, `FW1`
+2. **Title** — short noun phrase, e.g. `Settings pass — grouped list, Programme as a short page`
+3. **Locked answer body** — the full structured answer (the owner's calls, e.g. call 1 → B, and what each changes)
+4. **Commit subject** — short imperative, e.g. `lock Set2, the Settings pass`
+5. **Commit body** — 3-8 short paragraphs explaining the decision and the PR that implements it
 
 If any of these are unclear, ask the user before running.
 
@@ -40,19 +40,21 @@ If any of these are unclear, ask the user before running.
 
 ### 1. Append the row to the plan file
 
-The plan file is `.claude/plans/programme-run-followups.md`. Decisions live in
-a markdown table near the bottom. Each row has the format:
+The plan file is `.claude/plans/programme-run-followups.md`. Each decision is
+one table row:
 
 ```
-| <N> | <Question title> | <Locked answer body> |
+| <ID> | <Title> | <Locked answer body> |
 ```
 
 The locked answer body is a single table cell — newlines must be removed or
-replaced with double-spaces. Bold the sub-question labels: `**Q17a → C**`.
+replaced with double-spaces. Bold the call labels: `**call 1 → B**`.
 
-Find the most recent locked row (highest Qn in the table) using grep, then
-insert the new row immediately AFTER it using the Edit tool. Use a unique
-anchor string (the full preceding row) so the Edit doesn't collide.
+Put the row after the last row of its arc's table when it continues an arc
+listed under "Decision log" (`A5` sits in the Auth arc's table); otherwise
+after the last row in the file, where the recent locks (`Soc12`, `Set2`,
+`FW1`) are. Use the full preceding row as the Edit anchor so the Edit
+doesn't collide.
 
 ### 2. Commit
 
@@ -67,7 +69,7 @@ plan: <commit subject>
 
 ...
 
-Impact on PR-X / tropos-shared (if applicable): <one paragraph>
+Implementation: <the PR that carries the change, if there is one>
 
 https://claude.ai/code/session_<SESSION_ID>
 ```
@@ -98,14 +100,13 @@ If push fails due to network, retry up to 4 times with exponential backoff
 After successful push, give the user a one-line confirmation including:
 
 - The commit SHA (first 7 chars)
-- The locked answer in shorthand (e.g. "Q17 locked C/B/hybrid")
+- The locked answer in shorthand (e.g. "Set2 locked: B on both calls")
 - One sentence on the next undecided question if relevant
 
 Example:
 
-> Pushed `a1b2c3d`. Q17 locked C / B / hybrid with mandatory stale-data
-> badge and override-allowed escape hatch. Next undecided: Q18 (Watch
-> notification & alert policy).
+> Pushed `a1b2c3d`. Set2 locked: a grouped Settings list, Programme as a
+> short page, and a switch per notification type.
 
 ## Anti-patterns
 
