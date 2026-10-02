@@ -2656,7 +2656,8 @@ input (run each sign-off stage as its own workflow), subagents always run
 in `acceptEdits` and inherit your tool allowlist. Cost: many agents = many
 more tokens than a conversational pass — counts toward plan limits.
 
-**Route a Tropos task into a workflow (or turn `ultracode` on) when:**
+**Suggest a workflow (the user opts in with the word `workflow` or
+`/effort ultracode`) for a Tropos task when:**
 
 - The change touches the **correctness-critical engines** —
   `performanceEngine`, `runScheduler` (race-prep / taper / recovery state
