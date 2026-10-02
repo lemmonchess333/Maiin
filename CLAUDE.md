@@ -342,7 +342,7 @@ while the fake clock is still installed — `src/test/setup.ts` cannot do
 it for you, and its header says why.
 
 The seeds are FIXED, which pins the ORDER and nothing else. **The job
-is not deterministic, and this paragraph said it was.** Seed 23 went red
+is not deterministic.** Seed 23 went red
 on one head and green on the next — same test, same seed, one
 branch-update apart — and six local repetitions never reproduced it.
 vitest's `seed` seeds the ordering RNG; the worker pool is separate, so
