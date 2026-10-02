@@ -228,7 +228,7 @@ run-surface feature modules.
 Runtime: **Node 22** | Language: **Plain JS (CommonJS)**
 
 The table below is a SELECTION, not the inventory — it names 10 of the
-~55 functions `functions/index.js` exports. The Pages table above claims
+functions `functions/index.js` exports. The Pages table above claims
 completeness and is pinned both ways; this one does not and is not, so do
 not read a function's absence here as evidence it does not exist. The
 authoritative list is `grep -oE "^exports\.[A-Za-z0-9_]+" functions/index.js`.
