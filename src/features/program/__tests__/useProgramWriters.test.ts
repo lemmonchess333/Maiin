@@ -145,7 +145,11 @@ import {
   batchLog,
   failNextFirestore,
   deferReads,
+  pendingReads,
+  resumeReads,
+  releaseAllReads,
 } from "@/test/firestoreHarness";
+import { toast } from "sonner";
 
 // ─── useAuth + adjacent mocks ────────────────────────────────────────
 
@@ -3216,6 +3220,109 @@ describe("the rollover waits for the loader's migration", () => {
       expect(result.current.programState?.programSchemaVersion).toBe(
         CURRENT_PROGRAM_SCHEMA_VERSION
       )
+    );
+  });
+});
+
+describe("the rollover waits for the loader's server read", () => {
+  /** A pure lifter's plan as `completeOnboarding` writes it: current
+   *  schema, and exercises with no instanceId. The loader fills those in
+   *  (`legacyInstanceId`) and commits on its first server read, so the
+   *  stored plan and the loader's copy differ on `workouts` until it has. */
+  function serverPlan(liftWeekKey: string): ProgramState {
+    return {
+      goal: "recomp",
+      currentPhase: "progression",
+      weekNumber: 1,
+      splitType: "full_body",
+      fatigueScore: 0,
+      updatedAt: 0,
+      programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
+      liftWeekKey,
+      workouts: [
+        {
+          dayName: "Full Body A",
+          dayType: "lift",
+          completed: true,
+          exercises: [
+            {
+              name: "Barbell Squat",
+              exerciseId: "squat",
+              sets: 3,
+              reps: 8,
+              weight: 80,
+            },
+          ],
+        },
+        {
+          dayName: "Full Body B",
+          dayType: "lift",
+          completed: false,
+          exercises: [
+            {
+              name: "Bench Press",
+              exerciseId: "bench-press",
+              sets: 3,
+              reps: 8,
+              weight: 60,
+            },
+          ],
+        },
+      ],
+    } as unknown as ProgramState;
+  }
+
+  // The first Monday after a mid-week sign-up. The phone has the plan
+  // cached, so the loader paints its normalised copy at once and waits
+  // for the server. The lift rollover acted on that paint and committed
+  // against a base the store did not hold (the store still had no
+  // instanceIds), and was refused: "Your programme changed while you were
+  // editing", in red, on Train, before the person had touched anything.
+  // It refetched and tried again from the raw document, which the
+  // loader's own commit then moved on, and was refused again.
+  it("rolls the week once, after the loader has committed, with no error", async () => {
+    mockProfile = {
+      uid: "test-user-1",
+      weekSchedule: generateSchedule(2, 0),
+      weekScheduleVersion: 1,
+      weeklyWorkoutsTarget: 2,
+      weeklyRunDaysTarget: 0,
+      primaryGoal: "hypertrophy",
+    };
+    const lastWeek = localWeekKey(
+      addLocalDays(parseLocalDate(localWeekKey()), -7)
+    );
+    seedProgram(serverPlan(lastWeek));
+    seedCacheDoc(serverPlan(lastWeek));
+    vi.mocked(toast.error).mockClear();
+    deferReads();
+    const { result } = mountProgram();
+
+    // Painted from the cache while the server read is out.
+    await waitFor(() =>
+      expect(result.current.programState?.liftWeekKey).toBe(lastWeek)
+    );
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 25));
+    });
+    // Only the loader's read is waiting: nothing has started a save.
+    expect(pendingReads()).toEqual([PROGRAM]);
+
+    resumeReads();
+    releaseAllReads();
+    await waitFor(
+      () =>
+        expect((readDoc(PROGRAM) as unknown as ProgramState).liftWeekKey).toBe(
+          localWeekKey()
+        ),
+      { timeout: 2000 }
+    );
+    const stored = readDoc(PROGRAM) as unknown as ProgramState;
+    expect(stored.weekNumber).toBe(2);
+    expect(stored.workouts[0].exercises[0].instanceId).toBeTruthy();
+    expect(toast.error).not.toHaveBeenCalled();
+    await waitFor(() =>
+      expect(result.current.programState?.liftWeekKey).toBe(localWeekKey())
     );
   });
 });

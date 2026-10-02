@@ -1049,6 +1049,16 @@ export function useProgram() {
   // runDays is empty (no signal to compare).
   useEffect(() => {
     if (!programState || !profile) return;
+    // Not before the loader has read the document from the server and
+    // committed what it changed. Until then `programState` can be the
+    // cache-first paint, normalised from the cached copy, which the store
+    // does not hold: a plan written by `completeOnboarding` has no
+    // exercise instanceIds until the loader's first commit adds them. A
+    // rollover built on that paint was refused on `workouts` ("Your
+    // programme changed while you were editing"), in red, on a new
+    // person's first Monday, and its retry from the refetched document
+    // was refused again once the loader's commit landed.
+    if (!mirrorReady) return;
     // A document the loader has not migrated yet is not one to roll: its
     // week keys are in the OLD vocabulary, and comparing them with today's
     // reads a week that has not passed as one that has. The loader owns
@@ -1200,6 +1210,7 @@ export function useProgram() {
     layoffRead,
     recentLayoff,
     user,
+    mirrorReady,
   ]);
 
   /**
@@ -1248,7 +1259,9 @@ export function useProgram() {
 
   useEffect(() => {
     if (!programState || !profile) return;
-    // Same wait as the run-side effect: never roll an unmigrated document.
+    // Same waits as the run-side effect: never roll the cache-first paint
+    // before the loader's server read, and never an unmigrated document.
+    if (!mirrorReady) return;
     if (programState.programSchemaVersion !== CURRENT_PROGRAM_SCHEMA_VERSION)
       return;
 
@@ -1299,7 +1312,7 @@ export function useProgram() {
       .catch((err) => {
         logger.warn("[auto-rollover:lift] save failed", err);
       });
-  }, [programState, profile, saveProgram, recovery]);
+  }, [programState, profile, saveProgram, recovery, mirrorReady]);
 
   // Mark a workout day as completed (does NOT auto-advance week)
   // Also writes to workouts collection so Home stats can see it.
