@@ -1,0 +1,240 @@
+{
+  "exerciseId": "clean-and-press",
+  "version": "anatomy-v3-2026-10-02",
+  "width": 1536,
+  "height": 1024,
+  "decision": "approved",
+  "reviewer": "Codex native and mobile visual review",
+  "reviewedAt": "2026-10-02T14:21:06.129Z",
+  "reference": {
+    "path": "form-frames/clean-and-press/1.webp",
+    "sha256": "3c8f74e4e64f3758faeed32fe539fdb2afcf27166a6fc038712843a25e08e093",
+    "anchors": {
+      "nearSoleLeft": {
+        "x": 666,
+        "y": 899
+      },
+      "nearSoleRight": {
+        "x": 762,
+        "y": 899
+      },
+      "farSoleLeft": {
+        "x": 785,
+        "y": 891
+      },
+      "farSoleRight": {
+        "x": 889,
+        "y": 891
+      }
+    },
+    "invariantDimensions": {
+      "nearSoleWidth": 97,
+      "farSoleWidth": 105
+    }
+  },
+  "cueSha256": "1abb006fc8f6d07649b5524ed4b8ef1d5eb4092c09c11fdee63aee49aa7b9297",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "One faceless white anatomical athlete in white trainers, with consistent identity across five unique native poses."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Fixed 1536x1024 landscape canvas and side-three-quarter view. No crop, resize or whole-body translation. Full overhead plates remain visible."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Native review of all five unique poses: two arms and two legs, neutral-back pull, elbows forward in front rack, shallow knee dip, extended overhead arms. No extra limbs."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "One continuous barbell, one plate per end, two hands on the shaft throughout. Bar follows the pull, front-rack and overhead path. Dark plate edges remain visible after floor cleanup."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Both planted soles measured on final lossless WebPs. Four sole-edge anchors show zero pixel drift; sole scan widths are 97 and 105 pixels throughout. Narrow sole contact repair is documented in provenance; no body translation."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Bar rises near the legs into the front rack, stays racked through a shallow dip, then rises overhead. Heels remain planted; the lowering frame returns to shoulders before the loop returns to floor."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Glutes, hamstrings and front deltoids strongest purple; quadriceps and triceps lighter with pale core bracing. Legend matches this movement-specific hierarchy."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Six exact registered cues describe setup, initial pull, catch, shallow dip, overhead drive and controlled lowering. Catalogue includes leg drive for this exercise."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "Reviewed all six frames and 6-to-1 in the actual player. Frame 6 reuses frame 3 at shoulder height, with a lowering cue; next frame completes the return to floor. This is a six-still guide, not continuous interpolated motion."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "Actual ExerciseFormFrames at 390x844 in light mode: all six final images and loop inspected with registered cues; no clipping. Seamless black backdrop removes the previously visible floor rectangle."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "Actual ExerciseFormFrames at 390x844 in dark mode: full overhead apparatus stays in frame, planted feet stay aligned, cues remain legible and no textured floor patch appears."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/clean-and-press/1.webp",
+      "sha256": "3c8f74e4e64f3758faeed32fe539fdb2afcf27166a6fc038712843a25e08e093",
+      "anchors": {
+        "nearSoleLeft": {
+          "x": 666,
+          "y": 899
+        },
+        "nearSoleRight": {
+          "x": 762,
+          "y": 899
+        },
+        "farSoleLeft": {
+          "x": 785,
+          "y": 891
+        },
+        "farSoleRight": {
+          "x": 889,
+          "y": 891
+        }
+      },
+      "invariantDimensions": {
+        "nearSoleWidth": 97,
+        "farSoleWidth": 105
+      }
+    },
+    {
+      "path": "form-frames/clean-and-press/2.webp",
+      "sha256": "e22880fedd9d2c7f14cbb638c0c46d117c32a46209a35849b4442ab0fc670ec4",
+      "anchors": {
+        "nearSoleLeft": {
+          "x": 666,
+          "y": 899
+        },
+        "nearSoleRight": {
+          "x": 762,
+          "y": 899
+        },
+        "farSoleLeft": {
+          "x": 785,
+          "y": 891
+        },
+        "farSoleRight": {
+          "x": 889,
+          "y": 891
+        }
+      },
+      "invariantDimensions": {
+        "nearSoleWidth": 97,
+        "farSoleWidth": 105
+      }
+    },
+    {
+      "path": "form-frames/clean-and-press/3.webp",
+      "sha256": "8e837f8272d273276fec6058c8016701858987ab7c2887369154090fb2af7de4",
+      "anchors": {
+        "nearSoleLeft": {
+          "x": 666,
+          "y": 899
+        },
+        "nearSoleRight": {
+          "x": 762,
+          "y": 899
+        },
+        "farSoleLeft": {
+          "x": 785,
+          "y": 891
+        },
+        "farSoleRight": {
+          "x": 889,
+          "y": 891
+        }
+      },
+      "invariantDimensions": {
+        "nearSoleWidth": 97,
+        "farSoleWidth": 105
+      }
+    },
+    {
+      "path": "form-frames/clean-and-press/4.webp",
+      "sha256": "f4e8bc5c32e354365217b236d0c7c67f26fa75d264ff4d42580054bbe310f5c2",
+      "anchors": {
+        "nearSoleLeft": {
+          "x": 666,
+          "y": 899
+        },
+        "nearSoleRight": {
+          "x": 762,
+          "y": 899
+        },
+        "farSoleLeft": {
+          "x": 785,
+          "y": 891
+        },
+        "farSoleRight": {
+          "x": 889,
+          "y": 891
+        }
+      },
+      "invariantDimensions": {
+        "nearSoleWidth": 97,
+        "farSoleWidth": 105
+      }
+    },
+    {
+      "path": "form-frames/clean-and-press/5.webp",
+      "sha256": "ca7c24baa1f44a7471c5a07d53be20efeba2054f0e4fcb55f8fb82e0838116de",
+      "anchors": {
+        "nearSoleLeft": {
+          "x": 666,
+          "y": 899
+        },
+        "nearSoleRight": {
+          "x": 762,
+          "y": 899
+        },
+        "farSoleLeft": {
+          "x": 785,
+          "y": 891
+        },
+        "farSoleRight": {
+          "x": 889,
+          "y": 891
+        }
+      },
+      "invariantDimensions": {
+        "nearSoleWidth": 97,
+        "farSoleWidth": 105
+      }
+    },
+    {
+      "path": "form-frames/clean-and-press/6.webp",
+      "sha256": "8e837f8272d273276fec6058c8016701858987ab7c2887369154090fb2af7de4",
+      "anchors": {
+        "nearSoleLeft": {
+          "x": 666,
+          "y": 899
+        },
+        "nearSoleRight": {
+          "x": 762,
+          "y": 899
+        },
+        "farSoleLeft": {
+          "x": 785,
+          "y": 891
+        },
+        "farSoleRight": {
+          "x": 889,
+          "y": 891
+        }
+      },
+      "invariantDimensions": {
+        "nearSoleWidth": 97,
+        "farSoleWidth": 105
+      }
+    }
+  ]
+}

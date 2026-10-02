@@ -15,6 +15,19 @@ const placard = (
 });
 
 export const RELEASED_FORM_PLACARDS = {
+  "clean-and-press": placard(
+    "clean-and-press",
+    ["Glutes", "Hamstrings", "Front Delts"],
+    ["Quads", "Triceps", "Core stabilisers"],
+    [
+      [0, "Set up", "Feet hip-width; grip bar with flat back."],
+      [0.25, "Pull", "Push through floor; keep the bar close."],
+      [0.45, "Catch", "Extend hips; catch bar on front delts."],
+      [0.6, "Dip", "Dip shallowly with an upright, braced torso."],
+      [1, "Drive", "Drive overhead; finish with straight arms."],
+      [0.45, "Lower", "Lower to shoulders, then toward the floor."],
+    ]
+  ),
   "diamond-push-ups": placard(
     "diamond-push-ups",
     ["Triceps"],
