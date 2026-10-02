@@ -155,6 +155,7 @@ describe("exportMealsCSV", () => {
     seedIn(MEALS, [
       {
         date: "2025-01-15",
+        createdAt: 1,
         foodName: "Chicken Breast",
         totalCalories: 300,
         totalProtein: 50,
@@ -169,16 +170,22 @@ describe("exportMealsCSV", () => {
   });
 
   it("handles missing fields with defaults", async () => {
-    seedIn(MEALS, [{ date: "2025-01-15" }]);
+    seedIn(MEALS, [{ date: "2025-01-15", createdAt: 1 }]);
     const csv = await exportMealsCSV("user1");
     expect(csv).toContain('2025-01-15,"",0,0,0,0');
   });
 
   it("omits soft-deleted meals, like every other reader of the diary", async () => {
     seedIn(MEALS, [
-      { date: "2025-01-15", foodName: "Kept", totalCalories: 300 },
       {
         date: "2025-01-15",
+        createdAt: 1,
+        foodName: "Kept",
+        totalCalories: 300,
+      },
+      {
+        date: "2025-01-15",
+        createdAt: 2,
         foodName: "Binned",
         totalCalories: 900,
         deletedAt: "2025-01-15T12:00:00.000Z",
@@ -231,6 +238,7 @@ describe("collection isolation", () => {
     seedIn(MEALS, [
       {
         date: "2025-01-15",
+        createdAt: 1,
         foodName: "Chicken Breast",
         calories: 200,
         protein: 40,
