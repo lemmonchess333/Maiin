@@ -1136,6 +1136,12 @@ Default canonical vocabulary — `needs-triage` / `needs-info` /
 auto-created on first `/triage` use if absent on GitHub. See
 `docs/agents/triage-labels.md`.
 
+### Vendored skills
+
+Most of `.claude/skills/` is copied from other repos. Where each skill came
+from, its version and the local changes to carry into the next update are in
+`docs/agents/vendored-skills.md`.
+
 ### Reusable prompts
 
 Two paste-ready session prompts live in `docs/agents/`, each carrying the
@@ -1152,7 +1158,9 @@ calls with both options measured, and the ratchet baselines it left.
 
 Single-context. `CONTEXT.md` at repo root (seed; fill with domain
 vocabulary as it crystallises); ADRs in `docs/adr/`. See
-`docs/agents/domain.md`.
+`docs/agents/domain.md`. The domain skills call the glossary
+`GLOSSARY.md`: here it is `CONTEXT.md`'s "Domain glossary" section. Update
+that, and don't create a `GLOSSARY.md`.
 
 Training-programming evidence handoffs (integrated 2026-08-09): start at
 `docs/training-programming-claude-handoff.md`, which indexes the lifting
