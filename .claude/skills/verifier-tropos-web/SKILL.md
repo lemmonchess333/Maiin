@@ -132,8 +132,10 @@ MUST:
 - Use `waitUntil: "domcontentloaded"` not `"networkidle"` — Firebase
   SDK keeps the network busy with background calls that have no
   emulator route
-- Use `#login-email` / `#login-password` / `button[type="submit"]`
-  selectors (matches `e2e/helpers/auth.ts`)
+- Reach the sign-in form the way `openSignInForm` in `e2e/helpers/auth.ts`
+  does: a browser that has never signed in opens on the welcome screen, so
+  tap "I have an account" first. Then use the `#login-email` /
+  `#login-password` / `button[type="submit"]` selectors
 - Wait for `<nav>` first child visible as the sign-in success signal
   (bottom-nav only renders inside authenticated Layout)
 - Capture console errors via `page.on("pageerror", ...)` and
