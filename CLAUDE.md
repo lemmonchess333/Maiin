@@ -456,9 +456,8 @@ These are distilled from the project's own rework history — classes of mistake
   rest.
   The discriminator is not "don't assert on writes". Seven other no-write
   sites in the repo are sound, and not because their writers still write
-  documents — that was my first answer and it is wrong;
-  `workoutCompletionQueue` writes through a `runTransaction`. They are
-  sound because in each, the empty log is a SECOND assertion:
+  documents (`workoutCompletionQueue` writes through a `runTransaction`).
+  They are sound because in each, the empty log is a SECOND assertion:
   `workoutCorrection` anchors on two `rejects.toThrow(...)`,
   `workoutCompletionQueue` on the flush return plus both queue lengths,
   `WeightLogSheetRecovery` on a visible control and an alert's text, and
