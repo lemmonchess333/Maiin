@@ -49,7 +49,7 @@ non-negotiables, inline so you can't miss them:
    Sans.** Two fonts, no third — ever.
 4. **44px minimum touch target** (iOS shell).
 5. **Use the primitives** (`Button`, `IconButton`, `Banner`, `BottomSheet`,
-   `Dialog`, `.ds-card`, `.ds-input`) — don't hand-roll a button from a `div`.
+   `Dialog`, `Card`, `.ds-input`) — don't hand-roll a button from a `div`.
 6. **Colours come from tokens, never hardcoded hex** — Tailwind classes
    (`bg-primary`, `text-muted-foreground`, `bg-primary-strong` for filled CTAs)
    or the `THEME` object from `@/lib/theme` (e.g. `THEME.running` for coral,
