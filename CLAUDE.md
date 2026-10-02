@@ -71,7 +71,7 @@ e2e/                    # Playwright specs; screenshot capture specs in e2e/scre
 - **Base path:** `/Maiin/` (for GitHub Pages deployment)
 - **Offline support:** `src/lib/offlineQueue.ts` queues writes when offline
 - **Error boundaries:** `RouteErrorBoundary` (page-level) and `SectionErrorBoundary` (card-level)
-- **Route prefetching:** `PREFETCH_MAP` in App.tsx preloads adjacent pages via `requestIdleCallback`
+- **Tab preloading:** `BottomNavigation` calls `preloadTab()` (`src/lib/preloadTab.ts`) to load a tab's page as the person reaches for it
 - **Auth routing:** Three route sets — unauthenticated (Login), onboarding incomplete (Onboarding), authenticated (full app)
 - **App version:** Defined via `__APP_VERSION__`, read from `package.json` at build time
 
