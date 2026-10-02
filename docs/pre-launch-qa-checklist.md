@@ -7,8 +7,8 @@ here needs eyes on a real device, a real account pair, real payment rails, or
 a production observation window** — none can be done from a headless code
 environment.
 
-Source of truth for the underlying detail remains CLAUDE.md → "Pre-launch QA
-backlog"; this file is the execution-ordered overlay. Tick items here as you
+Source of truth for the underlying detail remains `docs/qa/pre-launch-backlog.md`;
+this file is the execution-ordered overlay. Tick items here as you
 clear them.
 
 Priority key: **P0** = launch blocker (billing / security / data-loss / the

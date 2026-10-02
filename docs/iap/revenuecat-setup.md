@@ -223,8 +223,8 @@ Variables) before relying on it.
   `syncRevenueCatEntitlement` callable (server, `functions/revenueCat.js`). Both
   re-read the subscriber from the REST API and write `subscriptionTier` /
   `subscriptionExpiresAt`, which also covers the lifecycle events slice 4
-  planned. Needs the **webhook + REST secrets** before it merges; the QA row in
-  CLAUDE.md has the checks.
+  planned. Needs the **webhook + REST secrets** before it merges; the RevenueCat
+  row in `docs/qa/pre-launch-backlog.md` has the checks.
 - **Slices 4–8:** lifecycle webhooks, restore/manage, the web "Get it on iOS"
   funnel, then the sandbox-device test that retires the hand-rolled Apple path.
 

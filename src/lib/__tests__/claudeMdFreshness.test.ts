@@ -223,10 +223,9 @@ describe("CLAUDE.md — retired features", () => {
       name: "crews",
       probe: "src/hooks/useCrews.ts",
       retiredIn: "#1700 (Spaces/Challenges/Circles own their jobs)",
-      // The QA-backlog row is a historical record, explicitly marked
-      // SUPERSEDED rather than rewritten — matching the append-only
-      // discipline the plan-file lock rule uses.
-      allowedMentions: 2,
+      // None left: the QA rows that mention crews as history moved to
+      // docs/qa/pre-launch-backlog.md.
+      allowedMentions: 0,
     },
     {
       name: "AmbientGlow",

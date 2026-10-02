@@ -571,5 +571,5 @@ Re-verify a claim on this list before repeating it.
   verified-request telemetry it describes.
 - The Console deployed-source spot-checks in `docs/post-deploy-verification.md`
   for anything that touched `functions/`.
-- A Google Cloud budget alert (CLAUDE.md, cost & margin row).
+- A Google Cloud budget alert (`docs/qa/pre-launch-backlog.md`, cost & margin row).
 - GitHub secret scanning and push protection on the repository.

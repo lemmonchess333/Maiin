@@ -12,7 +12,7 @@
  * Three documents said the opposite. `ci.yml`'s own header ("Until then
  * this runs and reports red but does not block auto-merge"), the
  * operator checklist in `docs/agents/app-improvement-prompt.md`, and
- * CLAUDE.md's `firebase` row, which built an argument on it: that a
+ * the QA backlog's `firebase` row, which built an argument on it: that a
  * `firebase` minor carrying +62 kB gzip could ride a red
  * `check:dist-size` straight past auto-merge, because the ratchet runs
  * in a job nothing required. It cannot. The ratchet is a STEP of `unit`.
