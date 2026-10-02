@@ -170,8 +170,7 @@ exists — pinned by `claudeMdFreshness.test.ts` in both directions
 
 ### goalSpace/ · spaces/ · partnerStreak/ · run/
 
-Four modules that shipped after this section was first written and were
-never listed. `goalSpace/` owns Goal Spaces (Circles) — membership,
+`goalSpace/` owns Goal Spaces (Circles) — membership,
 invites, weekly focus, check-ins. `spaces/` owns the space definitions,
 including the race spaces a `raceGoal.eventSpaceId` binds to.
 `partnerStreak/` owns partner bonds and shared-day streaks (the SERVER is
