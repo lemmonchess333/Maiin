@@ -4,7 +4,7 @@
 
 The reviewed Hanging Leg Raise, Plank and Crunches guides are now live on Firebase Hosting from commit `f527f68`. [Production verification](releases/2026-10-03/PRODUCTION_VERIFICATION.json) checks all 18 delivered frames and three thumbnails against local SHA-256 hashes.
 
-The [Shrugs repair](releases/2026-10-03/SHRUGS.md) now adds a reviewed branch guide with fixed legs and reusable rigid equipment layers. Four fixed-body patches and nine visible equipment-face comparisons pass exactly; mobile playback passes in both themes. It is not yet part of the deployed `f527f68` release.
+The [Shrugs repair](releases/2026-10-03/SHRUGS.md) now adds a reviewed branch guide with fixed legs and reusable rigid equipment layers. Four fixed-body patches and nine visible equipment-face comparisons pass exactly; mobile playback passes in both themes. It is now live on Firebase Hosting from `1cf1f24`; [production verification](releases/2026-10-03/SHRUGS_PRODUCTION_VERIFICATION.json) confirms all six frames, the card thumbnail and the registry bundle match the reviewed local build.
 
 The [forearm Plank release](releases/2026-10-03/PLANK.md) adds a reviewed
 entry, timed hold and controlled exit, six lossless delivery files, exact cues
@@ -22,7 +22,7 @@ WebPs, seven-word cues, a reviewed card thumbnail and actual mobile playback.
 The live registry now contains **60 released sets** (51 approved, 3 owner-released
 with findings, 6 historical sets needing review), totalling 178,546,306 frame
 bytes. Of the 141 in-scope exercises, 81 still have no released artwork.
-Side Plank remains incomplete and excluded. `inventory.json` reflects this
+Side Plank remains incomplete and excluded. The [local contact repair trials](pilots/side-plank-composite-20261003/README.md) fix vertical support drift but retain a measured fist mismatch; neither trial is approved. `inventory.json` reflects this
 branch's current registry, not deployment status.
 
 ## Previous checkpoint — 2 October 2026
