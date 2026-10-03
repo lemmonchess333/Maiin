@@ -1,5 +1,11 @@
 # Exercise artwork continuation — 2 October 2026
 
+**Update, 3 October:** Hanging Leg Raise has since been integrated with reviewed
+delivery files, shorter production cues and a card thumbnail. See
+[the release record](../../releases/2026-10-03/README.md). This folder preserves
+the original draft checkpoint and its original cue/image hashes. Side Plank
+remains incomplete; its rejection findings still apply.
+
 Base: main `5fe0da9dc9f69fb54e6101754a8bc4c939053df2`.
 
 | Exercise                        | Result                                                                       | Selected frames               |

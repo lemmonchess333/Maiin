@@ -1,0 +1,10 @@
+{
+  "reference": "form-frames/leg-raise/3.webp",
+  "referenceSha256": "954e7e5a0044dd972d7a69701b298838628740849e5b3bb8361f3a068f140507",
+  "image": "leg-raise.png",
+  "imageSha256": "719f086e5da240ead7d1c256700af21dd203646758de03745b5b13f9f7c8d9b6",
+  "method": "image_gen.imagegen transparent-background edit of the reviewed endpoint; station uprights removed for compact card framing. Form frames are unchanged.",
+  "reviewStatus": "reviewed",
+  "reviewedAt": "2026-10-03T06:01:20.266Z",
+  "reviewEvidence": "docs/exercise-art/releases/2026-10-03/evidence"
+}

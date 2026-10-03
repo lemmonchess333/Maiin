@@ -5,6 +5,10 @@ import ExerciseRigDemo from "../../src/components/ExerciseRigDemo";
 import ExerciseFormFrames from "../../src/components/ExerciseFormFrames";
 import { getAuthoredBeats, getFormBeats } from "../../src/lib/bodyRig";
 import { FORM_ARTWORK } from "../../src/lib/formArtwork";
+import {
+  getFormArtCutout,
+  formArtCutoutUrl,
+} from "../../src/lib/formArtCutouts";
 import { Button } from "../../src/components/ui/Button";
 import batch from "../../docs/exercise-art/BATCH_REVIEW_MANIFEST.json";
 import recovered from "../../docs/exercise-art/RECOVERED_DRAFTS.json";
@@ -55,6 +59,7 @@ export default function Review() {
   const curlDraft = id === "db-curl (draft)";
   const batchDraft = batchDrafts[id];
   const draft = curlDraft || Boolean(batchDraft);
+  const cardArt = draft ? null : getFormArtCutout(id);
   const hasReleasedArtwork = Object.hasOwn(
     FORM_ARTWORK,
     id.replace(/ \(draft\)$/, "")
@@ -130,6 +135,17 @@ export default function Review() {
               onStep={setStep}
               stepRequest={request}
             />
+          )}
+          {cardArt && (
+            <div className="ds-card p-3" data-testid="card-artwork">
+              <img
+                src={formArtCutoutUrl(cardArt)}
+                alt={`${id} card artwork`}
+                width={cardArt.width}
+                height={cardArt.height}
+                className="h-28 w-full object-contain"
+              />
+            </div>
           )}
           {beats.map((beat, i) => (
             <Button

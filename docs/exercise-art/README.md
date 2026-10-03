@@ -1,6 +1,17 @@
 # Exercise artwork migration
 
-## Current checkpoint — 2 October 2026
+## Current checkpoint — 3 October 2026
+
+Hanging Leg Raise is now integrated as a reviewed production guide on this
+branch. The [release record](releases/2026-10-03/README.md) covers six lossless
+WebPs, seven-word cues, a reviewed card thumbnail and actual mobile playback.
+The live registry now contains **57 released sets** (48 approved, 3 owner-released
+with findings, 6 historical sets needing review), totalling 169,078,842 frame
+bytes. Of the 141 in-scope exercises, 84 still have no released artwork.
+Side Plank remains incomplete and excluded. `inventory.json` reflects this
+branch's current registry, not deployment status.
+
+## Previous checkpoint — 2 October 2026
 
 The live registry now contains **56 released sets**: 47 with recorded approval,
 3 owner-released with findings, and 6 historical sets needing review. The

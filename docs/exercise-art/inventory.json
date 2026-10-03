@@ -2,9 +2,9 @@
   "catalogue": 152,
   "inScope": 141,
   "existingSets": 6,
-  "newlyApproved": 47,
+  "newlyApproved": 48,
   "ownerReleasedWithFindings": 3,
-  "releasedBytes": 165641054,
+  "releasedBytes": 169078842,
   "errors": [],
   "inventory": [
     {
@@ -1038,9 +1038,9 @@
       "name": "Hanging Leg Raise",
       "equipment": "Bodyweight",
       "inScope": true,
-      "authoredBeats": 0,
-      "status": "needs-artwork",
-      "bytes": 0
+      "authoredBeats": 6,
+      "status": "approved",
+      "bytes": 3437788
     },
     {
       "id": "toe-touches",

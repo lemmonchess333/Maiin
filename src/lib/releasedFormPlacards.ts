@@ -15,6 +15,19 @@ const placard = (
 });
 
 export const RELEASED_FORM_PLACARDS = {
+  "leg-raise": placard(
+    "leg-raise",
+    ["Rectus abdominis"],
+    ["Obliques"],
+    [
+      [0, "Hang and brace", "Hang with straight arms; brace without swinging."],
+      [0.5, "Begin raise", "Raise both straight legs without kicking."],
+      [1, "Reach parallel", "Bring your legs level with your hips."],
+      [1, "Hold control", "Pause briefly; keep your torso steady."],
+      [0.5, "Lower slowly", "Lower both legs together under control."],
+      [0, "Return to hang", "Return below your hips without swinging back."],
+    ]
+  ),
   "clean-and-press": placard(
     "clean-and-press",
     ["Glutes", "Hamstrings", "Front Delts"],

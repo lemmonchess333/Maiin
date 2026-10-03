@@ -3,8 +3,8 @@
  *
  * The cut-outs are for the places a drawing sits on a CARD rather than on
  * the form guide's stage: Home's Today card, exercise rows, the finish
- * screen. 35 of the 42 released sets were drawn on solid black, which on a
- * card reads as a black box.
+ * screen. Many released sets were drawn on solid black, which on a card
+ * reads as a black box.
  *
  * The reviewed frame sets under public/form-frames are NOT touched. Their
  * release records pin every delivered frame's sha256
@@ -27,16 +27,22 @@
  *      anti-aliased edge fades instead of leaving a dark rim. (A ramp that
  *      started at zero left the backdrop at 10-30% opacity, invisible on a
  *      dark card and a grey box on a white one.)
+ * A reviewed transparent source can be supplied in
+ * docs/exercise-art/cutout-sources/<id>.json. Its image and reference hashes
+ * must match; this preserves imagegen/artist edits when regenerating cards.
  * Sets that already carry their own alpha are only trimmed and scaled.
  * Every image is then trimmed to its content with 4% padding and scaled to
  * fit 480 px on its long side.
  *
  *   npm run art:cutouts
+ *   npm run art:cutouts -- --only=leg-raise
  */
 import { createHash } from "node:crypto";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import sharp from "sharp";
+import { FORM_ART_CUTOUTS } from "../../src/lib/formArtCutouts.data";
+import { preparedCutoutPath } from "./prepared-cutout";
 import {
   FORM_ARTWORK,
   getReleasedFormArtwork,
@@ -219,11 +225,47 @@ async function main() {
   const ids = Object.keys(FORM_ARTWORK)
     .filter((id) => getReleasedFormArtwork(id))
     .sort();
+  const only = process.argv.find((arg) => arg.startsWith("--only="))?.slice(7);
+  if (only && !ids.includes(only))
+    throw new Error(`Unknown released exercise: ${only}`);
   for (const id of ids) {
     const art = getReleasedFormArtwork(id)!;
     const sourcePath = resolve(ROOT, "public", art.reference);
     const sourceBytes = readFileSync(sourcePath);
-    const { rgba, width, height, keyed } = await cutOut(sourcePath);
+    if (only && id !== only) {
+      const previous = FORM_ART_CUTOUTS[id];
+      if (
+        !previous ||
+        previous.source !== art.reference ||
+        previous.sourceSha256 !== sha256(sourceBytes) ||
+        previous.sha256 !==
+          sha256(readFileSync(resolve(ROOT, "public", previous.src)))
+      ) {
+        throw new Error(
+          `${id}: stale existing cutout; regenerate it before a targeted export`
+        );
+      }
+      rows.push(`  ${JSON.stringify(id)}: ${JSON.stringify(previous)},`);
+      continue;
+    }
+    // Preserve reviewed artist/imagegen cutouts across future regenerations.
+    // Their transparent source stays bound to the exact released reference.
+    const preparedDir = resolve(ROOT, "docs/exercise-art/cutout-sources");
+    const prepared = preparedCutoutPath(
+      preparedDir,
+      id,
+      art.reference,
+      sourceBytes
+    );
+    const inputPath = prepared ?? sourcePath;
+    if (prepared) {
+      const alpha = await sharp(prepared).stats();
+      if (alpha.channels.length !== 4 || alpha.channels[3].min !== 0)
+        throw new Error(
+          `${id}: prepared cutout needs a transparent background`
+        );
+    }
+    const { rgba, width, height, keyed } = await cutOut(inputPath);
     const box = contentBox(rgba, width, height);
     const scale = Math.min(1, LONG_SIDE / Math.max(box.width, box.height));
     const outW = Math.round(box.width * scale);
@@ -253,8 +295,8 @@ export interface FormArtCutout {
   src: string;
   width: number;
   height: number;
-  /** True when the black backdrop was keyed out; false when the set
-   *  already carried its own alpha. */
+  /** True when the black backdrop was keyed out; false when the reviewed
+   *  input already carried its own alpha. */
   keyed: boolean;
   /** The released reference frame it was cut from. */
   source: string;

@@ -7,8 +7,8 @@ export interface FormArtCutout {
   src: string;
   width: number;
   height: number;
-  /** True when the black backdrop was keyed out; false when the set
-   *  already carried its own alpha. */
+  /** True when the black backdrop was keyed out; false when the reviewed
+   *  input already carried its own alpha. */
   keyed: boolean;
   /** The released reference frame it was cut from. */
   source: string;
@@ -17,16 +17,6 @@ export interface FormArtCutout {
 }
 
 export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
-  "clean-and-press": {
-    src: "form-art/clean-and-press.webp",
-    width: 480,
-    height: 422,
-    keyed: true,
-    source: "form-frames/clean-and-press/1.webp",
-    sourceSha256:
-      "3c8f74e4e64f3758faeed32fe539fdb2afcf27166a6fc038712843a25e08e093",
-    sha256: "afc9212ee093ad435cf415fa70b75eabf51a03d8f7be5f89004239171753372f",
-  },
   "arnold-press": {
     src: "form-art/arnold-press.webp",
     width: 281,
@@ -166,6 +156,16 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
     sourceSha256:
       "814f2db721603cb6c39f3bfb8053d38e35f9d6ee8388f872d902420bfc0e9f30",
     sha256: "743de2f9a7c0585e3d4c3f1c68eac55a21363e5857757ece539ea975133772ed",
+  },
+  "clean-and-press": {
+    src: "form-art/clean-and-press.webp",
+    width: 480,
+    height: 422,
+    keyed: true,
+    source: "form-frames/clean-and-press/1.webp",
+    sourceSha256:
+      "3c8f74e4e64f3758faeed32fe539fdb2afcf27166a6fc038712843a25e08e093",
+    sha256: "afc9212ee093ad435cf415fa70b75eabf51a03d8f7be5f89004239171753372f",
   },
   "concentration-curl": {
     src: "form-art/concentration-curl.webp",
@@ -366,6 +366,16 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
     sourceSha256:
       "2fc8466bb1c13bdeb4a8f1aa11fa4e62921e5fc9156bda5488c15d84416f4ea3",
     sha256: "594722a8afb61456e4b8ddcf7725e954cbde8a169049f28605fd520c5159e70c",
+  },
+  "leg-raise": {
+    src: "form-art/leg-raise.webp",
+    width: 422,
+    height: 480,
+    keyed: false,
+    source: "form-frames/leg-raise/3.webp",
+    sourceSha256:
+      "954e7e5a0044dd972d7a69701b298838628740849e5b3bb8361f3a068f140507",
+    sha256: "bdde13adac6b2d933f487325e4369293df85eab6c3ca2c8578b70e80c66aa41b",
   },
   "lu-raise": {
     src: "form-art/lu-raise.webp",
