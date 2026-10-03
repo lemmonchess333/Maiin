@@ -1,8 +1,9 @@
 /**
- * Shared daily-totals summer. Home's food card and Food's day both read a
- * day's totals through `useMeals().getDailyTotals`, which sums here, and
- * the streak and Food's week strip sum their own meal lists here too, so
- * no surface can drift again. The bug this ended: Home's `useHomeData`
+ * Shared daily-totals summer. Home's food card reads a day's totals
+ * through `useMeals().getDailyTotals`, which sums here; Food's day sums
+ * the meals it shows (so a deleted entry leaves the total while its Undo
+ * is open), and the streak and Food's week strip sum their own meal lists
+ * here too, so no surface can drift again. The bug this ended: Home's `useHomeData`
  * estimated carbs and fat from a 62/38 split of leftover calories while
  * useMeals read the real values. Same doc → same totals → same numbers on
  * every surface.

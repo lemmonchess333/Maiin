@@ -491,8 +491,8 @@ export function useMeals(dateWindow?: { from: string; to: string }) {
     [meals]
   );
 
-  // Routed through the shared sumMealTotals util. Home's food card and
-  // Food's day both read their totals here, so they cannot drift. If you're
+  // Routed through the shared sumMealTotals util, which Food's day also sums
+  // its visible meals with, so the two cannot drift. If you're
   // adding a new macro (fibre, sugar, sodium, something new), update
   // mealTotals.ts — every caller gets it for free.
   const getDailyTotals = useCallback(
