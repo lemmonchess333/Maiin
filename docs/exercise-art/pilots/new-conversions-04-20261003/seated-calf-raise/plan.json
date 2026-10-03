@@ -1,0 +1,22 @@
+{
+  "variation": "Seated machine calf raise with knee angle near90degrees, pads on lower thighs, forefeet on short step and heels free. Soleus emphasis.",
+  "camera": "Fixed side three-quarter, entire seated machine and both feet visible.",
+  "equipment": "Plate-loaded seated calf machine with one pivoting thigh-pad lever and fixed seat and step.",
+  "anchors": ["seat base", "forefoot step", "lever pivot"],
+  "muscles": {
+    "primary": ["Soleus"],
+    "secondary": ["Gastrocnemius lighter"]
+  },
+  "beats": [
+    [0, "Set your stretch", "Sit tall; lower heels below the step."],
+    [0.5, "Raise your heels", "Raise heels; keep thighs against the pads."],
+    [1, "Squeeze your calves", "Lift heels high against the thigh pads."],
+    [1, "Hold the top", "Pause briefly; keep both forefeet supported."],
+    [0.5, "Lower slowly", "Lower heels slowly without bouncing."],
+    [0, "Return to stretch", "Let heels drop below the step gently."]
+  ],
+  "sequence": [1, 2, 3, 3, 2, 1],
+  "exerciseId": "seated-calf-raise",
+  "status": "draft-awaiting-review",
+  "releaseApproved": false
+}

@@ -1,0 +1,22 @@
+{
+  "variation": "Two matching dumbbells picked up using a deadlift, carried with short controlled steps, and set down under control.",
+  "camera": "Fixed front-side three-quarter, full body and both dumbbells, space around feet.",
+  "equipment": "Two matching hex dumbbells.",
+  "anchors": ["ground plane"],
+  "muscles": {
+    "primary": ["Forearms", "Upper trapezius", "Core"],
+    "secondary": ["Glutes", "Legs lighter"]
+  },
+  "beats": [
+    [0, "Prepare to lift", "Hinge and bend knees; grip both weights."],
+    [0.25, "Stand tall", "Stand tall; brace with shoulders packed down."],
+    [0.5, "Take short steps", "Walk forward with short, controlled steps."],
+    [1, "Keep your posture", "Keep weights steady and your chest tall."],
+    [0.25, "Stop with control", "Stop walking before lowering the weights."],
+    [0, "Set weights down", "Hinge and bend knees; lower without dropping."]
+  ],
+  "sequence": [1, 2, 3, 4, 2, 1],
+  "exerciseId": "farmers-carry",
+  "status": "draft-awaiting-review",
+  "releaseApproved": false
+}

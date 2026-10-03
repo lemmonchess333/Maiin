@@ -1,0 +1,36 @@
+{
+  "exerciseId": "farmers-carry",
+  "tool": "image_gen",
+  "identity": {
+    "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+  },
+  "nativeSources": [
+    {
+      "path": "docs/exercise-art/pilots/new-conversions-04-20261003/farmers-carry/sources/pose-1.png",
+      "sha256": "db4621c1276b460e7bb36d57ce19fb987e6376aa894d97df5a8cbd01214c05ca",
+      "bytes": 1069269
+    },
+    {
+      "path": "docs/exercise-art/pilots/new-conversions-04-20261003/farmers-carry/sources/pose-2.png",
+      "sha256": "835d1dae83027bc044c2dce1d925d4588dc045ab5c86e64170fb83ae1e4219fa",
+      "bytes": 935116
+    },
+    {
+      "path": "docs/exercise-art/pilots/new-conversions-04-20261003/farmers-carry/sources/pose-3.png",
+      "sha256": "7eebe60de613699b94d835c6c30497d4757378040cede327ccc7532d895175a4",
+      "bytes": 1409125
+    },
+    {
+      "path": "docs/exercise-art/pilots/new-conversions-04-20261003/farmers-carry/sources/pose-4.png",
+      "sha256": "6f11fd96151d5e4d18f15fa9b0707a5ae7cf27810f030375d1b67dd7e53a8357",
+      "bytes": 1049851
+    }
+  ],
+  "processing": "Native PNG bytes copied unchanged. Return/hold slots explicitly reuse earlier poses. No body rescaling, compositing, or warping.",
+  "reviewFindings": [
+    "Pickup, upright hold, and alternating walking steps are distinct. Upright shoulders and straight loaded arms remain readable.",
+    "Pickup athlete and dumbbells change scale relative to upright pose; pickup weights do not clearly contact the floor. Step width and foot ground contact need review before release."
+  ],
+  "releaseApproved": false
+}

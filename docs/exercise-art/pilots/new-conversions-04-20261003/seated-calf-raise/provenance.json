@@ -1,0 +1,36 @@
+{
+  "exerciseId": "seated-calf-raise",
+  "tool": "image_gen",
+  "identity": {
+    "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+  },
+  "nativeSources": [
+    {
+      "path": "docs/exercise-art/pilots/new-conversions-04-20261003/seated-calf-raise/sources/pose-1.png",
+      "sha256": "c3f4549e51e7a6574b0cdbf1e3deaaa01192de487865a7a8bf676b264a770bc9",
+      "bytes": 951668
+    },
+    {
+      "path": "docs/exercise-art/pilots/new-conversions-04-20261003/seated-calf-raise/sources/pose-2.png",
+      "sha256": "d171c64d9eb68c0489df2c0fd58e59eff428610c6970c58d89beaa2cc9fef503",
+      "bytes": 971806
+    },
+    {
+      "path": "docs/exercise-art/pilots/new-conversions-04-20261003/seated-calf-raise/sources/pose-3.png",
+      "sha256": "b187bdc4df61c0ce32fc57717be788b4d5258abe7e8dd0130f4fcf2def2f3d8d",
+      "bytes": 1333490
+    },
+    {
+      "path": "docs/exercise-art/pilots/new-conversions-04-20261003/seated-calf-raise/sources/rejected-initial-machine.png",
+      "sha256": "c44d353bf8b2edf68ea3f3330145b3fd94c4bf647abc73346d8c498842fc02e7",
+      "bytes": 987243
+    }
+  ],
+  "processing": "Native PNG bytes copied unchanged. Return/hold slots explicitly reuse earlier poses. No body rescaling, compositing, or warping.",
+  "reviewFindings": [
+    "Rear pivot and forward load now have a plausible resistance direction; rejected first machine is retained in sources.",
+    "Bottom pose remains near neutral rather than a full below-step stretch. Mid/top heel angles are too similar, and plate rotation is inconsistent with thigh-pad travel. Do not release."
+  ],
+  "releaseApproved": false
+}
