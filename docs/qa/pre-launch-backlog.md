@@ -399,6 +399,17 @@ Modelled 2026-07-05. Apple's cut dwarfs all infra: at £3.99/mo, Apple takes £0
       to 30% if the renewal lapses or revenue crosses the threshold.
 - [ ] **Set a Google Cloud budget alert** (GCP Console → Billing → Budgets & alerts): email at, e.g., >£50/mo. Single smoke-detector across Gemini/Vertex, Firebase, and the future ORS proxy. Optionally set a hard Vertex/Gemini quota ceiling.
 - [ ] When Run11 (ORS) ships: wire per-user quota in the proxy (one user can't drain the daily 2,500), log quota-exceeded, and confirm the straight-line fallback fires on 429.
+- [ ] **Confirm the AI food calls log their token counts** (shipped in
+      #2558, 2026-10-02). After a Pro photo scan or a Pro typed meal,
+      open Google Cloud console → Logging → Logs Explorer for
+      `adaptive-fitness-af8bb` and search
+      `"analyzeFood.usage" OR "analyzeFoodText.usage"`. Each entry should
+      carry `promptTokens`, `outputTokens` and `totalTokens` as numbers.
+      `null` in all three means Vertex replied without its usage block,
+      and the counts have to come from somewhere else. The entries hold
+      no prompt, image or reply (`vertexUsage` in
+      `functions/lib/vertexLogRedaction.js` reads only the counts). They
+      are what a prompt or model change gets measured against.
 
 ## App Store listing — public Terms/Privacy URLs (launch gate)
 
