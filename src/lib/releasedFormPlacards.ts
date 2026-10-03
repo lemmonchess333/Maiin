@@ -15,6 +15,19 @@ const placard = (
 });
 
 export const RELEASED_FORM_PLACARDS = {
+  crunches: placard(
+    "crunches",
+    ["Rectus abdominis"],
+    ["Obliques"],
+    [
+      [0, "Set and brace", "Plant feet; rest hands lightly behind head."],
+      [0.5, "Begin curl", "Curl your shoulders up using your abs."],
+      [1, "Lift shoulders", "Lift shoulder blades; keep lower back down."],
+      [1, "Pause briefly", "Pause without pulling on your neck."],
+      [0.5, "Lower slowly", "Lower your shoulders slowly with control."],
+      [0, "Return to floor", "Rest shoulders; keep your feet planted."],
+    ]
+  ),
   plank: placard(
     "plank",
     ["Rectus abdominis", "Obliques"],

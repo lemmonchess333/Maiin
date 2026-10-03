@@ -2,9 +2,9 @@
   "catalogue": 152,
   "inScope": 141,
   "existingSets": 6,
-  "newlyApproved": 49,
+  "newlyApproved": 50,
   "ownerReleasedWithFindings": 3,
-  "releasedBytes": 172173054,
+  "releasedBytes": 175681846,
   "errors": [],
   "inventory": [
     {
@@ -1011,9 +1011,9 @@
       "name": "Crunches",
       "equipment": "Bodyweight",
       "inScope": true,
-      "authoredBeats": 0,
-      "status": "needs-artwork",
-      "bytes": 0
+      "authoredBeats": 6,
+      "status": "approved",
+      "bytes": 3508792
     },
     {
       "id": "bicycle-crunch",

@@ -1,0 +1,129 @@
+{
+  "command": "npx playwright test --config playwright.form-art.config.ts",
+  "viewport": {
+    "width": 393,
+    "height": 852
+  },
+  "stats": {
+    "startTime": "2026-10-03T09:55:53.590Z",
+    "duration": 149034.239,
+    "expected": 30,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "screenshots": [
+    {
+      "path": "docs/exercise-art/releases/2026-10-03/crunches-evidence/dark-1.png",
+      "sha256": "2508644f2f48ffac669e5fe92dcc20b1659bc3b37e4dd10839b918c12ceb689b"
+    },
+    {
+      "path": "docs/exercise-art/releases/2026-10-03/crunches-evidence/dark-2.png",
+      "sha256": "2ab0057bd0947a167e9de53962535cee4977d033564c7e523b4811a0c29416df"
+    },
+    {
+      "path": "docs/exercise-art/releases/2026-10-03/crunches-evidence/dark-3.png",
+      "sha256": "36b0bb2c498deb1d8706126251945a4dc72c97eb14060471cf8240cc38510275"
+    },
+    {
+      "path": "docs/exercise-art/releases/2026-10-03/crunches-evidence/dark-4.png",
+      "sha256": "4b25c14a09536e23de9ce93a9ecd8ce84a66252edadf862ebf2eb31a8efb3421"
+    },
+    {
+      "path": "docs/exercise-art/releases/2026-10-03/crunches-evidence/dark-5.png",
+      "sha256": "2b2ba9ac6305ba8fd1b8d34705e0fa1f5c63b771f21357d1f594539ec16d9cdb"
+    },
+    {
+      "path": "docs/exercise-art/releases/2026-10-03/crunches-evidence/dark-6.png",
+      "sha256": "2195b900fab7fc5d17f7ac2331daa1fecf4e7ac49d724dde9bb2043d1bc2e30e"
+    },
+    {
+      "path": "docs/exercise-art/releases/2026-10-03/crunches-evidence/dark-card.png",
+      "sha256": "11fca0ad116894f276c6d113b206415a3295c3e440e173ca55255538d943cdb1"
+    },
+    {
+      "path": "docs/exercise-art/releases/2026-10-03/crunches-evidence/dark-page.png",
+      "sha256": "4e6b13b826b1e395cd72bcb611618bc8df67bbf033468ce7ffd9de971b340fbd"
+    },
+    {
+      "path": "docs/exercise-art/releases/2026-10-03/crunches-evidence/dark-pixels-1.png",
+      "sha256": "23093c6f4128ffdc22475651772cf33eae446f99838720e50f403f1a157e09b5"
+    },
+    {
+      "path": "docs/exercise-art/releases/2026-10-03/crunches-evidence/dark-pixels-2.png",
+      "sha256": "ca06b4ceeb7a8c8ac4fb2e304f7ec6abc82747d957374335ac56903ee15a1730"
+    },
+    {
+      "path": "docs/exercise-art/releases/2026-10-03/crunches-evidence/dark-pixels-3.png",
+      "sha256": "cc9bb6421ab05ab975a09263b04e197fa681a644a44f09078bbb654d535000c6"
+    },
+    {
+      "path": "docs/exercise-art/releases/2026-10-03/crunches-evidence/dark-pixels-4.png",
+      "sha256": "cc9bb6421ab05ab975a09263b04e197fa681a644a44f09078bbb654d535000c6"
+    },
+    {
+      "path": "docs/exercise-art/releases/2026-10-03/crunches-evidence/dark-pixels-5.png",
+      "sha256": "ca06b4ceeb7a8c8ac4fb2e304f7ec6abc82747d957374335ac56903ee15a1730"
+    },
+    {
+      "path": "docs/exercise-art/releases/2026-10-03/crunches-evidence/dark-pixels-6.png",
+      "sha256": "23093c6f4128ffdc22475651772cf33eae446f99838720e50f403f1a157e09b5"
+    },
+    {
+      "path": "docs/exercise-art/releases/2026-10-03/crunches-evidence/light-1.png",
+      "sha256": "0a3a4e3e6b7ab3fd06d9a33b87b2d624f19bfe8bf6486f1218e4fdcde40f3596"
+    },
+    {
+      "path": "docs/exercise-art/releases/2026-10-03/crunches-evidence/light-2.png",
+      "sha256": "b093755f7c6d6468f08beb21a0e882aa9a305ed75c2c56945c8039eedfd50a78"
+    },
+    {
+      "path": "docs/exercise-art/releases/2026-10-03/crunches-evidence/light-3.png",
+      "sha256": "ce6337fb7029ce4469f95ec98bbade0aba99a82f03a0b6a3afe580461bb1fd2d"
+    },
+    {
+      "path": "docs/exercise-art/releases/2026-10-03/crunches-evidence/light-4.png",
+      "sha256": "f4156b8c4ab3ddd69be561341c2b793a8fd8bffc422e0ce69c7368dac21bcc1c"
+    },
+    {
+      "path": "docs/exercise-art/releases/2026-10-03/crunches-evidence/light-5.png",
+      "sha256": "0912764f768cd9eeb4dcd1a32a9c4259bc25ef866173f75de89e20bc4585eef7"
+    },
+    {
+      "path": "docs/exercise-art/releases/2026-10-03/crunches-evidence/light-6.png",
+      "sha256": "8803699f96257ffd4a0597bb10eb475fdfc017525ae74b56eef6f6582feaa705"
+    },
+    {
+      "path": "docs/exercise-art/releases/2026-10-03/crunches-evidence/light-card.png",
+      "sha256": "042de92ba016e6c754075266788402f6dda65d903b5b403ae2f20ba098bbcd9c"
+    },
+    {
+      "path": "docs/exercise-art/releases/2026-10-03/crunches-evidence/light-page.png",
+      "sha256": "64cc252d06abbb394e6e1eccc3cba6a106163adf2c4dcb52a744e60bf2f3b647"
+    },
+    {
+      "path": "docs/exercise-art/releases/2026-10-03/crunches-evidence/light-pixels-1.png",
+      "sha256": "23093c6f4128ffdc22475651772cf33eae446f99838720e50f403f1a157e09b5"
+    },
+    {
+      "path": "docs/exercise-art/releases/2026-10-03/crunches-evidence/light-pixels-2.png",
+      "sha256": "ca06b4ceeb7a8c8ac4fb2e304f7ec6abc82747d957374335ac56903ee15a1730"
+    },
+    {
+      "path": "docs/exercise-art/releases/2026-10-03/crunches-evidence/light-pixels-3.png",
+      "sha256": "cc9bb6421ab05ab975a09263b04e197fa681a644a44f09078bbb654d535000c6"
+    },
+    {
+      "path": "docs/exercise-art/releases/2026-10-03/crunches-evidence/light-pixels-4.png",
+      "sha256": "cc9bb6421ab05ab975a09263b04e197fa681a644a44f09078bbb654d535000c6"
+    },
+    {
+      "path": "docs/exercise-art/releases/2026-10-03/crunches-evidence/light-pixels-5.png",
+      "sha256": "ca06b4ceeb7a8c8ac4fb2e304f7ec6abc82747d957374335ac56903ee15a1730"
+    },
+    {
+      "path": "docs/exercise-art/releases/2026-10-03/crunches-evidence/light-pixels-6.png",
+      "sha256": "23093c6f4128ffdc22475651772cf33eae446f99838720e50f403f1a157e09b5"
+    }
+  ]
+}

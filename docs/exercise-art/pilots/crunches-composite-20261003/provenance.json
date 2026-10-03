@@ -1,0 +1,30 @@
+{
+  "method": "User-authorized fixed-contact layer repair; original generated sources preserved.",
+  "files": [
+    {
+      "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+      "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+    },
+    {
+      "path": "docs/exercise-art/masters/crunches/1.png",
+      "sha256": "11a9cd61cc3d9cd028eb213af0cada295465b0a62108b4110edd05968879758f"
+    },
+    {
+      "path": "docs/exercise-art/pilots/continuation-20261003/crunches/plan.json",
+      "sha256": "7c6dc80a051de1d84b642ef8ce9fe0e0e24cebcc943dd9e90eb76b26aef02776"
+    },
+    {
+      "path": "docs/exercise-art/pilots/crunches-composite-20261003/build.mjs",
+      "sha256": "44f751f611b24d9c297a0c8eb5b7050fa364a84f6aacfb3f44d3e0d9ed8683a7"
+    },
+    {
+      "path": "docs/exercise-art/pilots/crunches-composite-20261003/composition.json",
+      "sha256": "4e2bb36709311b3dcbb164a917b81c1ba1d50199ebd73db34b679b31c247eba3"
+    },
+    {
+      "path": "docs/exercise-art/pilots/crunches-composite-20261003/registration.json",
+      "sha256": "79fe0aa4079ceb61e8394161f7069b530aeb56d2976585b6b95a8a0904cb9720"
+    }
+  ],
+  "delivery": "All six decoded WebPs equal repaired PNG RGB pixels exactly."
+}

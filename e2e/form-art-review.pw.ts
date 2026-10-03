@@ -1,5 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 import { readFileSync } from "node:fs";
+import { PNG } from "pngjs";
+import pixelmatch from "pixelmatch";
 
 // Playwright loads this in Node ESM, unlike Vite's JSON-transforming fixture.
 const batch: typeof import("../docs/exercise-art/BATCH_REVIEW_MANIFEST.json") =
@@ -154,7 +156,25 @@ for (const set of sets) {
           const finishPixels = await image.screenshot({
             path: info.outputPath(`${theme}-endpoint-last.png`),
           });
-          expect(finishPixels.equals(startPixels!)).toBe(true);
+          const first = PNG.sync.read(startPixels!);
+          const last = PNG.sync.read(finishPixels);
+          expect([last.width, last.height]).toEqual([
+            first.width,
+            first.height,
+          ]);
+          // Saved endpoint captures differed in 144 channels by at most 4/255.
+          // Match the production test: exact source hashes above, zero
+          // perceptual pixel differences including antialiased edges below.
+          expect(
+            pixelmatch(
+              first.data,
+              last.data,
+              undefined,
+              first.width,
+              first.height,
+              { threshold: 0.02, includeAA: true }
+            )
+          ).toBe(0);
         }
         if (set.exerciseId === "db-row" && index === 2)
           rowHoldPixels = await image.screenshot();

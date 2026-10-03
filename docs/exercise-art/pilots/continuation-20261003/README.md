@@ -2,6 +2,8 @@
 
 Base: `f16195eb460b6e7f573239ac81f8fc8585cc7235`.
 
+Historical draft checkpoint; the later [composite repair](../crunches-composite-20261003/README.md) is released separately. Original files and failed measurements below remain unchanged.
+
 This adds a native six-file **review candidate**, not a production release.
 Crunches remains absent from `FORM_ARTWORK` and `public/form-frames`. The
 released exercise count stays at 57, with 84 in-scope exercises still lacking
