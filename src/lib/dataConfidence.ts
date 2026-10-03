@@ -9,7 +9,7 @@
    Why a shared utility:
    - Today the Analytics page treats data-density inconsistently —
      nutrition section suppresses sparklines + deltas on thin samples
-     (via `showSparklines` / `showDelta` flags in History.tsx) while
+     (via `showSparklines` / `showDelta` flags in historyFigures.ts) while
      lifting, running, macros, and weight surfaces show decorations
      unconditionally. Result: "↓ 79% vs last" rendered alongside
      "Averages below are based on too few logged days to be reliable"

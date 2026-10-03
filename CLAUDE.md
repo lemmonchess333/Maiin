@@ -147,6 +147,7 @@ exists — pinned by `claudeMdFreshness.test.ts` in both directions
 | `socialApi.ts`          | Firestore social operations (feed, kudos, follow)              |
 | `shareCardGenerator.ts` | Share card image generation (html-to-image)                    |
 | `analytics.ts`          | Analytics computation                                          |
+| `historyFigures.ts`     | Analytics range figures: window, range before, join-day clamp  |
 | `subscription.ts`       | Pro subscription handling                                      |
 | `firebase.ts`           | Firebase app initialization & Firestore/Auth/Storage exports   |
 | `auth.tsx`              | AuthProvider, useAuth hook, UserProfile interface              |

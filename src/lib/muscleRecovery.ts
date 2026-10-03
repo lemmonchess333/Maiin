@@ -82,7 +82,7 @@ function daysBetween(fromKey: string, toKey: string): number {
  * Map saved workout docs (users/{uid}/workouts shape) to muscle hits.
  * Attribution follows the volume tally's rules: DB exercise resolved by
  * exerciseId first, then by name (the saved `category` field has shipped
- * unreliable data — see History.tsx); unattributable lifts are skipped.
+ * unreliable data — see `historyFigures.ts`); unattributable lifts are skipped.
  * Saved sets are completed-only. A planned exercise with no performed sets,
  * or preparation alone, cannot establish a training hit. Missing set data
  * stays unknown; legacy completed sets without a type still count.
