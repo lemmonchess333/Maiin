@@ -16,9 +16,10 @@ import {
  * nutrition covered SEVEN because it kept the current time of day on the
  * boundary and so pushed that date out, and adherence divided by seven.
  *
- * The three comparison FORMS are all still different, and legitimately
- * so — a workout is a local date string, a run is a Timestamp, a meal is
- * a date string parsed back to midnight. What has to agree is the set of
+ * The comparison FORMS can differ, and legitimately so — a workout is a
+ * local date string, a run is matched by the day it started (Lift3, a
+ * local date string too, through `src/lib/savedRuns.ts`), a meal is a
+ * date string parsed back to midnight. What has to agree is the set of
  * dates they admit. That is what this pins.
  */
 
@@ -26,13 +27,9 @@ import {
 const ADMITS = {
   // History `liftingData`: string compare against a local date key.
   lifting: (dateKey: string, since: Date) => dateKey >= localDateString(since),
-  // useRunningStats: a run's completedAt, taken at that date's local midnight.
-  running: (dateKey: string, since: Date) =>
-    new Date(
-      Number(dateKey.slice(0, 4)),
-      Number(dateKey.slice(5, 7)) - 1,
-      Number(dateKey.slice(8, 10))
-    ) >= since,
+  // useRunningStats (`inRunWindow`): the run's day against the window's
+  // first day key.
+  running: (dateKey: string, since: Date) => dateKey >= localDateString(since),
   // History `nutrition`: the meal's own date parsed back to local midnight.
   nutrition: (dateKey: string, since: Date) =>
     new Date(dateKey + "T00:00:00") >= since,

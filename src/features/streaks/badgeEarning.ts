@@ -28,7 +28,9 @@ export interface BalancedWorkout {
   date: string;
 }
 export interface BalancedRun {
-  completedAt: { toDate: () => Date } | null;
+  /** The local "YYYY-MM-DD" the run belongs to (Lift3: the day it started;
+   *  `SavedRun.day`). Never the day it finished. */
+  day: string;
 }
 
 export interface BadgeEarningContext {
@@ -86,12 +88,7 @@ function liftRunDaySets(
   }
   const runDays = new Set<string>();
   for (const r of runs) {
-    if (!r.completedAt) continue;
-    try {
-      runDays.add(format(r.completedAt.toDate(), "yyyy-MM-dd"));
-    } catch {
-      // unparseable timestamp — skip
-    }
+    if (typeof r.day === "string" && r.day) runDays.add(r.day);
   }
   return { liftDays, runDays };
 }
@@ -162,13 +159,7 @@ export function activeDayCounts(
 
   const runDays = new Set<string>();
   for (const r of runs) {
-    if (!r.completedAt) continue;
-    try {
-      const d = format(r.completedAt.toDate(), "yyyy-MM-dd");
-      if (inWindow(d)) runDays.add(d);
-    } catch {
-      // unparseable timestamp — skip
-    }
+    if (typeof r.day === "string" && inWindow(r.day)) runDays.add(r.day);
   }
 
   return { liftDays: liftDays.size, runDays: runDays.size };

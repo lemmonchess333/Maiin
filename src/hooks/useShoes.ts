@@ -4,7 +4,6 @@ import {
   doc,
   onSnapshot,
   Timestamp,
-  getDocs,
   writeBatch,
 } from "firebase/firestore";
 import { addDocGuarded, updateDocGuarded } from "@/lib/firestoreWrite";
@@ -12,6 +11,7 @@ import { db } from "@/lib/firebase";
 import { useUid } from "@/lib/auth";
 import { logger } from "@/lib/logger";
 import { isVolumeEligible } from "@/lib/runStatsEligibility";
+import { fetchSavedRuns } from "@/lib/savedRuns";
 
 export interface Shoe {
   id: string;
@@ -150,10 +150,11 @@ export function useShoes() {
    * gives us a clean reference to rebuild totals from scratch.
    *
    * This reconciler:
-   *   1. Reads every run under `users/{uid}/runs`.
-   *   2. Sums `distance / 1000` keyed by the run's `shoeId` (falls back to
-   *      the CURRENT default for runs saved before the field existed — an
-   *      imperfect best guess, but better than leaving them unattributed).
+   *   1. Reads every saved run, including any this phone has not synced.
+   *   2. Sums `distance / 1000` keyed by the run's `shoeId` (the saved run's
+   *      own, else the shoe its launch config named, else the CURRENT
+   *      default for runs saved before either existed — an imperfect best
+   *      guess, but better than leaving them unattributed).
    *   3. Writes all active shoe totals in one atomic batch, also resetting
    *      `alert85Shown` / `alert100Shown` so the next run with the shoe
    *      can re-trigger the replacement toast if it re-crosses a threshold.
@@ -163,36 +164,25 @@ export function useShoes() {
   const reconcileMileageFromRuns = useCallback(async () => {
     if (!uid) return { updated: 0, totalRuns: 0 };
 
-    const runsSnap = await getDocs(collection(db, "users", uid, "runs"));
+    const runs = await fetchSavedRuns(uid, { all: true });
     const currentDefaultId = defaultShoe?.id ?? null;
 
     const kmByShoe = new Map<string, number>();
-    for (const d of runsSnap.docs) {
-      const data = d.data() as {
-        isInvalid?: boolean;
-        savedAnyway?: boolean;
-        distance?: number;
-        duration?: number;
-        shoeId?: string | null;
-        runConfig?: { shoeId?: string };
-      };
+    for (const run of runs) {
       // P0.5: skip saved-anyway / isInvalid runs so shoe mileage
       // doesn't include the misclick volume. Pre-fix this only
       // gated on `distance > 0`, which let a fat-fingered
       // 20km/0:08 "too-fast" save inflate the shoe by 20km and
       // trigger the replacement-prompt at 85%/100% prematurely.
-      if (!isVolumeEligible(data)) continue;
-      const distanceMeters =
-        typeof data.distance === "number" ? data.distance : 0;
-      if (distanceMeters <= 0) continue;
+      if (!isVolumeEligible(run)) continue;
+      if (run.distance <= 0) continue;
 
-      const resolvedId =
-        data.shoeId ?? data.runConfig?.shoeId ?? currentDefaultId ?? null;
+      const resolvedId = run.shoeId ?? currentDefaultId;
       if (!resolvedId) continue;
 
       kmByShoe.set(
         resolvedId,
-        (kmByShoe.get(resolvedId) ?? 0) + distanceMeters / 1000
+        (kmByShoe.get(resolvedId) ?? 0) + run.distance / 1000
       );
     }
 
@@ -208,7 +198,7 @@ export function useShoes() {
     }
     await batch.commit();
 
-    return { updated: activeShoes.length, totalRuns: runsSnap.size };
+    return { updated: activeShoes.length, totalRuns: runs.length };
   }, [uid, activeShoes, defaultShoe]);
 
   return {

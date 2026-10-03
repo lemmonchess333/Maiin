@@ -11,14 +11,7 @@ import {
 import { useLocation, useNavigate, Navigate } from "react-router-dom";
 import { readString, writeString } from "@/lib/localStore";
 import { lazyRetry } from "@/lib/lazyRetry";
-import {
-  collection,
-  doc,
-  getDocs,
-  orderBy,
-  query,
-  Timestamp,
-} from "firebase/firestore";
+import { collection, doc, Timestamp } from "firebase/firestore";
 import { updateDocGuarded } from "@/lib/firestoreWrite";
 import {
   queueDurableWrite,
@@ -57,6 +50,7 @@ import CircleShareSheet from "@/components/social/CircleShareSheet";
 import { Button } from "@/components/ui/Button";
 import { THEME } from "../lib/theme";
 import { calculatePaceTrend, type PaceTrendResult } from "../lib/paceTrends";
+import { fetchSavedRuns } from "../lib/savedRuns";
 import PaceInsightCard from "../components/run/PaceInsightCard";
 import {
   usePaceInsightFromRuns,
@@ -525,37 +519,16 @@ export default function RunSummary() {
     let cancelled = false;
     (async () => {
       try {
-        const snap = await getDocs(
-          query(
-            collection(db, "users", uid, "runs"),
-            orderBy("completedAt", "desc")
-          )
-        );
-        const allRuns: PaceInsightRun[] = snap.docs.map((d) => {
-          const data = d.data();
-          const completedAt = data.completedAt?.toDate?.();
-          return {
-            id: d.id,
-            distance: data.distance ?? 0,
-            duration: data.duration ?? 0,
-            avgPace: data.avgPace ?? 0,
-            completedAt:
-              completedAt instanceof Date &&
-              Number.isFinite(completedAt.getTime())
-                ? completedAt
-                : null,
-            /* Source / validity fields plumbed through so paceTrends
-               can exclude treadmill / manual / invalid / savedAnyway
-               records — a treadmill 2:38/km can't masquerade as a PR
-               against historical outdoor runs. */
-            activityType: data.activityType,
-            isInvalid: data.isInvalid,
-            savedAnyway: data.savedAnyway,
-          };
-        });
+        /* Saved runs carry their source and validity fields, so
+           paceTrends can exclude treadmill / manual / invalid /
+           savedAnyway records — a treadmill 2:38/km can't masquerade as
+           a PR against historical outdoor runs. */
+        const allRuns = await fetchSavedRuns(uid, { all: true });
         if (cancelled) return;
         setPaceHistory(allRuns);
         const currentRun = {
+          // Once saved, this run is in the history read above.
+          id: state.savedRun?.id,
           distance: state.distance,
           avgPace:
             state.elapsed > 0 && state.distance > 0
@@ -564,15 +537,7 @@ export default function RunSummary() {
           completedAt: new Date(),
           activityType: state.runConfig?.activityType,
         };
-        setPaceTrend(
-          calculatePaceTrend(
-            currentRun,
-            allRuns.filter(
-              (run): run is PaceInsightRun & { completedAt: Date } =>
-                run.completedAt instanceof Date
-            )
-          )
-        );
+        setPaceTrend(calculatePaceTrend(currentRun, allRuns));
       } catch (err) {
         if (cancelled) return;
         logger.error("[RunSummary] pace-history load failed", err);

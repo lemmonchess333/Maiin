@@ -1,17 +1,11 @@
 import { useEffect, useState } from "react";
-import {
-  collection,
-  doc,
-  onSnapshot,
-  query,
-  Timestamp,
-  where,
-} from "firebase/firestore";
+import { collection, doc, onSnapshot, query, where } from "firebase/firestore";
 import { useUid } from "@/lib/auth";
 import { db } from "@/lib/firebase";
 import { localDateString, parseLocalDate } from "@/lib/dateHelpers";
 import { mealSlotFor } from "@/lib/mealSlots";
 import { DEFAULT_PUSH_CONSENT } from "@/lib/pushConsent";
+import { useSavedRuns } from "@/hooks/useSavedRuns";
 import type { MealKey } from "@/components/food/mealConstants";
 
 export interface ReminderActivity {
@@ -32,18 +26,24 @@ export function useReminderActivity() {
     key: string;
     meals: MealKey[];
     workout: boolean;
-    run: boolean;
     loaded: string[];
     pushOwns: boolean | null;
   }>({
     key: "",
     meals: [],
     workout: false,
-    run: false,
     loaded: [],
     pushOwns: null,
   });
   const key = `${uid ?? ""}:${clock.dateKey}`;
+  // Today's runs by the day they started (Lift3), as the streak counts
+  // them, with a run saved on this phone and not yet synced among them.
+  const todaysRuns = useSavedRuns(
+    uid ? { since: clock.dateKey, until: clock.dateKey } : null
+  );
+  const ranToday = todaysRuns.runs.some(
+    (run) => !run.isInvalid && run.distance > 0
+  );
   useEffect(() => {
     const tick = () =>
       setClock((old) =>
@@ -80,7 +80,6 @@ export function useReminderActivity() {
                 key,
                 meals: [],
                 workout: false,
-                run: false,
                 loaded: [],
                 pushOwns: null,
               };
@@ -113,19 +112,6 @@ export function useReminderActivity() {
           workout: snap.docs.some((d) => !d.data().deletedAt),
         })
       ),
-      onSnapshot(
-        query(
-          collection(db, "users", uid, "runs"),
-          where("completedAt", ">=", Timestamp.fromDate(start)),
-          where("completedAt", "<", Timestamp.fromDate(end))
-        ),
-        (snap) =>
-          publish("runs", {
-            run: snap.docs.some(
-              (d) => !d.data().isInvalid && Number(d.data().distance) > 0
-            ),
-          })
-      ),
       onSnapshot(doc(db, "users", uid, "settings", "push"), (snap) => {
         const consent = { ...DEFAULT_PUSH_CONSENT, ...snap.data() };
         publish("push", {
@@ -143,12 +129,13 @@ export function useReminderActivity() {
     activity: {
       ready:
         !!current &&
-        ["meals", "workouts", "runs"].every((source) =>
+        todaysRuns.answered &&
+        ["meals", "workouts"].every((source) =>
           current.loaded.includes(source)
         ),
       dateKey: clock.dateKey,
       meals: current?.meals ?? [],
-      workout: !!(current?.workout || current?.run),
+      workout: !!current?.workout || (!!current && ranToday),
     } satisfies ReminderActivity,
     pushOwns: current?.pushOwns ?? null,
     refreshKey: `${key}:${clock.opened}`,

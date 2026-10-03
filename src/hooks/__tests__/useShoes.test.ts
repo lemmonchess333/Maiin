@@ -35,6 +35,9 @@ import {
   flushSnapshots,
   failNextFirestore,
 } from "@/test/firestoreHarness";
+import { savedRunDoc } from "@/test/sessionFixtures";
+
+const DAY = "2026-06-01";
 
 function shoe(name: string, over: Record<string, unknown> = {}) {
   return {
@@ -214,15 +217,19 @@ describe("reconcileMileageFromRuns", () => {
       "users/u1/shoes/a": shoe("A", { isDefault: true, totalKm: 999 }),
       "users/u1/shoes/b": shoe("B", { totalKm: 999 }),
       // Explicit top-level shoeId
-      "users/u1/runs/r1": { distance: 5000, duration: 1500, shoeId: "b" },
+      "users/u1/runs/r1": savedRunDoc(DAY, {
+        distance: 5000,
+        duration: 1500,
+        shoeId: "b",
+      }),
       // Legacy nested config
-      "users/u1/runs/r2": {
+      "users/u1/runs/r2": savedRunDoc(DAY, {
         distance: 10000,
         duration: 3000,
         runConfig: { shoeId: "b" },
-      },
+      }),
       // No shoe recorded at all — falls back to the CURRENT default.
-      "users/u1/runs/r3": { distance: 3000, duration: 900 },
+      "users/u1/runs/r3": savedRunDoc(DAY, { distance: 3000, duration: 900 }),
     });
     const result = await mounted();
 
@@ -241,14 +248,18 @@ describe("reconcileMileageFromRuns", () => {
     // a shoe past its replacement threshold.
     seedFirestore({
       "users/u1/shoes/a": shoe("A", { isDefault: true }),
-      "users/u1/runs/good": { distance: 5000, duration: 1500, shoeId: "a" },
-      "users/u1/runs/bogus": {
+      "users/u1/runs/good": savedRunDoc(DAY, {
+        distance: 5000,
+        duration: 1500,
+        shoeId: "a",
+      }),
+      "users/u1/runs/bogus": savedRunDoc(DAY, {
         distance: 20000,
         duration: 8,
         shoeId: "a",
         isInvalid: true,
         savedAnyway: true,
-      },
+      }),
     });
     const result = await mounted();
 
@@ -271,7 +282,11 @@ describe("reconcileMileageFromRuns", () => {
         alert85Shown: true,
         alert100Shown: true,
       }),
-      "users/u1/runs/r1": { distance: 20000, duration: 6000, shoeId: "a" },
+      "users/u1/runs/r1": savedRunDoc(DAY, {
+        distance: 20000,
+        duration: 6000,
+        shoeId: "a",
+      }),
     });
     const result = await mounted();
 
@@ -292,7 +307,11 @@ describe("reconcileMileageFromRuns", () => {
     seedFirestore({
       "users/u1/shoes/a": shoe("A", { isDefault: true }),
       "users/u1/shoes/old": shoe("Old", { retired: true, totalKm: 742.5 }),
-      "users/u1/runs/r1": { distance: 5000, duration: 1500, shoeId: "old" },
+      "users/u1/runs/r1": savedRunDoc(DAY, {
+        distance: 5000,
+        duration: 1500,
+        shoeId: "old",
+      }),
     });
     const result = await mounted();
 

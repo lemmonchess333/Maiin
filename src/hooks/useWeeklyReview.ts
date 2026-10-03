@@ -37,6 +37,7 @@ import { workoutTonnageKg } from "@/hooks/useWorkouts";
 import { resolveSnapshotCalorieTarget } from "@/lib/adaptiveTarget";
 import { useSubscription } from "@/lib/subscription";
 import { isVolumeEligible } from "@/lib/runStatsEligibility";
+import { fetchSavedRuns } from "@/lib/savedRuns";
 import {
   buildPRMap,
   checkSetPR,
@@ -328,7 +329,7 @@ export function useWeeklyReview(): UseWeeklyReviewResult {
 
         const [
           workoutsSnap,
-          runsSnap,
+          savedRuns,
           mealsSnap,
           weighIns,
           perfSnap,
@@ -343,13 +344,9 @@ export function useWeeklyReview(): UseWeeklyReviewResult {
               where("date", "<=", end)
             )
           ),
-          getDocs(
-            query(
-              collection(db, "users", user.uid, "runs"),
-              where("date", ">=", start),
-              where("date", "<=", end)
-            )
-          ),
+          // The week's runs by their Lift3 day, through the saved-run
+          // reader: runs saved before `date` existed are no longer left out.
+          fetchSavedRuns(user.uid, { since: start, until: end }),
           getDocs(
             query(
               collection(db, "users", user.uid, "meals"),
@@ -404,16 +401,11 @@ export function useWeeklyReview(): UseWeeklyReviewResult {
           ),
         }));
 
-        const runs = runsSnap.docs
-          .map((d) => d.data() as Record<string, unknown>)
-          .filter((r) => typeof r.date === "string")
-          .map((r) => ({
-            date: r.date as string,
-            distanceMeters: typeof r.distance === "number" ? r.distance : 0,
-            eligible: isVolumeEligible(
-              r as Parameters<typeof isVolumeEligible>[0]
-            ),
-          }));
+        const runs = savedRuns.map((run) => ({
+          date: run.day,
+          distanceMeters: run.distance,
+          eligible: isVolumeEligible(run),
+        }));
 
         // One entry per day with ≥1 active (non-deleted) meal.
         const byDay = new Map<string, number>();

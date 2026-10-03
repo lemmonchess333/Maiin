@@ -36,6 +36,7 @@ import {
   type WeekPulse,
 } from "@/lib/weeklyReviewViewModel";
 import { isVolumeEligible } from "@/lib/runStatsEligibility";
+import { fetchSavedRuns } from "@/lib/savedRuns";
 import { resolveRunPlanSurface } from "@/lib/runProgrammeViewModel";
 import { logger } from "@/lib/logger";
 
@@ -78,7 +79,7 @@ export function useWeekPulse(
       try {
         const weekKey = localWeekKey(new Date());
         const { start, end } = weekBounds(weekKey);
-        const [workoutsSnap, runsSnap, programStateSnap] = await Promise.all([
+        const [workoutsSnap, savedRuns, programStateSnap] = await Promise.all([
           getDocs(
             query(
               collection(db, "users", user.uid, "workouts"),
@@ -86,13 +87,10 @@ export function useWeekPulse(
               where("date", "<=", end)
             )
           ),
-          getDocs(
-            query(
-              collection(db, "users", user.uid, "runs"),
-              where("date", ">=", start),
-              where("date", "<=", end)
-            )
-          ),
+          // Through the saved-run reader: the week's runs by their Lift3
+          // day, including runs saved before `date` existed (a `date`-only
+          // query left those out) and runs saved on this phone.
+          fetchSavedRuns(user.uid, { since: start, until: end }),
           getDoc(doc(db, "users", user.uid, "programState", "current")),
         ]);
         if (cancelled) return;
@@ -100,22 +98,12 @@ export function useWeekPulse(
         const workouts = workoutsSnap.docs
           .map((d) => d.data() as { date?: unknown })
           .filter((w): w is { date: string } => typeof w.date === "string");
-        const runs = runsSnap.docs
-          .map(
-            (d) =>
-              ({ ...d.data(), id: d.id }) as Record<string, unknown> & {
-                id: string;
-              }
-          )
-          .filter((r) => typeof r.date === "string")
-          .map((r) => ({
-            id: r.id,
-            date: r.date as string,
-            distanceMeters: typeof r.distance === "number" ? r.distance : 0,
-            eligible: isVolumeEligible(
-              r as Parameters<typeof isVolumeEligible>[0]
-            ),
-          }));
+        const runs = savedRuns.map((run) => ({
+          id: run.id,
+          date: run.day,
+          distanceMeters: run.distance,
+          eligible: isVolumeEligible(run),
+        }));
 
         const schedule = Array.isArray(profile?.weekSchedule)
           ? (profile.weekSchedule as { day?: number; type?: string }[])

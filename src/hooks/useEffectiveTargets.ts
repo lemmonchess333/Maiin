@@ -284,15 +284,12 @@ export function useEffectiveTargets(date?: Date): EffectiveTargets {
       actualLiftBurn = workouts
         .filter((w) => isWorkoutOnDate(w, targetDate))
         .reduce((sum, w) => sum + w.totalCalories, 0);
-      actualRunBurn = runs.reduce((sum, r) => {
-        if (!r.completedAt) return sum;
-        try {
-          const runKey = localDateString(r.completedAt.toDate());
-          return runKey === targetKey ? sum + r.calories : sum;
-        } catch {
-          return sum;
-        }
-      }, 0);
+      // A run burns on its day (Lift3: the day it started), the day the
+      // streak and History count it on.
+      actualRunBurn = runs.reduce(
+        (sum, r) => (r.day === targetKey ? sum + r.calories : sum),
+        0
+      );
     }
     const actualBurn = actualLiftBurn + actualRunBurn;
 

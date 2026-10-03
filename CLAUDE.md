@@ -131,6 +131,7 @@ exists — pinned by `claudeMdFreshness.test.ts` in both directions
 | `performanceEngine.ts`  | Weekly performance index (0-100), load bands, deload detection |
 | `tdee.ts`               | Base TDEE calculation                                          |
 | `phaseNutrition.ts`     | Day-type specific macro adjustments (lift/run/rest)            |
+| `savedRuns.ts`          | The one saved-run reader: query, parse, Lift3 day, queued runs |
 | `gps.ts`                | Haversine, pace, splits, elevation, Kalman filter, GPX export  |
 | `paceTrends.ts`         | Running pace trend detection (PR/improving/consistent)         |
 | `guidedRun.ts`          | Guided run logic & coaching                                    |
@@ -206,7 +207,7 @@ run-surface feature modules.
 `useFirestore`, `useMeals`, `useWorkouts`, `useWaterLog`, `useShoes`, `useFoodFavourites`
 
 **Running & GPS:**
-`useGPS`, `useRunTimer`, `useRunningStats`, `useSessionPlayer`, `usePrivacyZones`, `useAudioCues`, `useWakeLock`
+`useGPS`, `useRunTimer`, `useRunningStats`, `useSavedRuns` (the live form of `lib/savedRuns.ts`, the only runs reader), `useSessionPlayer`, `usePrivacyZones`, `useAudioCues`, `useWakeLock`
 
 **Social:**
 `useSocialFeed`, `useDiscoverFeed`, `useUnreadCount`, `useBlockedUsers`, `useFollowState` (one follow record shared by every Follow control), `useUserProfileData`

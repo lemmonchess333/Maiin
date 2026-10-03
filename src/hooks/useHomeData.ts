@@ -6,7 +6,6 @@ import {
   query,
   where,
   getDocs,
-  Timestamp,
   orderBy,
   limit,
 } from "firebase/firestore";
@@ -18,6 +17,7 @@ import type { UserProfile } from "@/lib/auth";
 import { logger } from "@/lib/logger";
 import { sumMealTotals, type MealTotalsInput } from "@/lib/mealTotals";
 import { isVolumeEligible } from "@/lib/runStatsEligibility";
+import { fetchSavedRuns } from "@/lib/savedRuns";
 import { calcWeightTrend } from "@/utils/weightTrend";
 import {
   collapseBodyweightLogs,
@@ -156,7 +156,6 @@ export function useHomeData(
 
       const startOfToday = new Date();
       startOfToday.setHours(0, 0, 0, 0);
-      const todayTs = Timestamp.fromDate(startOfToday);
       const todayKey = localDateString();
 
       // Filter on the client-set `date` string — same field Food's useMeals
@@ -173,12 +172,15 @@ export function useHomeData(
         )
       );
 
-      const fetchRuns = getDocs(
-        query(
-          collection(db, "users", user.uid, "runs"),
-          where("completedAt", ">=", todayTs)
-        )
-      );
+      // The post-workout nudge asks when a run FINISHED, so it reads the
+      // runs that belong to yesterday or today (a run begun before midnight
+      // belongs to yesterday) and keeps those that finished today. Through
+      // the saved-run reader, a run saved offline counts at once.
+      const yesterday = new Date(startOfToday);
+      yesterday.setDate(yesterday.getDate() - 1);
+      const fetchRuns = fetchSavedRuns(user.uid, {
+        since: localDateString(yesterday),
+      });
 
       const fetchWeight = getDocs(
         query(
@@ -231,16 +233,12 @@ export function useHomeData(
           // non-countable runs so a saved-anyway "too-fast" 20km / 0:08
           // misclick can't trigger a refuel prompt.
           if (results[1].status === "fulfilled") {
-            results[1].value.docs.forEach(function (d) {
-              const data = d.data();
-              if (!isVolumeEligible(data)) return;
-              const at = data.completedAt?.toMillis?.();
-              if (
-                typeof at === "number" &&
-                (lastRunAtMs === null || at > lastRunAtMs)
-              )
-                lastRunAtMs = at;
-            });
+            for (const run of results[1].value) {
+              if (!isVolumeEligible(run)) continue;
+              const at = run.completedAt.getTime();
+              if (at < startOfToday.getTime()) continue;
+              if (lastRunAtMs === null || at > lastRunAtMs) lastRunAtMs = at;
+            }
           } else {
             logger.error("[useHomeData] runs fetch failed:", results[1].reason);
             errors.push("Failed to load runs");

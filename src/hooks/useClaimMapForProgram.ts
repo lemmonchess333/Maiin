@@ -31,16 +31,7 @@
  *     the `dateAnchor` arg).
  */
 
-import { useEffect, useMemo, useState } from "react";
-import {
-  collection,
-  onSnapshot,
-  orderBy,
-  query,
-  Timestamp,
-} from "firebase/firestore";
-import { db } from "@/lib/firebase";
-import { useUid } from "@/lib/auth";
+import { useMemo } from "react";
 import type { ProgramState } from "@/features/program/programTypes";
 import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
 import { localDateString } from "@/lib/dateHelpers";
@@ -50,6 +41,8 @@ import {
   type CompletionDeps,
   type SavedRunLike,
 } from "@/lib/scheduledRunCompletion";
+import type { RunWindow, SavedRun } from "@/lib/savedRuns";
+import { useSavedRuns } from "./useSavedRuns";
 
 /**
  * Pre-computed template-quality lookup. Keyed by `RUN_TEMPLATES[i].id`.
@@ -197,13 +190,29 @@ interface UseClaimMapResult {
   loading: boolean;
 }
 
-/** What the runs listener has delivered, and whose runs they are. */
-interface LoadedSavedRuns {
-  uid: string | null;
-  runs: SavedRunDoc[];
-}
+/** Every saved run: a planned day can be claimed by any run on its date. */
+const ALL_RUNS: RunWindow = { all: true };
 
 const NO_SAVED_RUNS: SavedRunDoc[] = [];
+
+/**
+ * A saved run as the completion helper reads it. `date` is the run's day
+ * under Lift3 (the day it started), the same day History, the streak and
+ * Food count it on. `createdAt` orders claims: a legacy `createdAt` where
+ * one exists, else `completedAt`.
+ */
+function toSavedRunDoc(run: SavedRun): SavedRunDoc {
+  return {
+    id: run.id,
+    date: run.day,
+    distance: run.distance,
+    avgPace: run.avgPace,
+    templateId: run.templateId,
+    createdAt: { seconds: run.savedAtSeconds },
+    duration: run.duration,
+    type: run.type,
+  };
+}
 
 /**
  * @param dateAnchor optional override for "today" (test fixtures,
@@ -213,87 +222,19 @@ export function useClaimMapForProgram(
   programState: ProgramState | null,
   dateAnchor?: string
 ): UseClaimMapResult {
-  const uid = useUid();
-  const [loaded, setLoaded] = useState<LoadedSavedRuns>({
-    uid: null,
-    runs: NO_SAVED_RUNS,
-  });
-  // Runs count only for the account they were delivered for. Signed out,
-  // or switched to an account whose listener has not answered yet, there
-  // are none — so another account's runs can never claim this plan's
-  // slots, not even for the render before the new listener lands.
-  const delivered = uid !== null && loaded.uid === uid;
-  const savedRuns = delivered ? loaded.runs : NO_SAVED_RUNS;
-  const loading = uid !== null && !delivered;
+  /* The account's saved runs, through the one reader (`useSavedRuns`):
+     ordered by `completedAt`, which every saved run carries, scoped to the
+     signed-in account (another account's runs never claim this plan's
+     slots, not even for the render before the new listener lands), and
+     with runs saved on this phone but not yet synced, so an offline run
+     fills its day on Home at once. */
+  const { runs, loading } = useSavedRuns(ALL_RUNS);
+  const savedRuns = useMemo(
+    () => (runs.length ? runs.map(toSavedRunDoc) : NO_SAVED_RUNS),
+    [runs]
+  );
 
   const today = dateAnchor ?? localDateString(new Date());
-
-  useEffect(
-    function () {
-      if (!uid) return;
-      const runsRef = collection(db, "users", uid, "runs");
-      /* Ordered by `completedAt`, which every saved run carries. Runs have
-         never had a `createdAt` (RunSummary does not write one), and a
-         query ordered by a field leaves out every document without it, so
-         this listener read nothing in production: no planned run was ever
-         claimed, and no run reached Home's week. */
-      const q = query(runsRef, orderBy("completedAt", "desc"));
-      const unsub = onSnapshot(
-        q,
-        (snap) => {
-          const rows: SavedRunDoc[] = snap.docs.map(function (d) {
-            const data = d.data() as Record<string, unknown>;
-            // When the run was saved: a legacy `createdAt` where one exists,
-            // else `completedAt`. It orders claims and keys the fingerprint.
-            const ca = data.createdAt ?? data.completedAt;
-            return {
-              id: d.id,
-              date: typeof data.date === "string" ? data.date : undefined,
-              distance:
-                typeof data.distance === "number" ? data.distance : undefined,
-              avgPace:
-                typeof data.avgPace === "number" ? data.avgPace : undefined,
-              /* Saved-run docs carry NO plain `templateId` — RunSummary
-                 writes `actualTemplateId` (what was run) and
-                 `plannedTemplateId` (what was scheduled), both top-level.
-                 Reading `data.templateId` therefore left this undefined
-                 on every real run, which silently disabled the race-day
-                 short-circuit in `distanceAndBucketOk`.
-                 `actual` first: the question downstream is what the user
-                 RAN, not what they were meant to run. */
-              templateId:
-                typeof data.actualTemplateId === "string"
-                  ? data.actualTemplateId
-                  : typeof data.plannedTemplateId === "string"
-                    ? data.plannedTemplateId
-                    : typeof data.templateId === "string"
-                      ? data.templateId
-                      : undefined,
-              createdAt:
-                ca instanceof Timestamp
-                  ? { seconds: ca.seconds }
-                  : ca instanceof Date
-                    ? { seconds: Math.floor(ca.getTime() / 1000) }
-                    : undefined,
-              duration:
-                typeof data.duration === "number" ? data.duration : undefined,
-              type: typeof data.type === "string" ? data.type : undefined,
-            };
-          });
-          setLoaded({ uid, runs: rows });
-        },
-        () => {
-          // Settle out of loading, keeping whatever this account's listener
-          // already delivered; never another account's rows.
-          setLoaded((current) =>
-            current.uid === uid ? current : { uid, runs: NO_SAVED_RUNS }
-          );
-        }
-      );
-      return unsub;
-    },
-    [uid]
-  );
 
   const runDays = programState?.runDays ?? [];
   const manualCompletions = programState?.manualCompletions ?? {};

@@ -53,6 +53,8 @@ export interface PaceTrendResult {
 }
 
 interface RunForTrend {
+  /** The saved run's id, when it has one. */
+  id?: string;
   distance: number; // metres
   avgPace: number; // sec/km
   completedAt: Date;
@@ -74,8 +76,11 @@ export function calculatePaceTrend(
     return { trend: "no-data", label: "", className: "" };
   }
 
-  // Find comparable runs (within 20% distance, excluding the current one)
+  // Find comparable runs (within 20% distance, excluding the current one:
+  // once saved, the run on screen is in its own history, and against
+  // itself a PR reads as "Faster")
   const comparable = allRuns.filter((r) => {
+    if (currentRun.id !== undefined && r.id === currentRun.id) return false;
     if (r.completedAt.getTime() === currentRun.completedAt.getTime())
       return false;
     if (!isPaceTrendEligible(r)) return false;

@@ -52,6 +52,7 @@ import {
   releaseAllReads,
   pendingReads,
 } from "@/test/firestoreHarness";
+import { savedRunDoc } from "@/test/sessionFixtures";
 
 /* ── auth, with a SWITCHABLE uid ───────────────────────────────────── */
 
@@ -125,12 +126,10 @@ function seedRunHistory(uid: string, daysAgo: number, count = 10): void {
   const tree: Record<string, Record<string, unknown>> = {};
   for (let i = 0; i < count; i++) {
     const date = shift(TODAY, -(daysAgo + i * 3));
-    tree[`users/${uid}/runs/r${i}`] = {
-      date,
+    tree[`users/${uid}/runs/r${i}`] = savedRunDoc(date, {
       distance: 9000,
       duration: 3000,
-      completedAt: `${date}T09:00:00.000Z`,
-    };
+    });
   }
   seedFirestore(tree);
 }

@@ -13,11 +13,11 @@ import { localDateString } from "../dateHelpers";
  * UTC stringify rolls the cutoff back to the previous Saturday and pulls an
  * extra day of workouts into the weekly window.
  *
- * `buildLeaderboard` is Firestore-bound (not unit-testable without a full
- * SDK mock), so this pins the date-derivation invariant the fix relies on:
+ * This file pins the date-derivation invariant the fix relies on:
  * `localDateString(since)` is the local calendar date of `since` regardless
  * of timezone, and diverges from `toISOString()` for a local-midnight Date
- * in positive-offset zones. The vitest runner is UTC, so that case is
+ * in positive-offset zones. `leaderboardRuns.test.ts` drives
+ * `buildLeaderboard` itself against the Firestore fake. The vitest runner is UTC, so that case is
  * exercised in a child process under TZ=Asia/Tokyo (UTC+9).
  */
 describe("leaderboard weekly cutoff — local vs UTC date string", () => {

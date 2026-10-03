@@ -40,6 +40,7 @@ import {
   resetFirestore,
   failNextFirestore,
 } from "@/test/firestoreHarness";
+import { savedRunDoc } from "@/test/sessionFixtures";
 
 /** Wed 15 Jul 2026 → current week Mon 13th, reviewed week Mon 6th–Sun 12th. */
 const NOW = new Date(2026, 6, 15, 9, 0, 0);
@@ -92,16 +93,14 @@ describe("useWeeklyReview assembly", () => {
       "users/u1/workouts/w2": lift("2026-07-08", 105, 5),
       // Out of week — must not be counted
       "users/u1/workouts/w3": lift("2026-07-13", 200, 5),
-      "users/u1/runs/r1": {
-        date: "2026-07-07",
+      "users/u1/runs/r1": savedRunDoc("2026-07-07", {
         distance: 5000,
         duration: 1500,
-      },
-      "users/u1/runs/r2": {
-        date: "2026-07-11",
+      }),
+      "users/u1/runs/r2": savedRunDoc("2026-07-11", {
         distance: 10000,
         duration: 3000,
-      },
+      }),
       "users/u1/meals/m1": { date: "2026-07-06", totalCalories: 2200 },
       "users/u1/meals/m2": { date: "2026-07-07", totalCalories: 2600 },
       // Compute-date keys: the doc that summarises the reviewed week
@@ -222,17 +221,15 @@ describe("useWeeklyReview assembly", () => {
   it("excludes ineligible runs from volume but still counts them", async () => {
     seedFirestore({
       "users/u1/workouts/w1": lift("2026-07-06", 100, 5),
-      "users/u1/runs/good": {
-        date: "2026-07-07",
+      "users/u1/runs/good": savedRunDoc("2026-07-07", {
         distance: 5000,
         duration: 1500,
-      },
-      "users/u1/runs/bad": {
-        date: "2026-07-08",
+      }),
+      "users/u1/runs/bad": savedRunDoc("2026-07-08", {
         distance: 40000,
         duration: 60,
         isInvalid: true,
-      },
+      }),
     });
 
     const { result } = renderHook(() => useWeeklyReview());
@@ -282,7 +279,7 @@ describe("useWeeklyReview assembly", () => {
 describe("useReviewEligibility", () => {
   it("is eligible when the reviewed week has any activity", async () => {
     seedFirestore({
-      "users/u1/runs/r1": { date: "2026-07-07", distance: 5000 },
+      "users/u1/runs/r1": savedRunDoc("2026-07-07", { distance: 5000 }),
     });
     const { result } = renderHook(() => useReviewEligibility());
     await waitFor(() => expect(result.current.eligibility).toBe("eligible"));
@@ -301,7 +298,7 @@ describe("useReviewEligibility", () => {
 
   it("caches the verdict per (uid, week) so remounts don't re-probe", async () => {
     seedFirestore({
-      "users/u1/runs/r1": { date: "2026-07-07", distance: 5000 },
+      "users/u1/runs/r1": savedRunDoc("2026-07-07", { distance: 5000 }),
     });
     const first = renderHook(() => useReviewEligibility());
     await waitFor(() =>

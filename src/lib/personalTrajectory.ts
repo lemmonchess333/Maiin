@@ -23,11 +23,11 @@ import {
   where,
   orderBy,
   limit,
-  Timestamp,
 } from "firebase/firestore";
 import { db } from "./firebase";
 import { localDateString, startOfLocalWeek } from "@/lib/dateHelpers";
 import { isVolumeEligible } from "./runStatsEligibility";
+import { fetchSavedRuns, type SavedRun } from "./savedRuns";
 
 export interface TrajectoryBreakdown {
   km: number;
@@ -76,26 +76,28 @@ function toDateKey(d: Date): string {
   return localDateString(d);
 }
 
+/**
+ * Whether a run counts before `cutoff`. A run belongs to the day it started
+ * (Lift3), so a run on an earlier day always counts, even one that ran past
+ * midnight; on the cutoff's own day it counts once it had finished.
+ */
+function ranBefore(run: SavedRun, cutoff: Date): boolean {
+  return (
+    run.day < toDateKey(cutoff) || run.completedAt.getTime() < cutoff.getTime()
+  );
+}
+
 async function computeRangeBreakdown(
   uid: string,
   fromDate: Date,
   toDate: Date
 ): Promise<TrajectoryBreakdown> {
-  const fromTs = Timestamp.fromDate(fromDate);
-  const toTs = Timestamp.fromDate(toDate);
   const fromKey = toDateKey(fromDate);
   const toKey = toDateKey(toDate);
+  const lastDay = toDateKey(new Date(toDate.getTime() - 1));
 
-  const [runsSnap, workoutsSnap] = await Promise.all([
-    getDocs(
-      query(
-        collection(db, "users", uid, "runs"),
-        where("completedAt", ">=", fromTs),
-        where("completedAt", "<", toTs),
-        orderBy("completedAt"),
-        limit(100)
-      )
-    ),
+  const [runs, workoutsSnap] = await Promise.all([
+    fetchSavedRuns(uid, { since: fromKey, until: lastDay, cap: 100 }),
     getDocs(
       query(
         collection(db, "users", uid, "workouts"),
@@ -107,10 +109,10 @@ async function computeRangeBreakdown(
     ),
   ]);
 
-  const km = runsSnap.docs.reduce(
-    (s, d) =>
-      isVolumeEligible(d.data())
-        ? s + (Number(d.data().distance) || 0) / 1000
+  const km = runs.reduce(
+    (s, run) =>
+      isVolumeEligible(run) && ranBefore(run, toDate)
+        ? s + run.distance / 1000
         : s,
     0
   );

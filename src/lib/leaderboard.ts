@@ -5,11 +5,11 @@ import {
   where,
   orderBy,
   limit,
-  Timestamp,
 } from "firebase/firestore";
 import { db } from "./firebase";
 import { isVolumeEligible } from "./runStatsEligibility";
 import { localDateString, startOfLocalWeek } from "./dateHelpers";
+import { fetchSavedRuns } from "./savedRuns";
 
 export interface LeaderboardEntry {
   uid: string;
@@ -73,15 +73,14 @@ export async function buildLeaderboard(
   // Week start through the shared anchor — this read the week boundary by
   // hand, so it agreed with the rest of the app only by repetition.
   const since = startOfLocalWeek(new Date());
-  const sinceTs = Timestamp.fromDate(since);
   // `workout.date` is stored as a LOCAL "YYYY-MM-DD" string, so the cutoff
   // for the `where('date', '>=', ...)` query must be the LOCAL date of
   // `since` — not `since.toISOString()` (UTC). `since` is LOCAL midnight on
   // the week's first day; in positive-offset zones (e.g. UTC+9) that instant
   // is still the previous calendar day in UTC, so the UTC stringify rolls the
-  // cutoff back a day and pulls in an extra day's workouts. The
-  // runs query filters on `completedAt` (a Timestamp) so it correctly uses
-  // `sinceTs` and is unaffected.
+  // cutoff back a day and pulls in an extra day's workouts. Runs are read by
+  // the same day key, through the one saved-run reader (Lift3: a run belongs
+  // to the day it started).
   const sinceDateStr = localDateString(since);
 
   const entries: { uid: string; value: number }[] = [];
@@ -91,19 +90,12 @@ export async function buildLeaderboard(
       let value = 0;
 
       if (challenge === "weekly_distance" || challenge === "weekly_hybrid") {
-        const runsSnap = await getDocs(
-          query(
-            collection(db, "users", uid, "runs"),
-            where("completedAt", ">=", sinceTs),
-            orderBy("completedAt"),
-            limit(50)
-          )
-        );
-        const km = runsSnap.docs.reduce(
-          (s, d) =>
-            isVolumeEligible(d.data())
-              ? s + (d.data().distance || 0) / 1000
-              : s,
+        const runs = await fetchSavedRuns(uid, {
+          since: sinceDateStr,
+          cap: 50,
+        });
+        const km = runs.reduce(
+          (s, run) => (isVolumeEligible(run) ? s + run.distance / 1000 : s),
           0
         );
         if (challenge === "weekly_distance") value = Math.round(km * 10) / 10;

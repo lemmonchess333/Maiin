@@ -1,7 +1,7 @@
 import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
-import { renderHook, waitFor, cleanup } from "@testing-library/react";
-import { Timestamp } from "firebase/firestore";
+import { act, renderHook, waitFor, cleanup } from "@testing-library/react";
 import { resetFirestore, seedFirestore } from "@/test/firestoreHarness";
+import { savedRunDoc } from "@/test/sessionFixtures";
 import { useReminderActivity } from "../useReminderActivity";
 
 vi.mock("firebase/firestore");
@@ -11,6 +11,8 @@ vi.mock("@/lib/auth", () => ({ useUid: () => uid }));
 
 beforeEach(() => {
   resetFirestore();
+  // The offline queue lives in localStorage, which outlives a test.
+  localStorage.clear();
   uid = "u1";
   vi.useFakeTimers({ toFake: ["Date"] });
   vi.setSystemTime(new Date(2026, 8, 6, 12));
@@ -30,10 +32,11 @@ describe("reminder activity source boundaries", () => {
         deletedAt: 1,
       },
       "users/u1/meals/c": { date: "2026-09-05", meal: "dinner" },
-      "users/u1/runs/a": {
-        completedAt: Timestamp.fromDate(new Date(2026, 8, 6, 10)),
-        distance: 5000,
-      },
+      "users/u1/runs/a": savedRunDoc(
+        "2026-09-06",
+        { distance: 5000 },
+        new Date(2026, 8, 6, 10)
+      ),
       "users/u1/settings/push": { enabled: true, streak: true },
     });
     const { result } = renderHook(() => useReminderActivity());
@@ -58,18 +61,49 @@ describe("reminder activity source boundaries", () => {
   });
   it("does not treat an invalid or zero-distance run as today's session", async () => {
     seedFirestore({
-      "users/u1/runs/a": {
-        completedAt: Timestamp.fromDate(new Date(2026, 8, 6, 10)),
-        distance: 5000,
-        isInvalid: true,
-      },
-      "users/u1/runs/b": {
-        completedAt: Timestamp.fromDate(new Date(2026, 8, 6, 11)),
-        distance: 0,
-      },
+      "users/u1/runs/a": savedRunDoc(
+        "2026-09-06",
+        { distance: 5000, isInvalid: true },
+        new Date(2026, 8, 6, 10)
+      ),
+      "users/u1/runs/b": savedRunDoc(
+        "2026-09-06",
+        { distance: 0 },
+        new Date(2026, 8, 6, 11)
+      ),
     });
     const { result } = renderHook(() => useReminderActivity());
     await waitFor(() => expect(result.current.activity.ready).toBe(true));
     expect(result.current.activity.workout).toBe(false);
+  });
+  it("counts a run on the day it started, as the streak does (Lift3)", async () => {
+    // Begun at 23:40 last night, saved at 00:15: last night's run. The
+    // streak counts it for yesterday, so today still needs a session and
+    // the reminder must still come.
+    seedFirestore({
+      "users/u1/runs/late": savedRunDoc(
+        "2026-09-05",
+        { distance: 5000 },
+        new Date(2026, 8, 6, 0, 15)
+      ),
+    });
+    const { result } = renderHook(() => useReminderActivity());
+    await waitFor(() => expect(result.current.activity.ready).toBe(true));
+    expect(result.current.activity.workout).toBe(false);
+  });
+  it("counts a run saved on this phone before it syncs", async () => {
+    const { queueDurableWrite } = await import("@/lib/offlineQueue");
+    const { result } = renderHook(() => useReminderActivity());
+    await waitFor(() => expect(result.current.activity.ready).toBe(true));
+    expect(result.current.activity.workout).toBe(false);
+    act(() =>
+      queueDurableWrite(
+        "u1",
+        "users/u1/runs",
+        "offline",
+        savedRunDoc("2026-09-06", { distance: 5000 }, new Date(2026, 8, 6, 11))
+      )
+    );
+    expect(result.current.activity.workout).toBe(true);
   });
 });

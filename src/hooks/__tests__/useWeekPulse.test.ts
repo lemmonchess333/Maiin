@@ -43,6 +43,7 @@ import {
   resetFirestore,
   failNextFirestore,
 } from "@/test/firestoreHarness";
+import { savedRunDoc } from "@/test/sessionFixtures";
 
 /** Wed 15 Jul 2026 → current week is Sun 12th … Sat 18th. */
 const NOW = new Date(2026, 6, 15, 9, 0, 0);
@@ -79,8 +80,14 @@ describe("useWeekPulse", () => {
     seedFirestore({
       "users/u1/workouts/in": { date: IN_WEEK, exercises: [] },
       "users/u1/workouts/old": { date: LAST_WEEK, exercises: [] },
-      "users/u1/runs/in": { date: IN_WEEK, distance: 5000, duration: 1500 },
-      "users/u1/runs/old": { date: LAST_WEEK, distance: 9000, duration: 2700 },
+      "users/u1/runs/in": savedRunDoc(IN_WEEK, {
+        distance: 5000,
+        duration: 1500,
+      }),
+      "users/u1/runs/old": savedRunDoc(LAST_WEEK, {
+        distance: 9000,
+        duration: 2700,
+      }),
     });
     const { result } = renderHook(() => useWeekPulse());
     await waitFor(() => expect(result.current).not.toBeNull());
@@ -91,13 +98,15 @@ describe("useWeekPulse", () => {
 
   it("excludes ineligible runs from the distance", async () => {
     seedFirestore({
-      "users/u1/runs/good": { date: IN_WEEK, distance: 5000, duration: 1500 },
-      "users/u1/runs/bogus": {
-        date: IN_WEEK,
+      "users/u1/runs/good": savedRunDoc(IN_WEEK, {
+        distance: 5000,
+        duration: 1500,
+      }),
+      "users/u1/runs/bogus": savedRunDoc(IN_WEEK, {
         distance: 40000,
         duration: 8,
         isInvalid: true,
-      },
+      }),
     });
     const { result } = renderHook(() => useWeekPulse());
     await waitFor(() => expect(result.current).not.toBeNull());
@@ -108,7 +117,10 @@ describe("useWeekPulse", () => {
     // Done-only framing. "3 of 5" against a target the user never set is
     // the thing the lock forbids.
     seedFirestore({
-      "users/u1/runs/r1": { date: IN_WEEK, distance: 5000, duration: 1500 },
+      "users/u1/runs/r1": savedRunDoc(IN_WEEK, {
+        distance: 5000,
+        duration: 1500,
+      }),
     });
     const { result } = renderHook(() => useWeekPulse());
     await waitFor(() => expect(result.current).not.toBeNull());
@@ -122,7 +134,10 @@ describe("useWeekPulse", () => {
       raceGoal: { distance: "10k", targetDate: "2026-09-05" },
     };
     seedFirestore({
-      "users/u1/runs/r1": { date: IN_WEEK, distance: 5000, duration: 1500 },
+      "users/u1/runs/r1": savedRunDoc(IN_WEEK, {
+        distance: 5000,
+        duration: 1500,
+      }),
       "users/u1/programState/current": {
         runPlan: {
           raceGoal: { distance: "10k", targetDate: "2026-09-05" },
@@ -188,7 +203,10 @@ describe("useWeekPulse — the run a finish screen is showing", () => {
 
   it("counts it once when the read already holds it", async () => {
     seedFirestore({
-      "users/u1/runs/r1": { date: IN_WEEK, distance: 4000, duration: 1400 },
+      "users/u1/runs/r1": savedRunDoc(IN_WEEK, {
+        distance: 4000,
+        duration: 1400,
+      }),
     });
     const run = {
       id: "r1",

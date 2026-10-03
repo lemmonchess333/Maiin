@@ -1,13 +1,11 @@
 import { useEffect, useState } from "react";
-import { collection, getDocs } from "firebase/firestore";
-import { db } from "@/lib/firebase";
 import { useUid } from "@/lib/auth";
 import { logger } from "@/lib/logger";
 import {
   isVolumeEligible,
   sumLifetimeRunTotals,
 } from "@/lib/runStatsEligibility";
-import { parseRunSummary, type RunSummaryItem } from "@/hooks/useRunningStats";
+import { fetchSavedRuns, type SavedRun } from "@/lib/savedRuns";
 import {
   recordedRaceMilestones,
   type MilestoneRace,
@@ -35,11 +33,13 @@ export interface LifetimeRunStats {
    * runs predated the range saw "--". Each record applies its own
    * eligibility to this pool.
    */
-  runs: RunSummaryItem[];
+  runs: SavedRun[];
 }
 
 export interface DatedRun {
   completedAtMs: number;
+  /** The local day the run belongs to (Lift3: the day it started). */
+  day: string;
   distanceM: number;
 }
 
@@ -52,32 +52,13 @@ const EMPTY: LifetimeRunStats = {
   runs: [],
 };
 
-/** Every run doc that parses, oldest first by finish. */
-function parsedRuns(
-  docs: readonly { id: string; [key: string]: unknown }[]
-): RunSummaryItem[] {
-  const out: RunSummaryItem[] = [];
-  for (const doc of docs) {
-    const run = parseRunSummary(doc.id, doc);
-    if (run) out.push(run);
-  }
-  return out.sort((a, b) => a.completedAt.getTime() - b.completedAt.getTime());
-}
-
-/** The runs the totals count, as a finish time and a distance. */
-function datedRuns(
-  docs: readonly { id: string; [key: string]: unknown }[]
-): DatedRun[] {
-  const out: DatedRun[] = [];
-  for (const doc of docs) {
-    const run = parseRunSummary(doc.id, doc);
-    if (!run || !isVolumeEligible(run)) continue;
-    out.push({
-      completedAtMs: run.completedAt.getTime(),
-      distanceM: run.distance,
-    });
-  }
-  return out;
+/** The runs the totals count, as a finish time, a day and a distance. */
+function datedRuns(runs: readonly SavedRun[]): DatedRun[] {
+  return runs.filter(isVolumeEligible).map((run) => ({
+    completedAtMs: run.completedAt.getTime(),
+    day: run.day,
+    distanceM: run.distance,
+  }));
 }
 
 /**
@@ -116,17 +97,18 @@ export function useLifetimeRunStats(options?: { enabled?: boolean }) {
     let cancelled = false;
     (async () => {
       try {
-        const snap = await getDocs(collection(db, "users", uid, "runs"));
+        // Every saved run, through the saved-run reader, oldest first. Each
+        // is placed in the chronology on its Lift3 day, so a run saved
+        // before `date` existed is placed by its finish rather than dropped.
+        const runs = (await fetchSavedRuns(uid, { all: true })).reverse();
         if (cancelled) return;
         setFailed(false);
-        // `id` is carried through so the chronology's first-run entry has a
-        // stable key; the doc data does not contain it.
-        const runs = snap.docs.map((d) => ({ ...d.data(), id: d.id }));
+        const records = runs.map((run) => ({ ...run, date: run.day }));
         setStats({
-          ...sumLifetimeRunTotals(runs),
-          races: recordedRaceMilestones(runs),
+          ...sumLifetimeRunTotals(records),
+          races: recordedRaceMilestones(records),
           dated: datedRuns(runs),
-          runs: parsedRuns(runs),
+          runs,
         });
         setStatsUid(uid);
         setLoadedUid(uid);
