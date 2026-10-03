@@ -11,6 +11,8 @@ import { resetFirestore, seedFirestore } from "@/test/firestoreHarness";
 import { localDateString } from "@/lib/dateHelpers";
 import type { UserProfile } from "@/lib/auth";
 const today = localDateString();
+/** Today as Home hands it to useHomeData. */
+const TODAY = { key: today, protein: 0 };
 const profile = { weightKg: 75 } as UserProfile;
 beforeEach(() => {
   resetFirestore();
@@ -29,7 +31,9 @@ it("shows the latest locally saved weight immediately, after reopening, and afte
     },
   });
   const online = vi.spyOn(navigator, "onLine", "get").mockReturnValue(false);
-  const home = renderHook(() => useHomeData({ uid: "a" }, profile, [], "kg"));
+  const home = renderHook(() =>
+    useHomeData({ uid: "a" }, profile, [], "kg", null, TODAY)
+  );
   await waitFor(() => expect(home.result.current.loading).toBe(false));
   act(() => {
     queueWeightEntry("a", today, 81);
@@ -39,7 +43,7 @@ it("shows the latest locally saved weight immediately, after reopening, and afte
   expect(home.result.current.weightSyncStatus).toMatch(/Offline/);
   home.unmount();
   const reopened = renderHook(() =>
-    useHomeData({ uid: "a" }, profile, [], "kg")
+    useHomeData({ uid: "a" }, profile, [], "kg", null, TODAY)
   );
   expect(reopened.result.current.lastWeightInfo?.kg).toBe(82);
   await waitFor(() => expect(reopened.result.current.loading).toBe(false));
@@ -62,10 +66,14 @@ it("keeps another account and today's reading separate from a queued past-day co
       source: "manual",
     },
   });
-  const home = renderHook(() => useHomeData({ uid: "a" }, profile, [], "kg"));
+  const home = renderHook(() =>
+    useHomeData({ uid: "a" }, profile, [], "kg", null, TODAY)
+  );
   await waitFor(() => expect(home.result.current.loading).toBe(false));
   expect(home.result.current.lastWeightInfo?.kg).toBe(75);
-  const other = renderHook(() => useHomeData({ uid: "b" }, profile, [], "kg"));
+  const other = renderHook(() =>
+    useHomeData({ uid: "b" }, profile, [], "kg", null, TODAY)
+  );
   await waitFor(() => expect(other.result.current.loading).toBe(false));
   expect(other.result.current.lastWeightInfo?.kg).toBe(75);
   expect(other.result.current.weightSyncStatus).toBeNull();

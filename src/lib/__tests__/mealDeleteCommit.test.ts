@@ -12,8 +12,12 @@
  * ("Rice x3"), so these run over several ids at once. A partial failure is
  * the interesting case: the ones that landed must stay gone.
  */
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { commitMealDeletes } from "@/lib/mealDeleteCommit";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import {
+  commitMealDeletes,
+  deleteAfterUndoWindow,
+  MEAL_UNDO_WINDOW_MS,
+} from "@/lib/mealDeleteCommit";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
@@ -111,22 +115,81 @@ describe("commitMealDeletes", () => {
   });
 });
 
+describe("deleteAfterUndoWindow", () => {
+  beforeEach(() => vi.useFakeTimers());
+  afterEach(() => vi.useRealTimers());
+
+  function windowDeps() {
+    return { hide: vi.fn(), show: vi.fn(), commit: vi.fn() };
+  }
+
+  it("hides at once and deletes only when the window closes", () => {
+    const d = windowDeps();
+    deleteAfterUndoWindow(["a", "b"], d);
+    expect(d.hide).toHaveBeenCalledWith(["a", "b"]);
+    vi.advanceTimersByTime(MEAL_UNDO_WINDOW_MS - 1);
+    expect(d.commit).not.toHaveBeenCalled();
+    vi.advanceTimersByTime(1);
+    expect(d.commit).toHaveBeenCalledTimes(1);
+    expect(d.commit).toHaveBeenCalledWith(["a", "b"]);
+    expect(d.show).not.toHaveBeenCalled();
+  });
+
+  it("undo inside the window shows the meals and never deletes them", () => {
+    const d = windowDeps();
+    const undo = deleteAfterUndoWindow(["a"], d);
+    vi.advanceTimersByTime(MEAL_UNDO_WINDOW_MS - 1);
+    undo();
+    expect(d.show).toHaveBeenCalledWith(["a"]);
+    vi.advanceTimersByTime(MEAL_UNDO_WINDOW_MS * 2);
+    expect(d.commit).not.toHaveBeenCalled();
+  });
+
+  it("undo after the delete has started does nothing", () => {
+    // The row stepper's toast used to outlive the window by a second: its
+    // Undo showed rows whose delete had already been written.
+    const d = windowDeps();
+    const undo = deleteAfterUndoWindow(["a"], d);
+    vi.advanceTimersByTime(MEAL_UNDO_WINDOW_MS);
+    expect(d.commit).toHaveBeenCalledTimes(1);
+    undo();
+    expect(d.show).not.toHaveBeenCalled();
+  });
+
+  it("keeps each delete's window to itself", () => {
+    const d = windowDeps();
+    const undoFirst = deleteAfterUndoWindow(["a"], d);
+    vi.advanceTimersByTime(1000);
+    deleteAfterUndoWindow(["b"], d);
+    undoFirst();
+    vi.advanceTimersByTime(MEAL_UNDO_WINDOW_MS);
+    expect(d.commit).toHaveBeenCalledTimes(1);
+    expect(d.commit).toHaveBeenCalledWith(["b"]);
+    expect(d.show).toHaveBeenCalledWith(["a"]);
+  });
+});
+
 /* The helper is only worth anything if the page reaches it. Food.tsx is
    not renderable in jsdom — the tree hangs — so the wiring is pinned at
-   the source instead: both delete paths go through the commit, and
-   neither calls the raw soft-delete on its own again. */
+   the source instead: both delete paths go through the undo window and
+   the commit, and neither calls the raw soft-delete on its own again. */
 describe("Food.tsx routes its deletes through the commit", () => {
   const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
   const food = readFileSync(resolve(repoRoot, "src/pages/Food.tsx"), "utf8")
     .replace(/\/\*[\s\S]*?\*\//g, " ")
     .replace(/\/\/[^\n]*/g, " ");
 
-  it("imports the commit and uses it on both delete paths", () => {
+  it("sends both delete paths through the undo window and the commit", () => {
     expect(food).toMatch(
-      /import \{ commitMealDeletes \} from "@\/lib\/mealDeleteCommit"/
+      /import \{[^}]*\bcommitMealDeletes\b[^}]*\bdeleteAfterUndoWindow\b[^}]*\} from "@\/lib\/mealDeleteCommit"/
     );
     // The serving-stepper decrement and the row delete.
-    expect(food.match(/commitDeletes\(/g)?.length).toBe(2);
+    expect(food.match(/hideThenDelete\(/g)?.length).toBe(2);
+    // One window, which commits through the one recovery path.
+    expect(food.match(/deleteAfterUndoWindow\(/g)?.length).toBe(1);
+    expect(food.match(/commitDeletes\(/g)?.length).toBe(1);
+    // Every Undo toast lasts exactly as long as its window.
+    expect(food.match(/duration: MEAL_UNDO_WINDOW_MS/g)?.length).toBe(2);
   });
 
   it("never calls deleteMeal outside the commit's dependency wiring", () => {

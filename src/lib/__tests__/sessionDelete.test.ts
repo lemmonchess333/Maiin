@@ -27,6 +27,7 @@ import {
   writeLog,
   failNextFirestore,
   unfiredFailures,
+  readDoc,
 } from "@/test/firestoreHarness";
 import { deleteLoggedSession } from "@/lib/sessionDelete";
 
@@ -93,6 +94,21 @@ describe("deleteLoggedSession", () => {
     // The session survived, so the user's retry is a plain repeat rather
     // than a resume from a half-deleted state.
     expect(allPaths()).toContain("users/u1/workouts/w-1");
+  });
+
+  it("a failed workout delete leaves the best-lift map as it was", async () => {
+    // One batch: the delete and the map's invalidation land together or
+    // not at all, so a retry starts from the same state.
+    seedFirestore({ "users/u1/stats/prMap": { revision: 2, map: {} } });
+    failNextFirestore("commit");
+
+    await expect(
+      deleteLoggedSession({ uid: "u1", kind: "workout", id: "w-1" })
+    ).rejects.toBeTruthy();
+
+    expect(unfiredFailures()).toEqual([]);
+    expect(allPaths()).toContain("users/u1/workouts/w-1");
+    expect(readDoc("users/u1/stats/prMap")).toEqual({ revision: 2, map: {} });
   });
 
   it("touches no activity when the session was never shared", async () => {

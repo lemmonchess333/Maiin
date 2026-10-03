@@ -17,7 +17,7 @@
  */
 
 import { useCallback, useEffect, useState } from "react";
-import { collection, doc, getDocs, query, where } from "firebase/firestore";
+import { collection, doc, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { setDocGuarded } from "@/lib/firestoreWrite";
 import { logger } from "@/lib/logger";
@@ -28,6 +28,12 @@ import {
   type TrainingBlock,
 } from "./trainingBlock";
 import { blockEndDate } from "./trainingBlock";
+import {
+  addLocalDays,
+  localDateString,
+  parseLocalDate,
+} from "@/lib/dateHelpers";
+import { fetchSavedWorkouts } from "@/lib/savedWorkouts";
 import type { ReviewWorkoutDoc } from "./blockReviewViewModel";
 
 export function useTrainingBlock(uid: string | undefined) {
@@ -96,25 +102,18 @@ export function useTrainingBlock(uid: string | undefined) {
     async (block: TrainingBlock): Promise<ReviewWorkoutDoc[]> => {
       if (!uid) return [];
       try {
-        const snap = await getDocs(
-          query(
-            collection(db, "users", uid, "workouts"),
-            where("date", ">=", block.startDate),
-            where("date", "<", blockEndDate(block))
-          )
+        // The block's days: from its start to the day before it ends.
+        const lastDay = localDateString(
+          addLocalDays(parseLocalDate(blockEndDate(block)), -1)
         );
-        return snap.docs.map((d) => {
-          const data = d.data() as {
-            date?: unknown;
-            exercises?: Array<{
-              exerciseId?: unknown;
-              exerciseName?: unknown;
-              sets?: Array<{ reps?: unknown; weightKg?: unknown }>;
-            }>;
-          };
+        const workouts = await fetchSavedWorkouts(uid, {
+          since: block.startDate,
+          until: lastDay,
+        });
+        return workouts.map((data) => {
           return {
-            date: typeof data.date === "string" ? data.date : "",
-            exercises: (data.exercises ?? []).map((ex) => ({
+            date: data.date,
+            exercises: data.exercises.map((ex) => ({
               exerciseId:
                 typeof ex.exerciseId === "string" ? ex.exerciseId : "",
               exerciseName:

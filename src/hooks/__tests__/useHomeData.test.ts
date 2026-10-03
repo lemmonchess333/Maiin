@@ -32,18 +32,15 @@ vi.mock("date-fns", () => ({
   format: vi.fn((_d: unknown, _fmt: string) => "2026-04-01"),
 }));
 
-const MEALS = "users/u1/meals";
 const RUNS = "users/u1/runs";
 const WEIGHT = "users/u1/bodyweightLogs";
 
 /**
- * The hook date-windows every read:
- *   meals   where("date", "==", localDateString())
- *   runs    where("completedAt", ">=", Timestamp.fromDate(startOfToday))
- * The old stub ignored constraints entirely and handed back whatever was
- * queued, so those filters were never exercised — a row with no `date`
- * counted toward today's totals. Rows are stamped here so they satisfy
- * the real query; anything unstamped is correctly dropped.
+ * The hook windows its runs read to the day it is given, and the old stub
+ * ignored constraints entirely, so the window was never exercised. Rows
+ * are stamped here so they satisfy the real query. Today's food is not
+ * read here: Home hands the hook today's protein from the diary it already
+ * holds (`useMeals`).
  */
 const TODAY_KEY = localDateString();
 const todayStart = new Date();
@@ -75,23 +72,21 @@ function seedRows(base: string, rows: Record<string, unknown>[]) {
   if (Object.keys(tree).length > 0) seedFirestore(tree);
 }
 
-/** Seed all three collections the hook reads, by path rather than by
- *  call order. An empty array simply seeds nothing. */
+/** Seed both collections the hook reads, by path rather than by call
+ *  order. An empty array simply seeds nothing. */
 function seedHome(
-  meals: Record<string, unknown>[] = [],
   runs: Record<string, unknown>[] = [],
   weight: Record<string, unknown>[] = []
 ) {
-  seedRows(
-    MEALS,
-    meals.map((m) => ({ date: TODAY_KEY, ...m }))
-  );
   seedRows(
     RUNS,
     runs.map((r) => ({ completedAt: Timestamp.fromDate(todayStart), ...r }))
   );
   seedRows(WEIGHT, weight);
 }
+
+/** Today as Home hands it over: the day key and the diary's protein. */
+const TODAY = { key: TODAY_KEY, protein: 0 };
 
 function makeProfile(overrides: Partial<UserProfile> = {}): UserProfile {
   return {
@@ -128,43 +123,15 @@ describe("useHomeData", { timeout: 5000 }, () => {
   });
 
   it("starts in loading state and resolves to not loading", async () => {
-    seedHome([], [], []);
+    seedHome();
 
     const { result } = renderHook(() =>
-      useHomeData({ uid: "u1" }, makeProfile(), [], "kg")
+      useHomeData({ uid: "u1" }, makeProfile(), [], "kg", null, TODAY)
     );
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false);
     });
-  });
-
-  it("counts ONLY today's meals — a yesterday row is filtered out", async () => {
-    // The `where("date", "==", todayKey)` filter was untestable before
-    // the migration: the stub ignored constraints and returned whatever
-    // was queued, so a stale row counted toward today's totals. That
-    // filter is the fix for the Home/Food macro mismatch the hook's own
-    // comment describes, and nothing was holding it.
-    seedFirestore({
-      [`${MEALS}/today`]: {
-        date: TODAY_KEY,
-        totalCalories: 500,
-        totalProtein: 40,
-      },
-      [`${MEALS}/yesterday`]: {
-        date: "1999-01-01",
-        totalCalories: 9999,
-        totalProtein: 999,
-      },
-    });
-
-    const { result } = renderHook(() =>
-      useHomeData({ uid: "u1" }, makeProfile(), [], "kg")
-    );
-    await waitFor(() => expect(result.current.loading).toBe(false));
-
-    expect(result.current.dailyCal).toBe(500);
-    expect(result.current.dailyProt).toBe(40);
   });
 
   /* "counts ONLY runs completed today" lived here. Its only observable
@@ -175,31 +142,14 @@ describe("useHomeData", { timeout: 5000 }, () => {
      stays because it narrows the read; it no longer changes an answer, so
      there is nothing left to assert that could fail. */
 
-  it("returns zero defaults when no user", () => {
-    const { result } = renderHook(() => useHomeData(null, null, [], "kg"));
-
-    expect(result.current.dailyCal).toBe(0);
-    expect(result.current.dailyProt).toBe(0);
-    expect(result.current.loading).toBe(true);
-  });
-
-  it("computes meal totals from Firestore results", async () => {
-    const mealsRows = [
-      { totalCalories: 500, totalProtein: 40 },
-      { calories: 300, protein: 20 },
-    ];
-    seedHome(mealsRows, [], []);
-
+  it("reads nothing and keeps loading when there is no user", () => {
     const { result } = renderHook(() =>
-      useHomeData({ uid: "u1" }, makeProfile(), [], "kg")
+      useHomeData(null, null, [], "kg", null, TODAY)
     );
 
-    await waitFor(() => {
-      expect(result.current.loading).toBe(false);
-    });
-
-    expect(result.current.dailyCal).toBe(800);
-    expect(result.current.dailyProt).toBe(60);
+    expect(result.current.lastWeightInfo).toBeNull();
+    expect(result.current.postWorkoutNudge).toBeNull();
+    expect(result.current.loading).toBe(true);
   });
 
   /* The P0.5 run-hygiene trio (isInvalid / savedAnyway / legacy rows)
@@ -210,11 +160,11 @@ describe("useHomeData", { timeout: 5000 }, () => {
      prompt a refuel" below — the composition that remains live. */
 
   it("falls back to profile weight when bodyweightLogs is empty (kg)", async () => {
-    seedHome([], [], []);
+    seedHome();
 
     const profile = makeProfile({ weightKg: 75 });
     const { result } = renderHook(() =>
-      useHomeData({ uid: "u1" }, profile, [], "kg")
+      useHomeData({ uid: "u1" }, profile, [], "kg", null, TODAY)
     );
 
     await waitFor(() => {
@@ -230,11 +180,11 @@ describe("useHomeData", { timeout: 5000 }, () => {
   });
 
   it("falls back to profile weight when bodyweightLogs is empty (lbs)", async () => {
-    seedHome([], [], []);
+    seedHome();
 
     const profile = makeProfile({ weightKg: 75 });
     const { result } = renderHook(() =>
-      useHomeData({ uid: "u1" }, profile, [], "lbs")
+      useHomeData({ uid: "u1" }, profile, [], "lbs", null, TODAY)
     );
 
     await waitFor(() => {
@@ -245,17 +195,13 @@ describe("useHomeData", { timeout: 5000 }, () => {
   });
 
   it("handles partial failures gracefully (Promise.allSettled)", async () => {
-    // P0.5: `duration` is required for the run to pass
-    // isCountableRun's 30s floor. Pre-fix this test only set
-    // distance and still aggregated; after the eligibility filter
-    // landed, missing duration drops the run from the aggregate.
-    // The meals read fails; runs + weight still resolve.
-    failNextFirestore("getDocs", { path: MEALS });
-    seedHome([], [{ distance: 3000, duration: 1200 }], []);
+    // The runs read fails; the weight still resolves.
+    failNextFirestore("getDocs", { path: RUNS });
+    seedHome([{ distance: 3000, duration: 1200 }], []);
 
     const profile = makeProfile({ weightKg: 70 });
     const { result } = renderHook(() =>
-      useHomeData({ uid: "u1" }, profile, [], "kg")
+      useHomeData({ uid: "u1" }, profile, [], "kg", null, TODAY)
     );
 
     await waitFor(() => {
@@ -266,19 +212,18 @@ describe("useHomeData", { timeout: 5000 }, () => {
     // test would otherwise assert a clean load and still pass the
     // "runs still computed" half below.
     expect(unfiredFailures()).toEqual([]);
-    expect(result.current.error).toContain("Failed to load meals");
-    // The non-meal half still resolved. Anchored on weight rather than
-    // runs because the run aggregate is gone; without a positive here the
-    // test would pass on a hook that resolved nothing at all.
+    expect(result.current.error).toContain("Failed to load runs");
+    // The weight half still resolved; without a positive here the test
+    // would pass on a hook that resolved nothing at all.
     expect(result.current.lastWeightInfo).not.toBeNull();
   });
 
   it("converts weight to lbs when weightUnit is lbs", async () => {
     const weightRows = [{ date: "2026-03-30", weight: 80 }];
-    seedHome([], [], weightRows);
+    seedHome([], weightRows);
 
     const { result } = renderHook(() =>
-      useHomeData({ uid: "u1" }, makeProfile(), [], "lbs")
+      useHomeData({ uid: "u1" }, makeProfile(), [], "lbs", null, TODAY)
     );
 
     await waitFor(() => {
@@ -290,10 +235,17 @@ describe("useHomeData", { timeout: 5000 }, () => {
   });
 
   it("refreshes the weight after a saved entry or undo", async () => {
-    seedHome([], [], []);
+    seedHome();
 
     const { result } = renderHook(() =>
-      useHomeData({ uid: "u1" }, makeProfile({ weightKg: 70 }), [], "kg")
+      useHomeData(
+        { uid: "u1" },
+        makeProfile({ weightKg: 70 }),
+        [],
+        "kg",
+        null,
+        TODAY
+      )
     );
 
     await waitFor(() => {
@@ -333,32 +285,42 @@ describe("useHomeData", { timeout: 5000 }, () => {
     ] as unknown as Parameters<typeof useHomeData>[2];
 
     it("quotes the DAY's protein target, not the stored baseline", async () => {
-      seedFirestore({
-        [`${MEALS}/today`]: {
-          date: TODAY_KEY,
-          totalCalories: 500,
-          totalProtein: 40,
-        },
-      });
-
       const { result } = renderHook(() =>
         useHomeData(
           { uid: "u1" },
           makeProfile({ targetProtein: 160 }),
           workoutToday,
           "kg",
-          176 // what the rings on the same screen show
+          176, // what the rings on the same screen show
+          { key: TODAY_KEY, protein: 40 } // what the macro tiles show
         )
       );
 
-      // Anchored on the VALUE, not on the nudge existing. The nudge is set
-      // by an effect keyed on today's workouts, so it goes non-null on the
-      // first render — before the meal query resolves. Waiting for non-null
-      // and then asserting returned at t=0 with dailyProt still 0, which
-      // made this pass or fail on timing. 176 - 40; the un-loaded value is
-      // 176, so this cannot be satisfied before the meals land.
+      // Anchored on the VALUE, not on the nudge existing: 176 - 40. A
+      // nudge quoting the stored 160, or ignoring the protein logged,
+      // reads 120 or 176.
       await waitFor(() =>
         expect(result.current.postWorkoutNudge?.proteinRemaining).toBe(136)
+      );
+    });
+
+    it("follows the protein the diary shows as it changes", async () => {
+      // Home passes the diary's total for the day; a meal logged while Home
+      // is open, offline ones included, moves the nudge with the tiles.
+      const { result, rerender } = renderHook(
+        ({ protein }) =>
+          useHomeData({ uid: "u1" }, makeProfile(), workoutToday, "kg", 176, {
+            key: TODAY_KEY,
+            protein,
+          }),
+        { initialProps: { protein: 40 } }
+      );
+      await waitFor(() =>
+        expect(result.current.postWorkoutNudge?.proteinRemaining).toBe(136)
+      );
+      rerender({ protein: 100 });
+      await waitFor(() =>
+        expect(result.current.postWorkoutNudge?.proteinRemaining).toBe(76)
       );
     });
 
@@ -373,29 +335,18 @@ describe("useHomeData", { timeout: 5000 }, () => {
       // value" and "falls back to the constant" produced the same number and
       // the test could not tell them apart — a mutation dropping the stored
       // fallback entirely still passed.
-      seedFirestore({
-        [`${MEALS}/today`]: {
-          date: TODAY_KEY,
-          totalCalories: 500,
-          totalProtein: 40,
-        },
-      });
-
       const { result } = renderHook(() =>
         useHomeData(
           { uid: "u1" },
           makeProfile({ targetProtein: 190 }),
           workoutToday,
           "kg",
-          null
+          null,
+          { key: TODAY_KEY, protein: 40 }
         )
       );
 
-      // Anchored on the VALUE, like its sibling above. Waiting for the nudge
-      // to merely EXIST returns at t=0 — the nudge is set by an effect keyed
-      // on today's workouts, so it is non-null before the meal query
-      // resolves and `dailyProt` is still 0. The un-loaded reading is 190,
-      // which is what CI caught.
+      // Anchored on the VALUE, like its sibling above: 190 - 40.
       await waitFor(() =>
         expect(result.current.postWorkoutNudge?.proteinRemaining).toBe(150)
       );
@@ -442,9 +393,12 @@ describe("useHomeData", { timeout: 5000 }, () => {
       runs: Record<string, unknown>[],
       workouts: Parameters<typeof useHomeData>[2]
     ) {
-      seedHome([{ totalCalories: 500, totalProtein: 40 }], runs, []);
+      seedHome(runs, []);
       return renderHook(() =>
-        useHomeData({ uid: "u1" }, makeProfile(), workouts, "kg", 176)
+        useHomeData({ uid: "u1" }, makeProfile(), workouts, "kg", 176, {
+          key: TODAY_KEY,
+          protein: 40,
+        })
       );
     }
 
@@ -473,14 +427,55 @@ describe("useHomeData", { timeout: 5000 }, () => {
 
     it("an ineligible run does not prompt a refuel", async () => {
       // A saved-anyway misclick must not trigger a refuel prompt.
-      // Anchored on the meal the harness seeds having landed, so the null
-      // read is not just the effect's initial value — `toBeNull` alone
-      // passes at t=0.
+      // Anchored on the reads having landed, so the null read is not just
+      // the effect's initial value — `toBeNull` alone passes at t=0.
       const { result } = renderWith(
         [{ ...countableRun, savedAnyway: true }],
         []
       );
-      await waitFor(() => expect(result.current.dailyCal).toBe(500));
+      await waitFor(() => expect(result.current.loading).toBe(false));
+      expect(result.current.postWorkoutNudge).toBeNull();
+    });
+
+    it("stops prompting for a run finished before midnight once the day turns", async () => {
+      /* The nudge counts runs finished today, and its reads follow the day
+         Home gives it: when the day turns they run again, for the new one.
+         Before they were made once, on mount, and a run finished at 23:30
+         went on prompting a refuel into the next day. */
+      const lateEvening = new Date(`${TODAY_KEY}T23:40:00`);
+      vi.setSystemTime(lateEvening);
+      seedHome(
+        [
+          {
+            ...countableRun,
+            completedAt: Timestamp.fromDate(
+              new Date(lateEvening.getTime() - 10 * 60_000)
+            ),
+          },
+        ],
+        []
+      );
+      // One list for every render, as Home's is: the nudge reads it, and a
+      // new one each render would run the nudge forever.
+      const noWorkouts: Parameters<typeof useHomeData>[2] = [];
+      const { result, rerender } = renderHook(
+        ({ key }) =>
+          useHomeData({ uid: "u1" }, makeProfile(), noWorkouts, "kg", 176, {
+            key,
+            protein: 40,
+          }),
+        { initialProps: { key: TODAY_KEY } }
+      );
+      await waitFor(() =>
+        expect(result.current.postWorkoutNudge?.type).toBe("run")
+      );
+
+      const nextDay = new Date(lateEvening.getTime() + 30 * 60_000);
+      vi.setSystemTime(nextDay);
+      rerender({ key: localDateString(nextDay) });
+      // Anchored on the new day's reads landing: the hook loads again.
+      expect(result.current.loading).toBe(true);
+      await waitFor(() => expect(result.current.loading).toBe(false));
       expect(result.current.postWorkoutNudge).toBeNull();
     });
 
@@ -496,9 +491,9 @@ describe("useHomeData", { timeout: 5000 }, () => {
         ],
         []
       );
-      // Anchored on the seeded meal having landed — otherwise this passes
-      // while the hook has resolved nothing at all.
-      await waitFor(() => expect(result.current.dailyCal).toBe(500));
+      // Anchored on the reads having landed — otherwise this passes while
+      // the hook has resolved nothing at all.
+      await waitFor(() => expect(result.current.loading).toBe(false));
       expect(result.current.postWorkoutNudge).toBeNull();
     });
   });

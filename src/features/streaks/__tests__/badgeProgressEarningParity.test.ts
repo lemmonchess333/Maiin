@@ -51,11 +51,7 @@ function recentDays(n: number): string[] {
 }
 
 function runsOn(dates: string[]) {
-  return dates.map((key) => {
-    const [y, m, d] = key.split("-").map(Number);
-    const at = new Date(y, m - 1, d, 12, 0, 0);
-    return { completedAt: { toDate: () => at } };
-  });
+  return dates.map((day) => ({ day }));
 }
 
 /**

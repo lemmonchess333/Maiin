@@ -31,8 +31,7 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { Toggle } from "@/components/ui/Toggle";
-import { collection, getDocs, query, orderBy, limit } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { fetchSavedRuns } from "@/lib/savedRuns";
 import { useAuth } from "@/lib/auth";
 import { prescriptivePaceTableFromFitness } from "@/lib/runPaces";
 import {
@@ -273,27 +272,14 @@ export default function RunSetupModal({
     let cancelled = false;
     (async () => {
       try {
-        const snap = await getDocs(
-          query(
-            collection(db, "users", user.uid, "runs"),
-            orderBy("completedAt", "desc"),
-            limit(5)
-          )
-        );
+        const runs = await fetchSavedRuns(user.uid, { latest: 5 });
         if (cancelled) return;
-        for (const d of snap.docs) {
-          const data = d.data() as {
-            distance?: number;
-            duration?: number;
-            activityType?: string;
-            isInvalid?: boolean;
-            savedAnyway?: boolean;
-          };
-          if (!isVolumeEligible(data)) continue;
+        for (const run of runs) {
+          if (!isVolumeEligible(run)) continue;
           setLastRun({
-            distanceM: data.distance ?? 0,
-            durationS: data.duration ?? 0,
-            activityType: data.activityType ?? "freerun",
+            distanceM: run.distance,
+            durationS: run.duration,
+            activityType: run.activityType,
           });
           return;
         }

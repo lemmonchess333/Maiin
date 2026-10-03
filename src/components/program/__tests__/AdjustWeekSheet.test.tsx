@@ -19,6 +19,7 @@ import {
 import AdjustWeekSheet from "../AdjustWeekSheet";
 import { getEasedWeekKey, setEasedWeekKey } from "@/lib/easeWeekNudgeMarkers";
 import { localWeekKey } from "@/lib/dateHelpers";
+import type { RealignOutcome } from "@/features/program/programOutcome";
 
 vi.mock("@/lib/toast", () => ({
   toast: { success: vi.fn(), error: vi.fn() },
@@ -34,10 +35,13 @@ afterEach(() => {
 
 function setup() {
   const applyEaseWeek = vi.fn(async () => 0);
-  const realignRacePlan = vi.fn().mockResolvedValue({
-    timing: "healthy" as const,
-    totalWeeks: 15,
-  });
+  const realignRacePlan = vi.fn(
+    async (): Promise<RealignOutcome> => ({
+      status: "applied",
+      timing: "healthy",
+      totalWeeks: 15,
+    })
+  );
   render(
     <AdjustWeekSheet
       open
@@ -162,7 +166,7 @@ function openEaser(props: {
   revertEaseWeek?: () => Promise<{ ok: boolean; message?: string }>;
   easedThisWeek?: boolean;
   onClose?: () => void;
-  realignRacePlan?: () => Promise<{ timing: "healthy"; totalWeeks: number }>;
+  realignRacePlan?: () => Promise<RealignOutcome>;
 }) {
   render(
     <AdjustWeekSheet
@@ -375,7 +379,7 @@ describe("AdjustWeekSheet — pending changes", () => {
   });
 
   it("keeps the re-plan preview stable until the request completes", async () => {
-    const request = deferred<{ timing: "healthy"; totalWeeks: number }>();
+    const request = deferred<RealignOutcome>();
     const onClose = vi.fn();
     openEaser({ realignRacePlan: () => request.promise, onClose });
     fireEvent.click(screen.getByRole("button", { name: /My week is crowded/ }));
@@ -383,10 +387,33 @@ describe("AdjustWeekSheet — pending changes", () => {
     expect(screen.getByRole("button", { name: "Back" })).toBeDisabled();
     expect(screen.getByRole("status")).toHaveTextContent("Saving changes…");
     await act(async () =>
-      request.resolve({ timing: "healthy", totalWeeks: 12 })
+      request.resolve({ status: "applied", timing: "healthy", totalWeeks: 12 })
     );
     expect(onClose).toHaveBeenCalledTimes(1);
     expect(screen.queryByRole("status")).toBeNull();
+  });
+
+  it("announces nothing and stays open when the re-plan is refused", async () => {
+    // The writer says why ("Your race date has passed."). The sheet used to
+    // toast "Re-planned" over it and close, because a refusal came back as
+    // a healthy plan of 0 weeks.
+    const onClose = vi.fn();
+    const realignRacePlan = vi.fn(
+      async (): Promise<RealignOutcome> => ({
+        status: "declined",
+        reason: "Your race date has passed.",
+      })
+    );
+    openEaser({ realignRacePlan, onClose });
+    fireEvent.click(screen.getByRole("button", { name: /My week is crowded/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Re-plan from today" }));
+    await vi.waitFor(() => expect(realignRacePlan).toHaveBeenCalledTimes(1));
+    await vi.waitFor(() =>
+      expect(screen.getByRole("button", { name: "Back" })).toBeEnabled()
+    );
+    const { toast } = await import("@/lib/toast");
+    expect(toast.success).not.toHaveBeenCalled();
+    expect(onClose).not.toHaveBeenCalled();
   });
 });
 

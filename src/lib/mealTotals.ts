@@ -1,18 +1,19 @@
 /**
- * Shared daily-totals summer. Both Home's useHomeData (which pulls today's
- * meal docs directly from Firestore) and Food's useMeals (which sums from
- * the client-side meal cache) funnel through this function so the two
- * surfaces can't drift again — the previous bug was caused by
- * useHomeData estimating carbs/fat from a 62/38 split of leftover
- * calories while useMeals read the real values. Same doc → same totals
- * → same numbers on every surface.
+ * Shared daily-totals summer. Home's food card reads a day's totals
+ * through `useMeals().getDailyTotals`, which sums here; Food's day sums
+ * the meals it shows (so a deleted entry leaves the total while its Undo
+ * is open), and the streak and Food's week strip sum their own meal lists
+ * here too, so no surface can drift again. The bug this ended: Home's `useHomeData`
+ * estimated carbs and fat from a 62/38 split of leftover calories while
+ * useMeals read the real values. Same doc → same totals → same numbers on
+ * every surface.
  *
  * Accepts two input shapes:
  *   1. The parsed `Meal` type exported from useMeals.ts — fully typed,
  *      uses the `total*` prefix.
- *   2. Raw Firestore `d.data()` payloads from useHomeData — may use the
- *      legacy bare form (`calories`, `protein`, `carbs`, `fat`) if they
- *      were written by a much older app build.
+ *   2. Raw Firestore `d.data()` payloads — may use the legacy bare form
+ *      (`calories`, `protein`, `carbs`, `fat`) if they were written by a
+ *      much older app build.
  *
  * Each macro field prefers the prefixed form, falls back to the bare
  * form, then 0. Non-finite values (NaN, undefined, strings) coerce to 0.
@@ -34,18 +35,18 @@ export interface MealTotalsInput {
   fat?: number;
   // HOME-MEALS-01: soft-delete marker. Deletion is SOFT (`deletedAt` +
   // 24h restore window), so a "deleted" meal still exists as a doc.
-  // useMeals filters `!deletedAt` client-side, but useHomeData reads
-  // today's docs straight from Firestore with no such filter and fed
+  // useMeals filters `!deletedAt` client-side, but Home's useHomeData
+  // read today's docs straight from Firestore with no such filter and fed
   // every raw doc here — so soft-deleted meals inflated Home's totals
   // and count while Food showed the correct numbers. Filtering at this
-  // shared boundary keeps every caller in agreement. `null` (the
-  // post-restore value) counts as active.
+  // shared boundary keeps every caller in agreement, raw readers
+  // included. `null` (the post-restore value) counts as active.
   deletedAt?: unknown;
 }
 
 // Firestore payloads carry extra keys (items, confidence, createdAt, ...).
 // The sum only reads the fields above; TypeScript's width-subtyping permits
-// wider objects to be assigned to this type, and the useHomeData call site
+// wider objects to be assigned to this type, and a raw-snapshot caller
 // casts `d.data()` with `as MealTotalsInput` to make that explicit.
 //
 // No index signature on the interface itself — adding one broke

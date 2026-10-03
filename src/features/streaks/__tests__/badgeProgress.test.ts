@@ -22,9 +22,7 @@ function def(partial: Partial<BadgeDef> & { id: string }): BadgeDef {
   } as BadgeDef;
 }
 const liftOn = (date: string) => ({ date });
-const runOn = (d: number) => ({
-  completedAt: { toDate: () => new Date(2026, 4, d, 12, 0, 0) },
-});
+const runOn = (d: number) => ({ day: `2026-05-${String(d).padStart(2, "0")}` });
 function ctx(over: Partial<Parameters<typeof badgeProgress>[1]> = {}) {
   return { currentStreak: 0, workouts: [], runs: [], today: TODAY, ...over };
 }

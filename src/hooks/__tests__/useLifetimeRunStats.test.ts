@@ -36,9 +36,18 @@ import {
   failNextFirestore,
   unfiredFailures,
 } from "@/test/firestoreHarness";
+import { localDateString } from "@/lib/dateHelpers";
 
+/** Every saved run carries `completedAt`; the saved-run reader orders and
+ *  windows by it, so a fixture without one is left out as Firestore would
+ *  leave it out. */
 function run(distance: number, over: Record<string, unknown> = {}) {
-  return { distance, duration: distance / 3, ...over };
+  return {
+    distance,
+    duration: distance / 3,
+    completedAt: 1_750_000_000_000,
+    ...over,
+  };
 }
 
 beforeEach(() => {
@@ -124,8 +133,17 @@ describe("useLifetimeRunStats", () => {
         (x, y) => x.completedAtMs - y.completedAtMs
       )
     ).toEqual([
-      { completedAtMs: 1_700_000_000_000, distanceM: 3000 },
-      { completedAtMs: 1_800_000_000_000, distanceM: 5000 },
+      {
+        completedAtMs: 1_700_000_000_000,
+        // No `date` saved: the run's day is the local day it finished.
+        day: localDateString(new Date(1_700_000_000_000)),
+        distanceM: 3000,
+      },
+      {
+        completedAtMs: 1_800_000_000_000,
+        day: localDateString(new Date(1_800_000_000_000)),
+        distanceM: 5000,
+      },
     ]);
     // The same runs the totals count, no more.
     expect(result.current.dated).toHaveLength(result.current.runCount);

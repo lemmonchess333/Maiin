@@ -58,22 +58,6 @@ export interface SessionShareAction {
   post: (decision?: ShareDecision) => Promise<ShareOutcome>;
 }
 
-/** Receipts cross `Promise<unknown>` boundaries (WorkoutSession's
- *  `onCompleteDay`), so the finish screen checks the shape it was given. */
-export function isSessionShareAction(
-  value: unknown
-): value is SessionShareAction {
-  if (!value || typeof value !== "object") return false;
-  const v = value as Partial<SessionShareAction>;
-  return (
-    typeof v.uid === "string" &&
-    (v.type === "run" || v.type === "workout") &&
-    typeof v.post === "function" &&
-    !!v.source &&
-    typeof v.source.id === "string"
-  );
-}
-
 const live = new Map<string, LiveShareOutcome>();
 /** Posts under way, by session, so a second action for the same session
  *  (a resumed save chain builds a new one) waits on the first post. */

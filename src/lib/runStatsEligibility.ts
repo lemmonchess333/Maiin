@@ -1,8 +1,8 @@
 import type { ActivityType } from "@/types/run";
-import { isOutdoorGpsRun } from "./runGuards";
+import { isOutdoorGpsRun, requiresManualDistance } from "./runGuards";
 
 /**
- * Stat eligibility predicates for run records. Three sibling policies
+ * Stat eligibility predicates for run records. Four sibling policies
  * — the matrix lives here so the differences are visible side-by-side.
  *
  *  - {@link isVolumeEligible} — does this run count toward total runs,
@@ -11,6 +11,10 @@ import { isOutdoorGpsRun } from "./runGuards";
  *  - {@link isPaceEligible} — does this run count toward Best Pace,
  *    the best-pace and Longest Run records, outdoor-style PRs?
  *    Outdoor GPS only. Strict policy.
+ *  - {@link isIndoorPaceEligible} — does this run count toward the PRs
+ *    tab's Indoor records? Treadmill + manual only, on the strict
+ *    policy's floors: a typed distance sets an indoor record, never an
+ *    outdoor one.
  *  - {@link isPaceTrendEligible} — does this run count toward the pace
  *    trend badge ("PR" / "Faster" / "Steady") on RunSummary? Outdoor
  *    GPS only, but lenient on legacy docs missing `activityType`.
@@ -85,6 +89,18 @@ export function isPaceEligible(run: RunRecord): boolean {
   if (!isVolumeEligible(run)) return false;
   if (!run.activityType) return false;
   if (!isOutdoorGpsRun(run.activityType as ActivityType)) return false;
+  const pace = run.avgPace ?? 0;
+  return Number.isFinite(pace) && pace > 0;
+}
+
+/** Indoor-record eligibility: the strict policy for a treadmill or
+ *  manual run, whose distance the runner typed. Volume's floors (so an
+ *  invalid or saved-anyway run sets nothing) and a positive, finite
+ *  avgPace. Its records are kept apart from the outdoor ones, because a
+ *  typed distance is not a measured one. */
+export function isIndoorPaceEligible(run: RunRecord): boolean {
+  if (!isVolumeEligible(run)) return false;
+  if (!requiresManualDistance(run.activityType as ActivityType)) return false;
   const pace = run.avgPace ?? 0;
   return Number.isFinite(pace) && pace > 0;
 }

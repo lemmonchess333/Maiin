@@ -7,7 +7,6 @@ import {
   runSessionPresentation,
   runSessionExplainer,
 } from "@/lib/runSessionExplainer";
-import { liftSessionExplainer } from "@/lib/liftSessionExplainer";
 import type { ScheduledRunDay } from "@/features/program/runScheduler";
 
 vi.mock("@/lib/haptic", () => ({ haptic: vi.fn() }));
@@ -15,10 +14,7 @@ vi.mock("@/lib/homeAnalytics", () => ({ track: vi.fn() }));
 
 describe("session purpose command surfaces", () => {
   it("keeps lift rationale off Home while preserving the muscle meta", () => {
-    const purpose = liftSessionExplainer(
-      { weekNumber: 3, currentPhase: "progression" },
-      "2026-09-06"
-    )!;
+    const purpose = "Week 3 of 4 · progression follows your sets";
     const { container } = render(
       <LiftCTACard
         nextWorkout={{
@@ -26,6 +22,7 @@ describe("session purpose command surfaces", () => {
           dayType: "pull",
           exercises: [],
         }}
+        // @ts-expect-error -- no rationale on Home (owner, 2026-09-09), so the card takes none
         purpose={purpose}
         muscleGroups="Back · Biceps"
         navigate={vi.fn()}
@@ -60,6 +57,7 @@ describe("session purpose command surfaces", () => {
       <RunCTACard
         todayRun={run}
         navigate={vi.fn()}
+        // @ts-expect-error -- no rationale or plan week on Home (owner, 2026-09-09)
         purpose={purpose}
         weekLabel={weekLabel}
       />

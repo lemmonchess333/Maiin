@@ -1,17 +1,23 @@
 import { useCallback, useSyncExternalStore } from "react";
-import {
-  collection,
-  doc,
-  limit,
-  onSnapshot,
-  orderBy,
-  query,
-  Timestamp,
-  where,
-} from "firebase/firestore";
+import { doc, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { localDateString, parseLocalDate } from "@/lib/dateHelpers";
 import { isVolumeEligible } from "@/lib/runStatsEligibility";
+import { subscribeQueuedWrites } from "@/lib/offlineQueue";
+import {
+  parseSavedRunDocs,
+  savedRunsQuery,
+  withQueuedRuns,
+  type RunWindow,
+  type SavedRun,
+} from "@/lib/savedRuns";
+import {
+  parseSavedWorkoutDocs,
+  savedWorkoutsQuery,
+  withQueuedWorkouts,
+  type Workout,
+  type WorkoutWindow,
+} from "@/lib/savedWorkouts";
 import type { ProgramState } from "@/features/program/programTypes";
 
 // ── Subscription window ──────────────────────────────────────────────────
@@ -26,7 +32,8 @@ export interface WorkoutRow {
 }
 
 export interface RunRow {
-  completedAt: Timestamp | null;
+  /** The local day the run belongs to (Lift3: the day it started). */
+  day: string;
   calories: number;
 }
 
@@ -44,6 +51,45 @@ const EMPTY: TrainingFuelData = {
   workoutsLoaded: false,
   runsLoaded: false,
 };
+
+function runWindowFor(today: string): RunWindow {
+  const start = parseLocalDate(today);
+  start.setDate(start.getDate() - WINDOW_DAYS);
+  return { since: localDateString(start), cap: DOC_LIMIT };
+}
+
+/**
+ * The window's workouts as the burn tiles count them: the server's, with
+ * this phone's unsynced ones laid over them.
+ */
+function liftRows(
+  uid: string,
+  savedWorkouts: readonly Workout[],
+  window: WorkoutWindow
+): WorkoutRow[] {
+  return withQueuedWorkouts(uid, savedWorkouts, window).map((workout) => ({
+    date: workout.date,
+    totalCalories:
+      typeof workout.totalCalories === "number" ? workout.totalCalories : 0,
+  }));
+}
+
+/**
+ * The window's runs as the burn tiles count them: the server's, with this
+ * phone's unsynced runs laid over them, and only runs that can count
+ * (saved-anyway "too-fast" misclicks never do: a bad GPS reading can't
+ * inflate the informational burn tiles).
+ */
+function burnRows(
+  uid: string,
+  savedRuns: readonly SavedRun[],
+  window: RunWindow
+): RunRow[] {
+  return withQueuedRuns(uid, savedRuns, window)
+    .filter(isVolumeEligible)
+    .map((run) => ({ day: run.day, calories: run.calories }));
+}
+
 interface Entry {
   value: TrainingFuelData;
   listeners: Set<() => void>;
@@ -76,67 +122,50 @@ function subscribe(uid: string, today: string, notify: () => void): () => void {
         }),
       () => publish({ program: null })
     );
-    const windowStart = parseLocalDate(today);
-    windowStart.setDate(windowStart.getDate() - WINDOW_DAYS);
-    const windowStartString = localDateString(windowStart);
-    const windowStartTs = Timestamp.fromDate(windowStart);
+    const runWindow = runWindowFor(today);
+    const workoutWindow: WorkoutWindow = {
+      since: (runWindow as { since: string }).since,
+      cap: DOC_LIMIT,
+    };
 
-    const workoutsRef = collection(db, "users", uid, "workouts");
-    const workoutsQ = query(
-      workoutsRef,
-      where("date", ">=", windowStartString),
-      orderBy("date", "desc"),
-      limit(DOC_LIMIT)
+    // Workouts and runs through their one readers, with what this phone
+    // has saved and not yet synced, so a session burns from the moment it
+    // is saved.
+    let savedWorkouts: Workout[] = [];
+    const unsubWorkouts = onSnapshot(
+      savedWorkoutsQuery(uid, workoutWindow),
+      (snap) => {
+        savedWorkouts = parseSavedWorkoutDocs(snap.docs);
+        publish({
+          workouts: liftRows(uid, savedWorkouts, workoutWindow),
+          workoutsLoaded: true,
+        });
+      }
     );
-    const unsubWorkouts = onSnapshot(workoutsQ, (snap) => {
-      const rows: WorkoutRow[] = snap.docs
-        .map((d) => d.data() as { date?: unknown; totalCalories?: unknown })
-        .filter((d) => typeof d.date === "string")
-        .map((d) => ({
-          date: d.date as string,
-          totalCalories:
-            typeof d.totalCalories === "number" ? d.totalCalories : 0,
-        }));
-      publish({ workouts: rows, workoutsLoaded: true });
-    });
 
-    const runsRef = collection(db, "users", uid, "runs");
-    const runsQ = query(
-      runsRef,
-      where("completedAt", ">=", windowStartTs),
-      orderBy("completedAt", "desc"),
-      limit(DOC_LIMIT)
-    );
-    const unsubRuns = onSnapshot(runsQ, (snap) => {
-      // Drop non-countable runs (saved-anyway "too-fast" misclicks) so a bad
-      // GPS reading can't inflate the informational burn tiles.
-      const rows: RunRow[] = snap.docs
-        .map((d) => {
-          const raw = d.data() as {
-            completedAt?: unknown;
-            calories?: unknown;
-            isInvalid?: boolean;
-            savedAnyway?: boolean;
-            distance?: number;
-            duration?: number;
-          };
-          if (!isVolumeEligible(raw)) return null;
-          const ts =
-            raw.completedAt instanceof Timestamp ? raw.completedAt : null;
-          return {
-            completedAt: ts,
-            calories: typeof raw.calories === "number" ? raw.calories : 0,
-          };
-        })
-        .filter((row): row is RunRow => row !== null);
-      publish({ runs: rows, runsLoaded: true });
+    // One parse and the Lift3 day for runs, so a run begun before midnight
+    // burns on the day it began.
+    let savedRuns: SavedRun[] = [];
+    const unsubRuns = onSnapshot(savedRunsQuery(uid, runWindow), (snap) => {
+      savedRuns = parseSavedRunDocs(snap.docs);
+      publish({
+        runs: burnRows(uid, savedRuns, runWindow),
+        runsLoaded: true,
+      });
     });
+    const unsubQueue = subscribeQueuedWrites(() =>
+      publish({
+        workouts: liftRows(uid, savedWorkouts, workoutWindow),
+        runs: burnRows(uid, savedRuns, runWindow),
+      })
+    );
 
     owner.stop = () => {
       active = false;
       unsubProgram();
       unsubWorkouts();
       unsubRuns();
+      unsubQueue();
     };
   }
   entry.listeners.add(notify);

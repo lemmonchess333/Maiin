@@ -102,11 +102,32 @@ branch rebuilds that work on top of the newer app fixes.
   with a 2 MiB limit per cached file. No pre-download of the full library.
   Quota failures do not prevent network images from displaying.
 
+## Releasing a set
+
+A release is its record and its cues. Nothing else is written by hand.
+
+1. Deliver the six frames as `public/form-frames/<id>/1.webp` to `6.webp`.
+2. Write the six cues in `src/lib/releasedFormPlacards.ts`.
+3. Print a draft record with
+   `node --import tsx scripts/create-form-art-review.ts <id> --version=<version> --reference=<1-6>`,
+   complete the review, and save it as
+   `docs/exercise-art/releases/<date>/<id>.json` with `"decision": "approved"`.
+4. Run `npm run art:releases`. It writes the set's registry facts (version,
+   canvas, reference frame, record) to `src/lib/formArtReleases.data.ts`
+   from the record. Do not add the set to `src/lib/formArtwork.ts`.
+5. Run `npm run art:cutouts -- --only=<id>` for its card thumbnail.
+6. Run `npm run check:form-art` and `npm run test`.
+
+When a set has more than one approved record, the newest review wins. Sets
+released without a strict review (the older shipped sets and the owner
+releases) are still listed by hand in `formArtwork.ts`; no new set joins them.
+
 ## Production commands
 
 ```sh
 npm run check:form-art
 npm run check:form-drafts
+npm run art:releases
 node --import tsx scripts/audit-form-art.ts --json
 node --import tsx scripts/form-card-prompt.ts db-curl docs/exercise-art/scenes/db-curl.json
 node --import tsx scripts/form-card-prompt.ts squat docs/exercise-art/scenes/squat.json
@@ -115,6 +136,9 @@ node --import tsx scripts/create-form-art-review.ts barbell-row
 ```
 
 The review command prints an unapproved template. It never approves artwork.
+Without `--version` it describes a set as released, for a re-review; with
+it, the set is described from its delivered frames, for a new or
+replacement set.
 `inventory.json` is the full exact-ID queue. Plan status `reviewed` means the
 written movement plan has been checked, not that any generated image is approved.
 

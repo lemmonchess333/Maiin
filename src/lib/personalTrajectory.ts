@@ -16,18 +16,14 @@
  * space into a useful motivational signal.
  */
 
-import {
-  collection,
-  getDocs,
-  query,
-  where,
-  orderBy,
-  limit,
-  Timestamp,
-} from "firebase/firestore";
-import { db } from "./firebase";
 import { localDateString, startOfLocalWeek } from "@/lib/dateHelpers";
 import { isVolumeEligible } from "./runStatsEligibility";
+import { fetchSavedRuns, type SavedRun } from "./savedRuns";
+import {
+  fetchSavedWorkouts,
+  workoutTonnageKg,
+  type Workout,
+} from "./savedWorkouts";
 
 export interface TrajectoryBreakdown {
   km: number;
@@ -76,62 +72,61 @@ function toDateKey(d: Date): string {
   return localDateString(d);
 }
 
+/**
+ * Whether a run counts before `cutoff`. A run belongs to the day it started
+ * (Lift3), so a run on an earlier day always counts, even one that ran past
+ * midnight; on the cutoff's own day it counts once it had finished.
+ */
+function ranBefore(run: SavedRun, cutoff: Date): boolean {
+  return (
+    run.day < toDateKey(cutoff) || run.completedAt.getTime() < cutoff.getTime()
+  );
+}
+
+/**
+ * The same rule for a workout: one on an earlier day always counts; on the
+ * cutoff's own day it counts once it had been saved. The workouts query
+ * used to stop at the cutoff's day, so last Tuesday's morning session never
+ * counted towards "last week at this point" on a Tuesday afternoon.
+ */
+function liftedBefore(workout: Workout, cutoff: Date): boolean {
+  const day = toDateKey(cutoff);
+  if (workout.date < day) return true;
+  const saved = workout.createdAt?.toDate?.();
+  return (
+    workout.date === day &&
+    saved instanceof Date &&
+    saved.getTime() < cutoff.getTime()
+  );
+}
+
 async function computeRangeBreakdown(
   uid: string,
   fromDate: Date,
   toDate: Date
 ): Promise<TrajectoryBreakdown> {
-  const fromTs = Timestamp.fromDate(fromDate);
-  const toTs = Timestamp.fromDate(toDate);
   const fromKey = toDateKey(fromDate);
-  const toKey = toDateKey(toDate);
+  const lastDay = toDateKey(new Date(toDate.getTime() - 1));
 
-  const [runsSnap, workoutsSnap] = await Promise.all([
-    getDocs(
-      query(
-        collection(db, "users", uid, "runs"),
-        where("completedAt", ">=", fromTs),
-        where("completedAt", "<", toTs),
-        orderBy("completedAt"),
-        limit(100)
-      )
-    ),
-    getDocs(
-      query(
-        collection(db, "users", uid, "workouts"),
-        where("date", ">=", fromKey),
-        where("date", "<", toKey),
-        orderBy("date"),
-        limit(100)
-      )
-    ),
+  const [runs, workouts] = await Promise.all([
+    fetchSavedRuns(uid, { since: fromKey, until: lastDay, cap: 100 }),
+    fetchSavedWorkouts(uid, { since: fromKey, until: lastDay, cap: 100 }),
   ]);
 
-  const km = runsSnap.docs.reduce(
-    (s, d) =>
-      isVolumeEligible(d.data())
-        ? s + (Number(d.data().distance) || 0) / 1000
+  const km = runs.reduce(
+    (s, run) =>
+      isVolumeEligible(run) && ranBefore(run, toDate)
+        ? s + run.distance / 1000
         : s,
     0
   );
-  const kg = workoutsSnap.docs.reduce((s, d) => {
-    const exs = (d.data().exercises || []) as {
-      sets?: { weightKg?: number; reps?: number }[];
-    }[];
-    return (
-      s +
-      exs.reduce(
-        (es, ex) =>
-          es +
-          (ex.sets ?? []).reduce(
-            (ss, set) =>
-              ss + (Number(set.weightKg) || 0) * (Number(set.reps) || 0),
-            0
-          ),
-        0
-      )
-    );
-  }, 0);
+  // Timed holds lift nothing (`workoutTonnageKg`), as the server's
+  // challenge maths has it.
+  const kg = workouts.reduce(
+    (s, workout) =>
+      liftedBefore(workout, toDate) ? s + workoutTonnageKg(workout) : s,
+    0
+  );
 
   const score = km * 100 + kg * 0.1;
   return {

@@ -31,6 +31,10 @@ import {
 import { db } from "@/lib/firebase";
 import { useUid } from "@/lib/auth";
 import { isVolumeEligible } from "@/lib/runStatsEligibility";
+import type { RunWindow } from "@/lib/savedRuns";
+import { SAVED_WORKOUTS, type WorkoutWindow } from "@/lib/savedWorkouts";
+import { useSavedRuns } from "@/hooks/useSavedRuns";
+import { useSavedSessions } from "@/hooks/useSavedSessions";
 import { BADGE_DEFINITIONS, initBadges, type EarnedBadge } from "./badges";
 import { badgesToAward, earnedBadgeCount } from "./badgeEarning";
 import { useNutritionBadgeData } from "@/hooks/useNutritionBadgeData";
@@ -98,6 +102,10 @@ const DEFAULT_STREAKS: StreakData = {
 // surface actually needs a true-lifetime number.
 const WORKOUT_LIMIT = 400;
 const RUN_LIMIT = 400;
+/** The newest RUN_LIMIT runs: the streak's run window. */
+const STREAK_RUN_WINDOW: RunWindow = { latest: RUN_LIMIT };
+/** The newest WORKOUT_LIMIT workouts: the streak's workout window. */
+const STREAK_WORKOUT_WINDOW: WorkoutWindow = { latest: WORKOUT_LIMIT };
 const MEAL_LIMIT = 500;
 
 // ── Timezone notes ───────────────────────────────────────────────────────
@@ -115,7 +123,13 @@ interface WorkoutRow {
 }
 
 interface RunRow {
-  completedAt: Timestamp | null;
+  /** The local day the run belongs to (Lift3: the day it started,
+   *  `SavedRun.day`). The streak, badges and Food count a run on it. */
+  day: string;
+  /** When the run finished. Read only by early_bird's before-7am check,
+   *  which is about when a log happened, as the workouts' and meals'
+   *  `createdAt` are. */
+  completedAt: Date;
   /* Persisted onto every run doc by the validity correction
      (PR #480). Carried here so the snapshot mapping can drop invalid
      and zero-distance records before they credit a streak day. */
@@ -212,13 +226,7 @@ export function computeActiveDateSet(
   }
 
   for (const r of runs) {
-    if (!r.completedAt) continue;
-    try {
-      const d = r.completedAt.toDate();
-      set.add(format(d, "yyyy-MM-dd"));
-    } catch {
-      // Skip rows with invalid timestamps
-    }
+    if (typeof r.day === "string" && r.day) set.add(r.day);
   }
 
   for (const m of meals) {
@@ -440,16 +448,52 @@ function useStreaksInternal() {
   const [streakData, setStreakData] = useState<StreakData>(DEFAULT_STREAKS);
 
   // Source streams
-  const [workouts, setWorkouts] = useState<WorkoutRow[]>([]);
-  const [runs, setRuns] = useState<RunRow[]>([]);
   const [meals, setMeals] = useState<MealRow[]>([]);
+
+  /* Runs come through the one saved-run reader: one parse, the Lift3 day,
+     and runs saved on this phone but not yet synced, so an offline run
+     keeps the streak the moment it is saved. Invalid and zero-distance
+     records are dropped here, so neither computeActiveDateSet nor
+     computeStreakDays needs to know the predicate: a saved-anyway 0:02
+     record shouldn't credit a streak day. The reader scopes rows to the
+     signed-in account and settles out of loading on a failed read. */
+  /* Workouts the same way, through the one workout reader: the day each
+     belongs to and workouts finished on this phone but not yet synced. */
+  const savedWorkouts = useSavedSessions(
+    SAVED_WORKOUTS,
+    uid,
+    uid ? STREAK_WORKOUT_WINDOW : null
+  );
+  const workoutsLoaded = !!uid && savedWorkouts.answered;
+  const workouts = useMemo<WorkoutRow[]>(
+    () =>
+      savedWorkouts.items.map((workout) => ({
+        date: workout.date,
+        createdAt:
+          workout.createdAt instanceof Timestamp ? workout.createdAt : null,
+      })),
+    [savedWorkouts.items]
+  );
+  const savedRuns = useSavedRuns(uid ? STREAK_RUN_WINDOW : null);
+  // The run list itself, not a run waiting to sync: the streak is saved
+  // once everything has loaded, and a streak counted from that one run
+  // would overwrite the saved one.
+  const runsLoaded = !!uid && savedRuns.answered;
+  const runs = useMemo<RunRow[]>(
+    () =>
+      savedRuns.runs.filter(isVolumeEligible).map((run) => ({
+        day: run.day,
+        completedAt: run.completedAt,
+        isInvalid: run.isInvalid,
+        distance: run.distance,
+      })),
+    [savedRuns.runs]
+  );
 
   // Loading gates — 4 independent flags. We wait for all 4 to flip before
   // computing or persisting anything, so silent backfill can't double-award
   // badges that already have an earnedAt set in Firestore.
   const [streaksDocLoaded, setStreaksDocLoaded] = useState(false);
-  const [workoutsLoaded, setWorkoutsLoaded] = useState(false);
-  const [runsLoaded, setRunsLoaded] = useState(false);
   const [mealsLoaded, setMealsLoaded] = useState(false);
 
   // Account-switch reset (React "adjust state during render" idiom). Every
@@ -466,12 +510,8 @@ function useStreaksInternal() {
   if (streamsUid !== uid) {
     setStreamsUid(uid);
     setStreakData(DEFAULT_STREAKS);
-    setWorkouts([]);
-    setRuns([]);
     setMeals([]);
     setStreaksDocLoaded(false);
-    setWorkoutsLoaded(false);
-    setRunsLoaded(false);
     setMealsLoaded(false);
   }
 
@@ -632,64 +672,6 @@ function useStreaksInternal() {
       onSubscriptionError("streaks", setStreaksDocLoaded)
     );
 
-    const workoutsRef = collection(db, "users", uid, "workouts");
-    const workoutsQ = query(
-      workoutsRef,
-      orderBy("date", "desc"),
-      limit(WORKOUT_LIMIT)
-    );
-    const unsubWorkouts = onSnapshot(
-      workoutsQ,
-      (snap) => {
-        const rows: WorkoutRow[] = snap.docs
-          .map((d) => d.data() as { date?: unknown; createdAt?: unknown })
-          .filter((d) => typeof d.date === "string")
-          .map((d) => ({
-            date: d.date as string,
-            createdAt: d.createdAt instanceof Timestamp ? d.createdAt : null,
-          }));
-        setWorkouts(rows);
-        setWorkoutsLoaded(true);
-      },
-      onSubscriptionError("workouts", setWorkoutsLoaded)
-    );
-
-    const runsRef = collection(db, "users", uid, "runs");
-    const runsQ = query(
-      runsRef,
-      orderBy("completedAt", "desc"),
-      limit(RUN_LIMIT)
-    );
-    const unsubRuns = onSnapshot(
-      runsQ,
-      (snap) => {
-        /* Drop invalid + zero-distance records at the snapshot
-         boundary so neither computeActiveDateSet nor
-         computeStreakDays needs to know the predicate. A
-         saved-anyway 0:02 record shouldn't credit a streak day. */
-        const rows: RunRow[] = snap.docs.flatMap((d) => {
-          const raw = d.data() as {
-            completedAt?: unknown;
-            isInvalid?: boolean;
-            distance?: number;
-          };
-          if (!isVolumeEligible(raw)) return [];
-          const ts =
-            raw.completedAt instanceof Timestamp ? raw.completedAt : null;
-          return [
-            {
-              completedAt: ts,
-              isInvalid: raw.isInvalid,
-              distance: raw.distance,
-            },
-          ];
-        });
-        setRuns(rows);
-        setRunsLoaded(true);
-      },
-      onSubscriptionError("runs", setRunsLoaded)
-    );
-
     const mealsRef = collection(db, "users", uid, "meals");
     const mealsQ = query(
       mealsRef,
@@ -741,8 +723,6 @@ function useStreaksInternal() {
 
     return () => {
       unsubStreaks();
-      unsubWorkouts();
-      unsubRuns();
       unsubMeals();
     };
   }, [uid]);
@@ -827,10 +807,10 @@ function useStreaksInternal() {
     if (!allLoaded) return [] as string[];
     const EARLY_HOUR = 7;
     const set = new Set<string>();
-    const addIfEarly = (ts: Timestamp | null | undefined) => {
+    const addIfEarly = (ts: Timestamp | Date | null | undefined) => {
       if (!ts) return;
       try {
-        const d = ts.toDate();
+        const d = ts instanceof Date ? ts : ts.toDate();
         if (d.getHours() < EARLY_HOUR) set.add(format(d, "yyyy-MM-dd"));
       } catch {
         // unparseable timestamp — skip

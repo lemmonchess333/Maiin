@@ -46,6 +46,13 @@ vi.mock("@/lib/savedRoutines", () => ({
         targetReps: 8,
         targetWeightKg: 50,
       },
+      {
+        name: "Barbell Row",
+        exerciseId: "barbell-row",
+        setCount: 3,
+        targetReps: 10,
+        targetWeightKg: 40,
+      },
     ],
   }),
 }));
@@ -67,7 +74,8 @@ const session = {
   durationMinutes: 25,
   startedAt: new Date("2026-09-06T12:00:00").getTime(),
   exerciseNotes: { 0: " Seat at 4 " },
-  setLogs: [[{ weight: 50, reps: 8, completed: true }]],
+  // The bench done; the row left out on the day.
+  setLogs: [[{ weight: 50, reps: 8, completed: true }], []],
 };
 async function openRoutine() {
   render(
@@ -94,16 +102,23 @@ describe("routine completion receipt", () => {
       expect(receipt.syncStatus).toBe("synced");
       expect(h.compose).not.toHaveBeenCalled();
       await receipt.share.post();
-      expect(h.compose).toHaveBeenCalledWith(
-        "routine-user",
-        expect.objectContaining({ type: "workout", title: "Bench day" })
-      );
+      // What was done, not the routine as written: the row was left out.
+      expect(h.compose).toHaveBeenCalledWith("routine-user", {
+        type: "workout",
+        title: "Bench day",
+        meta: ["1 exercise", "400 kg volume", "25 min"],
+      });
     });
     expect(
       readDoc("users/routine-user/workouts/routine-stable-routine")
     ).toMatchObject({
       date: "2026-09-06",
-      exercises: [expect.objectContaining({ notes: "Seat at 4" })],
+      source: "routine",
+      routineId: "r1",
+      exercises: [
+        expect.objectContaining({ notes: "Seat at 4", plannedSetCount: 3 }),
+        expect.objectContaining({ sets: [], plannedSetCount: 3 }),
+      ],
     });
   });
 

@@ -2,34 +2,26 @@ import { readFileSync } from "node:fs";
 import { createHash } from "node:crypto";
 import { describe, expect, it } from "vitest";
 import { FORM_ARTWORK, getReleasedFormArtwork } from "../formArtwork";
-import { getFormBeats } from "../bodyRig";
+import { getAuthoredBeats, getFormBeats } from "../bodyRig";
 import { validateOwnerArtworkRelease } from "../formArtOwnerRelease";
-import { validateArtworkReview } from "../formArtReview";
+import {
+  artworkReviewExpectation,
+  validateArtworkReview,
+} from "../formArtReview";
 
 const ids = ["goblet-squat", "squat", "barbell-curl"];
 const sha = (bytes: string | Buffer) =>
   createHash("sha256").update(bytes).digest("hex");
+/** A set's release record, and what it must say about the set as it ships:
+ *  the same expectation the audit checks every record against. */
 function evidence(id: string) {
   const art = FORM_ARTWORK[id];
-  const asset = (path: string) => ({
-    path,
-    sha256: sha(readFileSync(`public/${path}`)),
-  });
   return {
     review: JSON.parse(readFileSync(art.reviewFile!, "utf8")),
-    expected: {
-      exerciseId: id,
-      version: art.version,
-      width: art.width,
-      height: art.height,
-      frames: art.frames.map(asset),
-      reference: asset(art.reference),
-      cueSha256: sha(
-        JSON.stringify(
-          getFormBeats(id)!.map(({ label, cue }) => ({ label, cue }))
-        )
-      ),
-    },
+    expected: artworkReviewExpectation(id, art, getAuthoredBeats(id)!, {
+      asset: (path) => sha(readFileSync(`public/${path}`)),
+      text: sha,
+    }),
   };
 }
 
@@ -70,44 +62,36 @@ describe("owner-authorized artwork activation", () => {
         );
     }
   }, 30_000);
-  it("keeps incomplete pilots inactive while releasing reviewed exact-ID guides", () => {
+  it("keeps incomplete pilots inactive", () => {
     for (const id of ["lat-pulldown", "deadlift", "incline-db-bench"])
       expect(getReleasedFormArtwork(id), id).toBeNull();
-    for (const id of [
-      "concentration-curl",
-      "bodyweight-squat",
-      "db-curl",
-      "hammer-curl",
-      "front-raise",
-      "push-ups",
-      "db-bench",
-      "barbell-shrug",
-      "lateral-raise",
-      "pike-push-up",
-      "toe-touches",
-      "dead-bug",
-      "bicycle-crunch",
-      "russian-twist",
-      "mountain-climbers",
-      "cable-crunch",
-      "cable-woodchopper",
-      "pallof-press",
-      "dragon-flag",
-      "l-sit",
-      "clean-and-press",
-      "leg-raise",
-      "plank",
-      "crunches",
-      "shrugs",
-      "glute-bridge",
-    ]) {
+  });
+  /* Every approved set, not a hand-kept list of them: a list that each
+     release had to extend covered 26 of the 54. The budget is the one
+     above, for the same reason: the whole library is hashed here, and
+     under the full parallel suite the worker can wait for its turn. */
+  it("releases every approved set as its review recorded it, with its cues live", () => {
+    const approved = Object.keys(FORM_ARTWORK).filter(
+      (id) => FORM_ARTWORK[id].status === "approved"
+    );
+    expect(approved.length).toBeGreaterThan(0);
+    for (const id of approved) {
       expect(getReleasedFormArtwork(id)?.status, id).toBe("approved");
+      expect(getFormBeats(id), id).toHaveLength(6);
       const { review, expected } = evidence(id);
       expect(validateArtworkReview(review, expected), id).toEqual([]);
     }
-  });
+  }, 30_000);
   it("rejects missing permission, erased findings, certified checks and stale release data", () => {
-    const { review, expected } = evidence("barbell-shrug");
+    /* An owner release whose record passes as it stands. This used
+       barbell-shrug, which has since been re-released under strict
+       review: its record failed the owner contract before any change, so
+       every case below passed without testing anything. */
+    const { review, expected } = evidence("goblet-squat");
+    expect(FORM_ARTWORK["goblet-squat"].status).toBe(
+      "owner-released-with-findings"
+    );
+    expect(validateOwnerArtworkRelease(review, expected)).toEqual([]);
     for (const mutate of [
       (r: typeof review) => {
         delete r.approval;

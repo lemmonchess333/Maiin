@@ -11,6 +11,7 @@ import {
 import { deleteLoggedSession } from "../sessionDelete";
 import { useRunningStats } from "@/hooks/useRunningStats";
 import { useSessionDoc } from "@/hooks/useSessionDoc";
+import { localDateString } from "../dateHelpers";
 import {
   resetFirestore,
   seedFirestore,
@@ -31,13 +32,16 @@ vi.mock("@/lib/firebase", () => ({ auth, db }));
 vi.mock("@/lib/auth", () => ({ useUid: () => auth.currentUser?.uid ?? null }));
 vi.mock("@/lib/errorReporting", () => ({ captureError: vi.fn() }));
 const path = "users/run-a/runs";
+/* A run that finished just now. Its `date` is the day it started, as the
+   writer stores it: derived from the clock, never a literal, so the run
+   stays inside a window that ends today when CI moves the clock. */
 const data = () => ({
   distance: 5000,
   duration: 1500,
   avgPace: 300,
   completedAt: Timestamp.fromDate(new Date()),
   startedAt: Timestamp.fromDate(new Date(Date.now() - 1500000)),
-  date: "2026-09-12",
+  date: localDateString(new Date(Date.now() - 1500000)),
   notes: "Original run",
   activityType: "freerun",
   points: [{ lat: 51.5, lon: -0.1, timestamp: Date.now() }],

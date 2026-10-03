@@ -214,9 +214,9 @@ export default function Run() {
   // — freeform users still load it to keep the hook order stable.
   // The loading flag is only honoured for non-freeform users; freeform
   // skips the skeleton path entirely.
-  // `completeRunDay` is invoked from RunSummary post-save, not here —
-  // RunSummary re-calls useProgram to access it. We only read
-  // programState + loading here to drive the prefill memo.
+  // Nothing here completes a planned day: a saved run completes the day it
+  // matches through the claims (useClaimMapForProgram). We only read programState +
+  // loading here to drive the prefill memo.
   const { programState, loading: programLoading } = useProgram();
   const profileRunMode = (profile?.runMode ?? "freeform") as PlanMode;
   const isFreeformUser = profileRunMode === "freeform";

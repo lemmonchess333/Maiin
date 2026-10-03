@@ -75,6 +75,17 @@ describe("calculatePaceTrend", () => {
       expect(result.trend).toBe("no-data"); // only 7 comparable, needs 8
     });
 
+    it("excludes the current run's own saved record by id", () => {
+      // Read back after Save: the record carries the save time, not the
+      // moment the finish screen computed the trend.
+      const current = { ...makeRun(280, 5000, 0), id: "run-1" };
+      const ownRecord = { ...makeRun(280, 5000, 0), id: "run-1" };
+      ownRecord.completedAt = new Date(current.completedAt.getTime() - 5000);
+      const allRuns = [ownRecord, ...generateRuns(10, 300, 5000, 1)];
+      const result = calculatePaceTrend(current, allRuns);
+      expect(result.trend).toBe("pr");
+    });
+
     it("excludes runs with zero pace from comparables", () => {
       const current = makeRun(300, 5000, 0);
       const validRuns = generateRuns(7, 310, 5000, 1);

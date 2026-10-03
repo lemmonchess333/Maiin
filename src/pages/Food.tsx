@@ -20,7 +20,11 @@ import PageShell from "@/components/ui/PageShell";
 import { pageItemVariant } from "@/components/ui/pageMotion";
 import { haptic } from "@/lib/haptic";
 import { logger } from "@/lib/logger";
-import { commitMealDeletes } from "@/lib/mealDeleteCommit";
+import {
+  commitMealDeletes,
+  deleteAfterUndoWindow,
+  MEAL_UNDO_WINDOW_MS,
+} from "@/lib/mealDeleteCommit";
 import { joinHumanList } from "@/lib/listFormat";
 
 const ManualFoodLogger = lazyRetry(() =>
@@ -88,6 +92,7 @@ import {
   type MealKey,
 } from "@/components/food/mealConstants";
 import { mealLoggedAt, mealSlotFor } from "@/lib/mealSlots";
+import { sumMealTotals } from "@/lib/mealTotals";
 import { track as trackFoodEvent } from "@/lib/foodAnalytics";
 import { sweepFoodPhotosOnce } from "@/lib/foodPhotoStore";
 import Card from "@/components/ui/Card";
@@ -386,7 +391,6 @@ export default function Food() {
   const {
     meals,
     getMealsForDate,
-    getDailyTotals,
     deleteMeal,
     editMeal,
     loading: mealsLoading,
@@ -419,6 +423,31 @@ export default function Food() {
     [deleteMeal]
   );
 
+  /* Hide the entries now, delete them when the undo window closes, and
+     hand back the toast's Undo. Deleting a row and stepping its servings
+     down both come here. */
+  const hideThenDelete = (mealIds: string[], foodName: string) =>
+    deleteAfterUndoWindow(mealIds, {
+      hide: (ids) =>
+        setPendingDeleteIds((prev) => {
+          const next = new Set(prev);
+          for (const id of ids) next.add(id);
+          return next;
+        }),
+      show: (ids) =>
+        setPendingDeleteIds((prev) => {
+          const next = new Set(prev);
+          for (const id of ids) next.delete(id);
+          return next;
+        }),
+      // On success the ids stay in pendingDeleteIds: the Firestore
+      // onSnapshot drops the meals from the array, making the pending ids a
+      // harmless no-op filter on entries that no longer exist. Clearing
+      // them before that snapshot arrives flashes the rows back into the
+      // list. `commitDeletes` clears only the ids whose write REJECTED.
+      commit: (ids) => void commitDeletes([...ids], foodName),
+    });
+
   // Food6 ci3+perf: capture initial-render duration. `renderStartRef`
   // takes its first-paint timestamp from the post-mount effect (rather
   // than lazy useState which would trip the react-hooks/purity rule
@@ -439,7 +468,6 @@ export default function Food() {
     renderReportedRef.current = true;
   }, [mealsLoading]);
   const todaysMeals = getMealsForDate(selectedDate);
-  const rawDailyTotals = getDailyTotals(selectedDate);
 
   const [prevDate, setPrevDate] = useState(selectedDate);
   if (prevDate !== selectedDate) {
@@ -480,39 +508,13 @@ export default function Food() {
     [todaysMeals, pendingDeleteIds]
   );
 
-  // Optimistic daily totals — the hero card's ring and macro columns reflect
-  // the pending-delete state instantly. If the user undoes, the ring ticks
-  // back up.
-  const dailyTotals = useMemo(() => {
-    if (pendingDeleteIds.size === 0) return rawDailyTotals;
-    let calories = rawDailyTotals.calories;
-    let protein = rawDailyTotals.protein;
-    let carbs = rawDailyTotals.carbs;
-    let fat = rawDailyTotals.fat;
-    let fiber = rawDailyTotals.fiber;
-    let sugar = rawDailyTotals.sugar;
-    let sodium = rawDailyTotals.sodium;
-    for (const m of todaysMeals) {
-      if (!pendingDeleteIds.has(m.id)) continue;
-      calories -= safeNum(m.totalCalories);
-      protein -= safeNum(m.totalProtein);
-      carbs -= safeNum(m.totalCarbs);
-      fat -= safeNum(m.totalFat);
-      fiber -= safeNum(m.totalFiber);
-      sugar -= safeNum(m.totalSugar);
-      sodium -= safeNum(m.totalSodium);
-    }
-    return {
-      ...rawDailyTotals,
-      calories,
-      protein,
-      carbs,
-      fat,
-      fiber,
-      sugar,
-      sodium,
-    };
-  }, [rawDailyTotals, pendingDeleteIds, todaysMeals]);
+  // The day's totals, from the meals on screen: the ring and macro columns
+  // drop the moment an entry is deleted and come back if it is undone. The
+  // same summer as every other surface's totals (`sumMealTotals`).
+  const dailyTotals = useMemo(
+    () => sumMealTotals(visibleTodaysMeals),
+    [visibleTodaysMeals]
+  );
 
   /* The week strip. Each day's target as it stood is read over the same
      span as the meals, so the two move together and a week inside the
@@ -1195,43 +1197,24 @@ export default function Food() {
           `Added ${adds} ${adds === 1 ? "serving" : "servings"}`
         );
       } else {
-        /* Decrement branch — actual data loss. Mirrors the
-           handleDeleteMeal pattern (line 733+): optimistically
-           hide via pendingDeleteIds + schedule the real delete
-           after a 3s window + render an Undo action on the
-           toast. Without this, stepping a count down was
-           irreversible — asymmetric vs swipe-delete. */
+        /* Decrement branch — actual data loss, so it is undoable
+           exactly as a row delete is (`hideThenDelete`). Without
+           this, stepping a count down was irreversible. */
         const removes = currentCount - targetCount;
         const toRemove = groupMeals.slice(-removes);
-        const idsToRemove = toRemove.map((m) => m.id);
-
-        setPendingDeleteIds((prev) => {
-          const next = new Set(prev);
-          for (const id of idsToRemove) next.add(id);
-          return next;
-        });
+        const undo = hideThenDelete(
+          toRemove.map((m) => m.id),
+          foodName
+        );
         setEditingGroup(null);
         setOpenRowId(null);
-
-        const timeoutId = setTimeout(() => {
-          void commitDeletes(idsToRemove, foodName);
-        }, 3000);
 
         toast.success(
           `Updated to ${targetCount} ${targetCount === 1 ? "serving" : "servings"}`,
           {
             id: `food-edit-${foodName}`,
-            action: {
-              label: "Undo",
-              onClick: () => {
-                clearTimeout(timeoutId);
-                setPendingDeleteIds((prev) => {
-                  const next = new Set(prev);
-                  for (const id of idsToRemove) next.delete(id);
-                  return next;
-                });
-              },
-            },
+            action: { label: "Undo", onClick: undo },
+            duration: MEAL_UNDO_WINDOW_MS,
           }
         );
       }
@@ -1282,44 +1265,19 @@ export default function Food() {
       });
     }
 
-    // 1. Optimistic hide for every meal in the group.
-    setPendingDeleteIds((prev) => {
-      const next = new Set(prev);
-      for (const id of mealIds) next.add(id);
-      return next;
-    });
+    const undo = hideThenDelete(mealIds, foodName);
     setOpenRowId(null);
 
-    // 2. Schedule the Firestore deletes after the undo window.
-    const timeoutId = setTimeout(() => {
-      // On success the ids stay in pendingDeleteIds: the Firestore
-      // onSnapshot drops the meals from the array, making the pending ids a
-      // harmless no-op filter on entries that no longer exist. Clearing
-      // them before that snapshot arrives flashes the rows back into the
-      // list. `commitDeletes` clears only the ids whose write REJECTED.
-      void commitDeletes(mealIds, foodName);
-    }, 3000);
-
-    // 3. Toast with Undo — pluralised when the group held multiple
-    //    servings so the user knows how many entries the action covered.
+    // Pluralised when the group held multiple servings so the user knows
+    // how many entries the action covered.
     const message =
       mealIds.length === 1
         ? `${foodName} deleted`
         : `${mealIds.length} servings of ${foodName} deleted`;
 
     toast(message, {
-      action: {
-        label: "Undo",
-        onClick: () => {
-          clearTimeout(timeoutId);
-          setPendingDeleteIds((prev) => {
-            const next = new Set(prev);
-            for (const id of mealIds) next.delete(id);
-            return next;
-          });
-        },
-      },
-      duration: 3000,
+      action: { label: "Undo", onClick: undo },
+      duration: MEAL_UNDO_WINDOW_MS,
     });
   };
 

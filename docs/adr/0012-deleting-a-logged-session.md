@@ -252,3 +252,26 @@ driver is deleted), and leave standing as history (partner streaks,
 milestone badges — both still deliberate). The user-facing confirmation
 copy needed no change: "your standing in a live challenge can go down"
 was already the promise, and this makes it true for the fifth metric.
+
+## Fourth amendment (2026-10-03) — the best-lift map is rebuilt too
+
+The tally above leaves out one piece of derived state: the best-lift map,
+`users/{uid}/stats/prMap`, which the workout screen keeps so a session can
+tell a new best from the whole history. Deleting a workout left it
+standing, so a mis-logged best stayed the best to beat and real bests
+under it never showed, the same failure the third amendment fixed for
+`fastest_effort`.
+
+It is a cache rather than an accumulator: every figure in it can be
+rebuilt from the saved workouts, and correcting a workout already marked
+it stale for that reason. A delete now does the same, in the same commit
+as the delete, and the next session rebuilds the map from the workouts
+that remain. The repair is on the client, not in `onWorkoutDeleted`,
+because the map is written and read only by the app
+(`src/lib/liftRecordsStore.ts`), whose protocol (a revision-checked
+commit, an `invalidated` flag) would otherwise need a server mirror.
+
+The tally therefore adds a fourth kind: reverse (challenge SUM metrics,
+lifetime totals), recompute (Performance Index, `fastest_effort` when its
+driving run is deleted), rebuild on next use (the best-lift map), and
+leave standing as history (partner streaks, milestone badges).

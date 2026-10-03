@@ -27,7 +27,7 @@ import InlineNumerals from "@/components/ui/InlineNumerals";
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { liftWeekLabel } from "@/lib/liftSessionExplainer";
+import { liftWeekLabel } from "@/lib/liftWeekLabel";
 import { localDateString } from "@/lib/dateHelpers";
 import { useNavigate } from "react-router-dom";
 import { ChevronRight } from "lucide-react";

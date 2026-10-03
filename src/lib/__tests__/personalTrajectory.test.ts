@@ -27,20 +27,24 @@ vi.mock("../firebase", () => ({ db: {} }));
 
 import { getPersonalTrajectory } from "../personalTrajectory";
 import { seedFirestore, resetFirestore } from "@/test/firestoreHarness";
-import { Timestamp } from "firebase/firestore";
+import { savedRunDoc, savedWorkoutDoc } from "@/test/sessionFixtures";
+import { localDateString } from "../dateHelpers";
 
 /** Tuesday 14:00 local time. Week starts Monday, so: this week from Mon 27th;
  *  last week Mon 20th → Mon 27th; last-week-to-date Mon 20th → Tue 21st
  *  14:00. */
 const NOW = new Date("2026-04-28T14:00:00");
 
-/** A run doc as stored — `duration` clears the eligibility floor (30s). */
-function run(iso: string, km: number) {
-  return {
-    completedAt: Timestamp.fromDate(new Date(iso)),
-    distance: km * 1000,
-    duration: 60,
-  };
+/** A run doc as stored, finished at `iso` and started that day unless
+ *  `startedOn` says otherwise. `duration` clears the eligibility floor
+ *  (30s). */
+function run(iso: string, km: number, startedOn?: string) {
+  const finished = new Date(iso);
+  return savedRunDoc(
+    startedOn ?? localDateString(finished),
+    { distance: km * 1000, duration: 60 },
+    finished
+  );
 }
 
 beforeEach(() => {
@@ -127,15 +131,88 @@ describe("getPersonalTrajectory", () => {
     expect(result.deltaPct).toBeNull();
   });
 
+  it("cuts last week's Tuesday at the same time of day", async () => {
+    // Now is Tuesday 14:00. Last Tuesday's 13:00 run is inside the slice;
+    // its 15:00 run is after the same point and counts for the full week
+    // only.
+    seedFirestore({
+      "users/user1/runs/before": run("2026-04-21T13:00:00", 3),
+      "users/user1/runs/after": run("2026-04-21T15:00:00", 7),
+    });
+    const result = await getPersonalTrajectory("user1");
+    expect(result.lastWeekToDate.km).toBe(3);
+    expect(result.lastWeek.km).toBe(10);
+  });
+
+  it("puts a run that crossed midnight into the week it started (Lift3)", async () => {
+    // Begun on last week's Sunday night, saved at 00:20 on this Monday.
+    seedFirestore({
+      "users/user1/runs/late": run("2026-04-27T00:20:00", 6, "2026-04-26"),
+    });
+    const result = await getPersonalTrajectory("user1");
+    expect(result.lastWeek.km).toBe(6);
+    expect(result.thisWeek.km).toBe(0);
+  });
+
   it("ignores a sub-threshold run (eligibility floor)", async () => {
     seedFirestore({
-      "users/user1/runs/bogus": {
-        completedAt: Timestamp.fromDate(new Date("2026-04-27T10:00:00")),
-        distance: 40000,
-        duration: 8,
-      },
+      "users/user1/runs/bogus": savedRunDoc(
+        "2026-04-27",
+        { distance: 40000, duration: 8 },
+        new Date("2026-04-27T10:00:00")
+      ),
     });
     const result = await getPersonalTrajectory("user1");
     expect(result.thisWeek.km).toBe(0);
+  });
+
+  it("cuts last week's workouts at the same time of day too", async () => {
+    // 80 kg x 5 x 2 sets = 800 kg, 80 points, per seeded workout. Now is
+    // Tuesday 14:00: last Tuesday's 09:00 session is inside the slice, its
+    // 19:00 session is not. The workouts read used to stop at last
+    // Tuesday's date, so the morning session never counted either.
+    seedFirestore({
+      "users/user1/workouts/morning": savedWorkoutDoc(
+        "2026-04-21",
+        {},
+        new Date("2026-04-21T09:00:00")
+      ),
+      "users/user1/workouts/evening": savedWorkoutDoc(
+        "2026-04-21",
+        {},
+        new Date("2026-04-21T19:00:00")
+      ),
+    });
+    const result = await getPersonalTrajectory("user1");
+    expect(result.lastWeekToDate.kg).toBe(800);
+    expect(result.lastWeek.kg).toBe(1600);
+  });
+
+  it("counts a timed hold as no weight lifted", async () => {
+    // A 100 kg x 5 set (500 kg) and a 20 kg plank held for 60 s, which
+    // the old sum counted as 1,200 kg.
+    seedFirestore({
+      "users/user1/workouts/plank": savedWorkoutDoc("2026-04-27", {
+        exercises: [
+          {
+            exerciseId: "bench-press",
+            exerciseName: "Bench Press",
+            category: "chest",
+            sets: [{ setNumber: 1, reps: 5, weightKg: 100 }],
+            caloriesBurned: 0,
+          },
+          {
+            exerciseId: "weighted-plank",
+            exerciseName: "Weighted Plank",
+            category: "core",
+            repUnit: "seconds",
+            sets: [{ setNumber: 1, reps: 60, weightKg: 20 }],
+            caloriesBurned: 0,
+          },
+        ],
+      }),
+    });
+    const result = await getPersonalTrajectory("user1");
+    expect(result.thisWeek.kg).toBe(500);
   });
 });

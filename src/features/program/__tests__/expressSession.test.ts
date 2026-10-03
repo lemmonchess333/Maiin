@@ -217,10 +217,10 @@ describe("buildExpressSession — trimming policy", () => {
     }
   });
 
-  it("maps every plan position back to its ORIGINAL day index", () => {
-    // Dropping a middle accessory must not shift later exercises'
-    // source indexes — progression and the completion write index into
-    // the STORED day, so a off-by-one here trains the wrong lift.
+  it("keeps each surviving exercise as it was, in the day's order", () => {
+    // The finished session finds each exercise's stored row by its
+    // identity (`applySessionProgression`), so dropping a middle
+    // accessory must leave the others as they were and in order.
     const d = day([
       ex("Bench Press", 4, false), // src 0
       ex("Cable Fly", 4, true), // src 1 — dropped first (from end… )
@@ -229,19 +229,22 @@ describe("buildExpressSession — trimming policy", () => {
       ex("Tricep Pushdown", 4, true), // src 4
     ]); // 20 sets = 50 min
     const plan = buildExpressSession(d, "express30"); // 12-set budget
-    // Every surviving exercise's sourceIndex points at the exercise
-    // with the same identity in the original day.
-    plan.exercises.forEach((e, i) => {
-      expect(d.exercises[plan.sourceIndexes[i]].exerciseId).toBe(e.exerciseId);
-    });
-    // Compounds always survive with their original positions intact.
-    expect(plan.sourceIndexes).toContain(0);
-    expect(plan.sourceIndexes).toContain(2);
+    const positions = plan.exercises.map((e) =>
+      d.exercises.findIndex((orig) => orig.exerciseId === e.exerciseId)
+    );
+    expect(positions).not.toContain(-1);
+    expect(positions).toEqual([...positions].sort((a, b) => a - b));
+    // Compounds always survive.
+    expect(positions).toContain(0);
+    expect(positions).toContain(2);
   });
 
-  it("full plan maps positions 1:1", () => {
-    const plan = buildExpressSession(typicalPushDay(), "full");
-    expect(plan.sourceIndexes).toEqual([0, 1, 2, 3, 4]);
+  it("full plan keeps every exercise in place", () => {
+    const d = typicalPushDay();
+    const plan = buildExpressSession(d, "full");
+    expect(plan.exercises.map((e) => e.exerciseId)).toEqual(
+      d.exercises.map((e) => e.exerciseId)
+    );
   });
 
   it("is deterministic and never mutates the input day", () => {

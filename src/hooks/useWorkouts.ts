@@ -1,20 +1,19 @@
-import { useState, useEffect, useCallback } from "react";
+import { useCallback } from "react";
 import { parseISO } from "date-fns";
 import { localDateString } from "@/lib/dateHelpers";
-import {
-  collection,
-  query,
-  orderBy,
-  onSnapshot,
-  Timestamp,
-  limit,
-} from "firebase/firestore";
+import { Timestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
 import { estimateLiftBurn } from "@/lib/workoutBurn";
 import { logger } from "@/lib/logger";
 import { safeMerge } from "@/lib/offlineQueue";
 import { noteActivitySnapshot } from "@/lib/activationTracker";
+import {
+  SAVED_WORKOUTS,
+  type Workout,
+  type WorkoutWindow,
+} from "@/lib/savedWorkouts";
+import { useSavedSessions } from "./useSavedSessions";
 
 /**
  * Normalise a caller-supplied workout date to a local "yyyy-MM-dd" string.
@@ -43,72 +42,8 @@ function normaliseWorkoutDate(input: string | Date | undefined): string {
   }
 }
 
-/**
- * D2: widened from `{setNumber, reps, weightKg}`.
- *
- * The canonical definition and the single projection that builds these live in
- * `src/features/program/workoutSetRecord.ts` — read that file for why the
- * evidence matters, why none of it is backfillable, and why nothing reads the
- * new fields yet.
- */
-export interface WorkoutSet {
-  setNumber: number;
-  reps: number;
-  weightKg: number;
-  /** working | warmup | dropset | failure. Absent on pre-D2 documents;
-   *  `src/lib/export.ts` has always defaulted it to "working". */
-  type?: string;
-  /** Helms's 6–10 half-point scale. Interpret via the workout document's
-   *  session-level `rpeProvenance`. */
-  rpe?: number;
-  /** The PRESCRIPTION this set was executed against, captured at write time
-   *  because `applyProgression` overwrites it immediately afterwards — so
-   *  planned-vs-actual is unrecoverable from any later read. */
-  plannedReps?: number;
-  plannedWeightKg?: number;
-}
-
-export interface WorkoutExercise {
-  exerciseId: string;
-  exerciseName: string;
-  category: string;
-  repUnit?: "reps" | "seconds";
-  /** What the lifter typed against this exercise during the session
-   *  ("Level 8, 6.0 incline"). Absent when they wrote nothing, and on
-   *  every workout logged before notes were persisted. */
-  notes?: string;
-  sets: WorkoutSet[];
-  /** Immutable number of working sets prescribed at session start. */
-  plannedSetCount?: number;
-  caloriesBurned: number;
-  // Cardio-specific (optional)
-  durationMinutes?: number;
-  distanceKm?: number;
-  intensity?: "low" | "moderate" | "high";
-}
-
-export interface Workout {
-  revision?: number;
-  lastCorrectionId?: string;
-  programmeCompletion?: import("@/lib/workoutCompletion").SavedProgrammeCompletion;
-  burnContext?: { bodyweightKg: number; inferred?: boolean };
-  id: string;
-  date: string;
-  exercises: WorkoutExercise[];
-  totalCalories: number;
-  durationMinutes: number;
-  notes: string;
-  createdAt: Timestamp;
-  /** The `activities` doc this session was posted as, if it was posted.
-   *
-   *  Sharing is reachable from two places now — the post-save composer and
-   *  `/workout/:id` — and both call `postActivity`, which `addDoc`s a fresh
-   *  activity every time. Without a marker on the workout, sharing the same
-   *  session from both would put two posts in the feed for one workout.
-   *  Written best-effort after the post lands; a failed write can only cause
-   *  a duplicate post, never a lost workout. */
-  sharedActivityId?: string;
-}
+export type { Workout, WorkoutExercise, WorkoutSet } from "@/lib/savedWorkouts";
+export { workoutTonnageKg } from "@/lib/savedWorkouts";
 
 /**
  * The session's display name.
@@ -129,42 +64,6 @@ export function workoutTitle(workout: { notes?: string }): string {
   return workout.notes?.split(" — ")[0]?.trim() || "Workout";
 }
 
-/** Total kg lifted in a session, derived from its sets. The writers compute
- *  the same figure for the burn formula and persist it as `totalVolume`
- *  (#2041); this derives it from `exercises`, which is correct for every
- *  doc, old and new.
- *
- *  Timed exercises contribute NOTHING, because their `reps` is a duration
- *  and `weightKg × reps` is not a weight moved. That rule is the writers'
- *  — both `useProgram.completeWorkoutDay` and the server command reducer
- *  reduce with `repUnit === "seconds" ? 0 : …` — and this copy was missing
- *  it, so a weighted plank counted here and not there. `weighted-plank` is
- *  a real catalog exercise, so a 20 kg / 60 s hold added 1,200 kg to every
- *  surface below and to none of the recorded session totals.
- *
- *  This is the widest-read of the copies: History's volume card and chart,
- *  WorkoutDetail, the weekly recap, the solo feed, the share sheet, and
- *  SpacePostComposer, which MATERIALIZES the result onto a space post.
- *
- *  `repUnit` is compared to the literal rather than tested for truthiness
- *  because the type admits `"reps"` as an explicit value. */
-export function workoutTonnageKg(workout: Pick<Workout, "exercises">): number {
-  // Defensive `?? []`: legacy docs can miss `exercises` entirely; the
-  // guarded per-set multiply already tolerates missing weight/reps, so
-  // the container should tolerate a missing list the same way.
-  return (workout.exercises ?? []).reduce(
-    (t, ex) =>
-      t +
-      (ex?.repUnit === "seconds"
-        ? 0
-        : (ex?.sets ?? []).reduce(
-            (s, set) => s + (set.weightKg || 0) * (set.reps || 0),
-            0
-          )),
-    0
-  );
-}
-
 /**
  * Read coverage for the workouts subscription.
  *  - "recent"   (default) — the newest RECENT_WORKOUT_LIMIT workouts. Correct
@@ -181,92 +80,41 @@ export interface UseWorkoutsOptions {
 
 const RECENT_WORKOUT_LIMIT = 50;
 
-/** What a listener has delivered, and for which `uid:coverage` it did. */
-interface LoadedWorkouts {
-  key: string | null;
-  workouts: Workout[];
-}
+const COVERAGE_WINDOW: Record<WorkoutCoverage, WorkoutWindow> = {
+  recent: { latest: RECENT_WORKOUT_LIMIT },
+  complete: { all: true },
+};
 
-const NO_WORKOUTS: Workout[] = [];
+/* Activation funnel: fire `workout_completed` once per newly-created
+   workout across all write paths. Only the "recent" listener is the
+   lifecycle event source — a "complete" listener can mount after a recent
+   one and would falsely count every pre-existing workout beyond the first
+   50 as newly-created activity. It is given the list's own rows, not this
+   phone's unsynced ones, so a workout fires when it reaches the server, as
+   it always has. */
+const noteRecentWorkouts = (loaded: Workout[], uid: string) =>
+  noteActivitySnapshot(
+    "workout",
+    uid,
+    loaded.map((workout) => workout.id)
+  );
 
 export function useWorkouts(options: UseWorkoutsOptions = {}) {
   const { user, profile } = useAuth();
   const uid = user?.uid;
   const coverage = options.coverage ?? "recent";
-  const key = uid ? `${uid}:${coverage}` : null;
-  const [loaded, setLoaded] = useState<LoadedWorkouts>({
-    key: null,
-    workouts: NO_WORKOUTS,
-  });
 
-  // Never render account A's history while account B's listener is still
-  // establishing, and reset cleanly when coverage changes: a list counts
-  // only while it was delivered for the current `uid:coverage`, so the
-  // switch itself empties the view and puts it back into loading — in the
-  // same render, with no effect needed to clear it first.
-  const delivered = key !== null && loaded.key === key;
-  const workouts = delivered ? loaded.workouts : NO_WORKOUTS;
-  const loading = key !== null && !delivered;
-
-  useEffect(() => {
-    if (!uid || !key) return;
-
-    // The captured `uid` and `key` are the only ones these callbacks may
-    // act on.
-    let active = true;
-
-    const workoutsRef = collection(db, "users", uid, "workouts");
-    const q =
-      coverage === "complete"
-        ? query(workoutsRef, orderBy("date", "desc"))
-        : query(
-            workoutsRef,
-            orderBy("date", "desc"),
-            limit(RECENT_WORKOUT_LIMIT)
-          );
-
-    const unsubscribe = onSnapshot(
-      q,
-      (snapshot) => {
-        if (!active) return;
-        const data = snapshot.docs
-          .map((d) => ({ id: d.id, ...d.data() }) as Workout)
-          .filter(
-            (d) => typeof d.date === "string" && Array.isArray(d.exercises)
-          );
-        setLoaded({ key, workouts: data });
-        // Activation funnel: fire `workout_completed` once per newly-created
-        // workout across all write paths. Only the "recent" listener is the
-        // lifecycle event source — a "complete" listener can mount after a
-        // recent one and would falsely count every pre-existing workout
-        // beyond the first 50 as newly-created activity.
-        if (coverage === "recent") {
-          noteActivitySnapshot(
-            "workout",
-            uid,
-            snapshot.docs.map((d) => d.id)
-          );
-        }
-      },
-      // Surface the failure so the UI exits its skeleton; retain any
-      // workouts this listener already delivered so a transient rule or
-      // network error doesn't empty the history view. Another key's list
-      // is never retained.
-      (err) => {
-        if (!active) return;
-        logger.error("[useWorkouts] snapshot subscription failed", err);
-        setLoaded((current) => ({
-          key,
-          workouts: current.key === key ? current.workouts : NO_WORKOUTS,
-        }));
-      }
-    );
-
-    return () => {
-      active = false;
-      unsubscribe();
-    };
-  }, [uid, coverage, key]);
+  /* Through the one workout reader on the shared session engine: account
+     A's history never renders while account B's listener is establishing,
+     a failed read keeps the rows already shown (so a transient rule or
+     network error doesn't empty the history view), and a workout finished
+     offline shows at once. */
+  const { items: workouts, loading } = useSavedSessions(
+    SAVED_WORKOUTS,
+    uid,
+    COVERAGE_WINDOW[coverage],
+    coverage === "recent" ? { onLoaded: noteRecentWorkouts } : {}
+  );
 
   const saveWorkout = useCallback(
     async (workout: Omit<Workout, "id" | "createdAt">) => {

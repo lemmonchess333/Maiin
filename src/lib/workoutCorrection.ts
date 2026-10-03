@@ -8,6 +8,7 @@ import type { Workout, WorkoutExercise } from "@/hooks/useWorkouts";
 import { workoutTonnageKg } from "@/hooks/useWorkouts";
 import { estimateLiftBurn, selectLiftMET } from "./workoutBurn";
 import { stripUndefined } from "./firestoreGuards";
+import { invalidateLiftRecords } from "./liftRecordsStore";
 import { validateSet } from "./setValidation";
 import { sameStoredValue } from "@/features/program/stateTransition";
 import { applySessionProgression } from "@/features/program/sessionCompletion";
@@ -112,7 +113,6 @@ export async function correctSavedWorkout(
   };
   assertOwner();
   const ref = doc(db, "users", uid, "workouts", id);
-  const recordsRef = doc(db, "users", uid, "stats", "prMap");
   const programRef = doc(db, "users", uid, "programState", "current");
   await runTransaction(db, async (transaction) => {
     const snapshot = await transaction.get(ref);
@@ -128,7 +128,6 @@ export async function correctSavedWorkout(
         "This workout changed elsewhere. Reopen it to review the latest version."
       );
     const next = correctedWorkout(stored, edits);
-    const records = await transaction.get(recordsRef);
     const saved = stored.programmeCompletion;
     const program = saved ? await transaction.get(programRef) : null;
     assertOwner();
@@ -245,10 +244,6 @@ export async function correctSavedWorkout(
           stored.sourceVolumeAtFirstCorrection ?? workoutTonnageKg(stored),
       })
     );
-    transaction.set(
-      recordsRef,
-      { revision: (records.data()?.revision ?? 0) + 1, invalidated: true },
-      { merge: true }
-    );
+    invalidateLiftRecords(transaction, uid);
   });
 }

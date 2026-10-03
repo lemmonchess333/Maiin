@@ -9,9 +9,10 @@
  * default. Routing this through `compose()` would offer to rewrite the
  * user's default as a side effect of sharing one old workout.
  *
- * The activity payload mirrors the post-save one in `useProgram` so a post
- * made here renders identically in the feed, including the structured
- * `exercises` array that ActivityCard's "Save as routine" flow reads.
+ * The post is built by `liftPost`, as the finish screens' are, so a post
+ * made here says the same as one made at the finish, with the exercise
+ * rows the feed card draws and "Save as routine" copies. It built its own
+ * before, with no summary on its rows, and the card that drew it broke.
  */
 import { useState } from "react";
 import { Users, Globe } from "lucide-react";
@@ -28,7 +29,8 @@ import { CAPTION_MAX } from "@/lib/activityPost";
 import { containsProfanity } from "@/lib/profanityFilter";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { useEmailVerificationGate } from "@/hooks/useEmailVerificationGate";
-import { workoutTonnageKg, type Workout } from "@/hooks/useWorkouts";
+import type { Workout } from "@/hooks/useWorkouts";
+import { liftPost, liftPostPreview, type LiftForPost } from "@/lib/liftPost";
 import VerifyEmailNotice from "@/components/social/VerifyEmailNotice";
 
 interface Props {
@@ -58,8 +60,12 @@ export default function WorkoutFeedShareSheet({
   const [posting, setPosting] = useState(false);
 
   const captionIsProfane = containsProfanity(caption);
-  const exercises = workout.exercises ?? [];
-  const tonnage = workoutTonnageKg(workout);
+  const lift: LiftForPost = {
+    title,
+    exercises: workout.exercises ?? [],
+    durationMinutes: workout.durationMinutes ?? 0,
+  };
+  const preview = liftPostPreview(lift);
 
   const share = async (visibility: "followers" | "public") => {
     // Held while the email is unverified — the rules refuse the write.
@@ -71,28 +77,17 @@ export default function WorkoutFeedShareSheet({
     haptic("light");
     setPosting(true);
     try {
-      const activityId = await postActivity({
-        authorId: uid,
-        authorName: profile?.displayName || "Athlete",
-        ...(profile?.photoURL ? { authorPhotoURL: profile.photoURL } : {}),
-        type: "workout",
-        visibility,
-        ...(caption.trim() ? { caption: caption.trim() } : {}),
-        workoutName: title,
-        activityTitle: title,
-        exerciseCount: exercises.length,
-        totalVolume: tonnage,
-        duration: (workout.durationMinutes ?? 0) * 60,
-        muscleGroups: [
-          ...new Set(exercises.map((ex) => ex.category).filter(Boolean)),
-        ],
-        exercises: exercises.map((ex) => ({
-          name: ex.exerciseName,
-          sets: ex.sets?.length ?? 0,
-          reps: ex.sets?.[0]?.reps ?? 0,
-          weightKg: ex.sets?.[0]?.weightKg ?? 0,
-        })),
-      });
+      const activityId = await postActivity(
+        liftPost(
+          {
+            uid,
+            displayName: profile?.displayName,
+            photoURL: profile?.photoURL,
+          },
+          lift,
+          { visibility, caption }
+        )
+      );
 
       // Best-effort dedupe marker. If this write fails the post still
       // stands — the only cost is that this page keeps offering the button,
@@ -127,17 +122,7 @@ export default function WorkoutFeedShareSheet({
             {title}
           </p>
           <p className="text-xs text-muted-foreground font-mono tabular-nums mt-0.5">
-            {[
-              `${exercises.length} exercise${exercises.length === 1 ? "" : "s"}`,
-              tonnage > 0
-                ? `${Math.round(tonnage).toLocaleString()} kg volume`
-                : "",
-              (workout.durationMinutes ?? 0) > 0
-                ? `${workout.durationMinutes} min`
-                : "",
-            ]
-              .filter(Boolean)
-              .join(" · ")}
+            {preview.meta.join(" · ")}
           </p>
         </div>
 

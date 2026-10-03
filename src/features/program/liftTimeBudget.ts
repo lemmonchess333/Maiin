@@ -21,7 +21,7 @@ export function buildTimeBudgetSession(
   day: WorkoutDay,
   budget: number
 ): ExpressPlan {
-  let items = day.exercises.map((ex, src) => ({ ex: { ...ex }, src }));
+  let items = day.exercises.map((ex) => ({ ex: { ...ex } }));
   const trim: ExpressPlan["trim"] = { droppedExercises: [], reducedSets: [] };
   const over = () =>
     estimateSessionMinutes(items.map((item) => item.ex)) > budget;
@@ -49,7 +49,6 @@ export function buildTimeBudgetSession(
   return {
     variant: "time_budget",
     exercises: items.map((i) => i.ex),
-    sourceIndexes: items.map((i) => i.src),
     estimatedMinutes: estimateSessionMinutes(items.map((i) => i.ex)),
     trim,
   };

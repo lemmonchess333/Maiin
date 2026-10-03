@@ -1,9 +1,9 @@
 /**
- * Commit the soft-deletes behind the diary's undo window.
+ * The diary's delete: hide now, undo for a few seconds, then commit.
  *
  * Deleting a meal row hides it and takes its calories out of the day's
  * total straight away, then writes the soft-delete once the undo window
- * closes. Nothing un-hides the row on the way out — the `onSnapshot`
+ * closes (`deleteAfterUndoWindow`). Nothing un-hides the row on the way out — the `onSnapshot`
  * carrying the now-deleted meal is what makes the hide moot — so a write
  * that REJECTS left the row hidden and the day's total short for the rest
  * of the session, with the meal still there on the next load.
@@ -46,4 +46,43 @@ export async function commitMealDeletes(
   if (failed.length === 0) return;
   deps.restore(failed);
   deps.report(foodName);
+}
+
+/** How long a deleted meal can be put back: the Undo toast's life. */
+export const MEAL_UNDO_WINDOW_MS = 3000;
+
+export interface UndoWindowDeps {
+  /** Take these meals off the screen and out of the day's total. */
+  hide: (mealIds: readonly string[]) => void;
+  /** Put them back: the delete was undone. */
+  show: (mealIds: readonly string[]) => void;
+  /** Write the delete (`commitMealDeletes`). */
+  commit: (mealIds: readonly string[]) => void;
+}
+
+/**
+ * Hide meals now and delete them when the undo window closes. Returns the
+ * undo, for the toast's Undo: it cancels the delete and shows the meals
+ * again, and does nothing once the delete has started, so a late tap
+ * cannot show a meal that is on its way out.
+ *
+ * The diary has two ways to remove entries, deleting a row and stepping its
+ * servings down, and both come here, so they share one window.
+ */
+export function deleteAfterUndoWindow(
+  mealIds: readonly string[],
+  deps: UndoWindowDeps,
+  windowMs: number = MEAL_UNDO_WINDOW_MS
+): () => void {
+  deps.hide(mealIds);
+  let committed = false;
+  const timer = setTimeout(() => {
+    committed = true;
+    deps.commit(mealIds);
+  }, windowMs);
+  return () => {
+    if (committed) return;
+    clearTimeout(timer);
+    deps.show(mealIds);
+  };
 }

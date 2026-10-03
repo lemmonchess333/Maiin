@@ -69,8 +69,7 @@ export interface EasierPlan extends Omit<ExpressPlan, "trim"> {
 /**
  * Build the easier execution clone of a programme day. Pure +
  * deterministic; the input day is never mutated — the caller feeds the
- * clone into the live session exactly like an Express plan
- * (sourceIndexes is the identity mapping since nothing is dropped).
+ * clone into the live session exactly like an Express plan.
  */
 export function buildEasierSession(day: WorkoutDay): EasierPlan {
   const adjustments: EasierAdjustments = { setsReduced: 0, loadsReduced: 0 };
@@ -88,7 +87,6 @@ export function buildEasierSession(day: WorkoutDay): EasierPlan {
   return {
     variant: "easier_today",
     exercises,
-    sourceIndexes: exercises.map((_, i) => i),
     estimatedMinutes: estimateSessionMinutes(exercises),
     adjustments,
   };

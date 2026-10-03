@@ -5,8 +5,9 @@ import type { FitnessGoal } from "@/lib/tdee";
  * canonical build path (`planBuilder.buildPlan`) writes the SAME derived phase
  * to BOTH `profile.program.goal` AND `programState.goal` in one operation.
  * Macro/calorie consumers read the profile copy; the lift engine reads the
- * programState copy — `useProgram.logExercise` passes `programState.goal` into
- * `applyProgression` (rep-scheme selection), `Program.tsx` shows it in the
+ * programState copy — finishing a workout passes `programState.goal` into
+ * `applyProgression` (rep-scheme selection, in
+ * `sessionCompletion.applySessionProgression`), `Program.tsx` shows it in the
  * header, and `regenerateProgram` prefers it over the profile value. When the
  * SettingsNutrition page persists a derived-phase change it must mirror BOTH
  * copies, or the lift side keeps the stale goal's rep scheme (the repo's

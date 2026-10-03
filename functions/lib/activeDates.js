@@ -4,10 +4,12 @@
  * Mirrors the client's computeActiveDateSet (src/features/streaks/useStreaks):
  * a local date counts as "active" if ANY workout / run / meal contributes it.
  * Workout + meal `date` fields are ALREADY the user's local YYYY-MM-DD (written
- * client-side), so they're used as-is; run timestamps are UTC, so they're
- * converted to the user's tz here — that's why the server needs the tz to agree
- * with the client on which local day a run counts for. Meals need ≥1 item
- * (guards draft/empty docs), matching the client.
+ * client-side), so they're used as-is. A run counts on the day it STARTED
+ * (Lift3): its `date`, written client-side from the first GPS point, as the
+ * client's saved-run reader (src/lib/savedRuns.ts) dates it. A run saved
+ * before `date` existed falls back to its completion instant converted to
+ * the user's tz — that's why the server needs the tz to agree with the
+ * client. Meals need ≥1 item (guards draft/empty docs), matching the client.
  *
  * This exists because the active-date set is computed client-side and never
  * persisted, so the streak-nudge cron has no stored field to read — it
@@ -20,16 +22,18 @@
  * and the streak nudge silently skipped exactly the user whose real streak
  * (which the client refuses to credit for that run) was about to break.
  *
- * Pure: plain rows (runs as epoch ms + eligibility fields) + tz in, local
- * date keys out.
+ * Pure: plain rows (runs as date + epoch ms + eligibility fields) + tz in,
+ * local date keys out.
  */
 const { localDateKeyInTz } = require("./streakNudge");
 const { isVolumeEligibleRun } = require("./runEligibility");
+const { isCalendarDate } = require("./dateUtils");
 
 /**
  * @param {{
  *   workouts?: { date?: string }[],
  *   runs?: {
+ *     date?: string,
  *     completedAtMs?: number,
  *     isInvalid?: boolean,
  *     savedAnyway?: boolean,
@@ -50,6 +54,10 @@ function activeDateKeysFromLogs(logs, timezone) {
   }
   for (const r of runs) {
     if (!isVolumeEligibleRun(r)) continue;
+    if (isCalendarDate(r.date)) {
+      set.add(r.date);
+      continue;
+    }
     if (typeof r.completedAtMs !== "number" || !Number.isFinite(r.completedAtMs)) {
       continue;
     }

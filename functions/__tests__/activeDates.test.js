@@ -16,6 +16,38 @@ describe("activeDateKeysFromLogs", () => {
     expect(keys.sort()).toEqual(["2026-06-01", "2026-06-02"]);
   });
 
+  it("counts a run on the day it started (Lift3), not the day it was saved", () => {
+    // Started 23:40 on 1 June in London, saved 00:15 on the 2nd (23:15Z).
+    const keys = activeDateKeysFromLogs(
+      {
+        runs: [
+          {
+            date: "2026-06-01",
+            completedAtMs: Date.parse("2026-06-01T23:15:00Z"),
+            distance: 5000,
+            duration: 1800,
+          },
+        ],
+      },
+      "Europe/London"
+    );
+    expect(keys).toEqual(["2026-06-01"]);
+  });
+
+  it("falls back to the completion day when `date` is missing or not a real day", () => {
+    const completedAtMs = Date.parse("2026-06-03T12:00:00Z");
+    const keys = activeDateKeysFromLogs(
+      {
+        runs: [
+          { completedAtMs, distance: 5000, duration: 1800 },
+          { date: "2026-02-30", completedAtMs, distance: 5000, duration: 1800 },
+        ],
+      },
+      "UTC"
+    );
+    expect(keys).toEqual(["2026-06-03"]);
+  });
+
   it("excludes soft-deleted meals", () => {
     const keys = activeDateKeysFromLogs(
       {

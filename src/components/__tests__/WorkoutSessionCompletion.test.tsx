@@ -4,6 +4,15 @@ import {
   readDoc,
 } from "@/test/firestoreHarness";
 vi.mock("@/components/WeekPulseCard", () => ({ default: () => null }));
+/* Every save hands back a share now, as the writers' always did; the row
+   that offers it is SessionShareRow's own tests' to cover. */
+const shareRow = vi.hoisted(() => ({ action: undefined as unknown }));
+vi.mock("@/components/workout/SessionShareRow", () => ({
+  default: (props: { action: unknown }) => {
+    shareRow.action = props.action;
+    return null;
+  },
+}));
 import {
   act,
   cleanup,
@@ -13,6 +22,8 @@ import {
 } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { ProgramExercise } from "@/features/program/programTypes";
+import type { ComponentProps } from "react";
+import type { LiftCompletionReceipt } from "@/lib/liftCompletion";
 
 const h = vi.hoisted(() => ({
   load: vi.fn(() => null),
@@ -76,8 +87,32 @@ vi.mock("@/lib/restTimerNotification", () => ({
 }));
 import WorkoutSession from "../WorkoutSession";
 
+/**
+ * What a writer hands back (`completeLift`): saved now, or, given the
+ * queue's promise, waiting to sync. The share posts nothing.
+ */
+function receipt(queued?: Promise<"synced" | "failed">): LiftCompletionReceipt {
+  return {
+    workoutId: "programme-test",
+    share: {
+      uid: "test",
+      type: "workout",
+      source: { kind: "workout", id: "programme-test" },
+      post: async () => ({ status: "declined" }),
+    },
+    syncStatus: queued ? "queued" : "synced",
+    sync: queued ?? Promise.resolve("synced"),
+  };
+}
+
+type CompleteDay = ComponentProps<typeof WorkoutSession>["onCompleteDay"];
+/** A writer whose save lands at once, or (given the queue's promise)
+ *  waits to sync. */
+const writer = (queued?: Promise<"synced" | "failed">) =>
+  vi.fn<CompleteDay>(async () => receipt(queued));
+
 function openSession(
-  onCompleteDay = vi.fn(),
+  onCompleteDay = writer(),
   onClose = vi.fn(),
   exercise: Partial<ProgramExercise> = {}
 ) {
@@ -487,8 +522,8 @@ describe("workout save acknowledgement", () => {
       .mockRejectedValueOnce(new Error("offline"))
       .mockImplementation(
         () =>
-          new Promise<void>((resolve) => {
-            resolveSave = resolve;
+          new Promise<LiftCompletionReceipt>((resolve) => {
+            resolveSave = () => resolve(receipt());
           })
       );
     const close = vi.fn();
@@ -538,7 +573,7 @@ describe("workout save acknowledgement", () => {
   });
 });
 
-async function finishAndSave(complete = vi.fn().mockResolvedValue(undefined)) {
+async function finishAndSave(complete = writer()) {
   openSession(complete);
   for (let i = 0; i < 3; i++) {
     fireEvent.click(
@@ -553,14 +588,19 @@ async function finishAndSave(complete = vi.fn().mockResolvedValue(undefined)) {
   fireEvent.click(screen.getByRole("button", { name: "Save workout" }));
 }
 
+it("hands the finish screen the share the save came back with", async () => {
+  shareRow.action = undefined;
+  const saved = receipt();
+  await finishAndSave(vi.fn<CompleteDay>(async () => saved));
+  await vi.waitFor(() => expect(shareRow.action).toBe(saved.share));
+});
+
 it("keeps the recovery draft while queued, then clears it only when synced", async () => {
   let settle!: (outcome: "synced" | "failed") => void;
   const sync = new Promise<"synced" | "failed">((resolve) => {
     settle = resolve;
   });
-  await finishAndSave(
-    vi.fn().mockResolvedValue({ syncStatus: "queued", sync })
-  );
+  await finishAndSave(writer(sync));
   await vi.waitFor(() =>
     expect(screen.getByText("Waiting to sync")).toBeVisible()
   );
@@ -586,8 +626,8 @@ it("a reconnect rejection keeps the session and retries the same completion", as
   });
   const complete = vi
     .fn()
-    .mockResolvedValueOnce({ syncStatus: "queued", sync })
-    .mockResolvedValueOnce(undefined);
+    .mockResolvedValueOnce(receipt(sync))
+    .mockResolvedValueOnce(receipt());
   await finishAndSave(complete);
   await vi.waitFor(() =>
     expect(screen.getByRole("button", { name: "Done" })).toBeInTheDocument()
@@ -630,9 +670,7 @@ it("ignores a late completion acknowledgement after account switch", async () =>
   const sync = new Promise<"synced" | "failed">((resolve) => {
     settle = resolve;
   });
-  await finishAndSave(
-    vi.fn().mockResolvedValue({ syncStatus: "queued", sync })
-  );
+  await finishAndSave(writer(sync));
   await vi.waitFor(() =>
     expect(screen.getByText("Waiting to sync")).toBeVisible()
   );
@@ -690,7 +728,7 @@ it("reopens an unsynced completion with its original date and retry identity", a
     exerciseNotes: { 0: "Seat at 4" },
     setLogs: [[{ reps: 8, weight: 20, completed: true, type: "working" }]],
   } as never);
-  const complete = vi.fn().mockResolvedValue(undefined);
+  const complete = writer();
   openSession(complete);
   expect(screen.queryByText("Resume workout?")).not.toBeInTheDocument();
   fireEvent.click(screen.getByRole("button", { name: "Retry sync" }));
@@ -800,7 +838,7 @@ describe("completed-set corrections", () => {
   });
 
   it("replaces the final progression result and saves the corrected workout", async () => {
-    const complete = vi.fn().mockResolvedValue(undefined);
+    const complete = writer();
     const log = openSession(complete);
     for (let i = 0; i < 3; i++)
       fireEvent.click(
@@ -1075,7 +1113,7 @@ describe("WorkoutSession — timers survive a locked phone", () => {
 });
 
 it("Undo followed by finishing early saves only the final completed work", async () => {
-  const complete = vi.fn().mockResolvedValue(undefined);
+  const complete = writer();
   openSession(complete);
   for (let i = 0; i < 3; i++)
     fireEvent.click(
@@ -1100,7 +1138,7 @@ it("Undo followed by finishing early saves only the final completed work", async
       (set: { completed: boolean }) => set.completed
     )
   ).toHaveLength(2);
-  expect(complete.mock.calls[0][1].prescription.exercises[0]).toMatchObject({
+  expect(complete.mock.calls[0][1].prescription!.exercises[0]).toMatchObject({
     sets: 3,
     reps: 8,
     weight: 0,
@@ -1118,7 +1156,7 @@ describe("Plate-Club badges are awarded the moment the workout saves", () => {
     exercise: Partial<ProgramExercise>,
     kg: string
   ) {
-    const onCompleteDay = vi.fn(); // resolves undefined → synced → acknowledge()
+    const onCompleteDay = writer();
     await act(async () => {
       openSession(onCompleteDay, vi.fn(), exercise);
     });

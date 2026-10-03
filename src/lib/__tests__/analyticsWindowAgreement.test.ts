@@ -16,24 +16,21 @@ import {
  * nutrition covered SEVEN because it kept the current time of day on the
  * boundary and so pushed that date out, and adherence divided by seven.
  *
- * The three comparison FORMS are all still different, and legitimately
- * so — a workout is a local date string, a run is a Timestamp, a meal is
- * a date string parsed back to midnight. What has to agree is the set of
+ * The comparison FORMS can differ, and legitimately so — a workout is a
+ * local date string, a run is matched by the day it started (Lift3, a
+ * local date string too, through `src/lib/savedRuns.ts`), a meal is a
+ * date string parsed back to midnight. What has to agree is the set of
  * dates they admit. That is what this pins.
  */
 
 /** Exactly the comparisons the three sections make, given one boundary. */
 const ADMITS = {
-  // History `liftingData`: string compare against a local date key.
+  // `liftFigures`: string compare against a local date key.
   lifting: (dateKey: string, since: Date) => dateKey >= localDateString(since),
-  // useRunningStats: a run's completedAt, taken at that date's local midnight.
-  running: (dateKey: string, since: Date) =>
-    new Date(
-      Number(dateKey.slice(0, 4)),
-      Number(dateKey.slice(5, 7)) - 1,
-      Number(dateKey.slice(8, 10))
-    ) >= since,
-  // History `nutrition`: the meal's own date parsed back to local midnight.
+  // useRunningStats (`inRunWindow`): the run's day against the window's
+  // first day key.
+  running: (dateKey: string, since: Date) => dateKey >= localDateString(since),
+  // `nutritionFigures`: the meal's own date parsed back to local midnight.
   nutrition: (dateKey: string, since: Date) =>
     new Date(dateKey + "T00:00:00") >= since,
 } as const;
@@ -132,7 +129,8 @@ describe("the three Analytics sections admit the same dates", () => {
  * either routes through the shared helper or it does not.
  */
 const RANGE_PILL_SURFACES = [
-  "src/pages/History.tsx",
+  // History's window, for every figure on the page.
+  "src/lib/historyFigures.ts",
   "src/pages/ExerciseHistory.tsx",
   "src/hooks/useRunningStats.ts",
 ];
@@ -145,20 +143,30 @@ describe("every range-pill surface uses the shared boundary", () => {
     ).toBe(true);
   });
 
-  it.each(RANGE_PILL_SURFACES)("%s derives no boundary by hand", (path) => {
-    /* The shape all three got wrong: a NAMED day-count subtracted
-       straight from a date, which against an inclusive comparison opens
-       one date too many. `- (days - 1)` is the correct hand-rolled form
-       and is deliberately not matched, so a file that spells the `+ 1`
-       out is not flagged — only one that omits it. */
-    const src = readFileSync(path, "utf8");
-    const HAND_ROLLED =
-      /(?:setDate\(\s*\w+\.getDate\(\)|addLocalDays\([^,]+,)\s*-\s*\w*[dD]ays\b/;
+  it("History takes its window from historyFigures", () => {
     expect(
-      HAND_ROLLED.test(src),
-      `${path} derives a range boundary by hand — use rollingWindowStart`
-    ).toBe(false);
+      /historyRange\(/.test(readFileSync("src/pages/History.tsx", "utf8")),
+      "History scopes a range pill — its window must come from historyRange"
+    ).toBe(true);
   });
+
+  it.each([...RANGE_PILL_SURFACES, "src/pages/History.tsx"])(
+    "%s derives no boundary by hand",
+    (path) => {
+      /* The shape all three got wrong: a NAMED day-count subtracted
+         straight from a date, which against an inclusive comparison opens
+         one date too many. `- (days - 1)` is the correct hand-rolled form
+         and is deliberately not matched, so a file that spells the `+ 1`
+         out is not flagged — only one that omits it. */
+      const src = readFileSync(path, "utf8");
+      const HAND_ROLLED =
+        /(?:setDate\(\s*\w+\.getDate\(\)|addLocalDays\([^,]+,)\s*-\s*\w*[dD]ays\b/;
+      expect(
+        HAND_ROLLED.test(src),
+        `${path} derives a range boundary by hand — use rollingWindowStart`
+      ).toBe(false);
+    }
+  );
 
   it("the hand-rolled pattern matches the three real defects", () => {
     /* Anchored on the actual text each file carried, so the negative

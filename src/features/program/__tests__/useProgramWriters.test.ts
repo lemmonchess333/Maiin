@@ -36,6 +36,7 @@ import {
 import { CURRENT_PROGRAM_SCHEMA_VERSION } from "../programTypes";
 import { sameStoredValue } from "../stateTransition";
 import type { ProgramState, ScheduledRunDay } from "../programTypes";
+import type { RealignOutcome } from "../programOutcome";
 
 // ─── Firebase mocks ──────────────────────────────────────────────────
 
@@ -2065,6 +2066,7 @@ describe("packet 15 — completeWorkoutDay atomic batch", () => {
     });
 
     failNextFirestore("commit");
+    vi.mocked(toast.error).mockClear();
     await expect(
       result.current.completeWorkoutDay(0, session("cid-2"))
       // The fake generates the message from the injected code, so match
@@ -2073,6 +2075,9 @@ describe("packet 15 — completeWorkoutDay atomic batch", () => {
     ).rejects.toThrow(/permission-denied/);
     // No split state: the day is still not completed in local state.
     expect(result.current.programState?.workouts[0].completed).toBe(false);
+    // The workout screen says it couldn't save. The writer saying so too
+    // put two of the same message on screen.
+    expect(toast.error).not.toHaveBeenCalled();
   });
 
   it("persists sessionVariant on the PRIVATE workout doc — easier_today saves truthfully (PROGRAM-ADAPT-01)", async () => {
@@ -2306,15 +2311,96 @@ describe("RUN-RACE-GUARD-01 — race identity is immutable in the writers", () =
       timeout: 2000,
     });
     markWrites();
+    vi.mocked(toast.error).mockClear();
 
+    let outcome: unknown;
     await act(async () => {
-      await result.current.markManualComplete("race_day_1");
+      outcome = await result.current.markManualComplete("race_day_1");
     });
 
+    // Reported and said, so the run finish screen cannot announce "Scheduled
+    // run marked complete" over the refusal, as it did when this returned
+    // nothing.
+    expect(outcome).toEqual({
+      status: "declined",
+      reason: "A race is complete once you log it as a run.",
+    });
+    expect(vi.mocked(toast.error).mock.calls.map(([text]) => text)).toEqual([
+      "Couldn't mark that complete. A race is complete once you log it as a run.",
+    ]);
     // As above: the command channel is what carries the write now.
     expect(
       sentCommands.find((c) => c.kind === "setManualRunCompletion")
     ).toBeUndefined();
+    expect(setDocCalls().length).toBe(0);
+  });
+});
+
+/* A realign that cannot run used to come back as "healthy, 0 weeks", and
+   Home, the Run tab and the adjust sheet each announced it as a realigned
+   plan ("Plan realigned to today — 0 weeks to your 10K"). It now comes back
+   as a refusal, said once by the writer, and nothing is saved. */
+describe("realignRacePlan reports a refusal instead of a 0-week plan", () => {
+  function seedRacePlan(targetDate: string) {
+    seedProgram({
+      goal: "recomp",
+      currentPhase: "base",
+      weekNumber: 1,
+      splitType: "ppl",
+      workouts: [],
+      fatigueScore: 0,
+      updatedAt: Date.now(),
+      settings: { autoProgression: true, microloading: true },
+      weekHistory: [],
+      programSchemaVersion: CURRENT_PROGRAM_SCHEMA_VERSION,
+      runDays: [],
+      runPlan: {
+        mode: "race_prep",
+        raceGoal: { distance: "10k", targetDate },
+      },
+    } as unknown as ProgramState);
+  }
+
+  async function realign(): Promise<unknown> {
+    const { result } = mountProgram();
+    await waitFor(() => expect(result.current.loading).toBe(false), {
+      timeout: 2000,
+    });
+    markWrites();
+    vi.mocked(toast.error).mockClear();
+    let outcome: unknown;
+    await act(async () => {
+      outcome = await result.current.realignRacePlan();
+    });
+    return outcome;
+  }
+
+  it("a race whose date has passed is not realigned", async () => {
+    const yesterday = localDateString(addLocalDays(new Date(), -1));
+    mockProfile = raceProfile(yesterday);
+    seedRacePlan(yesterday);
+
+    expect(await realign()).toEqual({
+      status: "declined",
+      reason: "Your race date has passed.",
+    });
+    expect(vi.mocked(toast.error).mock.calls.map(([text]) => text)).toEqual([
+      "Couldn't realign your plan. Your race date has passed.",
+    ]);
+    expect(setDocCalls().length).toBe(0);
+  });
+
+  it("a plan with no race is not realigned", async () => {
+    mockProfile = structuredProfile();
+    seedRacePlan(localDateString(addLocalDays(new Date(), 70)));
+
+    expect(await realign()).toEqual({
+      status: "declined",
+      reason: "There's no race on your plan.",
+    });
+    expect(vi.mocked(toast.error).mock.calls.map(([text]) => text)).toEqual([
+      "Couldn't realign your plan. There's no race on your plan.",
+    ]);
     expect(setDocCalls().length).toBe(0);
   });
 });
@@ -3158,7 +3244,7 @@ describe("#2422 — an action computed before another write landed still commits
     );
 
     let caught: unknown;
-    let outcome: { timing: string; totalWeeks: number } | undefined;
+    let outcome: RealignOutcome | undefined;
     await act(async () => {
       outcome = await realignAsRendered().catch((e) => {
         caught = e;
@@ -3166,7 +3252,10 @@ describe("#2422 — an action computed before another write landed still commits
       });
     });
     expect(caught).toBeUndefined();
-    expect(outcome?.totalWeeks ?? 0).toBeGreaterThan(0);
+    expect(outcome?.status).toBe("applied");
+    expect(
+      outcome?.status === "applied" ? outcome.totalWeeks : 0
+    ).toBeGreaterThan(0);
 
     const stored = readDoc(PROGRAM) as unknown as ProgramState;
     expect(stored.runPlan?.currentWeek).toBe(3);

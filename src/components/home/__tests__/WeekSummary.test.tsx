@@ -2,9 +2,10 @@ import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
 import WeekSummary from "../WeekSummary";
 
+/** Done and planned for each; a null plan is a week with none. */
 function counts(
-  lifts: [number, number],
-  runs: [number, number],
+  lifts: [number, number | null],
+  runs: [number, number | null],
   foodDays: number
 ) {
   return {
@@ -31,18 +32,18 @@ describe("WeekSummary", () => {
 
   it("leaves out a discipline the week neither planned nor logged", () => {
     // A runner who does not lift is not shown "0 of 0 lifts" every week.
-    render(<WeekSummary counts={counts([0, 0], [2, 3], 1)} />);
+    render(<WeekSummary counts={counts([0, null], [2, 3], 1)} />);
     expect(screen.queryByRole("group", { name: /^Lifts/ })).toBeNull();
     expect(screen.getAllByRole("group")).toHaveLength(2);
   });
 
   it("shows a logged session the plan did not have, without a denominator", () => {
-    render(<WeekSummary counts={counts([1, 0], [0, 3], 0)} />);
+    render(<WeekSummary counts={counts([1, null], [0, 3], 0)} />);
     expect(screen.getByRole("group", { name: "Lifts: 1" })).toBeInTheDocument();
   });
 
   it("always shows food, the one every week has", () => {
-    render(<WeekSummary counts={counts([0, 0], [0, 0], 0)} />);
+    render(<WeekSummary counts={counts([0, null], [0, null], 0)} />);
     expect(
       screen.getByRole("group", { name: "Food logged: 0 of 7 days" })
     ).toBeInTheDocument();
@@ -65,7 +66,7 @@ describe("WeekSummary in the week the account began", () => {
       <WeekSummary
         counts={{
           lifts: { done: 1, planned: 1 },
-          runs: { done: 0, planned: 0 },
+          runs: { done: 0, planned: null },
           foodDays: 3,
           foodDayTotal: 3,
         }}

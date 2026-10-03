@@ -117,5 +117,5 @@ it("keeps the bounded history and excludes invalid runs from the shared burn dat
   const { result } = renderHook(() => useTrainingFuelData("u1", TODAY));
   await flushSnapshots();
   expect(result.current.workouts).toHaveLength(60);
-  expect(result.current.runs).toEqual([{ completedAt, calories: 100 }]);
+  expect(result.current.runs).toEqual([{ day: TODAY, calories: 100 }]);
 });

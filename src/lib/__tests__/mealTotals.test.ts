@@ -84,8 +84,8 @@ describe("sumMealTotals", () => {
 
   it("tolerates extra keys on the input (Firestore docs carry items/createdAt/etc.)", () => {
     // The sum only reads the macro fields; everything else is ignored.
-    // Cast-through-unknown mirrors how useHomeData passes raw snapshot
-    // payloads (`d.data() as MealTotalsInput`).
+    // Cast-through-unknown mirrors how a raw-snapshot reader passes
+    // Firestore payloads (`d.data() as MealTotalsInput`).
     const raw = [
       {
         totalCalories: 150,

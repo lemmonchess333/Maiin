@@ -168,6 +168,33 @@ export function resolveRunDayForDate(
 }
 
 /**
+ * The person's seven-day schedule: their own, or, when it is missing or not
+ * seven days, one built from their weekly targets. The strip, the week's
+ * counts and every day's resolution read the same one.
+ */
+export function weekScheduleFor(
+  profile:
+    | Partial<
+        Pick<
+          UserProfile,
+          | "weekSchedule"
+          | "weeklyWorkoutsTarget"
+          | "weeklyRunDaysTarget"
+          | "weeklyRunsTarget"
+        >
+      >
+    | null
+    | undefined
+): ScheduleDay[] {
+  return profile?.weekSchedule && profile.weekSchedule.length === 7
+    ? profile.weekSchedule
+    : generateSchedule(
+        profile?.weeklyWorkoutsTarget ?? 3,
+        getWeeklyRunTarget(profile)
+      );
+}
+
+/**
  * Resolve a full training-day view for a calendar date — schedule
  * type, lift slot (with index into programState.workouts[]), run
  * slot (with status helpers + a `startUrl` when startable). Pure;
@@ -211,13 +238,7 @@ export function resolveTrainingDayForDate(args: {
   } = args;
   const dayIndex = parseLocalDate(dateKey).getDay();
 
-  const schedule: ScheduleDay[] =
-    profile?.weekSchedule && profile.weekSchedule.length === 7
-      ? profile.weekSchedule
-      : generateSchedule(
-          profile?.weeklyWorkoutsTarget ?? 3,
-          getWeeklyRunTarget(profile)
-        );
+  const schedule = weekScheduleFor(profile);
   const scheduleType: DayType =
     schedule.find((s) => s.day === dayIndex)?.type ?? "rest";
   const isBothDay = scheduleType === "both";
@@ -334,6 +355,9 @@ export function resolveTrainingWindow(args: {
   /** PR-J Q3 chunk B3c — forwarded to `resolveTrainingDayForDate`
    *  for derived completion. WeekStrip is the primary caller. */
   claimMap?: Map<string, ClaimState>;
+  /** Today's local date key, forwarded to `resolveTrainingDayForDate`;
+   *  defaults to the real today there. */
+  todayKey?: string;
 }): ResolvedTrainingDay[] {
   const currentWeekKey = localWeekKey(args.startDate);
   const out: ResolvedTrainingDay[] = [];
@@ -347,6 +371,7 @@ export function resolveTrainingWindow(args: {
         programState: args.programState,
         currentWeekKey,
         claimMap: args.claimMap,
+        todayKey: args.todayKey,
       })
     );
   }

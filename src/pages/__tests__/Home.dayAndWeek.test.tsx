@@ -28,7 +28,7 @@ const h = vi.hoisted(() => ({
   profile: null as any,
   programState: null as any,
   workouts: [] as Array<{ id: string; date: string }>,
-  meals: [] as Array<{ id: string; date: string }>,
+  meals: [] as Array<{ id: string; date: string; calories?: number }>,
   mealsLoading: false,
   mealsError: null as string | null,
   dayMap: new Map<
@@ -37,6 +37,8 @@ const h = vi.hoisted(() => ({
   >(),
   claimMap: new Map(),
   unclaimedByDate: new Map(),
+  /* Every saved run, as the claim hook reads them. */
+  runs: [] as Array<Record<string, unknown>>,
 }));
 
 vi.mock("firebase/firestore");
@@ -91,31 +93,35 @@ vi.mock("@/hooks/useWorkouts", () => ({
       h.workouts.filter((w) => w.date === date),
   }),
 }));
-vi.mock("@/hooks/useMeals", () => ({
+vi.mock("@/hooks/useMeals", () => {
+  /* One function, as useMeals' own is between changes to the meals (a
+     useCallback): a memo keyed on it must not be refreshed by a new
+     function on every render, or a missing day key goes unnoticed. */
+  const getDailyTotals = (date: string) => ({
+    calories: h.meals
+      .filter((m) => m.date === date)
+      .reduce((total, m) => total + (m.calories ?? 0), 0),
+    protein: 0,
+    carbs: 0,
+    fat: 0,
+    mealCount: h.meals.filter((m) => m.date === date).length,
+  });
   /* The hook's own contract: `meals` are the ACTIVE meals (a soft-deleted
      meal is not among them), and a day's totals count them. */
-  useMeals: () => ({
-    meals: h.meals,
-    loading: h.mealsLoading,
-    error: h.mealsError,
-    getDailyTotals: (date: string) => ({
-      calories: 0,
-      protein: 0,
-      carbs: 0,
-      fat: 0,
-      mealCount: h.meals.filter((m) => m.date === date).length,
+  return {
+    useMeals: () => ({
+      meals: h.meals,
+      loading: h.mealsLoading,
+      error: h.mealsError,
+      getDailyTotals,
     }),
-  }),
-}));
+  };
+});
 vi.mock("@/hooks/useFirestore", () => ({
   useWeeklyDayMap: () => h.dayMap,
 }));
 vi.mock("@/hooks/useHomeData", () => ({
   useHomeData: () => ({
-    dailyCal: 0,
-    dailyProt: 0,
-    dailyCarbs: 0,
-    dailyFat: 0,
     lastWeightInfo: null,
     weightTrend: null,
     weightSyncStatus: "idle",
@@ -148,6 +154,7 @@ vi.mock("@/hooks/useClaimMapForProgram", () => ({
   useClaimMapForProgram: () => ({
     claimMap: h.claimMap,
     unclaimedByDate: h.unclaimedByDate,
+    runs: h.runs,
     today: "",
     loading: false,
   }),
@@ -231,7 +238,13 @@ vi.mock("@/components/home/StepsPrimingModal", () => ({
 vi.mock("@/components/home/TrialEndedDialog", () => ({ default: () => null }));
 vi.mock("@/components/home/WaterCard", () => ({ default: () => null }));
 vi.mock("@/components/home/WeightStepsTiles", () => ({ default: () => null }));
-vi.mock("@/components/home/TodayEnergy", () => ({ default: () => null }));
+/* The food card draws the figures it is handed; the test reads the one
+   that says which day's food it is. */
+vi.mock("@/components/home/TodayEnergy", () => ({
+  default: ({ calories }: { calories: number }) => (
+    <output data-testid="today-calories">{calories}</output>
+  ),
+}));
 vi.mock("@/components/home/WeeklyReviewEntry", () => ({ default: () => null }));
 vi.mock("@/components/home/PerformanceHeroCard", () => ({
   default: () => null,
@@ -360,6 +373,7 @@ beforeEach(() => {
   h.dayMap = new Map();
   h.claimMap = new Map();
   h.unclaimedByDate = new Map();
+  h.runs = [];
 });
 
 afterEach(() => {
@@ -382,6 +396,24 @@ describe("Home — the date follows the clock", () => {
 
     expect(screen.getByText(formatWeekdayDayMonth(earlyMonday))).toBeTruthy();
     expect(screen.queryByText(formatWeekdayDayMonth(lateSunday))).toBeNull();
+  });
+
+  it("shows the new day's food once the app comes back after midnight", () => {
+    /* The food card read today's meals once, when Home mounted, so after
+       midnight it went on showing yesterday's. It now reads the diary Home
+       holds, for Home's day. */
+    const lateSunday = new Date(2026, 8, 27, 23, 59, 30);
+    pinClock(lateSunday);
+    h.meals = [{ id: "m1", date: localDateString(lateSunday), calories: 500 }];
+    renderHome();
+    expect(screen.getByTestId("today-calories").textContent).toBe("500");
+
+    act(() => {
+      vi.setSystemTime(new Date(2026, 8, 28, 0, 0, 30));
+      document.dispatchEvent(new Event("visibilitychange"));
+    });
+
+    expect(screen.getByTestId("today-calories").textContent).toBe("0");
   });
 
   it("starts the week's counts again when the week turns over", () => {
@@ -408,6 +440,48 @@ describe("Home — the date follows the clock", () => {
 
     // The new week has no session in it yet.
     expect(column("Lifts")).toBe("Lifts: 0 of 2");
+  });
+});
+
+describe("Home — the week's runs, as every screen counts them", () => {
+  beforeEach(() => {
+    pinClock(WEDNESDAY);
+  });
+
+  const monday = () => localDateString(addLocalDays(WEDNESDAY, -2));
+  const tuesday = () => localDateString(addLocalDays(WEDNESDAY, -1));
+
+  it("counts the runs that count against the plan's run days", () => {
+    // A race plan runs on Tuesday and Thursday. Tuesday's run counts; the
+    // run saved anyway on Monday counts nowhere.
+    h.profile = profileWith({ 2: "run", 4: "run" });
+    h.programState = programStateWith({
+      runDays: [
+        runDay(addLocalDays(WEDNESDAY, -1)),
+        runDay(addLocalDays(WEDNESDAY, 1)),
+      ],
+    });
+    h.runs = [
+      { id: "r1", day: tuesday(), distance: 5000, duration: 1800 },
+      {
+        id: "r2",
+        day: monday(),
+        distance: 9000,
+        duration: 600,
+        savedAnyway: true,
+      },
+    ];
+    renderHome();
+    expect(column("Runs")).toBe("Runs: 1 of 2");
+  });
+
+  it("shows a free runner's runs with no target to count against", () => {
+    // The schedule names two run days, but a free runner's plan has no
+    // runs in it: their week is done-only (Run9a, Rev1).
+    h.profile = profileWith({ 2: "run", 4: "run" });
+    h.runs = [{ id: "r1", day: tuesday(), distance: 5000, duration: 1800 }];
+    renderHome();
+    expect(column("Runs")).toBe("Runs: 1");
   });
 });
 

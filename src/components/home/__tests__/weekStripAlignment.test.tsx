@@ -27,6 +27,7 @@ const todayKey = localDateString(new Date());
 function renderStrip(selectedDate: string | null = null) {
   return render(
     <WeekStrip
+      todayKey={todayKey}
       dayMap={new Map()}
       profile={profile}
       programState={null}

@@ -15,46 +15,48 @@
  * There is no refetch path to lean on — hence an explicit argument.
  */
 import { useEffect, useMemo, useState } from "react";
-import {
-  collection,
-  doc,
-  getDoc,
-  getDocs,
-  query,
-  where,
-} from "firebase/firestore";
+import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
 import { useStreaks } from "@/features/streaks/useStreaks";
 import { localDateString, localWeekKey } from "@/lib/dateHelpers";
-import { scheduledDaysSinceStart, startDayKey } from "@/lib/startDay";
 import {
   buildWeekPulse,
   weekBounds,
-  inWeek,
-  type ReviewRun,
   type WeekPulse,
 } from "@/lib/weeklyReviewViewModel";
-import { isVolumeEligible } from "@/lib/runStatsEligibility";
-import { resolveRunPlanSurface } from "@/lib/runProgrammeViewModel";
+import { fetchSavedRuns } from "@/lib/savedRuns";
+import { fetchSavedWorkouts } from "@/lib/savedWorkouts";
+import {
+  trainingWeek,
+  type TrainingWeekInput,
+  type WeekRun,
+} from "@/lib/trainingWeek";
 import { logger } from "@/lib/logger";
 
 /** The run a run's finish screen is showing, saved or not yet. */
-export interface PendingRun extends Omit<ReviewRun, "date"> {
+export interface PendingRun {
   /** Its document id once known; a fetched run with this id is the same run. */
   id: string | null;
   /** Its local date; null for one with no trace, counted as today's. */
   date: string | null;
+  /** Metres. */
+  distance: number;
+  /** Seconds. */
+  duration: number;
+  /** Flagged invalid on the finish screen: it counts nowhere. */
+  isInvalid: boolean;
 }
 
 interface WeekFetch {
   weekKey: string;
-  /** The day the week was read, for a pending run with no date. */
-  todayKey: string;
+  /** When the week was read: a pending run with no date is that day's. */
+  readAt: Date;
   workouts: { date: string }[];
-  runs: (ReviewRun & { id: string })[];
-  plannedLifts: number | null;
-  plannedRuns: number | null;
+  runs: (WeekRun & { id: string })[];
+  /** The plan and the profile as they were when the week was read. */
+  programState: TrainingWeekInput["programState"];
+  profile: TrainingWeekInput["profile"];
 }
 
 export function useWeekPulse(
@@ -76,84 +78,30 @@ export function useWeekPulse(
     let cancelled = false;
     (async () => {
       try {
-        const weekKey = localWeekKey(new Date());
+        const readAt = new Date();
+        const weekKey = localWeekKey(readAt);
         const { start, end } = weekBounds(weekKey);
-        const [workoutsSnap, runsSnap, programStateSnap] = await Promise.all([
-          getDocs(
-            query(
-              collection(db, "users", user.uid, "workouts"),
-              where("date", ">=", start),
-              where("date", "<=", end)
-            )
-          ),
-          getDocs(
-            query(
-              collection(db, "users", user.uid, "runs"),
-              where("date", ">=", start),
-              where("date", "<=", end)
-            )
-          ),
+        const [savedWorkouts, savedRuns, programStateSnap] = await Promise.all([
+          // Through the saved-workout reader: the week's workouts, including
+          // one finished on this phone and not yet synced.
+          fetchSavedWorkouts(user.uid, { since: start, until: end }),
+          // Through the saved-run reader: the week's runs by their Lift3
+          // day, including runs saved before `date` existed (a `date`-only
+          // query left those out) and runs saved on this phone.
+          fetchSavedRuns(user.uid, { since: start, until: end }),
           getDoc(doc(db, "users", user.uid, "programState", "current")),
         ]);
         if (cancelled) return;
 
-        const workouts = workoutsSnap.docs
-          .map((d) => d.data() as { date?: unknown })
-          .filter((w): w is { date: string } => typeof w.date === "string");
-        const runs = runsSnap.docs
-          .map(
-            (d) =>
-              ({ ...d.data(), id: d.id }) as Record<string, unknown> & {
-                id: string;
-              }
-          )
-          .filter((r) => typeof r.date === "string")
-          .map((r) => ({
-            id: r.id,
-            date: r.date as string,
-            distanceMeters: typeof r.distance === "number" ? r.distance : 0,
-            eligible: isVolumeEligible(
-              r as Parameters<typeof isVolumeEligible>[0]
-            ),
-          }));
-
-        const schedule = Array.isArray(profile?.weekSchedule)
-          ? (profile.weekSchedule as { day?: number; type?: string }[])
-          : [];
-        // In the week the account began, only the days since (startDay.ts).
-        const liftDays = scheduledDaysSinceStart(
-          schedule,
-          ["lift", "both"],
-          weekKey,
-          startDayKey(profile?.createdAt)
-        );
-
-        // Planned runs only when a race plan exists (Run9a: freeform →
-        // done-only framing — same rule as the review).
-        const programState = programStateSnap.exists()
-          ? (programStateSnap.data() as Record<string, unknown>)
-          : null;
-        const surface = resolveRunPlanSurface(
-          profile as Parameters<typeof resolveRunPlanSurface>[0],
-          programState as Parameters<typeof resolveRunPlanSurface>[1]
-        );
-        const runPlan = programState?.runPlan as
-          | { runDays?: { date?: string }[] }
-          | undefined;
-        const plannedRuns =
-          surface.kind === "race_goal" && Array.isArray(runPlan?.runDays)
-            ? runPlan.runDays.filter(
-                (d) => typeof d.date === "string" && inWeek(d.date, weekKey)
-              ).length
-            : null;
-
         setWeek({
           weekKey,
-          todayKey: localDateString(),
-          workouts,
-          runs,
-          plannedLifts: liftDays > 0 ? liftDays : null,
-          plannedRuns,
+          readAt,
+          workouts: savedWorkouts.map((w) => ({ date: w.date })),
+          runs: savedRuns,
+          programState: programStateSnap.exists()
+            ? (programStateSnap.data() as TrainingWeekInput["programState"])
+            : null,
+          profile,
         });
       } catch (err) {
         logger.warn("[useWeekPulse] fetch failed", err);
@@ -171,29 +119,34 @@ export function useWeekPulse(
   const hasPending = pendingRun !== null;
   const pendingId = pendingRun?.id ?? null;
   const pendingDate = pendingRun?.date ?? null;
-  const pendingMeters = pendingRun?.distanceMeters ?? 0;
-  const pendingEligible = pendingRun?.eligible ?? false;
+  const pendingDistance = pendingRun?.distance ?? 0;
+  const pendingDuration = pendingRun?.duration ?? 0;
+  const pendingInvalid = pendingRun?.isInvalid ?? false;
   return useMemo(() => {
     if (!week) return null;
     const alreadyRead =
       pendingId !== null && week.runs.some((r) => r.id === pendingId);
-    const runs =
+    const runs: WeekRun[] =
       hasPending && !alreadyRead
         ? [
             ...week.runs,
             {
-              date: pendingDate ?? week.todayKey,
-              distanceMeters: pendingMeters,
-              eligible: pendingEligible,
+              day: pendingDate ?? localDateString(week.readAt),
+              distance: pendingDistance,
+              duration: pendingDuration,
+              isInvalid: pendingInvalid,
             },
           ]
         : week.runs;
     return buildWeekPulse({
-      weekKey: week.weekKey,
-      workouts: week.workouts,
-      runs,
-      plannedLifts: week.plannedLifts,
-      plannedRuns: week.plannedRuns,
+      week: trainingWeek({
+        weekKey: week.weekKey,
+        profile: week.profile,
+        programState: week.programState,
+        workouts: week.workouts,
+        runs,
+        now: week.readAt,
+      }),
       streak: currentStreak,
       pendingLifts,
     });
@@ -202,8 +155,9 @@ export function useWeekPulse(
     hasPending,
     pendingId,
     pendingDate,
-    pendingMeters,
-    pendingEligible,
+    pendingDistance,
+    pendingDuration,
+    pendingInvalid,
     currentStreak,
     pendingLifts,
   ]);

@@ -127,3 +127,17 @@ it("labels a timed exercise in seconds when an older shared summary omitted its 
   expect(container.textContent).toContain("3×60 s");
   expect(container.textContent).not.toContain("3×60 BW");
 });
+
+it("draws a post shared from a saved workout, whose rows have no summary", () => {
+  // What `/workout/:id` posted before every lift post was built by
+  // `liftPost`. The card read the summary those rows did not have, and
+  // threw while drawing the post.
+  const item = feedItem();
+  // Not the shape FeedItem declares: the feed holds what was written.
+  item.activity!.exercises = [
+    { name: "Barbell Bench Press", sets: 2, reps: 8, weightKg: 60 },
+  ] as unknown as NonNullable<FeedItem["activity"]>["exercises"];
+  const { container } = renderCard(item);
+  expect(container.textContent).toContain("Barbell Bench Press");
+  expect(container.textContent).toContain("2×8×60 kg");
+});

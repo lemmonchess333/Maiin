@@ -222,9 +222,7 @@ machine-written even when each line is fine on its own. Prefer the middot
 the app already uses for `fact · fact`, or a full stop between two
 independent statements. Keep the em dash for a genuine aside.
 `emDashCopy.test.ts` ratchets the total and caps any single component, so
-the count can only fall; `liftSessionExplainerLength.test.ts` additionally
-bans it outright in the session purpose lines, which are capped at 45
-characters so they render on one line.
+the count can only fall.
 
 ---
 

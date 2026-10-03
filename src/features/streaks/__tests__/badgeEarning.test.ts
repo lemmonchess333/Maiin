@@ -26,7 +26,8 @@ function liftOn(date: string) {
   return { date };
 }
 function runOn(y: number, m: number, d: number) {
-  return { completedAt: { toDate: () => new Date(y, m, d, 12, 0, 0) } };
+  const day = `${y}-${String(m + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+  return { day };
 }
 
 describe("isBalancedEarned", () => {
@@ -78,19 +79,16 @@ describe("isBalancedEarned", () => {
     expect(isBalancedEarned(oldLifts, fiveRunDays, TODAY)).toBe(false);
   });
 
-  it("skips runs with null / unparseable completedAt", () => {
-    const badRuns = [
-      { completedAt: null },
-      {
-        completedAt: {
-          toDate: () => {
-            throw new Error("bad ts");
-          },
-        },
-      },
-      ...fiveRunDays,
-    ];
+  it("skips runs with no day", () => {
+    const badRuns = [{ day: "" }, ...fiveRunDays];
     expect(isBalancedEarned(fiveLiftDays, badRuns, TODAY)).toBe(true);
+  });
+
+  it("counts a run on the day it started, not the day it finished (Lift3)", () => {
+    // Five runs each begun before midnight and saved after it belong to
+    // the five days they started: 16th to 20th, all inside the window.
+    const lateRuns = [15, 16, 17, 18, 19].map((d) => runOn(2026, 4, d + 1));
+    expect(isBalancedEarned(fiveLiftDays, lateRuns, TODAY)).toBe(true);
   });
 });
 

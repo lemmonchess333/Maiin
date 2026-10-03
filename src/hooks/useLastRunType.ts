@@ -16,8 +16,7 @@
  * could have cleared it.
  */
 import { useEffect, useState } from "react";
-import { collection, getDocs, limit, orderBy, query } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { fetchSavedRuns } from "@/lib/savedRuns";
 import { useUid } from "@/lib/auth";
 import { resolveRepeatType } from "@/components/run/runConfigDefaults";
 import type { ActivityType } from "@/types/run";
@@ -39,18 +38,9 @@ export function useLastRunType(): ActivityType | null {
     let cancelled = false;
     (async () => {
       try {
-        const snap = await getDocs(
-          query(
-            collection(db, "users", uid, "runs"),
-            orderBy("completedAt", "desc"),
-            limit(5)
-          )
-        );
+        const runs = await fetchSavedRuns(uid, { latest: 5 });
         if (cancelled) return;
-        setAnswer({
-          uid,
-          type: resolveRepeatType(snap.docs.map((d) => d.data())),
-        });
+        setAnswer({ uid, type: resolveRepeatType(runs) });
       } catch {
         // Silent — the tile picker renders without the repeat row.
       }

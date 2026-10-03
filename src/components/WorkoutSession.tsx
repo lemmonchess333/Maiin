@@ -44,7 +44,7 @@ import EditSetSheet from "@/components/workout/EditSetSheet";
 import { sessionRecords } from "@/features/program/sessionRecords";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { motion, AnimatePresence } from "framer-motion";
-import { collection, getDocs, query, orderBy, limit } from "firebase/firestore";
+import { fetchSavedWorkouts } from "@/lib/savedWorkouts";
 import {
   buildInitialSetLogs,
   toCompletionSetLogs,
@@ -66,21 +66,22 @@ import {
   flushCompletionSurfaces,
 } from "@/lib/completionSurfaceCounter";
 import {
-  buildPRMap,
-  bumpSessionCounts,
   checkSetPR,
   exerciseBest,
   type SetPR,
   recordSetBest,
-  buildVolumeBest,
   checkVolumePR,
   exerciseSessionVolume,
-  nextVolumeBest,
   type PRMap,
   type RepBucket,
   type VolumeBestMap,
   getRepBucket,
 } from "@/lib/prTracking";
+import {
+  commitLiftRecords,
+  loadLiftRecords,
+  type LiftRecords,
+} from "@/lib/liftRecordsStore";
 import {
   suggestNextLoad,
   type ProgressionSuggestion,
@@ -114,10 +115,8 @@ import { IconButton } from "@/components/ui/IconButton";
 import { Spinner } from "@/components/ui/Spinner";
 import InlineNumerals from "@/components/ui/InlineNumerals";
 import { localDateString } from "@/lib/dateHelpers";
-import {
-  isSessionShareAction,
-  type SessionShareAction,
-} from "@/lib/sessionPost";
+import type { SessionShareAction } from "@/lib/sessionPost";
+import type { LiftCompletionReceipt } from "@/lib/liftCompletion";
 // Form guide is heavy (react-body-highlighter) — lazy-load so it only hydrates
 // when the user opens the "How to" sheet mid-workout (D-LIFT-14).
 const ExerciseFormContent = lazyRetry(
@@ -207,10 +206,11 @@ interface Props {
   deloadWeek?: boolean;
   progressionBaseline?: ProgramExercise[];
   programmeContext?: ProgrammeCompletionContext;
+  /** Saves the session (`completeLift`) and hands back its receipt. */
   onCompleteDay: (
     dayIndex: number,
     sessionData: CompletedSessionData
-  ) => Promise<unknown>;
+  ) => Promise<LiftCompletionReceipt>;
   onClose: () => void;
 }
 
@@ -406,7 +406,8 @@ export default function WorkoutSession({
   // Multi-rep-range PR tracking
   const [prMap, setPrMap] = useState<PRMap>({});
   const recordBaseline = useRef<PRMap>({});
-  const recordsRevisionRef = useRef(0);
+  /** The map as loaded: what this session's records are committed over. */
+  const loadedRecordsRef = useRef<LiftRecords | null>(null);
   const volumeBaseline = useRef<VolumeBestMap>({});
   const [editingSet, setEditingSet] = useState<{
     exIdx: number;
@@ -434,37 +435,27 @@ export default function WorkoutSession({
     if (!user?.uid || !day.exercises.length) return;
 
     const fetchPreviousWeights = async () => {
-      const workoutsRef = collection(db, "users", user.uid, "workouts");
-      const snap = await getDocs(
-        query(workoutsRef, orderBy("date", "desc"), limit(50))
-      );
+      // The 50 newest workouts, including one finished on this phone that
+      // has not synced yet: it is the last session even offline.
+      const recent = await fetchSavedWorkouts(user.uid, { latest: 50 });
 
       const prevWeights: Record<string, { weight: number; reps: number }[]> =
         {};
       const notes: Record<number, { text: string; date: string }> = {};
 
-      snap.docs.forEach((d) => {
-        const data = d.data();
+      recent.forEach((data) => {
         if (data.completionId === completionIdRef.current) return;
         day.exercises.forEach((exercise, index) => {
           if (notes[index]) return;
-          const previous = (data.exercises ?? []).find(
-            (entry: {
-              exerciseId?: string;
-              exerciseName?: string;
-              notes?: string;
-            }) =>
-              (entry.exerciseId && exercise.exerciseId
-                ? entry.exerciseId === exercise.exerciseId
-                : entry.exerciseName === exercise.name) && entry.notes?.trim()
-          );
-          if (
-            previous &&
-            typeof data.date === "string" &&
-            /^\d{4}-\d{2}-\d{2}$/.test(data.date)
-          ) {
-            notes[index] = { text: previous.notes.trim(), date: data.date };
-          }
+          const text = data.exercises
+            .find(
+              (entry) =>
+                (entry.exerciseId && exercise.exerciseId
+                  ? entry.exerciseId === exercise.exerciseId
+                  : entry.exerciseName === exercise.name) && entry.notes?.trim()
+            )
+            ?.notes?.trim();
+          if (text) notes[index] = { text, date: data.date };
         });
         (data.exercises || []).forEach(
           (ex: {
@@ -517,132 +508,19 @@ export default function WorkoutSession({
         return updated;
       });
 
-      // Load persisted PR map, or build from history if not available.
-      // `map` and `sessionCounts` are tracked SEPARATELY: a legacy doc that
-      // carries a map but predates sessionCounts used to fall into the
-      // rebuild branch below, which REPLACED the persisted map with a
-      // 50-workout-window rebuild — and a window that misses the user's
-      // real best fires a false "PR!" for a lift WORSE than one they've
-      // already logged (probe-measured 2026-08-05: 90×1 celebrated against
-      // a window best of 85 while the persisted map held 100). The
-      // persisted map only ever ratchets, so when it exists it wins;
-      // the rebuild then fills in only what's missing.
-      let mapLoaded = false;
-      let countsLoaded = false;
-      let volumeBestLoaded = false;
-      let recordsInvalidated = false;
+      // The best-lift map, as stored or rebuilt from history
+      // (liftRecordsStore.ts). If it cannot be read, this session celebrates
+      // no bests and leaves the stored map alone.
       try {
-        const { doc: fbDoc, getDoc: fbGetDoc } =
-          await import("firebase/firestore");
-        const prMapDoc = await fbGetDoc(
-          fbDoc(db, "users", user.uid, "stats", "prMap")
-        );
-        if (prMapDoc.exists()) {
-          const data = prMapDoc.data();
-          recordsRevisionRef.current = data.revision ?? 0;
-          recordsInvalidated = data.invalidated === true;
-          if (data.map && !recordsInvalidated) {
-            recordBaseline.current = data.map as PRMap;
-            setPrMap(recordBaseline.current);
-            mapLoaded = true;
-          }
-          if (data.sessionCounts && !recordsInvalidated) {
-            setSessionCounts(data.sessionCounts as Record<string, number>);
-            countsLoaded = true;
-          }
-          if (data.volumeBest && !recordsInvalidated) {
-            volumeBaseline.current = data.volumeBest as VolumeBestMap;
-            setVolumeBest(volumeBaseline.current);
-            volumeBestLoaded = true;
-          }
-        }
-      } catch {
-        // Fall through to rebuild from history
-      }
-
-      const recordHistory = recordsInvalidated
-        ? await getDocs(query(workoutsRef, orderBy("date", "desc")))
-        : snap;
-      if (!mapLoaded || !countsLoaded) {
-        // Fall back to building from last 50 workouts — only the pieces
-        // that are actually missing.
-        const history = recordHistory.docs.map((d) => {
-          const data = d.data();
-          return {
-            date: data.date as string,
-            exercises: (data.exercises || []).map(
-              (ex: {
-                exerciseName: string;
-                repUnit?: "reps" | "seconds";
-                sets: { weightKg: number; reps: number; type?: string }[];
-              }) => ({
-                exerciseName: ex.exerciseName,
-                /* Carried for the same reason the volumeBest projection
-                   carries it: buildPRMap now applies the live PR gate (no
-                   warm-ups, no holds), and a projection that strips the
-                   fields makes that gate unreachable on exactly the path
-                   that REPLACES the live-built map. */
-                repUnit: ex.repUnit,
-                sets: (ex.sets || []).map((s) => ({
-                  weightKg: s.weightKg || 0,
-                  reps: s.reps || 0,
-                  type: s.type,
-                })),
-              })
-            ),
-          };
-        });
-        if (!mapLoaded) {
-          recordBaseline.current = buildPRMap(history);
-          setPrMap(recordBaseline.current);
-        }
-
-        if (!countsLoaded) {
-          // Count sessions per exercise for 3-session minimum filter
-          const counts: Record<string, number> = {};
-          for (const w of history) {
-            const seen = new Set<string>();
-            for (const ex of w.exercises) {
-              if (!seen.has(ex.exerciseName)) {
-                counts[ex.exerciseName] = (counts[ex.exerciseName] || 0) + 1;
-                seen.add(ex.exerciseName);
-              }
-            }
-          }
-          setSessionCounts(counts);
-        }
-      }
-
-      if (!volumeBestLoaded) {
-        // Legacy stats/prMap docs predate volumeBest — rebuild from the
-        // same 50-workout window so the first post-upgrade session doesn't
-        // spray false volume PRs.
-        const historyForVolume = recordHistory.docs.map((d) => {
-          const data = d.data();
-          return {
-            date: (data.date as string) ?? "",
-            exercises: (data.exercises || []).map(
-              (ex: {
-                exerciseName: string;
-                repUnit?: "reps" | "seconds";
-                sets: { weightKg: number; reps: number }[];
-              }) => ({
-                exerciseName: ex.exerciseName,
-                /* Carried, because this projection is all buildVolumeBest
-                   sees. Stripping it made the timed-exercise exclusion
-                   unreachable regardless of what the helper did — the
-                   saved workout knows its unit; this copy of it did not. */
-                repUnit: ex.repUnit,
-                sets: (ex.sets || []).map((s) => ({
-                  weightKg: s.weightKg || 0,
-                  reps: s.reps || 0,
-                })),
-              })
-            ),
-          };
-        });
-        volumeBaseline.current = buildVolumeBest(historyForVolume);
-        setVolumeBest(volumeBaseline.current);
+        const records = await loadLiftRecords(user.uid, recent);
+        loadedRecordsRef.current = records;
+        recordBaseline.current = records.map;
+        setPrMap(records.map);
+        setSessionCounts(records.sessionCounts);
+        volumeBaseline.current = records.volumeBest;
+        setVolumeBest(records.volumeBest);
+      } catch (error) {
+        logger.warn("[WorkoutSession] best-lift map unavailable", error);
       }
     };
 
@@ -1321,14 +1199,7 @@ export default function WorkoutSession({
       // after sign-out, mark the next user's session saved, or award a badge.
       if (completionUid && auth.currentUser?.uid !== completionUid) return;
       const queuedReceipt =
-        receipt &&
-        typeof receipt === "object" &&
-        "syncStatus" in receipt &&
-        receipt.syncStatus === "queued" &&
-        "sync" in receipt &&
-        receipt.sync instanceof Promise
-          ? (receipt.sync as Promise<"synced" | "failed">)
-          : null;
+        receipt.syncStatus === "queued" ? receipt.sync : null;
       const acknowledge = () => {
         clearDraft(completionIdRef.current);
         setSaved(true);
@@ -1359,76 +1230,27 @@ export default function WorkoutSession({
         });
       } else acknowledge();
 
-      // Persist PR map to Firestore for history beyond 50-session window.
+      // Persist the best-lift map for history beyond the recent window.
       // Best-effort — the workout already committed above.
-      if (user?.uid && Object.keys(prMap).length > 0) {
+      const loadedRecords = loadedRecordsRef.current;
+      if (user?.uid && loadedRecords && Object.keys(prMap).length > 0) {
         void (async () => {
           try {
             if (queuedReceipt && (await queuedReceipt) !== "synced") return;
             if (auth.currentUser?.uid !== user.uid) return;
-            // Backlog #2: persist volume bests derived from the FINAL set
-            // logs — undo-safe (an undone set never inflates the record).
-            const volDate = localDateString();
-            /* The rule (a hold has no volume) and the carry-forward live in
-             `nextVolumeBest`, where a test can reach them — this block had
-             none, in a file that has none. */
-            const finalVolumeBest: VolumeBestMap = nextVolumeBest(
-              volumeBest,
-              setLogs.map((exSets, exIdx) => ({
+            // From the FINAL set logs, so an undone set never inflates a
+            // record. Warm-ups are not volume, and an exercise with none
+            // of its working sets done was not trained.
+            await commitLiftRecords(user.uid, loadedRecords, {
+              map: prMap,
+              lifts: setLogs.map((exSets, exIdx) => ({
                 name: day.exercises[exIdx]?.name ?? "",
                 repUnit: day.exercises[exIdx]?.repUnit,
                 sets: exSets
                   .filter((s2) => s2.completed && s2.type !== "warmup")
                   .map((s2) => ({ weightKg: s2.weight, reps: s2.reps })),
               })),
-              volDate
-            );
-            // THIS session counts toward the 3-session minimum. The counts
-            // were loaded, never incremented, and persisted back verbatim —
-            // so they froze at their first-persist values and the PR gate
-            // never opened for anyone whose doc predated their third session
-            // (see bumpSessionCounts). Only exercises with a completed
-            // working set count: an all-skipped exercise wasn't trained.
-            const finalSessionCounts = bumpSessionCounts(
-              sessionCounts,
-              setLogs.flatMap((exSets, exIdx) => {
-                const name = day.exercises[exIdx]?.name;
-                if (!name) return [];
-                return exSets.some((s2) => s2.completed && s2.type !== "warmup")
-                  ? [name]
-                  : [];
-              })
-            );
-            const { doc: fbDoc } = await import("firebase/firestore");
-            const { Timestamp } = await import("firebase/firestore");
-            if (auth.currentUser?.uid !== user.uid) return;
-            const { runTransaction } = await import("firebase/firestore");
-            const ref = fbDoc(db, "users", user.uid, "stats", "prMap");
-            await runTransaction(db, async (transaction) => {
-              const current = await transaction.get(ref);
-              if (auth.currentUser?.uid !== user.uid) return;
-              const revision = current.data()?.revision ?? 0;
-              if (revision !== recordsRevisionRef.current) {
-                // Another save/correction invalidated this session's baseline.
-                transaction.set(
-                  ref,
-                  { invalidated: true, revision: revision + 1 },
-                  { merge: true }
-                );
-                return;
-              }
-              transaction.set(
-                ref,
-                {
-                  map: prMap,
-                  sessionCounts: finalSessionCounts,
-                  volumeBest: finalVolumeBest,
-                  updatedAt: Timestamp.now(),
-                  invalidated: false,
-                  revision: revision + 1,
-                },
-                { merge: true }
-              );
+              date: localDateString(),
             });
           } catch {
             // Non-critical — map can be rebuilt from history
@@ -1436,14 +1258,7 @@ export default function WorkoutSession({
         })();
       }
 
-      if (
-        receipt &&
-        typeof receipt === "object" &&
-        "share" in receipt &&
-        isSessionShareAction(receipt.share)
-      ) {
-        setShareAction(receipt.share);
-      }
+      setShareAction(receipt.share);
     } catch (error) {
       // The core save failed. Do NOT clear the draft, reset set logs, close
       // the session, or mint a new completion id — the user taps the (now

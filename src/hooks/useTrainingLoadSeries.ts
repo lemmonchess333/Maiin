@@ -1,13 +1,6 @@
 import { useEffect, useState } from "react";
-import {
-  collection,
-  getDocs,
-  orderBy,
-  query,
-  where,
-  Timestamp,
-} from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { fetchSavedRuns } from "@/lib/savedRuns";
+import { fetchSavedWorkouts } from "@/lib/savedWorkouts";
 import { useUid } from "@/lib/auth";
 import { logger } from "@/lib/logger";
 import { isVolumeEligible } from "@/lib/runStatsEligibility";
@@ -26,7 +19,9 @@ import {
  * or the curve fake-ramps from zero (loadCurve's warmup contract).
  *
  * Session → load mapping (the trainingLoad model):
- *  - runs: volume-eligible only (isVolumeEligible — invalid / saved-anyway /
+ *  - runs: through the saved-run reader, on their Lift3 day (the day they
+ *    started, as History's weekly bins and the streak count them);
+ *    volume-eligible only (isVolumeEligible — invalid / saved-anyway /
  *    sub-threshold runs never train you); moving minutes; tempo/intervals/
  *    race flagged as quality
  *  - workouts: durationMinutes, falling back to 3 min per logged set for
@@ -75,59 +70,34 @@ export function useTrainingLoadSeries(displayDays: number): {
         since.setDate(since.getDate() - fetchDays);
         const sinceKey = localDateString(since);
 
-        const runsQ = query(
-          collection(db, "users", uid, "runs"),
-          where("completedAt", ">=", Timestamp.fromDate(since)),
-          orderBy("completedAt", "desc")
-        );
-        // Workout docs key their local day in a `date` string (YYYY-MM-DD),
-        // which orders lexicographically.
-        const workoutsQ = query(
-          collection(db, "users", uid, "workouts"),
-          where("date", ">=", sinceKey),
-          orderBy("date", "desc")
-        );
-        const [runsSnap, workoutsSnap] = await Promise.all([
-          getDocs(runsQ),
-          getDocs(workoutsQ),
+        const [runs, workouts] = await Promise.all([
+          fetchSavedRuns(uid, { since: sinceKey }),
+          fetchSavedWorkouts(uid, { since: sinceKey }),
         ]);
 
         const sessions: TrainingSession[] = [];
-        runsSnap.docs.forEach((d) => {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const data = d.data() as Record<string, any>;
-          if (!isVolumeEligible(data)) return;
-          const completed =
-            data.completedAt instanceof Timestamp
-              ? data.completedAt.toDate()
-              : data.completedAt?.toDate?.();
-          if (!completed) return;
+        for (const run of runs) {
+          if (!isVolumeEligible(run)) continue;
           sessions.push({
-            dateKey: localDateString(completed),
+            dateKey: run.day,
             discipline: "run",
-            minutes: (data.duration ?? 0) / 60,
-            quality: QUALITY_TYPES.has(data.activityType),
+            minutes: run.duration / 60,
+            quality: QUALITY_TYPES.has(run.activityType),
           });
-        });
-        workoutsSnap.docs.forEach((d) => {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const data = d.data() as Record<string, any>;
-          if (typeof data.date !== "string") return;
-          const setCount = Array.isArray(data.exercises)
-            ? data.exercises.reduce(
-                (c: number, ex: { sets?: unknown[] }) =>
-                  c + (ex.sets?.length ?? 0),
-                0
-              )
-            : 0;
-          const minutes = data.durationMinutes || setCount * MINUTES_PER_SET;
-          if (minutes <= 0) return;
+        }
+        for (const workout of workouts) {
+          const setCount = workout.exercises.reduce(
+            (c, ex) => c + (ex.sets?.length ?? 0),
+            0
+          );
+          const minutes = workout.durationMinutes || setCount * MINUTES_PER_SET;
+          if (minutes <= 0) continue;
           sessions.push({
-            dateKey: data.date,
+            dateKey: workout.date,
             discipline: "lift",
             minutes,
           });
-        });
+        }
 
         if (cancelled) return;
         setLoaded({

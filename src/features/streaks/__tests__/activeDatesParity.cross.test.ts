@@ -24,6 +24,7 @@ import { describe, it, expect } from "vitest";
 import { createRequire } from "node:module";
 import { computeActiveDateSet } from "../useStreaks";
 import { isVolumeEligible } from "@/lib/runStatsEligibility";
+import { parseSavedRun } from "@/lib/savedRuns";
 
 const require_ = createRequire(import.meta.url);
 const { activeDateKeysFromLogs } = require_(
@@ -33,6 +34,7 @@ const { activeDateKeysFromLogs } = require_(
     logs: {
       workouts?: { date?: string }[];
       runs?: {
+        date?: string;
         completedAtMs?: number;
         isInvalid?: boolean;
         savedAnyway?: boolean;
@@ -47,8 +49,11 @@ const { activeDateKeysFromLogs } = require_(
 
 const deviceTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-/** Raw run docs as Firestore holds them (epoch ms + eligibility fields). */
+/** Raw run docs as Firestore holds them (start day, completion instant as
+ *  epoch ms, eligibility fields). */
 interface RawRun {
+  /** The day the run started (Lift3). Absent on runs saved before it. */
+  date?: string;
   ms: number;
   isInvalid?: boolean;
   savedAnyway?: boolean;
@@ -56,24 +61,28 @@ interface RawRun {
   duration?: number;
 }
 
-/** The client's snapshot boundary: eligibility filter, Timestamp-like rows. */
+/** The client's path: the saved-run reader parses the raw doc (and gives
+ *  it its Lift3 day), then the streak's eligibility filter and row. */
 function clientSet(
   workouts: { date: string }[],
   rawRuns: RawRun[],
   meals: { date: string; items: unknown[] }[]
 ): string[] {
   const rows = rawRuns
-    .filter((r) => isVolumeEligible(r))
-    .map((r) => ({
-      completedAt: { toDate: () => new Date(r.ms) },
-    }));
-  return Array.from(
-    computeActiveDateSet(
-      workouts,
-      rows as unknown as Parameters<typeof computeActiveDateSet>[1],
-      meals
+    .map((r, i) =>
+      parseSavedRun(`run-${i}`, {
+        ...(r.date ? { date: r.date } : {}),
+        completedAt: new Date(r.ms),
+        isInvalid: r.isInvalid,
+        savedAnyway: r.savedAnyway,
+        distance: r.distance,
+        duration: r.duration,
+      })
     )
-  ).sort();
+    .filter((run) => run !== null)
+    .filter((run) => isVolumeEligible(run))
+    .map((run) => ({ day: run.day, completedAt: run.completedAt }));
+  return Array.from(computeActiveDateSet(workouts, rows, meals)).sort();
 }
 
 /** The server's mapping, exactly as maybeSendStreakNudge builds it. */
@@ -86,6 +95,7 @@ function serverSet(
     {
       workouts,
       runs: rawRuns.map((r) => ({
+        date: r.date,
         completedAtMs: r.ms,
         isInvalid: r.isInvalid,
         savedAnyway: r.savedAnyway,
@@ -142,6 +152,21 @@ describe("client active-date set ≡ server streak-nudge derivation", () => {
     const runs: RawRun[] = [{ ms: NOON, ...GOOD, savedAnyway: true }];
     expect(clientSet([], runs, [])).toEqual([]);
     expect(serverSet([], runs, [])).toEqual([]);
+  });
+
+  it("a run begun before midnight and saved after it counts on the day it began, on both sides (Lift3)", () => {
+    // Started 23:40 on 1 June, saved 00:15 on the 2nd. The streak used to
+    // count the 2nd (the completion instant); the run belongs to the 1st.
+    const savedAt = new Date(2026, 5, 2, 0, 15, 0).getTime();
+    const runs: RawRun[] = [{ date: "2026-06-01", ms: savedAt, ...GOOD }];
+    expect(clientSet([], runs, [])).toEqual(["2026-06-01"]);
+    expect(serverSet([], runs, [])).toEqual(["2026-06-01"]);
+  });
+
+  it("a run saved before `date` existed falls back to its completion day, on both sides", () => {
+    const runs: RawRun[] = [{ ms: NOON, ...GOOD }];
+    expect(clientSet([], runs, [])).toEqual(["2026-06-01"]);
+    expect(serverSet([], runs, [])).toEqual(["2026-06-01"]);
   });
 
   it("agrees on empty input", () => {

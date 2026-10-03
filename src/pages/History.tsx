@@ -11,20 +11,15 @@ import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { useStallWatch } from "@/hooks/useStallWatch";
 import { useRunningStats } from "@/hooks/useRunningStats";
 import { useWorkouts, workoutTonnageKg } from "@/hooks/useWorkouts";
-import { bestSetPerExercise } from "@/lib/liftRecords";
-import { liftProgress, NEW_BEST_DAYS } from "@/lib/liftProgress";
-import { performedWeeklyVolume, volumeWeekKeys } from "@/lib/performedVolume";
 import { runningPageInsight } from "@/lib/runInsights";
 import { focusLabel } from "@/features/program/trainingBlock";
 import type { PrimaryGoal } from "@/features/program/programTypes";
 import { useLifetimeRunStats } from "@/hooks/useLifetimeRunStats";
 import { useAuth, useUid } from "@/lib/auth";
-import { daysSinceStart, startDayKey } from "@/lib/startDay";
 import { useEffectiveTargets } from "@/hooks/useEffectiveTargets";
 import { THEME } from "@/lib/theme";
 import { adherenceTone } from "@/lib/adherenceTone";
 import { buildDelta } from "@/lib/deltaFormat";
-import { EXERCISES } from "@/lib/exercises";
 import TimeRangePills from "@/components/analytics/TimeRangePills";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import SectionHeading from "@/components/ui/SectionHeading";
@@ -71,15 +66,10 @@ import {
   distanceChange,
   previousRangeLabel,
   rollingRangeLabel,
-  summaryBins,
-  summaryFirstDayKey,
-  summaryGranularity,
-  usualBinAmount,
   volumeChange,
 } from "@/lib/periodSummary";
 import { useBodyweightTrend } from "@/hooks/useBodyweightTrend";
 import { predictedRaceTimesFromFitness } from "@/lib/runPaces";
-import { runEvidenceDate } from "@/lib/runExecutionEvidence";
 import StatCard from "@/components/analytics/StatCard";
 import WorkoutHistoryList from "@/components/workout/WorkoutHistoryList";
 import SectionEmptyCTA from "@/components/analytics/SectionEmptyCTA";
@@ -90,15 +80,9 @@ import AnalyticsGoDeeper, {
 import RacePredictionsCard from "@/components/analytics/RacePredictionsCard";
 import TrainingLoadCard from "@/components/analytics/TrainingLoadCard";
 import { useTrainingLoadSeries } from "@/hooks/useTrainingLoadSeries";
-import { isPaceEligible, isVolumeEligible } from "@/lib/runStatsEligibility";
-import { paceMinSec, distanceLabel } from "@/lib/runLabels";
-import {
-  distanceIn,
-  distanceUnitLabel,
-  paceUnitLabel,
-} from "@/lib/distanceUnits";
+import { distanceLabel } from "@/lib/runLabels";
+import { distanceIn, distanceUnitLabel } from "@/lib/distanceUnits";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
-import { requiresManualDistance } from "@/lib/runGuards";
 import { Footprints, Trophy, UtensilsCrossed, LineChart } from "lucide-react";
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary";
 import { Skeleton, ChartSkeleton } from "@/components/LoadingSkeleton";
@@ -118,16 +102,14 @@ import HistoryOfflineBanner from "@/components/analytics/HistoryOfflineBanner";
    below where it would have rendered. */
 import { getWeeklyRunTarget } from "@/lib/scheduleUtils";
 import {
-  isAllTimeRecord,
-  selectRunRecords,
-  type RunRecords,
-} from "@/lib/runRecordSelection";
-import {
-  localDateString,
-  parseLocalDate,
-  rollingWindowStart,
-  addLocalDays,
-} from "@/lib/dateHelpers";
+  historyRange,
+  liftFigures,
+  liftingPageFigures,
+  nutritionFigures,
+  periodSummaryFigures,
+  runRecordRows,
+} from "@/lib/historyFigures";
+import { localDateString, parseLocalDate } from "@/lib/dateHelpers";
 import {
   computeMuscleRecovery,
   hitsFromWorkoutDocs,
@@ -578,19 +560,15 @@ export default function History() {
   const lifetimeRuns = useLifetimeRunStats();
   const lifetimeMeals = useLifetimeMealStats();
   const { profile } = useAuth();
-  /* An account younger than the range has nothing in the range before
-     it: no "↑5 sessions on the 30 days before", and food counted out of
-     the days it has existed, not out of 30 (startDay.ts). */
-  const { startKey, joinedInRange, foodRangeDays } = useMemo(() => {
-    const start = startDayKey(profile?.createdAt);
-    const days = daysSinceStart(start, localDateString());
-    const younger = days !== null && days < rangeDays;
-    return {
-      startKey: start,
-      joinedInRange: younger,
-      foodRangeDays: younger && days ? days : rangeDays,
-    };
-  }, [profile?.createdAt, rangeDays]);
+  /* The range the pill names, read once for every figure below: its
+     window, the range before it, and the days an account younger than
+     the range has had (`historyFigures`). Such an account has nothing in
+     the range before it to compare with. */
+  const range = useMemo(
+    () => historyRange(rangeDays, { createdAt: profile?.createdAt }),
+    [rangeDays, profile?.createdAt]
+  );
+  const { startKey, joinedInRange } = range;
   const unit = useDistanceUnit();
   /**
    * The cross-cutting gate. Only the surfaces that genuinely SPAN all
@@ -731,168 +709,13 @@ export default function History() {
     return { runCount, runDistance };
   }, [weeklyData]);
 
-  const runningPRs = useMemo(() => {
-    const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-
-    /* Hist5b pin 4 / PR 7b — rolling 30-day window for the
-       "Recent bests" PRs subsection (sublabeled inside the PRs
-       tab). Distinct from the lifetime PRs computed below. */
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-
-    /* Pace and outdoor-distance PRs require pace eligibility:
-       outdoor GPS source (treadmill / manual record their distance
-       from user input, so a 2km / 5:17 treadmill entry shouldn't
-       claim a 2:38/km best pace), valid + saved-properly + above
-       the volume floor + finite positive avgPace. Longest Run
-       reads outdoor only too — treadmill distance isn't
-       GPS-verified, so it can't set a distance PR.
-
-       ALL-TIME means every run, so the pool is the lifetime read, not the
-       page's range. It was `runs` — `useRunningStats(rangeDays)` — which
-       made "All-time" the last 30 days at the default range and left a
-       runner whose best runs predated the range looking at "--". */
-    const allRuns = lifetimeRuns.runs;
-    const paceEligible = allRuns.filter((r) => isPaceEligible(r));
-
-    /* Hist5 grill Q3 Stress 3 round 1 + Hist5b pin 5 — Indoor PRs
-       tracked separately for users who run primarily on a
-       treadmill or who enter manual distances. Same fastest-pace
-       logic, different eligibility filter: must be treadmill/
-       manual + valid + finite-positive avgPace + above volume
-       floor. Sublabeled distinctly so the user doesn't conflate
-       indoor pace (user-entered distance) with outdoor pace
-       (GPS-verified). */
-    const indoorEligible = allRuns.filter(
-      (r) =>
-        requiresManualDistance(
-          r.activityType as Parameters<typeof requiresManualDistance>[0]
-        ) &&
-        Number.isFinite(r.avgPace) &&
-        r.avgPace > 0 &&
-        r.distance >= 500
-    );
-
-    const fmtDate = formatDayMonth;
-
-    /* Compute best 1K / 5K / Longest from a run pool. Shared shape
-       between Lifetime / Recent / Indoor buckets — only the input
-       filter changes. Returns the same UI-ready array shape as
-       before. */
-    type RecordRun = (typeof paceEligible)[number];
-    const buildPRBucket = (
-      pool: typeof paceEligible,
-      includeLongest: boolean,
-      /* The records over every run, for a narrower pool: its rows say New
-         only where the same run holds the record here too, since New is
-         gold and gold means a personal best. */
-      allTime?: RunRecords<RecordRun>
-    ) => {
-      /* Selection lives in `selectRunRecords` so it can be tested. The
-         rule that matters is not the two floors but what they imply:
-         the 5 km pool is a SUBSET of the 1 km one, so the helper returns
-         the sustained record only when a different run holds it. */
-      const {
-        bestPace: best1k,
-        bestSustainedPace: best5k,
-        longest,
-      } = selectRunRecords(pool, { includeLongest });
-      const isNew = (run: RecordRun, kind: keyof RunRecords<RecordRun>) =>
-        run.completedAt >= sevenDaysAgo &&
-        (!allTime || isAllTimeRecord(allTime, kind, run));
-
-      const cards: Array<{
-        label: string;
-        value: string;
-        date: string;
-        isNew: boolean;
-        /* Which run holds the record, so the row can open it. Every one
-           of these records IS a saved run; the rows were the only inert
-           ones on the tab while every lift row opened its history. */
-        runId?: string;
-      }> = [
-        /* Neither of these is a race result, and the labels no longer say
-           one. Both read `avgPace` — the average over a WHOLE run — from
-           a pool filtered by a distance floor. So "Fastest 1K" was the
-           average pace of a run of at least a kilometre, which for a
-           20 km steady run is not a kilometre time and for a user who
-           has only ever run 10 km is a distance they have never covered
-           on its own. `runs5k` is a subset of `runs1k`, so the two also
-           carry the SAME number and date whenever the best-paced run was
-           5 km or longer — two rows, one fact, which is what the filmed
-           rich-history capture shows.
-
-           The value still carries its unit: a bare "5:32" is ambiguous
-           between per-kilometre and per-mile wherever it sits.
-
-           A true fastest kilometre IS reachable — `RunSummary` persists
-           `splits` with `paceSeconds` per km. It is not a relabel away,
-           though: `parseRunSummary` does not read the field, and taking
-           a MIN across runs where only SOME carry splits mixes a
-           best-kilometre with a whole-run average and biases the record
-           toward runs that happen to have them. Doing it properly means
-           qualifying only splits-carrying runs, which silently drops
-           every legacy and treadmill entry from the record. */
-        {
-          label: "Best pace",
-          value: best1k
-            ? `${paceMinSec(best1k.avgPace, unit)} ${paceUnitLabel(unit)}`
-            : "--",
-          date: best1k ? fmtDate(best1k.completedAt) : "",
-          isNew: best1k ? isNew(best1k, "bestPace") : false,
-          ...(best1k ? { runId: best1k.id } : {}),
-        },
-      ];
-      /* The sustained-distance row, and ONLY when it is a different run.
-         `runs5k` is a subset of `runs1k`, so the two rows carry the same
-         figure and the same date whenever the best-paced run was already
-         5 km or longer — which for most runners is most of the time. Two
-         rows saying one thing under two headings reads as a bug, and it
-         is what the filmed rich-history capture showed.
-
-         It still earns its place when a short blast holds the overall
-         record: then "5:32" over 1.2 km and "5:58" over 10 km are two
-         genuinely different facts about the same runner. */
-      if (best5k && best5k !== best1k) {
-        cards.push({
-          label: "Best pace · 5K+",
-          value: `${paceMinSec(best5k.avgPace, unit)} ${paceUnitLabel(unit)}`,
-          date: fmtDate(best5k.completedAt),
-          isNew: isNew(best5k, "bestSustainedPace"),
-          runId: best5k.id,
-        });
-      }
-      if (includeLongest) {
-        cards.push({
-          /* Sentence case, like the two rows above it. The pace labels
-             were rewritten when they stopped claiming to be kilometre
-             times; this one kept the Title Case it was written with and
-             sat as the odd row in a three-row list. */
-          label: "Longest run",
-          value: longest ? distanceLabel(longest.distance, unit) : "--",
-          date: longest ? fmtDate(longest.completedAt) : "",
-          isNew: longest ? isNew(longest, "longest") : false,
-          ...(longest ? { runId: longest.id } : {}),
-        });
-      }
-      return cards;
-    };
-
-    return {
-      lifetime: buildPRBucket(paceEligible, /* includeLongest */ true),
-      recent30d: buildPRBucket(
-        paceEligible.filter((r) => r.completedAt >= thirtyDaysAgo),
-        /* includeLongest */ true,
-        selectRunRecords(paceEligible, { includeLongest: true })
-      ),
-      indoor: buildPRBucket(indoorEligible, /* includeLongest */ false),
-      hasAnyIndoor: indoorEligible.length > 0,
-      hasAnyRecent: paceEligible.some((r) => r.completedAt >= thirtyDaysAgo),
-    };
-    // `unit` too: the values are written in it, and a unit switch left
-    // them in the old one until the runs changed.
-  }, [lifetimeRuns.runs, unit]);
+  /* The PRs tab's running records, from every run rather than the
+     range's: all-time and last-30-days outdoor records, and indoor ones
+     apart. `unit` too: the values are written in it. */
+  const runningPRs = useMemo(
+    () => runRecordRows(lifetimeRuns.runs, range, unit),
+    [lifetimeRuns.runs, range, unit]
+  );
 
   // Per-group recovery chips for the muscle heat map (Tier-2 #6 second
   // half). NOW-state — always computed over the last RECOVERY_LOOKBACK_DAYS
@@ -908,324 +731,72 @@ export default function History() {
     );
   }, [workouts]);
 
-  const liftingData = useMemo(() => {
-    /* `rollingWindowStart`, not a hand-rolled `today - rangeDays`. The
-       hand-rolled form opens a window of rangeDays + 1 DATES, because the
-       comparison below is inclusive — one date wider than the nutrition
-       block and than the span adherence divides by. */
-    const since = rollingWindowStart(rangeDays);
-    // Previous comparable period: the same span of days immediately before
-    // `since`, for the overview's changes on the range before.
-    const prevSince = rollingWindowStart(rangeDays, addLocalDays(since, -1));
+  /* The range's sessions, kilograms and sets per muscle, the range
+     before for the changes, and the PRs tab's lift records. */
+  const liftingData = useMemo(
+    () => liftFigures(workouts, range),
+    [workouts, range]
+  );
 
-    // w.date is a LOCAL "YYYY-MM-DD" string; `new Date("YYYY-MM-DD")`
-    // parses as UTC midnight and shifts the boundary day in negative-
-    // offset timezones. String comparison against a local key is the
-    // in-file convention.
-    const sinceKey = localDateString(since);
-    const prevSinceKey = localDateString(prevSince);
+  /* Daily food across the range, out of the days this account has had
+     in it. */
+  const nutrition = useMemo(
+    () => nutritionFigures(rangeMeals, range),
+    [rangeMeals, range]
+  );
 
-    const filtered = workouts.filter((w) => w.date >= sinceKey);
-    const liftCount = filtered.length;
-    let liftVolume = 0;
-    const muscleData: Record<string, number> = {};
-
-    filtered.forEach((w) => {
-      // Guarded tonnage via the canonical helper — the previous inline
-      // `set.weightKg * set.reps` turned one legacy set with a missing
-      // field into NaN, rendering a literal "NaN kg" stat card while the
-      // guarded Lifetime card showed a real number for the same data.
-      liftVolume += workoutTonnageKg(w);
-      w.exercises?.forEach((ex) => {
-        // Look up category from the static EXERCISES list as the
-        // primary source. The saved `ex.category` field is unreliable
-        // — seed/test data has shipped with every exercise tagged
-        // "Chest" regardless of actual movement, which collapsed the
-        // muscle heatmap to chest-only. EXERCISES is the authoritative
-        // taxonomy; fall back to the saved field only if the exercise
-        // isn't in the static list (e.g. a custom exercise).
-        const exDef = EXERCISES.find((e) => e.name === ex.exerciseName);
-        const group = exDef?.category || ex.category || "Other";
-        muscleData[group] = (muscleData[group] || 0) + (ex.sets?.length || 0);
-      });
-    });
-
-    // Previous-period totals for delta comparison.
-    const prevFiltered = workouts.filter(
-      (w) => w.date >= prevSinceKey && w.date < sinceKey
-    );
-    const prevLiftVolume = prevFiltered.reduce(
-      (s, w) => s + workoutTonnageKg(w),
-      0
-    );
-    const prevLiftCount = prevFiltered.length;
-
-    /* Hist5b pin 4 / PR 7a — lifetime PRs for the dedicated PRs tab:
-       each exercise's best set across every logged workout
-       (`liftRecords.ts`). A rolling 7-day "prTimeline" was computed
-       beside it, a full e1RM pass over every set, for a card deleted
-       long ago; nothing read it, and it is gone. */
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    // w.date is a LOCAL "YYYY-MM-DD" string, so the cutoffs are LOCAL
-    // dates too. The Lifting page's "New best" reads the same window.
-    const newSinceKey = localDateString(
-      addLocalDays(new Date(), -NEW_BEST_DAYS)
-    );
-    const lifetimePRs = bestSetPerExercise(workouts, { newSinceKey });
-
-    /* Hist5b pin 4 / PR 7b — Recent bests subsection (rolling 30
-       days). Same per-exercise top-set logic as lifetimePRs but
-       constrained to the last 30 days, so the user reads "All-time"
-       and "Last 30 days" as two different scopes. */
-    const recentLiftPRs = bestSetPerExercise(workouts, {
-      sinceKey: localDateString(thirtyDaysAgo),
-      newSinceKey,
-    });
-
-    return {
-      liftCount,
-      liftVolume,
-      muscleData,
-      lifetimePRs,
-      recentLiftPRs,
-      prevLiftCount,
-      prevLiftVolume,
-    };
-  }, [workouts, rangeDays]);
-
-  const nutrition = useMemo(() => {
-    /* Local midnight, so the boundary DATE is inside the window. A
-       boundary carrying `new Date()`'s clock, compared against each
-       meal's local midnight, pushes that date out instead — the opposite
-       off-by-one to the lifting block above, on the same page. */
-    const since = rollingWindowStart(rangeDays);
-    const prevSince = rollingWindowStart(rangeDays, addLocalDays(since, -1));
-
-    type DayTotals = { cal: number; prot: number; carbs: number; fat: number };
-    const bucketByDate = (ms: typeof meals) => {
-      const byDate: Record<string, DayTotals> = {};
-      for (const m of ms) {
-        if (!byDate[m.date])
-          byDate[m.date] = { cal: 0, prot: 0, carbs: 0, fat: 0 };
-        byDate[m.date].cal += m.totalCalories || 0;
-        byDate[m.date].prot += m.totalProtein || 0;
-        byDate[m.date].carbs += m.totalCarbs || 0;
-        byDate[m.date].fat += m.totalFat || 0;
-      }
-      return byDate;
-    };
-    const avg = (days: DayTotals[], key: keyof DayTotals) =>
-      days.length
-        ? Math.round(days.reduce((s, d) => s + d[key], 0) / days.length)
-        : 0;
-
-    const filtered = rangeMeals.filter(
-      (m) => new Date(m.date + "T00:00:00") >= since
-    );
-    const prevFiltered = rangeMeals.filter((m) => {
-      const d = new Date(m.date + "T00:00:00");
-      return d >= prevSince && d < since;
-    });
-
-    const byDate = bucketByDate(filtered);
-    const prevByDate = bucketByDate(prevFiltered);
-    const days = Object.values(byDate);
-    const prevDays = Object.values(prevByDate);
-
-    const avgCalories = avg(days, "cal");
-    const avgProtein = avg(days, "prot");
-    const avgCarbs = avg(days, "carbs");
-    const avgFat = avg(days, "fat");
-    const prevAvgCalories = avg(prevDays, "cal");
-    const prevAvgProtein = avg(prevDays, "prot");
-    const prevAvgCarbs = avg(prevDays, "carbs");
-    const prevAvgFat = avg(prevDays, "fat");
-
-    const daysLogged = Object.keys(byDate).length;
-    const prevDaysLogged = Object.keys(prevByDate).length;
-    const adherence =
-      daysLogged > 0 ? Math.round((daysLogged / rangeDays) * 100) : 0;
-
-    // Sparkline series: daily values from logged days only, in
-    // chronological order. We deliberately do NOT zero-pad missing
-    // days because for an intake metric, a missing log day is "unknown
-    // intake," not "ate zero." Plotting zero would invent data.
-    //
-    // Instead, the sparkline is GATED on sufficient data density (see
-    // showSparklines below). Below the threshold the sparkline hides
-    // entirely rather than render a misleading shape from too few
-    // points anchored to logged days. ≥7 logged days AND ≥50%
-    // adherence is the floor at which the trend is robust enough to
-    // visualise.
-    const sortedDates = Object.keys(byDate).sort((a, b) => a.localeCompare(b));
-    const caloriesSparkline = sortedDates.map((d) => byDate[d].cal);
-    const proteinSparkline = sortedDates.map((d) => byDate[d].prot);
-    const carbsSparkline = sortedDates.map((d) => byDate[d].carbs);
-    const fatSparkline = sortedDates.map((d) => byDate[d].fat);
-
-    // ≥7 days = one weekly cycle, the minimum for any trend signal to
-    // average out. ≥50% = the point at which the unobserved days
-    // could no longer plausibly invert the visible trend.
-    const showSparklines = daysLogged >= 7 && adherence >= 50;
-
-    // Period-over-period delta requires comparable, well-sampled
-    // windows. The selection-bias risk on intake metrics is real:
-    // a user logging 17/30 days isn't logging a random sample —
-    // they're logging the days they cared about tracking, which
-    // tends to skew the mean. Below 60% adherence in either window
-    // the comparison can't be trusted, so suppress the chip rather
-    // than assert a number that's mostly artifact.
-    const showDelta =
-      daysLogged >= 7 &&
-      prevDaysLogged >= 7 &&
-      daysLogged / rangeDays >= 0.6 &&
-      prevDaysLogged / rangeDays >= 0.6;
-
-    return {
-      avgCalories,
-      avgProtein,
-      avgCarbs,
-      avgFat,
-      prevAvgCalories,
-      prevAvgProtein,
-      prevAvgCarbs,
-      prevAvgFat,
-      adherence,
-      daysLogged,
-      prevDaysLogged,
-      showSparklines,
-      showDelta,
-      caloriesSparkline,
-      proteinSparkline,
-      carbsSparkline,
-      fatSparkline,
-    };
-  }, [rangeMeals, rangeDays]);
+  /* The read of every run has settled: the best-ever claims and the
+     range before wait for it. */
+  const allRunsKnown = !lifetimeRuns.loading && !lifetimeRuns.failed;
 
   /* DS3 period summary — the overview's first card. Sessions, kilograms
-     and distance bar by bar across the range, and the range before it for
-     the changes. Lifts count by their local date and their guarded
-     tonnage, runs by the day they were recorded and their stored metres,
-     as the page's other totals count them; runs before the window come
-     from the lifetime read, which already holds every run, because
-     `useRunningStats` reads only the window. */
-  const periodSummary = useMemo(() => {
-    const now = new Date();
-    const since = rollingWindowStart(rangeDays);
-    const prevSince = rollingWindowStart(rangeDays, addLocalDays(since, -1));
-    const sinceKey = localDateString(since);
-    const granularity = summaryGranularity(rangeDays);
-    /* Each bar is the whole week or month it names, so the first one
-       takes its days from before the window too (`summaryFirstDayKey`).
-       `workouts` holds every session. Inside the window the bars count
-       the window's run read, as the figures above them do, and the first
-       bar's earlier days take theirs from the lifetime read. */
-    const firstDayKey = summaryFirstDayKey(since, granularity);
-    const binRuns = [
-      ...lifetimeRuns.runs.filter((r) => runEvidenceDate(r) < sinceKey),
-      ...runs.filter((r) => runEvidenceDate(r) >= sinceKey),
-    ];
-    const bins = summaryBins({
-      since,
-      today: now,
-      lifts: workouts
-        .filter((w) => w.date >= firstDayKey)
-        .map((w) => ({ date: w.date, volumeKg: workoutTonnageKg(w) })),
-      runs: binRuns
-        .filter((r) => isVolumeEligible(r))
-        .map((r) => ({ date: runEvidenceDate(r), distanceM: r.distance ?? 0 }))
-        .filter((r) => r.date >= firstDayKey),
-      granularity,
-    });
-    // A failed or pending read is an unknown, not a range with no runs.
-    const previousRuns =
-      lifetimeRuns.loading || lifetimeRuns.failed
-        ? null
-        : lifetimeRuns.dated.filter(
-            (r) =>
-              r.completedAtMs >= prevSince.getTime() &&
-              r.completedAtMs < since.getTime()
-          );
-    return {
-      granularity,
-      bins,
-      prevRunCount: previousRuns ? previousRuns.length : null,
-      prevRunM: previousRuns
-        ? previousRuns.reduce((sum, r) => sum + r.distanceM, 0)
-        : null,
-    };
-  }, [
-    rangeDays,
-    workouts,
-    runs,
-    lifetimeRuns.runs,
-    lifetimeRuns.dated,
-    lifetimeRuns.loading,
-    lifetimeRuns.failed,
-  ]);
+     and distance bar by bar across the range, and the range before it
+     for the changes. */
+  const periodSummary = useMemo(
+    () =>
+      periodSummaryFigures({
+        range,
+        workouts,
+        windowRuns: runs,
+        allRuns: lifetimeRuns.runs,
+        allRunsKnown,
+      }),
+    [range, workouts, runs, lifetimeRuns.runs, allRunsKnown]
+  );
 
   /* The Lifting page's reading of the range: each main lift's progress,
      the sets each muscle got a week against the range for the user's
      focus, the range's sets, and the weekly average the volume bars stand
-     against. `workouts` holds every session, so a lift's best and the
-     user's first session are both all-time. */
+     against. */
   const liftGoal = profile?.primaryGoal as PrimaryGoal | undefined;
-  const liftingInsight = useMemo(() => {
-    const today = new Date();
-    const since = rollingWindowStart(rangeDays);
-    const sinceKey = localDateString(since);
-    let firstSessionKey: string | null = null;
-    let sets = 0;
-    for (const w of workouts) {
-      if (!firstSessionKey || w.date < firstSessionKey) {
-        firstSessionKey = w.date;
-      }
-      if (w.date < sinceKey) continue;
-      for (const ex of w.exercises ?? []) {
-        for (const set of ex.sets ?? []) {
-          if (set.type !== "warmup" && set.reps > 0) sets += 1;
-        }
-      }
-    }
-    const weekKeys = volumeWeekKeys({ since, today, firstSessionKey });
-    return {
-      progress: liftProgress(workouts, { sinceKey, today }),
-      sets,
-      muscleWeeks: weekKeys.length,
-      muscles: performedWeeklyVolume(workouts, {
-        weekKeys,
+  const liftingInsight = useMemo(
+    () =>
+      liftingPageFigures(workouts, range, {
         primaryGoal: liftGoal,
+        bins: periodSummary.bins,
       }),
-      averageKg: usualBinAmount(periodSummary.bins, (b) => b.volumeKg, {
-        sinceKey,
-        firstSessionKey,
-      }),
-    };
-  }, [workouts, rangeDays, liftGoal, periodSummary.bins]);
+    [workouts, range, liftGoal, periodSummary.bins]
+  );
 
   /* The Running page's reading of the range (`runningPageInsight`): pace
      by kind of run, best efforts, the longest run, time on the move and
      the weekly average. The best-ever claims wait for the one-shot read
      of every run; the function's header says why. */
-  const allRunsKnown = !lifetimeRuns.loading && !lifetimeRuns.failed;
-  const runningInsight = useMemo(() => {
-    const since = rollingWindowStart(rangeDays);
-    return {
+  const runningInsight = useMemo(
+    () => ({
       ...runningPageInsight({
         windowRuns: runs,
         allRuns: lifetimeRuns.runs,
         allRunsKnown,
-        sinceKey: localDateString(since),
-        prevSinceKey: localDateString(
-          rollingWindowStart(rangeDays, addLocalDays(since, -1))
-        ),
-        todayKey: localDateString(),
+        sinceKey: range.sinceKey,
+        prevSinceKey: range.prevSinceKey,
+        todayKey: range.todayKey,
         bins: periodSummary.bins,
       }),
-      newSinceKey: localDateString(addLocalDays(new Date(), -NEW_BEST_DAYS)),
-    };
-  }, [runs, lifetimeRuns.runs, allRunsKnown, rangeDays, periodSummary.bins]);
+      newSinceKey: range.newSinceKey,
+    }),
+    [runs, lifetimeRuns.runs, allRunsKnown, range, periodSummary.bins]
+  );
 
   const summarySessions = liftingData.liftCount + runningTotals.runCount;
   const summaryFigures: SummaryFigure[] = [
@@ -1280,10 +851,10 @@ export default function History() {
       foodDaysReading({
         meals: rangeMeals,
         targets: dayTargets,
-        sinceKey: localDateString(rollingWindowStart(rangeDays)),
-        todayKey: localDateString(),
+        sinceKey: range.sinceKey,
+        todayKey: range.todayKey,
       }),
-    [rangeMeals, dayTargets, rangeDays]
+    [rangeMeals, dayTargets, range]
   );
   const latestTrendKg =
     bodyweight.points.length > 0
@@ -1322,19 +893,19 @@ export default function History() {
         }),
         food: foodLine({
           daysLogged: nutrition.daysLogged,
-          rangeDays: foodRangeDays,
+          rangeDays: nutrition.days,
         }),
       }),
     [
       liftingInsight.progress,
       runningInsight.pace.rows,
       runningInsight.longest,
-      foodRangeDays,
       unit,
       bodyweight.points,
       profile?.preferredWeightUnit,
       profile?.hideWeightNumber,
       nutrition.daysLogged,
+      nutrition.days,
     ]
   );
   const targetCalories = effectiveTargets.finalTarget ?? 0;
@@ -1343,7 +914,7 @@ export default function History() {
     const rows: TrendRow[] = [];
     const weight = weightRow({
       points: bodyweight.points,
-      sinceKey: localDateString(rollingWindowStart(rangeDays)),
+      sinceKey: range.sinceKey,
       unit: profile?.preferredWeightUnit === "lbs" ? "lbs" : "kg",
       hideNumber: !!profile?.hideWeightNumber,
     });
@@ -1370,7 +941,7 @@ export default function History() {
     return rows;
   }, [
     bodyweight.points,
-    rangeDays,
+    range,
     profile?.preferredWeightUnit,
     profile?.hideWeightNumber,
     profile?.runFitness,
@@ -2019,7 +1590,7 @@ export default function History() {
                             </span>{" "}
                             of{" "}
                             <span className="font-mono tabular-nums">
-                              {rangeDays}
+                              {nutrition.days}
                             </span>{" "}
                             days
                           </p>
@@ -2055,7 +1626,7 @@ export default function History() {
                     )}
                     {/* Top row: calories + protein. Sparkline + delta both
                   conditionally suppressed when sample is too thin (see
-                  showSparklines / showDelta in the nutrition memo). */}
+                  showSparklines / showDelta in `nutritionFigures`). */}
                     <div className="grid grid-cols-2 gap-2 mt-2">
                       <StatCard
                         label="Avg calories"

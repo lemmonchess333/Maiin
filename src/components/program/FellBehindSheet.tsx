@@ -31,6 +31,7 @@ import { Footprints } from "lucide-react";
 import SectionLabel from "@/components/ui/SectionLabel";
 import { ChoiceSheet, type Choice } from "@/components/ui/ChoiceSheet";
 import type { LayoffClass } from "@/features/program/layoffDetection";
+import type { ProgramOutcome } from "@/features/program/programOutcome";
 import {
   track as trackLifecycleEvent,
   type ReturnChoice,
@@ -50,7 +51,7 @@ interface FellBehindSheetProps {
     weeklyTarget: number;
   };
   /** Writers from useProgram. */
-  dismissFellBehindPrompt: () => Promise<void>;
+  dismissFellBehindPrompt: () => Promise<ProgramOutcome>;
   /** Re-anchor the plan to today (keep the race date). Already wrapped by the
    *  caller to clear the flag, persist, and toast the timing result. */
   realignRacePlan: () => Promise<void>;

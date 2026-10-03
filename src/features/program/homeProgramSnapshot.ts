@@ -1,16 +1,19 @@
 import type { UserProfile } from "@/lib/auth";
 import { localDateString, localWeekKey } from "@/lib/dateHelpers";
-import { getWeeklyRunTarget } from "@/lib/scheduleUtils";
-import { isInRecoveryOn } from "@/lib/runPlanResolver";
 import { normalizeProgramState, type ProgramState } from "./programTypes";
 import {
   backfillWeekScheduleIfMissing,
   migrateProgramState,
 } from "./migrations";
 import { sameStoredValue } from "./stateTransition";
-import { areRaceRunDaysStale, raceIsInFuture } from "./raceRunDaysReconcile";
+import {
+  raceWeekNeedsBuilding,
+  weekRolloverAnchor,
+} from "./programMaintenance";
 
-/** Read/shape repair only. Generation and editing stay in the deferred engine. */
+/** Read/shape repair only. Generation and editing stay in the deferred
+ *  engine; `needsMaintenance` asks the engine's own questions
+ *  (programMaintenance.ts) to say when Home has to load it. */
 export function homeProgramSnapshot(
   raw: ProgramState | null,
   profile: UserProfile,
@@ -22,24 +25,7 @@ export function homeProgramSnapshot(
     normalizeProgramState(raw, { primaryGoal: profile.primaryGoal }),
     week
   );
-  const runWeek = programState.runDays?.[0]?.weekKey;
-  const runOwnsRollover =
-    !!profile.runMode && profile.runMode !== "freeform" && !!runWeek;
-  const anchor = runOwnsRollover ? runWeek : programState.liftWeekKey;
-  const raceRepair =
-    profile.runMode === "race_prep" &&
-    !!profile.raceGoal &&
-    (!programState.runDays ||
-      (raceIsInFuture(profile.raceGoal, today) &&
-        !isInRecoveryOn(programState.runPlan, today) &&
-        runWeek === week &&
-        areRaceRunDaysStale({
-          runDays: programState.runDays,
-          raceGoal: profile.raceGoal,
-          weekSchedule: profile.weekSchedule ?? [],
-          weeklyRunDays: getWeeklyRunTarget(profile) || 3,
-          todayKey: today,
-        })));
+  const anchor = weekRolloverAnchor(programState, profile)?.weekKey;
   return {
     programState,
     needsMaintenance:
@@ -47,6 +33,6 @@ export function homeProgramSnapshot(
       profile.runMode === "structured" ||
       !sameStoredValue(raw, programState) ||
       !!(anchor && anchor < week) ||
-      raceRepair,
+      raceWeekNeedsBuilding(programState, profile, today),
   };
 }

@@ -620,41 +620,6 @@ export function finalisePlanMetadata(
   };
 }
 
-// ─── Completion gating rule ────────────────────────────────────────
-
-/**
- * Returns true iff RunSummary should call `completeRunDay` after a
- * successful save. Pulled out as a pure predicate so the rule is
- * unit-testable independent of the component flow.
- *
- * Six gates, ALL must hold:
- *   - plannedRunDayIndex !== null
- *   - plannedTemplateId !== null
- *   - actualTemplateId !== null
- *   - matchedPlanExact === true
- *   - offPlan === false
- *   - the saved run is valid (caller passes `!isInvalid`)
- *
- * Off-plan runs do NOT complete the day. Same-type but
- * different-template runs (matchedPlanType: true, matchedPlanExact:
- * false) do NOT complete the day. Invalid saved-anyway runs do NOT
- * complete the day. The user has to actually do the planned thing.
- */
-export function shouldCompleteRunDay(args: {
-  metadata: RunPlanMetadata;
-  isValid: boolean;
-}): boolean {
-  if (!args.isValid) return false;
-  const m = args.metadata;
-  return (
-    m.plannedRunDayIndex !== null &&
-    m.plannedTemplateId !== null &&
-    m.actualTemplateId !== null &&
-    m.matchedPlanExact === true &&
-    m.offPlan === false
-  );
-}
-
 // ─── offPlan rule (centralised) ─────────────────────────────────────
 
 /**

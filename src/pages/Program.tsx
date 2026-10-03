@@ -14,6 +14,8 @@ import {
   liftDayStatus,
 } from "@/features/program/liftDayStatus";
 import { useProgram } from "@/features/program/useProgram";
+import { changeStands } from "@/features/program/programOutcome";
+import { nextUpIndex } from "@/features/program/nextUpCursor";
 import { useStreaks } from "@/features/streaks/useStreaks";
 import { useAuth } from "@/lib/auth";
 import { useWorkouts } from "@/hooks/useWorkouts";
@@ -44,7 +46,7 @@ import {
   blockOfferBlockedByRace,
   blockPrefersShorterSessions,
 } from "@/features/program/represcribe";
-import { liftWeekLabel } from "@/lib/liftSessionExplainer";
+import { liftWeekLabel } from "@/lib/liftWeekLabel";
 import WeekPhaseRow from "@/components/program/WeekPhaseRow";
 import SkipConfirmSheet from "@/components/program/SkipConfirmSheet";
 import ExpressSessionSheet from "@/components/program/ExpressSessionSheet";
@@ -588,17 +590,10 @@ function ProgramInner() {
   const deloadNotice = useDismissOnce(deloadDismissKey(noticeWeekKey));
   const recoveryNotice = useDismissOnce(recoveryDismissKey(noticeWeekKey));
 
-  // Today index: first incomplete workout (respects nextWorkoutOverride)
+  // Today index: the next-up cursor, the session Home offers too.
   const todayIndex = useMemo(() => {
     if (!programState || viewingHistoryIndex !== null) return -1;
-    if (programState.nextWorkoutOverride != null) {
-      const oi = programState.workouts.findIndex(
-        (d, i) =>
-          i === programState.nextWorkoutOverride && !d.completed && !d.skipped
-      );
-      if (oi >= 0) return oi;
-    }
-    return programState.workouts.findIndex((d) => !d.completed && !d.skipped);
+    return nextUpIndex(programState);
   }, [programState, viewingHistoryIndex]);
 
   const easierRecommendation = useEasierTodayRecommendation(
@@ -1775,14 +1770,16 @@ function ProgramInner() {
         }
         onConfirm={async () => {
           if (skipTargetDay !== null) {
-            await skipWorkoutDay(skipTargetDay);
-            haptic("medium");
-            // Auto-advance to next incomplete day
-            const nextIncomplete = displayWorkouts.findIndex(
-              (d, i) => i !== skipTargetDay && !d.completed && !d.skipped
-            );
-            if (nextIncomplete >= 0) {
-              handleSelect(nextIncomplete);
+            const outcome = await skipWorkoutDay(skipTargetDay);
+            // A refused skip has been said by the writer, and the day is
+            // still the one to look at.
+            if (changeStands(outcome)) {
+              haptic("medium");
+              // On to the session that is up next now.
+              const nextUp = nextUpIndex(programState, skipTargetDay);
+              if (nextUp >= 0) {
+                handleSelect(nextUp);
+              }
             }
           }
           setShowSkipConfirm(false);
@@ -1836,17 +1833,15 @@ function ProgramInner() {
           // the day — the stored programme day is never mutated, and
           // the LIFT-01 draft identity derives from the trimmed layout
           // so a full-session draft can't restore into an express run
-          // (or vice versa). The session logs sets positionally over
-          // the TRIMMED list, while logExercise and completeWorkoutDay
-          // index into the STORED day — both callbacks realign through
-          // plan.sourceIndexes so a dropped accessory can't shift
-          // progression or the saved record onto the wrong lift.
+          // (or vice versa). The session logs and saves the TRIMMED
+          // list; progression finds each exercise's row in the STORED
+          // day by instanceId (`progressionBaseline` below, then
+          // `applySessionProgression`), so a dropped accessory can't
+          // shift progression onto the wrong lift.
           const storedDay = programState.workouts[sessionDayIndex];
           // Easier today (PROGRAM-ADAPT-01) is the same execution-clone
           // contract as Express: a reduced COPY runs; the stored day is
-          // untouched. Its sourceIndexes are the identity mapping
-          // (nothing dropped), so the generic realignment below is a
-          // no-op that keeps one code path for all trimmed variants.
+          // untouched, and nothing is dropped.
           const plan =
             sessionVariant === "full"
               ? null

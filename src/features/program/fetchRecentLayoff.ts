@@ -4,10 +4,9 @@
  *
  * WHY A BOUNDED ONE-SHOT READ RATHER THAN A HOOK. The two paths that must
  * resolve a layoff — the calendar auto-rollover and the fell-behind realign —
- * both live inside `useProgram`, and `useProgram` cannot consume `useClaimMap`
- * (the existing runs subscriber) because `useClaimMap` calls `useProgram`.
- * Subscribing again would mean a second live listener over the same collection
- * in an already-hot hook. A capped `getDocs` on the paths that actually need
+ * both live inside `useProgram`, which holds no runs subscription. Adding one
+ * there would mean a second live listener over the collection the claims
+ * (`useClaimMapForProgram`) already listen to, in an already-hot hook. A capped `getDocs` on the paths that actually need
  * the answer costs one read and adds no listener.
  *
  * WHY THE CAP IS SAFE. Only the most recent ELIGIBLE run matters, and
@@ -18,9 +17,8 @@
  * shorter than it is), which fails toward the CURRENT behaviour rather than
  * toward an unearned re-entry plan.
  */
-import { collection, getDocs, limit, orderBy, query } from "firebase/firestore";
 
-import { db } from "@/lib/firebase";
+import { fetchSavedRuns } from "@/lib/savedRuns";
 import { logger } from "@/lib/logger";
 import {
   layoffFromRuns,
@@ -47,25 +45,17 @@ export async function fetchRecentLayoff(
 ): Promise<LayoffClass> {
   if (!uid) return "none";
   try {
-    const snap = await getDocs(
-      query(
-        collection(db, "users", uid, "runs"),
-        // `completedAt`, the field `useClaimMap` orders by: every saved run
-        // has it, and none has a `createdAt`, so ordering by that read none.
-        orderBy("completedAt", "desc"),
-        limit(RECENT_RUN_SCAN_LIMIT)
-      )
-    );
-    const runs: DatedRun[] = snap.docs.map((d) => {
-      const data = d.data() as Record<string, unknown>;
-      return {
-        date: typeof data.date === "string" ? data.date : undefined,
-        distance: typeof data.distance === "number" ? data.distance : undefined,
-        duration: typeof data.duration === "number" ? data.duration : undefined,
-        isInvalid: data.isInvalid === true,
-        savedAnyway: data.savedAnyway === true,
-      };
-    });
+    // Through the saved-run reader: ordered by `completedAt`, which every
+    // saved run has (none has a `createdAt`, so ordering by that read none),
+    // dated by the run's Lift3 day, and including runs saved on this phone.
+    const saved = await fetchSavedRuns(uid, { latest: RECENT_RUN_SCAN_LIMIT });
+    const runs: DatedRun[] = saved.map((run) => ({
+      date: run.day,
+      distance: run.distance,
+      duration: run.duration,
+      isInvalid: run.isInvalid === true,
+      savedAnyway: run.savedAnyway === true,
+    }));
     return layoffFromRuns(runs, todayKey);
   } catch (err) {
     logger.warn("[layoff] recent-run read failed; treating as no layoff", err);

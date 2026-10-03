@@ -2892,6 +2892,8 @@ async function maybeSendStreakNudge(uid, now) {
         const data = d.data();
         const c = data.completedAt;
         return {
+          // Lift3: the run's day is the day it started.
+          date: data.date,
           completedAtMs: c && c.toMillis ? c.toMillis() : NaN,
           isInvalid: data.isInvalid,
           savedAnyway: data.savedAnyway,

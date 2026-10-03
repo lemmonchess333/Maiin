@@ -43,6 +43,7 @@ import {
 } from "@/features/program/runPlanTiming";
 import { realignResultMessage } from "@/lib/realignCopy";
 import type { ScheduledRunDay } from "@/features/program/programTypes";
+import type { RealignOutcome } from "@/features/program/programOutcome";
 
 type Intent = "not_100" | "crowded" | "easier";
 type Step =
@@ -85,8 +86,9 @@ interface AdjustWeekSheetProps {
    * Tuesday had no way back at all.
    */
   easedThisWeek?: boolean;
-  /** Existing re-anchor writer (keeps the race date). */
-  realignRacePlan: () => Promise<{ timing: RaceTiming; totalWeeks: number }>;
+  /** Existing re-anchor writer (keeps the race date). A refusal or a
+   *  failed save comes back as such, already said by the writer. */
+  realignRacePlan: () => Promise<RealignOutcome>;
   /** Run14: when the sheet is opened FROM the ease-week nudge, skip the
    *  intent chooser and land straight on the easier-week preview (the
    *  nudge already established the intent). Omitted for the normal
@@ -351,12 +353,15 @@ export default function AdjustWeekSheet({
     pendingRef.current = true;
     setApplying(true);
     try {
-      const { timing, totalWeeks } = await realignRacePlan();
+      const result = await realignRacePlan();
+      // Refused or not saved: the writer has said why, and the sheet stays
+      // open so the athlete can pick something else.
+      if (result.status !== "applied") return;
       track("adjust_week_applied", { intent, action: "realign" });
       toast.success(
         realignResultMessage({
-          timing,
-          totalWeeks,
+          timing: result.timing,
+          totalWeeks: result.totalWeeks,
           distance: raceGoal.distance,
         })
       );

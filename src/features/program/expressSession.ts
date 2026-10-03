@@ -84,17 +84,13 @@ export interface ExpressTrim {
 
 export interface ExpressPlan {
   variant: SessionVariant;
-  /** The executable exercise list — fresh objects, input day untouched. */
-  exercises: ProgramExercise[];
   /**
-   * Maps each plan position to its index in the ORIGINAL day
-   * (`sourceIndexes[planIdx] === dayIdx`). The live session logs sets
-   * positionally over the trimmed list, but progression
-   * (`logExercise`) and the completion write index into the STORED
-   * programme day — callers must realign through this mapping or a
-   * dropped exercise shifts every later log onto the wrong lift.
+   * The executable exercise list — fresh objects, input day untouched.
+   * Each keeps its `instanceId`, which is how the finished session finds
+   * the exercise's row in the stored day (`applySessionProgression`), so
+   * dropping one cannot move another's progression.
    */
-  sourceIndexes: number[];
+  exercises: ProgramExercise[];
   /** Estimate for THIS plan (post-trim), rounded like the UI's. */
   estimatedMinutes: number;
   trim: ExpressTrim;
@@ -165,15 +161,12 @@ export function buildExpressSession(
 ): ExpressPlan {
   // Fresh objects throughout — the caller feeds this straight into the
   // live session, which must never alias the stored programme state.
-  // Each entry carries its ORIGINAL day index so drops don't desync
-  // progression / completion writes (see ExpressPlan.sourceIndexes).
-  let items = day.exercises.map((ex, src) => ({ ex: { ...ex }, src }));
+  let items = day.exercises.map((ex) => ({ ex: { ...ex } }));
   const trim: ExpressTrim = { droppedExercises: [], reducedSets: [] };
 
   const finish = (): ExpressPlan => ({
     variant,
     exercises: items.map((it) => it.ex),
-    sourceIndexes: items.map((it) => it.src),
     estimatedMinutes: estimateSessionMinutes(items.map((it) => it.ex)),
     trim,
   });
@@ -214,7 +207,7 @@ export function buildExpressSession(
     if (excess <= ex.sets - ACCESSORY_MIN_SETS) {
       const to = ex.sets - excess;
       trim.reducedSets.push({ name: ex.name, from: ex.sets, to });
-      items[i] = { ex: { ...ex, sets: to }, src: items[i].src };
+      items[i] = { ex: { ...ex, sets: to } };
     } else {
       trim.droppedExercises.unshift(ex.name);
       items = [...items.slice(0, i), ...items.slice(i + 1)];
@@ -230,7 +223,7 @@ export function buildExpressSession(
     if (isAccessoryExercise(ex) || ex.sets <= COMPOUND_MIN_SETS) continue;
     const to = Math.max(COMPOUND_MIN_SETS, ex.sets - overageSets());
     trim.reducedSets.push({ name: ex.name, from: ex.sets, to });
-    items[i] = { ex: { ...ex, sets: to }, src: items[i].src };
+    items[i] = { ex: { ...ex, sets: to } };
   }
 
   return finish();

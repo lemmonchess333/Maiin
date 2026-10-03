@@ -78,19 +78,45 @@ describe("feed post fields: postActivity and firestore.rules agree", () => {
   });
 
   it("the session savers type their posts, so an unknown field fails the build", () => {
-    /* The three savers build the post in a callback that createSessionShare
-       hands to postActivity and to the offline queue. TypeScript checks a
-       literal's extra fields only where it meets a declared type, so each
-       callback's return is annotated: an unannotated one would carry any
-       field straight to the rules. */
-    for (const file of [
-      "src/pages/RunSummary.tsx",
-      "src/pages/Routine.tsx",
-      "src/features/program/useProgram.ts",
+    /* A saver hands createSessionShare a callback that builds the post,
+       and createSessionShare posts or queues it. TypeScript checks a
+       literal's extra fields only where it meets a declared type, so every
+       post is built where one is declared: by liftPost or runPost, each
+       declared to return ActivityPost. An undeclared builder would carry
+       any field straight to the rules. */
+    const read = (file: string) =>
+      readFileSync(resolve(repoRoot, file), "utf8");
+    const declaration = (source: string, name: string) => {
+      const at = source.indexOf(`export function ${name}(`);
+      expect(at, name).toBeGreaterThanOrEqual(0);
+      return source.slice(at, source.indexOf("\nexport ", at));
+    };
+    expect(declaration(read("src/lib/liftPost.ts"), "liftPost")).toContain(
+      "): ActivityPost {"
+    );
+    const runs = read("src/lib/runCompletion.ts");
+    expect(declaration(runs, "runPost")).toContain("): ActivityPost {");
+
+    for (const [file, builder] of [
+      ["src/lib/liftCompletion.ts", "liftPost"],
+      ["src/lib/runCompletion.ts", "runPost"],
     ]) {
-      const source = readFileSync(resolve(repoRoot, file), "utf8");
+      const source = read(file);
       expect(source, file).toContain("createSessionShare(");
-      expect(source, file).toContain("payload: (decision): ActivityPost => ({");
+      expect(source, file).toMatch(
+        new RegExp(`payload: \\(decision\\) =>\\s+${builder}\\(`)
+      );
+      expect(source, file).not.toContain("postActivity(");
+    }
+    // The finish screens save through those modules, never by hand.
+    for (const [file, call] of [
+      ["src/pages/Routine.tsx", "completeLift("],
+      ["src/features/program/useProgram.ts", "completeLift("],
+      ["src/pages/RunSummary.tsx", "completeRun("],
+    ]) {
+      const source = read(file);
+      expect(source, file).toContain(call);
+      expect(source, file).not.toContain("createSessionShare(");
       expect(source, file).not.toContain("postActivity(");
     }
     const helper = readFileSync(

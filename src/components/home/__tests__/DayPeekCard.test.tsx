@@ -25,7 +25,7 @@ import type {
 } from "@/features/program/programTypes";
 import type { ScheduleDay } from "@/lib/scheduleUtils";
 import type { ClaimState } from "@/lib/scheduledRunCompletion";
-import type { SavedRunDoc } from "@/hooks/useClaimMap";
+import type { SavedRunDoc } from "@/hooks/useClaimMapForProgram";
 import {
   localDateString,
   localWeekKey,
@@ -174,6 +174,7 @@ describe("DayPeekCard — planned run rendering (spec gate #11, resolver-aware)"
 
     render(
       <DayPeekCard
+        todayKey={localDateString()}
         dateKey={tueKey}
         profile={profile}
         programState={programState}
@@ -210,6 +211,7 @@ describe("DayPeekCard — planned run rendering (spec gate #11, resolver-aware)"
     } as ProgramState["runPlan"];
     renderCard(
       <DayPeekCard
+        todayKey={localDateString()}
         dateKey={date}
         profile={profile}
         programState={program}
@@ -245,6 +247,7 @@ describe("DayPeekCard — planned run rendering (spec gate #11, resolver-aware)"
 
     render(
       <DayPeekCard
+        todayKey={localDateString()}
         dateKey={tueKey}
         profile={profile}
         programState={makeProgramState([])}
@@ -289,6 +292,7 @@ describe("DayPeekCard — planned run rendering (spec gate #11, resolver-aware)"
 
     render(
       <DayPeekCard
+        todayKey={localDateString()}
         dateKey={tueKey}
         profile={profile}
         programState={programState}
@@ -334,6 +338,7 @@ describe("DayPeekCard — planned run rendering (spec gate #11, resolver-aware)"
 
     render(
       <DayPeekCard
+        todayKey={localDateString()}
         dateKey={tueKey}
         profile={profile}
         programState={programState}
@@ -376,6 +381,7 @@ describe("DayPeekCard — planned run rendering (spec gate #11, resolver-aware)"
 
     render(
       <DayPeekCard
+        todayKey={localDateString()}
         dateKey={tueKey}
         profile={profile}
         programState={programState}
@@ -410,6 +416,7 @@ describe("DayPeekCard — planned run rendering (spec gate #11, resolver-aware)"
 
     render(
       <DayPeekCard
+        todayKey={localDateString()}
         dateKey={tueKey}
         profile={profile}
         programState={programState}
@@ -479,6 +486,7 @@ describe("DayPeekCard — PR-0c: next-week date does NOT inherit this-week runDa
     });
     render(
       <DayPeekCard
+        todayKey={localDateString()}
         dateKey={nextTueKey}
         profile={profile}
         programState={programState}
@@ -522,6 +530,7 @@ describe("DayPeekCard — Q5 extras rows (chunk B3g)", () => {
     const profile = makeProfile(schedule);
     renderCard(
       <DayPeekCard
+        todayKey={localDateString()}
         dateKey={tueKey}
         profile={profile}
         programState={makeProgramState([])}
@@ -553,6 +562,7 @@ describe("DayPeekCard — Q5 extras rows (chunk B3g)", () => {
     const profile = makeProfile(schedule);
     renderCard(
       <DayPeekCard
+        todayKey={localDateString()}
         dateKey={tueKey}
         profile={profile}
         programState={makeProgramState([])}
@@ -583,6 +593,7 @@ describe("DayPeekCard — Q5 extras rows (chunk B3g)", () => {
     const profile = makeProfile(schedule);
     renderCard(
       <DayPeekCard
+        todayKey={localDateString()}
         dateKey={tueKey}
         profile={profile}
         programState={makeProgramState([])}
@@ -631,6 +642,7 @@ describe("DayPeekCard — Q5 extras rows (chunk B3g)", () => {
     const profile = makeProfile(schedule);
     renderCard(
       <DayPeekCard
+        todayKey={localDateString()}
         dateKey={tueKey}
         profile={profile}
         programState={makeProgramState([])}
@@ -682,6 +694,7 @@ describe("DayPeekCard — Q5 extras rows (chunk B3g)", () => {
     ]);
     renderCard(
       <DayPeekCard
+        todayKey={localDateString()}
         dateKey={tueKey}
         profile={profile}
         programState={programState}
@@ -739,6 +752,7 @@ describe("DayPeekCard — lift row tap-through", () => {
     const tueKey = dayOfThisWeek(2);
     render(
       <DayPeekCard
+        todayKey={localDateString()}
         dateKey={tueKey}
         profile={makeProfile(LIFT_WEEK)}
         programState={makeProgramState([])}
@@ -830,6 +844,7 @@ describe("DayPeekCard — the badge names what the card holds", () => {
     const tueKey = dayOfThisWeek(2);
     render(
       <DayPeekCard
+        todayKey={localDateString()}
         dateKey={tueKey}
         profile={makeProfile(schedule)}
         programState={makeProgramState([])}
@@ -850,6 +865,7 @@ describe("DayPeekCard — the badge names what the card holds", () => {
     const tueWeekKey = localWeekKey(parseLocalDate(tueKey));
     render(
       <DayPeekCard
+        todayKey={localDateString()}
         dateKey={tueKey}
         profile={makeProfile(schedule)}
         programState={makeProgramState([
@@ -872,6 +888,7 @@ describe("DayPeekCard — the badge names what the card holds", () => {
     const satWeekKey = localWeekKey(parseLocalDate(satKey));
     render(
       <DayPeekCard
+        todayKey={localDateString()}
         dateKey={satKey}
         profile={makeProfile(schedule)}
         programState={makeProgramState([
@@ -912,9 +929,14 @@ describe("DayPeekCard — the nutrition row opens the diary", () => {
       makeSchedule(["rest", "rest", "rest", "rest", "rest", "rest", "rest"])
     );
 
-  function renderWithTotals(dateKey: string, onClose = vi.fn()) {
+  function renderWithTotals(
+    dateKey: string,
+    onClose = vi.fn(),
+    todayKey = localDateString()
+  ) {
     renderCard(
       <DayPeekCard
+        todayKey={todayKey}
         dateKey={dateKey}
         profile={plainProfile()}
         programState={makeProgramState([])}
@@ -952,6 +974,21 @@ describe("DayPeekCard — the nutrition row opens the diary", () => {
     // handed today and this branch ran nowhere but here — the shape a
     // test has when it is the only caller of the code it covers.
     renderWithTotals(localDateString(new Date()));
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /open the food diary/i })
+    );
+
+    expect(navigateMock).toHaveBeenCalledWith("/food");
+  });
+
+  it("takes today from Home, so the diary opens on the day Home shows as today", () => {
+    /* Home's day key can trail the clock (it moves at midnight and on
+       resume), and the strip, the session card and this card all read it.
+       Here Home's today is yesterday by the clock: the card links it as
+       today, as the strip beside it rings it. */
+    const homeToday = localDateString(new Date(Date.now() - 86_400_000));
+    renderWithTotals(homeToday, vi.fn(), homeToday);
 
     fireEvent.click(
       screen.getByRole("button", { name: /open the food diary/i })

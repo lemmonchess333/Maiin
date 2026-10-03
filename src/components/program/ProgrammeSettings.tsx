@@ -116,7 +116,7 @@ interface ProgrammeSettingsProps {
   profile: UserProfile;
   programState: ProgramState | null;
   /** Live-saves the engine toggles (auto-progression / microloading). */
-  updateSettings: (patch: Partial<ProgramSettings>) => Promise<void> | void;
+  updateSettings: (patch: Partial<ProgramSettings>) => Promise<unknown> | void;
   /** Destructive rebuild from scratch (Week 1, clears weekHistory). */
   regenerateProgram: (
     goal?: string,

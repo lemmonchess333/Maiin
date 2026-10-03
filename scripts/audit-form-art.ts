@@ -1,50 +1,45 @@
 import { readFileSync, statSync } from "node:fs";
 import { resolve } from "node:path";
 import { createHash } from "node:crypto";
+import { isDeepStrictEqual } from "node:util";
 import { EXERCISES } from "../src/lib/exercises";
 import { FORM_ARTWORK } from "../src/lib/formArtwork";
+import { APPROVED_FORM_ART_RELEASES } from "../src/lib/formArtReleases.data";
 import { getAuthoredBeats } from "../src/lib/bodyRig";
 import { validateOwnerArtworkRelease } from "../src/lib/formArtOwnerRelease";
-import { validateArtworkReview } from "../src/lib/formArtReview";
+import {
+  artworkReviewExpectation,
+  validateArtworkReview,
+} from "../src/lib/formArtReview";
+import {
+  approvedReleases,
+  readReleaseRecords,
+  RELEASES_MODULE,
+} from "./art/form-art-releases";
+import { webpSize } from "./art/webp-size";
 
 export const sha256 = (bytes: string | Buffer) =>
   createHash("sha256").update(bytes).digest("hex");
 export const assetHash = (path: string) =>
   sha256(readFileSync(resolve("public", path)));
 
-/** Read native WebP dimensions without re-encoding or upscaling the art. */
-function dimensions(data: Buffer): [number, number] {
-  if (
-    data.toString("ascii", 0, 4) !== "RIFF" ||
-    data.toString("ascii", 8, 12) !== "WEBP"
-  )
-    throw new Error("Not a WebP image");
-  for (let offset = 12; offset + 8 <= data.length; ) {
-    const kind = data.toString("ascii", offset, offset + 4);
-    const size = data.readUInt32LE(offset + 4);
-    const start = offset + 8;
-    if (start + size > data.length) throw new Error("Truncated WebP");
-    if (kind === "VP8X" && size >= 10)
-      return [
-        1 + data.readUIntLE(start + 4, 3),
-        1 + data.readUIntLE(start + 7, 3),
-      ];
-    if (kind === "VP8 " && size >= 10)
-      return [
-        data.readUInt16LE(start + 6) & 16383,
-        data.readUInt16LE(start + 8) & 16383,
-      ];
-    if (kind === "VP8L" && size >= 5) {
-      const bits = data.readUInt32LE(start + 1);
-      return [(bits & 16383) + 1, ((bits >>> 14) & 16383) + 1];
-    }
-    offset = start + size + (size % 2);
-  }
-  throw new Error("WebP dimensions missing");
-}
-
 const errors: string[] = [];
 let bytes = 0;
+// The approved sets are built from their records, so a record added or
+// corrected without regenerating would not be released, or not as reviewed.
+try {
+  if (
+    !isDeepStrictEqual(
+      approvedReleases(readReleaseRecords(resolve("."))),
+      APPROVED_FORM_ART_RELEASES
+    )
+  )
+    errors.push(
+      `${RELEASES_MODULE} is not what the release records say: run npm run art:releases`
+    );
+} catch (error) {
+  errors.push(String(error));
+}
 for (const [id, artwork] of Object.entries(FORM_ARTWORK)) {
   if (!EXERCISES.some((exercise) => exercise.id === id))
     errors.push(`${id}: unknown exercise ID`);
@@ -68,7 +63,7 @@ for (const [id, artwork] of Object.entries(FORM_ARTWORK)) {
         throw new Error("Cue/image ordering mismatch");
       const data = readFileSync(resolve("public", path));
       bytes += data.length;
-      const [width, height] = dimensions(data);
+      const [width, height] = webpSize(data);
       if (width !== artwork.width || height !== artwork.height)
         throw new Error(`Canvas ${width}×${height} differs from registry`);
     } catch (error) {
@@ -87,23 +82,13 @@ for (const [id, artwork] of Object.entries(FORM_ARTWORK)) {
       errors.push(
         ...(artwork.status === "approved"
           ? validateArtworkReview
-          : validateOwnerArtworkRelease)(review, {
-          exerciseId: id,
-          version: artwork.version,
-          width: artwork.width,
-          height: artwork.height,
-          reference: {
-            path: artwork.reference,
-            sha256: assetHash(artwork.reference),
-          },
-          frames: artwork.frames.map((path) => ({
-            path,
-            sha256: assetHash(path),
-          })),
-          cueSha256: sha256(
-            JSON.stringify(beats?.map(({ label, cue }) => ({ label, cue })))
-          ),
-        }).map((error) => `${id}: ${error}`)
+          : validateOwnerArtworkRelease)(
+          review,
+          artworkReviewExpectation(id, artwork, beats ?? [], {
+            asset: assetHash,
+            text: sha256,
+          })
+        ).map((error) => `${id}: ${error}`)
       );
     } catch (error) {
       errors.push(`${id}: ${String(error)}`);
