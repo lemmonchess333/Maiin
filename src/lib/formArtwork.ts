@@ -41,6 +41,18 @@ const ownerReleased = (
 // Preserve the seven previously shipped sets while replacements are reviewed.
 // These entries do not claim that the art passes the new consistency standard.
 export const FORM_ARTWORK: Record<string, FormArtwork> = {
+  shrugs: {
+    version: "anatomy-v3-rigid-2026-10-03",
+    status: "approved",
+    width: 1024,
+    height: 1536,
+    frames: Array.from(
+      { length: 6 },
+      (_, i) => `form-frames/shrugs/${i + 1}.webp`
+    ),
+    reference: "form-frames/shrugs/3.webp",
+    reviewFile: "docs/exercise-art/releases/2026-10-03/shrugs.json",
+  },
   crunches: {
     version: "anatomy-v3-composite-2026-10-03",
     status: "approved",

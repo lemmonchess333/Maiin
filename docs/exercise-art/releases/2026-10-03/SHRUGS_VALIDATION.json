@@ -1,0 +1,53 @@
+{
+  "baseCommit": "7b901b83f99aeaac742cfc080e12324a2a0b5a2f",
+  "verify": {
+    "command": "VITEST_MAX_WORKERS=4 npm run verify",
+    "passed": true,
+    "testFilesPassed": 978,
+    "testFilesSkipped": 8,
+    "testsPassed": 10876,
+    "testsSkipped": 367,
+    "testsFailed": 0,
+    "durationSeconds": 264.16
+  },
+  "browser": {
+    "command": "npx playwright test --config playwright.form-art.config.ts",
+    "startTime": "2026-10-03T11:10:06.755Z",
+    "duration": 86871.973,
+    "expected": 33,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "bundleBudget": {
+    "passed": true,
+    "chunks": 335,
+    "totalKB": 5881.9,
+    "baselineKB": 5878.1
+  },
+  "delivery": {
+    "frameCount": 6,
+    "uniquePoses": 3,
+    "frameBytes": 2864460,
+    "cardBytes": 18188,
+    "dimensions": [1024, 1536],
+    "cardDimensions": [200, 480],
+    "sourcePngToWebpRgbPixels": "Exact equality for all six frames."
+  },
+  "artwork": {
+    "fixedBodyPatches": 4,
+    "maximumFixedDriftPixels": 0,
+    "visibleEquipmentFaceComparisons": 9,
+    "maximumFaceChannelDifference": 0
+  },
+  "coverage": {
+    "released": 60,
+    "approved": 51,
+    "ownerReleasedWithFindings": 3,
+    "historicalNeedsReview": 6,
+    "withoutReleasedArt": 81,
+    "inScope": 141,
+    "releasedFrameBytes": 178546306
+  },
+  "scope": "Reviewed Shrugs guide integrated on the working branch. This validation does not claim deployment."
+}

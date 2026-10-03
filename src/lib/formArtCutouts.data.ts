@@ -517,6 +517,16 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
       "d76a8cb29e043fb367a192c4f1a129c6bcfdf6b595564235cd910bf0322293e9",
     sha256: "f14c2f0a93d6e57f82ca4535c347a57479599d316229df0b716ff28ce0006c23",
   },
+  shrugs: {
+    src: "form-art/shrugs.webp",
+    width: 200,
+    height: 480,
+    keyed: true,
+    source: "form-frames/shrugs/3.webp",
+    sourceSha256:
+      "fd854e16d713eab7077649df497c95c28742bf6f254d2e26f43e649a0ca5666e",
+    sha256: "a6b85844c73b245af6e180328435175bf352737713e26b0465a492b97931019f",
+  },
   "skull-crushers": {
     src: "form-art/skull-crushers.webp",
     width: 480,

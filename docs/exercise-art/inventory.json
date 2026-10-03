@@ -2,9 +2,9 @@
   "catalogue": 152,
   "inScope": 141,
   "existingSets": 6,
-  "newlyApproved": 50,
+  "newlyApproved": 51,
   "ownerReleasedWithFindings": 3,
-  "releasedBytes": 175681846,
+  "releasedBytes": 178546306,
   "errors": [],
   "inventory": [
     {
@@ -417,9 +417,9 @@
       "name": "Shrugs",
       "equipment": "Dumbbells",
       "inScope": true,
-      "authoredBeats": 0,
-      "status": "needs-artwork",
-      "bytes": 0
+      "authoredBeats": 6,
+      "status": "approved",
+      "bytes": 2864460
     },
     {
       "id": "barbell-shrug",

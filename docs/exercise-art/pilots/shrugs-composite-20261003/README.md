@@ -29,3 +29,5 @@ node docs/exercise-art/pilots/shrugs-composite-20261003/measure-equipment.mjs
 ```
 
 `composition.json`, `fixed-support-review-20261003.json` and `equipment-diagnostic.json` retain `releaseApproved: false`. Coverage remains 59/141.
+
+The later `shrugs-rigid-20261003` repair resolves the equipment findings in separate assets; see `docs/exercise-art/releases/2026-10-03/SHRUGS.md`. These historical sources and measurements remain unchanged.

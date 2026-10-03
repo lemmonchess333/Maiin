@@ -8,6 +8,7 @@ for (const { id, dimensions, cardWidth } of [
   { id: "leg-raise", dimensions: [1024, 1536], cardWidth: 422 },
   { id: "plank", dimensions: [1536, 1024], cardWidth: 480 },
   { id: "crunches", dimensions: [1536, 1024], cardWidth: 480 },
+  { id: "shrugs", dimensions: [1024, 1536], cardWidth: 200 },
 ]) {
   const beats = getFormBeats(id);
   if (!beats || beats.length !== 6)

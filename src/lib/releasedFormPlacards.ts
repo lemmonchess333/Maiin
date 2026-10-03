@@ -15,6 +15,23 @@ const placard = (
 });
 
 export const RELEASED_FORM_PLACARDS = {
+  shrugs: placard(
+    "shrugs",
+    ["Upper trapezius"],
+    [],
+    [
+      [0, "Set your stance", "Stand tall; hold dumbbells beside your thighs."],
+      [0.5, "Begin shrug", "Raise your shoulders straight toward your ears."],
+      [1, "Reach the top", "Keep your elbows straight and neck neutral."],
+      [
+        1,
+        "Pause briefly",
+        "Squeeze your traps without rolling your shoulders.",
+      ],
+      [0.5, "Lower slowly", "Lower shoulders slowly; keep your arms straight."],
+      [0, "Return to start", "Settle shoulders; keep your stance and grip."],
+    ]
+  ),
   crunches: placard(
     "crunches",
     ["Rectus abdominis"],

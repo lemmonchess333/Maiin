@@ -1,0 +1,142 @@
+{
+  "reviewedAt": "2026-10-03",
+  "method": "31x31 RGB setup patches, +/-10px integer search minimizing absolute channel difference. Sole patches measure stationary supports. Knee patches diagnose contour consistency; shading/redraw changes can shift the match without proving anatomical joint translation. No image edits.",
+  "releaseApproved": false,
+  "existingReleaseAnchorLimitPixels": 1,
+  "findings": [
+    "All four repaired lower-body patches match setup exactly: zero translation and zero RGB difference.",
+    "Upper-body and grip anatomy require visual review independently of these fixed-contact measurements.",
+    "Equipment layer construction and exact face patches are recorded separately in composition.json and rigidity.json; this support diagnostic does not grant release approval."
+  ],
+  "frames": [
+    {
+      "frame": 1,
+      "path": "docs/exercise-art/pilots/shrugs-rigid-20261003/frames/1.png",
+      "sha256": "275af7efa1eabf34e10d70e19f56c4d6765accf78f1a543814188ee7fe538b23",
+      "patches": {
+        "screenLeftSole": {
+          "origin": {
+            "x": 335,
+            "y": 1408
+          },
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 0
+        },
+        "screenRightSole": {
+          "origin": {
+            "x": 609,
+            "y": 1468
+          },
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 0
+        },
+        "screenLeftKneeContour": {
+          "origin": {
+            "x": 437,
+            "y": 982
+          },
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 0
+        },
+        "screenRightKneeContour": {
+          "origin": {
+            "x": 587,
+            "y": 1051
+          },
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 0
+        }
+      }
+    },
+    {
+      "frame": 2,
+      "path": "docs/exercise-art/pilots/shrugs-rigid-20261003/frames/2.png",
+      "sha256": "cc817264ffb8eae2356b59fcd57113693d9f62ed6c73f796c143851c728e5030",
+      "patches": {
+        "screenLeftSole": {
+          "origin": {
+            "x": 335,
+            "y": 1408
+          },
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 0
+        },
+        "screenRightSole": {
+          "origin": {
+            "x": 609,
+            "y": 1468
+          },
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 0
+        },
+        "screenLeftKneeContour": {
+          "origin": {
+            "x": 437,
+            "y": 982
+          },
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 0
+        },
+        "screenRightKneeContour": {
+          "origin": {
+            "x": 587,
+            "y": 1051
+          },
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 0
+        }
+      }
+    },
+    {
+      "frame": 3,
+      "path": "docs/exercise-art/pilots/shrugs-rigid-20261003/frames/3.png",
+      "sha256": "c92efdedace7e2c2936817daeb89fba74b545cddd2001e1dd436eaf482485019",
+      "patches": {
+        "screenLeftSole": {
+          "origin": {
+            "x": 335,
+            "y": 1408
+          },
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 0
+        },
+        "screenRightSole": {
+          "origin": {
+            "x": 609,
+            "y": 1468
+          },
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 0
+        },
+        "screenLeftKneeContour": {
+          "origin": {
+            "x": 437,
+            "y": 982
+          },
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 0
+        },
+        "screenRightKneeContour": {
+          "origin": {
+            "x": 587,
+            "y": 1051
+          },
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 0
+        }
+      }
+    }
+  ]
+}

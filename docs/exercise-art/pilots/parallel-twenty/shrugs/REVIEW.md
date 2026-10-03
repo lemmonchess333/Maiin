@@ -30,3 +30,5 @@ The next repair needs a stationary lower body and rigid dumbbell geometry.
 No new generation or code-based image repair was performed in this follow-up.
 
 A later [fixed-leg composite candidate](../../shrugs-composite-20261003/README.md) eliminates measured sole/knee drift in separate files. Equipment and upper-body review remain open; these original sources are unchanged and unreleased.
+
+The later `shrugs-rigid-20261003` repair resolves the equipment findings in separate assets; see `docs/exercise-art/releases/2026-10-03/SHRUGS.md`. These historical sources and measurements remain unchanged.
