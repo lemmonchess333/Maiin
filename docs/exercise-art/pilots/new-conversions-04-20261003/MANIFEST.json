@@ -1,0 +1,175 @@
+{
+  "schemaVersion": 1,
+  "batch": "new-conversions-04-20261003",
+  "releaseApproved": false,
+  "productionAssetsChanged": false,
+  "selectedFrameCount": 12,
+  "completeDraftSets": [
+    {
+      "exerciseId": "seated-calf-raise",
+      "status": "draft-awaiting-review",
+      "camera": "Fixed side three-quarter, entire seated machine and both feet visible.",
+      "anchors": ["seat base", "forefoot step", "lever pivot"],
+      "equipment": "Plate-loaded seated calf machine with one pivoting thigh-pad lever and fixed seat and step.",
+      "muscles": {
+        "primary": ["Soleus"],
+        "secondary": ["Gastrocnemius lighter"]
+      },
+      "reviewFindings": [
+        "Rear pivot and forward load now have a plausible resistance direction; rejected first machine is retained in sources.",
+        "Bottom pose remains near neutral rather than a full below-step stretch. Mid/top heel angles are too similar, and plate rotation is inconsistent with thigh-pad travel. Do not release."
+      ],
+      "frames": [
+        {
+          "frame": 1,
+          "path": "docs/exercise-art/pilots/new-conversions-04-20261003/seated-calf-raise/frames/1.png",
+          "caption": "SET YOUR STRETCH 1/6",
+          "cue": "Sit tall; lower heels below the step.",
+          "progress": 0,
+          "dimensions": [1536, 1024],
+          "bytes": 951668,
+          "sha256": "c3f4549e51e7a6574b0cdbf1e3deaaa01192de487865a7a8bf676b264a770bc9",
+          "reusedFrom": null
+        },
+        {
+          "frame": 2,
+          "path": "docs/exercise-art/pilots/new-conversions-04-20261003/seated-calf-raise/frames/2.png",
+          "caption": "RAISE YOUR HEELS 2/6",
+          "cue": "Raise heels; keep thighs against the pads.",
+          "progress": 0.5,
+          "dimensions": [1536, 1024],
+          "bytes": 971806,
+          "sha256": "d171c64d9eb68c0489df2c0fd58e59eff428610c6970c58d89beaa2cc9fef503",
+          "reusedFrom": null
+        },
+        {
+          "frame": 3,
+          "path": "docs/exercise-art/pilots/new-conversions-04-20261003/seated-calf-raise/frames/3.png",
+          "caption": "SQUEEZE YOUR CALVES 3/6",
+          "cue": "Lift heels high against the thigh pads.",
+          "progress": 1,
+          "dimensions": [1536, 1024],
+          "bytes": 1333490,
+          "sha256": "b187bdc4df61c0ce32fc57717be788b4d5258abe7e8dd0130f4fcf2def2f3d8d",
+          "reusedFrom": null
+        },
+        {
+          "frame": 4,
+          "path": "docs/exercise-art/pilots/new-conversions-04-20261003/seated-calf-raise/frames/4.png",
+          "caption": "HOLD THE TOP 4/6",
+          "cue": "Pause briefly; keep both forefeet supported.",
+          "progress": 1,
+          "dimensions": [1536, 1024],
+          "bytes": 1333490,
+          "sha256": "b187bdc4df61c0ce32fc57717be788b4d5258abe7e8dd0130f4fcf2def2f3d8d",
+          "reusedFrom": 3
+        },
+        {
+          "frame": 5,
+          "path": "docs/exercise-art/pilots/new-conversions-04-20261003/seated-calf-raise/frames/5.png",
+          "caption": "LOWER SLOWLY 5/6",
+          "cue": "Lower heels slowly without bouncing.",
+          "progress": 0.5,
+          "dimensions": [1536, 1024],
+          "bytes": 971806,
+          "sha256": "d171c64d9eb68c0489df2c0fd58e59eff428610c6970c58d89beaa2cc9fef503",
+          "reusedFrom": 2
+        },
+        {
+          "frame": 6,
+          "path": "docs/exercise-art/pilots/new-conversions-04-20261003/seated-calf-raise/frames/6.png",
+          "caption": "RETURN TO STRETCH 6/6",
+          "cue": "Let heels drop below the step gently.",
+          "progress": 0,
+          "dimensions": [1536, 1024],
+          "bytes": 951668,
+          "sha256": "c3f4549e51e7a6574b0cdbf1e3deaaa01192de487865a7a8bf676b264a770bc9",
+          "reusedFrom": 1
+        }
+      ]
+    },
+    {
+      "exerciseId": "farmers-carry",
+      "status": "draft-awaiting-review",
+      "camera": "Fixed front-side three-quarter, full body and both dumbbells, space around feet.",
+      "anchors": ["ground plane"],
+      "equipment": "Two matching hex dumbbells.",
+      "muscles": {
+        "primary": ["Forearms", "Upper trapezius", "Core"],
+        "secondary": ["Glutes", "Legs lighter"]
+      },
+      "reviewFindings": [
+        "Pickup, upright hold, and alternating walking steps are distinct. Upright shoulders and straight loaded arms remain readable.",
+        "Pickup athlete and dumbbells change scale relative to upright pose; pickup weights do not clearly contact the floor. Step width and foot ground contact need review before release."
+      ],
+      "frames": [
+        {
+          "frame": 1,
+          "path": "docs/exercise-art/pilots/new-conversions-04-20261003/farmers-carry/frames/1.png",
+          "caption": "PREPARE TO LIFT 1/6",
+          "cue": "Hinge and bend knees; grip both weights.",
+          "progress": 0,
+          "dimensions": [1024, 1536],
+          "bytes": 1069269,
+          "sha256": "db4621c1276b460e7bb36d57ce19fb987e6376aa894d97df5a8cbd01214c05ca",
+          "reusedFrom": null
+        },
+        {
+          "frame": 2,
+          "path": "docs/exercise-art/pilots/new-conversions-04-20261003/farmers-carry/frames/2.png",
+          "caption": "STAND TALL 2/6",
+          "cue": "Stand tall; brace with shoulders packed down.",
+          "progress": 0.25,
+          "dimensions": [1024, 1536],
+          "bytes": 935116,
+          "sha256": "835d1dae83027bc044c2dce1d925d4588dc045ab5c86e64170fb83ae1e4219fa",
+          "reusedFrom": null
+        },
+        {
+          "frame": 3,
+          "path": "docs/exercise-art/pilots/new-conversions-04-20261003/farmers-carry/frames/3.png",
+          "caption": "TAKE SHORT STEPS 3/6",
+          "cue": "Walk forward with short, controlled steps.",
+          "progress": 0.5,
+          "dimensions": [1024, 1536],
+          "bytes": 1409125,
+          "sha256": "7eebe60de613699b94d835c6c30497d4757378040cede327ccc7532d895175a4",
+          "reusedFrom": null
+        },
+        {
+          "frame": 4,
+          "path": "docs/exercise-art/pilots/new-conversions-04-20261003/farmers-carry/frames/4.png",
+          "caption": "KEEP YOUR POSTURE 4/6",
+          "cue": "Keep weights steady and your chest tall.",
+          "progress": 1,
+          "dimensions": [1024, 1536],
+          "bytes": 1049851,
+          "sha256": "6f11fd96151d5e4d18f15fa9b0707a5ae7cf27810f030375d1b67dd7e53a8357",
+          "reusedFrom": null
+        },
+        {
+          "frame": 5,
+          "path": "docs/exercise-art/pilots/new-conversions-04-20261003/farmers-carry/frames/5.png",
+          "caption": "STOP WITH CONTROL 5/6",
+          "cue": "Stop walking before lowering the weights.",
+          "progress": 0.25,
+          "dimensions": [1024, 1536],
+          "bytes": 935116,
+          "sha256": "835d1dae83027bc044c2dce1d925d4588dc045ab5c86e64170fb83ae1e4219fa",
+          "reusedFrom": 2
+        },
+        {
+          "frame": 6,
+          "path": "docs/exercise-art/pilots/new-conversions-04-20261003/farmers-carry/frames/6.png",
+          "caption": "SET WEIGHTS DOWN 6/6",
+          "cue": "Hinge and bend knees; lower without dropping.",
+          "progress": 0,
+          "dimensions": [1024, 1536],
+          "bytes": 1069269,
+          "sha256": "db4621c1276b460e7bb36d57ce19fb987e6376aa894d97df5a8cbd01214c05ca",
+          "reusedFrom": 1
+        }
+      ]
+    }
+  ]
+}

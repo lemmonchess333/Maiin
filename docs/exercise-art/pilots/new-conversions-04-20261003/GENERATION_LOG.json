@@ -1,0 +1,78 @@
+{
+  "mapping": {
+    "seated-calf-raise": {
+      "1": "/workspace/generated_images/exec-2ea114c4-8dc3-4aeb-ba05-1748ea935b6b.png",
+      "2": "/workspace/generated_images/exec-7f26f5e0-71d3-4453-828b-be2d0a6f2c7a.png",
+      "3": "/workspace/generated_images/exec-d4e51743-7e04-444d-ac29-1d1b161c06c5.png"
+    },
+    "farmers-carry": {
+      "1": "/workspace/generated_images/exec-c288091c-d00c-44db-b121-8a0abb46bdef.png",
+      "2": "/workspace/generated_images/exec-af89e7a9-0328-49c8-8cab-e7ab16550a3b.png",
+      "3": "/workspace/generated_images/exec-fd2019ad-ec5d-44e1-82b2-df5c072c46f8.png",
+      "4": "/workspace/generated_images/exec-a87ef2bc-9884-4ad8-b15b-a947f2288c87.png"
+    }
+  },
+  "generations": [
+    {
+      "id": "seated-calf-raise",
+      "pose": 1,
+      "prompt": "Create an educational SEATED CALF RAISE starting-frame illustration in the canonical reference style: faceless adult white-grey anatomical athlete, white shoes, opaque charcoal athletic shorts, solid black background, soleus on both lower calves highlighted purple with lighter gastrocnemius. ONE athlete SEATED UPRIGHT on a realistic compact plate-loaded seated calf machine, knees bent about90degrees, cushions pressing on lower thighs just above knees, hands resting on the machine handles. Fixed side three-quarter camera facing left, full machine and body in landscape1536x1024 with generous margins. Fixed seat and floor frame; short raised forefoot step; rigid load lever pivots near seat and holds the thigh pads and one round weight plate farther forward. Load supported coherently by the pivot and thigh contact. This is the LOW stretch: both balls of feet stay on the SHORT step and both heels hang behind it, visibly BELOW its top surface. Step must support only the front half of each shoe, leaving both heels free in air. No standing or bent-over donkey variation. No text, labels, arrows, logo, collage, or checkerboard. Clean anatomical linework and believable proportions."
+    },
+    {
+      "id": "seated-calf-raise",
+      "pose": 1,
+      "referenced_image_paths": [
+        "/workspace/generated_images/exec-778729b5-f26e-48ec-82f7-8cddbef5a861.png"
+      ],
+      "prompt": "Correct this seated calf raise instructional illustration. Preserve athlete identity, seated posture, black background, shorts, purple calves, camera and canvas. Rebuild the machine as a mechanically correct simple seated calf machine: lever pivot BEHIND the thigh pads toward the seat at right; weight plate and thigh pads BOTH extend forward LEFT from that pivot so lifting knees raises the loaded plate. No counterweight on opposite side of pivot. Shorten the foot step to support ONLY balls of feet, both heels hanging off rear edge and visibly BELOW step top for low stretch. Show clear black air gap under rear half of both shoes. Full equipment and body within margins. Single frame, no labels."
+    },
+    {
+      "id": "farmers-carry",
+      "pose": 1,
+      "referenced_image_paths": [
+        "/workspace/Maiin/docs/exercise-art/identity/athlete-anatomy-v3.png"
+      ],
+      "prompt": "Create one educational Farmer's Carry PICKUP illustration using this faceless white-grey adult anatomical athlete style, wearing opaque charcoal athletic shorts and white shoes. Solid black background. Portrait1024x1536, fixed front-side three-quarter camera facing slightly left, full body with generous headroom and ground space. Athlete hinged at hips with moderately bent knees, neutral flat back, head aligned, feet hip width planted. Both straight arms reach vertically down OUTSIDE legs to grip two identical large dark hex dumbbells RESTING ON THE FLOOR beside feet. Show full dumbbells and hands, natural grip. Purple forearm muscles, upper trapezius and subtle core, legs lightly lavender. Anatomically credible deadlift pickup, no squat curl. No text, arrows, logos or extra figures."
+    },
+    {
+      "id": "seated-calf-raise",
+      "pose": 2,
+      "referenced_image_paths": [
+        "/workspace/generated_images/exec-2ea114c4-8dc3-4aeb-ba05-1748ea935b6b.png"
+      ],
+      "prompt": "Create the MID-RAISE frame of this same seated calf raise. Preserve exact camera, canvas1536x1024, athlete scale, seat location, fixed machine floor base, rear right pivot and SHORT foot step. Balls of both feet stay on identical step coordinates. Raise both HEELS moderately, about15degrees shoe incline, ankles plantarflexing. Knees and thigh pads rise together slightly, loaded lever and left weight plate rotate UP about the fixed rear right pivot. Athlete stays seated, head and hips stay fixed; hands stay gripping handles which travel with pads. Charcoal shorts, white-grey anatomy, purple calves, black background. This must visibly differ at ankles from input but be only halfway to full tiptoe. No extra items or text."
+    },
+    {
+      "id": "seated-calf-raise",
+      "pose": 3,
+      "referenced_image_paths": [
+        "/workspace/generated_images/exec-2ea114c4-8dc3-4aeb-ba05-1748ea935b6b.png"
+      ],
+      "prompt": "Create the TOP frame of this same seated calf raise. Preserve exact camera, canvas1536x1024, athlete scale, seat location, fixed machine floor base, rear right pivot and SHORT foot step. Balls of both feet stay on identical step coordinates. Raise both HEELS HIGH, about35degrees shoe incline, unmistakable plantarflexion onto balls of feet with a large air gap under heels. Knees and thigh pads rise together, loaded lever and left weight plate rotate UP about the fixed rear right pivot. Athlete stays seated, head and hips stay fixed; hands stay gripping handles which travel with pads. Charcoal shorts, white-grey anatomy, purple calves, black background. Clear full raised heels compared with input. No extra items or text."
+    },
+    {
+      "id": "farmers-carry",
+      "pose": 2,
+      "referenced_image_paths": [
+        "/workspace/generated_images/exec-c288091c-d00c-44db-b121-8a0abb46bdef.png"
+      ],
+      "prompt": "Create standing tall position after pickup for this Farmer's Carry. Same exact anatomical athlete, charcoal shorts, white shoes, highlights, TWO identical hex dumbbells same size and grips, camera facing slightly left, blackbackground portrait1024x1536. Athlete now fully upright head to feet, hips and knees extended, feet hip width parallel, shoulders down and back, arms straight at sides holding dumbbells at outer thighs. Neutral spine, eyes ahead, no shrug, no lean. Camera zoom OUT if needed so entire upright body has generous headroom and floor margin. This standing frame will be master for subsequent walking frames. No text or other equipment."
+    },
+    {
+      "id": "farmers-carry",
+      "pose": 3,
+      "referenced_image_paths": [
+        "/workspace/generated_images/exec-af89e7a9-0328-49c8-8cab-e7ab16550a3b.png"
+      ],
+      "prompt": "Create a controlled WALKING STEP frame for this Farmer's Carry. Preserve exact1024x1536canvas, camera, athlete scale/headheight, white-grey anatomical adult with charcoalshorts, muscle highlights, blackbackground and BOTH same hex dumbbells hanging from straight arms. Tall braced torso and packed shoulders, no arm swing. Show a SHORT natural walking step toward lower left: near leg (screenright) advanced forward, its heel landing; far leg behind with heel slightly raised. Both knees softly bent as appropriate, no crossed feet, no lunge or wide stride. Weights held steadily at sides clear of legs. Keep fullbody shoes and weights within frame. Onefigure no labels."
+    },
+    {
+      "id": "farmers-carry",
+      "pose": 4,
+      "referenced_image_paths": [
+        "/workspace/generated_images/exec-af89e7a9-0328-49c8-8cab-e7ab16550a3b.png"
+      ],
+      "prompt": "Create a controlled WALKING STEP frame for this Farmer's Carry. Preserve exact1024x1536canvas, camera, athlete scale/headheight, white-grey anatomical adult with charcoalshorts, muscle highlights, blackbackground and BOTH same hex dumbbells hanging from straight arms. Tall braced torso and packed shoulders, no arm swing. Show a SHORT natural walking step toward lower left: far leg (screenleft) advanced forward, its heel landing; near leg behind with heel slightly raised. Both knees softly bent as appropriate, no crossed feet, no lunge or wide stride. Weights held steadily at sides clear of legs. Keep fullbody shoes and weights within frame. Onefigure no labels."
+    }
+  ]
+}
