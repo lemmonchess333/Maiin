@@ -1,0 +1,26 @@
+{
+  "variation": "Two-handed Russian kettlebell swing to chest height, driven by hip extension.",
+  "camera": "Fixed near side three-quarter facing left, full athlete and bell with headroom.",
+  "equipment": "One dark kettlebell, level floor.",
+  "anchors": [
+    "left shoe floor contact",
+    "right shoe floor contact",
+    "floor plane"
+  ],
+  "muscles": {
+    "primary": ["Glutes", "Hamstrings"],
+    "secondary": ["Core", "Shoulders lighter"]
+  },
+  "beats": [
+    [0, "Hinge back", "Hinge back; guide the bell between legs."],
+    [0.5, "Drive your hips", "Drive through your feet and extend hips."],
+    [1, "Let the bell float", "Stand tall; let the bell reach chest height."],
+    [1, "Stay tall", "Brace your abs without leaning back."],
+    [0.5, "Guide the descent", "Let the bell fall; keep arms relaxed."],
+    [0, "Hinge again", "Hinge back as the bell passes your legs."]
+  ],
+  "sequence": [1, 2, 3, 3, 2, 1],
+  "exerciseId": "kettlebell-swing",
+  "status": "draft-awaiting-review",
+  "releaseApproved": false
+}

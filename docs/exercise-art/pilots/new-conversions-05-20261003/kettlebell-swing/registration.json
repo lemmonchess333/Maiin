@@ -1,0 +1,153 @@
+{
+  "method": "Read-only 31x31 RGB patches, +/-20px integer search against pose 1. Drift diagnoses redraws, not anatomical correctness; no image edits or automatic approval.",
+  "selectedPoseOrder": [1, 2, 3, 3, 2, 1],
+  "poses": [
+    {
+      "frame": 1,
+      "path": "docs/exercise-art/pilots/new-conversions-05-20261003/kettlebell-swing/frames/1.png",
+      "sha256": "8123b1a9c554e5fae3bf63258f4cec79d942531ca9017cf9b6f0d2977f3c78ad",
+      "anchors": {
+        "nearHeel": {
+          "x": 967,
+          "y": 916
+        },
+        "nearToe": {
+          "x": 870,
+          "y": 921
+        },
+        "farHeel": {
+          "x": 830,
+          "y": 876
+        },
+        "farToe": {
+          "x": 730,
+          "y": 880
+        }
+      },
+      "matching": {
+        "nearHeel": {
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 0
+        },
+        "nearToe": {
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 0
+        },
+        "farHeel": {
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 0
+        },
+        "farToe": {
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 0
+        }
+      },
+      "invariantDimensions": {
+        "firstSupportSpan": 97.12878049270465,
+        "secondSupportSpan": 100.07996802557444
+      }
+    },
+    {
+      "frame": 2,
+      "path": "docs/exercise-art/pilots/new-conversions-05-20261003/kettlebell-swing/frames/2.png",
+      "sha256": "5ebb3ec58dff4a1f76d40abd501be6179acec811452217ce105ada9068fcd00c",
+      "anchors": {
+        "nearHeel": {
+          "x": 967,
+          "y": 916
+        },
+        "nearToe": {
+          "x": 870,
+          "y": 921
+        },
+        "farHeel": {
+          "x": 830,
+          "y": 876
+        },
+        "farToe": {
+          "x": 730,
+          "y": 880
+        }
+      },
+      "matching": {
+        "nearHeel": {
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 7.844259451959764
+        },
+        "nearToe": {
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 9.745057232049948
+        },
+        "farHeel": {
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 6.305931321540062
+        },
+        "farToe": {
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 8.223378425251473
+        }
+      },
+      "invariantDimensions": {
+        "firstSupportSpan": 97.12878049270465,
+        "secondSupportSpan": 100.07996802557444
+      }
+    },
+    {
+      "frame": 3,
+      "path": "docs/exercise-art/pilots/new-conversions-05-20261003/kettlebell-swing/frames/3.png",
+      "sha256": "66791213d5023a9d17b4b92ccab862849d8ac329ed5d2ed5f563f09c2dad74be",
+      "anchors": {
+        "nearHeel": {
+          "x": 967,
+          "y": 915
+        },
+        "nearToe": {
+          "x": 870,
+          "y": 920
+        },
+        "farHeel": {
+          "x": 830,
+          "y": 869
+        },
+        "farToe": {
+          "x": 730,
+          "y": 873
+        }
+      },
+      "matching": {
+        "nearHeel": {
+          "dx": 0,
+          "dy": -1,
+          "meanChannelDifference": 9.20326049254249
+        },
+        "nearToe": {
+          "dx": 0,
+          "dy": -1,
+          "meanChannelDifference": 8.154353104405134
+        },
+        "farHeel": {
+          "dx": 0,
+          "dy": -7,
+          "meanChannelDifference": 7.806451612903226
+        },
+        "farToe": {
+          "dx": 0,
+          "dy": -7,
+          "meanChannelDifference": 8.17273673257024
+        }
+      },
+      "invariantDimensions": {
+        "firstSupportSpan": 97.12878049270465,
+        "secondSupportSpan": 100.07996802557444
+      }
+    }
+  ]
+}

@@ -2,6 +2,8 @@
 
 ## Current checkpoint — 3 October 2026
 
+The [fifth new-conversion batch](pilots/new-conversions-05-20261003/README.md) adds Ab Wheel Rollout and Kettlebell Swing: twelve native draft frames with measured contact drift and mobile review evidence. The [fourth batch](pilots/new-conversions-04-20261003/REVIEW.md) adds Seated Calf Raise and Farmer’s Carry. All four remain outside production pending their recorded form/contact corrections.
+
 The latest continuation releases [Pistol Squat](releases/2026-10-03/PISTOL_SQUAT.md) after native ankle and mobile review, and adds the missing [horizontal Glute-Ham Raise endpoint](pilots/glute-ham-full-range-20261003/README.md). Glute-Ham Raise remains a draft with pad-contact findings recorded.
 
 The owner clarified the calf raise with an upright shoulder-pad machine screenshot. The [standing calf release](releases/2026-10-03/STANDING_CALF_RAISE.md) now supplies the matching sequence to both Calf Raise and Standing Calf Raise. The earlier [donkey calf release](releases/2026-10-03/DONKEY_CALF_RAISE.md) is a separate exercise variation. Other unfinished conversions remain in review.

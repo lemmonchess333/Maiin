@@ -1,0 +1,31 @@
+{
+  "exerciseId": "ab-wheel",
+  "tool": "image_gen",
+  "identity": {
+    "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+  },
+  "nativeSources": [
+    {
+      "path": "docs/exercise-art/pilots/new-conversions-05-20261003/ab-wheel/sources/pose-1.png",
+      "sha256": "b4b97befc2ca2642e20de0525aeefdfd24e0193b2c19759e625abc4fe59b2509",
+      "bytes": 779508
+    },
+    {
+      "path": "docs/exercise-art/pilots/new-conversions-05-20261003/ab-wheel/sources/pose-2.png",
+      "sha256": "8af89ad2d0b0c924dc9cba1784fd42106f94d092c42286bddbc83a43ab27dd89",
+      "bytes": 793457
+    },
+    {
+      "path": "docs/exercise-art/pilots/new-conversions-05-20261003/ab-wheel/sources/pose-3.png",
+      "sha256": "638c57ea43d4eb9846b027f36f67a7550c29c8fb8cdfb2fa30a67e710057d798",
+      "bytes": 1196775
+    }
+  ],
+  "processing": "Native PNG bytes copied unchanged. Slots 4, 5, 6 reuse 3, 2, 1; no body warping or equipment compositing.",
+  "reviewFindings": [
+    "Three distinct poses show a kneeling setup, forward rollout and extended range, then reverse. Both hands remain at the wheel and knees remain on the pad.",
+    "Read-only patch matching measures near-knee shifts up to 3px horizontally / 2px vertically, and a pad-corner shift of 2px vertically. These exceed the existing 1px fixed-anchor release limit. Wheel dimensions also need consistency review. Remains a draft."
+  ],
+  "releaseApproved": false
+}
