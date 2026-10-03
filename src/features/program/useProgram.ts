@@ -4,7 +4,10 @@ import {
   type ProgramUpdater,
 } from "./programTransition";
 import { ProgrammeConflictError, sameStoredValue } from "./stateTransition";
-import { areRaceRunDaysStale, raceIsInFuture } from "./raceRunDaysReconcile";
+import {
+  raceWeekNeedsBuilding,
+  weekRolloverAnchor,
+} from "./programMaintenance";
 import type { ProgrammeCompletionContext } from "@/lib/workoutCompletion";
 import {
   completeLift,
@@ -602,28 +605,15 @@ export function useProgram() {
         const thisWeek = localWeekKey();
         const weekSchedule = profile.weekSchedule ?? [];
         const runTarget = getWeeklyRunTarget(profile) || 3;
-        // Earlier weeks belong to auto-rollover, which archives their history.
-        // Reconcile only a wrong template in the current week here, inline with
-        // load, so a second effect cannot race the rollover writer.
-        const repairCurrentRaceWeek =
-          effectiveRunMode === "race_prep" &&
-          raceIsInFuture(profile.raceGoal, today) &&
-          !isInRecoveryOn(next.runPlan, today) &&
-          next.runDays?.[0]?.weekKey === thisWeek &&
-          areRaceRunDaysStale({
-            runDays: next.runDays,
-            raceGoal: profile.raceGoal,
-            weekSchedule,
-            weeklyRunDays: runTarget,
-            todayKey: today,
-          });
         if (profile.runMode === "structured") {
           next = { ...next, runDays: [] };
           delete next.runPlan;
         } else if (
           profile.raceGoal &&
-          effectiveRunMode === "race_prep" &&
-          (!next.runDays || repairCurrentRaceWeek)
+          // Earlier weeks belong to auto-rollover, which archives their
+          // history. Only this week's runs are built here, inline with load,
+          // so a second effect cannot race the rollover writer.
+          raceWeekNeedsBuilding(next, profile, today)
         ) {
           // A cold load must use the same returning-runner evidence as rollover.
           const layoff = await fetchRecentLayoff(user.uid, today);
@@ -1159,8 +1149,9 @@ export function useProgram() {
     // wait-for-migration early-return.
     if (user && layoffRead.uid !== user.uid) return;
 
-    const runDayWeekKey = programState.runDays?.[0]?.weekKey;
-    if (!runDayWeekKey) return;
+    const rollover = weekRolloverAnchor(programState, profile);
+    if (rollover?.side !== "run") return;
+    const runDayWeekKey = rollover.weekKey;
 
     const todayKeyG = localWeekKey();
     if (runDayWeekKey >= todayKeyG) return;
@@ -1289,20 +1280,15 @@ export function useProgram() {
     if (programState.programSchemaVersion !== CURRENT_PROGRAM_SCHEMA_VERSION)
       return;
 
-    // Precisely the complement of the run-side effect's guards, so exactly one
-    // of the two can act on any given state.
-    const runSideOwnsRollover =
-      !!profile.runMode &&
-      profile.runMode !== "freeform" &&
-      !!programState.runDays?.[0]?.weekKey;
-    if (runSideOwnsRollover) return;
-
-    const anchor = programState.liftWeekKey;
-    // Absent means a pre-D1 document that `migrateProgramState` has not
+    // The run-side effect acts on a "run" anchor and this one on a "lift"
+    // anchor, so exactly one of the two can act on any given state. No
+    // anchor means a pre-D1 document that `migrateProgramState` has not
     // repaired yet. Do nothing — seeding here would race the migration, and
     // treating absent as stale would roll a returning user forward by the
     // whole iteration cap on first open.
-    if (!anchor) return;
+    const rollover = weekRolloverAnchor(programState, profile);
+    if (rollover?.side !== "lift") return;
+    const anchor = rollover.weekKey;
 
     const todayKey = localWeekKey();
     if (anchor >= todayKey) return;
