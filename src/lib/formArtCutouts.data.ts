@@ -147,6 +147,16 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
       "afee5565830317710ab999faca850ab492c959f06df2c60d22e146c8fd97d44e",
     sha256: "1c08ea5c166d58cdf3307193b62ecda473344bb325aacb9f350968c6f2f8755c",
   },
+  "calf-raise": {
+    src: "form-art/calf-raise.webp",
+    width: 320,
+    height: 480,
+    keyed: true,
+    source: "form-frames/calf-raise/3.webp",
+    sourceSha256:
+      "aca1db8fc393638d52ede1f7204f8aac667a011fe82b86432866d74951d02de8",
+    sha256: "b3929dbabf02f5518263a155e1a0bf817351972fd54717d065a9b6d4b70684af",
+  },
   "chest-press-machine": {
     src: "form-art/chest-press-machine.webp",
     width: 422,
@@ -566,6 +576,16 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
     sourceSha256:
       "be48eb2d8d92308fc4e4d72c7509915d87a6b8efe0fba68500cf7c1721882cfe",
     sha256: "4186733dbe706284d7a215248f04aca16975fc7087f59da551de06c8da9bfc03",
+  },
+  "standing-calf-raise": {
+    src: "form-art/standing-calf-raise.webp",
+    width: 320,
+    height: 480,
+    keyed: true,
+    source: "form-frames/standing-calf-raise/3.webp",
+    sourceSha256:
+      "aca1db8fc393638d52ede1f7204f8aac667a011fe82b86432866d74951d02de8",
+    sha256: "b3929dbabf02f5518263a155e1a0bf817351972fd54717d065a9b6d4b70684af",
   },
   "superman-hold": {
     src: "form-art/superman-hold.webp",

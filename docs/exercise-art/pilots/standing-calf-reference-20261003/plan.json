@@ -1,0 +1,50 @@
+{
+  "exerciseIds": ["calf-raise", "standing-calf-raise"],
+  "variation": "Upright standing machine calf raise, matching the owner reference screenshot; shoulder pads, hand grips, forefeet on short elevated step and free heels.",
+  "camera": "Fixed rear three-quarter facing left, entire machine and athlete visible; portrait 1024x1536.",
+  "identity": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+  "equipment": "Selectorized standing calf machine with a fixed floor frame and short forefoot step, shoulder carriage that travels vertically on guide rods, grips attached to carriage, visible weight stack.",
+  "primary": ["Gastrocnemius"],
+  "secondary": ["Soleus"],
+  "beats": [
+    {
+      "frame": 1,
+      "label": "Set your stretch",
+      "cue": "Stand tall; lower heels below the step.",
+      "pose": "Bottom stretch, both heels below fixed step."
+    },
+    {
+      "frame": 2,
+      "label": "Raise your heels",
+      "cue": "Push through forefeet; keep knees softly straight.",
+      "pose": "Heels level with step, body and shoulder carriage slightly raised."
+    },
+    {
+      "frame": 3,
+      "label": "Squeeze your calves",
+      "cue": "Lift heels high and squeeze your calves.",
+      "pose": "Full controlled tiptoe, heels high, body and shoulder carriage rise together."
+    },
+    {
+      "frame": 4,
+      "label": "Hold the top",
+      "cue": "Pause briefly; keep your torso upright.",
+      "reuse": 3
+    },
+    {
+      "frame": 5,
+      "label": "Lower slowly",
+      "cue": "Lower your heels slowly without bouncing.",
+      "reuse": 2
+    },
+    {
+      "frame": 6,
+      "label": "Return to stretch",
+      "cue": "Let heels sink below the step gently.",
+      "reuse": 1
+    }
+  ],
+  "status": "approved-for-production",
+  "reference": "Owner-provided Training.fit screenshot in conversation, 2026-10-03; top image shows intended upright shoulder-pad machine.",
+  "identityVariation": "Charcoal athletic shorts follow the owner screenshot."
+}

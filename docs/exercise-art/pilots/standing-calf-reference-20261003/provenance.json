@@ -1,0 +1,53 @@
+{
+  "exerciseIds": ["calf-raise", "standing-calf-raise"],
+  "reference": "Owner standing-calf screenshot supplied during the active merge task.",
+  "identity": {
+    "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+  },
+  "builder": {
+    "path": "docs/exercise-art/pilots/standing-calf-reference-20261003/build.py",
+    "sha256": "a99cd96e06a76e7e906e0ec7a40250e1dfbc4da31113a43c36991a2b2e0cc520"
+  },
+  "sources": [
+    {
+      "path": "docs/exercise-art/pilots/standing-calf-reference-20261003/sources/1.png",
+      "sha256": "73cd2ab226ccc7e5b1131598ff651977484260bdf06c0b6399ee537ed7e63a89"
+    },
+    {
+      "path": "docs/exercise-art/pilots/standing-calf-reference-20261003/sources/2.png",
+      "sha256": "3c76486bdfb196ac750cb52ee097575c0256b5f54cfa2af9b2d2f72181713cba"
+    },
+    {
+      "path": "docs/exercise-art/pilots/standing-calf-reference-20261003/sources/3.png",
+      "sha256": "7bdeb641ed3db148aaff42ae8d872a11416a900dd9a687e1e6ca34d26c651de8"
+    }
+  ],
+  "frames": [
+    {
+      "path": "docs/exercise-art/pilots/standing-calf-reference-20261003/frames/1.png",
+      "sha256": "749ea229ad1ddc8aebf82ead0cec205218f92d5cebe089adbb3bdb557269de74"
+    },
+    {
+      "path": "docs/exercise-art/pilots/standing-calf-reference-20261003/frames/2.png",
+      "sha256": "23cbcf0e88e2efd7db9ba1e690fa9a20faf78f46dc19f56e6f5eba693f61dd27"
+    },
+    {
+      "path": "docs/exercise-art/pilots/standing-calf-reference-20261003/frames/3.png",
+      "sha256": "959e1493733e96683d754d28ee3597ccd9a24671130225fcdc354d1d0cfaa76f"
+    },
+    {
+      "path": "docs/exercise-art/pilots/standing-calf-reference-20261003/frames/4.png",
+      "sha256": "959e1493733e96683d754d28ee3597ccd9a24671130225fcdc354d1d0cfaa76f"
+    },
+    {
+      "path": "docs/exercise-art/pilots/standing-calf-reference-20261003/frames/5.png",
+      "sha256": "23cbcf0e88e2efd7db9ba1e690fa9a20faf78f46dc19f56e6f5eba693f61dd27"
+    },
+    {
+      "path": "docs/exercise-art/pilots/standing-calf-reference-20261003/frames/6.png",
+      "sha256": "749ea229ad1ddc8aebf82ead0cec205218f92d5cebe089adbb3bdb557269de74"
+    }
+  ],
+  "review": "Separate production reviews for calf-raise and standing-calf-raise."
+}

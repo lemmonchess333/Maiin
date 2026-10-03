@@ -1,0 +1,271 @@
+{
+  "exerciseId": "calf-raise",
+  "version": "anatomy-v3-upright-reference-2026-10-03",
+  "width": 1024,
+  "height": 1536,
+  "decision": "approved",
+  "reviewer": "Codex native anatomy, owner-reference variation, fixed equipment and mobile player review",
+  "reviewedAt": "2026-10-03T16:08:30.222976+00:00",
+  "reference": {
+    "path": "form-frames/calf-raise/3.webp",
+    "sha256": "aca1db8fc393638d52ede1f7204f8aac667a011fe82b86432866d74951d02de8",
+    "anchors": {
+      "leftBaseBolt": {
+        "x": 262,
+        "y": 1286
+      },
+      "leftFloorFoot": {
+        "x": 63,
+        "y": 1294
+      },
+      "cageLeftPost": {
+        "x": 261,
+        "y": 500
+      },
+      "cageRightPost": {
+        "x": 493,
+        "y": 500
+      }
+    },
+    "invariantDimensions": {
+      "cagePostSpan": 232,
+      "selectedStackLayerWidth": 185,
+      "selectedStackLayerHeight": 196
+    }
+  },
+  "cueSha256": "2f242605e505975db3cd60a9d9dd8bac4f336397481a008f3ba2438c0fae8f21",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "White-grey faceless anatomical athlete with white shoes and purple calves. Opaque charcoal athletic shorts follow the owner-provided standing calf reference."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Native1024x1536 fixed rear three-quarter scene; complete upright athlete and machine visible."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Native full frames and enlarged shoes reviewed: upright torso, softly straight knees, connected ankles and natural heel rise. No body warping or resizing in final selection."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Fixed cage and floor regions reuse setup pixels. One196x185 selected plate/sleeve layer moves at0,8,64px while lower plates remain fixed."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Shoulder cushions remain on the shoulders and hands wrap the attached handles. Both forefeet stay supported by the elevated step; heels overhang and then rise. Native shoe flexion is retained; this is a visual contact review, not a claim of pixel-exact sole registration."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Standing calf raise matches the owner screenshot: no forward hip hinge, shoulder loading, heel drop followed by tiptoe and controlled return."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Purple gastrocnemius and lighter soleus highlights remain on both calves."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Six short cues describe the upright shoulder-pad variation in both catalogue entries; no donkey-calf instructions reused."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "Three selected native poses stored as six lossless WebPs in1,2,3,3,2,1 order."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "393x852 production player in light theme: six lossless delivery frames, expected cues,320x480 transparent card, no overflow/page errors, touch controls and reduced motion. Native and mobile screenshots inspected; see standing-calf-evidence/."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "393x852 production player in dark theme: six lossless delivery frames, expected cues,320x480 transparent card, no overflow/page errors, touch controls and reduced motion. Native and mobile screenshots inspected; see standing-calf-evidence/."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/calf-raise/1.webp",
+      "sha256": "82c966e915a52cc97b4a83c094816bc0fff3b0f38d6a4ede8a839981d476070c",
+      "anchors": {
+        "leftBaseBolt": {
+          "x": 262,
+          "y": 1286
+        },
+        "leftFloorFoot": {
+          "x": 63,
+          "y": 1294
+        },
+        "cageLeftPost": {
+          "x": 261,
+          "y": 500
+        },
+        "cageRightPost": {
+          "x": 493,
+          "y": 500
+        }
+      },
+      "invariantDimensions": {
+        "cagePostSpan": 232,
+        "selectedStackLayerWidth": 185,
+        "selectedStackLayerHeight": 196
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/standing-calf-reference-20261003/frames/1.png",
+        "sha256": "749ea229ad1ddc8aebf82ead0cec205218f92d5cebe089adbb3bdb557269de74"
+      }
+    },
+    {
+      "path": "form-frames/calf-raise/2.webp",
+      "sha256": "dfd5a1f7e05d83d59313652f71dba23c89fe6e0c635fa8e6e6fbbfcd61fba0d1",
+      "anchors": {
+        "leftBaseBolt": {
+          "x": 262,
+          "y": 1286
+        },
+        "leftFloorFoot": {
+          "x": 63,
+          "y": 1294
+        },
+        "cageLeftPost": {
+          "x": 261,
+          "y": 500
+        },
+        "cageRightPost": {
+          "x": 493,
+          "y": 500
+        }
+      },
+      "invariantDimensions": {
+        "cagePostSpan": 232,
+        "selectedStackLayerWidth": 185,
+        "selectedStackLayerHeight": 196
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/standing-calf-reference-20261003/frames/2.png",
+        "sha256": "23cbcf0e88e2efd7db9ba1e690fa9a20faf78f46dc19f56e6f5eba693f61dd27"
+      }
+    },
+    {
+      "path": "form-frames/calf-raise/3.webp",
+      "sha256": "aca1db8fc393638d52ede1f7204f8aac667a011fe82b86432866d74951d02de8",
+      "anchors": {
+        "leftBaseBolt": {
+          "x": 262,
+          "y": 1286
+        },
+        "leftFloorFoot": {
+          "x": 63,
+          "y": 1294
+        },
+        "cageLeftPost": {
+          "x": 261,
+          "y": 500
+        },
+        "cageRightPost": {
+          "x": 493,
+          "y": 500
+        }
+      },
+      "invariantDimensions": {
+        "cagePostSpan": 232,
+        "selectedStackLayerWidth": 185,
+        "selectedStackLayerHeight": 196
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/standing-calf-reference-20261003/frames/3.png",
+        "sha256": "959e1493733e96683d754d28ee3597ccd9a24671130225fcdc354d1d0cfaa76f"
+      }
+    },
+    {
+      "path": "form-frames/calf-raise/4.webp",
+      "sha256": "aca1db8fc393638d52ede1f7204f8aac667a011fe82b86432866d74951d02de8",
+      "anchors": {
+        "leftBaseBolt": {
+          "x": 262,
+          "y": 1286
+        },
+        "leftFloorFoot": {
+          "x": 63,
+          "y": 1294
+        },
+        "cageLeftPost": {
+          "x": 261,
+          "y": 500
+        },
+        "cageRightPost": {
+          "x": 493,
+          "y": 500
+        }
+      },
+      "invariantDimensions": {
+        "cagePostSpan": 232,
+        "selectedStackLayerWidth": 185,
+        "selectedStackLayerHeight": 196
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/standing-calf-reference-20261003/frames/4.png",
+        "sha256": "959e1493733e96683d754d28ee3597ccd9a24671130225fcdc354d1d0cfaa76f"
+      }
+    },
+    {
+      "path": "form-frames/calf-raise/5.webp",
+      "sha256": "dfd5a1f7e05d83d59313652f71dba23c89fe6e0c635fa8e6e6fbbfcd61fba0d1",
+      "anchors": {
+        "leftBaseBolt": {
+          "x": 262,
+          "y": 1286
+        },
+        "leftFloorFoot": {
+          "x": 63,
+          "y": 1294
+        },
+        "cageLeftPost": {
+          "x": 261,
+          "y": 500
+        },
+        "cageRightPost": {
+          "x": 493,
+          "y": 500
+        }
+      },
+      "invariantDimensions": {
+        "cagePostSpan": 232,
+        "selectedStackLayerWidth": 185,
+        "selectedStackLayerHeight": 196
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/standing-calf-reference-20261003/frames/5.png",
+        "sha256": "23cbcf0e88e2efd7db9ba1e690fa9a20faf78f46dc19f56e6f5eba693f61dd27"
+      }
+    },
+    {
+      "path": "form-frames/calf-raise/6.webp",
+      "sha256": "82c966e915a52cc97b4a83c094816bc0fff3b0f38d6a4ede8a839981d476070c",
+      "anchors": {
+        "leftBaseBolt": {
+          "x": 262,
+          "y": 1286
+        },
+        "leftFloorFoot": {
+          "x": 63,
+          "y": 1294
+        },
+        "cageLeftPost": {
+          "x": 261,
+          "y": 500
+        },
+        "cageRightPost": {
+          "x": 493,
+          "y": 500
+        }
+      },
+      "invariantDimensions": {
+        "cagePostSpan": 232,
+        "selectedStackLayerWidth": 185,
+        "selectedStackLayerHeight": 196
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/standing-calf-reference-20261003/frames/6.png",
+        "sha256": "749ea229ad1ddc8aebf82ead0cec205218f92d5cebe089adbb3bdb557269de74"
+      }
+    }
+  ]
+}

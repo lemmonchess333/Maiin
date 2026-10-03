@@ -15,6 +15,41 @@ const placard = (
 });
 
 export const RELEASED_FORM_PLACARDS = {
+  "calf-raise": placard(
+    "calf-raise",
+    ["Gastrocnemius"],
+    ["Soleus"],
+    [
+      [0, "Set your stretch", "Stand tall; lower heels below the step."],
+      [
+        0.5,
+        "Raise your heels",
+        "Push through forefeet; keep knees softly straight.",
+      ],
+      [1, "Squeeze your calves", "Lift heels high and squeeze your calves."],
+      [1, "Hold the top", "Pause briefly; keep your torso upright."],
+      [0.5, "Lower slowly", "Lower your heels slowly without bouncing."],
+      [0, "Return to stretch", "Let heels sink below the step gently."],
+    ]
+  ),
+  "standing-calf-raise": placard(
+    "standing-calf-raise",
+    ["Gastrocnemius"],
+    ["Soleus"],
+    [
+      [0, "Set your stretch", "Stand tall; lower heels below the step."],
+      [
+        0.5,
+        "Raise your heels",
+        "Push through forefeet; keep knees softly straight.",
+      ],
+      [1, "Squeeze your calves", "Lift heels high and squeeze your calves."],
+      [1, "Hold the top", "Pause briefly; keep your torso upright."],
+      [0.5, "Lower slowly", "Lower your heels slowly without bouncing."],
+      [0, "Return to stretch", "Let heels sink below the step gently."],
+    ]
+  ),
+
   "donkey-calf-raise": placard(
     "donkey-calf-raise",
     ["Gastrocnemius"],

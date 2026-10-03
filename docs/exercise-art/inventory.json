@@ -2,9 +2,9 @@
   "catalogue": 152,
   "inScope": 141,
   "existingSets": 6,
-  "newlyApproved": 52,
+  "newlyApproved": 54,
   "ownerReleasedWithFindings": 3,
-  "releasedBytes": 181176746,
+  "releasedBytes": 190497826,
   "errors": [],
   "inventory": [
     {
@@ -876,18 +876,18 @@
       "name": "Calf Raise",
       "equipment": "Machine",
       "inScope": true,
-      "authoredBeats": 0,
-      "status": "needs-artwork",
-      "bytes": 0
+      "authoredBeats": 6,
+      "status": "approved",
+      "bytes": 4660540
     },
     {
       "id": "standing-calf-raise",
       "name": "Standing Calf Raise",
       "equipment": "Machine",
       "inScope": true,
-      "authoredBeats": 0,
-      "status": "needs-artwork",
-      "bytes": 0
+      "authoredBeats": 6,
+      "status": "approved",
+      "bytes": 4660540
     },
     {
       "id": "seated-calf-raise",
