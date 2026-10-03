@@ -469,3 +469,81 @@ describe("RUN-EV-03 — the layoff read is a declared regeneration dependency", 
     expect(longestKm(week)).toBeLessThanOrEqual(14);
   });
 });
+
+/**
+ * The rest of what a regenerated week is built from. The rollover, "Start
+ * next week" and the run-plan editor each built the race plan's inputs
+ * themselves until they shared one recipe (`regenerateRacePlan` and
+ * `nextRunWeek` in useProgram.ts); these pin what that recipe must keep
+ * doing, through the real hook.
+ */
+describe("what else a regenerated week is built from", () => {
+  const PROGRAM = "users/userA/programState/current";
+  const stored = () =>
+    readDoc(PROGRAM) as {
+      runDays?: unknown[];
+      runPlan?: { currentWeek?: number };
+    };
+
+  /** Mount, let the first plan land and age it into mid-block, then hand
+   *  the hook `profile` and return it once the rollover has run. */
+  async function rolledOver(profile: () => Record<string, unknown>) {
+    mockProfile = profile();
+    seedRunHistory("userA", 1);
+    const hook = renderHook(() => useProgram());
+    await waitFor(() =>
+      expect(persistedRunDays("userA").length).toBeGreaterThan(0)
+    );
+    await ageIntoMidBlock("userA", 9);
+    mockProfile = profile();
+    hook.rerender();
+    return hook;
+  }
+
+  it("caps the long run at a slow runner's confirmed easy pace", async () => {
+    // Run17: at a confirmed easy pace of 10:42/km (VDOT 20) the 150-minute
+    // ceiling admits no long run past 12 km. The trained runner above
+    // reaches past 14 km in the same week, so a week built without the
+    // pace would too.
+    await rolledOver(() => ({
+      ...raceProfile(),
+      runFitness: { benchmark: null, vdot: 20 },
+    }));
+    await waitFor(() =>
+      expect(stored().runPlan?.currentWeek).toBeGreaterThan(9)
+    );
+    const week = persistedRunDays("userA");
+    expect(longestKm(week)).toBeGreaterThan(0);
+    expect(longestKm(week)).toBeLessThanOrEqual(12);
+  });
+
+  it("builds the week from the editor's tuning before the profile has it", async () => {
+    // The run-plan editor saves new knobs and refreshes in the same tap, so
+    // the profile this hook holds is still the old one.
+    const { result } = await rolledOver(raceProfile);
+    await waitFor(() =>
+      expect(stored().runPlan?.currentWeek).toBeGreaterThan(9)
+    );
+    const standard = longestKm(persistedRunDays("userA"));
+    expect(standard).toBeGreaterThan(14);
+    await act(async () => {
+      await result.current.refreshRunSchedule({
+        tuning: { volume: "lighter", difficulty: "standard" },
+      });
+    });
+    expect(longestKm(persistedRunDays("userA"))).toBeLessThan(standard);
+  });
+
+  it("rolls a week that starts after the race into free running", async () => {
+    // R3: the race is over, recovery has ended, and the server has not yet
+    // cleared raceGoal. The week moved into is free running, never a race
+    // plan dated before it, and never last week's runs carried on.
+    const raceBeforeThisWeek = shift(String(localWeekKey()), -1);
+    await rolledOver(() => ({
+      ...raceProfile(),
+      raceGoal: { distance: "marathon", targetDate: raceBeforeThisWeek },
+    }));
+    await waitFor(() => expect(stored().runDays).toEqual([]));
+    expect(stored().runPlan).toBeUndefined();
+  });
+});

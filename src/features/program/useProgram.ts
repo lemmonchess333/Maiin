@@ -1,5 +1,3 @@
-import type { RunningBaseline } from "@/features/program/runningBaseline";
-import type { RunTimeLimits } from "./runTimeLimits";
 import {
   commitProgramTransition,
   commitProgramUpdate,
@@ -216,17 +214,17 @@ function makeRunPlanRecord(
  * that `refreshRunSchedule` already used, and without the
  * `completedRaces` re-attach that multi-race plans need.
  *
- * The helper accepts everything explicitly so callers stay in
- * control of which week / schedule / target they feed in (varies
- * per site — load uses today, week-advance uses next-week start,
- * editor-apply uses an overridden schedule).
+ * Callers pass what varies per site — which week, schedule and target
+ * (load uses today, week-advance uses next-week start, editor-apply uses
+ * an overridden schedule). What does not vary — the runner's tuning, easy
+ * pace, time limits and running baseline — is read off the profile here,
+ * so no site can leave one out. They were required arguments, written out
+ * the same way at all seven sites.
  */
 function regenerateRacePlan({
+  profile,
   raceGoal,
   recentLayoff,
-  easyPaceSPerKm,
-  runningBaseline,
-  runTimeLimits,
   weekSchedule,
   weeklyRunDays,
   currentDate,
@@ -235,6 +233,12 @@ function regenerateRacePlan({
   carry,
   prior,
 }: {
+  /** The runner. Pgm6's tuning (`runTuningFromProfile`), Run17's confirmed
+   *  easy pace (`planningEasyPaceSPerKm`), the run time limits and the
+   *  running baseline all come from here: a plan built without one would
+   *  regress a tuned plan to standard, or a benchmarked runner's long-run
+   *  ceiling to the nominal table, on the next weekly refresh. */
+  profile: UserProfile;
   raceGoal: {
     distance: "5k" | "10k" | "half" | "marathon";
     targetDate: string;
@@ -244,23 +248,15 @@ function regenerateRacePlan({
   weeklyRunDays: number;
   currentDate: string;
   weekStart: string;
-  /** Pgm6 knobs — REQUIRED here (unlike the generator's optional
-   *  param) so no regen site can silently forget them and regress a
-   *  tuned plan back to standard. Derive via
-   *  `runTuningFromProfile(profile)`. */
-  tuning: RunTuning;
+  /** Pgm6 knobs newer than `profile`: the run-plan editor saves them and
+   *  refreshes before this closure's profile has caught up
+   *  (`RefreshRunScheduleOverrides.tuning`). */
+  tuning?: RunTuning;
   /** Run15 — how long the runner has been away. Required for the same reason
    *  it is required on `RacePlanV2Input`: a regen site that forgets it would
    *  silently rebuild a returning runner's week at mid-block volume, and a
    *  compile error is a better guard than a convention. */
   recentLayoff: LayoffClass;
-  /** Run17 — the runner's confirmed easy pace (`planningEasyPaceSPerKm`), or
-   *  null. REQUIRED for the same reason as `tuning`: a regen site that forgot
-   *  it would silently revert a benchmarked runner's long-run ceiling to the
-   *  nominal table on the next weekly refresh. */
-  easyPaceSPerKm: number | null;
-  runningBaseline: RunningBaseline | null;
-  runTimeLimits: RunTimeLimits | null;
   carry?: {
     currentWeek?: number;
     totalWeeks?: number;
@@ -297,11 +293,11 @@ function regenerateRacePlan({
     weeklyRunDays,
     currentDate,
     weekStart,
-    tuning,
+    tuning: tuning ?? runTuningFromProfile(profile),
     recentLayoff,
-    easyPaceSPerKm,
-    runningBaseline,
-    runTimeLimits,
+    easyPaceSPerKm: planningEasyPaceSPerKm(profile.runFitness),
+    runningBaseline: profile.runningBaseline ?? null,
+    runTimeLimits: profile.runTimeLimits ?? null,
     // The block's original length, so the generator emits the week for where
     // the runner actually IS rather than week 0 of a fresh block. Without it
     // `weeks[0]` — the only week any caller persists — is always a base week,
@@ -349,6 +345,67 @@ function regenerateRacePlan({
     );
   }
   return { runDays, runPlan, manualCompletions: carriedManualCompletions };
+}
+
+/**
+ * The run side of moving the programme into the next week, shared by the
+ * Monday rollover and "Start next week". `advanced` is the programme with
+ * its lift side already moved on; `next` is the week moved into.
+ */
+function nextRunWeek(
+  advanced: ProgramState,
+  next: { weekStart: string; date: string },
+  profile: UserProfile,
+  recentLayoff: LayoffClass
+): Pick<ProgramState, "runDays" | "runPlan"> {
+  const weekSchedule = profile.weekSchedule ?? [];
+  const runPlan = advanced.runPlan;
+  // Asked about NEXT week's date, not today: the question is whether the
+  // week being rolled into is still inside the recovery window.
+  if (runPlan && isInRecoveryOn(runPlan, next.date)) {
+    // RUN-H1: a week rolling over mid-recovery must STAY a recovery week
+    // and keep phase/recoveryEndDate — never regenerate a race plan (which
+    // emits race-training runDays AND drops the recovery flags via
+    // makeRunPlanRecord). Mirrors refreshRunSchedule's recovery branch;
+    // recovery exit is a deliberate decision (resolveRecoveryExit), not a
+    // rollover side effect.
+    return {
+      runDays: scheduleRecoveryWeekV2({
+        weekSchedule,
+        weekStart: next.weekStart,
+      }),
+      runPlan: { ...runPlan },
+    };
+  }
+  if (
+    profile.runMode === "race_prep" &&
+    profile.raceGoal &&
+    // R3: same elapsed guard as refreshRunSchedule — a week rolling over
+    // after an elapsed race (recovery ended, raceGoal not yet server-
+    // cleared) must go freeform, not regenerate a plan dated in the past.
+    next.date <= profile.raceGoal.targetDate
+  ) {
+    const regenerated = regenerateRacePlan({
+      profile,
+      recentLayoff,
+      raceGoal: profile.raceGoal,
+      weekSchedule,
+      weeklyRunDays: getWeeklyRunTarget(profile) || 3,
+      currentDate: next.date,
+      weekStart: next.weekStart,
+      carry: {
+        currentWeek: (runPlan?.currentWeek ?? 0) + 1,
+        totalWeeks: runPlan?.totalWeeks,
+        completedRaces: runPlan?.completedRaces,
+      },
+    });
+    return { runDays: regenerated.runDays, runPlan: regenerated.runPlan };
+  }
+  // RUN-M: structured mode is retired (Run9a — the Run surface is two
+  // states, freeform + race_prep), so a week that is neither recovering nor
+  // racing is free running: no planned runs, no runPlan. Never resurrect a
+  // structured week here.
+  return { runDays: [], runPlan: undefined };
 }
 
 interface RefreshRunScheduleOverrides {
@@ -567,10 +624,7 @@ export function useProgram() {
           if (cancelled || auth.currentUser?.uid !== user.uid) return;
           const runs = regenerateRacePlan({
             recentLayoff: layoff,
-            tuning: runTuningFromProfile(profile),
-            easyPaceSPerKm: planningEasyPaceSPerKm(profile?.runFitness),
-            runTimeLimits: profile?.runTimeLimits ?? null,
-            runningBaseline: profile?.runningBaseline ?? null,
+            profile,
             raceGoal: profile.raceGoal,
             weekSchedule,
             weeklyRunDays: runTarget,
@@ -655,12 +709,7 @@ export function useProgram() {
           const weekStart = localWeekKey();
           ({ runDays, runPlan } = regenerateRacePlan({
             recentLayoff,
-            tuning: runTuningFromProfile(profile),
-
-            easyPaceSPerKm: planningEasyPaceSPerKm(profile?.runFitness),
-
-            runTimeLimits: profile?.runTimeLimits ?? null,
-            runningBaseline: profile?.runningBaseline ?? null,
+            profile,
             raceGoal: profile.raceGoal,
             weekSchedule,
             weeklyRunDays: runTarget,
@@ -1136,76 +1185,19 @@ export function useProgram() {
         ? { ...rolling }
         : advanceWeek(rolling, profile.experience, recovery, nextLiftWeekKey);
 
-      // Advance run side. Compute the next week's start key. Take
-      // one week step from the current runDay week key.
-      const nextWeekStart = localWeekKey(
-        addLocalDays(parseLocalDate(currentRunWeekKey), 7)
+      // Advance run side: one week step from the current runDay week key.
+      const nextRunDate = addLocalDays(parseLocalDate(currentRunWeekKey), 7);
+      const runs = nextRunWeek(
+        advanced,
+        {
+          weekStart: localWeekKey(nextRunDate),
+          date: localDateString(nextRunDate),
+        },
+        profile,
+        recentLayoff
       );
-      const nextWeekCurrentDate = localDateString(
-        addLocalDays(parseLocalDate(currentRunWeekKey), 7)
-      );
-      const weekSchedule = profile.weekSchedule ?? [];
-      const runTarget = getWeeklyRunTarget(profile) || 3;
-
-      const advRunPlan = advanced.runPlan;
-      // Asked about NEXT week's date, not today: the question is whether the
-      // week being rolled into is still inside the recovery window. The
-      // explicit `!!advRunPlan` is what carries the non-null guarantee into
-      // the block below, which spreads it — `isInRecoveryOn` deliberately
-      // does not narrow (see its doc).
-      const inRecovery =
-        !!advRunPlan && isInRecoveryOn(advRunPlan, nextWeekCurrentDate);
-
-      if (inRecovery) {
-        // RUN-H1: a week rolling over mid-recovery must STAY a recovery week
-        // and keep phase/recoveryEndDate — never regenerate a race plan (which
-        // emits race-training runDays AND drops the recovery flags via
-        // makeRunPlanRecord). Mirrors refreshRunSchedule's recovery branch;
-        // recovery exit is a deliberate decision (resolveRecoveryExit), not a
-        // rollover side effect.
-        advanced.runDays = scheduleRecoveryWeekV2({
-          weekSchedule,
-          weekStart: nextWeekStart,
-        });
-        advanced.runPlan = { ...advRunPlan };
-      } else if (
-        profile.runMode === "race_prep" &&
-        profile.raceGoal &&
-        // R3: same elapsed guard as refreshRunSchedule — a week rolling over
-        // after an elapsed race (recovery ended, raceGoal not yet server-
-        // cleared) must go freeform, not regenerate a plan dated in the past.
-        nextWeekCurrentDate <= profile.raceGoal.targetDate
-      ) {
-        const r = regenerateRacePlan({
-          recentLayoff,
-          tuning: runTuningFromProfile(profile),
-
-          easyPaceSPerKm: planningEasyPaceSPerKm(profile?.runFitness),
-
-          runTimeLimits: profile?.runTimeLimits ?? null,
-          runningBaseline: profile?.runningBaseline ?? null,
-          raceGoal: profile.raceGoal,
-          weekSchedule,
-          weeklyRunDays: runTarget,
-          currentDate: nextWeekCurrentDate,
-          weekStart: nextWeekStart,
-          carry: {
-            currentWeek: (advanced.runPlan?.currentWeek ?? 0) + 1,
-            totalWeeks: advanced.runPlan?.totalWeeks,
-            completedRaces: advanced.runPlan?.completedRaces,
-          },
-        });
-        advanced.runDays = r.runDays;
-        advanced.runPlan = r.runPlan;
-      } else {
-        // RUN-M: structured mode is retired (Run9a — the Run surface is two
-        // states, freeform + race_prep). This else is unreachable today (the
-        // effect early-returns on freeform), so a non-race state IS freeform:
-        // no auto-assigned runDays, no runPlan. Never resurrect a structured
-        // week here.
-        advanced.runDays = [];
-        advanced.runPlan = undefined;
-      }
+      advanced.runDays = runs.runDays;
+      advanced.runPlan = runs.runPlan;
 
       rolling = advanced;
       iterations++;
@@ -1612,68 +1604,18 @@ export function useProgram() {
       // since-plan-start; `totalWeeks` preserved from prev so the
       // race-strip "Week N of M" display stays consistent.
       if (profile?.runMode && profile.runMode !== "freeform") {
-        const weekSchedule = profile.weekSchedule ?? [];
-        const runTarget = getWeeklyRunTarget(profile) || 3;
-        const nextWeekStart = localWeekKey(addLocalDays(new Date(), 7));
-        const nextWeekCurrentDate = localDateString(
-          addLocalDays(new Date(), 7)
+        const nextRunDate = addLocalDays(new Date(), 7);
+        const runs = nextRunWeek(
+          advanced,
+          {
+            weekStart: localWeekKey(nextRunDate),
+            date: localDateString(nextRunDate),
+          },
+          profile,
+          recentLayoff
         );
-
-        const advRunPlan = advanced.runPlan;
-        // Asked about NEXT week's date, not today: the question is whether the
-        // week being rolled into is still inside the recovery window. The
-        // explicit `!!advRunPlan` is what carries the non-null guarantee into
-        // the block below, which spreads it — `isInRecoveryOn` deliberately
-        // does not narrow (see its doc).
-        const inRecovery =
-          !!advRunPlan && isInRecoveryOn(advRunPlan, nextWeekCurrentDate);
-
-        if (inRecovery) {
-          // RUN-H1: a week rolling over mid-recovery must STAY a recovery week
-          // and keep phase/recoveryEndDate — never regenerate a race plan (which
-          // emits race-training runDays AND drops the recovery flags via
-          // makeRunPlanRecord). Mirrors refreshRunSchedule's recovery branch;
-          // recovery exit is a deliberate decision (resolveRecoveryExit), not a
-          // rollover side effect.
-          advanced.runDays = scheduleRecoveryWeekV2({
-            weekSchedule,
-            weekStart: nextWeekStart,
-          });
-          advanced.runPlan = { ...advRunPlan };
-        } else if (
-          profile.runMode === "race_prep" &&
-          profile.raceGoal &&
-          // R3: same elapsed guard as refreshRunSchedule — a week rolling over
-          // after an elapsed race (recovery ended, raceGoal not yet server-
-          // cleared) must go freeform, not regenerate a plan dated in the past.
-          nextWeekCurrentDate <= profile.raceGoal.targetDate
-        ) {
-          const r = regenerateRacePlan({
-            recentLayoff,
-            tuning: runTuningFromProfile(profile),
-
-            easyPaceSPerKm: planningEasyPaceSPerKm(profile?.runFitness),
-
-            runTimeLimits: profile?.runTimeLimits ?? null,
-            runningBaseline: profile?.runningBaseline ?? null,
-            raceGoal: profile.raceGoal,
-            weekSchedule,
-            weeklyRunDays: runTarget,
-            currentDate: nextWeekCurrentDate,
-            weekStart: nextWeekStart,
-            carry: {
-              currentWeek: (advanced.runPlan?.currentWeek ?? 0) + 1,
-              totalWeeks: advanced.runPlan?.totalWeeks,
-              completedRaces: advanced.runPlan?.completedRaces,
-            },
-          });
-          advanced.runDays = r.runDays;
-          advanced.runPlan = r.runPlan;
-        } else {
-          // RUN-M: structured retired — a non-race state is freeform (no runDays).
-          advanced.runDays = [];
-          advanced.runPlan = undefined;
-        }
+        advanced.runDays = runs.runDays;
+        advanced.runPlan = runs.runPlan;
       }
       return advanced;
     });
@@ -2298,12 +2240,7 @@ export function useProgram() {
           if (profile.runMode === "race_prep" && profile.raceGoal) {
             ({ runDays, runPlan } = regenerateRacePlan({
               recentLayoff,
-              tuning: runTuningFromProfile(profile),
-
-              easyPaceSPerKm: planningEasyPaceSPerKm(profile?.runFitness),
-
-              runTimeLimits: profile?.runTimeLimits ?? null,
-              runningBaseline: profile?.runningBaseline ?? null,
+              profile,
               raceGoal: profile.raceGoal,
               weekSchedule: effectiveSchedule,
               weeklyRunDays: runTarget,
@@ -2467,12 +2404,8 @@ export function useProgram() {
           // and recoveryEndDate.
           ({ runDays, runPlan } = regenerateRacePlan({
             recentLayoff,
-            tuning: overrides?.tuning ?? runTuningFromProfile(profile),
-
-            easyPaceSPerKm: planningEasyPaceSPerKm(profile?.runFitness),
-
-            runTimeLimits: profile?.runTimeLimits ?? null,
-            runningBaseline: profile?.runningBaseline ?? null,
+            profile,
+            tuning: overrides?.tuning,
             raceGoal: profile.raceGoal,
             weekSchedule,
             weeklyRunDays: runTarget,
@@ -3388,12 +3321,7 @@ export function useProgram() {
         const prevRunPlan = base.runPlan;
         const { runDays, runPlan, manualCompletions } = regenerateRacePlan({
           recentLayoff,
-          tuning: runTuningFromProfile(profile),
-
-          easyPaceSPerKm: planningEasyPaceSPerKm(profile?.runFitness),
-
-          runTimeLimits: profile?.runTimeLimits ?? null,
-          runningBaseline: profile?.runningBaseline ?? null,
+          profile,
           raceGoal,
           weekSchedule: profile.weekSchedule ?? [],
           weeklyRunDays: getWeeklyRunTarget(profile) || 3,
