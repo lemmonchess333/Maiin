@@ -1,13 +1,5 @@
 import { useCallback, useSyncExternalStore } from "react";
-import {
-  collection,
-  doc,
-  limit,
-  onSnapshot,
-  orderBy,
-  query,
-  where,
-} from "firebase/firestore";
+import { doc, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { localDateString, parseLocalDate } from "@/lib/dateHelpers";
 import { isVolumeEligible } from "@/lib/runStatsEligibility";
@@ -19,6 +11,13 @@ import {
   type RunWindow,
   type SavedRun,
 } from "@/lib/savedRuns";
+import {
+  parseSavedWorkoutDocs,
+  savedWorkoutsQuery,
+  withQueuedWorkouts,
+  type Workout,
+  type WorkoutWindow,
+} from "@/lib/savedWorkouts";
 import type { ProgramState } from "@/features/program/programTypes";
 
 // ── Subscription window ──────────────────────────────────────────────────
@@ -57,6 +56,22 @@ function runWindowFor(today: string): RunWindow {
   const start = parseLocalDate(today);
   start.setDate(start.getDate() - WINDOW_DAYS);
   return { since: localDateString(start), cap: DOC_LIMIT };
+}
+
+/**
+ * The window's workouts as the burn tiles count them: the server's, with
+ * this phone's unsynced ones laid over them.
+ */
+function liftRows(
+  uid: string,
+  savedWorkouts: readonly Workout[],
+  window: WorkoutWindow
+): WorkoutRow[] {
+  return withQueuedWorkouts(uid, savedWorkouts, window).map((workout) => ({
+    date: workout.date,
+    totalCalories:
+      typeof workout.totalCalories === "number" ? workout.totalCalories : 0,
+  }));
 }
 
 /**
@@ -108,30 +123,28 @@ function subscribe(uid: string, today: string, notify: () => void): () => void {
       () => publish({ program: null })
     );
     const runWindow = runWindowFor(today);
-    const windowStartString = (runWindow as { since: string }).since;
+    const workoutWindow: WorkoutWindow = {
+      since: (runWindow as { since: string }).since,
+      cap: DOC_LIMIT,
+    };
 
-    const workoutsRef = collection(db, "users", uid, "workouts");
-    const workoutsQ = query(
-      workoutsRef,
-      where("date", ">=", windowStartString),
-      orderBy("date", "desc"),
-      limit(DOC_LIMIT)
+    // Workouts and runs through their one readers, with what this phone
+    // has saved and not yet synced, so a session burns from the moment it
+    // is saved.
+    let savedWorkouts: Workout[] = [];
+    const unsubWorkouts = onSnapshot(
+      savedWorkoutsQuery(uid, workoutWindow),
+      (snap) => {
+        savedWorkouts = parseSavedWorkoutDocs(snap.docs);
+        publish({
+          workouts: liftRows(uid, savedWorkouts, workoutWindow),
+          workoutsLoaded: true,
+        });
+      }
     );
-    const unsubWorkouts = onSnapshot(workoutsQ, (snap) => {
-      const rows: WorkoutRow[] = snap.docs
-        .map((d) => d.data() as { date?: unknown; totalCalories?: unknown })
-        .filter((d) => typeof d.date === "string")
-        .map((d) => ({
-          date: d.date as string,
-          totalCalories:
-            typeof d.totalCalories === "number" ? d.totalCalories : 0,
-        }));
-      publish({ workouts: rows, workoutsLoaded: true });
-    });
 
-    // Runs through the one saved-run reader: one parse and the Lift3 day,
-    // so a run begun before midnight burns on the day it began. A run saved
-    // on this phone burns from the moment it is saved, before it syncs.
+    // One parse and the Lift3 day for runs, so a run begun before midnight
+    // burns on the day it began.
     let savedRuns: SavedRun[] = [];
     const unsubRuns = onSnapshot(savedRunsQuery(uid, runWindow), (snap) => {
       savedRuns = parseSavedRunDocs(snap.docs);
@@ -141,7 +154,10 @@ function subscribe(uid: string, today: string, notify: () => void): () => void {
       });
     });
     const unsubQueue = subscribeQueuedWrites(() =>
-      publish({ runs: burnRows(uid, savedRuns, runWindow) })
+      publish({
+        workouts: liftRows(uid, savedWorkouts, workoutWindow),
+        runs: burnRows(uid, savedRuns, runWindow),
+      })
     );
 
     owner.stop = () => {

@@ -16,7 +16,7 @@ import { localDateString } from "../dateHelpers";
  * This file pins the date-derivation invariant the fix relies on:
  * `localDateString(since)` is the local calendar date of `since` regardless
  * of timezone, and diverges from `toISOString()` for a local-midnight Date
- * in positive-offset zones. `leaderboardRuns.test.ts` drives
+ * in positive-offset zones. `leaderboardSessions.test.ts` drives
  * `buildLeaderboard` itself against the Firestore fake. The vitest runner is UTC, so that case is
  * exercised in a child process under TZ=Asia/Tokyo (UTC+9).
  */

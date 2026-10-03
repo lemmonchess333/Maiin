@@ -23,7 +23,6 @@
  */
 import {
   collection,
-  getDocs,
   limit,
   orderBy,
   query,
@@ -35,6 +34,7 @@ import {
 import { db } from "./firebase";
 import { parseLocalDate } from "./dateHelpers";
 import { pendingDocumentWrites } from "./offlineQueue";
+import { fetchSaved, type SavedSessionSource } from "./savedSessions";
 import {
   isRunDateKey,
   readRunExecutionTarget,
@@ -321,21 +321,6 @@ export function withQueuedRuns(
     : runs;
 }
 
-/** Whether this phone holds a run that has not synced yet. */
-export function hasQueuedRunCreate(uid: string | null | undefined): boolean {
-  return (
-    !!uid &&
-    pendingDocumentWrites(uid, `users/${uid}/runs`).some(
-      (entry) => !entry.merge
-    )
-  );
-}
-
-/** Whether any write to this account's runs is still waiting to sync. */
-export function hasQueuedRunWrites(uid: string | null | undefined): boolean {
-  return !!uid && pendingDocumentWrites(uid, `users/${uid}/runs`).length > 0;
-}
-
 /** Parse a query's documents, dropping any that cannot be read. */
 export function parseSavedRunDocs(
   docs: readonly { id: string; data: () => DocumentData }[]
@@ -348,18 +333,31 @@ export function parseSavedRunDocs(
   return runs;
 }
 
+/** A stable key for a window: a live query restarts only when it changes. */
+export function runWindowKey(window: RunWindow): string {
+  if ("latest" in window) return `latest:${window.latest}`;
+  if ("all" in window) return "all";
+  return `days:${window.since}:${window.until ?? ""}:${window.cap ?? ""}`;
+}
+
+/** Saved runs as a session source, for `useSavedSessions` and `fetchSaved`. */
+export const SAVED_RUNS: SavedSessionSource<SavedRun, RunWindow> = {
+  collection: "runs",
+  windowKey: runWindowKey,
+  query: savedRunsQuery,
+  parseDocs: parseSavedRunDocs,
+  inWindow: inRunWindow,
+  withQueued: withQueuedRuns,
+};
+
 /**
  * One read of a window, for readers that do not stay subscribed. Runs saved
  * on this phone and not yet synced are included when `uid` is the signed-in
  * account (another account has none queued here).
  */
-export async function fetchSavedRuns(
+export function fetchSavedRuns(
   uid: string,
   window: RunWindow
 ): Promise<SavedRun[]> {
-  const snap = await getDocs(savedRunsQuery(uid, window));
-  const loaded = parseSavedRunDocs(snap.docs).filter((run) =>
-    inRunWindow(run, window)
-  );
-  return withQueuedRuns(uid, loaded, window);
+  return fetchSaved(SAVED_RUNS, uid, window);
 }

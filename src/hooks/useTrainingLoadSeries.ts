@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
-import { collection, getDocs, orderBy, query, where } from "firebase/firestore";
-import { db } from "@/lib/firebase";
 import { fetchSavedRuns } from "@/lib/savedRuns";
+import { fetchSavedWorkouts } from "@/lib/savedWorkouts";
 import { useUid } from "@/lib/auth";
 import { logger } from "@/lib/logger";
 import { isVolumeEligible } from "@/lib/runStatsEligibility";
@@ -71,16 +70,9 @@ export function useTrainingLoadSeries(displayDays: number): {
         since.setDate(since.getDate() - fetchDays);
         const sinceKey = localDateString(since);
 
-        // Workout docs key their local day in a `date` string (YYYY-MM-DD),
-        // which orders lexicographically.
-        const workoutsQ = query(
-          collection(db, "users", uid, "workouts"),
-          where("date", ">=", sinceKey),
-          orderBy("date", "desc")
-        );
-        const [runs, workoutsSnap] = await Promise.all([
+        const [runs, workouts] = await Promise.all([
           fetchSavedRuns(uid, { since: sinceKey }),
-          getDocs(workoutsQ),
+          fetchSavedWorkouts(uid, { since: sinceKey }),
         ]);
 
         const sessions: TrainingSession[] = [];
@@ -93,25 +85,19 @@ export function useTrainingLoadSeries(displayDays: number): {
             quality: QUALITY_TYPES.has(run.activityType),
           });
         }
-        workoutsSnap.docs.forEach((d) => {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const data = d.data() as Record<string, any>;
-          if (typeof data.date !== "string") return;
-          const setCount = Array.isArray(data.exercises)
-            ? data.exercises.reduce(
-                (c: number, ex: { sets?: unknown[] }) =>
-                  c + (ex.sets?.length ?? 0),
-                0
-              )
-            : 0;
-          const minutes = data.durationMinutes || setCount * MINUTES_PER_SET;
-          if (minutes <= 0) return;
+        for (const workout of workouts) {
+          const setCount = workout.exercises.reduce(
+            (c, ex) => c + (ex.sets?.length ?? 0),
+            0
+          );
+          const minutes = workout.durationMinutes || setCount * MINUTES_PER_SET;
+          if (minutes <= 0) continue;
           sessions.push({
-            dateKey: data.date,
+            dateKey: workout.date,
             discipline: "lift",
             minutes,
           });
-        });
+        }
 
         if (cancelled) return;
         setLoaded({

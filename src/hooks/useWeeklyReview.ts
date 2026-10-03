@@ -38,6 +38,7 @@ import { resolveSnapshotCalorieTarget } from "@/lib/adaptiveTarget";
 import { useSubscription } from "@/lib/subscription";
 import { isVolumeEligible } from "@/lib/runStatsEligibility";
 import { fetchSavedRuns } from "@/lib/savedRuns";
+import { fetchSavedWorkouts } from "@/lib/savedWorkouts";
 import {
   buildPRMap,
   checkSetPR,
@@ -81,11 +82,6 @@ interface WorkoutDocLite {
     repUnit?: "reps" | "seconds";
     sets: { weightKg: number; reps: number; type?: string }[];
   }[];
-}
-
-function isWorkoutDoc(d: unknown): d is WorkoutDocLite {
-  const w = d as WorkoutDocLite;
-  return typeof w?.date === "string" && Array.isArray(w?.exercises);
 }
 
 /** The exercise's best across every rep range, as `checkSetPR` finds it. */
@@ -328,22 +324,18 @@ export function useWeeklyReview(): UseWeeklyReviewResult {
         const nextKey = weekKeyMinusN(weekKey, -1);
 
         const [
-          workoutsSnap,
+          weekWorkoutDocs,
           savedRuns,
           mealsSnap,
           weighIns,
           perfSnap,
           prevPerfSnap,
-          baselineSnap,
+          baselineDocs,
           programStateSnap,
         ] = await Promise.all([
-          getDocs(
-            query(
-              collection(db, "users", user.uid, "workouts"),
-              where("date", ">=", start),
-              where("date", "<=", end)
-            )
-          ),
+          // The week's workouts and runs through their one readers, with
+          // any finished on this phone and not yet synced.
+          fetchSavedWorkouts(user.uid, { since: start, until: end }),
           // The week's runs by their Lift3 day, through the saved-run
           // reader: runs saved before `date` existed are no longer left out.
           fetchSavedRuns(user.uid, { since: start, until: end }),
@@ -372,33 +364,17 @@ export function useWeeklyReview(): UseWeeklyReviewResult {
               limit(1)
             )
           ),
-          getDocs(
-            query(
-              collection(db, "users", user.uid, "workouts"),
-              where("date", "<", start),
-              orderBy("date", "desc"),
-              limit(PR_BASELINE_LIMIT)
-            )
-          ),
+          fetchSavedWorkouts(user.uid, {
+            latest: PR_BASELINE_LIMIT,
+            before: start,
+          }),
           getDoc(doc(db, "users", user.uid, "programState", "current")),
         ]);
         if (cancelled) return;
 
-        const weekWorkoutDocs = workoutsSnap.docs
-          .map((d) => d.data())
-          .filter(isWorkoutDoc);
-        const baselineDocs = baselineSnap.docs
-          .map((d) => d.data())
-          .filter(isWorkoutDoc);
-
-        // WorkoutDocLite carries only the fields tonnage needs (sets'
-        // weightKg×reps); the wider Workout type wants presentation
-        // fields this computation never reads — hence the unknown hop.
         const workouts = weekWorkoutDocs.map((w) => ({
           date: w.date,
-          tonnageKg: workoutTonnageKg(
-            w as unknown as Parameters<typeof workoutTonnageKg>[0]
-          ),
+          tonnageKg: workoutTonnageKg(w),
         }));
 
         const runs = savedRuns.map((run) => ({

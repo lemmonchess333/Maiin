@@ -132,6 +132,7 @@ exists — pinned by `claudeMdFreshness.test.ts` in both directions
 | `tdee.ts`               | Base TDEE calculation                                          |
 | `phaseNutrition.ts`     | Day-type specific macro adjustments (lift/run/rest)            |
 | `savedRuns.ts`          | The one saved-run reader: query, parse, Lift3 day, queued runs |
+| `savedWorkouts.ts`      | The one saved-workout reader: query, parse, day, queued ones   |
 | `gps.ts`                | Haversine, pace, splits, elevation, Kalman filter, GPX export  |
 | `paceTrends.ts`         | Running pace trend detection (PR/improving/consistent)         |
 | `guidedRun.ts`          | Guided run logic & coaching                                    |
@@ -207,7 +208,7 @@ run-surface feature modules.
 `useFirestore`, `useMeals`, `useWorkouts`, `useWaterLog`, `useShoes`, `useFoodFavourites`
 
 **Running & GPS:**
-`useGPS`, `useRunTimer`, `useRunningStats`, `useSavedRuns` (the live form of `lib/savedRuns.ts`, the only runs reader), `useSessionPlayer`, `usePrivacyZones`, `useAudioCues`, `useWakeLock`
+`useGPS`, `useRunTimer`, `useRunningStats`, `useSavedRuns` (runs on `useSavedSessions`, the one live engine for saved runs and workouts; `savedSessionsReaderGuard.test.ts` keeps their readers the only ones), `useSessionPlayer`, `usePrivacyZones`, `useAudioCues`, `useWakeLock`
 
 **Social:**
 `useSocialFeed`, `useDiscoverFeed`, `useUnreadCount`, `useBlockedUsers`, `useFollowState` (one follow record shared by every Follow control), `useUserProfileData`

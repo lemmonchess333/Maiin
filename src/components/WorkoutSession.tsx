@@ -44,7 +44,7 @@ import EditSetSheet from "@/components/workout/EditSetSheet";
 import { sessionRecords } from "@/features/program/sessionRecords";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { motion, AnimatePresence } from "framer-motion";
-import { collection, getDocs, query, orderBy, limit } from "firebase/firestore";
+import { fetchSavedWorkouts } from "@/lib/savedWorkouts";
 import {
   buildInitialSetLogs,
   toCompletionSetLogs,
@@ -434,37 +434,27 @@ export default function WorkoutSession({
     if (!user?.uid || !day.exercises.length) return;
 
     const fetchPreviousWeights = async () => {
-      const workoutsRef = collection(db, "users", user.uid, "workouts");
-      const snap = await getDocs(
-        query(workoutsRef, orderBy("date", "desc"), limit(50))
-      );
+      // The 50 newest workouts, including one finished on this phone that
+      // has not synced yet: it is the last session even offline.
+      const recent = await fetchSavedWorkouts(user.uid, { latest: 50 });
 
       const prevWeights: Record<string, { weight: number; reps: number }[]> =
         {};
       const notes: Record<number, { text: string; date: string }> = {};
 
-      snap.docs.forEach((d) => {
-        const data = d.data();
+      recent.forEach((data) => {
         if (data.completionId === completionIdRef.current) return;
         day.exercises.forEach((exercise, index) => {
           if (notes[index]) return;
-          const previous = (data.exercises ?? []).find(
-            (entry: {
-              exerciseId?: string;
-              exerciseName?: string;
-              notes?: string;
-            }) =>
-              (entry.exerciseId && exercise.exerciseId
-                ? entry.exerciseId === exercise.exerciseId
-                : entry.exerciseName === exercise.name) && entry.notes?.trim()
-          );
-          if (
-            previous &&
-            typeof data.date === "string" &&
-            /^\d{4}-\d{2}-\d{2}$/.test(data.date)
-          ) {
-            notes[index] = { text: previous.notes.trim(), date: data.date };
-          }
+          const text = data.exercises
+            .find(
+              (entry) =>
+                (entry.exerciseId && exercise.exerciseId
+                  ? entry.exerciseId === exercise.exerciseId
+                  : entry.exerciseName === exercise.name) && entry.notes?.trim()
+            )
+            ?.notes?.trim();
+          if (text) notes[index] = { text, date: data.date };
         });
         (data.exercises || []).forEach(
           (ex: {
@@ -561,15 +551,14 @@ export default function WorkoutSession({
       }
 
       const recordHistory = recordsInvalidated
-        ? await getDocs(query(workoutsRef, orderBy("date", "desc")))
-        : snap;
+        ? await fetchSavedWorkouts(user.uid, { all: true })
+        : recent;
       if (!mapLoaded || !countsLoaded) {
         // Fall back to building from last 50 workouts — only the pieces
         // that are actually missing.
-        const history = recordHistory.docs.map((d) => {
-          const data = d.data();
+        const history = recordHistory.map((data) => {
           return {
-            date: data.date as string,
+            date: data.date,
             exercises: (data.exercises || []).map(
               (ex: {
                 exerciseName: string;
@@ -617,10 +606,9 @@ export default function WorkoutSession({
         // Legacy stats/prMap docs predate volumeBest — rebuild from the
         // same 50-workout window so the first post-upgrade session doesn't
         // spray false volume PRs.
-        const historyForVolume = recordHistory.docs.map((d) => {
-          const data = d.data();
+        const historyForVolume = recordHistory.map((data) => {
           return {
-            date: (data.date as string) ?? "",
+            date: data.date,
             exercises: (data.exercises || []).map(
               (ex: {
                 exerciseName: string;

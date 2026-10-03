@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
-import { collection, getDocs, limit, orderBy, query } from "firebase/firestore";
-import { db } from "@/lib/firebase";
 import { buildPRMap, type PRMap } from "@/lib/prTracking";
+import { fetchSavedWorkouts } from "@/lib/savedWorkouts";
 
 /* Module-level cache — keyed by uid.
  *
@@ -29,26 +28,7 @@ async function fetchPRMap(uid: string): Promise<PRMap> {
   if (existing) return existing;
 
   const promise = (async () => {
-    const snap = await getDocs(
-      query(
-        collection(db, "users", uid, "workouts"),
-        orderBy("date", "desc"),
-        limit(FETCH_LIMIT)
-      )
-    );
-    const workouts = snap.docs
-      .map(
-        (d) =>
-          d.data() as {
-            exercises: {
-              exerciseName: string;
-              repUnit?: "reps" | "seconds";
-              sets: { weightKg: number; reps: number; type?: string }[];
-            }[];
-            date: string;
-          }
-      )
-      .filter((w) => Array.isArray(w.exercises) && typeof w.date === "string");
+    const workouts = await fetchSavedWorkouts(uid, { latest: FETCH_LIMIT });
     const map = buildPRMap(workouts);
     cache.set(uid, map);
     inflight.delete(uid);

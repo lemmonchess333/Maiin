@@ -1,6 +1,7 @@
 import { collection, query, orderBy, getDocs } from "firebase/firestore";
 import { isActiveMealDoc } from "@/lib/mealTotals";
 import { db } from "@/lib/firebase";
+import { fetchSavedWorkouts } from "@/lib/savedWorkouts";
 
 /** CSV quoting protects cell boundaries; an apostrophe also keeps untrusted
  * formula prefixes as text when the export is opened in a spreadsheet. */
@@ -16,45 +17,40 @@ function csvCell(value: unknown, alwaysQuote = false): string {
 }
 
 export async function exportWorkoutsCSV(uid: string): Promise<string> {
-  const workoutsRef = collection(db, "users", uid, "workouts");
-  const q = query(workoutsRef, orderBy("date", "desc"));
-  const snap = await getDocs(q);
+  // Every saved workout, including one finished on this phone and not yet
+  // synced: it is the user's data from the moment they finished it.
+  const workouts = await fetchSavedWorkouts(uid, { all: true });
 
   const rows = ["Date,Exercise,Set,Weight (kg),Reps,Type"];
 
-  snap.docs.forEach((docSnap) => {
-    const w = docSnap.data();
-    const date = w.date || "";
-    if (Array.isArray(w.exercises)) {
-      w.exercises.forEach(
-        (ex: {
-          exerciseName?: string;
-          name?: string;
-          sets?: {
-            weightKg?: number;
-            weight?: number;
-            reps?: number;
-            type?: string;
-          }[];
-        }) => {
-          if (Array.isArray(ex.sets)) {
-            ex.sets.forEach((set, i: number) => {
-              rows.push(
-                [
-                  csvCell(date),
-                  csvCell(ex.exerciseName || ex.name || "", true),
-                  csvCell(i + 1),
-                  csvCell(set.weightKg ?? set.weight ?? 0),
-                  csvCell(set.reps ?? 0),
-                  csvCell(set.type || "working"),
-                ].join(",")
-              );
-            });
-          }
-        }
-      );
+  // Older workouts named an exercise `name` and a set's load `weight`.
+  type ExportedExercise = {
+    exerciseName?: string;
+    name?: string;
+    sets?: {
+      weightKg?: number;
+      weight?: number;
+      reps?: number;
+      type?: string;
+    }[];
+  };
+  for (const w of workouts) {
+    for (const ex of w.exercises as unknown as ExportedExercise[]) {
+      if (!Array.isArray(ex.sets)) continue;
+      ex.sets.forEach((set, i) => {
+        rows.push(
+          [
+            csvCell(w.date),
+            csvCell(ex.exerciseName || ex.name || "", true),
+            csvCell(i + 1),
+            csvCell(set.weightKg ?? set.weight ?? 0),
+            csvCell(set.reps ?? 0),
+            csvCell(set.type || "working"),
+          ].join(",")
+        );
+      });
     }
-  });
+  }
 
   return rows.join("\n");
 }

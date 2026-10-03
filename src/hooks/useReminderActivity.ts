@@ -6,6 +6,8 @@ import { localDateString, parseLocalDate } from "@/lib/dateHelpers";
 import { mealSlotFor } from "@/lib/mealSlots";
 import { DEFAULT_PUSH_CONSENT } from "@/lib/pushConsent";
 import { useSavedRuns } from "@/hooks/useSavedRuns";
+import { useSavedSessions } from "@/hooks/useSavedSessions";
+import { SAVED_WORKOUTS } from "@/lib/savedWorkouts";
 import type { MealKey } from "@/components/food/mealConstants";
 
 export interface ReminderActivity {
@@ -25,22 +27,20 @@ export function useReminderActivity() {
   const [state, setState] = useState<{
     key: string;
     meals: MealKey[];
-    workout: boolean;
     loaded: string[];
     pushOwns: boolean | null;
   }>({
     key: "",
     meals: [],
-    workout: false,
     loaded: [],
     pushOwns: null,
   });
   const key = `${uid ?? ""}:${clock.dateKey}`;
-  // Today's runs by the day they started (Lift3), as the streak counts
-  // them, with a run saved on this phone and not yet synced among them.
-  const todaysRuns = useSavedRuns(
-    uid ? { since: clock.dateKey, until: clock.dateKey } : null
-  );
+  // Today's sessions by the day they started (Lift3), as the streak counts
+  // them, with any saved on this phone and not yet synced among them.
+  const today = uid ? { since: clock.dateKey, until: clock.dateKey } : null;
+  const todaysWorkouts = useSavedSessions(SAVED_WORKOUTS, uid, today);
+  const todaysRuns = useSavedRuns(today);
   const ranToday = todaysRuns.runs.some(
     (run) => !run.isInvalid && run.distance > 0
   );
@@ -79,7 +79,6 @@ export function useReminderActivity() {
             : {
                 key,
                 meals: [],
-                workout: false,
                 loaded: [],
                 pushOwns: null,
               };
@@ -107,11 +106,6 @@ export function useReminderActivity() {
             .map((d) => mealSlotFor(d.data())),
         })
       ),
-      onSnapshot(dated("workouts"), (snap) =>
-        publish("workouts", {
-          workout: snap.docs.some((d) => !d.data().deletedAt),
-        })
-      ),
       onSnapshot(doc(db, "users", uid, "settings", "push"), (snap) => {
         const consent = { ...DEFAULT_PUSH_CONSENT, ...snap.data() };
         publish("push", {
@@ -130,12 +124,11 @@ export function useReminderActivity() {
       ready:
         !!current &&
         todaysRuns.answered &&
-        ["meals", "workouts"].every((source) =>
-          current.loaded.includes(source)
-        ),
+        todaysWorkouts.answered &&
+        current.loaded.includes("meals"),
       dateKey: clock.dateKey,
       meals: current?.meals ?? [],
-      workout: !!current?.workout || (!!current && ranToday),
+      workout: !!current && (todaysWorkouts.items.length > 0 || ranToday),
     } satisfies ReminderActivity,
     pushOwns: current?.pushOwns ?? null,
     refreshKey: `${key}:${clock.opened}`,

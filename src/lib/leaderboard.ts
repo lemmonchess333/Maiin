@@ -1,15 +1,9 @@
-import {
-  collection,
-  getDocs,
-  query,
-  where,
-  orderBy,
-  limit,
-} from "firebase/firestore";
+import { collection, getDocs } from "firebase/firestore";
 import { db } from "./firebase";
 import { isVolumeEligible } from "./runStatsEligibility";
 import { localDateString, startOfLocalWeek } from "./dateHelpers";
 import { fetchSavedRuns } from "./savedRuns";
+import { fetchSavedWorkouts, workoutTonnageKg } from "./savedWorkouts";
 
 export interface LeaderboardEntry {
   uid: string;
@@ -78,9 +72,9 @@ export async function buildLeaderboard(
   // `since` — not `since.toISOString()` (UTC). `since` is LOCAL midnight on
   // the week's first day; in positive-offset zones (e.g. UTC+9) that instant
   // is still the previous calendar day in UTC, so the UTC stringify rolls the
-  // cutoff back a day and pulls in an extra day's workouts. Runs are read by
-  // the same day key, through the one saved-run reader (Lift3: a run belongs
-  // to the day it started).
+  // cutoff back a day and pulls in an extra day's workouts. Workouts and runs
+  // are both read by that day key, through their one readers (Lift3: a
+  // session belongs to the day it started).
   const sinceDateStr = localDateString(since);
 
   const entries: { uid: string; value: number }[] = [];
@@ -103,46 +97,23 @@ export async function buildLeaderboard(
       }
 
       if (challenge === "weekly_volume" || challenge === "weekly_hybrid") {
-        const workoutsSnap = await getDocs(
-          query(
-            collection(db, "users", uid, "workouts"),
-            where("date", ">=", sinceDateStr),
-            orderBy("date"),
-            limit(50)
-          )
-        );
-        const kg = workoutsSnap.docs.reduce((s, d) => {
-          return (
-            s +
-            (d.data().exercises || []).reduce(
-              (
-                es: number,
-                ex: { sets?: { weightKg?: number; reps?: number }[] }
-              ) =>
-                es +
-                (ex.sets || []).reduce(
-                  (ss: number, set: { weightKg?: number; reps?: number }) =>
-                    ss + (set.weightKg || 0) * (set.reps || 0),
-                  0
-                ),
-              0
-            )
-          );
-        }, 0);
+        // Timed holds lift nothing (`workoutTonnageKg`), as the server's
+        // challenge maths has it.
+        const workouts = await fetchSavedWorkouts(uid, {
+          since: sinceDateStr,
+          cap: 50,
+        });
+        const kg = workouts.reduce((s, w) => s + workoutTonnageKg(w), 0);
         if (challenge === "weekly_volume") value = Math.round(kg);
         else value += kg * 0.1;
       }
 
       if (challenge === "weekly_workouts") {
-        const workoutsSnap = await getDocs(
-          query(
-            collection(db, "users", uid, "workouts"),
-            where("date", ">=", sinceDateStr),
-            orderBy("date"),
-            limit(50)
-          )
-        );
-        value = workoutsSnap.docs.length;
+        const workouts = await fetchSavedWorkouts(uid, {
+          since: sinceDateStr,
+          cap: 50,
+        });
+        value = workouts.length;
       }
 
       entries.push({ uid, value: Math.round(value * 10) / 10 });

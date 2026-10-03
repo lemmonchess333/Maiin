@@ -1,7 +1,7 @@
 import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
 import { act, renderHook, waitFor, cleanup } from "@testing-library/react";
 import { resetFirestore, seedFirestore } from "@/test/firestoreHarness";
-import { savedRunDoc } from "@/test/sessionFixtures";
+import { savedRunDoc, savedWorkoutDoc } from "@/test/sessionFixtures";
 import { useReminderActivity } from "../useReminderActivity";
 
 vi.mock("firebase/firestore");
@@ -102,6 +102,25 @@ describe("reminder activity source boundaries", () => {
         "users/u1/runs",
         "offline",
         savedRunDoc("2026-09-06", { distance: 5000 }, new Date(2026, 8, 6, 11))
+      )
+    );
+    expect(result.current.activity.workout).toBe(true);
+  });
+  it("counts today's workout, not yesterday's, and one finished offline", async () => {
+    seedFirestore({
+      "users/u1/workouts/yesterday": savedWorkoutDoc("2026-09-05"),
+    });
+    const { queueDurableWrite } = await import("@/lib/offlineQueue");
+    const { result } = renderHook(() => useReminderActivity());
+    // POSITIVE anchor: every source has answered before the absence.
+    await waitFor(() => expect(result.current.activity.ready).toBe(true));
+    expect(result.current.activity.workout).toBe(false);
+    act(() =>
+      queueDurableWrite(
+        "u1",
+        "users/u1/workouts",
+        "offline",
+        savedWorkoutDoc("2026-09-06")
       )
     );
     expect(result.current.activity.workout).toBe(true);

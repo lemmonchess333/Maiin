@@ -15,14 +15,7 @@
  * There is no refetch path to lean on — hence an explicit argument.
  */
 import { useEffect, useMemo, useState } from "react";
-import {
-  collection,
-  doc,
-  getDoc,
-  getDocs,
-  query,
-  where,
-} from "firebase/firestore";
+import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth";
 import { useStreaks } from "@/features/streaks/useStreaks";
@@ -37,6 +30,7 @@ import {
 } from "@/lib/weeklyReviewViewModel";
 import { isVolumeEligible } from "@/lib/runStatsEligibility";
 import { fetchSavedRuns } from "@/lib/savedRuns";
+import { fetchSavedWorkouts } from "@/lib/savedWorkouts";
 import { resolveRunPlanSurface } from "@/lib/runProgrammeViewModel";
 import { logger } from "@/lib/logger";
 
@@ -79,14 +73,10 @@ export function useWeekPulse(
       try {
         const weekKey = localWeekKey(new Date());
         const { start, end } = weekBounds(weekKey);
-        const [workoutsSnap, savedRuns, programStateSnap] = await Promise.all([
-          getDocs(
-            query(
-              collection(db, "users", user.uid, "workouts"),
-              where("date", ">=", start),
-              where("date", "<=", end)
-            )
-          ),
+        const [savedWorkouts, savedRuns, programStateSnap] = await Promise.all([
+          // Through the saved-workout reader: the week's workouts, including
+          // one finished on this phone and not yet synced.
+          fetchSavedWorkouts(user.uid, { since: start, until: end }),
           // Through the saved-run reader: the week's runs by their Lift3
           // day, including runs saved before `date` existed (a `date`-only
           // query left those out) and runs saved on this phone.
@@ -95,9 +85,7 @@ export function useWeekPulse(
         ]);
         if (cancelled) return;
 
-        const workouts = workoutsSnap.docs
-          .map((d) => d.data() as { date?: unknown })
-          .filter((w): w is { date: string } => typeof w.date === "string");
+        const workouts = savedWorkouts.map((w) => ({ date: w.date }));
         const runs = savedRuns.map((run) => ({
           id: run.id,
           date: run.day,
