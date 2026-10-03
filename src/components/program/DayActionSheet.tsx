@@ -74,6 +74,7 @@ import {
 import type { SavedRunDoc } from "@/hooks/useClaimMap";
 import type { UserProfile } from "@/lib/auth";
 import type { ProgramState } from "@/features/program/programTypes";
+import type { ProgramOutcome } from "@/features/program/programOutcome";
 
 interface DayActionSheetProps {
   open: boolean;
@@ -102,21 +103,21 @@ interface DayActionSheetProps {
   /** PR-J Q2 chunk B2: replaces the deleted completeRunDay.
    *  Writes to programState.manualCompletions[runDayId]; derivation
    *  surfaces ✅ via the claim map (Q2 P27). */
-  markManualComplete: (runDayId: string) => Promise<void>;
-  skipRunDay: (idOrDayIndex: string | number) => Promise<void>;
-  skipWorkoutDay: (dayIndex: number) => Promise<void>;
+  markManualComplete: (runDayId: string) => Promise<ProgramOutcome>;
+  skipRunDay: (idOrDayIndex: string | number) => Promise<ProgramOutcome>;
+  skipWorkoutDay: (dayIndex: number) => Promise<ProgramOutcome>;
   /** SESSION-RESTORE-01: reverse a skip. Restores a skipped /
    *  race_no_show run slot (restoreRunDay) or a skipped lift day
    *  (restoreWorkoutDay) back to `planned` — a status reversal only,
    *  never a completion. */
-  restoreRunDay: (idOrDayIndex: string | number) => Promise<void>;
-  restoreWorkoutDay: (dayIndex: number) => Promise<void>;
+  restoreRunDay: (idOrDayIndex: string | number) => Promise<ProgramOutcome>;
+  restoreWorkoutDay: (dayIndex: number) => Promise<ProgramOutcome>;
   /** RUN-RESCHEDULE-01: one-off move of a planned run to another day
    *  within its week. Preserves identity; only date/dayIndex change. */
   moveRunDay: (
     idOrDayIndex: string | number,
     targetDayIndex: number
-  ) => Promise<void>;
+  ) => Promise<ProgramOutcome>;
   /** Which blocks to surface.
    *
    *  - "day" (default) — the whole-day manager: run + lift blocks. Used by

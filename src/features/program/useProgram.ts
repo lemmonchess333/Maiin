@@ -15,7 +15,7 @@ import {
   applySessionProgression,
   type SessionPrescription,
 } from "./sessionCompletion";
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { captureError } from "@/lib/errorReporting";
 import {
   doc,
@@ -178,6 +178,15 @@ import { enqueueCommand, isTransportFailure } from "./commandOutbox";
 import { repUnitForExerciseId } from "./repUnits";
 import { getExerciseById } from "@/lib/exercises";
 import { sendProgramCommand } from "./programCommandClient";
+import {
+  APPLIED,
+  FAILED,
+  QUEUED,
+  changeStands,
+  declined,
+  type ProgramOutcome,
+  type RealignOutcome,
+} from "./programOutcome";
 
 const PROGRAM_DOC = "current";
 
@@ -379,9 +388,17 @@ interface RefreshRunScheduleOverrides {
   tuning?: RunTuning;
 }
 
-/** "Couldn't add that." + the server's own reason when it gave one. */
+/** "Couldn't add that." + the reason when there is one fit to show. With
+ *  none, the plan is being re-read, and the toast says so. */
 function rejectedToast(base: string, reason: string | null): void {
   toast.error(reason ? `${base} ${reason}` : `${base} Refreshing.`);
+}
+
+/** A change refused on a rule this phone can check itself, such as a race
+ *  being completed by hand: said once, with the rule. */
+function declineWithReason(base: string, reason: string): ProgramOutcome {
+  rejectedToast(base, reason);
+  return declined(reason);
 }
 
 export function useProgram() {
@@ -935,26 +952,26 @@ export function useProgram() {
    * server may have applied more than the client modelled — and re-deriving
    * the result locally is the tested-copy-vs-running-copy mistake.
    *
-   * Returns which of the three happened, not a boolean: callers need to tell
-   * "rejected" from "queued", and a `false` meaning both is the shape that made
-   * the first version of this wrong.
+   * Returns what happened as a `ProgramOutcome`, not a boolean: callers
+   * need to tell "declined" from "queued", and a `false` meaning both is the
+   * shape that made the first version of this wrong. Writers hand the
+   * outcome on, so the screen that asked can tell a refusal from a success.
    *
-   * A `rejected` result rolls the state back and logs, but deliberately does
-   * NOT toast — because every caller so far has a better answer than "your
-   * change vanished", and a generic error toast on top of a caller's own
-   * recovery reads as a bug. **A new caller must handle `rejected`**: leaving
-   * it unhandled means the user watches their change silently undo itself.
+   * A refusal is handled HERE, whole: the state rolls back, the person is
+   * told once (`declinedMessage` plus the server's reason, when it gave one
+   * fit to show), and the plan is re-read, because a refusal usually means
+   * this phone's copy is stale. Handled in one place, no writer can leave a
+   * refused change to undo itself on screen without a word. Pass `null`
+   * only for a writer that answers a refusal itself (the reorder writes
+   * directly instead).
    */
-  /** The last rejected command's user-fit reason, read by the writers'
-   *  toasts (a ref: the writers' callbacks must not re-create on it). */
-  const lastRejectionRef = useRef<string | null>(null);
-
   const runProgramCommand = useCallback(
     async (
       command: { kind: string; commandId: string } & Record<string, unknown>,
-      optimistic: (state: ProgramState) => ProgramState
-    ): Promise<"applied" | "queued" | "rejected"> => {
-      if (!user || !programState) return "rejected";
+      optimistic: (state: ProgramState) => ProgramState,
+      declinedMessage: string | null
+    ): Promise<ProgramOutcome> => {
+      if (!user || !programState) return FAILED;
       const before = programState;
       setProgramState(optimistic(before));
       try {
@@ -966,16 +983,14 @@ export function useProgram() {
           // stands, it just has not landed yet.
           enqueueCommand(user.uid, command);
           logger.log(`[useProgram] ${command.kind} queued — offline`);
-          return "queued";
+          return QUEUED;
         }
         // The server considered it and said no. This is the only case where
         // the user's change is genuinely not happening, so it is the only
-        // case that rolls back. A caller with a better answer than "undo it"
-        // acts on the `rejected` result and repairs its own state.
+        // case that rolls back.
         setProgramState(before);
         logger.error(`[useProgram] ${command.kind} rejected`, err);
         const reason = describeRejection(err);
-        lastRejectionRef.current = reason;
         captureError(
           err instanceof Error ? err : new Error(String(err)),
           "error",
@@ -985,12 +1000,41 @@ export function useProgram() {
             reason: reason ?? "",
           }
         );
-        return "rejected";
+        if (declinedMessage !== null) rejectedToast(declinedMessage, reason);
+        try {
+          await refetchProgramState();
+        } catch (refetchError) {
+          // The rollback above already shows the state before the change.
+          logger.warn(
+            `[useProgram] ${command.kind}: re-read after refusal failed`,
+            refetchError
+          );
+        }
+        return declined(reason);
       }
       await refetchProgramState();
-      return "applied";
+      return APPLIED;
     },
     [user, programState, refetchProgramState]
+  );
+
+  /**
+   * Refuse a change this phone can already see will not work: the day is
+   * gone, or is no longer in a state that allows it (the screen was showing
+   * an older copy of the plan). Said once, the plan re-read so the screen
+   * catches up, and reported, so nothing announces it as done.
+   */
+  const declineStale = useCallback(
+    async (message: string): Promise<ProgramOutcome> => {
+      rejectedToast(message, null);
+      try {
+        await refetchProgramState();
+      } catch (error) {
+        logger.warn("[useProgram] re-read after a stale change failed", error);
+      }
+      return declined(null);
+    },
+    [refetchProgramState]
   );
 
   // PR-L L5 — the race-no-show transition (PR-D) and recovery-phase
@@ -1656,13 +1700,13 @@ export function useProgram() {
 
   // Skip a workout day (no stats, no social post)
   const skipWorkoutDay = useCallback(
-    async (dayIndex: number) => {
-      if (!programState || !user) return;
+    async (dayIndex: number): Promise<ProgramOutcome> => {
+      if (!programState || !user) return FAILED;
       // P6: through the boundary. Equivalent — the reducer sets the same one
       // flag on the same day.
       const skipPrecondition = workoutDayPrecondition(programState, dayIndex);
-      if (!skipPrecondition) return;
-      const outcome = await runProgramCommand(
+      if (!skipPrecondition) return declineStale("Couldn't skip that session.");
+      return runProgramCommand(
         {
           kind: "skipWorkoutDay",
           commandId: generateInstanceId(),
@@ -1673,57 +1717,58 @@ export function useProgram() {
           workouts: state.workouts.map((d, i) =>
             i === dayIndex ? { ...d, skipped: true } : d
           ),
-        })
+        }),
+        "Couldn't skip that session."
       );
-      if (outcome === "rejected") await refetchProgramState();
     },
-    [programState, user, runProgramCommand, refetchProgramState]
+    [programState, user, runProgramCommand, declineStale]
   );
 
   // Set a specific day as the next workout (override default progression),
   // or null to follow programme order again. PROGRAM-SESSION-ORDER-01: a
   // cursor change only — layout, loads, history and fatigue are untouched.
   // The writer accepts only an in-range, unfinished day; terminal or
-  // malformed selections are ignored (the derive-time guard in Program.tsx
-  // already falls back, but a bad override must not persist either).
+  // malformed selections are refused, with the plan re-read (the derive-time
+  // guard in Program.tsx already falls back, but a bad override must not
+  // persist either).
   // `undefined` is stripped by the guarded write path, so a reset removes
   // the field rather than storing a stale value.
   const setNextWorkout = useCallback(
-    async (dayIndex: number | null) => {
-      if (!programState) return;
+    async (dayIndex: number | null): Promise<ProgramOutcome> => {
+      if (!programState) return FAILED;
       // P6: BOTH branches go through the boundary. The clear needed its own
       // kind — `setNextWorkout`'s `dayIndex` is part of the day precondition,
       // so it cannot express "no day" — and adding it is what let this migrate
       // whole rather than leaving set and reset on two write paths.
       if (dayIndex === null) {
-        if (programState.nextWorkoutOverride == null) return;
-        const outcome = await runProgramCommand(
+        if (programState.nextWorkoutOverride == null) return APPLIED;
+        return runProgramCommand(
           { kind: "clearNextWorkout", commandId: generateInstanceId() },
           (state) => {
             const { nextWorkoutOverride: _cleared, ...rest } = state;
             return rest as ProgramState;
-          }
+          },
+          "Couldn't go back to programme order."
         );
-        if (outcome === "rejected") await refetchProgramState();
-        return;
       }
       const day = programState.workouts[dayIndex];
-      if (!Number.isInteger(dayIndex) || !day || day.completed || day.skipped) {
-        return;
-      }
-      const nextPrecondition = workoutDayPrecondition(programState, dayIndex);
-      if (!nextPrecondition) return;
-      const outcome = await runProgramCommand(
+      const nextPrecondition =
+        Number.isInteger(dayIndex) && day && !day.completed && !day.skipped
+          ? workoutDayPrecondition(programState, dayIndex)
+          : null;
+      if (!nextPrecondition)
+        return declineStale("Couldn't make that your next session.");
+      return runProgramCommand(
         {
           kind: "setNextWorkout",
           commandId: generateInstanceId(),
           ...nextPrecondition,
         },
-        (state) => ({ ...state, nextWorkoutOverride: dayIndex })
+        (state) => ({ ...state, nextWorkoutOverride: dayIndex }),
+        "Couldn't make that your next session."
       );
-      if (outcome === "rejected") await refetchProgramState();
     },
-    [programState, runProgramCommand, refetchProgramState]
+    [programState, runProgramCommand, declineStale]
   );
 
   // Manually advance to next week (called from UI)
@@ -1880,8 +1925,8 @@ export function useProgram() {
    * the type by this PR).
    */
   const markManualComplete = useCallback(
-    async (runDayId: string) => {
-      if (!programState?.runDays || !user) return;
+    async (runDayId: string): Promise<ProgramOutcome> => {
+      if (!programState?.runDays || !user) return FAILED;
       const targetIndex = programState.runDays.findIndex(
         (rd) => rd.id === runDayId
       );
@@ -1889,19 +1934,24 @@ export function useProgram() {
         logger.warn(
           `[markManualComplete] no runDay matched id=${runDayId}; skipping`
         );
-        return;
+        return declineStale("Couldn't mark that complete.");
       }
       const targetDay = programState.runDays[targetIndex];
 
       // RUN-RACE-GUARD-01: a race completes only via a logged run
       // (RunSummary reconciliation), never a manual mark — otherwise a
       // race overridden to easy + manual-completed silently erases the
-      // race. Gate on the immutable race identity.
+      // race. Gate on the immutable race identity. Said, not just logged:
+      // the run finish screen offers this on an off-plan save and reports
+      // whatever comes back.
       if (isScheduledRaceRunDay(targetDay)) {
         logger.warn(
           `[markManualComplete] refusing to manually complete a scheduled race (id=${targetDay.id}); a race completes via a logged run`
         );
-        return;
+        return declineWithReason(
+          "Couldn't mark that complete.",
+          "A race is complete once you log it as a run."
+        );
       }
 
       // P20: skipped → planned two-step. The transition gate uses
@@ -1914,7 +1964,7 @@ export function useProgram() {
           logger.warn(
             `[markManualComplete] invalid transition ${fromStatus} → planned for runDay ${targetDay.id}; skipping`
           );
-          return;
+          return declineStale("Couldn't mark that complete.");
         }
         updatedDays = programState.runDays.slice();
         updatedDays[targetIndex] = {
@@ -1929,7 +1979,7 @@ export function useProgram() {
         [runDayId]: { completedAt: new Date() },
       };
 
-      const outcome = await runProgramCommand(
+      return runProgramCommand(
         {
           kind: "setManualRunCompletion",
           commandId: generateInstanceId(),
@@ -1940,14 +1990,11 @@ export function useProgram() {
           ...state,
           runDays: updatedDays,
           manualCompletions: updatedMap,
-        })
+        }),
+        "Couldn't mark that complete."
       );
-      if (outcome === "rejected") {
-        rejectedToast("Couldn't mark that complete.", lastRejectionRef.current);
-        await refetchProgramState();
-      }
     },
-    [programState, user, runProgramCommand, refetchProgramState]
+    [programState, user, runProgramCommand, declineStale]
   );
 
   /**
@@ -1958,27 +2005,29 @@ export function useProgram() {
    * — DayActionSheet wires the copy.
    */
   const unmarkManualComplete = useCallback(
-    async (runDayId: string) => {
-      if (!programState?.manualCompletions || !user) return;
-      if (!(runDayId in programState.manualCompletions)) return;
+    async (runDayId: string): Promise<ProgramOutcome> => {
+      if (!programState || !user) return FAILED;
+      // Not marked: nothing to undo.
+      if (
+        !programState.manualCompletions ||
+        !(runDayId in programState.manualCompletions)
+      )
+        return APPLIED;
       const next = { ...programState.manualCompletions };
       delete next[runDayId];
 
-      const outcome = await runProgramCommand(
+      return runProgramCommand(
         {
           kind: "setManualRunCompletion",
           commandId: generateInstanceId(),
           runDayId,
           completed: false,
         },
-        (state) => ({ ...state, manualCompletions: next })
+        (state) => ({ ...state, manualCompletions: next }),
+        "Couldn't undo that."
       );
-      if (outcome === "rejected") {
-        rejectedToast("Couldn't undo that.", lastRejectionRef.current);
-        await refetchProgramState();
-      }
     },
-    [programState, user, runProgramCommand, refetchProgramState]
+    [programState, user, runProgramCommand]
   );
 
   // P1-3: Skip a run day (planned → skipped). Same id-or-index
@@ -1987,8 +2036,8 @@ export function useProgram() {
   // so a no-op call against a terminal-state runDay logs and exits
   // without writing.
   const skipRunDay = useCallback(
-    async (idOrDayIndex: string | number) => {
-      if (!programState?.runDays || !user) return;
+    async (idOrDayIndex: string | number): Promise<ProgramOutcome> => {
+      if (!programState?.runDays || !user) return FAILED;
 
       const targetIndex =
         typeof idOrDayIndex === "string"
@@ -2000,7 +2049,7 @@ export function useProgram() {
         logger.warn(
           `[skipRunDay] no runDay matched ${typeof idOrDayIndex === "string" ? "id" : "dayIndex"}=${idOrDayIndex}; skipping`
         );
-        return;
+        return declineStale("Couldn't skip that run.");
       }
       const targetDay = programState.runDays[targetIndex];
       // PR-0b-iii: legacy-completed-aware status read via the
@@ -2015,7 +2064,7 @@ export function useProgram() {
         logger.warn(
           `[skipRunDay] invalid transition ${fromStatus} → ${toStatus} for runDay ${targetDay.id ?? targetDay.dayIndex}; skipping`
         );
-        return;
+        return declineStale("Couldn't skip that run.");
       }
 
       // The command addresses the slot by STABLE ID, so the dayIndex overload
@@ -2026,7 +2075,7 @@ export function useProgram() {
         logger.warn(
           `[skipRunDay] runDay at dayIndex=${targetDay.dayIndex} has no stable id; skipping`
         );
-        return;
+        return declineStale("Couldn't skip that run.");
       }
 
       const updatedDays = programState.runDays.slice();
@@ -2037,21 +2086,18 @@ export function useProgram() {
         // to tell the two states apart.
         status: toStatus,
       };
-      const outcome = await runProgramCommand(
+      return runProgramCommand(
         {
           kind: "transitionRunDay",
           commandId: generateInstanceId(),
           runDayId: targetDay.id,
           to: toStatus,
         },
-        (state) => ({ ...state, runDays: updatedDays })
+        (state) => ({ ...state, runDays: updatedDays }),
+        "Couldn't skip that run."
       );
-      if (outcome === "rejected") {
-        rejectedToast("Couldn't skip that run.", lastRejectionRef.current);
-        await refetchProgramState();
-      }
     },
-    [programState, user, runProgramCommand, refetchProgramState]
+    [programState, user, runProgramCommand, declineStale]
   );
 
   // SESSION-RESTORE-01: a skip is a reversible decision. Restore a
@@ -2065,8 +2111,8 @@ export function useProgram() {
   // status (planned / completed_*) is refused with a log, so a
   // completed run can never be silently reopened.
   const restoreRunDay = useCallback(
-    async (idOrDayIndex: string | number) => {
-      if (!programState?.runDays || !user) return;
+    async (idOrDayIndex: string | number): Promise<ProgramOutcome> => {
+      if (!programState?.runDays || !user) return FAILED;
       const targetIndex =
         typeof idOrDayIndex === "string"
           ? programState.runDays.findIndex((rd) => rd.id === idOrDayIndex)
@@ -2077,7 +2123,7 @@ export function useProgram() {
         logger.warn(
           `[restoreRunDay] no runDay matched ${typeof idOrDayIndex === "string" ? "id" : "dayIndex"}=${idOrDayIndex}; skipping`
         );
-        return;
+        return declineStale("Couldn't restore that run.");
       }
       const targetDay = programState.runDays[targetIndex];
       const fromStatus = getScheduledRunStatus(targetDay);
@@ -2087,13 +2133,13 @@ export function useProgram() {
         logger.warn(
           `[restoreRunDay] invalid transition ${fromStatus} → planned for runDay ${targetDay.id ?? targetDay.dayIndex}; skipping`
         );
-        return;
+        return declineStale("Couldn't restore that run.");
       }
       if (!targetDay.id) {
         logger.warn(
           `[restoreRunDay] runDay at dayIndex=${targetDay.dayIndex} has no stable id; skipping`
         );
-        return;
+        return declineStale("Couldn't restore that run.");
       }
 
       const updatedDays = programState.runDays.slice();
@@ -2102,21 +2148,18 @@ export function useProgram() {
         status: "planned" as ScheduledRunStatus,
         completed: false,
       };
-      const outcome = await runProgramCommand(
+      return runProgramCommand(
         {
           kind: "transitionRunDay",
           commandId: generateInstanceId(),
           runDayId: targetDay.id,
           to: "planned",
         },
-        (state) => ({ ...state, runDays: updatedDays })
+        (state) => ({ ...state, runDays: updatedDays }),
+        "Couldn't restore that run."
       );
-      if (outcome === "rejected") {
-        rejectedToast("Couldn't restore that run.", lastRejectionRef.current);
-        await refetchProgramState();
-      }
     },
-    [programState, user, runProgramCommand, refetchProgramState]
+    [programState, user, runProgramCommand, declineStale]
   );
 
   // SESSION-RESTORE-01 (lift half): clear `skipped` on a lift day,
@@ -2125,13 +2168,17 @@ export function useProgram() {
   // reopened, and a non-skipped day is a no-op. No stats, streak, or
   // social side effect (mirrors skipWorkoutDay's write shape).
   const restoreWorkoutDay = useCallback(
-    async (dayIndex: number) => {
-      if (!programState || !user) return;
+    async (dayIndex: number): Promise<ProgramOutcome> => {
+      if (!programState || !user) return FAILED;
       const day = programState.workouts[dayIndex];
-      if (!day || !day.skipped || day.completed) return;
-      const precondition = workoutDayPrecondition(programState, dayIndex);
-      if (!precondition) return;
-      const outcome = await runProgramCommand(
+      // A planned day has nothing to restore.
+      if (day && !day.skipped && !day.completed) return APPLIED;
+      const precondition =
+        day && !day.completed
+          ? workoutDayPrecondition(programState, dayIndex)
+          : null;
+      if (!precondition) return declineStale("Couldn't restore that session.");
+      return runProgramCommand(
         {
           kind: "restoreWorkoutDay",
           commandId: generateInstanceId(),
@@ -2142,17 +2189,11 @@ export function useProgram() {
           workouts: state.workouts.map((d, i) =>
             i === dayIndex ? { ...d, skipped: false } : d
           ),
-        })
+        }),
+        "Couldn't restore that session."
       );
-      if (outcome === "rejected") {
-        rejectedToast(
-          "Couldn't restore that session.",
-          lastRejectionRef.current
-        );
-        await refetchProgramState();
-      }
     },
-    [programState, user, runProgramCommand, refetchProgramState]
+    [programState, user, runProgramCommand, declineStale]
   );
 
   // RUN-RESCHEDULE-01: one-off move of a planned run to another day WITHIN
@@ -2164,8 +2205,11 @@ export function useProgram() {
   // event, RUN-RACE-GUARD-01) and only an editable/planned slot moves.
   // `weekSchedule` isn't mutated, and the plan isn't regenerated.
   const moveRunDay = useCallback(
-    async (idOrDayIndex: string | number, targetDayIndex: number) => {
-      if (!programState?.runDays || !user) return;
+    async (
+      idOrDayIndex: string | number,
+      targetDayIndex: number
+    ): Promise<ProgramOutcome> => {
+      if (!programState?.runDays || !user) return FAILED;
       const target = programState.runDays.find((rd) =>
         typeof idOrDayIndex === "string"
           ? rd.id === idOrDayIndex
@@ -2175,15 +2219,15 @@ export function useProgram() {
         logger.warn(
           `[moveRunDay] no runDay matched ${typeof idOrDayIndex === "string" ? "id" : "dayIndex"}=${idOrDayIndex}; skipping`
         );
-        return;
+        return declineStale("Couldn't move that run.");
       }
       if (!canRescheduleRun(target)) {
         logger.warn(
           `[moveRunDay] runDay ${target.id ?? target.dayIndex} is not reschedulable (race or non-planned); skipping`
         );
-        return;
+        return declineStale("Couldn't move that run.");
       }
-      if (targetDayIndex === target.dayIndex) return; // no-op: same day
+      if (targetDayIndex === target.dayIndex) return APPLIED; // same day
       // Integrity guard: never double-book a day (the UI already blocks
       // occupied days, but two runs sharing a dayIndex corrupts the week).
       if (
@@ -2194,13 +2238,13 @@ export function useProgram() {
         logger.warn(
           `[moveRunDay] dayIndex=${targetDayIndex} already occupied; skipping`
         );
-        return;
+        return declineStale("Couldn't move that run.");
       }
       if (!target.id) {
         logger.warn(
           `[moveRunDay] runDay at dayIndex=${target.dayIndex} has no stable id; skipping`
         );
-        return;
+        return declineStale("Couldn't move that run.");
       }
       // Computed here for the OPTIMISTIC paint only. The command sends just
       // the run id and the target day: the date, the move markers and the
@@ -2217,10 +2261,10 @@ export function useProgram() {
         logger.warn(
           `[moveRunDay] could not resolve a date for dayIndex=${targetDayIndex}; skipping`
         );
-        return;
+        return declineStale("Couldn't move that run.");
       }
       const targetId = target.id;
-      const outcome = await runProgramCommand(
+      return runProgramCommand(
         {
           kind: "moveRunDay",
           commandId: generateInstanceId(),
@@ -2245,20 +2289,11 @@ export function useProgram() {
             else delete next.movedToDate;
             return next;
           }),
-        })
+        }),
+        "Couldn't move that run."
       );
-      if (outcome === "rejected") {
-        rejectedToast("Couldn't move that run.", lastRejectionRef.current);
-        await refetchProgramState();
-      }
     },
-    [
-      programState,
-      user,
-      profile?.weekSchedule,
-      runProgramCommand,
-      refetchProgramState,
-    ]
+    [programState, user, profile?.weekSchedule, runProgramCommand, declineStale]
   );
 
   // Override a run day template. Refuses to write when the target
@@ -2354,17 +2389,13 @@ export function useProgram() {
               ? { ...rd, templateId, userOverride: templateId }
               : rd
           ),
-        })
+        }),
+        "Couldn't change that run."
       );
-      if (outcome === "rejected") {
-        rejectedToast("Couldn't change that run.", lastRejectionRef.current);
-        await refetchProgramState();
-        return false;
-      }
       // No success toast — the schedule UI shows the new run-day state.
-      return true;
+      return changeStands(outcome);
     },
-    [programState, runProgramCommand, refetchProgramState]
+    [programState, runProgramCommand]
   );
 
   // Log exercise performance with auto-progression
@@ -2512,16 +2543,13 @@ export function useProgram() {
           ...(session ? { sessionId: session.id } : {}),
           ...(session?.correction ? { correction: true } : {}),
         },
-        (state) => ({ ...state, workouts: updatedWorkouts })
+        (state) => ({ ...state, workouts: updatedWorkouts }),
+        "Couldn't save that set."
       );
-      if (outcome === "rejected") {
-        rejectedToast("Couldn't save that set.", lastRejectionRef.current);
-        await refetchProgramState();
-        if (session?.correction)
-          throw new Error("Couldn’t update your workout. Please try again.");
-      }
+      if (!changeStands(outcome) && session?.correction)
+        throw new Error("Couldn’t update your workout. Please try again.");
     },
-    [programState, runProgramCommand, refetchProgramState]
+    [programState, runProgramCommand]
   );
 
   /* `updateExercise` (manual sets/reps/weight override) was DELETED here
@@ -2542,8 +2570,8 @@ export function useProgram() {
 
   // Update settings
   const updateSettings = useCallback(
-    async (updates: Partial<ProgramSettings>) => {
-      if (!programState) return;
+    async (updates: Partial<ProgramSettings>): Promise<ProgramOutcome> => {
+      if (!programState) return FAILED;
       const current = programState.settings ?? {
         autoProgression: true,
         microloading: true,
@@ -2552,7 +2580,7 @@ export function useProgram() {
       // P6: the reducer replaces the whole settings object, so the MERGE stays
       // client-side and the full result is sent. Both fields are required by
       // the validator, which is why a partial patch would be rejected.
-      const outcome = await runProgramCommand(
+      return runProgramCommand(
         {
           kind: "setProgramSettings",
           commandId: generateInstanceId(),
@@ -2561,11 +2589,11 @@ export function useProgram() {
             microloading: newSettings.microloading,
           },
         },
-        (state) => ({ ...state, settings: newSettings })
+        (state) => ({ ...state, settings: newSettings }),
+        "Couldn't save that setting."
       );
-      if (outcome === "rejected") await refetchProgramState();
     },
-    [programState, runProgramCommand, refetchProgramState]
+    [programState, runProgramCommand]
   );
 
   // Regenerate program (goal or split change).
@@ -2853,9 +2881,10 @@ export function useProgram() {
   // would lag and refresh would still emit easy_30. By doing the
   // whole transition in one saveProgram call, we sidestep the
   // closure-lag problem.
-  const skipRecoveryEarly = useCallback(async () => {
-    if (!programState || !profile) return;
-    if (programState.runPlan?.phase !== "recovery") return;
+  const skipRecoveryEarly = useCallback(async (): Promise<ProgramOutcome> => {
+    if (!programState || !profile) return FAILED;
+    // Already out of recovery: nothing to end.
+    if (programState.runPlan?.phase !== "recovery") return APPLIED;
 
     // P6: ONE command, replacing `Promise.all([updateProfile, saveProgram])`.
     //
@@ -2889,26 +2918,18 @@ export function useProgram() {
         delete nextRunPlan.phase;
         delete nextRunPlan.recoveryEndDate;
         return { ...state, runPlan: nextRunPlan as unknown as RunPlan };
-      }
+      },
+      "Couldn't end recovery."
     );
 
-    if (outcome === "rejected") {
-      rejectedToast("Couldn't end recovery.", lastRejectionRef.current);
-      await refetchProgramState();
-      return;
-    }
+    if (!changeStands(outcome)) return outcome;
     // The profile half landed SERVER-side, so the local copy is stale until
     // it is re-read. Without this the recovery hero would linger on a plan
     // that no longer has a recovery phase.
     await refreshProfile();
     logger.log(`[skipRecoveryEarly] exited recovery → ${exit.runMode}`);
-  }, [
-    programState,
-    profile,
-    runProgramCommand,
-    refetchProgramState,
-    refreshProfile,
-  ]);
+    return outcome;
+  }, [programState, profile, runProgramCommand, refreshProfile]);
 
   // ── Run9 phase-3 (Slice DE): one-tap Realign ─────────────────
   //
@@ -2920,20 +2941,21 @@ export function useProgram() {
   // skip path stays as `dismissFellBehindPrompt` above.
 
   /** Q24 (i) — dismiss the prompt without changing the plan. */
-  const dismissFellBehindPrompt = useCallback(async () => {
-    if (!programState) return;
-    if (!programState.pendingFellBehindPrompt) return;
-    logger.log("[fellBehind] dismissed without plan change");
-    const outcome = await runProgramCommand(
-      { kind: "dismissFellBehindPrompt", commandId: generateInstanceId() },
-      (state) => {
-        const next = { ...state };
-        delete next.pendingFellBehindPrompt;
-        return next;
-      }
-    );
-    if (outcome === "rejected") await refetchProgramState();
-  }, [programState, runProgramCommand, refetchProgramState]);
+  const dismissFellBehindPrompt =
+    useCallback(async (): Promise<ProgramOutcome> => {
+      if (!programState) return FAILED;
+      if (!programState.pendingFellBehindPrompt) return APPLIED;
+      logger.log("[fellBehind] dismissed without plan change");
+      return runProgramCommand(
+        { kind: "dismissFellBehindPrompt", commandId: generateInstanceId() },
+        (state) => {
+          const next = { ...state };
+          delete next.pendingFellBehindPrompt;
+          return next;
+        },
+        "Couldn't dismiss that."
+      );
+    }, [programState, runProgramCommand]);
 
   /**
    * Reorder one day's exercises through the command boundary — the first
@@ -2997,6 +3019,8 @@ export function useProgram() {
 
       const precondition = workoutDayPrecondition(programState, dayIndex);
       if (!precondition) return false;
+      // No decline message: a refusal here is answered with the direct write
+      // below, not a toast.
       const outcome = await runProgramCommand(
         {
           kind: "reorderExercises",
@@ -3004,10 +3028,11 @@ export function useProgram() {
           ...precondition,
           orderedInstanceIds,
         },
-        permute
+        permute,
+        null
       );
 
-      if (outcome === "rejected") {
+      if (outcome.status === "declined") {
         logger.log(
           "[useProgram] reorder rejected — writing directly, which also persists the instanceIds"
         );
@@ -3017,8 +3042,8 @@ export function useProgram() {
         });
       }
       // Applied, queued, or written directly — the user's reorder stuck in all
-      // three. Only the early bail above returns false.
-      return true;
+      // three. Only a bail (nothing loaded, signed out) returns false.
+      return outcome.status !== "failed";
     },
     [programState, runProgramCommand, saveProgram]
   );
@@ -3063,15 +3088,12 @@ export function useProgram() {
                 }
               : d
           ),
-        })
+        }),
+        "Couldn't remove that."
       );
-      if (outcome === "rejected") {
-        rejectedToast("Couldn't remove that.", lastRejectionRef.current);
-        await refetchProgramState();
-      }
-      return outcome !== "rejected";
+      return changeStands(outcome);
     },
-    [programState, runProgramCommand, refetchProgramState]
+    [programState, runProgramCommand]
   );
 
   /**
@@ -3127,15 +3149,12 @@ export function useProgram() {
                 }
               : d
           ),
-        })
+        }),
+        "Couldn't add that."
       );
-      if (outcome === "rejected") {
-        rejectedToast("Couldn't add that.", lastRejectionRef.current);
-        await refetchProgramState();
-      }
-      return outcome !== "rejected";
+      return changeStands(outcome);
     },
-    [programState, runProgramCommand, refetchProgramState]
+    [programState, runProgramCommand]
   );
 
   /**
@@ -3163,15 +3182,12 @@ export function useProgram() {
           commandId: generateInstanceId(),
           ...precondition,
         },
-        (state) => state
+        (state) => state,
+        "Couldn't undo that."
       );
-      if (outcome === "rejected") {
-        toast.error("Couldn't undo that.");
-        await refetchProgramState();
-      }
-      return outcome !== "rejected";
+      return changeStands(outcome);
     },
-    [programState, runProgramCommand, refetchProgramState]
+    [programState, runProgramCommand]
   );
 
   /**
@@ -3275,15 +3291,12 @@ export function useProgram() {
                 }
               : d
           ),
-        })
+        }),
+        "Couldn't swap that."
       );
-      if (outcome === "rejected") {
-        rejectedToast("Couldn't swap that.", lastRejectionRef.current);
-        await refetchProgramState();
-      }
-      return outcome !== "rejected";
+      return changeStands(outcome);
     },
-    [programState, profile, runProgramCommand, refetchProgramState]
+    [programState, profile, runProgramCommand]
   );
 
   /** PROGRAM-DELOAD-01 — apply/revert the deload week via the server
@@ -3545,16 +3558,12 @@ export function useProgram() {
             input.focus,
             toExperience(profile?.experience)
           ),
-        })
+        }),
+        "Couldn't start that block."
       );
-      if (outcome === "rejected") {
-        rejectedToast("Couldn't start that block.", lastRejectionRef.current);
-        await refetchProgramState();
-        return false;
-      }
-      return true;
+      return changeStands(outcome);
     },
-    [programState, profile, runProgramCommand, refetchProgramState]
+    [programState, profile, runProgramCommand]
   );
 
   /**
@@ -3591,15 +3600,11 @@ export function useProgram() {
         };
         delete next.trainingBlock;
         return next;
-      }
+      },
+      "Couldn't end that block."
     );
-    if (outcome === "rejected") {
-      rejectedToast("Couldn't end that block.", lastRejectionRef.current);
-      await refetchProgramState();
-      return false;
-    }
-    return true;
-  }, [programState, profile, runProgramCommand, refetchProgramState]);
+    return changeStands(outcome);
+  }, [programState, profile, runProgramCommand]);
 
   /**
    * End the block but KEEP its focus as the user's programme focus — the
@@ -3614,15 +3619,11 @@ export function useProgram() {
         const next = { ...state };
         delete next.trainingBlock;
         return next;
-      }
+      },
+      "Couldn't end that block."
     );
-    if (outcome === "rejected") {
-      rejectedToast("Couldn't end that block.", lastRejectionRef.current);
-      await refetchProgramState();
-      return false;
-    }
-    return true;
-  }, [programState, runProgramCommand, refetchProgramState]);
+    return changeStands(outcome);
+  }, [programState, runProgramCommand]);
 
   /**
    * Adopt a pre-Blk2 block that was still open when Blk2 shipped.
@@ -3701,29 +3702,35 @@ export function useProgram() {
    *  Carries terminal status + re-keys manualCompletions (Slice A) so the
    *  current week's completions survive the regen. Clears the server-written
    *  fell-behind flag if present — but works WITHOUT it too, since the in-tab
-   *  Realign banner can be triggered any time the user feels behind. Returns
-   *  the timing + totalWeeks so the caller can toast the right copy. */
-  const realignRacePlan = useCallback(async (): Promise<{
-    timing: RaceTiming;
-    totalWeeks: number;
-  }> => {
-    if (!programState || !profile) return { timing: "healthy", totalWeeks: 0 };
+   *  Realign banner can be triggered any time the user feels behind.
+   *
+   *  Returns what happened. When it landed, the timing + totalWeeks, so the
+   *  caller can toast the right copy; a refusal is said here, once, and the
+   *  caller says nothing. A refusal carries no timing, so no screen can
+   *  announce it as a realigned plan. */
+  const realignRacePlan = useCallback(async (): Promise<RealignOutcome> => {
+    const refuse = (reason: string): RealignOutcome => {
+      rejectedToast("Couldn't realign your plan.", reason);
+      return { status: "declined", reason };
+    };
+    if (!programState || !profile) return { status: "failed" };
     if (profile.runMode !== "race_prep" || !profile.raceGoal)
-      return { timing: "healthy", totalWeeks: 0 };
+      return refuse("There's no race on your plan.");
     // RUN-H1: realign re-plans race-training weeks; it is meaningless during an
     // active recovery window (the race is done) and would regenerate a race
     // plan that drops the recovery phase. The fell-behind prompt that triggers
     // realign is already suppressed during recovery, but guard explicitly so
     // recovery exit stays a deliberate decision (resolveRecoveryExit).
+    const inRecovery = "You're in recovery after your race.";
     if (isInRecoveryOn(programState.runPlan, localDateString())) {
-      return { timing: "healthy", totalWeeks: 0 };
+      return refuse(inRecovery);
     }
     // R3: a race that has already passed (recovery ended, raceGoal not yet
     // server-cleared at recoveryEndDate + 7d) must not be realigned —
     // regenerating would produce a phantom plan dated in the past. Leave it for
     // the freeform transition, same as refreshRunSchedule / the rollovers.
     if (localDateString() > profile.raceGoal.targetDate) {
-      return { timing: "healthy", totalWeeks: 0 };
+      return refuse("Your race date has passed.");
     }
     // Built against the live document. A realign is a re-anchor to today,
     // and the week position it carries must be the store's: computed from
@@ -3731,44 +3738,51 @@ export function useProgram() {
     // was refused, and repaired only by tapping again.
     const raceGoal = profile.raceGoal;
     let planned: ProgramState["runPlan"];
-    const saved = await saveProgram((base) => {
-      if (isInRecoveryOn(base.runPlan, localDateString())) return null;
-      const prevRunPlan = base.runPlan;
-      const { runDays, runPlan, manualCompletions } = regenerateRacePlan({
-        recentLayoff,
-        tuning: runTuningFromProfile(profile),
+    let saved: ProgramState | null;
+    try {
+      saved = await saveProgram((base) => {
+        if (isInRecoveryOn(base.runPlan, localDateString())) return null;
+        const prevRunPlan = base.runPlan;
+        const { runDays, runPlan, manualCompletions } = regenerateRacePlan({
+          recentLayoff,
+          tuning: runTuningFromProfile(profile),
 
-        easyPaceSPerKm: planningEasyPaceSPerKm(profile?.runFitness),
+          easyPaceSPerKm: planningEasyPaceSPerKm(profile?.runFitness),
 
-        runTimeLimits: profile?.runTimeLimits ?? null,
-        runningBaseline: profile?.runningBaseline ?? null,
-        raceGoal,
-        weekSchedule: profile.weekSchedule ?? [],
-        weeklyRunDays: getWeeklyRunTarget(profile) || 3,
-        currentDate: localDateString(),
-        weekStart: localWeekKey(),
-        carry: {
-          currentWeek: prevRunPlan?.currentWeek,
-          // Carried WITH currentWeek, as every other regen site does: the
-          // phase of a week is currentWeek against totalWeeks, so carrying
-          // the position without the block length re-derived the phase from
-          // the weeks REMAINING — a realign at week 10 of 18 with 6 weeks
-          // left generated a base week while the cockpit showed the carried
-          // build phase.
-          totalWeeks: prevRunPlan?.totalWeeks,
-          completedRaces: prevRunPlan?.completedRaces,
-        },
-        prior: {
-          runDays: base.runDays ?? [],
-          manualCompletions: base.manualCompletions,
-        },
+          runTimeLimits: profile?.runTimeLimits ?? null,
+          runningBaseline: profile?.runningBaseline ?? null,
+          raceGoal,
+          weekSchedule: profile.weekSchedule ?? [],
+          weeklyRunDays: getWeeklyRunTarget(profile) || 3,
+          currentDate: localDateString(),
+          weekStart: localWeekKey(),
+          carry: {
+            currentWeek: prevRunPlan?.currentWeek,
+            // Carried WITH currentWeek, as every other regen site does: the
+            // phase of a week is currentWeek against totalWeeks, so carrying
+            // the position without the block length re-derived the phase from
+            // the weeks REMAINING — a realign at week 10 of 18 with 6 weeks
+            // left generated a base week while the cockpit showed the carried
+            // build phase.
+            totalWeeks: prevRunPlan?.totalWeeks,
+            completedRaces: prevRunPlan?.completedRaces,
+          },
+          prior: {
+            runDays: base.runDays ?? [],
+            manualCompletions: base.manualCompletions,
+          },
+        });
+        planned = runPlan;
+        const next = { ...base, runDays, runPlan, manualCompletions };
+        delete next.pendingFellBehindPrompt;
+        return next;
       });
-      planned = runPlan;
-      const next = { ...base, runDays, runPlan, manualCompletions };
-      delete next.pendingFellBehindPrompt;
-      return next;
-    });
-    if (!saved || !planned) return { timing: "healthy", totalWeeks: 0 };
+    } catch {
+      // saveProgram has already said what went wrong.
+      return { status: "failed" };
+    }
+    // Not written: the live plan went into recovery since this screen drew.
+    if (!saved || !planned) return refuse(inRecovery);
     const timing: RaceTiming = planned.belowFloor
       ? "below-floor"
       : planned.compressed
@@ -3778,7 +3792,7 @@ export function useProgram() {
       `[realign] re-anchored race plan from today — timing=${timing}, ` +
         `totalWeeks=${planned.totalWeeks}, belowFloor=${!!planned.belowFloor}`
     );
-    return { timing, totalWeeks: planned.totalWeeks ?? 0 };
+    return { status: "applied", timing, totalWeeks: planned.totalWeeks ?? 0 };
   }, [programState, profile, saveProgram, recentLayoff]);
 
   // Week navigation

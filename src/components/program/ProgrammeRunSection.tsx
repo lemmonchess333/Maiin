@@ -114,7 +114,10 @@ import { getRunHeroState } from "@/lib/runHeroState";
 import { getFreeformCadence } from "@/lib/freeformCadence";
 import { resolveRunContextualPrompt } from "@/lib/runContextualPrompt";
 import { realignResultMessage } from "@/lib/realignCopy";
-import type { RaceTiming } from "@/features/program/runPlanTiming";
+import type {
+  ProgramOutcome,
+  RealignOutcome,
+} from "@/features/program/programOutcome";
 import { useRunningStats } from "@/hooks/useRunningStats";
 import { useClaimMap } from "@/hooks/useClaimMap";
 import { haptic } from "@/lib/haptic";
@@ -191,15 +194,15 @@ interface ProgrammeRunSectionProps {
   revertEaseWeek: () => Promise<{ ok: boolean; message?: string }>;
   /** PR-J Q2 chunk B2: replaces completeRunDay. Writes the
    *  manualCompletions map; derivation surfaces ✅. */
-  markManualComplete: (runDayId: string) => Promise<void>;
-  skipRunDay: (idOrDayIndex: string | number) => Promise<void>;
-  skipWorkoutDay: (dayIndex: number) => Promise<void>;
-  restoreRunDay: (idOrDayIndex: string | number) => Promise<void>;
-  restoreWorkoutDay: (dayIndex: number) => Promise<void>;
+  markManualComplete: (runDayId: string) => Promise<ProgramOutcome>;
+  skipRunDay: (idOrDayIndex: string | number) => Promise<ProgramOutcome>;
+  skipWorkoutDay: (dayIndex: number) => Promise<ProgramOutcome>;
+  restoreRunDay: (idOrDayIndex: string | number) => Promise<ProgramOutcome>;
+  restoreWorkoutDay: (dayIndex: number) => Promise<ProgramOutcome>;
   moveRunDay: (
     idOrDayIndex: string | number,
     targetDayIndex: number
-  ) => Promise<void>;
+  ) => Promise<ProgramOutcome>;
   /** PR-C + Run9 ENG(j): atomic writer to exit the recovery phase
    *  early. Resolves the exit via `resolveRecoveryExit` — the race is
    *  done, so the user returns to FREEFORM (plan + raceGoal cleared),
@@ -207,14 +210,15 @@ interface ProgrammeRunSectionProps {
    *  in which case race_prep is preserved and only the recovery phase
    *  clears. Called from the in-recovery "Skip recovery early" link
    *  and the recovery-complete banner's "Back to freeform" action. */
-  skipRecoveryEarly: () => Promise<void>;
+  skipRecoveryEarly: () => Promise<ProgramOutcome>;
   /** Run9 phase-3 (Slice DE) — re-anchor the race plan to today (keep the
-   *  race date). Returns the timing so the in-tab Realign banner can toast the
-   *  finish-safely / compressed / healthy copy. */
-  realignRacePlan: () => Promise<{ timing: RaceTiming; totalWeeks: number }>;
+   *  race date). When it lands, the timing, so the in-tab Realign banner can
+   *  toast the finish-safely / compressed / healthy copy; a refusal is
+   *  said by the writer. */
+  realignRacePlan: () => Promise<RealignOutcome>;
   /** Clears `pendingFellBehindPrompt` without a plan change — used by the
    *  in-tab "My race moved →" path before routing to the date editor. */
-  dismissFellBehindPrompt: () => Promise<void>;
+  dismissFellBehindPrompt: () => Promise<ProgramOutcome>;
 }
 
 export default function ProgrammeRunSection({
@@ -903,13 +907,14 @@ export default function ProgrammeRunSection({
   // honest finish-safely line below the taper floor.
   async function handleRealign(): Promise<void> {
     try {
-      const { timing, totalWeeks } = await realignRacePlan();
-      if (raceGoal) {
+      const result = await realignRacePlan();
+      // A refusal or a failed save has already been said by the writer.
+      if (result.status === "applied" && raceGoal) {
         toast.success(
           realignResultMessage({
-            timing,
+            timing: result.timing,
             distance: raceGoal.distance as "5k" | "10k" | "half" | "marathon",
-            totalWeeks,
+            totalWeeks: result.totalWeeks,
           })
         );
       }
@@ -1814,10 +1819,7 @@ export default function ProgrammeRunSection({
             programState?.easeSnapshot != null &&
             programState.easeSnapshot.weekNumber === programState.weekNumber
           }
-          realignRacePlan={async () => {
-            const result = await realignRacePlan();
-            return result;
-          }}
+          realignRacePlan={realignRacePlan}
           // A6's eased-week marker is the sheet's own job now. It was a
           // callback from here, and the sheet's OTHER mount (SettingsRunPlan)
           // never passed one — so easing from Settings produced no bounce

@@ -14,6 +14,7 @@ import {
   liftDayStatus,
 } from "@/features/program/liftDayStatus";
 import { useProgram } from "@/features/program/useProgram";
+import { changeStands } from "@/features/program/programOutcome";
 import { useStreaks } from "@/features/streaks/useStreaks";
 import { useAuth } from "@/lib/auth";
 import { useWorkouts } from "@/hooks/useWorkouts";
@@ -1775,14 +1776,18 @@ function ProgramInner() {
         }
         onConfirm={async () => {
           if (skipTargetDay !== null) {
-            await skipWorkoutDay(skipTargetDay);
-            haptic("medium");
-            // Auto-advance to next incomplete day
-            const nextIncomplete = displayWorkouts.findIndex(
-              (d, i) => i !== skipTargetDay && !d.completed && !d.skipped
-            );
-            if (nextIncomplete >= 0) {
-              handleSelect(nextIncomplete);
+            const outcome = await skipWorkoutDay(skipTargetDay);
+            // A refused skip has been said by the writer, and the day is
+            // still the one to look at.
+            if (changeStands(outcome)) {
+              haptic("medium");
+              // Auto-advance to next incomplete day
+              const nextIncomplete = displayWorkouts.findIndex(
+                (d, i) => i !== skipTargetDay && !d.completed && !d.skipped
+              );
+              if (nextIncomplete >= 0) {
+                handleSelect(nextIncomplete);
+              }
             }
           }
           setShowSkipConfirm(false);

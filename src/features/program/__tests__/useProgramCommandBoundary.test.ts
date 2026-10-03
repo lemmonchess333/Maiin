@@ -309,6 +309,104 @@ describe("reorderDayExercises — the migrated writer", () => {
   });
 });
 
+/* ─── What a writer reports (C2) ─────────────────────────────────────────
+   A writer used to return nothing, and four of them said nothing when the
+   server refused: a refused skip, setting or "follow programme order"
+   quietly undid itself on screen. The seam now says a refusal once (the
+   writer's line plus the server's reason) and every writer hands back what
+   happened, so a screen announces success only when the change stands. ── */
+describe("a refused command is said once and reported", () => {
+  const refusal = (message: string) =>
+    Object.assign(new Error(message), {
+      code: "functions/failed-precondition",
+    });
+
+  beforeEach(async () => {
+    const { toast } = await import("sonner");
+    vi.mocked(toast.error).mockClear();
+  });
+
+  it("a refused skip rolls back, says why, and reports the refusal", async () => {
+    sendProgramCommand.mockRejectedValue(
+      refusal("This workout changed since you started. Refresh and try again.")
+    );
+    const hook = await mounted();
+
+    let outcome: unknown;
+    await act(async () => {
+      outcome = await hook.result.current.skipWorkoutDay(0);
+    });
+
+    expect(outcome).toEqual({
+      status: "declined",
+      reason: "This workout changed since you started. Refresh and try again.",
+    });
+    const { toast } = await import("sonner");
+    // The app's toast wrapper adds a dedupe id; the text is what is said.
+    expect(vi.mocked(toast.error).mock.calls.map(([text]) => text)).toEqual([
+      "Couldn't skip that session. This workout changed since you started. Refresh and try again.",
+    ]);
+    expect(
+      (hook.result.current.programState as ProgramState).workouts[0].skipped
+    ).toBeFalsy();
+    expect(outboxLength("test-user-1")).toBe(0);
+  });
+
+  it("a refused setting is said, not silently undone", async () => {
+    // A code with no user-fit prose: the line says the plan is re-read.
+    sendProgramCommand.mockRejectedValue(callableError("functions/internal"));
+    const hook = await mounted();
+
+    let outcome: unknown;
+    await act(async () => {
+      outcome = await hook.result.current.updateSettings({
+        autoProgression: false,
+      });
+    });
+
+    expect(outcome).toEqual({ status: "declined", reason: null });
+    const { toast } = await import("sonner");
+    expect(vi.mocked(toast.error).mock.calls.map(([text]) => text)).toEqual([
+      "Couldn't save that setting. Refreshing.",
+    ]);
+    expect(
+      (hook.result.current.programState as ProgramState).settings
+        ?.autoProgression
+    ).toBe(true);
+  });
+
+  it("an offline change is queued, stands, and says nothing", async () => {
+    sendProgramCommand.mockRejectedValue(
+      callableError("functions/unavailable")
+    );
+    const hook = await mounted();
+
+    let outcome: unknown;
+    await act(async () => {
+      outcome = await hook.result.current.skipWorkoutDay(0);
+    });
+
+    expect(outcome).toEqual({ status: "queued" });
+    expect(
+      (hook.result.current.programState as ProgramState).workouts[0].skipped
+    ).toBe(true);
+    const { toast } = await import("sonner");
+    expect(toast.error).not.toHaveBeenCalled();
+  });
+
+  it("a change with nothing to do is applied without a command", async () => {
+    const hook = await mounted();
+
+    let outcome: unknown;
+    await act(async () => {
+      outcome = await hook.result.current.setNextWorkout(null);
+    });
+
+    expect(outcome).toEqual({ status: "applied" });
+    expect(sendProgramCommand).not.toHaveBeenCalled();
+  });
+});
+
 /* ─── The other two writers with no new server code (P6) ─────────────────
    `removeExercise` and `addExercises` are the only remaining Program.tsx
    sites whose reducer already reproduces the client. The recovery differs

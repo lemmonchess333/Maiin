@@ -32,6 +32,8 @@ const h = vi.hoisted(() => ({
   auth: { user: { uid: "runner" }, profile: { displayName: "Runner" } },
   domAtRender: [] as string[],
   paceLoading: [] as boolean[],
+  markManualComplete: vi.fn(),
+  skipRunDay: vi.fn(),
 }));
 vi.mock("@/lib/auth", () => ({
   useAuth: () => h.auth,
@@ -42,8 +44,8 @@ vi.mock("@/features/program/useProgram", () => ({
   useProgram: () => {
     h.domAtRender.push(document.body.textContent ?? "");
     return {
-      markManualComplete: vi.fn(),
-      skipRunDay: vi.fn(),
+      markManualComplete: h.markManualComplete,
+      skipRunDay: h.skipRunDay,
       programState: { runDays: [{ id: "rd-1", status: "planned" }] },
     };
   },
@@ -157,6 +159,10 @@ beforeEach(() => {
   localStorage.clear();
   h.domAtRender.length = 0;
   h.paceLoading.length = 0;
+  h.markManualComplete.mockReset();
+  h.markManualComplete.mockResolvedValue({ status: "applied" });
+  h.skipRunDay.mockReset();
+  h.skipRunDay.mockResolvedValue({ status: "applied" });
 });
 afterEach(() => {
   resumeReads();
@@ -180,6 +186,57 @@ describe("RunSummary — the off-plan prompt's stored dismissal", () => {
     expect(
       h.domAtRender.filter((dom) => dom.includes("Off-plan save"))
     ).toEqual([]);
+  });
+});
+
+describe("RunSummary — the off-plan prompt says only what happened", () => {
+  it("marks the planned run complete when the writer did", async () => {
+    renderSummary();
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Mark scheduled run complete" })
+    );
+    expect(
+      await screen.findByText("Scheduled run marked complete.")
+    ).toBeInTheDocument();
+    expect(h.markManualComplete).toHaveBeenCalledWith("rd-1");
+  });
+
+  it("a refused completion keeps the prompt and claims nothing", async () => {
+    // A race is completed by logging it, so the writer refuses and says so.
+    // The card used to report "Scheduled run marked complete." regardless.
+    h.markManualComplete.mockResolvedValue({
+      status: "declined",
+      reason: "A race is complete once you log it as a run.",
+    });
+    renderSummary();
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Mark scheduled run complete" })
+    );
+    await waitFor(() => expect(h.markManualComplete).toHaveBeenCalled());
+    // POSITIVE anchor: the prompt is still there, its buttons usable again.
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: "Mark scheduled run complete" })
+      ).toBeEnabled()
+    );
+    expect(screen.getByText("Off-plan save")).toBeInTheDocument();
+    expect(screen.queryByText("Scheduled run marked complete.")).toBeNull();
+  });
+
+  it("a refused skip keeps the prompt and claims nothing", async () => {
+    h.skipRunDay.mockResolvedValue({ status: "declined", reason: null });
+    renderSummary();
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Skip scheduled run" })
+    );
+    await waitFor(() => expect(h.skipRunDay).toHaveBeenCalledWith("rd-1"));
+    await waitFor(() =>
+      expect(
+        screen.getByRole("button", { name: "Skip scheduled run" })
+      ).toBeEnabled()
+    );
+    expect(screen.getByText("Off-plan save")).toBeInTheDocument();
+    expect(screen.queryByText("Scheduled run skipped.")).toBeNull();
   });
 });
 

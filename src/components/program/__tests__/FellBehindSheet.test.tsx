@@ -15,6 +15,10 @@ import { readFileSync } from "node:fs";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import FellBehindSheet from "../FellBehindSheet";
+import {
+  APPLIED,
+  type ProgramOutcome,
+} from "@/features/program/programOutcome";
 
 function basePrompt() {
   return {
@@ -32,7 +36,7 @@ function setup({
   raceModeActive?: boolean;
   recentLayoff?: "none" | "gap" | "detrained";
 } = {}) {
-  const dismissFellBehindPrompt = vi.fn(async () => {});
+  const dismissFellBehindPrompt = vi.fn(async () => APPLIED);
   const realignRacePlan = vi.fn(async () => {});
   const onRaceMoved = vi.fn();
   const onClose = vi.fn();
@@ -127,7 +131,10 @@ describe("FellBehindSheet", () => {
   it("disables all buttons during an in-flight action (double-tap guard)", async () => {
     // Make the writer slow so we can observe the disabled state.
     const dismissFellBehindPrompt = vi.fn(
-      () => new Promise<void>((resolve) => setTimeout(resolve, 50))
+      () =>
+        new Promise<ProgramOutcome>((resolve) =>
+          setTimeout(() => resolve(APPLIED), 50)
+        )
     );
     const realignRacePlan = vi.fn(async () => {});
     const onRaceMoved = vi.fn();

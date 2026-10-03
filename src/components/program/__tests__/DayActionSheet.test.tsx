@@ -43,6 +43,7 @@ import type {
 } from "@/features/program/programTypes";
 import type { ClaimState } from "@/lib/scheduledRunCompletion";
 import type { SavedRunDoc } from "@/hooks/useClaimMap";
+import { APPLIED } from "@/features/program/programOutcome";
 
 /* These components read the display unit, which resolves from the auth
    profile — and `useAuth` throws outside an AuthProvider, which none of
@@ -166,14 +167,14 @@ function commonCallbacks() {
   return {
     overrideRunDay: vi.fn(),
     // PR-J Q2 chunk B2: markManualComplete replaces completeRunDay.
-    markManualComplete: vi.fn(async () => {}),
-    skipRunDay: vi.fn(async () => {}),
-    skipWorkoutDay: vi.fn(async () => {}),
+    markManualComplete: vi.fn(async () => APPLIED),
+    skipRunDay: vi.fn(async () => APPLIED),
+    skipWorkoutDay: vi.fn(async () => APPLIED),
     // SESSION-RESTORE-01
-    restoreRunDay: vi.fn(async () => {}),
-    restoreWorkoutDay: vi.fn(async () => {}),
+    restoreRunDay: vi.fn(async () => APPLIED),
+    restoreWorkoutDay: vi.fn(async () => APPLIED),
     // RUN-RESCHEDULE-01
-    moveRunDay: vi.fn(async () => {}),
+    moveRunDay: vi.fn(async () => APPLIED),
   };
 }
 

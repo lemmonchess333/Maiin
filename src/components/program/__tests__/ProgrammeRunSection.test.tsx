@@ -26,11 +26,21 @@
  *     race_prep + no goal.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import {
+  act,
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+} from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import ProgrammeRunSection from "../ProgrammeRunSection";
 import { localDateString } from "@/lib/dateHelpers";
 import type { UserProfile } from "@/lib/auth";
+import {
+  APPLIED,
+  type RealignOutcome,
+} from "@/features/program/programOutcome";
 import type {
   ProgramState,
   ScheduledRunDay,
@@ -139,8 +149,11 @@ vi.mock("@/hooks/useRunningStats", () => ({
 // Run9 (l): the race-recent hero's "I didn't race" tap fires a sonner toast.
 // Mock it so the dismissal test runs without a mounted <Toaster>.
 const toastMock = vi.fn();
+const toastSuccessMock = vi.fn();
 vi.mock("sonner", () => ({
-  toast: (...args: unknown[]) => toastMock(...args),
+  toast: Object.assign((...args: unknown[]) => toastMock(...args), {
+    success: (...args: unknown[]) => toastSuccessMock(...args),
+  }),
 }));
 
 function makeProfile(overrides: Partial<UserProfile> = {}): UserProfile {
@@ -205,24 +218,27 @@ function commonProps() {
     revertEaseWeek: vi.fn(async () => ({ ok: true })),
     // PR-J Q2 chunk B2: completeRunDay deleted; replaced by
     // markManualComplete which writes to manualCompletions.
-    markManualComplete: vi.fn(async () => {}),
-    skipRunDay: vi.fn(async () => {}),
-    skipWorkoutDay: vi.fn(async () => {}),
+    markManualComplete: vi.fn(async () => APPLIED),
+    skipRunDay: vi.fn(async () => APPLIED),
+    skipWorkoutDay: vi.fn(async () => APPLIED),
     // SESSION-RESTORE-01
-    restoreRunDay: vi.fn(async () => {}),
-    restoreWorkoutDay: vi.fn(async () => {}),
+    restoreRunDay: vi.fn(async () => APPLIED),
+    restoreWorkoutDay: vi.fn(async () => APPLIED),
     // RUN-RESCHEDULE-01
-    moveRunDay: vi.fn(async () => {}),
+    moveRunDay: vi.fn(async () => APPLIED),
     // PR-B: refreshRunSchedule is the composing handler's second
     // half. Tests pass an async no-op since the assertions are on
     // the chip + form behaviour, not the regenerator output.
     refreshRunSchedule: vi.fn(async () => {}),
-    skipRecoveryEarly: vi.fn(async () => {}),
-    realignRacePlan: vi.fn(async () => ({
-      timing: "compressible" as const,
-      totalWeeks: 4,
-    })),
-    dismissFellBehindPrompt: vi.fn(async () => {}),
+    skipRecoveryEarly: vi.fn(async () => APPLIED),
+    realignRacePlan: vi.fn(
+      async (): Promise<RealignOutcome> => ({
+        status: "applied",
+        timing: "compressible",
+        totalWeeks: 4,
+      })
+    ),
+    dismissFellBehindPrompt: vi.fn(async () => APPLIED),
   };
 }
 
@@ -1129,6 +1145,41 @@ describe("ProgrammeRunSection — Run9 phase-3 fell-behind realign slot", () => 
     renderSection(props, fellBehindState());
     fireEvent.click(screen.getByRole("button", { name: /Realign my plan/i }));
     await waitFor(() => expect(props.realignRacePlan).toHaveBeenCalled());
+  });
+
+  /** Taps Realign and waits until the section has acted on the answer. */
+  async function realignWith(outcome: RealignOutcome) {
+    toastSuccessMock.mockClear();
+    let answer: Promise<RealignOutcome> | undefined;
+    const props = {
+      ...commonProps(),
+      realignRacePlan: vi.fn(() => (answer = Promise.resolve(outcome))),
+    };
+    renderSection(props, fellBehindState());
+    fireEvent.click(screen.getByRole("button", { name: /Realign my plan/i }));
+    await waitFor(() => expect(props.realignRacePlan).toHaveBeenCalled());
+    await act(async () => {
+      await answer;
+    });
+  }
+
+  it("a realign that lands says what it built", async () => {
+    await realignWith({
+      status: "applied",
+      timing: "compressible",
+      totalWeeks: 4,
+    });
+    expect(toastSuccessMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("a refused realign is not announced as a realigned plan", async () => {
+    // It used to come back as "healthy, 0 weeks" and toast a realigned
+    // plan. The writer says why it refused; the section says nothing more.
+    await realignWith({
+      status: "declined",
+      reason: "Your race date has passed.",
+    });
+    expect(toastSuccessMock).not.toHaveBeenCalled();
   });
 
   it("does NOT render the Realign banner without the flag", () => {

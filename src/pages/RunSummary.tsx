@@ -62,6 +62,7 @@ import { applyPrivacyZones } from "../lib/privacyZones";
 import { clipRouteEnds, DEFAULT_CLIP_METERS } from "../lib/shareCard/polyline";
 import { useShoes } from "../hooks/useShoes";
 import { useProgram } from "../features/program/useProgram";
+import { changeStands } from "../features/program/programOutcome";
 import {
   freeformPlanMetadata,
   getAdherenceLabel,
@@ -1483,11 +1484,17 @@ export default function RunSummary() {
                           // derives from the OR over (saved-run match,
                           // manual map, legacy status) per Q1 P27.
                           // `refKey` is the runDay.id when present; the
-                          // dayIndex fallback was a pre-PR-J overload.
-                          if (typeof refKey === "string") {
-                            await markManualComplete(refKey);
-                          }
-                          setReconciliation("completed");
+                          // dayIndex fallback was a pre-PR-J overload, so a
+                          // legacy key completes the slot this card found.
+                          // "Marked complete" only when it was: a refusal
+                          // (a race completes by logging it) is said by the
+                          // writer, and the card stays.
+                          const runDayId =
+                            typeof refKey === "string" ? refKey : runDay?.id;
+                          if (!runDayId) return;
+                          const outcome = await markManualComplete(runDayId);
+                          if (changeStands(outcome))
+                            setReconciliation("completed");
                         } catch (err) {
                           logger.warn(
                             "[RunSummary] reconciliation: markManualComplete failed:",
@@ -1515,8 +1522,9 @@ export default function RunSummary() {
                       onClick={async () => {
                         setReconciliationBusy(true);
                         try {
-                          await skipRunDay(refKey);
-                          setReconciliation("skipped");
+                          const outcome = await skipRunDay(refKey);
+                          if (changeStands(outcome))
+                            setReconciliation("skipped");
                         } catch (err) {
                           logger.warn(
                             "[RunSummary] reconciliation: skipRunDay failed:",

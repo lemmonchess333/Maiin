@@ -1386,17 +1386,18 @@ export default function Home() {
           prompt={fellBehindPrompt}
           dismissFellBehindPrompt={dismissFellBehindPrompt}
           realignRacePlan={async () => {
-            const { timing, totalWeeks } = await realignRacePlan();
-            if (profile?.raceGoal) {
+            const result = await realignRacePlan();
+            // A refusal or a failed save has already been said by the writer.
+            if (result.status === "applied" && profile?.raceGoal) {
               toast.success(
                 realignResultMessage({
-                  timing,
+                  timing: result.timing,
                   distance: profile.raceGoal.distance as
                     | "5k"
                     | "10k"
                     | "half"
                     | "marathon",
-                  totalWeeks,
+                  totalWeeks: result.totalWeeks,
                 })
               );
             }

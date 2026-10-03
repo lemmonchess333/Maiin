@@ -92,7 +92,7 @@ function countMarkers() {
  *  lint pass rewrote the effects it touched, 730 once the Social pass
  *  deleted the solo-first feed's cards. Lower it when you move
  *  narrative out; never raise it without the reason written here. */
-const MARKER_BASELINE = 730;
+const MARKER_BASELINE = 729;
 
 describe("archaeology markers in non-test comments (ratchet)", () => {
   const { files, total, byFile, byKind } = countMarkers();
