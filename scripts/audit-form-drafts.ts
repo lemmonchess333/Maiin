@@ -8,6 +8,7 @@ import continuation from "../docs/exercise-art/pilots/continuation-20261002/MANI
 import octoberThird from "../docs/exercise-art/pilots/continuation-20261003/MANIFEST.json";
 import newConversions from "../docs/exercise-art/pilots/new-conversions-20261003/MANIFEST.json";
 import newConversions02 from "../docs/exercise-art/pilots/new-conversions-02-20261003/MANIFEST.json";
+import newConversions03 from "../docs/exercise-art/pilots/new-conversions-03-20261003/MANIFEST.json";
 
 // Integrity only. This command never grants visual or technique approval.
 const errors: string[] = [];
@@ -23,6 +24,7 @@ for (const current of [
   octoberThird,
   newConversions,
   newConversions02,
+  newConversions03,
 ]) {
   let selected = 0;
   for (const set of current.completeDraftSets) {

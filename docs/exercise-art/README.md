@@ -4,6 +4,8 @@
 
 Current owner priority: convert the remaining unconverted exercises. Leave already improved guides and existing repair work alone unless the owner asks to revisit them.
 
+The [third new-conversion batch](pilots/new-conversions-03-20261003/README.md) adds Glute-Ham Raise, Donkey Calf Raise and Pistol Squat: 18 native draft frames for three previously unconverted IDs. Contact drift, incomplete calf-raise range and inconsistent backgrounds are recorded; none is approved for production.
+
 The [second new-conversion batch](pilots/new-conversions-02-20261003/README.md) adds Nordic Hamstring Curl, Hip Adduction Machine and Sissy Squat: another 18 native draft frames with catalogue-based sequences, source hashes and mobile playback evidence. All three were previously unconverted. Fixed-equipment drift is recorded, so the drafts remain outside production.
 
 The [new-conversion batch](pilots/new-conversions-20261003/README.md) adds Cuban Press and Hip Abduction Machine: 12 native draft frames with plans, provenance and mobile playback evidence. Both were previously unconverted. They remain outside production pending the recorded anatomy/equipment findings; existing repair sets were left alone.

@@ -1,0 +1,64 @@
+{
+  "method": "21x21 RGB patch matching on a white diagnostic background (native sources unchanged), integer translation within the recorded search radius. Diagnostics only: does not establish limb or equipment dimensions, contact mechanics, or release approval.",
+  "releaseApproved": false,
+  "searchRadiusPixels": 32,
+  "frames": [
+    {
+      "frame": 1,
+      "path": "docs/exercise-art/pilots/new-conversions-03-20261003/glute-ham-raise/frames/1.png",
+      "sha256": "50f83a3d715803b34c6e7749b95533bdb1ed9710cba72e2cdb0f23cd5fe21a42",
+      "anchors": {
+        "nearBaseBolt": {
+          "reference": [875, 933],
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 0
+        },
+        "footplateUpperBolt": {
+          "reference": [1131, 482],
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 0
+        }
+      }
+    },
+    {
+      "frame": 2,
+      "path": "docs/exercise-art/pilots/new-conversions-03-20261003/glute-ham-raise/frames/2.png",
+      "sha256": "25a06147c2bf0da9c27e0784886b6a591ab537f38aae88711dc90aff4e2856bf",
+      "anchors": {
+        "nearBaseBolt": {
+          "reference": [875, 933],
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 15.335600907029479
+        },
+        "footplateUpperBolt": {
+          "reference": [1131, 482],
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 12.203325774754346
+        }
+      }
+    },
+    {
+      "frame": 3,
+      "path": "docs/exercise-art/pilots/new-conversions-03-20261003/glute-ham-raise/frames/3.png",
+      "sha256": "220f9a26e854b1ab66e6ee7b6803ab2990cc18a214d34576304cc1a5d6ec46f4",
+      "anchors": {
+        "nearBaseBolt": {
+          "reference": [875, 933],
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 8.215419501133788
+        },
+        "footplateUpperBolt": {
+          "reference": [1131, 482],
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 5.798185941043084
+        }
+      }
+    }
+  ]
+}

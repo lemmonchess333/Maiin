@@ -1,0 +1,37 @@
+{
+  "exerciseId": "donkey-calf-raise",
+  "tool": "image_gen",
+  "releaseApproved": false,
+  "identity": {
+    "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+  },
+  "master": {
+    "path": "docs/exercise-art/masters/donkey-calf-raise/1.png",
+    "sha256": "dd453128055fb7d0011d1dd45f6243b51839ccbd75a60d050467cdae65348393"
+  },
+  "generationSources": [
+    {
+      "selectedFrame": 1,
+      "path": "/workspace/generated_images/exec-1e7cad99-9785-4700-8c79-bd0d8c84383b.png",
+      "sha256": "dd453128055fb7d0011d1dd45f6243b51839ccbd75a60d050467cdae65348393"
+    },
+    {
+      "selectedFrame": 2,
+      "path": "/workspace/generated_images/exec-a9067594-f7a2-4142-929e-dda78b86b746.png",
+      "sha256": "567694728016cc969bc5234398b46dc626ff005db1042444b4a0f377d7b24c3f"
+    },
+    {
+      "selectedFrame": 3,
+      "path": "/workspace/generated_images/exec-211c2124-6461-443a-a32c-f0db8dfd7547.png",
+      "sha256": "a73c862f18ef998c784f238bc3983014d9af48cde9a163b0ee9b3214cafe978f"
+    }
+  ],
+  "cueSha256": "9c652187f219822935753c46262cc9be76ccc23bf31e05636122bfc96cf784bf",
+  "reviewFindings": [
+    "The initial setup had a vertical side-hip pad and was rejected. The selected correction places a horizontal cushion over the lower back. Original rejected source is retained.",
+    "The selected start does not demonstrate the planned below-platform heel stretch. Midway and top candidates show nearly the same heel elevation; progression and pad travel are not validated. Intended cues are retained for review but the images do not fully satisfy them.",
+    "Machine geometry, limb lengths and loaded-pad mechanics remain unapproved. Six draft slots are present, but this is not a technique-approved full-range conversion.",
+    "Native background changes between black and white across selected poses. This causes a visible playback flash and fails scene continuity; no release approval. Original images are preserved without code-based repair."
+  ]
+}

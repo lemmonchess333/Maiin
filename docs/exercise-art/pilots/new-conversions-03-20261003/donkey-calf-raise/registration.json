@@ -1,0 +1,64 @@
+{
+  "method": "21x21 RGB patch matching on a white diagnostic background (native sources unchanged), integer translation within the recorded search radius. Diagnostics only: does not establish limb or equipment dimensions, contact mechanics, or release approval.",
+  "releaseApproved": false,
+  "searchRadiusPixels": 32,
+  "frames": [
+    {
+      "frame": 1,
+      "path": "docs/exercise-art/pilots/new-conversions-03-20261003/donkey-calf-raise/frames/1.png",
+      "sha256": "dd453128055fb7d0011d1dd45f6243b51839ccbd75a60d050467cdae65348393",
+      "anchors": {
+        "nearFloorBolt": {
+          "reference": [923, 944],
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 0
+        },
+        "handleBaseEdge": {
+          "reference": [329, 404],
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 0
+        }
+      }
+    },
+    {
+      "frame": 2,
+      "path": "docs/exercise-art/pilots/new-conversions-03-20261003/donkey-calf-raise/frames/2.png",
+      "sha256": "567694728016cc969bc5234398b46dc626ff005db1042444b4a0f377d7b24c3f",
+      "anchors": {
+        "nearFloorBolt": {
+          "reference": [923, 944],
+          "dx": 0,
+          "dy": -1,
+          "meanChannelDifference": 15.026455026455027
+        },
+        "handleBaseEdge": {
+          "reference": [329, 404],
+          "dx": -2,
+          "dy": -9,
+          "meanChannelDifference": 3.384731670445956
+        }
+      }
+    },
+    {
+      "frame": 3,
+      "path": "docs/exercise-art/pilots/new-conversions-03-20261003/donkey-calf-raise/frames/3.png",
+      "sha256": "a73c862f18ef998c784f238bc3983014d9af48cde9a163b0ee9b3214cafe978f",
+      "anchors": {
+        "nearFloorBolt": {
+          "reference": [923, 944],
+          "dx": -1,
+          "dy": 0,
+          "meanChannelDifference": 12.035525321239607
+        },
+        "handleBaseEdge": {
+          "reference": [329, 404],
+          "dx": -2,
+          "dy": -9,
+          "meanChannelDifference": 4.133030990173848
+        }
+      }
+    }
+  ]
+}

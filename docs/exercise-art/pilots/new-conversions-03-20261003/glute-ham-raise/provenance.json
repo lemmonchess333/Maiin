@@ -1,0 +1,36 @@
+{
+  "exerciseId": "glute-ham-raise",
+  "tool": "image_gen",
+  "releaseApproved": false,
+  "identity": {
+    "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+  },
+  "master": {
+    "path": "docs/exercise-art/masters/glute-ham-raise/1.png",
+    "sha256": "50f83a3d715803b34c6e7749b95533bdb1ed9710cba72e2cdb0f23cd5fe21a42"
+  },
+  "generationSources": [
+    {
+      "selectedFrame": 1,
+      "path": "/workspace/generated_images/exec-c190c9e5-5f3a-4ee1-b0d8-328e7c6c7169.png",
+      "sha256": "50f83a3d715803b34c6e7749b95533bdb1ed9710cba72e2cdb0f23cd5fe21a42"
+    },
+    {
+      "selectedFrame": 2,
+      "path": "/workspace/generated_images/exec-b65e8883-e8ed-4f95-b4ea-9f0044aa413f.png",
+      "sha256": "25a06147c2bf0da9c27e0784886b6a591ab537f38aae88711dc90aff4e2856bf"
+    },
+    {
+      "selectedFrame": 3,
+      "path": "/workspace/generated_images/exec-ca69b23a-374f-441f-83ab-d4e1c47a13eb.png",
+      "sha256": "220f9a26e854b1ab66e6ee7b6803ab2990cc18a214d34576304cc1a5d6ec46f4"
+    }
+  ],
+  "cueSha256": "5b1d72bae561cfacfc36c327560496dfaa6f32a7783ae1f36920f1bfe6ce8f18",
+  "reviewFindings": [
+    "Three unique poses selected as upright, modest lean, deeper lean, then reused 3,2,1. The first requested intermediate leaned farther than planned, so it is explicitly selected as frame 3; the later modest lean is frame 2.",
+    "GHD support geometry appears similar but body length and knee contact change between poses. Knee-extension mechanics and athlete proportions remain unapproved. This is a controlled partial-range draft, not a demonstrated full-range repetition.",
+    "Native background changes between black and white across selected poses. This causes a visible playback flash and fails scene continuity; no release approval. Original images are preserved without code-based repair."
+  ]
+}

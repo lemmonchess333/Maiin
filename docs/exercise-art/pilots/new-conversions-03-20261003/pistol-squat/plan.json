@@ -1,0 +1,53 @@
+{
+  "variation": "Unassisted bodyweight pistol squat on one working leg with the other leg straight forward and off the floor; same side throughout, then repeat opposite side.",
+  "camera": "Fixed side three-quarter facing right, both shoes and working-foot heel visible.",
+  "equipment": "Bodyweight on level floor, no bench or assistance.",
+  "primary": "Quadriceps of working leg",
+  "secondary": "Glutes, hamstrings and core lighter",
+  "fixedAnchors": [
+    "working-foot heel contact",
+    "working-foot forefoot contact"
+  ],
+  "invariants": ["athlete limb lengths", "working shoe dimensions"],
+  "beats": [
+    {
+      "frame": 1,
+      "label": "Balance on one leg",
+      "cue": "Stand on one leg; extend the other.",
+      "pose": "Working foot planted flat, nonworking leg straight forward off floor, arms forward for balance."
+    },
+    {
+      "frame": 2,
+      "label": "Sit back and down",
+      "cue": "Bend your standing knee; keep heel planted.",
+      "pose": "Half-depth single-leg squat, other leg straight and suspended, arms forward."
+    },
+    {
+      "frame": 3,
+      "label": "Reach controlled depth",
+      "cue": "Lower near your heel without losing balance.",
+      "pose": "Deep controlled squat, hips near working heel, working heel planted, free leg straight forward off floor."
+    },
+    {
+      "frame": 4,
+      "label": "Keep your position",
+      "cue": "Keep free leg lifted and knee aligned.",
+      "reuse": 3
+    },
+    {
+      "frame": 5,
+      "label": "Drive upward",
+      "cue": "Push through your planted foot to stand.",
+      "reuse": 2
+    },
+    {
+      "frame": 6,
+      "label": "Finish before switching",
+      "cue": "Stand tall, then repeat the other side.",
+      "reuse": 1
+    }
+  ],
+  "exerciseId": "pistol-squat",
+  "status": "six-frame-draft",
+  "releaseApproved": false
+}
