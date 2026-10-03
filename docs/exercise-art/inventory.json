@@ -2,9 +2,9 @@
   "catalogue": 152,
   "inScope": 141,
   "existingSets": 6,
-  "newlyApproved": 54,
+  "newlyApproved": 55,
   "ownerReleasedWithFindings": 3,
-  "releasedBytes": 190497826,
+  "releasedBytes": 193614926,
   "errors": [],
   "inventory": [
     {
@@ -966,9 +966,9 @@
       "name": "Pistol Squats",
       "equipment": "Bodyweight",
       "inScope": true,
-      "authoredBeats": 0,
-      "status": "needs-artwork",
-      "bytes": 0
+      "authoredBeats": 6,
+      "status": "approved",
+      "bytes": 3117100
     },
     {
       "id": "plank",

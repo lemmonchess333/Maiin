@@ -306,6 +306,13 @@ export const APPROVED_FORM_ART_RELEASES: Record<
     height: 1024,
     reference: 1,
   },
+  "pistol-squat": {
+    folder: "2026-10-03",
+    version: "anatomy-v3-fixed-foot-2026-10-03",
+    width: 1024,
+    height: 1536,
+    reference: 3,
+  },
   plank: {
     folder: "2026-10-03",
     version: "anatomy-v3-2026-10-03",

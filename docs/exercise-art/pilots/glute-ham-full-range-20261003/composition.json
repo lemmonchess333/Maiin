@@ -1,0 +1,25 @@
+{
+  "method": "Fixed base and ankle-restraint regions copied from setup; native athlete pixels retained.",
+  "fixedRegions": [
+    [0, 650, 1536, 1024],
+    [1080, 450, 1260, 650]
+  ],
+  "frames": [
+    {
+      "frame": 1,
+      "fixedRegionMaxErrors": [0, 0],
+      "sha256": "a8016da54c0bfef98f418e858e9062986288d0ed9e760975677b242189ac0fc4"
+    },
+    {
+      "frame": 2,
+      "fixedRegionMaxErrors": [0, 0],
+      "sha256": "f9014e76233d0b4a47f0af56b0f0709b63063bdb95abd6fd48777936770e4c98"
+    },
+    {
+      "frame": 3,
+      "fixedRegionMaxErrors": [0, 0],
+      "sha256": "bc8fe89b3518e347d28fe9e6680b74c998d3db50080542afc938f15895065176"
+    }
+  ],
+  "releaseApproved": false
+}

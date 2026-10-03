@@ -2,9 +2,11 @@
 
 ## Current checkpoint — 3 October 2026
 
+The latest continuation releases [Pistol Squat](releases/2026-10-03/PISTOL_SQUAT.md) after native ankle and mobile review, and adds the missing [horizontal Glute-Ham Raise endpoint](pilots/glute-ham-full-range-20261003/README.md). Glute-Ham Raise remains a draft with pad-contact findings recorded.
+
 The owner clarified the calf raise with an upright shoulder-pad machine screenshot. The [standing calf release](releases/2026-10-03/STANDING_CALF_RAISE.md) now supplies the matching sequence to both Calf Raise and Standing Calf Raise. The earlier [donkey calf release](releases/2026-10-03/DONKEY_CALF_RAISE.md) is a separate exercise variation. Other unfinished conversions remain in review.
 
-The [third new-conversion batch](pilots/new-conversions-03-20261003/README.md) adds Glute-Ham Raise, Donkey Calf Raise and Pistol Squat: 18 native draft frames for three previously unconverted IDs. Glute-Ham Raise and Pistol Squat remain drafts. The calf raise has since been regenerated, refined and approved separately.
+The [third new-conversion batch](pilots/new-conversions-03-20261003/README.md) adds Glute-Ham Raise, Donkey Calf Raise and Pistol Squat: 18 native draft frames for three previously unconverted IDs. Glute-Ham Raise remains a draft with an updated full-range endpoint. Pistol Squat and the calf raise have since passed separate production reviews.
 
 The [second new-conversion batch](pilots/new-conversions-02-20261003/README.md) adds Nordic Hamstring Curl, Hip Adduction Machine and Sissy Squat: another 18 native draft frames with catalogue-based sequences, source hashes and mobile playback evidence. All three were previously unconverted. Fixed-equipment drift is recorded, so the drafts remain outside production.
 
@@ -27,9 +29,9 @@ draft is preserved separately, with its contact findings unchanged.
 Hanging Leg Raise is now integrated as a reviewed production guide on this
 branch. The [release record](releases/2026-10-03/README.md) covers six lossless
 WebPs, seven-word cues, a reviewed card thumbnail and actual mobile playback.
-The branch registry now contains **63 released sets** (54 approved, 3 owner-released
+The branch registry now contains **64 released sets** (55 approved, 3 owner-released
 with findings, 6 historical sets needing review). Of the 141 in-scope exercises,
-78 still have no released artwork.
+77 still have no released artwork.
 Side Plank remains incomplete and excluded. The [local contact repair trials](pilots/side-plank-composite-20261003/README.md) fix vertical support drift but retain a measured fist mismatch; neither trial is approved. `inventory.json` reflects this
 branch's current registry, not deployment status.
 

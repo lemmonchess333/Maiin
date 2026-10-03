@@ -1,0 +1,129 @@
+{
+  "commit": "8202b40778800230738766830d0f8060ccb9c91b",
+  "url": "https://adaptive-fitness-af8bb.firebaseapp.com",
+  "checkedAt": "2026-10-03T16:25:39.932218+00:00",
+  "assets": [
+    {
+      "path": "form-frames/calf-raise/1.webp",
+      "status": 200,
+      "contentType": "image/webp",
+      "sha256": "82c966e915a52cc97b4a83c094816bc0fff3b0f38d6a4ede8a839981d476070c",
+      "matchesLocal": true
+    },
+    {
+      "path": "form-frames/calf-raise/2.webp",
+      "status": 200,
+      "contentType": "image/webp",
+      "sha256": "dfd5a1f7e05d83d59313652f71dba23c89fe6e0c635fa8e6e6fbbfcd61fba0d1",
+      "matchesLocal": true
+    },
+    {
+      "path": "form-frames/calf-raise/3.webp",
+      "status": 200,
+      "contentType": "image/webp",
+      "sha256": "aca1db8fc393638d52ede1f7204f8aac667a011fe82b86432866d74951d02de8",
+      "matchesLocal": true
+    },
+    {
+      "path": "form-frames/calf-raise/4.webp",
+      "status": 200,
+      "contentType": "image/webp",
+      "sha256": "aca1db8fc393638d52ede1f7204f8aac667a011fe82b86432866d74951d02de8",
+      "matchesLocal": true
+    },
+    {
+      "path": "form-frames/calf-raise/5.webp",
+      "status": 200,
+      "contentType": "image/webp",
+      "sha256": "dfd5a1f7e05d83d59313652f71dba23c89fe6e0c635fa8e6e6fbbfcd61fba0d1",
+      "matchesLocal": true
+    },
+    {
+      "path": "form-frames/calf-raise/6.webp",
+      "status": 200,
+      "contentType": "image/webp",
+      "sha256": "82c966e915a52cc97b4a83c094816bc0fff3b0f38d6a4ede8a839981d476070c",
+      "matchesLocal": true
+    },
+    {
+      "path": "form-frames/standing-calf-raise/1.webp",
+      "status": 200,
+      "contentType": "image/webp",
+      "sha256": "82c966e915a52cc97b4a83c094816bc0fff3b0f38d6a4ede8a839981d476070c",
+      "matchesLocal": true
+    },
+    {
+      "path": "form-frames/standing-calf-raise/2.webp",
+      "status": 200,
+      "contentType": "image/webp",
+      "sha256": "dfd5a1f7e05d83d59313652f71dba23c89fe6e0c635fa8e6e6fbbfcd61fba0d1",
+      "matchesLocal": true
+    },
+    {
+      "path": "form-frames/standing-calf-raise/3.webp",
+      "status": 200,
+      "contentType": "image/webp",
+      "sha256": "aca1db8fc393638d52ede1f7204f8aac667a011fe82b86432866d74951d02de8",
+      "matchesLocal": true
+    },
+    {
+      "path": "form-frames/standing-calf-raise/4.webp",
+      "status": 200,
+      "contentType": "image/webp",
+      "sha256": "aca1db8fc393638d52ede1f7204f8aac667a011fe82b86432866d74951d02de8",
+      "matchesLocal": true
+    },
+    {
+      "path": "form-frames/standing-calf-raise/5.webp",
+      "status": 200,
+      "contentType": "image/webp",
+      "sha256": "dfd5a1f7e05d83d59313652f71dba23c89fe6e0c635fa8e6e6fbbfcd61fba0d1",
+      "matchesLocal": true
+    },
+    {
+      "path": "form-frames/standing-calf-raise/6.webp",
+      "status": 200,
+      "contentType": "image/webp",
+      "sha256": "82c966e915a52cc97b4a83c094816bc0fff3b0f38d6a4ede8a839981d476070c",
+      "matchesLocal": true
+    },
+    {
+      "path": "form-art/calf-raise.webp",
+      "status": 200,
+      "contentType": "image/webp",
+      "sha256": "b3929dbabf02f5518263a155e1a0bf817351972fd54717d065a9b6d4b70684af",
+      "matchesLocal": true
+    },
+    {
+      "path": "form-art/standing-calf-raise.webp",
+      "status": 200,
+      "contentType": "image/webp",
+      "sha256": "b3929dbabf02f5518263a155e1a0bf817351972fd54717d065a9b6d4b70684af",
+      "matchesLocal": true
+    }
+  ],
+  "registryBundle": {
+    "path": "assets/formArtwork-CAJqRKsj.js",
+    "sha256": "ef5520e5cfd42c3a883c1388819ec56257d26f0015680fca3bed12391ef92510",
+    "matchesLocal": true,
+    "containsStandingCalfRaiseRelease": true
+  },
+  "workflowRun": 37136609265,
+  "localVerification": {
+    "commit": "8202b40778800230738766830d0f8060ccb9c91b",
+    "checkedAt": "2026-10-03T16:14:52.988803+00:00",
+    "verify": {
+      "command": "VITEST_MAX_WORKERS=4 npm run verify",
+      "passed": true,
+      "testFilesPassed": 978,
+      "testFilesSkipped": 8,
+      "testsPassed": 10882,
+      "testsSkipped": 367,
+      "durationSeconds": 272.42
+    },
+    "browserChecksPassed": 6,
+    "bundleBudgetPassed": true,
+    "bundleChunks": 335,
+    "bundleTotalKB": 5885.0
+  }
+}

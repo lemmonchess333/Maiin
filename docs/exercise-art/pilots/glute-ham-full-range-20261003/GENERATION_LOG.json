@@ -1,0 +1,8 @@
+[
+  {
+    "pose": "horizontal-endpoint",
+    "prompt": "Create the fully lowered endpoint of this educational GLUTE-HAM RAISE on a GHD machine. Preserve the supplied faceless white-grey anatomical mannequin, purple hamstrings and lighter glutes, white shoes, solid black background, fixed1536x1024 camera, entire machine dimensions and floor-frame position. Feet remain locked against the SAME rear footplate between the ankle rollers at the right. Lower the athlete to a STRAIGHT HORIZONTAL BODY position extending to the LEFT: head, neck, shoulders, hips and thighs approximately level with the anchored knees. Arms remain crossed on the chest. Extend at the KNEES while keeping hips straight; do not bend at the waist or depict a back extension. Knees/lower thighs remain in contact with the top/front curved pad around x820,y550; the shins and ankles stay secured to the right, not floating above the restraints. Head should reach toward x200,y500 with adequate left margin. This is the full controlled straight-body lower, roughly parallel to the floor, not a partial diagonal lean. Keep natural original arm, thigh and shin lengths and athlete scale. The GHD footplate, rollers, pad shapes, front support, and floor bolts must remain stationary. One athlete, one machine, one pose. No text or arrows. This anatomical exercise diagram is nonsexual, with a smooth featureless mannequin pelvis.",
+    "reference": "docs/exercise-art/pilots/repair-new-conversions-03-20261003/glute-ham-raise/frames/1.png",
+    "source": "/workspace/generated_images/exec-84fcb03e-1b2e-4e7e-a11b-85d230e72019.png"
+  }
+]

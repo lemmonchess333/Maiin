@@ -487,6 +487,16 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
       "70aed55136f54a96e8ba3c000361c13104b984c5d68b379158ad59d00a823a26",
     sha256: "f7f5a025471cdd0c125376f9ec2d937183976f02a6c1514ecec4be33c7a9f5d3",
   },
+  "pistol-squat": {
+    src: "form-art/pistol-squat.webp",
+    width: 464,
+    height: 480,
+    keyed: true,
+    source: "form-frames/pistol-squat/3.webp",
+    sourceSha256:
+      "7aba7db20ab38f360a7d21ad18e329ef8aa2658c2f9ed8e9293c0080b53cd46c",
+    sha256: "0167f54ce712f4518fffdb22dfaab19f24186bc179a2f284b24e6f12a4f8ac42",
+  },
   plank: {
     src: "form-art/plank.webp",
     width: 480,

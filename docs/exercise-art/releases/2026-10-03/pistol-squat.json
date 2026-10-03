@@ -1,0 +1,208 @@
+{
+  "exerciseId": "pistol-squat",
+  "version": "anatomy-v3-fixed-foot-2026-10-03",
+  "width": 1024,
+  "height": 1536,
+  "decision": "approved",
+  "reviewer": "Codex native full-pose and ankle-transition review with production-player validation",
+  "reviewedAt": "2026-10-03T19:23:06.477742+00:00",
+  "reference": {
+    "path": "form-frames/pistol-squat/3.webp",
+    "sha256": "7aba7db20ab38f360a7d21ad18e329ef8aa2658c2f9ed8e9293c0080b53cd46c",
+    "anchors": {
+      "workingHeel": {
+        "x": 234,
+        "y": 1358
+      },
+      "workingForefoot": {
+        "x": 410,
+        "y": 1371
+      }
+    },
+    "invariantDimensions": {
+      "fixedLowerShoeWidth": 223,
+      "fixedLowerShoeHeight": 93
+    }
+  },
+  "cueSha256": "7a706bcf176e08b85314189063a97f24588f724ede36384b86be5a9a450a5ba0",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Same canonical faceless white-grey athlete, white shoes and purple working quadriceps across all poses."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Fixed1024x1536 side three-quarter view facing right. Earlier rigid image translations place the working shoe on a single floor reference without whole-body scaling."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Native full poses and enlarged ankle transition reviewed: one working leg bends, free leg stays extended and raised, arms counterbalance forward, and the locally resampled calf joins the fixed shoe continuously. Projected limb lengths vary with pose; no claim of identical2D bone lengths."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Bodyweight exercise with no added equipment. The fixed lower-shoe bounds remain223x93pixels."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Working heel and forefoot remain planted: every pixel in x0..500,y1300..1536 matches setup in all six frames. Close-up review checks the ankle join separately."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Single-leg descent reaches hips close to the working heel, with free leg suspended and the same working side maintained on return."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Working quadriceps highlighted strongly; glute/hamstring contribution lighter. No percentage claims."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Six unchanged catalogue-based cues cover balance, lowering, controlled depth, stable knee, upward drive and switching after the repetition."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "Six lossless files use1,2,3,3,2,1 with exact hold and return reuse."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "393x852 production player in light theme: six expected lossless frames, exact cues,464x480 transparent card, touch controls, no overflow/page errors and reduced motion. Native ankle close-up and mobile screenshots inspected; see pistol-ghr-evidence/."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "393x852 production player in dark theme: six expected lossless frames, exact cues,464x480 transparent card, touch controls, no overflow/page errors and reduced motion. Native ankle close-up and mobile screenshots inspected; see pistol-ghr-evidence/."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/pistol-squat/1.webp",
+      "sha256": "1299fc4f1a898894d81a9fcc6a1254278c65870b566cc45f55689e3cf8ae9470",
+      "anchors": {
+        "workingHeel": {
+          "x": 234,
+          "y": 1358
+        },
+        "workingForefoot": {
+          "x": 410,
+          "y": 1371
+        }
+      },
+      "invariantDimensions": {
+        "fixedLowerShoeWidth": 223,
+        "fixedLowerShoeHeight": 93
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/repair-new-conversions-03-20261003/pistol-squat/frames/1.png",
+        "sha256": "00cc035e8c1eacaf8e950343c91c287ee3a060da62325d2dc305020a8c28810c"
+      }
+    },
+    {
+      "path": "form-frames/pistol-squat/2.webp",
+      "sha256": "e77f077a04a98bd6fdfb132268a4ebb0b7496df4d55ceb9a86cc36b0f1c72672",
+      "anchors": {
+        "workingHeel": {
+          "x": 234,
+          "y": 1358
+        },
+        "workingForefoot": {
+          "x": 410,
+          "y": 1371
+        }
+      },
+      "invariantDimensions": {
+        "fixedLowerShoeWidth": 223,
+        "fixedLowerShoeHeight": 93
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/repair-new-conversions-03-20261003/pistol-squat/frames/2.png",
+        "sha256": "71a5234ea276f5374303d1ed80ed2741ccf3f89f2b58375b256c86879ca80a5f"
+      }
+    },
+    {
+      "path": "form-frames/pistol-squat/3.webp",
+      "sha256": "7aba7db20ab38f360a7d21ad18e329ef8aa2658c2f9ed8e9293c0080b53cd46c",
+      "anchors": {
+        "workingHeel": {
+          "x": 234,
+          "y": 1358
+        },
+        "workingForefoot": {
+          "x": 410,
+          "y": 1371
+        }
+      },
+      "invariantDimensions": {
+        "fixedLowerShoeWidth": 223,
+        "fixedLowerShoeHeight": 93
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/repair-new-conversions-03-20261003/pistol-squat/frames/3.png",
+        "sha256": "90dcfb91383a05a1a2211b946bea1a10b93e0d47fa14a45ca8ce49c000b39994"
+      }
+    },
+    {
+      "path": "form-frames/pistol-squat/4.webp",
+      "sha256": "7aba7db20ab38f360a7d21ad18e329ef8aa2658c2f9ed8e9293c0080b53cd46c",
+      "anchors": {
+        "workingHeel": {
+          "x": 234,
+          "y": 1358
+        },
+        "workingForefoot": {
+          "x": 410,
+          "y": 1371
+        }
+      },
+      "invariantDimensions": {
+        "fixedLowerShoeWidth": 223,
+        "fixedLowerShoeHeight": 93
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/repair-new-conversions-03-20261003/pistol-squat/frames/4.png",
+        "sha256": "90dcfb91383a05a1a2211b946bea1a10b93e0d47fa14a45ca8ce49c000b39994"
+      }
+    },
+    {
+      "path": "form-frames/pistol-squat/5.webp",
+      "sha256": "e77f077a04a98bd6fdfb132268a4ebb0b7496df4d55ceb9a86cc36b0f1c72672",
+      "anchors": {
+        "workingHeel": {
+          "x": 234,
+          "y": 1358
+        },
+        "workingForefoot": {
+          "x": 410,
+          "y": 1371
+        }
+      },
+      "invariantDimensions": {
+        "fixedLowerShoeWidth": 223,
+        "fixedLowerShoeHeight": 93
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/repair-new-conversions-03-20261003/pistol-squat/frames/5.png",
+        "sha256": "71a5234ea276f5374303d1ed80ed2741ccf3f89f2b58375b256c86879ca80a5f"
+      }
+    },
+    {
+      "path": "form-frames/pistol-squat/6.webp",
+      "sha256": "1299fc4f1a898894d81a9fcc6a1254278c65870b566cc45f55689e3cf8ae9470",
+      "anchors": {
+        "workingHeel": {
+          "x": 234,
+          "y": 1358
+        },
+        "workingForefoot": {
+          "x": 410,
+          "y": 1371
+        }
+      },
+      "invariantDimensions": {
+        "fixedLowerShoeWidth": 223,
+        "fixedLowerShoeHeight": 93
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/repair-new-conversions-03-20261003/pistol-squat/frames/6.png",
+        "sha256": "00cc035e8c1eacaf8e950343c91c287ee3a060da62325d2dc305020a8c28810c"
+      }
+    }
+  ]
+}

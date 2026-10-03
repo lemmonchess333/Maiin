@@ -4,6 +4,8 @@
 
 The owner's latest instruction was to fix the generated exercises first. This pass replaces the selected draft frames for Glute-Ham Raise, Donkey Calf Raise and Pistol Squat. The previous native generations and their findings remain preserved in the original batch and `sources/`.
 
+**Later review:** Pistol Squat now has a [production approval](../../releases/2026-10-03/PISTOL_SQUAT.md). Glute-Ham Raise selects a [new full-range endpoint](../glute-ham-full-range-20261003/README.md). Findings and validation below describe the earlier repair checkpoint.
+
 ## Changes
 
 - **All three:** consistent black backgrounds eliminate the white-frame flashes. Image generation performed the background edits; original sources remain untouched.

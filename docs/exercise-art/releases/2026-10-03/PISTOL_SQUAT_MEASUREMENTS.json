@@ -1,0 +1,53 @@
+{
+  "method": "Exact lower-shoe pixels and threshold40 visible bounds within the fixed region x0..500,y1300..1536. Anatomy and calf bridge reviewed separately.",
+  "frames": [
+    {
+      "frame": 1,
+      "fixedLowerShoeMaxError": 0,
+      "lowerShoeBounds": [213, 1300, 436, 1393],
+      "lowerShoeWidth": 223,
+      "lowerShoeHeight": 93,
+      "sha256": "00cc035e8c1eacaf8e950343c91c287ee3a060da62325d2dc305020a8c28810c"
+    },
+    {
+      "frame": 2,
+      "fixedLowerShoeMaxError": 0,
+      "lowerShoeBounds": [213, 1300, 436, 1393],
+      "lowerShoeWidth": 223,
+      "lowerShoeHeight": 93,
+      "sha256": "71a5234ea276f5374303d1ed80ed2741ccf3f89f2b58375b256c86879ca80a5f"
+    },
+    {
+      "frame": 3,
+      "fixedLowerShoeMaxError": 0,
+      "lowerShoeBounds": [213, 1300, 436, 1393],
+      "lowerShoeWidth": 223,
+      "lowerShoeHeight": 93,
+      "sha256": "90dcfb91383a05a1a2211b946bea1a10b93e0d47fa14a45ca8ce49c000b39994"
+    },
+    {
+      "frame": 4,
+      "fixedLowerShoeMaxError": 0,
+      "lowerShoeBounds": [213, 1300, 436, 1393],
+      "lowerShoeWidth": 223,
+      "lowerShoeHeight": 93,
+      "sha256": "90dcfb91383a05a1a2211b946bea1a10b93e0d47fa14a45ca8ce49c000b39994"
+    },
+    {
+      "frame": 5,
+      "fixedLowerShoeMaxError": 0,
+      "lowerShoeBounds": [213, 1300, 436, 1393],
+      "lowerShoeWidth": 223,
+      "lowerShoeHeight": 93,
+      "sha256": "71a5234ea276f5374303d1ed80ed2741ccf3f89f2b58375b256c86879ca80a5f"
+    },
+    {
+      "frame": 6,
+      "fixedLowerShoeMaxError": 0,
+      "lowerShoeBounds": [213, 1300, 436, 1393],
+      "lowerShoeWidth": 223,
+      "lowerShoeHeight": 93,
+      "sha256": "00cc035e8c1eacaf8e950343c91c287ee3a060da62325d2dc305020a8c28810c"
+    }
+  ]
+}
