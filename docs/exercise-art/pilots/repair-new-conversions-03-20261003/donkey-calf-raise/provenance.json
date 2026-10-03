@@ -1,0 +1,52 @@
+{
+  "exerciseId": "donkey-calf-raise",
+  "tools": ["image_gen", "previously authorized fixed-contact compositing"],
+  "releaseApproved": false,
+  "identity": {
+    "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+  },
+  "master": {
+    "path": "docs/exercise-art/pilots/repair-new-conversions-03-20261003/donkey-calf-raise/frames/1.png",
+    "sha256": "84706e7205e3f3b9a070f3741744f99df8413022d8baf75cfca2a060a2b3593a"
+  },
+  "sources": [
+    {
+      "path": "docs/exercise-art/pilots/repair-new-conversions-03-20261003/sources/donkey-calf-raise/1.png",
+      "sha256": "dd453128055fb7d0011d1dd45f6243b51839ccbd75a60d050467cdae65348393"
+    },
+    {
+      "path": "docs/exercise-art/pilots/repair-new-conversions-03-20261003/sources/donkey-calf-raise/2.png",
+      "sha256": "567694728016cc969bc5234398b46dc626ff005db1042444b4a0f377d7b24c3f"
+    },
+    {
+      "path": "docs/exercise-art/pilots/repair-new-conversions-03-20261003/sources/donkey-calf-raise/3.png",
+      "sha256": "a73c862f18ef998c784f238bc3983014d9af48cde9a163b0ee9b3214cafe978f"
+    },
+    {
+      "path": "docs/exercise-art/pilots/repair-new-conversions-03-20261003/sources/donkey-calf-raise/rejected-mid-too-high.png",
+      "sha256": "6718d2386119c656e1eb36ec5b65b1663aa4b174caf5612965eeb40c61a042f0"
+    },
+    {
+      "path": "docs/exercise-art/pilots/repair-new-conversions-03-20261003/sources/donkey-calf-raise/repaired-1.png",
+      "sha256": "6920ce1eb233a5c5d71e90e3ea8e3aa306ad48c14b1eec534b9e52710b551936"
+    },
+    {
+      "path": "docs/exercise-art/pilots/repair-new-conversions-03-20261003/sources/donkey-calf-raise/repaired-2.png",
+      "sha256": "4df62a551731d8e44e146cf82b8598f1471f4be271317555bc184b333bc4121e"
+    },
+    {
+      "path": "docs/exercise-art/pilots/repair-new-conversions-03-20261003/sources/donkey-calf-raise/repaired-3.png",
+      "sha256": "8366407c3f57b82ae7019e8474af379c76e67c248e97f1386001fa244723191c"
+    }
+  ],
+  "builder": {
+    "path": "docs/exercise-art/pilots/repair-new-conversions-03-20261003/build.py",
+    "sha256": "b1062292fbed71340a81849c3fa592826974e3647dc7564a78e315d35319f6a6"
+  },
+  "cueSha256": "9c652187f219822935753c46262cc9be76ccc23bf31e05636122bfc96cf784bf",
+  "reviewFindings": [
+    "Replaced the flat setup with a shorter step and overhanging lowered heels. New neutral and raised positions give distinct heel progression on a consistent black background.",
+    "Fixed machine base, handle support and lower upright regions now reuse setup pixels. The generated step rear edge still changes and foot/pad mechanics and body proportions remain unapproved; this repair does not grant release approval."
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "method": "Rigid translation followed by exact master sole/lower-shoe region and contour-aligned calf transition with local row resampling; no whole-image rescaling.",
+  "operations": [
+    {
+      "frame": 2,
+      "source": "/workspace/Maiin/docs/exercise-art/pilots/repair-new-conversions-03-20261003/sources/pistol-squat/2.png",
+      "translation": [1, 33],
+      "fixedRegion": [0, 1300, 500, 1536],
+      "calfBlendRows": [1230, 1300]
+    },
+    {
+      "frame": 3,
+      "source": "/workspace/Maiin/docs/exercise-art/pilots/repair-new-conversions-03-20261003/sources/pistol-squat/repaired-background-3.png",
+      "translation": [3, 63],
+      "fixedRegion": [0, 1300, 500, 1536],
+      "calfBlendRows": [1230, 1300]
+    }
+  ],
+  "releaseApproved": false
+}

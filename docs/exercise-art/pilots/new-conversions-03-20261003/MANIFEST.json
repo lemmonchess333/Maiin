@@ -16,75 +16,74 @@
         "secondary": ["Glutes and calves lighter"]
       },
       "reviewFindings": [
-        "Three unique poses selected as upright, modest lean, deeper lean, then reused 3,2,1. The first requested intermediate leaned farther than planned, so it is explicitly selected as frame 3; the later modest lean is frame 2.",
-        "GHD support geometry appears similar but body length and knee contact change between poses. Knee-extension mechanics and athlete proportions remain unapproved. This is a controlled partial-range draft, not a demonstrated full-range repetition.",
-        "Native background changes between black and white across selected poses. This causes a visible playback flash and fails scene continuity; no release approval. Original images are preserved without code-based repair."
+        "Repaired the white middle-frame background to black. Selected base and footplate regions are copied exactly from the setup, removing fixed-equipment redraw within those regions.",
+        "Body proportions, changing knee-pad contact and full-range mechanics still require review. This remains a partial-range draft; fixed machine pixels do not establish anatomical approval."
       ],
       "frames": [
         {
           "frame": 1,
-          "path": "docs/exercise-art/pilots/new-conversions-03-20261003/glute-ham-raise/frames/1.png",
+          "path": "docs/exercise-art/pilots/repair-new-conversions-03-20261003/glute-ham-raise/frames/1.png",
           "caption": "SET UPRIGHT 1/6",
           "cue": "Secure feet; brace with arms across chest.",
           "progress": 0,
           "dimensions": [1536, 1024],
-          "bytes": 866906,
-          "sha256": "50f83a3d715803b34c6e7749b95533bdb1ed9710cba72e2cdb0f23cd5fe21a42",
+          "bytes": 784122,
+          "sha256": "a8016da54c0bfef98f418e858e9062986288d0ed9e760975677b242189ac0fc4",
           "reusedFrom": null
         },
         {
           "frame": 2,
-          "path": "docs/exercise-art/pilots/new-conversions-03-20261003/glute-ham-raise/frames/2.png",
+          "path": "docs/exercise-art/pilots/repair-new-conversions-03-20261003/glute-ham-raise/frames/2.png",
           "caption": "BEGIN LOWERING 2/6",
           "cue": "Lower slowly by extending at your knees.",
           "progress": 0.5,
           "dimensions": [1536, 1024],
-          "bytes": 1356237,
-          "sha256": "25a06147c2bf0da9c27e0784886b6a591ab537f38aae88711dc90aff4e2856bf",
+          "bytes": 800013,
+          "sha256": "9598ae89a56e36615e1a4a1d25ce7117a696649bc2fadee670e8afd4367c783d",
           "reusedFrom": null
         },
         {
           "frame": 3,
-          "path": "docs/exercise-art/pilots/new-conversions-03-20261003/glute-ham-raise/frames/3.png",
+          "path": "docs/exercise-art/pilots/repair-new-conversions-03-20261003/glute-ham-raise/frames/3.png",
           "caption": "CONTROL YOUR RANGE 3/6",
           "cue": "Keep knees, hips and head aligned.",
           "progress": 1,
           "dimensions": [1536, 1024],
-          "bytes": 1172588,
-          "sha256": "220f9a26e854b1ab66e6ee7b6803ab2990cc18a214d34576304cc1a5d6ec46f4",
+          "bytes": 965352,
+          "sha256": "f9014e76233d0b4a47f0af56b0f0709b63063bdb95abd6fd48777936770e4c98",
           "reusedFrom": null
         },
         {
           "frame": 4,
-          "path": "docs/exercise-art/pilots/new-conversions-03-20261003/glute-ham-raise/frames/4.png",
+          "path": "docs/exercise-art/pilots/repair-new-conversions-03-20261003/glute-ham-raise/frames/4.png",
           "caption": "STAY BRACED 4/6",
           "cue": "Keep hips extended and hamstrings under tension.",
           "progress": 1,
           "dimensions": [1536, 1024],
-          "bytes": 1172588,
-          "sha256": "220f9a26e854b1ab66e6ee7b6803ab2990cc18a214d34576304cc1a5d6ec46f4",
+          "bytes": 965352,
+          "sha256": "f9014e76233d0b4a47f0af56b0f0709b63063bdb95abd6fd48777936770e4c98",
           "reusedFrom": 3
         },
         {
           "frame": 5,
-          "path": "docs/exercise-art/pilots/new-conversions-03-20261003/glute-ham-raise/frames/5.png",
+          "path": "docs/exercise-art/pilots/repair-new-conversions-03-20261003/glute-ham-raise/frames/5.png",
           "caption": "CURL UPWARD 5/6",
           "cue": "Use hamstrings and glutes to rise smoothly.",
           "progress": 0.5,
           "dimensions": [1536, 1024],
-          "bytes": 1356237,
-          "sha256": "25a06147c2bf0da9c27e0784886b6a591ab537f38aae88711dc90aff4e2856bf",
+          "bytes": 800013,
+          "sha256": "9598ae89a56e36615e1a4a1d25ce7117a696649bc2fadee670e8afd4367c783d",
           "reusedFrom": 2
         },
         {
           "frame": 6,
-          "path": "docs/exercise-art/pilots/new-conversions-03-20261003/glute-ham-raise/frames/6.png",
+          "path": "docs/exercise-art/pilots/repair-new-conversions-03-20261003/glute-ham-raise/frames/6.png",
           "caption": "RETURN UPRIGHT 6/6",
           "cue": "Finish tall without arching your lower back.",
           "progress": 0,
           "dimensions": [1536, 1024],
-          "bytes": 866906,
-          "sha256": "50f83a3d715803b34c6e7749b95533bdb1ed9710cba72e2cdb0f23cd5fe21a42",
+          "bytes": 784122,
+          "sha256": "a8016da54c0bfef98f418e858e9062986288d0ed9e760975677b242189ac0fc4",
           "reusedFrom": 1
         }
       ]
@@ -104,76 +103,74 @@
         "secondary": ["Soleus lighter"]
       },
       "reviewFindings": [
-        "The initial setup had a vertical side-hip pad and was rejected. The selected correction places a horizontal cushion over the lower back. Original rejected source is retained.",
-        "The selected start does not demonstrate the planned below-platform heel stretch. Midway and top candidates show nearly the same heel elevation; progression and pad travel are not validated. Intended cues are retained for review but the images do not fully satisfy them.",
-        "Machine geometry, limb lengths and loaded-pad mechanics remain unapproved. Six draft slots are present, but this is not a technique-approved full-range conversion.",
-        "Native background changes between black and white across selected poses. This causes a visible playback flash and fails scene continuity; no release approval. Original images are preserved without code-based repair."
+        "Replaced the flat setup with a shorter step and overhanging lowered heels. New neutral and raised positions give distinct heel progression on a consistent black background.",
+        "Fixed machine base, handle support and lower upright regions now reuse setup pixels. The generated step rear edge still changes and foot/pad mechanics and body proportions remain unapproved; this repair does not grant release approval."
       ],
       "frames": [
         {
           "frame": 1,
-          "path": "docs/exercise-art/pilots/new-conversions-03-20261003/donkey-calf-raise/frames/1.png",
+          "path": "docs/exercise-art/pilots/repair-new-conversions-03-20261003/donkey-calf-raise/frames/1.png",
           "caption": "SET YOUR STRETCH 1/6",
           "cue": "Brace forward; let heels lower below platform.",
           "progress": 0,
           "dimensions": [1536, 1024],
-          "bytes": 1348298,
-          "sha256": "dd453128055fb7d0011d1dd45f6243b51839ccbd75a60d050467cdae65348393",
+          "bytes": 1092813,
+          "sha256": "84706e7205e3f3b9a070f3741744f99df8413022d8baf75cfca2a060a2b3593a",
           "reusedFrom": null
         },
         {
           "frame": 2,
-          "path": "docs/exercise-art/pilots/new-conversions-03-20261003/donkey-calf-raise/frames/2.png",
+          "path": "docs/exercise-art/pilots/repair-new-conversions-03-20261003/donkey-calf-raise/frames/2.png",
           "caption": "RISE THROUGH YOUR TOES 2/6",
           "cue": "Lift heels while keeping knees softly straight.",
           "progress": 0.5,
           "dimensions": [1536, 1024],
-          "bytes": 1398664,
-          "sha256": "567694728016cc969bc5234398b46dc626ff005db1042444b4a0f377d7b24c3f",
+          "bytes": 934105,
+          "sha256": "adefa0fb58aa8b4de883e273c0f564a5faf26fe4101efa28eaf72dd1b6ae34ae",
           "reusedFrom": null
         },
         {
           "frame": 3,
-          "path": "docs/exercise-art/pilots/new-conversions-03-20261003/donkey-calf-raise/frames/3.png",
+          "path": "docs/exercise-art/pilots/repair-new-conversions-03-20261003/donkey-calf-raise/frames/3.png",
           "caption": "REACH THE TOP 3/6",
           "cue": "Rise onto toes and squeeze your calves.",
           "progress": 1,
           "dimensions": [1536, 1024],
-          "bytes": 1395536,
-          "sha256": "a73c862f18ef998c784f238bc3983014d9af48cde9a163b0ee9b3214cafe978f",
+          "bytes": 1010188,
+          "sha256": "4a53cc263cff89a64fc790d5178262324a3744e0bf17f7c1b2b43325c72b5121",
           "reusedFrom": null
         },
         {
           "frame": 4,
-          "path": "docs/exercise-art/pilots/new-conversions-03-20261003/donkey-calf-raise/frames/4.png",
+          "path": "docs/exercise-art/pilots/repair-new-conversions-03-20261003/donkey-calf-raise/frames/4.png",
           "caption": "CONTROL THE TOP 4/6",
           "cue": "Pause briefly without bouncing or bending knees.",
           "progress": 1,
           "dimensions": [1536, 1024],
-          "bytes": 1395536,
-          "sha256": "a73c862f18ef998c784f238bc3983014d9af48cde9a163b0ee9b3214cafe978f",
+          "bytes": 1010188,
+          "sha256": "4a53cc263cff89a64fc790d5178262324a3744e0bf17f7c1b2b43325c72b5121",
           "reusedFrom": 3
         },
         {
           "frame": 5,
-          "path": "docs/exercise-art/pilots/new-conversions-03-20261003/donkey-calf-raise/frames/5.png",
+          "path": "docs/exercise-art/pilots/repair-new-conversions-03-20261003/donkey-calf-raise/frames/5.png",
           "caption": "LOWER SLOWLY 5/6",
           "cue": "Lower heels slowly against the resistance.",
           "progress": 0.5,
           "dimensions": [1536, 1024],
-          "bytes": 1398664,
-          "sha256": "567694728016cc969bc5234398b46dc626ff005db1042444b4a0f377d7b24c3f",
+          "bytes": 934105,
+          "sha256": "adefa0fb58aa8b4de883e273c0f564a5faf26fe4101efa28eaf72dd1b6ae34ae",
           "reusedFrom": 2
         },
         {
           "frame": 6,
-          "path": "docs/exercise-art/pilots/new-conversions-03-20261003/donkey-calf-raise/frames/6.png",
+          "path": "docs/exercise-art/pilots/repair-new-conversions-03-20261003/donkey-calf-raise/frames/6.png",
           "caption": "RETURN TO STRETCH 6/6",
           "cue": "Let heels sink below the platform gently.",
           "progress": 0,
           "dimensions": [1536, 1024],
-          "bytes": 1348298,
-          "sha256": "dd453128055fb7d0011d1dd45f6243b51839ccbd75a60d050467cdae65348393",
+          "bytes": 1092813,
+          "sha256": "84706e7205e3f3b9a070f3741744f99df8413022d8baf75cfca2a060a2b3593a",
           "reusedFrom": 1
         }
       ]
@@ -189,75 +186,74 @@
         "secondary": ["Glutes, hamstrings and core lighter"]
       },
       "reviewFindings": [
-        "Three unique poses show single-leg standing, midway lowering and deep lowering, then reused 3,2,1. Same working leg and forward free leg are retained.",
-        "The planted shoe shifts upward between poses, despite the fixed-floor plan. Working-limb proportions and torso balance need review. No fixed-contact approval is claimed.",
-        "Native background changes between black and white across selected poses. This causes a visible playback flash and fails scene continuity; no release approval. Original images are preserved without code-based repair."
+        "Repaired black background and fixed the planted working sole and lower shoe by rigidly translating each lowering pose and reusing the master contact region. A 70-row contour-aligned calf bridge prevents a doubled edge.",
+        "The shoe region is exact, but the calf bridge is locally resampled and must be reviewed for anatomy and sharpness. Whole-body proportions and balance remain unapproved."
       ],
       "frames": [
         {
           "frame": 1,
-          "path": "docs/exercise-art/pilots/new-conversions-03-20261003/pistol-squat/frames/1.png",
+          "path": "docs/exercise-art/pilots/repair-new-conversions-03-20261003/pistol-squat/frames/1.png",
           "caption": "BALANCE ON ONE LEG 1/6",
           "cue": "Stand on one leg; extend the other.",
           "progress": 0,
           "dimensions": [1024, 1536],
-          "bytes": 861094,
-          "sha256": "915a52ef1ce7649ea6d459799ed18e83c43c65cf8b37b05210d6f3b86ceb950b",
+          "bytes": 776596,
+          "sha256": "00cc035e8c1eacaf8e950343c91c287ee3a060da62325d2dc305020a8c28810c",
           "reusedFrom": null
         },
         {
           "frame": 2,
-          "path": "docs/exercise-art/pilots/new-conversions-03-20261003/pistol-squat/frames/2.png",
+          "path": "docs/exercise-art/pilots/repair-new-conversions-03-20261003/pistol-squat/frames/2.png",
           "caption": "SIT BACK AND DOWN 2/6",
           "cue": "Bend your standing knee; keep heel planted.",
           "progress": 0.5,
           "dimensions": [1024, 1536],
-          "bytes": 1360583,
-          "sha256": "4b57dfde09fca1cfa1f55268fa57e06ad9dd3168acfa50b1f93aad2c3b83306e",
+          "bytes": 1083602,
+          "sha256": "71a5234ea276f5374303d1ed80ed2741ccf3f89f2b58375b256c86879ca80a5f",
           "reusedFrom": null
         },
         {
           "frame": 3,
-          "path": "docs/exercise-art/pilots/new-conversions-03-20261003/pistol-squat/frames/3.png",
+          "path": "docs/exercise-art/pilots/repair-new-conversions-03-20261003/pistol-squat/frames/3.png",
           "caption": "REACH CONTROLLED DEPTH 3/6",
           "cue": "Lower near your heel without losing balance.",
           "progress": 1,
           "dimensions": [1024, 1536],
-          "bytes": 1188106,
-          "sha256": "f03753d5d8baf8b396fa1982547b1db27604fde832028d9f236e43dae260d451",
+          "bytes": 676053,
+          "sha256": "90dcfb91383a05a1a2211b946bea1a10b93e0d47fa14a45ca8ce49c000b39994",
           "reusedFrom": null
         },
         {
           "frame": 4,
-          "path": "docs/exercise-art/pilots/new-conversions-03-20261003/pistol-squat/frames/4.png",
+          "path": "docs/exercise-art/pilots/repair-new-conversions-03-20261003/pistol-squat/frames/4.png",
           "caption": "KEEP YOUR POSITION 4/6",
           "cue": "Keep free leg lifted and knee aligned.",
           "progress": 1,
           "dimensions": [1024, 1536],
-          "bytes": 1188106,
-          "sha256": "f03753d5d8baf8b396fa1982547b1db27604fde832028d9f236e43dae260d451",
+          "bytes": 676053,
+          "sha256": "90dcfb91383a05a1a2211b946bea1a10b93e0d47fa14a45ca8ce49c000b39994",
           "reusedFrom": 3
         },
         {
           "frame": 5,
-          "path": "docs/exercise-art/pilots/new-conversions-03-20261003/pistol-squat/frames/5.png",
+          "path": "docs/exercise-art/pilots/repair-new-conversions-03-20261003/pistol-squat/frames/5.png",
           "caption": "DRIVE UPWARD 5/6",
           "cue": "Push through your planted foot to stand.",
           "progress": 0.5,
           "dimensions": [1024, 1536],
-          "bytes": 1360583,
-          "sha256": "4b57dfde09fca1cfa1f55268fa57e06ad9dd3168acfa50b1f93aad2c3b83306e",
+          "bytes": 1083602,
+          "sha256": "71a5234ea276f5374303d1ed80ed2741ccf3f89f2b58375b256c86879ca80a5f",
           "reusedFrom": 2
         },
         {
           "frame": 6,
-          "path": "docs/exercise-art/pilots/new-conversions-03-20261003/pistol-squat/frames/6.png",
+          "path": "docs/exercise-art/pilots/repair-new-conversions-03-20261003/pistol-squat/frames/6.png",
           "caption": "FINISH BEFORE SWITCHING 6/6",
           "cue": "Stand tall, then repeat the other side.",
           "progress": 0,
           "dimensions": [1024, 1536],
-          "bytes": 861094,
-          "sha256": "915a52ef1ce7649ea6d459799ed18e83c43c65cf8b37b05210d6f3b86ceb950b",
+          "bytes": 776596,
+          "sha256": "00cc035e8c1eacaf8e950343c91c287ee3a060da62325d2dc305020a8c28810c",
           "reusedFrom": 1
         }
       ]

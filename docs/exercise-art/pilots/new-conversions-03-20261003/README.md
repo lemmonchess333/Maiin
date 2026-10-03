@@ -1,4 +1,6 @@
-# New exercise conversions, batch 3 — 3 October 2026
+# Original exercise conversion drafts, batch 3 — 3 October 2026
+
+**Superseded review:** selected frames now point to the [repair pass](../repair-new-conversions-03-20261003/README.md). The original images, findings and validation below are retained as historical evidence; `MANIFEST.json` describes the current repaired selection.
 
 Three previously unconverted IDs now have six native draft slots each. These are first-pass conversions, with unresolved visual findings retained. Existing guides and repair sets were left alone.
 

@@ -2,7 +2,7 @@
 
 ## Current checkpoint — 3 October 2026
 
-Current owner priority: convert the remaining unconverted exercises. Leave already improved guides and existing repair work alone unless the owner asks to revisit them.
+Current owner priority: fix the newly generated batch first (latest instruction). The [repair pass](pilots/repair-new-conversions-03-20261003/README.md) addresses background changes, planted-foot drift and calf-raise pose progression. Older approved guides remain untouched.
 
 The [third new-conversion batch](pilots/new-conversions-03-20261003/README.md) adds Glute-Ham Raise, Donkey Calf Raise and Pistol Squat: 18 native draft frames for three previously unconverted IDs. Contact drift, incomplete calf-raise range and inconsistent backgrounds are recorded; none is approved for production.
 
