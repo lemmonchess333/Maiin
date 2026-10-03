@@ -16,7 +16,6 @@ import {
   finalisePlanMetadata,
   freeformPlanMetadata,
   getAdherenceLabel,
-  shouldCompleteRunDay,
   type RunPlanMetadata,
 } from "../runPlanMetadata";
 import type { ScheduledRunDay, RunPlan } from "@/features/program/runScheduler";
@@ -579,116 +578,6 @@ describe("finalisePlanMetadata — user diverges via chooser", () => {
   });
 });
 
-describe("shouldCompleteRunDay — programme reconciliation gating", () => {
-  // The six-condition AND. Each test isolates one negative branch
-  // so a future refactor that drops a gate fails loudly here.
-
-  const onPlanMatch: RunPlanMetadata = {
-    planMode: "race_prep",
-    planSource: "today_plan",
-    plannedRunDayIndex: MONDAY,
-    plannedTemplateId: "tempo_20",
-    plannedTemplateType: "tempo",
-    actualTemplateId: "tempo_20",
-    matchedPlanExact: true,
-    matchedPlanType: true,
-    offPlan: false,
-    planWeekIndex: 2,
-    planTotalWeeks: 8,
-    scheduledRunId: null,
-  };
-
-  // Scenario 6: exact planned-template match completes the day.
-  it("completes when all six gates pass", () => {
-    expect(shouldCompleteRunDay({ metadata: onPlanMatch, isValid: true })).toBe(
-      true
-    );
-  });
-
-  // Scenario 5: user switched type → matchedPlanExact false.
-  it("does NOT complete when matchedPlanExact is false", () => {
-    const off = {
-      ...onPlanMatch,
-      actualTemplateId: null,
-      matchedPlanExact: false,
-      matchedPlanType: false,
-      offPlan: true,
-    };
-    expect(shouldCompleteRunDay({ metadata: off, isValid: true })).toBe(false);
-  });
-
-  it("does NOT complete when matchedPlanType is true but matchedPlanExact is false", () => {
-    // Same broad type (tempo run on a planned tempo day) but
-    // different template — fails the exact-match gate. This is the
-    // case Clay explicitly flagged: a user doing 'easy run' on a
-    // planned 5x1k must NOT mark the 5x1k complete.
-    const sameType = {
-      ...onPlanMatch,
-      actualTemplateId: "easy_30",
-      matchedPlanExact: false,
-      matchedPlanType: true,
-      offPlan: true,
-    };
-    expect(shouldCompleteRunDay({ metadata: sameType, isValid: true })).toBe(
-      false
-    );
-  });
-
-  it("does NOT complete when offPlan is true", () => {
-    const off = { ...onPlanMatch, offPlan: true };
-    expect(shouldCompleteRunDay({ metadata: off, isValid: true })).toBe(false);
-  });
-
-  it("does NOT complete when plannedRunDayIndex is null (rest day)", () => {
-    const restDay = freeformPlanMetadata("race_prep");
-    expect(shouldCompleteRunDay({ metadata: restDay, isValid: true })).toBe(
-      false
-    );
-  });
-
-  it("does NOT complete when plannedTemplateId is null (completed-day extra run)", () => {
-    const completed = {
-      ...onPlanMatch,
-      planSource: "completed_day" as const,
-      plannedTemplateId: null,
-      plannedTemplateType: null,
-      actualTemplateId: null,
-      matchedPlanExact: null,
-      matchedPlanType: null,
-      offPlan: true,
-    };
-    expect(shouldCompleteRunDay({ metadata: completed, isValid: true })).toBe(
-      false
-    );
-  });
-
-  it("does NOT complete when actualTemplateId is null", () => {
-    const noActual = {
-      ...onPlanMatch,
-      actualTemplateId: null,
-      matchedPlanExact: false,
-      offPlan: true,
-    };
-    expect(shouldCompleteRunDay({ metadata: noActual, isValid: true })).toBe(
-      false
-    );
-  });
-
-  // Scenario 7: invalid saved-anyway run never completes.
-  it("does NOT complete when the run is invalid (saved anyway)", () => {
-    expect(
-      shouldCompleteRunDay({ metadata: onPlanMatch, isValid: false })
-    ).toBe(false);
-  });
-
-  it("freeform runs never complete a programme day", () => {
-    const freeform = freeformPlanMetadata("freeform");
-    expect(shouldCompleteRunDay({ metadata: freeform, isValid: true })).toBe(
-      false
-    );
-  });
-});
-
 // ────────────────────────────────────────────────────────────────────
 // P0-6: ?scheduledRunId= URL pin
 // ────────────────────────────────────────────────────────────────────
@@ -875,11 +764,12 @@ describe("computePlanMetadata — ?scheduledRunId=<id> URL pin", () => {
 // These mirror the high-level RunSummary save flow:
 //   1. compute metadata from URL + plan context
 //   2. finalise against the user's actual activityType
-//   3. shouldCompleteRunDay verdict drives completion
 //
-// Pinned end-to-end so a future refactor on any one step (URL
-// parsing, finalisation rule, completion gate) can't silently
-// regress the contract that drives scheduled-slot completion.
+// Pinned end-to-end so a future refactor on either step (URL parsing,
+// finalisation rule) can't silently regress the metadata a saved run
+// carries. Whether the run then completes its scheduled slot is the
+// claims' call (useClaimMap, scheduledRunCompletion.test.ts): the
+// save-time completion this used to drive was removed in PR-J.
 
 describe("spec v7 #8 — scheduledRunId completes only that scheduled run", () => {
   it("user launches Monday's tempo via ?scheduledRunId= + does the planned tempo → completes Monday's slot", () => {
@@ -914,17 +804,12 @@ describe("spec v7 #8 — scheduledRunId completes only that scheduled run", () =
     // Pin: match is exact (user did the planned template).
     expect(final.matchedPlanExact).toBe(true);
     expect(final.offPlan).toBe(false);
-    // Pin: completion gate fires → useProgram.completeRunDay(id)
-    // will be dispatched against THIS scheduled slot, not today's.
-    expect(shouldCompleteRunDay({ metadata: final, isValid: true })).toBe(true);
   });
 
-  it("scheduledRunId without ?template=, user picks a DIFFERENT template → completion fires for THAT slot only when match remains exact", () => {
+  it("scheduledRunId without ?template=, user picks a DIFFERENT template → the run is off-plan for THAT slot", () => {
     // Edge case: URL pins the slot but user changes the template
-    // from the chooser. finalisePlanMetadata clears
-    // actualTemplateId once the user diverges, so completion gate
-    // refuses → the scheduled slot stays open + the off-plan
-    // metadata persists on the saved run.
+    // from the chooser. The off-plan metadata persists on the saved
+    // run, which is what raises the P3-1 reconciliation card.
     const days = [
       makeRunDayV2({
         id: "runday_2026-05-10_1_tempo_20",
@@ -948,11 +833,6 @@ describe("spec v7 #8 — scheduledRunId completes only that scheduled run", () =
     expect(final.scheduledRunId).toBe("runday_2026-05-10_1_tempo_20");
     expect(final.matchedPlanExact).toBe(false);
     expect(final.offPlan).toBe(true);
-    // Slot does NOT auto-complete. The P3-1 reconciliation card
-    // will fire on save instead.
-    expect(shouldCompleteRunDay({ metadata: final, isValid: true })).toBe(
-      false
-    );
   });
 });
 
@@ -989,13 +869,6 @@ describe("spec v7 #9 — ?template= fallback never completes the WRONG scheduled
     expect(final.actualTemplateId).toBe("easy_30");
     expect(final.matchedPlanExact).toBe(false);
     expect(final.offPlan).toBe(true);
-    // CRITICAL: shouldCompleteRunDay returns false. RunSummary
-    // will NOT call completeRunDay against Tuesday's scheduled
-    // slot. The slot stays open; the saved run carries off-plan
-    // metadata for analytics; the P3-1 prompt fires.
-    expect(shouldCompleteRunDay({ metadata: final, isValid: true })).toBe(
-      false
-    );
   });
 
   it("user opens ?template=tempo_20 on a Tuesday with a planned long_10k → both same-type & exact mismatch, no completion", () => {
@@ -1023,9 +896,6 @@ describe("spec v7 #9 — ?template= fallback never completes the WRONG scheduled
     expect(final.matchedPlanExact).toBe(false);
     expect(final.matchedPlanType).toBe(false);
     expect(final.offPlan).toBe(true);
-    expect(shouldCompleteRunDay({ metadata: final, isValid: true })).toBe(
-      false
-    );
   });
 });
 

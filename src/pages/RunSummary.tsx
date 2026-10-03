@@ -57,10 +57,7 @@ import { applyPrivacyZones } from "../lib/privacyZones";
 import { useShoes } from "../hooks/useShoes";
 import { useProgram } from "../features/program/useProgram";
 import { changeStands } from "../features/program/programOutcome";
-import {
-  getAdherenceLabel,
-  shouldCompleteRunDay,
-} from "../lib/runPlanMetadata";
+import { getAdherenceLabel } from "../lib/runPlanMetadata";
 import { RUN_TEMPLATES } from "../lib/workoutTemplates";
 import {
   paceTableFromFitness,
@@ -1253,10 +1250,11 @@ export default function RunSummary() {
 
           {/* P3-1: save-time mismatch reconciliation.
           Fires only when the saved run is off-plan AND points at a
-          still-planned scheduled slot. Auto-complete (shouldCompleteRunDay)
-          already fired silently for the matched case — this is the
-          "you did something else, what should the scheduled slot do?"
-          dialog. State is local to this RunSummary mount.
+          still-planned scheduled slot. A run that matches its planned
+          day completes it through the claims (useClaimMap), with no
+          write here; this is the "you did something else, what should
+          the scheduled slot do?" dialog. State is local to this
+          RunSummary mount.
 
           Conditions for the card to appear:
             - run was saved successfully (saved === true)
@@ -1264,7 +1262,6 @@ export default function RunSummary() {
             - planMetadata indicates a real plan context (mode !== freeform,
               scheduledRunId or plannedRunDayIndex present)
             - planMetadata.offPlan === true (mismatch occurred)
-            - shouldCompleteRunDay returned false (no silent auto-complete)
             - the scheduled run is still in `planned` status (no point
               reconciling a terminal-state day)
             - the user hasn't picked an option yet (reconciliation
@@ -1279,8 +1276,6 @@ export default function RunSummary() {
               if (!m.offPlan) return null;
               const refKey = m.scheduledRunId ?? m.plannedRunDayIndex;
               if (refKey === null || refKey === undefined) return null;
-              if (shouldCompleteRunDay({ metadata: m, isValid: !isInvalid }))
-                return null;
               // Resolve current scheduled-run status from programState. If
               // the runDay is already terminal (completed / skipped / etc.)
               // there's nothing to reconcile — the user must have already
