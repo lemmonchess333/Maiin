@@ -1,28 +1,22 @@
 # Regenerated Donkey Calf Raise — 3 October 2026
 
-The owner rejected the previous calf raise as mechanically unclear. This sequence replaces that layout with a newly generated side-view master: near-vertical legs, horizontal hip hinge, a short forefoot step, visibly overhanging heels, and a rear plate-loaded lever acting on an articulated lower-back cushion. The old machine and its repair remain archived.
+The rejected calf raise is replaced by a reviewed side view with near-vertical legs, a stable hip hinge, a short forefoot step, overhanging heels and a rigid rear loading lever. The selected sequence is lowered heels → neutral ankles → raised heels → hold → neutral return → lowered heels. The six original catalogue cues are unchanged.
 
-The selected movement is lowered heels → neutral ankles → raised heels → brief hold → neutral return → lowered heels. Three distinct poses are stored as six separate native PNGs. The original catalogue cues remain unchanged. The six-frame selector in `new-conversions-03-20261003/MANIFEST.json` and the account-free player now use this version.
+## Contact refinement and approval
 
-## Construction and review
+Both grips and the forefoot sole now retain exact setup pixels. Small local hand translations and forefoot flexion connect these contacts smoothly to the regenerated wrists and elevated heels. The whole body is not resized. The exposed step stays visible beneath the forefoot, and the final ankle join has no sharp contour seam. Earlier drifting frames, a failed contour join and a rejected generation that changed camera scale remain in `before-contact-refinement/`.
 
-A first master was rejected for insufficient headroom. A second master leaves room for the athlete to rise. The first top pose was rejected because it stretched the legs and detached the plate visually from the lever. A restrained generation became the neutral intermediate; the final top pose was derived incrementally from it.
+One source lever-and-plate layer rotates about a fixed rear pivot at 0°, 3.1° and 5.2°. The same cushion follows its endpoint through an articulated mount. The rear post, base and front supports retain setup pixels. Native full frames and enlarged contact views were inspected alongside production playback in both mobile themes.
 
-Image generation still shifted the rear pivot. The final builder therefore preserves the regenerated athlete and uses one source lever-and-plate layer rotated about the fixed rear pivot, with the constant cushion following its endpoint through an articulated mount. The rotations are 0°, 3.1° and 5.2°. The whole body is neither warped nor resized by the builder. The rear post, lower base and lower front supports retain exact setup pixels. All backgrounds remain black.
-
-The shortened step supports the forefeet while the heels visibly progress from below the step to above it. The side view makes ankle motion distinct from knee flexion. Native and mobile review found the loading mechanism and heel travel clearer than the rejected layout.
-
-## Limits before release
-
-The sampled rear pivot and floor bolt are pixel-exact. The generated near-hand patch still shifts up to 6px; forefoot-shape matching reaches the 12px search boundary as the shoe changes angle, with substantial residual error. Those patch results do not establish an exact fixed forefoot contact. Human proportions, hand/forefoot continuity and technique remain unapproved. These are explicit remaining findings, not covered by the rigid-machine checks.
-
-**This is the selected regenerated draft, not a production release.** Production assets and coverage are unchanged. The previous canonical setup is archived as `masters/donkey-calf-raise/superseded-20261003.png`; historical provenance points to that snapshot.
+The selected set is approved in [the production review](../../releases/2026-10-03/donkey-calf-raise.json). Six lossless 1536×1024 WebPs and a transparent 480×342 card are registered for release. The earlier draft validation files document the previous checkpoint; current release verification is in [DONKEY_CALF_VALIDATION.json](../../releases/2026-10-03/DONKEY_CALF_VALIDATION.json).
 
 ## Validation and reproducibility
 
-All three mobile checks passed: dark/light source dimensions and endpoint hashes, caption/cue order, actual 6→1 autoplay wrap, touch controls, overflow/page errors and reduced motion. Screenshots are in `evidence/`; results are in `BROWSER_VALIDATION.json`. Full repository results are in `VALIDATION.json`.
+All six targeted browser checks passed: production delivery and draft playback in light/dark themes, cue order, loop behavior, touch controls, overflow/page errors and reduced motion. Current screenshots are in `../../releases/2026-10-03/donkey-calf-evidence/`.
 
-`MECHANICS_VALIDATION.json` records exact stationary-region comparisons, fixed pivot-to-pad-mount length and reverse-pose reuse. It does not grant anatomical approval. `registration.json` preserves the hand/forefoot diagnostics. Source, master, identity, cue and builder hashes are in `provenance.json`; exact prompts and reference snapshots are in `GENERATION_LOG.json`.
+`MECHANICS_VALIDATION.json` checks exact stationary regions and contact rectangles, constant pivot-to-pad length and reverse-pose reuse. `registration.json` measures contact patches within those rectangles; the older whole-shoe shape comparison is preserved in `before-contact-refinement/registration.json`. Mechanical diagnostics supplement the visual approval; they do not independently establish anatomical correctness.
+
+Source, master, identity, cue and builder hashes are in `provenance.json`. Original generation prompts are in `GENERATION_LOG.json`; the rejected contact generation is in `CONTACT_REFINEMENT_LOG.json`. The previous canonical setup is archived as `masters/donkey-calf-raise/superseded-20261003.png`.
 
 ```sh
 python docs/exercise-art/pilots/donkey-calf-regenerated-20261003/build.py
@@ -32,4 +26,4 @@ npm run check:form-drafts
 npx playwright test --config playwright.form-art.config.ts --grep 'donkey-calf-raise'
 ```
 
-The deterministic builder uses Pillow. Validation also uses NumPy. Native generations and rejected candidates are preserved; running these scripts makes no remote image calls.
+The deterministic builder uses Pillow and NumPy. Running these scripts makes no remote image calls.

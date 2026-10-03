@@ -287,6 +287,16 @@ export const FORM_ART_CUTOUTS: Record<string, FormArtCutout> = {
       "abd79b7a1788a4902a09f3709538df390a5c8b580761882fb9bb6244707be9f8",
     sha256: "335f739987f1a5ee6b8f513d243f475eaaf794fda16834e248aeef72d0fdfa55",
   },
+  "donkey-calf-raise": {
+    src: "form-art/donkey-calf-raise.webp",
+    width: 480,
+    height: 342,
+    keyed: true,
+    source: "form-frames/donkey-calf-raise/3.webp",
+    sourceSha256:
+      "007f05ec97c8cebfbd200434edd7981fffb87591275149aa8ffa8a45871ce3ac",
+    sha256: "5857b12c829472bd47d568de8dda9bdebbbea6ee587e1aca9fd82f7820f5e264",
+  },
   "dragon-flag": {
     src: "form-art/dragon-flag.webp",
     width: 480,

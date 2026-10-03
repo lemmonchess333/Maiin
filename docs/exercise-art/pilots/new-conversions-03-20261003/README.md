@@ -1,6 +1,6 @@
 # Original exercise conversion drafts, batch 3 — 3 October 2026
 
-**Superseded review:** selected frames now point to the [repair pass](../repair-new-conversions-03-20261003/README.md). The original images, findings and validation below are retained as historical evidence; `MANIFEST.json` describes the current repaired selection.
+**Superseded review:** selected frames now point to the [repair pass](../repair-new-conversions-03-20261003/README.md). The original images, findings and validation below are retained as historical evidence; `MANIFEST.json` describes the current repaired selection. The calf raise has since been regenerated and approved in its [separate production release](../../releases/2026-10-03/DONKEY_CALF_RAISE.md); the other two sets remain drafts.
 
 Three previously unconverted IDs now have six native draft slots each. These are first-pass conversions, with unresolved visual findings retained. Existing guides and repair sets were left alone.
 

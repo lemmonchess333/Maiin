@@ -5,6 +5,7 @@ import { PNG } from "pngjs";
 import { getFormBeats } from "../src/lib/formGuides";
 
 for (const { id, dimensions, cardWidth } of [
+  { id: "donkey-calf-raise", dimensions: [1536, 1024], cardWidth: 480 },
   { id: "leg-raise", dimensions: [1024, 1536], cardWidth: 422 },
   { id: "plank", dimensions: [1536, 1024], cardWidth: 480 },
   { id: "crunches", dimensions: [1536, 1024], cardWidth: 480 },

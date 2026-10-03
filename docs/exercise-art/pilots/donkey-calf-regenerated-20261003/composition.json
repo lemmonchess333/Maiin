@@ -1,5 +1,5 @@
 {
-  "method": "Single source lever and plate rotate rigidly around fixed rear pivot; constant pad follows lever endpoint through articulated mount. Athlete body is not warped or resized.",
+  "method": "Single source lever and plate rotate rigidly around fixed rear pivot; constant pad follows lever endpoint. Hands and forefeet use exact master pixels, after small local contact translations and smooth perimeter blending. Whole body is not resized.",
   "frames": [
     {
       "frame": 1,
@@ -11,7 +11,16 @@
         [0, 780, 1536, 1024],
         [1209, 317, 1262, 780],
         [0, 506, 450, 780]
-      ]
+      ],
+      "fixedContacts": [
+        [373, 476, 394, 495],
+        [448, 488, 465, 505],
+        [687, 750, 724, 763]
+      ],
+      "localContactTranslation": {
+        "hand": [0, 6],
+        "forefoot": [5, 3]
+      }
     },
     {
       "frame": 2,
@@ -23,7 +32,16 @@
         [0, 780, 1536, 1024],
         [1209, 317, 1262, 780],
         [0, 506, 450, 780]
-      ]
+      ],
+      "fixedContacts": [
+        [373, 476, 394, 495],
+        [448, 488, 465, 505],
+        [687, 750, 724, 763]
+      ],
+      "localContactTranslation": {
+        "hand": [0, 1],
+        "forefoot": [5, 3]
+      }
     },
     {
       "frame": 3,
@@ -35,7 +53,16 @@
         [0, 780, 1536, 1024],
         [1209, 317, 1262, 780],
         [0, 506, 450, 780]
-      ]
+      ],
+      "fixedContacts": [
+        [373, 476, 394, 495],
+        [448, 488, 465, 505],
+        [687, 750, 724, 763]
+      ],
+      "localContactTranslation": {
+        "hand": [0, 6],
+        "forefoot": [5, 3]
+      }
     }
   ]
 }

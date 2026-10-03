@@ -1,6 +1,6 @@
 {
   "exerciseId": "donkey-calf-raise",
-  "releaseApproved": false,
+  "releaseApproved": true,
   "identity": {
     "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
     "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
@@ -11,7 +11,7 @@
   },
   "builder": {
     "path": "docs/exercise-art/pilots/donkey-calf-regenerated-20261003/build.py",
-    "sha256": "351dc06a94f0e83e3213796f7885ca8c21a7cb59eefa4ca6b63ea32e6cc8ecb3"
+    "sha256": "f26cfdd58a14b8be88035e00e7385406c72597b450dde467e0701e3f0a14bf9d"
   },
   "sources": [
     {
@@ -29,9 +29,9 @@
   ],
   "cueSha256": "9c652187f219822935753c46262cc9be76ccc23bf31e05636122bfc96cf784bf",
   "reviewFindings": [
-    "Regenerated from a new side-view master after owner rejected the previous calf raise. Short forefoot step, hanging heels, near-vertical legs, horizontal hip hinge and articulated lower-back cushion make the movement explicit.",
-    "Selected sequence uses lowered heels, neutral ankles, raised heels, then return. The first exaggerated top generation was rejected; a restrained neutral pose became the intermediate before deriving the final raised pose.",
-    "One rigid lever-and-plate source rotates around the fixed rear pivot; the cushion follows its endpoint. Fixed lower machine regions reuse master pixels. No body warping or resizing is applied by the builder.",
-    "Small generated hand/forefoot silhouette changes and anatomical consistency still need review before production release. Fixed machine pixels and rigid lever construction do not automatically approve human technique."
-  ]
+    "Refined near/far hand and forefoot-sole contact regions now match setup pixels exactly. Original drifting versions and failed contour/scale trials are retained separately.",
+    "Small local contact translations and forefoot flexion joins preserve the raised heel and remove the earlier seams. One rigid rear lever/plate assembly and fixed supports remain unchanged.",
+    "Selected repaired frames approved for production after native and mobile review; see docs/exercise-art/releases/2026-10-03/donkey-calf-raise.json."
+  ],
+  "releaseReview": "docs/exercise-art/releases/2026-10-03/donkey-calf-raise.json"
 }

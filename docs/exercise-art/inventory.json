@@ -2,9 +2,9 @@
   "catalogue": 152,
   "inScope": 141,
   "existingSets": 6,
-  "newlyApproved": 51,
+  "newlyApproved": 52,
   "ownerReleasedWithFindings": 3,
-  "releasedBytes": 178546306,
+  "releasedBytes": 181176746,
   "errors": [],
   "inventory": [
     {
@@ -903,9 +903,9 @@
       "name": "Donkey Calf Raise",
       "equipment": "Machine",
       "inScope": true,
-      "authoredBeats": 0,
-      "status": "needs-artwork",
-      "bytes": 0
+      "authoredBeats": 6,
+      "status": "approved",
+      "bytes": 2630440
     },
     {
       "id": "single-leg-calf-raise",

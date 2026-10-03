@@ -1,0 +1,30 @@
+[
+  {
+    "frame": 3,
+    "prompt": "Perform a surgical contact refinement of reference3, the raised donkey calf pose. Reference2 is the exact fixed-contact setup, first is identity. Keep ALL of the raised pose, head/hip/knee/ankle locations, heel elevation, rear machine and weight plate unchanged. Copy reference2's two hands and fixed handle positions so the grip no longer moves upward; reconnect only the nearby wrists smoothly. At the feet, keep the heels raised exactly as reference3, but keep the fronts of both shoes planted on the EXACT SAME step edge as reference2. Copy the toe/forefoot contact shape fromreference2 and let the shoes bend naturally at the ball, with smooth curved uppers/soles connecting to the raised heels. No sharp ankle seams, vertical cut lines, double contours, stretched calves or blurred anatomy. Forefoot and hand contacts must be stationary; only tiny local wrist/shoe transitions may change. Same1536x1024 native frame, black background, faceless whitegrey athlete, purple calves, no text.",
+    "refs": [
+      "/workspace/Maiin/docs/exercise-art/identity/athlete-anatomy-v3.png",
+      "/workspace/Maiin/docs/exercise-art/pilots/donkey-calf-regenerated-20261003/frames/1.png",
+      "/workspace/Maiin/docs/exercise-art/pilots/donkey-calf-regenerated-20261003/before-contact-refinement/3.png"
+    ],
+    "source": "/workspace/generated_images/exec-f3b5471b-a1cd-4d83-864d-f098f65f7377.png",
+    "selected": false,
+    "rejectionReason": "Changed camera framing and body scale; excluded from selected frames.",
+    "archivedSource": "docs/exercise-art/pilots/donkey-calf-regenerated-20261003/before-contact-refinement/rejected-regenerated-scale.png",
+    "sourceSha256": "82ee0ed55646b7db076de28ed104ee0f020af6b61389a9c31fe1186bdf1044b9",
+    "referenceHashes": [
+      {
+        "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+        "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+      },
+      {
+        "path": "docs/exercise-art/pilots/donkey-calf-regenerated-20261003/frames/1.png",
+        "sha256": "4d071361a634e25bd10bc518b8aae2a46fd117179d7604d510da72961c4a747c"
+      },
+      {
+        "path": "docs/exercise-art/pilots/donkey-calf-regenerated-20261003/before-contact-refinement/3.png",
+        "sha256": "0f13b5be933e607fde2b0d362068f45cba5c561a1b6fee45bdf05cc820e4a759"
+      }
+    ]
+  }
+]

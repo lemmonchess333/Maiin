@@ -1,0 +1,50 @@
+{
+  "baseCommit": "f42015d9e8491e175627e1abf70989d865f21c82",
+  "checkedAt": "2026-10-03T15:28:24.496440+00:00",
+  "verify": {
+    "command": "VITEST_MAX_WORKERS=4 npm run verify",
+    "passed": true,
+    "testFilesPassed": 978,
+    "testFilesSkipped": 8,
+    "testsPassed": 10878,
+    "testsSkipped": 367,
+    "durationSeconds": 268.78
+  },
+  "browser": {
+    "command": "npx playwright test --config playwright.form-art.config.ts --grep 'donkey-calf-raise'",
+    "stats": {
+      "startTime": "2026-10-03T15:14:49.396Z",
+      "duration": 17293.249,
+      "expected": 6,
+      "skipped": 0,
+      "unexpected": 0,
+      "flaky": 0
+    }
+  },
+  "mechanics": {
+    "fixedMachineRegionsPixelExact": true,
+    "handAndForefootSoleContactsPixelExact": true,
+    "rigidLeverLengthConstant": true,
+    "returnPosesExact": true,
+    "nativeVisualReviewPassed": true
+  },
+  "draftAudit": {
+    "sets": 25,
+    "selectedFrames": 150,
+    "uniquePoses": 90,
+    "nativeBytes": 149770032,
+    "errors": []
+  },
+  "bundleBudget": {
+    "passed": true,
+    "chunks": 335,
+    "totalBytes": 6024141,
+    "baselineUpdated": true,
+    "reason": "Added released-guide cues and artwork/card metadata; measured growth documented in DONKEY_CALF_RAISE.md. Budget tolerances unchanged."
+  },
+  "productionAssetsChanged": true,
+  "releaseApproved": true,
+  "releasedSets": 61,
+  "inScope": 141,
+  "deployment": "Production workflow runs after merge; this file records pre-merge checks."
+}

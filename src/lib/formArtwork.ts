@@ -41,6 +41,18 @@ const ownerReleased = (
 // Preserve the seven previously shipped sets while replacements are reviewed.
 // These entries do not claim that the art passes the new consistency standard.
 export const FORM_ARTWORK: Record<string, FormArtwork> = {
+  "donkey-calf-raise": {
+    version: "anatomy-v3-fixed-contacts-2026-10-03",
+    status: "approved",
+    width: 1536,
+    height: 1024,
+    frames: Array.from(
+      { length: 6 },
+      (_, i) => `form-frames/donkey-calf-raise/${i + 1}.webp`
+    ),
+    reference: "form-frames/donkey-calf-raise/3.webp",
+    reviewFile: "docs/exercise-art/releases/2026-10-03/donkey-calf-raise.json",
+  },
   shrugs: {
     version: "anatomy-v3-rigid-2026-10-03",
     status: "approved",

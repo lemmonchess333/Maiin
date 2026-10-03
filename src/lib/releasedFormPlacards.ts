@@ -15,6 +15,27 @@ const placard = (
 });
 
 export const RELEASED_FORM_PLACARDS = {
+  "donkey-calf-raise": placard(
+    "donkey-calf-raise",
+    ["Gastrocnemius"],
+    ["Soleus"],
+    [
+      [0, "Set your stretch", "Brace forward; let heels lower below platform."],
+      [
+        0.5,
+        "Rise through your toes",
+        "Lift heels while keeping knees softly straight.",
+      ],
+      [1, "Reach the top", "Rise onto toes and squeeze your calves."],
+      [
+        1,
+        "Control the top",
+        "Pause briefly without bouncing or bending knees.",
+      ],
+      [0.5, "Lower slowly", "Lower heels slowly against the resistance."],
+      [0, "Return to stretch", "Let heels sink below the platform gently."],
+    ]
+  ),
   shrugs: placard(
     "shrugs",
     ["Upper trapezius"],
