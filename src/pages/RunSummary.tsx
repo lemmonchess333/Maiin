@@ -11,7 +11,7 @@ import {
 import { useLocation, useNavigate, Navigate } from "react-router-dom";
 import { readString, writeString } from "@/lib/localStore";
 import { lazyRetry } from "@/lib/lazyRetry";
-import { collection, doc, Timestamp } from "firebase/firestore";
+import { doc } from "firebase/firestore";
 import { updateDocGuarded } from "@/lib/firestoreWrite";
 import {
   queueDurableWrite,
@@ -33,11 +33,7 @@ import {
   toGPX,
   estimateRunCalories,
 } from "../lib/gps";
-import type { ActivityPost } from "../lib/activityPost";
-import {
-  createSessionShare,
-  type SessionShareAction,
-} from "../lib/sessionPost";
+import type { SessionShareAction } from "../lib/sessionPost";
 import type { GPSPoint, Split } from "../lib/gps";
 import type { RunConfig } from "../components/run/RunSetupModal";
 import RunMap from "../components/run/RunMapLazy";
@@ -57,14 +53,11 @@ import {
   type PaceInsightRun,
 } from "../hooks/usePaceInsight";
 import { usePrivacyZones } from "../hooks/usePrivacyZones";
-import { sampleRoute } from "@/lib/routeSegments";
 import { applyPrivacyZones } from "../lib/privacyZones";
-import { clipRouteEnds, DEFAULT_CLIP_METERS } from "../lib/shareCard/polyline";
 import { useShoes } from "../hooks/useShoes";
 import { useProgram } from "../features/program/useProgram";
 import { changeStands } from "../features/program/programOutcome";
 import {
-  freeformPlanMetadata,
   getAdherenceLabel,
   shouldCompleteRunDay,
 } from "../lib/runPlanMetadata";
@@ -87,6 +80,7 @@ import {
 } from "@/lib/distanceUnits";
 import RunStatGrid from "@/components/run/RunStatGrid";
 import { useWeekPulse, type PendingRun } from "../hooks/useWeekPulse";
+import { completeRun, runPostRoute } from "@/lib/runCompletion";
 import { isVolumeEligible, isPaceEligible } from "../lib/runStatsEligibility";
 import { clearStoredRun } from "../lib/runResumeStorage";
 import { toast } from "@/lib/toast";
@@ -118,7 +112,6 @@ import { getDistanceComparison } from "@/lib/funComparisons";
 import { elevationLabel } from "@/lib/runLabels";
 import { formatDayMonthYear } from "@/utils/formatters";
 import { gradeAdjustedPace } from "../lib/gradeAdjustedPace";
-import { CALORIE_UNIT } from "@/utils/formatNutrition";
 
 /* Reusable retry banner. Shown above the action row on a save
  * failure. Coral-tinted to read as in-flow rather than modal-alert.
@@ -922,130 +915,55 @@ export default function RunSummary() {
        this stops a flap if the user mashes it. */
     if (savingRef.current) return;
     savingRef.current = true;
-    /* A Retry after the run document was written but a later step failed
-       (share post, shoe mileage). Pre-fix the chain re-entered from the
-       top and wrote a SECOND run document; onRunCreated then credited
-       challenges, lifetime totals and weekly distance twice, because its
-       idempotency markers key on the (new) document id. Resume against
-       the id already held instead. */
-    const resumed = savedRunId !== null;
     setSaveStatus("saving");
     setSaveError(null);
 
-    // Resolve the shoe this run should attribute mileage to. If the user
-    // picked one in RunSetupModal, honour that; otherwise fall back to the
-    // current default. Previously the mileage accumulator only fired when
-    // `runConfig.shoeId` was explicitly set, so users who hit "Start" with
-    // their default shoe configured saw mileage silently stay at zero.
-    // Persist the resolved value as a top-level `shoeId` field so the
-    // mileage reconciliation utility in useShoes has a clean reference
-    // regardless of how the run was started.
+    // The shoe the run's distance goes on: the one picked in RunSetupModal,
+    // else the current default. Mileage used to move only for a shoe
+    // picked explicitly, so a runner who started on the default saw none.
     const effectiveShoeId = runConfig?.shoeId ?? defaultShoe?.id ?? null;
-
-    // Phase B1: plan-adherence metadata block, persisted at the top
-    // level of the run doc so adherence queries (History "on-plan vs
-    // off-plan", future weekly adherence rollup, future
-    // completion-failure recovery) can filter without nesting into
-    // `runConfig.planMetadata`. The same data lives on `runConfig`
-    // for completeness; top-level is the canonical query surface.
-    //
-    // Defensive fallback: legacy navigation paths or test fixtures
-    // that bypass Run.tsx might land here without planMetadata on
-    // runConfig. Default to freeform shape so the run doc still has
-    // a well-formed metadata block — null-tolerance downstream.
-    const planMetadata =
-      runConfig?.planMetadata ?? freeformPlanMetadata("freeform");
-
-    // The run's start — its first GPS point. One value feeds both the
-    // Timestamp and (Lift3) the local date the run is filed under.
-    const startedAtDate = new Date(points[0]?.timestamp || Date.now());
-    const runData = {
-      distance,
-      duration: elapsed,
-      avgPace: avgPaceSeconds,
-      calories,
-      elevationGain,
-      points: sampleRoute(points, 500),
-      splits,
-      startedAt: Timestamp.fromDate(startedAtDate),
-      completedAt: Timestamp.now(),
-      // PR-L bugfix — saved-run docs now persist a local-date string
-      // alongside the completedAt Timestamp. The PR-L scheduled
-      // functions (dailyRaceReconciliationSweep, weeklyFellBehindCheck)
-      // and the onRunCreated recovery-entry path all filter runs by
-      // this field; without it the queries return empty for every
-      // user and the reconciliation flow silently mis-fires. Matches
-      // the workouts convention (saved workouts already carry both).
-      // Lift3 (runs too): dated by when the run STARTED — not by the Save
-      // tap, so a run begun before midnight belongs to the day it began, as
-      // on Strava and Garmin.
-      date: localDateString(startedAtDate),
-      notes: notes.trim(),
-      // RUN-03: optional structured effort signal. Null (skipped) survives
-      // stripUndefined so the field shape doesn't bifurcate — same precedent
-      // as isInvalid/invalidReason below. Backward-compatible: legacy runs
-      // simply lack the field.
-      relativeEffort,
-      // A6: persist the verdict TONE so the adaptive-intensity trigger can
-      // read miss history from stored runs (the display line recomputes
-      // live above; the tone is the durable signal). null when the session
-      // had no judgeable target — same null-not-absent convention as
-      // relativeEffort so the field shape doesn't bifurcate.
-      paceVerdictTone: paceVerdict?.tone ?? null,
-      visibility: "followers" as const,
-      type: "run",
-      activityType: runConfig?.activityType || "freerun",
-      target: runConfig?.target,
-      intervalData,
-      runConfig,
-      shoeId: effectiveShoeId,
-      /* Persist the validity verdict alongside the run document so
-         downstream consumers (History filtering, PR computation, weekly
-         stats) have a stable boolean to filter on without re-deriving
-         from distance/duration. Valid runs explicitly get
-         { isInvalid: false, invalidReason: null, savedAnyway: false }
-         so the field shape doesn't bifurcate; null survives
-         stripUndefined per firestoreGuards.ts:83. */
-      isInvalid,
-      invalidReason: invalidReason ?? null,
-      savedAnyway: isInvalid,
-      // PR H (audit P1 #9): persist route quality so RunDetail can
-      // surface a confidence chip and History can downrank patchy /
-      // poor routes from pace PRs. `null` survives stripUndefined
-      // and signals "no quality data" (treadmill / manual / legacy).
-      routeQuality: state.routeQuality ?? null,
-      // ── Phase B1: plan-adherence metadata (top-level) ────────────
-      planMode: planMetadata.planMode,
-      planSource: planMetadata.planSource,
-      plannedRunDayIndex: planMetadata.plannedRunDayIndex,
-      plannedTemplateId: planMetadata.plannedTemplateId,
-      plannedTemplateType: planMetadata.plannedTemplateType,
-      actualTemplateId: planMetadata.actualTemplateId,
-      matchedPlanExact: planMetadata.matchedPlanExact,
-      matchedPlanType: planMetadata.matchedPlanType,
-      offPlan: planMetadata.offPlan,
-      planWeekIndex: planMetadata.planWeekIndex,
-      planTotalWeeks: planMetadata.planTotalWeeks,
-      // P0-6: pinpoint which scheduled slot this run fulfilled.
-      // Persisting alongside the legacy `plannedRunDayIndex` lets
-      // analytics distinguish "the Tuesday tempo from week 3" from
-      // "the Tuesday tempo from week 4" without re-deriving from
-      // dates. Null for freeform / URL-template-only / legacy.
-      scheduledRunId: planMetadata.scheduledRunId,
-    };
     try {
-      // The recovery copy must reach device storage BEFORE any server write.
-      // The queue survives leaving this page, retries with this same id, and
-      // retires the record only after the server acknowledges it.
-      const savedId =
-        savedRunId ??
-        (runIdRef.current ??= doc(
-          collection(db, "users", user.uid, "runs")
-        ).id);
-      if (!savedRunId) {
-        queueDurableWrite(user.uid, `users/${user.uid}/runs`, savedId, runData);
-      }
-      if (navigator.onLine) void flushQueue(db, user.uid).catch(() => {});
+      /* The save (`completeRun`): the device's copy is queued before any
+         server write, under an id a retry keeps. A Retry after the run was
+         saved but a later step failed resumes against that id rather than
+         writing a second run, which onRunCreated would credit twice
+         (challenges, lifetime totals, weekly distance). */
+      const completion = completeRun({
+        uid: user.uid,
+        author: {
+          displayName: profile?.displayName,
+          photoURL: profile?.photoURL,
+        },
+        runId: savedRunId ?? runIdRef.current,
+        alreadySaved: savedRunId !== null,
+        run: {
+          points,
+          distance,
+          elapsed,
+          avgPaceSeconds,
+          avgPace,
+          calories,
+          elevationGain,
+          splits,
+          runConfig,
+          intervalData,
+          notes,
+          relativeEffort,
+          paceVerdictTone: paceVerdict?.tone ?? null,
+          isInvalid,
+          invalidReason: invalidReason ?? null,
+          routeQuality: state.routeQuality ?? null,
+          shoeId: effectiveShoeId,
+        },
+        // Loading or unread privacy settings withhold the route.
+        route: runPostRoute(points, {
+          withheld: Boolean(privacyZonesLoading || privacyZonesError),
+          showEnds: profile?.hideSharedRouteEnds === false,
+        }),
+        unit,
+      });
+      const savedId = completion.runId;
+      runIdRef.current = savedId;
       setSavedRunId(savedId);
       // A reload of this browser-history entry must reopen the same saved run.
       navigate(".", {
@@ -1065,89 +983,14 @@ export default function RunSummary() {
       // went into the document, not the ones on screen a moment later.
       setSavedFields({ notes: notes.trim(), relativeEffort });
 
-      /* Hist5d Stress 19 / PR 7b — return-link toast closes the
-         PRs-tab cold-start loop. Only fires on saves that could
-         plausibly have set a PR — invalid 0km / 0:00 runs (the
-         "Save anyway" exits) shouldn't tease a PR celebration. */
-      if (!isInvalid) {
-        if (!resumed) {
-          // Activation funnel: a real (non-zero) saved run. Invalid 0km/0:00
-          // "save anyway" runs are excluded — same gate as the PR toast/share.
-          // Once per run: a resumed chain has already fired both.
-          trackLifecycle("run_completed");
-          // Session-completed signal for the reminder priming modal (D-1):
-          // a run-first user's first session is the consent value moment too.
-        }
-      }
+      // Activation funnel: a real saved run, once a run (a resumed save
+      // has fired it). A run saved anyway is not one.
+      if (!isInvalid && !completion.resumed) trackLifecycle("run_completed");
 
-      // Sharing happens on the finish screen once the run is persisted:
+      // Sharing happens on the finish screen once the run is saved:
       // automatically when the user has said so, or from its share button.
-      // A run saved anyway under the thresholds is never offered.
-      if (isInvalid) {
-        setShareAction(undefined);
-      } else {
-        const runName =
-          runConfig?.activityType === "intervals"
-            ? "Interval Run"
-            : runConfig?.activityType === "guided"
-              ? "Guided Run"
-              : "Run";
-        const km = distance / 1000;
-        const mins = Math.floor(elapsed / 60);
-        const secs = Math.round(elapsed % 60);
-        // Computed once, before any choice: this exact geometry is
-        // previewed and posted. Loading/failed privacy settings withhold
-        // the route.
-        const routeWithheld = privacyZonesLoading || privacyZonesError;
-        const sharedRoutePoints = routeWithheld
-          ? []
-          : profile?.hideSharedRouteEnds === false
-            ? points
-            : clipRouteEnds(points, DEFAULT_CLIP_METERS);
-        const routePreview = sampleRoute(sharedRoutePoints, 20).map((p) => ({
-          lat: p.lat,
-          lon: p.lon,
-          ...(p.breakBefore ? { breakBefore: true } : {}),
-        }));
-        setShareAction(
-          createSessionShare({
-            uid: user.uid,
-            type: "run",
-            source: { kind: "run", id: savedId },
-            preview: () => ({
-              type: "run",
-              title: runName,
-              routePreview,
-              routePrivacyNote: routeWithheld
-                ? "Route withheld because privacy settings are unavailable."
-                : "This is the route included in your post.",
-              meta: [
-                `${km.toFixed(2)} km`,
-                `${mins}:${secs.toString().padStart(2, "0")}`,
-                calories ? `${Math.round(calories)} ${CALORIE_UNIT}` : "",
-              ].filter(Boolean),
-            }),
-            payload: (decision): ActivityPost => ({
-              authorId: user.uid,
-              authorName: profile?.displayName || "Athlete",
-              ...(profile?.photoURL
-                ? { authorPhotoURL: profile.photoURL }
-                : {}),
-              type: "run" as const,
-              visibility: decision.visibility,
-              ...(decision.caption ? { caption: decision.caption } : {}),
-              runName,
-              activityTitle: runName,
-              distance,
-              duration: elapsed,
-              avgPace,
-              elevationGain,
-              calories,
-              routePreview,
-            }),
-          })
-        );
-      }
+      // A run saved anyway is never offered.
+      setShareAction(completion.share);
 
       // Update shoe mileage against whichever shoe was resolved above —
       // once per run (see mileageAppliedRef).

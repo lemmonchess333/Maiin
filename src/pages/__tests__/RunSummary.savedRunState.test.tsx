@@ -10,6 +10,10 @@
  *    change, the insight reads as loading from that render until the new
  *    read settles; the flag used to go up one commit late.
  *
+ * 3. Save queues the run under one id before any server write, and a
+ *    Retry after a later step failed resumes against that id, so the run
+ *    is saved once (`completeRun`).
+ *
  * The mocked `useProgram` runs at the top of every render, so it records
  * what the previous commit left in the DOM — that is how a commit that
  * showed something for one frame is caught. Firestore runs on the one
@@ -26,7 +30,10 @@ import {
 import { Link, MemoryRouter, Route, Routes } from "react-router-dom";
 
 vi.mock("firebase/firestore");
-vi.mock("@/lib/firebase", () => ({ db: {}, auth: {} }));
+vi.mock("@/lib/firebase", () => ({
+  db: {},
+  auth: { currentUser: { uid: "runner" } },
+}));
 
 const h = vi.hoisted(() => ({
   auth: { user: { uid: "runner" }, profile: { displayName: "Runner" } },
@@ -34,6 +41,7 @@ const h = vi.hoisted(() => ({
   paceLoading: [] as boolean[],
   markManualComplete: vi.fn(),
   skipRunDay: vi.fn(),
+  track: vi.fn(),
 }));
 vi.mock("@/lib/auth", () => ({
   useAuth: () => h.auth,
@@ -76,7 +84,7 @@ const week = vi.hoisted(() => ({
   },
 }));
 vi.mock("@/hooks/useWeekPulse", () => ({ useWeekPulse: () => week.pulse }));
-vi.mock("@/lib/lifecycleAnalytics", () => ({ track: vi.fn() }));
+vi.mock("@/lib/lifecycleAnalytics", () => ({ track: h.track }));
 vi.mock("@/components/run/RunMapLazy", () => ({ default: () => null }));
 vi.mock("@/components/analytics/SplitsBarChart", () => ({
   default: () => null,
@@ -103,6 +111,7 @@ vi.mock("@/components/social/SavedRunKudos", () => ({ default: () => null }));
 
 import RunSummary from "../RunSummary";
 import { writeString } from "@/lib/localStore";
+import { pendingDocumentWrites } from "@/lib/offlineQueue";
 import {
   deferReads,
   releaseAllReads,
@@ -292,5 +301,67 @@ describe("RunSummary — the plan row counts the week the card counts", () => {
     renderSummary();
     expect(await screen.findByText("Run saved")).toBeInTheDocument();
     expect(screen.queryByText("runs this week")).toBeNull();
+  });
+});
+
+describe("RunSummary — Save", () => {
+  /** The same run, finished and not yet saved: no receipt. */
+  function renderUnsaved() {
+    const { savedRun: _receipt, ...run } = savedRun();
+    return render(
+      <MemoryRouter initialEntries={[{ pathname: "/run-summary", state: run }]}>
+        <Routes>
+          <Route path="/run-summary" element={<RunSummary />} />
+        </Routes>
+      </MemoryRouter>
+    );
+  }
+  const queued = () => pendingDocumentWrites("runner", "users/runner/runs");
+
+  let online: ReturnType<typeof vi.spyOn>;
+  beforeEach(() => {
+    h.track.mockReset();
+    // Offline, the run waits in the queue, where the test can read it.
+    online = vi.spyOn(navigator, "onLine", "get").mockReturnValue(false);
+  });
+  afterEach(() => online.mockRestore());
+
+  it("queues the run, then shows it saved", async () => {
+    renderUnsaved();
+    fireEvent.click(await screen.findByRole("button", { name: "Save run" }));
+    expect(
+      await screen.findByRole("button", { name: "Done" })
+    ).toBeInTheDocument();
+    expect(queued()).toHaveLength(1);
+    expect(queued()[0].data).toMatchObject({
+      distance: 5000,
+      duration: 1500,
+      isInvalid: false,
+      scheduledRunId: "rd-1",
+    });
+    expect(h.track).toHaveBeenCalledWith("run_completed");
+    expect(
+      screen.getByText("Saved on this phone · waiting to sync")
+    ).toBeInTheDocument();
+  });
+
+  it("saves the run once when a Retry follows a later step's failure", async () => {
+    // The run is queued, then the step after it throws.
+    h.track.mockImplementationOnce(() => {
+      throw new Error("analytics down");
+    });
+    renderUnsaved();
+    fireEvent.click(await screen.findByRole("button", { name: "Save run" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Retry" }));
+    expect(
+      await screen.findByRole("button", { name: "Done" })
+    ).toBeInTheDocument();
+    expect(queued()).toHaveLength(1);
+    // The first run's event fired with the first save, and only then.
+    expect(h.track).toHaveBeenCalledTimes(1);
+    // The page holds the queued run's id, so it knows the run is waiting.
+    expect(
+      screen.getByText("Saved on this phone · waiting to sync")
+    ).toBeInTheDocument();
   });
 });

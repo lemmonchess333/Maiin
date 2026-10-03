@@ -81,37 +81,41 @@ describe("feed post fields: postActivity and firestore.rules agree", () => {
     /* A saver hands createSessionShare a callback that builds the post,
        and createSessionShare posts or queues it. TypeScript checks a
        literal's extra fields only where it meets a declared type, so every
-       post is built where one is declared: the run's callback is annotated,
-       and a lift's post is built by liftPost, declared to return
-       ActivityPost. An undeclared builder would carry any field straight to
-       the rules. */
+       post is built where one is declared: by liftPost or runPost, each
+       declared to return ActivityPost. An undeclared builder would carry
+       any field straight to the rules. */
     const read = (file: string) =>
       readFileSync(resolve(repoRoot, file), "utf8");
-    const run = read("src/pages/RunSummary.tsx");
-    expect(run).toContain("createSessionShare(");
-    expect(run).toContain("payload: (decision): ActivityPost => ({");
-    expect(run).not.toContain("postActivity(");
-
-    const liftPost = read("src/lib/liftPost.ts");
-    const builder = liftPost.slice(
-      liftPost.indexOf("export function liftPost("),
-      liftPost.indexOf(
-        "\nexport ",
-        liftPost.indexOf("export function liftPost(")
-      )
+    const declaration = (source: string, name: string) => {
+      const at = source.indexOf(`export function ${name}(`);
+      expect(at, name).toBeGreaterThanOrEqual(0);
+      return source.slice(at, source.indexOf("\nexport ", at));
+    };
+    expect(declaration(read("src/lib/liftPost.ts"), "liftPost")).toContain(
+      "): ActivityPost {"
     );
-    expect(builder).toContain("): ActivityPost {");
-    const lift = read("src/lib/liftCompletion.ts");
-    expect(lift).toContain("createSessionShare(");
-    expect(lift).toMatch(/payload: \(decision\) =>\s+liftPost\(/);
-    expect(lift).not.toContain("postActivity(");
-    // The two lift writers save through completeLift, never by hand.
-    for (const file of [
-      "src/pages/Routine.tsx",
-      "src/features/program/useProgram.ts",
+    const runs = read("src/lib/runCompletion.ts");
+    expect(declaration(runs, "runPost")).toContain("): ActivityPost {");
+
+    for (const [file, builder] of [
+      ["src/lib/liftCompletion.ts", "liftPost"],
+      ["src/lib/runCompletion.ts", "runPost"],
     ]) {
       const source = read(file);
-      expect(source, file).toContain("completeLift(");
+      expect(source, file).toContain("createSessionShare(");
+      expect(source, file).toMatch(
+        new RegExp(`payload: \\(decision\\) =>\\s+${builder}\\(`)
+      );
+      expect(source, file).not.toContain("postActivity(");
+    }
+    // The finish screens save through those modules, never by hand.
+    for (const [file, call] of [
+      ["src/pages/Routine.tsx", "completeLift("],
+      ["src/features/program/useProgram.ts", "completeLift("],
+      ["src/pages/RunSummary.tsx", "completeRun("],
+    ]) {
+      const source = read(file);
+      expect(source, file).toContain(call);
       expect(source, file).not.toContain("createSessionShare(");
       expect(source, file).not.toContain("postActivity(");
     }

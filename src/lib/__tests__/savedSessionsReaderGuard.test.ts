@@ -31,7 +31,7 @@ const srcRoot = resolve(repoRoot, "src");
 const ALLOWLIST: Record<"runs" | "workouts", Set<string>> = {
   runs: new Set([
     "src/lib/savedRuns.ts", // the reader
-    "src/pages/RunSummary.tsx", // mints a new run's id before saving it
+    "src/lib/runCompletion.ts", // mints a new run's id before saving it
   ]),
   workouts: new Set([
     "src/lib/savedWorkouts.ts", // the reader

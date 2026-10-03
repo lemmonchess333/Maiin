@@ -149,6 +149,9 @@ exists — pinned by `claudeMdFreshness.test.ts` in both directions
 | `analytics.ts`          | Analytics computation                                          |
 | `historyFigures.ts`     | Analytics range figures: window, range before, join-day clamp  |
 | `trainingWeek.ts`       | The week done and planned, which every week count reads        |
+| `liftCompletion.ts`     | Finishing a lift: the saved workout, the save and its receipt  |
+| `liftPost.ts`           | A lift's feed post, built from what was done, and its reader   |
+| `runCompletion.ts`      | Finishing a run: the saved run, the save resumed by id, a post |
 | `subscription.ts`       | Pro subscription handling                                      |
 | `firebase.ts`           | Firebase app initialization & Firestore/Auth/Storage exports   |
 | `auth.tsx`              | AuthProvider, useAuth hook, UserProfile interface              |
