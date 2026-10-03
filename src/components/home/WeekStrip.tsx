@@ -6,11 +6,7 @@ import { resolveTrainingWindow } from "@/lib/trainingResolver";
 import type { ClaimState } from "@/lib/scheduledRunCompletion";
 import { cn } from "@/lib/utils";
 import { beforeStart } from "@/lib/startDay";
-import {
-  localDateString,
-  localWeekKey,
-  parseLocalDate,
-} from "@/lib/dateHelpers";
+import { localWeekKey, parseLocalDate } from "@/lib/dateHelpers";
 
 /**
  * What one day of the strip shows (DS3). The circle carries the day's
@@ -133,6 +129,7 @@ const STATE_CLASSES: Record<WeekDayState, string> = {
 };
 
 export default function WeekStrip({
+  todayKey,
   dayMap,
   profile,
   programState,
@@ -143,6 +140,10 @@ export default function WeekStrip({
   extraRunDates,
   startKey = null,
 }: {
+  /** Today, "yyyy-MM-dd": Home's day key (`useLocalDateKey`), so the strip
+   *  turns over with the rest of the page. It read `new Date()` inside a
+   *  memo that nothing re-ran at midnight, and kept yesterday as today. */
+  todayKey: string;
   dayMap: Map<
     string,
     { workouts: number; meals: number; caloriesHit: boolean }
@@ -170,8 +171,6 @@ export default function WeekStrip({
   startKey?: string | null;
 }) {
   const days = useMemo(() => {
-    const today = new Date();
-    const todayKey = localDateString(today);
     /* The CALENDAR week containing today, not a rolling window that
        starts at today. Home labels this section "This week" while the
        strip ran today..today+6, so on a Wednesday it read Wed-Tue and
@@ -192,13 +191,14 @@ export default function WeekStrip({
        `WEEK_STARTS_ON`, so the Monday flip cost it nothing; the
        weekday letters come from each date via `format`, so they move
        with the days rather than being a fixed S-M-T-W row. */
-    const weekStart = parseLocalDate(localWeekKey(today));
+    const weekStart = parseLocalDate(localWeekKey(parseLocalDate(todayKey)));
     const resolved = resolveTrainingWindow({
       startDate: weekStart,
       days: 7,
       profile,
       programState,
       claimMap,
+      todayKey,
     });
     return resolved.map((r) => {
       const data = dayMap.get(r.dateKey);
@@ -222,6 +222,7 @@ export default function WeekStrip({
       };
     });
   }, [
+    todayKey,
     dayMap,
     profile,
     programState,

@@ -39,7 +39,6 @@ export default function LiftCTACard({
   status,
   eyebrowLabel,
 }: {
-  purpose?: string | null;
   nextWorkout: {
     completed?: boolean;
     skipped?: boolean;
@@ -49,8 +48,6 @@ export default function LiftCTACard({
   };
   navigate: (p: string) => void;
   muscleGroups?: string;
-  /** Legacy cold-start flag; a calendar card always describes the plan. */
-  isFirst?: boolean;
   /** HOME-ACTION-01: index into programState.workouts for the exact
    *  Programme day this card represents, so both actions open that day
    *  (`?day=N`) instead of a bare `/program`. Null → bare `/program`. */

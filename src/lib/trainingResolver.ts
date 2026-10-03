@@ -355,6 +355,9 @@ export function resolveTrainingWindow(args: {
   /** PR-J Q3 chunk B3c — forwarded to `resolveTrainingDayForDate`
    *  for derived completion. WeekStrip is the primary caller. */
   claimMap?: Map<string, ClaimState>;
+  /** Today's local date key, forwarded to `resolveTrainingDayForDate`;
+   *  defaults to the real today there. */
+  todayKey?: string;
 }): ResolvedTrainingDay[] {
   const currentWeekKey = localWeekKey(args.startDate);
   const out: ResolvedTrainingDay[] = [];
@@ -368,6 +371,7 @@ export function resolveTrainingWindow(args: {
         programState: args.programState,
         currentWeekKey,
         claimMap: args.claimMap,
+        todayKey: args.todayKey,
       })
     );
   }

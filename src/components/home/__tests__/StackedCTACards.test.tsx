@@ -61,24 +61,70 @@ vi.mock("@/hooks/useCountUp", function () {
 });
 
 import StackedCTACards from "../StackedCTACards";
+import type {
+  RestDayOffer,
+  TodayLift,
+  TodayRun,
+  TodaySession,
+} from "@/lib/todaySession";
 
-function renderCards(
-  overrides: Partial<Parameters<typeof StackedCTACards>[0]> = {}
-) {
-  const defaults = {
-    nextWorkout: {
-      dayName: "Push Day",
-      dayType: "push",
-      exercises: [{ name: "Bench Press" }, { name: "OHP" }],
-    },
-    todayType: "both" as const,
-    navigate: vi.fn(),
-    todayRun: null,
-  };
-  const props = { ...defaults, ...overrides };
+/* The cards draw what `todaySession` decided; which card a day gets, and
+   in what order a rest day's offers win, is tested there
+   (todaySession.test.ts). These pin how each decision is drawn. */
+const PUSH = {
+  dayName: "Push Day",
+  dayType: "push",
+  exercises: [{ name: "Bench Press" }, { name: "OHP" }],
+} as any;
+
+const lift = (extra: Partial<TodayLift> = {}): TodayLift => ({
+  workout: PUSH,
+  index: null,
+  isStartable: true,
+  status: "planned",
+  muscleGroups: "",
+  ...extra,
+});
+
+const run = (extra: Partial<TodayRun> = {}): TodayRun => ({
+  runDay: null,
+  completed: false,
+  isFirst: false,
+  ...extra,
+});
+
+const liftDay = (extra: Partial<TodayLift> = {}): TodaySession => ({
+  type: "lift",
+  lift: lift(extra),
+  run: null,
+  rest: null,
+});
+
+const runDay = (extra: Partial<TodayRun> = {}): TodaySession => ({
+  type: "run",
+  lift: null,
+  run: run(extra),
+  rest: null,
+});
+
+const bothDay = (
+  liftExtra: Partial<TodayLift> = {},
+  runExtra: Partial<TodayRun> = {}
+): TodaySession => ({
+  type: "both",
+  lift: lift(liftExtra),
+  run: run(runExtra),
+  rest: null,
+});
+
+const restDay = (
+  offer: RestDayOffer = { kind: "rest", tomorrow: null }
+): TodaySession => ({ type: "rest", lift: null, run: null, rest: offer });
+
+function renderCards(session: TodaySession = bothDay(), navigate = vi.fn()) {
   return render(
     <MemoryRouter>
-      <StackedCTACards {...props} />
+      <StackedCTACards session={session} navigate={navigate} />
     </MemoryRouter>
   );
 }
@@ -111,24 +157,19 @@ describe("StackedCTACards", function () {
   });
 
   describe("conditional CTA cards", function () {
-    it("shows LiftCTA when todayType is lift and nextWorkout exists", function () {
-      renderCards({ todayType: "lift" });
+    it("shows LiftCTA on a lifting day with a workout", function () {
+      renderCards(liftDay());
       expect(screen.getByText("Push Day")).toBeInTheDocument();
     });
 
-    it("hides LiftCTA when todayType is rest", function () {
-      renderCards({ todayType: "rest" });
+    it("shows no lift on a rest day", function () {
+      renderCards(restDay());
       expect(screen.queryByText("Push Day")).not.toBeInTheDocument();
     });
 
     it("opens Programme without selecting an overflow day when today's lift is missing", function () {
       const navigate = vi.fn();
-      renderCards({
-        todayType: "lift",
-        nextWorkout: null,
-        liftDayIndex: 6,
-        navigate,
-      });
+      renderCards(liftDay({ workout: null, index: 6 }), navigate);
       expect(screen.queryByText("Push Day")).not.toBeInTheDocument();
       expect(screen.queryByText("Today · Rest day")).not.toBeInTheDocument();
       expect(screen.getByText("Check your lifting plan")).toBeInTheDocument();
@@ -137,77 +178,71 @@ describe("StackedCTACards", function () {
     });
 
     it("keeps the run available alongside recovery for a missing lift on a both day", function () {
-      renderCards({ todayType: "both", nextWorkout: null });
+      renderCards(bothDay({ workout: null }));
       expect(screen.getByText("Today · Run day")).toBeInTheDocument();
       expect(
         screen.getByRole("button", { name: "Open programme" })
       ).toBeInTheDocument();
     });
 
-    it.each(["rest", "run"] as const)(
-      "does not show lift recovery on a %s day",
-      function (todayType) {
-        renderCards({ todayType, nextWorkout: null });
-        expect(
-          screen.queryByRole("button", { name: "Open programme" })
-        ).not.toBeInTheDocument();
-      }
-    );
-
-    it("does not show lift recovery when the planned workout is available", function () {
-      renderCards({ todayType: "lift" });
+    it.each([
+      ["rest", restDay()],
+      ["run", runDay()],
+    ] as const)("does not show lift recovery on a %s day", function (_, day) {
+      renderCards(day);
       expect(
         screen.queryByRole("button", { name: "Open programme" })
       ).not.toBeInTheDocument();
     });
 
-    it("shows RunCTA when todayType is run", function () {
-      renderCards({ todayType: "run" });
+    it("does not show lift recovery when the planned workout is available", function () {
+      renderCards(liftDay());
+      expect(
+        screen.queryByRole("button", { name: "Open programme" })
+      ).not.toBeInTheDocument();
+    });
+
+    it("shows RunCTA on a run day", function () {
+      renderCards(runDay());
       expect(screen.getByText(/Run day/)).toBeInTheDocument();
     });
 
-    it("hides RunCTA when todayType is rest", function () {
-      renderCards({ todayType: "rest" });
+    it("shows no run on a rest day", function () {
+      renderCards(restDay());
       expect(screen.queryByText("Today · Run day")).not.toBeInTheDocument();
     });
 
-    it("shows both CTAs when todayType is both", function () {
-      renderCards({ todayType: "both" });
+    it("shows both CTAs on a lift and run day", function () {
+      renderCards(bothDay());
       expect(screen.getByText("Push Day")).toBeInTheDocument();
       expect(screen.getByText(/Run day/)).toBeInTheDocument();
     });
   });
 
   describe("#972 cold-start framing", function () {
-    it("keeps calendar wording when a fresh account is shown a later lift", function () {
-      renderCards({ todayType: "lift", firstWorkout: true, liftDayIndex: 2 });
-      expect(screen.getByText("Planned for today")).toBeInTheDocument();
-      expect(screen.queryByText("Your first workout")).not.toBeInTheDocument();
-    });
-
-    it("frames the run card as 'Your first run' when firstRun is set", function () {
-      renderCards({ todayType: "run", firstRun: true });
+    it("frames the run card as 'Your first run' for a new person's first", function () {
+      renderCards(runDay({ isFirst: true }));
       expect(screen.getByText("Your first run")).toBeInTheDocument();
     });
 
-    it("default (no flags) keeps the standard lift eyebrow", function () {
+    it("keeps the standard lift eyebrow", function () {
       /* "Planned for today", not the run card's "Today · Run day": ADR-0002
          makes a run's identity its date and a lift's the cursor's call, so
          the lift card describes the plan rather than naming the session as
          today's. The register split is pinned in liftCardRegister.test.tsx. */
-      renderCards({ todayType: "lift" });
+      renderCards(liftDay({ index: 2 }));
       expect(screen.getByText("Planned for today")).toBeInTheDocument();
       expect(screen.queryByText("Your first workout")).not.toBeInTheDocument();
     });
 
-    it("shows the FirstMealCard instead of RestDayCard on a rest day when firstMeal is set", function () {
-      renderCards({ todayType: "rest", firstMeal: true });
+    it("shows the FirstMealCard on a new person's rest day", function () {
+      renderCards(restDay({ kind: "first-meal" }));
       expect(screen.getByText("Log your first meal")).toBeInTheDocument();
       expect(screen.queryByText("Recover today")).not.toBeInTheDocument();
     });
 
-    it("shows the normal RestDayCard on a rest day when firstMeal is not set", function () {
-      renderCards({ todayType: "rest", firstMeal: false });
+    it("shows the normal RestDayCard on any other rest day", function () {
+      renderCards(restDay());
       expect(screen.getByText("Recover today")).toBeInTheDocument();
       expect(screen.queryByText("Log your first meal")).not.toBeInTheDocument();
     });
@@ -228,7 +263,7 @@ describe("HOME-ACTION-01 — deep-link + terminal states", function () {
 
   it("tapping the lift card opens the exact Programme day (?day=N)", function () {
     const navigate = vi.fn();
-    renderCards({ todayType: "lift", liftDayIndex: 2, navigate });
+    renderCards(liftDay({ index: 2 }), navigate);
     fireEvent.click(
       screen.getByRole("button", { name: "Open Push Day in Train" })
     );
@@ -237,7 +272,7 @@ describe("HOME-ACTION-01 — deep-link + terminal states", function () {
 
   it("Start workout opens the same day and starts it (&start=1)", function () {
     const navigate = vi.fn();
-    renderCards({ todayType: "lift", liftDayIndex: 2, navigate });
+    renderCards(liftDay({ index: 2 }), navigate);
     fireEvent.click(screen.getByRole("button", { name: "Start workout" }));
     expect(navigate).toHaveBeenCalledExactlyOnceWith("/program?day=2&start=1");
   });
@@ -248,11 +283,7 @@ describe("HOME-ACTION-01 — deep-link + terminal states", function () {
        has no pill to hold one: the only icon on it is Start's play mark,
        which sits inside a full-width labelled button. Whichever card grows
        a chevron again, this fails. */
-    const { container } = renderCards({
-      todayType: "both",
-      liftDayIndex: 2,
-      navigate: vi.fn(),
-    });
+    const { container } = renderCards(bothDay({ index: 2 }));
     expect(container.querySelector(".lucide-chevron-right")).toBeNull();
     expect(screen.queryByText("View")).toBeNull();
     expect(screen.queryByText("View run")).toBeNull();
@@ -260,13 +291,10 @@ describe("HOME-ACTION-01 — deep-link + terminal states", function () {
 
   it("a completed lift is labelled Completed, offers no Start and still opens the day", function () {
     const navigate = vi.fn();
-    renderCards({
-      todayType: "lift",
-      liftDayIndex: 1,
-      liftStartable: false,
-      liftStatus: "completed",
-      navigate,
-    });
+    renderCards(
+      liftDay({ index: 1, isStartable: false, status: "completed" }),
+      navigate
+    );
     expect(screen.getByText("Completed")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Start workout" })).toBeNull();
     fireEvent.click(
@@ -277,17 +305,18 @@ describe("HOME-ACTION-01 — deep-link + terminal states", function () {
 
   it("a skipped run is labelled Skipped and does not relaunch /run", function () {
     const navigate = vi.fn();
-    renderCards({
-      todayType: "run",
-      navigate,
-      todayRun: {
-        id: "run-1",
-        dayIndex: 3,
-        templateId: "easy_30",
-        type: "easy",
-        status: "skipped",
-      } as any,
-    });
+    renderCards(
+      runDay({
+        runDay: {
+          id: "run-1",
+          dayIndex: 3,
+          templateId: "easy_30",
+          type: "easy",
+          status: "skipped",
+        } as any,
+      }),
+      navigate
+    );
     expect(screen.getByText("Skipped")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Start run" })).toBeNull();
     fireEvent.click(
@@ -300,17 +329,18 @@ describe("HOME-ACTION-01 — deep-link + terminal states", function () {
 
   it("a startable run launches /run with the template params", function () {
     const navigate = vi.fn();
-    renderCards({
-      todayType: "run",
-      navigate,
-      todayRun: {
-        id: "run-2",
-        dayIndex: 3,
-        templateId: "easy_30",
-        type: "easy",
-        status: "planned",
-      } as any,
-    });
+    renderCards(
+      runDay({
+        runDay: {
+          id: "run-2",
+          dayIndex: 3,
+          templateId: "easy_30",
+          type: "easy",
+          status: "planned",
+        } as any,
+      }),
+      navigate
+    );
     fireEvent.click(screen.getByRole("button", { name: "Start run" }));
     expect(navigate).toHaveBeenCalledExactlyOnceWith(
       "/run?template=easy_30&scheduledRunId=run-2"
@@ -319,17 +349,18 @@ describe("HOME-ACTION-01 — deep-link + terminal states", function () {
 
   it("tapping a startable run's card previews it in Train instead of starting it", function () {
     const navigate = vi.fn();
-    renderCards({
-      todayType: "run",
-      navigate,
-      todayRun: {
-        id: "run-2",
-        dayIndex: 3,
-        templateId: "easy_30",
-        type: "easy",
-        status: "planned",
-      } as any,
-    });
+    renderCards(
+      runDay({
+        runDay: {
+          id: "run-2",
+          dayIndex: 3,
+          templateId: "easy_30",
+          type: "easy",
+          status: "planned",
+        } as any,
+      }),
+      navigate
+    );
     fireEvent.click(
       screen.getByRole("button", { name: "Open Easy 30 in Train" })
     );
@@ -392,13 +423,10 @@ describe("Today cards — every part that is not Start opens the day", function 
 
   it("a tap on a finished lift's status opens the day", function () {
     const navigate = vi.fn();
-    renderCards({
-      todayType: "lift",
-      liftDayIndex: 1,
-      liftStartable: false,
-      liftStatus: "completed",
-      navigate,
-    });
+    renderCards(
+      liftDay({ index: 1, isStartable: false, status: "completed" }),
+      navigate
+    );
     const preview = screen.getByRole("button", {
       name: "Open Push Day in Train",
     });
@@ -413,7 +441,7 @@ describe("Today cards — every part that is not Start opens the day", function 
 
   it("a tap on a skipped run's status opens the run in Train", function () {
     const navigate = vi.fn();
-    renderCards({ todayType: "run", navigate, todayRun: skippedRun });
+    renderCards(runDay({ runDay: skippedRun }), navigate);
     const preview = screen.getByRole("button", {
       name: "Open Easy 30 in Train",
     });
@@ -428,7 +456,7 @@ describe("Today cards — every part that is not Start opens the day", function 
   });
 
   it("Start keeps its own taps, and the space around it opens the day", function () {
-    renderCards({ todayType: "both", liftDayIndex: 2, todayRun: plannedRun });
+    renderCards(bothDay({ index: 2 }, { runDay: plannedRun }));
     for (const [start, previewName] of [
       ["Start workout", "Open Push Day in Train"],
       ["Start run", "Open Easy 30 in Train"],
@@ -447,12 +475,14 @@ describe("Today cards — every part that is not Start opens the day", function 
 describe("rest day — tomorrow's session", function () {
   it("names tomorrow's session and opens it", function () {
     const navigate = vi.fn();
-    // The label as Home builds it (Home.dayAndWeek.test.tsx pins that).
-    renderCards({
-      todayType: "rest",
-      navigate,
-      tomorrow: { label: "Pull · Lat focus", target: "/program?day=3" },
-    });
+    // The label as todaySession builds it (todaySession.test.ts pins that).
+    renderCards(
+      restDay({
+        kind: "rest",
+        tomorrow: { label: "Pull · Lat focus", target: "/program?day=3" },
+      }),
+      navigate
+    );
     expect(screen.getByText(/Tomorrow:/)).toHaveTextContent(
       "Tomorrow: Pull · Lat focus."
     );
@@ -461,32 +491,37 @@ describe("rest day — tomorrow's session", function () {
   });
 
   it("offers nothing to open when tomorrow is rest too", function () {
-    renderCards({ todayType: "rest", tomorrow: null });
+    renderCards(restDay({ kind: "rest", tomorrow: null }));
     expect(screen.getByText("Recover today")).toBeInTheDocument();
     expect(screen.queryByText(/Tomorrow:/)).toBeNull();
     expect(screen.queryByRole("button")).toBeNull();
   });
 });
 
-describe("rest day — someone who runs freely", function () {
-  it("offers a run instead of a rest day", function () {
-    renderCards({ todayType: "rest", freeRunner: true });
+describe("rest day — what else it can offer", function () {
+  it("offers someone who runs freely a run instead of a rest day", function () {
+    renderCards(restDay({ kind: "free-run" }));
     expect(screen.getByText("Run when it suits you")).toBeInTheDocument();
     expect(screen.queryByText(/Recover today/)).toBeNull();
   });
 
-  it("still leads with the first workout while it is undone", function () {
-    renderCards({
-      todayType: "rest",
-      freeRunner: true,
-      restDayFirstWorkout: {
-        dayName: "Full Body A",
-        dayType: "full",
-        exercises: [{ name: "Squat" }],
-      } as any,
-      restDayFirstWorkoutIndex: 0,
-    });
+  it("offers a new lifter their first workout, opening at its day", function () {
+    const navigate = vi.fn();
+    renderCards(
+      restDay({
+        kind: "first-workout",
+        workout: {
+          dayName: "Full Body A",
+          dayType: "full",
+          exercises: [{ name: "Squat" }],
+        } as any,
+        index: 0,
+      }),
+      navigate
+    );
     expect(screen.getByText("Your first workout")).toBeInTheDocument();
     expect(screen.queryByText("Run when it suits you")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Start workout" }));
+    expect(navigate).toHaveBeenCalledExactlyOnceWith("/program?day=0&start=1");
   });
 });

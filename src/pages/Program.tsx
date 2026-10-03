@@ -46,7 +46,7 @@ import {
   blockOfferBlockedByRace,
   blockPrefersShorterSessions,
 } from "@/features/program/represcribe";
-import { liftWeekLabel } from "@/lib/liftSessionExplainer";
+import { liftWeekLabel } from "@/lib/liftWeekLabel";
 import WeekPhaseRow from "@/components/program/WeekPhaseRow";
 import SkipConfirmSheet from "@/components/program/SkipConfirmSheet";
 import ExpressSessionSheet from "@/components/program/ExpressSessionSheet";

@@ -26,7 +26,7 @@ import {
   workoutCompletionDayIdentity,
 } from "../workoutCompletion";
 import { correctSavedWorkout, type WorkoutEdits } from "../workoutCorrection";
-import { liftSessionExplainer } from "../liftSessionExplainer";
+import { liftWeekLabel } from "../liftWeekLabel";
 import { detectStall } from "@/features/program/stallDetection";
 
 vi.mock("firebase/firestore");
@@ -227,15 +227,6 @@ describe("saved lifting work, correction, and the next prescription", () => {
       expect(
         (readDoc(path(variant)) as unknown as Workout).exercises[0].sets[0]
       ).toMatchObject({ reps: 6, plannedReps: 8 });
-      expect(liftSessionExplainer(corrected, input.date, variant)).toMatch(
-        variant === "easier_today"
-          ? /Easier today/
-          : variant === "time_budget"
-            ? /Usual session/
-            : variant === "express30"
-              ? /Shorter today/
-              : /progression follows your sets/
-      );
     }
   );
   it("three incomplete sessions do not masquerade as three failed full prescriptions", async () => {
@@ -338,7 +329,7 @@ describe("saved lifting work, correction, and the next prescription", () => {
       lastPerformance: { weight: 100, reps: 6 },
       consecutiveFailures: 1,
     });
-    expect(liftSessionExplainer(next, "2026-09-14")).toContain("Week 2");
+    expect(liftWeekLabel(next, "2026-09-14")).toContain("Week 2 of 4");
     await correctSavedWorkout(
       db,
       "u1",

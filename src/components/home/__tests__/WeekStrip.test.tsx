@@ -118,6 +118,7 @@ describe("WeekStrip — runDay status precedence (spec gate #11, resolver-aware)
 
     const { container } = render(
       <WeekStrip
+        todayKey={localDateString()}
         dayMap={new Map()}
         profile={profile}
         programState={programState}
@@ -162,6 +163,7 @@ describe("WeekStrip — runDay status precedence (spec gate #11, resolver-aware)
 
     const { container } = render(
       <WeekStrip
+        todayKey={localDateString()}
         dayMap={new Map()}
         profile={profile}
         programState={programState}
@@ -202,6 +204,7 @@ describe("WeekStrip — runDay status precedence (spec gate #11, resolver-aware)
 
     const { container } = render(
       <WeekStrip
+        todayKey={localDateString()}
         dayMap={new Map()}
         profile={profile}
         programState={programState}
@@ -266,6 +269,7 @@ describe("WeekStrip — runDay status precedence (spec gate #11, resolver-aware)
     );
     const { container } = render(
       <WeekStrip
+        todayKey={localDateString()}
         dayMap={new Map()}
         profile={profile}
         programState={makeProgramState(runDays)}
@@ -299,6 +303,7 @@ describe("WeekStrip — runDay status precedence (spec gate #11, resolver-aware)
 
     const { container } = render(
       <WeekStrip
+        todayKey={localDateString()}
         dayMap={new Map()}
         profile={profile}
         programState={null}
@@ -351,6 +356,7 @@ describe("WeekStrip — accessible name and selection state", () => {
     const profile = makeProfile(makeSchedule(DOW.map(() => type)));
     return render(
       <WeekStrip
+        todayKey={localDateString()}
         dayMap={opts.dayMap ?? new Map()}
         profile={profile}
         programState={makeProgramState(opts.runDays ?? [])}
@@ -559,6 +565,7 @@ describe("WeekStrip — the week you are in, not the week ahead", () => {
   function renderStrip() {
     return render(
       <WeekStrip
+        todayKey={localDateString()}
         dayMap={new Map()}
         profile={makeProfile(makeSchedule(Array(7).fill("rest")))}
         programState={makeProgramState([])}
@@ -619,6 +626,7 @@ describe("WeekStrip — today is a ring, selection a second ring outside it", ()
   it("marks today with the purple ring and nothing else", () => {
     const { container } = render(
       <WeekStrip
+        todayKey={localDateString()}
         dayMap={new Map()}
         profile={null}
         programState={null}
@@ -638,6 +646,7 @@ describe("WeekStrip — today is a ring, selection a second ring outside it", ()
     const todayKey = localDateString(new Date());
     const { container } = render(
       <WeekStrip
+        todayKey={localDateString()}
         dayMap={new Map()}
         profile={null}
         programState={null}
@@ -662,6 +671,7 @@ describe("WeekStrip — the circle is a statement about the date (DS3)", () => {
     const todayKey = localDateString(new Date());
     const { container } = render(
       <WeekStrip
+        todayKey={localDateString()}
         dayMap={new Map()}
         profile={makeProfile(
           makeSchedule(["rest", "rest", "rest", "rest", "rest", "rest", "rest"])
@@ -683,6 +693,7 @@ describe("WeekStrip — the circle is a statement about the date (DS3)", () => {
     const todayKey = localDateString(new Date());
     const { container } = render(
       <WeekStrip
+        todayKey={localDateString()}
         dayMap={new Map()}
         profile={makeProfile(
           makeSchedule(["rest", "rest", "rest", "rest", "rest", "rest", "rest"])
@@ -701,6 +712,7 @@ describe("WeekStrip — the circle is a statement about the date (DS3)", () => {
     const todayKey = localDateString(new Date());
     const { container } = render(
       <WeekStrip
+        todayKey={localDateString()}
         dayMap={new Map()}
         profile={liftWeek()}
         programState={null}
@@ -723,6 +735,7 @@ describe("WeekStrip — the circle is a statement about the date (DS3)", () => {
     try {
       const { container } = render(
         <WeekStrip
+          todayKey={localDateString()}
           dayMap={new Map()}
           profile={liftWeek()}
           programState={null}
@@ -785,6 +798,7 @@ describe("WeekStrip — the circle is a statement about the date (DS3)", () => {
       } as ProgramState;
       const { container } = render(
         <WeekStrip
+          todayKey={localDateString()}
           dayMap={new Map()}
           profile={makeProfile(
             makeSchedule([
@@ -821,6 +835,7 @@ describe("WeekStrip — the circle is a statement about the date (DS3)", () => {
   it("leaves a rest day bare", () => {
     const { container } = render(
       <WeekStrip
+        todayKey={localDateString()}
         dayMap={new Map()}
         profile={makeProfile(
           makeSchedule(["rest", "rest", "rest", "rest", "rest", "rest", "rest"])
@@ -846,6 +861,7 @@ describe("WeekStrip — days before the account began", () => {
     const profile = makeProfile(makeSchedule(Array(7).fill("lift")));
     return render(
       <WeekStrip
+        todayKey={localDateString()}
         dayMap={new Map()}
         profile={profile}
         programState={makeProgramState([])}
@@ -869,5 +885,108 @@ describe("WeekStrip — days before the account began", () => {
   it("changes nothing without a known start day", () => {
     const { container } = renderLiftWeek(null);
     expect(circleStates(container)).not.toContain("before");
+  });
+});
+
+/**
+ * The strip turns over with the day Home gives it.
+ *
+ * It read `new Date()` inside a memo keyed on its data, so nothing re-ran
+ * it at midnight: an app left open, or resumed the next morning, kept
+ * yesterday ringed as today, and on a Monday kept last week. Home's day
+ * key moves at midnight and on resume (`useLocalDateKey`), and the strip
+ * now reads that.
+ */
+describe("WeekStrip — the day it is given", () => {
+  const SUNDAY = "2026-09-27";
+  const MONDAY = "2026-09-28";
+
+  // One of each, so the day is the only thing that changes between renders.
+  const dayMap = new Map();
+  const profile = makeProfile(makeSchedule(Array(7).fill("rest")));
+  const programState = makeProgramState([]);
+  const onDayTap = vi.fn();
+
+  function strip(todayKey: string) {
+    return (
+      <WeekStrip
+        todayKey={todayKey}
+        dayMap={dayMap}
+        profile={profile}
+        programState={programState}
+        claimMap={emptyClaimMap}
+        selectedDate={null}
+        onDayTap={onDayTap}
+      />
+    );
+  }
+
+  const today = (container: HTMLElement) =>
+    container
+      .querySelector('[aria-current="date"]')
+      ?.getAttribute("aria-label");
+  const firstDay = (container: HTMLElement) =>
+    container.querySelector("button")?.getAttribute("aria-label");
+
+  it("moves today, and the week, when the day turns", () => {
+    const { container, rerender } = render(strip(SUNDAY));
+    expect(today(container)).toMatch(/^Sunday 27 September/);
+    expect(firstDay(container)).toMatch(/^Monday 21 September/);
+
+    rerender(strip(MONDAY));
+    expect(today(container)).toMatch(/^Monday 28 September/);
+    expect(firstDay(container)).toMatch(/^Monday 28 September/);
+  });
+
+  it("does not mark a lifting day done before it comes, whatever the clock says", () => {
+    /* A lift's completion belongs to its rotation slot (ADR-0002), so a
+       day that has not come shows its lift planned. Which days have come
+       is Home's day to say: here the clock is a week on, and Tuesday is
+       still tomorrow. */
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date(2026, 9, 8, 12));
+    try {
+      const { container } = render(
+        <WeekStrip
+          todayKey={MONDAY}
+          dayMap={new Map()}
+          profile={makeProfile(
+            makeSchedule([
+              "rest",
+              "rest",
+              "lift",
+              "rest",
+              "rest",
+              "rest",
+              "rest",
+            ])
+          )}
+          programState={
+            {
+              ...makeProgramState([]),
+              workouts: [
+                {
+                  dayName: "Pull — Lat Focus",
+                  dayType: "pull",
+                  exercises: [],
+                  completed: true,
+                },
+              ],
+            } as unknown as ProgramState
+          }
+          claimMap={emptyClaimMap}
+          selectedDate={null}
+          onDayTap={vi.fn()}
+        />
+      );
+      const tuesday = [...container.querySelectorAll("button")].find((b) =>
+        b.getAttribute("aria-label")?.startsWith("Tuesday 29 September")
+      );
+      expect(
+        tuesday?.querySelector("[data-state]")?.getAttribute("data-state")
+      ).toBe("planned");
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

@@ -29,8 +29,6 @@ export default function RunCTACard({
   completed,
 }: {
   todayRun: ScheduledRunDay | null;
-  purpose?: string | null;
-  weekLabel?: string | null;
   navigate: (p: string) => void;
   /** #972 cold-start framing: frame this as the user's first run. */
   isFirst?: boolean;

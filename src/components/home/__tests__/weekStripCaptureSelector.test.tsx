@@ -4,6 +4,7 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
 import WeekStrip from "@/components/home/WeekStrip";
+import { localDateString } from "@/lib/dateHelpers";
 import type { UserProfile } from "@/lib/auth";
 import type { ProgramState } from "@/features/program/programTypes";
 import type { ScheduleDay } from "@/lib/scheduleUtils";
@@ -111,6 +112,7 @@ function makeProgramState(): ProgramState {
 function dayCellNames(): string[] {
   const { container } = render(
     <WeekStrip
+      todayKey={localDateString()}
       dayMap={new Map()}
       profile={makeProfile()}
       programState={makeProgramState()}

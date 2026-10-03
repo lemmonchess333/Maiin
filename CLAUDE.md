@@ -149,6 +149,7 @@ exists — pinned by `claudeMdFreshness.test.ts` in both directions
 | `analytics.ts`          | Analytics computation                                          |
 | `historyFigures.ts`     | Analytics range figures: window, range before, join-day clamp  |
 | `trainingWeek.ts`       | The week done and planned, which every week count reads        |
+| `todaySession.ts`       | Home's session card: which card a day gets, tomorrow's name    |
 | `liftCompletion.ts`     | Finishing a lift: the saved workout, the save and its receipt  |
 | `liftPost.ts`           | A lift's feed post, built from what was done, and its reader   |
 | `runCompletion.ts`      | Finishing a run: the saved run, the save resumed by id, a post |
@@ -591,7 +592,7 @@ legacy-only — pre-Food9 documents keep rendering, nothing writes it.
 - `functions/` is plain JS (CommonJS) — excluded from ESLint TS config
 - Firestore `d.data()` returns `DocumentData` — always assert types at boundaries
 - Run tracking pages (`/run`, `/run-summary`) render full-screen without the Layout nav wrapper
-- `StackedCTACards.tsx` is large (~18KB) — it contains all home hero cards; modify individual sections carefully
+- Which card Home's session stack shows, and what it says, is decided in `src/lib/todaySession.ts` from one day key; `StackedCTACards.tsx` only draws the answer, so change the rules there and test them without rendering Home
 - `WaterWave.tsx` + `WaterBubbles.tsx` have complex SVG animations — treat carefully when modifying
 
 ## gstack

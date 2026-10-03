@@ -23,11 +23,7 @@ import {
   type ClaimState,
 } from "@/lib/scheduledRunCompletion";
 import type { SavedRunDoc } from "@/hooks/useClaimMap";
-import {
-  localDateString,
-  localWeekKey,
-  parseLocalDate,
-} from "@/lib/dateHelpers";
+import { localWeekKey, parseLocalDate } from "@/lib/dateHelpers";
 import { cn } from "@/lib/utils";
 import { IconButton } from "@/components/ui/IconButton";
 import ExtrasExpandSheet from "@/components/program/ExtrasExpandSheet";
@@ -150,6 +146,7 @@ function DiaryRowShell({
 
 export default function DayPeekCard({
   dateKey,
+  todayKey,
   profile,
   programState,
   claimMap,
@@ -160,6 +157,9 @@ export default function DayPeekCard({
   onManage,
 }: {
   dateKey: string;
+  /** Today, "yyyy-MM-dd": Home's day key, so the card and the strip agree
+   *  on which day is today. */
+  todayKey: string;
   /** P1-4 / PR-0c: profile + programState replace the previous
    *  `schedule` + `runDays` props. The peek calls the shared
    *  training resolver which enforces date/weekKey-aware runDay
@@ -211,8 +211,9 @@ export default function DayPeekCard({
     dateKey,
     profile,
     programState,
-    currentWeekKey: localWeekKey(new Date()),
+    currentWeekKey: localWeekKey(parseLocalDate(todayKey)),
     claimMap,
+    todayKey,
   });
   const dayLabel = format(parseLocalDate(dateKey), "EEE d MMM");
   /* The badge describes the day's WEEKDAY PATTERN (`profile.weekSchedule`),
@@ -291,7 +292,6 @@ export default function DayPeekCard({
      — matching how Food.tsx's own arrows write the URL (it deletes the
      param for today rather than pinning it). See DiaryRowShell for why
      a future date gets no link at all. */
-  const todayKey = localDateString(new Date());
   const diaryHref =
     dateKey > todayKey
       ? null

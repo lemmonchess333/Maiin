@@ -15,20 +15,13 @@ import { assessLiftReturn } from "@/features/program/liftLayoff";
 import { useMeals } from "@/hooks/useMeals";
 import { useHomeData } from "@/hooks/useHomeData";
 import { useLifetimeRunStats } from "@/hooks/useLifetimeRunStats";
-import {
-  getActivationFraming,
-  isWithinActivationWindow,
-} from "@/lib/activationFraming";
+import { isWithinActivationWindow } from "@/lib/activationFraming";
 import { firstWeek } from "@/lib/firstWeek";
 import FirstWeekCard from "@/components/home/FirstWeekCard";
 import NewBadgeRow from "@/components/home/NewBadgeRow";
 
 import { useSubscription } from "@/lib/subscription";
 import { useHomeProgram } from "@/features/program/useHomeProgram";
-import { liftSessionExplainer } from "@/lib/liftSessionExplainer";
-import { runSessionPresentation } from "@/lib/runSessionExplainer";
-import { RUN_TEMPLATES } from "@/lib/workoutTemplates";
-import { getExerciseById } from "@/lib/exercises";
 import { useWeeklyDayMap } from "@/hooks/useFirestore";
 import { BadgeEarnedModal } from "@/features/streaks/BadgeEarnedModal";
 import { useStreaks } from "@/features/streaks/useStreaks";
@@ -42,26 +35,19 @@ import { toast } from "@/lib/toast";
 import { realignResultMessage } from "@/lib/realignCopy";
 import { HomeSkeleton } from "@/components/LoadingSkeleton";
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary";
-import { resolveTrainingDayForDate } from "@/lib/trainingResolver";
 import { summariseWeek } from "@/lib/weekSummary";
 import { trainingWeek, weekDays } from "@/lib/trainingWeek";
-import { nextLiftAfter, resolveHomeLift } from "@/lib/homeLift";
-import { nextUpIndex } from "@/features/program/nextUpCursor";
+import { todaySession } from "@/lib/todaySession";
 import { startDayKey } from "@/lib/startDay";
 import { loggedAgo } from "@/lib/loggedAgo";
 import { useClaimMapForProgram } from "@/hooks/useClaimMapForProgram";
 import { goalReachedOffer } from "@/lib/goalWeightPlan";
 import GoalReachedSheet from "@/components/home/GoalReachedSheet";
-import {
-  localDateString,
-  localWeekKey,
-  parseLocalDate,
-} from "@/lib/dateHelpers";
+import { localWeekKey, parseLocalDate } from "@/lib/dateHelpers";
 import { useEffectiveTargets } from "@/hooks/useEffectiveTargets";
 import { useDismissOnce } from "@/hooks/useDismissOnce";
 import { useCountUp } from "@/hooks/useCountUp";
 import { useLocalDateKey } from "@/hooks/useLocalDateKey";
-import { liftDayLine } from "@/lib/liftDayLabel";
 
 import { StreakFlame } from "@/components/StreakFlame";
 import Avatar from "@/components/Avatar";
@@ -198,25 +184,19 @@ export default function Home() {
   const { dismissed: welcomeDismissed, dismiss: dismissCoachMarks } =
     useDismissOnce("tropos-welcome-checklist-dismissed");
 
-  // PR-0c: single resolver call. Replaces three inline derivations
-  // that disagreed with each other and with the (now-retired) Programme Today tab:
-  //   1. `runTarget = ... ?? 2` — phantom runs for freeform users.
-  //      The resolver internally uses getWeeklyRunTarget which
-  //      defaults to 0.
-  //   2. Which lift. The resolver maps the weekday to a workout, and that
-  //      still decides whether today is a lifting day; the workout itself
-  //      is the programme's next, as on Train (homeLift.ts, ADR-0002).
-  //   3. `todayRun = runDays.find(r => dayIndex === todayDow && !completed)`
-  //      — treats skipped as startable, ignores date/weekKey.
-  //      The resolver enforces date → weekKey → guarded-legacy match
-  //      and uses isScheduledRunStartable for the gate.
-  //
   // The day comes from the shared local date key, which moves at midnight
-  // and when the app returns to the foreground. The header, the week's
-  // counts and tomorrow's session follow it, so an app resumed the next
-  // morning names the new day rather than the one it was opened on.
+  // and when the app returns to the foreground. Today's session
+  // (`todaySession`), the strip, the day peek, the week's counts and
+  // tomorrow's session all read it, so an app resumed the next morning
+  // names the new day rather than the one it was opened on.
   const todayKey = useLocalDateKey();
-  const today = useMemo(() => parseLocalDate(todayKey), [todayKey]);
+  // The day, and the moment Home read it: both move when the day turns, so
+  // a new account's window and a trial's end are measured on the same day
+  // as everything else here.
+  const { today, nowMs } = useMemo(
+    () => ({ today: parseLocalDate(todayKey), nowMs: new Date().getTime() }),
+    [todayKey]
+  );
   const currentWeekKey = localWeekKey(today);
   // PR-J Q3 chunk B3c — single source of truth for derived run-day
   // completion across all of Home's surfaces (WeekStrip dot, DayPeek
@@ -229,33 +209,6 @@ export default function Home() {
     unclaimedByDate,
     runs: savedRuns,
   } = useClaimMapForProgram(programState);
-  const resolvedToday = useMemo(
-    function () {
-      return resolveTrainingDayForDate({
-        dateKey: todayKey,
-        profile,
-        programState,
-        currentWeekKey,
-        claimMap,
-      });
-    },
-    [todayKey, profile, programState, currentWeekKey, claimMap]
-  );
-
-  const todayType = resolvedToday.scheduleType;
-  // The workout today's card offers: the programme's next, the one Train
-  // starts, on a day the week schedules a lift (homeLift.ts, ADR-0002).
-  const homeLift = useMemo(
-    () =>
-      resolveHomeLift({
-        scheduled: resolvedToday.lift,
-        programme: programState,
-        sessionsToday: new Set(
-          workouts.filter((w) => w.date === todayKey).map((w) => w.id)
-        ),
-      }),
-    [resolvedToday.lift, programState, workouts, todayKey]
-  );
 
   // What was done, by date: the strip fills a day for a logged lift
   // session or run, and the week's counts read the same records.
@@ -326,69 +279,6 @@ export default function Home() {
     ]
   );
 
-  // Tomorrow's session, named on the rest-day card. Resolved with TODAY's
-  // week key, as the resolver asks of every caller, so a legacy run day
-  // cannot borrow this week's status for next week.
-  const tomorrowSession = useMemo(
-    function () {
-      const date = new Date(today);
-      date.setDate(date.getDate() + 1);
-      const dateKey = localDateString(date);
-      const next = resolveTrainingDayForDate({
-        dateKey,
-        profile,
-        programState,
-        currentWeekKey,
-        claimMap,
-      });
-      // A lift day names the workout that will be next by then, in the
-      // programme's order, as today's card does.
-      const tomorrowLift = next.lift.workout
-        ? (nextLiftAfter(homeLift, programState) ?? {
-            index: next.lift.index,
-            workout: next.lift.workout,
-          })
-        : null;
-      // Named as the workout and finish screens say it: "Pull · Lat focus".
-      const liftName = tomorrowLift
-        ? liftDayLine(tomorrowLift.workout.dayName)
-        : null;
-      const runDay = next.run.runDay;
-      /* A run day whose week has no runs written yet is named by its type.
-         The plan holds the current week's runs, so on a Sunday, Monday's
-         run is written only when the week rolls over. Once a week's runs
-         are written, a run day with none on it has had its run moved to
-         another date (runs are pinned to dates, ADR-0002), and it names
-         nothing. A run with neither date nor week key belongs to the
-         current week, as the resolver reads it. */
-      const nextWeekKey = localWeekKey(date);
-      const nextWeekWritten = (programState?.runDays ?? []).some(
-        (rd) =>
-          (rd.date
-            ? localWeekKey(parseLocalDate(rd.date))
-            : (rd.weekKey ?? currentWeekKey)) === nextWeekKey
-      );
-      const runName = runDay
-        ? (RUN_TEMPLATES.find(
-            (t) => t.id === (runDay.userOverride ?? runDay.templateId)
-          )?.name ?? "Run")
-        : (next.scheduleType === "run" || next.scheduleType === "both") &&
-            !nextWeekWritten
-          ? "Run"
-          : null;
-      const label =
-        liftName && runName
-          ? `${liftName} and ${runName}`
-          : (liftName ?? runName);
-      if (!label) return null;
-      const target =
-        liftName && typeof tomorrowLift?.index === "number"
-          ? `/program?day=${tomorrowLift.index}`
-          : `/program?tab=run&rday=${dateKey}`;
-      return { label, target };
-    },
-    [today, profile, programState, currentWeekKey, claimMap, homeLift]
-  );
   // Hybrid loop — cross-discipline "today" guidance (yesterday's training →
   // today's plan + fuel). Null while data loads / nothing to surface.
   // Threads Home's OWN workouts subscription in — the hook previously
@@ -466,12 +356,6 @@ export default function Home() {
     },
     [profile?.createdAt]
   );
-  // Captured once on mount (the activation window is day-scale; per-render
-  // freshness isn't needed, and this keeps the render path pure — Date.now()
-  // is flagged as impure-during-render).
-  const nowMs = useMemo(function () {
-    return new Date().getTime();
-  }, []);
   // Home's Pro strip for a free account (homeProStrip.ts). Trial
   // eligibility decides the copy: a first-timer is offered the trial,
   // an account that has had one is offered the plans.
@@ -490,24 +374,28 @@ export default function Home() {
   const inActivationWindow = isWithinActivationWindow(createdAtMs, nowMs);
   const { runCount: lifetimeRunCount, loading: runStatsLoading } =
     useLifetimeRunStats({ enabled: inActivationWindow });
-  const activationFraming = useMemo(
-    function () {
-      return getActivationFraming({
+  // Today's session card: which card shows and what it says.
+  const session = useMemo(
+    () =>
+      todaySession({
+        today: todayKey,
+        profile,
+        programState,
+        claimMap,
+        workouts,
         createdAtMs,
         nowMs,
-        todayType,
-        workoutCount: workouts.length,
-        // While the runs read is in flight, treat as "has runs" so the run
-        // card never flashes "Your first run" before the count resolves.
-        runCount: runStatsLoading ? 1 : lifetimeRunCount,
-        mealCount: totalLifetimeMeals,
-      });
-    },
+        lifetimeRuns: runStatsLoading ? null : lifetimeRunCount,
+        lifetimeMeals: totalLifetimeMeals,
+      }),
     [
+      todayKey,
+      profile,
+      programState,
+      claimMap,
+      workouts,
       createdAtMs,
       nowMs,
-      todayType,
-      workouts.length,
       runStatsLoading,
       lifetimeRunCount,
       totalLifetimeMeals,
@@ -592,8 +480,8 @@ export default function Home() {
    * plan is not away.
    */
   const liftReturn = useMemo(
-    () => assessLiftReturn(workouts, localDateString()),
-    [workouts]
+    () => assessLiftReturn(workouts, todayKey),
+    [workouts, todayKey]
   );
   // `useDismissOnce` scopes by uid, so a dismissal cannot leak across a
   // shared device; the key identifies the absence, so dismissing settles
@@ -728,75 +616,6 @@ export default function Home() {
     },
     [peekDate, getDailyTotals]
   );
-  // Today's lift: the programme's next workout on a lifting day, or the
-  // one finished today. Null when today isn't a lift/both day or the
-  // schedule has drifted past workouts[].length.
-  const nextWorkout = homeLift.workout;
-  /* A new person's first workout is ready any day (lifts follow the
-     rotation, ADR-0002), so on a rest day ask the lift-day question. */
-  const brandNewLifter =
-    todayType === "rest" &&
-    getActivationFraming({
-      createdAtMs,
-      nowMs,
-      todayType: "lift",
-      workoutCount: workouts.length,
-      runCount: 1,
-      mealCount: 1,
-    }).firstWorkout;
-  const restDayFirstWorkoutIndex = brandNewLifter
-    ? nextUpIndex(programState)
-    : -1;
-  const restDayFirstWorkout =
-    restDayFirstWorkoutIndex >= 0
-      ? (programState?.workouts?.[restDayFirstWorkoutIndex] ?? null)
-      : null;
-  const liftPurpose = liftSessionExplainer(
-    programState,
-    localDateString(),
-    "full",
-    nextWorkout?.exercises.map((ex) => ex.progressionType)
-  );
-  const plannedRun = resolvedToday.run.runDay;
-  const purposeTemplate = RUN_TEMPLATES.find(
-    (t) => t.id === (plannedRun?.userOverride ?? plannedRun?.templateId)
-  );
-  const runPresentation =
-    purposeTemplate && profile?.runMode !== "freeform"
-      ? runSessionPresentation({
-          type: purposeTemplate.type,
-          templateId: purposeTemplate.id,
-          currentWeek: programState?.runPlan?.currentWeek,
-          totalWeeks: programState?.runPlan?.totalWeeks,
-          distance:
-            programState?.runPlan?.raceGoal?.distance ??
-            profile?.raceGoal?.distance,
-        })
-      : { purpose: null, weekLabel: null };
-  const muscleGroups = useMemo(
-    function () {
-      if (!nextWorkout) return "";
-      const groups = nextWorkout.exercises
-        .map(function (ex) {
-          return getExerciseById(
-            (ex as { exerciseId?: string }).exerciseId ?? ""
-          )?.category;
-        })
-        .filter(Boolean);
-      const unique = [...new Set(groups)] as string[];
-      if (unique.length === 0) return "";
-      if (unique.length <= 3) return unique.join(" · ");
-      return unique.slice(0, 3).join(" · ") + " + more";
-    },
-    [nextWorkout]
-  );
-
-  // PR-0c: today's scheduled run, resolved date/weekKey-aware. The
-  // resolver returns the matched runDay (even when terminal — so
-  // RunCTACard can still render "Done" via the PR-0b-iii status
-  // gate). Returns null when there's no plan for today.
-  const todayRun = resolvedToday.run.runDay;
-
   if (!profile) return <HomeSkeleton />;
 
   return (
@@ -966,6 +785,7 @@ export default function Home() {
             RouteErrorBoundary. */}
         <SectionErrorBoundary sectionName="week-strip">
           <WeekStrip
+            todayKey={todayKey}
             dayMap={weeklyDayMap}
             profile={profile}
             programState={programState}
@@ -980,6 +800,7 @@ export default function Home() {
             {peekDate && (
               <DayPeekCard
                 dateKey={peekDate}
+                todayKey={todayKey}
                 profile={profile}
                 programState={programState}
                 claimMap={claimMap}
@@ -1013,32 +834,11 @@ export default function Home() {
           <TrackSectionView section="stacked_cta">
             <SectionErrorBoundary sectionName="quick-actions">
               <StackedCTACards
-                nextWorkout={nextWorkout}
-                liftPurpose={liftPurpose}
-                runPurpose={runPresentation.purpose}
-                runWeekLabel={runPresentation.weekLabel}
-                liftDayIndex={homeLift.index}
-                liftStartable={homeLift.isStartable}
-                liftStatus={homeLift.status}
-                runCompleted={resolvedToday.run.isCompleted}
-                todayType={todayType}
+                session={session}
                 navigate={function (p: string) {
                   closePeek();
                   navigate(p);
                 }}
-                todayRun={todayRun}
-                muscleGroups={muscleGroups}
-                firstWorkout={activationFraming.firstWorkout}
-                firstRun={activationFraming.firstRun}
-                firstMeal={activationFraming.firstMeal}
-                tomorrow={tomorrowSession}
-                restDayFirstWorkout={restDayFirstWorkout}
-                restDayFirstWorkoutIndex={restDayFirstWorkoutIndex}
-                freeRunner={
-                  profile?.runMode === "freeform" &&
-                  (profile?.athleteType === "Runner" ||
-                    profile?.athleteType === "Hybrid")
-                }
               />
             </SectionErrorBoundary>
           </TrackSectionView>

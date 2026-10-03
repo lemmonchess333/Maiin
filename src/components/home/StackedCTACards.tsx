@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import type { ScheduledRunDay } from "@/features/program/runScheduler";
+import type { TodaySession } from "@/lib/todaySession";
 import LiftCTACard from "@/components/home/LiftCTACard";
 import RunCTACard from "@/components/home/RunCTACard";
 import RestDayCard from "@/components/home/RestDayCard";
@@ -29,77 +29,19 @@ const fadeUp = {
  * below the energy row (they're vitals, not the day's mission), and
  * the WelcomeBackCard was deleted outright (returned daily, carried
  * no action — one voice per screen).
+ *
+ * Which cards show, and what each says, is decided by `todaySession`; this
+ * draws its answer.
  */
 export default function StackedCTACards({
-  nextWorkout,
-  liftPurpose,
-  runPurpose,
-  runWeekLabel,
-  liftDayIndex = null,
-  liftStartable = true,
-  liftStatus,
-  runCompleted,
-  todayType,
+  session,
   navigate,
-  todayRun,
-  muscleGroups,
-  firstWorkout = false,
-  firstRun = false,
-  firstMeal = false,
-  tomorrow = null,
-  restDayFirstWorkout = null,
-  restDayFirstWorkoutIndex = null,
-  freeRunner = false,
 }: {
-  liftPurpose?: string | null;
-  runPurpose?: string | null;
-  runWeekLabel?: string | null;
-  nextWorkout: {
-    dayName: string;
-    dayType: string;
-    exercises: {
-      name: string;
-      exerciseId?: string;
-      sets?: number;
-      restSeconds?: number;
-      weight?: number;
-    }[];
-  } | null;
-  /** HOME-ACTION-01: the resolved lift slot's day index + startability,
-   *  threaded to LiftCTACard for `?day=N` deep-linking and the Done state. */
-  liftDayIndex?: number | null;
-  liftStartable?: boolean;
-  liftStatus?: "none" | "planned" | "completed" | "skipped";
-  runCompleted?: boolean;
-  todayType: "lift" | "run" | "both" | "rest";
+  /** Today's session, as `todaySession` decided it. */
+  session: TodaySession;
   navigate: (p: string) => void;
-  todayRun: ScheduledRunDay | null;
-  muscleGroups?: string;
-  // #972 cold-start framing flags (day-type-aware, per-domain, 14-day window).
-  firstWorkout?: boolean;
-  firstRun?: boolean;
-  firstMeal?: boolean;
-  /** Tomorrow's session, for the rest-day card: its name and where it
-   *  opens. Null when tomorrow is rest too. */
-  tomorrow?: { label: string; target: string } | null;
-  /** A new person's first workout, offered on a rest day: lifts follow the
-   *  rotation, not the weekday (ADR-0002), so it is ready any day. */
-  restDayFirstWorkout?:
-    | React.ComponentProps<typeof LiftCTACard>["nextWorkout"]
-    | null;
-  restDayFirstWorkoutIndex?: number | null;
-  /** Free running schedules nothing, so every day reads as rest; a free
-   *  runner's day offers a run instead. */
-  freeRunner?: boolean;
 }) {
-  const hasLiftDay = todayType === "lift" || todayType === "both";
-  const showLift = hasLiftDay && nextWorkout;
-  const showRun = todayType === "run" || todayType === "both";
-  // Rest-day cue. Previously neither lift nor run rendered on rest
-  // days and the page looked half-empty — users couldn't distinguish
-  // "scheduled rest" from "something broke". RestDayCard fills the
-  // slot with an intentional message and keeps the page rhythm.
-  const showRest = todayType === "rest";
+  const { lift, run, rest } = session;
 
   return (
     <motion.div
@@ -108,21 +50,19 @@ export default function StackedCTACards({
       animate="visible"
       variants={stagger}
     >
-      {showLift && nextWorkout && (
+      {lift?.workout && (
         <motion.div key="lift" variants={fadeUp}>
           <LiftCTACard
-            nextWorkout={nextWorkout}
-            purpose={liftPurpose}
+            nextWorkout={lift.workout}
             navigate={navigate}
-            muscleGroups={muscleGroups}
-            isFirst={firstWorkout}
-            dayIndex={liftDayIndex}
-            isStartable={liftStartable}
-            status={liftStatus}
+            muscleGroups={lift.muscleGroups}
+            dayIndex={lift.index}
+            isStartable={lift.isStartable}
+            status={lift.status}
           />
         </motion.div>
       )}
-      {hasLiftDay && !nextWorkout && (
+      {lift && !lift.workout && (
         <motion.div key="lift-recovery" variants={fadeUp}>
           {/* Legacy schedules can outnumber the programme's workouts.
               Keep the next-session choice with Programme's rotation
@@ -146,44 +86,38 @@ export default function StackedCTACards({
           />
         </motion.div>
       )}
-      {showRun && (
+      {run && (
         <motion.div key="run" variants={fadeUp}>
           <RunCTACard
-            todayRun={todayRun}
-            completed={runCompleted}
-            purpose={runPurpose}
-            weekLabel={runWeekLabel}
+            todayRun={run.runDay}
+            completed={run.completed}
             navigate={navigate}
-            isFirst={firstRun}
+            isFirst={run.isFirst}
           />
         </motion.div>
       )}
-      {showRest && (
+      {rest && (
         <motion.div key="rest" variants={fadeUp}>
-          {/* #972: on a rest day a new user has no workout to frame, so
-              drive the first meal instead (per-domain: gated on meals === 0
-              within the window). */}
-          {/* The first workout still leads for someone who also lifts;
-              after it, a free runner's day without a lift offers a run.
-              Free running has no planned days, so "Rest day" was wrong for
-              anyone who runs freely, a lifter who also runs included. */}
-          {restDayFirstWorkout ? (
+          {/* Rest-day cue. Previously neither lift nor run rendered on rest
+              days and the page looked half-empty — users couldn't
+              distinguish "scheduled rest" from "something broke". */}
+          {rest.kind === "first-workout" ? (
             <LiftCTACard
-              nextWorkout={restDayFirstWorkout}
+              nextWorkout={rest.workout}
               navigate={navigate}
-              dayIndex={restDayFirstWorkoutIndex}
+              dayIndex={rest.index}
               eyebrowLabel="Your first workout"
             />
-          ) : freeRunner ? (
+          ) : rest.kind === "free-run" ? (
             <RunCTACard
               todayRun={null}
               navigate={navigate}
               eyebrowLabel="Run when it suits you"
             />
-          ) : firstMeal ? (
+          ) : rest.kind === "first-meal" ? (
             <FirstMealCard navigate={navigate} />
           ) : (
-            <RestDayCard tomorrow={tomorrow} navigate={navigate} />
+            <RestDayCard tomorrow={rest.tomorrow} navigate={navigate} />
           )}
         </motion.div>
       )}
