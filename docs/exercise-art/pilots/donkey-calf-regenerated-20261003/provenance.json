@@ -1,0 +1,37 @@
+{
+  "exerciseId": "donkey-calf-raise",
+  "releaseApproved": false,
+  "identity": {
+    "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+    "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+  },
+  "master": {
+    "path": "docs/exercise-art/masters/donkey-calf-raise/1.png",
+    "sha256": "4d071361a634e25bd10bc518b8aae2a46fd117179d7604d510da72961c4a747c"
+  },
+  "builder": {
+    "path": "docs/exercise-art/pilots/donkey-calf-regenerated-20261003/build.py",
+    "sha256": "351dc06a94f0e83e3213796f7885ca8c21a7cb59eefa4ca6b63ea32e6cc8ecb3"
+  },
+  "sources": [
+    {
+      "path": "docs/exercise-art/pilots/donkey-calf-regenerated-20261003/sources/1.png",
+      "sha256": "74d345fc55049dd10b541a4d25e5205f3c242574ed582d63627ce882f67ca1d0"
+    },
+    {
+      "path": "docs/exercise-art/pilots/donkey-calf-regenerated-20261003/sources/2.png",
+      "sha256": "f3661bde06952404e30ca083fbbaa853b13eb1d47a1264405bfa2db619a8016f"
+    },
+    {
+      "path": "docs/exercise-art/pilots/donkey-calf-regenerated-20261003/sources/3.png",
+      "sha256": "437e04a2663fd0cb42894d1bfcdf24eb7bc05b3f2de666d579b9e1ee4dc8ead9"
+    }
+  ],
+  "cueSha256": "9c652187f219822935753c46262cc9be76ccc23bf31e05636122bfc96cf784bf",
+  "reviewFindings": [
+    "Regenerated from a new side-view master after owner rejected the previous calf raise. Short forefoot step, hanging heels, near-vertical legs, horizontal hip hinge and articulated lower-back cushion make the movement explicit.",
+    "Selected sequence uses lowered heels, neutral ankles, raised heels, then return. The first exaggerated top generation was rejected; a restrained neutral pose became the intermediate before deriving the final raised pose.",
+    "One rigid lever-and-plate source rotates around the fixed rear pivot; the cushion follows its endpoint. Fixed lower machine regions reuse master pixels. No body warping or resizing is applied by the builder.",
+    "Small generated hand/forefoot silhouette changes and anatomical consistency still need review before production release. Fixed machine pixels and rigid lever construction do not automatically approve human technique."
+  ]
+}

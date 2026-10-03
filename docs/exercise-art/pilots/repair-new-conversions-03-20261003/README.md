@@ -1,5 +1,7 @@
 # Repair of the newly generated batch — 3 October 2026
 
+**Calf raise superseded:** the owner rejected this calf-raise layout. Its active selection now uses the [regenerated side-view sequence](../donkey-calf-regenerated-20261003/README.md); original repair evidence below remains historical.
+
 The owner's latest instruction was to fix the generated exercises first. This pass replaces the selected draft frames for Glute-Ham Raise, Donkey Calf Raise and Pistol Squat. The previous native generations and their findings remain preserved in the original batch and `sources/`.
 
 ## Changes

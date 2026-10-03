@@ -1,0 +1,41 @@
+{
+  "method": "Single source lever and plate rotate rigidly around fixed rear pivot; constant pad follows lever endpoint through articulated mount. Athlete body is not warped or resized.",
+  "frames": [
+    {
+      "frame": 1,
+      "leverRotationDegrees": 0,
+      "pivot": [1231, 374],
+      "padMount": [865, 350],
+      "padTranslation": [0, 0],
+      "fixedRegions": [
+        [0, 780, 1536, 1024],
+        [1209, 317, 1262, 780],
+        [0, 506, 450, 780]
+      ]
+    },
+    {
+      "frame": 2,
+      "leverRotationDegrees": 3.1,
+      "pivot": [1231, 374],
+      "padMount": [866.833470172241, 330.24227435974313],
+      "padTranslation": [2, -20],
+      "fixedRegions": [
+        [0, 780, 1536, 1024],
+        [1209, 317, 1262, 780],
+        [0, 506, 450, 780]
+      ]
+    },
+    {
+      "frame": 3,
+      "leverRotationDegrees": 5.2,
+      "pivot": [1231, 374],
+      "padMount": [868.6814920313016, 316.92725008082914],
+      "padTranslation": [4, -33],
+      "fixedRegions": [
+        [0, 780, 1536, 1024],
+        [1209, 317, 1262, 780],
+        [0, 506, 450, 780]
+      ]
+    }
+  ]
+}

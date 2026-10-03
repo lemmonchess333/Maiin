@@ -1,0 +1,11 @@
+{
+  "stats": {
+    "startTime": "2026-10-03T14:23:51.766Z",
+    "duration": 9314.097,
+    "expected": 3,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "scope": "Three calf-raise mobile checks: light/dark frame order, source pins, cues, autoplay wrap, accessibility controls and reduced motion. Does not grant visual approval."
+}

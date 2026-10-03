@@ -2,7 +2,7 @@
 
 ## Current checkpoint — 3 October 2026
 
-Current owner priority: fix the newly generated batch first (latest instruction). The [repair pass](pilots/repair-new-conversions-03-20261003/README.md) addresses background changes, planted-foot drift and calf-raise pose progression. Older approved guides remain untouched.
+Current owner priority: regenerate and fix the rejected calf raise. The [new side-view calf raise](pilots/donkey-calf-regenerated-20261003/README.md) replaces the earlier machine layout with a short forefoot step and a rigid rear lever. The other generated exercises remain unchanged.
 
 The [third new-conversion batch](pilots/new-conversions-03-20261003/README.md) adds Glute-Ham Raise, Donkey Calf Raise and Pistol Squat: 18 native draft frames for three previously unconverted IDs. Contact drift, incomplete calf-raise range and inconsistent backgrounds are recorded; none is approved for production.
 

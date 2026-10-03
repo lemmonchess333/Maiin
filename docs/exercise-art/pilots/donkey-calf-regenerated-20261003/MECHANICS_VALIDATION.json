@@ -1,0 +1,28 @@
+{
+  "passed": true,
+  "scope": "Exact stationary machine pixels; analytic rigid lever length and fixed pivot; identical reverse-pose reuse. No anatomical approval.",
+  "releaseApproved": false,
+  "frames": [
+    {
+      "frame": 1,
+      "sha256": "4d071361a634e25bd10bc518b8aae2a46fd117179d7604d510da72961c4a747c",
+      "fixedRegionMaxErrors": [0, 0, 0],
+      "backgroundCornerMax": 1,
+      "pivotToPadMountPixels": 366.7860411738702
+    },
+    {
+      "frame": 2,
+      "sha256": "4c0a00dfce268ae392deff0ef36ceef52f6e9eeb2e44c8e2b8dfa2a2e10043a1",
+      "fixedRegionMaxErrors": [0, 0, 0],
+      "backgroundCornerMax": 1,
+      "pivotToPadMountPixels": 366.7860411738703
+    },
+    {
+      "frame": 3,
+      "sha256": "0f13b5be933e607fde2b0d362068f45cba5c561a1b6fee45bdf05cc820e4a759",
+      "fixedRegionMaxErrors": [0, 0, 0],
+      "backgroundCornerMax": 1,
+      "pivotToPadMountPixels": 366.7860411738702
+    }
+  ]
+}

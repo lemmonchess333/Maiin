@@ -1,0 +1,115 @@
+[
+  {
+    "frame": 1,
+    "prompt": "Create one technically coherent DONKEY CALF RAISE setup diagram from scratch using reference only for athlete identity. Landscape1536x1024 pure BLACK background, no text. Near-orthographic TRUE SIDE VIEW, athlete faces LEFT; second leg offset only slightly to show two feet. Anatomical white/light-grey faceless athlete, smooth featureless pelvis, white trainers, gastrocnemius strongest purple and soleus lighter lilac. Athlete hinges at hips about90degrees, torso nearly HORIZONTAL, straight neutral spine, both legs nearly VERTICAL with softly straight knees. Hands hold fixed handles on a simple front support to LEFT. BOTH FOREFOOT BALLS rest at the REAR EDGE of a SHORT raised step: toes point LEFT, heels overhang to RIGHT and sink clearly BELOW step top (dorsiflexion). The step supports only front third of shoes; empty space under arches and heels. Do not put full shoes on a long bench. Realistic simple plate-loaded lever donkey calf machine: rear pivot on an upright BEHIND the athlete at farRIGHT, rigid steel lever extends LEFT from pivot to a horizontal padded cushion resting ON TOP of the lower back/upper pelvis. One modest circular weight plate on the lever near its rear half. A pivoting pad mount allows cushion to stay flush with back as lever rotates. All metal linkage BEHIND/outside body, no column passing through athlete, no vertical side-hip pad. Floor base connects front support, step and rear upright. Full athlete and equipment fit comfortably inside canvas, no cropping. Make ankle, heel clearance, pad contact and rear lever pivot unambiguous.",
+    "refs": [
+      "/workspace/Maiin/docs/exercise-art/identity/athlete-anatomy-v3.png"
+    ],
+    "source": "/workspace/generated_images/exec-da341b38-54d5-4753-85f5-cc704b37700b.png",
+    "selected": false,
+    "sourceSha256": "7209d94fc5066b590c9a89c3a83f6c96e2aa0be6e01c5f54ade1d7c8cd2280ac",
+    "referenceSnapshots": [
+      {
+        "toolPath": "/workspace/Maiin/docs/exercise-art/identity/athlete-anatomy-v3.png",
+        "retainedPath": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+        "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+      }
+    ]
+  },
+  {
+    "frame": 1,
+    "prompt": "Reframe SECOND reference only. Preserve this exact donkey calf machine, athlete pose, rear pivot mechanism, feet hanging off shortstep, anatomy and black background. Uniformly reduce the ENTIRE athlete-plus-machine scene to about80percent size and center it horizontally near bottom. Leave at least180pixels empty BLACK above the head, enough space for an80pixel upward calf raise without cropping. Preserve all body and machine proportions and positions RELATIVE to one another. Landscape1536x1024, complete scene approximately x180..1380 andy190..950. No new objects, no pose change, no labels. First reference athlete identity only.",
+    "refs": [
+      "/workspace/Maiin/docs/exercise-art/identity/athlete-anatomy-v3.png",
+      "/workspace/Maiin/docs/exercise-art/pilots/donkey-calf-regenerated-20261003/setup-tight-headroom.png"
+    ],
+    "source": "/workspace/generated_images/exec-54086362-18ff-4dc9-bb71-aa2f95b3cb95.png",
+    "sourceSha256": "74d345fc55049dd10b541a4d25e5205f3c242574ed582d63627ce882f67ca1d0",
+    "referenceSnapshots": [
+      {
+        "toolPath": "/workspace/Maiin/docs/exercise-art/identity/athlete-anatomy-v3.png",
+        "retainedPath": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+        "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+      },
+      {
+        "toolPath": "/workspace/Maiin/docs/exercise-art/pilots/donkey-calf-regenerated-20261003/setup-tight-headroom.png",
+        "retainedPath": "docs/exercise-art/pilots/donkey-calf-regenerated-20261003/setup-tight-headroom.png",
+        "sha256": "7209d94fc5066b590c9a89c3a83f6c96e2aa0be6e01c5f54ade1d7c8cd2280ac"
+      }
+    ]
+  },
+  {
+    "frame": 3,
+    "prompt": "Edit SECOND reference into the TOP of the donkey calf raise. Preserve EXACT camera, scene scale, black background, fixed machine base, short step and rear lever pivot. Forefoot ball stays fixed at approximately(719,756). Rotate each foot about that ball so the heel rises clearly to around(788,711), a shoe angle about30degrees heel UP to theRIGHT. No knee bend, no leg shrinkage: raise the ankle,knee,hip and torso as a chain about50pixels using full-length limbs, with slight natural adjustment at shoulders/elbows to keep hands fixed at(383,483) and(456,494). Keep torso hinged nearlyhorizontal. The lower-back cushion stays in contact and rises WITH pelvis. Rotate the rigid lever and its plate as ONE assembly about the fixed rear pivot at(1231,374): pad mount now roughly(865,300), same pivot-to-mount length. Plate must rise with lever, NEVER stay fixed while pad rises. Do not bend or telescope lever. Maintain identical plate size/holes, calf muscle hierarchy and pad geometry. Whitegrey faceless athlete, no labels. Full1536x1024 canvas identical.",
+    "refs": [
+      "/workspace/Maiin/docs/exercise-art/identity/athlete-anatomy-v3.png",
+      "/workspace/Maiin/docs/exercise-art/pilots/donkey-calf-regenerated-20261003/frames/1.png"
+    ],
+    "source": "/workspace/generated_images/exec-e19630ff-2f0d-48ca-bb64-d65bc53016e7.png",
+    "selected": false,
+    "sourceSha256": "a9d26cafbafc336622cfaa6992c8ff9363ec257bc97537641a43173b1621f670",
+    "referenceSnapshots": [
+      {
+        "toolPath": "/workspace/Maiin/docs/exercise-art/identity/athlete-anatomy-v3.png",
+        "retainedPath": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+        "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+      },
+      {
+        "toolPath": "/workspace/Maiin/docs/exercise-art/pilots/donkey-calf-regenerated-20261003/frames/1.png",
+        "retainedPath": "docs/exercise-art/pilots/donkey-calf-regenerated-20261003/sources/1.png",
+        "sha256": "74d345fc55049dd10b541a4d25e5205f3c242574ed582d63627ce882f67ca1d0"
+      }
+    ]
+  },
+  {
+    "frame": 3,
+    "prompt": "LOCAL SMALL MOVEMENT EDIT of reference2. Donkey calf raise, modest heel rise. Keep exact body lengths! Rotate shoes about the SAME balls of feet so heels become just30pixels ABOVE step top. This raises ankles and whole legs/hips onlyabout25pixels. Head and hips must stay almost at their starting height (head y~225, hip y~355), NOT 100pixels higher. Preserve thigh and shin lengths exactly; do NOT stretch the body vertically. Keep knees softly straight, same horizontal torso hinge, hands fixed with small elbow angle adjustment. Move horizontal back cushion upward only25pixels with pelvis. Rear lever rotates onlyabout4degrees at the SAME rear pivot. Rigid lever and weight plate form ONE assembly: plate CENTER stays directly on lever centerline and rises onlyabout9pixels, no axle floating above bar. Same plate design/size, same pad. Forefoot balls, machine supports, short step, camera, black background fixed. Canonical white-grey faceless anatomical athlete fromref1. No labels. Exact1536x1024 canvas. Emphasize modest believable ankle movement rather than exaggerated full-body height change.",
+    "refs": [
+      "/workspace/Maiin/docs/exercise-art/identity/athlete-anatomy-v3.png",
+      "/workspace/Maiin/docs/exercise-art/pilots/donkey-calf-regenerated-20261003/frames/1.png"
+    ],
+    "source": "/workspace/generated_images/exec-000a729d-e557-4344-a367-46bb59378436.png",
+    "selectedFrame": 2,
+    "sourceSha256": "f3661bde06952404e30ca083fbbaa853b13eb1d47a1264405bfa2db619a8016f",
+    "referenceSnapshots": [
+      {
+        "toolPath": "/workspace/Maiin/docs/exercise-art/identity/athlete-anatomy-v3.png",
+        "retainedPath": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+        "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+      },
+      {
+        "toolPath": "/workspace/Maiin/docs/exercise-art/pilots/donkey-calf-regenerated-20261003/frames/1.png",
+        "retainedPath": "docs/exercise-art/pilots/donkey-calf-regenerated-20261003/sources/1.png",
+        "sha256": "74d345fc55049dd10b541a4d25e5205f3c242574ed582d63627ce882f67ca1d0"
+      }
+    ]
+  },
+  {
+    "frame": 3,
+    "prompt": "Edit THIRD reference (neutral ankles) to a clear heel-raised position, a small incremental move. First athlete identity; second fixed scene master. Keep both forefoot balls on exactly the SAME step edge. Rotate shoes with heels UP to the RIGHT: rear sole visibly around40pixels higher than toe sole, about25degrees shoe angle. Raise ankles and hips onlyabout25pixels more than reference3; do NOT elongate shins or thighs, keep knees softly straight. Near ankle should shift slightly left as shoe rotates around fixed forefoot. Torso remains hinged, shoulders rise slightly, hands stay attached to exact handles with natural small elbow adjustment. Rear pivot stays EXACTLY fixed. Cushion remains on back and rises modestly; lever rotates only4degrees more than reference3, rigid length. Weight plate stays mounted directly on lever at unchanged relative position and size, so rises a small amount (roughly10pixels). Full sideview composition, BLACK background,1536x1024, no labels, no other changes. Prioritize tilted heel-raised shoes with fixed forefeet and unchanged limb lengths.",
+    "refs": [
+      "/workspace/Maiin/docs/exercise-art/identity/athlete-anatomy-v3.png",
+      "/workspace/Maiin/docs/exercise-art/pilots/donkey-calf-regenerated-20261003/frames/1.png",
+      "/workspace/Maiin/docs/exercise-art/pilots/donkey-calf-regenerated-20261003/frames/2.png"
+    ],
+    "source": "/workspace/generated_images/exec-536b132f-78bf-492f-b01e-f963d68379f7.png",
+    "sourceSha256": "437e04a2663fd0cb42894d1bfcdf24eb7bc05b3f2de666d579b9e1ee4dc8ead9",
+    "referenceSnapshots": [
+      {
+        "toolPath": "/workspace/Maiin/docs/exercise-art/identity/athlete-anatomy-v3.png",
+        "retainedPath": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+        "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
+      },
+      {
+        "toolPath": "/workspace/Maiin/docs/exercise-art/pilots/donkey-calf-regenerated-20261003/frames/1.png",
+        "retainedPath": "docs/exercise-art/pilots/donkey-calf-regenerated-20261003/sources/1.png",
+        "sha256": "74d345fc55049dd10b541a4d25e5205f3c242574ed582d63627ce882f67ca1d0"
+      },
+      {
+        "toolPath": "/workspace/Maiin/docs/exercise-art/pilots/donkey-calf-regenerated-20261003/frames/2.png",
+        "retainedPath": "docs/exercise-art/pilots/donkey-calf-regenerated-20261003/sources/2.png",
+        "sha256": "f3661bde06952404e30ca083fbbaa853b13eb1d47a1264405bfa2db619a8016f"
+      }
+    ]
+  }
+]

@@ -1,0 +1,62 @@
+{
+  "variation": "Machine donkey calf raise with roughly90degree hip hinge and lower-back loading pad, forefeet supported on raised step, full controlled ankle plantarflexion and dorsiflexion.",
+  "camera": "Fixed near-orthographic side view, facing left. Both heels and forefoot supports visible.",
+  "equipment": "Plate-loaded donkey calf machine: rear pivot behind athlete, rigid lever to articulated horizontal lower-back pad, modest plate on lever, separate front fixed handles, short forefoot step with unobstructed heel clearance.",
+  "primary": "Gastrocnemius",
+  "secondary": "Soleus lighter",
+  "fixedAnchors": [
+    "Rear pivot",
+    "Forefoot support edge",
+    "Front hand supports",
+    "Machine floor base"
+  ],
+  "invariants": [
+    "Body segment lengths",
+    "Fixed rear pivot",
+    "Rigid lever length and plate shape",
+    "Fixed step and forefoot balls",
+    "Fixed hand grips"
+  ],
+  "beats": [
+    {
+      "frame": 1,
+      "label": "Set your stretch",
+      "cue": "Brace forward; let heels lower below platform.",
+      "pose": "Hips hinged approximately90degrees, balls of feet supported, heels below step, lower-back pad in contact."
+    },
+    {
+      "frame": 2,
+      "label": "Rise through your toes",
+      "cue": "Lift heels while keeping knees softly straight.",
+      "pose": "Heels halfway raised, ankles plantarflexing; pelvis and loading pad rise together."
+    },
+    {
+      "frame": 3,
+      "label": "Reach the top",
+      "cue": "Rise onto toes and squeeze your calves.",
+      "pose": "Heels fully raised in controlled range; forefeet remain on same step, pad contacts lower back."
+    },
+    {
+      "frame": 4,
+      "label": "Control the top",
+      "cue": "Pause briefly without bouncing or bending knees.",
+      "reuse": 3
+    },
+    {
+      "frame": 5,
+      "label": "Lower slowly",
+      "cue": "Lower heels slowly against the resistance.",
+      "reuse": 2
+    },
+    {
+      "frame": 6,
+      "label": "Return to stretch",
+      "cue": "Let heels sink below the platform gently.",
+      "reuse": 1
+    }
+  ],
+  "exerciseId": "donkey-calf-raise",
+  "status": "six-frame-draft",
+  "releaseApproved": false,
+  "reviewGoal": "Reject the previous machine layout. Show below-step heel stretch, neutral ankle and clear heel rise; loading lever rotates around rear pivot while pad contacts lower back."
+}

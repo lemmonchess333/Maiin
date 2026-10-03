@@ -91,86 +91,89 @@
     {
       "exerciseId": "donkey-calf-raise",
       "status": "draft-awaiting-review",
-      "camera": "Fixed side three-quarter facing left; heel clearance and lower-back pad visible.",
+      "camera": "Fixed near-orthographic side view, facing left. Both heels and forefoot supports visible.",
       "anchors": [
-        "forefoot step corners",
-        "hand support frame",
-        "machine floor feet"
+        "Rear pivot",
+        "Forefoot support edge",
+        "Front hand supports",
+        "Machine floor base"
       ],
-      "equipment": "Real donkey calf machine with forefoot step, fixed forward hand supports, vertical moving lower-back loading pad on a guided carriage.",
+      "equipment": "Plate-loaded donkey calf machine: rear pivot behind athlete, rigid lever to articulated horizontal lower-back pad, modest plate on lever, separate front fixed handles, short forefoot step with unobstructed heel clearance.",
       "muscles": {
         "primary": ["Gastrocnemius"],
         "secondary": ["Soleus lighter"]
       },
       "reviewFindings": [
-        "Replaced the flat setup with a shorter step and overhanging lowered heels. New neutral and raised positions give distinct heel progression on a consistent black background.",
-        "Fixed machine base, handle support and lower upright regions now reuse setup pixels. The generated step rear edge still changes and foot/pad mechanics and body proportions remain unapproved; this repair does not grant release approval."
+        "Regenerated from a new side-view master after owner rejected the previous calf raise. Short forefoot step, hanging heels, near-vertical legs, horizontal hip hinge and articulated lower-back cushion make the movement explicit.",
+        "Selected sequence uses lowered heels, neutral ankles, raised heels, then return. The first exaggerated top generation was rejected; a restrained neutral pose became the intermediate before deriving the final raised pose.",
+        "One rigid lever-and-plate source rotates around the fixed rear pivot; the cushion follows its endpoint. Fixed lower machine regions reuse master pixels. No body warping or resizing is applied by the builder.",
+        "Small generated hand/forefoot silhouette changes and anatomical consistency still need review before production release. Fixed machine pixels and rigid lever construction do not automatically approve human technique."
       ],
       "frames": [
         {
           "frame": 1,
-          "path": "docs/exercise-art/pilots/repair-new-conversions-03-20261003/donkey-calf-raise/frames/1.png",
+          "path": "docs/exercise-art/pilots/donkey-calf-regenerated-20261003/frames/1.png",
           "caption": "SET YOUR STRETCH 1/6",
           "cue": "Brace forward; let heels lower below platform.",
           "progress": 0,
           "dimensions": [1536, 1024],
-          "bytes": 1092813,
-          "sha256": "84706e7205e3f3b9a070f3741744f99df8413022d8baf75cfca2a060a2b3593a",
+          "bytes": 668913,
+          "sha256": "4d071361a634e25bd10bc518b8aae2a46fd117179d7604d510da72961c4a747c",
           "reusedFrom": null
         },
         {
           "frame": 2,
-          "path": "docs/exercise-art/pilots/repair-new-conversions-03-20261003/donkey-calf-raise/frames/2.png",
+          "path": "docs/exercise-art/pilots/donkey-calf-regenerated-20261003/frames/2.png",
           "caption": "RISE THROUGH YOUR TOES 2/6",
           "cue": "Lift heels while keeping knees softly straight.",
           "progress": 0.5,
           "dimensions": [1536, 1024],
-          "bytes": 934105,
-          "sha256": "adefa0fb58aa8b4de883e273c0f564a5faf26fe4101efa28eaf72dd1b6ae34ae",
+          "bytes": 690594,
+          "sha256": "4c0a00dfce268ae392deff0ef36ceef52f6e9eeb2e44c8e2b8dfa2a2e10043a1",
           "reusedFrom": null
         },
         {
           "frame": 3,
-          "path": "docs/exercise-art/pilots/repair-new-conversions-03-20261003/donkey-calf-raise/frames/3.png",
+          "path": "docs/exercise-art/pilots/donkey-calf-regenerated-20261003/frames/3.png",
           "caption": "REACH THE TOP 3/6",
           "cue": "Rise onto toes and squeeze your calves.",
           "progress": 1,
           "dimensions": [1536, 1024],
-          "bytes": 1010188,
-          "sha256": "4a53cc263cff89a64fc790d5178262324a3744e0bf17f7c1b2b43325c72b5121",
+          "bytes": 759762,
+          "sha256": "0f13b5be933e607fde2b0d362068f45cba5c561a1b6fee45bdf05cc820e4a759",
           "reusedFrom": null
         },
         {
           "frame": 4,
-          "path": "docs/exercise-art/pilots/repair-new-conversions-03-20261003/donkey-calf-raise/frames/4.png",
+          "path": "docs/exercise-art/pilots/donkey-calf-regenerated-20261003/frames/4.png",
           "caption": "CONTROL THE TOP 4/6",
           "cue": "Pause briefly without bouncing or bending knees.",
           "progress": 1,
           "dimensions": [1536, 1024],
-          "bytes": 1010188,
-          "sha256": "4a53cc263cff89a64fc790d5178262324a3744e0bf17f7c1b2b43325c72b5121",
+          "bytes": 759762,
+          "sha256": "0f13b5be933e607fde2b0d362068f45cba5c561a1b6fee45bdf05cc820e4a759",
           "reusedFrom": 3
         },
         {
           "frame": 5,
-          "path": "docs/exercise-art/pilots/repair-new-conversions-03-20261003/donkey-calf-raise/frames/5.png",
+          "path": "docs/exercise-art/pilots/donkey-calf-regenerated-20261003/frames/5.png",
           "caption": "LOWER SLOWLY 5/6",
           "cue": "Lower heels slowly against the resistance.",
           "progress": 0.5,
           "dimensions": [1536, 1024],
-          "bytes": 934105,
-          "sha256": "adefa0fb58aa8b4de883e273c0f564a5faf26fe4101efa28eaf72dd1b6ae34ae",
+          "bytes": 690594,
+          "sha256": "4c0a00dfce268ae392deff0ef36ceef52f6e9eeb2e44c8e2b8dfa2a2e10043a1",
           "reusedFrom": 2
         },
         {
           "frame": 6,
-          "path": "docs/exercise-art/pilots/repair-new-conversions-03-20261003/donkey-calf-raise/frames/6.png",
+          "path": "docs/exercise-art/pilots/donkey-calf-regenerated-20261003/frames/6.png",
           "caption": "RETURN TO STRETCH 6/6",
           "cue": "Let heels sink below the platform gently.",
           "progress": 0,
           "dimensions": [1536, 1024],
-          "bytes": 1092813,
-          "sha256": "84706e7205e3f3b9a070f3741744f99df8413022d8baf75cfca2a060a2b3593a",
+          "bytes": 668913,
+          "sha256": "4d071361a634e25bd10bc518b8aae2a46fd117179d7604d510da72961c4a747c",
           "reusedFrom": 1
         }
       ]

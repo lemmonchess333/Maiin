@@ -99,7 +99,7 @@ const endpointHashes: Record<string, string> = {
   "glute-ham-raise":
     "a8016da54c0bfef98f418e858e9062986288d0ed9e760975677b242189ac0fc4",
   "donkey-calf-raise":
-    "84706e7205e3f3b9a070f3741744f99df8413022d8baf75cfca2a060a2b3593a",
+    "4d071361a634e25bd10bc518b8aae2a46fd117179d7604d510da72961c4a747c",
   "pistol-squat":
     "00cc035e8c1eacaf8e950343c91c287ee3a060da62325d2dc305020a8c28810c",
 
