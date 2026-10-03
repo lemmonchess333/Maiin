@@ -2,6 +2,10 @@
 
 ## Current checkpoint — 3 October 2026
 
+The reviewed Hanging Leg Raise, Plank and Crunches guides are now live on Firebase Hosting from commit `f527f68`. [Production verification](releases/2026-10-03/PRODUCTION_VERIFICATION.json) checks all 18 delivered frames and three thumbnails against local SHA-256 hashes.
+
+Work continues in a separate [Shrugs fixed-leg candidate](pilots/shrugs-composite-20261003/README.md): four stationary patches now match exactly, while equipment and upper-body review remain open. It is not released.
+
 The [forearm Plank release](releases/2026-10-03/PLANK.md) adds a reviewed
 entry, timed hold and controlled exit, six lossless delivery files, exact cues
 and a transparent card thumbnail. Its four measured arm supports stay within

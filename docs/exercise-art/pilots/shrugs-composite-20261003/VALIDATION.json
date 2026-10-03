@@ -1,0 +1,20 @@
+{
+  "releaseApproved": false,
+  "verify": {
+    "command": "VITEST_MAX_WORKERS=4 npm run verify",
+    "passed": true,
+    "testFilesPassed": 978,
+    "testFilesSkipped": 8,
+    "testsPassed": 10874,
+    "testsSkipped": 367,
+    "durationSeconds": 260.86
+  },
+  "artwork": {
+    "fixedLowerRegion": "Exact setup RGB below y860 in all six files",
+    "movingUpperRegion": "Exact original pose RGB above y840",
+    "supportPatches": "Both soles and both knee patches: dx=0, dy=0, meanChannelDifference=0",
+    "nativeJoin": "Two native 2x close-ups inspected; full sequential review remains open",
+    "equipment": "Threshold-dependent cap footprints vary. Not certified rigid."
+  },
+  "production": "No registry or public asset changes. Candidate remains outside production."
+}

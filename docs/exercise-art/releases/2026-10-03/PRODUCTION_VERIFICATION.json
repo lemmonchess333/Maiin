@@ -1,0 +1,140 @@
+{
+  "commit": "f527f68354bd60e47c1d73afec3ce8fdf3dea961",
+  "url": "https://adaptive-fitness-af8bb.firebaseapp.com",
+  "checkedAt": "2026-10-03T10:15:40.959419+00:00",
+  "workflowRun": 37115535373,
+  "assets": [
+    {
+      "path": "form-frames/leg-raise/1.webp",
+      "status": 200,
+      "contentType": "image/webp",
+      "sha256": "9ce55626814c523cee72881391e8853b0ce71b9cf290828c166512f584526c27"
+    },
+    {
+      "path": "form-frames/leg-raise/2.webp",
+      "status": 200,
+      "contentType": "image/webp",
+      "sha256": "0b8c930ec8495e7bf01d903be42654f710894a74ef18b7114256416b06a74f2d"
+    },
+    {
+      "path": "form-frames/leg-raise/3.webp",
+      "status": 200,
+      "contentType": "image/webp",
+      "sha256": "954e7e5a0044dd972d7a69701b298838628740849e5b3bb8361f3a068f140507"
+    },
+    {
+      "path": "form-frames/leg-raise/4.webp",
+      "status": 200,
+      "contentType": "image/webp",
+      "sha256": "954e7e5a0044dd972d7a69701b298838628740849e5b3bb8361f3a068f140507"
+    },
+    {
+      "path": "form-frames/leg-raise/5.webp",
+      "status": 200,
+      "contentType": "image/webp",
+      "sha256": "0b8c930ec8495e7bf01d903be42654f710894a74ef18b7114256416b06a74f2d"
+    },
+    {
+      "path": "form-frames/leg-raise/6.webp",
+      "status": 200,
+      "contentType": "image/webp",
+      "sha256": "9ce55626814c523cee72881391e8853b0ce71b9cf290828c166512f584526c27"
+    },
+    {
+      "path": "form-art/leg-raise.webp",
+      "status": 200,
+      "contentType": "image/webp",
+      "sha256": "bdde13adac6b2d933f487325e4369293df85eab6c3ca2c8578b70e80c66aa41b"
+    },
+    {
+      "path": "form-frames/plank/1.webp",
+      "status": 200,
+      "contentType": "image/webp",
+      "sha256": "bc1d06703ba86d6e85552e50631fe510a9a959acf33edc2c336cf28cb2c9896b"
+    },
+    {
+      "path": "form-frames/plank/2.webp",
+      "status": 200,
+      "contentType": "image/webp",
+      "sha256": "bc1d06703ba86d6e85552e50631fe510a9a959acf33edc2c336cf28cb2c9896b"
+    },
+    {
+      "path": "form-frames/plank/3.webp",
+      "status": 200,
+      "contentType": "image/webp",
+      "sha256": "100c8d8ef4c326eb0fc2dd5a607bf4ca058584bd1fdcf2e463449e1f447f5e1c"
+    },
+    {
+      "path": "form-frames/plank/4.webp",
+      "status": 200,
+      "contentType": "image/webp",
+      "sha256": "100c8d8ef4c326eb0fc2dd5a607bf4ca058584bd1fdcf2e463449e1f447f5e1c"
+    },
+    {
+      "path": "form-frames/plank/5.webp",
+      "status": 200,
+      "contentType": "image/webp",
+      "sha256": "100c8d8ef4c326eb0fc2dd5a607bf4ca058584bd1fdcf2e463449e1f447f5e1c"
+    },
+    {
+      "path": "form-frames/plank/6.webp",
+      "status": 200,
+      "contentType": "image/webp",
+      "sha256": "bc1d06703ba86d6e85552e50631fe510a9a959acf33edc2c336cf28cb2c9896b"
+    },
+    {
+      "path": "form-art/plank.webp",
+      "status": 200,
+      "contentType": "image/webp",
+      "sha256": "7e2474605d406042b52a190190a523df21055d2fa07a5d0df491b7ab2315f8ae"
+    },
+    {
+      "path": "form-frames/crunches/1.webp",
+      "status": 200,
+      "contentType": "image/webp",
+      "sha256": "7ea2f4eb76bd48f38da40a8c2faf493b1f698b89f7ab836bdbc69bd0fdc23780"
+    },
+    {
+      "path": "form-frames/crunches/2.webp",
+      "status": 200,
+      "contentType": "image/webp",
+      "sha256": "49c7cd8e7da32f13a32deab59d6c2ad8b083c7b2daf01d6b53d1898ae3296bbe"
+    },
+    {
+      "path": "form-frames/crunches/3.webp",
+      "status": 200,
+      "contentType": "image/webp",
+      "sha256": "2250788079500c8503ab1d494bc0b7f1c5c896297eba35b056f124ae7193062c"
+    },
+    {
+      "path": "form-frames/crunches/4.webp",
+      "status": 200,
+      "contentType": "image/webp",
+      "sha256": "2250788079500c8503ab1d494bc0b7f1c5c896297eba35b056f124ae7193062c"
+    },
+    {
+      "path": "form-frames/crunches/5.webp",
+      "status": 200,
+      "contentType": "image/webp",
+      "sha256": "49c7cd8e7da32f13a32deab59d6c2ad8b083c7b2daf01d6b53d1898ae3296bbe"
+    },
+    {
+      "path": "form-frames/crunches/6.webp",
+      "status": 200,
+      "contentType": "image/webp",
+      "sha256": "7ea2f4eb76bd48f38da40a8c2faf493b1f698b89f7ab836bdbc69bd0fdc23780"
+    },
+    {
+      "path": "form-art/crunches.webp",
+      "status": 200,
+      "contentType": "image/webp",
+      "sha256": "2768e5755abce242d27df458ec804023c760435cade478b8dbf175e3ea7f150f"
+    }
+  ],
+  "registryBundle": {
+    "path": "assets/formArtwork-CUOkHAy3.js",
+    "sha256": "ea98da8251d9a57e012063d3e5c54f5f5a1d273007bfa3543a9f5a8dbaa9ecff",
+    "matchesLocal": true,
+    "containsCrunchesRelease": true
+  }
+}

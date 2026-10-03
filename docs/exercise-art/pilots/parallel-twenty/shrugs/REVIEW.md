@@ -28,3 +28,5 @@ node docs/exercise-art/pilots/parallel-twenty/shrugs/measure-fixed-supports.mjs
 
 The next repair needs a stationary lower body and rigid dumbbell geometry.
 No new generation or code-based image repair was performed in this follow-up.
+
+A later [fixed-leg composite candidate](../../shrugs-composite-20261003/README.md) eliminates measured sole/knee drift in separate files. Equipment and upper-body review remain open; these original sources are unchanged and unreleased.

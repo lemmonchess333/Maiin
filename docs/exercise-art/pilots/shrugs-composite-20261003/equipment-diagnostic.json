@@ -1,0 +1,63 @@
+{
+  "releaseApproved": false,
+  "method": "Largest 4-connected neutral-grey component after 5x5 erosion in fixed front-cap ROIs: all RGB channels >25 and <185, channel spread <30. Coordinates and footprint depend on shading, outline and ROI clipping; not a physical dumbbell measurement.",
+  "frames": [
+    {
+      "frame": 1,
+      "caps": {
+        "screenLeftFrontCap": {
+          "x": 246,
+          "y": 723,
+          "width": 77,
+          "height": 87,
+          "pixels": 5375
+        },
+        "screenRightFrontCap": {
+          "x": 562,
+          "y": 737,
+          "width": 80,
+          "height": 90,
+          "pixels": 5571
+        }
+      }
+    },
+    {
+      "frame": 2,
+      "caps": {
+        "screenLeftFrontCap": {
+          "x": 248,
+          "y": 677,
+          "width": 76,
+          "height": 87,
+          "pixels": 5366
+        },
+        "screenRightFrontCap": {
+          "x": 562,
+          "y": 696,
+          "width": 79,
+          "height": 89,
+          "pixels": 5466
+        }
+      }
+    },
+    {
+      "frame": 3,
+      "caps": {
+        "screenLeftFrontCap": {
+          "x": 251,
+          "y": 635,
+          "width": 76,
+          "height": 87,
+          "pixels": 5445
+        },
+        "screenRightFrontCap": {
+          "x": 560,
+          "y": 651,
+          "width": 82,
+          "height": 90,
+          "pixels": 5587
+        }
+      }
+    }
+  ]
+}

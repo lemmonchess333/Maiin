@@ -1,0 +1,67 @@
+{
+  "releaseApproved": false,
+  "method": "User-authorized RGB layer compositing. Setup legs and feet copied exactly below y860; original upper body and equipment unchanged above y840; 20px smoothstep join. No scaling or warping.",
+  "fixedRegionChannelDifferences": 0,
+  "movingRegionChannelDifferences": 0,
+  "remainingReview": [
+    "Pelvis above the repair boundary remains independently drawn.",
+    "Dumbbells and hands unchanged; rigid equipment geometry has not passed review.",
+    "Native join and playback review required before any release."
+  ],
+  "frames": [
+    {
+      "path": "docs/exercise-art/pilots/shrugs-composite-20261003/frames/1.png",
+      "pose": 1,
+      "sha256": "4921bd1068faf05e19d5e804b5e70e1f39d4379572721a598c3f4284d1ad44ff",
+      "source": {
+        "path": "docs/exercise-art/pilots/parallel-twenty/shrugs/frames/1.png",
+        "sha256": "657bf5f55e9a4d9d8f368b145f95f8689550236567d3b545df34dcb408ef4838"
+      }
+    },
+    {
+      "path": "docs/exercise-art/pilots/shrugs-composite-20261003/frames/2.png",
+      "pose": 2,
+      "sha256": "14c47bacfed0b331b54a9369ce59f96b2ff500f4b231f7cd13d10ac3fc8cab22",
+      "source": {
+        "path": "docs/exercise-art/pilots/parallel-twenty/shrugs/frames/2.png",
+        "sha256": "2dcfab94c3871c479ab6f1545912afe74de69f15331e43ec3a51927833119f5f"
+      }
+    },
+    {
+      "path": "docs/exercise-art/pilots/shrugs-composite-20261003/frames/3.png",
+      "pose": 3,
+      "sha256": "4166c7f93f9ad49d99e69acd43cfcfbb6340d69fddd279e9fec2e6a788568c72",
+      "source": {
+        "path": "docs/exercise-art/pilots/parallel-twenty/shrugs/frames/3.png",
+        "sha256": "9b056c7c0dcfd80c49d015ca9235c42d521c548633fb2009972572d2bd2dc9fe"
+      }
+    },
+    {
+      "path": "docs/exercise-art/pilots/shrugs-composite-20261003/frames/4.png",
+      "pose": 3,
+      "sha256": "4166c7f93f9ad49d99e69acd43cfcfbb6340d69fddd279e9fec2e6a788568c72",
+      "source": {
+        "path": "docs/exercise-art/pilots/parallel-twenty/shrugs/frames/3.png",
+        "sha256": "9b056c7c0dcfd80c49d015ca9235c42d521c548633fb2009972572d2bd2dc9fe"
+      }
+    },
+    {
+      "path": "docs/exercise-art/pilots/shrugs-composite-20261003/frames/5.png",
+      "pose": 2,
+      "sha256": "14c47bacfed0b331b54a9369ce59f96b2ff500f4b231f7cd13d10ac3fc8cab22",
+      "source": {
+        "path": "docs/exercise-art/pilots/parallel-twenty/shrugs/frames/2.png",
+        "sha256": "2dcfab94c3871c479ab6f1545912afe74de69f15331e43ec3a51927833119f5f"
+      }
+    },
+    {
+      "path": "docs/exercise-art/pilots/shrugs-composite-20261003/frames/6.png",
+      "pose": 1,
+      "sha256": "4921bd1068faf05e19d5e804b5e70e1f39d4379572721a598c3f4284d1ad44ff",
+      "source": {
+        "path": "docs/exercise-art/pilots/parallel-twenty/shrugs/frames/1.png",
+        "sha256": "657bf5f55e9a4d9d8f368b145f95f8689550236567d3b545df34dcb408ef4838"
+      }
+    }
+  ]
+}

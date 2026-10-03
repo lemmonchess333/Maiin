@@ -1,0 +1,33 @@
+{
+  "releaseApproved": false,
+  "files": [
+    {
+      "path": "docs/exercise-art/pilots/shrugs-composite-20261003/build.mjs",
+      "sha256": "09eb2f8d3d923d51d957ae64757871728c4751678b4f7df73ece7730f74e5fab"
+    },
+    {
+      "path": "docs/exercise-art/pilots/shrugs-composite-20261003/composition.json",
+      "sha256": "4ea42b20555c3edce76ba57063805042cd8bcfee54f6bdb09d8470929eeeaa9d"
+    },
+    {
+      "path": "docs/exercise-art/pilots/shrugs-composite-20261003/equipment-diagnostic.json",
+      "sha256": "ac9dfdd1a6b53d1b535b9ff3301fce11d913945280c4e22c441cff0e6f35ef78"
+    },
+    {
+      "path": "docs/exercise-art/pilots/shrugs-composite-20261003/fixed-support-review-20261003.json",
+      "sha256": "b9a6b562192d958428b56b2e399e806ad02cdb89fc89017f1e755930c9be02d6"
+    },
+    {
+      "path": "docs/exercise-art/pilots/shrugs-composite-20261003/measure-equipment.mjs",
+      "sha256": "6aed5889a7b9a0bd26aa80975b29ba23b7bd50ee8a745ca408fe9974f2bf1895"
+    },
+    {
+      "path": "docs/exercise-art/pilots/shrugs-composite-20261003/measure-fixed-supports.mjs",
+      "sha256": "b09439ca25cfaedb3291cd9c820f793c718c8be5209b286e822ee321d0561aae"
+    },
+    {
+      "path": "docs/exercise-art/pilots/shrugs-composite-20261003/sources.json",
+      "sha256": "f5703a753b62028e3fa744644ecd4d87a528b09de69da93f1bad97afe5f49508"
+    }
+  ]
+}
