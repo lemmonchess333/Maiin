@@ -1,0 +1,142 @@
+{
+  "reviewedAt": "2026-10-03",
+  "method": "31x31 RGB setup patches, +/-10px integer search minimizing absolute channel difference. Sole patches measure stationary supports. Knee patches diagnose contour consistency; shading/redraw changes can shift the match without proving anatomical joint translation. No image edits.",
+  "releaseApproved": false,
+  "existingReleaseAnchorLimitPixels": 1,
+  "findings": [
+    "Screen-left sole best-fit translations are +3px x at midpoint and +2px x at peak, exceeding the existing 1px anchor limit.",
+    "Peak knee-contour matches move -9px y at screen left and -8px y at screen right. This warrants lower-body consistency review, not a claim of measured bone-length change.",
+    "Dumbbell projected shape and size remain subject to equipment review; no invariant equipment dimensions are certified here."
+  ],
+  "frames": [
+    {
+      "frame": 1,
+      "path": "docs/exercise-art/pilots/parallel-twenty/shrugs/frames/1.png",
+      "sha256": "657bf5f55e9a4d9d8f368b145f95f8689550236567d3b545df34dcb408ef4838",
+      "patches": {
+        "screenLeftSole": {
+          "origin": {
+            "x": 335,
+            "y": 1408
+          },
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 0
+        },
+        "screenRightSole": {
+          "origin": {
+            "x": 609,
+            "y": 1468
+          },
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 0
+        },
+        "screenLeftKneeContour": {
+          "origin": {
+            "x": 437,
+            "y": 982
+          },
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 0
+        },
+        "screenRightKneeContour": {
+          "origin": {
+            "x": 587,
+            "y": 1051
+          },
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 0
+        }
+      }
+    },
+    {
+      "frame": 2,
+      "path": "docs/exercise-art/pilots/parallel-twenty/shrugs/frames/2.png",
+      "sha256": "2dcfab94c3871c479ab6f1545912afe74de69f15331e43ec3a51927833119f5f",
+      "patches": {
+        "screenLeftSole": {
+          "origin": {
+            "x": 335,
+            "y": 1408
+          },
+          "dx": 3,
+          "dy": 0,
+          "meanChannelDifference": 5.289975719736386
+        },
+        "screenRightSole": {
+          "origin": {
+            "x": 609,
+            "y": 1468
+          },
+          "dx": 1,
+          "dy": 0,
+          "meanChannelDifference": 4.508151231356226
+        },
+        "screenLeftKneeContour": {
+          "origin": {
+            "x": 437,
+            "y": 982
+          },
+          "dx": 1,
+          "dy": 2,
+          "meanChannelDifference": 4.624349635796046
+        },
+        "screenRightKneeContour": {
+          "origin": {
+            "x": 587,
+            "y": 1051
+          },
+          "dx": 0,
+          "dy": 1,
+          "meanChannelDifference": 2.861602497398543
+        }
+      }
+    },
+    {
+      "frame": 3,
+      "path": "docs/exercise-art/pilots/parallel-twenty/shrugs/frames/3.png",
+      "sha256": "9b056c7c0dcfd80c49d015ca9235c42d521c548633fb2009972572d2bd2dc9fe",
+      "patches": {
+        "screenLeftSole": {
+          "origin": {
+            "x": 335,
+            "y": 1408
+          },
+          "dx": 2,
+          "dy": 0,
+          "meanChannelDifference": 3.718002081165453
+        },
+        "screenRightSole": {
+          "origin": {
+            "x": 609,
+            "y": 1468
+          },
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 3.7981269510926117
+        },
+        "screenLeftKneeContour": {
+          "origin": {
+            "x": 437,
+            "y": 982
+          },
+          "dx": 2,
+          "dy": -9,
+          "meanChannelDifference": 6.038848421782865
+        },
+        "screenRightKneeContour": {
+          "origin": {
+            "x": 587,
+            "y": 1051
+          },
+          "dx": 0,
+          "dy": -8,
+          "meanChannelDifference": 3.176205341657995
+        }
+      }
+    }
+  ]
+}
