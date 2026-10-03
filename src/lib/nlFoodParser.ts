@@ -5,7 +5,7 @@ import { logger } from "@/lib/logger";
  * into structured macro data using a common food database lookup.
  *
  * Features:
- *   - ~160 common foods with approximate macros per typical serving
+ *   - Common foods with approximate macros per typical serving
  *   - Quantity parsing: "2 eggs" → qty=2
  *   - Compound matching: "toast with butter" → sums both
  *   - Multi-word fallback: "ham sandwich" → ham + sandwich if no exact match
@@ -23,10 +23,11 @@ export interface ParsedFood {
   carbs: number;
   fat: number;
   unrecognized?: boolean;
-  /** Human-readable portion the user typed ("200g", "150ml", "1.5kg").
-   *  Persisted as the diary row's portionSize so the saved entry reads
-   *  back what the user wrote instead of a generic "1 serving". Only
-   *  set when a mass/volume unit was detected in the input. */
+  /** Human-readable portion the user typed ("200g", "150ml", "1.5kg",
+   *  "1 pint"). Persisted as the diary row's portionSize so the saved
+   *  entry reads back what the user wrote instead of a generic "1
+   *  serving". Only set when a mass/volume unit was detected in the
+   *  input. */
   portionLabel?: string;
   /** Internal — canonical FOOD_DB key. Used for output dedup. Strip before persisting. */
   _canonicalKey?: string;
@@ -94,6 +95,13 @@ const FOOD_DB: Record<string, Macros> = {
     serving: "1 large (50g)",
   },
   omelette: {
+    calories: 154,
+    protein: 11,
+    carbs: 1,
+    fat: 12,
+    serving: "1 omelette (2 eggs)",
+  },
+  omelet: {
     calories: 154,
     protein: 11,
     carbs: 1,
@@ -348,6 +356,13 @@ const FOOD_DB: Record<string, Macros> = {
     fat: 1,
     serving: "1 slice (30g)",
   },
+  "garlic bread": {
+    calories: 204,
+    protein: 5,
+    carbs: 25,
+    fat: 9,
+    serving: "2 slices (60g)",
+  },
   bagel: {
     calories: 250,
     protein: 9,
@@ -489,6 +504,20 @@ const FOOD_DB: Record<string, Macros> = {
     fat: 0,
     serving: "1 medium (150g)",
   },
+  mash: {
+    calories: 226,
+    protein: 4,
+    carbs: 34,
+    fat: 8,
+    serving: "200g",
+  },
+  "mashed potato": {
+    calories: 226,
+    protein: 4,
+    carbs: 34,
+    fat: 8,
+    serving: "200g",
+  },
   "sweet potato": {
     calories: 112,
     protein: 2,
@@ -496,12 +525,18 @@ const FOOD_DB: Record<string, Macros> = {
     fat: 0,
     serving: "1 medium (130g)",
   },
+  /* "Chips" are what a British plate means by them: fries, as in "steak
+     and chips". The app speaks British English, and "crisps" has its own
+     row; it said a 28 g bag of crisps, so "steak and chips" logged 152
+     kcal of crisps. The snack keeps "crisps" and the American "potato
+     chips"; "tortilla chips" is its own food, where the longest-name match
+     would otherwise log a tortilla wrap. */
   chips: {
-    calories: 152,
-    protein: 2,
-    carbs: 15,
-    fat: 10,
-    serving: "28g bag",
+    calories: 365,
+    protein: 4,
+    carbs: 48,
+    fat: 18,
+    serving: "1 medium portion (117g)",
   },
   crisps: {
     calories: 152,
@@ -510,19 +545,56 @@ const FOOD_DB: Record<string, Macros> = {
     fat: 10,
     serving: "28g bag",
   },
+  "potato chips": {
+    calories: 152,
+    protein: 2,
+    carbs: 15,
+    fat: 10,
+    serving: "28g bag",
+  },
+  /* A flavour named with "and" is still one bag: the joiner would
+     otherwise split "cheese and onion crisps" into cheese and crisps. */
+  "salt and vinegar crisps": {
+    calories: 152,
+    protein: 2,
+    carbs: 15,
+    fat: 10,
+    serving: "28g bag",
+  },
+  "cheese and onion crisps": {
+    calories: 152,
+    protein: 2,
+    carbs: 15,
+    fat: 10,
+    serving: "28g bag",
+  },
+  "sour cream and onion crisps": {
+    calories: 152,
+    protein: 2,
+    carbs: 15,
+    fat: 10,
+    serving: "28g bag",
+  },
+  "tortilla chips": {
+    calories: 140,
+    protein: 2,
+    carbs: 19,
+    fat: 7,
+    serving: "28g serving",
+  },
   fries: {
     calories: 365,
     protein: 4,
     carbs: 48,
     fat: 18,
-    serving: "1 medium order (117g)",
+    serving: "1 medium portion (117g)",
   },
   "french fries": {
     calories: 365,
     protein: 4,
     carbs: 48,
     fat: 18,
-    serving: "1 medium order (117g)",
+    serving: "1 medium portion (117g)",
   },
   popcorn: {
     calories: 106,
@@ -844,6 +916,13 @@ const FOOD_DB: Record<string, Macros> = {
     fat: 0,
     serving: "1 medium (110g)",
   },
+  "spring onion": {
+    calories: 5,
+    protein: 0,
+    carbs: 1,
+    fat: 0,
+    serving: "1 spring onion (15g)",
+  },
   garlic: {
     calories: 4,
     protein: 0,
@@ -1056,6 +1135,13 @@ const FOOD_DB: Record<string, Macros> = {
     fat: 10,
     serving: "100g",
   },
+  houmous: {
+    calories: 166,
+    protein: 8,
+    carbs: 14,
+    fat: 10,
+    serving: "100g",
+  },
   mayo: {
     calories: 94,
     protein: 0,
@@ -1195,6 +1281,20 @@ const FOOD_DB: Record<string, Macros> = {
     fat: 0,
     serving: "1 can (355ml)",
   },
+  coke: {
+    calories: 139,
+    protein: 0,
+    carbs: 35,
+    fat: 0,
+    serving: "1 can (330ml)",
+  },
+  "diet coke": {
+    calories: 1,
+    protein: 0,
+    carbs: 0,
+    fat: 0,
+    serving: "1 can (330ml)",
+  },
   "energy drink": {
     calories: 110,
     protein: 0,
@@ -1210,6 +1310,13 @@ const FOOD_DB: Record<string, Macros> = {
     serving: "240ml",
   },
   beer: {
+    calories: 153,
+    protein: 2,
+    carbs: 13,
+    fat: 0,
+    serving: "1 can (355ml)",
+  },
+  lager: {
     calories: 153,
     protein: 2,
     carbs: 13,
@@ -1377,6 +1484,27 @@ const FOOD_DB: Record<string, Macros> = {
     fat: 15,
     serving: "1 slice (80g)",
   },
+  "mince pie": {
+    calories: 224,
+    protein: 2,
+    carbs: 35,
+    fat: 9,
+    serving: "1 pie (59g)",
+  },
+  jam: {
+    calories: 56,
+    protein: 0,
+    carbs: 14,
+    fat: 0,
+    serving: "1 tbsp (20g)",
+  },
+  sugar: {
+    calories: 16,
+    protein: 0,
+    carbs: 4,
+    fat: 0,
+    serving: "1 tsp (4g)",
+  },
   brownie: {
     calories: 260,
     protein: 3,
@@ -1433,7 +1561,12 @@ const FOOD_ALIASES: Record<string, string> = {
   toast: "bread", // toasted ↔ untoasted (DB treats equal)
   oatmeal: "oats",
   porridge: "oats",
-  crisps: "chips", // UK ↔ US (the snack, not fries)
+  chips: "fries", // UK chips are fries
+  "potato chips": "crisps", // US ↔ UK (the snack)
+  mash: "mashed potato",
+  omelet: "omelette", // US ↔ UK
+  houmous: "hummus", // the UK supermarket spelling
+  lager: "beer", // a lager is a beer; the row is the same
   "french fries": "fries",
   courgette: "zucchini", // UK ↔ US
   aubergine: "eggplant", // UK ↔ US
@@ -1447,6 +1580,9 @@ const FOOD_ALIASES: Record<string, string> = {
 function canonicalKey(key: string): string {
   return FOOD_ALIASES[key] ?? key;
 }
+
+/** A British (imperial) pint. */
+const PINT_ML = 568;
 
 /**
  * Attempt to extract a quantity prefix like "2 eggs" → { qty: 2, rest: "eggs" }
@@ -1471,6 +1607,9 @@ function extractQty(segment: string): {
   grams?: number;
   ml?: number;
   portionLabel?: string;
+  /** How the row's name opens when it is not the portion label alone:
+   *  "1 pint of" before "lager". */
+  namePrefix?: string;
   rest: string;
 } {
   // Mass: "200g chicken" / "1.5kg rice" / "200 g chicken"
@@ -1497,6 +1636,31 @@ function extractQty(segment: string): {
       ml,
       portionLabel: `${num}${unit}`,
       rest: volMatch[3].trim(),
+    };
+  }
+  // Pints: "a pint of lager", "2 pints of milk", "half a pint of beer".
+  // A British pint is 568 ml, and the drink scales against its row's ml
+  // as "568ml lager" would; read as a count, a pint of beer logged one
+  // 355 ml can and a pint of milk one 240 ml glass.
+  const pintMatch = segment.match(
+    /^(?:(\d+(?:\.\d+)?)\s*|(?:an?|one)\s+|(half)\s+(?:an?\s+)?)?pints?\s+(?:of\s+)?(.+)/i
+  );
+  if (pintMatch) {
+    const pints = pintMatch[2]
+      ? 0.5
+      : pintMatch[1]
+        ? parseFloat(pintMatch[1])
+        : 1;
+    const portionLabel =
+      pints === 0.5
+        ? "half a pint"
+        : `${pints} ${pints === 1 ? "pint" : "pints"}`;
+    return {
+      qty: 1,
+      ml: pints * PINT_ML,
+      portionLabel,
+      namePrefix: `${portionLabel} of`,
+      rest: pintMatch[3].trim(),
     };
   }
   // "2 eggs" or "2.5 servings"
@@ -1540,9 +1704,10 @@ function parseServingMl(serving: string): number | null {
 }
 
 /**
- * Simple Levenshtein distance for fuzzy matching.
+ * Edit distance for typos. Swapping two neighbouring letters ("chciken")
+ * is one slip, as it is on a keyboard, not two (optimal string alignment).
  */
-function levenshtein(a: string, b: string): number {
+function editDistance(a: string, b: string): number {
   const m = a.length,
     n = b.length;
   if (m === 0) return n;
@@ -1558,15 +1723,60 @@ function levenshtein(a: string, b: string): number {
         a[i - 1] === b[j - 1]
           ? dp[i - 1][j - 1]
           : 1 + Math.min(dp[i - 1][j - 1], dp[i - 1][j], dp[i][j - 1]);
+      if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) {
+        dp[i][j] = Math.min(dp[i][j], dp[i - 2][j - 2] + 1);
+      }
     }
   }
   return dp[m][n];
 }
 
-/** Strip common plural suffixes: "bars" → "bar", "cookies" → "cookie" */
+/**
+ * How many slips a typed word may carry and still be read as a food in
+ * the table. A correction that lands on a different food logs the wrong
+ * thing with no warning, where a food the table does not know is flagged
+ * as unknown, so short words get none: "jam" is one letter from "ham",
+ * "cob" from "cod". Two slips in a five-letter word read "lager" and
+ * "cider" as "liver", so four to seven letters get one ("chiken",
+ * "rcie"), and only longer words get two ("brocolli").
+ */
+function typoAllowance(word: string): number {
+  if (word.length <= 3) return 0;
+  return word.length < 8 ? 1 : 2;
+}
+
+/**
+ * Foods one slip from a different row, which the table does not have.
+ * Typed, they mean themselves: a pasty is not pasta, port is not pork,
+ * bitter is not butter. A food that has a row needs no entry here, since
+ * an exact match comes first, and nor does a word whose first letter
+ * differs (`findBestMatch` never changes it).
+ */
+const NOT_TYPOS = new Set([
+  "pasty",
+  "port",
+  "bitter",
+  "batter",
+  "soba",
+  "beet",
+  "chops",
+  "wing",
+]);
+
+/** The table names its dishes with "and" ("fish and chips"); people
+ *  often type "&". */
+function andForAmpersand(text: string): string {
+  return text.replace(/\s+&\s+/g, " and ");
+}
+
+/** Strip common plural suffixes: "bars" → "bar", "berries" → "berry",
+ *  "potatoes" → "potato". "-es" is the plural only after s, x, z, ch, sh
+ *  and o; elsewhere the e is the word's own ("pies" → "pie", "cakes" →
+ *  "cake"), and dropping it made "2 mince pies" two portions of mince. */
 function depluralize(word: string): string {
   if (word.endsWith("ies") && word.length > 4) return word.slice(0, -3) + "y";
-  if (word.endsWith("es") && word.length > 3) return word.slice(0, -2);
+  if (/(?:s|x|z|ch|sh|o)es$/.test(word) && word.length > 3)
+    return word.slice(0, -2);
   if (word.endsWith("s") && !word.endsWith("ss") && word.length > 3)
     return word.slice(0, -1);
   return word;
@@ -1574,11 +1784,11 @@ function depluralize(word: string): string {
 
 /**
  * Try to find an exact or substring match in the food DB.
- * Falls back to depluralized forms and fuzzy (Levenshtein) matching.
+ * Falls back to depluralized forms, then to typos (see `typoAllowance`).
  * Returns the best matching key, or null.
  */
 function findBestMatch(text: string): string | null {
-  const lower = text.toLowerCase().trim();
+  const lower = andForAmpersand(text.toLowerCase().trim());
 
   // Exact match
   if (FOOD_DB[lower]) return lower;
@@ -1606,26 +1816,27 @@ function findBestMatch(text: string): string | null {
     }
   }
 
-  // Fuzzy matching: allow small typos (distance ≤ 2 for words ≥ 4 chars)
+  // Typos: the closest key within the typed word's allowance.
   let bestKey: string | null = null;
   let bestDist = Infinity;
-  const candidates = [lower, depluralWords];
-  for (const candidate of candidates) {
+  for (const candidate of [lower, depluralWords]) {
+    if (NOT_TYPOS.has(candidate)) continue;
+    const allowance = typoAllowance(candidate);
     for (const key of sortedKeys) {
-      // Only fuzzy-match single-word keys against single-word input,
-      // or multi-word keys against multi-word input of similar length
-      if (Math.abs(candidate.length - key.length) > 3) continue;
-      const dist = levenshtein(candidate, key);
-      const maxDist = key.length <= 3 ? 1 : 2;
-      if (dist <= maxDist && dist < bestDist) {
+      // Words further apart in length than the allowance cannot match.
+      if (Math.abs(candidate.length - key.length) > allowance) continue;
+      // Nearly every misspelling keeps its first letter, so a word that
+      // differs there is another word: hake is a fish, not cake, and
+      // toffee is not coffee.
+      if (key[0] !== candidate[0]) continue;
+      const dist = editDistance(candidate, key);
+      if (dist <= allowance && dist < bestDist) {
         bestDist = dist;
         bestKey = key;
       }
     }
   }
-  if (bestKey) return bestKey;
-
-  return null;
+  return bestKey;
 }
 
 /**
@@ -1741,10 +1952,14 @@ function mergeByCanonicalKey(rows: ParsedFood[]): ParsedFood[] {
  *     recognises keeps the phrase whole, so the existing path decides.
  *   - A quantity belongs to the part it was written in: "2 eggs and toast"
  *     is two eggs and one toast.
+ *   - "on" joins two foods as "and" does: "beans on toast" is beans and
+ *     toast, where the longest name alone logged a slice of toast.
+ *   - "&" reads as "and", so "fish & chips" and "cheese & onion crisps"
+ *     find their rows (see `andForAmpersand`).
  */
-const CONJUNCTION_SPLIT_RE = /\s+(?:and|&|\+)\s+/i;
+const CONJUNCTION_SPLIT_RE = /\s+(?:and|&|\+|on)\s+/i;
 const CONJUNCTION_KEYS = Object.keys(FOOD_DB).filter((k) =>
-  /\s(?:and|&)\s/.test(k)
+  /\s(?:and|&|on)\s/.test(k)
 );
 
 function partResolves(part: string): boolean {
@@ -1758,7 +1973,7 @@ function partResolves(part: string): boolean {
 
 function splitConjunctions(segment: string): string[] {
   if (!CONJUNCTION_SPLIT_RE.test(segment)) return [segment];
-  const lower = extractQty(segment).rest.toLowerCase();
+  const lower = andForAmpersand(extractQty(segment).rest.toLowerCase());
   const depluraled = lower.split(/\s+/).map(depluralize).join(" ");
   if (FOOD_DB[lower] || FOOD_DB[depluraled]) return [segment];
   for (const key of CONJUNCTION_KEYS) {
@@ -1775,6 +1990,24 @@ function splitConjunctions(segment: string): string[] {
   return parts;
 }
 
+/**
+ * Milk in a cup of tea or coffee is a splash, not the glass its row
+ * describes: "tea with milk" added 240 ml of milk to the cup, 152 kcal
+ * for a cup of tea, on a drink logged several times a day. A mug takes
+ * about 30 ml.
+ */
+const SPLASH_ML = 30;
+const CUP_DRINKS = new Set(["tea", "coffee", "espresso"]);
+
+/** How much of an added food's serving goes into the food it was added
+ *  to ("tea with milk" → a splash of the milk). */
+function addedShare(baseKey: string | null, key: string): number {
+  if (!baseKey || !CUP_DRINKS.has(baseKey)) return 1;
+  if (key !== "milk" && !key.endsWith(" milk")) return 1;
+  const ml = parseServingMl(FOOD_DB[key].serving);
+  return ml ? SPLASH_ML / ml : 1;
+}
+
 export function parseFoodText(input: string): ParsedFood[] {
   if (!input.trim()) return [];
 
@@ -1788,7 +2021,8 @@ export function parseFoodText(input: string): ParsedFood[] {
   const results: ParsedFood[] = [];
 
   for (const segment of segments) {
-    const { qty, grams, ml, portionLabel, rest } = extractQty(segment);
+    const { qty, grams, ml, portionLabel, namePrefix, rest } =
+      extractQty(segment);
 
     // Mass/volume-prefixed inputs skip the compound `with` path —
     // the user's portion applies to one food, not a sum. "100g
@@ -1805,15 +2039,17 @@ export function parseFoodText(input: string): ParsedFood[] {
         totalC = 0,
         totalF = 0;
       let anyMatch = false;
+      const baseKey = findBestMatch(withParts[0]);
 
-      for (const part of withParts) {
+      for (const [i, part] of withParts.entries()) {
         const key = findBestMatch(part);
         if (key) {
           const item = FOOD_DB[key];
-          totalCal += item.calories;
-          totalP += item.protein;
-          totalC += item.carbs;
-          totalF += item.fat;
+          const share = i === 0 ? 1 : addedShare(baseKey, key);
+          totalCal += item.calories * share;
+          totalP += item.protein * share;
+          totalC += item.carbs * share;
+          totalF += item.fat * share;
           anyMatch = true;
         }
       }
@@ -1858,7 +2094,7 @@ export function parseFoodText(input: string): ParsedFood[] {
       // rounds out the prefix already, so we just title-case the rest
       // and the portionLabel carries the unit.
       const displayName = hasUnitPrefix
-        ? `${portionLabel} ${rest}`
+        ? `${namePrefix ?? portionLabel} ${rest}`
         : qty > 1
           ? `${rest} (x${qty})`
           : rest;
@@ -1903,7 +2139,7 @@ export function parseFoodText(input: string): ParsedFood[] {
     // <unknown food>" instead of losing the wording entirely.
     logger.warn("[nlFoodParser] Unrecognized food:", rest);
     const displayName = hasUnitPrefix
-      ? `${portionLabel} ${rest}`
+      ? `${namePrefix ?? portionLabel} ${rest}`
       : qty > 1
         ? `${rest} (x${qty})`
         : rest;
@@ -1984,7 +2220,7 @@ export function getFoodSuggestions(input: string, limit = 8): FoodSuggestion[] {
 
     // Fuzzy match: only for single-word queries against single-word keys
     if (!query.includes(" ") && !key.includes(" ") && query.length >= 3) {
-      const dist = levenshtein(query, key);
+      const dist = editDistance(query, key);
       const maxDist = query.length <= 4 ? 1 : 2;
       if (dist <= maxDist) {
         if (!seen.has(key)) {
