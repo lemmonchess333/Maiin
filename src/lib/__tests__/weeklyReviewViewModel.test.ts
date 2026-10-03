@@ -9,8 +9,9 @@ import {
   type WeeklyReviewData,
 } from "../weeklyReviewViewModel";
 
-/* Reviewed week: Sunday 2026-06-21 .. Saturday 2026-06-27. */
-const WEEK = "2026-06-21";
+/* Reviewed week: Monday 2026-06-22 .. Sunday 2026-06-28, keyed by its
+   Monday as `localWeekKey` keys every week. */
+const WEEK = "2026-06-22";
 
 /**
  * The week's counts as the data layer hands them over (`trainingWeek`),
@@ -53,25 +54,25 @@ function base(overrides: Partial<WeeklyReviewData> = {}): WeeklyReviewData {
     established: true,
     weekAhead: { lifts: 4, runs: 3, phaseNote: null },
     goalProfile: null,
-    now: new Date("2026-06-28T10:00:00"),
+    now: new Date("2026-06-29T10:00:00"),
     ...overrides,
   };
   return { ...data, week: overrides.week ?? countsOf(data) };
 }
 
 describe("weekBounds / inWeek", () => {
-  it("computes Sun..Sat local bounds", () => {
+  it("runs from the key's day to the sixth day after it", () => {
     expect(weekBounds(WEEK)).toEqual({
-      start: "2026-06-21",
-      end: "2026-06-27",
+      start: "2026-06-22",
+      end: "2026-06-28",
     });
   });
 
   it("bounds are inclusive", () => {
-    expect(inWeek("2026-06-21", WEEK)).toBe(true);
-    expect(inWeek("2026-06-27", WEEK)).toBe(true);
-    expect(inWeek("2026-06-20", WEEK)).toBe(false);
-    expect(inWeek("2026-06-28", WEEK)).toBe(false);
+    expect(inWeek("2026-06-22", WEEK)).toBe(true);
+    expect(inWeek("2026-06-28", WEEK)).toBe(true);
+    expect(inWeek("2026-06-21", WEEK)).toBe(false);
+    expect(inWeek("2026-06-29", WEEK)).toBe(false);
   });
 });
 
@@ -93,7 +94,7 @@ describe("eligibility (Q6 amended)", () => {
   it("a discarded/invalid run still counts as a deliberate act (no quiet framing) but not as a stat", () => {
     const r = buildWeeklyReview(
       base({
-        runs: [{ date: "2026-06-23", distanceMeters: 4000, eligible: false }],
+        runs: [{ date: "2026-06-24", distanceMeters: 4000, eligible: false }],
       })
     );
     expect(r?.kind).toBe("normal");
@@ -104,7 +105,7 @@ describe("eligibility (Q6 amended)", () => {
     const r = buildWeeklyReview(
       base({
         established: false,
-        workouts: [{ date: "2026-06-28", tonnageKg: 1000 }], // next week
+        workouts: [{ date: "2026-06-29", tonnageKg: 1000 }], // next week
       })
     );
     expect(r).toBeNull();
@@ -117,7 +118,7 @@ describe("headline (PI collapse + delta suppression)", () => {
   it("collapses for a zero-training week even when a perf doc exists", () => {
     const r = buildWeeklyReview(
       base({
-        mealDays: [{ date: "2026-06-22", calories: 2100 }],
+        mealDays: [{ date: "2026-06-23", calories: 2100 }],
         perf,
         prevPi: 60,
       })
@@ -129,7 +130,7 @@ describe("headline (PI collapse + delta suppression)", () => {
   it("renders PI (rounded) with delta when prior week has a PI", () => {
     const r = buildWeeklyReview(
       base({
-        workouts: [{ date: "2026-06-22", tonnageKg: 5000 }],
+        workouts: [{ date: "2026-06-23", tonnageKg: 5000 }],
         perf,
         prevPi: 62,
       })
@@ -141,7 +142,7 @@ describe("headline (PI collapse + delta suppression)", () => {
   it("suppresses delta when the prior week has no PI (no vacation spikes)", () => {
     const r = buildWeeklyReview(
       base({
-        workouts: [{ date: "2026-06-22", tonnageKg: 5000 }],
+        workouts: [{ date: "2026-06-23", tonnageKg: 5000 }],
         perf,
         prevPi: null,
       })
@@ -152,7 +153,7 @@ describe("headline (PI collapse + delta suppression)", () => {
   it("deload week: negative delta suppressed, verdict says by-design", () => {
     const r = buildWeeklyReview(
       base({
-        workouts: [{ date: "2026-06-22", tonnageKg: 2000 }],
+        workouts: [{ date: "2026-06-23", tonnageKg: 2000 }],
         perf: { pi: 50, loadBand: "deload", deloadRecommended: true },
         prevPi: 68,
       })
@@ -168,7 +169,7 @@ describe("headline (PI collapse + delta suppression)", () => {
   it("deload week keeps a POSITIVE delta", () => {
     const r = buildWeeklyReview(
       base({
-        workouts: [{ date: "2026-06-22", tonnageKg: 2000 }],
+        workouts: [{ date: "2026-06-23", tonnageKg: 2000 }],
         perf: { pi: 70, loadBand: "deload", deloadRecommended: true },
         prevPi: 65,
       })
@@ -270,10 +271,10 @@ describe("training lanes", () => {
     const r = buildWeeklyReview(
       base({
         runs: [
-          { date: "2026-06-22", distanceMeters: 5210, eligible: true },
-          { date: "2026-06-24", distanceMeters: 10480, eligible: true },
+          { date: "2026-06-23", distanceMeters: 5210, eligible: true },
+          { date: "2026-06-25", distanceMeters: 10480, eligible: true },
           // Longer, and saved anyway: it is not the week's longest run.
-          { date: "2026-06-25", distanceMeters: 21000, eligible: false },
+          { date: "2026-06-26", distanceMeters: 21000, eligible: false },
         ],
         week: {
           lifts: { done: 0, planned: null },
@@ -294,10 +295,10 @@ describe("training lanes", () => {
     const r = buildWeeklyReview(
       base({
         workouts: [
-          { date: "2026-06-22", tonnageKg: 5000.4 },
-          { date: "2026-06-24", tonnageKg: 4999.8 },
+          { date: "2026-06-23", tonnageKg: 5000.4 },
+          { date: "2026-06-25", tonnageKg: 4999.8 },
         ],
-        runs: [{ date: "2026-06-23", distanceMeters: 8000, eligible: true }],
+        runs: [{ date: "2026-06-24", distanceMeters: 8000, eligible: true }],
         week: {
           lifts: { done: 2, planned: 4 },
           runs: { done: 1, planned: 3, km: 8 },
@@ -314,7 +315,7 @@ describe("training lanes", () => {
 
   it("lanes collapse independently", () => {
     const r = buildWeeklyReview(
-      base({ workouts: [{ date: "2026-06-22", tonnageKg: 3000 }] })
+      base({ workouts: [{ date: "2026-06-23", tonnageKg: 3000 }] })
     );
     expect(r?.training?.lifts?.done).toBe(1);
     expect(r?.training?.runs).toBeNull();
@@ -326,19 +327,19 @@ describe("training lanes", () => {
       exerciseName: "Bench Press",
       weight: 80,
       reps: 8,
-      date: "2026-06-24",
-      previous: { weight: 77.5, reps: 8, date: "2026-06-03" },
+      date: "2026-06-25",
+      previous: { weight: 77.5, reps: 8, date: "2026-06-04" },
     };
     const withBest = buildWeeklyReview(
       base({
-        workouts: [{ date: "2026-06-24", tonnageKg: 3000 }],
+        workouts: [{ date: "2026-06-25", tonnageKg: 3000 }],
         prsHit: 1,
         bestMoment: best,
       })
     );
     expect(withBest?.training?.best).toEqual(best);
     const without = buildWeeklyReview(
-      base({ workouts: [{ date: "2026-06-24", tonnageKg: 3000 }] })
+      base({ workouts: [{ date: "2026-06-25", tonnageKg: 3000 }] })
     );
     expect(without?.training?.best).toBeNull();
   });
@@ -349,8 +350,8 @@ describe("nutrition (adherence-neutral)", () => {
     const r = buildWeeklyReview(
       base({
         mealDays: [
-          { date: "2026-06-22", calories: 2000 },
-          { date: "2026-06-23", calories: 2300 },
+          { date: "2026-06-23", calories: 2000 },
+          { date: "2026-06-24", calories: 2300 },
         ],
         calorieTarget: 2200,
         adaptiveRetunedInWeek: true,
@@ -366,7 +367,7 @@ describe("nutrition (adherence-neutral)", () => {
 
   it("collapses when nothing was logged", () => {
     const r = buildWeeklyReview(
-      base({ workouts: [{ date: "2026-06-22", tonnageKg: 100 }] })
+      base({ workouts: [{ date: "2026-06-23", tonnageKg: 100 }] })
     );
     expect(r?.nutrition).toBeNull();
   });
@@ -376,7 +377,7 @@ describe("body (trend + projection reuse + hide-the-number)", () => {
   // Daily weigh-ins for ~6 weeks (clears the T3 ≥1-month confidence
   // window), trending down toward the goal; ends inside the reviewed week.
   const history = Array.from({ length: 40 }, (_, i) => {
-    const d = new Date(2026, 4, 19 + i); // 19 May → 27 Jun 2026
+    const d = new Date(2026, 4, 20 + i); // 20 May → 28 Jun 2026
     const pad = (n: number) => String(n).padStart(2, "0");
     return {
       date: `2026-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`,
@@ -421,11 +422,11 @@ describe("body (trend + projection reuse + hide-the-number)", () => {
   });
 
   it("collapses without a weigh-in IN the week", () => {
-    const older = history.filter((h) => h.date < "2026-06-21");
+    const older = history.filter((h) => h.date < "2026-06-22");
     const r = buildWeeklyReview(
       base({
         weighIns: older,
-        workouts: [{ date: "2026-06-22", tonnageKg: 100 }],
+        workouts: [{ date: "2026-06-23", tonnageKg: 100 }],
       })
     );
     expect(r?.body).toBeNull();
@@ -435,8 +436,8 @@ describe("body (trend + projection reuse + hide-the-number)", () => {
     const r = buildWeeklyReview(
       base({
         weighIns: [
-          { date: "2026-06-22", weight: 80 },
-          { date: "2026-06-24", weight: 79.8 },
+          { date: "2026-06-23", weight: 80 },
+          { date: "2026-06-25", weight: 79.8 },
         ],
       })
     );
@@ -526,26 +527,26 @@ describe("the week the account began", () => {
   const perf = { pi: 63, loadBand: "moderate", deloadRecommended: false };
 
   it("is reviewed from the start day, with a first-score verdict", () => {
-    // Joined on the Thursday of the Sun..Sat week.
+    // Joined on the Friday: three days of the week.
     const r = buildWeeklyReview(
       base({
-        startKey: "2026-06-25",
-        workouts: [{ date: "2026-06-25", tonnageKg: 5000 }],
+        startKey: "2026-06-26",
+        workouts: [{ date: "2026-06-26", tonnageKg: 5000 }],
         perf,
       })
     );
-    expect(r?.firstDays).toEqual({ start: "2026-06-25", count: 3 });
+    expect(r?.firstDays).toEqual({ start: "2026-06-26", count: 3 });
     expect(r?.headline?.verdict).toBe(
       "Your first score. It settles over the next few weeks."
     );
   });
 
   it("is an ordinary week when the account began on its first day or before", () => {
-    for (const startKey of ["2026-06-21", "2026-06-01", null]) {
+    for (const startKey of ["2026-06-22", "2026-06-02", null]) {
       const r = buildWeeklyReview(
         base({
           startKey,
-          workouts: [{ date: "2026-06-22", tonnageKg: 5000 }],
+          workouts: [{ date: "2026-06-23", tonnageKg: 5000 }],
           perf,
         })
       );
