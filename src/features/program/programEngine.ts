@@ -448,23 +448,6 @@ export function splitRationale(weeklyLiftDays: number): string {
   }
 }
 
-export function primaryGoalLabel(g?: PrimaryGoal): string {
-  switch (g) {
-    case "strength":
-      return "Strength";
-    case "hypertrophy":
-      return "Hypertrophy";
-    case "fat_loss":
-      return "Fat Loss";
-    case "general":
-      return "General Fitness";
-    case "running":
-      return "Running Support";
-    default:
-      return "General Fitness";
-  }
-}
-
 /* ================================
    EXERCISE BUILDER HELPER
 ================================ */

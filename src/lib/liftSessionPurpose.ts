@@ -16,9 +16,9 @@
  *    `goalProfileFor` and `volumeLandmark` set the reps and the weekly sets
  *    it describes, and `liftSessionPurpose.test.ts` fails if either moves
  *    under the words. It explains the focus rather than naming it: Train's
- *    week row already names it, as "Hypertrophy" or, in a block, "Build
- *    muscle", and a third name for one setting on the same screen is the
- *    two-vocabularies problem `programHeaderLine` was trimmed to avoid.
+ *    week row already names it in Settings' words ("Build muscle"), and a
+ *    second name for one setting on the same screen is the two-vocabulary
+ *    problem `programHeaderLine` was trimmed to avoid.
  *    A day the user built themselves (`isCustom`) gets no focus sentence:
  *    its reps are whatever they chose.
  *  - "A lighter week" only when `currentPhase` is "deload", which is set

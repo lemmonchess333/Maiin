@@ -52,10 +52,26 @@ describe("the lift week label derives from programme facts", () => {
         today
       );
       expect(label).toBe(
-        `Week ${((weekNumber - 1) % 4) + 1} of 4 · ${deload ? "Deload" : "Strength"}`
+        `Week ${((weekNumber - 1) % 4) + 1} of 4 · ${deload ? "Deload" : "Get stronger"}`
       );
     }
   );
+  /* One setting, one name on Train. The plain cycle named the focus
+     "Hypertrophy" and a block named it "Build muscle", so starting a block
+     appeared to rename the setting, and the block picker beside the row
+     offered "Build muscle" for what the row called "Hypertrophy". */
+  for (const focus of FOCUS_ORDER) {
+    it(`names the ${focus} focus as Settings and a block do`, () => {
+      expect(liftWeekLabel({ ...state, primaryGoal: focus }, today)).toBe(
+        `Week 2 of 4 · ${focusLabel(focus)}`
+      );
+    });
+  }
+  it("names a programme with no stored focus as the general one", () => {
+    expect(
+      liftWeekLabel({ weekNumber: 1, currentPhase: "progression" }, today)
+    ).toBe(`Week 1 of 4 · ${focusLabel("general")}`);
+  });
   for (const focus of FOCUS_ORDER) {
     it(`names a ${focus} block's week and focus`, () => {
       expect(

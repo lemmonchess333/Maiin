@@ -2250,10 +2250,9 @@ export function useProgram() {
           // Persist primaryGoal across regenerate. Without this, the
           // engine USED primaryGoal to pick rep ranges when generating
           // the new workouts (line above), but the saved state lost
-          // the field — so the Program header's "Built for {goal}" line
-          // (Program.tsx:381 → primaryGoalLabel) silently fell back to
-          // "General Fitness" after every Goal change / Refresh, even
-          // for a hypertrophy or strength user.
+          // the field — so Train named the general focus after every
+          // Goal change / Refresh, even for a hypertrophy or strength
+          // user.
           ...(primaryGoal !== undefined && { primaryGoal }),
           currentPhase: "base",
           weekNumber: 1,

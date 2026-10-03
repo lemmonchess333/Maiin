@@ -1,5 +1,4 @@
 import type { ProgramState } from "@/features/program/programTypes";
-import { primaryGoalLabel } from "@/features/program/programEngine";
 import { blockWeekOf, focusLabel } from "@/features/program/trainingBlock";
 
 type ProgrammeContext = Partial<
@@ -16,9 +15,11 @@ function cycleWeek(week: number | undefined): number | null {
 }
 
 /**
- * Train's week label for a lifting plan: "Week 2 of 8 · Strength" in a
- * training block, "Week 3 of 4 · Hypertrophy" in the plain cycle. One
- * display vocabulary; block dates never replace the engine's week counter.
+ * Train's week label for a lifting plan: "Week 2 of 8 · Get stronger" in a
+ * training block, "Week 3 of 4 · Build muscle" in the plain cycle. The
+ * focus takes Settings' names (`focusLabel`) in both, so one setting has
+ * one name on Train whether or not a block runs. Block dates never replace
+ * the engine's week counter.
  */
 export function liftWeekLabel(
   state: ProgrammeContext | null | undefined,
@@ -31,5 +32,5 @@ export function liftWeekLabel(
     return `Week ${week} of ${block.durationWeeks} · ${focusLabel(block.focus)}`;
   }
   if (cycleWeek(state.weekNumber) === null) return null;
-  return `Week ${cycleWeek(state.weekNumber)} of 4 · ${state.currentPhase === "deload" ? "Deload" : primaryGoalLabel(state.primaryGoal)}`;
+  return `Week ${cycleWeek(state.weekNumber)} of 4 · ${state.currentPhase === "deload" ? "Deload" : focusLabel(state.primaryGoal ?? "general")}`;
 }
