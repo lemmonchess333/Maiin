@@ -610,6 +610,36 @@ Firestore emulator up — 1156 tests, 76 files, none skipped.
 
 ## `functions/` dependency advisories — the bump was TRIED and declined
 
+**STATUS 2026-10-03 — the last moderates are cleared by a `uuid` override,
+not by v14.** After the 2026-09-07 pass, `npm audit` still reported 8 moderate
+advisories in `functions/` and 10 at the root. Eight in each were one
+advisory, GHSA-w5hq-g745-h8pq (`uuid` below 11.1.1: no bounds check when v3,
+v5 or v6 write into a buffer the caller passes), reaching firebase-admin
+through `gaxios`, `google-gax` and `teeny-request`. The root's other two were
+vitest's `@vitest/mocker` (GHSA-82fw-gwwq-j7x9, fixed in 4.1.11). Measured
+before choosing:
+
+- firebase-admin 14.5.0, the newest, clears 6 of the 8 and leaves 2: the
+  storage client it bundles still depends on `gaxios` 6, which asks for
+  `uuid` ^9. The migration this section describes would not reach zero.
+- Each of the three consumers calls `uuid.v4()` with no buffer, so the code
+  the advisory names never ran here, and `uuid` 11 keeps `v4()` and its
+  CommonJS build.
+
+Both `package.json` files now carry `"overrides": { "uuid": "^11.1.1" }`, and
+the root's vitest floor is ^4.1.11. Both audits report 0. Checked on the
+change: the functions suite against the emulators (1,586 tests, none
+skipped), the full root suite, and the whole capture seed chain against the
+emulators, which drives the root's firebase-admin. Remove the override once
+`npm ls uuid` in `functions/` shows firebase-admin's own tree asking for
+11.1.1 or later.
+
+npm 10.9.7 crashes resolving vitest 4.1.11's optional peers in the root tree
+("Cannot read properties of null (reading 'edgesOut')"). The root lockfile was
+regenerated with npm 11 (`npx npm@11 install --package-lock-only`), changing
+only the vitest family and `uuid`, and npm 10's `npm ci` installs it cleanly.
+A later bump that hits the same crash can take the same route.
+
 **STATUS 2026-09-07 — high/critical hold superseded by a fresh measurement.**
 Compatible transitive updates (including grpc-js, protobufjs, websocket-driver,
 form-data and fast-xml-builder) now clear the high and critical advisories
