@@ -103,10 +103,7 @@ vi.mock("@/components/workout/CompletionExtras", () => ({
   default: () => null,
 }));
 vi.mock("@/components/run/PaceInsightCard", () => ({ default: () => null }));
-vi.mock("@/components/WeekPulseCard", () => ({
-  default: () => null,
-  WeekPulseView: () => null,
-}));
+vi.mock("@/components/WeekPulseView", () => ({ default: () => null }));
 vi.mock("@/components/social/SavedRunKudos", () => ({ default: () => null }));
 
 import RunSummary from "../RunSummary";

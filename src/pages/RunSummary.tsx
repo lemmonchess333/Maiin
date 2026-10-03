@@ -163,12 +163,9 @@ function RetryBanner({
  * InvalidRunReview owns its own saved-state UI ("Saved anyway" +
  * Done). Sharing / GPX export / map / charts are deliberately absent
  * because none of them make sense for sub-50m noise. */
-// Keep this optional detail split after the workout save screen stopped importing it.
-const WeekPulseView = lazyRetry(() =>
-  import("@/components/WeekPulseCard").then((m) => ({
-    default: m.WeekPulseView,
-  }))
-);
+// An optional detail, loaded on its own: from its own file, so it brings
+// only the card and not the workout finish screen it once shared a file with.
+const WeekPulseView = lazyRetry(() => import("@/components/WeekPulseView"));
 const SavedRunKudos = lazyRetry(
   () => import("@/components/social/SavedRunKudos")
 );
