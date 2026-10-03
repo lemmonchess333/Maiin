@@ -19,7 +19,7 @@
     "stripe": "^17.0.0"
   },
   "devDependencies": {
-    "vitest": "^4.1.11"
+    "vitest": "^5.0.3"
   },
   "overrides": {
     "uuid": "^11.1.1"
