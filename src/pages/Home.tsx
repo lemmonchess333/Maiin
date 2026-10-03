@@ -306,11 +306,13 @@ export default function Home() {
   );
 
   const weightUnit = profile?.preferredWeightUnit || "kg";
+  // Today's food, from the diary Home already holds: the totals Food shows
+  // for the same day, a meal logged offline included.
+  const todayIntake = useMemo(
+    () => getDailyTotals(todayKey),
+    [getDailyTotals, todayKey]
+  );
   const {
-    dailyCal,
-    dailyProt,
-    dailyCarbs,
-    dailyFat,
     lastWeightInfo,
     weightTrend,
     weightSyncStatus,
@@ -325,7 +327,8 @@ export default function Home() {
     weightUnit,
     // HOME-TARGET-01, protein half: the post-workout nudge must quote the
     // same target the macro rings on this screen show.
-    effectiveTargets?.protein ?? null
+    effectiveTargets?.protein ?? null,
+    { key: todayKey, protein: todayIntake.protein }
   );
 
   // Performance data for the hero card: this week's score, and the week
@@ -879,10 +882,10 @@ export default function Home() {
         <TrackSectionView section="today_energy">
           <SectionErrorBoundary sectionName="today-intake">
             <TodayEnergy
-              calories={dailyCal}
-              protein={dailyProt}
-              carbs={dailyCarbs}
-              fat={dailyFat}
+              calories={todayIntake.calories}
+              protein={todayIntake.protein}
+              carbs={todayIntake.carbs}
+              fat={todayIntake.fat}
               targets={effectiveTargets}
               mealsLoading={mealsLoading}
               // Computed by useHomeData against the same protein target

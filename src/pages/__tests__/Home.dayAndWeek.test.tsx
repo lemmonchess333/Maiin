@@ -28,7 +28,7 @@ const h = vi.hoisted(() => ({
   profile: null as any,
   programState: null as any,
   workouts: [] as Array<{ id: string; date: string }>,
-  meals: [] as Array<{ id: string; date: string }>,
+  meals: [] as Array<{ id: string; date: string; calories?: number }>,
   mealsLoading: false,
   mealsError: null as string | null,
   dayMap: new Map<
@@ -93,31 +93,35 @@ vi.mock("@/hooks/useWorkouts", () => ({
       h.workouts.filter((w) => w.date === date),
   }),
 }));
-vi.mock("@/hooks/useMeals", () => ({
+vi.mock("@/hooks/useMeals", () => {
+  /* One function, as useMeals' own is between changes to the meals (a
+     useCallback): a memo keyed on it must not be refreshed by a new
+     function on every render, or a missing day key goes unnoticed. */
+  const getDailyTotals = (date: string) => ({
+    calories: h.meals
+      .filter((m) => m.date === date)
+      .reduce((total, m) => total + (m.calories ?? 0), 0),
+    protein: 0,
+    carbs: 0,
+    fat: 0,
+    mealCount: h.meals.filter((m) => m.date === date).length,
+  });
   /* The hook's own contract: `meals` are the ACTIVE meals (a soft-deleted
      meal is not among them), and a day's totals count them. */
-  useMeals: () => ({
-    meals: h.meals,
-    loading: h.mealsLoading,
-    error: h.mealsError,
-    getDailyTotals: (date: string) => ({
-      calories: 0,
-      protein: 0,
-      carbs: 0,
-      fat: 0,
-      mealCount: h.meals.filter((m) => m.date === date).length,
+  return {
+    useMeals: () => ({
+      meals: h.meals,
+      loading: h.mealsLoading,
+      error: h.mealsError,
+      getDailyTotals,
     }),
-  }),
-}));
+  };
+});
 vi.mock("@/hooks/useFirestore", () => ({
   useWeeklyDayMap: () => h.dayMap,
 }));
 vi.mock("@/hooks/useHomeData", () => ({
   useHomeData: () => ({
-    dailyCal: 0,
-    dailyProt: 0,
-    dailyCarbs: 0,
-    dailyFat: 0,
     lastWeightInfo: null,
     weightTrend: null,
     weightSyncStatus: "idle",
@@ -234,7 +238,13 @@ vi.mock("@/components/home/StepsPrimingModal", () => ({
 vi.mock("@/components/home/TrialEndedDialog", () => ({ default: () => null }));
 vi.mock("@/components/home/WaterCard", () => ({ default: () => null }));
 vi.mock("@/components/home/WeightStepsTiles", () => ({ default: () => null }));
-vi.mock("@/components/home/TodayEnergy", () => ({ default: () => null }));
+/* The food card draws the figures it is handed; the test reads the one
+   that says which day's food it is. */
+vi.mock("@/components/home/TodayEnergy", () => ({
+  default: ({ calories }: { calories: number }) => (
+    <output data-testid="today-calories">{calories}</output>
+  ),
+}));
 vi.mock("@/components/home/WeeklyReviewEntry", () => ({ default: () => null }));
 vi.mock("@/components/home/PerformanceHeroCard", () => ({
   default: () => null,
@@ -386,6 +396,24 @@ describe("Home — the date follows the clock", () => {
 
     expect(screen.getByText(formatWeekdayDayMonth(earlyMonday))).toBeTruthy();
     expect(screen.queryByText(formatWeekdayDayMonth(lateSunday))).toBeNull();
+  });
+
+  it("shows the new day's food once the app comes back after midnight", () => {
+    /* The food card read today's meals once, when Home mounted, so after
+       midnight it went on showing yesterday's. It now reads the diary Home
+       holds, for Home's day. */
+    const lateSunday = new Date(2026, 8, 27, 23, 59, 30);
+    pinClock(lateSunday);
+    h.meals = [{ id: "m1", date: localDateString(lateSunday), calories: 500 }];
+    renderHome();
+    expect(screen.getByTestId("today-calories").textContent).toBe("500");
+
+    act(() => {
+      vi.setSystemTime(new Date(2026, 8, 28, 0, 0, 30));
+      document.dispatchEvent(new Event("visibilitychange"));
+    });
+
+    expect(screen.getByTestId("today-calories").textContent).toBe("0");
   });
 
   it("starts the week's counts again when the week turns over", () => {
