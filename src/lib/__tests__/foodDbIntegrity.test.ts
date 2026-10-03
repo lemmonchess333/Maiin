@@ -131,8 +131,8 @@ describe("FOOD_DB — the fixture reads the real table", () => {
     expect(ROWS.length).toBe(201);
     expect(ROWS.map((r) => r.name)).toContain("chicken breast");
     expect(ROWS.find((r) => r.name === "chicken breast")).toMatchObject({
-      calories: 165,
-      protein: 31,
+      calories: 248,
+      protein: 47,
     });
   });
 });

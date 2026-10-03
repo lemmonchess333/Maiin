@@ -45,7 +45,16 @@ type Macros = {
    scales against the grams in that string: a row whose figures are per
    100 g names 100g, and a counted serving ("1 medium (150g)") carries the
    figures for that weight. `foodDbIntegrity.test.ts` checks rows against
-   reference values per 100 g. */
+   reference values per 100 g.
+
+   A food typed with no amount logs one serving, so a serving is a portion
+   someone eats. The main protein of a plate (meat, poultry, salmon, cod
+   and other fish served as a main, tofu, tempeh) is 150 g cooked. At
+   100 g, "salmon, potatoes, broccoli" logged 393 kcal and "chicken
+   breast, rice" 365, about a fifth short of the plate, and logged intake
+   is what the adaptive TDEE learns from. Foods eaten in pieces, slices or
+   smaller amounts (thighs, wings, ham, tuna, crab, liver, mackerel) keep
+   100 g. */
 const FOOD_DB: Record<string, Macros> = {
   // ── Proteins ──
   egg: { calories: 78, protein: 6, carbs: 1, fat: 5, serving: "1 large (50g)" },
@@ -92,18 +101,18 @@ const FOOD_DB: Record<string, Macros> = {
     serving: "1 omelette (2 eggs)",
   },
   chicken: {
-    calories: 165,
-    protein: 31,
+    calories: 248,
+    protein: 47,
     carbs: 0,
-    fat: 4,
-    serving: "100g cooked",
+    fat: 6,
+    serving: "150g cooked",
   },
   "chicken breast": {
-    calories: 165,
-    protein: 31,
+    calories: 248,
+    protein: 47,
     carbs: 0,
-    fat: 4,
-    serving: "100g cooked",
+    fat: 6,
+    serving: "150g cooked",
   },
   "chicken thigh": {
     calories: 209,
@@ -120,11 +129,11 @@ const FOOD_DB: Record<string, Macros> = {
     serving: "100g cooked",
   },
   turkey: {
-    calories: 135,
-    protein: 30,
+    calories: 203,
+    protein: 45,
     carbs: 0,
-    fat: 1,
-    serving: "100g cooked",
+    fat: 2,
+    serving: "150g cooked",
   },
   ham: {
     calories: 145,
@@ -148,53 +157,53 @@ const FOOD_DB: Record<string, Macros> = {
     serving: "1 link (56g)",
   },
   beef: {
-    calories: 250,
-    protein: 26,
+    calories: 375,
+    protein: 39,
     carbs: 0,
-    fat: 15,
-    serving: "100g cooked",
+    fat: 23,
+    serving: "150g cooked",
   },
   steak: {
-    calories: 271,
-    protein: 26,
+    calories: 407,
+    protein: 39,
     carbs: 0,
-    fat: 18,
-    serving: "100g cooked",
+    fat: 27,
+    serving: "150g cooked",
   },
   mince: {
-    calories: 250,
-    protein: 26,
+    calories: 375,
+    protein: 39,
     carbs: 0,
-    fat: 15,
-    serving: "100g cooked",
+    fat: 23,
+    serving: "150g cooked",
   },
   "ground beef": {
-    calories: 250,
-    protein: 26,
+    calories: 375,
+    protein: 39,
     carbs: 0,
-    fat: 15,
-    serving: "100g cooked",
+    fat: 23,
+    serving: "150g cooked",
   },
   pork: {
-    calories: 242,
-    protein: 27,
+    calories: 363,
+    protein: 41,
     carbs: 0,
-    fat: 14,
-    serving: "100g cooked",
+    fat: 21,
+    serving: "150g cooked",
   },
   lamb: {
-    calories: 250,
-    protein: 25,
+    calories: 375,
+    protein: 38,
     carbs: 0,
-    fat: 16,
-    serving: "100g cooked",
+    fat: 24,
+    serving: "150g cooked",
   },
   duck: {
-    calories: 337,
-    protein: 19,
+    calories: 506,
+    protein: 29,
     carbs: 0,
-    fat: 28,
-    serving: "100g cooked",
+    fat: 42,
+    serving: "150g cooked",
   },
   liver: {
     calories: 175,
@@ -204,11 +213,11 @@ const FOOD_DB: Record<string, Macros> = {
     serving: "100g cooked",
   },
   salmon: {
-    calories: 208,
-    protein: 20,
+    calories: 312,
+    protein: 30,
     carbs: 0,
-    fat: 13,
-    serving: "100g cooked",
+    fat: 20,
+    serving: "150g cooked",
   },
   tuna: {
     calories: 130,
@@ -218,18 +227,18 @@ const FOOD_DB: Record<string, Macros> = {
     serving: "100g cooked",
   },
   fish: {
-    calories: 136,
-    protein: 20,
+    calories: 204,
+    protein: 30,
     carbs: 0,
-    fat: 6,
-    serving: "100g cooked",
+    fat: 9,
+    serving: "150g cooked",
   },
   cod: {
-    calories: 105,
-    protein: 23,
+    calories: 158,
+    protein: 35,
     carbs: 0,
-    fat: 1,
-    serving: "100g cooked",
+    fat: 2,
+    serving: "150g cooked",
   },
   mackerel: {
     calories: 262,
@@ -267,18 +276,18 @@ const FOOD_DB: Record<string, Macros> = {
     serving: "100g cooked",
   },
   tofu: {
-    calories: 144,
-    protein: 17,
-    carbs: 3,
-    fat: 9,
-    serving: "100g",
+    calories: 216,
+    protein: 26,
+    carbs: 5,
+    fat: 14,
+    serving: "150g",
   },
   tempeh: {
-    calories: 195,
-    protein: 20,
-    carbs: 8,
-    fat: 11,
-    serving: "100g",
+    calories: 293,
+    protein: 30,
+    carbs: 12,
+    fat: 17,
+    serving: "150g",
   },
   jerky: { calories: 116, protein: 9, carbs: 3, fat: 7, serving: "28g" },
   "cottage cheese": {
