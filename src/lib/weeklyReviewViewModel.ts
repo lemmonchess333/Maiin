@@ -35,6 +35,7 @@ import {
   projectGoalDate,
 } from "@/utils/weightTrend";
 import { computeDataConfidence } from "@/lib/dataConfidence";
+import type { TrainingWeek } from "@/lib/trainingWeek";
 import { parseLocalDate, localDateString } from "@/lib/dateHelpers";
 
 /* ── Week bounds ──────────────────────────────────────────────── */
@@ -129,9 +130,11 @@ export interface WeeklyReviewData {
   bestMoment?: WeekBest | null;
   perf: ReviewPerfWeek | null;
   prevPi: number | null;
-  plannedLifts: number | null;
-  /** Planned eligible-run count for the reviewed week; null when freeform. */
-  plannedRuns: number | null;
+  /**
+   * The reviewed week's counts (`trainingWeek`), done and planned, as Home
+   * and the finish screens count them.
+   */
+  week: Pick<TrainingWeek, "lifts" | "runs">;
   /** The day the account began ("yyyy-MM-dd"): a week it began inside
    *  is reviewed from that day (startDay.ts). */
   startKey?: string | null;
@@ -211,18 +214,15 @@ export interface WeekPulse {
 
 /**
  * Live mid-week counterpart of the review's training section, shown on
- * the two completion screens. Same rules as the review: eligible runs
- * only, planned comparisons only when a plan exists (Run9a freeform →
- * done-only), Monday-start weeks. NO PI claims — the index recomputes
- * async server-side after a save, so an instant delta would be a guess.
+ * the two completion screens, from the same week counts as the review and
+ * Home (`trainingWeek`): runs that count, planned comparisons only when the
+ * plan has runs this week (a free runner's week is done-only, Run9a),
+ * Monday-start weeks. NO PI claims — the index recomputes async
+ * server-side after a save, so an instant delta would be a guess.
  * Returns null when there is nothing to say (no lanes at all).
  */
 export function buildWeekPulse(args: {
-  weekKey: string;
-  workouts: { date: string }[];
-  runs: ReviewRun[];
-  plannedLifts: number | null;
-  plannedRuns: number | null;
+  week: Pick<TrainingWeek, "lifts" | "runs">;
   streak: number;
   /**
    * Sessions finished but NOT yet persisted, counted into `done`.
@@ -235,27 +235,18 @@ export function buildWeekPulse(args: {
    */
   pendingLifts?: number;
 }): WeekPulse | null {
-  const workouts = args.workouts.filter((w) => inWeek(w.date, args.weekKey));
-  const eligibleRuns = args.runs.filter(
-    (r) => r.eligible && inWeek(r.date, args.weekKey)
-  );
-
-  const pendingLifts = Math.max(0, args.pendingLifts ?? 0);
-  const liftsDone = workouts.length + pendingLifts;
+  const { week } = args;
+  const liftsDone = week.lifts.done + Math.max(0, args.pendingLifts ?? 0);
   const lifts =
-    liftsDone > 0 || args.plannedLifts !== null
-      ? { done: liftsDone, planned: args.plannedLifts }
+    liftsDone > 0 || week.lifts.planned !== null
+      ? { done: liftsDone, planned: week.lifts.planned }
       : null;
   const runs =
-    eligibleRuns.length > 0 || args.plannedRuns !== null
+    week.runs.done > 0 || week.runs.planned !== null
       ? {
-          count: eligibleRuns.length,
-          km:
-            Math.round(
-              (eligibleRuns.reduce((s, r) => s + r.distanceMeters, 0) / 1000) *
-                10
-            ) / 10,
-          planned: args.plannedRuns,
+          count: week.runs.done,
+          km: week.runs.km,
+          planned: week.runs.planned,
         }
       : null;
 
@@ -389,29 +380,31 @@ export function buildWeeklyReview(data: WeeklyReviewData): WeeklyReview | null {
     };
   }
 
-  /* Training — lanes collapse independently; planned comparisons only
-     when a plan exists (freeform → done-only framing). */
+  /* Training — lanes collapse independently. The counts are the week's
+     (`trainingWeek`): runs that count, planned comparisons only when the
+     plan had runs that week (freeform → done-only framing). The longest
+     run is one of the runs that count. */
+  const { week } = data;
   const eligibleRuns = runs.filter((r) => r.eligible);
-  const runKm = eligibleRuns.reduce((s, r) => s + r.distanceMeters, 0) / 1000;
   const longestKm = eligibleRuns.length
     ? Math.max(...eligibleRuns.map((r) => r.distanceMeters)) / 1000
     : null;
   const liftLane =
-    workouts.length > 0
+    week.lifts.done > 0
       ? {
-          done: workouts.length,
-          planned: data.plannedLifts,
+          done: week.lifts.done,
+          planned: week.lifts.planned,
           tonnageKg: Math.round(workouts.reduce((s, w) => s + w.tonnageKg, 0)),
         }
       : null;
   const runLane =
-    eligibleRuns.length > 0
+    week.runs.done > 0
       ? {
-          count: eligibleRuns.length,
-          km: Math.round(runKm * 10) / 10,
+          count: week.runs.done,
+          km: week.runs.km,
           longestKm:
             longestKm !== null ? Math.round(longestKm * 10) / 10 : null,
-          planned: data.plannedRuns,
+          planned: week.runs.planned,
         }
       : null;
   const training =

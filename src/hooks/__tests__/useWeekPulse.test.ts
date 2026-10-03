@@ -45,7 +45,7 @@ import {
 } from "@/test/firestoreHarness";
 import { savedRunDoc } from "@/test/sessionFixtures";
 
-/** Wed 15 Jul 2026 → current week is Sun 12th … Sat 18th. */
+/** Wed 15 Jul 2026 → current week is Mon 13th … Sun 19th. */
 const NOW = new Date(2026, 6, 15, 9, 0, 0);
 const IN_WEEK = "2026-07-14";
 const LAST_WEEK = "2026-07-08";
@@ -138,16 +138,19 @@ describe("useWeekPulse", () => {
         distance: 5000,
         duration: 1500,
       }),
+      // The plan's dated run days live at the top of the programme
+      // document, where the scheduler writes them.
       "users/u1/programState/current": {
         runPlan: {
           raceGoal: { distance: "10k", targetDate: "2026-09-05" },
-          runDays: [
-            { date: "2026-07-13" },
-            { date: "2026-07-15" },
-            { date: IN_WEEK },
-            { date: LAST_WEEK }, // outside the week — must not count
-          ],
         },
+        runDays: [
+          { id: "a", date: "2026-07-13", templateId: "easy_30" },
+          { id: "b", date: "2026-07-15", templateId: "easy_30" },
+          { id: "c", date: IN_WEEK, templateId: "easy_30" },
+          // outside the week — must not count
+          { id: "d", date: LAST_WEEK, templateId: "easy_30" },
+        ],
       },
     });
     const { result } = renderHook(() => useWeekPulse());
@@ -193,8 +196,9 @@ describe("useWeekPulse — the run a finish screen is showing", () => {
     const run = {
       id: null,
       date: IN_WEEK,
-      distanceMeters: 4000,
-      eligible: true,
+      distance: 4000,
+      duration: 1400,
+      isInvalid: false,
     };
     const { result } = renderHook(() => useWeekPulse(0, run));
     await waitFor(() => expect(result.current).not.toBeNull());
@@ -211,12 +215,49 @@ describe("useWeekPulse — the run a finish screen is showing", () => {
     const run = {
       id: "r1",
       date: IN_WEEK,
-      distanceMeters: 4000,
-      eligible: true,
+      distance: 4000,
+      duration: 1400,
+      isInvalid: false,
     };
     const { result } = renderHook(() => useWeekPulse(0, run));
     await waitFor(() => expect(result.current).not.toBeNull());
     expect(result.current?.runs).toMatchObject({ count: 1, km: 4 });
+  });
+});
+
+describe("useWeekPulse — runs as every screen counts them", () => {
+  it("does not count a finished run flagged invalid", async () => {
+    const run = {
+      id: null,
+      date: IN_WEEK,
+      distance: 20000,
+      duration: 480,
+      isInvalid: true,
+    };
+    seedFirestore({
+      "users/u1/runs/r1": savedRunDoc(IN_WEEK, {
+        distance: 5000,
+        duration: 1500,
+      }),
+    });
+    const { result } = renderHook(() => useWeekPulse(0, run));
+    await waitFor(() => expect(result.current).not.toBeNull());
+    expect(result.current?.runs).toMatchObject({ count: 1, km: 5 });
+  });
+
+  it("counts a planned run marked done by hand", async () => {
+    seedFirestore({
+      "users/u1/programState/current": {
+        runDays: [
+          { id: "a", date: "2026-07-13", templateId: "easy_30" },
+          { id: "b", date: "2026-07-16", templateId: "easy_30" },
+        ],
+        manualCompletions: { a: { completedAt: 1 } },
+      },
+    });
+    const { result } = renderHook(() => useWeekPulse());
+    await waitFor(() => expect(result.current).not.toBeNull());
+    expect(result.current?.runs).toMatchObject({ count: 1, planned: 2 });
   });
 });
 
@@ -226,9 +267,13 @@ describe("useWeekPulse — the week the account began", () => {
     // and Friday's are not.
     mockProfile = {
       weekSchedule: [
+        { day: 0, type: "rest" },
         { day: 1, type: "lift" },
+        { day: 2, type: "rest" },
         { day: 3, type: "lift" },
+        { day: 4, type: "rest" },
         { day: 5, type: "lift" },
+        { day: 6, type: "rest" },
       ],
       createdAt: { toMillis: () => NOW.getTime() },
     };

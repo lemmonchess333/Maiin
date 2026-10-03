@@ -22,7 +22,7 @@ import {
 } from "@/lib/offlineQueue";
 import EditDistance from "@/components/run/EditDistance";
 import { auth, db } from "../lib/firebase";
-import { localDateString, localWeekKey } from "../lib/dateHelpers";
+import { localDateString } from "../lib/dateHelpers";
 import { spaceDef } from "@/features/spaces/spaceDefs";
 import { useAuth } from "../lib/auth";
 import { useOnlineStatus } from "../hooks/useOnlineStatus";
@@ -86,8 +86,7 @@ import {
   elevationUnitLabel,
 } from "@/lib/distanceUnits";
 import RunStatGrid from "@/components/run/RunStatGrid";
-import { useRunningStats } from "../hooks/useRunningStats";
-import { getWeeklyRunTarget } from "../lib/scheduleUtils";
+import { useWeekPulse, type PendingRun } from "../hooks/useWeekPulse";
 import { isVolumeEligible, isPaceEligible } from "../lib/runStatsEligibility";
 import { clearStoredRun } from "../lib/runResumeStorage";
 import { toast } from "@/lib/toast";
@@ -172,7 +171,11 @@ function RetryBanner({
  * Done). Sharing / GPX export / map / charts are deliberately absent
  * because none of them make sense for sub-50m noise. */
 // Keep this optional detail split after the workout save screen stopped importing it.
-const WeekPulseCard = lazyRetry(() => import("@/components/WeekPulseCard"));
+const WeekPulseView = lazyRetry(() =>
+  import("@/components/WeekPulseCard").then((m) => ({
+    default: m.WeekPulseView,
+  }))
+);
 const SavedRunKudos = lazyRetry(
   () => import("@/components/social/SavedRunKudos")
 );
@@ -378,10 +381,6 @@ export default function RunSummary() {
   // "yes I did do this scheduled run" reconciliation path
   // (Q5 P74 — DayActionSheet's contextual hint).
   const { markManualComplete, skipRunDay, programState } = useProgram();
-  // Run8 PR3c — this-week run count for the plan-progress row. Hook
-  // must sit above the early-return guard at line ~470 to satisfy
-  // rules-of-hooks. Used further below in the component body.
-  const { runs: weekRunsRaw } = useRunningStats(7);
   // P3-1: reconciliation choice — 'pending' until the user picks,
   // then 'completed' / 'skipped' / 'dismissed' once they do.
   //
@@ -612,6 +611,32 @@ export default function RunSummary() {
     [state, privacyZones]
   );
 
+  /* This run as the screen's two week lines count it, saved or not yet.
+     One read of the week (`useWeekPulse`, counted by `trainingWeek`) feeds
+     the card and the plan row, so the two cannot disagree. Above the
+     `!state` return with the other hooks, so it reads `state` defensively
+     and repeats the edited-distance fallback. */
+  const pendingWeekRun = useMemo<PendingRun | null>(() => {
+    if (!state) return null;
+    const runDistance = editedDistanceMeters ?? state.distance;
+    const type = state.runConfig?.activityType;
+    return {
+      id: savedRunId,
+      // A run with no trace (entered by hand) is today's.
+      date: points[0] ? localDateString(new Date(points[0].timestamp)) : null,
+      distance: runDistance,
+      duration: state.elapsed,
+      isInvalid: type
+        ? getInvalidRunReason({
+            activityType: type,
+            distanceKm: (runDistance ?? 0) / 1000,
+            elapsedSeconds: state.elapsed ?? 0,
+          }) !== null
+        : false,
+    };
+  }, [state, editedDistanceMeters, savedRunId, points]);
+  const weekPulse = useWeekPulse(0, pendingWeekRun);
+
   // A redirect is an element, not a call made while rendering: React Router
   // warns on navigate() in render, and a re-render before the navigation
   // commits would fire it twice.
@@ -834,27 +859,6 @@ export default function RunSummary() {
     return null;
   })();
 
-  // Run8 PR3c — plan-progress row. Surfaces "X of N runs this week"
-  // for structured / race_prep users; freeform users see nothing.
-  // The just-saved run is counted optimistically (saved && eligible)
-  // so the user sees their new total without waiting for the
-  // useRunningStats query to refetch.
-  const weeklyRunTarget =
-    profile?.runMode && profile.runMode !== "freeform"
-      ? getWeeklyRunTarget(profile)
-      : 0;
-  const thisWeekKey = localWeekKey(new Date());
-  const eligibleRunsThisWeek = weekRunsRaw.filter(
-    (r) => isVolumeEligible(r) && localWeekKey(r.completedAt) === thisWeekKey
-  ).length;
-  // Optimistic count: include the just-saved run if it cleared the
-  // eligibility threshold (distance >= 50 && duration >= 30 — same
-  // gate isVolumeEligible uses on persisted runs). Hooked on the
-  // current saveStatus so it lights up the moment the save lands,
-  // before useRunningStats refetches the new doc.
-  const currentRunIsEligible = (distance ?? 0) >= 50 && (elapsed ?? 0) >= 30;
-  // `saveStatus`/`saved` are declared further down in this component;
-  // we recompute the "include current run" flag inline at render.
   const runPlanCurrentWeek = programState?.runPlan?.currentWeek;
   const runPlanTotalWeeks = programState?.runPlan?.totalWeeks;
 
@@ -1643,21 +1647,7 @@ export default function RunSummary() {
               being counted twice. Null while loading; no jank. */}
           <div className="px-4 mb-4">
             <Suspense fallback={null}>
-              <WeekPulseCard
-                pendingRun={{
-                  id: savedRunId,
-                  // A run with no trace (entered by hand) is today's.
-                  date: points[0]
-                    ? localDateString(new Date(points[0].timestamp))
-                    : null,
-                  distanceMeters: distance,
-                  eligible: isVolumeEligible({
-                    distance,
-                    duration: elapsed,
-                    isInvalid,
-                  }),
-                }}
-              />
+              <WeekPulseView pulse={weekPulse} />
             </Suspense>
           </div>
 
@@ -1717,13 +1707,12 @@ export default function RunSummary() {
             </div>
           )}
 
-          {/* Run8 PR3c — plan-progress row. Only renders for
-              structured / race_prep users (weeklyRunTarget > 0).
-              Includes the just-saved run optimistically once the
-              save lands so the user sees their new total without
-              waiting for useRunningStats to refetch. Race-prep adds
-              the "Week X of Y" anchor. */}
-          {weeklyRunTarget > 0 && (
+          {/* Run8 PR3c — the plan row: this week's runs against the
+              plan's, from the same read as the card above, so the two
+              cannot disagree, and a race plan's week. It shows only while
+              the plan has runs this week: a free runner's week is
+              done-only (Run9a). */}
+          {weekPulse?.runs && weekPulse.runs.planned !== null && (
             <div className="mx-4 mb-4 px-3 py-2.5 rounded-xl bg-card border border-border/40 flex items-center justify-center gap-1.5 text-xs">
               {profile?.runMode === "race_prep" &&
                 runPlanTotalWeeks &&
@@ -1736,30 +1725,27 @@ export default function RunSummary() {
                   </>
                 )}
               <span className="font-mono tabular-nums font-semibold text-foreground">
-                {Math.min(
-                  weeklyRunTarget,
-                  eligibleRunsThisWeek +
-                    (saved &&
-                    currentRunIsEligible &&
-                    !weekRunsRaw.some((run) => run.id === savedRunId)
-                      ? 1
-                      : 0)
-                )}
+                {weekPulse.runs.count}
               </span>
               <span className="text-muted-foreground">of</span>
               <span className="font-mono tabular-nums font-semibold text-foreground">
-                {weeklyRunTarget}
+                {weekPulse.runs.planned}
               </span>
               <span className="text-muted-foreground">runs this week</span>
-              {saved && currentRunIsEligible && (
-                <span
-                  className="ml-1 text-xs font-semibold"
-                  style={{ color: THEME.success }}
-                  aria-label="this run counts"
-                >
-                  +1 ✓
-                </span>
-              )}
+              {saved &&
+                isVolumeEligible({
+                  distance,
+                  duration: elapsed,
+                  isInvalid,
+                }) && (
+                  <span
+                    className="ml-1 text-xs font-semibold"
+                    style={{ color: THEME.success }}
+                    aria-label="this run counts"
+                  >
+                    +1 ✓
+                  </span>
+                )}
             </div>
           )}
 

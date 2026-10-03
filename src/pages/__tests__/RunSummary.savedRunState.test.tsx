@@ -68,9 +68,14 @@ vi.mock("@/hooks/useOnlineStatus", () => ({
 vi.mock("@/hooks/useShoes", () => ({
   useShoes: () => ({ updateMileage: vi.fn(), defaultShoe: null }),
 }));
-vi.mock("@/hooks/useRunningStats", () => ({
-  useRunningStats: () => ({ runs: [] }),
+const week = vi.hoisted(() => ({
+  pulse: null as null | {
+    lifts: null;
+    runs: { count: number; km: number; planned: number | null };
+    streak: null;
+  },
 }));
+vi.mock("@/hooks/useWeekPulse", () => ({ useWeekPulse: () => week.pulse }));
 vi.mock("@/lib/lifecycleAnalytics", () => ({ track: vi.fn() }));
 vi.mock("@/components/run/RunMapLazy", () => ({ default: () => null }));
 vi.mock("@/components/analytics/SplitsBarChart", () => ({
@@ -90,7 +95,10 @@ vi.mock("@/components/workout/CompletionExtras", () => ({
   default: () => null,
 }));
 vi.mock("@/components/run/PaceInsightCard", () => ({ default: () => null }));
-vi.mock("@/components/WeekPulseCard", () => ({ default: () => null }));
+vi.mock("@/components/WeekPulseCard", () => ({
+  default: () => null,
+  WeekPulseView: () => null,
+}));
 vi.mock("@/components/social/SavedRunKudos", () => ({ default: () => null }));
 
 import RunSummary from "../RunSummary";
@@ -157,6 +165,7 @@ function renderSummary() {
 beforeEach(() => {
   resetFirestore();
   localStorage.clear();
+  week.pulse = null;
   h.domAtRender.length = 0;
   h.paceLoading.length = 0;
   h.markManualComplete.mockReset();
@@ -259,5 +268,29 @@ describe("RunSummary — pace history loading follows its inputs", () => {
     resumeReads();
     releaseAllReads();
     await waitFor(() => expect(h.paceLoading.at(-1)).toBe(false));
+  });
+});
+
+describe("RunSummary — the plan row counts the week the card counts", () => {
+  it("shows the week's runs against the plan's, from the one read", async () => {
+    week.pulse = {
+      lifts: null,
+      runs: { count: 2, km: 9.5, planned: 3 },
+      streak: null,
+    };
+    renderSummary();
+    const label = await screen.findByText("runs this week");
+    expect(label.parentElement?.textContent).toMatch(/^2of3runs this week/);
+  });
+
+  it("has no plan row for a week the plan has no runs in", async () => {
+    week.pulse = {
+      lifts: null,
+      runs: { count: 2, km: 9.5, planned: null },
+      streak: null,
+    };
+    renderSummary();
+    expect(await screen.findByText("Run saved")).toBeInTheDocument();
+    expect(screen.queryByText("runs this week")).toBeNull();
   });
 });

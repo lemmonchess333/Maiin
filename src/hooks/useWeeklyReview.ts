@@ -27,7 +27,6 @@ import { localWeekKey } from "@/lib/dateHelpers";
 import {
   buildWeeklyReview,
   weekBounds,
-  inWeek,
   type WeekBest,
   type WeeklyReview,
   type WeeklyReviewData,
@@ -51,7 +50,8 @@ import { fetchBodyweightLogs } from "@/lib/api";
 import { resolveRunPlanSurface } from "@/lib/runProgrammeViewModel";
 import { isActiveMealDoc } from "@/lib/mealTotals";
 import { logger } from "@/lib/logger";
-import { scheduledDaysSinceStart, startDayKey } from "@/lib/startDay";
+import { startDayKey } from "@/lib/startDay";
+import { trainingWeek, type TrainingWeekInput } from "@/lib/trainingWeek";
 import {
   resolveDeloadRecommended,
   resolveLoadBand,
@@ -456,7 +456,9 @@ export function useWeeklyReview(): UseWeeklyReviewResult {
         }
         if (cancelled) return;
 
-        // Plan context (Run9a): freeform substrate has no planned runs.
+        // The reviewed week's counts and the week ahead's plan, counted as
+        // Home and the finish screens count them (`trainingWeek`). A free
+        // runner's plan has no runs, so their weeks are done-only (Run9a).
         const programState = programStateSnap.exists()
           ? (programStateSnap.data() as Record<string, unknown>)
           : null;
@@ -464,44 +466,28 @@ export function useWeeklyReview(): UseWeeklyReviewResult {
           profile as Parameters<typeof resolveRunPlanSurface>[0],
           programState as Parameters<typeof resolveRunPlanSurface>[1]
         );
-        const schedule = Array.isArray(profile?.weekSchedule)
-          ? (profile.weekSchedule as { day?: number; type?: string }[])
-          : [];
-        // The week the account began counts from the day it began
-        // (startDay.ts): a Friday sign-up planned no Monday lift.
+        const planState = programState as TrainingWeekInput["programState"];
         const startKey = startDayKey(profile?.createdAt);
-        const liftDaysReviewed = scheduledDaysSinceStart(
-          schedule,
-          ["lift", "both"],
+        const readAt = new Date();
+        const reviewed = trainingWeek({
           weekKey,
-          startKey
-        );
-        const liftDays = schedule.filter(
-          (s) => s.type === "lift" || s.type === "both"
-        ).length;
-        const runScheduleDays = schedule.filter(
-          (s) => s.type === "run" || s.type === "both"
-        ).length;
-
+          profile,
+          programState: planState,
+          workouts: weekWorkoutDocs,
+          runs: savedRuns,
+          now: readAt,
+        });
+        const ahead = trainingWeek({
+          weekKey: localWeekKey(readAt),
+          profile,
+          programState: planState,
+          workouts: [],
+          runs: [],
+          now: readAt,
+        });
         const runPlan = programState?.runPlan as
-          | { runDays?: { date?: string }[]; phase?: string | null }
+          | { phase?: string | null }
           | undefined;
-        const raceRunDaysIn = (from: string): number | null => {
-          if (surface.kind !== "race_goal") return null;
-          if (!Array.isArray(runPlan?.runDays)) return null;
-          return runPlan.runDays.filter(
-            (d) => typeof d.date === "string" && inWeek(d.date, from)
-          ).length;
-        };
-
-        const plannedRuns = raceRunDaysIn(weekKey);
-        const currentWeekKey = localWeekKey(new Date());
-        const weekAheadRuns =
-          surface.kind === "race_goal"
-            ? raceRunDaysIn(currentWeekKey)
-            : runScheduleDays > 0
-              ? runScheduleDays
-              : null;
         const phaseNote =
           surface.kind === "race_goal"
             ? runPlan?.phase
@@ -531,8 +517,7 @@ export function useWeeklyReview(): UseWeeklyReviewResult {
           })(),
           perf,
           prevPi,
-          plannedLifts: liftDaysReviewed > 0 ? liftDaysReviewed : null,
-          plannedRuns,
+          week: { lifts: reviewed.lifts, runs: reviewed.runs },
           startKey,
           /* Resolved through the SAME precedence the PI's adherence
              scoring uses (adaptiveTarget's snapshot resolver, the pinned
@@ -549,8 +534,8 @@ export function useWeeklyReview(): UseWeeklyReviewResult {
           hideWeightNumber: Boolean(profile?.hideWeightNumber),
           established,
           weekAhead: {
-            lifts: liftDays > 0 ? liftDays : null,
-            runs: weekAheadRuns,
+            lifts: ahead.lifts.planned,
+            runs: ahead.runs.planned,
             phaseNote,
           },
           goalProfile: profile

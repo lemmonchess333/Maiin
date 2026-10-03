@@ -42,11 +42,9 @@ import { toast } from "@/lib/toast";
 import { realignResultMessage } from "@/lib/realignCopy";
 import { HomeSkeleton } from "@/components/LoadingSkeleton";
 import { SectionErrorBoundary } from "@/components/SectionErrorBoundary";
-import {
-  resolveTrainingDayForDate,
-  resolveTrainingWindow,
-} from "@/lib/trainingResolver";
+import { resolveTrainingDayForDate } from "@/lib/trainingResolver";
 import { summariseWeek } from "@/lib/weekSummary";
+import { trainingWeek, weekDays } from "@/lib/trainingWeek";
 import { nextLiftAfter, resolveHomeLift } from "@/lib/homeLift";
 import { nextUpIndex } from "@/features/program/nextUpCursor";
 import { startDayKey } from "@/lib/startDay";
@@ -226,7 +224,11 @@ export default function Home() {
   // chunk B3f forwards unclaimedByDate to DayActionSheet for the
   // same-date paradox hint (P74), and Q5 chunk B3g forwards it to
   // DayPeekCard for the extras rows.
-  const { claimMap, unclaimedByDate } = useClaimMapForProgram(programState);
+  const {
+    claimMap,
+    unclaimedByDate,
+    runs: savedRuns,
+  } = useClaimMapForProgram(programState);
   const resolvedToday = useMemo(
     function () {
       return resolveTrainingDayForDate({
@@ -278,17 +280,10 @@ export default function Home() {
     [profile?.createdAt]
   );
 
-  // DS3 "This week": the same resolved calendar week the strip draws, so
-  // the counts and the circles cannot disagree about what was planned.
+  // DS3 "This week": lifts and runs as every screen counts the week
+  // (`trainingWeek`), and the days with food logged.
   const weekCounts = useMemo(
     function () {
-      const window = resolveTrainingWindow({
-        startDate: parseLocalDate(currentWeekKey),
-        days: 7,
-        profile,
-        programState,
-        claimMap,
-      });
       /* A day counts as logged when it has a meal, and the loaded meals
          are the record of that. The daily log holds the count Food last
          wrote, and Food writes nothing when a day's last meal is deleted,
@@ -296,17 +291,22 @@ export default function Home() {
          only while the meals are loading or could not be read. */
       const mealsKnown = !mealsLoading && !mealsError;
       const mealsByDate = new Map<string, { meals: number }>();
-      for (const day of window) {
-        mealsByDate.set(day.dateKey, {
+      for (const day of weekDays(currentWeekKey)) {
+        mealsByDate.set(day, {
           meals: mealsKnown
-            ? getDailyTotals(day.dateKey).mealCount
-            : (weeklyDayMap.get(day.dateKey)?.meals ?? 0),
+            ? getDailyTotals(day).mealCount
+            : (weeklyDayMap.get(day)?.meals ?? 0),
         });
       }
       return summariseWeek({
-        window,
-        liftDates: workouts.map((w) => w.date),
-        extraRunsByDate: unclaimedByDate,
+        training: trainingWeek({
+          weekKey: currentWeekKey,
+          profile,
+          programState,
+          workouts,
+          runs: savedRuns,
+          now: today,
+        }),
         mealsByDate,
         startKey,
       });
@@ -314,11 +314,11 @@ export default function Home() {
     [
       startKey,
       currentWeekKey,
+      today,
       profile,
       programState,
-      claimMap,
       workouts,
-      unclaimedByDate,
+      savedRuns,
       weeklyDayMap,
       getDailyTotals,
       mealsLoading,

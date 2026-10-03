@@ -148,6 +148,7 @@ exists — pinned by `claudeMdFreshness.test.ts` in both directions
 | `shareCardGenerator.ts` | Share card image generation (html-to-image)                    |
 | `analytics.ts`          | Analytics computation                                          |
 | `historyFigures.ts`     | Analytics range figures: window, range before, join-day clamp  |
+| `trainingWeek.ts`       | The week done and planned, which every week count reads        |
 | `subscription.ts`       | Pro subscription handling                                      |
 | `firebase.ts`           | Firebase app initialization & Firestore/Auth/Storage exports   |
 | `auth.tsx`              | AuthProvider, useAuth hook, UserProfile interface              |

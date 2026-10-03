@@ -43,6 +43,7 @@ import {
 } from "@/lib/scheduledRunCompletion";
 import type { RunWindow, SavedRun } from "@/lib/savedRuns";
 import { useSavedRuns } from "./useSavedRuns";
+import { isVolumeEligible } from "@/lib/runStatsEligibility";
 
 /**
  * Pre-computed template-quality lookup. Keyed by `RUN_TEMPLATES[i].id`.
@@ -184,6 +185,9 @@ interface UseClaimMapResult {
   /** Saved runs that don't claim any runDay slot. Keyed by date for
    *  Q5 extras display in RunWeekStrip / DayPeekCard. */
   unclaimedByDate: Map<string, SavedRunDoc[]>;
+  /** Every saved run, as read: the week's counts (`trainingWeek`) apply
+   *  their own rule to them. */
+  runs: readonly SavedRun[];
   /** Local YYYY-MM-DD used to compute the claim map. Callers
    *  watching midnight rollover key off this. */
   today: string;
@@ -229,10 +233,14 @@ export function useClaimMapForProgram(
      with runs saved on this phone but not yet synced, so an offline run
      fills its day on Home at once. */
   const { runs, loading } = useSavedRuns(ALL_RUNS);
-  const savedRuns = useMemo(
-    () => (runs.length ? runs.map(toSavedRunDoc) : NO_SAVED_RUNS),
-    [runs]
-  );
+  /* Only runs that count fill a planned day or show as an extra: a run saved
+     anyway counts in no total (`isVolumeEligible`), so it completes no
+     planned run either, and the strip agrees with the week's counts. A
+     planned run done without a run that counts can be marked done by hand. */
+  const savedRuns = useMemo(() => {
+    const counted = runs.filter((run) => isVolumeEligible(run));
+    return counted.length ? counted.map(toSavedRunDoc) : NO_SAVED_RUNS;
+  }, [runs]);
 
   const today = dateAnchor ?? localDateString(new Date());
 
@@ -288,5 +296,5 @@ export function useClaimMapForProgram(
     [claimMap, savedRuns]
   );
 
-  return { claimMap, unclaimedByDate, today, loading };
+  return { claimMap, unclaimedByDate, runs, today, loading };
 }

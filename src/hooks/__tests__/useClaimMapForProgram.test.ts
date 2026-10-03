@@ -76,10 +76,12 @@ function useClaimMap(dateAnchor?: string) {
 
 const RUNS = "users/u1/runs";
 
-/** Seed saved-run documents the hook's own subscription will deliver. */
+/** Seed saved-run documents the hook's own subscription will deliver.
+ *  Every saved run carries its duration, so each fixture has one unless
+ *  it sets its own. */
 function seedRuns(docs: Array<{ id: string; data: Record<string, unknown> }>) {
   const tree: Record<string, Record<string, unknown>> = {};
-  for (const d of docs) tree[`${RUNS}/${d.id}`] = d.data;
+  for (const d of docs) tree[`${RUNS}/${d.id}`] = { duration: 1800, ...d.data };
   seedFirestore(tree);
 }
 
@@ -418,6 +420,7 @@ describe("useClaimMap - account ownership", () => {
       "users/u1/runs/saved-1": {
         date: "2026-05-26",
         distance: 5000,
+        duration: 1650,
         avgPace: 330,
         templateId: "easy-5k",
         completedAt: Timestamp.fromMillis(1716700000_000),
@@ -447,6 +450,7 @@ describe("useClaimMap - account ownership", () => {
       "users/u2/runs/b-run": {
         date: "2026-05-20",
         distance: 8000,
+        duration: 2400,
         avgPace: 300,
         completedAt: Timestamp.fromMillis(1716200000_000),
       },
@@ -548,12 +552,43 @@ describe("useClaimMap - distance threshold", () => {
     expect(r.claimMap.get("rd-long")?.claimedSavedRunId).toBe("saved-d");
   });
 
-  it("compares METRES to METRES - a 20m run cannot claim a 15K slot", async () => {
+  it("compares METRES to METRES - a 60m run cannot claim a 15K slot", async () => {
     // The regression test for the unit bug. Under the old kilometre-valued
-    // lookup this was 20 / 15 = 1.33, comfortably over the 0.7 bar, so a
-    // twenty-metre walk completed a 15K long run. It must now be 20 / 15000.
-    const r = await claimFor(LONG_15K_DAY, 20);
+    // lookup this was 60 / 15 = 4, comfortably over the 0.7 bar, so a
+    // sixty-metre walk completed a 15K long run. It must now be 60 / 15000.
+    // (Sixty metres, not less: a run under 50 m counts nowhere, so it could
+    // not claim the slot whatever the gate did.)
+    const r = await claimFor(LONG_15K_DAY, 60);
     expect(r.claimMap.get("rd-long")?.claimedSavedRunId).toBeUndefined();
+    expect(r.unclaimedByDate.get("2026-05-26")).toHaveLength(1);
+  });
+
+  it("a run saved anyway completes no planned run and is not an extra", async () => {
+    // It counts in no total (`isVolumeEligible`), so the strip agrees with
+    // the week's counts. The planned run can still be marked done by hand.
+    mockProgramState = { runDays: [LONG_15K_DAY], manualCompletions: {} };
+    const { result } = renderHook(() => useClaimMap("2026-05-26"));
+    await act(async () => {
+      seedRuns([
+        {
+          id: "saved-anyway",
+          data: {
+            date: "2026-05-26",
+            distance: 15000,
+            avgPace: 330,
+            savedAnyway: true,
+            completedAt: Timestamp.fromMillis(1716700000_000),
+          },
+        },
+      ]);
+      await flushSnapshots();
+    });
+    expect(
+      result.current.claimMap.get("rd-long")?.claimedSavedRunId
+    ).toBeUndefined();
+    expect(result.current.unclaimedByDate.size).toBe(0);
+    // Still read: the week's counts apply their own rule to it.
+    expect(result.current.runs.map((run) => run.id)).toEqual(["saved-anyway"]);
   });
 
   it("judges a swapped day against the OVERRIDE, not the original template", async () => {

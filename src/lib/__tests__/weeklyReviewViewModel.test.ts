@@ -12,8 +12,33 @@ import {
 /* Reviewed week: Sunday 2026-06-21 .. Saturday 2026-06-27. */
 const WEEK = "2026-06-21";
 
-function base(overrides: Partial<WeeklyReviewData> = {}): WeeklyReviewData {
+/**
+ * The week's counts as the data layer hands them over (`trainingWeek`),
+ * for a fixture that gives only its sessions: no plan, eligible runs in
+ * the week. A test about planned comparisons passes `week` itself.
+ */
+function countsOf({
+  weekKey,
+  workouts,
+  runs,
+}: Pick<WeeklyReviewData, "weekKey" | "workouts" | "runs">) {
+  const counted = runs.filter((r) => r.eligible && inWeek(r.date, weekKey));
+  const metres = counted.reduce((sum, r) => sum + r.distanceMeters, 0);
   return {
+    lifts: {
+      done: workouts.filter((w) => inWeek(w.date, weekKey)).length,
+      planned: null,
+    },
+    runs: {
+      done: counted.length,
+      planned: null,
+      km: Math.round(metres / 100) / 10,
+    },
+  };
+}
+
+function base(overrides: Partial<WeeklyReviewData> = {}): WeeklyReviewData {
+  const data = {
     weekKey: WEEK,
     workouts: [],
     runs: [],
@@ -22,8 +47,6 @@ function base(overrides: Partial<WeeklyReviewData> = {}): WeeklyReviewData {
     prsHit: null,
     perf: null,
     prevPi: null,
-    plannedLifts: null,
-    plannedRuns: null,
     calorieTarget: null,
     adaptiveRetunedInWeek: false,
     hideWeightNumber: false,
@@ -33,6 +56,7 @@ function base(overrides: Partial<WeeklyReviewData> = {}): WeeklyReviewData {
     now: new Date("2026-06-28T10:00:00"),
     ...overrides,
   };
+  return { ...data, week: overrides.week ?? countsOf(data) };
 }
 
 describe("weekBounds / inWeek", () => {
@@ -242,18 +266,24 @@ describe("verdict templates (no AI)", () => {
 });
 
 describe("training lanes", () => {
-  it("counts only ELIGIBLE runs in stats; converts metres→km; finds longest", () => {
+  it("takes the runs from the week's counts, the longest from the runs that count", () => {
     const r = buildWeeklyReview(
       base({
         runs: [
           { date: "2026-06-22", distanceMeters: 5210, eligible: true },
           { date: "2026-06-24", distanceMeters: 10480, eligible: true },
-          { date: "2026-06-25", distanceMeters: 9000, eligible: false },
+          // Longer, and saved anyway: it is not the week's longest run.
+          { date: "2026-06-25", distanceMeters: 21000, eligible: false },
         ],
+        week: {
+          lifts: { done: 0, planned: null },
+          // A third run marked done by hand, with no distance to add.
+          runs: { done: 3, planned: null, km: 15.7 },
+        },
       })
     );
     expect(r?.training?.runs).toEqual({
-      count: 2,
+      count: 3,
       km: 15.7,
       longestKm: 10.5,
       planned: null, // freeform → done-only framing
@@ -268,8 +298,10 @@ describe("training lanes", () => {
           { date: "2026-06-24", tonnageKg: 4999.8 },
         ],
         runs: [{ date: "2026-06-23", distanceMeters: 8000, eligible: true }],
-        plannedLifts: 4,
-        plannedRuns: 3,
+        week: {
+          lifts: { done: 2, planned: 4 },
+          runs: { done: 1, planned: 3, km: 8 },
+        },
       })
     );
     expect(r?.training?.lifts).toEqual({
@@ -413,7 +445,14 @@ describe("body (trend + projection reuse + hide-the-number)", () => {
 });
 
 describe("buildWeekPulse (Rev1 PR2)", () => {
-  const CURRENT = "2026-06-28"; // Sunday-start current week
+  const counts = (
+    lifts: { done: number; planned: number | null },
+    runs: { done: number; planned: number | null; km: number } = {
+      done: 0,
+      planned: null,
+      km: 0,
+    }
+  ) => ({ lifts, runs });
 
   // The completion screens mount this card BEFORE dispatching their save, and
   // the lift screen unmounts as soon as the save resolves — so a user who had
@@ -421,11 +460,7 @@ describe("buildWeekPulse (Rev1 PR2)", () => {
   // never corrected. `pendingLifts` is how the caller counts that session.
   it("counts a finished-but-unsaved session via pendingLifts", () => {
     const p = buildWeekPulse({
-      weekKey: CURRENT,
-      workouts: [],
-      runs: [],
-      plannedLifts: 6,
-      plannedRuns: null,
+      week: counts({ done: 0, planned: 6 }),
       streak: 0,
       pendingLifts: 1,
     });
@@ -434,11 +469,7 @@ describe("buildWeekPulse (Rev1 PR2)", () => {
 
   it("adds pendingLifts to already-saved sessions rather than replacing them", () => {
     const p = buildWeekPulse({
-      weekKey: CURRENT,
-      workouts: [{ date: "2026-06-29" }, { date: "2026-07-01" }],
-      runs: [],
-      plannedLifts: 6,
-      plannedRuns: null,
+      week: counts({ done: 2, planned: 6 }),
       streak: 0,
       pendingLifts: 1,
     });
@@ -447,11 +478,7 @@ describe("buildWeekPulse (Rev1 PR2)", () => {
 
   it("omitting pendingLifts is unchanged behaviour", () => {
     const p = buildWeekPulse({
-      weekKey: CURRENT,
-      workouts: [{ date: "2026-06-29" }],
-      runs: [],
-      plannedLifts: 6,
-      plannedRuns: null,
+      week: counts({ done: 1, planned: 6 }),
       streak: 0,
     });
     expect(p?.lifts).toEqual({ done: 1, planned: 6 });
@@ -459,11 +486,7 @@ describe("buildWeekPulse (Rev1 PR2)", () => {
 
   it("returns both lanes with planned comparisons when plans exist", () => {
     const p = buildWeekPulse({
-      weekKey: CURRENT,
-      workouts: [{ date: "2026-06-29" }, { date: "2026-07-01" }],
-      runs: [{ date: "2026-06-30", distanceMeters: 8200, eligible: true }],
-      plannedLifts: 4,
-      plannedRuns: 3,
+      week: counts({ done: 2, planned: 4 }, { done: 1, planned: 3, km: 8.2 }),
       streak: 12,
     });
     expect(p).toEqual({
@@ -475,39 +498,24 @@ describe("buildWeekPulse (Rev1 PR2)", () => {
 
   it("freeform: run lane is done-only (planned null) and hides when empty", () => {
     const p = buildWeekPulse({
-      weekKey: CURRENT,
-      workouts: [{ date: "2026-06-29" }],
-      runs: [],
-      plannedLifts: 3,
-      plannedRuns: null,
+      week: counts({ done: 1, planned: 3 }),
       streak: 2,
     });
     expect(p?.lifts).toEqual({ done: 1, planned: 3 });
     expect(p?.runs).toBeNull();
   });
 
-  it("ineligible runs never count; out-of-week rows ignored", () => {
+  it("has nothing to say for a week with nothing done or planned", () => {
     const p = buildWeekPulse({
-      weekKey: CURRENT,
-      workouts: [{ date: "2026-06-20" }], // previous week
-      runs: [
-        { date: "2026-06-29", distanceMeters: 9000, eligible: false },
-        { date: "2026-06-20", distanceMeters: 5000, eligible: true },
-      ],
-      plannedLifts: null,
-      plannedRuns: null,
+      week: counts({ done: 0, planned: null }),
       streak: 5,
     });
-    expect(p).toBeNull(); // nothing in-week and eligible, no plans
+    expect(p).toBeNull();
   });
 
   it("zero streak hides the streak line", () => {
     const p = buildWeekPulse({
-      weekKey: CURRENT,
-      workouts: [{ date: "2026-06-29" }],
-      runs: [],
-      plannedLifts: null,
-      plannedRuns: null,
+      week: counts({ done: 1, planned: null }),
       streak: 0,
     });
     expect(p?.streak).toBeNull();

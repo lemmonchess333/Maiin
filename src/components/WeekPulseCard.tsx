@@ -1,6 +1,7 @@
 import SectionLabel from "@/components/ui/SectionLabel";
 import { Dumbbell, Footprints, Flame } from "lucide-react";
 import { useWeekPulse, type PendingRun } from "@/hooks/useWeekPulse";
+import type { WeekPulse } from "@/lib/weeklyReviewViewModel";
 import { storedKmLabel } from "@/lib/runLabels";
 import { useDistanceUnit } from "@/hooks/useDistanceUnit";
 import { THEME } from "@/lib/theme";
@@ -22,7 +23,14 @@ export default function WeekPulseCard({
   pendingLifts?: number;
   pendingRun?: PendingRun | null;
 } = {}) {
-  const pulse = useWeekPulse(pendingLifts, pendingRun);
+  return <WeekPulseView pulse={useWeekPulse(pendingLifts, pendingRun)} />;
+}
+
+/**
+ * The card for a week already read. The run finish screen reads the week
+ * itself, once, because its plan row counts the same runs.
+ */
+export function WeekPulseView({ pulse }: { pulse: WeekPulse | null }) {
   // Before the early return — a hook cannot sit behind one.
   const unit = useDistanceUnit();
   if (!pulse) return null;

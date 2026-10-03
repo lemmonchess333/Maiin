@@ -37,6 +37,8 @@ const h = vi.hoisted(() => ({
   >(),
   claimMap: new Map(),
   unclaimedByDate: new Map(),
+  /* Every saved run, as the claim hook reads them. */
+  runs: [] as Array<Record<string, unknown>>,
 }));
 
 vi.mock("firebase/firestore");
@@ -148,6 +150,7 @@ vi.mock("@/hooks/useClaimMapForProgram", () => ({
   useClaimMapForProgram: () => ({
     claimMap: h.claimMap,
     unclaimedByDate: h.unclaimedByDate,
+    runs: h.runs,
     today: "",
     loading: false,
   }),
@@ -360,6 +363,7 @@ beforeEach(() => {
   h.dayMap = new Map();
   h.claimMap = new Map();
   h.unclaimedByDate = new Map();
+  h.runs = [];
 });
 
 afterEach(() => {
@@ -408,6 +412,48 @@ describe("Home — the date follows the clock", () => {
 
     // The new week has no session in it yet.
     expect(column("Lifts")).toBe("Lifts: 0 of 2");
+  });
+});
+
+describe("Home — the week's runs, as every screen counts them", () => {
+  beforeEach(() => {
+    pinClock(WEDNESDAY);
+  });
+
+  const monday = () => localDateString(addLocalDays(WEDNESDAY, -2));
+  const tuesday = () => localDateString(addLocalDays(WEDNESDAY, -1));
+
+  it("counts the runs that count against the plan's run days", () => {
+    // A race plan runs on Tuesday and Thursday. Tuesday's run counts; the
+    // run saved anyway on Monday counts nowhere.
+    h.profile = profileWith({ 2: "run", 4: "run" });
+    h.programState = programStateWith({
+      runDays: [
+        runDay(addLocalDays(WEDNESDAY, -1)),
+        runDay(addLocalDays(WEDNESDAY, 1)),
+      ],
+    });
+    h.runs = [
+      { id: "r1", day: tuesday(), distance: 5000, duration: 1800 },
+      {
+        id: "r2",
+        day: monday(),
+        distance: 9000,
+        duration: 600,
+        savedAnyway: true,
+      },
+    ];
+    renderHome();
+    expect(column("Runs")).toBe("Runs: 1 of 2");
+  });
+
+  it("shows a free runner's runs with no target to count against", () => {
+    // The schedule names two run days, but a free runner's plan has no
+    // runs in it: their week is done-only (Run9a, Rev1).
+    h.profile = profileWith({ 2: "run", 4: "run" });
+    h.runs = [{ id: "r1", day: tuesday(), distance: 5000, duration: 1800 }];
+    renderHome();
+    expect(column("Runs")).toBe("Runs: 1");
   });
 });
 

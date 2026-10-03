@@ -132,6 +132,37 @@ describe("useWeeklyReview assembly", () => {
     });
   });
 
+  it("plans the week ahead from the plan's dated run days", async () => {
+    // A race plan keeps its dated run days at the top of the programme
+    // document. The recap read them from a field the plan does not have,
+    // so a race runner's week ahead never showed a run.
+    mockProfile = {
+      ...mockProfile,
+      runMode: "race_prep",
+      raceGoal: { distance: "10k", targetDate: "2026-09-05" },
+    };
+    seedFirestore({
+      "users/u1/workouts/w1": lift("2026-07-06", 100, 5),
+      "users/u1/programState/current": {
+        runPlan: { phase: "build" },
+        runDays: [
+          { id: "a", date: "2026-07-14", templateId: "easy_30" },
+          { id: "b", date: "2026-07-16", templateId: "easy_30" },
+          { id: "c", date: "2026-07-19", templateId: "long_15k" },
+        ],
+      },
+    });
+
+    const { result } = renderHook(() => useWeeklyReview());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    expect(result.current.review?.weekAhead).toEqual({
+      lifts: 3,
+      runs: 3,
+      phaseNote: "Race prep — build",
+    });
+  });
+
   it("quotes the ADAPTIVE target for an engaged Pro user, like the PI does", async () => {
     /* The recap's calorie line and the PI's adherence factor must name the
        same number. `profile.targetCalories` deliberately never moves once

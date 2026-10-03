@@ -19,20 +19,20 @@ interface Column {
  */
 export default function WeekSummary({ counts }: { counts: WeekSummaryCounts }) {
   const columns: Column[] = [];
-  if (counts.lifts.planned > 0 || counts.lifts.done > 0)
+  if (counts.lifts.planned !== null || counts.lifts.done > 0)
     columns.push({
       key: "lifts",
       label: "Lifts",
       done: counts.lifts.done,
-      of: counts.lifts.planned || null,
+      of: counts.lifts.planned,
       fill: "hsl(var(--lifting))",
     });
-  if (counts.runs.planned > 0 || counts.runs.done > 0)
+  if (counts.runs.planned !== null || counts.runs.done > 0)
     columns.push({
       key: "runs",
       label: "Runs",
       done: counts.runs.done,
-      of: counts.runs.planned || null,
+      of: counts.runs.planned,
       fill: "hsl(var(--running))",
     });
   columns.push({
