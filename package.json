@@ -116,7 +116,6 @@
     "pixelmatch": "^7.2.0",
     "pngjs": "^7.0.0",
     "prettier": "^3.8.3",
-    "react-doctor": "^0.2.16",
     "sharp": "^0.35.4",
     "tailwindcss": "^4.3.0",
     "tsx": "^4.23.13",
