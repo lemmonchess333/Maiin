@@ -26,6 +26,48 @@ export interface ArtworkReviewExpectation {
   cueSha256: string;
 }
 
+/**
+ * What a release record must say about a registered set: its registry
+ * facts, the hash of every delivered frame and of the reference, and the
+ * hash of the cues shown with it. The audit checks each record against it,
+ * the review script prints it as a new record's template, and the release
+ * test checks records with it. Built here, beside the contract it feeds,
+ * so the three cannot drift: each used to build it by hand, and two read
+ * the authored cues while the third read the live placard's.
+ */
+export function artworkReviewExpectation(
+  exerciseId: string,
+  art: {
+    version: string;
+    width: number;
+    height: number;
+    frames: readonly string[];
+    reference: string;
+  },
+  cues: readonly { label: string; cue: string }[],
+  sha256: {
+    /** The hash of a delivered file, by its path under `public/`. */
+    asset: (path: string) => string;
+    text: (value: string) => string;
+  }
+): ArtworkReviewExpectation {
+  const asset = (path: string): ReviewedAsset => ({
+    path,
+    sha256: sha256.asset(path),
+  });
+  return {
+    exerciseId,
+    version: art.version,
+    width: art.width,
+    height: art.height,
+    frames: art.frames.map(asset),
+    reference: asset(art.reference),
+    cueSha256: sha256.text(
+      JSON.stringify(cues.map(({ label, cue }) => ({ label, cue })))
+    ),
+  };
+}
+
 const object = (value: unknown): Record<string, unknown> =>
   value !== null && typeof value === "object" && !Array.isArray(value)
     ? (value as Record<string, unknown>)

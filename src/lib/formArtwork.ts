@@ -1,3 +1,8 @@
+import {
+  APPROVED_FORM_ART_RELEASES,
+  type ApprovedFormArtRelease,
+} from "./formArtReleases.data";
+
 /** Artwork is released by exact exercise ID, never by an approximate alias. */
 export interface FormArtwork {
   version: string;
@@ -13,698 +18,88 @@ export interface FormArtwork {
   reviewFile?: string;
 }
 
-const existing = (id: string, width: number, height: number): FormArtwork => ({
+/** A set listed by hand, which is never an approved one. */
+type HandListedFormArtwork = FormArtwork & {
+  status: Exclude<FormArtwork["status"], "approved">;
+};
+
+/** A set's six delivered frames, in playing order. */
+export const formFramePaths = (id: string): string[] =>
+  Array.from({ length: 6 }, (_, i) => `form-frames/${id}/${i + 1}.webp`);
+
+const existing = (
+  id: string,
+  width: number,
+  height: number
+): HandListedFormArtwork => ({
   version: "existing-2026-09",
   status: "existing-needs-review",
   width,
   height,
-  frames: Array.from(
-    { length: 6 },
-    (_, i) => `form-frames/${id}/${i + 1}.webp`
-  ),
+  frames: formFramePaths(id),
   reference: `form-frames/${id}/1.webp`,
 });
 
-// The owner explicitly requested these ten sets be activated with findings retained.
+// The owner explicitly requested these sets be activated with findings retained.
 // This state records release authorization, not a passing visual review.
 const ownerReleased = (
   id: string,
   width: number,
   height: number
-): FormArtwork => ({
+): HandListedFormArtwork => ({
   ...existing(id, width, height),
   version: "owner-release-2026-09",
   status: "owner-released-with-findings",
   reviewFile: `docs/exercise-art/releases/2026-09-owner/${id}.json`,
 });
 
-// Preserve the seven previously shipped sets while replacements are reviewed.
-// These entries do not claim that the art passes the new consistency standard.
-export const FORM_ARTWORK: Record<string, FormArtwork> = {
-  "calf-raise": {
-    version: "anatomy-v3-upright-reference-2026-10-03",
-    status: "approved",
-    width: 1024,
-    height: 1536,
-    frames: Array.from(
-      { length: 6 },
-      (_, i) => `form-frames/calf-raise/${i + 1}.webp`
-    ),
-    reference: "form-frames/calf-raise/3.webp",
-    reviewFile: "docs/exercise-art/releases/2026-10-03/calf-raise.json",
-  },
-  "standing-calf-raise": {
-    version: "anatomy-v3-upright-reference-2026-10-03",
-    status: "approved",
-    width: 1024,
-    height: 1536,
-    frames: Array.from(
-      { length: 6 },
-      (_, i) => `form-frames/standing-calf-raise/${i + 1}.webp`
-    ),
-    reference: "form-frames/standing-calf-raise/3.webp",
-    reviewFile:
-      "docs/exercise-art/releases/2026-10-03/standing-calf-raise.json",
-  },
+/**
+ * A set approved by strict review. Every fact here comes from its release
+ * record, through APPROVED_FORM_ART_RELEASES, which `npm run art:releases`
+ * writes from the records: releasing a set is its record and its cues,
+ * with no registry entry to copy by hand.
+ */
+const approved = (
+  id: string,
+  release: ApprovedFormArtRelease
+): FormArtwork => ({
+  version: release.version,
+  status: "approved",
+  width: release.width,
+  height: release.height,
+  frames: formFramePaths(id),
+  reference: `form-frames/${id}/${release.reference}.webp`,
+  reviewFile: `docs/exercise-art/releases/${release.folder}/${id}.json`,
+});
 
-  "donkey-calf-raise": {
-    version: "anatomy-v3-fixed-contacts-2026-10-03",
-    status: "approved",
-    width: 1536,
-    height: 1024,
-    frames: Array.from(
-      { length: 6 },
-      (_, i) => `form-frames/donkey-calf-raise/${i + 1}.webp`
-    ),
-    reference: "form-frames/donkey-calf-raise/3.webp",
-    reviewFile: "docs/exercise-art/releases/2026-10-03/donkey-calf-raise.json",
-  },
-  shrugs: {
-    version: "anatomy-v3-rigid-2026-10-03",
-    status: "approved",
-    width: 1024,
-    height: 1536,
-    frames: Array.from(
-      { length: 6 },
-      (_, i) => `form-frames/shrugs/${i + 1}.webp`
-    ),
-    reference: "form-frames/shrugs/3.webp",
-    reviewFile: "docs/exercise-art/releases/2026-10-03/shrugs.json",
-  },
-  crunches: {
-    version: "anatomy-v3-composite-2026-10-03",
-    status: "approved",
-    width: 1536,
-    height: 1024,
-    frames: Array.from(
-      { length: 6 },
-      (_, i) => `form-frames/crunches/${i + 1}.webp`
-    ),
-    reference: "form-frames/crunches/3.webp",
-    reviewFile: "docs/exercise-art/releases/2026-10-03/crunches.json",
-  },
-  plank: {
-    version: "anatomy-v3-2026-10-03",
-    status: "approved",
-    width: 1536,
-    height: 1024,
-    frames: Array.from(
-      { length: 6 },
-      (_, i) => `form-frames/plank/${i + 1}.webp`
-    ),
-    reference: "form-frames/plank/3.webp",
-    reviewFile: "docs/exercise-art/releases/2026-10-03/plank.json",
-  },
-  "leg-raise": {
-    version: "anatomy-v3-2026-10-03",
-    status: "approved",
-    width: 1024,
-    height: 1536,
-    frames: Array.from(
-      { length: 6 },
-      (_, i) => `form-frames/leg-raise/${i + 1}.webp`
-    ),
-    reference: "form-frames/leg-raise/3.webp",
-    reviewFile: "docs/exercise-art/releases/2026-10-03/leg-raise.json",
-  },
-  "clean-and-press": {
-    version: "anatomy-v3-2026-10-02",
-    status: "approved",
-    width: 1536,
-    height: 1024,
-    frames: Array.from(
-      { length: 6 },
-      (_, i) => `form-frames/clean-and-press/${i + 1}.webp`
-    ),
-    reference: "form-frames/clean-and-press/1.webp",
-    reviewFile: "docs/exercise-art/releases/2026-10-02/clean-and-press.json",
-  },
-  "russian-twist": {
-    version: "anatomy-v3-2026-09-29",
-    status: "approved",
-    width: 1536,
-    height: 1024,
-    frames: Array.from(
-      { length: 6 },
-      (_, i) => `form-frames/russian-twist/${i + 1}.webp`
-    ),
-    reference: "form-frames/russian-twist/4.webp",
-    reviewFile: "docs/exercise-art/releases/2026-09-29/russian-twist.json",
-  },
-  "mountain-climbers": {
-    version: "anatomy-v3-2026-09-29",
-    status: "approved",
-    width: 1536,
-    height: 1024,
-    frames: Array.from(
-      { length: 6 },
-      (_, i) => `form-frames/mountain-climbers/${i + 1}.webp`
-    ),
-    reference: "form-frames/mountain-climbers/3.webp",
-    reviewFile: "docs/exercise-art/releases/2026-09-29/mountain-climbers.json",
-  },
-  "cable-crunch": {
-    version: "anatomy-v3-2026-09-29",
-    status: "approved",
-    width: 1536,
-    height: 1024,
-    frames: Array.from(
-      { length: 6 },
-      (_, i) => `form-frames/cable-crunch/${i + 1}.webp`
-    ),
-    reference: "form-frames/cable-crunch/1.webp",
-    reviewFile: "docs/exercise-art/releases/2026-09-29/cable-crunch.json",
-  },
-  "cable-woodchopper": {
-    version: "anatomy-v3-2026-09-29",
-    status: "approved",
-    width: 1536,
-    height: 1024,
-    frames: Array.from(
-      { length: 6 },
-      (_, i) => `form-frames/cable-woodchopper/${i + 1}.webp`
-    ),
-    reference: "form-frames/cable-woodchopper/1.webp",
-    reviewFile: "docs/exercise-art/releases/2026-09-29/cable-woodchopper.json",
-  },
-  "pallof-press": {
-    version: "anatomy-v3-2026-09-29",
-    status: "approved",
-    width: 1536,
-    height: 1024,
-    frames: Array.from(
-      { length: 6 },
-      (_, i) => `form-frames/pallof-press/${i + 1}.webp`
-    ),
-    reference: "form-frames/pallof-press/1.webp",
-    reviewFile: "docs/exercise-art/releases/2026-09-29/pallof-press.json",
-  },
-  "dragon-flag": {
-    version: "anatomy-v3-2026-09-29",
-    status: "approved",
-    width: 1536,
-    height: 1024,
-    frames: Array.from(
-      { length: 6 },
-      (_, i) => `form-frames/dragon-flag/${i + 1}.webp`
-    ),
-    reference: "form-frames/dragon-flag/1.webp",
-    reviewFile: "docs/exercise-art/releases/2026-09-29/dragon-flag.json",
-  },
-  "l-sit": {
-    version: "anatomy-v3-2026-09-29",
-    status: "approved",
-    width: 1536,
-    height: 1024,
-    frames: Array.from(
-      { length: 6 },
-      (_, i) => `form-frames/l-sit/${i + 1}.webp`
-    ),
-    reference: "form-frames/l-sit/3.webp",
-    reviewFile: "docs/exercise-art/releases/2026-09-29/l-sit.json",
-  },
-  "bicycle-crunch": {
-    version: "anatomy-v3-2026-09-29",
-    status: "approved",
-    width: 1536,
-    height: 1024,
-    frames: Array.from(
-      { length: 6 },
-      (_, i) => `form-frames/bicycle-crunch/${i + 1}.webp`
-    ),
-    reference: "form-frames/bicycle-crunch/3.webp",
-    reviewFile: "docs/exercise-art/releases/2026-09-29/bicycle-crunch.json",
-  },
-  "dead-bug": {
-    version: "anatomy-v3-2026-09-29",
-    status: "approved",
-    width: 1536,
-    height: 1024,
-    frames: Array.from(
-      { length: 6 },
-      (_, i) => `form-frames/dead-bug/${i + 1}.webp`
-    ),
-    reference: "form-frames/dead-bug/3.webp",
-    reviewFile: "docs/exercise-art/releases/2026-09-29/dead-bug.json",
-  },
-  "toe-touches": {
-    version: "anatomy-v3-2026-09-29",
-    status: "approved",
-    width: 1536,
-    height: 1024,
-    frames: Array.from(
-      { length: 6 },
-      (_, i) => `form-frames/toe-touches/${i + 1}.webp`
-    ),
-    reference: "form-frames/toe-touches/1.webp",
-    reviewFile: "docs/exercise-art/releases/2026-09-29/toe-touches.json",
-  },
-  "pike-push-up": {
-    version: "anatomy-v3-2026-09-29",
-    status: "approved",
-    width: 1536,
-    height: 1024,
-    frames: Array.from(
-      { length: 6 },
-      (_, i) => `form-frames/pike-push-up/${i + 1}.webp`
-    ),
-    reference: "form-frames/pike-push-up/1.webp",
-    reviewFile: "docs/exercise-art/releases/2026-09-29/pike-push-up.json",
-  },
-  "glute-bridge": {
-    version: "anatomy-v3-2026-09-29",
-    status: "approved",
-    width: 1536,
-    height: 1024,
-    frames: Array.from(
-      { length: 6 },
-      (_, i) => `form-frames/glute-bridge/${i + 1}.webp`
-    ),
-    reference: "form-frames/glute-bridge/1.webp",
-    reviewFile: "docs/exercise-art/releases/2026-09-29/glute-bridge.json",
-  },
-  "diamond-push-ups": {
-    version: "anatomy-v3-2026-09-25",
-    status: "approved",
-    width: 1254,
-    height: 1254,
-    frames: Array.from(
-      { length: 6 },
-      (_, i) => `form-frames/diamond-push-ups/${i + 1}.webp`
-    ),
-    reference: "form-frames/diamond-push-ups/1.webp",
-    reviewFile: "docs/exercise-art/releases/2026-09-25/diamond-push-ups.json",
-  },
-  "tricep-kickback": {
-    version: "anatomy-v3-2026-09-25",
-    status: "approved",
-    width: 1536,
-    height: 1024,
-    frames: Array.from(
-      { length: 6 },
-      (_, i) => `form-frames/tricep-kickback/${i + 1}.webp`
-    ),
-    reference: "form-frames/tricep-kickback/1.webp",
-    reviewFile: "docs/exercise-art/releases/2026-09-25/tricep-kickback.json",
-  },
-  "spider-db-curl": {
-    version: "anatomy-v3-2026-09-25",
-    status: "approved",
-    width: 1536,
-    height: 1024,
-    frames: Array.from(
-      { length: 6 },
-      (_, i) => `form-frames/spider-db-curl/${i + 1}.webp`
-    ),
-    reference: "form-frames/spider-db-curl/1.webp",
-    reviewFile: "docs/exercise-art/releases/2026-09-25/spider-db-curl.json",
-  },
-  "concentration-curl": {
-    version: "anatomy-v3-2026-09-25",
-    status: "approved",
-    width: 1024,
-    height: 1536,
-    frames: Array.from(
-      { length: 6 },
-      (_, i) => `form-frames/concentration-curl/${i + 1}.webp`
-    ),
-    reference: "form-frames/concentration-curl/1.webp",
-    reviewFile: "docs/exercise-art/releases/2026-09-25/concentration-curl.json",
-  },
-  "reverse-barbell-curl": {
-    version: "anatomy-v3-2026-09-24",
-    status: "approved",
-    width: 1024,
-    height: 1536,
-    frames: Array.from(
-      { length: 6 },
-      (_, i) => `form-frames/reverse-barbell-curl/${i + 1}.webp`
-    ),
-    reference: "form-frames/reverse-barbell-curl/1.webp",
-    reviewFile:
-      "docs/exercise-art/releases/2026-09-24/reverse-barbell-curl.json",
-  },
-  "cross-body-hammer-curl": {
-    version: "anatomy-v3-2026-09-24",
-    status: "approved",
-    width: 1024,
-    height: 1536,
-    frames: Array.from(
-      { length: 6 },
-      (_, i) => `form-frames/cross-body-hammer-curl/${i + 1}.webp`
-    ),
-    reference: "form-frames/cross-body-hammer-curl/1.webp",
-    reviewFile:
-      "docs/exercise-art/releases/2026-09-24/cross-body-hammer-curl.json",
-  },
-  "ez-bar-curl": {
-    version: "anatomy-v3-2026-09-24",
-    status: "approved",
-    width: 1024,
-    height: 1536,
-    frames: Array.from(
-      { length: 6 },
-      (_, i) => `form-frames/ez-bar-curl/${i + 1}.webp`
-    ),
-    reference: "form-frames/ez-bar-curl/1.webp",
-    reviewFile: "docs/exercise-art/releases/2026-09-24/ez-bar-curl.json",
-  },
-  "decline-db-press": {
-    version: "anatomy-v3-2026-09-24",
-    status: "approved",
-    width: 1536,
-    height: 1024,
-    frames: Array.from(
-      { length: 6 },
-      (_, i) => `form-frames/decline-db-press/${i + 1}.webp`
-    ),
-    reference: "form-frames/decline-db-press/1.webp",
-    reviewFile: "docs/exercise-art/releases/2026-09-24/decline-db-press.json",
-  },
-  "meadows-row": {
-    version: "anatomy-v3-2026-09-24",
-    status: "approved",
-    width: 1536,
-    height: 1024,
-    frames: Array.from(
-      { length: 6 },
-      (_, i) => `form-frames/meadows-row/${i + 1}.webp`
-    ),
-    reference: "form-frames/meadows-row/1.webp",
-    reviewFile: "docs/exercise-art/releases/2026-09-24/meadows-row.json",
-  },
-  "decline-sit-up": {
-    version: "anatomy-v3-2026-09-24",
-    status: "approved",
-    width: 1536,
-    height: 1024,
-    frames: Array.from(
-      { length: 6 },
-      (_, i) => `form-frames/decline-sit-up/${i + 1}.webp`
-    ),
-    reference: "form-frames/decline-sit-up/1.webp",
-    reviewFile: "docs/exercise-art/releases/2026-09-24/decline-sit-up.json",
-  },
-  "bench-dips": {
-    version: "anatomy-v3-2026-09-24",
-    status: "approved",
-    width: 1536,
-    height: 1024,
-    frames: Array.from(
-      { length: 6 },
-      (_, i) => `form-frames/bench-dips/${i + 1}.webp`
-    ),
-    reference: "form-frames/bench-dips/1.webp",
-    reviewFile: "docs/exercise-art/releases/2026-09-24/bench-dips.json",
-  },
-  "barbell-upright-row": {
-    version: "anatomy-v3-2026-09-24",
-    status: "approved",
-    width: 1536,
-    height: 1024,
-    frames: Array.from(
-      { length: 6 },
-      (_, i) => `form-frames/barbell-upright-row/${i + 1}.webp`
-    ),
-    reference: "form-frames/barbell-upright-row/3.webp",
-    reviewFile:
-      "docs/exercise-art/releases/2026-09-24/barbell-upright-row.json",
-  },
-  "zottman-curl": {
-    version: "anatomy-v3-2026-09-24",
-    status: "approved",
-    width: 1024,
-    height: 1536,
-    frames: Array.from(
-      { length: 6 },
-      (_, i) => `form-frames/zottman-curl/${i + 1}.webp`
-    ),
-    reference: "form-frames/zottman-curl/1.webp",
-    reviewFile: "docs/exercise-art/releases/2026-09-24/zottman-curl.json",
-  },
-  "lu-raise": {
-    version: "anatomy-v3-2026-09-24",
-    status: "approved",
-    width: 1536,
-    height: 1024,
-    frames: Array.from(
-      { length: 6 },
-      (_, i) => `form-frames/lu-raise/${i + 1}.webp`
-    ),
-    reference: "form-frames/lu-raise/1.webp",
-    reviewFile: "docs/exercise-art/releases/2026-09-24/lu-raise.json",
-  },
-  "arnold-press": {
-    version: "anatomy-v3-2026-09-24",
-    status: "approved",
-    width: 1536,
-    height: 1024,
-    frames: Array.from(
-      { length: 6 },
-      (_, i) => `form-frames/arnold-press/${i + 1}.webp`
-    ),
-    reference: "form-frames/arnold-press/3.webp",
-    reviewFile: "docs/exercise-art/releases/2026-09-24/arnold-press.json",
-  },
-  "db-flyes": {
-    version: "anatomy-v3-2026-09-24",
-    status: "approved",
-    width: 1536,
-    height: 1024,
-    frames: Array.from(
-      { length: 6 },
-      (_, i) => `form-frames/db-flyes/${i + 1}.webp`
-    ),
-    reference: "form-frames/db-flyes/1.webp",
-    reviewFile: "docs/exercise-art/releases/2026-09-24/db-flyes.json",
-  },
-  "chest-press-machine": {
-    version: "anatomy-v3-2026-09-24",
-    status: "approved",
-    width: 1536,
-    height: 1024,
-    frames: Array.from(
-      { length: 6 },
-      (_, i) => `form-frames/chest-press-machine/${i + 1}.webp`
-    ),
-    reference: "form-frames/chest-press-machine/1.webp",
-    reviewFile:
-      "docs/exercise-art/releases/2026-09-24/chest-press-machine.json",
-  },
-  "machine-chest-fly": {
-    version: "anatomy-v3-2026-09-24",
-    status: "approved",
-    width: 1536,
-    height: 1024,
-    frames: Array.from(
-      { length: 6 },
-      (_, i) => `form-frames/machine-chest-fly/${i + 1}.webp`
-    ),
-    reference: "form-frames/machine-chest-fly/3.webp",
-    reviewFile: "docs/exercise-art/releases/2026-09-24/machine-chest-fly.json",
-  },
-  "pec-deck": {
-    version: "anatomy-v3-2026-09-24",
-    status: "approved",
-    width: 1536,
-    height: 1024,
-    frames: Array.from(
-      { length: 6 },
-      (_, i) => `form-frames/pec-deck/${i + 1}.webp`
-    ),
-    reference: "form-frames/pec-deck/1.webp",
-    reviewFile: "docs/exercise-art/releases/2026-09-24/pec-deck.json",
-  },
-  "decline-bench": {
-    version: "anatomy-v3-2026-09-24",
-    status: "approved",
-    width: 1536,
-    height: 1024,
-    frames: Array.from(
-      { length: 6 },
-      (_, i) => `form-frames/decline-bench/${i + 1}.webp`
-    ),
-    reference: "form-frames/decline-bench/3.webp",
-    reviewFile: "docs/exercise-art/releases/2026-09-24/decline-bench.json",
-  },
-  "weighted-chest-dip": {
-    version: "anatomy-v3-2026-09-22",
-    status: "approved",
-    width: 1536,
-    height: 1024,
-    frames: Array.from(
-      { length: 6 },
-      (_, i) => `form-frames/weighted-chest-dip/${i + 1}.webp`
-    ),
-    reference: "form-frames/weighted-chest-dip/1.webp",
-    reviewFile: "docs/exercise-art/releases/2026-09-22/weighted-chest-dip.json",
-  },
-  "incline-bench": {
-    version: "anatomy-v3-2026-09-22",
-    status: "approved",
-    width: 1536,
-    height: 1024,
-    frames: Array.from(
-      { length: 6 },
-      (_, i) => `form-frames/incline-bench/${i + 1}.webp`
-    ),
-    reference: "form-frames/incline-bench/1.webp",
-    reviewFile: "docs/exercise-art/releases/2026-09-22/incline-bench.json",
-  },
-  "barbell-floor-press": {
-    version: "anatomy-v3-2026-09-22",
-    status: "approved",
-    width: 1536,
-    height: 1024,
-    frames: Array.from(
-      { length: 6 },
-      (_, i) => `form-frames/barbell-floor-press/${i + 1}.webp`
-    ),
-    reference: "form-frames/barbell-floor-press/1.webp",
-    reviewFile:
-      "docs/exercise-art/releases/2026-09-22/barbell-floor-press.json",
-  },
-  "cable-crossover": {
-    version: "anatomy-v3-2026-09-24",
-    status: "approved",
-    width: 1536,
-    height: 1024,
-    frames: Array.from(
-      { length: 6 },
-      (_, i) => `form-frames/cable-crossover/${i + 1}.webp`
-    ),
-    reference: "form-frames/cable-crossover/1.webp",
-    reviewFile: "docs/exercise-art/releases/2026-09-24/cable-crossover.json",
-  },
-  "superman-hold": {
-    version: "anatomy-v3-2026-09-24",
-    status: "approved",
-    width: 1536,
-    height: 1024,
-    frames: Array.from(
-      { length: 6 },
-      (_, i) => `form-frames/superman-hold/${i + 1}.webp`
-    ),
-    reference: "form-frames/superman-hold/1.webp",
-    reviewFile: "docs/exercise-art/releases/2026-09-24/superman-hold.json",
-  },
-  "weighted-push-ups": {
-    version: "anatomy-v3-2026-09-22",
-    status: "approved",
-    width: 1536,
-    height: 1024,
-    frames: Array.from(
-      { length: 6 },
-      (_, i) => `form-frames/weighted-push-ups/${i + 1}.webp`
-    ),
-    reference: "form-frames/weighted-push-ups/1.webp",
-    reviewFile: "docs/exercise-art/releases/2026-09-22/weighted-push-ups.json",
-  },
-  "db-curl": {
-    version: "anatomy-v3-2026-09-29",
-    status: "approved",
-    width: 1024,
-    height: 1536,
-    frames: Array.from(
-      { length: 6 },
-      (_, i) => `form-frames/db-curl/${i + 1}.webp`
-    ),
-    reference: "form-frames/db-curl/1.webp",
-    reviewFile: "docs/exercise-art/releases/2026-09-29/db-curl.json",
-  },
-  "hammer-curl": {
-    version: "anatomy-v3-2026-09-29",
-    status: "approved",
-    width: 1024,
-    height: 1536,
-    frames: Array.from(
-      { length: 6 },
-      (_, i) => `form-frames/hammer-curl/${i + 1}.webp`
-    ),
-    reference: "form-frames/hammer-curl/1.webp",
-    reviewFile: "docs/exercise-art/releases/2026-09-29/hammer-curl.json",
-  },
-  "front-raise": {
-    version: "anatomy-v3-2026-09-29",
-    status: "approved",
-    width: 1024,
-    height: 1536,
-    frames: Array.from(
-      { length: 6 },
-      (_, i) => `form-frames/front-raise/${i + 1}.webp`
-    ),
-    reference: "form-frames/front-raise/1.webp",
-    reviewFile: "docs/exercise-art/releases/2026-09-29/front-raise.json",
-  },
+/**
+ * The sets listed by hand: those released without a strict review. Six
+ * shipped before the review existed and are kept while replacements are
+ * reviewed; they do not claim to pass the new consistency standard. Three
+ * the owner released with their findings. An approved set never belongs
+ * here: it comes from its record, and formArtwork.test.ts fails if an ID
+ * is listed in both places.
+ */
+export const HAND_LISTED_FORM_ARTWORK: Record<string, HandListedFormArtwork> = {
   "goblet-squat": ownerReleased("goblet-squat", 1024, 1536),
-  "push-ups": {
-    version: "anatomy-v3-2026-09-29",
-    status: "approved",
-    width: 1536,
-    height: 1024,
-    frames: Array.from(
-      { length: 6 },
-      (_, i) => `form-frames/push-ups/${i + 1}.webp`
-    ),
-    reference: "form-frames/push-ups/1.webp",
-    reviewFile: "docs/exercise-art/releases/2026-09-29/push-ups.json",
-  },
   squat: ownerReleased("squat", 1024, 1536),
   "barbell-curl": ownerReleased("barbell-curl", 1024, 1536),
-  "db-bench": {
-    version: "anatomy-v3-2026-09-29",
-    status: "approved",
-    width: 1536,
-    height: 1024,
-    frames: Array.from(
-      { length: 6 },
-      (_, i) => `form-frames/db-bench/${i + 1}.webp`
-    ),
-    reference: "form-frames/db-bench/1.webp",
-    reviewFile: "docs/exercise-art/releases/2026-09-29/db-bench.json",
-  },
-  "bodyweight-squat": {
-    version: "anatomy-v3-2026-09-29",
-    status: "approved",
-    width: 1024,
-    height: 1536,
-    frames: Array.from(
-      { length: 6 },
-      (_, i) => `form-frames/bodyweight-squat/${i + 1}.webp`
-    ),
-    reference: "form-frames/bodyweight-squat/1.webp",
-    reviewFile: "docs/exercise-art/releases/2026-09-29/bodyweight-squat.json",
-  },
-  "barbell-shrug": {
-    version: "anatomy-v3-2026-09-29",
-    status: "approved",
-    width: 1024,
-    height: 1536,
-    frames: Array.from(
-      { length: 6 },
-      (_, i) => `form-frames/barbell-shrug/${i + 1}.webp`
-    ),
-    reference: "form-frames/barbell-shrug/1.webp",
-    reviewFile: "docs/exercise-art/releases/2026-09-29/barbell-shrug.json",
-  },
   "barbell-row": existing("barbell-row", 1000, 1701),
   "bench-press": existing("bench-press", 1000, 823),
   dips: existing("dips", 1000, 1413),
-  "lateral-raise": {
-    version: "anatomy-v3-2026-09-29",
-    status: "approved",
-    width: 1254,
-    height: 1254,
-    frames: Array.from(
-      { length: 6 },
-      (_, i) => `form-frames/lateral-raise/${i + 1}.webp`
-    ),
-    reference: "form-frames/lateral-raise/1.webp",
-    reviewFile: "docs/exercise-art/releases/2026-09-29/lateral-raise.json",
-  },
   "overhead-press": existing("overhead-press", 1000, 966),
   "rope-tricep-pushdown": existing("rope-tricep-pushdown", 1000, 1767),
   "skull-crushers": existing("skull-crushers", 1000, 858),
+};
+
+export const FORM_ARTWORK: Record<string, FormArtwork> = {
+  ...HAND_LISTED_FORM_ARTWORK,
+  ...Object.fromEntries(
+    Object.entries(APPROVED_FORM_ART_RELEASES).map(([id, release]) => [
+      id,
+      approved(id, release),
+    ])
+  ),
 };
 
 export function getReleasedFormArtwork(id: string): FormArtwork | null {
