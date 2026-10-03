@@ -2,18 +2,24 @@
 
 ## Current checkpoint — 3 October 2026
 
+The [forearm Plank release](releases/2026-10-03/PLANK.md) adds a reviewed
+entry, timed hold and controlled exit, six lossless delivery files, exact cues
+and a transparent card thumbnail. Its four measured arm supports stay within
+the existing 1px limit. The full hold intentionally remains still.
+
 The [Crunches continuation](pilots/continuation-20261003/README.md) adds a
 six-file review candidate and preserves a rejected intermediate attempt.
 Measured shoe shifts of up to 3px horizontally and 2px vertically exceed the
 existing 1px release limit, so Crunches remains unreleased. The draft is
-available in the review fixture with explicit findings; coverage is unchanged.
+available in the review fixture with explicit findings; that draft did not
+change released coverage.
 
 Hanging Leg Raise is now integrated as a reviewed production guide on this
 branch. The [release record](releases/2026-10-03/README.md) covers six lossless
 WebPs, seven-word cues, a reviewed card thumbnail and actual mobile playback.
-The live registry now contains **57 released sets** (48 approved, 3 owner-released
-with findings, 6 historical sets needing review), totalling 169,078,842 frame
-bytes. Of the 141 in-scope exercises, 84 still have no released artwork.
+The live registry now contains **58 released sets** (49 approved, 3 owner-released
+with findings, 6 historical sets needing review), totalling 172,173,054 frame
+bytes. Of the 141 in-scope exercises, 83 still have no released artwork.
 Side Plank remains incomplete and excluded. `inventory.json` reflects this
 branch's current registry, not deployment status.
 

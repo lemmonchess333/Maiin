@@ -1,0 +1,264 @@
+{
+  "exerciseId": "plank",
+  "version": "anatomy-v3-2026-10-03",
+  "width": 1536,
+  "height": 1024,
+  "decision": "approved",
+  "reviewer": "Codex native artwork and production-player review",
+  "reviewedAt": "2026-10-03T09:17:58.313750+00:00",
+  "reference": {
+    "path": "form-frames/plank/3.webp",
+    "sha256": "100c8d8ef4c326eb0fc2dd5a607bf4ca058584bd1fdcf2e463449e1f447f5e1c",
+    "anchors": {
+      "nearFist": {
+        "x": 163,
+        "y": 695
+      },
+      "nearElbow": {
+        "x": 455,
+        "y": 688
+      },
+      "farFist": {
+        "x": 79,
+        "y": 678
+      },
+      "farElbow": {
+        "x": 271,
+        "y": 631
+      }
+    },
+    "invariantDimensions": {
+      "nearForearmSupportSpan": 292.083892058429,
+      "farForearmSupportSpan": 197.66891510806647
+    }
+  },
+  "cueSha256": "087ad9c839c5d83554c5d2173a8a2021d2c795d919fc399e7c3e713b3427f0e5",
+  "checks": {
+    "identity": {
+      "passed": true,
+      "evidence": "Both native poses preserve the canonical bald faceless white-grey anatomical athlete, white trainers and featureless pelvis. The card is a separately reviewed transparent derivative; form-frame pixels remain identical to the source PNGs."
+    },
+    "camera": {
+      "passed": true,
+      "evidence": "Fixed 1536x1024 side three-quarter canvas. Head left, feet right, both forearms and feet visible. No per-frame cropping, scaling, mirroring or compositing."
+    },
+    "anatomy": {
+      "passed": true,
+      "evidence": "Native review: two arms and two legs with consistent proportions; forearms support beneath shoulders. Knees flex for supported setup and extend for the hold. Neck remains neutral. No missing supports, extra limbs, collapsed trunk or pike in the hold."
+    },
+    "equipment": {
+      "passed": true,
+      "evidence": "Bodyweight forearm plank on a level floor; no weights, restraints, bench or changing equipment."
+    },
+    "contact": {
+      "passed": true,
+      "evidence": "Four named fist/elbow support patches stay within the existing 1px limit. Near fist shifts -1px x and far elbow +1px x; all y translations are zero. Both measured forearm support spans change by less than 1%. Shoes pivot and knees move intentionally during entry and exit; they are not falsely treated as fixed anchors across different support states. Patches respond to shading as well as geometry and do not certify all anatomy."
+    },
+    "physics": {
+      "passed": true,
+      "evidence": "Setup/exit is supported on knees and forearms. Hold extends legs onto toes while maintaining a long head-to-heel line and planted forearms. Full-plank slots share identical bytes; no invented movement during the isometric hold."
+    },
+    "muscles": {
+      "passed": true,
+      "evidence": "Strongest purple marks visible rectus abdominis and obliques; glutes and shoulder deltoids are paler. On-screen muscle key follows the visible hierarchy without through-body core anatomy or measured activation claims."
+    },
+    "cueAgreement": {
+      "passed": true,
+      "evidence": "Six production cues match the exact forearm variation and fit the seven-word budget. The hold cue explicitly says Hold for time while breathing normally. Demo playback is an instructional sequence, not a prescribed hold timer."
+    },
+    "sequenceAndLoop": {
+      "passed": true,
+      "evidence": "Actual production player shows six delivered WebPs in order: supported setup, brace, extend, align, timed hold, controlled kneel. Two unique joint configurations are intentionally reused in six separate files. Endpoint files are byte-identical; displayed endpoint comparison and real 6-to-1 timer pass. Reduced motion stays still and allows stepping."
+    },
+    "mobileLight": {
+      "passed": true,
+      "evidence": "Actual production guide and transparent card inspected at 393x852 in light mode. Full poses and captions remain visible, cues readable, no horizontal overflow or page errors. Card has no visible black backdrop or halo on the light surface."
+    },
+    "mobileDark": {
+      "passed": true,
+      "evidence": "Actual production guide and transparent card inspected at 393x852 in dark mode. Full poses and captions remain visible, cues readable, no horizontal overflow or page errors. Card preserves the hold pose on the dark surface."
+    }
+  },
+  "frames": [
+    {
+      "path": "form-frames/plank/1.webp",
+      "sha256": "bc1d06703ba86d6e85552e50631fe510a9a959acf33edc2c336cf28cb2c9896b",
+      "anchors": {
+        "nearFist": {
+          "x": 164,
+          "y": 695
+        },
+        "nearElbow": {
+          "x": 455,
+          "y": 688
+        },
+        "farFist": {
+          "x": 79,
+          "y": 678
+        },
+        "farElbow": {
+          "x": 270,
+          "y": 631
+        }
+      },
+      "invariantDimensions": {
+        "nearForearmSupportSpan": 291.08418026406036,
+        "farForearmSupportSpan": 196.69773765857093
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/plank-20261003/1.png",
+        "sha256": "2a2092a358d4c857e4d49b1217352e97cc8765dfa29ba8c7e46964784c378c7a"
+      }
+    },
+    {
+      "path": "form-frames/plank/2.webp",
+      "sha256": "bc1d06703ba86d6e85552e50631fe510a9a959acf33edc2c336cf28cb2c9896b",
+      "anchors": {
+        "nearFist": {
+          "x": 164,
+          "y": 695
+        },
+        "nearElbow": {
+          "x": 455,
+          "y": 688
+        },
+        "farFist": {
+          "x": 79,
+          "y": 678
+        },
+        "farElbow": {
+          "x": 270,
+          "y": 631
+        }
+      },
+      "invariantDimensions": {
+        "nearForearmSupportSpan": 291.08418026406036,
+        "farForearmSupportSpan": 196.69773765857093
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/plank-20261003/2.png",
+        "sha256": "2a2092a358d4c857e4d49b1217352e97cc8765dfa29ba8c7e46964784c378c7a"
+      }
+    },
+    {
+      "path": "form-frames/plank/3.webp",
+      "sha256": "100c8d8ef4c326eb0fc2dd5a607bf4ca058584bd1fdcf2e463449e1f447f5e1c",
+      "anchors": {
+        "nearFist": {
+          "x": 163,
+          "y": 695
+        },
+        "nearElbow": {
+          "x": 455,
+          "y": 688
+        },
+        "farFist": {
+          "x": 79,
+          "y": 678
+        },
+        "farElbow": {
+          "x": 271,
+          "y": 631
+        }
+      },
+      "invariantDimensions": {
+        "nearForearmSupportSpan": 292.083892058429,
+        "farForearmSupportSpan": 197.66891510806647
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/plank-20261003/3.png",
+        "sha256": "2f45ca88baa643eeeaf0e0eab4f387d8306842bf1d0a4ac23b3f93db1230e9f6"
+      }
+    },
+    {
+      "path": "form-frames/plank/4.webp",
+      "sha256": "100c8d8ef4c326eb0fc2dd5a607bf4ca058584bd1fdcf2e463449e1f447f5e1c",
+      "anchors": {
+        "nearFist": {
+          "x": 163,
+          "y": 695
+        },
+        "nearElbow": {
+          "x": 455,
+          "y": 688
+        },
+        "farFist": {
+          "x": 79,
+          "y": 678
+        },
+        "farElbow": {
+          "x": 271,
+          "y": 631
+        }
+      },
+      "invariantDimensions": {
+        "nearForearmSupportSpan": 292.083892058429,
+        "farForearmSupportSpan": 197.66891510806647
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/plank-20261003/4.png",
+        "sha256": "2f45ca88baa643eeeaf0e0eab4f387d8306842bf1d0a4ac23b3f93db1230e9f6"
+      }
+    },
+    {
+      "path": "form-frames/plank/5.webp",
+      "sha256": "100c8d8ef4c326eb0fc2dd5a607bf4ca058584bd1fdcf2e463449e1f447f5e1c",
+      "anchors": {
+        "nearFist": {
+          "x": 163,
+          "y": 695
+        },
+        "nearElbow": {
+          "x": 455,
+          "y": 688
+        },
+        "farFist": {
+          "x": 79,
+          "y": 678
+        },
+        "farElbow": {
+          "x": 271,
+          "y": 631
+        }
+      },
+      "invariantDimensions": {
+        "nearForearmSupportSpan": 292.083892058429,
+        "farForearmSupportSpan": 197.66891510806647
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/plank-20261003/5.png",
+        "sha256": "2f45ca88baa643eeeaf0e0eab4f387d8306842bf1d0a4ac23b3f93db1230e9f6"
+      }
+    },
+    {
+      "path": "form-frames/plank/6.webp",
+      "sha256": "bc1d06703ba86d6e85552e50631fe510a9a959acf33edc2c336cf28cb2c9896b",
+      "anchors": {
+        "nearFist": {
+          "x": 164,
+          "y": 695
+        },
+        "nearElbow": {
+          "x": 455,
+          "y": 688
+        },
+        "farFist": {
+          "x": 79,
+          "y": 678
+        },
+        "farElbow": {
+          "x": 270,
+          "y": 631
+        }
+      },
+      "invariantDimensions": {
+        "nearForearmSupportSpan": 291.08418026406036,
+        "farForearmSupportSpan": 196.69773765857093
+      },
+      "source": {
+        "path": "docs/exercise-art/pilots/plank-20261003/6.png",
+        "sha256": "2a2092a358d4c857e4d49b1217352e97cc8765dfa29ba8c7e46964784c378c7a"
+      }
+    }
+  ]
+}

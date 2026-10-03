@@ -1,0 +1,76 @@
+{
+  "exerciseId": "plank",
+  "status": "reviewed",
+  "variation": "Forearm plank with knee-supported entry/exit, extended legs and a timed hold. Not push-ups or repeated hip lifts.",
+  "canonicalReference": "docs/exercise-art/identity/athlete-anatomy-v3.png",
+  "canvas": [1536, 1024],
+  "camera": "Fixed low side three-quarter, head left and feet right; both forearms and both toes visible.",
+  "anchors": [
+    "near elbow floor contact",
+    "near fist floor contact",
+    "far forearm contact",
+    "floor and camera"
+  ],
+  "invariants": ["forearm length", "upper arm length", "limb proportions"],
+  "intentionalMovement": [
+    "Knees lift for hold and lower on exit.",
+    "Shoes pivot and legs extend during entry; do not mistake intended shoe rotation for fixed pixel geometry.",
+    "Forearms and elbows remain planted across the entire sequence."
+  ],
+  "muscles": {
+    "primary": ["rectus abdominis", "obliques"],
+    "secondary": ["glutes", "anterior deltoids"],
+    "note": "Qualitative hierarchy. Deep core muscles are not rendered through skin."
+  },
+  "source": "src/lib/exercises.ts: plank",
+  "frames": [
+    {
+      "frame": 1,
+      "label": "Set forearms",
+      "cue": "Place elbows beneath shoulders; rest your knees.",
+      "t": 0,
+      "state": "Knees grounded, forearms flat, elbows beneath shoulders, toes tucked."
+    },
+    {
+      "frame": 2,
+      "label": "Brace first",
+      "cue": "Brace your abs before lifting your knees.",
+      "t": 0,
+      "state": "Same supported setup; establish abdominal tension before lifting.",
+      "reusedFrom": 1
+    },
+    {
+      "frame": 3,
+      "label": "Extend and lift",
+      "cue": "Extend legs; lift knees from the floor.",
+      "t": 1,
+      "state": "Full forearm plank on toes and forearms; straight head-to-heel line."
+    },
+    {
+      "frame": 4,
+      "label": "Find your line",
+      "cue": "Keep head, hips and heels aligned.",
+      "t": 1,
+      "state": "Same full plank; no hip sag, pike or head tilt.",
+      "reusedFrom": 3
+    },
+    {
+      "frame": 5,
+      "label": "Hold and breathe",
+      "cue": "Hold for time while breathing normally.",
+      "t": 1,
+      "state": "Same full plank, sustained isometric hold for the prescribed duration. Demo cadence is not the exercise duration.",
+      "reusedFrom": 3
+    },
+    {
+      "frame": 6,
+      "label": "Lower knees",
+      "cue": "Finish your hold; lower your knees gently.",
+      "t": 0,
+      "state": "Return to the original knee-supported setup with control.",
+      "reusedFrom": 1
+    }
+  ],
+  "reuseRationale": "A timed isometric hold does not require invented motion. Setup and brace share one joint configuration; lift/align/hold share the full-plank position; exit returns to setup. Each slot has a separate source file.",
+  "releaseApproved": true
+}

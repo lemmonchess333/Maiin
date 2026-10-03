@@ -1,0 +1,105 @@
+{
+  "method": "31x31 RGB setup patches; +/-5px integer translation minimizing absolute channel differences. Four named arm contacts and two forearm support spans. Patches respond to shading/redraw differences; this is not anatomy certification. No image edits.",
+  "selectedPoseOrder": [1, 1, 3, 3, 3, 1],
+  "intentionalMovement": "Knees lift and shoes pivot/translate during entry; only arm support contacts are fixed throughout. Hold slots reuse one image exactly.",
+  "poses": [
+    {
+      "frame": 1,
+      "path": "docs/exercise-art/pilots/plank-20261003/1.png",
+      "sha256": "2a2092a358d4c857e4d49b1217352e97cc8765dfa29ba8c7e46964784c378c7a",
+      "anchors": {
+        "nearFist": {
+          "x": 164,
+          "y": 695
+        },
+        "nearElbow": {
+          "x": 455,
+          "y": 688
+        },
+        "farFist": {
+          "x": 79,
+          "y": 678
+        },
+        "farElbow": {
+          "x": 270,
+          "y": 631
+        }
+      },
+      "matching": {
+        "nearFist": {
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 0
+        },
+        "nearElbow": {
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 0
+        },
+        "farFist": {
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 0
+        },
+        "farElbow": {
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 0
+        }
+      },
+      "invariantDimensions": {
+        "nearForearmSupportSpan": 291.08418026406036,
+        "farForearmSupportSpan": 196.69773765857093
+      }
+    },
+    {
+      "frame": 3,
+      "path": "docs/exercise-art/pilots/plank-20261003/3.png",
+      "sha256": "2f45ca88baa643eeeaf0e0eab4f387d8306842bf1d0a4ac23b3f93db1230e9f6",
+      "anchors": {
+        "nearFist": {
+          "x": 163,
+          "y": 695
+        },
+        "nearElbow": {
+          "x": 455,
+          "y": 688
+        },
+        "farFist": {
+          "x": 79,
+          "y": 678
+        },
+        "farElbow": {
+          "x": 271,
+          "y": 631
+        }
+      },
+      "matching": {
+        "nearFist": {
+          "dx": -1,
+          "dy": 0,
+          "meanChannelDifference": 5.582726326742976
+        },
+        "nearElbow": {
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 5.154006243496358
+        },
+        "farFist": {
+          "dx": 0,
+          "dy": 0,
+          "meanChannelDifference": 10.007977800901838
+        },
+        "farElbow": {
+          "dx": 1,
+          "dy": 0,
+          "meanChannelDifference": 7.073534512660423
+        }
+      },
+      "invariantDimensions": {
+        "nearForearmSupportSpan": 292.083892058429,
+        "farForearmSupportSpan": 197.66891510806647
+      }
+    }
+  ]
+}

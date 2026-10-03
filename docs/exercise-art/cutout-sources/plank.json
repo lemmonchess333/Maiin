@@ -1,0 +1,10 @@
+{
+  "reference": "form-frames/plank/3.webp",
+  "referenceSha256": "100c8d8ef4c326eb0fc2dd5a607bf4ca058584bd1fdcf2e463449e1f447f5e1c",
+  "image": "plank.png",
+  "imageSha256": "7a259921354392f855de05255fc75376de7f2dd95688b8bfaa3a36030a2c798e",
+  "method": "image_gen.imagegen transparent-background derivative of the reviewed full-plank pose. Minor outline/framing changes are reviewed separately; full guide unchanged.",
+  "reviewStatus": "reviewed",
+  "reviewedAt": "2026-10-03T09:13:10.728Z",
+  "reviewEvidence": "docs/exercise-art/releases/2026-10-03/plank-evidence"
+}

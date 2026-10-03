@@ -2,9 +2,9 @@
   "catalogue": 152,
   "inScope": 141,
   "existingSets": 6,
-  "newlyApproved": 48,
+  "newlyApproved": 49,
   "ownerReleasedWithFindings": 3,
-  "releasedBytes": 169078842,
+  "releasedBytes": 172173054,
   "errors": [],
   "inventory": [
     {
@@ -975,9 +975,9 @@
       "name": "Plank",
       "equipment": "Bodyweight",
       "inScope": true,
-      "authoredBeats": 0,
-      "status": "needs-artwork",
-      "bytes": 0
+      "authoredBeats": 6,
+      "status": "approved",
+      "bytes": 3094212
     },
     {
       "id": "superman-hold",

@@ -15,6 +15,19 @@ const placard = (
 });
 
 export const RELEASED_FORM_PLACARDS = {
+  plank: placard(
+    "plank",
+    ["Rectus abdominis", "Obliques"],
+    ["Glutes", "Anterior deltoids"],
+    [
+      [0, "Set forearms", "Place elbows beneath shoulders; rest your knees."],
+      [0, "Brace first", "Brace your abs before lifting your knees."],
+      [1, "Extend and lift", "Extend legs; lift knees from the floor."],
+      [1, "Find your line", "Keep head, hips and heels aligned."],
+      [1, "Hold and breathe", "Hold for time while breathing normally."],
+      [0, "Lower knees", "Finish your hold; lower your knees gently."],
+    ]
+  ),
   "leg-raise": placard(
     "leg-raise",
     ["Rectus abdominis"],

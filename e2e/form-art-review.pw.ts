@@ -85,6 +85,7 @@ for (const set of sets) {
       const errors: string[] = [];
       page.on("pageerror", (error) => errors.push(error.message));
       await page.goto("/e2e/fixtures/form-art.html");
+      await page.evaluate(() => document.fonts.ready);
       await page
         .getByRole("combobox", { name: "Exercise" })
         .selectOption(`${set.exerciseId} (draft)`);
@@ -138,16 +139,22 @@ for (const set of sets) {
         await expect(page.locator('button[aria-current="step"]')).toContainText(
           frame.cue
         );
+        await image.evaluate((node) => (node as HTMLImageElement).decode());
         // Compare displayed pixels, not a label claiming to reach the endpoint.
         if (index === 0) {
           expect(frame.sha256).toBe(endpointHashes[set.exerciseId]);
-          startPixels = await image.screenshot();
+          startPixels = await image.screenshot({
+            path: info.outputPath(`${theme}-endpoint-first.png`),
+          });
         }
         if (index === 5) {
           expect(frame.sha256).toBe(endpointHashes[set.exerciseId]);
           expect(frame.progress).toBe(0);
           expect(startPixels).toBeDefined();
-          expect((await image.screenshot()).equals(startPixels!)).toBe(true);
+          const finishPixels = await image.screenshot({
+            path: info.outputPath(`${theme}-endpoint-last.png`),
+          });
+          expect(finishPixels.equals(startPixels!)).toBe(true);
         }
         if (set.exerciseId === "db-row" && index === 2)
           rowHoldPixels = await image.screenshot();
