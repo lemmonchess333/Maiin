@@ -1,4 +1,5 @@
 import RunPurpose from "@/components/run/RunPurpose";
+import LiftPurpose from "@/components/program/LiftPurpose";
 import { runSessionPresentation } from "@/lib/runSessionExplainer";
 import { useState } from "react";
 import { THEME } from "@/lib/theme";
@@ -456,6 +457,17 @@ export default function DayPeekCard({
                     )}
                   </span>
                 </LiftRowShell>
+              )}
+              {/* The planned lift's reason, as the run row below carries
+                  "Why this run". Outside the row: it can be a button, and
+                  a disclosure cannot sit inside one. */}
+              {plannedLiftName && !multiSession && (
+                <LiftPurpose
+                  programme={programState}
+                  day={resolved.lift.workout}
+                  date={dateKey}
+                  className="pl-5"
+                />
               )}
               {hasM && (
                 <DiaryRowShell

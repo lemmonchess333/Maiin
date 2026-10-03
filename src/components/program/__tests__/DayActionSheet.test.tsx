@@ -1055,6 +1055,53 @@ describe("DayActionSheet — lift section", () => {
     expect(screen.getByText(/Completed/i)).toBeInTheDocument();
   });
 
+  it("gives the lift its reason behind 'Why this session', closed", () => {
+    const { profile, programState, callbacks } = setup();
+    programState.weekNumber = 3;
+    programState.currentPhase = "progression";
+    programState.primaryGoal = "strength";
+    render(
+      <DayActionSheet
+        open={true}
+        onClose={() => {}}
+        dateKey={todayKey()}
+        profile={profile}
+        programState={programState}
+        claimMap={emptyClaimMap}
+        unclaimedByDate={emptyUnclaimed}
+        {...callbacks}
+      />
+    );
+    const lift = screen.getByRole("region", { name: "Lift actions" });
+    const why = within(lift).getByText("Why this session").closest("details")!;
+    expect(why).not.toHaveAttribute("open");
+    expect(why).toHaveTextContent(
+      "This session is built for strength: heavier main lifts for lower reps."
+    );
+    expect(why).toHaveTextContent(
+      "This is the last full week before a lighter one, planned for next week."
+    );
+  });
+
+  it("offers no reason it cannot place in the programme", () => {
+    const { profile, programState, callbacks } = setup();
+    programState.weekNumber = 0;
+    render(
+      <DayActionSheet
+        open={true}
+        onClose={() => {}}
+        dateKey={todayKey()}
+        profile={profile}
+        programState={programState}
+        claimMap={emptyClaimMap}
+        unclaimedByDate={emptyUnclaimed}
+        {...callbacks}
+      />
+    );
+    expect(screen.getByText(/Skip this lift/i)).toBeInTheDocument();
+    expect(screen.queryByText("Why this session")).not.toBeInTheDocument();
+  });
+
   it("skipped lift: 'Skipped' badge, no Skip button", () => {
     const { profile, programState, callbacks } = setup({ skipped: true });
     render(

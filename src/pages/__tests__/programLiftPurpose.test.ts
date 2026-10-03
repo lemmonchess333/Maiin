@@ -1,0 +1,45 @@
+import { describe, it, expect } from "vitest";
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { dirname, resolve } from "node:path";
+
+/**
+ * Train's lift tab carries "Why this session" under the session card, as
+ * its Run tab carries "Why this run", and on the same days: one still to
+ * train this week.
+ *
+ * Pinned at the source, for the reason `programExerciseList.test.ts`
+ * gives: nothing in the repo renders Program.tsx in jsdom. What the
+ * disclosure says, and when it says nothing, is rendered and tested in
+ * `liftSessionPurpose.test.ts`, `DayPeekCard.test.tsx` and
+ * `DayActionSheet.test.tsx`; this file pins only where the page puts it.
+ */
+const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
+const source = readFileSync(resolve(repoRoot, "src/pages/Program.tsx"), "utf8");
+const code = source
+  .replace(/\/\*[\s\S]*?\*\//g, " ")
+  .replace(/\/\/[^\n]*/g, " ");
+
+describe("Train's lift tab explains the session", () => {
+  const at = code.indexOf("<LiftPurpose");
+
+  it("renders it once, after the session card", () => {
+    expect(at).toBeGreaterThan(-1);
+    expect(code.indexOf("<LiftPurpose", at + 1)).toBe(-1);
+    expect(at).toBeGreaterThan(code.indexOf('sport="lift"'));
+  });
+
+  it("explains the selected day from the programme", () => {
+    const props = code.slice(at, code.indexOf("/>", at));
+    expect(props).toMatch(/programme=\{programState\}/);
+    expect(props).toMatch(/day=\{selectedWorkout\}/);
+  });
+
+  it("only on a day still to train this week", () => {
+    /* A completed, skipped or missed day — and every day of a past week,
+       which liftDayStatus calls missed — has nothing left to explain. */
+    expect(code.slice(Math.max(0, at - 160), at)).toMatch(
+      /status === "today" \|\| status === "upcoming"/
+    );
+  });
+});

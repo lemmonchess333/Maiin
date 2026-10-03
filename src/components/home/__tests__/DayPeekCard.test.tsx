@@ -814,6 +814,102 @@ describe("DayPeekCard — lift row tap-through", () => {
 });
 
 /**
+ * "Why this session" — the lift's reason, behind a tap, as the run row
+ * carries "Why this run". The card names the session; the reason waits.
+ */
+describe("DayPeekCard — why this lift", () => {
+  const LIFT_WEEK = makeSchedule([
+    "rest",
+    "rest",
+    "lift",
+    "rest",
+    "rest",
+    "rest",
+    "rest",
+  ]);
+
+  function liftProgramme(overrides: Partial<ProgramState> = {}) {
+    return {
+      ...makeProgramState([]),
+      weekNumber: 1,
+      currentPhase: "progression",
+      primaryGoal: "hypertrophy",
+      workouts: [
+        {
+          dayName: "Pull — Lat Focus",
+          dayType: "pull",
+          exercises: [],
+          completed: false,
+        },
+      ],
+      ...overrides,
+    } as ProgramState;
+  }
+
+  function renderDay(
+    programState: ProgramState,
+    workouts: { id: string; notes?: string }[] = []
+  ) {
+    renderCard(
+      <DayPeekCard
+        todayKey={localDateString()}
+        dateKey={dayOfThisWeek(2)}
+        profile={makeProfile(LIFT_WEEK)}
+        programState={programState}
+        claimMap={emptyClaimMap}
+        extras={emptyExtras}
+        workouts={workouts}
+        dailyTotals={emptyTotals()}
+        onClose={vi.fn()}
+      />
+    );
+  }
+
+  it("discloses the planned lift's reason, closed until asked for", () => {
+    renderDay(liftProgramme());
+    expect(screen.getByText("Pull — Lat Focus")).toBeInTheDocument();
+    const why = screen.getByText("Why this session").closest("details")!;
+    expect(why).not.toHaveAttribute("open");
+    expect(why).toHaveTextContent(
+      "This session is built for muscle growth: higher reps, and more weekly sets for each muscle."
+    );
+    expect(why).toHaveTextContent(
+      "Your plan builds for three weeks, then a lighter week follows."
+    );
+  });
+
+  it("names a lighter week as one, and nothing else", () => {
+    renderDay(liftProgramme({ weekNumber: 4, currentPhase: "deload" }));
+    const why = screen.getByText("Why this session").closest("details")!;
+    expect(why).toHaveTextContent(
+      "This is a lighter week, with fewer sets and easier targets, so the fatigue of recent weeks can clear."
+    );
+    expect(why).not.toHaveTextContent(/built for/);
+  });
+
+  it("shows no reason without a planned lift, or a week to place it in", () => {
+    renderDay(liftProgramme({ workouts: [] }), [{ id: "w-1" }]);
+    expect(screen.queryByText("Why this session")).not.toBeInTheDocument();
+  });
+
+  it("shows no reason for a programme it cannot place", () => {
+    renderDay(liftProgramme({ weekNumber: 0 }));
+    expect(screen.getByText("Pull — Lat Focus")).toBeInTheDocument();
+    expect(screen.queryByText("Why this session")).not.toBeInTheDocument();
+  });
+
+  it("leaves the reason off a day whose saved sessions get a row each", () => {
+    /* Several saved sessions replace the planned name with a row per
+       session, so there is no planned lift on screen to explain. */
+    renderDay(liftProgramme(), [
+      { id: "w-1", notes: "Pull — Lat Focus — Programme Week 1" },
+      { id: "w-2", notes: "Arms — Pump" },
+    ]);
+    expect(screen.queryByText("Why this session")).not.toBeInTheDocument();
+  });
+});
+
+/**
  * The day-type badge must describe what the card actually contains.
  *
  * Device screenshot, 2026-08-13 (Week 12, deload): Tue 18 Aug carried a
