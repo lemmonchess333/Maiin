@@ -1,0 +1,35 @@
+{
+  "exerciseId": "glute-ham-raise",
+  "releaseApproved": false,
+  "master": {
+    "path": "docs/exercise-art/pilots/glute-ham-full-range-20261003/frames/1.png",
+    "sha256": "a8016da54c0bfef98f418e858e9062986288d0ed9e760975677b242189ac0fc4"
+  },
+  "builder": {
+    "path": "docs/exercise-art/pilots/glute-ham-full-range-20261003/build.py",
+    "sha256": "32d33910def59a27ff262c71fce6f8434824693ec007e5931cd1c7d60247d8f4"
+  },
+  "sources": [
+    {
+      "path": "docs/exercise-art/pilots/glute-ham-full-range-20261003/sources/1.png",
+      "sha256": "a8016da54c0bfef98f418e858e9062986288d0ed9e760975677b242189ac0fc4"
+    },
+    {
+      "path": "docs/exercise-art/pilots/glute-ham-full-range-20261003/sources/2.png",
+      "sha256": "f9014e76233d0b4a47f0af56b0f0709b63063bdb95abd6fd48777936770e4c98"
+    },
+    {
+      "path": "docs/exercise-art/pilots/glute-ham-full-range-20261003/sources/3.png",
+      "sha256": "9e8ac4af7c79d5d2edbaff61902bec486d784511e2b0c0667397997865081672"
+    }
+  ],
+  "reviewFindings": [
+    "Full horizontal lowered endpoint now replaces the partial diagonal endpoint. The former deepest pose becomes the intermediate; upright, diagonal, horizontal and reverse return are distinct.",
+    "Fixed floor base and ankle-restraint regions retain exact setup pixels. Native body poses are not resized or warped.",
+    "Knee/thigh contact with the curved pad and pad profile consistency still need review; exact fixed supports alone do not approve anatomy. Remains a draft."
+  ],
+  "plan": {
+    "path": "docs/exercise-art/pilots/glute-ham-full-range-20261003/plan.json",
+    "sha256": "5f90206178a6fb568ceb85cb037d8a0f0e753197784670d21347dbddcf8d2223"
+  }
+}

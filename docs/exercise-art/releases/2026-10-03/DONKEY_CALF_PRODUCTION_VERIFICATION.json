@@ -1,0 +1,62 @@
+{
+  "commit": "8cad71df5489beccae883a2579e31848d33e87df",
+  "url": "https://adaptive-fitness-af8bb.firebaseapp.com",
+  "checkedAt": "2026-10-03T15:44:56.732385+00:00",
+  "assets": [
+    {
+      "path": "form-frames/donkey-calf-raise/1.webp",
+      "status": 200,
+      "contentType": "image/webp",
+      "sha256": "8a660d4f0a218201d987309387eb86f1bba7a928ba2e49f4035ab39237e1255e",
+      "matchesLocal": true
+    },
+    {
+      "path": "form-frames/donkey-calf-raise/2.webp",
+      "status": 200,
+      "contentType": "image/webp",
+      "sha256": "e7d03fdea2eea80da7610a57819513baa85f4bb69774cafc39c7b9b00acbc7aa",
+      "matchesLocal": true
+    },
+    {
+      "path": "form-frames/donkey-calf-raise/3.webp",
+      "status": 200,
+      "contentType": "image/webp",
+      "sha256": "007f05ec97c8cebfbd200434edd7981fffb87591275149aa8ffa8a45871ce3ac",
+      "matchesLocal": true
+    },
+    {
+      "path": "form-frames/donkey-calf-raise/4.webp",
+      "status": 200,
+      "contentType": "image/webp",
+      "sha256": "007f05ec97c8cebfbd200434edd7981fffb87591275149aa8ffa8a45871ce3ac",
+      "matchesLocal": true
+    },
+    {
+      "path": "form-frames/donkey-calf-raise/5.webp",
+      "status": 200,
+      "contentType": "image/webp",
+      "sha256": "e7d03fdea2eea80da7610a57819513baa85f4bb69774cafc39c7b9b00acbc7aa",
+      "matchesLocal": true
+    },
+    {
+      "path": "form-frames/donkey-calf-raise/6.webp",
+      "status": 200,
+      "contentType": "image/webp",
+      "sha256": "8a660d4f0a218201d987309387eb86f1bba7a928ba2e49f4035ab39237e1255e",
+      "matchesLocal": true
+    },
+    {
+      "path": "form-art/donkey-calf-raise.webp",
+      "status": 200,
+      "contentType": "image/webp",
+      "sha256": "5857b12c829472bd47d568de8dda9bdebbbea6ee587e1aca9fd82f7820f5e264",
+      "matchesLocal": true
+    }
+  ],
+  "registryBundle": {
+    "path": "assets/formArtwork-Cwv4nFjd.js",
+    "sha256": "463324c35b9c5180d8e9fe71bfc37210287abec88ebdf6bbac89ef45b5799d2a",
+    "matchesLocal": true,
+    "containsDonkeyCalfRaiseRelease": true
+  }
+}

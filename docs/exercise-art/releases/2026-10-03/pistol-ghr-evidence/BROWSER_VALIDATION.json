@@ -1,0 +1,11 @@
+{
+  "command": "npx playwright test --config playwright.form-art.config.ts --grep 'pistol-squat|glute-ham-raise'",
+  "stats": {
+    "startTime": "2026-10-03T19:20:33.198Z",
+    "duration": 24465.602,
+    "expected": 9,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}

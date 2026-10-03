@@ -1,0 +1,50 @@
+{
+  "variation": "Glute-ham raise on a GHD with secured feet, thigh-pad contact, knee extension during lowering and hamstring-led return; no waist-only back extension.",
+  "camera": "Fixed side three-quarter facing left, full GHD and athlete visible.",
+  "equipment": "Rigid GHD with rounded thigh pads, ankle rollers and footplate; no added weight.",
+  "primary": "Hamstrings",
+  "secondary": "Glutes and calves lighter",
+  "fixedAnchors": ["GHD floor feet", "ankle restraint assembly", "footplate"],
+  "invariants": ["GHD dimensions", "athlete limb lengths", "ankle roller size"],
+  "beats": [
+    {
+      "frame": 1,
+      "label": "Set upright",
+      "cue": "Secure feet; brace with arms across chest.",
+      "pose": "Upright, thighs against pad, feet secured between ankle rollers and footplate."
+    },
+    {
+      "frame": 2,
+      "label": "Begin lowering",
+      "cue": "Lower slowly by extending at your knees.",
+      "pose": "Diagonal straight-body lowering between upright and horizontal, with feet secured."
+    },
+    {
+      "frame": 3,
+      "label": "Control your range",
+      "cue": "Keep knees, hips and head aligned.",
+      "pose": "Horizontal straight-body endpoint, arms crossed, feet secured, thigh/knee support retained."
+    },
+    {
+      "frame": 4,
+      "label": "Stay braced",
+      "cue": "Keep hips extended and hamstrings under tension.",
+      "reuse": 3
+    },
+    {
+      "frame": 5,
+      "label": "Curl upward",
+      "cue": "Use hamstrings and glutes to rise smoothly.",
+      "reuse": 2
+    },
+    {
+      "frame": 6,
+      "label": "Return upright",
+      "cue": "Finish tall without arching your lower back.",
+      "reuse": 1
+    }
+  ],
+  "exerciseId": "glute-ham-raise",
+  "status": "six-frame-draft",
+  "releaseApproved": false
+}

@@ -41,6 +41,18 @@ const ownerReleased = (
 // Preserve the seven previously shipped sets while replacements are reviewed.
 // These entries do not claim that the art passes the new consistency standard.
 export const FORM_ARTWORK: Record<string, FormArtwork> = {
+  "pistol-squat": {
+    version: "anatomy-v3-fixed-foot-2026-10-03",
+    status: "approved",
+    width: 1024,
+    height: 1536,
+    frames: Array.from(
+      { length: 6 },
+      (_, i) => `form-frames/pistol-squat/${i + 1}.webp`
+    ),
+    reference: "form-frames/pistol-squat/3.webp",
+    reviewFile: "docs/exercise-art/releases/2026-10-03/pistol-squat.json",
+  },
   "calf-raise": {
     version: "anatomy-v3-upright-reference-2026-10-03",
     status: "approved",

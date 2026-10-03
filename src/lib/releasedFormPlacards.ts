@@ -15,6 +15,23 @@ const placard = (
 });
 
 export const RELEASED_FORM_PLACARDS = {
+  "pistol-squat": placard(
+    "pistol-squat",
+    ["Quadriceps"],
+    ["Glutes", "Hamstrings", "Core"],
+    [
+      [0, "Balance on one leg", "Stand on one leg; extend the other."],
+      [0.5, "Sit back and down", "Bend your standing knee; keep heel planted."],
+      [
+        1,
+        "Reach controlled depth",
+        "Lower near your heel without losing balance.",
+      ],
+      [1, "Keep your position", "Keep free leg lifted and knee aligned."],
+      [0.5, "Drive upward", "Push through your planted foot to stand."],
+      [0, "Finish before switching", "Stand tall, then repeat the other side."],
+    ]
+  ),
   "calf-raise": placard(
     "calf-raise",
     ["Gastrocnemius"],

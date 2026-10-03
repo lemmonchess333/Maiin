@@ -16,13 +16,14 @@
         "secondary": ["Glutes and calves lighter"]
       },
       "reviewFindings": [
-        "Repaired the white middle-frame background to black. Selected base and footplate regions are copied exactly from the setup, removing fixed-equipment redraw within those regions.",
-        "Body proportions, changing knee-pad contact and full-range mechanics still require review. This remains a partial-range draft; fixed machine pixels do not establish anatomical approval."
+        "Full horizontal lowered endpoint now replaces the partial diagonal endpoint. The former deepest pose becomes the intermediate; upright, diagonal, horizontal and reverse return are distinct.",
+        "Fixed floor base and ankle-restraint regions retain exact setup pixels. Native body poses are not resized or warped.",
+        "Knee/thigh contact with the curved pad and pad profile consistency still need review; exact fixed supports alone do not approve anatomy. Remains a draft."
       ],
       "frames": [
         {
           "frame": 1,
-          "path": "docs/exercise-art/pilots/repair-new-conversions-03-20261003/glute-ham-raise/frames/1.png",
+          "path": "docs/exercise-art/pilots/glute-ham-full-range-20261003/frames/1.png",
           "caption": "SET UPRIGHT 1/6",
           "cue": "Secure feet; brace with arms across chest.",
           "progress": 0,
@@ -33,51 +34,51 @@
         },
         {
           "frame": 2,
-          "path": "docs/exercise-art/pilots/repair-new-conversions-03-20261003/glute-ham-raise/frames/2.png",
+          "path": "docs/exercise-art/pilots/glute-ham-full-range-20261003/frames/2.png",
           "caption": "BEGIN LOWERING 2/6",
           "cue": "Lower slowly by extending at your knees.",
           "progress": 0.5,
           "dimensions": [1536, 1024],
-          "bytes": 800013,
-          "sha256": "9598ae89a56e36615e1a4a1d25ce7117a696649bc2fadee670e8afd4367c783d",
+          "bytes": 965352,
+          "sha256": "f9014e76233d0b4a47f0af56b0f0709b63063bdb95abd6fd48777936770e4c98",
           "reusedFrom": null
         },
         {
           "frame": 3,
-          "path": "docs/exercise-art/pilots/repair-new-conversions-03-20261003/glute-ham-raise/frames/3.png",
+          "path": "docs/exercise-art/pilots/glute-ham-full-range-20261003/frames/3.png",
           "caption": "CONTROL YOUR RANGE 3/6",
           "cue": "Keep knees, hips and head aligned.",
           "progress": 1,
           "dimensions": [1536, 1024],
-          "bytes": 965352,
-          "sha256": "f9014e76233d0b4a47f0af56b0f0709b63063bdb95abd6fd48777936770e4c98",
+          "bytes": 746714,
+          "sha256": "bc8fe89b3518e347d28fe9e6680b74c998d3db50080542afc938f15895065176",
           "reusedFrom": null
         },
         {
           "frame": 4,
-          "path": "docs/exercise-art/pilots/repair-new-conversions-03-20261003/glute-ham-raise/frames/4.png",
+          "path": "docs/exercise-art/pilots/glute-ham-full-range-20261003/frames/4.png",
           "caption": "STAY BRACED 4/6",
           "cue": "Keep hips extended and hamstrings under tension.",
           "progress": 1,
           "dimensions": [1536, 1024],
-          "bytes": 965352,
-          "sha256": "f9014e76233d0b4a47f0af56b0f0709b63063bdb95abd6fd48777936770e4c98",
+          "bytes": 746714,
+          "sha256": "bc8fe89b3518e347d28fe9e6680b74c998d3db50080542afc938f15895065176",
           "reusedFrom": 3
         },
         {
           "frame": 5,
-          "path": "docs/exercise-art/pilots/repair-new-conversions-03-20261003/glute-ham-raise/frames/5.png",
+          "path": "docs/exercise-art/pilots/glute-ham-full-range-20261003/frames/5.png",
           "caption": "CURL UPWARD 5/6",
           "cue": "Use hamstrings and glutes to rise smoothly.",
           "progress": 0.5,
           "dimensions": [1536, 1024],
-          "bytes": 800013,
-          "sha256": "9598ae89a56e36615e1a4a1d25ce7117a696649bc2fadee670e8afd4367c783d",
+          "bytes": 965352,
+          "sha256": "f9014e76233d0b4a47f0af56b0f0709b63063bdb95abd6fd48777936770e4c98",
           "reusedFrom": 2
         },
         {
           "frame": 6,
-          "path": "docs/exercise-art/pilots/repair-new-conversions-03-20261003/glute-ham-raise/frames/6.png",
+          "path": "docs/exercise-art/pilots/glute-ham-full-range-20261003/frames/6.png",
           "caption": "RETURN UPRIGHT 6/6",
           "cue": "Finish tall without arching your lower back.",
           "progress": 0,
@@ -188,8 +189,8 @@
         "secondary": ["Glutes, hamstrings and core lighter"]
       },
       "reviewFindings": [
-        "Repaired black background and fixed the planted working sole and lower shoe by rigidly translating each lowering pose and reusing the master contact region. A 70-row contour-aligned calf bridge prevents a doubled edge.",
-        "The shoe region is exact, but the calf bridge is locally resampled and must be reviewed for anatomy and sharpness. Whole-body proportions and balance remain unapproved."
+        "The repaired fixed shoe and locally resampled ankle transition passed native close-up review. No additional regeneration or body reshaping was needed for this release.",
+        "Production delivery and mobile review are recorded separately in docs/exercise-art/releases/2026-10-03/pistol-squat.json."
       ],
       "frames": [
         {

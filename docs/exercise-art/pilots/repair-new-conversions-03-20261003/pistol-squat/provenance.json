@@ -1,7 +1,7 @@
 {
   "exerciseId": "pistol-squat",
   "tools": ["image_gen", "previously authorized fixed-contact compositing"],
-  "releaseApproved": false,
+  "releaseApproved": true,
   "identity": {
     "path": "docs/exercise-art/identity/athlete-anatomy-v3.png",
     "sha256": "fa56dd686d1e8ff88db91b9465255eefd9837f26174acebd18ddb2851d45a72b"
@@ -35,6 +35,7 @@
   "cueSha256": "c65bbe5c9c403d2799c8fd1638764be7416514693865790ad7cec8babb7bbcf7",
   "reviewFindings": [
     "Repaired black background and fixed the planted working sole and lower shoe by rigidly translating each lowering pose and reusing the master contact region. A 70-row contour-aligned calf bridge prevents a doubled edge.",
-    "The shoe region is exact, but the calf bridge is locally resampled and must be reviewed for anatomy and sharpness. Whole-body proportions and balance remain unapproved."
-  ]
+    "Native full-pose and enlarged ankle-bridge review passed. Lower shoe is pixel-exact; the existing local calf transition is explicitly retained. Production mobile evidence is recorded in the separate release review."
+  ],
+  "releaseReview": "docs/exercise-art/releases/2026-10-03/pistol-squat.json"
 }
