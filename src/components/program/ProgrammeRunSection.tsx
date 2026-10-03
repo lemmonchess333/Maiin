@@ -119,7 +119,7 @@ import type {
   RealignOutcome,
 } from "@/features/program/programOutcome";
 import { useRunningStats } from "@/hooks/useRunningStats";
-import { useClaimMap } from "@/hooks/useClaimMap";
+import { useClaimMapForProgram } from "@/hooks/useClaimMapForProgram";
 import { haptic } from "@/lib/haptic";
 import { resolveDayPagerDelta } from "@/lib/dayPagerSwipe";
 import {
@@ -293,8 +293,10 @@ export default function ProgrammeRunSection({
   // programState.manualCompletions; forwarded to RunWeekStrip so
   // the strip's ✅ tracks manual/saved-run/legacy completions.
   // Q5 chunk B3e — also forwards unclaimedByDate for the extras
-  // pills (saved runs that don't claim any planned slot).
-  const { claimMap, unclaimedByDate } = useClaimMap();
+  // pills (saved runs that don't claim any planned slot). Read from the
+  // plan Train already holds: the old wrapper called useProgram() again,
+  // which started a second engine, empty, beside Train's.
+  const { claimMap, unclaimedByDate } = useClaimMapForProgram(programState);
 
   // Run8 PR1a — mode pills + race-goal form removed from this
   // surface. Mode + race goal now live on `/settings/run-plan`

@@ -156,7 +156,7 @@ describe("dead file references in production comments", () => {
     // walk broke — the failure shape this whole file exists to prevent.
     expect(SCANNED.length).toBeGreaterThan(500);
     expect(EXISTING.size).toBeGreaterThan(500);
-    expect(EXISTING.has("useClaimMap.ts")).toBe(true);
+    expect(EXISTING.has("useClaimMapForProgram.ts")).toBe(true);
   });
 
   it("every path cited in a comment names a file that still exists", () => {

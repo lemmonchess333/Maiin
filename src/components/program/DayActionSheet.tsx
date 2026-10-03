@@ -71,7 +71,7 @@ import {
   getCompletionKind,
   type ClaimState,
 } from "@/lib/scheduledRunCompletion";
-import type { SavedRunDoc } from "@/hooks/useClaimMap";
+import type { SavedRunDoc } from "@/hooks/useClaimMapForProgram";
 import type { UserProfile } from "@/lib/auth";
 import type { ProgramState } from "@/features/program/programTypes";
 import type { ProgramOutcome } from "@/features/program/programOutcome";
@@ -87,7 +87,7 @@ interface DayActionSheetProps {
   /** PR-J Q3 chunk B3d — derived completion source of truth.
    *  Forwarded to the shared `resolveTrainingDayForDate` call so
    *  the sheet's "Completed" badge tracks manual / saved-run-claim
-   *  / legacy completions uniformly. Wired via `useClaimMap` in
+   *  / legacy completions uniformly. Wired via `useClaimMapForProgram` in
    *  the parent (ProgrammeRunSection). Closes the last resolver
    *  back-compat fallback B3c left open. */
   claimMap: Map<string, ClaimState>;
@@ -96,7 +96,7 @@ interface DayActionSheetProps {
    *  unclaimed but a saved run for the same date IS present as an
    *  extra (distance-fail or bucket-fail), surface a contextual
    *  hint above the Mark complete button so the user can resolve
-   *  the friction with one tap. Wired via `useClaimMap` in the
+   *  the friction with one tap. Wired via `useClaimMapForProgram` in the
    *  parent. */
   unclaimedByDate: Map<string, SavedRunDoc[]>;
   overrideRunDay: (idOrDayIndex: string | number, templateId: string) => void;

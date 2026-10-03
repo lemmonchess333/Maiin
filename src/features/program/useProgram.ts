@@ -1259,9 +1259,7 @@ export function useProgram() {
    * adherence-sensitive readers downstream are not fed a lie.
    */
   /* Resolve the layoff once the user is known. Bounded one-shot read — see
-     `fetchRecentLayoff` for why this is not a subscription (useClaimMap, the
-     existing runs subscriber, calls useProgram, so this hook cannot consume
-     it). Race-prep only: a freeform runner has no plan for a layoff to
+     `fetchRecentLayoff` for why this is not a subscription. Race-prep only: a freeform runner has no plan for a layoff to
      reshape, so the read is not worth making for them. */
   useEffect(() => {
     if (!user?.uid) return;

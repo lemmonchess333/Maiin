@@ -1251,7 +1251,7 @@ export default function RunSummary() {
           {/* P3-1: save-time mismatch reconciliation.
           Fires only when the saved run is off-plan AND points at a
           still-planned scheduled slot. A run that matches its planned
-          day completes it through the claims (useClaimMap), with no
+          day completes it through the claims (useClaimMapForProgram), with no
           write here; this is the "you did something else, what should
           the scheduled slot do?" dialog. State is local to this
           RunSummary mount.

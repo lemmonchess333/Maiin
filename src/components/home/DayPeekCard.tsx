@@ -22,7 +22,7 @@ import {
   getCompletionKind,
   type ClaimState,
 } from "@/lib/scheduledRunCompletion";
-import type { SavedRunDoc } from "@/hooks/useClaimMap";
+import type { SavedRunDoc } from "@/hooks/useClaimMapForProgram";
 import { localWeekKey, parseLocalDate } from "@/lib/dateHelpers";
 import { cn } from "@/lib/utils";
 import { IconButton } from "@/components/ui/IconButton";
@@ -171,12 +171,12 @@ export default function DayPeekCard({
   /** PR-J Q3 chunk B3c — derived completion source of truth.
    *  Forwarded to the resolver so the "Run completed" copy and
    *  Check icon track manual / saved-run-claim / legacy
-   *  completions uniformly. Wired via `useClaimMap` in Home. */
+   *  completions uniformly. Wired via `useClaimMapForProgram` in Home. */
   claimMap: Map<string, ClaimState>;
   /** PR-J Q5 chunk B3g — unclaimed saved runs for this date.
    *  Rendered as tap-through rows so a logged extra run shows on
    *  the Home day peek alongside the planned slot. Wired via
-   *  `useClaimMap().unclaimedByDate.get(dateKey)` in Home. */
+   *  `useClaimMapForProgram(programState).unclaimedByDate.get(dateKey)` in Home. */
   extras: SavedRunDoc[];
   workouts: {
     /** Firestore doc id — the /workout/:id destination for the lift row.

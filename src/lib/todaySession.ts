@@ -49,7 +49,7 @@ export interface TodaySessionInput {
   today: string;
   profile: UserProfile | null;
   programState: ProgramState | null;
-  /** Which planned runs are done (`useClaimMap`). */
+  /** Which planned runs are done (`useClaimMapForProgram`). */
   claimMap: Map<string, ClaimState>;
   /** The saved lift sessions: each one's id and day. */
   workouts: readonly { id: string; date: string }[];

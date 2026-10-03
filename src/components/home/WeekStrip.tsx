@@ -159,7 +159,7 @@ export default function WeekStrip({
   /** PR-J Q3 chunk B3c — derived completion source of truth.
    *  Forwarded to `resolveTrainingWindow` so the strip's run-day ✅
    *  reflects manual / saved-run-claim / legacy completions
-   *  uniformly. Wired via `useClaimMap` in Home. */
+   *  uniformly. Wired via `useClaimMapForProgram` in Home. */
   claimMap: Map<string, ClaimState>;
   selectedDate: string | null;
   onDayTap: (dk: string) => void;

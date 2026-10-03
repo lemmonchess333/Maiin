@@ -42,7 +42,7 @@ import type {
   WorkoutDay,
 } from "@/features/program/programTypes";
 import type { ClaimState } from "@/lib/scheduledRunCompletion";
-import type { SavedRunDoc } from "@/hooks/useClaimMap";
+import type { SavedRunDoc } from "@/hooks/useClaimMapForProgram";
 import { APPLIED } from "@/features/program/programOutcome";
 
 /* These components read the display unit, which resolves from the auth

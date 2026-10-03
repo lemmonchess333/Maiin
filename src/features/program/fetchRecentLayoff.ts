@@ -4,10 +4,9 @@
  *
  * WHY A BOUNDED ONE-SHOT READ RATHER THAN A HOOK. The two paths that must
  * resolve a layoff — the calendar auto-rollover and the fell-behind realign —
- * both live inside `useProgram`, and `useProgram` cannot consume `useClaimMap`
- * (the existing runs subscriber) because `useClaimMap` calls `useProgram`.
- * Subscribing again would mean a second live listener over the same collection
- * in an already-hot hook. A capped `getDocs` on the paths that actually need
+ * both live inside `useProgram`, which holds no runs subscription. Adding one
+ * there would mean a second live listener over the collection the claims
+ * (`useClaimMapForProgram`) already listen to, in an already-hot hook. A capped `getDocs` on the paths that actually need
  * the answer costs one read and adds no listener.
  *
  * WHY THE CAP IS SAFE. Only the most recent ELIGIBLE run matters, and

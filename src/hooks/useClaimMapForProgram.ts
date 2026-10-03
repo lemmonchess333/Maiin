@@ -1,9 +1,8 @@
 /**
  * PR-J Q3 P77 — Memoised claim map for the soft-link reframe.
  *
- * Subscribes to the user's saved runs + reads programState (via
- * useProgram + the existing useRunningStats subscription) and
- * produces a single `Map<runDayId, ClaimState>` via
+ * Subscribes to the user's saved runs, reads the programState its caller
+ * already holds (Train's engine, Home's snapshot), and produces a single `Map<runDayId, ClaimState>` via
  * `computeClaims` from `@/lib/scheduledRunCompletion`.
  *
  * Why a hook (not raw useMemo at the call site):

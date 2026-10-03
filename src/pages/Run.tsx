@@ -215,7 +215,7 @@ export default function Run() {
   // The loading flag is only honoured for non-freeform users; freeform
   // skips the skeleton path entirely.
   // Nothing here completes a planned day: a saved run completes the day it
-  // matches through the claims (useClaimMap). We only read programState +
+  // matches through the claims (useClaimMapForProgram). We only read programState +
   // loading here to drive the prefill memo.
   const { programState, loading: programLoading } = useProgram();
   const profileRunMode = (profile?.runMode ?? "freeform") as PlanMode;

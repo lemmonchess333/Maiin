@@ -94,10 +94,10 @@ vi.mock("@/lib/auth", () => ({
   useUidForStorageKey: () => "u-1",
 }));
 
-// PR-J chunk B3b — ProgrammeRunSection now consumes useClaimMap,
-// which calls useProgram + Firestore onSnapshot. Tests render the
-// component without a Firestore environment, so we mock useClaimMap
-// to return an empty claim map. The hook surface is already covered
+// PR-J chunk B3b — ProgrammeRunSection derives its claims with
+// useClaimMapForProgram, which subscribes to Firestore. Tests render the
+// component without a Firestore environment, so we mock it to return an
+// empty claim map. The hook surface is already covered
 // by src/hooks/__tests__/useClaimMapForProgram.test.ts.
 // Mutable so a test can seed a claim against a planned runDay (Run9 ENG e:
 // startability must consult the claim-map, not just stored status).
@@ -109,8 +109,8 @@ let mockClaimMap = new Map<
     legacyCompleted: boolean;
   }
 >();
-vi.mock("@/hooks/useClaimMap", () => ({
-  useClaimMap: () => ({
+vi.mock("@/hooks/useClaimMapForProgram", () => ({
+  useClaimMapForProgram: () => ({
     claimMap: mockClaimMap,
     unclaimedByDate: new Map(),
     today: "2026-05-12",
