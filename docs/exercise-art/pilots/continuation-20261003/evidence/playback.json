@@ -1,0 +1,74 @@
+{
+  "command": "npx playwright test --config playwright.form-art.config.ts",
+  "viewport": {
+    "width": 393,
+    "height": 852
+  },
+  "stats": {
+    "startTime": "2026-10-03T08:32:32.382Z",
+    "duration": 69649.602,
+    "expected": 24,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "screenshots": [
+    {
+      "path": "docs/exercise-art/pilots/continuation-20261003/evidence/dark-1.png",
+      "sha256": "e95631571ba44c5a76dd5c719089d81c40d61cb968826c9e997518a2cde30a81"
+    },
+    {
+      "path": "docs/exercise-art/pilots/continuation-20261003/evidence/dark-2.png",
+      "sha256": "32a50659bc7318bc2183b4a136185eac1a97650507e627430b35e3727252fd2e"
+    },
+    {
+      "path": "docs/exercise-art/pilots/continuation-20261003/evidence/dark-3.png",
+      "sha256": "c522c4c93bf61a38e3d82e23630106cbb3a4034265694cfb7b8217e6a402362c"
+    },
+    {
+      "path": "docs/exercise-art/pilots/continuation-20261003/evidence/dark-4.png",
+      "sha256": "946e3a1b63066b365bfb6cbd271156beaae8fa52a9811cb6f541691c81782da3"
+    },
+    {
+      "path": "docs/exercise-art/pilots/continuation-20261003/evidence/dark-5.png",
+      "sha256": "82cce28154ae9ecfe2e9c6979d05efe540526420bea00c13eb672d4673175753"
+    },
+    {
+      "path": "docs/exercise-art/pilots/continuation-20261003/evidence/dark-6.png",
+      "sha256": "25f9af796a47c9058cb3321ff27d3081e7f3be5355566b419552f2599dbc3972"
+    },
+    {
+      "path": "docs/exercise-art/pilots/continuation-20261003/evidence/dark-page.png",
+      "sha256": "b1245ef86785665f8342a0cfe30aec371ad7be24ff313c725a75458f391c0971"
+    },
+    {
+      "path": "docs/exercise-art/pilots/continuation-20261003/evidence/light-1.png",
+      "sha256": "08c227842b9e30b394ec7c7e0291f738af65e1a83d32d792e0dc6560c843a974"
+    },
+    {
+      "path": "docs/exercise-art/pilots/continuation-20261003/evidence/light-2.png",
+      "sha256": "8d38ec0f5d398f4971d6dc60b04221499ec2568522d7533acf633bde8c5c0e15"
+    },
+    {
+      "path": "docs/exercise-art/pilots/continuation-20261003/evidence/light-3.png",
+      "sha256": "3ce3660a44d91fe5744b140e1e90b135fccc6eddc7de1f098097544a67eab9ec"
+    },
+    {
+      "path": "docs/exercise-art/pilots/continuation-20261003/evidence/light-4.png",
+      "sha256": "3abcfa4a1eaea899a749ef8accb36f81c48089c92f9617e4357c70152177cb7c"
+    },
+    {
+      "path": "docs/exercise-art/pilots/continuation-20261003/evidence/light-5.png",
+      "sha256": "13fc69c1cda6b3ebaaca8c7c8bb4eccad8cb79744a0d881be9a5b55ef9fef954"
+    },
+    {
+      "path": "docs/exercise-art/pilots/continuation-20261003/evidence/light-6.png",
+      "sha256": "3aed912cdee34842fc74da647f1a6e6e00a8c2801629c1a31af5a9c2f082acae"
+    },
+    {
+      "path": "docs/exercise-art/pilots/continuation-20261003/evidence/light-page.png",
+      "sha256": "ffda1e5e5050b04543cf888a491f7fbd31955eb0c334273e9b1f769fa9b0cd53"
+    }
+  ],
+  "releaseApproved": false
+}

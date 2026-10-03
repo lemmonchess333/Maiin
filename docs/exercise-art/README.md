@@ -2,6 +2,12 @@
 
 ## Current checkpoint — 3 October 2026
 
+The [Crunches continuation](pilots/continuation-20261003/README.md) adds a
+six-file review candidate and preserves a rejected intermediate attempt.
+Measured shoe shifts of up to 3px horizontally and 2px vertically exceed the
+existing 1px release limit, so Crunches remains unreleased. The draft is
+available in the review fixture with explicit findings; coverage is unchanged.
+
 Hanging Leg Raise is now integrated as a reviewed production guide on this
 branch. The [release record](releases/2026-10-03/README.md) covers six lossless
 WebPs, seven-word cues, a reviewed card thumbnail and actual mobile playback.

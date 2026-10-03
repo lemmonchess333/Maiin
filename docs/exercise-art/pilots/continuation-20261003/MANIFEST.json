@@ -1,0 +1,101 @@
+{
+  "schemaVersion": 1,
+  "batch": "continuation-20261003",
+  "releaseApproved": false,
+  "productionAssetsChanged": false,
+  "selectedFrameCount": 6,
+  "completeDraftSets": [
+    {
+      "exerciseId": "crunches",
+      "status": "draft-awaiting-review",
+      "camera": "Fixed side three-quarter, head left and feet right, slight elevation shows both arms and both planted shoes.",
+      "anchors": [
+        "both shoe soles",
+        "pelvis and lower-back floor contact",
+        "floor and camera"
+      ],
+      "equipment": "Bodyweight on level floor; no foot restraint or weights.",
+      "muscles": {
+        "primary": ["rectus abdominis"],
+        "secondary": ["obliques"],
+        "note": "Qualitative visible hierarchy. Catalogue hip flexors are deep and are not drawn through the body."
+      },
+      "reviewFindings": [
+        "Three distinct native poses selected as 1,2,3,3,2,1 in six separate files. Peak/return reuse is explicit; this is not six unique poses.",
+        "The first intended early-curl edit rose farther than requested and was selected as the peak. The next intermediate attempt rose higher still and is rejected. A retry from the flat master gives an intermediate between flat and peak, with uneven spacing; no smooth-motion claim.",
+        "Native review shows the intended bent-knee crunch and stable canonical identity/muscle hierarchy. Fixed-contact measurements prevent release: intermediate near heel shifts +1x/+2y, near toe +3x/0y, far toe +3x/+1y; peak far toe +2x/0y. The strict release tolerance is 1px.",
+        "Pelvis patch shifts at most 1px. Patch matching can also respond to shading and outline changes; these findings do not certify all anatomy or hand contact. No pixel compositing, warping, cropping or rescaling was used.",
+        "Side Plank remains unreleased with its existing 12px shoe displacement. Its failed repair method was not repeated.",
+        "All 24 browser checks passed, including the three Crunches checks for light, dark and reduced motion. The six displayed frames, cues, actual 6-to-1 timer, identical endpoint pixels, 44px controls and lack of overflow/page errors were checked. All three unique displayed poses were inspected in both themes; small intermediate-to-peak spacing remains visible. These player results do not clear the failed contact checks. No public assets or release approval."
+      ],
+      "frames": [
+        {
+          "frame": 1,
+          "path": "docs/exercise-art/pilots/continuation-20261003/crunches/1.png",
+          "caption": "SET AND BRACE 1/6",
+          "cue": "Plant feet; rest hands lightly behind head.",
+          "progress": 0,
+          "dimensions": [1536, 1024],
+          "bytes": 947460,
+          "sha256": "11a9cd61cc3d9cd028eb213af0cada295465b0a62108b4110edd05968879758f",
+          "reusedFrom": null
+        },
+        {
+          "frame": 2,
+          "path": "docs/exercise-art/pilots/continuation-20261003/crunches/2.png",
+          "caption": "BEGIN CURL 2/6",
+          "cue": "Curl your shoulders up using your abs.",
+          "progress": 0.5,
+          "dimensions": [1536, 1024],
+          "bytes": 1217977,
+          "sha256": "df16be278a38c7f7a2acf8de77a0ac4f739524b7412ede20c8aad1d2a25605df",
+          "reusedFrom": null
+        },
+        {
+          "frame": 3,
+          "path": "docs/exercise-art/pilots/continuation-20261003/crunches/3.png",
+          "caption": "LIFT SHOULDERS 3/6",
+          "cue": "Lift shoulder blades; keep lower back down.",
+          "progress": 1,
+          "dimensions": [1536, 1024],
+          "bytes": 1281305,
+          "sha256": "5e2ae11af79f51c7d0e8a17a573df9f77267ab1072c95bcbb2846ad404a57697",
+          "reusedFrom": null
+        },
+        {
+          "frame": 4,
+          "path": "docs/exercise-art/pilots/continuation-20261003/crunches/4.png",
+          "caption": "PAUSE BRIEFLY 4/6",
+          "cue": "Pause without pulling on your neck.",
+          "progress": 1,
+          "dimensions": [1536, 1024],
+          "bytes": 1281305,
+          "sha256": "5e2ae11af79f51c7d0e8a17a573df9f77267ab1072c95bcbb2846ad404a57697",
+          "reusedFrom": 3
+        },
+        {
+          "frame": 5,
+          "path": "docs/exercise-art/pilots/continuation-20261003/crunches/5.png",
+          "caption": "LOWER SLOWLY 5/6",
+          "cue": "Lower your shoulders slowly with control.",
+          "progress": 0.5,
+          "dimensions": [1536, 1024],
+          "bytes": 1217977,
+          "sha256": "df16be278a38c7f7a2acf8de77a0ac4f739524b7412ede20c8aad1d2a25605df",
+          "reusedFrom": 2
+        },
+        {
+          "frame": 6,
+          "path": "docs/exercise-art/pilots/continuation-20261003/crunches/6.png",
+          "caption": "RETURN TO FLOOR 6/6",
+          "cue": "Rest shoulders; keep your feet planted.",
+          "progress": 0,
+          "dimensions": [1536, 1024],
+          "bytes": 947460,
+          "sha256": "11a9cd61cc3d9cd028eb213af0cada295465b0a62108b4110edd05968879758f",
+          "reusedFrom": 1
+        }
+      ]
+    }
+  ]
+}

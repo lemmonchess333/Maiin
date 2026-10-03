@@ -77,8 +77,9 @@ describe("recovered form artwork", () => {
     expect(audit).toContain(
       'import recovered from "../docs/exercise-art/RECOVERED_DRAFTS.json"'
     );
-    expect(audit).toContain(
-      "for (const current of [manifest, recovered, continuation])"
+    // Recovery must remain audited when additional draft batches are added.
+    expect(audit).toMatch(
+      /for \(const current of \[[^\]]*\brecovered\b[^\]]*\]\)/
     );
   });
 });

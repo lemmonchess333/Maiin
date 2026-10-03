@@ -13,12 +13,14 @@ import { Button } from "../../src/components/ui/Button";
 import batch from "../../docs/exercise-art/BATCH_REVIEW_MANIFEST.json";
 import recovered from "../../docs/exercise-art/RECOVERED_DRAFTS.json";
 import continuation from "../../docs/exercise-art/pilots/continuation-20261002/MANIFEST.json";
+import octoberThird from "../../docs/exercise-art/pilots/continuation-20261003/MANIFEST.json";
 
 const batchDrafts = Object.fromEntries(
   [
     ...batch.completeDraftSets,
     ...recovered.completeDraftSets,
     ...continuation.completeDraftSets,
+    ...octoberThird.completeDraftSets,
   ].map((set) => [
     `${set.exerciseId} (draft)`,
     {

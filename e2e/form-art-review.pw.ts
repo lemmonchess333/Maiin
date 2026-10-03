@@ -23,7 +23,19 @@ const continuation: typeof import("../docs/exercise-art/pilots/continuation-2026
     )
   );
 
+const octoberThird: typeof import("../docs/exercise-art/pilots/continuation-20261003/MANIFEST.json") =
+  JSON.parse(
+    readFileSync(
+      new URL(
+        "../docs/exercise-art/pilots/continuation-20261003/MANIFEST.json",
+        import.meta.url
+      ),
+      "utf8"
+    )
+  );
+
 const targets = new Set([
+  "crunches",
   "db-row",
   "db-shoulder-press",
   "incline-db-press",
@@ -34,11 +46,13 @@ const targets = new Set([
 const sets = [
   ...batch.completeDraftSets,
   ...continuation.completeDraftSets,
+  ...octoberThird.completeDraftSets,
 ].filter((set) => targets.has(set.exerciseId));
 if (sets.length !== targets.size)
   throw new Error("Missing exact exercise review target");
 // Independent source pins: the same incorrect pose at both ends must fail.
 const endpointHashes: Record<string, string> = {
+  crunches: "11a9cd61cc3d9cd028eb213af0cada295465b0a62108b4110edd05968879758f",
   "leg-raise":
     "da1d8e73b06d96aad0028cf229ac36a79867e09bedca74ea422a73ad7e233a01",
   "db-row": "d39a9faaa0f6a9de3ec516f1b42f594fd64d555aa8aa36994d17a782344d4aec",
